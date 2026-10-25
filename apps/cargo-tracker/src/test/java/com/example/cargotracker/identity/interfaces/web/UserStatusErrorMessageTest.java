@@ -21,7 +21,7 @@ class UserStatusErrorMessageTest {
         "OVERSIGHT_ROLE, ACTIVE, システム管理者・監査担当者の利用停止と再開は、この画面では行いません。, false",
         "NO_CHANGE, SUSPENDED, 利用状態は既に利用停止です。最新の内容を確かめてください。, false",
         "NO_CHANGE, ACTIVE, 利用状態は既に利用中です。最新の内容を確かめてください。, false",
-        "REASON_REQUIRED, ACTIVE, 停止の理由を選んでください。, true"
+        "REASON_REQUIRED, ACTIVE, 利用終了・異動・緊急停止のどれかを選んでください。, true"
     })
     void 拒否の文言と欄へのリンク(StatusChangeRejection rejection, UserStatus current, String text, boolean field) {
         assertThat(UserStatusChangeController.errorMessage(rejection, current))

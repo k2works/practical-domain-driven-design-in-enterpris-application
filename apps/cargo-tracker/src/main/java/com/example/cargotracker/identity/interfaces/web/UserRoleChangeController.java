@@ -70,13 +70,15 @@ public class UserRoleChangeController {
     public String change(
             @PathVariable String id,
             @RequestParam(name = "roles", required = false) List<String> roles,
-            @RequestParam long version,
+            @RequestParam(name = "version", required = false) String versionValue,
             AuthenticatedActor actor,
             Model model,
             RedirectAttributes redirectAttributes) {
         // 確定も先に詳細を読み、管理範囲の外なら試行を記録して 404 にする（Bolt 34b。書き手は詳細の部品で、確定のときだけ）
         UserId target = page.find(id, actor, true).id();
         Set<Role> selected = UserAdministrationParameters.roles(roles);
+        // 版も範囲の判定の後に解釈する（利用状態の確定と同じ。数でない版で範囲外の試行の記録を避けさせない。Bolt 38）
+        long version = UserAdministrationParameters.version(versionValue);
         return switch (roleChanges.change(actor, target, version, selected)) {
             case RoleChangeOutcome.Changed _ -> {
                 redirectAttributes.addFlashAttribute("notice", CHANGED_NOTICE);

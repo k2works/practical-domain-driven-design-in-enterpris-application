@@ -149,7 +149,7 @@ public class UserStatusChangeController {
                     case SELF_CHANGE -> UserDetailPage.SELF_STATUS_NOTE;
                     case OVERSIGHT_ROLE -> UserDetailPage.OVERSIGHT_STATUS_NOTE;
                     case NO_CHANGE -> "利用状態は既に" + UserAdministrationLabels.status(current) + "です。最新の内容を確かめてください。";
-                    case REASON_REQUIRED -> "停止の理由を選んでください。";
+                    case REASON_REQUIRED -> "利用終了・異動・緊急停止のどれかを選んでください。";
                 };
         return new ErrorMessage(text, rejection == StatusChangeRejection.REASON_REQUIRED);
     }

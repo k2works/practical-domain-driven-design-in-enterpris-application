@@ -227,6 +227,17 @@ public class UserAdministrationUiSteps {
         assertThat(summary).containsText(message);
     }
 
+    @かつ("エラー要約にフォーカスがあり、誤りのリンクを押すと {string} にフォーカスが移る")
+    public void 要約から欄へ移る(String firstOption) {
+        // 行 6・7: 要約へのフォーカスはスクリプト、リンクの先へはブラウザの素の移動（Bolt 38）
+        Locator summary = page().getByRole(AriaRole.ALERT);
+        assertThat(summary).isFocused();
+        summary.getByRole(AriaRole.LINK).click();
+        assertThat(page().getByLabel(firstOption, new Page.GetByLabelOptions().setExact(true)))
+                .isFocused();
+        browser.checkAccessibility();
+    }
+
     @ならば("役割 {string} と {string} が選ばれている")
     public void 選ばれている(String first, String second) {
         assertThat(page().getByLabel(first, new Page.GetByLabelOptions().setExact(true)))

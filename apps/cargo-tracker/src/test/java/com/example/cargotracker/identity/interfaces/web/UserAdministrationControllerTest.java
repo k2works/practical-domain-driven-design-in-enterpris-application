@@ -90,6 +90,18 @@ class UserAdministrationControllerTest {
     }
 
     @Test
+    void 誤りのない詳細の群には誤りの印を付けない() throws Exception {
+        // 行 3: 群があることを先に確かめてから、aria-invalid がないことを確かめる（Bolt 38）
+        found(user(3, UserStatus.ACTIVE));
+
+        mockMvc.perform(get(DETAIL))
+                .andExpect(status().isOk())
+                .andExpect(content().string(Matchers.containsString("<fieldset id=\"roles\"")))
+                .andExpect(content().string(Matchers.containsString("<fieldset id=\"suspension-reason\"")))
+                .andExpect(content().string(Matchers.not(Matchers.containsString("aria-invalid"))));
+    }
+
+    @Test
     void 詳細の範囲外は記録せずに404にする() throws Exception {
         when(queryService.detail(any(), eq(TARGET))).thenReturn(new UserLookup.OutOfScope());
 

@@ -162,7 +162,11 @@ class UserStatusChangeControllerTest {
                 .andExpect(content().string(Matchers.containsString("利用状態を変更できませんでした")))
                 .andExpect(content().string(Matchers.containsString(STALE)))
                 .andExpect(content().string(Matchers.containsString("name=\"version\" value=\"4\"")))
-                .andExpect(content().string(Matchers.not(Matchers.containsString("name=\"version\" value=\"3\""))));
+                .andExpect(content().string(Matchers.not(Matchers.containsString("name=\"version\" value=\"3\""))))
+                // 古い版は選び方の誤りではないので、表示名を付けずリンクせず、群に誤りの印を付けない（Bolt 38 の開発レビュー）
+                .andExpect(content().string(UserRoleChangeControllerTest.summaryWithoutLink()))
+                .andExpect(content().string(Matchers.not(Matchers.containsString("停止の理由: "))))
+                .andExpect(content().string(Matchers.not(Matchers.containsString("aria-invalid"))));
     }
 
     @Test
@@ -175,8 +179,39 @@ class UserStatusChangeControllerTest {
         mockMvc.perform(get(STATUS_CONFIRMATION).param("status", "SUSPENDED").param("version", "3"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(Matchers.containsString("利用状態を変更できませんでした")))
-                .andExpect(content().string(Matchers.containsString("停止の理由を選んでください。")))
-                .andExpect(content().string(Matchers.containsString("href=\"#suspension-reason\"")));
+                // 行 2: 文言は表示名で始めない（ui_design の共通部品）。群の最初の選択肢へ向かう（Bolt 38）
+                .andExpect(content()
+                        .string(Matchers.containsString(
+                                "<a href=\"#reason-USAGE_ENDED\">停止の理由: 利用終了・異動・緊急停止のどれかを選んでください。</a>")))
+                .andExpect(content().string(Matchers.not(Matchers.containsString("停止の理由を選んでください。"))))
+                .andExpect(content().string(Matchers.not(UserRoleChangeControllerTest.summaryWithoutLink())))
+                .andExpect(content().string(Matchers.containsString("src=\"/js/transport-request-form.js\"")))
+                .andExpect(content()
+                        .string(UserRoleChangeControllerTest.containsPattern(
+                                "<fieldset id=\"suspension-reason\"[^>]*aria-invalid=\"true\"")))
+                .andExpect(content().string(UserRoleChangeControllerTest.containsPattern("<fieldset id=\"roles\"")))
+                .andExpect(content()
+                        .string(Matchers.not(UserRoleChangeControllerTest.containsPattern(
+                                "<fieldset id=\"roles\"[^>]*aria-invalid"))));
+    }
+
+    @Test
+    void 停止の理由の欄のない停止中の利用者への理由の拒否は欄へリンクしない() throws Exception {
+        // 行 4b: 判定の後に停止された競合。示す欄がないので表示名を付けずリンクしない（Bolt 38）
+        found(user(3, UserStatus.SUSPENDED));
+        when(statusChanges.check(any(), eq(TARGET), anyLong(), any(), any()))
+                .thenReturn(new StatusChangeCheck.Refused(
+                        new UserAdministrationRefusal.Rejected<>(StatusChangeRejection.REASON_REQUIRED)));
+
+        mockMvc.perform(get(STATUS_CONFIRMATION).param("status", "SUSPENDED").param("version", "3"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(Matchers.containsString("id=\"error-summary\"")))
+                .andExpect(content().string(Matchers.containsString("利用終了・異動・緊急停止のどれかを選んでください。")))
+                .andExpect(content().string(Matchers.not(Matchers.containsString("停止の理由: "))))
+                .andExpect(content().string(UserRoleChangeControllerTest.summaryWithoutLink()))
+                // 出口: 再開の操作と一覧へ戻るリンクは残る
+                .andExpect(content().string(Matchers.containsString("利用再開の内容を確認する")))
+                .andExpect(content().string(Matchers.containsString("利用者の一覧へ戻る")));
     }
 
     @Test

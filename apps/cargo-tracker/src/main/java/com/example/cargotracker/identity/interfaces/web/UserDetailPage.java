@@ -7,6 +7,7 @@ import com.example.cargotracker.identity.application.internal.queryservices.User
 import com.example.cargotracker.identity.domain.model.rules.RoleAssignmentPolicy;
 import com.example.cargotracker.identity.domain.model.valueobjects.SuspensionReason;
 import com.example.cargotracker.identity.domain.model.valueobjects.UserDetail;
+import com.example.cargotracker.identity.domain.model.valueobjects.UserStatus;
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
 import com.example.cargotracker.shared.domain.Role;
 import com.example.cargotracker.shared.domain.UserId;
@@ -16,6 +17,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.ui.Model;
@@ -26,6 +28,12 @@ import org.springframework.web.server.ResponseStatusException;
  * 記録（`ADMIN_SCOPE_DENIED`）の書き手はこの部品の 1 か所で、確定の POST から呼ばれたときだけ書く（GET は CSRF の守りがなく他サイトから
  * 記録を書かせられるので書かない。Bolt 34b の開発レビューの決定）。合成ルートの {@code @Bean} の戻り値の型の規則（AT-07）に当たらない
  * よう、{@code @Component} で組み立てる。
+ *
+ * <p>詳細に操作を足すとき（Bolt 38 の開始準備の決定 3・5）: (1) {@link Section} に操作の値を 1 つ足す（エラー要約の見出しと、選び方の
+ * 誤りの欄の表示名。選び方の誤りのない操作は表示名を持たない）、(2) {@link Fields} にその欄を描くかを 1 つ足し、{@link #render} で
+ * 1 度だけ決めて model に置く（テンプレートの欄を描く条件もそれを読む）、(3) {@link #anchor} の switch に、描く群の最初の選択肢を
+ * リンク先にする枝を足す（値を足すと網羅の誤りでコンパイルが止まる）、(4) テンプレートに領域を足す（1 つの領域に操作が 2 つなら値を
+ * 2 つ対応させる）、(5) controller は {@link Operation} を渡す。
  */
 @Component
 final class UserDetailPage {
@@ -83,10 +91,18 @@ final class UserDetailPage {
         model.addAttribute("statusName", UserAdministrationLabels.status(user.status()));
         model.addAttribute("currentRoles", UserAdministrationLabels.roles(user.roles()));
         model.addAttribute("companyKindName", UserAdministrationLabels.companyKind(user.companyKind()));
+        List<RoleOption> roleOptions = roleOptions(assignable, form.selected());
+        List<ReasonOption> reasonOptions = reasonOptions(form.reason());
+        String statusNote = statusNote(user, self);
+        // 欄を描くかはここで 1 度だけ決め、テンプレートとエラー要約のリンク先の両方が読む（Bolt 38）
+        Fields fields =
+                new Fields(!self && !assignable.isEmpty(), statusNote == null && user.status() == UserStatus.ACTIVE);
         model.addAttribute("self", self);
         model.addAttribute("selfRoleNote", SELF_ROLE_NOTE);
         model.addAttribute("assignable", !assignable.isEmpty());
-        model.addAttribute("roleOptions", roleOptions(assignable, form.selected()));
+        model.addAttribute("roleForm", fields.roles());
+        model.addAttribute("reasonForm", fields.reason());
+        model.addAttribute("roleOptions", roleOptions);
         // 画面で付け外しできない今の役割（監督の役割など）は、変えずに送るため隠し項目で持つ
         model.addAttribute(
                 "keptRoles",
@@ -95,12 +111,19 @@ final class UserDetailPage {
                         .map(Role::name)
                         .toList());
         model.addAttribute("keptRoleNames", UserAdministrationLabels.roles(unassignable(user.roles(), assignable)));
-        model.addAttribute("statusNote", statusNote(user, self));
-        model.addAttribute("reasonOptions", reasonOptions(form.reason()));
+        model.addAttribute("statusNote", statusNote);
+        model.addAttribute("reasonOptions", reasonOptions);
         model.addAttribute(UserAdministrationLabels.VERSION_ATTRIBUTE, form.version());
         model.addAttribute("error", form.errorOf(Section.ROLES));
         model.addAttribute("statusError", form.errorOf(Section.STATUS));
-        model.addAttribute("summary", ErrorSummary.of(form));
+        model.addAttribute(
+                "summary",
+                ErrorSummary.of(
+                        form,
+                        section -> anchor(
+                                section,
+                                fields.roles() ? roleOptions : List.of(),
+                                fields.reason() ? reasonOptions : List.of())));
         model.addAttribute(UserAdministrationLabels.ACTIVE_ATTRIBUTE, UserAdministrationLabels.ACTIVE);
         return DETAIL_VIEW;
     }
@@ -160,6 +183,24 @@ final class UserDetailPage {
         return result;
     }
 
+    /**
+     * その操作の選び方の誤りの欄へのリンク先（描く群の最初の選択肢。fieldset はフォーカスを受けないので選択肢へ向ける。Bolt 38）。欄を
+     * 描かないときは選択肢を空で渡すので、リンク先も空。
+     */
+    private static Optional<String> anchor(
+            Section section, List<RoleOption> drawnRoles, List<ReasonOption> drawnReasons) {
+        return switch (section) {
+            case ROLES ->
+                drawnRoles.stream()
+                        .findFirst()
+                        .map(option -> "#role-" + option.role().name());
+            case STATUS ->
+                drawnReasons.stream()
+                        .findFirst()
+                        .map(option -> "#reason-" + option.reason().name());
+        };
+    }
+
     /** 画面で付け外しできる役割（企業の種類に合う業務の役割）の選択肢。宣言の順。 */
     private static List<RoleOption> roleOptions(Set<Role> assignable, Set<Role> selected) {
         return Arrays.stream(Role.values())
@@ -197,21 +238,42 @@ final class UserDetailPage {
         return new ResponseStatusException(HttpStatus.FORBIDDEN);
     }
 
-    /** 誤りを示す詳細の領域。エラー要約の見出しとリンク先を決める（Bolt 34d で 2 つの要約を 1 つにした）。 */
+    /**
+     * 誤りを示す詳細の操作（Bolt 34d で 2 つの要約を 1 つにした。Bolt 38 から 1 つの値が 1 つの操作）。エラー要約の見出しと、選び方の
+     * 誤りの欄の表示名（リンクの文「表示名: 文言」に使う。共通部品のエラー要約）を決める。リンク先は描く欄で決まるので {@link #anchor}
+     * が決める。
+     */
     enum Section {
-        /** 役割の領域。 */
-        ROLES("役割を変更できませんでした", "#roles"),
-        /** 利用状態の領域。 */
-        STATUS("利用状態を変更できませんでした", "#suspension-reason");
+        /** 役割の変更。 */
+        ROLES("役割を変更できませんでした", "付ける役割"),
+        /** 利用状態の変更。 */
+        STATUS("利用状態を変更できませんでした", "停止の理由");
 
         private final String title;
-        private final String anchor;
+        private final String fieldLabel;
 
-        Section(String title, String anchor) {
+        /**
+         * @param title エラー要約の見出し
+         * @param fieldLabel 選び方の誤りの欄の表示名（選び方の誤りのない操作は null）
+         */
+        Section(String title, String fieldLabel) {
             this.title = title;
-            this.anchor = anchor;
+            this.fieldLabel = fieldLabel;
+        }
+
+        /** 選び方の誤りの欄の表示名。選び方の誤りのない操作は空。 */
+        Optional<String> fieldLabel() {
+            return Optional.ofNullable(fieldLabel);
         }
     }
+
+    /**
+     * 詳細に描く選び方の欄。
+     *
+     * @param roles 役割の欄（自分と荷受人の企業の利用者には描かない）
+     * @param reason 停止の理由の欄（自分・監督の役割・停止中の利用者には描かない）
+     */
+    private record Fields(boolean roles, boolean reason) {}
 
     /**
      * 拒否の画面を描く操作（役割の変更・利用状態の変更）。誤りを示す領域は操作ごとに 1 つで、規則の拒否と古い版の両方に使う。
@@ -283,18 +345,24 @@ final class UserDetailPage {
      * 詳細のエラー要約。
      *
      * @param title 見出し
-     * @param error 誤り
-     * @param anchor 選び方の誤りのときにリンクする欄
+     * @param anchor 選び方の誤りの欄のリンク先（リンクしないなら null）
+     * @param text 示す文（リンクするなら「表示名: 文言」、しないなら文言だけ）
      */
-    public record ErrorSummary(String title, ErrorMessage error, String anchor) {
+    public record ErrorSummary(String title, String anchor, String text) {
 
-        /** 詳細に示す誤りの要約。誤りがなければ null。 */
-        static ErrorSummary of(DetailForm form) {
+        /** 詳細に示す誤りの要約。誤りがなければ null。選び方の誤りで、欄を描くときだけ欄へリンクする（Bolt 38）。 */
+        static ErrorSummary of(DetailForm form, Function<Section, Optional<String>> anchorOf) {
             Problem problem = form.problem();
             if (problem == null) {
                 return null;
             }
-            return new ErrorSummary(problem.section().title, problem.message(), problem.section().anchor);
+            Section section = problem.section();
+            ErrorMessage message = problem.message();
+            return section.fieldLabel()
+                    .filter(_ -> message.field())
+                    .flatMap(label -> anchorOf.apply(section)
+                            .map(href -> new ErrorSummary(section.title, href, label + ": " + message.text())))
+                    .orElseGet(() -> new ErrorSummary(section.title, null, message.text()));
         }
     }
 

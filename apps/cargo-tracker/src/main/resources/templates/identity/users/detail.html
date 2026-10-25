@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html lang="ja" xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{layout/staff :: layout(~{::title}, ~{::main}, ~{}, 'users')}">
+      th:replace="~{layout/staff :: layout(~{::title}, ~{::main}, ~{::script}, 'users')}">
 <head>
     <meta charset="UTF-8">
     <title>利用者の詳細 - cargo-tracker</title>
+    <!--/* エラー要約へフォーカスを移す（共通部品「エラー要約」。S-04・S-09・S-13 と同じ。リンクの先へはブラウザの素の移動で移る。Bolt 38） */-->
+    <script th:src="@{/js/transport-request-form.js}" defer></script>
 </head>
 <body>
 <main>
@@ -11,14 +13,14 @@
     <div th:if="${notice != null}" class="alert alert-success" role="status" th:text="${notice}">
         役割を変更しました。相手の次の操作から効きます。
     </div>
-    <!--/* エラー要約（S-09 と同じ形）。役割の変更と利用状態の変更（Bolt 34d）で 1 つにし、見出しとリンク先を controller が選ぶ。
-         選び方の誤り（役割・停止の理由）だけ欄へリンクする（古い版と、役割の変更の自分の役割、利用状態の変更の自分と監督の役割の拒否は
-         選び方の誤りではない） */-->
+    <!--/* エラー要約（共通部品と同じ形）。役割の変更と利用状態の変更（Bolt 34d）で 1 つにし、見出しは操作で決まる。選び方の誤り
+         （役割・停止の理由）だけ「表示名: 文言」で群の最初の選択肢へリンクする（古い版と、役割の変更の自分の役割、利用状態の変更の自分と
+         監督の役割の拒否は選び方の誤りではない）。欄を描かない利用者への拒否は文言だけを示す（Bolt 38） */-->
     <div id="error-summary" th:if="${summary != null}" tabindex="-1" role="alert" aria-labelledby="error-summary-title">
         <h2 id="error-summary-title" th:text="${summary.title}">役割を変更できませんでした</h2>
         <ul>
-            <li th:if="${summary.error.field}"><a th:href="${summary.anchor}" th:text="${summary.error.text}">役割を 1 つ以上選んでください。</a></li>
-            <li th:unless="${summary.error.field}" th:text="${summary.error.text}">この利用者の情報が先に更新されました。</li>
+            <li th:if="${summary.anchor != null}"><a th:href="${summary.anchor}" th:text="${summary.text}">付ける役割: 役割を 1 つ以上選んでください。</a></li>
+            <li th:unless="${summary.anchor != null}" th:text="${summary.text}">この利用者の情報が先に更新されました。</li>
         </ul>
     </div>
     <dl class="row">
@@ -37,11 +39,12 @@
         <p th:if="${self}" id="self-note" th:text="${selfRoleNote}">自分の役割は変更できません。ほかのシステム管理者に依頼してください。</p>
         <p th:if="${!self and !assignable}" id="unassignable-note"
            th:text="|${companyKindName}の利用者には役割を付けません。|">荷受人の企業の利用者には役割を付けません。</p>
-        <form th:if="${!self and assignable}" method="get"
+        <form th:if="${roleForm}" method="get"
               th:action="@{/staff/users/{id}/role-changes/confirmation(id=${user.id.value})}">
             <input type="hidden" name="version" th:value="${version}">
             <input type="hidden" name="roles" th:each="role : ${keptRoles}" th:value="${role}">
-            <fieldset id="roles" th:attr="aria-describedby=${error != null and error.field} ? 'roles-error' : null">
+            <fieldset id="roles"
+                      th:attr="aria-describedby=${error != null and error.field} ? 'roles-error' : null,aria-invalid=${error != null and error.field} ? 'true' : null">
                 <legend class="h6">付ける役割</legend>
                 <p th:if="${error != null and error.field}" id="roles-error" class="text-danger" th:text="${error.text}">役割を 1 つ以上選んでください。</p>
                 <p class="form-text" th:text="|${companyKindName}の利用者に付けられる役割です。印を外すと、その役割を外します。システム管理者・監査担当者の役割は、この画面では付けたり外したりできません。|">
@@ -64,15 +67,15 @@
     <section class="mt-4" aria-labelledby="status-title">
         <h2 id="status-title" class="h5">利用状態</h2>
         <p th:if="${statusNote != null}" id="status-note" th:text="${statusNote}">自分の利用状態は変更できません。ほかのシステム管理者に依頼してください。</p>
-        <form th:if="${statusNote == null and user.status.name() == 'ACTIVE'}" method="get"
+        <form th:if="${reasonForm}" method="get"
               th:action="@{/staff/users/{id}/status-changes/confirmation(id=${user.id.value})}">
             <input type="hidden" name="status" value="SUSPENDED">
             <input type="hidden" name="version" th:value="${version}">
             <fieldset id="suspension-reason"
-                      th:attr="aria-describedby=${statusError != null and statusError.field} ? 'suspension-reason-error' : null">
+                      th:attr="aria-describedby=${statusError != null and statusError.field} ? 'suspension-reason-error' : null,aria-invalid=${statusError != null and statusError.field} ? 'true' : null">
                 <legend class="h6">停止の理由</legend>
                 <p th:if="${statusError != null and statusError.field}" id="suspension-reason-error" class="text-danger"
-                   th:text="${statusError.text}">停止の理由を選んでください。</p>
+                   th:text="${statusError.text}">利用終了・異動・緊急停止のどれかを選んでください。</p>
                 <div class="form-check" th:each="option : ${reasonOptions}">
                     <input class="form-check-input" type="radio" name="reason"
                            th:id="|reason-${option.reason.name()}|" th:value="${option.reason.name()}"
@@ -83,6 +86,7 @@
             </fieldset>
             <button type="submit" class="btn btn-outline-danger mt-3">利用停止の内容を確認する</button>
         </form>
+        <!--/* 再開には選び方の欄がないので、エラー要約のリンク先に関わらない。条件はテンプレートに置く（Bolt 38） */-->
         <form th:if="${statusNote == null and user.status.name() == 'SUSPENDED'}" method="get"
               th:action="@{/staff/users/{id}/status-changes/confirmation(id=${user.id.value})}">
             <input type="hidden" name="status" value="ACTIVE">

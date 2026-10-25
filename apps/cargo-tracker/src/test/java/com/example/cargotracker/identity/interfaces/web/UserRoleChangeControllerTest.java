@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -26,12 +27,15 @@ import com.example.cargotracker.identity.domain.model.valueobjects.RoleChangeRej
 import com.example.cargotracker.identity.domain.model.valueobjects.RoleChangeRejectionReason;
 import com.example.cargotracker.identity.domain.model.valueobjects.UserDetail;
 import com.example.cargotracker.identity.domain.model.valueobjects.UserStatus;
+import com.example.cargotracker.identity.infrastructure.security.TestActors;
 import com.example.cargotracker.identity.infrastructure.security.WithAuthenticatedActor;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Role;
 import com.example.cargotracker.shared.domain.UserId;
 import java.util.Set;
 import java.util.UUID;
+import java.util.regex.Pattern;
+import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -158,7 +162,11 @@ class UserRoleChangeControllerTest {
                 .andExpect(content().string(Matchers.containsString(STALE)))
                 .andExpect(content().string(Matchers.containsString("name=\"version\" value=\"4\"")))
                 .andExpect(content().string(Matchers.containsString("value=\"SALES\" checked")))
-                .andExpect(content().string(Matchers.not(Matchers.containsString("value=\"ROUTE_DESIGNER\" checked"))));
+                .andExpect(content().string(Matchers.not(Matchers.containsString("value=\"ROUTE_DESIGNER\" checked"))))
+                // 古い版は選び方の誤りではないので、表示名を付けずリンクせず、群に誤りの印を付けない（Bolt 38 の開発レビュー）
+                .andExpect(content().string(summaryWithoutLink()))
+                .andExpect(content().string(Matchers.not(Matchers.containsString("付ける役割: "))))
+                .andExpect(content().string(Matchers.not(Matchers.containsString("aria-invalid"))));
     }
 
     @Test
@@ -171,8 +179,16 @@ class UserRoleChangeControllerTest {
         mockMvc.perform(get(ROLE_CONFIRMATION).param("version", "3"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(Matchers.containsString("役割を変更できませんでした")))
-                .andExpect(content().string(Matchers.containsString("役割を 1 つ以上選んでください。")))
-                .andExpect(content().string(Matchers.containsString("href=\"#roles\"")))
+                // 行 1: 共通部品と同じ「表示名: 文言」で、群の最初の選択肢へ向かう（Bolt 38）
+                .andExpect(content()
+                        .string(Matchers.containsString("<a href=\"#role-SALES\">付ける役割: 役割を 1 つ以上選んでください。</a>")))
+                // 要約の中のリンクの陽性の対照（行 4 の否定が空振りしないこと）と、要約へフォーカスを移すスクリプト（V6 を速い層でも）
+                .andExpect(content().string(Matchers.not(summaryWithoutLink())))
+                .andExpect(content().string(Matchers.containsString("src=\"/js/transport-request-form.js\"")))
+                .andExpect(content().string(containsPattern("<fieldset id=\"roles\"[^>]*aria-invalid=\"true\"")))
+                .andExpect(content().string(containsPattern("<fieldset id=\"suspension-reason\"")))
+                .andExpect(content()
+                        .string(Matchers.not(containsPattern("<fieldset id=\"suspension-reason\"[^>]*aria-invalid"))))
                 .andExpect(content().string(Matchers.not(Matchers.containsString("value=\"SALES\" checked"))));
     }
 
@@ -204,6 +220,65 @@ class UserRoleChangeControllerTest {
     }
 
     @Test
+    void 役割の確定で数でない版より先に範囲外の試行を記録する() throws Exception {
+        // 行 5: 版の解釈は範囲の判定の後（利用状態の確定と同じ。Bolt 34f の指摘 9。Bolt 38）
+        when(queryService.detail(any(), eq(TARGET))).thenReturn(new UserLookup.OutOfScope());
+
+        mockMvc.perform(post(ROLE_CONFIRMATION).param("roles", "SALES").param("version", "x"))
+                .andExpect(status().isNotFound());
+
+        verify(denials).recordDenied(any(), eq(TARGET));
+        verifyNoInteractions(roleChanges);
+    }
+
+    @Test
+    void 役割の確定で版がなくても先に範囲外の試行を記録する() throws Exception {
+        when(queryService.detail(any(), eq(TARGET))).thenReturn(new UserLookup.OutOfScope());
+
+        mockMvc.perform(post(ROLE_CONFIRMATION).param("roles", "SALES")).andExpect(status().isNotFound());
+
+        verify(denials).recordDenied(any(), eq(TARGET));
+        verifyNoInteractions(roleChanges);
+    }
+
+    @Test
+    void 役割の欄のない荷受人の企業の利用者への拒否は欄へリンクしない() throws Exception {
+        // 行 4: URL から役割を送ると企業の種類の拒否になるが、示す欄がないので表示名を付けずリンクしない（Bolt 38）
+        when(queryService.detail(any(), eq(TARGET))).thenReturn(new UserLookup.Found(consignee(3)));
+        when(roleChanges.change(any(), eq(TARGET), anyLong(), any()))
+                .thenReturn(new RoleChangeOutcome.Refused(new UserAdministrationRefusal.Rejected<>(
+                        new RoleChangeRejection(RoleChangeRejectionReason.UNFIT_FOR_COMPANY, Set.of(Role.SALES)))));
+
+        mockMvc.perform(post(ROLE_CONFIRMATION).param("roles", "SALES").param("version", "3"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(Matchers.containsString("id=\"error-summary\"")))
+                .andExpect(content().string(Matchers.containsString("営業担当者は、荷受人の企業の利用者には付けられません。")))
+                .andExpect(content().string(Matchers.not(Matchers.containsString("付ける役割: "))))
+                .andExpect(content().string(summaryWithoutLink()))
+                // 出口: 利用状態の領域と一覧へ戻るリンクは残る
+                .andExpect(content().string(Matchers.containsString("id=\"status-title\"")))
+                .andExpect(content().string(Matchers.containsString("利用者の一覧へ戻る")));
+    }
+
+    @Test
+    void 役割の欄のない自分の詳細への選び方の誤りは欄へリンクしない() throws Exception {
+        // 行 4c: 判定の順で自分は先に拒まれるので届かないが、部品の「欄を描かないならリンクしない」を確かめる（サービスを mock）
+        UserId self = TestActors.STAFF_USER;
+        when(queryService.detail(any(), eq(self))).thenReturn(new UserLookup.Found(user(self, 3)));
+        when(roleChanges.check(any(), eq(self), anyLong(), any()))
+                .thenReturn(new RoleChangeCheck.Refused(new UserAdministrationRefusal.Rejected<>(
+                        RoleChangeRejection.of(RoleChangeRejectionReason.NO_ROLES))));
+
+        mockMvc.perform(get("/staff/users/" + self.value() + "/role-changes/confirmation")
+                        .param("version", "3"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(Matchers.containsString("id=\"error-summary\"")))
+                .andExpect(content().string(Matchers.containsString("役割を 1 つ以上選んでください。")))
+                .andExpect(content().string(Matchers.not(Matchers.containsString("付ける役割: "))))
+                .andExpect(content().string(summaryWithoutLink()));
+    }
+
+    @Test
     void 役割を変えたら知らせとともに詳細へ移す() throws Exception {
         found(user(3));
         when(roleChanges.change(any(), eq(TARGET), anyLong(), any())).thenReturn(new RoleChangeOutcome.Changed(4));
@@ -226,6 +301,32 @@ class UserRoleChangeControllerTest {
         return user(version, UserStatus.ACTIVE);
     }
 
+    private static UserDetail user(UserId id, long version) {
+        return new UserDetail(
+                id,
+                new CompanyId(UUID.fromString("20000000-0000-0000-0000-000000000003")),
+                "A 社",
+                CompanyKind.OPERATOR,
+                "営業 一郎",
+                new EmailAddress("sales@example.com"),
+                UserStatus.ACTIVE,
+                Set.of(Role.SALES),
+                version);
+    }
+
+    private static UserDetail consignee(long version) {
+        return new UserDetail(
+                TARGET,
+                new CompanyId(UUID.fromString("20000000-0000-0000-0000-000000000004")),
+                "C 社",
+                CompanyKind.CONSIGNEE,
+                "高橋",
+                new EmailAddress("takahashi@example.com"),
+                UserStatus.ACTIVE,
+                Set.of(),
+                version);
+    }
+
     private static UserDetail user(long version, UserStatus status) {
         return new UserDetail(
                 TARGET,
@@ -237,5 +338,15 @@ class UserRoleChangeControllerTest {
                 status,
                 Set.of(Role.SALES),
                 version);
+    }
+
+    /** 本文に正規表現に合う箇所がある（属性の並びによらず確かめる）。 */
+    static Matcher<String> containsPattern(String regex) {
+        return Matchers.matchesPattern(Pattern.compile("(?s).*" + regex + ".*"));
+    }
+
+    /** エラー要約の中にリンクがない（要約があることは呼ぶ側が先に確かめる）。 */
+    static Matcher<String> summaryWithoutLink() {
+        return Matchers.not(containsPattern("id=\"error-summary\"(?:(?!</div>).)*<a "));
     }
 }
