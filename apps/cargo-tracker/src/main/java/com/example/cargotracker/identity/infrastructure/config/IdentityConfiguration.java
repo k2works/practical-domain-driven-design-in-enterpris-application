@@ -9,6 +9,7 @@ import com.example.cargotracker.identity.application.internal.commandservices.Se
 import com.example.cargotracker.identity.application.internal.commandservices.TotpEnrollmentService;
 import com.example.cargotracker.identity.application.internal.commandservices.TotpReEnrollmentService;
 import com.example.cargotracker.identity.application.internal.commandservices.TotpVerificationService;
+import com.example.cargotracker.identity.application.internal.commandservices.UserRegistrationService;
 import com.example.cargotracker.identity.application.internal.commandservices.UserRoleChangeService;
 import com.example.cargotracker.identity.application.internal.commandservices.UserStatusChangeService;
 import com.example.cargotracker.identity.application.internal.eventhandlers.KpiObservationEventHandler;
@@ -33,6 +34,7 @@ import com.example.cargotracker.identity.domain.model.aggregates.RecoveryCodeRep
 import com.example.cargotracker.identity.domain.model.aggregates.TotpCodeGenerator;
 import com.example.cargotracker.identity.domain.model.aggregates.TotpCredentialRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.TotpSecretIssuer;
+import com.example.cargotracker.identity.domain.model.aggregates.UnusablePasswordHashIssuer;
 import com.example.cargotracker.identity.domain.model.aggregates.UserAssignmentRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.UserRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.UserSessionRevoker;
@@ -145,6 +147,20 @@ public class IdentityConfiguration {
             Clock clock,
             TransactionTemplate transactionTemplate) {
         return new SessionRevalidationService(standings, auditRecords, clock, transactionTemplate);
+    }
+
+    @Bean
+    @SuppressWarnings("java:S107") // 判定と書き込みと使えないハッシュの部品をそろえて受ける
+    UserRegistrationService userRegistrationService(
+            UserRepository users,
+            CompanyRepository companies,
+            UserAssignmentRepository assignments,
+            AuditRecordRepository auditRecords,
+            UnusablePasswordHashIssuer unusablePasswordHashes,
+            Clock clock,
+            TransactionTemplate transactionTemplate) {
+        return new UserRegistrationService(
+                users, companies, assignments, auditRecords, unusablePasswordHashes, clock, transactionTemplate);
     }
 
     @Bean

@@ -40,6 +40,9 @@ public final class AuditRecord {
     /** 対象の種類: 利用者（`audit_record.target_type`）。 */
     private static final String USER_TARGET = "USER";
 
+    /** 対象の種類の企業（Bolt 38b2。範囲外の企業への登録の試行）。 */
+    private static final String COMPANY_TARGET = "COMPANY";
+
     /** 理由: 管理範囲外（`ADMIN_SCOPE_DENIED` の理由。Bolt 34b）。 */
     static final String OUT_OF_SCOPE = "OUT_OF_SCOPE";
 
@@ -212,6 +215,46 @@ public final class AuditRecord {
                         Long.toString(targetVersion),
                         roleNames(before),
                         roleNames(after)));
+    }
+
+    /**
+     * システム管理者が利用者を登録したことを記録する（Bolt 38b2、US-16 AC1）。対象は新しい利用者と版 0、変更前はなし（null）、変更後は
+     * 登録した役割の名前を {@link Role} の宣言の順にカンマでつないだ文字列。メールアドレスと表示名は書かない。結果は成功。
+     */
+    public static AuditRecord userRegistered(
+            UserId actor, CompanyId actorCompany, UserId targetUser, Set<Role> roles, UtcInstant at) {
+        Objects.requireNonNull(actor, USER_ARGUMENT);
+        Objects.requireNonNull(actorCompany, COMPANY_ARGUMENT);
+        Objects.requireNonNull(targetUser, TARGET_USER_ARGUMENT);
+        return new AuditRecord(
+                UUID.randomUUID(),
+                at,
+                actor,
+                actorCompany,
+                AuditAction.USER_REGISTERED,
+                AuditResult.SUCCESS,
+                null,
+                new AuditTarget(USER_TARGET, targetUser.value().toString(), "0", null, roleNames(roles)));
+    }
+
+    /**
+     * システム管理者が管理範囲外の企業に利用者を登録しようとしたことを記録する（Bolt 38b2、US-16 AC2、IA-INV-08・IA-INV-14）。結果は
+     * 失敗、理由は {@code OUT_OF_SCOPE}、対象は企業（版と変更前後はない）。
+     */
+    public static AuditRecord adminScopeDeniedCompany(
+            UserId actor, CompanyId actorCompany, CompanyId targetCompany, UtcInstant at) {
+        Objects.requireNonNull(actor, USER_ARGUMENT);
+        Objects.requireNonNull(actorCompany, COMPANY_ARGUMENT);
+        Objects.requireNonNull(targetCompany, "targetCompany");
+        return new AuditRecord(
+                UUID.randomUUID(),
+                at,
+                actor,
+                actorCompany,
+                AuditAction.ADMIN_SCOPE_DENIED,
+                AuditResult.FAILURE,
+                OUT_OF_SCOPE,
+                new AuditTarget(COMPANY_TARGET, targetCompany.value().toString(), null, null, null));
     }
 
     /**

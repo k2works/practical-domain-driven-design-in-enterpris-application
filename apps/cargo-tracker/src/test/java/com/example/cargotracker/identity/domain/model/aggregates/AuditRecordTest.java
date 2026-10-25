@@ -10,6 +10,7 @@ import com.example.cargotracker.identity.domain.model.valueobjects.Authenticatio
 import com.example.cargotracker.identity.domain.model.valueobjects.SuspensionReason;
 import com.example.cargotracker.identity.domain.model.valueobjects.UserStatus;
 import com.example.cargotracker.shared.domain.CompanyId;
+import com.example.cargotracker.shared.domain.Role;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Instant;
@@ -125,6 +126,35 @@ class AuditRecordTest {
         assertThat(auditRecord.reason()).isEqualTo("OUT_OF_SCOPE");
         assertThat(auditRecord.target())
                 .isEqualTo(new AuditTarget("USER", target.value().toString(), null, null, null));
+    }
+
+    @Test
+    void 利用者の登録は成功として対象の利用者と版0と登録した役割を記録しメールアドレスと表示名を持たない() {
+        // 行 1（Bolt 38b2）
+        UserId target = new UserId(UUID.randomUUID());
+
+        AuditRecord auditRecord = AuditRecord.userRegistered(
+                USER, COMPANY, target, java.util.Set.of(Role.ROUTE_DESIGNER, Role.SALES), AT);
+
+        assertThat(auditRecord.action()).isEqualTo(AuditAction.USER_REGISTERED);
+        assertThat(auditRecord.result()).isEqualTo(AuditResult.SUCCESS);
+        assertThat(auditRecord.reason()).isNull();
+        assertThat(auditRecord.target())
+                .isEqualTo(new AuditTarget("USER", target.value().toString(), "0", null, "SALES,ROUTE_DESIGNER"));
+    }
+
+    @Test
+    void 範囲外の企業への登録の試行は失敗として理由と対象の企業を記録する() {
+        // 行 3b（Bolt 38b2）
+        CompanyId target = new CompanyId(UUID.randomUUID());
+
+        AuditRecord auditRecord = AuditRecord.adminScopeDeniedCompany(USER, COMPANY, target, AT);
+
+        assertThat(auditRecord.action()).isEqualTo(AuditAction.ADMIN_SCOPE_DENIED);
+        assertThat(auditRecord.result()).isEqualTo(AuditResult.FAILURE);
+        assertThat(auditRecord.reason()).isEqualTo("OUT_OF_SCOPE");
+        assertThat(auditRecord.target())
+                .isEqualTo(new AuditTarget("COMPANY", target.value().toString(), null, null, null));
     }
 
     @Test

@@ -168,6 +168,10 @@ class AuthenticationArchitectureTest {
     static final ArchRule BcryptRecoveryCodeHasherはcryptoにある = cryptoComponent("BcryptRecoveryCodeHasher");
 
     @ArchTest
+    static final ArchRule BcryptUnusablePasswordHashIssuerはcryptoにある =
+            cryptoComponent("BcryptUnusablePasswordHashIssuer");
+
+    @ArchTest
     static final ArchRule BundledCommonPasswordListはcryptoにある = cryptoComponent("BundledCommonPasswordList");
 
     @ArchTest
@@ -189,12 +193,13 @@ class AuthenticationArchitectureTest {
     @ArchTest
     static final ArchRule Sha256PasswordResetTokenHasherはcryptoにある = cryptoComponent("Sha256PasswordResetTokenHasher");
 
-    /** 暗号の部品の一覧（上の名前ごとの規則と同じ 11）。 */
+    /** 暗号の部品の一覧（上の名前ごとの規則と同じ 12）。 */
     private static final List<String> CRYPTO_COMPONENTS = List.of(
             "AesGcmSecretCipher",
             "Base32",
             "BcryptPasswordHasher",
             "BcryptRecoveryCodeHasher",
+            "BcryptUnusablePasswordHashIssuer",
             "BundledCommonPasswordList",
             "JavaOtpTotpCodeGenerator",
             "QrCodeSvg",

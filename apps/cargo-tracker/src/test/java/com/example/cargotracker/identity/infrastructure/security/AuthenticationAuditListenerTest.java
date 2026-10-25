@@ -208,6 +208,11 @@ class AuthenticationAuditListenerTest {
             }
 
             @Override
+            public void addRegistered(User user, UserId grantedBy, UtcInstant at) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
             public Optional<User> findByEmail(EmailAddress email) {
                 userLookups.add(email.value());
                 return List.of(active, suspended).stream()

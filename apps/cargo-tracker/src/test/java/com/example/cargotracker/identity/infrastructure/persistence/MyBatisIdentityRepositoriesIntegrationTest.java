@@ -127,6 +127,41 @@ class MyBatisIdentityRepositoriesIntegrationTest {
     }
 
     @Test
+    void 登録した利用者は登録の時刻で入り役割は付与した操作者を持つ() {
+        // 行 1（Bolt 38b2。US-16 AC1）
+        User operator = user(uniqueEmail(), UserStatus.ACTIVE, Set.of(Role.SHIPPER));
+        users.add(operator);
+        User registered = user(uniqueEmail(), UserStatus.ACTIVE, Set.of(Role.SHIPPER));
+        UtcInstant at = new UtcInstant(java.time.Instant.parse("2026-10-25T03:00:00Z"));
+
+        users.addRegistered(registered, operator.id(), at);
+
+        assertThat(jdbc.queryForObject(
+                        "SELECT granted_by FROM identity.user_role WHERE user_id = ?",
+                        UUID.class,
+                        registered.id().value()))
+                .isEqualTo(operator.id().value());
+        assertThat(jdbc.queryForObject(
+                                "SELECT created_at FROM identity.app_user WHERE id = ?",
+                                java.time.OffsetDateTime.class,
+                                registered.id().value())
+                        .toInstant())
+                .isEqualTo(at.instant());
+        assertThat(users.findById(registered.id())).isPresent();
+    }
+
+    @Test
+    void 登録した利用者も同じメールアドレスでは2人登録できない() {
+        String email = uniqueEmail();
+        users.add(user(email, UserStatus.ACTIVE, Set.of(Role.SHIPPER)));
+        User same = user(email, UserStatus.ACTIVE, Set.of(Role.SHIPPER));
+        UserId grantedBy = new UserId(UUID.randomUUID());
+        UtcInstant at = new UtcInstant(java.time.Instant.parse("2026-10-25T03:00:00Z"));
+
+        assertThatThrownBy(() -> users.addRegistered(same, grantedBy, at)).isInstanceOf(DuplicateEmailException.class);
+    }
+
+    @Test
     void 同じメールアドレスの利用者は2人登録できない() {
         String email = uniqueEmail();
         users.add(user(email, UserStatus.ACTIVE, Set.of(Role.SHIPPER)));

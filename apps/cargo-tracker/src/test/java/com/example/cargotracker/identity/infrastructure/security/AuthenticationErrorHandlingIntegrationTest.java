@@ -22,6 +22,7 @@ import com.example.cargotracker.identity.domain.model.aggregates.RecoveryCodeHas
 import com.example.cargotracker.identity.domain.model.aggregates.RecoveryCodeRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.TotpCredential;
 import com.example.cargotracker.identity.domain.model.aggregates.TotpCredentialRepository;
+import com.example.cargotracker.identity.domain.model.aggregates.UnusablePasswordHashIssuer;
 import com.example.cargotracker.identity.domain.model.aggregates.User;
 import com.example.cargotracker.identity.domain.model.valueobjects.AuditAction;
 import com.example.cargotracker.identity.domain.model.valueobjects.CompanyKind;
@@ -86,6 +87,9 @@ class AuthenticationErrorHandlingIntegrationTest extends IdentitySpyIntegrationT
     @Autowired
     RecoveryCodeHasher recoveryCodeHasher;
 
+    @Autowired
+    UnusablePasswordHashIssuer unusablePasswordHashes;
+
     private Company company;
 
     @BeforeEach
@@ -144,6 +148,52 @@ class AuthenticationErrorHandlingIntegrationTest extends IdentitySpyIntegrationT
         org.mockito.Mockito.reset(users);
         mvc.perform(password(email, "wrong")).andExpect(redirectedUrl("/login?error"));
         assertThat(failures(email)).as("DB が戻れば誤りは数える").isEqualTo(1);
+    }
+
+    @Test
+    void 役割0件の利用者のログインは失敗へ倒れ理由SERVICE_ERRORで数えない() throws Exception {
+        // 行 13b（Bolt 38b2。データの不整合を「見つからない」に吸い込まない。開始準備の決定 (6)）
+        String email = user();
+        jdbc.update(
+                "DELETE FROM identity.user_role WHERE user_id = ?",
+                userIdOf(email).value());
+        int before = serviceErrors();
+
+        mvc.perform(password(email, PASSWORD)).andExpect(redirectedUrl("/login?error"));
+
+        assertThat(serviceErrors()).as("この送信の 1 行").isEqualTo(before + 1);
+        assertThat(failures(email)).as("数えない").isZero();
+    }
+
+    @Test
+    void 形の誤ったメールアドレスのログインは見つからない利用者と同じに扱う() throws Exception {
+        // 行 13（Bolt 38b2。try を EmailAddress.of だけに狭めても、形の誤りは今のまま）
+        int before = unknownUsers();
+        int errors = serviceErrors();
+
+        mvc.perform(password("not-an-email", PASSWORD)).andExpect(redirectedUrl("/login?error"));
+
+        assertThat(unknownUsers()).isEqualTo(before + 1);
+        assertThat(serviceErrors()).as("サービスの誤りにしない").isEqualTo(errors);
+    }
+
+    @Test
+    void 使えないハッシュの利用者のpasswordのログインは誤ったpasswordと同じに扱う() throws Exception {
+        // 行 12b（Bolt 38b2。500 にしない）
+        String email = "unusable-" + UUID.randomUUID() + "@example.com";
+        UserId userId = new UserId(UUID.randomUUID());
+        users.add(User.of(
+                userId,
+                company.id(),
+                EmailAddress.of(email),
+                "新人 花子",
+                unusablePasswordHashes.issue(),
+                UserStatus.ACTIVE,
+                Set.of(Role.SHIPPER)));
+
+        mvc.perform(password(email, PASSWORD)).andExpect(redirectedUrl("/login?error"));
+
+        assertThat(failureReasons(email)).containsExactly("BAD_CREDENTIALS");
     }
 
     @Test
@@ -306,6 +356,12 @@ class AuthenticationErrorHandlingIntegrationTest extends IdentitySpyIntegrationT
                 Integer.class,
                 userIdOf(email).value());
         return count == null ? 0 : count;
+    }
+
+    private int unknownUsers() {
+        return jdbc.queryForObject(
+                "SELECT count(*) FROM identity.audit_record WHERE action = 'LOGIN_FAILED' AND reason = 'UNKNOWN_USER'",
+                Integer.class);
     }
 
     private int serviceErrors() {

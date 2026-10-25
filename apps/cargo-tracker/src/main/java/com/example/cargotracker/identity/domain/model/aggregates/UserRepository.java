@@ -18,6 +18,16 @@ public interface UserRepository {
     /** 利用者と役割を追加する。メールアドレスが既にあれば {@link DuplicateEmailException}。 */
     void add(User user);
 
+    /**
+     * システム管理者が登録した利用者と役割を追加する（Bolt 38b2。US-16 AC1）。利用者は {@code at} の時刻で、役割は付与した操作者と時刻付きで
+     * 入れる。メールアドレスが既にあれば {@link DuplicateEmailException}。
+     *
+     * @param user 登録した利用者（{@link User#register}）
+     * @param grantedBy 登録した操作者
+     * @param at 登録の時刻
+     */
+    void addRegistered(User user, UserId grantedBy, UtcInstant at);
+
     Optional<User> findByEmail(EmailAddress email);
 
     Optional<User> findById(UserId id);

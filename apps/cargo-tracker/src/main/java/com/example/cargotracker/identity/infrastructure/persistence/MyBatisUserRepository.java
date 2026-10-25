@@ -44,6 +44,22 @@ public class MyBatisUserRepository implements UserRepository {
     @Override
     public void add(User user) {
         OffsetDateTime now = OffsetDateTime.now(clock).withOffsetSameInstant(ZoneOffset.UTC);
+        insertUser(user, now);
+        user.roles().stream()
+                .sorted()
+                .forEach(role -> mapper.insertUserRole(user.id().value(), role.name(), now));
+    }
+
+    @Override
+    public void addRegistered(User user, UserId grantedBy, UtcInstant at) {
+        OffsetDateTime now = at.instant().atOffset(ZoneOffset.UTC);
+        insertUser(user, now);
+        user.roles().stream()
+                .sorted()
+                .forEach(role -> mapper.insertGrantedUserRole(user.id().value(), role.name(), grantedBy.value(), now));
+    }
+
+    private void insertUser(User user, OffsetDateTime now) {
         try {
             mapper.insertUser(
                     new UserRow(
@@ -58,9 +74,6 @@ public class MyBatisUserRepository implements UserRepository {
         } catch (DuplicateKeyException e) {
             throw new DuplicateEmailException("同じメールアドレスの利用者が既にある", e);
         }
-        user.roles().stream()
-                .sorted()
-                .forEach(role -> mapper.insertUserRole(user.id().value(), role.name(), now));
     }
 
     @Override

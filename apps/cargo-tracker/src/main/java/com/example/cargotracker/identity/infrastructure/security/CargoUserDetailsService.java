@@ -38,12 +38,17 @@ public class CargoUserDetailsService implements UserDetailsService {
                 user.passwordHash());
     }
 
-    /** メールアドレスの利用者を探す。形式の誤ったメールアドレスは見つからない扱い。 */
+    /**
+     * メールアドレスの利用者を探す。形式の誤ったメールアドレスは見つからない扱い。読めない利用者の行（役割 0 件などのデータの不整合）の例外は
+     * 吸い込まずに外へ出す（ログインの失敗の監査は理由 {@code SERVICE_ERROR} になり、失敗を数えない。Bolt 38b2 の開始準備の決定 (6)）。
+     */
     Optional<User> findUser(String username) {
+        EmailAddress email;
         try {
-            return users.findByEmail(EmailAddress.of(username));
+            email = EmailAddress.of(username);
         } catch (IllegalArgumentException _) {
             return Optional.empty();
         }
+        return users.findByEmail(email);
     }
 }

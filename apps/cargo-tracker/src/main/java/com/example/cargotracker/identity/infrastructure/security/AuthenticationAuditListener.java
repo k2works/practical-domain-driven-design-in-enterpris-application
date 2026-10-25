@@ -29,6 +29,8 @@ import org.springframework.security.core.Authentication;
  * ロック（失敗の回数）は、この入口からログインの試行のサービスに写して数える（Bolt 32、ADR-012 の見直しの 5）。数えるのは誤り
  * （BadCredentials のイベント）だけで、ロック中の試行もサービスに写す。数えない拒否（利用停止・無効な企業、存在しない利用者、
  * 利用者の読み出しの DB の誤り）と password の段の成功は、ここから監査記録に直接書く。
+ * Bolt 38b2 から、読めない利用者の行（役割 0 件などのデータの不整合）でのログインは、利用者の読み出しの例外が
+ * {@code AuthenticationFailureServiceExceptionEvent} になり、理由 {@code SERVICE_ERROR} で書く（「見つからない」に吸い込まない）。
  */
 public class AuthenticationAuditListener {
 
