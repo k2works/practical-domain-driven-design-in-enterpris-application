@@ -110,7 +110,7 @@ Bolt がイテレーションに当たります。ふりかえりは各 Bolt の
 | 37f | [US-06 の Golden dataset v0 と #15 のクローズ](bolt_37f_plan.md) | [終了報告](bolt_37f_report.md) | W6 | 完了 |
 | 37f2 | [受入シナリオの背景の写しの整理](bolt_37f2_plan.md) | [終了報告](bolt_37f2_report.md) | W6 | 完了 |
 | 37f3 | [「区間」の語のそろえ（荷主の画面とマニュアルは「航海」）](bolt_37f3_plan.md) | [終了報告](bolt_37f3_report.md) | W6 | 完了 |
-| 38 | [S-20 の前の直し（エラー要約の形とフォーカス、版の解釈の順、Section の足し方）](bolt_38_plan.md) | — | W6 | 計画済み |
+| 38 | [S-20 の前の直し（エラー要約の形とフォーカス、版の解釈の順、Section の足し方）](bolt_38_plan.md) | [終了報告](bolt_38_report.md) | W6 | 完了 |
 
 Bolt を始めるときに行を追加します。
 

@@ -2,8 +2,10 @@
 type: Plan
 title: "Bolt 38 終了報告 - S-20 の前の直し（エラー要約の形とフォーカス、役割の確定の版の解釈の順、Section の足し方）"
 tags: [plan]
-status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-25T01:30:15Z }
+status: stable
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-25T02:10:14Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-25T02:10:14Z }
 ---
 
 # Bolt 38 終了報告 - S-20 の前の直し（エラー要約の形とフォーカス、役割の確定の版の解釈の順、Section の足し方）
@@ -39,7 +41,7 @@ S-20 の利用者の詳細のエラー要約を共通部品と同じ形にし、
 | Bolt | 第 38 回（W6 の 18 本目） |
 | 期間 | 2026-10-25（計画の承認の記録 `807d072ed` から、終了報告の承認の依頼まで） |
 | 対象 | `UserDetailPage`・`UserRoleChangeController`・`UserStatusChangeController`、`detail.html`、S-20 の MockMvc と画面の層のテスト、マニュアル 11 章と `11-role-change-rejected.png`、ui_design・architecture_backend・release_plan |
-| GitHub | [#50](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/50)（この報告の承認の後にコメントする） |
+| GitHub | [#50](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/50)（この報告の承認の後にコメントした） |
 | SP | 0 |
 | 計画 | [Bolt 38 計画](bolt_38_plan.md) |
 
@@ -111,6 +113,7 @@ Bolt 38b（利用者の登録と招待。開始準備は `opening-iteration` で
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-25 | 終了報告を承認した（議題 1〜4）。#50 にコメントした | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-25 | 初版作成（承認待ち） | anthropic/claude-opus-5-5 |
 
 ## 関連ドキュメント
