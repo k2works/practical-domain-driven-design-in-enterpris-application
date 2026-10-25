@@ -4,7 +4,7 @@ title: "リリース計画 - cargo-tracker（A 社国際貨物輸送管理シス
 description: "cargo-tracker MVP のリリース計画。1 人 + AI、時間単位の Bolt（= イテレーション）と週次の見直しで、最初の縦の流れ（R0.1）、パイロット準備完了（R1.0）、本格展開前（R1.1）の 3 段階、Unit のエントロピー評価、SP、バッファ、パイロット開始の条件、引継ぎ ID の台帳、業務責任者に確かめる事項の台帳。"
 tags: [development,release-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-25T01:10:29Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-25T01:30:15Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T09:29:53Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:38:26Z }
@@ -1273,3 +1273,4 @@ xychart-beta
 | 2026-10-25 | Bolt 37f3 の終了報告を承認した（議題 1〜4）。W6 の経路設計の Bolt（36〜37f3）を終えた | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-25 | [Bolt 38 計画](bolt_38_plan.md)を作り、整合性検証の指摘を反映した（承認待ち）。リンク先は群の最初の選択肢、フォーカスは既存のスクリプト、`Section` は操作ごとの値で足し方を書く、停止の理由の誤りの文言を選択肢を示す文にすると決めた（human:kakimomokuri） | anthropic/claude-opus-5-5 |
 | 2026-10-25 | Bolt 38 の計画を承認した（確認ポイント 1〜7 を推奨のとおり） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
+| 2026-10-25 | Bolt 38 を実装し（S-20 のエラー要約の形とフォーカス、停止の理由の誤りの文言、役割の確定の版の解釈の順、詳細に操作を足す手順）、[Bolt 38 終了報告](bolt_38_report.md)を作った（承認待ち） | anthropic/claude-opus-5-5 |
