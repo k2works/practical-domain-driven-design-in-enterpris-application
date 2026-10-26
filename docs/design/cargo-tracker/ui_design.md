@@ -4,7 +4,7 @@ title: "cargo-tracker UI 設計"
 description: "cargo-tracker の顧客 Web と社内業務 Web の画面オブジェクト、システムメタファー、画面一覧、画面遷移、主要画面のイメージ、共通部品（WCAG 2.2 AA）、エラー時を含むインタラクション。"
 tags: [design, ui]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-26T00:51:35Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-26T03:22:13Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:57:45Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:39Z }
@@ -1667,7 +1667,7 @@ cargo-tracker で、このメールアドレスの password の再設定の依�
 
 ### 利用者の招待のメール（US-16 AC1。Bolt 38b2b）
 
-システム管理者が利用者を登録したときに、登録したメールアドレスへ送る（送るのは Bolt 38b2c の登録のイベントのハンドラー）。通知の公開 API `UserInvitationMail`（[ADR-017](../../adr/cargo-tracker/017-notification-module-and-mail.md)）で送り、件名と本文は通知のテキストのテンプレートで組み立て、表に保存しない。リンクは再設定と同じ A-06 の形（最後の段がトークン。期限は 24 時間）。日時の書式は再設定のメールと同じ。
+システム管理者が利用者を登録したときに、登録したメールアドレスへ送る（送るのは登録のイベント DE-25 のハンドラー `UserInvitationMailEventHandler`。Bolt 38b2c）。通知の公開 API `UserInvitationMail`（[ADR-017](../../adr/cargo-tracker/017-notification-module-and-mail.md)）で送り、件名と本文は通知のテキストのテンプレートで組み立て、表に保存しない。リンクは再設定と同じ A-06 の形（最後の段がトークン。期限は 24 時間）。日時の書式は再設定のメールと同じ。
 
 件名: 「【cargo-tracker】利用者の登録のご案内」
 

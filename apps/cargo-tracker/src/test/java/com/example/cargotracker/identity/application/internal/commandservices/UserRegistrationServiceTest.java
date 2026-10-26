@@ -7,6 +7,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.example.cargotracker.identity.domain.events.UserRegistered;
 import com.example.cargotracker.identity.domain.model.aggregates.AuditRecord;
 import com.example.cargotracker.identity.domain.model.aggregates.AuditRecordRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.Company;
@@ -38,6 +39,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.AbstractPlatformTransactionManager;
 import org.springframework.transaction.support.DefaultTransactionStatus;
@@ -55,12 +57,14 @@ class UserRegistrationServiceTest {
     private final AuditRecordRepository auditRecords = mock(AuditRecordRepository.class);
     private final UserAssignmentRepository assignments = mock(UserAssignmentRepository.class);
     private final UnusablePasswordHashIssuer hashes = mock(UnusablePasswordHashIssuer.class);
+    private final ApplicationEventPublisher events = mock(ApplicationEventPublisher.class);
     private final UserRegistrationService service = new UserRegistrationService(
             users,
             companies,
             assignments,
             auditRecords,
             hashes,
+            events,
             Clock.fixed(NOW, ZoneOffset.UTC),
             new NoTransactions());
 
@@ -84,6 +88,7 @@ class UserRegistrationServiceTest {
     private void verifyNothingWritten() {
         verify(users, never()).addRegistered(any(), any(), any());
         verify(auditRecords, never()).append(any());
+        verify(events, never()).publishEvent(any(Object.class));
     }
 
     @Test
@@ -95,6 +100,10 @@ class UserRegistrationServiceTest {
 
         assertThat(outcome).isInstanceOf(UserRegistrationOutcome.Registered.class);
         UserId registered = ((UserRegistrationOutcome.Registered) outcome).userId();
+        ArgumentCaptor<UserRegistered> event = ArgumentCaptor.forClass(UserRegistered.class);
+        verify(events).publishEvent(event.capture());
+        assertThat(event.getValue().userId()).isEqualTo(registered);
+        assertThat(event.getValue().registeredAt()).isEqualTo(new UtcInstant(NOW));
         ArgumentCaptor<User> user = ArgumentCaptor.forClass(User.class);
         verify(users)
                 .addRegistered(

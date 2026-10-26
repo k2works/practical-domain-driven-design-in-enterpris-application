@@ -1,5 +1,6 @@
 package com.example.cargotracker.identity.application.internal.commandservices;
 
+import com.example.cargotracker.identity.domain.events.UserRegistered;
 import com.example.cargotracker.identity.domain.model.aggregates.AuditRecord;
 import com.example.cargotracker.identity.domain.model.aggregates.AuditRecordRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.Company;
@@ -20,6 +21,7 @@ import java.time.Clock;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -30,7 +32,8 @@ import org.springframework.transaction.support.TransactionTemplate;
  * <p>判定は、操作者 → 企業の有無 → 管理範囲 → 企業の有効性（範囲の外の企業に理由を示さないため範囲の後）→ 表示名 → 登録の判定
  * （{@link User#decideRegistration}。役割なし・監督の役割・企業の種類・職務分離）→ 重複のメールアドレスの順。受け付けたら、使えないハッシュの
  * 利用者と、付与した操作者付きの役割と、監査記録 {@code USER_REGISTERED}（役割だけ。メールアドレスと表示名は書かない）を 1 つの
- * トランザクションで書く。監査を書けなければ例外で全体を戻す（IA-INV-08 の同期の書き方）。同じメールアドレスの同時の登録は一意制約の
+ * トランザクションで書き、同じトランザクションで DE-25 {@code UserRegistered}（登録の ID・利用者の ID・時刻だけ）を出す（Bolt 38b2c。招待は
+ * コミットの後にハンドラーが送り、拒否と重複のロールバックでは残らない）。監査を書けなければ例外で全体を戻す（IA-INV-08 の同期の書き方）。同じメールアドレスの同時の登録は一意制約の
  * 例外を値にする（トランザクションの外で捕まえる。前例 {@code TotpEnrollmentService}）。拒否は監査に書かない。確定で管理範囲の外の企業へ
  * 登録しようとしたときだけ、その試行を別のトランザクションで記録する（IA-INV-14。登録の範囲外の記録の書き手はこの 1 か所。Bolt 38b2 の
  * 開始準備の決定 (5)）。
@@ -46,16 +49,18 @@ public class UserRegistrationService {
     private final UserAssignmentRepository assignments;
     private final AuditRecordRepository auditRecords;
     private final UnusablePasswordHashIssuer unusablePasswordHashes;
+    private final ApplicationEventPublisher events;
     private final Clock clock;
     private final TransactionTemplate transactionTemplate;
 
-    @SuppressWarnings("java:S107") // 判定と書き込みと使えないハッシュの部品をそろえて受ける
+    @SuppressWarnings("java:S107") // 判定と書き込みと使えないハッシュとイベントの部品をそろえて受ける
     public UserRegistrationService(
             UserRepository users,
             CompanyRepository companies,
             UserAssignmentRepository assignments,
             AuditRecordRepository auditRecords,
             UnusablePasswordHashIssuer unusablePasswordHashes,
+            ApplicationEventPublisher events,
             Clock clock,
             TransactionTemplate transactionTemplate) {
         this.users = users;
@@ -63,6 +68,7 @@ public class UserRegistrationService {
         this.assignments = assignments;
         this.auditRecords = auditRecords;
         this.unusablePasswordHashes = unusablePasswordHashes;
+        this.events = events;
         this.clock = clock;
         this.transactionTemplate = transactionTemplate;
     }
@@ -128,6 +134,8 @@ public class UserRegistrationService {
                 // 監査の役割は作った利用者から取る（前例 UserRoleChangeService の承認からの取り方）
                 auditRecords.append(AuditRecord.userRegistered(
                         operator.userId(), operator.companyId(), registered.id(), registered.roles(), now));
+                // DE-25。招待はコミットの後にハンドラーが送る（ロールバックでは残らない）
+                events.publishEvent(new UserRegistered(UUID.randomUUID(), registered.id(), now));
                 yield new UserRegistrationOutcome.Registered(registered.id());
             }
         };

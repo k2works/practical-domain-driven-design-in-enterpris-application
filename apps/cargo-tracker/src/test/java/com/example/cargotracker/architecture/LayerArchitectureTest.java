@@ -15,6 +15,7 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noMethods;
 import static com.tngtech.archunit.library.Architectures.layeredArchitecture;
 
 import com.example.cargotracker.identity.domain.model.aggregates.AuditRecord;
+import com.example.cargotracker.identity.domain.model.valueobjects.PasswordResetTokenPurpose;
 import com.example.cargotracker.identity.interfaces.web.DevTotpCodeSource;
 import com.example.cargotracker.shared.annotation.ddd.Saga;
 import com.tngtech.archunit.base.DescribedPredicate;
@@ -378,6 +379,36 @@ class LayerArchitectureTest {
             .haveFullyQualifiedName(COMPANY_SCOPE_DENIAL_WRITER)
             .should()
             .callMethodWhere(COMPANY_SCOPE_DENIAL);
+
+    /** 招待の用途で発行する部品（Bolt 38b2c。DE-25 のハンドラー）。 */
+    private static final String INVITATION_ISSUER =
+            "com.example.cargotracker.identity.application.internal.eventhandlers.UserInvitationMailEventHandler";
+
+    /** 招待の用途の定数の名前。 */
+    private static final String INVITATION_PURPOSE = "USER_INVITATION";
+
+    /**
+     * 招待の用途（{@code PasswordResetTokenPurpose.USER_INVITATION}）を参照するのは招待のハンドラーだけ（Bolt 38b2c の開始準備の決定 (4)、
+     * 2026-10-26、human:kakimomokuri。T-205。計画の行 9）。招待のトークンの書き手を 1 か所にして、ほかの道で 24 時間のリンクを出させない。
+     * 守るのは定数の参照で、{@code valueOf}・{@code values()} は捕まえない。用途の {@code switch} は、形によって合成のクラスが参照して当たるか、
+     * すり抜ける。用途による出し分け（Bolt 38b4）は、外から定数を参照せず、用途の型のメソッドで問い合わせる（列挙の中の参照は外す）。
+     */
+    @ArchTest
+    static final ArchRule 招待の用途を参照するのは招待のハンドラーだけ = noClasses()
+            .that()
+            .doNotHaveFullyQualifiedName(INVITATION_ISSUER)
+            .and()
+            .areNotAssignableTo(PasswordResetTokenPurpose.class)
+            .should()
+            .accessField(PasswordResetTokenPurpose.class, INVITATION_PURPOSE);
+
+    /** 招待のハンドラーの名前と参照が実在し続けることの見張り（計画の行 9）。動かす・名前を変える・参照しなくなると落ちる（T-135）。 */
+    @ArchTest
+    static final ArchRule 招待の用途を参照する書き手は招待のハンドラー = classes()
+            .that()
+            .haveFullyQualifiedName(INVITATION_ISSUER)
+            .should()
+            .accessField(PasswordResetTokenPurpose.class, INVITATION_PURPOSE);
 
     /** platform は技術の部品だけを置き、コンテキストの型に依存しない。 */
     @ArchTest

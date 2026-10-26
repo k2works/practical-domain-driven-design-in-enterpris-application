@@ -4,7 +4,7 @@ title: "ADR-017: 通知モジュールを新設し、メールは公開 API で�
 description: "通知モジュールを最小に新設し、メールの送信を公開 API（notification.interfaces.api の PasswordResetMail。Bolt 38b2b で UserInvitationMail を足した）で受けて SMTP で送る決定。identity は依頼の応答から切り離した @ApplicationModuleListener のハンドラーで再設定のトークンを発行し、ACL から同期で呼ぶ。通知は identity に依存しない。dev はログに出す送信、統合テストは Mailpit、SES の SMTP は W10。"
 tags: [adr, architecture, notification, mail]
 status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-26T00:51:35Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-26T03:22:13Z }
 ---
 
 # ADR-017: 通知モジュールを新設し、メールは公開 API で受けて SMTP で送る
@@ -45,7 +45,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-26T00:51:35Z }
 
 ### 2. identity からの呼び出しと依存の制約
 
-- `identity` は ACL `identity.application.internal.outboundservices.acl.NotificationPasswordResetMails`（上流の名前 + 名詞）から公開 API を同期で呼ぶ。組み立ては `identity.infrastructure.config` で、`identity` の `allowedDependencies` に `"notification :: api"` を足す。層の規則に例外を足さない。
+- `identity` は ACL `identity.application.internal.outboundservices.acl.NotificationPasswordResetMails`（上流の名前 + 名詞。Bolt 38b2c から利用者の招待の `NotificationUserInvitationMails` も）から公開 API を同期で呼ぶ。組み立ては `identity.infrastructure.config` で、`identity` の `allowedDependencies` に `"notification :: api"` を足す。層の規則に例外を足さない。
 - ADR-014 の「下流の listener が上流の公開 API を呼ぶ」形ではない。通知は送信の能力を公開 API で提供し、業務の判断を持たない。
 - **通知は `identity` に依存しない**（開始準備の決定 6）。宛先（利用者の ID とアドレス）は呼ぶ側が渡す。荷主への通知（US-22）で宛先をどう渡すかは W9 の開始準備で決める。
 
@@ -66,13 +66,14 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-26T00:51:35Z }
 | :--- | :--- |
 | 依頼の応答 | `identity.application.internal.commandservices.PasswordResetRequestService` は、入力の正規化、利用者の判定、監査の記録（同じトランザクション。IA-INV-08）だけを行い、有効な利用者ならドメインのイベント `PasswordResetRequested`（`identity.domain.events`）を出す。応答は登録の有無にかかわらず同じで、トークンの発行も送信も待たない |
 | イベント | 依頼の ID・利用者の ID・依頼の時刻だけを載せる。トークンも URL も載せないので、発行記録（`platform.event_publication`）に平文が残らない |
-| ハンドラー | `identity.application.internal.eventhandlers.PasswordResetMailEventHandler`（`@ApplicationModuleListener`。コミットの後に別のスレッドと別のトランザクションで動く）が、利用者の行をロックし、トークンを発行してハッシュを保存し、設定の公開の base URL（`cargotracker.public-base-url`）からリンクを組み立て、ACL で送る。平文のトークンと URL は、このメソッドの中の変数と送信の要求だけにあり、発行記録・ログ・表に残らない |
+| ハンドラー | `identity.application.internal.eventhandlers.PasswordResetMailEventHandler`（`@ApplicationModuleListener`。コミットの後に別のスレッドと別のトランザクションで動く）が、利用者の行をロックし、トークンを発行してハッシュを保存し、設定の公開の base URL（`cargotracker.public-base-url`）からリンクを組み立て、ACL で送る。発行の手順は Bolt 38b2c から共有の部品 `PasswordResetTokenIssuance` が持つ。平文のトークンと URL は、部品が返す値と送信の要求だけにあり、発行記録・ログ・表に残らない |
+| 利用者の招待（Bolt 38b2c） | 登録のサービスが登録のトランザクションで DE-25 `UserRegistered`（登録の ID・利用者の ID・時刻だけ）を出し、`UserInvitationMailEventHandler`（`@ApplicationModuleListener`）がコミットの後に招待のトークン（`USER_INVITATION`、24 時間、1 分の抑えは数えない）を発行し、ACL `NotificationUserInvitationMails` で送る。発行の手順（ロック・再配信・抑え・有効か・前の未使用の無効化・発行）は 2 つのハンドラーが共有の部品 `PasswordResetTokenIssuance`（package-private）で持つ。送れなくても完了にし、出口は A-05（本人の再設定） |
 | 再配信 | 同じ依頼の ID のトークンが既にあれば何もしない（トークンの表の `request_id` に一意制約）。再配信で 2 通送らない |
 | 送信の失敗 | `Failed` でも例外にせず完了にする。再配信で新しいトークンを作らない。送れなかった依頼は利用者が依頼し直す |
 | ADR-003 | 例外を作らない。`@ApplicationModuleListener` と発行記録の形のまま |
 | 送信の保証 | SMTP の送信はハンドラーのトランザクションと利用者の行の占有の中で行い、接続・読み・書きのタイムアウト（各 5 秒）で占有の長さを抑える。トークンの発行・通知の記録・送信の結果は 1 つのトランザクションで、送信は at-least-once とする。送った後、コミットの前に落ちると、届いたリンクは使えず、再配信で新しいリンクの 2 通目が送られることがある（2026-10-15、human:kakimomokuri が決定） |
 
-トークンの規則（32 バイトの乱数、SHA-256 のハッシュだけを保存、30 分、1 回だけ、新しい発行で前を無効、1 分以内の依頼し直しは送らない）は [非機能要件](../../design/cargo-tracker/non_functional.md) の SEC-08 とドメインモデルの IA-INV-12 に置く。
+トークンの規則（32 バイトの乱数、SHA-256 のハッシュだけを保存、30 分（利用者の招待は 24 時間）、1 回だけ、新しい発行で前を無効、1 分以内の依頼し直しは送らない（再設定だけ））は [非機能要件](../../design/cargo-tracker/non_functional.md) の SEC-08 とドメインモデルの IA-INV-12 に置く。
 
 ### 5. 送信の記録
 
@@ -133,6 +134,7 @@ Bolt 38d の開始準備で、種類ごとの公開 API（再設定・利用者�
 
 - 2026-10-15: Bolt 33a のステップ 1 で、決定 6 に仮の A-06 を本物の A-06 に置き換えること（リンクを開くとトークンの ID だけを session に移して PRG、使えないリンクは同じ案内、仮のテンプレートを消す、リンクの path を定数に寄せる）を書いた（Bolt 33a の開始準備の決定 1。human:kakimomokuri が決定）。
 - 2026-10-26: Bolt 38b2b で、2 つ目の公開 API `UserInvitationMail`（種類 `USER_INVITATION`）、文面のポート `UserInvitationMailTemplate`、記録と送信と伏せ字の共有の部品 `LinkMailDelivery`（伏せ字は「[リンク]」）と結果 `MailDeliveryOutcome` を足した（決定 1・3・5、既知の課題。Bolt 38b2b の開始準備の決定 1〜3。human:kakimomokuri が決定）。
+- 2026-10-26: Bolt 38b2c で、決定 2 と 4 に利用者の招待の identity の側（DE-25、招待のハンドラー、ACL `NotificationUserInvitationMails`、発行の共有の部品 `PasswordResetTokenIssuance`、24 時間で抑えを数えない）を足した（Bolt 38b2c の開始準備の決定 1〜4。human:kakimomokuri が決定）。
 
 ## 関連ドキュメント
 

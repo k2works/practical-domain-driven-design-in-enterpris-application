@@ -18,7 +18,7 @@ public interface PasswordResetTokenRepository {
     /** 依頼の ID のトークンがあるか（モジュールのイベントの再配信で 2 通送らない）。 */
     boolean existsByRequestId(UUID requestId);
 
-    /** 利用者のその用途の最後の発行時刻。発行がなければ空（Bolt 38b。繰り返しの依頼の抑えは再設定の発行だけで数える）。 */
+    /** 利用者のその用途の最後の発行時刻。発行がなければ空（Bolt 38b。繰り返しの依頼の抑えは、抑えを数える用途の発行だけで数える。Bolt 38b2c）。 */
     Optional<UtcInstant> findLastIssuedAt(UserId userId, PasswordResetTokenPurpose purpose);
 
     /** 利用者の未使用で無効にしていないトークンを、すべて無効にする。無効にした件数を返す。 */

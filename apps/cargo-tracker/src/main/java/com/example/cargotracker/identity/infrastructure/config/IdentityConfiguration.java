@@ -14,7 +14,9 @@ import com.example.cargotracker.identity.application.internal.commandservices.Us
 import com.example.cargotracker.identity.application.internal.commandservices.UserStatusChangeService;
 import com.example.cargotracker.identity.application.internal.eventhandlers.KpiObservationEventHandler;
 import com.example.cargotracker.identity.application.internal.eventhandlers.PasswordResetMailEventHandler;
+import com.example.cargotracker.identity.application.internal.eventhandlers.UserInvitationMailEventHandler;
 import com.example.cargotracker.identity.application.internal.outboundservices.acl.NotificationPasswordResetMails;
+import com.example.cargotracker.identity.application.internal.outboundservices.acl.NotificationUserInvitationMails;
 import com.example.cargotracker.identity.application.internal.queryservices.KpiObservationQueryService;
 import com.example.cargotracker.identity.application.internal.queryservices.TotpEnrollmentQueryService;
 import com.example.cargotracker.identity.application.internal.queryservices.UserAdministrationQueryService;
@@ -43,6 +45,7 @@ import com.example.cargotracker.identity.domain.model.rules.LockPolicy;
 import com.example.cargotracker.identity.domain.model.rules.PasswordPolicy;
 import com.example.cargotracker.identity.infrastructure.crypto.AesGcmSecretCipher;
 import com.example.cargotracker.notification.interfaces.api.PasswordResetMail;
+import com.example.cargotracker.notification.interfaces.api.UserInvitationMail;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.Clock;
@@ -81,6 +84,11 @@ public class IdentityConfiguration {
             throw new IllegalStateException("ステージング・本番の " + PUBLIC_BASE_URL + " は https でループバックでない URL にする");
         }
         return value.endsWith("/") ? value.substring(0, value.length() - 1) : value;
+    }
+
+    /** 再設定と利用者の招待のリンクの接頭辞（A-06。リンクはこれにトークンを続ける。用途による出し分けは Bolt 38b4）。 */
+    private static String passwordResetLinkPrefix(Environment environment) {
+        return publicBaseUrl(environment) + SessionPaths.PASSWORD_RESET_URL + "/";
     }
 
     /** query と fragment のない、http(s) の絶対の URL として読む。 */
@@ -150,17 +158,25 @@ public class IdentityConfiguration {
     }
 
     @Bean
-    @SuppressWarnings("java:S107") // 判定と書き込みと使えないハッシュの部品をそろえて受ける
+    @SuppressWarnings("java:S107") // 判定と書き込みと使えないハッシュとイベントの部品をそろえて受ける
     UserRegistrationService userRegistrationService(
             UserRepository users,
             CompanyRepository companies,
             UserAssignmentRepository assignments,
             AuditRecordRepository auditRecords,
             UnusablePasswordHashIssuer unusablePasswordHashes,
+            ApplicationEventPublisher events,
             Clock clock,
             TransactionTemplate transactionTemplate) {
         return new UserRegistrationService(
-                users, companies, assignments, auditRecords, unusablePasswordHashes, clock, transactionTemplate);
+                users,
+                companies,
+                assignments,
+                auditRecords,
+                unusablePasswordHashes,
+                events,
+                clock,
+                transactionTemplate);
     }
 
     @Bean
@@ -336,8 +352,39 @@ public class IdentityConfiguration {
                 generator,
                 hasher,
                 notificationPasswordResetMails,
-                publicBaseUrl(environment) + SessionPaths.PASSWORD_RESET_URL + "/",
+                passwordResetLinkPrefix(environment),
                 clock);
+    }
+
+    /**
+     * DE-25 を受けて招待のトークンを発行しメールを送る（Bolt 38b2c、ADR-017）。リンクは再設定と同じ A-06 の形（{@link #publicBaseUrl}）。
+     */
+    @Bean
+    @SuppressWarnings("java:S107") // 発行と送信に要るポートと設定をそろえて渡す
+    UserInvitationMailEventHandler userInvitationMailEventHandler(
+            PasswordResetTokenRepository tokens,
+            UserRepository users,
+            CompanyRepository companies,
+            PasswordResetTokenGenerator generator,
+            PasswordResetTokenHasher hasher,
+            NotificationUserInvitationMails notificationUserInvitationMails,
+            Environment environment,
+            Clock clock) {
+        return new UserInvitationMailEventHandler(
+                tokens,
+                users,
+                companies,
+                generator,
+                hasher,
+                notificationUserInvitationMails,
+                passwordResetLinkPrefix(environment),
+                clock);
+    }
+
+    /** 通知の公開 API（利用者の招待のメール）を呼ぶ腐敗防止層（ADR-017。Bolt 38b2c）。 */
+    @Bean
+    NotificationUserInvitationMails notificationUserInvitationMails(UserInvitationMail userInvitationMail) {
+        return new NotificationUserInvitationMails(userInvitationMail);
     }
 
     /** 通知の公開 API（password の再設定のメール）を呼ぶ腐敗防止層（ADR-017。Bolt 33）。 */
