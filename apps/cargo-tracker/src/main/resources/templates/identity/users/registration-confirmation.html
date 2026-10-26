@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/staff :: layout(~{::title}, ~{::main}, ~{}, 'users')}">
+<head>
+    <meta charset="UTF-8">
+    <title>利用者の登録の確認 - cargo-tracker</title>
+</head>
+<body>
+<main>
+    <h1>利用者を登録しますか</h1>
+    <!--/* 画面そのものが確認の領域（共通の確認の領域の 6 つの項目）。変更内容は保存する値。確認は何も書かない（Bolt 38b3b） */-->
+    <dl class="row">
+        <dt class="col-sm-3">対象</dt>
+        <dd class="col-sm-9" th:text="${companyLabel}">A 社（運用する会社）</dd>
+        <dt class="col-sm-3">現在の状態</dt>
+        <dd class="col-sm-9">未登録</dd>
+        <dt class="col-sm-3">変更内容</dt>
+        <dd class="col-sm-9" id="registration-change" th:text="${change}">hanako@example.com、新人 花子、営業担当者</dd>
+        <dt class="col-sm-3">影響</dt>
+        <dd class="col-sm-9">登録したメールアドレスへ、初回の設定の案内（24 時間有効）を送ります。</dd>
+        <dt class="col-sm-3">実行者</dt>
+        <dd class="col-sm-9" th:text="${operator}">システム管理者 高橋</dd>
+        <dt class="col-sm-3">回復手段</dt>
+        <dd class="col-sm-9">誤って登録したときは、利用者の詳細から利用を停止してください（送った案内のリンクも使えなくなります）。</dd>
+    </dl>
+    <!--/* 登録するも戻るも POST と hidden（メールアドレスと表示名を URL に残さない） */-->
+    <div class="d-flex gap-2">
+        <form method="post" th:action="@{/staff/users}">
+            <input type="hidden" name="companyId" th:value="${company.id.value}">
+            <input type="hidden" name="email" th:value="${email}">
+            <input type="hidden" name="displayName" th:value="${displayName}">
+            <input type="hidden" name="roles" th:each="role : ${selectedRoles}" th:value="${role}">
+            <button type="submit" class="btn btn-primary">登録する</button>
+        </form>
+        <form method="post" th:action="@{/staff/users/new/form}">
+            <input type="hidden" name="companyId" th:value="${company.id.value}">
+            <input type="hidden" name="email" th:value="${email}">
+            <input type="hidden" name="displayName" th:value="${displayName}">
+            <input type="hidden" name="roles" th:each="role : ${selectedRoles}" th:value="${role}">
+            <button type="submit" class="btn btn-link">戻る</button>
+        </form>
+    </div>
+</main>
+</body>
+</html>

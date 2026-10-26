@@ -4,7 +4,6 @@ import com.example.cargotracker.identity.application.internal.commandservices.Ro
 import com.example.cargotracker.identity.application.internal.commandservices.RoleChangeOutcome;
 import com.example.cargotracker.identity.application.internal.commandservices.UserAdministrationRefusal;
 import com.example.cargotracker.identity.application.internal.commandservices.UserRoleChangeService;
-import com.example.cargotracker.identity.domain.model.rules.RoleAssignmentPolicy;
 import com.example.cargotracker.identity.domain.model.valueobjects.CompanyKind;
 import com.example.cargotracker.identity.domain.model.valueobjects.RoleChangeRejection;
 import com.example.cargotracker.identity.domain.model.valueobjects.RoleChangeRejectionReason;
@@ -144,14 +143,8 @@ public class UserRoleChangeController {
                     case NO_ROLES -> "役割を 1 つ以上選んでください。";
                     case NO_CHANGE -> "今の役割から変わっていません。足す役割か外す役割を選んでください。";
                     case OVERSIGHT_ROLE -> "システム管理者・監査担当者の役割は、この画面では付けたり外したりできません。";
-                    case UNFIT_FOR_COMPANY ->
-                        UserAdministrationLabels.roles(rejection.roles()) + "は、"
-                                + UserAdministrationLabels.companyKind(companyKind) + "の利用者には付けられません。";
-                    case CONFLICTING_ROLES ->
-                        "システム管理者・監査担当者と、業務データを変更できる役割（"
-                                + UserAdministrationLabels.roles(
-                                        RoleAssignmentPolicy.businessRolesOf(rejection.roles()))
-                                + "）は併せて付けられません。";
+                    case UNFIT_FOR_COMPANY -> UserAdministrationLabels.unfitRoles(rejection.roles(), companyKind);
+                    case CONFLICTING_ROLES -> UserAdministrationLabels.conflictingRoles(rejection.roles());
                 };
         return new ErrorMessage(text, rejection.reason() != RoleChangeRejectionReason.SELF_CHANGE);
     }

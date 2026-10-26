@@ -10,6 +10,7 @@ import com.example.cargotracker.identity.domain.model.aggregates.UnusablePasswor
 import com.example.cargotracker.identity.domain.model.aggregates.User;
 import com.example.cargotracker.identity.domain.model.aggregates.UserAssignmentRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.UserRepository;
+import com.example.cargotracker.identity.domain.model.rules.DisplayNameRule;
 import com.example.cargotracker.identity.domain.model.valueobjects.EmailAddress;
 import com.example.cargotracker.identity.domain.model.valueobjects.UserRegistrationRejection;
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
@@ -40,9 +41,6 @@ import org.springframework.transaction.support.TransactionTemplate;
  */
 @Service // JIG がユースケースとして読む印（組み立ては IdentityConfiguration）
 public class UserRegistrationService {
-
-    /** 表示名の長さの上限（コードポイント。`app_user.display_name` は `VARCHAR(200)`）。 */
-    private static final int DISPLAY_NAME_MAX = 200;
 
     private final UserRepository users;
     private final CompanyRepository companies;
@@ -122,6 +120,26 @@ public class UserRegistrationService {
         return outcome;
     }
 
+    /**
+     * 範囲外の企業への確定の試行なら記録する（Bolt 38b3b の開発レビューの高-1。IA-INV-14）。画面の確定の POST が、入力の誤りや役割の名前を
+     * 解釈する前に呼ぶ（誤った値の送信でも、範囲外の企業への試行は記録してから 404 にする。前例 UI 設計の利用状態の変更）。操作者と管理範囲を
+     * ここで確かめ直し、システム管理者の、ある企業への、範囲外の試行だけを {@link #register} と同じく別のトランザクションで書く。外側の
+     * トランザクションの外で呼ぶ。
+     *
+     * @param operator 操作者
+     * @param companyId 送られた企業
+     * @return 範囲外の企業への試行として記録したら true
+     */
+    public boolean denyOutOfScope(AuthenticatedActor operator, CompanyId companyId) {
+        if (!operator.hasRole(Role.SYSTEM_ADMIN)
+                || companies.findById(companyId).isEmpty()
+                || assignments.scopeOf(operator.userId()).covers(companyId)) {
+            return false;
+        }
+        recordOutOfScope(operator, companyId);
+        return true;
+    }
+
     private UserRegistrationOutcome registerInTransaction(
             AuthenticatedActor operator, CompanyId companyId, EmailAddress email, String displayName, Set<Role> roles) {
         return switch (judge(operator, companyId, email, displayName, roles)) {
@@ -166,7 +184,7 @@ public class UserRegistrationService {
         if (!company.get().active()) {
             return refused(new UserRegistrationRefusal.InactiveCompany());
         }
-        return normalizedDisplayName(displayName)
+        return DisplayNameRule.normalize(displayName)
                 .map(name -> decide(company.get(), email, name, roles))
                 .orElseGet(() -> refused(new UserRegistrationRefusal.InvalidDisplayName()));
     }
@@ -181,42 +199,6 @@ public class UserRegistrationService {
                         ? refused(new UserRegistrationRefusal.DuplicateEmail())
                         : new Judgement.Accepted(approval, name);
         };
-    }
-
-    /**
-     * 前後の空白（NBSP などの Unicode の空白を含む）を除いた表示名。空・200 コードポイントを超える・見分けにくい文字（制御文字・書式文字・
-     * 行と段落の区切り）を含むなら空（Bolt 38b3。一覧と詳細で見分けにくい名前を登録させない）。
-     */
-    private static Optional<String> normalizedDisplayName(String displayName) {
-        String name = stripSpaces(displayName == null ? "" : displayName);
-        boolean valid = !name.isEmpty()
-                && name.codePointCount(0, name.length()) <= DISPLAY_NAME_MAX
-                && name.codePoints().noneMatch(UserRegistrationService::isIndistinct);
-        return valid ? Optional.of(name) : Optional.empty();
-    }
-
-    private static String stripSpaces(String value) {
-        int start = 0;
-        int end = value.length();
-        while (start < end && isSpace(value.codePointAt(start))) {
-            start += Character.charCount(value.codePointAt(start));
-        }
-        while (end > start && isSpace(value.codePointBefore(end))) {
-            end -= Character.charCount(value.codePointBefore(end));
-        }
-        return value.substring(start, end);
-    }
-
-    private static boolean isSpace(int codePoint) {
-        return Character.isWhitespace(codePoint) || Character.isSpaceChar(codePoint);
-    }
-
-    private static boolean isIndistinct(int codePoint) {
-        int type = Character.getType(codePoint);
-        return Character.isISOControl(codePoint)
-                || type == Character.FORMAT
-                || type == Character.LINE_SEPARATOR
-                || type == Character.PARAGRAPH_SEPARATOR;
     }
 
     private static Judgement refused(UserRegistrationRefusal refusal) {

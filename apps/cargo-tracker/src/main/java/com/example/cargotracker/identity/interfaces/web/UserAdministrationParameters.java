@@ -1,6 +1,7 @@
 package com.example.cargotracker.identity.interfaces.web;
 
 import com.example.cargotracker.identity.domain.model.valueobjects.SuspensionReason;
+import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Role;
 import com.example.cargotracker.shared.domain.UserId;
 import java.util.List;
@@ -12,7 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
 /**
- * S-20 の 3 つの controller が共有する、送られた値の解釈（Bolt 34f）。ID の誤りは 404（いない利用者と同じ）、知らない名前と数でない版は
+ * S-20 の controller が共有する、送られた値の解釈（Bolt 34f。Bolt 38b3b から利用者の登録も）。ID の誤りは 404（いない利用者と同じ）、知らない名前と数でない版は
  * 400。状態を持たない。
  */
 final class UserAdministrationParameters {
@@ -23,6 +24,15 @@ final class UserAdministrationParameters {
     static UserId userId(String id) {
         try {
             return new UserId(UUID.fromString(id));
+        } catch (IllegalArgumentException _) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        }
+    }
+
+    /** 企業 ID（Bolt 38b3b。利用者の登録）。形の誤った ID は 404（いない企業と同じ）。 */
+    static CompanyId companyId(String id) {
+        try {
+            return new CompanyId(UUID.fromString(id));
         } catch (IllegalArgumentException _) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND);
         }

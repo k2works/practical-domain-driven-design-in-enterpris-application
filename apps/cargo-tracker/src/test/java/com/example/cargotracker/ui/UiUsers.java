@@ -217,6 +217,21 @@ public class UiUsers {
         return new Credentials(userId, email, PASSWORD);
     }
 
+    /**
+     * 名前を決めた運用する会社を作り、シナリオの企業としてシステム管理者の管理範囲に入れる（Bolt 38b3b。利用者の登録で、利用者ごとに
+     * 作る「A 社」と名前が重ならない企業を選ぶため）。
+     */
+    public CompanyId administeredOperator(String name) {
+        Company company = Company.of(new CompanyId(UUID.randomUUID()), name, CompanyKind.OPERATOR, true);
+        companies.add(company);
+        scenarioCompanies.add(company.id());
+        if (created.containsKey(Role.SYSTEM_ADMIN)) {
+            AdministrationFixtures.assignCompany(
+                    jdbc, created.get(Role.SYSTEM_ADMIN).userId(), company.id());
+        }
+        return company.id();
+    }
+
     /** 役割の利用者の表示名（画面に出る名前を確かめるため）。 */
     public String displayNameOf(Role role) {
         return displayName(role);

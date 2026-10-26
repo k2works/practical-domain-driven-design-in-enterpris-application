@@ -79,6 +79,16 @@ class UserAdministrationControllerTest {
     }
 
     @Test
+    void 一覧に利用者を登録する入口のリンクを出す() throws Exception {
+        // Bolt 38b3b の行 1
+        when(queryService.list(any())).thenReturn(List.of());
+
+        mockMvc.perform(get("/staff/users"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(Matchers.containsString("<a href=\"/staff/users/new\">利用者を登録する</a>")));
+    }
+
+    @Test
     void 詳細は企業の種類と利用状態の名前を示す() throws Exception {
         found(user(3, UserStatus.SUSPENDED));
 
