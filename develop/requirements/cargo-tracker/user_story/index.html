@@ -13947,7 +13947,7 @@
 <li>(5) 停止の確定では、同じトランザクションで相手の未使用の password の再設定のトークンを無効にする。停止の前に発行したリンクで、再開の後に password を設定し直させない。</li>
 <li>(6) 再開の確定の後に、相手の session をすべて消す。相手が 1 度も操作しないうちに停止して再開したとき、前の session を使い続けさせない（再開の後の session はログインし直したものだけ）。消せなくても再開は戻さない。停止の確定では今までどおりすぐには消さない（開始準備の決定の 2 つ目は変えない）。</li>
 </ul>
-<p>Bolt 38b 系の決定（2026-10-25〜26、human:kakimomokuri。<a href="../../../development/cargo-tracker/bolt_38b_plan/">Bolt 38b 計画</a>、<a href="../../../development/cargo-tracker/bolt_38b2_plan/">Bolt 38b2 計画</a>、<a href="../../../development/cargo-tracker/bolt_38b2b_plan/">Bolt 38b2b 計画</a>、<a href="../../../development/cargo-tracker/bolt_38b2c_plan/">Bolt 38b2c 計画</a>）: AC1 の関係を作る手段として、システム管理者が管理範囲の企業に利用者を登録する（役割は企業の種類に合うものだけ、監査 <code>USER_REGISTERED</code>）。登録した利用者は password を持たず、登録のコミットの後に初回の設定のリンク（利用者の招待。24 時間・1 回だけ）を登録したメールアドレスへ送る。期限を過ぎたときと届かないときの出口は A-05（本人の再設定）。AC の文は変えない。登録の画面は Bolt 38b3、初回の設定の画面の出し分けは Bolt 38b4</p>
+<p>Bolt 38b 系の決定（2026-10-25〜26、human:kakimomokuri。<a href="../../../development/cargo-tracker/bolt_38b_plan/">Bolt 38b 計画</a>、<a href="../../../development/cargo-tracker/bolt_38b2_plan/">Bolt 38b2 計画</a>、<a href="../../../development/cargo-tracker/bolt_38b2b_plan/">Bolt 38b2b 計画</a>、<a href="../../../development/cargo-tracker/bolt_38b2c_plan/">Bolt 38b2c 計画</a>）: AC1 の関係を作る手段として、システム管理者が管理範囲の企業に利用者を登録する（役割は企業の種類に合うものだけ、監査 <code>USER_REGISTERED</code>）。登録した利用者は password を持たず、登録のコミットの後に初回の設定のリンク（利用者の招待。24 時間・1 回だけ）を登録したメールアドレスへ送る。期限を過ぎたときと届かないときの出口は A-05（本人の再設定）。AC の文は変えない。登録の画面は Bolt 38b3b（表示名の規則と登録できる企業の照会は Bolt 38b3）、初回の設定の画面の出し分けは Bolt 38b4</p>
 <h3 id="us-17">US-17 監査証跡を照会する<a class="headerlink" href="#us-17" title="Permanent link">&para;</a></h3>
 <blockquote>
 <p>管理・コンプライアンス担当者として、重要操作の主体と結果を時系列で照会したい。変更と承認の正当性を検証するためだ。</p>
