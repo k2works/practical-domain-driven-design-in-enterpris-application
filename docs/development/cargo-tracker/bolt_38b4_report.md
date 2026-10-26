@@ -1,3 +1,11 @@
+---
+type: Plan
+title: "Bolt 38b4 終了報告 - A-06 の初回の設定の出し分けと、登録から A-07 までの受入シナリオ"
+tags: [plan]
+status: draft
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-26T22:19:33Z }
+---
+
 # Bolt 38b4 終了報告 - A-06 の初回の設定の出し分けと、登録から A-07 までの受入シナリオ
 
 ## 承認の議題（T-36。先に確かめてほしいこと）
