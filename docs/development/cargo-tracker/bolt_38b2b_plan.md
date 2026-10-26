@@ -2,8 +2,10 @@
 type: Plan
 title: "Bolt 38b2b 計画 - 利用者の招待のメール（通知の側）と、範囲外の企業の記録の規則"
 tags: [plan]
-status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-25T23:20:19Z }
+status: stable
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-26T00:01:55Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-26T00:01:55Z }
 ---
 
 # Bolt 38b2b 計画 - 利用者の招待のメール（通知の側）と、範囲外の企業の記録の規則
@@ -211,6 +213,7 @@ ThymeleafPasswordResetMailTemplate --> MailTextTemplates
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-26 | 計画を承認した（確認ポイント 1〜7 を推奨のとおり） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-26 | 整合性検証の指摘を反映した（承認待ち）。招待のメールに期限を過ぎたときの出口の 1 文を足すと決めた（human:kakimomokuri）。domain_model・SEC-08・test_strategy・ADR-017・architecture_backend の直す行、伏せ字のテストの事実、文面の組み立てを try の中に残すこと（行 3・4、V7）、共有の部品の受ける形（3 つ）と結果の名前（`MailDeliveryOutcome`）、SpotBugs の抑止、ArchUnit の規則の書き方（`equivalentTo`、メソッド参照）、V6 を名前の見張りの変異に、出口の列、引き継ぎ（T-126・#50）、受入シナリオを書かない理由を足した | anthropic/claude-opus-5-5 |
 | 2026-10-26 | 初版作成（承認待ち）。開始準備で、38b2b を通知の側（38b2b）と identity の側（38b2c）に分け、招待のメールは短い文面にし、記録と送信を共有して伏せ字を「[リンク]」に寄せ、ArchUnit の規則を範囲外の企業の記録と招待の発行の 2 つ足すと決めた（human:kakimomokuri） | anthropic/claude-opus-5-5 |
 
