@@ -14,9 +14,11 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noMethods;
 import static com.tngtech.archunit.library.Architectures.layeredArchitecture;
 
+import com.example.cargotracker.identity.domain.model.aggregates.AuditRecord;
 import com.example.cargotracker.identity.interfaces.web.DevTotpCodeSource;
 import com.example.cargotracker.shared.annotation.ddd.Saga;
 import com.tngtech.archunit.base.DescribedPredicate;
+import com.tngtech.archunit.core.domain.JavaCall;
 import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.junit.AnalyzeClasses;
@@ -348,6 +350,34 @@ class LayerArchitectureTest {
             .should()
             .dependOnClassesThat()
             .haveSimpleName("AdministrationScopeDenialService");
+
+    /** 範囲外の企業への登録の試行の記録の書き手（Bolt 38b2。登録のサービスの確定の口）。 */
+    private static final String COMPANY_SCOPE_DENIAL_WRITER =
+            "com.example.cargotracker.identity.application.internal.commandservices.UserRegistrationService";
+
+    /** 範囲外の企業への登録の試行の記録を作る呼び出し（{@code AuditRecord.adminScopeDeniedCompany}）。 */
+    private static final DescribedPredicate<JavaCall<?>> COMPANY_SCOPE_DENIAL =
+            target(owner(equivalentTo(AuditRecord.class))).and(target(nameMatching("adminScopeDeniedCompany")));
+
+    /**
+     * 範囲外の企業への登録の試行の記録は、登録のサービスだけが作る（Bolt 38b2b。Bolt 38b2 の終了報告の議題 2、2026-10-25、
+     * human:kakimomokuri。T-205。計画の行 8）。書き手を 1 か所にして、記録の漏れと二重の記録を防ぐ（IA-INV-14）。守るのは呼び出しだけで、メソッド参照
+     * （{@code AuditRecord::adminScopeDeniedCompany}）は捕まえない。
+     */
+    @ArchTest
+    static final ArchRule 範囲外の企業の記録は登録のサービスだけが作る = noClasses()
+            .that()
+            .doNotHaveFullyQualifiedName(COMPANY_SCOPE_DENIAL_WRITER)
+            .should()
+            .callMethodWhere(COMPANY_SCOPE_DENIAL);
+
+    /** 書き手の名前と呼び出しが実在し続けることの見張り（計画の行 8）。書き手を動かす・名前を変える・呼ばなくなると落ちる（T-135）。 */
+    @ArchTest
+    static final ArchRule 範囲外の企業の記録の書き手は登録のサービス = classes()
+            .that()
+            .haveFullyQualifiedName(COMPANY_SCOPE_DENIAL_WRITER)
+            .should()
+            .callMethodWhere(COMPANY_SCOPE_DENIAL);
 
     /** platform は技術の部品だけを置き、コンテキストの型に依存しない。 */
     @ArchTest

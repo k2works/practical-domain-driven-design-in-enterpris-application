@@ -11,7 +11,7 @@ import java.time.Duration;
 public enum PasswordResetTokenPurpose {
     /** password の再設定（A-05 の依頼）。期限は 30 分。 */
     RESET(Duration.ofMinutes(30)),
-    /** 利用者の招待（システム管理者が登録した利用者への初回の設定のリンク。Bolt 38b2 で発行する）。期限は 24 時間。 */
+    /** 利用者の招待（システム管理者が登録した利用者への初回の設定のリンク。Bolt 38b2c で発行する）。期限は 24 時間。 */
     USER_INVITATION(Duration.ofHours(24));
 
     private final Duration validity;

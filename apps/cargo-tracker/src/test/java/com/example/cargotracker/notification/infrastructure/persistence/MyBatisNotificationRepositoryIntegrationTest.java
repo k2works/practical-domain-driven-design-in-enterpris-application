@@ -57,6 +57,27 @@ class MyBatisNotificationRepositoryIntegrationTest {
     }
 
     @Test
+    void 利用者の招待の通知を記録して読み出す() {
+        // 行 6（Bolt 38b2b。CHECK が USER_INVITATION を通す）
+        Notification notification = Notification.pending(
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                "hanako@example.com",
+                NotificationKind.USER_INVITATION,
+                UUID.randomUUID().toString(),
+                "ja",
+                CREATED_AT);
+
+        assertThat(repository.addIfAbsent(notification)).isTrue();
+
+        assertThat(repository
+                        .findByEventIdAndRecipient(notification.eventId(), notification.recipientUserId())
+                        .orElseThrow()
+                        .kind())
+                .isEqualTo(NotificationKind.USER_INVITATION);
+    }
+
+    @Test
     void 同じ契機と宛先の2つ目は記録しない() {
         UUID eventId = UUID.randomUUID();
         UUID recipient = UUID.randomUUID();

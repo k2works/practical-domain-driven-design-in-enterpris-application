@@ -4,7 +4,7 @@ title: "cargo-tracker ドメインモデル"
 description: "cargo-tracker の業務領域の分類、ユビキタス言語、7 つの境界づけられたコンテキスト（通知を含む）の集約・エンティティ・値オブジェクト・ドメインルール、コマンド・クエリ・イベント、予約サガ。"
 tags: [design, domain-model, ddd]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-25T10:39:17Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-26T00:51:35Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:41:04Z }
   - { by: human:kakimomokuri, at: 2026-10-01T07:48:17Z }
@@ -235,7 +235,7 @@ quadrantChart
 | 利用者の登録の承認 | UserRegistrationApproval | 利用者の集約の登録の判定（`User#decideRegistration`）を通った印。所属企業（ID）と役割の集合を持ち、`User#register` はこれだけを受ける。コンストラクターは private で、利用者の集約だけが作る（Bolt 34e の承認の値と同じ形）。判定は static なので判定した実体に縛られない。1 回の登録に使い、重複は登録のサービスとメールアドレスの一意制約で守る（Bolt 38b） | アクセス・監査 |
 | 利用者の登録の拒否 | UserRegistrationRejection | 利用者の登録を受け付けない理由（`UserRegistrationRejectionReason`: `NO_ROLES`・`OVERSIGHT_ROLE`・`UNFIT_FOR_COMPANY`・`CONFLICTING_ROLES`。判定はこの順）と、示す役割の集合。今の規則では監督の役割を拒んだ後に職務分離に当たる組み合わせは残らないが、規則が広がったときのために判定の最後に残す（Bolt 38b） | アクセス・監査 |
 | 再設定のトークンの用途 | PasswordResetTokenPurpose | 再設定のトークンの用途。`RESET`（password の再設定。期限 30 分）と `USER_INVITATION`（利用者の招待。登録したシステム管理者が送る初回の設定のリンク。期限 24 時間）。期限は用途が持つ。繰り返しの依頼の抑えは `RESET` の発行だけで数え、前の未使用のトークンの無効化は用途を問わない。US-19 の荷受人の招待（参照許可）とは別のもの（Bolt 38b） | アクセス・監査 |
-| 利用者の招待 | UserInvitation | システム管理者が登録した利用者に、初回の password を設定するリンクを送ること。リンクは再設定と同じ表と A-06 を使い、用途 `PasswordResetTokenPurpose.USER_INVITATION`（24 時間）で区別する（Bolt 38b。発行とメールは Bolt 38b2b、A-06 の出し分けは Bolt 38b4）。US-19 の荷受人の招待（参照許可。通知の種類 `CONSIGNEE_INVITATION`）とは別のもの | アクセス・監査 |
+| 利用者の招待 | UserInvitation | システム管理者が登録した利用者に、初回の password を設定するリンクを送ること。リンクは再設定と同じ表と A-06 を使い、用途 `PasswordResetTokenPurpose.USER_INVITATION`（24 時間）で区別する（Bolt 38b。メールの部品は Bolt 38b2b、発行と送信は Bolt 38b2c、A-06 の出し分けは Bolt 38b4）。US-19 の荷受人の招待（参照許可。通知の種類 `CONSIGNEE_INVITATION`）とは別のもの | アクセス・監査 |
 | 利用者の登録のサービス | UserRegistrationService | システム管理者が管理範囲の企業に利用者を登録するアプリケーションのサービス（`commandservices`。Bolt 38b2）。確かめる `check`（何も書かない）と登録する `register`。判定は操作者 → 企業の有無 → 管理範囲 → 企業の有効性 → 表示名 → 登録の判定（`User#decideRegistration`）→ 重複のメールアドレスの順で、受け付けたら使えないハッシュの利用者・付与した操作者付きの役割・監査 `USER_REGISTERED` を 1 つのトランザクションで書く。確定で管理範囲の外の企業へ登録しようとしたときだけ、その試行（`ADMIN_SCOPE_DENIED`、対象は企業）を別のトランザクションで書く（登録の範囲外の記録の書き手はこの 1 か所） | アクセス・監査 |
 | 使えない password のハッシュの発行 | UnusablePasswordHashIssuer | システム管理者が登録した利用者の、本人が初回の password を設定するまでの password のハッシュを作るポート（`domain.model.aggregates`。Bolt 38b2）。乱数の平文をログインの照合と同じ PasswordEncoder（bcrypt）でハッシュにして平文を捨てるので、どの password とも一致せず、照合の時間も普通の利用者と同じ。実装は `infrastructure.crypto` | アクセス・監査 |
 | 役割の変更のサービス | UserRoleChangeService | システム管理者が利用者の役割を変えるアプリケーションのサービス（`commandservices`。Bolt 34）。判定の規則を通し、`app_user.version` を条件にした更新・`user_role` の差分・監査記録 `ROLES_CHANGED` を 1 つのトランザクションで書く。判定は 操作者（システム管理者か）→ 利用者と企業 → 管理範囲（Bolt 34b）→ 規則（`User#decideRoleChange`）→ 版の順。Bolt 34e から、確かめる `check` は `RoleChangeCheck`（`Acceptable`・`Refused`）、変える `change` は `RoleChangeOutcome`（`Changed(版)`・`Refused`）を返し、拒否は共通の `UserAdministrationRefusal<RoleChangeRejection>`（`NotPermitted`（操作者がシステム管理者でない）・`NotFound`・`OutOfScope`（管理範囲外）・`Rejected(拒否)`・`Stale`）にする（controller に届かない枝をなくす。2026-10-17、human:kakimomokuri）。判定の前半（操作者 → 利用者と企業 → 管理範囲）は部品 `ManagedUserLookup` に任せる。版の出どころは承認の値（`RoleChangeApproval#version`）の 1 つにし、リポジトリの期待する版と監査の新しい版をそこから取る。拒否と古い版は監査に書かない | アクセス・監査 |
@@ -259,14 +259,18 @@ quadrantChart
 | 役割 | Role | 荷主担当者、営業担当者、経路設計者、追跡管理者、データ責任者、カスタマーサポート、システム管理者、監査担当者 | 共有カーネル（Bolt 14） |
 | 参照許可 | AccessGrant | 荷主担当者が予約単位で荷受人に与える照会の許可（BR-07） | アクセス・監査 |
 | KPI 計測記録 | KpiObservation | KPI-01・KPI-02 の算出に使う時刻・件数と、パイロット開始前の基準値 | アクセス・監査 |
-| 通知 | Notification | 利用者へ送るメール 1 通（荷主への業務の通知と password の再設定）の宛先・種類・対象・送信結果の記録。本文とリンクは持たない | 通知 |
-| 通知の種類 | NotificationKind | 通知の契機の区分。password の再設定 `PASSWORD_RESET`（Bolt 33）。荷主への業務の通知の値（`QUOTATION_PRESENTED` など。データモデルの CHECK の値）は使う Bolt（W9）で足す | 通知 |
+| 通知 | Notification | 利用者へ送るメール 1 通（荷主への業務の通知、password の再設定、利用者の招待）の宛先・種類・対象・送信結果の記録。本文とリンクは持たない | 通知 |
+| 通知の種類 | NotificationKind | 通知の契機の区分。password の再設定 `PASSWORD_RESET`（Bolt 33）、利用者の招待 `USER_INVITATION`（Bolt 38b2b）。荷主への業務の通知の値（`QUOTATION_PRESENTED` など。データモデルの CHECK の値）は使う Bolt（W9）で足す | 通知 |
 | 通知の状態 | NotificationStatus | 送信待ち `PENDING`、送信済み `SENT`、失敗 `FAILED`。PENDING からだけ SENT か FAILED に変わる（Bolt 33） | 通知 |
 | 再設定のメール | PasswordResetMail | 通知の公開 API（`notification.interfaces.api`）。password の再設定のメール 1 通を送る操作 `send(PasswordResetMailRequest)` を持ち、`PasswordResetMailReceipt` を返す。宛先は呼ぶ側が渡し、通知は identity に依存しない（ADR-017、Bolt 33） | 通知 |
 | 再設定のメールの要求 | PasswordResetMailRequest | 再設定のメールの公開 API の要求。依頼の ID（通知の `event_id`）、トークンの ID（`target_ref`）、宛先の利用者の ID、メールアドレス、再設定の URL、期限（`UtcInstant`）、言語を持つ（Bolt 33） | 通知 |
 | 再設定のメールの結果 | PasswordResetMailReceipt | 再設定のメールの公開 API の結果。送った `Sent`、同じ依頼の ID と宛先で送り済み `AlreadySent`、送れなかった `Failed`（Bolt 33） | 通知 |
-| 再設定のメールの送信のサービス | PasswordResetMailService | 通知のアプリケーションのサービス（`notification.application.internal.commandservices`）。通知を PENDING で記録してからメールの送信のポートを呼び、SENT か FAILED（理由）にする。同じ `event_id` と宛先の通知があれば送らない（N-INV-02、Bolt 33） | 通知 |
+| 再設定のメールの送信のサービス | PasswordResetMailService | 通知のアプリケーションのサービス（`notification.application.internal.commandservices`）。通知を PENDING で記録してからメールの送信のポートを呼び、SENT か FAILED（理由）にする。同じ `event_id` と宛先の通知があれば送らない（N-INV-02、Bolt 33）。Bolt 38b2b から記録と送信と伏せ字は `LinkMailDelivery` が持つ | 通知 |
 | 再設定のメールの文面 | PasswordResetMailTemplate | password の再設定のメールの件名と本文を組み立てるポート（`notification.domain.model.aggregates`）。実装は Thymeleaf のテキストのテンプレートの `ThymeleafPasswordResetMailTemplate`（`notification.infrastructure.mail`。ADR-017、Bolt 33） | 通知 |
+| 利用者の招待のメール | UserInvitationMail | 通知の公開 API（`notification.interfaces.api`）。利用者の招待のメール 1 通を送る操作 `send(UserInvitationMailRequest)` を持ち、`UserInvitationMailReceipt`（`Sent`・`AlreadySent`・`Failed`）を返す。要求は登録の ID（通知の `event_id`）、招待のトークンの ID（`target_ref`）、宛先の利用者の ID、メールアドレス、初回の設定の URL、期限、言語を持つ（ADR-017、Bolt 38b2b） | 通知 |
+| 利用者の招待のメールの送信のサービス | UserInvitationMailService | 通知のアプリケーションのサービス。種類 `USER_INVITATION`・対象は招待のトークンの ID で、記録と送信と伏せ字は `LinkMailDelivery` に任せる（Bolt 38b2b） | 通知 |
+| 利用者の招待のメールの文面 | UserInvitationMailTemplate | 利用者の招待のメールの件名と本文を組み立てるポート（`notification.domain.model.aggregates`）。実装は `ThymeleafUserInvitationMailTemplate`（Bolt 38b2b） | 通知 |
+| リンクのあるメールの送り方 | LinkMailDelivery | 再設定と利用者の招待のメールで共有する部品（`commandservices`、package-private。Bean にせず各サービスが作る）。通知を PENDING で記録し、文面を組み立てて送り、SENT か FAILED にする。失敗の理由とログのリンク・トークン・アドレスを「[リンク]」「[メールアドレス]」に伏せる。結果は `MailDeliveryOutcome`（Bolt 38b2b） | 通知 |
 | 送るメール | OutgoingMail | 宛先・件名・本文（テキスト）のメール 1 通。本文にリンクが入るので文字列に出さない（`notification.domain.model.aggregates`。Bolt 33） | 通知 |
 | メールの送信 | MailSender | 宛先・件名・本文のメール 1 通を送るポート（`notification.domain.model.aggregates`。外部の技術のポートはドメインに置く規則）。実装は SMTP の `SmtpMailSender` と、dev でログに出す `LoggingMailSender`（1 つの Bean の中で守りの式で切り替える）（`notification.infrastructure.mail`。ADR-017、Bolt 33） | 通知 |
 | 監査記録 | AuditRecord | 操作者・時刻・対象・変更前後・理由・承認・出典の追記専用の記録 | アクセス・監査 |
@@ -1427,11 +1431,11 @@ ADR-002 によりトランザクションスクリプトとする。ここでは
 
 通知は `identity` に依存しない（`allowedDependencies = {"shared"}`）。宛先（利用者 ID とメールアドレス）は呼ぶ側が渡す。アクセス・監査が通知の公開 API を呼ぶ（Bolt 33）ので、通知がアクセス・監査の公開 API で宛先を解決すると依存が循環するため（開始準備の決定 6）。W9 の業務の通知（US-22）で宛先をどう渡すか（イベントに載せる、購読する側で解決するなど）は W9 の開始準備で決める。
 
-入口は 2 つになる。1 つは他のコンテキストのイベントの購読（業務の通知。W9）、もう 1 つは公開 API（`notification.interfaces.api`）の同期の呼び出し（password の再設定。Bolt 33）である。公開 API `PasswordResetMail` のアダプター（`interfaces.api.internal`）は、アプリケーションのサービス `PasswordResetMailService` を呼ぶ。サービスは通知を PENDING で記録してから送信のポート `MailSender` を呼び、SENT か FAILED（理由）にする。同じ `event_id` と宛先の通知が既にあれば送らず `AlreadySent` を返す（N-INV-02）。件名と本文は通知のテンプレート（Thymeleaf のテキストのテンプレート）で組み立て、保存しない。`MailSender` の実装は SMTP（`SmtpMailSender`）と、dev だけのログに出す送信（`LoggingMailSender`）で、`notification.infrastructure.mail` に置く。
+入口は 2 つになる。1 つは他のコンテキストのイベントの購読（業務の通知。W9）、もう 1 つは公開 API（`notification.interfaces.api`）の同期の呼び出し（password の再設定。Bolt 33。利用者の招待。Bolt 38b2b）である。公開 API `PasswordResetMail` のアダプター（`interfaces.api.internal`）は、アプリケーションのサービス `PasswordResetMailService` を呼び、`UserInvitationMail` のアダプターは `UserInvitationMailService` を呼ぶ。どちらのサービスも、記録・送信・失敗の理由の伏せ字を共有の部品 `LinkMailDelivery` に任せる（Bolt 38b2b）。部品は通知を PENDING で記録してから送信のポート `MailSender` を呼び、SENT か FAILED（理由）にする。同じ `event_id` と宛先の通知が既にあれば送らず `AlreadySent` を返す（N-INV-02）。件名と本文は通知のテンプレート（Thymeleaf のテキストのテンプレート）で組み立て、保存しない。`MailSender` の実装は SMTP（`SmtpMailSender`）と、dev だけのログに出す送信（`LoggingMailSender`）で、`notification.infrastructure.mail` に置く。
 
 | 集約 | 集約ルート | 識別子 | 含むもの | 責務 |
 | :--- | :--- | :--- | :--- | :--- |
-| 通知 | 通知（Notification） | 通知 ID | イベント ID（契機の業務キー。password の再設定では依頼の ID）、宛先（利用者 ID・メールアドレス）、種類（`NotificationKind`）、対象（password の再設定ではトークンの ID）、言語、状態（`NotificationStatus`。送信待ち・送信済み・失敗）、送信時刻、失敗の理由 | メールの送信と結果の記録（本文とリンクは持たない） |
+| 通知 | 通知（Notification） | 通知 ID | イベント ID（契機の業務キー。password の再設定では依頼の ID、利用者の招待では登録の ID）、宛先（利用者 ID・メールアドレス）、種類（`NotificationKind`）、対象（password の再設定と利用者の招待ではトークンの ID）、言語、状態（`NotificationStatus`。送信待ち・送信済み・失敗）、送信時刻、失敗の理由 | メールの送信と結果の記録（本文とリンクは持たない） |
 
 | ID | 不変条件・ルール | 根拠 |
 | :--- | :--- | :--- |
@@ -1448,8 +1452,9 @@ ADR-002 によりトランザクションスクリプトとする。ここでは
 | 確認中への遷移 | DE-18 | 予約の荷主担当者 |
 | 荷受人への招待 | 参照許可の発行 | 荷受人（日本語と英語） |
 | password の再設定（`PASSWORD_RESET`。Bolt 33） | アクセス・監査から公開 API で同期に呼ばれる（2 つ目の入口。DE-23 のハンドラーが呼ぶ） | 依頼した利用者（宛先は呼ぶ側が渡す） |
+| 利用者の招待（`USER_INVITATION`。Bolt 38b2b。呼ぶのは Bolt 38b2c） | アクセス・監査から公開 API で同期に呼ばれる（登録のイベントのハンドラーが呼ぶ） | 登録された利用者（宛先は呼ぶ側が渡す） |
 
-password の再設定のメールは、本文にリンクとその期限・使い方だけを書き、料金などの業務の情報を書かない（N-INV-01）。リンクを含むため本文を保存せず、テンプレートと `target_ref` からも再現しない（この種類だけの例外。データモデルの通知の表）。
+password の再設定のメールは、本文にリンクとその期限・使い方だけを書き、料金などの業務の情報を書かない（N-INV-01）。リンクを含むため本文を保存せず、テンプレートと `target_ref` からも再現しない（リンクのある種類の例外。利用者の招待のメールも同じ。データモデルの通知の表）。
 
 ```plantuml
 @startuml

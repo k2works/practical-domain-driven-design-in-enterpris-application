@@ -24,6 +24,15 @@
         <Package name="~com\.example\.cargotracker\.identity\.application\.internal\..*"/>
     </Match>
     <!--
+      EI_EXPOSE_REP2: notification のアプリケーションのサービス（メールの送信のサービスと共有の部品）も、DI で受け取った部品を保持するだけ。
+      Bolt 33 は再設定のサービスのクラスで抑止していたが、Bolt 38b2b で招待のサービスと共有の部品が加わったので、identity と同じくパッケージで
+      指定する（Bolt 38b2b）。
+    -->
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+        <Package name="~com\.example\.cargotracker\.notification\.application\.internal\..*"/>
+    </Match>
+    <!--
       EI_EXPOSE_REP2: application.internal の外で、同じく DI の部品を保持するだけと分かっているクラス。このクラスに限って抑止する。
     -->
     <Match>
@@ -31,8 +40,6 @@
         <Or>
             <!-- A-08 の画面は、DI の部品（再登録のサービス）を保持するだけ（Bolt 33b） -->
             <Class name="com.example.cargotracker.identity.interfaces.web.TotpReEnrollmentController"/>
-            <!-- 通知のメールの送信のサービスも、同じく DI の部品を保持するだけ（Bolt 33） -->
-            <Class name="com.example.cargotracker.notification.application.internal.commandservices.PasswordResetMailService"/>
         </Or>
     </Match>
     <!--

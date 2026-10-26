@@ -1,13 +1,16 @@
 package com.example.cargotracker.notification.infrastructure.config;
 
 import com.example.cargotracker.notification.application.internal.commandservices.PasswordResetMailService;
+import com.example.cargotracker.notification.application.internal.commandservices.UserInvitationMailService;
 import com.example.cargotracker.notification.domain.model.aggregates.MailSender;
 import com.example.cargotracker.notification.domain.model.aggregates.NotificationRepository;
 import com.example.cargotracker.notification.domain.model.aggregates.PasswordResetMailTemplate;
+import com.example.cargotracker.notification.domain.model.aggregates.UserInvitationMailTemplate;
 import com.example.cargotracker.notification.infrastructure.mail.LoggingMailSender;
 import com.example.cargotracker.notification.infrastructure.mail.NotificationMailGuard;
 import com.example.cargotracker.notification.infrastructure.mail.SmtpMailSender;
 import com.example.cargotracker.notification.infrastructure.mail.ThymeleafPasswordResetMailTemplate;
+import com.example.cargotracker.notification.infrastructure.mail.ThymeleafUserInvitationMailTemplate;
 import java.time.Clock;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Bean;
@@ -38,6 +41,22 @@ public class NotificationConfiguration {
     @Bean
     PasswordResetMailTemplate passwordResetMailTemplate() {
         return new ThymeleafPasswordResetMailTemplate();
+    }
+
+    @Bean
+    UserInvitationMailTemplate userInvitationMailTemplate() {
+        return new ThymeleafUserInvitationMailTemplate();
+    }
+
+    @Bean
+    UserInvitationMailService userInvitationMailService(
+            NotificationRepository notifications,
+            MailSender notificationMailSender,
+            UserInvitationMailTemplate userInvitationMailTemplate,
+            Clock clock,
+            TransactionTemplate transactionTemplate) {
+        return new UserInvitationMailService(
+                notifications, notificationMailSender, userInvitationMailTemplate, clock, transactionTemplate);
     }
 
     @Bean

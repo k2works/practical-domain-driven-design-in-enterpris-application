@@ -3,9 +3,7 @@ package com.example.cargotracker.notification.application.internal.commandservic
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.example.cargotracker.notification.application.internal.commands.SendPasswordResetMailCommand;
-import com.example.cargotracker.notification.domain.model.aggregates.MailSender;
 import com.example.cargotracker.notification.domain.model.aggregates.Notification;
-import com.example.cargotracker.notification.domain.model.aggregates.NotificationRepository;
 import com.example.cargotracker.notification.domain.model.aggregates.OutgoingMail;
 import com.example.cargotracker.notification.domain.model.valueobjects.NotificationKind;
 import com.example.cargotracker.notification.domain.model.valueobjects.NotificationStatus;
@@ -13,30 +11,23 @@ import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
-import org.springframework.transaction.support.SimpleTransactionStatus;
-import org.springframework.transaction.support.TransactionCallback;
-import org.springframework.transaction.support.TransactionTemplate;
 
 /** 再設定のメールの送信のサービス（ADR-017。Bolt 33）。 */
 class PasswordResetMailServiceTest {
 
     private static final Instant NOW = Instant.parse("2026-10-15T01:00:00Z");
 
-    private final InMemoryNotifications notifications = new InMemoryNotifications();
-    private final RecordingSender sender = new RecordingSender();
+    private final NotificationTestDoubles.InMemoryNotifications notifications =
+            new NotificationTestDoubles.InMemoryNotifications();
+    private final NotificationTestDoubles.RecordingSender sender = new NotificationTestDoubles.RecordingSender();
     private final PasswordResetMailService service = new PasswordResetMailService(
             notifications,
             sender,
             (to, resetUrl, expiresAt, locale) -> new OutgoingMail(to, "件名", "本文 " + resetUrl),
             Clock.fixed(NOW, ZoneOffset.UTC),
-            new ImmediateTransactions());
+            new NotificationTestDoubles.ImmediateTransactions());
 
     private static SendPasswordResetMailCommand command(UUID requestId) {
         return new SendPasswordResetMailCommand(
@@ -53,14 +44,16 @@ class PasswordResetMailServiceTest {
     void 送れたら送信済みの通知を残し本文とリンクは残さない() {
         SendPasswordResetMailCommand command = command(UUID.randomUUID());
 
-        PasswordResetMailOutcome outcome = service.send(command);
+        MailDeliveryOutcome outcome = service.send(command);
 
-        assertThat(outcome).isEqualTo(new PasswordResetMailOutcome.Sent());
+        assertThat(outcome).isEqualTo(new MailDeliveryOutcome.Sent());
         assertThat(sender.sent).singleElement().satisfies(mail -> {
             assertThat(mail.to()).isEqualTo("shipper@example.com");
             assertThat(mail.body()).contains(command.resetUrl());
         });
-        Notification recorded = notifications.find(command).orElseThrow();
+        Notification recorded = notifications
+                .find(command.requestId(), command.recipientUserId())
+                .orElseThrow();
         assertThat(recorded.status()).isEqualTo(NotificationStatus.SENT);
         assertThat(recorded.sentAt()).contains(new UtcInstant(NOW));
         assertThat(recorded.kind()).isEqualTo(NotificationKind.PASSWORD_RESET);
@@ -73,9 +66,9 @@ class PasswordResetMailServiceTest {
         service.send(first);
         assertThat(sender.sent).hasSize(1);
 
-        PasswordResetMailOutcome outcome = service.send(first);
+        MailDeliveryOutcome outcome = service.send(first);
 
-        assertThat(outcome).isEqualTo(new PasswordResetMailOutcome.AlreadySent());
+        assertThat(outcome).isEqualTo(new MailDeliveryOutcome.AlreadySent());
         assertThat(sender.sent).hasSize(1);
     }
 
@@ -84,10 +77,12 @@ class PasswordResetMailServiceTest {
         sender.failure = new IllegalStateException("接続できない");
         SendPasswordResetMailCommand command = command(UUID.randomUUID());
 
-        PasswordResetMailOutcome outcome = service.send(command);
+        MailDeliveryOutcome outcome = service.send(command);
 
-        assertThat(outcome).isInstanceOf(PasswordResetMailOutcome.Failed.class);
-        Notification recorded = notifications.find(command).orElseThrow();
+        assertThat(outcome).isInstanceOf(MailDeliveryOutcome.Failed.class);
+        Notification recorded = notifications
+                .find(command.requestId(), command.recipientUserId())
+                .orElseThrow();
         assertThat(recorded.status()).isEqualTo(NotificationStatus.FAILED);
         assertThat(recorded.failureReason())
                 .hasValueSatisfying(reason ->
@@ -101,8 +96,35 @@ class PasswordResetMailServiceTest {
 
         service.send(command);
 
-        assertThat(notifications.find(command).orElseThrow().failureReason())
-                .hasValueSatisfying(reason -> assertThat(reason).doesNotContain("secret-token"));
+        assertThat(notifications
+                        .find(command.requestId(), command.recipientUserId())
+                        .orElseThrow()
+                        .failureReason())
+                .hasValueSatisfying(reason ->
+                        assertThat(reason).doesNotContain("secret-token").contains("[リンク]"));
+    }
+
+    @Test
+    void 文面を組み立てられなくても例外にせず失敗の理由を残す() {
+        // 行 4（Bolt 38b2b。文面は記録の後に送信と同じ try の中で作る）
+        PasswordResetMailService failing = new PasswordResetMailService(
+                notifications,
+                sender,
+                (to, resetUrl, expiresAt, locale) -> {
+                    throw new IllegalStateException("文面の誤り " + resetUrl);
+                },
+                Clock.fixed(NOW, ZoneOffset.UTC),
+                new NotificationTestDoubles.ImmediateTransactions());
+        SendPasswordResetMailCommand command = command(UUID.randomUUID());
+
+        assertThat(failing.send(command)).isInstanceOf(MailDeliveryOutcome.Failed.class);
+        assertThat(sender.sent).isEmpty();
+        assertThat(notifications
+                        .find(command.requestId(), command.recipientUserId())
+                        .orElseThrow()
+                        .failureReason())
+                .hasValueSatisfying(
+                        reason -> assertThat(reason).contains("文面の誤り").doesNotContain("secret-token"));
     }
 
     @Test
@@ -113,7 +135,10 @@ class PasswordResetMailServiceTest {
 
         service.send(command);
 
-        assertThat(notifications.find(command).orElseThrow().failureReason())
+        assertThat(notifications
+                        .find(command.requestId(), command.recipientUserId())
+                        .orElseThrow()
+                        .failureReason())
                 .hasValueSatisfying(reason -> assertThat(reason)
                         .startsWith("IllegalStateException: 550")
                         .doesNotContain("secret-token")
@@ -127,62 +152,7 @@ class PasswordResetMailServiceTest {
         SendPasswordResetMailCommand command = command(UUID.randomUUID());
         notifications.rejectOutcome = true;
 
-        assertThat(service.send(command)).isEqualTo(new PasswordResetMailOutcome.Sent());
+        assertThat(service.send(command)).isEqualTo(new MailDeliveryOutcome.Sent());
         assertThat(sender.sent).hasSize(1);
-    }
-
-    private static final class RecordingSender implements MailSender {
-        private final List<OutgoingMail> sent = new ArrayList<>();
-        private RuntimeException failure;
-
-        @Override
-        public void send(OutgoingMail mail) {
-            if (failure != null) {
-                throw failure;
-            }
-            sent.add(mail);
-        }
-    }
-
-    private static final class InMemoryNotifications implements NotificationRepository {
-        private final Map<String, Notification> rows = new HashMap<>();
-        private boolean rejectOutcome;
-
-        private static String key(UUID eventId, UUID recipient) {
-            return eventId + "/" + recipient;
-        }
-
-        Optional<Notification> find(SendPasswordResetMailCommand command) {
-            return findByEventIdAndRecipient(command.requestId(), command.recipientUserId());
-        }
-
-        @Override
-        public boolean addIfAbsent(Notification notification) {
-            return rows.putIfAbsent(key(notification.eventId(), notification.recipientUserId()), notification) == null;
-        }
-
-        @Override
-        public boolean recordOutcome(Notification notification) {
-            String key = key(notification.eventId(), notification.recipientUserId());
-            Notification current = rows.get(key);
-            if (rejectOutcome || current == null || current.status() != NotificationStatus.PENDING) {
-                return false;
-            }
-            rows.put(key, notification);
-            return true;
-        }
-
-        @Override
-        public Optional<Notification> findByEventIdAndRecipient(UUID eventId, UUID recipientUserId) {
-            return Optional.ofNullable(rows.get(key(eventId, recipientUserId)));
-        }
-    }
-
-    /** トランザクションを開かずにそのまま呼ぶ（単体テスト用）。 */
-    private static final class ImmediateTransactions extends TransactionTemplate {
-        @Override
-        public <T> T execute(TransactionCallback<T> action) {
-            return action.doInTransaction(new SimpleTransactionStatus());
-        }
     }
 }

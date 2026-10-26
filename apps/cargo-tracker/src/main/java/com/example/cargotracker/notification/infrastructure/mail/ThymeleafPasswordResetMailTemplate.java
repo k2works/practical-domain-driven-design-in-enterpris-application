@@ -3,14 +3,9 @@ package com.example.cargotracker.notification.infrastructure.mail;
 import com.example.cargotracker.notification.domain.model.aggregates.OutgoingMail;
 import com.example.cargotracker.notification.domain.model.aggregates.PasswordResetMailTemplate;
 import com.example.cargotracker.shared.domain.UtcInstant;
-import java.nio.charset.StandardCharsets;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
-import org.thymeleaf.templatemode.TemplateMode;
-import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
 
 /**
  * password の再設定のメールの文面（UI 設計「password の再設定のメール」。Bolt 33）。Thymeleaf のテキストのテンプレート
@@ -22,27 +17,13 @@ public final class ThymeleafPasswordResetMailTemplate implements PasswordResetMa
     /** 件名（UI 設計）。 */
     static final String SUBJECT = "【cargo-tracker】password の再設定のご案内";
 
-    private static final ZoneId DISPLAY_ZONE = ZoneId.of("Asia/Tokyo");
-    private static final DateTimeFormatter DATE_TIME = DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm VV（'UTC'xxx）");
-
-    private final SpringTemplateEngine engine;
-
-    public ThymeleafPasswordResetMailTemplate() {
-        ClassLoaderTemplateResolver resolver = new ClassLoaderTemplateResolver();
-        resolver.setPrefix("mail/");
-        resolver.setSuffix(".txt");
-        resolver.setTemplateMode(TemplateMode.TEXT);
-        resolver.setCharacterEncoding(StandardCharsets.UTF_8.name());
-        resolver.setCacheable(true);
-        this.engine = new SpringTemplateEngine();
-        this.engine.setTemplateResolver(resolver);
-    }
+    private final SpringTemplateEngine engine = MailTextTemplates.engine();
 
     @Override
     public OutgoingMail compose(String to, String resetUrl, UtcInstant expiresAt, String locale) {
         Context context = new Context(Locale.forLanguageTag(locale));
         context.setVariable("resetUrl", resetUrl);
-        context.setVariable("expiresAt", DATE_TIME.format(expiresAt.instant().atZone(DISPLAY_ZONE)));
+        context.setVariable("expiresAt", MailTextTemplates.dateTime(expiresAt));
         return new OutgoingMail(to, SUBJECT, engine.process("password-reset", context));
     }
 }

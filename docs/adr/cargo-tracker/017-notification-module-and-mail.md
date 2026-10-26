@@ -1,10 +1,10 @@
 ---
 type: ADR
 title: "ADR-017: 通知モジュールを新設し、メールは公開 API で受けて SMTP で送る"
-description: "通知モジュールを最小に新設し、メールの送信を公開 API（notification.interfaces.api の PasswordResetMail）で受けて SMTP で送る決定。identity は依頼の応答から切り離した @ApplicationModuleListener のハンドラーで再設定のトークンを発行し、ACL から同期で呼ぶ。通知は identity に依存しない。dev はログに出す送信、統合テストは Mailpit、SES の SMTP は W10。"
+description: "通知モジュールを最小に新設し、メールの送信を公開 API（notification.interfaces.api の PasswordResetMail。Bolt 38b2b で UserInvitationMail を足した）で受けて SMTP で送る決定。identity は依頼の応答から切り離した @ApplicationModuleListener のハンドラーで再設定のトークンを発行し、ACL から同期で呼ぶ。通知は identity に依存しない。dev はログに出す送信、統合テストは Mailpit、SES の SMTP は W10。"
 tags: [adr, architecture, notification, mail]
 status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T04:05:17Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-26T00:51:35Z }
 ---
 
 # ADR-017: 通知モジュールを新設し、メールは公開 API で受けて SMTP で送る
@@ -36,10 +36,12 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T04:05:17Z }
 | 操作 | インターフェース `PasswordResetMail` の `send(PasswordResetMailRequest)` が `PasswordResetMailReceipt` を返す。結果は `Sent`・`AlreadySent`・`Failed` |
 | 要求 | 依頼の ID（UUID。通知の `event_id`）、トークンの ID（UUID。`target_ref`）、宛先の利用者の ID（UUID）、アドレス、再設定の URL、期限（`UtcInstant`）、言語。値は Java の標準・共有カーネルの型と文字列だけ |
 | 通知の中 | アダプターがアプリケーションサービス `notification.application.internal.commandservices.PasswordResetMailService` を呼ぶ。サービスは通知を PENDING で記録してから送信のポートを呼び、SENT か FAILED（理由）にする。状態の更新は `status = 'PENDING'` を条件にした更新で、版の列は持たない |
+| 2 つ目の操作（Bolt 38b2b） | インターフェース `UserInvitationMail` の `send(UserInvitationMailRequest)` が `UserInvitationMailReceipt`（`Sent`・`AlreadySent`・`Failed`）を返す。要求は登録の ID（`event_id`）、招待のトークンの ID（`target_ref`）、宛先の利用者の ID、アドレス、初回の設定の URL、期限、言語。サービスは `UserInvitationMailService`。種類ごとの口にし、一般の口にまとめるかは Bolt 38d で決める（2026-10-26 の開始準備、human:kakimomokuri） |
+| 共有の部品（Bolt 38b2b） | 記録（PENDING）・送信・SENT か FAILED・失敗の理由とログの伏せ字は、2 つのサービスが package-private の `LinkMailDelivery` に任せる（Bean にせず各サービスが作る）。伏せ字はリンクを「[リンク]」、アドレスを「[メールアドレス]」にする。結果は `MailDeliveryOutcome`（Bolt 38b2b で `PasswordResetMailOutcome` から名前を変えた） |
 | 重複 | 同じ `event_id` と宛先の通知が既にあれば送らず `AlreadySent` を返す（UK(event_id, recipient_user_id)。N-INV-02） |
 | 本文 | 件名と本文は通知モジュールのテンプレート（Thymeleaf のテキストのテンプレート）で組み立てる。料金などを書かない（N-INV-01） |
 
-補足（2026-10-15、human:kakimomokuri が決定）: 外部の技術のポート（回復コードのハッシュ・TOTP の秘密の発行・メールの送信など）はドメイン（`domain.model.aggregates`）に置く。`application.internal.outboundservices` は他のコンテキストを呼ぶ ACL に使う。Bolt 33 のステップ 2 で送信のポートを `application.internal.outboundservices` に置いて層の規則に当たり、人に諮って、それまでの前例（回復コードのハッシュ・TOTP の秘密の発行）を規則にした。送信のポート `MailSender`・`PasswordResetMailTemplate`・`OutgoingMail` は `notification.domain.model.aggregates` のままにする。
+補足（2026-10-15、human:kakimomokuri が決定）: 外部の技術のポート（回復コードのハッシュ・TOTP の秘密の発行・メールの送信など）はドメイン（`domain.model.aggregates`）に置く。`application.internal.outboundservices` は他のコンテキストを呼ぶ ACL に使う。Bolt 33 のステップ 2 で送信のポートを `application.internal.outboundservices` に置いて層の規則に当たり、人に諮って、それまでの前例（回復コードのハッシュ・TOTP の秘密の発行）を規則にした。送信のポート `MailSender`・`PasswordResetMailTemplate`・`OutgoingMail` は `notification.domain.model.aggregates` のままにする（Bolt 38b2b の `UserInvitationMailTemplate` も同じ）。
 
 ### 2. identity からの呼び出しと依存の制約
 
@@ -51,7 +53,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T04:05:17Z }
 
 | 要素 | 決定 |
 | :--- | :--- |
-| ポート | `notification.domain.model.aggregates` の `MailSender`（文面の `PasswordResetMailTemplate`、送るメール `OutgoingMail` も同じ。決定 1 の補足の規則による。Bolt 33 のステップ 2 で層の規則に当たって `application.internal.outboundservices` から移した）。application は `org.springframework.mail..`・`jakarta.mail..` に依存しない（`LayerArchitectureTest` の禁止に足す） |
+| ポート | `notification.domain.model.aggregates` の `MailSender`（文面の `PasswordResetMailTemplate` と `UserInvitationMailTemplate`、送るメール `OutgoingMail` も同じ。決定 1 の補足の規則による。Bolt 33 のステップ 2 で層の規則に当たって `application.internal.outboundservices` から移した）。application は `org.springframework.mail..`・`jakarta.mail..` に依存しない（`LayerArchitectureTest` の禁止に足す） |
 | SMTP | `notification.infrastructure.mail.SmtpMailSender`（`spring-boot-starter-mail` の `JavaMailSender`。版は Boot 管理）。接続・読み・書きのタイムアウトを各 5 秒にする（`spring.mail.properties.mail.smtp.connectiontimeout`・`timeout`・`writetimeout`。決定 4） |
 | dev | `notification.infrastructure.mail.LoggingMailSender` がメールをログに出す（宛先・件名・本文。リンクを含む）。`notification.infrastructure.config` の 1 つの `MailSender` の Bean の中で、守りの式で `LoggingMailSender` と `SmtpMailSender` を切り替える |
 | 守り | `notification.infrastructure.mail.NotificationMailGuard` で、dev と staging・prod の併用と、staging・prod で SMTP の設定がないときは起動を止める。それ以外（プロファイルなしのテストなど）は送信の失敗として記録する |
@@ -74,8 +76,8 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T04:05:17Z }
 
 ### 5. 送信の記録
 
-- 通知モジュールの `notification.notification` の表に、宛先の利用者・アドレス・種類（`PASSWORD_RESET`）・対象・言語・状態・送信時刻・失敗の理由を残す。本文とリンクは保存しない。
-- `PASSWORD_RESET` の `target_ref` はトークンの ID とし、本文を再現しない（この種類だけの例外。リンクを再現できる値を残さない）。`recipient_user_id` はコンテキストをまたぐので FK にしない。
+- 通知モジュールの `notification.notification` の表に、宛先の利用者・アドレス・種類（`PASSWORD_RESET`。Bolt 38b2b から `USER_INVITATION` も）・対象・言語・状態・送信時刻・失敗の理由を残す。本文とリンクは保存しない。
+- `PASSWORD_RESET` の `target_ref` はトークンの ID とし、本文を再現しない（リンクを再現できる値を残さない例外。Bolt 38b2b の `USER_INVITATION` も同じで、`event_id` は登録の ID、`target_ref` は招待のトークンの ID）。`recipient_user_id` はコンテキストをまたぐので FK にしない。
 - 繰り返し（1 分以内）で送らなかったことは記録せず、送信の記録がないことで分かる。監査（`PASSWORD_RESET_REQUESTED`）と送信の記録は結ばない（AUD-02 の対象の列は使う Bolt で足す）。
 
 ### 6. 33a までの仮の A-06
@@ -118,7 +120,7 @@ W10 に送る（2026-10-15、human:kakimomokuri が決定）。
 - 爆撃の 1 日の上限がない。1 分ごとに依頼し直して、前のリンクを無効にできる。
 - デモのログにリンクが出る。デモには実在のメールアドレスを登録しない（ADR-013）。
 
-W9 の開始準備で、宛先のモデルを決める。利用者でない宛先（荷受人への招待 `CONSIGNEE_INVITATION`）を扱うため、`recipient_user_id` の NOT NULL と UK(event_id, recipient_user_id)、公開 API を種類ごとに分けるか汎用にするかを見直す。
+Bolt 38d の開始準備で、種類ごとの公開 API（再設定・利用者の招待）を一般の口にまとめるか、共有の部品 `LinkMailDelivery` をリンクのないメールに広げるかを決める（Bolt 38b の確認ポイント 1）。W9 の開始準備で、宛先のモデルを決める。利用者でない宛先（荷受人への招待 `CONSIGNEE_INVITATION`）を扱うため、`recipient_user_id` の NOT NULL と UK(event_id, recipient_user_id)、公開 API を種類ごとに分けるか汎用にするかを見直す。
 
 ## コンプライアンス
 
@@ -130,6 +132,7 @@ W9 の開始準備で、宛先のモデルを決める。利用者でない宛�
 ## 改訂の経緯
 
 - 2026-10-15: Bolt 33a のステップ 1 で、決定 6 に仮の A-06 を本物の A-06 に置き換えること（リンクを開くとトークンの ID だけを session に移して PRG、使えないリンクは同じ案内、仮のテンプレートを消す、リンクの path を定数に寄せる）を書いた（Bolt 33a の開始準備の決定 1。human:kakimomokuri が決定）。
+- 2026-10-26: Bolt 38b2b で、2 つ目の公開 API `UserInvitationMail`（種類 `USER_INVITATION`）、文面のポート `UserInvitationMailTemplate`、記録と送信と伏せ字の共有の部品 `LinkMailDelivery`（伏せ字は「[リンク]」）と結果 `MailDeliveryOutcome` を足した（決定 1・3・5、既知の課題。Bolt 38b2b の開始準備の決定 1〜3。human:kakimomokuri が決定）。
 
 ## 関連ドキュメント
 

@@ -1,7 +1,7 @@
 package com.example.cargotracker.notification.interfaces.api.internal;
 
 import com.example.cargotracker.notification.application.internal.commands.SendPasswordResetMailCommand;
-import com.example.cargotracker.notification.application.internal.commandservices.PasswordResetMailOutcome;
+import com.example.cargotracker.notification.application.internal.commandservices.MailDeliveryOutcome;
 import com.example.cargotracker.notification.application.internal.commandservices.PasswordResetMailService;
 import com.example.cargotracker.notification.interfaces.api.PasswordResetMail;
 import com.example.cargotracker.notification.interfaces.api.PasswordResetMailReceipt;
@@ -23,7 +23,7 @@ public class PasswordResetMailAdapter implements PasswordResetMail {
 
     @Override
     public PasswordResetMailReceipt send(PasswordResetMailRequest request) {
-        PasswordResetMailOutcome outcome = service.send(new SendPasswordResetMailCommand(
+        MailDeliveryOutcome outcome = service.send(new SendPasswordResetMailCommand(
                 request.requestId(),
                 request.tokenId(),
                 request.recipientUserId(),
@@ -32,9 +32,9 @@ public class PasswordResetMailAdapter implements PasswordResetMail {
                 request.expiresAt(),
                 request.locale()));
         return switch (outcome) {
-            case PasswordResetMailOutcome.Sent _ -> new PasswordResetMailReceipt.Sent();
-            case PasswordResetMailOutcome.AlreadySent _ -> new PasswordResetMailReceipt.AlreadySent();
-            case PasswordResetMailOutcome.Failed(String reason) -> new PasswordResetMailReceipt.Failed(reason);
+            case MailDeliveryOutcome.Sent _ -> new PasswordResetMailReceipt.Sent();
+            case MailDeliveryOutcome.AlreadySent _ -> new PasswordResetMailReceipt.AlreadySent();
+            case MailDeliveryOutcome.Failed(String reason) -> new PasswordResetMailReceipt.Failed(reason);
         };
     }
 }

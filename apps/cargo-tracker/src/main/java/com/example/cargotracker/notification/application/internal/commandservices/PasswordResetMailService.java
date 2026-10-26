@@ -4,14 +4,9 @@ import com.example.cargotracker.notification.application.internal.commands.SendP
 import com.example.cargotracker.notification.domain.model.aggregates.MailSender;
 import com.example.cargotracker.notification.domain.model.aggregates.Notification;
 import com.example.cargotracker.notification.domain.model.aggregates.NotificationRepository;
-import com.example.cargotracker.notification.domain.model.aggregates.OutgoingMail;
 import com.example.cargotracker.notification.domain.model.aggregates.PasswordResetMailTemplate;
 import com.example.cargotracker.notification.domain.model.valueobjects.NotificationKind;
-import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Clock;
-import java.util.regex.Pattern;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -27,21 +22,8 @@ import org.springframework.transaction.support.TransactionTemplate;
 @Service
 public class PasswordResetMailService {
 
-    private static final Logger LOG = LoggerFactory.getLogger(PasswordResetMailService.class);
-
-    /** 失敗の理由でリンクの代わりに置く文字列。 */
-    static final String LINK_PLACEHOLDER = "[再設定のリンク]";
-
-    /** 失敗の理由でメールアドレスの代わりに置く文字列。 */
-    static final String ADDRESS_PLACEHOLDER = "[メールアドレス]";
-
-    private static final Pattern EMAIL_ADDRESS = Pattern.compile("[^\\s<>\"'(),;:]+@[^\\s<>\"'(),;:]+");
-
-    private final NotificationRepository notifications;
-    private final MailSender sender;
+    private final LinkMailDelivery delivery;
     private final PasswordResetMailTemplate template;
-    private final Clock clock;
-    private final TransactionTemplate transactionTemplate;
 
     public PasswordResetMailService(
             NotificationRepository notifications,
@@ -49,15 +31,12 @@ public class PasswordResetMailService {
             PasswordResetMailTemplate template,
             Clock clock,
             TransactionTemplate transactionTemplate) {
-        this.notifications = notifications;
-        this.sender = sender;
+        this.delivery = new LinkMailDelivery(notifications, sender, clock, transactionTemplate);
         this.template = template;
-        this.clock = clock;
-        this.transactionTemplate = transactionTemplate;
     }
 
-    /** password の再設定のメールを送り、結果を記録する。 */
-    public PasswordResetMailOutcome send(SendPasswordResetMailCommand command) {
+    /** password の再設定のメールを送り、結果を記録する（記録と送信と伏せ字は {@link LinkMailDelivery}。Bolt 38b2b）。 */
+    public MailDeliveryOutcome send(SendPasswordResetMailCommand command) {
         Notification pending = Notification.pending(
                 command.requestId(),
                 command.recipientUserId(),
@@ -65,50 +44,10 @@ public class PasswordResetMailService {
                 NotificationKind.PASSWORD_RESET,
                 command.tokenId().toString(),
                 command.locale(),
-                now());
-        Boolean added = transactionTemplate.execute(status -> notifications.addIfAbsent(pending));
-        if (!Boolean.TRUE.equals(added)) {
-            return new PasswordResetMailOutcome.AlreadySent();
-        }
-        try {
-            OutgoingMail mail =
-                    template.compose(command.email(), command.resetUrl(), command.expiresAt(), command.locale());
-            sender.send(mail);
-        } catch (RuntimeException e) {
-            String reason = reasonOf(e, command.resetUrl());
-            LOG.warn("password の再設定のメールを送れなかった: 依頼 {}、通知 {}、理由 {}", command.requestId(), pending.id(), reason);
-            saveOutcome(pending.failed(reason));
-            return new PasswordResetMailOutcome.Failed(reason);
-        }
-        saveOutcome(pending.sent(now()));
-        return new PasswordResetMailOutcome.Sent();
-    }
-
-    /**
-     * 送信の結果を書く。送った後なので、書けなくても例外にしない（例外にすると呼ぶ側のトランザクションが戻り、届いたリンクのトークンが
-     * 消える）。同じ通知を同時に 2 つが書くことはない（記録は契機と宛先で 1 つ）ので、書けないのは想定の外で、警告を残す。
-     */
-    private void saveOutcome(Notification outcome) {
-        Boolean saved = transactionTemplate.execute(status -> notifications.recordOutcome(outcome));
-        if (!Boolean.TRUE.equals(saved)) {
-            LOG.warn("送信待ちでない通知に送信の結果を書こうとした: 通知 {}、結果 {}", outcome.id(), outcome.status());
-        }
-    }
-
-    private UtcInstant now() {
-        return new UtcInstant(clock.instant());
-    }
-
-    /**
-     * 例外の型と文。リンク（とその中のトークン）とメールアドレスを伏せる（記録とログに残さない。SMTP の応答の文には宛先が入ることがある）。
-     */
-    static String reasonOf(RuntimeException e, String resetUrl) {
-        String message = String.valueOf(e.getMessage()).replace(resetUrl, LINK_PLACEHOLDER);
-        String token = resetUrl.substring(resetUrl.lastIndexOf('/') + 1);
-        if (!token.isEmpty()) {
-            message = message.replace(token, LINK_PLACEHOLDER);
-        }
-        message = EMAIL_ADDRESS.matcher(message).replaceAll(ADDRESS_PLACEHOLDER);
-        return e.getClass().getSimpleName() + ": " + message;
+                delivery.now());
+        return delivery.deliver(
+                pending,
+                command.resetUrl(),
+                () -> template.compose(command.email(), command.resetUrl(), command.expiresAt(), command.locale()));
     }
 }

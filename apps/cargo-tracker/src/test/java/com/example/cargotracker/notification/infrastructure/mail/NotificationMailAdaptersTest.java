@@ -42,6 +42,31 @@ class NotificationMailAdaptersTest {
     }
 
     @Test
+    void 利用者の招待の文面はUI設計の件名と6文でリンクと期限と出口を入れ業務の情報を書かない() {
+        // 行 5（Bolt 38b2b。N-INV-01）
+        OutgoingMail mail = new ThymeleafUserInvitationMailTemplate()
+                .compose(
+                        "hanako@example.com",
+                        "https://cargo.example/password-reset/abc?x=1&y=2",
+                        new UtcInstant(Instant.parse("2026-10-27T01:30:00Z")),
+                        "ja");
+
+        assertThat(mail.to()).isEqualTo("hanako@example.com");
+        assertThat(mail.subject()).isEqualTo("【cargo-tracker】利用者の登録のご案内");
+        assertThat(mail.body())
+                .startsWith("cargo-tracker の利用者として、このメールアドレスが登録されました。")
+                .contains("次のリンクを開いて、password を設定してください。")
+                .contains("https://cargo.example/password-reset/abc?x=1&y=2")
+                .contains("このリンクは 2026-10-27 10:30 Asia/Tokyo（UTC+09:00） まで、1 回だけ使えます。")
+                .contains("期限を過ぎたときは、ログインの画面の「password を忘れた場合」から設定できます。")
+                .contains("心当たりがない場合は、このメールを無視してください。")
+                .doesNotContain("&amp;")
+                .doesNotContain("役割")
+                .doesNotContain("企業");
+        assertThat(mail.body().lines()).hasSize(6);
+    }
+
+    @Test
     @ExtendWith(OutputCaptureExtension.class)
     void ログに出す送信は宛先と件名と本文を出す(CapturedOutput output) {
         new LoggingMailSender().send(new OutgoingMail("shipper@example.com", "件名", "本文のリンク"));
