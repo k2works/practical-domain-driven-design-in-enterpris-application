@@ -8565,6 +8565,41 @@
   
   
     <li class="md-nav__item">
+      <a href="../bolt_38b4_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 38b4 計画
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../release_report-0_1/" class="md-nav__link">
         
   
@@ -15721,14 +15756,14 @@
 </tr>
 <tr>
 <td style="text-align: left;">38b3b</td>
-<td style="text-align: left;">S-20 の登録の画面: 一覧の入口、企業を選ぶ画面と付けられる役割と入力の画面の 2 段（JS なし。荷受人の企業は出さない）、確認は POST と hidden（メールアドレスと表示名を URL に残さない。確認は書かず、範囲外の記録もしない。「戻る」と誤りの示し直しも POST と hidden で行い、確定の後の PRG の行き先にメールアドレスを入れない。ui_design :182-183 の「確認の GET は書かない」を「確認（GET・POST）は書かない」に一般化する）、企業の選択肢の名前は「企業名（企業の種類）」にし同じ名前の企業は並び（名前・ID）で区別する、役割のチェックボックスは <code>Role</code> の宣言の順に並べる（<code>RegistrableCompany.assignableRoles</code> は順を持たない）、Bolt 38 のエラー要約、<code>/staff/users/**</code> の認可と CSRF の統合テスト、axe、マニュアル 11 章とキャプチャ。機能ブランチで進め、PR の CI を緑にし、develop へのマージは 38b4 と一緒（デモ環境は develop への push で配備されるため。Bolt 38b3 の開始準備の決定 (6)）。開始準備で確かめて諮ること: Bolt 38b2 の rollback-only と DE-25 の推論、Bolt 38 の既知の課題（停止の理由の文言、エラー要約の二重の読み上げと fieldset の <code>aria-invalid</code>）、Bolt 38b2c の行 3 の件数の前提。<a href="../bolt_38b3b_plan/">Bolt 38b3b 計画</a>・<a href="../bolt_38b3b_report/">終了報告</a>（承認済み。PR #51、develop へのマージは 38b4 と一緒）</td>
+<td style="text-align: left;">S-20 の登録の画面: 一覧の入口、企業を選ぶ画面と付けられる役割と入力の画面の 2 段（JS なし。荷受人の企業は出さない）、確認は POST と hidden（メールアドレスと表示名を URL に残さない。確認は書かず、範囲外の記録もしない。「戻る」と誤りの示し直しも POST と hidden で行い、確定の後の PRG の行き先にメールアドレスを入れない。ui_design :182-183 の「確認の GET は書かない」を「確認（GET・POST）は書かない」に一般化する）、企業の選択肢の名前は「企業名（企業の種類）」にし同じ名前の企業は並び（名前・ID）で区別する、役割のチェックボックスは <code>Role</code> の宣言の順に並べる（<code>RegistrableCompany.assignableRoles</code> は順を持たない）、Bolt 38 のエラー要約、<code>/staff/users/**</code> の認可と CSRF の統合テスト、axe、マニュアル 11 章とキャプチャ。機能ブランチで進め、PR の CI を緑にし、develop へのマージは 38b4 と一緒（デモ環境は develop への push で配備されるため。Bolt 38b3 の開始準備の決定 (6)）。開始準備で確かめて諮ること: Bolt 38b2 の rollback-only と DE-25 の推論、Bolt 38 の既知の課題（停止の理由の文言、エラー要約の二重の読み上げと fieldset の <code>aria-invalid</code>）、Bolt 38b2c の行 3 の件数の前提。<a href="../bolt_38b3b_plan/">Bolt 38b3b 計画</a>・<a href="../bolt_38b3b_report/">終了報告</a>（承認済み。PR #51 を 2026-10-26 に develop へマージした。人の指示で 38b4 を待たない）</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: left;">アウトサイドイン（38b・38b2・38b2b・38b2c・38b3 の上に画面を足す）</td>
 <td style="text-align: left;">計画と終了報告（認可・画面）</td>
 </tr>
 <tr>
 <td style="text-align: left;">38b4</td>
-<td style="text-align: left;">A-06 の初回の設定と無効のリンクの画面の出し分け（用途で見出し・説明・期限の文言・完了の知らせ・監査。用途の定数を外から参照せず、enum の中のメソッドで問い合わせる。Bolt 38b2c の規則）。開始準備で、再起動の後の遅れた DE-25 で設定を済ませた本人に招待を送り直すことを、DE-25 の古さ（例: 登録から 24 時間）で止めるかを諮る（Bolt 38b2c の終了報告の議題 5）、axe、マニュアル 2 章とキャプチャ、受入シナリオ（登録から A-07 まで）、受入条件の照合の表、動画（<code>@demo-bolt-38b4</code>）。38b3b と同じ配備（38b3b の機能ブランチと一緒に develop へマージし、デモ環境の配備の確かめはこの Bolt の終了報告で）</td>
+<td style="text-align: left;">A-06 の初回の設定と無効のリンクの画面の出し分け（用途で見出し・説明・期限の文言・完了の知らせ・監査。用途の定数を外から参照せず、enum の中のメソッドで問い合わせる。Bolt 38b2c の規則）。開始準備で、再起動の後の遅れた DE-25 で設定を済ませた本人に招待を送り直すことを、DE-25 の古さ（例: 登録から 24 時間）で止めるかを諮る（Bolt 38b2c の終了報告の議題 5）、axe、マニュアル 2 章とキャプチャ、受入シナリオ（登録から A-07 まで）、受入条件の照合の表、動画（<code>@demo-bolt-38b4</code>）。develop で開発する（2026-10-26、human:kakimomokuri の指示。38b3b の PR #51 は先にマージした）。<a href="../bolt_38b4_plan/">Bolt 38b4 計画</a>（承認待ち）</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: left;">アウトサイドイン</td>
 <td style="text-align: left;">計画と終了報告（画面・GitHub）</td>
@@ -18079,6 +18114,16 @@
 <td style="text-align: left;">2026-10-26</td>
 <td style="text-align: left;">Bolt 38b3b の終了報告を承認した（議題 1〜4。develop へのマージは 38b4 の終了報告の承認の後）</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-26</td>
+<td style="text-align: left;">人の指示（「ブランチは develop で開発して」「前の作業もちゃんとマージしてね」）で、PR #51 をマージコミットで develop へマージした（<code>269b99fdf</code>。CI の check・ui・deploy-demo が成功し、デモ環境は v447 で動いている）。38b4 からは develop で開発する。38b3b と 38b4 の同じ配備（Bolt 38b の決定 (1)）はやめ、登録の画面が A-06 の出し分けより先にデモ環境に出ることを受け入れた</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、指示 human:kakimomokuri</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-26</td>
+<td style="text-align: left;"><a href="../bolt_38b4_plan/">Bolt 38b4 計画</a>を作り、整合性検証の指摘を反映した（承認待ち）。遅れた DE-25 は招待の期限と本人の再設定で止める、使えないリンクは用途を問わない同じ案内、初回の設定の監査に <code>INITIAL_PASSWORD_SET</code>、完了の知らせは用途で分けてログアウトの一文を足す、再設定のリンクで初めて設定する場合は受け入れて文書に書く、目安の 2〜4 時間を超えるが分けずに 1 つの Bolt（約 5.5 時間、打ち切りで守る）と決めた（human:kakimomokuri）</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
 </tr>
 </tbody>
 </table>
