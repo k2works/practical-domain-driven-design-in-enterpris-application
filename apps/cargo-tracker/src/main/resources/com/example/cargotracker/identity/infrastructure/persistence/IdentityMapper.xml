@@ -78,6 +78,14 @@
         SELECT id, name, kind, active FROM identity.company WHERE id = #{id}
     </select>
 
+    <!-- Bolt 38b3。登録できる企業の照会（空の集合では呼ばない） -->
+    <select id="selectCompaniesIn" resultMap="companyRow">
+        SELECT id, name, kind, active FROM identity.company
+         WHERE id IN
+               <foreach collection="companyIds" item="companyId" open="(" separator="," close=")">#{companyId}</foreach>
+         ORDER BY name, id
+    </select>
+
     <sql id="userColumns">id, company_id, email, display_name, password_hash, status, version</sql>
 
     <insert id="insertUser">

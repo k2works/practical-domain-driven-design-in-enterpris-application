@@ -213,8 +213,8 @@ public class IdentityConfiguration {
 
     @Bean
     UserAdministrationQueryService userAdministrationQueryService(
-            UserRepository users, UserAssignmentRepository assignments) {
-        return new UserAdministrationQueryService(users, assignments);
+            UserRepository users, UserAssignmentRepository assignments, CompanyRepository companies) {
+        return new UserAdministrationQueryService(users, assignments, companies);
     }
 
     @Bean

@@ -7,7 +7,9 @@ import com.example.cargotracker.shared.domain.CompanyId;
 import java.time.Clock;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import org.springframework.stereotype.Repository;
 
 /**
@@ -34,8 +36,21 @@ public class MyBatisCompanyRepository implements CompanyRepository {
 
     @Override
     public Optional<Company> findById(CompanyId id) {
-        return mapper.selectCompany(id.value())
-                .map(row ->
-                        Company.of(new CompanyId(row.id()), row.name(), CompanyKind.valueOf(row.kind()), row.active()));
+        return mapper.selectCompany(id.value()).map(MyBatisCompanyRepository::toCompany);
+    }
+
+    @Override
+    public List<Company> findAllIn(Set<CompanyId> ids) {
+        if (ids.isEmpty()) {
+            // 空の IN 句は SQL の誤りになるので、問い合わせない
+            return List.of();
+        }
+        return mapper.selectCompaniesIn(ids.stream().map(CompanyId::value).toList()).stream()
+                .map(MyBatisCompanyRepository::toCompany)
+                .toList();
+    }
+
+    private static Company toCompany(CompanyRow row) {
+        return Company.of(new CompanyId(row.id()), row.name(), CompanyKind.valueOf(row.kind()), row.active());
     }
 }

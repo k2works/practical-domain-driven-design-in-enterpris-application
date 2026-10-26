@@ -265,6 +265,11 @@ class AuthenticationAuditListenerTest {
             public Optional<Company> findById(CompanyId id) {
                 return company.id().equals(id) ? Optional.of(company) : Optional.empty();
             }
+
+            @Override
+            public List<Company> findAllIn(Set<CompanyId> ids) {
+                throw new UnsupportedOperationException();
+            }
         };
     }
 }

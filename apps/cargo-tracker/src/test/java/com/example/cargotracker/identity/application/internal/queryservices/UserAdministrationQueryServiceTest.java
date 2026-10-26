@@ -7,11 +7,15 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.example.cargotracker.identity.domain.model.aggregates.Company;
+import com.example.cargotracker.identity.domain.model.aggregates.CompanyRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.UserAssignmentRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.UserRepository;
+import com.example.cargotracker.identity.domain.model.rules.RoleAssignmentPolicy;
 import com.example.cargotracker.identity.domain.model.valueobjects.AdministrationScope;
 import com.example.cargotracker.identity.domain.model.valueobjects.CompanyKind;
 import com.example.cargotracker.identity.domain.model.valueobjects.EmailAddress;
+import com.example.cargotracker.identity.domain.model.valueobjects.RegistrableCompany;
 import com.example.cargotracker.identity.domain.model.valueobjects.UserDetail;
 import com.example.cargotracker.identity.domain.model.valueobjects.UserStatus;
 import com.example.cargotracker.identity.domain.model.valueobjects.UserSummary;
@@ -30,12 +34,24 @@ class UserAdministrationQueryServiceTest {
 
     private final UserRepository users = mock(UserRepository.class);
     private final UserAssignmentRepository assignments = mock(UserAssignmentRepository.class);
-    private final UserAdministrationQueryService service = new UserAdministrationQueryService(users, assignments);
+    private final CompanyRepository companies = mock(CompanyRepository.class);
+    private final UserAdministrationQueryService service =
+            new UserAdministrationQueryService(users, assignments, companies);
 
     private final CompanyId inside = new CompanyId(UUID.randomUUID());
     private final CompanyId outside = new CompanyId(UUID.randomUUID());
     private final AuthenticatedActor admin =
             new AuthenticatedActor(new UserId(UUID.randomUUID()), inside, Set.of(Role.SYSTEM_ADMIN), "管理 次郎", "A 社");
+    private final CompanyId shipper = new CompanyId(UUID.randomUUID());
+    private final CompanyId consignee = new CompanyId(UUID.randomUUID());
+    private final CompanyId inactive = new CompanyId(UUID.randomUUID());
+    private final Company operatorCompany = Company.of(inside, "A 社", CompanyKind.OPERATOR, true);
+    private final Company shipperCompany = Company.of(shipper, "荷主 B", CompanyKind.SHIPPER, true);
+    private final Company consigneeCompany = Company.of(consignee, "荷受人 C", CompanyKind.CONSIGNEE, true);
+    private final Company inactiveCompany = Company.of(inactive, "D 社", CompanyKind.OPERATOR, false);
+    private final Set<CompanyId> scope = Set.of(inside, shipper, consignee, inactive);
+    private final AuthenticatedActor sales =
+            new AuthenticatedActor(new UserId(UUID.randomUUID()), inside, Set.of(Role.SALES), "営業 一郎", "A 社");
 
     private UserDetail detailIn(CompanyId company) {
         return new UserDetail(
@@ -67,8 +83,6 @@ class UserAdministrationQueryServiceTest {
 
     @Test
     void システム管理者でなければ一覧は空で読まない() {
-        AuthenticatedActor sales =
-                new AuthenticatedActor(new UserId(UUID.randomUUID()), inside, Set.of(Role.SALES), "営業", "A 社");
 
         assertThat(service.list(sales)).isEmpty();
         verify(users, never()).findSummariesIn(any());
@@ -102,11 +116,85 @@ class UserAdministrationQueryServiceTest {
 
     @Test
     void システム管理者でなければ詳細は権限なしで読まない() {
-        AuthenticatedActor sales =
-                new AuthenticatedActor(new UserId(UUID.randomUUID()), inside, Set.of(Role.SALES), "営業", "A 社");
         UserId target = new UserId(UUID.randomUUID());
 
         assertThat(service.detail(sales, target)).isEqualTo(new UserLookup.NotPermitted());
         verify(users, never()).findDetail(any());
+    }
+
+    private void givenScope() {
+        when(assignments.scopeOf(admin.userId())).thenReturn(new AdministrationScope(scope));
+        for (Company company : List.of(operatorCompany, shipperCompany, consigneeCompany, inactiveCompany)) {
+            when(companies.findById(company.id())).thenReturn(Optional.of(company));
+        }
+    }
+
+    @Test
+    void 登録できる企業は管理範囲の有効で付けられる役割がある企業だけをリポジトリの順で返す() {
+        // Bolt 38b3 の行 4（T-106。準備に荷受人の企業と無効な企業があることを先に確かめる）
+        givenScope();
+        List<Company> inScope = List.of(operatorCompany, consigneeCompany, inactiveCompany, shipperCompany);
+        when(companies.findAllIn(scope)).thenReturn(inScope);
+        // 荷受人の企業には付けられる役割がなく、無効な企業は付けられる役割のある種類（無効を除かなければ出てしまう）
+        assertThat(RoleAssignmentPolicy.assignableRoles(consigneeCompany.kind()))
+                .isEmpty();
+        assertThat(RoleAssignmentPolicy.assignableRoles(inactiveCompany.kind())).isNotEmpty();
+
+        assertThat(service.registrableCompanies(admin))
+                .containsExactly(
+                        new RegistrableCompany(
+                                inside,
+                                "A 社",
+                                CompanyKind.OPERATOR,
+                                Set.of(
+                                        Role.SALES,
+                                        Role.ROUTE_DESIGNER,
+                                        Role.TRACKING_MANAGER,
+                                        Role.DATA_STEWARD,
+                                        Role.CUSTOMER_SUPPORT)),
+                        new RegistrableCompany(shipper, "荷主 B", CompanyKind.SHIPPER, Set.of(Role.SHIPPER)));
+        verify(companies).findAllIn(scope);
+    }
+
+    @Test
+    void システム管理者でなければ登録できる企業は空で管理範囲も企業も読まない() {
+        // Bolt 38b3 の行 5
+        assertThat(service.registrableCompanies(sales)).isEmpty();
+        assertThat(service.registrableCompany(sales, inside)).isEqualTo(new RegistrableCompanyLookup.NotPermitted());
+        verify(assignments, never()).scopeOf(any());
+        verify(companies, never()).findAllIn(any());
+        verify(companies, never()).findById(any());
+    }
+
+    @Test
+    void 一社の照会は範囲の企業を見つけ無効と荷受人とない企業と範囲外を分ける() {
+        // Bolt 38b3 の行 6
+        givenScope();
+        CompanyId missing = new CompanyId(UUID.randomUUID());
+        Company other = Company.of(outside, "範囲外の会社", CompanyKind.OPERATOR, true);
+        when(companies.findById(outside)).thenReturn(Optional.of(other));
+        when(companies.findById(missing)).thenReturn(Optional.empty());
+
+        assertThat(service.registrableCompany(admin, shipper))
+                .isEqualTo(new RegistrableCompanyLookup.Found(
+                        new RegistrableCompany(shipper, "荷主 B", CompanyKind.SHIPPER, Set.of(Role.SHIPPER))));
+        assertThat(service.registrableCompany(admin, inactive)).isEqualTo(new RegistrableCompanyLookup.Inactive());
+        assertThat(service.registrableCompany(admin, consignee))
+                .isEqualTo(new RegistrableCompanyLookup.NoAssignableRoles());
+        assertThat(service.registrableCompany(admin, missing)).isEqualTo(new RegistrableCompanyLookup.NotFound());
+        // ない企業でも管理範囲を先に読み、範囲外の企業と読み出しの量をそろえる（前例 detail）
+        verify(assignments, org.mockito.Mockito.times(4)).scopeOf(admin.userId());
+        assertThat(service.registrableCompany(admin, outside)).isEqualTo(new RegistrableCompanyLookup.OutOfScope());
+    }
+
+    @Test
+    void 範囲外の無効な企業と範囲外の荷受人の企業は範囲外として返す() {
+        // Bolt 38b3 の行 6b（範囲外の企業の状態を示さない）
+        when(assignments.scopeOf(admin.userId())).thenReturn(new AdministrationScope(Set.of(inside)));
+        when(companies.findById(inactive)).thenReturn(Optional.of(inactiveCompany));
+        when(companies.findById(consignee)).thenReturn(Optional.of(consigneeCompany));
+
+        assertThat(service.registrableCompany(admin, inactive)).isEqualTo(new RegistrableCompanyLookup.OutOfScope());
+        assertThat(service.registrableCompany(admin, consignee)).isEqualTo(new RegistrableCompanyLookup.OutOfScope());
     }
 }

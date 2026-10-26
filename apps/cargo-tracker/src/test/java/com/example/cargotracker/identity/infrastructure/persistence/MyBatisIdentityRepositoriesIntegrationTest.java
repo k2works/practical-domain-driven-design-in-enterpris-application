@@ -322,6 +322,29 @@ class MyBatisIdentityRepositoriesIntegrationTest {
     }
 
     @Test
+    void 企業をIDの集合で名前とIDの順に読み出し知らないIDは無視し空の集合は空() {
+        // Bolt 38b3 の行 7（同じ名前の 2 社は ID の順。ID の降順に入れる）
+        UUID base = UUID.randomUUID();
+        CompanyId low = new CompanyId(new UUID(base.getMostSignificantBits(), 1L));
+        CompanyId high = new CompanyId(new UUID(base.getMostSignificantBits(), 2L));
+        String sameName = "B 同名 " + base;
+        CompanyId first = new CompanyId(UUID.randomUUID());
+        companies.add(Company.of(high, sameName, CompanyKind.OPERATOR, true));
+        companies.add(Company.of(low, sameName, CompanyKind.SHIPPER, false));
+        companies.add(Company.of(first, "A 先頭 " + base, CompanyKind.CONSIGNEE, true));
+
+        assertThat(companies.findAllIn(Set.of(high, low, first, new CompanyId(UUID.randomUUID()))))
+                .extracting(Company::id)
+                .containsExactly(first, low, high);
+        assertThat(companies.findAllIn(Set.of(low))).singleElement().satisfies(found -> {
+            assertThat(found.name()).isEqualTo(sameName);
+            assertThat(found.kind()).isEqualTo(CompanyKind.SHIPPER);
+            assertThat(found.active()).isFalse();
+        });
+        assertThat(companies.findAllIn(Set.of())).isEmpty();
+    }
+
+    @Test
     void システム管理者に割り当てた企業だけを管理範囲として読む() {
         UserId admin = addUser(company, "管理 " + UUID.randomUUID(), Set.of(Role.SHIPPER));
         CompanyId other = new CompanyId(UUID.randomUUID());

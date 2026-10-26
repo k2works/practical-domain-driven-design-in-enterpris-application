@@ -17,6 +17,8 @@ public interface IdentityMapper {
 
     Optional<CompanyRow> selectCompany(UUID id);
 
+    List<CompanyRow> selectCompaniesIn(@Param("companyIds") List<UUID> companyIds);
+
     void insertUser(@Param("row") UserRow row, @Param("now") OffsetDateTime now);
 
     void insertUserRole(@Param("userId") UUID userId, @Param("role") String role, @Param("now") OffsetDateTime now);

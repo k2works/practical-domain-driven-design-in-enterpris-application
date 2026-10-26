@@ -183,13 +183,40 @@ public class UserRegistrationService {
         };
     }
 
-    /** 前後の空白を除いた表示名。空・200 コードポイントを超える・制御文字を含むなら空。 */
+    /**
+     * 前後の空白（NBSP などの Unicode の空白を含む）を除いた表示名。空・200 コードポイントを超える・見分けにくい文字（制御文字・書式文字・
+     * 行と段落の区切り）を含むなら空（Bolt 38b3。一覧と詳細で見分けにくい名前を登録させない）。
+     */
     private static Optional<String> normalizedDisplayName(String displayName) {
-        String name = displayName == null ? "" : displayName.strip();
+        String name = stripSpaces(displayName == null ? "" : displayName);
         boolean valid = !name.isEmpty()
                 && name.codePointCount(0, name.length()) <= DISPLAY_NAME_MAX
-                && name.codePoints().noneMatch(Character::isISOControl);
+                && name.codePoints().noneMatch(UserRegistrationService::isIndistinct);
         return valid ? Optional.of(name) : Optional.empty();
+    }
+
+    private static String stripSpaces(String value) {
+        int start = 0;
+        int end = value.length();
+        while (start < end && isSpace(value.codePointAt(start))) {
+            start += Character.charCount(value.codePointAt(start));
+        }
+        while (end > start && isSpace(value.codePointBefore(end))) {
+            end -= Character.charCount(value.codePointBefore(end));
+        }
+        return value.substring(start, end);
+    }
+
+    private static boolean isSpace(int codePoint) {
+        return Character.isWhitespace(codePoint) || Character.isSpaceChar(codePoint);
+    }
+
+    private static boolean isIndistinct(int codePoint) {
+        int type = Character.getType(codePoint);
+        return Character.isISOControl(codePoint)
+                || type == Character.FORMAT
+                || type == Character.LINE_SEPARATOR
+                || type == Character.PARAGRAPH_SEPARATOR;
     }
 
     private static Judgement refused(UserRegistrationRefusal refusal) {

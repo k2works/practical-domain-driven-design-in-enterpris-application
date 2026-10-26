@@ -189,15 +189,43 @@ class UserRegistrationServiceTest {
         verifyNothingWritten();
     }
 
-    @ParameterizedTest(name = "表示名「{0}」を拒む")
-    @ValueSource(strings = {"", "   ", "新人\u0007花子", "改行\n入り"})
+    @ParameterizedTest(name = "[{index}] 空や見分けにくい表示名を拒む")
+    @ValueSource(
+            strings = {
+                "",
+                "   ",
+                "新人\u0007花子",
+                "改行\n入り",
+                "\u00A0\u00A0",
+                "\u202F",
+                "\u2007",
+                "\u3000",
+                "新人\u202E花子",
+                "新人\u200B花子",
+                "\uFEFF新人",
+                "新人\u2028花子",
+                "新人\u2029花子",
+                "新人\uDB40\uDC61花子"
+            })
     void 空や制御文字の表示名を拒む(String displayName) {
-        // 行 6
+        // 行 6（Bolt 38b2）。Bolt 38b3 の行 1・行 2（NBSP などの空白だけ、書式文字、行と段落の区切り。U+3000 だけは今も拒む）
         given(operatorCompany, true);
 
         assertThat(register(operatorCompany, displayName, Set.of(Role.SALES)))
                 .isEqualTo(new UserRegistrationOutcome.Refused(new UserRegistrationRefusal.InvalidDisplayName()));
         verifyNothingWritten();
+    }
+
+    @Test
+    void 表示名の前後のNBSPを除いて受け付ける() {
+        // Bolt 38b3 の行 1（T-206。保存した表示名の全文で確かめる）
+        given(operatorCompany, true);
+
+        register(operatorCompany, "\u00A0\u3000新人 花子\u202F", Set.of(Role.SALES));
+
+        ArgumentCaptor<User> user = ArgumentCaptor.forClass(User.class);
+        verify(users).addRegistered(user.capture(), any(), any());
+        assertThat(user.getValue().displayName()).isEqualTo("新人 花子");
     }
 
     @Test
@@ -210,6 +238,9 @@ class UserRegistrationServiceTest {
                 .isInstanceOf(UserRegistrationOutcome.Registered.class);
         assertThat(register(operatorCompany, max + "あ", Set.of(Role.SALES)))
                 .isEqualTo(new UserRegistrationOutcome.Refused(new UserRegistrationRefusal.InvalidDisplayName()));
+        // 前後の空白を除いてから数える（Bolt 38b3）
+        assertThat(register(operatorCompany, "\u00A0" + max + "\u202F", Set.of(Role.SALES)))
+                .isInstanceOf(UserRegistrationOutcome.Registered.class);
     }
 
     @Test
