@@ -179,6 +179,36 @@ class UserRegistrationServiceTest {
     }
 
     @Test
+    void 範囲外の企業への確定の試行は値を解釈する前に記録できる() {
+        // Bolt 38b3b の開発レビューの高-1（画面が入力の誤りや役割の名前を解釈する前に呼ぶ）
+        Company other = Company.of(new CompanyId(UUID.randomUUID()), "B 社", CompanyKind.SHIPPER, true);
+        given(other, false);
+
+        assertThat(service.denyOutOfScope(admin, other.id())).isTrue();
+
+        ArgumentCaptor<AuditRecord> audit = ArgumentCaptor.forClass(AuditRecord.class);
+        verify(auditRecords).append(audit.capture());
+        assertThat(audit.getValue().action()).isEqualTo(AuditAction.ADMIN_SCOPE_DENIED);
+        assertThat(audit.getValue().target())
+                .isEqualTo(new AuditTarget("COMPANY", other.id().value().toString(), null, null, null));
+    }
+
+    @Test
+    void 範囲内の企業とない企業とシステム管理者でない操作者では範囲外の試行を記録しない() {
+        // Bolt 38b3b の開発レビューの高-1（サービスが操作者と管理範囲を確かめ直す）
+        given(operatorCompany, true);
+        CompanyId missing = new CompanyId(UUID.randomUUID());
+        when(companies.findById(missing)).thenReturn(Optional.empty());
+        AuthenticatedActor sales = new AuthenticatedActor(
+                new UserId(UUID.randomUUID()), operatorCompany.id(), Set.of(Role.SALES), "営業 一郎", "A 社");
+
+        assertThat(service.denyOutOfScope(admin, operatorCompany.id())).isFalse();
+        assertThat(service.denyOutOfScope(admin, missing)).isFalse();
+        assertThat(service.denyOutOfScope(sales, operatorCompany.id())).isFalse();
+        verify(auditRecords, never()).append(any());
+    }
+
+    @Test
     void 管理範囲の無効な企業は理由を示して拒む() {
         // 行 5
         Company inactive = Company.of(new CompanyId(UUID.randomUUID()), "B 社", CompanyKind.SHIPPER, false);

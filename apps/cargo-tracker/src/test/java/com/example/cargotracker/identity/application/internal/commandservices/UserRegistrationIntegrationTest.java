@@ -142,6 +142,19 @@ class UserRegistrationIntegrationTest {
     }
 
     @Test
+    void 外側のトランザクションの中で範囲外の確定の試行を記録しようとすると例外にする() {
+        // Bolt 38b3b の開発レビューの高-1（denyOutOfScope も register と同じガード）
+        Company other = Company.of(new CompanyId(UUID.randomUUID()), "B 社", CompanyKind.SHIPPER, true);
+        transactionTemplate.executeWithoutResult(status -> companies.add(other));
+
+        org.assertj.core.api.Assertions.assertThatThrownBy(() ->
+                        transactionTemplate.executeWithoutResult(status -> service.denyOutOfScope(admin, other.id())))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("外側のトランザクション");
+        assertThat(auditsOf(other.id().value().toString())).isEmpty();
+    }
+
+    @Test
     void 範囲外の企業への登録は試行だけを記録し確かめるときは記録しない() {
         // 行 3b・行 11。対照の範囲内の登録は書く（T-106）
         Company other = Company.of(new CompanyId(UUID.randomUUID()), "B 社", CompanyKind.SHIPPER, true);

@@ -1,5 +1,6 @@
 package com.example.cargotracker.identity.interfaces.web;
 
+import com.example.cargotracker.identity.domain.model.rules.RoleAssignmentPolicy;
 import com.example.cargotracker.identity.domain.model.valueobjects.CompanyKind;
 import com.example.cargotracker.identity.domain.model.valueobjects.SuspensionReason;
 import com.example.cargotracker.identity.domain.model.valueobjects.UserStatus;
@@ -64,5 +65,15 @@ final class UserAdministrationLabels {
     /** 役割を {@link Role} の宣言の順に並べる。 */
     static List<Role> order(Set<Role> roles) {
         return roles.isEmpty() ? List.of() : List.copyOf(EnumSet.copyOf(roles));
+    }
+
+    /** 企業の種類に付けられない役割の拒否の文言（役割の変更と利用者の登録が共有する。UI 設計 S-20）。 */
+    static String unfitRoles(Set<Role> roles, CompanyKind companyKind) {
+        return roles(roles) + "は、" + companyKind(companyKind) + "の利用者には付けられません。";
+    }
+
+    /** 職務分離の拒否の文言（役割の変更と利用者の登録が共有する。UI 設計 S-20）。 */
+    static String conflictingRoles(Set<Role> roles) {
+        return "システム管理者・監査担当者と、業務データを変更できる役割（" + roles(RoleAssignmentPolicy.businessRolesOf(roles)) + "）は併せて付けられません。";
     }
 }
