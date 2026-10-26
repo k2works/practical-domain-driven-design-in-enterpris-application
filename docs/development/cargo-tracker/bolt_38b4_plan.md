@@ -2,8 +2,10 @@
 type: Plan
 title: "Bolt 38b4 計画 - A-06 の初回の設定の出し分けと、登録から A-07 までの受入シナリオ"
 tags: [plan]
-status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-26T10:05:32Z }
+status: stable
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-26T10:37:34Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-26T10:37:34Z }
 ---
 
 # Bolt 38b4 計画 - A-06 の初回の設定の出し分けと、登録から A-07 までの受入シナリオ
@@ -188,6 +190,7 @@ A07 --> 業務の画面
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-26 | 計画を承認した（確認ポイント 1〜8 を推奨のとおり） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-26 | 整合性検証の指摘を反映した（承認待ち）。使えないリンクの案内の全文、再設定のリンクで初めて設定する場合は受け入れて文書に書く、初回の知らせにログアウトの一文と決めた（human:kakimomokuri）。照合は途中の経過（閉じるのは 38g）、時間と打ち切り、新しいファイルの一覧、テストのクラスの実名、`setupOf` と POST の扱い、`yieldsTo` で RESET を外から参照しない、行 4・10 の組み合わせ、文書の一覧（付録 B、ui_design の画面一覧・遷移図、domain_model の流れ、ADR、architecture_backend、test_strategy）、既存の期待の直し、キャプチャの撮り方、動画の添付先の表、受入シナリオの足場 | anthropic/claude-opus-5-5 |
 | 2026-10-26 | 初版作成（承認待ち）。開始準備で、遅れた DE-25 は招待の期限と本人の再設定で止める、使えないリンクは用途を問わない同じ案内、初回の設定の監査に新しい値、完了の知らせは用途で分ける、分けずに 1 つの Bolt、develop で開発すると決めた（human:kakimomokuri） | anthropic/claude-opus-5-5 |
 
