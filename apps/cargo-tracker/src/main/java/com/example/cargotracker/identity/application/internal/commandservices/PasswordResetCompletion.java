@@ -8,8 +8,12 @@ import java.util.Objects;
  */
 public sealed interface PasswordResetCompletion {
 
-    /** 新しい password を設定した（トークンを使い、session の失効まで終えた）。 */
-    record Completed() implements PasswordResetCompletion {}
+    /**
+     * 新しい password を設定した（トークンを使い、session の失効まで終えた）。
+     *
+     * @param initial 招待のリンクで初回の password を設定したか（画面は完了の知らせを選ぶ。Bolt 38b4）
+     */
+    record Completed(boolean initial) implements PasswordResetCompletion {}
 
     /** リンクが使えない（期限切れ・使用済み・無効・存在しない・利用停止。どれかを示さない）。トークンも password も変えていない。 */
     record Invalid() implements PasswordResetCompletion {}

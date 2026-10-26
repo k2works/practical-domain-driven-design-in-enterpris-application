@@ -28,7 +28,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 /**
  * 再設定の完了のサービス。password の再設定のリンクの確かめと A-06 の設定（Bolt 33a、US-18 AC8、SEC-04・SEC-05・SEC-08、IA-INV-12）。リンクのトークンを確かめ（{@link #open}・
- * {@link #isUsable}）、A-06 で新しい password を設定する（{@link #complete}）。
+ * {@link #setupOf}）、A-06 で新しい password を設定する（{@link #complete}）。
  *
  * <p>設定は、リンクがまだ使えるかと方針を確かめてから（使えなければ方針より先に無効とし、方針の誤りではトークンを使わない）、1 つのトランザクションで、トークンを条件付きで使い、password を変え、同じ利用者の
  * 未使用のトークンを無効にし、監査を書く。利用停止・企業の無効は、どれかを示さずに無効とする。確定の後に、その利用者の session をすべて
@@ -94,10 +94,19 @@ public class PasswordResetCompletionService {
                 .map(PasswordResetToken::id);
     }
 
-    /** トークンがまだ使えるか（A-06 を開いたとき）。 */
-    public boolean isUsable(UUID tokenId) {
+    /**
+     * 使えるトークンの設定の形（Bolt 38b4。A-06 を開いたときと送ったとき）。初回の設定かは用途から決める（用途の名前は画面に渡さない）。使えなければ空。
+     */
+    public Optional<PasswordSetup> setupOf(UUID tokenId) {
         UtcInstant now = now();
-        return tokens.findById(tokenId).filter(found -> found.isUsable(now)).isPresent();
+        return tokens.findById(tokenId)
+                .filter(found -> found.isUsable(now))
+                .map(found -> new PasswordSetup(found.id(), found.purpose().setsInitialPassword()));
+    }
+
+    /** トークンがまだ使えるか（設定の前の確かめ。{@link #setupOf} と同じ条件）。 */
+    public boolean isUsable(UUID tokenId) {
+        return setupOf(tokenId).isPresent();
     }
 
     /**
@@ -118,19 +127,19 @@ public class PasswordResetCompletionService {
         if (violation.isPresent()) {
             return new PasswordResetCompletion.PolicyViolated(violation.get());
         }
-        // 変えた利用者のメールアドレス。使えなければ空のままでロールバックする
-        AtomicReference<EmailAddress> changed = new AtomicReference<>();
+        // 変えた利用者のメールアドレスと初回の設定か。使えなければ空のままでロールバックする
+        AtomicReference<Changed> changed = new AtomicReference<>();
         transactionTemplate.executeWithoutResult(
                 status -> changePassword(tokenId, newPassword).ifPresentOrElse(changed::set, status::setRollbackOnly));
         if (changed.get() == null) {
             return new PasswordResetCompletion.Invalid();
         }
-        revokeSessions(tokenId, changed.get());
-        return new PasswordResetCompletion.Completed();
+        revokeSessions(tokenId, changed.get().email());
+        return new PasswordResetCompletion.Completed(changed.get().initial());
     }
 
     /** トランザクションの中で、トークンを使って password を変える。使えなければ空。 */
-    private Optional<EmailAddress> changePassword(UUID tokenId, String newPassword) {
+    private Optional<Changed> changePassword(UUID tokenId, String newPassword) {
         UtcInstant now = now();
         Optional<PasswordResetToken> token = tokens.findById(tokenId);
         if (token.isEmpty()) {
@@ -149,10 +158,19 @@ public class PasswordResetCompletionService {
             throw new IllegalStateException("password を書けなかった: " + changed.id());
         }
         tokens.invalidateUnused(changed.id(), now);
+        // 招待のリンクなら初回の設定、再設定のリンクなら（初めての設定でも）再設定の完了（Bolt 38b4 の開始準備の決定 (3)・(7)）
+        boolean initial = token.get().purpose().setsInitialPassword();
         auditRecords.append(
-                AuditRecord.passwordResetCompleted(changed.id(), company.get().id(), now));
-        return Optional.of(changed.email());
+                initial
+                        ? AuditRecord.initialPasswordSet(
+                                changed.id(), company.get().id(), now)
+                        : AuditRecord.passwordResetCompleted(
+                                changed.id(), company.get().id(), now));
+        return Optional.of(new Changed(changed.email(), initial));
     }
+
+    /** password を変えた利用者のメールアドレスと、初回の設定か。 */
+    private record Changed(EmailAddress email, boolean initial) {}
 
     private void revokeSessions(UUID tokenId, EmailAddress email) {
         try {

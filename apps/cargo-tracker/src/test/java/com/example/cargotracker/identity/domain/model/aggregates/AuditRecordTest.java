@@ -50,6 +50,27 @@ class AuditRecordTest {
     }
 
     @Test
+    void 初回のpasswordの設定は再設定と分けて成功として記録する() {
+        // Bolt 38b4（開始準備の決定 (3)）
+        AuditRecord auditRecord = AuditRecord.initialPasswordSet(USER, COMPANY, AT);
+
+        assertThat(auditRecord.action()).isEqualTo(AuditAction.INITIAL_PASSWORD_SET);
+        assertThat(auditRecord.result()).isEqualTo(AuditResult.SUCCESS);
+        assertThat(auditRecord.actorUserId()).isEqualTo(USER);
+        assertThat(auditRecord.actorCompanyId()).isEqualTo(COMPANY);
+        assertThat(auditRecord.occurredAt()).isEqualTo(AT);
+        assertThat(auditRecord.reason()).isNull();
+    }
+
+    @Test
+    void 初回のpasswordの設定は利用者と企業を欠かせない() {
+        assertThatThrownBy(() -> AuditRecord.initialPasswordSet(null, COMPANY, AT))
+                .isInstanceOf(NullPointerException.class);
+        assertThatThrownBy(() -> AuditRecord.initialPasswordSet(USER, null, AT))
+                .isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
     void TOTPの登録は利用者と企業を記録する() {
         AuditRecord auditRecord = AuditRecord.totpEnrolled(USER, COMPANY, AT);
 

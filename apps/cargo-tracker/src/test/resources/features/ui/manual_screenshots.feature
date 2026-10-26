@@ -171,6 +171,13 @@
     かつ 画面を "11-user-registration-rejected" として撮る
     かつ 付ける役割 "営業担当者" とメールアドレス "hanako@example.com" と表示名 "新人 花子" を入れて確認する
     かつ 画面を "11-user-registration-confirmation" として撮る
+    # 2.6 初回の password の設定（Bolt 38b4）。登録した利用者に届いた招待のメールのリンクを開く
+    かつ 利用者の登録の確認で登録する
+    かつ 登録した利用者に届いた招待のメールのリンクを開く
+    かつ 画面を "02-password-initial-new" として撮る
+    かつ 初回の設定の画面で password を 2 回入れて設定する
+    かつ ログインの画面に password を設定した知らせが出る
+    かつ 画面を "02-login-initial-password-set" として撮る
 
   # 2.8 画面が見つかりません（Bolt 34b）
   シナリオ: 画面が見つかりませんを撮る

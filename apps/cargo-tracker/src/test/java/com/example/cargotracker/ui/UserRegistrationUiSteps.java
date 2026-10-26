@@ -2,8 +2,12 @@ package com.example.cargotracker.ui;
 
 import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
+import com.example.cargotracker.MailpitClient;
+import com.example.cargotracker.MailpitClient.ReceivedMail;
 import com.example.cargotracker.shared.domain.Role;
+import com.example.cargotracker.shared.domain.UserId;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
@@ -11,8 +15,15 @@ import io.cucumber.java.ja.かつ;
 import io.cucumber.java.ja.ならば;
 import io.cucumber.java.ja.もし;
 import io.cucumber.java.ja.前提;
+import java.time.Duration;
+import java.util.List;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.testcontainers.containers.GenericContainer;
 
 /**
  * 利用者の登録（S-20。Bolt 38b3b、US-16 AC1）の画面の層のステップ定義。登録するメールアドレスはシナリオごとに作る。企業は、準備で
@@ -25,10 +36,32 @@ public class UserRegistrationUiSteps {
     private final UiUsers users;
     private String registeredEmail;
 
-    public UserRegistrationUiSteps(BrowserSession browser, JdbcTemplate jdbc, UiUsers users) {
+    /** 招待のメールを待つ時間。 */
+    private static final Duration MAIL_WAIT = Duration.ofSeconds(10);
+
+    /** 招待のメールのリンク（公開の base URL は既定の localhost:8080 なので、path だけを取り出してテストのサーバーで開く）。 */
+    private static final Pattern INVITATION_LINK =
+            Pattern.compile("https?://[^/\\s]+(/password-reset/[A-Za-z0-9_-]{43})");
+
+    /** 初回の設定で入れる password（ログインに使う）。 */
+    private static final String INITIAL_PASSWORD = "my first long passphrase";
+
+    private final GenericContainer<?> mailpitContainer;
+    private final String baseUrl;
+    private UserId registeredUser;
+
+    public UserRegistrationUiSteps(
+            BrowserSession browser,
+            JdbcTemplate jdbc,
+            UiUsers users,
+            GenericContainer<?> mailpitContainer,
+            @LocalServerPort int port,
+            @Value("${ui.base-url:}") String configuredBaseUrl) {
         this.browser = browser;
         this.jdbc = jdbc;
         this.users = users;
+        this.mailpitContainer = mailpitContainer;
+        this.baseUrl = configuredBaseUrl.isBlank() ? "http://localhost:" + port : configuredBaseUrl;
     }
 
     @前提("管理範囲に運用する会社 {string} がある")
@@ -160,6 +193,89 @@ public class UserRegistrationUiSteps {
         summary.getByRole(AriaRole.LINK).first().click();
         assertThat(page().getByLabel(firstOption, new Page.GetByLabelOptions().setExact(true)))
                 .isFocused();
+        browser.checkAccessibility();
+    }
+
+    @もし("登録した利用者に届いた招待のメールのリンクを開く")
+    public void 招待のメールのリンクを開く() {
+        List<ReceivedMail> mails = new MailpitClient(mailpitContainer).awaitMessagesTo(registeredEmail, 1, MAIL_WAIT);
+        assertThat(mails)
+                .singleElement()
+                .satisfies(mail -> assertThat(mail.subject()).isEqualTo("【cargo-tracker】利用者の登録のご案内"));
+        Matcher matcher = INVITATION_LINK.matcher(mails.getFirst().text());
+        assertThat(matcher.find()).as("本文に初回の設定のリンクがある").isTrue();
+        UUID userId =
+                jdbc.queryForObject("SELECT id FROM identity.app_user WHERE email = ?", UUID.class, registeredEmail);
+        registeredUser = new UserId(userId);
+        // メールはハンドラーの確定の前に届くので、トークンが確定するまで待つ（T-127）
+        await().atMost(MAIL_WAIT)
+                .until(() -> jdbc.queryForObject(
+                                "SELECT count(*) FROM identity.password_reset_token WHERE user_id = ?",
+                                Integer.class,
+                                userId)
+                        > 0);
+        page().navigate(baseUrl + matcher.group(1));
+    }
+
+    @かつ("初回の設定の画面で password を 2 回入れて設定する")
+    public void 初回のpasswordを設定する() {
+        page().waitForURL(url -> url.endsWith("/password-reset/new"));
+        assertThat(page().getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setLevel(1)))
+                .hasText("password の設定");
+        assertThat(page().locator("main")).containsText("初めて使う password を入力してください。");
+        browser.checkAccessibility();
+        page().getByLabel("新しい password", new Page.GetByLabelOptions().setExact(true))
+                .fill(INITIAL_PASSWORD);
+        page().getByLabel("新しい password（確認）").fill(INITIAL_PASSWORD);
+        page().getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("password を設定する"))
+                .click();
+    }
+
+    @ならば("ログインの画面に password を設定した知らせが出る")
+    public void passwordを設定した知らせが出る() {
+        page().waitForURL(url -> url.contains("/login?initial-password-set"));
+        Locator notice = page().getByRole(AriaRole.STATUS);
+        assertThat(notice).containsText("password を設定しました。");
+        assertThat(notice).containsText("このブラウザでログインしていた場合は、ログアウトしました。設定した password でログインし、認証アプリを登録してください。");
+        browser.checkAccessibility();
+    }
+
+    @もし("登録した利用者が設定した password でログインする")
+    public void 設定したpasswordでログインする() {
+        page().getByLabel("メールアドレス").fill(registeredEmail);
+        page().getByLabel("password", new Page.GetByLabelOptions().setExact(true))
+                .fill(INITIAL_PASSWORD);
+        page().getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("ログイン"))
+                .click();
+        page().waitForURL(url -> url.contains("/login/totp/enroll"));
+    }
+
+    @かつ("登録した利用者が認証アプリの登録の画面で手入力のキーから作ったコードを入れて登録する")
+    public void 認証アプリを登録する() {
+        browser.checkAccessibility();
+        String manualKey = page().locator("code.app-totp-key").getAttribute("data-manual-key");
+        page().getByLabel("認証コード").fill(users.codeFromKey(registeredUser, manualKey));
+        page().getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("登録する"))
+                .click();
+        assertThat(page().getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName("回復コードの保存")))
+                .isVisible();
+        browser.checkAccessibility();
+    }
+
+    @かつ("登録した利用者が認証コードの画面で認証アプリのコードを入れて確認する")
+    public void 認証コードを入れて確認する() {
+        page().waitForURL(url -> url.contains("/login/totp"));
+        browser.checkAccessibility();
+        page().getByLabel("認証コード").fill(users.totpCode(registeredUser));
+        page().getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("確認"))
+                .click();
+        page().waitForURL(url -> !url.contains("/login"));
+    }
+
+    @ならば("登録した利用者の業務の画面が表示される")
+    public void 業務の画面が表示される() {
+        assertThat(page().getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setLevel(1)))
+                .isVisible();
         browser.checkAccessibility();
     }
 }

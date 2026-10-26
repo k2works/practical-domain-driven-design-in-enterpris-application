@@ -291,4 +291,56 @@ class UserInvitationIntegrationTest {
                                 users.findById(suspended).orElseThrow().email().value()))
                 .isEmpty();
     }
+
+    @Test
+    void 登録から24時間を過ぎて遅れて配られたDE25では招待を発行しない() {
+        // Bolt 38b4 の行 9（Bolt 38b2c の議題 5。再起動の後の配り直し）
+        UserId user = transactionTemplate.execute(status -> AuthenticationFactorFixtures.newUser(companies, users));
+        UserId control = transactionTemplate.execute(status -> AuthenticationFactorFixtures.newUser(companies, users));
+        UserInvitationMailEventHandler target = AopTestUtils.getTargetObject(handler);
+
+        transactionTemplate.executeWithoutResult(status -> target.on(
+                new UserRegistered(UUID.randomUUID(), user, new UtcInstant(NOW.minus(Duration.ofHours(24))))));
+        transactionTemplate.executeWithoutResult(status -> target.on(new UserRegistered(
+                UUID.randomUUID(),
+                control,
+                new UtcInstant(NOW.minus(Duration.ofHours(24)).plusSeconds(1)))));
+
+        assertThat(tokenCount(control)).as("24 時間の前の登録には発行する（対照）").isEqualTo(1);
+        assertThat(tokenCount(user)).isZero();
+    }
+
+    @Test
+    void 登録の後に本人の再設定のトークンがあれば招待を発行せず再設定のリンクを無効にしない() {
+        // Bolt 38b4 の行 10（後なら譲る、同じ時刻なら発行する）
+        UserId later = transactionTemplate.execute(status -> AuthenticationFactorFixtures.newUser(companies, users));
+        UserId same = transactionTemplate.execute(status -> AuthenticationFactorFixtures.newUser(companies, users));
+        Instant registered = NOW.minus(Duration.ofHours(2));
+        String laterHash = sha256("reset-" + UUID.randomUUID());
+        transactionTemplate.executeWithoutResult(status -> {
+            tokens.add(PasswordResetToken.issue(
+                    PasswordResetTokenPurpose.RESET,
+                    UUID.randomUUID(),
+                    later,
+                    laterHash,
+                    new UtcInstant(NOW.minusSeconds(60))));
+            tokens.add(PasswordResetToken.issue(
+                    PasswordResetTokenPurpose.RESET,
+                    UUID.randomUUID(),
+                    same,
+                    sha256("reset-" + UUID.randomUUID()),
+                    new UtcInstant(registered)));
+        });
+        UserInvitationMailEventHandler target = AopTestUtils.getTargetObject(handler);
+
+        transactionTemplate.executeWithoutResult(
+                status -> target.on(new UserRegistered(UUID.randomUUID(), later, new UtcInstant(registered))));
+        transactionTemplate.executeWithoutResult(
+                status -> target.on(new UserRegistered(UUID.randomUUID(), same, new UtcInstant(registered))));
+
+        assertThat(tokenCount(later)).isEqualTo(1);
+        assertThat(tokens.findByTokenHash(laterHash).orElseThrow().invalidatedAt())
+                .isEmpty();
+        assertThat(tokenCount(same)).as("同じ時刻の再設定には譲らない").isEqualTo(2);
+    }
 }

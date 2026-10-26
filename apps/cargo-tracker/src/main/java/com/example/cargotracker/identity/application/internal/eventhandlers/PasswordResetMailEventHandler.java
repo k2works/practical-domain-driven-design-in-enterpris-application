@@ -55,7 +55,12 @@ public class PasswordResetMailEventHandler {
     /** DE-23 を受けてトークンを発行し、再設定のメールを送る。 */
     @ApplicationModuleListener
     public void on(PasswordResetRequested event) {
-        issuance.issue(PasswordResetTokenPurpose.RESET, event.requestId(), event.userId(), resetLinkPrefix)
+        issuance.issue(
+                        PasswordResetTokenPurpose.RESET,
+                        event.requestId(),
+                        event.userId(),
+                        event.requestedAt(),
+                        resetLinkPrefix)
                 .ifPresent(issued -> send(event, issued));
     }
 

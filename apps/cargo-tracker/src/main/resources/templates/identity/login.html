@@ -26,6 +26,11 @@
         <p class="mb-1">新しい password でログインしてください。このブラウザでログインしていた場合は、ログアウトしました。</p>
         <p class="mb-0">新しい password を正しく入れてもログインできない場合は、続けて誤ったログインのために、しばらくログインできなくなっていることがあります。[[${lockMinutes}]] 分たってから、もう一度ログインしてください。</p>
     </div>
+    <!--/* 招待のリンクで初回の password を設定した後（印 initial-password-set。Bolt 38b4、UI 設計「A-06」の完了の知らせ） */-->
+    <div th:if="${param['initial-password-set']}" class="alert alert-success" role="status" id="initial-password-set">
+        <p class="mb-1"><strong>password を設定しました。</strong></p>
+        <p class="mb-0">このブラウザでログインしていた場合は、ログアウトしました。設定した password でログインし、認証アプリを登録してください。</p>
+    </div>
     <div th:if="${param['reset-requested']}" class="alert alert-info" role="status" id="reset-requested">
         <p class="mb-1"><strong>password の再設定の依頼を受け付けました。</strong></p>
         <p class="mb-1">入力したメールアドレスが登録されていて、ご利用いただける状態であれば、再設定のリンクをそのアドレスへ送ります。</p>

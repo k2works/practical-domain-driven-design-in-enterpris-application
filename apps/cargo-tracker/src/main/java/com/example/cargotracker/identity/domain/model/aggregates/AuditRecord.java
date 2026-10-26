@@ -187,6 +187,17 @@ public final class AuditRecord {
     }
 
     /**
+     * 招待のリンクで初回の password を設定したことを記録する（Bolt 38b4、US-16 AC1）。A-06 で初回の password を設定し、招待のトークンを
+     * 使ったとき。結果は成功。
+     */
+    public static AuditRecord initialPasswordSet(UserId user, CompanyId company, UtcInstant at) {
+        Objects.requireNonNull(user, USER_ARGUMENT);
+        Objects.requireNonNull(company, COMPANY_ARGUMENT);
+        return new AuditRecord(
+                UUID.randomUUID(), at, user, company, AuditAction.INITIAL_PASSWORD_SET, AuditResult.SUCCESS, null);
+    }
+
+    /**
      * システム管理者が利用者の役割を変えたことを記録する（Bolt 34、US-16 AC1 の役割の分）。対象は利用者と更新した後の版、変更前後は
      * 役割の名前を {@link Role} の宣言の順にカンマでつないだ文字列。結果は成功。
      */

@@ -4,7 +4,7 @@ title: "ADR-012: 認証の主体は共有カーネルの型にし、password の
 description: "US-18 の password によるログインと session を、Spring Security 7 の form login と Spring Session JDBC で作る。"
 tags: [adr, authentication, session]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-17T11:36:19Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-26T21:57:10Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-06T06:51:29Z }
 ---
@@ -103,6 +103,7 @@ US-18 の password によるログインと session を、Spring Security 7 の 
 - 存在しないメールアドレスでの失敗は、操作者を空にして記録し、メールアドレスは残さない。
 - Bolt 33 から、password の再設定の依頼（A-05）を `PASSWORD_RESET_REQUESTED` で記録する。書くのは依頼のアプリケーションサービス `PasswordResetRequestService` で、依頼と同じトランザクションで書く（IA-INV-08）。有効な利用者は `SUCCESS`（理由なし）、止められた利用者は `FAILURE`・`SUSPENDED`、所属企業の無効は `FAILURE`・`COMPANY_INACTIVE`、登録のないアドレスは `FAILURE`・`UNKNOWN_USER`（操作者を空にし、アドレスを残さない）。理由は `AuthenticationRejection` の値を使う。繰り返し（1 分以内）で送らなかったことは記録しない。監査と送信の記録は結ばない（AUD-02 の対象の列は使う Bolt で足す。[ADR-017](017-notification-module-and-mail.md)）。
 - Bolt 33a から、password の再設定の完了を `PASSWORD_RESET_COMPLETED`（成功だけ。操作者に利用者と企業）で記録する。書くのは `PasswordResetCompletionService` で、トークンの使用・password の更新と同じトランザクションで書く。
+- Bolt 38b4 から、招待のリンクで初回の password を設定したときは `INITIAL_PASSWORD_SET`（成功だけ）を、同じ完了のサービスが同じトランザクションで書く。再設定のリンクで初めて設定した場合は `PASSWORD_RESET_COMPLETED` のまま（2026-10-26、human:kakimomokuri）。
 - Bolt 33b から、認証アプリの再登録の完了を `TOTP_RE_ENROLLED`（成功だけ。操作者に利用者と企業）で記録する。書くのは `TotpReEnrollmentService` で、TOTP の秘密の置き換え・回復コードの発行し直しと同じトランザクションで書く。
 - 監査記録の書き込みに失敗したら、ログインも失敗にする（IA-INV-08 の同期の書き込み。fail-closed）。
 - 権限外のアクセスの試行の記録（`ADMIN_SCOPE_DENIED`）は、Bolt 34b から controller の確定の POST で `AdministrationScopeDenialService` が単独で書く（GET では書かない）。
@@ -196,6 +197,7 @@ US-18 の password によるログインと session を、Spring Security 7 の 
 
 ## 改訂の経緯
 
+- 2026-10-26: Bolt 38b4 で、A-06 の完了の監査に、招待のリンクで初回の password を設定したときの `INITIAL_PASSWORD_SET` を足した（再設定は `PASSWORD_RESET_COMPLETED` のまま。Bolt 38b4 の開始準備の決定 (3)。human:kakimomokuri が決定）。
 - 2026-10-17: Bolt 34c のステップ 1 で、決定 4 の権限外のアクセスの試行の記録を、Bolt 34b からの事実（controller の確定の POST で `AdministrationScopeDenialService` が単独で書き、GET では書かない）に直した。決定 4 と「W5 で見直すこと」の 5 の書き手の記述を、Bolt 34c の決定（書き手は今のまま。[ADR-011](011-mfa-totp.md) のステータス）に結んだ（Bolt 34c の開始準備の決定 2。human:kakimomokuri が決定）。
 - 2026-10-16: Bolt 33f の開発レビューで、決定 3 の URL を application 層に置く理由を「規則に例外を足さずに済む」から「規則に見えない定数の依存の向きを、設計の約束として保つ」に正し、合成ルートが参照していた password の再設定の URL（`PasswordResetController.URL`）も `SessionPaths` に寄せた。決定 6 に `SessionPaths` を足した（human:kakimomokuri が決定）。
 - 2026-10-16: Bolt 33f のステップ 1 で、決定 3 の URL を `SessionKeys` から同じパッケージの `SessionPaths` に分け、URL（遷移先）の関心を application 層に置く理由（Bolt 33c の議題 4 (b)）と、`SessionPolicy` の期限の時刻 `deadline` を書いた。決定 6 とコンプライアンスの節も合わせた（Bolt 33f の開始準備の決定 1・3・7。human:kakimomokuri が決定）。

@@ -3,6 +3,7 @@ package com.example.cargotracker.identity.interfaces.web;
 import com.example.cargotracker.identity.application.internal.commandservices.PasswordResetCompletion;
 import com.example.cargotracker.identity.application.internal.commandservices.PasswordResetCompletionService;
 import com.example.cargotracker.identity.application.internal.commandservices.PasswordResetRequestService;
+import com.example.cargotracker.identity.application.internal.commandservices.PasswordSetup;
 import com.example.cargotracker.identity.application.internal.session.SessionPaths;
 import com.example.cargotracker.identity.domain.model.rules.PasswordPolicy;
 import com.example.cargotracker.identity.domain.model.valueobjects.EmailAddress;
@@ -50,6 +51,9 @@ public class PasswordResetController {
 
     /** 再設定を終えた後に移る A-01 の URL（知らせの印。T-124）。 */
     static final String COMPLETED_URL = "/login?reset-completed";
+
+    /** 招待のリンクで初回の password を設定した後に移る A-01 の URL（知らせの印。Bolt 38b4）。 */
+    static final String INITIAL_COMPLETED_URL = "/login?initial-password-set";
 
     private static final String VIEW = "identity/password-reset";
     private static final String NEW_VIEW = "identity/password-reset-new";
@@ -106,12 +110,12 @@ public class PasswordResetController {
     @GetMapping("/new")
     public String newPassword(HttpServletRequest request, HttpServletResponse response, Model model) {
         response.setHeader(REFERRER_POLICY, NO_REFERRER);
-        Optional<UUID> tokenId = tokenIdOf(request);
-        if (tokenId.isEmpty() || !completions.isUsable(tokenId.get())) {
+        Optional<PasswordSetup> setup = tokenIdOf(request).flatMap(completions::setupOf);
+        if (setup.isEmpty()) {
             forgetToken(request);
             return INVALID_VIEW;
         }
-        addPolicy(model);
+        addForm(model, setup.get());
         return NEW_VIEW;
     }
 
@@ -124,19 +128,21 @@ public class PasswordResetController {
             HttpServletResponse response,
             Model model) {
         response.setHeader(REFERRER_POLICY, NO_REFERRER);
-        Optional<UUID> tokenId = tokenIdOf(request);
-        if (tokenId.isEmpty()) {
+        // 初回の設定かで見出しを選ぶため、先に設定の形を読む。使えなければ案内（Bolt 38b4）
+        Optional<PasswordSetup> setup = tokenIdOf(request).flatMap(completions::setupOf);
+        if (setup.isEmpty()) {
+            forgetToken(request);
             return INVALID_VIEW;
         }
         if (!newPassword.equals(confirmPassword)) {
-            addPolicy(model);
+            addForm(model, setup.get());
             model.addAttribute(CONFIRM_ERROR, "確認の欄に、新しい password と同じものを入力してください。");
             return NEW_VIEW;
         }
-        PasswordResetCompletion result = completions.complete(tokenId.get(), newPassword);
+        PasswordResetCompletion result = completions.complete(setup.get().tokenId(), newPassword);
         return switch (result) {
             case PasswordResetCompletion.PolicyViolated(PasswordPolicyViolation violation) -> {
-                addPolicy(model);
+                addForm(model, setup.get());
                 model.addAttribute(NEW_PASSWORD_ERROR, messageOf(violation));
                 yield NEW_VIEW;
             }
@@ -144,11 +150,11 @@ public class PasswordResetController {
                 forgetToken(request);
                 yield INVALID_VIEW;
             }
-            case PasswordResetCompletion.Completed _ -> {
+            case PasswordResetCompletion.Completed(boolean initial) -> {
                 // 今のブラウザの認証と session を捨て、新しい session で A-01 へ（Bolt 33a の開始準備の決定 6）
                 new SecurityContextLogoutHandler().logout(request, response, null);
                 request.getSession(true);
-                yield REDIRECT + COMPLETED_URL;
+                yield REDIRECT + (initial ? INITIAL_COMPLETED_URL : COMPLETED_URL);
             }
         };
     }
@@ -164,6 +170,14 @@ public class PasswordResetController {
                         + " 文字分までの password を入力してください。";
             case COMMON -> "この password はよく使われているため、使えません。ほかの人に推測されにくい password を入力してください。";
         };
+    }
+
+    /** A-06 の見出し・説明・title（初回の設定か再設定か。UI 設計「A-06」。テンプレートは用途を比べない）と方針の数値。 */
+    private static void addForm(Model model, PasswordSetup setup) {
+        String heading = setup.initial() ? "password の設定" : "password の再設定";
+        model.addAttribute("heading", heading);
+        model.addAttribute("description", setup.initial() ? "初めて使う password を入力してください。" : "新しい password を入力してください。");
+        addPolicy(model);
     }
 
     private static void addPolicy(Model model) {

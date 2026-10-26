@@ -81,9 +81,14 @@ class PasswordResetCompletionIntegrationTest {
 
     /** 平文のトークンを発行して保存し、平文を返す。 */
     private String issue(UserId user, Instant at) {
+        return issue(user, at, PasswordResetTokenPurpose.RESET);
+    }
+
+    /** 用途を選んでトークンを発行して保存し、平文を返す（Bolt 38b4。招待のトークンはテストの準備として直に作る）。 */
+    private String issue(UserId user, Instant at, PasswordResetTokenPurpose purpose) {
         String token = "token-" + UUID.randomUUID();
-        transactionTemplate.executeWithoutResult(status -> tokens.add(PasswordResetToken.issue(
-                PasswordResetTokenPurpose.RESET, UUID.randomUUID(), user, hasher.hash(token), new UtcInstant(at))));
+        transactionTemplate.executeWithoutResult(status -> tokens.add(
+                PasswordResetToken.issue(purpose, UUID.randomUUID(), user, hasher.hash(token), new UtcInstant(at))));
         return token;
     }
 
@@ -98,6 +103,14 @@ class PasswordResetCompletionIntegrationTest {
     private int completedAudits(UserId user) {
         return jdbc.queryForObject(
                 "SELECT count(*) FROM identity.audit_record WHERE action = 'PASSWORD_RESET_COMPLETED'"
+                        + " AND actor_user_id = ? AND result = 'SUCCESS'",
+                Integer.class,
+                user.value());
+    }
+
+    private int initialAudits(UserId user) {
+        return jdbc.queryForObject(
+                "SELECT count(*) FROM identity.audit_record WHERE action = 'INITIAL_PASSWORD_SET'"
                         + " AND actor_user_id = ? AND result = 'SUCCESS'",
                 Integer.class,
                 user.value());
@@ -143,7 +156,7 @@ class PasswordResetCompletionIntegrationTest {
 
         PasswordResetCompletion result = service.complete(tokenId, NEW_PASSWORD);
 
-        assertThat(result).isEqualTo(new PasswordResetCompletion.Completed());
+        assertThat(result).isEqualTo(new PasswordResetCompletion.Completed(false));
         assertThat(passwordEncoder.matches(NEW_PASSWORD, passwordHashOf(user))).isTrue();
         assertThat(service.isUsable(tokenId)).as("使ったトークン").isFalse();
         assertThat(service.isUsable(olderId)).as("前の未使用のトークン").isFalse();
@@ -152,6 +165,24 @@ class PasswordResetCompletionIntegrationTest {
         assertThat(failures.findByUserId(user).consecutiveFailures())
                 .as("ロックは変えない（SEC-02）")
                 .isEqualTo(5);
+    }
+
+    @Test
+    void 招待のリンクで設定すると初回の完了を返し前のトークンを無効にし初回の設定の監査だけを1件書く() {
+        // Bolt 38b4 の行 4（開発レビュー）
+        UserId user = newUser();
+        String older = issue(user, NOW.minusSeconds(120));
+        String invitation = issue(user, NOW.minusSeconds(60), PasswordResetTokenPurpose.USER_INVITATION);
+        UUID olderId = opened(older);
+        UUID invitationId = opened(invitation);
+
+        assertThat(service.complete(invitationId, NEW_PASSWORD)).isEqualTo(new PasswordResetCompletion.Completed(true));
+
+        assertThat(passwordEncoder.matches(NEW_PASSWORD, passwordHashOf(user))).isTrue();
+        assertThat(service.isUsable(invitationId)).as("使った招待のトークン").isFalse();
+        assertThat(service.isUsable(olderId)).as("前の未使用のトークン").isFalse();
+        assertThat(initialAudits(user)).isEqualTo(1);
+        assertThat(completedAudits(user)).isZero();
     }
 
     @Test
@@ -169,14 +200,14 @@ class PasswordResetCompletionIntegrationTest {
 
         assertThat(service.isUsable(tokenId)).as("直して送り直せる").isTrue();
         assertThat(passwordHashOf(user)).isEqualTo(before);
-        assertThat(service.complete(tokenId, NEW_PASSWORD)).isEqualTo(new PasswordResetCompletion.Completed());
+        assertThat(service.complete(tokenId, NEW_PASSWORD)).isEqualTo(new PasswordResetCompletion.Completed(false));
     }
 
     @Test
     void 使えないトークンと止められた利用者は無効としpasswordも監査も変えない() {
         UserId user = newUser();
         UUID used = opened(issue(user, NOW.minusSeconds(60)));
-        assertThat(service.complete(used, NEW_PASSWORD)).isEqualTo(new PasswordResetCompletion.Completed());
+        assertThat(service.complete(used, NEW_PASSWORD)).isEqualTo(new PasswordResetCompletion.Completed(false));
         String afterFirst = passwordHashOf(user);
 
         assertThat(service.complete(used, "another long passphrase")).isEqualTo(new PasswordResetCompletion.Invalid());

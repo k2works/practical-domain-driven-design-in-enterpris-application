@@ -9,6 +9,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.example.cargotracker.identity.domain.model.aggregates.AuditRecord;
 import com.example.cargotracker.identity.domain.model.aggregates.AuditRecordRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.Company;
 import com.example.cargotracker.identity.domain.model.aggregates.CompanyRepository;
@@ -18,6 +19,7 @@ import com.example.cargotracker.identity.domain.model.aggregates.User;
 import com.example.cargotracker.identity.domain.model.aggregates.UserRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.UserSessionRevoker;
 import com.example.cargotracker.identity.domain.model.rules.PasswordPolicy;
+import com.example.cargotracker.identity.domain.model.valueobjects.AuditAction;
 import com.example.cargotracker.identity.domain.model.valueobjects.CompanyKind;
 import com.example.cargotracker.identity.domain.model.valueobjects.EmailAddress;
 import com.example.cargotracker.identity.domain.model.valueobjects.PasswordResetTokenPurpose;
@@ -92,7 +94,7 @@ class PasswordResetCompletionServiceTest {
         when(sessions.revokeAll(any())).thenThrow(new IllegalStateException("session の表に届かない"));
 
         assertThat(service.complete(token.id(), "a brand new long passphrase"))
-                .isEqualTo(new PasswordResetCompletion.Completed());
+                .isEqualTo(new PasswordResetCompletion.Completed(false));
         verify(users).changePassword(any());
     }
 
@@ -116,7 +118,7 @@ class PasswordResetCompletionServiceTest {
         });
 
         assertThat(service.complete(token.id(), "a brand new long passphrase"))
-                .isEqualTo(new PasswordResetCompletion.Completed());
+                .isEqualTo(new PasswordResetCompletion.Completed(false));
         verify(sessions).revokeAll(user.email());
     }
 
@@ -163,5 +165,77 @@ class PasswordResetCompletionServiceTest {
             committed = true;
             return result;
         }
+    }
+
+    private final PasswordResetToken invitation = PasswordResetToken.issue(
+            PasswordResetTokenPurpose.USER_INVITATION,
+            UUID.randomUUID(),
+            user.id(),
+            "b".repeat(64),
+            new UtcInstant(NOW.minusSeconds(60)));
+
+    private AuditRecord auditAfterCompleting(PasswordResetToken used, boolean initial) {
+        when(tokens.findById(used.id())).thenReturn(Optional.of(used));
+        when(users.findById(user.id())).thenReturn(Optional.of(user));
+        when(companies.findById(company.id())).thenReturn(Optional.of(company));
+        when(tokens.markUsed(any(), any())).thenReturn(true);
+        when(users.changePassword(any())).thenReturn(true);
+
+        assertThat(service.complete(used.id(), "a brand new long passphrase"))
+                .isEqualTo(new PasswordResetCompletion.Completed(initial));
+        org.mockito.ArgumentCaptor<AuditRecord> audit = org.mockito.ArgumentCaptor.forClass(AuditRecord.class);
+        verify(auditRecords).append(audit.capture());
+        return audit.getValue();
+    }
+
+    @Test
+    void 招待のリンクで設定すると初回の設定として監査を書き初回の完了を返す() {
+        // Bolt 38b4 の行 4
+        assertThat(auditAfterCompleting(invitation, true).action()).isEqualTo(AuditAction.INITIAL_PASSWORD_SET);
+    }
+
+    @Test
+    void 再設定のリンクで設定すると今までどおり再設定の完了として監査を書く() {
+        // Bolt 38b4 の行 5（再設定のリンクで初めて設定する場合も同じ。開始準備の決定 (7)）
+        assertThat(auditAfterCompleting(token, false).action()).isEqualTo(AuditAction.PASSWORD_RESET_COMPLETED);
+    }
+
+    @Test
+    void 使えるトークンの設定の形は用途から初回かを返し使えなければ空() {
+        // Bolt 38b4 の行 2・3
+        when(tokens.findById(invitation.id())).thenReturn(Optional.of(invitation));
+        when(tokens.findById(token.id())).thenReturn(Optional.of(token));
+        UUID missing = UUID.randomUUID();
+        when(tokens.findById(missing)).thenReturn(Optional.empty());
+
+        assertThat(service.setupOf(invitation.id())).contains(new PasswordSetup(invitation.id(), true));
+        assertThat(service.setupOf(token.id())).contains(new PasswordSetup(token.id(), false));
+        assertThat(service.setupOf(missing)).isEmpty();
+    }
+
+    @Test
+    void 期限切れと使用済みのトークンの設定の形は空() {
+        // Bolt 38b4（開発レビュー）
+        PasswordResetToken expired = PasswordResetToken.issue(
+                PasswordResetTokenPurpose.USER_INVITATION,
+                UUID.randomUUID(),
+                user.id(),
+                "c".repeat(64),
+                new UtcInstant(NOW.minus(java.time.Duration.ofHours(24))));
+        PasswordResetToken used = PasswordResetToken.reconstitute(
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                user.id(),
+                PasswordResetTokenPurpose.USER_INVITATION,
+                "d".repeat(64),
+                new UtcInstant(NOW.minusSeconds(60)),
+                new UtcInstant(NOW.plusSeconds(3600)),
+                new UtcInstant(NOW.minusSeconds(30)),
+                null);
+        when(tokens.findById(expired.id())).thenReturn(Optional.of(expired));
+        when(tokens.findById(used.id())).thenReturn(Optional.of(used));
+
+        assertThat(service.setupOf(expired.id())).isEmpty();
+        assertThat(service.setupOf(used.id())).isEmpty();
     }
 }

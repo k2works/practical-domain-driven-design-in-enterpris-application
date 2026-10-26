@@ -34,6 +34,11 @@ public enum AuditAction {
      */
     PASSWORD_RESET_COMPLETED,
     /**
+     * 招待のリンクで初回の password を設定した（Bolt 38b4、US-16 AC1・US-18 AC7）。A-06 で初回の password を設定し、招待のトークンを使ったとき。
+     * 成功だけを記録する（方針の誤り・使えないリンクは記録しない）。再設定のリンクで初めて設定した場合は {@link #PASSWORD_RESET_COMPLETED}。
+     */
+    INITIAL_PASSWORD_SET,
+    /**
      * システム管理者が利用者の役割を変えた（Bolt 34。US-16 AC1 の役割の分）。成功だけを記録し、対象（利用者と更新した後の版）と
      * 変更前後の役割を {@link AuditTarget} に残す。拒んだ変更と古い版からの変更は記録しない。
      */

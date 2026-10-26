@@ -64,7 +64,7 @@ npx gulp issue:attach-demo:all                                              # �
 | bolt-21 | #9（US-21） | bolt-23b・bolt-24・bolt-25・bolt-25b・bolt-27b | #10（US-04） |
 | bolt-26・bolt-26c | #11（US-12） | bolt-27 | #12（US-09） |
 | bolt-28 | #44（主成功の流れと Release 0.1 のデモ） | bolt-31・bolt-31b・bolt-31c・bolt-32・bolt-32c・bolt-32b・bolt-32e・bolt-32f・bolt-33a・bolt-33b | #13（US-18） |
-| bolt-34・bolt-34d | #14（US-16） | bolt-37c・bolt-37e3b・bolt-37e4b | #16（US-07） |
+| bolt-34・bolt-34d・bolt-38b4 | #14（US-16） | bolt-37c・bolt-37e3b・bolt-37e4b | #16（US-07） |
 | bolt-37b2 | #15（US-06） | | |
 
 ### インフラ

@@ -21,7 +21,8 @@ import org.slf4j.LoggerFactory;
 /**
  * 再設定のトークンの発行（Bolt 38b2c。再設定のハンドラー（Bolt 33）から、利用者の招待のハンドラーと共有するために抜き出した。IA-INV-12、
  * SEC-08）。利用者の行の占有で発行を直列にし（同時の 2 つの契機で 2 通送らない）、同じ契機の ID のトークンがあれば発行しない（再配信）。
- * 用途が繰り返しの抑えを数えるなら、前の発行から 1 分たっていなければ発行しない（抑えは占有の後に見る）。利用者が有効でなければ発行しない。
+ * 用途が契機の時刻で発行を拒む（遅れて配られた契機）か、契機の後に譲る用途の発行があれば発行しない（Bolt 38b4）。用途が繰り返しの抑えを
+ * 数えるなら、前の発行から 1 分たっていなければ発行しない（抑えは占有の後に見る）。利用者が有効でなければ発行しない。
  * 発行するときは前の未使用のトークンを無効にする。発行しなかった理由は INFO のログに出す。リンクの値（平文）は返す値と送信の要求にだけあり、
  * 表・発行記録・ログに残らない。Bean にせず、各ハンドラーがコンストラクターの引数から作る（前例 {@code LinkMailDelivery}）。
  */
@@ -57,10 +58,16 @@ final class PasswordResetTokenIssuance {
      * @param purpose 用途
      * @param requestId 契機の ID（再設定の依頼、利用者の登録）。トークンの {@code request_id} になる
      * @param userId 宛先の利用者
+     * @param triggeredAt 契機の時刻（依頼・登録の時刻。遅れて配られた契機を見分ける。Bolt 38b4）
      * @param linkPrefix リンクの接頭辞（リンクはこれにトークンを続ける）
      * @return 発行したリンク。発行しなかったら空
      */
-    Optional<IssuedLink> issue(PasswordResetTokenPurpose purpose, UUID requestId, UserId userId, String linkPrefix) {
+    Optional<IssuedLink> issue(
+            PasswordResetTokenPurpose purpose,
+            UUID requestId,
+            UserId userId,
+            UtcInstant triggeredAt,
+            String linkPrefix) {
         if (!tokens.lockForIssue(userId)) {
             return skipped(purpose, "利用者がいない", requestId);
         }
@@ -68,6 +75,12 @@ final class PasswordResetTokenIssuance {
             return skipped(purpose, "同じ契機の再配信", requestId);
         }
         UtcInstant now = new UtcInstant(clock.instant());
+        if (!purpose.acceptsTriggerAt(triggeredAt, now)) {
+            return skipped(purpose, "契機が古い", requestId);
+        }
+        if (yieldsToLaterIssue(purpose, userId, triggeredAt)) {
+            return skipped(purpose, "契機の後に本人の別の用途の発行がある", requestId);
+        }
         if (purpose.throttlesRepeatedIssue()
                 && !PasswordResetToken.allowsIssue(tokens.findLastIssuedAt(userId, purpose), now)) {
             return skipped(purpose, "前の発行から 1 分たっていない", requestId);
@@ -86,6 +99,14 @@ final class PasswordResetTokenIssuance {
     private static Optional<IssuedLink> skipped(PasswordResetTokenPurpose purpose, String reason, UUID requestId) {
         LOG.info("{} のトークンを発行しなかった（{}）: 契機 {}", purpose, reason, requestId);
         return Optional.empty();
+    }
+
+    /** 譲る用途の発行が、契機より後にあるか（同じ時刻は譲らない）。 */
+    private boolean yieldsToLaterIssue(PasswordResetTokenPurpose purpose, UserId userId, UtcInstant triggeredAt) {
+        return purpose.yieldsTo()
+                .flatMap(other -> tokens.findLastIssuedAt(userId, other))
+                .filter(last -> last.instant().isAfter(triggeredAt.instant()))
+                .isPresent();
     }
 
     private boolean isActive(User user) {

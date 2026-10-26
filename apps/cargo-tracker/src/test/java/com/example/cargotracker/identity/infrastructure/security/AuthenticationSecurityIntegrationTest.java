@@ -1313,16 +1313,22 @@ class AuthenticationSecurityIntegrationTest {
     private static final String NEW_URL = "/password-reset/new";
     private static final String COMPLETED_URL = "/login?reset-completed";
     private static final String NEW_PASSWORD = "a brand new long passphrase";
-    private static final String INVALID_TITLE = "この再設定のリンクは使えません";
+    private static final String INVALID_TITLE = "このリンクは使えません";
+    private static final String INITIAL_URL = "/login?initial-password-set";
 
     @Autowired
     PasswordResetTokenRepository resetTokens;
 
     /** 再設定のトークンを発行して保存し、リンクに入る値（平文）を返す。 */
     private String issueResetToken(String email) {
+        return issueToken(email, PasswordResetTokenPurpose.RESET);
+    }
+
+    /** 用途のトークンを発行して保存し、リンクに入る値（平文）を返す（Bolt 38b4。招待のトークンはテストの準備として直に作る）。 */
+    private String issueToken(String email, PasswordResetTokenPurpose purpose) {
         String token = "tok" + UUID.randomUUID().toString().replace("-", "");
         resetTokens.add(PasswordResetToken.issue(
-                PasswordResetTokenPurpose.RESET,
+                purpose,
                 UUID.randomUUID(),
                 userIdOf(email),
                 new Sha256PasswordResetTokenHasher().hash(token),
@@ -1407,6 +1413,120 @@ class AuthenticationSecurityIntegrationTest {
         mvc.perform(get(RESET_URL + "/unknown-token"))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString(INVALID_TITLE)));
         mvc.perform(get(NEW_URL)).andExpect(content().string(org.hamcrest.Matchers.containsString(INVALID_TITLE)));
+    }
+
+    @Test
+    void 招待のリンクのA06は初回の設定として見え設定すると初回の知らせに移り初回の設定として監査を書く() throws Exception {
+        // Bolt 38b4 の行 2・4・8（開始準備の決定 (3)・(4)・(8)）
+        String email = shipper(UserStatus.ACTIVE);
+        Cookie session = openResetLink(issueToken(email, PasswordResetTokenPurpose.USER_INVITATION), null);
+
+        mvc.perform(get(NEW_URL).cookie(session))
+                .andExpect(status().isOk())
+                .andExpect(content()
+                        .string(org.hamcrest.Matchers.containsString("<title>password の設定 - cargo-tracker</title>")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("<h1>password の設定</h1>")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("初めて使う password を入力してください。")));
+        mvc.perform(setPassword(session, NEW_PASSWORD, NEW_PASSWORD)).andExpect(redirectedUrl(INITIAL_URL));
+
+        mvc.perform(get(INITIAL_URL))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("password を設定しました。")))
+                .andExpect(content()
+                        .string(org.hamcrest.Matchers.containsString(
+                                "このブラウザでログインしていた場合は、ログアウトしました。設定した password でログインし、認証アプリを登録してください。")))
+                .andExpect(content()
+                        .string(org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("password を変更しました。"))));
+        assertThat(auditOf(email))
+                .anyMatch(row -> "INITIAL_PASSWORD_SET".equals(row.get("action")))
+                .noneMatch(row -> "PASSWORD_RESET_COMPLETED".equals(row.get("action")));
+    }
+
+    @Test
+    void 再設定のリンクのA06は再設定のtitleと見出しと説明の全文のまま() throws Exception {
+        // Bolt 38b4 の行 3（開発レビュー。T-206）
+        Cookie session = openResetLink(issueResetToken(shipper(UserStatus.ACTIVE)), null);
+
+        String page = mvc.perform(get(NEW_URL).cookie(session))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        assertThat(page)
+                .contains("<title>password の再設定 - cargo-tracker</title>")
+                .contains("<h1>password の再設定</h1>")
+                .contains("新しい password を入力してください。")
+                .doesNotContain("初めて使う password");
+    }
+
+    @Test
+    void 招待のリンクで方針を誤ると初回の見出しのまま示し利用停止なら使えない案内でどちらも監査を書かない() throws Exception {
+        // Bolt 38b4 の行 4・6（T-211。誤った値と利用停止の組み合わせ）
+        String email = shipper(UserStatus.ACTIVE);
+        Cookie session = openResetLink(issueToken(email, PasswordResetTokenPurpose.USER_INVITATION), null);
+
+        mvc.perform(setPassword(session, NEW_PASSWORD, NEW_PASSWORD + "x"))
+                .andExpect(content()
+                        .string(org.hamcrest.Matchers.containsString(
+                                "<title>エラー: password の設定 - cargo-tracker</title>")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("<h1>password の設定</h1>")));
+        mvc.perform(setPassword(session, "short", "short"))
+                .andExpect(content()
+                        .string(org.hamcrest.Matchers.containsString(
+                                "<title>エラー: password の設定 - cargo-tracker</title>")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("<h1>password の設定</h1>")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("12 文字以上の password を入力してください。")));
+        jdbc.update(
+                "UPDATE identity.app_user SET status = 'SUSPENDED' WHERE id = ?",
+                userIdOf(email).value());
+        mvc.perform(setPassword(session, NEW_PASSWORD, NEW_PASSWORD))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString(INVALID_TITLE)));
+
+        assertThat(auditOf(email))
+                .noneMatch(row -> "INITIAL_PASSWORD_SET".equals(row.get("action")))
+                .noneMatch(row -> "PASSWORD_RESET_COMPLETED".equals(row.get("action")));
+    }
+
+    @Test
+    void 使えないリンクの案内は時間を書かず用途を問わず同じ全文になる() throws Exception {
+        // Bolt 38b4 の行 7（開始準備の決定 (2)・(6)）
+        String email = shipper(UserStatus.ACTIVE);
+        String used = issueToken(email, PasswordResetTokenPurpose.USER_INVITATION);
+        mvc.perform(setPassword(openResetLink(used, null), NEW_PASSWORD, NEW_PASSWORD));
+
+        String invalid = mvc.perform(get(RESET_URL + "/" + used))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        assertThat(invalid)
+                .contains("<title>このリンクは使えません - cargo-tracker</title>")
+                .contains("<h1>このリンクは使えません</h1>")
+                .contains("有効期限を過ぎた、使用済み、新しいリンクが送られた、などが考えられます。")
+                .contains("新しいリンクを送る（初めて設定する場合も、ここから設定できます）")
+                .contains("<li>メールが複数届いている場合は、いちばん新しいメールのリンクを開いてください。</li>")
+                .contains("<li>すでに password を設定した場合は、その password でログインしてください。</li>")
+                .contains("<li>うまくいかない場合は、荷主の方は担当営業に、社内の方はシステム管理者にお問い合わせください。</li>")
+                .contains(">ログインに戻る</a>")
+                .doesNotContain("30 分")
+                .doesNotContain("再設定の");
+        // 招待の期限切れのトークンも同じ案内（開発レビュー。組み合わせ）
+        String expired = issueToken(email, PasswordResetTokenPurpose.USER_INVITATION);
+        advance(Duration.ofHours(24));
+        assertThat(mvc.perform(get(RESET_URL + "/" + expired))
+                        .andReturn()
+                        .getResponse()
+                        .getContentAsString())
+                .contains("<h1>このリンクは使えません</h1>")
+                .contains("有効期限を過ぎた、使用済み、新しいリンクが送られた、などが考えられます。")
+                .doesNotContain("30 分");
+        assertThat(mvc.perform(get(RESET_URL + "/unknown-token"))
+                        .andReturn()
+                        .getResponse()
+                        .getContentAsString())
+                .contains("<h1>このリンクは使えません</h1>")
+                .contains("有効期限を過ぎた、使用済み、新しいリンクが送られた、などが考えられます。");
     }
 
     @Test

@@ -40,6 +40,8 @@
         <Or>
             <!-- A-08 の画面は、DI の部品（再登録のサービス）を保持するだけ（Bolt 33b） -->
             <Class name="com.example.cargotracker.identity.interfaces.web.TotpReEnrollmentController"/>
+            <!-- A-05・A-06 の画面は、DI の部品（依頼と完了のサービス）を保持するだけ。Bolt 38b4 で完了のサービスに初回の判定を足して指摘された -->
+            <Class name="com.example.cargotracker.identity.interfaces.web.PasswordResetController"/>
         </Or>
     </Match>
     <!--

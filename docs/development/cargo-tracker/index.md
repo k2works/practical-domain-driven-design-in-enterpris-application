@@ -113,7 +113,11 @@ Bolt がイテレーションに当たります。ふりかえりは各 Bolt の
 | 38 | [S-20 の前の直し（エラー要約の形とフォーカス、版の解釈の順、Section の足し方）](bolt_38_plan.md) | [終了報告](bolt_38_report.md) | W6 | 完了 |
 | 38b | [利用者の登録の判定と、招待のトークンの用途（ドメインと永続化）](bolt_38b_plan.md) | [終了報告](bolt_38b_report.md) | W6 | 完了 |
 | 38b2 | [利用者の登録のサービスと監査（使えないハッシュ、範囲外の記録）](bolt_38b2_plan.md) | [終了報告](bolt_38b2_report.md) | W6 | 完了 |
-| 38b2b | [利用者の招待のメール（通知の側）と、範囲外の企業の記録の規則](bolt_38b2b_plan.md) | — | W6 | 計画済み |
+| 38b2b | [利用者の招待のメール（通知の側）と、範囲外の企業の記録の規則](bolt_38b2b_plan.md) | [終了報告](bolt_38b2b_report.md) | W6 | 完了 |
+| 38b2c | [利用者の招待の発行（identity の側）と、招待の用途の規則](bolt_38b2c_plan.md) | [終了報告](bolt_38b2c_report.md) | W6 | 完了 |
+| 38b3 | [登録の画面の下ごしらえ（表示名の規則と、登録できる企業の照会）](bolt_38b3_plan.md) | [終了報告](bolt_38b3_report.md) | W6 | 完了 |
+| 38b3b | [S-20 の利用者の登録の画面](bolt_38b3b_plan.md) | [終了報告](bolt_38b3b_report.md) | W6 | 完了 |
+| 38b4 | [A-06 の初回の設定の出し分けと、登録から A-07 までの受入シナリオ](bolt_38b4_plan.md) | —（[動画](../../assets/demo/bolt-38b4/register-and-setup.webm){:target="_blank"}） | W6 | 実装中 |
 
 Bolt を始めるときに行を追加します。
 

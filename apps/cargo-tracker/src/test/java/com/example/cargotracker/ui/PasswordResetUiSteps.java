@@ -206,9 +206,10 @@ public class PasswordResetUiSteps {
 
     @ならば("再設定のリンクは使えないと案内される")
     public void 再設定のリンクは使えないと案内される() {
-        assertThat(page().getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName("この再設定のリンクは使えません")))
+        assertThat(page().getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName("このリンクは使えません")))
                 .isVisible();
-        assertThat(page().getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("password の再設定を依頼し直す")))
+        assertThat(page().getByRole(
+                                AriaRole.LINK, new Page.GetByRoleOptions().setName("新しいリンクを送る（初めて設定する場合も、ここから設定できます）")))
                 .isVisible();
         browser.checkAccessibility();
     }

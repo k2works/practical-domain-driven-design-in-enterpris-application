@@ -58,6 +58,7 @@ public class UserInvitationMailEventHandler {
                         PasswordResetTokenPurpose.USER_INVITATION,
                         event.registrationId(),
                         event.userId(),
+                        event.registeredAt(),
                         invitationLinkPrefix)
                 .ifPresent(issued -> send(event, issued));
     }

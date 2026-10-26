@@ -109,7 +109,11 @@ public class UiUsers {
      * 使った刻みを戻してから作る（本体の再利用の拒否は変えない。Bolt 31 の確認ポイント 7）。
      */
     public String totpCode(Role role) {
-        UserId userId = of(role).userId();
+        return totpCode(of(role).userId());
+    }
+
+    /** {@link #totpCode(Role)} と同じで、画面で登録した利用者のための口（Bolt 38b4）。 */
+    public String totpCode(UserId userId) {
         AuthenticationFactorFixtures.resetTotpStep(jdbc, userId);
         TotpCredential credential = totpCredentials.findByUserId(userId).orElseThrow();
         return totpCodes.code(
@@ -168,7 +172,11 @@ public class UiUsers {
 
     /** A-07 の手入力のキー（Base32）から、利用者の認証アプリと同じようにその時点のコードを作る（Bolt 31b）。 */
     public String codeFromKey(Role role, String manualKey) {
-        UserId owner = of(role).userId();
+        return codeFromKey(of(role).userId(), manualKey);
+    }
+
+    /** {@link #codeFromKey(Role, String)} と同じで、画面で登録した利用者のための口（Bolt 38b4）。 */
+    public String codeFromKey(UserId owner, String manualKey) {
         return totpCodes.code(
                 owner,
                 cipher.encrypt(Base32.decode(manualKey.replace(" ", "")), owner),
