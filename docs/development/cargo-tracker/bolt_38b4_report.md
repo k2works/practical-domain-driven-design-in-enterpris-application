@@ -2,8 +2,10 @@
 type: Plan
 title: "Bolt 38b4 終了報告 - A-06 の初回の設定の出し分けと、登録から A-07 までの受入シナリオ"
 tags: [plan]
-status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-26T22:19:33Z }
+status: stable
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-26T23:08:05Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-26T23:08:05Z }
 ---
 
 # Bolt 38b4 終了報告 - A-06 の初回の設定の出し分けと、登録から A-07 までの受入シナリオ
@@ -142,6 +144,7 @@ Bolt 38c（ロックの解除と管理者による TOTP の解除。#47 の前�
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-27 | 終了報告を承認した（議題 1〜5）。動画を #14 へ添付した | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-27 | 初版作成（承認待ち） | anthropic/claude-opus-5-5 |
 
 ## 関連ドキュメント
