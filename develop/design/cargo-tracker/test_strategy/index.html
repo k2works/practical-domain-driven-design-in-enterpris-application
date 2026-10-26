@@ -7973,6 +7973,41 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_38b2b_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 38b2b 計画
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../development/cargo-tracker/release_report-0_1/" class="md-nav__link">
         
   
@@ -13928,7 +13963,7 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 </tr>
 <tr>
 <td style="text-align: left;">通知</td>
-<td style="text-align: left;">メールを受けるだけのコンテナ（Testcontainers の Mailpit。Bolt 33、ADR-017）で、通知の宛先・件名・本文（料金などを含まない）と、送信失敗の記録を確かめる。Bolt 33 は password の再設定のメールの分: SMTP の送信アダプターで件名・本文・宛先が届く、送信のサービスが PENDING から SENT・FAILED にする、同じ <code>event_id</code> と宛先で 2 通送らない。dev のログに出す送信（<code>LoggingMailSender</code>）はログの取り込みを送信の間だけにして確かめ（T-111）、dev と staging・prod の併用と、staging・prod で SMTP の設定がないときに起動を止めることを確かめる</td>
+<td style="text-align: left;">メールを受けるだけのコンテナ（Testcontainers の Mailpit。Bolt 33、ADR-017）で、通知の宛先・件名・本文（料金などを含まない）と、送信失敗の記録を確かめる。Bolt 33 は password の再設定のメールの分、Bolt 38b2b は利用者の招待のメールの分（公開 API から Mailpit まで、同じ登録の 2 回目は送らない）: SMTP の送信アダプターで件名・本文・宛先が届く、送信のサービスが PENDING から SENT・FAILED にする、同じ <code>event_id</code> と宛先で 2 通送らない。dev のログに出す送信（<code>LoggingMailSender</code>）はログの取り込みを送信の間だけにして確かめ（T-111）、dev と staging・prod の併用と、staging・prod で SMTP の設定がないときに起動を止めることを確かめる</td>
 </tr>
 <tr>
 <td style="text-align: left;">password の再設定の依頼</td>

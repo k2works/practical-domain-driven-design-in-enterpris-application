@@ -2104,6 +2104,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#us-16-ac1bolt-38b2b" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        利用者の招待のメール（US-16 AC1。Bolt 38b2b）
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -8266,6 +8277,41 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_38b2b_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 38b2b 計画
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../development/cargo-tracker/release_report-0_1/" class="md-nav__link">
         
   
@@ -13401,7 +13447,7 @@
 <tr>
 <td style="text-align: left;">言語</td>
 <td style="text-align: left;">US-10、US-19</td>
-<td style="text-align: left;">荷受人向けの画面（C-11、C-12）と招待メールは日本語と英語。その他は日本語</td>
+<td style="text-align: left;">荷受人向けの画面（C-11、C-12）と荷受人への招待メールは日本語と英語。その他は日本語（利用者の招待のメールも日本語だけ。Bolt 38b2b）</td>
 </tr>
 <tr>
 <td style="text-align: left;">Bootstrap 5.3、htmx 2.0、Thymeleaf</td>
@@ -15457,6 +15503,12 @@
 <td style="text-align: left;">日本語と英語で開示項目・有効期間・受諾の方法</td>
 <td style="text-align: left;">荷受人</td>
 </tr>
+<tr>
+<td style="text-align: left;">利用者の招待（Bolt 38b2b）</td>
+<td style="text-align: left;">【cargo-tracker】利用者の登録のご案内</td>
+<td style="text-align: left;">初回の password の設定のリンク・期限・期限を過ぎたときの出口（下の節）</td>
+<td style="text-align: left;">システム管理者が登録した利用者</td>
+</tr>
 </tbody>
 </table>
 <p>料金・契約条件・書類・他の予約の情報はメールに書かない（N-INV-01）。送った通知は C-16 でも確認できる。</p>
@@ -15500,6 +15552,44 @@
 </tbody>
 </table>
 <p>本文には業務の情報（料金・番号・企業名・他の利用者）を書かず、リンクと期限と使い方だけを書く（N-INV-01）。リンクは設定の公開の base URL（<code>cargotracker.public-base-url</code>）から組み立てる（Host ヘッダーから組み立てない）。文面は日本語だけを作り、英語の文面は決めていない（要求には言語を持たせる）。リンクを開くと、トークンを確かめて session にトークンの ID だけを置き、トークンのない URL の A-06 へ移す（Bolt 33a。画面の URL の表の「再設定のリンクを開く」）。Bolt 33 から 33a までは、リンクの先は仮の A-06（準備中）を返していた（トークンを読まず session に覚えない。2026-10-15 に human:kakimomokuri が決定）。</p>
+<h3 id="us-16-ac1bolt-38b2b">利用者の招待のメール（US-16 AC1。Bolt 38b2b）<a class="headerlink" href="#us-16-ac1bolt-38b2b" title="Permanent link">&para;</a></h3>
+<p>システム管理者が利用者を登録したときに、登録したメールアドレスへ送る（送るのは Bolt 38b2c の登録のイベントのハンドラー）。通知の公開 API <code>UserInvitationMail</code>（<a href="../../../adr/cargo-tracker/017-notification-module-and-mail/">ADR-017</a>）で送り、件名と本文は通知のテキストのテンプレートで組み立て、表に保存しない。リンクは再設定と同じ A-06 の形（最後の段がトークン。期限は 24 時間）。日時の書式は再設定のメールと同じ。</p>
+<p>件名: 「【cargo-tracker】利用者の登録のご案内」</p>
+<p>本文（短い文面にし、期限を過ぎたときの出口の 1 文を足した。2026-10-26、human:kakimomokuri）:</p>
+<div class="highlight"><pre><span></span><code>cargo-tracker の利用者として、このメールアドレスが登録されました。
+次のリンクを開いて、password を設定してください。
+{設定の URL}
+このリンクは {期限} まで、1 回だけ使えます。
+期限を過ぎたときは、ログインの画面の「password を忘れた場合」から設定できます。
+心当たりがない場合は、このメールを無視してください。
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">場面</th>
+<th style="text-align: left;">本文の各文が事実と合うか</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">登録された本人</td>
+<td style="text-align: left;">合う。登録されたこと・リンク・期限・1 回だけを示す。設定の後のログインと認証アプリの登録（A-07）は、ログインの画面からの流れのまま進める</td>
+</tr>
+<tr>
+<td style="text-align: left;">別人のアドレスに届いた（登録の誤り）</td>
+<td style="text-align: left;">合う。何もしなければ password は設定されず、無視してよい。誰が登録したかは述べない</td>
+</tr>
+<tr>
+<td style="text-align: left;">招待の後に本人か第三者が再設定を依頼した・利用停止された</td>
+<td style="text-align: left;">一部だけ合う。リンクは期限の前でも使えなくなる（新しい発行と停止の確定は前の未使用のリンクを無効にする。受け入れたリスク。SEC-08）。出口は A-05（本人の再設定）で、本文の「password を忘れた場合」から設定できる（利用停止中は設定できない）</td>
+</tr>
+<tr>
+<td style="text-align: left;">期限を過ぎた・メールが届かなかった</td>
+<td style="text-align: left;">期限を過ぎた場合は合う（出口は A-05）。届かなかった場合は本文が読まれないので、マニュアル（Bolt 38b4 の 2 章）で A-05 を案内する。登録したての利用者は利用中なので A-05 を使える</td>
+</tr>
+</tbody>
+</table>
+<p>本文には業務の情報（企業名・役割・登録した人）を書かない（N-INV-01）。文面は日本語だけを作る（荷受人への招待の日英とは別のもの）。招待の再送の操作は作らない（本人が A-05 で設定できる）。</p>
 <h2 id="_13">インタラクション<a class="headerlink" href="#_13" title="Permanent link">&para;</a></h2>
 <h3 id="_14">主要な操作フロー<a class="headerlink" href="#_14" title="Permanent link">&para;</a></h3>
 <h4 id="_15">見積依頼から本予約まで（荷主担当者・営業担当者・経路設計者）<a class="headerlink" href="#_15" title="Permanent link">&para;</a></h4>

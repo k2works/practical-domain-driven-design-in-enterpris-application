@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="通知モジュールを最小に新設し、メールの送信を公開 API（notification.interfaces.api の PasswordResetMail）で受けて SMTP で送る決定。identity は依頼の応答から切り離した @ApplicationModuleListener のハンドラーで再設定のトークンを発行し、ACL から同期で呼ぶ。通知は identity に依存しない。dev はログに出す送信、統合テストは Mailpit、SES の SMTP は W10。">
+        <meta name="description" content="通知モジュールを最小に新設し、メールの送信を公開 API（notification.interfaces.api の PasswordResetMail。Bolt 38b2b で UserInvitationMail を足した）で受けて SMTP で送る決定。identity は依頼の応答から切り離した @ApplicationModuleListener のハンドラーで再設定のトークンを発行し、ACL から同期で呼ぶ。通知は identity に依存しない。dev はログに出す送信、統合テストは Mailpit、SES の SMTP は W10。">
       
       
         <meta name="author" content="k2works">
@@ -7580,6 +7580,41 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_38b2b_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 38b2b 計画
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../development/cargo-tracker/release_report-0_1/" class="md-nav__link">
         
   
@@ -12976,6 +13011,14 @@
 <td style="text-align: left;">アダプターがアプリケーションサービス <code>notification.application.internal.commandservices.PasswordResetMailService</code> を呼ぶ。サービスは通知を PENDING で記録してから送信のポートを呼び、SENT か FAILED（理由）にする。状態の更新は <code>status = 'PENDING'</code> を条件にした更新で、版の列は持たない</td>
 </tr>
 <tr>
+<td style="text-align: left;">2 つ目の操作（Bolt 38b2b）</td>
+<td style="text-align: left;">インターフェース <code>UserInvitationMail</code> の <code>send(UserInvitationMailRequest)</code> が <code>UserInvitationMailReceipt</code>（<code>Sent</code>・<code>AlreadySent</code>・<code>Failed</code>）を返す。要求は登録の ID（<code>event_id</code>）、招待のトークンの ID（<code>target_ref</code>）、宛先の利用者の ID、アドレス、初回の設定の URL、期限、言語。サービスは <code>UserInvitationMailService</code>。種類ごとの口にし、一般の口にまとめるかは Bolt 38d で決める（2026-10-26 の開始準備、human:kakimomokuri）</td>
+</tr>
+<tr>
+<td style="text-align: left;">共有の部品（Bolt 38b2b）</td>
+<td style="text-align: left;">記録（PENDING）・送信・SENT か FAILED・失敗の理由とログの伏せ字は、2 つのサービスが package-private の <code>LinkMailDelivery</code> に任せる（Bean にせず各サービスが作る）。伏せ字はリンクを「[リンク]」、アドレスを「[メールアドレス]」にする。結果は <code>MailDeliveryOutcome</code>（Bolt 38b2b で <code>PasswordResetMailOutcome</code> から名前を変えた）</td>
+</tr>
+<tr>
 <td style="text-align: left;">重複</td>
 <td style="text-align: left;">同じ <code>event_id</code> と宛先の通知が既にあれば送らず <code>AlreadySent</code> を返す（UK(event_id, recipient_user_id)。N-INV-02）</td>
 </tr>
@@ -12985,7 +13028,7 @@
 </tr>
 </tbody>
 </table>
-<p>補足（2026-10-15、human:kakimomokuri が決定）: 外部の技術のポート（回復コードのハッシュ・TOTP の秘密の発行・メールの送信など）はドメイン（<code>domain.model.aggregates</code>）に置く。<code>application.internal.outboundservices</code> は他のコンテキストを呼ぶ ACL に使う。Bolt 33 のステップ 2 で送信のポートを <code>application.internal.outboundservices</code> に置いて層の規則に当たり、人に諮って、それまでの前例（回復コードのハッシュ・TOTP の秘密の発行）を規則にした。送信のポート <code>MailSender</code>・<code>PasswordResetMailTemplate</code>・<code>OutgoingMail</code> は <code>notification.domain.model.aggregates</code> のままにする。</p>
+<p>補足（2026-10-15、human:kakimomokuri が決定）: 外部の技術のポート（回復コードのハッシュ・TOTP の秘密の発行・メールの送信など）はドメイン（<code>domain.model.aggregates</code>）に置く。<code>application.internal.outboundservices</code> は他のコンテキストを呼ぶ ACL に使う。Bolt 33 のステップ 2 で送信のポートを <code>application.internal.outboundservices</code> に置いて層の規則に当たり、人に諮って、それまでの前例（回復コードのハッシュ・TOTP の秘密の発行）を規則にした。送信のポート <code>MailSender</code>・<code>PasswordResetMailTemplate</code>・<code>OutgoingMail</code> は <code>notification.domain.model.aggregates</code> のままにする（Bolt 38b2b の <code>UserInvitationMailTemplate</code> も同じ）。</p>
 <h3 id="2-identity">2. identity からの呼び出しと依存の制約<a class="headerlink" href="#2-identity" title="Permanent link">&para;</a></h3>
 <ul>
 <li><code>identity</code> は ACL <code>identity.application.internal.outboundservices.acl.NotificationPasswordResetMails</code>（上流の名前 + 名詞）から公開 API を同期で呼ぶ。組み立ては <code>identity.infrastructure.config</code> で、<code>identity</code> の <code>allowedDependencies</code> に <code>"notification :: api"</code> を足す。層の規則に例外を足さない。</li>
@@ -13003,7 +13046,7 @@
 <tbody>
 <tr>
 <td style="text-align: left;">ポート</td>
-<td style="text-align: left;"><code>notification.domain.model.aggregates</code> の <code>MailSender</code>（文面の <code>PasswordResetMailTemplate</code>、送るメール <code>OutgoingMail</code> も同じ。決定 1 の補足の規則による。Bolt 33 のステップ 2 で層の規則に当たって <code>application.internal.outboundservices</code> から移した）。application は <code>org.springframework.mail..</code>・<code>jakarta.mail..</code> に依存しない（<code>LayerArchitectureTest</code> の禁止に足す）</td>
+<td style="text-align: left;"><code>notification.domain.model.aggregates</code> の <code>MailSender</code>（文面の <code>PasswordResetMailTemplate</code> と <code>UserInvitationMailTemplate</code>、送るメール <code>OutgoingMail</code> も同じ。決定 1 の補足の規則による。Bolt 33 のステップ 2 で層の規則に当たって <code>application.internal.outboundservices</code> から移した）。application は <code>org.springframework.mail..</code>・<code>jakarta.mail..</code> に依存しない（<code>LayerArchitectureTest</code> の禁止に足す）</td>
 </tr>
 <tr>
 <td style="text-align: left;">SMTP</td>
@@ -13069,8 +13112,8 @@
 <p>トークンの規則（32 バイトの乱数、SHA-256 のハッシュだけを保存、30 分、1 回だけ、新しい発行で前を無効、1 分以内の依頼し直しは送らない）は <a href="../../../design/cargo-tracker/non_functional/">非機能要件</a> の SEC-08 とドメインモデルの IA-INV-12 に置く。</p>
 <h3 id="5">5. 送信の記録<a class="headerlink" href="#5" title="Permanent link">&para;</a></h3>
 <ul>
-<li>通知モジュールの <code>notification.notification</code> の表に、宛先の利用者・アドレス・種類（<code>PASSWORD_RESET</code>）・対象・言語・状態・送信時刻・失敗の理由を残す。本文とリンクは保存しない。</li>
-<li><code>PASSWORD_RESET</code> の <code>target_ref</code> はトークンの ID とし、本文を再現しない（この種類だけの例外。リンクを再現できる値を残さない）。<code>recipient_user_id</code> はコンテキストをまたぐので FK にしない。</li>
+<li>通知モジュールの <code>notification.notification</code> の表に、宛先の利用者・アドレス・種類（<code>PASSWORD_RESET</code>。Bolt 38b2b から <code>USER_INVITATION</code> も）・対象・言語・状態・送信時刻・失敗の理由を残す。本文とリンクは保存しない。</li>
+<li><code>PASSWORD_RESET</code> の <code>target_ref</code> はトークンの ID とし、本文を再現しない（リンクを再現できる値を残さない例外。Bolt 38b2b の <code>USER_INVITATION</code> も同じで、<code>event_id</code> は登録の ID、<code>target_ref</code> は招待のトークンの ID）。<code>recipient_user_id</code> はコンテキストをまたぐので FK にしない。</li>
 <li>繰り返し（1 分以内）で送らなかったことは記録せず、送信の記録がないことで分かる。監査（<code>PASSWORD_RESET_REQUESTED</code>）と送信の記録は結ばない（AUD-02 の対象の列は使う Bolt で足す）。</li>
 </ul>
 <h3 id="6-33a-a-06">6. 33a までの仮の A-06<a class="headerlink" href="#6-33a-a-06" title="Permanent link">&para;</a></h3>
@@ -13126,7 +13169,7 @@
 <li>爆撃の 1 日の上限がない。1 分ごとに依頼し直して、前のリンクを無効にできる。</li>
 <li>デモのログにリンクが出る。デモには実在のメールアドレスを登録しない（ADR-013）。</li>
 </ul>
-<p>W9 の開始準備で、宛先のモデルを決める。利用者でない宛先（荷受人への招待 <code>CONSIGNEE_INVITATION</code>）を扱うため、<code>recipient_user_id</code> の NOT NULL と UK(event_id, recipient_user_id)、公開 API を種類ごとに分けるか汎用にするかを見直す。</p>
+<p>Bolt 38d の開始準備で、種類ごとの公開 API（再設定・利用者の招待）を一般の口にまとめるか、共有の部品 <code>LinkMailDelivery</code> をリンクのないメールに広げるかを決める（Bolt 38b の確認ポイント 1）。W9 の開始準備で、宛先のモデルを決める。利用者でない宛先（荷受人への招待 <code>CONSIGNEE_INVITATION</code>）を扱うため、<code>recipient_user_id</code> の NOT NULL と UK(event_id, recipient_user_id)、公開 API を種類ごとに分けるか汎用にするかを見直す。</p>
 <h2 id="_9">コンプライアンス<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h2>
 <ul>
 <li>ModularityTest のモジュール一覧に通知を足し、<code>notification</code> が <code>shared</code> だけに依存することを確かめる。</li>
@@ -13137,6 +13180,7 @@
 <h2 id="_10">改訂の経緯<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>
 <ul>
 <li>2026-10-15: Bolt 33a のステップ 1 で、決定 6 に仮の A-06 を本物の A-06 に置き換えること（リンクを開くとトークンの ID だけを session に移して PRG、使えないリンクは同じ案内、仮のテンプレートを消す、リンクの path を定数に寄せる）を書いた（Bolt 33a の開始準備の決定 1。human:kakimomokuri が決定）。</li>
+<li>2026-10-26: Bolt 38b2b で、2 つ目の公開 API <code>UserInvitationMail</code>（種類 <code>USER_INVITATION</code>）、文面のポート <code>UserInvitationMailTemplate</code>、記録と送信と伏せ字の共有の部品 <code>LinkMailDelivery</code>（伏せ字は「[リンク]」）と結果 <code>MailDeliveryOutcome</code> を足した（決定 1・3・5、既知の課題。Bolt 38b2b の開始準備の決定 1〜3。human:kakimomokuri が決定）。</li>
 </ul>
 <h2 id="_11">関連ドキュメント<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h2>
 <ul>

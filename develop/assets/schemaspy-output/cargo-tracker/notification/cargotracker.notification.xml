@@ -3,11 +3,11 @@
    <tables>
       <table name="notification" remarks="通知" schema="notification" type="TABLE">
          <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="id" nullable="false" remarks="通知 ID" size="2147483647" type="uuid" typeCode="1111"/>
-         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="event_id" nullable="false" remarks="契機の ID（password の再設定では依頼の ID）" size="2147483647" type="uuid" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="event_id" nullable="false" remarks="契機のイベントの ID（再設定の依頼、利用者の登録など）" size="2147483647" type="uuid" typeCode="1111"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="recipient_user_id" nullable="false" remarks="宛先の利用者 ID（アクセス・監査の利用者。外部キーを張らない）" size="2147483647" type="uuid" typeCode="1111"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="email" nullable="false" remarks="宛先のメールアドレス" size="320" type="varchar" typeCode="12"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="kind" nullable="false" remarks="通知の種類" size="30" type="varchar" typeCode="12"/>
-         <column autoUpdated="false" defaultValue="null" digits="0" id="5" name="target_ref" nullable="false" remarks="対象の参照（password の再設定では再設定のトークンの ID。本文は再現しない）" size="200" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="5" name="target_ref" nullable="false" remarks="対象の参照（再設定と利用者の招待はトークンの ID。本文は再現しない）" size="200" type="varchar" typeCode="12"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="6" name="locale" nullable="false" remarks="文面の言語" size="10" type="varchar" typeCode="12"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="7" name="status" nullable="false" remarks="通知の状態" size="30" type="varchar" typeCode="12"/>
          <column autoUpdated="false" defaultValue="null" digits="6" id="8" name="sent_at" nullable="true" remarks="送信時刻" size="35" type="timestamptz" typeCode="93"/>
@@ -22,7 +22,7 @@
             <column ascending="true" name="recipient_user_id"/>
          </index>
          <checkConstraint constraint="(((status)::text = 'FAILED'::text) = (failure_reason IS NOT NULL))" name="ck_notification_failure_reason"/>
-         <checkConstraint constraint="((kind)::text = ANY ((ARRAY['QUOTATION_PRESENTED'::character varying, 'ROUTE_APPROVED'::character varying, 'QUOTATION_EXPIRING'::character varying, 'BOOKING_CONFIRMED'::character varying, 'TRACKING_UNDER_REVIEW'::character varying, 'CONSIGNEE_INVITATION'::character varying, 'PASSWORD_RESET'::character varying])::text[]))" name="ck_notification_kind"/>
+         <checkConstraint constraint="((kind)::text = ANY ((ARRAY['QUOTATION_PRESENTED'::character varying, 'ROUTE_APPROVED'::character varying, 'QUOTATION_EXPIRING'::character varying, 'BOOKING_CONFIRMED'::character varying, 'TRACKING_UNDER_REVIEW'::character varying, 'CONSIGNEE_INVITATION'::character varying, 'PASSWORD_RESET'::character varying, 'USER_INVITATION'::character varying])::text[]))" name="ck_notification_kind"/>
          <checkConstraint constraint="(((status)::text = 'SENT'::text) = (sent_at IS NOT NULL))" name="ck_notification_sent_at"/>
          <checkConstraint constraint="((status)::text = ANY ((ARRAY['PENDING'::character varying, 'SENT'::character varying, 'FAILED'::character varying])::text[]))" name="ck_notification_status"/>
       </table>
