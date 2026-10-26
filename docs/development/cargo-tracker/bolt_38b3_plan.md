@@ -2,8 +2,10 @@
 type: Plan
 title: "Bolt 38b3 計画 - 登録の画面の下ごしらえ（表示名の規則と、登録できる企業の照会）"
 tags: [plan]
-status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-26T04:47:00Z }
+status: stable
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-26T05:11:55Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-26T05:11:56Z }
 ---
 
 # Bolt 38b3 計画 - 登録の画面の下ごしらえ（表示名の規則と、登録できる企業の照会）
@@ -183,6 +185,7 @@ UserAdministrationQueryService --> RegistrableCompanyLookup
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-26 | 計画を承認した（確認ポイント 1〜5 を推奨のとおり） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-26 | 整合性検証の指摘を反映した（承認待ち）。38b3b と 38b4 の同じ配備の守り方（機能ブランチ）、値と照会の結果の置き場所、行・段落の区切りも拒む、送られた既知の課題を 38b3b に送ると決めた（human:kakimomokuri）。1 社の照会の判定の順と行 6b、承認ゲートのセキュリティ、アプローチの根拠、文書の行の一覧、既存のテストの直し、変異の分け方と V6・V8、空の範囲はリポジトリで守る（前例 `list`）、Try の対応 | anthropic/claude-opus-5-5 |
 | 2026-10-26 | 初版作成（承認待ち）。開始準備で、38b3 を 38b3・38b3b に分け、確認は POST と hidden、2 段の画面で JS なし、荷受人の企業は出さない、書式文字と NBSP だけの表示名を拒むと決めた（human:kakimomokuri） | anthropic/claude-opus-5-5 |
 
