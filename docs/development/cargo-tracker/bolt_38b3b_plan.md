@@ -2,8 +2,10 @@
 type: Plan
 title: "Bolt 38b3b 計画 - S-20 の利用者の登録の画面"
 tags: [plan]
-status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-26T06:40:53Z }
+status: stable
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-26T06:45:41Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-26T06:45:42Z }
 ---
 
 # Bolt 38b3b 計画 - S-20 の利用者の登録の画面
@@ -187,6 +189,7 @@ title S-20 の利用者の登録（Bolt 38b3b）
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-26 | 計画を承認した（確認ポイント 1〜7 を推奨のとおり。PR の作成を許す） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-26 | 整合性検証の指摘を反映した（承認待ち）。文言（表示名で始めない、見出し、付ける役割）、画面で見る誤りはまとめる、38b4 も同じブランチで 1 つの PR、確認の領域の回復手段と決めた（human:kakimomokuri）。1 段目の印、URL を `/new` の下に、`UserDetailPage` を使わない部品と architecture_backend :323、行 9（重複の内外）・行 12（5 つの URL と 3 つの POST、`/new` が `{id}` に落ちない）・行 13（監査）、V6・V8、UI テストの企業、新しいファイルの一覧、ui_design・マニュアル・test_strategy の直す行、Try と既知の課題の対応、行番号 | anthropic/claude-opus-5-5 |
 | 2026-10-26 | 初版作成（承認待ち）。開始準備で、エラー要約は今の共通の形にそろえ課題を残す、停止の理由の文言は残す、確定の後は詳細へ PRG と知らせると決めた（human:kakimomokuri） | anthropic/claude-opus-5-5 |
 
