@@ -8598,6 +8598,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#password" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        初回の password の設定
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -13663,8 +13674,8 @@
 <td style="text-align: left;"><a href="#25-まもなくログアウトします">2.5</a></td>
 </tr>
 <tr>
-<td style="text-align: left;">password の再設定</td>
-<td style="text-align: left;">password を忘れたときに、再設定のリンクをメールで受け取り、新しい password を設定する</td>
+<td style="text-align: left;">password の再設定・初回の設定</td>
+<td style="text-align: left;">password を忘れたときに、再設定のリンクをメールで受け取り、新しい password を設定する。登録されたときに届く案内のリンクから、初回の password を設定する</td>
 <td style="text-align: left;"><a href="#26-password-を忘れた場合">2.6</a></td>
 </tr>
 <tr>
@@ -14081,6 +14092,7 @@
 <ul>
 <li>登録しているメールアドレスに、password を再設定するためのリンクを送ってもらいます</li>
 <li>メールのリンクを開き、新しい password を設定します</li>
+<li>利用者として登録されたときに届く案内のメールのリンクを開き、初回の password を設定します（下の「初回の password の設定」）</li>
 </ul>
 <h3 id="_27">画面の開き方<a class="headerlink" href="#_27" title="Permanent link">&para;</a></h3>
 <ul>
@@ -14178,13 +14190,35 @@
 <li>条件に合わないか、確認の欄が違うと、欄の下に誤りが示され、入力した password は消えます。もう一度入力してください。確認の欄の違いを直した後に、条件の誤りが示されることがあります</li>
 <li>設定すると、ほかのパソコン・スマートフォン・ブラウザでログインしていた場合も、次の操作で「もう一度ログインしてください」（<a href="#24-もう一度ログインしてください">2.4</a>）になります。設定したブラウザでログインしていた場合は、ログアウトします</li>
 <li>続けて誤ったログインのためにログインできなくなっていた場合は、新しい password を設定しても、15 分たつまでログインできません</li>
-<li>リンクを開くと「この再設定のリンクは使えません」と示された場合は、有効期限（30 分）を過ぎた、すでに使った、新しいリンクが送られた、などが考えられます。いちばん新しいメールのリンクを開くか、「password の再設定を依頼し直す」からもう一度依頼してください</li>
+<li>リンクを開くと「このリンクは使えません」と示された場合は、有効期限を過ぎた、使用済み、新しいリンクが送られた、などが考えられます。いちばん新しいメールのリンクを開くか、「新しいリンクを送る（初めて設定する場合も、ここから設定できます）」からもう一度依頼してください。初回の設定の案内のリンクが使えなくなった場合も同じです</li>
 </ul>
-<p><img alt="この再設定のリンクは使えません" src="../assets/02-password-reset-invalid.png" /></p>
+<p><img alt="このリンクは使えません" src="../assets/02-password-reset-invalid.png" /></p>
 <ul>
 <li>再設定の画面を開いたまま 30 分以上たった場合は、「もう一度ログインしてください」が示されます。リンクの有効期限（30 分）も過ぎているので、ログインの画面の「password を忘れた場合」からもう一度依頼してください</li>
 <li>しばらく使っていなかったブラウザでリンクを開いて「もう一度ログインしてください」が示された場合は、メールのリンクをもう一度開いてください（依頼してから 30 分以内なら使えます）</li>
 </ul>
+<h3 id="password">初回の password の設定<a class="headerlink" href="#password" title="Permanent link">&para;</a></h3>
+<p>システム管理者が利用者を登録すると（<a href="../11-%E5%88%A9%E7%94%A8%E8%80%85%E3%81%AE%E7%AE%A1%E7%90%86/">11.5</a>）、登録したメールアドレスへ「【cargo-tracker】利用者の登録のご案内」のメールが届きます。このメールのリンクから、初めて使う password を設定します。</p>
+<p><img alt="password の設定" src="../assets/02-password-initial-new.png" /></p>
+<p>画面の項目は、再設定の画面と同じです。見出しが「password の設定」、説明が「初めて使う password を入力してください。」になります。</p>
+<ol>
+<li>案内のメールのリンクを開きます。「password の設定」の画面が開きます</li>
+<li>「新しい password」と「新しい password（確認）」に同じ password を入力し、「password を設定する」をクリックします</li>
+<li>ログインの画面に戻り、「password を設定しました。」と示されます</li>
+</ol>
+<p><img alt="password を設定した知らせ" src="../assets/02-login-initial-password-set.png" /></p>
+<ol>
+<li>
+<p><a href="#21-ログイン">2.1 ログイン</a> の手順で、設定した password でログインします。続けて、認証アプリの登録の画面が開くので、認証アプリを登録します</p>
+</li>
+<li>
+<p>案内のリンクの有効期限は 24 時間で、1 回だけ使えます</p>
+</li>
+<li>期限が過ぎた場合や、案内が届かない場合は、ログインの画面の「password を忘れた場合」から設定してください。そのときの画面と知らせは、再設定と同じ「password の再設定」「password を変更しました。」になりますが、初回の設定もそのまま行えます</li>
+<li>案内のメールが届いた後に、本人かほかの人が「password を忘れた場合」から依頼すると、案内のリンクは使えなくなります。新しく届いた再設定のメールのリンクから設定してください</li>
+<li>設定したブラウザでほかの利用者がログインしていた場合は、ログアウトします</li>
+<li>ログインできないときは、15 分たってから試してください</li>
+</ol>
 <h2 id="27">2.7 認証アプリを登録し直す<a class="headerlink" href="#27" title="Permanent link">&para;</a></h2>
 <h3 id="_31">この画面でできること<a class="headerlink" href="#_31" title="Permanent link">&para;</a></h3>
 <ul>

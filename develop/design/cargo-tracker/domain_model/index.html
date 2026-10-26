@@ -14382,7 +14382,7 @@
 <tr>
 <td style="text-align: left;">監査の操作</td>
 <td style="text-align: left;">AuditAction</td>
-<td style="text-align: left;">監査記録の操作。password の段の成功（<code>PASSWORD_VERIFIED</code>）、ログインの成功（<code>LOGIN_SUCCEEDED</code>。2 つの要素がそろった）、ログインの失敗（<code>LOGIN_FAILED</code>）、TOTP の登録（<code>TOTP_ENROLLED</code>。Bolt 31b）、回復コードの使用（<code>RECOVERY_CODE_USED</code>。Bolt 31c）、ロック（<code>ACCOUNT_LOCKED</code>。その失敗でロックしたときだけ。Bolt 32）、session の取消し（<code>SESSION_REVOKED</code>。request ごとの確かめで利用停止・無効な企業・利用者なしを見つけて session を捨てた。Bolt 32c）、ログアウト（<code>LOGOUT</code>）、password の再設定の依頼（<code>PASSWORD_RESET_REQUESTED</code>。Bolt 33）、password の再設定の完了（<code>PASSWORD_RESET_COMPLETED</code>。成功だけ。Bolt 33a）、TOTP の再登録（<code>TOTP_RE_ENROLLED</code>。成功だけ。Bolt 33b）。Bolt 34 で役割の変更（<code>ROLES_CHANGED</code>。対象・版・変更前後を持つ）を、Bolt 34b で管理範囲外の試行（<code>ADMIN_SCOPE_DENIED</code>。結果は失敗、理由 <code>OUT_OF_SCOPE</code>、対象は利用者）を足した。Bolt 34d で利用停止（<code>USER_SUSPENDED</code>。結果は成功、理由は停止の理由の名前、対象・版・変更前後を持つ）と利用再開（<code>USER_REACTIVATED</code>。理由なし、対象・版・変更前後を持つ）を足した。Bolt 38b2 で利用者の登録（<code>USER_REGISTERED</code>。成功だけ、対象は新しい利用者・版 0・変更後は役割の名前）を足し、<code>ADMIN_SCOPE_DENIED</code> の対象に企業（管理範囲外の企業への登録の試行）を足した</td>
+<td style="text-align: left;">監査記録の操作。password の段の成功（<code>PASSWORD_VERIFIED</code>）、ログインの成功（<code>LOGIN_SUCCEEDED</code>。2 つの要素がそろった）、ログインの失敗（<code>LOGIN_FAILED</code>）、TOTP の登録（<code>TOTP_ENROLLED</code>。Bolt 31b）、回復コードの使用（<code>RECOVERY_CODE_USED</code>。Bolt 31c）、ロック（<code>ACCOUNT_LOCKED</code>。その失敗でロックしたときだけ。Bolt 32）、session の取消し（<code>SESSION_REVOKED</code>。request ごとの確かめで利用停止・無効な企業・利用者なしを見つけて session を捨てた。Bolt 32c）、ログアウト（<code>LOGOUT</code>）、password の再設定の依頼（<code>PASSWORD_RESET_REQUESTED</code>。Bolt 33）、password の再設定の完了（<code>PASSWORD_RESET_COMPLETED</code>。成功だけ。Bolt 33a）、TOTP の再登録（<code>TOTP_RE_ENROLLED</code>。成功だけ。Bolt 33b）。Bolt 34 で役割の変更（<code>ROLES_CHANGED</code>。対象・版・変更前後を持つ）を、Bolt 34b で管理範囲外の試行（<code>ADMIN_SCOPE_DENIED</code>。結果は失敗、理由 <code>OUT_OF_SCOPE</code>、対象は利用者）を足した。Bolt 34d で利用停止（<code>USER_SUSPENDED</code>。結果は成功、理由は停止の理由の名前、対象・版・変更前後を持つ）と利用再開（<code>USER_REACTIVATED</code>。理由なし、対象・版・変更前後を持つ）を足した。Bolt 38b2 で利用者の登録（<code>USER_REGISTERED</code>。成功だけ、対象は新しい利用者・版 0・変更後は役割の名前）を足し、<code>ADMIN_SCOPE_DENIED</code> の対象に企業（管理範囲外の企業への登録の試行）を足した。招待のリンクで初回の password を設定した（<code>INITIAL_PASSWORD_SET</code>。成功だけ。Bolt 38b4）</td>
 <td style="text-align: left;">アクセス・監査</td>
 </tr>
 <tr>
@@ -14412,7 +14412,7 @@
 <tr>
 <td style="text-align: left;">利用者を登録した</td>
 <td style="text-align: left;">UserRegistered</td>
-<td style="text-align: left;">システム管理者が利用者を登録したことを表すドメインのイベント（<code>identity.domain.events</code>、DE-25）。登録の ID・利用者の ID・登録の時刻だけを持ち、メールアドレス・操作者・役割は持たない（発行記録に個人情報を残さない。Bolt 38b2c）</td>
+<td style="text-align: left;">システム管理者が利用者を登録したことを表すドメインのイベント（<code>identity.domain.events</code>、DE-25）。登録の ID・利用者の ID・登録の時刻だけを持ち、メールアドレス・操作者・役割は持たない（発行記録に個人情報を残さない。Bolt 38b2c）。登録の時刻は、遅れて配られた DE-25 で招待を発行しないかの判定に使う（Bolt 38b4）</td>
 <td style="text-align: left;">アクセス・監査</td>
 </tr>
 <tr>
@@ -14430,13 +14430,13 @@
 <tr>
 <td style="text-align: left;">利用者の招待のメールのイベントハンドラー</td>
 <td style="text-align: left;">UserInvitationMailEventHandler</td>
-<td style="text-align: left;"><code>UserRegistered</code> を登録のコミットの後に別のトランザクションで受けるハンドラー（<code>eventhandlers</code>、<code>@ApplicationModuleListener</code>）。共有の部品で招待のトークン（<code>USER_INVITATION</code>、24 時間）を発行し、ACL <code>NotificationUserInvitationMails</code> で通知の公開 API <code>UserInvitationMail</code> に送る。送れなくても完了にする（出口は A-05）。招待の用途を参照するのはこのクラスだけ（ArchUnit の規則。Bolt 38b2c）</td>
+<td style="text-align: left;"><code>UserRegistered</code> を登録のコミットの後に別のトランザクションで受けるハンドラー（<code>eventhandlers</code>、<code>@ApplicationModuleListener</code>）。共有の部品で招待のトークン（<code>USER_INVITATION</code>、24 時間）を発行し、ACL <code>NotificationUserInvitationMails</code> で通知の公開 API <code>UserInvitationMail</code> に送る。送れなくても完了にする（出口は A-05）。招待の用途を参照するのはこのクラスだけ（ArchUnit の規則。Bolt 38b2c）。登録の時刻を契機の時刻として部品に渡す（Bolt 38b4）</td>
 <td style="text-align: left;">アクセス・監査</td>
 </tr>
 <tr>
 <td style="text-align: left;">再設定のトークンの発行</td>
 <td style="text-align: left;">PasswordResetTokenIssuance</td>
-<td style="text-align: left;">2 つのハンドラーが共有する発行の部品（<code>eventhandlers</code>、package-private。Bean にせず各ハンドラーが作る）。利用者の行をロックし、同じ依頼の ID のトークンがあれば何もせず、用途が抑えを数えるなら前の発行から 1 分以内なら発行せず、利用者が有効でなければ発行せず、そうでなければ前の未使用のトークンを無効にしてトークンを発行し、リンク（<code>IssuedLink</code>）を返す（Bolt 38b2c）</td>
+<td style="text-align: left;">2 つのハンドラーが共有する発行の部品（<code>eventhandlers</code>、package-private。Bean にせず各ハンドラーが作る）。利用者の行をロックし、同じ依頼の ID のトークンがあれば何もせず、用途が抑えを数えるなら前の発行から 1 分以内なら発行せず、利用者が有効でなければ発行せず、そうでなければ前の未使用のトークンを無効にしてトークンを発行し、リンク（<code>IssuedLink</code>）を返す（Bolt 38b2c）。Bolt 38b4 から、契機の時刻を受け、用途が契機の時刻で発行を拒む（遅れて配られた招待）か、契機の後に譲る用途（再設定）の発行があれば発行しない（同じ時刻は譲らない）。手順の順は、ロック・再配信・契機が古いか・譲るか・抑え・有効か・前の未使用の無効化・発行</td>
 <td style="text-align: left;">アクセス・監査</td>
 </tr>
 <tr>
@@ -14490,7 +14490,7 @@
 <tr>
 <td style="text-align: left;">再設定のトークンの用途</td>
 <td style="text-align: left;">PasswordResetTokenPurpose</td>
-<td style="text-align: left;">再設定のトークンの用途。<code>RESET</code>（password の再設定。期限 30 分）と <code>USER_INVITATION</code>（利用者の招待。登録したシステム管理者が送る初回の設定のリンク。期限 24 時間）。期限は用途が持つ。繰り返しの依頼の抑えを数えるかも用途が持ち（<code>throttlesRepeatedIssue()</code>。<code>RESET</code> だけが数える。Bolt 38b2c）、前の未使用のトークンの無効化は用途を問わない。US-19 の荷受人の招待（参照許可）とは別のもの（Bolt 38b）</td>
+<td style="text-align: left;">再設定のトークンの用途。<code>RESET</code>（password の再設定。期限 30 分）と <code>USER_INVITATION</code>（利用者の招待。登録したシステム管理者が送る初回の設定のリンク。期限 24 時間）。期限は用途が持つ。繰り返しの依頼の抑えを数えるかも用途が持ち（<code>throttlesRepeatedIssue()</code>。<code>RESET</code> だけが数える。Bolt 38b2c）、前の未使用のトークンの無効化は用途を問わない。US-19 の荷受人の招待（参照許可）とは別のもの（Bolt 38b）。Bolt 38b4 から、初回の password の設定か（<code>setsInitialPassword()</code>。<code>USER_INVITATION</code> だけ）、契機の時刻で発行してよいか（<code>acceptsTriggerAt</code>。初回の設定は契機から期限の前だけ）、後に発行された用途に譲るか（<code>yieldsTo()</code>。初回の設定は <code>RESET</code> に譲る）を持つ</td>
 <td style="text-align: left;">アクセス・監査</td>
 </tr>
 <tr>
@@ -14628,7 +14628,7 @@
 <tr>
 <td style="text-align: left;">再設定の完了のサービス</td>
 <td style="text-align: left;">PasswordResetCompletionService</td>
-<td style="text-align: left;">A-06 の設定を受けるアプリケーションのサービス（<code>commandservices</code>）。リンクのトークンを確かめてトークンの ID を返し（<code>open</code>）、トークンの ID が使えるかを答え（<code>isUsable</code>）、方針を確かめてからトークンを条件付きで使い、password を変え、前の未使用のトークンを無効にし、監査記録（<code>PASSWORD_RESET_COMPLETED</code>）を書く（1 つのトランザクション）。コミットの後に利用者の session を失効させる（<code>complete</code>。Bolt 33a）</td>
+<td style="text-align: left;">A-06 の設定を受けるアプリケーションのサービス（<code>commandservices</code>）。リンクのトークンを確かめてトークンの ID を返し（<code>open</code>）、トークンの ID が使えるかを答え（<code>isUsable</code>）、方針を確かめてからトークンを条件付きで使い、password を変え、前の未使用のトークンを無効にし、監査記録（<code>PASSWORD_RESET_COMPLETED</code>）を書く（1 つのトランザクション）。コミットの後に利用者の session を失効させる（<code>complete</code>。Bolt 33a）。Bolt 38b4 から、使えるトークンの設定の形（<code>setupOf</code> が返す <code>PasswordSetup</code>。初回の設定か）を返し、招待のトークンの設定では監査 <code>INITIAL_PASSWORD_SET</code> を書き、結果 <code>Completed</code> に初回かを持たせる</td>
 <td style="text-align: left;">アクセス・監査</td>
 </tr>
 <tr>
@@ -15644,7 +15644,7 @@
 <li>利用者を読み、利用停止・所属企業の無効なら無効を返す（理由を示さない。監査を書かず、トランザクションを戻す）</li>
 <li>ポート <code>PasswordHasher</code> でハッシュを作り、利用者の集約の <code>changePassword(newHash)</code> で password を変えて保存する</li>
 <li>同じ利用者の未使用のトークンを無効にする</li>
-<li>監査記録 <code>PASSWORD_RESET_COMPLETED</code> を書く</li>
+<li>監査記録 <code>PASSWORD_RESET_COMPLETED</code> を書く（招待のトークンなら <code>INITIAL_PASSWORD_SET</code>。Bolt 38b4）</li>
 </ol>
 <p>コミットの後に、ポート <code>UserSessionRevoker</code> の <code>revokeAll(メールアドレス)</code> でその利用者の session をすべて失効させる（Spring Session は自分のトランザクションで動くので、完了のトランザクションに入れない）。失効が失敗しても警告のログにとどめ、完了にする（password は変わっている）。ロックと失敗の数（ログインの失敗の集約）は変えない（SEC-02）。password の要素は与えず、利用者は A-01 から新しい password と TOTP でログインし直す（ADR-011）。</p>
 <p>password の方針は、12 文字以上 64 文字以下（code point で数える。空白と全角の文字を許す）、UTF-8 で 72 バイト以下（bcrypt は 72 バイトを超える password で例外を投げる）、よく使われる password の一覧に載っていない（大文字小文字を区別しない）の 3 つで、短い・長い・72 バイト・よく使われる、の順に確かめて最初の違反だけを返す（SEC-04・SEC-05）。Unicode の正規化はしない（ログインの照合と同時に直す必要があるので、扱うなら別の Bolt）。方針は合成ルートの <code>@Bean</code> で返せない（AT-07）ので、サービスの <code>@Bean</code> の中で <code>new</code> する（<code>LockPolicy</code> の前例）。利用者の集約は版を写さず、password の更新は版を上げるが条件にしない（同じ利用者の同時の設定は、トークンの条件付きの使用で 1 つに絞られる。<a href="../data_model/">データモデル</a>）。</p>
@@ -15783,7 +15783,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">IA-INV-08</td>
-<td style="text-align: left;">認証の成功・失敗・ロック、権限外のアクセス試行は、ドメインイベントを経ずに同じ request の中で同期に監査記録へ書く。ログインの失敗の回数とその監査記録（<code>LOGIN_FAILED</code>・<code>ACCOUNT_LOCKED</code>）、成功で 0 に戻すことと <code>LOGIN_SUCCEEDED</code> は 1 つのトランザクションにし、監査記録の追記が失敗したら回数も戻す。ロックの監査はその失敗でロックしたときだけ 1 行書く（Bolt 32）。回復コードのログインでは、コードの使用と <code>RECOVERY_CODE_USED</code> が 1 つのトランザクション、<code>LOGIN_SUCCEEDED</code> と回数の戻しが別のトランザクションになる。後者の追記が失敗すると、例外が伝わってログインは 500 になり通らない。session は password の段のまま残り（2 つ目の要素の入力に戻れる。業務の画面は A-02 の <code>/login/totp?factor.type=totp</code> へ導く）、同じ session で別の回復コードを送り直せるが、送るたびにまた 500 になり、コードが 1 つずつ使用済みになる。コードの使用と <code>RECOVERY_CODE_USED</code> は先にコミットしているので、使ったコードは戻らない（<code>RECOVERY_CODE_USED</code> は残り、<code>LOGIN_SUCCEEDED</code> と回数の戻しは書かれず、誤りとしても数えない。Bolt 34c で <code>AuthenticationErrorHandlingIntegrationTest</code> の特性テストで固定した。変えるかは後の Bolt の議題）。request ごとの確かめで session を捨てたときの <code>SESSION_REVOKED</code> も、その request の中で 1 つのトランザクションで書き、追記が失敗したら session を捨てて 500 にする（Bolt 32c）。管理範囲外の試行（<code>ADMIN_SCOPE_DENIED</code>。Bolt 34b）は、役割の変更のトランザクションの外で単独のトランザクションで書き、追記が失敗したら 500 にする。利用者の登録の監査記録（<code>USER_REGISTERED</code>。Bolt 38b2）は利用者と役割と同じトランザクションで書き、追記が失敗したら利用者も残さない。利用停止と再開の監査記録（<code>USER_SUSPENDED</code>・<code>USER_REACTIVATED</code>。Bolt 34d）は利用状態の変更と同じトランザクションで書き、追記が失敗したら利用状態も戻す（停止で無効にした再設定のトークンも戻る。IA-INV-12）。変更前の状態は判定に使った利用者の状態から渡し、変わっていない変更は記録しない。再開の後の session の消去は確定のトランザクションの外で行い、消せなくても記録と再開は戻さない（IA-INV-04）</td>
+<td style="text-align: left;">認証の成功・失敗・ロック、権限外のアクセス試行は、ドメインイベントを経ずに同じ request の中で同期に監査記録へ書く。ログインの失敗の回数とその監査記録（<code>LOGIN_FAILED</code>・<code>ACCOUNT_LOCKED</code>）、成功で 0 に戻すことと <code>LOGIN_SUCCEEDED</code> は 1 つのトランザクションにし、監査記録の追記が失敗したら回数も戻す。ロックの監査はその失敗でロックしたときだけ 1 行書く（Bolt 32）。回復コードのログインでは、コードの使用と <code>RECOVERY_CODE_USED</code> が 1 つのトランザクション、<code>LOGIN_SUCCEEDED</code> と回数の戻しが別のトランザクションになる。後者の追記が失敗すると、例外が伝わってログインは 500 になり通らない。session は password の段のまま残り（2 つ目の要素の入力に戻れる。業務の画面は A-02 の <code>/login/totp?factor.type=totp</code> へ導く）、同じ session で別の回復コードを送り直せるが、送るたびにまた 500 になり、コードが 1 つずつ使用済みになる。コードの使用と <code>RECOVERY_CODE_USED</code> は先にコミットしているので、使ったコードは戻らない（<code>RECOVERY_CODE_USED</code> は残り、<code>LOGIN_SUCCEEDED</code> と回数の戻しは書かれず、誤りとしても数えない。Bolt 34c で <code>AuthenticationErrorHandlingIntegrationTest</code> の特性テストで固定した。変えるかは後の Bolt の議題）。request ごとの確かめで session を捨てたときの <code>SESSION_REVOKED</code> も、その request の中で 1 つのトランザクションで書き、追記が失敗したら session を捨てて 500 にする（Bolt 32c）。管理範囲外の試行（<code>ADMIN_SCOPE_DENIED</code>。Bolt 34b）は、役割の変更のトランザクションの外で単独のトランザクションで書き、追記が失敗したら 500 にする。利用者の登録の監査記録（<code>USER_REGISTERED</code>。Bolt 38b2）は利用者と役割と同じトランザクションで書き、追記が失敗したら利用者も残さない。利用停止と再開の監査記録（<code>USER_SUSPENDED</code>・<code>USER_REACTIVATED</code>。Bolt 34d）は利用状態の変更と同じトランザクションで書き、追記が失敗したら利用状態も戻す（停止で無効にした再設定のトークンも戻る。IA-INV-12）。変更前の状態は判定に使った利用者の状態から渡し、変わっていない変更は記録しない。再開の後の session の消去は確定のトランザクションの外で行い、消せなくても記録と再開は戻さない（IA-INV-04）。招待のリンクの初回の設定の <code>INITIAL_PASSWORD_SET</code> も、トークンの使用と password の更新と同じトランザクションで書く（Bolt 38b4）</td>
 <td style="text-align: left;">AUD-01、US-16〜US-19</td>
 </tr>
 <tr>
@@ -15803,7 +15803,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">IA-INV-12</td>
-<td style="text-align: left;">再設定のトークンは 1 回だけ使え、発行から用途の期限で使えなくなる（再設定は 30 分。29 分 59 秒では使える。利用者の招待は 24 時間。Bolt 38b）。前の発行から 1 分以内なら発行しない抑えは再設定（<code>RESET</code>）の発行だけで数え（用途の値 <code>throttlesRepeatedIssue()</code>。Bolt 38b2c）、招待の直後の本人の再設定の依頼を止めない。新しい発行による前の未使用のトークンの無効化は用途を問わない（Bolt 38b）。同じ利用者に新しく発行すると、前の未使用のトークンは使えなくなる（無効にした時刻を入れて残す）。表にはトークンのハッシュ（SHA-256）だけを置き、平文のトークンとリンクは表・イベントの発行記録・ログに残さない。発行は登録された有効な利用者にだけ行い、同じ依頼の ID（利用者の招待では登録の ID）では 1 つだけ、同じ利用者の前の発行から 1 分以内なら発行しない。依頼の応答は登録の有無にかかわらず同じにする（Bolt 33）。使うのは A-06 の設定で、使っておらず無効にしておらず期限の前（<code>used_at IS NULL AND invalidated_at IS NULL AND expires_at &gt; now</code>）の行だけを条件付きの更新で使い、件数が 0 なら使えない。ドメインの <code>isUsable(now)</code> と SQL の条件が同じであることを契約テストで確かめる（<code>LockPolicy</code> の前例）。方針の誤りではトークンを使わない。設定を終えると、同じ利用者のほかの未使用のトークンも無効にする。期限切れ・使用済み・無効・存在しないトークンは、どれも同じ応答にする（Bolt 33a）。S-20 の利用停止の確定（Bolt 34d）では、同じトランザクションで相手の未使用のトークンを無効にする（<code>PasswordResetTokenRepository#invalidateUnused</code>。停止の前に発行したリンクで、再開の後に password を設定し直させない。開発レビューの後の決定 (5)、2026-10-17、human:kakimomokuri）</td>
+<td style="text-align: left;">再設定のトークンは 1 回だけ使え、発行から用途の期限で使えなくなる（再設定は 30 分。29 分 59 秒では使える。利用者の招待は 24 時間。Bolt 38b）。期限は発行から数える（遅れて配られても、登録から最大で約 48 時間。遅れた配り直しは再起動の後にだけ起きる。受け入れた。2026-10-27、human:kakimomokuri）。前の発行から 1 分以内なら発行しない抑えは再設定（<code>RESET</code>）の発行だけで数え（用途の値 <code>throttlesRepeatedIssue()</code>。Bolt 38b2c）、招待の直後の本人の再設定の依頼を止めない。新しい発行による前の未使用のトークンの無効化は用途を問わない（Bolt 38b）。同じ利用者に新しく発行すると、前の未使用のトークンは使えなくなる（無効にした時刻を入れて残す）。表にはトークンのハッシュ（SHA-256）だけを置き、平文のトークンとリンクは表・イベントの発行記録・ログに残さない。発行は登録された有効な利用者にだけ行い、同じ依頼の ID（利用者の招待では登録の ID）では 1 つだけ、同じ利用者の前の発行から 1 分以内なら発行しない。依頼の応答は登録の有無にかかわらず同じにする（Bolt 33）。使うのは A-06 の設定で、使っておらず無効にしておらず期限の前（<code>used_at IS NULL AND invalidated_at IS NULL AND expires_at &gt; now</code>）の行だけを条件付きの更新で使い、件数が 0 なら使えない。ドメインの <code>isUsable(now)</code> と SQL の条件が同じであることを契約テストで確かめる（<code>LockPolicy</code> の前例）。方針の誤りではトークンを使わない。設定を終えると、同じ利用者のほかの未使用のトークンも無効にする。期限切れ・使用済み・無効・存在しないトークンは、どれも同じ応答にする（Bolt 33a）。S-20 の利用停止の確定（Bolt 34d）では、同じトランザクションで相手の未使用のトークンを無効にする（<code>PasswordResetTokenRepository#invalidateUnused</code>。停止の前に発行したリンクで、再開の後に password を設定し直させない。開発レビューの後の決定 (5)、2026-10-17、human:kakimomokuri）。遅れて配られた招待の契機（登録から 24 時間を過ぎた、登録の後に本人の再設定の発行がある）では招待を発行しない（Bolt 38b4）</td>
 <td style="text-align: left;">US-18 AC8、SEC-08</td>
 </tr>
 <tr>
@@ -16228,7 +16228,7 @@
 <td style="text-align: left;">利用者を登録した（<code>UserRegistered</code>）</td>
 <td style="text-align: left;">アクセス・監査</td>
 <td style="text-align: left;">登録の ID、利用者の ID、登録の時刻だけ（<code>identity.domain.events</code>。メールアドレス・操作者・役割は載せない。発行記録に個人情報を残さないため。登録のトランザクションで出し、拒否と重複のロールバックでは残らない。Bolt 38b2c）</td>
-<td style="text-align: left;">アクセス・監査: 同じコンテキストのハンドラー <code>UserInvitationMailEventHandler</code> が招待のトークンを発行し、通知の公開 API で招待のメールを送る（コミットの後、別のトランザクション。登録の ID で冪等。IA-INV-12）。監査記録 <code>USER_REGISTERED</code> は登録のサービスが同期に書くので、このイベントからは書かない</td>
+<td style="text-align: left;">アクセス・監査: 同じコンテキストのハンドラー <code>UserInvitationMailEventHandler</code> が招待のトークンを発行し、通知の公開 API で招待のメールを送る（コミットの後、別のトランザクション。登録の ID で冪等。IA-INV-12）。監査記録 <code>USER_REGISTERED</code> は登録のサービスが同期に書くので、このイベントからは書かない。登録から 24 時間を過ぎて配られた DE-25 と、登録の後に本人の再設定の発行がある DE-25 では発行しない（Bolt 38b4）</td>
 <td style="text-align: left;">—</td>
 </tr>
 </tbody>
