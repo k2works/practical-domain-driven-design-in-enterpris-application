@@ -4,7 +4,7 @@ title: "リリース計画 - cargo-tracker（A 社国際貨物輸送管理シス
 description: "cargo-tracker MVP のリリース計画。1 人 + AI、時間単位の Bolt（= イテレーション）と週次の見直しで、最初の縦の流れ（R0.1）、パイロット準備完了（R1.0）、本格展開前（R1.1）の 3 段階、Unit のエントロピー評価、SP、バッファ、パイロット開始の条件、引継ぎ ID の台帳、業務責任者に確かめる事項の台帳。"
 tags: [development,release-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-26T01:19:37Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-26T01:30:54Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T09:29:53Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:38:26Z }
@@ -773,7 +773,7 @@ US-18 の Bolt の順序は 31b → 31c → 31d → 32 → 32c → 32d → 32b �
 | 38 | S-20 の前の直し: Bolt 34f の開発レビューの指摘 8・9（エラー要約の形とフォーカス、`aria-describedby`・`aria-invalid`、役割の確定の版を範囲の判定の後に解釈する）、`Section` とテンプレート（#50）。マニュアル 11 章、axe。開始準備で、`aria-describedby` は Bolt 34f で付いていると確かめ、停止の理由の誤りの文言を選択肢を示す文にすると決めた。マニュアルは 11 章の該当行とキャプチャ 1 枚（`11-role-change-rejected`）、動画は撮らない（human:kakimomokuri）。[Bolt 38 計画](bolt_38_plan.md)（承認済み）、[Bolt 38 終了報告](bolt_38_report.md)（承認済み） | 0 | アウトサイドイン（画面の構造） | 計画と終了報告 |
 | 38b | 利用者の登録の判定と招待のトークンの用途（ドメインと永続化）: `User` の登録の判定（役割なし・監督の役割・企業の種類・職務分離）と承認の値からだけ作る口、役割 0 件の検査の二重（#50）、`password_reset_token` の用途の列（`RESET` 30 分・`USER_INVITATION` 24 時間。確認ポイント 15）と、繰り返しの依頼の抑えを再設定の発行だけで数える形。見える振る舞いは変えない。開始準備で 38b を 38b〜38b4 に分けた（human:kakimomokuri）。[Bolt 38b 計画](bolt_38b_plan.md)（承認済み）、[Bolt 38b 終了報告](bolt_38b_report.md)（承認済み） | 0 | インサイドアウト（利用者の生成の判定とトークンの用途から） | 計画と終了報告（スキーマ・セキュリティ。確認ポイント 15） |
 | 38b2 | 利用者の登録のサービスと監査: 登録のサービス（操作者・企業の有無・管理範囲・企業の有効性・表示名・登録の判定・重複のメールアドレス）、使えないハッシュ、監査 `USER_REGISTERED`（役割だけ）、範囲外の企業への試行の記録（確定の口の中で書く）、ログインの道の try を狭める（Bolt 38b の既知の課題）。開始準備で 38b2 を 38b2・38b2b に分けた（human:kakimomokuri）。[Bolt 38b2 計画](bolt_38b2_plan.md)（承認済み）、[Bolt 38b2 終了報告](bolt_38b2_report.md)（承認済み） | 0 | インサイドアウト（登録のサービスから） | 計画と終了報告（構造・セキュリティ） |
-| 38b2b | 利用者の招待のメール（通知の側）: 通知の記録と送信と伏せ字の共有の部品（再設定と共有）、通知の種類 `USER_INVITATION`（`notification.kind` の CHECK）、招待専用の公開 API（一般の口は 38d）、短い文面、範囲外の企業の記録を作る部品を登録のサービスに限る ArchUnit の規則（Bolt 38b2 の終了報告の議題 2）。開始準備で 38b2b を 38b2b・38b2c に分けた（human:kakimomokuri）。[Bolt 38b2b 計画](bolt_38b2b_plan.md)（承認済み）・[終了報告](bolt_38b2b_report.md)（承認待ち） | 0 | インサイドアウト（通知の公開 API と記録・送信の部品から） | 計画と終了報告（スキーマ・構造・外部連携） |
+| 38b2b | 利用者の招待のメール（通知の側）: 通知の記録と送信と伏せ字の共有の部品（再設定と共有）、通知の種類 `USER_INVITATION`（`notification.kind` の CHECK）、招待専用の公開 API（一般の口は 38d）、短い文面、範囲外の企業の記録を作る部品を登録のサービスに限る ArchUnit の規則（Bolt 38b2 の終了報告の議題 2）。開始準備で 38b2b を 38b2b・38b2c に分けた（human:kakimomokuri）。[Bolt 38b2b 計画](bolt_38b2b_plan.md)・[終了報告](bolt_38b2b_report.md)（承認済み） | 0 | インサイドアウト（通知の公開 API と記録・送信の部品から） | 計画と終了報告（スキーマ・構造・外部連携） |
 | 38b2c | 利用者の招待の発行（identity の側）: 登録のイベント DE-25（登録のトランザクションで出し、その ID を招待のトークンの `request_id` にする）、招待のトークン（`USER_INVITATION`、24 時間）の発行の手順（再設定と共有。1 分の抑えは見ない）と招待のハンドラー、identity の ACL、登録から Mailpit までの統合テスト、招待の発行を招待のハンドラーに限る ArchUnit の規則。38b3 はこの後（先に出すと招待のない登録が本番に出る） | 0 | インサイドアウト（イベントとハンドラーから） | 計画と終了報告（構造・セキュリティ・外部連携） |
 | 38b3 | S-20 の登録の画面: 一覧の入口、企業を選んでその種類に合う役割を選ぶ入力、確認の領域、Bolt 38 のエラー要約、`/staff/users/**` の認可と CSRF の統合テスト、管理範囲の企業の一覧の照会、axe、マニュアル 11 章とキャプチャ。38b4 と同じ配備 | 0 | アウトサイドイン（38b・38b2・38b2b・38b2c の上に画面を足す） | 計画と終了報告（認可・画面） |
 | 38b4 | A-06 の初回の設定と無効のリンクの画面の出し分け（用途で見出し・説明・期限の文言・完了の知らせ・監査）、axe、マニュアル 2 章とキャプチャ、受入シナリオ（登録から A-07 まで）、受入条件の照合の表、動画（`@demo-bolt-38b4`）。38b3 と同じ配備 | 0 | アウトサイドイン | 計画と終了報告（画面・GitHub） |
@@ -799,7 +799,7 @@ US-18 の Bolt の順序は 31b → 31c → 31d → 32 → 32c → 32d → 32b �
 
 - [x] W6 の開始準備（本節。2026-10-20）: 計画の承認、詳細整合性検証・横断整合性検証（指摘を反映）、承認の後に直す文書、GitHub の同期
 - [x] Bolt 36〜37f3: CI の揺らぎ、US-06 の残り（#15）、US-07 の残り（#16）。[Bolt 36 計画](bolt_36_plan.md)（承認済み）、[Bolt 36 終了報告](bolt_36_report.md)（承認済み）、[Bolt 37 計画](bolt_37_plan.md)（承認済み）、[Bolt 37 終了報告](bolt_37_report.md)（承認済み）、[Bolt 37b 計画](bolt_37b_plan.md)（承認済み）、[Bolt 37b 終了報告](bolt_37b_report.md)（承認済み）、[Bolt 37b2 計画](bolt_37b2_plan.md)（承認済み）、[Bolt 37b2 終了報告](bolt_37b2_report.md)（承認済み）、[Bolt 37c 計画](bolt_37c_plan.md)（承認済み）、[Bolt 37c 終了報告](bolt_37c_report.md)（承認済み）、[Bolt 37d 計画](bolt_37d_plan.md)（承認済み）、[Bolt 37d 終了報告](bolt_37d_report.md)（承認済み）、[Bolt 37d2 計画](bolt_37d2_plan.md)・[終了報告](bolt_37d2_report.md)、[Bolt 37e 計画](bolt_37e_plan.md)・[終了報告](bolt_37e_report.md)、[Bolt 37e2 計画](bolt_37e2_plan.md)・[終了報告](bolt_37e2_report.md)、[Bolt 37e3 計画](bolt_37e3_plan.md)・[終了報告](bolt_37e3_report.md)、[Bolt 37e3b 計画](bolt_37e3b_plan.md)・[終了報告](bolt_37e3b_report.md)、[Bolt 37e4 計画](bolt_37e4_plan.md)・[終了報告](bolt_37e4_report.md)、[Bolt 37e4b 計画](bolt_37e4b_plan.md)・[終了報告](bolt_37e4b_report.md)、[Bolt 37e4c 計画](bolt_37e4c_plan.md)・[終了報告](bolt_37e4c_report.md)、[Bolt 37f 計画](bolt_37f_plan.md)・[終了報告](bolt_37f_report.md)、[Bolt 37f2 計画](bolt_37f2_plan.md)・[終了報告](bolt_37f2_report.md)、[Bolt 37f3 計画](bolt_37f3_plan.md)・[終了報告](bolt_37f3_report.md)（いずれも承認済み）
-- [ ] Bolt 38〜38g: US-16 の残り（#14）、US-18 AC9 の管理者経路（#47）。[Bolt 38 計画](bolt_38_plan.md)・[終了報告](bolt_38_report.md)、[Bolt 38b 計画](bolt_38b_plan.md)・[終了報告](bolt_38b_report.md)、[Bolt 38b2 計画](bolt_38b2_plan.md)・[終了報告](bolt_38b2_report.md)（承認済み）、[Bolt 38b2b 計画](bolt_38b2b_plan.md)・[終了報告](bolt_38b2b_report.md)（承認待ち）
+- [ ] Bolt 38〜38g: US-16 の残り（#14）、US-18 AC9 の管理者経路（#47）。[Bolt 38 計画](bolt_38_plan.md)・[終了報告](bolt_38_report.md)、[Bolt 38b 計画](bolt_38b_plan.md)・[終了報告](bolt_38b_report.md)、[Bolt 38b2 計画](bolt_38b2_plan.md)・[終了報告](bolt_38b2_report.md)（承認済み）、[Bolt 38b2b 計画](bolt_38b2b_plan.md)・[終了報告](bolt_38b2b_report.md)（承認済み）
 - [ ] 画面の確認: 新しい画面と変えた画面（S-06・S-07・S-20・A-06）の axe と、支援技術による手動確認（人。#14・#15 の完了の定義、#50 の人の作業）
 - [ ] W6 の締め: 結果とふりかえり、開いている持ち越しの数（T-89）、W7 の計画の見直し
 
@@ -1291,3 +1291,4 @@ xychart-beta
 | 2026-10-26 | [Bolt 38b2b 計画](bolt_38b2b_plan.md)を作り、整合性検証の指摘を反映した（承認待ち）。38b2b を通知の側（38b2b）と identity の側（38b2c）に分け、招待のメールは短い文面に期限を過ぎたときの出口の 1 文を足し、記録と送信を共有して伏せ字を「[リンク]」に寄せ、ArchUnit の規則を範囲外の企業の記録と招待の発行の 2 つ足すと決めた（human:kakimomokuri） | anthropic/claude-opus-5-5 |
 | 2026-10-26 | Bolt 38b2b の計画を承認した（確認ポイント 1〜7 を推奨のとおり） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-26 | Bolt 38b2b を実装し（利用者の招待のメールの公開 API と文面、共有の部品 `LinkMailDelivery`、通知の種類 `USER_INVITATION`、範囲外の企業の記録の ArchUnit の規則）、[Bolt 38b2b 終了報告](bolt_38b2b_report.md)を作った（承認待ち） | anthropic/claude-opus-5-5 |
+| 2026-10-26 | Bolt 38b2b の終了報告を承認した（議題 1〜4） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |

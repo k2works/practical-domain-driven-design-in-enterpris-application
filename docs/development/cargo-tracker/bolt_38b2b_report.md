@@ -2,8 +2,10 @@
 type: Plan
 title: "Bolt 38b2b 終了報告 - 利用者の招待のメール（通知の側）と範囲外の企業の記録の規則"
 tags: [plan]
-status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-26T01:19:37Z }
+status: stable
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-26T01:30:54Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-26T01:30:55Z }
 ---
 
 # Bolt 38b2b 終了報告 - 利用者の招待のメール（通知の側）と範囲外の企業の記録の規則
@@ -119,6 +121,7 @@ Bolt 38b2c（利用者の招待の発行。identity の側。開始準備は `op
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-26 | 終了報告を承認した（議題 1〜4） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-26 | 初版作成（承認待ち） | anthropic/claude-opus-5-5 |
 
 ## 関連ドキュメント
