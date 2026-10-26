@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="システム管理者が、利用者の一覧と詳細を確かめ、利用者の役割を確認の画面を経て付けたり外したりし、利用者の利用を停止し再開する手順です。">
+        <meta name="description" content="システム管理者が、利用者の一覧と詳細を確かめ、利用者を登録し、利用者の役割を確認の画面を経て付けたり外したりし、利用者の利用を停止し再開する手順です。">
       
       
         <meta name="author" content="k2works">
@@ -7825,6 +7825,41 @@
   
   
     <li class="md-nav__item">
+      <a href="../../development/cargo-tracker/bolt_38b3b_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 38b3b 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../development/cargo-tracker/release_report-0_1/" class="md-nav__link">
         
   
@@ -8690,6 +8725,100 @@
         
           <li class="md-nav__item">
   <a href="#_20" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        注意・補足
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#115" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11.5 利用者の登録
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="11.5 利用者の登録">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_21" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        この画面でできること
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_22" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        画面の開き方
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_23" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        企業を選ぶ
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_24" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        入力
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_25" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        確認
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_26" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        操作手順
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_27" class="md-nav__link">
     <span class="md-ellipsis">
       
         注意・補足
@@ -13268,7 +13397,7 @@
 
 
 <h1 id="11">11 章 利用者の管理<a class="headerlink" href="#11" title="Permanent link">&para;</a></h1>
-<p>システム管理者が、利用者の一覧と詳細を確かめ、利用者の業務の役割を確認の画面を経て付けたり外したりし、利用者の利用を停止し再開する手順です。役割は、荷主担当者・営業担当者・経路設計者・追跡管理者・データ責任者・カスタマーサポート・システム管理者・監査担当者の 8 つに決まっています。この画面で付け外しできるのは、システム管理者・監査担当者を除く 6 つの業務の役割です。</p>
+<p>システム管理者が、利用者の一覧と詳細を確かめ、管理範囲の企業に利用者を登録し、利用者の業務の役割を確認の画面を経て付けたり外したりし、利用者の利用を停止し再開する手順です。役割は、荷主担当者・営業担当者・経路設計者・追跡管理者・データ責任者・カスタマーサポート・システム管理者・監査担当者の 8 つに決まっています。この画面で付け外しし、登録のときに付けられるのは、システム管理者・監査担当者を除く 6 つの業務の役割です。</p>
 <p>画面の開き方: ログインすると利用者の一覧（11.1）が開きます。ナビゲーションの「利用者」（URL: <code>/staff/users</code>）からも開けます。システム管理者だけが開けます。</p>
 <table>
 <thead>
@@ -13299,6 +13428,11 @@
 <td style="text-align: left;">停止・再開の内容を確かめてから停止・再開する</td>
 <td style="text-align: left;"><a href="#114-利用状態の変更の確認">11.4</a></td>
 </tr>
+<tr>
+<td style="text-align: left;">利用者の登録（企業を選ぶ・入力・確認。確認の見出しは「利用者を登録しますか」）</td>
+<td style="text-align: left;">企業を選び、付ける役割とメールアドレスと表示名を入れ、確かめてから登録する</td>
+<td style="text-align: left;"><a href="#115-利用者の登録">11.5</a></td>
+</tr>
 </tbody>
 </table>
 <h2 id="111">11.1 利用者<a class="headerlink" href="#111" title="Permanent link">&para;</a></h2>
@@ -13306,6 +13440,7 @@
 <ul>
 <li>企業と利用者と役割を一覧で確かめます</li>
 <li>利用者を選んで詳細を開きます</li>
+<li>「利用者を登録する」から利用者を登録します（<a href="#115-利用者の登録">11.5</a>）</li>
 </ul>
 <h3 id="_2">画面の開き方<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h3>
 <ul>
@@ -13347,18 +13482,24 @@
 <td style="text-align: left;">役割</td>
 <td style="text-align: left;">利用者が持つ役割</td>
 </tr>
+<tr>
+<td style="text-align: left;">⑥</td>
+<td style="text-align: left;">利用者を登録する</td>
+<td style="text-align: left;">押すと利用者の登録（企業を選ぶ画面）が開きます</td>
+</tr>
 </tbody>
 </table>
 <h3 id="_4">操作手順<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h3>
-<ol>
+<ul>
 <li>役割を変えたい利用者、または利用を停止・再開したい利用者の表示名を押します</li>
-</ol>
+<li>利用者を登録するときは「利用者を登録する」を押します（<a href="#115-利用者の登録">11.5</a>）</li>
+</ul>
 <h3 id="_5">注意・補足<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h3>
 <ul>
 <li>一覧は企業名・表示名の順に並びます</li>
 <li>一覧に並ぶのは、あなたの管理範囲の企業の利用者だけです。管理範囲は運用の手順で割り当てます。一覧に出るはずの企業がないときは、運用の担当に管理範囲の割り当てをご依頼ください（管理範囲がなければ「管理する企業の利用者はいません。」と示されます）</li>
-<li>管理範囲の外の企業の利用者の画面を URL で開くと、存在しない利用者と同じく「画面が見つかりません」と示されます（<a href="../02-%E3%83%AD%E3%82%B0%E3%82%A4%E3%83%B3%E3%81%A8%E5%85%B1%E9%80%9A%E3%81%AE%E7%94%BB%E9%9D%A2/#28-画面が見つかりません">2.8</a>）。管理範囲の外の利用者の役割を変えようとしたときは、監査のため記録されます。自分の企業を管理範囲に持たない場合は、自分の詳細も開けません</li>
-<li>利用者の登録は、この画面ではまだできません。後のリリースで足します。利用の停止と再開は、詳細の「利用状態」から行います（<a href="#112-利用者の詳細">11.2</a>・<a href="#114-利用状態の変更の確認">11.4</a>）</li>
+<li>管理範囲の外の企業の利用者の画面を URL で開くと、存在しない利用者と同じく「画面が見つかりません」と示されます（<a href="../02-%E3%83%AD%E3%82%B0%E3%82%A4%E3%83%B3%E3%81%A8%E5%85%B1%E9%80%9A%E3%81%AE%E7%94%BB%E9%9D%A2/#28-画面が見つかりません">2.8</a>）。管理範囲の外の利用者の役割を変えようとしたとき、管理範囲の外の企業に利用者を登録しようとしたときは、監査のため記録されます。自分の企業を管理範囲に持たない場合は、自分の詳細も開けません</li>
+<li>利用の停止と再開は、詳細の「利用状態」から行います（<a href="#112-利用者の詳細">11.2</a>・<a href="#114-利用状態の変更の確認">11.4</a>）</li>
 </ul>
 <h2 id="112">11.2 利用者の詳細<a class="headerlink" href="#112" title="Permanent link">&para;</a></h2>
 <h3 id="_6">この画面でできること<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h3>
@@ -13615,6 +13756,144 @@
 <li>止めた相手から問い合わせを受けたときの手がかり: 相手に見えるのは「もう一度ログインしてください」の案内（<a href="../02-%E3%83%AD%E3%82%B0%E3%82%A4%E3%83%B3%E3%81%A8%E5%85%B1%E9%80%9A%E3%81%AE%E7%94%BB%E9%9D%A2/#24-もう一度ログインしてください">2.4</a>）と、ログインの「メールアドレスまたは password が正しくありません。」だけで、止めた理由は示されません（<a href="../%E4%BB%98%E9%8C%B2B-%E3%83%88%E3%83%A9%E3%83%96%E3%83%AB%E3%82%B7%E3%83%A5%E3%83%BC%E3%83%86%E3%82%A3%E3%83%B3%E3%82%B0/#q1-1-ログインできないメールアドレスまたは-password-が正しくありません認証コードまたは回復コードが正しくないかすでに使われています">付録 B の Q1-1</a>・<a href="../%E4%BB%98%E9%8C%B2B-%E3%83%88%E3%83%A9%E3%83%96%E3%83%AB%E3%82%B7%E3%83%A5%E3%83%BC%E3%83%86%E3%82%A3%E3%83%B3%E3%82%B0/#q1-2-もう一度ログインしてくださいと示された">Q1-2</a>）。詳細の利用状態を確かめ、利用中なのにログインできないときは、ロック（15 分）か所属企業の無効化を疑い、運用の窓口に確かめてください</li>
 <li>確認している間に、ほかのシステム管理者の操作などでその利用者の情報が先に更新されていたら、停止・再開されず「この利用者の情報が先に更新されました。最新の内容を確かめてから、もう一度変更してください。」と示され、最新の詳細が開きます</li>
 <li>利用の停止と再開は、操作したシステム管理者・時刻・変更前後の利用状態として記録されます。停止は選んだ理由も記録されます</li>
+</ul>
+<h2 id="115">11.5 利用者の登録<a class="headerlink" href="#115" title="Permanent link">&para;</a></h2>
+<h3 id="_21">この画面でできること<a class="headerlink" href="#_21" title="Permanent link">&para;</a></h3>
+<ul>
+<li>管理範囲の企業を選び、その企業の利用者に付けられる役割とメールアドレスと表示名を入れ、確かめてから利用者を登録します</li>
+<li>登録した利用者には、登録したメールアドレスへ初回の設定の案内（24 時間有効）が送られます</li>
+</ul>
+<h3 id="_22">画面の開き方<a class="headerlink" href="#_22" title="Permanent link">&para;</a></h3>
+<ul>
+<li>利用者の一覧（11.1）で「利用者を登録する」を押します</li>
+</ul>
+<h3 id="_23">企業を選ぶ<a class="headerlink" href="#_23" title="Permanent link">&para;</a></h3>
+<p><img alt="利用者の登録（企業を選ぶ）" src="../assets/11-user-registration-company.png" /></p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">#</th>
+<th style="text-align: left;">項目</th>
+<th style="text-align: left;">説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">①</td>
+<td style="text-align: left;">企業</td>
+<td style="text-align: left;">管理範囲の、利用中の企業。「企業名（企業の種類）」で並びます。荷受人の企業は並びません</td>
+</tr>
+<tr>
+<td style="text-align: left;">②</td>
+<td style="text-align: left;">次へ</td>
+<td style="text-align: left;">選んだ企業の入力の画面へ進みます</td>
+</tr>
+</tbody>
+</table>
+<h3 id="_24">入力<a class="headerlink" href="#_24" title="Permanent link">&para;</a></h3>
+<p><img alt="利用者の登録（入力）" src="../assets/11-user-registration-form.png" /></p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">#</th>
+<th style="text-align: left;">項目</th>
+<th style="text-align: left;">説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">①</td>
+<td style="text-align: left;">付ける役割</td>
+<td style="text-align: left;">その企業の利用者に付けられる業務の役割。1 つ以上選びます</td>
+</tr>
+<tr>
+<td style="text-align: left;">②</td>
+<td style="text-align: left;">メールアドレス</td>
+<td style="text-align: left;">登録する利用者がログインに使うメールアドレス。初回の設定の案内もここへ送られます</td>
+</tr>
+<tr>
+<td style="text-align: left;">③</td>
+<td style="text-align: left;">表示名</td>
+<td style="text-align: left;">一覧と詳細に出る名前（200 文字以内）</td>
+</tr>
+<tr>
+<td style="text-align: left;">④</td>
+<td style="text-align: left;">確認する</td>
+<td style="text-align: left;">入れた内容の確認へ進みます</td>
+</tr>
+<tr>
+<td style="text-align: left;">⑤</td>
+<td style="text-align: left;">企業を選び直す</td>
+<td style="text-align: left;">企業を選ぶ画面に戻ります</td>
+</tr>
+</tbody>
+</table>
+<h3 id="_25">確認<a class="headerlink" href="#_25" title="Permanent link">&para;</a></h3>
+<p><img alt="利用者の登録の確認" src="../assets/11-user-registration-confirmation.png" /></p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">#</th>
+<th style="text-align: left;">項目</th>
+<th style="text-align: left;">説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">①</td>
+<td style="text-align: left;">対象・現在の状態</td>
+<td style="text-align: left;">登録する企業と、まだ登録していないこと</td>
+</tr>
+<tr>
+<td style="text-align: left;">②</td>
+<td style="text-align: left;">変更内容</td>
+<td style="text-align: left;">登録するメールアドレス・表示名・付ける役割（保存される形。メールアドレスは小文字、表示名は前後の空白を除いた形）</td>
+</tr>
+<tr>
+<td style="text-align: left;">③</td>
+<td style="text-align: left;">影響</td>
+<td style="text-align: left;">登録したメールアドレスへ、初回の設定の案内（24 時間有効）を送ります</td>
+</tr>
+<tr>
+<td style="text-align: left;">④</td>
+<td style="text-align: left;">実行者</td>
+<td style="text-align: left;">登録するシステム管理者（あなた）</td>
+</tr>
+<tr>
+<td style="text-align: left;">⑤</td>
+<td style="text-align: left;">回復手段</td>
+<td style="text-align: left;">誤って登録したときは、利用者の詳細から利用を停止します（送った案内のリンクも使えなくなります）</td>
+</tr>
+<tr>
+<td style="text-align: left;">⑥</td>
+<td style="text-align: left;">登録する・戻る</td>
+<td style="text-align: left;">「登録する」で登録します。「戻る」で入れた内容を残したまま入力の画面に戻ります</td>
+</tr>
+</tbody>
+</table>
+<h3 id="_26">操作手順<a class="headerlink" href="#_26" title="Permanent link">&para;</a></h3>
+<ol>
+<li>利用者の一覧で「利用者を登録する」を押します</li>
+<li>企業を選び、「次へ」を押します</li>
+<li>付ける役割を選び、メールアドレスと表示名を入れて、「確認する」を押します</li>
+<li>内容を確かめて、「登録する」を押します</li>
+<li>登録した利用者の詳細に「利用者を登録しました。登録したメールアドレスへ初回の設定の案内を送ります。」と出ます</li>
+</ol>
+<h3 id="_27">注意・補足<a class="headerlink" href="#_27" title="Permanent link">&para;</a></h3>
+<ul>
+<li>入れた内容に誤りがあると、画面の上に「利用者を登録できませんでした」と誤りの一覧が出ます。誤りを押すと、その欄へ移ります</li>
+</ul>
+<p><img alt="誤りの一覧" src="../assets/11-user-registration-rejected.png" /></p>
+<ul>
+<li>
+<p>企業を選ばずに「次へ」を押すと「企業: 登録する企業を 1 つ選んでください。」と示されます。利用を停止している企業や、付けられる役割のない企業を選んだときは「企業: 選んだ企業には利用者を登録できません。ほかの企業を選んでください。」と示され、企業を選ぶ画面に戻ります</p>
+</li>
+<li>
+<p>既に登録されているメールアドレスは登録できません（「既に登録されています。ほかのメールアドレスを入力してください。」）</p>
+</li>
+<li>表示名は、見分けやすい文字で入れます。空白だけの名前や、画面で見分けにくい文字を含む名前は登録できません</li>
+<li>登録した利用者は、案内のリンクから password を設定し、認証アプリを登録してから使い始めます。案内の期限（24 時間）が過ぎたときや、案内が届かないときは、本人にログインの画面の「password を忘れた場合」から設定してもらいます（<a href="../02-%E3%83%AD%E3%82%B0%E3%82%A4%E3%83%B3%E3%81%A8%E5%85%B1%E9%80%9A%E3%81%AE%E7%94%BB%E9%9D%A2/#26-password-を忘れた場合">2.6</a>）</li>
+<li>登録は、操作したシステム管理者・時刻・付けた役割として記録されます</li>
 </ul>
 
 

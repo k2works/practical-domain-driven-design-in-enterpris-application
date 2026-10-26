@@ -8530,6 +8530,41 @@
   
   
     <li class="md-nav__item">
+      <a href="../bolt_38b3b_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 38b3b 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../release_report-0_1/" class="md-nav__link">
         
   
@@ -15686,7 +15721,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">38b3b</td>
-<td style="text-align: left;">S-20 の登録の画面: 一覧の入口、企業を選ぶ画面と付けられる役割と入力の画面の 2 段（JS なし。荷受人の企業は出さない）、確認は POST と hidden（メールアドレスと表示名を URL に残さない。確認は書かず、範囲外の記録もしない。「戻る」と誤りの示し直しも POST と hidden で行い、確定の後の PRG の行き先にメールアドレスを入れない。ui_design :182-183 の「確認の GET は書かない」を「確認（GET・POST）は書かない」に一般化する）、企業の選択肢の名前は「企業名（企業の種類）」にし同じ名前の企業は並び（名前・ID）で区別する、役割のチェックボックスは <code>Role</code> の宣言の順に並べる（<code>RegistrableCompany.assignableRoles</code> は順を持たない）、Bolt 38 のエラー要約、<code>/staff/users/**</code> の認可と CSRF の統合テスト、axe、マニュアル 11 章とキャプチャ。機能ブランチで進め、PR の CI を緑にし、develop へのマージは 38b4 と一緒（デモ環境は develop への push で配備されるため。Bolt 38b3 の開始準備の決定 (6)）。開始準備で確かめて諮ること: Bolt 38b2 の rollback-only と DE-25 の推論、Bolt 38 の既知の課題（停止の理由の文言、エラー要約の二重の読み上げと fieldset の <code>aria-invalid</code>）、Bolt 38b2c の行 3 の件数の前提。<a href="../bolt_38b3b_plan/">Bolt 38b3b 計画</a>（承認済み）</td>
+<td style="text-align: left;">S-20 の登録の画面: 一覧の入口、企業を選ぶ画面と付けられる役割と入力の画面の 2 段（JS なし。荷受人の企業は出さない）、確認は POST と hidden（メールアドレスと表示名を URL に残さない。確認は書かず、範囲外の記録もしない。「戻る」と誤りの示し直しも POST と hidden で行い、確定の後の PRG の行き先にメールアドレスを入れない。ui_design :182-183 の「確認の GET は書かない」を「確認（GET・POST）は書かない」に一般化する）、企業の選択肢の名前は「企業名（企業の種類）」にし同じ名前の企業は並び（名前・ID）で区別する、役割のチェックボックスは <code>Role</code> の宣言の順に並べる（<code>RegistrableCompany.assignableRoles</code> は順を持たない）、Bolt 38 のエラー要約、<code>/staff/users/**</code> の認可と CSRF の統合テスト、axe、マニュアル 11 章とキャプチャ。機能ブランチで進め、PR の CI を緑にし、develop へのマージは 38b4 と一緒（デモ環境は develop への push で配備されるため。Bolt 38b3 の開始準備の決定 (6)）。開始準備で確かめて諮ること: Bolt 38b2 の rollback-only と DE-25 の推論、Bolt 38 の既知の課題（停止の理由の文言、エラー要約の二重の読み上げと fieldset の <code>aria-invalid</code>）、Bolt 38b2c の行 3 の件数の前提。<a href="../bolt_38b3b_plan/">Bolt 38b3b 計画</a>・<a href="../bolt_38b3b_report/">終了報告</a>（承認済み。PR #51、develop へのマージは 38b4 と一緒）</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: left;">アウトサイドイン（38b・38b2・38b2b・38b2c・38b3 の上に画面を足す）</td>
 <td style="text-align: left;">計画と終了報告（認可・画面）</td>
@@ -18033,6 +18068,16 @@
 <tr>
 <td style="text-align: left;">2026-10-26</td>
 <td style="text-align: left;">Bolt 38b3b の計画を承認した（確認ポイント 1〜7 を推奨のとおり。実装は機能ブランチ <code>feature/bolt-38b3b</code> で進める）</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-26</td>
+<td style="text-align: left;">Bolt 38b3b を機能ブランチ <code>feature/bolt-38b3b</code> で実装し（S-20 の登録の画面、範囲外の確定の記録、<code>DisplayNameRule</code>、マニュアル 11.5）、PR #51 を作り、<a href="../bolt_38b3b_report/">Bolt 38b3b 終了報告</a>を作った</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-26</td>
+<td style="text-align: left;">Bolt 38b3b の終了報告を承認した（議題 1〜4。develop へのマージは 38b4 の終了報告の承認の後）</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
 </tr>
 </tbody>

@@ -8218,6 +8218,41 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_38b3b_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 38b3b 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../development/cargo-tracker/release_report-0_1/" class="md-nav__link">
         
   
@@ -14222,6 +14257,10 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 <tr>
 <td style="text-align: left;">S-20 の画面の構造</td>
 <td style="text-align: left;">Bolt 34f（振る舞いの変わらない直し）。controller を分ける前に、今の controller に WebMvc のテスト（<code>@WebMvcTest</code>・<code>addFilters = false</code>、照会・変更・記録のサービスは <code>@MockitoBean</code>、操作者は <code>@WithAuthenticatedActor</code>）を特性のテストとして足す。役割と利用状態のそれぞれで、確定の範囲外は記録して 404（詳細の読み出しと判定の 2 つ）、確かめる範囲外は記録せずに 404、<code>NotPermitted</code> は 403、<code>NotFound</code> は 404、古い版は最新の版で詳細を示し直す、<code>Rejected</code> は選んだまま文言を示す、変えたら知らせとともに詳細へ移す。記録の 2 つの向きの変異（確定の範囲外の記録を外す、確かめる範囲外で記録する）で落ちることを確かめる（控えから戻す）。分けた後は controller ごとのテストに中身を変えずに分け、詳細の部品 <code>UserDetailPage</code> は <code>@Import</code> で本物を読む（モックにすると範囲外の記録の守りが消える）。画面の名前は <code>UserAdministrationLabelsTest</code>（<code>@CsvSource</code>）。認証・認可・CSRF はセキュリティの統合テストのまま</td>
+</tr>
+<tr>
+<td style="text-align: left;">利用者の登録の画面</td>
+<td style="text-align: left;">Bolt 38b3b（US-16 AC1・AC2）。WebMvc のテスト（<code>UserRegistrationControllerTest</code>。企業の選択肢、選ばずに次へ、入力の画面の役割の順、404 と 1 段目へ戻す枝、確認で書かない、画面で見る誤りをまとめる、サービスの拒否の文言、戻る、PRG の行き先）。セキュリティの統合テスト（<code>UserRegistrationSecurityIntegrationTest</code>。5 つの URL の認可、3 つの POST の CSRF、範囲外の確定だけ試行を記録、重複の文言が管理範囲の内外で同じ、画面の確定から監査と DE-25 と招待のトークンまで）。画面の層（<code>register_user_ui.feature</code>。通し、エラー要約のフォーカスとリンク、幅 320 px、axe）</td>
 </tr>
 </tbody>
 </table>
