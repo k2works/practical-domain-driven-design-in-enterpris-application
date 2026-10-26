@@ -13834,7 +13834,7 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 </tr>
 <tr>
 <td style="text-align: left;">IA-INV-12（再設定のトークン）</td>
-<td style="text-align: left;">○（Bolt 33: 期限の 29 分 59 秒と 30 分、無効化、ハッシュだけを持つ。依頼のサービスの監査の結果と理由（有効・登録なし・止められた利用者・所属企業の無効）。Bolt 33a: 完了のサービスの完了・無効（期限切れ・使用済み・無効化・存在しない）・方針の誤り（トークンを使わない）・利用停止と企業の無効（無効、監査なし）、前の未使用のトークンの無効化、監査（利用者で絞る。T-113）、コミットの後の失効（ロールバックしたら失効しない）、失効が失敗しても完了）</td>
+<td style="text-align: left;">○（Bolt 38b2c: 用途の値（抑えを数えるのは <code>RESET</code> だけ）、招待のハンドラーの送信の失敗で完了。Bolt 33: 期限の 29 分 59 秒と 30 分、無効化、ハッシュだけを持つ。依頼のサービスの監査の結果と理由（有効・登録なし・止められた利用者・所属企業の無効）。Bolt 33a: 完了のサービスの完了・無効（期限切れ・使用済み・無効化・存在しない）・方針の誤り（トークンを使わない）・利用停止と企業の無効（無効、監査なし）、前の未使用のトークンの無効化、監査（利用者で絞る。T-113）、コミットの後の失効（ロールバックしたら失効しない）、失効が失敗しても完了）</td>
 <td style="text-align: left;">○（Bolt 33: <code>@US-18-AC8</code>。登録ありならリンクが届くことを先に確かめてから、登録なしで届かないこと。Bolt 33a: 依頼から設定まで、期限切れのリンクの案内、よく使われる password の誤り）</td>
 <td style="text-align: left;">○（Bolt 33: ハッシュで探す、新しい発行で前を無効、<code>request_id</code> の一意。ハンドラーの繰り返しの 59 秒と 1 分、同じ依頼の ID の再配信で 2 通送らない、送信の <code>Failed</code> で完了、依頼がロールバックしたら呼ばれない、同時の 2 つの発行の直列（T-100）。発行記録・トークンの表・ログに平文のトークンと URL がない。Bolt 33a: <code>findById</code>・<code>markUsed</code> と <code>isUsable</code> との契約テスト（使える・期限ちょうど・使用済み・無効）、同じトークンの同時の 2 つの送信で 1 回だけ（T-100。条件を外すと落ちることを確かめる。T-112））</td>
 <td style="text-align: left;">○（Bolt 33: 登録の有無で応答（リダイレクト先・本文）が同じ、応答が送信を待たない。Bolt 33a: 期限切れ・使用済み・無効のリンクが同じ案内）</td>
@@ -14033,7 +14033,7 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 </tr>
 <tr>
 <td style="text-align: left;">通知</td>
-<td style="text-align: left;">メールを受けるだけのコンテナ（Testcontainers の Mailpit。Bolt 33、ADR-017）で、通知の宛先・件名・本文（料金などを含まない）と、送信失敗の記録を確かめる。Bolt 33 は password の再設定のメールの分、Bolt 38b2b は利用者の招待のメールの分（公開 API から Mailpit まで、同じ登録の 2 回目は送らない）: SMTP の送信アダプターで件名・本文・宛先が届く、送信のサービスが PENDING から SENT・FAILED にする、同じ <code>event_id</code> と宛先で 2 通送らない。dev のログに出す送信（<code>LoggingMailSender</code>）はログの取り込みを送信の間だけにして確かめ（T-111）、dev と staging・prod の併用と、staging・prod で SMTP の設定がないときに起動を止めることを確かめる</td>
+<td style="text-align: left;">メールを受けるだけのコンテナ（Testcontainers の Mailpit。Bolt 33、ADR-017）で、通知の宛先・件名・本文（料金などを含まない）と、送信失敗の記録を確かめる。Bolt 33 は password の再設定のメールの分、Bolt 38b2b は利用者の招待のメールの分（公開 API から Mailpit まで、同じ登録の 2 回目は送らない）、Bolt 38b2c は登録から招待のメールまで（登録のコミットの後に届く、拒否と重複では DE-25 が出ない、再配信で 2 通送らない、登録の後に止められた利用者には送らない、発行記録とログに平文とアドレスがない）: SMTP の送信アダプターで件名・本文・宛先が届く、送信のサービスが PENDING から SENT・FAILED にする、同じ <code>event_id</code> と宛先で 2 通送らない。dev のログに出す送信（<code>LoggingMailSender</code>）はログの取り込みを送信の間だけにして確かめ（T-111）、dev と staging・prod の併用と、staging・prod で SMTP の設定がないときに起動を止めることを確かめる</td>
 </tr>
 <tr>
 <td style="text-align: left;">password の再設定の依頼</td>

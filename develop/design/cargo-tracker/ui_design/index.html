@@ -15623,7 +15623,7 @@
 </table>
 <p>本文には業務の情報（料金・番号・企業名・他の利用者）を書かず、リンクと期限と使い方だけを書く（N-INV-01）。リンクは設定の公開の base URL（<code>cargotracker.public-base-url</code>）から組み立てる（Host ヘッダーから組み立てない）。文面は日本語だけを作り、英語の文面は決めていない（要求には言語を持たせる）。リンクを開くと、トークンを確かめて session にトークンの ID だけを置き、トークンのない URL の A-06 へ移す（Bolt 33a。画面の URL の表の「再設定のリンクを開く」）。Bolt 33 から 33a までは、リンクの先は仮の A-06（準備中）を返していた（トークンを読まず session に覚えない。2026-10-15 に human:kakimomokuri が決定）。</p>
 <h3 id="us-16-ac1bolt-38b2b">利用者の招待のメール（US-16 AC1。Bolt 38b2b）<a class="headerlink" href="#us-16-ac1bolt-38b2b" title="Permanent link">&para;</a></h3>
-<p>システム管理者が利用者を登録したときに、登録したメールアドレスへ送る（送るのは Bolt 38b2c の登録のイベントのハンドラー）。通知の公開 API <code>UserInvitationMail</code>（<a href="../../../adr/cargo-tracker/017-notification-module-and-mail/">ADR-017</a>）で送り、件名と本文は通知のテキストのテンプレートで組み立て、表に保存しない。リンクは再設定と同じ A-06 の形（最後の段がトークン。期限は 24 時間）。日時の書式は再設定のメールと同じ。</p>
+<p>システム管理者が利用者を登録したときに、登録したメールアドレスへ送る（送るのは登録のイベント DE-25 のハンドラー <code>UserInvitationMailEventHandler</code>。Bolt 38b2c）。通知の公開 API <code>UserInvitationMail</code>（<a href="../../../adr/cargo-tracker/017-notification-module-and-mail/">ADR-017</a>）で送り、件名と本文は通知のテキストのテンプレートで組み立て、表に保存しない。リンクは再設定と同じ A-06 の形（最後の段がトークン。期限は 24 時間）。日時の書式は再設定のメールと同じ。</p>
 <p>件名: 「【cargo-tracker】利用者の登録のご案内」</p>
 <p>本文（短い文面にし、期限を過ぎたときの出口の 1 文を足した。2026-10-26、human:kakimomokuri）:</p>
 <div class="highlight"><pre><span></span><code>cargo-tracker の利用者として、このメールアドレスが登録されました。
