@@ -2,8 +2,10 @@
 type: Plan
 title: "Bolt 38b2c 計画 - 利用者の招待の発行（identity の側）と、招待の用途の規則"
 tags: [plan]
-status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-26T01:52:04Z }
+status: stable
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-26T02:34:11Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-26T02:34:11Z }
 ---
 
 # Bolt 38b2c 計画 - 利用者の招待の発行（identity の側）と、招待の用途の規則
@@ -200,6 +202,7 @@ NotificationPasswordResetMails --> PasswordResetMail
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-26 | 計画を承認した（確認ポイント 1〜10 を推奨のとおり） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-26 | 整合性検証の指摘を反映した（承認待ち）。招待の用途の規則と 38b4 の A-06 の出し分けの関係（出し分けは定数を参照せず enum の中のメソッドで問い合わせる）、文書で直す行の一覧（domain_model・ADR-017 の決定 4・architecture_backend・ui_design・test_strategy・data_model・user_story・release_plan の 38b3 と 38b4 の行）、行 3 の発行記録の確かめ、V5 の期待と V9、行 6 の偽物とログの全文、外側のトランザクションの判断、新しいファイルの一覧、既存のテストへの影響、古くなる注 | anthropic/claude-opus-5-5 |
 | 2026-10-26 | 初版作成（承認待ち）。開始準備で、発行の手順を部品に抜き出す、DE-25 は ID と時刻だけ、発行の前に止められていれば発行しない、招待の発行の規則は用途の定数の参照で守ると決めた（human:kakimomokuri） | anthropic/claude-opus-5-5 |
 
