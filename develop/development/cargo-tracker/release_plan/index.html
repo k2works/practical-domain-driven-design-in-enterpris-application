@@ -8372,7 +8372,7 @@
     
   
   
-    <span class="md-status md-status--draft"></span>
+    <span class="md-status md-status--stable"></span>
   
 
   
@@ -15532,7 +15532,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">38b2c</td>
-<td style="text-align: left;">利用者の招待の発行（identity の側）: 登録のイベント DE-25（登録のトランザクションで出し、その ID を招待のトークンの <code>request_id</code> にする）、招待のトークン（<code>USER_INVITATION</code>、24 時間）の発行の手順（再設定と共有。1 分の抑えは見ない）と招待のハンドラー、identity の ACL、登録から Mailpit までの統合テスト、招待の発行を招待のハンドラーに限る ArchUnit の規則。38b3 はこの後（先に出すと招待のない登録が本番に出る）。<a href="../bolt_38b2c_plan/">Bolt 38b2c 計画</a>（承認待ち）</td>
+<td style="text-align: left;">利用者の招待の発行（identity の側）: 登録のイベント DE-25（登録のトランザクションで出し、その ID を招待のトークンの <code>request_id</code> にする）、招待のトークン（<code>USER_INVITATION</code>、24 時間）の発行の手順（再設定と共有。1 分の抑えは見ない）と招待のハンドラー、identity の ACL、登録から Mailpit までの統合テスト、招待の発行を招待のハンドラーに限る ArchUnit の規則。38b3 はこの後（先に出すと招待のない登録が本番に出る）。<a href="../bolt_38b2c_plan/">Bolt 38b2c 計画</a>（承認済み）</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: left;">インサイドアウト（イベントとハンドラーから）</td>
 <td style="text-align: left;">計画と終了報告（構造・セキュリティ・外部連携）</td>
@@ -17842,6 +17842,11 @@
 <td style="text-align: left;">2026-10-26</td>
 <td style="text-align: left;"><a href="../bolt_38b2c_plan/">Bolt 38b2c 計画</a>を作り、整合性検証の指摘を反映した（承認待ち）。発行の手順を部品に抜き出す、DE-25 は ID と時刻だけ、発行の前に止められていれば発行しない、招待の用途の規則は定数の参照で守ると決めた（human:kakimomokuri）</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-26</td>
+<td style="text-align: left;">Bolt 38b2c の計画を承認した（確認ポイント 1〜10 を推奨のとおり）</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
 </tr>
 </tbody>
 </table>
