@@ -117,7 +117,7 @@ Bolt がイテレーションに当たります。ふりかえりは各 Bolt の
 | 38b2c | [利用者の招待の発行（identity の側）と、招待の用途の規則](bolt_38b2c_plan.md) | [終了報告](bolt_38b2c_report.md) | W6 | 完了 |
 | 38b3 | [登録の画面の下ごしらえ（表示名の規則と、登録できる企業の照会）](bolt_38b3_plan.md) | [終了報告](bolt_38b3_report.md) | W6 | 完了 |
 | 38b3b | [S-20 の利用者の登録の画面](bolt_38b3b_plan.md) | [終了報告](bolt_38b3b_report.md) | W6 | 完了 |
-| 38b4 | [A-06 の初回の設定の出し分けと、登録から A-07 までの受入シナリオ](bolt_38b4_plan.md) | —（[動画](../../assets/demo/bolt-38b4/register-and-setup.webm){:target="_blank"}） | W6 | 実装中 |
+| 38b4 | [A-06 の初回の設定の出し分けと、登録から A-07 までの受入シナリオ](bolt_38b4_plan.md) | [終了報告](bolt_38b4_report.md)（[動画](../../assets/demo/bolt-38b4/register-and-setup.webm){:target="_blank"}） | W6 | 完了 |
 
 Bolt を始めるときに行を追加します。
 
@@ -238,3 +238,4 @@ Bolt を始めるときに行を追加します。
 * [Bolt 38b3b 終了報告 - S-20 の利用者の登録の画面](./bolt_38b3b_report.md)
 * [Bolt 38b4 計画 - A-06 の初回の設定の出し分けと、登録から A-07 までの受入シナリオ](./bolt_38b4_plan.md)
 * [Bolt 38b4 終了報告 - A-06 の初回の設定の出し分けと、登録から A-07 までの受入シナリオ](./bolt_38b4_report.md)
+* [Bolt 38c 計画 - S-20 のログインの資格（ロックの解除と管理者による TOTP の解除）](./bolt_38c_plan.md)
