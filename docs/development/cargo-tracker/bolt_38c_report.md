@@ -2,8 +2,10 @@
 type: Plan
 title: "Bolt 38c 終了報告 - S-20 のログインの資格（ロックの解除と管理者による TOTP の解除）"
 tags: [plan]
-status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-27T03:36:14Z }
+status: stable
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-27T03:48:59Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-27T03:49:00Z }
 ---
 
 # Bolt 38c 終了報告 - S-20 のログインの資格（ロックの解除と管理者による TOTP の解除）
@@ -150,6 +152,7 @@ Bolt 38c2（停止の理由・停止した人・時刻を S-20 の詳細に示�
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-27 | 終了報告を承認した（議題 1〜6。議題 4 は推奨のとおり 38c2 で表示の形を直し分のずれを添える、議題 5 は #49 に書き足す）。動画を #47 へ添付した | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-27 | 初版作成（承認待ち） | anthropic/claude-opus-5-5 |
 
 ## 関連ドキュメント
