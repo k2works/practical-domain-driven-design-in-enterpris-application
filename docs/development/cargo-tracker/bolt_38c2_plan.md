@@ -2,8 +2,10 @@
 type: Plan
 title: "Bolt 38c2 計画 - S-20 の詳細に停止の記録を示し、ロックの期限を項目に分ける"
 tags: [plan]
-status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-27T04:08:05Z }
+status: stable
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-27T05:04:32Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-27T05:04:34Z }
 ---
 
 # Bolt 38c2 計画 - S-20 の詳細に停止の記録を示し、ロックの期限を項目に分ける
@@ -300,6 +302,7 @@ end note
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-27 | 計画を承認した（確認ポイントを推奨のとおり） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-27 | 整合性検証の指摘を反映した（承認待ち）。管理範囲の外の停止した人も表示名を示す、行がなければ「不明（利用者 ID: …）」、一覧のキャプチャも返すと決めた（human:kakimomokuri）。契約と H2・PostgreSQL の子、`SuspensionRecordRow`、手書きの実装 9 か所、`result` の条件を外す、行 5 の分割と行 8b・9b・9c、変異 V7・V8、`<p id>` の形、`asOf` の後に載せる順、索引の確かめ方、CONCURRENTLY の注、ドメインモデル図、用語集の名前、示す決まりの置き場所（ui_design :76、SEC-13）、PERF-01、architecture_backend、T-122 の漏れ、決定 (8) が議題 4 を改めたこと、時間の配分と打ち切り | anthropic/claude-opus-5-5 |
 | 2026-10-27 | 初版作成（承認待ち）。開始準備で、停止の情報は監査記録から索引を足して読む、システム管理者に今の停止の分だけ示す、再開の後は示さない、記録がなければ「記録がありません」、停止した人は今の表示名、時刻は社内の形、ロックの期限は 2 つの項目に分ける、分のずれの注はマニュアルに置く、停止中の詳細のキャプチャを足し動画は撮らないと決めた（human:kakimomokuri） | anthropic/claude-opus-5-5 |
 
