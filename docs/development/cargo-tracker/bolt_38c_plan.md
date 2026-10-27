@@ -2,8 +2,10 @@
 type: Plan
 title: "Bolt 38c 計画 - S-20 のログインの資格（ロックの解除と管理者による TOTP の解除）"
 tags: [plan]
-status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-27T00:04:19Z }
+status: stable
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-27T00:16:53Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-27T00:16:53Z }
 ---
 
 # Bolt 38c 計画 - S-20 のログインの資格（ロックの解除と管理者による TOTP の解除）
@@ -258,6 +260,7 @@ title ログインの失敗
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-27 | 計画を承認した（確認ポイントを推奨のとおり） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-27 | 整合性検証の指摘を反映した（承認待ち）。A-03 に解除の理由を書く、確認した登録だけを消す、日時は前例のテキストの欄、ロックの期限は共通の社内の形と決めた（human:kakimomokuri）。URL を前例の名詞の形と同じ確定の送り先に、#47 と受入条件の照合、`Section` は詳細の拒否だけで確認の画面の要約は別、拒否・規則・結果の型と新しいファイルの一覧、射影の行と照会の `Clock`、契約テストと偽物、文言の全文、監査の値、`@US-18-AC3` の場面、文書の範囲の漏れ、出口の列、行 8 の分割と行 10・14、変異 V10、時間の配分 | anthropic/claude-opus-5-5 |
 | 2026-10-27 | 初版作成（承認待ち）。開始準備で、38c を 38c・38c2 に分ける、通知の窓を受け入れる、TOTP の解除は資格と回復コードを消し session を消す、本人確認は手段を選び日時を入れる、自分と監督の役割は画面で扱わない、操作は当てはまるときだけ出す、ロックの解除は理由を持たない、招待の再送は作らないと決めた（human:kakimomokuri） | anthropic/claude-opus-5-5 |
 
