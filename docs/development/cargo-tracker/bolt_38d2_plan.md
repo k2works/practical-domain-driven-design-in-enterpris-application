@@ -2,8 +2,10 @@
 type: Plan
 title: "Bolt 38d2 計画 - 回復コードでログインした後に、残りの回復コードの数を案内する"
 tags: [plan]
-status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-27T12:29:30Z }
+status: stable
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-27T21:44:21Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-27T21:44:24Z }
 ---
 
 # Bolt 38d2 計画 - 回復コードでログインした後に、残りの回復コードの数を案内する
@@ -318,6 +320,7 @@ end note
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-28 | 計画を承認した（確認ポイントを推奨のとおり） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-27 | 整合性検証の指摘を反映した（承認待ち）。0 個のときは解除の道を示し、期限を過ぎた知らせの通れない文を連絡先の文に差し替える、認証コードでログインした後の案内は次のストーリーの候補にすると決めた（human:kakimomokuri）。advice は照会を `ObjectProvider` で受ける、完了の応答では数の属性も消す、A-08 は advice の値を使い回してモデルの名前を 1 つにする、照会は `TotpEnrollmentQueryService` に足す案、知らせを 1 つの断片に寄せる、準備のステップ、受入条件の一覧、行の境界（4 個ちょうど）と 9a〜9f・10、変異の作り直し（V3・V7・V8）と追加（V9〜V11）、T-122・T-126 の漏れ（ADR-011 の 6 か所、ui_design、release_plan、キャプチャ 2 枚、マニュアル）、38d の終了報告の承認の前提、38d の既知の課題 2 件、T-217 と T-204、時間を 210 分にそろえ A-08 を先にする順、打ち切ったときの #47 | anthropic/claude-opus-5-5 |
 | 2026-10-27 | 初版作成（承認待ち）。開始準備で、案内は A-08 と後で登録した後の知らせの 2 か所、数はログインに使った 1 個を引いた後で 3 個以下、0 個は強めの文で「後で登録する」は残す、回復コードだけを作り直す画面は作らない、今の口で数える、#47 は終了報告の承認の後に閉じる、動画は撮らないと決めた（human:kakimomokuri） | anthropic/claude-opus-5-5 |
 
