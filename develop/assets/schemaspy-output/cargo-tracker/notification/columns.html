@@ -136,7 +136,7 @@
         "nullable": "",
         "autoUpdated": "",
         "defaultValue": "null",
-        "comments": "<p>契機のイベントの ID（再設定の依頼、利用者の登録など）</p>"
+        "comments": "<p>契機のイベントの ID（再設定の依頼、利用者の登録、TOTP の解除・登録・再登録の監査記録など）</p>"
     },
     {
         "tableName": "notification",
@@ -192,7 +192,7 @@
         "nullable": "",
         "autoUpdated": "",
         "defaultValue": "null",
-        "comments": "<p>対象の参照（再設定と利用者の招待はトークンの ID。本文は再現しない）</p>"
+        "comments": "<p>対象の参照（再設定と利用者の招待はトークンの ID で本文は再現しない。TOTP のお知らせは監査記録の ID）</p>"
     },
     {
         "tableName": "notification",

@@ -153,7 +153,7 @@
                                         <table border='0' cellspacing='0' cellpadding='0'>
                                         </table>
                                     </td>
-                                    <td><p>契機のイベントの ID（再設定の依頼、利用者の登録など）</p></td>
+                                    <td><p>契機のイベントの ID（再設定の依頼、利用者の登録、TOTP の解除・登録・再登録の監査記録など）</p></td>
                                 </tr>
                                 <tr>
                                     <td class='indexedColumn' title='Indexed'><i class='fa fa-sitemap fa-rotate-120' style='padding-right: 5px;'></i><span id="recipient_user_id">recipient_user_id</span></td>
@@ -221,7 +221,7 @@
                                         <table border='0' cellspacing='0' cellpadding='0'>
                                         </table>
                                     </td>
-                                    <td><p>対象の参照（再設定と利用者の招待はトークンの ID。本文は再現しない）</p></td>
+                                    <td><p>対象の参照（再設定と利用者の招待はトークンの ID で本文は再現しない。TOTP のお知らせは監査記録の ID）</p></td>
                                 </tr>
                                 <tr>
                                     <td><span id="locale">locale</span></td>
@@ -380,7 +380,7 @@
                                 <tbody>
                                 <tr>
                                     <td>ck_notification_kind</td>
-                                    <td>((kind)::text &#61; ANY ((ARRAY[&#39;QUOTATION_PRESENTED&#39;::character varying, &#39;ROUTE_APPROVED&#39;::character varying, &#39;QUOTATION_EXPIRING&#39;::character varying, &#39;BOOKING_CONFIRMED&#39;::character varying, &#39;TRACKING_UNDER_REVIEW&#39;::character varying, &#39;CONSIGNEE_INVITATION&#39;::character varying, &#39;PASSWORD_RESET&#39;::character varying, &#39;USER_INVITATION&#39;::character varying])::text[]))</td>
+                                    <td>((kind)::text &#61; ANY ((ARRAY[&#39;QUOTATION_PRESENTED&#39;::character varying, &#39;ROUTE_APPROVED&#39;::character varying, &#39;QUOTATION_EXPIRING&#39;::character varying, &#39;BOOKING_CONFIRMED&#39;::character varying, &#39;TRACKING_UNDER_REVIEW&#39;::character varying, &#39;CONSIGNEE_INVITATION&#39;::character varying, &#39;PASSWORD_RESET&#39;::character varying, &#39;USER_INVITATION&#39;::character varying, &#39;TOTP_RESET_BY_ADMIN&#39;::character varying, &#39;TOTP_ENROLLED&#39;::character varying, &#39;TOTP_RE_ENROLLED&#39;::character varying])::text[]))</td>
                                 </tr>
                                 <tr>
                                     <td>ck_notification_status</td>

@@ -8445,7 +8445,7 @@
     
   
   
-    <span class="md-status md-status--draft"></span>
+    <span class="md-status md-status--stable"></span>
   
 
   
@@ -15250,6 +15250,12 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 <td style="text-align: left;">AC9 の管理者の経路（S-20 で本人確認の手段と日時を記録して解除する。資格と回復コードを消し、ほかの端末は A-03、次のログインで A-07。本人への通知は 38d）と AC3 のロックの解除（S-20）。確認した登録の時刻のときだけ消す・既に解除・登録が変わった・同時の 2 つの解除はリポジトリの契約テストとサービスの統合テスト</td>
 <td style="text-align: left;">38c</td>
 <td style="text-align: left;"><code>@US-18-AC9</code>・<code>@US-18-AC3</code>（<code>manage_user_login_credentials_ui.feature</code>）、セキュリティの統合テスト <code>UserLoginCredentialSecurityIntegrationTest</code>、<code>AuthenticationFactorRepositoriesContract</code>、<code>UserLoginCredentialServiceTest</code>・<code>UserLoginCredentialIntegrationTest</code>・<code>UserLoginCredentialRollbackIntegrationTest</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">US-18</td>
+<td style="text-align: left;">AC9 の「本人へ通知される」と SEC-10 の本人への通知（管理者による解除・A-07 の登録・回復コードの経路の再登録のお知らせ）。コミットの後に 1 通、監査記録の ID で冪等、送れなくても戻さない、発行記録とログにメールアドレスを残さない、本文の日時は監査の時刻、停止中にも送る、全部の通知の種類を CHECK が通す</td>
+<td style="text-align: left;">38d</td>
+<td style="text-align: left;"><code>@US-18-AC9</code>（<code>manage_user_login_credentials_ui.feature</code>）と A-08 の場面（<code>login_ui.feature</code>）の Mailpit の確かめ、<code>TotpNotificationIntegrationTest</code>、ハンドラーの単体 <code>TotpResetMailEventHandlerTest</code>・<code>TotpEnrollmentMailEventHandlerTest</code>、通知の <code>TotpResetMailServiceTest</code>・<code>TotpEnrollmentMailServiceTest</code>・<code>MailDeliveryTest</code>・<code>TotpMailRequestsTest</code>・<code>TotpResetMailIntegrationTest</code>・<code>TotpEnrollmentMailIntegrationTest</code>・<code>NotificationMailAdaptersTest</code>、<code>MyBatisNotificationRepositoryIntegrationTest</code>（全部の種類）</td>
 </tr>
 <tr>
 <td style="text-align: left;">US-16</td>

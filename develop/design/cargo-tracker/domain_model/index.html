@@ -8518,7 +8518,7 @@
     
   
   
-    <span class="md-status md-status--draft"></span>
+    <span class="md-status md-status--stable"></span>
   
 
   
@@ -14556,7 +14556,7 @@
 <tr>
 <td style="text-align: left;">TOTP の登録</td>
 <td style="text-align: left;">TotpEnrollmentService</td>
-<td style="text-align: left;">初回の TOTP の登録を行うアプリケーションのサービス。秘密を発行して表示の値を返し（登録の途中の暗号文は同じ利用者なら使い続ける）、最初のコードを確かめてから TOTP の資格・回復コード 10 個・監査記録（<code>TOTP_ENROLLED</code>）を 1 つのトランザクションで保存し、回復コードの平文を返す。TOTP の要素は与えない（US-18 AC7、IA-INV-10・11、Bolt 31b）。Bolt 33b から、password の段の主体（<code>PasswordVerifiedUser</code>）でなく段に中立な値（<code>EnrollingUser</code>）で受ける。認証アプリの再登録と共用するのは、秘密の発行のポート（<code>TotpSecretIssuer</code>）と値 <code>EnrollingUser</code> で、再登録のサービスはこのサービスを呼ばない（途中の暗号文を使い続ける処理は <code>TotpProvisioningStarter</code>、回復コード 10 個の発行は <code>RecoveryCode.issueSet</code> を 2 つのサービスが使う。Bolt 33d で寄せた）</td>
+<td style="text-align: left;">初回の TOTP の登録を行うアプリケーションのサービス。秘密を発行して表示の値を返し（登録の途中の暗号文は同じ利用者なら使い続ける）、最初のコードを確かめてから TOTP の資格・回復コード 10 個・監査記録（<code>TOTP_ENROLLED</code>）を 1 つのトランザクションで保存し、回復コードの平文を返す。同じトランザクションで DE-28 <code>TotpEnrolled</code> を出す（Bolt 38d。本人へ登録のお知らせ）。TOTP の要素は与えない（US-18 AC7、IA-INV-10・11、Bolt 31b）。Bolt 33b から、password の段の主体（<code>PasswordVerifiedUser</code>）でなく段に中立な値（<code>EnrollingUser</code>）で受ける。認証アプリの再登録と共用するのは、秘密の発行のポート（<code>TotpSecretIssuer</code>）と値 <code>EnrollingUser</code> で、再登録のサービスはこのサービスを呼ばない（途中の暗号文を使い続ける処理は <code>TotpProvisioningStarter</code>、回復コード 10 個の発行は <code>RecoveryCode.issueSet</code> を 2 つのサービスが使う。Bolt 33d で寄せた）</td>
 <td style="text-align: left;">アクセス・監査</td>
 </tr>
 <tr>
@@ -14568,7 +14568,7 @@
 <tr>
 <td style="text-align: left;">認証アプリの再登録</td>
 <td style="text-align: left;">TotpReEnrollmentService</td>
-<td style="text-align: left;">回復コードでログインした利用者が TOTP を登録し直すアプリケーションのサービス（<code>commandservices</code>）。利用者の ID で <code>User</code> を読んでメールアドレスを得て（利用停止・所属企業の無効は利用できない）、新しい秘密を発行して表示の値を返し（途中の暗号文が読めればそれを使い続ける）、開始から 15 分の上限と新しいコードを確かめてから、再登録の前に読んだ秘密のままのときだけ TOTP の資格の秘密を置き換え（<code>replace</code>。資格がなければ利用できない）、回復コード 10 個を発行し直し、監査記録（<code>TOTP_RE_ENROLLED</code>）を書く（1 つのトランザクション）。コミットの後にその利用者のほかの session を失効させる（<code>revokeOthers</code>。失敗は警告のログ）。結果（<code>ReEnrollmentResult</code>）は 6 種類で、完了（<code>ReEnrolled</code>。回復コードの平文）・コードの誤り（<code>CodeRejected</code>）・期限切れ（<code>Expired</code>）・秘密が読めない（<code>SecretUnusable</code>）・ほかの画面や二度押しで先に登録し直していた（<code>Superseded</code>。置き換えも回復コードの発行し直しもしない）・利用できない（<code>Unavailable</code>）（US-18 AC9、SEC-10、IA-INV-10・11。Bolt 33b で作る）</td>
+<td style="text-align: left;">回復コードでログインした利用者が TOTP を登録し直すアプリケーションのサービス（<code>commandservices</code>）。利用者の ID で <code>User</code> を読んでメールアドレスを得て（利用停止・所属企業の無効は利用できない）、新しい秘密を発行して表示の値を返し（途中の暗号文が読めればそれを使い続ける）、開始から 15 分の上限と新しいコードを確かめてから、再登録の前に読んだ秘密のままのときだけ TOTP の資格の秘密を置き換え（<code>replace</code>。資格がなければ利用できない）、回復コード 10 個を発行し直し、監査記録（<code>TOTP_RE_ENROLLED</code>）を書き、DE-27 <code>TotpReEnrolled</code> を出す（1 つのトランザクション。DE-27 は Bolt 38d。本人へ再登録のお知らせ）。コミットの後にその利用者のほかの session を失効させる（<code>revokeOthers</code>。失敗は警告のログ）。結果（<code>ReEnrollmentResult</code>）は 6 種類で、完了（<code>ReEnrolled</code>。回復コードの平文）・コードの誤り（<code>CodeRejected</code>）・期限切れ（<code>Expired</code>）・秘密が読めない（<code>SecretUnusable</code>）・ほかの画面や二度押しで先に登録し直していた（<code>Superseded</code>。置き換えも回復コードの発行し直しもしない）・利用できない（<code>Unavailable</code>）（US-18 AC9、SEC-10、IA-INV-10・11。Bolt 33b で作る）</td>
 <td style="text-align: left;">アクセス・監査</td>
 </tr>
 <tr>
@@ -14659,6 +14659,36 @@
 <td style="text-align: left;">再設定のメールのイベントハンドラー</td>
 <td style="text-align: left;">PasswordResetMailEventHandler</td>
 <td style="text-align: left;"><code>PasswordResetRequested</code> を依頼のコミットの後に別のトランザクションで受けるハンドラー（<code>eventhandlers</code>、<code>@ApplicationModuleListener</code>）。発行は共有の部品 <code>PasswordResetTokenIssuance</code> に任せ（Bolt 38b2c）、発行したら通知の公開 API で送る。送信の失敗でも完了にする（Bolt 33）</td>
+<td style="text-align: left;">アクセス・監査</td>
+</tr>
+<tr>
+<td style="text-align: left;">管理者が TOTP の登録を解除した</td>
+<td style="text-align: left;">TotpResetByAdmin</td>
+<td style="text-align: left;">システム管理者が TOTP の登録を解除したことを表すドメインのイベント（<code>identity.domain.events</code>、DE-26。Bolt 38d）。監査記録の ID・利用者の ID・解除の時刻（監査の時刻）だけを持ち、メールアドレス・操作者・本人確認の手段は持たない</td>
+<td style="text-align: left;">アクセス・監査</td>
+</tr>
+<tr>
+<td style="text-align: left;">TOTP を再登録した</td>
+<td style="text-align: left;">TotpReEnrolled</td>
+<td style="text-align: left;">回復コードの経路で認証アプリを登録し直したことを表すドメインのイベント（DE-27。Bolt 38d）。監査記録の ID・利用者の ID・再登録の時刻だけを持つ</td>
+<td style="text-align: left;">アクセス・監査</td>
+</tr>
+<tr>
+<td style="text-align: left;">TOTP を登録した</td>
+<td style="text-align: left;">TotpEnrolled</td>
+<td style="text-align: left;">A-07 で認証アプリを登録したことを表すドメインのイベント（DE-28。Bolt 38d）。監査記録の ID・利用者の ID・登録の時刻だけを持つ。招待の後の最初の登録と、管理者の解除の後の登録を見分けない</td>
+<td style="text-align: left;">アクセス・監査</td>
+</tr>
+<tr>
+<td style="text-align: left;">TOTP の解除のお知らせのイベントハンドラー</td>
+<td style="text-align: left;">TotpResetMailEventHandler</td>
+<td style="text-align: left;"><code>TotpResetByAdmin</code> を解除のコミットの後に別のトランザクションで受けるハンドラー（<code>eventhandlers</code>、<code>@ApplicationModuleListener</code>。Bolt 38d）。利用者を読んで登録メールアドレスを得て、ACL <code>NotificationTotpResetMails</code> で通知の公開 API <code>TotpResetMail</code> に送る。停止中の利用者にも送る。利用者がいなければ送らない。送れなくても例外にしない</td>
+<td style="text-align: left;">アクセス・監査</td>
+</tr>
+<tr>
+<td style="text-align: left;">TOTP の登録のお知らせのイベントハンドラー</td>
+<td style="text-align: left;">TotpEnrollmentMailEventHandler</td>
+<td style="text-align: left;"><code>TotpEnrolled</code> と <code>TotpReEnrolled</code> を、登録・再登録のコミットの後に別のトランザクションで受けるハンドラー（2 つの listener。Bolt 38d）。ACL <code>NotificationTotpEnrollmentMails</code> で通知の公開 API <code>TotpEnrollmentMail</code> に送る。扱いは解除のお知らせと同じ</td>
 <td style="text-align: left;">アクセス・監査</td>
 </tr>
 <tr>
@@ -14760,7 +14790,7 @@
 <tr>
 <td style="text-align: left;">ログインの資格の管理のサービス</td>
 <td style="text-align: left;">UserLoginCredentialService</td>
-<td style="text-align: left;">システム管理者がロックを外し、TOTP の登録を解除するアプリケーションのサービス（<code>commandservices</code>。Bolt 38c）。どちらも確認の <code>check</code>（書かない）と確定を持ち、判定は操作者 → 利用者と企業 → 管理範囲（<code>ManagedUserLookup</code>）→ 規則（<code>User#loginCredentialChangeRejection</code>）→ 状態（ロック中か・登録済みか・確認した登録か）の順。ロックの解除は 1 つのトランザクションでロック中を条件にした更新と監査 <code>ACCOUNT_UNLOCKED</code> を書く（session は消さない）。TOTP の解除は本人確認の日時を規則で確かめてから、1 つのトランザクションで確認した登録の時刻を条件にした資格の削除・回復コードの削除・監査 <code>TOTP_RESET_BY_ADMIN</code> を書き、確定の後にその利用者の session をすべて消す（消せなくても解除は戻さない）。結果は <code>UnlockCheck</code>・<code>UnlockOutcome</code>・<code>TotpResetCheck</code>・<code>TotpResetOutcome</code>（拒否は <code>UserAdministrationRefusal&lt;LoginCredentialRejection&gt;</code>）</td>
+<td style="text-align: left;">システム管理者がロックを外し、TOTP の登録を解除するアプリケーションのサービス（<code>commandservices</code>。Bolt 38c）。どちらも確認の <code>check</code>（書かない）と確定を持ち、判定は操作者 → 利用者と企業 → 管理範囲（<code>ManagedUserLookup</code>）→ 規則（<code>User#loginCredentialChangeRejection</code>）→ 状態（ロック中か・登録済みか・確認した登録か）の順。ロックの解除は 1 つのトランザクションでロック中を条件にした更新と監査 <code>ACCOUNT_UNLOCKED</code> を書く（session は消さない）。TOTP の解除は本人確認の日時を規則で確かめてから、1 つのトランザクションで確認した登録の時刻を条件にした資格の削除・回復コードの削除・監査 <code>TOTP_RESET_BY_ADMIN</code> と DE-26 <code>TotpResetByAdmin</code> を書き（Bolt 38d）、確定の後にその利用者の session をすべて消す（消せなくても解除は戻さない）。結果は <code>UnlockCheck</code>・<code>UnlockOutcome</code>・<code>TotpResetCheck</code>・<code>TotpResetOutcome</code>（拒否は <code>UserAdministrationRefusal&lt;LoginCredentialRejection&gt;</code>）</td>
 <td style="text-align: left;">アクセス・監査</td>
 </tr>
 <tr>
@@ -14904,7 +14934,7 @@
 <tr>
 <td style="text-align: left;">通知の種類</td>
 <td style="text-align: left;">NotificationKind</td>
-<td style="text-align: left;">通知の契機の区分。password の再設定 <code>PASSWORD_RESET</code>（Bolt 33）、利用者の招待 <code>USER_INVITATION</code>（Bolt 38b2b）。荷主への業務の通知の値（<code>QUOTATION_PRESENTED</code> など。データモデルの CHECK の値）は使う Bolt（W9）で足す</td>
+<td style="text-align: left;">通知の契機の区分。password の再設定 <code>PASSWORD_RESET</code>（Bolt 33）、利用者の招待 <code>USER_INVITATION</code>（Bolt 38b2b）、管理者による TOTP の登録の解除 <code>TOTP_RESET_BY_ADMIN</code>・認証アプリの登録 <code>TOTP_ENROLLED</code>・再登録 <code>TOTP_RE_ENROLLED</code>（Bolt 38d）。荷主への業務の通知の値（<code>QUOTATION_PRESENTED</code> など。データモデルの CHECK の値）は使う Bolt（W9）で足す</td>
 <td style="text-align: left;">通知</td>
 </tr>
 <tr>
@@ -14934,7 +14964,7 @@
 <tr>
 <td style="text-align: left;">再設定のメールの送信のサービス</td>
 <td style="text-align: left;">PasswordResetMailService</td>
-<td style="text-align: left;">通知のアプリケーションのサービス（<code>notification.application.internal.commandservices</code>）。通知を PENDING で記録してからメールの送信のポートを呼び、SENT か FAILED（理由）にする。同じ <code>event_id</code> と宛先の通知があれば送らない（N-INV-02、Bolt 33）。Bolt 38b2b から記録と送信と伏せ字は <code>LinkMailDelivery</code> が持つ</td>
+<td style="text-align: left;">通知のアプリケーションのサービス（<code>notification.application.internal.commandservices</code>）。通知を PENDING で記録してからメールの送信のポートを呼び、SENT か FAILED（理由）にする。同じ <code>event_id</code> と宛先の通知があれば送らない（N-INV-02、Bolt 33）。Bolt 38b2b から記録と送信と伏せ字は共有の部品が持つ（Bolt 38d で <code>MailDelivery</code> に名前を変えた）</td>
 <td style="text-align: left;">通知</td>
 </tr>
 <tr>
@@ -14952,7 +14982,19 @@
 <tr>
 <td style="text-align: left;">利用者の招待のメールの送信のサービス</td>
 <td style="text-align: left;">UserInvitationMailService</td>
-<td style="text-align: left;">通知のアプリケーションのサービス。種類 <code>USER_INVITATION</code>・対象は招待のトークンの ID で、記録と送信と伏せ字は <code>LinkMailDelivery</code> に任せる（Bolt 38b2b）</td>
+<td style="text-align: left;">通知のアプリケーションのサービス。種類 <code>USER_INVITATION</code>・対象は招待のトークンの ID で、記録と送信と伏せ字は <code>MailDelivery</code> に任せる（Bolt 38b2b。Bolt 38d で名前を変えた）</td>
+<td style="text-align: left;">通知</td>
+</tr>
+<tr>
+<td style="text-align: left;">TOTP の解除のお知らせの送信のサービス</td>
+<td style="text-align: left;">TotpResetMailService</td>
+<td style="text-align: left;">通知のアプリケーションのサービス。種類 <code>TOTP_RESET_BY_ADMIN</code>・契機と対象は監査記録の ID で、記録と送信と伏せ字は <code>MailDelivery</code> に任せる（リンクを持たないので、伏せるのはメールアドレスだけ。Bolt 38d）</td>
+<td style="text-align: left;">通知</td>
+</tr>
+<tr>
+<td style="text-align: left;">TOTP の登録のお知らせの送信のサービス</td>
+<td style="text-align: left;">TotpEnrollmentMailService</td>
+<td style="text-align: left;">通知のアプリケーションのサービス。登録 <code>TOTP_ENROLLED</code> と再登録 <code>TOTP_RE_ENROLLED</code> を、要求の種類で選んだ雛形で送る（契機と対象は監査記録の ID。Bolt 38d）</td>
 <td style="text-align: left;">通知</td>
 </tr>
 <tr>
@@ -14962,9 +15004,9 @@
 <td style="text-align: left;">通知</td>
 </tr>
 <tr>
-<td style="text-align: left;">リンクのあるメールの送り方</td>
-<td style="text-align: left;">LinkMailDelivery</td>
-<td style="text-align: left;">再設定と利用者の招待のメールで共有する部品（<code>commandservices</code>、package-private。Bean にせず各サービスが作る）。通知を PENDING で記録し、文面を組み立てて送り、SENT か FAILED にする。失敗の理由とログのリンク・トークン・アドレスを「[リンク]」「[メールアドレス]」に伏せる。結果は <code>MailDeliveryOutcome</code>（Bolt 38b2b）</td>
+<td style="text-align: left;">メールの送り方</td>
+<td style="text-align: left;">MailDelivery</td>
+<td style="text-align: left;">通知のメールの送信のサービスが共有する部品（<code>commandservices</code>、package-private。Bean にせず各サービスが作る）。通知を PENDING で記録し、文面を組み立てて送り、SENT か FAILED にする。失敗の理由とログから、呼ぶ側が渡した伏せる文字列（リンクとトークン、メールアドレス）とメールアドレスの形の文字列を「[リンク]」「[メールアドレス]」に伏せる。結果は <code>MailDeliveryOutcome</code>（Bolt 38b2b で <code>LinkMailDelivery</code> として作り、Bolt 38d でリンクのないメールにも使える形に広げて名前を変えた）</td>
 <td style="text-align: left;">通知</td>
 </tr>
 <tr>
@@ -16137,7 +16179,7 @@
 <h3 id="notification">通知（Notification）<a class="headerlink" href="#notification" title="Permanent link">&para;</a></h3>
 <p>利用者へのメール（荷主担当者への業務の通知（US-22）と password の再設定（US-18 AC8））を担う一般のコンテキストとする。業務の判断を持たず、メールを送り、その結果を記録する。Bolt 33 で password の再設定のメールの分だけを最小に作る（<a href="../../../adr/cargo-tracker/017-notification-module-and-mail/">ADR-017</a>）。</p>
 <p>通知は <code>identity</code> に依存しない（<code>allowedDependencies = {"shared"}</code>）。宛先（利用者 ID とメールアドレス）は呼ぶ側が渡す。アクセス・監査が通知の公開 API を呼ぶ（Bolt 33）ので、通知がアクセス・監査の公開 API で宛先を解決すると依存が循環するため（開始準備の決定 6）。W9 の業務の通知（US-22）で宛先をどう渡すか（イベントに載せる、購読する側で解決するなど）は W9 の開始準備で決める。</p>
-<p>入口は 2 つになる。1 つは他のコンテキストのイベントの購読（業務の通知。W9）、もう 1 つは公開 API（<code>notification.interfaces.api</code>）の同期の呼び出し（password の再設定。Bolt 33。利用者の招待。Bolt 38b2b）である。公開 API <code>PasswordResetMail</code> のアダプター（<code>interfaces.api.internal</code>）は、アプリケーションのサービス <code>PasswordResetMailService</code> を呼び、<code>UserInvitationMail</code> のアダプターは <code>UserInvitationMailService</code> を呼ぶ。どちらのサービスも、記録・送信・失敗の理由の伏せ字を共有の部品 <code>LinkMailDelivery</code> に任せる（Bolt 38b2b）。部品は通知を PENDING で記録してから送信のポート <code>MailSender</code> を呼び、SENT か FAILED（理由）にする。同じ <code>event_id</code> と宛先の通知が既にあれば送らず <code>AlreadySent</code> を返す（N-INV-02）。件名と本文は通知のテンプレート（Thymeleaf のテキストのテンプレート）で組み立て、保存しない。<code>MailSender</code> の実装は SMTP（<code>SmtpMailSender</code>）と、dev だけのログに出す送信（<code>LoggingMailSender</code>）で、<code>notification.infrastructure.mail</code> に置く。</p>
+<p>入口は 2 つになる。1 つは他のコンテキストのイベントの購読（業務の通知。W9）、もう 1 つは公開 API（<code>notification.interfaces.api</code>）の同期の呼び出し（password の再設定。Bolt 33。利用者の招待。Bolt 38b2b。TOTP の解除・登録・再登録のお知らせ。Bolt 38d）である。公開 API <code>PasswordResetMail</code> のアダプター（<code>interfaces.api.internal</code>）は、アプリケーションのサービス <code>PasswordResetMailService</code> を呼び、<code>UserInvitationMail</code> のアダプターは <code>UserInvitationMailService</code> を呼ぶ。<code>TotpResetMail</code> と <code>TotpEnrollmentMail</code> のアダプターは <code>TotpResetMailService</code>・<code>TotpEnrollmentMailService</code> を呼ぶ（Bolt 38d）。どのサービスも、記録・送信・失敗の理由の伏せ字を共有の部品 <code>MailDelivery</code> に任せる（Bolt 38b2b。Bolt 38d で <code>LinkMailDelivery</code> から名前を変えた）。部品は通知を PENDING で記録してから送信のポート <code>MailSender</code> を呼び、SENT か FAILED（理由）にする。同じ <code>event_id</code> と宛先の通知が既にあれば送らず <code>AlreadySent</code> を返す（N-INV-02）。件名と本文は通知のテンプレート（Thymeleaf のテキストのテンプレート）で組み立て、保存しない。<code>MailSender</code> の実装は SMTP（<code>SmtpMailSender</code>）と、dev だけのログに出す送信（<code>LoggingMailSender</code>）で、<code>notification.infrastructure.mail</code> に置く。</p>
 <table>
 <thead>
 <tr>
@@ -16153,7 +16195,7 @@
 <td style="text-align: left;">通知</td>
 <td style="text-align: left;">通知（Notification）</td>
 <td style="text-align: left;">通知 ID</td>
-<td style="text-align: left;">イベント ID（契機の業務キー。password の再設定では依頼の ID、利用者の招待では登録の ID）、宛先（利用者 ID・メールアドレス）、種類（<code>NotificationKind</code>）、対象（password の再設定と利用者の招待ではトークンの ID）、言語、状態（<code>NotificationStatus</code>。送信待ち・送信済み・失敗）、送信時刻、失敗の理由</td>
+<td style="text-align: left;">イベント ID（契機の業務キー。password の再設定では依頼の ID、利用者の招待では登録の ID、TOTP のお知らせでは監査記録の ID）、宛先（利用者 ID・メールアドレス）、種類（<code>NotificationKind</code>）、対象（password の再設定と利用者の招待ではトークンの ID、TOTP のお知らせでは監査記録の ID）、言語、状態（<code>NotificationStatus</code>。送信待ち・送信済み・失敗）、送信時刻、失敗の理由</td>
 <td style="text-align: left;">メールの送信と結果の記録（本文とリンクは持たない）</td>
 </tr>
 </tbody>
@@ -16233,9 +16275,19 @@
 <td style="text-align: left;">アクセス・監査から公開 API で同期に呼ばれる（DE-25 のハンドラーが ACL で呼ぶ）</td>
 <td style="text-align: left;">登録された利用者（宛先は呼ぶ側が渡す）</td>
 </tr>
+<tr>
+<td style="text-align: left;">管理者による TOTP の登録の解除のお知らせ（<code>TOTP_RESET_BY_ADMIN</code>。Bolt 38d）</td>
+<td style="text-align: left;">アクセス・監査から公開 API で同期に呼ばれる（DE-26 のハンドラーが ACL で呼ぶ）</td>
+<td style="text-align: left;">解除された利用者（停止中も。宛先は呼ぶ側が渡す）</td>
+</tr>
+<tr>
+<td style="text-align: left;">認証アプリの登録・再登録のお知らせ（<code>TOTP_ENROLLED</code>・<code>TOTP_RE_ENROLLED</code>。Bolt 38d）</td>
+<td style="text-align: left;">アクセス・監査から公開 API で同期に呼ばれる（DE-28・DE-27 のハンドラーが ACL で呼ぶ）</td>
+<td style="text-align: left;">登録・再登録した利用者（停止中も）</td>
+</tr>
 </tbody>
 </table>
-<p>password の再設定のメールは、本文にリンクとその期限・使い方だけを書き、料金などの業務の情報を書かない（N-INV-01）。リンクを含むため本文を保存せず、テンプレートと <code>target_ref</code> からも再現しない（リンクのある種類の例外。利用者の招待のメールも同じ。データモデルの通知の表）。</p>
+<p>password の再設定のメールは、本文にリンクとその期限・使い方だけを書き、料金などの業務の情報を書かない（N-INV-01）。リンクを含むため本文を保存せず、テンプレートと <code>target_ref</code> からも再現しない（リンクのある種類の例外。利用者の招待のメールも同じ。データモデルの通知の表）。TOTP の解除・登録・再登録のお知らせ（Bolt 38d）はリンクを持たないので例外に入れず、本文は保存しないが、テンプレートと <code>target_ref</code>（監査記録の ID。日時は監査の時刻）から再現できる。</p>
 <p><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2ZXJzaW9uPSIxLjEiIGRhdGEtZGlhZ3JhbS10eXBlPSJTVEFURSIgc3R5bGU9IndpZHRoOjI1MnB4O2hlaWdodDozMzFweDtiYWNrZ3JvdW5kOiNGRkZGRkY7IiB3aWR0aD0iMjUycHgiIGhlaWdodD0iMzMxcHgiIHZpZXdCb3g9IjAgMCAyNTIgMzMxIiB6b29tQW5kUGFuPSJtYWduaWZ5IiBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSJub25lIiBjb250ZW50U3R5bGVUeXBlPSJ0ZXh0L2NzcyI+PD9wbGFudHVtbCAxLjIwMjYuOT8+PGRlZnMvPjxnIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBsZW5ndGhBZGp1c3Q9InNwYWNpbmciPjxnIGNsYXNzPSJ0aXRsZSIgZGF0YS1zb3VyY2UtbGluZT0iMSI+PHRleHQgeD0iMTA4LjgwNSIgeT0iMjIuOTk1IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIyOCIgZm9udC13ZWlnaHQ9IjcwMCI+6YCa55+lPC90ZXh0PjwvZz48ZyBjbGFzcz0ic3RhcnRfZW50aXR5IiBkYXRhLXF1YWxpZmllZC1uYW1lPSIuc3RhcnQuIiBpZD0iZW50MDAwMSIgZGF0YS1zb3VyY2UtbGluZT0iMiI+PGVsbGlwc2UgY3g9Ijg4LjM4IiBjeT0iNTMuMjk3IiByeD0iMTAiIHJ5PSIxMCIgZmlsbD0iIzIyMiIgc3R5bGU9InN0cm9rZTojMjIyO3N0cm9rZS13aWR0aDoxOyIvPjwvZz48ZyBjbGFzcz0iZW50aXR5IiBkYXRhLXF1YWxpZmllZC1uYW1lPSJQRU5ESU5HIiBpZD0iZW50MDAwMiIgZGF0YS1zb3VyY2UtbGluZT0iMiI+PHJlY3QgeD0iNDYuMzgiIHk9IjE0MC4yOTciIHdpZHRoPSI4My45OTEiIGhlaWdodD0iNTAiIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIgcng9IjEyLjUiIHJ5PSIxMi41Ii8+PGxpbmUgeDE9IjQ2LjM4IiB5MT0iMTY2LjU5NCIgeDI9IjEzMC4zNzEiIHkyPSIxNjYuNTk0IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiLz48dGV4dCB4PSI1Ni4zOCIgeT0iMTU4LjI5MiIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iNjMuOTkxIj5QRU5ESU5HPC90ZXh0PjwvZz48ZyBjbGFzcz0iZW50aXR5IiBkYXRhLXF1YWxpZmllZC1uYW1lPSJTRU5UIiBpZD0iZW50MDAwNCIgZGF0YS1zb3VyY2UtbGluZT0iMyI+PHJlY3QgeD0iNyIgeT0iMjY3LjI5NyIgd2lkdGg9IjU2Ljc1NyIgaGVpZ2h0PSI1MCIgZmlsbD0iI0YxRjFGMSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7IiByeD0iMTIuNSIgcnk9IjEyLjUiLz48bGluZSB4MT0iNyIgeTE9IjI5My41OTQiIHgyPSI2My43NTciIHkyPSIyOTMuNTk0IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiLz48dGV4dCB4PSIxNyIgeT0iMjg1LjI5MiIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMzYuNzU3Ij5TRU5UPC90ZXh0PjwvZz48ZyBjbGFzcz0iZW50aXR5IiBkYXRhLXF1YWxpZmllZC1uYW1lPSJGQUlMRUQiIGlkPSJlbnQwMDA2IiBkYXRhLXNvdXJjZS1saW5lPSI0Ij48cmVjdCB4PSIxMDcuNzkiIHk9IjI2Ny4yOTciIHdpZHRoPSI2OS4xODUiIGhlaWdodD0iNTAiIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIgcng9IjEyLjUiIHJ5PSIxMi41Ii8+PGxpbmUgeDE9IjEwNy43OSIgeTE9IjI5My41OTQiIHgyPSIxNzYuOTc1IiB5Mj0iMjkzLjU5NCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7Ii8+PHRleHQgeD0iMTE3Ljc5IiB5PSIyODUuMjkyIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSI0OS4xODUiPkZBSUxFRDwvdGV4dD48L2c+PCEtLWxpbmsgKnN0YXJ0KiB0byBQRU5ESU5HLS0+PGcgY2xhc3M9ImxpbmsiIGRhdGEtZW50aXR5LTE9ImVudDAwMDEiIGRhdGEtZW50aXR5LTI9ImVudDAwMDIiIGlkPSJsbmszIiBkYXRhLXNvdXJjZS1saW5lPSIyIiBkYXRhLWxpbmstdHlwZT0iZGVwZW5kZW5jeSI+PHBhdGggZD0iTTg4LjM4LDYzLjY3NyBDODguMzgsODAuNDA3IDg4LjM4LDExMC44ODcgODguMzgsMTM0LjkyNyIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxOyIgZmlsbD0ibm9uZSIgaWQ9IipzdGFydCotdG8tUEVORElORyIvPjxwb2x5Z29uIHBvaW50cz0iODguMzgsMTM5LjkyNyw5Mi4zOCwxMzAuOTI3LDg4LjM4LDEzNC45MjcsODQuMzgsMTMwLjkyNyw4OC4zOCwxMzkuOTI3IiBmaWxsPSIjMTgxODE4IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7c3Ryb2tlLWxpbmVqb2luOm1pdGVyO3N0cm9rZS1taXRlcmxpbWl0OjEwOyIvPjx0ZXh0IHg9Ijg5LjM4IiB5PSIxMDYuMzY0IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEzIiB0ZXh0TGVuZ3RoPSI1MiI+6KiY6Yyy44GZ44KLPC90ZXh0PjwvZz48IS0tbGluayBQRU5ESU5HIHRvIFNFTlQtLT48ZyBjbGFzcz0ibGluayIgZGF0YS1lbnRpdHktMT0iZW50MDAwMiIgZGF0YS1lbnRpdHktMj0iZW50MDAwNCIgaWQ9ImxuazUiIGRhdGEtc291cmNlLWxpbmU9IjMiIGRhdGEtbGluay10eXBlPSJkZXBlbmRlbmN5Ij48cGF0aCBkPSJNNTQuNTcsMTkwLjU3NyBDNDUuNjUsMTk4Ljg5NyAzNy4xOCwyMDguOTg3IDMyLjM4LDIyMC4yOTcgQzI2LjE1LDIzNC45NDcgMjYuMTQ1LDI0Ny45MjQgMjguNDg1LDI2Mi4wOTQiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiIGZpbGw9Im5vbmUiIGlkPSJQRU5ESU5HLXRvLVNFTlQiLz48cG9seWdvbiBwb2ludHM9IjI5LjMsMjY3LjAyNywzMS43OCwyNTcuNDk1LDI4LjQ4NSwyNjIuMDk0LDIzLjg4NywyNTguNzk5LDI5LjMsMjY3LjAyNyIgZmlsbD0iIzE4MTgxOCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxO3N0cm9rZS1saW5lam9pbjptaXRlcjtzdHJva2UtbWl0ZXJsaW1pdDoxMDsiLz48dGV4dCB4PSIzMy4zOCIgeT0iMjMzLjM2NCIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMyIgdGV4dExlbmd0aD0iNjUiPumAgeS/oeOBq+aIkOWKnzwvdGV4dD48L2c+PCEtLWxpbmsgUEVORElORyB0byBGQUlMRUQtLT48ZyBjbGFzcz0ibGluayIgZGF0YS1lbnRpdHktMT0iZW50MDAwMiIgZGF0YS1lbnRpdHktMj0iZW50MDAwNiIgaWQ9ImxuazciIGRhdGEtc291cmNlLWxpbmU9IjQiIGRhdGEtbGluay10eXBlPSJkZXBlbmRlbmN5Ij48cGF0aCBkPSJNOTguOTIsMTkwLjY5NyBDMTA4LjQzLDIxMi43MTcgMTIwLjM3NiwyNDAuMzY3IDEyOS44ODYsMjYyLjM2NyIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxOyIgZmlsbD0ibm9uZSIgaWQ9IlBFTkRJTkctdG8tRkFJTEVEIi8+PHBvbHlnb24gcG9pbnRzPSIxMzEuODcsMjY2Ljk1NywxMzEuOTcxLDI1Ny4xMDksMTI5Ljg4NiwyNjIuMzY3LDEyNC42MjcsMjYwLjI4MywxMzEuODcsMjY2Ljk1NyIgZmlsbD0iIzE4MTgxOCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxO3N0cm9rZS1saW5lam9pbjptaXRlcjtzdHJva2UtbWl0ZXJsaW1pdDoxMDsiLz48dGV4dCB4PSIxMTkuNjEiIHk9IjIzMy4zNjQiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTMiIHRleHRMZW5ndGg9IjExNyI+6YCB5L+h44Gr5aSx5pWX77yI55CG55Sx77yJPC90ZXh0PjwvZz48P3BsYW50dW1sLXNyYyBBeWFpb0tiTFVEYW13X2R5ZkxwSE1oNEFraGZzMlc2a1ZZd1VWa3VBTFdlbExpbnVzUkZmU1VGQ25xdFROMzFYYTk5V0x4eUdlRnBCWGlPZC1uUy1SYnB6aDZGMnF3eHZBNGhTNzNyek41c0c1SnJUaWw3UHJFZGx6dEd5ZHozc1ZDaDZ6dGl3MEcwMD8+PC9nPjwvc3ZnPg==" class="uml" alt="uml diagram" title="" /></p>
 <h3 id="_20">外部データの開始判定<a class="headerlink" href="#_20" title="Permanent link">&para;</a></h3>
 <table>
@@ -16469,6 +16521,30 @@
 <td style="text-align: left;">アクセス・監査</td>
 <td style="text-align: left;">登録の ID、利用者の ID、登録の時刻だけ（<code>identity.domain.events</code>。メールアドレス・操作者・役割は載せない。発行記録に個人情報を残さないため。登録のトランザクションで出し、拒否と重複のロールバックでは残らない。Bolt 38b2c）</td>
 <td style="text-align: left;">アクセス・監査: 同じコンテキストのハンドラー <code>UserInvitationMailEventHandler</code> が招待のトークンを発行し、通知の公開 API で招待のメールを送る（コミットの後、別のトランザクション。登録の ID で冪等。IA-INV-12）。監査記録 <code>USER_REGISTERED</code> は登録のサービスが同期に書くので、このイベントからは書かない。登録から 24 時間を過ぎて配られた DE-25 と、登録の後に本人の再設定の発行がある DE-25 では発行しない（Bolt 38b4）</td>
+<td style="text-align: left;">—</td>
+</tr>
+<tr>
+<td style="text-align: left;">DE-26</td>
+<td style="text-align: left;">管理者が TOTP の登録を解除した（<code>TotpResetByAdmin</code>）</td>
+<td style="text-align: left;">アクセス・監査</td>
+<td style="text-align: left;">監査記録の ID、利用者の ID、解除の時刻だけ（<code>identity.domain.events</code>。メールアドレス・操作者・本人確認の手段は載せない。解除のトランザクションで出し、拒否・0 件・日時の誤り・監査の失敗のロールバックでは残らない。Bolt 38d）</td>
+<td style="text-align: left;">アクセス・監査: 同じコンテキストのハンドラー <code>TotpResetMailEventHandler</code> が、通知の公開 API で本人へ解除のお知らせを送る（コミットの後、別のトランザクション。監査記録の ID で冪等。SEC-10）</td>
+<td style="text-align: left;">—</td>
+</tr>
+<tr>
+<td style="text-align: left;">DE-27</td>
+<td style="text-align: left;">TOTP を再登録した（<code>TotpReEnrolled</code>）</td>
+<td style="text-align: left;">アクセス・監査</td>
+<td style="text-align: left;">監査記録の ID、利用者の ID、再登録の時刻だけ（回復コードの経路の再登録のトランザクションで出す。Bolt 38d）</td>
+<td style="text-align: left;">アクセス・監査: <code>TotpEnrollmentMailEventHandler</code> が本人へ再登録のお知らせを送る</td>
+<td style="text-align: left;">—</td>
+</tr>
+<tr>
+<td style="text-align: left;">DE-28</td>
+<td style="text-align: left;">TOTP を登録した（<code>TotpEnrolled</code>）</td>
+<td style="text-align: left;">アクセス・監査</td>
+<td style="text-align: left;">監査記録の ID、利用者の ID、登録の時刻だけ（A-07 の登録のトランザクションで出す。Bolt 38d）</td>
+<td style="text-align: left;">アクセス・監査: <code>TotpEnrollmentMailEventHandler</code> が本人へ登録のお知らせを送る</td>
 <td style="text-align: left;">—</td>
 </tr>
 </tbody>
