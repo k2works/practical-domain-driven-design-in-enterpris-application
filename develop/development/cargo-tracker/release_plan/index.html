@@ -8687,7 +8687,7 @@
     
   
   
-    <span class="md-status md-status--draft"></span>
+    <span class="md-status md-status--stable"></span>
   
 
   
@@ -15875,14 +15875,14 @@
 </tr>
 <tr>
 <td style="text-align: left;">38c</td>
-<td style="text-align: left;">ロックの解除と管理者による TOTP の解除（#47 の前半）: S-20 の詳細の「ログインの資格」の領域（ロックの期限と認証アプリの登録の有無。操作は当てはまるときだけ出す）、ロックの解除（監査 <code>ACCOUNT_UNLOCKED</code>、理由なし）、TOTP の解除（本人確認の手段を選び日時を入れる。確認した登録だけの資格と回復コードを 1 つのトランザクションで消し、確定の後に session をすべて消す。監査 <code>TOTP_RESET_BY_ADMIN</code>）、A-03 の理由の文、自分と監督の役割は画面で扱わない、マニュアル 11 章・2 章・付録 B、axe、動画（<code>@demo-bolt-38c</code>）。本人への通知は 38d（窓を受け入れる）。開始準備で 38c と 38c2 に分けた。<a href="../bolt_38c_plan/">Bolt 38c 計画</a>（承認済み）・<a href="../bolt_38c_report/">終了報告</a>（承認待ち）</td>
+<td style="text-align: left;">ロックの解除と管理者による TOTP の解除（#47 の前半）: S-20 の詳細の「ログインの資格」の領域（ロックの期限と認証アプリの登録の有無。操作は当てはまるときだけ出す）、ロックの解除（監査 <code>ACCOUNT_UNLOCKED</code>、理由なし）、TOTP の解除（本人確認の手段を選び日時を入れる。確認した登録だけの資格と回復コードを 1 つのトランザクションで消し、確定の後に session をすべて消す。監査 <code>TOTP_RESET_BY_ADMIN</code>）、A-03 の理由の文、自分と監督の役割は画面で扱わない、マニュアル 11 章・2 章・付録 B、axe、動画（<code>@demo-bolt-38c</code>）。本人への通知は 38d（窓を受け入れる）。開始準備で 38c と 38c2 に分けた。<a href="../bolt_38c_plan/">Bolt 38c 計画</a>（承認済み）・<a href="../bolt_38c_report/">終了報告</a>（承認済み）</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: left;">アウトサイドイン（S-20 から。既存の集約に操作を足す）</td>
 <td style="text-align: left;">計画と終了報告（セキュリティ・認可。確認ポイント 13・14）</td>
 </tr>
 <tr>
 <td style="text-align: left;">38c2</td>
-<td style="text-align: left;">停止の理由・停止した人・時刻を S-20 の詳細に示す（#50）。マニュアル 11 章とキャプチャ、axe</td>
+<td style="text-align: left;">停止の理由・停止した人・時刻を S-20 の詳細に示す（#50）。ロックの期限の表示の形（「ロック中: … まで」）と、分の切り捨てのずれの注（38c の終了報告の議題 4）。マニュアル 11 章とキャプチャ、axe</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: left;">アウトサイドイン（S-20 から）</td>
 <td style="text-align: left;">計画と終了報告（画面）</td>
@@ -15927,7 +15927,7 @@
 <ul class="task-list">
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> W6 の開始準備（本節。2026-10-20）: 計画の承認、詳細整合性検証・横断整合性検証（指摘を反映）、承認の後に直す文書、GitHub の同期</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Bolt 36〜37f3: CI の揺らぎ、US-06 の残り（#15）、US-07 の残り（#16）。<a href="../bolt_36_plan/">Bolt 36 計画</a>（承認済み）、<a href="../bolt_36_report/">Bolt 36 終了報告</a>（承認済み）、<a href="../bolt_37_plan/">Bolt 37 計画</a>（承認済み）、<a href="../bolt_37_report/">Bolt 37 終了報告</a>（承認済み）、<a href="../bolt_37b_plan/">Bolt 37b 計画</a>（承認済み）、<a href="../bolt_37b_report/">Bolt 37b 終了報告</a>（承認済み）、<a href="../bolt_37b2_plan/">Bolt 37b2 計画</a>（承認済み）、<a href="../bolt_37b2_report/">Bolt 37b2 終了報告</a>（承認済み）、<a href="../bolt_37c_plan/">Bolt 37c 計画</a>（承認済み）、<a href="../bolt_37c_report/">Bolt 37c 終了報告</a>（承認済み）、<a href="../bolt_37d_plan/">Bolt 37d 計画</a>（承認済み）、<a href="../bolt_37d_report/">Bolt 37d 終了報告</a>（承認済み）、<a href="../bolt_37d2_plan/">Bolt 37d2 計画</a>・<a href="../bolt_37d2_report/">終了報告</a>、<a href="../bolt_37e_plan/">Bolt 37e 計画</a>・<a href="../bolt_37e_report/">終了報告</a>、<a href="../bolt_37e2_plan/">Bolt 37e2 計画</a>・<a href="../bolt_37e2_report/">終了報告</a>、<a href="../bolt_37e3_plan/">Bolt 37e3 計画</a>・<a href="../bolt_37e3_report/">終了報告</a>、<a href="../bolt_37e3b_plan/">Bolt 37e3b 計画</a>・<a href="../bolt_37e3b_report/">終了報告</a>、<a href="../bolt_37e4_plan/">Bolt 37e4 計画</a>・<a href="../bolt_37e4_report/">終了報告</a>、<a href="../bolt_37e4b_plan/">Bolt 37e4b 計画</a>・<a href="../bolt_37e4b_report/">終了報告</a>、<a href="../bolt_37e4c_plan/">Bolt 37e4c 計画</a>・<a href="../bolt_37e4c_report/">終了報告</a>、<a href="../bolt_37f_plan/">Bolt 37f 計画</a>・<a href="../bolt_37f_report/">終了報告</a>、<a href="../bolt_37f2_plan/">Bolt 37f2 計画</a>・<a href="../bolt_37f2_report/">終了報告</a>、<a href="../bolt_37f3_plan/">Bolt 37f3 計画</a>・<a href="../bolt_37f3_report/">終了報告</a>（いずれも承認済み）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Bolt 38〜38g: US-16 の残り（#14）、US-18 AC9 の管理者経路（#47）。<a href="../bolt_38_plan/">Bolt 38 計画</a>・<a href="../bolt_38_report/">終了報告</a>、<a href="../bolt_38b_plan/">Bolt 38b 計画</a>・<a href="../bolt_38b_report/">終了報告</a>、<a href="../bolt_38b2_plan/">Bolt 38b2 計画</a>・<a href="../bolt_38b2_report/">終了報告</a>（承認済み）、<a href="../bolt_38b2b_plan/">Bolt 38b2b 計画</a>・<a href="../bolt_38b2b_report/">終了報告</a>（承認済み）、<a href="../bolt_38b2c_plan/">Bolt 38b2c 計画</a>（承認済み）・<a href="../bolt_38b2c_report/">終了報告</a>（承認済み）、<a href="../bolt_38b3_plan/">Bolt 38b3 計画</a>・<a href="../bolt_38b3_report/">終了報告</a>（承認済み）、<a href="../bolt_38b4_plan/">Bolt 38b4 計画</a>（承認済み）・<a href="../bolt_38b4_report/">終了報告</a>（承認済み）、<a href="../bolt_38c_plan/">Bolt 38c 計画</a>（承認済み）・<a href="../bolt_38c_report/">終了報告</a>（承認待ち）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Bolt 38〜38g: US-16 の残り（#14）、US-18 AC9 の管理者経路（#47）。<a href="../bolt_38_plan/">Bolt 38 計画</a>・<a href="../bolt_38_report/">終了報告</a>、<a href="../bolt_38b_plan/">Bolt 38b 計画</a>・<a href="../bolt_38b_report/">終了報告</a>、<a href="../bolt_38b2_plan/">Bolt 38b2 計画</a>・<a href="../bolt_38b2_report/">終了報告</a>（承認済み）、<a href="../bolt_38b2b_plan/">Bolt 38b2b 計画</a>・<a href="../bolt_38b2b_report/">終了報告</a>（承認済み）、<a href="../bolt_38b2c_plan/">Bolt 38b2c 計画</a>（承認済み）・<a href="../bolt_38b2c_report/">終了報告</a>（承認済み）、<a href="../bolt_38b3_plan/">Bolt 38b3 計画</a>・<a href="../bolt_38b3_report/">終了報告</a>（承認済み）、<a href="../bolt_38b4_plan/">Bolt 38b4 計画</a>（承認済み）・<a href="../bolt_38b4_report/">終了報告</a>（承認済み）、<a href="../bolt_38c_plan/">Bolt 38c 計画</a>（承認済み）・<a href="../bolt_38c_report/">終了報告</a>（承認済み）</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 画面の確認: 新しい画面と変えた画面（S-06・S-07・S-20・A-06）の axe と、支援技術による手動確認（人。#14・#15 の完了の定義、#50 の人の作業）</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> W6 の締め: 結果とふりかえり、開いている持ち越しの数（T-89）、W7 の計画の見直し</li>
 </ul>
@@ -18266,6 +18266,11 @@
 <td style="text-align: left;">2026-10-27</td>
 <td style="text-align: left;">Bolt 38c を実装し（S-20 のログインの資格、ロックの解除と監査 <code>ACCOUNT_UNLOCKED</code>、本人確認を記録する TOTP の解除と監査 <code>TOTP_RESET_BY_ADMIN</code>、A-03 の理由の文、受入シナリオと動画 2 本、マニュアル 11 章・2 章・付録 B）、<a href="../bolt_38c_report/">Bolt 38c 終了報告</a>を作った（承認待ち）。デモ環境は v462</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-27</td>
+<td style="text-align: left;">Bolt 38c の終了報告を承認した（議題 1〜6。議題 4 は推奨のとおり 38c2 で表示の形を直し分のずれを添える、議題 5 は #49 に書き足す）。動画を #47 へ添付した</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
 </tr>
 </tbody>
 </table>
