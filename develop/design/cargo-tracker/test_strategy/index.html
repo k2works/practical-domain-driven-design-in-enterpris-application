@@ -15106,6 +15106,12 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 <td style="text-align: left;"><code>@US-18-AC9</code>（<code>login_ui.feature</code>。回復コードでログインして再登録し、新しい回復コードで続ける、後で登録すると知らせが出てリンクから A-08 を開ける）、認証アプリの再登録のセキュリティの統合テスト、IA-INV-10・11 の単体・統合テスト</td>
 </tr>
 <tr>
+<td style="text-align: left;">US-18</td>
+<td style="text-align: left;">AC9 の管理者の経路（S-20 で本人確認の手段と日時を記録して解除する。資格と回復コードを消し、ほかの端末は A-03、次のログインで A-07。本人への通知は 38d）と AC3 のロックの解除（S-20）。確認した登録の時刻のときだけ消す・既に解除・登録が変わった・同時の 2 つの解除はリポジトリの契約テストとサービスの統合テスト</td>
+<td style="text-align: left;">38c</td>
+<td style="text-align: left;"><code>@US-18-AC9</code>・<code>@US-18-AC3</code>（<code>manage_user_login_credentials_ui.feature</code>）、セキュリティの統合テスト <code>UserLoginCredentialSecurityIntegrationTest</code>、<code>AuthenticationFactorRepositoriesContract</code>、<code>UserLoginCredentialServiceTest</code>・<code>UserLoginCredentialIntegrationTest</code>・<code>UserLoginCredentialRollbackIntegrationTest</code></td>
+</tr>
+<tr>
 <td style="text-align: left;">US-16</td>
 <td style="text-align: left;">AC1（企業・利用者・役割・担当案件の関係と変更履歴。登録の手段と初回の設定を含む）</td>
 <td style="text-align: left;">34・38b〜38b4（担当案件は 38e。未）</td>

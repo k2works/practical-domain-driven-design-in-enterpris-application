@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="システム管理者が、利用者の一覧と詳細を確かめ、利用者を登録し、利用者の役割を確認の画面を経て付けたり外したりし、利用者の利用を停止し再開する手順です。">
+        <meta name="description" content="システム管理者が、利用者の一覧と詳細を確かめ、利用者を登録し、利用者の役割を確認の画面を経て付けたり外したりし、利用者の利用を停止し再開し、ロックと認証アプリの登録を解除する手順です。">
       
       
         <meta name="author" content="k2works">
@@ -8938,6 +8938,150 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#116" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11.6 ロックの解除の確認
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="11.6 ロックの解除の確認">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_28" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        この画面でできること
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_29" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        画面の開き方
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_30" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        画面の説明
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_31" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        操作手順
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_32" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        注意・補足
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#117" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11.7 認証アプリの登録の解除の確認
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="11.7 認証アプリの登録の解除の確認">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_33" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        この画面でできること
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_34" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        画面の開き方
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_35" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        画面の説明
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_36" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        操作手順
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_37" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        注意・補足
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -13502,7 +13646,7 @@
 
 
 <h1 id="11">11 章 利用者の管理<a class="headerlink" href="#11" title="Permanent link">&para;</a></h1>
-<p>システム管理者が、利用者の一覧と詳細を確かめ、管理範囲の企業に利用者を登録し、利用者の業務の役割を確認の画面を経て付けたり外したりし、利用者の利用を停止し再開する手順です。役割は、荷主担当者・営業担当者・経路設計者・追跡管理者・データ責任者・カスタマーサポート・システム管理者・監査担当者の 8 つに決まっています。この画面で付け外しし、登録のときに付けられるのは、システム管理者・監査担当者を除く 6 つの業務の役割です。</p>
+<p>システム管理者が、利用者の一覧と詳細を確かめ、管理範囲の企業に利用者を登録し、利用者の業務の役割を確認の画面を経て付けたり外したりし、利用者の利用を停止し再開し、ログインできなくなった利用者のロックと認証アプリの登録を解除する手順です。役割は、荷主担当者・営業担当者・経路設計者・追跡管理者・データ責任者・カスタマーサポート・システム管理者・監査担当者の 8 つに決まっています。この画面で付け外しし、登録のときに付けられるのは、システム管理者・監査担当者を除く 6 つの業務の役割です。</p>
 <p>画面の開き方: ログインすると利用者の一覧（11.1）が開きます。ナビゲーションの「利用者」（URL: <code>/staff/users</code>）からも開けます。システム管理者だけが開けます。</p>
 <table>
 <thead>
@@ -13537,6 +13681,16 @@
 <td style="text-align: left;">利用者の登録（企業を選ぶ・入力・確認。確認の見出しは「利用者を登録しますか」）</td>
 <td style="text-align: left;">企業を選び、付ける役割とメールアドレスと表示名を入れ、確かめてから登録する</td>
 <td style="text-align: left;"><a href="#115-利用者の登録">11.5</a></td>
+</tr>
+<tr>
+<td style="text-align: left;">ロックの解除の確認（見出しは「ロックを解除しますか」）</td>
+<td style="text-align: left;">続けて誤ってログインできなくなった利用者のロックを外す</td>
+<td style="text-align: left;"><a href="#116-ロックの解除の確認">11.6</a></td>
+</tr>
+<tr>
+<td style="text-align: left;">認証アプリの登録の解除の確認（見出しは「認証アプリの登録を解除しますか」）</td>
+<td style="text-align: left;">本人確認の手段と日時を記録し、認証アプリを使えなくなった利用者の登録を解除する</td>
+<td style="text-align: left;"><a href="#117-認証アプリの登録の解除の確認">11.7</a></td>
 </tr>
 </tbody>
 </table>
@@ -13612,6 +13766,7 @@
 <li>利用者の企業・メールアドレス・利用状態・今の役割を確かめます</li>
 <li>付けたい役割を選び、変更の内容の確認へ進みます</li>
 <li>停止の理由を選んで利用停止の確認へ、または停止中の利用者の利用再開の確認へ進みます</li>
+<li>ロックの状態と認証アプリの登録の有無を確かめ、ロックの解除や認証アプリの登録の解除の確認へ進みます</li>
 </ul>
 <h3 id="_7">画面の開き方<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h3>
 <ul>
@@ -13658,6 +13813,11 @@
 <td style="text-align: left;">利用状態の領域（見出し「利用状態」）</td>
 <td style="text-align: left;">利用中の利用者には停止の理由（利用終了・異動・緊急停止）と「利用停止の内容を確認する」、停止中の利用者には「利用再開の内容を確認する」が並びます。押してもまだ停止・再開されません</td>
 </tr>
+<tr>
+<td style="text-align: left;">⑦</td>
+<td style="text-align: left;">ログインの資格の領域（見出し「ログインの資格」）</td>
+<td style="text-align: left;">「ロック: ロック中（解ける日時 まで）」または「ロック: なし」と、「認証アプリ: 登録済み」または「認証アプリ: 未登録」が示されます。ロック中なら「ロックを解除する」、登録済みなら「認証アプリの登録を解除する」が並びます。押してもまだ解除されません</td>
+</tr>
 </tbody>
 </table>
 <h3 id="_9">操作手順<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h3>
@@ -13672,6 +13832,7 @@
 <li>「利用停止の内容を確認する」を押します</li>
 </ol>
 <p>停止中の利用者の利用を再開するときは、「利用再開の内容を確認する」を押します。</p>
+<p>ロックを外すときは「ログインの資格」の「ロックを解除する」を、認証アプリの登録を解除するときは「認証アプリの登録を解除する」を押します（<a href="#116-ロックの解除の確認">11.6</a>・<a href="#117-認証アプリの登録の解除の確認">11.7</a>）。</p>
 <p>自分の詳細と、荷受人の企業の利用者の詳細には、「役割」の領域に役割を選ぶ欄がありません。「自分の役割は変更できません。ほかのシステム管理者に依頼してください。」または「荷受人の企業の利用者には役割を付けません。」と示されます。</p>
 <h3 id="_10">注意・補足<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h3>
 <p>選び方が決まりに合わないときは、確認へ進まず、この画面の上に理由が示され、キーボードの操作と読み上げもそこから始まります。理由は「付ける役割: 役割を 1 つ以上選んでください。」のように欄の名前から始まるリンクになっていて、押すと「付ける役割」の最初のチェックボックスへ移ります。同じ理由は「付ける役割」の欄の下にも示されます（欄の下では欄の名前を付けません）。</p>
@@ -13704,6 +13865,9 @@
 <li>停止の理由を選ばずに「利用停止の内容を確認する」を押すと、確認へ進まず「停止の理由: 利用終了・異動・緊急停止のどれかを選んでください。」と画面の上に示されます。この理由のリンクを押すと、「停止の理由」の最初の選択肢（利用終了）へ移ります</li>
 <li>自分の詳細と、システム管理者・監査担当者の詳細の「利用状態」には、停止・再開の操作がありません。「自分の利用状態は変更できません。ほかのシステム管理者に依頼してください。」または「システム管理者・監査担当者の利用停止と再開は、この画面では行いません。」と示されます。システム管理者・監査担当者の停止・再開が要るときは、運用の窓口に依頼してください</li>
 <li>停止中の利用者の役割も変えられます。再開の前に役割を整えておけます</li>
+<li>自分の詳細と、システム管理者・監査担当者の詳細の「ログインの資格」には、解除の操作がありません。「自分のログインの資格は、この画面では変えられません。」または「システム管理者・監査担当者のログインの資格は、この画面では変えられません。運用の手順に従ってください。」と示されます。ほかのシステム管理者か、運用の窓口に依頼してください</li>
+<li>ロックの期限を過ぎていれば「ロック: なし」と示されます（15 分たつと自然に解けます）</li>
+<li>解除の確認を開いた後に、期限が過ぎたり、ほかのシステム管理者が先に解除したりしていたら、解除されず「この利用者のロックは、既に解除されています。」または「この利用者の認証アプリの登録は、既に解除されています。」と画面の上に示されます</li>
 </ul>
 <p>停止の理由は、次の 3 つから選びます。</p>
 <table>
@@ -13858,7 +14022,7 @@
 <li>停止すると、相手がそれまでに受け取った password の再設定のリンクは使えなくなります（再開の後は、相手にもう一度依頼してもらいます）</li>
 <li>再開すると、相手は改めてログインします（停止の前のログインは使えません）</li>
 <li>ほかのシステム管理者が先に同じ変更をしていたら、「利用状態は既に…です。最新の内容を確かめてください。」と示されます。詳細の利用状態を確かめてください</li>
-<li>止めた相手から問い合わせを受けたときの手がかり: 相手に見えるのは「もう一度ログインしてください」の案内（<a href="../02-%E3%83%AD%E3%82%B0%E3%82%A4%E3%83%B3%E3%81%A8%E5%85%B1%E9%80%9A%E3%81%AE%E7%94%BB%E9%9D%A2/#24-もう一度ログインしてください">2.4</a>）と、ログインの「メールアドレスまたは password が正しくありません。」だけで、止めた理由は示されません（<a href="../%E4%BB%98%E9%8C%B2B-%E3%83%88%E3%83%A9%E3%83%96%E3%83%AB%E3%82%B7%E3%83%A5%E3%83%BC%E3%83%86%E3%82%A3%E3%83%B3%E3%82%B0/#q1-1-ログインできないメールアドレスまたは-password-が正しくありません認証コードまたは回復コードが正しくないかすでに使われています">付録 B の Q1-1</a>・<a href="../%E4%BB%98%E9%8C%B2B-%E3%83%88%E3%83%A9%E3%83%96%E3%83%AB%E3%82%B7%E3%83%A5%E3%83%BC%E3%83%86%E3%82%A3%E3%83%B3%E3%82%B0/#q1-2-もう一度ログインしてくださいと示された">Q1-2</a>）。詳細の利用状態を確かめ、利用中なのにログインできないときは、ロック（15 分）か所属企業の無効化を疑い、運用の窓口に確かめてください</li>
+<li>止めた相手から問い合わせを受けたときの手がかり: 相手に見えるのは「もう一度ログインしてください」の案内（<a href="../02-%E3%83%AD%E3%82%B0%E3%82%A4%E3%83%B3%E3%81%A8%E5%85%B1%E9%80%9A%E3%81%AE%E7%94%BB%E9%9D%A2/#24-もう一度ログインしてください">2.4</a>）と、ログインの「メールアドレスまたは password が正しくありません。」だけで、止めた理由は示されません（<a href="../%E4%BB%98%E9%8C%B2B-%E3%83%88%E3%83%A9%E3%83%96%E3%83%AB%E3%82%B7%E3%83%A5%E3%83%BC%E3%83%86%E3%82%A3%E3%83%B3%E3%82%B0/#q1-1-ログインできないメールアドレスまたは-password-が正しくありません認証コードまたは回復コードが正しくないかすでに使われています">付録 B の Q1-1</a>・<a href="../%E4%BB%98%E9%8C%B2B-%E3%83%88%E3%83%A9%E3%83%96%E3%83%AB%E3%82%B7%E3%83%A5%E3%83%BC%E3%83%86%E3%82%A3%E3%83%B3%E3%82%B0/#q1-2-もう一度ログインしてくださいと示された">Q1-2</a>）。詳細の利用状態を確かめ、利用中なのにログインできないときは、詳細の「ログインの資格」でロックを確かめ（ロック中なら <a href="#116-ロックの解除の確認">11.6</a> で外せます）、ロックもなければ所属企業の無効化を疑い、運用の窓口に確かめてください</li>
 <li>確認している間に、ほかのシステム管理者の操作などでその利用者の情報が先に更新されていたら、停止・再開されず「この利用者の情報が先に更新されました。最新の内容を確かめてから、もう一度変更してください。」と示され、最新の詳細が開きます</li>
 <li>利用の停止と再開は、操作したシステム管理者・時刻・変更前後の利用状態として記録されます。停止は選んだ理由も記録されます</li>
 </ul>
@@ -13999,6 +14163,181 @@
 <li>表示名は、見分けやすい文字で入れます。空白だけの名前や、画面で見分けにくい文字を含む名前は登録できません</li>
 <li>登録した利用者は、案内のリンクから password を設定し、認証アプリを登録してから使い始めます。案内の期限（24 時間）が過ぎたときや、案内が届かないときは、本人にログインの画面の「password を忘れた場合」から設定してもらいます（<a href="../02-%E3%83%AD%E3%82%B0%E3%82%A4%E3%83%B3%E3%81%A8%E5%85%B1%E9%80%9A%E3%81%AE%E7%94%BB%E9%9D%A2/#26-password-を忘れた場合">2.6</a> の「初回の password の設定」）</li>
 <li>登録は、操作したシステム管理者・時刻・付けた役割として記録されます</li>
+</ul>
+<h2 id="116">11.6 ロックの解除の確認<a class="headerlink" href="#116" title="Permanent link">&para;</a></h2>
+<h3 id="_28">この画面でできること<a class="headerlink" href="#_28" title="Permanent link">&para;</a></h3>
+<ul>
+<li>続けて 5 回誤ってログインできなくなった（ロックされた）利用者の、対象・現在の状態・変更内容・影響・回復手段・実行者を確かめて、ロックを外します</li>
+</ul>
+<h3 id="_29">画面の開き方<a class="headerlink" href="#_29" title="Permanent link">&para;</a></h3>
+<ul>
+<li>利用者の詳細の「ログインの資格」で「ロックを解除する」を押します（ロック中の利用者だけに出ます）</li>
+</ul>
+<h3 id="_30">画面の説明<a class="headerlink" href="#_30" title="Permanent link">&para;</a></h3>
+<p><img alt="ロックの解除の確認" src="../assets/11-unlock-confirmation.png" /></p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">#</th>
+<th style="text-align: left;">項目</th>
+<th style="text-align: left;">説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">①</td>
+<td style="text-align: left;">対象</td>
+<td style="text-align: left;">ロックを外す利用者</td>
+</tr>
+<tr>
+<td style="text-align: left;">②</td>
+<td style="text-align: left;">現在の状態</td>
+<td style="text-align: left;">「ロック中（解ける日時 まで）」</td>
+</tr>
+<tr>
+<td style="text-align: left;">③</td>
+<td style="text-align: left;">変更内容・影響</td>
+<td style="text-align: left;">ロックを外します。すぐにログインを試せ、失敗の回数は 0 に戻ります</td>
+</tr>
+<tr>
+<td style="text-align: left;">④</td>
+<td style="text-align: left;">回復手段</td>
+<td style="text-align: left;">ロックの解除は取り消せません。続けて 5 回誤ると、また 15 分ロックされます</td>
+</tr>
+<tr>
+<td style="text-align: left;">⑤</td>
+<td style="text-align: left;">実行者</td>
+<td style="text-align: left;">解除するシステム管理者（あなた）</td>
+</tr>
+<tr>
+<td style="text-align: left;">⑥</td>
+<td style="text-align: left;">解除する・戻る</td>
+<td style="text-align: left;">「解除する」でロックを外します。「戻る」で詳細に戻ります</td>
+</tr>
+</tbody>
+</table>
+<h3 id="_31">操作手順<a class="headerlink" href="#_31" title="Permanent link">&para;</a></h3>
+<ol>
+<li>対象の利用者から、ロックの解除を頼まれていることを確かめます</li>
+<li>内容を確かめ、「解除する」を押します</li>
+<li>利用者の詳細に「ロックを解除しました。」と出て、「ロック: なし」になります</li>
+<li>本人に、すぐにログインできることを伝えます</li>
+</ol>
+<h3 id="_32">注意・補足<a class="headerlink" href="#_32" title="Permanent link">&para;</a></h3>
+<ul>
+<li>ロックを外しても、本人のログイン中の画面は終わりません。認証アプリの登録も変わりません</li>
+<li>本人に覚えのない誤りでロックされていた場合は、ほかの人が password を試した可能性があります。本人に password の再設定（<a href="../02-%E3%83%AD%E3%82%B0%E3%82%A4%E3%83%B3%E3%81%A8%E5%85%B1%E9%80%9A%E3%81%AE%E7%94%BB%E9%9D%A2/#26-password-を忘れた場合">2.6</a>）を勧めてください</li>
+<li>ロックの解除は、操作したシステム管理者・時刻として記録されます</li>
+</ul>
+<h2 id="117">11.7 認証アプリの登録の解除の確認<a class="headerlink" href="#117" title="Permanent link">&para;</a></h2>
+<h3 id="_33">この画面でできること<a class="headerlink" href="#_33" title="Permanent link">&para;</a></h3>
+<ul>
+<li>認証アプリを使えなくなり、回復コードもない利用者について、別の経路で本人であることを確かめた手段と日時を記録して、認証アプリの登録を解除します</li>
+</ul>
+<h3 id="_34">画面の開き方<a class="headerlink" href="#_34" title="Permanent link">&para;</a></h3>
+<ul>
+<li>利用者の詳細の「ログインの資格」で「認証アプリの登録を解除する」を押します（認証アプリを登録済みの利用者だけに出ます）</li>
+</ul>
+<h3 id="_35">画面の説明<a class="headerlink" href="#_35" title="Permanent link">&para;</a></h3>
+<p><img alt="認証アプリの登録の解除の確認" src="../assets/11-totp-reset-confirmation.png" /></p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">#</th>
+<th style="text-align: left;">項目</th>
+<th style="text-align: left;">説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">①</td>
+<td style="text-align: left;">対象</td>
+<td style="text-align: left;">登録を解除する利用者</td>
+</tr>
+<tr>
+<td style="text-align: left;">②</td>
+<td style="text-align: left;">現在の状態・変更内容</td>
+<td style="text-align: left;">「認証アプリ: 登録済み」。認証アプリの登録と回復コードを消します</td>
+</tr>
+<tr>
+<td style="text-align: left;">③</td>
+<td style="text-align: left;">影響</td>
+<td style="text-align: left;">この利用者のログイン中の画面はすべて終わります。次のログインで認証アプリを登録し直します。本人への連絡は別に行います</td>
+</tr>
+<tr>
+<td style="text-align: left;">④</td>
+<td style="text-align: left;">回復手段</td>
+<td style="text-align: left;">本人が次のログインで登録し直します</td>
+</tr>
+<tr>
+<td style="text-align: left;">⑤</td>
+<td style="text-align: left;">実行者</td>
+<td style="text-align: left;">解除するシステム管理者（あなた）</td>
+</tr>
+<tr>
+<td style="text-align: left;">⑥</td>
+<td style="text-align: left;">本人確認の手段</td>
+<td style="text-align: left;">本人であることを確かめた手段を、登録の電話番号への折り返し・対面・所属企業の管理担当者への確認から選びます</td>
+</tr>
+<tr>
+<td style="text-align: left;">⑦</td>
+<td style="text-align: left;">本人確認の日時</td>
+<td style="text-align: left;">本人であることを確かめた日時を、日本時間で「2026-11-09 10:30」の形で入れます。7 日以内の日時だけを入れられます</td>
+</tr>
+<tr>
+<td style="text-align: left;">⑧</td>
+<td style="text-align: left;">解除する・戻る</td>
+<td style="text-align: left;">「解除する」で登録を解除します。「戻る」で詳細に戻ります</td>
+</tr>
+</tbody>
+</table>
+<h3 id="_36">操作手順<a class="headerlink" href="#_36" title="Permanent link">&para;</a></h3>
+<ol>
+<li>事前に決めた別の経路（登録の電話番号への折り返し・対面・所属企業の管理担当者への確認）で、頼んできた人が本人であることを確かめます</li>
+<li>「本人確認の手段」で確かめた手段を選び、「本人確認の日時」に確かめた日時を入れます</li>
+<li>内容を確かめ、「解除する」を押します</li>
+<li>利用者の詳細に「認証アプリの登録を解除しました。この利用者は次のログインで認証アプリを登録し直します。」と出て、「認証アプリ: 未登録」になります</li>
+<li>本人に、次のログインで認証アプリを登録し直すこと（<a href="../02-%E3%83%AD%E3%82%B0%E3%82%A4%E3%83%B3%E3%81%A8%E5%85%B1%E9%80%9A%E3%81%AE%E7%94%BB%E9%9D%A2/#21-ログイン">2.1</a> の初めてのログインと同じ手順）を連絡します。この画面からは本人へ知らせは届きません</li>
+</ol>
+<h3 id="_37">注意・補足<a class="headerlink" href="#_37" title="Permanent link">&para;</a></h3>
+<ul>
+<li>本人確認の手段を選ばない、日時を入れない、形が違う、今より後、7 日より前のときは、解除されず、画面の上に「認証アプリの登録を解除できませんでした」と誤りの一覧が出ます。誤りを押すと、その欄へ移ります</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">示される理由</th>
+<th style="text-align: left;">直し方</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">本人確認の手段: どれか 1 つを選んでください。</td>
+<td style="text-align: left;">確かめた手段を選びます</td>
+</tr>
+<tr>
+<td style="text-align: left;">本人確認の日時: 入力してください。</td>
+<td style="text-align: left;">確かめた日時を入れます</td>
+</tr>
+<tr>
+<td style="text-align: left;">本人確認の日時: 「2026-11-09 10:30」の形で、日本時間で入力してください。</td>
+<td style="text-align: left;">年-月-日 時:分 の形で入れ直します</td>
+</tr>
+<tr>
+<td style="text-align: left;">本人確認の日時: 今より後の日時は入力できません。</td>
+<td style="text-align: left;">確かめた日時を入れ直します</td>
+</tr>
+<tr>
+<td style="text-align: left;">本人確認の日時: 7 日以内に確認した日時を入力してください。</td>
+<td style="text-align: left;">もう一度本人に確かめてから入れます</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>解除すると、その利用者の回復コードもすべて使えなくなります。ログイン中の画面は、次の操作で「もう一度ログインしてください」（<a href="../02-%E3%83%AD%E3%82%B0%E3%82%A4%E3%83%B3%E3%81%A8%E5%85%B1%E9%80%9A%E3%81%AE%E7%94%BB%E9%9D%A2/#24-もう一度ログインしてください">2.4</a>）に移ります</li>
+<li>ロックは変わりません。ロック中のときは、あわせてロックも外してください（<a href="#116-ロックの解除の確認">11.6</a>）</li>
+<li>確認を開いた後に本人が認証アプリを登録し直していたら、解除されず「登録が変わりました。詳細を開き直してください。」と示されます。詳細を開き直し、まだ解除が要るかを本人に確かめてください</li>
+<li>登録の解除は、操作したシステム管理者・時刻・本人確認の手段と日時として記録されます</li>
 </ul>
 
 

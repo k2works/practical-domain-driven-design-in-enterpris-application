@@ -14105,10 +14105,22 @@
 <td style="text-align: left;">IA-INV-04</td>
 </tr>
 <tr>
+<td style="text-align: left;">ロックの解除</td>
+<td style="text-align: left;">本人からロックの解除を頼まれたら、S-20 の詳細の「ログインの資格」から解除する（Bolt 38c。理由と本人確認は記録しない）</td>
+<td style="text-align: left;">システム管理者</td>
+<td style="text-align: left;">SEC-02、IA-INV-03</td>
+</tr>
+<tr>
 <td style="text-align: left;">TOTP の再登録</td>
-<td style="text-align: left;">事前に決めた別経路（所属企業の管理担当者への確認など）で本人確認し、登録を解除する。本人に通知する</td>
+<td style="text-align: left;">事前に決めた別経路（登録の電話番号への折り返し・対面・所属企業の管理担当者への確認）で本人確認し、S-20 の確認の画面に手段と日時を記録して登録を解除する（Bolt 38c）。本人に通知する（Bolt 38d まではシステム管理者が別に連絡する）</td>
 <td style="text-align: left;">システム管理者</td>
 <td style="text-align: left;">SEC-10</td>
+</tr>
+<tr>
+<td style="text-align: left;">自分と監督の役割の利用者のログインの資格</td>
+<td style="text-align: left;">システム管理者・監査担当者のロックの解除と TOTP の解除は S-20 で扱わない。運用の手順（ランブック。W10）で行う</td>
+<td style="text-align: left;">システム管理者</td>
+<td style="text-align: left;">IA-INV-01</td>
 </tr>
 <tr>
 <td style="text-align: left;">権限の定期見直し</td>
