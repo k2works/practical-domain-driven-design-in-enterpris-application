@@ -8410,7 +8410,7 @@
     
   
   
-    <span class="md-status md-status--draft"></span>
+    <span class="md-status md-status--stable"></span>
   
 
   
@@ -8445,7 +8445,7 @@
     
   
   
-    <span class="md-status md-status--draft"></span>
+    <span class="md-status md-status--stable"></span>
   
 
   
@@ -15243,8 +15243,8 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 <tr>
 <td style="text-align: left;">US-16</td>
 <td style="text-align: left;">AC5（利用終了・権限取消しで次の request から拒否）</td>
-<td style="text-align: left;">34d（役割の取消しのシナリオは 38g）</td>
-<td style="text-align: left;"><code>@US-16-AC5</code>（manage_user_status_ui）</td>
+<td style="text-align: left;">34d・38c2（役割の取消しのシナリオは 38g）</td>
+<td style="text-align: left;"><code>@US-16-AC5</code>（manage_user_status_ui。38c2 で、停止中の詳細の停止の記録と再開の後に示さないことを足した）。停止の記録の照会は契約 <code>AuditRecordSuspensionContract</code>（H2 と PostgreSQL の子。最新の停止・操作と対象で絞る・停止した人の行がない）、索引 <code>ix_audit_record_target</code> は <code>MyBatisIdentityRepositoriesIntegrationTest</code>（<code>pg_indexes</code>）</td>
 </tr>
 <tr>
 <td style="text-align: left;">US-06</td>

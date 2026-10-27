@@ -8383,7 +8383,7 @@
     
   
   
-    <span class="md-status md-status--draft"></span>
+    <span class="md-status md-status--stable"></span>
   
 
   
@@ -8418,7 +8418,7 @@
     
   
   
-    <span class="md-status md-status--draft"></span>
+    <span class="md-status md-status--stable"></span>
   
 
   
@@ -14121,6 +14121,7 @@
 </tr>
 </tbody>
 </table>
+<p>将来、行の多い表に索引を足すとき（Bolt 38c2 の注）: 普通の <code>CREATE INDEX</code> は作り終えるまで表への書き込みを待たせる。行の多い本番の表では、PostgreSQL の <code>CREATE INDEX CONCURRENTLY</code> を postgresql の側のマイグレーションで、トランザクションの外で流す必要がある（H2 は持たない）。Flyway でトランザクションの外で流す設定と、使っている版の動きは、その Bolt で確かめてから手順に書く。Bolt 38c2 の <code>ix_audit_record_target</code> は、本番の配備（W10）の前に足すので、本番の DB は全部のマイグレーションから作られ、待ちの問題はない。</p>
 <h3 id="_20">ロールバック<a class="headerlink" href="#_20" title="Permanent link">&para;</a></h3>
 <table>
 <thead>

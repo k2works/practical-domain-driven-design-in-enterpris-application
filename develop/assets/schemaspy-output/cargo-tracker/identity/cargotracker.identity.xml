@@ -58,6 +58,11 @@
          <index name="ix_audit_record_occurred_at" unique="false">
             <column ascending="true" name="occurred_at"/>
          </index>
+         <index name="ix_audit_record_target" unique="false">
+            <column ascending="true" name="target_type"/>
+            <column ascending="true" name="target_id"/>
+            <column ascending="true" name="occurred_at"/>
+         </index>
          <checkConstraint constraint="((result)::text = ANY ((ARRAY['SUCCESS'::character varying, 'FAILURE'::character varying])::text[]))" name="ck_audit_record_result"/>
       </table>
       <table name="company" remarks="企業" schema="identity" type="TABLE">

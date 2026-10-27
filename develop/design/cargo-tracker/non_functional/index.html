@@ -8388,7 +8388,7 @@
     
   
   
-    <span class="md-status md-status--draft"></span>
+    <span class="md-status md-status--stable"></span>
   
 
   
@@ -8423,7 +8423,7 @@
     
   
   
-    <span class="md-status md-status--draft"></span>
+    <span class="md-status md-status--stable"></span>
   
 
   
@@ -13675,7 +13675,7 @@
 <td style="text-align: left;">画面の表示（全画面の遷移）</td>
 <td style="text-align: left;">p95 1.0 秒以内、p99 2.0 秒以内</td>
 <td style="text-align: left;">提案</td>
-<td style="text-align: left;">サーバー描画（ADR-005）の業務画面として一般的な水準</td>
+<td style="text-align: left;">サーバー描画（ADR-005）の業務画面として一般的な水準。S-20 の詳細（確認の画面と確定を含む）は、停止中の利用者のときだけ監査記録を索引 <code>ix_audit_record_target</code> で 1 行読む分が増える（Bolt 38c2）</td>
 </tr>
 <tr>
 <td style="text-align: left;">PERF-02</td>
@@ -14181,7 +14181,7 @@
 <tr>
 <td style="text-align: left;">SEC-13</td>
 <td style="text-align: left;">職務分離</td>
-<td style="text-align: left;">システム管理者・監査担当者は業務データを変更できない</td>
+<td style="text-align: left;">システム管理者・監査担当者は業務データを変更できない。システム管理者は S-20 の詳細で今の停止の記録（理由・停止した人・時刻）を読むだけで、監査記録を照会・変更しない（照会は監査担当者の S-21。Bolt 38c2）</td>
 <td style="text-align: left;">確定（BR-15）</td>
 </tr>
 <tr>

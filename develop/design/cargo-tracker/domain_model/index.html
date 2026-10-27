@@ -8483,7 +8483,7 @@
     
   
   
-    <span class="md-status md-status--draft"></span>
+    <span class="md-status md-status--stable"></span>
   
 
   
@@ -8518,7 +8518,7 @@
     
   
   
-    <span class="md-status md-status--draft"></span>
+    <span class="md-status md-status--stable"></span>
   
 
   
@@ -14351,6 +14351,12 @@
 <td style="text-align: left;">アクセス・監査</td>
 </tr>
 <tr>
+<td style="text-align: left;">停止の記録</td>
+<td style="text-align: left;">SuspensionRecord</td>
+<td style="text-align: left;">今の停止の記録（最新の監査記録 <code>USER_SUSPENDED</code>）。停止の理由・停止した人の ID と今の表示名（行がなければ空）・停止した時刻。S-20 の詳細で停止中の利用者に示す（<code>identity.domain.model.valueobjects</code>。Bolt 38c2）</td>
+<td style="text-align: left;">アクセス・監査</td>
+</tr>
+<tr>
 <td style="text-align: left;">利用状態の変更の拒否</td>
 <td style="text-align: left;">StatusChangeRejection</td>
 <td style="text-align: left;">利用状態の変更を受け付けない理由。自分の変更 <code>SELF_CHANGE</code>、監督の役割を持つ利用者 <code>OVERSIGHT_ROLE</code>、同じ状態への変更 <code>NO_CHANGE</code>、理由のない停止 <code>REASON_REQUIRED</code>（判定はこの順）。画面に示す付随の値がないので enum だけにする（<code>identity.domain.model.valueobjects</code>。Bolt 34d）</td>
@@ -14731,7 +14737,7 @@
 <tr>
 <td style="text-align: left;">利用者の管理の照会</td>
 <td style="text-align: left;">UserAdministrationQueryService</td>
-<td style="text-align: left;">S-20 の一覧と詳細を読むアプリケーションのサービス（<code>queryservices</code>。Bolt 34）。Bolt 34b から操作者を受け、一覧は管理範囲の企業の利用者だけ、詳細は <code>UserLookup</code>（<code>Found</code>・<code>NotFound</code>・<code>OutOfScope</code>・<code>NotPermitted</code>）を返す。射影 <code>UserSummary</code>（一覧の行）・<code>UserDetail</code>（詳細。企業の種類と版を含む）で受け、<code>password_hash</code> を読まない。Bolt 38b3 から、登録できる企業の一覧（<code>registrableCompanies</code>）と 1 社の照会（<code>registrableCompany</code>。<code>RegistrableCompanyLookup</code>）を返す</td>
+<td style="text-align: left;">S-20 の一覧と詳細を読むアプリケーションのサービス（<code>queryservices</code>。Bolt 34）。Bolt 34b から操作者を受け、一覧は管理範囲の企業の利用者だけ、詳細は <code>UserLookup</code>（<code>Found</code>・<code>NotFound</code>・<code>OutOfScope</code>・<code>NotPermitted</code>）を返す。射影 <code>UserSummary</code>（一覧の行）・<code>UserDetail</code>（詳細。企業の種類と版を含む）で受け、<code>password_hash</code> を読まない。Bolt 38b3 から、登録できる企業の一覧（<code>registrableCompanies</code>）と 1 社の照会（<code>registrableCompany</code>。<code>RegistrableCompanyLookup</code>）を返す。Bolt 38c2 から、詳細は停止中の利用者のときだけ監査記録のリポジトリから今の停止の記録を読んで載せる（範囲の判定の後。照会のサービスが監査記録を読む最初の例）</td>
 <td style="text-align: left;">アクセス・監査</td>
 </tr>
 <tr>
@@ -14743,7 +14749,7 @@
 <tr>
 <td style="text-align: left;">利用者の詳細</td>
 <td style="text-align: left;">UserDetail</td>
-<td style="text-align: left;">S-20 の詳細の読み出しの射影（Bolt 34）。一覧の行の項目に、所属企業の ID と種類と版を足したもの。<code>password_hash</code> を持たない</td>
+<td style="text-align: left;">S-20 の詳細の読み出しの射影（Bolt 34）。一覧の行の項目に、所属企業の ID と種類と版を足したもの。<code>password_hash</code> を持たない。Bolt 38c からロックの期限と認証アプリの登録の時刻、Bolt 38c2 から停止の記録（<code>SuspensionRecord</code>。停止中だけ）を持つ</td>
 <td style="text-align: left;">アクセス・監査</td>
 </tr>
 <tr>
@@ -14941,7 +14947,7 @@
 <tr>
 <td style="text-align: left;">監査記録</td>
 <td style="text-align: left;">AuditRecord</td>
-<td style="text-align: left;">操作者・時刻・対象・変更前後・理由・承認・出典の追記専用の記録</td>
+<td style="text-align: left;">操作者・時刻・対象・変更前後・理由・承認・出典の追記専用の記録。リポジトリ（<code>AuditRecordRepository</code>）は追記と照会だけを持ち、更新と削除はしない（IA-INV-07）。Bolt 38c2 から、対象の利用者の最新の停止の記録を引く（<code>findLatestUserSuspension</code>。索引 <code>ix_audit_record_target</code>）</td>
 <td style="text-align: left;">アクセス・監査</td>
 </tr>
 <tr>
