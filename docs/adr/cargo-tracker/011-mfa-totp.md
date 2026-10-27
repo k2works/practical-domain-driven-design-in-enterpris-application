@@ -4,7 +4,7 @@ title: "ADR-011: 多要素認証は Spring Security 7 の要素の権限で組�
 description: "password の後に TOTP を求める 2 段階のログインを、Spring Security 7 の多要素認証（要素ごとの権限）で組む。"
 tags: [adr, authentication, mfa, totp]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-27T03:11:49Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-27T10:34:52Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-11T08:28:34Z }
 ---
@@ -458,6 +458,7 @@ Bolt 33b で解いたもの（決定 10 に移した）: TOTP の再登録（SEC
 
 ## 改訂の経緯
 
+- 2026-10-27: Bolt 38d で、決定 10 の「本人への通知」を実装した。管理者による解除（DE-26）、解除の後の A-07 の登録（DE-28。招待の後の最初の登録も含む）、回復コードの経路の再登録（DE-27）を、監査と同じトランザクションでイベントにし、コミットの後に本人の登録メールアドレスへお知らせを送る（通知の公開 API。ADR-017）。残りの回復コードの案内は Bolt 38d2（Bolt 38d の開始準備の決定 (1)・(2)。human:kakimomokuri が決定）。
 - 2026-10-27: Bolt 38c のステップ 1 で、ロックの解除（決定 9 の運用）と管理者の経路の TOTP の解除（確認した登録の時刻を条件にした資格の削除、回復コードの削除、監査 `TOTP_RESET_BY_ADMIN`、確定の後の session の消去。本人への通知は Bolt 38d）を足した（Bolt 38c の開始準備の決定、human:kakimomokuri）
 - 2026-10-17: Bolt 34c のステップ 1 で、ステータスに 34c の開始準備と計画の承認の決定（34c・34e・34f の分け方、ログインの監査の書き手は今のまま、理由と書き手の表）を書き、Bolt 32c の決定の「Bolt 34 で見直す」を閉じた。決定 7 の照合とトランザクションの境界と決定 9 の数え方の置き場所に、回復コードのログインのトランザクションの分かれ目（`LOGIN_SUCCEEDED` の追記が失敗すると 500 で、使ったコードは使用済みのまま残る。特性テストで固定した）を足した（Bolt 34c の開始準備の決定 1・2 と確認ポイント 7。human:kakimomokuri が決定）。開発レビューの後、確かめた事実に合わせて、回復コードの記述に session が password の段のまま残ることと送り直すたびにコードが減ることを、書き手の表に理由 `LOCKED` の 2 つの経路とリスナーの `default` 節のほかの失敗のイベントを書いた。
 - 2026-10-16: Bolt 33f で、決定 6 の回復コードの生成のポートが `NormalizedRecoveryCode` の一覧を返すことと、A-08 の URL を `SessionKeys` から同じパッケージの `SessionPaths` に分けたことを書いた（Bolt 33f の開始準備の決定 1・2。human:kakimomokuri が決定）。

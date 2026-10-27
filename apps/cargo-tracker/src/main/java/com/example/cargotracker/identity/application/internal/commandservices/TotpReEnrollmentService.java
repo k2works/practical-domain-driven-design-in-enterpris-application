@@ -1,5 +1,6 @@
 package com.example.cargotracker.identity.application.internal.commandservices;
 
+import com.example.cargotracker.identity.domain.events.TotpReEnrolled;
 import com.example.cargotracker.identity.domain.model.aggregates.AuditRecord;
 import com.example.cargotracker.identity.domain.model.aggregates.AuditRecordRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.Company;
@@ -29,6 +30,7 @@ import java.util.List;
 import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -61,6 +63,7 @@ public class TotpReEnrollmentService {
     private final RecoveryCodeHasher hasher;
     private final TotpCodeGenerator generator;
     private final UserSessionRevoker sessions;
+    private final ApplicationEventPublisher events;
     private final Clock clock;
     private final TransactionTemplate transactionTemplate;
 
@@ -76,6 +79,7 @@ public class TotpReEnrollmentService {
             RecoveryCodeHasher hasher,
             TotpCodeGenerator generator,
             UserSessionRevoker sessions,
+            ApplicationEventPublisher events,
             Clock clock,
             TransactionTemplate transactionTemplate) {
         this.users = users;
@@ -88,6 +92,7 @@ public class TotpReEnrollmentService {
         this.hasher = hasher;
         this.generator = generator;
         this.sessions = sessions;
+        this.events = events;
         this.clock = clock;
         this.transactionTemplate = transactionTemplate;
     }
@@ -165,7 +170,10 @@ public class TotpReEnrollmentService {
                 return false;
             }
             recoveryCodes.replaceAll(owner, issued);
-            auditRecords.append(AuditRecord.totpReEnrolled(owner, user.companyId(), now));
+            AuditRecord audit = AuditRecord.totpReEnrolled(owner, user.companyId(), now);
+            auditRecords.append(audit);
+            // 同じトランザクションで DE-27 を出し、コミットの後に本人へ再登録のお知らせを送る（Bolt 38d。SEC-10）
+            events.publishEvent(new TotpReEnrolled(audit.id(), owner, now));
             return true;
         });
         if (!Boolean.TRUE.equals(replaced)) {

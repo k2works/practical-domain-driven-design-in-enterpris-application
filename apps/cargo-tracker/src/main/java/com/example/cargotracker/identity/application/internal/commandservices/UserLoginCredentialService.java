@@ -1,5 +1,6 @@
 package com.example.cargotracker.identity.application.internal.commandservices;
 
+import com.example.cargotracker.identity.domain.events.TotpResetByAdmin;
 import com.example.cargotracker.identity.domain.model.aggregates.AuditRecord;
 import com.example.cargotracker.identity.domain.model.aggregates.AuditRecordRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.CompanyRepository;
@@ -22,6 +23,7 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -38,8 +40,9 @@ import org.springframework.transaction.support.TransactionTemplate;
  * <p>ロックの解除はロック中を条件に 0 回に戻し、監査 {@code ACCOUNT_UNLOCKED} を書く。session は消さない（IA-INV-03）。TOTP の解除は、
  * 本人確認の日時を規則（{@link IdentityVerificationPolicy}）で確かめてから、確認の画面で読んだ登録の時刻を条件に資格を消し、回復コードを
  * すべて消し、監査 {@code TOTP_RESET_BY_ADMIN} を書く。ロックは触らない。確定の後にその利用者の session をすべて消す（Spring Session
- * が自分のトランザクションで消すので確定の後に呼び、消せなくても解除は戻さない。前例は利用の再開。失効の失敗の扱いは #49）。本人への
- * 通知は Bolt 38d（2026-10-27 の開始準備の決定 (2)・(3)、human:kakimomokuri）。
+ * が自分のトランザクションで消すので確定の後に呼び、消せなくても解除は戻さない。前例は利用の再開。失効の失敗の扱いは #49）。解除と
+ * 同じトランザクションで DE-26 {@code TotpResetByAdmin}（監査記録の ID・利用者の ID・監査の時刻だけ）を出し、コミットの後にイベント
+ * ハンドラーが本人へ解除のお知らせを送る（Bolt 38d。SEC-10）。
  */
 @Service // JIG がユースケースとして読む印（組み立ては IdentityConfiguration）
 public class UserLoginCredentialService {
@@ -52,10 +55,11 @@ public class UserLoginCredentialService {
     private final RecoveryCodeRepository recoveryCodes;
     private final AuditRecordRepository auditRecords;
     private final UserSessionRevoker sessions;
+    private final ApplicationEventPublisher events;
     private final Clock clock;
     private final TransactionTemplate transactionTemplate;
 
-    @SuppressWarnings("java:S107") // 判定と 3 つの表の書き込みと監査と session の失効の部品をそろえて受ける
+    @SuppressWarnings("java:S107") // 判定と 3 つの表の書き込みと監査と session の失効とイベントの部品をそろえて受ける
     public UserLoginCredentialService(
             UserRepository users,
             CompanyRepository companies,
@@ -65,6 +69,7 @@ public class UserLoginCredentialService {
             RecoveryCodeRepository recoveryCodes,
             AuditRecordRepository auditRecords,
             UserSessionRevoker sessions,
+            ApplicationEventPublisher events,
             Clock clock,
             TransactionTemplate transactionTemplate) {
         this.lookup = new ManagedUserLookup(users, companies, assignments);
@@ -73,6 +78,7 @@ public class UserLoginCredentialService {
         this.recoveryCodes = recoveryCodes;
         this.auditRecords = auditRecords;
         this.sessions = sessions;
+        this.events = events;
         this.clock = clock;
         this.transactionTemplate = transactionTemplate;
     }
@@ -201,8 +207,11 @@ public class UserLoginCredentialService {
                     .orElse(LoginCredentialRejection.ENROLLMENT_CHANGED)));
         }
         recoveryCodes.removeAll(target);
-        auditRecords.append(AuditRecord.totpResetByAdmin(
-                operator.userId(), operator.companyId(), target, user.get().version(), method, verifiedAt, now()));
+        UtcInstant resetAt = now();
+        AuditRecord audit = AuditRecord.totpResetByAdmin(
+                operator.userId(), operator.companyId(), target, user.get().version(), method, verifiedAt, resetAt);
+        auditRecords.append(audit);
+        events.publishEvent(new TotpResetByAdmin(audit.id(), target, resetAt));
         judged.set(user.get());
         return new TotpResetOutcome.Reset();
     }

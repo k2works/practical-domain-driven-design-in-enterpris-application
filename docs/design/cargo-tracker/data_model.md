@@ -4,7 +4,7 @@ title: "cargo-tracker データモデル"
 description: "cargo-tracker の概念データモデル、スキーマ分割、命名と型の規約（H2 と PostgreSQL の共通部分）、コンテキストごとの論理データモデルと ER 図、版・追記専用・冪等性・イベント配信の表現。"
 tags: [design, data-model]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-27T07:04:06Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-27T10:34:52Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:48:17Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:37Z }
@@ -977,11 +977,11 @@ entity "notification\n通知" as n {
 
 | 表 | 主な制約 | 対応する不変条件 |
 | :--- | :--- | :--- |
-| `notification` | UK（`event_id`、`recipient_user_id`）で、イベントの再配信でも同じ宛先へ 2 通送らない。`kind` IN（`QUOTATION_PRESENTED`、`ROUTE_APPROVED`、`QUOTATION_EXPIRING`、`BOOKING_CONFIRMED`、`TRACKING_UNDER_REVIEW`、`CONSIGNEE_INVITATION`、`PASSWORD_RESET`、`USER_INVITATION`（Bolt 38b2b））。`status` IN（`PENDING`、`SENT`、`FAILED`）。`recipient_user_id` はコンテキストをまたぐので外部キーにしない。PENDING で追加してから送り、送信の結果は `UPDATE ... SET status = ..., sent_at = ..., failure_reason = ... WHERE id = :id AND status = 'PENDING'` の更新件数で書く（`version` を持たない例外）。`email`（宛先のメールアドレス。個人情報）の保持の期間は、トークンの表と同じく非機能要件（W10）で決める（Bolt 33） | N-INV-02、N-INV-03 |
+| `notification` | UK（`event_id`、`recipient_user_id`）で、イベントの再配信でも同じ宛先へ 2 通送らない。`kind` IN（`QUOTATION_PRESENTED`、`ROUTE_APPROVED`、`QUOTATION_EXPIRING`、`BOOKING_CONFIRMED`、`TRACKING_UNDER_REVIEW`、`CONSIGNEE_INVITATION`、`PASSWORD_RESET`、`USER_INVITATION`（Bolt 38b2b）、`TOTP_RESET_BY_ADMIN`、`TOTP_ENROLLED`、`TOTP_RE_ENROLLED`（Bolt 38d））。`status` IN（`PENDING`、`SENT`、`FAILED`）。`recipient_user_id` はコンテキストをまたぐので外部キーにしない。PENDING で追加してから送り、送信の結果は `UPDATE ... SET status = ..., sent_at = ..., failure_reason = ... WHERE id = :id AND status = 'PENDING'` の更新件数で書く（`version` を持たない例外）。`email`（宛先のメールアドレス。個人情報）の保持の期間は、トークンの表と同じく非機能要件（W10）で決める（Bolt 33） | N-INV-02、N-INV-03 |
 
-Bolt 33 でこの表を作る（[Bolt 33 計画](../../development/cargo-tracker/bolt_33_plan.md) の確認ポイント 4、[ADR-017](../../adr/cargo-tracker/017-notification-module-and-mail.md)）。`kind` の CHECK には上の 8 値を置く。Bolt 33 は `PASSWORD_RESET` を、Bolt 38b2b は `USER_INVITATION` を使い、残りの 6 値は業務の通知（W9）で使う。`USER_INVITATION` は Bolt 38b2b で足した（`V20261026100000`。CHECK を DROP して ADD し、`event_id`・`target_ref` の注を直した）。新しいスキーマなので、`afterMigrate__grant_app_user.sql` の `GRANT USAGE ON SCHEMA`、`MapperSchemaArchitectureTest.SCHEMAS`、`SchemaCommentIntegrationTest.BUSINESS_SCHEMAS`、ER 図の対象（`ops/scripts/design_docs.js` の `schemas`）の 4 か所に `notification` を足す（ER 図の対象の漏れは Bolt 33 で MkDocs の配備を止め、後から足した）。なお、`SchemaCommentIntegrationTest.BUSINESS_SCHEMAS` には `tracking` も漏れていた（Bolt 33a の既知の課題）。`tracking` の表と列にはコメントがそろっていて、マイグレーションは要らないので、Bolt 33c でテストの一覧に足す。
+Bolt 33 でこの表を作る（[Bolt 33 計画](../../development/cargo-tracker/bolt_33_plan.md) の確認ポイント 4、[ADR-017](../../adr/cargo-tracker/017-notification-module-and-mail.md)）。`kind` の CHECK には上の 11 値を置く。Bolt 33 は `PASSWORD_RESET` を、Bolt 38b2b は `USER_INVITATION` を、Bolt 38d は TOTP の 3 値を使い、残りの 6 値は業務の通知（W9）で使う。`USER_INVITATION` は Bolt 38b2b で足した（`V20261026100000`。CHECK を DROP して ADD し、`event_id`・`target_ref` の注を直した）。TOTP の 3 値は Bolt 38d で同じ形で足した（`V20261027110000`。Bolt 38c2 の `V20261027100000` の後）。新しいスキーマなので、`afterMigrate__grant_app_user.sql` の `GRANT USAGE ON SCHEMA`、`MapperSchemaArchitectureTest.SCHEMAS`、`SchemaCommentIntegrationTest.BUSINESS_SCHEMAS`、ER 図の対象（`ops/scripts/design_docs.js` の `schemas`）の 4 か所に `notification` を足す（ER 図の対象の漏れは Bolt 33 で MkDocs の配備を止め、後から足した）。なお、`SchemaCommentIntegrationTest.BUSINESS_SCHEMAS` には `tracking` も漏れていた（Bolt 33a の既知の課題）。`tracking` の表と列にはコメントがそろっていて、マイグレーションは要らないので、Bolt 33c でテストの一覧に足す。
 
-メールの本文は保存しない（料金などを含まないことは N-INV-01 で守り、本文はテンプレートと `target_ref` から再現できる）。例外は `PASSWORD_RESET` と `USER_INVITATION`（Bolt 38b2b）で、`event_id` は再設定の依頼の ID（利用者の招待では登録の ID）、`target_ref` はトークンの ID（`identity.password_reset_token.id`）とする。本文のリンクは平文のトークンを含み、どこにも残さないので、この種類は本文を再現しない（残るのは宛先・種類・対象・送信の結果まで）。トークンと送信の記録の保持の期間は非機能要件（W10）で決める。
+メールの本文は保存しない（料金などを含まないことは N-INV-01 で守り、本文はテンプレートと `target_ref` から再現できる）。TOTP の解除・登録・再登録のお知らせ（Bolt 38d）は `event_id` と `target_ref` が監査記録の ID（`identity.audit_record.id`）で、本文の日時は監査の `occurred_at` から再現できるので、例外に入れない。例外は `PASSWORD_RESET` と `USER_INVITATION`（Bolt 38b2b）で、`event_id` は再設定の依頼の ID（利用者の招待では登録の ID）、`target_ref` はトークンの ID（`identity.password_reset_token.id`）とする。本文のリンクは平文のトークンを含み、どこにも残さないので、この種類は本文を再現しない（残るのは宛先・種類・対象・送信の結果まで）。トークンと送信の記録の保持の期間は非機能要件（W10）で決める。
 
 ### 外部データ（`external_data`）
 
@@ -1200,7 +1200,7 @@ src/main/resources/db/
 | 有人案件 | `service_case`、`service_case_source`、`service_case_progress`、`service_case_answer` | — |
 | 照会記録・営業日カレンダー | `inquiry_record`、`business_calendar` | — |
 | KPI 計測記録 | `kpi_observation`、`kpi_baseline` | — |
-| 通知 | `notification` | 本文とリンクは保存しない。`PASSWORD_RESET` と `USER_INVITATION` の `target_ref` はトークンの ID（Bolt 33・38b2b） |
+| 通知 | `notification` | 本文とリンクは保存しない。`PASSWORD_RESET` と `USER_INVITATION` の `target_ref` はトークンの ID（Bolt 33・38b2b）。TOTP のお知らせ（`TOTP_RESET_BY_ADMIN`・`TOTP_ENROLLED`・`TOTP_RE_ENROLLED`）の `target_ref` は監査記録の ID で、本文を再現できる（Bolt 38d） |
 | 企業・利用者・参照許可・監査記録 | `company`、`app_user`、`user_role`、`user_assignment`、`access_grant`、`audit_record` | 認証の仕組みは Spring Security が使う |
 | TOTP の資格・回復コード・ログインの失敗 | `totp_credential`、`recovery_code`、`login_failure` | 利用者とは別の集約（Bolt 30） |
 | 再設定のトークン | `password_reset_token` | 利用者とは別の集約。ハッシュだけを持つ（IA-INV-12。Bolt 33） |

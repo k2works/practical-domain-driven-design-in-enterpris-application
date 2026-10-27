@@ -1,5 +1,6 @@
 package com.example.cargotracker.identity.application.internal.commandservices;
 
+import com.example.cargotracker.identity.domain.events.TotpEnrolled;
 import com.example.cargotracker.identity.domain.model.aggregates.AuditRecord;
 import com.example.cargotracker.identity.domain.model.aggregates.AuditRecordRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.DuplicateTotpEnrollmentException;
@@ -21,6 +22,7 @@ import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Clock;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -30,7 +32,8 @@ import org.springframework.transaction.support.TransactionTemplate;
  * 登録は TOTP の要素を与えない（登録の後は A-02 で TOTP を入れる。Bolt 31b の確認ポイント 2）。同時の 2 つの登録は TOTP の資格の
  * 主キーで 1 つに絞る。後の登録は主キーの違反で自分のトランザクションをロールバックし、トランザクションの外側でその違反を受けて
  * 「登録済み」を返す（ADR-007 の「一意制約の違反は同じトランザクションで捕まえない」を守りつつ、結果を 1 つの経路にする。
- * Bolt 31b の開発レビュー）。
+ * Bolt 31b の開発レビュー）。同じトランザクションで DE-28 {@code TotpEnrolled}（監査記録の ID・利用者の ID・時刻だけ）を出し、コミットの
+ * 後にイベントハンドラーが本人へ登録のお知らせを送る（Bolt 38d。SEC-10）。
  *
  * <p>{@code @Service} は JIG がユースケースとして読むための印で、組み立ては {@code IdentityConfiguration} が担う。
  */
@@ -44,6 +47,7 @@ public class TotpEnrollmentService {
     private final RecoveryCodeGenerator recoveryCodeGenerator;
     private final RecoveryCodeHasher hasher;
     private final TotpCodeGenerator generator;
+    private final ApplicationEventPublisher events;
     private final Clock clock;
     private final TransactionTemplate transactionTemplate;
 
@@ -56,6 +60,7 @@ public class TotpEnrollmentService {
             RecoveryCodeGenerator recoveryCodeGenerator,
             RecoveryCodeHasher hasher,
             TotpCodeGenerator generator,
+            ApplicationEventPublisher events,
             Clock clock,
             TransactionTemplate transactionTemplate) {
         this.credentials = credentials;
@@ -65,6 +70,7 @@ public class TotpEnrollmentService {
         this.recoveryCodeGenerator = recoveryCodeGenerator;
         this.hasher = hasher;
         this.generator = generator;
+        this.events = events;
         this.clock = clock;
         this.transactionTemplate = transactionTemplate;
     }
@@ -127,7 +133,9 @@ public class TotpEnrollmentService {
         // 資格の追加（主キー）を先に行い、同時の登録では回復コードを置き換える前に後の登録を止める（議題 2 の①）
         credentials.add(credential);
         recoveryCodes.replaceAll(owner, issued);
-        auditRecords.append(AuditRecord.totpEnrolled(owner, user.companyId(), now));
+        AuditRecord audit = AuditRecord.totpEnrolled(owner, user.companyId(), now);
+        auditRecords.append(audit);
+        events.publishEvent(new TotpEnrolled(audit.id(), owner, now));
         // 画面に平文を一度だけ示す結果は文字列のまま（値の toString は伏せるため。Bolt 33f の開始準備の決定 2）
         return new EnrollmentResult.Enrolled(
                 codes.stream().map(NormalizedRecoveryCode::value).toList());

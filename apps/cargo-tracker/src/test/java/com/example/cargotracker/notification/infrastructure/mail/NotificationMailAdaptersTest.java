@@ -67,6 +67,49 @@ class NotificationMailAdaptersTest {
     }
 
     @Test
+    void 解除のお知らせはUI設計の件名と4文で役割と日時を入れ本人確認の手段や操作した人を書かない() {
+        // Bolt 38d の行 10（N-INV-01。解除のお知らせだけ役割を書く）
+        OutgoingMail mail = new ThymeleafTotpResetMailTemplate()
+                .compose("hanako@example.com", new UtcInstant(Instant.parse("2026-11-09T01:30:00Z")), "ja");
+
+        assertThat(mail.to()).isEqualTo("hanako@example.com");
+        assertThat(mail.subject()).isEqualTo("【cargo-tracker】認証アプリの登録の解除のご案内");
+        assertThat(mail.body()).isEqualTo("""
+                        cargo-tracker で、このメールアドレスの利用者の認証アプリの登録を、システム管理者が 2026-11-09 10:30 Asia/Tokyo（UTC+09:00） に解除しました。
+                        回復コードも使えなくなりました。
+                        次のログインで、認証アプリを登録し直してください。
+                        この解除に心当たりがない場合は、荷主の方は担当営業に、社内の方はシステム管理者にお知らせください。
+                        """);
+    }
+
+    @Test
+    void 登録のお知らせはUI設計の件名と2文で日時と連絡先を入れ誰が登録したかを書かない() {
+        // Bolt 38d の行 10
+        OutgoingMail mail = new ThymeleafTotpEnrollmentMailTemplate()
+                .compose("hanako@example.com", new UtcInstant(Instant.parse("2026-11-09T01:30:00Z")), false, "ja");
+
+        assertThat(mail.subject()).isEqualTo("【cargo-tracker】認証アプリの登録のご案内");
+        assertThat(mail.body()).isEqualTo("""
+                        cargo-tracker で、このメールアドレスの利用者の認証アプリが、2026-11-09 10:30 Asia/Tokyo（UTC+09:00） に登録されました。
+                        この登録に心当たりがない場合は、すぐに、荷主の方は担当営業に、社内の方はシステム管理者にお知らせください。
+                        """);
+    }
+
+    @Test
+    void 再登録のお知らせはUI設計の件名と3文で前の要素が使えないことを入れ回復コードの値を書かない() {
+        // Bolt 38d の行 10
+        OutgoingMail mail = new ThymeleafTotpEnrollmentMailTemplate()
+                .compose("hanako@example.com", new UtcInstant(Instant.parse("2026-11-09T01:30:00Z")), true, "ja");
+
+        assertThat(mail.subject()).isEqualTo("【cargo-tracker】認証アプリの再登録のご案内");
+        assertThat(mail.body()).isEqualTo("""
+                        cargo-tracker で、このメールアドレスの利用者の認証アプリが、2026-11-09 10:30 Asia/Tokyo（UTC+09:00） に登録し直されました。
+                        回復コードでログインして登録し直したため、前の認証アプリと前の回復コードは使えなくなりました。
+                        この操作に心当たりがない場合は、すぐに、荷主の方は担当営業に、社内の方はシステム管理者にお知らせください。
+                        """);
+    }
+
+    @Test
     @ExtendWith(OutputCaptureExtension.class)
     void ログに出す送信は宛先と件名と本文を出す(CapturedOutput output) {
         new LoggingMailSender().send(new OutgoingMail("shipper@example.com", "件名", "本文のリンク"));

@@ -10,6 +10,7 @@ import static org.mockito.Mockito.when;
 
 import com.example.cargotracker.identity.acceptance.InMemoryRecoveryCodeRepository;
 import com.example.cargotracker.identity.acceptance.InMemoryTotpCredentialRepository;
+import com.example.cargotracker.identity.domain.events.TotpReEnrolled;
 import com.example.cargotracker.identity.domain.model.aggregates.AuditRecord;
 import com.example.cargotracker.identity.domain.model.aggregates.AuditRecordRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.Company;
@@ -151,6 +152,15 @@ class TotpReEnrollmentServiceTest {
     };
     private boolean failAudit;
     private final RecordingTransactions transactions = new RecordingTransactions();
+    /** 出したイベント（Bolt 38d の DE-27）。 */
+    private final List<Object> published = new ArrayList<>();
+    /** 出した時点でトランザクションの中にいたか（Bolt 38d の開発レビュー M3。監査と同じトランザクションで出す）。 */
+    private final List<Boolean> publishedInTransaction = new ArrayList<>();
+
+    private void publish(Object event) {
+        published.add(event);
+        publishedInTransaction.add(TransactionSynchronizationManager.isActualTransactionActive());
+    }
 
     private final TotpReEnrollmentService service = new TotpReEnrollmentService(
             users,
@@ -163,6 +173,7 @@ class TotpReEnrollmentServiceTest {
             HASHER,
             GENERATOR,
             sessions,
+            this::publish,
             Clock.fixed(NOW, ZoneOffset.UTC),
             transactions);
 
@@ -198,6 +209,26 @@ class TotpReEnrollmentServiceTest {
             assertThat(written.actorCompanyId()).isEqualTo(company.id());
         });
         verify(sessions).revokeOthers(user.email(), CURRENT_SESSION);
+        // Bolt 38d の行 2・14: 監査記録の ID と監査の時刻で DE-27 を出す
+        assertThat(published)
+                .containsExactly(new TotpReEnrolled(audit.getFirst().id(), user.id(), new UtcInstant(NOW)));
+        assertThat(publishedInTransaction).as("監査と同じトランザクションの中で出す").containsExactly(true);
+    }
+
+    @Test
+    void 再登録しなければ再登録のイベントを出さない() {
+        // Bolt 38d の行 4b（CodeRejected・Expired・SecretUnusable・Unavailable・Superseded）
+        EncryptedSecret renewed = givenEnrolledUser();
+        assertThat(complete(renewed, "123456", STARTED)).isEqualTo(new ReEnrollmentResult.CodeRejected());
+        assertThat(complete(renewed, CODE, new UtcInstant(NOW.minus(Duration.ofMinutes(15)))))
+                .isEqualTo(new ReEnrollmentResult.Expired());
+        assertThat(complete(ISSUER.issue(new UserId(UUID.randomUUID())), CODE, STARTED))
+                .isEqualTo(new ReEnrollmentResult.SecretUnusable());
+        assertThat(complete(oldSecret, CODE, STARTED)).isEqualTo(new ReEnrollmentResult.Superseded());
+        when(users.findById(user.id())).thenReturn(Optional.empty());
+        assertThat(complete(renewed, CODE, STARTED)).isEqualTo(new ReEnrollmentResult.Unavailable());
+
+        assertThat(published).isEmpty();
     }
 
     @Test

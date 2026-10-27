@@ -2,7 +2,10 @@ package com.example.cargotracker.ui;
 
 import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
+import com.example.cargotracker.MailpitClient;
+import com.example.cargotracker.MailpitClient.ReceivedMail;
 import com.example.cargotracker.shared.domain.Role;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
@@ -11,13 +14,16 @@ import com.microsoft.playwright.options.Cookie;
 import io.cucumber.java.ja.ならば;
 import io.cucumber.java.ja.もし;
 import java.net.URI;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.regex.Pattern;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.testcontainers.containers.GenericContainer;
 
 /**
  * 利用者の管理（S-20）のログインの資格（ロックの解除と管理者による TOTP の解除）の画面の層のステップ定義（Bolt 38c。US-18 AC3・AC9）。
@@ -27,9 +33,17 @@ public class UserLoginCredentialUiSteps {
 
     private static final DateTimeFormatter VERIFIED_AT = DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm");
 
+    /** お知らせのメールを待つ時間。 */
+    private static final Duration MAIL_WAIT = Duration.ofSeconds(10);
+
+    /** お知らせの本文の日時の形（画面と同じ。時刻の値はテストの実行の時刻なので形だけを見る）。 */
+    private static final Pattern NOTICE_DATE_TIME =
+            Pattern.compile("\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2} Asia/Tokyo（UTC\\+09:00）");
+
     private final BrowserSession browser;
     private final UiUsers users;
     private final JdbcTemplate jdbc;
+    private final GenericContainer<?> mailpitContainer;
     private final String baseUrl;
 
     /** 営業担当者の別の端末の Cookie（同じブラウザの Cookie を入れ替えて別の端末に見立てる）。 */
@@ -39,16 +53,47 @@ public class UserLoginCredentialUiSteps {
             BrowserSession browser,
             UiUsers users,
             JdbcTemplate jdbc,
+            GenericContainer<?> mailpitContainer,
             @LocalServerPort int port,
             @Value("${ui.base-url:}") String configuredBaseUrl) {
         this.browser = browser;
         this.users = users;
         this.jdbc = jdbc;
+        this.mailpitContainer = mailpitContainer;
         this.baseUrl = configuredBaseUrl.isBlank() ? "http://localhost:" + port : configuredBaseUrl;
     }
 
     private Page page() {
         return browser.page();
+    }
+
+    @ならば("営業担当者に件名 {string} のお知らせが届き、本文に {string} と日時がある")
+    public void 営業担当者にお知らせが届く(String subject, String sentence) {
+        お知らせが届く(Role.SALES, subject, sentence);
+    }
+
+    @ならば("荷主担当者に件名 {string} のお知らせが届き、本文に {string} と日時がある")
+    public void 荷主担当者にお知らせが届く(String subject, String sentence) {
+        お知らせが届く(Role.SHIPPER, subject, sentence);
+    }
+
+    /** Bolt 38d の行 16（件名は全文、本文は要の文と日時の形。同じ件名のお知らせは 1 通だけ）。 */
+    private void お知らせが届く(Role role, String subject, String sentence) {
+        String email = users.of(role).email();
+        MailpitClient mailpit = new MailpitClient(mailpitContainer);
+        List<ReceivedMail> notices = await().atMost(MAIL_WAIT)
+                .pollInterval(Duration.ofMillis(200))
+                .until(
+                        () -> mailpit.messagesTo(email).stream()
+                                .filter(mail -> mail.subject().equals(subject))
+                                .toList(),
+                        mails -> !mails.isEmpty());
+        assertThat(notices).singleElement().satisfies(mail -> {
+            assertThat(mail.text()).contains(sentence);
+            assertThat(NOTICE_DATE_TIME.matcher(mail.text()).find())
+                    .as("本文に日時がある")
+                    .isTrue();
+        });
     }
 
     private Locator credentials() {
@@ -97,7 +142,8 @@ public class UserLoginCredentialUiSteps {
         assertThat(main).containsText(users.of(Role.SALES).email());
         assertThat(main.locator("dd#current-state")).hasText("認証アプリ: 登録済み");
         assertThat(main.locator("dd#credential-change")).hasText("認証アプリの登録と回復コードを消す");
-        assertThat(main).containsText("この利用者のログイン中の session はすべて終わります。次のログインで認証アプリを登録し直します。本人への連絡は別に行ってください。");
+        assertThat(main)
+                .containsText("この利用者のログイン中の session はすべて終わります。次のログインで認証アプリを登録し直します。本人の登録メールアドレスに、解除のお知らせのメールを送ります。");
         assertThat(main).containsText("本人が次のログインで登録し直します。");
         assertThat(main).containsText("システム管理者 " + users.displayNameOf(Role.SYSTEM_ADMIN));
         assertThat(page().getByLabel("登録の電話番号への折り返し")).isVisible();

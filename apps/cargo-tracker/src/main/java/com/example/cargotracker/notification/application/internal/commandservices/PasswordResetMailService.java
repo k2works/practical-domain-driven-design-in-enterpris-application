@@ -22,7 +22,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 @Service
 public class PasswordResetMailService {
 
-    private final LinkMailDelivery delivery;
+    private final MailDelivery delivery;
     private final PasswordResetMailTemplate template;
 
     public PasswordResetMailService(
@@ -31,11 +31,11 @@ public class PasswordResetMailService {
             PasswordResetMailTemplate template,
             Clock clock,
             TransactionTemplate transactionTemplate) {
-        this.delivery = new LinkMailDelivery(notifications, sender, clock, transactionTemplate);
+        this.delivery = new MailDelivery(notifications, sender, clock, transactionTemplate);
         this.template = template;
     }
 
-    /** password の再設定のメールを送り、結果を記録する（記録と送信と伏せ字は {@link LinkMailDelivery}。Bolt 38b2b）。 */
+    /** password の再設定のメールを送り、結果を記録する（記録と送信と伏せ字は {@link MailDelivery}。Bolt 38b2b）。 */
     public MailDeliveryOutcome send(SendPasswordResetMailCommand command) {
         Notification pending = Notification.pending(
                 command.requestId(),
@@ -47,7 +47,7 @@ public class PasswordResetMailService {
                 delivery.now());
         return delivery.deliver(
                 pending,
-                command.resetUrl(),
-                () -> template.compose(command.email(), command.resetUrl(), command.expiresAt(), command.locale()));
+                () -> template.compose(command.email(), command.resetUrl(), command.expiresAt(), command.locale()),
+                MailDelivery.linkMasks(command.resetUrl()));
     }
 }

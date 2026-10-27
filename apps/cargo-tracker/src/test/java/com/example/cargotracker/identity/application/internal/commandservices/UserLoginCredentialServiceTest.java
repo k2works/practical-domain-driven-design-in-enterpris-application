@@ -10,6 +10,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.example.cargotracker.identity.domain.events.TotpResetByAdmin;
 import com.example.cargotracker.identity.domain.model.aggregates.AuditRecord;
 import com.example.cargotracker.identity.domain.model.aggregates.AuditRecordRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.Company;
@@ -48,6 +49,7 @@ import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.SimpleTransactionStatus;
 import org.springframework.transaction.support.TransactionCallback;
@@ -68,6 +70,7 @@ class UserLoginCredentialServiceTest {
     private final RecoveryCodeRepository recoveryCodes = mock(RecoveryCodeRepository.class);
     private final AuditRecordRepository auditRecords = mock(AuditRecordRepository.class);
     private final UserSessionRevoker sessions = mock(UserSessionRevoker.class);
+    private final ApplicationEventPublisher events = mock(ApplicationEventPublisher.class);
     private final RecordingTransactions transactions = new RecordingTransactions();
     private final UserLoginCredentialService service = new UserLoginCredentialService(
             users,
@@ -78,6 +81,7 @@ class UserLoginCredentialServiceTest {
             recoveryCodes,
             auditRecords,
             sessions,
+            events,
             Clock.fixed(NOW, ZoneOffset.UTC),
             transactions);
 
@@ -199,6 +203,36 @@ class UserLoginCredentialServiceTest {
                         "method=IN_PERSON;verifiedAt=2026-11-09T01:30:00Z"));
         assertThat(transactions.rollbackOnly).isFalse();
         verify(loginFailures, never()).unlock(any(), any());
+        // Bolt 38d の行 1・14: 監査記録の ID と監査の時刻で DE-26 を出す（同じトランザクションの中）
+        verify(events).publishEvent(new TotpResetByAdmin(audit.id(), sales.id(), new UtcInstant(NOW)));
+    }
+
+    @Test
+    void 解除しなければ解除のイベントを出さない() {
+        // Bolt 38d の行 4a（拒否・未登録・登録が変わった・0 件・日時の誤り。変異 V4）
+        User auditor = user(new UserId(UUID.randomUUID()), Set.of(Role.AUDITOR));
+        given(auditor);
+        enrolled(auditor, ENROLLED_AT);
+        given(sales);
+        when(totpCredentials.findByUserId(sales.id()))
+                .thenReturn(Optional.of(TotpCredential.enroll(sales.id(), new EncryptedSecret("c"), ENROLLED_AT)));
+        when(totpCredentials.remove(sales.id(), ENROLLED_AT)).thenReturn(false);
+        UtcInstant renewed = new UtcInstant(NOW.minusSeconds(30));
+        UtcInstant future = new UtcInstant(NOW.plusSeconds(60));
+
+        assertThat(service.resetTotp(
+                        admin, auditor.id(), ENROLLED_AT, IdentityVerificationMethod.IN_PERSON, VERIFIED_AT))
+                .isInstanceOf(TotpResetOutcome.Refused.class);
+        assertThat(service.resetTotp(admin, sales.id(), renewed, IdentityVerificationMethod.IN_PERSON, VERIFIED_AT))
+                .isEqualTo(new TotpResetOutcome.Refused(rejected(LoginCredentialRejection.ENROLLMENT_CHANGED)));
+        assertThat(service.resetTotp(admin, sales.id(), ENROLLED_AT, IdentityVerificationMethod.IN_PERSON, future))
+                .isEqualTo(new TotpResetOutcome.Unverifiable(Violation.FUTURE));
+        assertThat(service.resetTotp(admin, sales.id(), ENROLLED_AT, IdentityVerificationMethod.IN_PERSON, VERIFIED_AT))
+                .isInstanceOf(TotpResetOutcome.Refused.class);
+        when(totpCredentials.findByUserId(sales.id())).thenReturn(Optional.empty());
+        assertThat(service.resetTotp(admin, sales.id(), ENROLLED_AT, IdentityVerificationMethod.IN_PERSON, VERIFIED_AT))
+                .isEqualTo(new TotpResetOutcome.Refused(rejected(LoginCredentialRejection.NOT_ENROLLED)));
+        verify(events, never()).publishEvent(any(Object.class));
     }
 
     @Test

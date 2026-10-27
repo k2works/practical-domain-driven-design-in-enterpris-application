@@ -15,8 +15,12 @@ import com.example.cargotracker.identity.application.internal.commandservices.Us
 import com.example.cargotracker.identity.application.internal.commandservices.UserStatusChangeService;
 import com.example.cargotracker.identity.application.internal.eventhandlers.KpiObservationEventHandler;
 import com.example.cargotracker.identity.application.internal.eventhandlers.PasswordResetMailEventHandler;
+import com.example.cargotracker.identity.application.internal.eventhandlers.TotpEnrollmentMailEventHandler;
+import com.example.cargotracker.identity.application.internal.eventhandlers.TotpResetMailEventHandler;
 import com.example.cargotracker.identity.application.internal.eventhandlers.UserInvitationMailEventHandler;
 import com.example.cargotracker.identity.application.internal.outboundservices.acl.NotificationPasswordResetMails;
+import com.example.cargotracker.identity.application.internal.outboundservices.acl.NotificationTotpEnrollmentMails;
+import com.example.cargotracker.identity.application.internal.outboundservices.acl.NotificationTotpResetMails;
 import com.example.cargotracker.identity.application.internal.outboundservices.acl.NotificationUserInvitationMails;
 import com.example.cargotracker.identity.application.internal.queryservices.KpiObservationQueryService;
 import com.example.cargotracker.identity.application.internal.queryservices.TotpEnrollmentQueryService;
@@ -46,6 +50,8 @@ import com.example.cargotracker.identity.domain.model.rules.LockPolicy;
 import com.example.cargotracker.identity.domain.model.rules.PasswordPolicy;
 import com.example.cargotracker.identity.infrastructure.crypto.AesGcmSecretCipher;
 import com.example.cargotracker.notification.interfaces.api.PasswordResetMail;
+import com.example.cargotracker.notification.interfaces.api.TotpEnrollmentMail;
+import com.example.cargotracker.notification.interfaces.api.TotpResetMail;
 import com.example.cargotracker.notification.interfaces.api.UserInvitationMail;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -217,6 +223,7 @@ public class IdentityConfiguration {
             RecoveryCodeRepository recoveryCodes,
             AuditRecordRepository auditRecords,
             UserSessionRevoker sessions,
+            ApplicationEventPublisher events,
             Clock clock,
             TransactionTemplate transactionTemplate) {
         return new UserLoginCredentialService(
@@ -228,6 +235,7 @@ public class IdentityConfiguration {
                 recoveryCodes,
                 auditRecords,
                 sessions,
+                events,
                 clock,
                 transactionTemplate);
     }
@@ -268,6 +276,7 @@ public class IdentityConfiguration {
             RecoveryCodeGenerator recoveryCodeGenerator,
             RecoveryCodeHasher hasher,
             TotpCodeGenerator generator,
+            ApplicationEventPublisher events,
             Clock clock,
             TransactionTemplate transactionTemplate) {
         return new TotpEnrollmentService(
@@ -278,6 +287,7 @@ public class IdentityConfiguration {
                 recoveryCodeGenerator,
                 hasher,
                 generator,
+                events,
                 clock,
                 transactionTemplate);
     }
@@ -295,6 +305,7 @@ public class IdentityConfiguration {
             RecoveryCodeHasher hasher,
             TotpCodeGenerator generator,
             UserSessionRevoker sessions,
+            ApplicationEventPublisher events,
             Clock clock,
             TransactionTemplate transactionTemplate) {
         return new TotpReEnrollmentService(
@@ -308,6 +319,7 @@ public class IdentityConfiguration {
                 hasher,
                 generator,
                 sessions,
+                events,
                 clock,
                 transactionTemplate);
     }
@@ -410,6 +422,32 @@ public class IdentityConfiguration {
                 notificationUserInvitationMails,
                 passwordResetLinkPrefix(environment),
                 clock);
+    }
+
+    /** DE-26 を受けて本人へ TOTP の登録の解除のお知らせを送る（Bolt 38d、ADR-017）。 */
+    @Bean
+    TotpResetMailEventHandler totpResetMailEventHandler(
+            UserRepository users, NotificationTotpResetMails notificationTotpResetMails) {
+        return new TotpResetMailEventHandler(users, notificationTotpResetMails);
+    }
+
+    /** DE-28・DE-27 を受けて本人へ認証アプリの登録と再登録のお知らせを送る（Bolt 38d、ADR-017）。 */
+    @Bean
+    TotpEnrollmentMailEventHandler totpEnrollmentMailEventHandler(
+            UserRepository users, NotificationTotpEnrollmentMails notificationTotpEnrollmentMails) {
+        return new TotpEnrollmentMailEventHandler(users, notificationTotpEnrollmentMails);
+    }
+
+    /** 通知の公開 API（認証アプリの登録と再登録のお知らせ）を呼ぶ腐敗防止層（ADR-017。Bolt 38d）。 */
+    @Bean
+    NotificationTotpEnrollmentMails notificationTotpEnrollmentMails(TotpEnrollmentMail totpEnrollmentMail) {
+        return new NotificationTotpEnrollmentMails(totpEnrollmentMail);
+    }
+
+    /** 通知の公開 API（管理者による TOTP の登録の解除のお知らせ）を呼ぶ腐敗防止層（ADR-017。Bolt 38d）。 */
+    @Bean
+    NotificationTotpResetMails notificationTotpResetMails(TotpResetMail totpResetMail) {
+        return new NotificationTotpResetMails(totpResetMail);
     }
 
     /** 通知の公開 API（利用者の招待のメール）を呼ぶ腐敗防止層（ADR-017。Bolt 38b2c）。 */

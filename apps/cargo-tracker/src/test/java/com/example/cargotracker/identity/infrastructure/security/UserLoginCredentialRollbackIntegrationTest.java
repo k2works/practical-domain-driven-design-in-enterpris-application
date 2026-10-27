@@ -7,6 +7,7 @@ import static org.mockito.Mockito.doThrow;
 
 import com.example.cargotracker.identity.AdministrationFixtures;
 import com.example.cargotracker.identity.application.internal.commandservices.UserLoginCredentialService;
+import com.example.cargotracker.identity.domain.events.TotpResetByAdmin;
 import com.example.cargotracker.identity.domain.model.aggregates.Company;
 import com.example.cargotracker.identity.domain.model.aggregates.User;
 import com.example.cargotracker.identity.domain.model.valueobjects.AuditAction;
@@ -142,6 +143,13 @@ class UserLoginCredentialRollbackIntegrationTest extends IdentitySpyIntegrationT
                         Integer.class,
                         sales.value().toString()))
                 .as("監査の行も残らない")
+                .isZero();
+        // Bolt 38d の行 5（変異 V5）: 解除のイベントも残らず、お知らせは送られない
+        assertThat(jdbc.queryForObject(
+                        "SELECT count(*) FROM platform.event_publication WHERE event_type = ? AND serialized_event LIKE ?",
+                        Integer.class,
+                        TotpResetByAdmin.class.getName(),
+                        "%" + sales.value() + "%"))
                 .isZero();
     }
 }

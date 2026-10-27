@@ -11,12 +11,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
 /**
- * 利用者の招待のメールの送信のサービス（ADR-017。Bolt 38b2b）。記録と送信と伏せ字は再設定のメールと共有する（{@link LinkMailDelivery}）。
+ * 利用者の招待のメールの送信のサービス（ADR-017。Bolt 38b2b）。記録と送信と伏せ字は再設定のメールと共有する（{@link MailDelivery}）。
  */
 @Service
 public class UserInvitationMailService {
 
-    private final LinkMailDelivery delivery;
+    private final MailDelivery delivery;
     private final UserInvitationMailTemplate template;
 
     public UserInvitationMailService(
@@ -25,7 +25,7 @@ public class UserInvitationMailService {
             UserInvitationMailTemplate template,
             Clock clock,
             TransactionTemplate transactionTemplate) {
-        this.delivery = new LinkMailDelivery(notifications, sender, clock, transactionTemplate);
+        this.delivery = new MailDelivery(notifications, sender, clock, transactionTemplate);
         this.template = template;
     }
 
@@ -41,8 +41,7 @@ public class UserInvitationMailService {
                 delivery.now());
         return delivery.deliver(
                 pending,
-                command.invitationUrl(),
-                () -> template.compose(
-                        command.email(), command.invitationUrl(), command.expiresAt(), command.locale()));
+                () -> template.compose(command.email(), command.invitationUrl(), command.expiresAt(), command.locale()),
+                MailDelivery.linkMasks(command.invitationUrl()));
     }
 }

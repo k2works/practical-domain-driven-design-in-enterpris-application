@@ -1,15 +1,21 @@
 package com.example.cargotracker.notification.infrastructure.config;
 
 import com.example.cargotracker.notification.application.internal.commandservices.PasswordResetMailService;
+import com.example.cargotracker.notification.application.internal.commandservices.TotpEnrollmentMailService;
+import com.example.cargotracker.notification.application.internal.commandservices.TotpResetMailService;
 import com.example.cargotracker.notification.application.internal.commandservices.UserInvitationMailService;
 import com.example.cargotracker.notification.domain.model.aggregates.MailSender;
 import com.example.cargotracker.notification.domain.model.aggregates.NotificationRepository;
 import com.example.cargotracker.notification.domain.model.aggregates.PasswordResetMailTemplate;
+import com.example.cargotracker.notification.domain.model.aggregates.TotpEnrollmentMailTemplate;
+import com.example.cargotracker.notification.domain.model.aggregates.TotpResetMailTemplate;
 import com.example.cargotracker.notification.domain.model.aggregates.UserInvitationMailTemplate;
 import com.example.cargotracker.notification.infrastructure.mail.LoggingMailSender;
 import com.example.cargotracker.notification.infrastructure.mail.NotificationMailGuard;
 import com.example.cargotracker.notification.infrastructure.mail.SmtpMailSender;
 import com.example.cargotracker.notification.infrastructure.mail.ThymeleafPasswordResetMailTemplate;
+import com.example.cargotracker.notification.infrastructure.mail.ThymeleafTotpEnrollmentMailTemplate;
+import com.example.cargotracker.notification.infrastructure.mail.ThymeleafTotpResetMailTemplate;
 import com.example.cargotracker.notification.infrastructure.mail.ThymeleafUserInvitationMailTemplate;
 import java.time.Clock;
 import org.springframework.beans.factory.ObjectProvider;
@@ -46,6 +52,40 @@ public class NotificationConfiguration {
     @Bean
     UserInvitationMailTemplate userInvitationMailTemplate() {
         return new ThymeleafUserInvitationMailTemplate();
+    }
+
+    @Bean
+    TotpResetMailTemplate totpResetMailTemplate() {
+        return new ThymeleafTotpResetMailTemplate();
+    }
+
+    /** 管理者による TOTP の登録の解除のお知らせ（Bolt 38d）。 */
+    @Bean
+    TotpResetMailService totpResetMailService(
+            NotificationRepository notifications,
+            MailSender notificationMailSender,
+            TotpResetMailTemplate totpResetMailTemplate,
+            Clock clock,
+            TransactionTemplate transactionTemplate) {
+        return new TotpResetMailService(
+                notifications, notificationMailSender, totpResetMailTemplate, clock, transactionTemplate);
+    }
+
+    @Bean
+    TotpEnrollmentMailTemplate totpEnrollmentMailTemplate() {
+        return new ThymeleafTotpEnrollmentMailTemplate();
+    }
+
+    /** 認証アプリの登録と再登録のお知らせ（Bolt 38d）。 */
+    @Bean
+    TotpEnrollmentMailService totpEnrollmentMailService(
+            NotificationRepository notifications,
+            MailSender notificationMailSender,
+            TotpEnrollmentMailTemplate totpEnrollmentMailTemplate,
+            Clock clock,
+            TransactionTemplate transactionTemplate) {
+        return new TotpEnrollmentMailService(
+                notifications, notificationMailSender, totpEnrollmentMailTemplate, clock, transactionTemplate);
     }
 
     @Bean

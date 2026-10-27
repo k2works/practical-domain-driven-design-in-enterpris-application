@@ -4,7 +4,7 @@ title: "cargo-tracker テスト戦略"
 description: "cargo-tracker のテスト形状、テストレベルと責務、BDD（Cucumber）のシナリオ階層とタグ規約、不変条件・ユーザーストーリーとテストの対応、カバレッジ目標、CI での実行。"
 tags: [design, test-strategy, bdd]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-27T07:04:06Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-27T10:34:52Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T08:12:04Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:38Z }
@@ -575,6 +575,7 @@ Release 1.0 の受入条件の照合の表はまだ作っていない（上の�
 | US-18 | AC8 の後半（A-06 でリンクを開いて新しい password を設定し、A-01 でログインし直す。期限切れ・使用済みのリンク） | 33a | `@US-18-AC8`（`login_ui.feature`。依頼から設定とログインし直しまで、期限切れのリンク、よく使われる password）、password の再設定の完了のセキュリティの統合テスト、IA-INV-12 と password の方針の単体・統合テスト |
 | US-18 | AC9 の回復コードの経路（回復コードでログインすると A-08 に導かれ、TOTP を登録し直して新しい回復コードを受け取る。後で登録できる。古いコードと回復コードは使えなくなり、ほかの session は失効する。管理者の経路と本人への通知は #47） | 33b | `@US-18-AC9`（`login_ui.feature`。回復コードでログインして再登録し、新しい回復コードで続ける、後で登録すると知らせが出てリンクから A-08 を開ける）、認証アプリの再登録のセキュリティの統合テスト、IA-INV-10・11 の単体・統合テスト |
 | US-18 | AC9 の管理者の経路（S-20 で本人確認の手段と日時を記録して解除する。資格と回復コードを消し、ほかの端末は A-03、次のログインで A-07。本人への通知は 38d）と AC3 のロックの解除（S-20）。確認した登録の時刻のときだけ消す・既に解除・登録が変わった・同時の 2 つの解除はリポジトリの契約テストとサービスの統合テスト | 38c | `@US-18-AC9`・`@US-18-AC3`（`manage_user_login_credentials_ui.feature`）、セキュリティの統合テスト `UserLoginCredentialSecurityIntegrationTest`、`AuthenticationFactorRepositoriesContract`、`UserLoginCredentialServiceTest`・`UserLoginCredentialIntegrationTest`・`UserLoginCredentialRollbackIntegrationTest` |
+| US-18 | AC9 の「本人へ通知される」と SEC-10 の本人への通知（管理者による解除・A-07 の登録・回復コードの経路の再登録のお知らせ）。コミットの後に 1 通、監査記録の ID で冪等、送れなくても戻さない、発行記録とログにメールアドレスを残さない、本文の日時は監査の時刻、停止中にも送る、全部の通知の種類を CHECK が通す | 38d | `@US-18-AC9`（`manage_user_login_credentials_ui.feature`）と A-08 の場面（`login_ui.feature`）の Mailpit の確かめ、`TotpNotificationIntegrationTest`、ハンドラーの単体 `TotpResetMailEventHandlerTest`・`TotpEnrollmentMailEventHandlerTest`、通知の `TotpResetMailServiceTest`・`TotpEnrollmentMailServiceTest`・`MailDeliveryTest`・`TotpMailRequestsTest`・`TotpResetMailIntegrationTest`・`TotpEnrollmentMailIntegrationTest`・`NotificationMailAdaptersTest`、`MyBatisNotificationRepositoryIntegrationTest`（全部の種類） |
 | US-16 | AC1（企業・利用者・役割・担当案件の関係と変更履歴。登録の手段と初回の設定を含む） | 34・38b〜38b4（担当案件は 38e。未） | `@US-16-AC1`（manage_user_roles_ui の役割の変更、register_user_ui の登録と招待から A-07 まで `@demo-bolt-38b4`）、監査 `ROLES_CHANGED`・`USER_REGISTERED`・`INITIAL_PASSWORD_SET` の統合テスト。照合は途中の経過で、閉じるのは 38g |
 | US-16 | AC2（管理範囲の外は拒否し試行を記録） | 34b・38b2・38b3b | `@US-16-AC2`、範囲外の記録の統合テスト |
 | US-16 | AC3（職務分離） | 34・38b | `@US-16-AC3`、役割の規則のテスト |

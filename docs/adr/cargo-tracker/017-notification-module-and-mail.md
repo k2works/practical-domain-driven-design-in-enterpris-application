@@ -4,7 +4,7 @@ title: "ADR-017: 通知モジュールを新設し、メールは公開 API で�
 description: "通知モジュールを最小に新設し、メールの送信を公開 API（notification.interfaces.api の PasswordResetMail。Bolt 38b2b で UserInvitationMail を足した）で受けて SMTP で送る決定。identity は依頼の応答から切り離した @ApplicationModuleListener のハンドラーで再設定のトークンを発行し、ACL から同期で呼ぶ。通知は identity に依存しない。dev はログに出す送信、統合テストは Mailpit、SES の SMTP は W10。"
 tags: [adr, architecture, notification, mail]
 status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-26T21:57:10Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-27T10:34:52Z }
 ---
 
 # ADR-017: 通知モジュールを新設し、メールは公開 API で受けて SMTP で送る
@@ -36,8 +36,9 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-26T21:57:10Z }
 | 操作 | インターフェース `PasswordResetMail` の `send(PasswordResetMailRequest)` が `PasswordResetMailReceipt` を返す。結果は `Sent`・`AlreadySent`・`Failed` |
 | 要求 | 依頼の ID（UUID。通知の `event_id`）、トークンの ID（UUID。`target_ref`）、宛先の利用者の ID（UUID）、アドレス、再設定の URL、期限（`UtcInstant`）、言語。値は Java の標準・共有カーネルの型と文字列だけ |
 | 通知の中 | アダプターがアプリケーションサービス `notification.application.internal.commandservices.PasswordResetMailService` を呼ぶ。サービスは通知を PENDING で記録してから送信のポートを呼び、SENT か FAILED（理由）にする。状態の更新は `status = 'PENDING'` を条件にした更新で、版の列は持たない |
-| 2 つ目の操作（Bolt 38b2b） | インターフェース `UserInvitationMail` の `send(UserInvitationMailRequest)` が `UserInvitationMailReceipt`（`Sent`・`AlreadySent`・`Failed`）を返す。要求は登録の ID（`event_id`）、招待のトークンの ID（`target_ref`）、宛先の利用者の ID、アドレス、初回の設定の URL、期限、言語。サービスは `UserInvitationMailService`。種類ごとの口にし、一般の口にまとめるかは Bolt 38d で決める（2026-10-26 の開始準備、human:kakimomokuri） |
-| 共有の部品（Bolt 38b2b） | 記録（PENDING）・送信・SENT か FAILED・失敗の理由とログの伏せ字は、2 つのサービスが package-private の `LinkMailDelivery` に任せる（Bean にせず各サービスが作る）。伏せ字はリンクを「[リンク]」、アドレスを「[メールアドレス]」にする。結果は `MailDeliveryOutcome`（Bolt 38b2b で `PasswordResetMailOutcome` から名前を変えた） |
+| 2 つ目の操作（Bolt 38b2b） | インターフェース `UserInvitationMail` の `send(UserInvitationMailRequest)` が `UserInvitationMailReceipt`（`Sent`・`AlreadySent`・`Failed`）を返す。要求は登録の ID（`event_id`）、招待のトークンの ID（`target_ref`）、宛先の利用者の ID、アドレス、初回の設定の URL、期限、言語。サービスは `UserInvitationMailService`。種類ごとの口にし、一般の口にまとめるかは Bolt 38d で決める（2026-10-26 の開始準備、human:kakimomokuri）。Bolt 38d で種類ごとのままと決めた（下の 3・4 つ目の操作） |
+| 3・4 つ目の操作（Bolt 38d） | `TotpResetMail.send(TotpResetMailRequest)`（管理者による TOTP の登録の解除のお知らせ）と `TotpEnrollmentMail.send(TotpEnrollmentMailRequest)`（認証アプリの登録と再登録のお知らせ。要求が `reEnrolled` を持ち、種類 `TOTP_ENROLLED`・`TOTP_RE_ENROLLED` と雛形を選ぶ）。要求は監査記録の ID（`event_id` と `target_ref`）、宛先の利用者の ID、アドレス、時刻、言語で、リンクを持たない。サービスは `TotpResetMailService`・`TotpEnrollmentMailService`。identity の DE-26・DE-27・DE-28 のハンドラーが ACL で呼ぶ |
+| 共有の部品（Bolt 38b2b） | 記録（PENDING）・送信・SENT か FAILED・失敗の理由とログの伏せ字は、各サービスが package-private の `MailDelivery` に任せる（Bean にせず各サービスが作る。Bolt 38b2b で `LinkMailDelivery` として作り、Bolt 38d でリンクのないメールにも使える形に広げて名前を変えた。伏せる文字列は呼ぶ側が渡す）。伏せ字はリンクを「[リンク]」、アドレスを「[メールアドレス]」にする。結果は `MailDeliveryOutcome`（Bolt 38b2b で `PasswordResetMailOutcome` から名前を変えた） |
 | 重複 | 同じ `event_id` と宛先の通知が既にあれば送らず `AlreadySent` を返す（UK(event_id, recipient_user_id)。N-INV-02） |
 | 本文 | 件名と本文は通知モジュールのテンプレート（Thymeleaf のテキストのテンプレート）で組み立てる。料金などを書かない（N-INV-01） |
 
@@ -121,7 +122,7 @@ W10 に送る（2026-10-15、human:kakimomokuri が決定）。
 - 爆撃の 1 日の上限がない。1 分ごとに依頼し直して、前のリンクを無効にできる。
 - デモのログにリンクが出る。デモには実在のメールアドレスを登録しない（ADR-013）。
 
-Bolt 38d の開始準備で、種類ごとの公開 API（再設定・利用者の招待）を一般の口にまとめるか、共有の部品 `LinkMailDelivery` をリンクのないメールに広げるかを決める（Bolt 38b の確認ポイント 1）。W9 の開始準備で、宛先のモデルを決める。利用者でない宛先（荷受人への招待 `CONSIGNEE_INVITATION`）を扱うため、`recipient_user_id` の NOT NULL と UK(event_id, recipient_user_id)、公開 API を種類ごとに分けるか汎用にするかを見直す。
+Bolt 38d の開始準備で、種類ごとの公開 API は種類ごとのままとし（解除と、登録・再登録の 2 つの口を足した。登録と再登録は 1 つの口で種類を分ける）、共有の部品をリンクのないメールにも使える形に広げた（`MailDelivery`。2026-10-27、human:kakimomokuri。Bolt 38b の確認ポイント 1）。一般の口は W9 の業務の通知で宛先のモデルを決めるときに見直す。W9 の開始準備で、宛先のモデルを決める。利用者でない宛先（荷受人への招待 `CONSIGNEE_INVITATION`）を扱うため、`recipient_user_id` の NOT NULL と UK(event_id, recipient_user_id)、公開 API を種類ごとに分けるか汎用にするかを見直す。
 
 ## コンプライアンス
 
@@ -136,6 +137,8 @@ Bolt 38d の開始準備で、種類ごとの公開 API（再設定・利用者�
 - 2026-10-26: Bolt 38b2b で、2 つ目の公開 API `UserInvitationMail`（種類 `USER_INVITATION`）、文面のポート `UserInvitationMailTemplate`、記録と送信と伏せ字の共有の部品 `LinkMailDelivery`（伏せ字は「[リンク]」）と結果 `MailDeliveryOutcome` を足した（決定 1・3・5、既知の課題。Bolt 38b2b の開始準備の決定 1〜3。human:kakimomokuri が決定）。
 - 2026-10-26: Bolt 38b2c で、決定 2 と 4 に利用者の招待の identity の側（DE-25、招待のハンドラー、ACL `NotificationUserInvitationMails`、発行の共有の部品 `PasswordResetTokenIssuance`、24 時間で抑えを数えない）を足した（Bolt 38b2c の開始準備の決定 1〜4。human:kakimomokuri が決定）。
 - 2026-10-26: Bolt 38b4 で、決定 4 の利用者の招待に、遅れて配られた DE-25（登録から 24 時間を過ぎた、登録の後に本人の再設定の発行がある）では発行しないことを足した（Bolt 38b4 の開始準備の決定 (1)。human:kakimomokuri が決定）。
+
+- 2026-10-27: Bolt 38d で、3・4 つ目の公開 API `TotpResetMail`・`TotpEnrollmentMail`（種類 `TOTP_RESET_BY_ADMIN`・`TOTP_ENROLLED`・`TOTP_RE_ENROLLED`。リンクのないお知らせ）、identity の DE-26・DE-27・DE-28 とハンドラーと ACL を足し、共有の部品を `MailDelivery` に改めてリンクのないメールに広げた。一般の口にまとめるかの見直しは「種類ごとのまま」と決めた（決定 1・3・5、既知の課題。Bolt 38d の開始準備の決定 (3)・(4)・(5)。human:kakimomokuri が決定）。
 
 ## 関連ドキュメント
 

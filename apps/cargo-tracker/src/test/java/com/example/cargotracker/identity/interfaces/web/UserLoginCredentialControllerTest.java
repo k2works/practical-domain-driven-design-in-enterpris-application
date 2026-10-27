@@ -174,7 +174,7 @@ class UserLoginCredentialControllerTest {
                 .andExpect(text("認証アプリの登録を解除しますか"))
                 .andExpect(text("認証アプリ: 登録済み"))
                 .andExpect(text("認証アプリの登録と回復コードを消す"))
-                .andExpect(text("この利用者のログイン中の session はすべて終わります。次のログインで認証アプリを登録し直します。本人への連絡は別に行ってください。"))
+                .andExpect(text("この利用者のログイン中の session はすべて終わります。次のログインで認証アプリを登録し直します。本人の登録メールアドレスに、解除のお知らせのメールを送ります。"))
                 .andExpect(text("本人が次のログインで登録し直します。"))
                 .andExpect(text("登録の電話番号への折り返し"))
                 .andExpect(text("所属企業の管理担当者への確認"))

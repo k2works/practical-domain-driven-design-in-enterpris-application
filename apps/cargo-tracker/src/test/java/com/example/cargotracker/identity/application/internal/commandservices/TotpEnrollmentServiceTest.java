@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.example.cargotracker.identity.acceptance.InMemoryRecoveryCodeRepository;
 import com.example.cargotracker.identity.acceptance.InMemoryTotpCredentialRepository;
+import com.example.cargotracker.identity.domain.events.TotpEnrolled;
 import com.example.cargotracker.identity.domain.model.aggregates.AuditRecord;
 import com.example.cargotracker.identity.domain.model.aggregates.AuditRecordRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.RecoveryCode;
@@ -37,6 +38,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.AbstractPlatformTransactionManager;
 import org.springframework.transaction.support.DefaultTransactionStatus;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
 /**
@@ -116,6 +118,16 @@ class TotpEnrollmentServiceTest {
         }
     };
     private final FakeIssuer issuer = new FakeIssuer();
+    /** 出したイベント（Bolt 38d の DE-28）。 */
+    private final List<Object> published = new ArrayList<>();
+    /** 出した時点でトランザクションの中にいたか（Bolt 38d の開発レビュー M3。監査と同じトランザクションで出す）。 */
+    private final List<Boolean> publishedInTransaction = new ArrayList<>();
+
+    private void publish(Object event) {
+        published.add(event);
+        publishedInTransaction.add(TransactionSynchronizationManager.isActualTransactionActive());
+    }
+
     private final RecoveryCodeGenerator recoveryCodeGenerator = () -> GENERATED;
     /** トランザクションを持たない単体テストのための、何もしないトランザクションマネージャー。 */
     private static final TransactionTemplate NO_TRANSACTION =
@@ -149,6 +161,7 @@ class TotpEnrollmentServiceTest {
             recoveryCodeGenerator,
             HASHER,
             GENERATOR,
+            this::publish,
             Clock.fixed(NOW, ZoneOffset.UTC),
             NO_TRANSACTION);
 
@@ -233,6 +246,23 @@ class TotpEnrollmentServiceTest {
             assertThat(entry.actorUserId()).isEqualTo(actor.userId());
             assertThat(entry.actorCompanyId()).isEqualTo(actor.companyId());
         });
+        // Bolt 38d の行 3・14: 監査記録の ID と監査の時刻で DE-28 を出す
+        assertThat(published)
+                .containsExactly(new TotpEnrolled(audit.getFirst().id(), actor.userId(), new UtcInstant(NOW)));
+        assertThat(publishedInTransaction).as("監査と同じトランザクションの中で出す").containsExactly(true);
+    }
+
+    @Test
+    void 登録しなければ登録のイベントを出さない() {
+        // Bolt 38d の行 4c（AlreadyEnrolled・SecretUnusable・CodeRejected）
+        EncryptedSecret secret = started(Optional.empty());
+        assertThat(service.complete(actor, secret, "000098")).isInstanceOf(EnrollmentResult.CodeRejected.class);
+        assertThat(service.complete(actor, issuer.issue(new UserId(UUID.randomUUID())), "000100"))
+                .isInstanceOf(EnrollmentResult.SecretUnusable.class);
+        credentials.add(TotpCredential.enroll(actor.userId(), secret, new UtcInstant(NOW)));
+        assertThat(service.complete(actor, secret, "000100")).isInstanceOf(EnrollmentResult.AlreadyEnrolled.class);
+
+        assertThat(published).isEmpty();
     }
 
     @Test
@@ -262,6 +292,7 @@ class TotpEnrollmentServiceTest {
                 recoveryCodeGenerator,
                 HASHER,
                 GENERATOR,
+                this::publish,
                 Clock.fixed(NOW, ZoneOffset.UTC),
                 NO_TRANSACTION);
 
@@ -290,6 +321,7 @@ class TotpEnrollmentServiceTest {
                 recoveryCodeGenerator,
                 HASHER,
                 broken,
+                this::publish,
                 Clock.fixed(NOW, ZoneOffset.UTC),
                 NO_TRANSACTION);
         EncryptedSecret secret = started(Optional.empty());
@@ -315,6 +347,7 @@ class TotpEnrollmentServiceTest {
                 recoveryCodeGenerator,
                 HASHER,
                 GENERATOR,
+                this::publish,
                 Clock.fixed(NOW, ZoneOffset.UTC),
                 NO_TRANSACTION);
         Optional<EncryptedSecret> pending = Optional.of(issuer.issue(actor.userId()));

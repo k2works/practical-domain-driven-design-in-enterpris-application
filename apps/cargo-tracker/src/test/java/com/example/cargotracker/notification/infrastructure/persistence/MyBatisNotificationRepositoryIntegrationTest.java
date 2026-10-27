@@ -78,6 +78,28 @@ class MyBatisNotificationRepositoryIntegrationTest {
     }
 
     @Test
+    void 全部の種類の通知をCHECKが通して記録できる() {
+        // Bolt 38d の行 12（enum と ck_notification_kind のずれを見張る。T-214）
+        for (NotificationKind kind : NotificationKind.values()) {
+            Notification notification = Notification.pending(
+                    UUID.randomUUID(),
+                    UUID.randomUUID(),
+                    "hanako@example.com",
+                    kind,
+                    UUID.randomUUID().toString(),
+                    "ja",
+                    CREATED_AT);
+
+            assertThat(repository.addIfAbsent(notification)).as(kind.name()).isTrue();
+            assertThat(repository
+                            .findByEventIdAndRecipient(notification.eventId(), notification.recipientUserId())
+                            .orElseThrow()
+                            .kind())
+                    .isEqualTo(kind);
+        }
+    }
+
+    @Test
     void 同じ契機と宛先の2つ目は記録しない() {
         UUID eventId = UUID.randomUUID();
         UUID recipient = UUID.randomUUID();
