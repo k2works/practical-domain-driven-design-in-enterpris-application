@@ -14,6 +14,7 @@ import com.example.cargotracker.identity.domain.model.valueobjects.AuditResult;
 import com.example.cargotracker.identity.domain.model.valueobjects.AuthenticationRejection;
 import com.example.cargotracker.identity.domain.model.valueobjects.CompanyKind;
 import com.example.cargotracker.identity.domain.model.valueobjects.EmailAddress;
+import com.example.cargotracker.identity.domain.model.valueobjects.SuspensionRecord;
 import com.example.cargotracker.identity.domain.model.valueobjects.UserStatus;
 import com.example.cargotracker.shared.acceptance.MutableClock;
 import com.example.cargotracker.shared.domain.CompanyId;
@@ -87,6 +88,11 @@ class SessionRevalidationServiceTest {
         @Override
         public List<AuditRecord> findByActorUserId(UserId actor) {
             return audit.stream().filter(r -> actor.equals(r.actorUserId())).toList();
+        }
+
+        @Override
+        public Optional<SuspensionRecord> findLatestUserSuspension(UserId target) {
+            return Optional.empty();
         }
     };
     private final UserStandingRepository standings = id -> {

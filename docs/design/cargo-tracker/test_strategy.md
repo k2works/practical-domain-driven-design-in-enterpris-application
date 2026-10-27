@@ -4,7 +4,7 @@ title: "cargo-tracker テスト戦略"
 description: "cargo-tracker のテスト形状、テストレベルと責務、BDD（Cucumber）のシナリオ階層とタグ規約、不変条件・ユーザーストーリーとテストの対応、カバレッジ目標、CI での実行。"
 tags: [design, test-strategy, bdd]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-27T03:11:49Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-27T07:04:06Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T08:12:04Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:38Z }
@@ -579,7 +579,7 @@ Release 1.0 の受入条件の照合の表はまだ作っていない（上の�
 | US-16 | AC2（管理範囲の外は拒否し試行を記録） | 34b・38b2・38b3b | `@US-16-AC2`、範囲外の記録の統合テスト |
 | US-16 | AC3（職務分離） | 34・38b | `@US-16-AC3`、役割の規則のテスト |
 | US-16 | AC4（業務担当者の担当範囲の外は拒否し試行を記録） | 38e〜38g（未） | — |
-| US-16 | AC5（利用終了・権限取消しで次の request から拒否） | 34d（役割の取消しのシナリオは 38g） | `@US-16-AC5`（manage_user_status_ui） |
+| US-16 | AC5（利用終了・権限取消しで次の request から拒否） | 34d・38c2（役割の取消しのシナリオは 38g） | `@US-16-AC5`（manage_user_status_ui。38c2 で、停止中の詳細の停止の記録と再開の後に示さないことを足した）。停止の記録の照会は契約 `AuditRecordSuspensionContract`（H2 と PostgreSQL の子。最新の停止・操作と対象で絞る・停止した人の行がない）、索引 `ix_audit_record_target` は `MyBatisIdentityRepositoriesIntegrationTest`（`pg_indexes`） |
 | US-06 | AC4（最終取得から許容時間（24 時間。D-89）を過ぎた航海を使う候補は情報不足で除外され、航海・取得時刻・許容時間・参照した航海情報の版が示される。ちょうど許容時間は足りる） | 37b2 | `@US-06-AC4`（`route_candidates.feature`・`compare_route_candidates_ui.feature`）、`InfoFreshnessPolicyTest`・`RoutingCaseTest`、保存の往復の統合テスト、設定の結合のテスト |
 | US-06 | Golden dataset v0（#15 の補足。仮の値で業務責任者の承認待ち。G-01〜G-03・G-06 の制約適合判定、G-04 は提出の拒否） | 37f | `@golden`（`routing/golden/route_candidates_golden_v0.feature` のシナリオアウトライン 4 行、`special_cargo_golden_v0.feature` の 3 行）、`RoutingCaseGoldenDatasetTest`（案件のデータの候補一覧の全体） |
 | US-07 | AC3（承認中に区間の航海の情報版が更新されていれば確定は拒否され、候補の比較に戻って再判断が求められる。確定の時刻に情報不足でも確定できない） | 37c | `@US-07-AC3`（`confirm_route.feature`・`confirm_route_ui.feature`）、`RoutingCaseConfirmationTest`（候補の版の違う区間を含む）・`InfoFreshnessPolicyTest`、`RoutingCaseControllerTest` |

@@ -13,7 +13,10 @@
         <dt class="col-sm-3">対象</dt>
         <dd class="col-sm-9" th:text="|${user.companyName} ${user.displayName}（${user.email.value}）|">A 社 佐藤（sato@example.com）</dd>
         <dt class="col-sm-3">現在の状態</dt>
-        <dd class="col-sm-9" id="current-state" th:text="${currentState}">ロック中（2026-11-09 10:45 Asia/Tokyo（UTC+09:00）（UTC 2026-11-09 01:45） まで）</dd>
+        <dd class="col-sm-9" id="current-state" th:text="${currentState}">ロック中</dd>
+        <!--/* ロックが解ける日時（Bolt 38c2。共通の確認の領域の項目に足す例外。ui_design の確認の領域） */-->
+        <dt class="col-sm-3" th:if="${lockUntil != null}">解ける日時</dt>
+        <dd class="col-sm-9" th:if="${lockUntil != null}" id="lock-until" th:text="${lockUntil}">2026-11-09 10:45 Asia/Tokyo（UTC+09:00）（UTC 2026-11-09 01:45）</dd>
         <dt class="col-sm-3">変更内容</dt>
         <dd class="col-sm-9" id="credential-change">ロックを解除する</dd>
         <dt class="col-sm-3">影響</dt>

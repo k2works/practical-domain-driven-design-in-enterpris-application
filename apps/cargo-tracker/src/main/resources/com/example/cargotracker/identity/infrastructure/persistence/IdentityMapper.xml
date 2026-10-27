@@ -86,6 +86,17 @@
         </constructor>
     </resultMap>
 
+    <!-- 停止の記録の行（Bolt 38c2）。最新の USER_SUSPENDED に、操作者の今の表示名を足す -->
+    <resultMap id="suspensionRecordRow" type="com.example.cargotracker.identity.infrastructure.persistence.SuspensionRecordRow">
+        <constructor>
+            <arg column="action" name="action" javaType="String"/>
+            <arg column="reason" name="reason" javaType="String"/>
+            <arg column="actor_user_id" name="actorUserId" javaType="java.util.UUID"/>
+            <arg column="actor_display_name" name="actorDisplayName" javaType="String"/>
+            <arg column="occurred_at" name="occurredAt" javaType="java.time.OffsetDateTime"/>
+        </constructor>
+    </resultMap>
+
     <insert id="insertCompany">
         INSERT INTO identity.company (id, name, kind, active, version, created_at, updated_at)
         VALUES (#{row.id}, #{row.name}, #{row.kind}, #{row.active}, 0, #{now}, #{now})
@@ -225,5 +236,21 @@
           FROM identity.audit_record
          WHERE actor_user_id = #{actorUserId}
          ORDER BY occurred_at, id
+    </select>
+
+    <!-- Bolt 38c2。対象の利用者の停止と再開のうち最新の 1 行（索引 ix_audit_record_target）。それが再開なら今の停止の記録はない
+         （停止 → 再開 → DB を直接書き換えた停止で、前の停止を今の停止として示さない）。判定と、理由か操作者の欠けた行の扱いは
+         リポジトリが行う（WHERE で落とすと、理由を持たない再開の行も消え、前の停止に戻ってしまう）。target_id は VARCHAR なので利用者 ID を
+         文字列で渡す。操作者に外部キーはないので LEFT JOIN にする（INNER JOIN だと行が消えた操作者の記録ごと失う）。id は同じ時刻の行の
+         並びを決めるだけ。失敗の USER_SUSPENDED を書くコードはないので result で絞らない -->
+    <select id="selectLatestUserSuspension" resultMap="suspensionRecordRow">
+        SELECT a.action, a.reason, a.actor_user_id, u.display_name AS actor_display_name, a.occurred_at
+          FROM identity.audit_record a
+          LEFT JOIN identity.app_user u ON u.id = a.actor_user_id
+         WHERE a.action IN ('USER_SUSPENDED', 'USER_REACTIVATED')
+           AND a.target_type = 'USER'
+           AND a.target_id = #{targetId}
+         ORDER BY a.occurred_at DESC, a.id DESC
+         LIMIT 1
     </select>
 </mapper>

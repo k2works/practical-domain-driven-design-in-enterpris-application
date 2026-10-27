@@ -9,6 +9,7 @@ import com.example.cargotracker.identity.domain.model.aggregates.AuditRecordRepo
 import com.example.cargotracker.identity.domain.model.rules.LockPolicy;
 import com.example.cargotracker.identity.domain.model.valueobjects.AuditAction;
 import com.example.cargotracker.identity.domain.model.valueobjects.AuthenticationRejection;
+import com.example.cargotracker.identity.domain.model.valueobjects.SuspensionRecord;
 import com.example.cargotracker.shared.acceptance.MutableClock;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.UserId;
@@ -16,6 +17,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -71,6 +73,11 @@ class LoginAttemptServiceTest {
         @Override
         public List<AuditRecord> findByActorUserId(UserId actor) {
             return audit.stream().filter(r -> actor.equals(r.actorUserId())).toList();
+        }
+
+        @Override
+        public Optional<SuspensionRecord> findLatestUserSuspension(UserId target) {
+            return Optional.empty();
         }
     };
     private final RecordingTransactionManager transactions = new RecordingTransactionManager();
@@ -190,6 +197,11 @@ class LoginAttemptServiceTest {
                     @Override
                     public List<AuditRecord> findByActorUserId(UserId actor) {
                         return List.of();
+                    }
+
+                    @Override
+                    public Optional<SuspensionRecord> findLatestUserSuspension(UserId target) {
+                        return Optional.empty();
                     }
                 },
                 new LockPolicy(),

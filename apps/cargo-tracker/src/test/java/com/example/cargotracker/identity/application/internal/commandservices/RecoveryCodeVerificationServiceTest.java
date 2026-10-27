@@ -9,6 +9,7 @@ import com.example.cargotracker.identity.domain.model.aggregates.AuditRecordRepo
 import com.example.cargotracker.identity.domain.model.aggregates.RecoveryCode;
 import com.example.cargotracker.identity.domain.model.aggregates.RecoveryCodeHasher;
 import com.example.cargotracker.identity.domain.model.valueobjects.AuditAction;
+import com.example.cargotracker.identity.domain.model.valueobjects.SuspensionRecord;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
@@ -17,6 +18,7 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
@@ -104,6 +106,11 @@ class RecoveryCodeVerificationServiceTest {
         @Override
         public List<AuditRecord> findByActorUserId(UserId actor) {
             return audit.stream().filter(r -> actor.equals(r.actorUserId())).toList();
+        }
+
+        @Override
+        public Optional<SuspensionRecord> findLatestUserSuspension(UserId target) {
+            return Optional.empty();
         }
     };
     private final RecordingTransactionManager transactions = new RecordingTransactionManager();
@@ -230,6 +237,11 @@ class RecoveryCodeVerificationServiceTest {
                     @Override
                     public List<AuditRecord> findByActorUserId(UserId actor) {
                         return List.of();
+                    }
+
+                    @Override
+                    public Optional<SuspensionRecord> findLatestUserSuspension(UserId target) {
+                        return Optional.empty();
                     }
                 },
                 hasher,

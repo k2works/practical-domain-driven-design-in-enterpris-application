@@ -7,6 +7,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.example.cargotracker.identity.domain.model.aggregates.AuditRecordRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.Company;
 import com.example.cargotracker.identity.domain.model.aggregates.CompanyRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.UserAssignmentRepository;
@@ -16,6 +17,8 @@ import com.example.cargotracker.identity.domain.model.valueobjects.Administratio
 import com.example.cargotracker.identity.domain.model.valueobjects.CompanyKind;
 import com.example.cargotracker.identity.domain.model.valueobjects.EmailAddress;
 import com.example.cargotracker.identity.domain.model.valueobjects.RegistrableCompany;
+import com.example.cargotracker.identity.domain.model.valueobjects.SuspensionReason;
+import com.example.cargotracker.identity.domain.model.valueobjects.SuspensionRecord;
 import com.example.cargotracker.identity.domain.model.valueobjects.UserDetail;
 import com.example.cargotracker.identity.domain.model.valueobjects.UserStatus;
 import com.example.cargotracker.identity.domain.model.valueobjects.UserSummary;
@@ -40,9 +43,10 @@ class UserAdministrationQueryServiceTest {
     private final UserRepository users = mock(UserRepository.class);
     private final UserAssignmentRepository assignments = mock(UserAssignmentRepository.class);
     private final CompanyRepository companies = mock(CompanyRepository.class);
+    private final AuditRecordRepository auditRecords = mock(AuditRecordRepository.class);
     private static final Instant NOW = Instant.parse("2026-11-09T01:30:00Z");
-    private final UserAdministrationQueryService service =
-            new UserAdministrationQueryService(users, assignments, companies, Clock.fixed(NOW, ZoneOffset.UTC));
+    private final UserAdministrationQueryService service = new UserAdministrationQueryService(
+            users, assignments, companies, auditRecords, Clock.fixed(NOW, ZoneOffset.UTC));
 
     private final CompanyId inside = new CompanyId(UUID.randomUUID());
     private final CompanyId outside = new CompanyId(UUID.randomUUID());
@@ -245,5 +249,92 @@ class UserAdministrationQueryServiceTest {
             assertThat(each.detail().lockedUntil()).isEmpty();
             assertThat(each.detail().totpEnrolledAt()).isEqualTo(detail.totpEnrolledAt());
         });
+    }
+
+    // 詳細の停止の記録（Bolt 38c2。US-16 AC5、#50）
+
+    private UserDetail suspendedIn(CompanyId company, Optional<UtcInstant> lockedUntil) {
+        UserDetail detail = detailIn(company);
+        return new UserDetail(
+                detail.id(),
+                detail.companyId(),
+                detail.companyName(),
+                detail.companyKind(),
+                detail.displayName(),
+                detail.email(),
+                UserStatus.SUSPENDED,
+                detail.roles(),
+                detail.version(),
+                lockedUntil,
+                Optional.empty());
+    }
+
+    private final SuspensionRecord suspension = new SuspensionRecord(
+            SuspensionReason.TRANSFERRED,
+            new UserId(UUID.randomUUID()),
+            Optional.of("管理 次郎"),
+            new UtcInstant(NOW.minus(Duration.ofHours(1))));
+
+    @Test
+    void 停止中の利用者の詳細には今の停止の記録を載せる() {
+        // 行 1 の照会の側
+        UserDetail detail = suspendedIn(inside, Optional.empty());
+        when(users.findDetail(detail.id())).thenReturn(Optional.of(detail));
+        when(assignments.scopeOf(admin.userId())).thenReturn(new AdministrationScope(Set.of(inside)));
+        when(auditRecords.findLatestUserSuspension(detail.id())).thenReturn(Optional.of(suspension));
+
+        assertThat(service.detail(admin, detail.id()))
+                .isEqualTo(new UserLookup.Found(detail.withSuspension(Optional.of(suspension))));
+    }
+
+    @Test
+    void 停止中で記録がなければ停止の記録は空() {
+        // 行 2（DB を直接書き換えた停止。画面は「記録がありません」と示す）
+        UserDetail detail = suspendedIn(inside, Optional.empty());
+        when(users.findDetail(detail.id())).thenReturn(Optional.of(detail));
+        when(assignments.scopeOf(admin.userId())).thenReturn(new AdministrationScope(Set.of(inside)));
+        when(auditRecords.findLatestUserSuspension(detail.id())).thenReturn(Optional.empty());
+
+        assertThat(service.detail(admin, detail.id()))
+                .isInstanceOfSatisfying(
+                        UserLookup.Found.class,
+                        found -> assertThat(found.detail().suspension()).isEmpty());
+        verify(auditRecords).findLatestUserSuspension(detail.id());
+    }
+
+    @Test
+    void 利用中の利用者の詳細は監査記録を読まない() {
+        // 行 3（再開した後を含む。V1）
+        UserDetail detail = detailIn(inside);
+        when(users.findDetail(detail.id())).thenReturn(Optional.of(detail));
+        when(assignments.scopeOf(admin.userId())).thenReturn(new AdministrationScope(Set.of(inside)));
+
+        assertThat(service.detail(admin, detail.id())).isEqualTo(new UserLookup.Found(detail));
+        verify(auditRecords, never()).findLatestUserSuspension(any());
+    }
+
+    @Test
+    void 停止中でロックの期限が切れても停止の記録は残る() {
+        // 行 8b（asOf が作り直すので、記録は asOf の後に載せる）
+        UserDetail detail = suspendedIn(inside, Optional.of(new UtcInstant(NOW)));
+        when(users.findDetail(detail.id())).thenReturn(Optional.of(detail));
+        when(assignments.scopeOf(admin.userId())).thenReturn(new AdministrationScope(Set.of(inside)));
+        when(auditRecords.findLatestUserSuspension(detail.id())).thenReturn(Optional.of(suspension));
+
+        assertThat(service.detail(admin, detail.id())).isInstanceOfSatisfying(UserLookup.Found.class, found -> {
+            assertThat(found.detail().lockedUntil()).isEmpty();
+            assertThat(found.detail().suspension()).contains(suspension);
+        });
+    }
+
+    @Test
+    void 管理範囲外の停止中の利用者は監査記録を読まない() {
+        // 行 9（範囲の判定の後で読む。いない利用者と範囲外の利用者で読み出しの量をそろえる守りを保つ）
+        UserDetail detail = suspendedIn(outside, Optional.empty());
+        when(users.findDetail(detail.id())).thenReturn(Optional.of(detail));
+        when(assignments.scopeOf(admin.userId())).thenReturn(new AdministrationScope(Set.of(inside)));
+
+        assertThat(service.detail(admin, detail.id())).isEqualTo(new UserLookup.OutOfScope());
+        verify(auditRecords, never()).findLatestUserSuspension(any());
     }
 }

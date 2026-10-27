@@ -177,9 +177,10 @@ public class UserLoginCredentialController {
 
     private String showUnlock(UserDetail user, AuthenticatedActor actor, Model model) {
         model.addAttribute("user", user);
+        model.addAttribute("currentState", UserAdministrationLabels.lockState(user));
         model.addAttribute(
-                "currentState",
-                user.lockedUntil().map(UserAdministrationLabels::locked).orElse(null));
+                "lockUntil",
+                user.lockedUntil().map(UserAdministrationLabels::staffTime).orElse(null));
         addCommon(actor, model);
         return "identity/users/unlock-confirmation";
     }

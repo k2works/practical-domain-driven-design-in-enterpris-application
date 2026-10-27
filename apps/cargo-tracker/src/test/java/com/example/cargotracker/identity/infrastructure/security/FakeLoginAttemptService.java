@@ -6,11 +6,13 @@ import com.example.cargotracker.identity.domain.model.aggregates.AuditRecord;
 import com.example.cargotracker.identity.domain.model.aggregates.AuditRecordRepository;
 import com.example.cargotracker.identity.domain.model.rules.LockPolicy;
 import com.example.cargotracker.identity.domain.model.valueobjects.AuthenticationRejection;
+import com.example.cargotracker.identity.domain.model.valueobjects.SuspensionRecord;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.UserId;
 import java.time.Clock;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.AbstractPlatformTransactionManager;
 import org.springframework.transaction.support.DefaultTransactionStatus;
@@ -64,6 +66,11 @@ class FakeLoginAttemptService extends LoginAttemptService {
         @Override
         public List<AuditRecord> findByActorUserId(UserId actor) {
             return List.of();
+        }
+
+        @Override
+        public Optional<SuspensionRecord> findLatestUserSuspension(UserId target) {
+            return Optional.empty();
         }
     }
 

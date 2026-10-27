@@ -2,6 +2,7 @@ package com.example.cargotracker.identity.infrastructure.persistence;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.InstanceOfAssertFactories.STRING;
 
 import com.example.cargotracker.TestcontainersConfiguration;
 import com.example.cargotracker.identity.AdministrationFixtures;
@@ -579,5 +580,15 @@ class MyBatisIdentityRepositoriesIntegrationTest {
         User absent = user(uniqueEmail(), UserStatus.ACTIVE, Set.of(Role.SHIPPER));
 
         assertThat(users.changePassword(absent)).isFalse();
+    }
+
+    @Test
+    void 監査記録を対象で引く索引がある() {
+        // 行 10（Bolt 38c2）。索引が使われるかは EXPLAIN で見ない（行が少ないとプランナーが表を順に読み、結果が揺れる）
+        assertThat(jdbc.queryForList(
+                        "SELECT indexdef FROM pg_indexes WHERE schemaname = 'identity' AND indexname = 'ix_audit_record_target'",
+                        String.class))
+                .singleElement(STRING)
+                .contains("(target_type, target_id, occurred_at)");
     }
 }

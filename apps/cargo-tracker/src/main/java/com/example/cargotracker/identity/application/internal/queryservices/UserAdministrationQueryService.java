@@ -1,5 +1,6 @@
 package com.example.cargotracker.identity.application.internal.queryservices;
 
+import com.example.cargotracker.identity.domain.model.aggregates.AuditRecordRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.Company;
 import com.example.cargotracker.identity.domain.model.aggregates.CompanyRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.UserAssignmentRepository;
@@ -8,6 +9,7 @@ import com.example.cargotracker.identity.domain.model.rules.RoleAssignmentPolicy
 import com.example.cargotracker.identity.domain.model.valueobjects.AdministrationScope;
 import com.example.cargotracker.identity.domain.model.valueobjects.RegistrableCompany;
 import com.example.cargotracker.identity.domain.model.valueobjects.UserDetail;
+import com.example.cargotracker.identity.domain.model.valueobjects.UserStatus;
 import com.example.cargotracker.identity.domain.model.valueobjects.UserSummary;
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
 import com.example.cargotracker.shared.domain.CompanyId;
@@ -23,7 +25,8 @@ import org.springframework.stereotype.Service;
 /**
  * 利用者の管理の照会。S-20 の一覧と詳細を読む（Bolt 34。US-16 の一部）。`password_hash` を読まない射影で受ける。Bolt 34b から操作者を
  * 受け、管理範囲（`user_assignment` の `COMPANY`。IA-INV-14）の企業の利用者だけを返す。照会は書かない（範囲外の試行の記録は
- * 確定の POST でだけ S-20 の画面の層の詳細の部品 {@code UserDetailPage} が {@code AdministrationScopeDenialService} で書く）。
+ * 確定の POST でだけ S-20 の画面の層の詳細の部品 {@code UserDetailPage} が {@code AdministrationScopeDenialService} で書く）。Bolt 38c2
+ * から、詳細で停止中の利用者の今の停止の記録を監査記録のリポジトリから読む（照会のサービスが監査記録を読む最初の例）。
  */
 @Service // JIG がユースケースとして読む印（組み立ては IdentityConfiguration）
 public class UserAdministrationQueryService {
@@ -31,13 +34,19 @@ public class UserAdministrationQueryService {
     private final UserRepository users;
     private final UserAssignmentRepository assignments;
     private final CompanyRepository companies;
+    private final AuditRecordRepository auditRecords;
     private final Clock clock;
 
     public UserAdministrationQueryService(
-            UserRepository users, UserAssignmentRepository assignments, CompanyRepository companies, Clock clock) {
+            UserRepository users,
+            UserAssignmentRepository assignments,
+            CompanyRepository companies,
+            AuditRecordRepository auditRecords,
+            Clock clock) {
         this.users = users;
         this.assignments = assignments;
         this.companies = companies;
+        this.auditRecords = auditRecords;
         this.clock = clock;
     }
 
@@ -100,7 +109,8 @@ public class UserAdministrationQueryService {
     /**
      * 詳細を探す。管理範囲の外の利用者は範囲外として返す。管理範囲を先に読み、いない利用者と範囲外の利用者で読み出しの量をそろえる
      * （応答の時間から範囲外の利用者の存在を見分けにくくする。Bolt 34b の開発レビュー）。ロックの期限は今の時刻で判定し、切れていれば
-     * 空にする（Bolt 38c。リポジトリは期限をそのまま返す）。
+     * 空にする（Bolt 38c。リポジトリは期限をそのまま返す）。停止中の利用者のときだけ、範囲の判定の後に今の停止の記録を監査記録から読み、
+     * {@link UserDetail#asOf} の後に載せる（Bolt 38c2。asOf が詳細を作り直すので順を固定する。利用中なら読まない）。
      */
     public UserLookup detail(AuthenticatedActor operator, UserId id) {
         if (!operator.hasRole(Role.SYSTEM_ADMIN)) {
@@ -114,6 +124,10 @@ public class UserAdministrationQueryService {
         if (!scope.covers(found.get().companyId())) {
             return new UserLookup.OutOfScope();
         }
-        return new UserLookup.Found(found.get().asOf(new UtcInstant(clock.instant())));
+        UserDetail current = found.get().asOf(new UtcInstant(clock.instant()));
+        return new UserLookup.Found(
+                current.status() == UserStatus.SUSPENDED
+                        ? current.withSuspension(auditRecords.findLatestUserSuspension(id))
+                        : current);
     }
 }

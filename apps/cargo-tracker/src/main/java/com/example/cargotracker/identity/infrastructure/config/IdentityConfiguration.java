@@ -240,8 +240,12 @@ public class IdentityConfiguration {
 
     @Bean
     UserAdministrationQueryService userAdministrationQueryService(
-            UserRepository users, UserAssignmentRepository assignments, CompanyRepository companies, Clock clock) {
-        return new UserAdministrationQueryService(users, assignments, companies, clock);
+            UserRepository users,
+            UserAssignmentRepository assignments,
+            CompanyRepository companies,
+            AuditRecordRepository auditRecords,
+            Clock clock) {
+        return new UserAdministrationQueryService(users, assignments, companies, auditRecords, clock);
     }
 
     @Bean

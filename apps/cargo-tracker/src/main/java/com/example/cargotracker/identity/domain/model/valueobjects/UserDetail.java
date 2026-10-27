@@ -11,7 +11,8 @@ import java.util.Set;
 
 /**
  * 利用者の詳細。S-20 の詳細の読み出しの射影（Bolt 34）。一覧の行の項目に、所属企業の ID と種類と版を足したもの。`password_hash` を
- * 持たない。Bolt 38c から、ログインの資格（ロックの期限と認証アプリの登録の時刻）を持つ。TOTP の秘密は持たない。
+ * 持たない。Bolt 38c から、ログインの資格（ロックの期限と認証アプリの登録の時刻）を持つ。TOTP の秘密は持たない。Bolt 38c2 から、停止中の
+ * 利用者の今の停止の記録を持つ（照会のサービスが {@link #asOf} の後に {@link #withSuspension} で載せる）。
  *
  * @param id 利用者 ID
  * @param companyId 所属企業 ID
@@ -24,6 +25,7 @@ import java.util.Set;
  * @param version 版（役割の変更の期待する版）
  * @param lockedUntil ロックの期限（ロックの記録がなければ空。照会のサービスが {@link #asOf} で、期限の切れたロックを空にする）
  * @param totpEnrolledAt 認証アプリの登録の時刻（未登録なら空。登録の有無と、解除の確認の画面で持つ値を兼ねる）
+ * @param suspension 今の停止の記録（利用中の利用者と、停止中で記録のない利用者は空）
  */
 @ValueObject
 public record UserDetail(
@@ -37,7 +39,8 @@ public record UserDetail(
         Set<Role> roles,
         long version,
         Optional<UtcInstant> lockedUntil,
-        Optional<UtcInstant> totpEnrolledAt) {
+        Optional<UtcInstant> totpEnrolledAt,
+        Optional<SuspensionRecord> suspension) {
 
     public UserDetail {
         Objects.requireNonNull(id, "id");
@@ -50,6 +53,56 @@ public record UserDetail(
         roles = Set.copyOf(roles);
         Objects.requireNonNull(lockedUntil, "lockedUntil");
         Objects.requireNonNull(totpEnrolledAt, "totpEnrolledAt");
+        Objects.requireNonNull(suspension, "suspension");
+    }
+
+    /**
+     * 停止の記録を持たない詳細（リポジトリが読む形。停止の記録は照会のサービスが {@link #withSuspension} で載せる）。既存の詳細の
+     * 作り直しには使わない（停止の記録が黙って落ちる）。作り直しは {@link #asOf}・{@link #withSuspension} で行う。
+     */
+    @SuppressWarnings("java:S107") // 射影の項目をそろえて受ける
+    public UserDetail(
+            UserId id,
+            CompanyId companyId,
+            String companyName,
+            CompanyKind companyKind,
+            String displayName,
+            EmailAddress email,
+            UserStatus status,
+            Set<Role> roles,
+            long version,
+            Optional<UtcInstant> lockedUntil,
+            Optional<UtcInstant> totpEnrolledAt) {
+        this(
+                id,
+                companyId,
+                companyName,
+                companyKind,
+                displayName,
+                email,
+                status,
+                roles,
+                version,
+                lockedUntil,
+                totpEnrolledAt,
+                Optional.empty());
+    }
+
+    /** 今の停止の記録を載せた詳細（Bolt 38c2）。 */
+    public UserDetail withSuspension(Optional<SuspensionRecord> latest) {
+        return new UserDetail(
+                id,
+                companyId,
+                companyName,
+                companyKind,
+                displayName,
+                email,
+                status,
+                roles,
+                version,
+                lockedUntil,
+                totpEnrolledAt,
+                latest);
     }
 
     /** その時刻の詳細。ロックの期限がその時刻か、それより前なら（ロックは解けている）、ロックの期限を空にする（期限ちょうどで解ける）。 */
@@ -68,6 +121,7 @@ public record UserDetail(
                 roles,
                 version,
                 Optional.empty(),
-                totpEnrolledAt);
+                totpEnrolledAt,
+                suspension);
     }
 }

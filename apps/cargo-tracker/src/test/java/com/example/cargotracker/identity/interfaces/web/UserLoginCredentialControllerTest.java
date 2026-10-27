@@ -1,5 +1,7 @@
 package com.example.cargotracker.identity.interfaces.web;
 
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.not;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
@@ -88,7 +90,12 @@ class UserLoginCredentialControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(text("ロックを解除しますか"))
                 .andExpect(text("A 社 佐藤（sato@example.com）"))
-                .andExpect(text("ロック中（2026-11-09 10:45 Asia/Tokyo（UTC+09:00）（UTC 2026-11-09 01:45） まで）"))
+                // 行 7（Bolt 38c2）: 現在の状態は「ロック中」とし、次に「解ける日時」を足す
+                .andExpect(text("<dd class=\"col-sm-9\" id=\"current-state\">ロック中</dd>"))
+                .andExpect(text("<dt class=\"col-sm-3\">解ける日時</dt>"))
+                .andExpect(
+                        text(
+                                "<dd class=\"col-sm-9\" id=\"lock-until\">2026-11-09 10:45 Asia/Tokyo（UTC+09:00）（UTC 2026-11-09 01:45）</dd>"))
                 .andExpect(text("ロックを解除する"))
                 .andExpect(text("すぐにログインを試せます。失敗の回数は 0 に戻ります。"))
                 .andExpect(text("ロックの解除は取り消せません（5 回続けて誤ると、また 15 分ロックされます）。"))
@@ -96,6 +103,18 @@ class UserLoginCredentialControllerTest {
                 .andExpect(text("解除する"));
 
         verify(credentials, never()).unlock(any(), any());
+    }
+
+    @Test
+    void 確かめの後に期限が切れていれば現在の状態はなしとし解ける日時を出さない() throws Exception {
+        // 開発レビュー L-7（確かめと詳細の時刻の間にロックが切れた。確定は NOT_LOCKED で拒まれる）
+        found(user(Optional.empty()));
+        when(credentials.checkUnlock(any(), eq(TARGET))).thenReturn(new UnlockCheck.Acceptable());
+
+        mockMvc.perform(get(UNLOCK))
+                .andExpect(status().isOk())
+                .andExpect(text("<dd class=\"col-sm-9\" id=\"current-state\">なし</dd>"))
+                .andExpect(content().string(not(containsString("解ける日時"))));
     }
 
     @Test
@@ -307,6 +326,10 @@ class UserLoginCredentialControllerTest {
     }
 
     private static UserDetail user() {
+        return user(Optional.of(LOCKED_UNTIL));
+    }
+
+    private static UserDetail user(Optional<UtcInstant> lockedUntil) {
         return new UserDetail(
                 TARGET,
                 new CompanyId(UUID.fromString("20000000-0000-0000-0000-000000000003")),
@@ -317,7 +340,7 @@ class UserLoginCredentialControllerTest {
                 UserStatus.ACTIVE,
                 Set.of(Role.SALES),
                 3L,
-                Optional.of(LOCKED_UNTIL),
+                lockedUntil,
                 Optional.of(ENROLLED_AT));
     }
 }

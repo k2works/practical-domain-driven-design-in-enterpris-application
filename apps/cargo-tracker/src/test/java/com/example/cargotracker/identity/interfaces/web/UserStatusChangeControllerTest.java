@@ -24,12 +24,15 @@ import com.example.cargotracker.identity.domain.model.valueobjects.CompanyKind;
 import com.example.cargotracker.identity.domain.model.valueobjects.EmailAddress;
 import com.example.cargotracker.identity.domain.model.valueobjects.StatusChangeRejection;
 import com.example.cargotracker.identity.domain.model.valueobjects.SuspensionReason;
+import com.example.cargotracker.identity.domain.model.valueobjects.SuspensionRecord;
 import com.example.cargotracker.identity.domain.model.valueobjects.UserDetail;
 import com.example.cargotracker.identity.domain.model.valueobjects.UserStatus;
 import com.example.cargotracker.identity.infrastructure.security.WithAuthenticatedActor;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Role;
 import com.example.cargotracker.shared.domain.UserId;
+import com.example.cargotracker.shared.domain.UtcInstant;
+import java.time.Instant;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -197,8 +200,9 @@ class UserStatusChangeControllerTest {
 
     @Test
     void 停止の理由の欄のない停止中の利用者への理由の拒否は欄へリンクしない() throws Exception {
-        // 行 4b: 判定の後に停止された競合。示す欄がないので表示名を付けずリンクしない（Bolt 38）
-        found(user(3, UserStatus.SUSPENDED));
+        // 行 4b: 判定の後に停止された競合。示す欄がないので表示名を付けずリンクしない（Bolt 38）。
+        // Bolt 38c2 の行 9b: 規則の拒否の後に描き直す詳細にも停止の記録を示す
+        found(user(3, UserStatus.SUSPENDED).withSuspension(Optional.of(suspension())));
         when(statusChanges.check(any(), eq(TARGET), anyLong(), any(), any()))
                 .thenReturn(new StatusChangeCheck.Refused(
                         new UserAdministrationRefusal.Rejected<>(StatusChangeRejection.REASON_REQUIRED)));
@@ -207,8 +211,9 @@ class UserStatusChangeControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().string(Matchers.containsString("id=\"error-summary\"")))
                 .andExpect(content().string(Matchers.containsString("利用終了・異動・緊急停止のどれかを選んでください。")))
-                .andExpect(content().string(Matchers.not(Matchers.containsString("停止の理由: "))))
+                .andExpect(content().string(Matchers.not(Matchers.containsString("停止の理由: 利用終了・異動・緊急停止のどれかを選んでください。"))))
                 .andExpect(content().string(UserRoleChangeControllerTest.summaryWithoutLink()))
+                .andExpect(content().string(Matchers.containsString(">停止の理由: 異動</p>")))
                 // 出口: 再開の操作と一覧へ戻るリンクは残る
                 .andExpect(content().string(Matchers.containsString("利用再開の内容を確認する")))
                 .andExpect(content().string(Matchers.containsString("利用者の一覧へ戻る")));
@@ -267,6 +272,31 @@ class UserStatusChangeControllerTest {
 
     private void found(UserDetail user) {
         when(queryService.detail(any(), eq(TARGET))).thenReturn(new UserLookup.Found(user));
+    }
+
+    @Test
+    void 利用状態の確定が古い版なら描き直す詳細にも停止の記録を示す() throws Exception {
+        // Bolt 38c2 の行 9b（古い版）
+        when(queryService.detail(any(), eq(TARGET)))
+                .thenReturn(
+                        new UserLookup.Found(user(3, UserStatus.SUSPENDED).withSuspension(Optional.of(suspension()))),
+                        new UserLookup.Found(user(4, UserStatus.SUSPENDED).withSuspension(Optional.of(suspension()))));
+        when(statusChanges.change(any(), eq(TARGET), anyLong(), any(), any()))
+                .thenReturn(new StatusChangeOutcome.Refused(new UserAdministrationRefusal.Stale<>()));
+
+        mockMvc.perform(post(STATUS_CONFIRMATION).param("status", "ACTIVE").param("version", "3"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(Matchers.containsString(STALE)))
+                .andExpect(content().string(Matchers.containsString(">停止の理由: 異動</p>")))
+                .andExpect(content().string(Matchers.containsString(">停止した人: 管理 次郎</p>")));
+    }
+
+    private static SuspensionRecord suspension() {
+        return new SuspensionRecord(
+                SuspensionReason.TRANSFERRED,
+                new UserId(UUID.fromString("20000000-0000-0000-0000-000000000509")),
+                Optional.of("管理 次郎"),
+                new UtcInstant(Instant.parse("2026-11-09T01:30:00Z")));
     }
 
     private static RequestBuilder suspend() {

@@ -6,6 +6,7 @@ import com.example.cargotracker.identity.application.internal.queryservices.User
 import com.example.cargotracker.identity.application.internal.queryservices.UserLookup;
 import com.example.cargotracker.identity.domain.model.rules.RoleAssignmentPolicy;
 import com.example.cargotracker.identity.domain.model.valueobjects.SuspensionReason;
+import com.example.cargotracker.identity.domain.model.valueobjects.SuspensionRecord;
 import com.example.cargotracker.identity.domain.model.valueobjects.UserDetail;
 import com.example.cargotracker.identity.domain.model.valueobjects.UserStatus;
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
@@ -119,6 +120,7 @@ final class UserDetailPage {
                         .toList());
         model.addAttribute("keptRoleNames", UserAdministrationLabels.roles(unassignable(user.roles(), assignable)));
         model.addAttribute("statusNote", statusNote);
+        model.addAttribute("suspension", SuspensionLines.of(user));
         model.addAttribute("reasonOptions", reasonOptions);
         model.addAttribute(UserAdministrationLabels.VERSION_ATTRIBUTE, form.version());
         model.addAttribute("error", form.errorOf(Section.ROLES));
@@ -230,6 +232,38 @@ final class UserDetailPage {
         return null;
     }
 
+    /**
+     * 利用状態の領域の停止の記録の行（Bolt 38c2。US-16 AC5、#50）。停止中の利用者だけに示す。記録がなければ「記録がありません」の 1 行。
+     *
+     * @param reason 停止の理由の行（記録がなければ null）
+     * @param actor 停止した人の行（記録がなければ null）
+     * @param occurredAt 停止した日時の行（記録がなければ null）
+     * @param missing 記録がないときの行（記録があれば null）
+     */
+    public record SuspensionLines(String reason, String actor, String occurredAt, String missing) {
+
+        /**
+         * 停止の記録の行。利用中の利用者には示さないので null。照会のサービスは停止中の利用者にだけ記録を載せるが、ここでも状態を見る。
+         * 空の記録を、停止中なら「記録がありません」、利用中なら何も示さない、と読み分けるため。
+         */
+        static SuspensionLines of(UserDetail user) {
+            if (user.status() != UserStatus.SUSPENDED) {
+                return null;
+            }
+            return user.suspension()
+                    .map(SuspensionLines::recorded)
+                    .orElseGet(() -> new SuspensionLines(null, null, null, "停止の記録: 記録がありません"));
+        }
+
+        private static SuspensionLines recorded(SuspensionRecord suspension) {
+            return new SuspensionLines(
+                    "停止の理由: " + UserAdministrationLabels.suspensionReason(suspension.reason()),
+                    "停止した人: " + UserAdministrationLabels.suspensionActor(suspension),
+                    "停止した日時: " + UserAdministrationLabels.staffTime(suspension.occurredAt()),
+                    null);
+        }
+    }
+
     /** 停止の理由の選択肢。宣言の順。 */
     private static List<ReasonOption> reasonOptions(Optional<SuspensionReason> selected) {
         return Arrays.stream(SuspensionReason.values())
@@ -291,21 +325,22 @@ final class UserDetailPage {
      * （ロックの解除はロック中、認証アプリの登録の解除は登録済み。停止中・荷受人の企業の利用者にも出す）。
      *
      * @param lockState ロックの状態の文
+     * @param lockUntil ロックが解ける日時の文（Bolt 38c2 で状態の文から分けた。ロックがなければ null）
      * @param totpState 認証アプリの登録の状態の文
      * @param note 操作を出さない理由の案内（操作を出すなら null）
      * @param unlockable ロックの解除の操作を出すか
      * @param resettable 認証アプリの登録の解除の操作を出すか
      */
     public record LoginCredentials(
-            String lockState, String totpState, String note, boolean unlockable, boolean resettable) {
+            String lockState, String lockUntil, String totpState, String note, boolean unlockable, boolean resettable) {
 
         static LoginCredentials of(UserDetail user, boolean self) {
             String note = credentialNote(user, self);
             return new LoginCredentials(
-                    "ロック: "
-                            + user.lockedUntil()
-                                    .map(UserAdministrationLabels::locked)
-                                    .orElse("なし"),
+                    "ロック: " + UserAdministrationLabels.lockState(user),
+                    user.lockedUntil()
+                            .map(until -> "解ける日時: " + UserAdministrationLabels.staffTime(until))
+                            .orElse(null),
                     user.totpEnrolledAt().isPresent() ? "認証アプリ: 登録済み" : "認証アプリ: 未登録",
                     note,
                     note == null && user.lockedUntil().isPresent(),

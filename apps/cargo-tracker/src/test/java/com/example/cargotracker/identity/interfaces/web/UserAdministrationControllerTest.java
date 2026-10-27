@@ -14,6 +14,8 @@ import com.example.cargotracker.identity.application.internal.queryservices.User
 import com.example.cargotracker.identity.application.internal.queryservices.UserLookup;
 import com.example.cargotracker.identity.domain.model.valueobjects.CompanyKind;
 import com.example.cargotracker.identity.domain.model.valueobjects.EmailAddress;
+import com.example.cargotracker.identity.domain.model.valueobjects.SuspensionReason;
+import com.example.cargotracker.identity.domain.model.valueobjects.SuspensionRecord;
 import com.example.cargotracker.identity.domain.model.valueobjects.UserDetail;
 import com.example.cargotracker.identity.domain.model.valueobjects.UserStatus;
 import com.example.cargotracker.identity.domain.model.valueobjects.UserSummary;
@@ -137,7 +139,10 @@ class UserAdministrationControllerTest {
         mockMvc.perform(get(DETAIL))
                 .andExpect(status().isOk())
                 .andExpect(text("ログインの資格"))
-                .andExpect(text("ロック: ロック中（2026-11-09 10:45 Asia/Tokyo（UTC+09:00）（UTC 2026-11-09 01:45） まで）"))
+                // 行 7（Bolt 38c2）: ロックの期限は「解ける日時」の項目に分ける
+                .andExpect(text(">ロック: ロック中</p>"))
+                .andExpect(text(">解ける日時: 2026-11-09 10:45 Asia/Tokyo（UTC+09:00）（UTC 2026-11-09 01:45）</p>"))
+                .andExpect(content().string(Matchers.not(Matchers.containsString(" まで）"))))
                 .andExpect(text("認証アプリ: 登録済み"))
                 .andExpect(text("ロックを解除する"))
                 .andExpect(text("認証アプリの登録を解除する"))
@@ -151,6 +156,8 @@ class UserAdministrationControllerTest {
 
         mockMvc.perform(get(DETAIL))
                 .andExpect(text("ロック: なし"))
+                // 行 8（Bolt 38c2。V6）
+                .andExpect(content().string(Matchers.not(Matchers.containsString("解ける日時"))))
                 .andExpect(text("認証アプリ: 未登録"))
                 .andExpect(content().string(Matchers.not(Matchers.containsString("ロックを解除する"))))
                 .andExpect(content().string(Matchers.not(Matchers.containsString("認証アプリの登録を解除する"))));
@@ -215,6 +222,93 @@ class UserAdministrationControllerTest {
                 operatorUser.totpEnrolledAt()));
 
         mockMvc.perform(get(DETAIL)).andExpect(text("ロックを解除する")).andExpect(text("認証アプリの登録を解除する"));
+    }
+
+    // ---- 利用状態の領域の停止の記録（Bolt 38c2。US-16 AC5、#50） ----
+
+    static final UserId SUSPENDED_BY = new UserId(UUID.fromString("20000000-0000-0000-0000-000000000509"));
+
+    private static SuspensionRecord suspension(Optional<String> actorDisplayName) {
+        return new SuspensionRecord(
+                SuspensionReason.TRANSFERRED,
+                SUSPENDED_BY,
+                actorDisplayName,
+                new UtcInstant(Instant.parse("2026-11-09T01:30:00Z")));
+    }
+
+    private static UserDetail suspended(Set<Role> roles, Optional<SuspensionRecord> latest) {
+        UserDetail user = credentialsOf(TARGET, roles, Optional.empty(), Optional.empty());
+        return new UserDetail(
+                        user.id(),
+                        user.companyId(),
+                        user.companyName(),
+                        user.companyKind(),
+                        user.displayName(),
+                        user.email(),
+                        UserStatus.SUSPENDED,
+                        user.roles(),
+                        user.version(),
+                        user.lockedUntil(),
+                        user.totpEnrolledAt())
+                .withSuspension(latest);
+    }
+
+    @Test
+    void 停止中の利用者には停止の理由と停止した人と停止した日時を示す() throws Exception {
+        // 行 1
+        found(suspended(Set.of(Role.SALES), Optional.of(suspension(Optional.of("管理 次郎")))));
+
+        mockMvc.perform(get(DETAIL))
+                .andExpect(status().isOk())
+                .andExpect(text("<p id=\"suspension-record-reason\">停止の理由: 異動</p>"))
+                .andExpect(text("<p id=\"suspension-record-actor\">停止した人: 管理 次郎</p>"))
+                .andExpect(
+                        text(
+                                "<p id=\"suspension-record-at\">停止した日時: 2026-11-09 10:30 Asia/Tokyo（UTC+09:00）（UTC 2026-11-09 01:30）</p>"))
+                .andExpect(content().string(Matchers.not(Matchers.containsString("記録がありません"))))
+                .andExpect(text("利用再開の内容を確認する"));
+    }
+
+    @Test
+    void 停止中で記録がなければ記録がないとだけ示す() throws Exception {
+        // 行 2（DB を直接書き換えた停止。V2）
+        found(suspended(Set.of(Role.SALES), Optional.empty()));
+
+        mockMvc.perform(get(DETAIL))
+                .andExpect(text("<p id=\"suspension-record-missing\">停止の記録: 記録がありません</p>"))
+                .andExpect(content().string(Matchers.not(Matchers.containsString("停止した人"))))
+                .andExpect(content().string(Matchers.not(Matchers.containsString("停止した日時"))));
+    }
+
+    @Test
+    void 停止した人の行がなければ不明と利用者IDを示す() throws Exception {
+        // 行 6（開始準備の決定 (12)）
+        found(suspended(Set.of(Role.SALES), Optional.of(suspension(Optional.empty()))));
+
+        mockMvc.perform(get(DETAIL))
+                .andExpect(
+                        text(
+                                "<p id=\"suspension-record-actor\">停止した人: 不明（利用者 ID: 20000000-0000-0000-0000-000000000509）</p>"));
+    }
+
+    @Test
+    void 利用中の利用者には停止の記録を示さない() throws Exception {
+        // 行 3 の画面の側
+        found(user(3, UserStatus.ACTIVE));
+
+        mockMvc.perform(get(DETAIL))
+                .andExpect(status().isOk())
+                .andExpect(content().string(Matchers.not(Matchers.containsString("suspension-record"))));
+    }
+
+    @Test
+    void DBで停止した監督の役割の利用者には案内と停止の記録の両方を示す() throws Exception {
+        // 行 9c
+        found(suspended(Set.of(Role.AUDITOR), Optional.empty()));
+
+        mockMvc.perform(get(DETAIL))
+                .andExpect(text("システム管理者・監査担当者の利用停止と再開は、この画面では行いません。"))
+                .andExpect(text("停止の記録: 記録がありません"));
     }
 
     private static org.springframework.test.web.servlet.ResultMatcher text(String expected) {

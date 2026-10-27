@@ -11,6 +11,7 @@ import io.cucumber.java.ja.かつ;
 import io.cucumber.java.ja.ならば;
 import io.cucumber.java.ja.もし;
 import java.net.URI;
+import java.util.regex.Pattern;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -137,6 +138,27 @@ public class UserStatusUiSteps {
                 .hasCount(0);
         assertThat(page().getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("利用再開の内容を確認する")))
                 .hasCount(0);
+    }
+
+    /** 停止の記録（Bolt 38c2）。理由と停止した人は全文で、停止した日時は実際の時刻になるので社内の形で確かめる。 */
+    @ならば("利用状態の領域に停止の理由 {string} と停止した人と停止した日時が示される")
+    public void 停止の記録が示される(String reason) {
+        Locator status = statusSection();
+        assertThat(status.locator("#suspension-record-reason")).hasText("停止の理由: " + reason);
+        assertThat(status.locator("#suspension-record-actor"))
+                .hasText("停止した人: " + users.displayNameOf(Role.SYSTEM_ADMIN));
+        assertThat(status.locator("#suspension-record-at"))
+                .hasText(Pattern.compile("^停止した日時: \\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2} Asia/Tokyo（UTC\\+09:00）"
+                        + "（UTC \\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}）$"));
+    }
+
+    @ならば("利用状態の領域に停止の記録は示されない")
+    public void 停止の記録は示されない() {
+        assertThat(statusSection().locator("[id^=suspension-record]")).hasCount(0);
+    }
+
+    private Locator statusSection() {
+        return page().getByRole(AriaRole.REGION, new Page.GetByRoleOptions().setName("利用状態"));
     }
 
     private void submit(String button) {

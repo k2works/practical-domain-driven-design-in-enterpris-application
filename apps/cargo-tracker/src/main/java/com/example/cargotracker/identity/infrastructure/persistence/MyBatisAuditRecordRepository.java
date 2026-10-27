@@ -5,16 +5,19 @@ import com.example.cargotracker.identity.domain.model.aggregates.AuditRecordRepo
 import com.example.cargotracker.identity.domain.model.valueobjects.AuditAction;
 import com.example.cargotracker.identity.domain.model.valueobjects.AuditResult;
 import com.example.cargotracker.identity.domain.model.valueobjects.AuditTarget;
+import com.example.cargotracker.identity.domain.model.valueobjects.SuspensionReason;
+import com.example.cargotracker.identity.domain.model.valueobjects.SuspensionRecord;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.stereotype.Repository;
 
 /**
- * 監査記録のリポジトリの MyBatis 実装。追記だけを持つ（IA-INV-07）。
+ * 監査記録のリポジトリの MyBatis 実装。追記と照会だけを持ち、更新と削除はしない（IA-INV-07）。
  */
 @Repository
 public class MyBatisAuditRecordRepository implements AuditRecordRepository {
@@ -52,6 +55,18 @@ public class MyBatisAuditRecordRepository implements AuditRecordRepository {
         return mapper.selectAuditRecordsByActor(actor.value()).stream()
                 .map(MyBatisAuditRecordRepository::toAggregate)
                 .toList();
+    }
+
+    @Override
+    public Optional<SuspensionRecord> findLatestUserSuspension(UserId target) {
+        return Optional.ofNullable(
+                        mapper.selectLatestUserSuspension(target.value().toString()))
+                .filter(SuspensionRecordRow::isCurrentSuspension)
+                .map(row -> new SuspensionRecord(
+                        SuspensionReason.valueOf(row.reason()),
+                        new UserId(row.actorUserId()),
+                        Optional.ofNullable(row.actorDisplayName()),
+                        new UtcInstant(row.occurredAt().toInstant())));
     }
 
     private static AuditRecord toAggregate(AuditRecordRow row) {

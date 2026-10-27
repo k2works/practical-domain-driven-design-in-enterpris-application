@@ -4,7 +4,7 @@ title: "cargo-tracker データモデル"
 description: "cargo-tracker の概念データモデル、スキーマ分割、命名と型の規約（H2 と PostgreSQL の共通部分）、コンテキストごとの論理データモデルと ER 図、版・追記専用・冪等性・イベント配信の表現。"
 tags: [design, data-model]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-27T03:11:49Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-27T07:04:06Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:48:17Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:37Z }
@@ -945,7 +945,7 @@ Bolt 14 で作る範囲（2026-10-06、human:kakimomokuri。[Bolt 14 計画](../
 - 既存の表の `shipper_company_id`・`consignee_company_id`・`submitted_by` などには外部キーを張らない。仮の荷受人の企業（US-16 の企業マスターまで設定にある）を表に持たないため、企業マスターで決める。
 - `db/dev-data/` の開発用のシードは、スキーマの所有（ADR-001）の例外として、ほかのコンテキストの表から写してよい（例: Bolt 21 の KPI 計測記録の最初の提示時刻を `quotation.quotation` から写す）。本番のマイグレーションとアプリケーションのコードでは、ほかのコンテキストの表を読まない。ただし、写しの列を足すマイグレーションが既存の行を 1 回だけ埋めるときは、ADR-001 のコンプライアンスの例外として読んでよい（Bolt 24。`booking.booking.quotation_no`）。
 - 開発用の企業と利用者は `db/dev-data/` に置き、`dev` のときだけ Flyway の場所に足す。共通・ベンダーの場所に置かない（ADR-011 の決定 3）。
-- Bolt 34 で `audit_record` に `target_type`・`target_id`・`target_version`・`before_state`・`after_state` を足した（どれも NULL を許す。今の記録は対象を持たない）。役割の変更の履歴は別の表を作らず、監査記録 `ROLES_CHANGED`（対象 `USER`・利用者 ID・更新した後の版、変更前後は役割の名前を `Role` の宣言の順にカンマでつないだ文字列）で代える。`user_role` は今の値だけを持ち、付与で `granted_by`（操作者）と `granted_at` を入れ、取消しで行を消す（2026-10-16、human:kakimomokuri）。`user_role.granted_by` は NULL を許す（dev-data の既存の行は NULL）。`approval_ref`・`source_ref` と `(target_type, target_id, occurred_at)` のインデックスは、使う Bolt（監査の照会は US-17）で足す。
+- Bolt 34 で `audit_record` に `target_type`・`target_id`・`target_version`・`before_state`・`after_state` を足した（どれも NULL を許す。今の記録は対象を持たない）。役割の変更の履歴は別の表を作らず、監査記録 `ROLES_CHANGED`（対象 `USER`・利用者 ID・更新した後の版、変更前後は役割の名前を `Role` の宣言の順にカンマでつないだ文字列）で代える。`user_role` は今の値だけを持ち、付与で `granted_by`（操作者）と `granted_at` を入れ、取消しで行を消す（2026-10-16、human:kakimomokuri）。`user_role.granted_by` は NULL を許す（dev-data の既存の行は NULL）。`approval_ref`・`source_ref` は、使う Bolt（監査の照会は US-17）で足す。`(target_type, target_id, occurred_at)` のインデックス `ix_audit_record_target` は、S-20 の詳細で停止中の利用者の今の停止の記録（最新の `USER_SUSPENDED`）を引くために Bolt 38c2 で足した（`V20261027100000`。H2 と PostgreSQL の共通の構文で、CONCURRENTLY は使わない。監査の照会（US-17）も同じ索引を使う）。
 - Bolt 38b2 で、利用者の登録の監査記録 `USER_REGISTERED` も対象の列を使う（対象 `USER`・新しい利用者 ID・版 `0`、変更前は null、変更後は登録した役割の名前。メールアドレスと表示名は書かない）。管理範囲の外の企業への登録の試行の `ADMIN_SCOPE_DENIED` は対象の種類を `COMPANY`（企業 ID、版と変更前後は null）にする（`target_type` は `VARCHAR(50)` で、スキーマは変えない）
 - Bolt 34d で、利用状態の変更の監査記録 `USER_SUSPENDED`・`USER_REACTIVATED` も対象の列を使う（対象 `USER`・利用者 ID・更新した後の版、変更前後は利用状態の名前 `ACTIVE`・`SUSPENDED`。結果は `SUCCESS`。`USER_SUSPENDED` の `reason` は停止の理由の名前、`USER_REACTIVATED` の `reason` は空）。`app_user.status` の更新と同じトランザクションで書き、拒否と古い版は書かない（IA-INV-08）。スキーマは変えないので、DB の列のコメント（`V20261016100000__add_identity_audit_record_target.sql` の `target_type`・`target_id`・`target_version`・`before_state`・`after_state` の「役割の変更では」）は直さずに残す。`audit_record.reason` は上の ER では `VARCHAR(4000)` だが、DB（`V20261006140000__create_identity_users.sql`）は `VARCHAR(100)` で食い違う。停止の理由の名前は最長 11 文字（`TRANSFERRED`）で `VARCHAR(100)` に収まるので、この Bolt では食い違いを記すだけにし、解消は入れない（Bolt 34d の計画のスコープ。2026-10-17、human:kakimomokuri が承認）。
 - Bolt 38c で、ロックの解除の監査記録 `ACCOUNT_UNLOCKED`（対象 `USER`・利用者 ID・利用者の今の版（変わらない）、変更前 `LOCKED`・変更後 `UNLOCKED`、`reason` は空）と、管理者による TOTP の解除の監査記録 `TOTP_RESET_BY_ADMIN`（対象 `USER`・利用者 ID・利用者の今の版、変更前 `ENROLLED`、変更後は `method=PHONE_CALLBACK;verifiedAt=2026-11-09T01:30:00Z` の形（本人確認の手段の名前と UTC の ISO-8601）、`reason` は `IDENTITY_VERIFIED`）も対象の列を使う。結果はどちらも `SUCCESS`。拒否と「既に解除」は書かない。スキーマは変えない（`action` に CHECK はなく、3 つの表の DELETE は権限で許されている）
@@ -1176,7 +1176,7 @@ src/main/resources/db/
 | `tracking.tracking_record` | `ix_tracking_record_shipper`（`shipper_company_id`、`created_at`）、（`consignee_company_id`） | 荷主の照会（C-10。Bolt 27 で足した。荷主企業で絞って追跡の開始時刻の新しい順に並べる一覧のため、並びの列を含めた複合の索引にした）・荷受人の照会（荷受人の照会を作る US-10・R1.1 で足す）。`booking_id` は一意制約が索引を兼ねる。S-11 の追跡の開始時刻（`created_at`）の並びの索引は、R0.1 では追跡記録が数十件なので足さない（一覧の絞り込みとページ送りを作る W7 以後に決める。Bolt 26） |
 | `tracking.service_case` | （`status`、`receive_due_at`） | 受領期限を過ぎた案件（escalation） |
 | `identity.access_grant` | （`booking_id`、`consignee_company_id`、`status`） | 参照許可の確認（request ごと） |
-| `identity.audit_record` | （`target_type`、`target_id`、`occurred_at`）、（`actor_user_id`、`occurred_at`） | 監査証跡の照会（US-17） |
+| `identity.audit_record` | `ix_audit_record_target`（`target_type`、`target_id`、`occurred_at`）、`ix_audit_record_actor`（`actor_user_id`、`occurred_at`） | S-20 の詳細の今の停止の記録（Bolt 38c2 で足した。対象の利用者の最新の `USER_SUSPENDED` を 1 行引く）・監査証跡の照会（US-17） |
 | `external_data.receipt` | （`ingestion_id`）、（`classification`） | 取込単位の件数、隔離中の一覧 |
 | `tracking.service_case` | （`shipper_company_id`、`status`） | 荷主の問い合わせ一覧（US-23） |
 | `tracking.inquiry_record` | （`shipper_company_id`、`received_at`） | KPI-02 の週次集計 |

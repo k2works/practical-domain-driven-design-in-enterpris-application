@@ -4,7 +4,7 @@ title: "cargo-tracker 運用要件"
 description: "cargo-tracker の運用体制、定常運用、監視と通知、バックアップと復旧、障害対応の手順（ランブック）、変更管理、DB 利用者と権限の初期化、アカウント運用、運用タスクの一覧。"
 tags: [design, operation]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-27T03:11:49Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-27T07:04:06Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T08:30:35Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:38Z }
@@ -241,6 +241,8 @@ stop
 | 通常の変更 | 機能の追加・修正、依存の更新 | 開発・運用チームのレビューと、本番配備の承認 | 営業時間内（金曜の午後を避ける） |
 | 影響の大きい変更 | DB の構造の変更（列の削除を伴う段階）、認証・認可の変更、計画停止を伴う変更 | 上記に加えて運用責任者の承認 | 計画停止の枠、または営業時間内の早い時刻 |
 | 緊急の変更 | CRITICAL の脆弱性、重大障害の修正 | 当番と運用責任者の承認。事後にレビューする | 随時 |
+
+将来、行の多い表に索引を足すとき（Bolt 38c2 の注）: 普通の `CREATE INDEX` は作り終えるまで表への書き込みを待たせる。行の多い本番の表では、PostgreSQL の `CREATE INDEX CONCURRENTLY` を postgresql の側のマイグレーションで、トランザクションの外で流す必要がある（H2 は持たない）。Flyway でトランザクションの外で流す設定と、使っている版の動きは、その Bolt で確かめてから手順に書く。Bolt 38c2 の `ix_audit_record_target` は、本番の配備（W10）の前に足すので、本番の DB は全部のマイグレーションから作られ、待ちの問題はない。
 
 ### ロールバック
 

@@ -66,6 +66,15 @@
     <!--/* 利用状態の領域（Bolt 34d。US-16 AC5）。役割の領域と別にし、荷受人の企業の利用者にも出す。自分と監督の役割の利用者には操作を出さない */-->
     <section class="mt-4" aria-labelledby="status-title">
         <h2 id="status-title" class="h5">利用状態</h2>
+        <!--/* 停止の記録（Bolt 38c2。US-16 AC5、#50）。停止中の利用者だけに、今の停止の理由・停止した人・停止した日時を示す */-->
+        <th:block th:if="${suspension != null}">
+            <p th:if="${suspension.missing != null}" id="suspension-record-missing" th:text="${suspension.missing}">停止の記録: 記録がありません</p>
+            <th:block th:if="${suspension.missing == null}">
+                <p id="suspension-record-reason" th:text="${suspension.reason}">停止の理由: 異動</p>
+                <p id="suspension-record-actor" th:text="${suspension.actor}">停止した人: 高橋</p>
+                <p id="suspension-record-at" th:text="${suspension.occurredAt}">停止した日時: 2026-11-09 10:30 Asia/Tokyo（UTC+09:00）（UTC 2026-11-09 01:30）</p>
+            </th:block>
+        </th:block>
         <p th:if="${statusNote != null}" id="status-note" th:text="${statusNote}">自分の利用状態は変更できません。ほかのシステム管理者に依頼してください。</p>
         <form th:if="${reasonForm}" method="get"
               th:action="@{/staff/users/{id}/status-changes/confirmation(id=${user.id.value})}">
@@ -99,6 +108,7 @@
     <section class="mt-4" aria-labelledby="credentials-title">
         <h2 id="credentials-title" class="h5">ログインの資格</h2>
         <p id="lock-state" th:text="${credentials.lockState}">ロック: なし</p>
+        <p th:if="${credentials.lockUntil != null}" id="lock-until" th:text="${credentials.lockUntil}">解ける日時: 2026-11-09 10:45 Asia/Tokyo（UTC+09:00）（UTC 2026-11-09 01:45）</p>
         <p id="totp-state" th:text="${credentials.totpState}">認証アプリ: 登録済み</p>
         <p th:if="${credentials.note != null}" id="credential-note" th:text="${credentials.note}">自分のログインの資格は、この画面では変えられません。</p>
         <form th:if="${credentials.unlockable}" method="get" class="d-inline"

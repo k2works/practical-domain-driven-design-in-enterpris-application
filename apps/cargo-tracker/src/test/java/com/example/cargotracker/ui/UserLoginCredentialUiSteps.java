@@ -57,9 +57,10 @@ public class UserLoginCredentialUiSteps {
 
     @ならば("ログインの資格にロック中と期限と {string} が示される")
     public void ロック中と期限が示される(String totp) {
-        assertThat(credentials().locator("#lock-state")).containsText("ロック: ロック中（");
-        assertThat(credentials().locator("#lock-state")).containsText("Asia/Tokyo（UTC+09:00）");
-        assertThat(credentials().locator("#lock-state")).containsText(" まで）");
+        // ロックの期限は「解ける日時」の項目に分ける（Bolt 38c2）
+        assertThat(credentials().locator("#lock-state")).hasText("ロック: ロック中");
+        assertThat(credentials().locator("#lock-until")).containsText("解ける日時: ");
+        assertThat(credentials().locator("#lock-until")).containsText("Asia/Tokyo（UTC+09:00）");
         assertThat(credentials().locator("#totp-state")).hasText(totp);
     }
 
@@ -80,7 +81,8 @@ public class UserLoginCredentialUiSteps {
         assertThat(page().getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setLevel(1)))
                 .hasText("ロックを解除しますか");
         assertThat(main).containsText(users.of(Role.SALES).email());
-        assertThat(main.locator("dd#current-state")).containsText("ロック中（");
+        assertThat(main.locator("dd#current-state")).hasText("ロック中");
+        assertThat(main.locator("dd#lock-until")).containsText("Asia/Tokyo（UTC+09:00）");
         assertThat(main.locator("dd#credential-change")).hasText("ロックを解除する");
         assertThat(main).containsText("すぐにログインを試せます。失敗の回数は 0 に戻ります。");
         assertThat(main).containsText("ロックの解除は取り消せません（5 回続けて誤ると、また 15 分ロックされます）。");

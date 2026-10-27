@@ -29,6 +29,7 @@ import com.example.cargotracker.identity.domain.model.valueobjects.EmailAddress;
 import com.example.cargotracker.identity.domain.model.valueobjects.EncryptedSecret;
 import com.example.cargotracker.identity.domain.model.valueobjects.NormalizedRecoveryCode;
 import com.example.cargotracker.identity.domain.model.valueobjects.SessionId;
+import com.example.cargotracker.identity.domain.model.valueobjects.SuspensionRecord;
 import com.example.cargotracker.identity.domain.model.valueobjects.TotpProvisioning;
 import com.example.cargotracker.identity.domain.model.valueobjects.UserStatus;
 import com.example.cargotracker.shared.domain.CompanyId;
@@ -141,6 +142,11 @@ class TotpReEnrollmentServiceTest {
         @Override
         public List<AuditRecord> findByActorUserId(UserId actor) {
             return audit.stream().filter(r -> actor.equals(r.actorUserId())).toList();
+        }
+
+        @Override
+        public Optional<SuspensionRecord> findLatestUserSuspension(UserId target) {
+            return Optional.empty();
         }
     };
     private boolean failAudit;

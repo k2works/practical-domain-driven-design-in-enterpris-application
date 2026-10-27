@@ -68,4 +68,7 @@ public interface IdentityMapper {
     void insertAuditRecord(AuditRecordRow row);
 
     List<AuditRecordRow> selectAuditRecordsByActor(UUID actorUserId);
+
+    /** 対象の利用者の今の停止の記録を、操作者の今の表示名とともに読む（Bolt 38c2）。対象の ID は文字列（列が VARCHAR）。 */
+    SuspensionRecordRow selectLatestUserSuspension(@Param("targetId") String targetId);
 }
