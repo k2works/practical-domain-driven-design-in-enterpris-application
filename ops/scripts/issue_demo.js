@@ -68,6 +68,7 @@ const BOLT_ISSUES = {
   'bolt-37e3b': 16,
   'bolt-37e4b': 16,
   'bolt-38b4': 14,
+  'bolt-38c': 47,
 };
 
 /** 添付したコメントの目印。同じ Bolt を同じ Issue に 2 回添付しない。 */

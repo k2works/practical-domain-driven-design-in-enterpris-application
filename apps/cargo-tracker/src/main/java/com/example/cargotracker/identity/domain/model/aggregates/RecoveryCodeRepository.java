@@ -24,4 +24,10 @@ public interface RecoveryCodeRepository {
      * true になる。存在しないコードと、ほかの利用者のコードは false（失敗へ倒す。T-42。多層の守り）。
      */
     boolean use(UserId userId, UUID recoveryCodeId, UtcInstant usedAt);
+
+    /**
+     * 利用者の回復コードを、使ったものも含めてすべて消す（Bolt 38c。システム管理者の TOTP の解除。古い回復コードでログインさせない。
+     * 次の登録で発行し直す）。呼び出し側のトランザクションの中で使う。
+     */
+    void removeAll(UserId userId);
 }

@@ -232,6 +232,8 @@ public class UserAdministrationUiSteps {
         // 行 6・7: 要約へのフォーカスはスクリプト、リンクの先へはブラウザの素の移動（Bolt 38）
         Locator summary = page().getByRole(AriaRole.ALERT);
         assertThat(summary).isFocused();
+        // 詳細の誤りは 1 つ（誤りが複数の確認の画面は「最初の誤り」のステップを使う）
+        assertThat(summary.getByRole(AriaRole.LINK)).hasCount(1);
         summary.getByRole(AriaRole.LINK).click();
         assertThat(page().getByLabel(firstOption, new Page.GetByLabelOptions().setExact(true)))
                 .isFocused();

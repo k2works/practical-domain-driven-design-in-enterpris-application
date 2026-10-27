@@ -52,6 +52,23 @@
         </constructor>
     </resultMap>
 
+    <!-- S-20 の詳細の行（Bolt 38c で一覧の行から分けた。ロックの期限と認証アプリの登録の時刻を足す） -->
+    <resultMap id="userDetailRow" type="com.example.cargotracker.identity.infrastructure.persistence.UserDetailRow">
+        <constructor>
+            <arg column="id" name="id" javaType="java.util.UUID"/>
+            <arg column="company_id" name="companyId" javaType="java.util.UUID"/>
+            <arg column="company_name" name="companyName" javaType="String"/>
+            <arg column="company_kind" name="companyKind" javaType="String"/>
+            <arg column="email" name="email" javaType="String"/>
+            <arg column="display_name" name="displayName" javaType="String"/>
+            <arg column="status" name="status" javaType="String"/>
+            <arg column="version" name="version" javaType="_long"/>
+            <arg column="role" name="role" javaType="String"/>
+            <arg column="locked_until" name="lockedUntil" javaType="java.time.OffsetDateTime"/>
+            <arg column="totp_enrolled_at" name="totpEnrolledAt" javaType="java.time.OffsetDateTime"/>
+        </constructor>
+    </resultMap>
+
     <resultMap id="auditRecordRow" type="com.example.cargotracker.identity.infrastructure.persistence.AuditRecordRow">
         <constructor>
             <idArg column="id" name="id" javaType="java.util.UUID"/>
@@ -162,11 +179,15 @@
         SELECT scope_id FROM identity.user_assignment WHERE user_id = #{adminId} AND scope_kind = 'COMPANY'
     </select>
 
-    <select id="selectUserAdministrationRowsById" resultMap="userAdministrationRow">
-        SELECT <include refid="userAdministrationColumns"/>
+    <!-- 詳細（Bolt 38c からログインの資格を足す）。2 つの表は主キーが user_id なので、役割の数より行は増えない。期限が切れたかは照会の
+         サービスが判定する（期限をそのまま返す）。TOTP の秘密は読まない -->
+    <select id="selectUserDetailRowsById" resultMap="userDetailRow">
+        SELECT <include refid="userAdministrationColumns"/>, f.locked_until, t.enrolled_at AS totp_enrolled_at
           FROM identity.app_user u
           JOIN identity.company c ON c.id = u.company_id
           LEFT JOIN identity.user_role r ON r.user_id = u.id
+          LEFT JOIN identity.login_failure f ON f.user_id = u.id
+          LEFT JOIN identity.totp_credential t ON t.user_id = u.id
          WHERE u.id = #{id}
          ORDER BY r.role
     </select>

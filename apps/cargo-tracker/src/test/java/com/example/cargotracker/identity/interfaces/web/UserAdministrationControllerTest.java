@@ -17,11 +17,15 @@ import com.example.cargotracker.identity.domain.model.valueobjects.EmailAddress;
 import com.example.cargotracker.identity.domain.model.valueobjects.UserDetail;
 import com.example.cargotracker.identity.domain.model.valueobjects.UserStatus;
 import com.example.cargotracker.identity.domain.model.valueobjects.UserSummary;
+import com.example.cargotracker.identity.infrastructure.security.TestActors;
 import com.example.cargotracker.identity.infrastructure.security.WithAuthenticatedActor;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Role;
 import com.example.cargotracker.shared.domain.UserId;
+import com.example.cargotracker.shared.domain.UtcInstant;
+import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import org.hamcrest.Matchers;
@@ -120,6 +124,119 @@ class UserAdministrationControllerTest {
         verify(denials, never()).recordDenied(any(), any());
     }
 
+    // ---- ログインの資格の領域（Bolt 38c。行 1） ----
+
+    @Test
+    void ロック中で登録済みの利用者には期限と2つの解除の操作を示す() throws Exception {
+        found(credentialsOf(
+                TARGET,
+                Set.of(Role.SALES),
+                Optional.of(new UtcInstant(Instant.parse("2026-11-09T01:45:00Z"))),
+                Optional.of(new UtcInstant(Instant.parse("2026-10-01T00:00:00Z")))));
+
+        mockMvc.perform(get(DETAIL))
+                .andExpect(status().isOk())
+                .andExpect(text("ログインの資格"))
+                .andExpect(text("ロック: ロック中（2026-11-09 10:45 Asia/Tokyo（UTC+09:00）（UTC 2026-11-09 01:45） まで）"))
+                .andExpect(text("認証アプリ: 登録済み"))
+                .andExpect(text("ロックを解除する"))
+                .andExpect(text("認証アプリの登録を解除する"))
+                .andExpect(text("/unlocks/confirmation"))
+                .andExpect(text("/totp-resets/confirmation"));
+    }
+
+    @Test
+    void ロックも登録もない停止中の利用者には状態だけを示し操作を出さない() throws Exception {
+        found(user(3, UserStatus.SUSPENDED));
+
+        mockMvc.perform(get(DETAIL))
+                .andExpect(text("ロック: なし"))
+                .andExpect(text("認証アプリ: 未登録"))
+                .andExpect(content().string(Matchers.not(Matchers.containsString("ロックを解除する"))))
+                .andExpect(content().string(Matchers.not(Matchers.containsString("認証アプリの登録を解除する"))));
+    }
+
+    @Test
+    void 停止中の利用者にも当てはまる解除の操作を出す() throws Exception {
+        UserDetail enrolled =
+                credentialsOf(TARGET, Set.of(Role.SALES), Optional.empty(), Optional.of(new UtcInstant(Instant.EPOCH)));
+        found(new UserDetail(
+                enrolled.id(),
+                enrolled.companyId(),
+                enrolled.companyName(),
+                enrolled.companyKind(),
+                enrolled.displayName(),
+                enrolled.email(),
+                UserStatus.SUSPENDED,
+                enrolled.roles(),
+                enrolled.version(),
+                enrolled.lockedUntil(),
+                enrolled.totpEnrolledAt()));
+
+        mockMvc.perform(get(DETAIL)).andExpect(text("認証アプリの登録を解除する"));
+    }
+
+    @Test
+    void 自分と監督の役割の利用者のログインの資格には案内だけを示す() throws Exception {
+        Optional<UtcInstant> locked = Optional.of(new UtcInstant(Instant.parse("2026-11-09T01:45:00Z")));
+        Optional<UtcInstant> enrolled = Optional.of(new UtcInstant(Instant.EPOCH));
+        UserId self = TestActors.STAFF_USER;
+        when(queryService.detail(any(), eq(self)))
+                .thenReturn(new UserLookup.Found(credentialsOf(self, Set.of(Role.SYSTEM_ADMIN), locked, enrolled)));
+        found(credentialsOf(TARGET, Set.of(Role.AUDITOR), locked, enrolled));
+
+        mockMvc.perform(get("/staff/users/" + self.value()))
+                .andExpect(text("自分のログインの資格は、この画面では変えられません。"))
+                .andExpect(content().string(Matchers.not(Matchers.containsString("ロックを解除する"))));
+        mockMvc.perform(get(DETAIL))
+                .andExpect(text("システム管理者・監査担当者のログインの資格は、この画面では変えられません。運用の手順に従ってください。"))
+                .andExpect(content().string(Matchers.not(Matchers.containsString("ロックを解除する"))))
+                .andExpect(content().string(Matchers.not(Matchers.containsString("認証アプリの登録を解除する"))));
+    }
+
+    @Test
+    void 荷受人の企業の利用者にも当てはまる解除の操作を出す() throws Exception {
+        UserDetail operatorUser = credentialsOf(
+                TARGET,
+                Set.of(),
+                Optional.of(new UtcInstant(Instant.parse("2026-11-09T01:45:00Z"))),
+                Optional.of(new UtcInstant(Instant.EPOCH)));
+        found(new UserDetail(
+                operatorUser.id(),
+                new CompanyId(UUID.fromString("20000000-0000-0000-0000-000000000004")),
+                "C 社",
+                CompanyKind.CONSIGNEE,
+                operatorUser.displayName(),
+                operatorUser.email(),
+                operatorUser.status(),
+                operatorUser.roles(),
+                operatorUser.version(),
+                operatorUser.lockedUntil(),
+                operatorUser.totpEnrolledAt()));
+
+        mockMvc.perform(get(DETAIL)).andExpect(text("ロックを解除する")).andExpect(text("認証アプリの登録を解除する"));
+    }
+
+    private static org.springframework.test.web.servlet.ResultMatcher text(String expected) {
+        return content().string(Matchers.containsString(expected));
+    }
+
+    private static UserDetail credentialsOf(
+            UserId id, Set<Role> roles, Optional<UtcInstant> lockedUntil, Optional<UtcInstant> enrolledAt) {
+        return new UserDetail(
+                id,
+                new CompanyId(UUID.fromString("20000000-0000-0000-0000-000000000003")),
+                "A 社",
+                CompanyKind.OPERATOR,
+                "佐藤",
+                new EmailAddress("sato@example.com"),
+                UserStatus.ACTIVE,
+                roles,
+                3L,
+                lockedUntil,
+                enrolledAt);
+    }
+
     private void found(UserDetail user) {
         when(queryService.detail(any(), eq(TARGET))).thenReturn(new UserLookup.Found(user));
     }
@@ -134,6 +251,8 @@ class UserAdministrationControllerTest {
                 new EmailAddress("sato@example.com"),
                 status,
                 Set.of(Role.SALES),
-                version);
+                version,
+                Optional.empty(),
+                Optional.empty());
     }
 }

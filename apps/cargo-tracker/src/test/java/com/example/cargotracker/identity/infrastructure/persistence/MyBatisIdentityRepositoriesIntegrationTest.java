@@ -295,6 +295,30 @@ class MyBatisIdentityRepositoriesIntegrationTest {
     }
 
     @Test
+    void 利用者の管理の詳細はロックの期限と認証アプリの登録の時刻を返し記録がなければ空() {
+        UserId id = addUser(company, "資格 " + UUID.randomUUID(), Set.of(Role.SALES, Role.ROUTE_DESIGNER));
+        UserId none = addUser(company, "資格なし " + UUID.randomUUID(), Set.of(Role.SALES));
+        jdbc.update(
+                "INSERT INTO identity.login_failure (user_id, consecutive_failures, locked_until, updated_at)"
+                        + " VALUES (?, 5, TIMESTAMP WITH TIME ZONE '2026-11-09 01:45:00+00', now())",
+                id.value());
+        jdbc.update(
+                "INSERT INTO identity.totp_credential (user_id, secret_encrypted, last_used_step, enrolled_at)"
+                        + " VALUES (?, 'ciphertext', 0, TIMESTAMP WITH TIME ZONE '2026-10-01 00:00:00+00')",
+                id.value());
+
+        UserDetail detail = users.findDetail(id).orElseThrow();
+        UserDetail empty = users.findDetail(none).orElseThrow();
+
+        // 2 つの表は主キーが利用者 ID なので、役割の行は増えない
+        assertThat(detail.roles()).containsExactlyInAnyOrder(Role.SALES, Role.ROUTE_DESIGNER);
+        assertThat(detail.lockedUntil()).contains(new UtcInstant(Instant.parse("2026-11-09T01:45:00Z")));
+        assertThat(detail.totpEnrolledAt()).contains(new UtcInstant(Instant.parse("2026-10-01T00:00:00Z")));
+        assertThat(empty.lockedUntil()).isEmpty();
+        assertThat(empty.totpEnrolledAt()).isEmpty();
+    }
+
+    @Test
     void 役割のない利用者も一覧と詳細に出て役割は空() {
         UserId id = addUser(company, "役割なし " + UUID.randomUUID(), Set.of(Role.SHIPPER));
         jdbc.update("DELETE FROM identity.user_role WHERE user_id = ?", id.value());

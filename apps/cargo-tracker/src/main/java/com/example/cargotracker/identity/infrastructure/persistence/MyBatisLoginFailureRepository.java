@@ -61,6 +61,11 @@ public class MyBatisLoginFailureRepository implements LoginFailureRepository {
         mapper.resetLoginFailure(userId.value(), toOffset(succeededAt));
     }
 
+    @Override
+    public boolean unlock(UserId userId, UtcInstant now) {
+        return mapper.unlockLoginFailureIfLocked(userId.value(), toOffset(now)) == 1;
+    }
+
     private static OffsetDateTime toOffset(UtcInstant instant) {
         return instant.instant().atOffset(ZoneOffset.UTC);
     }

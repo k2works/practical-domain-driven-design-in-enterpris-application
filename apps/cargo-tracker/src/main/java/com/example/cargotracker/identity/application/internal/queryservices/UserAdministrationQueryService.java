@@ -13,6 +13,8 @@ import com.example.cargotracker.shared.domain.AuthenticatedActor;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Role;
 import com.example.cargotracker.shared.domain.UserId;
+import com.example.cargotracker.shared.domain.UtcInstant;
+import java.time.Clock;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -29,12 +31,14 @@ public class UserAdministrationQueryService {
     private final UserRepository users;
     private final UserAssignmentRepository assignments;
     private final CompanyRepository companies;
+    private final Clock clock;
 
     public UserAdministrationQueryService(
-            UserRepository users, UserAssignmentRepository assignments, CompanyRepository companies) {
+            UserRepository users, UserAssignmentRepository assignments, CompanyRepository companies, Clock clock) {
         this.users = users;
         this.assignments = assignments;
         this.companies = companies;
+        this.clock = clock;
     }
 
     /**
@@ -95,7 +99,8 @@ public class UserAdministrationQueryService {
 
     /**
      * 詳細を探す。管理範囲の外の利用者は範囲外として返す。管理範囲を先に読み、いない利用者と範囲外の利用者で読み出しの量をそろえる
-     * （応答の時間から範囲外の利用者の存在を見分けにくくする。Bolt 34b の開発レビュー）。
+     * （応答の時間から範囲外の利用者の存在を見分けにくくする。Bolt 34b の開発レビュー）。ロックの期限は今の時刻で判定し、切れていれば
+     * 空にする（Bolt 38c。リポジトリは期限をそのまま返す）。
      */
     public UserLookup detail(AuthenticatedActor operator, UserId id) {
         if (!operator.hasRole(Role.SYSTEM_ADMIN)) {
@@ -109,6 +114,6 @@ public class UserAdministrationQueryService {
         if (!scope.covers(found.get().companyId())) {
             return new UserLookup.OutOfScope();
         }
-        return new UserLookup.Found(found.get());
+        return new UserLookup.Found(found.get().asOf(new UtcInstant(clock.instant())));
     }
 }

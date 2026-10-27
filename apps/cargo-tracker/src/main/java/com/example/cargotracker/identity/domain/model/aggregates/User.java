@@ -3,6 +3,7 @@ package com.example.cargotracker.identity.domain.model.aggregates;
 import com.example.cargotracker.identity.domain.model.rules.RoleAssignmentPolicy;
 import com.example.cargotracker.identity.domain.model.valueobjects.AuthenticationRejection;
 import com.example.cargotracker.identity.domain.model.valueobjects.EmailAddress;
+import com.example.cargotracker.identity.domain.model.valueobjects.LoginCredentialRejection;
 import com.example.cargotracker.identity.domain.model.valueobjects.RoleChangeRejection;
 import com.example.cargotracker.identity.domain.model.valueobjects.RoleChangeRejectionReason;
 import com.example.cargotracker.identity.domain.model.valueobjects.StatusChangeRejection;
@@ -224,6 +225,23 @@ public final class User {
     public User changeStatus(StatusChangeApproval approval) {
         requireDecidedOnThis(approval.decidedOn);
         return new User(id, companyId, email, displayName, passwordHash, approval.to(), roles, version);
+    }
+
+    /**
+     * ログインの資格の変更（システム管理者によるロックの解除と TOTP の解除）を受け付けない理由（Bolt 38c。US-18 AC3・AC9、IA-INV-01）。
+     * 受け付けるなら空。判定は自分 → 監督の役割の順（利用状態の変更と同じ。停止中の利用者は受け付ける）。ロック中か・登録済みかは別の
+     * 集約の状態なので、サービスがこの後に判定する。
+     *
+     * @param operator 変更する操作者
+     */
+    public Optional<LoginCredentialRejection> loginCredentialChangeRejection(UserId operator) {
+        if (id.equals(operator)) {
+            return Optional.of(LoginCredentialRejection.SELF);
+        }
+        if (RoleAssignmentPolicy.holdsOversightRole(roles)) {
+            return Optional.of(LoginCredentialRejection.OVERSIGHT_ROLE);
+        }
+        return Optional.empty();
     }
 
     /** 承認がこの実体の判定で得たものかを確かめる（値で比べない。同じ ID と版の別の実体の承認も拒む）。 */

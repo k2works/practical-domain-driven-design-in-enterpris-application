@@ -2,6 +2,7 @@ package com.example.cargotracker.identity.domain.model.aggregates;
 
 import com.example.cargotracker.identity.domain.model.valueobjects.EncryptedSecret;
 import com.example.cargotracker.shared.domain.UserId;
+import com.example.cargotracker.shared.domain.UtcInstant;
 import java.util.Optional;
 
 /**
@@ -35,4 +36,13 @@ public interface TotpCredentialRepository {
      * @param secret 照合に使った資格の暗号化した秘密
      */
     boolean useStep(UserId userId, EncryptedSecret secret, long step);
+
+    /**
+     * システム管理者の解除（Bolt 38c。US-18 AC9）。保存されている資格の登録の時刻が、確認の画面で読んだ時刻のときだけ資格を消し、消せたら
+     * true。確認の後に本人が登録し直した資格（登録の時刻が変わる）と、資格のない利用者は消さずに false（同時の 2 つの解除は 1 つだけが
+     * true になる）。
+     *
+     * @param expectedEnrolledAt 確認の画面で読んだ登録の時刻
+     */
+    boolean remove(UserId userId, UtcInstant expectedEnrolledAt);
 }

@@ -23,6 +23,11 @@ import com.example.cargotracker.shared.domain.AuthenticatedActor;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Role;
 import com.example.cargotracker.shared.domain.UserId;
+import com.example.cargotracker.shared.domain.UtcInstant;
+import java.time.Clock;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -35,8 +40,9 @@ class UserAdministrationQueryServiceTest {
     private final UserRepository users = mock(UserRepository.class);
     private final UserAssignmentRepository assignments = mock(UserAssignmentRepository.class);
     private final CompanyRepository companies = mock(CompanyRepository.class);
+    private static final Instant NOW = Instant.parse("2026-11-09T01:30:00Z");
     private final UserAdministrationQueryService service =
-            new UserAdministrationQueryService(users, assignments, companies);
+            new UserAdministrationQueryService(users, assignments, companies, Clock.fixed(NOW, ZoneOffset.UTC));
 
     private final CompanyId inside = new CompanyId(UUID.randomUUID());
     private final CompanyId outside = new CompanyId(UUID.randomUUID());
@@ -63,7 +69,9 @@ class UserAdministrationQueryServiceTest {
                 EmailAddress.of("sales@example.com"),
                 UserStatus.ACTIVE,
                 Set.of(Role.SALES),
-                0L);
+                0L,
+                Optional.empty(),
+                Optional.empty());
     }
 
     @Test
@@ -196,5 +204,46 @@ class UserAdministrationQueryServiceTest {
 
         assertThat(service.registrableCompany(admin, inactive)).isEqualTo(new RegistrableCompanyLookup.OutOfScope());
         assertThat(service.registrableCompany(admin, consignee)).isEqualTo(new RegistrableCompanyLookup.OutOfScope());
+    }
+
+    // 詳細のログインの資格（Bolt 38c。行 1）
+
+    private UserDetail lockedUntil(Instant until) {
+        UserDetail detail = detailIn(inside);
+        return new UserDetail(
+                detail.id(),
+                detail.companyId(),
+                detail.companyName(),
+                detail.companyKind(),
+                detail.displayName(),
+                detail.email(),
+                detail.status(),
+                detail.roles(),
+                detail.version(),
+                Optional.of(new UtcInstant(until)),
+                Optional.of(new UtcInstant(NOW.minus(Duration.ofDays(30)))));
+    }
+
+    @Test
+    void 詳細のロックの期限は今より後ならそのまま示し登録の時刻も返す() {
+        UserDetail detail = lockedUntil(NOW.plusSeconds(1));
+        when(users.findDetail(detail.id())).thenReturn(Optional.of(detail));
+        when(assignments.scopeOf(admin.userId())).thenReturn(new AdministrationScope(Set.of(inside)));
+
+        assertThat(service.detail(admin, detail.id())).isEqualTo(new UserLookup.Found(detail));
+    }
+
+    @Test
+    void 詳細のロックの期限がちょうど今か過ぎていればロックなしにする() {
+        UserDetail detail = lockedUntil(NOW);
+        when(users.findDetail(detail.id())).thenReturn(Optional.of(detail));
+        when(assignments.scopeOf(admin.userId())).thenReturn(new AdministrationScope(Set.of(inside)));
+
+        UserLookup found = service.detail(admin, detail.id());
+
+        assertThat(found).isInstanceOfSatisfying(UserLookup.Found.class, each -> {
+            assertThat(each.detail().lockedUntil()).isEmpty();
+            assertThat(each.detail().totpEnrolledAt()).isEqualTo(detail.totpEnrolledAt());
+        });
     }
 }

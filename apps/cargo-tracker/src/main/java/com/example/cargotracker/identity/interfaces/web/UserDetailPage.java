@@ -33,7 +33,8 @@ import org.springframework.web.server.ResponseStatusException;
  * 誤りの欄の表示名。選び方の誤りのない操作は表示名を持たない）、(2) {@link Fields} にその欄を描くかを 1 つ足し、{@link #render} で
  * 1 度だけ決めて model に置く（テンプレートの欄を描く条件もそれを読む）、(3) {@link #anchor} の switch に、描く群の最初の選択肢を
  * リンク先にする枝を足す（値を足すと網羅の誤りでコンパイルが止まる）、(4) テンプレートに領域を足す（1 つの領域に操作が 2 つなら値を
- * 2 つ対応させる）、(5) controller は {@link Operation} を渡す。
+ * 2 つ対応させる）、(5) controller は {@link Operation} を渡す。選び方の欄のない操作（Bolt 38c のログインの資格）は (2) を飛ばし、(3) で
+ * 空を返す（拒否は文言だけを示す）。
  */
 @Component
 final class UserDetailPage {
@@ -49,6 +50,12 @@ final class UserDetailPage {
 
     /** 監督の役割を持つ利用者の詳細の利用状態の領域の案内（UI 設計 S-20。Bolt 34d）。利用状態の変更の拒否の文言と同じ。 */
     static final String OVERSIGHT_STATUS_NOTE = "システム管理者・監査担当者の利用停止と再開は、この画面では行いません。";
+
+    /** 自分の詳細のログインの資格の領域の案内（UI 設計 S-20。Bolt 38c）。ログインの資格の拒否の文言と同じ。 */
+    static final String SELF_CREDENTIAL_NOTE = "自分のログインの資格は、この画面では変えられません。";
+
+    /** 監督の役割を持つ利用者の詳細のログインの資格の領域の案内（UI 設計 S-20。Bolt 38c）。ログインの資格の拒否の文言と同じ。 */
+    static final String OVERSIGHT_CREDENTIAL_NOTE = "システム管理者・監査担当者のログインの資格は、この画面では変えられません。運用の手順に従ってください。";
 
     private static final String DETAIL_VIEW = "identity/users/detail";
 
@@ -124,6 +131,7 @@ final class UserDetailPage {
                                 section,
                                 fields.roles() ? roleOptions : List.of(),
                                 fields.reason() ? reasonOptions : List.of())));
+        model.addAttribute("credentials", LoginCredentials.of(user, self));
         model.addAttribute(UserAdministrationLabels.ACTIVE_ATTRIBUTE, UserAdministrationLabels.ACTIVE);
         return DETAIL_VIEW;
     }
@@ -198,6 +206,8 @@ final class UserDetailPage {
                 drawnReasons.stream()
                         .findFirst()
                         .map(option -> "#reason-" + option.reason().name());
+            // ログインの資格の操作は詳細に選び方の欄を持たない（拒否は文言だけを示す。Bolt 38c）
+            case UNLOCK, TOTP_RESET -> Optional.empty();
         };
     }
 
@@ -247,7 +257,11 @@ final class UserDetailPage {
         /** 役割の変更。 */
         ROLES("役割を変更できませんでした", "付ける役割"),
         /** 利用状態の変更。 */
-        STATUS("利用状態を変更できませんでした", "停止の理由");
+        STATUS("利用状態を変更できませんでした", "停止の理由"),
+        /** ロックの解除（Bolt 38c。詳細に出す拒否だけ。選び方の欄はない）。 */
+        UNLOCK("ロックを解除できませんでした", null),
+        /** 認証アプリの登録の解除（Bolt 38c。詳細に出す拒否だけ。確認の画面の入力の誤りは確認の画面の要約で示す）。 */
+        TOTP_RESET("認証アプリの登録を解除できませんでした", null);
 
         private final String title;
         private final String fieldLabel;
@@ -261,9 +275,51 @@ final class UserDetailPage {
             this.fieldLabel = fieldLabel;
         }
 
+        /** エラー要約の見出し（Bolt 38c。確認の画面の要約も同じ見出しを使う）。 */
+        String title() {
+            return title;
+        }
+
         /** 選び方の誤りの欄の表示名。選び方の誤りのない操作は空。 */
         Optional<String> fieldLabel() {
             return Optional.ofNullable(fieldLabel);
+        }
+    }
+
+    /**
+     * 詳細のログインの資格の領域（Bolt 38c）。自分と監督の役割の利用者には操作を出さず案内だけを示す。操作は当てはまるときだけ出す
+     * （ロックの解除はロック中、認証アプリの登録の解除は登録済み。停止中・荷受人の企業の利用者にも出す）。
+     *
+     * @param lockState ロックの状態の文
+     * @param totpState 認証アプリの登録の状態の文
+     * @param note 操作を出さない理由の案内（操作を出すなら null）
+     * @param unlockable ロックの解除の操作を出すか
+     * @param resettable 認証アプリの登録の解除の操作を出すか
+     */
+    public record LoginCredentials(
+            String lockState, String totpState, String note, boolean unlockable, boolean resettable) {
+
+        static LoginCredentials of(UserDetail user, boolean self) {
+            String note = credentialNote(user, self);
+            return new LoginCredentials(
+                    "ロック: "
+                            + user.lockedUntil()
+                                    .map(UserAdministrationLabels::locked)
+                                    .orElse("なし"),
+                    user.totpEnrolledAt().isPresent() ? "認証アプリ: 登録済み" : "認証アプリ: 未登録",
+                    note,
+                    note == null && user.lockedUntil().isPresent(),
+                    note == null && user.totpEnrolledAt().isPresent());
+        }
+
+        private static String credentialNote(UserDetail user, boolean self) {
+            if (self) {
+                return SELF_CREDENTIAL_NOTE;
+            }
+            if (RoleAssignmentPolicy.holdsOversightRole(user.roles())) {
+                return OVERSIGHT_CREDENTIAL_NOTE;
+            }
+            return null;
         }
     }
 

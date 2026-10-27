@@ -290,6 +290,8 @@ class UserStatusChangeControllerTest {
                 new EmailAddress("sato@example.com"),
                 status,
                 Set.of(Role.SALES),
-                version);
+                version,
+                Optional.empty(),
+                Optional.empty());
     }
 }

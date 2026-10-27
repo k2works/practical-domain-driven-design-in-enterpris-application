@@ -29,4 +29,11 @@ public interface LoginFailureRepository {
 
     /** 成功を記録する。ロック中でなければ回数を 0 に戻しロックを外す。記録のない利用者では何もしない。 */
     void recordSuccess(UserId userId, UtcInstant succeededAt);
+
+    /**
+     * システム管理者の解除（Bolt 38c）。その時刻にロック中のときだけ回数を 0 に戻しロックを外し、外したら true。規則は
+     * {@link LoginFailure#unlock} と同じ。期限の切れたロック・失敗の途中・記録のない利用者は書かずに false（同時の 2 つの解除は
+     * 1 つだけが true になる）。
+     */
+    boolean unlock(UserId userId, UtcInstant now);
 }

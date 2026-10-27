@@ -12,6 +12,7 @@ import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Video;
 import com.microsoft.playwright.options.AriaRole;
+import com.microsoft.playwright.options.Cookie;
 import io.cucumber.spring.ScenarioScope;
 import java.net.URI;
 import java.nio.file.Path;
@@ -167,6 +168,18 @@ public class BrowserSession implements DisposableBean {
         Page tab = context.newPage();
         tab.navigate(url);
         return tab;
+    }
+
+    /** いまの Cookie の控え（Bolt 38c。同じ利用者の別の端末に見立てるため、後で {@link #restoreCookies} で戻す）。 */
+    public List<Cookie> cookies() {
+        return List.copyOf(context.cookies());
+    }
+
+    /** Cookie を控えたものに入れ替える（Bolt 38c）。どの役割でログインしているかは分からなくなるので、次の画面はログインし直させる。 */
+    public void restoreCookies(List<Cookie> cookies) {
+        context.clearCookies();
+        context.addCookies(cookies);
+        signedIn = null;
     }
 
     /** いまの session の Cookie の値（Bolt 32b。テストの準備として session の属性を書き換える）。 */

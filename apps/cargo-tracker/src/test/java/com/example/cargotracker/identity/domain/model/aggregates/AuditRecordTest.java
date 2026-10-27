@@ -7,6 +7,7 @@ import com.example.cargotracker.identity.domain.model.valueobjects.AuditAction;
 import com.example.cargotracker.identity.domain.model.valueobjects.AuditResult;
 import com.example.cargotracker.identity.domain.model.valueobjects.AuditTarget;
 import com.example.cargotracker.identity.domain.model.valueobjects.AuthenticationRejection;
+import com.example.cargotracker.identity.domain.model.valueobjects.IdentityVerificationMethod;
 import com.example.cargotracker.identity.domain.model.valueobjects.SuspensionReason;
 import com.example.cargotracker.identity.domain.model.valueobjects.UserStatus;
 import com.example.cargotracker.shared.domain.CompanyId;
@@ -243,5 +244,58 @@ class AuditRecordTest {
                 .isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> AuditRecord.userReactivated(USER, COMPANY, target, 1L, UserStatus.ACTIVE, AT))
                 .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void ロックの解除は理由を持たず対象の利用者と今の版とロックの前後を記録する() {
+        UserId target = new UserId(UUID.randomUUID());
+
+        AuditRecord auditRecord = AuditRecord.accountUnlocked(USER, COMPANY, target, 3L, AT);
+
+        assertThat(auditRecord.action()).isEqualTo(AuditAction.ACCOUNT_UNLOCKED);
+        assertThat(auditRecord.result()).isEqualTo(AuditResult.SUCCESS);
+        assertThat(auditRecord.reason()).isNull();
+        assertThat(auditRecord.actorUserId()).isEqualTo(USER);
+        assertThat(auditRecord.actorCompanyId()).isEqualTo(COMPANY);
+        assertThat(auditRecord.target())
+                .isEqualTo(new AuditTarget("USER", target.value().toString(), "3", "LOCKED", "UNLOCKED"));
+    }
+
+    @Test
+    void 管理者のTOTPの解除は本人確認の理由と手段と日時を記録する() {
+        UserId target = new UserId(UUID.randomUUID());
+        UtcInstant verifiedAt = new UtcInstant(Instant.parse("2026-11-09T01:30:00Z"));
+
+        AuditRecord auditRecord = AuditRecord.totpResetByAdmin(
+                USER, COMPANY, target, 7L, IdentityVerificationMethod.PHONE_CALLBACK, verifiedAt, AT);
+
+        assertThat(auditRecord.action()).isEqualTo(AuditAction.TOTP_RESET_BY_ADMIN);
+        assertThat(auditRecord.result()).isEqualTo(AuditResult.SUCCESS);
+        assertThat(auditRecord.reason()).isEqualTo("IDENTITY_VERIFIED");
+        assertThat(auditRecord.target())
+                .isEqualTo(new AuditTarget(
+                        "USER",
+                        target.value().toString(),
+                        "7",
+                        "ENROLLED",
+                        "method=PHONE_CALLBACK;verifiedAt=2026-11-09T01:30:00Z"));
+    }
+
+    @Test
+    void ログインの資格の解除は主体と対象と本人確認を欠かせない() {
+        UserId target = new UserId(UUID.randomUUID());
+
+        assertThatThrownBy(() -> AuditRecord.accountUnlocked(null, COMPANY, target, 1L, AT))
+                .isInstanceOf(NullPointerException.class);
+        assertThatThrownBy(() -> AuditRecord.accountUnlocked(USER, COMPANY, null, 1L, AT))
+                .isInstanceOf(NullPointerException.class);
+        assertThatThrownBy(() -> AuditRecord.totpResetByAdmin(USER, COMPANY, target, 1L, null, AT, AT))
+                .isInstanceOf(NullPointerException.class);
+        assertThatThrownBy(() -> AuditRecord.totpResetByAdmin(
+                        USER, null, target, 1L, IdentityVerificationMethod.IN_PERSON, AT, AT))
+                .isInstanceOf(NullPointerException.class);
+        assertThatThrownBy(() -> AuditRecord.totpResetByAdmin(
+                        USER, COMPANY, target, 1L, IdentityVerificationMethod.IN_PERSON, null, AT))
+                .isInstanceOf(NullPointerException.class);
     }
 }

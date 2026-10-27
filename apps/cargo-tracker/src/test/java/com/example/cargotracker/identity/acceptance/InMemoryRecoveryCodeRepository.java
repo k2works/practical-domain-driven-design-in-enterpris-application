@@ -45,6 +45,11 @@ public class InMemoryRecoveryCodeRepository implements RecoveryCodeRepository {
         return true;
     }
 
+    @Override
+    public synchronized void removeAll(UserId userId) {
+        store.values().removeIf(code -> code.userId().equals(userId));
+    }
+
     /** シナリオの開始時に回復コードを消す。 */
     public synchronized void clear() {
         store.clear();

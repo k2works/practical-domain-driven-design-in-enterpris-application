@@ -24,6 +24,9 @@ public interface AuthenticationFactorMapper {
     int updateTotpCredentialIfUnchanged(
             @Param("row") TotpCredentialRow row, @Param("expectedSecret") String expectedSecret);
 
+    /** 確認の画面で読んだ登録の時刻のときだけ資格を消す（Bolt 38c）。 */
+    int deleteTotpCredentialIfEnrolledAt(@Param("userId") UUID userId, @Param("enrolledAt") OffsetDateTime enrolledAt);
+
     void deleteRecoveryCodes(UUID userId);
 
     void insertRecoveryCode(RecoveryCodeRow row);
@@ -44,4 +47,7 @@ public interface AuthenticationFactorMapper {
             @Param("lockedUntil") OffsetDateTime lockedUntil);
 
     void resetLoginFailure(@Param("userId") UUID userId, @Param("now") OffsetDateTime now);
+
+    /** ロック中のときだけ 0 回・ロックなしに戻す（Bolt 38c。システム管理者の解除）。 */
+    int unlockLoginFailureIfLocked(@Param("userId") UUID userId, @Param("now") OffsetDateTime now);
 }

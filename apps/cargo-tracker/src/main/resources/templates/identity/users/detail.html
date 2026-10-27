@@ -94,6 +94,22 @@
             <button type="submit" class="btn btn-primary">利用再開の内容を確認する</button>
         </form>
     </section>
+    <!--/* ログインの資格の領域（Bolt 38c。US-18 AC3・AC9）。ロックの状態と認証アプリの登録の有無を示し、当てはまる解除の操作だけを出す。
+         自分と監督の役割の利用者には操作を出さず案内だけを示す。確定の拒否は上のエラー要約に文言だけで示す（選び方の欄はない） */-->
+    <section class="mt-4" aria-labelledby="credentials-title">
+        <h2 id="credentials-title" class="h5">ログインの資格</h2>
+        <p id="lock-state" th:text="${credentials.lockState}">ロック: なし</p>
+        <p id="totp-state" th:text="${credentials.totpState}">認証アプリ: 登録済み</p>
+        <p th:if="${credentials.note != null}" id="credential-note" th:text="${credentials.note}">自分のログインの資格は、この画面では変えられません。</p>
+        <form th:if="${credentials.unlockable}" method="get" class="d-inline"
+              th:action="@{/staff/users/{id}/unlocks/confirmation(id=${user.id.value})}">
+            <button type="submit" class="btn btn-outline-primary">ロックを解除する</button>
+        </form>
+        <form th:if="${credentials.resettable}" method="get" class="d-inline"
+              th:action="@{/staff/users/{id}/totp-resets/confirmation(id=${user.id.value})}">
+            <button type="submit" class="btn btn-outline-danger">認証アプリの登録を解除する</button>
+        </form>
+    </section>
     <p class="mt-3"><a th:href="@{/staff/users}">利用者の一覧へ戻る</a></p>
 </main>
 </body>

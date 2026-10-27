@@ -4,7 +4,7 @@ title: "cargo-tracker ユーザーストーリー"
 description: "cargo-tracker MVP の価値単位のユーザーストーリー、受入条件、上流要件へのトレーサビリティ。"
 tags: [requirements, user-story]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-26T21:57:10Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-27T03:11:49Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T05:20:11Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:39Z }
@@ -614,7 +614,7 @@ W5 の開始準備の決定（2026-10-11、human:kakimomokuri）: #13 は W5 の
 
 Bolt 32 の決定（2026-10-13、human:kakimomokuri。[Bolt 32 計画](../../development/cargo-tracker/bolt_32_plan.md) の確認ポイント 1〜11、[ADR-011](../../adr/cargo-tracker/011-mfa-totp.md) の決定 9）:
 
-- AC3 の「password または TOTP の認証」の失敗には、回復コードの誤りも含めて合わせて数える（回復コードの総当たりもロックで抑える）。数えないのは、ロック中の試行、存在しない利用者、password が正しく利用停止・無効な企業で拒んだとき、利用者の読み出しの DB の誤り、TOTP の登録のコードの誤り。0 に戻すのは 2 つの要素がそろったログインの成功だけ。
+- AC3 の「password または TOTP の認証」の失敗には、回復コードの誤りも含めて合わせて数える（回復コードの総当たりもロックで抑える）。数えないのは、ロック中の試行、存在しない利用者、password が正しく利用停止・無効な企業で拒んだとき、利用者の読み出しの DB の誤り、TOTP の登録のコードの誤り。0 に戻すのは 2 つの要素がそろったログインの成功と、システム管理者のロックの解除（Bolt 38c。S-20）だけ。
 - AC3 の「追加試行が拒否される」は、ロック中も AC2 と同じく誤りと同じ応答と文言で拒む。ロックの有無と解ける時刻は示さず、誤りの文言に一般の予告「続けて 5 回誤ると、15 分ログインできなくなります。」を足す。
 - 利用者を変えながら password を試す攻撃（S-02）は利用者ごとのロックでは止まらないので、W10 の WAF の送信元ごとの流量の規則（SEC-20）で扱う。
 - AC6 の request ごとの役割の確認は Bolt 32c で作る。
@@ -642,7 +642,7 @@ Bolt 33b の開始準備の決定（2026-10-15、human:kakimomokuri。[Bolt 33b 
 
 - AC9 の「回復コードを使う … Then TOTP を再登録でき」は、回復コードでログインすると認証アプリの再登録の画面（A-08）に導き、新しいコードを確かめた時点で TOTP の秘密を置き換え、回復コード 10 個を発行し直して一度だけ示すことで満たす（Bolt 33b）。「後で登録する」で業務の画面に進め、印がある間は業務の画面に知らせを出す。入口は回復コードでログインした流れだけで、認証アプリの設定の画面は作らない。
 - 再登録の後は、古い認証アプリのコードと古い回復コードは使えない。完了のコミットの後に、その利用者のほかの session を失効させる（今の session は残す。ほかの端末は次の操作で再認証の案内）。再登録は監査証跡に `TOTP_RE_ENROLLED`（成功だけ）で記録する。
-- AC9 の「システム管理者が定めた別経路で本人確認して登録を解除する」「解除が監査証跡へ記録され本人へ通知される」と、再登録の本人への通知、残りの回復コードが少ないときの案内は [#47](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/47)（W6）で満たす（W5 の開始準備の決定どおり）。#13 は Bolt 33b でクローズする。
+- AC9 の「システム管理者が定めた別経路で本人確認して登録を解除する」「解除が監査証跡へ記録され本人へ通知される」と、再登録の本人への通知、残りの回復コードが少ないときの案内は [#47](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/47)（W6）で満たす（W5 の開始準備の決定どおり）。#13 は Bolt 33b でクローズする。 Bolt 38c で管理者の経路（S-20 で本人確認の手段と日時を記録して解除し、資格・回復コード・session を消す。本人は次のログインで A-07 から登録し直す）を作り、本人への通知は Bolt 38d で足す（2026-10-27 の開始準備の決定、human:kakimomokuri）。
 
 ### US-19 荷受人の参照許可を管理する
 

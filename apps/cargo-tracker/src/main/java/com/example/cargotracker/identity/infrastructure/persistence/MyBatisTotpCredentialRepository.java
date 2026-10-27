@@ -55,6 +55,13 @@ public class MyBatisTotpCredentialRepository implements TotpCredentialRepository
         return mapper.updateLastUsedStepIfLater(userId.value(), secret.value(), step) == 1;
     }
 
+    @Override
+    public boolean remove(UserId userId, UtcInstant expectedEnrolledAt) {
+        return mapper.deleteTotpCredentialIfEnrolledAt(
+                        userId.value(), expectedEnrolledAt.instant().atOffset(ZoneOffset.UTC))
+                == 1;
+    }
+
     private static TotpCredentialRow rowOf(TotpCredential credential) {
         return new TotpCredentialRow(
                 credential.userId().value(),

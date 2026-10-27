@@ -415,4 +415,84 @@ public abstract class AuthenticationFactorRepositoriesContract {
         assertThat(whileLocked.counted()).as("ロック中は数えない").isFalse();
         assertThat(whileLocked.lockedBy(at(Duration.ofMinutes(10)))).isFalse();
     }
+
+    // システム管理者のロックの解除と TOTP の解除（Bolt 38c。行 14）
+
+    @Test
+    void ロック中の利用者のロックを解除すると0回でロックなしになり件数で分かる() {
+        UserId user = newUser();
+        for (int i = 0; i < 5; i++) {
+            failAt(user, at(Duration.ofSeconds(i)));
+        }
+
+        assertThat(loginFailures().unlock(user, at(Duration.ofMinutes(1)))).isTrue();
+
+        LoginFailure failure = loginFailures().findByUserId(user);
+        assertThat(failure.consecutiveFailures()).isZero();
+        assertThat(failure.lockedUntil()).isEmpty();
+        assertThat(loginFailures().unlock(user, at(Duration.ofMinutes(1))))
+                .as("2 回目")
+                .isFalse();
+    }
+
+    @Test
+    void 期限の切れたロックと失敗の途中と記録のない利用者は解除しない() {
+        UserId expired = newUser();
+        for (int i = 0; i < 5; i++) {
+            failAt(expired, at(Duration.ofSeconds(i)));
+        }
+        UserId failing = newUser();
+        failAt(failing, at(Duration.ZERO));
+
+        // 期限ちょうど（5 回目の 15 分後）はもうロック中でない
+        assertThat(loginFailures().unlock(expired, at(Duration.ofSeconds(4).plusMinutes(15))))
+                .isFalse();
+        assertThat(loginFailures().unlock(failing, at(Duration.ofMinutes(1)))).isFalse();
+        assertThat(loginFailures().unlock(newUser(), at(Duration.ZERO))).isFalse();
+        assertThat(loginFailures().findByUserId(expired).consecutiveFailures()).isEqualTo(5);
+        assertThat(loginFailures().findByUserId(failing).consecutiveFailures()).isEqualTo(1);
+    }
+
+    @Test
+    void 読んだ登録の時刻のときだけTOTPの資格を消す() {
+        UserId user = newUser();
+        totpCredentials().add(TotpCredential.enroll(user, SECRET, at(Duration.ZERO)));
+
+        assertThat(totpCredentials().remove(user, at(Duration.ofSeconds(1))))
+                .as("時刻が違う")
+                .isFalse();
+        assertThat(totpCredentials().findByUserId(user)).isPresent();
+        assertThat(totpCredentials().remove(user, at(Duration.ZERO))).isTrue();
+        assertThat(totpCredentials().findByUserId(user)).isEmpty();
+        assertThat(totpCredentials().remove(user, at(Duration.ZERO))).as("行がない").isFalse();
+    }
+
+    @Test
+    void 再登録した資格は前の登録の時刻では消さない() {
+        UserId user = newUser();
+        totpCredentials().add(TotpCredential.enroll(user, SECRET, at(Duration.ZERO)));
+        TotpCredential read = totpCredentials().findByUserId(user).orElseThrow();
+        totpCredentials().replace(read.reEnroll(new EncryptedSecret("renewed"), 10, at(Duration.ofDays(1))), SECRET);
+
+        assertThat(totpCredentials().remove(user, at(Duration.ZERO))).isFalse();
+        assertThat(totpCredentials().findByUserId(user).orElseThrow().secret())
+                .isEqualTo(new EncryptedSecret("renewed"));
+    }
+
+    @Test
+    void 回復コードをすべて消すと使ったものも残らずほかの利用者のコードは残る() {
+        UserId user = newUser();
+        UserId other = newUser();
+        List<RecoveryCode> issued = issue(user, "c0de");
+        recoveryCodes().replaceAll(user, issued);
+        recoveryCodes().replaceAll(other, issue(other, "0e30"));
+        recoveryCodes().use(user, issued.getFirst().id(), at(Duration.ofMinutes(1)));
+
+        recoveryCodes().removeAll(user);
+
+        assertThat(recoveryCodes().findUnusedByUserId(user)).isEmpty();
+        assertThat(recoveryCodes().use(user, issued.get(1).id(), at(Duration.ofMinutes(2))))
+                .isFalse();
+        assertThat(recoveryCodes().findUnusedByUserId(other)).hasSize(RecoveryCode.CODES_PER_USER);
+    }
 }

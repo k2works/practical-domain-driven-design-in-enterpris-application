@@ -52,6 +52,16 @@ public class InMemoryLoginFailureRepository implements LoginFailureRepository {
         store.computeIfPresent(userId, (id, stored) -> stored.recordSuccess(succeededAt));
     }
 
+    @Override
+    public boolean unlock(UserId userId, UtcInstant now) {
+        boolean[] unlocked = {false};
+        store.computeIfPresent(userId, (id, stored) -> {
+            unlocked[0] = stored.isLocked(now);
+            return stored.unlock(now);
+        });
+        return unlocked[0];
+    }
+
     /** シナリオの開始時に記録と登録した利用者を消す。 */
     public void clear() {
         store.clear();

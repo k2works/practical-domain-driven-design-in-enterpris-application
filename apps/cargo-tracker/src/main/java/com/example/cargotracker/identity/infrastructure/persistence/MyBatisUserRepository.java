@@ -122,7 +122,7 @@ public class MyBatisUserRepository implements UserRepository {
                             first.displayName(),
                             new EmailAddress(first.email()),
                             UserStatus.valueOf(first.status()),
-                            roles(rows));
+                            roles(rows.stream().map(UserAdministrationRow::role).toList()));
                 })
                 .toList();
     }
@@ -138,11 +138,11 @@ public class MyBatisUserRepository implements UserRepository {
 
     @Override
     public Optional<UserDetail> findDetail(UserId id) {
-        List<UserAdministrationRow> rows = mapper.selectUserAdministrationRowsById(id.value());
+        List<UserDetailRow> rows = mapper.selectUserDetailRowsById(id.value());
         if (rows.isEmpty()) {
             return Optional.empty();
         }
-        UserAdministrationRow first = rows.getFirst();
+        UserDetailRow first = rows.getFirst();
         return Optional.of(new UserDetail(
                 new UserId(first.id()),
                 new CompanyId(first.companyId()),
@@ -151,8 +151,10 @@ public class MyBatisUserRepository implements UserRepository {
                 first.displayName(),
                 new EmailAddress(first.email()),
                 UserStatus.valueOf(first.status()),
-                roles(rows),
-                first.version()));
+                roles(rows.stream().map(UserDetailRow::role).toList()),
+                first.version(),
+                Optional.ofNullable(first.lockedUntil()).map(at -> new UtcInstant(at.toInstant())),
+                Optional.ofNullable(first.totpEnrolledAt()).map(at -> new UtcInstant(at.toInstant()))));
     }
 
     /** SQL の並びを保ったまま、利用者ごとの行にまとめる。 */
@@ -163,12 +165,9 @@ public class MyBatisUserRepository implements UserRepository {
         return List.copyOf(byUser.values());
     }
 
-    private static Set<Role> roles(List<UserAdministrationRow> rows) {
-        return rows.stream()
-                .map(UserAdministrationRow::role)
-                .filter(Objects::nonNull)
-                .map(Role::valueOf)
-                .collect(Collectors.toSet());
+    /** 行の役割の名前（役割のない利用者の行は null）を役割にする。 */
+    private static Set<Role> roles(List<String> names) {
+        return names.stream().filter(Objects::nonNull).map(Role::valueOf).collect(Collectors.toSet());
     }
 
     @Override

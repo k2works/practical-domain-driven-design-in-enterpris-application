@@ -9,6 +9,7 @@ import com.example.cargotracker.identity.application.internal.commandservices.Se
 import com.example.cargotracker.identity.application.internal.commandservices.TotpEnrollmentService;
 import com.example.cargotracker.identity.application.internal.commandservices.TotpReEnrollmentService;
 import com.example.cargotracker.identity.application.internal.commandservices.TotpVerificationService;
+import com.example.cargotracker.identity.application.internal.commandservices.UserLoginCredentialService;
 import com.example.cargotracker.identity.application.internal.commandservices.UserRegistrationService;
 import com.example.cargotracker.identity.application.internal.commandservices.UserRoleChangeService;
 import com.example.cargotracker.identity.application.internal.commandservices.UserStatusChangeService;
@@ -206,6 +207,32 @@ public class IdentityConfiguration {
     }
 
     @Bean
+    @SuppressWarnings("java:S107") // サービスの部品をそろえて受ける
+    UserLoginCredentialService userLoginCredentialService(
+            UserRepository users,
+            CompanyRepository companies,
+            UserAssignmentRepository assignments,
+            LoginFailureRepository loginFailures,
+            TotpCredentialRepository totpCredentials,
+            RecoveryCodeRepository recoveryCodes,
+            AuditRecordRepository auditRecords,
+            UserSessionRevoker sessions,
+            Clock clock,
+            TransactionTemplate transactionTemplate) {
+        return new UserLoginCredentialService(
+                users,
+                companies,
+                assignments,
+                loginFailures,
+                totpCredentials,
+                recoveryCodes,
+                auditRecords,
+                sessions,
+                clock,
+                transactionTemplate);
+    }
+
+    @Bean
     AdministrationScopeDenialService administrationScopeDenialService(
             AuditRecordRepository auditRecords, Clock clock, TransactionTemplate transactionTemplate) {
         return new AdministrationScopeDenialService(auditRecords, clock, transactionTemplate);
@@ -213,8 +240,8 @@ public class IdentityConfiguration {
 
     @Bean
     UserAdministrationQueryService userAdministrationQueryService(
-            UserRepository users, UserAssignmentRepository assignments, CompanyRepository companies) {
-        return new UserAdministrationQueryService(users, assignments, companies);
+            UserRepository users, UserAssignmentRepository assignments, CompanyRepository companies, Clock clock) {
+        return new UserAdministrationQueryService(users, assignments, companies, clock);
     }
 
     @Bean

@@ -114,4 +114,25 @@ class LoginFailureTest {
         assertThat(afterSuccess.consecutiveFailures()).isEqualTo(5);
         assertThat(afterSuccess.lockedUntil()).isEqualTo(locked.lockedUntil());
     }
+
+    // システム管理者のロックの解除（Bolt 38c。US-18 AC3 の運用の側）
+
+    @Test
+    void ロック中なら解除で回数を0に戻しロックを外す() {
+        LoginFailure unlocked = failTimes(5).unlock(at(Duration.ofMinutes(1)));
+
+        assertThat(unlocked.consecutiveFailures()).isZero();
+        assertThat(unlocked.lockedUntil()).isEmpty();
+        assertThat(unlocked.isLocked(at(Duration.ofMinutes(1)))).isFalse();
+    }
+
+    @Test
+    void ロック中でなければ解除しても変えない() {
+        LoginFailure failing = failTimes(3);
+        LoginFailure expired = failTimes(5);
+
+        assertThat(failing.unlock(at(Duration.ofMinutes(1))).consecutiveFailures())
+                .isEqualTo(3);
+        assertThat(expired.unlock(at(Duration.ofMinutes(20))).lockedUntil()).isEqualTo(expired.lockedUntil());
+    }
 }

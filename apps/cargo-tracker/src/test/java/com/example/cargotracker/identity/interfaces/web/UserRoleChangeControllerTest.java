@@ -32,6 +32,7 @@ import com.example.cargotracker.identity.infrastructure.security.WithAuthenticat
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Role;
 import com.example.cargotracker.shared.domain.UserId;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.regex.Pattern;
@@ -311,7 +312,9 @@ class UserRoleChangeControllerTest {
                 new EmailAddress("sales@example.com"),
                 UserStatus.ACTIVE,
                 Set.of(Role.SALES),
-                version);
+                version,
+                Optional.empty(),
+                Optional.empty());
     }
 
     private static UserDetail consignee(long version) {
@@ -324,7 +327,9 @@ class UserRoleChangeControllerTest {
                 new EmailAddress("takahashi@example.com"),
                 UserStatus.ACTIVE,
                 Set.of(),
-                version);
+                version,
+                Optional.empty(),
+                Optional.empty());
     }
 
     private static UserDetail user(long version, UserStatus status) {
@@ -337,7 +342,9 @@ class UserRoleChangeControllerTest {
                 new EmailAddress("sato@example.com"),
                 status,
                 Set.of(Role.SALES),
-                version);
+                version,
+                Optional.empty(),
+                Optional.empty());
     }
 
     /** 本文に正規表現に合う箇所がある（属性の並びによらず確かめる）。 */

@@ -5,6 +5,7 @@ import com.example.cargotracker.identity.domain.model.aggregates.TotpCredential;
 import com.example.cargotracker.identity.domain.model.aggregates.TotpCredentialRepository;
 import com.example.cargotracker.identity.domain.model.valueobjects.EncryptedSecret;
 import com.example.cargotracker.shared.domain.UserId;
+import com.example.cargotracker.shared.domain.UtcInstant;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -56,6 +57,19 @@ public class InMemoryTotpCredentialRepository implements TotpCredentialRepositor
             return stored.use(step);
         });
         return used[0];
+    }
+
+    @Override
+    public boolean remove(UserId userId, UtcInstant expectedEnrolledAt) {
+        boolean[] removed = {false};
+        store.computeIfPresent(userId, (id, stored) -> {
+            if (!stored.enrolledAt().equals(expectedEnrolledAt)) {
+                return stored;
+            }
+            removed[0] = true;
+            return null;
+        });
+        return removed[0];
     }
 
     /** シナリオの開始時に資格を消す。 */

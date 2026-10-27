@@ -2,9 +2,12 @@ package com.example.cargotracker.identity.interfaces.web;
 
 import com.example.cargotracker.identity.domain.model.rules.RoleAssignmentPolicy;
 import com.example.cargotracker.identity.domain.model.valueobjects.CompanyKind;
+import com.example.cargotracker.identity.domain.model.valueobjects.IdentityVerificationMethod;
 import com.example.cargotracker.identity.domain.model.valueobjects.SuspensionReason;
 import com.example.cargotracker.identity.domain.model.valueobjects.UserStatus;
+import com.example.cargotracker.platform.web.DateTimeDisplay;
 import com.example.cargotracker.shared.domain.Role;
+import com.example.cargotracker.shared.domain.UtcInstant;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
@@ -43,6 +46,20 @@ final class UserAdministrationLabels {
             case TRANSFERRED -> "異動";
             case EMERGENCY -> "緊急停止";
         };
+    }
+
+    /** 本人確認の手段の名前（Bolt 38c）。 */
+    static String verificationMethod(IdentityVerificationMethod method) {
+        return switch (method) {
+            case PHONE_CALLBACK -> "登録の電話番号への折り返し";
+            case IN_PERSON -> "対面";
+            case COMPANY_ADMINISTRATOR -> "所属企業の管理担当者への確認";
+        };
+    }
+
+    /** ロック中の状態の文（Bolt 38c。期限は日時表示の共通部品の社内の形）。詳細の領域とロックの解除の確認が使う。 */
+    static String locked(UtcInstant until) {
+        return "ロック中（" + DateTimeDisplay.staff(until.instant()) + " まで）";
     }
 
     /** 企業の種類の名前。 */

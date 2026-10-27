@@ -4,6 +4,7 @@ import com.example.cargotracker.identity.domain.model.valueobjects.AuditAction;
 import com.example.cargotracker.identity.domain.model.valueobjects.AuditResult;
 import com.example.cargotracker.identity.domain.model.valueobjects.AuditTarget;
 import com.example.cargotracker.identity.domain.model.valueobjects.AuthenticationRejection;
+import com.example.cargotracker.identity.domain.model.valueobjects.IdentityVerificationMethod;
 import com.example.cargotracker.identity.domain.model.valueobjects.SuspensionReason;
 import com.example.cargotracker.identity.domain.model.valueobjects.UserStatus;
 import com.example.cargotracker.shared.annotation.ddd.AggregateRoot;
@@ -45,6 +46,9 @@ public final class AuditRecord {
 
     /** 理由: 管理範囲外（`ADMIN_SCOPE_DENIED` の理由。Bolt 34b）。 */
     static final String OUT_OF_SCOPE = "OUT_OF_SCOPE";
+
+    /** 管理者による TOTP の解除の理由（Bolt 38c。別経路の本人確認をした）。 */
+    static final String IDENTITY_VERIFIED = "IDENTITY_VERIFIED";
 
     private final UUID id;
     private final UtcInstant occurredAt;
@@ -336,6 +340,79 @@ public final class AuditRecord {
                 at);
     }
 
+    /**
+     * システム管理者がロックを解除したことを記録する（Bolt 38c、US-18 AC3）。理由は持たない。対象は利用者と今の版（解除では変わらない）、
+     * 変更前後はロックの状態（{@code LOCKED}・{@code UNLOCKED}）。結果は成功。
+     */
+    public static AuditRecord accountUnlocked(
+            UserId actor, CompanyId actorCompany, UserId targetUser, long targetVersion, UtcInstant at) {
+        return userTargetChanged(
+                actor,
+                actorCompany,
+                AuditAction.ACCOUNT_UNLOCKED,
+                null,
+                targetUser,
+                targetVersion,
+                "LOCKED",
+                "UNLOCKED",
+                at);
+    }
+
+    /**
+     * システム管理者が本人確認をしたうえで TOTP の登録を解除したことを記録する（Bolt 38c、US-18 AC9、SEC-10）。理由は
+     * {@code IDENTITY_VERIFIED}、対象は利用者と今の版、変更前は {@code ENROLLED}、変更後は本人確認の手段の名前と日時（UTC の ISO-8601）を
+     * {@code method=PHONE_CALLBACK;verifiedAt=2026-11-09T01:30:00Z} の形で持つ。結果は成功。
+     */
+    @SuppressWarnings("java:S107") // 解除の項目と本人確認の記録をそろえて受ける
+    public static AuditRecord totpResetByAdmin(
+            UserId actor,
+            CompanyId actorCompany,
+            UserId targetUser,
+            long targetVersion,
+            IdentityVerificationMethod method,
+            UtcInstant verifiedAt,
+            UtcInstant at) {
+        Objects.requireNonNull(method, "method");
+        Objects.requireNonNull(verifiedAt, "verifiedAt");
+        return userTargetChanged(
+                actor,
+                actorCompany,
+                AuditAction.TOTP_RESET_BY_ADMIN,
+                IDENTITY_VERIFIED,
+                targetUser,
+                targetVersion,
+                "ENROLLED",
+                "method=" + method.name() + ";verifiedAt=" + verifiedAt.instant(),
+                at);
+    }
+
+    /** 利用者を対象にした成功の記録（利用状態の変更とログインの資格の記録が共有する）。変更前後は記録の文字列のまま持つ。 */
+    @SuppressWarnings("java:S107") // 利用者を対象にした記録が共有する項目をそろえて受ける
+    private static AuditRecord userTargetChanged(
+            UserId actor,
+            CompanyId actorCompany,
+            AuditAction action,
+            String reason,
+            UserId targetUser,
+            long targetVersion,
+            String before,
+            String after,
+            UtcInstant at) {
+        Objects.requireNonNull(actor, USER_ARGUMENT);
+        Objects.requireNonNull(actorCompany, COMPANY_ARGUMENT);
+        Objects.requireNonNull(targetUser, TARGET_USER_ARGUMENT);
+        return new AuditRecord(
+                UUID.randomUUID(),
+                at,
+                actor,
+                actorCompany,
+                action,
+                AuditResult.SUCCESS,
+                reason,
+                new AuditTarget(
+                        USER_TARGET, targetUser.value().toString(), Long.toString(targetVersion), before, after));
+    }
+
     @SuppressWarnings("java:S107") // 利用状態の変更の 2 つの記録が共有する項目をそろえて受ける
     private static AuditRecord statusChanged(
             UserId actor,
@@ -347,26 +424,11 @@ public final class AuditRecord {
             UserStatus before,
             UserStatus after,
             UtcInstant at) {
-        Objects.requireNonNull(actor, USER_ARGUMENT);
-        Objects.requireNonNull(actorCompany, COMPANY_ARGUMENT);
-        Objects.requireNonNull(targetUser, TARGET_USER_ARGUMENT);
         if (Objects.requireNonNull(before, "before") == after) {
             throw new IllegalArgumentException("利用状態が変わっていない変更は記録しない");
         }
-        return new AuditRecord(
-                UUID.randomUUID(),
-                at,
-                actor,
-                actorCompany,
-                action,
-                AuditResult.SUCCESS,
-                reason,
-                new AuditTarget(
-                        USER_TARGET,
-                        targetUser.value().toString(),
-                        Long.toString(targetVersion),
-                        before.name(),
-                        after.name()));
+        return userTargetChanged(
+                actor, actorCompany, action, reason, targetUser, targetVersion, before.name(), after.name(), at);
     }
 
     private static String roleNames(Set<Role> roles) {

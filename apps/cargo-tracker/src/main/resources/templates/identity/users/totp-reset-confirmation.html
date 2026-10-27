@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/staff :: layout(~{::title}, ~{::main}, ~{::script}, 'users')}">
+<head>
+    <meta charset="UTF-8">
+    <title>認証アプリの登録の解除の確認 - cargo-tracker</title>
+    <!--/* エラー要約へフォーカスを移す（共通部品「エラー要約」。リンクの先へはブラウザの素の移動で移る） */-->
+    <script th:src="@{/js/transport-request-form.js}" defer></script>
+</head>
+<body>
+<main>
+    <!--/* 認証アプリの登録の解除の確認の領域（Bolt 38c。US-18 AC9 の管理者の経路、SEC-10）。確定に要る本人確認の手段と日時を確認の画面に
+         持ち、誤りはこの画面のエラー要約で「表示名: 文言」の形でまとめて示す（利用者の登録の入力の画面と同じ形） */-->
+    <h1>認証アプリの登録を解除しますか</h1>
+    <div id="error-summary" th:if="${summary != null}" tabindex="-1" role="alert" aria-labelledby="error-summary-title">
+        <h2 id="error-summary-title" th:text="${summary.title}">認証アプリの登録を解除できませんでした</h2>
+        <ul>
+            <li th:each="item : ${summary.items}"><a th:href="${item.href}" th:text="${item.text}">本人確認の手段: どれか 1 つを選んでください。</a></li>
+        </ul>
+    </div>
+    <dl class="row">
+        <dt class="col-sm-3">対象</dt>
+        <dd class="col-sm-9" th:text="|${user.companyName} ${user.displayName}（${user.email.value}）|">A 社 佐藤（sato@example.com）</dd>
+        <dt class="col-sm-3">現在の状態</dt>
+        <dd class="col-sm-9" id="current-state">認証アプリ: 登録済み</dd>
+        <dt class="col-sm-3">変更内容</dt>
+        <dd class="col-sm-9" id="credential-change">認証アプリの登録と回復コードを消す</dd>
+        <dt class="col-sm-3">影響</dt>
+        <dd class="col-sm-9">この利用者のログイン中の session はすべて終わります。次のログインで認証アプリを登録し直します。本人への連絡は別に行ってください。</dd>
+        <dt class="col-sm-3">回復手段</dt>
+        <dd class="col-sm-9">本人が次のログインで登録し直します。</dd>
+        <dt class="col-sm-3">実行者</dt>
+        <dd class="col-sm-9" th:text="${operator}">システム管理者 高橋</dd>
+    </dl>
+    <form method="post" th:action="@{/staff/users/{id}/totp-resets/confirmation(id=${user.id.value})}">
+        <!--/* 確認の画面で読んだ登録。確定のときに、この登録のときだけ消す（確認の後に本人が登録し直した資格は消さない） */-->
+        <input type="hidden" name="enrolledAt" th:value="${enrolledAt}">
+        <fieldset id="method"
+                  th:attr="aria-describedby=${methodError != null} ? 'method-error' : null,aria-invalid=${methodError != null} ? 'true' : null">
+            <legend class="h6">本人確認の手段</legend>
+            <p th:if="${methodError != null}" id="method-error" class="text-danger" th:text="${methodError}">どれか 1 つを選んでください。</p>
+            <div class="form-check" th:each="option : ${methodOptions}">
+                <input class="form-check-input" type="radio" name="method"
+                       th:id="|method-${option.value}|" th:value="${option.value}" th:checked="${option.selected}">
+                <label class="form-check-label" th:for="|method-${option.value}|" th:text="${option.label}">対面</label>
+            </div>
+        </fieldset>
+        <div class="mt-3">
+            <label class="form-label" for="verified-at">本人確認の日時</label>
+            <p id="verified-at-hint" class="form-text">例: 2026-11-09 10:30。タイムゾーンは Asia/Tokyo（UTC+09:00）です。7 日以内に確認した日時を入れてください。</p>
+            <p th:if="${verifiedAtError != null}" id="verified-at-error" class="text-danger" th:text="${verifiedAtError}">入力してください。</p>
+            <input class="form-control" type="text" id="verified-at" name="verifiedAt" th:value="${verifiedAt}"
+                   th:attr="aria-describedby=${verifiedAtError != null} ? 'verified-at-hint verified-at-error' : 'verified-at-hint',aria-invalid=${verifiedAtError != null} ? 'true' : null">
+        </div>
+        <div class="mt-3">
+            <button type="submit" class="btn btn-danger">解除する</button>
+            <a class="btn btn-link" th:href="@{/staff/users/{id}(id=${user.id.value})}">戻る</a>
+        </div>
+    </form>
+</main>
+</body>
+</html>

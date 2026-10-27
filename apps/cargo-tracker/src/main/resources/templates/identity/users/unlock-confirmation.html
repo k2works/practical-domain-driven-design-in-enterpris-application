@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/staff :: layout(~{::title}, ~{::main}, ~{}, 'users')}">
+<head>
+    <meta charset="UTF-8">
+    <title>ロックの解除の確認 - cargo-tracker</title>
+</head>
+<body>
+<main>
+    <!--/* ロックの解除の確認の領域（Bolt 38c。US-18 AC3 の運用の側）。利用状態の変更の確認（status-confirmation.html）の形を写す */-->
+    <h1>ロックを解除しますか</h1>
+    <dl class="row">
+        <dt class="col-sm-3">対象</dt>
+        <dd class="col-sm-9" th:text="|${user.companyName} ${user.displayName}（${user.email.value}）|">A 社 佐藤（sato@example.com）</dd>
+        <dt class="col-sm-3">現在の状態</dt>
+        <dd class="col-sm-9" id="current-state" th:text="${currentState}">ロック中（2026-11-09 10:45 Asia/Tokyo（UTC+09:00）（UTC 2026-11-09 01:45） まで）</dd>
+        <dt class="col-sm-3">変更内容</dt>
+        <dd class="col-sm-9" id="credential-change">ロックを解除する</dd>
+        <dt class="col-sm-3">影響</dt>
+        <dd class="col-sm-9">すぐにログインを試せます。失敗の回数は 0 に戻ります。</dd>
+        <dt class="col-sm-3">回復手段</dt>
+        <dd class="col-sm-9">ロックの解除は取り消せません（5 回続けて誤ると、また 15 分ロックされます）。</dd>
+        <dt class="col-sm-3">実行者</dt>
+        <dd class="col-sm-9" th:text="${operator}">システム管理者 高橋</dd>
+    </dl>
+    <form method="post" th:action="@{/staff/users/{id}/unlocks/confirmation(id=${user.id.value})}">
+        <button type="submit" class="btn btn-primary">解除する</button>
+        <a class="btn btn-link" th:href="@{/staff/users/{id}(id=${user.id.value})}">戻る</a>
+    </form>
+</main>
+</body>
+</html>

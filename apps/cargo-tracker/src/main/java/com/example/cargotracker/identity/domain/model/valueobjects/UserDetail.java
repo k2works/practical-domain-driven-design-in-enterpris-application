@@ -4,12 +4,14 @@ import com.example.cargotracker.shared.annotation.ddd.ValueObject;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Role;
 import com.example.cargotracker.shared.domain.UserId;
+import com.example.cargotracker.shared.domain.UtcInstant;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
 /**
  * 利用者の詳細。S-20 の詳細の読み出しの射影（Bolt 34）。一覧の行の項目に、所属企業の ID と種類と版を足したもの。`password_hash` を
- * 持たない。
+ * 持たない。Bolt 38c から、ログインの資格（ロックの期限と認証アプリの登録の時刻）を持つ。TOTP の秘密は持たない。
  *
  * @param id 利用者 ID
  * @param companyId 所属企業 ID
@@ -20,6 +22,8 @@ import java.util.Set;
  * @param status 利用状態
  * @param roles 役割
  * @param version 版（役割の変更の期待する版）
+ * @param lockedUntil ロックの期限（ロックの記録がなければ空。照会のサービスが {@link #asOf} で、期限の切れたロックを空にする）
+ * @param totpEnrolledAt 認証アプリの登録の時刻（未登録なら空。登録の有無と、解除の確認の画面で持つ値を兼ねる）
  */
 @ValueObject
 public record UserDetail(
@@ -31,7 +35,9 @@ public record UserDetail(
         EmailAddress email,
         UserStatus status,
         Set<Role> roles,
-        long version) {
+        long version,
+        Optional<UtcInstant> lockedUntil,
+        Optional<UtcInstant> totpEnrolledAt) {
 
     public UserDetail {
         Objects.requireNonNull(id, "id");
@@ -42,5 +48,26 @@ public record UserDetail(
         Objects.requireNonNull(email, "email");
         Objects.requireNonNull(status, "status");
         roles = Set.copyOf(roles);
+        Objects.requireNonNull(lockedUntil, "lockedUntil");
+        Objects.requireNonNull(totpEnrolledAt, "totpEnrolledAt");
+    }
+
+    /** その時刻の詳細。ロックの期限がその時刻か、それより前なら（ロックは解けている）、ロックの期限を空にする（期限ちょうどで解ける）。 */
+    public UserDetail asOf(UtcInstant now) {
+        if (lockedUntil.isEmpty() || now.instant().isBefore(lockedUntil.get().instant())) {
+            return this;
+        }
+        return new UserDetail(
+                id,
+                companyId,
+                companyName,
+                companyKind,
+                displayName,
+                email,
+                status,
+                roles,
+                version,
+                Optional.empty(),
+                totpEnrolledAt);
     }
 }

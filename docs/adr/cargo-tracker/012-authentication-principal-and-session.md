@@ -4,7 +4,7 @@ title: "ADR-012: 認証の主体は共有カーネルの型にし、password の
 description: "US-18 の password によるログインと session を、Spring Security 7 の form login と Spring Session JDBC で作る。"
 tags: [adr, authentication, session]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-26T21:57:10Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-27T03:11:49Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-06T06:51:29Z }
 ---
@@ -83,6 +83,7 @@ US-18 の password によるログインと session を、Spring Security 7 の 
   - 消した session の Cookie の次の要求は、失効の扱い（`invalidSessionStrategy`。Bolt 32e の部品）で A-03 に移る。GET の業務の画面は覚え、ログインし直すとその画面に戻る。A-03 の文言に「password を再設定したため」を足す（止めたことは示さないまま）。
   - 既知の課題: 失効した Cookie のまま再設定のリンクを開くと、失効の扱いで A-03 に移り、リンクの URL は覚えない（覚えるのは `/customer/**`・`/staff/**` の GET だけ）。もう一度リンクを開けば通る。
 - Bolt 33b から、ほかの session の失効の 2 つ目の場面として、認証アプリの再登録（A-08）を終えたら、その利用者の今の session のほかを失効させる（2026-10-15、Bolt 33b の開始準備の決定 1 で human:kakimomokuri が決定。SEC-10、[ADR-011](011-mfa-totp.md) の決定 10）。
+- Bolt 38c から、session の失効の 3 つ目の場面として、システム管理者が S-20 で TOTP の登録を解除したら、確定の後にその利用者の session をすべて失効させる（`UserSessionRevoker.revokeAll`。前例は利用の再開。消せなくても解除は戻さず警告のログ。失効の失敗の扱いは #49）。次の request は失効の扱いで A-03 に移る（2026-10-27、Bolt 38c の開始準備の決定 (3)、human:kakimomokuri）。
   - 失効は再登録のトランザクションのコミットの後に行い、失敗は警告のログにとどめる（password の再設定と同じ理由）。
   - ドメインのポート `UserSessionRevoker` に `revokeOthers(メールアドレス, 残す session の ID)` を足す（メソッドが 2 つになるので `@FunctionalInterface` を外す）。実装 `SpringSessionUserSessionRevoker` は主体の名前の索引で探し、残す session を除いて消す。ほかの利用者と主体のない session は消さない。
   - 今の session は残す（password の再設定と違い、今の利用者は回復コードと新しい認証アプリで本人であることを示した後で、ログインし直させる理由がない）。今の session の ID は変えない。回復コードでログインしたときに、認証の入口の `ChangeSessionIdAuthenticationStrategy` がすでに変えている（`RecoveryCodeLoginSecurityIntegrationTest` が確かめている。Bolt 33a の Try T-130）。
@@ -197,6 +198,7 @@ US-18 の password によるログインと session を、Spring Security 7 の 
 
 ## 改訂の経緯
 
+- 2026-10-27: Bolt 38c のステップ 1 で、決定 3 のほかの session を失効させる場面に、システム管理者による TOTP の解除を足した
 - 2026-10-26: Bolt 38b4 で、A-06 の完了の監査に、招待のリンクで初回の password を設定したときの `INITIAL_PASSWORD_SET` を足した（再設定は `PASSWORD_RESET_COMPLETED` のまま。Bolt 38b4 の開始準備の決定 (3)。human:kakimomokuri が決定）。
 - 2026-10-17: Bolt 34c のステップ 1 で、決定 4 の権限外のアクセスの試行の記録を、Bolt 34b からの事実（controller の確定の POST で `AdministrationScopeDenialService` が単独で書き、GET では書かない）に直した。決定 4 と「W5 で見直すこと」の 5 の書き手の記述を、Bolt 34c の決定（書き手は今のまま。[ADR-011](011-mfa-totp.md) のステータス）に結んだ（Bolt 34c の開始準備の決定 2。human:kakimomokuri が決定）。
 - 2026-10-16: Bolt 33f の開発レビューで、決定 3 の URL を application 層に置く理由を「規則に例外を足さずに済む」から「規則に見えない定数の依存の向きを、設計の約束として保つ」に正し、合成ルートが参照していた password の再設定の URL（`PasswordResetController.URL`）も `SessionPaths` に寄せた。決定 6 に `SessionPaths` を足した（human:kakimomokuri が決定）。

@@ -7,6 +7,7 @@ import static org.assertj.core.api.Assertions.fail;
 import com.example.cargotracker.identity.domain.model.valueobjects.AuthenticationRejection;
 import com.example.cargotracker.identity.domain.model.valueobjects.CompanyKind;
 import com.example.cargotracker.identity.domain.model.valueobjects.EmailAddress;
+import com.example.cargotracker.identity.domain.model.valueobjects.LoginCredentialRejection;
 import com.example.cargotracker.identity.domain.model.valueobjects.RoleChangeRejection;
 import com.example.cargotracker.identity.domain.model.valueobjects.RoleChangeRejectionReason;
 import com.example.cargotracker.identity.domain.model.valueobjects.StatusChangeRejection;
@@ -550,5 +551,39 @@ class UserTest {
             case User.StatusChangeDecision.Approved(User.StatusChangeApproval approval) -> approval;
             case User.StatusChangeDecision.Refused(StatusChangeRejection rejection) -> fail("拒否された: " + rejection);
         };
+    }
+
+    // ログインの資格の変更（ロックの解除と TOTP の解除。Bolt 38c。開始準備の決定 (5)）
+
+    @Test
+    void 業務の役割の利用者のログインの資格は停止中でも変えられる() {
+        assertThat(staff(Set.of(Role.SALES), UserStatus.ACTIVE).loginCredentialChangeRejection(ADMIN))
+                .isEmpty();
+        assertThat(staff(Set.of(Role.SHIPPER), UserStatus.SUSPENDED).loginCredentialChangeRejection(ADMIN))
+                .isEmpty();
+    }
+
+    @Test
+    void 自分のログインの資格は変えられない() {
+        User admin = User.of(
+                ADMIN,
+                COMPANY,
+                EmailAddress.of("admin@example.com"),
+                "管理 次郎",
+                "{bcrypt}$2a$10$hash",
+                UserStatus.ACTIVE,
+                Set.of(Role.SALES),
+                0L);
+
+        assertThat(admin.loginCredentialChangeRejection(ADMIN)).contains(LoginCredentialRejection.SELF);
+    }
+
+    @ParameterizedTest(name = "{0} を持つ利用者のログインの資格は変えられない")
+    @EnumSource(
+            value = Role.class,
+            names = {"SYSTEM_ADMIN", "AUDITOR"})
+    void 監督の役割を持つ利用者のログインの資格は変えられない(Role oversight) {
+        assertThat(staff(Set.of(oversight), UserStatus.ACTIVE).loginCredentialChangeRejection(ADMIN))
+                .contains(LoginCredentialRejection.OVERSIGHT_ROLE);
     }
 }

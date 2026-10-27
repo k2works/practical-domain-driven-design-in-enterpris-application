@@ -56,8 +56,8 @@ public interface IdentityMapper {
     /** システム管理者に管理範囲として割り当てた企業 ID（Bolt 34b）。 */
     List<UUID> selectManagedCompanies(UUID adminId);
 
-    /** S-20 の詳細の行（Bolt 34）。役割の数だけ行が出る。 */
-    List<UserAdministrationRow> selectUserAdministrationRowsById(UUID id);
+    /** S-20 の詳細の行（Bolt 34。Bolt 38c からログインの資格を持つ詳細だけの行）。役割の数だけ行が出る。 */
+    List<UserDetailRow> selectUserDetailRowsById(UUID id);
 
     /** 役割を外す（Bolt 34）。 */
     int deleteUserRole(@Param("userId") UUID userId, @Param("role") String role);

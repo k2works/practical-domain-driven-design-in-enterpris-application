@@ -14,8 +14,8 @@ import java.util.Optional;
 /**
  * 利用者の管理の判定の前半（Bolt 34e で役割の変更 {@link UserRoleChangeService} と利用状態の変更 {@link UserStatusChangeService}
  * の重複を寄せた）。操作者がシステム管理者か → 利用者 → 所属企業 → 管理範囲（IA-INV-14）の順に確かめ、管理する利用者と所属企業か、
- * 受け付けない理由を返す。管理範囲は規則より先に見る（範囲外の利用者の様子を規則の拒否で漏らさない）。Bean にせず、2 つのサービスが
- * 組み立てる。
+ * 受け付けない理由を返す。管理範囲は規則より先に見る（範囲外の利用者の様子を規則の拒否で漏らさない）。Bean にせず、使うサービス（Bolt
+ * 38c からログインの資格の管理 {@link UserLoginCredentialService} も）が組み立てる。
  */
 final class ManagedUserLookup {
 

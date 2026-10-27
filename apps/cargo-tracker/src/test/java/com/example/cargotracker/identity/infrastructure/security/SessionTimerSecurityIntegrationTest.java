@@ -200,6 +200,20 @@ class SessionTimerSecurityIntegrationTest {
     }
 
     @Test
+    void A03の失効の理由は1文目を全文で示し管理者の解除の後の案内を添える() throws Exception {
+        // 理由を受け取らないので並べる（Bolt 38c の開始準備の決定 (9)。全文で 1 回確かめる。T-206）
+        assertThat(mvc.perform(get(EXPIRED_URL))
+                        .andExpect(status().isOk())
+                        .andReturn()
+                        .getResponse()
+                        .getContentAsString())
+                .contains("一定時間操作がなかったため、ログインの手続き（認証コードの入力や認証アプリの登録）を時間内に終えなかったため、"
+                        + "ログインから 8 時間を過ぎたため、password を再設定したため、認証アプリを登録し直したため、"
+                        + "またはシステム管理者が認証アプリの登録を解除したため、ログアウトしました。もう一度ログインしてください。")
+                .contains("システム管理者が認証アプリの登録を解除した場合は、次のログインで認証アプリを登録し直してください。");
+    }
+
+    @Test
     void 認可の403には送信が拒まれた印を置かない() throws Exception {
         // 役割にない画面の 403 は、ログアウトでも送信の失敗でもない（Bolt 32f）
         Cookie session = login();

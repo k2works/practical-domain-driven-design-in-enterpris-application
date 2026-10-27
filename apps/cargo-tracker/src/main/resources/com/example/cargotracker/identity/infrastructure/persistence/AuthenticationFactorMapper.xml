@@ -65,6 +65,14 @@
            AND secret_encrypted = #{expectedSecret}
     </update>
 
+    <!-- システム管理者の解除（Bolt 38c）。確認の画面で読んだ登録の時刻のときだけ消す。確認の後の再登録（A-08 は登録の時刻を書き換える）
+         は消さない。同時の 2 つの解除は、後の文が先の行ロックを待って WHERE を評価し直し、0 件になる -->
+    <delete id="deleteTotpCredentialIfEnrolledAt">
+        DELETE FROM identity.totp_credential
+         WHERE user_id = #{userId}
+           AND enrolled_at = #{enrolledAt}
+    </delete>
+
     <delete id="deleteRecoveryCodes">
         DELETE FROM identity.recovery_code WHERE user_id = #{userId}
     </delete>
@@ -132,5 +140,16 @@
                updated_at = #{now}
          WHERE user_id = #{userId}
            AND (locked_until IS NULL OR locked_until &lt;= #{now})
+    </update>
+
+    <!-- システム管理者の解除（Bolt 38c。規則は LoginFailure#unlock と同じ）。ロック中（期限より前）のときだけ 0 回・ロックなしに戻す。
+         期限の切れたロックと失敗の途中は変えない。同時の 2 つの解除は、後の文が先の行ロックを待って WHERE を評価し直し、0 件になる -->
+    <update id="unlockLoginFailureIfLocked">
+        UPDATE identity.login_failure
+           SET consecutive_failures = 0,
+               locked_until = CAST(NULL AS TIMESTAMP WITH TIME ZONE),
+               updated_at = #{now}
+         WHERE user_id = #{userId}
+           AND locked_until &gt; #{now}
     </update>
 </mapper>

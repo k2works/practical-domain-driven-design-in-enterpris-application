@@ -49,6 +49,11 @@ public class MyBatisRecoveryCodeRepository implements RecoveryCodeRepository {
         return mapper.updateRecoveryCodeUsedIfUnused(userId.value(), recoveryCodeId, toOffset(usedAt)) == 1;
     }
 
+    @Override
+    public void removeAll(UserId userId) {
+        mapper.deleteRecoveryCodes(userId.value());
+    }
+
     private static OffsetDateTime toOffset(UtcInstant instant) {
         return instant.instant().atOffset(ZoneOffset.UTC);
     }

@@ -15,10 +15,21 @@ public enum AuditAction {
     TOTP_ENROLLED,
     /** 認証アプリを登録し直した（回復コードでログインした後。秘密を置き換え、回復コードを発行し直した。Bolt 33b）。 */
     TOTP_RE_ENROLLED,
+    /**
+     * システム管理者が別経路の本人確認をしたうえで利用者の TOTP の登録を解除した（Bolt 38c。US-18 AC9、SEC-10）。成功だけを記録し、理由は
+     * {@code IDENTITY_VERIFIED}、対象（利用者と今の版）と、変更前 {@code ENROLLED}・変更後に本人確認の手段の名前と日時（UTC）を
+     * {@link AuditTarget} に残す。既に解除・登録が変わったときは記録しない。
+     */
+    TOTP_RESET_BY_ADMIN,
     /** 回復コードを 1 つ使った（A-02 で TOTP の代わりに使った。Bolt 31c。続けて LOGIN_SUCCEEDED を書く）。 */
     RECOVERY_CODE_USED,
     /** 5 回続けて失敗してロックした（Bolt 32。US-18 AC3）。 */
     ACCOUNT_LOCKED,
+    /**
+     * システム管理者がロック中の利用者のロックを解除した（Bolt 38c。US-18 AC3 の運用の側）。成功だけを記録し、理由は持たない。対象
+     * （利用者と今の版）とロックの前後（{@code LOCKED}・{@code UNLOCKED}）を {@link AuditTarget} に残す。既に解除されていたときは記録しない。
+     */
+    ACCOUNT_UNLOCKED,
     /** request ごとの確かめで利用停止・無効な企業・利用者なしを見つけて session を捨てた（Bolt 32c。US-18 AC6）。 */
     SESSION_REVOKED,
     /** ログアウトした。 */
