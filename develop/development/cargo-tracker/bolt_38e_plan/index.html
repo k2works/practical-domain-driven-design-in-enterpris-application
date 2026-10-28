@@ -8434,7 +8434,7 @@
     
   
   
-    <span class="md-status md-status--draft"></span>
+    <span class="md-status md-status--stable"></span>
   
 
   
@@ -13873,12 +13873,16 @@
 <td style="text-align: left;">担当企業はまだありません。担当企業は、業務の画面で扱える企業を絞るために使います（業務の画面で効くのは、今後の更新からです）。</td>
 </tr>
 <tr>
-<td style="text-align: left;">管理範囲の外の担当企業</td>
-<td style="text-align: left;">管理範囲の外の企業 {N} 社も担当しています。この画面では変えられません。</td>
+<td style="text-align: left;">この画面で変えられない担当企業（【開発レビューの後に改めた】管理範囲の外の企業と、管理範囲の中でも無効になった荷主など。2026-10-28、human:kakimomokuri）</td>
+<td style="text-align: left;">この画面で変えられない企業 {N} 社も担当しています。</td>
 </tr>
 <tr>
-<td style="text-align: left;">操作のボタン</td>
-<td style="text-align: left;">変更内容を確認する</td>
+<td style="text-align: left;">担当企業にできる荷主の企業が管理範囲にない（【開発レビューの後に足した】選択肢と確認の操作を出さない）</td>
+<td style="text-align: left;">あなたの管理範囲には、担当企業にできる荷主の企業がありません。</td>
+</tr>
+<tr>
+<td style="text-align: left;">操作のボタン（【開発レビューの後に改めた】役割の領域のボタンと名前で見分ける）</td>
+<td style="text-align: left;">担当範囲の変更内容を確認する</td>
 </tr>
 <tr>
 <td style="text-align: left;">確認の見出しとボタン</td>
@@ -13886,7 +13890,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">確認の領域</td>
-<td style="text-align: left;">対象、現在の状態「担当企業: {企業名}、…（管理範囲の外の企業 {N} 社）」、変更内容「追加: {企業名}、…／解除: {企業名}、…」、影響「この利用者の担当企業が変わります。業務の画面で効くのは、今後の更新からです。」、回復手段「もう一度変更すれば戻せます。」、実行者</td>
+<td style="text-align: left;">対象、現在の状態「担当企業: {企業名}、…（この画面で変えられない企業 {N} 社）」、変更内容「追加: {企業名}、…／解除: {企業名}、…」、影響「この利用者の担当企業が変わります。業務の画面で効くのは、今後の更新からです。」、回復手段「もう一度変更すれば戻せます。」、実行者</td>
 </tr>
 <tr>
 <td style="text-align: left;">詳細のエラー要約の見出し</td>
@@ -14042,10 +14046,31 @@
 </tr>
 <tr>
 <td style="text-align: left;">6b</td>
-<td style="text-align: left;">同じ利用者に <code>BOOKING</code> の行がある</td>
+<td style="text-align: left;">同じ利用者に <code>BOOKING</code> の行がある（解除する企業と同じ <code>scope_id</code> を含む。開発レビューの後に V13 のため準備を改めた）</td>
 <td style="text-align: left;"><code>COMPANY</code> の差だけを書き、<code>BOOKING</code> の行は残る</td>
 <td style="text-align: left;">詳細</td>
 <td style="text-align: left;">契約</td>
+</tr>
+<tr>
+<td style="text-align: left;">6c</td>
+<td style="text-align: left;">管理範囲の中で無効になった荷主を担当している（開発レビューの後に足した）</td>
+<td style="text-align: left;">選択肢に出さず、この画面で変えられない企業の数に入れる</td>
+<td style="text-align: left;">詳細（運用の窓口へ）</td>
+<td style="text-align: left;"><code>UserAdministrationControllerTest</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">6d</td>
+<td style="text-align: left;">操作者の管理範囲に担当企業にできる荷主の企業がない（開発レビューの後に足した）</td>
+<td style="text-align: left;">理由を一文で示し、選択肢も確認の操作も出さない</td>
+<td style="text-align: left;">詳細のほかの領域</td>
+<td style="text-align: left;"><code>UserAdministrationControllerTest</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">6e</td>
+<td style="text-align: left;">すべて解除して確認へ進み「戻る」（開発レビューの後に足した）</td>
+<td style="text-align: left;">印を外したまま詳細に戻る（選んだことを印 <code>companiesChosen</code> で渡す）</td>
+<td style="text-align: left;">詳細</td>
+<td style="text-align: left;"><code>UserAssignmentControllerTest</code>・<code>UserAdministrationControllerTest</code></td>
 </tr>
 <tr>
 <td style="text-align: left;">7</td>

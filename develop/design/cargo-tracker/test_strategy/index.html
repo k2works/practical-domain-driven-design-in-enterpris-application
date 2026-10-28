@@ -8655,7 +8655,7 @@
     
   
   
-    <span class="md-status md-status--draft"></span>
+    <span class="md-status md-status--stable"></span>
   
 
   
@@ -15441,8 +15441,8 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 <tr>
 <td style="text-align: left;">US-16</td>
 <td style="text-align: left;">AC1（企業・利用者・役割・担当案件の関係と変更履歴。登録の手段と初回の設定を含む）</td>
-<td style="text-align: left;">34・38b〜38b4（担当案件は 38e。未）</td>
-<td style="text-align: left;"><code>@US-16-AC1</code>（manage_user_roles_ui の役割の変更、register_user_ui の登録と招待から A-07 まで <code>@demo-bolt-38b4</code>）、監査 <code>ROLES_CHANGED</code>・<code>USER_REGISTERED</code>・<code>INITIAL_PASSWORD_SET</code> の統合テスト。照合は途中の経過で、閉じるのは 38g</td>
+<td style="text-align: left;">34・38b〜38b4・38e（担当案件は担当企業で近似する。Bolt 38e）</td>
+<td style="text-align: left;"><code>@US-16-AC1</code>（manage_user_roles_ui の役割の変更、register_user_ui の登録と招待から A-07 まで <code>@demo-bolt-38b4</code>）、<code>manage_user_assignments_ui</code>（担当範囲の割り当て。Bolt 38e）、監査 <code>ROLES_CHANGED</code>・<code>USER_REGISTERED</code>・<code>INITIAL_PASSWORD_SET</code>・<code>ASSIGNMENTS_CHANGED</code> の統合テスト。照合は途中の経過で、閉じるのは 38g</td>
 </tr>
 <tr>
 <td style="text-align: left;">US-16</td>

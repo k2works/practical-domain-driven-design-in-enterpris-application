@@ -8628,7 +8628,7 @@
     
   
   
-    <span class="md-status md-status--draft"></span>
+    <span class="md-status md-status--stable"></span>
   
 
   
@@ -14437,6 +14437,12 @@
 <td style="text-align: left;">システム管理者・監査担当者のロックの解除と TOTP の解除は S-20 で扱わない。運用の手順（ランブック。W10）で行う</td>
 <td style="text-align: left;">システム管理者</td>
 <td style="text-align: left;">IA-INV-01</td>
+</tr>
+<tr>
+<td style="text-align: left;">監督の役割と業務の役割の付け替え</td>
+<td style="text-align: left;"><code>user_assignment</code> の同じ <code>COMPANY</code> の行は、システム管理者の管理範囲と業務担当者の担当企業の 2 つの意味を持つ（役割で読み分ける。Bolt 38e）。監督の役割と業務の役割を付け替えるときは、先にその利用者の <code>COMPANY</code> の行を消す（残すと、担当企業が管理範囲に、管理範囲が担当企業になる）。手順はランブック（W10）に書く</td>
+<td style="text-align: left;">システム管理者</td>
+<td style="text-align: left;">IA-INV-01・IA-INV-02・IA-INV-14</td>
 </tr>
 <tr>
 <td style="text-align: left;">権限の定期見直し</td>
