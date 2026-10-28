@@ -4,7 +4,7 @@ title: "cargo-tracker システムユースケース"
 description: "cargo-tracker の MVP を中心とするシステムユースケースの目的、保証、主成功シナリオ、拡張、測定基準。"
 tags: [requirements, usecase]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-22T12:21:52Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-28T04:02:31Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T05:20:11Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:39Z }
@@ -360,6 +360,8 @@ MVP の決定: 許可は予約単位であり、引渡し完了まで荷主担�
 | カスタマーサポート | 許可された追跡照会、有人案件の受付・進捗・回答 | 担当企業・担当案件 | 予約、経路、実績、権限の変更は禁止 |
 | システム管理者 | 利用者の登録・停止、固定役割の付与・取消し | 管理対象企業 | 業務データの作成・変更・承認は禁止 |
 | 監査担当者 | 監査証跡の照会 | 許可された企業・期間 | 業務データと権限の変更は禁止 |
+
+パイロットでは、担当案件を担当企業で近似する（Bolt 38e の決定 (10)、2026-10-28、human:kakimomokuri）。営業担当者・経路設計者・追跡管理者・カスタマーサポートの対象範囲は担当企業（システム管理者が S-20 で割り当てる）で、データ責任者の対象範囲は W7 で決める。
 
 ### UC-17 監査証跡を照会する
 

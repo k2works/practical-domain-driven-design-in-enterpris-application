@@ -121,7 +121,9 @@ public class UserAdministrationUiSteps {
     @かつ("役割 {string} を選んで変更内容を確認する")
     public void 役割を選んで確認する(String role) {
         page().getByLabel(role, new Page.GetByLabelOptions().setExact(true)).check();
-        page().getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("変更内容を確認する"))
+        // 担当範囲の領域（Bolt 38e）のボタン「担当範囲の変更内容を確認する」にも名前が部分一致するので、役割の領域の中で押す
+        region("役割")
+                .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("変更内容を確認する"))
                 .click();
         page().waitForLoadState();
         browser.checkAccessibility();
@@ -130,7 +132,9 @@ public class UserAdministrationUiSteps {
     @かつ("役割 {string} を外して変更内容を確認する")
     public void 役割を外して確認する(String role) {
         page().getByLabel(role, new Page.GetByLabelOptions().setExact(true)).uncheck();
-        page().getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("変更内容を確認する"))
+        // 担当範囲の領域（Bolt 38e）のボタン「担当範囲の変更内容を確認する」にも名前が部分一致するので、役割の領域の中で押す
+        region("役割")
+                .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("変更内容を確認する"))
                 .click();
         page().waitForLoadState();
         browser.checkAccessibility();

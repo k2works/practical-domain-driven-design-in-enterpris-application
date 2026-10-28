@@ -115,6 +115,8 @@ tasks.named('test') {
 	}
 	// Spring Modulith の図（ModuleDocumentationTest）を出力として宣言し、キャッシュから復元しても図が残るようにする
 	outputs.dir(layout.buildDirectory.dir('spring-modulith-docs')).withPropertyName('moduleDocumentation')
+	// テストの Spring の文脈がキャッシュに積み上がり、既定（512 MB）では足りなくなった（Bolt 38e。2026-10-28、human:kakimomokuri が決定）
+	maxHeapSize = '1g'
 }
 
 // 画面の層の受入シナリオ（@ui）。Playwright の Chromium をヘッドレスで動かす。check に入れず、CI では別のジョブで動かす

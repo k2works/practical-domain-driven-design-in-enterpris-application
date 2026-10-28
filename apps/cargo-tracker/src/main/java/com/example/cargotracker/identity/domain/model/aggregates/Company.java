@@ -44,4 +44,9 @@ public final class Company {
     public boolean active() {
         return active;
     }
+
+    /** 業務担当者の担当企業にできるか（Bolt 38e の決定 (11)）。有効な荷主の企業だけ（運用会社・荷受人・無効な企業はできない）。 */
+    public boolean acceptsAssignment() {
+        return active && kind == CompanyKind.SHIPPER;
+    }
 }

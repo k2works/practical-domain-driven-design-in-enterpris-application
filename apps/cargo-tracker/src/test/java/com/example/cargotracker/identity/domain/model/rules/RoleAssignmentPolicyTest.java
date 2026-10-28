@@ -139,4 +139,28 @@ class RoleAssignmentPolicyTest {
         assertThat(RoleAssignmentPolicy.holdsOversightRole(Set.of(Role.SALES, Role.AUDITOR)))
                 .isTrue();
     }
+
+    @ParameterizedTest(name = "{0} を持つ利用者には担当範囲がある")
+    @EnumSource(
+            value = Role.class,
+            names = {"SALES", "ROUTE_DESIGNER", "TRACKING_MANAGER", "CUSTOMER_SUPPORT"})
+    void 業務の4つの役割のどれかを持てば担当範囲がある(Role scoped) {
+        // Bolt 38e の決定 (10)。担当案件を担当企業で近似する役割
+        assertThat(RoleAssignmentPolicy.holdsAssignmentScopedRole(Set.of(scoped)))
+                .isTrue();
+    }
+
+    @ParameterizedTest(name = "{0} だけの利用者には担当範囲がない")
+    @EnumSource(
+            value = Role.class,
+            names = {"SHIPPER", "DATA_STEWARD", "SYSTEM_ADMIN", "AUDITOR"})
+    void 荷主とデータ責任者と監督の役割だけなら担当範囲がない(Role unscoped) {
+        assertThat(RoleAssignmentPolicy.holdsAssignmentScopedRole(Set.of(unscoped)))
+                .isFalse();
+    }
+
+    @Test
+    void 役割がなければ担当範囲がない() {
+        assertThat(RoleAssignmentPolicy.holdsAssignmentScopedRole(Set.of())).isFalse();
+    }
 }

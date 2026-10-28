@@ -3,6 +3,7 @@ package com.example.cargotracker.identity.domain.model.aggregates;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.example.cargotracker.identity.domain.model.valueobjects.AssignedCompanies;
 import com.example.cargotracker.identity.domain.model.valueobjects.AuditAction;
 import com.example.cargotracker.identity.domain.model.valueobjects.AuditResult;
 import com.example.cargotracker.identity.domain.model.valueobjects.AuditTarget;
@@ -15,6 +16,7 @@ import com.example.cargotracker.shared.domain.Role;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Instant;
+import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
@@ -135,6 +137,48 @@ class AuditRecordTest {
                 .isInstanceOf(NullPointerException.class);
         assertThatThrownBy(() -> AuditRecord.sessionRevoked(USER, null, AuthenticationRejection.UNKNOWN_USER, AT))
                 .isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
+    void 担当範囲の変更は対象の利用者と版と変更前後の担当企業を企業IDの昇順で記録する() {
+        // Bolt 38e の行 3（V16）。企業名は変わりうるので残さない
+        UserId target = new UserId(UUID.randomUUID());
+        CompanyId first = new CompanyId(UUID.fromString("00000000-0000-0000-0000-000000000001"));
+        CompanyId second = new CompanyId(UUID.fromString("00000000-0000-0000-0000-000000000002"));
+        CompanyId third = new CompanyId(UUID.fromString("00000000-0000-0000-0000-000000000003"));
+
+        AuditRecord auditRecord = AuditRecord.assignmentsChanged(
+                USER,
+                COMPANY,
+                target,
+                7L,
+                new AssignedCompanies(Set.of(third, first)),
+                new AssignedCompanies(Set.of(second, third, first)),
+                AT);
+
+        assertThat(auditRecord.action()).isEqualTo(AuditAction.ASSIGNMENTS_CHANGED);
+        assertThat(auditRecord.result()).isEqualTo(AuditResult.SUCCESS);
+        assertThat(auditRecord.reason()).isNull();
+        assertThat(auditRecord.actorUserId()).isEqualTo(USER);
+        assertThat(auditRecord.target())
+                .isEqualTo(new AuditTarget(
+                        "USER",
+                        target.value().toString(),
+                        "7",
+                        first.value() + "," + third.value(),
+                        first.value() + "," + second.value() + "," + third.value()));
+    }
+
+    @Test
+    void 担当企業がなくなる変更は変更後を空で記録する() {
+        UserId target = new UserId(UUID.randomUUID());
+        CompanyId only = new CompanyId(UUID.randomUUID());
+
+        AuditRecord auditRecord = AuditRecord.assignmentsChanged(
+                USER, COMPANY, target, 2L, new AssignedCompanies(Set.of(only)), AssignedCompanies.none(), AT);
+
+        assertThat(auditRecord.target().beforeState()).isEqualTo(only.value().toString());
+        assertThat(auditRecord.target().afterState()).isEmpty();
     }
 
     @Test

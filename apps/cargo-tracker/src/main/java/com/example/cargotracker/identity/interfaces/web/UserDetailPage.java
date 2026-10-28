@@ -2,14 +2,17 @@ package com.example.cargotracker.identity.interfaces.web;
 
 import com.example.cargotracker.identity.application.internal.commandservices.AdministrationScopeDenialService;
 import com.example.cargotracker.identity.application.internal.commandservices.UserAdministrationRefusal;
+import com.example.cargotracker.identity.application.internal.queryservices.AssignableCompanyQuery;
 import com.example.cargotracker.identity.application.internal.queryservices.UserAdministrationQueryService;
 import com.example.cargotracker.identity.application.internal.queryservices.UserLookup;
+import com.example.cargotracker.identity.domain.model.aggregates.Company;
 import com.example.cargotracker.identity.domain.model.rules.RoleAssignmentPolicy;
 import com.example.cargotracker.identity.domain.model.valueobjects.SuspensionReason;
 import com.example.cargotracker.identity.domain.model.valueobjects.SuspensionRecord;
 import com.example.cargotracker.identity.domain.model.valueobjects.UserDetail;
 import com.example.cargotracker.identity.domain.model.valueobjects.UserStatus;
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
+import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Role;
 import com.example.cargotracker.shared.domain.UserId;
 import java.util.Arrays;
@@ -35,7 +38,7 @@ import org.springframework.web.server.ResponseStatusException;
  * 1 度だけ決めて model に置く（テンプレートの欄を描く条件もそれを読む）、(3) {@link #anchor} の switch に、描く群の最初の選択肢を
  * リンク先にする枝を足す（値を足すと網羅の誤りでコンパイルが止まる）、(4) テンプレートに領域を足す（1 つの領域に操作が 2 つなら値を
  * 2 つ対応させる）、(5) controller は {@link Operation} を渡す。選び方の欄のない操作（Bolt 38c のログインの資格）は (2) を飛ばし、(3) で
- * 空を返す（拒否は文言だけを示す）。
+ * 空を返す（拒否は文言だけを示す）。Bolt 38e の担当範囲は、担当範囲のある役割の利用者だけに領域を出し、(2) の代わりに {@link AssignmentArea} を描く。
  */
 @Component
 final class UserDetailPage {
@@ -54,6 +57,12 @@ final class UserDetailPage {
 
     /** 自分の詳細のログインの資格の領域の案内（UI 設計 S-20。Bolt 38c）。ログインの資格の拒否の文言と同じ。 */
     static final String SELF_CREDENTIAL_NOTE = "自分のログインの資格は、この画面では変えられません。";
+
+    /** 担当企業がないときの担当範囲の領域の案内（UI 設計 S-20。Bolt 38e。括弧の文は業務の側が効く 38g で外す）。 */
+    static final String NO_ASSIGNMENT_NOTE = "担当企業はまだありません。担当企業は、業務の画面で扱える企業を絞るために使います（業務の画面で効くのは、今後の更新からです）。";
+
+    /** 担当企業にできる荷主が操作者の管理範囲にないときの担当範囲の領域の案内（UI 設計 S-20。Bolt 38e の開発レビューの低-1）。 */
+    static final String NO_SELECTABLE_NOTE = "あなたの管理範囲には、担当企業にできる荷主の企業がありません。";
 
     /** 監督の役割を持つ利用者の詳細のログインの資格の領域の案内（UI 設計 S-20。Bolt 38c）。ログインの資格の拒否の文言と同じ。 */
     static final String OVERSIGHT_CREDENTIAL_NOTE = "システム管理者・監査担当者のログインの資格は、この画面では変えられません。運用の手順に従ってください。";
@@ -90,6 +99,11 @@ final class UserDetailPage {
         };
     }
 
+    /** 操作者が担当企業にできる企業（Bolt 38e。担当範囲の変更の確認が企業名を示すのに使う）。権限がなければ 403。 */
+    List<Company> assignableCompanies(AuthenticatedActor actor) {
+        return queryService.assignableCompanies(actor).itemsOr(UserDetailPage::forbidden);
+    }
+
     /** 詳細の画面を描く。 */
     String render(DetailForm form, AuthenticatedActor actor, Model model) {
         UserDetail user = form.user();
@@ -102,6 +116,10 @@ final class UserDetailPage {
         List<RoleOption> roleOptions = roleOptions(assignable, form.selected());
         List<ReasonOption> reasonOptions = reasonOptions(form.reason());
         String statusNote = statusNote(user, self);
+        // 担当範囲の領域は担当範囲のある役割の利用者だけに出す（Bolt 38e。どの役割かは規則だけが知る）
+        AssignmentArea assignments = RoleAssignmentPolicy.holdsAssignmentScopedRole(user.roles())
+                ? AssignmentArea.of(user, form.companies(), assignableCompanies(actor))
+                : null;
         // 欄を描くかはここで 1 度だけ決め、テンプレートとエラー要約のリンク先の両方が読む（Bolt 38）
         Fields fields =
                 new Fields(!self && !assignable.isEmpty(), statusNote == null && user.status() == UserStatus.ACTIVE);
@@ -132,8 +150,11 @@ final class UserDetailPage {
                         section -> anchor(
                                 section,
                                 fields.roles() ? roleOptions : List.of(),
-                                fields.reason() ? reasonOptions : List.of())));
+                                fields.reason() ? reasonOptions : List.of(),
+                                assignments == null ? List.of() : assignments.options())));
         model.addAttribute("credentials", LoginCredentials.of(user, self));
+        model.addAttribute("assignments", assignments);
+        model.addAttribute("assignmentError", form.errorOf(Section.ASSIGNMENTS));
         model.addAttribute(UserAdministrationLabels.ACTIVE_ATTRIBUTE, UserAdministrationLabels.ACTIVE);
         return DETAIL_VIEW;
     }
@@ -160,7 +181,8 @@ final class UserDetailPage {
                                 retry.selected(),
                                 retry.reason(),
                                 retry.version(),
-                                new Problem(operation.section(), retry.message())),
+                                new Problem(operation.section(), retry.message()),
+                                retry.companies()),
                         actor,
                         model);
             }
@@ -198,7 +220,10 @@ final class UserDetailPage {
      * 描かないときは選択肢を空で渡すので、リンク先も空。
      */
     private static Optional<String> anchor(
-            Section section, List<RoleOption> drawnRoles, List<ReasonOption> drawnReasons) {
+            Section section,
+            List<RoleOption> drawnRoles,
+            List<ReasonOption> drawnReasons,
+            List<CompanyOption> drawnCompanies) {
         return switch (section) {
             case ROLES ->
                 drawnRoles.stream()
@@ -208,6 +233,7 @@ final class UserDetailPage {
                 drawnReasons.stream()
                         .findFirst()
                         .map(option -> "#reason-" + option.reason().name());
+            case ASSIGNMENTS -> drawnCompanies.stream().findFirst().map(option -> "#company-" + option.id());
             // ログインの資格の操作は詳細に選び方の欄を持たない（拒否は文言だけを示す。Bolt 38c）
             case UNLOCK, TOTP_RESET -> Optional.empty();
         };
@@ -278,7 +304,8 @@ final class UserDetailPage {
         return new ResponseStatusException(HttpStatus.NOT_FOUND);
     }
 
-    private static ResponseStatusException forbidden() {
+    /** 権限なしの応答（403、A-04）。一覧系の照会の権限なし（{@code AdministrationListing.NotPermitted}）もここに寄せる（Bolt 38e。#50 (b)）。 */
+    static ResponseStatusException forbidden() {
         return new ResponseStatusException(HttpStatus.FORBIDDEN);
     }
 
@@ -295,7 +322,9 @@ final class UserDetailPage {
         /** ロックの解除（Bolt 38c。詳細に出す拒否だけ。選び方の欄はない）。 */
         UNLOCK("ロックを解除できませんでした", null),
         /** 認証アプリの登録の解除（Bolt 38c。詳細に出す拒否だけ。確認の画面の入力の誤りは確認の画面の要約で示す）。 */
-        TOTP_RESET("認証アプリの登録を解除できませんでした", null);
+        TOTP_RESET("認証アプリの登録を解除できませんでした", null),
+        /** 担当範囲の変更（Bolt 38e）。 */
+        ASSIGNMENTS("担当範囲を変更できませんでした", "担当企業");
 
         private final String title;
         private final String fieldLabel;
@@ -359,6 +388,64 @@ final class UserDetailPage {
     }
 
     /**
+     * この画面で変えられない担当企業の数（選べる企業の外の担当企業。管理範囲の外の企業と、管理範囲の中でも無効になった荷主など）。詳細の
+     * 領域と確認の領域の両方がここで数える（Bolt 38e の開発レビューの中-1・中-3）。
+     */
+    static int unchangeableCount(UserDetail user, List<Company> assignable) {
+        return user.assignedCompanies().outsideCountOf(AssignableCompanyQuery.scopeOf(assignable));
+    }
+
+    /** 詳細の担当範囲の領域の、この画面で変えられない担当企業の数の案内（UI 設計 S-20。名前は出さない。決定 (11)）。なければ null。 */
+    static String unchangeableNote(int count) {
+        return count == 0 ? null : "この画面で変えられない企業 " + count + " 社も担当しています。";
+    }
+
+    /** 確認の領域の現在の状態に添える、この画面で変えられない担当企業の数（UI 設計 S-20）。なければ空。 */
+    static String unchangeableSuffix(int count) {
+        return count == 0 ? "" : "（この画面で変えられない企業 " + count + " 社）";
+    }
+
+    /**
+     * 詳細の担当範囲の領域（Bolt 38e。US-16 AC1）。担当範囲のある役割の利用者だけに出す。選べる企業（操作者の管理範囲の中の有効な荷主）を
+     * チェックボックスで並べ、選んだ企業（確認から戻ったときと拒否のとき）か今の担当企業に印を付ける。この画面で変えられない担当企業は名前を
+     * 出さず数だけ示す（決定 (11)）。選べる企業がなければ、選択肢も確認の操作も出さず理由を一文で示す（開発レビューの低-1）。
+     *
+     * @param options 担当企業の選択肢（リポジトリの順）
+     * @param noneNote 担当企業がないときの案内（あれば null）
+     * @param outsideNote この画面で変えられない担当企業の数の案内（なければ null）
+     * @param unselectableNote 選べる企業がないときの案内（選べる企業があれば null。null のときだけ確認の操作を出す）
+     */
+    public record AssignmentArea(
+            List<CompanyOption> options, String noneNote, String outsideNote, String unselectableNote) {
+
+        public AssignmentArea {
+            options = List.copyOf(options);
+        }
+
+        static AssignmentArea of(UserDetail user, Optional<Set<CompanyId>> selected, List<Company> assignable) {
+            Set<CompanyId> current = user.assignedCompanies().companies();
+            Set<CompanyId> checked = selected.orElse(current);
+            return new AssignmentArea(
+                    assignable.stream()
+                            .map(company -> new CompanyOption(
+                                    company.id().value().toString(), company.name(), checked.contains(company.id())))
+                            .toList(),
+                    current.isEmpty() ? NO_ASSIGNMENT_NOTE : null,
+                    unchangeableNote(unchangeableCount(user, assignable)),
+                    assignable.isEmpty() ? NO_SELECTABLE_NOTE : null);
+        }
+    }
+
+    /**
+     * 担当企業の選択肢。
+     *
+     * @param id 企業 ID
+     * @param name 企業名
+     * @param selected 選んでいるか
+     */
+    public record CompanyOption(String id, String name, boolean selected) {}
+
+    /**
      * 詳細に描く選び方の欄。
      *
      * @param roles 役割の欄（自分と荷受人の企業の利用者には描かない）
@@ -381,8 +468,20 @@ final class UserDetailPage {
      * @param reason 選んでいる停止の理由
      * @param version フォームが持つ版
      * @param message 誤りの文言
+     * @param companies 選んでいる担当企業（Bolt 38e。担当範囲の変更でなければ空）
      */
-    record Retry(Set<Role> selected, Optional<SuspensionReason> reason, long version, ErrorMessage message) {}
+    record Retry(
+            Set<Role> selected,
+            Optional<SuspensionReason> reason,
+            long version,
+            ErrorMessage message,
+            Optional<Set<CompanyId>> companies) {
+
+        /** 担当企業を選ばない操作の内容。 */
+        Retry(Set<Role> selected, Optional<SuspensionReason> reason, long version, ErrorMessage message) {
+            this(selected, reason, version, message, Optional.empty());
+        }
+    }
 
     /**
      * 詳細に示す誤り。
@@ -400,13 +499,35 @@ final class UserDetailPage {
      * @param reason 選んでいる停止の理由
      * @param version フォームが持つ版
      * @param problem 誤り（なければ null）
+     * @param companies 選んでいる担当企業（Bolt 38e。なければ今の担当企業に印を付ける）
      */
     record DetailForm(
-            UserDetail user, Set<Role> selected, Optional<SuspensionReason> reason, long version, Problem problem) {
+            UserDetail user,
+            Set<Role> selected,
+            Optional<SuspensionReason> reason,
+            long version,
+            Problem problem,
+            Optional<Set<CompanyId>> companies) {
+
+        /** 担当企業を選んでいない内容。 */
+        DetailForm(
+                UserDetail user, Set<Role> selected, Optional<SuspensionReason> reason, long version, Problem problem) {
+            this(user, selected, reason, version, problem, Optional.empty());
+        }
 
         /** 誤りのない内容。 */
         static DetailForm of(UserDetail user, Set<Role> selected, Optional<SuspensionReason> reason, long version) {
             return new DetailForm(user, selected, reason, version, null);
+        }
+
+        /** 誤りのない内容（確認から戻ったときの担当企業を選んだまま。Bolt 38e）。 */
+        static DetailForm of(
+                UserDetail user,
+                Set<Role> selected,
+                Optional<SuspensionReason> reason,
+                long version,
+                Optional<Set<CompanyId>> companies) {
+            return new DetailForm(user, selected, reason, version, null, companies);
         }
 
         /** その領域の誤り。ほかの領域の誤りか、誤りがなければ null。 */

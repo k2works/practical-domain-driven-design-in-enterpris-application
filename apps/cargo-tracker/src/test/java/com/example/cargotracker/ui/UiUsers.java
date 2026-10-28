@@ -228,12 +228,10 @@ public class UiUsers {
                     userId, cipher.encrypt(TOTP_SECRET.clone(), userId), new UtcInstant(clock.instant())));
         }
         if (administered) {
-            scenarioCompanies.add(company.id());
+            // システム管理者を作る間は created にまだないので、今いるシステム管理者（いれば）にだけ入る
+            addScenarioCompany(company.id());
             if (role == Role.SYSTEM_ADMIN) {
                 scenarioCompanies.forEach(each -> AdministrationFixtures.assignCompany(jdbc, userId, each));
-            } else if (created.containsKey(Role.SYSTEM_ADMIN)) {
-                AdministrationFixtures.assignCompany(
-                        jdbc, created.get(Role.SYSTEM_ADMIN).userId(), company.id());
             }
         }
         return new Credentials(userId, email, PASSWORD);
@@ -246,12 +244,31 @@ public class UiUsers {
     public CompanyId administeredOperator(String name) {
         Company company = Company.of(new CompanyId(UUID.randomUUID()), name, CompanyKind.OPERATOR, true);
         companies.add(company);
-        scenarioCompanies.add(company.id());
+        addScenarioCompany(company.id());
+        return company.id();
+    }
+
+    /**
+     * 名前を決めた荷主の企業を作り、シナリオの企業としてシステム管理者の管理範囲に入れる（Bolt 38e。担当範囲の領域で担当企業として選ぶ
+     * 企業。荷主担当者の利用者は作らない）。
+     */
+    public CompanyId administeredShipper(String name) {
+        Company company = Company.of(new CompanyId(UUID.randomUUID()), name, CompanyKind.SHIPPER, true);
+        companies.add(company);
+        addScenarioCompany(company.id());
+        return company.id();
+    }
+
+    /**
+     * シナリオの企業に足し、作ってあればシナリオのシステム管理者の管理範囲に入れる（Bolt 38e の開発レビューの中-4。作る順によらず
+     * 「シナリオの管理者がシナリオの企業を管理する」。後から作るシステム管理者は {@link #create} が全部の企業を入れる）。
+     */
+    private void addScenarioCompany(CompanyId company) {
+        scenarioCompanies.add(company);
         if (created.containsKey(Role.SYSTEM_ADMIN)) {
             AdministrationFixtures.assignCompany(
-                    jdbc, created.get(Role.SYSTEM_ADMIN).userId(), company.id());
+                    jdbc, created.get(Role.SYSTEM_ADMIN).userId(), company);
         }
-        return company.id();
     }
 
     /** 役割の利用者の表示名（画面に出る名前を確かめるため）。 */

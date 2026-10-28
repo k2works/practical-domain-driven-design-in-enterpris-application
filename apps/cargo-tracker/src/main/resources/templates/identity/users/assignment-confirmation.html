@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/staff :: layout(~{::title}, ~{::main}, ~{}, 'users')}">
+<head>
+    <meta charset="UTF-8">
+    <title>担当範囲の変更の確認 - cargo-tracker</title>
+</head>
+<body>
+<main>
+    <!--/* 担当範囲の変更の確認（Bolt 38e。US-16 AC1）。画面そのものが確認の領域（役割の変更の確認と同じ形。項目は共通の確認の領域） */-->
+    <h1>担当範囲を変更しますか</h1>
+    <dl class="row">
+        <dt class="col-sm-3">対象</dt>
+        <dd class="col-sm-9" th:text="|${user.companyName} ${user.displayName}（${user.email.value}）|">A 社 佐藤（sato@example.com）</dd>
+        <dt class="col-sm-3">現在の状態</dt>
+        <dd class="col-sm-9" id="current-companies" th:text="${currentCompanies}">担当企業: 荷主 北（管理範囲の外の企業 1 社）</dd>
+        <dt class="col-sm-3">変更内容</dt>
+        <dd class="col-sm-9"><span id="added-companies" th:text="|追加: ${addedCompanies}|">追加: 荷主 南</span>／<span id="removed-companies" th:text="|解除: ${removedCompanies}|">解除: なし</span></dd>
+        <dt class="col-sm-3">影響</dt>
+        <dd class="col-sm-9">この利用者の担当企業が変わります。業務の画面で効くのは、今後の更新からです。</dd>
+        <dt class="col-sm-3">回復手段</dt>
+        <dd class="col-sm-9">もう一度変更すれば戻せます。</dd>
+        <dt class="col-sm-3">実行者</dt>
+        <dd class="col-sm-9" th:text="${operator}">システム管理者 高橋</dd>
+    </dl>
+    <form method="post" th:action="@{/staff/users/{id}/assignment-changes/confirmation(id=${user.id.value})}">
+        <input type="hidden" name="version" th:value="${version}">
+        <input type="hidden" name="companies" th:each="company : ${selectedCompanies}" th:value="${company}">
+        <button type="submit" class="btn btn-primary">変更する</button>
+        <a class="btn btn-link" th:href="@{/staff/users/{id}(id=${user.id.value},companies=${selectedCompanies},version=${version},companiesChosen=true)}">戻る</a>
+    </form>
+</main>
+</body>
+</html>

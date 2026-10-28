@@ -89,7 +89,7 @@ class UserAdministrationSecurityIntegrationTest extends IdentitySpyIntegrationTe
 
     @Test
     void システム管理者はホームから利用者の一覧へ移り一覧と詳細を開ける() throws Exception {
-        Cookie session = logins().login(user(operator, Role.SYSTEM_ADMIN));
+        Cookie session = logins().login(admin());
         String target = user(operator, Role.SALES);
 
         mvc.perform(get("/").cookie(session)).andExpect(redirectedUrl(USERS_URL));
@@ -102,7 +102,7 @@ class UserAdministrationSecurityIntegrationTest extends IdentitySpyIntegrationTe
 
     @Test
     void システム管理者はほかの社内と荷主の画面を開けない() throws Exception {
-        Cookie session = logins().login(user(operator, Role.SYSTEM_ADMIN));
+        Cookie session = logins().login(admin());
 
         for (String url : new String[] {
             "/staff/transport-requests",
@@ -137,7 +137,7 @@ class UserAdministrationSecurityIntegrationTest extends IdentitySpyIntegrationTe
 
     @Test
     void いない利用者の詳細は404() throws Exception {
-        Cookie session = logins().login(user(operator, Role.SYSTEM_ADMIN));
+        Cookie session = logins().login(admin());
 
         mvc.perform(get(USERS_URL + "/" + UUID.randomUUID()).cookie(session)).andExpect(status().isNotFound());
     }
@@ -145,7 +145,7 @@ class UserAdministrationSecurityIntegrationTest extends IdentitySpyIntegrationTe
     @Test
     void 社内のナビの利用者はシステム管理者にだけ出す() throws Exception {
         String link = "href=\"" + USERS_URL + "\"[^>]*>利用者</a>";
-        Cookie admin = logins().login(user(operator, Role.SYSTEM_ADMIN));
+        Cookie admin = logins().login(admin());
         Cookie sales = logins().login(user(operator, Role.SALES));
 
         assertThat(page(admin, USERS_URL)).containsPattern(link);
@@ -156,7 +156,7 @@ class UserAdministrationSecurityIntegrationTest extends IdentitySpyIntegrationTe
 
     @Test
     void 確定のPOSTを画面を経ずに送っても同じ判定で拒み何も書かない() throws Exception {
-        Cookie session = logins().login(user(operator, Role.SYSTEM_ADMIN));
+        Cookie session = logins().login(admin());
         String target = user(operator, Role.SALES);
         String url = USERS_URL + "/" + logins().userIdOf(target).value() + "/role-changes/confirmation";
 
@@ -179,7 +179,7 @@ class UserAdministrationSecurityIntegrationTest extends IdentitySpyIntegrationTe
     @Test
     void 確定のPOSTにもCSRFのトークンが要る() throws Exception {
         // 業務の画面の CSRF の拒否は 403 ではなく案内へ移す（Bolt 32f）。役割も監査も書かないことを確かめる
-        Cookie session = logins().login(user(operator, Role.SYSTEM_ADMIN));
+        Cookie session = logins().login(admin());
         String target = user(operator, Role.SALES);
         String detailUrl = USERS_URL + "/" + logins().userIdOf(target).value();
 
@@ -197,7 +197,7 @@ class UserAdministrationSecurityIntegrationTest extends IdentitySpyIntegrationTe
 
     @Test
     void 変えた役割は相手の次のrequestから効く() throws Exception {
-        Cookie admin = logins().login(user(operator, Role.SYSTEM_ADMIN));
+        Cookie admin = logins().login(admin());
         String target = user(operator, Role.SALES);
         Cookie targetSession = logins().login(target);
         mvc.perform(get("/staff/transport-requests").cookie(targetSession)).andExpect(status().isOk());
@@ -217,7 +217,7 @@ class UserAdministrationSecurityIntegrationTest extends IdentitySpyIntegrationTe
 
     @Test
     void 監査担当者に業務の役割を足すPOSTは職務分離で拒む() throws Exception {
-        Cookie session = logins().login(user(operator, Role.SYSTEM_ADMIN));
+        Cookie session = logins().login(admin());
         String target = user(operator, Role.AUDITOR);
 
         String page = postChange(session, target, "0", Role.AUDITOR.name(), Role.SALES.name())
@@ -232,7 +232,7 @@ class UserAdministrationSecurityIntegrationTest extends IdentitySpyIntegrationTe
 
     @Test
     void 自分の詳細には役割のフォームを出さずPOSTでも自分の役割は変えられない() throws Exception {
-        String admin = user(operator, Role.SYSTEM_ADMIN);
+        String admin = admin();
         Cookie session = logins().login(admin);
 
         String detail = page(session, USERS_URL + "/" + logins().userIdOf(admin).value());
@@ -249,7 +249,7 @@ class UserAdministrationSecurityIntegrationTest extends IdentitySpyIntegrationTe
 
     @Test
     void 役割を選ばない送信は役割なしで拒む() throws Exception {
-        Cookie session = logins().login(user(operator, Role.SYSTEM_ADMIN));
+        Cookie session = logins().login(admin());
         String target = user(operator, Role.SALES);
 
         String page = postChange(session, target, "0")
@@ -264,7 +264,7 @@ class UserAdministrationSecurityIntegrationTest extends IdentitySpyIntegrationTe
 
     @Test
     void 知らない役割の名前と数でない版と版のない送信は400() throws Exception {
-        Cookie session = logins().login(user(operator, Role.SYSTEM_ADMIN));
+        Cookie session = logins().login(admin());
         String target = user(operator, Role.SALES);
         String url = USERS_URL + "/" + logins().userIdOf(target).value() + "/role-changes/confirmation";
 
@@ -282,7 +282,7 @@ class UserAdministrationSecurityIntegrationTest extends IdentitySpyIntegrationTe
 
     @Test
     void 形の誤った利用者IDは詳細も確認も確定も404() throws Exception {
-        Cookie session = logins().login(user(operator, Role.SYSTEM_ADMIN));
+        Cookie session = logins().login(admin());
         String url = USERS_URL + "/not-a-uuid";
 
         mvc.perform(get(url).cookie(session)).andExpect(status().isNotFound());
@@ -300,7 +300,7 @@ class UserAdministrationSecurityIntegrationTest extends IdentitySpyIntegrationTe
     void 荷受人の企業の利用者の詳細には役割のフォームを出さない() throws Exception {
         Company consignee = Company.of(new CompanyId(UUID.randomUUID()), "荷受人 A", CompanyKind.CONSIGNEE, true);
         companies.add(consignee);
-        String admin = user(operator, Role.SYSTEM_ADMIN);
+        String admin = admin();
         AdministrationFixtures.assignCompany(jdbc, logins().userIdOf(admin), consignee.id());
         Cookie session = logins().login(admin);
         String target = user(consignee, Role.SHIPPER);
@@ -317,7 +317,7 @@ class UserAdministrationSecurityIntegrationTest extends IdentitySpyIntegrationTe
     void 範囲外の利用者は一覧に出ず詳細も確認も確定も404で確定の試行だけが1行残り役割も版も変わらない() throws Exception {
         Company outside = Company.of(new CompanyId(UUID.randomUUID()), "範囲外の会社", CompanyKind.OPERATOR, true);
         companies.add(outside);
-        String admin = user(operator, Role.SYSTEM_ADMIN);
+        String admin = admin();
         Cookie session = logins().login(admin);
         String inside = user(operator, Role.SALES);
         String stranger = user(outside, Role.SALES);
@@ -352,7 +352,7 @@ class UserAdministrationSecurityIntegrationTest extends IdentitySpyIntegrationTe
 
     @Test
     void 詳細を読んだ後に管理範囲から外れた確定も404で試行を1行だけ書く() throws Exception {
-        String admin = user(operator, Role.SYSTEM_ADMIN);
+        String admin = admin();
         Cookie session = logins().login(admin);
         String target = user(operator, Role.SALES);
         // 1 回目（controller の詳細の読み出し）は範囲内、2 回目（役割の変更の判定）は範囲外
@@ -369,8 +369,8 @@ class UserAdministrationSecurityIntegrationTest extends IdentitySpyIntegrationTe
 
     @Test
     void 自分の企業を管理範囲に持つシステム管理者はほかのシステム管理者の詳細を開ける() throws Exception {
-        Cookie session = logins().login(user(operator, Role.SYSTEM_ADMIN));
-        String other = user(operator, Role.SYSTEM_ADMIN);
+        Cookie session = logins().login(admin());
+        String other = admin();
 
         assertThat(page(session, USERS_URL + "/" + logins().userIdOf(other).value()))
                 .contains(other);
@@ -380,7 +380,7 @@ class UserAdministrationSecurityIntegrationTest extends IdentitySpyIntegrationTe
     void 範囲外とない利用者は同じ404で区別できない() throws Exception {
         Company outside = Company.of(new CompanyId(UUID.randomUUID()), "範囲外の会社", CompanyKind.OPERATOR, true);
         companies.add(outside);
-        Cookie session = logins().login(user(operator, Role.SYSTEM_ADMIN));
+        Cookie session = logins().login(admin());
         String stranger = user(outside, Role.SALES);
 
         String outOfScope = mvc.perform(
@@ -402,7 +402,7 @@ class UserAdministrationSecurityIntegrationTest extends IdentitySpyIntegrationTe
 
     @Test
     void 管理範囲のないシステム管理者には一覧が空で自分の詳細も404() throws Exception {
-        String admin = user(operator, Role.SYSTEM_ADMIN);
+        String admin = admin();
         jdbc.update(
                 "DELETE FROM identity.user_assignment WHERE user_id = ?",
                 logins().userIdOf(admin).value());
@@ -418,7 +418,7 @@ class UserAdministrationSecurityIntegrationTest extends IdentitySpyIntegrationTe
     void 範囲外の試行を書けなければ404で隠さず失敗にする() throws Exception {
         Company outside = Company.of(new CompanyId(UUID.randomUUID()), "範囲外の会社", CompanyKind.OPERATOR, true);
         companies.add(outside);
-        Cookie session = logins().login(user(operator, Role.SYSTEM_ADMIN));
+        Cookie session = logins().login(admin());
         String stranger = user(outside, Role.SALES);
         doThrow(new IllegalStateException("監査の表に届かない"))
                 .when(auditRecords)
@@ -463,6 +463,31 @@ class UserAdministrationSecurityIntegrationTest extends IdentitySpyIntegrationTe
                 .getContentAsString();
     }
 
+    /** 管理範囲を明示して入れたシステム管理者（#50 (a)。テストの A 社と荷主 A。ほかの企業はテストごとに割り当てる）。 */
+    private String admin() {
+        String email = user(operator, Role.SYSTEM_ADMIN);
+        AdministrationFixtures.assignCompany(jdbc, logins().userIdOf(email), operator.id());
+        AdministrationFixtures.assignCompany(jdbc, logins().userIdOf(email), shipper.id());
+        return email;
+    }
+
+    @Test
+    void システム管理者を作っただけでは管理範囲は入らず明示の補助で入る() {
+        // Bolt 38e の行 12（#50 (a)。作る順序に依存せず、準備が見える）
+        String plain = user(operator, Role.SYSTEM_ADMIN);
+        String explicit = admin();
+
+        assertThat(scopeRowsOf(plain)).isZero();
+        assertThat(scopeRowsOf(explicit)).isEqualTo(2);
+    }
+
+    private int scopeRowsOf(String email) {
+        return jdbc.queryForObject(
+                "SELECT count(*) FROM identity.user_assignment WHERE user_id = ?",
+                Integer.class,
+                logins().userIdOf(email).value());
+    }
+
     private String user(Company company, Role role) {
         String email = "admin-test-" + UUID.randomUUID() + "@example.com";
         UserId userId = new UserId(UUID.randomUUID());
@@ -476,11 +501,7 @@ class UserAdministrationSecurityIntegrationTest extends IdentitySpyIntegrationTe
                 Set.of(role)));
         totpCredentials.add(TotpCredential.enroll(
                 userId, cipher.encrypt(TOTP_SECRET.clone(), userId), new UtcInstant(clock.instant())));
-        if (role == Role.SYSTEM_ADMIN) {
-            // 管理範囲（Bolt 34b）。テストの A 社と荷主 A を割り当てる。ほかの企業はテストごとに割り当てる
-            AdministrationFixtures.assignCompany(jdbc, userId, operator.id());
-            AdministrationFixtures.assignCompany(jdbc, userId, shipper.id());
-        }
+        // 管理範囲は作っただけでは入れない。明示の補助 admin() で入れる（Bolt 38e。#50 (a)）
         return email;
     }
 

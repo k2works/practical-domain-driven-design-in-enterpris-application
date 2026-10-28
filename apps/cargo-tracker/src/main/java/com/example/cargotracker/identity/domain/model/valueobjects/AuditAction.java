@@ -73,5 +73,11 @@ public enum AuditAction {
      * システム管理者が停止中の利用者の利用を再開した（Bolt 34d。US-16 AC5）。成功だけを記録し、理由は持たない。対象と変更前後の利用状態を
      * {@link AuditTarget} に残す。
      */
-    USER_REACTIVATED
+    USER_REACTIVATED,
+    /**
+     * システム管理者が業務担当者の担当範囲（担当企業）を変えた（Bolt 38e。US-16 AC1 の担当の関係と変更履歴）。成功だけを記録し、対象
+     * （利用者と更新した後の版）と変更前後の担当企業（管理範囲の外を含む全体を企業 ID の昇順にカンマでつないだ一覧）を {@link AuditTarget}
+     * に残す。企業名は変わりうるので残さない。拒んだ変更と古い版からの変更は記録しない。
+     */
+    ASSIGNMENTS_CHANGED
 }

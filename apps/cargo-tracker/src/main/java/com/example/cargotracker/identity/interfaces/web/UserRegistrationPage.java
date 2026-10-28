@@ -65,9 +65,10 @@ final class UserRegistrationPage {
      * @param problem 企業の欄の誤りの文言（なければ null）
      */
     String companies(AuthenticatedActor actor, String problem, Model model) {
-        List<CompanyOption> options = queryService.registrableCompanies(actor).stream()
-                .map(company -> new CompanyOption(company.id().value().toString(), label(company)))
-                .toList();
+        List<CompanyOption> options =
+                queryService.registrableCompanies(actor).itemsOr(UserDetailPage::forbidden).stream()
+                        .map(company -> new CompanyOption(company.id().value().toString(), label(company)))
+                        .toList();
         model.addAttribute("companyOptions", options);
         model.addAttribute("companyError", problem);
         model.addAttribute("summary", companySummary(problem, options));
@@ -76,13 +77,14 @@ final class UserRegistrationPage {
     }
 
     /** 企業の欄の誤りのエラー要約（誤りがなければ null）。リンクは最初の選択肢へ向け、選択肢がなければリンクしない。 */
-    private static Summary companySummary(String problem, List<CompanyOption> options) {
+    private static ConfirmationSummary companySummary(String problem, List<CompanyOption> options) {
         if (problem == null) {
             return null;
         }
         String href =
                 options.isEmpty() ? null : "#company-" + options.getFirst().id();
-        return new Summary(SUMMARY_TITLE, List.of(new SummaryItem(href, COMPANY_LABEL + ": " + problem)));
+        return new ConfirmationSummary(
+                SUMMARY_TITLE, List.of(new ConfirmationSummary.Item(href, COMPANY_LABEL + ": " + problem)));
     }
 
     /**
@@ -108,10 +110,11 @@ final class UserRegistrationPage {
         List<FieldError> ordered =
                 errors.stream().sorted(Comparator.comparing(FieldError::field)).toList();
         Map<String, String> fieldErrors = new LinkedHashMap<>();
-        List<SummaryItem> items = new ArrayList<>();
+        List<ConfirmationSummary.Item> items = new ArrayList<>();
         for (FieldError error : ordered) {
             fieldErrors.put(error.field().key, error.text());
-            items.add(new SummaryItem(anchor(error.field(), roleOptions), error.field().label + ": " + error.text()));
+            items.add(new ConfirmationSummary.Item(
+                    anchor(error.field(), roleOptions), error.field().label + ": " + error.text()));
         }
         model.addAttribute("company", company);
         model.addAttribute("companyLabel", label(company));
@@ -119,7 +122,7 @@ final class UserRegistrationPage {
         model.addAttribute("email", input.email());
         model.addAttribute("displayName", input.displayName());
         model.addAttribute("errors", fieldErrors);
-        model.addAttribute("summary", items.isEmpty() ? null : new Summary(SUMMARY_TITLE, items));
+        model.addAttribute("summary", items.isEmpty() ? null : new ConfirmationSummary(SUMMARY_TITLE, items));
         model.addAttribute(UserAdministrationLabels.ACTIVE_ATTRIBUTE, UserAdministrationLabels.ACTIVE);
         return FORM_VIEW;
     }
@@ -262,25 +265,4 @@ final class UserRegistrationPage {
      * @param label 画面の名前（「企業名（企業の種類）」）
      */
     public record CompanyOption(String id, String label) {}
-
-    /**
-     * 登録の画面のエラー要約。
-     *
-     * @param title 見出し
-     * @param items 誤り（欄の順）
-     */
-    public record Summary(String title, List<SummaryItem> items) {
-
-        public Summary {
-            items = List.copyOf(items);
-        }
-    }
-
-    /**
-     * エラー要約の 1 件。
-     *
-     * @param href 欄へのリンク先（リンクしないなら null）
-     * @param text 示す文（「表示名: 文言」）
-     */
-    public record SummaryItem(String href, String text) {}
 }

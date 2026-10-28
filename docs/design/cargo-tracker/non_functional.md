@@ -4,7 +4,7 @@ title: "cargo-tracker 非機能要件"
 description: "cargo-tracker の性能・可用性・復旧・データ鮮度・セキュリティ・プライバシー・保持・アクセシビリティ・保守性・拡張性の測定可能な目標値、根拠、決定者、検証方法。"
 tags: [design, non-functional]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-27T23:45:27Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-28T04:02:31Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T08:22:09Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:38Z }
@@ -64,7 +64,7 @@ verified:
 | PERF-08 | 同時利用者 | 50 名で PERF-01〜04 を満たす | 提案 | 前提とする規模 |
 | PERF-09 | 通知メール（US-22） | 契機のイベントから送信まで p95 5 分以内 | 提案 | 荷主が見積りの提示や確認中を早く知るため。送信の失敗は画面の通知一覧で補う |
 
-PERF-01・02 の注記（Bolt 32c）: 認証済みの request ごとに、利用者・役割・企業を確かめる SQL が 1 回増える（SEC-12、IA-INV-04）。キャッシュは入れない（入れると利用停止・権限の取消しの「次の request から」が崩れる）。W10 の性能の評価で、この SQL の時間を計測項目に入れる。
+PERF-01・02 の注記（Bolt 32c）: 認証済みの request ごとに、利用者・役割・企業を確かめる SQL が 1 回増える（SEC-12、IA-INV-04）。キャッシュは入れない（入れると利用停止・権限の取消しの「次の request から」が崩れる）。W10 の性能の評価で、この SQL の時間を計測項目に入れる。 Bolt 38e から、S-20 の詳細の照会に担当範囲のある役割の利用者の担当企業の読み出し（1 回の SQL）と、選べる企業の読み出し（管理範囲の企業を 1 回）が加わる。
 
 ### 非同期処理の状態の問い合わせ（UI-HO-02）
 

@@ -1,5 +1,6 @@
 package com.example.cargotracker.identity.domain.model.aggregates;
 
+import com.example.cargotracker.identity.domain.model.valueobjects.AssignedCompanies;
 import com.example.cargotracker.identity.domain.model.valueobjects.AuditAction;
 import com.example.cargotracker.identity.domain.model.valueobjects.AuditResult;
 import com.example.cargotracker.identity.domain.model.valueobjects.AuditTarget;
@@ -233,6 +234,37 @@ public final class AuditRecord {
     }
 
     /**
+     * システム管理者が業務担当者の担当範囲（担当企業）を変えたことを記録する（Bolt 38e、US-16 AC1）。対象は利用者と更新した後の版、
+     * 変更前後は管理範囲の外を含む担当企業の全体を企業 ID の昇順にカンマでつないだ文字列（担当企業がなければ空の文字列）。結果は成功。
+     */
+    public static AuditRecord assignmentsChanged(
+            UserId actor,
+            CompanyId actorCompany,
+            UserId targetUser,
+            long targetVersion,
+            AssignedCompanies before,
+            AssignedCompanies after,
+            UtcInstant at) {
+        Objects.requireNonNull(actor, USER_ARGUMENT);
+        Objects.requireNonNull(actorCompany, COMPANY_ARGUMENT);
+        Objects.requireNonNull(targetUser, TARGET_USER_ARGUMENT);
+        return new AuditRecord(
+                UUID.randomUUID(),
+                at,
+                actor,
+                actorCompany,
+                AuditAction.ASSIGNMENTS_CHANGED,
+                AuditResult.SUCCESS,
+                null,
+                new AuditTarget(
+                        USER_TARGET,
+                        targetUser.value().toString(),
+                        Long.toString(targetVersion),
+                        companyIds(before),
+                        companyIds(after)));
+    }
+
+    /**
      * システム管理者が利用者を登録したことを記録する（Bolt 38b2、US-16 AC1）。対象は新しい利用者と版 0、変更前はなし（null）、変更後は
      * 登録した役割の名前を {@link Role} の宣言の順にカンマでつないだ文字列。メールアドレスと表示名は書かない。結果は成功。
      */
@@ -429,6 +461,13 @@ public final class AuditRecord {
         }
         return userTargetChanged(
                 actor, actorCompany, action, reason, targetUser, targetVersion, before.name(), after.name(), at);
+    }
+
+    private static String companyIds(AssignedCompanies companies) {
+        return companies.companies().stream()
+                .map(company -> company.value().toString())
+                .sorted()
+                .collect(Collectors.joining(","));
     }
 
     private static String roleNames(Set<Role> roles) {

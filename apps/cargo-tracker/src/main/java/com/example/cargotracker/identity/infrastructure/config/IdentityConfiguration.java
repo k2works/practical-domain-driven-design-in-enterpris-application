@@ -9,6 +9,7 @@ import com.example.cargotracker.identity.application.internal.commandservices.Se
 import com.example.cargotracker.identity.application.internal.commandservices.TotpEnrollmentService;
 import com.example.cargotracker.identity.application.internal.commandservices.TotpReEnrollmentService;
 import com.example.cargotracker.identity.application.internal.commandservices.TotpVerificationService;
+import com.example.cargotracker.identity.application.internal.commandservices.UserAssignmentService;
 import com.example.cargotracker.identity.application.internal.commandservices.UserLoginCredentialService;
 import com.example.cargotracker.identity.application.internal.commandservices.UserRegistrationService;
 import com.example.cargotracker.identity.application.internal.commandservices.UserRoleChangeService;
@@ -195,6 +196,17 @@ public class IdentityConfiguration {
             Clock clock,
             TransactionTemplate transactionTemplate) {
         return new UserRoleChangeService(users, companies, assignments, auditRecords, clock, transactionTemplate);
+    }
+
+    @Bean
+    UserAssignmentService userAssignmentService(
+            UserRepository users,
+            CompanyRepository companies,
+            UserAssignmentRepository assignments,
+            AuditRecordRepository auditRecords,
+            Clock clock,
+            TransactionTemplate transactionTemplate) {
+        return new UserAssignmentService(users, companies, assignments, auditRecords, clock, transactionTemplate);
     }
 
     @Bean

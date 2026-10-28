@@ -63,6 +63,35 @@
             <button type="submit" class="btn btn-primary mt-3">変更内容を確認する</button>
         </form>
     </section>
+    <!--/* 担当範囲の領域（Bolt 38e。US-16 AC1）。担当範囲のある役割（営業担当者・経路設計者・追跡管理者・カスタマーサポート）の利用者だけに出す。
+         選べる企業（管理範囲の中の有効な荷主）をチェックボックスで並べ、この画面で変えられない担当企業は数だけ示す。ボタンの名前は
+         役割の領域のボタンと見分けられる名前にする（読み上げのボタンの一覧で区別する）。選べる企業がなければ理由だけを示し、操作を出さない */-->
+    <section th:if="${assignments != null}" class="mt-4" aria-labelledby="assignments-title">
+        <h2 id="assignments-title" class="h5">担当範囲</h2>
+        <p th:if="${assignments.noneNote != null}" id="assignments-none-note" th:text="${assignments.noneNote}">担当企業はまだありません。</p>
+        <p th:if="${assignments.unselectableNote != null}" id="assignments-unselectable-note"
+           th:text="${assignments.unselectableNote}">あなたの管理範囲には、担当企業にできる荷主の企業がありません。</p>
+        <p th:if="${assignments.unselectableNote != null and assignments.outsideNote != null}" id="assignments-outside-note"
+           class="form-text" th:text="${assignments.outsideNote}">この画面で変えられない企業 1 社も担当しています。</p>
+        <form th:if="${assignments.unselectableNote == null}" method="get"
+              th:action="@{/staff/users/{id}/assignment-changes/confirmation(id=${user.id.value})}">
+            <input type="hidden" name="version" th:value="${version}">
+            <fieldset id="assigned-companies"
+                      th:attr="aria-describedby=${assignmentError != null and assignmentError.field} ? 'assigned-companies-error' : null,aria-invalid=${assignmentError != null and assignmentError.field} ? 'true' : null">
+                <legend class="h6">担当企業</legend>
+                <p th:if="${assignmentError != null and assignmentError.field}" id="assigned-companies-error" class="text-danger"
+                   th:text="${assignmentError.text}">今の割り当てから変わっていません。</p>
+                <div class="form-check" th:each="option : ${assignments.options}">
+                    <input class="form-check-input" type="checkbox" name="companies"
+                           th:id="|company-${option.id}|" th:value="${option.id}" th:checked="${option.selected}">
+                    <label class="form-check-label" th:for="|company-${option.id}|" th:text="${option.name}">荷主 北</label>
+                </div>
+                <p th:if="${assignments.outsideNote != null}" id="assignments-outside-note" class="form-text"
+                   th:text="${assignments.outsideNote}">この画面で変えられない企業 1 社も担当しています。</p>
+            </fieldset>
+            <button type="submit" class="btn btn-primary mt-3">担当範囲の変更内容を確認する</button>
+        </form>
+    </section>
     <!--/* 利用状態の領域（Bolt 34d。US-16 AC5）。役割の領域と別にし、荷受人の企業の利用者にも出す。自分と監督の役割の利用者には操作を出さない */-->
     <section class="mt-4" aria-labelledby="status-title">
         <h2 id="status-title" class="h5">利用状態</h2>

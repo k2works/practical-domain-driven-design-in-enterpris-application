@@ -4,7 +4,7 @@ title: "cargo-tracker ユーザーストーリー"
 description: "cargo-tracker MVP の価値単位のユーザーストーリー、受入条件、上流要件へのトレーサビリティ。"
 tags: [requirements, user-story]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-27T23:45:27Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-28T04:02:31Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T05:20:11Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:39Z }
@@ -706,6 +706,8 @@ Bolt 34d の開発レビューの後の決定（2026-10-17、human:kakimomokuri�
 Bolt 38b 系の決定（2026-10-25〜26、human:kakimomokuri。[Bolt 38b 計画](../../development/cargo-tracker/bolt_38b_plan.md)、[Bolt 38b2 計画](../../development/cargo-tracker/bolt_38b2_plan.md)、[Bolt 38b2b 計画](../../development/cargo-tracker/bolt_38b2b_plan.md)、[Bolt 38b2c 計画](../../development/cargo-tracker/bolt_38b2c_plan.md)）: AC1 の関係を作る手段として、システム管理者が管理範囲の企業に利用者を登録する（役割は企業の種類に合うものだけ、監査 `USER_REGISTERED`）。登録した利用者は password を持たず、登録のコミットの後に初回の設定のリンク（利用者の招待。24 時間・1 回だけ）を登録したメールアドレスへ送る。期限を過ぎたときと届かないときの出口は A-05（本人の再設定）。AC の文は変えない。登録の画面は Bolt 38b3b（表示名の規則と登録できる企業の照会は Bolt 38b3）、初回の設定の画面の出し分けは Bolt 38b4（済み。招待のリンクで初回の password を設定すると監査 `INITIAL_PASSWORD_SET` を書き、A-01 で認証アプリの登録へ案内する。US-18 AC7）
 
 Bolt 38c2 の決定（2026-10-27、human:kakimomokuri。[Bolt 38c2 計画](../../development/cargo-tracker/bolt_38c2_plan.md)）: 停止中の利用者の S-20 の詳細に、今の停止（最新の監査記録 `USER_SUSPENDED`）の理由・停止した人（今の表示名。管理範囲の外の人でも示す）・停止した日時を示し、再開してよいかを判断する材料にする。再開した後は示さず、停止と再開の履歴は US-17（S-21）で扱う。記録がなければ「記録がありません」と示す（AC5 の「履歴は保持」は監査記録が担う）。
+
+Bolt 38e の決定（2026-10-28、human:kakimomokuri。[Bolt 38e 計画](../../development/cargo-tracker/bolt_38e_plan.md)）: システム管理者が S-20 の詳細の「担当範囲」の領域で、担当範囲のある役割（営業担当者・経路設計者・追跡管理者・カスタマーサポート）の利用者に、自分の管理範囲の中の有効な荷主の企業を担当企業として割り当て・解除する（確認の領域を経て、変更前・変更後の 1 行の監査 `ASSIGNMENTS_CHANGED`）。パイロットでは、AC1・AC4 の「担当案件」を担当企業で近似する（要件の変更。BR-15 の注）。データ責任者は W7 で決める。業務の画面で担当企業が効く（絞り込みと拒否）のは Bolt 38f・38g から。
 
 ### US-17 監査証跡を照会する
 

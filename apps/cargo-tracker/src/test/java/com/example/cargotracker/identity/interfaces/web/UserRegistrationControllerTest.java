@@ -17,6 +17,7 @@ import com.example.cargotracker.identity.application.internal.commandservices.Us
 import com.example.cargotracker.identity.application.internal.commandservices.UserRegistrationOutcome;
 import com.example.cargotracker.identity.application.internal.commandservices.UserRegistrationRefusal;
 import com.example.cargotracker.identity.application.internal.commandservices.UserRegistrationService;
+import com.example.cargotracker.identity.application.internal.queryservices.AdministrationListing;
 import com.example.cargotracker.identity.application.internal.queryservices.RegistrableCompanyLookup;
 import com.example.cargotracker.identity.application.internal.queryservices.UserAdministrationQueryService;
 import com.example.cargotracker.identity.domain.model.valueobjects.CompanyKind;
@@ -98,7 +99,7 @@ class UserRegistrationControllerTest {
     void 企業を選ぶ画面は登録できる企業を企業名と種類で並びの順に並べる() throws Exception {
         // 行 2（同じ名前の 2 社は照会の並びのまま）
         when(queryService.registrableCompanies(any()))
-                .thenReturn(List.of(
+                .thenReturn(permitted(
                         OPERATOR_COMPANY,
                         new RegistrableCompany(SAME_NAME, "A 社", CompanyKind.OPERATOR, Set.of(Role.SALES)),
                         new RegistrableCompany(SHIPPER, "荷主 B", CompanyKind.SHIPPER, Set.of(Role.SHIPPER))));
@@ -120,7 +121,7 @@ class UserRegistrationControllerTest {
     @Test
     void 登録できる企業がなければ文言だけを示し次へを出さない() throws Exception {
         // 行 2
-        when(queryService.registrableCompanies(any())).thenReturn(List.of());
+        when(queryService.registrableCompanies(any())).thenReturn(permitted());
 
         assertThat(body(get(NEW))).contains("登録できる企業がありません。").doesNotContain("次へ");
     }
@@ -128,7 +129,7 @@ class UserRegistrationControllerTest {
     @Test
     void 企業を選ばずに次へ進むとエラー要約で選ぶよう示す() throws Exception {
         // 行 3（ラジオを選ばずに送ると companyId は送られず、印だけが送られる）
-        when(queryService.registrableCompanies(any())).thenReturn(List.of(OPERATOR_COMPANY));
+        when(queryService.registrableCompanies(any())).thenReturn(permitted(OPERATOR_COMPANY));
 
         String page = body(get(NEW).param("step", "company"));
 
@@ -140,7 +141,7 @@ class UserRegistrationControllerTest {
     @Test
     void 初めて開いた企業を選ぶ画面にはエラー要約を出さない() throws Exception {
         // 行 3 の対照
-        when(queryService.registrableCompanies(any())).thenReturn(List.of(OPERATOR_COMPANY));
+        when(queryService.registrableCompanies(any())).thenReturn(permitted(OPERATOR_COMPANY));
 
         assertThat(body(get(NEW))).doesNotContain(SUMMARY_TITLE).doesNotContain("aria-invalid");
     }
@@ -191,7 +192,7 @@ class UserRegistrationControllerTest {
     @Test
     void 入力の画面の企業が無効か荷受人なら企業を選ぶ画面に戻してエラー要約を示す() throws Exception {
         // 行 5
-        when(queryService.registrableCompanies(any())).thenReturn(List.of(OPERATOR_COMPANY));
+        when(queryService.registrableCompanies(any())).thenReturn(permitted(OPERATOR_COMPANY));
         when(queryService.registrableCompany(any(), eq(SHIPPER))).thenReturn(new RegistrableCompanyLookup.Inactive());
         when(queryService.registrableCompany(any(), eq(SAME_NAME)))
                 .thenReturn(new RegistrableCompanyLookup.NoAssignableRoles());
@@ -367,12 +368,17 @@ class UserRegistrationControllerTest {
     @Test
     void 確定の企業が無効なら企業を選ぶ画面に戻す() throws Exception {
         // 行 11
-        when(queryService.registrableCompanies(any())).thenReturn(List.of(OPERATOR_COMPANY));
+        when(queryService.registrableCompanies(any())).thenReturn(permitted(OPERATOR_COMPANY));
         when(registrations.register(any(), eq(OPERATOR), any(), any(), any()))
                 .thenReturn(new UserRegistrationOutcome.Refused(new UserRegistrationRefusal.InactiveCompany()));
 
         assertThat(body(filled(post("/staff/users"))))
                 .contains("<h1>利用者の登録</h1>")
                 .contains("企業: 選んだ企業には利用者を登録できません。ほかの企業を選んでください。");
+    }
+
+    @SafeVarargs
+    private static <T> AdministrationListing<T> permitted(T... items) {
+        return new AdministrationListing.Permitted<>(List.of(items));
     }
 }

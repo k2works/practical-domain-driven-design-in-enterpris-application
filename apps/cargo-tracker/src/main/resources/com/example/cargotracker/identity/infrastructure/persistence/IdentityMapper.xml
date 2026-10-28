@@ -190,6 +190,36 @@
         SELECT scope_id FROM identity.user_assignment WHERE user_id = #{adminId} AND scope_kind = 'COMPANY'
     </select>
 
+    <!-- Bolt 38e。利用者の COMPANY の行を役割で絞らずに読む（担当企業の置き換えの前の今の行。管理範囲・担当企業の意味を持たせない） -->
+    <select id="selectCompanyRows" resultType="java.util.UUID">
+        SELECT scope_id FROM identity.user_assignment WHERE user_id = #{userId} AND scope_kind = 'COMPANY'
+    </select>
+
+    <!-- Bolt 38e。業務担当者の担当企業。同じ COMPANY の行は、担当範囲のある役割を持つ利用者のときだけ担当企業として読む（決定 (9)） -->
+    <select id="selectAssignedCompanies" resultType="java.util.UUID">
+        SELECT a.scope_id
+          FROM identity.user_assignment a
+         WHERE a.user_id = #{userId}
+           AND a.scope_kind = 'COMPANY'
+           AND EXISTS (SELECT 1 FROM identity.user_role r
+                        WHERE r.user_id = a.user_id
+                          AND r.role IN
+                              <foreach collection="roles" item="role" open="(" separator="," close=")">#{role}</foreach>)
+    </select>
+
+    <!-- Bolt 38e。担当企業の差だけを書く（担当案件の BOOKING の行は触らない） -->
+    <delete id="deleteCompanyAssignment">
+        DELETE FROM identity.user_assignment
+         WHERE user_id = #{userId}
+           AND scope_kind = 'COMPANY'
+           AND scope_id = #{companyId}
+    </delete>
+
+    <insert id="insertCompanyAssignment">
+        INSERT INTO identity.user_assignment (user_id, scope_kind, scope_id, granted_by, granted_at)
+        VALUES (#{userId}, 'COMPANY', #{companyId}, #{grantedBy}, #{now})
+    </insert>
+
     <!-- 詳細（Bolt 38c からログインの資格を足す）。2 つの表は主キーが user_id なので、役割の数より行は増えない。期限が切れたかは照会の
          サービスが判定する（期限をそのまま返す）。TOTP の秘密は読まない -->
     <select id="selectUserDetailRowsById" resultMap="userDetailRow">

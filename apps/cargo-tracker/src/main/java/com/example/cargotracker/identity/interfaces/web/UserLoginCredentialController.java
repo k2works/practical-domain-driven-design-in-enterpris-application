@@ -14,8 +14,6 @@ import com.example.cargotracker.identity.interfaces.web.UserDetailPage.ErrorMess
 import com.example.cargotracker.identity.interfaces.web.UserDetailPage.Operation;
 import com.example.cargotracker.identity.interfaces.web.UserDetailPage.Retry;
 import com.example.cargotracker.identity.interfaces.web.UserDetailPage.Section;
-import com.example.cargotracker.identity.interfaces.web.UserRegistrationPage.Summary;
-import com.example.cargotracker.identity.interfaces.web.UserRegistrationPage.SummaryItem;
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
 import com.example.cargotracker.shared.domain.Role;
 import com.example.cargotracker.shared.domain.UserId;
@@ -304,16 +302,16 @@ public class UserLoginCredentialController {
         }
 
         /** 確認の画面のエラー要約。誤りがなければ null。欄の順に「表示名: 文言」で各欄へリンクする。 */
-        Summary summary() {
-            List<SummaryItem> items = new ArrayList<>();
+        ConfirmationSummary summary() {
+            List<ConfirmationSummary.Item> items = new ArrayList<>();
             if (methodError != null) {
-                items.add(new SummaryItem(
+                items.add(new ConfirmationSummary.Item(
                         "#method-" + IdentityVerificationMethod.values()[0].name(), METHOD_LABEL + ": " + methodError));
             }
             if (verifiedAtError != null) {
-                items.add(new SummaryItem("#verified-at", VERIFIED_AT_LABEL + ": " + verifiedAtError));
+                items.add(new ConfirmationSummary.Item("#verified-at", VERIFIED_AT_LABEL + ": " + verifiedAtError));
             }
-            return items.isEmpty() ? null : new Summary(Section.TOTP_RESET.title(), items);
+            return items.isEmpty() ? null : new ConfirmationSummary(Section.TOTP_RESET.title(), items);
         }
 
         private static String violationText(Violation violation) {

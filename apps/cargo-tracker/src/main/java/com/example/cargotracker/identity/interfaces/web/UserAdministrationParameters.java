@@ -50,6 +50,24 @@ final class UserAdministrationParameters {
         }
     }
 
+    /** 送られた担当企業の ID を企業 ID にする（Bolt 38e）。なければ空、形の誤りと重複は 400。 */
+    static Set<CompanyId> companies(List<String> companies) {
+        if (companies == null) {
+            return Set.of();
+        }
+        try {
+            Set<CompanyId> parsed = companies.stream()
+                    .map(id -> new CompanyId(UUID.fromString(id)))
+                    .collect(Collectors.toUnmodifiableSet());
+            if (parsed.size() != companies.size()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+            }
+            return parsed;
+        } catch (IllegalArgumentException _) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        }
+    }
+
     /** 送られた停止の理由の名前を理由にする。空や未指定は理由なし（停止なら判定が拒む）、知らない名前は 400。 */
     static Optional<SuspensionReason> suspensionReason(String reason) {
         if (reason == null || reason.isBlank()) {

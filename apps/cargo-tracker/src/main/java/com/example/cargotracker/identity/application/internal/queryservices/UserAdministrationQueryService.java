@@ -17,7 +17,6 @@ import com.example.cargotracker.shared.domain.Role;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Clock;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import org.springframework.stereotype.Service;
@@ -35,6 +34,7 @@ public class UserAdministrationQueryService {
     private final UserAssignmentRepository assignments;
     private final CompanyRepository companies;
     private final AuditRecordRepository auditRecords;
+    private final AssignableCompanyQuery assignable;
     private final Clock clock;
 
     public UserAdministrationQueryService(
@@ -47,22 +47,25 @@ public class UserAdministrationQueryService {
         this.assignments = assignments;
         this.companies = companies;
         this.auditRecords = auditRecords;
+        this.assignable = new AssignableCompanyQuery(companies, assignments);
         this.clock = clock;
     }
 
     /**
      * 登録できる企業（管理範囲の、有効で、付けられる業務の役割がある企業）を、リポジトリの順（名前・ID）で返す（Bolt 38b3。S-20 の登録の
-     * 企業の選択肢）。システム管理者でなければ空。空の管理範囲はリポジトリが空を返す（前例 {@link #list}）。
+     * 企業の選択肢）。システム管理者でなければ権限なしを値で返す（Bolt 38e。#50 (b)。画面の層が 403 にする）。空の管理範囲はリポジトリが
+     * 空を返す（前例 {@link #list}）。
      */
-    public List<RegistrableCompany> registrableCompanies(AuthenticatedActor operator) {
+    public AdministrationListing<RegistrableCompany> registrableCompanies(AuthenticatedActor operator) {
         if (!operator.hasRole(Role.SYSTEM_ADMIN)) {
-            return List.of();
+            return new AdministrationListing.NotPermitted<>();
         }
-        return companies.findAllIn(assignments.scopeOf(operator.userId()).companies()).stream()
-                .filter(Company::active)
-                .map(UserAdministrationQueryService::registrable)
-                .flatMap(Optional::stream)
-                .toList();
+        return new AdministrationListing.Permitted<>(
+                companies.findAllIn(assignments.scopeOf(operator.userId()).companies()).stream()
+                        .filter(Company::active)
+                        .map(UserAdministrationQueryService::registrable)
+                        .flatMap(Optional::stream)
+                        .toList());
     }
 
     /**
@@ -98,19 +101,25 @@ public class UserAdministrationQueryService {
                 : Optional.of(new RegistrableCompany(company.id(), company.name(), company.kind(), roles));
     }
 
-    /** 管理範囲の企業の利用者の一覧の行を、所属企業の名前・表示名の順に返す。システム管理者でなければ空。 */
-    public List<UserSummary> list(AuthenticatedActor operator) {
+    /**
+     * 管理範囲の企業の利用者の一覧の行を、所属企業の名前・表示名の順に返す。システム管理者でなければ権限なしを値で返す（Bolt 38e。#50 (b)。
+     * 空の一覧と詳細の権限なしで扱いがそろっていなかった。詳細の照会の {@link UserLookup.NotPermitted} と同じく、画面の層が 403（A-04）に
+     * する。URL の規則（`/staff/users/**`）が先に拒むので、利用者には見えない守り）。
+     */
+    public AdministrationListing<UserSummary> list(AuthenticatedActor operator) {
         if (!operator.hasRole(Role.SYSTEM_ADMIN)) {
-            return List.of();
+            return new AdministrationListing.NotPermitted<>();
         }
-        return users.findSummariesIn(assignments.scopeOf(operator.userId()).companies());
+        return new AdministrationListing.Permitted<>(
+                users.findSummariesIn(assignments.scopeOf(operator.userId()).companies()));
     }
 
     /**
      * 詳細を探す。管理範囲の外の利用者は範囲外として返す。管理範囲を先に読み、いない利用者と範囲外の利用者で読み出しの量をそろえる
      * （応答の時間から範囲外の利用者の存在を見分けにくくする。Bolt 34b の開発レビュー）。ロックの期限は今の時刻で判定し、切れていれば
      * 空にする（Bolt 38c。リポジトリは期限をそのまま返す）。停止中の利用者のときだけ、範囲の判定の後に今の停止の記録を監査記録から読み、
-     * {@link UserDetail#asOf} の後に載せる（Bolt 38c2。asOf が詳細を作り直すので順を固定する。利用中なら読まない）。
+     * {@link UserDetail#asOf} の後に載せる（Bolt 38c2。asOf が詳細を作り直すので順を固定する。利用中なら読まない）。担当範囲のある役割の
+     * 利用者のときだけ、担当企業を読んで載せる（Bolt 38e）。
      */
     public UserLookup detail(AuthenticatedActor operator, UserId id) {
         if (!operator.hasRole(Role.SYSTEM_ADMIN)) {
@@ -125,9 +134,24 @@ public class UserAdministrationQueryService {
             return new UserLookup.OutOfScope();
         }
         UserDetail current = found.get().asOf(new UtcInstant(clock.instant()));
+        UserDetail withSuspension = current.status() == UserStatus.SUSPENDED
+                ? current.withSuspension(auditRecords.findLatestUserSuspension(id))
+                : current;
         return new UserLookup.Found(
-                current.status() == UserStatus.SUSPENDED
-                        ? current.withSuspension(auditRecords.findLatestUserSuspension(id))
-                        : current);
+                RoleAssignmentPolicy.holdsAssignmentScopedRole(withSuspension.roles())
+                        ? withSuspension.withAssignedCompanies(assignments.assignedCompaniesOf(id))
+                        : withSuspension);
+    }
+
+    /**
+     * 担当企業にできる企業（操作者の管理範囲の中の有効な荷主の企業）を、リポジトリの順（名前・ID）で返す（Bolt 38e。S-20 の担当範囲の
+     * 領域の選択肢）。システム管理者でなければ権限なしを値で返す。選べる企業は担当範囲の変更のサービスと同じ口
+     * （{@link AssignableCompanyQuery}）で読む。
+     */
+    public AdministrationListing<Company> assignableCompanies(AuthenticatedActor operator) {
+        if (!operator.hasRole(Role.SYSTEM_ADMIN)) {
+            return new AdministrationListing.NotPermitted<>();
+        }
+        return new AdministrationListing.Permitted<>(assignable.of(operator.userId()));
     }
 }

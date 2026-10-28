@@ -21,6 +21,7 @@ import com.example.cargotracker.identity.application.internal.commandservices.Un
 import com.example.cargotracker.identity.application.internal.commandservices.UnlockOutcome;
 import com.example.cargotracker.identity.application.internal.commandservices.UserAdministrationRefusal;
 import com.example.cargotracker.identity.application.internal.commandservices.UserLoginCredentialService;
+import com.example.cargotracker.identity.application.internal.queryservices.AdministrationListing;
 import com.example.cargotracker.identity.application.internal.queryservices.UserAdministrationQueryService;
 import com.example.cargotracker.identity.application.internal.queryservices.UserLookup;
 import com.example.cargotracker.identity.domain.model.rules.IdentityVerificationPolicy.Violation;
@@ -36,10 +37,12 @@ import com.example.cargotracker.shared.domain.Role;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import org.hamcrest.Matchers;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -72,6 +75,12 @@ class UserLoginCredentialControllerTest {
 
     @MockitoBean
     UserAdministrationQueryService queryService;
+
+    @BeforeEach
+    void 担当企業にできる企業は既定でなし() {
+        // Bolt 38e。一覧系の照会は結果を値で返すので、モックの既定（null）にしない
+        when(queryService.assignableCompanies(any())).thenReturn(new AdministrationListing.Permitted<>(List.of()));
+    }
 
     @MockitoBean
     UserLoginCredentialService credentials;

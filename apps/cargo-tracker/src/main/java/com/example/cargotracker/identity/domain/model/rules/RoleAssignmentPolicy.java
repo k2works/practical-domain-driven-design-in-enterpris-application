@@ -29,6 +29,13 @@ public final class RoleAssignmentPolicy {
             Role.DATA_STEWARD,
             Role.CUSTOMER_SUPPORT);
 
+    /**
+     * 担当範囲（担当企業）のある役割（Bolt 38e の決定 (10)）。BR-15 の担当企業・担当案件の役割で、担当案件は担当企業で近似する（パイロット）。
+     * データ責任者は W7 で決めるので入れない。
+     */
+    private static final Set<Role> ASSIGNMENT_SCOPED_ROLES =
+            EnumSet.of(Role.SALES, Role.ROUTE_DESIGNER, Role.TRACKING_MANAGER, Role.CUSTOMER_SUPPORT);
+
     /** 業務データを変更できない役割（業務の役割と併せて付けない）。 */
     private static final Set<Role> OVERSIGHT_ROLES = EnumSet.of(Role.SYSTEM_ADMIN, Role.AUDITOR);
 
@@ -74,6 +81,19 @@ public final class RoleAssignmentPolicy {
     /** 監督の役割（システム管理者・監査担当者）を 1 つでも持つか（Bolt 34d。利用停止と再開を画面で扱わない相手）。 */
     public static boolean holdsOversightRole(Set<Role> roles) {
         return roles.stream().anyMatch(OVERSIGHT_ROLES::contains);
+    }
+
+    /**
+     * 担当範囲のある役割を 1 つでも持つか（Bolt 38e。S-20 の担当範囲の領域を出す相手、担当企業として読む相手）。どの役割を絞るかは
+     * この規則だけに置く（判定の写しを作らない）。
+     */
+    public static boolean holdsAssignmentScopedRole(Set<Role> roles) {
+        return roles.stream().anyMatch(ASSIGNMENT_SCOPED_ROLES::contains);
+    }
+
+    /** 担当範囲のある役割（Bolt 38e。担当企業を読む SQL が条件に使う）。 */
+    public static Set<Role> assignmentScopedRoles() {
+        return Set.copyOf(ASSIGNMENT_SCOPED_ROLES);
     }
 
     /** 業務データを変更できる役割だけを返す（職務分離の文言で示す役割）。 */

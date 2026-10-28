@@ -56,6 +56,25 @@ public interface IdentityMapper {
     /** システム管理者に管理範囲として割り当てた企業 ID（Bolt 34b）。 */
     List<UUID> selectManagedCompanies(UUID adminId);
 
+    /**
+     * 利用者の COMPANY の行の企業 ID を、役割で絞らずに読む（Bolt 38e。担当企業の置き換えの前に今の行を読む。管理範囲・担当企業のどちらの
+     * 意味も持たせない。開発レビューの低-3）。
+     */
+    List<UUID> selectCompanyRows(UUID userId);
+
+    /** 担当範囲のある役割を持つ利用者の担当企業 ID（Bolt 38e）。役割がなければ空。 */
+    List<UUID> selectAssignedCompanies(@Param("userId") UUID userId, @Param("roles") List<String> roles);
+
+    /** 担当企業を 1 つ外す（Bolt 38e。COMPANY の行だけ）。 */
+    int deleteCompanyAssignment(@Param("userId") UUID userId, @Param("companyId") UUID companyId);
+
+    /** 付与した操作者付きで担当企業を 1 つ足す（Bolt 38e）。 */
+    void insertCompanyAssignment(
+            @Param("userId") UUID userId,
+            @Param("companyId") UUID companyId,
+            @Param("grantedBy") UUID grantedBy,
+            @Param("now") OffsetDateTime now);
+
     /** S-20 の詳細の行（Bolt 34。Bolt 38c からログインの資格を持つ詳細だけの行）。役割の数だけ行が出る。 */
     List<UserDetailRow> selectUserDetailRowsById(UUID id);
 

@@ -14,6 +14,7 @@ import com.example.cargotracker.identity.domain.model.aggregates.UserAssignmentR
 import com.example.cargotracker.identity.domain.model.aggregates.UserRepository;
 import com.example.cargotracker.identity.domain.model.rules.RoleAssignmentPolicy;
 import com.example.cargotracker.identity.domain.model.valueobjects.AdministrationScope;
+import com.example.cargotracker.identity.domain.model.valueobjects.AssignedCompanies;
 import com.example.cargotracker.identity.domain.model.valueobjects.CompanyKind;
 import com.example.cargotracker.identity.domain.model.valueobjects.EmailAddress;
 import com.example.cargotracker.identity.domain.model.valueobjects.RegistrableCompany;
@@ -35,6 +36,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 /** 利用者の管理の照会（Bolt 34b。管理範囲で絞る。US-16 AC2、IA-INV-14）。 */
@@ -78,6 +80,66 @@ class UserAdministrationQueryServiceTest {
                 Optional.empty());
     }
 
+    @BeforeEach
+    void 担当企業は既定でなし() {
+        when(assignments.assignedCompaniesOf(any())).thenReturn(AssignedCompanies.none());
+    }
+
+    // ---- 担当範囲（Bolt 38e。行 1・11、AC-1・AC-6） ----
+
+    @Test
+    void 担当範囲のある役割の利用者の詳細には担当企業を載せる() {
+        UserDetail detail = detailIn(inside);
+        AssignedCompanies assigned = new AssignedCompanies(Set.of(shipper));
+        when(users.findDetail(detail.id())).thenReturn(Optional.of(detail));
+        when(assignments.scopeOf(admin.userId())).thenReturn(new AdministrationScope(Set.of(inside)));
+        when(assignments.assignedCompaniesOf(detail.id())).thenReturn(assigned);
+
+        assertThat(service.detail(admin, detail.id()))
+                .isEqualTo(new UserLookup.Found(detail.withAssignedCompanies(assigned)));
+    }
+
+    @Test
+    void 担当範囲のない役割の利用者の担当企業は読まない() {
+        UserDetail detail = new UserDetail(
+                new UserId(UUID.randomUUID()),
+                inside,
+                "A 社",
+                CompanyKind.OPERATOR,
+                "監査 花子",
+                EmailAddress.of("auditor@example.com"),
+                UserStatus.ACTIVE,
+                Set.of(Role.AUDITOR),
+                0L,
+                Optional.empty(),
+                Optional.empty());
+        when(users.findDetail(detail.id())).thenReturn(Optional.of(detail));
+        when(assignments.scopeOf(admin.userId())).thenReturn(new AdministrationScope(Set.of(inside)));
+
+        assertThat(service.detail(admin, detail.id())).isEqualTo(new UserLookup.Found(detail));
+        verify(assignments, never()).assignedCompaniesOf(any());
+    }
+
+    @Test
+    void 担当企業にできるのは管理範囲の中の有効な荷主の企業だけ() {
+        // 決定 (11)。運用会社・荷受人・無効な企業は並べない
+        Company inactiveShipper = Company.of(new CompanyId(UUID.randomUUID()), "荷主 E（無効）", CompanyKind.SHIPPER, false);
+        when(assignments.scopeOf(admin.userId())).thenReturn(new AdministrationScope(scope));
+        when(companies.findAllIn(scope))
+                .thenReturn(
+                        List.of(operatorCompany, shipperCompany, consigneeCompany, inactiveCompany, inactiveShipper));
+
+        assertThat(service.assignableCompanies(admin))
+                .isEqualTo(new AdministrationListing.Permitted<>(List.of(shipperCompany)));
+    }
+
+    @Test
+    void システム管理者でなければ担当企業にできる企業は権限なしとして拒み読まない() {
+        // 行 13（#50 (b)）。詳細と同じく権限なし（403）にそろえる
+        assertThat(service.assignableCompanies(sales)).isEqualTo(new AdministrationListing.NotPermitted<>());
+        verify(companies, never()).findAllIn(any());
+    }
+
     @Test
     void 一覧は管理範囲の企業で絞る() {
         UserSummary summary = new UserSummary(
@@ -90,13 +152,13 @@ class UserAdministrationQueryServiceTest {
         when(assignments.scopeOf(admin.userId())).thenReturn(new AdministrationScope(Set.of(inside)));
         when(users.findSummariesIn(Set.of(inside))).thenReturn(List.of(summary));
 
-        assertThat(service.list(admin)).containsExactly(summary);
+        assertThat(service.list(admin)).isEqualTo(new AdministrationListing.Permitted<>(List.of(summary)));
     }
 
     @Test
-    void システム管理者でなければ一覧は空で読まない() {
-
-        assertThat(service.list(sales)).isEmpty();
+    void システム管理者でなければ一覧は権限なしとして拒み読まない() {
+        // 行 13（#50 (b)）。空の一覧ではなく、詳細と同じく権限なし（403）にそろえる
+        assertThat(service.list(sales)).isEqualTo(new AdministrationListing.NotPermitted<>());
         verify(users, never()).findSummariesIn(any());
     }
 
@@ -152,7 +214,7 @@ class UserAdministrationQueryServiceTest {
                 .isEmpty();
         assertThat(RoleAssignmentPolicy.assignableRoles(inactiveCompany.kind())).isNotEmpty();
 
-        assertThat(service.registrableCompanies(admin))
+        assertThat(service.registrableCompanies(admin).itemsOr(IllegalStateException::new))
                 .containsExactly(
                         new RegistrableCompany(
                                 inside,
@@ -169,9 +231,9 @@ class UserAdministrationQueryServiceTest {
     }
 
     @Test
-    void システム管理者でなければ登録できる企業は空で管理範囲も企業も読まない() {
-        // Bolt 38b3 の行 5
-        assertThat(service.registrableCompanies(sales)).isEmpty();
+    void システム管理者でなければ登録できる企業は権限なしとして拒み管理範囲も企業も読まない() {
+        // Bolt 38b3 の行 5。Bolt 38e の行 13（#50 (b)）で空の一覧から権限なし（403）にそろえた
+        assertThat(service.registrableCompanies(sales)).isEqualTo(new AdministrationListing.NotPermitted<>());
         assertThat(service.registrableCompany(sales, inside)).isEqualTo(new RegistrableCompanyLookup.NotPermitted());
         verify(assignments, never()).scopeOf(any());
         verify(companies, never()).findAllIn(any());
