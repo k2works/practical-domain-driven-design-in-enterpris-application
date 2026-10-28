@@ -14301,7 +14301,7 @@
 </tr>
 <tr>
 <td style="text-align: left;"><code>CargoUserDetails</code></td>
-<td style="text-align: left;">項目を足さない。足すと配備の前の session の値が false で復元され、ロックの状態が session に写る（session の直列化の互換。ADR-012 のネガティブ）。ロックの状態は session に写さず、毎回 <code>isLocked</code> で確かめる</td>
+<td style="text-align: left;">直列化する項目を足さない。足すと配備の前の session の値が false で復元され、ロックの状態が session に写る（session の直列化の互換。ADR-012 のネガティブ）。ロックの状態は session に写さず、毎回 <code>isLocked</code> で確かめる。Bolt 38f で担当企業を <code>transient</code> の項目として足した（直列化の形を変えず、request ごとの確かめで作り直す。ADR-012 の改訂）。ロックの状態は今も写さない</td>
 </tr>
 <tr>
 <td style="text-align: left;">理由の優先</td>
