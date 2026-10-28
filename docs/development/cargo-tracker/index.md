@@ -121,7 +121,7 @@ Bolt がイテレーションに当たります。ふりかえりは各 Bolt の
 | 38c | [S-20 のログインの資格（ロックの解除と管理者による TOTP の解除）](bolt_38c_plan.md) | [終了報告](bolt_38c_report.md)（動画 [ロックの解除](../../assets/demo/bolt-38c/unlock.webm){:target="_blank"}・[TOTP の解除](../../assets/demo/bolt-38c/totp-reset.webm){:target="_blank"}） | W6 | 完了 |
 | 38c2 | [S-20 の詳細に停止の記録を示し、ロックの期限を項目に分ける](bolt_38c2_plan.md) | [終了報告](bolt_38c2_report.md) | W6 | 完了 |
 | 38d | [本人への通知（TOTP の解除・登録・再登録のお知らせ）](bolt_38d_plan.md) | [終了報告](bolt_38d_report.md) | W6 | 完了 |
-| 38d2 | [残りの回復コードの案内](bolt_38d2_plan.md) | — | W6 | 計画済み |
+| 38d2 | [残りの回復コードの案内](bolt_38d2_plan.md) | [終了報告](bolt_38d2_report.md) | W6 | 終了報告の承認待ち |
 | 38e | [業務担当者の担当企業の割り当て](bolt_38e_plan.md) | — | W6 | 計画済み（承認待ち） |
 
 Bolt を始めるときに行を追加します。
