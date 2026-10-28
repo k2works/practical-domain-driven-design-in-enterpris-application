@@ -9020,6 +9020,41 @@
   
   
     <li class="md-nav__item">
+      <a href="../bolt_38f_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 38f 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../release_report-0_1/" class="md-nav__link">
         
   
@@ -16225,7 +16260,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">38f</td>
-<td style="text-align: left;">担当範囲の判定（見積りの側）: request ごとの確かめで担当企業を読み <code>AuthenticatedActor</code> に載せる（ADR-012 の改訂。<code>CargoUserDetails</code> の <code>transient</code> の項目で毎回作り直すので、古い session を捨てる手順は要らない）、<code>shared.domain</code> の範囲外の試行の記録のポートと identity の実装（<code>interfaces.api.internal</code> のアダプター）と ADR-019（自分のトランザクションで書き、外側の中では拒む。確定の POST だけ記録し GET は 404 だけ。用語「担当範囲の外の試行」）、輸送要求の審査と社内の見積りの 10 の入口を担当企業で絞り、範囲外は 404 と試行の記録（AC4 の見積りの分）。マニュアル 6 章（38e から受け渡しとポートを受けた。開始準備で予約の側を 38f2 に分けた）。<a href="../bolt_38f_plan/">Bolt 38f 計画</a>（承認済み）</td>
+<td style="text-align: left;">担当範囲の判定（見積りの側）: request ごとの確かめで担当企業を読み <code>AuthenticatedActor</code> に載せる（ADR-012 の改訂。<code>CargoUserDetails</code> の <code>transient</code> の項目で毎回作り直すので、古い session を捨てる手順は要らない）、<code>shared.domain</code> の範囲外の試行の記録のポートと identity の実装（<code>interfaces.api.internal</code> のアダプター）と ADR-019（自分のトランザクションで書き、外側の中では拒む。確定の POST だけ記録し GET は 404 だけ。用語「担当範囲の外の試行」）、輸送要求の審査と社内の見積りの 10 の入口を担当企業で絞り、範囲外は 404 と試行の記録（AC4 の見積りの分）。マニュアル 6 章（38e から受け渡しとポートを受けた。開始準備で予約の側を 38f2 に分けた）。<a href="../bolt_38f_plan/">Bolt 38f 計画</a>（承認済み）・<a href="../bolt_38f_report/">終了報告</a>（承認待ち）</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: left;">インサイドアウト（受け渡しとポート）の後にアウトサイドイン（既存の集約に受入条件を足す）</td>
 <td style="text-align: left;">計画と終了報告（認可・構造（ADR-012 の改訂・ADR-019）。確認ポイント 17）</td>
@@ -16256,7 +16291,7 @@
 <ul class="task-list">
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> W6 の開始準備（本節。2026-10-20）: 計画の承認、詳細整合性検証・横断整合性検証（指摘を反映）、承認の後に直す文書、GitHub の同期</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Bolt 36〜37f3: CI の揺らぎ、US-06 の残り（#15）、US-07 の残り（#16）。<a href="../bolt_36_plan/">Bolt 36 計画</a>（承認済み）、<a href="../bolt_36_report/">Bolt 36 終了報告</a>（承認済み）、<a href="../bolt_37_plan/">Bolt 37 計画</a>（承認済み）、<a href="../bolt_37_report/">Bolt 37 終了報告</a>（承認済み）、<a href="../bolt_37b_plan/">Bolt 37b 計画</a>（承認済み）、<a href="../bolt_37b_report/">Bolt 37b 終了報告</a>（承認済み）、<a href="../bolt_37b2_plan/">Bolt 37b2 計画</a>（承認済み）、<a href="../bolt_37b2_report/">Bolt 37b2 終了報告</a>（承認済み）、<a href="../bolt_37c_plan/">Bolt 37c 計画</a>（承認済み）、<a href="../bolt_37c_report/">Bolt 37c 終了報告</a>（承認済み）、<a href="../bolt_37d_plan/">Bolt 37d 計画</a>（承認済み）、<a href="../bolt_37d_report/">Bolt 37d 終了報告</a>（承認済み）、<a href="../bolt_37d2_plan/">Bolt 37d2 計画</a>・<a href="../bolt_37d2_report/">終了報告</a>、<a href="../bolt_37e_plan/">Bolt 37e 計画</a>・<a href="../bolt_37e_report/">終了報告</a>、<a href="../bolt_37e2_plan/">Bolt 37e2 計画</a>・<a href="../bolt_37e2_report/">終了報告</a>、<a href="../bolt_37e3_plan/">Bolt 37e3 計画</a>・<a href="../bolt_37e3_report/">終了報告</a>、<a href="../bolt_37e3b_plan/">Bolt 37e3b 計画</a>・<a href="../bolt_37e3b_report/">終了報告</a>、<a href="../bolt_37e4_plan/">Bolt 37e4 計画</a>・<a href="../bolt_37e4_report/">終了報告</a>、<a href="../bolt_37e4b_plan/">Bolt 37e4b 計画</a>・<a href="../bolt_37e4b_report/">終了報告</a>、<a href="../bolt_37e4c_plan/">Bolt 37e4c 計画</a>・<a href="../bolt_37e4c_report/">終了報告</a>、<a href="../bolt_37f_plan/">Bolt 37f 計画</a>・<a href="../bolt_37f_report/">終了報告</a>、<a href="../bolt_37f2_plan/">Bolt 37f2 計画</a>・<a href="../bolt_37f2_report/">終了報告</a>、<a href="../bolt_37f3_plan/">Bolt 37f3 計画</a>・<a href="../bolt_37f3_report/">終了報告</a>（いずれも承認済み）</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Bolt 38〜38g: US-16 の残り（#14）、US-18 AC9 の管理者経路（#47）。<a href="../bolt_38_plan/">Bolt 38 計画</a>・<a href="../bolt_38_report/">終了報告</a>、<a href="../bolt_38b_plan/">Bolt 38b 計画</a>・<a href="../bolt_38b_report/">終了報告</a>、<a href="../bolt_38b2_plan/">Bolt 38b2 計画</a>・<a href="../bolt_38b2_report/">終了報告</a>（承認済み）、<a href="../bolt_38b2b_plan/">Bolt 38b2b 計画</a>・<a href="../bolt_38b2b_report/">終了報告</a>（承認済み）、<a href="../bolt_38b2c_plan/">Bolt 38b2c 計画</a>（承認済み）・<a href="../bolt_38b2c_report/">終了報告</a>（承認済み）、<a href="../bolt_38b3_plan/">Bolt 38b3 計画</a>・<a href="../bolt_38b3_report/">終了報告</a>（承認済み）、<a href="../bolt_38b4_plan/">Bolt 38b4 計画</a>（承認済み）・<a href="../bolt_38b4_report/">終了報告</a>（承認済み）、<a href="../bolt_38c_plan/">Bolt 38c 計画</a>（承認済み）・<a href="../bolt_38c_report/">終了報告</a>（承認済み）、<a href="../bolt_38c2_plan/">Bolt 38c2 計画</a>（承認済み）・<a href="../bolt_38c2_report/">終了報告</a>（承認済み）、<a href="../bolt_38d_plan/">Bolt 38d 計画</a>（承認済み）・<a href="../bolt_38d_report/">終了報告</a>（承認済み）、<a href="../bolt_38d2_plan/">Bolt 38d2 計画</a>（承認済み）・<a href="../bolt_38d2_report/">終了報告</a>（承認済み）、<a href="../bolt_38e_plan/">Bolt 38e 計画</a>（承認済み）・<a href="../bolt_38e_report/">終了報告</a>（承認済み）、<a href="../bolt_38f_plan/">Bolt 38f 計画</a>（承認済み）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Bolt 38〜38g: US-16 の残り（#14）、US-18 AC9 の管理者経路（#47）。<a href="../bolt_38_plan/">Bolt 38 計画</a>・<a href="../bolt_38_report/">終了報告</a>、<a href="../bolt_38b_plan/">Bolt 38b 計画</a>・<a href="../bolt_38b_report/">終了報告</a>、<a href="../bolt_38b2_plan/">Bolt 38b2 計画</a>・<a href="../bolt_38b2_report/">終了報告</a>（承認済み）、<a href="../bolt_38b2b_plan/">Bolt 38b2b 計画</a>・<a href="../bolt_38b2b_report/">終了報告</a>（承認済み）、<a href="../bolt_38b2c_plan/">Bolt 38b2c 計画</a>（承認済み）・<a href="../bolt_38b2c_report/">終了報告</a>（承認済み）、<a href="../bolt_38b3_plan/">Bolt 38b3 計画</a>・<a href="../bolt_38b3_report/">終了報告</a>（承認済み）、<a href="../bolt_38b4_plan/">Bolt 38b4 計画</a>（承認済み）・<a href="../bolt_38b4_report/">終了報告</a>（承認済み）、<a href="../bolt_38c_plan/">Bolt 38c 計画</a>（承認済み）・<a href="../bolt_38c_report/">終了報告</a>（承認済み）、<a href="../bolt_38c2_plan/">Bolt 38c2 計画</a>（承認済み）・<a href="../bolt_38c2_report/">終了報告</a>（承認済み）、<a href="../bolt_38d_plan/">Bolt 38d 計画</a>（承認済み）・<a href="../bolt_38d_report/">終了報告</a>（承認済み）、<a href="../bolt_38d2_plan/">Bolt 38d2 計画</a>（承認済み）・<a href="../bolt_38d2_report/">終了報告</a>（承認済み）、<a href="../bolt_38e_plan/">Bolt 38e 計画</a>（承認済み）・<a href="../bolt_38e_report/">終了報告</a>（承認済み）、<a href="../bolt_38f_plan/">Bolt 38f 計画</a>（承認済み）・<a href="../bolt_38f_report/">終了報告</a>（承認待ち）</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> 画面の確認: 新しい画面と変えた画面（S-06・S-07・S-20・A-06）の axe と、支援技術による手動確認（人。#14・#15 の完了の定義、#50 の人の作業）</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> W6 の締め: 結果とふりかえり、開いている持ち越しの数（T-89）、W7 の計画の見直し</li>
 </ul>
@@ -18684,6 +18719,11 @@
 <td style="text-align: left;">2026-10-28</td>
 <td style="text-align: left;">Bolt 38e の終了報告を承認した（議題 1〜6。議題 6 の #50 (a)・(b) の計画からの変更を含む）。#50 にテストの Spring の文脈の数と業務の役割どうしの付け替えを書き足した</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-10-28</td>
+<td style="text-align: left;">Bolt 38f を実装し（担当企業の受け渡し、範囲外の試行の記録のポートと ADR-019、見積りの側の 10 の入口の絞り込み、既存の UI シナリオの割り当ての前提、荷主 A だけの営業担当者、マニュアル 6 章）、<a href="../bolt_38f_report/">Bolt 38f 終了報告</a>を作った（承認待ち）。デモ環境は v490</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
 </tr>
 </tbody>
 </table>
