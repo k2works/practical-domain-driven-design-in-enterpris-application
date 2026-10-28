@@ -2,8 +2,10 @@
 type: Plan
 title: "Bolt 38d2 終了報告 - 回復コードでログインした後に、残りの回復コードの数を案内する"
 tags: [plan]
-status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-28T00:36:56Z }
+status: stable
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-28T01:11:51Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-28T01:11:52Z }
 ---
 
 # Bolt 38d2 終了報告 - 回復コードでログインした後に、残りの回復コードの数を案内する
@@ -134,6 +136,7 @@ Bolt 38e（業務担当者の担当企業の割り当て。計画は承認待ち
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-28 | 終了報告を承認した（議題 1〜4。議題 2 はマニュアルの文をこのまま受け入れ、議題 3 は照会の失敗で全画面が 500 になることを受け入れる（ADR-011 に一言書くのは次の文書の直しで））。#47 を閉じ、#50 に advice の負債を書き足した | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-28 | 初版作成（承認待ち） | anthropic/claude-opus-5-5 |
 
 ## 関連ドキュメント
