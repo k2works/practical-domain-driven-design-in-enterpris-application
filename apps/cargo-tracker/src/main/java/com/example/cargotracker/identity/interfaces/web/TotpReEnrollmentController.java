@@ -93,6 +93,8 @@ public class TotpReEnrollmentController {
                 clearPending(session);
                 RecoveryLogin.clear(session);
                 addLayout(actor, model);
+                // advice は handler の前に動き、再登録の前の数を入れている（新しい回復コード 10 個を受け取ったので消す。Bolt 38d2）
+                model.addAttribute(RecoveryLoginAdvice.REMAINING, null);
                 model.addAttribute("recoveryCodes", recoveryCodes);
                 yield CODES_VIEW;
             }

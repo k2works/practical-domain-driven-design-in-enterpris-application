@@ -21,6 +21,13 @@
         登録し直しの手続きが中断されたため、新しいキーを発行しました。先ほど認証アプリに追加した項目は使えないので削除し、新しい QR コードを読み取ってください。
     </div>
     <p>回復コードでログインしました。認証アプリを登録し直してください。</p>
+    <!--/* 残りの回復コード（Bolt 38d2、SEC-10）。advice が少ないとき（3 個以下）だけ入れる。0 個は戻る道がないので強める（色だけに頼らない） */-->
+    <div id="remaining-recovery-codes" th:if="${remainingRecoveryCodes != null}"
+         th:with="some=${!remainingRecoveryCodes.isEmpty()}, none=${remainingRecoveryCodes.isEmpty()}">
+        <p th:if="${some}"
+           th:text="|まだ使っていない回復コードは、残り ${remainingRecoveryCodes.count()} 個です。登録し直すと、新しい回復コードを 10 個受け取ります。|">まだ使っていない回復コードは、残り 3 個です。登録し直すと、新しい回復コードを 10 個受け取ります。</p>
+        <p th:if="${none}"><strong>回復コードは残っていません。認証アプリを使えないと、登録の解除を頼むまでログインできなくなるので、今すぐ登録し直してください。</strong>「後で登録する」を選ぶと、ログインから [[${recoveryLoginLifetime}]]を過ぎた後は、この画面に戻れません。</p>
+    </div>
     <p>登録し直すと、前の認証アプリのコードと、残っている回復コードは使えなくなります。</p>
     <p><span th:text="${deadline}">2026-10-15 10:15 Asia/Tokyo（UTC+09:00）</span> までに登録してください（この画面を開いてから [[${reEnrollmentLifetime}]]）。</p>
     <h2 class="h5">1. 認証アプリで QR コードを読み取る</h2>

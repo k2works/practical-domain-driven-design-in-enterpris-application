@@ -49,6 +49,24 @@ public class LoginUiSteps {
         credentials = users.of(role);
     }
 
+    @前提("荷主担当者の未使用の回復コードをログインの前に {int} 個にしておく")
+    public void 未使用の回復コードをログインの前に減らしておく(int count) {
+        users.leaveUnusedRecoveryCodesBeforeLogin(count);
+    }
+
+    @ならば("認証アプリの再登録の画面に {string} と示される")
+    public void 再登録の画面に示される(String text) {
+        assertThat(page().locator("#remaining-recovery-codes")).hasText(text);
+        browser.checkAccessibility();
+    }
+
+    @ならば("回復コードでログインした印の知らせに {string} と示される")
+    public void 印の知らせに示される(String text) {
+        assertThat(page().locator(".app-recovery-notice .app-remaining-recovery-codes"))
+                .hasText(text);
+        browser.checkAccessibility();
+    }
+
     @前提("認証アプリを登録していない荷主担当者の利用者が登録されている")
     public void 認証アプリを登録していない荷主担当者の利用者が登録されている() {
         role = Role.SHIPPER;

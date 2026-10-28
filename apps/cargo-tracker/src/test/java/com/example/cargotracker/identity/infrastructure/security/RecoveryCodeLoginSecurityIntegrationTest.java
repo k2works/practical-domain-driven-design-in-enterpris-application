@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -70,6 +71,7 @@ class RecoveryCodeLoginSecurityIntegrationTest {
     private static final String ENROLL_URL = "/login/totp/enroll";
     private static final String TOTP_ERROR = "/login?totp-error";
     private static final String BUSINESS_URL = "/customer/transport-requests";
+    private static final String STAFF_BUSINESS_URL = "/staff/transport-requests";
     private static final String RECOVERY_CODE = "1a2b-3c4d";
     private static final String SECOND_RECOVERY_CODE = "5e6f-7a8b";
     private static final byte[] TOTP_SECRET = "12345678901234567890".getBytes(StandardCharsets.US_ASCII);
@@ -600,7 +602,7 @@ class RecoveryCodeLoginSecurityIntegrationTest {
         Cookie recovered = loginWithRecoveryCode(email, RECOVERY_CODE);
         ((MutableClock) clock).setInstant(clock.instant().plus(Duration.ofMinutes(15)));
 
-        mvc.perform(get("/staff/transport-requests").cookie(recovered))
+        mvc.perform(get(STAFF_BUSINESS_URL).cookie(recovered))
                 .andExpect(status().isOk())
                 .andExpect(content().string(org.hamcrest.Matchers.containsString(EXPIRED_NOTICE)));
     }
@@ -629,6 +631,157 @@ class RecoveryCodeLoginSecurityIntegrationTest {
                         .string(org.hamcrest.Matchers.not(
                                 org.hamcrest.Matchers.containsString("href=\"/account/authenticator\""))));
         assertThat(auditActions(email)).doesNotContain("TOTP_RE_ENROLLED");
+    }
+
+    // --- 残りの回復コードの案内（SEC-10、Bolt 38d2。数はログインに使った 1 個を引いた後の未使用） ---
+
+    private static final String REMAINING_BLOCK = "<div id=\"remaining-recovery-codes\">";
+    private static final String REMAINING_3_A08 = "<p>まだ使っていない回復コードは、残り 3 個です。登録し直すと、新しい回復コードを 10 個受け取ります。</p>";
+    private static final String EMPTY_A08 =
+            "<p><strong>回復コードは残っていません。認証アプリを使えないと、登録の解除を頼むまでログインできなくなるので、今すぐ登録し直してください。</strong>「後で登録する」を選ぶと、ログインから 15 分を過ぎた後は、この画面に戻れません。</p>";
+    private static final String LATER_FORM = "action=\"/account/authenticator/later\"";
+    private static final String LOG_IN_AGAIN = "登録し直すには、いったんログアウトして、回復コードでログインし直してください。";
+
+    private static String remainingNotice(String text) {
+        return "<span class=\"app-remaining-recovery-codes\">" + text + "</span>";
+    }
+
+    @Test
+    void 残り4個ちょうどのA08には残りの数を示さない() throws Exception {
+        // 行 3（境界。ログインの前は 5 個）
+        Cookie recovered = loginWithRecoveryCode(shipperWithUnusedBeforeLogin(5), RECOVERY_CODE);
+
+        assertThat(reEnrollmentPage(recovered)).doesNotContain("remaining-recovery-codes");
+    }
+
+    @Test
+    void 残り3個のA08にログインに使った1個を引いた数と作り直す道を示す() throws Exception {
+        // 行 4（ログインの前は 4 個）
+        Cookie recovered = loginWithRecoveryCode(shipperWithUnusedBeforeLogin(4), RECOVERY_CODE);
+
+        assertThat(reEnrollmentPage(recovered)).contains(REMAINING_BLOCK, REMAINING_3_A08);
+    }
+
+    @Test
+    void 最後の1個でログインしたA08には解除の道を含む強めの文を示し後で登録するは残す() throws Exception {
+        // 行 5
+        Cookie recovered = loginWithRecoveryCode(shipperWithUnusedBeforeLogin(1), RECOVERY_CODE);
+
+        assertThat(reEnrollmentPage(recovered)).contains(REMAINING_BLOCK, EMPTY_A08, LATER_FORM);
+    }
+
+    @Test
+    void 誤ったコードで描き直したA08にも残りの数を示す() throws Exception {
+        // 行 6
+        Cookie recovered = loginWithRecoveryCode(shipperWithUnusedBeforeLogin(4), RECOVERY_CODE);
+        reEnrollmentPage(recovered);
+
+        String again = mvc.perform(post(RE_ENROLL_URL)
+                        .cookie(recovered)
+                        .param("code", "000000")
+                        .with(csrf()))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        assertThat(again).contains("認証コードが正しくありません。", REMAINING_BLOCK, REMAINING_3_A08);
+    }
+
+    @Test
+    void 再登録を完了した画面と続けた後の業務の画面には残りの数も知らせも出さない() throws Exception {
+        // 行 7（T-216: 打ち消す操作の後。完了の POST の時点では印がまだあり、advice は再登録の前の数を入れる）
+        String email = shipperWithUnusedBeforeLogin(4);
+        Cookie recovered = loginWithRecoveryCode(email, RECOVERY_CODE);
+        String key = manualKey(reEnrollmentPage(recovered));
+
+        String done = mvc.perform(post(RE_ENROLL_URL)
+                        .cookie(recovered)
+                        .param("code", codeFromKey(email, key))
+                        .with(csrf()))
+                .andExpect(status().isOk())
+                .andExpect(model().attribute("remainingRecoveryCodes", Matchers.nullValue()))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        assertThat(done).contains("認証アプリを登録し直しました。").doesNotContain("remaining-recovery-codes");
+        mvc.perform(get(BUSINESS_URL).cookie(recovered))
+                .andExpect(status().isOk())
+                .andExpect(model().attributeDoesNotExist("remainingRecoveryCodes"))
+                .andExpect(content().string(Matchers.not(Matchers.containsString("app-recovery-notice"))));
+    }
+
+    @Test
+    void 認証コードでログインした利用者には回復コードが少なくても数を入れない() throws Exception {
+        // 行 8（範囲の外の場面を今のまま出さないことで固定する。事実 15）
+        String email = shipperWithUnusedBeforeLogin(1);
+
+        mvc.perform(get(BUSINESS_URL).cookie(loginWithTotp(email)))
+                .andExpect(status().isOk())
+                .andExpect(model().attributeDoesNotExist("remainingRecoveryCodes"))
+                .andExpect(content().string(Matchers.not(Matchers.containsString("app-recovery-notice"))));
+    }
+
+    @Test
+    void 後で登録した荷主の業務の画面の知らせに残り1個を示す() throws Exception {
+        // 行 9a（active・1〜3 個・customer）
+        Cookie recovered = loginWithRecoveryCode(shipperWithUnusedBeforeLogin(2), RECOVERY_CODE);
+
+        assertThat(businessPageAfterLater(recovered, BUSINESS_URL))
+                .contains(NOTICE, remainingNotice("まだ使っていない回復コードは、残り 1 個です。"));
+    }
+
+    @Test
+    void 後で登録した社内の業務の画面の知らせに回復コードが残っていないことを示す() throws Exception {
+        // 行 9b（active・0 個・staff）
+        Cookie recovered = loginWithRecoveryCode(staffWithUnusedBeforeLogin(1), RECOVERY_CODE);
+
+        assertThat(businessPageAfterLater(recovered, STAFF_BUSINESS_URL))
+                .contains(NOTICE, remainingNotice("回復コードは残っていません。"));
+    }
+
+    @Test
+    void 期限を過ぎた社内の知らせに残り2個とログインし直す道を示す() throws Exception {
+        // 行 9c（expired・1〜3 個・staff）
+        Cookie recovered = loginWithRecoveryCode(staffWithUnusedBeforeLogin(3), RECOVERY_CODE);
+
+        assertThat(expiredBusinessPage(recovered, STAFF_BUSINESS_URL))
+                .contains(EXPIRED_NOTICE, LOG_IN_AGAIN, remainingNotice("まだ使っていない回復コードは、残り 2 個です。"));
+    }
+
+    @Test
+    void 期限を過ぎた荷主の知らせで残っていなければ通れない道を出さず担当営業に解除を頼む文にする() throws Exception {
+        // 行 9d（expired・0 個・customer）
+        Cookie recovered = loginWithRecoveryCode(shipperWithUnusedBeforeLogin(1), RECOVERY_CODE);
+
+        assertThat(expiredBusinessPage(recovered, BUSINESS_URL))
+                .contains(
+                        EXPIRED_NOTICE,
+                        remainingNotice("回復コードは残っていないので、回復コードでログインし直して登録することはできません。担当営業に、認証アプリの登録の解除を頼んでください。"))
+                .doesNotContain(LOG_IN_AGAIN);
+    }
+
+    @Test
+    void 期限を過ぎた社内の知らせで残っていなければ通れない道を出さずシステム管理者に解除を頼む文にする() throws Exception {
+        // 行 9e（expired・0 個・staff）
+        Cookie recovered = loginWithRecoveryCode(staffWithUnusedBeforeLogin(1), RECOVERY_CODE);
+
+        assertThat(expiredBusinessPage(recovered, STAFF_BUSINESS_URL))
+                .contains(
+                        EXPIRED_NOTICE,
+                        remainingNotice("回復コードは残っていないので、回復コードでログインし直して登録することはできません。システム管理者に、認証アプリの登録の解除を頼んでください。"))
+                .doesNotContain(LOG_IN_AGAIN);
+    }
+
+    @Test
+    void 後で登録した業務の画面の知らせに残り4個ちょうどなら数を示さない() throws Exception {
+        // 行 9f（境界）
+        Cookie recovered = loginWithRecoveryCode(shipperWithUnusedBeforeLogin(5), RECOVERY_CODE);
+
+        assertThat(businessPageAfterLater(recovered, BUSINESS_URL))
+                .contains(NOTICE)
+                .doesNotContain("app-remaining-recovery-codes");
     }
 
     @Test
@@ -723,15 +876,61 @@ class RecoveryCodeLoginSecurityIntegrationTest {
     }
 
     private String enrolledUserWithRecoveryCodes(String email, String plain) {
+        return enrolledUserWithRecoveryCodes(email, plain, RecoveryCode.CODES_PER_USER);
+    }
+
+    /**
+     * 回復コード 10 個を発行し、ログインの前の未使用を {@code unusedBeforeLogin} 個にする（後ろから使用済みにし、先頭の平文は残す。
+     * Bolt 38d2）。
+     */
+    private String enrolledUserWithRecoveryCodes(String email, String plain, int unusedBeforeLogin) {
         UserId userId = userIdOf(email);
         UtcInstant now = new UtcInstant(clock.instant());
-        recoveryCodes.replaceAll(
-                userId,
-                IntStream.range(0, RecoveryCode.CODES_PER_USER)
-                        .mapToObj(i ->
-                                RecoveryCode.issue(userId, i == 0 ? plain : String.format("0000-%04x", i), hasher, now))
-                        .toList());
+        List<RecoveryCode> issued = IntStream.range(0, RecoveryCode.CODES_PER_USER)
+                .mapToObj(i -> RecoveryCode.issue(userId, i == 0 ? plain : String.format("0000-%04x", i), hasher, now))
+                .toList();
+        recoveryCodes.replaceAll(userId, issued);
+        for (int i = RecoveryCode.CODES_PER_USER - 1; i >= unusedBeforeLogin; i--) {
+            recoveryCodes.use(userId, issued.get(i).id(), now);
+        }
         return email;
+    }
+
+    private String shipperWithUnusedBeforeLogin(int unusedBeforeLogin) {
+        return enrolledUserWithRecoveryCodes(enrolledUser(), RECOVERY_CODE, unusedBeforeLogin);
+    }
+
+    private String staffWithUnusedBeforeLogin(int unusedBeforeLogin) {
+        Company operator = Company.of(new CompanyId(UUID.randomUUID()), "A 社", CompanyKind.OPERATOR, true);
+        companies.add(operator);
+        return enrolledUserWithRecoveryCodes(enrolledUser(operator, Role.SALES), RECOVERY_CODE, unusedBeforeLogin);
+    }
+
+    private String reEnrollmentPage(Cookie recovered) throws Exception {
+        return mvc.perform(get(RE_ENROLL_URL).cookie(recovered))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+    }
+
+    private String businessPageAfterLater(Cookie recovered, String url) throws Exception {
+        mvc.perform(post(RE_ENROLL_URL + "/later").cookie(recovered).with(csrf()))
+                .andExpect(redirectedUrl("/"));
+        return mvc.perform(get(url).cookie(recovered))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+    }
+
+    private String expiredBusinessPage(Cookie recovered, String url) throws Exception {
+        ((MutableClock) clock).setInstant(clock.instant().plus(Duration.ofMinutes(15)));
+        return mvc.perform(get(url).cookie(recovered))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
     }
 
     private String unenrolledUser() {

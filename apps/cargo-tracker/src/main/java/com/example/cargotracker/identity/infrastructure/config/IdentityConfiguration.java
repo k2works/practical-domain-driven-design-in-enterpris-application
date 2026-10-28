@@ -325,8 +325,9 @@ public class IdentityConfiguration {
     }
 
     @Bean
-    TotpEnrollmentQueryService totpEnrollmentQueryService(TotpCredentialRepository credentials) {
-        return new TotpEnrollmentQueryService(credentials);
+    TotpEnrollmentQueryService totpEnrollmentQueryService(
+            TotpCredentialRepository credentials, RecoveryCodeRepository recoveryCodes) {
+        return new TotpEnrollmentQueryService(credentials, recoveryCodes);
     }
 
     @Bean

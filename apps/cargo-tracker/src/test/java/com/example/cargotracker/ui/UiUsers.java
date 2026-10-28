@@ -63,6 +63,9 @@ public class UiUsers {
     private final java.util.List<CompanyId> scenarioCompanies = new java.util.ArrayList<>();
 
     private Credentials outsider;
+    /** ログインの前に未使用にしておく回復コードの数（残りの回復コードの案内のシナリオ。Bolt 38d2）。既定は発行した 10 個のまま。 */
+    private int unusedRecoveryCodesBeforeLogin = RecoveryCode.CODES_PER_USER;
+
     private final String suffix = UUID.randomUUID().toString();
 
     @SuppressWarnings("java:S107") // 利用者と TOTP の資格を作る部品をそろえて受ける（シナリオの範囲の部品）
@@ -127,16 +130,27 @@ public class UiUsers {
     public String recoveryCode(Role role) {
         UserId userId = of(role).userId();
         UtcInstant now = new UtcInstant(clock.instant());
-        recoveryCodes.replaceAll(
-                userId,
-                java.util.stream.IntStream.range(0, RecoveryCode.CODES_PER_USER)
-                        .mapToObj(i -> RecoveryCode.issue(
-                                userId,
-                                i == 0 ? RECOVERY_CODE : String.format("0000-%04x", i),
-                                recoveryCodeHasher,
-                                now))
-                        .toList());
+        java.util.List<RecoveryCode> issued = java.util.stream.IntStream.range(0, RecoveryCode.CODES_PER_USER)
+                .mapToObj(i -> RecoveryCode.issue(
+                        userId, i == 0 ? RECOVERY_CODE : String.format("0000-%04x", i), recoveryCodeHasher, now))
+                .toList();
+        recoveryCodes.replaceAll(userId, issued);
+        // 返す平文（先頭）は残し、後ろから使用済みにする（Bolt 38d2）
+        for (int i = RecoveryCode.CODES_PER_USER - 1; i >= unusedRecoveryCodesBeforeLogin; i--) {
+            recoveryCodes.use(userId, issued.get(i).id(), now);
+        }
         return RECOVERY_CODE;
+    }
+
+    /**
+     * ログインの前に未使用にしておく回復コードの数を決める（残りの回復コードの案内のシナリオ。Bolt 38d2）。数は返す平文を含み、
+     * {@link #recoveryCode(Role)} が発行した後に残りを使用済みにする（10 個そろいでしか発行できないため）。
+     */
+    public void leaveUnusedRecoveryCodesBeforeLogin(int count) {
+        if (count < 1 || count > RecoveryCode.CODES_PER_USER) {
+            throw new IllegalArgumentException("ログインに使う 1 個を含めて 1〜10 個: " + count);
+        }
+        unusedRecoveryCodesBeforeLogin = count;
     }
 
     /**
