@@ -37,9 +37,10 @@ public interface TransportRequestMapper {
 
     Optional<TransportRequestRow> selectByNumberForStaff(String requestNumber);
 
-    List<TransportRequestSummaryRow> selectUnderReviewSummaries();
+    List<TransportRequestSummaryRow> selectUnderReviewSummaries(
+            @Param("shipperCompanyIds") List<UUID> shipperCompanyIds);
 
-    List<TransportRequestSummaryRow> selectQuotingSummaries();
+    List<TransportRequestSummaryRow> selectQuotingSummaries(@Param("shipperCompanyIds") List<UUID> shipperCompanyIds);
 
     List<TransportRequestSummaryRow> selectSummariesByShipper(UUID shipperCompanyId);
 

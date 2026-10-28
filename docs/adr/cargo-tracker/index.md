@@ -24,6 +24,7 @@ cargo-tracker プロジェクトの ADR ドキュメントです。
 | [ADR-016](./016-booking-checks-quotation-at-commit-time.md) | 予約は commit 時刻を渡して見積りの公開 API で確定に使えるかを確かめる | 承認済み（文面は Bolt 23 の終了報告で確かめる） |
 | [ADR-017](./017-notification-module-and-mail.md) | 通知モジュールを新設し、メールは公開 API で受けて SMTP で送る | 採用（2026-10-15、Bolt 33） |
 | [ADR-018](./018-requote-returns-transport-request-with-ordering-guard.md) | 再見積りの提示で輸送要求を荷主承認待ちへ戻し、届く順の入れ替わりは楽観ロックでぶつけて守る | 採用（2026-10-19、Bolt 35b2） |
+| [ADR-019](./019-out-of-scope-attempt-recorder.md) | 担当範囲の外の試行の記録のポートを共有カーネルに置き、identity が実装する | 採用（2026-10-28、Bolt 38f） |
 
 ## 補足
 

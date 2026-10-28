@@ -16,6 +16,8 @@ public final class TestActors {
     public static final CompanyId STAFF_COMPANY =
             new CompanyId(UUID.fromString("10000000-0000-0000-0000-000000000003"));
     public static final UserId STAFF_USER = new UserId(UUID.fromString("10000000-0000-0000-0000-000000000301"));
+    /** 営業担当者の担当企業（荷主の企業。Bolt 38f）。 */
+    public static final CompanyId STAFF_ASSIGNED_COMPANY = SHIPPER_COMPANY;
 
     private TestActors() {}
 }

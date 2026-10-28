@@ -19,12 +19,15 @@ import com.example.cargotracker.quotation.application.internal.commandservices.S
 import com.example.cargotracker.quotation.application.internal.commandservices.TransportRequestCommandService;
 import com.example.cargotracker.quotation.application.internal.commandservices.TransportRequestReviewService;
 import com.example.cargotracker.quotation.application.internal.queryservices.StaffQuotationQueryService;
+import com.example.cargotracker.quotation.application.internal.queryservices.StaffTransportRequestLookup;
 import com.example.cargotracker.quotation.application.internal.queryservices.StaffTransportRequestQueryService;
 import com.example.cargotracker.quotation.domain.events.QuotationPresented;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationFixture;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTermsFixture;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestStatus;
+import com.example.cargotracker.shared.domain.AuthenticatedActor;
+import com.example.cargotracker.shared.domain.AuthenticatedActorFixture;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
@@ -56,6 +59,9 @@ class QuotationPresentedDeliveryIntegrationTest {
 
     private static final Duration TIMEOUT = Duration.ofSeconds(10);
     private static final UserId STAFF = new UserId(UUID.randomUUID());
+    private static final CompanyId SHIPPER_COMPANY = new CompanyId(UUID.randomUUID());
+    /** 営業担当者（提出する荷主企業を担当する。Bolt 38f）。 */
+    private static final AuthenticatedActor OPERATOR = AuthenticatedActorFixture.salesHandling(STAFF, SHIPPER_COMPANY);
 
     @Autowired
     TransportRequestCommandService transportRequestCommandService;
@@ -95,23 +101,24 @@ class QuotationPresentedDeliveryIntegrationTest {
 
     @Test
     void 見積りを提示するとイベントが非同期に配信され輸送要求が見積提示済みになり配信が完了する() {
-        SubmissionOutcome.Submitted submitted =
-                (SubmissionOutcome.Submitted) transportRequestCommandService.submit(new SubmitTransportRequestCommand(
-                        new CompanyId(UUID.randomUUID()), STAFF, ShipmentTermsFixture.completeInput()));
+        SubmissionOutcome.Submitted submitted = (SubmissionOutcome.Submitted) transportRequestCommandService.submit(
+                new SubmitTransportRequestCommand(SHIPPER_COMPANY, STAFF, ShipmentTermsFixture.completeInput()));
         TransportRequestNumber number = submitted.number();
-        assertThat(reviewService.approve(new ApproveTransportRequestCommand(number, 1, STAFF, "根拠")))
+        assertThat(reviewService.approve(new ApproveTransportRequestCommand(number, 1, STAFF, "根拠"), OPERATOR))
                 .isInstanceOf(ReviewOutcome.Reviewed.class);
         assertThat(quotationCommandService.calculate(
-                        new CalculateQuotationCommand(number, QuotationFixture.completeInput())))
+                        new CalculateQuotationCommand(number, QuotationFixture.completeInput()), OPERATOR))
                 .isEqualTo(new CalculationOutcome.Calculated(number, 1));
 
-        assertThat(quotationCommandService.present(new PresentQuotationCommand(number, 1, STAFF)))
+        assertThat(quotationCommandService.present(new PresentQuotationCommand(number, 1, STAFF), OPERATOR))
                 .isEqualTo(new PresentationOutcome.Presented(number, 1));
 
         await().atMost(TIMEOUT)
-                .untilAsserted(() -> assertThat(staffQueryService.findByNumber(number))
-                        .hasValueSatisfying(
-                                request -> assertThat(request.status()).isEqualTo(TransportRequestStatus.QUOTED)));
+                .untilAsserted(() -> assertThat(staffQueryService.findByNumber(number, OPERATOR))
+                        .isInstanceOfSatisfying(
+                                StaffTransportRequestLookup.Found.class,
+                                found ->
+                                        assertThat(found.request().status()).isEqualTo(TransportRequestStatus.QUOTED)));
         await().atMost(TIMEOUT)
                 .untilAsserted(() -> assertThat(completedEventPublications.findAll())
                         .extracting(EventPublication::getEvent)
@@ -123,18 +130,18 @@ class QuotationPresentedDeliveryIntegrationTest {
 
     @Test
     void 見積りを提示するとKPI計測記録に最初の提示時刻が非同期に記録されリードタイムが求まる() {
-        SubmissionOutcome.Submitted submitted =
-                (SubmissionOutcome.Submitted) transportRequestCommandService.submit(new SubmitTransportRequestCommand(
-                        new CompanyId(UUID.randomUUID()), STAFF, ShipmentTermsFixture.completeInput()));
+        SubmissionOutcome.Submitted submitted = (SubmissionOutcome.Submitted) transportRequestCommandService.submit(
+                new SubmitTransportRequestCommand(SHIPPER_COMPANY, STAFF, ShipmentTermsFixture.completeInput()));
         TransportRequestNumber number = submitted.number();
         UUID transportRequestId = submitted.transportRequestId().value();
-        reviewService.approve(new ApproveTransportRequestCommand(number, 1, STAFF, "根拠"));
-        quotationCommandService.calculate(new CalculateQuotationCommand(number, QuotationFixture.completeInput()));
+        reviewService.approve(new ApproveTransportRequestCommand(number, 1, STAFF, "根拠"), OPERATOR);
+        quotationCommandService.calculate(
+                new CalculateQuotationCommand(number, QuotationFixture.completeInput()), OPERATOR);
         await().atMost(TIMEOUT)
                 .untilAsserted(() -> assertThat(kpiObservationQueryService.findByTransportRequestId(transportRequestId))
                         .isPresent());
 
-        quotationCommandService.present(new PresentQuotationCommand(number, 1, STAFF));
+        quotationCommandService.present(new PresentQuotationCommand(number, 1, STAFF), OPERATOR);
 
         await().atMost(TIMEOUT)
                 .untilAsserted(() -> assertThat(kpiObservationQueryService.findByTransportRequestId(transportRequestId))
@@ -150,7 +157,7 @@ class QuotationPresentedDeliveryIntegrationTest {
     /** 見積り 1 の提示時刻（KPI 計測記録の最初の提示時刻と照らし合わせる）。 */
     private UtcInstant presentedAtOf(TransportRequestNumber number) {
         return staffQuotationQueryService
-                .find(number, 1)
+                .find(number, 1, OPERATOR)
                 .orElseThrow()
                 .presentedAt()
                 .orElseThrow();

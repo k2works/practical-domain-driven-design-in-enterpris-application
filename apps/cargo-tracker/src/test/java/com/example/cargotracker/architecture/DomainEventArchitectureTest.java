@@ -1,8 +1,10 @@
 package com.example.cargotracker.architecture;
 
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 
 import com.example.cargotracker.shared.annotation.ddd.DomainEvent;
+import com.example.cargotracker.shared.domain.OutOfScopeAttemptRecorder;
 import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
@@ -55,4 +57,16 @@ class DomainEventArchitectureTest {
                     "com.example.cargotracker.shared.domain..",
                     "com.example.cargotracker.shared.annotation.ddd..",
                     "com.example.cargotracker..domain.events..");
+
+    /**
+     * 共有カーネルの型でも、担当範囲の外の試行の記録のポート（振る舞いを持つ。ADR-019 の例外）には依存しない（Bolt 38f の決定 (9)、
+     * 計画の行 15）。上の規則は {@code shared.domain} 全体を許すので、ここで外す。
+     */
+    @ArchTest
+    static final ArchRule ドメインイベントは担当範囲の外の記録のポートに依存しない = noClasses()
+            .that()
+            .resideInAPackage("..domain.events..")
+            .should()
+            .dependOnClassesThat()
+            .haveFullyQualifiedName(OutOfScopeAttemptRecorder.class.getName());
 }

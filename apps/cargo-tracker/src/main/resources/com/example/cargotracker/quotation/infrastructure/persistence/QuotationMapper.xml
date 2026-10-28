@@ -2,6 +2,9 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.example.cargotracker.quotation.infrastructure.persistence.QuotationMapper">
 
+    <!-- 社内の一覧を担当企業（荷主企業）で絞る IN の並び（Bolt 38f。空の集合は照会のサービスが読まずに返すので、ここでは空にならない） -->
+    <sql id="shipperCompanyIn"><foreach collection="shipperCompanyIds" item="shipperCompanyId" open="(" separator="," close=")">#{shipperCompanyId}</foreach></sql>
+
     <resultMap id="quotationRow" type="com.example.cargotracker.quotation.infrastructure.persistence.QuotationRow">
         <constructor>
             <idArg column="id" name="id" javaType="java.util.UUID"/>
@@ -165,12 +168,14 @@
     </resultMap>
 
     <!-- 受付一覧（S-02）の見積提示済みの表（Bolt 11 レビュー R-02）。見積提示済みの見積依頼ごとに、見積り番号の最大の見積りを、
-         有効期限の近い順に返す。社内の照会なので荷主企業で絞らない -->
+         有効期限の近い順に返す。社内の照会で、荷主企業（営業担当者の担当企業。Bolt 38f）で絞る -->
     <select id="selectLatestOfQuotedRequests" resultMap="quotedRequestSummaryRow">
         SELECT r.request_number, q.quotation_no, q.status, q.expires_at
           FROM quotation.transport_request r
           JOIN quotation.quotation q ON q.transport_request_id = r.id
          WHERE r.status = 'QUOTED'
+           AND r.shipper_company_id IN
+               <include refid="shipperCompanyIn"/>
            AND q.quotation_no = (SELECT MAX(latest.quotation_no)
                                    FROM quotation.quotation latest
                                   WHERE latest.transport_request_id = r.id)
@@ -198,6 +203,8 @@
          WHERE ((r.status IN ('ROUTING', 'AWAITING_APPROVAL')
                  AND q.status IN ('ROUTING_REQUESTED', 'AWAITING_SHIPPER_APPROVAL'))
                 OR (r.status = 'READY_TO_BOOK' AND q.status = 'AWAITING_SHIPPER_APPROVAL'))
+           AND r.shipper_company_id IN
+               <include refid="shipperCompanyIn"/>
          ORDER BY q.responded_at, r.request_number
     </select>
 
@@ -232,6 +239,8 @@
          WHERE r.status IN ('ROUTING', 'AWAITING_APPROVAL', 'READY_TO_BOOK')
            AND (q.status = 'APPROVED'
                 OR (q.status = 'PENDING_APPROVAL' AND q.routing_case_number IS NOT NULL))
+           AND r.shipper_company_id IN
+               <include refid="shipperCompanyIn"/>
          ORDER BY q.expires_at, r.request_number
     </select>
 

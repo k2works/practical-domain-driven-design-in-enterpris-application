@@ -3,17 +3,19 @@ package com.example.cargotracker.quotation.application.internal.commandservices;
 import com.example.cargotracker.quotation.application.internal.commands.CalculateQuotationCommand;
 import com.example.cargotracker.quotation.application.internal.commands.PresentQuotationCommand;
 import com.example.cargotracker.quotation.application.internal.commands.RequoteQuotationCommand;
+import com.example.cargotracker.quotation.application.internal.queryservices.StaffTransportRequestLookup;
+import com.example.cargotracker.quotation.application.internal.queryservices.StaffTransportRequestScope;
 import com.example.cargotracker.quotation.domain.model.aggregates.ConcurrentQuotationUpdateException;
 import com.example.cargotracker.quotation.domain.model.aggregates.DuplicateQuotationException;
 import com.example.cargotracker.quotation.domain.model.aggregates.Quotation;
 import com.example.cargotracker.quotation.domain.model.aggregates.QuotationRepository;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequest;
-import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequestRepository;
 import com.example.cargotracker.quotation.domain.model.rules.RequotePolicy;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationId;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationRejection;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationViolations;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestStatus;
+import com.example.cargotracker.shared.domain.AuthenticatedActor;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Clock;
 import java.util.List;
@@ -27,7 +29,8 @@ import org.springframework.transaction.annotation.Transactional;
  * 見積りのコマンドを受け付ける入力ポート（US-03、社内の営業担当者が使う）。トランザクションの境界になる。
  * 1 つのトランザクションでは見積りの集約だけを更新し、輸送要求の状態は DE-03 を受けて別のトランザクションで変える（Bolt 10 の H1）。
  * 再見積りだけは、旧版と新しい見積りの 2 つの見積りを 1 つのトランザクションで書く（Q-INV-18 が見積りをまたぐ規則のため。
- * ドメインモデル「見積りの失効と置換」。Bolt 11）。
+ * ドメインモデル「見積りの失効と置換」。Bolt 11）。営業担当者が扱えるのは担当企業の見積依頼だけで、どのコマンドも最初に担当範囲を
+ * 判定する（{@link StaffTransportRequestScope}。範囲の外なら何も書かずに範囲外の結果を返す。Bolt 38f の決定 (10)）。
  *
  * <p>{@code @Service} は JIG がユースケースとして読むための印で、部品探索の対象にはしない（CargoTrackerApplication）。
  * 組み立ては {@code QuotationConfiguration} が担う。
@@ -35,20 +38,20 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class QuotationCommandService {
 
-    private final TransportRequestRepository transportRequestRepository;
     private final QuotationRepository quotationRepository;
     private final ApplicationEventPublisher eventPublisher;
     private final Clock clock;
+    private final StaffTransportRequestScope scope;
 
     public QuotationCommandService(
-            TransportRequestRepository transportRequestRepository,
             QuotationRepository quotationRepository,
             ApplicationEventPublisher eventPublisher,
-            Clock clock) {
-        this.transportRequestRepository = transportRequestRepository;
+            Clock clock,
+            StaffTransportRequestScope scope) {
         this.quotationRepository = quotationRepository;
         this.eventPublisher = eventPublisher;
         this.clock = clock;
+        this.scope = scope;
     }
 
     /**
@@ -56,12 +59,17 @@ public class QuotationCommandService {
      * 見積りがないときだけ（Q-INV-18）。対象の版は輸送要求の現在の版。入力に違反があれば何も保存せずに違反を返す（AC3）。
      */
     @Transactional
-    public CalculationOutcome calculate(CalculateQuotationCommand command) {
-        Optional<TransportRequest> found = transportRequestRepository.findByNumberForStaff(command.number());
-        if (found.isEmpty()) {
-            return new CalculationOutcome.NotFound();
+    public CalculationOutcome calculate(CalculateQuotationCommand command, AuthenticatedActor operator) {
+        TransportRequest request;
+        switch (scope.find(command.number(), operator)) {
+            case StaffTransportRequestLookup.Found(TransportRequest found) -> request = found;
+            case StaffTransportRequestLookup.NotFound _ -> {
+                return new CalculationOutcome.NotFound();
+            }
+            case StaffTransportRequestLookup.OutOfScope _ -> {
+                return new CalculationOutcome.OutOfScope();
+            }
         }
-        TransportRequest request = found.get();
         if (request.status() != TransportRequestStatus.QUOTING) {
             return new CalculationOutcome.Rejected(QuotationRejection.TRANSPORT_REQUEST_NOT_QUOTING);
         }
@@ -91,11 +99,19 @@ public class QuotationCommandService {
 
     /** 見積りを社内承認して提示する（承認待ち → 提示済み）。提示時刻は Clock から得て、保存と同じトランザクションで DE-03 を発行する。 */
     @Transactional
-    public PresentationOutcome present(PresentQuotationCommand command) {
-        Optional<Quotation> found = transportRequestRepository
-                .findByNumberForStaff(command.number())
-                .flatMap(request ->
-                        quotationRepository.findByTransportRequestIdAndNo(request.id(), command.quotationNo()));
+    public PresentationOutcome present(PresentQuotationCommand command, AuthenticatedActor operator) {
+        TransportRequest request;
+        switch (scope.find(command.number(), operator)) {
+            case StaffTransportRequestLookup.Found(TransportRequest inScope) -> request = inScope;
+            case StaffTransportRequestLookup.NotFound _ -> {
+                return new PresentationOutcome.NotFound();
+            }
+            case StaffTransportRequestLookup.OutOfScope _ -> {
+                return new PresentationOutcome.OutOfScope();
+            }
+        }
+        Optional<Quotation> found =
+                quotationRepository.findByTransportRequestIdAndNo(request.id(), command.quotationNo());
         if (found.isEmpty()) {
             return new PresentationOutcome.NotFound();
         }
@@ -123,12 +139,17 @@ public class QuotationCommandService {
      * 旧版が置換済み・失効なら拒否し、入力に違反があれば何も保存せずに違反を返す。旧版の更新を先に書き、DB の部分一意インデックスに触れないようにする。
      */
     @Transactional
-    public RequotationOutcome requote(RequoteQuotationCommand command) {
-        Optional<TransportRequest> found = transportRequestRepository.findByNumberForStaff(command.number());
-        if (found.isEmpty()) {
-            return new RequotationOutcome.NotFound();
+    public RequotationOutcome requote(RequoteQuotationCommand command, AuthenticatedActor operator) {
+        TransportRequest request;
+        switch (scope.find(command.number(), operator)) {
+            case StaffTransportRequestLookup.Found(TransportRequest found) -> request = found;
+            case StaffTransportRequestLookup.NotFound _ -> {
+                return new RequotationOutcome.NotFound();
+            }
+            case StaffTransportRequestLookup.OutOfScope _ -> {
+                return new RequotationOutcome.OutOfScope();
+            }
         }
-        TransportRequest request = found.get();
         List<Quotation> existing = quotationRepository.findByTransportRequestId(request.id());
         Optional<Quotation> previous = existing.stream()
                 .filter(quotation -> quotation.quotationNo() == command.quotationNo())

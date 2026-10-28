@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.never;
@@ -25,6 +26,7 @@ import com.example.cargotracker.quotation.application.internal.commandservices.P
 import com.example.cargotracker.quotation.application.internal.commandservices.QuotationCommandService;
 import com.example.cargotracker.quotation.application.internal.commandservices.RequotationOutcome;
 import com.example.cargotracker.quotation.application.internal.queryservices.StaffQuotationQueryService;
+import com.example.cargotracker.quotation.application.internal.queryservices.StaffTransportRequestLookup;
 import com.example.cargotracker.quotation.application.internal.queryservices.StaffTransportRequestQueryService;
 import com.example.cargotracker.quotation.domain.model.aggregates.Quotation;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequest;
@@ -115,6 +117,9 @@ class StaffQuotationControllerTest {
     @MockitoBean
     StaffTransportRequestQueryService transportRequestQueryService;
 
+    @MockitoBean
+    StaffOutOfScopeResponder outOfScope;
+
     private static UtcInstant tokyo(String dateTime) {
         return new UtcInstant(LocalDateTime.parse(dateTime).atZone(TOKYO).toInstant());
     }
@@ -124,7 +129,8 @@ class StaffQuotationControllerTest {
         TransportRequest request = submittedRequest();
         request.approve(1, STAFF, "根拠", new UtcInstant(Instant.parse("2026-10-05T03:00:00Z")));
         request.markQuotationPresented(1);
-        given(transportRequestQueryService.findByNumber(NUMBER)).willReturn(Optional.of(request));
+        given(transportRequestQueryService.findByNumber(eq(NUMBER), any()))
+                .willReturn(new StaffTransportRequestLookup.Found(request));
     }
 
     /** 予約待ち（予約確定済みにするなら booked）の見積依頼。 */
@@ -138,7 +144,8 @@ class StaffQuotationControllerTest {
         if (booked) {
             request.markBooked(1);
         }
-        given(transportRequestQueryService.findByNumber(NUMBER)).willReturn(Optional.of(request));
+        given(transportRequestQueryService.findByNumber(eq(NUMBER), any()))
+                .willReturn(new StaffTransportRequestLookup.Found(request));
     }
 
     private static TransportRequest submittedRequest() {
@@ -195,7 +202,7 @@ class StaffQuotationControllerTest {
                 List.of(),
                 tokyo("2099-10-10T09:00"),
                 tokyo("2099-10-30T18:00"));
-        given(commandService.calculate(new CalculateQuotationCommand(NUMBER, expected)))
+        given(commandService.calculate(eq(new CalculateQuotationCommand(NUMBER, expected)), any()))
                 .willReturn(new CalculationOutcome.Calculated(NUMBER, 1));
 
         mockMvc.perform(post("/staff/transport-requests/TR-2026-0001/quotations")
@@ -228,7 +235,7 @@ class StaffQuotationControllerTest {
     @Test
     void 作成中か承認待ちか提示済みの見積りがあれば作成画面でなくその見積りへ移す() throws Exception {
         transportRequestExists();
-        given(queryService.findActive(NUMBER)).willReturn(Optional.of(pendingApproval()));
+        given(queryService.findActive(eq(NUMBER), any())).willReturn(Optional.of(pendingApproval()));
 
         mockMvc.perform(get("/staff/transport-requests/TR-2026-0001/quotations/new"))
                 .andExpect(redirectedUrl("/staff/transport-requests/TR-2026-0001/quotations/1"));
@@ -244,7 +251,7 @@ class StaffQuotationControllerTest {
                 List.of(new Location("SGSIN"), new Location("LKCMB")),
                 tokyo("2099-10-10T09:00"),
                 tokyo("2099-10-30T18:00"));
-        given(commandService.calculate(new CalculateQuotationCommand(NUMBER, expected)))
+        given(commandService.calculate(eq(new CalculateQuotationCommand(NUMBER, expected)), any()))
                 .willReturn(new CalculationOutcome.Calculated(NUMBER, 1));
 
         mockMvc.perform(post("/staff/transport-requests/TR-2026-0001/quotations")
@@ -278,13 +285,13 @@ class StaffQuotationControllerTest {
                 .andExpect(content().string(containsString(">有効期限: 2026-11-02 09:00 の形（日本時間）で入力してください</a>")))
                 .andExpect(content().string(containsString("value=\"2099/10/08\"")));
 
-        then(commandService).should(never()).calculate(any());
+        then(commandService).should(never()).calculate(any(), any());
     }
 
     @Test
     void 業務の規則の違反は欄の位置に戻してエラー要約と項目の下に示す() throws Exception {
         transportRequestExists();
-        given(commandService.calculate(any()))
+        given(commandService.calculate(any(), any()))
                 .willReturn(new CalculationOutcome.Invalid(new QuotationViolations(List.of(
                         new Violation(Item.PRICING_LINES, Reason.AMOUNT_NOT_POSITIVE, 1),
                         new Violation(Item.EXPIRES_AT, Reason.NOT_AFTER_CALCULATION)))));
@@ -303,7 +310,7 @@ class StaffQuotationControllerTest {
     @Test
     void 見積りがすでにあるときはその見積りへ移して理由を示す() throws Exception {
         transportRequestExists();
-        given(commandService.calculate(any()))
+        given(commandService.calculate(any(), any()))
                 .willReturn(new CalculationOutcome.Rejected(QuotationRejection.ALREADY_QUOTED));
 
         mockMvc.perform(post("/staff/transport-requests/TR-2026-0001/quotations")
@@ -326,7 +333,7 @@ class StaffQuotationControllerTest {
                         complete.departureAt(),
                         complete.arrivalAt()),
                 new UtcInstant(Instant.parse("2026-10-05T04:00:00Z")));
-        given(queryService.find(NUMBER, 1)).willReturn(Optional.of(direct));
+        given(queryService.find(eq(NUMBER), eq(1), any())).willReturn(Optional.of(direct));
 
         mockMvc.perform(get("/staff/transport-requests/TR-2026-0001/quotations/1"))
                 .andExpect(status().isOk())
@@ -336,7 +343,7 @@ class StaffQuotationControllerTest {
     @Test
     void 算出した見積りに料金明細と合計と有効期限と経路方針と提示のボタンを示す() throws Exception {
         transportRequestExists();
-        given(queryService.find(NUMBER, 1)).willReturn(Optional.of(pendingApproval()));
+        given(queryService.find(eq(NUMBER), eq(1), any())).willReturn(Optional.of(pendingApproval()));
 
         mockMvc.perform(get("/staff/transport-requests/TR-2026-0001/quotations/1"))
                 .andExpect(status().isOk())
@@ -361,7 +368,8 @@ class StaffQuotationControllerTest {
 
     @Test
     void 社内承認して提示するとログインした営業担当者で提示し受付一覧に結果を示す() throws Exception {
-        given(commandService.present(new PresentQuotationCommand(NUMBER, 1, STAFF)))
+        transportRequestExists();
+        given(commandService.present(eq(new PresentQuotationCommand(NUMBER, 1, STAFF)), any()))
                 .willReturn(new PresentationOutcome.Presented(NUMBER, 1));
 
         mockMvc.perform(post("/staff/transport-requests/TR-2026-0001/quotations/1/presentation"))
@@ -371,7 +379,8 @@ class StaffQuotationControllerTest {
 
     @Test
     void 提示できないときと競合したときは見積りに戻して理由を示す() throws Exception {
-        given(commandService.present(any()))
+        transportRequestExists();
+        given(commandService.present(any(), any()))
                 .willReturn(new PresentationOutcome.Rejected(QuotationRejection.NOT_PENDING_APPROVAL))
                 .willReturn(new PresentationOutcome.Conflict());
 
@@ -392,7 +401,7 @@ class StaffQuotationControllerTest {
     @Test
     void 提示済みの見積りには再見積りの操作を出し提示の操作は出さない() throws Exception {
         transportRequestExists();
-        given(queryService.find(NUMBER, 1)).willReturn(Optional.of(presented()));
+        given(queryService.find(eq(NUMBER), eq(1), any())).willReturn(Optional.of(presented()));
 
         mockMvc.perform(get("/staff/transport-requests/TR-2026-0001/quotations/1"))
                 .andExpect(content().string(containsString("<dd>提示済み</dd>")))
@@ -405,7 +414,7 @@ class StaffQuotationControllerTest {
     @Test
     void 有効期限を過ぎた承認待ちの見積りは失効と示し提示の操作を出さず再見積りの操作を出す() throws Exception {
         transportRequestExists();
-        given(queryService.find(NUMBER, 1)).willReturn(Optional.of(pendingApproval()));
+        given(queryService.find(eq(NUMBER), eq(1), any())).willReturn(Optional.of(pendingApproval()));
         clock.setInstant(QuotationFixture.EXPIRES_AT.instant());
         try {
             mockMvc.perform(get("/staff/transport-requests/TR-2026-0001/quotations/1"))
@@ -428,8 +437,8 @@ class StaffQuotationControllerTest {
         Quotation replacement = Quotation.create(new QuotationId(UUID.randomUUID()), ID, 1, 2);
         replacement.calculate(QuotationFixture.completeInput(), new UtcInstant(NOW));
         old.replaceWith(replacement.id(), new UtcInstant(NOW));
-        given(queryService.find(NUMBER, 1)).willReturn(Optional.of(old));
-        given(queryService.findAll(NUMBER)).willReturn(List.of(old, replacement));
+        given(queryService.find(eq(NUMBER), eq(1), any())).willReturn(Optional.of(old));
+        given(queryService.findAll(eq(NUMBER), any())).willReturn(List.of(old, replacement));
 
         mockMvc.perform(get("/staff/transport-requests/TR-2026-0001/quotations/1"))
                 .andExpect(content().string(containsString("<dd>置換済み</dd>")))
@@ -462,7 +471,7 @@ class StaffQuotationControllerTest {
     @Test
     void 再承認の見積りの荷主承認待ちは荷主の再承認を待っていると示し引き継いだ回答時刻で依頼の文を出さない() throws Exception {
         readyToBookRequestExists(false);
-        given(queryService.find(NUMBER, 2)).willReturn(Optional.of(reapproval()));
+        given(queryService.find(eq(NUMBER), eq(2), any())).willReturn(Optional.of(reapproval()));
 
         mockMvc.perform(get("/staff/transport-requests/TR-2026-0001/quotations/2"))
                 .andExpect(content().string(containsString("荷主の再承認を待っています（承認済みの経路版と経路方針を引き継いだ見積りです）。この見積りは読み取り専用です。")))
@@ -476,7 +485,7 @@ class StaffQuotationControllerTest {
         // 再承認は提示（2099-10-08T10:00:00Z）の後
         quotation.approveByShipper(
                 new UserId(UUID.randomUUID()), new UtcInstant(Instant.parse("2099-10-08T10:30:00Z")));
-        given(queryService.find(NUMBER, 2)).willReturn(Optional.of(quotation));
+        given(queryService.find(eq(NUMBER), eq(2), any())).willReturn(Optional.of(quotation));
 
         mockMvc.perform(get("/staff/transport-requests/TR-2026-0001/quotations/2"))
                 .andExpect(
@@ -493,8 +502,8 @@ class StaffQuotationControllerTest {
         Quotation quotation = presented();
         quotation.requestRouteDesign(
                 new UserId(UUID.randomUUID()), new UtcInstant(Instant.parse("2026-10-06T00:30:00Z")));
-        given(queryService.find(NUMBER, 1)).willReturn(Optional.of(quotation));
-        given(queryService.findAll(NUMBER)).willReturn(List.of(quotation));
+        given(queryService.find(eq(NUMBER), eq(1), any())).willReturn(Optional.of(quotation));
+        given(queryService.findAll(eq(NUMBER), any())).willReturn(List.of(quotation));
 
         mockMvc.perform(get("/staff/transport-requests/TR-2026-0001/quotations/1"))
                 .andExpect(content().string(containsString("<dd>詳細設計依頼済み</dd>")))
@@ -512,7 +521,7 @@ class StaffQuotationControllerTest {
         Quotation quotation = presented();
         quotation.requestRouteDesign(
                 new UserId(UUID.randomUUID()), new UtcInstant(Instant.parse("2026-10-06T00:30:00Z")));
-        given(queryService.find(NUMBER, 1)).willReturn(Optional.of(quotation));
+        given(queryService.find(eq(NUMBER), eq(1), any())).willReturn(Optional.of(quotation));
         clock.setInstant(QuotationFixture.EXPIRES_AT.instant());
         try {
             mockMvc.perform(get("/staff/transport-requests/TR-2026-0001/quotations/1"))
@@ -529,7 +538,7 @@ class StaffQuotationControllerTest {
     @Test
     void 再見積りの画面は旧版の明細と通貨と経路方針を初期値にし有効期限は空にする() throws Exception {
         transportRequestExists();
-        given(queryService.find(NUMBER, 1)).willReturn(Optional.of(presented()));
+        given(queryService.find(eq(NUMBER), eq(1), any())).willReturn(Optional.of(presented()));
 
         mockMvc.perform(get("/staff/transport-requests/TR-2026-0001/quotations/1/requotation"))
                 .andExpect(status().isOk())
@@ -550,7 +559,7 @@ class StaffQuotationControllerTest {
     @Test
     void 再見積りして算出すると新しい見積りへ移り結果を示す() throws Exception {
         transportRequestExists();
-        given(commandService.requote(any()))
+        given(commandService.requote(any(), any()))
                 .willReturn(new RequotationOutcome.Calculated(NUMBER, 2, QuotationStatus.REPLACED));
 
         mockMvc.perform(post("/staff/transport-requests/TR-2026-0001/quotations/1/requotation")
@@ -566,22 +575,24 @@ class StaffQuotationControllerTest {
                                 "result", "TR-2026-0001 見積 2 を算出しました。見積 1 は新しい見積りに置き換えました。内容を確かめて社内承認してください"));
         then(commandService)
                 .should()
-                .requote(new RequoteQuotationCommand(
-                        NUMBER,
-                        1,
-                        new QuotationInput(
-                                List.of(new PricingLineInput("海上運賃", new BigDecimal("3000.00"), null)),
-                                Currency.USD,
-                                tokyo("2099-10-09T18:00"),
-                                List.of(),
-                                tokyo("2099-10-10T09:00"),
-                                tokyo("2099-10-30T18:00"))));
+                .requote(
+                        eq(new RequoteQuotationCommand(
+                                NUMBER,
+                                1,
+                                new QuotationInput(
+                                        List.of(new PricingLineInput("海上運賃", new BigDecimal("3000.00"), null)),
+                                        Currency.USD,
+                                        tokyo("2099-10-09T18:00"),
+                                        List.of(),
+                                        tokyo("2099-10-10T09:00"),
+                                        tokyo("2099-10-30T18:00")))),
+                        any());
     }
 
     @Test
     void 再見積りの入力の誤りは再見積りの画面に戻してエラー要約に示す() throws Exception {
         transportRequestExists();
-        given(commandService.requote(any()))
+        given(commandService.requote(any(), any()))
                 .willReturn(new RequotationOutcome.Invalid(
                         new QuotationViolations(List.of(new Violation(Item.EXPIRES_AT, Reason.MISSING)))));
 
@@ -598,7 +609,7 @@ class StaffQuotationControllerTest {
     @Test
     void 再見積りできないときと競合したときは旧版に戻して理由を示す() throws Exception {
         transportRequestExists();
-        given(commandService.requote(any()))
+        given(commandService.requote(any(), any()))
                 .willReturn(new RequotationOutcome.Rejected(QuotationRejection.REPLACED))
                 .willReturn(new RequotationOutcome.Conflict());
 
@@ -625,7 +636,9 @@ class StaffQuotationControllerTest {
 
     @Test
     void 失効した見積りを提示しようとすると理由と再見積りの案内を示す() throws Exception {
-        given(commandService.present(any())).willReturn(new PresentationOutcome.Rejected(QuotationRejection.EXPIRED));
+        transportRequestExists();
+        given(commandService.present(any(), any()))
+                .willReturn(new PresentationOutcome.Rejected(QuotationRejection.EXPIRED));
 
         mockMvc.perform(post("/staff/transport-requests/TR-2026-0001/quotations/1/presentation"))
                 .andExpect(redirectedUrl("/staff/transport-requests/TR-2026-0001/quotations/1"))
@@ -635,7 +648,7 @@ class StaffQuotationControllerTest {
     @Test
     void 有効期限を過ぎた提示済みの見積りは使えないと示し再見積りの操作を出す() throws Exception {
         transportRequestExists();
-        given(queryService.find(NUMBER, 1)).willReturn(Optional.of(presented()));
+        given(queryService.find(eq(NUMBER), eq(1), any())).willReturn(Optional.of(presented()));
         clock.setInstant(QuotationFixture.EXPIRES_AT.instant());
         try {
             mockMvc.perform(get("/staff/transport-requests/TR-2026-0001/quotations/1"))
@@ -654,8 +667,8 @@ class StaffQuotationControllerTest {
         Quotation latest = Quotation.create(new QuotationId(UUID.randomUUID()), ID, 1, 2);
         latest.calculate(QuotationFixture.completeInput(), new UtcInstant(NOW));
         old.replaceWith(latest.id(), QuotationFixture.EXPIRES_AT);
-        given(queryService.find(NUMBER, 1)).willReturn(Optional.of(old));
-        given(queryService.findAll(NUMBER)).willReturn(List.of(old, latest));
+        given(queryService.find(eq(NUMBER), eq(1), any())).willReturn(Optional.of(old));
+        given(queryService.findAll(eq(NUMBER), any())).willReturn(List.of(old, latest));
 
         mockMvc.perform(get("/staff/transport-requests/TR-2026-0001/quotations/1"))
                 .andExpect(content().string(containsString("<dd>失効</dd>")))
@@ -668,7 +681,7 @@ class StaffQuotationControllerTest {
     @Test
     void 旧版を失効として記録した再見積りはその旨を結果に示す() throws Exception {
         transportRequestExists();
-        given(commandService.requote(any()))
+        given(commandService.requote(any(), any()))
                 .willReturn(new RequotationOutcome.Calculated(NUMBER, 2, QuotationStatus.EXPIRED));
 
         mockMvc.perform(requoteForm())
@@ -679,7 +692,7 @@ class StaffQuotationControllerTest {
     @Test
     void 輸送要求の古い版に対する見積りの再見積りは理由を示す() throws Exception {
         transportRequestExists();
-        given(commandService.requote(any()))
+        given(commandService.requote(any(), any()))
                 .willReturn(new RequotationOutcome.Rejected(QuotationRejection.OUTDATED_VERSION));
 
         mockMvc.perform(requoteForm())
@@ -689,7 +702,7 @@ class StaffQuotationControllerTest {
     @Test
     void 期限内の承認済みの見積りの再見積りは本予約の確定へ進むよう示す() throws Exception {
         transportRequestExists();
-        given(commandService.requote(any()))
+        given(commandService.requote(any(), any()))
                 .willReturn(new RequotationOutcome.Rejected(QuotationRejection.APPROVED_AND_STILL_VALID));
 
         mockMvc.perform(requoteForm())
@@ -699,7 +712,7 @@ class StaffQuotationControllerTest {
     @Test
     void 荷主の承認の段階のほかの理由の再見積りは既定の文言で示す() throws Exception {
         transportRequestExists();
-        given(commandService.requote(any()))
+        given(commandService.requote(any(), any()))
                 .willReturn(new RequotationOutcome.Rejected(QuotationRejection.ALREADY_APPROVED));
 
         mockMvc.perform(requoteForm())
@@ -711,7 +724,7 @@ class StaffQuotationControllerTest {
     @Test
     void 承認の後に失効した見積りは経路を引き継いで再見積りできると案内し再見積りの操作と確定した経路を示す() throws Exception {
         readyToBookRequestExists(false);
-        given(queryService.find(NUMBER, 1)).willReturn(Optional.of(approved()));
+        given(queryService.find(eq(NUMBER), eq(1), any())).willReturn(Optional.of(approved()));
         clock.setInstant(QuotationFixture.EXPIRES_AT.instant());
         try {
             mockMvc.perform(get("/staff/transport-requests/TR-2026-0001/quotations/1"))
@@ -729,7 +742,7 @@ class StaffQuotationControllerTest {
     @Test
     void 期限内の承認済みの見積りは再見積りの操作を出さず開いても本予約の確定へ進むよう示して戻す() throws Exception {
         readyToBookRequestExists(false);
-        given(queryService.find(NUMBER, 1)).willReturn(Optional.of(approved()));
+        given(queryService.find(eq(NUMBER), eq(1), any())).willReturn(Optional.of(approved()));
 
         mockMvc.perform(get("/staff/transport-requests/TR-2026-0001/quotations/1"))
                 .andExpect(content().string(not(containsString("/requotation"))));
@@ -741,7 +754,7 @@ class StaffQuotationControllerTest {
     @Test
     void 予約確定済みの見積依頼の失効した承認済みの見積りは再見積りの操作を出さず予約確定済みと示す() throws Exception {
         readyToBookRequestExists(true);
-        given(queryService.find(NUMBER, 1)).willReturn(Optional.of(approved()));
+        given(queryService.find(eq(NUMBER), eq(1), any())).willReturn(Optional.of(approved()));
         clock.setInstant(QuotationFixture.EXPIRES_AT.instant());
         try {
             mockMvc.perform(get("/staff/transport-requests/TR-2026-0001/quotations/1"))
@@ -757,7 +770,7 @@ class StaffQuotationControllerTest {
     @Test
     void 経路を持つ見積りの再見積りの画面は経路方針と経路版を読み取り専用で示し経路方針の欄を出さない() throws Exception {
         readyToBookRequestExists(false);
-        given(queryService.find(NUMBER, 1)).willReturn(Optional.of(approved()));
+        given(queryService.find(eq(NUMBER), eq(1), any())).willReturn(Optional.of(approved()));
         clock.setInstant(QuotationFixture.EXPIRES_AT.instant());
         try {
             mockMvc.perform(get("/staff/transport-requests/TR-2026-0001/quotations/1/requotation"))
@@ -779,8 +792,8 @@ class StaffQuotationControllerTest {
     void 経路を持つ見積りの再見積りは経路方針を受けずに旧版の経路方針で算出を頼む() throws Exception {
         readyToBookRequestExists(false);
         Quotation old = approved();
-        given(queryService.find(NUMBER, 1)).willReturn(Optional.of(old));
-        given(commandService.requote(any()))
+        given(queryService.find(eq(NUMBER), eq(1), any())).willReturn(Optional.of(old));
+        given(commandService.requote(any(), any()))
                 .willReturn(new RequotationOutcome.Calculated(NUMBER, 2, QuotationStatus.EXPIRED));
 
         mockMvc.perform(post("/staff/transport-requests/TR-2026-0001/quotations/1/requotation")
@@ -792,7 +805,7 @@ class StaffQuotationControllerTest {
                         .param("departureAt", "壊れた日時"))
                 .andExpect(redirectedUrl("/staff/transport-requests/TR-2026-0001/quotations/2"));
         ArgumentCaptor<RequoteQuotationCommand> command = ArgumentCaptor.forClass(RequoteQuotationCommand.class);
-        then(commandService).should().requote(command.capture());
+        then(commandService).should().requote(command.capture(), any());
         assertThat(command.getValue().input().via()).containsExactly(new Location("SGSIN"));
         assertThat(command.getValue().input().departureAt())
                 .isEqualTo(old.routePolicy().orElseThrow().departureAt());
@@ -803,8 +816,8 @@ class StaffQuotationControllerTest {
     @Test
     void 経路を持つ見積りの再見積りの入力の誤りは読み取り専用の経路方針と経路版を残して描き直す() throws Exception {
         readyToBookRequestExists(false);
-        given(queryService.find(NUMBER, 1)).willReturn(Optional.of(approved()));
-        given(commandService.requote(any()))
+        given(queryService.find(eq(NUMBER), eq(1), any())).willReturn(Optional.of(approved()));
+        given(commandService.requote(any(), any()))
                 .willReturn(new RequotationOutcome.Invalid(
                         new QuotationViolations(List.of(new Violation(Item.EXPIRES_AT, Reason.MISSING)))));
 
@@ -822,7 +835,7 @@ class StaffQuotationControllerTest {
     @Test
     void 予約確定済みの見積依頼の期限内の承認済みの見積りを開いても予約確定済みと示して戻す() throws Exception {
         readyToBookRequestExists(true);
-        given(queryService.find(NUMBER, 1)).willReturn(Optional.of(approved()));
+        given(queryService.find(eq(NUMBER), eq(1), any())).willReturn(Optional.of(approved()));
 
         mockMvc.perform(get("/staff/transport-requests/TR-2026-0001/quotations/1/requotation"))
                 .andExpect(flash().attribute("problem", "TR-2026-0001 見積 1 は本予約を確定済みのため、再見積りできません"));
@@ -831,7 +844,7 @@ class StaffQuotationControllerTest {
     @Test
     void 経路を持つ見積りの再見積りの形式の誤りも読み取り専用の経路方針と経路版を残して描き直す() throws Exception {
         readyToBookRequestExists(false);
-        given(queryService.find(NUMBER, 1)).willReturn(Optional.of(approved()));
+        given(queryService.find(eq(NUMBER), eq(1), any())).willReturn(Optional.of(approved()));
 
         mockMvc.perform(post("/staff/transport-requests/TR-2026-0001/quotations/1/requotation")
                         .param("lines[0].description", "海上運賃")
@@ -842,14 +855,14 @@ class StaffQuotationControllerTest {
                 .andExpect(content().string(containsString("<dd>SGSIN</dd>")))
                 .andExpect(content().string(containsString("確定した経路（RC-2026-0001 経路版 1）")))
                 .andExpect(content().string(not(containsString("id=\"via\""))));
-        then(commandService).should(never()).requote(any());
+        then(commandService).should(never()).requote(any(), any());
     }
 
     @Test
     void 経路を持たない見積りの再見積りは入れた経路方針のまま算出を頼む() throws Exception {
         transportRequestExists();
-        given(queryService.find(NUMBER, 1)).willReturn(Optional.of(presented()));
-        given(commandService.requote(any()))
+        given(queryService.find(eq(NUMBER), eq(1), any())).willReturn(Optional.of(presented()));
+        given(commandService.requote(any(), any()))
                 .willReturn(new RequotationOutcome.Calculated(NUMBER, 2, QuotationStatus.REPLACED));
 
         mockMvc.perform(post("/staff/transport-requests/TR-2026-0001/quotations/1/requotation")
@@ -862,7 +875,7 @@ class StaffQuotationControllerTest {
                         .param("arrivalAt", "2099-10-31 18:00"))
                 .andExpect(redirectedUrl("/staff/transport-requests/TR-2026-0001/quotations/2"));
         ArgumentCaptor<RequoteQuotationCommand> command = ArgumentCaptor.forClass(RequoteQuotationCommand.class);
-        then(commandService).should().requote(command.capture());
+        then(commandService).should().requote(command.capture(), any());
         assertThat(command.getValue().input().via()).containsExactly(new Location("HKHKG"));
         assertThat(command.getValue().input().departureAt()).isEqualTo(tokyo("2099-10-11T09:00"));
     }
@@ -870,7 +883,7 @@ class StaffQuotationControllerTest {
     @Test
     void 再見積りを予約確定済みの理由で受け付けなかったときはその文言を示す() throws Exception {
         transportRequestExists();
-        given(commandService.requote(any()))
+        given(commandService.requote(any(), any()))
                 .willReturn(new RequotationOutcome.Rejected(QuotationRejection.TRANSPORT_REQUEST_BOOKED));
 
         mockMvc.perform(requoteForm())
@@ -894,7 +907,7 @@ class StaffQuotationControllerTest {
     void 期限内の出発済みの見積りの再見積りは出発済みと荷主との相談を示し本予約の確定へ進むよう示さない() throws Exception {
         // Bolt 37e4 の状態の組み合わせの行 14（T-185。古い「本予約の確定へ進んでください」を出さない）
         transportRequestExists();
-        given(commandService.requote(any()))
+        given(commandService.requote(any(), any()))
                 .willReturn(new RequotationOutcome.Rejected(QuotationRejection.ROUTE_ALREADY_DEPARTED));
 
         mockMvc.perform(requoteForm())
@@ -906,7 +919,7 @@ class StaffQuotationControllerTest {
     void 期限内の印のある見積りの再見積りは再設計要と経路設計者との相談を示す() throws Exception {
         // 行 10
         transportRequestExists();
-        given(commandService.requote(any()))
+        given(commandService.requote(any(), any()))
                 .willReturn(new RequotationOutcome.Rejected(QuotationRejection.ROUTE_REDESIGN_REQUIRED));
 
         mockMvc.perform(requoteForm())
@@ -922,7 +935,7 @@ class StaffQuotationControllerTest {
         clock.setInstant(QuotationFixture.EXPIRES_AT.instant());
         try {
             for (Quotation quotation : List.of(marked(awaitingShipperApproval()), marked(approved()))) {
-                given(queryService.find(NUMBER, 1)).willReturn(Optional.of(quotation));
+                given(queryService.find(eq(NUMBER), eq(1), any())).willReturn(Optional.of(quotation));
 
                 mockMvc.perform(get("/staff/transport-requests/TR-2026-0001/quotations/1"))
                         .andExpect(content().string(containsString(notice)))
@@ -956,7 +969,7 @@ class StaffQuotationControllerTest {
                 at);
         quotation.approveByShipper(new UserId(UUID.randomUUID()), at);
         quotation.clearDomainEvents();
-        given(queryService.find(NUMBER, 1)).willReturn(Optional.of(quotation));
+        given(queryService.find(eq(NUMBER), eq(1), any())).willReturn(Optional.of(quotation));
         clock.setInstant(QuotationFixture.EXPIRES_AT.instant());
         try {
             mockMvc.perform(get("/staff/transport-requests/TR-2026-0001/quotations/1"))

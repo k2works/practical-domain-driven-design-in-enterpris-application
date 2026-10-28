@@ -25,6 +25,8 @@ import com.example.cargotracker.quotation.domain.model.valueobjects.TransportReq
 import com.example.cargotracker.routing.application.internal.queryservices.RoutingCaseQueryService;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteVersionStatus;
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseSummary;
+import com.example.cargotracker.shared.domain.AuthenticatedActor;
+import com.example.cargotracker.shared.domain.AuthenticatedActorFixture;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.UserId;
 import java.time.Duration;
@@ -46,6 +48,10 @@ class RouteDesignRequestedRoutingIntegrationTest {
 
     private static final Duration TIMEOUT = Duration.ofSeconds(10);
     private static final UserId STAFF = new UserId(UUID.randomUUID());
+    private static final CompanyId SHIPPER_COMPANY = new CompanyId(UUID.randomUUID());
+    /** 営業担当者（提出する荷主企業を担当する。Bolt 38f）。 */
+    private static final AuthenticatedActor OPERATOR = AuthenticatedActorFixture.salesHandling(STAFF, SHIPPER_COMPANY);
+
     private static final UserId SHIPPER = new UserId(UUID.randomUUID());
 
     @Autowired
@@ -68,16 +74,16 @@ class RouteDesignRequestedRoutingIntegrationTest {
 
     @Test
     void 詳細経路設計を依頼するとイベントが経路設計に配信され見積りの経路条件で案件が1つ作られる() {
-        CompanyId shipper = new CompanyId(UUID.randomUUID());
+        CompanyId shipper = SHIPPER_COMPANY;
         SubmissionOutcome.Submitted submitted = (SubmissionOutcome.Submitted) transportRequestCommandService.submit(
                 new SubmitTransportRequestCommand(shipper, SHIPPER, ShipmentTermsFixture.completeInput()));
         TransportRequestNumber number = submitted.number();
-        assertThat(reviewService.approve(new ApproveTransportRequestCommand(number, 1, STAFF, "根拠")))
+        assertThat(reviewService.approve(new ApproveTransportRequestCommand(number, 1, STAFF, "根拠"), OPERATOR))
                 .isInstanceOf(ReviewOutcome.Reviewed.class);
         assertThat(quotationCommandService.calculate(
-                        new CalculateQuotationCommand(number, QuotationFixture.completeInput())))
+                        new CalculateQuotationCommand(number, QuotationFixture.completeInput()), OPERATOR))
                 .isEqualTo(new CalculationOutcome.Calculated(number, 1));
-        assertThat(quotationCommandService.present(new PresentQuotationCommand(number, 1, STAFF)))
+        assertThat(quotationCommandService.present(new PresentQuotationCommand(number, 1, STAFF), OPERATOR))
                 .isEqualTo(new PresentationOutcome.Presented(number, 1));
 
         assertThat(quotationResponseService.requestRouteDesign(

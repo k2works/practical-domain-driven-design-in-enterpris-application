@@ -36,6 +36,7 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -59,6 +60,10 @@ class MyBatisQuotationIntegrationTest {
     private static final UtcInstant NOW = new UtcInstant(Instant.parse("2082-01-05T04:00:00Z"));
     private static final UtcInstant APPROVED_AT = new UtcInstant(Instant.parse("2082-01-05T04:30:00Z"));
     private static final UserId STAFF = new UserId(UUID.randomUUID());
+    /** 社内の一覧を絞る担当企業（Bolt 38f）。一覧を確かめる輸送要求はこの荷主のもの。 */
+    private static final CompanyId SHIPPER = new CompanyId(UUID.randomUUID());
+
+    private static final CompanyId OTHER_SHIPPER = new CompanyId(UUID.randomUUID());
 
     @Autowired
     QuotationRepository repository;
@@ -70,15 +75,7 @@ class MyBatisQuotationIntegrationTest {
     JdbcTemplate jdbc;
 
     private TransportRequestId transportRequest(int sequence) {
-        TransportRequest request = TransportRequest.submit(
-                new TransportRequestId(UUID.randomUUID()),
-                new TransportRequestNumber(2082, sequence),
-                new CompanyId(UUID.randomUUID()),
-                ShipmentTermsFixture.generalCargo(),
-                STAFF,
-                NOW);
-        transportRequests.save(request);
-        return request.id();
+        return transportRequest(sequence, SHIPPER);
     }
 
     private Quotation calculated(TransportRequestId transportRequestId, int quotationNo) {
@@ -376,7 +373,7 @@ class MyBatisQuotationIntegrationTest {
         transportRequests.update(quotingRequest);
         repository.save(calculated(quoting, 1));
 
-        assertThat(repository.findLatestOfQuotedRequests())
+        assertThat(repository.findLatestOfQuotedRequests(Set.of(SHIPPER)))
                 .filteredOn(summary -> summary.number().equals(new TransportRequestNumber(2082, 15))
                         || summary.number().equals(new TransportRequestNumber(2082, 16)))
                 .containsExactly(new QuotedRequestSummary(
@@ -384,6 +381,52 @@ class MyBatisQuotationIntegrationTest {
                         2,
                         QuotationStatus.PENDING_APPROVAL,
                         QuotationFixture.EXPIRES_AT));
+    }
+
+    @Test
+    void 社内の一覧の3つの照会は担当企業の輸送要求だけを返す() {
+        // Bolt 38f の行 2a（見積提示済み・経路設計中・予約の確定待ちの SQL の IN。V3c・V3d・V3e）
+        for (int sequence : List.of(94, 95)) {
+            TransportRequestId quoted = transportRequest(sequence, sequence == 94 ? SHIPPER : OTHER_SHIPPER);
+            TransportRequest request = transportRequests.findById(quoted).orElseThrow();
+            request.approve(1, STAFF, "根拠", NOW);
+            request.markQuotationPresented(1);
+            transportRequests.update(request);
+            repository.save(presented(quoted, 1));
+        }
+        for (int sequence : List.of(96, 97)) {
+            TransportRequestId routing = transportRequest(sequence, sequence == 96 ? SHIPPER : OTHER_SHIPPER);
+            advanceTransportRequest(routing, TransportRequestStatus.ROUTING);
+            routingRequested(routing);
+        }
+        for (int sequence : List.of(98, 99)) {
+            TransportRequestId ready = transportRequest(sequence, sequence == 98 ? SHIPPER : OTHER_SHIPPER);
+            approved(ready);
+            advanceTransportRequest(ready, TransportRequestStatus.READY_TO_BOOK);
+        }
+
+        assertThat(repository.findLatestOfQuotedRequests(Set.of(SHIPPER)))
+                .extracting(QuotedRequestSummary::number)
+                .contains(new TransportRequestNumber(2082, 94))
+                .doesNotContain(new TransportRequestNumber(2082, 95));
+        assertThat(repository.findRoutingRequestedSummaries(Set.of(SHIPPER)))
+                .extracting(RoutingRequestedSummary::number)
+                .contains(new TransportRequestNumber(2082, 96))
+                .doesNotContain(new TransportRequestNumber(2082, 97));
+        assertThat(repository.findAwaitingBookingSummaries(Set.of(SHIPPER)))
+                .extracting(AwaitingBookingSummary::number)
+                .contains(new TransportRequestNumber(2082, 98))
+                .doesNotContain(new TransportRequestNumber(2082, 99));
+        // 2 社を担当すれば 2 社とも出る（開発レビューの低 4）
+        assertThat(repository.findLatestOfQuotedRequests(Set.of(SHIPPER, OTHER_SHIPPER)))
+                .extracting(QuotedRequestSummary::number)
+                .contains(new TransportRequestNumber(2082, 94), new TransportRequestNumber(2082, 95));
+        assertThat(repository.findRoutingRequestedSummaries(Set.of(SHIPPER, OTHER_SHIPPER)))
+                .extracting(RoutingRequestedSummary::number)
+                .contains(new TransportRequestNumber(2082, 96), new TransportRequestNumber(2082, 97));
+        assertThat(repository.findAwaitingBookingSummaries(Set.of(SHIPPER, OTHER_SHIPPER)))
+                .extracting(AwaitingBookingSummary::number)
+                .contains(new TransportRequestNumber(2082, 98), new TransportRequestNumber(2082, 99));
     }
 
     // 荷主の回答（US-24 AC1、Q-INV-09・18。Bolt 12）
@@ -495,7 +538,7 @@ class MyBatisQuotationIntegrationTest {
 
         assertThat(transportRequests.findById(earlier).orElseThrow().status())
                 .isEqualTo(TransportRequestStatus.ROUTING);
-        assertThat(repository.findRoutingRequestedSummaries())
+        assertThat(repository.findRoutingRequestedSummaries(Set.of(SHIPPER)))
                 .filteredOn(summary -> summary.number().year() == 2082)
                 .containsExactly(
                         new RoutingRequestedSummary(
@@ -668,11 +711,11 @@ class MyBatisQuotationIntegrationTest {
         ready.markReadyToBook(1);
         transportRequests.update(ready);
 
-        assertThat(repository.findRoutingRequestedSummaries())
+        assertThat(repository.findRoutingRequestedSummaries(Set.of(SHIPPER)))
                 .filteredOn(summary -> summary.number().year() == 2082)
                 .extracting(summary -> summary.number().sequence() + ":" + summary.status())
                 .containsExactly("29:AWAITING_SHIPPER_APPROVAL");
-        assertThat(repository.findAwaitingBookingSummaries())
+        assertThat(repository.findAwaitingBookingSummaries(Set.of(SHIPPER)))
                 .filteredOn(summary -> summary.number().year() == 2082)
                 .extracting(summary -> summary.number().sequence())
                 .contains(30);
@@ -726,7 +769,7 @@ class MyBatisQuotationIntegrationTest {
         awaitingApproval(awaiting);
         advanceTransportRequest(awaiting, TransportRequestStatus.AWAITING_APPROVAL);
 
-        assertThat(repository.findAwaitingBookingSummaries())
+        assertThat(repository.findAwaitingBookingSummaries(Set.of(SHIPPER)))
                 .as("DE-21・DE-04 の配信を待たずに見積りの承認済みを正にする（輸送要求が経路設計中のままでも出す）。有効期限の近い順")
                 .filteredOn(summary -> summary.number().year() == 2082)
                 // 最初の区間の出発（Bolt 37e4）はこのテストの見るところでないので比べない
@@ -748,7 +791,7 @@ class MyBatisQuotationIntegrationTest {
                                 1,
                                 SHIPPER_APPROVED_AT,
                                 QuotationFixture.EXPIRES_AT));
-        assertThat(repository.findRoutingRequestedSummaries())
+        assertThat(repository.findRoutingRequestedSummaries(Set.of(SHIPPER)))
                 .as("承認済みは予約の確定待ちの表に移し、荷主承認待ちは経路の確定の時刻を持つ")
                 .filteredOn(summary ->
                         summary.number().year() == 2082 && summary.number().sequence() >= 31)
@@ -771,7 +814,7 @@ class MyBatisQuotationIntegrationTest {
         approved(unmarked);
         advanceTransportRequest(unmarked, TransportRequestStatus.READY_TO_BOOK);
 
-        assertThat(repository.findAwaitingBookingSummaries())
+        assertThat(repository.findAwaitingBookingSummaries(Set.of(SHIPPER)))
                 .filteredOn(summary -> summary.number().year() == 2082
                         && java.util.Set.of(91, 92).contains(summary.number().sequence()))
                 .extracting(summary -> summary.number().sequence(), AwaitingBookingSummary::routeRedesignRequired)
@@ -792,7 +835,7 @@ class MyBatisQuotationIntegrationTest {
                 java.sql.Timestamp.from(departure.instant()),
                 departed.value());
 
-        assertThat(repository.findAwaitingBookingSummaries())
+        assertThat(repository.findAwaitingBookingSummaries(Set.of(SHIPPER)))
                 .filteredOn(summary -> summary.number().equals(new TransportRequestNumber(2082, 93)))
                 .singleElement()
                 .satisfies(summary -> {
@@ -926,7 +969,7 @@ class MyBatisQuotationIntegrationTest {
         UtcInstant nextExpires =
                 new UtcInstant(QuotationFixture.EXPIRES_AT.instant().plusSeconds(86_400));
 
-        assertThat(repository.findAwaitingBookingSummaries())
+        assertThat(repository.findAwaitingBookingSummaries(Set.of(SHIPPER)))
                 .as("経路を持つ承認待ち（再見積りの後で提示の前）は、輸送要求が予約待ちでも荷主承認待ちでも出す（D-85。Bolt 35c）。"
                         + "経路を持たない承認待ちと、提示した後の見積り（荷主承認待ち）は出さない")
                 .filteredOn(summary ->
@@ -950,7 +993,7 @@ class MyBatisQuotationIntegrationTest {
                                 1,
                                 null,
                                 nextExpires));
-        assertThat(repository.findRoutingRequestedSummaries())
+        assertThat(repository.findRoutingRequestedSummaries(Set.of(SHIPPER)))
                 .as("提示した見積り 2（荷主承認待ち）は、DE-24 で輸送要求が予約待ちから戻る前でも経路設計中・荷主承認待ちの表に出す")
                 .filteredOn(summary ->
                         summary.number().year() == 2082 && summary.number().sequence() >= 37)

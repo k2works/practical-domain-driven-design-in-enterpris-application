@@ -18,7 +18,8 @@ import org.springframework.transaction.support.TransactionTemplate;
 /**
  * session の確かめのサービス（Bolt 32c、US-18 AC6、IA-INV-04、ADR-012 の見直しの 3）。認証済みの request ごとに、利用者・役割・
  * 所属企業を 1 回で読み、ログインと同じドメインの規則（{@link User#authenticationRejection}）で判定する。拒否なら
- * {@code SESSION_REVOKED} を 1 つのトランザクションで書いて理由を返し、拒否でなければ今の役割・表示名・企業名の主体を返す。
+ * {@code SESSION_REVOKED} を 1 つのトランザクションで書いて理由を返し、拒否でなければ今の役割・表示名・企業名・担当企業の主体を返す
+ * （担当企業は Bolt 38f。割り当てを変えると次の request から効く）。
  * 役割が変わっただけのときは記録しない。認証の入口のフィルターから呼ぶので、層の規則 D-5 の認証の例外の範囲（入口から
  * 呼べるのは commandservices）に置く。読み出し・監査の誤りは投げ、入口が session を捨てて 500 にする（fail-closed）。
  */
@@ -64,7 +65,8 @@ public class SessionRevalidationService {
                         standing.company().id(),
                         user.roles(),
                         user.displayName(),
-                        standing.company().name()),
+                        standing.company().name(),
+                        standing.assignedCompanies().companies()),
                 user.email());
     }
 

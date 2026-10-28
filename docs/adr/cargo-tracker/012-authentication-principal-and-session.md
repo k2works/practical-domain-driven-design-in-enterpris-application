@@ -4,7 +4,7 @@ title: "ADR-012: 認証の主体は共有カーネルの型にし、password の
 description: "US-18 の password によるログインと session を、Spring Security 7 の form login と Spring Session JDBC で作る。"
 tags: [adr, authentication, session]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-27T03:11:49Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-28T10:20:03Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-06T06:51:29Z }
 ---
@@ -34,7 +34,7 @@ US-18 の password によるログインと session を、Spring Security 7 の 
 
 - 共有カーネル（`shared`）に、認証された利用者 `AuthenticatedActor`（利用者 ID・企業 ID・役割（1 つ以上）・表示名・企業名）と役割 `Role`（BR-15 の 8 役割）を置く。
 - `quotation` の controller は、引数に `AuthenticatedActor` を書くだけでこの型を受け取る。`identity` の引数の解決（`AuthenticatedActorArgumentResolver`）が Spring Security の主体から作って渡すため、`@AuthenticationPrincipal` も使わない。Spring Security の型（`UserDetails`、`Authentication`）と `identity` には依存しない（ArchUnit で確かめる。Bolt 14 の実装で、注釈も Spring Security の型であるため引数の解決にした）。
-- Spring Security の主体は `identity` の型（`CargoUserDetails`。`UserDetails` を実装する）で、session（Spring Session JDBC）に直列化できる値だけを持ち、`actor()` で `AuthenticatedActor` を作る。
+- Spring Security の主体は `identity` の型（`CargoUserDetails`。`UserDetails` を実装する）で、session（Spring Session JDBC）に直列化できる値だけを持ち、`actor()` で `AuthenticatedActor` を作る。 Bolt 38f で、`AuthenticatedActor` に担当企業（業務担当者が業務の画面で扱える荷主の企業。38e の割り当て）を足した。`CargoUserDetails` には担当企業を `transient` の項目で持ち、確かめのフィルターが request ごとに今の担当企業（利用者・役割・企業と同じ 1 回の SQL）で主体を作り直す。直列化の形を変えないので、配備の前の session もそのまま戻り、古い session を捨てる手順は要らない。戻した直後と確かめを通らない公開の URL では担当企業は空（失敗に倒す。何も扱わない）。
 - 置き換えの順は ADR-011 の決定 4 に従う（型を足す → 認証を入れる → controller を 1 つずつ置き換える → `ProvisionalActorProperties` を消す）。
 
 ### 2. 認証の構成
@@ -150,7 +150,7 @@ US-18 の password によるログインと session を、Spring Security 7 の 
 
 ### ネガティブ
 
-- session は JDK の直列化で DB に置く。`Role` の定数の改名・削除、`CargoUserDetails` の移動や項目の変更、Spring Security の版の更新、W5 の要素の権限の追加で、配備の前の session が復元できなくなる。互換を壊す変更を配備するときは、配備の手順で `platform.spring_session` の行を消し、利用者にログインし直してもらう（W10 の運用手順書に書く）。復元の失敗を無効な session として扱う変換は、W5 の要素の権限を足すときに検討する（Bolt 31 では、要素の権限を足しても配備の前の session は復元でき、password の段の時刻がないので期限の判定で A-03 に送る形になった。復元そのものが失敗する変更の変換は入れていない。ADR-011 の決定 2）。Bolt 32 のロックでは、互換を保つため `CargoUserDetails` に項目を足さず、ロックの状態を session に写さない（ADR-011 の決定 9）。
+- session は JDK の直列化で DB に置く。`Role` の定数の改名・削除、`CargoUserDetails` の移動や項目の変更、Spring Security の版の更新、W5 の要素の権限の追加で、配備の前の session が復元できなくなる。互換を壊す変更を配備するときは、配備の手順で `platform.spring_session` の行を消し、利用者にログインし直してもらう（W10 の運用手順書に書く）。復元の失敗を無効な session として扱う変換は、W5 の要素の権限を足すときに検討する（Bolt 31 では、要素の権限を足しても配備の前の session は復元でき、password の段の時刻がないので期限の判定で A-03 に送る形になった。復元そのものが失敗する変更の変換は入れていない。ADR-011 の決定 2）。Bolt 32 のロックでは、互換を保つため `CargoUserDetails` に項目を足さず、ロックの状態を session に写さない（ADR-011 の決定 9）。 Bolt 38f の担当企業は `transient` にしたので、この互換に当たらない（変える前のバイト列を戻すテスト `OldSessionPrincipalTest` で確かめる）。
 - 未認証の request（ログインの画面の CSRF のトークン、失敗の後のメールアドレス）でも session の行ができる。作られる速さの上限（レート制限）は、W10 の WAF の送信元ごとの流量の規則で扱う（利用者ごとのロックでは抑えられない。Bolt 32 の開始準備で S-02 とあわせて決めた。SEC-20、リスク台帳）。
 
 - Bolt 32c まで、利用停止しても既存の session は最長 8 時間使えた（パイロットの前で本番の利用者はいない）。Bolt 32c で request ごとに確かめるようにして解消した。その代わりに、認証済みの request ごとに 1 回の SQL が増える。キャッシュは入れない（入れると AC6 の「次の request から」が崩れる）。W10 の性能の評価で計測する（PERF-01・02）。
@@ -198,6 +198,7 @@ US-18 の password によるログインと session を、Spring Security 7 の 
 
 ## 改訂の経緯
 
+- 2026-10-28: Bolt 38f で、決定 1 に担当企業の受け渡し（`AuthenticatedActor` の担当企業、`CargoUserDetails` の `transient` の項目、request ごとの作り直し）を足した。session の互換を壊さないので【前の決定の変更】はない（Bolt 38f の開始準備の決定 (2)。human:kakimomokuri が決定）。
 - 2026-10-27: Bolt 38c のステップ 1 で、決定 3 のほかの session を失効させる場面に、システム管理者による TOTP の解除を足した
 - 2026-10-26: Bolt 38b4 で、A-06 の完了の監査に、招待のリンクで初回の password を設定したときの `INITIAL_PASSWORD_SET` を足した（再設定は `PASSWORD_RESET_COMPLETED` のまま。Bolt 38b4 の開始準備の決定 (3)。human:kakimomokuri が決定）。
 - 2026-10-17: Bolt 34c のステップ 1 で、決定 4 の権限外のアクセスの試行の記録を、Bolt 34b からの事実（controller の確定の POST で `AdministrationScopeDenialService` が単独で書き、GET では書かない）に直した。決定 4 と「W5 で見直すこと」の 5 の書き手の記述を、Bolt 34c の決定（書き手は今のまま。[ADR-011](011-mfa-totp.md) のステータス）に結んだ（Bolt 34c の開始準備の決定 2。human:kakimomokuri が決定）。

@@ -3,6 +3,7 @@ package com.example.cargotracker.quotation.interfaces.web;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -22,6 +23,7 @@ import com.example.cargotracker.quotation.application.internal.commandservices.R
 import com.example.cargotracker.quotation.application.internal.commandservices.TransportRequestReviewService;
 import com.example.cargotracker.quotation.application.internal.queryservices.DocumentFile;
 import com.example.cargotracker.quotation.application.internal.queryservices.StaffQuotationQueryService;
+import com.example.cargotracker.quotation.application.internal.queryservices.StaffTransportRequestLookup;
 import com.example.cargotracker.quotation.application.internal.queryservices.StaffTransportRequestQueryService;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequest;
 import com.example.cargotracker.quotation.domain.model.valueobjects.AwaitingBookingSummary;
@@ -42,6 +44,7 @@ import com.example.cargotracker.quotation.domain.model.valueobjects.TransportReq
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.Role;
+import com.example.cargotracker.shared.domain.ScopedResourceKind;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Clock;
@@ -57,8 +60,10 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Bean;
+import org.springframework.http.HttpStatus;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.server.ResponseStatusException;
 
 // 画面の単体テストはコントローラーの振る舞いだけを見る。認証・認可・CSRF はセキュリティの統合テストで確かめる（Bolt 14）
 @WithAuthenticatedActor(Role.SALES)
@@ -99,6 +104,9 @@ class TransportRequestReviewControllerTest {
     @MockitoBean
     StaffQuotationQueryService quotationQueryService;
 
+    @MockitoBean
+    StaffOutOfScopeResponder outOfScope;
+
     private static TransportRequest underReview() {
         return TransportRequest.submit(
                 ID,
@@ -135,7 +143,7 @@ class TransportRequestReviewControllerTest {
 
     @Test
     void 受付一覧は営業担当者のホームなので入口の一覧へ戻るリンクを出さない() throws Exception {
-        given(queryService.findUnderReview()).willReturn(List.of(summary()));
+        given(queryService.findUnderReview(any())).willReturn(List.of(summary()));
 
         mockMvc.perform(get("/staff/transport-requests"))
                 .andExpect(status().isOk())
@@ -144,7 +152,7 @@ class TransportRequestReviewControllerTest {
 
     @Test
     void 受付一覧に審査中の見積依頼を業務番号のリンクと社内の日時と待っている時間と貨物種別で示し内部のIDを出さない() throws Exception {
-        given(queryService.findUnderReview()).willReturn(List.of(summary()));
+        given(queryService.findUnderReview(any())).willReturn(List.of(summary()));
 
         mockMvc.perform(get("/staff/transport-requests"))
                 .andExpect(status().isOk())
@@ -159,7 +167,7 @@ class TransportRequestReviewControllerTest {
 
     @Test
     void 受付一覧に経路設計中の見積依頼の見積りを依頼時刻の古い順に示し見積りを開ける() throws Exception {
-        given(quotationQueryService.findRoutingRequestedSummaries())
+        given(quotationQueryService.findRoutingRequestedSummaries(any()))
                 .willReturn(List.of(
                         new RoutingRequestedSummary(
                                 NUMBER,
@@ -193,7 +201,7 @@ class TransportRequestReviewControllerTest {
     void 受付一覧の経路設計中の表に荷主承認待ちの見積依頼と経路の確定の時刻を示し未確定は凡例つきの横線にする() throws Exception {
         UtcInstant requestedAt = new UtcInstant(Instant.parse("2026-10-06T00:30:00Z"));
         UtcInstant expiresAt = new UtcInstant(Instant.parse("2099-10-09T09:00:00Z"));
-        given(quotationQueryService.findRoutingRequestedSummaries())
+        given(quotationQueryService.findRoutingRequestedSummaries(any()))
                 .willReturn(List.of(
                         new RoutingRequestedSummary(
                                 NUMBER,
@@ -221,7 +229,7 @@ class TransportRequestReviewControllerTest {
 
     @Test
     void 受付一覧の予約の確定待ちに荷主が承認した見積りを有効期限の近い順に示し本予約の確定を開ける() throws Exception {
-        given(quotationQueryService.findAwaitingBookingSummaries())
+        given(quotationQueryService.findAwaitingBookingSummaries(any()))
                 .willReturn(List.of(
                         new AwaitingBookingSummary(
                                 NUMBER,
@@ -295,7 +303,7 @@ class TransportRequestReviewControllerTest {
 
     @Test
     void 再見積りの後に提示の前に失効した承認待ちの見積りは予約の確定待ちから再見積りでき凡例は承認待ちの行があるときだけ示す() throws Exception {
-        given(quotationQueryService.findAwaitingBookingSummaries())
+        given(quotationQueryService.findAwaitingBookingSummaries(any()))
                 .willReturn(List.of(new AwaitingBookingSummary(
                         NUMBER,
                         2,
@@ -313,7 +321,7 @@ class TransportRequestReviewControllerTest {
                                         containsString(
                                                 "href=\"/staff/transport-requests/TR-2026-0001/quotations/2/requotation\">TR-2026-0001 見積 2 を再見積りする</a>")))
                 .andExpect(content().string(not(containsString("を開く（承認待ち）"))));
-        given(quotationQueryService.findAwaitingBookingSummaries())
+        given(quotationQueryService.findAwaitingBookingSummaries(any()))
                 .willReturn(List.of(new AwaitingBookingSummary(
                         NUMBER,
                         1,
@@ -330,7 +338,7 @@ class TransportRequestReviewControllerTest {
     void 割り当てた経路が再設計要の行は予約の確定待ちに残し再設計要と示して本予約の入口を出さない() throws Exception {
         // Bolt 37e3 の状態の組み合わせの行 5（期限内）・6（失効）・7（経路を引き継いだ承認待ち）
         UtcInstant approvedAt = new UtcInstant(Instant.parse("2026-10-04T06:00:00Z"));
-        given(quotationQueryService.findAwaitingBookingSummaries())
+        given(quotationQueryService.findAwaitingBookingSummaries(any()))
                 .willReturn(List.of(
                         new AwaitingBookingSummary(
                                 NUMBER,
@@ -403,7 +411,7 @@ class TransportRequestReviewControllerTest {
         // Bolt 37e4 の状態の組み合わせの行 12・13（T-185。陽性の対照に出発前の行を置く）
         UtcInstant approvedAt = new UtcInstant(Instant.parse("2026-10-04T06:00:00Z"));
         UtcInstant expiresAt = new UtcInstant(Instant.parse("2099-10-09T09:00:00Z"));
-        given(quotationQueryService.findAwaitingBookingSummaries())
+        given(quotationQueryService.findAwaitingBookingSummaries(any()))
                 .willReturn(List.of(
                         new AwaitingBookingSummary(
                                 NUMBER,
@@ -454,7 +462,7 @@ class TransportRequestReviewControllerTest {
 
     @Test
     void 受付一覧に見積提示済みの見積依頼の最新の見積りを有効期限の近い順に示し見積りを開ける() throws Exception {
-        given(quotationQueryService.findQuotedSummaries())
+        given(quotationQueryService.findQuotedSummaries(any()))
                 .willReturn(List.of(
                         new QuotedRequestSummary(
                                 NUMBER,
@@ -481,7 +489,7 @@ class TransportRequestReviewControllerTest {
 
     @Test
     void 審査中の見積依頼がなければその旨を示す() throws Exception {
-        given(queryService.findUnderReview()).willReturn(List.of());
+        given(queryService.findUnderReview(any())).willReturn(List.of());
 
         mockMvc.perform(get("/staff/transport-requests"))
                 .andExpect(status().isOk())
@@ -490,7 +498,7 @@ class TransportRequestReviewControllerTest {
 
     @Test
     void 結果のお知らせに添えたリンクはお知らせの文の外に示す() throws Exception {
-        given(queryService.findUnderReview()).willReturn(List.of());
+        given(queryService.findUnderReview(any())).willReturn(List.of());
 
         mockMvc.perform(get("/staff/transport-requests")
                         .flashAttr("result", "TR-2026-0001 見積 1 は既に予約に使われています（追跡番号 CTABCDEFGH2345）。")
@@ -505,7 +513,8 @@ class TransportRequestReviewControllerTest {
 
     @Test
     void 審査画面に輸送条件と版と確定と差戻しのフォームを示し対象の版番号を隠し項目で持つ() throws Exception {
-        given(queryService.findByNumber(NUMBER)).willReturn(Optional.of(underReview()));
+        given(queryService.findByNumber(eq(NUMBER), any()))
+                .willReturn(new StaffTransportRequestLookup.Found(underReview()));
 
         mockMvc.perform(get("/staff/transport-requests/TR-2026-0001"))
                 .andExpect(status().isOk())
@@ -519,7 +528,8 @@ class TransportRequestReviewControllerTest {
 
     @Test
     void 審査画面にこれまでの審査記録を示す() throws Exception {
-        given(queryService.findByNumber(NUMBER)).willReturn(Optional.of(resubmitted()));
+        given(queryService.findByNumber(eq(NUMBER), any()))
+                .willReturn(new StaffTransportRequestLookup.Found(resubmitted()));
 
         mockMvc.perform(get("/staff/transport-requests/TR-2026-0001"))
                 .andExpect(status().isOk())
@@ -544,9 +554,10 @@ class TransportRequestReviewControllerTest {
 
     @Test
     void 不足事項が長すぎれば不足事項の欄に示す() throws Exception {
-        given(reviewService.sendBack(any()))
+        given(reviewService.sendBack(any(), any()))
                 .willReturn(new ReviewOutcome.Rejected(ReviewRejection.MISSING_ITEMS_TOO_LONG, 1));
-        given(queryService.findByNumber(NUMBER)).willReturn(Optional.of(underReview()));
+        given(queryService.findByNumber(eq(NUMBER), any()))
+                .willReturn(new StaffTransportRequestLookup.Found(underReview()));
 
         mockMvc.perform(post("/staff/transport-requests/TR-2026-0001/reviews")
                         .param("decision", "SENT_BACK")
@@ -560,7 +571,7 @@ class TransportRequestReviewControllerTest {
 
     @Test
     void 審査の対象の見積依頼がなければ見つからない() throws Exception {
-        given(reviewService.approve(any())).willReturn(new ReviewOutcome.NotFound());
+        given(reviewService.approve(any(), any())).willReturn(new ReviewOutcome.NotFound());
 
         mockMvc.perform(post("/staff/transport-requests/TR-2026-0099/reviews")
                         .param("decision", "APPROVED")
@@ -570,8 +581,26 @@ class TransportRequestReviewControllerTest {
     }
 
     @Test
+    void 確かめの後にサービスが担当範囲の外を返せば試行を記録して404にする() throws Exception {
+        // Bolt 38f の開発レビュー M2（前の確かめとコマンドの間に割り当てが変わった場合）
+        given(reviewService.approve(any(), any())).willReturn(new ReviewOutcome.OutOfScope());
+        given(outOfScope.recordAndNotFound(any(), any(), any()))
+                .willReturn(new ResponseStatusException(HttpStatus.NOT_FOUND));
+
+        mockMvc.perform(post("/staff/transport-requests/TR-2026-0001/reviews")
+                        .param("decision", "APPROVED")
+                        .param("versionNo", "1")
+                        .param("rationale", "確認した"))
+                .andExpect(status().isNotFound());
+
+        then(outOfScope)
+                .should()
+                .recordAndNotFound(any(), eq(ScopedResourceKind.TRANSPORT_REQUEST), eq("TR-2026-0001"));
+    }
+
+    @Test
     void 確定するとログインした営業担当者で審査し結果を示して見積りの作成へリダイレクトする() throws Exception {
-        given(reviewService.approve(new ApproveTransportRequestCommand(NUMBER, 1, STAFF, "確認した")))
+        given(reviewService.approve(eq(new ApproveTransportRequestCommand(NUMBER, 1, STAFF, "確認した")), any()))
                 .willReturn(new ReviewOutcome.Reviewed(NUMBER, 1, ReviewDecision.APPROVED));
 
         mockMvc.perform(post("/staff/transport-requests/TR-2026-0001/reviews")
@@ -584,7 +613,8 @@ class TransportRequestReviewControllerTest {
 
     @Test
     void 差し戻すと理由と不足事項を渡し結果を一覧に示す() throws Exception {
-        given(reviewService.sendBack(new SendBackTransportRequestCommand(NUMBER, 1, STAFF, "契約条件の確認が必要", "取引条件書")))
+        given(reviewService.sendBack(
+                        eq(new SendBackTransportRequestCommand(NUMBER, 1, STAFF, "契約条件の確認が必要", "取引条件書")), any()))
                 .willReturn(new ReviewOutcome.Reviewed(NUMBER, 1, ReviewDecision.SENT_BACK));
 
         mockMvc.perform(post("/staff/transport-requests/TR-2026-0001/reviews")
@@ -598,9 +628,10 @@ class TransportRequestReviewControllerTest {
 
     @Test
     void 理由のない差戻しはエラー要約と項目の下に示し入力を残す() throws Exception {
-        given(reviewService.sendBack(any()))
+        given(reviewService.sendBack(any(), any()))
                 .willReturn(new ReviewOutcome.Rejected(ReviewRejection.RATIONALE_REQUIRED, 1));
-        given(queryService.findByNumber(NUMBER)).willReturn(Optional.of(underReview()));
+        given(queryService.findByNumber(eq(NUMBER), any()))
+                .willReturn(new StaffTransportRequestLookup.Found(underReview()));
 
         mockMvc.perform(post("/staff/transport-requests/TR-2026-0001/reviews")
                         .param("decision", "SENT_BACK")
@@ -616,8 +647,10 @@ class TransportRequestReviewControllerTest {
 
     @Test
     void 古い版の審査は拒否し版2の内容と隠し項目を示して根拠を空にし再審査を求める() throws Exception {
-        given(reviewService.approve(any())).willReturn(new ReviewOutcome.Rejected(ReviewRejection.STALE_VERSION, 2));
-        given(queryService.findByNumber(NUMBER)).willReturn(Optional.of(resubmitted()));
+        given(reviewService.approve(any(), any()))
+                .willReturn(new ReviewOutcome.Rejected(ReviewRejection.STALE_VERSION, 2));
+        given(queryService.findByNumber(eq(NUMBER), any()))
+                .willReturn(new StaffTransportRequestLookup.Found(resubmitted()));
 
         mockMvc.perform(post("/staff/transport-requests/TR-2026-0001/reviews")
                         .param("decision", "APPROVED")
@@ -633,8 +666,9 @@ class TransportRequestReviewControllerTest {
 
     @Test
     void ほかの利用者が先に更新していたらその旨を示す() throws Exception {
-        given(reviewService.approve(any())).willReturn(new ReviewOutcome.Conflict());
-        given(queryService.findByNumber(NUMBER)).willReturn(Optional.of(underReview()));
+        given(reviewService.approve(any(), any())).willReturn(new ReviewOutcome.Conflict());
+        given(queryService.findByNumber(eq(NUMBER), any()))
+                .willReturn(new StaffTransportRequestLookup.Found(underReview()));
 
         mockMvc.perform(post("/staff/transport-requests/TR-2026-0001/reviews")
                         .param("decision", "APPROVED")
@@ -646,7 +680,7 @@ class TransportRequestReviewControllerTest {
 
     @Test
     void 業務番号がないか形式でなければ見つからない() throws Exception {
-        given(queryService.findByNumber(any())).willReturn(Optional.empty());
+        given(queryService.findByNumber(any(), any())).willReturn(new StaffTransportRequestLookup.NotFound());
 
         mockMvc.perform(get("/staff/transport-requests/TR-2026-0099")).andExpect(status().isNotFound());
         mockMvc.perform(get("/staff/transport-requests/{id}", UUID.randomUUID()))
@@ -665,7 +699,8 @@ class TransportRequestReviewControllerTest {
                 14,
                 "a".repeat(64),
                 "quotation/x/y");
-        given(queryService.findDocument(NUMBER, 1, 1)).willReturn(Optional.of(new DocumentFile(document, content)));
+        given(queryService.findDocument(eq(NUMBER), eq(1), eq(1), any()))
+                .willReturn(Optional.of(new DocumentFile(document, content)));
 
         mockMvc.perform(get("/staff/transport-requests/TR-2026-0001/versions/1/documents/1"))
                 .andExpect(status().isOk())
@@ -676,7 +711,7 @@ class TransportRequestReviewControllerTest {
 
     @Test
     void ない書類の取得は見つからない() throws Exception {
-        given(queryService.findDocument(NUMBER, 1, 9)).willReturn(Optional.empty());
+        given(queryService.findDocument(eq(NUMBER), eq(1), eq(9), any())).willReturn(Optional.empty());
 
         mockMvc.perform(get("/staff/transport-requests/TR-2026-0001/versions/1/documents/9"))
                 .andExpect(status().isNotFound());

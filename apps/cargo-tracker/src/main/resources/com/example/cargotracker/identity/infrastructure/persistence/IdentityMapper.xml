@@ -35,6 +35,7 @@
             <arg column="company_kind" name="companyKind" javaType="String"/>
             <arg column="company_active" name="companyActive" javaType="_boolean"/>
             <arg column="role" name="role" javaType="String"/>
+            <arg column="assigned_company_id" name="assignedCompanyId" javaType="java.util.UUID"/>
         </constructor>
     </resultMap>
 
@@ -241,16 +242,19 @@
         SELECT role FROM identity.user_role WHERE user_id = #{userId} ORDER BY role
     </select>
 
-    <!-- request ごとの確かめ（Bolt 32c、ADR-012 の見直しの 3）。利用者・所属企業・役割を 1 回で読む。役割がなければ role が NULL の 1 行 -->
+    <!-- request ごとの確かめ（Bolt 32c、ADR-012 の見直しの 3）。利用者・所属企業・役割・担当企業を 1 回で読む。役割がなければ role が
+         NULL、担当企業がなければ assigned_company_id が NULL。役割 × 担当企業の重なりは写すときに除く。COMPANY の条件は ON 句に置く
+         （WHERE に置くと割り当てのない利用者の行が消える）。担当企業として読むかは役割で決める（Bolt 38e の決定 (9)。Bolt 38f） -->
     <select id="selectUserStanding" resultMap="userStandingRow">
         SELECT u.id, u.company_id, u.email, u.display_name, u.password_hash, u.status,
                c.name AS company_name, c.kind AS company_kind, c.active AS company_active,
-               r.role
+               r.role, a.scope_id AS assigned_company_id
           FROM identity.app_user u
           JOIN identity.company c ON c.id = u.company_id
           LEFT JOIN identity.user_role r ON r.user_id = u.id
+          LEFT JOIN identity.user_assignment a ON a.user_id = u.id AND a.scope_kind = 'COMPANY'
          WHERE u.id = #{id}
-         ORDER BY r.role
+         ORDER BY r.role, a.scope_id
     </select>
 
     <insert id="insertAuditRecord">

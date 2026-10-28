@@ -6,6 +6,7 @@ import com.example.cargotracker.quotation.application.internal.commands.SendBack
 import com.example.cargotracker.quotation.application.internal.commandservices.ReviewOutcome;
 import com.example.cargotracker.quotation.application.internal.commandservices.TransportRequestReviewService;
 import com.example.cargotracker.quotation.application.internal.queryservices.StaffQuotationQueryService;
+import com.example.cargotracker.quotation.application.internal.queryservices.StaffTransportRequestLookup;
 import com.example.cargotracker.quotation.application.internal.queryservices.StaffTransportRequestQueryService;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequest;
 import com.example.cargotracker.quotation.domain.model.entities.ReviewRecord;
@@ -16,6 +17,7 @@ import com.example.cargotracker.quotation.domain.model.valueobjects.ReviewReject
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestSummary;
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
+import com.example.cargotracker.shared.domain.ScopedResourceKind;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Clock;
@@ -37,7 +39,9 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 /**
  * 社内業務 Web の見積依頼の審査（S-02 受付一覧、S-03 審査。US-02、Bolt 5）。
- * 営業担当者はすべての荷主の見積依頼を扱うため、荷主企業で絞らない。判断者はログインした営業担当者（認証の主体。ADR-012）。
+ * 営業担当者が扱えるのは担当企業の見積依頼だけ（Bolt 38f。US-16 AC4）。担当範囲の外は見つからない扱い（404）にし、確定の試行
+ * （POST）だけをアクセス・監査の記録に残す（SEC-12。{@link StaffOutOfScopeResponder}）。判断者はログインした営業担当者（認証の主体。
+ * ADR-012）。
  */
 @Controller
 @RequestMapping("/staff/transport-requests")
@@ -56,6 +60,7 @@ public class TransportRequestReviewController {
     private final StaffTransportRequestQueryService queryService;
     private final StaffQuotationQueryService quotationQueryService;
     private final ProvisionalConsigneeProperties provisionalConsignees;
+    private final StaffOutOfScopeResponder outOfScope;
     private final Clock clock;
 
     public TransportRequestReviewController(
@@ -63,30 +68,34 @@ public class TransportRequestReviewController {
             StaffTransportRequestQueryService queryService,
             StaffQuotationQueryService quotationQueryService,
             ProvisionalConsigneeProperties provisionalConsignees,
+            StaffOutOfScopeResponder outOfScope,
             Clock clock) {
         this.reviewService = reviewService;
         this.queryService = queryService;
         this.quotationQueryService = quotationQueryService;
         this.provisionalConsignees = provisionalConsignees;
+        this.outOfScope = outOfScope;
         this.clock = clock;
     }
 
     /**
      * S-02 受付一覧。審査中と見積り作成中の見積依頼を、それぞれ最初の提出時刻の古い順（待たせている順）に示す（見積り作成中は Bolt 10）。
      * 見積提示済みの見積依頼は、最新の見積りを有効期限の近い順に示し、見積り（S-04）を開ける（Bolt 11 レビュー R-02、D-38）。
+     * どの表も担当企業の見積依頼だけで、担当企業がまだなければ、そのことと頼む先を示す（Bolt 38f）。
      */
     @GetMapping
-    public String list(Model model) {
+    public String list(AuthenticatedActor actor, Model model) {
+        model.addAttribute("noAssignedCompanies", actor.hasNoAssignedCompanies());
         model.addAttribute(
                 "requests",
-                queryService.findUnderReview().stream().map(this::row).toList());
+                queryService.findUnderReview(actor).stream().map(this::row).toList());
         model.addAttribute(
                 "quotingRequests",
-                queryService.findQuoting().stream().map(this::row).toList());
+                queryService.findQuoting(actor).stream().map(this::row).toList());
         UtcInstant now = new UtcInstant(clock.instant());
         model.addAttribute(
                 "quotedRequests",
-                quotationQueryService.findQuotedSummaries().stream()
+                quotationQueryService.findQuotedSummaries(actor).stream()
                         .map(summary -> new QuotedRow(
                                 QuotationViews.label(summary.number(), summary.quotationNo()),
                                 STAFF_TRANSPORT_REQUESTS + summary.number().text() + QUOTATIONS + summary.quotationNo(),
@@ -97,7 +106,7 @@ public class TransportRequestReviewController {
         // Bolt 20 から荷主承認待ちも並べ、経路の確定の時刻を示す（Bolt 23b。D-78）。荷主が承認した見積りは予約の確定待ちの表へ
         model.addAttribute(
                 "routingRequests",
-                quotationQueryService.findRoutingRequestedSummaries().stream()
+                quotationQueryService.findRoutingRequestedSummaries(actor).stream()
                         .map(summary -> new RoutingRow(
                                 QuotationViews.label(summary.number(), summary.quotationNo()),
                                 STAFF_TRANSPORT_REQUESTS + summary.number().text() + QUOTATIONS + summary.quotationNo(),
@@ -111,7 +120,7 @@ public class TransportRequestReviewController {
         // 予約の確定待ち（US-04、D-78。Bolt 23b）。荷主が承認した見積りを有効期限の近い順に示す。有効期限の前は本予約の確定（S-09。
         // 予約の画面。URL だけでつなぎ、予約のコードには依存しない）を、失効した見積りは再見積り（S-04）を、再見積りした後で提示する前の
         // 見積り（経路を引き継いだ承認待ち）は見積り（S-04）を開ける（D-85。Bolt 35c）
-        List<AwaitingBookingRow> awaitingBookings = quotationQueryService.findAwaitingBookingSummaries().stream()
+        List<AwaitingBookingRow> awaitingBookings = quotationQueryService.findAwaitingBookingSummaries(actor).stream()
                 .map(summary -> awaitingBookingRow(summary, now))
                 .toList();
         model.addAttribute("awaitingBookings", awaitingBookings);
@@ -122,8 +131,8 @@ public class TransportRequestReviewController {
 
     /** S-03 審査。 */
     @GetMapping("/{number}")
-    public String review(@PathVariable String number, Model model) {
-        TransportRequest request = find(number);
+    public String review(@PathVariable String number, AuthenticatedActor actor, Model model) {
+        TransportRequest request = find(number, actor);
         ReviewForm form = new ReviewForm();
         form.setVersionNo(request.currentVersion().versionNo());
         model.addAttribute("reviewForm", form);
@@ -133,6 +142,7 @@ public class TransportRequestReviewController {
     /**
      * 審査を確定する・差し戻す。確定したら見積りの作成（S-04）へ、差し戻したら受付一覧へ移り、結果を示す（PRG。Bolt 10）。
      * 受け付けなかったら、理由を示して審査画面を出し直す。判断と版番号が送られていなければ、要求そのものの誤り（400）とする。
+     * 担当範囲は入力の解釈より先に判定し、範囲の外なら入力によらず試行を記録して 404 にする（Bolt 38f）。
      */
     @PostMapping("/{number}/reviews")
     public String submitReview(
@@ -144,6 +154,7 @@ public class TransportRequestReviewController {
             RedirectAttributes redirectAttributes) {
         TransportRequestNumber transportRequestNumber = TransportRequestViews.parseNumber(number)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        rejectOutOfScope(transportRequestNumber, actor);
         ReviewDecision decision = decision(reviewForm.getDecision());
         if (reviewForm.getVersionNo() == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "審査の対象の版番号がありません");
@@ -153,15 +164,19 @@ public class TransportRequestReviewController {
         ReviewOutcome outcome =
                 switch (decision) {
                     case APPROVED ->
-                        reviewService.approve(new ApproveTransportRequestCommand(
-                                transportRequestNumber, versionNo, reviewer, reviewForm.getRationale()));
+                        reviewService.approve(
+                                new ApproveTransportRequestCommand(
+                                        transportRequestNumber, versionNo, reviewer, reviewForm.getRationale()),
+                                actor);
                     case SENT_BACK ->
-                        reviewService.sendBack(new SendBackTransportRequestCommand(
-                                transportRequestNumber,
-                                versionNo,
-                                reviewer,
-                                reviewForm.getReason(),
-                                reviewForm.getMissingItems()));
+                        reviewService.sendBack(
+                                new SendBackTransportRequestCommand(
+                                        transportRequestNumber,
+                                        versionNo,
+                                        reviewer,
+                                        reviewForm.getReason(),
+                                        reviewForm.getMissingItems()),
+                                actor);
                 };
         return switch (outcome) {
             case ReviewOutcome.Reviewed reviewed -> {
@@ -173,14 +188,23 @@ public class TransportRequestReviewController {
             }
             case ReviewOutcome.Rejected(ReviewRejection reason, int currentVersionNo) -> {
                 reject(reason, currentVersionNo, decision, reviewForm, bindingResult);
-                yield showReview(find(number), model);
+                yield showReview(find(number, actor), model);
             }
             case ReviewOutcome.NotFound _ -> throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+            case ReviewOutcome.OutOfScope _ ->
+                throw outOfScope.recordAndNotFound(actor, ScopedResourceKind.TRANSPORT_REQUEST, number);
             case ReviewOutcome.Conflict _ -> {
                 bindingResult.reject("conflict", "他の利用者が先に更新しました。受付一覧から開き直してください");
-                yield showReview(find(number), model);
+                yield showReview(find(number, actor), model);
             }
         };
+    }
+
+    /** 担当範囲の外への確定の試行を記録して 404 にする。見つからなければここでは何もせず、コマンドが見つからない結果を返す。 */
+    private void rejectOutOfScope(TransportRequestNumber number, AuthenticatedActor actor) {
+        if (queryService.findByNumber(number, actor) instanceof StaffTransportRequestLookup.OutOfScope) {
+            throw outOfScope.recordAndNotFound(actor, ScopedResourceKind.TRANSPORT_REQUEST, number.text());
+        }
     }
 
     /** 判断の値を解釈する。知らない値やないときは、取り違えを防ぐため要求そのものの誤り（400）とする（Bolt 5 レビュー R-01）。 */
@@ -250,9 +274,12 @@ public class TransportRequestReviewController {
     /** 必要書類を取得する（D-20: 営業担当者は開ける）。ブラウザの中で開かせず、ダウンロードさせる。 */
     @GetMapping("/{number}/versions/{versionNo}/documents/{documentNo}")
     public ResponseEntity<byte[]> document(
-            @PathVariable String number, @PathVariable int versionNo, @PathVariable int documentNo) {
+            @PathVariable String number,
+            @PathVariable int versionNo,
+            @PathVariable int documentNo,
+            AuthenticatedActor actor) {
         return TransportRequestViews.parseNumber(number)
-                .flatMap(found -> queryService.findDocument(found, versionNo, documentNo))
+                .flatMap(found -> queryService.findDocument(found, versionNo, documentNo, actor))
                 .map(RequiredDocumentViews::download)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
     }
@@ -278,9 +305,10 @@ public class TransportRequestReviewController {
                 TransportRequestLabels.staffDateTime(reviewRecord.decidedAt()));
     }
 
-    private TransportRequest find(String number) {
+    /** 担当範囲の中の輸送要求を引き当てる。見つからなくても範囲の外でも 404（照会は記録しない。Bolt 38f）。 */
+    private TransportRequest find(String number, AuthenticatedActor actor) {
         return TransportRequestViews.parseNumber(number)
-                .flatMap(queryService::findByNumber)
+                .flatMap(parsed -> queryService.findByNumber(parsed, actor).inScope())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
     }
 

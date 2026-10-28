@@ -7,6 +7,7 @@ import com.example.cargotracker.quotation.acceptance.InMemoryTransportRequestRep
 import com.example.cargotracker.quotation.application.internal.commands.CalculateQuotationCommand;
 import com.example.cargotracker.quotation.application.internal.commands.PresentQuotationCommand;
 import com.example.cargotracker.quotation.application.internal.commands.RequoteQuotationCommand;
+import com.example.cargotracker.quotation.application.internal.queryservices.StaffTransportRequestScope;
 import com.example.cargotracker.quotation.domain.events.QuotationPresented;
 import com.example.cargotracker.quotation.domain.model.aggregates.ConcurrentQuotationUpdateException;
 import com.example.cargotracker.quotation.domain.model.aggregates.DuplicateQuotationException;
@@ -21,6 +22,8 @@ import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTerm
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestId;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestStatus;
+import com.example.cargotracker.shared.domain.AuthenticatedActor;
+import com.example.cargotracker.shared.domain.AuthenticatedActorFixture;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
@@ -41,18 +44,24 @@ class QuotationCommandServiceTest {
     private static final UserId STAFF = new UserId(UUID.randomUUID());
     private static final UserId SHIPPER = new UserId(UUID.randomUUID());
     private static final Instant RESPONDED_AT = NOW.minusSeconds(30);
+    private static final CompanyId SHIPPER_COMPANY = new CompanyId(UUID.randomUUID());
+    /** 営業担当者（見積依頼の荷主企業を担当する。Bolt 38f）。 */
+    private static final AuthenticatedActor OPERATOR = AuthenticatedActorFixture.salesHandling(STAFF, SHIPPER_COMPANY);
 
     private final InMemoryTransportRequestRepository transportRequests = new InMemoryTransportRequestRepository();
     private final InMemoryQuotationRepository quotations = new InMemoryQuotationRepository();
     private final List<Object> published = new ArrayList<>();
     private final QuotationCommandService service = new QuotationCommandService(
-            transportRequests, quotations, published::add, Clock.fixed(NOW, ZoneOffset.UTC));
+            quotations,
+            published::add,
+            Clock.fixed(NOW, ZoneOffset.UTC),
+            new StaffTransportRequestScope(transportRequests));
 
     private TransportRequest submitted() {
         TransportRequest request = TransportRequest.submit(
                 new TransportRequestId(UUID.randomUUID()),
                 NUMBER,
-                new CompanyId(UUID.randomUUID()),
+                SHIPPER_COMPANY,
                 ShipmentTermsFixture.generalCargo(),
                 STAFF,
                 new UtcInstant(NOW.minusSeconds(3600)));
@@ -71,7 +80,7 @@ class QuotationCommandServiceTest {
         approved();
 
         CalculationOutcome outcome =
-                service.calculate(new CalculateQuotationCommand(NUMBER, QuotationFixture.completeInput()));
+                service.calculate(new CalculateQuotationCommand(NUMBER, QuotationFixture.completeInput()), OPERATOR);
 
         assertThat(outcome).isEqualTo(new CalculationOutcome.Calculated(NUMBER, 1));
         assertThat(quotations.findByTransportRequestIdAndNo(
@@ -89,31 +98,31 @@ class QuotationCommandServiceTest {
     void 審査中の見積依頼には見積りを作れない() {
         submitted();
 
-        assertThat(service.calculate(new CalculateQuotationCommand(NUMBER, QuotationFixture.completeInput())))
+        assertThat(service.calculate(new CalculateQuotationCommand(NUMBER, QuotationFixture.completeInput()), OPERATOR))
                 .isEqualTo(new CalculationOutcome.Rejected(QuotationRejection.TRANSPORT_REQUEST_NOT_QUOTING));
     }
 
     @Test
     void ない見積依頼は見つからない() {
-        assertThat(service.calculate(new CalculateQuotationCommand(NUMBER, QuotationFixture.completeInput())))
+        assertThat(service.calculate(new CalculateQuotationCommand(NUMBER, QuotationFixture.completeInput()), OPERATOR))
                 .isEqualTo(new CalculationOutcome.NotFound());
     }
 
     @Test
     void 承認待ちの見積りがあれば2つ目を作れない() {
         approved();
-        service.calculate(new CalculateQuotationCommand(NUMBER, QuotationFixture.completeInput()));
+        service.calculate(new CalculateQuotationCommand(NUMBER, QuotationFixture.completeInput()), OPERATOR);
 
-        assertThat(service.calculate(new CalculateQuotationCommand(NUMBER, QuotationFixture.completeInput())))
+        assertThat(service.calculate(new CalculateQuotationCommand(NUMBER, QuotationFixture.completeInput()), OPERATOR))
                 .isEqualTo(new CalculationOutcome.Rejected(QuotationRejection.ALREADY_QUOTED));
     }
 
     @Test
     void 社内承認して提示すると保存と同じトランザクションでDE03を1回だけ発行する() {
         approved();
-        service.calculate(new CalculateQuotationCommand(NUMBER, QuotationFixture.completeInput()));
+        service.calculate(new CalculateQuotationCommand(NUMBER, QuotationFixture.completeInput()), OPERATOR);
 
-        PresentationOutcome outcome = service.present(new PresentQuotationCommand(NUMBER, 1, STAFF));
+        PresentationOutcome outcome = service.present(new PresentQuotationCommand(NUMBER, 1, STAFF), OPERATOR);
 
         assertThat(outcome).isEqualTo(new PresentationOutcome.Presented(NUMBER, 1));
         assertThat(published).singleElement().isInstanceOf(QuotationPresented.class);
@@ -122,10 +131,10 @@ class QuotationCommandServiceTest {
     @Test
     void 提示済みの見積りをもう一度提示すると拒否する() {
         approved();
-        service.calculate(new CalculateQuotationCommand(NUMBER, QuotationFixture.completeInput()));
-        service.present(new PresentQuotationCommand(NUMBER, 1, STAFF));
+        service.calculate(new CalculateQuotationCommand(NUMBER, QuotationFixture.completeInput()), OPERATOR);
+        service.present(new PresentQuotationCommand(NUMBER, 1, STAFF), OPERATOR);
 
-        assertThat(service.present(new PresentQuotationCommand(NUMBER, 1, STAFF)))
+        assertThat(service.present(new PresentQuotationCommand(NUMBER, 1, STAFF), OPERATOR))
                 .isEqualTo(new PresentationOutcome.Rejected(QuotationRejection.NOT_PENDING_APPROVAL));
         assertThat(published).hasSize(1);
     }
@@ -134,7 +143,7 @@ class QuotationCommandServiceTest {
     void ない見積りの提示は見つからない() {
         approved();
 
-        assertThat(service.present(new PresentQuotationCommand(NUMBER, 1, STAFF)))
+        assertThat(service.present(new PresentQuotationCommand(NUMBER, 1, STAFF), OPERATOR))
                 .isEqualTo(new PresentationOutcome.NotFound());
     }
 
@@ -148,16 +157,20 @@ class QuotationCommandServiceTest {
             }
         };
         QuotationCommandService racingService = new QuotationCommandService(
-                transportRequests, racing, published::add, Clock.fixed(NOW, ZoneOffset.UTC));
+                racing,
+                published::add,
+                Clock.fixed(NOW, ZoneOffset.UTC),
+                new StaffTransportRequestScope(transportRequests));
 
-        assertThat(racingService.calculate(new CalculateQuotationCommand(NUMBER, QuotationFixture.completeInput())))
+        assertThat(racingService.calculate(
+                        new CalculateQuotationCommand(NUMBER, QuotationFixture.completeInput()), OPERATOR))
                 .isEqualTo(new CalculationOutcome.Rejected(QuotationRejection.ALREADY_QUOTED));
     }
 
     private TransportRequestId presentedQuotation1() {
         approved();
-        service.calculate(new CalculateQuotationCommand(NUMBER, QuotationFixture.completeInput()));
-        service.present(new PresentQuotationCommand(NUMBER, 1, STAFF));
+        service.calculate(new CalculateQuotationCommand(NUMBER, QuotationFixture.completeInput()), OPERATOR);
+        service.present(new PresentQuotationCommand(NUMBER, 1, STAFF), OPERATOR);
         published.clear();
         return transportRequests.findByNumberForStaff(NUMBER).orElseThrow().id();
     }
@@ -167,7 +180,7 @@ class QuotationCommandServiceTest {
         TransportRequestId id = presentedQuotation1();
 
         RequotationOutcome outcome =
-                service.requote(new RequoteQuotationCommand(NUMBER, 1, QuotationFixture.completeInput()));
+                service.requote(new RequoteQuotationCommand(NUMBER, 1, QuotationFixture.completeInput()), OPERATOR);
 
         assertThat(outcome).isEqualTo(new RequotationOutcome.Calculated(NUMBER, 2, QuotationStatus.REPLACED));
         Quotation replacement = quotations.findByTransportRequestIdAndNo(id, 2).orElseThrow();
@@ -187,7 +200,7 @@ class QuotationCommandServiceTest {
         request.markQuotationPresented(1);
         transportRequests.update(request);
 
-        assertThat(service.requote(new RequoteQuotationCommand(NUMBER, 1, QuotationFixture.completeInput())))
+        assertThat(service.requote(new RequoteQuotationCommand(NUMBER, 1, QuotationFixture.completeInput()), OPERATOR))
                 .isEqualTo(new RequotationOutcome.Calculated(NUMBER, 2, QuotationStatus.REPLACED));
     }
 
@@ -196,7 +209,7 @@ class QuotationCommandServiceTest {
         TransportRequestId id = presentedQuotation1();
         QuotationInput empty = new QuotationInput(List.of(), null, null, List.of(), null, null);
 
-        assertThat(service.requote(new RequoteQuotationCommand(NUMBER, 1, empty)))
+        assertThat(service.requote(new RequoteQuotationCommand(NUMBER, 1, empty), OPERATOR))
                 .isInstanceOf(RequotationOutcome.Invalid.class);
         assertThat(quotations.findByTransportRequestIdAndNo(id, 1))
                 .hasValueSatisfying(old -> assertThat(old.status()).isEqualTo(QuotationStatus.PRESENTED));
@@ -206,9 +219,9 @@ class QuotationCommandServiceTest {
     @Test
     void 置換済みの見積りは再見積りできない() {
         presentedQuotation1();
-        service.requote(new RequoteQuotationCommand(NUMBER, 1, QuotationFixture.completeInput()));
+        service.requote(new RequoteQuotationCommand(NUMBER, 1, QuotationFixture.completeInput()), OPERATOR);
 
-        assertThat(service.requote(new RequoteQuotationCommand(NUMBER, 1, QuotationFixture.completeInput())))
+        assertThat(service.requote(new RequoteQuotationCommand(NUMBER, 1, QuotationFixture.completeInput()), OPERATOR))
                 .isEqualTo(new RequotationOutcome.Rejected(QuotationRejection.REPLACED));
     }
 
@@ -216,7 +229,7 @@ class QuotationCommandServiceTest {
     void ない見積りの再見積りは見つからない() {
         approved();
 
-        assertThat(service.requote(new RequoteQuotationCommand(NUMBER, 1, QuotationFixture.completeInput())))
+        assertThat(service.requote(new RequoteQuotationCommand(NUMBER, 1, QuotationFixture.completeInput()), OPERATOR))
                 .isEqualTo(new RequotationOutcome.NotFound());
     }
 
@@ -231,9 +244,13 @@ class QuotationCommandServiceTest {
         };
         quotations.findByTransportRequestId(id).forEach(racing::save);
         QuotationCommandService racingService = new QuotationCommandService(
-                transportRequests, racing, published::add, Clock.fixed(NOW, ZoneOffset.UTC));
+                racing,
+                published::add,
+                Clock.fixed(NOW, ZoneOffset.UTC),
+                new StaffTransportRequestScope(transportRequests));
 
-        assertThat(racingService.requote(new RequoteQuotationCommand(NUMBER, 1, QuotationFixture.completeInput())))
+        assertThat(racingService.requote(
+                        new RequoteQuotationCommand(NUMBER, 1, QuotationFixture.completeInput()), OPERATOR))
                 .isEqualTo(new RequotationOutcome.Conflict());
         assertThat(racing.findByTransportRequestIdAndNo(id, 2)).isEmpty();
     }
@@ -242,10 +259,10 @@ class QuotationCommandServiceTest {
     void 有効期限を過ぎた見積りを再見積りすると旧版が失効になったことを返す() {
         presentedQuotation1();
         QuotationCommandService later = new QuotationCommandService(
-                transportRequests,
                 quotations,
                 published::add,
-                Clock.fixed(QuotationFixture.EXPIRES_AT.instant(), ZoneOffset.UTC));
+                Clock.fixed(QuotationFixture.EXPIRES_AT.instant(), ZoneOffset.UTC),
+                new StaffTransportRequestScope(transportRequests));
         QuotationInput input = new QuotationInput(
                 QuotationFixture.completeInput().lines(),
                 QuotationFixture.completeInput().currency(),
@@ -254,7 +271,7 @@ class QuotationCommandServiceTest {
                 new UtcInstant(QuotationFixture.EXPIRES_AT.instant().plusSeconds(172_800)),
                 new UtcInstant(QuotationFixture.EXPIRES_AT.instant().plusSeconds(259_200)));
 
-        assertThat(later.requote(new RequoteQuotationCommand(NUMBER, 1, input)))
+        assertThat(later.requote(new RequoteQuotationCommand(NUMBER, 1, input), OPERATOR))
                 .isEqualTo(new RequotationOutcome.Calculated(NUMBER, 2, QuotationStatus.EXPIRED));
     }
 
@@ -289,10 +306,10 @@ class QuotationCommandServiceTest {
 
     private QuotationCommandService atExpiry() {
         return new QuotationCommandService(
-                transportRequests,
                 quotations,
                 published::add,
-                Clock.fixed(QuotationFixture.EXPIRES_AT.instant(), ZoneOffset.UTC));
+                Clock.fixed(QuotationFixture.EXPIRES_AT.instant(), ZoneOffset.UTC),
+                new StaffTransportRequestScope(transportRequests));
     }
 
     private static QuotationInput laterInput() {
@@ -311,7 +328,7 @@ class QuotationCommandServiceTest {
         TransportRequestId id =
                 transportRequests.findByNumberForStaff(NUMBER).orElseThrow().id();
 
-        assertThat(atExpiry().requote(new RequoteQuotationCommand(NUMBER, 1, laterInput())))
+        assertThat(atExpiry().requote(new RequoteQuotationCommand(NUMBER, 1, laterInput()), OPERATOR))
                 .isEqualTo(new RequotationOutcome.Calculated(NUMBER, 2, QuotationStatus.EXPIRED));
 
         Quotation replacement = quotations.findByTransportRequestIdAndNo(id, 2).orElseThrow();
@@ -337,7 +354,7 @@ class QuotationCommandServiceTest {
     void 経路設計中と荷主承認待ちの見積依頼でも承認済みで失効した見積りを再見積りできる(TransportRequestStatus status) {
         approvedQuotation1(status);
 
-        assertThat(atExpiry().requote(new RequoteQuotationCommand(NUMBER, 1, laterInput())))
+        assertThat(atExpiry().requote(new RequoteQuotationCommand(NUMBER, 1, laterInput()), OPERATOR))
                 .isEqualTo(new RequotationOutcome.Calculated(NUMBER, 2, QuotationStatus.EXPIRED));
     }
 
@@ -347,7 +364,7 @@ class QuotationCommandServiceTest {
         TransportRequestId id =
                 transportRequests.findByNumberForStaff(NUMBER).orElseThrow().id();
 
-        assertThat(service.requote(new RequoteQuotationCommand(NUMBER, 1, QuotationFixture.completeInput())))
+        assertThat(service.requote(new RequoteQuotationCommand(NUMBER, 1, QuotationFixture.completeInput()), OPERATOR))
                 .isEqualTo(new RequotationOutcome.Rejected(QuotationRejection.APPROVED_AND_STILL_VALID));
         assertThat(quotations.findByTransportRequestIdAndNo(id, 1))
                 .hasValueSatisfying(old -> assertThat(old.status()).isEqualTo(QuotationStatus.APPROVED));
@@ -366,7 +383,7 @@ class QuotationCommandServiceTest {
         old.calculate(QuotationFixture.completeInput(), at);
         quotations.save(old);
 
-        assertThat(service.requote(new RequoteQuotationCommand(NUMBER, 1, QuotationFixture.completeInput())))
+        assertThat(service.requote(new RequoteQuotationCommand(NUMBER, 1, QuotationFixture.completeInput()), OPERATOR))
                 .isEqualTo(new RequotationOutcome.Rejected(QuotationRejection.OUTDATED_VERSION));
     }
 
@@ -376,7 +393,7 @@ class QuotationCommandServiceTest {
         TransportRequestId id =
                 transportRequests.findByNumberForStaff(NUMBER).orElseThrow().id();
 
-        assertThat(atExpiry().requote(new RequoteQuotationCommand(NUMBER, 1, laterInput())))
+        assertThat(atExpiry().requote(new RequoteQuotationCommand(NUMBER, 1, laterInput()), OPERATOR))
                 .as("画面と同じ照会の判定（D-85。Bolt 35c）")
                 .isEqualTo(new RequotationOutcome.Rejected(QuotationRejection.TRANSPORT_REQUEST_BOOKED));
         assertThat(quotations.findByTransportRequestIdAndNo(id, 1))
@@ -399,7 +416,7 @@ class QuotationCommandServiceTest {
         old.calculate(QuotationFixture.completeInput(), new UtcInstant(NOW.minusSeconds(60)));
         quotations.save(old);
 
-        assertThat(service.requote(new RequoteQuotationCommand(NUMBER, 1, QuotationFixture.completeInput())))
+        assertThat(service.requote(new RequoteQuotationCommand(NUMBER, 1, QuotationFixture.completeInput()), OPERATOR))
                 .isEqualTo(new RequotationOutcome.Rejected(QuotationRejection.TRANSPORT_REQUEST_NOT_QUOTING));
     }
 }

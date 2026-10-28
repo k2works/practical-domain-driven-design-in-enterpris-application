@@ -305,6 +305,30 @@ public final class AuditRecord {
     }
 
     /**
+     * 業務担当者が担当企業の外の確定の操作を送ったことを記録する（担当範囲の外の試行。Bolt 38f、US-16 AC4、IA-INV-08、ADR-019）。結果は
+     * 失敗、理由は {@code OUT_OF_SCOPE}、対象は業務の対象の種類と ID（版と変更前後はない）。
+     *
+     * @param targetType 対象の種類（共有カーネルの {@code ScopedResourceKind} の名前）
+     * @param targetId 対象の ID（輸送要求番号など）
+     */
+    public static AuditRecord assignedScopeDenied(
+            UserId actor, CompanyId actorCompany, String targetType, String targetId, UtcInstant at) {
+        Objects.requireNonNull(actor, USER_ARGUMENT);
+        Objects.requireNonNull(actorCompany, COMPANY_ARGUMENT);
+        Objects.requireNonNull(targetType, "targetType");
+        Objects.requireNonNull(targetId, "targetId");
+        return new AuditRecord(
+                UUID.randomUUID(),
+                at,
+                actor,
+                actorCompany,
+                AuditAction.ASSIGNED_SCOPE_DENIED,
+                AuditResult.FAILURE,
+                OUT_OF_SCOPE,
+                new AuditTarget(targetType, targetId, null, null, null));
+    }
+
+    /**
      * システム管理者が管理範囲外の利用者を開いた・変えようとしたことを記録する（Bolt 34b、US-16 AC2、IA-INV-08・IA-INV-14）。結果は
      * 失敗、理由は {@code OUT_OF_SCOPE}、対象は利用者（版と変更前後はない）。
      */

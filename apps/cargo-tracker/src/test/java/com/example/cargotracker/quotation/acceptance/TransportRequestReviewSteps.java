@@ -21,6 +21,8 @@ import com.example.cargotracker.quotation.domain.model.valueobjects.SubmissionVi
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestStatus;
 import com.example.cargotracker.shared.acceptance.ScenarioContext;
+import com.example.cargotracker.shared.domain.AuthenticatedActor;
+import com.example.cargotracker.shared.domain.AuthenticatedActorFixture;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.UserId;
@@ -36,6 +38,12 @@ import java.util.UUID;
  * 審査の対象は、同じシナリオで提出した輸送要求（ScenarioContext の輸送要求 ID）とする。
  */
 public class TransportRequestReviewSteps {
+
+    /** 営業担当者（荷主 2 社を担当する。Bolt 38f）。 */
+    private static final AuthenticatedActor OPERATOR = AuthenticatedActorFixture.salesHandling(
+            new UserId(UUID.fromString("00000000-0000-0000-0000-000000000301")),
+            new CompanyId(UUID.fromString("00000000-0000-0000-0000-000000000001")),
+            new CompanyId(UUID.fromString("00000000-0000-0000-0000-000000000002")));
 
     /** 認証ができるまでの仮の営業担当者（Bolt 5 の人の決定）。 */
     private static final UserId REVIEWER = new UserId(UUID.fromString("00000000-0000-0000-0000-000000000301"));
@@ -90,13 +98,14 @@ public class TransportRequestReviewSteps {
     @もし("営業担当者が版 {int} の審査を根拠 {string} で確定する")
     public void 審査を確定する(int versionNo, String rationale) {
         lastReview = reviewService.approve(
-                new ApproveTransportRequestCommand(current().number(), versionNo, REVIEWER, rationale));
+                new ApproveTransportRequestCommand(current().number(), versionNo, REVIEWER, rationale), OPERATOR);
     }
 
     @もし("営業担当者が版 {int} を理由 {string} と不足事項 {string} で差し戻す")
     public void 差し戻す(int versionNo, String reason, String missingItems) {
         lastReview = reviewService.sendBack(
-                new SendBackTransportRequestCommand(current().number(), versionNo, REVIEWER, reason, missingItems));
+                new SendBackTransportRequestCommand(current().number(), versionNo, REVIEWER, reason, missingItems),
+                OPERATOR);
     }
 
     @もし("荷主が目的地を {string} に直して再提出する")

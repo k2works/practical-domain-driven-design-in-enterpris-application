@@ -30,6 +30,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.springframework.dao.DuplicateKeyException;
@@ -129,8 +130,8 @@ public class MyBatisQuotationRepository implements QuotationRepository {
     }
 
     @Override
-    public List<RoutingRequestedSummary> findRoutingRequestedSummaries() {
-        return mapper.selectRoutingRequested().stream()
+    public List<RoutingRequestedSummary> findRoutingRequestedSummaries(Set<CompanyId> shipperCompanyIds) {
+        return mapper.selectRoutingRequested(MyBatisTransportRequestRepository.idsOf(shipperCompanyIds)).stream()
                 .map(row -> new RoutingRequestedSummary(
                         TransportRequestNumber.parse(row.requestNumber()),
                         row.quotationNo(),
@@ -142,8 +143,8 @@ public class MyBatisQuotationRepository implements QuotationRepository {
     }
 
     @Override
-    public List<AwaitingBookingSummary> findAwaitingBookingSummaries() {
-        return mapper.selectAwaitingBooking().stream()
+    public List<AwaitingBookingSummary> findAwaitingBookingSummaries(Set<CompanyId> shipperCompanyIds) {
+        return mapper.selectAwaitingBooking(MyBatisTransportRequestRepository.idsOf(shipperCompanyIds)).stream()
                 .map(row -> new AwaitingBookingSummary(
                         TransportRequestNumber.parse(row.requestNumber()),
                         row.quotationNo(),
@@ -171,8 +172,8 @@ public class MyBatisQuotationRepository implements QuotationRepository {
     }
 
     @Override
-    public List<QuotedRequestSummary> findLatestOfQuotedRequests() {
-        return mapper.selectLatestOfQuotedRequests().stream()
+    public List<QuotedRequestSummary> findLatestOfQuotedRequests(Set<CompanyId> shipperCompanyIds) {
+        return mapper.selectLatestOfQuotedRequests(MyBatisTransportRequestRepository.idsOf(shipperCompanyIds)).stream()
                 .map(row -> new QuotedRequestSummary(
                         TransportRequestNumber.parse(row.requestNumber()),
                         row.quotationNo(),

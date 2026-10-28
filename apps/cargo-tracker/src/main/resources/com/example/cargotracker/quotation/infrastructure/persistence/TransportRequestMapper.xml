@@ -2,6 +2,9 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.example.cargotracker.quotation.infrastructure.persistence.TransportRequestMapper">
 
+    <!-- 社内の一覧を担当企業（荷主企業）で絞る IN の並び（Bolt 38f。空の集合は照会のサービスが読まずに返すので、ここでは空にならない） -->
+    <sql id="shipperCompanyIn"><foreach collection="shipperCompanyIds" item="shipperCompanyId" open="(" separator="," close=")">#{shipperCompanyId}</foreach></sql>
+
     <resultMap id="transportRequestRow" type="com.example.cargotracker.quotation.infrastructure.persistence.TransportRequestRow">
         <constructor>
             <idArg column="id" name="id" javaType="java.util.UUID"/>
@@ -123,7 +126,7 @@
          WHERE r.id = #{id}
     </select>
 
-    <!-- 社内用: 荷主企業で絞らない（営業担当者はすべての荷主の輸送要求を扱う） -->
+    <!-- 社内用: ここでは荷主企業で絞らない。営業担当者の担当範囲はアプリケーション層の StaffTransportRequestScope が判定する（Bolt 38f） -->
     <select id="selectByNumberForStaff" resultMap="transportRequestRow">
         <include refid="selectRow"/>
          WHERE r.request_number = #{requestNumber}
@@ -157,17 +160,21 @@
            AND first_version.version_no = 1
     </sql>
 
-    <!-- 社内用の受付一覧: 審査中を、最初の提出時刻（版 1）の古い順に -->
+    <!-- 社内用の受付一覧: 担当企業（荷主企業。Bolt 38f）の審査中を、最初の提出時刻（版 1）の古い順に -->
     <select id="selectUnderReviewSummaries" resultMap="transportRequestSummaryRow">
         <include refid="selectSummary"/>
          WHERE r.status = 'UNDER_REVIEW'
+           AND r.shipper_company_id IN
+               <include refid="shipperCompanyIn"/>
          ORDER BY first_version.submitted_at, r.request_number
     </select>
 
-    <!-- 社内用の受付一覧の見積り作成中: 審査を確定した見積依頼を、最初の提出時刻（版 1）の古い順に（Bolt 10） -->
+    <!-- 社内用の受付一覧の見積り作成中: 担当企業の審査を確定した見積依頼を、最初の提出時刻（版 1）の古い順に（Bolt 10・38f） -->
     <select id="selectQuotingSummaries" resultMap="transportRequestSummaryRow">
         <include refid="selectSummary"/>
          WHERE r.status = 'QUOTING'
+           AND r.shipper_company_id IN
+               <include refid="shipperCompanyIn"/>
          ORDER BY first_version.submitted_at, r.request_number
     </select>
 

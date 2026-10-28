@@ -8,6 +8,7 @@ import com.example.cargotracker.quotation.application.internal.commandservices.P
 import com.example.cargotracker.quotation.application.internal.commandservices.QuotationCommandService;
 import com.example.cargotracker.quotation.application.internal.commandservices.RequotationOutcome;
 import com.example.cargotracker.quotation.application.internal.queryservices.StaffQuotationQueryService;
+import com.example.cargotracker.quotation.application.internal.queryservices.StaffTransportRequestLookup;
 import com.example.cargotracker.quotation.application.internal.queryservices.StaffTransportRequestQueryService;
 import com.example.cargotracker.quotation.domain.model.aggregates.Quotation;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequest;
@@ -18,6 +19,7 @@ import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationSta
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationViolations;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
+import com.example.cargotracker.shared.domain.ScopedResourceKind;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Clock;
@@ -39,7 +41,9 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 /**
  * 社内業務 Web の見積りの作成（S-04。US-03）。料金明細・通貨・有効期限・経路方針を 1 つの画面で入れて算出し（承認待ち）、
- * 算出した見積りを確かめて社内承認して提示する。社内の画面なので荷主企業で絞らない。社内承認者はログインした営業担当者（認証の主体。ADR-012）。
+ * 算出した見積りを確かめて社内承認して提示する。営業担当者が扱えるのは担当企業の見積依頼だけで（Bolt 38f。US-16 AC4）、範囲の外は
+ * 見つからない扱い（404）にし、確定の試行（POST）だけをアクセス・監査の記録に残す（SEC-12。{@link StaffOutOfScopeResponder}）。
+ * 社内承認者はログインした営業担当者（認証の主体。ADR-012）。
  * 承認待ち・提示済みの見積りからは再見積りでき、旧版は置換済み（有効期限を過ぎていれば失効）として読み取り専用で残る（Bolt 11）。
  */
 @Controller
@@ -61,6 +65,7 @@ public class StaffQuotationController {
     private final StaffQuotationQueryService queryService;
     private final StaffTransportRequestQueryService transportRequestQueryService;
     private final ProvisionalConsigneeProperties provisionalConsignees;
+    private final StaffOutOfScopeResponder outOfScope;
     private final Clock clock;
 
     public StaffQuotationController(
@@ -68,11 +73,13 @@ public class StaffQuotationController {
             StaffQuotationQueryService queryService,
             StaffTransportRequestQueryService transportRequestQueryService,
             ProvisionalConsigneeProperties provisionalConsignees,
+            StaffOutOfScopeResponder outOfScope,
             Clock clock) {
         this.commandService = commandService;
         this.queryService = queryService;
         this.transportRequestQueryService = transportRequestQueryService;
         this.provisionalConsignees = provisionalConsignees;
+        this.outOfScope = outOfScope;
         this.clock = clock;
     }
 
@@ -81,9 +88,9 @@ public class StaffQuotationController {
      * （算出した後に画面を離れても、受付一覧の見積り作成中から戻れる。Bolt 9・10 レビュー R-04）。
      */
     @GetMapping("/new")
-    public String newQuotation(@PathVariable String number, Model model) {
-        TransportRequest request = findTransportRequest(number);
-        Optional<Quotation> active = queryService.findActive(request.number());
+    public String newQuotation(@PathVariable String number, AuthenticatedActor actor, Model model) {
+        TransportRequest request = findTransportRequest(number, actor);
+        Optional<Quotation> active = queryService.findActive(request.number(), actor);
         if (active.isPresent()) {
             return REDIRECT + quotationPath(request.number(), active.get().quotationNo());
         }
@@ -95,17 +102,18 @@ public class StaffQuotationController {
     @PostMapping
     public String calculate(
             @PathVariable String number,
+            AuthenticatedActor actor,
             @ModelAttribute QuotationForm quotationForm,
             BindingResult bindingResult,
             Model model,
             RedirectAttributes redirectAttributes) {
-        TransportRequest request = findTransportRequest(number);
+        TransportRequest request = confirmingTransportRequest(number, actor, null);
         List<Integer> rowsOfLines = new ArrayList<>();
         Optional<QuotationInput> input = QuotationFormConverter.convert(quotationForm, bindingResult, rowsOfLines);
         if (input.isEmpty()) {
             return showCreateForm(request, model);
         }
-        return switch (commandService.calculate(new CalculateQuotationCommand(request.number(), input.get()))) {
+        return switch (commandService.calculate(new CalculateQuotationCommand(request.number(), input.get()), actor)) {
             case CalculationOutcome.Calculated(TransportRequestNumber calculated, int quotationNo) -> {
                 redirectAttributes.addFlashAttribute(
                         RESULT, QuotationViews.label(calculated, quotationNo) + " を算出しました。内容を確かめて社内承認してください");
@@ -116,7 +124,7 @@ public class StaffQuotationController {
                 yield showCreateForm(request, model);
             }
             case CalculationOutcome.Rejected(QuotationRejection reason) -> {
-                Optional<Quotation> active = queryService.findActive(request.number());
+                Optional<Quotation> active = queryService.findActive(request.number(), actor);
                 if (reason == QuotationRejection.ALREADY_QUOTED && active.isPresent()) {
                     redirectAttributes.addFlashAttribute(
                             PROBLEM, request.number().text() + " にはすでに見積りがあります。その見積りを示します");
@@ -128,6 +136,11 @@ public class StaffQuotationController {
                 yield REDIRECT + LIST_PATH;
             }
             case CalculationOutcome.NotFound _ -> throw notFound();
+            case CalculationOutcome.OutOfScope _ ->
+                throw outOfScope.recordAndNotFound(
+                        actor,
+                        ScopedResourceKind.TRANSPORT_REQUEST,
+                        request.number().text());
         };
     }
 
@@ -136,10 +149,11 @@ public class StaffQuotationController {
      * 失効（表示する時刻で有効期限を過ぎた）と置換済みは読み取り専用で、置換済みなら置換先へのリンクを示す（Bolt 11）。
      */
     @GetMapping("/{quotationNo}")
-    public String show(@PathVariable String number, @PathVariable int quotationNo, Model model) {
-        TransportRequest request = findTransportRequest(number);
+    public String show(
+            @PathVariable String number, @PathVariable int quotationNo, AuthenticatedActor actor, Model model) {
+        TransportRequest request = findTransportRequest(number, actor);
         Quotation quotation =
-                queryService.find(request.number(), quotationNo).orElseThrow(StaffQuotationController::notFound);
+                queryService.find(request.number(), quotationNo, actor).orElseThrow(StaffQuotationController::notFound);
         UtcInstant now = new UtcInstant(clock.instant());
         // 再見積りの操作の出し分けは、GET・POST と同じ規則を使う（輸送要求の状態と版を含む。D-85。Bolt 35c）
         Optional<QuotationRejection> requoteRejection = RequotePolicy.rejection(request, quotation, now);
@@ -150,7 +164,7 @@ public class StaffQuotationController {
         model.addAttribute("routingRequestedNotice", routingRequestedNotice(quotation, now));
         List<Quotation> all =
                 quotation.status() == QuotationStatus.REPLACED || quotation.status() == QuotationStatus.EXPIRED
-                        ? queryService.findAll(request.number())
+                        ? queryService.findAll(request.number(), actor)
                         : List.of();
         model.addAttribute(
                 "replacement",
@@ -192,11 +206,12 @@ public class StaffQuotationController {
     public String requotation(
             @PathVariable String number,
             @PathVariable int quotationNo,
+            AuthenticatedActor actor,
             Model model,
             RedirectAttributes redirectAttributes) {
-        TransportRequest request = findTransportRequest(number);
+        TransportRequest request = findTransportRequest(number, actor);
         Quotation quotation =
-                queryService.find(request.number(), quotationNo).orElseThrow(StaffQuotationController::notFound);
+                queryService.find(request.number(), quotationNo, actor).orElseThrow(StaffQuotationController::notFound);
         Optional<QuotationRejection> rejection =
                 RequotePolicy.rejection(request, quotation, new UtcInstant(clock.instant()));
         if (rejection.isPresent()) {
@@ -218,12 +233,13 @@ public class StaffQuotationController {
     public String requote(
             @PathVariable String number,
             @PathVariable int quotationNo,
+            AuthenticatedActor actor,
             @ModelAttribute QuotationForm quotationForm,
             BindingResult bindingResult,
             Model model,
             RedirectAttributes redirectAttributes) {
-        TransportRequest request = findTransportRequest(number);
-        Optional<Quotation> old = queryService.find(request.number(), quotationNo);
+        TransportRequest request = confirmingTransportRequest(number, actor, quotationNo);
+        Optional<Quotation> old = queryService.find(request.number(), quotationNo, actor);
         old.filter(quotation -> quotation.assignedRoute().isPresent())
                 .map(QuotationFormConverter::toForm)
                 .ifPresent(inherited -> {
@@ -238,7 +254,7 @@ public class StaffQuotationController {
         }
         String oldLabel = QuotationViews.label(request.number(), quotationNo);
         return switch (commandService.requote(
-                new RequoteQuotationCommand(request.number(), quotationNo, input.get()))) {
+                new RequoteQuotationCommand(request.number(), quotationNo, input.get()), actor)) {
             case RequotationOutcome.Calculated(
                     TransportRequestNumber calculated,
                     int newNo,
@@ -263,6 +279,9 @@ public class StaffQuotationController {
                 yield REDIRECT + quotationPath(request.number(), quotationNo);
             }
             case RequotationOutcome.NotFound _ -> throw notFound();
+            case RequotationOutcome.OutOfScope _ ->
+                throw outOfScope.recordAndNotFound(
+                        actor, ScopedResourceKind.QUOTATION, quotationId(request.number(), quotationNo));
         };
     }
 
@@ -274,10 +293,10 @@ public class StaffQuotationController {
             AuthenticatedActor actor,
             RedirectAttributes redirectAttributes) {
         TransportRequestNumber transportRequestNumber =
-                TransportRequestViews.parseNumber(number).orElseThrow(StaffQuotationController::notFound);
+                confirmingTransportRequest(number, actor, quotationNo).number();
         UserId approver = actor.userId();
         return switch (commandService.present(
-                new PresentQuotationCommand(transportRequestNumber, quotationNo, approver))) {
+                new PresentQuotationCommand(transportRequestNumber, quotationNo, approver), actor)) {
             case PresentationOutcome.Presented(TransportRequestNumber presented, int presentedNo) -> {
                 redirectAttributes.addFlashAttribute(RESULT, QuotationViews.label(presented, presentedNo) + " を提示しました");
                 yield REDIRECT + LIST_PATH;
@@ -292,6 +311,9 @@ public class StaffQuotationController {
                 yield REDIRECT + quotationPath(transportRequestNumber, quotationNo);
             }
             case PresentationOutcome.NotFound _ -> throw notFound();
+            case PresentationOutcome.OutOfScope _ ->
+                throw outOfScope.recordAndNotFound(
+                        actor, ScopedResourceKind.QUOTATION, quotationId(transportRequestNumber, quotationNo));
         };
     }
 
@@ -340,10 +362,36 @@ public class StaffQuotationController {
         return FORM_VIEW;
     }
 
-    private TransportRequest findTransportRequest(String number) {
+    /** 照会（GET）の見積依頼を担当範囲の中で引き当てる。見つからなくても範囲の外でも 404（照会は記録しない。Bolt 38f）。 */
+    private TransportRequest findTransportRequest(String number, AuthenticatedActor actor) {
         return TransportRequestViews.parseNumber(number)
-                .flatMap(transportRequestQueryService::findByNumber)
+                .flatMap(parsed ->
+                        transportRequestQueryService.findByNumber(parsed, actor).inScope())
                 .orElseThrow(StaffQuotationController::notFound);
+    }
+
+    /**
+     * 確定（POST）の見積依頼を担当範囲の中で引き当てる。範囲の外なら入力の解釈より先に試行を記録して 404 にする（Bolt 38f、SEC-12）。
+     *
+     * @param quotationNo 見積りへの操作なら見積り番号（記録の対象を「業務番号/見積り番号」にする）。見積依頼への操作なら null
+     */
+    private TransportRequest confirmingTransportRequest(String number, AuthenticatedActor actor, Integer quotationNo) {
+        TransportRequestNumber parsed =
+                TransportRequestViews.parseNumber(number).orElseThrow(StaffQuotationController::notFound);
+        StaffTransportRequestLookup lookup = transportRequestQueryService.findByNumber(parsed, actor);
+        // 範囲の外の確かめは審査の controller と同じ書き方（範囲の外なら記録して 404、そうでなければ範囲の中を引き当てる。M2）
+        if (lookup instanceof StaffTransportRequestLookup.OutOfScope) {
+            throw quotationNo == null
+                    ? outOfScope.recordAndNotFound(actor, ScopedResourceKind.TRANSPORT_REQUEST, parsed.text())
+                    : outOfScope.recordAndNotFound(
+                            actor, ScopedResourceKind.QUOTATION, quotationId(parsed, quotationNo));
+        }
+        return lookup.inScope().orElseThrow(StaffQuotationController::notFound);
+    }
+
+    /** 記録の対象の見積りの識別（業務番号/見積り番号）。 */
+    private static String quotationId(TransportRequestNumber number, int quotationNo) {
+        return number.text() + "/" + quotationNo;
     }
 
     private static String quotationPath(TransportRequestNumber number, int quotationNo) {

@@ -18,6 +18,7 @@ import com.example.cargotracker.identity.domain.model.aggregates.AuditRecord;
 import com.example.cargotracker.identity.domain.model.valueobjects.PasswordResetTokenPurpose;
 import com.example.cargotracker.identity.interfaces.web.DevTotpCodeSource;
 import com.example.cargotracker.shared.annotation.ddd.Saga;
+import com.example.cargotracker.shared.domain.OutOfScopeAttemptRecorder;
 import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.JavaCall;
 import com.tngtech.archunit.core.domain.JavaClass;
@@ -31,6 +32,7 @@ import java.util.Arrays;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Controller;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 /**
@@ -409,6 +411,132 @@ class LayerArchitectureTest {
             .haveFullyQualifiedName(INVITATION_ISSUER)
             .should()
             .accessField(PasswordResetTokenPurpose.class, INVITATION_PURPOSE);
+
+    /** 担当範囲の外の試行の記録の書き手（Bolt 38f。アクセス・監査の記録のサービス）。 */
+    private static final String ASSIGNED_SCOPE_DENIAL_WRITER =
+            "com.example.cargotracker.identity.application.internal.commandservices.AssignedScopeDenialService";
+
+    /** 担当範囲の外の試行の記録を作る呼び出し（{@code AuditRecord.assignedScopeDenied}）。 */
+    private static final DescribedPredicate<JavaCall<?>> ASSIGNED_SCOPE_DENIAL =
+            target(owner(equivalentTo(AuditRecord.class))).and(target(nameMatching("assignedScopeDenied")));
+
+    /**
+     * 担当範囲の外の試行の記録は、記録のサービスだけが作る（Bolt 38f の決定 (5)、計画の行 15。T-205）。書き手を 1 か所にして、記録の漏れと
+     * 二重の記録を防ぐ（IA-INV-08）。守るのは呼び出しだけで、メソッド参照は捕まえない。
+     */
+    @ArchTest
+    static final ArchRule 担当範囲の外の記録は記録のサービスだけが作る = noClasses()
+            .that()
+            .doNotHaveFullyQualifiedName(ASSIGNED_SCOPE_DENIAL_WRITER)
+            .should()
+            .callMethodWhere(ASSIGNED_SCOPE_DENIAL);
+
+    /** 書き手の名前と呼び出しが実在し続けることの見張り（計画の行 15）。動かす・名前を変える・呼ばなくなると落ちる（T-135）。 */
+    @ArchTest
+    static final ArchRule 担当範囲の外の記録の書き手は記録のサービス = classes()
+            .that()
+            .haveFullyQualifiedName(ASSIGNED_SCOPE_DENIAL_WRITER)
+            .should()
+            .callMethodWhere(ASSIGNED_SCOPE_DENIAL);
+
+    /** 担当範囲の外の試行の記録のサービスを呼ぶアダプター（Bolt 38f。identity の公開の入口の実装）。 */
+    private static final String OUT_OF_SCOPE_RECORDER_ADAPTER =
+            "com.example.cargotracker.identity.interfaces.api.internal.OutOfScopeAttemptRecorderAdapter";
+
+    /**
+     * 担当範囲の外の試行の記録のサービスを呼ぶのは、ポートのアダプターだけ（Bolt 38f の開発レビューの低 10 (a)）。アダプターを通さずに
+     * サービスを直接呼ぶと、ポートの見張りの規則を抜けられる。
+     */
+    @ArchTest
+    static final ArchRule 担当範囲の外の記録のサービスはポートのアダプターだけが呼ぶ = noClasses()
+            .that()
+            .doNotHaveFullyQualifiedName(OUT_OF_SCOPE_RECORDER_ADAPTER)
+            .and()
+            .doNotHaveFullyQualifiedName(ASSIGNED_SCOPE_DENIAL_WRITER)
+            .should()
+            .callMethodWhere(target(owner(nameMatching(ASSIGNED_SCOPE_DENIAL_WRITER.replace(".", "\\."))))
+                    .and(target(nameMatching("recordDenied"))));
+
+    /** 社内の側の輸送要求の読み出し（担当範囲を確かめない）。 */
+    private static final DescribedPredicate<JavaCall<?>> STAFF_TRANSPORT_REQUEST_READ = target(
+                    owner(
+                            nameMatching(
+                                    "com\\.example\\.cargotracker\\.quotation\\.domain\\.model\\.aggregates\\.TransportRequestRepository")))
+            .and(target(nameMatching("findByNumberForStaff")));
+
+    /**
+     * 担当範囲を確かめずに輸送要求を読む口を呼べるのは、担当範囲の判定の部品と、予約の側の照会だけ（Bolt 38f の開発レビュー M3。決定 (10)
+     * 「範囲を知らないまま読み書きできる道を残さない」）。予約の側（{@code BookableQuotationQueryService}）は 38f2 で担当範囲で絞り、
+     * ここから外す。
+     */
+    @ArchTest
+    static final ArchRule 担当範囲を確かめない輸送要求の読み出しは判定の部品だけが呼ぶ = noClasses()
+            .that()
+            .doNotHaveFullyQualifiedName(
+                    "com.example.cargotracker.quotation.application.internal.queryservices.StaffTransportRequestScope")
+            // 38f2 で外す（予約の側を担当範囲で絞る）
+            .and()
+            .doNotHaveFullyQualifiedName(
+                    "com.example.cargotracker.quotation.application.internal.queryservices.BookableQuotationQueryService")
+            .should()
+            .callMethodWhere(STAFF_TRANSPORT_REQUEST_READ);
+
+    /** 担当範囲の外の試行の記録のポートを呼ぶ部品（Bolt 38f。見積りの社内の画面の層）。 */
+    private static final String OUT_OF_SCOPE_RESPONDER =
+            "com.example.cargotracker.quotation.interfaces.web.StaffOutOfScopeResponder";
+
+    /** 担当範囲の外の試行の記録のポートの呼び出し。 */
+    private static final DescribedPredicate<JavaCall<?>> OUT_OF_SCOPE_RECORDING =
+            target(owner(equivalentTo(OutOfScopeAttemptRecorder.class)));
+
+    /**
+     * 担当範囲の外の試行の記録のポートを呼ぶのは、画面の層の 1 つの部品だけ（Bolt 38f の決定 (10)、ADR-019、計画の行 15）。controller や
+     * サービスが直接呼ぶと、記録の漏れ・二重の記録や、外側のトランザクションの中の呼び出し（ポートは拒む）が起きる。38f2 で予約の側の部品を足す。
+     */
+    @ArchTest
+    static final ArchRule 担当範囲の外の記録のポートは画面の部品だけが呼ぶ = noClasses()
+            .that()
+            .doNotHaveFullyQualifiedName(OUT_OF_SCOPE_RESPONDER)
+            .should()
+            .callMethodWhere(OUT_OF_SCOPE_RECORDING);
+
+    /** 呼ぶ部品の名前と呼び出しが実在し続けることの見張り（T-135）。 */
+    @ArchTest
+    static final ArchRule 担当範囲の外の記録のポートを呼ぶ部品は社内の画面の部品 = classes()
+            .that()
+            .haveFullyQualifiedName(OUT_OF_SCOPE_RESPONDER)
+            .should()
+            .callMethodWhere(OUT_OF_SCOPE_RECORDING);
+
+    /** ポートを呼ぶ部品はトランザクションを持たない（ポートは自分のトランザクションで書き、外側の中では拒む。決定 (4)）。 */
+    @ArchTest
+    static final ArchRule 担当範囲の外の記録のポートを呼ぶ部品はトランザクションを持たない = classes()
+            .that()
+            .haveFullyQualifiedName(OUT_OF_SCOPE_RESPONDER)
+            .should()
+            .notBeAnnotatedWith(Transactional.class);
+
+    /** 同じく、部品のメソッドにもトランザクションを付けない。 */
+    @ArchTest
+    static final ArchRule 担当範囲の外の記録のポートを呼ぶ部品のメソッドはトランザクションを持たない = noMethods()
+            .that()
+            .areDeclaredInClassesThat()
+            .haveFullyQualifiedName(OUT_OF_SCOPE_RESPONDER)
+            .should()
+            .beAnnotatedWith(Transactional.class);
+
+    /**
+     * 共有カーネル（{@code shared.domain}）に置く振る舞いの型（インターフェース）は、担当範囲の外の試行の記録のポートだけ（ADR-019 の例外。
+     * 決定 (9)）。ほかのポートを共有カーネルに置くと落ちる。
+     */
+    @ArchTest
+    static final ArchRule 共有カーネルの振る舞いの型は担当範囲の外の記録のポートだけ = classes()
+            .that()
+            .resideInAPackage("com.example.cargotracker.shared.domain..")
+            .and()
+            .areInterfaces()
+            .should()
+            .haveFullyQualifiedName(OutOfScopeAttemptRecorder.class.getName());
 
     /** platform は技術の部品だけを置き、コンテキストの型に依存しない。 */
     @ArchTest

@@ -9,6 +9,7 @@ import com.example.cargotracker.quotation.domain.model.valueobjects.TransportReq
 import com.example.cargotracker.shared.domain.CompanyId;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * 見積りのリポジトリ（送信ポート）。見積りは輸送要求と別の集約で、輸送要求 ID と見積り番号で探す。
@@ -35,21 +36,28 @@ public interface QuotationRepository {
 
     /**
      * 見積提示済みの見積依頼ごとに、最新の見積り（見積り番号の最大）を、有効期限の近い順に返す（受付一覧 S-02。Bolt 11 レビュー R-02）。
-     * 社内の照会で、荷主企業で絞らない。
+     * 社内の照会で、荷主企業（営業担当者の担当企業。Bolt 38f）で絞る。
+     *
+     * @param shipperCompanyIds 荷主企業（空でない。空の守りは呼ぶ側の 1 か所）
      */
-    List<QuotedRequestSummary> findLatestOfQuotedRequests();
+    List<QuotedRequestSummary> findLatestOfQuotedRequests(Set<CompanyId> shipperCompanyIds);
 
     /**
      * 経路設計中の見積依頼ごとに、詳細設計依頼済みの見積りを、依頼時刻の古い順に返す（受付一覧 S-02。US-24 AC1。Bolt 12）。
-     * 社内の照会で、荷主企業で絞らない。
+     * 社内の照会で、荷主企業（担当企業。Bolt 38f）で絞る。
+     *
+     * @param shipperCompanyIds 荷主企業（空でない）
      */
-    List<RoutingRequestedSummary> findRoutingRequestedSummaries();
+    List<RoutingRequestedSummary> findRoutingRequestedSummaries(Set<CompanyId> shipperCompanyIds);
 
     /**
      * 予約の確定待ち（荷主が承認した見積りと、荷主の承認の後に失効した見積りを再見積りした後で提示する前の経路を持つ承認待ちの見積り。
-     * 輸送要求が予約確定済みでないもの）を有効期限の近い順に（S-02。Bolt 23b。承認待ちの行は D-85。Bolt 35c）。
+     * 輸送要求が予約確定済みでないもの）を有効期限の近い順に（S-02。Bolt 23b。承認待ちの行は D-85。Bolt 35c）。荷主企業（担当企業。
+     * Bolt 38f）で絞る。
+     *
+     * @param shipperCompanyIds 荷主企業（空でない）
      */
-    List<AwaitingBookingSummary> findAwaitingBookingSummaries();
+    List<AwaitingBookingSummary> findAwaitingBookingSummaries(Set<CompanyId> shipperCompanyIds);
 
     /**
      * 荷主企業の見積依頼ごとに、荷主に見える最新の見積り（提示済みで見積り番号の最大）を返す（荷主の見積依頼の一覧 C-02 の状態の

@@ -15,6 +15,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -96,18 +97,18 @@ public class InMemoryQuotationRepository implements QuotationRepository {
 
     /** 輸送要求の状態を知らないため、業務ルール層では使わない（PostgreSQL の統合テストで確かめる。Bolt 11 レビュー R-02）。 */
     @Override
-    public List<QuotedRequestSummary> findLatestOfQuotedRequests() {
+    public List<QuotedRequestSummary> findLatestOfQuotedRequests(Set<CompanyId> shipperCompanyIds) {
         throw new UnsupportedOperationException("見積提示済みの一覧は業務ルール層で使わない");
     }
 
     /** 輸送要求の状態を知らないため、業務ルール層では使わない（PostgreSQL の統合テストで確かめる。Bolt 12）。 */
     @Override
-    public List<RoutingRequestedSummary> findRoutingRequestedSummaries() {
+    public List<RoutingRequestedSummary> findRoutingRequestedSummaries(Set<CompanyId> shipperCompanyIds) {
         throw new UnsupportedOperationException("経路設計中の一覧は業務ルール層で使わない");
     }
 
     @Override
-    public List<AwaitingBookingSummary> findAwaitingBookingSummaries() {
+    public List<AwaitingBookingSummary> findAwaitingBookingSummaries(Set<CompanyId> shipperCompanyIds) {
         throw new UnsupportedOperationException("予約の確定待ちの一覧は業務ルール層で使わない");
     }
 

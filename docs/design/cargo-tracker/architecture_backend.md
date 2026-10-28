@@ -4,7 +4,7 @@ title: "cargo-tracker バックエンドアーキテクチャ"
 description: "cargo-tracker の境界づけられたコンテキスト、コンテキストごとのドメインロジックパターン、パッケージ構成、サガとドメインイベントによる連携（ARCH-HO-01〜03）、受信サービスの方針。"
 tags: [design, architecture, backend]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-28T04:02:31Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-28T10:20:03Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:11:12Z }
   - { by: human:kakimomokuri, at: 2026-10-01T07:41:04Z }
@@ -88,7 +88,7 @@ rectangle "追跡\n(U3)" as T
 rectangle "アクセス・監査\n(U4)" as IA
 rectangle "外部データ\n(U5)" as X
 rectangle "通知\n(US-22)" as N
-rectangle "共有カーネル\n時刻・識別子・版・場所" as SK
+rectangle "共有カーネル\n時刻・識別子・版・場所\n＋担当範囲の外の試行の記録のポート（ADR-019）" as SK
 cloud "運送会社・港湾\n（承認済みファイル）" as EXT
 
 Q --> R : U/D 顧客-供給者\n見積り済み輸送要求
@@ -130,7 +130,7 @@ end note
 | 外部データ → 経路設計・追跡 | X → R、T | 公開ホスト + 公表された言語 | 未検証の原本を採用値として渡さない |
 | 外部 → 外部データ | EXT → X | 腐敗防止層 | 提供元の形式を経路規則へ直接漏らさない |
 | アクセス・監査 → 全体 | IA → 全体 | 公開ホスト | 認証方式・監査方式を業務規則へ埋め込まない |
-| 共有カーネル | 全業務コンテキスト | 共有カーネル（第 3 章） | 業務の意味を持たない基本型だけに限る |
+| 共有カーネル | 全業務コンテキスト | 共有カーネル（第 3 章） | 業務の意味を持たない基本型だけに限る。例外は担当範囲の外の試行の記録のポート `OutOfScopeAttemptRecorder` 1 つ（ADR-019。Bolt 38f） |
 | 追跡 → 予約（イベントのみ） | T → B | 公表された言語（ドメインイベント） | 集荷実績の採用と引渡しの確認だけを通知する。予約は追跡の公開 API・内部に依存しない（[ドメインモデル](domain_model.md) DE-09、DE-10。第 2 章で Booking が Cargo Handled を購読するのと同じ）。注: 予約が追跡のイベントを購読すると `booking → tracking :: events` が加わり、ADR-015 の依存の向き（`tracking → booking`・`routing`）と循環する。DE-09・DE-10 は ADR-014 の形（追跡の listener が予約の公開 API を呼ぶ）にそろえ、US-12 の残り（W7）の Bolt で直す |
 | 予約 → 見積り（下流から上流への通知） | B → Q | 下流の listener が上流の公開 API を呼ぶ（[ADR-014](../../adr/cargo-tracker/014-downstream-to-upstream-notification.md)） | 本予約の確定（DE-07）を予約の listener が受け、見積りの公開 API で輸送要求を予約確定済みにする（W4） |
 | 経路設計 → 見積り（下流から上流への通知） | R → Q | 下流の listener が上流の公開 API を呼ぶ（ADR-014） | 経路の確定（DE-05）を経路設計の listener が受け、見積りの公開 API（経路の割当て）で依頼元の見積りに経路版を割り当てる（Bolt 20）。見積りは経路設計のイベントを購読しない |
@@ -156,7 +156,7 @@ end note
 
 ### 共有カーネル
 
-第 3 章の共有カーネルを、次の基本型に限って使う。業務規則を持つ型は共有しない。
+第 3 章の共有カーネルを、次の基本型に限って使う。業務規則を持つ型は共有しない。例外として、担当範囲の外の試行の記録のポート `OutOfScopeAttemptRecorder` と記録の対象の種類 `ScopedResourceKind` だけを置く。業務のコンテキストの画面の層が呼び、identity が実装する依存性逆転で、identity の公開 API を呼ぶと見積りとの間で依存が循環するのを避ける（[ADR-019](../../adr/cargo-tracker/019-out-of-scope-attempt-recorder.md)。Bolt 38f。共有カーネルの振る舞いの型がこのポートだけであることと、イベントと公開 API の型がポートに依存しないことを ArchUnit で守る）。
 
 | 型 | 内容 |
 | :--- | :--- |
@@ -304,6 +304,7 @@ Bolt 1 の実装で次を決めた。
 | TOTP の登録・再登録、再設定の完了、役割と利用状態の変更 | それぞれのアプリケーションのサービス | 状態の変更と同じ |
 | 再設定の依頼（受付・不受付） | `PasswordResetRequestService` | 単独（不受付は状態を変えない） |
 | `ADMIN_SCOPE_DENIED` | `AdministrationScopeDenialService`（controller の確定の POST だけから） | 単独。GET では書かない |
+| `ASSIGNED_SCOPE_DENIED` | `AssignedScopeDenialService`（ポート `OutOfScopeAttemptRecorder` のアダプター経由。社内の画面の `StaffOutOfScopeResponder` が確定の POST だけから呼ぶ。Bolt 38f） | 単独（自分のトランザクション。外側のトランザクションの中では拒む）。GET では書かない |
 
 - request ごとの利用者の確かめ（Bolt 32c。[ADR-012](../../adr/cargo-tracker/012-authentication-principal-and-session.md) の見直しの 3、IA-INV-04）: 入口のフィルター `SessionRevalidationFilter`（`identity.infrastructure.security`）を `SessionLifetimeFilter` の直後（`UsernamePasswordAuthenticationFilter`・`TotpAuthenticationFilter` より前）に置き、認証済みの主体を持つ request でアプリケーションのサービス `SessionRevalidationService`（`identity.application.internal.commandservices`）を呼ぶ。サービスはドメインのポート `UserStandingRepository`（`identity.domain.model.aggregates`）で利用者と所属企業の組を 1 回で読み、判定と `SESSION_REVOKED` の書き込みを行う。ポートの実装 `MyBatisUserStandingRepository` は `identity.infrastructure.persistence` に置く（1 つの SQL）。依存の向きは「入口 → `commandservices` → ドメインのポート ← persistence」で、上の認証の入口の例外（D-5）の範囲に収まる（例外を広げない）。フィルターは結果を写すだけにする（拒否なら session を捨てて A-03、拒否でなければ主体と `ROLE_` の権限を差し替えた新しいセキュリティのコンテキスト。session には保存しない）。`SessionRevalidationService` は `@Service` を付け、合成ルート（`IdentityConfiguration`）で組み立て、トランザクションは `TransactionTemplate` で内側に持つ
 - session の残り時間と延長（Bolt 32b。[ADR-012](../../adr/cargo-tracker/012-authentication-principal-and-session.md) の決定 3、ACC-06）: 8 時間の上限までの残りの秒数は、入口のフィルター `SessionLifetimeFilter` が上限の判定と同じ起点（`AUTHENTICATED_AT`）と同じ時計で算出し、2 つの要素のそろった session でだけ request の属性 `cargotracker.request.sessionLifetimeRemainingSeconds` に置く（password の段・登録の途中・起点のない session・認証の前では置かない。session の属性の接頭辞 `cargotracker.session.` と分ける）。画面の層の `SessionTimerAdvice`（`identity.interfaces.web` の `@ControllerAdvice`。共通の画面のモデルの属性を足す前例は `CurrentActorAdvice`）がこの属性を名前で読み、属性があるときだけ `request.getSession(false)` で無操作の秒数（`getMaxInactiveInterval()`）を読んで、モデルの属性 `sessionTimer` にする（引数で `HttpSession` を受けると session を作ってしまうので受けない）。画面の層は `infrastructure` に依存できず（`LayerArchitectureTest`）、8 時間の起点と上限は認証の入口にあるので、値は request の属性で渡し、層の規則に例外を足さない。名前は入口と画面の層が application 層の `SessionKeys` の同じ定数を参照する（Bolt 32b から 33b までは 2 つの定数で持ち一致をテストで守っていたのを、Bolt 33c で寄せた。下の「session の属性の名前と期間の置き場所」の箇条）。延長は `SessionController`（`identity.interfaces.web`）の `POST /session/extend` で、公開の URL にせず、今のフィルター（CSRF・`SessionLifetimeFilter`・`SessionRevalidationFilter`・認証）をすべて通す。Spring Session がその request で session の最終アクセスを新しくするので、controller は 204 を返すだけにする。8 時間の上限は延ばさない。監査記録は書かない（延長はログインでも権限の変更でもない）

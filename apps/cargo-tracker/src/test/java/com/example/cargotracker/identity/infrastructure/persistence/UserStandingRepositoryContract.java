@@ -131,6 +131,50 @@ abstract class UserStandingRepositoryContract {
                         .containsExactlyInAnyOrder(Role.SHIPPER, Role.TRACKING_MANAGER));
     }
 
+    private void assign(User user, String scopeKind, UUID scopeId) {
+        jdbc().update(
+                        "INSERT INTO identity.user_assignment (user_id, scope_kind, scope_id, granted_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP)",
+                        user.id().value(),
+                        scopeKind,
+                        scopeId);
+    }
+
+    @Test
+    void 対象の役割の利用者は担当企業も1回で読み役割と企業の重なりを除く() {
+        // Bolt 38f の行 11（役割 2 × 企業 2 の重なりと、BOOKING の行を担当企業に載せない。V10）
+        User user = newUser(newCompany(), Set.of(Role.SALES, Role.ROUTE_DESIGNER));
+        CompanyId shipperA = new CompanyId(UUID.randomUUID());
+        CompanyId shipperB = new CompanyId(UUID.randomUUID());
+        assign(user, "COMPANY", shipperA.value());
+        assign(user, "COMPANY", shipperB.value());
+        assign(user, "BOOKING", UUID.randomUUID());
+
+        assertThat(standings().findById(user.id())).hasValueSatisfying(standing -> {
+            assertThat(standing.user().roles()).containsExactlyInAnyOrder(Role.SALES, Role.ROUTE_DESIGNER);
+            assertThat(standing.assignedCompanies().companies()).containsExactlyInAnyOrder(shipperA, shipperB);
+        });
+    }
+
+    @Test
+    void 担当企業がなければ空() {
+        User user = newUser(newCompany(), Set.of(Role.SALES));
+
+        assertThat(standings().findById(user.id()))
+                .hasValueSatisfying(standing ->
+                        assertThat(standing.assignedCompanies().companies()).isEmpty());
+    }
+
+    @Test
+    void 対象の役割のない利用者の行は担当企業として読まない() {
+        // Bolt 38f の行 12（システム管理者の COMPANY の行は管理範囲。担当企業に載せない。38e の決定 (9)。V11）
+        User admin = newUser(newCompany(), Set.of(Role.SYSTEM_ADMIN));
+        assign(admin, "COMPANY", UUID.randomUUID());
+
+        assertThat(standings().findById(admin.id()))
+                .hasValueSatisfying(standing ->
+                        assertThat(standing.assignedCompanies().companies()).isEmpty());
+    }
+
     @Test
     void 役割が0件の利用者は利用者の不変条件の例外で利用者IDを示す() {
         // 行 11（Bolt 38b。#50 の役割 0 件の検査の二重を、利用者のコンストラクターの 1 か所にした）

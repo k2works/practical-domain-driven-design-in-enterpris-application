@@ -21,6 +21,7 @@ import com.example.cargotracker.quotation.application.internal.commandservices.S
 import com.example.cargotracker.quotation.application.internal.commandservices.TransportRequestCommandService;
 import com.example.cargotracker.quotation.application.internal.commandservices.TransportRequestReviewService;
 import com.example.cargotracker.quotation.application.internal.queryservices.StaffQuotationQueryService;
+import com.example.cargotracker.quotation.application.internal.queryservices.StaffTransportRequestLookup;
 import com.example.cargotracker.quotation.application.internal.queryservices.StaffTransportRequestQueryService;
 import com.example.cargotracker.quotation.domain.events.QuotationApprovedByShipper;
 import com.example.cargotracker.quotation.domain.events.QuotationRouteAssigned;
@@ -40,6 +41,7 @@ import com.example.cargotracker.routing.domain.model.aggregates.RoutingCaseRepos
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseNumber;
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseSummary;
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
+import com.example.cargotracker.shared.domain.AuthenticatedActorFixture;
 import com.example.cargotracker.shared.domain.CommandId;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Role;
@@ -72,6 +74,10 @@ class RouteConfirmedAssignmentIntegrationTest {
 
     private static final Duration TIMEOUT = Duration.ofSeconds(10);
     private static final UserId STAFF = new UserId(UUID.randomUUID());
+    private static final CompanyId SHIPPER_COMPANY = new CompanyId(UUID.randomUUID());
+    /** 営業担当者（提出する荷主企業を担当する。Bolt 38f）。 */
+    private static final AuthenticatedActor OPERATOR = AuthenticatedActorFixture.salesHandling(STAFF, SHIPPER_COMPANY);
+
     private static final UserId SHIPPER_USER = new UserId(UUID.randomUUID());
     private static final UserId ROUTE_DESIGNER = new UserId(UUID.randomUUID());
     private static final AuthenticatedActor SALES = new AuthenticatedActor(
@@ -121,13 +127,14 @@ class RouteConfirmedAssignmentIntegrationTest {
 
     @Test
     void 経路を確定すると見積りに割り当てられ荷主が承認すると予約待ちになり本予約を確定すると予約確定済みになる() {
-        CompanyId shipper = new CompanyId(UUID.randomUUID());
+        CompanyId shipper = SHIPPER_COMPANY;
         SubmissionOutcome.Submitted submitted = (SubmissionOutcome.Submitted) transportRequestCommandService.submit(
                 new SubmitTransportRequestCommand(shipper, SHIPPER_USER, ShipmentTermsFixture.completeInput()));
         TransportRequestNumber number = submitted.number();
-        reviewService.approve(new ApproveTransportRequestCommand(number, 1, STAFF, "根拠"));
-        quotationCommandService.calculate(new CalculateQuotationCommand(number, QuotationFixture.completeInput()));
-        quotationCommandService.present(new PresentQuotationCommand(number, 1, STAFF));
+        reviewService.approve(new ApproveTransportRequestCommand(number, 1, STAFF, "根拠"), OPERATOR);
+        quotationCommandService.calculate(
+                new CalculateQuotationCommand(number, QuotationFixture.completeInput()), OPERATOR);
+        quotationCommandService.present(new PresentQuotationCommand(number, 1, STAFF), OPERATOR);
         quotationResponseService.requestRouteDesign(new RequestRouteDesignCommand(number, 1, shipper, SHIPPER_USER));
         RoutingCaseNumber caseNumber = await().atMost(TIMEOUT)
                 .until(
@@ -149,7 +156,7 @@ class RouteConfirmedAssignmentIntegrationTest {
                 .isInstanceOf(RouteConfirmationOutcome.Confirmed.class);
 
         await().atMost(TIMEOUT)
-                .untilAsserted(() -> assertThat(staffQuotationQueryService.find(number, 1))
+                .untilAsserted(() -> assertThat(staffQuotationQueryService.find(number, 1, OPERATOR))
                         .hasValueSatisfying(quotation -> {
                             assertThat(quotation.status()).isEqualTo(QuotationStatus.AWAITING_SHIPPER_APPROVAL);
                             assertThat(quotation.assignedRoute()).hasValueSatisfying(route -> {
@@ -285,9 +292,10 @@ class RouteConfirmedAssignmentIntegrationTest {
 
     private void awaitTransportRequestStatus(TransportRequestNumber number, TransportRequestStatus status) {
         await().atMost(TIMEOUT)
-                .untilAsserted(() -> assertThat(staffTransportRequestQueryService.findByNumber(number))
-                        .hasValueSatisfying(
-                                request -> assertThat(request.status()).isEqualTo(status)));
+                .untilAsserted(() -> assertThat(staffTransportRequestQueryService.findByNumber(number, OPERATOR))
+                        .isInstanceOfSatisfying(
+                                StaffTransportRequestLookup.Found.class,
+                                found -> assertThat(found.request().status()).isEqualTo(status)));
     }
 
     private long aggregateVersion(RoutingCaseNumber caseNumber) {

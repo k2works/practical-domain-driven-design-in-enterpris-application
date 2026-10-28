@@ -49,4 +49,7 @@ public sealed interface CalculationOutcome {
 
     /** 業務番号の輸送要求がない。 */
     record NotFound() implements CalculationOutcome {}
+
+    /** 輸送要求の荷主企業が操作者の担当企業でない（Bolt 38f。画面は試行を記録して 404 にする）。 */
+    record OutOfScope() implements CalculationOutcome {}
 }

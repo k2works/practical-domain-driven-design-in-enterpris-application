@@ -15,16 +15,27 @@ import com.example.cargotracker.quotation.interfaces.api.RouteRedesignNotificati
 import com.example.cargotracker.quotation.interfaces.api.RouteRedesignNotificationRequest;
 import com.example.cargotracker.shared.acceptance.MutableClock;
 import com.example.cargotracker.shared.acceptance.ScenarioContext;
+import com.example.cargotracker.shared.domain.AuthenticatedActor;
+import com.example.cargotracker.shared.domain.AuthenticatedActorFixture;
+import com.example.cargotracker.shared.domain.CompanyId;
+import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import io.cucumber.java.ja.ならば;
 import io.cucumber.java.ja.もし;
 import java.time.Instant;
+import java.util.UUID;
 
 /**
  * 再設計要の経路を割り当てた見積り（US-07 AC5、Q-INV-10、B-INV-05。Bolt 37e）のステップ定義。経路設計の DE-06 の listener（Bolt 37e2）の
  * 代わりに、見積りの公開 API で再設計要を伝える。本予約の照会は予約が呼ぶ見積りの公開 API を直接呼ぶ（予約の画面の文言は Bolt 37e3）。
  */
 public class RouteRedesignSteps {
+
+    /** 営業担当者（荷主 2 社を担当する。Bolt 38f）。 */
+    private static final AuthenticatedActor OPERATOR = AuthenticatedActorFixture.salesHandling(
+            new UserId(UUID.fromString("00000000-0000-0000-0000-000000000301")),
+            new CompanyId(UUID.fromString("00000000-0000-0000-0000-000000000001")),
+            new CompanyId(UUID.fromString("00000000-0000-0000-0000-000000000002")));
 
     private final RouteRedesignNotification notification;
     private final BookableQuotationQuery bookableQuotationQuery;
@@ -113,7 +124,7 @@ public class RouteRedesignSteps {
 
     private AssignedRoute assignedRoute(int quotationNo) {
         return staffQueryService
-                .find(transportRequest().number(), quotationNo)
+                .find(transportRequest().number(), quotationNo, OPERATOR)
                 .orElseThrow()
                 .assignedRoute()
                 .orElseThrow();

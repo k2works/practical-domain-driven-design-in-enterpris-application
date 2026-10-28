@@ -4,7 +4,7 @@ title: "ADR-011: 多要素認証は Spring Security 7 の要素の権限で組�
 description: "password の後に TOTP を求める 2 段階のログインを、Spring Security 7 の多要素認証（要素ごとの権限）で組む。"
 tags: [adr, authentication, mfa, totp]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-27T23:45:27Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-28T10:20:03Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-11T08:28:34Z }
 ---
@@ -304,7 +304,7 @@ ArchUnit で、ZXing を参照するのが暗号の部品（`identity.infrastruc
 | 数えない失敗 | ロック中の試行（期限も延ばさない）、存在しない利用者（行を作らない）、password が正しく利用停止・無効な企業で拒んだとき（Disabled のイベント。今の理由）、利用者の読み出しの DB の誤り（ロックの読み出しの誤りは 500。下の「DB の誤り」）、A-07 の登録のコードの誤り（登録は認証のイベントを経ず、登録の誤りは自分の秘密の確かめで、他人の要素の推測にならない） |
 | 0 に戻す時点 | 2 つの要素（TOTP または回復コード）がそろったログインの成功だけ。password の段の成功では戻さない（password を知る者が、TOTP を試しながら password を通し直して回数を戻せないように）。ロック中は戻さない（IA-INV-03） |
 | ロックの確かめ | 判定は `LoginAttemptService#isLocked` の 1 か所。password の段は `DaoAuthenticationProvider` の照合の後の確認で、今の `AccountStatusUserDetailsChecker` を包む入口の部品 `LockAwareUserDetailsChecker` が、まず `isLocked` を見て `LockedException`、次に今の利用停止の確認をする。照合の前に確かめると、応答の時間（bcrypt を回すか）でロックが分かる（Bolt 14 の利用停止と同じ理由）。TOTP・回復コードの段は、provider が確かめる前に `isLocked` を見て `LockedException`（失敗のハンドラーが `/login?totp-error` に戻す）。`LockedException` の失敗のイベントは `AuthenticationFailureLockedEvent`（枠組みの既定の対応） |
-| `CargoUserDetails` | 項目を足さない。足すと配備の前の session の値が false で復元され、ロックの状態が session に写る（session の直列化の互換。ADR-012 のネガティブ）。ロックの状態は session に写さず、毎回 `isLocked` で確かめる |
+| `CargoUserDetails` | 直列化する項目を足さない。足すと配備の前の session の値が false で復元され、ロックの状態が session に写る（session の直列化の互換。ADR-012 のネガティブ）。ロックの状態は session に写さず、毎回 `isLocked` で確かめる。Bolt 38f で担当企業を `transient` の項目として足した（直列化の形を変えず、request ごとの確かめで作り直す。ADR-012 の改訂）。ロックの状態は今も写さない |
 | 理由の優先 | ロックが先。ロック中で利用停止の利用者は理由 `LOCKED` |
 | ロック中の試行の監査 | ロックで確かめずに拒んだ試行（Locked のイベント。password の段の正しい password、TOTP・回復コードの段で照合の前）は `recordLockedAttempt`、誤った password（BadCredentials のイベント）は `recordFailure` がロック中と見分けて、どちらも `LOGIN_FAILED`（理由 `LOCKED`）を書き、数えない |
 | ロックの監査 | この失敗でロックしたときだけ `ACCOUNT_LOCKED`（結果 `SUCCESS`、理由なし、操作者は利用者と企業）を同じトランザクションで書く。リポジトリの `recordFailure` が条件付きの更新の件数から「数えたか」と数えた後の状態（`FailureCount`）を返し、サービスはそれで見分ける。同時の 4・5 回目でも `ACCOUNT_LOCKED` は 1 行だけになる |

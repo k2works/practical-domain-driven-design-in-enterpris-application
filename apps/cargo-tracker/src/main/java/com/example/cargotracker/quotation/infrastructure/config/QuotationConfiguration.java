@@ -17,6 +17,7 @@ import com.example.cargotracker.quotation.application.internal.queryservices.Quo
 import com.example.cargotracker.quotation.application.internal.queryservices.RouteConditionQueryService;
 import com.example.cargotracker.quotation.application.internal.queryservices.StaffQuotationQueryService;
 import com.example.cargotracker.quotation.application.internal.queryservices.StaffTransportRequestQueryService;
+import com.example.cargotracker.quotation.application.internal.queryservices.StaffTransportRequestScope;
 import com.example.cargotracker.quotation.application.internal.queryservices.TransportRequestQueryService;
 import com.example.cargotracker.quotation.domain.model.aggregates.QuotationRepository;
 import com.example.cargotracker.quotation.domain.model.aggregates.RequiredDocumentStorage;
@@ -81,23 +82,33 @@ public class QuotationConfiguration {
 
     @Bean
     TransportRequestReviewService transportRequestReviewService(
-            TransportRequestRepository repository, ApplicationEventPublisher eventPublisher, Clock clock) {
-        return new TransportRequestReviewService(repository, eventPublisher, clock);
+            TransportRequestRepository repository,
+            ApplicationEventPublisher eventPublisher,
+            Clock clock,
+            StaffTransportRequestScope scope) {
+        return new TransportRequestReviewService(repository, eventPublisher, clock, scope);
+    }
+
+    @Bean
+    StaffTransportRequestScope staffTransportRequestScope(TransportRequestRepository repository) {
+        return new StaffTransportRequestScope(repository);
     }
 
     @Bean
     StaffTransportRequestQueryService staffTransportRequestQueryService(
-            TransportRequestRepository repository, RequiredDocumentStorage documentStorage) {
-        return new StaffTransportRequestQueryService(repository, documentStorage);
+            TransportRequestRepository repository,
+            RequiredDocumentStorage documentStorage,
+            StaffTransportRequestScope scope) {
+        return new StaffTransportRequestQueryService(repository, documentStorage, scope);
     }
 
     @Bean
     QuotationCommandService quotationCommandService(
-            TransportRequestRepository transportRequestRepository,
             QuotationRepository quotationRepository,
             ApplicationEventPublisher eventPublisher,
-            Clock clock) {
-        return new QuotationCommandService(transportRequestRepository, quotationRepository, eventPublisher, clock);
+            Clock clock,
+            StaffTransportRequestScope scope) {
+        return new QuotationCommandService(quotationRepository, eventPublisher, clock, scope);
     }
 
     @Bean
@@ -182,8 +193,8 @@ public class QuotationConfiguration {
 
     @Bean
     StaffQuotationQueryService staffQuotationQueryService(
-            TransportRequestRepository transportRequestRepository, QuotationRepository quotationRepository) {
-        return new StaffQuotationQueryService(transportRequestRepository, quotationRepository);
+            QuotationRepository quotationRepository, StaffTransportRequestScope scope) {
+        return new StaffQuotationQueryService(quotationRepository, scope);
     }
 
     @Bean

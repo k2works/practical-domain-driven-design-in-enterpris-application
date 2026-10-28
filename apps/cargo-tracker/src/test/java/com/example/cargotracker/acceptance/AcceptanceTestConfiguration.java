@@ -35,6 +35,7 @@ import com.example.cargotracker.quotation.application.internal.queryservices.Quo
 import com.example.cargotracker.quotation.application.internal.queryservices.RouteConditionQueryService;
 import com.example.cargotracker.quotation.application.internal.queryservices.StaffQuotationQueryService;
 import com.example.cargotracker.quotation.application.internal.queryservices.StaffTransportRequestQueryService;
+import com.example.cargotracker.quotation.application.internal.queryservices.StaffTransportRequestScope;
 import com.example.cargotracker.quotation.application.internal.queryservices.TransportRequestQueryService;
 import com.example.cargotracker.quotation.domain.events.QuotationApprovedByShipper;
 import com.example.cargotracker.quotation.domain.events.QuotationPresented;
@@ -410,7 +411,11 @@ public class AcceptanceTestConfiguration {
                 InMemoryQuotationRepository quotationRepository,
                 DeferredEventDelivery eventDelivery,
                 MutableClock clock) {
-            return new QuotationCommandService(transportRequestRepository, quotationRepository, eventDelivery, clock);
+            return new QuotationCommandService(
+                    quotationRepository,
+                    eventDelivery,
+                    clock,
+                    new StaffTransportRequestScope(transportRequestRepository));
         }
 
         @Bean
@@ -433,7 +438,8 @@ public class AcceptanceTestConfiguration {
         StaffQuotationQueryService staffQuotationQueryService(
                 InMemoryTransportRequestRepository transportRequestRepository,
                 InMemoryQuotationRepository quotationRepository) {
-            return new StaffQuotationQueryService(transportRequestRepository, quotationRepository);
+            return new StaffQuotationQueryService(
+                    quotationRepository, new StaffTransportRequestScope(transportRequestRepository));
         }
 
         @Bean
@@ -463,7 +469,8 @@ public class AcceptanceTestConfiguration {
                 InMemoryTransportRequestRepository repository,
                 DeferredEventDelivery eventDelivery,
                 MutableClock clock) {
-            return new TransportRequestReviewService(repository, eventDelivery, clock);
+            return new TransportRequestReviewService(
+                    repository, eventDelivery, clock, new StaffTransportRequestScope(repository));
         }
 
         @Bean
@@ -475,7 +482,8 @@ public class AcceptanceTestConfiguration {
         @Bean
         StaffTransportRequestQueryService staffTransportRequestQueryService(
                 InMemoryTransportRequestRepository repository, InMemoryRequiredDocumentStorage documentStorage) {
-            return new StaffTransportRequestQueryService(repository, documentStorage);
+            return new StaffTransportRequestQueryService(
+                    repository, documentStorage, new StaffTransportRequestScope(repository));
         }
     }
 

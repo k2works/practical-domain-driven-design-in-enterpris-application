@@ -23,6 +23,7 @@ import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
 import org.junit.jupiter.api.Test;
@@ -220,13 +221,13 @@ class TransportRequestEventHandlersConflictTest {
         }
 
         @Override
-        public List<TransportRequestSummary> findUnderReviewSummaries() {
-            return delegate.findUnderReviewSummaries();
+        public List<TransportRequestSummary> findUnderReviewSummaries(Set<CompanyId> shipperCompanyIds) {
+            return delegate.findUnderReviewSummaries(shipperCompanyIds);
         }
 
         @Override
-        public List<TransportRequestSummary> findQuotingSummaries() {
-            return delegate.findQuotingSummaries();
+        public List<TransportRequestSummary> findQuotingSummaries(Set<CompanyId> shipperCompanyIds) {
+            return delegate.findQuotingSummaries(shipperCompanyIds);
         }
     }
 }

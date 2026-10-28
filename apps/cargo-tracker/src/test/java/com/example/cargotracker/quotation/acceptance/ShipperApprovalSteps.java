@@ -17,6 +17,8 @@ import com.example.cargotracker.quotation.domain.model.valueobjects.TransportReq
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
 import com.example.cargotracker.shared.acceptance.DeferredEventDelivery;
 import com.example.cargotracker.shared.acceptance.ScenarioContext;
+import com.example.cargotracker.shared.domain.AuthenticatedActor;
+import com.example.cargotracker.shared.domain.AuthenticatedActorFixture;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
@@ -32,6 +34,12 @@ import java.util.stream.Collectors;
  * 荷主の承認は荷主の回答の入力ポートだけを呼ぶ（AT-05）。割当ては経路設計の確定（DE-05）の配信で起きる。
  */
 public class ShipperApprovalSteps {
+
+    /** 営業担当者（荷主 2 社を担当する。Bolt 38f）。 */
+    private static final AuthenticatedActor OPERATOR = AuthenticatedActorFixture.salesHandling(
+            new UserId(UUID.fromString("00000000-0000-0000-0000-000000000301")),
+            new CompanyId(UUID.fromString("00000000-0000-0000-0000-000000000001")),
+            new CompanyId(UUID.fromString("00000000-0000-0000-0000-000000000002")));
 
     /** 提出したのと同じ荷主（TransportRequestSteps と同じ値）。 */
     private static final CompanyId SHIPPER = new CompanyId(UUID.fromString("00000000-0000-0000-0000-000000000001"));
@@ -91,7 +99,7 @@ public class ShipperApprovalSteps {
 
     @ならば("見積り {int} に案件 {string} の経路版 {int} が割り当てられ、区間は {string} で確定の時刻は {string} である")
     public void 経路版が割り当てられている(int quotationNo, String caseNumber, int routeVersionNo, String legs, String confirmedAt) {
-        assertThat(staffQueryService.find(number(), quotationNo)).hasValueSatisfying(quotation -> {
+        assertThat(staffQueryService.find(number(), quotationNo, OPERATOR)).hasValueSatisfying(quotation -> {
             assertThat(quotation.status()).isEqualTo(QuotationStatus.AWAITING_SHIPPER_APPROVAL);
             assertThat(quotation.assignedRoute()).hasValueSatisfying(route -> {
                 assertThat(route.routingCaseNumber()).isEqualTo(caseNumber);
@@ -105,7 +113,7 @@ public class ShipperApprovalSteps {
 
     @ならば("見積り {int} に経路版は割り当てられていない")
     public void 経路版は割り当てられていない(int quotationNo) {
-        assertThat(staffQueryService.find(number(), quotationNo))
+        assertThat(staffQueryService.find(number(), quotationNo, OPERATOR))
                 .hasValueSatisfying(
                         quotation -> assertThat(quotation.assignedRoute()).isEmpty());
     }
@@ -137,7 +145,7 @@ public class ShipperApprovalSteps {
 
     @ならば("見積り {int} は承認済みになり、承認者と承認時刻 {string} と承認した経路版 {string} の {int} が残る")
     public void 承認が残る(int quotationNo, String approvedAt, String caseNumber, int routeVersionNo) {
-        assertThat(staffQueryService.find(number(), quotationNo)).hasValueSatisfying(quotation -> {
+        assertThat(staffQueryService.find(number(), quotationNo, OPERATOR)).hasValueSatisfying(quotation -> {
             assertThat(quotation.status()).isEqualTo(QuotationStatus.APPROVED);
             assertThat(quotation.shipperApproval()).contains(new ShipperApproval(APPROVER, at(approvedAt)));
             assertThat(quotation.assignedRoute()).hasValueSatisfying(route -> {

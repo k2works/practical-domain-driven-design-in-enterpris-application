@@ -137,7 +137,8 @@ class DevSampleDataSmokeTest {
             new CompanyId(UUID.fromString("00000000-0000-0000-0000-000000000003")),
             Set.of(Role.SALES),
             "営業 一郎（開発）",
-            "A 社（開発）");
+            "A 社（開発）",
+            Set.of(SHIPPER_A, SHIPPER_B));
 
     @Test
     void 荷主は自社のサンプルの見積依頼だけを見る() {
@@ -226,14 +227,14 @@ class DevSampleDataSmokeTest {
         TransportRequestNumber number = number(908);
 
         assertThat(quotationCommandService.requote(
-                        new RequoteQuotationCommand(number, 1, QuotationFixture.completeInput())))
+                        new RequoteQuotationCommand(number, 1, QuotationFixture.completeInput()), SALES))
                 .isInstanceOf(RequotationOutcome.Calculated.class);
         // 旧版の見積り 1 は失効を記録し、本予約に使えないまま
         assertThat(expiredAfterApprovalQuotation(1).status()).isEqualTo(QuotationStatus.EXPIRED);
         assertThat(bookableQuotations.find(
                         new BookableQuotationRequest("TR-2026-0908", 1, new UtcInstant(Instant.now()))))
                 .isInstanceOf(BookableQuotationResult.NotBookable.class);
-        assertThat(quotationCommandService.present(new PresentQuotationCommand(number, 2, SALES.userId())))
+        assertThat(quotationCommandService.present(new PresentQuotationCommand(number, 2, SALES.userId()), SALES))
                 .isInstanceOf(PresentationOutcome.Presented.class);
         Quotation presented = expiredAfterApprovalQuotation(2);
         assertThat(presented.status()).isEqualTo(QuotationStatus.AWAITING_SHIPPER_APPROVAL);
@@ -282,19 +283,19 @@ class DevSampleDataSmokeTest {
 
     @Test
     void 営業の受付一覧にサンプルが状態ごとに出る() {
-        assertThat(transportRequests.findUnderReviewSummaries())
+        assertThat(transportRequests.findUnderReviewSummaries(Set.of(SHIPPER_A, SHIPPER_B)))
                 .extracting(TransportRequestSummary::number)
                 .contains(number(901));
-        assertThat(transportRequests.findQuotingSummaries())
+        assertThat(transportRequests.findQuotingSummaries(Set.of(SHIPPER_A, SHIPPER_B)))
                 .extracting(TransportRequestSummary::number)
                 .contains(number(902));
-        assertThat(quotations.findLatestOfQuotedRequests())
+        assertThat(quotations.findLatestOfQuotedRequests(Set.of(SHIPPER_A, SHIPPER_B)))
                 .filteredOn(summary -> summary.number().equals(number(903)))
                 .singleElement()
                 .satisfies(summary -> assertThat(summary.expiresAt().instant()).isAfter(Instant.now()))
                 .extracting(QuotedRequestSummary::quotationNo)
                 .isEqualTo(1);
-        assertThat(quotations.findRoutingRequestedSummaries())
+        assertThat(quotations.findRoutingRequestedSummaries(Set.of(SHIPPER_A, SHIPPER_B)))
                 .extracting(RoutingRequestedSummary::number)
                 .contains(number(904), number(905));
     }
@@ -423,7 +424,7 @@ class DevSampleDataSmokeTest {
 
     @Test
     void 営業の受付一覧の予約の確定待ちに荷主が承認した見本が有効期限の近い順に出る() {
-        assertThat(quotations.findAwaitingBookingSummaries())
+        assertThat(quotations.findAwaitingBookingSummaries(Set.of(SHIPPER_A, SHIPPER_B)))
                 .filteredOn(summary -> summary.number().sequence() >= 901)
                 .extracting(AwaitingBookingSummary::number, AwaitingBookingSummary::quotationNo)
                 .containsExactly(
@@ -435,7 +436,7 @@ class DevSampleDataSmokeTest {
                         org.assertj.core.groups.Tuple.tuple(number(910), 1),
                         // 承認の後に最初の区間が出発した見本（有効期限は起動した日の 8 日後。Bolt 37e4b）
                         org.assertj.core.groups.Tuple.tuple(number(912), 1));
-        assertThat(quotations.findAwaitingBookingSummaries())
+        assertThat(quotations.findAwaitingBookingSummaries(Set.of(SHIPPER_A, SHIPPER_B)))
                 .filteredOn(summary ->
                         summary.number().equals(number(906)) || summary.number().equals(number(907)))
                 .hasSize(2)
@@ -475,6 +476,16 @@ class DevSampleDataSmokeTest {
     // 割り当てた経路が再設計要になった見本（US-07 AC5。Bolt 37e3b の状態の組み合わせの行 1〜8）
 
     @Test
+    void 荷主Aだけを担当する開発の営業担当者の担当企業は荷主Aだけ() {
+        // Bolt 38f の決定 (12)（デモで担当範囲の絞り込みを見せる前提）。開発レビューの低 11、変異 D2
+        assertThat(jdbc.queryForList(
+                        "SELECT scope_id FROM identity.user_assignment WHERE user_id = ? AND scope_kind = 'COMPANY'",
+                        UUID.class,
+                        UUID.fromString("00000000-0000-0000-0000-000000000306")))
+                .containsExactly(SHIPPER_A.value());
+    }
+
+    @Test
     void 再設計要の見本の見積依頼は荷主承認待ちと予約待ちで見積りは割り当てた経路が再設計要() {
         assertThat(routeRedesignRequest(909).status()).isEqualTo(TransportRequestStatus.AWAITING_APPROVAL);
         assertThat(routeRedesignRequest(910).status()).isEqualTo(TransportRequestStatus.READY_TO_BOOK);
@@ -490,7 +501,7 @@ class DevSampleDataSmokeTest {
     @Test
     void 再設計要でない見本の見積りと予約の確定待ちの行には印がない() {
         // 陰性の対照（印の写し違いで、ほかの見本に印が付いていないこと）
-        assertThat(quotations.findAwaitingBookingSummaries())
+        assertThat(quotations.findAwaitingBookingSummaries(Set.of(SHIPPER_A, SHIPPER_B)))
                 .filteredOn(summary -> java.util.Set.of(906, 907, 908)
                         .contains(summary.number().sequence()))
                 .hasSize(3)
@@ -546,10 +557,10 @@ class DevSampleDataSmokeTest {
     @Test
     void 再設計要の荷主承認待ちの見本は予約の確定待ちに出ず経路設計中と荷主承認待ちの表に出る() {
         // 行 3
-        assertThat(quotations.findAwaitingBookingSummaries())
+        assertThat(quotations.findAwaitingBookingSummaries(Set.of(SHIPPER_A, SHIPPER_B)))
                 .extracting(AwaitingBookingSummary::number)
                 .doesNotContain(number(909));
-        assertThat(quotations.findRoutingRequestedSummaries())
+        assertThat(quotations.findRoutingRequestedSummaries(Set.of(SHIPPER_A, SHIPPER_B)))
                 .extracting(RoutingRequestedSummary::number)
                 .contains(number(909));
     }
@@ -557,7 +568,7 @@ class DevSampleDataSmokeTest {
     @Test
     void 再設計要の承認済みの見本は予約の確定待ちの行に再設計要と分かり本予約の確定に使えない() {
         // 行 4・5
-        assertThat(quotations.findAwaitingBookingSummaries())
+        assertThat(quotations.findAwaitingBookingSummaries(Set.of(SHIPPER_A, SHIPPER_B)))
                 .filteredOn(summary -> summary.number().equals(number(910)))
                 .singleElement()
                 .satisfies(
@@ -706,10 +717,10 @@ class DevSampleDataSmokeTest {
     @Test
     void 出発済みの荷主承認待ちの見本は予約の確定待ちに出ず経路設計中と荷主承認待ちの表に出る() {
         // 行 3（出る側の表を先に確かめる。T-106・T-119）
-        assertThat(quotations.findRoutingRequestedSummaries())
+        assertThat(quotations.findRoutingRequestedSummaries(Set.of(SHIPPER_A, SHIPPER_B)))
                 .extracting(RoutingRequestedSummary::number)
                 .contains(number(911));
-        assertThat(quotations.findAwaitingBookingSummaries())
+        assertThat(quotations.findAwaitingBookingSummaries(Set.of(SHIPPER_A, SHIPPER_B)))
                 .extracting(AwaitingBookingSummary::number)
                 .doesNotContain(number(911));
     }
@@ -718,7 +729,7 @@ class DevSampleDataSmokeTest {
     void 出発済みの承認済みの見本は予約の確定待ちの行に出発済みと分かり本予約の確定に使えない() {
         // 行 4・5
         UtcInstant now = new UtcInstant(Instant.now());
-        assertThat(quotations.findAwaitingBookingSummaries())
+        assertThat(quotations.findAwaitingBookingSummaries(Set.of(SHIPPER_A, SHIPPER_B)))
                 .filteredOn(summary -> summary.number().equals(number(912)))
                 .singleElement()
                 .satisfies(summary -> {
@@ -765,7 +776,7 @@ class DevSampleDataSmokeTest {
                     .as("TR-2026-0" + sequence)
                     .isFalse();
         }
-        assertThat(quotations.findAwaitingBookingSummaries())
+        assertThat(quotations.findAwaitingBookingSummaries(Set.of(SHIPPER_A, SHIPPER_B)))
                 .filteredOn(summary -> java.util.Set.of(906, 907, 908, 910)
                         .contains(summary.number().sequence()))
                 .hasSize(4)

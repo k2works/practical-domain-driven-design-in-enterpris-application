@@ -19,6 +19,8 @@ import com.example.cargotracker.quotation.domain.model.valueobjects.SubmissionVi
 import com.example.cargotracker.quotation.domain.model.valueobjects.SubmissionViolations.Reason;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
 import com.example.cargotracker.shared.acceptance.ScenarioContext;
+import com.example.cargotracker.shared.domain.AuthenticatedActor;
+import com.example.cargotracker.shared.domain.AuthenticatedActorFixture;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.UserId;
 import io.cucumber.datatable.DataTable;
@@ -36,6 +38,12 @@ import java.util.UUID;
  * 書類の中身は、形式の先頭のバイトに、指定の大きさまで埋め草を足して作る。
  */
 public class RequiredDocumentSteps {
+
+    /** 営業担当者（荷主 2 社を担当する。Bolt 38f）。 */
+    private static final AuthenticatedActor OPERATOR = AuthenticatedActorFixture.salesHandling(
+            new UserId(UUID.fromString("00000000-0000-0000-0000-000000000301")),
+            new CompanyId(UUID.fromString("00000000-0000-0000-0000-000000000001")),
+            new CompanyId(UUID.fromString("00000000-0000-0000-0000-000000000002")));
 
     /** 提出したのと同じ荷主（TransportRequestSteps と同じ値）。 */
     private static final CompanyId SHIPPER = new CompanyId(UUID.fromString("00000000-0000-0000-0000-000000000001"));
@@ -118,7 +126,9 @@ public class RequiredDocumentSteps {
     @ならば("営業担当者が版 {int} の書類 {int} を取得すると {string} の形式 {string} の添付と同じ中身が返る")
     public void 営業担当者が取得すると同じ中身が返る(int versionNo, int documentNo, String fileName, String mediaType) {
         assertSameContent(
-                staffQueryService.findDocument(current().number(), versionNo, documentNo), fileName, mediaType);
+                staffQueryService.findDocument(current().number(), versionNo, documentNo, OPERATOR),
+                fileName,
+                mediaType);
     }
 
     @ならば("他社の荷主が版 {int} の書類 {int} を取得しても見つからない")

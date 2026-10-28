@@ -37,6 +37,9 @@ public sealed interface PresentationOutcome {
     /** 業務番号の輸送要求か、見積り番号の見積りがない。 */
     record NotFound() implements PresentationOutcome {}
 
+    /** 輸送要求の荷主企業が操作者の担当企業でない（Bolt 38f。画面は試行を記録して 404 にする）。 */
+    record OutOfScope() implements PresentationOutcome {}
+
     /** 読み込んだ後に、ほかの利用者が先に更新した（楽観ロックの競合）。 */
     record Conflict() implements PresentationOutcome {}
 }

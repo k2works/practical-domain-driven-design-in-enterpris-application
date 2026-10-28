@@ -9,6 +9,7 @@ import com.example.cargotracker.identity.domain.model.aggregates.Company;
 import com.example.cargotracker.identity.domain.model.aggregates.User;
 import com.example.cargotracker.identity.domain.model.aggregates.UserStanding;
 import com.example.cargotracker.identity.domain.model.aggregates.UserStandingRepository;
+import com.example.cargotracker.identity.domain.model.valueobjects.AssignedCompanies;
 import com.example.cargotracker.identity.domain.model.valueobjects.AuditAction;
 import com.example.cargotracker.identity.domain.model.valueobjects.AuditResult;
 import com.example.cargotracker.identity.domain.model.valueobjects.AuthenticationRejection;
@@ -113,6 +114,30 @@ class SessionRevalidationServiceTest {
         User user =
                 User.of(userId, companyId, EmailAddress.of("shipper@example.com"), "荷主 太郎", "{noop}x", status, roles);
         stored = Optional.of(new UserStanding(user, company));
+    }
+
+    @Test
+    void 主体に今の担当企業を載せる() {
+        // Bolt 38f（受け渡し。request ごとの確かめで載せ直す）
+        Company company = Company.of(companyId, "A 社", CompanyKind.OPERATOR, true);
+        User user = User.of(
+                userId,
+                companyId,
+                EmailAddress.of("sales@example.com"),
+                "営業 一郎",
+                "{noop}x",
+                UserStatus.ACTIVE,
+                Set.of(Role.SALES));
+        CompanyId shipper = new CompanyId(UUID.randomUUID());
+        stored = Optional.of(new UserStanding(user, company, new AssignedCompanies(Set.of(shipper))));
+
+        SessionStanding standing = service.revalidate(userId, companyId);
+
+        assertThat(standing)
+                .isInstanceOfSatisfying(
+                        SessionStanding.Current.class,
+                        current ->
+                                assertThat(current.actor().assignedCompanies()).containsExactly(shipper));
     }
 
     @Test

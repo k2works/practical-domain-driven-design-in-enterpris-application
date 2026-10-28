@@ -55,4 +55,26 @@
         <Class name="com.example.cargotracker.identity.infrastructure.security.TotpAuthenticationToken"/>
         <Field name="path"/>
     </Match>
+    <!--
+      SE_TRANSIENT_FIELD_NOT_RESTORED: 認証の主体の担当企業（Bolt 38f）は、意図して transient にしている。確かめのフィルターが request
+      ごとに今の担当企業で主体を作り直すので保存しない。直列化の形を変えないので古い session もそのまま戻る（ADR-012 の改訂。2026-10-28、
+      Bolt 38f の開始準備の決定 (2)、human:kakimomokuri）。戻した直後の null は actor() が空として渡す（失敗に倒す）。このクラスのこの欄に
+      限って抑止する。
+    -->
+    <Match>
+        <Bug pattern="SE_TRANSIENT_FIELD_NOT_RESTORED"/>
+        <Class name="com.example.cargotracker.identity.infrastructure.security.CargoUserDetails"/>
+        <Field name="assignedCompanyIds"/>
+    </Match>
+    <!--
+      EI_EXPOSE_REP・EI_EXPOSE_REP2: 社内の側の輸送要求の引き当ての結果（Bolt 38f）は、見つかった集約をそのまま呼び手に渡すための入れ物。
+      前は Optional で同じ集約を渡しており、集約を複製すると呼び手のコマンドが更新する対象が変わる。このクラスに限って抑止する。
+    -->
+    <Match>
+        <Or>
+            <Bug pattern="EI_EXPOSE_REP"/>
+            <Bug pattern="EI_EXPOSE_REP2"/>
+        </Or>
+        <Class name="com.example.cargotracker.quotation.application.internal.queryservices.StaffTransportRequestLookup$Found"/>
+    </Match>
 </FindBugsFilter>

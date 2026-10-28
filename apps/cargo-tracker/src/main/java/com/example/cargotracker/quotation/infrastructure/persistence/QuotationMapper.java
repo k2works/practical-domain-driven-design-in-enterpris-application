@@ -44,12 +44,13 @@ public interface QuotationMapper {
     List<AssignedRouteLegRow> selectAssignedRouteLegsByTransportRequestId(UUID transportRequestId);
 
     /** 見積提示済みの見積依頼ごとの最新の見積り（受付一覧 S-02。Bolt 11）。 */
-    List<QuotedRequestSummaryRow> selectLatestOfQuotedRequests();
+    List<QuotedRequestSummaryRow> selectLatestOfQuotedRequests(
+            @Param("shipperCompanyIds") List<UUID> shipperCompanyIds);
 
     /** 経路設計中の見積依頼の、詳細設計依頼済みの見積りを依頼時刻の古い順に（受付一覧 S-02。Bolt 12）。 */
-    List<RoutingRequestedSummaryRow> selectRoutingRequested();
+    List<RoutingRequestedSummaryRow> selectRoutingRequested(@Param("shipperCompanyIds") List<UUID> shipperCompanyIds);
 
-    List<AwaitingBookingSummaryRow> selectAwaitingBooking();
+    List<AwaitingBookingSummaryRow> selectAwaitingBooking(@Param("shipperCompanyIds") List<UUID> shipperCompanyIds);
 
     /** 荷主企業の荷主承認待ち・予約待ちの見積依頼ごとの、荷主に見える最新の見積り（荷主の見積依頼の一覧 C-02。Bolt 35d）。 */
     List<ShipperLatestQuotationSummaryRow> selectLatestVisibleForShipper(UUID shipperCompanyId);

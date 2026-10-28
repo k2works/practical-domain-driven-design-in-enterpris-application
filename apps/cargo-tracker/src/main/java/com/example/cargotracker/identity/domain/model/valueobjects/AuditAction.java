@@ -60,6 +60,12 @@ public enum AuditAction {
      */
     ADMIN_SCOPE_DENIED,
     /**
+     * 業務担当者が担当企業の外の確定の操作を送った（担当範囲の外の試行。Bolt 38f。US-16 AC4、IA-INV-08、ADR-019）。結果は失敗、理由は
+     * {@code OUT_OF_SCOPE}、対象は業務の対象（輸送要求・見積りなど。種類と ID）。版と変更前後はない。1 回の request につき 1 行。管理範囲の
+     * 外の試行（{@link #ADMIN_SCOPE_DENIED}）とは別の値。
+     */
+    ASSIGNED_SCOPE_DENIED,
+    /**
      * システム管理者が利用者を登録した（Bolt 38b2。US-16 AC1）。成功だけを記録し、対象（新しい利用者と版 0）と登録した役割を
      * {@link AuditTarget} に残す。メールアドレスと表示名は書かない。拒んだ登録は記録しない（範囲外の企業への試行は {@link #ADMIN_SCOPE_DENIED}）。
      */

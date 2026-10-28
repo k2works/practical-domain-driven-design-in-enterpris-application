@@ -1,6 +1,7 @@
 package com.example.cargotracker.identity.infrastructure.config;
 
 import com.example.cargotracker.identity.application.internal.commandservices.AdministrationScopeDenialService;
+import com.example.cargotracker.identity.application.internal.commandservices.AssignedScopeDenialService;
 import com.example.cargotracker.identity.application.internal.commandservices.LoginAttemptService;
 import com.example.cargotracker.identity.application.internal.commandservices.PasswordResetCompletionService;
 import com.example.cargotracker.identity.application.internal.commandservices.PasswordResetRequestService;
@@ -256,6 +257,12 @@ public class IdentityConfiguration {
     AdministrationScopeDenialService administrationScopeDenialService(
             AuditRecordRepository auditRecords, Clock clock, TransactionTemplate transactionTemplate) {
         return new AdministrationScopeDenialService(auditRecords, clock, transactionTemplate);
+    }
+
+    @Bean
+    AssignedScopeDenialService assignedScopeDenialService(
+            AuditRecordRepository auditRecords, Clock clock, TransactionTemplate transactionTemplate) {
+        return new AssignedScopeDenialService(auditRecords, clock, transactionTemplate);
     }
 
     @Bean

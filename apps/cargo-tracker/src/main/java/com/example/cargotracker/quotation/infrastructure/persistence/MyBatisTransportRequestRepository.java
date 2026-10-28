@@ -24,6 +24,8 @@ import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 import org.springframework.stereotype.Repository;
 
 /**
@@ -100,17 +102,25 @@ public class MyBatisTransportRequestRepository implements TransportRequestReposi
     }
 
     @Override
-    public List<TransportRequestSummary> findUnderReviewSummaries() {
-        return mapper.selectUnderReviewSummaries().stream()
+    public List<TransportRequestSummary> findUnderReviewSummaries(Set<CompanyId> shipperCompanyIds) {
+        return mapper.selectUnderReviewSummaries(idsOf(shipperCompanyIds)).stream()
                 .map(MyBatisTransportRequestRepository::toSummary)
                 .toList();
     }
 
     @Override
-    public List<TransportRequestSummary> findQuotingSummaries() {
-        return mapper.selectQuotingSummaries().stream()
+    public List<TransportRequestSummary> findQuotingSummaries(Set<CompanyId> shipperCompanyIds) {
+        return mapper.selectQuotingSummaries(idsOf(shipperCompanyIds)).stream()
                 .map(MyBatisTransportRequestRepository::toSummary)
                 .toList();
+    }
+
+    /** 社内の一覧を絞る荷主企業（Bolt 38f）。空は呼ぶ側で守る（{@code IN ()} は書けない）。 */
+    static List<UUID> idsOf(Set<CompanyId> shipperCompanyIds) {
+        if (shipperCompanyIds.isEmpty()) {
+            throw new IllegalArgumentException("社内の一覧は担当企業で絞る（空は呼ぶ側で守る）");
+        }
+        return shipperCompanyIds.stream().map(CompanyId::value).toList();
     }
 
     private static TransportRequestSummary toSummary(TransportRequestSummaryRow row) {

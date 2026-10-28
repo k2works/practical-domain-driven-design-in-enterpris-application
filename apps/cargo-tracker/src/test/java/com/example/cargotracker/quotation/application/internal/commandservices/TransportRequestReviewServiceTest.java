@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.example.cargotracker.quotation.acceptance.InMemoryTransportRequestRepository;
 import com.example.cargotracker.quotation.application.internal.commands.ApproveTransportRequestCommand;
 import com.example.cargotracker.quotation.application.internal.commands.SendBackTransportRequestCommand;
+import com.example.cargotracker.quotation.application.internal.queryservices.StaffTransportRequestScope;
 import com.example.cargotracker.quotation.domain.events.TransportRequestReviewed;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequest;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ReviewDecision;
@@ -12,6 +13,8 @@ import com.example.cargotracker.quotation.domain.model.valueobjects.ReviewReject
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTermsFixture;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestId;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
+import com.example.cargotracker.shared.domain.AuthenticatedActor;
+import com.example.cargotracker.shared.domain.AuthenticatedActorFixture;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
@@ -30,6 +33,10 @@ class TransportRequestReviewServiceTest {
     private static final Instant NOW = Instant.parse("2026-10-05T03:00:00Z");
     private static final TransportRequestNumber NUMBER = new TransportRequestNumber(2026, 1);
     private static final UserId REVIEWER = new UserId(UUID.randomUUID());
+    private static final CompanyId SHIPPER_COMPANY = new CompanyId(UUID.randomUUID());
+    /** 営業担当者（輸送要求の荷主企業を担当する。Bolt 38f）。 */
+    private static final AuthenticatedActor OPERATOR =
+            AuthenticatedActorFixture.salesHandling(REVIEWER, SHIPPER_COMPANY);
 
     private final List<Object> published = new ArrayList<>();
     private InMemoryTransportRequestRepository repository;
@@ -39,11 +46,15 @@ class TransportRequestReviewServiceTest {
     @BeforeEach
     void 審査中の輸送要求を保存しておく() {
         repository = new InMemoryTransportRequestRepository();
-        service = new TransportRequestReviewService(repository, published::add, Clock.fixed(NOW, ZoneOffset.UTC));
+        service = new TransportRequestReviewService(
+                repository,
+                published::add,
+                Clock.fixed(NOW, ZoneOffset.UTC),
+                new StaffTransportRequestScope(repository));
         TransportRequest request = TransportRequest.submit(
                 new TransportRequestId(UUID.randomUUID()),
                 NUMBER,
-                new CompanyId(UUID.randomUUID()),
+                SHIPPER_COMPANY,
                 ShipmentTermsFixture.generalCargo(),
                 new UserId(UUID.randomUUID()),
                 new UtcInstant(Instant.parse("2026-10-05T01:00:00Z")));
@@ -53,7 +64,8 @@ class TransportRequestReviewServiceTest {
 
     @Test
     void 確定するとClockの時刻で記録して保存しDE02を1回だけ発行する() {
-        ReviewOutcome outcome = service.approve(new ApproveTransportRequestCommand(NUMBER, 1, REVIEWER, "確認した"));
+        ReviewOutcome outcome =
+                service.approve(new ApproveTransportRequestCommand(NUMBER, 1, REVIEWER, "確認した"), OPERATOR);
 
         assertThat(outcome).isEqualTo(new ReviewOutcome.Reviewed(NUMBER, 1, ReviewDecision.APPROVED));
         assertThat(repository.findById(id).orElseThrow().reviewRecords())
@@ -66,7 +78,8 @@ class TransportRequestReviewServiceTest {
 
     @Test
     void 受け付けなければ保存もイベントの発行もせず理由と現在の版を返す() {
-        ReviewOutcome outcome = service.sendBack(new SendBackTransportRequestCommand(NUMBER, 2, REVIEWER, "理由", null));
+        ReviewOutcome outcome =
+                service.sendBack(new SendBackTransportRequestCommand(NUMBER, 2, REVIEWER, "理由", null), OPERATOR);
 
         assertThat(outcome).isEqualTo(new ReviewOutcome.Rejected(ReviewRejection.STALE_VERSION, 1));
         assertThat(repository.findById(id).orElseThrow().reviewRecords()).isEmpty();
@@ -76,7 +89,8 @@ class TransportRequestReviewServiceTest {
     @Test
     void 業務番号の輸送要求がなければ見つからないを返す() {
         assertThat(service.approve(
-                        new ApproveTransportRequestCommand(new TransportRequestNumber(2026, 99), 1, REVIEWER, "確認")))
+                        new ApproveTransportRequestCommand(new TransportRequestNumber(2026, 99), 1, REVIEWER, "確認"),
+                        OPERATOR))
                 .isInstanceOf(ReviewOutcome.NotFound.class);
     }
 
@@ -94,10 +108,11 @@ class TransportRequestReviewServiceTest {
             }
         };
         racing.save(repository.findById(id).orElseThrow());
-        TransportRequestReviewService racingService =
-                new TransportRequestReviewService(racing, published::add, Clock.fixed(NOW, ZoneOffset.UTC));
+        TransportRequestReviewService racingService = new TransportRequestReviewService(
+                racing, published::add, Clock.fixed(NOW, ZoneOffset.UTC), new StaffTransportRequestScope(racing));
 
-        assertThat(racingService.sendBack(new SendBackTransportRequestCommand(NUMBER, 1, REVIEWER, "差し戻す", null)))
+        assertThat(racingService.sendBack(
+                        new SendBackTransportRequestCommand(NUMBER, 1, REVIEWER, "差し戻す", null), OPERATOR))
                 .isInstanceOf(ReviewOutcome.Conflict.class);
         assertThat(published).isEmpty();
         assertThat(racing.findById(id).orElseThrow().reviewRecords())

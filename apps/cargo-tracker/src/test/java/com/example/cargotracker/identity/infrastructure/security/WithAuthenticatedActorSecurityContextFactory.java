@@ -1,5 +1,6 @@
 package com.example.cargotracker.identity.infrastructure.security;
 
+import com.example.cargotracker.identity.domain.model.rules.RoleAssignmentPolicy;
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
 import com.example.cargotracker.shared.domain.Role;
 import java.util.ArrayList;
@@ -26,7 +27,10 @@ public class WithAuthenticatedActorSecurityContextFactory
                 shipper ? TestActors.SHIPPER_COMPANY : TestActors.STAFF_COMPANY,
                 Set.of(annotation.value()),
                 shipper ? "荷主 太郎" : "営業 一郎",
-                shipper ? "荷主 A" : "A 社");
+                shipper ? "荷主 A" : "A 社",
+                RoleAssignmentPolicy.holdsAssignmentScopedRole(Set.of(annotation.value()))
+                        ? Set.of(TestActors.STAFF_ASSIGNED_COMPANY)
+                        : Set.of());
         CargoUserDetails details =
                 new CargoUserDetails(actor, shipper ? "shipper@example.com" : "sales@example.com", true, null);
         SecurityContext context = SecurityContextHolder.createEmptyContext();

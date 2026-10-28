@@ -17,6 +17,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -83,18 +84,20 @@ public class InMemoryTransportRequestRepository implements TransportRequestRepos
     }
 
     @Override
-    public List<TransportRequestSummary> findUnderReviewSummaries() {
+    public List<TransportRequestSummary> findUnderReviewSummaries(Set<CompanyId> shipperCompanyIds) {
         return store.values().stream()
                 .filter(request -> request.status() == TransportRequestStatus.UNDER_REVIEW)
+                .filter(request -> shipperCompanyIds.contains(request.shipperCompanyId()))
                 .map(this::toSummary)
                 .sorted(byFirstSubmittedAt())
                 .toList();
     }
 
     @Override
-    public List<TransportRequestSummary> findQuotingSummaries() {
+    public List<TransportRequestSummary> findQuotingSummaries(Set<CompanyId> shipperCompanyIds) {
         return store.values().stream()
                 .filter(request -> request.status() == TransportRequestStatus.QUOTING)
+                .filter(request -> shipperCompanyIds.contains(request.shipperCompanyId()))
                 .map(this::toSummary)
                 .sorted(byFirstSubmittedAt())
                 .toList();

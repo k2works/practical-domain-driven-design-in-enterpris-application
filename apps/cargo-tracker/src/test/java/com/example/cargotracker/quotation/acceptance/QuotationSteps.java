@@ -24,6 +24,8 @@ import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationVio
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
 import com.example.cargotracker.shared.acceptance.DeferredEventDelivery;
 import com.example.cargotracker.shared.acceptance.ScenarioContext;
+import com.example.cargotracker.shared.domain.AuthenticatedActor;
+import com.example.cargotracker.shared.domain.AuthenticatedActorFixture;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.UserId;
@@ -46,6 +48,12 @@ import java.util.UUID;
  * 社内承認者は、審査の判断者と同じく仮の営業担当者とする。
  */
 public class QuotationSteps {
+
+    /** 営業担当者（荷主 2 社を担当する。Bolt 38f）。 */
+    private static final AuthenticatedActor OPERATOR = AuthenticatedActorFixture.salesHandling(
+            new UserId(UUID.fromString("00000000-0000-0000-0000-000000000301")),
+            new CompanyId(UUID.fromString("00000000-0000-0000-0000-000000000001")),
+            new CompanyId(UUID.fromString("00000000-0000-0000-0000-000000000002")));
 
     /** 提出したのと同じ荷主（TransportRequestSteps と同じ値）。 */
     private static final CompanyId SHIPPER = new CompanyId(UUID.fromString("00000000-0000-0000-0000-000000000001"));
@@ -161,19 +169,23 @@ public class QuotationSteps {
 
     @もし("営業担当者が見積りを算出する")
     public void 見積りを算出する() {
-        lastCalculation = commandService.calculate(new CalculateQuotationCommand(
-                number(), new QuotationInput(List.copyOf(lines), currency, expiresAt, via, departureAt, arrivalAt)));
+        lastCalculation = commandService.calculate(
+                new CalculateQuotationCommand(
+                        number(),
+                        new QuotationInput(List.copyOf(lines), currency, expiresAt, via, departureAt, arrivalAt)),
+                OPERATOR);
     }
 
     @もし("営業担当者が見積り {int} を社内承認して提示する")
     public void 社内承認して提示する(int quotationNo) {
-        assertThat(commandService.present(new PresentQuotationCommand(number(), quotationNo, APPROVER)))
+        assertThat(commandService.present(new PresentQuotationCommand(number(), quotationNo, APPROVER), OPERATOR))
                 .isInstanceOf(PresentationOutcome.Presented.class);
     }
 
     @もし("営業担当者が見積り {int} の社内承認と提示を試みる")
     public void 社内承認と提示を試みる(int quotationNo) {
-        lastPresentation = commandService.present(new PresentQuotationCommand(number(), quotationNo, APPROVER));
+        lastPresentation =
+                commandService.present(new PresentQuotationCommand(number(), quotationNo, APPROVER), OPERATOR);
     }
 
     @ならば("見積りの提示の結果は {string} である")
@@ -187,10 +199,12 @@ public class QuotationSteps {
 
     @もし("営業担当者が見積り {int} を再見積りする")
     public void 再見積りする(int quotationNo) {
-        lastRequotation = commandService.requote(new RequoteQuotationCommand(
-                number(),
-                quotationNo,
-                new QuotationInput(List.copyOf(lines), currency, expiresAt, via, departureAt, arrivalAt)));
+        lastRequotation = commandService.requote(
+                new RequoteQuotationCommand(
+                        number(),
+                        quotationNo,
+                        new QuotationInput(List.copyOf(lines), currency, expiresAt, via, departureAt, arrivalAt)),
+                OPERATOR);
     }
 
     @ならば("再見積りは受け付けられず {string} と示される")
@@ -200,15 +214,16 @@ public class QuotationSteps {
 
     @ならば("見積り {int} は {string} に {string} として扱われる")
     public void 判定時刻での有効性(int quotationNo, String at, String validity) {
-        assertThat(staffQueryService.find(number(), quotationNo))
+        assertThat(staffQueryService.find(number(), quotationNo, OPERATOR))
                 .hasValueSatisfying(quotation -> assertThat(quotation.isExpiredAt(new UtcInstant(Instant.parse(at))))
                         .isEqualTo("失効".equals(validity)));
     }
 
     @ならば("見積り {int} は {string} になり見積り {int} に置き換えられている")
     public void 置き換えられている(int quotationNo, String status, int replacementNo) {
-        Quotation replacement = staffQueryService.find(number(), replacementNo).orElseThrow();
-        assertThat(staffQueryService.find(number(), quotationNo)).hasValueSatisfying(quotation -> {
+        Quotation replacement =
+                staffQueryService.find(number(), replacementNo, OPERATOR).orElseThrow();
+        assertThat(staffQueryService.find(number(), quotationNo, OPERATOR)).hasValueSatisfying(quotation -> {
             assertThat(quotation.status()).isEqualTo(STATUSES.get(status));
             assertThat(quotation.replacedBy()).contains(replacement.id());
         });
@@ -221,7 +236,7 @@ public class QuotationSteps {
 
     @ならば("見積り {int} はない")
     public void 見積りはない(int quotationNo) {
-        assertThat(staffQueryService.find(number(), quotationNo)).isEmpty();
+        assertThat(staffQueryService.find(number(), quotationNo, OPERATOR)).isEmpty();
     }
 
     @ならば("荷主が照会する見積りは次のとおりである")
@@ -235,13 +250,13 @@ public class QuotationSteps {
 
     @ならば("見積り {int} は {string} になる")
     public void 見積りの状態(int quotationNo, String status) {
-        assertThat(staffQueryService.find(number(), quotationNo))
+        assertThat(staffQueryService.find(number(), quotationNo, OPERATOR))
                 .hasValueSatisfying(quotation -> assertThat(quotation.status()).isEqualTo(STATUSES.get(status)));
     }
 
     @ならば("見積り {int} は {string} になり、提示時刻 {string} と承認者が残る")
     public void 提示時刻と承認者が残る(int quotationNo, String status, String presentedAt) {
-        assertThat(staffQueryService.find(number(), quotationNo)).hasValueSatisfying(quotation -> {
+        assertThat(staffQueryService.find(number(), quotationNo, OPERATOR)).hasValueSatisfying(quotation -> {
             assertThat(quotation.status()).isEqualTo(STATUSES.get(status));
             assertThat(quotation.presentedAt()).contains(new UtcInstant(Instant.parse(presentedAt)));
             assertThat(quotation.approvedBy()).contains(APPROVER);
@@ -308,7 +323,7 @@ public class QuotationSteps {
 
     @ならば("見積りは作られない")
     public void 見積りは作られない() {
-        assertThat(staffQueryService.find(number(), 1)).isEmpty();
+        assertThat(staffQueryService.find(number(), 1, OPERATOR)).isEmpty();
     }
 
     @ならば("見積りの算出の結果は {string} である")
@@ -323,7 +338,7 @@ public class QuotationSteps {
     @ならば("見積りは作られず {string} と示される")
     public void 見積りは作られず理由が示される(String reason) {
         assertThat(lastCalculation).isEqualTo(new CalculationOutcome.Rejected(REJECTIONS.get(reason)));
-        assertThat(staffQueryService.find(number(), 2)).isEmpty();
+        assertThat(staffQueryService.find(number(), 2, OPERATOR)).isEmpty();
     }
 
     private Optional<Quotation> shipperQuotation() {

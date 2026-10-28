@@ -63,6 +63,8 @@ public class UiUsers {
     private final java.util.List<CompanyId> scenarioCompanies = new java.util.ArrayList<>();
 
     private Credentials outsider;
+    /** 営業担当者の担当企業の外の荷主の企業（Bolt 38f）。 */
+    private CompanyId outOfScopeShipper;
     /** ログインの前に未使用にしておく回復コードの数（残りの回復コードの案内のシナリオ。Bolt 38d2）。既定は発行した 10 個のまま。 */
     private int unusedRecoveryCodesBeforeLogin = RecoveryCode.CODES_PER_USER;
 
@@ -269,6 +271,32 @@ public class UiUsers {
             AdministrationFixtures.assignCompany(
                     jdbc, created.get(Role.SYSTEM_ADMIN).userId(), company);
         }
+    }
+
+    /**
+     * 営業担当者に、シナリオの荷主担当者の企業を担当させる（Bolt 38f。社内の画面は担当企業の見積依頼だけを示す）。割り当ては S-20 で
+     * 入れるので、テストの準備として表に入れる。利用者を作るときには割り当てない（明示の前提で入れる。38e の #50 (a)）。
+     */
+    public void assignShipperCompanyToSales() {
+        AdministrationFixtures.assignCompany(jdbc, of(Role.SALES).userId(), companyOf(Role.SHIPPER));
+    }
+
+    /** 役割の利用者の企業。 */
+    public CompanyId companyOf(Role role) {
+        return users.findById(of(role).userId()).orElseThrow().companyId();
+    }
+
+    /**
+     * 営業担当者の担当企業の外の荷主の企業（Bolt 38f。範囲の外の見積依頼を置く）。荷主担当者の利用者は作らず、名前は担当企業と見分ける。
+     * 初めて求められたときに作る。
+     */
+    public CompanyId outOfScopeShipper() {
+        if (outOfScopeShipper == null) {
+            Company company = Company.of(new CompanyId(UUID.randomUUID()), "荷主 範囲外", CompanyKind.SHIPPER, true);
+            companies.add(company);
+            outOfScopeShipper = company.id();
+        }
+        return outOfScopeShipper;
     }
 
     /** 役割の利用者の表示名（画面に出る名前を確かめるため）。 */

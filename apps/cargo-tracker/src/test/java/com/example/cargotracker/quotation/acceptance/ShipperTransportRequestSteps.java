@@ -21,6 +21,8 @@ import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTerm
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestStatus;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestSummary;
+import com.example.cargotracker.shared.domain.AuthenticatedActor;
+import com.example.cargotracker.shared.domain.AuthenticatedActorFixture;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.UserId;
@@ -37,6 +39,12 @@ import java.util.UUID;
  * 荷主の照会と再提出は、必ず荷主企業を渡す（Q-INV-08）。
  */
 public class ShipperTransportRequestSteps {
+
+    /** 営業担当者（荷主 2 社を担当する。Bolt 38f）。 */
+    private static final AuthenticatedActor OPERATOR = AuthenticatedActorFixture.salesHandling(
+            new UserId(UUID.fromString("00000000-0000-0000-0000-000000000301")),
+            new CompanyId(UUID.fromString("00000000-0000-0000-0000-000000000001")),
+            new CompanyId(UUID.fromString("00000000-0000-0000-0000-000000000002")));
 
     /** 提出したのと同じ荷主（TransportRequestSteps と同じ値）。 */
     private static final CompanyId SHIPPER = new CompanyId(UUID.fromString("00000000-0000-0000-0000-000000000001"));
@@ -88,8 +96,10 @@ public class ShipperTransportRequestSteps {
 
     @前提("営業担当者が {string} の版 {int} を理由 {string} と不足事項 {string} で差し戻す")
     public void 業務番号を指定して差し戻す(String number, int versionNo, String reason, String missingItems) {
-        ReviewOutcome outcome = reviewService.sendBack(new SendBackTransportRequestCommand(
-                TransportRequestNumber.parse(number), versionNo, REVIEWER, reason, missingItems));
+        ReviewOutcome outcome = reviewService.sendBack(
+                new SendBackTransportRequestCommand(
+                        TransportRequestNumber.parse(number), versionNo, REVIEWER, reason, missingItems),
+                OPERATOR);
         assertThat(outcome).isInstanceOf(ReviewOutcome.Reviewed.class);
     }
 
@@ -167,7 +177,7 @@ public class ShipperTransportRequestSteps {
 
     @ならば("営業担当者の受付一覧に {string} が版 {int} で並ぶ")
     public void 受付一覧に版で並ぶ(String number, int versionNo) {
-        assertThat(staffQueryService.findUnderReview()).anySatisfy(row -> {
+        assertThat(staffQueryService.findUnderReview(OPERATOR)).anySatisfy(row -> {
             assertThat(row.number().text()).isEqualTo(number);
             assertThat(row.versionNo()).isEqualTo(versionNo);
         });

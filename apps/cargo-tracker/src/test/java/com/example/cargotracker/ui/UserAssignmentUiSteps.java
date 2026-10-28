@@ -53,6 +53,15 @@ public class UserAssignmentUiSteps {
         users.administeredShipper(second);
     }
 
+    /**
+     * 営業担当者に、シナリオの荷主担当者の企業を担当させる（Bolt 38f）。営業担当者が見積りの側の社内の画面を通る feature の背景に置く
+     * 共通の前提。
+     */
+    @前提("営業担当者は荷主の企業を担当している")
+    public void 営業担当者は荷主の企業を担当している() {
+        users.assignShipperCompanyToSales();
+    }
+
     @前提("営業担当者に管理範囲の外の荷主が担当企業として割り当てられている")
     public void 範囲の外の荷主が割り当てられている() {
         Company outside = Company.of(new CompanyId(UUID.randomUUID()), "範囲外の荷主", CompanyKind.SHIPPER, true);

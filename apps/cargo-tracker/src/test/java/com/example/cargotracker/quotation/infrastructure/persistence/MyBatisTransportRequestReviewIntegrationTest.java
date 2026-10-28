@@ -23,6 +23,7 @@ import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Instant;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,6 +42,10 @@ import org.springframework.transaction.annotation.Transactional;
 class MyBatisTransportRequestReviewIntegrationTest {
 
     private static final UserId REVIEWER = new UserId(UUID.randomUUID());
+    /** 社内の一覧を絞る担当企業（Bolt 38f）。一覧を確かめる輸送要求はこの荷主のもの。 */
+    private static final CompanyId SHIPPER = new CompanyId(UUID.randomUUID());
+
+    private static final CompanyId OTHER_SHIPPER = new CompanyId(UUID.randomUUID());
     private static final UtcInstant DECIDED_AT = new UtcInstant(Instant.parse("2085-01-05T03:00:00.654321Z"));
 
     @Autowired
@@ -51,10 +56,14 @@ class MyBatisTransportRequestReviewIntegrationTest {
     }
 
     private TransportRequest saved(int sequence, String submittedAt) {
+        return saved(sequence, submittedAt, SHIPPER);
+    }
+
+    private TransportRequest saved(int sequence, String submittedAt, CompanyId shipper) {
         TransportRequest request = TransportRequest.submit(
                 new TransportRequestId(UUID.randomUUID()),
                 new TransportRequestNumber(2085, sequence),
-                new CompanyId(UUID.randomUUID()),
+                shipper,
                 ShipmentTermsFixture.generalCargo(),
                 new UserId(UUID.randomUUID()),
                 new UtcInstant(Instant.parse(submittedAt)));
@@ -142,6 +151,31 @@ class MyBatisTransportRequestReviewIntegrationTest {
     }
 
     @Test
+    void 社内の一覧の2つの照会は担当企業の輸送要求だけを返す() {
+        // Bolt 38f の行 2a（審査中・見積り作成中の SQL の IN。V3a・V3b）
+        saved(11, "2085-01-05T01:00:00Z", SHIPPER);
+        saved(12, "2085-01-05T01:00:00Z", OTHER_SHIPPER);
+        TransportRequest quoting = saved(13, "2085-01-05T01:00:00Z", SHIPPER);
+        quoting.approve(1, REVIEWER, "確認した", DECIDED_AT);
+        repository.update(quoting);
+        TransportRequest otherQuoting = saved(14, "2085-01-05T01:00:00Z", OTHER_SHIPPER);
+        otherQuoting.approve(1, REVIEWER, "確認した", DECIDED_AT);
+        repository.update(otherQuoting);
+
+        assertThat(repository.findUnderReviewSummaries(Set.of(SHIPPER)))
+                .extracting(TransportRequestSummary::number)
+                .contains(new TransportRequestNumber(2085, 11))
+                .doesNotContain(new TransportRequestNumber(2085, 12));
+        assertThat(repository.findQuotingSummaries(Set.of(SHIPPER)))
+                .extracting(TransportRequestSummary::number)
+                .contains(new TransportRequestNumber(2085, 13))
+                .doesNotContain(new TransportRequestNumber(2085, 14));
+        assertThat(repository.findUnderReviewSummaries(Set.of(SHIPPER, OTHER_SHIPPER)))
+                .extracting(TransportRequestSummary::number)
+                .contains(new TransportRequestNumber(2085, 11), new TransportRequestNumber(2085, 12));
+    }
+
+    @Test
     void 受付一覧は審査中だけを最初の提出時刻の古い順に並べ差し戻して出し直した版2も最初の時刻で並ぶ() {
         TransportRequest resubmittedLater = saved(6, "2085-01-05T00:00:00Z");
         saved(7, "2085-01-05T00:30:00Z");
@@ -154,13 +188,13 @@ class MyBatisTransportRequestReviewIntegrationTest {
         draft.resubmit(draft.currentVersion().terms(), new UserId(UUID.randomUUID()), DECIDED_AT);
         repository.update(draft);
 
-        assertThat(repository.findUnderReviewSummaries())
+        assertThat(repository.findUnderReviewSummaries(Set.of(SHIPPER)))
                 .filteredOn(summary -> summary.number().year() == 2085)
                 .extracting(TransportRequestSummary::number, TransportRequestSummary::versionNo)
                 .containsSubsequence(
                         tuple(new TransportRequestNumber(2085, 6), 2), tuple(new TransportRequestNumber(2085, 7), 1))
                 .doesNotContain(tuple(new TransportRequestNumber(2085, 8), 1));
-        assertThat(repository.findUnderReviewSummaries())
+        assertThat(repository.findUnderReviewSummaries(Set.of(SHIPPER)))
                 .filteredOn(summary -> summary.number().equals(new TransportRequestNumber(2085, 6)))
                 .singleElement()
                 .satisfies(summary -> {
@@ -216,15 +250,7 @@ class MyBatisTransportRequestReviewIntegrationTest {
     }
 
     private TransportRequest savedFor(CompanyId shipper, int sequence, String submittedAt) {
-        TransportRequest request = TransportRequest.submit(
-                new TransportRequestId(UUID.randomUUID()),
-                new TransportRequestNumber(2085, sequence),
-                shipper,
-                ShipmentTermsFixture.generalCargo(),
-                new UserId(UUID.randomUUID()),
-                new UtcInstant(Instant.parse(submittedAt)));
-        repository.save(request);
-        return repository.findById(request.id()).orElseThrow();
+        return saved(sequence, submittedAt, shipper);
     }
 
     @Test

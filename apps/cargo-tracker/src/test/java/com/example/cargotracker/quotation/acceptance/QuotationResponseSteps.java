@@ -15,6 +15,8 @@ import com.example.cargotracker.quotation.domain.model.valueobjects.TransportReq
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestStatus;
 import com.example.cargotracker.shared.acceptance.DeferredEventDelivery;
 import com.example.cargotracker.shared.acceptance.ScenarioContext;
+import com.example.cargotracker.shared.domain.AuthenticatedActor;
+import com.example.cargotracker.shared.domain.AuthenticatedActorFixture;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
@@ -30,6 +32,12 @@ import java.util.UUID;
  * 回答者は、認証（US-18）ができるまでの仮の荷主の利用者とする。
  */
 public class QuotationResponseSteps {
+
+    /** 営業担当者（荷主 2 社を担当する。Bolt 38f）。 */
+    private static final AuthenticatedActor OPERATOR = AuthenticatedActorFixture.salesHandling(
+            new UserId(UUID.fromString("00000000-0000-0000-0000-000000000301")),
+            new CompanyId(UUID.fromString("00000000-0000-0000-0000-000000000001")),
+            new CompanyId(UUID.fromString("00000000-0000-0000-0000-000000000002")));
 
     /** 提出したのと同じ荷主（TransportRequestSteps と同じ値）。 */
     private static final CompanyId SHIPPER = new CompanyId(UUID.fromString("00000000-0000-0000-0000-000000000001"));
@@ -100,7 +108,7 @@ public class QuotationResponseSteps {
 
     @ならば("見積り {int} は {string} になり、回答者と回答時刻 {string} が残る")
     public void 回答者と回答時刻が残る(int quotationNo, String status, String respondedAt) {
-        assertThat(staffQueryService.find(number(), quotationNo)).hasValueSatisfying(quotation -> {
+        assertThat(staffQueryService.find(number(), quotationNo, OPERATOR)).hasValueSatisfying(quotation -> {
             assertThat(quotation.status()).isEqualTo(named(STATUSES, status));
             assertThat(quotation.respondedBy()).contains(RESPONDENT);
             assertThat(quotation.respondedAt()).contains(new UtcInstant(Instant.parse(respondedAt)));

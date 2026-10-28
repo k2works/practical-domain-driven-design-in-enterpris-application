@@ -3,6 +3,7 @@ package com.example.cargotracker.architecture;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 
+import com.example.cargotracker.shared.domain.OutOfScopeAttemptRecorder;
 import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
@@ -67,4 +68,16 @@ class PublicApiArchitectureTest {
                     "com.example.cargotracker.quotation.interfaces.web..",
                     "com.example.cargotracker.quotation.interfaces.api.internal..")
             .because("予約は見積りの公開 API だけを使う（ADR-016、腐敗防止層 QuotationBookability）");
+
+    /**
+     * 共有カーネルの型でも、担当範囲の外の試行の記録のポート（振る舞いを持つ。ADR-019 の例外）には依存しない（Bolt 38f の決定 (9)、
+     * 計画の行 15）。上の規則は {@code shared.domain} 全体を許すので、ここで外す。
+     */
+    @ArchTest
+    static final ArchRule 公開APIは担当範囲の外の記録のポートに依存しない = noClasses()
+            .that()
+            .resideInAPackage("com.example.cargotracker.*.interfaces.api")
+            .should()
+            .dependOnClassesThat()
+            .haveFullyQualifiedName(OutOfScopeAttemptRecorder.class.getName());
 }

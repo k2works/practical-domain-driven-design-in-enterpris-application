@@ -7,7 +7,9 @@ import com.example.cargotracker.shared.domain.UserId;
 import java.io.Serial;
 import java.util.Collection;
 import java.util.EnumSet;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.springframework.security.core.CredentialsContainer;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -20,6 +22,9 @@ import org.springframework.security.core.userdetails.UserDetails;
  * session に置いた主体はログインの時点の値だが、Bolt 32c から認証済みの request ごとに {@link SessionRevalidationFilter} が今の
  * 役割・表示名・企業名で作り直して差し替える（{@code enabled} は true、password のハッシュは持たない。このフィルターは session に
  * 保存しないが、A-02・A-07 が通ったときは認証のフィルターが作り直した主体で保存する）。
+ * 担当企業（Bolt 38f）は {@code transient} で持ち、直列化しない。確かめのフィルターが request ごとに今の値で作り直すので、絞る request
+ * ではいつも今の担当企業が載る。session から戻した直後と、確かめをしない公開の URL（{@code /error} を含む）では null で、
+ * {@link #actor()} は空として渡す（失敗に倒す）。直列化の形を変えないので、古い session もそのまま戻る（ADR-012 の改訂）。
  */
 public final class CargoUserDetails implements UserDetails, CredentialsContainer {
 
@@ -34,6 +39,7 @@ public final class CargoUserDetails implements UserDetails, CredentialsContainer
     private final EnumSet<Role> roles;
     private final boolean enabled;
     private String passwordHash;
+    private final transient Set<UUID> assignedCompanyIds;
 
     /**
      * @param actor 認証された利用者（値を直列化できる型に写して持つ）
@@ -50,11 +56,17 @@ public final class CargoUserDetails implements UserDetails, CredentialsContainer
         this.roles = EnumSet.copyOf(actor.roles());
         this.enabled = enabled;
         this.passwordHash = passwordHash;
+        this.assignedCompanyIds =
+                actor.assignedCompanies().stream().map(CompanyId::value).collect(Collectors.toUnmodifiableSet());
     }
 
     /** ほかのコンテキストに渡す、認証された利用者。 */
     public AuthenticatedActor actor() {
-        return new AuthenticatedActor(new UserId(userId), new CompanyId(companyId), roles, displayName, companyName);
+        Set<CompanyId> assigned = assignedCompanyIds == null
+                ? Set.of()
+                : assignedCompanyIds.stream().map(CompanyId::new).collect(Collectors.toUnmodifiableSet());
+        return new AuthenticatedActor(
+                new UserId(userId), new CompanyId(companyId), roles, displayName, companyName, assigned);
     }
 
     @Override

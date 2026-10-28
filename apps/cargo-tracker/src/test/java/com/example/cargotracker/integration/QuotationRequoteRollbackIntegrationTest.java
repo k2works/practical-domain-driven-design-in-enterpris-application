@@ -23,6 +23,8 @@ import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationSta
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTermsFixture;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestId;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
+import com.example.cargotracker.shared.domain.AuthenticatedActor;
+import com.example.cargotracker.shared.domain.AuthenticatedActorFixture;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.UserId;
 import java.util.UUID;
@@ -42,6 +44,9 @@ import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 class QuotationRequoteRollbackIntegrationTest {
 
     private static final UserId STAFF = new UserId(UUID.randomUUID());
+    private static final CompanyId SHIPPER_COMPANY = new CompanyId(UUID.randomUUID());
+    /** 営業担当者（提出する荷主企業を担当する。Bolt 38f）。 */
+    private static final AuthenticatedActor OPERATOR = AuthenticatedActorFixture.salesHandling(STAFF, SHIPPER_COMPANY);
 
     @Autowired
     TransportRequestCommandService transportRequestCommandService;
@@ -60,25 +65,25 @@ class QuotationRequoteRollbackIntegrationTest {
 
     @Test
     void 新しい見積りの保存が失敗すると旧版の置換もロールバックする() {
-        SubmissionOutcome.Submitted submitted =
-                (SubmissionOutcome.Submitted) transportRequestCommandService.submit(new SubmitTransportRequestCommand(
-                        new CompanyId(UUID.randomUUID()), STAFF, ShipmentTermsFixture.completeInput()));
+        SubmissionOutcome.Submitted submitted = (SubmissionOutcome.Submitted) transportRequestCommandService.submit(
+                new SubmitTransportRequestCommand(SHIPPER_COMPANY, STAFF, ShipmentTermsFixture.completeInput()));
         TransportRequestNumber number = submitted.number();
-        reviewService.approve(new ApproveTransportRequestCommand(number, 1, STAFF, "根拠"));
-        quotationCommandService.calculate(new CalculateQuotationCommand(number, QuotationFixture.completeInput()));
-        quotationCommandService.present(new PresentQuotationCommand(number, 1, STAFF));
+        reviewService.approve(new ApproveTransportRequestCommand(number, 1, STAFF, "根拠"), OPERATOR);
+        quotationCommandService.calculate(
+                new CalculateQuotationCommand(number, QuotationFixture.completeInput()), OPERATOR);
+        quotationCommandService.present(new PresentQuotationCommand(number, 1, STAFF), OPERATOR);
         doThrow(new DuplicateQuotationException(new TransportRequestId(UUID.randomUUID()), 2))
                 .when(quotationRepository)
                 .save(argThat(quotation -> quotation != null && quotation.quotationNo() == 2));
         RequoteQuotationCommand requote = new RequoteQuotationCommand(number, 1, QuotationFixture.completeInput());
 
-        assertThatThrownBy(() -> quotationCommandService.requote(requote))
+        assertThatThrownBy(() -> quotationCommandService.requote(requote, OPERATOR))
                 .isInstanceOf(DuplicateQuotationException.class);
 
-        assertThat(staffQuotationQueryService.find(number, 1)).hasValueSatisfying(old -> {
+        assertThat(staffQuotationQueryService.find(number, 1, OPERATOR)).hasValueSatisfying(old -> {
             assertThat(old.status()).isEqualTo(QuotationStatus.PRESENTED);
             assertThat(old.replacedBy()).isEmpty();
         });
-        assertThat(staffQuotationQueryService.find(number, 2)).isEmpty();
+        assertThat(staffQuotationQueryService.find(number, 2, OPERATOR)).isEmpty();
     }
 }
