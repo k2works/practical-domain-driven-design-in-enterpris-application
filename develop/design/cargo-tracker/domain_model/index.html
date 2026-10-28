@@ -8798,7 +8798,7 @@
     
   
   
-    <span class="md-status md-status--draft"></span>
+    <span class="md-status md-status--stable"></span>
   
 
   
@@ -8833,7 +8833,7 @@
     
   
   
-    <span class="md-status md-status--draft"></span>
+    <span class="md-status md-status--stable"></span>
   
 
   
@@ -15166,8 +15166,32 @@
 <tr>
 <td style="text-align: left;">担当範囲の外の記録の対象の種類</td>
 <td style="text-align: left;">ScopedResourceKind</td>
-<td style="text-align: left;">記録の対象の種類（<code>TRANSPORT_REQUEST</code>・<code>QUOTATION</code>。38f2 で予約を足す）。監査記録の対象の種類になる</td>
+<td style="text-align: left;">記録の対象の種類（<code>TRANSPORT_REQUEST</code>・<code>QUOTATION</code>。予約の確定の範囲の外も <code>QUOTATION</code>。38g で経路設計・追跡の値を足す）。監査記録の対象の種類になる</td>
 <td style="text-align: left;">共有カーネル</td>
+</tr>
+<tr>
+<td style="text-align: left;">予約の照会の範囲の外</td>
+<td style="text-align: left;">BookableQuotationResult.OutOfScope</td>
+<td style="text-align: left;">見積りの公開 API の照会で、操作者の担当企業の外の輸送要求に返す結果。正規の業務番号と見積り番号だけを持ち、失効などの理由を示さない（Bolt 38f2。ADR-016）</td>
+<td style="text-align: left;">見積り（予約が呼ぶ）</td>
+</tr>
+<tr>
+<td style="text-align: left;">予約の腐敗防止層の範囲の外</td>
+<td style="text-align: left;">QuotationBookability.Result.OutOfScope</td>
+<td style="text-align: left;">予約の腐敗防止層が公開 API の範囲の外から写す結果。見積りを使えない理由（<code>QuotationUnavailability</code>）とは別の結果にする（Bolt 38f2）</td>
+<td style="text-align: left;">予約</td>
+</tr>
+<tr>
+<td style="text-align: left;">本予約の確定の範囲の外</td>
+<td style="text-align: left;">BookingConfirmationOutcome.OutOfScope、BookingConfirmationPage.OutOfScope</td>
+<td style="text-align: left;">本予約の確定（POST）と S-09 の GET で、操作者の担当企業の外の見積りに返す結果。予約済みの判定より先に判定し、範囲の外では予約済みの追跡番号を示さない（Bolt 38f2）</td>
+<td style="text-align: left;">予約</td>
+</tr>
+<tr>
+<td style="text-align: left;">予約の範囲の外の応答</td>
+<td style="text-align: left;">BookingOutOfScopeResponder</td>
+<td style="text-align: left;">予約の社内の画面で、確定の POST の範囲の外を記録して 404 を返す部品（<code>@Transactional</code> なし。Bolt 38f2。ADR-019）</td>
+<td style="text-align: left;">予約</td>
 </tr>
 <tr>
 <td style="text-align: left;">担当企業</td>
@@ -16022,7 +16046,7 @@
 <tr>
 <td style="text-align: left;">見積りを使えない理由</td>
 <td style="text-align: left;">QuotationUnavailability</td>
-<td style="text-align: left;">見積りの公開 API の照会の結果から予約の腐敗防止層（<code>QuotationBookability</code>）が写す、本予約の確定に見積りを使えない理由。見つからない（<code>NOT_FOUND</code>）・失効（<code>EXPIRED</code>）・置換済み（<code>REPLACED</code>）・承認済みでない（<code>NOT_APPROVED</code>）・再設計要（<code>ROUTE_REDESIGN_REQUIRED</code>。Bolt 37e3）・出発済み（<code>ROUTE_ALREADY_DEPARTED</code>。Bolt 37e4）。知らない理由は承認済みでないに寄せる。理由で分岐するのは S-09 の文言（<code>BookingController</code>）と確定の判定（<code>BookingCommandService</code>）の 2 か所（T-175。B-INV-05）</td>
+<td style="text-align: left;">見積りの公開 API の照会の結果から予約の腐敗防止層（<code>QuotationBookability</code>）が写す、本予約の確定に見積りを使えない理由。見つからない（<code>NOT_FOUND</code>）・失効（<code>EXPIRED</code>）・置換済み（<code>REPLACED</code>）・承認済みでない（<code>NOT_APPROVED</code>）・再設計要（<code>ROUTE_REDESIGN_REQUIRED</code>。Bolt 37e3）・出発済み（<code>ROUTE_ALREADY_DEPARTED</code>。Bolt 37e4）。知らない理由は承認済みでないに寄せる（腐敗防止層の写しは理由ごとの明示の case にする。Bolt 38f2）。担当企業の外は理由ではなく範囲の外の結果（<code>QuotationBookability.Result.OutOfScope</code>）にする。理由で分岐するのは S-09 の文言（<code>BookingController</code>）と確定の判定（<code>BookingCommandService</code>）の 2 か所（T-175。B-INV-05）</td>
 </tr>
 <tr>
 <td style="text-align: left;">確定の判定の順序</td>

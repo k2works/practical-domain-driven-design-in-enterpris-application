@@ -8332,7 +8332,7 @@
     
   
   
-    <span class="md-status md-status--draft"></span>
+    <span class="md-status md-status--stable"></span>
   
 
   
@@ -8367,7 +8367,7 @@
     
   
   
-    <span class="md-status md-status--draft"></span>
+    <span class="md-status md-status--stable"></span>
   
 
   
@@ -13690,7 +13690,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">照会</td>
-<td style="text-align: left;">見積りの公開 API（<code>quotation :: api</code>）に、業務番号と見積り番号と commit 時刻を渡す（2026-10-08 の Bolt 23b で見積り ID から改めた。画面の URL に内部の ID を出さない D-4 のため。呼び出し元は予約だけ）。見積りが承認済みで commit 時刻が有効期限より前のときだけ、確定に要る写し（輸送要求 ID・版、業務番号、見積り ID、荷主企業、荷受人、貨物区分・要約、荷主承認者と承認時刻、割り当てた経路版）を返す。それ以外は理由（失効・未承認・置換済み・見つからない・再設計要）を値で返す（ADR-014 の「業務の拒否は結果の値で返す」。再設計要は Bolt 37e で足した）</td>
+<td style="text-align: left;">見積りの公開 API（<code>quotation :: api</code>）に、業務番号と見積り番号と commit 時刻と操作者（<code>AuthenticatedActor</code>。Bolt 38f2）を渡す（2026-10-08 の Bolt 23b で見積り ID から改めた。画面の URL に内部の ID を出さない D-4 のため。呼び出し元は予約だけ）。見積りが承認済みで commit 時刻が有効期限より前のときだけ、確定に要る写し（輸送要求 ID・版、業務番号、見積り ID、荷主企業、荷受人、貨物区分・要約、荷主承認者と承認時刻、割り当てた経路版）を返す。それ以外は理由（失効・未承認・置換済み・見つからない・再設計要）を値で返す（ADR-014 の「業務の拒否は結果の値で返す」。再設計要は Bolt 37e で足した）。操作者の担当企業の外の輸送要求は、ほかの理由より先に、ロックを取る前に判定して範囲の外（<code>OutOfScope</code>。正規の業務番号と見積り番号だけを持つ）を返す（Bolt 38f2。範囲の外では失効などの理由を示さない）。公開 API に主体を載せるのは、呼び手の担当範囲で絞るときだけ（主体は認可の判定にだけ使い、写しには入れない）</td>
 </tr>
 <tr>
 <td style="text-align: left;">commit 時刻</td>
@@ -13768,6 +13768,7 @@
 <li>2026-10-08: Bolt 23b で、照会の鍵を見積り ID から業務番号と見積り番号に改め、結果に荷主の承認時刻を足した。S-09 を業務番号と見積り番号で開き、画面の URL に内部の ID を出さないため（D-4。human:kakimomokuri が決定）</li>
 <li>2026-10-22: Bolt 37e で、照会の理由に再設計要を足し、DE-06 の受け方を ADR-014 の形（経路設計の中の listener が見積りの公開 API を呼ぶ）に直した。「見積りの側が DE-06 を受けて」は、見積りが経路設計のイベントを購読する形に読め、ADR-014 と食い違っていたため（<a href="../../../development/cargo-tracker/bolt_37e_plan/">Bolt 37e 計画</a> の確認ポイント 8。human:kakimomokuri が承認。DE-06 との競合の守り方は Bolt 37e2 で決める）</li>
 <li>2026-10-23: Bolt 37e2 で、DE-06 と本予約の確定の競合の守り方（ネガティブの W6 の宿題）を決めた。本予約の確定（POST）は見積りの行を <code>FOR UPDATE</code> で読む確定用の照会を使い、S-09 の GET は今の照会のまま。commit 時刻はロックの待ちの前に取ること、再見積りとの競合もこのロックで待つこと、共有ロックと期待版の案を採らない理由、境界をまたぐロック・待ちの上限・ロックの順の規則と、並行の統合テストを足した（<a href="../../../development/cargo-tracker/bolt_37e2_plan/">Bolt 37e2 計画</a> の確認ポイント 4・5。human:kakimomokuri が承認）</li>
+<li>2026-10-28: Bolt 38f2 で、照会の要求に操作者を、結果に範囲の外（<code>OutOfScope</code>）を足した。予約の社内の入口を担当企業で絞り（US-16 AC4）、範囲の判定を予約済み・失効などの判定より先に置くため。公開 API に主体を載せる最初の前例なので、載せるのは呼び手の担当範囲で絞るときだけとした（<a href="../../../development/cargo-tracker/bolt_38f2_plan/">Bolt 38f2 計画</a> の確認ポイント 2。human:kakimomokuri が承認）</li>
 </ul>
 <h2 id="_10">関連ドキュメント<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>
 <ul>
