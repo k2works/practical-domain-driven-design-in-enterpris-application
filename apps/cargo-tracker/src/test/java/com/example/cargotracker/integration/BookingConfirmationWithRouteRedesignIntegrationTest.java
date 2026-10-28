@@ -61,8 +61,16 @@ class BookingConfirmationWithRouteRedesignIntegrationTest {
     private static final Duration TIMEOUT = Duration.ofSeconds(10);
     private static final UserId STAFF = new UserId(UUID.randomUUID());
     private static final UserId SHIPPER_USER = new UserId(UUID.randomUUID());
+    private static final CompanyId SHIPPER = new CompanyId(UUID.randomUUID());
+    /** 営業担当者（荷主企業を担当する。Bolt 38f2）。 */
     private static final AuthenticatedActor SALES = new AuthenticatedActor(
-            new UserId(UUID.randomUUID()), new CompanyId(UUID.randomUUID()), Set.of(Role.SALES), "佐藤", "A 社");
+            new UserId(UUID.randomUUID()),
+            new CompanyId(UUID.randomUUID()),
+            Set.of(Role.SALES),
+            "佐藤",
+            "A 社",
+            Set.of(SHIPPER));
+
     private static final UtcInstant REQUIRED_AT = at("2026-01-09T00:30:00Z");
 
     @Autowired
@@ -120,12 +128,12 @@ class BookingConfirmationWithRouteRedesignIntegrationTest {
                 .containsExactly("CONFIRMED");
         // 行 5。予約の画面（S-24）の照会は確定した予約を返し、予約サガは取り消しや失敗に進んでいない（追跡の開始は経路設計の案件を
         // 読むので、案件のないこのテストでは開始せず進行中のまま）。本予約の確定（S-09）の照会は予約済みを返す
-        assertThat(bookingQueryService.detail(trackingNumber)).hasValueSatisfying(detail -> {
+        assertThat(bookingQueryService.detail(trackingNumber, SALES)).hasValueSatisfying(detail -> {
             assertThat(detail.booking().trackingNumber()).isEqualTo(trackingNumber);
             assertThat(detail.booking().status()).isEqualTo(BookingStatus.CONFIRMED);
             assertThat(detail.sagaStatus()).isEqualTo(BookingSagaStatus.IN_PROGRESS);
         });
-        assertThat(bookingQueryService.confirmation(request.number().text(), 1))
+        assertThat(bookingQueryService.confirmation(request.number().text(), 1, SALES))
                 .isEqualTo(new BookingConfirmationPage.AlreadyBooked(trackingNumber));
     }
 
@@ -134,7 +142,7 @@ class BookingConfirmationWithRouteRedesignIntegrationTest {
         TransportRequest request = TransportRequest.submit(
                 new TransportRequestId(UUID.randomUUID()),
                 new TransportRequestNumber(2081, sequence),
-                new CompanyId(UUID.randomUUID()),
+                SHIPPER,
                 ShipmentTermsFixture.generalCargo(),
                 STAFF,
                 at("2026-01-05T01:00:00Z"));

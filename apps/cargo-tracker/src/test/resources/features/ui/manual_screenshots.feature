@@ -38,6 +38,9 @@
     # 6 章 受付一覧・審査・見積りの作成と提示（担当企業がないときの一覧を撮ってから、荷主の企業を割り当てる。Bolt 38f）
     かつ 画面 "/staff/transport-requests" を開く
     かつ 画面を "06-intake-list-no-assignment" として撮る
+    # 7.4 予約一覧の担当企業がないとき（Bolt 38f2）
+    かつ 画面 "/staff/bookings" を開く
+    かつ 画面を "07-booking-list-no-assignment" として撮る
     かつ 営業担当者は荷主の企業を担当している
     かつ 画面 "/staff/transport-requests" を開く
     かつ 画面を "06-intake-list-review" として撮る

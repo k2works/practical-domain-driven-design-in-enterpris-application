@@ -1,6 +1,46 @@
 # Docs Update Log
 
 ## 2026-10-28
+* **Update**: [bolt_38g_plan](/development/cargo-tracker/bolt_38g_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [用語集](/manual/用語集.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [付録B-トラブルシューティング](/manual/付録B-トラブルシューティング.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [07-本予約の確定と予約一覧](/manual/07-本予約の確定と予約一覧.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [development_strategy](/development/cargo-tracker/development_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [019-out-of-scope-attempt-recorder](/adr/cargo-tracker/019-out-of-scope-attempt-recorder.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [016-booking-checks-quotation-at-commit-time](/adr/cargo-tracker/016-booking-checks-quotation-at-commit-time.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [用語集](/manual/用語集.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [付録B-トラブルシューティング](/manual/付録B-トラブルシューティング.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [07-本予約の確定と予約一覧](/manual/07-本予約の確定と予約一覧.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [development_strategy](/development/cargo-tracker/development_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [019-out-of-scope-attempt-recorder](/adr/cargo-tracker/019-out-of-scope-attempt-recorder.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [016-booking-checks-quotation-at-commit-time](/adr/cargo-tracker/016-booking-checks-quotation-at-commit-time.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [用語集](/manual/用語集.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [付録B-トラブルシューティング](/manual/付録B-トラブルシューティング.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [07-本予約の確定と予約一覧](/manual/07-本予約の確定と予約一覧.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [development_strategy](/development/cargo-tracker/development_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [019-out-of-scope-attempt-recorder](/adr/cargo-tracker/019-out-of-scope-attempt-recorder.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [016-booking-checks-quotation-at-commit-time](/adr/cargo-tracker/016-booking-checks-quotation-at-commit-time.md) を更新（anthropic/claude-opus-5-5）
 * **Verification**: [bolt_38f2_plan](/development/cargo-tracker/bolt_38f2_plan.md) を human:kakimomokuri が検証
 * **Verification**: [bolt_38f_report](/development/cargo-tracker/bolt_38f_report.md) を human:kakimomokuri が検証
 * **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）

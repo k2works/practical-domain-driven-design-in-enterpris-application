@@ -60,4 +60,10 @@ public sealed interface BookingConfirmationPage {
             Objects.requireNonNull(trackingNumber, "trackingNumber");
         }
     }
+
+    /**
+     * 見積りの輸送要求が操作者の担当企業の外（Bolt 38f2。US-16 AC4）。予約済みの判定より先に判定し、追跡番号も理由も持たない（画面は
+     * 記録せずに 404 にする）。
+     */
+    record OutOfScope() implements BookingConfirmationPage {}
 }

@@ -44,14 +44,12 @@ import com.example.cargotracker.shared.domain.AuthenticatedActor;
 import com.example.cargotracker.shared.domain.AuthenticatedActorFixture;
 import com.example.cargotracker.shared.domain.CommandId;
 import com.example.cargotracker.shared.domain.CompanyId;
-import com.example.cargotracker.shared.domain.Role;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.tracking.application.internal.eventhandlers.BookingTrackingStartNotificationEventHandler;
 import com.example.cargotracker.tracking.application.internal.eventhandlers.TrackingStartEventHandler;
 import com.example.cargotracker.tracking.domain.events.TrackingStarted;
 import java.time.Duration;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -80,8 +78,9 @@ class RouteConfirmedAssignmentIntegrationTest {
 
     private static final UserId SHIPPER_USER = new UserId(UUID.randomUUID());
     private static final UserId ROUTE_DESIGNER = new UserId(UUID.randomUUID());
-    private static final AuthenticatedActor SALES = new AuthenticatedActor(
-            new UserId(UUID.randomUUID()), new CompanyId(UUID.randomUUID()), Set.of(Role.SALES), "佐藤", "A 社");
+    /** 本予約を確定する営業担当者（荷主企業を担当する。Bolt 38f2）。 */
+    private static final AuthenticatedActor SALES =
+            AuthenticatedActorFixture.salesHandling(new UserId(UUID.randomUUID()), SHIPPER_COMPANY);
 
     @Autowired
     TransportRequestCommandService transportRequestCommandService;

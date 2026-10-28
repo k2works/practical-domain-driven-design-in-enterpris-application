@@ -465,19 +465,15 @@ class LayerArchitectureTest {
             .and(target(nameMatching("findByNumberForStaff")));
 
     /**
-     * 担当範囲を確かめずに輸送要求を読む口を呼べるのは、担当範囲の判定の部品と、予約の側の照会だけ（Bolt 38f の開発レビュー M3。決定 (10)
-     * 「範囲を知らないまま読み書きできる道を残さない」）。予約の側（{@code BookableQuotationQueryService}）は 38f2 で担当範囲で絞り、
-     * ここから外す。
+     * 担当範囲を確かめずに輸送要求を読む口を呼べるのは、担当範囲の判定の部品だけ（Bolt 38f の開発レビュー M3。決定 (10)
+     * 「範囲を知らないまま読み書きできる道を残さない」）。予約の側の照会（{@code BookableQuotationQueryService}）は 38f2 で担当範囲の判定の
+     * 部品を通すようにし、例外から外した。
      */
     @ArchTest
     static final ArchRule 担当範囲を確かめない輸送要求の読み出しは判定の部品だけが呼ぶ = noClasses()
             .that()
             .doNotHaveFullyQualifiedName(
                     "com.example.cargotracker.quotation.application.internal.queryservices.StaffTransportRequestScope")
-            // 38f2 で外す（予約の側を担当範囲で絞る）
-            .and()
-            .doNotHaveFullyQualifiedName(
-                    "com.example.cargotracker.quotation.application.internal.queryservices.BookableQuotationQueryService")
             .should()
             .callMethodWhere(STAFF_TRANSPORT_REQUEST_READ);
 
@@ -485,26 +481,41 @@ class LayerArchitectureTest {
     private static final String OUT_OF_SCOPE_RESPONDER =
             "com.example.cargotracker.quotation.interfaces.web.StaffOutOfScopeResponder";
 
+    /** 担当範囲の外の試行の記録のポートを呼ぶ予約の部品（Bolt 38f2。予約の社内の画面の層）。 */
+    private static final String BOOKING_OUT_OF_SCOPE_RESPONDER =
+            "com.example.cargotracker.booking.interfaces.web.BookingOutOfScopeResponder";
+
     /** 担当範囲の外の試行の記録のポートの呼び出し。 */
     private static final DescribedPredicate<JavaCall<?>> OUT_OF_SCOPE_RECORDING =
             target(owner(equivalentTo(OutOfScopeAttemptRecorder.class)));
 
     /**
-     * 担当範囲の外の試行の記録のポートを呼ぶのは、画面の層の 1 つの部品だけ（Bolt 38f の決定 (10)、ADR-019、計画の行 15）。controller や
-     * サービスが直接呼ぶと、記録の漏れ・二重の記録や、外側のトランザクションの中の呼び出し（ポートは拒む）が起きる。38f2 で予約の側の部品を足す。
+     * 担当範囲の外の試行の記録のポートを呼ぶのは、画面の層のコンテキストごとの 1 つの部品だけ（Bolt 38f の決定 (10)、ADR-019、計画の行 15。
+     * 38f2 で予約の側の部品を足した）。controller やサービスが直接呼ぶと、記録の漏れ・二重の記録や、外側のトランザクションの中の呼び出し
+     * （ポートは拒む）が起きる。
      */
     @ArchTest
     static final ArchRule 担当範囲の外の記録のポートは画面の部品だけが呼ぶ = noClasses()
             .that()
             .doNotHaveFullyQualifiedName(OUT_OF_SCOPE_RESPONDER)
+            .and()
+            .doNotHaveFullyQualifiedName(BOOKING_OUT_OF_SCOPE_RESPONDER)
             .should()
             .callMethodWhere(OUT_OF_SCOPE_RECORDING);
 
-    /** 呼ぶ部品の名前と呼び出しが実在し続けることの見張り（T-135）。 */
+    /** 呼ぶ部品の名前と呼び出しが実在し続けることの見張り（T-135。部品ごとに 1 本。「A か B」にすると片方が無くても通る）。 */
     @ArchTest
     static final ArchRule 担当範囲の外の記録のポートを呼ぶ部品は社内の画面の部品 = classes()
             .that()
             .haveFullyQualifiedName(OUT_OF_SCOPE_RESPONDER)
+            .should()
+            .callMethodWhere(OUT_OF_SCOPE_RECORDING);
+
+    /** 予約の部品の名前と呼び出しが実在し続けることの見張り（Bolt 38f2。T-135）。 */
+    @ArchTest
+    static final ArchRule 担当範囲の外の記録のポートを呼ぶ予約の部品は予約の社内の画面の部品 = classes()
+            .that()
+            .haveFullyQualifiedName(BOOKING_OUT_OF_SCOPE_RESPONDER)
             .should()
             .callMethodWhere(OUT_OF_SCOPE_RECORDING);
 
@@ -513,6 +524,8 @@ class LayerArchitectureTest {
     static final ArchRule 担当範囲の外の記録のポートを呼ぶ部品はトランザクションを持たない = classes()
             .that()
             .haveFullyQualifiedName(OUT_OF_SCOPE_RESPONDER)
+            .or()
+            .haveFullyQualifiedName(BOOKING_OUT_OF_SCOPE_RESPONDER)
             .should()
             .notBeAnnotatedWith(Transactional.class);
 
@@ -522,6 +535,9 @@ class LayerArchitectureTest {
             .that()
             .areDeclaredInClassesThat()
             .haveFullyQualifiedName(OUT_OF_SCOPE_RESPONDER)
+            .or()
+            .areDeclaredInClassesThat()
+            .haveFullyQualifiedName(BOOKING_OUT_OF_SCOPE_RESPONDER)
             .should()
             .beAnnotatedWith(Transactional.class);
 

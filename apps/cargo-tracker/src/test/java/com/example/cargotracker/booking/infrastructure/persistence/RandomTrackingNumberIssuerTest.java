@@ -81,7 +81,7 @@ class RandomTrackingNumberIssuerTest {
         }
 
         @Override
-        public List<BookingSummary> findRecentSummaries(int limit) {
+        public List<BookingSummary> findRecentSummaries(Set<CompanyId> shipperCompanyIds, int limit) {
             return List.of();
         }
 

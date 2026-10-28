@@ -10,7 +10,9 @@
 <main>
     <h1>予約一覧</h1>
     <!--/* S-10 の最小の表示（Bolt 25b）。絞り込み・ページ送り・変更・取消申請の状況は US-05（W11） */-->
-    <p th:if="${#lists.isEmpty(bookings)}">確定した予約はまだありません。本予約は<a th:href="@{/staff/transport-requests}">見積依頼の受付一覧</a>の「予約の確定待ち」から確定できます。</p>
+    <!--/* 担当企業がない営業担当者には、一覧が空の理由と頼む先だけを示す（Bolt 38f2。S-02 と同じ形）。空の文は出さない（予約はあるのに「まだありません」と言わない） */-->
+    <p class="alert alert-info" th:if="${noAssignedCompanies}">担当企業がまだないので、表示できる予約はありません。システム管理者に担当企業の割り当てを頼んでください。</p>
+    <p th:if="${#lists.isEmpty(bookings) and !noAssignedCompanies}">確定した予約はまだありません。本予約は<a th:href="@{/staff/transport-requests}">見積依頼の受付一覧</a>の「予約の確定待ち」から確定できます。</p>
     <p th:if="${truncated}" th:text="|新しい ${limit} 件だけを示しています。|">新しい 50 件だけを示しています。</p>
     <div th:unless="${#lists.isEmpty(bookings)}" class="table-scroll" tabindex="0" role="region"
          aria-labelledby="bookings-caption">

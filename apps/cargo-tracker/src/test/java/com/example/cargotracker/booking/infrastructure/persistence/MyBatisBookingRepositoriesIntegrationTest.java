@@ -205,21 +205,33 @@ class MyBatisBookingRepositoriesIntegrationTest {
     }
 
     /**
-     * S-10 予約一覧（Bolt 25b）。予約の要約を確定時刻（予約版 1）の新しい順、同じ時刻なら追跡番号の順に上限まで返す。ほかのテストが
-     * コミットした予約もあるので、このテストの予約は遠い先の確定時刻にして一覧の先頭に来るようにする。
+     * S-10 予約一覧（Bolt 25b）。予約の要約を確定時刻（予約版 1）の新しい順、同じ時刻なら追跡番号の順に上限まで返す。Bolt 38f2 から、
+     * 営業担当者の担当企業（荷主企業の集合。2 社）の予約だけを返し、ほかの荷主の予約は出さない（行 1a・1b、V6）。
      */
     @Test
-    void 予約の要約を確定時刻の新しい順に上限まで返す() {
-        Booking oldest = savedAt("2099-12-01T00:00:00Z", new TrackingNumber("CTZZZZZZZZZZZ2"));
-        Booking sameTimeLater = savedAt("2099-12-02T00:00:00Z", new TrackingNumber("CTZZZZZZZZZZZ4"));
-        Booking sameTimeFirst = savedAt("2099-12-02T00:00:00Z", new TrackingNumber("CTZZZZZZZZZZZ3"));
+    void 担当企業の荷主の予約の要約だけを確定時刻の新しい順に上限まで返す() {
+        CompanyId shipperA = new CompanyId(UUID.randomUUID());
+        CompanyId shipperB = new CompanyId(UUID.randomUUID());
+        Booking oldest = savedAt("2099-12-01T00:00:00Z", new TrackingNumber("CTZZZZZZZZZZZ2"), shipperA);
+        Booking sameTimeLater = savedAt("2099-12-02T00:00:00Z", new TrackingNumber("CTZZZZZZZZZZZ4"), shipperB);
+        Booking sameTimeFirst = savedAt("2099-12-02T00:00:00Z", new TrackingNumber("CTZZZZZZZZZZZ3"), shipperA);
+        savedAt("2099-12-03T00:00:00Z", TrackingNumber.generate(random), new CompanyId(UUID.randomUUID()));
 
-        assertThat(repository.findRecentSummaries(3))
+        assertThat(repository.findRecentSummaries(Set.of(shipperA, shipperB), 3))
                 .containsExactly(
                         summary(sameTimeFirst, "2099-12-02T00:00:00Z"),
                         summary(sameTimeLater, "2099-12-02T00:00:00Z"),
                         summary(oldest, "2099-12-01T00:00:00Z"));
-        assertThat(repository.findRecentSummaries(1)).containsExactly(summary(sameTimeFirst, "2099-12-02T00:00:00Z"));
+        assertThat(repository.findRecentSummaries(Set.of(shipperA, shipperB), 1))
+                .containsExactly(summary(sameTimeFirst, "2099-12-02T00:00:00Z"));
+        assertThat(repository.findRecentSummaries(Set.of(shipperB), 10))
+                .containsExactly(summary(sameTimeLater, "2099-12-02T00:00:00Z"));
+    }
+
+    @Test
+    void 社内の予約一覧は荷主企業の集合が空なら問い合わせずに空を返す() {
+        // 空の IN は SQL の誤りになる。照会のサービスの守りと重ねる（Bolt 38f2 の開発レビュー L4）
+        assertThat(repository.findRecentSummaries(Set.of(), 10)).isEmpty();
     }
 
     /** C-06 予約一覧（荷主。BR-07。Bolt 27b）。荷主企業の予約だけを、S-10 と同じ並びで上限まで返す。他社の予約は出さない。 */

@@ -14,6 +14,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -86,8 +87,12 @@ public class InMemoryBookingRepository implements BookingRepository {
 
     /** 確定時刻（予約版 1）の新しい順、同じ時刻なら追跡番号の順に、上限までの要約の写しを返す（MyBatis の実装と同じ。T-61）。 */
     @Override
-    public synchronized List<BookingSummary> findRecentSummaries(int limit) {
-        return summaries(List.copyOf(byTrackingNumber.values()), limit);
+    public synchronized List<BookingSummary> findRecentSummaries(Set<CompanyId> shipperCompanyIds, int limit) {
+        return summaries(
+                byTrackingNumber.values().stream()
+                        .filter(booking -> shipperCompanyIds.contains(booking.shipperCompanyId()))
+                        .toList(),
+                limit);
     }
 
     /** 確定時刻の新しい順（同じ時刻なら追跡番号の順）に上限まで。値の写しを返す（T-61）。 */

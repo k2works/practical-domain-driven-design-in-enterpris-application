@@ -4,7 +4,7 @@ title: "cargo-tracker ドメインモデル"
 description: "cargo-tracker の業務領域の分類、ユビキタス言語、7 つの境界づけられたコンテキスト（通知を含む）の集約・エンティティ・値オブジェクト・ドメインルール、コマンド・クエリ・イベント、予約サガ。"
 tags: [design, domain-model, ddd]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-28T10:20:03Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-28T23:19:21Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:41:04Z }
   - { by: human:kakimomokuri, at: 2026-10-01T07:48:17Z }
@@ -269,7 +269,11 @@ quadrantChart
 | 管理範囲の外の試行の記録のサービス | AdministrationScopeDenialService | 管理範囲外の利用者への試行を監査記録 `ADMIN_SCOPE_DENIED` に書くアプリケーションのサービス（`commandservices`。Bolt 34b）。S-20 の画面の層（詳細の部品。Bolt 34f）が確定の POST でだけ呼ぶ。役割の変更のトランザクションの外で単独に書く | アクセス・監査 |
 | 担当範囲の外の試行の記録のサービス | AssignedScopeDenialService | 業務担当者の担当企業の外への確定の試行を監査記録 `ASSIGNED_SCOPE_DENIED`（`FAILURE`・`OUT_OF_SCOPE`）に書くアプリケーションのサービス（`commandservices`。Bolt 38f）。自分のトランザクションで書き、外側のトランザクションの中では拒む。ポート `OutOfScopeAttemptRecorder` のアダプターだけが呼ぶ | アクセス・監査 |
 | 担当範囲の外の試行の記録のポート | OutOfScopeAttemptRecorder | 業務のコンテキストの画面の層が担当範囲の外の試行を記録するポート（共有カーネル `shared.domain`。ADR-019。Bolt 38f）。identity の `interfaces.api.internal` のアダプターが実装する。共有カーネルに置く振る舞いの型はこれだけ | 共有カーネル |
-| 担当範囲の外の記録の対象の種類 | ScopedResourceKind | 記録の対象の種類（`TRANSPORT_REQUEST`・`QUOTATION`。38f2 で予約を足す）。監査記録の対象の種類になる | 共有カーネル |
+| 担当範囲の外の記録の対象の種類 | ScopedResourceKind | 記録の対象の種類（`TRANSPORT_REQUEST`・`QUOTATION`。予約の確定の範囲の外も `QUOTATION`。38g で経路設計・追跡の値を足す）。監査記録の対象の種類になる | 共有カーネル |
+| 予約の照会の範囲の外 | BookableQuotationResult.OutOfScope | 見積りの公開 API の照会で、操作者の担当企業の外の輸送要求に返す結果。正規の業務番号と見積り番号だけを持ち、失効などの理由を示さない（Bolt 38f2。ADR-016） | 見積り（予約が呼ぶ） |
+| 予約の腐敗防止層の範囲の外 | QuotationBookability.Result.OutOfScope | 予約の腐敗防止層が公開 API の範囲の外から写す結果。見積りを使えない理由（`QuotationUnavailability`）とは別の結果にする（Bolt 38f2） | 予約 |
+| 本予約の確定の範囲の外 | BookingConfirmationOutcome.OutOfScope、BookingConfirmationPage.OutOfScope | 本予約の確定（POST）と S-09 の GET で、操作者の担当企業の外の見積りに返す結果。予約済みの判定より先に判定し、範囲の外では予約済みの追跡番号を示さない（Bolt 38f2） | 予約 |
+| 予約の範囲の外の応答 | BookingOutOfScopeResponder | 予約の社内の画面で、確定の POST の範囲の外を記録して 404 を返す部品（`@Transactional` なし。Bolt 38f2。ADR-019） | 予約 |
 | 担当企業 | AuthenticatedActor.assignedCompanies | 業務担当者が業務の画面で扱える荷主の企業（38e の割り当て）。request ごとの確かめで今の値が載り、判定は `handlesCompany` の 1 か所（空なら何も扱わない。失敗に倒す。Bolt 38f） | 共有カーネル |
 | 社内の輸送要求の担当範囲 | StaffTransportRequestScope | 社内の側の照会とコマンドのサービスが最初に呼ぶ担当範囲の判定（見積り。Bolt 38f）。見つかった・ない・範囲の外（`StaffTransportRequestLookup`）を返し、一覧は担当企業で絞る（担当企業がなければ読まない） | 見積り |
 | 通知の再設定のメール | NotificationPasswordResetMails | 通知の公開 API `PasswordResetMail` を呼ぶ identity の ACL（`application.internal.outboundservices.acl`。上流の名前 + 名詞）。通知の結果を identity の言葉に写す（Bolt 33） | アクセス・監査 |
@@ -988,7 +992,7 @@ title 貨物予約の状態遷移（本予約以後）
 | 確定条件の検証 | BookingConditions | 見積り・経路版・貨物・承認の状態を受け取り、不足条件を返す。見積りと経路版の状態は、アプリケーションサービスが ACL 越しに取得して値として渡す |
 | 追跡番号の発行 | TrackingNumberIssuer | 推測されにくい一意な追跡番号を発行する（ファクトリ） |
 | 確定できる貨物の規則 | BookableCargoPolicy | 写した貨物種別の名前が一般貨物（`GENERAL`）のときだけ確定できるとする（B-INV-04。Bolt 35）。知らない値・空の値は確定しない。見積りの `MvpAcceptancePolicy` は使わない（BC の独立。予約は見積りの公開 API から写した値だけで判定する）。サービスの判定、`Booking.confirm`、S-09 を開いたときの読み取りモデル（`BookingConfirmationPage.Available.specialCargo`）の 3 か所が同じ規則を使う |
-| 見積りを使えない理由 | QuotationUnavailability | 見積りの公開 API の照会の結果から予約の腐敗防止層（`QuotationBookability`）が写す、本予約の確定に見積りを使えない理由。見つからない（`NOT_FOUND`）・失効（`EXPIRED`）・置換済み（`REPLACED`）・承認済みでない（`NOT_APPROVED`）・再設計要（`ROUTE_REDESIGN_REQUIRED`。Bolt 37e3）・出発済み（`ROUTE_ALREADY_DEPARTED`。Bolt 37e4）。知らない理由は承認済みでないに寄せる。理由で分岐するのは S-09 の文言（`BookingController`）と確定の判定（`BookingCommandService`）の 2 か所（T-175。B-INV-05） |
+| 見積りを使えない理由 | QuotationUnavailability | 見積りの公開 API の照会の結果から予約の腐敗防止層（`QuotationBookability`）が写す、本予約の確定に見積りを使えない理由。見つからない（`NOT_FOUND`）・失効（`EXPIRED`）・置換済み（`REPLACED`）・承認済みでない（`NOT_APPROVED`）・再設計要（`ROUTE_REDESIGN_REQUIRED`。Bolt 37e3）・出発済み（`ROUTE_ALREADY_DEPARTED`。Bolt 37e4）。知らない理由は承認済みでないに寄せる（腐敗防止層の写しは理由ごとの明示の case にする。Bolt 38f2）。担当企業の外は理由ではなく範囲の外の結果（`QuotationBookability.Result.OutOfScope`）にする。理由で分岐するのは S-09 の文言（`BookingController`）と確定の判定（`BookingCommandService`）の 2 か所（T-175。B-INV-05） |
 | 確定の判定の順序 | BookingCommandService | 役割（B-INV-10）→ 処理済みコマンド（B-INV-03。内容が同じなら最初の結果、違えば衝突）→ 業務番号と見積り番号で引いた同じ見積りの貨物予約（B-INV-11。既存の追跡番号）→ 見積りの公開 API の照会（commit 時刻。B-INV-02・05）→ 特殊貨物（B-INV-04。Bolt 35）→ 確定条件（B-INV-01）の順に判定する。特殊貨物は直せないので確定条件より先に返し、追跡番号を発行しない。確定の後に見積りが失効・置換されても、再送と同じ見積りの確定は失効にしない。同時の確定で一意制約に負けた側は、保存をセーブポイントに戻し、同じトランザクションで読み直して同じ結果を返す（Bolt 24） |
 
 ### 追跡（Tracking、U3）

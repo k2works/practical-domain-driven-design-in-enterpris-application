@@ -44,8 +44,12 @@ public interface BookingMapper {
 
     Optional<BookingSagaRow> findSagaByBookingId(@Param("bookingId") UUID bookingId);
 
-    /** 予約の要約を確定時刻（予約版 1）の新しい順、同じ時刻なら追跡番号の順に上限まで引く（S-10。Bolt 25b）。 */
-    List<BookingSummaryRow> findRecentSummaries(@Param("limit") int limit);
+    /**
+     * 荷主企業の集合（空でない）の予約の要約を確定時刻（予約版 1）の新しい順、同じ時刻なら追跡番号の順に上限まで引く（S-10。Bolt 25b・
+     * 38f2）。
+     */
+    List<BookingSummaryRow> findRecentSummaries(
+            @Param("shipperCompanyIds") Collection<UUID> shipperCompanyIds, @Param("limit") int limit);
 
     /** 荷主企業の予約の要約を S-10 と同じ並びで上限まで引く（C-06。他社の予約は引かない。BR-07。Bolt 27b）。索引 ix_booking_shipper_status。 */
     List<BookingSummaryRow> findRecentSummariesByShipper(

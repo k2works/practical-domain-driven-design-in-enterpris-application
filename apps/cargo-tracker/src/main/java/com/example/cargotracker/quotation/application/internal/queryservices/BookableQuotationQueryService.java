@@ -11,6 +11,7 @@ import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationRej
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTerms;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipperApproval;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
+import com.example.cargotracker.shared.domain.AuthenticatedActor;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.util.Optional;
 import org.springframework.stereotype.Service;
@@ -22,7 +23,9 @@ import org.springframework.transaction.annotation.Transactional;
  * 写しに変える（2026-10-09 に公開 API を interfaces.api へ移した）。
  *
  * <p> * 予約確定に使える見積りの照会の実装（見積りの公開 API。ADR-016、Q-INV-06。Bolt 23）。判定は見積りの集約（{@link
- * Quotation#bookingRejectionAt}）に置き、使えるときだけ輸送要求の見積りの対象の版から確定に要る値を写す。
+ * Quotation#bookingRejectionAt}）に置き、使えるときだけ輸送要求の見積りの対象の版から確定に要る値を写す。操作者の担当企業の外の
+ * 輸送要求は、担当範囲の判定の部品（{@link StaffTransportRequestScope}）で、ほかの理由より先に、見積りの行を押さえる前に範囲の外と
+ * する（Bolt 38f2。US-16 AC4）。
  *
  * <p>{@code @Service} は JIG がユースケースとして読むための印で、部品探索の対象にはしない（CargoTrackerApplication）。
  * 組み立ては {@code QuotationConfiguration} が担う。
@@ -32,11 +35,15 @@ public class BookableQuotationQueryService {
 
     private final QuotationRepository quotationRepository;
     private final TransportRequestRepository transportRequestRepository;
+    private final StaffTransportRequestScope scope;
 
     public BookableQuotationQueryService(
-            QuotationRepository quotationRepository, TransportRequestRepository transportRequestRepository) {
+            QuotationRepository quotationRepository,
+            TransportRequestRepository transportRequestRepository,
+            StaffTransportRequestScope scope) {
         this.quotationRepository = quotationRepository;
         this.transportRequestRepository = transportRequestRepository;
+        this.scope = scope;
     }
 
     /**
@@ -45,10 +52,12 @@ public class BookableQuotationQueryService {
      * @param transportRequestNumber 業務番号の表記
      * @param quotationNo 見積り番号
      * @param committedAt 予約確定の commit 時刻
-     * @return 使えるなら見積りと対象の輸送要求、使えないなら理由
+     * @param operator 操作者（担当範囲の判定に使う）
+     * @return 使えるなら見積りと対象の輸送要求、範囲の外なら範囲の外、使えないなら理由
      */
-    public BookableQuotation find(String transportRequestNumber, int quotationNo, UtcInstant committedAt) {
-        return judge(findByNumber(transportRequestNumber, quotationNo, false), committedAt);
+    public BookableQuotation find(
+            String transportRequestNumber, int quotationNo, UtcInstant committedAt, AuthenticatedActor operator) {
+        return lookUp(transportRequestNumber, quotationNo, committedAt, operator, false);
     }
 
     /**
@@ -59,12 +68,38 @@ public class BookableQuotationQueryService {
      * @param transportRequestNumber 業務番号の表記
      * @param quotationNo 見積り番号
      * @param committedAt 予約確定の commit 時刻
-     * @return 使えるなら見積りと対象の輸送要求、使えないなら理由
+     * @param operator 操作者（担当範囲の判定に使う。範囲の外なら行を押さえない）
+     * @return 使えるなら見積りと対象の輸送要求、範囲の外なら範囲の外、使えないなら理由
      */
     @Transactional(propagation = Propagation.MANDATORY)
     public BookableQuotation findForConfirmation(
-            String transportRequestNumber, int quotationNo, UtcInstant committedAt) {
-        return judge(findByNumber(transportRequestNumber, quotationNo, true), committedAt);
+            String transportRequestNumber, int quotationNo, UtcInstant committedAt, AuthenticatedActor operator) {
+        return lookUp(transportRequestNumber, quotationNo, committedAt, operator, true);
+    }
+
+    /**
+     * 業務番号の輸送要求を担当範囲で引き当て、範囲の中なら見積りを引いて判定する（D-4。Bolt 23b・38f2）。業務番号の形でなければ見つからない。
+     * 範囲の判定は失効などの判定と見積りの行を押さえることより先（範囲の外では理由を示さず、ロックも取らない）。{@code lock} なら見積りの
+     * 行を押さえてから読む（Bolt 37e2）。
+     */
+    private BookableQuotation lookUp(
+            String transportRequestNumber,
+            int quotationNo,
+            UtcInstant committedAt,
+            AuthenticatedActor operator,
+            boolean lock) {
+        Optional<TransportRequestNumber> number = parse(transportRequestNumber);
+        if (number.isEmpty()) {
+            return new BookableQuotation.NotBookable(BookableQuotation.Reason.QUOTATION_NOT_FOUND);
+        }
+        return switch (scope.find(number.get(), operator)) {
+            case StaffTransportRequestLookup.Found(TransportRequest request) ->
+                judge(quotationOf(request, quotationNo, lock), committedAt);
+            case StaffTransportRequestLookup.NotFound _ ->
+                new BookableQuotation.NotBookable(BookableQuotation.Reason.QUOTATION_NOT_FOUND);
+            case StaffTransportRequestLookup.OutOfScope _ ->
+                new BookableQuotation.OutOfScope(number.get().text(), quotationNo);
+        };
     }
 
     private BookableQuotation judge(Optional<Quotation> found, UtcInstant committedAt) {
@@ -112,21 +147,19 @@ public class BookableQuotationQueryService {
         return CargoDisplayNames.summary(cargo);
     }
 
-    /**
-     * 業務番号と見積り番号で見積りを引く（D-4。Bolt 23b）。業務番号の形でなければ見つからない。{@code lock} なら見積りの行を押さえてから
-     * 読む（Bolt 37e2）。
-     */
-    private Optional<Quotation> findByNumber(String transportRequestNumber, int quotationNo, boolean lock) {
-        TransportRequestNumber number;
+    private static Optional<TransportRequestNumber> parse(String transportRequestNumber) {
         try {
-            number = TransportRequestNumber.parse(transportRequestNumber);
+            return Optional.of(TransportRequestNumber.parse(transportRequestNumber));
         } catch (IllegalArgumentException _) {
             return Optional.empty();
         }
-        return transportRequestRepository
-                .findByNumberForStaff(number)
-                .filter(request -> !lock || quotationRepository.lockForBooking(request.id(), quotationNo))
-                .flatMap(request -> quotationRepository.findByTransportRequestIdAndNo(request.id(), quotationNo));
+    }
+
+    private Optional<Quotation> quotationOf(TransportRequest request, int quotationNo, boolean lock) {
+        if (lock && !quotationRepository.lockForBooking(request.id(), quotationNo)) {
+            return Optional.empty();
+        }
+        return quotationRepository.findByTransportRequestIdAndNo(request.id(), quotationNo);
     }
 
     private static BookableQuotation.Reason reasonOf(QuotationRejection rejection) {

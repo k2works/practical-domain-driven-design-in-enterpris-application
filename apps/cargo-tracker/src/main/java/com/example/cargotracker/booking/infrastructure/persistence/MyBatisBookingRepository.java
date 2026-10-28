@@ -20,6 +20,7 @@ import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Repository;
@@ -104,8 +105,13 @@ public class MyBatisBookingRepository implements BookingRepository {
     }
 
     @Override
-    public List<BookingSummary> findRecentSummaries(int limit) {
-        return mapper.findRecentSummaries(limit).stream()
+    public List<BookingSummary> findRecentSummaries(Set<CompanyId> shipperCompanyIds, int limit) {
+        if (shipperCompanyIds.isEmpty()) {
+            // 空の IN は SQL の誤りになるので、問い合わせずに空を返す（照会のサービスの守りと重ねる。Bolt 38f2 の開発レビュー）
+            return List.of();
+        }
+        List<UUID> ids = shipperCompanyIds.stream().map(CompanyId::value).toList();
+        return mapper.findRecentSummaries(ids, limit).stream()
                 .map(MyBatisBookingRepository::toSummary)
                 .toList();
     }

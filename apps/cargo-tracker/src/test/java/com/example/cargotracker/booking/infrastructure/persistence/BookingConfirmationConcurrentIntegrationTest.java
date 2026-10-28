@@ -200,7 +200,13 @@ class BookingConfirmationConcurrentIntegrationTest {
                 commandId,
                 terms.transportRequestNumber(),
                 terms.quotationNo(),
-                new AuthenticatedActor(new UserId(sales), A_COMPANY, Set.of(Role.SALES), "担当", "A 社"),
+                new AuthenticatedActor(
+                        new UserId(sales),
+                        A_COMPANY,
+                        Set.of(Role.SALES),
+                        "担当",
+                        "A 社",
+                        Set.of(terms.shipperCompanyId())),
                 true);
     }
 

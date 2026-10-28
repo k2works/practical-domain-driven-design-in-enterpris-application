@@ -73,4 +73,18 @@ public sealed interface BookingConfirmationOutcome {
 
     /** 営業担当者でない（B-INV-10。カスタマーサポートは確定できない）。 */
     record Forbidden() implements BookingConfirmationOutcome {}
+
+    /**
+     * 見積りの輸送要求が操作者の担当企業の外（Bolt 38f2。US-16 AC4）。画面は試行を記録して 404 にする。controller が確定の前に範囲を
+     * 確かめるので、これはその後に担当企業が変わったときにだけ返る。
+     *
+     * @param transportRequestNumber 正規の業務番号（記録の ID に使う）
+     * @param quotationNo 見積り番号
+     */
+    record OutOfScope(String transportRequestNumber, int quotationNo) implements BookingConfirmationOutcome {
+
+        public OutOfScope {
+            Objects.requireNonNull(transportRequestNumber, "transportRequestNumber");
+        }
+    }
 }

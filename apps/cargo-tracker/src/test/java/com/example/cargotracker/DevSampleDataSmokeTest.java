@@ -217,7 +217,7 @@ class DevSampleDataSmokeTest {
     @Test
     void 承認の後に失効した見本の見積り1は本予約の確定に使えない() {
         assertThat(bookableQuotations.find(
-                        new BookableQuotationRequest("TR-2026-0908", 1, new UtcInstant(Instant.now()))))
+                        new BookableQuotationRequest("TR-2026-0908", 1, new UtcInstant(Instant.now()), SALES)))
                 .isEqualTo(new BookableQuotationResult.NotBookable(BookableQuotationResult.NotBookable.EXPIRED));
     }
 
@@ -232,7 +232,7 @@ class DevSampleDataSmokeTest {
         // 旧版の見積り 1 は失効を記録し、本予約に使えないまま
         assertThat(expiredAfterApprovalQuotation(1).status()).isEqualTo(QuotationStatus.EXPIRED);
         assertThat(bookableQuotations.find(
-                        new BookableQuotationRequest("TR-2026-0908", 1, new UtcInstant(Instant.now()))))
+                        new BookableQuotationRequest("TR-2026-0908", 1, new UtcInstant(Instant.now()), SALES)))
                 .isInstanceOf(BookableQuotationResult.NotBookable.class);
         assertThat(quotationCommandService.present(new PresentQuotationCommand(number, 2, SALES.userId()), SALES))
                 .isInstanceOf(PresentationOutcome.Presented.class);
@@ -446,7 +446,8 @@ class DevSampleDataSmokeTest {
     @Test
     void 荷主が承認した見本は見積りの公開APIで本予約の確定に使える() {
         for (String number : java.util.List.of("TR-2026-0906", "TR-2026-0907")) {
-            assertThat(bookableQuotations.find(new BookableQuotationRequest(number, 1, new UtcInstant(Instant.now()))))
+            assertThat(bookableQuotations.find(
+                            new BookableQuotationRequest(number, 1, new UtcInstant(Instant.now()), SALES)))
                     .as(number)
                     .isInstanceOf(BookableQuotationResult.Bookable.class);
         }
@@ -574,7 +575,7 @@ class DevSampleDataSmokeTest {
                 .satisfies(
                         summary -> assertThat(summary.routeRedesignRequired()).isTrue());
         assertThat(bookableQuotations.find(
-                        new BookableQuotationRequest("TR-2026-0910", 1, new UtcInstant(Instant.now()))))
+                        new BookableQuotationRequest("TR-2026-0910", 1, new UtcInstant(Instant.now()), SALES)))
                 .isEqualTo(new BookableQuotationResult.NotBookable(
                         BookableQuotationResult.NotBookable.ROUTE_REDESIGN_REQUIRED));
     }
@@ -736,7 +737,7 @@ class DevSampleDataSmokeTest {
                     assertThat(summary.routeRedesignRequired()).isFalse();
                     assertThat(summary.isRouteDepartedAt(now)).isTrue();
                 });
-        assertThat(bookableQuotations.find(new BookableQuotationRequest("TR-2026-0912", 1, now)))
+        assertThat(bookableQuotations.find(new BookableQuotationRequest("TR-2026-0912", 1, now, SALES)))
                 .isEqualTo(new BookableQuotationResult.NotBookable(
                         BookableQuotationResult.NotBookable.ROUTE_ALREADY_DEPARTED));
     }

@@ -7,6 +7,7 @@ import com.example.cargotracker.shared.domain.CommandId;
 import com.example.cargotracker.shared.domain.CompanyId;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -35,12 +36,14 @@ public interface BookingRepository {
     Optional<Booking> findByTrackingNumber(TrackingNumber trackingNumber);
 
     /**
-     * 確定した予約の要約を、確定時刻（予約版 1 の commit 時刻）の新しい順（同じ時刻なら追跡番号の順）に上限まで返す（S-10。Bolt 25b）。
+     * 荷主企業の集合（営業担当者の担当企業）の予約の要約を、確定時刻（予約版 1 の commit 時刻）の新しい順（同じ時刻なら追跡番号の順）に
+     * 上限まで返す（S-10。Bolt 25b。Bolt 38f2 で全件の口から置き換えた）。
      *
+     * @param shipperCompanyIds 荷主企業 ID の集合（空なら空を返す。照会のサービスも先に空を守る）
      * @param limit 上限の件数
      * @return 予約の要約
      */
-    List<BookingSummary> findRecentSummaries(int limit);
+    List<BookingSummary> findRecentSummaries(Set<CompanyId> shipperCompanyIds, int limit);
 
     /**
      * 荷主企業の予約の要約を、確定時刻（予約版 1 の commit 時刻）の新しい順（同じ時刻なら追跡番号の順）に上限まで返す（C-06。他社の予約は

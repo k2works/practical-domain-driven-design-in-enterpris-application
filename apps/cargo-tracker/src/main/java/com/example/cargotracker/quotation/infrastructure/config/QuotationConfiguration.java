@@ -147,8 +147,10 @@ public class QuotationConfiguration {
     /** 予約確定に使える見積りの照会の入力ポート（見積りの公開 API のアダプターが委ねる。予約が本予約の確定で使う。ADR-016。Bolt 23）。 */
     @Bean
     BookableQuotationQueryService bookableQuotationQueryService(
-            QuotationRepository quotationRepository, TransportRequestRepository transportRequestRepository) {
-        return new BookableQuotationQueryService(quotationRepository, transportRequestRepository);
+            QuotationRepository quotationRepository,
+            TransportRequestRepository transportRequestRepository,
+            StaffTransportRequestScope scope) {
+        return new BookableQuotationQueryService(quotationRepository, transportRequestRepository, scope);
     }
 
     /** 経路の割当ての入力ポート（見積りの公開 API のアダプターが委ねる。経路設計が DE-05 を受けて使う。ADR-014。Bolt 20）。 */

@@ -4,7 +4,7 @@ title: "ADR-019: 担当範囲の外の試行の記録のポートを共有カー
 description: "業務担当者（営業担当者など）が担当企業の外の業務の対象を確定しようとした試行を、業務のコンテキストの画面の層から同期に監査記録へ書く。"
 tags: [adr]
 status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-28T10:20:03Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-28T23:19:21Z }
 ---
 
 # ADR-019: 担当範囲の外の試行の記録のポートを共有カーネルに置き、identity が実装する
@@ -29,11 +29,11 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-28T10:20:03Z }
 
 | 要素 | 決定 |
 | :--- | :--- |
-| ポートの置き場所 | `shared.domain.OutOfScopeAttemptRecorder`（`recordOutOfScope(AuthenticatedActor, ScopedResourceKind, String)`）。記録の対象の種類は列挙 `ScopedResourceKind`（`TRANSPORT_REQUEST`・`QUOTATION`。38f2 で予約を足す）で固定する |
+| ポートの置き場所 | `shared.domain.OutOfScopeAttemptRecorder`（`recordOutOfScope(AuthenticatedActor, ScopedResourceKind, String)`）。記録の対象の種類は列挙 `ScopedResourceKind`（`TRANSPORT_REQUEST`・`QUOTATION`。38g で経路設計・追跡の値を足す）で固定する。予約の側（38f2）は値を足さない。確定の POST の対象は見積りなので `QUOTATION` と「業務番号/見積り番号」で記録する（予約は確定の前にはまだないため） |
 | 実装 | `identity.interfaces.api.internal.OutOfScopeAttemptRecorderAdapter`（`@Component`）が `identity.application.internal.commandservices.AssignedScopeDenialService` に委ねる。合成ルートの `@Bean` にはしない（合成ルートが共有カーネルの型を返すと認証の規則に当たる） |
 | 記録の値 | `action=ASSIGNED_SCOPE_DENIED`、`result=FAILURE`、`reason=OUT_OF_SCOPE`、対象の種類と識別（業務番号、見積りは「業務番号/見積り番号」）、版は空 |
 | トランザクション | 記録は自分のトランザクションで書く。外側のトランザクションの中で呼ばれたら `IllegalStateException` で拒む（業務の書き込みと記録を混ぜない）。書けなければ例外（500） |
-| 呼ぶ側 | 担当範囲の判定は業務のサービスが行い（前例 `ManagedUserLookup`）、範囲の外を結果で返す。確定の POST では、controller が入力の解釈より先に照会のサービスで範囲を確かめ、範囲の外ならその場で記録して 404 にする（2 つの controller で同じ書き方。コマンドのサービスが返す範囲の外は、その間に割り当てが変わったときにだけ通る）。画面の層の 1 つの部品（38f では `quotation.interfaces.web.StaffOutOfScopeResponder`。`@Transactional` なし）だけがポートを呼び、404 を返す。記録するのは確定の POST だけで、GET の範囲の外は 404 だけ（SEC-12） |
+| 呼ぶ側 | 担当範囲の判定は業務のサービスが行い（前例 `ManagedUserLookup`）、範囲の外を結果で返す。確定の POST では、controller が入力の解釈より先に照会のサービスで範囲を確かめ、範囲の外ならその場で記録して 404 にする（2 つの controller で同じ書き方。コマンドのサービスが返す範囲の外は、その間に割り当てが変わったときにだけ通る）。画面の層のコンテキストごとに 1 つの部品（38f の見積りの側は `quotation.interfaces.web.StaffOutOfScopeResponder`、38f2 の予約の側は `booking.interfaces.web.BookingOutOfScopeResponder`。どちらも `@Transactional` なし）だけがポートを呼び、404 を返す。予約の確定の POST では、controller が役割の後・予約済みの判定と確定用の照会の前に、ロックしない照会（操作者を渡した見積りの公開 API）で範囲を確かめる。記録するのは確定の POST だけで、GET の範囲の外は 404 だけ（SEC-12） |
 | 守り | ArchUnit で、記録の工場を呼ぶのは記録のサービスだけ、ポートを呼ぶのは画面の部品だけ（トランザクションなし）、ドメインイベントと公開 API の型はポートに依存しない、共有カーネルの振る舞いの型はこのポートだけ、を確かめる |
 
 ## 代替案
@@ -50,7 +50,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-28T10:20:03Z }
 
 ### ポジティブ
 
-- 依存の循環なしに、業務のコンテキストから同期に記録できる。38f2・38g の予約・経路設計・追跡の側も同じポートを使える
+- 依存の循環なしに、業務のコンテキストから同期に記録できる。38f2 の予約の側は同じポートを使い、38g の経路設計・追跡の側も使える
 
 ### ネガティブ
 
@@ -68,6 +68,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-28T10:20:03Z }
 
 - 2026-10-28: 初版（Bolt 38f）
 - 2026-10-28: 開発レビューを反映した。ADR-003 との関係、`platform :: api` の案、実行時の Bean の依存、package-info の変更、呼ぶ側の前の確かめを書き足した
+- 2026-10-28: Bolt 38f2 で、予約の側の呼ぶ側（`BookingOutOfScopeResponder`、確定の POST の先の確かめ）を足し、予約の側では対象の種類の値を足さないことにした（確定の対象は見積り）。部品を共通にするかは 38g の開始準備で諮る
 
 ## 関連ドキュメント
 

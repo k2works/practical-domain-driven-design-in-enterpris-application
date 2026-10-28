@@ -112,7 +112,7 @@ public class RouteRedesignSteps {
     @ならば("見積り {int} の本予約の照会の結果は {string} である")
     public void 本予約の照会の結果(int quotationNo, String reason) {
         BookableQuotationResult result = bookableQuotationQuery.find(new BookableQuotationRequest(
-                transportRequest().number().text(), quotationNo, new UtcInstant(clock.instant())));
+                transportRequest().number().text(), quotationNo, new UtcInstant(clock.instant()), OPERATOR));
         assertThat(result).isEqualTo(new BookableQuotationResult.NotBookable(reason));
     }
 

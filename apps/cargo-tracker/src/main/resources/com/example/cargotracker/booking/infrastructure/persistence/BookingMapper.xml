@@ -2,6 +2,9 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.example.cargotracker.booking.infrastructure.persistence.BookingMapper">
 
+    <!-- 荷主企業の集合の IN（quotation の mapper の写し。booking は quotation の mapper を参照しない。Bolt 38f2） -->
+    <sql id="shipperCompanyIn"><foreach collection="shipperCompanyIds" item="shipperCompanyId" open="(" separator="," close=")">#{shipperCompanyId}</foreach></sql>
+
     <resultMap id="bookingRow" type="com.example.cargotracker.booking.infrastructure.persistence.BookingRow">
         <constructor>
             <idArg column="id" name="id" javaType="java.util.UUID"/>
@@ -163,11 +166,13 @@
     </resultMap>
 
     <!-- S-10 予約一覧（Bolt 25b）。確定時刻は予約版 1 の commit 時刻（最初の確定の時刻）。同じ時刻は追跡番号の順で、追跡番号は英大文字と
-         数字だけなので、DB の照合順序でもメモリの実装（String.compareTo の文字コード順）と同じ並びになる -->
+         数字だけなので、DB の照合順序でもメモリの実装（String.compareTo の文字コード順）と同じ並びになる。Bolt 38f2 から営業担当者の
+         担当企業（荷主企業の集合。空でない）で絞る -->
     <select id="findRecentSummaries" resultMap="bookingSummaryRow">
         SELECT b.id, b.tracking_number, b.transport_request_number, b.quotation_no, v.committed_at
           FROM booking.booking b
           JOIN booking.booking_version v ON v.booking_id = b.id AND v.booking_version_no = 1
+         WHERE b.shipper_company_id IN <include refid="shipperCompanyIn"/>
          ORDER BY v.committed_at DESC, b.tracking_number
          LIMIT #{limit}
     </select>

@@ -73,6 +73,19 @@ public sealed interface BookableQuotation {
         }
     }
 
+    /**
+     * 輸送要求が操作者の担当企業の外（Bolt 38f2）。
+     *
+     * @param transportRequestNumber 正規の業務番号の表記
+     * @param quotationNo 見積り番号
+     */
+    record OutOfScope(String transportRequestNumber, int quotationNo) implements BookableQuotation {
+
+        public OutOfScope {
+            Objects.requireNonNull(transportRequestNumber, "transportRequestNumber");
+        }
+    }
+
     /** 使えない理由。 */
     enum Reason {
         /** 見積りが見つからない。 */

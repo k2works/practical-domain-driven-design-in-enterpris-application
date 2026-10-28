@@ -90,4 +90,18 @@ public sealed interface BookableQuotationResult {
             Objects.requireNonNull(reason, "reason");
         }
     }
+
+    /**
+     * 輸送要求が操作者の担当企業の外（Bolt 38f2。US-16 AC4）。ほかの理由より先に判定し、失効などの理由も荷主企業も持たない（範囲の外の
+     * 存在を知らせない）。予約が試行を記録する ID のために、正規の業務番号と見積り番号だけを持つ。
+     *
+     * @param transportRequestNumber 正規の業務番号の表記
+     * @param quotationNo 見積り番号
+     */
+    record OutOfScope(String transportRequestNumber, int quotationNo) implements BookableQuotationResult {
+
+        public OutOfScope {
+            Objects.requireNonNull(transportRequestNumber, "transportRequestNumber");
+        }
+    }
 }

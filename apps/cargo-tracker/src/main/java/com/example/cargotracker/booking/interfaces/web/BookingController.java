@@ -12,6 +12,7 @@ import com.example.cargotracker.booking.domain.model.valueobjects.TrackingNumber
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
 import com.example.cargotracker.shared.domain.CommandId;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
@@ -29,6 +30,8 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
  * C-17・S-07 と同じく別のダイアログは挟まない）。見積りは業務番号と見積り番号で指し、URL に内部の ID を出さない（D-4）。開いたときの
  * 判定は参考で、確定の可否は送ったときの照会（commit 時刻）で決まる（ADR-016）。S-09 は開くたびにコマンド ID を発行して隠し項目で送り、
  * 同じコマンド ID の再送には最初の結果を示す（B-INV-03）。隠し項目の欠け・形の誤りは利用者が入れる値ではないので 400 にする。
+ * Bolt 38f2 から、どの画面も営業担当者の担当企業で絞る（US-16 AC4）。範囲の外は、いない予約・見積りと同じ 404 にし、確定の POST の
+ * 範囲の外だけを試行として記録する（ADR-019。GET は記録しない。SEC-12）。
  */
 @Controller
 @RequestMapping("/staff/bookings")
@@ -45,19 +48,26 @@ public class BookingController {
 
     private final BookingCommandService commandService;
     private final BookingQueryService queryService;
+    private final BookingOutOfScopeResponder outOfScope;
 
-    public BookingController(BookingCommandService commandService, BookingQueryService queryService) {
+    public BookingController(
+            BookingCommandService commandService,
+            BookingQueryService queryService,
+            BookingOutOfScopeResponder outOfScope) {
         this.commandService = commandService;
         this.queryService = queryService;
+        this.outOfScope = outOfScope;
     }
 
     /**
      * 予約一覧（S-10 の最小の表示。Bolt 25b）。確定した予約を確定時刻の新しい順に上限まで示し、追跡番号から S-24 を開ける。
-     * 絞り込み・ページ送り・変更・取消申請の状況は US-05（W11）。
+     * 絞り込み・ページ送り・変更・取消申請の状況は US-05（W11）。Bolt 38f2 から担当企業の荷主の予約だけを示し、担当企業がなければ
+     * 案内を示す。
      */
     @GetMapping
-    public String list(Model model) {
-        RecentBookings recent = queryService.recent();
+    public String list(AuthenticatedActor actor, Model model) {
+        RecentBookings recent = queryService.recent(actor);
+        model.addAttribute("noAssignedCompanies", actor.hasNoAssignedCompanies());
         model.addAttribute("bookings", BookingViews.list(recent));
         model.addAttribute("truncated", recent.truncated());
         model.addAttribute("limit", recent.limit());
@@ -69,13 +79,22 @@ public class BookingController {
     public String confirmation(
             @RequestParam("transportRequest") String transportRequestNumber,
             @RequestParam("quotation") int quotationNo,
+            AuthenticatedActor actor,
             Model model,
             RedirectAttributes redirectAttributes) {
         return showConfirmation(
-                transportRequestNumber, quotationNo, CommandId.random(), List.of(), false, model, redirectAttributes);
+                new Confirming(transportRequestNumber, quotationNo, CommandId.random(), actor),
+                List.of(),
+                false,
+                model,
+                redirectAttributes);
     }
 
-    /** 本予約を確定する。確定したら予約の詳細へリダイレクトし、追跡番号を示す（PRG）。 */
+    /**
+     * 本予約を確定する。確定したら予約の詳細へリダイレクトし、追跡番号を示す（PRG）。確定のサービスの前に、見積りの行を押さえない照会で
+     * 担当範囲を確かめ、範囲の外なら記録して 404 にする（Bolt 38f2。順序は役割 → 範囲 → 決着済み → 確定用の照会。範囲の外では予約済みも
+     * 確定条件の欠けも示さない）。
+     */
     @PostMapping
     public String confirm(
             @RequestParam("commandId") UUID commandId,
@@ -85,10 +104,27 @@ public class BookingController {
             AuthenticatedActor actor,
             Model model,
             RedirectAttributes redirectAttributes) {
+        Optional<String> outOfScopeNumber = queryService.outOfScopeNumber(transportRequestNumber, quotationNo, actor);
+        if (outOfScopeNumber.isPresent()) {
+            throw outOfScope.recordAndNotFound(actor, outOfScopeNumber.get(), quotationNo);
+        }
         CommandId command = new CommandId(commandId);
         BookingConfirmationOutcome outcome = commandService.confirm(
                 new ConfirmBookingCommand(command, transportRequestNumber, quotationNo, actor, staffConfirmed));
-        String subject = BookingViews.subject(transportRequestNumber, quotationNo);
+        return respond(
+                outcome,
+                new Confirming(transportRequestNumber, quotationNo, command, actor),
+                model,
+                redirectAttributes);
+    }
+
+    /** 確定の結果ごとの応答（循環的複雑度を確定の前の確かめと分ける）。 */
+    private String respond(
+            BookingConfirmationOutcome outcome,
+            Confirming confirming,
+            Model model,
+            RedirectAttributes redirectAttributes) {
+        String subject = BookingViews.subject(confirming.transportRequestNumber(), confirming.quotationNo());
         return switch (outcome) {
             case BookingConfirmationOutcome.Confirmed(TrackingNumber trackingNumber) -> {
                 redirectAttributes.addFlashAttribute(
@@ -96,12 +132,10 @@ public class BookingController {
                 yield "redirect:/staff/bookings/" + trackingNumber.value();
             }
             case BookingConfirmationOutcome.MissingConditions(List<BookingCondition> missing) ->
-                showConfirmation(
-                        transportRequestNumber, quotationNo, command, missing, false, model, redirectAttributes);
+                showConfirmation(confirming, missing, false, model, redirectAttributes);
             // 特殊貨物は S-09 を開いたときと同じ表示で示す。拒んだ結果を渡し、照会し直した結果だけに頼らない（US-04 AC5。Bolt 35）
             case BookingConfirmationOutcome.SpecialCargo _ ->
-                showConfirmation(
-                        transportRequestNumber, quotationNo, command, List.of(), true, model, redirectAttributes);
+                showConfirmation(confirming, List.of(), true, model, redirectAttributes);
             case BookingConfirmationOutcome.Expired _ ->
                 unavailable(subject, QuotationUnavailability.EXPIRED, redirectAttributes);
             case BookingConfirmationOutcome.QuotationUnavailable(QuotationUnavailability reason) ->
@@ -115,41 +149,50 @@ public class BookingController {
                 yield RECEPTION;
             }
             case BookingConfirmationOutcome.Forbidden _ -> throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+            // 先の確かめの後に担当企業が変わったときだけ届く。記録の ID は見積りの公開 API が返す正規の業務番号（Bolt 38f2）
+            case BookingConfirmationOutcome.OutOfScope(String canonicalNumber, int outOfScopeNo) ->
+                throw outOfScope.recordAndNotFound(confirming.actor(), canonicalNumber, outOfScopeNo);
         };
     }
 
     /** 予約の詳細（S-24）。Bolt 23b の最小の表示。予約サガが処理中なら完了と示さない（ADR-015）。 */
     @GetMapping("/{trackingNumber}")
-    public String detail(@PathVariable String trackingNumber, Model model) {
+    public String detail(@PathVariable String trackingNumber, AuthenticatedActor actor, Model model) {
         TrackingNumber parsed =
                 BookingViews.parseTrackingNumber(trackingNumber).orElseThrow(BookingController::notFound);
         model.addAttribute(
-                "booking", BookingViews.detail(queryService.detail(parsed).orElseThrow(BookingController::notFound)));
+                "booking",
+                BookingViews.detail(queryService.detail(parsed, actor).orElseThrow(BookingController::notFound)));
         return DETAIL_VIEW;
     }
 
+    /** 本予約の確定の画面を示す対象（業務番号・見積り番号・送るコマンド ID・操作者）。 */
+    private record Confirming(
+            String transportRequestNumber, int quotationNo, CommandId commandId, AuthenticatedActor actor) {}
+
     private String showConfirmation(
-            String transportRequestNumber,
-            int quotationNo,
-            CommandId commandId,
+            Confirming confirming,
             List<BookingCondition> missing,
             boolean rejectedAsSpecialCargo,
             Model model,
             RedirectAttributes redirectAttributes) {
-        String subject = BookingViews.subject(transportRequestNumber, quotationNo);
-        return switch (queryService.confirmation(transportRequestNumber, quotationNo)) {
+        String number = confirming.transportRequestNumber();
+        int quotationNo = confirming.quotationNo();
+        String subject = BookingViews.subject(number, quotationNo);
+        return switch (queryService.confirmation(number, quotationNo, confirming.actor())) {
             case BookingConfirmationPage.Available available -> {
                 model.addAttribute(
                         "page",
-                        BookingViews.confirmation(
-                                transportRequestNumber, quotationNo, available, missing, rejectedAsSpecialCargo));
-                model.addAttribute("commandId", commandId.value().toString());
+                        BookingViews.confirmation(number, quotationNo, available, missing, rejectedAsSpecialCargo));
+                model.addAttribute("commandId", confirming.commandId().value().toString());
                 yield CONFIRMATION_VIEW;
             }
             case BookingConfirmationPage.Unavailable(QuotationUnavailability reason) ->
                 unavailable(subject, reason, redirectAttributes);
             case BookingConfirmationPage.AlreadyBooked(TrackingNumber trackingNumber) ->
                 alreadyBooked(subject, trackingNumber, redirectAttributes);
+            // 範囲の外は、いない見積りと同じ 404（記録しない。予約済みでも追跡番号を示さない。Bolt 38f2）
+            case BookingConfirmationPage.OutOfScope _ -> throw notFound();
         };
     }
 

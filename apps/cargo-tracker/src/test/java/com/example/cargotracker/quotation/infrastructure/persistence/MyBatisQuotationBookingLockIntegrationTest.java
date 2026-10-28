@@ -22,6 +22,8 @@ import com.example.cargotracker.quotation.interfaces.api.RouteRedesignNotificati
 import com.example.cargotracker.quotation.interfaces.api.RouteRedesignNotificationReceipt;
 import com.example.cargotracker.quotation.interfaces.api.RouteRedesignNotificationRequest;
 import com.example.cargotracker.shared.OverlappingTransactions;
+import com.example.cargotracker.shared.domain.AuthenticatedActor;
+import com.example.cargotracker.shared.domain.AuthenticatedActorFixture;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.UserId;
@@ -124,8 +126,14 @@ class MyBatisQuotationBookingLockIntegrationTest {
                 .isInstanceOf(IllegalTransactionStateException.class);
     }
 
+    /** 荷主企業（どの見積りも同じ。営業担当者が担当する。Bolt 38f2）。 */
+    private static final CompanyId SHIPPER = new CompanyId(UUID.randomUUID());
+
+    private static final AuthenticatedActor OPERATOR =
+            AuthenticatedActorFixture.salesHandling(new UserId(UUID.randomUUID()), SHIPPER);
+
     private static BookableQuotationRequest request(String number) {
-        return new BookableQuotationRequest(number, 1, COMMITTED_AT);
+        return new BookableQuotationRequest(number, 1, COMMITTED_AT, OPERATOR);
     }
 
     private static RouteRedesignNotificationRequest redesign(String routingCaseNumber) {
@@ -137,7 +145,7 @@ class MyBatisQuotationBookingLockIntegrationTest {
         TransportRequest request = TransportRequest.submit(
                 new TransportRequestId(UUID.randomUUID()),
                 new TransportRequestNumber(2090, sequence),
-                new CompanyId(UUID.randomUUID()),
+                SHIPPER,
                 ShipmentTermsFixture.generalCargo(),
                 STAFF,
                 at("2090-01-05T01:00:00Z"));

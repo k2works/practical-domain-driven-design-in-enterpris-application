@@ -98,7 +98,8 @@ class BookingCommandServiceTest {
         assertThat(outcome).isEqualTo(new BookingConfirmationOutcome.Confirmed(BookingFixture.TRACKING_NUMBER));
         assertThat(quotationQuery.all())
                 .as("業務番号と見積り番号で、commit 時刻を渡して照会する（ADR-016、D-4）")
-                .containsExactly(new BookableQuotationRequest("TR-2026-0001", 1, new UtcInstant(NOW)));
+                .containsExactly(new BookableQuotationRequest(
+                        "TR-2026-0001", 1, new UtcInstant(NOW), actor(BookingFixture.SALES, Role.SALES)));
         Booking booking = repository.findAll().getFirst();
         assertThat(booking.currentVersion().committedAt()).isEqualTo(new UtcInstant(NOW));
         assertThat(sagaRepository.findByBookingId(booking.id()).orElseThrow().status())
@@ -116,6 +117,18 @@ class BookingCommandServiceTest {
         assertThat(service.confirm(command(Role.SALES, true)))
                 .isEqualTo(new BookingConfirmationOutcome.QuotationUnavailable(QuotationUnavailability.REPLACED));
 
+        assertThat(issued).hasValue(0);
+        assertThat(repository.findAll()).isEmpty();
+        assertThat(published).isEmpty();
+    }
+
+    @Test
+    void 見積りの公開APIが担当範囲の外と返せば範囲の外を返し追跡番号を発行しない() {
+        // 行 3（V3）。controller の先の確かめの後に担当企業が変わったときの守り
+        quotation = new BookableQuotationResult.OutOfScope("TR-2026-0001", 1);
+
+        assertThat(service.confirm(command(Role.SALES, true)))
+                .isEqualTo(new BookingConfirmationOutcome.OutOfScope("TR-2026-0001", 1));
         assertThat(issued).hasValue(0);
         assertThat(repository.findAll()).isEmpty();
         assertThat(published).isEmpty();
@@ -370,12 +383,11 @@ class BookingCommandServiceTest {
 
     private static ConfirmBookingCommand command(
             CommandId commandId, UUID operator, Role role, boolean staffConfirmed) {
-        return new ConfirmBookingCommand(
-                commandId,
-                "TR-2026-0001",
-                1,
-                new AuthenticatedActor(new UserId(operator), A_COMPANY, Set.of(role), "担当", "A 社"),
-                staffConfirmed);
+        return new ConfirmBookingCommand(commandId, "TR-2026-0001", 1, actor(operator, role), staffConfirmed);
+    }
+
+    private static AuthenticatedActor actor(UUID operator, Role role) {
+        return new AuthenticatedActor(new UserId(operator), A_COMPANY, Set.of(role), "担当", "A 社");
     }
 
     private static BookableQuotationResult bookable(String cargoSummary) {

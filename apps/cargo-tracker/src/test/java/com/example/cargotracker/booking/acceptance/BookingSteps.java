@@ -15,6 +15,7 @@ import com.example.cargotracker.booking.domain.model.valueobjects.TrackingNumber
 import com.example.cargotracker.shared.acceptance.DeferredEventDelivery;
 import com.example.cargotracker.shared.acceptance.ScenarioContext;
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
+import com.example.cargotracker.shared.domain.AuthenticatedActorFixture;
 import com.example.cargotracker.shared.domain.CommandId;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Role;
@@ -200,6 +201,13 @@ public class BookingSteps {
     }
 
     private static AuthenticatedActor actor(String userId, Role role, String name) {
-        return new AuthenticatedActor(new UserId(UUID.fromString(userId)), A_COMPANY, Set.of(role), name, "A 社");
+        // 受入シナリオの荷主企業（001・002）を担当する（Bolt 38f2。予約の確定は担当企業で絞る）
+        return new AuthenticatedActor(
+                new UserId(UUID.fromString(userId)),
+                A_COMPANY,
+                Set.of(role),
+                name,
+                "A 社",
+                Set.of(AuthenticatedActorFixture.SCENARIO_SHIPPER, AuthenticatedActorFixture.SCENARIO_OTHER_SHIPPER));
     }
 }

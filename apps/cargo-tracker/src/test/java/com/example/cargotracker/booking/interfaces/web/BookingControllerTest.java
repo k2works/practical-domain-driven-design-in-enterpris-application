@@ -3,6 +3,8 @@ package com.example.cargotracker.booking.interfaces.web;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -44,8 +46,10 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.http.HttpStatus;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.server.ResponseStatusException;
 
 /**
  * S-09 本予約の確定と S-24 予約の詳細（US-04 AC1〜AC5。Bolt 23b・24・35）。S-09 は画面そのものが確認の領域（BR-13）。開いたときの
@@ -74,6 +78,9 @@ class BookingControllerTest {
     @MockitoBean
     BookingQueryService queryService;
 
+    @MockitoBean
+    BookingOutOfScopeResponder outOfScope;
+
     private static BookingConfirmationPage.Available available(BookingTerms terms) {
         return new BookingConfirmationPage.Available(terms, APPROVED_AT, EXPIRES_AT);
     }
@@ -82,7 +89,8 @@ class BookingControllerTest {
 
     @Test
     void 確定条件の見出しに業務ルールの番号を出さない() throws Exception {
-        given(queryService.confirmation("TR-2026-0001", 1)).willReturn(available(BookingFixture.terms()));
+        given(queryService.confirmation(eq("TR-2026-0001"), eq(1), any()))
+                .willReturn(available(BookingFixture.terms()));
 
         mockMvc.perform(get(NEW))
                 .andExpect(status().isOk())
@@ -92,7 +100,8 @@ class BookingControllerTest {
 
     @Test
     void 確定の画面に確定条件と開いた時刻での確認であることと確認の領域を示す() throws Exception {
-        given(queryService.confirmation("TR-2026-0001", 1)).willReturn(available(BookingFixture.terms()));
+        given(queryService.confirmation(eq("TR-2026-0001"), eq(1), any()))
+                .willReturn(available(BookingFixture.terms()));
 
         mockMvc.perform(get(NEW))
                 .andExpect(status().isOk())
@@ -130,7 +139,7 @@ class BookingControllerTest {
                 base.cargoCategory(),
                 " ",
                 base.shipperApproverId());
-        given(queryService.confirmation("TR-2026-0001", 1)).willReturn(available(noCargo));
+        given(queryService.confirmation(eq("TR-2026-0001"), eq(1), any())).willReturn(available(noCargo));
 
         mockMvc.perform(get(NEW)).andExpect(status().isOk()).andExpect(content().string(containsString("貨物の要約がありません")));
     }
@@ -154,14 +163,14 @@ class BookingControllerTest {
                     QuotationUnavailability.ROUTE_REDESIGN_REQUIRED,
                     subject + " は割り当てた経路が再設計要のため本予約を確定できません。経路設計者と扱いを相談してください。"
                 })) {
-            given(queryService.confirmation("TR-2026-0001", 1))
+            given(queryService.confirmation(eq("TR-2026-0001"), eq(1), any()))
                     .willReturn(new BookingConfirmationPage.Unavailable((QuotationUnavailability) entry[0]));
 
             mockMvc.perform(get(NEW))
                     .andExpect(redirectedUrl(RECEPTION))
                     .andExpect(flash().attribute("problem", entry[1]));
         }
-        given(queryService.confirmation("TR-2026-0001", 1))
+        given(queryService.confirmation(eq("TR-2026-0001"), eq(1), any()))
                 .willReturn(new BookingConfirmationPage.AlreadyBooked(BookingFixture.TRACKING_NUMBER));
 
         mockMvc.perform(get(NEW))
@@ -172,8 +181,50 @@ class BookingControllerTest {
     }
 
     @Test
+    void 担当範囲の外の見積りは開くと記録せずに404にする() throws Exception {
+        // 行 2b・4b（予約済みでも追跡番号を示さない）
+        given(queryService.confirmation(eq("TR-2026-0001"), eq(1), any()))
+                .willReturn(new BookingConfirmationPage.OutOfScope());
+
+        mockMvc.perform(get(NEW)).andExpect(status().isNotFound());
+        verify(outOfScope, never()).recordAndNotFound(any(), any(), anyInt());
+    }
+
+    @Test
+    void 担当範囲の外の見積りを送ると確定のサービスを呼ばずに正規の業務番号で記録して404にする() throws Exception {
+        // 行 3・4c・5（範囲の判定は決着済み・確定条件の判定より先）。記録の ID は生の入力ではなく照会が返す正規の業務番号
+        given(queryService.outOfScopeNumber(eq("tr-2026-0001"), eq(1), any())).willReturn(Optional.of("TR-2026-0001"));
+        given(outOfScope.recordAndNotFound(any(), eq("TR-2026-0001"), eq(1)))
+                .willReturn(new ResponseStatusException(HttpStatus.NOT_FOUND));
+
+        mockMvc.perform(post("/staff/bookings")
+                        .param("commandId", COMMAND_ID)
+                        .param("transportRequest", "tr-2026-0001")
+                        .param("quotation", "1"))
+                .andExpect(status().isNotFound());
+        verify(outOfScope).recordAndNotFound(any(), eq("TR-2026-0001"), eq(1));
+        verify(commandService, never()).confirm(any());
+    }
+
+    @Test
+    void 確定のサービスが担当範囲の外を返したら正規の業務番号で記録して404にする() throws Exception {
+        // 先の確かめの後に担当企業が変わったときの守り
+        given(commandService.confirm(any())).willReturn(new BookingConfirmationOutcome.OutOfScope("TR-2026-0001", 1));
+        given(outOfScope.recordAndNotFound(any(), eq("TR-2026-0001"), eq(1)))
+                .willReturn(new ResponseStatusException(HttpStatus.NOT_FOUND));
+
+        mockMvc.perform(post("/staff/bookings")
+                        .param("commandId", COMMAND_ID)
+                        .param("transportRequest", "tr-2026-0001")
+                        .param("quotation", "1")
+                        .param("staffConfirmed", "true"))
+                .andExpect(status().isNotFound());
+        verify(outOfScope).recordAndNotFound(any(), eq("TR-2026-0001"), eq(1));
+    }
+
+    @Test
     void 見つからない見積りは404にする() throws Exception {
-        given(queryService.confirmation("TR-2026-0001", 1))
+        given(queryService.confirmation(eq("TR-2026-0001"), eq(1), any()))
                 .willReturn(new BookingConfirmationPage.Unavailable(QuotationUnavailability.NOT_FOUND));
 
         mockMvc.perform(get(NEW)).andExpect(status().isNotFound());
@@ -208,7 +259,8 @@ class BookingControllerTest {
 
     @Test
     void 確定の画面は開くたびに新しいコマンドIDを隠し項目に入れる() throws Exception {
-        given(queryService.confirmation("TR-2026-0001", 1)).willReturn(available(BookingFixture.terms()));
+        given(queryService.confirmation(eq("TR-2026-0001"), eq(1), any()))
+                .willReturn(available(BookingFixture.terms()));
 
         String first = mockMvc.perform(get(NEW)).andReturn().getResponse().getContentAsString();
         String second = mockMvc.perform(get(NEW)).andReturn().getResponse().getContentAsString();
@@ -223,7 +275,8 @@ class BookingControllerTest {
         given(commandService.confirm(any()))
                 .willReturn(
                         new BookingConfirmationOutcome.MissingConditions(List.of(BookingCondition.STAFF_CONFIRMATION)));
-        given(queryService.confirmation("TR-2026-0001", 1)).willReturn(available(BookingFixture.terms()));
+        given(queryService.confirmation(eq("TR-2026-0001"), eq(1), any()))
+                .willReturn(available(BookingFixture.terms()));
 
         String body = mockMvc.perform(post("/staff/bookings")
                         .param("commandId", COMMAND_ID)
@@ -279,7 +332,8 @@ class BookingControllerTest {
         given(commandService.confirm(any()))
                 .willReturn(
                         new BookingConfirmationOutcome.MissingConditions(List.of(BookingCondition.STAFF_CONFIRMATION)));
-        given(queryService.confirmation("TR-2026-0001", 1)).willReturn(available(BookingFixture.terms()));
+        given(queryService.confirmation(eq("TR-2026-0001"), eq(1), any()))
+                .willReturn(available(BookingFixture.terms()));
 
         mockMvc.perform(post("/staff/bookings")
                         .param("commandId", COMMAND_ID)
@@ -297,7 +351,7 @@ class BookingControllerTest {
 
     @Test
     void 特殊貨物を含む見積りは開いたときから確定できないと示し確定のボタンを出さない() throws Exception {
-        given(queryService.confirmation("TR-2026-0001", 1))
+        given(queryService.confirmation(eq("TR-2026-0001"), eq(1), any()))
                 .willReturn(available(withCargo(BookingFixture.terms(), "DANGEROUS", "危険物 / パレット × 12")));
 
         mockMvc.perform(get(NEW))
@@ -317,7 +371,7 @@ class BookingControllerTest {
     @Test
     void 知らない貨物種別の見積りも開いたときから確定できないと示す() throws Exception {
         // 開いたときの判定は確定のときと同じ規則で、知らない値は確定しない側に倒す
-        given(queryService.confirmation("TR-2026-0001", 1))
+        given(queryService.confirmation(eq("TR-2026-0001"), eq(1), any()))
                 .willReturn(available(withCargo(BookingFixture.terms(), "UNKNOWN", "不明 / パレット × 12")));
 
         mockMvc.perform(get(NEW))
@@ -330,7 +384,8 @@ class BookingControllerTest {
     void 特殊貨物の拒否で送り返されたら照会し直した見積りが一般貨物でも拒否を示す() throws Exception {
         // 表示は拒んだ結果から決め、照会し直した結果だけに頼らない（判定した対象と表示の結び付き。T-150）
         given(commandService.confirm(any())).willReturn(new BookingConfirmationOutcome.SpecialCargo());
-        given(queryService.confirmation("TR-2026-0001", 1)).willReturn(available(BookingFixture.terms()));
+        given(queryService.confirmation(eq("TR-2026-0001"), eq(1), any()))
+                .willReturn(available(BookingFixture.terms()));
 
         mockMvc.perform(post("/staff/bookings")
                         .param("commandId", COMMAND_ID)
@@ -345,7 +400,7 @@ class BookingControllerTest {
     @Test
     void 特殊貨物の拒否で送り返されたら同じ表示で確定のボタンを出さない() throws Exception {
         given(commandService.confirm(any())).willReturn(new BookingConfirmationOutcome.SpecialCargo());
-        given(queryService.confirmation("TR-2026-0001", 1))
+        given(queryService.confirmation(eq("TR-2026-0001"), eq(1), any()))
                 .willReturn(available(withCargo(BookingFixture.terms(), "REEFER", "冷凍 / パレット × 12")));
 
         mockMvc.perform(post("/staff/bookings")
@@ -362,7 +417,8 @@ class BookingControllerTest {
 
     @Test
     void 一般貨物の見積りには特殊貨物の拒否を示さない() throws Exception {
-        given(queryService.confirmation("TR-2026-0001", 1)).willReturn(available(BookingFixture.terms()));
+        given(queryService.confirmation(eq("TR-2026-0001"), eq(1), any()))
+                .willReturn(available(BookingFixture.terms()));
 
         mockMvc.perform(get(NEW))
                 .andExpect(status().isOk())
@@ -379,7 +435,7 @@ class BookingControllerTest {
         given(commandService.confirm(any()))
                 .willReturn(new BookingConfirmationOutcome.MissingConditions(
                         List.of(BookingCondition.REQUIRED_CARGO, BookingCondition.STAFF_CONFIRMATION)));
-        given(queryService.confirmation("TR-2026-0001", 1))
+        given(queryService.confirmation(eq("TR-2026-0001"), eq(1), any()))
                 .willReturn(available(withCargo(BookingFixture.terms(), "GENERAL", " ")));
 
         mockMvc.perform(post("/staff/bookings")
@@ -425,7 +481,7 @@ class BookingControllerTest {
                 base.shipperApproverId());
         given(commandService.confirm(any()))
                 .willReturn(new BookingConfirmationOutcome.MissingConditions(List.of(BookingCondition.REQUIRED_CARGO)));
-        given(queryService.confirmation("TR-2026-0001", 1)).willReturn(available(noCargo));
+        given(queryService.confirmation(eq("TR-2026-0001"), eq(1), any())).willReturn(available(noCargo));
 
         mockMvc.perform(post("/staff/bookings")
                         .param("commandId", COMMAND_ID)
@@ -466,7 +522,7 @@ class BookingControllerTest {
 
     @Test
     void 業務番号の形でない見積りは見積りの公開APIが見つからないと返すので開いても送っても404にする() throws Exception {
-        given(queryService.confirmation("XX", 1))
+        given(queryService.confirmation(eq("XX"), eq(1), any()))
                 .willReturn(new BookingConfirmationPage.Unavailable(QuotationUnavailability.NOT_FOUND));
         given(commandService.confirm(any()))
                 .willReturn(new BookingConfirmationOutcome.QuotationUnavailable(QuotationUnavailability.NOT_FOUND));
@@ -492,7 +548,7 @@ class BookingControllerTest {
                         BookingFixture.SALES,
                         new UtcInstant(Instant.parse("2026-10-08T00:30:00Z")))
                 .booking();
-        given(queryService.detail(BookingFixture.TRACKING_NUMBER))
+        given(queryService.detail(eq(BookingFixture.TRACKING_NUMBER), any()))
                 .willReturn(Optional.of(new BookingDetail(booking, BookingSagaStatus.IN_PROGRESS)));
 
         mockMvc.perform(get("/staff/bookings/CTABCDEFGH2345"))
@@ -536,7 +592,7 @@ class BookingControllerTest {
                         BookingFixture.SALES,
                         new UtcInstant(Instant.parse("2026-10-08T00:30:00Z")))
                 .booking();
-        given(queryService.detail(BookingFixture.TRACKING_NUMBER))
+        given(queryService.detail(eq(BookingFixture.TRACKING_NUMBER), any()))
                 .willReturn(Optional.of(new BookingDetail(booking, BookingSagaStatus.COMPLETED)));
 
         mockMvc.perform(get("/staff/bookings/CTABCDEFGH2345"))
@@ -558,7 +614,7 @@ class BookingControllerTest {
                         BookingFixture.SALES,
                         new UtcInstant(Instant.parse("2026-10-08T00:30:00Z")))
                 .booking();
-        given(queryService.detail(BookingFixture.TRACKING_NUMBER))
+        given(queryService.detail(eq(BookingFixture.TRACKING_NUMBER), any()))
                 .willReturn(Optional.of(new BookingDetail(booking, BookingSagaStatus.FAILED)));
 
         mockMvc.perform(get("/staff/bookings/CTABCDEFGH2345"))
@@ -570,7 +626,7 @@ class BookingControllerTest {
     /** S-10 予約一覧の最小の表示（Bolt 25b）。確定時刻の新しい順で、追跡番号から S-24 を開ける。 */
     @Test
     void 予約一覧に追跡番号と見積りと確定時刻と追跡の開始を新しい順に示す() throws Exception {
-        given(queryService.recent())
+        given(queryService.recent(any()))
                 .willReturn(new RecentBookings(
                         List.of(
                                 recent(
@@ -610,7 +666,7 @@ class BookingControllerTest {
 
     @Test
     void 予約がなければその旨を示す() throws Exception {
-        given(queryService.recent()).willReturn(new RecentBookings(List.of(), false, 50));
+        given(queryService.recent(any())).willReturn(new RecentBookings(List.of(), false, 50));
 
         mockMvc.perform(get("/staff/bookings"))
                 .andExpect(status().isOk())
@@ -621,7 +677,7 @@ class BookingControllerTest {
 
     @Test
     void 上限を超えたら新しい50件だけを示していることを示す() throws Exception {
-        given(queryService.recent())
+        given(queryService.recent(any()))
                 .willReturn(new RecentBookings(
                         List.of(recent(
                                 "CTABCDEFGH2345",
@@ -646,7 +702,7 @@ class BookingControllerTest {
         "NEEDS_HUMAN, 有人確認要（担当者が確認します）"
     })
     void 予約一覧の追跡の開始は予約サガの状態ごとに処理中表示の言葉で示す(BookingSagaStatus status, String label) throws Exception {
-        given(queryService.recent())
+        given(queryService.recent(any()))
                 .willReturn(new RecentBookings(
                         List.of(recent("CTABCDEFGH2345", "TR-2026-0001", 1, "2026-10-08T00:30:00Z", status)),
                         false,
@@ -673,7 +729,8 @@ class BookingControllerTest {
 
     @Test
     void ない追跡番号と追跡番号の形でない番号は404にする() throws Exception {
-        given(queryService.detail(new TrackingNumber("CTZZZZZZZZZZZZ"))).willReturn(Optional.empty());
+        given(queryService.detail(eq(new TrackingNumber("CTZZZZZZZZZZZZ")), any()))
+                .willReturn(Optional.empty());
 
         mockMvc.perform(get("/staff/bookings/CTZZZZZZZZZZZZ")).andExpect(status().isNotFound());
         mockMvc.perform(get("/staff/bookings/XX")).andExpect(status().isNotFound());

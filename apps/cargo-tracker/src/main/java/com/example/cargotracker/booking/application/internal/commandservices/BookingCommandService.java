@@ -36,7 +36,8 @@ import org.springframework.transaction.annotation.Transactional;
  *
  * <p>判定の順序は、役割 → 処理済みコマンド（B-INV-03）→ 同じ見積りの予約（B-INV-11）→ 見積りの照会 → 特殊貨物（B-INV-04。Bolt 35）
  * → 確定条件。確定済みの判定を
- * 見積りの照会より前に置くので、確定の後に見積りが失効・置換されても、再送と同じ見積りの確定は失効にしない（Bolt 24）。
+ * 見積りの照会より前に置くので、確定の後に見積りが失効・置換されても、再送と同じ見積りの確定は失効にしない（Bolt 24）。担当範囲は
+ * controller がこのサービスの前に確かめ、見積りの照会が範囲の外を返すのは、その後に担当企業が変わったときだけ（Bolt 38f2）。
  *
  * <p>{@code @Service} は JIG がユースケースとして読むための印で、部品探索の対象にはしない（CargoTrackerApplication）。
  * 組み立ては {@code BookingConfiguration} が担う。
@@ -79,15 +80,13 @@ public class BookingCommandService {
             return settled.get();
         }
         UtcInstant committedAt = new UtcInstant(clock.instant());
-        BookingTerms terms;
-        switch (quotations.checkForConfirmation(command.transportRequestNumber(), command.quotationNo(), committedAt)) {
-            case QuotationBookability.Result.Unavailable(QuotationUnavailability reason) -> {
-                return reason == QuotationUnavailability.EXPIRED
-                        ? new BookingConfirmationOutcome.Expired()
-                        : new BookingConfirmationOutcome.QuotationUnavailable(reason);
-            }
-            case QuotationBookability.Result.Bookable bookable -> terms = bookable.terms();
+        QuotationBookability.Result checked = quotations.checkForConfirmation(
+                command.transportRequestNumber(), command.quotationNo(), committedAt, command.operator());
+        if (checked instanceof QuotationBookability.Result.Refusal refusal) {
+            return refusedByQuotation(refusal);
         }
+        QuotationBookability.Result.Bookable bookable = (QuotationBookability.Result.Bookable) checked;
+        BookingTerms terms = bookable.terms();
         // 有効な見積り・荷主の承認・承認済み経路版は、見積りが確定に使えると判定した時点でそろっている（ADR-016）
         BookingConditions conditions =
                 new BookingConditions(true, !terms.cargoSummary().isBlank(), true, true, command.staffConfirmed());
@@ -135,6 +134,18 @@ public class BookingCommandService {
         sagaRepository.save(BookingSaga.start(confirmation.booking().id(), trackingNumber, committedAt));
         eventPublisher.publishEvent(confirmation.event());
         return new BookingConfirmationOutcome.Confirmed(trackingNumber);
+    }
+
+    /** 見積りの照会が確定に使えないと返したときの結果（範囲の外は Bolt 38f2）。 */
+    private static BookingConfirmationOutcome refusedByQuotation(QuotationBookability.Result.Refusal refusal) {
+        return switch (refusal) {
+            case QuotationBookability.Result.Unavailable(QuotationUnavailability reason) ->
+                reason == QuotationUnavailability.EXPIRED
+                        ? new BookingConfirmationOutcome.Expired()
+                        : new BookingConfirmationOutcome.QuotationUnavailable(reason);
+            case QuotationBookability.Result.OutOfScope(String transportRequestNumber, int quotationNo) ->
+                new BookingConfirmationOutcome.OutOfScope(transportRequestNumber, quotationNo);
+        };
     }
 
     /**

@@ -226,8 +226,10 @@ public class AcceptanceTestConfiguration {
                     bookingRepository,
                     bookingSagaRepository,
                     new RandomTrackingNumberIssuer(bookingRepository, new Random(23)),
-                    new QuotationBookability(new BookableQuotationQueryAdapter(
-                            new BookableQuotationQueryService(quotationRepository, transportRequestRepository))),
+                    new QuotationBookability(new BookableQuotationQueryAdapter(new BookableQuotationQueryService(
+                            quotationRepository,
+                            transportRequestRepository,
+                            new StaffTransportRequestScope(transportRequestRepository)))),
                     eventDelivery,
                     clock);
         }
@@ -305,8 +307,10 @@ public class AcceptanceTestConfiguration {
         BookableQuotationQuery bookableQuotationQuery(
                 InMemoryQuotationRepository quotationRepository,
                 InMemoryTransportRequestRepository transportRequestRepository) {
-            return new BookableQuotationQueryAdapter(
-                    new BookableQuotationQueryService(quotationRepository, transportRequestRepository));
+            return new BookableQuotationQueryAdapter(new BookableQuotationQueryService(
+                    quotationRepository,
+                    transportRequestRepository,
+                    new StaffTransportRequestScope(transportRequestRepository)));
         }
 
         /** 経路設計は DE-05 を受けて見積りの公開 API（経路の割当て）を呼ぶ（Bolt 20）。 */
