@@ -1,6 +1,8 @@
 # Docs Update Log
 
 ## 2026-10-28
+* **Creation**: [bolt_38f_report](/development/cargo-tracker/bolt_38f_report.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [019-out-of-scope-attempt-recorder](/adr/cargo-tracker/019-out-of-scope-attempt-recorder.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [06-受付一覧と審査と見積り](/manual/06-受付一覧と審査と見積り.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）

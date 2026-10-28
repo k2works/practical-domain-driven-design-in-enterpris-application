@@ -299,6 +299,7 @@ nav:
           - Bolt 38e 計画: development/cargo-tracker/bolt_38e_plan.md
           - Bolt 38e 終了報告: development/cargo-tracker/bolt_38e_report.md
           - Bolt 38f 計画: development/cargo-tracker/bolt_38f_plan.md
+          - Bolt 38f 終了報告: development/cargo-tracker/bolt_38f_report.md
           - Release 0.1 リリース完了報告書: development/cargo-tracker/release_report-0_1.md
   - ユーザーマニュアル:
       - 概要: manual/index.md
