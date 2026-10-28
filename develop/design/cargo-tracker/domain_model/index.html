@@ -8588,7 +8588,7 @@
     
   
   
-    <span class="md-status md-status--draft"></span>
+    <span class="md-status md-status--stable"></span>
   
 
   
@@ -8614,6 +8614,41 @@
     
   
     Bolt 38d2 計画
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_38e_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 38e 計画
   
 
     
@@ -14516,6 +14551,12 @@
 <td style="text-align: left;">アクセス・監査</td>
 </tr>
 <tr>
+<td style="text-align: left;">残りの回復コード</td>
+<td style="text-align: left;">RemainingRecoveryCodes</td>
+<td style="text-align: left;">まだ使っていない回復コードの数（Bolt 38d2。SEC-10）。3 個以下を少ない、0 個を残っていないとし、回復コードでログインした後の A-08 と印の知らせが、少ないときだけ数を示す（<code>identity.domain.model.valueobjects</code>）</td>
+<td style="text-align: left;">アクセス・監査</td>
+</tr>
+<tr>
 <td style="text-align: left;">回復コード</td>
 <td style="text-align: left;">RecoveryCode</td>
 <td style="text-align: left;">TOTP の端末を失ったときに一度だけ使えるコード。ハッシュだけを持つ（SEC-09、Bolt 30）。入れたコードを正規化して <code>NormalizedRecoveryCode</code> を返す <code>normalize</code>、10 個の発行とそろいの確かめを 1 つにした工場メソッド <code>issueSet</code> を持つ。コードの形（16 進 8 文字を 4 文字ずつハイフンで区切る）の知識は <code>NormalizedRecoveryCode</code> に置く（Bolt 33d。値オブジェクトから集約への依存の前例がないので、形の知識は値の側に置いた（Bolt 33d のステップ 3））。Bolt 33f から <code>issueSet</code> は <code>NormalizedRecoveryCode</code> の一覧を受ける</td>
@@ -14656,7 +14697,7 @@
 <tr>
 <td style="text-align: left;">TOTP の登録の照会</td>
 <td style="text-align: left;">TotpEnrollmentQueryService</td>
-<td style="text-align: left;">利用者が TOTP を登録済みかを答える問い合わせのサービス。画面の層だけが呼ぶ（Bolt 31b で TOTP の確認から移した）</td>
+<td style="text-align: left;">利用者が TOTP を登録済みかを答える問い合わせのサービス。画面の層だけが呼ぶ（Bolt 31b で TOTP の確認から移した）。Bolt 38d2 から、まだ使っていない回復コードの数（残りの回復コード）も答える（<code>RecoveryCodeRepository.findUnusedByUserId</code> の数。口は足さない）</td>
 <td style="text-align: left;">アクセス・監査</td>
 </tr>
 <tr>
