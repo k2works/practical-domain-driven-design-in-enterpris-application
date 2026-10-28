@@ -2,8 +2,10 @@
 type: Plan
 title: "Bolt 38f 終了報告 - 担当企業の受け渡しと範囲外の試行の記録、見積りの側の担当範囲の絞り込み"
 tags: [plan]
-status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-28T10:41:03Z }
+status: stable
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-28T13:49:04Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-28T13:49:05Z }
 ---
 
 # Bolt 38f 終了報告 - 担当企業の受け渡しと範囲外の試行の記録、見積りの側の担当範囲の絞り込み
@@ -128,6 +130,7 @@ Bolt 38f2（予約の側の担当範囲の絞り込みと動画。開始準備�
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-28 | 終了報告を承認した（議題 1〜5。議題 4 は今の設計に合わせ、計画の行 16b と AC-6 を「404 の画面が 500 にならず共通の文言を出す（表示名は出さない）」と読み替える） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-28 | 初版作成（承認待ち） | anthropic/claude-opus-5-5 |
 
 ## 関連ドキュメント

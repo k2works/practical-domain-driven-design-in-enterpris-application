@@ -2,8 +2,10 @@
 type: Plan
 title: "Bolt 38f2 計画 - 予約の側の担当範囲の絞り込み"
 tags: [plan]
-status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-28T12:56:26Z }
+status: stable
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-28T13:49:04Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-28T13:49:05Z }
 ---
 
 # Bolt 38f2 計画 - 予約の側の担当範囲の絞り込み
@@ -358,6 +360,7 @@ stop
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-28 | 計画を承認した（確認ポイントを推奨のとおり。約 6 時間を分割の規則の例外として受け入れる） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-28 | 整合性検証の指摘を反映し、動画を 38f2b に分けた（承認待ち）。範囲の判定を予約済みの判定より先に置く（new GET は照会を先に、確定 POST は 38f と同じく controller が先にロックしない照会で確かめる）、公開 API に操作者を載せ ADR-016 を改める、ArchUnit の 4 つの規則を 2 クラスに広げる、一覧の全件の口を消す、行 4b・4c・5・6d を足し・直す、変異を 13 個に、既存のテストの直しを全列挙、時間を 360 分に（human:kakimomokuri が決定 (7)・(8) を決めた） | anthropic/claude-opus-5-5 |
 | 2026-10-28 | 初版作成（承認待ち）。開始準備で、公開 API に操作者を渡し quotation が範囲外を返す、一覧と詳細は予約の荷主企業で絞る、予約用の記録の部品を置く、記録は確定の POST だけ、動画は荷主 A だけの営業担当者の場面、カスタマーサポートは開かない、1 つの Bolt で打ち切りを置くと決めた（human:kakimomokuri） | anthropic/claude-opus-5-5 |
 
