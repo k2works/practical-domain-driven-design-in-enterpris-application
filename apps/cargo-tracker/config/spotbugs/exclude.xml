@@ -77,4 +77,15 @@
         </Or>
         <Class name="com.example.cargotracker.quotation.application.internal.queryservices.StaffTransportRequestLookup$Found"/>
     </Match>
+    <!--
+      EI_EXPOSE_REP・EI_EXPOSE_REP2: 経路設計の案件の引き当ての結果（Bolt 38g）も、上の輸送要求と同じく見つかった集約をそのまま呼び手に
+      渡すための入れ物。集約を複製すると呼び手のコマンドが更新する対象が変わる。このクラスに限って抑止する。
+    -->
+    <Match>
+        <Or>
+            <Bug pattern="EI_EXPOSE_REP"/>
+            <Bug pattern="EI_EXPOSE_REP2"/>
+        </Or>
+        <Class name="com.example.cargotracker.routing.application.internal.queryservices.RoutingCaseLookup$Found"/>
+    </Match>
 </FindBugsFilter>
