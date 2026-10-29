@@ -2,6 +2,10 @@
 
 ## 2026-10-29
 * **Verification**: [release_plan](/development/cargo-tracker/release_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_38g_report](/development/cargo-tracker/bolt_38g_report.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_38g_report](/development/cargo-tracker/bolt_38g_report.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [release_plan](/development/cargo-tracker/release_plan.md) を human:kakimomokuri が検証
 * **Update**: [bolt_38g_report](/development/cargo-tracker/bolt_38g_report.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [bolt_38f2b_report](/development/cargo-tracker/bolt_38f2b_report.md) を更新（anthropic/claude-opus-5-5）
