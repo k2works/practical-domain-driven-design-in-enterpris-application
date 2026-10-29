@@ -2,8 +2,10 @@
 type: Plan
 title: "Bolt 38f2b 終了報告 - 担当範囲の動画と #14 への添付"
 tags: [plan]
-status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-29T01:17:32Z }
+status: stable
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-29T05:43:28Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-29T05:24:09Z }
 ---
 
 # Bolt 38f2b 終了報告 - 担当範囲の動画と #14 への添付
@@ -88,6 +90,7 @@ Bolt 38g（経路設計と追跡の担当範囲の絞り込みと、US-16 の締
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-29 | 終了報告を承認した（議題 1〜4）。承認の後に `issue:attach-demo` で 3 本を [#14 に添付した](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/14#issuecomment-6488733003)。コメントに各シナリオの見出しと受入条件（AC1 が 1 本、AC4 が 2 本）と目印 `issue-attach-demo:bolt-38f2b` が入ることを確かめた | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-29 | 初版作成（承認待ち） | anthropic/claude-opus-5-5 |
 
 ## 関連ドキュメント
