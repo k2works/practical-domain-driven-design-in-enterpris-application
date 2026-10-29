@@ -35,11 +35,13 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.modulith.events.CompletedEventPublications;
 
 /**
  * DE-16 の経路設計への配信を PostgreSQL 18 で確かめる（R-INV-10、ADR-003。Bolt 17 の H2）。
  * 荷主の回答のコミット後に、イベント発行記録を経て非同期に購読され、経路設計が見積りの公開 API で経路条件を得て案件を作る。
+ * 案件には輸送要求の荷主企業が写る（担当範囲の判定に使う。Bolt 38g の行 6c）。
  * このテストはコミットするため、待つ条件はこのテストで提出した輸送要求に限る。
  */
 @SpringBootTest
@@ -53,6 +55,9 @@ class RouteDesignRequestedRoutingIntegrationTest {
     private static final AuthenticatedActor OPERATOR = AuthenticatedActorFixture.salesHandling(STAFF, SHIPPER_COMPANY);
 
     private static final UserId SHIPPER = new UserId(UUID.randomUUID());
+    /** 提出する荷主企業を担当する経路設計者（Bolt 38g）。 */
+    private static final AuthenticatedActor DESIGNER =
+            AuthenticatedActorFixture.routeDesignerHandling(new UserId(UUID.randomUUID()), SHIPPER_COMPANY);
 
     @Autowired
     TransportRequestCommandService transportRequestCommandService;
@@ -71,6 +76,9 @@ class RouteDesignRequestedRoutingIntegrationTest {
 
     @Autowired
     CompletedEventPublications completedEventPublications;
+
+    @Autowired
+    JdbcTemplate jdbc;
 
     @Test
     void 詳細経路設計を依頼するとイベントが経路設計に配信され見積りの経路条件で案件が1つ作られる() {
@@ -91,7 +99,7 @@ class RouteDesignRequestedRoutingIntegrationTest {
                 .isEqualTo(new RouteDesignRequestOutcome.Requested(number, 1));
 
         await().atMost(TIMEOUT)
-                .untilAsserted(() -> assertThat(routingCaseQueryService.listCases())
+                .untilAsserted(() -> assertThat(routingCaseQueryService.listCases(DESIGNER))
                         .filteredOn(summary -> summary.transportRequestNumber().equals(number.text()))
                         .singleElement()
                         .satisfies(summary -> {
@@ -109,8 +117,13 @@ class RouteDesignRequestedRoutingIntegrationTest {
                                         .transportRequestId()
                                         .equals(submitted.transportRequestId().value()))
                         .hasSize(2));
-        assertThat(routingCaseQueryService.listCases())
+        assertThat(routingCaseQueryService.listCases(DESIGNER))
                 .extracting(RoutingCaseSummary::transportRequestNumber)
                 .containsOnlyOnce(number.text());
+        assertThat(jdbc.queryForObject(
+                        "SELECT shipper_company_id FROM routing.routing_case WHERE transport_request_number = ?",
+                        UUID.class,
+                        number.text()))
+                .isEqualTo(shipper.value());
     }
 }

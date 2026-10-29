@@ -10,6 +10,7 @@ import com.example.cargotracker.routing.domain.model.valueobjects.ExclusionReaso
 import com.example.cargotracker.routing.domain.model.valueobjects.Leg;
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseId;
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseNumber;
+import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Instant;
@@ -86,7 +87,8 @@ class RoutingCaseGoldenDatasetTest {
                 golden.routeSpecification(),
                 at("2026-10-06T02:00:00Z"),
                 at("2026-10-08T09:00:00Z"),
-                UUID.randomUUID());
+                UUID.randomUUID(),
+                new CompanyId(UUID.randomUUID()));
     }
 
     private static UtcInstant at(String instant) {

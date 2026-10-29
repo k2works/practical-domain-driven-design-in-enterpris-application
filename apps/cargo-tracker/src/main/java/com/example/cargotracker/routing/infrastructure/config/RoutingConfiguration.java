@@ -11,6 +11,7 @@ import com.example.cargotracker.routing.application.internal.outboundservices.ac
 import com.example.cargotracker.routing.application.internal.outboundservices.acl.QuotationRouteConditions;
 import com.example.cargotracker.routing.application.internal.outboundservices.acl.QuotationRouteRedesigns;
 import com.example.cargotracker.routing.application.internal.queryservices.RoutingCaseQueryService;
+import com.example.cargotracker.routing.application.internal.queryservices.RoutingCaseScope;
 import com.example.cargotracker.routing.domain.model.aggregates.ConnectionRuleRepository;
 import com.example.cargotracker.routing.domain.model.aggregates.RoutingCaseNumberIssuer;
 import com.example.cargotracker.routing.domain.model.aggregates.RoutingCaseRepository;
@@ -93,14 +94,28 @@ public class RoutingConfiguration {
             ConnectionRuleRepository connectionRuleRepository,
             ApplicationEventPublisher eventPublisher,
             Clock clock,
-            InfoFreshnessPolicy infoFreshnessPolicy) {
+            InfoFreshnessPolicy infoFreshnessPolicy,
+            RoutingCaseScope routingCaseScope) {
         return new RoutingCaseCommandService(
-                repository, voyageRepository, connectionRuleRepository, eventPublisher, clock, infoFreshnessPolicy);
+                repository,
+                voyageRepository,
+                connectionRuleRepository,
+                eventPublisher,
+                clock,
+                infoFreshnessPolicy,
+                routingCaseScope);
     }
 
     @Bean
-    RoutingCaseQueryService routingCaseQueryService(RoutingCaseRepository repository) {
-        return new RoutingCaseQueryService(repository);
+    RoutingCaseQueryService routingCaseQueryService(
+            RoutingCaseRepository repository, RoutingCaseScope routingCaseScope) {
+        return new RoutingCaseQueryService(repository, routingCaseScope);
+    }
+
+    /** 社内の経路設計案件の担当範囲の判定（照会とコマンドのサービスが使う。Bolt 38g）。 */
+    @Bean
+    RoutingCaseScope routingCaseScope(RoutingCaseRepository repository) {
+        return new RoutingCaseScope(repository);
     }
 
     /** 起動時に、今年と来年（日本時間）の案件番号の採番の行を用意する（業務番号と同じ。D-13）。 */

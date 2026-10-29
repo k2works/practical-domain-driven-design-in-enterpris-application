@@ -209,8 +209,13 @@ public class MyBatisTrackingRecordRepository implements TrackingRecordRepository
     }
 
     @Override
-    public List<TrackingRecordSummary> findRecentSummaries(int limit) {
-        return mapper.findRecentSummaries(limit).stream()
+    public List<TrackingRecordSummary> findRecentSummaries(Set<CompanyId> shipperCompanyIds, int limit) {
+        if (shipperCompanyIds.isEmpty()) {
+            // IN () は書けない。判定の部品も空の集合では呼ばない（Bolt 38g。38f2 の前例）
+            return List.of();
+        }
+        List<UUID> ids = shipperCompanyIds.stream().map(CompanyId::value).toList();
+        return mapper.findRecentSummaries(ids, limit).stream()
                 .map(MyBatisTrackingRecordRepository::toSummary)
                 .toList();
     }

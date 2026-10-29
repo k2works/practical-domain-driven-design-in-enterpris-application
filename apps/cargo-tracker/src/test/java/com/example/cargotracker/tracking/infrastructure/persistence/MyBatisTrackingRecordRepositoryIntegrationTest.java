@@ -22,6 +22,7 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.OptionalInt;
 import java.util.Random;
+import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -38,6 +39,9 @@ import org.springframework.transaction.annotation.Transactional;
 @Import(TestcontainersConfiguration.class)
 @Transactional
 class MyBatisTrackingRecordRepositoryIntegrationTest {
+
+    /** このテストの荷主企業（社内の一覧を荷主企業の集合で読む。Bolt 38g）。 */
+    private final CompanyId scenarioShipper = new CompanyId(UUID.randomUUID());
 
     private static final String ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
     private static final UtcInstant STARTED_AT = new UtcInstant(Instant.parse("2026-10-08T09:00:00.123456Z"));
@@ -158,7 +162,7 @@ class MyBatisTrackingRecordRepositoryIntegrationTest {
         // 数字と英字の比較でも、DB の照合順序がメモリの実装（文字コード順。数字が先）と同じ並びになる（Bolt 26 レビュー P-2）
         TrackingRecord sameTimeDigit = save("2099-01-03T00:00:00Z", new TrackingNumber("CT222222222222"));
 
-        assertThat(repository.findRecentSummaries(5))
+        assertThat(repository.findRecentSummaries(Set.of(scenarioShipper), 5))
                 .extracting(TrackingRecordSummary::trackingNumber)
                 .containsExactly(
                         sameTimeDigit.trackingNumber(),
@@ -166,10 +170,10 @@ class MyBatisTrackingRecordRepositoryIntegrationTest {
                         sameTimeB.trackingNumber(),
                         middle.trackingNumber(),
                         oldest.trackingNumber());
-        assertThat(repository.findRecentSummaries(2))
+        assertThat(repository.findRecentSummaries(Set.of(scenarioShipper), 2))
                 .extracting(TrackingRecordSummary::trackingNumber)
                 .containsExactly(sameTimeDigit.trackingNumber(), sameTimeA.trackingNumber());
-        assertThat(repository.findRecentSummaries(1).getFirst())
+        assertThat(repository.findRecentSummaries(Set.of(scenarioShipper), 1).getFirst())
                 .isEqualTo(new TrackingRecordSummary(
                         sameTimeDigit.trackingNumber(),
                         TrackingStatus.PICKUP_SCHEDULED,
@@ -261,6 +265,21 @@ class MyBatisTrackingRecordRepositoryIntegrationTest {
                         .getFirst()
                         .latestEta())
                 .isEqualTo(newer.latestEta());
+    }
+
+    @Test
+    void 社内の要約は荷主企業の集合の追跡記録だけを返し空の集合なら何も返さない() {
+        // 行 1c・1d（社内の一覧は担当企業の集合で絞る。Bolt 38g）
+        CompanyId other = new CompanyId(UUID.randomUUID());
+        TrackingRecord ofShipper = save("2099-01-01T00:00:00Z", trackingNumber());
+        TrackingRecord ofOther = saveFor(other, "2099-01-02T00:00:00Z");
+        TrackingRecord ofThird = saveFor(new CompanyId(UUID.randomUUID()), "2099-01-03T00:00:00Z");
+
+        assertThat(repository.findRecentSummaries(Set.of(scenarioShipper, other), 10))
+                .extracting(TrackingRecordSummary::trackingNumber)
+                .containsExactly(ofOther.trackingNumber(), ofShipper.trackingNumber())
+                .doesNotContain(ofThird.trackingNumber());
+        assertThat(repository.findRecentSummaries(Set.of(), 10)).isEmpty();
     }
 
     @Test
@@ -425,7 +444,7 @@ class MyBatisTrackingRecordRepositoryIntegrationTest {
         TrackingRecord trackingRecord = TrackingRecord.start(
                         trackingNumber,
                         UUID.randomUUID(),
-                        new CompanyId(UUID.randomUUID()),
+                        scenarioShipper,
                         new CompanyId(UUID.randomUUID()),
                         TrackingFixture.schedule(),
                         new UtcInstant(Instant.parse(startedAt)))

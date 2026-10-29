@@ -44,6 +44,12 @@ public sealed interface MilestoneRegistrationOutcome {
     /** 追跡番号の追跡記録がない。 */
     record NotFound() implements MilestoneRegistrationOutcome {}
 
+    /**
+     * 追跡記録の荷主企業が操作者の担当企業でない（Bolt 38g。US-16 AC4）。何も書かずに返す。画面は試行を記録して 404 にする（画面を開いた
+     * 後に割り当てが外れたときの守り。controller は先にロックしない照会で範囲を確かめる）。登録済み・版の照合・発生時刻の判定より先に判定する。
+     */
+    record OutOfScope() implements MilestoneRegistrationOutcome {}
+
     /** 画面を開いた後に、ほかの追跡管理者が先に追跡記録を更新した（版の不一致・楽観ロックの競合）。 */
     record Conflict() implements MilestoneRegistrationOutcome {}
 }

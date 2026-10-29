@@ -119,7 +119,8 @@ class UserAssignmentControllerTest {
                 .andExpect(text("<dd class=\"col-sm-9\" id=\"current-companies\">担当企業: 荷主 北（この画面で変えられない企業 1 社）</dd>"))
                 .andExpect(text(
                         "<span id=\"added-companies\">追加: 荷主 南</span>／<span id=\"removed-companies\">解除: 荷主 北</span>"))
-                .andExpect(text("この利用者の担当企業が変わります。業務の画面で効くのは、今後の更新からです。"))
+                .andExpect(text("この利用者の担当企業が変わります。業務の画面では、次の操作から変更後の担当企業で絞られます。"))
+                .andExpect(content().string(Matchers.not(Matchers.containsString("今後の更新から"))))
                 .andExpect(text("もう一度変更すれば戻せます。"))
                 .andExpect(text("システム管理者 営業 一郎"))
                 .andExpect(text("name=\"companies\" value=\"" + SOUTH_ID + "\""))

@@ -1,5 +1,6 @@
 package com.example.cargotracker.routing.infrastructure.persistence;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -65,5 +66,5 @@ public interface RoutingCaseMapper {
 
     List<ExclusionReasonRow> selectExclusionReasons(UUID routingCaseId);
 
-    List<RoutingCaseSummaryRow> selectSummaries();
+    List<RoutingCaseSummaryRow> selectSummaries(@Param("shipperCompanyIds") Collection<UUID> shipperCompanyIds);
 }

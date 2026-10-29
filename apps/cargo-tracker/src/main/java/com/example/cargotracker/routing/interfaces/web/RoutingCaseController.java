@@ -37,6 +37,9 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
  * 経路設計者だけが開ける（認可は SecurityConfiguration）。画面と URL には案件番号だけを出す（D-4）。候補の算出・再算出と確定は
  * PRG で S-06 に戻る。算出と確定のフォームは案件の版を持ち、違えば競合として最新を確かめるよう示す（Bolt 17 レビュー D-64）。
  * S-07 は画面そのものが確認の領域（BR-13。見積りへの回答 C-05 と同じ形で、別の確認のダイアログは挟まない）。
+ * Bolt 38g（US-16 AC4）から、経路設計者の担当企業の案件だけを扱う。範囲の外は存在しない案件と同じく 404 にし、状態を変える POST（候補の算出・
+ * 確定）の範囲の外だけを試行として記録する（{@link RoutingOutOfScopeResponder}。SEC-12、ADR-019）。POST は値の解釈（コマンドの判定）より先に
+ * ロックしない照会で範囲を確かめる。型の変換で止まる値（数でない版・候補番号）は範囲によらず 400 で、記録しない。
  */
 @Controller
 @RequestMapping("/staff/routing-cases")
@@ -68,33 +71,39 @@ public class RoutingCaseController {
     private final RoutingCaseQueryService queryService;
     private final RoutingCaseCommandService commandService;
     private final Clock clock;
+    private final RoutingOutOfScopeResponder outOfScope;
 
     public RoutingCaseController(
-            RoutingCaseQueryService queryService, RoutingCaseCommandService commandService, Clock clock) {
+            RoutingCaseQueryService queryService,
+            RoutingCaseCommandService commandService,
+            Clock clock,
+            RoutingOutOfScopeResponder outOfScope) {
         this.queryService = queryService;
         this.commandService = commandService;
         this.clock = clock;
+        this.outOfScope = outOfScope;
     }
 
-    /** S-05。見積有効期限の近い順（Bolt 19）。期限を過ぎた案件は期限切れと示す。 */
+    /** S-05。担当企業の案件を見積有効期限の近い順に示す（Bolt 19・38g）。期限を過ぎた案件は期限切れと示す。 */
     @GetMapping
-    public String list(Model model) {
+    public String list(AuthenticatedActor actor, Model model) {
         Instant now = clock.instant();
         model.addAttribute(
                 "cases",
-                queryService.listCases().stream()
+                queryService.listCases(actor).stream()
                         .map(summary -> RoutingCaseViews.row(summary, now))
                         .toList());
+        model.addAttribute("noAssignedCompanies", actor.hasNoAssignedCompanies());
         return LIST_VIEW;
     }
 
-    /** S-06。算出の前は候補の算出の操作を、算出の後は候補と再算出の操作を示す。 */
+    /** S-06。算出の前は候補の算出の操作を、算出の後は候補と再算出の操作を示す。範囲の外は 404（記録しない）。 */
     @GetMapping("/{number}")
-    public String show(@PathVariable String number, Model model) {
+    public String show(@PathVariable String number, AuthenticatedActor actor, Model model) {
         model.addAttribute(
                 "routingCase",
                 queryService
-                        .findByNumber(parse(number))
+                        .findByNumber(parse(number), actor)
                         .map(routingCase -> RoutingCaseViews.detail(routingCase, clock.instant()))
                         .orElseThrow(RoutingCaseController::notFound));
         return SHOW_VIEW;
@@ -108,8 +117,9 @@ public class RoutingCaseController {
             AuthenticatedActor actor,
             RedirectAttributes redirectAttributes) {
         RoutingCaseNumber caseNumber = parse(number);
+        rejectOutOfScope(caseNumber, actor);
         return switch (commandService.calculateCandidates(
-                new CalculateCandidatesCommand(caseNumber, expectedVersion, actor.userId()))) {
+                new CalculateCandidatesCommand(caseNumber, expectedVersion, actor.userId()), actor)) {
             case CandidateCalculationOutcome.Calculated(
                     RoutingCaseNumber calculated,
                     CandidateCalculation calculation) -> {
@@ -121,17 +131,19 @@ public class RoutingCaseController {
                 yield REDIRECT + caseNumber.text();
             }
             case CandidateCalculationOutcome.NotFound() -> throw notFound();
+            case CandidateCalculationOutcome.OutOfScope() -> throw recordOutOfScope(caseNumber, actor);
         };
     }
 
-    /** S-07。適合の候補だけを開ける。除外の候補・確定できない状態は S-06 に戻して理由を示す。 */
+    /** S-07。適合の候補だけを開ける。除外の候補・確定できない状態は S-06 に戻して理由を示す。範囲の外は 404（記録しない）。 */
     @GetMapping("/{number}/confirmation")
     public String confirmation(
             @PathVariable String number,
             @RequestParam int candidate,
+            AuthenticatedActor actor,
             Model model,
             RedirectAttributes redirectAttributes) {
-        RoutingCase routingCase = find(parse(number));
+        RoutingCase routingCase = find(parse(number), actor);
         Optional<RouteConfirmationRejectionReason> rejection = routingCase.confirmationRejection();
         if (rejection.isPresent()) {
             redirectAttributes.addFlashAttribute(PROBLEM, message(rejection.get()));
@@ -158,8 +170,16 @@ public class RoutingCaseController {
             Model model,
             RedirectAttributes redirectAttributes) {
         RoutingCaseNumber caseNumber = parse(number);
-        RouteConfirmationOutcome outcome = commandService.confirm(new ConfirmRouteCommand(
-                caseNumber, candidate, rationale, expectedVersion, actor.userId(), actor.hasRole(Role.ROUTE_DESIGNER)));
+        rejectOutOfScope(caseNumber, actor);
+        RouteConfirmationOutcome outcome = commandService.confirm(
+                new ConfirmRouteCommand(
+                        caseNumber,
+                        candidate,
+                        rationale,
+                        expectedVersion,
+                        actor.userId(),
+                        actor.hasRole(Role.ROUTE_DESIGNER)),
+                actor);
         return switch (outcome) {
             case RouteConfirmationOutcome.Confirmed confirmed -> {
                 redirectAttributes.addFlashAttribute(
@@ -171,12 +191,13 @@ public class RoutingCaseController {
                 yield REDIRECT + caseNumber.text();
             }
             case RouteConfirmationOutcome.NotFound() -> throw notFound();
+            case RouteConfirmationOutcome.OutOfScope() -> throw recordOutOfScope(caseNumber, actor);
             case RouteConfirmationOutcome.Rejected(RouteConfirmationRejectionReason reason) -> {
                 if (!SHOWN_ON_CONFIRMATION.contains(reason)) {
                     redirectAttributes.addFlashAttribute(PROBLEM, message(reason));
                     yield REDIRECT + caseNumber.text();
                 }
-                RoutingCase routingCase = find(caseNumber);
+                RoutingCase routingCase = find(caseNumber, actor);
                 Optional<RouteCandidate> selected = candidateOf(routingCase, candidate);
                 if (selected.isEmpty()) {
                     // 拒否の後に候補が算出し直されていた。S-06 で最新の候補を確かめてもらう
@@ -226,8 +247,19 @@ public class RoutingCaseController {
         return MESSAGES.get(reason);
     }
 
-    private RoutingCase find(RoutingCaseNumber number) {
-        return queryService.findByNumber(number).orElseThrow(RoutingCaseController::notFound);
+    private RoutingCase find(RoutingCaseNumber number, AuthenticatedActor actor) {
+        return queryService.findByNumber(number, actor).orElseThrow(RoutingCaseController::notFound);
+    }
+
+    /** 状態を変える POST の前の確かめ。範囲の外なら試行を記録して 404（値の解釈より先。Bolt 38g の行 4）。 */
+    private void rejectOutOfScope(RoutingCaseNumber number, AuthenticatedActor actor) {
+        if (queryService.outOfScope(number, actor)) {
+            throw recordOutOfScope(number, actor);
+        }
+    }
+
+    private ResponseStatusException recordOutOfScope(RoutingCaseNumber number, AuthenticatedActor actor) {
+        return outOfScope.recordAndNotFound(actor, number.text());
     }
 
     private static Optional<RouteCandidate> candidateOf(RoutingCase routingCase, int candidateNo) {

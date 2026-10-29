@@ -18,7 +18,7 @@ import org.springframework.stereotype.Service;
 
 /**
  * DE-16 荷主が詳細経路設計を依頼した を購読し、経路設計案件を作る（R-INV-10、US-06。Bolt 17）。
- * 経路条件は見積りの公開 API から ACL 越しに得る。見積りの保存のコミットの後に、非同期で、新しいトランザクションの中で処理する。
+ * 経路条件と荷主企業（Bolt 38g。担当範囲の判定に使う）は見積りの公開 API から ACL 越しに得る。見積りの保存のコミットの後に、非同期で、新しいトランザクションの中で処理する。
  * 配信は少なくとも 1 回なので、同じ輸送要求版の案件があれば何もしない（冪等）。同時の再配信は一意制約が止め、トランザクションを
  * 戻して例外にする（案件番号も戻る。再起動の後に再配信され、そのときは案件があるので何もしない）。
  * 経路条件が得られない（輸送要求がないか、依頼の後に再提出された）ときは、結果整合が崩れた手がかりとして警告のログを残す。
@@ -72,6 +72,7 @@ public class RoutingCaseOpeningEventHandler {
                 conditions.get().specification(),
                 event.requestedAt(),
                 event.expiresAt(),
-                event.requestedBy()));
+                event.requestedBy(),
+                conditions.get().shipperCompanyId()));
     }
 }

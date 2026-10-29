@@ -22,6 +22,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.ui.Model;
@@ -59,7 +60,7 @@ final class UserDetailPage {
     static final String SELF_CREDENTIAL_NOTE = "自分のログインの資格は、この画面では変えられません。";
 
     /** 担当企業がないときの担当範囲の領域の案内（UI 設計 S-20。Bolt 38e。括弧の文は業務の側が効く 38g で外す）。 */
-    static final String NO_ASSIGNMENT_NOTE = "担当企業はまだありません。担当企業は、業務の画面で扱える企業を絞るために使います（業務の画面で効くのは、今後の更新からです）。";
+    static final String NO_ASSIGNMENT_NOTE = "担当企業はまだありません。担当企業は、業務の画面で扱える企業を絞るために使います。";
 
     /** 担当企業にできる荷主が操作者の管理範囲にないときの担当範囲の領域の案内（UI 設計 S-20。Bolt 38e の開発レビューの低-1）。 */
     static final String NO_SELECTABLE_NOTE = "あなたの管理範囲には、担当企業にできる荷主の企業がありません。";
@@ -398,6 +399,30 @@ final class UserDetailPage {
     /** 詳細の担当範囲の領域の、この画面で変えられない担当企業の数の案内（UI 設計 S-20。名前は出さない。決定 (11)）。なければ null。 */
     static String unchangeableNote(int count) {
         return count == 0 ? null : "この画面で変えられない企業 " + count + " 社も担当しています。";
+    }
+
+    /**
+     * 停止の確認の領域に示すこの利用者の担当企業（Bolt 38g の確認ポイント 19。UI 設計 S-20）。担当範囲のある役割の利用者だけに示し、
+     * そうでなければ null。名前は選べる企業（操作者の管理範囲の中の有効な荷主）のものだけを並べ、この画面で変えられない企業は 38e の語で
+     * 数だけを示す（決定 (11)）。付け替えは担当範囲の領域で行う。
+     */
+    String assignedCompaniesLine(UserDetail user, AuthenticatedActor actor) {
+        if (!RoleAssignmentPolicy.holdsAssignmentScopedRole(user.roles())) {
+            return null;
+        }
+        List<Company> assignable = assignableCompanies(actor);
+        Set<CompanyId> current = user.assignedCompanies().companies();
+        String names = assignable.stream()
+                .filter(company -> current.contains(company.id()))
+                .map(Company::name)
+                .collect(Collectors.joining("、"));
+        int unchangeable = unchangeableCount(user, assignable);
+        if (names.isEmpty() && unchangeable > 0) {
+            return "担当企業: この画面で変えられない企業 " + unchangeable + " 社を担当しています。";
+        }
+        String line = "担当企業: " + (names.isEmpty() ? "なし" : names) + "。";
+        String note = unchangeableNote(unchangeable);
+        return note == null ? line : line + note;
     }
 
     /** 確認の領域の現在の状態に添える、この画面で変えられない担当企業の数（UI 設計 S-20）。なければ空。 */

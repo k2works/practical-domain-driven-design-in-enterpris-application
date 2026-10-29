@@ -328,6 +328,7 @@ class RoutingCaseConfirmationTest {
                 at("2026-10-06T02:00:00Z"),
                 null,
                 null,
+                RoutingCaseTest.SHIPPER,
                 List.of(old, RouteVersion.draft(2)),
                 5);
 
@@ -380,6 +381,7 @@ class RoutingCaseConfirmationTest {
                         requestedAt,
                         null,
                         null,
+                        RoutingCaseTest.SHIPPER,
                         twoConfirmed,
                         5))
                 .isInstanceOf(IllegalArgumentException.class);

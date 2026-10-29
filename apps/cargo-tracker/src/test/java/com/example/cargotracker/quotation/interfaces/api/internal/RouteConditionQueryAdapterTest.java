@@ -23,9 +23,10 @@ class RouteConditionQueryAdapterTest {
     private final InMemoryTransportRequestRepository repository = new InMemoryTransportRequestRepository();
     private final RouteConditionQueryAdapter service =
             new RouteConditionQueryAdapter(new RouteConditionQueryService(repository));
+    private final CompanyId shipper = new CompanyId(UUID.randomUUID());
 
     @Test
-    void 輸送要求の現在の版の経路条件と業務番号を返す() {
+    void 輸送要求の現在の版の経路条件と業務番号と荷主企業を返す() {
         TransportRequest request = submitted();
 
         assertThat(service.find(request.id().value(), 1))
@@ -34,7 +35,8 @@ class RouteConditionQueryAdapterTest {
                         new Location("JPTYO"),
                         new Location("NLRTM"),
                         ShipmentTermsFixture.ARRIVAL_DEADLINE,
-                        "GENERAL"));
+                        "GENERAL",
+                        shipper));
     }
 
     @Test
@@ -49,7 +51,7 @@ class RouteConditionQueryAdapterTest {
         TransportRequest request = TransportRequest.submit(
                 new TransportRequestId(UUID.randomUUID()),
                 new TransportRequestNumber(2026, 7),
-                new CompanyId(UUID.randomUUID()),
+                shipper,
                 ShipmentTermsFixture.generalCargo(),
                 new UserId(UUID.randomUUID()),
                 new UtcInstant(Instant.parse("2026-10-05T01:00:00Z")));

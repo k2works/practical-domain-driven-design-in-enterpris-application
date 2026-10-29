@@ -6,6 +6,7 @@ import com.example.cargotracker.routing.acceptance.InMemoryConnectionRuleReposit
 import com.example.cargotracker.routing.acceptance.InMemoryRoutingCaseRepository;
 import com.example.cargotracker.routing.acceptance.InMemoryVoyageRepository;
 import com.example.cargotracker.routing.application.internal.commands.EvaluateConfirmedRouteCommand;
+import com.example.cargotracker.routing.application.internal.queryservices.RoutingCaseScope;
 import com.example.cargotracker.routing.domain.events.RouteRedesignRequired;
 import com.example.cargotracker.routing.domain.model.aggregates.ConnectionRule;
 import com.example.cargotracker.routing.domain.model.aggregates.RoutingCase;
@@ -132,7 +133,8 @@ class ConfirmedRouteEvaluationTest {
                 rules,
                 published::add,
                 Clock.fixed(EVALUATED_AT, ZoneOffset.UTC),
-                new InfoFreshnessPolicy(Duration.ofHours(24)));
+                new InfoFreshnessPolicy(Duration.ofHours(24)),
+                new RoutingCaseScope(repository));
     }
 
     private EvaluateConfirmedRouteCommand command() {

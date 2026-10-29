@@ -1,5 +1,6 @@
 package com.example.cargotracker.tracking.application.internal.queryservices;
 
+import com.example.cargotracker.shared.domain.AuthenticatedActor;
 import com.example.cargotracker.tracking.domain.model.aggregates.TrackingRecord;
 import com.example.cargotracker.tracking.domain.model.aggregates.TrackingRecordRepository;
 import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingNumber;
@@ -10,7 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * 追跡記録の照会（S-11 追跡一覧、S-12 追跡の詳細。Bolt 26）。
+ * 追跡記録の照会（S-11 追跡一覧、S-12 追跡の詳細。Bolt 26）。操作者の担当企業で絞る（{@link TrackingRecordScope}。Bolt 38g。US-16 AC4）。
  *
  * <p>{@code @Service} は JIG がユースケースとして読むための印で、部品探索の対象にはしない（CargoTrackerApplication）。
  * 組み立ては {@code TrackingConfiguration} が担う。
@@ -22,9 +23,11 @@ public class TrackingRecordQueryService {
     private static final int RECENT_LIMIT = 50;
 
     private final TrackingRecordRepository repository;
+    private final TrackingRecordScope scope;
 
-    public TrackingRecordQueryService(TrackingRecordRepository repository) {
+    public TrackingRecordQueryService(TrackingRecordRepository repository, TrackingRecordScope scope) {
         this.repository = repository;
+        this.scope = scope;
     }
 
     /**
@@ -32,14 +35,24 @@ public class TrackingRecordQueryService {
      * 判定し、要約は 1 回の照会で引く（行ごとに照会しない）。
      */
     @Transactional(readOnly = true)
-    public RecentTrackingRecords recent() {
-        List<TrackingRecordSummary> found = repository.findRecentSummaries(RECENT_LIMIT + 1);
+    public RecentTrackingRecords recent(AuthenticatedActor actor) {
+        List<TrackingRecordSummary> found =
+                scope.listWithin(actor, companies -> repository.findRecentSummaries(companies, RECENT_LIMIT + 1));
         return RecentTrackingRecords.of(found, RECENT_LIMIT);
     }
 
-    /** 追跡の詳細（S-12）。追跡記録を予定区間とあわせて返す。 */
+    /** 追跡の詳細（S-12・S-13）。担当範囲の中の追跡記録を予定区間とあわせて返す。ない・範囲の外は空（どちらも 404。記録しない）。 */
     @Transactional(readOnly = true)
-    public Optional<TrackingRecord> detail(TrackingNumber trackingNumber) {
-        return repository.findByTrackingNumber(trackingNumber);
+    public Optional<TrackingRecord> detail(TrackingNumber trackingNumber, AuthenticatedActor actor) {
+        return scope.find(trackingNumber, actor).inScope();
+    }
+
+    /**
+     * 追跡記録が操作者の担当範囲の外か（マイルストーンの登録の POST の前の確かめ。ロックしない。Bolt 38g）。ない追跡記録は範囲の外では
+     * ない（記録せず 404 はコマンドが返す）。
+     */
+    @Transactional(readOnly = true)
+    public boolean outOfScope(TrackingNumber trackingNumber, AuthenticatedActor actor) {
+        return scope.find(trackingNumber, actor) instanceof TrackingRecordLookup.OutOfScope;
     }
 }

@@ -21,6 +21,7 @@ import com.example.cargotracker.routing.domain.model.valueobjects.RouteVersionSt
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseId;
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseNumber;
 import com.example.cargotracker.shared.annotation.ddd.AggregateRoot;
+import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.util.ArrayList;
@@ -40,6 +41,7 @@ import java.util.stream.Collectors;
  * （外部情報の更新で再設計要にする。US-07 AC4）を足した。
  *
  * <p>輸送要求・見積りの ID と業務番号は、見積りの公開 API とイベントから得た値の写し（見積りのドメインの型を持たない。ADR-001）。
+ * 荷主企業も見積りの公開 API の写しで、社内の画面を担当企業で絞るのに使う（Bolt 38g。US-16 AC4、IA-INV-02）。
  */
 @AggregateRoot
 public final class RoutingCase {
@@ -60,6 +62,7 @@ public final class RoutingCase {
     private final UtcInstant requestedAt;
     private final UtcInstant quotationExpiresAt;
     private final UUID requestedBy;
+    private final CompanyId shipperCompanyId;
     private final long aggregateVersion;
     private final List<RouteVersion> routeVersions;
 
@@ -76,6 +79,7 @@ public final class RoutingCase {
             UtcInstant requestedAt,
             UtcInstant quotationExpiresAt,
             UUID requestedBy,
+            CompanyId shipperCompanyId,
             List<RouteVersion> routeVersions,
             long aggregateVersion) {
         this.id = Objects.requireNonNull(id, "id");
@@ -92,13 +96,15 @@ public final class RoutingCase {
         this.requestedAt = Objects.requireNonNull(requestedAt, "requestedAt");
         this.quotationExpiresAt = quotationExpiresAt;
         this.requestedBy = requestedBy;
+        this.shipperCompanyId = Objects.requireNonNull(shipperCompanyId, "shipperCompanyId");
         this.routeVersions = new ArrayList<>(validated(routeVersions));
         this.aggregateVersion = aggregateVersion;
     }
 
     /**
      * 詳細経路設計の依頼を受けて案件を作る（経路版 1 は作成中）。同じ輸送要求版の案件がないことは、アプリケーションサービスが
-     * 確かめ、リポジトリの一意制約が最後に守る（R-INV-10）。見積有効期限と依頼者は DE-16 の値の写し（Bolt 19）。
+     * 確かめ、リポジトリの一意制約が最後に守る（R-INV-10）。見積有効期限と依頼者は DE-16 の値の写し（Bolt 19）。荷主企業は見積りの
+     * 公開 API の値の写しで、必ず持つ（Bolt 38g）。
      */
     @SuppressWarnings("java:S107") // 依頼と経路条件の値をすべて受け取る
     public static RoutingCase open(
@@ -112,7 +118,8 @@ public final class RoutingCase {
             RouteSpecification specification,
             UtcInstant requestedAt,
             UtcInstant quotationExpiresAt,
-            UUID requestedBy) {
+            UUID requestedBy,
+            CompanyId shipperCompanyId) {
         return new RoutingCase(
                 id,
                 number,
@@ -125,6 +132,7 @@ public final class RoutingCase {
                 requestedAt,
                 Objects.requireNonNull(quotationExpiresAt, "quotationExpiresAt"),
                 Objects.requireNonNull(requestedBy, "requestedBy"),
+                shipperCompanyId,
                 List.of(RouteVersion.draft(1)),
                 INITIAL_AGGREGATE_VERSION);
     }
@@ -145,6 +153,7 @@ public final class RoutingCase {
             UtcInstant requestedAt,
             UtcInstant quotationExpiresAt,
             UUID requestedBy,
+            CompanyId shipperCompanyId,
             List<RouteVersion> routeVersions,
             long aggregateVersion) {
         return new RoutingCase(
@@ -159,6 +168,7 @@ public final class RoutingCase {
                 requestedAt,
                 quotationExpiresAt,
                 requestedBy,
+                shipperCompanyId,
                 routeVersions,
                 aggregateVersion);
     }
@@ -455,6 +465,11 @@ public final class RoutingCase {
     /** 詳細経路設計を依頼した荷主担当者の利用者 ID（DE-16 の写し。Bolt 19 より前に作った案件にはない）。 */
     public Optional<UUID> requestedBy() {
         return Optional.ofNullable(requestedBy);
+    }
+
+    /** 荷主企業（見積りの公開 API の写し。社内の画面を担当企業で絞るのに使う。Bolt 38g）。 */
+    public CompanyId shipperCompanyId() {
+        return shipperCompanyId;
     }
 
     /** いまの（最新の）経路版。 */

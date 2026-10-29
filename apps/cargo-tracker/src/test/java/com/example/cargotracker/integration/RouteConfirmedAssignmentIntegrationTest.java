@@ -78,6 +78,9 @@ class RouteConfirmedAssignmentIntegrationTest {
 
     private static final UserId SHIPPER_USER = new UserId(UUID.randomUUID());
     private static final UserId ROUTE_DESIGNER = new UserId(UUID.randomUUID());
+    /** 提出する荷主企業を担当する経路設計者（Bolt 38g）。 */
+    private static final AuthenticatedActor DESIGNER =
+            AuthenticatedActorFixture.routeDesignerHandling(ROUTE_DESIGNER, SHIPPER_COMPANY);
     /** 本予約を確定する営業担当者（荷主企業を担当する。Bolt 38f2）。 */
     private static final AuthenticatedActor SALES =
             AuthenticatedActorFixture.salesHandling(new UserId(UUID.randomUUID()), SHIPPER_COMPANY);
@@ -137,7 +140,7 @@ class RouteConfirmedAssignmentIntegrationTest {
         quotationResponseService.requestRouteDesign(new RequestRouteDesignCommand(number, 1, shipper, SHIPPER_USER));
         RoutingCaseNumber caseNumber = await().atMost(TIMEOUT)
                 .until(
-                        () -> routingCaseQueryService.listCases().stream()
+                        () -> routingCaseQueryService.listCases(DESIGNER).stream()
                                 .filter(summary ->
                                         summary.transportRequestNumber().equals(number.text()))
                                 .map(RoutingCaseSummary::number)
@@ -147,11 +150,19 @@ class RouteConfirmedAssignmentIntegrationTest {
         String voyageNumber = directVoyage();
 
         assertThat(routingCaseCommandService.calculateCandidates(
-                        new CalculateCandidatesCommand(caseNumber, aggregateVersion(caseNumber), ROUTE_DESIGNER)))
+                        new CalculateCandidatesCommand(caseNumber, aggregateVersion(caseNumber), ROUTE_DESIGNER),
+                        DESIGNER))
                 .isInstanceOf(CandidateCalculationOutcome.Calculated.class);
         int candidateNo = candidateOf(caseNumber, voyageNumber);
-        assertThat(routingCaseCommandService.confirm(new ConfirmRouteCommand(
-                        caseNumber, candidateNo, "直行で期限まで 3 日ある。", aggregateVersion(caseNumber), ROUTE_DESIGNER, true)))
+        assertThat(routingCaseCommandService.confirm(
+                        new ConfirmRouteCommand(
+                                caseNumber,
+                                candidateNo,
+                                "直行で期限まで 3 日ある。",
+                                aggregateVersion(caseNumber),
+                                ROUTE_DESIGNER,
+                                true),
+                        DESIGNER))
                 .isInstanceOf(RouteConfirmationOutcome.Confirmed.class);
 
         await().atMost(TIMEOUT)

@@ -6,12 +6,14 @@ import com.example.cargotracker.routing.domain.model.aggregates.RoutingCase;
 import com.example.cargotracker.routing.domain.model.aggregates.RoutingCaseRepository;
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseNumber;
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseSummary;
+import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -64,8 +66,9 @@ public class InMemoryRoutingCaseRepository implements RoutingCaseRepository {
     }
 
     @Override
-    public List<RoutingCaseSummary> findSummaries() {
+    public List<RoutingCaseSummary> findSummaries(Set<CompanyId> shipperCompanyIds) {
         return store.values().stream()
+                .filter(found -> shipperCompanyIds.contains(found.shipperCompanyId()))
                 .sorted(Comparator.comparing((RoutingCase found) -> found.quotationExpiresAt()
                                 .map(UtcInstant::instant)
                                 .orElse(Instant.MAX))
@@ -106,6 +109,7 @@ public class InMemoryRoutingCaseRepository implements RoutingCaseRepository {
                 source.requestedAt(),
                 source.quotationExpiresAt().orElse(null),
                 source.requestedBy().orElse(null),
+                source.shipperCompanyId(),
                 source.routeVersions(),
                 version);
     }

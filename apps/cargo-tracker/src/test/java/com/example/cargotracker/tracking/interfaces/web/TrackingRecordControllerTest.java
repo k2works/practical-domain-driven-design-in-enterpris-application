@@ -3,6 +3,8 @@ package com.example.cargotracker.tracking.interfaces.web;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.matchesPattern;
 import static org.hamcrest.Matchers.not;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -60,6 +62,9 @@ class TrackingRecordControllerTest {
     @MockitoBean
     TrackingRecordCommandService commandService;
 
+    @MockitoBean
+    TrackingOutOfScopeResponder outOfScope;
+
     private static TrackingRecordSummary summary(String trackingNumber, TrackingStatus status) {
         return new TrackingRecordSummary(
                 new TrackingNumber(trackingNumber),
@@ -94,7 +99,7 @@ class TrackingRecordControllerTest {
 
     @Test
     void 追跡一覧に追跡番号と現在状態と当初の到着予定と追跡の開始時刻を新しい順に示す() throws Exception {
-        given(queryService.recent())
+        given(queryService.recent(any()))
                 .willReturn(new RecentTrackingRecords(
                         List.of(
                                 summary("CTBBBBBBBBBBBB", TrackingStatus.PICKUP_SCHEDULED),
@@ -122,7 +127,7 @@ class TrackingRecordControllerTest {
 
     @Test
     void 追跡記録がなければまだないと示し表を出さない() throws Exception {
-        given(queryService.recent()).willReturn(new RecentTrackingRecords(List.of(), false, 50));
+        given(queryService.recent(any())).willReturn(new RecentTrackingRecords(List.of(), false, 50));
 
         mockMvc.perform(get(LIST))
                 .andExpect(status().isOk())
@@ -132,7 +137,7 @@ class TrackingRecordControllerTest {
 
     @Test
     void 上限を超えたら新しい件数だけを示していると示す() throws Exception {
-        given(queryService.recent())
+        given(queryService.recent(any()))
                 .willReturn(new RecentTrackingRecords(
                         List.of(summary("CTABCDEFGH2345", TrackingStatus.PICKUP_SCHEDULED)), true, 50));
 
@@ -156,9 +161,10 @@ class TrackingRecordControllerTest {
         "UNDER_REVIEW, 確認中"
     })
     void 追跡状態は表示名で示す(TrackingStatus status, String displayName) throws Exception {
-        given(queryService.recent())
+        given(queryService.recent(any()))
                 .willReturn(new RecentTrackingRecords(List.of(summary("CTABCDEFGH2345", status)), false, 50));
-        given(queryService.detail(TrackingFixture.TRACKING_NUMBER)).willReturn(Optional.of(trackingRecord(status)));
+        given(queryService.detail(eq(TrackingFixture.TRACKING_NUMBER), any()))
+                .willReturn(Optional.of(trackingRecord(status)));
 
         mockMvc.perform(get(LIST)).andExpect(content().string(containsString("<td>" + displayName + "</td>")));
         mockMvc.perform(get(DETAIL))
@@ -177,7 +183,7 @@ class TrackingRecordControllerTest {
 
     @Test
     void 追跡の詳細に現在状態と到着予定と経路版と予定区間と主要実績がまだないことを示す() throws Exception {
-        given(queryService.detail(TrackingFixture.TRACKING_NUMBER))
+        given(queryService.detail(eq(TrackingFixture.TRACKING_NUMBER), any()))
                 .willReturn(Optional.of(trackingRecord(TrackingStatus.PICKUP_SCHEDULED)));
 
         mockMvc.perform(get(DETAIL))
@@ -229,7 +235,7 @@ class TrackingRecordControllerTest {
     @Test
     void 主要実績を発生時刻の順のリストで種類と場所と発生時刻と出典と状態とともに示す() throws Exception {
         // 実績 2 は実績 1 より前に起きた（登録の順と発生時刻の順が違う）
-        given(queryService.detail(TrackingFixture.TRACKING_NUMBER))
+        given(queryService.detail(eq(TrackingFixture.TRACKING_NUMBER), any()))
                 .willReturn(Optional.of(trackingRecord(
                         TrackingStatus.RECEIVED_AT_ORIGIN,
                         List.of(
@@ -267,7 +273,7 @@ class TrackingRecordControllerTest {
 
     @Test
     void 発生時刻が同じ主要実績は実績番号の順に示す() throws Exception {
-        given(queryService.detail(TrackingFixture.TRACKING_NUMBER))
+        given(queryService.detail(eq(TrackingFixture.TRACKING_NUMBER), any()))
                 .willReturn(Optional.of(trackingRecord(
                         TrackingStatus.RECEIVED_AT_ORIGIN,
                         List.of(
@@ -293,7 +299,7 @@ class TrackingRecordControllerTest {
 
     @Test
     void 登録の結果と既存の実績へのリンクを状態の通知として示す() throws Exception {
-        given(queryService.detail(TrackingFixture.TRACKING_NUMBER))
+        given(queryService.detail(eq(TrackingFixture.TRACKING_NUMBER), any()))
                 .willReturn(Optional.of(trackingRecord(TrackingStatus.PICKUP_SCHEDULED)));
 
         mockMvc.perform(get(DETAIL)
@@ -308,7 +314,7 @@ class TrackingRecordControllerTest {
 
     @Test
     void 競合を警告として示す() throws Exception {
-        given(queryService.detail(TrackingFixture.TRACKING_NUMBER))
+        given(queryService.detail(eq(TrackingFixture.TRACKING_NUMBER), any()))
                 .willReturn(Optional.of(trackingRecord(TrackingStatus.PICKUP_SCHEDULED)));
 
         mockMvc.perform(get(DETAIL).flashAttr("problem", "ほかの追跡管理者が先にこの追跡記録を更新しました。"))
@@ -339,7 +345,7 @@ class TrackingRecordControllerTest {
 
     @Test
     void ない追跡番号の追跡の詳細は404() throws Exception {
-        given(queryService.detail(TrackingFixture.TRACKING_NUMBER)).willReturn(Optional.empty());
+        given(queryService.detail(eq(TrackingFixture.TRACKING_NUMBER), any())).willReturn(Optional.empty());
 
         mockMvc.perform(get(DETAIL)).andExpect(status().isNotFound());
     }

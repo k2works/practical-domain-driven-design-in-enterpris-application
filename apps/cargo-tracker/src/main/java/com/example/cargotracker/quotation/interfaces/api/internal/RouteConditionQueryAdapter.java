@@ -30,7 +30,8 @@ public class RouteConditionQueryAdapter implements RouteConditionQuery {
                     terms.origin(),
                     terms.destination(),
                     terms.arrivalDeadline(),
-                    terms.cargo().category().name());
+                    terms.cargo().category().name(),
+                    request.shipperCompanyId());
         });
     }
 }

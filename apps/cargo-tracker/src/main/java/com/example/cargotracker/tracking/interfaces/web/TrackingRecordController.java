@@ -35,6 +35,10 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
  * （確認中・鮮度超過・訂正承認待ち）は W7 以後、訂正は US-13。
  *
  * <p>S-13 はコマンドサービスの結果を文言と行き先に変えるだけで、業務の判定（同じ出典・未来の発生時刻）を持たない。
+ *
+ * <p>Bolt 38g（US-16 AC4）から、追跡管理者の担当企業の追跡記録だけを扱う。範囲の外は存在しない追跡記録と同じく 404 にし、マイルストーンの
+ * 登録（POST）の範囲の外だけを試行として記録する（{@link TrackingOutOfScopeResponder}。SEC-12、ADR-019）。登録の POST は入力の変換より先に
+ * ロックしない照会で範囲を確かめる（束縛の誤りは BindingResult が受けるので、範囲の外なら値によらず 404 と記録）。
  */
 @Controller
 @RequestMapping("/staff/tracking-records")
@@ -60,18 +64,24 @@ public class TrackingRecordController {
     private final TrackingRecordQueryService queryService;
     private final TrackingRecordCommandService commandService;
     private final Clock clock;
+    private final TrackingOutOfScopeResponder outOfScope;
 
     public TrackingRecordController(
-            TrackingRecordQueryService queryService, TrackingRecordCommandService commandService, Clock clock) {
+            TrackingRecordQueryService queryService,
+            TrackingRecordCommandService commandService,
+            Clock clock,
+            TrackingOutOfScopeResponder outOfScope) {
         this.queryService = queryService;
         this.commandService = commandService;
         this.clock = clock;
+        this.outOfScope = outOfScope;
     }
 
-    /** 追跡一覧（S-11 の最小の表示）。追跡記録を追跡の開始時刻の新しい順に上限まで示し、追跡番号から S-12 を開ける。 */
+    /** 追跡一覧（S-11 の最小の表示）。担当企業の追跡記録を追跡の開始時刻の新しい順に上限まで示し、追跡番号から S-12 を開ける。 */
     @GetMapping
-    public String list(Model model) {
-        RecentTrackingRecords recent = queryService.recent();
+    public String list(AuthenticatedActor actor, Model model) {
+        RecentTrackingRecords recent = queryService.recent(actor);
+        model.addAttribute("noAssignedCompanies", actor.hasNoAssignedCompanies());
         model.addAttribute("trackingRecords", TrackingRecordViews.list(recent));
         model.addAttribute("truncated", recent.truncated());
         model.addAttribute("limit", recent.limit());
@@ -80,15 +90,15 @@ public class TrackingRecordController {
 
     /** 追跡の詳細（S-12）。形式の誤った追跡番号は、ない追跡番号と同じく 404 にする。 */
     @GetMapping("/{trackingNumber}")
-    public String detail(@PathVariable String trackingNumber, Model model) {
-        model.addAttribute("trackingRecord", TrackingRecordViews.detail(found(trackingNumber)));
+    public String detail(@PathVariable String trackingNumber, AuthenticatedActor actor, Model model) {
+        model.addAttribute("trackingRecord", TrackingRecordViews.detail(found(trackingNumber, actor)));
         return DETAIL_VIEW;
     }
 
     /** 主要実績の登録（S-13）。画面を開いたときの追跡記録の版を隠し項目に入れる（競合の検出）。 */
     @GetMapping("/{trackingNumber}/milestones/new")
-    public String newMilestone(@PathVariable String trackingNumber, Model model) {
-        TrackingRecord trackingRecord = found(trackingNumber);
+    public String newMilestone(@PathVariable String trackingNumber, AuthenticatedActor actor, Model model) {
+        TrackingRecord trackingRecord = found(trackingNumber, actor);
         MilestoneForm form = new MilestoneForm();
         form.setExpectedVersion(trackingRecord.aggregateVersion());
         return milestoneForm(trackingRecord.trackingNumber(), form, model);
@@ -108,13 +118,15 @@ public class TrackingRecordController {
             RedirectAttributes redirectAttributes) {
         TrackingNumber number =
                 TrackingRecordViews.parseTrackingNumber(trackingNumber).orElseThrow(this::notFound);
+        // 範囲の判定は入力の変換より先（Bolt 38g の行 4。範囲の外なら値の誤りによらず 404 と記録）
+        rejectOutOfScope(number, actor);
         Optional<RegisterMilestoneCommand> converted = MilestoneFormConverter.convert(
                 form, number, actor.userId(), new UtcInstant(clock.instant()), bindingResult);
         if (converted.isEmpty()) {
             return milestoneForm(number, form, model);
         }
         RegisterMilestoneCommand command = converted.get();
-        switch (commandService.registerMilestone(command)) {
+        switch (commandService.registerMilestone(command, actor)) {
             case MilestoneRegistrationOutcome.Registered(int milestoneNo, TrackingStatus currentStatus) ->
                 // 導出し直した現在状態も示す（AC1 の「現在状態が再評価される」を利用者に伝える）
                 redirectAttributes.addFlashAttribute(
@@ -136,6 +148,7 @@ public class TrackingRecordController {
                 return milestoneForm(number, form, model);
             }
             case MilestoneRegistrationOutcome.NotFound _ -> throw notFound();
+            case MilestoneRegistrationOutcome.OutOfScope _ -> throw recordOutOfScope(number, actor);
         }
         // 行き先の追跡番号はパスの変数から展開する（S-12）
         return "redirect:/staff/tracking-records/{trackingNumber}";
@@ -172,10 +185,21 @@ public class TrackingRecordController {
                 .toList();
     }
 
-    private TrackingRecord found(String trackingNumber) {
+    private TrackingRecord found(String trackingNumber, AuthenticatedActor actor) {
         return TrackingRecordViews.parseTrackingNumber(trackingNumber)
-                .flatMap(queryService::detail)
+                .flatMap(number -> queryService.detail(number, actor))
                 .orElseThrow(this::notFound);
+    }
+
+    /** 状態を変える POST の前の確かめ。範囲の外なら試行を記録して 404（値の解釈より先。Bolt 38g の行 4）。 */
+    private void rejectOutOfScope(TrackingNumber number, AuthenticatedActor actor) {
+        if (queryService.outOfScope(number, actor)) {
+            throw recordOutOfScope(number, actor);
+        }
+    }
+
+    private ResponseStatusException recordOutOfScope(TrackingNumber number, AuthenticatedActor actor) {
+        return outOfScope.recordAndNotFound(actor, number.value());
     }
 
     private ResponseStatusException notFound() {

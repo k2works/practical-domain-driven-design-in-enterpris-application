@@ -1,6 +1,7 @@
 package com.example.cargotracker.routing.application.internal.outboundservices.acl;
 
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteSpecification;
+import com.example.cargotracker.shared.domain.CompanyId;
 import java.util.Objects;
 
 /**
@@ -8,11 +9,14 @@ import java.util.Objects;
  *
  * @param transportRequestNumber 業務番号の表記
  * @param specification 経路条件
+ * @param shipperCompanyId 荷主企業（案件に写し、社内の画面を担当企業で絞るのに使う。Bolt 38g）
  */
-public record RoutingCaseConditions(String transportRequestNumber, RouteSpecification specification) {
+public record RoutingCaseConditions(
+        String transportRequestNumber, RouteSpecification specification, CompanyId shipperCompanyId) {
 
     public RoutingCaseConditions {
         Objects.requireNonNull(transportRequestNumber, "transportRequestNumber");
         Objects.requireNonNull(specification, "specification");
+        Objects.requireNonNull(shipperCompanyId, "shipperCompanyId");
     }
 }

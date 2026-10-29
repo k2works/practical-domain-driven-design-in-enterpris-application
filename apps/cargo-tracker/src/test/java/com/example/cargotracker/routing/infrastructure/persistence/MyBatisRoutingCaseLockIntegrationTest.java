@@ -10,6 +10,7 @@ import com.example.cargotracker.routing.domain.model.valueobjects.RouteSpecifica
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseId;
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseNumber;
 import com.example.cargotracker.shared.OverlappingTransactions;
+import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Instant;
@@ -116,7 +117,8 @@ class MyBatisRoutingCaseLockIntegrationTest {
                         new Location("JPTYO"), new Location("NLRTM"), at("2095-11-02T00:00:00Z"), "GENERAL"),
                 at("2095-10-06T02:00:00Z"),
                 at("2095-10-08T09:00:00Z"),
-                UUID.randomUUID());
+                UUID.randomUUID(),
+                new CompanyId(UUID.randomUUID()));
     }
 
     private static UtcInstant at(String instant) {

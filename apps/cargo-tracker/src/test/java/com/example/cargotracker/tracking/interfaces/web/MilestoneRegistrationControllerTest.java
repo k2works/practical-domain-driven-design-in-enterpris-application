@@ -4,8 +4,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -40,15 +42,18 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.HttpStatus;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+import org.springframework.web.server.ResponseStatusException;
 
 /** S-13 主要実績の登録（追跡管理者。US-12 AC1・AC2。Bolt 26c）。 */
 // 画面の単体テストはコントローラーの振る舞いだけを見る。認証・認可はセキュリティの統合テストで確かめる（Bolt 14）
@@ -81,9 +86,13 @@ class MilestoneRegistrationControllerTest {
     @MockitoBean
     TrackingRecordCommandService commandService;
 
+    @MockitoBean
+    TrackingOutOfScopeResponder outOfScope;
+
     @BeforeEach
     void 追跡記録がある() {
-        given(queryService.detail(TrackingFixture.TRACKING_NUMBER)).willReturn(Optional.of(trackingRecord(3)));
+        given(queryService.detail(eq(TrackingFixture.TRACKING_NUMBER), any()))
+                .willReturn(Optional.of(trackingRecord(3)));
     }
 
     private static TrackingRecord trackingRecord(long version) {
@@ -183,7 +192,7 @@ class MilestoneRegistrationControllerTest {
 
     @Test
     void ない追跡番号の登録の画面は404() throws Exception {
-        given(queryService.detail(TrackingFixture.TRACKING_NUMBER)).willReturn(Optional.empty());
+        given(queryService.detail(eq(TrackingFixture.TRACKING_NUMBER), any())).willReturn(Optional.empty());
 
         mockMvc.perform(get(FORM)).andExpect(status().isNotFound());
     }
@@ -194,11 +203,52 @@ class MilestoneRegistrationControllerTest {
                 .andExpect(status().isNotFound());
     }
 
+    // 担当範囲（Bolt 38g）
+
+    @Test
+    void 範囲の外の追跡記録への登録は入力の変換とコマンドの前に記録して404() throws Exception {
+        // 行 3b・4（数でない版でも範囲の判定が先）
+        given(queryService.outOfScope(eq(TrackingFixture.TRACKING_NUMBER), any()))
+                .willReturn(true);
+        given(outOfScope.recordAndNotFound(any(), eq(TrackingFixture.TRACKING_NUMBER.value())))
+                .willReturn(new ResponseStatusException(HttpStatus.NOT_FOUND));
+
+        mockMvc.perform(registration("expectedVersion", "abc")).andExpect(status().isNotFound());
+
+        then(outOfScope).should().recordAndNotFound(any(), eq(TrackingFixture.TRACKING_NUMBER.value()));
+        then(commandService).should(never()).registerMilestone(any(), any());
+    }
+
+    @Test
+    void 登録の途中で範囲の外になったら記録して404() throws Exception {
+        // 行 5c
+        given(commandService.registerMilestone(any(), any())).willReturn(new MilestoneRegistrationOutcome.OutOfScope());
+        given(outOfScope.recordAndNotFound(any(), eq(TrackingFixture.TRACKING_NUMBER.value())))
+                .willReturn(new ResponseStatusException(HttpStatus.NOT_FOUND));
+
+        mockMvc.perform(validRegistration()).andExpect(status().isNotFound());
+
+        InOrder order = inOrder(queryService, commandService, outOfScope);
+        order.verify(queryService).outOfScope(eq(TrackingFixture.TRACKING_NUMBER), any());
+        order.verify(commandService).registerMilestone(any(), any());
+        order.verify(outOfScope).recordAndNotFound(any(), eq(TrackingFixture.TRACKING_NUMBER.value()));
+    }
+
+    @Test
+    void 範囲の外の登録の画面は記録せずに404() throws Exception {
+        // 行 2b（GET は記録しない。SEC-12）
+        given(queryService.detail(eq(TrackingFixture.TRACKING_NUMBER), any())).willReturn(Optional.empty());
+
+        mockMvc.perform(get(FORM)).andExpect(status().isNotFound());
+
+        then(outOfScope).should(never()).recordAndNotFound(any(), any());
+    }
+
     // 登録（POST）
 
     @Test
     void 登録すると入力を整えたコマンドを渡し追跡の詳細へ戻って登録した実績を示す() throws Exception {
-        given(commandService.registerMilestone(any()))
+        given(commandService.registerMilestone(any(), any()))
                 .willReturn(new MilestoneRegistrationOutcome.Registered(1, TrackingStatus.PICKED_UP));
 
         mockMvc.perform(validRegistration())
@@ -207,7 +257,7 @@ class MilestoneRegistrationControllerTest {
                 .andExpect(flash().attribute("result", "実績 1 を登録しました。現在状態は「集荷済み」です。"));
 
         ArgumentCaptor<RegisterMilestoneCommand> captor = ArgumentCaptor.forClass(RegisterMilestoneCommand.class);
-        then(commandService).should().registerMilestone(captor.capture());
+        then(commandService).should().registerMilestone(captor.capture(), any());
         RegisterMilestoneCommand command = captor.getValue();
         assertThat(command.trackingNumber()).isEqualTo(TrackingFixture.TRACKING_NUMBER);
         assertThat(command.expectedVersion()).isEqualTo(3);
@@ -223,7 +273,7 @@ class MilestoneRegistrationControllerTest {
 
     @Test
     void 同じ出典の実績があれば追跡の詳細へ戻り既存の実績を結果として示しその実績へのリンクを添える() throws Exception {
-        given(commandService.registerMilestone(any()))
+        given(commandService.registerMilestone(any(), any()))
                 .willReturn(new MilestoneRegistrationOutcome.AlreadyRegistered(1));
 
         mockMvc.perform(validRegistration())
@@ -235,7 +285,7 @@ class MilestoneRegistrationControllerTest {
 
     @Test
     void 画面を開いた後にほかの追跡管理者が更新していたら追跡の詳細へ戻り最新を確かめるよう示す() throws Exception {
-        given(commandService.registerMilestone(any())).willReturn(new MilestoneRegistrationOutcome.Conflict());
+        given(commandService.registerMilestone(any(), any())).willReturn(new MilestoneRegistrationOutcome.Conflict());
 
         mockMvc.perform(validRegistration())
                 .andExpect(redirectedUrl(DETAIL))
@@ -244,7 +294,7 @@ class MilestoneRegistrationControllerTest {
 
     @Test
     void 発生時刻が未来なら登録の画面に発生時刻の誤りを示し入力した値を残す() throws Exception {
-        given(commandService.registerMilestone(any()))
+        given(commandService.registerMilestone(any(), any()))
                 .willReturn(new MilestoneRegistrationOutcome.Rejected(MilestoneRejectionReason.OCCURRED_IN_FUTURE));
 
         mockMvc.perform(validRegistration())
@@ -260,12 +310,12 @@ class MilestoneRegistrationControllerTest {
         mockMvc.perform(post("/staff/tracking-records/not-a-tracking-number/milestones"))
                 .andExpect(status().isNotFound());
 
-        then(commandService).should(never()).registerMilestone(any());
+        then(commandService).should(never()).registerMilestone(any(), any());
     }
 
     @Test
     void 追跡記録がなければ404() throws Exception {
-        given(commandService.registerMilestone(any())).willReturn(new MilestoneRegistrationOutcome.NotFound());
+        given(commandService.registerMilestone(any(), any())).willReturn(new MilestoneRegistrationOutcome.NotFound());
 
         mockMvc.perform(validRegistration()).andExpect(status().isNotFound());
     }
@@ -283,7 +333,7 @@ class MilestoneRegistrationControllerTest {
                 .andExpect(content().string(containsString("href=\"#sourceKind\">出典の種類: 選択肢から選んでください")))
                 .andExpect(content().string(containsString("href=\"#sourceReference\">出典の参照: 入力してください")));
 
-        then(commandService).should(never()).registerMilestone(any());
+        then(commandService).should(never()).registerMilestone(any(), any());
     }
 
     @ParameterizedTest
@@ -299,12 +349,12 @@ class MilestoneRegistrationControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString(message)));
 
-        then(commandService).should(never()).registerMilestone(any());
+        then(commandService).should(never()).registerMilestone(any(), any());
     }
 
     @Test
     void 出典の参照は200文字まで受け付ける() throws Exception {
-        given(commandService.registerMilestone(any()))
+        given(commandService.registerMilestone(any(), any()))
                 .willReturn(new MilestoneRegistrationOutcome.Registered(1, TrackingStatus.PICKED_UP));
 
         mockMvc.perform(registration("sourceReference", "a".repeat(200))).andExpect(redirectedUrl(DETAIL));
@@ -316,7 +366,7 @@ class MilestoneRegistrationControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("出典の参照: 200 文字までで入力してください")));
 
-        then(commandService).should(never()).registerMilestone(any());
+        then(commandService).should(never()).registerMilestone(any(), any());
     }
 
     @Test
@@ -325,6 +375,6 @@ class MilestoneRegistrationControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("出典の参照: 入力してください")));
 
-        then(commandService).should(never()).registerMilestone(any());
+        then(commandService).should(never()).registerMilestone(any(), any());
     }
 }

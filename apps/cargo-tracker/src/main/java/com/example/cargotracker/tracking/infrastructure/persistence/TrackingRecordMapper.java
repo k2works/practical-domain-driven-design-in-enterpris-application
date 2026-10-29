@@ -1,6 +1,7 @@
 package com.example.cargotracker.tracking.infrastructure.persistence;
 
 import java.time.OffsetDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -42,8 +43,9 @@ public interface TrackingRecordMapper {
     List<TrackingRecordSummaryRow> findRecentSummariesByShipper(
             @Param("shipperCompanyId") UUID shipperCompanyId, @Param("limit") int limit);
 
-    /** S-11 追跡一覧（Bolt 26）。追跡の開始時刻の新しい順（同じ時刻なら追跡番号の順）に上限まで。 */
-    List<TrackingRecordSummaryRow> findRecentSummaries(@Param("limit") int limit);
+    /** S-11 追跡一覧（Bolt 26）。荷主企業の集合（担当企業。Bolt 38g）で絞り、追跡の開始時刻の新しい順（同じ時刻なら追跡番号の順）に上限まで。 */
+    List<TrackingRecordSummaryRow> findRecentSummaries(
+            @Param("shipperCompanyIds") Collection<UUID> shipperCompanyIds, @Param("limit") int limit);
 
     List<ScheduledLegRow> findScheduledLegs(@Param("trackingNumber") String trackingNumber);
 }

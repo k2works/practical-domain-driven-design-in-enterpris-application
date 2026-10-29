@@ -9,6 +9,9 @@ import static com.example.cargotracker.tracking.domain.model.TrackingFixture.at;
 import static com.example.cargotracker.tracking.domain.model.TrackingFixture.schedule;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.example.cargotracker.shared.domain.AuthenticatedActor;
+import com.example.cargotracker.shared.domain.AuthenticatedActorFixture;
+import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.Source;
 import com.example.cargotracker.shared.domain.SourceKind;
@@ -16,6 +19,7 @@ import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import com.example.cargotracker.tracking.acceptance.InMemoryTrackingRecordRepository;
 import com.example.cargotracker.tracking.application.internal.commands.RegisterMilestoneCommand;
+import com.example.cargotracker.tracking.application.internal.queryservices.TrackingRecordScope;
 import com.example.cargotracker.tracking.domain.model.aggregates.ConcurrentTrackingRecordUpdateException;
 import com.example.cargotracker.tracking.domain.model.aggregates.TrackingRecord;
 import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneKind;
@@ -36,8 +40,15 @@ class TrackingRecordCommandServiceTest {
     private static final Instant NOW = Instant.parse("2026-11-01T03:00:00Z");
 
     private final InMemoryTrackingRecordRepository repository = new InMemoryTrackingRecordRepository();
-    private final TrackingRecordCommandService service =
-            new TrackingRecordCommandService(repository, Clock.fixed(NOW, ZoneOffset.UTC));
+    /** 追跡記録の荷主企業を担当する追跡管理者（Bolt 38g）。 */
+    private static final AuthenticatedActor MANAGER =
+            AuthenticatedActorFixture.trackingManagerHandling(REGISTRANT, SHIPPER);
+    /** 担当企業の外の追跡管理者（Bolt 38g）。 */
+    private static final AuthenticatedActor OUTSIDER =
+            AuthenticatedActorFixture.trackingManagerHandling(REGISTRANT, new CompanyId(UUID.randomUUID()));
+
+    private final TrackingRecordCommandService service = new TrackingRecordCommandService(
+            repository, Clock.fixed(NOW, ZoneOffset.UTC), new TrackingRecordScope(repository));
 
     @BeforeEach
     void 追跡を開始した追跡記録がある() {
@@ -47,7 +58,8 @@ class TrackingRecordCommandServiceTest {
 
     @Test
     void 登録すると保存して登録した実績番号と導出し直した現在状態を返し版を1増やす() {
-        MilestoneRegistrationOutcome outcome = service.registerMilestone(command(0, "F-118", "2026-11-01T02:30:00Z"));
+        MilestoneRegistrationOutcome outcome =
+                service.registerMilestone(command(0, "F-118", "2026-11-01T02:30:00Z"), MANAGER);
 
         assertThat(outcome).isEqualTo(new MilestoneRegistrationOutcome.Registered(1, TrackingStatus.PICKED_UP));
         TrackingRecord saved = repository.findByTrackingNumber(TRACKING_NUMBER).orElseThrow();
@@ -59,9 +71,10 @@ class TrackingRecordCommandServiceTest {
 
     @Test
     void 同じ出典の2件目は既存の実績番号を返し保存しない() {
-        service.registerMilestone(command(0, "F-118", "2026-11-01T02:30:00Z"));
+        service.registerMilestone(command(0, "F-118", "2026-11-01T02:30:00Z"), MANAGER);
 
-        MilestoneRegistrationOutcome outcome = service.registerMilestone(command(1, "F-118", "2026-11-01T02:30:00Z"));
+        MilestoneRegistrationOutcome outcome =
+                service.registerMilestone(command(1, "F-118", "2026-11-01T02:30:00Z"), MANAGER);
 
         assertThat(outcome).isEqualTo(new MilestoneRegistrationOutcome.AlreadyRegistered(1));
         TrackingRecord saved = repository.findByTrackingNumber(TRACKING_NUMBER).orElseThrow();
@@ -71,17 +84,19 @@ class TrackingRecordCommandServiceTest {
 
     @Test
     void 画面を開いた後に別の登録が先に保存されていても同じ出典なら既存の実績番号を返す() {
-        service.registerMilestone(command(0, "F-118", "2026-11-01T02:30:00Z"));
+        service.registerMilestone(command(0, "F-118", "2026-11-01T02:30:00Z"), MANAGER);
 
         // 同じ画面からの二重送信（画面を開いたときの版 0 のまま）
-        MilestoneRegistrationOutcome outcome = service.registerMilestone(command(0, "F-118", "2026-11-01T02:30:00Z"));
+        MilestoneRegistrationOutcome outcome =
+                service.registerMilestone(command(0, "F-118", "2026-11-01T02:30:00Z"), MANAGER);
 
         assertThat(outcome).isEqualTo(new MilestoneRegistrationOutcome.AlreadyRegistered(1));
     }
 
     @Test
     void 画面を開いたときの版と違えば競合にして保存しない() {
-        MilestoneRegistrationOutcome outcome = service.registerMilestone(command(7, "F-118", "2026-11-01T02:30:00Z"));
+        MilestoneRegistrationOutcome outcome =
+                service.registerMilestone(command(7, "F-118", "2026-11-01T02:30:00Z"), MANAGER);
 
         assertThat(outcome).isEqualTo(new MilestoneRegistrationOutcome.Conflict());
         assertThat(repository
@@ -93,23 +108,22 @@ class TrackingRecordCommandServiceTest {
 
     @Test
     void 保存のときに楽観ロックの競合が起きたら競合にする() {
+        InMemoryTrackingRecordRepository failing = new InMemoryTrackingRecordRepository() {
+            @Override
+            public void update(TrackingRecord trackingRecord) {
+                throw new ConcurrentTrackingRecordUpdateException(
+                        trackingRecord.trackingNumber(), trackingRecord.aggregateVersion());
+            }
+
+            {
+                save(TrackingRecord.start(TRACKING_NUMBER, BOOKING_ID, SHIPPER, CONSIGNEE, schedule(), STARTED_AT)
+                        .trackingRecord());
+            }
+        };
         TrackingRecordCommandService conflicting = new TrackingRecordCommandService(
-                new InMemoryTrackingRecordRepository() {
-                    @Override
-                    public void update(TrackingRecord trackingRecord) {
-                        throw new ConcurrentTrackingRecordUpdateException(
-                                trackingRecord.trackingNumber(), trackingRecord.aggregateVersion());
-                    }
+                failing, Clock.fixed(NOW, ZoneOffset.UTC), new TrackingRecordScope(failing));
 
-                    {
-                        save(TrackingRecord.start(
-                                        TRACKING_NUMBER, BOOKING_ID, SHIPPER, CONSIGNEE, schedule(), STARTED_AT)
-                                .trackingRecord());
-                    }
-                },
-                Clock.fixed(NOW, ZoneOffset.UTC));
-
-        assertThat(conflicting.registerMilestone(command(0, "F-118", "2026-11-01T02:30:00Z")))
+        assertThat(conflicting.registerMilestone(command(0, "F-118", "2026-11-01T02:30:00Z"), MANAGER))
                 .isEqualTo(new MilestoneRegistrationOutcome.Conflict());
     }
 
@@ -124,12 +138,13 @@ class TrackingRecordCommandServiceTest {
                 new Source(SourceKind.FIELD_RECORD, "F-118", new UtcInstant(NOW)),
                 REGISTRANT);
 
-        assertThat(service.registerMilestone(unknown)).isEqualTo(new MilestoneRegistrationOutcome.NotFound());
+        assertThat(service.registerMilestone(unknown, MANAGER)).isEqualTo(new MilestoneRegistrationOutcome.NotFound());
     }
 
     @Test
     void 発生時刻が登録時刻より後なら拒否の理由を返し保存しない() {
-        MilestoneRegistrationOutcome outcome = service.registerMilestone(command(0, "F-118", "2026-11-01T03:00:01Z"));
+        MilestoneRegistrationOutcome outcome =
+                service.registerMilestone(command(0, "F-118", "2026-11-01T03:00:01Z"), MANAGER);
 
         assertThat(outcome)
                 .isEqualTo(new MilestoneRegistrationOutcome.Rejected(MilestoneRejectionReason.OCCURRED_IN_FUTURE));
@@ -142,10 +157,36 @@ class TrackingRecordCommandServiceTest {
 
     @Test
     void 画面を開いたときの版と違っても発生時刻が未来なら拒否の理由を返す() {
-        MilestoneRegistrationOutcome outcome = service.registerMilestone(command(7, "F-118", "2026-11-01T03:00:01Z"));
+        MilestoneRegistrationOutcome outcome =
+                service.registerMilestone(command(7, "F-118", "2026-11-01T03:00:01Z"), MANAGER);
 
         assertThat(outcome)
                 .isEqualTo(new MilestoneRegistrationOutcome.Rejected(MilestoneRejectionReason.OCCURRED_IN_FUTURE));
+    }
+
+    @Test
+    void 範囲の外の追跡記録には登録せずに範囲外を返す() {
+        // 行 5c（画面を開いた後に割り当てが外れた）
+        assertThat(service.registerMilestone(command(0, "F-118", "2026-11-01T02:30:00Z"), OUTSIDER))
+                .isEqualTo(new MilestoneRegistrationOutcome.OutOfScope());
+        assertThat(repository
+                        .findByTrackingNumber(TRACKING_NUMBER)
+                        .orElseThrow()
+                        .milestones())
+                .isEmpty();
+    }
+
+    @Test
+    void 範囲の外では登録済みも競合も未来の発生時刻も示さず範囲外を返す() {
+        // 行 5d（範囲の判定が、登録済み・版の照合・発生時刻の判定より先。存在を漏らさない）
+        service.registerMilestone(command(0, "F-118", "2026-11-01T02:30:00Z"), MANAGER);
+
+        assertThat(service.registerMilestone(command(1, "F-118", "2026-11-01T02:30:00Z"), OUTSIDER))
+                .isEqualTo(new MilestoneRegistrationOutcome.OutOfScope());
+        assertThat(service.registerMilestone(command(0, "F-119", "2026-11-01T02:30:00Z"), OUTSIDER))
+                .isEqualTo(new MilestoneRegistrationOutcome.OutOfScope());
+        assertThat(service.registerMilestone(command(1, "F-120", "2026-11-01T03:00:01Z"), OUTSIDER))
+                .isEqualTo(new MilestoneRegistrationOutcome.OutOfScope());
     }
 
     private static RegisterMilestoneCommand command(long expectedVersion, String reference, String occurredAt) {

@@ -30,6 +30,7 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Controller;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -485,23 +486,56 @@ class LayerArchitectureTest {
     private static final String BOOKING_OUT_OF_SCOPE_RESPONDER =
             "com.example.cargotracker.booking.interfaces.web.BookingOutOfScopeResponder";
 
+    /** 担当範囲の外の試行の記録のポートを呼ぶ経路設計の部品（Bolt 38g。経路設計の社内の画面の層）。 */
+    private static final String ROUTING_OUT_OF_SCOPE_RESPONDER =
+            "com.example.cargotracker.routing.interfaces.web.RoutingOutOfScopeResponder";
+
+    /** 担当範囲の外の試行の記録のポートを呼ぶ追跡の部品（Bolt 38g。追跡の社内の画面の層）。 */
+    private static final String TRACKING_OUT_OF_SCOPE_RESPONDER =
+            "com.example.cargotracker.tracking.interfaces.web.TrackingOutOfScopeResponder";
+
+    /** 記録の部品の名前の規則（Bolt 38g の決定 (3)）。コンテキストの画面の層に置き、名前を {@code OutOfScopeResponder} で終える。 */
+    private static final String OUT_OF_SCOPE_RESPONDER_NAME =
+            "com\\.example\\.cargotracker\\..*\\.interfaces\\.web\\..*OutOfScopeResponder";
+
+    /** 名前の規則に合ってよい部品（閉じた一覧。足すときは規則の変更として人に諮る。Bolt 38g）。 */
+    private static final String OUT_OF_SCOPE_RESPONDERS = String.join(
+            "|",
+            OUT_OF_SCOPE_RESPONDER.replace(".", "\\."),
+            BOOKING_OUT_OF_SCOPE_RESPONDER.replace(".", "\\."),
+            ROUTING_OUT_OF_SCOPE_RESPONDER.replace(".", "\\."),
+            TRACKING_OUT_OF_SCOPE_RESPONDER.replace(".", "\\."));
+
     /** 担当範囲の外の試行の記録のポートの呼び出し。 */
     private static final DescribedPredicate<JavaCall<?>> OUT_OF_SCOPE_RECORDING =
             target(owner(equivalentTo(OutOfScopeAttemptRecorder.class)));
 
     /**
-     * 担当範囲の外の試行の記録のポートを呼ぶのは、画面の層のコンテキストごとの 1 つの部品だけ（Bolt 38f の決定 (10)、ADR-019、計画の行 15。
-     * 38f2 で予約の側の部品を足した）。controller やサービスが直接呼ぶと、記録の漏れ・二重の記録や、外側のトランザクションの中の呼び出し
-     * （ポートは拒む）が起きる。
+     * 担当範囲の外の試行の記録のポートを呼ぶのは、名前の規則に合う画面の層の部品だけ（Bolt 38f の決定 (10)、ADR-019。38f2 で予約の側を、
+     * 38g で経路設計と追跡の側を足し、部品の FQN の並びを名前の規則に変えた）。controller やサービスが直接呼ぶと、記録の漏れ・二重の記録や、
+     * 外側のトランザクションの中の呼び出し（ポートは拒む）が起きる。
      */
     @ArchTest
     static final ArchRule 担当範囲の外の記録のポートは画面の部品だけが呼ぶ = noClasses()
             .that()
-            .doNotHaveFullyQualifiedName(OUT_OF_SCOPE_RESPONDER)
-            .and()
-            .doNotHaveFullyQualifiedName(BOOKING_OUT_OF_SCOPE_RESPONDER)
+            .haveNameNotMatching(OUT_OF_SCOPE_RESPONDER_NAME)
             .should()
             .callMethodWhere(OUT_OF_SCOPE_RECORDING);
+
+    /**
+     * 名前の規則に合うクラスは、閉じた一覧の部品（トップレベルで {@code @Component}）だけ（Bolt 38g。名前の規則だけでは、名前を合わせた
+     * クラス（入れ子を含む）を足せば一覧が開く）。
+     */
+    @ArchTest
+    static final ArchRule 担当範囲の外の記録のポートを呼べる名前の部品は閉じた一覧のどれか = classes()
+            .that()
+            .haveNameMatching(OUT_OF_SCOPE_RESPONDER_NAME)
+            .should()
+            .haveNameMatching(OUT_OF_SCOPE_RESPONDERS)
+            .andShould()
+            .beTopLevelClasses()
+            .andShould()
+            .beAnnotatedWith(Component.class);
 
     /** 呼ぶ部品の名前と呼び出しが実在し続けることの見張り（T-135。部品ごとに 1 本。「A か B」にすると片方が無くても通る）。 */
     @ArchTest
@@ -519,13 +553,27 @@ class LayerArchitectureTest {
             .should()
             .callMethodWhere(OUT_OF_SCOPE_RECORDING);
 
+    /** 経路設計の部品の名前と呼び出しが実在し続けることの見張り（Bolt 38g。T-135）。 */
+    @ArchTest
+    static final ArchRule 担当範囲の外の記録のポートを呼ぶ経路設計の部品は経路設計の社内の画面の部品 = classes()
+            .that()
+            .haveFullyQualifiedName(ROUTING_OUT_OF_SCOPE_RESPONDER)
+            .should()
+            .callMethodWhere(OUT_OF_SCOPE_RECORDING);
+
+    /** 追跡の部品の名前と呼び出しが実在し続けることの見張り（Bolt 38g。T-135）。 */
+    @ArchTest
+    static final ArchRule 担当範囲の外の記録のポートを呼ぶ追跡の部品は追跡の社内の画面の部品 = classes()
+            .that()
+            .haveFullyQualifiedName(TRACKING_OUT_OF_SCOPE_RESPONDER)
+            .should()
+            .callMethodWhere(OUT_OF_SCOPE_RECORDING);
+
     /** ポートを呼ぶ部品はトランザクションを持たない（ポートは自分のトランザクションで書き、外側の中では拒む。決定 (4)）。 */
     @ArchTest
     static final ArchRule 担当範囲の外の記録のポートを呼ぶ部品はトランザクションを持たない = classes()
             .that()
-            .haveFullyQualifiedName(OUT_OF_SCOPE_RESPONDER)
-            .or()
-            .haveFullyQualifiedName(BOOKING_OUT_OF_SCOPE_RESPONDER)
+            .haveNameMatching(OUT_OF_SCOPE_RESPONDER_NAME)
             .should()
             .notBeAnnotatedWith(Transactional.class);
 
@@ -534,10 +582,7 @@ class LayerArchitectureTest {
     static final ArchRule 担当範囲の外の記録のポートを呼ぶ部品のメソッドはトランザクションを持たない = noMethods()
             .that()
             .areDeclaredInClassesThat()
-            .haveFullyQualifiedName(OUT_OF_SCOPE_RESPONDER)
-            .or()
-            .areDeclaredInClassesThat()
-            .haveFullyQualifiedName(BOOKING_OUT_OF_SCOPE_RESPONDER)
+            .haveNameMatching(OUT_OF_SCOPE_RESPONDER_NAME)
             .should()
             .beAnnotatedWith(Transactional.class);
 

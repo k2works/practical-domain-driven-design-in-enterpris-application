@@ -378,9 +378,7 @@ class UserAdministrationControllerTest {
         when(queryService.assignableCompanies(any())).thenReturn(permitted(NORTH, SOUTH));
 
         mockMvc.perform(get(DETAIL))
-                .andExpect(
-                        text(
-                                "<p id=\"assignments-none-note\">担当企業はまだありません。担当企業は、業務の画面で扱える企業を絞るために使います（業務の画面で効くのは、今後の更新からです）。</p>"));
+                .andExpect(text("<p id=\"assignments-none-note\">担当企業はまだありません。担当企業は、業務の画面で扱える企業を絞るために使います。</p>"));
     }
 
     @Test

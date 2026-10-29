@@ -3,6 +3,8 @@ package com.example.cargotracker.routing.application.internal.commandservices;
 import com.example.cargotracker.routing.application.internal.commands.CalculateCandidatesCommand;
 import com.example.cargotracker.routing.application.internal.commands.ConfirmRouteCommand;
 import com.example.cargotracker.routing.application.internal.commands.EvaluateConfirmedRouteCommand;
+import com.example.cargotracker.routing.application.internal.queryservices.RoutingCaseLookup;
+import com.example.cargotracker.routing.application.internal.queryservices.RoutingCaseScope;
 import com.example.cargotracker.routing.domain.events.RouteConfirmed;
 import com.example.cargotracker.routing.domain.events.RouteRedesignRequired;
 import com.example.cargotracker.routing.domain.model.aggregates.ConcurrentRoutingCaseUpdateException;
@@ -16,6 +18,7 @@ import com.example.cargotracker.routing.domain.model.rules.InfoFreshnessPolicy;
 import com.example.cargotracker.routing.domain.model.rules.RouteCandidateFinder;
 import com.example.cargotracker.routing.domain.model.valueobjects.CandidateCalculation;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteApprover;
+import com.example.cargotracker.shared.domain.AuthenticatedActor;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Clock;
 import java.util.Optional;
@@ -28,6 +31,8 @@ import org.springframework.transaction.annotation.Transactional;
  * トランザクションの境界になる。
  * 判定時刻は Clock から得る。航海と接続時間規則を読み込み、候補探索と制約適合判定に渡す（どちらもリポジトリを呼ばない）。
  * 情報鮮度の判定（許容時間は設定の値。D-89。Bolt 37b2）は組み立てから受け取る。
+ * 経路設計者の操作（候補の算出と確定）は、読み出しの直後に担当範囲を判定し（{@link RoutingCaseScope}。Bolt 38g。US-16 AC4）、範囲の外なら
+ * 何も書かずに範囲外の結果を返す。判定は版の照合より先（範囲の外の案件の版の競合を示さない）。
  *
  * <p>{@code @Service} は JIG がユースケースとして読むための印で、部品探索の対象にはしない（CargoTrackerApplication）。
  * 組み立ては {@code RoutingConfiguration} が担う。
@@ -43,30 +48,40 @@ public class RoutingCaseCommandService {
     private final RouteCandidateFinder finder = new RouteCandidateFinder();
     private final ConstraintEvaluator evaluator = new ConstraintEvaluator();
     private final InfoFreshnessPolicy freshness;
+    private final RoutingCaseScope scope;
 
+    @SuppressWarnings("java:S107") // リポジトリ・時計・判定の部品をすべて組み立てから受け取る
     public RoutingCaseCommandService(
             RoutingCaseRepository repository,
             VoyageRepository voyageRepository,
             ConnectionRuleRepository connectionRuleRepository,
             ApplicationEventPublisher eventPublisher,
             Clock clock,
-            InfoFreshnessPolicy freshness) {
+            InfoFreshnessPolicy freshness,
+            RoutingCaseScope scope) {
         this.repository = repository;
         this.voyageRepository = voyageRepository;
         this.connectionRuleRepository = connectionRuleRepository;
         this.eventPublisher = eventPublisher;
         this.clock = clock;
         this.freshness = freshness;
+        this.scope = scope;
     }
 
     /** 経路候補を算出・再算出する（US-06 AC1〜AC4。情報不足は Bolt 37b2）。 */
     @Transactional
-    public CandidateCalculationOutcome calculateCandidates(CalculateCandidatesCommand command) {
-        Optional<RoutingCase> found = repository.findByNumber(command.number());
-        if (found.isEmpty()) {
-            return new CandidateCalculationOutcome.NotFound();
+    public CandidateCalculationOutcome calculateCandidates(
+            CalculateCandidatesCommand command, AuthenticatedActor operator) {
+        RoutingCase routingCase;
+        switch (scope.find(command.number(), operator)) {
+            case RoutingCaseLookup.Found(RoutingCase found) -> routingCase = found;
+            case RoutingCaseLookup.NotFound _ -> {
+                return new CandidateCalculationOutcome.NotFound();
+            }
+            case RoutingCaseLookup.OutOfScope _ -> {
+                return new CandidateCalculationOutcome.OutOfScope();
+            }
         }
-        RoutingCase routingCase = found.get();
         if (routingCase.aggregateVersion() != command.expectedVersion()) {
             return new CandidateCalculationOutcome.Conflict();
         }
@@ -90,12 +105,17 @@ public class RoutingCaseCommandService {
      * 同じトランザクションで読み直して判定し直す（規則は接続の時刻に有効なもの。D-90。航海は情報版の照合と情報不足。Bolt 37c。ロックしない）。確定したら DE-05 を発行する（購読は US-24 AC4）。
      */
     @Transactional
-    public RouteConfirmationOutcome confirm(ConfirmRouteCommand command) {
-        Optional<RoutingCase> found = repository.findByNumber(command.number());
-        if (found.isEmpty()) {
-            return new RouteConfirmationOutcome.NotFound();
+    public RouteConfirmationOutcome confirm(ConfirmRouteCommand command, AuthenticatedActor operator) {
+        RoutingCase routingCase;
+        switch (scope.find(command.number(), operator)) {
+            case RoutingCaseLookup.Found(RoutingCase found) -> routingCase = found;
+            case RoutingCaseLookup.NotFound _ -> {
+                return new RouteConfirmationOutcome.NotFound();
+            }
+            case RoutingCaseLookup.OutOfScope _ -> {
+                return new RouteConfirmationOutcome.OutOfScope();
+            }
         }
-        RoutingCase routingCase = found.get();
         if (routingCase.aggregateVersion() != command.expectedVersion()) {
             return new RouteConfirmationOutcome.Conflict();
         }

@@ -74,6 +74,14 @@ public class UserStatusUiSteps {
         assertThat(confirmation).containsText("システム管理者 " + users.displayNameOf(Role.SYSTEM_ADMIN));
     }
 
+    /** 確認ポイント 19（Bolt 38g の行 8）。付け替えは担当範囲の領域で行うので、示すだけ。 */
+    @ならば("利用状態の変更の確認にこの利用者の担当企業として荷主の企業が示される")
+    public void 確認の領域に担当企業が示される() {
+        assertThat(page().locator("main dd#assigned-companies"))
+                .hasText("担当企業: " + users.companyNameOf(Role.SHIPPER) + "。");
+        browser.checkAccessibility();
+    }
+
     @もし("利用状態の変更の確認で {string} を押す")
     public void 確定する(String button) {
         submit(button);

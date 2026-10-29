@@ -14,6 +14,11 @@
         <dd class="col-sm-9" th:text="|${user.companyName} ${user.displayName}（${user.email.value}）|">A 社 佐藤（sato@example.com）</dd>
         <dt class="col-sm-3">現在の状態</dt>
         <dd class="col-sm-9" id="current-status" th:text="${currentStatus}">利用中</dd>
+        <!--/* この利用者の担当企業（Bolt 38g の確認ポイント 19。担当範囲のある役割の利用者だけ。付け替えは詳細の担当範囲の領域） */-->
+        <th:block th:if="${assignedCompanies != null}">
+            <dt class="col-sm-3">担当企業</dt>
+            <dd class="col-sm-9" id="assigned-companies" th:text="${assignedCompanies}">担当企業: 荷主 北。</dd>
+        </th:block>
         <dt class="col-sm-3">変更内容</dt>
         <dd class="col-sm-9" id="status-change"
             th:text="${suspending} ? |利用を停止する（理由: ${reasonName}）| : '利用を再開する'">利用を停止する（理由: 異動）</dd>

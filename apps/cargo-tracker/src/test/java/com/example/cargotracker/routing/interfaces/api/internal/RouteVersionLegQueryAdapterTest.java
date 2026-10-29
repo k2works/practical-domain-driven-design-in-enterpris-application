@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.example.cargotracker.routing.acceptance.InMemoryRoutingCaseRepository;
 import com.example.cargotracker.routing.application.internal.queryservices.RoutingCaseQueryService;
+import com.example.cargotracker.routing.application.internal.queryservices.RoutingCaseScope;
 import com.example.cargotracker.routing.domain.model.aggregates.RoutingCaseFixture;
 import org.junit.jupiter.api.Test;
 
@@ -16,7 +17,7 @@ class RouteVersionLegQueryAdapterTest {
 
     private final InMemoryRoutingCaseRepository repository = new InMemoryRoutingCaseRepository();
     private final RouteVersionLegQueryAdapter adapter =
-            new RouteVersionLegQueryAdapter(new RoutingCaseQueryService(repository));
+            new RouteVersionLegQueryAdapter(new RoutingCaseQueryService(repository, new RoutingCaseScope(repository)));
 
     @Test
     void 確定した経路版の区間を区間の順に返す() {

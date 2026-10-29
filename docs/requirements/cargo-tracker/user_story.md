@@ -4,7 +4,7 @@ title: "cargo-tracker ユーザーストーリー"
 description: "cargo-tracker MVP の価値単位のユーザーストーリー、受入条件、上流要件へのトレーサビリティ。"
 tags: [requirements, user-story]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-28T04:02:31Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-29T04:55:37Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T05:20:11Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:39Z }
@@ -708,6 +708,8 @@ Bolt 38b 系の決定（2026-10-25〜26、human:kakimomokuri。[Bolt 38b 計画]
 Bolt 38c2 の決定（2026-10-27、human:kakimomokuri。[Bolt 38c2 計画](../../development/cargo-tracker/bolt_38c2_plan.md)）: 停止中の利用者の S-20 の詳細に、今の停止（最新の監査記録 `USER_SUSPENDED`）の理由・停止した人（今の表示名。管理範囲の外の人でも示す）・停止した日時を示し、再開してよいかを判断する材料にする。再開した後は示さず、停止と再開の履歴は US-17（S-21）で扱う。記録がなければ「記録がありません」と示す（AC5 の「履歴は保持」は監査記録が担う）。
 
 Bolt 38e の決定（2026-10-28、human:kakimomokuri。[Bolt 38e 計画](../../development/cargo-tracker/bolt_38e_plan.md)）: システム管理者が S-20 の詳細の「担当範囲」の領域で、担当範囲のある役割（営業担当者・経路設計者・追跡管理者・カスタマーサポート）の利用者に、自分の管理範囲の中の有効な荷主の企業を担当企業として割り当て・解除する（確認の領域を経て、変更前・変更後の 1 行の監査 `ASSIGNMENTS_CHANGED`）。パイロットでは、AC1・AC4 の「担当案件」を担当企業で近似する（要件の変更。BR-15 の注）。データ責任者は W7 で決める。業務の画面で担当企業が効く（絞り込みと拒否）のは Bolt 38f・38g から。
+
+Bolt 38f〜38g の決定（2026-10-28〜29、human:kakimomokuri。[Bolt 38f 計画](../../development/cargo-tracker/bolt_38f_plan.md)、[Bolt 38f2 計画](../../development/cargo-tracker/bolt_38f2_plan.md)、[Bolt 38g 計画](../../development/cargo-tracker/bolt_38g_plan.md)）: AC4 は、見積り（38f）・予約（38f2）・経路設計と追跡（38g）の社内の画面を担当企業で絞り、範囲の外は共通の 404 にし、状態を変える POST の範囲の外だけを監査記録 `ASSIGNED_SCOPE_DENIED` に残す。経路設計の案件は荷主企業を持たなかったので、見積りの公開 API から写す列を足す（38g）。AC5 の権限の取消しは、2 つの役割を持つ利用者から 1 つを外し、次の request からその役割の画面だけが拒まれ、過去の操作の記録が残ることで確かめる（38g）。#14 の完了の定義のうち支援技術による手動確認の記録は満たさずに閉じ、手動確認を W10 の運用準備に送る（38g の開始準備の決定 (7)）。
 
 ### US-17 監査証跡を照会する
 

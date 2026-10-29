@@ -21,6 +21,7 @@ public record RoutingCaseRow(
         OffsetDateTime requestedAt,
         OffsetDateTime quotationExpiresAt,
         UUID createdBy,
+        UUID shipperCompanyId,
         long version,
         OffsetDateTime createdAt,
         OffsetDateTime updatedAt) {}

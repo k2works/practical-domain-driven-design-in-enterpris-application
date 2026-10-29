@@ -14,6 +14,7 @@ import com.example.cargotracker.routing.domain.model.valueobjects.RouteSpecifica
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteVersionStatus;
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseId;
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseNumber;
+import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Duration;
@@ -35,6 +36,7 @@ class RoutingCaseTest {
     static final UtcInstant JUDGED_AT = at("2026-10-07T03:00:00Z");
     static final UtcInstant QUOTATION_EXPIRES_AT = at("2026-10-08T09:00:00Z");
     static final UUID REQUESTED_BY = UUID.randomUUID();
+    static final CompanyId SHIPPER = new CompanyId(UUID.randomUUID());
     static final List<ConnectionRule> RULES = List.of(
             new ConnectionRule(UUID.randomUUID(), SINGAPORE, Duration.ofHours(8), at("2026-01-01T00:00:00Z"), null));
 
@@ -50,6 +52,34 @@ class RoutingCaseTest {
         assertThat(routingCase.routeVersion().status()).isEqualTo(RouteVersionStatus.DRAFT);
         assertThat(routingCase.routeVersion().candidates()).isEmpty();
         assertThat(routingCase.routeVersion().evaluatedAt()).isEmpty();
+        assertThat(routingCase.shipperCompanyId()).isEqualTo(SHIPPER);
+    }
+
+    @Test
+    void 荷主企業のない案件は作れない() {
+        // 行 6c（荷主企業は担当範囲の判定に使うので null を許さない。Bolt 38g）
+        RouteSpecification specification = new RouteSpecification(TOKYO, ROTTERDAM, DEADLINE, "GENERAL");
+        UtcInstant requestedAt = at("2026-10-06T02:00:00Z");
+        RoutingCaseId id = new RoutingCaseId(UUID.randomUUID());
+        RoutingCaseNumber number = new RoutingCaseNumber(2026, 1);
+        UUID transportRequestId = UUID.randomUUID();
+        UUID quotationId = UUID.randomUUID();
+        List<Location> routePolicyVia = List.of(SINGAPORE);
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> RoutingCase.open(
+                        id,
+                        number,
+                        transportRequestId,
+                        "TR-2026-0001",
+                        1,
+                        quotationId,
+                        routePolicyVia,
+                        specification,
+                        requestedAt,
+                        QUOTATION_EXPIRES_AT,
+                        REQUESTED_BY,
+                        null))
+                .isInstanceOf(NullPointerException.class)
+                .hasMessage("shipperCompanyId");
     }
 
     @Test
@@ -172,6 +202,7 @@ class RoutingCaseTest {
                 at("2026-10-06T02:00:00Z"),
                 null,
                 null,
+                SHIPPER,
                 List.of(new com.example.cargotracker.routing.domain.model.entities.RouteVersion(
                         1, RouteVersionStatus.SUPERSEDED, List.of(), JUDGED_AT)),
                 3);
@@ -292,7 +323,8 @@ class RoutingCaseTest {
                 new RouteSpecification(TOKYO, ROTTERDAM, DEADLINE, "GENERAL"),
                 at("2026-10-06T02:00:00Z"),
                 QUOTATION_EXPIRES_AT,
-                REQUESTED_BY);
+                REQUESTED_BY,
+                SHIPPER);
     }
 
     static Voyage direct(String number, String arrival) {

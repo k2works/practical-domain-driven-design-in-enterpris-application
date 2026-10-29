@@ -62,6 +62,18 @@ public class UserAssignmentUiSteps {
         users.assignShipperCompanyToSales();
     }
 
+    /** 経路設計者に、シナリオの荷主担当者の企業を担当させる（Bolt 38g）。経路設計の社内の画面を通る feature の背景に置く共通の前提。 */
+    @前提("経路設計者は荷主の企業を担当している")
+    public void 経路設計者は荷主の企業を担当している() {
+        users.assignShipperCompanyTo(Role.ROUTE_DESIGNER);
+    }
+
+    /** 追跡管理者に、シナリオの荷主担当者の企業を担当させる（Bolt 38g）。追跡の社内の画面を通る feature の背景に置く共通の前提。 */
+    @前提("追跡管理者は荷主の企業を担当している")
+    public void 追跡管理者は荷主の企業を担当している() {
+        users.assignShipperCompanyTo(Role.TRACKING_MANAGER);
+    }
+
     @前提("営業担当者に管理範囲の外の荷主が担当企業として割り当てられている")
     public void 範囲の外の荷主が割り当てられている() {
         Company outside = Company.of(new CompanyId(UUID.randomUUID()), "範囲外の荷主", CompanyKind.SHIPPER, true);
@@ -88,7 +100,8 @@ public class UserAssignmentUiSteps {
         assertThat(assignments.getByLabel(second, new Locator.GetByLabelOptions().setExact(true)))
                 .not()
                 .isChecked();
-        assertThat(assignments).containsText("担当企業はまだありません。担当企業は、業務の画面で扱える企業を絞るために使います" + "（業務の画面で効くのは、今後の更新からです）。");
+        assertThat(assignments).containsText("担当企業はまだありません。担当企業は、業務の画面で扱える企業を絞るために使います。");
+        assertThat(assignments).not().containsText("今後の更新から");
     }
 
     @ならば("担当範囲の領域に {string} と示される")
@@ -118,7 +131,7 @@ public class UserAssignmentUiSteps {
                 .hasText("担当範囲を変更しますか");
         assertThat(confirmation.locator("#added-companies")).hasText("追加: " + added);
         assertThat(confirmation.locator("#removed-companies")).hasText("解除: " + removed);
-        assertThat(confirmation).containsText("この利用者の担当企業が変わります。業務の画面で効くのは、今後の更新からです。");
+        assertThat(confirmation).containsText("この利用者の担当企業が変わります。業務の画面では、次の操作から変更後の担当企業で絞られます。");
         assertThat(confirmation).containsText("システム管理者 " + users.displayNameOf(Role.SYSTEM_ADMIN));
         assertThat(confirmation).containsText("もう一度変更すれば戻せます。");
     }

@@ -18,6 +18,8 @@ import com.example.cargotracker.routing.domain.model.valueobjects.Leg;
 import com.example.cargotracker.routing.domain.model.valueobjects.PortCall;
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseSummary;
 import com.example.cargotracker.shared.acceptance.MutableClock;
+import com.example.cargotracker.shared.domain.AuthenticatedActor;
+import com.example.cargotracker.shared.domain.AuthenticatedActorFixture;
 import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
@@ -40,6 +42,8 @@ public class RoutingSteps {
 
     /** 経路設計者（業務ルール層のシナリオの操作者）。 */
     static final UserId ROUTE_DESIGNER = new UserId(UUID.fromString("00000000-0000-0000-0000-000000000501"));
+    /** 受入シナリオの経路設計者（シナリオの 2 つの荷主企業を担当する。Bolt 38g）。 */
+    static final AuthenticatedActor SCENARIO_DESIGNER = handling(ROUTE_DESIGNER);
 
     private static final UtcInstant INFO_ACQUIRED_AT = new UtcInstant(Instant.parse("2026-10-07T01:00:00Z"));
     private static final Map<String, ExclusionReasonCode> REASONS = Map.of(
@@ -121,7 +125,7 @@ public class RoutingSteps {
         assertThat(routingCase.arrivalDeadline())
                 .isEqualTo(goldenCase.routeSpecification().arrivalDeadline());
         assertThat(queryService
-                        .findByNumber(routingCase.number())
+                        .findByNumber(routingCase.number(), SCENARIO_DESIGNER)
                         .orElseThrow()
                         .specification()
                         .cargoCategory())
@@ -208,12 +212,12 @@ public class RoutingSteps {
      */
     @ならば("経路設計案件はない")
     public void 経路設計案件はない() {
-        assertThat(queryService.listCases()).isEmpty();
+        assertThat(queryService.listCases(SCENARIO_DESIGNER)).isEmpty();
     }
 
     @ならば("経路設計案件が {int} 件あり、条件は {string} から {string}、希望到着期限は {string} である")
     public void 経路設計案件がある(int count, String origin, String destination, String deadline) {
-        List<RoutingCaseSummary> cases = queryService.listCases();
+        List<RoutingCaseSummary> cases = queryService.listCases(SCENARIO_DESIGNER);
         assertThat(cases).hasSize(count);
         assertThat(cases.getFirst().origin()).isEqualTo(new Location(origin));
         assertThat(cases.getFirst().destination()).isEqualTo(new Location(destination));
@@ -223,10 +227,15 @@ public class RoutingSteps {
     @もし("経路設計者が案件の候補を算出する")
     public void 経路設計者が案件の候補を算出する() {
         RoutingCaseSummary routingCase = onlyCase();
-        outcome = commandService.calculateCandidates(new CalculateCandidatesCommand(
-                routingCase.number(),
-                queryService.findByNumber(routingCase.number()).orElseThrow().aggregateVersion(),
-                ROUTE_DESIGNER));
+        outcome = commandService.calculateCandidates(
+                new CalculateCandidatesCommand(
+                        routingCase.number(),
+                        queryService
+                                .findByNumber(routingCase.number(), SCENARIO_DESIGNER)
+                                .orElseThrow()
+                                .aggregateVersion(),
+                        ROUTE_DESIGNER),
+                SCENARIO_DESIGNER);
     }
 
     @ならば("算出の結果は {int} 件で、適合は {int} 件、除外は {int} 件である")
@@ -318,14 +327,20 @@ public class RoutingSteps {
         assertThat(currentCase().routeVersion().evaluatedAt()).contains(at(evaluatedAt));
     }
 
+    /** シナリオの 2 つの荷主企業を担当する利用者（経路設計の照会とコマンドは担当企業で絞る。Bolt 38g）。 */
+    static AuthenticatedActor handling(UserId userId) {
+        return AuthenticatedActorFixture.routeDesignerHandling(
+                userId, AuthenticatedActorFixture.SCENARIO_SHIPPER, AuthenticatedActorFixture.SCENARIO_OTHER_SHIPPER);
+    }
+
     private RoutingCaseSummary onlyCase() {
-        List<RoutingCaseSummary> cases = queryService.listCases();
+        List<RoutingCaseSummary> cases = queryService.listCases(SCENARIO_DESIGNER);
         assertThat(cases).hasSize(1);
         return cases.getFirst();
     }
 
     private RoutingCase currentCase() {
-        return queryService.findByNumber(onlyCase().number()).orElseThrow();
+        return queryService.findByNumber(onlyCase().number(), SCENARIO_DESIGNER).orElseThrow();
     }
 
     private RouteCandidate candidateOf(String voyageNumbers) {

@@ -19,6 +19,7 @@ import com.example.cargotracker.routing.domain.model.valueobjects.RouteVersionSt
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseId;
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseNumber;
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseSummary;
+import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Clock;
@@ -30,6 +31,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.springframework.dao.DuplicateKeyException;
@@ -132,8 +134,13 @@ public class MyBatisRoutingCaseRepository implements RoutingCaseRepository {
     }
 
     @Override
-    public List<RoutingCaseSummary> findSummaries() {
-        return mapper.selectSummaries().stream()
+    public List<RoutingCaseSummary> findSummaries(Set<CompanyId> shipperCompanyIds) {
+        if (shipperCompanyIds.isEmpty()) {
+            // IN () は書けない。判定の部品も空の集合では呼ばない（Bolt 38g。38f2 の前例）
+            return List.of();
+        }
+        List<UUID> ids = shipperCompanyIds.stream().map(CompanyId::value).toList();
+        return mapper.selectSummaries(ids).stream()
                 .map(row -> new RoutingCaseSummary(
                         RoutingCaseNumber.parse(row.caseNumber()),
                         row.transportRequestNumber(),
@@ -223,6 +230,7 @@ public class MyBatisRoutingCaseRepository implements RoutingCaseRepository {
                 toUtc(row.requestedAt()),
                 row.quotationExpiresAt() == null ? null : toUtc(row.quotationExpiresAt()),
                 row.createdBy(),
+                new CompanyId(row.shipperCompanyId()),
                 versions,
                 row.version());
     }
@@ -363,6 +371,7 @@ public class MyBatisRoutingCaseRepository implements RoutingCaseRepository {
                         .map(MyBatisRoutingCaseRepository::toOffset)
                         .orElse(null),
                 routingCase.requestedBy().orElse(null),
+                routingCase.shipperCompanyId().value(),
                 routingCase.aggregateVersion(),
                 now,
                 now);

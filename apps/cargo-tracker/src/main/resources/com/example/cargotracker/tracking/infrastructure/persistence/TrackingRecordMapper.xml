@@ -2,6 +2,8 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.example.cargotracker.tracking.infrastructure.persistence.TrackingRecordMapper">
 
+    <sql id="shipperCompanyIn"><foreach collection="shipperCompanyIds" item="shipperCompanyId" open="(" separator="," close=")">#{shipperCompanyId}</foreach></sql>
+
     <resultMap id="trackingRecordRow" type="com.example.cargotracker.tracking.infrastructure.persistence.TrackingRecordRow">
         <constructor>
             <idArg column="tracking_number" name="trackingNumber" javaType="String"/>
@@ -131,6 +133,7 @@
     <select id="findRecentSummaries" resultMap="trackingRecordSummaryRow">
         SELECT tracking_number, current_status, original_eta, latest_eta, created_at
           FROM tracking.tracking_record
+         WHERE shipper_company_id IN <include refid="shipperCompanyIn"/>
          ORDER BY created_at DESC, tracking_number
          LIMIT #{limit}
     </select>

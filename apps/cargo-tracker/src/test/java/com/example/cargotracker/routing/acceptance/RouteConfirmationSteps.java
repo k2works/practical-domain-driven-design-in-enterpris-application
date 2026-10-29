@@ -98,8 +98,10 @@ public class RouteConfirmationSteps {
 
     @かつ("ほかの経路設計者が候補を算出し直す")
     public void ほかの経路設計者が候補を算出し直す() {
-        commandService.calculateCandidates(new CalculateCandidatesCommand(
-                onlyCase().number(), currentCase().aggregateVersion(), OTHER_ROUTE_DESIGNER));
+        commandService.calculateCandidates(
+                new CalculateCandidatesCommand(
+                        onlyCase().number(), currentCase().aggregateVersion(), OTHER_ROUTE_DESIGNER),
+                RoutingSteps.handling(OTHER_ROUTE_DESIGNER));
     }
 
     @もし("経路設計者が候補 {int} を判断根拠 {string} で確定する")
@@ -183,8 +185,10 @@ public class RouteConfirmationSteps {
     }
 
     private void confirm(int candidateNo, String rationale, long expectedVersion, UserId approver, boolean designer) {
-        outcome = commandService.confirm(new ConfirmRouteCommand(
-                onlyCase().number(), candidateNo, rationale, expectedVersion, approver, designer));
+        outcome = commandService.confirm(
+                new ConfirmRouteCommand(
+                        onlyCase().number(), candidateNo, rationale, expectedVersion, approver, designer),
+                RoutingSteps.handling(approver));
     }
 
     private List<RouteConfirmed> confirmedEvents() {
@@ -195,12 +199,14 @@ public class RouteConfirmationSteps {
     }
 
     private RoutingCaseSummary onlyCase() {
-        List<RoutingCaseSummary> cases = queryService.listCases();
+        List<RoutingCaseSummary> cases = queryService.listCases(RoutingSteps.SCENARIO_DESIGNER);
         assertThat(cases).hasSize(1);
         return cases.getFirst();
     }
 
     private RoutingCase currentCase() {
-        return queryService.findByNumber(onlyCase().number()).orElseThrow();
+        return queryService
+                .findByNumber(onlyCase().number(), RoutingSteps.SCENARIO_DESIGNER)
+                .orElseThrow();
     }
 }

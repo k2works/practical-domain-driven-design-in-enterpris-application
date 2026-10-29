@@ -11,6 +11,7 @@ import com.example.cargotracker.routing.domain.model.aggregates.RoutingCase;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteSpecification;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteVersionStatus;
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseNumber;
+import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Instant;
@@ -27,8 +28,9 @@ class RoutingCaseOpeningEventHandlerTest {
     static final UtcInstant REQUESTED_AT = new UtcInstant(Instant.parse("2026-10-06T02:00:00Z"));
     static final UUID REQUESTER = UUID.randomUUID();
     static final UtcInstant DEADLINE = new UtcInstant(Instant.parse("2026-11-02T00:00:00Z"));
-    static final RouteConditionView VIEW =
-            new RouteConditionView("TR-2026-0001", new Location("JPTYO"), new Location("NLRTM"), DEADLINE, "GENERAL");
+    static final CompanyId SHIPPER = new CompanyId(UUID.randomUUID());
+    static final RouteConditionView VIEW = new RouteConditionView(
+            "TR-2026-0001", new Location("JPTYO"), new Location("NLRTM"), DEADLINE, "GENERAL", SHIPPER);
 
     private final InMemoryRoutingCaseRepository repository = new InMemoryRoutingCaseRepository();
     private final RoutingCaseOpeningEventHandler handler = new RoutingCaseOpeningEventHandler(
@@ -38,7 +40,7 @@ class RoutingCaseOpeningEventHandlerTest {
                     id.equals(TRANSPORT_REQUEST_ID) && versionNo == 1 ? Optional.of(VIEW) : Optional.empty()));
 
     @Test
-    void 依頼を受けると経路条件を見積りから得て案件を作る() {
+    void 依頼を受けると経路条件と荷主企業を見積りから得て案件を作る() {
         handler.on(event(1));
 
         RoutingCase created =
@@ -53,6 +55,7 @@ class RoutingCaseOpeningEventHandlerTest {
         assertThat(created.requestedAt()).isEqualTo(REQUESTED_AT);
         assertThat(created.quotationExpiresAt()).contains(new UtcInstant(Instant.parse("2026-10-08T09:00:00Z")));
         assertThat(created.requestedBy()).contains(REQUESTER);
+        assertThat(created.shipperCompanyId()).isEqualTo(SHIPPER);
         assertThat(created.routeVersion().status()).isEqualTo(RouteVersionStatus.DRAFT);
     }
 

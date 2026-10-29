@@ -2,7 +2,10 @@ package com.example.cargotracker.tracking.application.internal.queryservices;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.example.cargotracker.shared.domain.AuthenticatedActor;
+import com.example.cargotracker.shared.domain.AuthenticatedActorFixture;
 import com.example.cargotracker.shared.domain.CompanyId;
+import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import com.example.cargotracker.tracking.acceptance.InMemoryTrackingRecordRepository;
 import com.example.cargotracker.tracking.domain.model.TrackingFixture;
@@ -14,6 +17,7 @@ import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingStatu
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
@@ -25,14 +29,18 @@ class TrackingRecordQueryServiceTest {
 
     private final InMemoryTrackingRecordRepository repository = new InMemoryTrackingRecordRepository();
     private final CountingRepository counting = new CountingRepository(repository);
-    private final TrackingRecordQueryService service = new TrackingRecordQueryService(counting);
+    private final TrackingRecordQueryService service =
+            new TrackingRecordQueryService(counting, new TrackingRecordScope(counting));
+    /** 追跡記録の荷主企業を担当する追跡管理者（Bolt 38g）。 */
+    private final AuthenticatedActor manager =
+            AuthenticatedActorFixture.trackingManagerHandling(new UserId(UUID.randomUUID()), TrackingFixture.SHIPPER);
 
     @Test
     void 追跡一覧は追跡の開始時刻の新しい順に要約を返す() {
         TrackingRecord older = started(1, "2026-10-26T01:00:00Z");
         TrackingRecord newer = started(2, "2026-10-26T02:00:00Z");
 
-        RecentTrackingRecords recent = service.recent();
+        RecentTrackingRecords recent = service.recent(manager);
 
         assertThat(recent.truncated()).isFalse();
         assertThat(recent.rows())
@@ -54,7 +62,7 @@ class TrackingRecordQueryServiceTest {
             started(i, "2026-10-26T0" + i + ":00:00Z");
         }
 
-        service.recent();
+        service.recent(manager);
 
         assertThat(counting.summaryQueries).isEqualTo(1);
         assertThat(counting.detailQueries).isZero();
@@ -68,7 +76,7 @@ class TrackingRecordQueryServiceTest {
                     Instant.parse("2026-10-01T00:00:00Z").plusSeconds(i * 60L).toString());
         }
 
-        RecentTrackingRecords recent = service.recent();
+        RecentTrackingRecords recent = service.recent(manager);
 
         assertThat(recent.rows()).hasSize(50);
         assertThat(recent.truncated()).isTrue();
@@ -88,7 +96,7 @@ class TrackingRecordQueryServiceTest {
                     Instant.parse("2026-10-01T00:00:00Z").plusSeconds(i * 60L).toString());
         }
 
-        RecentTrackingRecords recent = service.recent();
+        RecentTrackingRecords recent = service.recent(manager);
 
         assertThat(recent.rows()).hasSize(50);
         assertThat(recent.truncated()).isFalse();
@@ -96,18 +104,37 @@ class TrackingRecordQueryServiceTest {
 
     @Test
     void 追跡記録がなければ空の一覧を返す() {
-        RecentTrackingRecords recent = service.recent();
+        RecentTrackingRecords recent = service.recent(manager);
 
         assertThat(recent.rows()).isEmpty();
         assertThat(recent.truncated()).isFalse();
     }
 
     @Test
+    void 追跡一覧と詳細は担当企業の追跡記録だけを返し担当企業がなければ一覧を引かない() {
+        // 行 1c・1d・2b・6（Bolt 38g）
+        TrackingRecord saved = started(1, "2026-10-26T01:00:00Z");
+        AuthenticatedActor outsider = AuthenticatedActorFixture.trackingManagerHandling(
+                new UserId(UUID.randomUUID()), new CompanyId(UUID.randomUUID()));
+        AuthenticatedActor unassigned =
+                AuthenticatedActorFixture.trackingManagerHandling(new UserId(UUID.randomUUID()));
+
+        assertThat(service.recent(outsider).rows()).isEmpty();
+        assertThat(service.detail(saved.trackingNumber(), outsider)).isEmpty();
+        assertThat(service.outOfScope(saved.trackingNumber(), outsider)).isTrue();
+        assertThat(service.outOfScope(saved.trackingNumber(), manager)).isFalse();
+        assertThat(service.outOfScope(trackingNumber(2), outsider)).isFalse();
+        int before = counting.summaryQueries;
+        assertThat(service.recent(unassigned).rows()).isEmpty();
+        assertThat(counting.summaryQueries).isEqualTo(before);
+    }
+
+    @Test
     void 追跡の詳細は追跡番号で追跡記録を返しない追跡番号は空() {
         TrackingRecord saved = started(1, "2026-10-26T01:00:00Z");
 
-        assertThat(service.detail(saved.trackingNumber())).containsSame(saved);
-        assertThat(service.detail(trackingNumber(2))).isEmpty();
+        assertThat(service.detail(saved.trackingNumber(), manager)).containsSame(saved);
+        assertThat(service.detail(trackingNumber(2), manager)).isEmpty();
     }
 
     private TrackingRecord started(int no, String startedAt) {
@@ -175,9 +202,9 @@ class TrackingRecordQueryServiceTest {
         }
 
         @Override
-        public List<TrackingRecordSummary> findRecentSummaries(int limit) {
+        public List<TrackingRecordSummary> findRecentSummaries(Set<CompanyId> shipperCompanyIds, int limit) {
             summaryQueries++;
-            return delegate.findRecentSummaries(limit);
+            return delegate.findRecentSummaries(shipperCompanyIds, limit);
         }
     }
 }

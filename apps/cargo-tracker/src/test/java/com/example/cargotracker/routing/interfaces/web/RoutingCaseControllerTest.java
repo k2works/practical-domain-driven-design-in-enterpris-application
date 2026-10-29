@@ -2,6 +2,10 @@ package com.example.cargotracker.routing.interfaces.web;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -36,6 +40,7 @@ import com.example.cargotracker.routing.domain.model.valueobjects.RouteVersionSt
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseId;
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseNumber;
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseSummary;
+import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.Role;
 import com.example.cargotracker.shared.domain.UtcInstant;
@@ -48,13 +53,16 @@ import java.util.Optional;
 import java.util.UUID;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
+import org.mockito.InOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Bean;
+import org.springframework.http.HttpStatus;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.server.ResponseStatusException;
 
 /** S-05 経路設計案件一覧・S-06 経路候補の比較・S-07 経路の確定（US-06 AC1〜AC3、US-07 AC1・AC2。Bolt 17・19）。 */
 // 画面の単体テストはコントローラーの振る舞いだけを見る。認証・認可・CSRF はセキュリティの統合テストで確かめる（Bolt 14）
@@ -80,9 +88,12 @@ class RoutingCaseControllerTest {
     @MockitoBean
     RoutingCaseCommandService commandService;
 
+    @MockitoBean
+    RoutingOutOfScopeResponder outOfScope;
+
     @Test
     void 案件一覧は案件番号と見積依頼と条件と依頼の日時と状態を示し案件を開ける() throws Exception {
-        when(queryService.listCases())
+        when(queryService.listCases(any()))
                 .thenReturn(List.of(new RoutingCaseSummary(
                         NUMBER,
                         "TR-2026-0001",
@@ -112,7 +123,7 @@ class RoutingCaseControllerTest {
 
     @Test
     void 候補を算出した案件の状態は確定待ちと示す() throws Exception {
-        when(queryService.listCases())
+        when(queryService.listCases(any()))
                 .thenReturn(List.of(new RoutingCaseSummary(
                         NUMBER,
                         "TR-2026-0001",
@@ -130,7 +141,7 @@ class RoutingCaseControllerTest {
 
     @Test
     void 案件がなければその旨を示す() throws Exception {
-        when(queryService.listCases()).thenReturn(List.of());
+        when(queryService.listCases(any())).thenReturn(List.of());
 
         mockMvc.perform(get("/staff/routing-cases"))
                 .andExpect(status().isOk())
@@ -139,7 +150,7 @@ class RoutingCaseControllerTest {
 
     @Test
     void 算出の前の案件は条件と経路方針と候補の算出の操作を示す() throws Exception {
-        when(queryService.findByNumber(NUMBER)).thenReturn(Optional.of(open()));
+        when(queryService.findByNumber(eq(NUMBER), any())).thenReturn(Optional.of(open()));
 
         mockMvc.perform(get(SHOW))
                 .andExpect(status().isOk())
@@ -153,7 +164,7 @@ class RoutingCaseControllerTest {
 
     @Test
     void 算出した候補は適合と除外と理由と接続余裕と情報の取得時刻を示す() throws Exception {
-        when(queryService.findByNumber(NUMBER)).thenReturn(Optional.of(calculated()));
+        when(queryService.findByNumber(eq(NUMBER), any())).thenReturn(Optional.of(calculated()));
 
         mockMvc.perform(get(SHOW))
                 .andExpect(status().isOk())
@@ -186,7 +197,7 @@ class RoutingCaseControllerTest {
                 new RouteCandidateFinder(),
                 new ConstraintEvaluator(),
                 new InfoFreshnessPolicy(Duration.ofHours(24)));
-        when(queryService.findByNumber(NUMBER)).thenReturn(Optional.of(routingCase));
+        when(queryService.findByNumber(eq(NUMBER), any())).thenReturn(Optional.of(routingCase));
 
         mockMvc.perform(get(SHOW))
                 .andExpect(status().isOk())
@@ -196,15 +207,90 @@ class RoutingCaseControllerTest {
 
     @Test
     void ない案件番号と形式の違う案件番号は404() throws Exception {
-        when(queryService.findByNumber(any())).thenReturn(Optional.empty());
+        when(queryService.findByNumber(any(), any())).thenReturn(Optional.empty());
 
         mockMvc.perform(get(SHOW)).andExpect(status().isNotFound());
         mockMvc.perform(get("/staff/routing-cases/TR-2026-0001")).andExpect(status().isNotFound());
     }
 
     @Test
+    void 範囲の外の案件の候補の算出はコマンドの前に記録して404() throws Exception {
+        // 行 3a・4（controller が先に範囲を確かめ、コマンドを呼ばない。Bolt 38g）
+        when(queryService.outOfScope(eq(NUMBER), any())).thenReturn(true);
+        when(outOfScope.recordAndNotFound(any(), eq("RC-2026-0088")))
+                .thenReturn(new ResponseStatusException(HttpStatus.NOT_FOUND));
+
+        mockMvc.perform(post(SHOW + "/candidates").param("expectedVersion", "7"))
+                .andExpect(status().isNotFound());
+
+        verify(outOfScope).recordAndNotFound(any(), eq("RC-2026-0088"));
+        verify(commandService, never()).calculateCandidates(any(), any());
+    }
+
+    @Test
+    void 算出の途中で範囲の外になったら記録して404() throws Exception {
+        // 行 5c（先の確かめの後に割り当てが外れた）
+        when(commandService.calculateCandidates(any(), any())).thenReturn(new CandidateCalculationOutcome.OutOfScope());
+        when(outOfScope.recordAndNotFound(any(), eq("RC-2026-0088")))
+                .thenReturn(new ResponseStatusException(HttpStatus.NOT_FOUND));
+
+        mockMvc.perform(post(SHOW + "/candidates").param("expectedVersion", "0"))
+                .andExpect(status().isNotFound());
+
+        InOrder order = inOrder(queryService, commandService, outOfScope);
+        order.verify(queryService).outOfScope(eq(NUMBER), any());
+        order.verify(commandService).calculateCandidates(any(), any());
+        order.verify(outOfScope).recordAndNotFound(any(), eq("RC-2026-0088"));
+    }
+
+    @Test
+    void 範囲の外の案件の確定はコマンドの前に記録して404() throws Exception {
+        // 行 3a・4
+        when(queryService.outOfScope(eq(NUMBER), any())).thenReturn(true);
+        when(outOfScope.recordAndNotFound(any(), eq("RC-2026-0088")))
+                .thenReturn(new ResponseStatusException(HttpStatus.NOT_FOUND));
+
+        mockMvc.perform(post(SHOW + "/confirmation")
+                        .param("candidate", "1")
+                        .param("rationale", "")
+                        .param("expectedVersion", "7"))
+                .andExpect(status().isNotFound());
+
+        verify(outOfScope).recordAndNotFound(any(), eq("RC-2026-0088"));
+        verify(commandService, never()).confirm(any(), any());
+    }
+
+    @Test
+    void 確定の途中で範囲の外になったら記録して404() throws Exception {
+        // 行 5c
+        when(commandService.confirm(any(), any())).thenReturn(new RouteConfirmationOutcome.OutOfScope());
+        when(outOfScope.recordAndNotFound(any(), eq("RC-2026-0088")))
+                .thenReturn(new ResponseStatusException(HttpStatus.NOT_FOUND));
+
+        mockMvc.perform(post(SHOW + "/confirmation")
+                        .param("candidate", "1")
+                        .param("rationale", "根拠")
+                        .param("expectedVersion", "0"))
+                .andExpect(status().isNotFound());
+
+        verify(outOfScope).recordAndNotFound(any(), eq("RC-2026-0088"));
+    }
+
+    @Test
+    void 範囲の外の詳細と確定の確認は記録せずに404() throws Exception {
+        // 行 2a（GET は記録しない。SEC-12）
+        when(queryService.findByNumber(any(), any())).thenReturn(Optional.empty());
+
+        mockMvc.perform(get(SHOW)).andExpect(status().isNotFound());
+        mockMvc.perform(get(SHOW + "/confirmation").param("candidate", "1")).andExpect(status().isNotFound());
+
+        verify(outOfScope, never()).recordAndNotFound(any(), any());
+    }
+
+    @Test
     void 候補を算出すると比較の画面に戻り件数を示す() throws Exception {
-        when(commandService.calculateCandidates(new CalculateCandidatesCommand(NUMBER, 0, TestActors.STAFF_USER)))
+        when(commandService.calculateCandidates(
+                        eq(new CalculateCandidatesCommand(NUMBER, 0, TestActors.STAFF_USER)), any()))
                 .thenReturn(new CandidateCalculationOutcome.Calculated(
                         NUMBER, new CandidateCalculation(22, 20, 18, at("2026-10-07T03:00:00Z"))));
 
@@ -218,7 +304,8 @@ class RoutingCaseControllerTest {
 
     @Test
     void ほかの経路設計者が先に算出していたら確かめるよう示す() throws Exception {
-        when(commandService.calculateCandidates(new CalculateCandidatesCommand(NUMBER, 0, TestActors.STAFF_USER)))
+        when(commandService.calculateCandidates(
+                        eq(new CalculateCandidatesCommand(NUMBER, 0, TestActors.STAFF_USER)), any()))
                 .thenReturn(new CandidateCalculationOutcome.Conflict());
 
         mockMvc.perform(post(SHOW + "/candidates").param("expectedVersion", "0"))
@@ -228,7 +315,8 @@ class RoutingCaseControllerTest {
 
     @Test
     void ない案件の候補は算出できず404() throws Exception {
-        when(commandService.calculateCandidates(new CalculateCandidatesCommand(NUMBER, 0, TestActors.STAFF_USER)))
+        when(commandService.calculateCandidates(
+                        eq(new CalculateCandidatesCommand(NUMBER, 0, TestActors.STAFF_USER)), any()))
                 .thenReturn(new CandidateCalculationOutcome.NotFound());
 
         mockMvc.perform(post(SHOW + "/candidates").param("expectedVersion", "0"))
@@ -237,7 +325,7 @@ class RoutingCaseControllerTest {
 
     @Test
     void 案件一覧は見積有効期限を示し期限を過ぎた案件は期限切れと示し確定済みの状態を示す() throws Exception {
-        when(queryService.listCases())
+        when(queryService.listCases(any()))
                 .thenReturn(List.of(
                         new RoutingCaseSummary(
                                 NUMBER,
@@ -272,7 +360,7 @@ class RoutingCaseControllerTest {
 
     @Test
     void 比較の画面は適合の候補にだけ確定への入口を示し算出のフォームに版を持たせる() throws Exception {
-        when(queryService.findByNumber(NUMBER)).thenReturn(Optional.of(calculated()));
+        when(queryService.findByNumber(eq(NUMBER), any())).thenReturn(Optional.of(calculated()));
 
         mockMvc.perform(get(SHOW))
                 .andExpect(status().isOk())
@@ -292,14 +380,14 @@ class RoutingCaseControllerTest {
                 version.candidatesEvaluatedAt(),
                 version.candidates().size() + 2,
                 null));
-        when(queryService.findByNumber(NUMBER)).thenReturn(Optional.of(withOmitted));
+        when(queryService.findByNumber(eq(NUMBER), any())).thenReturn(Optional.of(withOmitted));
 
         mockMvc.perform(get(SHOW)).andExpect(content().string(Matchers.containsString("ほかに 2 件の候補があります")));
     }
 
     @Test
     void 確定した案件は確定した経路と根拠を示し算出と確定の操作を出さない() throws Exception {
-        when(queryService.findByNumber(NUMBER)).thenReturn(Optional.of(confirmed()));
+        when(queryService.findByNumber(eq(NUMBER), any())).thenReturn(Optional.of(confirmed()));
 
         mockMvc.perform(get(SHOW))
                 .andExpect(status().isOk())
@@ -316,7 +404,7 @@ class RoutingCaseControllerTest {
 
     @Test
     void 確定した案件には再設計要の案内を出さない() throws Exception {
-        when(queryService.findByNumber(NUMBER)).thenReturn(Optional.of(confirmed()));
+        when(queryService.findByNumber(eq(NUMBER), any())).thenReturn(Optional.of(confirmed()));
 
         mockMvc.perform(get(SHOW))
                 .andExpect(content().string(Matchers.containsString("確定した経路（候補 1）")))
@@ -337,7 +425,7 @@ class RoutingCaseControllerTest {
                 new RedesignRecord(
                         at("2026-10-08T06:00:00Z"),
                         List.of(RedesignReasonCode.CONNECTION_TOO_SHORT, RedesignReasonCode.DEADLINE_EXCEEDED))));
-        when(queryService.findByNumber(NUMBER)).thenReturn(Optional.of(redesignRequired));
+        when(queryService.findByNumber(eq(NUMBER), any())).thenReturn(Optional.of(redesignRequired));
 
         mockMvc.perform(get(SHOW))
                 .andExpect(status().isOk())
@@ -364,7 +452,7 @@ class RoutingCaseControllerTest {
 
     @Test
     void 比較の画面の適合の根拠に参照した航海情報の版を画面の語で示す() throws Exception {
-        when(queryService.findByNumber(NUMBER)).thenReturn(Optional.of(calculated()));
+        when(queryService.findByNumber(eq(NUMBER), any())).thenReturn(Optional.of(calculated()));
 
         mockMvc.perform(get(SHOW))
                 .andExpect(status().isOk())
@@ -374,7 +462,7 @@ class RoutingCaseControllerTest {
 
     @Test
     void 確定の画面の判定の根拠に参照した航海情報の版を画面の語で示す() throws Exception {
-        when(queryService.findByNumber(NUMBER)).thenReturn(Optional.of(calculated()));
+        when(queryService.findByNumber(eq(NUMBER), any())).thenReturn(Optional.of(calculated()));
 
         mockMvc.perform(get(SHOW + "/confirmation").param("candidate", "1"))
                 .andExpect(status().isOk())
@@ -384,7 +472,7 @@ class RoutingCaseControllerTest {
 
     @Test
     void 確定の画面は選んだ候補と見積有効期限と判断根拠の入力と確定の操作を示す() throws Exception {
-        when(queryService.findByNumber(NUMBER)).thenReturn(Optional.of(calculated()));
+        when(queryService.findByNumber(eq(NUMBER), any())).thenReturn(Optional.of(calculated()));
 
         mockMvc.perform(get(SHOW + "/confirmation").param("candidate", "1"))
                 .andExpect(status().isOk())
@@ -405,7 +493,7 @@ class RoutingCaseControllerTest {
 
     @Test
     void 除外の候補の確定の画面は開かず比較の画面で理由を示す() throws Exception {
-        when(queryService.findByNumber(NUMBER)).thenReturn(Optional.of(calculated()));
+        when(queryService.findByNumber(eq(NUMBER), any())).thenReturn(Optional.of(calculated()));
 
         mockMvc.perform(get(SHOW + "/confirmation").param("candidate", "2"))
                 .andExpect(redirectedUrl(SHOW))
@@ -414,7 +502,7 @@ class RoutingCaseControllerTest {
 
     @Test
     void ない候補とない案件の確定の画面は404() throws Exception {
-        when(queryService.findByNumber(NUMBER)).thenReturn(Optional.of(calculated()));
+        when(queryService.findByNumber(eq(NUMBER), any())).thenReturn(Optional.of(calculated()));
 
         mockMvc.perform(get(SHOW + "/confirmation").param("candidate", "99")).andExpect(status().isNotFound());
         mockMvc.perform(get("/staff/routing-cases/RC-2026-0001/confirmation").param("candidate", "1"))
@@ -423,7 +511,8 @@ class RoutingCaseControllerTest {
 
     @Test
     void 確定すると比較の画面に戻り確定したと示す() throws Exception {
-        when(commandService.confirm(new ConfirmRouteCommand(NUMBER, 1, "根拠", 3, TestActors.STAFF_USER, true)))
+        when(commandService.confirm(
+                        eq(new ConfirmRouteCommand(NUMBER, 1, "根拠", 3, TestActors.STAFF_USER, true)), any()))
                 .thenReturn(new RouteConfirmationOutcome.Confirmed(NUMBER, 1, 1));
 
         mockMvc.perform(post(SHOW + "/confirmation")
@@ -436,8 +525,9 @@ class RoutingCaseControllerTest {
 
     @Test
     void 確定を拒否されたら理由をエラー要約に示し入力を残す() throws Exception {
-        when(queryService.findByNumber(NUMBER)).thenReturn(Optional.of(calculated()));
-        when(commandService.confirm(new ConfirmRouteCommand(NUMBER, 1, "出発の後の根拠", 0, TestActors.STAFF_USER, true)))
+        when(queryService.findByNumber(eq(NUMBER), any())).thenReturn(Optional.of(calculated()));
+        when(commandService.confirm(
+                        eq(new ConfirmRouteCommand(NUMBER, 1, "出発の後の根拠", 0, TestActors.STAFF_USER, true)), any()))
                 .thenReturn(new RouteConfirmationOutcome.Rejected(RouteConfirmationRejectionReason.ALREADY_DEPARTED));
 
         mockMvc.perform(post(SHOW + "/confirmation")
@@ -452,8 +542,8 @@ class RoutingCaseControllerTest {
 
     @Test
     void 判断根拠がなければ入れるよう示す() throws Exception {
-        when(queryService.findByNumber(NUMBER)).thenReturn(Optional.of(calculated()));
-        when(commandService.confirm(new ConfirmRouteCommand(NUMBER, 1, "", 0, TestActors.STAFF_USER, true)))
+        when(queryService.findByNumber(eq(NUMBER), any())).thenReturn(Optional.of(calculated()));
+        when(commandService.confirm(eq(new ConfirmRouteCommand(NUMBER, 1, "", 0, TestActors.STAFF_USER, true)), any()))
                 .thenReturn(new RouteConfirmationOutcome.Rejected(RouteConfirmationRejectionReason.RATIONALE_MISSING));
 
         mockMvc.perform(post(SHOW + "/confirmation")
@@ -467,7 +557,8 @@ class RoutingCaseControllerTest {
 
     @Test
     void 画面を開いた後にほかの経路設計者が更新していたら確かめるよう示す() throws Exception {
-        when(commandService.confirm(new ConfirmRouteCommand(NUMBER, 1, "根拠", 0, TestActors.STAFF_USER, true)))
+        when(commandService.confirm(
+                        eq(new ConfirmRouteCommand(NUMBER, 1, "根拠", 0, TestActors.STAFF_USER, true)), any()))
                 .thenReturn(new RouteConfirmationOutcome.Conflict());
 
         mockMvc.perform(post(SHOW + "/confirmation")
@@ -482,7 +573,7 @@ class RoutingCaseControllerTest {
     void 再設計要の案件の確定の画面は開かず比較の画面で確定し直せない理由を示す() throws Exception {
         // Bolt 37e3 の状態の組み合わせの行 12（GET。POST は比較の画面に戻す理由の組で確かめる）
         RouteVersion version = confirmed().routeVersion();
-        when(queryService.findByNumber(NUMBER))
+        when(queryService.findByNumber(eq(NUMBER), any()))
                 .thenReturn(Optional.of(reconstitute(new RouteVersion(
                         1,
                         RouteVersionStatus.REDESIGN_REQUIRED,
@@ -500,13 +591,13 @@ class RoutingCaseControllerTest {
 
     @Test
     void 確定した案件と算出の前の案件の確定の画面は開かず比較の画面で理由を示す() throws Exception {
-        when(queryService.findByNumber(NUMBER)).thenReturn(Optional.of(confirmed()));
+        when(queryService.findByNumber(eq(NUMBER), any())).thenReturn(Optional.of(confirmed()));
 
         mockMvc.perform(get(SHOW + "/confirmation").param("candidate", "1"))
                 .andExpect(redirectedUrl(SHOW))
                 .andExpect(flash().attribute("problem", "この案件の経路はすでに確定しているか、候補をまだ算出していません。"));
 
-        when(queryService.findByNumber(NUMBER)).thenReturn(Optional.of(open()));
+        when(queryService.findByNumber(eq(NUMBER), any())).thenReturn(Optional.of(open()));
 
         mockMvc.perform(get(SHOW + "/confirmation").param("candidate", "1"))
                 .andExpect(redirectedUrl(SHOW))
@@ -524,7 +615,8 @@ class RoutingCaseControllerTest {
                 "ROUTE_REDESIGN_REQUIRED"
             })
     void 選んだ候補が使えないか参照した情報が置き換わった拒否は比較の画面に戻して理由を示す(RouteConfirmationRejectionReason reason) throws Exception {
-        when(commandService.confirm(new ConfirmRouteCommand(NUMBER, 1, "根拠", 0, TestActors.STAFF_USER, true)))
+        when(commandService.confirm(
+                        eq(new ConfirmRouteCommand(NUMBER, 1, "根拠", 0, TestActors.STAFF_USER, true)), any()))
                 .thenReturn(new RouteConfirmationOutcome.Rejected(reason));
 
         mockMvc.perform(post(SHOW + "/confirmation")
@@ -540,8 +632,9 @@ class RoutingCaseControllerTest {
             value = RouteConfirmationRejectionReason.class,
             names = {"RATIONALE_TOO_LONG", "NOT_ROUTE_DESIGNER", "NO_LONGER_CONFORMING", "INFO_INSUFFICIENT"})
     void 情報は同じで入力や再算出で直す拒否は確定の画面で示す(RouteConfirmationRejectionReason reason) throws Exception {
-        when(queryService.findByNumber(NUMBER)).thenReturn(Optional.of(calculated()));
-        when(commandService.confirm(new ConfirmRouteCommand(NUMBER, 1, "根拠", 0, TestActors.STAFF_USER, true)))
+        when(queryService.findByNumber(eq(NUMBER), any())).thenReturn(Optional.of(calculated()));
+        when(commandService.confirm(
+                        eq(new ConfirmRouteCommand(NUMBER, 1, "根拠", 0, TestActors.STAFF_USER, true)), any()))
                 .thenReturn(new RouteConfirmationOutcome.Rejected(reason));
 
         mockMvc.perform(post(SHOW + "/confirmation")
@@ -569,8 +662,9 @@ class RoutingCaseControllerTest {
 
     @Test
     void 確定の画面を描き直すときに候補がなくなっていたら比較の画面に戻す() throws Exception {
-        when(queryService.findByNumber(NUMBER)).thenReturn(Optional.of(open()));
-        when(commandService.confirm(new ConfirmRouteCommand(NUMBER, 1, "根拠", 0, TestActors.STAFF_USER, true)))
+        when(queryService.findByNumber(eq(NUMBER), any())).thenReturn(Optional.of(open()));
+        when(commandService.confirm(
+                        eq(new ConfirmRouteCommand(NUMBER, 1, "根拠", 0, TestActors.STAFF_USER, true)), any()))
                 .thenReturn(
                         new RouteConfirmationOutcome.Rejected(RouteConfirmationRejectionReason.NO_LONGER_CONFORMING));
 
@@ -583,7 +677,8 @@ class RoutingCaseControllerTest {
 
     @Test
     void ない案件は確定できず404() throws Exception {
-        when(commandService.confirm(new ConfirmRouteCommand(NUMBER, 1, "根拠", 0, TestActors.STAFF_USER, true)))
+        when(commandService.confirm(
+                        eq(new ConfirmRouteCommand(NUMBER, 1, "根拠", 0, TestActors.STAFF_USER, true)), any()))
                 .thenReturn(new RouteConfirmationOutcome.NotFound());
 
         mockMvc.perform(post(SHOW + "/confirmation")
@@ -595,7 +690,7 @@ class RoutingCaseControllerTest {
 
     @Test
     void 見積りの期限切れの案件は比較と確定の画面で担当営業との相談を示す() throws Exception {
-        when(queryService.findByNumber(NUMBER))
+        when(queryService.findByNumber(eq(NUMBER), any()))
                 .thenReturn(Optional.of(withExpiry(calculated(), "2026-10-07T00:00:00Z")));
 
         mockMvc.perform(get(SHOW))
@@ -608,7 +703,7 @@ class RoutingCaseControllerTest {
 
     @Test
     void 期限の前の案件は期限切れと示さない() throws Exception {
-        when(queryService.findByNumber(NUMBER))
+        when(queryService.findByNumber(eq(NUMBER), any()))
                 .thenReturn(Optional.of(withExpiry(calculated(), "2026-10-07T00:01:00Z")));
 
         mockMvc.perform(get(SHOW)).andExpect(content().string(Matchers.not(Matchers.containsString("見積りの期限切れ"))));
@@ -627,7 +722,7 @@ class RoutingCaseControllerTest {
                 at("2026-10-07T05:00:00Z"),
                 new ConstraintEvaluator(),
                 new InfoFreshnessPolicy(Duration.ofHours(24)));
-        when(queryService.findByNumber(NUMBER)).thenReturn(Optional.of(routingCase));
+        when(queryService.findByNumber(eq(NUMBER), any())).thenReturn(Optional.of(routingCase));
 
         mockMvc.perform(get(SHOW))
                 .andExpect(content().string(Matchers.containsString("&lt;script&gt;alert(1)&lt;/script&gt;")))
@@ -647,6 +742,7 @@ class RoutingCaseControllerTest {
                 source.requestedAt(),
                 at(expiresAt),
                 source.requestedBy().orElse(null),
+                source.shipperCompanyId(),
                 source.routeVersions(),
                 source.aggregateVersion());
     }
@@ -680,6 +776,7 @@ class RoutingCaseControllerTest {
                 source.requestedAt(),
                 source.quotationExpiresAt().orElse(null),
                 source.requestedBy().orElse(null),
+                source.shipperCompanyId(),
                 List.of(version),
                 0);
     }
@@ -706,7 +803,8 @@ class RoutingCaseControllerTest {
                 new RouteSpecification(TOKYO, ROTTERDAM, DEADLINE, "GENERAL"),
                 at("2026-10-06T02:00:00Z"),
                 at("2026-10-08T09:00:00Z"),
-                UUID.randomUUID());
+                UUID.randomUUID(),
+                new CompanyId(UUID.randomUUID()));
     }
 
     /** 候補を算出する航海（確定で読み直したときも同じ。Bolt 37c）。 */

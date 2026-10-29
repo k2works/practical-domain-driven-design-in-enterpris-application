@@ -21,4 +21,26 @@ public final class AuthenticatedActorFixture {
         return new AuthenticatedActor(
                 userId, new CompanyId(UUID.randomUUID()), Set.of(Role.SALES), "営業 一郎", "A 社", Set.of(shippers));
     }
+
+    /** 担当企業に {@code shippers} を持つ追跡管理者（Bolt 38g）。 */
+    public static AuthenticatedActor trackingManagerHandling(UserId userId, CompanyId... shippers) {
+        return new AuthenticatedActor(
+                userId,
+                new CompanyId(UUID.randomUUID()),
+                Set.of(Role.TRACKING_MANAGER),
+                "追跡 管理",
+                "A 社",
+                Set.of(shippers));
+    }
+
+    /** 担当企業に {@code shippers} を持つ経路設計者（Bolt 38g）。 */
+    public static AuthenticatedActor routeDesignerHandling(UserId userId, CompanyId... shippers) {
+        return new AuthenticatedActor(
+                userId,
+                new CompanyId(UUID.randomUUID()),
+                Set.of(Role.ROUTE_DESIGNER),
+                "経路 設計",
+                "A 社",
+                Set.of(shippers));
+    }
 }

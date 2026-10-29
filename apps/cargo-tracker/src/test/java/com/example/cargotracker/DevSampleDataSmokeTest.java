@@ -140,6 +140,33 @@ class DevSampleDataSmokeTest {
             "A 社（開発）",
             Set.of(SHIPPER_A, SHIPPER_B));
 
+    /**
+     * 開発の経路設計者（0302）の担当企業の集合（社内の一覧は担当企業の集合で読む。Bolt 38g）。dev-data の割り当てを読むので、デモで
+     * 経路設計者に見本の案件が出ることも守る（開発レビューの低 4。表の荷主企業から作ると同語反復になる）。
+     */
+    private Set<CompanyId> routingCaseShippers() {
+        return jdbc
+                .queryForList(
+                        "SELECT scope_id FROM identity.user_assignment WHERE user_id = ? AND scope_kind = 'COMPANY'",
+                        UUID.class,
+                        UUID.fromString("00000000-0000-0000-0000-000000000302"))
+                .stream()
+                .map(CompanyId::new)
+                .collect(java.util.stream.Collectors.toSet());
+    }
+
+    @Test
+    void 見本の経路設計案件の荷主企業は輸送要求の荷主企業で埋まっている() {
+        // Bolt 38g の行 6c（dev だけの V20261029100900 が埋め、V20261029101000 が NOT NULL にする）
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM routing.routing_case", Integer.class))
+                .isGreaterThanOrEqualTo(9);
+        assertThat(jdbc.queryForObject(
+                        "SELECT count(*) FROM routing.routing_case c JOIN quotation.transport_request r"
+                                + " ON r.id = c.transport_request_id WHERE c.shipper_company_id <> r.shipper_company_id",
+                        Integer.class))
+                .isZero();
+    }
+
     @Test
     void 荷主は自社のサンプルの見積依頼だけを見る() {
         assertThat(transportRequests.findSummariesByShipper(SHIPPER_A))
@@ -302,7 +329,7 @@ class DevSampleDataSmokeTest {
 
     @Test
     void 経路設計者の案件一覧に算出待ちと算出済みの案件が出る() {
-        assertThat(routingCases.findSummaries())
+        assertThat(routingCases.findSummaries(routingCaseShippers()))
                 .filteredOn(summary -> summary.number().sequence() >= 901)
                 .extracting(
                         RoutingCaseSummary::number,
@@ -334,7 +361,7 @@ class DevSampleDataSmokeTest {
                         org.assertj.core.groups.Tuple.tuple(
                                 new RoutingCaseNumber(2026, 909), "TR-2026-0912", RouteVersionStatus.CONFIRMED));
         // DE-16 の写しの見積有効期限が入り、一覧は期限の近い順（Bolt 19）
-        assertThat(routingCases.findSummaries())
+        assertThat(routingCases.findSummaries(routingCaseShippers()))
                 .filteredOn(summary -> summary.number().sequence() >= 901)
                 .hasSize(9)
                 .allSatisfy(summary -> assertThat(summary.expiresAt()).isPresent());
@@ -343,7 +370,7 @@ class DevSampleDataSmokeTest {
     @Test
     void 承認の後に失効した見本の案件は見積有効期限を過ぎて案件一覧の先頭に出る() {
         // DE-16 の時点の見積有効期限の写しなので、見積りの失効の後は過ぎて見える（現実の流れと同じ。Bolt 35e）
-        assertThat(routingCases.findSummaries())
+        assertThat(routingCases.findSummaries(routingCaseShippers()))
                 .filteredOn(summary -> summary.number().sequence() >= 901)
                 .first()
                 .satisfies(summary -> {

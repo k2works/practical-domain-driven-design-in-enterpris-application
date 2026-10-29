@@ -5,6 +5,7 @@ import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingNumbe
 import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingRecordSummary;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -45,9 +46,10 @@ public interface TrackingRecordRepository {
     List<TrackingRecordSummary> findRecentSummariesByShipper(CompanyId shipperCompanyId, int limit);
 
     /**
-     * 追跡記録の要約を、追跡の開始時刻の新しい順（同じ時刻なら追跡番号の順）に上限まで取得する（S-11。集約を組み立てない。Bolt 26）。
+     * 荷主企業の集合の追跡記録の要約を、追跡の開始時刻の新しい順（同じ時刻なら追跡番号の順）に上限まで取得する（S-11。集約を組み立てない。
+     * Bolt 26）。社内の画面は担当企業の集合で絞る（Bolt 38g。全件の口は置かない）。集合が空なら問い合わせずに空を返す。
      *
      * @param limit 上限の件数（1 以上）
      */
-    List<TrackingRecordSummary> findRecentSummaries(int limit);
+    List<TrackingRecordSummary> findRecentSummaries(Set<CompanyId> shipperCompanyIds, int limit);
 }

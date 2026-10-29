@@ -9,6 +9,7 @@ import com.example.cargotracker.tracking.application.internal.outboundservices.a
 import com.example.cargotracker.tracking.application.internal.outboundservices.acl.RoutingScheduledLegs;
 import com.example.cargotracker.tracking.application.internal.queryservices.CustomerTrackingQueryService;
 import com.example.cargotracker.tracking.application.internal.queryservices.TrackingRecordQueryService;
+import com.example.cargotracker.tracking.application.internal.queryservices.TrackingRecordScope;
 import com.example.cargotracker.tracking.domain.model.aggregates.TrackingRecordRepository;
 import java.time.Clock;
 import org.springframework.context.ApplicationEventPublisher;
@@ -53,14 +54,22 @@ public class TrackingConfiguration {
 
     /** 追跡管理者による主要実績の登録（US-12。Bolt 26b）。 */
     @Bean
-    TrackingRecordCommandService trackingRecordCommandService(TrackingRecordRepository repository, Clock clock) {
-        return new TrackingRecordCommandService(repository, clock);
+    TrackingRecordCommandService trackingRecordCommandService(
+            TrackingRecordRepository repository, Clock clock, TrackingRecordScope trackingRecordScope) {
+        return new TrackingRecordCommandService(repository, clock, trackingRecordScope);
     }
 
     /** 追跡記録の照会（S-11 追跡一覧、S-12 追跡の詳細。Bolt 26）。 */
     @Bean
-    TrackingRecordQueryService trackingRecordQueryService(TrackingRecordRepository repository) {
-        return new TrackingRecordQueryService(repository);
+    TrackingRecordQueryService trackingRecordQueryService(
+            TrackingRecordRepository repository, TrackingRecordScope trackingRecordScope) {
+        return new TrackingRecordQueryService(repository, trackingRecordScope);
+    }
+
+    /** 社内の追跡記録の担当範囲の判定（照会とコマンドのサービスが使う。Bolt 38g）。 */
+    @Bean
+    TrackingRecordScope trackingRecordScope(TrackingRecordRepository repository) {
+        return new TrackingRecordScope(repository);
     }
 
     /** 荷主の追跡の照会（C-10。社内の照会と分ける。Bolt 27）。 */

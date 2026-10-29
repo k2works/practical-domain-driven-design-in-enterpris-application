@@ -10,7 +10,8 @@
 <main>
     <h1>経路設計案件一覧</h1>
     <!-- S-05（Bolt 17）。荷主が詳細経路設計を依頼した案件を、依頼の新しい順に示す。状態の絞り込みは後の Bolt -->
-    <p th:if="${#lists.isEmpty(cases)}">詳細経路設計の依頼はまだありません。</p>
+    <p class="alert alert-info" th:if="${noAssignedCompanies}">担当企業がまだないので、表示できる経路設計の案件はありません。システム管理者に担当企業の割り当てを頼んでください。</p>
+    <p th:if="${#lists.isEmpty(cases) and !noAssignedCompanies}">詳細経路設計の依頼はまだありません。</p>
     <!-- 狭い画面では表だけを横にスクロールさせ、ページ全体を横にスクロールさせない（WCAG 1.4.10 の表の例外） -->
     <div th:unless="${#lists.isEmpty(cases)}" class="table-scroll" tabindex="0" role="region"
          aria-labelledby="cases-caption">

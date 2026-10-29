@@ -185,13 +185,15 @@ public class ConfirmedRouteEvaluationSteps {
     }
 
     private RoutingCaseSummary onlyCase() {
-        List<RoutingCaseSummary> cases = queryService.listCases();
+        List<RoutingCaseSummary> cases = queryService.listCases(RoutingSteps.SCENARIO_DESIGNER);
         assertThat(cases).hasSize(1);
         return cases.getFirst();
     }
 
     private RoutingCase currentCase() {
-        return queryService.findByNumber(onlyCase().number()).orElseThrow();
+        return queryService
+                .findByNumber(onlyCase().number(), RoutingSteps.SCENARIO_DESIGNER)
+                .orElseThrow();
     }
 
     private static UtcInstant at(String text) {

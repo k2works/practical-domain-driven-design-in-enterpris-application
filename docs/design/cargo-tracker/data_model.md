@@ -4,7 +4,7 @@ title: "cargo-tracker データモデル"
 description: "cargo-tracker の概念データモデル、スキーマ分割、命名と型の規約（H2 と PostgreSQL の共通部分）、コンテキストごとの論理データモデルと ER 図、版・追記専用・冪等性・イベント配信の表現。"
 tags: [design, data-model]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-28T23:19:21Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-29T04:55:37Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:48:17Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:37Z }
@@ -384,6 +384,7 @@ entity "routing_case\n経路設計案件" as rc {
   * arrival_deadline : TIMESTAMPTZ
   * cargo_category : VARCHAR(30)
   * requested_at : TIMESTAMPTZ
+  * shipper_company_id : UUID <<REF identity>>（Bolt 38g）
   * version : BIGINT
   * created_at / created_by（created_by は US-07）
   * updated_at / updated_by（updated_by は US-07）
@@ -512,6 +513,7 @@ Bolt 17（US-06 AC1〜AC3）で作る範囲（[Bolt 17 計画](../../development
 - Bolt 19（US-07 AC1・AC2）で足す列: `route_version` の `candidates_found`（見つけた候補の数。上限で示さなかった候補の数を常に示す。Bolt 17 レビュー D-64。既存の行は示した候補の数で埋める）、`selected_candidate_no`・`rationale`（VARCHAR(4000)）・`approved_by`・`approved_at`。4 列はそろって NULL かそろって値を持ち、確定では値を持ち、作成中・候補提示済み・要専門家判断では持たない（再設計要・旧版は確定の後の状態なので持てる）（CHECK `ck_route_version_confirmed`）。確定すると `routing_case.confirmed_route_version_no` に経路版番号を入れる（Bolt 37d まで。Bolt 37d でこの列と外部キーを消した）。`routing_case` の `quotation_expires_at`（DE-16 の見積有効期限。S-05 の並び）・`created_by`（行を作った操作者ではなく、DE-16 の依頼者の荷主担当者。行はイベントの購読が作る）・`updated_by`（最後に算出・確定した経路設計者）。Bolt 17 で作った行のために NULL を許す（デモ環境のサンプルの案件は `db/dev-data` で依頼元の見積りから写す）。S-05 は最新の経路版の状態を示し、見積有効期限の近い順（NULL は後ろ）、同じなら依頼の古い順に並べる。確定した経路版の行は、`updateRouteVersion` の条件（作成中・候補提示済みだけ）で書き直さない。参照情報版は `candidate_leg.info_version` から読み、写しの列は作らない。開発レビューの後に外部キーを 2 本足した（`V20261007140000`）。`routing_case`（`id`、`confirmed_route_version_no`）→ `route_version`、`route_version`（`routing_case_id`、`route_version_no`、`selected_candidate_no`）→ `route_candidate`（確定した候補を消せない）。「確定は案件に 1 つ」は H2 で部分一意インデックスを作れないため `confirmed_route_version_no` と集約の検証で守る。`decided_by`（専門判断）と再設計の列は使う Bolt で足す。
 - Bolt 37d（US-07 AC4 の準備）で足す列と消す列: `route_version` の `redesign_required_at`（再設計要にした時刻）と `redesign_reasons`（不適合の理由の区分の名前を空白で区切る。`DEADLINE_EXCEEDED`・`CONNECTION_TOO_SHORT`・`NOT_CONNECTABLE`・`VOYAGE_UNAVAILABLE`）。2 列はそろって NULL かそろって値を持ち、値を持てるのは再設計要と旧版だけ、再設計要は必ず持つ（CHECK `ck_route_version_redesign`）。再設計要は確定の記録も持つ（CHECK `ck_route_version_redesign_confirmed`）。設計の `redesign_cause`（US-08 の再設計の変更根拠）とは別の列。`routing_case.confirmed_route_version_no` と外部キーを消した。
 - 経路設計の表と見積りの表の間に外部キーは張らない（スキーマの所有。ADR-001）。輸送要求・見積りの ID は、見積りの公開 API とイベントから得た値の写し。
+- Bolt 38g（US-16 AC4）で足す列: `routing_case.shipper_company_id`（荷主企業。見積りの公開 API「経路条件の照会」の結果の写しで、社内の経路設計の画面を担当企業で絞るのに使う。NOT NULL）。3 段で入れる: common の `V20261029100000` で null 可で足し索引 `ix_routing_case_shipper`（`shipper_company_id`、`quotation_expires_at`）を付ける → dev だけの `V20261029100900` で既存の行を輸送要求の荷主企業から埋める → common の `V20261029101000` で `SET NOT NULL`。ステージング・本番には行がない
 - 航海・寄港・接続時間規則は、外部原本の取込（US-14、W7）と規則の管理ができるまで、開発環境の `db/dev-data` にだけ入れる仮のデータ（出典 `MANUAL_ENTRY`、情報版 `PROVISIONAL-1`、架空の航海番号）。ステージング・本番では 0 件。
 
 ### 予約（`booking`）
@@ -948,7 +950,7 @@ Bolt 14 で作る範囲（2026-10-06、human:kakimomokuri。[Bolt 14 計画](../
 - Bolt 34 で `audit_record` に `target_type`・`target_id`・`target_version`・`before_state`・`after_state` を足した（どれも NULL を許す。今の記録は対象を持たない）。役割の変更の履歴は別の表を作らず、監査記録 `ROLES_CHANGED`（対象 `USER`・利用者 ID・更新した後の版、変更前後は役割の名前を `Role` の宣言の順にカンマでつないだ文字列）で代える。`user_role` は今の値だけを持ち、付与で `granted_by`（操作者）と `granted_at` を入れ、取消しで行を消す（2026-10-16、human:kakimomokuri）。`user_role.granted_by` は NULL を許す（dev-data の既存の行は NULL）。`approval_ref`・`source_ref` は、使う Bolt（監査の照会は US-17）で足す。`(target_type, target_id, occurred_at)` のインデックス `ix_audit_record_target` は、S-20 の詳細で停止中の利用者の今の停止の記録（最新の `USER_SUSPENDED`）を引くために Bolt 38c2 で足した（`V20261027100000`。H2 と PostgreSQL の共通の構文で、CONCURRENTLY は使わない。監査の照会（US-17）も同じ索引を使う）。
 - Bolt 38e の `ASSIGNMENTS_CHANGED`: `target_type` は `USER`、`target_id` は利用者 ID、`target_version` は更新した後の版、`before_state`・`after_state` は管理範囲の外を含む担当企業の全体を企業 ID の昇順にカンマでつないだ文字列（担当企業がなければ空の文字列）。企業名は変わりうるので残さない。`VARCHAR(4000)` に入るのは約 108 社まで（パイロットの規模では受け入れる）。
 - Bolt 38b2 で、利用者の登録の監査記録 `USER_REGISTERED` も対象の列を使う（対象 `USER`・新しい利用者 ID・版 `0`、変更前は null、変更後は登録した役割の名前。メールアドレスと表示名は書かない）。管理範囲の外の企業への登録の試行の `ADMIN_SCOPE_DENIED` は対象の種類を `COMPANY`（企業 ID、版と変更前後は null）にする（`target_type` は `VARCHAR(50)` で、スキーマは変えない）
-- Bolt 38f で、担当範囲の外の試行の監査記録 `ASSIGNED_SCOPE_DENIED` を足す（表と列は変えない）。`result` は `FAILURE`、`reason` は `OUT_OF_SCOPE`、対象の種類は `TRANSPORT_REQUEST`・`QUOTATION`、対象の ID は業務番号（見積りは「業務番号/見積り番号」）、版と変更前・変更後は null。確定の POST だけで書く（SEC-12）。Bolt 38f2 から、予約の確定の POST の範囲の外も書く（対象の種類は `QUOTATION`、対象の ID は「業務番号/見積り番号」。表と列は変えない）
+- Bolt 38f で、担当範囲の外の試行の監査記録 `ASSIGNED_SCOPE_DENIED` を足す（表と列は変えない）。`result` は `FAILURE`、`reason` は `OUT_OF_SCOPE`、対象の種類は `TRANSPORT_REQUEST`・`QUOTATION`、対象の ID は業務番号（見積りは「業務番号/見積り番号」）、版と変更前・変更後は null。確定の POST だけで書く（SEC-12）。Bolt 38f2 から、予約の確定の POST の範囲の外も書く（対象の種類は `QUOTATION`、対象の ID は「業務番号/見積り番号」。表と列は変えない）。Bolt 38g から、経路設計の候補の算出・確定の POST（対象の種類は `ROUTING_CASE`、対象の ID は案件番号）とマイルストーンの登録の POST（`TRACKING_RECORD`、追跡番号）の範囲の外も書き、「確定の POST だけ」を「状態を変える POST」に改める（表と列は変えない）
 - Bolt 34d で、利用状態の変更の監査記録 `USER_SUSPENDED`・`USER_REACTIVATED` も対象の列を使う（対象 `USER`・利用者 ID・更新した後の版、変更前後は利用状態の名前 `ACTIVE`・`SUSPENDED`。結果は `SUCCESS`。`USER_SUSPENDED` の `reason` は停止の理由の名前、`USER_REACTIVATED` の `reason` は空）。`app_user.status` の更新と同じトランザクションで書き、拒否と古い版は書かない（IA-INV-08）。スキーマは変えないので、DB の列のコメント（`V20261016100000__add_identity_audit_record_target.sql` の `target_type`・`target_id`・`target_version`・`before_state`・`after_state` の「役割の変更では」）は直さずに残す。`audit_record.reason` は上の ER では `VARCHAR(4000)` だが、DB（`V20261006140000__create_identity_users.sql`）は `VARCHAR(100)` で食い違う。停止の理由の名前は最長 11 文字（`TRANSFERRED`）で `VARCHAR(100)` に収まるので、この Bolt では食い違いを記すだけにし、解消は入れない（Bolt 34d の計画のスコープ。2026-10-17、human:kakimomokuri が承認）。
 - Bolt 38c で、ロックの解除の監査記録 `ACCOUNT_UNLOCKED`（対象 `USER`・利用者 ID・利用者の今の版（変わらない）、変更前 `LOCKED`・変更後 `UNLOCKED`、`reason` は空）と、管理者による TOTP の解除の監査記録 `TOTP_RESET_BY_ADMIN`（対象 `USER`・利用者 ID・利用者の今の版、変更前 `ENROLLED`、変更後は `method=PHONE_CALLBACK;verifiedAt=2026-11-09T01:30:00Z` の形（本人確認の手段の名前と UTC の ISO-8601）、`reason` は `IDENTITY_VERIFIED`）も対象の列を使う。結果はどちらも `SUCCESS`。拒否と「既に解除」は書かない。スキーマは変えない（`action` に CHECK はなく、3 つの表の DELETE は権限で許されている）
 - Bolt 14 の認可はログインの時点の役割で行っていた。Bolt 32c で、権限の取消し（US-18 AC6）とあわせて request ごとに `app_user`・`user_role`・`company` を 1 回で確かめる形に置き換えた。スキーマは変えていない。
@@ -1172,6 +1174,7 @@ src/main/resources/db/
 | `quotation.quotation` | （`transport_request_id`、`status`） | 輸送要求の有効な見積り |
 | `quotation.quotation` | `ix_quotation_assigned_route`（`routing_case_number`、`route_version_no`） | 経路設計が再設計要にした経路版を割り当てた見積り（再見積りの旧版と新しい見積りの両方）を引き、再設計要の印を付ける（US-07 AC5。Bolt 37e） |
 | `routing.routing_case` | （`transport_request_id`） | 輸送要求から経路設計案件 |
+| `routing.routing_case` | `ix_routing_case_shipper`（`shipper_company_id`、`quotation_expires_at`） | 社内の経路設計案件一覧（S-05）を担当企業で絞り、見積有効期限の近い順に並べる（Bolt 38g） |
 | `routing.referenced_info_version` | （`voyage_number`） | 航海の更新で再評価する確定済み経路版の検索（DE-12）（Bolt 37d: この表は作らない。W7 で `candidate_leg.voyage_number` の索引として決める） |
 | `booking.booking` | `tracking_number`（一意）、（`shipper_company_id`、`status`）、（`transport_request_number`）、（`transport_request_number`、`quotation_no`）（一意） | 追跡番号での照会、荷主の予約一覧、業務番号から予約をたどる社内の照会（Bolt 23、R-31）、見積りの照会の前に同じ見積りの予約を引く（Bolt 24）。S-10 予約一覧（Bolt 25b）は予約版 1 の `committed_at` の新しい順に引くが、R0.1 では予約が数十件なので索引を足さない（確定時刻の索引は W11 の一覧の本体で決める）。C-06 予約一覧（荷主。Bolt 27b）は（`shipper_company_id`、`status`）の索引 `ix_booking_shipper_status` で荷主企業を絞り、索引は足さない |
 | `booking.booking_saga` | （`status`、`started_at`） | 処理中の滞留の判定（RTY-02、OBS-04） |

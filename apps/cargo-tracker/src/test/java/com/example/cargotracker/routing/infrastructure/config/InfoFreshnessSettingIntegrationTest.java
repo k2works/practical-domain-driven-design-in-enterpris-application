@@ -5,9 +5,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.example.cargotracker.routing.application.internal.commands.CalculateCandidatesCommand;
 import com.example.cargotracker.routing.application.internal.commandservices.CandidateCalculationOutcome;
 import com.example.cargotracker.routing.application.internal.commandservices.RoutingCaseCommandService;
+import com.example.cargotracker.routing.domain.model.aggregates.RoutingCase;
 import com.example.cargotracker.routing.domain.model.aggregates.RoutingCaseRepository;
 import com.example.cargotracker.routing.domain.model.valueobjects.CandidateCalculation;
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseNumber;
+import com.example.cargotracker.shared.domain.AuthenticatedActorFixture;
 import com.example.cargotracker.shared.domain.UserId;
 import java.sql.Timestamp;
 import java.time.Duration;
@@ -86,9 +88,10 @@ class InfoFreshnessSettingIntegrationTest {
     }
 
     CandidateCalculation recalculate() {
-        long version = routingCases.findByNumber(SAMPLE).orElseThrow().aggregateVersion();
-        CandidateCalculationOutcome outcome =
-                commandService.calculateCandidates(new CalculateCandidatesCommand(SAMPLE, version, ROUTE_DESIGNER));
+        RoutingCase sample = routingCases.findByNumber(SAMPLE).orElseThrow();
+        CandidateCalculationOutcome outcome = commandService.calculateCandidates(
+                new CalculateCandidatesCommand(SAMPLE, sample.aggregateVersion(), ROUTE_DESIGNER),
+                AuthenticatedActorFixture.routeDesignerHandling(ROUTE_DESIGNER, sample.shipperCompanyId()));
         assertThat(outcome).isInstanceOf(CandidateCalculationOutcome.Calculated.class);
         return ((CandidateCalculationOutcome.Calculated) outcome).calculation();
     }

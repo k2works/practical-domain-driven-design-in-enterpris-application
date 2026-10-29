@@ -2,8 +2,10 @@ package com.example.cargotracker.routing.domain.model.aggregates;
 
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseNumber;
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseSummary;
+import com.example.cargotracker.shared.domain.CompanyId;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -39,6 +41,9 @@ public interface RoutingCaseRepository {
     /** 輸送要求版の案件があるか（DE-16 の再配信で重複して作らないため。R-INV-10）。 */
     boolean existsForTransportRequestVersion(UUID transportRequestId, int transportRequestVersionNo);
 
-    /** 案件一覧（S-05）を、見積有効期限の近い順（期限のない案件は後ろ）、同じなら依頼の古い順に返す（Bolt 19）。 */
-    List<RoutingCaseSummary> findSummaries();
+    /**
+     * 荷主企業の集合の案件一覧（S-05）を、見積有効期限の近い順（期限のない案件は後ろ）、同じなら依頼の古い順に返す（Bolt 19）。
+     * 社内の画面は担当企業の集合で絞る（Bolt 38g。全件の口は置かない）。集合が空なら問い合わせずに空を返す。
+     */
+    List<RoutingCaseSummary> findSummaries(Set<CompanyId> shipperCompanyIds);
 }

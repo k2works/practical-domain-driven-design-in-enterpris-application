@@ -64,6 +64,7 @@ import com.example.cargotracker.routing.application.internal.outboundservices.ac
 import com.example.cargotracker.routing.application.internal.outboundservices.acl.QuotationRouteConditions;
 import com.example.cargotracker.routing.application.internal.outboundservices.acl.QuotationRouteRedesigns;
 import com.example.cargotracker.routing.application.internal.queryservices.RoutingCaseQueryService;
+import com.example.cargotracker.routing.application.internal.queryservices.RoutingCaseScope;
 import com.example.cargotracker.routing.domain.events.RouteConfirmed;
 import com.example.cargotracker.routing.domain.events.RouteRedesignRequired;
 import com.example.cargotracker.routing.domain.model.rules.InfoFreshnessPolicy;
@@ -78,6 +79,7 @@ import com.example.cargotracker.tracking.application.internal.eventhandlers.Trac
 import com.example.cargotracker.tracking.application.internal.outboundservices.acl.BookingTrackingStarts;
 import com.example.cargotracker.tracking.application.internal.outboundservices.acl.RoutingScheduledLegs;
 import com.example.cargotracker.tracking.application.internal.queryservices.CustomerTrackingQueryService;
+import com.example.cargotracker.tracking.application.internal.queryservices.TrackingRecordScope;
 import com.example.cargotracker.tracking.domain.events.TrackingStarted;
 import io.cucumber.spring.CucumberContextConfiguration;
 import java.time.Duration;
@@ -195,12 +197,13 @@ public class AcceptanceTestConfiguration {
                     eventDelivery,
                     clock,
                     // 受入シナリオの境界（24 時間）は D-89 の仮の値で書いた仕様なので、設定の既定値を読まずに固定する
-                    new InfoFreshnessPolicy(Duration.ofHours(24)));
+                    new InfoFreshnessPolicy(Duration.ofHours(24)),
+                    new RoutingCaseScope(repository));
         }
 
         @Bean
         RoutingCaseQueryService routingCaseQueryService(InMemoryRoutingCaseRepository repository) {
-            return new RoutingCaseQueryService(repository);
+            return new RoutingCaseQueryService(repository, new RoutingCaseScope(repository));
         }
 
         @Bean
@@ -270,7 +273,7 @@ public class AcceptanceTestConfiguration {
         @Bean
         TrackingRecordCommandService trackingRecordCommandService(
                 InMemoryTrackingRecordRepository repository, MutableClock clock) {
-            return new TrackingRecordCommandService(repository, clock);
+            return new TrackingRecordCommandService(repository, clock, new TrackingRecordScope(repository));
         }
 
         /** 追跡は DE-22 を受けて予約の公開 API で予約サガを完了にする（ADR-014・015。Bolt 25）。 */

@@ -11,6 +11,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Stream;
 
@@ -93,8 +94,10 @@ public class InMemoryTrackingRecordRepository implements TrackingRecordRepositor
 
     /** PostgreSQL の照会と同じく、追跡の開始時刻の新しい順（同じ時刻なら追跡番号の順）に上限まで返す（Bolt 26）。 */
     @Override
-    public synchronized List<TrackingRecordSummary> findRecentSummaries(int limit) {
-        return summaries(byBookingId.values().stream(), limit);
+    public synchronized List<TrackingRecordSummary> findRecentSummaries(Set<CompanyId> shipperCompanyIds, int limit) {
+        return summaries(
+                byBookingId.values().stream().filter(saved -> shipperCompanyIds.contains(saved.shipperCompanyId())),
+                limit);
     }
 
     private static List<TrackingRecordSummary> summaries(Stream<TrackingRecord> records, int limit) {

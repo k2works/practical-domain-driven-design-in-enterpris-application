@@ -31,11 +31,13 @@ import com.example.cargotracker.routing.domain.model.valueobjects.RouteVersionSt
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseId;
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseNumber;
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseSummary;
+import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -62,6 +64,7 @@ class MyBatisRoutingRepositoriesIntegrationTest {
     static final UtcInstant JUDGED_AT = at("2083-10-07T03:00:00Z");
     static final String EXPIRES_AT = "2083-10-08T09:00:00Z";
     static final UUID OPERATOR = UUID.randomUUID();
+    static final CompanyId SHIPPER = new CompanyId(UUID.randomUUID());
     static final RouteApprover APPROVER = new RouteApprover(UUID.randomUUID(), true);
 
     @Autowired
@@ -226,7 +229,7 @@ class MyBatisRoutingRepositoriesIntegrationTest {
                 "UPDATE routing.routing_case SET quotation_expires_at = NULL WHERE id = ?",
                 withoutExpiry.id().value());
 
-        List<RoutingCaseSummary> summaries = repository.findSummaries().stream()
+        List<RoutingCaseSummary> summaries = repository.findSummaries(Set.of(SHIPPER)).stream()
                 .filter(summary -> summary.number().year() == 2083)
                 .toList();
 
@@ -253,7 +256,28 @@ class MyBatisRoutingRepositoriesIntegrationTest {
     }
 
     @Test
-    void 依頼の見積有効期限と依頼者を保存して読み出せる() {
+    void 案件一覧は荷主企業の集合の案件だけを返し空の集合なら何も返さない() {
+        // 行 1a・1b（社内の一覧は担当企業の集合で絞る。Bolt 38g）
+        CompanyId other = new CompanyId(UUID.randomUUID());
+        CompanyId third = new CompanyId(UUID.randomUUID());
+        RoutingCase ofShipper = open(UUID.randomUUID(), "2083-10-06T01:00:00Z", EXPIRES_AT, SHIPPER);
+        RoutingCase ofOther = open(UUID.randomUUID(), "2083-10-06T02:00:00Z", EXPIRES_AT, other);
+        RoutingCase ofThird = open(UUID.randomUUID(), "2083-10-06T03:00:00Z", EXPIRES_AT, third);
+        repository.save(ofShipper);
+        repository.save(ofOther);
+        repository.save(ofThird);
+
+        assertThat(repository.findSummaries(Set.of(SHIPPER, other)))
+                .extracting(RoutingCaseSummary::number)
+                .contains(ofShipper.number(), ofOther.number())
+                .doesNotContain(ofThird.number());
+        assertThat(repository.findSummaries(Set.of(new CompanyId(UUID.randomUUID()))))
+                .isEmpty();
+        assertThat(repository.findSummaries(Set.of())).isEmpty();
+    }
+
+    @Test
+    void 依頼の見積有効期限と依頼者と荷主企業を保存して読み出せる() {
         RoutingCase routingCase = open(UUID.randomUUID(), "2083-10-06T02:00:00Z");
 
         repository.save(routingCase);
@@ -261,6 +285,12 @@ class MyBatisRoutingRepositoriesIntegrationTest {
         RoutingCase found = repository.findByNumber(routingCase.number()).orElseThrow();
         assertThat(found.quotationExpiresAt()).contains(at(EXPIRES_AT));
         assertThat(found.requestedBy()).isEqualTo(routingCase.requestedBy());
+        assertThat(found.shipperCompanyId()).isEqualTo(SHIPPER);
+        assertThat(jdbc.queryForObject(
+                        "SELECT shipper_company_id FROM routing.routing_case WHERE id = ?",
+                        UUID.class,
+                        routingCase.id().value()))
+                .isEqualTo(SHIPPER.value());
         assertThat(jdbc.queryForObject(
                         "SELECT created_by FROM routing.routing_case WHERE id = ?",
                         UUID.class,
@@ -380,7 +410,7 @@ class MyBatisRoutingRepositoriesIntegrationTest {
         assertThat(found.routeVersions().getFirst().candidates())
                 .hasSize(routingCase.routeVersion().candidates().size());
         assertThat(found.routeVersions().getLast().candidates()).isEmpty();
-        assertThat(repository.findSummaries())
+        assertThat(repository.findSummaries(Set.of(SHIPPER)))
                 .filteredOn(summary -> summary.number().equals(routingCase.number()))
                 .singleElement()
                 .satisfies(summary -> assertThat(summary.status()).isEqualTo(RouteVersionStatus.CANDIDATES_PRESENTED));
@@ -698,6 +728,7 @@ class MyBatisRoutingRepositoriesIntegrationTest {
                 source.requestedAt(),
                 source.quotationExpiresAt().orElse(null),
                 source.requestedBy().orElse(null),
+                source.shipperCompanyId(),
                 versions,
                 source.aggregateVersion());
     }
@@ -739,6 +770,10 @@ class MyBatisRoutingRepositoriesIntegrationTest {
     }
 
     private RoutingCase open(UUID transportRequestId, String requestedAt, String expiresAt) {
+        return open(transportRequestId, requestedAt, expiresAt, SHIPPER);
+    }
+
+    private RoutingCase open(UUID transportRequestId, String requestedAt, String expiresAt, CompanyId shipper) {
         return RoutingCase.open(
                 new RoutingCaseId(UUID.randomUUID()),
                 numberIssuer.next(2083),
@@ -750,7 +785,8 @@ class MyBatisRoutingRepositoriesIntegrationTest {
                 new RouteSpecification(TOKYO, ROTTERDAM, DEADLINE, "GENERAL"),
                 at(requestedAt),
                 at(expiresAt),
-                UUID.randomUUID());
+                UUID.randomUUID(),
+                shipper);
     }
 
     /** 直行（適合）、シンガポールで接続不足、香港で規則なし、期限超過の組合せ。 */

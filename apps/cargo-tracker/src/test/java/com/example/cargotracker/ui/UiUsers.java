@@ -278,7 +278,20 @@ public class UiUsers {
      * 入れるので、テストの準備として表に入れる。利用者を作るときには割り当てない（明示の前提で入れる。38e の #50 (a)）。
      */
     public void assignShipperCompanyToSales() {
-        AdministrationFixtures.assignCompany(jdbc, of(Role.SALES).userId(), companyOf(Role.SHIPPER));
+        assignShipperCompanyTo(Role.SALES);
+    }
+
+    /**
+     * 業務担当者の役割の利用者に、シナリオの荷主担当者の企業を担当させる（Bolt 38g。経路設計者・追跡管理者も担当企業の案件と追跡記録だけを
+     * 扱う）。割り当ては明示の前提で入れ、利用者を作るときには割り当てない（38e の #50 (a)）。
+     */
+    public void assignShipperCompanyTo(Role role) {
+        AdministrationFixtures.assignCompany(jdbc, of(role).userId(), companyOf(Role.SHIPPER));
+    }
+
+    /** 役割の利用者の企業の名前（画面に出る企業名を確かめるため。Bolt 38g）。 */
+    public String companyNameOf(Role role) {
+        return companies.findById(companyOf(role)).orElseThrow().name();
     }
 
     /** 役割の利用者の企業。 */

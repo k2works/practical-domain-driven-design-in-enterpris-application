@@ -3,15 +3,27 @@ package com.example.cargotracker.ui;
 import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.example.cargotracker.routing.domain.model.aggregates.RoutingCase;
+import com.example.cargotracker.routing.domain.model.aggregates.RoutingCaseFixture;
+import com.example.cargotracker.routing.domain.model.aggregates.RoutingCaseNumberIssuer;
+import com.example.cargotracker.routing.domain.model.aggregates.RoutingCaseRepository;
+import com.example.cargotracker.routing.domain.model.valueobjects.RouteApprover;
+import com.example.cargotracker.routing.domain.model.valueobjects.RouteSpecification;
+import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseId;
+import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.Role;
+import com.example.cargotracker.shared.domain.UtcInstant;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
+import com.microsoft.playwright.options.Cookie;
 import io.cucumber.java.ja.かつ;
 import io.cucumber.java.ja.ならば;
 import io.cucumber.java.ja.もし;
 import io.cucumber.java.ja.前提;
+import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -25,17 +37,27 @@ public class UserAdministrationUiSteps {
     private final BrowserSession browser;
     private final UiUsers users;
     private final JdbcTemplate jdbc;
+    private final RoutingCaseRepository routingCases;
+    private final RoutingCaseNumberIssuer routingCaseNumbers;
     private final String baseUrl;
+    /** 役割を外される経路設計者の session の Cookie（Bolt 38g の行 9）。 */
+    private List<Cookie> designerSession;
+    /** 役割を外される前に経路設計者が経路を確定した案件の番号（Bolt 38g の開発レビューの中 1）。 */
+    private String confirmedBeforeRemoval;
 
     public UserAdministrationUiSteps(
             BrowserSession browser,
             UiUsers users,
             JdbcTemplate jdbc,
+            RoutingCaseRepository routingCases,
+            RoutingCaseNumberIssuer routingCaseNumbers,
             @LocalServerPort int port,
             @Value("${ui.base-url:}") String configuredBaseUrl) {
         this.browser = browser;
         this.users = users;
         this.jdbc = jdbc;
+        this.routingCases = routingCases;
+        this.routingCaseNumbers = routingCaseNumbers;
         this.baseUrl = configuredBaseUrl.isBlank() ? "http://localhost:" + port : configuredBaseUrl;
     }
 
@@ -62,6 +84,118 @@ public class UserAdministrationUiSteps {
     @もし("システム管理者が営業担当者の利用者の詳細を開く")
     public void 営業担当者の詳細を開く() {
         openDetail(Role.SALES);
+    }
+
+    /**
+     * AC5 の役割の取消し（Bolt 38g の行 9）。役割を 0 にはできないので、外される利用者に 2 つ目の役割を付けておく（テストの準備として表に
+     * 入れる。request ごとの確かめが次の request から読む）。
+     */
+    @前提("経路設計者の利用者に追跡管理者の役割も付いている")
+    public void 経路設計者に追跡管理者の役割も付いている() {
+        jdbc.update(
+                "INSERT INTO identity.user_role (user_id, role, granted_by, granted_at) VALUES (?, 'TRACKING_MANAGER', NULL,"
+                        + " CURRENT_TIMESTAMP)",
+                users.of(Role.ROUTE_DESIGNER).userId().value());
+    }
+
+    /**
+     * AC5 の「過去の操作履歴は保持される」の前提（開発レビューの中 1）。担当企業の案件を、経路設計者の利用者が確定した状態で保存する
+     * （確定までの画面の流れは重いので、テストの準備として集約を直接保存する。38f2 の予約の前例）。経路版の行が選んだ候補の行を参照する
+     * ので、算出した案件を一度保存し、読み直して確定してから更新する（確定のコマンドと同じ口）。
+     */
+    @かつ("経路設計者の利用者が役割を外す前に担当企業の案件の経路を確定している")
+    public void 役割を外す前に経路を確定している() {
+        RoutingCase routingCase = RoutingCase.open(
+                new RoutingCaseId(UUID.randomUUID()),
+                routingCaseNumbers.next(2085),
+                UUID.randomUUID(),
+                "TR-2085-0001",
+                1,
+                UUID.randomUUID(),
+                List.of(),
+                new RouteSpecification(
+                        new Location("JPTYO"),
+                        new Location("NLRTM"),
+                        new UtcInstant(Instant.parse("2099-10-31T00:00:00Z")),
+                        "GENERAL"),
+                new UtcInstant(Instant.parse("2026-10-06T02:00:00Z")),
+                new UtcInstant(Instant.parse("2099-11-30T00:00:00Z")),
+                UUID.randomUUID(),
+                users.companyOf(Role.SHIPPER));
+        RoutingCaseFixture.calculateDirect(routingCase);
+        routingCases.save(routingCase);
+        RoutingCase calculated = routingCases.findByNumber(routingCase.number()).orElseThrow();
+        UUID designer = users.of(Role.ROUTE_DESIGNER).userId().value();
+        RoutingCaseFixture.confirmCalculated(calculated, new RouteApprover(designer, true));
+        routingCases.update(calculated, designer);
+        confirmedBeforeRemoval = calculated.number().text();
+    }
+
+    /** 外される利用者の session を控える（管理者の操作の間も生かし、後で同じ session で次の request を送る。T-216。前例 38c）。 */
+    @かつ("経路設計者の利用者がログインして経路設計の案件一覧を開いている")
+    public void 経路設計者がログインして案件一覧を開いている() {
+        browser.navigate(baseUrl + "/staff/routing-cases");
+        assertThat(page().getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setLevel(1)))
+                .hasText("経路設計案件一覧");
+        designerSession = browser.cookies();
+    }
+
+    @もし("システム管理者が経路設計者の利用者の詳細を開く")
+    public void 経路設計者の詳細を開く() {
+        openDetail(Role.ROUTE_DESIGNER);
+    }
+
+    @ならば("役割を変更したと示され、今の役割は {string} だけになる")
+    public void 役割は一つだけになる(String remaining) {
+        assertThat(page().getByRole(AriaRole.STATUS)).hasText("役割を変更しました。相手の次の操作から効きます。");
+        assertThat(page().locator("dd#current-roles")).hasText(remaining);
+        assertThat(rolesOf(Role.ROUTE_DESIGNER)).containsExactly("TRACKING_MANAGER");
+    }
+
+    @もし("経路設計者の利用者が同じ session で経路設計の案件一覧を開く")
+    public void 同じsessionで案件一覧を開く() {
+        browser.restoreCookies(designerSession);
+        page().navigate(baseUrl + "/staff/routing-cases");
+        page().waitForLoadState();
+    }
+
+    @もし("経路設計者の利用者が同じ session で追跡一覧を開く")
+    public void 同じsessionで追跡一覧を開く() {
+        page().navigate(baseUrl + "/staff/tracking-records");
+        page().waitForLoadState();
+    }
+
+    @ならば("追跡一覧が表示される")
+    public void 追跡一覧が表示される() {
+        assertThat(page().getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setLevel(1)))
+                .hasText("追跡一覧");
+        browser.checkAccessibility();
+    }
+
+    /**
+     * AC5 の「過去の操作履歴は保持される」。役割の取消しは、その利用者がした業務の記録（経路の確定の承認者）と監査の記録を消さない
+     * （Bolt 38g の行 9、開発レビューの中 1）。
+     */
+    @かつ("役割を外す前のその利用者の経路の確定の記録と、ログインの記録と役割の変更の記録が残っている")
+    public void 過去の記録が残っている() {
+        UUID designer = users.of(Role.ROUTE_DESIGNER).userId().value();
+        assertThat(jdbc.queryForObject(
+                        "SELECT count(*) FROM routing.route_version v JOIN routing.routing_case c ON v.routing_case_id = c.id"
+                                + " WHERE c.case_number = ? AND v.status = 'CONFIRMED' AND v.approved_by = ?",
+                        Integer.class,
+                        confirmedBeforeRemoval,
+                        designer))
+                .isOne();
+        assertThat(jdbc.queryForObject(
+                        "SELECT count(*) FROM identity.audit_record WHERE action = 'LOGIN_SUCCEEDED' AND actor_user_id = ?",
+                        Integer.class,
+                        designer))
+                .isPositive();
+        assertThat(jdbc.queryForObject(
+                        "SELECT count(*) FROM identity.audit_record WHERE action = 'ROLES_CHANGED' AND target_id = ?",
+                        Integer.class,
+                        designer.toString()))
+                .isOne();
     }
 
     @前提("監査担当者の利用者が登録されている")

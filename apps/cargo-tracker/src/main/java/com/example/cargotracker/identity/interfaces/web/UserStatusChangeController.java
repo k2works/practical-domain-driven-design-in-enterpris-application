@@ -136,6 +136,8 @@ public class UserStatusChangeController {
         model.addAttribute(UserAdministrationLabels.VERSION_ATTRIBUTE, version);
         model.addAttribute("operator", Role.SYSTEM_ADMIN.displayName() + " " + actor.displayName());
         model.addAttribute(UserAdministrationLabels.ACTIVE_ATTRIBUTE, UserAdministrationLabels.ACTIVE);
+        // 確認ポイント 19（Bolt 38g）: この利用者の担当企業を示すだけにし、付け替えは担当範囲の領域で行う
+        model.addAttribute("assignedCompanies", page.assignedCompaniesLine(user, actor));
         return "identity/users/status-confirmation";
     }
 

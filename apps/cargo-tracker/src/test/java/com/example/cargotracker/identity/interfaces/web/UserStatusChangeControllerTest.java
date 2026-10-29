@@ -21,6 +21,8 @@ import com.example.cargotracker.identity.application.internal.commandservices.Us
 import com.example.cargotracker.identity.application.internal.queryservices.AdministrationListing;
 import com.example.cargotracker.identity.application.internal.queryservices.UserAdministrationQueryService;
 import com.example.cargotracker.identity.application.internal.queryservices.UserLookup;
+import com.example.cargotracker.identity.domain.model.aggregates.Company;
+import com.example.cargotracker.identity.domain.model.valueobjects.AssignedCompanies;
 import com.example.cargotracker.identity.domain.model.valueobjects.CompanyKind;
 import com.example.cargotracker.identity.domain.model.valueobjects.EmailAddress;
 import com.example.cargotracker.identity.domain.model.valueobjects.StatusChangeRejection;
@@ -277,6 +279,88 @@ class UserStatusChangeControllerTest {
                         eq(3L),
                         eq(UserStatus.SUSPENDED),
                         eq(Optional.of(SuspensionReason.EMERGENCY)));
+    }
+
+    // 確認ポイント 19（停止の確認の領域にこの利用者の担当企業。Bolt 38g の行 8）
+
+    @Test
+    void 停止の確認の領域に担当企業の名前とこの画面で変えられない企業の数を示す() throws Exception {
+        Company north = Company.of(
+                new CompanyId(UUID.fromString("30000000-0000-0000-0000-000000000001")),
+                "荷主 北",
+                CompanyKind.SHIPPER,
+                true);
+        Company south = Company.of(
+                new CompanyId(UUID.fromString("30000000-0000-0000-0000-000000000002")),
+                "荷主 南",
+                CompanyKind.SHIPPER,
+                true);
+        CompanyId outside = new CompanyId(UUID.fromString("30000000-0000-0000-0000-000000000009"));
+        found(user(3).withAssignedCompanies(new AssignedCompanies(Set.of(north.id(), south.id(), outside))));
+        when(queryService.assignableCompanies(any()))
+                .thenReturn(new AdministrationListing.Permitted<>(List.of(north, south)));
+
+        mockMvc.perform(suspendConfirmation())
+                .andExpect(status().isOk())
+                .andExpect(content().string(Matchers.containsString("<dt class=\"col-sm-3\">担当企業</dt>")))
+                .andExpect(content().string(Matchers.containsString("担当企業: 荷主 北、荷主 南。この画面で変えられない企業 1 社も担当しています。")));
+    }
+
+    @Test
+    void 変えられない企業だけを担当していれば停止の確認の領域にその数だけを示しなしと示さない() throws Exception {
+        // 「なし。」と「も担当しています。」を組み合わせると食い違うので、数だけの文にする（開発レビューの中 2）
+        Company north = Company.of(
+                new CompanyId(UUID.fromString("30000000-0000-0000-0000-000000000001")),
+                "荷主 北",
+                CompanyKind.SHIPPER,
+                true);
+        CompanyId outside = new CompanyId(UUID.fromString("30000000-0000-0000-0000-000000000009"));
+        found(user(3).withAssignedCompanies(new AssignedCompanies(Set.of(outside))));
+        when(queryService.assignableCompanies(any())).thenReturn(new AdministrationListing.Permitted<>(List.of(north)));
+
+        mockMvc.perform(suspendConfirmation())
+                .andExpect(status().isOk())
+                .andExpect(content().string(Matchers.containsString("担当企業: この画面で変えられない企業 1 社を担当しています。")))
+                .andExpect(content().string(Matchers.not(Matchers.containsString("担当企業: なし"))));
+    }
+
+    @Test
+    void 担当企業がなければ停止の確認の領域になしと示す() throws Exception {
+        found(user(3));
+
+        mockMvc.perform(suspendConfirmation())
+                .andExpect(status().isOk())
+                .andExpect(content().string(Matchers.containsString("担当企業: なし。")))
+                .andExpect(content().string(Matchers.not(Matchers.containsString("この画面で変えられない企業"))));
+    }
+
+    @Test
+    void 担当範囲のある役割を持たない利用者の停止の確認の領域には担当企業を示さない() throws Exception {
+        found(new UserDetail(
+                TARGET,
+                new CompanyId(UUID.fromString("20000000-0000-0000-0000-000000000004")),
+                "荷主 A",
+                CompanyKind.SHIPPER,
+                "荷主 太郎",
+                new EmailAddress("shipper@example.com"),
+                UserStatus.ACTIVE,
+                Set.of(Role.SHIPPER),
+                3L,
+                Optional.empty(),
+                Optional.empty()));
+
+        mockMvc.perform(suspendConfirmation())
+                .andExpect(status().isOk())
+                .andExpect(content().string(Matchers.not(Matchers.containsString("担当企業"))));
+    }
+
+    private org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder suspendConfirmation() {
+        when(statusChanges.check(any(), eq(TARGET), anyLong(), any(), any()))
+                .thenReturn(new StatusChangeCheck.Acceptable());
+        return get(STATUS_CONFIRMATION)
+                .param("status", "SUSPENDED")
+                .param("reason", "EMERGENCY")
+                .param("version", "3");
     }
 
     private void found(UserDetail user) {

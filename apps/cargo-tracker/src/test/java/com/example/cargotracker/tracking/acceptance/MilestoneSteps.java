@@ -2,6 +2,7 @@ package com.example.cargotracker.tracking.acceptance;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.example.cargotracker.shared.domain.AuthenticatedActorFixture;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.Source;
@@ -28,6 +29,9 @@ import java.util.UUID;
 /** 主要実績の登録の受入シナリオのステップ（US-12 AC1・AC2。Bolt 26b）。 */
 public class MilestoneSteps {
 
+    /** シナリオの追跡記録の荷主企業（追跡管理者はこの企業を担当する。Bolt 38g）。 */
+    private static final CompanyId SHIPPER = new CompanyId(UUID.fromString("00000000-0000-0000-0000-000000026b03"));
+
     /** 受入シナリオの追跡管理者。 */
     private static final UserId TRACKING_MANAGER = new UserId(UUID.fromString("00000000-0000-0000-0000-000000026b01"));
 
@@ -50,7 +54,7 @@ public class MilestoneSteps {
         trackingRecords.save(TrackingRecord.start(
                         new TrackingNumber(trackingNumber),
                         UUID.fromString("00000000-0000-0000-0000-000000026b02"),
-                        new CompanyId(UUID.fromString("00000000-0000-0000-0000-000000026b03")),
+                        SHIPPER,
                         new CompanyId(UUID.fromString("00000000-0000-0000-0000-000000026b04")),
                         TrackingFixture.schedule(),
                         TrackingFixture.STARTED_AT)
@@ -68,14 +72,17 @@ public class MilestoneSteps {
         TrackingRecord trackingRecord = trackingRecords
                 .findByTrackingNumber(new TrackingNumber(trackingNumber))
                 .orElseThrow();
-        outcome = commandService.registerMilestone(new RegisterMilestoneCommand(
-                trackingRecord.trackingNumber(),
-                trackingRecord.aggregateVersion(),
-                kind(kind),
-                new Location(location),
-                at(occurredAt),
-                new Source(sourceKind(sourceKind), reference, new UtcInstant(clock.instant())),
-                TRACKING_MANAGER));
+        outcome = commandService.registerMilestone(
+                new RegisterMilestoneCommand(
+                        trackingRecord.trackingNumber(),
+                        trackingRecord.aggregateVersion(),
+                        kind(kind),
+                        new Location(location),
+                        at(occurredAt),
+                        new Source(sourceKind(sourceKind), reference, new UtcInstant(clock.instant())),
+                        TRACKING_MANAGER),
+                // 追跡管理者は登録する追跡記録の荷主企業を担当する（荷主の照会のシナリオの追跡記録はほかの荷主企業。Bolt 38g）
+                AuthenticatedActorFixture.trackingManagerHandling(TRACKING_MANAGER, trackingRecord.shipperCompanyId()));
     }
 
     @ならば("実績 {int} が登録される")

@@ -23,6 +23,7 @@ public class QuotationRouteConditions {
                 .map(view -> new RoutingCaseConditions(
                         view.transportRequestNumber(),
                         new RouteSpecification(
-                                view.origin(), view.destination(), view.arrivalDeadline(), view.cargoCategory())));
+                                view.origin(), view.destination(), view.arrivalDeadline(), view.cargoCategory()),
+                        view.shipperCompanyId()));
     }
 }

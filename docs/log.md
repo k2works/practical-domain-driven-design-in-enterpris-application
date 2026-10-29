@@ -1,6 +1,21 @@
 # Docs Update Log
 
 ## 2026-10-29
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [用語集](/manual/用語集.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [付録B-トラブルシューティング](/manual/付録B-トラブルシューティング.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [11-利用者の管理](/manual/11-利用者の管理.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [09-追跡管理](/manual/09-追跡管理.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [08-経路設計](/manual/08-経路設計.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [019-out-of-scope-attempt-recorder](/adr/cargo-tracker/019-out-of-scope-attempt-recorder.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [014-downstream-to-upstream-notification](/adr/cargo-tracker/014-downstream-to-upstream-notification.md) を更新（anthropic/claude-opus-5-5）
 * **Verification**: [release_plan](/development/cargo-tracker/release_plan.md) を human:kakimomokuri が検証
 * **Creation**: [bolt_38f2b_report](/development/cargo-tracker/bolt_38f2b_report.md) を作成（anthropic/claude-opus-5-5）
 * **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
