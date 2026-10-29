@@ -22,7 +22,7 @@ const MIN_GH_VERSION = [2, 99, 0];
 const MAX_VIDEO_BYTES = 100 * 1024 * 1024;
 const MAX_ATTACHMENTS = 50;
 /**
- * これまでの Bolt の動画の添付先（各 Bolt の計画の Issue 欄のうち R0.1 の Issue）。新しい Bolt は終了報告の承認の後に足す。
+ * これまでの Bolt の動画の添付先（各 Bolt の計画の Issue 欄のうち R0.1 の Issue）。新しい Bolt は Bolt の中で足し、動画の添付は終了報告の承認の後に行う。
  * 手順書（docs/operation/cargo-tracker/index.md）の表と同じにする。
  */
 const BOLT_ISSUES = {
@@ -69,6 +69,7 @@ const BOLT_ISSUES = {
   'bolt-37e4b': 16,
   'bolt-38b4': 14,
   'bolt-38c': 47,
+  'bolt-38f2b': 14,
 };
 
 /** 添付したコメントの目印。同じ Bolt を同じ Issue に 2 回添付しない。 */

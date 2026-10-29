@@ -52,7 +52,7 @@ DEMO_DRY_RUN=1 npx gulp issue:attach-demo:all                               # �
 npx gulp issue:attach-demo:all                                              # これまでの Bolt をまとめて添付する
 ```
 
-これまでの Bolt の動画の添付先（各 Bolt の計画の Issue 欄のうち R0.1 の Issue。`ops/scripts/issue_demo.js` の `BOLT_ISSUES` と同じにする。新しい Bolt は終了報告の承認の後に両方に足す）:
+これまでの Bolt の動画の添付先（各 Bolt の計画の Issue 欄のうち R0.1 の Issue。`ops/scripts/issue_demo.js` の `BOLT_ISSUES` と同じにする。新しい Bolt は Bolt の中で両方に足し、動画の添付は終了報告の承認の後に行う）:
 
 | Bolt | Issue | Bolt | Issue |
 | :--- | :--- | :--- | :--- |
@@ -64,7 +64,7 @@ npx gulp issue:attach-demo:all                                              # �
 | bolt-21 | #9（US-21） | bolt-23b・bolt-24・bolt-25・bolt-25b・bolt-27b | #10（US-04） |
 | bolt-26・bolt-26c | #11（US-12） | bolt-27 | #12（US-09） |
 | bolt-28 | #44（主成功の流れと Release 0.1 のデモ） | bolt-31・bolt-31b・bolt-31c・bolt-32・bolt-32c・bolt-32b・bolt-32e・bolt-32f・bolt-33a・bolt-33b | #13（US-18） |
-| bolt-34・bolt-34d・bolt-38b4 | #14（US-16） | bolt-37c・bolt-37e3b・bolt-37e4b | #16（US-07） |
+| bolt-34・bolt-34d・bolt-38b4・bolt-38f2b | #14（US-16） | bolt-37c・bolt-37e3b・bolt-37e4b | #16（US-07） |
 | bolt-37b2 | #15（US-06） | bolt-38c | #47（US-18 AC9 の管理者の経路） |
 
 ### インフラ
