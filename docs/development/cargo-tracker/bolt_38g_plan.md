@@ -3,7 +3,7 @@ type: Plan
 title: "Bolt 38g 計画 - 経路設計と追跡の担当範囲の絞り込みと、US-16 の締め"
 tags: [plan]
 status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-28T23:19:21Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-29T00:04:44Z }
 ---
 
 # Bolt 38g 計画 - 経路設計と追跡の担当範囲の絞り込みと、US-16 の締め
@@ -44,7 +44,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-28T23:19:21Z }
   - routing: `QuotationRouteConditions`（ACL）、`RoutingCaseConditions`（ACL の結果）、`RoutingCaseOpeningEventHandler`、`RoutingCase`（荷主企業。`open` は非 null を要求）、`RoutingCaseRepository`・MyBatis・mapper、`RoutingCaseQueryService`・`RoutingCaseCommandService`、`RoutingCaseController`、一覧のテンプレート（案内の文）
   - tracking: `TrackingRecordRepository`（社内の一覧を担当企業の集合で受ける口に置き換え、全件の口を消す）・MyBatis・mapper、`TrackingRecordQueryService`・`TrackingRecordCommandService`、`TrackingRecordController`、一覧のテンプレート（案内の文）
   - identity: 停止の確認の領域（`UserStatusChangeController`・テンプレート）、38e の文言（`UserDetailPage`・テンプレート）
-  - テストと組み立て: `UiUsers`（経路設計者・追跡管理者の割り当ての補助）、`UserAssignmentUiSteps`（背景の前提）、`LayerArchitectureTest`（名前の規則と閉じる規則）、`ScopedResourceKind`（値を足す）、`WithAuthenticatedActorSecurityContextFactory`、`RoutingConfiguration`・`TrackingConfiguration`（組み立て）、38f の `restrict_staff_by_assigned_companies_ui.feature`（シナリオ単位の `@US-16-AC4`。照合の表を実態に合わせる）
+  - テストと組み立て: `UiUsers`（経路設計者・追跡管理者の割り当ての補助）、`UserAssignmentUiSteps`（背景の前提）、`LayerArchitectureTest`（名前の規則と閉じる規則）、`ScopedResourceKind`（値を足す）、`WithAuthenticatedActorSecurityContextFactory`、`RoutingConfiguration`・`TrackingConfiguration`（組み立て）。38f の `restrict_staff_by_assigned_companies_ui.feature` のシナリオ単位の `@US-16-AC4` は 38f2b が足すので、38g はそれを前提に照合の表を数え直す
 - 資産: `docs/manual/assets/08-*`・`09-*`・`11-*` のうち中身が変わるものだけ残す（T-197・38f の M5）。キャプチャは UI テストの利用者で撮り、背景の前提で範囲の中に入るので、8 章・9 章の一覧のキャプチャは変わらない見込み。変わるのは 11 章の停止の確認と、38e の文言を外した S-20 の画面
 - デモの動画は作らない（AC4 の動画は 38f2b）
 
@@ -158,7 +158,6 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-28T23:19:21Z }
 - `LayerArchitectureTest`（名前の規則と閉じる規則）、`ScopedResourceKind` の Javadoc
 - 38e の文言を期待しているテスト（`UserAdministrationControllerTest`・`UserAssignmentControllerTest`・UI の feature）
 - 停止の確認の画面の期待（`UserStatusChangeControllerTest`・`manage_user_status_ui.feature`）
-- 38f の `restrict_staff_by_assigned_companies_ui.feature`（シナリオ単位の `@US-16-AC4`）
 
 ## ふりかえりと前の Bolt からの引き継ぎ
 
