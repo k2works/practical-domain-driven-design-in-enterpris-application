@@ -2,8 +2,10 @@
 type: Plan
 title: "Bolt 38f2b 計画 - 担当範囲の動画と #14 への添付"
 tags: [plan]
-status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-29T00:04:44Z }
+status: stable
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-29T00:22:12Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-29T00:22:13Z }
 ---
 
 # Bolt 38f2b 計画 - 担当範囲の動画と #14 への添付
@@ -133,6 +135,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-10-29T00:04:44Z }
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-29 | 計画を承認した（確認ポイント 1〜4 を推奨のとおり） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-29 | 2 つの整合性検証（xp-tester・xp-architect）の指摘を反映した（承認待ち）。タグを受入条件のタグと同じ行に書く、見積りの側の AC4 を 38f2b が受け持つ、動画の限界を受け入れて報告に書く、`issue:attach-demo:all` の dry run を足す、撮り直しの戻しの期待と除外の pathspec を書く、コメントと索引の文を統一の文にそろえる、出典の行とパスを直す、スコープに開発の索引・mkdocs・log を足す | anthropic/claude-opus-5-5 |
 | 2026-10-29 | 初版作成（承認待ち）。開始準備で、3 場面を既存のシナリオに 3 本で撮る、範囲の外の予約は今の準備を使う、添付先は #14、`BOLT_ISSUES` は Bolt の中で足す、コードは変えないと決めた（human:kakimomokuri） | anthropic/claude-opus-5-5 |
 

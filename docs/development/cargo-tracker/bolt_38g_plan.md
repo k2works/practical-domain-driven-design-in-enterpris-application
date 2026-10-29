@@ -2,8 +2,10 @@
 type: Plan
 title: "Bolt 38g 計画 - 経路設計と追跡の担当範囲の絞り込みと、US-16 の締め"
 tags: [plan]
-status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-29T00:04:44Z }
+status: stable
+generated: { by: anthropic/claude-opus-5-5, at: 2026-10-29T00:22:12Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-29T00:22:13Z }
 ---
 
 # Bolt 38g 計画 - 経路設計と追跡の担当範囲の絞り込みと、US-16 の締め
@@ -438,6 +440,7 @@ entity "routing.routing_case" {
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-10-29 | 計画を承認した（確認ポイントを推奨のとおり。約 12.7 時間を分割の規則の例外として受け入れる） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-29 | 整合性検証の指摘と人の決定を反映した（承認待ち）。荷主企業の列を NOT NULL の 3 段にし索引を `(shipper_company_id, quotation_expires_at)` に、分けずに 1 つで進め打ち切りの点検をステップ 3a の後に前倒し、記録の対象を状態を変える POST に広げる、#14 は支援技術による手動確認の記録なしで閉じ W10 に送る、と決めた（human:kakimomokuri）。判定の部品と Lookup の型、ArchUnit の閉じる規則、追跡の `BindingResult` とコマンドの中の判定の順、受入条件の記号 BA、AC5 の前提と履歴の保持、境界値の表、T-122 の漏れ、出典（ADR-014・architecture_backend）を直した | anthropic/claude-opus-5-5 |
 | 2026-10-28 | 初版作成（承認待ち）。開始準備で、経路設計の案件に荷主企業の列を足し公開 API で写す、分けずに 1 つで進める（分割の規則の例外）、記録の部品を写して ArchUnit を名前の規則に、AC5 の役割の取消しのシナリオを足す、#14 は手動確認の記録を確かめてから閉じると決めた（human:kakimomokuri） | anthropic/claude-opus-5-5 |
 
