@@ -13,7 +13,7 @@
       
       
       
-        <link rel="prev" href="../bolt_38f2_report/">
+        <link rel="prev" href="../bolt_38f2b_plan/">
       
       
         <link rel="next" href="../release_report-0_1/">
@@ -8424,6 +8424,41 @@
                 
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../bolt_38f2b_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 38f2b 計画
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
     
   
   
@@ -13834,7 +13869,7 @@
 <li>routing: <code>QuotationRouteConditions</code>（ACL）、<code>RoutingCaseConditions</code>（ACL の結果）、<code>RoutingCaseOpeningEventHandler</code>、<code>RoutingCase</code>（荷主企業。<code>open</code> は非 null を要求）、<code>RoutingCaseRepository</code>・MyBatis・mapper、<code>RoutingCaseQueryService</code>・<code>RoutingCaseCommandService</code>、<code>RoutingCaseController</code>、一覧のテンプレート（案内の文）</li>
 <li>tracking: <code>TrackingRecordRepository</code>（社内の一覧を担当企業の集合で受ける口に置き換え、全件の口を消す）・MyBatis・mapper、<code>TrackingRecordQueryService</code>・<code>TrackingRecordCommandService</code>、<code>TrackingRecordController</code>、一覧のテンプレート（案内の文）</li>
 <li>identity: 停止の確認の領域（<code>UserStatusChangeController</code>・テンプレート）、38e の文言（<code>UserDetailPage</code>・テンプレート）</li>
-<li>テストと組み立て: <code>UiUsers</code>（経路設計者・追跡管理者の割り当ての補助）、<code>UserAssignmentUiSteps</code>（背景の前提）、<code>LayerArchitectureTest</code>（名前の規則と閉じる規則）、<code>ScopedResourceKind</code>（値を足す）、<code>WithAuthenticatedActorSecurityContextFactory</code>、<code>RoutingConfiguration</code>・<code>TrackingConfiguration</code>（組み立て）、38f の <code>restrict_staff_by_assigned_companies_ui.feature</code>（シナリオ単位の <code>@US-16-AC4</code>。照合の表を実態に合わせる）</li>
+<li>テストと組み立て: <code>UiUsers</code>（経路設計者・追跡管理者の割り当ての補助）、<code>UserAssignmentUiSteps</code>（背景の前提）、<code>LayerArchitectureTest</code>（名前の規則と閉じる規則）、<code>ScopedResourceKind</code>（値を足す）、<code>WithAuthenticatedActorSecurityContextFactory</code>、<code>RoutingConfiguration</code>・<code>TrackingConfiguration</code>（組み立て）。38f の <code>restrict_staff_by_assigned_companies_ui.feature</code> のシナリオ単位の <code>@US-16-AC4</code> は 38f2b が足すので、38g はそれを前提に照合の表を数え直す</li>
 <li>資産: <code>docs/manual/assets/08-*</code>・<code>09-*</code>・<code>11-*</code> のうち中身が変わるものだけ残す（T-197・38f の M5）。キャプチャは UI テストの利用者で撮り、背景の前提で範囲の中に入るので、8 章・9 章の一覧のキャプチャは変わらない見込み。変わるのは 11 章の停止の確認と、38e の文言を外した S-20 の画面</li>
 <li>デモの動画は作らない（AC4 の動画は 38f2b）</li>
 </ul>
@@ -14231,7 +14266,6 @@
 <li><code>LayerArchitectureTest</code>（名前の規則と閉じる規則）、<code>ScopedResourceKind</code> の Javadoc</li>
 <li>38e の文言を期待しているテスト（<code>UserAdministrationControllerTest</code>・<code>UserAssignmentControllerTest</code>・UI の feature）</li>
 <li>停止の確認の画面の期待（<code>UserStatusChangeControllerTest</code>・<code>manage_user_status_ui.feature</code>）</li>
-<li>38f の <code>restrict_staff_by_assigned_companies_ui.feature</code>（シナリオ単位の <code>@US-16-AC4</code>）</li>
 </ul>
 <h2 id="bolt_1">ふりかえりと前の Bolt からの引き継ぎ<a class="headerlink" href="#bolt_1" title="Permanent link">&para;</a></h2>
 <table>
