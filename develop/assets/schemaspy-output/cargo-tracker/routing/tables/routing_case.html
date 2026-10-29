@@ -382,7 +382,7 @@
                                     <td><p>更新時刻</p></td>
                                 </tr>
                                 <tr>
-                                    <td><span id="quotation_expires_at">quotation_expires_at</span></td>
+                                    <td class='indexedColumn' title='Indexed'><i class='fa fa-sitemap fa-rotate-120' style='padding-right: 5px;'></i><span id="quotation_expires_at">quotation_expires_at</span></td>
                                     <td>timestamptz</td>
                                     <td>35,6</td>
                                     <td title='nullable'>√</td>
@@ -432,6 +432,23 @@
                                     </td>
                                     <td><p>最後に候補を算出・確定した経路設計者の利用者 ID</p></td>
                                 </tr>
+                                <tr>
+                                    <td class='indexedColumn' title='Indexed'><i class='fa fa-sitemap fa-rotate-120' style='padding-right: 5px;'></i><span id="shipper_company_id">shipper_company_id</span></td>
+                                    <td>uuid</td>
+                                    <td>2147483647</td>
+                                    <td title=''></td>
+                                    <td title=''></td>
+                                    <td>null</td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                        </table>
+                                    </td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                        </table>
+                                    </td>
+                                    <td><p>荷主企業（見積りの公開 API の写し。担当範囲の判定に使う）</p></td>
+                                </tr>
                                 </tbody>
                             </table>
                         </div>
@@ -473,6 +490,12 @@
                                     <td>Performance</td>
                                     <td><span title='Ascending'>Asc</span></td>
                                     <td>requested_at</td>
+                                </tr>
+                                <tr>
+                                    <td title='Indexed'>ix_routing_case_shipper</td>
+                                    <td>Performance</td>
+                                    <td><span title='Ascending'>Asc</span>/<span title='Ascending'>Asc</span></td>
+                                    <td>shipper_company_id + quotation_expires_at</td>
                                 </tr>
                                 <tr>
                                     <td class='uniqueKey' title='Unique Key'><i class='icon ion-key iconkey'></i> uk_routing_case_number</td>

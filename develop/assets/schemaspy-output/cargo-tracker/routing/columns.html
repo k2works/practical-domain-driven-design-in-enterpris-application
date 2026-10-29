@@ -1094,9 +1094,9 @@
         "tableName": "routing_case",
         "tableFileName": "routing_case",
         "tableType": "Table",
-        "keyClass": "",
-        "keyTitle": "",
-        "name": "quotation_expires_at",
+        "keyClass": "indexedColumn",
+        "keyTitle": "Indexed",
+        "name": "<i class='fa fa-sitemap fa-rotate-120' style='padding-right: 5px;'></i>quotation_expires_at",
         "type": "timestamptz",
         "length": 35,
         "nullable": "√",
@@ -1131,6 +1131,20 @@
         "autoUpdated": "",
         "defaultValue": "null",
         "comments": "<p>最後に候補を算出・確定した経路設計者の利用者 ID</p>"
+    },
+    {
+        "tableName": "routing_case",
+        "tableFileName": "routing_case",
+        "tableType": "Table",
+        "keyClass": "indexedColumn",
+        "keyTitle": "Indexed",
+        "name": "<i class='fa fa-sitemap fa-rotate-120' style='padding-right: 5px;'></i>shipper_company_id",
+        "type": "uuid",
+        "length": 2147483647,
+        "nullable": "",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>荷主企業（見積りの公開 API の写し。担当範囲の判定に使う）</p>"
     },
     {
         "tableName": "routing_case_number_counter",

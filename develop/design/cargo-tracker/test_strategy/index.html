@@ -15704,14 +15704,14 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 <tr>
 <td style="text-align: left;">US-16</td>
 <td style="text-align: left;">AC4（業務担当者の担当範囲の外は拒否し試行を記録）</td>
-<td style="text-align: left;">38e〜38g・38f2（38f で見積りの側、38f2 で予約の側（<code>BookingAssignedScopeSecurityIntegrationTest</code>、<code>restrict_bookings_by_assigned_companies_ui.feature</code>）。動画は 38f2b、経路設計・追跡の側は 38g）</td>
-<td style="text-align: left;"><code>@US-16-AC4</code>（restrict_staff_by_assigned_companies_ui のシナリオの行は 38f2b が足す。restrict_bookings_by_assigned_companies_ui。動画 <code>@demo-bolt-38f2b/quotation-scope</code>・<code>booking-scope</code>）、範囲外の記録の統合テスト</td>
+<td style="text-align: left;">38e〜38g・38f2（38f で見積りの側、38f2 で予約の側（<code>BookingAssignedScopeSecurityIntegrationTest</code>、<code>restrict_bookings_by_assigned_companies_ui.feature</code>）。動画は 38f2b、38g で経路設計・追跡の側（<code>RoutingAssignedScopeSecurityIntegrationTest</code>・<code>TrackingAssignedScopeSecurityIntegrationTest</code>、<code>restrict_routing_and_tracking_by_assigned_companies_ui.feature</code>））</td>
+<td style="text-align: left;"><code>@US-16-AC4</code>（restrict_staff_by_assigned_companies_ui のシナリオの行は 38f2b が足す。restrict_bookings_by_assigned_companies_ui、restrict_routing_and_tracking_by_assigned_companies_ui。動画 <code>@demo-bolt-38f2b/quotation-scope</code>・<code>booking-scope</code>）、範囲外の記録の統合テスト、判定の部品の単体（<code>RoutingCaseScopeTest</code>・<code>TrackingRecordScopeTest</code>）、ArchUnit の名前の規則と閉じる規則</td>
 </tr>
 <tr>
 <td style="text-align: left;">US-16</td>
 <td style="text-align: left;">AC5（利用終了・権限取消しで次の request から拒否）</td>
-<td style="text-align: left;">34d・38c2（役割の取消しのシナリオは 38g）</td>
-<td style="text-align: left;"><code>@US-16-AC5</code>（manage_user_status_ui。38c2 で、停止中の詳細の停止の記録と再開の後に示さないことを足した）。停止の記録の照会は契約 <code>AuditRecordSuspensionContract</code>（H2 と PostgreSQL の子。最新の停止・操作と対象で絞る・停止した人の行がない）、索引 <code>ix_audit_record_target</code> は <code>MyBatisIdentityRepositoriesIntegrationTest</code>（<code>pg_indexes</code>）</td>
+<td style="text-align: left;">34d・38c2・38g（38g で役割の取消しのシナリオ）</td>
+<td style="text-align: left;"><code>@US-16-AC5</code>（manage_user_status_ui、manage_user_roles_ui の役割の取消し（2 つの役割から経路設計者を外すと、同じ session の次の request で経路設計の画面は A-04、追跡の画面は開け、ログインと役割の変更の監査の記録が残る。Bolt 38g）。manage_user_status_ui は38c2 で、停止中の詳細の停止の記録と再開の後に示さないことを足した）。停止の記録の照会は契約 <code>AuditRecordSuspensionContract</code>（H2 と PostgreSQL の子。最新の停止・操作と対象で絞る・停止した人の行がない）、索引 <code>ix_audit_record_target</code> は <code>MyBatisIdentityRepositoriesIntegrationTest</code>（<code>pg_indexes</code>）</td>
 </tr>
 <tr>
 <td style="text-align: left;">US-06</td>

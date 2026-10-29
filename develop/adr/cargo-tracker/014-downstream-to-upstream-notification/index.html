@@ -11096,6 +11096,17 @@
   <a href="#_10" class="md-nav__link">
     <span class="md-ellipsis">
       
+        改訂の経緯
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_11" class="md-nav__link">
+    <span class="md-ellipsis">
+      
         関連ドキュメント
       
     </span>
@@ -13810,7 +13821,7 @@
 <p>承認（方針は 2026-10-08 に human:kakimomokuri が Bolt 19 終了報告の承認で D-71 の AI の推奨の形を採った。文面は 2026-10-08 に Bolt 20 の終了報告の承認で承認した）</p>
 <h2 id="_2">コンテキスト<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
 <ul>
-<li>経路設計は見積りのイベント（DE-16）と公開 API（経路条件の照会）に依存する（<code>routing → quotation :: events・api</code>。Bolt 17）。見積りは経路設計に依存しない。</li>
+<li>経路設計は見積りのイベント（DE-16）と公開 API（経路条件の照会）に依存する（<code>routing → quotation :: events・api</code>。Bolt 17）。見積りは経路設計に依存しない。Bolt 38g で経路条件の照会の結果に荷主企業を足した（結果に値を足すだけで、依存の向きと主体を持たない照会であることは変えない。経路設計は案件に写して担当範囲の判定に使う）。</li>
 <li>経路設計が経路を確定すると DE-05 を発行する（Bolt 19）。依頼元の見積りに経路版を割り当てて荷主承認待ちにする（R-INV-11、US-24 AC4）には、見積りがこの事実を知る必要がある。</li>
 <li>ドメインモデルのイベント一覧は「DE-05・DE-07 は下流の事実を上流がイベントで知る形で、上流が下流の公開 API や内部に依存するわけではない」と書いていた。Spring Modulith では、イベントの型を参照することも依存であり、見積りが DE-05 を購読すると <code>quotation → routing :: events</code> が加わって循環する。ApplicationModules の検証（ModularityTest）がこれを拒否する（Bolt 19 レビュー D-71、仮説 H3 が成り立たなかった）。</li>
 <li>予約の DE-07（本予約を確定した → 輸送要求を予約確定済みにする）と、経路設計の DE-06（再設計要 → 見積りの承認を止める）も同じ向きで、同じ問題が起きる。</li>
@@ -13918,7 +13929,12 @@
 <li>ArchUnit で、上流のコードが下流のパッケージを参照しないことを確かめる（見積り → 経路設計。Bolt 20）。</li>
 <li>上流の公開 API の引数と戻り値は、照会と同じく標準と共有カーネルの型と文字列だけで表す（ArchUnit）。</li>
 </ul>
-<h2 id="_10">関連ドキュメント<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>
+<h2 id="_10">改訂の経緯<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>
+<ul>
+<li>2026-10-08: 初版（Bolt 19・Bolt 20）</li>
+<li>2026-10-29: Bolt 38g で経路条件の照会の結果に荷主企業を足した（経路設計の案件を担当企業で絞るため。主体ではなく値で、照会は主体を持たない）</li>
+</ul>
+<h2 id="_11">関連ドキュメント<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h2>
 <ul>
 <li><a href="../001-modular-monolith/">ADR-001 モジュラーモノリス</a></li>
 <li><a href="../003-inter-context-integration/">ADR-003 コンテキスト間の連携</a></li>

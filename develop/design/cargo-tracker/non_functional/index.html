@@ -14130,7 +14130,7 @@
 <td style="text-align: left;">画面の表示（全画面の遷移）</td>
 <td style="text-align: left;">p95 1.0 秒以内、p99 2.0 秒以内</td>
 <td style="text-align: left;">提案</td>
-<td style="text-align: left;">サーバー描画（ADR-005）の業務画面として一般的な水準。S-20 の詳細（確認の画面と確定を含む）は、停止中の利用者のときだけ監査記録を索引 <code>ix_audit_record_target</code> で 1 行読む分が増える（Bolt 38c2）</td>
+<td style="text-align: left;">サーバー描画（ADR-005）の業務画面として一般的な水準。S-20 の詳細（確認の画面と確定を含む）は、停止中の利用者のときだけ監査記録を索引 <code>ix_audit_record_target</code> で 1 行読む分が増える（Bolt 38c2）。社内の経路設計案件一覧（S-05）は担当企業の <code>IN</code> で絞り、索引 <code>ix_routing_case_shipper</code>（<code>shipper_company_id</code>、<code>quotation_expires_at</code>）を使う。社内の追跡記録の一覧は <code>ix_tracking_record_shipper</code> を使う（Bolt 38g）</td>
 </tr>
 <tr>
 <td style="text-align: left;">PERF-02</td>
@@ -14631,7 +14631,7 @@
 <td style="text-align: left;">SEC-12</td>
 <td style="text-align: left;">方式</td>
 <td style="text-align: left;">役割（BR-15 の 8 役割）と担当範囲（企業・案件）と参照許可（BR-07）の組合せ。request ごとに DB の現在値で判断する。Bolt 32c で役割・利用状態・企業の有効性を実現した（認証済みの request ごとに 1 回の SQL で読み、止められた利用者は A-03、取り消した役割の URL は A-04）。Bolt 34 でシステム管理者による役割の付与・取消し（職務分離と企業の種類の規則、次の request から反映。監督の役割は画面で付け外ししない）を足した。Bolt 34b でシステム管理者の管理範囲（<code>user_assignment</code> の <code>COMPANY</code>。運用の手順で割り当てる）を足し、範囲外の利用者は 404 にして役割の変更の試行（確定の POST）を監査記録に残す（IA-INV-14。GET は CSRF の守りがなく他サイトから記録を書かせられるので記録しない）。Bolt 34 から 34b までの全企業の役割を変えられる窓は 34b で閉じ、本番への配備のゲート（Bolt 34 の議題 4）は外れた。本番の配備の前に、管理範囲の割り当ての運用タスクを用意する（W6 の開始準備で、割り当ての画面を作らず W10 の運用タスクにした。2026-10-20、human:kakimomokuri）。業務担当者の担当範囲は担当企業だけにする（W6 の開始準備の決定。Bolt 38e〜38g）。Bolt 34d でシステム管理者による利用停止と再開（停止の理由を選ぶ。版を条件に利用状態を変え、監査記録 <code>USER_SUSPENDED</code>・<code>USER_REACTIVATED</code> を同じトランザクションで書く。停止は相手の次の request から反映し、確定の後に session をすぐには消さない。自分と監督の役割を持つ利用者は画面で止めも再開もしない。2026-10-17、human:kakimomokuri）を足した。Bolt 34d の開発レビューの後に、停止の確定で相手の未使用の password の再設定のトークンを同じトランザクションで無効にし（停止の前のリンクで再開の後に設定し直させない。SEC-08）、再開の確定の後に相手の session をすべて消す（停止の前の session を使い続けさせない。消せなくても再開は戻さない）ことを足した（2026-10-17、human:kakimomokuri）。範囲外の利用者への確定の POST は、状態と版の値を管理範囲の判定の後に解釈し、誤った値でも試行を記録してから 404 にする。Bolt 38b2 で利用者の登録（管理範囲の企業にだけ行い、範囲の外の企業は存在しない企業と同じ応答にして確定の試行を対象の企業で記録する。無効な企業は範囲の後に理由を示して拒む）を足した。業務担当者の担当範囲（企業・案件）は US-16 の残り（W6）、参照許可は US-19 で足す</td>
-<td style="text-align: left;">確定（BR-07、BR-15、IA-INV-04）。Bolt 38f で見積りの側の社内の画面を担当企業で絞った（範囲の外は共通の 404。確定の POST の範囲の外だけを <code>ASSIGNED_SCOPE_DENIED</code> に記録し、GET は記録しない）。Bolt 38f2 で予約の側の社内の画面（一覧・本予約の確定の GET と POST・詳細）を担当企業で絞った（範囲の判定は予約済みの判定より先。確定の POST の範囲の外だけを <code>QUOTATION</code> で記録する。経路設計・追跡の側は 38g）</td>
+<td style="text-align: left;">確定（BR-07、BR-15、IA-INV-04）。Bolt 38f で見積りの側の社内の画面を担当企業で絞った（範囲の外は共通の 404。確定の POST の範囲の外だけを <code>ASSIGNED_SCOPE_DENIED</code> に記録し、GET は記録しない）。Bolt 38f2 で予約の側の社内の画面（一覧・本予約の確定の GET と POST・詳細）を担当企業で絞った（範囲の判定は予約済みの判定より先。確定の POST の範囲の外だけを <code>QUOTATION</code> で記録する）。Bolt 38g で経路設計の 5 つの入口と追跡の 4 つの入口を担当企業で絞り、範囲の外の状態を変える POST（候補の算出・経路の確定・マイルストーンの登録）を <code>ROUTING_CASE</code>・<code>TRACKING_RECORD</code> で記録する。記録の対象を「確定の POST だけ」から「状態を変える POST」に改めた（38f の見積りの作成・再見積り・提示も記録していた実態に合わせた。GET は記録しない）。範囲の判定は値の解釈より先、コマンドの中では版の照合より先</td>
 </tr>
 <tr>
 <td style="text-align: left;">SEC-13</td>

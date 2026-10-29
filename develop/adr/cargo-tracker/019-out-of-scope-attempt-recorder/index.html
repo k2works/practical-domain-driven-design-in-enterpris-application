@@ -13638,7 +13638,7 @@
 <tbody>
 <tr>
 <td style="text-align: left;">ポートの置き場所</td>
-<td style="text-align: left;"><code>shared.domain.OutOfScopeAttemptRecorder</code>（<code>recordOutOfScope(AuthenticatedActor, ScopedResourceKind, String)</code>）。記録の対象の種類は列挙 <code>ScopedResourceKind</code>（<code>TRANSPORT_REQUEST</code>・<code>QUOTATION</code>。38g で経路設計・追跡の値を足す）で固定する。予約の側（38f2）は値を足さない。確定の POST の対象は見積りなので <code>QUOTATION</code> と「業務番号/見積り番号」で記録する（予約は確定の前にはまだないため）</td>
+<td style="text-align: left;"><code>shared.domain.OutOfScopeAttemptRecorder</code>（<code>recordOutOfScope(AuthenticatedActor, ScopedResourceKind, String)</code>）。記録の対象の種類は列挙 <code>ScopedResourceKind</code>（<code>TRANSPORT_REQUEST</code>・<code>QUOTATION</code>・<code>ROUTING_CASE</code>・<code>TRACKING_RECORD</code>）で固定する。予約の側（38f2）は値を足さない。確定の POST の対象は見積りなので <code>QUOTATION</code> と「業務番号/見積り番号」で記録する（予約は確定の前にはまだないため）。38g で経路設計（<code>ROUTING_CASE</code>、案件番号）と追跡（<code>TRACKING_RECORD</code>、追跡番号）の値を足した</td>
 </tr>
 <tr>
 <td style="text-align: left;">実装</td>
@@ -13654,11 +13654,11 @@
 </tr>
 <tr>
 <td style="text-align: left;">呼ぶ側</td>
-<td style="text-align: left;">担当範囲の判定は業務のサービスが行い（前例 <code>ManagedUserLookup</code>）、範囲の外を結果で返す。確定の POST では、controller が入力の解釈より先に照会のサービスで範囲を確かめ、範囲の外ならその場で記録して 404 にする（2 つの controller で同じ書き方。コマンドのサービスが返す範囲の外は、その間に割り当てが変わったときにだけ通る）。画面の層のコンテキストごとに 1 つの部品（38f の見積りの側は <code>quotation.interfaces.web.StaffOutOfScopeResponder</code>、38f2 の予約の側は <code>booking.interfaces.web.BookingOutOfScopeResponder</code>。どちらも <code>@Transactional</code> なし）だけがポートを呼び、404 を返す。予約の確定の POST では、controller が役割の後・予約済みの判定と確定用の照会の前に、ロックしない照会（操作者を渡した見積りの公開 API）で範囲を確かめる。記録するのは確定の POST だけで、GET の範囲の外は 404 だけ（SEC-12）</td>
+<td style="text-align: left;">担当範囲の判定は業務のサービスが行い（前例 <code>ManagedUserLookup</code>）、範囲の外を結果で返す。状態を変える POST では、controller が入力の解釈より先に照会のサービスで範囲を確かめ、範囲の外ならその場で記録して 404 にする（どの controller も同じ書き方。コマンドのサービスが返す範囲の外は、その間に割り当てが変わったときにだけ通る）。画面の層のコンテキストごとに 1 つの部品（38f の見積りの側は <code>quotation.interfaces.web.StaffOutOfScopeResponder</code>、38f2 の予約の側は <code>booking.interfaces.web.BookingOutOfScopeResponder</code>、38g の経路設計の側は <code>routing.interfaces.web.RoutingOutOfScopeResponder</code>、追跡の側は <code>tracking.interfaces.web.TrackingOutOfScopeResponder</code>。どれも <code>@Transactional</code> なし）だけがポートを呼び、404 を返す。予約の確定の POST では、controller が役割の後・予約済みの判定と確定用の照会の前に、ロックしない照会（操作者を渡した見積りの公開 API）で範囲を確かめる。記録するのは状態を変える POST（輸送要求の受付の判断、見積りの作成・再見積り・提示、予約の確定、経路設計の候補の算出と確定、マイルストーンの登録）で、GET の範囲の外は 404 だけ（SEC-12。38g で「確定の POST だけ」を実態に合わせて改めた）</td>
 </tr>
 <tr>
 <td style="text-align: left;">守り</td>
-<td style="text-align: left;">ArchUnit で、記録の工場を呼ぶのは記録のサービスだけ、ポートを呼ぶのは画面の部品だけ（トランザクションなし）、ドメインイベントと公開 API の型はポートに依存しない、共有カーネルの振る舞いの型はこのポートだけ、を確かめる</td>
+<td style="text-align: left;">ArchUnit で、記録の工場を呼ぶのは記録のサービスだけ、ポートを呼ぶのは画面の部品だけ（トランザクションなし）、ドメインイベントと公開 API の型はポートに依存しない、共有カーネルの振る舞いの型はこのポートだけ、を確かめる。画面の部品は名前の規則（<code>..interfaces.web..</code> の <code>*OutOfScopeResponder</code>）で選び、名前の規則に合うクラスはトップレベルで <code>@Component</code> を付けた 4 つの FQN のどれかに限る閉じる規則を置く。部品ごとに実在の見張りを 1 本ずつ置く（38g）</td>
 </tr>
 </tbody>
 </table>
@@ -13691,12 +13691,20 @@
 <td style="text-align: left;"><code>platform :: api</code> にポートを置く（業務のすべてのコンテキストが <code>platform :: web</code> に依存しているので、新しい名前付きインターフェースを開く）</td>
 <td style="text-align: left;"><code>platform</code> は技術の部品だけを置き、コンテキストの型に依存しない（<code>LayerArchitectureTest</code>）。担当範囲の外の試行は業務の意味（担当企業・監査）を持つので、技術の部品の置き場所に合わない</td>
 </tr>
+<tr>
+<td style="text-align: left;">画面の部品を 1 つにして共有する（38g）</td>
+<td style="text-align: left;">部品はコンテキストの画面の層に置くので、ほかのコンテキストの <code>interfaces.web</code> に依存できない。共有カーネルに置くと画面の型（404 の例外）が入る。写しは 4 つで、中身は「ポートを 1 回呼び 404 を返す」だけなので、名前の規則と閉じる規則で数と形を守る</td>
+</tr>
+<tr>
+<td style="text-align: left;">ArchUnit を名前の規則だけにする（38g）</td>
+<td style="text-align: left;">名前さえ合えば部品が増やせ、一覧が開いたままになる。閉じる規則で 4 つの FQN に限り、足すときは規則の変更として人に諮る</td>
+</tr>
 </tbody>
 </table>
 <h2 id="_5">影響<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h2>
 <h3 id="_6">ポジティブ<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h3>
 <ul>
-<li>依存の循環なしに、業務のコンテキストから同期に記録できる。38f2 の予約の側は同じポートを使い、38g の経路設計・追跡の側も使える</li>
+<li>依存の循環なしに、業務のコンテキストから同期に記録できる。38f2 の予約の側は同じポートを使い、38g の経路設計・追跡の側も同じポートを使った</li>
 </ul>
 <h3 id="_7">ネガティブ<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h3>
 <ul>
@@ -13715,6 +13723,7 @@
 <li>2026-10-28: 初版（Bolt 38f）</li>
 <li>2026-10-28: 開発レビューを反映した。ADR-003 との関係、<code>platform :: api</code> の案、実行時の Bean の依存、package-info の変更、呼ぶ側の前の確かめを書き足した</li>
 <li>2026-10-28: Bolt 38f2 で、予約の側の呼ぶ側（<code>BookingOutOfScopeResponder</code>、確定の POST の先の確かめ）を足し、予約の側では対象の種類の値を足さないことにした（確定の対象は見積り）。部品を共通にするかは 38g の開始準備で諮る</li>
+<li>2026-10-29: Bolt 38g で、経路設計・追跡の値（<code>ROUTING_CASE</code>・<code>TRACKING_RECORD</code>）と 2 つの部品を足した。記録の対象を「確定の POST だけ」から「状態を変える POST」に改め（38f の見積りの作成・再見積り・提示も記録していた実態に合わせた）、ArchUnit を名前の規則と閉じる規則にした（開始準備の決定 (3)・(6)）</li>
 </ul>
 <h2 id="_10">関連ドキュメント<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>
 <ul>
