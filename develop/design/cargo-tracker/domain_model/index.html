@@ -15755,13 +15755,13 @@
 <tr>
 <td style="text-align: left;">外部原本</td>
 <td style="text-align: left;">ExternalRecord</td>
-<td style="text-align: left;">冪等性キーごとの外部の原本。最初に受け取った payload のハッシュを持つ。分類は持たない（分類は受け取るたびの受信記録が持つ。Bolt 39 で「その分類（採用・重複・隔離）」を改めた。下の要素表の分類の列は表を作る 39a2 で受信記録に移す）</td>
+<td style="text-align: left;">冪等性キーごとの外部の原本。最初に受け取った payload のハッシュを持つ。分類は持たない（分類は受け取るたびの受信記録が持つ。Bolt 39 で「その分類（採用・重複・隔離）」を改めた。下の要素表の分類の列は表を作る 39a3 で受信記録に移す）</td>
 <td style="text-align: left;">外部データ</td>
 </tr>
 <tr>
 <td style="text-align: left;">受信記録</td>
-<td style="text-align: left;">（39a2 で決める）</td>
-<td style="text-align: left;">外部原本を受け取るたびの追記専用の記録。分類（採用・重複・隔離・差異）を持つ（data_model の <code>receipt.classification</code>）。クラス名は通知の公開 API の結果（<code>PasswordResetMailReceipt</code> など）と紛れないよう、表を作る 39a2 で決める</td>
+<td style="text-align: left;">ReceivedRecord</td>
+<td style="text-align: left;">外部原本を受け取るたびの追記専用の記録。分類（採用・重複・隔離・差異）を持つ（data_model の <code>receipt.classification</code>。表は <code>external_data.received_record</code> に改め、判断の表は <code>external_data.received_record_decision</code> にする。改名と表は 39a3）。クラス名は通知の公開 API の結果（<code>PasswordResetMailReceipt</code> など）と紛れないよう <code>Receipt</code> を避けた（Bolt 39a2 の開始準備の決定 (3)）</td>
 <td style="text-align: left;">外部データ</td>
 </tr>
 <tr>
@@ -16915,7 +16915,7 @@
 <tr>
 <td style="text-align: left;">外部原本</td>
 <td style="text-align: left;">ExternalRecord</td>
-<td style="text-align: left;">冪等性キー（提供元、原本種別、外部 ID、外部版）、payload、payload のハッシュ、取得時刻、分類（採用・重複・隔離・差異。39a2 で受信記録に移す）</td>
+<td style="text-align: left;">冪等性キー（提供元、原本種別、外部 ID、外部版）、payload、payload のハッシュ、取得時刻、分類（採用・重複・隔離・差異。39a3 で受信記録に移す）</td>
 <td style="text-align: left;">ED-INV-02: 同じキー・同じハッシュは重複、同じキー・違うハッシュは隔離する。ED-INV-03: 順序逆転・既存値との矛盾は差異として自動で上書きしない（BR-12、US-14）</td>
 </tr>
 <tr>

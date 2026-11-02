@@ -14051,7 +14051,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">2</td>
-<td style="text-align: left;"><strong>用語集の「重複」</strong>: 「採用（別名 採用済み）」の行は足したが、「重複」の行はまだない。39a2 で受信記録のクラス名を決めるときに、分類の 4 つ（採用・重複・隔離・差異）をそろえて用語集に載せる（推奨）</td>
+<td style="text-align: left;"><strong>用語集の「重複」</strong>: 「採用（別名 採用済み）」の行は足したが、「重複」の行はまだない。39a3 で受信記録の表を作るときに、分類の 4 つ（採用・重複・隔離・差異）をそろえて用語集に載せる（推奨）</td>
 <td style="text-align: left;">domain_model の用語集</td>
 </tr>
 <tr>
@@ -14278,7 +14278,8 @@
 </ul>
 <h3 id="_8">既知の課題（後に持ち込む）<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h3>
 <ul>
-<li>39a2: 補償とトランザクション、許可リストの層別、受信記録のクラス名と用語集の分類 4 つ、契約のテストを継ぐ DB の実装、data_model の payload の注、domain_model の要素表、<code>SchemaCommentIntegrationTest</code>・<code>AppendOnlyGrantIntegrationTest</code>・<code>afterMigrate</code>・SchemaSpy の一覧</li>
+<li>39a2: 補償とトランザクション、許可リストの層別、契約のテストを継ぐ DB の実装、data_model の payload の注、<code>SchemaCommentIntegrationTest</code>・<code>AppendOnlyGrantIntegrationTest</code>・<code>afterMigrate</code>・SchemaSpy の一覧</li>
+<li>39a3: 受信記録の表（クラス名は 39a2 の開始準備で <code>ReceivedRecord</code> に決めた）と用語集の分類 4 つ、domain_model の要素表</li>
 <li>39b: 値の列、閉じ忘れのあるファイルの要確認と件数、誤りの理由の業務の言葉、件数の突き合わせ、文字コードの誤り、M-2、<code>PublicApiArchitectureTest</code> の汎用化、手書きの規則の写し、identity の監査の listener の毒入りのメッセージ、<code>domain.events</code></li>
 <li>OQ-02 で業務責任者に確かめること: 提供元が 1 ファイル 1 種別の CSV を出せるか（EDI なら変換は誰か）、外部 ID と外部版を持つか、取得時刻の意味と時差、列の名前と順は固定か、誤りの差し戻しの運用、取込の頻度と件数の目安</li>
 </ul>
@@ -14294,6 +14295,11 @@
 </tr>
 </thead>
 <tbody>
+<tr>
+<td style="text-align: left;">2026-11-02</td>
+<td style="text-align: left;">Bolt 39a2 の開始準備の決定 (3)・(4)（受信記録のクラス名、39a2 と 39a3 への分け方）に合わせ、議題 2 と既知の課題の指し先を 39a2 から 39a3 に直した（承認の内容は変えない）</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
+</tr>
 <tr>
 <td style="text-align: left;">2026-11-02</td>
 <td style="text-align: left;">human:kakimomokuri が承認した（議題 1〜4 を報告のとおり）</td>

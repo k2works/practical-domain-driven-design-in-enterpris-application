@@ -16984,7 +16984,14 @@
 </tr>
 <tr>
 <td style="text-align: left;">39a2</td>
-<td style="text-align: left;"><code>external_data</code> の表（<code>data_source</code>・<code>ingestion</code>・<code>external_record</code>・<code>receipt</code>・判断の表・<code>adopted_value</code>）、原本の保存の DB の実装（契約のテストを継ぐ）、受信記録のクラス名、data_model の payload の注と domain_model の要素表、<code>SchemaCommentIntegrationTest</code>・<code>AppendOnlyGrantIntegrationTest</code>・<code>afterMigrate</code>・SchemaSpy の一覧（Bolt 39 の開始準備で 39 から分けた）</td>
+<td style="text-align: left;">外部原本の保存の DB の実装: <code>external_data</code> のスキーマと原本の表（<code>stored_payload</code>。追記専用）、原本の保存の DB の実装（受信記録とは独立したトランザクション。契約のテストを継ぐ）、型の依存の許可リストを層別にし MyBatis を infrastructure だけに許す、<code>SchemaCommentIntegrationTest</code>・<code>AppendOnlyGrantIntegrationTest</code>・<code>afterMigrate</code>・SchemaSpy の一覧、data_model の payload の注と ADR-004 の改訂（Bolt 39 の開始準備で 39 から分けた）。【前の決定の変更】初案の範囲（6 表・<code>receipt</code>・受信記録のクラス名・domain_model の要素表）を <a href="../bolt_39a2_plan/">Bolt 39a2 計画</a> の開始準備の決定 (4) で 39a2 と 39a3 に縦に分けた（human:kakimomokuri）。<a href="../bolt_39a2_plan/">Bolt 39a2 計画</a>（承認済み）</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;">インサイドアウト（データ → 永続化の実装）。規則の層別は技術タスク</td>
+<td style="text-align: left;">ステップごと（スキーマ・構造・ADR）</td>
+</tr>
+<tr>
+<td style="text-align: left;">39a3</td>
+<td style="text-align: left;"><code>external_data</code> の残りの表（<code>data_source</code>・<code>ingestion</code>・<code>external_record</code>・<code>received_record</code>・<code>received_record_decision</code>・<code>adopted_value</code>）、data_model の <code>receipt</code> を <code>received_record</code> に改名（クラスは <code>ReceivedRecord</code>。Bolt 39a2 の開始準備の決定 (3)）、domain_model の要素表と用語集の分類 4 つ（Bolt 39a2 の開始準備で 39a2 から分けた）</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: left;">インサイドアウト（一意制約と分類の表から）</td>
 <td style="text-align: left;">ステップごと（スキーマ）</td>
@@ -17054,7 +17061,7 @@
 </tr>
 </tbody>
 </table>
-<p>順序は 38h → 39 → 39a2 → 39b → 39c → 39d → 39e → 39f → 39g → 39g2 → 39h → 39i（38h は W6 の締めで足した。評価の入口の 39f より前に、再設計要・出発済みの運用の決まりをマニュアルに置くため）。39e・39f は 39d の採用値（DE-12）を受け、39g は 39d の DE-13 を受けるので後に置く。39h は 39g の確認中との境界（確認ポイント 7）の後に置く。半日を超えそうな Bolt（39・39b・39f・39g）は開始準備で分ける。W5・W6 の実績（見込みの約 1.5 倍の本数）から、W7 も 15 本前後になる見込みである。W6 までで計画より約 3 週早いので、バッファ消費ルールの範囲で吸収し、W7 の週の見直しで確かめる。</p>
+<p>順序は 38h → 39 → 39a2 → 39a3 → 39b → 39c → 39d → 39e → 39f → 39g → 39g2 → 39h → 39i（38h は W6 の締めで足した。評価の入口の 39f より前に、再設計要・出発済みの運用の決まりをマニュアルに置くため）。39e・39f は 39d の採用値（DE-12）を受け、39g は 39d の DE-13 を受けるので後に置く。39h は 39g の確認中との境界（確認ポイント 7）の後に置く。半日を超えそうな Bolt（39・39b・39f・39g）は開始準備で分ける。W5・W6 の実績（見込みの約 1.5 倍の本数）から、W7 も 15 本前後になる見込みである。W6 までで計画より約 3 週早いので、バッファ消費ルールの範囲で吸収し、W7 の週の見直しで確かめる。</p>
 <p><strong>W6 の Try の持ち込み</strong>: 各 Bolt 計画の確認ポイントに、T-204・T-212（サブエージェントへの指示の最初に heredoc を使わないと書く。<code>orchestrating-development</code> の <code>PROJECT.md</code>）、T-217（本体を直す前に Red を流し、落ちた理由を記録する）、T-225・T-213（push の前に <code>check</code>）、T-182・T-211・T-216（状態の組み合わせの表に重複・隔離・差異と順序逆転・出口・誤った入力の行を置く）、T-184（listener は配信まで確かめる）、T-219（変異の対象に単体・統合・契約のテスト）、T-215・T-222（Gradle を流す担当を 1 つに、計画の初稿を先にコミット）、T-191（環境の前提に設定ファイルの行を添える）を入れる。</p>
 <p><strong>Living Documentation</strong>: 外部データのコンテキストの ADR、<code>package-info</code> の <code>allowedDependencies</code>、ModularityTest と MapperSchemaArchitectureTest の対応表、用語集の整合テスト（外部原本・受信記録・隔離・差異・採用値・下書き・確認中・原本だけ）、受入条件の照合の表（US-14、US-12 の Release 1.0 の範囲）</p>
 <p><strong>デモ項目</strong>: ファイルの取込と分類の結果（<code>@US-14</code>。重複・隔離・差異）、隔離・差異の判断、航海の更新から確定した経路が再設計要になる流れ（<code>@US-06</code>・<code>@US-07</code>）、取り込んだ実績の下書きの採用と、順序逆転・取消済み・完了後（<code>@US-12</code>）。動画は画面の振る舞いが変わる Bolt（39c・39d・39f・39g・39h）で <code>@demo-&lt;Bolt&gt;</code> を撮る</p>
@@ -19571,6 +19578,31 @@
 <tr>
 <td style="text-align: left;">2026-10-29</td>
 <td style="text-align: left;">Bolt 38g の終了報告を承認した（議題 1〜6。議題 5 の見出しの重複は推奨のとおり次の Bolt で直す）。承認の後に <a href="https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/14#issuecomment-6489755751">#14 を閉じた</a>（コメントに、支援技術による手動確認の記録がなく W10 に送ったことと、担当案件を担当企業で近似したことを書いた）。W6 の Bolt を締めた</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-11-02</td>
+<td style="text-align: left;">W6 を締めた（結果・ふりかえり・W6 の締めの見直し。human:kakimomokuri が承認）。締めの追加で <a href="../../../review/cargo-tracker/w6_review_20261102/">W6 横断レビュー</a>・品質ゲートの流し直し・<a href="../iteration_report-W6/">W6 完了報告書</a>を作り、進捗状況の表の W6 の行と開発の索引の Release 1.0 の完了 SP を実績に直した。T-204 を <code>orchestrating-development</code> の <code>PROJECT.md</code> のガードレールにした</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-11-02</td>
+<td style="text-align: left;">W7 の開始準備: W7 の節を作り、詳細整合性検証と横断整合性検証の指摘を反映して承認を受けた（設計の決定 7 つ、確認ポイント 1〜24）。承認の後に W7 の行・リスク台帳・W10 の行・台帳（D-92・D-93）・開発戦略を直し、#18・#19 に計画をコメントした。W6 の締めで Bolt 38h と D-94 を足した</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-11-02</td>
+<td style="text-align: left;"><a href="../bolt_38h_report/">Bolt 38h</a>（W6 の返済）を計画・実装・終了報告まで承認した。D-94 に営業への知らせの注を足し、#50 に後に送るものを書いた</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-11-02</td>
+<td style="text-align: left;"><a href="../bolt_39_report/">Bolt 39</a>（外部データのコンテキストの骨格）を計画・ステップごと・終了報告まで承認した。開始準備で 39 と 39a2 に分け、39a2 の開始準備で 39a2 と 39a3 に縦に分けた（W7 の Bolt の表に 39a2・39a3 の行。下流の <code>allowedDependencies</code> は listener を作る Bolt で足す）</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-11-02</td>
+<td style="text-align: left;"><a href="../bolt_39a2_plan/">Bolt 39a2 計画</a>を承認し、ステップ 1（設計の文書。<code>376e1ceb4</code>）を承認した</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
 </tr>
 <tr>
