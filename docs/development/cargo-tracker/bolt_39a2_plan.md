@@ -2,7 +2,9 @@
 type: Plan
 title: "Bolt 39a2 計画 - 外部原本の保存の DB の実装（原本の表、独立したトランザクション、層別の許可リスト）"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-02T11:26:43Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-02T11:28:07Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-11-02T11:28:08Z }
 ---
 
 # Bolt 39a2 計画 - 外部原本の保存の DB の実装（原本の表、独立したトランザクション、層別の許可リスト）
@@ -183,6 +185,7 @@ entity "external_data.stored_payload" {
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-11-02 | 計画を承認した（確認ポイント 1〜7 を推奨のとおり） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-11-02 | 整合性検証の指摘を反映した（承認待ち。重大 1・中 12・軽 13）。開始準備の決定 (1) に行ごとの量と W10 の S3 の接続を足し、(5) を「先に共通の `BYTEA` を試し、通らなければベンダー別と ADR-020」に改めた（human:kakimomokuri）。決定を変えない直し: 統合テストに `@Transactional` を付けない、行 5（1 次キャッシュの防御の写し）、V1・V3・V5 の落ちる先、規則の重なり、ステップ 2・3 の順（規則の層別を DB の実装と合わせる）、`TIMESTAMP WITH TIME ZONE` と Clock、表の日本語名「保存した原本」、`@Repository`、`org.mybatis..` を外す、Bolt 4 の前例の読み違い、直す文書の漏れ、【前の決定の変更】の印、時間 | anthropic/claude-opus-5-5 |
 | 2026-11-02 | 初版作成（承認待ち）。開始準備で、原本は独立したトランザクションで保存し、許可リストを層別にし、受信記録と判断の表の名前を決め、39a2 と 39a3 に縦に分け、原本の表はベンダー別の DDL にし、情報源は 39b で入れると決めた（human:kakimomokuri） | anthropic/claude-opus-5-5 |
 
