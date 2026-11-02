@@ -541,7 +541,7 @@ class RoutingCaseControllerTest {
                         .param("expectedVersion", "0"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(Matchers.containsString("id=\"error-summary\"")))
-                .andExpect(content().string(Matchers.containsString("最初の区間が出発済みのため確定できません")))
+                .andExpect(content().string(Matchers.containsString("最初の区間が出発済みのため確定できません。候補を再算出してください。")))
                 .andExpect(content().string(Matchers.containsString(">出発の後の根拠</textarea>")));
     }
 

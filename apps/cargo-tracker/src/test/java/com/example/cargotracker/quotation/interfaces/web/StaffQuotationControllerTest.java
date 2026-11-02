@@ -913,7 +913,7 @@ class StaffQuotationControllerTest {
         mockMvc.perform(requoteForm())
                 .andExpect(flash().attribute(
                                 "problem",
-                                "TR-2026-0001 見積 1 は割り当てた経路の最初の区間が出発済みのため、有効期限まで再見積りできません。荷主に新しい見積依頼を出すよう案内してください"));
+                                "TR-2026-0001 見積 1 は割り当てた経路の最初の区間が出発済みのため、有効期限まで再見積りできません。荷主に新しい見積依頼を出すよう案内してください。"));
     }
 
     @Test
@@ -926,7 +926,7 @@ class StaffQuotationControllerTest {
         mockMvc.perform(requoteForm())
                 .andExpect(flash().attribute(
                                 "problem",
-                                "TR-2026-0001 見積 1 は割り当てた経路が再設計要のため、有効期限まで再見積りできません。荷主に新しい見積依頼を出すよう案内してください"));
+                                "TR-2026-0001 見積 1 は割り当てた経路が再設計要のため、有効期限まで再見積りできません。荷主に新しい見積依頼を出すよう案内してください。"));
     }
 
     @Test
