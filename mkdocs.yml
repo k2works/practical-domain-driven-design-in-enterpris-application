@@ -307,6 +307,7 @@ nav:
           - Bolt 38g 計画: development/cargo-tracker/bolt_38g_plan.md
           - Bolt 38g 終了報告: development/cargo-tracker/bolt_38g_report.md
           - Release 0.1 リリース完了報告書: development/cargo-tracker/release_report-0_1.md
+          - W6 完了報告書: development/cargo-tracker/iteration_report-W6.md
   - ユーザーマニュアル:
       - 概要: manual/index.md
       - はじめに: manual/00-はじめに.md
@@ -354,6 +355,7 @@ nav:
           - Bolt 19 開発成果物レビュー（2026-10-07）: review/cargo-tracker/bolt_19_review_20261007.md
           - Bolt 20 開発成果物レビュー（2026-10-08）: review/cargo-tracker/bolt_20_review_20261008.md
           - Bolt 21 開発成果物レビュー（2026-10-08）: review/cargo-tracker/bolt_21_review_20261008.md
+          - W6 横断の開発成果物レビュー（2026-11-02）: review/cargo-tracker/w6_review_20261102.md
   - ADR:
       - 概要: adr/index.md
       - cargo-tracker:
