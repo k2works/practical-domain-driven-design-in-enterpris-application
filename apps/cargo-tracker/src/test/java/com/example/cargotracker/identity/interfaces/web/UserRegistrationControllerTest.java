@@ -63,6 +63,9 @@ class UserRegistrationControllerTest {
             CompanyKind.OPERATOR,
             Set.of(Role.CUSTOMER_SUPPORT, Role.SALES, Role.DATA_STEWARD, Role.ROUTE_DESIGNER, Role.TRACKING_MANAGER));
     static final String SUMMARY_TITLE = "利用者を登録できませんでした";
+    /** 登録の完了の知らせ（Bolt 38h で招待の期限と本人への一言を足した。L-12）。 */
+    static final String REGISTERED_NOTICE =
+            "利用者を登録しました。登録したメールアドレスへ初回の設定の案内を送ります。案内のリンクの有効期限は送ってから 24 時間です。本人に一言連絡してください。";
     /** WithAuthenticatedActor の運用する会社の主体の表示名（テストの準備の値）。 */
     static final String OPERATOR_NAME = "営業 一郎";
 
@@ -345,12 +348,40 @@ class UserRegistrationControllerTest {
 
         String location = mockMvc.perform(filled(post("/staff/users")))
                 .andExpect(redirectedUrl("/staff/users/" + REGISTERED.value()))
-                .andExpect(flash().attribute("notice", "利用者を登録しました。登録したメールアドレスへ初回の設定の案内を送ります。"))
+                .andExpect(flash().attribute("notice", REGISTERED_NOTICE))
                 .andReturn()
                 .getResponse()
                 .getRedirectedUrl();
 
         assertThat(location).doesNotContain("hanako").doesNotContain("%40");
+    }
+
+    @Test
+    void 担当範囲のある役割で登録すると割り当ての案内を付け知らせに招待の期限と本人への一言を出す() throws Exception {
+        // Bolt 38h の状態の組み合わせの行 7（期限は招待の用途の期限から導く。L-12）
+        when(registrations.register(any(), eq(OPERATOR), any(), any(), any()))
+                .thenReturn(new UserRegistrationOutcome.Registered(REGISTERED));
+
+        mockMvc.perform(filled(post("/staff/users")))
+                .andExpect(redirectedUrl("/staff/users/" + REGISTERED.value()))
+                .andExpect(flash().attribute("notice", REGISTERED_NOTICE))
+                .andExpect(flash().attribute("assignmentPrompt", true));
+    }
+
+    @Test
+    void 担当範囲のない役割で登録すると割り当ての案内を付けない() throws Exception {
+        // Bolt 38h の状態の組み合わせの行 8（期限と一言の案内は出す）
+        when(registrations.register(any(), eq(SHIPPER), any(), any(), any()))
+                .thenReturn(new UserRegistrationOutcome.Registered(REGISTERED));
+
+        mockMvc.perform(post("/staff/users")
+                        .param("companyId", SHIPPER.value().toString())
+                        .param("roles", Role.SHIPPER.name())
+                        .param("email", "taro@example.com")
+                        .param("displayName", "荷主 太郎"))
+                .andExpect(redirectedUrl("/staff/users/" + REGISTERED.value()))
+                .andExpect(flash().attribute("notice", REGISTERED_NOTICE))
+                .andExpect(flash().attribute("assignmentPrompt", org.hamcrest.Matchers.nullValue()));
     }
 
     @Test

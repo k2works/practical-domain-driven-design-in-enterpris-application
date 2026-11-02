@@ -3,6 +3,7 @@ package com.example.cargotracker.identity.interfaces.web;
 import com.example.cargotracker.identity.application.internal.queryservices.UserAdministrationQueryService;
 import com.example.cargotracker.identity.domain.model.valueobjects.UserDetail;
 import com.example.cargotracker.identity.domain.model.valueobjects.UserStatus;
+import com.example.cargotracker.identity.domain.model.valueobjects.UserSummary;
 import com.example.cargotracker.identity.interfaces.web.UserDetailPage.DetailForm;
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
 import com.example.cargotracker.shared.domain.CompanyId;
@@ -44,7 +45,9 @@ public class UserAdministrationController {
 
     @GetMapping(USERS_URL)
     public String list(AuthenticatedActor actor, Model model) {
-        model.addAttribute("summaries", queryService.list(actor).itemsOr(UserDetailPage::forbidden));
+        List<UserSummary> summaries = queryService.list(actor).itemsOr(UserDetailPage::forbidden);
+        model.addAttribute("summaries", summaries);
+        model.addAttribute("assignedCompanies", UserAdministrationLabels.assignedCompanies(summaries));
         model.addAttribute("statusNames", STATUS_NAMES);
         model.addAttribute(UserAdministrationLabels.ACTIVE_ATTRIBUTE, UserAdministrationLabels.ACTIVE);
         return "identity/users/list";

@@ -1,5 +1,6 @@
 package com.example.cargotracker.identity.interfaces.web;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
@@ -76,25 +77,78 @@ class UserAdministrationControllerTest {
     void 一覧は利用状態の名前を示す() throws Exception {
         when(queryService.list(any()))
                 .thenReturn(permitted(
-                        new UserSummary(
-                                TARGET,
-                                "A 社",
-                                "佐藤",
-                                new EmailAddress("sato@example.com"),
-                                UserStatus.ACTIVE,
-                                Set.of(Role.SALES)),
-                        new UserSummary(
-                                new UserId(UUID.fromString("20000000-0000-0000-0000-000000000502")),
-                                "A 社",
-                                "鈴木",
-                                new EmailAddress("suzuki@example.com"),
-                                UserStatus.SUSPENDED,
-                                Set.of(Role.SALES))));
+                        summary(TARGET, "佐藤", UserStatus.ACTIVE, Set.of(Role.SALES), List.of(), 0),
+                        summary(502, "鈴木", UserStatus.SUSPENDED, Set.of(Role.SALES), List.of(), 0)));
 
         mockMvc.perform(get("/staff/users"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(Matchers.containsString("<td>利用中</td>")))
                 .andExpect(content().string(Matchers.containsString("<td>利用停止</td>")));
+    }
+
+    @Test
+    void 一覧は担当企業を役割で書き分け管理範囲の外は数だけを示す() throws Exception {
+        // Bolt 38h の状態の組み合わせの行 5・5b（画面の側。射影は統合テスト）
+        when(queryService.list(any()))
+                .thenReturn(permitted(
+                        summary(511, "二社", UserStatus.ACTIVE, Set.of(Role.SALES), List.of("荷主 北", "荷主 南"), 0),
+                        summary(512, "なし", UserStatus.ACTIVE, Set.of(Role.SALES), List.of(), 0),
+                        summary(513, "荷主", UserStatus.ACTIVE, Set.of(Role.SHIPPER), List.of(), 0),
+                        summary(514, "管理", UserStatus.ACTIVE, Set.of(Role.SYSTEM_ADMIN), List.of(), 0),
+                        summary(515, "混在", UserStatus.ACTIVE, Set.of(Role.SALES), List.of("荷主 北"), 1),
+                        summary(516, "外だけ", UserStatus.ACTIVE, Set.of(Role.SALES), List.of(), 1)));
+
+        String body = mockMvc.perform(get("/staff/users"))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        assertThat(body)
+                .contains("<th scope=\"col\">担当企業</th>")
+                .contains("<td>荷主 北、荷主 南</td>")
+                .contains("<td>未割り当て</td>")
+                .contains("<td>荷主 北、ほか 1 社</td>")
+                .contains("<td>ほか 1 社</td>");
+        // 担当範囲のない役割（荷主担当者・システム管理者）は「—」と見えない文字。管理範囲を担当企業に数えない
+        assertThat(body.split("担当範囲のない役割", -1)).hasSize(3);
+    }
+
+    @Test
+    void 登録の直後の詳細は割り当ての案内と担当範囲の領域へのリンクを出す() throws Exception {
+        // Bolt 38h の状態の組み合わせの行 7（画面の側。案内は知らせとは別の属性で、知らせはエスケープしたまま）
+        found(assignedTo(Set.of(Role.SALES), UserStatus.ACTIVE, Set.of()));
+        when(queryService.assignableCompanies(any())).thenReturn(permitted(NORTH));
+
+        mockMvc.perform(get(DETAIL).flashAttr("notice", "<b>登録</b>").flashAttr("assignmentPrompt", true))
+                .andExpect(text("担当企業を割り当ててください。<a href=\"#assignments-title\">担当企業の割り当てへ</a>"))
+                .andExpect(text("&lt;b&gt;登録&lt;/b&gt;"));
+        mockMvc.perform(get(DETAIL))
+                .andExpect(content().string(Matchers.not(Matchers.containsString("担当企業を割り当ててください。"))));
+    }
+
+    private static UserSummary summary(
+            long suffix, String displayName, UserStatus status, Set<Role> roles, List<String> assigned, int outside) {
+        return summary(
+                new UserId(UUID.fromString("20000000-0000-0000-0000-%012d".formatted(suffix))),
+                displayName,
+                status,
+                roles,
+                assigned,
+                outside);
+    }
+
+    private static UserSummary summary(
+            UserId id, String displayName, UserStatus status, Set<Role> roles, List<String> assigned, int outside) {
+        return new UserSummary(
+                id,
+                "A 社",
+                displayName,
+                new EmailAddress("u" + id.value() + "@example.com"),
+                status,
+                roles,
+                assigned,
+                outside);
     }
 
     @Test

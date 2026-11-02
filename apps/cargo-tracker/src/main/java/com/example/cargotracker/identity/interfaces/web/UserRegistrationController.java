@@ -4,7 +4,9 @@ import com.example.cargotracker.identity.application.internal.commandservices.Us
 import com.example.cargotracker.identity.application.internal.commandservices.UserRegistrationOutcome;
 import com.example.cargotracker.identity.application.internal.commandservices.UserRegistrationRefusal;
 import com.example.cargotracker.identity.application.internal.commandservices.UserRegistrationService;
+import com.example.cargotracker.identity.domain.model.rules.RoleAssignmentPolicy;
 import com.example.cargotracker.identity.domain.model.valueobjects.EmailAddress;
+import com.example.cargotracker.identity.domain.model.valueobjects.PasswordResetTokenPurpose;
 import com.example.cargotracker.identity.domain.model.valueobjects.RegistrableCompany;
 import com.example.cargotracker.identity.interfaces.web.UserRegistrationPage.FieldError;
 import com.example.cargotracker.identity.interfaces.web.UserRegistrationPage.Input;
@@ -40,8 +42,12 @@ public class UserRegistrationController {
     /** 確認から戻る入力の画面の URL（POST。入力を戻す）。 */
     static final String FORM_URL = NEW_URL + "/form";
 
-    /** 登録の完了の知らせ（UI 設計 S-20）。 */
-    static final String REGISTERED_NOTICE = "利用者を登録しました。登録したメールアドレスへ初回の設定の案内を送ります。";
+    /** 登録の完了の知らせ（UI 設計 S-20）。Bolt 38h で招待のリンクの期限（招待の用途から導く）と本人への一言を足した（L-12）。 */
+    static final String REGISTERED_NOTICE = "利用者を登録しました。登録したメールアドレスへ初回の設定の案内を送ります。案内のリンクの有効期限は送ってから "
+            + PasswordResetTokenPurpose.initialPasswordValidity().toHours() + " 時間です。本人に一言連絡してください。";
+
+    /** 担当範囲のある役割で登録したときだけ付ける、割り当ての案内の印（Bolt 38h。H-2。知らせとは別の属性で、詳細の画面がリンクを出す）。 */
+    static final String ASSIGNMENT_PROMPT = "assignmentPrompt";
 
     /** 企業を選ぶ画面から次へ進んだ印（ラジオを選ばずに送ると企業の値が送られないので、初めて開いたときと見分ける）。 */
     private static final String COMPANY_STEP = "company";
@@ -104,6 +110,9 @@ public class UserRegistrationController {
                 actor, input.companyId(), EmailAddress.of(input.email()), input.displayName(), input.roles())) {
             case UserRegistrationOutcome.Registered(var userId) -> {
                 redirectAttributes.addFlashAttribute("notice", REGISTERED_NOTICE);
+                if (RoleAssignmentPolicy.holdsAssignmentScopedRole(input.roles())) {
+                    redirectAttributes.addFlashAttribute(ASSIGNMENT_PROMPT, true);
+                }
                 yield "redirect:" + UserAdministrationController.USERS_URL + "/" + userId.value();
             }
             case UserRegistrationOutcome.Refused(var refusal) -> refused(input, refusal, actor, model);

@@ -13,6 +13,8 @@
     <div th:if="${notice != null}" class="alert alert-success" role="status" th:text="${notice}">
         役割を変更しました。相手の次の操作から効きます。
     </div>
+    <!--/* 担当範囲のある役割で登録した直後だけ、担当範囲の領域へ案内する（Bolt 38h。H-2）。知らせはエスケープしたままにし、リンクはここに置く */-->
+    <p th:if="${assignmentPrompt != null and assignments != null}" class="alert alert-info">担当企業を割り当ててください。<a href="#assignments-title">担当企業の割り当てへ</a></p>
     <!--/* エラー要約（共通部品と同じ形）。役割の変更と利用状態の変更（Bolt 34d）で 1 つにし、見出しは操作で決まる。選び方の誤り
          （役割・停止の理由）だけ「表示名: 文言」で群の最初の選択肢へリンクする（古い版と、役割の変更の自分の役割、利用状態の変更の自分と
          監督の役割の拒否は選び方の誤りではない）。欄を描かない利用者への拒否は文言だけを示す（Bolt 38） */-->

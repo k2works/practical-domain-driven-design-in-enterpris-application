@@ -28,8 +28,10 @@ import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -279,6 +281,64 @@ class MyBatisIdentityRepositoriesIntegrationTest {
 
         assertThat(mine).extracting(UserSummary::id).containsExactly(first, second);
         assertThat(mine.get(1).roles()).containsExactlyInAnyOrder(Role.SALES, Role.ROUTE_DESIGNER);
+    }
+
+    @Test
+    void 利用者の管理の一覧は担当範囲のある役割のときだけ担当企業を集め管理範囲の外は数だけにする() {
+        // Bolt 38h の状態の組み合わせの行 5・5b（管理範囲の行を担当企業に数えない。38e の決定 (9)・(11)）
+        Company operator = Company.of(new CompanyId(UUID.randomUUID()), "運用（一覧の担当企業）", CompanyKind.OPERATOR, true);
+        Company south = Company.of(new CompanyId(UUID.randomUUID()), "荷主 南（一覧）", CompanyKind.SHIPPER, true);
+        Company outside = Company.of(new CompanyId(UUID.randomUUID()), "範囲の外の荷主", CompanyKind.SHIPPER, true);
+        companies.add(operator);
+        companies.add(south);
+        companies.add(outside);
+        UserId two = addUser(operator, "二社 " + UUID.randomUUID(), Set.of(Role.SALES));
+        AdministrationFixtures.assignCompany(jdbc, two, south.id());
+        AdministrationFixtures.assignCompany(jdbc, two, company.id());
+        UserId none = addUser(operator, "なし " + UUID.randomUUID(), Set.of(Role.SALES));
+        UserId shipper = addUser(company, "荷主 " + UUID.randomUUID(), Set.of(Role.SHIPPER));
+        UserId admin = addUser(operator, "管理 " + UUID.randomUUID(), Set.of(Role.SYSTEM_ADMIN));
+        AdministrationFixtures.assignCompany(jdbc, admin, operator.id());
+        AdministrationFixtures.assignCompany(jdbc, admin, company.id());
+        UserId mixed = addUser(operator, "混在 " + UUID.randomUUID(), Set.of(Role.SALES));
+        AdministrationFixtures.assignCompany(jdbc, mixed, company.id());
+        AdministrationFixtures.assignCompany(jdbc, mixed, outside.id());
+        UserId onlyOutside = addUser(operator, "外だけ " + UUID.randomUUID(), Set.of(Role.SALES));
+        AdministrationFixtures.assignCompany(jdbc, onlyOutside, outside.id());
+
+        Map<UserId, UserSummary> found = users.findSummariesIn(Set.of(operator.id(), company.id(), south.id())).stream()
+                .collect(Collectors.toMap(UserSummary::id, summary -> summary));
+
+        assertThat(found.get(two).assignedCompanyNames()).containsExactly("荷主 A", "荷主 南（一覧）");
+        assertThat(found.get(two).assignedOutsideCount()).isZero();
+        assertThat(found.get(none).assignedCompanyNames()).isEmpty();
+        assertThat(found.get(none).assignedOutsideCount()).isZero();
+        assertThat(found.get(shipper).assignedCompanyNames()).isEmpty();
+        assertThat(found.get(admin).assignedCompanyNames()).isEmpty();
+        assertThat(found.get(admin).assignedOutsideCount()).isZero();
+        assertThat(found.get(mixed).assignedCompanyNames()).containsExactly("荷主 A");
+        assertThat(found.get(mixed).assignedOutsideCount()).isEqualTo(1);
+        assertThat(found.get(onlyOutside).assignedCompanyNames()).isEmpty();
+        assertThat(found.get(onlyOutside).assignedOutsideCount()).isEqualTo(1);
+    }
+
+    @Test
+    void 利用者の管理の一覧は役割が2つの利用者を1行にし担当企業を重ねない() {
+        // Bolt 38h の状態の組み合わせの行 6（役割の数だけ行が出る SQL）
+        Company south = Company.of(new CompanyId(UUID.randomUUID()), "荷主 南（二役）", CompanyKind.SHIPPER, true);
+        companies.add(south);
+        UserId both = addUser(company, "二役 " + UUID.randomUUID(), Set.of(Role.SALES, Role.ROUTE_DESIGNER));
+        AdministrationFixtures.assignCompany(jdbc, both, company.id());
+        AdministrationFixtures.assignCompany(jdbc, both, south.id());
+
+        List<UserSummary> rows = users.findSummariesIn(Set.of(company.id(), south.id())).stream()
+                .filter(summary -> summary.id().equals(both))
+                .toList();
+
+        assertThat(rows).hasSize(1);
+        UserSummary found = rows.getFirst();
+        assertThat(found.roles()).containsExactlyInAnyOrder(Role.SALES, Role.ROUTE_DESIGNER);
+        assertThat(found.assignedCompanyNames()).containsExactly("荷主 A", "荷主 南（二役）");
     }
 
     @Test

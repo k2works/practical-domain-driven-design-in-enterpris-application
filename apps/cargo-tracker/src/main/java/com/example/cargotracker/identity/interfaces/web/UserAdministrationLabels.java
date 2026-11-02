@@ -7,11 +7,15 @@ import com.example.cargotracker.identity.domain.model.valueobjects.SuspensionRea
 import com.example.cargotracker.identity.domain.model.valueobjects.SuspensionRecord;
 import com.example.cargotracker.identity.domain.model.valueobjects.UserDetail;
 import com.example.cargotracker.identity.domain.model.valueobjects.UserStatus;
+import com.example.cargotracker.identity.domain.model.valueobjects.UserSummary;
 import com.example.cargotracker.platform.web.DateTimeDisplay;
 import com.example.cargotracker.shared.domain.Role;
+import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.util.EnumSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -104,6 +108,27 @@ final class UserAdministrationLabels {
     /** 役割を {@link Role} の宣言の順に並べる。 */
     static List<Role> order(Set<Role> roles) {
         return roles.isEmpty() ? List.of() : List.copyOf(EnumSet.copyOf(roles));
+    }
+
+    /**
+     * 一覧の担当企業の欄（UI 設計 S-20。Bolt 38h）。担当範囲のある役割の利用者だけを入れ、管理範囲の企業の名前を「、」で並べ、範囲の外は
+     * 「ほか N 社」、どちらもなければ「未割り当て」。担当範囲のない役割の利用者は入れない（画面は「—」と見えない文字にする）。
+     */
+    static Map<UserId, String> assignedCompanies(List<UserSummary> summaries) {
+        Map<UserId, String> labels = new LinkedHashMap<>();
+        summaries.stream()
+                .filter(summary -> RoleAssignmentPolicy.holdsAssignmentScopedRole(summary.roles()))
+                .forEach(summary -> labels.put(summary.id(), assignedCompanies(summary)));
+        return labels;
+    }
+
+    private static String assignedCompanies(UserSummary summary) {
+        String outside = summary.assignedOutsideCount() == 0 ? null : "ほか " + summary.assignedOutsideCount() + " 社";
+        if (summary.assignedCompanyNames().isEmpty()) {
+            return outside == null ? "未割り当て" : outside;
+        }
+        String names = String.join("、", summary.assignedCompanyNames());
+        return outside == null ? names : names + "、" + outside;
     }
 
     /** 企業の種類に付けられない役割の拒否の文言（役割の変更と利用者の登録が共有する。UI 設計 S-20）。 */

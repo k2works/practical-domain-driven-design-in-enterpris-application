@@ -3,6 +3,7 @@ package com.example.cargotracker.identity.infrastructure.persistence;
 import com.example.cargotracker.identity.domain.model.aggregates.DuplicateEmailException;
 import com.example.cargotracker.identity.domain.model.aggregates.User;
 import com.example.cargotracker.identity.domain.model.aggregates.UserRepository;
+import com.example.cargotracker.identity.domain.model.rules.RoleAssignmentPolicy;
 import com.example.cargotracker.identity.domain.model.valueobjects.CompanyKind;
 import com.example.cargotracker.identity.domain.model.valueobjects.EmailAddress;
 import com.example.cargotracker.identity.domain.model.valueobjects.UserDetail;
@@ -112,19 +113,43 @@ public class MyBatisUserRepository implements UserRepository {
         return mapper.updateUserStatus(changed.id().value(), changed.status().name(), expectedVersion, now) == 1;
     }
 
-    private static List<UserSummary> summaries(List<UserAdministrationRow> found) {
+    /**
+     * 一覧の行を利用者ごとに束ねる。担当企業は担当範囲のある役割のときだけ `COMPANY` の行から集め（管理範囲は数えない。Bolt 38e の決定 (9)）、
+     * 役割の行で重ねない。操作者の管理範囲の企業は名前（SQL の企業名の順）、範囲の外は数だけにする（決定 (11)。Bolt 38h）。
+     */
+    private static List<UserSummary> summaries(List<UserAdministrationRow> found, Set<UUID> scope) {
         return group(found).stream()
                 .map(rows -> {
                     UserAdministrationRow first = rows.getFirst();
+                    Set<Role> roles =
+                            roles(rows.stream().map(UserAdministrationRow::role).toList());
+                    Map<UUID, String> assigned =
+                            RoleAssignmentPolicy.holdsAssignmentScopedRole(roles) ? assignedCompanies(rows) : Map.of();
                     return new UserSummary(
                             new UserId(first.id()),
                             first.companyName(),
                             first.displayName(),
                             new EmailAddress(first.email()),
                             UserStatus.valueOf(first.status()),
-                            roles(rows.stream().map(UserAdministrationRow::role).toList()));
+                            roles,
+                            assigned.entrySet().stream()
+                                    .filter(company -> scope.contains(company.getKey()))
+                                    .map(Map.Entry::getValue)
+                                    .toList(),
+                            (int) assigned.keySet().stream()
+                                    .filter(company -> !scope.contains(company))
+                                    .count());
                 })
                 .toList();
+    }
+
+    /** 利用者の行の `COMPANY` の行を、企業ごとに 1 つ（行の順）にする。役割の数だけ同じ企業が出るので重ねない。 */
+    private static Map<UUID, String> assignedCompanies(List<UserAdministrationRow> rows) {
+        Map<UUID, String> companies = new LinkedHashMap<>();
+        rows.stream()
+                .filter(row -> row.assignedCompanyId() != null)
+                .forEach(row -> companies.putIfAbsent(row.assignedCompanyId(), row.assignedCompanyName()));
+        return companies;
     }
 
     @Override
@@ -132,8 +157,8 @@ public class MyBatisUserRepository implements UserRepository {
         if (companies.isEmpty()) {
             return List.of();
         }
-        return summaries(mapper.selectUserAdministrationRowsIn(
-                companies.stream().map(CompanyId::value).toList()));
+        List<UUID> scope = companies.stream().map(CompanyId::value).toList();
+        return summaries(mapper.selectUserAdministrationRowsIn(scope), Set.copyOf(scope));
     }
 
     @Override

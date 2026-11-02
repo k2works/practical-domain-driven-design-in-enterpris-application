@@ -3,6 +3,7 @@ package com.example.cargotracker.identity.domain.model.valueobjects;
 import com.example.cargotracker.shared.annotation.ddd.ValueObject;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.Optional;
 
 /**
@@ -31,6 +32,18 @@ public enum PasswordResetTokenPurpose {
         this.validity = validity;
         this.throttlesRepeatedIssue = throttlesRepeatedIssue;
         this.setsInitialPassword = setsInitialPassword;
+    }
+
+    /**
+     * 初回の password の設定（招待）のリンクが使える期間（Bolt 38h。S-20 の登録の完了の知らせ。L-12）。外から招待の定数を参照せず、この型に
+     * 問い合わせる（ArchUnit の規則）。
+     */
+    public static Duration initialPasswordValidity() {
+        return Arrays.stream(values())
+                .filter(PasswordResetTokenPurpose::setsInitialPassword)
+                .findFirst()
+                .orElseThrow()
+                .validity();
     }
 
     /** 発行から使えなくなるまでの期間。 */

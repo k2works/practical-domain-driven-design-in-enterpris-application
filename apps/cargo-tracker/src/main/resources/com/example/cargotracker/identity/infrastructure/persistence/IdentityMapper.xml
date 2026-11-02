@@ -50,6 +50,8 @@
             <arg column="status" name="status" javaType="String"/>
             <arg column="version" name="version" javaType="_long"/>
             <arg column="role" name="role" javaType="String"/>
+            <arg column="assigned_company_id" name="assignedCompanyId" javaType="java.util.UUID"/>
+            <arg column="assigned_company_name" name="assignedCompanyName" javaType="String"/>
         </constructor>
     </resultMap>
 
@@ -175,15 +177,19 @@
         r.role
     </sql>
 
-    <!-- Bolt 34b。管理範囲の企業の利用者だけ（空の集合では呼ばない） -->
+    <!-- Bolt 34b。管理範囲の企業の利用者だけ（空の集合では呼ばない）。Bolt 38h から COMPANY の行と企業の名前も読む（担当企業の列）。
+         COMPANY の条件は ON 句に置く（WHERE に置くと割り当てのない利用者の行が消える）。役割 × COMPANY の行の重なりと、担当企業として
+         読むか（役割で決める。Bolt 38e の決定 (9)）は写すときに決める -->
     <select id="selectUserAdministrationRowsIn" resultMap="userAdministrationRow">
-        SELECT <include refid="userAdministrationColumns"/>
+        SELECT <include refid="userAdministrationColumns"/>, a.scope_id AS assigned_company_id, ac.name AS assigned_company_name
           FROM identity.app_user u
           JOIN identity.company c ON c.id = u.company_id
           LEFT JOIN identity.user_role r ON r.user_id = u.id
+          LEFT JOIN identity.user_assignment a ON a.user_id = u.id AND a.scope_kind = 'COMPANY'
+          LEFT JOIN identity.company ac ON ac.id = a.scope_id
          WHERE u.company_id IN
                <foreach collection="companyIds" item="companyId" open="(" separator="," close=")">#{companyId}</foreach>
-         ORDER BY c.name, u.display_name, u.id, r.role
+         ORDER BY c.name, u.display_name, u.id, r.role, ac.name, a.scope_id
     </select>
 
     <!-- Bolt 34b。システム管理者の管理範囲（COMPANY の行だけ） -->

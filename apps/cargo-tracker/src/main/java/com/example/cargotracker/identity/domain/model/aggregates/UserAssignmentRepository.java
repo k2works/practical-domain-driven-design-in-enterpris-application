@@ -9,7 +9,9 @@ import com.example.cargotracker.shared.domain.UtcInstant;
  * 担当範囲のリポジトリ（送信ポート。Bolt 34b）。`user_assignment` の `COMPANY` の行を、システム管理者の管理範囲（Bolt 34b）と業務担当者の
  * 担当企業（Bolt 38e）の 2 つの意味で読む。同じ行の意味は役割で決まるので、管理範囲はシステム管理者のときだけ、担当企業は担当範囲のある役割
  * のときだけ読む（Bolt 38e の決定 (9)。監督の役割と業務の役割を付け替える運用の手順では、先に `COMPANY` の行を消す。W10）。担当企業は S-20
- * で書く（Bolt 38e）。管理範囲は運用の手順だけで書き、アプリは書かない（W10。確認ポイント 12。2026-10-16、human:kakimomokuri）。
+ * で書く（Bolt 38e）。管理範囲は運用の手順だけで書き、アプリは書かない（W10。確認ポイント 12。2026-10-16、human:kakimomokuri）。担当企業として
+ * 読む読み手はこのリポジトリのほかに 2 つある: request ごとの確かめ（`UserStandingRepository`）と、Bolt 38h からの S-20 の一覧
+ * （`UserRepository#findSummariesIn`）。どれも役割による読み分けを {@code RoleAssignmentPolicy} にそろえる。
  */
 public interface UserAssignmentRepository {
 

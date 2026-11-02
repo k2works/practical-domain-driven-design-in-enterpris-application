@@ -148,7 +148,9 @@ class UserAdministrationQueryServiceTest {
                 "営業 一郎",
                 EmailAddress.of("sales@example.com"),
                 UserStatus.ACTIVE,
-                Set.of(Role.SALES));
+                Set.of(Role.SALES),
+                List.of(),
+                0);
         when(assignments.scopeOf(admin.userId())).thenReturn(new AdministrationScope(Set.of(inside)));
         when(users.findSummariesIn(Set.of(inside))).thenReturn(List.of(summary));
 

@@ -162,7 +162,8 @@ public class UserRegistrationUiSteps {
 
     @ならば("利用者を登録したと示され、詳細に表示名 {string} と役割 {string} が示される")
     public void 登録したと示される(String displayName, String role) {
-        assertThat(page().getByRole(AriaRole.STATUS)).hasText("利用者を登録しました。登録したメールアドレスへ初回の設定の案内を送ります。");
+        assertThat(page().getByRole(AriaRole.STATUS))
+                .hasText("利用者を登録しました。登録したメールアドレスへ初回の設定の案内を送ります。案内のリンクの有効期限は送ってから 24 時間です。本人に一言連絡してください。");
         assertThat(page().getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setLevel(1)))
                 .containsText(displayName);
         assertThat(page().locator("dd#current-roles")).hasText(role);

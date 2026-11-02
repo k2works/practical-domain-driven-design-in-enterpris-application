@@ -22,6 +22,7 @@
                 <th scope="col">メールアドレス</th>
                 <th scope="col">利用状態</th>
                 <th scope="col">役割</th>
+                <th scope="col">担当企業</th>
             </tr>
             </thead>
             <tbody>
@@ -37,6 +38,9 @@
                             th:if="${user.roles.contains(role)}" th:text="${role.displayName}">営業担当者</li>
                     </ul>
                 </td>
+                <!--/* 担当企業（Bolt 38h。H-2）。担当範囲のない役割は「—」と見えない文字 */-->
+                <td th:if="${assignedCompanies[user.id] != null}" th:text="${assignedCompanies[user.id]}">荷主 北、ほか 1 社</td>
+                <td th:unless="${assignedCompanies[user.id] != null}"><span aria-hidden="true">—</span><span class="visually-hidden">担当範囲のない役割</span></td>
             </tr>
             </tbody>
         </table>
