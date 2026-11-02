@@ -97,11 +97,11 @@ class MapperSchemaArchitectureTest {
     /** スキーマの一覧は、業務のコンテキストを対応表で写した集合と基盤のスキーマに一致する（W6 横断レビュー M-3。Bolt 39）。 */
     @Test
     void スキーマの一覧は業務のコンテキストの写しと基盤のスキーマに一致する() {
-        Set<String> expected = new HashSet<>();
-        BusinessContexts.all().forEach(context -> expected.add(SCHEMA_OF.getOrDefault(context, context)));
-        expected.add("platform");
+        Set<String> mappedSchemas = new HashSet<>();
+        BusinessContexts.all().forEach(context -> mappedSchemas.add(SCHEMA_OF.getOrDefault(context, context)));
+        mappedSchemas.add("platform");
 
-        assertThat(SCHEMAS).containsExactlyInAnyOrderElementsOf(expected);
+        assertThat(mappedSchemas).containsExactlyInAnyOrderElementsOf(SCHEMAS);
     }
 
     private static List<String> violations(String context, String sql) {

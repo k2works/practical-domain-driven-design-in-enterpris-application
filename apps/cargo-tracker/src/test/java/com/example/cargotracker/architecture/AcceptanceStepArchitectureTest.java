@@ -80,7 +80,7 @@ class AcceptanceStepArchitectureTest {
     /** コンテキストの一覧は、業務のコンテキスト（モジュールから共有カーネルと基盤を除いたもの）に一致する（W6 横断レビュー M-3。Bolt 39）。 */
     @Test
     void コンテキストの一覧は業務のコンテキストに一致する() {
-        assertThat(CONTEXTS).containsExactlyInAnyOrderElementsOf(BusinessContexts.all());
+        assertThat(BusinessContexts.all()).containsExactlyInAnyOrderElementsOf(CONTEXTS);
     }
 
     private static ArchRule rule(String context) {

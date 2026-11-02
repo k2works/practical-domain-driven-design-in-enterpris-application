@@ -24,29 +24,33 @@ public abstract class ExternalPayloadStorageContract {
         PayloadObjectKey fileKey = PayloadObjectKey.newIngestionFile();
         PayloadObjectKey recordKey = PayloadObjectKey.newRecordPayload();
         byte[] file = bytes("external_id,external_version\r\nV-1,1\r\n");
-        byte[] record = bytes("V-1,1");
+        byte[] recordPayload = bytes("V-1,1");
 
         storage().store(fileKey, file);
-        storage().store(recordKey, record);
+        storage().store(recordKey, recordPayload);
 
         assertThat(fileKey.value()).startsWith("externaldata/ingestions/");
         assertThat(recordKey.value()).startsWith("externaldata/records/");
         assertThat(storage().read(fileKey)).isEqualTo(file);
-        assertThat(storage().read(recordKey)).isEqualTo(record);
+        assertThat(storage().read(recordKey)).isEqualTo(recordPayload);
     }
 
     @Test
     void 同じキーには上書きせず最初のバイト列が残る() {
         PayloadObjectKey key = PayloadObjectKey.newRecordPayload();
-        storage().store(key, bytes("first"));
+        ExternalPayloadStorage storage = storage();
+        storage.store(key, bytes("first"));
+        byte[] second = bytes("second");
 
-        assertThatThrownBy(() -> storage().store(key, bytes("second"))).isInstanceOf(IllegalStateException.class);
-        assertThat(storage().read(key)).isEqualTo(bytes("first"));
+        assertThatThrownBy(() -> storage.store(key, second)).isInstanceOf(IllegalStateException.class);
+        assertThat(storage.read(key)).isEqualTo(bytes("first"));
     }
 
     @Test
     void 保存していないキーは読めない() {
-        assertThatThrownBy(() -> storage().read(PayloadObjectKey.newRecordPayload()))
-                .isInstanceOf(NoSuchElementException.class);
+        ExternalPayloadStorage storage = storage();
+        PayloadObjectKey unknown = PayloadObjectKey.newRecordPayload();
+
+        assertThatThrownBy(() -> storage.read(unknown)).isInstanceOf(NoSuchElementException.class);
     }
 }
