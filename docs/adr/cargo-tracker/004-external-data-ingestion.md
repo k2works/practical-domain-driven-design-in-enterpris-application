@@ -8,6 +8,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-11-02T09:51:08Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:11:13Z }
   - { by: human:kakimomokuri, at: 2026-11-02T06:52:27Z }
+  - { by: human:kakimomokuri, at: 2026-11-02T11:09:18Z }
 ---
 
 # ADR-004: 外部原本は Inbox・隔離・照合の 3 段で取り込む
