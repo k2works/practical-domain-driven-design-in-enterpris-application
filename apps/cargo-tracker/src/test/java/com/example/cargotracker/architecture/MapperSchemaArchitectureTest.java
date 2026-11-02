@@ -7,8 +7,10 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -25,8 +27,11 @@ class MapperSchemaArchitectureTest {
     private static final Path MAPPER_ROOT = Path.of("src/main/resources/com/example/cargotracker");
 
     /** 業務のスキーマと基盤のスキーマ。表の参照の「スキーマ.表」の形のうち、これらの名前だけを見る（別名の「q.status」などを拾わない）。 */
-    private static final Set<String> SCHEMAS =
-            Set.of("quotation", "routing", "identity", "booking", "tracking", "notification", "platform");
+    private static final Set<String> SCHEMAS = Set.of(
+            "quotation", "routing", "identity", "booking", "tracking", "notification", "external_data", "platform");
+
+    /** コンテキスト名とスキーマ名が違うものの対応表。ないコンテキストはコンテキスト名をスキーマ名にする（W7 の設計の決定。Bolt 39）。 */
+    private static final Map<String, String> SCHEMA_OF = Map.of("externaldata", "external_data");
 
     /** 表を参照する句（FROM・JOIN・INTO・UPDATE）の後の「スキーマ.表」。 */
     private static final Pattern TABLE_REFERENCE =
@@ -77,12 +82,34 @@ class MapperSchemaArchitectureTest {
         assertThat(violations("tracking", sql)).isEmpty();
     }
 
+    @Test
+    void 外部データは自分のスキーマを読める() {
+        assertThat(violations("externaldata", "SELECT r.id FROM external_data.received_record r"))
+                .isEmpty();
+    }
+
+    @Test
+    void 外部データが追跡のスキーマを読めば見つける() {
+        assertThat(violations("externaldata", "SELECT t.id FROM tracking.tracking_record t"))
+                .containsExactly("tracking.tracking_record");
+    }
+
+    /** スキーマの一覧は、業務のコンテキストを対応表で写した集合と基盤のスキーマに一致する（W6 横断レビュー M-3。Bolt 39）。 */
+    @Test
+    void スキーマの一覧は業務のコンテキストの写しと基盤のスキーマに一致する() {
+        Set<String> expected = new HashSet<>();
+        BusinessContexts.all().forEach(context -> expected.add(SCHEMA_OF.getOrDefault(context, context)));
+        expected.add("platform");
+
+        assertThat(SCHEMAS).containsExactlyInAnyOrderElementsOf(expected);
+    }
+
     private static List<String> violations(String context, String sql) {
         List<String> found = new ArrayList<>();
         Matcher matcher = TABLE_REFERENCE.matcher(sql);
         while (matcher.find()) {
             String schema = matcher.group(1).toLowerCase(Locale.ROOT);
-            if (SCHEMAS.contains(schema) && !schema.equals(context)) {
+            if (SCHEMAS.contains(schema) && !schema.equals(SCHEMA_OF.getOrDefault(context, context))) {
                 found.add(schema + "." + matcher.group(2).toLowerCase(Locale.ROOT));
             }
         }

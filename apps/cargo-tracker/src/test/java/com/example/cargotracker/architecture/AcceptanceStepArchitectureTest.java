@@ -25,7 +25,8 @@ import org.junit.jupiter.api.Test;
 class AcceptanceStepArchitectureTest {
 
     private static final String ROOT = "com.example.cargotracker.";
-    private static final List<String> CONTEXTS = List.of("quotation", "routing", "booking", "tracking", "identity");
+    private static final List<String> CONTEXTS =
+            List.of("quotation", "routing", "booking", "tracking", "identity", "notification", "externaldata");
 
     @ArchTest
     static final ArchRule 見積りのステップ定義は自分のコンテキストと公開APIだけに依存する = rule("quotation");
@@ -74,6 +75,12 @@ class AcceptanceStepArchitectureTest {
         assertThat(forbidden("booking", ROOT + "booking.interfaces.api.internal"))
                 .isTrue();
         assertThat(forbidden("booking", ROOT + "shared.domain")).isFalse();
+    }
+
+    /** コンテキストの一覧は、業務のコンテキスト（モジュールから共有カーネルと基盤を除いたもの）に一致する（W6 横断レビュー M-3。Bolt 39）。 */
+    @Test
+    void コンテキストの一覧は業務のコンテキストに一致する() {
+        assertThat(CONTEXTS).containsExactlyInAnyOrderElementsOf(BusinessContexts.all());
     }
 
     private static ArchRule rule(String context) {
