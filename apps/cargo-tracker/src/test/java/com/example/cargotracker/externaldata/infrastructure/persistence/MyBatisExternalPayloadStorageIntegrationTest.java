@@ -174,7 +174,7 @@ class MyBatisExternalPayloadStorageIntegrationTest extends ExternalPayloadStorag
             try {
                 storage.store(key, payload);
                 return payload;
-            } catch (IllegalStateException refused) {
+            } catch (IllegalStateException _) {
                 return null;
             }
         };
