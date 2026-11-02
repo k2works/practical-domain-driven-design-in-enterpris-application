@@ -22,6 +22,8 @@ import org.springframework.transaction.support.TransactionTemplate;
  *       巻き戻し専用にしない
  *   <li>読み書きで配列を写す。呼び手の書き換えから原本を守り、MyBatis の 1 次キャッシュが同じ SqlSession の中の 2 回の読み出しで
  *       同じ配列を返しても、呼び手どうしで配列を共有しない
+ *   <li>読み出しは独立したトランザクションを開かず、外側のトランザクションがあればその接続で読む。保存は REQUIRES_NEW で読む前に
+ *       コミットされ、外側が READ COMMITTED（PostgreSQL の既定）なので、外側の中で保存した原本をすぐに読める
  *   <li>保存した時刻は Clock から取る（Clock の Bean はマイクロ秒に切り捨てる。BR-10、ADR-007）
  * </ul>
  */
@@ -48,7 +50,7 @@ public class MyBatisExternalPayloadStorage implements ExternalPayloadStorage {
             independentTransaction.executeWithoutResult(
                     status -> mapper.insert(key.value(), content, OffsetDateTime.now(clock)));
         } catch (DuplicateKeyException e) {
-            throw new IllegalStateException("その原本はもう保存してある（上書きしない）: " + key.value(), e);
+            throw new IllegalStateException("原本は上書きしない: " + key.value(), e);
         }
     }
 

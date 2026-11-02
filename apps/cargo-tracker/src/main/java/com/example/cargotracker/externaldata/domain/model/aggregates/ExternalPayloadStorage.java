@@ -19,7 +19,9 @@ import com.example.cargotracker.externaldata.domain.model.valueobjects.PayloadOb
  *
  * <p>巻き戻りとの関係: 実装は受信記録とは独立したトランザクションで保存し、外側のトランザクションが巻き戻っても原本を残す（ADR-004 の
  * 改訂。Bolt 39a2）。同じトランザクションで書くと、巻き戻りで原本も消え、「補償は消さない」と食い違うため。保存は外側のトランザクションの
- * 中から呼べる。DB の実装（W7〜W9）は REQUIRES_NEW で外側の接続を握ったまま 2 本目の接続を取るので、プールの大きさ以上の同時の取込で
+ * 中から呼べる。キーは取込ごとに新しい UUID から作る（{@link PayloadObjectKey#newIngestionFile()}・
+ * {@link PayloadObjectKey#newRecordPayload()}）ので、外側が巻き戻った後に同じファイルを取り込み直しても主キーの違反にならない。
+ * DB の実装（W7〜W9）は REQUIRES_NEW で外側の接続を握ったまま 2 本目の接続を取るので、プールの大きさ以上の同時の取込で
  * 枯渇しうる（取込は同時に走らない想定なので受け入れる）。行ごとの保存の量は 39b の PERF-06 で測り、足りなければ一括の保存を足す。
  * S3 の実装の接続の扱いは W10 で決める。
  */

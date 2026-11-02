@@ -5,6 +5,7 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.example.cargotracker.CargoTrackerApplication;
+import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
 import com.tngtech.archunit.core.importer.ImportOption;
 import org.junit.jupiter.api.Test;
@@ -14,6 +15,11 @@ import org.springframework.modulith.core.ApplicationModules;
  * AT-03: コンテキスト間の依存は公開 API とドメインイベントだけに限る（ADR-001）。
  */
 class ModularityTest {
+
+    /** 本番のクラス（テストを含めない）。規則ごとに読み込み直さない。 */
+    private static final JavaClasses PRODUCTION_CLASSES = new ClassFileImporter()
+            .withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS)
+            .importPackages("com.example.cargotracker");
 
     private final ApplicationModules modules = ApplicationModules.of(CargoTrackerApplication.class);
 
@@ -45,9 +51,7 @@ class ModularityTest {
                 .should()
                 .dependOnClassesThat()
                 .resideInAPackage("com.example.cargotracker.booking..")
-                .check(new ClassFileImporter()
-                        .withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS)
-                        .importPackages("com.example.cargotracker"));
+                .check(PRODUCTION_CLASSES);
     }
 
     /** 予約は経路設計に依存しない。経路版は見積りが割り当てた経路の写しで確かめる（ADR-016。Bolt 23）。 */
@@ -59,9 +63,7 @@ class ModularityTest {
                 .should()
                 .dependOnClassesThat()
                 .resideInAPackage("com.example.cargotracker.routing..")
-                .check(new ClassFileImporter()
-                        .withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS)
-                        .importPackages("com.example.cargotracker"));
+                .check(PRODUCTION_CLASSES);
     }
 
     /**
@@ -76,9 +78,7 @@ class ModularityTest {
                 .should()
                 .dependOnClassesThat()
                 .resideInAPackage("com.example.cargotracker.routing..")
-                .check(new ClassFileImporter()
-                        .withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS)
-                        .importPackages("com.example.cargotracker"));
+                .check(PRODUCTION_CLASSES);
     }
 
     /**
@@ -93,9 +93,7 @@ class ModularityTest {
                 .should()
                 .dependOnClassesThat()
                 .resideInAPackage("com.example.cargotracker.tracking..")
-                .check(new ClassFileImporter()
-                        .withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS)
-                        .importPackages("com.example.cargotracker"));
+                .check(PRODUCTION_CLASSES);
     }
 
     /**
@@ -119,17 +117,15 @@ class ModularityTest {
                         "com.example.cargotracker.externaldata..",
                         "com.example.cargotracker.shared..",
                         "org.springframework..")
-                .check(new ClassFileImporter()
-                        .withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS)
-                        .importPackages("com.example.cargotracker"));
+                .check(PRODUCTION_CLASSES);
     }
 
     /**
-     * 外部データのインフラストラクチャ層は、層の外の許可に加えて MyBatis に依存してよい（外部原本の保存の DB の実装。Bolt 39a2）。
-     * フレームワークの許可は、使う Bolt で、使う層に限って足す。
+     * 外部データのインフラストラクチャ層は MyBatis と、Spring のうち実際に使う範囲（例外の変換・トランザクション・ステレオタイプ）に
+     * 依存してよい（外部原本の保存の DB の実装。Bolt 39a2）。フレームワークの許可は、使う Bolt で、使う層に限って足す。
      */
     @Test
-    void 外部データのインフラストラクチャ層は加えてMyBatisに依存してよい() {
+    void 外部データのインフラストラクチャ層はMyBatisと使う範囲のSpringに依存してよい() {
         classes()
                 .that()
                 .resideInAPackage("com.example.cargotracker.externaldata.infrastructure..")
@@ -139,10 +135,10 @@ class ModularityTest {
                         "java..",
                         "com.example.cargotracker.externaldata..",
                         "com.example.cargotracker.shared..",
-                        "org.springframework..",
+                        "org.springframework.dao..",
+                        "org.springframework.transaction..",
+                        "org.springframework.stereotype..",
                         "org.apache.ibatis..")
-                .check(new ClassFileImporter()
-                        .withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS)
-                        .importPackages("com.example.cargotracker"));
+                .check(PRODUCTION_CLASSES);
     }
 }
