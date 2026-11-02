@@ -123,8 +123,9 @@ public class MyBatisUserRepository implements UserRepository {
                     UserAdministrationRow first = rows.getFirst();
                     Set<Role> roles =
                             roles(rows.stream().map(UserAdministrationRow::role).toList());
-                    Map<UUID, String> assigned =
-                            RoleAssignmentPolicy.holdsAssignmentScopedRole(roles) ? assignedCompanies(rows) : Map.of();
+                    boolean assignmentScoped = RoleAssignmentPolicy.holdsAssignmentScopedRole(roles);
+                    Map<Boolean, List<String>> byScope =
+                            assignmentScoped ? partitionByScope(assignedCompanies(rows), scope) : Map.of();
                     return new UserSummary(
                             new UserId(first.id()),
                             first.companyName(),
@@ -132,15 +133,19 @@ public class MyBatisUserRepository implements UserRepository {
                             new EmailAddress(first.email()),
                             UserStatus.valueOf(first.status()),
                             roles,
-                            assigned.entrySet().stream()
-                                    .filter(company -> scope.contains(company.getKey()))
-                                    .map(Map.Entry::getValue)
-                                    .toList(),
-                            (int) assigned.keySet().stream()
-                                    .filter(company -> !scope.contains(company))
-                                    .count());
+                            assignmentScoped,
+                            byScope.getOrDefault(true, List.of()),
+                            byScope.getOrDefault(false, List.of()).size());
                 })
                 .toList();
+    }
+
+    /** 担当企業の名前を、操作者の管理範囲の中（true）と外（false）に 1 度の走査で分ける。並びは行の順のまま。 */
+    private static Map<Boolean, List<String>> partitionByScope(Map<UUID, String> assigned, Set<UUID> scope) {
+        return assigned.entrySet().stream()
+                .collect(Collectors.partitioningBy(
+                        company -> scope.contains(company.getKey()),
+                        Collectors.mapping(Map.Entry::getValue, Collectors.toList())));
     }
 
     /** 利用者の行の `COMPANY` の行を、企業ごとに 1 つ（行の順）にする。役割の数だけ同じ企業が出るので重ねない。 */

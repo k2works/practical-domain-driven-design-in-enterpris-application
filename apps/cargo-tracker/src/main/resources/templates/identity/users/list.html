@@ -39,8 +39,8 @@
                     </ul>
                 </td>
                 <!--/* 担当企業（Bolt 38h。H-2）。担当範囲のない役割は「—」と見えない文字 */-->
-                <td th:if="${assignedCompanies[user.id] != null}" th:text="${assignedCompanies[user.id]}">荷主 北、ほか 1 社</td>
-                <td th:unless="${assignedCompanies[user.id] != null}"><span aria-hidden="true">—</span><span class="visually-hidden">担当範囲のない役割</span></td>
+                <td th:if="${user.hasAssignmentScope()}" th:text="${assignedCompanies[user.id]}">荷主 北、ほか 1 社</td>
+                <td th:unless="${user.hasAssignmentScope()}"><span aria-hidden="true">—</span><span class="visually-hidden">担当範囲のない役割</span></td>
             </tr>
             </tbody>
         </table>

@@ -15,6 +15,7 @@ import com.example.cargotracker.identity.application.internal.queryservices.Admi
 import com.example.cargotracker.identity.application.internal.queryservices.UserAdministrationQueryService;
 import com.example.cargotracker.identity.application.internal.queryservices.UserLookup;
 import com.example.cargotracker.identity.domain.model.aggregates.Company;
+import com.example.cargotracker.identity.domain.model.rules.RoleAssignmentPolicy;
 import com.example.cargotracker.identity.domain.model.valueobjects.AssignedCompanies;
 import com.example.cargotracker.identity.domain.model.valueobjects.CompanyKind;
 import com.example.cargotracker.identity.domain.model.valueobjects.EmailAddress;
@@ -110,8 +111,18 @@ class UserAdministrationControllerTest {
                 .contains("<td>未割り当て</td>")
                 .contains("<td>荷主 北、ほか 1 社</td>")
                 .contains("<td>ほか 1 社</td>");
-        // 担当範囲のない役割（荷主担当者・システム管理者）は「—」と見えない文字。管理範囲を担当企業に数えない
-        assertThat(body.split("担当範囲のない役割", -1)).hasSize(3);
+        // 担当範囲のない役割（荷主担当者・システム管理者）は、その行で「—」と見えない文字。管理範囲を担当企業に数えない
+        String noScope = "<td><span aria-hidden=\"true\">—</span><span class=\"visually-hidden\">担当範囲のない役割</span></td>";
+        assertThat(rowOf(body, "荷主")).contains(noScope);
+        assertThat(rowOf(body, "管理")).contains(noScope);
+        assertThat(rowOf(body, "なし")).contains("<td>未割り当て</td>").doesNotContain("担当範囲のない役割");
+    }
+
+    /** 一覧の表で、表示名のリンクを持つ行（{@code <tr>} から {@code </tr>} まで）。 */
+    private static String rowOf(String body, String displayName) {
+        int name = body.indexOf(">" + displayName + "</a>");
+        assertThat(name).as("表示名 %s の行", displayName).isNotNegative();
+        return body.substring(body.lastIndexOf("<tr>", name), body.indexOf("</tr>", name));
     }
 
     @Test
@@ -147,6 +158,7 @@ class UserAdministrationControllerTest {
                 new EmailAddress("u" + id.value() + "@example.com"),
                 status,
                 roles,
+                RoleAssignmentPolicy.holdsAssignmentScopedRole(roles),
                 assigned,
                 outside);
     }

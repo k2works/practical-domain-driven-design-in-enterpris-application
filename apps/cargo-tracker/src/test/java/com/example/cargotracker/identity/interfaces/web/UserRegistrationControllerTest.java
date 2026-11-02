@@ -22,6 +22,7 @@ import com.example.cargotracker.identity.application.internal.queryservices.Regi
 import com.example.cargotracker.identity.application.internal.queryservices.UserAdministrationQueryService;
 import com.example.cargotracker.identity.domain.model.valueobjects.CompanyKind;
 import com.example.cargotracker.identity.domain.model.valueobjects.EmailAddress;
+import com.example.cargotracker.identity.domain.model.valueobjects.PasswordResetTokenPurpose;
 import com.example.cargotracker.identity.domain.model.valueobjects.RegistrableCompany;
 import com.example.cargotracker.identity.domain.model.valueobjects.UserRegistrationRejection;
 import com.example.cargotracker.identity.domain.model.valueobjects.UserRegistrationRejectionReason;
@@ -63,9 +64,9 @@ class UserRegistrationControllerTest {
             CompanyKind.OPERATOR,
             Set.of(Role.CUSTOMER_SUPPORT, Role.SALES, Role.DATA_STEWARD, Role.ROUTE_DESIGNER, Role.TRACKING_MANAGER));
     static final String SUMMARY_TITLE = "利用者を登録できませんでした";
-    /** 登録の完了の知らせ（Bolt 38h で招待の期限と本人への一言を足した。L-12）。 */
-    static final String REGISTERED_NOTICE =
-            "利用者を登録しました。登録したメールアドレスへ初回の設定の案内を送ります。案内のリンクの有効期限は送ってから 24 時間です。本人に一言連絡してください。";
+    /** 登録の完了の知らせ（Bolt 38h で招待の期限と本人への一言を足した。L-12）。期限は招待の用途から組み立てる。 */
+    static final String REGISTERED_NOTICE = "利用者を登録しました。登録したメールアドレスへ初回の設定の案内を送ります。案内のリンクの有効期限は送ってから "
+            + PasswordResetTokenPurpose.initialPasswordValidity().toHours() + " 時間です。本人に一言連絡してください。";
     /** WithAuthenticatedActor の運用する会社の主体の表示名（テストの準備の値）。 */
     static final String OPERATOR_NAME = "営業 一郎";
 

@@ -149,6 +149,7 @@ class UserAdministrationQueryServiceTest {
                 EmailAddress.of("sales@example.com"),
                 UserStatus.ACTIVE,
                 Set.of(Role.SALES),
+                true,
                 List.of(),
                 0);
         when(assignments.scopeOf(admin.userId())).thenReturn(new AdministrationScope(Set.of(inside)));

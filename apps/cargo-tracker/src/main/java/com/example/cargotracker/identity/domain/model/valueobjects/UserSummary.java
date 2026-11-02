@@ -17,6 +17,7 @@ import java.util.Set;
  * @param email メールアドレス
  * @param status 利用状態
  * @param roles 役割
+ * @param hasAssignmentScope 担当範囲のある役割か（射影を作るときに {@code RoleAssignmentPolicy} で 1 度だけ判定する。画面はこれを使う）
  * @param assignedCompanyNames 操作者の管理範囲の中の担当企業の名前（企業名の順）
  * @param assignedOutsideCount 操作者の管理範囲の外の担当企業の数
  */
@@ -28,6 +29,7 @@ public record UserSummary(
         EmailAddress email,
         UserStatus status,
         Set<Role> roles,
+        boolean hasAssignmentScope,
         List<String> assignedCompanyNames,
         int assignedOutsideCount) {
 
@@ -41,6 +43,5 @@ public record UserSummary(
         assignedCompanyNames = List.copyOf(assignedCompanyNames);
         if (assignedOutsideCount < 0) {
             throw new IllegalArgumentException("assignedOutsideCount");
-        }
-    }
+        }    }
 }

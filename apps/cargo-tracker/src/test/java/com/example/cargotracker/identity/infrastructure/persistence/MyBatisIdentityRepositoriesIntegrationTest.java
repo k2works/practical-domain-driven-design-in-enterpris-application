@@ -327,9 +327,12 @@ class MyBatisIdentityRepositoriesIntegrationTest {
         // Bolt 38h の状態の組み合わせの行 6（役割の数だけ行が出る SQL）
         Company south = Company.of(new CompanyId(UUID.randomUUID()), "荷主 南（二役）", CompanyKind.SHIPPER, true);
         companies.add(south);
+        Company outside = Company.of(new CompanyId(UUID.randomUUID()), "範囲の外の荷主（二役）", CompanyKind.SHIPPER, true);
+        companies.add(outside);
         UserId both = addUser(company, "二役 " + UUID.randomUUID(), Set.of(Role.SALES, Role.ROUTE_DESIGNER));
         AdministrationFixtures.assignCompany(jdbc, both, company.id());
         AdministrationFixtures.assignCompany(jdbc, both, south.id());
+        AdministrationFixtures.assignCompany(jdbc, both, outside.id());
 
         List<UserSummary> rows = users.findSummariesIn(Set.of(company.id(), south.id())).stream()
                 .filter(summary -> summary.id().equals(both))
@@ -339,6 +342,8 @@ class MyBatisIdentityRepositoriesIntegrationTest {
         UserSummary found = rows.getFirst();
         assertThat(found.roles()).containsExactlyInAnyOrder(Role.SALES, Role.ROUTE_DESIGNER);
         assertThat(found.assignedCompanyNames()).containsExactly("荷主 A", "荷主 南（二役）");
+        // 範囲の外の担当企業も役割の数だけ行が出る。数も重ねない
+        assertThat(found.assignedOutsideCount()).isEqualTo(1);
     }
 
     @Test

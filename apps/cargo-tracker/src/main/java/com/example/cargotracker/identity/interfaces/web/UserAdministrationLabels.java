@@ -117,7 +117,7 @@ final class UserAdministrationLabels {
     static Map<UserId, String> assignedCompanies(List<UserSummary> summaries) {
         Map<UserId, String> labels = new LinkedHashMap<>();
         summaries.stream()
-                .filter(summary -> RoleAssignmentPolicy.holdsAssignmentScopedRole(summary.roles()))
+                .filter(UserSummary::hasAssignmentScope)
                 .forEach(summary -> labels.put(summary.id(), assignedCompanies(summary)));
         return labels;
     }

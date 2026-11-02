@@ -25,6 +25,14 @@ class PasswordResetTokenPurposeTest {
                 .isFalse();
     }
 
+    @Test
+    void 初回の設定のリンクの期限は時間で割り切れる() {
+        // Bolt 38h。登録の完了の知らせは期限を「N 時間」で示す（toHours）。割り切れない期限に変えたら、ここで気づく
+        Duration validity = PasswordResetTokenPurpose.initialPasswordValidity();
+
+        assertThat(validity).isEqualTo(Duration.ofHours(validity.toHours()));
+    }
+
     private static final Instant REGISTERED = Instant.parse("2026-10-26T05:00:00Z");
 
     private static UtcInstant at(Instant instant) {
