@@ -173,6 +173,15 @@ public class UserRegistrationUiSteps {
                 .isEqualTo(1);
     }
 
+    @かつ("担当企業を割り当てるよう案内され、案内のリンクが担当範囲の領域を指す")
+    public void 割り当ての案内が示される() {
+        // Bolt 38h の状態の組み合わせの行 7・8（担当範囲のある役割で登録した直後の詳細）
+        assertThat(page().locator("main")).containsText("担当企業を割り当ててください。");
+        Locator link = page().getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("担当企業の割り当てへ"));
+        assertThat(link).hasAttribute("href", "#assignments-title");
+        assertThat(page().locator("#assignments-title")).hasText("担当範囲");
+    }
+
     @ならば("登録の誤り {string} がエラー要約に示される")
     public void 誤りが示される(String message) {
         Locator summary = page().getByRole(AriaRole.ALERT);

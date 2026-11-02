@@ -121,7 +121,7 @@ class UserAdministrationControllerTest {
         when(queryService.assignableCompanies(any())).thenReturn(permitted(NORTH));
 
         mockMvc.perform(get(DETAIL).flashAttr("notice", "<b>登録</b>").flashAttr("assignmentPrompt", true))
-                .andExpect(text("担当企業を割り当ててください。<a href=\"#assignments-title\">担当企業の割り当てへ</a>"))
+                .andExpect(text("担当企業を割り当ててください。<a class=\"alert-link\" href=\"#assignments-title\">担当企業の割り当てへ</a>"))
                 .andExpect(text("&lt;b&gt;登録&lt;/b&gt;"));
         mockMvc.perform(get(DETAIL))
                 .andExpect(content().string(Matchers.not(Matchers.containsString("担当企業を割り当ててください。"))));
