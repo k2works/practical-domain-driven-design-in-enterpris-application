@@ -15244,8 +15244,8 @@
 </tr>
 <tr>
 <td style="text-align: left;">BR-12</td>
-<td style="text-align: left;">外部原本の冪等性キーは提供元、原本種別、外部 ID、外部版の組合せとする。同一キー・同一 payload は既存結果を返し、同一キー・異 payload は上書きせず隔離する。復旧は停止期間の全原本を採用済み・重複・隔離へ分類し、件数照合と手動入力との差異確認を完了した時点で完了とする</td>
-<td style="text-align: left;">2026-10-01 に human:kakimomokuri が冪等性と復旧完了条件を承認</td>
+<td style="text-align: left;">外部原本の冪等性キーは提供元、原本種別、外部 ID、外部版の組合せとする。同一キー・同一 payload は既存結果を返し、同一キー・異 payload は上書きせず隔離する。同一外部レコードの版の逆転と既存の採用値との矛盾は差異とする。復旧は停止期間の全原本を採用済み・重複・隔離・差異へ分類し、件数照合と手動入力との差異確認を完了した時点で完了とする</td>
+<td style="text-align: left;">2026-10-01 に human:kakimomokuri が冪等性と復旧完了条件を承認。2026-11-02 に分類を 3 つから 4 つ（差異を足す。US-14 AC5）に改めた（W7 の確認ポイント 1、ADR-004 の改訂。human:kakimomokuri）</td>
 </tr>
 <tr>
 <td style="text-align: left;">BR-13</td>
@@ -15581,7 +15581,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">OQ-02</td>
-<td style="text-align: left;"><strong>パイロットの最小取込方式は解決済み</strong>: BR-18 の承認済みファイル手動取込を用いる。具体的な提供元、ファイル形式、取得頻度、鮮度、補正責任、第 2 段階移行条件は未決</td>
+<td style="text-align: left;"><strong>パイロットの最小取込方式は解決済み</strong>: BR-18 の承認済みファイル手動取込を用いる。具体的な提供元、ファイル形式、取得頻度、鮮度、補正責任、第 2 段階移行条件は未決。注（2026-11-02、W7 の設計の決定「取込ファイルの形式」。human:kakimomokuri）: 回答が届くまで仮の形式で作る。CSV（RFC 4180）を 1 ファイル 1 種別にし、1 行に外部 ID・外部版・取得時刻・値を持つ（主要実績は追跡番号も持つ）。署名の検証は形式の検証とハッシュだけにする。回答が届いたら差し替えの Bolt を足す。本項は台帳に残す</td>
 <td style="text-align: left;">方式: human:kakimomokuri。残項目: 追跡・データ責任者</td>
 <td style="text-align: left;">方式は 2026-10-01 決定。提供元と形式はパイロット開始前</td>
 </tr>

@@ -15699,7 +15699,49 @@
 <tr>
 <td style="text-align: left;">外部原本</td>
 <td style="text-align: left;">ExternalRecord</td>
-<td style="text-align: left;">外部から受け取った無加工の原本と、その分類（採用・重複・隔離）</td>
+<td style="text-align: left;">冪等性キーごとの外部の原本。最初に受け取った payload のハッシュを持つ。分類は持たない（分類は受け取るたびの受信記録が持つ。Bolt 39 で「その分類（採用・重複・隔離）」を改めた。下の要素表の分類の列は表を作る 39a2 で受信記録に移す）</td>
+<td style="text-align: left;">外部データ</td>
+</tr>
+<tr>
+<td style="text-align: left;">受信記録</td>
+<td style="text-align: left;">（39a2 で決める）</td>
+<td style="text-align: left;">外部原本を受け取るたびの追記専用の記録。分類（採用・重複・隔離・差異）を持つ（data_model の <code>receipt.classification</code>）。クラス名は通知の公開 API の結果（<code>PasswordResetMailReceipt</code> など）と紛れないよう、表を作る 39a2 で決める</td>
+<td style="text-align: left;">外部データ</td>
+</tr>
+<tr>
+<td style="text-align: left;">取込</td>
+<td style="text-align: left;">Ingestion</td>
+<td style="text-align: left;">データ責任者が 1 ファイルを取り込む 1 回の単位。ファイル全体の原本と分類別の件数を持ち、照合に使う</td>
+<td style="text-align: left;">外部データ</td>
+</tr>
+<tr>
+<td style="text-align: left;">隔離</td>
+<td style="text-align: left;">QUARANTINED</td>
+<td style="text-align: left;">受信記録の分類の 1 つ。同じ冪等性キーで違う payload の原本と、形式を検証できないファイルと行（UC-15 2a）。データ責任者が判断するまで採用値に影響しない</td>
+<td style="text-align: left;">外部データ</td>
+</tr>
+<tr>
+<td style="text-align: left;">差異</td>
+<td style="text-align: left;">DISCREPANCY</td>
+<td style="text-align: left;">受信記録の分類の 1 つ。同じ外部レコードの版の逆転と、既存の採用値との矛盾（US-14 AC5）。US-15 の復旧照合で手動情報と突き合わせた差異（<code>reconciliation_discrepancy</code>）とは別の語</td>
+<td style="text-align: left;">外部データ</td>
+</tr>
+<tr>
+<td style="text-align: left;">外部原本の保存</td>
+<td style="text-align: left;">ExternalPayloadStorage</td>
+<td style="text-align: left;">原本（ファイル全体と行の payload）を無加工で保存し読み戻すポート（<code>externaldata.domain.model.aggregates</code>。外部の技術のポートはドメインに置く規則）。同じキーを上書きせず、読めないキーは例外。呼び手は保存に成功してから受信記録を書く。補償は消さない。実装は W7 は DB（39a2）、W10 で S3（Bolt 39。ADR-004 の改訂）</td>
+<td style="text-align: left;">外部データ</td>
+</tr>
+<tr>
+<td style="text-align: left;">原本のオブジェクトキー</td>
+<td style="text-align: left;">PayloadObjectKey</td>
+<td style="text-align: left;">保存した原本を指すキー（<code>externaldata/ingestions/{UUID}</code>・<code>externaldata/records/{UUID}</code>。呼び手が作り、前置きでファイル全体と行の payload を区別する）。形を検査し、保存先の外を指すキーを作れない（Bolt 39）</td>
+<td style="text-align: left;">外部データ</td>
+</tr>
+<tr>
+<td style="text-align: left;">原本のハッシュ</td>
+<td style="text-align: left;">PayloadHash</td>
+<td style="text-align: left;">原本のバイト列の SHA-256 の 16 進 64 文字。保存の前に呼び手が計算し、重複と隔離の判定に使う（data_model の <code>payload_hash</code>・<code>file_hash</code>。Bolt 39）</td>
 <td style="text-align: left;">外部データ</td>
 </tr>
 <tr>

@@ -16731,7 +16731,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">取込の置き場所</td>
-<td style="text-align: left;">新しいコンテキスト <code>externaldata</code>（スキーマは <code>external_data</code>）。外部データはほかのコンテキストに依存しない（<code>allowedDependencies</code> は <code>shared</code>・<code>platform :: web</code> だけ）。採用値と隔離と判断を DE-12（航海）・DE-13（主要実績）・DE-14（隔離）と判断のイベントで公開し、経路設計・追跡・identity が listener で受ける（それぞれの <code>allowedDependencies</code> に <code>externaldata :: events</code> を足す）。ModularityTest のモジュール一覧と型の依存の規則を足す（構造）。ADR に記録する（39 の計画で ADR-004 の改訂か ADR-020 かを諮る）</td>
+<td style="text-align: left;">新しいコンテキスト <code>externaldata</code>（スキーマは <code>external_data</code>）。外部データはほかのコンテキストに依存しない（<code>allowedDependencies</code> は <code>shared</code>・<code>platform :: web</code> だけ）。採用値と隔離と判断を DE-12（航海）・DE-13（主要実績）・DE-14（隔離）と判断のイベントで公開し、経路設計・追跡・identity が listener で受ける（それぞれの <code>allowedDependencies</code> に <code>externaldata :: events</code> を足す）。ModularityTest のモジュール一覧と型の依存の規則を足す（構造）。ADR に記録する（39 の計画で ADR-004 の改訂か ADR-020 かを諮る）。【前の決定の変更】Bolt 39 の開始準備の決定 (2)・(7)（2026-11-02、human:kakimomokuri）: ADR は ADR-004 を改訂する。「<code>shared</code>・<code>platform :: web</code> だけ」は許す範囲の上限と読み、39 の宣言は <code>shared</code> だけにする（<code>platform :: web</code> は画面を作る 39c、<code>domain.events</code> の名前付きインターフェースは最初のイベントを作る 39b で足す）。下流に <code>externaldata :: events</code> を足すのは、39 で 4 つのコンテキストをまとめてではなく、各 listener を作る Bolt（identity は 39b、経路設計は 39e、追跡は 39g）にする（<a href="../bolt_39_plan/">Bolt 39 計画</a>）</td>
 <td style="text-align: left;">architecture_backend（ARCH-HO-03 を含む）、ADR、ModularityTest、package-info</td>
 </tr>
 <tr>
@@ -16895,7 +16895,7 @@
 </table>
 <p><strong>設計への反映が必要な事項</strong>（各 Bolt の最初のステップで設計文書を直してから実装する）:</p>
 <ul>
-<li>外部データ（39〜39d・39h）: architecture_backend（新しいコンテキスト、依存の向き、ARCH-HO-03 の分類）、ADR-004 の改訂または ADR-020（置き場所、payload の保存、分類 4 つ、解析の置き場所）、domain_model（:311 と外部データの節の分類 4 つ、判断の記録、<code>PilotReadiness</code>、DE-12〜DE-14 と判断のイベントの属性と受け手、順序の逆転の境界）、data_model（<code>external_data</code> の表、判断の表、payload の注）、ui_design（S-16 の URL と項目、S-17 の画面イメージ、S-19 の注と画面遷移図、ナビゲーション）、requirements_definition（BR-12 の分類、OQ-02 の注）、system_usecase（UC-15 2a・6a）、test_strategy（:517・:518 の SP、<code>features/external_data/</code>、US-14 の照合の表）、non_functional（PERF-06 の確かめ方）、用語集（差異の区別）、MapperSchemaArchitectureTest・ModularityTest・各コンテキストの <code>package-info</code></li>
+<li>外部データ（39〜39d・39h）: architecture_backend（新しいコンテキスト、依存の向き、ARCH-HO-03 の分類）、ADR-004 の改訂（置き場所、payload の保存、分類 4 つ、解析の置き場所。Bolt 39 の開始準備の決定 (2) で ADR-020 にしないと決めた）、domain_model（:311 と外部データの節の分類 4 つ、判断の記録、<code>PilotReadiness</code>、DE-12〜DE-14 と判断のイベントの属性と受け手、順序の逆転の境界）、data_model（<code>external_data</code> の表、判断の表、payload の注）、ui_design（S-16 の URL と項目、S-17 の画面イメージ、S-19 の注と画面遷移図、ナビゲーション）、requirements_definition（BR-12 の分類、OQ-02 の注）、system_usecase（UC-15 2a・6a）、test_strategy（:517・:518 の SP、<code>features/external_data/</code>、US-14 の照合の表）、non_functional（PERF-06 の確かめ方）、用語集（差異の区別）、MapperSchemaArchitectureTest・ModularityTest・各コンテキストの <code>package-info</code></li>
 <li>経路設計（39e・39f・39i）: domain_model（:860 の航海のロック、:875 の評価の入口、:878 の寄港の位置、:1616 の DE-12 の属性）、data_model（<code>candidate_leg.voyage_number</code> の索引、確定の区間の寄港の位置、除外理由の <code>threshold</code>）、user_story（US-06・US-07 の W7 の注、:303 の港湾）</li>
 <li>追跡（39g・39g2）: domain_model（:1022 の手入力の規則、:1026・:1628 の DE-09・DE-10・DE-18、:1189 の確認中の理由、:1617 の DE-13 の受け手、T-INV-03〜05）、data_model（<code>milestone</code> の <code>revised_by</code>・<code>revised_at</code> を足すか）、user_story（US-12 の決定）、test_strategy（US-12 AC3〜AC5 のタグと照合の表）、architecture_backend :134</li>
 <li>承認の後に直す文書（W7 の開始準備の範囲）: W5〜W10 の表の W7 の行（開始条件を「満たした」に、39g2 を足す）、リスク台帳（37e3・37e3b の行、見本 TR-2026-0911・0912 の行）、W10 の行（情報源の管理の運用タスク、S3 の差し替え、FRS-04・OBS-06）、台帳（港湾の鮮度の新しい ID、UC-07 5a、D-89 の注）、開発戦略（:107 の中盤の例外に W7 の経路設計と追跡を足す、:186 の W7 のデモに再設計要になる流れと <code>@US-06</code>・<code>@US-07</code> を足す、:347 の W7 の行を Bolt の対象で決める形に）</li>
@@ -16921,7 +16921,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">39</td>
-<td style="text-align: left;">外部データのコンテキストの骨格（構造とポートと解析。DB を使わない）: パッケージと <code>package-info</code>（外部データは <code>shared</code> だけ。下流の <code>allowedDependencies</code> は listener を作る 39b・39e・39g で足す）、ModularityTest の許可リストの規則、MapperSchemaArchitectureTest の対応表、コンテキストの一覧の一致の規則（W6 横断レビュー M-3）、原本の保存のポート（ファイル全体と行の payload。補償は消さない）とオブジェクトキーとハッシュ、仮の CSV（RFC 4180）の解析、ADR-004 の改訂、分類 3 つの箇所、担当範囲の判定の置き方の既定（M-1）、用語集。開始準備で 39 と 39a2 に分けた（human:kakimomokuri）。<a href="../bolt_39_plan/">Bolt 39 計画</a>（承認済み）</td>
+<td style="text-align: left;">外部データのコンテキストの骨格（構造とポートと解析。DB を使わない）: パッケージと <code>package-info</code>（外部データは <code>shared</code> だけ。下流の <code>allowedDependencies</code> は listener を作る 39b・39e・39g で足す。【前の決定の変更】初案の「外部データ・経路設計・追跡・identity の <code>allowedDependencies</code>」を Bolt 39 の開始準備の決定 (7) で変えた）、ModularityTest の許可リストの規則、MapperSchemaArchitectureTest の対応表、コンテキストの一覧の一致の規則（W6 横断レビュー M-3）、原本の保存のポート（ファイル全体と行の payload。補償は消さない）とオブジェクトキーとハッシュ、仮の CSV（RFC 4180）の解析、ADR-004 の改訂、分類 3 つの箇所、担当範囲の判定の置き方の既定（M-1）、用語集。開始準備で 39 と 39a2 に分けた（human:kakimomokuri）。<a href="../bolt_39_plan/">Bolt 39 計画</a>（承認済み）</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: left;">規則は技術タスク、ポートと解析はインサイドアウト（ドメインの値とポートから）</td>
 <td style="text-align: left;">ステップごと（構造・ADR・規則の変更）</td>
@@ -16998,7 +16998,7 @@
 </tr>
 </tbody>
 </table>
-<p>順序は 38h → 39 → 39b → 39c → 39d → 39e → 39f → 39g → 39g2 → 39h → 39i（38h は W6 の締めで足した。評価の入口の 39f より前に、再設計要・出発済みの運用の決まりをマニュアルに置くため）。39e・39f は 39d の採用値（DE-12）を受け、39g は 39d の DE-13 を受けるので後に置く。39h は 39g の確認中との境界（確認ポイント 7）の後に置く。半日を超えそうな Bolt（39・39b・39f・39g）は開始準備で分ける。W5・W6 の実績（見込みの約 1.5 倍の本数）から、W7 も 15 本前後になる見込みである。W6 までで計画より約 3 週早いので、バッファ消費ルールの範囲で吸収し、W7 の週の見直しで確かめる。</p>
+<p>順序は 38h → 39 → 39a2 → 39b → 39c → 39d → 39e → 39f → 39g → 39g2 → 39h → 39i（38h は W6 の締めで足した。評価の入口の 39f より前に、再設計要・出発済みの運用の決まりをマニュアルに置くため）。39e・39f は 39d の採用値（DE-12）を受け、39g は 39d の DE-13 を受けるので後に置く。39h は 39g の確認中との境界（確認ポイント 7）の後に置く。半日を超えそうな Bolt（39・39b・39f・39g）は開始準備で分ける。W5・W6 の実績（見込みの約 1.5 倍の本数）から、W7 も 15 本前後になる見込みである。W6 までで計画より約 3 週早いので、バッファ消費ルールの範囲で吸収し、W7 の週の見直しで確かめる。</p>
 <p><strong>W6 の Try の持ち込み</strong>: 各 Bolt 計画の確認ポイントに、T-204・T-212（サブエージェントへの指示の最初に heredoc を使わないと書く。<code>orchestrating-development</code> の <code>PROJECT.md</code>）、T-217（本体を直す前に Red を流し、落ちた理由を記録する）、T-225・T-213（push の前に <code>check</code>）、T-182・T-211・T-216（状態の組み合わせの表に重複・隔離・差異と順序逆転・出口・誤った入力の行を置く）、T-184（listener は配信まで確かめる）、T-219（変異の対象に単体・統合・契約のテスト）、T-215・T-222（Gradle を流す担当を 1 つに、計画の初稿を先にコミット）、T-191（環境の前提に設定ファイルの行を添える）を入れる。</p>
 <p><strong>Living Documentation</strong>: 外部データのコンテキストの ADR、<code>package-info</code> の <code>allowedDependencies</code>、ModularityTest と MapperSchemaArchitectureTest の対応表、用語集の整合テスト（外部原本・受信記録・隔離・差異・採用値・下書き・確認中・原本だけ）、受入条件の照合の表（US-14、US-12 の Release 1.0 の範囲）</p>
 <p><strong>デモ項目</strong>: ファイルの取込と分類の結果（<code>@US-14</code>。重複・隔離・差異）、隔離・差異の判断、航海の更新から確定した経路が再設計要になる流れ（<code>@US-06</code>・<code>@US-07</code>）、取り込んだ実績の下書きの採用と、順序逆転・取消済み・完了後（<code>@US-12</code>）。動画は画面の振る舞いが変わる Bolt（39c・39d・39f・39g・39h）で <code>@demo-&lt;Bolt&gt;</code> を撮る</p>
