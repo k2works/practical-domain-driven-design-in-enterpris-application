@@ -12,6 +12,7 @@ verified:
   - { by: human:kakimomokuri, at: 2026-10-02T01:37:43Z }
   - { by: human:kakimomokuri, at: 2026-10-02T13:47:11Z }
   - { by: human:kakimomokuri, at: 2026-10-02T21:44:57Z }
+  - { by: human:kakimomokuri, at: 2026-11-02T06:52:27Z }
 ---
 
 # 要件定義 - A 社国際貨物輸送管理システム

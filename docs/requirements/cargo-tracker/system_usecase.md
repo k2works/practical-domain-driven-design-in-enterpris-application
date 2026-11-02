@@ -8,6 +8,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-11-02T06:51:16Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T05:20:11Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:39Z }
+  - { by: human:kakimomokuri, at: 2026-11-02T06:52:27Z }
 ---
 
 # cargo-tracker システムユースケース
