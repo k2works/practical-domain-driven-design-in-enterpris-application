@@ -15,7 +15,7 @@
         <h2 id="error-summary-title">確定できませんでした</h2>
         <ul>
             <li th:if="${rationaleError}"><a href="#rationale" th:text="${error}">判断根拠を入れてください。</a></li>
-            <li th:unless="${rationaleError}" th:text="${error}">最初の区間の航海がすでに出発しているため確定できません。</li>
+            <li th:unless="${rationaleError}" th:text="${error}">最初の区間が出発済みのため確定できません。</li>
         </ul>
     </div>
     <dl class="row">

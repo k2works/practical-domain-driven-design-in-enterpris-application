@@ -439,7 +439,9 @@ class RoutingCaseControllerTest {
                 .andExpect(content().string(Matchers.containsString("候補の判定は確定のときのものです。")))
                 .andExpect(content().string(Matchers.containsString("この経路では確定し直せません。")))
                 .andExpect(content().string(Matchers.containsString("再設計の操作は今後の更新で入れます。")))
-                .andExpect(content().string(Matchers.containsString("担当営業と扱いを相談してください。")))
+                // Bolt 38h の状態の組み合わせの行 2（S-06。担当営業との相談を求めない）
+                .andExpect(content().string(Matchers.containsString("担当営業が荷主に新しい見積依頼を出すよう案内します。")))
+                .andExpect(content().string(Matchers.not(Matchers.containsString("担当営業と扱いを相談してください。"))))
                 .andExpect(content().string(Matchers.containsString(">再設計要の経路<")))
                 .andExpect(content().string(Matchers.containsString("✓ 適合（確定のとき）")))
                 .andExpect(content().string(Matchers.not(Matchers.containsString("後の版"))))
@@ -525,6 +527,7 @@ class RoutingCaseControllerTest {
 
     @Test
     void 確定を拒否されたら理由をエラー要約に示し入力を残す() throws Exception {
+        // Bolt 38h の状態の組み合わせの行 4（出発済みの文を社内の語「最初の区間が出発済み」にそろえる）
         when(queryService.findByNumber(eq(NUMBER), any())).thenReturn(Optional.of(calculated()));
         when(commandService.confirm(
                         eq(new ConfirmRouteCommand(NUMBER, 1, "出発の後の根拠", 0, TestActors.STAFF_USER, true)), any()))
@@ -536,7 +539,7 @@ class RoutingCaseControllerTest {
                         .param("expectedVersion", "0"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(Matchers.containsString("id=\"error-summary\"")))
-                .andExpect(content().string(Matchers.containsString("最初の区間の航海がすでに出発しているため確定できません")))
+                .andExpect(content().string(Matchers.containsString("最初の区間が出発済みのため確定できません")))
                 .andExpect(content().string(Matchers.containsString(">出発の後の根拠</textarea>")));
     }
 
@@ -571,7 +574,7 @@ class RoutingCaseControllerTest {
 
     @Test
     void 再設計要の案件の確定の画面は開かず比較の画面で確定し直せない理由を示す() throws Exception {
-        // Bolt 37e3 の状態の組み合わせの行 12（GET。POST は比較の画面に戻す理由の組で確かめる）
+        // Bolt 37e3 の状態の組み合わせの行 12（GET。POST は比較の画面に戻す理由の組で確かめる）。Bolt 38h の状態の組み合わせの行 2（S-07）
         RouteVersion version = confirmed().routeVersion();
         when(queryService.findByNumber(eq(NUMBER), any()))
                 .thenReturn(Optional.of(reconstitute(new RouteVersion(
@@ -586,7 +589,7 @@ class RoutingCaseControllerTest {
 
         mockMvc.perform(get(SHOW + "/confirmation").param("candidate", "1"))
                 .andExpect(redirectedUrl(SHOW))
-                .andExpect(flash().attribute("problem", "この案件の経路は再設計要のため確定し直せません。担当営業と扱いを相談してください。"));
+                .andExpect(flash().attribute("problem", "この案件の経路は再設計要のため確定し直せません。担当営業が荷主に新しい見積依頼を出すよう案内します。"));
     }
 
     @Test

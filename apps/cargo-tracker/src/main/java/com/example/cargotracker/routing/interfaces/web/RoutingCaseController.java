@@ -231,8 +231,9 @@ public class RoutingCaseController {
                 RouteConfirmationRejectionReason.INFO_VERSION_CHANGED,
                 "候補を算出した後に航海の情報が更新されたため確定できません。入力した判断根拠は保存していません。" + "候補を再算出して判断し直してください。");
         messages.put(
-                RouteConfirmationRejectionReason.ROUTE_REDESIGN_REQUIRED, "この案件の経路は再設計要のため確定し直せません。担当営業と扱いを相談してください。");
-        messages.put(RouteConfirmationRejectionReason.ALREADY_DEPARTED, "最初の区間の航海がすでに出発しているため確定できません。候補を再算出してください。");
+                RouteConfirmationRejectionReason.ROUTE_REDESIGN_REQUIRED,
+                "この案件の経路は再設計要のため確定し直せません。担当営業が荷主に新しい見積依頼を出すよう案内します。");
+        messages.put(RouteConfirmationRejectionReason.ALREADY_DEPARTED, "最初の区間が出発済みのため確定できません。候補を再算出してください。");
         messages.put(
                 RouteConfirmationRejectionReason.INFO_INSUFFICIENT,
                 "航海の情報が取得から許容時間を過ぎているため確定できません（情報不足）。" + "航海の情報の取込をデータ責任者に依頼し、取り込まれたら候補を再算出してください。");

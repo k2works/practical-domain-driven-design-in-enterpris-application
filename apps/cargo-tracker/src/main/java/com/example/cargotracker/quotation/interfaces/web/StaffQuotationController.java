@@ -440,11 +440,11 @@ public class StaffQuotationController {
         }
         // 割り当てた経路の最初の区間が出発済みの承認済みの期限内の再見積り（D-88。Bolt 37e4）
         if (reason == QuotationRejection.ROUTE_ALREADY_DEPARTED) {
-            return subject + " は割り当てた経路の最初の区間が出発済みのため、有効期限まで再見積りできません。荷主と扱いを相談してください";
+            return subject + " は割り当てた経路の最初の区間が出発済みのため、有効期限まで再見積りできません。荷主に新しい見積依頼を出すよう案内してください";
         }
         // 割り当てた経路が再設計要の見積りの期限内の再見積り（US-07 AC5。Bolt 37e3）
         if (reason == QuotationRejection.ROUTE_REDESIGN_REQUIRED) {
-            return subject + " は割り当てた経路が再設計要のため、有効期限まで再見積りできません。経路設計者と扱いを相談してください";
+            return subject + " は割り当てた経路が再設計要のため、有効期限まで再見積りできません。荷主に新しい見積依頼を出すよう案内してください";
         }
         // NOT_APPROVED は予約確定の照会の理由で、この画面の操作では返らない（Bolt 23）
         return subject + " は荷主の承認の段階にあるため、この操作はできません";
@@ -456,10 +456,10 @@ public class StaffQuotationController {
      */
     private static String routeNoticeAfterExpiry(Quotation quotation, UtcInstant now, String expiresAt) {
         if (quotation.isRouteRedesignRequired()) {
-            return expiresAt + "を過ぎました。割り当てた経路が再設計要のため、経路を引き継いで再見積りしても荷主は承認できません。経路設計者と扱いを相談してから再見積りしてください。";
+            return expiresAt + "を過ぎました。割り当てた経路が再設計要のため、再見積りしても経路は再設計要のままで、荷主は承認できません。荷主に新しい見積依頼を出すよう案内してください。";
         }
         if (quotation.status() == QuotationStatus.APPROVED && quotation.isRouteDepartedAt(now)) {
-            return expiresAt + "を過ぎました。割り当てた経路の最初の区間が出発済みのため、経路を引き継いで再見積りしても荷主は承認できません。荷主と扱いを相談してから再見積りしてください。";
+            return expiresAt + "を過ぎました。割り当てた経路の最初の区間が出発済みのため、経路を引き継いで再見積りしても荷主は承認できません。荷主に新しい見積依頼を出すよう案内してください。";
         }
         return null;
     }

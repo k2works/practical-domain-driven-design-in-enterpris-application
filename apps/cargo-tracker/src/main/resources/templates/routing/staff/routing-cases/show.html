@@ -38,7 +38,7 @@
                 th:text="|${routingCase.confirmedRoute().label()}（候補 ${routingCase.confirmedRoute().candidateNo()}）|">確定した経路（候補 1）</h2>
             <div class="alert alert-warning" th:if="${routingCase.confirmedRoute().redesignRequired()}">
                 <p class="mb-1">外部情報の更新で条件を満たさなくなったため再設計要です。</p>
-                <p class="mb-0">候補の判定は確定のときのものです。この経路では確定し直せません。再設計の操作は今後の更新で入れます。担当営業と扱いを相談してください。</p>
+                <p class="mb-0">候補の判定は確定のときのものです。この経路では確定し直せません。再設計の操作は今後の更新で入れます。担当営業が荷主に新しい見積依頼を出すよう案内します。</p>
             </div>
             <dl class="row mb-0">
                 <th:block th:if="${routingCase.confirmedRoute().redesignRequired()}">
