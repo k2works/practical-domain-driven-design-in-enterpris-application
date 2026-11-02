@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<database name="cargotracker" schema="external_data" type="PostgreSQL - 18.6 (Debian 18.6-1.pgdg13+2)">
+   <tables>
+      <table name="stored_payload" remarks="保存した原本 [append-only]" schema="external_data" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="object_key" nullable="false" remarks="原本のオブジェクトキー" size="500" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="content" nullable="false" remarks="原本の内容" size="2147483647" type="bytea" typeCode="-2"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="2" name="stored_at" nullable="false" remarks="保存した時刻" size="35" type="timestamptz" typeCode="93"/>
+         <primaryKey column="object_key" sequenceNumberInPK="1"/>
+         <index name="pk_stored_payload" unique="true">
+            <column ascending="true" name="object_key"/>
+         </index>
+      </table>
+   </tables>
+</database>

@@ -14714,7 +14714,7 @@
 </tr>
 <tr>
 <td style="text-align: left;"><code>stored_payload</code></td>
-<td style="text-align: left;">原本のオブジェクトキー（<code>object_key</code>。<code>PayloadObjectKey</code> の値）が主キー。<code>content</code>（原本の内容）はバイト列で NOT NULL、0 バイトを許す。型は <code>BYTEA</code>（共通の置き場所で H2 も通るかを Bolt 39a2 のステップ 2 で確かめる）。<code>stored_at</code>（保存した時刻）は Clock から取りマイクロ秒に切り捨てる。ハッシュは持たない（<code>ingestion.file_hash</code>・<code>external_record.payload_hash</code>・<code>receipt.payload_hash</code> が持つ）。<code>file_object_key</code>・<code>payload_object_key</code> とは外部キーを張らない（W10 で S3 に差し替えるため）。追記専用の印を付け、UPDATE・DELETE の権限なし</td>
+<td style="text-align: left;">原本のオブジェクトキー（<code>object_key</code>。<code>PayloadObjectKey</code> の値）が主キー。<code>content</code>（原本の内容）はバイト列で NOT NULL、0 バイトを許す。型は <code>BYTEA</code>（共通の置き場所。H2 は別名として受けて <code>binary varying</code> になり、0 バイト・0x00・0xFF を読み書きできることを Bolt 39a2 のステップ 2 で確かめた。H2 の <code>binary varying</code> には長さの上限があり PostgreSQL の <code>BYTEA</code> と違うが、開発の範囲では影響しない）。<code>stored_at</code>（保存した時刻）は Clock から取りマイクロ秒に切り捨てる。ハッシュは持たない（<code>ingestion.file_hash</code>・<code>external_record.payload_hash</code>・<code>receipt.payload_hash</code> が持つ）。<code>file_object_key</code>・<code>payload_object_key</code> とは外部キーを張らない（W10 で S3 に差し替えるため）。追記専用の印を付け、UPDATE・DELETE の権限なし</td>
 <td style="text-align: left;">ADR-004、PV-01</td>
 </tr>
 <tr>
