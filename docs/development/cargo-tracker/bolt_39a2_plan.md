@@ -2,7 +2,7 @@
 type: Plan
 title: "Bolt 39a2 計画 - 外部原本の保存の DB の実装（原本の表、独立したトランザクション、層別の許可リスト）"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-02T11:28:07Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-02T11:39:36Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-11-02T11:28:08Z }
 ---
@@ -133,7 +133,7 @@ entity "external_data.stored_payload" {
 
 ## ステップ計画（ステップごとに止める）
 
-- [ ] **1. 設計の文書**: 上の「文書」の行のうち、バイナリの型によらない分（ベンダー別の記述と ADR-020 はステップ 2 の結果の後）（完了の判定: 文書の差分。**承認ゲート**）
+- [x] **1. 設計の文書**（`376e1ceb4`。2026-11-02 に human:kakimomokuri が承認した）: 上の「文書」の行のうち、バイナリの型によらない分（ベンダー別の記述と ADR-020 はステップ 2 の結果の後）（完了の判定: 文書の差分。**承認ゲート**）
 - [ ] **2. スキーマと原本の表（Red → Green）**: 行 6・7 の一覧（`AppendOnlyGrantIntegrationTest`・`SchemaCommentIntegrationTest`）に先に足して落ちることを確かめ、共通の `BYTEA` の DDL で PostgreSQL と H2 を確かめ、通らなければベンダー別に分けて ADR-020 を書く。afterMigrate・SchemaSpy の一覧。行 8（完了の判定: 期待した理由で落ちた後に緑。バイナリの型の確かめの結果。**承認ゲート**）
 - [ ] **3. 層別の許可リストと DB の実装（Red → Green）**: 行 1〜5 の統合テストと、行 9・10 の層別の規則を先に書き、空の実装（マッパーを持つ空のクラス）で落ちることを確かめてから（行 10 の (b) の規則は infrastructure のクラスができて対象を持つ。本当の Red は「今の 1 本の規則が、マッパーを足すと落ちる」こと）、マッパー・XML・実装を作り、規則を 2 本にする（完了の判定: 同上。**承認ゲート**）
 - [ ] **4. 品質ゲートと開発レビュー**: 変異、`check`、その後に SonarQube、開発レビューとその直し。push の前に `check`（T-225）。`uiTest` は画面を変えないので CI の `ui` の段で確かめる

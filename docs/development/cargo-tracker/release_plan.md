@@ -4,7 +4,7 @@ title: "リリース計画 - cargo-tracker（A 社国際貨物輸送管理シス
 description: "cargo-tracker MVP のリリース計画。1 人 + AI、時間単位の Bolt（= イテレーション）と週次の見直しで、最初の縦の流れ（R0.1）、パイロット準備完了（R1.0）、本格展開前（R1.1）の 3 段階、Unit のエントロピー評価、SP、バッファ、パイロット開始の条件、引継ぎ ID の台帳、業務責任者に確かめる事項の台帳。"
 tags: [development,release-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-02T11:30:33Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-02T11:39:36Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T09:29:53Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:38:26Z }
@@ -34,6 +34,7 @@ verified:
   - { by: human:kakimomokuri, at: 2026-11-02T05:41:54Z }
   - { by: human:kakimomokuri, at: 2026-11-02T06:42:48Z }
   - { by: human:kakimomokuri, at: 2026-11-02T11:09:18Z }
+  - { by: human:kakimomokuri, at: 2026-11-02T11:39:37Z }
 ---
 
 # リリース計画 - cargo-tracker（A 社国際貨物輸送管理システム）
@@ -1496,4 +1497,9 @@ xychart-beta
 | 2026-10-29 | Bolt 38f2b の終了報告を承認した（議題 1〜4）。承認の後に `issue:attach-demo` で 3 本を [#14 に添付した](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/14#issuecomment-6488733003)。コメントに各シナリオの見出しと受入条件（AC1 が 1 本、AC4 が 2 本）と目印 `issue-attach-demo:bolt-38f2b` が入ることを確かめた | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-29 | Bolt 38g を実装し（routing_case の荷主企業の列を 3 段、見積りの公開 API の経路条件に荷主企業と ADR-014 の改訂、経路設計と追跡の 9 つの入口の担当範囲、停止の確認の担当企業の行、AC5 の役割の取消し、マニュアル 8・9・11 章）、[Bolt 38g 終了報告](bolt_38g_report.md)を作った（承認待ち）。デモ環境は v506 | anthropic/claude-opus-5-5 |
 | 2026-10-29 | Bolt 38g の終了報告を承認した（議題 1〜6。議題 5 の見出しの重複は推奨のとおり次の Bolt で直す）。承認の後に [#14 を閉じた](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/14#issuecomment-6489755751)（コメントに、支援技術による手動確認の記録がなく W10 に送ったことと、担当案件を担当企業で近似したことを書いた）。W6 の Bolt を締めた | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
+| 2026-11-02 | W6 を締めた（結果・ふりかえり・W6 の締めの見直し。human:kakimomokuri が承認）。締めの追加で [W6 横断レビュー](../../review/cargo-tracker/w6_review_20261102.md)・品質ゲートの流し直し・[W6 完了報告書](iteration_report-W6.md)を作り、進捗状況の表の W6 の行と開発の索引の Release 1.0 の完了 SP を実績に直した。T-204 を `orchestrating-development` の `PROJECT.md` のガードレールにした | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
+| 2026-11-02 | W7 の開始準備: W7 の節を作り、詳細整合性検証と横断整合性検証の指摘を反映して承認を受けた（設計の決定 7 つ、確認ポイント 1〜24）。承認の後に W7 の行・リスク台帳・W10 の行・台帳（D-92・D-93）・開発戦略を直し、#18・#19 に計画をコメントした。W6 の締めで Bolt 38h と D-94 を足した | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
+| 2026-11-02 | [Bolt 38h](bolt_38h_report.md)（W6 の返済）を計画・実装・終了報告まで承認した。D-94 に営業への知らせの注を足し、#50 に後に送るものを書いた | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
+| 2026-11-02 | [Bolt 39](bolt_39_report.md)（外部データのコンテキストの骨格）を計画・ステップごと・終了報告まで承認した。開始準備で 39 と 39a2 に分け、39a2 の開始準備で 39a2 と 39a3 に縦に分けた（W7 の Bolt の表に 39a2・39a3 の行。下流の `allowedDependencies` は listener を作る Bolt で足す） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
+| 2026-11-02 | [Bolt 39a2 計画](bolt_39a2_plan.md)を承認し、ステップ 1（設計の文書。`376e1ceb4`）を承認した | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-28 | Bolt 38f2 のステップ 1 で、デモ項目の動画を撮る Bolt を 38f2b に直した | anthropic/claude-opus-5-5 |
