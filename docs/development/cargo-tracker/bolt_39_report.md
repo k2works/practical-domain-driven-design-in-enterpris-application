@@ -2,7 +2,7 @@
 type: Plan
 title: "Bolt 39 終了報告 - 外部データのコンテキストの骨格（構造、規則、payload の保存のポート、仮の CSV の解析）"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-02T11:09:17Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-02T11:30:33Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-11-02T11:09:18Z }
 ---
@@ -16,7 +16,7 @@ verified:
 | # | 確かめてほしいこと | 見る場所 |
 | :--- | :--- | :--- |
 | 1 | **誤りの物理行の範囲**: 指示は「閉じ忘れ以外の理由は始まり＝終わり」だったが、引用符の中の改行で 2 行にまたがる行の誤り（列数の違いなど）は実際の範囲（例 2..3）を持たせた。1 行に収まる誤りは始まり＝終わり。この形でよいか | `CsvRowError`、`CsvRecordsTest` の「複数の物理行にまたがる行の誤りは始まりと終わりの行を持つ」 |
-| 2 | **用語集の「重複」**: 「採用（別名 採用済み）」の行は足したが、「重複」の行はまだない。39a2 で受信記録のクラス名を決めるときに、分類の 4 つ（採用・重複・隔離・差異）をそろえて用語集に載せる（推奨） | domain_model の用語集 |
+| 2 | **用語集の「重複」**: 「採用（別名 採用済み）」の行は足したが、「重複」の行はまだない。39a3 で受信記録の表を作るときに、分類の 4 つ（採用・重複・隔離・差異）をそろえて用語集に載せる（推奨） | domain_model の用語集 |
 | 3 | **39a2 の開始準備で決めること**: (a) 原本の DB の保存と受信記録のトランザクションの関係（同じだと巻き戻りで原本も消え、消さない補償が成り立たない）、(b) 許可リストを層別にするか（MyBatis を infrastructure だけに）、(c) 契約のテストを継ぐ DB の実装 | ADR-004 の改訂の経緯、`ExternalPayloadStorage` の Javadoc、architecture_backend |
 | 4 | **39b の開始準備に送るもの**: 値の列（航海・主要実績）、閉じ忘れのあるファイルを取込全体の要確認にし取り込めなかった件数を示すこと、誤りの理由を業務の言葉で示すこと、受け取った・取り込んだ・誤りの件数の突き合わせ、Shift_JIS などの文字コードの誤り、M-2 と `PublicApiArchitectureTest` の汎用化と手書きの規則の写し、identity の監査の listener の毒入りのメッセージ、OQ-02 で業務責任者に確かめる 6 点 | 下の「既知の課題」 |
 
@@ -99,7 +99,8 @@ verified:
 
 ### 既知の課題（後に持ち込む）
 
-- 39a2: 補償とトランザクション、許可リストの層別、受信記録のクラス名と用語集の分類 4 つ、契約のテストを継ぐ DB の実装、data_model の payload の注、domain_model の要素表、`SchemaCommentIntegrationTest`・`AppendOnlyGrantIntegrationTest`・`afterMigrate`・SchemaSpy の一覧
+- 39a2: 補償とトランザクション、許可リストの層別、契約のテストを継ぐ DB の実装、data_model の payload の注、`SchemaCommentIntegrationTest`・`AppendOnlyGrantIntegrationTest`・`afterMigrate`・SchemaSpy の一覧
+- 39a3: 受信記録の表（クラス名は 39a2 の開始準備で `ReceivedRecord` に決めた）と用語集の分類 4 つ、domain_model の要素表
 - 39b: 値の列、閉じ忘れのあるファイルの要確認と件数、誤りの理由の業務の言葉、件数の突き合わせ、文字コードの誤り、M-2、`PublicApiArchitectureTest` の汎用化、手書きの規則の写し、identity の監査の listener の毒入りのメッセージ、`domain.events`
 - OQ-02 で業務責任者に確かめること: 提供元が 1 ファイル 1 種別の CSV を出せるか（EDI なら変換は誰か）、外部 ID と外部版を持つか、取得時刻の意味と時差、列の名前と順は固定か、誤りの差し戻しの運用、取込の頻度と件数の目安
 
@@ -111,6 +112,7 @@ Bolt 39a2（`external_data` の表と DB の実装）。開始準備で議題 3 
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-11-02 | Bolt 39a2 の開始準備の決定 (3)・(4)（受信記録のクラス名、39a2 と 39a3 への分け方）に合わせ、議題 2 と既知の課題の指し先を 39a2 から 39a3 に直した（承認の内容は変えない） | anthropic/claude-opus-5-5 |
 | 2026-11-02 | human:kakimomokuri が承認した（議題 1〜4 を報告のとおり） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-11-02 | 初版作成（承認待ち） | anthropic/claude-opus-5-5 |
 

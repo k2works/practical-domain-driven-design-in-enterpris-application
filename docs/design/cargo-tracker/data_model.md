@@ -4,7 +4,7 @@ title: "cargo-tracker データモデル"
 description: "cargo-tracker の概念データモデル、スキーマ分割、命名と型の規約（H2 と PostgreSQL の共通部分）、コンテキストごとの論理データモデルと ER 図、版・追記専用・冪等性・イベント配信の表現。"
 tags: [design, data-model]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-02T03:31:21Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-02T11:30:33Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:48:17Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:37Z }
@@ -32,7 +32,7 @@ verified:
 | DB は 1 つ、コンテキストごとにスキーマを分ける | ADR-001 | 7 つの業務スキーマと、基盤用のスキーマを置く |
 | 集約は状態保存。版は不変、追跡の主要実績と監査記録は追記専用 | ADR-002 | 版はヘッダ・明細の形で別の行にする。追記専用の表には削除の権限を与えない |
 | 冪等コマンド、永続化したドメインイベント、予約サガ | ADR-003 | 処理済みコマンド、イベント発行記録、サガ状態の表を持つ |
-| 外部原本は Inbox・隔離・照合 | ADR-004 | 原本は S3 に置き、DB には冪等性キーとハッシュと分類を持つ |
+| 外部原本は Inbox・隔離・照合 | ADR-004 | 原本は W7〜W9 は DB の `stored_payload`（受信記録とは独立したトランザクションで保存）に、W10 で S3 に置き、DB には冪等性キーとハッシュと分類を持つ（Bolt 39a2） |
 | 開発は H2、本番は PostgreSQL 18、永続化は MyBatis、スキーマは Flyway | ADR-007 | DDL は H2 と PostgreSQL の共通部分で書く |
 
 ## 概念データモデル
@@ -128,7 +128,7 @@ package "外部データ" {
 | `booking` | 予約 | 貨物予約、予約版、変更取消申請、予約サガ、処理済みコマンド |
 | `tracking` | 追跡 | 追跡記録、予定区間、主要実績、訂正、有人案件とその進捗・回答、照会記録、営業日カレンダー、処理済みコマンド |
 | `identity` | アクセス・監査 | 企業、利用者、役割、担当範囲、参照許可、監査記録、KPI 計測記録、KPI 基準値 |
-| `external_data` | 外部データ | 情報源、取込、外部原本、受信記録、採用値、手動情報、停止期間、復旧照合、差異 |
+| `external_data` | 外部データ | 情報源、取込、外部原本、保存した原本（W10 で S3 に差し替えるまで）、受信記録、採用値、手動情報、停止期間、復旧照合、差異 |
 | `notification` | 通知 | 通知（送信の記録） |
 | `platform` | 基盤（コンテキストに属さない） | Spring Modulith のイベント発行記録、Spring Session の表、ShedLock の表 |
 
@@ -170,7 +170,7 @@ ADR-007 により、DDL は H2（PostgreSQL 互換モード）と PostgreSQL 18 
 | 表 | 許す操作 | 守り方 |
 | :--- | :--- | :--- |
 | `identity.audit_record`、`identity.kpi_baseline` | INSERT、SELECT | PostgreSQL ではアプリケーションの DB 利用者から UPDATE・DELETE の権限を外す |
-| `quotation.transport_request_version`、`quotation.review_record`、`quotation.required_document`、`booking.booking_version`、`booking.processed_command`、`external_data.receipt` | INSERT、SELECT | UPDATE・DELETE の権限を外す（`review_record` は判断の事実で後から変えないため。2026-10-02 に承認、Bolt 5。`required_document` は版に付く書類の事実のため。2026-10-03 に承認、Bolt 7） |
+| `quotation.transport_request_version`、`quotation.review_record`、`quotation.required_document`、`booking.booking_version`、`booking.processed_command`、`external_data.stored_payload`、`external_data.receipt` | INSERT、SELECT | UPDATE・DELETE の権限を外す（`review_record` は判断の事実で後から変えないため。2026-10-02 に承認、Bolt 5。`required_document` は版に付く書類の事実のため。2026-10-03 に承認、Bolt 7。`stored_payload` は受け取った原本を上書きしない（ADR-004）ため。2026-11-02 に承認、Bolt 39a2） |
 | `tracking.milestone` | INSERT、SELECT、状態と下書き内容の UPDATE | DELETE の権限を外す。採用済みの内容を変えないことはドメインと PostgreSQL の統合テストで確かめる（T-INV-01、T-INV-07） |
 | `routing.route_version` | INSERT、SELECT、UPDATE | 状態が変わる（確定 → 再設計要 → 旧版）ため権限では守らない。確定した経路版の内容（候補・区間・判断根拠・承認）を変えないことは、ドメインと PostgreSQL の統合テストで確かめる（R-INV-06） |
 
@@ -1027,6 +1027,12 @@ entity "external_record\n外部原本" as er {
   * first_received_at : TIMESTAMPTZ
   .. UK (provider, record_type, external_id, external_version) ..
 }
+entity "stored_payload\n保存した原本" as sp {
+  * object_key : VARCHAR(500) <<PK>>
+  --
+  * content : BYTEA
+  * stored_at : TIMESTAMPTZ
+}
 entity "receipt\n受信記録" as rc {
   * id : UUID <<PK>>
   --
@@ -1119,12 +1125,13 @@ ds ||--o{ ff
 | :--- | :--- | :--- |
 | `data_source` | `approval_status` IN（`CANDIDATE`、`APPROVED`、`SUSPENDED`）。承認済みが 0 件ならパイロットを開始しない（アプリケーションで判定） | BR-18 |
 | `external_record` | 冪等性キー（提供元、原本種別、外部 ID、外部版）の一意制約。最初に受け取った payload のハッシュを持つ | BR-12 |
+| `stored_payload` | 原本のオブジェクトキー（`object_key`。`PayloadObjectKey` の値）が主キー。`content`（原本の内容）はバイト列で NOT NULL、0 バイトを許す。型は `BYTEA`（共通の置き場所で H2 も通るかを Bolt 39a2 のステップ 2 で確かめる）。`stored_at`（保存した時刻）は Clock から取りマイクロ秒に切り捨てる。ハッシュは持たない（`ingestion.file_hash`・`external_record.payload_hash`・`receipt.payload_hash` が持つ）。`file_object_key`・`payload_object_key` とは外部キーを張らない（W10 で S3 に差し替えるため）。追記専用の印を付け、UPDATE・DELETE の権限なし | ADR-004、PV-01 |
 | `receipt` | 受け取るたびに 1 行。`classification` IN（`ADOPTED`、`DUPLICATE`、`QUARANTINED`、`DISCREPANCY`）。ハッシュが外部原本と同じなら重複、違えば隔離。UPDATE・DELETE の権限なし | BR-12、US-14 |
 | `adopted_value` | 採用した受信記録ごとに 1 つ。ここから DE-12・DE-13 を発行する | ADR-004 |
 | `manual_entry` | 出典・入力者・入力時刻・仮状態を NOT NULL にする | BR-08 |
 | `recovery_reconciliation` | 停止期間ごとに 1 つ。完了には全件の分類、件数の一致、差異の解消が必要（アプリケーションで判定） | BR-12、US-15 |
 
-原本の payload は S3 に置き（ADR-004、ADR-008）、DB には `payload_object_key` とハッシュだけを持つ。開発環境では同じキーでローカルのファイルシステムに置く（ADR-007）。輸送要求の必要書類（`required_document`）も同じく、ファイルの中身は保存先に置き、DB にはオブジェクトキーと SHA-256 を持つ（Bolt 7）。
+原本の payload（ファイル全体と行）は、W7〜W9 は DB の `stored_payload` に置き、W10 で S3 に差し替える（ADR-004、ADR-008。Bolt 39a2）。保存は受信記録とは独立したトランザクション（REQUIRES_NEW）で行い、外側のトランザクションが巻き戻っても原本は残る（S3 と同じ振る舞い）。受信記録などの表には `payload_object_key` とハッシュだけを持つ。S3 に差し替えたら `stored_payload` は使わなくなる。輸送要求の必要書類（`required_document`）も同じく、ファイルの中身は保存先に置き、DB にはオブジェクトキーと SHA-256 を持つ（Bolt 7）。
 
 ### 基盤（`platform`）
 
