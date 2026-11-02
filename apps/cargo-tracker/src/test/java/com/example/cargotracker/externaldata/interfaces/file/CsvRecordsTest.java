@@ -73,6 +73,14 @@ class CsvRecordsTest {
     }
 
     @Test
+    void 引用符で囲まない値の中の引用符は行の誤りにしてほかの行は読む() {
+        CsvRecords records = parse("a,b\n1,x\"y\n3,4\n");
+
+        assertThat(records.rows()).containsExactly(row(1, "a", "b"), row(3, "3", "4"));
+        assertThat(records.errors()).containsExactly(new CsvRowError(2, CsvRowError.Reason.BARE_QUOTE));
+    }
+
+    @Test
     void 引用符の閉じ忘れは誤りにしてそれより前の行は読む() {
         CsvRecords records = parse("a,b\n1,2\n\"3,4\n5,6\n");
 

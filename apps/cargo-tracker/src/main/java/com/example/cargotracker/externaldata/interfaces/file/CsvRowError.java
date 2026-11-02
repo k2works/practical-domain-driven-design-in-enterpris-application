@@ -20,6 +20,8 @@ public record CsvRowError(int lineNumber, Reason reason) {
         UNCLOSED_QUOTE,
         /** 閉じた引用符の後に、区切り（カンマか改行）でない文字がある。 */
         TEXT_AFTER_CLOSING_QUOTE,
+        /** 引用符で囲まない値の中に引用符がある（RFC 4180 では引用符を含む値は引用符で囲む）。 */
+        BARE_QUOTE,
         /** 列数がヘッダーと違う。 */
         COLUMN_COUNT_MISMATCH
     }

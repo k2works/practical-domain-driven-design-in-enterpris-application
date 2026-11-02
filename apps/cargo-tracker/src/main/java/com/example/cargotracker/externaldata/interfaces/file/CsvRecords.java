@@ -80,10 +80,7 @@ public record CsvRecords(List<CsvRow> rows, List<CsvRowError> errors) {
         /** 値を 1 つ読む。読む位置は値の後の区切り（カンマ・改行・ファイルの終わり）に進める。読めなければ理由を返す。 */
         private CsvRowError.Reason readValue(StringBuilder value) {
             if (position >= text.length() || text.charAt(position) != '"') {
-                while (!atValueEnd() && !atRecordEnd()) {
-                    value.append(text.charAt(position++));
-                }
-                return null;
+                return readUnquoted(value);
             }
             if (!readQuoted(value)) {
                 return CsvRowError.Reason.UNCLOSED_QUOTE;
@@ -91,6 +88,20 @@ public record CsvRecords(List<CsvRow> rows, List<CsvRowError> errors) {
             if (!atValueEnd() && !atRecordEnd()) {
                 skipToNextLine();
                 return CsvRowError.Reason.TEXT_AFTER_CLOSING_QUOTE;
+            }
+            return null;
+        }
+
+        /** 引用符で囲まない値を読む。値の中に引用符があれば、その行の残りを飛ばして理由を返す。 */
+        private CsvRowError.Reason readUnquoted(StringBuilder value) {
+            while (!atValueEnd() && !atRecordEnd()) {
+                char c = text.charAt(position);
+                if (c == '"') {
+                    skipToNextLine();
+                    return CsvRowError.Reason.BARE_QUOTE;
+                }
+                value.append(c);
+                position++;
             }
             return null;
         }
