@@ -3,8 +3,10 @@ type: ADR
 title: "ADR-019: 担当範囲の外の試行の記録のポートを共有カーネルに置き、identity が実装する"
 description: "業務担当者（営業担当者など）が担当企業の外の業務の対象を確定しようとした試行を、業務のコンテキストの画面の層から同期に監査記録へ書く。"
 tags: [adr]
-status: draft
+status: stable
 generated: { by: anthropic/claude-opus-5-5, at: 2026-10-29T04:55:37Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-11-02T03:26:32Z }
 ---
 
 # ADR-019: 担当範囲の外の試行の記録のポートを共有カーネルに置き、identity が実装する

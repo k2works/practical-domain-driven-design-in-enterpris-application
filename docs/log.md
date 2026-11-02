@@ -1,6 +1,17 @@
 # Docs Update Log
 
 ## 2026-11-02
+* **Update**: [用語集](/manual/用語集.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [付録B-トラブルシューティング](/manual/付録B-トラブルシューティング.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [11-利用者の管理](/manual/11-利用者の管理.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [09-追跡管理](/manual/09-追跡管理.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [08-経路設計](/manual/08-経路設計.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [07-本予約の確定と予約一覧](/manual/07-本予約の確定と予約一覧.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [06-受付一覧と審査と見積り](/manual/06-受付一覧と審査と見積り.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [04-見積りへの回答と承認](/manual/04-見積りへの回答と承認.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [02-ログインと共通の画面](/manual/02-ログインと共通の画面.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [00-はじめに](/manual/00-はじめに.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [001-modular-monolith](/adr/cargo-tracker/001-modular-monolith.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）

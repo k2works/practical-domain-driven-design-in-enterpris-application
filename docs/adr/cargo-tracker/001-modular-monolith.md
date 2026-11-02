@@ -4,7 +4,7 @@ title: "ADR-001: モジュラーモノリスを採用する"
 description: "cargo-tracker のバックエンドを、境界づけられたコンテキストごとのモジュールを持つ 1 つのデプロイ単位として構築する決定。"
 tags: [adr, architecture]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-28T10:20:03Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-02T03:59:58Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:11:13Z }
   - { by: human:kakimomokuri, at: 2026-10-01T07:48:16Z }
@@ -69,7 +69,7 @@ verified:
 - アーキテクチャテストで、モジュール間の依存が公開 API とイベントだけであることを検査する。
 - 各モジュールのマッパーの SQL が自スキーマ以外の表を参照していないことを、CI のテストで検査する。
 - モジュールの中の層の依存（AT-02）は、`infrastructure.config`（合成ルート）だけを例外とする（2026-10-02 に human:kakimomokuri が承認した D-5。[バックエンドアーキテクチャ](../../design/cargo-tracker/architecture_backend.md) のパッケージ構成を参照）。
-- 公開 API とイベントのほかに依存してよいのは、技術の表示の部品 `platform :: web`（日時表示・期間表示）だけとする。コンテキストの画面の層（`interfaces.web`）からだけ参照でき、業務の型と規則は置かない（Bolt 22、#41。開発レビュー D-84）。 共有カーネル（OPEN）には値だけを置き、例外は担当範囲の外の試行の記録のポート 1 つ（[ADR-019](019-out-of-scope-attempt-recorder.md)。Bolt 38f）とする。
+- 公開 API とイベントのほかに依存してよいのは、技術の表示の部品 `platform :: web`（日時表示・期間表示）だけとする。コンテキストの画面の層（`interfaces.web`）からだけ参照でき、業務の型と規則は置かない（Bolt 22、#41。開発レビュー D-84）。共有カーネル（OPEN）には値だけを置き、例外は担当範囲の外の試行の記録のポート 1 つ（[ADR-019](019-out-of-scope-attempt-recorder.md)。Bolt 38f）とする。
 - マイグレーションが他スキーマの表を読んでよいのは、写しの列を新しく足すときに既存の行を 1 回だけ埋める場合に限る。条件は、読むだけ（他スキーマに書かない）、外部キーを張らない、マッパーの SQL とアプリケーションのコードには広げない、マイグレーションのコメントに例外であることを書く、の 4 つ。最初の例は `V20261009100000__add_booking_processed_command.sql`（貨物予約の見積り番号の写しを `quotation.quotation` から埋める。Bolt 24）。開発用のシード（`db/dev-data`）は、この例外とは別に、他スキーマから写してよい（データモデル）。将来モジュールを別の DB に切り出すときは、このマイグレーションを含むベースラインを取り直す
 
 ## 改訂の経緯

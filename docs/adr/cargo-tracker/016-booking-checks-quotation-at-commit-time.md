@@ -5,6 +5,8 @@ description: "本予約の確定で、見積りの有効性を commit 時刻で�
 tags: [adr, architecture, integration]
 status: stable
 generated: { by: anthropic/claude-opus-5-5, at: 2026-10-28T23:19:21Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-11-02T03:26:32Z }
 ---
 
 # ADR-016: 予約は commit 時刻を渡して見積りの公開 API で確定に使えるかを確かめる

@@ -3,8 +3,10 @@ type: ADR
 title: "ADR-017: 通知モジュールを新設し、メールは公開 API で受けて SMTP で送る"
 description: "通知モジュールを最小に新設し、メールの送信を公開 API（notification.interfaces.api の PasswordResetMail。Bolt 38b2b で UserInvitationMail を足した）で受けて SMTP で送る決定。identity は依頼の応答から切り離した @ApplicationModuleListener のハンドラーで再設定のトークンを発行し、ACL から同期で呼ぶ。通知は identity に依存しない。dev はログに出す送信、統合テストは Mailpit、SES の SMTP は W10。"
 tags: [adr, architecture, notification, mail]
-status: draft
+status: stable
 generated: { by: anthropic/claude-opus-5-5, at: 2026-10-27T10:34:52Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-11-02T03:26:32Z }
 ---
 
 # ADR-017: 通知モジュールを新設し、メールは公開 API で受けて SMTP で送る
