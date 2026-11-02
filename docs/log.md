@@ -1,5 +1,8 @@
 # Docs Update Log
 
+## 2026-11-02
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+
 ## 2026-10-29
 * **Verification**: [release_plan](/development/cargo-tracker/release_plan.md) を human:kakimomokuri が検証
 * **Verification**: [bolt_38g_report](/development/cargo-tracker/bolt_38g_report.md) を human:kakimomokuri が検証
