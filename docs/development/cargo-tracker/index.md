@@ -197,7 +197,7 @@ Bolt を始めるときに行を追加します。
 
 | 週 | 報告書 | 状態 |
 | :--- | :--- | :--- |
-| W6 | [W6 完了報告書](iteration_report-W6.md)（[W6 横断レビュー](../../review/cargo-tracker/w6_review_20261102.md)） | 作成済み（2026-11-02、承認待ち） |
+| W6 | [W6 完了報告書](iteration_report-W6.md)（[W6 横断レビュー](../../review/cargo-tracker/w6_review_20261102.md)） | 作成済み・承認済み（2026-11-02） |
 
 ## 補足
 
