@@ -15715,6 +15715,12 @@
 <td style="text-align: left;">外部データ</td>
 </tr>
 <tr>
+<td style="text-align: left;">採用</td>
+<td style="text-align: left;">ADOPTED</td>
+<td style="text-align: left;">受信記録の分類の 1 つ。新しい冪等性キーで検証を通った原本（ADR-004 決定 2）。別名「採用済み」（BR-12・UC-15 6a・US-15 の初版の語。2026-11-02 に「採用」にそろえた。Bolt 39、W7 の確認ポイント 1）</td>
+<td style="text-align: left;">外部データ</td>
+</tr>
+<tr>
 <td style="text-align: left;">隔離</td>
 <td style="text-align: left;">QUARANTINED</td>
 <td style="text-align: left;">受信記録の分類の 1 つ。同じ冪等性キーで違う payload の原本と、形式を検証できないファイルと行（UC-15 2a）。データ責任者が判断するまで採用値に影響しない</td>
@@ -16853,7 +16859,7 @@
 <tr>
 <td style="text-align: left;">外部原本</td>
 <td style="text-align: left;">ExternalRecord</td>
-<td style="text-align: left;">冪等性キー（提供元、原本種別、外部 ID、外部版）、payload、payload のハッシュ、取得時刻、分類（採用・重複・隔離・差異）</td>
+<td style="text-align: left;">冪等性キー（提供元、原本種別、外部 ID、外部版）、payload、payload のハッシュ、取得時刻、分類（採用・重複・隔離・差異。39a2 で受信記録に移す）</td>
 <td style="text-align: left;">ED-INV-02: 同じキー・同じハッシュは重複、同じキー・違うハッシュは隔離する。ED-INV-03: 順序逆転・既存値との矛盾は差異として自動で上書きしない（BR-12、US-14）</td>
 </tr>
 <tr>
