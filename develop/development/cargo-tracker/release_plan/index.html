@@ -17040,7 +17040,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">39a2</td>
-<td style="text-align: left;">外部原本の保存の DB の実装: <code>external_data</code> のスキーマと原本の表（<code>stored_payload</code>。追記専用）、原本の保存の DB の実装（受信記録とは独立したトランザクション。契約のテストを継ぐ）、型の依存の許可リストを層別にし MyBatis を infrastructure だけに許す、<code>SchemaCommentIntegrationTest</code>・<code>AppendOnlyGrantIntegrationTest</code>・<code>afterMigrate</code>・SchemaSpy の一覧、data_model の payload の注と ADR-004 の改訂（Bolt 39 の開始準備で 39 から分けた）。【前の決定の変更】初案の範囲（6 表・<code>receipt</code>・受信記録のクラス名・domain_model の要素表）を <a href="../bolt_39a2_plan/">Bolt 39a2 計画</a> の開始準備の決定 (4) で 39a2 と 39a3 に縦に分けた（human:kakimomokuri）。<a href="../bolt_39a2_plan/">Bolt 39a2 計画</a>（承認済み）</td>
+<td style="text-align: left;">外部原本の保存の DB の実装: <code>external_data</code> のスキーマと原本の表（<code>stored_payload</code>。追記専用）、原本の保存の DB の実装（受信記録とは独立したトランザクション。契約のテストを継ぐ）、型の依存の許可リストを層別にし MyBatis を infrastructure だけに許す、<code>SchemaCommentIntegrationTest</code>・<code>AppendOnlyGrantIntegrationTest</code>・<code>afterMigrate</code>・SchemaSpy の一覧、data_model の payload の注と ADR-004 の改訂（Bolt 39 の開始準備で 39 から分けた）。【前の決定の変更】初案の範囲（6 表・<code>receipt</code>・受信記録のクラス名・domain_model の要素表）を <a href="../bolt_39a2_plan/">Bolt 39a2 計画</a> の開始準備の決定 (4) で 39a2 と 39a3 に縦に分けた（human:kakimomokuri）。<a href="../bolt_39a2_plan/">Bolt 39a2 計画</a>（承認済み）・<a href="../bolt_39a2_report/">終了報告</a>（承認済み）</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: left;">インサイドアウト（データ → 永続化の実装）。規則の層別は技術タスク</td>
 <td style="text-align: left;">ステップごと（スキーマ・構造・ADR）</td>
@@ -19659,6 +19659,11 @@
 <tr>
 <td style="text-align: left;">2026-11-02</td>
 <td style="text-align: left;"><a href="../bolt_39a2_plan/">Bolt 39a2 計画</a>を承認し、ステップ 1（設計の文書。<code>376e1ceb4</code>）を承認した</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-11-02</td>
+<td style="text-align: left;">Bolt 39a2 のステップ 2・3 と<a href="../bolt_39a2_report/">終了報告</a>を承認した（共通の <code>BYTEA</code>、独立したトランザクションの DB の実装、層別の許可リスト）</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
 </tr>
 <tr>
