@@ -14179,7 +14179,7 @@
 <tr>
 <td style="text-align: left;">外部原本は Inbox・隔離・照合</td>
 <td style="text-align: left;">ADR-004</td>
-<td style="text-align: left;">原本は W7〜W9 は DB の <code>stored_payload</code>（受信記録とは独立したトランザクションで保存）に、W10 で S3 に置き、DB には冪等性キーとハッシュと分類を持つ（Bolt 39a2）</td>
+<td style="text-align: left;">原本は W7〜W9 は DB、W10 で S3 に置き、DB には冪等性キーとハッシュと分類を持つ（Bolt 39a2）</td>
 </tr>
 <tr>
 <td style="text-align: left;">開発は H2、本番は PostgreSQL 18、永続化は MyBatis、スキーマは Flyway</td>
@@ -14719,7 +14719,7 @@
 </tr>
 <tr>
 <td style="text-align: left;"><code>receipt</code></td>
-<td style="text-align: left;">受け取るたびに 1 行。<code>classification</code> IN（<code>ADOPTED</code>、<code>DUPLICATE</code>、<code>QUARANTINED</code>、<code>DISCREPANCY</code>）。ハッシュが外部原本と同じなら重複、違えば隔離。UPDATE・DELETE の権限なし</td>
+<td style="text-align: left;">受け取るたびに 1 行（39a3 で <code>received_record</code> に改名する）。<code>classification</code> IN（<code>ADOPTED</code>、<code>DUPLICATE</code>、<code>QUARANTINED</code>、<code>DISCREPANCY</code>）。ハッシュが外部原本と同じなら重複、違えば隔離。UPDATE・DELETE の権限なし</td>
 <td style="text-align: left;">BR-12、US-14</td>
 </tr>
 <tr>

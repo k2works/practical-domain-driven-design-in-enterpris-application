@@ -15791,7 +15791,7 @@
 <tr>
 <td style="text-align: left;">外部原本の保存</td>
 <td style="text-align: left;">ExternalPayloadStorage</td>
-<td style="text-align: left;">原本（ファイル全体と行の payload）を無加工で保存し読み戻すポート（<code>externaldata.domain.model.aggregates</code>。外部の技術のポートはドメインに置く規則）。同じキーを上書きせず、読めないキーは例外。呼び手は保存に成功してから受信記録を書く。補償は消さない。実装は W7 は DB（39a2）、W10 で S3（Bolt 39。ADR-004 の改訂）</td>
+<td style="text-align: left;">原本の payload の保存で、外部原本（ExternalRecord）の永続化ではない。原本（ファイル全体と行の payload）を無加工で保存し読み戻すポート（<code>externaldata.domain.model.aggregates</code>。外部の技術のポートはドメインに置く規則）。同じキーを上書きせず、読めないキーは例外。呼び手は保存に成功してから受信記録を書く。補償は消さない。実装は W7 は DB（39a2）、W10 で S3（Bolt 39。ADR-004 の改訂）</td>
 <td style="text-align: left;">外部データ</td>
 </tr>
 <tr>
