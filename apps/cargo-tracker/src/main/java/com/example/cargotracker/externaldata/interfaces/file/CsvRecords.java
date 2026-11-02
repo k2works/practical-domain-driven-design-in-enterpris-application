@@ -71,8 +71,8 @@ public record CsvRecords(List<String> header, List<CsvRow> rows, List<CsvRowErro
                 return new CsvRecords(List.of(), List.of(), List.of());
             }
             return switch (readRecord()) {
-                case Failed failed -> new CsvRecords(List.of(), List.of(), List.of(failed.error()));
-                case Read headerRead -> readRows(headerRead.row().values());
+                case Failed(CsvRowError error) -> new CsvRecords(List.of(), List.of(), List.of(error));
+                case Read(CsvRow headerRow, _) -> readRows(headerRow.values());
             };
         }
 
@@ -86,7 +86,7 @@ public record CsvRecords(List<String> header, List<CsvRow> rows, List<CsvRowErro
                     case Read read
                     when read.row().values().size() != header.size() -> errors.add(read.columnCountMismatch());
                     case Read read -> rows.add(read.row());
-                    case Failed failed -> errors.add(failed.error());
+                    case Failed(CsvRowError error) -> errors.add(error);
                 }
                 skipBlankLines();
             }
