@@ -2,7 +2,7 @@
 type: Plan
 title: "Bolt 39a2 計画 - 外部原本の保存の DB の実装（原本の表、独立したトランザクション、層別の許可リスト）"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-02T12:00:20Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-02T12:27:44Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-11-02T11:28:08Z }
 ---
@@ -135,7 +135,7 @@ entity "external_data.stored_payload" {
 
 - [x] **1. 設計の文書**（`376e1ceb4`。2026-11-02 に human:kakimomokuri が承認した）: 上の「文書」の行のうち、バイナリの型によらない分（ベンダー別の記述と ADR-020 はステップ 2 の結果の後）（完了の判定: 文書の差分。**承認ゲート**）
 - [x] **2. スキーマと原本の表（Red → Green）**（`21130e41d`。2026-11-02 に human:kakimomokuri が承認した。共通の `BYTEA` が PostgreSQL と H2 の両方で通ったので、ベンダー別の DDL と ADR-020 は作らない。スキーマと表は 1 つの版）: 行 6・7 の一覧（`AppendOnlyGrantIntegrationTest`・`SchemaCommentIntegrationTest`）に先に足して落ちることを確かめ、共通の `BYTEA` の DDL で PostgreSQL と H2 を確かめ、通らなければベンダー別に分けて ADR-020 を書く。afterMigrate・SchemaSpy の一覧。行 8（完了の判定: 期待した理由で落ちた後に緑。バイナリの型の確かめの結果。**承認ゲート**）
-- [ ] **3. 層別の許可リストと DB の実装（Red → Green）**: 行 1〜5 の統合テストと、行 9・10 の層別の規則を先に書き、空の実装（マッパーを持つ空のクラス）で落ちることを確かめてから（行 10 の (b) の規則は infrastructure のクラスができて対象を持つ。本当の Red は「今の 1 本の規則が、マッパーを足すと落ちる」こと）、マッパー・XML・実装を作り、規則を 2 本にする（完了の判定: 同上。**承認ゲート**）
+- [x] **3. 層別の許可リストと DB の実装（Red → Green）**（`52c257d60`。2026-11-02 に human:kakimomokuri が承認した。マイクロ秒の切り捨ては `ClockConfiguration` の `Clock.tick` に任せる）: 行 1〜5 の統合テストと、行 9・10 の層別の規則を先に書き、空の実装（マッパーを持つ空のクラス）で落ちることを確かめてから（行 10 の (b) の規則は infrastructure のクラスができて対象を持つ。本当の Red は「今の 1 本の規則が、マッパーを足すと落ちる」こと）、マッパー・XML・実装を作り、規則を 2 本にする（完了の判定: 同上。**承認ゲート**）
 - [ ] **4. 品質ゲートと開発レビュー**: 変異、`check`、その後に SonarQube、開発レビューとその直し。push の前に `check`（T-225）。`uiTest` は画面を変えないので CI の `ui` の段で確かめる
 - [ ] **5. 終了報告**: push して CI と MkDocs とデモ環境の配備（PostgreSQL への新しいスキーマのマイグレーション）を確かめる。release_plan・開発の索引・mkdocs を直す
 
@@ -167,10 +167,10 @@ entity "external_data.stored_payload" {
 
 | # | 変異 | 落ちる見込み |
 | :--- | :--- | :--- |
-| V1 | 保存を `REQUIRES_NEW` でなく外側のトランザクションに参加させる（`PROPAGATION_REQUIRED`） | 行 2（巻き戻りで消える）、行 4（外側で一意制約の違反が起き、コミットが `UnexpectedRollbackException`） |
+| V1 | 保存を `REQUIRES_NEW` でなく外側のトランザクションに参加させる（`PROPAGATION_REQUIRED`） | 行 2（巻き戻りで消える）、行 4（実際の落ち方: 一意制約の違反で PostgreSQL が外側のトランザクションを中断し、外側の次の SQL が失敗する。計画の時点の見込みはコミットの `UnexpectedRollbackException`。ステップ 3 で確かめて直した） |
 | V2 | 主キーの違反を捕まえずに上書き（`UPDATE`）する | 行 1（契約の上書きの拒否） |
 | V3 | 外部データの `interfaces.file` に MyBatis の型への依存を足す | 行 9 |
-| V4 | 原本の表のコメントから `[append-only]` を外す | 行 6 |
+| V4 | 原本の表のコメントから `[append-only]` を外す | 行 6（実際には削除禁止の印のテストも、表の集合の比べ方で一緒に落ちる） |
 | V5 | 読み出しで配列を写さない | 行 5 |
 
 ## 完了条件
