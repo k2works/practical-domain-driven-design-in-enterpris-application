@@ -26,7 +26,7 @@ class SchemaCommentIntegrationTest {
 
     /** 業務のスキーマ。フレームワークの表（platform）は DDL を持たないため対象にしない。 */
     private static final String BUSINESS_SCHEMAS =
-            "'quotation', 'routing', 'identity', 'booking', 'notification', 'tracking'";
+            "'quotation', 'routing', 'identity', 'booking', 'notification', 'tracking', 'external_data'";
 
     private static final Pattern JAPANESE = Pattern.compile("[\\p{IsHan}\\p{IsHiragana}\\p{IsKatakana}]");
     private static final String APPEND_ONLY_MARK = " [append-only]";

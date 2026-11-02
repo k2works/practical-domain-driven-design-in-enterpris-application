@@ -38,7 +38,8 @@ class AppendOnlyGrantIntegrationTest {
             "quotation.required_document",
             "identity.audit_record",
             "booking.booking_version",
-            "booking.processed_command");
+            "booking.processed_command",
+            "external_data.stored_payload");
 
     /**
      * データモデルの「追記専用」の表のうち、状態などを UPDATE するので DELETE だけを外す表（印は {@code [no-delete]}。Bolt 26b）。

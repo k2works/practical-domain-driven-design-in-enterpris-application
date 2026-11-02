@@ -6,7 +6,7 @@
 -- - 追記専用の表は、表の定義の印（COMMENT ON TABLE ... IS '<日本語名> [append-only]'）で選ぶ。名指しにしないので、
 --   印を付ければ新しい表も保護される（名指しの書き忘れで保護が黙って外れることを防ぐ）
 -- - 状態などを UPDATE するが行を消してはならない表は、印 [no-delete] で選び、DELETE だけを外す（tracking.milestone。Bolt 26b）
--- - 業務のスキーマを足したら、GRANT のスキーマの一覧も同じ変更で更新する（漏れるとアプリが権限不足で失敗する）
+-- - 業務のスキーマを足したら、GRANT のスキーマの一覧も同じ変更で更新する（漏れるとアプリが権限不足で失敗する。Bolt 39a2 で external_data を足した）
 -- - 既定権限（ALTER DEFAULT PRIVILEGES）は使わない。Flyway 以外で作られた表に UPDATE・DELETE が付くのを防ぐ
 -- - 連番（SEQUENCE、IDENTITY）を使う表を足したら、USAGE ON ALL SEQUENCES の付与も足す（いまは UUID だけ）
 DO $$
@@ -23,8 +23,8 @@ BEGIN
         RETURN;
     END IF;
 
-    EXECUTE format('GRANT USAGE ON SCHEMA quotation, routing, identity, booking, tracking, notification, platform TO %I', app_user);
-    EXECUTE format('GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA quotation, routing, identity, booking, tracking, notification, platform TO %I',
+    EXECUTE format('GRANT USAGE ON SCHEMA quotation, routing, identity, booking, tracking, notification, platform, external_data TO %I', app_user);
+    EXECUTE format('GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA quotation, routing, identity, booking, tracking, notification, platform, external_data TO %I',
                    app_user);
 
     FOR append_only IN
