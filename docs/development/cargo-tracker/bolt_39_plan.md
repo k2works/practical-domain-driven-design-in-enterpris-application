@@ -2,7 +2,7 @@
 type: Plan
 title: "Bolt 39 計画 - 外部データのコンテキストの骨格（構造、規則、payload の保存のポート、仮の CSV の解析）"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-02T07:11:16Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-02T07:35:49Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-11-02T06:42:48Z }
   - { by: human:kakimomokuri, at: 2026-11-02T06:52:27Z }
@@ -154,7 +154,7 @@ end note
 
 - [x] **1. 設計の文書**（`b9a87c0cf`。2026-11-02 に human:kakimomokuri が承認した）: ADR-004 の改訂、分類 3 つの箇所、architecture_backend、domain_model の用語集、release_plan・開発戦略の直し（完了の判定: 文書の差分。**承認ゲート**）
 - [x] **2. パッケージと規則（Red → Green）**（`ca44e5f74`。2026-11-02 に human:kakimomokuri が承認した。許可リストのフレームワークは今の依存を確かめて `org.springframework..` だけにした）: 行 1・2 のテスト（ModularityTest のモジュール一覧と許可リストの規則）を先に足して落ちることを確かめ（行 2 は対象のクラスがないことで落ちる見込み。落ちた理由を記録する）、パッケージと `package-info` を置く（完了の判定: 期待した理由で落ちた後に緑。**承認ゲート**）
-- [ ] **3. スキーマの対応表とコンテキストの一覧（Red → Green）**: 行 3〜5 のテストを先に足して落ちることを確かめ、対応表と一覧の一致の規則と `CONTEXTS` の追加を作る（完了の判定: 同上。**承認ゲート**）
+- [x] **3. スキーマの対応表とコンテキストの一覧（Red → Green）**（`324fe674f`。2026-11-02 に human:kakimomokuri が承認した。行 3 は本体の前に落ちなかったので変異 V3 で効くことを確かめて受け入れ、ModularityTest のモジュール一覧は期待の値として残す）: 行 3〜5 のテストを先に足して落ちることを確かめ、対応表と一覧の一致の規則と `CONTEXTS` の追加を作る（完了の判定: 同上。**承認ゲート**）
 - [ ] **4. 原本の保存のポート（Red → Green）**: 行 6〜8c のテストを先に書き、空の実装で落ちることを確かめてからポートと値とメモリの実装を作る（完了の判定: 同上。`LivingGlossaryConsistencyTest` が緑。**承認ゲート**）
 - [ ] **5. 仮の CSV の解析（Red → Green）**: 行 9〜12 のテストを先に書き、解析の部品とヘッダーの検証を作る（完了の判定: 同上。**承認ゲート**）
 - [ ] **6. 品質ゲートと開発レビュー**: 変異、`check`、その後に SonarQube、開発レビューとその直し。push の前に `check`（T-225）。`uiTest` は画面を変えないので CI の `ui` の段で確かめる
