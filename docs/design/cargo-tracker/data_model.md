@@ -4,7 +4,7 @@ title: "cargo-tracker データモデル"
 description: "cargo-tracker の概念データモデル、スキーマ分割、命名と型の規約（H2 と PostgreSQL の共通部分）、コンテキストごとの論理データモデルと ER 図、版・追記専用・冪等性・イベント配信の表現。"
 tags: [design, data-model]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-02T12:00:20Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-02T12:47:50Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:48:17Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:37Z }
@@ -33,7 +33,7 @@ verified:
 | DB は 1 つ、コンテキストごとにスキーマを分ける | ADR-001 | 7 つの業務スキーマと、基盤用のスキーマを置く |
 | 集約は状態保存。版は不変、追跡の主要実績と監査記録は追記専用 | ADR-002 | 版はヘッダ・明細の形で別の行にする。追記専用の表には削除の権限を与えない |
 | 冪等コマンド、永続化したドメインイベント、予約サガ | ADR-003 | 処理済みコマンド、イベント発行記録、サガ状態の表を持つ |
-| 外部原本は Inbox・隔離・照合 | ADR-004 | 原本は W7〜W9 は DB の `stored_payload`（受信記録とは独立したトランザクションで保存）に、W10 で S3 に置き、DB には冪等性キーとハッシュと分類を持つ（Bolt 39a2） |
+| 外部原本は Inbox・隔離・照合 | ADR-004 | 原本は W7〜W9 は DB、W10 で S3 に置き、DB には冪等性キーとハッシュと分類を持つ（Bolt 39a2） |
 | 開発は H2、本番は PostgreSQL 18、永続化は MyBatis、スキーマは Flyway | ADR-007 | DDL は H2 と PostgreSQL の共通部分で書く |
 
 ## 概念データモデル
@@ -1127,7 +1127,7 @@ ds ||--o{ ff
 | `data_source` | `approval_status` IN（`CANDIDATE`、`APPROVED`、`SUSPENDED`）。承認済みが 0 件ならパイロットを開始しない（アプリケーションで判定） | BR-18 |
 | `external_record` | 冪等性キー（提供元、原本種別、外部 ID、外部版）の一意制約。最初に受け取った payload のハッシュを持つ | BR-12 |
 | `stored_payload` | 原本のオブジェクトキー（`object_key`。`PayloadObjectKey` の値）が主キー。`content`（原本の内容）はバイト列で NOT NULL、0 バイトを許す。型は `BYTEA`（共通の置き場所。H2 は別名として受けて `binary varying` になり、0 バイト・0x00・0xFF を読み書きできることを Bolt 39a2 のステップ 2 で確かめた。H2 の `binary varying` には長さの上限があり PostgreSQL の `BYTEA` と違うが、開発の範囲では影響しない）。`stored_at`（保存した時刻）は Clock から取りマイクロ秒に切り捨てる。ハッシュは持たない（`ingestion.file_hash`・`external_record.payload_hash`・`receipt.payload_hash` が持つ）。`file_object_key`・`payload_object_key` とは外部キーを張らない（W10 で S3 に差し替えるため）。追記専用の印を付け、UPDATE・DELETE の権限なし | ADR-004、PV-01 |
-| `receipt` | 受け取るたびに 1 行。`classification` IN（`ADOPTED`、`DUPLICATE`、`QUARANTINED`、`DISCREPANCY`）。ハッシュが外部原本と同じなら重複、違えば隔離。UPDATE・DELETE の権限なし | BR-12、US-14 |
+| `receipt` | 受け取るたびに 1 行（39a3 で `received_record` に改名する）。`classification` IN（`ADOPTED`、`DUPLICATE`、`QUARANTINED`、`DISCREPANCY`）。ハッシュが外部原本と同じなら重複、違えば隔離。UPDATE・DELETE の権限なし | BR-12、US-14 |
 | `adopted_value` | 採用した受信記録ごとに 1 つ。ここから DE-12・DE-13 を発行する | ADR-004 |
 | `manual_entry` | 出典・入力者・入力時刻・仮状態を NOT NULL にする | BR-08 |
 | `recovery_reconciliation` | 停止期間ごとに 1 つ。完了には全件の分類、件数の一致、差異の解消が必要（アプリケーションで判定） | BR-12、US-15 |
