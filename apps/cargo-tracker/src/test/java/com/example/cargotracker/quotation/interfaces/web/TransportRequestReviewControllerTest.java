@@ -571,6 +571,7 @@ class TransportRequestReviewControllerTest {
 
     @Test
     void 審査の対象の見積依頼がなければ見つからない() throws Exception {
+        // Bolt 38h の状態の組み合わせの行 10（ない対象は範囲外の試行として記録しない）
         given(reviewService.approve(any(), any())).willReturn(new ReviewOutcome.NotFound());
 
         mockMvc.perform(post("/staff/transport-requests/TR-2026-0099/reviews")
@@ -578,6 +579,7 @@ class TransportRequestReviewControllerTest {
                         .param("versionNo", "1")
                         .param("rationale", "確認した"))
                 .andExpect(status().isNotFound());
+        then(outOfScope).should(org.mockito.Mockito.never()).recordAndNotFound(any(), any(), any());
     }
 
     @Test

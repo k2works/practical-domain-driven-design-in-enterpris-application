@@ -202,6 +202,43 @@ class TrackingAssignedScopeSecurityIntegrationTest {
         assertThat(deniedOf(trackingRecord)).isOne();
     }
 
+    @Test
+    void ない追跡記録のマイルストーンの登録は404で記録しない() throws Exception {
+        // Bolt 38h の状態の組み合わせの行 10（H-5。保存しない追跡番号）
+        String missing = "CT" + "Z".repeat(12);
+        Cookie session = login(manager(shipperA));
+
+        mvc.perform(register(missing, Map.of()).cookie(session)).andExpect(status().isNotFound());
+
+        assertThat(deniedOf(missing)).isZero();
+    }
+
+    @Test
+    void 割り当てを足すと次のrequestから担当範囲の中になる() throws Exception {
+        // Bolt 38h の状態の組み合わせの行 11（同じ session）
+        String trackingRecord = started(shipperA);
+        Cookie session = login(manager());
+        assertThat(body(session, RECORDS_URL)).doesNotContain(trackingRecord).contains(NO_ASSIGNED_COMPANIES);
+
+        AdministrationFixtures.assignCompany(jdbc, lastManager, shipperA);
+
+        assertThat(body(session, RECORDS_URL)).contains(trackingRecord).doesNotContain(NO_ASSIGNED_COMPANIES);
+        assertThat(body(session, RECORDS_URL + "/" + trackingRecord)).contains(trackingRecord);
+    }
+
+    @Test
+    void 割り当てを外すと次のrequestから担当範囲の外になる() throws Exception {
+        // Bolt 38h の状態の組み合わせの行 12
+        String trackingRecord = started(shipperA);
+        Cookie session = login(manager(shipperA));
+        assertThat(body(session, RECORDS_URL)).contains(trackingRecord);
+
+        jdbc.update("DELETE FROM identity.user_assignment WHERE user_id = ?", lastManager.value());
+
+        assertThat(body(session, RECORDS_URL)).doesNotContain(trackingRecord).contains(NO_ASSIGNED_COMPANIES);
+        mvc.perform(get(RECORDS_URL + "/" + trackingRecord).cookie(session)).andExpect(status().isNotFound());
+    }
+
     private String manager(CompanyId... assigned) {
         String email = "tracking-scope-test-" + UUID.randomUUID() + "@example.com";
         UserId userId = new UserId(UUID.randomUUID());

@@ -14,10 +14,10 @@
     <p role="status" th:if="${result}" th:text="${result}">TR-2026-0001 見積 1 を提示しました</p>
     <p th:if="${resultLinkHref}"><a th:href="@{${resultLinkHref}}" th:text="${resultLinkLabel}">予約の詳細を開く</a></p>
     <div class="alert alert-warning" role="alert" th:if="${problem}" th:text="${problem}">TR-2026-0001 にはすでに見積りがあります</div>
-    <!-- 担当企業がない営業担当者には、一覧が空の理由と頼む先を示す（Bolt 38f）。表ごとの空の文は今のまま出す -->
-    <p class="alert alert-info" th:if="${noAssignedCompanies}">担当企業がまだないので、表示できる輸送要求はありません。システム管理者に担当企業の割り当てを頼んでください。</p>
+    <!-- 担当企業がない営業担当者には、一覧が空の理由と頼む先を示す（Bolt 38f）。表ごとの空の文は出さない（Bolt 38h。S-10・S-05・S-11 と同じ形。見積依頼はあるのに「ありません」と言わない） -->
+    <p class="alert alert-info" th:if="${noAssignedCompanies}">担当企業がまだないので、表示できる見積依頼はありません。システム管理者に担当企業の割り当てを頼んでください。</p>
     <h2>審査中</h2>
-    <p th:if="${#lists.isEmpty(requests)}">審査中の見積依頼はありません。</p>
+    <p th:if="${#lists.isEmpty(requests) and !noAssignedCompanies}">審査中の見積依頼はありません。</p>
     <!-- 狭い画面では表だけを横にスクロールさせ、ページ全体を横にスクロールさせない（WCAG 1.4.10 の表の例外）。
          キー操作でもスクロールできるよう、囲みをフォーカスできるようにして名前を付ける -->
     <div th:unless="${#lists.isEmpty(requests)}" class="table-scroll" tabindex="0" role="region"
@@ -51,7 +51,7 @@
 
     <!-- 見積り作成中（Bolt 10）。審査を確定した見積依頼を、最初の提出時刻の古い順に示し、見積りの作成（S-04）を開ける -->
     <h2>見積り作成中</h2>
-    <p th:if="${#lists.isEmpty(quotingRequests)}">見積り作成中の見積依頼はありません。</p>
+    <p th:if="${#lists.isEmpty(quotingRequests) and !noAssignedCompanies}">見積り作成中の見積依頼はありません。</p>
     <div th:unless="${#lists.isEmpty(quotingRequests)}" class="table-scroll" tabindex="0" role="region"
          aria-labelledby="quoting-caption">
     <table class="table">
@@ -82,7 +82,7 @@
     <!-- 見積提示済み（Bolt 11 レビュー R-02、D-38）。見積依頼ごとに最新の見積り（再見積りで作った承認待ちを含む）を、有効期限の近い順に示し、
          見積り（S-04）を開ける。失効は表示する時刻で判定する -->
     <h2>見積提示済み</h2>
-    <p th:if="${#lists.isEmpty(quotedRequests)}">見積提示済みの見積依頼はありません。</p>
+    <p th:if="${#lists.isEmpty(quotedRequests) and !noAssignedCompanies}">見積提示済みの見積依頼はありません。</p>
     <div th:unless="${#lists.isEmpty(quotedRequests)}" class="table-scroll" tabindex="0" role="region"
          aria-labelledby="quoted-caption">
     <table class="table">
@@ -107,7 +107,7 @@
          経路設計者の案件一覧（S-05）は US-06。Bolt 20 から荷主承認待ちも並べ、Bolt 23b で経路の確定の時刻を足した（D-78）。
          荷主が承認した見積りは下の予約の確定待ちの表に移した -->
     <h2>経路設計中・荷主承認待ち</h2>
-    <p th:if="${#lists.isEmpty(routingRequests)}">経路設計中・荷主承認待ちの見積依頼はありません。</p>
+    <p th:if="${#lists.isEmpty(routingRequests) and !noAssignedCompanies}">経路設計中・荷主承認待ちの見積依頼はありません。</p>
     <div th:unless="${#lists.isEmpty(routingRequests)}" class="table-scroll" tabindex="0" role="region"
          aria-labelledby="routing-caption">
     <table class="table">
@@ -137,7 +137,7 @@
     <!-- 予約の確定待ち（Bolt 23b、US-04、D-78）。荷主が承認した見積りを有効期限の近い順に示す。有効期限の前は本予約の確定（S-09）を、
          失効した見積りは再見積り（S-04）を開ける。本予約を確定すると、輸送要求が予約確定済みになった後（DE-07 の配信）に行が消える -->
     <h2>予約の確定待ち</h2>
-    <p th:if="${#lists.isEmpty(awaitingBookings)}">予約の確定待ちの見積りはありません。</p>
+    <p th:if="${#lists.isEmpty(awaitingBookings) and !noAssignedCompanies}">予約の確定待ちの見積りはありません。</p>
     <div th:unless="${#lists.isEmpty(awaitingBookings)}" class="table-scroll" tabindex="0" role="region"
          aria-labelledby="awaiting-booking-caption">
     <table class="table">

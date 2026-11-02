@@ -74,7 +74,7 @@ class StaffAssignedScopeSecurityIntegrationTest {
 
     private static final byte[] TOTP_SECRET = "12345678901234567890".getBytes(StandardCharsets.US_ASCII);
     private static final String LIST_URL = "/staff/transport-requests";
-    private static final String NO_ASSIGNED_COMPANIES = "担当企業がまだないので、表示できる輸送要求はありません。システム管理者に担当企業の割り当てを頼んでください。";
+    private static final String NO_ASSIGNED_COMPANIES = "担当企業がまだないので、表示できる見積依頼はありません。システム管理者に担当企業の割り当てを頼んでください。";
     private static final AtomicInteger SEQUENCE = new AtomicInteger(1);
     /**
      * テストの時刻。共通の時計（{@code IdentityTestClock}）は既定で EPOCH を指し、置かないと TOTP の刻みが 0 になって、使った刻みを 0 に
@@ -231,6 +231,21 @@ class StaffAssignedScopeSecurityIntegrationTest {
         assertThat(body(session, LIST_URL)).contains(NO_ASSIGNED_COMPANIES).doesNotContain(request);
         mvc.perform(get(LIST_URL + "/" + request).cookie(session)).andExpect(status().isNotFound());
         assertThat(deniedOf(request)).isZero();
+    }
+
+    @Test
+    void 担当企業のない営業担当者の一覧は案内だけを示し表ごとの空の文を出さない() throws Exception {
+        // Bolt 38h の状態の組み合わせの行 9（H-4。S-10・S-05・S-11 と同じ形。表の見出しは残す）
+        Cookie session = login(sales());
+
+        assertThat(body(session, LIST_URL))
+                .contains(NO_ASSIGNED_COMPANIES)
+                .contains("<h2>審査中</h2>")
+                .doesNotContain("審査中の見積依頼はありません。")
+                .doesNotContain("見積り作成中の見積依頼はありません。")
+                .doesNotContain("見積提示済みの見積依頼はありません。")
+                .doesNotContain("経路設計中・荷主承認待ちの見積依頼はありません。")
+                .doesNotContain("予約の確定待ちの見積りはありません。");
     }
 
     static Stream<String> getEntrances() {

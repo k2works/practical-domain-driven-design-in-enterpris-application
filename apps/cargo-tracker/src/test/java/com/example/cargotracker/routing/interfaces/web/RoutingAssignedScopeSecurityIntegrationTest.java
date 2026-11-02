@@ -235,6 +235,43 @@ class RoutingAssignedScopeSecurityIntegrationTest {
         assertThat(deniedOf(routingCase)).isOne();
     }
 
+    @Test
+    void ない案件の候補の算出は404で記録しない() throws Exception {
+        // Bolt 38h の状態の組み合わせの行 10（H-5。発行だけして保存しない案件番号）
+        String missing = numberIssuer.next(2087).text();
+        Cookie session = login(designer(shipperA));
+
+        mvc.perform(calculate(missing, "0").cookie(session)).andExpect(status().isNotFound());
+
+        assertThat(deniedOf(missing)).isZero();
+    }
+
+    @Test
+    void 割り当てを足すと次のrequestから担当範囲の中になる() throws Exception {
+        // Bolt 38h の状態の組み合わせの行 11（同じ session）
+        String routingCase = opened(shipperA);
+        Cookie session = login(designer());
+        assertThat(body(session, CASES_URL)).doesNotContain(routingCase).contains(NO_ASSIGNED_COMPANIES);
+
+        AdministrationFixtures.assignCompany(jdbc, lastDesigner, shipperA);
+
+        assertThat(body(session, CASES_URL)).contains(routingCase).doesNotContain(NO_ASSIGNED_COMPANIES);
+        assertThat(body(session, CASES_URL + "/" + routingCase)).contains(routingCase);
+    }
+
+    @Test
+    void 割り当てを外すと次のrequestから担当範囲の外になる() throws Exception {
+        // Bolt 38h の状態の組み合わせの行 12
+        String routingCase = opened(shipperA);
+        Cookie session = login(designer(shipperA));
+        assertThat(body(session, CASES_URL)).contains(routingCase);
+
+        jdbc.update("DELETE FROM identity.user_assignment WHERE user_id = ?", lastDesigner.value());
+
+        assertThat(body(session, CASES_URL)).doesNotContain(routingCase).contains(NO_ASSIGNED_COMPANIES);
+        mvc.perform(get(CASES_URL + "/" + routingCase).cookie(session)).andExpect(status().isNotFound());
+    }
+
     private String designer(CompanyId... assigned) {
         String email = "routing-scope-test-" + UUID.randomUUID() + "@example.com";
         UserId userId = new UserId(UUID.randomUUID());

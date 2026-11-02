@@ -312,6 +312,44 @@ class BookingAssignedScopeSecurityIntegrationTest {
         assertThat(bookingsOf(quotation)).isZero();
     }
 
+    @Test
+    void ない見積りの確定のPOSTは404で記録しない() throws Exception {
+        // Bolt 38h の状態の組み合わせの行 10（H-5。見積りの側の前例と同じ趣旨）
+        String missing = nextNumber();
+        Cookie session = login(sales(shipperA));
+
+        mvc.perform(confirm(missing, UUID.randomUUID()).cookie(session).param("staffConfirmed", "true"))
+                .andExpect(status().isNotFound());
+
+        assertThat(deniedOf(missing + "/1")).isZero();
+    }
+
+    @Test
+    void 割り当てを足すと次のrequestから担当範囲の中になる() throws Exception {
+        // Bolt 38h の状態の組み合わせの行 11（同じ session。担当企業は request ごとの確かめで読み直す）
+        TrackingNumber booking = booked(shipperA, nextNumber());
+        Cookie session = login(sales());
+        assertThat(body(session, BOOKINGS_URL)).doesNotContain(booking.value()).contains(NO_ASSIGNED_COMPANIES);
+
+        AdministrationFixtures.assignCompany(jdbc, lastSales, shipperA);
+
+        assertThat(body(session, BOOKINGS_URL)).contains(booking.value()).doesNotContain(NO_ASSIGNED_COMPANIES);
+        assertThat(body(session, BOOKINGS_URL + "/" + booking.value())).contains(booking.value());
+    }
+
+    @Test
+    void 割り当てを外すと次のrequestから担当範囲の外になる() throws Exception {
+        // Bolt 38h の状態の組み合わせの行 12
+        TrackingNumber booking = booked(shipperA, nextNumber());
+        Cookie session = login(sales(shipperA));
+        assertThat(body(session, BOOKINGS_URL)).contains(booking.value());
+
+        jdbc.update("DELETE FROM identity.user_assignment WHERE user_id = ?", lastSales.value());
+
+        assertThat(body(session, BOOKINGS_URL)).doesNotContain(booking.value()).contains(NO_ASSIGNED_COMPANIES);
+        mvc.perform(get(BOOKINGS_URL + "/" + booking.value()).cookie(session)).andExpect(status().isNotFound());
+    }
+
     private String sales(CompanyId... assigned) {
         String email = "booking-scope-test-" + UUID.randomUUID() + "@example.com";
         UserId userId = new UserId(UUID.randomUUID());

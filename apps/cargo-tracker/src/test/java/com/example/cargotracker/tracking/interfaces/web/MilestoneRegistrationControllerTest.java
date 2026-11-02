@@ -318,6 +318,8 @@ class MilestoneRegistrationControllerTest {
         given(commandService.registerMilestone(any(), any())).willReturn(new MilestoneRegistrationOutcome.NotFound());
 
         mockMvc.perform(validRegistration()).andExpect(status().isNotFound());
+        // Bolt 38h の状態の組み合わせの行 10（ない対象は範囲外の試行として記録しない）
+        then(outOfScope).should(never()).recordAndNotFound(any(), any());
     }
 
     // 入力の誤り（形式。コマンドサービスを呼ばない）

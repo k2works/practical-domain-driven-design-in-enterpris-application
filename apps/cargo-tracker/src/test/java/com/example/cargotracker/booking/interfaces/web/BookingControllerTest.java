@@ -534,6 +534,8 @@ class BookingControllerTest {
                         .param("transportRequest", "XX")
                         .param("quotation", "1"))
                 .andExpect(status().isNotFound());
+        // Bolt 38h の状態の組み合わせの行 10（ない対象は範囲外の試行として記録しない）
+        verify(outOfScope, never()).recordAndNotFound(any(), any(), anyInt());
     }
 
     // S-24 予約の詳細

@@ -321,6 +321,8 @@ class RoutingCaseControllerTest {
 
         mockMvc.perform(post(SHOW + "/candidates").param("expectedVersion", "0"))
                 .andExpect(status().isNotFound());
+        // Bolt 38h の状態の組み合わせの行 10（ない対象は範囲外の試行として記録しない）
+        verify(outOfScope, never()).recordAndNotFound(any(), any());
     }
 
     @Test
