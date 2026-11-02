@@ -45,6 +45,11 @@ public record CsvRecords(List<String> header, List<CsvRow> rows, List<CsvRowErro
     /** 読めたレコード。 */
     private record Read(CsvRow row, int lastLineNumber) implements Outcome {
 
+        /** 読めたレコードの値の並び。 */
+        List<String> values() {
+            return row.values();
+        }
+
         /** 列数の違う行の誤り。 */
         CsvRowError columnCountMismatch() {
             return new CsvRowError(row.lineNumber(), lastLineNumber, CsvRowError.Reason.COLUMN_COUNT_MISMATCH);
@@ -72,7 +77,7 @@ public record CsvRecords(List<String> header, List<CsvRow> rows, List<CsvRowErro
             }
             return switch (readRecord()) {
                 case Failed(CsvRowError error) -> new CsvRecords(List.of(), List.of(), List.of(error));
-                case Read(CsvRow headerRow, _) -> readRows(headerRow.values());
+                case Read header -> readRows(header.values());
             };
         }
 
