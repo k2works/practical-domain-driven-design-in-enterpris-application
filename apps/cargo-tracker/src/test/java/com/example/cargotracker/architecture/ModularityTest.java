@@ -1,5 +1,6 @@
 package com.example.cargotracker.architecture;
 
+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -19,7 +20,15 @@ class ModularityTest {
     @Test
     void 見積りと経路設計とアクセス監査と予約と追跡と共有カーネルがモジュールとして認識される() {
         assertThat(modules.stream().map(module -> module.getIdentifier().toString()))
-                .contains("quotation", "routing", "identity", "booking", "tracking", "notification", "shared");
+                .contains(
+                        "quotation",
+                        "routing",
+                        "identity",
+                        "booking",
+                        "tracking",
+                        "notification",
+                        "externaldata",
+                        "shared");
     }
 
     @Test
@@ -84,6 +93,28 @@ class ModularityTest {
                 .should()
                 .dependOnClassesThat()
                 .resideInAPackage("com.example.cargotracker.tracking..")
+                .check(new ClassFileImporter()
+                        .withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS)
+                        .importPackages("com.example.cargotracker"));
+    }
+
+    /**
+     * 外部データはほかのコンテキストに依存しない上流で、依存してよい相手を許可リストで並べる（ADR-004 の改訂。Bolt 39）。
+     * 禁止する相手を名前で並べる形では、新しいコンテキストを足すたびに規則を書き足す必要があるため、許してよい相手だけを書く。
+     * フレームワークは今の外部データが実際に使う範囲（Spring）に限り、要るようになった Bolt で足す。
+     */
+    @Test
+    void 外部データは共有カーネルとJavaとフレームワークにだけ依存する() {
+        classes()
+                .that()
+                .resideInAPackage("com.example.cargotracker.externaldata..")
+                .should()
+                .onlyDependOnClassesThat()
+                .resideInAnyPackage(
+                        "java..",
+                        "com.example.cargotracker.externaldata..",
+                        "com.example.cargotracker.shared..",
+                        "org.springframework..")
                 .check(new ClassFileImporter()
                         .withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS)
                         .importPackages("com.example.cargotracker"));
