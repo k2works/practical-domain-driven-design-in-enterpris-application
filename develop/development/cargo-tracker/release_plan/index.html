@@ -9304,6 +9304,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../iteration_report-W6/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    W6 完了報告書
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -11011,6 +11039,34 @@
     <span class="md-status md-status--stable"></span>
   
 
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../review/cargo-tracker/w6_review_20261102/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    W6 横断の開発成果物レビュー（2026-11-02）
+  
+
+    
+  </span>
+  
   
 
       </a>
@@ -16801,6 +16857,13 @@
 </thead>
 <tbody>
 <tr>
+<td style="text-align: left;">38h</td>
+<td style="text-align: left;">W6 の返済（<a href="../../../review/cargo-tracker/w6_review_20261102/">W6 横断レビュー</a>の高 5 件と、38h とした中・低。2026-11-02、human:kakimomokuri が決めた）: 再設計要・出発済みの案件の相談の結論の決まりをマニュアル 4.2・6.4・7.1・8.2 に書き、互いを指し合う案内を直す（「案件を終える」操作は W9 の荷主の辞退の開始準備で決める）。S-20 の利用者の一覧に担当企業の列、業務担当者の登録の完了で担当範囲へ導く案内。8 章の候補の画面のキャプチャの撮り直し。担当企業がないときの S-02 の形と語。予約・経路設計・追跡に「ない対象の POST は記録しない」「割り当ての変更は次の request から効く」のテスト。マニュアルの入口（00 章・用語集・2.8）と domain_model の追従、出発済みの文、Javadoc と ADR の状態。評価の入口（39f）の前に終える</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;">アウトサイドイン（画面と受入シナリオから。既存の振る舞いを揃える）</td>
+<td style="text-align: left;">計画と終了報告（画面）</td>
+</tr>
+<tr>
 <td style="text-align: left;">39</td>
 <td style="text-align: left;">外部データのコンテキストの骨格: パッケージと <code>package-info</code>（外部データ・経路設計・追跡・identity の <code>allowedDependencies</code>）、ModularityTest と MapperSchemaArchitectureTest の対応表、<code>external_data</code> の表（<code>data_source</code>・<code>ingestion</code>・<code>external_record</code>・<code>receipt</code>・判断の表・<code>adopted_value</code>）、payload の保存のポートと DB の実装、仮の形式の解析（<code>interfaces</code> の側）、ADR、用語集。見える振る舞いは変えない</td>
 <td style="text-align: right;">0</td>
@@ -16872,7 +16935,7 @@
 </tr>
 </tbody>
 </table>
-<p>順序は 39 → 39b → 39c → 39d → 39e → 39f → 39g → 39g2 → 39h → 39i。39e・39f は 39d の採用値（DE-12）を受け、39g は 39d の DE-13 を受けるので後に置く。39h は 39g の確認中との境界（確認ポイント 7）の後に置く。半日を超えそうな Bolt（39・39b・39f・39g）は開始準備で分ける。W5・W6 の実績（見込みの約 1.5 倍の本数）から、W7 も 15 本前後になる見込みである。W6 までで計画より約 3 週早いので、バッファ消費ルールの範囲で吸収し、W7 の週の見直しで確かめる。</p>
+<p>順序は 38h → 39 → 39b → 39c → 39d → 39e → 39f → 39g → 39g2 → 39h → 39i（38h は W6 の締めで足した。評価の入口の 39f より前に、再設計要・出発済みの運用の決まりをマニュアルに置くため）。39e・39f は 39d の採用値（DE-12）を受け、39g は 39d の DE-13 を受けるので後に置く。39h は 39g の確認中との境界（確認ポイント 7）の後に置く。半日を超えそうな Bolt（39・39b・39f・39g）は開始準備で分ける。W5・W6 の実績（見込みの約 1.5 倍の本数）から、W7 も 15 本前後になる見込みである。W6 までで計画より約 3 週早いので、バッファ消費ルールの範囲で吸収し、W7 の週の見直しで確かめる。</p>
 <p><strong>W6 の Try の持ち込み</strong>: 各 Bolt 計画の確認ポイントに、T-204・T-212（サブエージェントへの指示の最初に heredoc を使わないと書く。<code>orchestrating-development</code> の <code>PROJECT.md</code>）、T-217（本体を直す前に Red を流し、落ちた理由を記録する）、T-225・T-213（push の前に <code>check</code>）、T-182・T-211・T-216（状態の組み合わせの表に重複・隔離・差異と順序逆転・出口・誤った入力の行を置く）、T-184（listener は配信まで確かめる）、T-219（変異の対象に単体・統合・契約のテスト）、T-215・T-222（Gradle を流す担当を 1 つに、計画の初稿を先にコミット）、T-191（環境の前提に設定ファイルの行を添える）を入れる。</p>
 <p><strong>Living Documentation</strong>: 外部データのコンテキストの ADR、<code>package-info</code> の <code>allowedDependencies</code>、ModularityTest と MapperSchemaArchitectureTest の対応表、用語集の整合テスト（外部原本・受信記録・隔離・差異・採用値・下書き・確認中・原本だけ）、受入条件の照合の表（US-14、US-12 の Release 1.0 の範囲）</p>
 <p><strong>デモ項目</strong>: ファイルの取込と分類の結果（<code>@US-14</code>。重複・隔離・差異）、隔離・差異の判断、航海の更新から確定した経路が再設計要になる流れ（<code>@US-06</code>・<code>@US-07</code>）、取り込んだ実績の下書きの採用と、順序逆転・取消済み・完了後（<code>@US-12</code>）。動画は画面の振る舞いが変わる Bolt（39c・39d・39f・39g・39h）で <code>@demo-&lt;Bolt&gt;</code> を撮る</p>
@@ -17278,6 +17341,15 @@
 <td style="text-align: left;">US-24 の残り（W9）の開始準備</td>
 <td style="text-align: left;">未決（2026-11-02、human:kakimomokuri が W7 の範囲の外として台帳に残すと決めた）</td>
 </tr>
+<tr>
+<td style="text-align: left;">D-94</td>
+<td style="text-align: left;">再設計要・出発済みで荷主が承認できない案件を、業務としてどう終えるか（今は経路設計者と営業の案内が互いを指し、閉じる操作がない。W7 の評価の入口で再設計要が本番で起き始める）</td>
+<td style="text-align: left;">営業が荷主に新しい見積依頼の出し直しを案内し、古い案件はそのまま残す（運用の決まりとしてマニュアルに書く。Bolt 38h）</td>
+<td style="text-align: left;">US-07、US-24 AC2、US-08、D-86</td>
+<td style="text-align: left;"><a href="../../../review/cargo-tracker/w6_review_20261102/">W6 横断レビュー</a> H-1</td>
+<td style="text-align: left;">W9 の US-24 の残り（荷主の辞退）の開始準備で、「案件を終える」操作と一緒に決める</td>
+<td style="text-align: left;">仮（2026-11-02、human:kakimomokuri が運用の決まりとマニュアルを先にすると決めた）</td>
+</tr>
 </tbody>
 </table>
 <hr />
@@ -17536,16 +17608,16 @@
 <tr>
 <td style="text-align: left;">W6</td>
 <td style="text-align: right;">12</td>
-<td style="text-align: right;">-</td>
-<td style="text-align: right;">-</td>
-<td style="text-align: left;">未着手（W5 の締めで 10 から 12 にした）</td>
+<td style="text-align: right;">12</td>
+<td style="text-align: right;">100%</td>
+<td style="text-align: left;">完了（2026-10-20〜10-29 に Bolt 36〜38g の 34 本を終え、2026-11-02 に締め、承認された（W5 の締めで目標を 10 から 12 にした）。US-16 の 5 SP（W5 の Bolt 34 の 2 を含む）を完了し #14 を、US-06 の残りの 5 SP を完了し #15 を、US-07 の残りの 2 SP を完了し #16 をクローズした。#47 を閉じた。人の変更依頼 1。締めの追加で W6 横断レビュー（高 5 は Bolt 38h）と品質ゲートの流し直しを行った。<a href="../iteration_report-W6/">W6 完了報告書</a>）</td>
 </tr>
 <tr>
 <td style="text-align: left;">W7</td>
 <td style="text-align: right;">10</td>
 <td style="text-align: right;">-</td>
 <td style="text-align: right;">-</td>
-<td style="text-align: left;">未着手</td>
+<td style="text-align: left;">計画済み（2026-11-02 に開始準備を承認した。Bolt 38h（W6 の返済）の後に Bolt 39〜39i）</td>
 </tr>
 <tr>
 <td style="text-align: left;">W8</td>
