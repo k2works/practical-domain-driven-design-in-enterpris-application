@@ -2,9 +2,10 @@
 type: Plan
 title: "Bolt 38h 計画 - W6 の返済（案件の出口の案内、担当企業の付け忘れ、担当範囲のテストのそろえ、マニュアルの追従）"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-02T03:26:31Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-02T05:41:52Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-11-02T03:26:32Z }
+  - { by: human:kakimomokuri, at: 2026-11-02T05:41:54Z }
 ---
 
 # Bolt 38h 計画 - W6 の返済（案件の出口の案内、担当企業の付け忘れ、担当範囲のテストのそろえ、マニュアルの追従）
@@ -201,6 +202,7 @@ end note
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-11-02 | Bolt を終え、[終了報告](bolt_38h_report.md)を承認した | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-11-02 | 計画を承認した（確認ポイント 1〜6 を推奨のとおり） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-11-02 | 整合性検証の指摘を反映した（承認待ち。重大 6・中 8・軽 9）。担当企業の列を役割で絞り、範囲の外は数だけにし、再設計要と出発済みの両方に同じ決まりを当て、次の行動の句だけを置き換え、語を「新しい見積依頼を出すよう案内」にし、出発済みの語は今のままにし、S-04 の期限の後の再見積りのボタンは残して文で知らせ、【前の決定の変更】の印、4.2、S-06 のキャプチャ、行 1b・5b、予約の NotFound、`detail.html` の別の属性、期限の導き方、V2・V6 の直しと V8 を足した。開始準備の追加の決定 (2)〜(5) は human:kakimomokuri | anthropic/claude-opus-5-5 |
 | 2026-11-02 | 初版作成（承認待ち）。開始準備で、分けずに 1 つで進め、案内はマニュアルと画面の両方に書き、担当企業は一覧の照会の射影に足すと決めた（human:kakimomokuri） | anthropic/claude-opus-5-5 |

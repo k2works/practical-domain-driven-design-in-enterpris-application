@@ -1,6 +1,14 @@
 # Docs Update Log
 
 ## 2026-11-02
+* **Verification**: [development_strategy](/development/cargo-tracker/development_strategy.md) を human:kakimomokuri が検証
+* **Verification**: [release_plan](/development/cargo-tracker/release_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_38h_plan](/development/cargo-tracker/bolt_38h_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_38h_report](/development/cargo-tracker/bolt_38h_report.md) を human:kakimomokuri が検証
+* **Update**: [bolt_38h_report](/development/cargo-tracker/bolt_38h_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [development_strategy](/development/cargo-tracker/development_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_38h_plan](/development/cargo-tracker/bolt_38h_plan.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [08-経路設計](/manual/08-経路設計.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [07-本予約の確定と予約一覧](/manual/07-本予約の確定と予約一覧.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [06-受付一覧と審査と見積り](/manual/06-受付一覧と審査と見積り.md) を更新（anthropic/claude-opus-5-5）
