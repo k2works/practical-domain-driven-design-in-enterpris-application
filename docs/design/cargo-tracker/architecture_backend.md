@@ -4,7 +4,7 @@ title: "cargo-tracker バックエンドアーキテクチャ"
 description: "cargo-tracker の境界づけられたコンテキスト、コンテキストごとのドメインロジックパターン、パッケージ構成、サガとドメインイベントによる連携（ARCH-HO-01〜03）、受信サービスの方針。"
 tags: [design, architecture, backend]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-29T04:55:37Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-02T06:51:16Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:11:12Z }
   - { by: human:kakimomokuri, at: 2026-10-01T07:41:04Z }
@@ -127,7 +127,7 @@ end note
 | 経路設計 → 予約 | R → B | 顧客-供給者 | 経路算出方法を予約に漏らさない |
 | 予約 → 追跡 | B → T | 顧客-供給者 | 見積りの内部情報を追跡へ公開しない。追跡は DE-07（荷主・荷受人の企業 ID を含む）を購読し、結果を `booking :: api` で返す（ADR-015。Bolt 25） |
 | 経路設計 → 追跡 | R → T | 顧客-供給者 | 候補計算の内部過程を追跡へ公開しない。追跡は `routing :: api` で確定した経路版の区間を引く（Bolt 25） |
-| 外部データ → 経路設計・追跡 | X → R、T | 公開ホスト + 公表された言語 | 未検証の原本を採用値として渡さない |
+| 外部データ → 経路設計・追跡 | X → R、T | 公開ホスト + 公表された言語 | 未検証の原本を採用値として渡さない。外部データ（`externaldata`。スキーマは `external_data`）はほかのコンテキストに依存しない上流で、採用値・隔離・判断をイベントで公開し（39b 以降）、経路設計の表を書かない。`allowedDependencies` は今は `shared` だけで、`platform :: web` は画面を作る 39c、`domain.events` の名前付きインターフェース（`events`）は最初のイベントを作る 39b で足す。下流（経路設計・追跡と、採否の監査を書くアクセス・監査）が `externaldata :: events` を足すのは、各 listener を作る Bolt（アクセス・監査は 39b、経路設計は 39e、追跡は 39g）。外部データのクラスが依存してよい型は、ModularityTest の許可リスト（`java..`・`externaldata..`・`shared..`・フレームワーク）で確かめる（Bolt 39。ADR-004 の改訂） |
 | 外部 → 外部データ | EXT → X | 腐敗防止層 | 提供元の形式を経路規則へ直接漏らさない |
 | アクセス・監査 → 全体 | IA → 全体 | 公開ホスト | 認証方式・監査方式を業務規則へ埋め込まない |
 | 共有カーネル | 全業務コンテキスト | 共有カーネル（第 3 章） | 業務の意味を持たない基本型だけに限る。例外は担当範囲の外の試行の記録のポート `OutOfScopeAttemptRecorder` 1 つ（ADR-019。Bolt 38f） |
@@ -153,6 +153,7 @@ end note
 - アクセス・監査が使う通知の公開 API（Bolt 33。[ADR-017](../../adr/cargo-tracker/017-notification-module-and-mail.md)）: password の再設定のメールの送信（`notification.interfaces.api.PasswordResetMail`。依頼の ID・トークンの ID・宛先の利用者の ID・アドレス・再設定の URL・期限・言語を受け、送信の記録を残して送る。結果は `Sent`・`AlreadySent`（同じ依頼の ID と宛先で記録済み）・`Failed`）。呼ぶ側は `identity.application.internal.outboundservices.acl.NotificationPasswordResetMails` で、イベントのハンドラー `PasswordResetMailEventHandler`（`@ApplicationModuleListener`）から呼ぶ。アダプターは `notification.interfaces.api.internal` に置き、通知のアプリケーションサービス `PasswordResetMailService`（`notification.application.internal.commandservices`）に委ねる。
 - アクセス・監査が使う通知の公開 API（Bolt 38b2b）: 利用者の招待のメールの送信（`notification.interfaces.api.UserInvitationMail`。登録の ID・招待のトークンの ID・宛先の利用者の ID・アドレス・初回の設定の URL・期限・言語を受け、結果は `Sent`・`AlreadySent`・`Failed`）。種類ごとの口で、一般の口と共有の部品を広げるかは Bolt 38d で決める。呼ぶのは identity の ACL `NotificationUserInvitationMails`（`identity.application.internal.outboundservices.acl`。Bolt 38b2c。DE-25 のハンドラー `UserInvitationMailEventHandler` から）
 - 追跡が使う公開 API（Bolt 25。ADR-015）: 経路設計の経路版の区間の照会（`routing.interfaces.api.RouteVersionLegQuery`。案件番号と経路版番号から、確定した経路版の区間を区間の順に返す。ない経路版は空）と、予約の追跡の開始の通知（`booking.interfaces.api.TrackingStartNotification`。予約 ID・追跡番号・開始時刻を受け、処理中の予約サガを完了にする。結果は `Completed`・`AlreadyCompleted`・`NotCompleted(reason)`）。
+- 担当範囲の判定の置き方の既定（Bolt 39。W6 横断レビュー M-1）: 担当範囲の判定は、下流が判定の材料（荷主企業）を自分の行に写して自分で判定するのを既定にする。上流の公開 API に主体を渡して判定させるのは、範囲の判定を上流のほかの理由とロックより先に置く必要があるときに限り、主体は認可にだけ使い写しに入れない（ADR-016 :34・:78）。主体を持たない読み出しと外部データは判定を通さない
 
 ### 共有カーネル
 
@@ -334,7 +335,7 @@ Bolt 1 の実装で次を決めた。
   - 覚えた要求は、Bean は作らず、覚えた要求の属性の名前（`SessionKeys.SAVED_REQUEST` = `SPRING_SECURITY_SAVED_REQUEST`。Spring Security の `HttpSessionRequestCache` の既定の名前）だけを共有する（2026-10-15、human:kakimomokuri が決定）。失効の部品 `ExpiredSessionRequestSaver` は、戻れる業務の画面の `RequestMatcher` とこの名前を明示した `HttpSessionRequestCache` で覚える。A-08 の `TotpReEnrollmentController` は、この名前を明示した `HttpSessionRequestCache` で読んで消す（読み出しの `getRequest`・`removeRequest` は matcher を使わない）。回復コードと TOTP の成功の扱い `FirstTotpSuccessHandler` と未認証の入口（`ExceptionTranslationFilter`）は、Spring Security の既定（同じ名前）のまま。開始準備では `RequestCache` を identity の合成ルートの 1 つの Bean にして 3 つの部品で共有し、Spring Security の既定には渡さないと決めていたが、実装で、`RequestCache` の Bean を作ると、Spring Security の `RequestCacheConfigurer` が型でその Bean を見つけ、`http.requestCache` に渡さなくても未認証の入口で使うので、未認証の入口が覚える範囲が変わることが分かったので改めた。`ExpiredSessionRequestSaver.SAVED_REQUEST` は `SessionKeys.SAVED_REQUEST` に移した
   - A-01 の「5 回」「15 分」は、`LoginController` がロックの方針 `LockPolicy` の値をモデルに入れ、テンプレートが `[[${lockFailures}]]`・`[[${lockMinutes}]]` で描く（表示は変えない）
 - 通知の依存の制約（Bolt 33 の開始準備の決定 6）: 通知は `identity` に依存しない。宛先（利用者の ID とアドレス）は呼ぶ側が渡す。荷主への通知（US-22）の宛先の渡し方は W9 の開始準備で決める
-- 各コンテキストの `package-info.java` に、依存してよいモジュールを `allowedDependencies` で宣言する（例: アクセス・監査は `shared`・`quotation :: events`・`platform :: web`・`notification :: api`（Bolt 33）、通知は `shared` だけ）
+- 各コンテキストの `package-info.java` に、依存してよいモジュールを `allowedDependencies` で宣言する（例: アクセス・監査は `shared`・`quotation :: events`・`platform :: web`・`notification :: api`（Bolt 33）、通知は `shared` だけ、外部データは `shared` だけ（Bolt 39））
 
 ドメインイベントは発行記録に JSON で保存され、未完了のものは後で復元されて再配信される。そのため、イベントの形を次の規則で進化させる（Bolt 1 レビュー R-05・R-37）。
 
@@ -442,20 +443,20 @@ end note
 
 | 段階 | 方式 | 対応する規則 |
 | :--- | :--- | :--- |
-| 受信 | 原本を無加工で保存し、冪等性キー（提供元、原本種別、外部 ID、外部版）と payload のハッシュを付ける | BR-12、PV-01 の外部原本消失 0 件 |
-| 分類 | 同じキーで同じ payload は「重複」、同じキーで違う payload は「隔離」、新しいキーは検証して「採用」 | BR-12 |
+| 受信 | 原本を無加工で保存し、冪等性キー（提供元、原本種別、外部 ID、外部版）と payload のハッシュを付ける。原本はファイル全体と行の payload の両方を、保存のポート（`externaldata.domain.model.aggregates.ExternalPayloadStorage`。キーは呼び手が作る `PayloadObjectKey`、ハッシュは `PayloadHash`）を通して保存する。保存に成功するまで受信記録を書かない（保存 → 受信記録の順）。同じキーを上書きしない。補償は消さない（トランザクションが巻き戻っても原本は残し、受信記録から参照されない原本は照合で数える。ADR-010 の消す補償とは違う）。保存先は W7 は DB（39a2）、W10 で S3（Object Lock、RET-03）に差し替える（ADR-004 の改訂。Bolt 39） | BR-12、PV-01 の外部原本消失 0 件 |
+| 分類 | 同じキーで同じ payload は「重複」、同じキーで違う payload は「隔離」、新しいキーは検証して「採用」、同じ外部レコードの版の逆転と既存の採用値との矛盾は「差異」（US-14 AC5）。分類は採用・重複・隔離・差異の 4 つで、受信記録が持つ（Bolt 39 で 3 つから改めた。ADR-004 の改訂）。形式を検証できないファイルと行も、原本を保存したうえで隔離する（UC-15 2a） | BR-12 |
 | 採用値の公開 | 採用した値だけを、出典・版・発生時刻・取得時刻付きのドメインイベントとして公開する。経路設計は航海（Voyage）集約を、追跡は主要実績を、それぞれ自分のコマンドで更新する | units.md U5 → U2、U3 の契約 |
 | 手動入力 | 停止時の手動入力は出典・入力者・入力時刻・仮状態を必須にし、原本と同じ Inbox に別の種別で記録する | BR-08 |
-| 照合 | 停止期間の全原本を「採用・重複・隔離」に分類し、件数照合と手動入力との差異確認が済んだ時点で復旧完了とする | BR-12、US-15 |
+| 照合 | 停止期間の全原本を「採用・重複・隔離・差異」に分類し、件数照合と手動入力との差異確認が済んだ時点で復旧完了とする（分類の「差異」と、US-15 の復旧照合の差異 `reconciliation_discrepancy` は別の語） | BR-12、US-15 |
 
-パイロットではファイル取込（`interfaces.file`）だけを作る。第 2 段階で API の受信口を足しても、Inbox 以降の処理は変えない。
+パイロットではファイル取込（`interfaces.file`）だけを作る。取込ファイルの解析は `externaldata.interfaces.file` で行い、application には値だけを渡す（application は Web の技術に依存しない。LayerArchitectureTest）。形式は OQ-02 の回答が届くまで仮の CSV（RFC 4180。引用符を許し、依存を足さずに解析する）とする（Bolt 39）。第 2 段階で API の受信口を足しても、Inbox 以降の処理は変えない。
 
 ## データの所有と永続化
 
 | 方針 | 内容 |
 | :--- | :--- |
 | データベース | MVP は 1 つのリレーショナル DB を使い、コンテキストごとにスキーマを分ける（第 3 章の単一 DB に、スキーマ分割を加えた） |
-| 所有 | 各スキーマは所有するコンテキストだけが読み書きする。他コンテキストのデータは公開 API かドメインイベントから得る。守り方はマッパーの SQL の静的検査（ADR-001） |
+| 所有 | 各スキーマは所有するコンテキストだけが読み書きする。他コンテキストのデータは公開 API かドメインイベントから得る。守り方はマッパーの SQL の静的検査（ADR-001。`MapperSchemaArchitectureTest`）。コンテキスト名とスキーマ名が違うときは、検査の「コンテキスト → スキーマ」の対応表で合わせる（外部データ `externaldata` → `external_data`。名前はどちらも変えない。Bolt 39）。業務のコンテキストの一覧（モジュールから `shared` と `platform` を除いたもの）と規則のテストの一覧の写しは、一致の規則で揃える（W6 横断レビュー M-3。Bolt 39） |
 | 集約の永続化 | 状態保存。エンティティと値オブジェクトは集約の永続化の一部として保存し、単独では保存しない（第 3 章） |
 | イベントの永続化 | 発行したドメインイベントと配信の完了状態を、発行元と同じトランザクションで保存する |
 | 監査証跡 | アクセス・監査スキーマに追記専用で記録し、更新・削除の権限を与えない |

@@ -4,7 +4,7 @@ title: "cargo-tracker ドメインモデル"
 description: "cargo-tracker の業務領域の分類、ユビキタス言語、7 つの境界づけられたコンテキスト（通知を含む）の集約・エンティティ・値オブジェクト・ドメインルール、コマンド・クエリ・イベント、予約サガ。"
 tags: [design, domain-model, ddd]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-02T03:31:21Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-02T06:51:16Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:41:04Z }
   - { by: human:kakimomokuri, at: 2026-10-01T07:48:17Z }
@@ -310,7 +310,14 @@ quadrantChart
 | メールの送信 | MailSender | 宛先・件名・本文のメール 1 通を送るポート（`notification.domain.model.aggregates`。外部の技術のポートはドメインに置く規則）。実装は SMTP の `SmtpMailSender` と、dev でログに出す `LoggingMailSender`（1 つの Bean の中で守りの式で切り替える）（`notification.infrastructure.mail`。ADR-017、Bolt 33） | 通知 |
 | 監査記録 | AuditRecord | 操作者・時刻・対象・変更前後・理由・承認・出典の追記専用の記録。リポジトリ（`AuditRecordRepository`）は追記と照会だけを持ち、更新と削除はしない（IA-INV-07）。Bolt 38c2 から、対象の利用者の最新の停止の記録を引く（`findLatestUserSuspension`。索引 `ix_audit_record_target`） | アクセス・監査 |
 | 情報源 | DataSource | データ責任者が選定・承認した運送会社・港湾などの原本の提供元（BR-18） | 外部データ |
-| 外部原本 | ExternalRecord | 外部から受け取った無加工の原本と、その分類（採用・重複・隔離） | 外部データ |
+| 外部原本 | ExternalRecord | 冪等性キーごとの外部の原本。最初に受け取った payload のハッシュを持つ。分類は持たない（分類は受け取るたびの受信記録が持つ。Bolt 39 で「その分類（採用・重複・隔離）」を改めた。下の要素表の分類の列は表を作る 39a2 で受信記録に移す） | 外部データ |
+| 受信記録 | （39a2 で決める） | 外部原本を受け取るたびの追記専用の記録。分類（採用・重複・隔離・差異）を持つ（data_model の `receipt.classification`）。クラス名は通知の公開 API の結果（`PasswordResetMailReceipt` など）と紛れないよう、表を作る 39a2 で決める | 外部データ |
+| 取込 | Ingestion | データ責任者が 1 ファイルを取り込む 1 回の単位。ファイル全体の原本と分類別の件数を持ち、照合に使う | 外部データ |
+| 隔離 | QUARANTINED | 受信記録の分類の 1 つ。同じ冪等性キーで違う payload の原本と、形式を検証できないファイルと行（UC-15 2a）。データ責任者が判断するまで採用値に影響しない | 外部データ |
+| 差異 | DISCREPANCY | 受信記録の分類の 1 つ。同じ外部レコードの版の逆転と、既存の採用値との矛盾（US-14 AC5）。US-15 の復旧照合で手動情報と突き合わせた差異（`reconciliation_discrepancy`）とは別の語 | 外部データ |
+| 外部原本の保存 | ExternalPayloadStorage | 原本（ファイル全体と行の payload）を無加工で保存し読み戻すポート（`externaldata.domain.model.aggregates`。外部の技術のポートはドメインに置く規則）。同じキーを上書きせず、読めないキーは例外。呼び手は保存に成功してから受信記録を書く。補償は消さない。実装は W7 は DB（39a2）、W10 で S3（Bolt 39。ADR-004 の改訂） | 外部データ |
+| 原本のオブジェクトキー | PayloadObjectKey | 保存した原本を指すキー（`externaldata/ingestions/{UUID}`・`externaldata/records/{UUID}`。呼び手が作り、前置きでファイル全体と行の payload を区別する）。形を検査し、保存先の外を指すキーを作れない（Bolt 39） | 外部データ |
+| 原本のハッシュ | PayloadHash | 原本のバイト列の SHA-256 の 16 進 64 文字。保存の前に呼び手が計算し、重複と隔離の判定に使う（data_model の `payload_hash`・`file_hash`。Bolt 39） | 外部データ |
 | 冪等性キー | IdempotencyKey | 提供元、原本種別、外部 ID、外部版の組（BR-12） | 外部データ |
 | 手動情報 | ManualEntry | 連携停止中に出典・入力者・入力時刻・仮状態を伴って入力した情報（BR-08） | 外部データ |
 | 復旧照合 | RecoveryReconciliation | 停止期間の全原本の分類・件数照合・手動情報との差異確認（BR-12） | 外部データ |

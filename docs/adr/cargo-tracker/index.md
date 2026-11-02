@@ -9,7 +9,7 @@ cargo-tracker プロジェクトの ADR ドキュメントです。
 | [ADR-001](./001-modular-monolith.md) | モジュラーモノリスを採用する | 承認済み |
 | [ADR-002](./002-domain-logic-pattern-per-context.md) | ドメインロジックのパターンを境界づけられたコンテキストごとに選ぶ | 承認済み |
 | [ADR-003](./003-inter-context-integration.md) | コンテキスト間は冪等コマンド・永続化したドメインイベント・オーケストレーション型のサガで連携する | 承認済み（決定 3 は ADR-015 で改訂） |
-| [ADR-004](./004-external-data-ingestion.md) | 外部原本は Inbox・隔離・照合の 3 段で取り込む | 承認済み |
+| [ADR-004](./004-external-data-ingestion.md) | 外部原本は Inbox・隔離・照合の 3 段で取り込む | 承認済み（決定 1〜3 は 2026-11-02 に Bolt 39 で改訂） |
 | [ADR-005](./005-server-side-rendering.md) | 画面はサーバーサイドレンダリングとハイパーメディアで提供する | 承認済み |
 | [ADR-006](./006-java-spring-boot-platform.md) | Java 25 LTS・Spring Boot 4.1・Spring Modulith でアプリケーションを構築する | 承認済み |
 | [ADR-007](./007-postgresql-mybatis-flyway.md) | 開発環境は H2、本番は PostgreSQL 18 を使い、永続化は MyBatis、スキーマは Flyway で管理する | 承認済み |
