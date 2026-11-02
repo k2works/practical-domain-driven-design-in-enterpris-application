@@ -43,5 +43,6 @@ public record UserSummary(
         assignedCompanyNames = List.copyOf(assignedCompanyNames);
         if (assignedOutsideCount < 0) {
             throw new IllegalArgumentException("assignedOutsideCount");
-        }    }
+        }
+    }
 }
