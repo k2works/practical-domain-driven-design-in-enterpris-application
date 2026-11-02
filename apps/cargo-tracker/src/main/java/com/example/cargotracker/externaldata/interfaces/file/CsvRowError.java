@@ -3,15 +3,25 @@ package com.example.cargotracker.externaldata.interfaces.file;
 import java.util.Objects;
 
 /**
- * 読めなかった CSV の行の誤り。例外にせず値で返し、ほかの行は読む（Bolt 39。隔離は 39b）。
+ * 読めなかった CSV の行の誤り。例外にせず値で返し、ほかの行は読む（Bolt 39。隔離は 39b）。誤りの行がファイルの物理行のどこからどこまでかを持つ。
+ * 引用符の閉じ忘れはファイルの終わりまでを飲み込むので、終わりはファイルの最後の行になる（39b で取込全体の要確認として扱い、取り込めなかった件数を示す）。
  *
- * @param lineNumber 行が始まるファイルの行番号（1 から）
+ * @param lineNumber 誤りの行が始まる物理行の番号（1 から）
+ * @param lastLineNumber 誤りの行が終わる物理行の番号（引用符の中の改行で複数の物理行にまたがれば始まりより後）
  * @param reason 理由
  */
-public record CsvRowError(int lineNumber, Reason reason) {
+public record CsvRowError(int lineNumber, int lastLineNumber, Reason reason) {
 
     public CsvRowError {
         Objects.requireNonNull(reason, "reason");
+        if (lastLineNumber < lineNumber) {
+            throw new IllegalArgumentException("誤りの行の終わりが始まりより前: " + lineNumber + ".." + lastLineNumber);
+        }
+    }
+
+    /** 1 つの物理行に収まる誤り。 */
+    public CsvRowError(int lineNumber, Reason reason) {
+        this(lineNumber, lineNumber, reason);
     }
 
     /** 行の誤りの理由。 */

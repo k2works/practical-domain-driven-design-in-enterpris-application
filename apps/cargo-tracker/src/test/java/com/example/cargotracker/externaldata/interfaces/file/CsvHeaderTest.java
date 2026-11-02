@@ -2,6 +2,7 @@ package com.example.cargotracker.externaldata.interfaces.file;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
@@ -44,6 +45,24 @@ class CsvHeaderTest {
         assertThat(CsvHeader.check(List.of(), CsvFileKind.VOYAGE))
                 .isEqualTo(new CsvHeader.FileError(
                         CsvHeader.Reason.MISSING_COLUMN, List.of("external_id", "external_version", "acquired_at")));
+    }
+
+    @Test
+    void 読んだCSVのヘッダーを検証する() {
+        CsvRecords records = CsvRecords.parse("external_id,external_version,acquired_at\nV-1,1,2026-11-02T00:00:00Z\n"
+                .getBytes(StandardCharsets.UTF_8));
+
+        assertThat(CsvHeader.check(records, CsvFileKind.VOYAGE))
+                .isEqualTo(new CsvHeader.Columns(Map.of("external_id", 0, "external_version", 1, "acquired_at", 2)));
+    }
+
+    @Test
+    void ヘッダーの行が読めなければファイルの誤りにする() {
+        CsvRecords records =
+                CsvRecords.parse("external_id,\"external_version\nV-1,1\n".getBytes(StandardCharsets.UTF_8));
+
+        assertThat(CsvHeader.check(records, CsvFileKind.VOYAGE))
+                .isEqualTo(new CsvHeader.FileError(CsvHeader.Reason.UNREADABLE_HEADER, List.of()));
     }
 
     @Test

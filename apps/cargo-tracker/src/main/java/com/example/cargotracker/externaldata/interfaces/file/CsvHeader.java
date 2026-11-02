@@ -10,7 +10,15 @@ import java.util.Map;
  */
 public sealed interface CsvHeader {
 
-    /** ヘッダーを種別に必要な列で検証する。 */
+    /** 読んだ CSV のヘッダーを種別に必要な列で検証する。ヘッダーの行を読めなければファイルの誤りにする。 */
+    static CsvHeader check(CsvRecords records, CsvFileKind kind) {
+        if (records.headerUnreadable()) {
+            return new FileError(Reason.UNREADABLE_HEADER, List.of());
+        }
+        return check(records.header(), kind);
+    }
+
+    /** ヘッダーの列名を種別に必要な列で検証する。 */
     static CsvHeader check(List<String> columns, CsvFileKind kind) {
         Map<String, Integer> positions = new LinkedHashMap<>();
         List<String> duplicated = new ArrayList<>();
@@ -62,6 +70,8 @@ public sealed interface CsvHeader {
         /** 必要な列がない（ヘッダーの行がない場合を含む）。 */
         MISSING_COLUMN,
         /** 同じ名前の列が 2 つ以上ある。 */
-        DUPLICATE_COLUMN
+        DUPLICATE_COLUMN,
+        /** ヘッダーの行を読めない（行の誤りがある。誤りは {@link CsvRecords#errors()} にある）。 */
+        UNREADABLE_HEADER
     }
 }
