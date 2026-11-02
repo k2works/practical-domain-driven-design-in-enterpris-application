@@ -2369,6 +2369,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#w72026-11-16-11-20" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        W7（2026-11-16 〜 11-20）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#w5w10release-10" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -16585,6 +16596,295 @@
 </tr>
 </tbody>
 </table>
+<h3 id="w72026-11-16-11-20">W7（2026-11-16 〜 11-20）<a class="headerlink" href="#w72026-11-16-11-20" title="Permanent link">&para;</a></h3>
+<p><strong>状態</strong>: 計画済み（承認待ち）。2026-11-02 に初案を作り、詳細整合性検証と横断整合性検証の指摘を反映した（重大 4 件・中 15 件・軽 11 件。人に諮る 3 件（下書き、監査、名前の違い）は human:kakimomokuri が決めた）</p>
+<p><strong>ゴール</strong>: 外部原本を安全に取り込み（US-14）、取り込んだ航海の更新から確定した経路版の評価をつなぎ、取り込んだ主要実績を下書きから採用する道と、確認中・取消済み・完了後の扱いを作る（US-12 の残り）。</p>
+<p><strong>開始条件の確かめ</strong>: 「外部情報の更新（DE-12）から評価を起こす入口をつなぐ Bolt は、Bolt 37e3b を終えてから始める」（W5〜W10 の表の W7 の行、リスク台帳の 37e3・37e3b の行）は満たされている（Bolt 37e3b の終了報告を 2026-10-23 に承認済み）。承認の後に、W7 の行とリスク台帳の文を「満たした」に直す。</p>
+<p><strong>局面とアプローチ</strong>: 中盤（<a href="../development_strategy/">開発戦略</a>）。外部データは新しいコンテキストで、トランザクションスクリプト（domain_model の外部データの節）なので <strong>インサイドアウト</strong>（外部原本・受信記録の一意制約と分類から。開発戦略の W7 の行）。外部データの画面（39c・39d）は、内側を 39・39b で固めた後に画面を足すので <strong>アウトサイドイン</strong>（表の「中盤」から外れる理由: 画面の振る舞いと認可が受入条件の中心で、内側は先に固まっているため）。経路設計の書き手と評価の入口（39e・39f）、追跡の下書きの採用と確認中・取消済み・完了後（39g）、DE-09・DE-10 の作り直し（39g2）は、既存の集約に受入条件を足すので <strong>アウトサイドイン</strong>（中盤の例外。序盤の集約を広げる）。</p>
+<p><strong>承認ゲート</strong>: 外部原本の取込（39〜39d・39h）は <strong>ステップごとに止める</strong>。<code>/goal</code> の下でもステップのゲートを外さない（W5・W6 の締めの決定）。経路設計と追跡の Bolt（39e〜39g2・39i）は既定（計画と終了報告で止め、確認必須は計画の確認ポイントにする）。規則に当たったら、置き場所を規則に合わせて動かさず、止めて諮る（T-125、ADR-017）。</p>
+<p><strong>設計の決定</strong>（2026-11-02 に human:kakimomokuri が決定。W7 の開始準備の 2 回の質問への回答）:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">事項</th>
+<th style="text-align: left;">決定</th>
+<th style="text-align: left;">反映</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">取込ファイルの形式（OQ-02 の残り。回答なし）</td>
+<td style="text-align: left;">仮の形式で作る。CSV を 1 ファイル 1 種別にし、1 行に外部 ID・外部版・取得時刻・値を持つ（主要実績は追跡番号も持つ。DE-13 の属性）。署名の検証は形式の検証とハッシュだけにする（UC-15 2a）。回答が届いたら差し替えの Bolt を足す（Unit の評価の U5 の方針）。OQ-02 は台帳に残す</td>
+<td style="text-align: left;">requirements_definition（OQ-02 の注）、system_usecase（UC-15 2a）、domain_model、test_strategy</td>
+</tr>
+<tr>
+<td style="text-align: left;">取込の置き場所</td>
+<td style="text-align: left;">新しいコンテキスト <code>externaldata</code>（スキーマは <code>external_data</code>）。外部データはほかのコンテキストに依存しない（<code>allowedDependencies</code> は <code>shared</code>・<code>platform :: web</code> だけ）。採用値と隔離と判断を DE-12（航海）・DE-13（主要実績）・DE-14（隔離）と判断のイベントで公開し、経路設計・追跡・identity が listener で受ける（それぞれの <code>allowedDependencies</code> に <code>externaldata :: events</code> を足す）。ModularityTest のモジュール一覧と型の依存の規則を足す（構造）。ADR に記録する（39 の計画で ADR-004 の改訂か ADR-020 かを諮る）</td>
+<td style="text-align: left;">architecture_backend（ARCH-HO-03 を含む）、ADR、ModularityTest、package-info</td>
+</tr>
+<tr>
+<td style="text-align: left;">payload の保存【前の決定の変更】</td>
+<td style="text-align: left;">保存のポートを <code>externaldata.domain.model.aggregates</code> に、実装を <code>externaldata.infrastructure</code> に置く（CLAUDE.md・ADR-017。前例は <code>RequiredDocumentStorage</code>）。W7 の実装は DB（開発はローカルのファイルでもよい）にし、DB にはキーとハッシュを持つ形をはじめから守る。「保存に成功するまで受信記録を書かない」順序と補償をポートの約束にしておく（ADR-010 の必要書類と同じ問題を W10 で起こさないため）。W10 で S3（Object Lock、RET-03 の 7 年）に差し替える。ADR-004 の決定 1（オブジェクトストレージ）と data_model の payload の注を W7 の間だけ変えるので、ADR に記録する</td>
+<td style="text-align: left;">ADR-004・ADR、data_model（payload の注）、W10 の行</td>
+</tr>
+<tr>
+<td style="text-align: left;">情報源の管理（S-19）</td>
+<td style="text-align: left;">画面にせず運用タスクにし、W10 の運用準備で作る（W6 の管理範囲の割り当てと同じ）。情報源は（提供元、原本種別）の単位（<code>data_source.record_type</code>）。W7 は開発データとテストの準備で情報源を入れ、US-14 AC2 は照会（<code>PilotReadiness</code>）と、承認済みの情報源のない取込の拒否で確かめる</td>
+<td style="text-align: left;">ui_design（S-19 の注と画面遷移図の「業務ホーム → S-19 → S-16」）、W10 の行</td>
+</tr>
+<tr>
+<td style="text-align: left;">取り込んだ主要実績（DE-13）の登録</td>
+<td style="text-align: left;">前の決定（DE-13 で下書き <code>DRAFT</code> を作る。BR-05・US-13 AC4・UC-10 3c）を変えない。追跡管理者が下書きを採用する操作を W7 で作る。完了済みの追跡には受けたときに原本だけ（<code>RETAINED_ONLY</code>。AC5）、取消済みの予約には受けたときに拒否して記録する（AC4）。時系列に反する実績は、採用のときと手入力のときに確認中（<code>UNDER_REVIEW</code>、DE-18。AC3）にする</td>
+<td style="text-align: left;">domain_model（DE-13・T-INV-03〜05・確認中の理由）、user_story（US-12 の決定）</td>
+</tr>
+<tr>
+<td style="text-align: left;">外部原本の採否の監査（AUD-01）</td>
+<td style="text-align: left;">外部データは隔離（DE-14）と判断のイベントを出すだけにし、identity の listener が監査記録を書く（identity に <code>externaldata :: events</code> への依存が加わる。今の <code>quotation :: events</code> と同じ形）。外部データは identity に依存しない</td>
+<td style="text-align: left;">domain_model（AuditRecord・IA-INV-08・DE-14 の受け手）、architecture_backend</td>
+</tr>
+<tr>
+<td style="text-align: left;">コンテキスト名とスキーマ名の違い</td>
+<td style="text-align: left;">MapperSchemaArchitectureTest に「コンテキスト → スキーマ」の対応表を足す（規則の変更）。<code>externaldata</code> は <code>external_data</code> を読める。名前はどちらも変えない</td>
+<td style="text-align: left;">MapperSchemaArchitectureTest、architecture_backend</td>
+</tr>
+</tbody>
+</table>
+<p><strong>確認ポイント</strong>（AI の推奨。計画の承認で決める。【前の決定の変更】は前に人が決めたことを変えるもの）:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">#</th>
+<th style="text-align: left;">確認すること</th>
+<th style="text-align: left;">推奨</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">1</td>
+<td style="text-align: left;">受信記録の分類の数【前の決定の変更】</td>
+<td style="text-align: left;">4 つ（採用・重複・隔離・差異）にする。US-14 AC5、domain_model の <code>Ingestion</code>（:1458）、data_model の <code>receipt.classification</code>（:1122）、S-16 の画面イメージ（:1757）に合わせ、3 つと書いた箇所を直す: ADR-004 の決定 2・3、domain_model :311、requirements_definition の BR-12（:732）、architecture_backend :447・:450 の ARCH-HO-03、system_usecase の UC-15 6a</td>
+</tr>
+<tr>
+<td style="text-align: left;">2</td>
+<td style="text-align: left;">隔離・差異の判断（S-17 の採用・却下と UC-15 の 6 段目の判断者）の記録</td>
+<td style="text-align: left;"><code>receipt</code> は追記専用（data_model :173）のまま、判断を別の追記専用の表（例: <code>external_data.receipt_decision</code>。判断・判断者・時刻・理由）に置く（スキーマ）。採用の判断で <code>adopted_value</code> を作り、DE-12・DE-13 を出す。隔離した payload を採用した後に同じ payload が再送されたとき（<code>external_record</code> は最初の payload のハッシュで比べる。data_model :1121）は重複にするか、39d の計画で決める</td>
+</tr>
+<tr>
+<td style="text-align: left;">3</td>
+<td style="text-align: left;">取込と判断をする役割</td>
+<td style="text-align: left;">データ責任者（<code>DATA_STEWARD</code>。<code>shared.domain.Role</code> に既にある）。取込（S-16）と判断（S-17）の認可、<code>/staff/external-data/**</code>、CSRF、ナビゲーション（データ責任者の業務ホームからの入口。ui_design :74・:141-142）とその検証のテスト。担当範囲では絞らない（情報源の単位で、荷主企業を持たない）</td>
+</tr>
+<tr>
+<td style="text-align: left;">4</td>
+<td style="text-align: left;">取込の単位と一括処理、PERF-06</td>
+<td style="text-align: left;">1 ファイルを 1 つの取込（<code>Ingestion</code>）とし、行ごとに分類して受信記録を書く。1 ファイル 1 万件以下（non_functional :50）、DB の 1 文の上限（:81）の中に収める。39b の統合テストで 1 万件のファイルの時間を測る（PERF-06）。リスク台帳の PERF-06 の行（版の競合の連鎖）に従い、同じ追跡番号への集中を 39g の統合テストで確かめる。負荷テストは W10</td>
+</tr>
+<tr>
+<td style="text-align: left;">5</td>
+<td style="text-align: left;">ファイルの解析の置き場所</td>
+<td style="text-align: left;">解析は <code>externaldata.interfaces</code>（ADR-004 の <code>interfaces.file</code>）で行い、application には値だけを渡す（LayerArchitectureTest :86・:276。application は <code>MultipartFile</code> などの Web の技術に依存しない）。規則に当たったら諮る</td>
+</tr>
+<tr>
+<td style="text-align: left;">6</td>
+<td style="text-align: left;">形式の検証に失敗した行（UC-15 2a）</td>
+<td style="text-align: left;">39b で、隔離して理由を残す（DE-14）。データ責任者への通知は W9 の通知で受ける（W7 は S-17 の一覧に出す）</td>
+</tr>
+<tr>
+<td style="text-align: left;">7</td>
+<td style="text-align: left;">順序の逆転を判定する場所（ADR-004 は規則を 2 か所に分ける案を却下している）</td>
+<td style="text-align: left;">外部データの差異（US-14 AC5、39h）は、同じ外部レコードの版の逆転と、既存の採用値との矛盾だけを判定する。追跡の確認中（US-12 AC3、39g）は、追跡の実績の時系列（出典をまたぐ）だけを判定する。境界を domain_model の外部データの節と追跡の節に書く。実行の順は 39g の後に 39h のまま</td>
+</tr>
+<tr>
+<td style="text-align: left;">8</td>
+<td style="text-align: left;">手入力の実績への確認中の規則【前の決定の変更】</td>
+<td style="text-align: left;">追跡管理者の手入力も、時系列に反すれば確認中にする（US-12 AC3。domain_model :1022 の「追跡管理者が登録した実績は採用」を変える）</td>
+</tr>
+<tr>
+<td style="text-align: left;">9</td>
+<td style="text-align: left;">取消済みの予約（US-12 AC4）</td>
+<td style="text-align: left;">予約を取消済みにする経路（DE-08 の受け手）は US-05（W11）なので、W7 は開発データとテストデータの取消済みの追跡で確かめる。拒否の記録は追跡に置く。有人例外案件（<code>service_case</code> の表はまだない）の起票は W8（US-20）でこの記録を受けてつなぐ。受入条件の照合の表では「有人例外案件に引き継ぐ」を W8 に送ったと書く（US-24・US-04 の前例）</td>
+</tr>
+<tr>
+<td style="text-align: left;">10</td>
+<td style="text-align: left;">DE-18（確認中になった）</td>
+<td style="text-align: left;">39g で発行する。受け手（荷主への通知）は W9 なので、W7 の時点では listener がない。T-184（配信まで確かめる）は W9 で受け手を作るときに当てる</td>
+</tr>
+<tr>
+<td style="text-align: left;">11</td>
+<td style="text-align: left;">航海の書き手と行のロック（W6 の確認ポイント 6 の宿題）</td>
+<td style="text-align: left;">航海を書くのは経路設計の DE-12 の listener（経路設計の中の書き手。外部データは経路設計の表を書かない）。航海の行は <code>version</code> の楽観ロックで守り、評価の <code>Conflict</code> は読み直して評価し直す（Bolt 37d2 計画 :108）。確定は今のとおり同じトランザクションで航海を読み直して比べ、行のロックは足さない。DE-12 の属性に取得時刻を足す（<code>routing.voyage.acquired_at</code> は NOT NULL で鮮度の判定に使う。domain_model :1616）</td>
+</tr>
+<tr>
+<td style="text-align: left;">12</td>
+<td style="text-align: left;">評価の入口</td>
+<td style="text-align: left;">DE-12 の listener が航海を更新した後、航海番号から確定した経路版を持つ案件を引く照会（<code>candidate_leg.voyage_number</code> の索引。data_model :1178）で <code>evaluateConfirmedRoute</code> を呼ぶ。配信まで確かめる統合テストを書く（T-184）。UC-06 4a（算出済みの候補を旧版にする）も同じ Bolt</td>
+</tr>
+<tr>
+<td style="text-align: left;">13</td>
+<td style="text-align: left;">2 度寄る航海の確定経路が情報版の更新のたびに再設計要になる件（Bolt 37d2 の既知の課題。domain_model :878）</td>
+<td style="text-align: left;">W7 で直す（評価の入口をつなぐと本番で起きるため）。確定の区間に寄港の位置を持たせる（スキーマ）。システムの更新の操作を分ける件（<code>update(routingCase, null)</code>）も同じ Bolt。US-08（W13）には送らない</td>
+</tr>
+<tr>
+<td style="text-align: left;">14</td>
+<td style="text-align: left;">開発データの見本 TR-2026-0911・0912 と航海 DEMO-101 の食い違い（リスク台帳）【前の決定の変更】</td>
+<td style="text-align: left;">見本の航海を分ける（見本専用の航海を足し、DEMO-101 の取込で見本の状態が変わらないようにする。dev だけのマイグレーション。データベースの承認ゲート）。Bolt 37e4b の決定 (2)「区間の航海は DEMO-101 のまま」を変える</td>
+</tr>
+<tr>
+<td style="text-align: left;">15</td>
+<td style="text-align: left;">港湾の情報【前の決定の変更】</td>
+<td style="text-align: left;">W7 は航海と主要実績だけにする（<code>AdoptedValue</code> の対象。domain_model :1459）。港湾の鮮度は、user_story :303 と台帳の D-89 の注が「W7、US-14 で扱う」としているのを変え、台帳に新しい ID で載せて Release 1.1 の計画の見直しで扱う</td>
+</tr>
+<tr>
+<td style="text-align: left;">16</td>
+<td style="text-align: left;">経路設計の貨物種別の判定（<code>CARGO_NOT_SUPPORTED</code>）と除外理由の閾値</td>
+<td style="text-align: left;">W7 の最後の Bolt（39i）で作る（W6 の確認ポイント 11 のとおり W7）。D-65 の貨物種別の ACL、除外理由の閾値の型と <code>threshold</code> の列を分けること（スキーマ）と値の名前（Bolt 37c 計画 :174）も同じ Bolt</td>
+</tr>
+<tr>
+<td style="text-align: left;">17</td>
+<td style="text-align: left;">D-65 の残りのうち取込で変わるもの</td>
+<td style="text-align: left;"><code>Voyage</code>・<code>ConnectionRule</code> の class 化と、航海の照会を時間の窓と港で絞ることは、書き手を作る 39e で行う。候補探索の量（航海が数百本のとき）は W10 の性能テストで確かめる。UC-07 5a（依頼の後の再提出で経路条件が得られない）は W7 の範囲の外として台帳に残す</td>
+</tr>
+<tr>
+<td style="text-align: left;">18</td>
+<td style="text-align: left;">Golden dataset の G-06</td>
+<td style="text-align: left;">欠落・矛盾の案件を 39h で足す（W6 の確認ポイント 11。v0 は古さだけ）</td>
+</tr>
+<tr>
+<td style="text-align: left;">19</td>
+<td style="text-align: left;">DE-09・DE-10 を ADR-014 の形に直す（W7 に送られていた。architecture_backend :134、domain_model :1026・:1628、Bolt 26b 計画 :67・:312、Bolt 23 終了報告 :128。B-INV-06 と US-05（W11）の前提）</td>
+<td style="text-align: left;">Bolt 39g2 を足して W7 で行う。Bolt 26b 終了報告 :107 の到着見込みと鮮度、P-3（追加する実績の選び方。版を通さずに実績を書く経路ができるため）も 39g2</td>
+</tr>
+<tr>
+<td style="text-align: left;">20</td>
+<td style="text-align: left;">SP の食い違い</td>
+<td style="text-align: left;">US-14 は 8 SP（ユーザーストーリー一覧）。test_strategy :517 の 5 SP を直す。あわせて :518 の US-15 の 4 SP を W12 の行の 5 SP にそろえる</td>
+</tr>
+<tr>
+<td style="text-align: left;">21</td>
+<td style="text-align: left;">取込がない日の通知（FRS-04）と、隔離が 24 時間未判断の警告（OBS-06）</td>
+<td style="text-align: left;">W7 では作らず、W10 の監視で作る</td>
+</tr>
+<tr>
+<td style="text-align: left;">22</td>
+<td style="text-align: left;">用語「差異」の重なり</td>
+<td style="text-align: left;">受信記録の分類の「差異」（<code>DISCREPANCY</code>）と、US-15 の復旧照合の差異（<code>reconciliation_discrepancy</code>）を用語集で区別する（39 のステップ 1）</td>
+</tr>
+<tr>
+<td style="text-align: left;">23</td>
+<td style="text-align: left;">ユーザーマニュアル</td>
+<td style="text-align: left;">外部データの取込と隔離・差異の確認の章を新しく作る（新しいファイル。39c・39d）。主要実績の下書きの採用と確認中・取消済み・完了後は 9 章（追跡管理）に足す（39g）。振る舞いが変わる Bolt はマニュアルの更新を完了条件に入れる</td>
+</tr>
+<tr>
+<td style="text-align: left;">24</td>
+<td style="text-align: left;">#50 から W7 で返すもの</td>
+<td style="text-align: left;">評価の入口に関わる Bolt 37c の「S-06 が古くなった候補を適合と示したまま」（39f）、追跡の Bolt 26b・26c の P-5（遅延の外部キーの違反が 500）・P-6（一意制約の違反を制約の名前で分ける）・P-7（13 引数の写し）（39g の Refactor）。ほかは W7 では返さない</td>
+</tr>
+</tbody>
+</table>
+<p><strong>設計への反映が必要な事項</strong>（各 Bolt の最初のステップで設計文書を直してから実装する）:</p>
+<ul>
+<li>外部データ（39〜39d・39h）: architecture_backend（新しいコンテキスト、依存の向き、ARCH-HO-03 の分類）、ADR-004 の改訂または ADR-020（置き場所、payload の保存、分類 4 つ、解析の置き場所）、domain_model（:311 と外部データの節の分類 4 つ、判断の記録、<code>PilotReadiness</code>、DE-12〜DE-14 と判断のイベントの属性と受け手、順序の逆転の境界）、data_model（<code>external_data</code> の表、判断の表、payload の注）、ui_design（S-16 の URL と項目、S-17 の画面イメージ、S-19 の注と画面遷移図、ナビゲーション）、requirements_definition（BR-12 の分類、OQ-02 の注）、system_usecase（UC-15 2a・6a）、test_strategy（:517・:518 の SP、<code>features/external_data/</code>、US-14 の照合の表）、non_functional（PERF-06 の確かめ方）、用語集（差異の区別）、MapperSchemaArchitectureTest・ModularityTest・各コンテキストの <code>package-info</code></li>
+<li>経路設計（39e・39f・39i）: domain_model（:860 の航海のロック、:875 の評価の入口、:878 の寄港の位置、:1616 の DE-12 の属性）、data_model（<code>candidate_leg.voyage_number</code> の索引、確定の区間の寄港の位置、除外理由の <code>threshold</code>）、user_story（US-06・US-07 の W7 の注、:303 の港湾）</li>
+<li>追跡（39g・39g2）: domain_model（:1022 の手入力の規則、:1026・:1628 の DE-09・DE-10・DE-18、:1189 の確認中の理由、:1617 の DE-13 の受け手、T-INV-03〜05）、data_model（<code>milestone</code> の <code>revised_by</code>・<code>revised_at</code> を足すか）、user_story（US-12 の決定）、test_strategy（US-12 AC3〜AC5 のタグと照合の表）、architecture_backend :134</li>
+<li>承認の後に直す文書（W7 の開始準備の範囲）: W5〜W10 の表の W7 の行（開始条件を「満たした」に、39g2 を足す）、リスク台帳（37e3・37e3b の行、見本 TR-2026-0911・0912 の行）、W10 の行（情報源の管理の運用タスク、S3 の差し替え、FRS-04・OBS-06）、台帳（港湾の鮮度の新しい ID、UC-07 5a、D-89 の注）、開発戦略（:107 の中盤の例外に W7 の経路設計と追跡を足す、:186 の W7 のデモに再設計要になる流れと <code>@US-06</code>・<code>@US-07</code> を足す、:347 の W7 の行を Bolt の対象で決める形に）</li>
+</ul>
+<p><strong>Bolt の分け方</strong>（2026-11-02 の初案。各 Bolt の開始準備で引き直す）:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Bolt</th>
+<th style="text-align: left;">範囲</th>
+<th style="text-align: right;">SP</th>
+<th style="text-align: left;">アプローチ</th>
+<th style="text-align: left;">承認ゲート</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">39</td>
+<td style="text-align: left;">外部データのコンテキストの骨格: パッケージと <code>package-info</code>（外部データ・経路設計・追跡・identity の <code>allowedDependencies</code>）、ModularityTest と MapperSchemaArchitectureTest の対応表、<code>external_data</code> の表（<code>data_source</code>・<code>ingestion</code>・<code>external_record</code>・<code>receipt</code>・判断の表・<code>adopted_value</code>）、payload の保存のポートと DB の実装、仮の形式の解析（<code>interfaces</code> の側）、ADR、用語集。見える振る舞いは変えない</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;">インサイドアウト（一意制約と分類の表から）</td>
+<td style="text-align: left;">ステップごと（構造・スキーマ・ADR・規則の変更）</td>
+</tr>
+<tr>
+<td style="text-align: left;">39b</td>
+<td style="text-align: left;">分類と取込のサービス: 採用・重複・隔離・差異の分類（冪等性キー BR-12。AC1・AC3・AC4）、形式の検証に失敗した行の隔離（UC-15 2a）、承認済みの情報源のない取込の拒否と <code>PilotReadiness</code>（AC2）、DE-14 と identity の監査の listener、1 万件の時間（PERF-06）。業務ルール層のシナリオ（<code>features/external_data/</code>）</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;">インサイドアウト</td>
+<td style="text-align: left;">ステップごと（セキュリティ・監査・構造）</td>
+</tr>
+<tr>
+<td style="text-align: left;">39c</td>
+<td style="text-align: left;">S-16 外部データの取込の画面: ファイルの選択、分類別の件数、認可（データ責任者）と CSRF、ナビゲーション、axe、マニュアルの新しい章とキャプチャ</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;">アウトサイドイン（S-16 から。局面とアプローチの段落の理由）</td>
+<td style="text-align: left;">ステップごと（認可・画面・新しいファイル）</td>
+</tr>
+<tr>
+<td style="text-align: left;">39d</td>
+<td style="text-align: left;">S-17 隔離・差異の確認: 判断（採用・却下）の記録と判断者、採用の判断で採用値と DE-12・DE-13、判断のイベントと監査、隔離した payload の再送の扱い、マニュアルとキャプチャ、axe</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;">アウトサイドイン（S-17 から。局面とアプローチの段落の理由）</td>
+<td style="text-align: left;">ステップごと（スキーマ・認可）</td>
+</tr>
+<tr>
+<td style="text-align: left;">39e</td>
+<td style="text-align: left;">経路設計の航海の書き手: DE-12 の listener、<code>Voyage</code>・<code>ConnectionRule</code> の class 化、<code>version</code> の楽観ロック、航海の照会を時間の窓と港で絞る、見本の航海を分ける（確認ポイント 14）</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;">アウトサイドイン（受入シナリオから）</td>
+<td style="text-align: left;">計画と終了報告（構造・開発データ）</td>
+</tr>
+<tr>
+<td style="text-align: left;">39f</td>
+<td style="text-align: left;">評価の入口: 航海番号から確定した経路版を持つ案件を引く照会と索引、<code>evaluateConfirmedRoute</code> をつなぐ、配信までの統合テスト（T-184）、UC-06 4a、2 度寄る航海の寄港の位置（確認ポイント 13）、S-06 の古くなった候補（#50）、マニュアル 8 章</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;">アウトサイドイン（状態の組み合わせの表を先に書く。T-182）</td>
+<td style="text-align: left;">計画と終了報告（スキーマ・構造）</td>
+</tr>
+<tr>
+<td style="text-align: left;">39g</td>
+<td style="text-align: left;">追跡の DE-13 と US-12 AC3〜AC5: 下書きの登録と採用の操作、確認中と DE-18、取消済みの拒否の記録、完了後の原本だけ、手入力にも確認中の規則、同じ追跡番号への集中の統合テスト（PERF-06）、P-5・P-6・P-7（#50）、マニュアル 9 章、<code>@US-12</code>。#19 をクローズして US-12 の 2 SP を数える</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: left;">アウトサイドイン（状態の組み合わせの表を先に書く）</td>
+<td style="text-align: left;">計画と終了報告（スキーマ）</td>
+</tr>
+<tr>
+<td style="text-align: left;">39g2</td>
+<td style="text-align: left;">DE-09・DE-10 を ADR-014 の形に直す（追跡の listener が予約の公開 API を呼ぶ）、到着見込みと鮮度、P-3（追加する実績の選び方）（確認ポイント 19）</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;">アウトサイドイン（既存の受入シナリオを守って形を変える）</td>
+<td style="text-align: left;">計画と終了報告（構造・公開 API）</td>
+</tr>
+<tr>
+<td style="text-align: left;">39h</td>
+<td style="text-align: left;">US-14 AC5 の差異（同じ外部レコードの版の逆転・既存の採用値との矛盾）、Golden dataset の G-06、受入条件の照合の表、W7 のデモの動画（<code>@US-14</code>）。#18 をクローズして US-14 の 8 SP を数える</td>
+<td style="text-align: right;">8</td>
+<td style="text-align: left;">アウトサイドイン（受入シナリオから）</td>
+<td style="text-align: left;">ステップごと（GitHub）</td>
+</tr>
+<tr>
+<td style="text-align: left;">39i</td>
+<td style="text-align: left;">経路設計の貨物種別の判定（<code>CARGO_NOT_SUPPORTED</code>）と貨物種別の ACL、除外理由の閾値の型と <code>threshold</code> の列、値の名前</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;">アウトサイドイン</td>
+<td style="text-align: left;">計画と終了報告（構造・スキーマ）</td>
+</tr>
+</tbody>
+</table>
+<p>順序は 39 → 39b → 39c → 39d → 39e → 39f → 39g → 39g2 → 39h → 39i。39e・39f は 39d の採用値（DE-12）を受け、39g は 39d の DE-13 を受けるので後に置く。39h は 39g の確認中との境界（確認ポイント 7）の後に置く。半日を超えそうな Bolt（39・39b・39f・39g）は開始準備で分ける。W5・W6 の実績（見込みの約 1.5 倍の本数）から、W7 も 15 本前後になる見込みである。W6 までで計画より約 3 週早いので、バッファ消費ルールの範囲で吸収し、W7 の週の見直しで確かめる。</p>
+<p><strong>W6 の Try の持ち込み</strong>: 各 Bolt 計画の確認ポイントに、T-204・T-212（サブエージェントへの指示の最初に heredoc を使わないと書く。<code>orchestrating-development</code> の <code>PROJECT.md</code>）、T-217（本体を直す前に Red を流し、落ちた理由を記録する）、T-225・T-213（push の前に <code>check</code>）、T-182・T-211・T-216（状態の組み合わせの表に重複・隔離・差異と順序逆転・出口・誤った入力の行を置く）、T-184（listener は配信まで確かめる）、T-219（変異の対象に単体・統合・契約のテスト）、T-215・T-222（Gradle を流す担当を 1 つに、計画の初稿を先にコミット）、T-191（環境の前提に設定ファイルの行を添える）を入れる。</p>
+<p><strong>Living Documentation</strong>: 外部データのコンテキストの ADR、<code>package-info</code> の <code>allowedDependencies</code>、ModularityTest と MapperSchemaArchitectureTest の対応表、用語集の整合テスト（外部原本・受信記録・隔離・差異・採用値・下書き・確認中・原本だけ）、受入条件の照合の表（US-14、US-12 の Release 1.0 の範囲）</p>
+<p><strong>デモ項目</strong>: ファイルの取込と分類の結果（<code>@US-14</code>。重複・隔離・差異）、隔離・差異の判断、航海の更新から確定した経路が再設計要になる流れ（<code>@US-06</code>・<code>@US-07</code>）、取り込んだ実績の下書きの採用と、順序逆転・取消済み・完了後（<code>@US-12</code>）。動画は画面の振る舞いが変わる Bolt（39c・39d・39f・39g・39h）で <code>@demo-&lt;Bolt&gt;</code> を撮る</p>
+<p><strong>主なタスク</strong>:</p>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> W7 の開始準備（本節）: 計画の承認、詳細整合性検証・横断整合性検証（指摘を反映）、承認の後に直す文書、GitHub の同期</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Bolt 39〜39d・39h: US-14（#18）</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Bolt 39e・39f・39i: 経路設計の書き手と評価の入口、貨物種別</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Bolt 39g・39g2: US-12 の残り（#19）、DE-09・DE-10 の作り直し</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> W7 の締め: 結果とふりかえり、開いている持ち越しの数（T-89）、W8 の計画の見直し</li>
+</ul>
+<p><strong>目標 SP</strong>: 10（US-14 8、US-12 の残り 2。W6 の締めで決めた）</p>
 <h3 id="w5w10release-10">W5〜W10（Release 1.0）<a class="headerlink" href="#w5w10release-10" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
