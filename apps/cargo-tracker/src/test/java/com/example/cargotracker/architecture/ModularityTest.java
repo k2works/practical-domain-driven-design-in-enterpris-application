@@ -101,13 +101,17 @@ class ModularityTest {
     /**
      * 外部データはほかのコンテキストに依存しない上流で、依存してよい相手を許可リストで並べる（ADR-004 の改訂。Bolt 39）。
      * 禁止する相手を名前で並べる形では、新しいコンテキストを足すたびに規則を書き足す必要があるため、許してよい相手だけを書く。
-     * フレームワークは今の外部データが実際に使う範囲（Spring）に限り、要るようになった Bolt で足す。
+     * 許可リストは層別にする（Bolt 39a2）。この規則はインフラストラクチャ層の外を見るが、domain は DomainArchitectureTest、
+     * application は LayerArchitectureTest が先に守るので、実質この規則だけが守るのは interfaces。
+     * フレームワークの許可は、使う Bolt で、使う層に限って足す（W10 の AWS SDK もインフラストラクチャ層に足す）。
      */
     @Test
-    void 外部データは共有カーネルとJavaとフレームワークにだけ依存する() {
+    void 外部データのインフラストラクチャ層の外は共有カーネルとJavaとSpringにだけ依存する() {
         classes()
                 .that()
                 .resideInAPackage("com.example.cargotracker.externaldata..")
+                .and()
+                .resideOutsideOfPackage("com.example.cargotracker.externaldata.infrastructure..")
                 .should()
                 .onlyDependOnClassesThat()
                 .resideInAnyPackage(
@@ -115,6 +119,28 @@ class ModularityTest {
                         "com.example.cargotracker.externaldata..",
                         "com.example.cargotracker.shared..",
                         "org.springframework..")
+                .check(new ClassFileImporter()
+                        .withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS)
+                        .importPackages("com.example.cargotracker"));
+    }
+
+    /**
+     * 外部データのインフラストラクチャ層は、層の外の許可に加えて MyBatis に依存してよい（外部原本の保存の DB の実装。Bolt 39a2）。
+     * フレームワークの許可は、使う Bolt で、使う層に限って足す。
+     */
+    @Test
+    void 外部データのインフラストラクチャ層は加えてMyBatisに依存してよい() {
+        classes()
+                .that()
+                .resideInAPackage("com.example.cargotracker.externaldata.infrastructure..")
+                .should()
+                .onlyDependOnClassesThat()
+                .resideInAnyPackage(
+                        "java..",
+                        "com.example.cargotracker.externaldata..",
+                        "com.example.cargotracker.shared..",
+                        "org.springframework..",
+                        "org.apache.ibatis..")
                 .check(new ClassFileImporter()
                         .withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS)
                         .importPackages("com.example.cargotracker"));

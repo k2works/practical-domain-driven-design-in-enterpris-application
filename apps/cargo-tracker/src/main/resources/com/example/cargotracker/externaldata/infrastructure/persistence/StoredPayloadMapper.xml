@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 保存した原本（Bolt 39a2、ADR-004 の改訂）。追記専用で、UPDATE と DELETE を書かない。
+     H2 と PostgreSQL の共通の構文で書き、RETURNING と ON CONFLICT は使わない（ADR-007）。上書きの拒否は主キーの違反で知る。 -->
+<mapper namespace="com.example.cargotracker.externaldata.infrastructure.persistence.StoredPayloadMapper">
+
+    <insert id="insert">
+        INSERT INTO external_data.stored_payload (object_key, content, stored_at)
+        VALUES (#{objectKey}, #{content}, #{storedAt})
+    </insert>
+
+    <select id="selectContent" resultType="_byte[]">
+        SELECT content FROM external_data.stored_payload WHERE object_key = #{objectKey}
+    </select>
+</mapper>
