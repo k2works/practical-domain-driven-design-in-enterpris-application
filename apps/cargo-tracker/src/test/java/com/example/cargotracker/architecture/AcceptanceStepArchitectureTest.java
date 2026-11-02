@@ -77,7 +77,10 @@ class AcceptanceStepArchitectureTest {
         assertThat(forbidden("booking", ROOT + "shared.domain")).isFalse();
     }
 
-    /** コンテキストの一覧は、業務のコンテキスト（モジュールから共有カーネルと基盤を除いたもの）に一致する（W6 横断レビュー M-3。Bolt 39）。 */
+    /**
+     * コンテキストの一覧は、業務のコンテキスト（モジュールから共有カーネルと基盤を除いたもの）に一致する（W6 横断レビュー M-3。Bolt 39）。
+     * 守るのは一覧（{@code CONTEXTS}）の写しで、コンテキストごとに手書きした規則（上の {@code @ArchTest}）の写しは 39b で M-2 と一緒に扱う。
+     */
     @Test
     void コンテキストの一覧は業務のコンテキストに一致する() {
         assertThat(BusinessContexts.all()).containsExactlyInAnyOrderElementsOf(CONTEXTS);

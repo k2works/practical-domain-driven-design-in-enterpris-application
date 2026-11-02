@@ -4,7 +4,7 @@ title: "cargo-tracker バックエンドアーキテクチャ"
 description: "cargo-tracker の境界づけられたコンテキスト、コンテキストごとのドメインロジックパターン、パッケージ構成、サガとドメインイベントによる連携（ARCH-HO-01〜03）、受信サービスの方針。"
 tags: [design, architecture, backend]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-02T06:51:16Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-02T09:51:08Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:11:12Z }
   - { by: human:kakimomokuri, at: 2026-10-01T07:41:04Z }
@@ -128,7 +128,7 @@ end note
 | 経路設計 → 予約 | R → B | 顧客-供給者 | 経路算出方法を予約に漏らさない |
 | 予約 → 追跡 | B → T | 顧客-供給者 | 見積りの内部情報を追跡へ公開しない。追跡は DE-07（荷主・荷受人の企業 ID を含む）を購読し、結果を `booking :: api` で返す（ADR-015。Bolt 25） |
 | 経路設計 → 追跡 | R → T | 顧客-供給者 | 候補計算の内部過程を追跡へ公開しない。追跡は `routing :: api` で確定した経路版の区間を引く（Bolt 25） |
-| 外部データ → 経路設計・追跡 | X → R、T | 公開ホスト + 公表された言語 | 未検証の原本を採用値として渡さない。外部データ（`externaldata`。スキーマは `external_data`）はほかのコンテキストに依存しない上流で、採用値・隔離・判断をイベントで公開し（39b 以降）、経路設計の表を書かない。`allowedDependencies` は今は `shared` だけで、`platform :: web` は画面を作る 39c、`domain.events` の名前付きインターフェース（`events`）は最初のイベントを作る 39b で足す。下流（経路設計・追跡と、採否の監査を書くアクセス・監査）が `externaldata :: events` を足すのは、各 listener を作る Bolt（アクセス・監査は 39b、経路設計は 39e、追跡は 39g）。外部データのクラスが依存してよい型は、ModularityTest の許可リスト（`java..`・`externaldata..`・`shared..`・フレームワーク）で確かめる（Bolt 39。ADR-004 の改訂） |
+| 外部データ → 経路設計・追跡 | X → R、T | 公開ホスト + 公表された言語 | 未検証の原本を採用値として渡さない。外部データ（`externaldata`。スキーマは `external_data`）はほかのコンテキストに依存しない上流で、採用値・隔離・判断をイベントで公開し（39b 以降）、経路設計の表を書かない。`allowedDependencies` は今は `shared` だけで、`platform :: web` は画面を作る 39c、`domain.events` の名前付きインターフェース（`events`）は最初のイベントを作る 39b で足す。下流（経路設計・追跡と、採否の監査を書くアクセス・監査）が `externaldata :: events` を足すのは、各 listener を作る Bolt（アクセス・監査は 39b、経路設計は 39e、追跡は 39g）。外部データのクラスが依存してよい型は、ModularityTest の許可リスト（`java..`・`externaldata..`・`shared..`・フレームワーク）で確かめる（Bolt 39。ADR-004 の改訂）。フレームワークの許可は使う Bolt で、使う層に限って足す（Bolt 39 は `org.springframework..` だけ。MyBatis などを層別に許すかは 39a2 で決める） |
 | 外部 → 外部データ | EXT → X | 腐敗防止層 | 提供元の形式を経路規則へ直接漏らさない |
 | アクセス・監査 → 全体 | IA → 全体 | 公開ホスト | 認証方式・監査方式を業務規則へ埋め込まない |
 | 共有カーネル | 全業務コンテキスト | 共有カーネル（第 3 章） | 業務の意味を持たない基本型だけに限る。例外は担当範囲の外の試行の記録のポート `OutOfScopeAttemptRecorder` 1 つ（ADR-019。Bolt 38f） |
@@ -154,7 +154,7 @@ end note
 - アクセス・監査が使う通知の公開 API（Bolt 33。[ADR-017](../../adr/cargo-tracker/017-notification-module-and-mail.md)）: password の再設定のメールの送信（`notification.interfaces.api.PasswordResetMail`。依頼の ID・トークンの ID・宛先の利用者の ID・アドレス・再設定の URL・期限・言語を受け、送信の記録を残して送る。結果は `Sent`・`AlreadySent`（同じ依頼の ID と宛先で記録済み）・`Failed`）。呼ぶ側は `identity.application.internal.outboundservices.acl.NotificationPasswordResetMails` で、イベントのハンドラー `PasswordResetMailEventHandler`（`@ApplicationModuleListener`）から呼ぶ。アダプターは `notification.interfaces.api.internal` に置き、通知のアプリケーションサービス `PasswordResetMailService`（`notification.application.internal.commandservices`）に委ねる。
 - アクセス・監査が使う通知の公開 API（Bolt 38b2b）: 利用者の招待のメールの送信（`notification.interfaces.api.UserInvitationMail`。登録の ID・招待のトークンの ID・宛先の利用者の ID・アドレス・初回の設定の URL・期限・言語を受け、結果は `Sent`・`AlreadySent`・`Failed`）。種類ごとの口で、一般の口と共有の部品を広げるかは Bolt 38d で決める。呼ぶのは identity の ACL `NotificationUserInvitationMails`（`identity.application.internal.outboundservices.acl`。Bolt 38b2c。DE-25 のハンドラー `UserInvitationMailEventHandler` から）
 - 追跡が使う公開 API（Bolt 25。ADR-015）: 経路設計の経路版の区間の照会（`routing.interfaces.api.RouteVersionLegQuery`。案件番号と経路版番号から、確定した経路版の区間を区間の順に返す。ない経路版は空）と、予約の追跡の開始の通知（`booking.interfaces.api.TrackingStartNotification`。予約 ID・追跡番号・開始時刻を受け、処理中の予約サガを完了にする。結果は `Completed`・`AlreadyCompleted`・`NotCompleted(reason)`）。
-- 担当範囲の判定の置き方の既定（Bolt 39。W6 横断レビュー M-1）: 担当範囲の判定は、下流が判定の材料（荷主企業）を自分の行に写して自分で判定するのを既定にする。上流の公開 API に主体を渡して判定させるのは、範囲の判定を上流のほかの理由とロックより先に置く必要があるときに限り、主体は認可にだけ使い写しに入れない（ADR-016 :34・:78）。主体を持たない読み出しと外部データは判定を通さない
+- 担当範囲の判定の置き方の既定（Bolt 39。W6 横断レビュー M-1）: 担当範囲の判定は、下流が判定の材料（荷主企業）を自分の行に写して自分で判定するのを既定にする。上流の公開 API に主体を渡して判定させるのは、範囲の判定を上流のほかの理由とロックより先に置く必要があるときに限り、主体は認可にだけ使い写しに入れない（ADR-016 :34・:78）。主体を持たない読み出しと外部データは判定を通さない（`RoutingCaseScope.java:17` の注、W7 の確認ポイント 3）
 
 ### 共有カーネル
 

@@ -16,6 +16,9 @@ import com.example.cargotracker.externaldata.domain.model.valueobjects.PayloadOb
  *   <li>呼び手は保存に成功するまで受信記録を書かない（保存 → 受信記録の順。形式の誤りで隔離する行とファイルも先に保存する）
  *   <li>補償は消さない（トランザクションが巻き戻っても原本は残し、受信記録から参照されない原本は照合で数える）
  * </ul>
+ *
+ * <p>巻き戻りとの関係（保存を受信記録と同じトランザクションで行うか、別にするか）は 39a2 で決める。DB の実装を同じトランザクションで
+ * 書くと、巻き戻りで原本も消え、「補償は消さない」と食い違うため（Bolt 39 の開発レビュー）。
  */
 public interface ExternalPayloadStorage {
 

@@ -4,7 +4,7 @@ title: "cargo-tracker ユーザーストーリー"
 description: "cargo-tracker MVP の価値単位のユーザーストーリー、受入条件、上流要件へのトレーサビリティ。"
 tags: [requirements, user-story]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-02T03:31:21Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-02T09:51:08Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T05:20:11Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:39Z }
@@ -573,7 +573,7 @@ MVP の決定: 通知はメールだけとし、配信設定・静穏時間・�
 
 - Given 外部連携が停止中、When 手動情報を登録する、Then 出典、入力者、入力時刻、仮状態が必須となる。
 - Given 外部接続が timeout、When 取得に失敗する、Then 失敗と取得時刻が記録され間隔を空けて再実行できる。
-- Given 連携が復旧、When 復旧照合する、Then 停止期間の全原本が採用済み・重複・隔離に分類され、受信件数との照合と手動情報との差異が一覧化される。
+- Given 連携が復旧、When 復旧照合する、Then 停止期間の全原本が採用・重複・隔離・差異に分類され、受信件数との照合と手動情報との差異が一覧化される。（2026-11-02 改訂: 分類に差異を足し、「採用済み」を「採用」にそろえた。Bolt 39、W7 の確認ポイント 1）
 - Given 停止期間の全原本が分類済み、When 受信件数が一致して手動情報との差異確認が完了する、Then 復旧照合が完了となり完了時刻と確認者が記録される。
 
 要確認: timeout、再送間隔、復旧目標は OQ-05 と後続の非機能要件で確定する。
