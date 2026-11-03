@@ -2,9 +2,10 @@
 type: Plan
 title: "Bolt 39b2 計画 - 形式の誤りの隔離（ファイル・行・閉じ忘れ・文字コード）と件数の突き合わせ"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-03T06:54:33Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-03T07:12:33Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-11-03T04:48:45Z }
+  - { by: human:kakimomokuri, at: 2026-11-03T07:12:34Z }
 ---
 
 # Bolt 39b2 計画 - 形式の誤りの隔離（ファイル・行・閉じ忘れ・文字コード）と件数の突き合わせ
@@ -343,8 +344,8 @@ er |o--o{ rr
 - [x] **4. 形式の誤りと取込のサービス（Red → Green）**（2026-11-03、推奨のとおり承認として記録した（Recommend 承認の指示による。human:kakimomokuri）。Red はコンパイルの誤りと、振る舞いのない型の 20 本。要確認は `IngestionOutcome.requiresReview()`（取り込めなかった部分があれば真。ファイルの誤りを含む）、注記の詳細は列名などの並び、注記の上限はコードポイントで数える。39b の隔離の注記を業務の言葉の形にそろえるのと、ファイルの誤りのとき行がないことの検証はステップ 5）: 行 1・5・6b・10・12〜17・20 のサービスの単体のテストを先に書き、`FormatDefect`、コマンドと結果の型の変更、キーのない隔離の受信記録、取込の取り込めなかった行、注記の文言、`reconciles()` を作る（完了の判定: 緑、`spotbugsMain`。**承認ゲート**（構造: 新しい値オブジェクト、コマンドと結果の型））
 - [x] **5. 組み立て（Red → Green）**（2026-11-03、推奨のとおり承認として記録した（Recommend 承認の指示による。human:kakimomokuri）。Red はコンパイルの誤りと、例外を投げるだけの組み立ての 30 本。組み立ては static の `IngestFileCommandAssembler.assemble`、キーの列の誤りは列の順で最初の 1 つ、列数の違う行の列数は原文を読み直して数える、範囲の言葉は `FormatDefect.lineRange`。39b の隔離の注記を業務の言葉の形にそろえた。重複の注記の文体と原文の読み直しは開発レビューで見る）: 行 1〜12（5b・6b を含む）・17 の組み立ての単体のテストを先に書き、`IngestFileCommandAssembler` を作る（完了の判定: 緑、`spotbugsMain`。**承認ゲート**（構造: 新しいクラス））
 - [x] **6. 統合と受入シナリオ（Red → Green）**（2026-11-03、推奨のとおり承認として記録した（Recommend 承認の指示による。human:kakimomokuri）。Red は受入シナリオ 4 本の `UndefinedStepException`。統合テスト 3 本は既に緑だったので、取り込めなかった行を書かない変異と REQUIRES_NEW を REQUIRED にする変異で落ちることを確かめた。ステップ定義は `ExternalRecordFormatErrorSteps` に分け、`InMemoryDataSourceRepository` に `all()` を足した）: 行 5・15・21 の統合テストと、`features/external_data/quarantine_malformed_records.feature`（必要な列がない、列数の違う行と正しい行の混在、閉じ忘れの要確認と件数、Shift_JIS）とステップ定義、行 22 の規則の確かめ（完了の判定: 緑。**承認ゲート**（構造: 受入シナリオ））
-- [ ] **7. 品質ゲートと開発レビュー**: 変異、`check`、その後に SonarQube、開発レビューとその直し。push の前に `check`
-- [ ] **8. 終了報告**: push して CI とデモ環境の配備を確かめる（デモ環境にスキーマの版が入る）。release_plan・開発の索引・mkdocs を直す。見える振る舞いは変わらないので、マニュアルは直さない（39c で新しい章）
+- [x] **7. 品質ゲートと開発レビュー**（`de622cf83`。SonarQube の 12 件と開発レビューの中 6・低 3 を直した。隔離の 2 列をそろえる CHECK は未 push の版の中で強めた）: 変異、`check`、その後に SonarQube、開発レビューとその直し。push の前に `check`
+- [x] **8. 終了報告**（[終了報告](bolt_39b2_report.md)を 2026-11-03 に推奨のとおり承認として記録した。Recommend 承認の指示による）: push して CI とデモ環境の配備を確かめる（デモ環境にスキーマの版が入る）。release_plan・開発の索引・mkdocs を直す。見える振る舞いは変わらないので、マニュアルは直さない（39c で新しい章）
 
 ### 時間の配分と打ち切り
 
