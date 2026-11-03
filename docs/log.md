@@ -1,6 +1,11 @@
 # Docs Update Log
 
 ## 2026-11-03
+* **Verification**: [004-external-data-ingestion](/adr/cargo-tracker/004-external-data-ingestion.md) を human:kakimomokuri が検証
+* **Verification**: [operation](/design/cargo-tracker/operation.md) を human:kakimomokuri が検証
+* **Verification**: [domain_model](/design/cargo-tracker/domain_model.md) を human:kakimomokuri が検証
+* **Verification**: [data_model](/design/cargo-tracker/data_model.md) を human:kakimomokuri が検証
+* **Update**: [bolt_39a3_plan](/development/cargo-tracker/bolt_39a3_plan.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [operation](/design/cargo-tracker/operation.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）

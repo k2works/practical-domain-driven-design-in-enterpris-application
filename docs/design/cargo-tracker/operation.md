@@ -9,6 +9,7 @@ verified:
   - { by: human:kakimomokuri, at: 2026-10-01T08:30:35Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:38Z }
   - { by: human:kakimomokuri, at: 2026-10-02T01:37:43Z }
+  - { by: human:kakimomokuri, at: 2026-11-03T00:39:43Z }
 ---
 
 # cargo-tracker 運用要件
