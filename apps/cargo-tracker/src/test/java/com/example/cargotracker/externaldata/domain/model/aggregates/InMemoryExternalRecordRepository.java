@@ -1,0 +1,36 @@
+package com.example.cargotracker.externaldata.domain.model.aggregates;
+
+import com.example.cargotracker.externaldata.domain.model.valueobjects.IdempotencyKey;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import org.springframework.dao.DuplicateKeyException;
+
+/**
+ * メモリ上の外部原本のリポジトリ（テスト用。Bolt 39b）。冪等性キーの一意制約を写し、同じキーの 2 回目の追加は DB と同じく
+ * {@link DuplicateKeyException} にする。
+ */
+public class InMemoryExternalRecordRepository implements ExternalRecordRepository {
+
+    private final Map<IdempotencyKey, ExternalRecord> records = new ConcurrentHashMap<>();
+
+    @Override
+    public Optional<ExternalRecord> findByKey(IdempotencyKey key) {
+        return Optional.ofNullable(records.get(key));
+    }
+
+    @Override
+    public void add(ExternalRecord externalRecord) {
+        Objects.requireNonNull(externalRecord, "externalRecord");
+        if (records.putIfAbsent(externalRecord.key(), externalRecord) != null) {
+            throw new DuplicateKeyException("冪等性キーの外部原本がもうある: " + externalRecord.key());
+        }
+    }
+
+    /** 足した外部原本（ポートの外。テストの確かめ）。 */
+    public List<ExternalRecord> all() {
+        return List.copyOf(records.values());
+    }
+}
