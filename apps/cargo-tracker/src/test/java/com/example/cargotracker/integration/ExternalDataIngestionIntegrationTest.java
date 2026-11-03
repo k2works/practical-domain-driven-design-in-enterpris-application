@@ -51,7 +51,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 /**
  * 取込のサービスを PostgreSQL 18 で確かめる（Bolt 39b の行 2・4・9・11。US-14 AC3・AC4、BR-12、ED-INV-02。Bolt 39b2 の行 5・15・21 は
- * CSV のバイト列から組み立て（{@code interfaces.file}）を通して取り込む。UC-15 2a）。
+ * CSV のバイト列から組み立て（{@code interfaces.file}）を通して取り込む。UC-15 2a。Bolt 39b2b の行 19 は値の誤りの行の隔離）。
  *
  * <p>共有の DB に承認済みの情報源を残さない。行 2・4・11 はテストのトランザクションの中で取込のサービスを呼び（サービスの
  * {@code @Transactional} は外側に加わる）、最後に巻き戻す。行 9 は取込のサービス自身のトランザクションが巻き戻ることを確かめるので、
@@ -331,6 +331,58 @@ class ExternalDataIngestionIntegrationTest {
                     .as("原本 %s を指す取込", key)
                     .isZero();
         }
+    }
+
+    @Test
+    void 行19_値の誤りの行は原文を保存してからキーのない隔離になり同じキーの正しい行は採用される() {
+        inRolledBackTransaction(() -> {
+            String provider = newProvider();
+            UUID sourceId = insertApprovedSource(provider);
+            // 3 行目は追跡番号に紛らわしい文字 0 を含む（キーの列は正しい）。4 行目は同じキーの正しい行
+            String malformedLine = "MS-0002,1," + acquired() + ",CTABCDEFGH0345" + tail();
+            byte[] csv = String.join(
+                            "\n",
+                            MILESTONE_HEADER,
+                            "MS-0001,1," + acquired() + ",CTABCDEFGH2345" + tail(),
+                            malformedLine,
+                            "MS-0002,1," + acquired() + ",CTABCDEFGH2346" + tail())
+                    .getBytes(StandardCharsets.UTF_8);
+
+            Ingested result = ingested(ingestionService.ingest(
+                    steward, IngestFileCommandAssembler.assemble(sourceId, CsvFileKind.MILESTONE, csv)));
+
+            assertThat(result.rows())
+                    .extracting(RowResult::lineNumber, RowResult::classification)
+                    .containsExactly(
+                            tuple(2, Classification.ADOPTED),
+                            tuple(3, Classification.QUARANTINED),
+                            tuple(4, Classification.ADOPTED));
+            RowResult malformed = result.rows().get(1);
+            assertThat(malformed.externalRecordId()).isNull();
+            Map<String, Object> quarantined = jdbc.queryForMap(
+                    "SELECT external_record_id, acquired_at, classification, classification_note, payload_object_key"
+                            + " FROM external_data.received_record WHERE id = ? AND ingestion_id = ?",
+                    malformed.receivedRecordId(),
+                    result.ingestionId());
+            assertThat(quarantined)
+                    .containsEntry("external_record_id", null)
+                    .containsEntry("acquired_at", null)
+                    .containsEntry("classification", Classification.QUARANTINED.name())
+                    .containsEntry(
+                            "classification_note",
+                            "3 行目: 追跡番号の形が違います（tracking_number）。CT と英大文字・数字 12 桁（0・O・1・I・L を除く）で書いてください。");
+            assertThat(storedPayload((String) quarantined.get("payload_object_key")))
+                    .isEqualTo(malformedLine.getBytes(StandardCharsets.UTF_8));
+            // 値の誤りの行は外部原本を作らない。同じキーの正しい行の外部原本だけがある
+            assertThat(externalRecordCount(provider)).isEqualTo(2);
+            assertThat(count(
+                            "SELECT COUNT(*) FROM external_data.external_record WHERE provider = ? AND external_id = ?",
+                            provider,
+                            "MS-0002"))
+                    .isEqualTo(1);
+            assertThat(result.reconciles()).isTrue();
+            assertThat(receivedRecordCount(result.ingestionId())).isEqualTo(3);
+        });
     }
 
     /** 取得時刻の文字列（取込時刻より前。T-230）。 */

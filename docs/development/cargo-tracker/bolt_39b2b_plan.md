@@ -2,7 +2,7 @@
 type: Plan
 title: "Bolt 39b2b 計画 - 値の列（航海・主要実績）の検証と写しを守るテスト"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-03T08:22:52Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-03T08:36:34Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-11-03T07:38:29Z }
 ---
@@ -273,7 +273,7 @@ ExternalDataCopiedRulesTest ..> VoyageValues : 経路設計の Voyage・PortCall
 - [x] **2. 値の型（Red → Green）**（2026-11-03、推奨のとおり承認として記録した（Recommend 承認の指示による。human:kakimomokuri）。Red はテストのコンパイルの誤り（型 6 つと `FormatDefect` の 4 値がない）。4 値の注記の言葉は値の型のテストで確かめ、`INVALID_KIND` の「どうすればよいか」は種類の値から作る。spotbugsMain は指摘なし）: 行 2・5・7・11・14・24 の値の型の単体のテストを先に書いて落ちることを確かめ（落ちた理由を記録する。T-217）、`RecordValues`・`VoyageValues`・`PortCallValue`・`MilestoneValues`・`TrackingNumberValue`・`MilestoneKindValue` と `FormatDefect` の 4 値（注記の言葉）を作る（完了の判定: 緑、`spotbugsMain`（T-232）、`sonar-local:check` の新しい違反（T-234）。**承認ゲート**（構造: 新しい値オブジェクト））
 - [x] **3. 写しを守るテスト（2026-11-03、推奨のとおり承認として記録した（Recommend 承認の指示による。human:kakimomokuri）。本体を変えないので、写しをずらす変異 V1・V2・V4・V10 で落ちることを確かめた。比べる値の表に受ける値と拒む値の両方があることを確かめるテストを足した。`integration` に置いたテストはどの規則にも拒まれない（行 26））（Red → Green）**: 行 21〜23 の `ExternalDataCopiedRulesTest` を書く。既に緑なら、写しを壊す変異（V1・V2・V4）で落ちることを確かめて記録する（完了の判定: 緑。**承認ゲート**（構造: コンテキストをまたぐテストの置き場所））
 - [x] **4. 必要な列と組み立て（Red → Green）**（2026-11-03、推奨のとおり承認として記録した（Recommend 承認の指示による。human:kakimomokuri）。先に直したテストは feature・組み立て・ヘッダー・取込のサービス・ステップ定義・統合テストの 6 つ（T-217）。Red はテストのコンパイルの誤り 17 か所。航海番号の上限と寄港の下限は `VoyageValues` の公開の定数を組み立てが参照する。SonarQube はステップ 2・3 のテストの違反 8 件で落ち、直して PASS（T-234）。spotbugsMain は指摘なし）: 行 1〜20・25 の組み立てとヘッダーとサービスの単体のテストを先に書く。必要な列の追加で落ちる既存のテストとシナリオ（「ふりかえりと前の Bolt からの引き継ぎ」の T-217 の行の一覧。`quarantine_malformed_records.feature` の既存のシナリオのヘッダー、航海の必要な列の期待は「（acquired_at、port_calls）」に）を一覧にし、Red の前に期待を直す（T-217）。`CsvFileKind` の必要な列、組み立ての値の検証、`IngestedRow` の `values` と値の既定を作るテストの部品を作る（完了の判定: 緑、`spotbugsMain`、`sonar-local:check` の新しい違反。**承認ゲート**（構造: 取り込む行の型））
-- [ ] **5. 統合と受入シナリオ（Red → Green）**: 行 19 の統合テストと、`quarantine_malformed_records.feature` に値の誤りのシナリオ（新しいシナリオだけ: 追跡番号の形の誤り、寄港の列の誤りと正しい行の混在。既存のシナリオの直しはステップ 4）、行 26 の規則の確かめ（完了の判定: 緑。本体を変えたら `spotbugsMain`。**承認ゲート**（構造: 受入シナリオ））
+- [x] **5. 統合と受入シナリオ（Red → Green）**（2026-11-03、推奨のとおり承認として記録した（Recommend 承認の指示による。human:kakimomokuri）。足したテストとシナリオはステップ 4 の実装で既に緑だったので、組み立てが値の誤りの行を捨てる変異と寄港の順を見逃す変異で落ちることを確かめた。統合テストは主要実績だけ（寄港の誤りは受入シナリオで確かめる）。SonarQube は PASS）: 行 19 の統合テストと、`quarantine_malformed_records.feature` に値の誤りのシナリオ（新しいシナリオだけ: 追跡番号の形の誤り、寄港の列の誤りと正しい行の混在。既存のシナリオの直しはステップ 4）、行 26 の規則の確かめ（完了の判定: 緑。本体を変えたら `spotbugsMain`。**承認ゲート**（構造: 受入シナリオ））
 - [ ] **6. 品質ゲートと開発レビュー**: 変異、`check`、その後に SonarQube、開発レビューとその直し。push の前に `check`
 - [ ] **7. 終了報告**: push して CI とデモ環境の配備を確かめる。release_plan（39b2b の行の計画と終了報告のリンク）・開発の索引・mkdocs を直す。終了報告に、release_plan の 39b2b の行（:943）の写しを守るテストの範囲（追跡番号の形）を、実績の種類と寄港の規則に広げたと書く。見える振る舞いは変わらないので、マニュアルは直さない（39c で新しい章）
 
