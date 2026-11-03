@@ -2,12 +2,14 @@ package com.example.cargotracker.externaldata.interfaces.file;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.example.cargotracker.externaldata.domain.model.valueobjects.FormatDefect;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 
-/** CSV のヘッダーの検証（Bolt 39 の行 12）。 */
+/** CSV のヘッダーの検証（Bolt 39 の行 12。Bolt 39b2 の行 12 の文字コードの誤り）。 */
 class CsvHeaderTest {
 
     @Test
@@ -31,20 +33,20 @@ class CsvHeaderTest {
     @Test
     void 必要な列がなければファイルの誤りにする() {
         assertThat(CsvHeader.check(List.of("external_id", "external_version"), CsvFileKind.VOYAGE))
-                .isEqualTo(new CsvHeader.FileError(CsvHeader.Reason.MISSING_COLUMN, List.of("acquired_at")));
+                .isEqualTo(new CsvHeader.FileError(FormatDefect.MISSING_COLUMN, List.of("acquired_at")));
     }
 
     @Test
     void 主要実績のファイルに追跡番号の列がなければファイルの誤りにする() {
         assertThat(CsvHeader.check(List.of("external_id", "external_version", "acquired_at"), CsvFileKind.MILESTONE))
-                .isEqualTo(new CsvHeader.FileError(CsvHeader.Reason.MISSING_COLUMN, List.of("tracking_number")));
+                .isEqualTo(new CsvHeader.FileError(FormatDefect.MISSING_COLUMN, List.of("tracking_number")));
     }
 
     @Test
     void ヘッダーの行がなければ必要な列がすべてない誤りにする() {
         assertThat(CsvHeader.check(List.of(), CsvFileKind.VOYAGE))
                 .isEqualTo(new CsvHeader.FileError(
-                        CsvHeader.Reason.MISSING_COLUMN, List.of("external_id", "external_version", "acquired_at")));
+                        FormatDefect.MISSING_COLUMN, List.of("external_id", "external_version", "acquired_at")));
     }
 
     @Test
@@ -62,13 +64,22 @@ class CsvHeaderTest {
                 CsvRecords.parse("external_id,\"external_version\nV-1,1\n".getBytes(StandardCharsets.UTF_8));
 
         assertThat(CsvHeader.check(records, CsvFileKind.VOYAGE))
-                .isEqualTo(new CsvHeader.FileError(CsvHeader.Reason.UNREADABLE_HEADER, List.of()));
+                .isEqualTo(new CsvHeader.FileError(FormatDefect.UNREADABLE_HEADER, List.of()));
+    }
+
+    @Test
+    void 行12_文字コードの誤りのファイルはヘッダーを読む前にファイルの誤りにする() {
+        CsvRecords records = CsvRecords.parse("external_id,external_version,acquired_at\n航海,1,2026-11-03T00:00:00Z\n"
+                .getBytes(Charset.forName("Shift_JIS")));
+
+        assertThat(CsvHeader.check(records, CsvFileKind.VOYAGE))
+                .isEqualTo(new CsvHeader.FileError(FormatDefect.UNDECODABLE, List.of()));
     }
 
     @Test
     void 同じ名前の列が重なればファイルの誤りにする() {
         assertThat(CsvHeader.check(
                         List.of("external_id", "external_version", "acquired_at", "external_id"), CsvFileKind.VOYAGE))
-                .isEqualTo(new CsvHeader.FileError(CsvHeader.Reason.DUPLICATE_COLUMN, List.of("external_id")));
+                .isEqualTo(new CsvHeader.FileError(FormatDefect.DUPLICATE_COLUMN, List.of("external_id")));
     }
 }

@@ -1,19 +1,24 @@
 package com.example.cargotracker.externaldata.interfaces.file;
 
+import com.example.cargotracker.externaldata.domain.model.valueobjects.FormatDefect;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
- * CSV のヘッダーの検証。列名から位置への写しか、ファイルの誤り（形式の誤りの理由）を値で返す（Bolt 39。原本の保存と隔離は 39b）。
+ * CSV のヘッダーの検証。列名から位置への写しか、ファイルの誤り（{@link FormatDefect}）を値で返す（Bolt 39。文字コードの誤りは Bolt 39b2。
+ * ファイルの誤りの原本の保存とキーのない隔離は Bolt 39b2 の取込のサービス）。
  */
 public sealed interface CsvHeader {
 
-    /** 読んだ CSV のヘッダーを種別に必要な列で検証する。ヘッダーの行を読めなければファイルの誤りにする。 */
+    /** 読んだ CSV のヘッダーを種別に必要な列で検証する。文字コードの誤りか、ヘッダーの行を読めなければファイルの誤りにする。 */
     static CsvHeader check(CsvRecords records, CsvFileKind kind) {
+        if (records.undecodable()) {
+            return new FileError(FormatDefect.UNDECODABLE, List.of());
+        }
         if (records.headerUnreadable()) {
-            return new FileError(Reason.UNREADABLE_HEADER, List.of());
+            return new FileError(FormatDefect.UNREADABLE_HEADER, List.of());
         }
         return check(records.header(), kind);
     }
@@ -29,13 +34,13 @@ public sealed interface CsvHeader {
             }
         }
         if (!duplicated.isEmpty()) {
-            return new FileError(Reason.DUPLICATE_COLUMN, duplicated);
+            return new FileError(FormatDefect.DUPLICATE_COLUMN, duplicated);
         }
         List<String> missing = kind.requiredColumns().stream()
                 .filter(required -> !positions.containsKey(required))
                 .toList();
         if (!missing.isEmpty()) {
-            return new FileError(Reason.MISSING_COLUMN, missing);
+            return new FileError(FormatDefect.MISSING_COLUMN, missing);
         }
         return new Columns(positions);
     }
@@ -55,23 +60,13 @@ public sealed interface CsvHeader {
     /**
      * ファイルの誤り。
      *
-     * @param reason 理由
+     * @param defect 形式の誤り
      * @param columns 理由にかかわる列の名前（足りない列、重なった列）
      */
-    record FileError(Reason reason, List<String> columns) implements CsvHeader {
+    record FileError(FormatDefect defect, List<String> columns) implements CsvHeader {
 
         public FileError {
             columns = List.copyOf(columns);
         }
-    }
-
-    /** ファイルの誤りの理由。 */
-    enum Reason {
-        /** 必要な列がない（ヘッダーの行がない場合を含む）。 */
-        MISSING_COLUMN,
-        /** 同じ名前の列が 2 つ以上ある。 */
-        DUPLICATE_COLUMN,
-        /** ヘッダーの行を読めない（行の誤りがある。誤りは {@link CsvRecords#errors()} にある）。 */
-        UNREADABLE_HEADER
     }
 }
