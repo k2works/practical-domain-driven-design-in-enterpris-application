@@ -4,7 +4,7 @@ title: "cargo-tracker ドメインモデル"
 description: "cargo-tracker の業務領域の分類、ユビキタス言語、7 つの境界づけられたコンテキスト（通知を含む）の集約・エンティティ・値オブジェクト・ドメインルール、コマンド・クエリ・イベント、予約サガ。"
 tags: [design, domain-model, ddd]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-02T12:47:50Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-03T00:29:59Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:41:04Z }
   - { by: human:kakimomokuri, at: 2026-10-01T07:48:17Z }
@@ -313,10 +313,12 @@ quadrantChart
 | メールの送信 | MailSender | 宛先・件名・本文のメール 1 通を送るポート（`notification.domain.model.aggregates`。外部の技術のポートはドメインに置く規則）。実装は SMTP の `SmtpMailSender` と、dev でログに出す `LoggingMailSender`（1 つの Bean の中で守りの式で切り替える）（`notification.infrastructure.mail`。ADR-017、Bolt 33） | 通知 |
 | 監査記録 | AuditRecord | 操作者・時刻・対象・変更前後・理由・承認・出典の追記専用の記録。リポジトリ（`AuditRecordRepository`）は追記と照会だけを持ち、更新と削除はしない（IA-INV-07）。Bolt 38c2 から、対象の利用者の最新の停止の記録を引く（`findLatestUserSuspension`。索引 `ix_audit_record_target`） | アクセス・監査 |
 | 情報源 | DataSource | データ責任者が選定・承認した運送会社・港湾などの原本の提供元（BR-18） | 外部データ |
-| 外部原本 | ExternalRecord | 冪等性キーごとの外部の原本。最初に受け取った payload のハッシュを持つ。分類は持たない（分類は受け取るたびの受信記録が持つ。Bolt 39 で「その分類（採用・重複・隔離）」を改めた。下の要素表の分類の列は表を作る 39a3 で受信記録に移す） | 外部データ |
-| 受信記録 | ReceivedRecord | 外部原本を受け取るたびの追記専用の記録。分類（採用・重複・隔離・差異）を持つ（data_model の `receipt.classification`。表は `external_data.received_record` に改め、判断の表は `external_data.received_record_decision` にする。改名と表は 39a3）。クラス名は通知の公開 API の結果（`PasswordResetMailReceipt` など）と紛れないよう `Receipt` を避けた（Bolt 39a2 の開始準備の決定 (3)） | 外部データ |
+| 外部原本 | ExternalRecord | 冪等性キーごとの外部の原本。最初に受け取った payload のハッシュを持つ。分類は持たない（分類は受け取るたびの受信記録が持つ。Bolt 39 で「その分類（採用・重複・隔離）」を改めた） | 外部データ |
+| 受信記録 | ReceivedRecord | 外部原本を受け取るたびの追記専用の記録。分類（採用・重複・隔離・差異）を持つ（data_model の `received_record.classification`。表は `external_data.received_record`。Bolt 39a3）。クラス名は通知の公開 API の結果（`PasswordResetMailReceipt` など）と紛れないよう `Receipt` を避けた（Bolt 39a2 の開始準備の決定 (3)） | 外部データ |
+| 受信記録の判断 | ReceivedRecordDecision | 隔離・差異の受信記録に対するデータ責任者の判断（採用 `ADOPTED`・却下 `REJECTED`）、判断者、判断の時刻、理由の追記専用の記録。受信記録 1 件につき 1 つで、判断のやり直しは提供元からの再送（新しい受信記録）で扱う（表は `external_data.received_record_decision`。Bolt 39a3）。英語名は仮で、クラスは判断を作る Bolt 39d で作る | 外部データ |
 | 取込 | Ingestion | データ責任者が 1 ファイルを取り込む 1 回の単位。ファイル全体の原本と分類別の件数を持ち、照合に使う | 外部データ |
 | 採用 | ADOPTED | 受信記録の分類の 1 つ。新しい冪等性キーで検証を通った原本（ADR-004 決定 2）。別名「採用済み」（BR-12・UC-15 6a・US-15 の初版の語。2026-11-02 に「採用」にそろえた。Bolt 39、W7 の確認ポイント 1） | 外部データ |
+| 重複 | DUPLICATE | 受信記録の分類の 1 つ。同じ冪等性キーで同じ payload（ハッシュが外部原本と同じ）の原本。採用値に影響しない（ED-INV-02、BR-12。Bolt 39a3） | 外部データ |
 | 隔離 | QUARANTINED | 受信記録の分類の 1 つ。同じ冪等性キーで違う payload の原本と、形式を検証できないファイルと行（UC-15 2a）。データ責任者が判断するまで採用値に影響しない | 外部データ |
 | 差異 | DISCREPANCY | 受信記録の分類の 1 つ。同じ外部レコードの版の逆転と、既存の採用値との矛盾（US-14 AC5）。US-15 の復旧照合で手動情報と突き合わせた差異（`reconciliation_discrepancy`）とは別の語 | 外部データ |
 | 外部原本の保存 | ExternalPayloadStorage | 原本の payload の保存で、外部原本（ExternalRecord）の永続化ではない。原本（ファイル全体と行の payload）を無加工で保存し読み戻すポート（`externaldata.domain.model.aggregates`。外部の技術のポートはドメインに置く規則）。同じキーを上書きせず、読めないキーは例外。呼び手は保存に成功してから受信記録を書く。補償は消さない。実装は W7 は DB（39a2）、W10 で S3（Bolt 39。ADR-004 の改訂） | 外部データ |
@@ -1468,7 +1470,9 @@ ADR-002 によりトランザクションスクリプトとする。ここでは
 | :--- | :--- | :--- | :--- |
 | 情報源 | DataSource | 提供元、原本種別、選定・承認状態、承認者 | ED-INV-01: 承認済みの情報源が 0 件ならパイロットを開始しない（BR-18、US-14） |
 | 取込 | Ingestion | 取込 ID、情報源、ファイル、取込者、取込時刻、件数 | 取込単位で件数を数え、照合に使う |
-| 外部原本 | ExternalRecord | 冪等性キー（提供元、原本種別、外部 ID、外部版）、payload、payload のハッシュ、取得時刻、分類（採用・重複・隔離・差異。39a3 で受信記録に移す） | ED-INV-02: 同じキー・同じハッシュは重複、同じキー・違うハッシュは隔離する。ED-INV-03: 順序逆転・既存値との矛盾は差異として自動で上書きしない（BR-12、US-14） |
+| 外部原本 | ExternalRecord | 冪等性キー（提供元、原本種別、外部 ID、外部版）、最初に受け取った payload とそのハッシュ、最初の受信時刻 | 冪等性キーごとに 1 つ（BR-12） |
+| 受信記録 | ReceivedRecord | 外部原本、取込、payload とそのハッシュ、取得時刻、分類（採用・重複・隔離・差異）、分類の注記、分類の時刻 | ED-INV-02: 同じキー・同じハッシュは重複、同じキー・違うハッシュは隔離する。ED-INV-03: 順序逆転・既存値との矛盾は差異として自動で上書きしない（BR-12、US-14）。追記専用 |
+| 受信記録の判断 | ReceivedRecordDecision | 受信記録、判断（採用・却下）、判断者、判断の時刻、理由 | 受信記録 1 件につき 1 つ。判断するのは隔離・差異の受信記録だけ（Bolt 39d で守る。US-14）。追記専用 |
 | 採用値 | AdoptedValue | 対象（航海・主要実績）、値、出典、版 | 採用値だけを経路設計・追跡へ公開する（ADR-004） |
 | 手動情報 | ManualEntry | 出典、入力者、入力時刻、仮状態、内容 | ED-INV-04: 出典・入力者・入力時刻・仮状態を必須とする（BR-08、US-15） |
 | 取得失敗 | FetchFailure | 失敗時刻、理由、再実行可能時刻 | 第 2 段階の API 連携で使う。パイロットでは記録の形だけ持つ（US-15） |

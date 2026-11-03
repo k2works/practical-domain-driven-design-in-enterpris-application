@@ -4,7 +4,7 @@ title: "cargo-tracker データモデル"
 description: "cargo-tracker の概念データモデル、スキーマ分割、命名と型の規約（H2 と PostgreSQL の共通部分）、コンテキストごとの論理データモデルと ER 図、版・追記専用・冪等性・イベント配信の表現。"
 tags: [design, data-model]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-02T12:47:50Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-03T00:29:59Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:48:17Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:37Z }
@@ -172,7 +172,7 @@ ADR-007 により、DDL は H2（PostgreSQL 互換モード）と PostgreSQL 18 
 | 表 | 許す操作 | 守り方 |
 | :--- | :--- | :--- |
 | `identity.audit_record`、`identity.kpi_baseline` | INSERT、SELECT | PostgreSQL ではアプリケーションの DB 利用者から UPDATE・DELETE の権限を外す |
-| `quotation.transport_request_version`、`quotation.review_record`、`quotation.required_document`、`booking.booking_version`、`booking.processed_command`、`external_data.stored_payload`、`external_data.receipt` | INSERT、SELECT | UPDATE・DELETE の権限を外す（`review_record` は判断の事実で後から変えないため。2026-10-02 に承認、Bolt 5。`required_document` は版に付く書類の事実のため。2026-10-03 に承認、Bolt 7。`stored_payload` は受け取った原本を上書きしない（ADR-004）ため。2026-11-02 に承認、Bolt 39a2） |
+| `quotation.transport_request_version`、`quotation.review_record`、`quotation.required_document`、`booking.booking_version`、`booking.processed_command`、`external_data.stored_payload`、`external_data.received_record`、`external_data.received_record_decision`、`external_data.adopted_value` | INSERT、SELECT | UPDATE・DELETE の権限を外す（`review_record` は判断の事実で後から変えないため。2026-10-02 に承認、Bolt 5。`required_document` は版に付く書類の事実のため。2026-10-03 に承認、Bolt 7。`stored_payload` は受け取った原本を上書きしない（ADR-004）ため。2026-11-02 に承認、Bolt 39a2。`received_record`・`received_record_decision`・`adopted_value` は受け取り・判断・採用の事実のため。2026-11-03 に承認、Bolt 39a3。`external_record`・`ingestion`・`data_source` には付けない。誤って採用した `ADOPTED` を取り消す経路がスキーマにないことは Bolt 39d の既知の課題） |
 | `tracking.milestone` | INSERT、SELECT、状態と下書き内容の UPDATE | DELETE の権限を外す。採用済みの内容を変えないことはドメインと PostgreSQL の統合テストで確かめる（T-INV-01、T-INV-07） |
 | `routing.route_version` | INSERT、SELECT、UPDATE | 状態が変わる（確定 → 再設計要 → 旧版）ため権限では守らない。確定した経路版の内容（候補・区間・判断根拠・承認）を変えないことは、ドメインと PostgreSQL の統合テストで確かめる（R-INV-06） |
 
@@ -1006,6 +1006,7 @@ entity "data_source\n情報源" as ds {
   approved_by : UUID
   approved_at : TIMESTAMPTZ
   * version : BIGINT
+  .. UK (provider, record_type) ..
 }
 entity "ingestion\n取込" as ing {
   * id : UUID <<PK>>
@@ -1035,7 +1036,7 @@ entity "stored_payload\n保存した原本" as sp {
   * content : BYTEA
   * stored_at : TIMESTAMPTZ
 }
-entity "receipt\n受信記録" as rc {
+entity "received_record\n受信記録" as rc {
   * id : UUID <<PK>>
   --
   * external_record_id : UUID <<FK>>
@@ -1047,10 +1048,19 @@ entity "receipt\n受信記録" as rc {
   classification_note : VARCHAR(1000)
   * classified_at : TIMESTAMPTZ
 }
+entity "received_record_decision\n受信記録の判断" as rcd {
+  * id : UUID <<PK>>
+  --
+  * received_record_id : UUID <<FK, UK>>
+  * decision : VARCHAR(30)
+  * decided_by : UUID
+  * decided_at : TIMESTAMPTZ
+  reason : VARCHAR(1000)
+}
 entity "adopted_value\n採用値" as av {
   * id : UUID <<PK>>
   --
-  * receipt_id : UUID <<FK, UK>>
+  * received_record_id : UUID <<FK, UK>>
   * target_type : VARCHAR(30)
   * target_key : VARCHAR(100)
   * value_summary : VARCHAR(4000)
@@ -1096,7 +1106,7 @@ entity "reconciliation_discrepancy\n差異" as rd {
   * discrepancy_no : INTEGER <<PK>>
   --
   manual_entry_id : UUID <<FK>>
-  receipt_id : UUID <<FK>>
+  received_record_id : UUID <<FK>>
   * description : VARCHAR(4000)
   resolution : VARCHAR(4000)
   resolved_by : UUID
@@ -1111,8 +1121,9 @@ entity "fetch_failure\n取得失敗" as ff {
   retry_after : TIMESTAMPTZ
 }
 ds ||--o{ ing
-ing ||--o{ rc
-er ||--|{ rc
+ing |o--o{ rc
+er ||--o{ rc
+rc ||--o| rcd
 rc ||--o| av
 ds ||--o{ og
 ds ||--o{ me
@@ -1125,11 +1136,12 @@ ds ||--o{ ff
 
 | 表 | 主な制約 | 対応する規則 |
 | :--- | :--- | :--- |
-| `data_source` | `approval_status` IN（`CANDIDATE`、`APPROVED`、`SUSPENDED`）。承認済みが 0 件ならパイロットを開始しない（アプリケーションで判定） | BR-18 |
-| `external_record` | 冪等性キー（提供元、原本種別、外部 ID、外部版）の一意制約。最初に受け取った payload のハッシュを持つ | BR-12 |
-| `stored_payload` | 原本のオブジェクトキー（`object_key`。`PayloadObjectKey` の値）が主キー。`content`（原本の内容）はバイト列で NOT NULL、0 バイトを許す。型は `BYTEA`（共通の置き場所。H2 は別名として受けて `binary varying` になり、0 バイト・0x00・0xFF を読み書きできることを Bolt 39a2 のステップ 2 で確かめた。H2 の `binary varying` には長さの上限があり PostgreSQL の `BYTEA` と違うが、開発の範囲では影響しない）。`stored_at`（保存した時刻）は Clock から取りマイクロ秒に切り捨てる。ハッシュは持たない（`ingestion.file_hash`・`external_record.payload_hash`・`receipt.payload_hash` が持つ）。`file_object_key`・`payload_object_key` とは外部キーを張らない（W10 で S3 に差し替えるため）。追記専用の印を付け、UPDATE・DELETE の権限なし | ADR-004、PV-01 |
-| `receipt` | 受け取るたびに 1 行（39a3 で `received_record` に改名する）。`classification` IN（`ADOPTED`、`DUPLICATE`、`QUARANTINED`、`DISCREPANCY`）。ハッシュが外部原本と同じなら重複、違えば隔離。UPDATE・DELETE の権限なし | BR-12、US-14 |
-| `adopted_value` | 採用した受信記録ごとに 1 つ。ここから DE-12・DE-13 を発行する | ADR-004 |
+| `data_source` | 情報源の単位（提供元、原本種別）の一意制約 `uk_data_source`（Bolt 39a3）。`approval_status` IN（`CANDIDATE`、`APPROVED`、`SUSPENDED`）。承認済みが 0 件ならパイロットを開始しない（アプリケーションで判定） | BR-18 |
+| `external_record` | 冪等性キー（提供元、原本種別、外部 ID、外部版）の一意制約。最初に受け取った payload のハッシュを持つ。`data_source` への外部キーは張らない（冪等性キーは情報源の承認の状態と独立し、出典は受信記録 → 取込 → 情報源でたどれるため。Bolt 39a3） | BR-12 |
+| `stored_payload` | 原本のオブジェクトキー（`object_key`。`PayloadObjectKey` の値）が主キー。`content`（原本の内容）はバイト列で NOT NULL、0 バイトを許す。型は `BYTEA`（共通の置き場所。H2 は別名として受けて `binary varying` になり、0 バイト・0x00・0xFF を読み書きできることを Bolt 39a2 のステップ 2 で確かめた。H2 の `binary varying` には長さの上限があり PostgreSQL の `BYTEA` と違うが、開発の範囲では影響しない）。`stored_at`（保存した時刻）は Clock から取りマイクロ秒に切り捨てる。ハッシュは持たない（`ingestion.file_hash`・`external_record.payload_hash`・`received_record.payload_hash` が持つ）。`file_object_key`・`payload_object_key` とは外部キーを張らない（W10 で S3 に差し替えるため）。追記専用の印を付け、UPDATE・DELETE の権限なし | ADR-004、PV-01 |
+| `received_record` | 受け取るたびに 1 行。`classification` IN（`ADOPTED`、`DUPLICATE`、`QUARANTINED`、`DISCREPANCY`）。ハッシュが外部原本と同じなら重複、違えば隔離。`ingestion_id` は NULL を許す。追記専用の印を付け、UPDATE・DELETE の権限なし | BR-12、US-14 |
+| `received_record_decision` | 受信記録の判断。受信記録 1 件につき 1 つ（`received_record_id` の一意制約）。判断のやり直しは提供元からの再送（新しい受信記録）で扱う。`decision` IN（`ADOPTED`、`REJECTED`。前例の `review_record` の過去分詞にそろえる）。`reason` は NULL を許す。判断の対象（隔離・差異の受信記録だけ）はアプリケーションで守る（Bolt 39d）。追記専用の印を付け、UPDATE・DELETE の権限なし（Bolt 39a3） | US-14 |
+| `adopted_value` | 採用した受信記録ごとに 1 つ（`received_record_id` の一意制約）。`target_type` IN（`VOYAGE`、`MILESTONE`。港湾は D-92 で Release 1.1）。ここから DE-12・DE-13 を発行する。追記専用の印を付け、UPDATE・DELETE の権限なし | ADR-004 |
 | `manual_entry` | 出典・入力者・入力時刻・仮状態を NOT NULL にする | BR-08 |
 | `recovery_reconciliation` | 停止期間ごとに 1 つ。完了には全件の分類、件数の一致、差異の解消が必要（アプリケーションで判定） | BR-12、US-15 |
 
@@ -1191,7 +1203,7 @@ src/main/resources/db/
 | `tracking.service_case` | （`status`、`receive_due_at`） | 受領期限を過ぎた案件（escalation） |
 | `identity.access_grant` | （`booking_id`、`consignee_company_id`、`status`） | 参照許可の確認（request ごと） |
 | `identity.audit_record` | `ix_audit_record_target`（`target_type`、`target_id`、`occurred_at`）、`ix_audit_record_actor`（`actor_user_id`、`occurred_at`） | S-20 の詳細の今の停止の記録（Bolt 38c2 で足した。対象の利用者の最新の `USER_SUSPENDED` を 1 行引く）・監査証跡の照会（US-17） |
-| `external_data.receipt` | （`ingestion_id`）、（`classification`） | 取込単位の件数、隔離中の一覧 |
+| `external_data.received_record` | （`ingestion_id`）、（`classification`） | 取込単位の件数、隔離中の一覧。外部キーの列のほかの索引は、使う照会が決まる Bolt 39b・39d で足す |
 | `tracking.service_case` | （`shipper_company_id`、`status`） | 荷主の問い合わせ一覧（US-23） |
 | `tracking.inquiry_record` | （`shipper_company_id`、`received_at`） | KPI-02 の週次集計 |
 | `identity.kpi_observation` | （`submitted_at`） | KPI-01 の週次集計 |

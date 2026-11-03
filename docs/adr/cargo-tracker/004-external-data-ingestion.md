@@ -4,7 +4,7 @@ title: "ADR-004: 外部原本は Inbox・隔離・照合の 3 段で取り込む
 description: "ARCH-HO-03 と BR-08・BR-12・BR-18 を満たすため、外部原本を無加工で保存し、冪等性キーで採用・重複・隔離・差異に分類し、復旧時に件数照合する決定。2026-11-02（W7、Bolt 39）に、置き場所（externaldata）、原本の保存のポートと消さない補償、分類 4 つ、形式の誤りの隔離、解析の置き場所を改訂した。"
 tags: [adr, architecture]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-02T12:47:50Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-03T00:29:59Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:11:13Z }
   - { by: human:kakimomokuri, at: 2026-11-02T06:52:27Z }
@@ -85,6 +85,8 @@ verified:
   - **接続**: 独立したトランザクションは外側の接続を握ったまま 2 本目の接続を取るので、接続プールの大きさ（既定 10）以上の同時の取込で接続が枯渇しうる。取込は 1 日 1〜4 ファイルで同時に走らない想定なので受け入れる（REQUIRES_NEW の経路の同時実行は前例の採番でも確かめていない）。39b の PERF-06 の計測で、取込の経路が一度に握る接続の数（外側 1・内側 1）も測る。
   - **量**: 原本はファイル全体と行の両方を保存するので、行ごとに独立したトランザクションになる（1 ファイル 1 万件で約 1 万回のコミット）。量は 39b の PERF-06（1 万件を 5 分以内）の計測で確かめ、足りなければ 39b で一括の保存をポートに足す。
   - **S3 の接続の扱い**: S3 の実装が外部への通信の間に DB の接続を握るかどうか（ADR-010 の「外部への通信の間に接続を保持しない」との違い）は、W10 の開始準備で決める。
+- 2026-11-03（W7、Bolt 39a3）: 受信記録の表の名前を改めた（[Bolt 39a3 計画](../../development/cargo-tracker/bolt_39a3_plan.md) の開始準備で決めたこと。human:kakimomokuri が決定）。決定は変えない。
+  - **改名の注**: 上の Bolt 39 の項の `receipt` は当時の表の名前で、受信記録の表は `external_data.received_record`（分類は `received_record.classification`）、受信記録の判断の表は `external_data.received_record_decision` にした。クラス名は `ReceivedRecord`（Bolt 39a2 の開始準備の決定 (3)）。
 
 ## 備考
 
