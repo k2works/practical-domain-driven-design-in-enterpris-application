@@ -2,7 +2,7 @@
 type: Plan
 title: "Bolt 39a3 計画 - 外部データの残りの 6 表（情報源・取込・外部原本・受信記録・判断・採用値）と改名"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-03T00:39:42Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-03T01:05:23Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-11-03T00:27:52Z }
 ---
@@ -148,7 +148,7 @@ received_record ||--o| adopted_value
 ## ステップ計画（ステップごとに止める）
 
 - [x] **1. 設計の文書**（`1b66e9d6c`。2026-11-03 に human:kakimomokuri が承認した。operation.md は docs/design/cargo-tracker/ にあった）: 上の「改名と設計の文書」と「用語集」の行、release_plan（完了の判定: 文書の差分。**承認ゲート**）
-- [ ] **2. 6 表（Red → Green）**: 行 2〜6 のテスト（`APPEND_ONLY_TABLES` と `ExternalDataSchemaIntegrationTest`）を先に書いて落ちることを確かめ（表がないので 42P01 で落ちる）、マイグレーションを作る。行 1・7（完了の判定: 緑。期待した理由で落ちることは変異で確かめる。**承認ゲート**）
+- [x] **2. 6 表（Red → Green）**（`dcd0fe9ce`・`23149f786`。2026-11-03、推奨のとおり承認として記録した（Recommend 承認の指示による。human:kakimomokuri）。一意制約の名前は前例に合わせて列を含める。行 4b は 3 値を確かめるため APPROVED・SUSPENDED の情報源も入れ、ロールバックで残さない）: 行 2〜6 のテスト（`APPEND_ONLY_TABLES` と `ExternalDataSchemaIntegrationTest`）を先に書いて落ちることを確かめ（表がないので 42P01 で落ちる）、マイグレーションを作る。行 1・7（完了の判定: 緑。期待した理由で落ちることは変異で確かめる。**承認ゲート**）
 - [ ] **3. 品質ゲートと開発レビュー**: 変異、`check`、その後に SonarQube、開発レビューとその直し。push の前に `check`
 - [ ] **4. 終了報告**: push して CI とデモ環境の配備（PostgreSQL に 6 表ができる）を確かめる。release_plan・開発の索引・mkdocs を直す
 
