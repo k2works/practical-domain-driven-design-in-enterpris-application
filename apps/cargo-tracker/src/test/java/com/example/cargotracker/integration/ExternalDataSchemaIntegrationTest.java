@@ -23,7 +23,8 @@ import org.springframework.context.annotation.Import;
  * 1 つ、区分値と外部キーを表の制約で守る。
  *
  * <p>共有の DB にデータを残さないよう、テストごとに 1 本の接続で自動コミットを切り、最後にロールバックする（Bolt 26b P-5）。違反の後の PostgreSQL は同じ
- * トランザクションの文を受け付けないので、違反は SAVEPOINT まで戻す。情報源は {@code CANDIDATE} で入れる（承認済みの情報源の件数を数える ED-INV-01 の
+ * トランザクションの文を受け付けないので、違反は SAVEPOINT まで戻す。情報源は {@code CANDIDATE} で入れる。行 4b だけは承認の状態の 3 値を確かめるため
+ * {@code APPROVED}・{@code SUSPENDED} も入れるが、1 本の接続でロールバックするのでほかのテストからは見えない（承認済みの情報源の件数を数える ED-INV-01 の
  * テストを汚さない）。
  */
 @SpringBootTest
@@ -33,6 +34,7 @@ class ExternalDataSchemaIntegrationTest {
     private static final String UNIQUE_VIOLATION = "23505";
     private static final String CHECK_VIOLATION = "23514";
     private static final String FOREIGN_KEY_VIOLATION = "23503";
+    private static final String NOT_NULL_VIOLATION = "23502";
     private static final Timestamp NOW = Timestamp.from(Instant.parse("2026-11-16T09:00:00Z"));
     private static final String HASH = "0".repeat(64);
 
@@ -114,14 +116,15 @@ class ExternalDataSchemaIntegrationTest {
             UUID ingestionId = insertIngestion(connection, dataSourceId);
             UUID externalRecordId = insertExternalRecord(connection, provider, "1");
 
-            insertReceivedRecord(connection, externalRecordId, ingestionId, "ADOPTED");
+            UUID adopted = insertReceivedRecord(connection, externalRecordId, ingestionId, "ADOPTED");
             insertReceivedRecord(connection, externalRecordId, null, "DUPLICATE");
             UUID quarantined = insertReceivedRecord(connection, externalRecordId, null, "QUARANTINED");
             UUID discrepancy = insertReceivedRecord(connection, externalRecordId, null, "DISCREPANCY");
             insertDecision(connection, quarantined, "ADOPTED");
             insertDecision(connection, discrepancy, "REJECTED");
+            // 採用値は採用の分類の受信記録と、採用と判断した受信記録に付ける（却下した受信記録には付けない。整合は Bolt 39d のサービスが守る）
+            insertAdoptedValue(connection, adopted, "MILESTONE");
             insertAdoptedValue(connection, quarantined, "VOYAGE");
-            insertAdoptedValue(connection, discrepancy, "MILESTONE");
 
             assertThat(count(
                             connection,
@@ -200,6 +203,51 @@ class ExternalDataSchemaIntegrationTest {
                     connection,
                     () -> insertAdoptedValue(connection, UUID.randomUUID(), "VOYAGE"),
                     FOREIGN_KEY_VIOLATION);
+        });
+    }
+
+    @Test
+    void 受信記録の分類の時刻は必須() throws SQLException {
+        inRolledBackTransaction(connection -> {
+            UUID externalRecordId = insertExternalRecord(connection, newProvider(), "1");
+
+            assertViolation(
+                    connection,
+                    () -> {
+                        try (PreparedStatement statement = connection.prepareStatement(
+                                "INSERT INTO external_data.received_record"
+                                        + " (id, external_record_id, payload_hash, payload_object_key, acquired_at,"
+                                        + " classification, classified_at) VALUES (?, ?, ?, 'record/x', ?, 'ADOPTED', NULL)")) {
+                            statement.setObject(1, UUID.randomUUID());
+                            statement.setObject(2, externalRecordId);
+                            statement.setString(3, HASH);
+                            statement.setTimestamp(4, NOW);
+                            statement.executeUpdate();
+                        }
+                    },
+                    NOT_NULL_VIOLATION);
+        });
+    }
+
+    @Test
+    void 受信記録の判断の判断者は必須() throws SQLException {
+        inRolledBackTransaction(connection -> {
+            UUID receivedRecordId = insertReceivedRecord(connection);
+
+            assertViolation(
+                    connection,
+                    () -> {
+                        try (PreparedStatement statement =
+                                connection.prepareStatement("INSERT INTO external_data.received_record_decision"
+                                        + " (id, received_record_id, decision, decided_by, decided_at)"
+                                        + " VALUES (?, ?, 'ADOPTED', NULL, ?)")) {
+                            statement.setObject(1, UUID.randomUUID());
+                            statement.setObject(2, receivedRecordId);
+                            statement.setTimestamp(3, NOW);
+                            statement.executeUpdate();
+                        }
+                    },
+                    NOT_NULL_VIOLATION);
         });
     }
 
