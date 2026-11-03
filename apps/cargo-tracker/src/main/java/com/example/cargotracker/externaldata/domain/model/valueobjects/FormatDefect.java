@@ -1,13 +1,16 @@
 package com.example.cargotracker.externaldata.domain.model.valueobjects;
 
 import com.example.cargotracker.shared.annotation.ddd.ValueObject;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * 形式の誤り。取込のファイルと行を隔離する理由（UC-15 2a。Bolt 39b2）。解析・ヘッダーの検証・組み立てがこの値を直接持ち、application に渡す。
  * 理由の名前は Bolt 39 で決めた名前を変えない。隔離の受信記録の注記を業務の言葉で作る（「&lt;物理行の範囲&gt;: &lt;理由&gt;。&lt;どうすればよいか&gt;」）。
- * 空の値・時刻の書式・長すぎる値は組み立て（{@code interfaces.file}）がキーの列を検証して見つける。
+ * 空の値・時刻の書式・長すぎる値は組み立て（{@code interfaces.file}）がキーの列と値の列を検証して見つける。場所・種類・追跡番号・
+ * 寄港の列の形の誤りは、組み立てが値の列から取込の値を作るときの拒否を写す（Bolt 39b2b）。
  *
  * <p>理由ごとに、なりうる範囲（{@link Extent}。ファイル・行・ファイルの終わりまで）を持つ。行の誤り・取り込めなかった部分・ヘッダーの
  * ファイルの誤りは、組み合わせをこの範囲で確かめる（原文の有無で判定しない。Bolt 39b2 の開発レビュー）。
@@ -33,18 +36,35 @@ public enum FormatDefect {
     BARE_QUOTE("引用符で囲まない値の中に引用符があります", "引用符を含む値は引用符で囲んでください。", Extent.ROW, Extent.UNTIL_END_OF_FILE),
     /** 列数がヘッダーと違う（行の誤り）。 */
     COLUMN_COUNT_MISMATCH("列の数がヘッダーと違います", Remedy.ASK_PROVIDER, Extent.ROW),
-    /** キーの列の値が空か空白だけ（値は加工せずに確かめる。行の誤り）。 */
+    /** キーの列か値の列の値が空か空白だけ（値は加工せずに確かめる。行の誤り）。 */
     EMPTY_VALUE("値が空です", Remedy.ASK_PROVIDER, Extent.ROW),
     /** 時刻がオフセット付きの ISO 8601 でない（オフセットのない値と、日付として誤りの値を含む。行の誤り）。 */
     INVALID_TIME("時刻の書式が違います", "オフセット付きの ISO 8601（例 2026-11-03T09:00:00+09:00）で書いてください。", Extent.ROW),
     /** 値が表の列の上限の文字数より長い（行の誤り）。 */
-    TOO_LONG("値が長すぎます", Remedy.ASK_PROVIDER, Extent.ROW);
+    TOO_LONG("値が長すぎます", Remedy.ASK_PROVIDER, Extent.ROW),
+    /** 場所（寄港の港を含む）が UN/LOCODE の形でない（値は加工しない。行の誤り。Bolt 39b2b）。 */
+    INVALID_LOCATION("場所の形が違います", "UN/LOCODE（国コード 2 文字 + 地点コード 3 文字。例 JPTYO）で書いてください。", Extent.ROW),
+    /** 実績の種類が 6 つの種類のどれでもない（小文字・前後の空白を含む。行の誤り。Bolt 39b2b）。 */
+    INVALID_KIND("種類が違います", Remedy.ONE_OF_MILESTONE_KINDS, Extent.ROW),
+    /** 追跡番号が追跡番号の形でない（行の誤り。Bolt 39b2b）。 */
+    INVALID_TRACKING_NUMBER("追跡番号の形が違います", "CT と英大文字・数字 12 桁（0・O・1・I・L を除く）で書いてください。", Extent.ROW),
+    /**
+     * 寄港の列の形が違う（寄港の区切り、寄港の数（2 つ以上）、到着か出発の有無、到着と出発の順、寄港の重複。詳細の言葉で分ける。行の誤り。
+     * Bolt 39b2b）。
+     */
+    INVALID_PORT_CALLS(
+            "寄港の列の形が違います", "寄港は 2 つ以上を | で区切り、各寄港は UN/LOCODE;到着;出発 で到着か出発を書き、出発は到着以後にし、同じ寄港を重ねないでください。", Extent.ROW);
 
     /** どうすればよいかの言葉で、理由をまたいで使うもの。 */
     private static final class Remedy {
 
         /** 行の誤りで、ファイルの中から直し方を示せないとき。 */
         static final String ASK_PROVIDER = "提供元に確かめてください。";
+
+        /** 実績の種類の誤りで、6 つの種類の名前を示す（種類の値から作り、名前を重ねて書かない）。 */
+        static final String ONE_OF_MILESTONE_KINDS =
+                Arrays.stream(MilestoneKindValue.values()).map(Enum::name).collect(Collectors.joining("・"))
+                        + " のどれかで書いてください。";
 
         private Remedy() {}
     }
