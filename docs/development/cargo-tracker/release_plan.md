@@ -4,7 +4,7 @@ title: "リリース計画 - cargo-tracker（A 社国際貨物輸送管理シス
 description: "cargo-tracker MVP のリリース計画。1 人 + AI、時間単位の Bolt（= イテレーション）と週次の見直しで、最初の縦の流れ（R0.1）、パイロット準備完了（R1.0）、本格展開前（R1.1）の 3 段階、Unit のエントロピー評価、SP、バッファ、パイロット開始の条件、引継ぎ ID の台帳、業務責任者に確かめる事項の台帳。"
 tags: [development,release-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-03T07:38:29Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-03T07:41:41Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T09:29:53Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:38:26Z }
@@ -1524,4 +1524,5 @@ xychart-beta
 | 2026-11-03 | [Bolt 39b2b 計画](bolt_39b2b_plan.md)を作り、整合性検証の指摘を反映して承認した（寄港の規則は個別に、ほかは推奨のとおり。Recommend 承認の指示による） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-11-03 | Bolt 39b のステップ 1（設計の文書）: W7 の設計の決定（取込の置き場所）と確認ポイント 4・6 に、39b を 4 本に分けたことによる【前の決定の変更】の注を足した | anthropic/claude-opus-5-5 |
 | 2026-11-03 | Bolt 39b2 のステップ 1（設計の文書）: W7 の確認ポイント 6 に、形式の誤りの受信記録は外部原本を持たないことの注を足した | anthropic/claude-opus-5-5 |
+| 2026-11-03 | Bolt 39b2b のステップ 1（設計の文書）: 寄港の規則を経路設計にそろえた【前の決定の変更】は requirements_definition の OQ-02 の注に置き、「取込ファイルの形式」は直さない。設計文書（domain_model・data_model・system_usecase・architecture_backend・ADR-004）を直した | anthropic/claude-opus-5-5 |
 | 2026-10-28 | Bolt 38f2 のステップ 1 で、デモ項目の動画を撮る Bolt を 38f2b に直した | anthropic/claude-opus-5-5 |
