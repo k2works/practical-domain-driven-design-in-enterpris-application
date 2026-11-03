@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 外部原本（Bolt 39b）。冪等性キー（提供元・原本種別・外部 ID・外部版）の一意制約で引く。同時の同じキーは一意制約で後が失敗する
+     （ON CONFLICT は使わない。確認ポイント 7）。H2 と PostgreSQL の共通の構文で書く（ADR-007）。 -->
+<mapper namespace="com.example.cargotracker.externaldata.infrastructure.persistence.ExternalRecordMapper">
+
+    <resultMap id="externalRecordRow" type="com.example.cargotracker.externaldata.infrastructure.persistence.ExternalRecordRow">
+        <constructor>
+            <idArg column="id" name="id" javaType="java.util.UUID"/>
+            <arg column="provider" name="provider" javaType="String"/>
+            <arg column="record_type" name="recordType" javaType="String"/>
+            <arg column="external_id" name="externalId" javaType="String"/>
+            <arg column="external_version" name="externalVersion" javaType="String"/>
+            <arg column="payload_hash" name="payloadHash" javaType="String"/>
+            <arg column="payload_object_key" name="payloadObjectKey" javaType="String"/>
+            <arg column="first_received_at" name="firstReceivedAt" javaType="java.time.OffsetDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <select id="selectByKey" resultMap="externalRecordRow">
+        SELECT id, provider, record_type, external_id, external_version, payload_hash, payload_object_key,
+               first_received_at
+          FROM external_data.external_record
+         WHERE provider = #{provider}
+           AND record_type = #{recordType}
+           AND external_id = #{externalId}
+           AND external_version = #{externalVersion}
+    </select>
+
+    <insert id="insert">
+        INSERT INTO external_data.external_record
+            (id, provider, record_type, external_id, external_version, payload_hash, payload_object_key,
+             first_received_at)
+        VALUES (#{id}, #{provider}, #{recordType}, #{externalId}, #{externalVersion}, #{payloadHash},
+                #{payloadObjectKey}, #{firstReceivedAt})
+    </insert>
+</mapper>

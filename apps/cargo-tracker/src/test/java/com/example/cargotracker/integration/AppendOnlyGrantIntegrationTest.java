@@ -40,6 +40,7 @@ class AppendOnlyGrantIntegrationTest {
             "booking.booking_version",
             "booking.processed_command",
             "external_data.stored_payload",
+            "external_data.ingestion",
             "external_data.received_record",
             "external_data.received_record_decision",
             "external_data.adopted_value");

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 受信記録（Bolt 39b、ED-INV-02）。追記専用なので INSERT と数えることだけを持つ。取込と外部原本より後に書く（外部キー）。
+     取込ごとの件数は ix_received_record_ingestion を使う。H2 と PostgreSQL の共通の構文で書く（ADR-007）。 -->
+<mapper namespace="com.example.cargotracker.externaldata.infrastructure.persistence.ReceivedRecordMapper">
+
+    <insert id="insert">
+        INSERT INTO external_data.received_record
+            (id, external_record_id, ingestion_id, payload_hash, payload_object_key, acquired_at, classification,
+             classification_note, classified_at)
+        VALUES (#{id}, #{externalRecordId}, #{ingestionId}, #{payloadHash}, #{payloadObjectKey}, #{acquiredAt},
+                #{classification}, #{classificationNote,jdbcType=VARCHAR}, #{classifiedAt})
+    </insert>
+
+    <select id="countByIngestionAndClassification" resultType="int">
+        SELECT COUNT(*) FROM external_data.received_record
+         WHERE ingestion_id = #{ingestionId} AND classification = #{classification}
+    </select>
+</mapper>
