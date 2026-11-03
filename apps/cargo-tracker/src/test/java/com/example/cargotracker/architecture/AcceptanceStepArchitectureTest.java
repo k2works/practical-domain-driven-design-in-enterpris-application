@@ -43,6 +43,10 @@ class AcceptanceStepArchitectureTest {
     @ArchTest
     static final ArchRule アクセス監査のステップ定義は自分のコンテキストと公開APIだけに依存する = rule("identity");
 
+    /** 外部データのステップ定義（Bolt 39b。手書きの規則の写しの汎用化は 39b3 で M-2 と一緒に扱う）。 */
+    @ArchTest
+    static final ArchRule 外部データのステップ定義は自分のコンテキストと公開APIだけに依存する = rule("externaldata");
+
     /**
      * 画面の層のステップは {@code Pattern.quote} を呼ばない（Bolt 33c、Try T-128）。Playwright は正規表現をブラウザーの JavaScript で照合し、
      * {@code \Q…\E} が効かない（Bolt 5・25・33a で踏んだ）。文字列は {@code PlaywrightText} でエスケープする。対象のクラスがなければ

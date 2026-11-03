@@ -24,6 +24,11 @@ public class InMemoryReceivedRecordRepository implements ReceivedRecordRepositor
                 .count();
     }
 
+    /** シナリオの開始時に消す（受入シナリオ。Bolt 39b）。 */
+    public void clear() {
+        records.clear();
+    }
+
     /** 追記した受信記録（ポートの外。テストの確かめ）。追記の順。 */
     public List<ReceivedRecord> all() {
         return List.copyOf(records);

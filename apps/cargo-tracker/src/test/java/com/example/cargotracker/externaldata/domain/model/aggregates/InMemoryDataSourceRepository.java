@@ -18,6 +18,11 @@ public class InMemoryDataSourceRepository implements DataSourceRepository {
         sources.put(source.id(), source);
     }
 
+    /** シナリオの開始時に消す（受入シナリオ。Bolt 39b）。 */
+    public void clear() {
+        sources.clear();
+    }
+
     @Override
     public Optional<DataSource> findById(UUID id) {
         return Optional.ofNullable(sources.get(id));

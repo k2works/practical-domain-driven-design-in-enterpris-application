@@ -10,6 +10,13 @@ import com.example.cargotracker.booking.application.internal.outboundservices.ac
 import com.example.cargotracker.booking.domain.events.BookingConfirmed;
 import com.example.cargotracker.booking.infrastructure.persistence.RandomTrackingNumberIssuer;
 import com.example.cargotracker.booking.interfaces.api.internal.TrackingStartNotificationAdapter;
+import com.example.cargotracker.externaldata.application.internal.commandservices.IngestionService;
+import com.example.cargotracker.externaldata.application.internal.queryservices.PilotReadinessQueryService;
+import com.example.cargotracker.externaldata.domain.model.aggregates.InMemoryDataSourceRepository;
+import com.example.cargotracker.externaldata.domain.model.aggregates.InMemoryExternalPayloadStorage;
+import com.example.cargotracker.externaldata.domain.model.aggregates.InMemoryExternalRecordRepository;
+import com.example.cargotracker.externaldata.domain.model.aggregates.InMemoryIngestionRepository;
+import com.example.cargotracker.externaldata.domain.model.aggregates.InMemoryReceivedRecordRepository;
 import com.example.cargotracker.identity.acceptance.InMemoryKpiObservationRepository;
 import com.example.cargotracker.identity.application.internal.eventhandlers.KpiObservationEventHandler;
 import com.example.cargotracker.identity.application.internal.queryservices.KpiObservationQueryService;
@@ -452,6 +459,50 @@ public class AcceptanceTestConfiguration {
         @Bean
         KpiObservationQueryService kpiObservationQueryService(InMemoryKpiObservationRepository repository) {
             return new KpiObservationQueryService(repository);
+        }
+
+        @Bean
+        InMemoryDataSourceRepository dataSourceRepository() {
+            return new InMemoryDataSourceRepository();
+        }
+
+        @Bean
+        InMemoryIngestionRepository ingestionRepository() {
+            return new InMemoryIngestionRepository();
+        }
+
+        @Bean
+        InMemoryExternalRecordRepository externalRecordRepository() {
+            return new InMemoryExternalRecordRepository();
+        }
+
+        @Bean
+        InMemoryReceivedRecordRepository receivedRecordRepository() {
+            return new InMemoryReceivedRecordRepository();
+        }
+
+        @Bean
+        InMemoryExternalPayloadStorage externalPayloadStorage() {
+            return new InMemoryExternalPayloadStorage();
+        }
+
+        /** データ責任者が承認済みの情報源のファイルを取り込む（US-14。Bolt 39b）。 */
+        @Bean
+        IngestionService ingestionService(
+                InMemoryDataSourceRepository dataSources,
+                InMemoryIngestionRepository ingestions,
+                InMemoryExternalRecordRepository externalRecords,
+                InMemoryReceivedRecordRepository receivedRecords,
+                InMemoryExternalPayloadStorage payloadStorage,
+                MutableClock clock) {
+            return new IngestionService(
+                    dataSources, ingestions, externalRecords, receivedRecords, payloadStorage, clock);
+        }
+
+        /** パイロットの開始判定（ED-INV-01、BR-18。Bolt 39b）。 */
+        @Bean
+        PilotReadinessQueryService pilotReadinessQueryService(InMemoryDataSourceRepository dataSources) {
+            return new PilotReadinessQueryService(dataSources);
         }
 
         @Bean

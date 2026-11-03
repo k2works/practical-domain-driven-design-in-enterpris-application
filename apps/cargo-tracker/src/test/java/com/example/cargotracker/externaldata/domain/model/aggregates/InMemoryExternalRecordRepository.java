@@ -29,6 +29,11 @@ public class InMemoryExternalRecordRepository implements ExternalRecordRepositor
         }
     }
 
+    /** シナリオの開始時に消す（受入シナリオ。Bolt 39b）。 */
+    public void clear() {
+        records.clear();
+    }
+
     /** 足した外部原本（ポートの外。テストの確かめ）。 */
     public List<ExternalRecord> all() {
         return List.copyOf(records.values());

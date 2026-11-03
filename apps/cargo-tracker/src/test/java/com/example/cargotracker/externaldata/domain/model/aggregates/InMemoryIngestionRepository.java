@@ -14,6 +14,11 @@ public class InMemoryIngestionRepository implements IngestionRepository {
         ingestions.add(Objects.requireNonNull(ingestion, "ingestion"));
     }
 
+    /** シナリオの開始時に消す（受入シナリオ。Bolt 39b）。 */
+    public void clear() {
+        ingestions.clear();
+    }
+
     /** 追記した取込（ポートの外。テストの確かめ）。追記の順。 */
     public List<Ingestion> all() {
         return List.copyOf(ingestions);

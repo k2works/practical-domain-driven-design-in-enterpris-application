@@ -20,6 +20,16 @@ public class InMemoryExternalPayloadStorage implements ExternalPayloadStorage {
         }
     }
 
+    /** 保存した原本の数（ポートの外。受入シナリオの確かめ。Bolt 39b）。 */
+    public int count() {
+        return payloads.size();
+    }
+
+    /** シナリオの開始時に消す（受入シナリオ。Bolt 39b）。 */
+    public void clear() {
+        payloads.clear();
+    }
+
     @Override
     public byte[] read(PayloadObjectKey key) {
         byte[] payload = payloads.get(key);

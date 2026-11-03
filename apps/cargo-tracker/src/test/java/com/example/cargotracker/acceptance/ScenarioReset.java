@@ -2,6 +2,11 @@ package com.example.cargotracker.acceptance;
 
 import com.example.cargotracker.booking.acceptance.InMemoryBookingRepository;
 import com.example.cargotracker.booking.acceptance.InMemoryBookingSagaRepository;
+import com.example.cargotracker.externaldata.domain.model.aggregates.InMemoryDataSourceRepository;
+import com.example.cargotracker.externaldata.domain.model.aggregates.InMemoryExternalPayloadStorage;
+import com.example.cargotracker.externaldata.domain.model.aggregates.InMemoryExternalRecordRepository;
+import com.example.cargotracker.externaldata.domain.model.aggregates.InMemoryIngestionRepository;
+import com.example.cargotracker.externaldata.domain.model.aggregates.InMemoryReceivedRecordRepository;
 import com.example.cargotracker.identity.acceptance.InMemoryKpiObservationRepository;
 import com.example.cargotracker.quotation.acceptance.InMemoryQuotationRepository;
 import com.example.cargotracker.quotation.acceptance.InMemoryRequiredDocumentStorage;
@@ -36,6 +41,11 @@ public class ScenarioReset {
     private final InMemoryBookingRepository bookingRepository;
     private final InMemoryBookingSagaRepository bookingSagaRepository;
     private final InMemoryTrackingRecordRepository trackingRecordRepository;
+    private final InMemoryDataSourceRepository dataSourceRepository;
+    private final InMemoryIngestionRepository ingestionRepository;
+    private final InMemoryExternalRecordRepository externalRecordRepository;
+    private final InMemoryReceivedRecordRepository receivedRecordRepository;
+    private final InMemoryExternalPayloadStorage externalPayloadStorage;
 
     public ScenarioReset(
             MutableClock clock,
@@ -51,7 +61,12 @@ public class ScenarioReset {
             InMemoryConnectionRuleRepository connectionRuleRepository,
             InMemoryBookingRepository bookingRepository,
             InMemoryBookingSagaRepository bookingSagaRepository,
-            InMemoryTrackingRecordRepository trackingRecordRepository) {
+            InMemoryTrackingRecordRepository trackingRecordRepository,
+            InMemoryDataSourceRepository dataSourceRepository,
+            InMemoryIngestionRepository ingestionRepository,
+            InMemoryExternalRecordRepository externalRecordRepository,
+            InMemoryReceivedRecordRepository receivedRecordRepository,
+            InMemoryExternalPayloadStorage externalPayloadStorage) {
         this.clock = clock;
         this.transportRequestRepository = transportRequestRepository;
         this.transportRequestNumberIssuer = transportRequestNumberIssuer;
@@ -66,6 +81,11 @@ public class ScenarioReset {
         this.bookingRepository = bookingRepository;
         this.bookingSagaRepository = bookingSagaRepository;
         this.trackingRecordRepository = trackingRecordRepository;
+        this.dataSourceRepository = dataSourceRepository;
+        this.ingestionRepository = ingestionRepository;
+        this.externalRecordRepository = externalRecordRepository;
+        this.receivedRecordRepository = receivedRecordRepository;
+        this.externalPayloadStorage = externalPayloadStorage;
     }
 
     @Before
@@ -84,5 +104,10 @@ public class ScenarioReset {
         bookingRepository.clear();
         bookingSagaRepository.clear();
         trackingRecordRepository.clear();
+        dataSourceRepository.clear();
+        ingestionRepository.clear();
+        externalRecordRepository.clear();
+        receivedRecordRepository.clear();
+        externalPayloadStorage.clear();
     }
 }
