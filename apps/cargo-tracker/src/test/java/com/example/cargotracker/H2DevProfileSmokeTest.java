@@ -20,7 +20,9 @@ import com.example.cargotracker.quotation.domain.model.valueobjects.TransportReq
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Role;
 import com.example.cargotracker.shared.domain.UserId;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Stream;
 import org.flywaydb.core.Flyway;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -144,7 +146,17 @@ class H2DevProfileSmokeTest extends KpiObservationRepositoryContract {
 
         PilotReadiness readiness = pilotReadiness.readiness();
 
-        assertThat(readiness.approvedCount()).isEqualTo(2);
+        assertThat(Stream.of(
+                                "00000000-0000-0000-0000-000000003901",
+                                "00000000-0000-0000-0000-000000003902",
+                                "00000000-0000-0000-0000-000000003903")
+                        .map(UUID::fromString)
+                        .map(dataSources::findById)
+                        .flatMap(Optional::stream)
+                        .filter(source -> source.approvalStatus() == ApprovalStatus.APPROVED))
+                .hasSize(2);
+        // 共有の H2 にほかのテストの承認済みの情報源が残っても崩れないよう、全体の件数は開発データの 2 つ以上で確かめる。
+        assertThat(readiness.approvedCount()).isGreaterThanOrEqualTo(2);
         assertThat(readiness.canStart()).isTrue();
     }
 }

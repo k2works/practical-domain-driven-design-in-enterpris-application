@@ -19,8 +19,8 @@ public class InMemoryReceivedRecordRepository implements ReceivedRecordRepositor
     @Override
     public int countByIngestionAndClassification(UUID ingestionId, Classification classification) {
         return (int) records.stream()
-                .filter(record -> record.ingestionId().equals(ingestionId))
-                .filter(record -> record.classification() == classification)
+                .filter(receivedRecord -> receivedRecord.ingestionId().equals(ingestionId))
+                .filter(receivedRecord -> receivedRecord.classification() == classification)
                 .count();
     }
 

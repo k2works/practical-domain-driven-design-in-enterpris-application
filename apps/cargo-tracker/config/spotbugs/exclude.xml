@@ -33,6 +33,14 @@
         <Package name="~com\.example\.cargotracker\.notification\.application\.internal\..*"/>
     </Match>
     <!--
+      EI_EXPOSE_REP2: externaldata のアプリケーションのサービス（取込のサービス・パイロットの開始判定）も、DI で受け取ったリポジトリなどの
+      部品を保持するだけ。identity・notification と同じくパッケージで指定する（Bolt 39b）。
+    -->
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+        <Package name="~com\.example\.cargotracker\.externaldata\.application\.internal\..*"/>
+    </Match>
+    <!--
       EI_EXPOSE_REP2: application.internal の外で、同じく DI の部品を保持するだけと分かっているクラス。このクラスに限って抑止する。
     -->
     <Match>

@@ -125,11 +125,11 @@ public abstract class ExternalDataRecordRepositoriesContract {
 
     @Test
     void 行10_外部原本を足すと冪等性キーで引け最初の受信時刻を往復する() {
-        ExternalRecord record = externalRecord(key("VOYAGE", "V-001"));
+        ExternalRecord externalRecord = externalRecord(key("VOYAGE", "V-001"));
 
-        externalRecords().add(record);
+        externalRecords().add(externalRecord);
 
-        assertThat(externalRecords().findByKey(record.key())).contains(record);
+        assertThat(externalRecords().findByKey(externalRecord.key())).contains(externalRecord);
     }
 
     @Test
@@ -150,18 +150,21 @@ public abstract class ExternalDataRecordRepositoriesContract {
     @Test
     void 行9b_同じ冪等性キーの外部原本の2回目の追加は一意制約の違反() {
         IdempotencyKey key = key("VOYAGE", "V-009");
-        externalRecords().add(externalRecord(key));
+        ExternalRecordRepository repository = externalRecords();
+        repository.add(externalRecord(key));
+        ExternalRecord again = externalRecord(key);
 
-        assertThatThrownBy(() -> externalRecords().add(externalRecord(key))).isInstanceOf(DuplicateKeyException.class);
+        assertThatThrownBy(() -> repository.add(again)).isInstanceOf(DuplicateKeyException.class);
     }
 
     @Test
     void 行10_受信記録を書いて読める() {
         Ingestion ingestion = ingestion(1);
         ingestions().add(ingestion);
-        ExternalRecord record = externalRecord(key("VOYAGE", "V-010"));
-        externalRecords().add(record);
-        ReceivedRecord quarantined = receivedRecord(record, ingestion, Classification.QUARANTINED, "前回と内容が違います");
+        ExternalRecord externalRecord = externalRecord(key("VOYAGE", "V-010"));
+        externalRecords().add(externalRecord);
+        ReceivedRecord quarantined =
+                receivedRecord(externalRecord, ingestion, Classification.QUARANTINED, "前回と内容が違います");
 
         receivedRecords().add(quarantined);
 
@@ -174,13 +177,13 @@ public abstract class ExternalDataRecordRepositoriesContract {
         Ingestion other = ingestion(1);
         ingestions().add(ingestion);
         ingestions().add(other);
-        ExternalRecord record = externalRecord(key("VOYAGE", "V-011"));
-        externalRecords().add(record);
+        ExternalRecord externalRecord = externalRecord(key("VOYAGE", "V-011"));
+        externalRecords().add(externalRecord);
 
-        receivedRecords().add(receivedRecord(record, ingestion, Classification.ADOPTED, null));
-        receivedRecords().add(receivedRecord(record, ingestion, Classification.DUPLICATE, null));
-        receivedRecords().add(receivedRecord(record, ingestion, Classification.DUPLICATE, null));
-        receivedRecords().add(receivedRecord(record, other, Classification.DUPLICATE, null));
+        receivedRecords().add(receivedRecord(externalRecord, ingestion, Classification.ADOPTED, null));
+        receivedRecords().add(receivedRecord(externalRecord, ingestion, Classification.DUPLICATE, null));
+        receivedRecords().add(receivedRecord(externalRecord, ingestion, Classification.DUPLICATE, null));
+        receivedRecords().add(receivedRecord(externalRecord, other, Classification.DUPLICATE, null));
 
         assertThat(receivedRecords().countByIngestionAndClassification(ingestion.id(), Classification.ADOPTED))
                 .isEqualTo(1);

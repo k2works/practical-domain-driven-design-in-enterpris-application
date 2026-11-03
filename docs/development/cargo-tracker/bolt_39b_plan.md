@@ -2,7 +2,7 @@
 type: Plan
 title: "Bolt 39b 計画 - 外部原本の取込と分類（採用・重複・隔離）と情報源の照会"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-03T03:19:11Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-03T04:02:14Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-11-03T02:25:16Z }
 ---
@@ -62,7 +62,7 @@ verified:
 | 照会 | `externaldata.application.internal.queryservices.PilotReadinessQueryService`（`@Service`）の `readiness()` が `PilotReadiness`（承認済みの情報源の件数、開始できるか、開始できない理由）を返す。0 件の理由は「承認済みの情報源がありません。情報源を選定し、承認してください」 | domain_model :1528、US-14 AC2 |
 | 時刻 | 1 つの取込で Clock から 1 回取った時刻を `ingested_at`・`first_received_at`・`classified_at` に使う（取込を 1 つの時点として再現できる）。`acquired_at` は行の値 | T-229、確認ポイント 8 |
 | 情報源の種別 | `data_source.record_type` の値は取込ファイルの種別 `CsvFileKind` の名前（`VOYAGE`・`MILESTONE`）にそろえる。CHECK は足さない（港湾は Release 1.1 で増える。D-92） | CsvFileKind :10-12、確認ポイント 4 |
-| 受入シナリオ | `src/test/resources/features/external_data/ingest_external_records.feature`。Feature に `@US-14`・`@must`、シナリオごとに受入条件 `@US-14-AC2`〜`@US-14-AC4`、業務ルール `@BR-12`（AC3・AC4）・`@BR-18`（AC2）、不変条件 `@ED-INV-01`（AC2）・`@ED-INV-02`（AC3・AC4）を付ける。ステップ定義は `externaldata.acceptance`、メモリの実装（情報源・取込・外部原本・受信記録）は前例どおり `externaldata.acceptance.InMemory…`（前例 `booking.acceptance.InMemoryBookingRepository`）に置き、`AcceptanceTestConfiguration` につなぐ。AcceptanceStepArchitectureTest に外部データの規則を手で 1 つ足す | test_strategy :118-125・:141、確認ポイント 10 |
+| 受入シナリオ | `src/test/resources/features/external_data/ingest_external_records.feature`。Feature に `@US-14`・`@must`、シナリオごとに受入条件 `@US-14-AC2`〜`@US-14-AC4`、業務ルール `@BR-12`（AC3・AC4）・`@BR-18`（AC2）、不変条件 `@ED-INV-01`（AC2）・`@ED-INV-02`（AC3・AC4）を付ける。ステップ定義は `externaldata.acceptance`、メモリの実装（情報源・取込・外部原本・受信記録）は単体と契約のテストと共有するため test の `externaldata.domain.model.aggregates`（`InMemoryDataSourceRepository` など。原本の保存の `InMemoryExternalPayloadStorage` と同じ置き場所）に置き、`AcceptanceTestConfiguration` につなぐ。AcceptanceStepArchitectureTest に外部データの規則を手で 1 つ足す | test_strategy :118-125・:141、確認ポイント 10 |
 | パッケージ | `externaldata.application`・`application.internal`・`commandservices`・`commands`・`queryservices`・`infrastructure.config` の `package-info`（最初の語は上の「パッケージの説明」。`infrastructure.config` は `notification.infrastructure.config` の前例にそろえる）。新しいパッケージとファイルは構造の承認ゲート | 構造 |
 
 ## ふりかえりと前の Bolt からの引き継ぎ

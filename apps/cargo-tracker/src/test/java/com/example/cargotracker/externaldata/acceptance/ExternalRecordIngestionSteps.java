@@ -147,7 +147,7 @@ public class ExternalRecordIngestionSteps {
         RowResult row = lastRow();
         assertThat(row.classification()).isEqualTo(classification(classification));
         ReceivedRecord received = receivedRecords.all().stream()
-                .filter(record -> record.id().equals(row.receivedRecordId()))
+                .filter(candidate -> candidate.id().equals(row.receivedRecordId()))
                 .findFirst()
                 .orElseThrow();
         assertThat(received.classificationNote()).isEqualTo(note);

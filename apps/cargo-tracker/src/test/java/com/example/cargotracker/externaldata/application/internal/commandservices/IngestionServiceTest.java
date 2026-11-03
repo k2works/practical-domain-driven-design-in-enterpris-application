@@ -109,35 +109,49 @@ class IngestionServiceTest {
 
     @Test
     void 行1_新しい冪等性キーの行は外部原本を作り受信記録を採用にして取込に関連付ける() {
-        IngestedRow row = milestone(2, "MS-0001", "1", "TRK-0001");
+        IngestedRow row = milestone(2, "MS-0001", "1", "CTABCDEFGH2345");
 
         Ingested result = ingested(service().ingest(steward, file(milestoneSource, row)));
 
-        ExternalRecord record = externalRecords
+        ExternalRecord adopted = externalRecords
                 .findByKey(keyOf(milestoneSource, "MS-0001", "1"))
                 .orElseThrow();
         ReceivedRecord received = receivedRecords.all().getFirst();
-        assertThat(record.payloadHash()).isEqualTo(PayloadHash.of(row.payload()));
-        assertThat(storage.read(record.payloadObjectKey())).isEqualTo(row.payload());
-        assertThat(record.firstReceivedAt()).isEqualTo(NOW);
+        assertThat(adopted.payloadHash()).isEqualTo(PayloadHash.of(row.payload()));
+        assertThat(storage.read(adopted.payloadObjectKey())).isEqualTo(row.payload());
+        assertThat(adopted.firstReceivedAt()).isEqualTo(NOW);
         assertThat(received.classification()).isEqualTo(Classification.ADOPTED);
         assertThat(received.classificationNote()).isNull();
-        assertThat(received.externalRecordId()).isEqualTo(record.id());
+        assertThat(received.externalRecordId()).isEqualTo(adopted.id());
         assertThat(received.ingestionId()).isEqualTo(result.ingestionId());
-        assertThat(received.payloadObjectKey()).isEqualTo(record.payloadObjectKey());
-        assertThat(result.rows()).containsExactly(new RowResult(2, Classification.ADOPTED, record.id(), received.id()));
+        assertThat(received.payloadObjectKey()).isEqualTo(adopted.payloadObjectKey());
+        assertThat(result.rows())
+                .containsExactly(new RowResult(2, Classification.ADOPTED, adopted.id(), received.id()));
     }
 
     @Test
     void 行1_原本はファイル全体と行の順に保存してから受信記録を書く() {
-        service().ingest(steward, file(milestoneSource, milestone(2, "MS-0001", "1", "TRK-0001")));
+        service().ingest(steward, file(milestoneSource, milestone(2, "MS-0001", "1", "CTABCDEFGH2345")));
 
         assertThat(calls).containsExactly("store:ingestions", "store:records", "received:ADOPTED");
     }
 
     @Test
+    void 行1_同じ外部IDで外部版の違う行は新しい冪等性キーで外部原本を作り採用にする() {
+        ingested(service().ingest(steward, file(milestoneSource, milestone(2, "MS-0001", "1", "CTABCDEFGH2345"))));
+
+        Ingested second = ingested(
+                service().ingest(steward, file(milestoneSource, milestone(2, "MS-0001", "2", "CTABCDEFGH2345"))));
+
+        assertThat(second.rows().getFirst().classification()).isEqualTo(Classification.ADOPTED);
+        assertThat(externalRecords.findByKey(keyOf(milestoneSource, "MS-0001", "2")))
+                .isPresent();
+        assertThat(externalRecords.all()).hasSize(2);
+    }
+
+    @Test
     void 行2_同じキーと同じ内容を別の取込で再送すると重複になり外部原本は1つのまま既存の外部原本IDを返す() {
-        IngestedRow row = milestone(2, "MS-0001", "1", "TRK-0001");
+        IngestedRow row = milestone(2, "MS-0001", "1", "CTABCDEFGH2345");
         Ingested first = ingested(service().ingest(steward, file(milestoneSource, row)));
 
         Ingested second = ingested(service().ingest(steward, file(milestoneSource, row)));
@@ -153,11 +167,11 @@ class IngestionServiceTest {
 
     @Test
     void 行3_同じキーで内容の違う行は隔離になり外部原本の最初のハッシュとオブジェクトキーは変わらない() {
-        service().ingest(steward, file(milestoneSource, milestone(2, "MS-0001", "1", "TRK-0001")));
+        service().ingest(steward, file(milestoneSource, milestone(2, "MS-0001", "1", "CTABCDEFGH2345")));
         ExternalRecord before = externalRecords.all().getFirst();
 
-        Ingested second =
-                ingested(service().ingest(steward, file(milestoneSource, milestone(2, "MS-0001", "1", "TRK-0002"))));
+        Ingested second = ingested(
+                service().ingest(steward, file(milestoneSource, milestone(2, "MS-0001", "1", "CTABCDEFGH2346"))));
 
         assertThat(externalRecords.all()).containsExactly(before);
         assertThat(second.rows().getFirst().classification()).isEqualTo(Classification.QUARANTINED);
@@ -173,9 +187,9 @@ class IngestionServiceTest {
                         steward,
                         file(
                                 milestoneSource,
-                                milestone(2, "MS-0001", "1", "TRK-0001"),
-                                milestone(3, "MS-0001", "1", "TRK-0001"),
-                                milestone(4, "MS-0001", "1", "TRK-0002"))));
+                                milestone(2, "MS-0001", "1", "CTABCDEFGH2345"),
+                                milestone(3, "MS-0001", "1", "CTABCDEFGH2345"),
+                                milestone(4, "MS-0001", "1", "CTABCDEFGH2346"))));
 
         assertThat(result.rows())
                 .extracting(RowResult::lineNumber, RowResult::classification)
@@ -190,7 +204,8 @@ class IngestionServiceTest {
     void 行5_候補の情報源の取込は拒否し何も保存しない() {
         DataSource candidate = source("運送会社C-" + UUID.randomUUID(), "MILESTONE", ApprovalStatus.CANDIDATE);
 
-        IngestionOutcome outcome = service().ingest(steward, file(candidate, milestone(2, "MS-0001", "1", "TRK-0001")));
+        IngestionOutcome outcome =
+                service().ingest(steward, file(candidate, milestone(2, "MS-0001", "1", "CTABCDEFGH2345")));
 
         assertThat(outcome).isInstanceOf(IngestionOutcome.DataSourceNotApproved.class);
         assertNothingWritten();
@@ -200,7 +215,8 @@ class IngestionServiceTest {
     void 行5_停止中の情報源の取込は拒否し何も保存しない() {
         DataSource suspended = source("運送会社S-" + UUID.randomUUID(), "MILESTONE", ApprovalStatus.SUSPENDED);
 
-        IngestionOutcome outcome = service().ingest(steward, file(suspended, milestone(2, "MS-0001", "1", "TRK-0001")));
+        IngestionOutcome outcome =
+                service().ingest(steward, file(suspended, milestone(2, "MS-0001", "1", "CTABCDEFGH2345")));
 
         assertThat(outcome).isInstanceOf(IngestionOutcome.DataSourceNotApproved.class);
         assertNothingWritten();
@@ -210,7 +226,8 @@ class IngestionServiceTest {
     void 行5_ない情報源の取込は拒否し何も保存しない() {
         DataSource unknown = new DataSource(UUID.randomUUID(), "未登録の提供元", "MILESTONE", ApprovalStatus.APPROVED);
 
-        IngestionOutcome outcome = service().ingest(steward, file(unknown, milestone(2, "MS-0001", "1", "TRK-0001")));
+        IngestionOutcome outcome =
+                service().ingest(steward, file(unknown, milestone(2, "MS-0001", "1", "CTABCDEFGH2345")));
 
         assertThat(outcome).isInstanceOf(IngestionOutcome.DataSourceNotFound.class);
         assertNothingWritten();
@@ -219,7 +236,9 @@ class IngestionServiceTest {
     @Test
     void 行5b_データ責任者でない操作者の取込は拒否し何も保存しない() {
         IngestionOutcome outcome = service()
-                .ingest(actor(Role.TRACKING_MANAGER), file(milestoneSource, milestone(2, "MS-0001", "1", "TRK-0001")));
+                .ingest(
+                        actor(Role.TRACKING_MANAGER),
+                        file(milestoneSource, milestone(2, "MS-0001", "1", "CTABCDEFGH2345")));
 
         assertThat(outcome).isInstanceOf(IngestionOutcome.NotPermitted.class);
         assertNothingWritten();
@@ -244,10 +263,10 @@ class IngestionServiceTest {
     void 行7_別の提供元の情報源で同じ外部IDと外部版の行は別のキーでどちらも採用() {
         DataSource otherProvider = approvedSource("運送会社B-" + UUID.randomUUID(), "MILESTONE");
 
-        Ingested first =
-                ingested(service().ingest(steward, file(milestoneSource, milestone(2, "MS-0001", "1", "TRK-0001"))));
-        Ingested second =
-                ingested(service().ingest(steward, file(otherProvider, milestone(2, "MS-0001", "1", "TRK-0001"))));
+        Ingested first = ingested(
+                service().ingest(steward, file(milestoneSource, milestone(2, "MS-0001", "1", "CTABCDEFGH2345"))));
+        Ingested second = ingested(
+                service().ingest(steward, file(otherProvider, milestone(2, "MS-0001", "1", "CTABCDEFGH2345"))));
 
         assertThat(first.rows().getFirst().classification()).isEqualTo(Classification.ADOPTED);
         assertThat(second.rows().getFirst().classification()).isEqualTo(Classification.ADOPTED);
@@ -263,7 +282,7 @@ class IngestionServiceTest {
         IngestedRow voyageRow =
                 new IngestedRow(2, "MS-0001", "1", ACQUIRED, voyageLine.getBytes(StandardCharsets.UTF_8));
 
-        service().ingest(steward, file(milestoneSource, milestone(2, "MS-0001", "1", "TRK-0001")));
+        service().ingest(steward, file(milestoneSource, milestone(2, "MS-0001", "1", "CTABCDEFGH2345")));
         Ingested voyage = ingested(service()
                 .ingest(
                         steward,
@@ -292,9 +311,13 @@ class IngestionServiceTest {
             }
         };
         IngestFileCommand command = file(
-                milestoneSource, milestone(2, "MS-0001", "1", "TRK-0001"), milestone(3, "MS-0002", "1", "TRK-0002"));
+                milestoneSource,
+                milestone(2, "MS-0001", "1", "CTABCDEFGH2345"),
+                milestone(3, "MS-0002", "1", "CTABCDEFGH2346"));
 
-        assertThatThrownBy(() -> service(failingOnSecondRow).ingest(steward, command))
+        IngestionService failingService = service(failingOnSecondRow);
+
+        assertThatThrownBy(() -> failingService.ingest(steward, command))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessage("原本の保存に失敗した");
         assertThat(receivedRecords.all()).hasSize(1);
@@ -304,7 +327,31 @@ class IngestionServiceTest {
 
     @Test
     void 行9b_同時の取込で同じ新しいキーを先に書かれたら一意制約の違反のまま例外を上げる() {
-        IngestedRow row = milestone(2, "MS-0001", "1", "TRK-0001");
+        IngestedRow row = milestone(2, "MS-0001", "1", "CTABCDEFGH2345");
+        IngestionService racingService = racingService(row);
+        IngestFileCommand command = file(milestoneSource, row);
+
+        assertThatThrownBy(() -> racingService.ingest(steward, command)).isInstanceOf(DuplicateKeyException.class);
+        assertThat(receivedRecords.all()).isEmpty();
+    }
+
+    @Test
+    void 行9b_同時の取込で失敗した行を取り込み直せば先に書かれた外部原本に対して同じ内容は重複違う内容は隔離() {
+        IngestedRow row = milestone(2, "MS-0001", "1", "CTABCDEFGH2345");
+        IngestionService racingService = racingService(row);
+        IngestFileCommand command = file(milestoneSource, row);
+        assertThatThrownBy(() -> racingService.ingest(steward, command)).isInstanceOf(DuplicateKeyException.class);
+
+        Ingested retried = ingested(racingService.ingest(steward, command));
+        Ingested changed = ingested(
+                racingService.ingest(steward, file(milestoneSource, milestone(2, "MS-0001", "1", "CTABCDEFGH2346"))));
+
+        assertThat(retried.rows().getFirst().classification()).isEqualTo(Classification.DUPLICATE);
+        assertThat(changed.rows().getFirst().classification()).isEqualTo(Classification.QUARANTINED);
+    }
+
+    /** 新しいキーを引いた直後に、同時の取込が同じキーの外部原本を先に書いたことにするサービス（行 9b）。 */
+    private IngestionService racingService(IngestedRow row) {
         InMemoryExternalRecordRepository racing = new InMemoryExternalRecordRepository() {
             @Override
             public Optional<ExternalRecord> findByKey(IdempotencyKey key) {
@@ -320,18 +367,13 @@ class IngestionServiceTest {
                 return found;
             }
         };
-        IngestionService racingService = new IngestionService(
-                sources, ingestions, racing, receivedRecords, new RecordingStorage(storage), clock);
-
-        assertThatThrownBy(() -> racingService.ingest(steward, file(milestoneSource, row)))
-                .isInstanceOf(DuplicateKeyException.class);
-        assertThat(receivedRecords.all()).isEmpty();
+        return new IngestionService(sources, ingestions, racing, receivedRecords, new RecordingStorage(storage), clock);
     }
 
     @Test
     void 行10_取込者は操作者で取込と外部原本と受信記録の時刻はClockの時刻で取得時刻は行の値() {
-        Ingested result =
-                ingested(service().ingest(steward, file(milestoneSource, milestone(2, "MS-0001", "1", "TRK-0001"))));
+        Ingested result = ingested(
+                service().ingest(steward, file(milestoneSource, milestone(2, "MS-0001", "1", "CTABCDEFGH2345"))));
 
         Ingestion ingestion = ingestions.all().getFirst();
         ReceivedRecord received = receivedRecords.all().getFirst();
@@ -345,16 +387,16 @@ class IngestionServiceTest {
 
     @Test
     void 行11_受け取った件数はコマンドの件数で分類別の件数は受信記録から数え合計が一致する() {
-        service().ingest(steward, file(milestoneSource, milestone(2, "MS-0001", "1", "TRK-0001")));
+        service().ingest(steward, file(milestoneSource, milestone(2, "MS-0001", "1", "CTABCDEFGH2345")));
 
         Ingested result = ingested(service()
                 .ingest(
                         steward,
                         file(
                                 milestoneSource,
-                                milestone(2, "MS-0001", "1", "TRK-0001"),
-                                milestone(3, "MS-0001", "1", "TRK-0009"),
-                                milestone(4, "MS-0002", "1", "TRK-0002"))));
+                                milestone(2, "MS-0001", "1", "CTABCDEFGH2345"),
+                                milestone(3, "MS-0001", "1", "CTABCDEFGH2349"),
+                                milestone(4, "MS-0002", "1", "CTABCDEFGH2346"))));
 
         assertThat(result.receivedCount()).isEqualTo(3);
         assertThat(ingestions.all().getLast().receivedCount()).isEqualTo(3);

@@ -4,19 +4,18 @@ import com.example.cargotracker.TestcontainersConfiguration;
 import com.example.cargotracker.externaldata.domain.model.aggregates.DataSource;
 import com.example.cargotracker.externaldata.domain.model.aggregates.DataSourceRepository;
 import com.example.cargotracker.externaldata.domain.model.aggregates.DataSourceRepositoryContract;
+import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
- * 情報源のリポジトリの MyBatis 実装を PostgreSQL 18 で確かめる（Bolt 39b の行 6）。契約を継ぐ。情報源の表は追記専用でないので、
- * テストのトランザクションで入れた行はロールバックで消える。
+ * 情報源のリポジトリの MyBatis 実装を PostgreSQL 18 で確かめる（Bolt 39b の行 6）。契約を継ぐ。テストのトランザクションは契約のクラスの
+ * {@code @Transactional} で張られ、入れた行はテストの終わりにロールバックで消える（情報源の表は追記専用でない）。
  */
 @SpringBootTest
 @Import(TestcontainersConfiguration.class)
-@Transactional
 class MyBatisDataSourceRepositoryIntegrationTest extends DataSourceRepositoryContract {
 
     @Autowired
@@ -25,11 +24,18 @@ class MyBatisDataSourceRepositoryIntegrationTest extends DataSourceRepositoryCon
     @Autowired
     JdbcTemplate jdbc;
 
+    @Autowired
+    SqlSessionTemplate sqlSession;
+
     @Override
     protected DataSourceRepository repository() {
         return repository;
     }
 
+    /**
+     * JDBC で行を書く。同じトランザクションの MyBatis のセッションは前の {@code countApproved} の結果をキャッシュに持ち、JDBC の書き込みでは
+     * 消えないので、書いた後にセッションのキャッシュを消す。
+     */
     @Override
     protected void given(DataSource source) {
         jdbc.update(
@@ -39,5 +45,6 @@ class MyBatisDataSourceRepositoryIntegrationTest extends DataSourceRepositoryCon
                 source.provider(),
                 source.recordType(),
                 source.approvalStatus().name());
+        sqlSession.clearCache();
     }
 }

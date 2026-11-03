@@ -18,9 +18,10 @@ class IdempotencyKeyTest {
     void 行7_提供元か原本種別か外部版が違えば別のキー() {
         IdempotencyKey key = new IdempotencyKey("運送会社A", "MILESTONE", "MS-0001", "1");
 
-        assertThat(key).isNotEqualTo(new IdempotencyKey("運送会社B", "MILESTONE", "MS-0001", "1"));
-        assertThat(key).isNotEqualTo(new IdempotencyKey("運送会社A", "VOYAGE", "MS-0001", "1"));
-        assertThat(key).isNotEqualTo(new IdempotencyKey("運送会社A", "MILESTONE", "MS-0001", "2"));
+        assertThat(key)
+                .isNotEqualTo(new IdempotencyKey("運送会社B", "MILESTONE", "MS-0001", "1"))
+                .isNotEqualTo(new IdempotencyKey("運送会社A", "VOYAGE", "MS-0001", "1"))
+                .isNotEqualTo(new IdempotencyKey("運送会社A", "MILESTONE", "MS-0001", "2"));
     }
 
     @Test

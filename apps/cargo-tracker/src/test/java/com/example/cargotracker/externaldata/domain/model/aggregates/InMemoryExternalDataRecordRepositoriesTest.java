@@ -42,7 +42,7 @@ class InMemoryExternalDataRecordRepositoriesTest extends ExternalDataRecordRepos
     @Override
     protected Optional<ReceivedRecord> storedReceivedRecord(UUID id) {
         return receivedRecords.all().stream()
-                .filter(record -> record.id().equals(id))
+                .filter(received -> received.id().equals(id))
                 .findFirst();
     }
 }
