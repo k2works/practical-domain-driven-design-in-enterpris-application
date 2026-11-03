@@ -14891,7 +14891,7 @@
 <ol>
 <li>マスター利用者でマイグレーション利用者とアプリケーション利用者を作る（<code>db:init</code>、環境ごとに 1 回）。</li>
 <li>配備のたびに、Flyway をマイグレーション利用者で実行し、スキーマと表を作る。</li>
-<li>同じ Flyway の実行の中で、PostgreSQL 用の <code>afterMigrate</code> コールバックがアプリケーション利用者に権限を与える。追記専用の表は、表の定義の印（<code>COMMENT ON TABLE ... IS '&lt;日本語名&gt; [append-only]'</code>）で選んで UPDATE・DELETE を外す。ステージング・本番では Flyway のプレースホルダー <code>requireappuser=true</code> にし、アプリケーション利用者がなければマイグレーションを失敗させる（Bolt 3）。Flyway とアプリの DB 利用者を同じ配備の中でどう分けるか（アプリの中で <code>spring.flyway.user</code> を分けるか、配備の前の別ジョブにするか）は人の判断待ち（D-9）。追記専用の表（<code>identity.audit_record</code>、<code>identity.kpi_baseline</code>、<code>quotation.transport_request_version</code>、<code>booking.booking_version</code>、<code>external_data.receipt</code>）には SELECT・INSERT だけを与え、<code>tracking.milestone</code> には DELETE を与えない（データモデル、ADR-007）。</li>
+<li>同じ Flyway の実行の中で、PostgreSQL 用の <code>afterMigrate</code> コールバックがアプリケーション利用者に権限を与える。追記専用の表は、表の定義の印（<code>COMMENT ON TABLE ... IS '&lt;日本語名&gt; [append-only]'</code>）で選んで UPDATE・DELETE を外す。ステージング・本番では Flyway のプレースホルダー <code>requireappuser=true</code> にし、アプリケーション利用者がなければマイグレーションを失敗させる（Bolt 3）。Flyway とアプリの DB 利用者を同じ配備の中でどう分けるか（アプリの中で <code>spring.flyway.user</code> を分けるか、配備の前の別ジョブにするか）は人の判断待ち（D-9）。追記専用の表には SELECT・INSERT だけを与え、<code>tracking.milestone</code> には DELETE を与えない（ADR-007）。追記専用の表の一覧は <a href="../data_model/">データモデル</a> の「版・追記専用・冪等性の表し方」の「追記専用」の表を正とし、ここには写さない（Bolt 39a3。写しは表を足すたびに漏れた）。</li>
 <li>新しい表を足すときは、同じ変更でコールバックも更新する。権限の付与が表の作成と同じ配備で行われるため、配備の途中で表を使えない・保護が外れる時間ができない。</li>
 <li>配備後に <code>db:grants:verify</code> で、追記専用の表の権限を確かめる（PostgreSQL の統合テストと同じ確認）。</li>
 </ol>

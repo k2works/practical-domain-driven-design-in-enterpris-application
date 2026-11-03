@@ -15811,13 +15811,19 @@
 <tr>
 <td style="text-align: left;">外部原本</td>
 <td style="text-align: left;">ExternalRecord</td>
-<td style="text-align: left;">冪等性キーごとの外部の原本。最初に受け取った payload のハッシュを持つ。分類は持たない（分類は受け取るたびの受信記録が持つ。Bolt 39 で「その分類（採用・重複・隔離）」を改めた。下の要素表の分類の列は表を作る 39a3 で受信記録に移す）</td>
+<td style="text-align: left;">冪等性キーごとの外部の原本。最初に受け取った payload のハッシュを持つ。分類は持たない（分類は受け取るたびの受信記録が持つ。Bolt 39 で「その分類（採用・重複・隔離）」を改めた）</td>
 <td style="text-align: left;">外部データ</td>
 </tr>
 <tr>
 <td style="text-align: left;">受信記録</td>
 <td style="text-align: left;">ReceivedRecord</td>
-<td style="text-align: left;">外部原本を受け取るたびの追記専用の記録。分類（採用・重複・隔離・差異）を持つ（data_model の <code>receipt.classification</code>。表は <code>external_data.received_record</code> に改め、判断の表は <code>external_data.received_record_decision</code> にする。改名と表は 39a3）。クラス名は通知の公開 API の結果（<code>PasswordResetMailReceipt</code> など）と紛れないよう <code>Receipt</code> を避けた（Bolt 39a2 の開始準備の決定 (3)）</td>
+<td style="text-align: left;">外部原本を受け取るたびの追記専用の記録。分類（採用・重複・隔離・差異）を持つ（data_model の <code>received_record.classification</code>。表は <code>external_data.received_record</code>。Bolt 39a3）。クラス名は通知の公開 API の結果（<code>PasswordResetMailReceipt</code> など）と紛れないよう <code>Receipt</code> を避けた（Bolt 39a2 の開始準備の決定 (3)）</td>
+<td style="text-align: left;">外部データ</td>
+</tr>
+<tr>
+<td style="text-align: left;">受信記録の判断</td>
+<td style="text-align: left;">ReceivedRecordDecision</td>
+<td style="text-align: left;">隔離・差異の受信記録に対するデータ責任者の判断（採用 <code>ADOPTED</code>・却下 <code>REJECTED</code>）、判断者、判断の時刻、理由の追記専用の記録。受信記録 1 件につき 1 つで、判断のやり直しは提供元からの再送（新しい受信記録）で扱う（表は <code>external_data.received_record_decision</code>。Bolt 39a3）。英語名は仮で、クラスは判断を作る Bolt 39d で作る</td>
 <td style="text-align: left;">外部データ</td>
 </tr>
 <tr>
@@ -15830,6 +15836,12 @@
 <td style="text-align: left;">採用</td>
 <td style="text-align: left;">ADOPTED</td>
 <td style="text-align: left;">受信記録の分類の 1 つ。新しい冪等性キーで検証を通った原本（ADR-004 決定 2）。別名「採用済み」（BR-12・UC-15 6a・US-15 の初版の語。2026-11-02 に「採用」にそろえた。Bolt 39、W7 の確認ポイント 1）</td>
+<td style="text-align: left;">外部データ</td>
+</tr>
+<tr>
+<td style="text-align: left;">重複</td>
+<td style="text-align: left;">DUPLICATE</td>
+<td style="text-align: left;">受信記録の分類の 1 つ。同じ冪等性キーで同じ payload（ハッシュが外部原本と同じ）の原本。採用値に影響しない（ED-INV-02、BR-12。Bolt 39a3）</td>
 <td style="text-align: left;">外部データ</td>
 </tr>
 <tr>
@@ -16971,8 +16983,20 @@
 <tr>
 <td style="text-align: left;">外部原本</td>
 <td style="text-align: left;">ExternalRecord</td>
-<td style="text-align: left;">冪等性キー（提供元、原本種別、外部 ID、外部版）、payload、payload のハッシュ、取得時刻、分類（採用・重複・隔離・差異。39a3 で受信記録に移す）</td>
-<td style="text-align: left;">ED-INV-02: 同じキー・同じハッシュは重複、同じキー・違うハッシュは隔離する。ED-INV-03: 順序逆転・既存値との矛盾は差異として自動で上書きしない（BR-12、US-14）</td>
+<td style="text-align: left;">冪等性キー（提供元、原本種別、外部 ID、外部版）、最初に受け取った payload とそのハッシュ、最初の受信時刻</td>
+<td style="text-align: left;">冪等性キーごとに 1 つ（BR-12）</td>
+</tr>
+<tr>
+<td style="text-align: left;">受信記録</td>
+<td style="text-align: left;">ReceivedRecord</td>
+<td style="text-align: left;">外部原本、取込、payload とそのハッシュ、取得時刻、分類（採用・重複・隔離・差異）、分類の注記、分類の時刻</td>
+<td style="text-align: left;">ED-INV-02: 同じキー・同じハッシュは重複、同じキー・違うハッシュは隔離する。ED-INV-03: 順序逆転・既存値との矛盾は差異として自動で上書きしない（BR-12、US-14）。追記専用</td>
+</tr>
+<tr>
+<td style="text-align: left;">受信記録の判断</td>
+<td style="text-align: left;">ReceivedRecordDecision</td>
+<td style="text-align: left;">受信記録、判断（採用・却下）、判断者、判断の時刻、理由</td>
+<td style="text-align: left;">受信記録 1 件につき 1 つ。判断するのは隔離・差異の受信記録だけ（Bolt 39d で守る。US-14）。追記専用</td>
 </tr>
 <tr>
 <td style="text-align: left;">採用値</td>

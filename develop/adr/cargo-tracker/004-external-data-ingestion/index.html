@@ -14140,6 +14140,8 @@
 <li><strong>接続</strong>: 独立したトランザクションは外側の接続を握ったまま 2 本目の接続を取るので、接続プールの大きさ（既定 10）以上の同時の取込で接続が枯渇しうる。取込は 1 日 1〜4 ファイルで同時に走らない想定なので受け入れる（REQUIRES_NEW の経路の同時実行は前例の採番でも確かめていない）。39b の PERF-06 の計測で、取込の経路が一度に握る接続の数（外側 1・内側 1）も測る。</li>
 <li><strong>量</strong>: 原本はファイル全体と行の両方を保存するので、行ごとに独立したトランザクションになる（1 ファイル 1 万件で約 1 万回のコミット）。量は 39b の PERF-06（1 万件を 5 分以内）の計測で確かめ、足りなければ 39b で一括の保存をポートに足す。</li>
 <li><strong>S3 の接続の扱い</strong>: S3 の実装が外部への通信の間に DB の接続を握るかどうか（ADR-010 の「外部への通信の間に接続を保持しない」との違い）は、W10 の開始準備で決める。</li>
+<li>2026-11-03（W7、Bolt 39a3）: 受信記録の表の名前を改めた（<a href="../../../development/cargo-tracker/bolt_39a3_plan/">Bolt 39a3 計画</a> の開始準備で決めたこと。human:kakimomokuri が決定）。決定は変えない。</li>
+<li><strong>改名の注</strong>: 上の Bolt 39 の項の <code>receipt</code> は当時の表の名前で、受信記録の表は <code>external_data.received_record</code>（分類は <code>received_record.classification</code>）、受信記録の判断の表は <code>external_data.received_record_decision</code> にした。クラス名は <code>ReceivedRecord</code>（Bolt 39a2 の開始準備の決定 (3)）。</li>
 </ul>
 <h2 id="_10">備考<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>
 <ul>
