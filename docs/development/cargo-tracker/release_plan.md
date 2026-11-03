@@ -4,7 +4,7 @@ title: "リリース計画 - cargo-tracker（A 社国際貨物輸送管理シス
 description: "cargo-tracker MVP のリリース計画。1 人 + AI、時間単位の Bolt（= イテレーション）と週次の見直しで、最初の縦の流れ（R0.1）、パイロット準備完了（R1.0）、本格展開前（R1.1）の 3 段階、Unit のエントロピー評価、SP、バッファ、パイロット開始の条件、引継ぎ ID の台帳、業務責任者に確かめる事項の台帳。"
 tags: [development,release-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-03T04:37:28Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-03T04:48:44Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T09:29:53Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:38:26Z }
@@ -40,6 +40,7 @@ verified:
   - { by: human:kakimomokuri, at: 2026-11-03T01:43:33Z }
   - { by: human:kakimomokuri, at: 2026-11-03T02:25:16Z }
   - { by: human:kakimomokuri, at: 2026-11-03T04:25:15Z }
+  - { by: human:kakimomokuri, at: 2026-11-03T04:48:45Z }
 ---
 
 # リリース計画 - cargo-tracker（A 社国際貨物輸送管理システム）
@@ -937,12 +938,12 @@ US-18 の Bolt の順序は 31b → 31c → 31d → 32 → 32c → 32d → 32b �
 | 39a2 | 外部原本の保存の DB の実装: `external_data` のスキーマと原本の表（`stored_payload`。追記専用）、原本の保存の DB の実装（受信記録とは独立したトランザクション。契約のテストを継ぐ）、型の依存の許可リストを層別にし MyBatis を infrastructure だけに許す、`SchemaCommentIntegrationTest`・`AppendOnlyGrantIntegrationTest`・`afterMigrate`・SchemaSpy の一覧、data_model の payload の注と ADR-004 の改訂（Bolt 39 の開始準備で 39 から分けた）。【前の決定の変更】初案の範囲（6 表・`receipt`・受信記録のクラス名・domain_model の要素表）を [Bolt 39a2 計画](bolt_39a2_plan.md) の開始準備の決定 (4) で 39a2 と 39a3 に縦に分けた（human:kakimomokuri）。[Bolt 39a2 計画](bolt_39a2_plan.md)（承認済み）・[終了報告](bolt_39a2_report.md)（承認済み） | 0 | インサイドアウト（データ → 永続化の実装）。規則の層別は技術タスク | ステップごと（スキーマ・構造・ADR） |
 | 39a3 | `external_data` の残りの表（`data_source`・`ingestion`・`external_record`・`received_record`・`received_record_decision`・`adopted_value`）、data_model の `receipt` を `received_record` に改名（クラスは `ReceivedRecord`。Bolt 39a2 の開始準備の決定 (3)）、domain_model の要素表と用語集の分類 4 つ（Bolt 39a2 の開始準備で 39a2 から分けた）。開始準備で、表と文書だけにし、判断は受信記録 1 件につき 1 つ（`ADOPTED`・`REJECTED`）、情報源に一意制約、追記専用は 3 表と決めた（human:kakimomokuri）。[Bolt 39a3 計画](bolt_39a3_plan.md)（承認済み）・[終了報告](bolt_39a3_report.md)（承認済み） | 0 | インサイドアウト（一意制約と分類の表から） | ステップごと（スキーマ） |
 | 39b | 取込と分類の縦: 形式の正しい行を冪等性キー（BR-12）で採用・重複・隔離に分類する（ED-INV-02、AC3・AC4。差異は 39h）、取込・外部原本・受信記録の読み書き（追記専用の表に更新・削除を持たせない）、ファイル全体と行の原本の保存、承認済みの情報源のない取込の拒否と `PilotReadiness`（ED-INV-01、AC2）、開発データの情報源と DATA_STEWARD の開発利用者、業務ルール層のシナリオ（`features/external_data/`）。【前の決定の変更】初案の 39b（分類と取込のサービス、形式の誤りの隔離、`PilotReadiness`、DE-14 と監査の listener、PERF-06）を、開始準備で半日を超えるので 39b・39b2・39b3・39b4 に縦に分けた（2026-11-03、推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）。[Bolt 39b 計画](bolt_39b_plan.md)（承認済み。組み立ての規則の変更は human:kakimomokuri が個別に決めた）・[終了報告](bolt_39b_report.md)（承認済み） | 0 | インサイドアウト | ステップごと（データベース・構造） |
-| 39b2 | 形式の誤りの隔離（ファイル・行。UC-15 2a）、引用符の閉じ忘れのファイルの要確認と取り込めなかった件数、誤りの理由を業務の言葉で、件数の突き合わせ（物理行。human:kakimomokuri）、文字コードの誤り、キーの列だけの組み立て。キーのない隔離のため `received_record.external_record_id`・`acquired_at` を NULL 可にし、取込に取り込めなかった行の列を足す。【前の決定の変更】初案の 39b2 から値の列を 39b2b に縦に分けた（開始準備。半日を超えるため。推奨のとおり。Recommend 承認の指示による） | 0 | インサイドアウト | ステップごと（スキーマ） |
-| 39b2b | 値の列（航海・主要実績。仮の形式、OQ-02）とその検証（UN/LOCODE・時刻・種類・追跡番号・寄港の列） | 0 | インサイドアウト | ステップごと（構造） |
+| 39b2 | 形式の誤りの隔離（ファイル・行。UC-15 2a）、引用符の閉じ忘れのファイルの要確認と取り込めなかった件数、誤りの理由を業務の言葉で、件数の突き合わせ（物理行。human:kakimomokuri）、文字コードの誤り、キーの列だけの組み立て。キーのない隔離のため `received_record.external_record_id`・`acquired_at` を NULL 可にし、取込に取り込めなかった行の列を足す。【前の決定の変更】初案の 39b2 から値の列を 39b2b に縦に分けた（開始準備。半日を超えるため。推奨のとおり。Recommend 承認の指示による）。[Bolt 39b2 計画](bolt_39b2_plan.md)（承認済み。件数の単位は human:kakimomokuri が個別に決めた） | 0 | インサイドアウト | ステップごと（スキーマ） |
+| 39b2b | 値の列（航海・主要実績。仮の形式、OQ-02）とその検証（UN/LOCODE・時刻・種類・追跡番号・寄港の列）、`CsvFileKind` の必要な列の追加、値の列の長さの上限、追跡番号の形の写し（外部データの中の形）が追跡の `TrackingNumber` と同じであることを守るテスト（Bolt 39b2 の開始準備で 39b2 から分けた） | 0 | インサイドアウト | ステップごと（構造） |
 | 39b3 | 採用値と DE-12・DE-13・DE-14、`domain.events`、identity の監査の listener（`externaldata :: events`）と毒入りのメッセージ、W6 横断レビュー M-2、`PublicApiArchitectureTest` の汎用化、手書きの規則の写し（AC1 の採用値） | 0 | インサイドアウト | ステップごと（監査・構造） |
 | 39b4 | PERF-06（1 万件を 5 分以内）、行ごとのコミットの量と接続の数、要れば一括の保存、原本 1 件の大きさの上限、数えるテストは自分のキーで絞る規約 | 0 | インサイドアウト | ステップごと（構造） |
 | 39c | S-16 外部データの取込の画面: ファイルの選択、分類別の件数、認可（データ責任者）と CSRF、ナビゲーション、axe、マニュアルの新しい章とキャプチャ | 0 | アウトサイドイン（S-16 から。局面とアプローチの段落の理由） | ステップごと（認可・画面・新しいファイル） |
-| 39d | S-17 隔離・差異の確認: 判断（採用・却下）の記録と判断者、採用の判断で採用値と DE-12・DE-13、判断のイベントと監査、隔離した payload の再送の扱い、マニュアルとキャプチャ、axe | 0 | アウトサイドイン（S-17 から。局面とアプローチの段落の理由） | ステップごと（スキーマ・認可） |
+| 39d | S-17 隔離・差異の確認: 判断（採用・却下）の記録と判断者、採用の判断で採用値と DE-12・DE-13、判断のイベントと監査、隔離した payload の再送の扱い、マニュアルとキャプチャ、axe。注: 開始準備の論点として、キーのない隔離（形式の誤り。Bolt 39b2）は外部原本も冪等性キーも持たないので採用値を作れない。判断は却下と再送だけかを決める | 0 | アウトサイドイン（S-17 から。局面とアプローチの段落の理由） | ステップごと（スキーマ・認可） |
 | 39e | 経路設計の航海の書き手: DE-12 の listener、`Voyage`・`ConnectionRule` の class 化、`version` の楽観ロック、航海の照会を時間の窓と港で絞る、見本の航海を分ける（確認ポイント 14） | 0 | アウトサイドイン（受入シナリオから） | 計画と終了報告（構造・開発データ） |
 | 39f | 評価の入口: 航海番号から確定した経路版を持つ案件を引く照会と索引、`evaluateConfirmedRoute` をつなぐ、配信までの統合テスト（T-184）、UC-06 4a、2 度寄る航海の寄港の位置（確認ポイント 13）、S-06 の古くなった候補（#50）、マニュアル 8 章 | 0 | アウトサイドイン（状態の組み合わせの表を先に書く。T-182） | 計画と終了報告（スキーマ・構造） |
 | 39g | 追跡の DE-13 と US-12 AC3〜AC5: 下書きの登録と採用の操作、確認中と DE-18、取消済みの拒否の記録、完了後の原本だけ、手入力にも確認中の規則、同じ追跡番号への集中の統合テスト（PERF-06）、P-5・P-6・P-7（#50）、マニュアル 9 章、`@US-12`。#19 をクローズして US-12 の 2 SP を数える | 2 | アウトサイドイン（状態の組み合わせの表を先に書く） | 計画と終了報告（スキーマ） |
@@ -1516,5 +1517,6 @@ xychart-beta
 | 2026-11-03 | Bolt 39a3 のステップ 1・2 と[終了報告](bolt_39a3_report.md)を承認した（ステップ 2 から後は推奨のとおり。Recommend 承認の指示による） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-11-03 | 39b を 39b・39b2・39b3・39b4 に縦に分け、[Bolt 39b 計画](bolt_39b_plan.md)を作り、整合性検証の指摘を反映して承認した（規則の変更は個別に、ほかは推奨のとおり。Recommend 承認の指示による） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-11-03 | Bolt 39b のステップ 1〜6 と[終了報告](bolt_39b_report.md)を承認した（推奨のとおり。Recommend 承認の指示による） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
+| 2026-11-03 | 39b2 から値の列を 39b2b に分け、[Bolt 39b2 計画](bolt_39b2_plan.md)を作り、整合性検証の指摘を反映して承認した（件数の単位は個別に、ほかは推奨のとおり。Recommend 承認の指示による） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-11-03 | Bolt 39b のステップ 1（設計の文書）: W7 の設計の決定（取込の置き場所）と確認ポイント 4・6 に、39b を 4 本に分けたことによる【前の決定の変更】の注を足した | anthropic/claude-opus-5-5 |
 | 2026-10-28 | Bolt 38f2 のステップ 1 で、デモ項目の動画を撮る Bolt を 38f2b に直した | anthropic/claude-opus-5-5 |
