@@ -14971,7 +14971,7 @@ M-0001,1,2026-11-19T23:00:00Z,CTABCDEFGH2345,DEPARTURE,JPTYO,2026-11-20T08:00:00
 <td style="text-align: left;">7</td>
 <td style="text-align: left;"><strong>値の列の長さの上限</strong></td>
 <td style="text-align: left;">ステップ 2・4</td>
-<td style="text-align: left;">推奨のとおり。航海番号 30 文字（<code>voyage_number VARCHAR(30)</code>、コードポイント）だけ。ほかは形で決まる。寄港の数の上限は置かない（PERF-06 の 39b4）</td>
+<td style="text-align: left;">推奨のとおり。航海番号 30 文字（<code>voyage_number VARCHAR(30)</code>、コードポイント）だけ。ほかは形で決まる。寄港の数の上限は置かない（PERF-06 の 39b4）。【前の決定の変更】Bolt 39b3 で寄港の数の上限を 60 に変えた（2026-11-03、human:kakimomokuri が決めた。<a href="../bolt_39b3_plan/">Bolt 39b3 計画</a>）</td>
 </tr>
 <tr>
 <td style="text-align: left;">8</td>
@@ -15093,6 +15093,11 @@ M-0001,1,2026-11-19T23:00:00Z,CTABCDEFGH2345,DEPARTURE,JPTYO,2026-11-20T08:00:00
 </tr>
 </thead>
 <tbody>
+<tr>
+<td style="text-align: left;">2026-11-03</td>
+<td style="text-align: left;">Bolt 39b3 のステップ 1: 確認ポイント 7 に、寄港の数の上限を 60 に変えた【前の決定の変更】の注を足した</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
+</tr>
 <tr>
 <td style="text-align: left;">2026-11-03</td>
 <td style="text-align: left;">計画を承認した。寄港の規則（経路設計にそろえる）は human:kakimomokuri が個別に決めた。整合性検証の指摘（詳細: 重大 1・中 4・軽 6、横断: 重大 1・中 5・軽 5）を反映し、ほかは推奨のとおり（Recommend 承認の指示による）。値の作り方とイベントの型は 39d・39b3 の開始準備で諮る</td>

@@ -15019,7 +15019,7 @@
 </tr>
 <tr>
 <td style="text-align: left;"><code>adopted_value</code></td>
-<td style="text-align: left;">採用した受信記録ごとに 1 つ（<code>received_record_id</code> の一意制約）。<code>target_type</code> IN（<code>VOYAGE</code>、<code>MILESTONE</code>。港湾は D-92 で Release 1.1）。採用値は分類が採用の受信記録と、採用と判断した受信記録だけに付く。採用値と判断・分類の整合は表の制約で守らず、アプリケーションで判定する（Bolt 39d）。ここから DE-12・DE-13 を発行する。追記専用の印を付け、UPDATE・DELETE の権限なし</td>
+<td style="text-align: left;">採用した受信記録ごとに 1 つ（<code>received_record_id</code> の一意制約）。<code>target_type</code> IN（<code>VOYAGE</code>、<code>MILESTONE</code>。港湾は D-92 で Release 1.1）。採用値は分類が採用の受信記録と、採用と判断した受信記録だけに付く。採用値と判断・分類の整合は表の制約で守らず、アプリケーションで判定する（Bolt 39d）。ここから DE-12・DE-13 を発行する。追記専用の印を付け、UPDATE・DELETE の権限なし。列の意味（Bolt 39b3）: <code>target_key</code> は航海なら航海番号、主要実績なら追跡番号（外部 ID とは限らない）。<code>value_summary</code> は取込の値から作る正規の文字列で、航海は寄港を <code>\|</code> で区切った「UN/LOCODE;到着;出発」（例 <code>JPTYO;;2026-11-19T23:00:00.000000Z\|USLAX;2026-12-01T14:00:00.000000Z;</code>）、主要実績は「種類;場所;発生時刻」（例 <code>DEPARTURE;JPTYO;2026-11-19T23:00:00.000000Z</code>）。時刻は UTC の ISO 8601 でマイクロ秒の 6 桁に固定し、空は空にする。4000 コードポイントまで（寄港は 60 までなので、航海の要約は最大 3719 文字）。<code>info_version</code> は外部版（100 文字まで）。<code>published_at</code> は取込の時刻（Clock から 1 回取った値）</td>
 <td style="text-align: left;">ADR-004</td>
 </tr>
 <tr>
