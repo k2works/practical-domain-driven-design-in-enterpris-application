@@ -4,7 +4,7 @@ title: "cargo-tracker データモデル"
 description: "cargo-tracker の概念データモデル、スキーマ分割、命名と型の規約（H2 と PostgreSQL の共通部分）、コンテキストごとの論理データモデルと ER 図、版・追記専用・冪等性・イベント配信の表現。"
 tags: [design, data-model]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-03T02:30:38Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-03T04:53:51Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:48:17Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:37Z }
@@ -1019,6 +1019,9 @@ entity "ingestion\n取込" as ing {
   * ingested_by : UUID
   * ingested_at : TIMESTAMPTZ
   * received_count : INTEGER
+  unparsed_from_line : INTEGER
+  * unparsed_line_count : INTEGER
+  .. CHECK（取り込めなかった行の始まりと数）..
 }
 entity "external_record\n外部原本" as er {
   * id : UUID <<PK>>
@@ -1041,14 +1044,15 @@ entity "stored_payload\n保存した原本" as sp {
 entity "received_record\n受信記録" as rc {
   * id : UUID <<PK>>
   --
-  * external_record_id : UUID <<FK>>
+  external_record_id : UUID <<FK>>
   ingestion_id : UUID <<FK>>
   * payload_hash : VARCHAR(64)
   * payload_object_key : VARCHAR(500)
-  * acquired_at : TIMESTAMPTZ
+  acquired_at : TIMESTAMPTZ
   * classification : VARCHAR(30)
   classification_note : VARCHAR(1000)
   * classified_at : TIMESTAMPTZ
+  .. CHECK ck_received_record_keyless_quarantine ..
 }
 entity "received_record_decision\n受信記録の判断" as rcd {
   * id : UUID <<PK>>
@@ -1124,7 +1128,7 @@ entity "fetch_failure\n取得失敗" as ff {
 }
 ds ||--o{ ing
 ing |o--o{ rc
-er ||--o{ rc
+er |o--o{ rc
 rc ||--o| rcd
 rc ||--o| av
 ds ||--o{ og
@@ -1139,16 +1143,16 @@ ds ||--o{ ff
 | 表 | 主な制約 | 対応する規則 |
 | :--- | :--- | :--- |
 | `data_source` | 情報源の単位（提供元、原本種別）の一意制約 `uk_data_source`（Bolt 39a3）。`approval_status` IN（`CANDIDATE`、`APPROVED`、`SUSPENDED`）。承認済みが 0 件ならパイロットを開始しない（アプリケーションで判定）。`record_type` の値は取込ファイルの種別 `CsvFileKind` の名前（`VOYAGE`、`MILESTONE`）にそろえる。CHECK は足さない（港湾は D-92 で Release 1.1 に増えるため。Bolt 39b） | BR-18 |
-| `ingestion` | 1 ファイルを 1 つの取込にする。`received_count`（受け取った件数）は、ファイルの物理データ行の数（ヘッダーを除く）。取込の行を書くときに入れ、更新しない。39b2 で形式の誤りの行が受信記録にならなくなっても意味を変えない。分類別の件数は受信記録から数える（形式の誤りのない範囲では分類別の合計が `received_count` と一致し、39b2 からは取り込めなかった件数を足して突き合わせる）。受信記録が取込への外部キーを持つので、取込の行は受信記録より先に書く。追記専用の印を付け、UPDATE・DELETE の権限なし（Bolt 39b） | BR-12 |
+| `ingestion` | 1 ファイルを 1 つの取込にする。`received_count`（受け取った件数）は、ファイルの物理データ行の数（ヘッダーを除く）。取込の行を書くときに入れ、更新しない。形式の誤りの行はキーのない隔離の受信記録になる（Bolt 39b2。【前の決定の変更】はじめは「39b2 で形式の誤りの行が受信記録にならなくなっても意味を変えない」。`received_count` の意味は物理データ行の数のまま変えない。2026-11-03、human:kakimomokuri）。分類別の件数は受信記録から数える。分類別の件数と `received_count` は単位が違い（受信記録の数と物理行の数）、突き合わせは物理行で行う（受け取った件数 ＝ 取り込んだ行と誤りの行の物理行の数 ＋ 取り込めなかった物理行の数。Bolt 39b2）。取り込めなかった行（引用符の閉じ忘れの行からファイルの終わりまで、またはファイルの誤りのときのデータ行のすべて）の始まり `unparsed_from_line`（NULL 可）と物理行の数 `unparsed_line_count`（NOT NULL、既定 0）を持ち、CHECK（数が 0 なら始まりは NULL、数が 0 より大きければ始まりは NOT NULL）で守る。ファイルの誤りでデータ行がなければ（0 バイト、BOM だけ、ヘッダーだけで列が足りない）NULL と 0 にする。どちらも取込の行を書くときに入れ、更新しない。取込全体の要確認は列で持たず、「取り込めなかった物理行の数が 0 より大きい、またはファイルの誤りの隔離の受信記録がある」と定める（Bolt 39b2）。受信記録が取込への外部キーを持つので、取込の行は受信記録より先に書く。追記専用の印を付け、UPDATE・DELETE の権限なし（Bolt 39b） | BR-12 |
 | `external_record` | 冪等性キー（提供元、原本種別、外部 ID、外部版）の一意制約。最初に受け取った payload のハッシュを持つ。`data_source` への外部キーは張らない（冪等性キーは情報源の承認の状態と独立し、出典は受信記録 → 取込 → 情報源でたどれるため。Bolt 39a3） | BR-12 |
 | `stored_payload` | 原本のオブジェクトキー（`object_key`。`PayloadObjectKey` の値）が主キー。`content`（原本の内容）はバイト列で NOT NULL、0 バイトを許す。型は `BYTEA`（共通の置き場所。H2 は別名として受けて `binary varying` になり、0 バイト・0x00・0xFF を読み書きできることを Bolt 39a2 のステップ 2 で確かめた。H2 の `binary varying` には長さの上限があり PostgreSQL の `BYTEA` と違うが、開発の範囲では影響しない）。`stored_at`（保存した時刻）は Clock から取りマイクロ秒に切り捨てる。ハッシュは持たない（`ingestion.file_hash`・`external_record.payload_hash`・`received_record.payload_hash` が持つ）。`file_object_key`・`payload_object_key` とは外部キーを張らない（W10 で S3 に差し替えるため）。追記専用の印を付け、UPDATE・DELETE の権限なし | ADR-004、PV-01 |
-| `received_record` | 受け取るたびに 1 行。`classification` IN（`ADOPTED`、`DUPLICATE`、`QUARANTINED`、`DISCREPANCY`）。ハッシュが外部原本と同じなら重複、違えば隔離。`ingestion_id` は NULL を許す。取込で書くときは、取込の行を先に書き、行の原本を保存してから受信記録を書く（Bolt 39b）。追記専用の印を付け、UPDATE・DELETE の権限なし | BR-12、US-14 |
+| `received_record` | 受け取るたびに 1 行。`classification` IN（`ADOPTED`、`DUPLICATE`、`QUARANTINED`、`DISCREPANCY`）。ハッシュが外部原本と同じなら重複、違えば隔離。`ingestion_id` は NULL を許す。取込で書くときは、取込の行を先に書き、行の原本を保存してから受信記録を書く（Bolt 39b）。形式の誤りの受信記録は外部原本と取得時刻を持たない（キーのない隔離）。`external_record_id` と `acquired_at` は NULL を許し、CHECK `ck_received_record_keyless_quarantine`（`classification = 'QUARANTINED' OR (external_record_id IS NOT NULL AND acquired_at IS NOT NULL)`）で NULL を隔離だけに限る。行の誤りの受信記録は行の原文（物理行の範囲）を保存した原本を指し、ファイルの誤り（文字コード、ヘッダーが読めない、必要な列がない、同じ名前の列）の受信記録は 1 つで、取込の `file_object_key`（`externaldata/ingestions/{UUID}` のキー）を指す。引用符の閉じ忘れは、その行からファイルの終わりまでの原文を保存した原本を指す受信記録を 1 つ書く。理由と物理行の範囲は `classification_note` に業務の言葉で書き、1000 文字を超えたら末尾を切る（Bolt 39b2）。追記専用の印を付け、UPDATE・DELETE の権限なし | BR-12、US-14、UC-15 2a |
 | `received_record_decision` | 受信記録の判断。受信記録 1 件につき 1 つ（`received_record_id` の一意制約）。判断のやり直しは提供元からの再送（新しい受信記録）で扱う。`decision` IN（`ADOPTED`、`REJECTED`。前例の `review_record` の過去分詞にそろえる）。`reason` は NULL を許す。判断は隔離・差異の受信記録だけに付く。判断と分類の整合は表の制約で守らず、アプリケーションで判定する（Bolt 39d）。追記専用の印を付け、UPDATE・DELETE の権限なし（Bolt 39a3） | US-14 |
 | `adopted_value` | 採用した受信記録ごとに 1 つ（`received_record_id` の一意制約）。`target_type` IN（`VOYAGE`、`MILESTONE`。港湾は D-92 で Release 1.1）。採用値は分類が採用の受信記録と、採用と判断した受信記録だけに付く。採用値と判断・分類の整合は表の制約で守らず、アプリケーションで判定する（Bolt 39d）。ここから DE-12・DE-13 を発行する。追記専用の印を付け、UPDATE・DELETE の権限なし | ADR-004 |
 | `manual_entry` | 出典・入力者・入力時刻・仮状態を NOT NULL にする | BR-08 |
 | `recovery_reconciliation` | 停止期間ごとに 1 つ。完了には全件の分類、件数の一致、差異の解消が必要（アプリケーションで判定） | BR-12、US-15 |
 
-原本の payload（ファイル全体と行）は、W7〜W9 は DB の `stored_payload` に置き、W10 で S3 に差し替える（ADR-004、ADR-008。Bolt 39a2）。保存は受信記録とは独立したトランザクション（REQUIRES_NEW）で行い、外側のトランザクションが巻き戻っても原本は残る（S3 と同じ振る舞い）。受信記録などの表には `payload_object_key` とハッシュだけを持つ。S3 に差し替えたら `stored_payload` は使わなくなる。輸送要求の必要書類（`required_document`）も同じく、ファイルの中身は保存先に置き、DB にはオブジェクトキーと SHA-256 を持つ（Bolt 7）。
+原本の payload（ファイル全体と行）は、W7〜W9 は DB の `stored_payload` に置き、W10 で S3 に差し替える（ADR-004、ADR-008。Bolt 39a2）。保存は受信記録とは独立したトランザクション（REQUIRES_NEW）で行い、外側のトランザクションが巻き戻っても原本は残る（S3 と同じ振る舞い）。受信記録などの表には `payload_object_key` とハッシュだけを持つ。S3 に差し替えたら `stored_payload` は使わなくなる。外側が巻き戻った取込の原本は、どの表からも参照されずに残る。参照されない原本は、`stored_payload` のオブジェクトキーのうち、`ingestion.file_object_key` と `received_record.payload_object_key` のどちらからも参照されないものとして数える（W10 の S3 ではオブジェクトの一覧と突き合わせる）。数える照会は照合を作る Bolt 39h で作る（ADR-004 の改訂の経緯。Bolt 39b2）。輸送要求の必要書類（`required_document`）も同じく、ファイルの中身は保存先に置き、DB にはオブジェクトキーと SHA-256 を持つ（Bolt 7）。
 
 ### 基盤（`platform`）
 

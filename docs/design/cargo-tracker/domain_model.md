@@ -4,7 +4,7 @@ title: "cargo-tracker ドメインモデル"
 description: "cargo-tracker の業務領域の分類、ユビキタス言語、7 つの境界づけられたコンテキスト（通知を含む）の集約・エンティティ・値オブジェクト・ドメインルール、コマンド・クエリ・イベント、予約サガ。"
 tags: [design, domain-model, ddd]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-03T02:30:38Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-03T04:53:51Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:41:04Z }
   - { by: human:kakimomokuri, at: 2026-10-01T07:48:17Z }
@@ -315,27 +315,29 @@ quadrantChart
 | 監査記録 | AuditRecord | 操作者・時刻・対象・変更前後・理由・承認・出典の追記専用の記録。リポジトリ（`AuditRecordRepository`）は追記と照会だけを持ち、更新と削除はしない（IA-INV-07）。Bolt 38c2 から、対象の利用者の最新の停止の記録を引く（`findLatestUserSuspension`。索引 `ix_audit_record_target`） | アクセス・監査 |
 | 情報源 | DataSource | データ責任者が選定・承認した運送会社・港湾などの原本の提供元（BR-18）。情報源・取込・外部原本・受信記録は、リポジトリのポートが受け渡す Java の record（`externaldata.domain.model.aggregates`、`@Entity`）で、振る舞いを持たない（トランザクションスクリプト。ADR-002、Bolt 39b） | 外部データ |
 | 外部原本 | ExternalRecord | 冪等性キーごとの外部の原本。最初に受け取った payload のハッシュを持つ。分類は持たない（分類は受け取るたびの受信記録が持つ。Bolt 39 で「その分類（採用・重複・隔離）」を改めた） | 外部データ |
-| 受信記録 | ReceivedRecord | 外部原本を受け取るたびの追記専用の記録。分類（採用・重複・隔離・差異）を持つ（data_model の `received_record.classification`。表は `external_data.received_record`。Bolt 39a3）。クラス名は通知の公開 API の結果（`PasswordResetMailReceipt` など）と紛れないよう `Receipt` を避けた（Bolt 39a2 の開始準備の決定 (3)） | 外部データ |
+| 受信記録 | ReceivedRecord | 外部原本を受け取るたびと、形式の誤りを見つけるたびの追記専用の記録。分類（採用・重複・隔離・差異）を持つ（data_model の `received_record.classification`。表は `external_data.received_record`。Bolt 39a3）。形式の誤りの受信記録は外部原本と取得時刻を持たない隔離（キーのない隔離）で、行の原文かファイル全体の原本を指す（Bolt 39b2。はじめの「外部原本を受け取るたびの」を改めた）。クラス名は通知の公開 API の結果（`PasswordResetMailReceipt` など）と紛れないよう `Receipt` を避けた（Bolt 39a2 の開始準備の決定 (3)） | 外部データ |
 | 受信記録の判断 | ReceivedRecordDecision | 隔離・差異の受信記録に対するデータ責任者の判断（採用 `ADOPTED`・却下 `REJECTED`）、判断者、判断の時刻、理由の追記専用の記録。受信記録 1 件につき 1 つで、判断のやり直しは提供元からの再送（新しい受信記録）で扱う（表は `external_data.received_record_decision`。Bolt 39a3）。英語名は仮で、クラスは判断を作る Bolt 39d で作る | 外部データ |
-| 取込 | Ingestion | データ責任者が 1 ファイルを取り込む 1 回の単位。ファイル全体の原本と受け取った件数を持ち、照合に使う。受け取った件数（`received_count`）はファイルの物理データ行の数（ヘッダーを除く）で、取込を書くときに入れ、更新しない（追記専用）。分類別の件数は受信記録から数える（Bolt 39b で「分類別の件数を持ち」を改めた） | 外部データ |
+| 取込 | Ingestion | データ責任者が 1 ファイルを取り込む 1 回の単位。ファイル全体の原本と受け取った件数を持ち、照合に使う。受け取った件数（`received_count`）はファイルの物理データ行の数（ヘッダーとレコードの外の空行を除く）で、取込を書くときに入れ、更新しない（追記専用）。分類別の件数は受信記録から数える（Bolt 39b で「分類別の件数を持ち」を改めた）。取り込めなかった行（引用符の閉じ忘れの行からファイルの終わりまで、またはファイルの誤りのときのデータ行のすべて）の始まりと物理行の数も書くときに入れる。取込全体の要確認は、取り込めなかった物理行の数が 0 より大きいか、ファイルの誤りの隔離の受信記録があることをいい、状態として持たない（Bolt 39b2） | 外部データ |
 | 情報源のリポジトリ | DataSourceRepository | 情報源を ID で引き（`findById`）、承認済みの情報源を数える（`countApproved`。`SUSPENDED` は数えない）ドメインのポート（`externaldata.domain.model.aggregates`）。読み取りだけを持つ（情報源の選定・承認は W10 の運用タスク。Bolt 39b） | 外部データ |
 | 取込のリポジトリ | IngestionRepository | 取込を追記する（`add`）ドメインのポート。追記専用の表なので更新・削除のメソッドを持たない（H2 は権限で守れないため。前例は `AuditRecordRepository`。Bolt 39b） | 外部データ |
 | 外部原本のリポジトリ | ExternalRecordRepository | 外部原本を冪等性キーで引き（`findByKey`）、足す（`add`）ドメインのポート。同じキーの 2 回目の追加（同時の取込）は一意制約の違反（`DuplicateKeyException`）のまま上げ、取込全体を巻き戻す（Bolt 39b） | 外部データ |
 | 受信記録のリポジトリ | ReceivedRecordRepository | 受信記録を追記し（`add`）、取込と分類ごとに数える（`countByIngestionAndClassification`）ドメインのポート。追記専用の表なので更新・削除のメソッドを持たない（Bolt 39b） | 外部データ |
 | 取込のサービス | IngestionService | 外部データのアプリケーションのサービス（`externaldata.application.internal.commandservices`。外側のトランザクション）。操作者がデータ責任者か、情報源があり承認済みかを確かめ、ファイル全体の原本を保存し、取込を書き、行の順に行の原本を保存してから冪等性キーで分類した受信記録を書く。時刻は Clock から 1 回取り、取込・外部原本・受信記録に使う（Bolt 39b） | 外部データ |
-| 取込の結果 | IngestionOutcome | 取込のサービスの結果（sealed）。取り込んだ `Ingested`（取込 ID、受け取った件数、分類別の件数、行ごとの結果）、情報源が承認済みでない `DataSourceNotApproved`、情報源がない `DataSourceNotFound`、操作者がデータ責任者でない `NotPermitted`。拒否のときは原本も含めて何も保存しない（`commandservices`。Bolt 39b） | 外部データ |
+| 取込の結果 | IngestionOutcome | 取込のサービスの結果（sealed）。取り込んだ `Ingested`（取込 ID、受け取った件数、分類別の件数、行ごとの結果、取り込めなかった部分（始まり・物理行の数・受信記録 ID）。`reconciles()` は「受け取った件数 ＝ 行の結果の物理行の数の合計 ＋ 取り込めなかった物理行の数」を確かめる。ファイルの誤りと閉じ忘れの受信記録は行の結果に入れず、取り込めなかった部分として返す。Bolt 39b2）、情報源が承認済みでない `DataSourceNotApproved`、情報源がない `DataSourceNotFound`、操作者がデータ責任者でない `NotPermitted`。拒否のときは原本も含めて何も保存しない（`commandservices`。Bolt 39b） | 外部データ |
 | 開始判定の照会 | PilotReadinessQueryService | 承認済みの情報源の件数と、パイロットを開始できるか、開始できない理由を `PilotReadiness` で返すアプリケーションのサービス（`externaldata.application.internal.queryservices`。ED-INV-01、BR-18。Bolt 39b） | 外部データ |
 | 分類 | Classification | 受信記録の分類（採用 `ADOPTED`・重複 `DUPLICATE`・隔離 `QUARANTINED`）の値オブジェクト（enum。`externaldata.domain.model.valueobjects`）。既にある外部原本と今のハッシュから分類を決める（ED-INV-02）。差異 `DISCREPANCY` は Bolt 39h で足す（Bolt 39b） | 外部データ |
 | 採用 | ADOPTED | 受信記録の分類の 1 つ。新しい冪等性キーで検証を通った原本（ADR-004 決定 2）。別名「採用済み」（BR-12・UC-15 6a・US-15 の初版の語。2026-11-02 に「採用」にそろえた。Bolt 39、W7 の確認ポイント 1） | 外部データ |
 | 重複 | DUPLICATE | 受信記録の分類の 1 つ。同じ冪等性キーで同じ payload（ハッシュが外部原本と同じ）の原本。採用値に影響しない（ED-INV-02、BR-12。Bolt 39a3） | 外部データ |
-| 隔離 | QUARANTINED | 受信記録の分類の 1 つ。同じ冪等性キーで違う payload の原本と、形式を検証できないファイルと行（UC-15 2a）。データ責任者が判断するまで採用値に影響しない | 外部データ |
+| 隔離 | QUARANTINED | 受信記録の分類の 1 つ。同じ冪等性キーで違う payload の原本と、形式を検証できないファイルと行（UC-15 2a）。データ責任者が判断するまで採用値に影響しない。形式の誤りの隔離は冪等性キーを信用できないので外部原本を引かず作らない（キーのない隔離。外部原本と取得時刻を持たない。Bolt 39b2） | 外部データ |
+| 形式の誤り | FormatDefect | 取込のファイルと行を隔離する理由の値オブジェクト（enum。`externaldata.domain.model.valueobjects`）。ファイルの誤り（文字コード `UNDECODABLE`、ヘッダーが読めない `UNREADABLE_HEADER`、必要な列がない `MISSING_COLUMN`、同じ名前の列 `DUPLICATE_COLUMN`）、取込全体の要確認にする引用符の閉じ忘れ `UNCLOSED_QUOTE`、行の誤り（閉じた引用符の後の文字 `TEXT_AFTER_CLOSING_QUOTE`、引用符で囲まない値の中の引用符 `BARE_QUOTE`、列数の違い `COLUMN_COUNT_MISMATCH`、空の値 `EMPTY_VALUE`、時刻の書式 `INVALID_TIME`、長すぎる値 `TOO_LONG`）。注記の業務の言葉（「12 行目: 列の数がヘッダーと違います（ヘッダー 4 列、この行 5 列）。」の形）を作る（Bolt 39b2） | 外部データ |
+| 取込の組み立て | IngestFileCommandAssembler | CSV の解析とヘッダーの検証の結果から取込のコマンド（`IngestFileCommand`）を作る関数（`externaldata.interfaces.file`。Spring の部品にしない）。キーの列（外部 ID・外部版・取得時刻）を検証し、形式の正しい行・行の誤り・取り込めなかった部分に分ける。リポジトリは使わない（Bolt 39b2） | 外部データ |
 | 差異 | DISCREPANCY | 受信記録の分類の 1 つ。同じ外部レコードの版の逆転と、既存の採用値との矛盾（US-14 AC5）。US-15 の復旧照合で手動情報と突き合わせた差異（`reconciliation_discrepancy`）とは別の語 | 外部データ |
 | 外部原本の保存 | ExternalPayloadStorage | 原本の payload の保存で、外部原本（ExternalRecord）の永続化ではない。原本（ファイル全体と行の payload）を無加工で保存し読み戻すポート（`externaldata.domain.model.aggregates`。外部の技術のポートはドメインに置く規則）。同じキーを上書きせず、読めないキーは例外。呼び手は保存に成功してから受信記録を書く。補償は消さない。実装は W7 は DB（39a2）、W10 で S3（Bolt 39。ADR-004 の改訂） | 外部データ |
-| 原本のオブジェクトキー | PayloadObjectKey | 保存した原本を指すキー（`externaldata/ingestions/{UUID}`・`externaldata/records/{UUID}`。呼び手が作り、前置きでファイル全体と行の payload を区別する）。形を検査し、保存先の外を指すキーを作れない（Bolt 39） | 外部データ |
+| 原本のオブジェクトキー | PayloadObjectKey | 保存した原本を指すキー（`externaldata/ingestions/{UUID}`・`externaldata/records/{UUID}`。呼び手が作り、前置きでファイル全体と行の payload を区別する）。形を検査し、保存先の外を指すキーを作れない（Bolt 39）。ファイルの誤りの受信記録は、ファイル全体の原本の `externaldata/ingestions/{UUID}` のキーを指す（Bolt 39b2） | 外部データ |
 | 原本のハッシュ | PayloadHash | 原本のバイト列の SHA-256 の 16 進 64 文字。保存の前に呼び手が計算し、重複と隔離の判定に使う（data_model の `payload_hash`・`file_hash`。Bolt 39） | 外部データ |
 | 冪等性キー | IdempotencyKey | 提供元、原本種別、外部 ID、外部版の組（BR-12）。値オブジェクト（`externaldata.domain.model.valueobjects`。Bolt 39b） | 外部データ |
 | 手動情報 | ManualEntry | 連携停止中に出典・入力者・入力時刻・仮状態を伴って入力した情報（BR-08） | 外部データ |
-| 復旧照合 | RecoveryReconciliation | 停止期間の全原本の分類・件数照合・手動情報との差異確認（BR-12） | 外部データ |
+| 復旧照合 | RecoveryReconciliation | 停止期間の全原本の分類・件数照合・手動情報との差異確認（BR-12）。件数はファイルの物理データ行の数で数える（Bolt 39b2） | 外部データ |
 | 採用値 | AdoptedValue | 外部原本から採用し、業務に公開した値 | 外部データ |
 | 輸送要求 ID | TransportRequestId | 輸送要求を識別する、システムが発行する不透明な値。画面には出さず、業務番号を出す | 見積り |
 | 見積り ID | QuotationId | 見積りを識別する、システムが発行する不透明な値。画面には出さず、見積り番号を出す（Bolt 10） | 見積り |
@@ -1478,14 +1480,14 @@ ADR-002 によりトランザクションスクリプトとする。ここでは
 | データ | 英語名 | 主な項目 | 規則（ID） |
 | :--- | :--- | :--- | :--- |
 | 情報源 | DataSource | 提供元、原本種別、選定・承認状態、承認者 | ED-INV-01: 承認済みの情報源が 0 件ならパイロットを開始しない（BR-18、US-14） |
-| 取込 | Ingestion | 取込 ID、情報源、ファイル、取込者、取込時刻、受け取った件数 | 受け取った件数はファイルの物理データ行の数（ヘッダーを除く）で、取込を書くときに入れ、更新しない。分類別の件数は受信記録から数え、照合に使う。取込は受信記録より先に書く。追記専用（Bolt 39b） |
+| 取込 | Ingestion | 取込 ID、情報源、ファイル、取込者、取込時刻、受け取った件数、取り込めなかった行の始まりと物理行の数 | 受け取った件数はファイルの物理データ行の数（ヘッダーを除く）で、取込を書くときに入れ、更新しない。分類別の件数は受信記録から数え、照合に使う。取込は受信記録より先に書く。追記専用（Bolt 39b）。取り込めなかった行も書くときに入れる（数が 0 なら始まりは NULL）。取り込めなかった物理行の数が 0 より大きいか、ファイルの誤りの隔離の受信記録があれば、取込全体を要確認とする（Bolt 39b2） |
 | 外部原本 | ExternalRecord | 冪等性キー（提供元、原本種別、外部 ID、外部版）、最初に受け取った payload とそのハッシュ、最初の受信時刻 | 冪等性キーごとに 1 つ（BR-12） |
-| 受信記録 | ReceivedRecord | 外部原本、取込、payload とそのハッシュ、取得時刻、分類（採用・重複・隔離・差異）、分類の注記、分類の時刻 | ED-INV-02: 同じキー・同じハッシュは重複、同じキー・違うハッシュは隔離する。ED-INV-03: 順序逆転・既存値との矛盾は差異として自動で上書きしない（BR-12、US-14）。同じファイルの中に同じキーが 2 行あれば行の順に処理し、先の行を採用、後の行は同じハッシュなら重複・違えば隔離にする（Bolt 39b）。追記専用 |
+| 受信記録 | ReceivedRecord | 外部原本、取込、payload とそのハッシュ、取得時刻、分類（採用・重複・隔離・差異）、分類の注記、分類の時刻 | ED-INV-02: 同じキー・同じハッシュは重複、同じキー・違うハッシュは隔離する。ED-INV-03: 順序逆転・既存値との矛盾は差異として自動で上書きしない（BR-12、US-14）。同じファイルの中に同じキーが 2 行あれば行の順に処理し、先の行を採用、後の行は同じハッシュなら重複・違えば隔離にする（Bolt 39b）。形式の誤りの受信記録は外部原本と取得時刻を持たない隔離にし、外部原本を引かず作らない（NULL は隔離だけ。表の CHECK と同じ規則。Bolt 39b2）。追記専用 |
 | 受信記録の判断 | ReceivedRecordDecision | 受信記録、判断（採用・却下）、判断者、判断の時刻、理由 | 受信記録 1 件につき 1 つ。判断するのは隔離・差異の受信記録だけ（Bolt 39d で守る。US-14）。追記専用 |
 | 採用値 | AdoptedValue | 対象（航海・主要実績）、値、出典、版 | 採用値だけを経路設計・追跡へ公開する（ADR-004） |
 | 手動情報 | ManualEntry | 出典、入力者、入力時刻、仮状態、内容 | ED-INV-04: 出典・入力者・入力時刻・仮状態を必須とする（BR-08、US-15） |
 | 取得失敗 | FetchFailure | 失敗時刻、理由、再実行可能時刻 | 第 2 段階の API 連携で使う。パイロットでは記録の形だけ持つ（US-15） |
-| 復旧照合 | RecoveryReconciliation | 停止期間、分類別件数、受信件数、手動情報との差異一覧、確認者、完了時刻 | ED-INV-05: 全原本が分類済みで、受信件数が一致し、差異確認が済んだときだけ完了する（BR-12、US-15） |
+| 復旧照合 | RecoveryReconciliation | 停止期間、分類別件数、受信件数、手動情報との差異一覧、確認者、完了時刻 | ED-INV-05: 全原本が分類済みで、受信件数が一致し、差異確認が済んだときだけ完了する（BR-12、US-15）。受信件数はファイルの物理データ行の数で、分類別件数（受信記録の数）とは単位が違う。突き合わせは物理行で行う（Bolt 39b2） |
 
 ### 通知（Notification）
 

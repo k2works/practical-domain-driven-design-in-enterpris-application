@@ -4,7 +4,7 @@ title: "cargo-tracker バックエンドアーキテクチャ"
 description: "cargo-tracker の境界づけられたコンテキスト、コンテキストごとのドメインロジックパターン、パッケージ構成、サガとドメインイベントによる連携（ARCH-HO-01〜03）、受信サービスの方針。"
 tags: [design, architecture, backend]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-03T02:30:38Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-03T04:53:51Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:11:12Z }
   - { by: human:kakimomokuri, at: 2026-10-01T07:41:04Z }
@@ -451,7 +451,7 @@ end note
 | 手動入力 | 停止時の手動入力は出典・入力者・入力時刻・仮状態を必須にし、原本と同じ Inbox に別の種別で記録する | BR-08 |
 | 照合 | 停止期間の全原本を「採用・重複・隔離・差異」に分類し、件数照合と手動入力との差異確認が済んだ時点で復旧完了とする（分類の「差異」と、US-15 の復旧照合の差異 `reconciliation_discrepancy` は別の語） | BR-12、US-15 |
 
-パイロットではファイル取込（`interfaces.file`）だけを作る。取込ファイルの解析は `externaldata.interfaces.file` で行い、application には値だけを渡す（application は Web の技術に依存しない。LayerArchitectureTest）。形式は OQ-02 の回答が届くまで仮の CSV（RFC 4180。引用符を許し、依存を足さずに解析する）とする（Bolt 39）。第 2 段階で API の受信口を足しても、Inbox 以降の処理は変えない。
+パイロットではファイル取込（`interfaces.file`）だけを作る。取込ファイルの解析は `externaldata.interfaces.file` で行い、application には値だけを渡す（application は Web の技術に依存しない。LayerArchitectureTest）。形式は OQ-02 の回答が届くまで仮の CSV（RFC 4180。引用符を許し、依存を足さずに解析する）とする（Bolt 39）。解析とヘッダーの検証の結果から取込のコマンド（`IngestFileCommand`）を作る組み立て（`externaldata.interfaces.file.IngestFileCommandAssembler`）も `interfaces.file` に置く。Spring の部品にせず（S-16 の画面の層がつなぐ。39c）、リポジトリを使わない。キーの列（外部 ID・外部版・取得時刻）の形もここで検証し、形式の誤りの理由は domain の値オブジェクト `FormatDefect` で渡す（application は interfaces の型を受けられないため。Bolt 39b2）。第 2 段階で API の受信口を足しても、Inbox 以降の処理は変えない。
 
 ## データの所有と永続化
 

@@ -4,7 +4,7 @@ title: "ADR-004: 外部原本は Inbox・隔離・照合の 3 段で取り込む
 description: "ARCH-HO-03 と BR-08・BR-12・BR-18 を満たすため、外部原本を無加工で保存し、冪等性キーで採用・重複・隔離・差異に分類し、復旧時に件数照合する決定。2026-11-02（W7、Bolt 39）に、置き場所（externaldata）、原本の保存のポートと消さない補償、分類 4 つ、形式の誤りの隔離、解析の置き場所を改訂した。"
 tags: [adr, architecture]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-03T02:30:38Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-03T04:53:51Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:11:13Z }
   - { by: human:kakimomokuri, at: 2026-11-02T06:52:27Z }
@@ -90,6 +90,9 @@ verified:
   - **改名の注**: 上の Bolt 39 の項の `receipt` は当時の表の名前で、受信記録の表は `external_data.received_record`（分類は `received_record.classification`）、受信記録の判断の表は `external_data.received_record_decision` にした。クラス名は `ReceivedRecord`（Bolt 39a2 の開始準備の決定 (3)）。
 - 2026-11-03（W7、Bolt 39b）: 39b を開始準備で縦に 4 本（39b・39b2・39b3・39b4）に分けた（[Bolt 39b 計画](../../development/cargo-tracker/bolt_39b_plan.md) の開始準備で決めたこと (1)。推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）。決定は変えない。
   - **分け方の注**: 上の Bolt 39a2 の項の「39b の取込のサービス」は `externaldata.application.internal.commandservices.IngestionService`（Bolt 39b）で、外側のトランザクションの中から保存を呼ぶ。「接続」と「量」の項の 39b の PERF-06 の計測（取込の経路が握る接続の数、1 万件を 5 分以内、足りなければ一括の保存）は 39b4 で行う。形式の誤りの隔離（上の Bolt 39 の項の「形式の誤り」）は 39b2、隔離と判断のイベントと identity の監査（同じく「監査」）は 39b3 で作る。
+- 2026-11-03（W7、Bolt 39b2）: 上の Bolt 39 の項の「形式の誤り」と「補償」の受信記録の持ち方を、次のように決めた（[Bolt 39b2 計画](../../development/cargo-tracker/bolt_39b2_plan.md) の開始準備で決めたこと (1)・(2) と確認ポイント 1・2・10。推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）。決定は変えない。
+  - **形式の誤りの受信記録**: 形式の誤りの受信記録は外部原本と取得時刻を持たない隔離にする（キーのない隔離。冪等性キーを信用できないので外部原本を引かず作らない）。表の CHECK で、外部原本のない受信記録を隔離だけに限る。行の誤りは行の原文を保存してから指し、ファイルの誤り（文字コード、ヘッダーが読めない、必要な列がない、同じ名前の列）はファイル全体の原本（取込の `file_object_key`）を指す受信記録を 1 つ書く。引用符の閉じ忘れは推測で読み直さず、その行からファイルの終わりまでの原文を保存して受信記録を 1 つ書き、取込に取り込めなかった行の始まりと数を持たせて取込全体を要確認にする。
+  - **参照されない原本の数え方**: 「補償」の項の受信記録から参照されない原本は、保存した原本のキーのうち、取込のファイル全体の原本と受信記録の原本のどちらからも参照されないものとして数える（W10 の S3 ではオブジェクトの一覧と突き合わせる）。数える照会は照合を作る 39h で作る。
 
 ## 備考
 
