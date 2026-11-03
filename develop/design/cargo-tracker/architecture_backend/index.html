@@ -15023,7 +15023,7 @@
 </tr>
 </tbody>
 </table>
-<p>パイロットではファイル取込（<code>interfaces.file</code>）だけを作る。取込ファイルの解析は <code>externaldata.interfaces.file</code> で行い、application には値だけを渡す（application は Web の技術に依存しない。LayerArchitectureTest）。形式は OQ-02 の回答が届くまで仮の CSV（RFC 4180。引用符を許し、依存を足さずに解析する）とする（Bolt 39）。第 2 段階で API の受信口を足しても、Inbox 以降の処理は変えない。</p>
+<p>パイロットではファイル取込（<code>interfaces.file</code>）だけを作る。取込ファイルの解析は <code>externaldata.interfaces.file</code> で行い、application には値だけを渡す（application は Web の技術に依存しない。LayerArchitectureTest）。形式は OQ-02 の回答が届くまで仮の CSV（RFC 4180。引用符を許し、依存を足さずに解析する）とする（Bolt 39）。解析とヘッダーの検証の結果から取込のコマンド（<code>IngestFileCommand</code>）を作る組み立て（<code>externaldata.interfaces.file.IngestFileCommandAssembler</code>）も <code>interfaces.file</code> に置く。Spring の部品にせず（S-16 の画面の層がつなぐ。39c）、リポジトリを使わない。キーの列（外部 ID・外部版・取得時刻）の形もここで検証し、形式の誤りの理由は domain の値オブジェクト <code>FormatDefect</code> で渡す（application は interfaces の型を受けられないため。Bolt 39b2）。第 2 段階で API の受信口を足しても、Inbox 以降の処理は変えない。</p>
 <h2 id="_11">データの所有と永続化<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h2>
 <table>
 <thead>

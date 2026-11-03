@@ -17023,7 +17023,7 @@
 <tr>
 <td style="text-align: left;">6</td>
 <td style="text-align: left;">形式の検証に失敗した行（UC-15 2a）</td>
-<td style="text-align: left;">39b で、隔離して理由を残す（DE-14）。データ責任者への通知は W9 の通知で受ける（W7 は S-17 の一覧に出す）。【前の決定の変更】Bolt 39b の開始準備の決定 (1)（2026-11-03、推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）: 形式の誤りの隔離は 39b2、DE-14 は 39b3 で作る（39b を縦に 4 本に分けたため）</td>
+<td style="text-align: left;">39b で、隔離して理由を残す（DE-14）。データ責任者への通知は W9 の通知で受ける（W7 は S-17 の一覧に出す）。【前の決定の変更】Bolt 39b の開始準備の決定 (1)（2026-11-03、推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）: 形式の誤りの隔離は 39b2、DE-14 は 39b3 で作る（39b を縦に 4 本に分けたため）。注: 形式の誤りの受信記録は外部原本を持たない（キーのない隔離。ファイルの誤りはファイル全体の原本を指す。Bolt 39b2）</td>
 </tr>
 <tr>
 <td style="text-align: left;">7</td>
@@ -17173,10 +17173,17 @@
 </tr>
 <tr>
 <td style="text-align: left;">39b2</td>
-<td style="text-align: left;">形式の誤りの隔離（ファイル・行。UC-15 2a）と値の列（航海・主要実績。仮の形式、OQ-02）の検証、引用符の閉じ忘れのファイルの要確認と取り込めなかった件数、誤りの理由を業務の言葉で、件数の突き合わせ、文字コードの誤り。キーのない隔離のため <code>received_record.external_record_id</code> を NULL 可にする</td>
+<td style="text-align: left;">形式の誤りの隔離（ファイル・行。UC-15 2a）、引用符の閉じ忘れのファイルの要確認と取り込めなかった件数、誤りの理由を業務の言葉で、件数の突き合わせ（物理行。human:kakimomokuri）、文字コードの誤り、キーの列だけの組み立て。キーのない隔離のため <code>received_record.external_record_id</code>・<code>acquired_at</code> を NULL 可にし、取込に取り込めなかった行の列を足す。【前の決定の変更】初案の 39b2 から値の列を 39b2b に縦に分けた（開始準備。半日を超えるため。推奨のとおり。Recommend 承認の指示による）。<a href="../bolt_39b2_plan/">Bolt 39b2 計画</a>（承認済み。件数の単位は human:kakimomokuri が個別に決めた）</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: left;">インサイドアウト</td>
 <td style="text-align: left;">ステップごと（スキーマ）</td>
+</tr>
+<tr>
+<td style="text-align: left;">39b2b</td>
+<td style="text-align: left;">値の列（航海・主要実績。仮の形式、OQ-02）とその検証（UN/LOCODE・時刻・種類・追跡番号・寄港の列）、<code>CsvFileKind</code> の必要な列の追加、値の列の長さの上限、追跡番号の形の写し（外部データの中の形）が追跡の <code>TrackingNumber</code> と同じであることを守るテスト（Bolt 39b2 の開始準備で 39b2 から分けた）</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;">インサイドアウト</td>
+<td style="text-align: left;">ステップごと（構造）</td>
 </tr>
 <tr>
 <td style="text-align: left;">39b3</td>
@@ -17201,7 +17208,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">39d</td>
-<td style="text-align: left;">S-17 隔離・差異の確認: 判断（採用・却下）の記録と判断者、採用の判断で採用値と DE-12・DE-13、判断のイベントと監査、隔離した payload の再送の扱い、マニュアルとキャプチャ、axe</td>
+<td style="text-align: left;">S-17 隔離・差異の確認: 判断（採用・却下）の記録と判断者、採用の判断で採用値と DE-12・DE-13、判断のイベントと監査、隔離した payload の再送の扱い、マニュアルとキャプチャ、axe。注: 開始準備の論点として、キーのない隔離（形式の誤り。Bolt 39b2）は外部原本も冪等性キーも持たないので採用値を作れない。判断は却下と再送だけかを決める</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: left;">アウトサイドイン（S-17 から。局面とアプローチの段落の理由）</td>
 <td style="text-align: left;">ステップごと（スキーマ・認可）</td>
@@ -17250,7 +17257,7 @@
 </tr>
 </tbody>
 </table>
-<p>順序は 38h → 39 → 39a2 → 39a3 → 39b → 39b2 → 39b3 → 39b4 → 39c → 39d → 39e → 39f → 39g → 39g2 → 39h → 39i（38h は W6 の締めで足した。評価の入口の 39f より前に、再設計要・出発済みの運用の決まりをマニュアルに置くため）。39e・39f は 39d の採用値（DE-12）を受け、39g は 39d の DE-13 を受けるので後に置く。39h は 39g の確認中との境界（確認ポイント 7）の後に置く。半日を超えそうな Bolt（39・39b・39f・39g）は開始準備で分ける。W5・W6 の実績（見込みの約 1.5 倍の本数）から、W7 も 15 本前後になる見込みである。W6 までで計画より約 3 週早いので、バッファ消費ルールの範囲で吸収し、W7 の週の見直しで確かめる。</p>
+<p>順序は 38h → 39 → 39a2 → 39a3 → 39b → 39b2 → 39b2b → 39b3 → 39b4 → 39c → 39d → 39e → 39f → 39g → 39g2 → 39h → 39i（38h は W6 の締めで足した。評価の入口の 39f より前に、再設計要・出発済みの運用の決まりをマニュアルに置くため）。39e・39f は 39d の採用値（DE-12）を受け、39g は 39d の DE-13 を受けるので後に置く。39h は 39g の確認中との境界（確認ポイント 7）の後に置く。半日を超えそうな Bolt（39・39b・39f・39g）は開始準備で分ける。W5・W6 の実績（見込みの約 1.5 倍の本数）から、W7 も 15 本前後になる見込みである。W6 までで計画より約 3 週早いので、バッファ消費ルールの範囲で吸収し、W7 の週の見直しで確かめる。</p>
 <p><strong>W6 の Try の持ち込み</strong>: 各 Bolt 計画の確認ポイントに、T-204・T-212（サブエージェントへの指示の最初に heredoc を使わないと書く。<code>orchestrating-development</code> の <code>PROJECT.md</code>）、T-217（本体を直す前に Red を流し、落ちた理由を記録する）、T-225・T-213（push の前に <code>check</code>）、T-182・T-211・T-216（状態の組み合わせの表に重複・隔離・差異と順序逆転・出口・誤った入力の行を置く）、T-184（listener は配信まで確かめる）、T-219（変異の対象に単体・統合・契約のテスト）、T-215・T-222（Gradle を流す担当を 1 つに、計画の初稿を先にコミット）、T-191（環境の前提に設定ファイルの行を添える）を入れる。</p>
 <p><strong>Living Documentation</strong>: 外部データのコンテキストの ADR、<code>package-info</code> の <code>allowedDependencies</code>、ModularityTest と MapperSchemaArchitectureTest の対応表、用語集の整合テスト（外部原本・受信記録・隔離・差異・採用値・下書き・確認中・原本だけ）、受入条件の照合の表（US-14、US-12 の Release 1.0 の範囲）</p>
 <p><strong>デモ項目</strong>: ファイルの取込と分類の結果（<code>@US-14</code>。重複・隔離・差異）、隔離・差異の判断、航海の更新から確定した経路が再設計要になる流れ（<code>@US-06</code>・<code>@US-07</code>）、取り込んだ実績の下書きの採用と、順序逆転・取消済み・完了後（<code>@US-12</code>）。動画は画面の振る舞いが変わる Bolt（39c・39d・39f・39g・39h）で <code>@demo-&lt;Bolt&gt;</code> を撮る</p>
@@ -19821,7 +19828,17 @@
 </tr>
 <tr>
 <td style="text-align: left;">2026-11-03</td>
+<td style="text-align: left;">39b2 から値の列を 39b2b に分け、<a href="../bolt_39b2_plan/">Bolt 39b2 計画</a>を作り、整合性検証の指摘を反映して承認した（件数の単位は個別に、ほかは推奨のとおり。Recommend 承認の指示による）</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-11-03</td>
 <td style="text-align: left;">Bolt 39b のステップ 1（設計の文書）: W7 の設計の決定（取込の置き場所）と確認ポイント 4・6 に、39b を 4 本に分けたことによる【前の決定の変更】の注を足した</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-11-03</td>
+<td style="text-align: left;">Bolt 39b2 のステップ 1（設計の文書）: W7 の確認ポイント 6 に、形式の誤りの受信記録は外部原本を持たないことの注を足した</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5</td>
 </tr>
 <tr>

@@ -15929,7 +15929,7 @@
 <tr>
 <td style="text-align: left;">受信記録</td>
 <td style="text-align: left;">ReceivedRecord</td>
-<td style="text-align: left;">外部原本を受け取るたびの追記専用の記録。分類（採用・重複・隔離・差異）を持つ（data_model の <code>received_record.classification</code>。表は <code>external_data.received_record</code>。Bolt 39a3）。クラス名は通知の公開 API の結果（<code>PasswordResetMailReceipt</code> など）と紛れないよう <code>Receipt</code> を避けた（Bolt 39a2 の開始準備の決定 (3)）</td>
+<td style="text-align: left;">外部原本を受け取るたびと、形式の誤りを見つけるたびの追記専用の記録。分類（採用・重複・隔離・差異）を持つ（data_model の <code>received_record.classification</code>。表は <code>external_data.received_record</code>。Bolt 39a3）。形式の誤りの受信記録は外部原本と取得時刻を持たない隔離（キーのない隔離）で、行の原文かファイル全体の原本を指す（Bolt 39b2。はじめの「外部原本を受け取るたびの」を改めた）。クラス名は通知の公開 API の結果（<code>PasswordResetMailReceipt</code> など）と紛れないよう <code>Receipt</code> を避けた（Bolt 39a2 の開始準備の決定 (3)）</td>
 <td style="text-align: left;">外部データ</td>
 </tr>
 <tr>
@@ -15941,7 +15941,7 @@
 <tr>
 <td style="text-align: left;">取込</td>
 <td style="text-align: left;">Ingestion</td>
-<td style="text-align: left;">データ責任者が 1 ファイルを取り込む 1 回の単位。ファイル全体の原本と受け取った件数を持ち、照合に使う。受け取った件数（<code>received_count</code>）はファイルの物理データ行の数（ヘッダーを除く）で、取込を書くときに入れ、更新しない（追記専用）。分類別の件数は受信記録から数える（Bolt 39b で「分類別の件数を持ち」を改めた）</td>
+<td style="text-align: left;">データ責任者が 1 ファイルを取り込む 1 回の単位。ファイル全体の原本と受け取った件数を持ち、照合に使う。受け取った件数（<code>received_count</code>）はファイルの物理データ行の数（ヘッダーとレコードの外の空行を除く）で、取込を書くときに入れ、更新しない（追記専用）。分類別の件数は受信記録から数える（Bolt 39b で「分類別の件数を持ち」を改めた）。取り込めなかった行（引用符の閉じ忘れの行からファイルの終わりまで、またはファイルの誤りのときのデータ行のすべて）の始まりと物理行の数も書くときに入れる。取込全体の要確認は、取り込めなかった物理行の数が 0 より大きいか、ファイルの誤りの隔離の受信記録があることをいい、状態として持たない（Bolt 39b2）</td>
 <td style="text-align: left;">外部データ</td>
 </tr>
 <tr>
@@ -15977,7 +15977,7 @@
 <tr>
 <td style="text-align: left;">取込の結果</td>
 <td style="text-align: left;">IngestionOutcome</td>
-<td style="text-align: left;">取込のサービスの結果（sealed）。取り込んだ <code>Ingested</code>（取込 ID、受け取った件数、分類別の件数、行ごとの結果）、情報源が承認済みでない <code>DataSourceNotApproved</code>、情報源がない <code>DataSourceNotFound</code>、操作者がデータ責任者でない <code>NotPermitted</code>。拒否のときは原本も含めて何も保存しない（<code>commandservices</code>。Bolt 39b）</td>
+<td style="text-align: left;">取込のサービスの結果（sealed）。取り込んだ <code>Ingested</code>（取込 ID、受け取った件数、分類別の件数、行ごとの結果、取り込めなかった部分（始まり・物理行の数・受信記録 ID）。<code>reconciles()</code> は「受け取った件数 ＝ 行の結果の物理行の数の合計 ＋ 取り込めなかった物理行の数」を確かめる。ファイルの誤りと閉じ忘れの受信記録は行の結果に入れず、取り込めなかった部分として返す。Bolt 39b2）、情報源が承認済みでない <code>DataSourceNotApproved</code>、情報源がない <code>DataSourceNotFound</code>、操作者がデータ責任者でない <code>NotPermitted</code>。拒否のときは原本も含めて何も保存しない（<code>commandservices</code>。Bolt 39b）</td>
 <td style="text-align: left;">外部データ</td>
 </tr>
 <tr>
@@ -16007,7 +16007,25 @@
 <tr>
 <td style="text-align: left;">隔離</td>
 <td style="text-align: left;">QUARANTINED</td>
-<td style="text-align: left;">受信記録の分類の 1 つ。同じ冪等性キーで違う payload の原本と、形式を検証できないファイルと行（UC-15 2a）。データ責任者が判断するまで採用値に影響しない</td>
+<td style="text-align: left;">受信記録の分類の 1 つ。同じ冪等性キーで違う payload の原本と、形式を検証できないファイルと行（UC-15 2a）。データ責任者が判断するまで採用値に影響しない。形式の誤りの隔離は冪等性キーを信用できないので外部原本を引かず作らない（キーのない隔離。外部原本と取得時刻を持たない。Bolt 39b2）</td>
+<td style="text-align: left;">外部データ</td>
+</tr>
+<tr>
+<td style="text-align: left;">形式の誤り</td>
+<td style="text-align: left;">FormatDefect</td>
+<td style="text-align: left;">取込のファイルと行を隔離する理由の値オブジェクト（enum。<code>externaldata.domain.model.valueobjects</code>）。ファイルの誤り（文字コード <code>UNDECODABLE</code>、ヘッダーが読めない <code>UNREADABLE_HEADER</code>、必要な列がない <code>MISSING_COLUMN</code>、同じ名前の列 <code>DUPLICATE_COLUMN</code>）、取込全体の要確認にする引用符の閉じ忘れ <code>UNCLOSED_QUOTE</code>、行の誤り（閉じた引用符の後の文字 <code>TEXT_AFTER_CLOSING_QUOTE</code>、引用符で囲まない値の中の引用符 <code>BARE_QUOTE</code>、列数の違い <code>COLUMN_COUNT_MISMATCH</code>、空の値 <code>EMPTY_VALUE</code>、時刻の書式 <code>INVALID_TIME</code>、長すぎる値 <code>TOO_LONG</code>）。注記の業務の言葉（「12 行目: 列の数がヘッダーと違います（ヘッダー 4 列、この行 5 列）。」の形）を作る（Bolt 39b2）。理由ごとに、なりうる範囲（ファイル・行・ファイルの終わりまで）を持ち、行の誤り・取り込めなかった部分・ヘッダーのファイルの誤りの組み合わせをこの範囲で確かめる（Bolt 39b2 の開発レビュー）</td>
+<td style="text-align: left;">外部データ</td>
+</tr>
+<tr>
+<td style="text-align: left;">物理行の範囲</td>
+<td style="text-align: left;">PhysicalLineRange</td>
+<td style="text-align: left;">取込ファイルの 1 行（引用符の中の改行で複数の物理行にまたがる）か誤りが、ファイルの物理行のどこからどこまでかを表す値オブジェクト（<code>externaldata.domain.model.valueobjects</code>）。始まりと終わり（1 から、終わりは始まり以上）、物理行の数（受け取った件数との突き合わせ）、注記の範囲の言葉（「12 行目」「12 行目から 13 行目まで」）を持つ（Bolt 39b2 の開発レビュー）</td>
+<td style="text-align: left;">外部データ</td>
+</tr>
+<tr>
+<td style="text-align: left;">取込の組み立て</td>
+<td style="text-align: left;">IngestFileCommandAssembler</td>
+<td style="text-align: left;">CSV の解析とヘッダーの検証の結果から取込のコマンド（<code>IngestFileCommand</code>）を作る関数（<code>externaldata.interfaces.file</code>。Spring の部品にしない）。キーの列（外部 ID・外部版・取得時刻）を検証し、形式の正しい行・行の誤り・取り込めなかった部分に分ける。リポジトリは使わない（Bolt 39b2）</td>
 <td style="text-align: left;">外部データ</td>
 </tr>
 <tr>
@@ -16025,7 +16043,7 @@
 <tr>
 <td style="text-align: left;">原本のオブジェクトキー</td>
 <td style="text-align: left;">PayloadObjectKey</td>
-<td style="text-align: left;">保存した原本を指すキー（<code>externaldata/ingestions/{UUID}</code>・<code>externaldata/records/{UUID}</code>。呼び手が作り、前置きでファイル全体と行の payload を区別する）。形を検査し、保存先の外を指すキーを作れない（Bolt 39）</td>
+<td style="text-align: left;">保存した原本を指すキー（<code>externaldata/ingestions/{UUID}</code>・<code>externaldata/records/{UUID}</code>。呼び手が作り、前置きでファイル全体と行の payload を区別する）。形を検査し、保存先の外を指すキーを作れない（Bolt 39）。ファイルの誤りの受信記録は、ファイル全体の原本の <code>externaldata/ingestions/{UUID}</code> のキーを指す（Bolt 39b2）</td>
 <td style="text-align: left;">外部データ</td>
 </tr>
 <tr>
@@ -16049,7 +16067,7 @@
 <tr>
 <td style="text-align: left;">復旧照合</td>
 <td style="text-align: left;">RecoveryReconciliation</td>
-<td style="text-align: left;">停止期間の全原本の分類・件数照合・手動情報との差異確認（BR-12）</td>
+<td style="text-align: left;">停止期間の全原本の分類・件数照合・手動情報との差異確認（BR-12）。件数はファイルの物理データ行の数で数える（Bolt 39b2）</td>
 <td style="text-align: left;">外部データ</td>
 </tr>
 <tr>
@@ -17137,8 +17155,8 @@
 <tr>
 <td style="text-align: left;">取込</td>
 <td style="text-align: left;">Ingestion</td>
-<td style="text-align: left;">取込 ID、情報源、ファイル、取込者、取込時刻、受け取った件数</td>
-<td style="text-align: left;">受け取った件数はファイルの物理データ行の数（ヘッダーを除く）で、取込を書くときに入れ、更新しない。分類別の件数は受信記録から数え、照合に使う。取込は受信記録より先に書く。追記専用（Bolt 39b）</td>
+<td style="text-align: left;">取込 ID、情報源、ファイル、取込者、取込時刻、受け取った件数、取り込めなかった行の始まりと物理行の数</td>
+<td style="text-align: left;">受け取った件数はファイルの物理データ行の数（ヘッダーとレコードの外の空行を除く）で、取込を書くときに入れ、更新しない。分類別の件数は受信記録から数え、照合に使う。取込は受信記録より先に書く。追記専用（Bolt 39b）。取り込めなかった行も書くときに入れる（数が 0 なら始まりは NULL）。取り込めなかった物理行の数が 0 より大きいか、ファイルの誤りの隔離の受信記録があれば、取込全体を要確認とする（Bolt 39b2）</td>
 </tr>
 <tr>
 <td style="text-align: left;">外部原本</td>
@@ -17150,7 +17168,7 @@
 <td style="text-align: left;">受信記録</td>
 <td style="text-align: left;">ReceivedRecord</td>
 <td style="text-align: left;">外部原本、取込、payload とそのハッシュ、取得時刻、分類（採用・重複・隔離・差異）、分類の注記、分類の時刻</td>
-<td style="text-align: left;">ED-INV-02: 同じキー・同じハッシュは重複、同じキー・違うハッシュは隔離する。ED-INV-03: 順序逆転・既存値との矛盾は差異として自動で上書きしない（BR-12、US-14）。同じファイルの中に同じキーが 2 行あれば行の順に処理し、先の行を採用、後の行は同じハッシュなら重複・違えば隔離にする（Bolt 39b）。追記専用</td>
+<td style="text-align: left;">ED-INV-02: 同じキー・同じハッシュは重複、同じキー・違うハッシュは隔離する。ED-INV-03: 順序逆転・既存値との矛盾は差異として自動で上書きしない（BR-12、US-14）。同じファイルの中に同じキーが 2 行あれば行の順に処理し、先の行を採用、後の行は同じハッシュなら重複・違えば隔離にする（Bolt 39b）。形式の誤りの受信記録は外部原本と取得時刻を持たない隔離にし、外部原本を引かず作らない（外部原本と取得時刻はそろって NULL で、NULL は隔離だけ。表の CHECK と同じ規則。Bolt 39b2）。追記専用</td>
 </tr>
 <tr>
 <td style="text-align: left;">受信記録の判断</td>
@@ -17180,7 +17198,7 @@
 <td style="text-align: left;">復旧照合</td>
 <td style="text-align: left;">RecoveryReconciliation</td>
 <td style="text-align: left;">停止期間、分類別件数、受信件数、手動情報との差異一覧、確認者、完了時刻</td>
-<td style="text-align: left;">ED-INV-05: 全原本が分類済みで、受信件数が一致し、差異確認が済んだときだけ完了する（BR-12、US-15）</td>
+<td style="text-align: left;">ED-INV-05: 全原本が分類済みで、受信件数が一致し、差異確認が済んだときだけ完了する（BR-12、US-15）。受信件数はファイルの物理データ行の数で、分類別件数（受信記録の数）とは単位が違う。突き合わせは物理行で行う（Bolt 39b2）</td>
 </tr>
 </tbody>
 </table>

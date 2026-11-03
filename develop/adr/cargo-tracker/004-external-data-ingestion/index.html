@@ -14256,6 +14256,9 @@
 <li><strong>改名の注</strong>: 上の Bolt 39 の項の <code>receipt</code> は当時の表の名前で、受信記録の表は <code>external_data.received_record</code>（分類は <code>received_record.classification</code>）、受信記録の判断の表は <code>external_data.received_record_decision</code> にした。クラス名は <code>ReceivedRecord</code>（Bolt 39a2 の開始準備の決定 (3)）。</li>
 <li>2026-11-03（W7、Bolt 39b）: 39b を開始準備で縦に 4 本（39b・39b2・39b3・39b4）に分けた（<a href="../../../development/cargo-tracker/bolt_39b_plan/">Bolt 39b 計画</a> の開始準備で決めたこと (1)。推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）。決定は変えない。</li>
 <li><strong>分け方の注</strong>: 上の Bolt 39a2 の項の「39b の取込のサービス」は <code>externaldata.application.internal.commandservices.IngestionService</code>（Bolt 39b）で、外側のトランザクションの中から保存を呼ぶ。「接続」と「量」の項の 39b の PERF-06 の計測（取込の経路が握る接続の数、1 万件を 5 分以内、足りなければ一括の保存）は 39b4 で行う。形式の誤りの隔離（上の Bolt 39 の項の「形式の誤り」）は 39b2、隔離と判断のイベントと identity の監査（同じく「監査」）は 39b3 で作る。</li>
+<li>2026-11-03（W7、Bolt 39b2）: 上の Bolt 39 の項の「形式の誤り」と「補償」の受信記録の持ち方を、次のように決めた（<a href="../../../development/cargo-tracker/bolt_39b2_plan/">Bolt 39b2 計画</a> の開始準備で決めたこと (1)・(2) と確認ポイント 1・2・10。推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）。決定は変えない。</li>
+<li><strong>形式の誤りの受信記録</strong>: 形式の誤りの受信記録は外部原本と取得時刻を持たない隔離にする（キーのない隔離。冪等性キーを信用できないので外部原本を引かず作らない）。表の CHECK で、外部原本のない受信記録を隔離だけに限る。行の誤りは行の原文を保存してから指し、ファイルの誤り（文字コード、ヘッダーが読めない、必要な列がない、同じ名前の列）はファイル全体の原本（取込の <code>file_object_key</code>）を指す受信記録を 1 つ書く。引用符の閉じ忘れは推測で読み直さず、その行からファイルの終わりまでの原文を保存して受信記録を 1 つ書き、取込に取り込めなかった行の始まりと数を持たせて取込全体を要確認にする。</li>
+<li><strong>参照されない原本の数え方</strong>: 「補償」の項の受信記録から参照されない原本は、保存した原本のキーのうち、取込のファイル全体の原本と受信記録の原本のどちらからも参照されないものとして数える（W10 の S3 ではオブジェクトの一覧と突き合わせる）。数える照会は照合を作る 39h で作る。</li>
 </ul>
 <h2 id="_10">備考<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>
 <ul>

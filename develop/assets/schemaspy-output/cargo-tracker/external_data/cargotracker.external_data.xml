@@ -77,18 +77,21 @@
          <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="file_hash" nullable="false" remarks="ファイルのハッシュ" size="64" type="varchar" typeCode="12"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="ingested_by" nullable="false" remarks="取込者" size="2147483647" type="uuid" typeCode="1111"/>
          <column autoUpdated="false" defaultValue="null" digits="6" id="5" name="ingested_at" nullable="false" remarks="取込時刻" size="35" type="timestamptz" typeCode="93"/>
-         <column autoUpdated="false" defaultValue="null" digits="0" id="6" name="received_count" nullable="false" remarks="受信件数" size="10" type="int4" typeCode="4"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="6" name="received_count" nullable="false" remarks="受信件数（ファイルの物理データ行の数。ヘッダーとレコードの外の空行を除く）" size="10" type="int4" typeCode="4"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="7" name="unparsed_from_line" nullable="true" remarks="取り込めなかった行の始まり（物理行の番号。取り込めなかった行がなければ NULL）" size="10" type="int4" typeCode="4"/>
+         <column autoUpdated="false" defaultValue="0" digits="0" id="8" name="unparsed_line_count" nullable="false" remarks="取り込めなかった物理行の数" size="10" type="int4" typeCode="4"/>
          <primaryKey column="id" sequenceNumberInPK="1"/>
          <index name="pk_ingestion" unique="true">
             <column ascending="true" name="id"/>
          </index>
+         <checkConstraint constraint="(((unparsed_line_count = 0) AND (unparsed_from_line IS NULL)) OR ((unparsed_line_count &gt; 0) AND (unparsed_from_line IS NOT NULL)))" name="ck_ingestion_unparsed_lines"/>
       </table>
       <table name="received_record" remarks="受信記録 [append-only]" schema="external_data" type="TABLE">
          <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="id" nullable="false" remarks="受信記録 ID" size="2147483647" type="uuid" typeCode="1111">
             <child column="received_record_id" foreignKey="fk_adopted_value_received_record" implied="false" onDeleteCascade="false" schema="external_data" table="adopted_value"/>
             <child column="received_record_id" foreignKey="fk_received_record_decision_received_record" implied="false" onDeleteCascade="false" schema="external_data" table="received_record_decision"/>
          </column>
-         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="external_record_id" nullable="false" remarks="外部原本 ID" size="2147483647" type="uuid" typeCode="1111">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="external_record_id" nullable="true" remarks="外部原本 ID（隔離は NULL 可。形式の誤りの受信記録は外部原本を持たない）" size="2147483647" type="uuid" typeCode="1111">
             <parent column="id" foreignKey="fk_received_record_external_record" implied="false" onDeleteCascade="false" schema="external_data" table="external_record"/>
          </column>
          <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="ingestion_id" nullable="true" remarks="取込 ID（取込によらない受信は NULL）" size="2147483647" type="uuid" typeCode="1111">
@@ -98,7 +101,7 @@
          <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="payload_object_key" nullable="false" remarks="payload のオブジェクトキー" size="500" type="varchar" typeCode="12">
             <parent column="object_key" foreignKey="Implied Constraint" implied="true" onDeleteCascade="false" schema="external_data" table="stored_payload"/>
          </column>
-         <column autoUpdated="false" defaultValue="null" digits="6" id="5" name="acquired_at" nullable="false" remarks="取得時刻" size="35" type="timestamptz" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="5" name="acquired_at" nullable="true" remarks="取得時刻（隔離は NULL 可。形式の誤りの受信記録は取得時刻を持たない）" size="35" type="timestamptz" typeCode="93"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="6" name="classification" nullable="false" remarks="分類（ADOPTED・DUPLICATE・QUARANTINED・DISCREPANCY）" size="30" type="varchar" typeCode="12"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="7" name="classification_note" nullable="true" remarks="分類の注記" size="1000" type="varchar" typeCode="12"/>
          <column autoUpdated="false" defaultValue="null" digits="6" id="8" name="classified_at" nullable="false" remarks="分類の時刻" size="35" type="timestamptz" typeCode="93"/>
@@ -113,6 +116,7 @@
             <column ascending="true" name="ingestion_id"/>
          </index>
          <checkConstraint constraint="((classification)::text = ANY ((ARRAY['ADOPTED'::character varying, 'DUPLICATE'::character varying, 'QUARANTINED'::character varying, 'DISCREPANCY'::character varying])::text[]))" name="ck_received_record_classification"/>
+         <checkConstraint constraint="(((external_record_id IS NULL) = (acquired_at IS NULL)) AND (((classification)::text = 'QUARANTINED'::text) OR (external_record_id IS NOT NULL)))" name="ck_received_record_keyless_quarantine"/>
       </table>
       <table name="received_record_decision" remarks="受信記録の判断 [append-only]" schema="external_data" type="TABLE">
          <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="id" nullable="false" remarks="受信記録の判断 ID" size="2147483647" type="uuid" typeCode="1111"/>

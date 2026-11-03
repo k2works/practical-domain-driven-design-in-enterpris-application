@@ -514,7 +514,35 @@
         "nullable": "",
         "autoUpdated": "",
         "defaultValue": "null",
-        "comments": "<p>受信件数</p>"
+        "comments": "<p>受信件数（ファイルの物理データ行の数。ヘッダーとレコードの外の空行を除く）</p>"
+    },
+    {
+        "tableName": "ingestion",
+        "tableFileName": "ingestion",
+        "tableType": "Table",
+        "keyClass": "",
+        "keyTitle": "",
+        "name": "unparsed_from_line",
+        "type": "int4",
+        "length": 10,
+        "nullable": "√",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>取り込めなかった行の始まり（物理行の番号。取り込めなかった行がなければ NULL）</p>"
+    },
+    {
+        "tableName": "ingestion",
+        "tableFileName": "ingestion",
+        "tableType": "Table",
+        "keyClass": "",
+        "keyTitle": "",
+        "name": "unparsed_line_count",
+        "type": "int4",
+        "length": 10,
+        "nullable": "",
+        "autoUpdated": "",
+        "defaultValue": "0",
+        "comments": "<p>取り込めなかった物理行の数</p>"
     },
     {
         "tableName": "received_record",
@@ -539,10 +567,10 @@
         "name": "<i class='icon ion-key iconkey' style='padding-left: 5px;'></i>external_record_id",
         "type": "uuid",
         "length": 2147483647,
-        "nullable": "",
+        "nullable": "√",
         "autoUpdated": "",
         "defaultValue": "null",
-        "comments": "<p>外部原本 ID</p>"
+        "comments": "<p>外部原本 ID（隔離は NULL 可。形式の誤りの受信記録は外部原本を持たない）</p>"
     },
     {
         "tableName": "received_record",
@@ -595,10 +623,10 @@
         "name": "acquired_at",
         "type": "timestamptz",
         "length": 35,
-        "nullable": "",
+        "nullable": "√",
         "autoUpdated": "",
         "defaultValue": "null",
-        "comments": "<p>取得時刻</p>"
+        "comments": "<p>取得時刻（隔離は NULL 可。形式の誤りの受信記録は取得時刻を持たない）</p>"
     },
     {
         "tableName": "received_record",
