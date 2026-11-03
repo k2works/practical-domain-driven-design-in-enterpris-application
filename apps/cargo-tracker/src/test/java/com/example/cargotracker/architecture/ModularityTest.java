@@ -1,5 +1,7 @@
 package com.example.cargotracker.architecture;
 
+import static com.tngtech.archunit.core.domain.JavaClass.Predicates.resideInAnyPackage;
+import static com.tngtech.archunit.core.domain.properties.HasName.Predicates.name;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -21,6 +23,9 @@ class ModularityTest {
             .withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS)
             .importPackages("com.example.cargotracker");
 
+    /** 外部データのインフラストラクチャ層に 1 クラスだけ許すイベントの発行（Bolt 39b3）。 */
+    private static final String EVENT_PUBLISHER = "org.springframework.context.ApplicationEventPublisher";
+
     private final ApplicationModules modules = ApplicationModules.of(CargoTrackerApplication.class);
 
     @Test
@@ -40,6 +45,16 @@ class ModularityTest {
     @Test
     void モジュール間の依存が境界を守っている() {
         modules.verify();
+    }
+
+    /** 外部データの DE-12〜DE-14 は名前付きインターフェース events で公開し、下流は externaldata :: events だけを参照する（Bolt 39b3 の行 16）。 */
+    @Test
+    void 行16_外部データのイベントは名前付きインターフェースeventsとして認識される() {
+        assertThat(modules.getModuleByName("externaldata")
+                        .orElseThrow()
+                        .getNamedInterfaces()
+                        .getByName("events"))
+                .isPresent();
     }
 
     /** 予約は見積りの下流で、見積りは予約の型（イベントを含む）を参照しない（ADR-014。Bolt 23。Bolt 20 レビュー D-78 の一般化）。 */
@@ -125,6 +140,9 @@ class ModularityTest {
      * 依存してよい（外部原本の保存の DB の実装。Bolt 39a2）。フレームワークの許可は、使う Bolt で、使う層に限って足す。
      * 組み立てのクラス（{@code infrastructure.config} の {@code @Configuration}・{@code @Bean}）のため
      * {@code org.springframework.context.annotation} を足した（Bolt 39b の確認ポイント 14。2026-11-03 の人の決定）。
+     * 取込のサービスにイベントの発行（DE-12〜DE-14）を渡す組み立てのため、{@code ApplicationEventPublisher} の 1 クラスだけを
+     * クラス名の完全一致で足した（{@code org.springframework.context} のパッケージ全体は許さない。Bolt 39b3、2026-11-03、
+     * human:kakimomokuri が決めた）。
      */
     @Test
     void 外部データのインフラストラクチャ層はMyBatisと使う範囲のSpringに依存してよい() {
@@ -132,16 +150,16 @@ class ModularityTest {
                 .that()
                 .resideInAPackage("com.example.cargotracker.externaldata.infrastructure..")
                 .should()
-                .onlyDependOnClassesThat()
-                .resideInAnyPackage(
-                        "java..",
-                        "com.example.cargotracker.externaldata..",
-                        "com.example.cargotracker.shared..",
-                        "org.springframework.dao..",
-                        "org.springframework.transaction..",
-                        "org.springframework.stereotype..",
-                        "org.springframework.context.annotation..",
-                        "org.apache.ibatis..")
+                .onlyDependOnClassesThat(resideInAnyPackage(
+                                "java..",
+                                "com.example.cargotracker.externaldata..",
+                                "com.example.cargotracker.shared..",
+                                "org.springframework.dao..",
+                                "org.springframework.transaction..",
+                                "org.springframework.stereotype..",
+                                "org.springframework.context.annotation..",
+                                "org.apache.ibatis..")
+                        .or(name(EVENT_PUBLISHER)))
                 .check(PRODUCTION_CLASSES);
     }
 }

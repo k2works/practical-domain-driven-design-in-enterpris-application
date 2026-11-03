@@ -4,13 +4,21 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.example.cargotracker.TestcontainersConfiguration;
 import com.example.cargotracker.booking.domain.events.BookingConfirmed;
+import com.example.cargotracker.externaldata.domain.events.ExternalRecordQuarantined;
+import com.example.cargotracker.externaldata.domain.events.MilestoneAdoptedValueAccepted;
+import com.example.cargotracker.externaldata.domain.events.VoyageAdoptedValueUpdated;
+import com.example.cargotracker.externaldata.domain.events.VoyageAdoptedValueUpdated.AdoptedPortCall;
 import com.example.cargotracker.quotation.domain.events.TransportRequestReviewed;
 import com.example.cargotracker.quotation.domain.events.TransportRequestSubmitted;
 import com.example.cargotracker.shared.domain.CompanyId;
+import com.example.cargotracker.shared.domain.Location;
+import com.example.cargotracker.shared.domain.Source;
+import com.example.cargotracker.shared.domain.SourceKind;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import com.example.cargotracker.tracking.domain.events.TrackingStarted;
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -127,8 +135,142 @@ class DomainEventSerializationContractTest {
             new UtcInstant(Instant.parse("2026-10-08T09:00:00.123456Z")),
             0);
 
+    private static final UserId DATA_STEWARD = new UserId(UUID.fromString("00000000-0000-0000-0000-000000000501"));
+    private static final CompanyId DATA_STEWARD_COMPANY =
+            new CompanyId(UUID.fromString("00000000-0000-0000-0000-000000000001"));
+
+    /**
+     * DE-12 航海の採用値を更新した（Bolt 39b3）。経路設計（39e）と監査（39b3b）が購読する公表された言語。寄港は入れ子の record
+     * {@code AdoptedPortCall}（空の時刻は null）、出典は共有カーネルの {@code Source}（参照は受信記録 ID）。
+     */
+    private static final String VOYAGE_ADOPTED_VALUE_UPDATED_V1 = """
+            {"adoptedValueId":"66666666-6666-6666-6666-666666666666",\
+            "ingestionId":"77777777-7777-7777-7777-777777777777",\
+            "dataSourceId":"88888888-8888-8888-8888-888888888888",\
+            "source":{"kind":"EXTERNAL_RECORD","reference":"99999999-9999-9999-9999-999999999999",\
+            "acquiredAt":{"instant":"2026-11-03T08:30:00Z"}},\
+            "voyageNumber":"V2611E",\
+            "portCalls":[{"port":{"unLocode":"JPTYO"},"arrivalAt":null,"departureAt":{"instant":"2026-11-19T23:00:00Z"}},\
+            {"port":{"unLocode":"USLAX"},"arrivalAt":{"instant":"2026-12-01T14:00:00Z"},"departureAt":null}],\
+            "infoVersion":"3",\
+            "operatorUserId":{"value":"00000000-0000-0000-0000-000000000501"},\
+            "operatorCompanyId":{"value":"00000000-0000-0000-0000-000000000001"},\
+            "publishedAt":{"instant":"2026-11-03T09:00:00.123456Z"}}""";
+
+    private static final VoyageAdoptedValueUpdated VOYAGE_ADOPTED_VALUE_UPDATED = new VoyageAdoptedValueUpdated(
+            UUID.fromString("66666666-6666-6666-6666-666666666666"),
+            UUID.fromString("77777777-7777-7777-7777-777777777777"),
+            UUID.fromString("88888888-8888-8888-8888-888888888888"),
+            new Source(
+                    SourceKind.EXTERNAL_RECORD,
+                    "99999999-9999-9999-9999-999999999999",
+                    new UtcInstant(Instant.parse("2026-11-03T08:30:00Z"))),
+            "V2611E",
+            List.of(
+                    new AdoptedPortCall(
+                            new Location("JPTYO"), null, new UtcInstant(Instant.parse("2026-11-19T23:00:00Z"))),
+                    new AdoptedPortCall(
+                            new Location("USLAX"), new UtcInstant(Instant.parse("2026-12-01T14:00:00Z")), null)),
+            "3",
+            DATA_STEWARD,
+            DATA_STEWARD_COMPANY,
+            new UtcInstant(Instant.parse("2026-11-03T09:00:00.123456Z")));
+
+    /** DE-13 主要実績の採用値を受け付けた（Bolt 39b3）。追跡（39g）と監査（39b3b）が購読する。追跡番号と種類は文字列で持つ。 */
+    private static final String MILESTONE_ADOPTED_VALUE_ACCEPTED_V1 = """
+            {"adoptedValueId":"66666666-6666-6666-6666-666666666666",\
+            "ingestionId":"77777777-7777-7777-7777-777777777777",\
+            "dataSourceId":"88888888-8888-8888-8888-888888888888",\
+            "source":{"kind":"EXTERNAL_RECORD","reference":"99999999-9999-9999-9999-999999999999",\
+            "acquiredAt":{"instant":"2026-11-03T08:30:00Z"}},\
+            "trackingNumber":"CTABCDEFGH2345","kind":"DEPARTURE","location":{"unLocode":"JPTYO"},\
+            "occurredAt":{"instant":"2026-11-03T08:00:00Z"},"externalId":"MS-0001","infoVersion":"7",\
+            "operatorUserId":{"value":"00000000-0000-0000-0000-000000000501"},\
+            "operatorCompanyId":{"value":"00000000-0000-0000-0000-000000000001"},\
+            "publishedAt":{"instant":"2026-11-03T09:00:00.123456Z"}}""";
+
+    private static final MilestoneAdoptedValueAccepted MILESTONE_ADOPTED_VALUE_ACCEPTED =
+            new MilestoneAdoptedValueAccepted(
+                    UUID.fromString("66666666-6666-6666-6666-666666666666"),
+                    UUID.fromString("77777777-7777-7777-7777-777777777777"),
+                    UUID.fromString("88888888-8888-8888-8888-888888888888"),
+                    new Source(
+                            SourceKind.EXTERNAL_RECORD,
+                            "99999999-9999-9999-9999-999999999999",
+                            new UtcInstant(Instant.parse("2026-11-03T08:30:00Z"))),
+                    "CTABCDEFGH2345",
+                    "DEPARTURE",
+                    new Location("JPTYO"),
+                    new UtcInstant(Instant.parse("2026-11-03T08:00:00Z")),
+                    "MS-0001",
+                    "7",
+                    DATA_STEWARD,
+                    DATA_STEWARD_COMPANY,
+                    new UtcInstant(Instant.parse("2026-11-03T09:00:00.123456Z")));
+
+    /** DE-14 外部原本を隔離した（Bolt 39b3）。監査（39b3b）が購読する。キーのない隔離（ファイルの誤り）は外部 ID・外部版・物理行が null。 */
+    private static final String EXTERNAL_RECORD_QUARANTINED_KEYLESS_V1 = """
+            {"receivedRecordId":"99999999-9999-9999-9999-999999999999",\
+            "ingestionId":"77777777-7777-7777-7777-777777777777",\
+            "dataSourceId":"88888888-8888-8888-8888-888888888888",\
+            "provider":"運送会社A","recordType":"MILESTONE","externalId":null,"externalVersion":null,\
+            "reason":"UNDECODABLE","firstLine":null,"lastLine":null,\
+            "operatorUserId":{"value":"00000000-0000-0000-0000-000000000501"},\
+            "operatorCompanyId":{"value":"00000000-0000-0000-0000-000000000001"},\
+            "quarantinedAt":{"instant":"2026-11-03T09:00:00.123456Z"}}""";
+
+    private static final ExternalRecordQuarantined EXTERNAL_RECORD_QUARANTINED_KEYLESS = new ExternalRecordQuarantined(
+            UUID.fromString("99999999-9999-9999-9999-999999999999"),
+            UUID.fromString("77777777-7777-7777-7777-777777777777"),
+            UUID.fromString("88888888-8888-8888-8888-888888888888"),
+            "運送会社A",
+            "MILESTONE",
+            null,
+            null,
+            "UNDECODABLE",
+            null,
+            null,
+            DATA_STEWARD,
+            DATA_STEWARD_COMPANY,
+            new UtcInstant(Instant.parse("2026-11-03T09:00:00.123456Z")));
+
     @Autowired
     EventSerializer serializer;
+
+    @Test
+    void 行10_保存済みのDE12のJSONから寄港の並びと出典を復元できる() {
+        assertThat(serializer.deserialize(VOYAGE_ADOPTED_VALUE_UPDATED_V1, VoyageAdoptedValueUpdated.class))
+                .isEqualTo(VOYAGE_ADOPTED_VALUE_UPDATED);
+    }
+
+    @Test
+    void 行10_DE12のJSONの形が変わっていない() {
+        assertThat(serializer.serialize(VOYAGE_ADOPTED_VALUE_UPDATED)).isEqualTo(VOYAGE_ADOPTED_VALUE_UPDATED_V1);
+    }
+
+    @Test
+    void 行10_保存済みのDE13のJSONから復元できる() {
+        assertThat(serializer.deserialize(MILESTONE_ADOPTED_VALUE_ACCEPTED_V1, MilestoneAdoptedValueAccepted.class))
+                .isEqualTo(MILESTONE_ADOPTED_VALUE_ACCEPTED);
+    }
+
+    @Test
+    void 行10_DE13のJSONの形が変わっていない() {
+        assertThat(serializer.serialize(MILESTONE_ADOPTED_VALUE_ACCEPTED))
+                .isEqualTo(MILESTONE_ADOPTED_VALUE_ACCEPTED_V1);
+    }
+
+    @Test
+    void 行10_保存済みのキーのない隔離のDE14のJSONからnullを復元できる() {
+        assertThat(serializer.deserialize(EXTERNAL_RECORD_QUARANTINED_KEYLESS_V1, ExternalRecordQuarantined.class))
+                .isEqualTo(EXTERNAL_RECORD_QUARANTINED_KEYLESS);
+    }
+
+    @Test
+    void 行10_キーのない隔離のDE14のJSONの形が変わっていない() {
+        assertThat(serializer.serialize(EXTERNAL_RECORD_QUARANTINED_KEYLESS))
+                .isEqualTo(EXTERNAL_RECORD_QUARANTINED_KEYLESS_V1);
+    }
 
     @Test
     void 業務番号のない保存済みのDE01のJSONから業務番号をnullとして復元できる() {

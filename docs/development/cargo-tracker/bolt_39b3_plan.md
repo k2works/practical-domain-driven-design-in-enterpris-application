@@ -2,7 +2,7 @@
 type: Plan
 title: "Bolt 39b3 計画 - 採用値と DE-12・DE-13・DE-14 の発行"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-03T11:45:41Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-03T12:55:33Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-11-03T11:09:44Z }
 ---
@@ -150,6 +150,7 @@ DEPARTURE;JPTYO;2026-11-19T23:00:00.000000Z
 | 39e・39g | 下流は DE-12・DE-13 の値の写し（文字列と共有カーネルの型）を自分の型に直す | 39e・39g の listener で、受けた値が自分の規則に合わないときの扱い（毒入りのメッセージにしない）を決める。写しの一致は `ExternalDataCopiedRulesTest` が守る（寄港の数の上限 60 は経路設計と意図して食い違う片側だけの規則で、このテストは守らない。39e で経路設計の `Voyage` に上限を足すかを決める） |
 | 39e・39g | DE-12・DE-13 の出典 `Source(EXTERNAL_RECORD, 受信記録 ID, 取得時刻)` | 下流は出典を `source_kind`・`source_ref` に写す（追跡は `uk_milestone_source`。data_model :771）。再配信で同じ受信記録の実績を重ねない |
 | 39e・39h | 採用値は追記だけで版を持たない。同じ航海の DE-12 が 2 つ非同期に届いたときの順 | 39e の listener と 39h の差異の判定で、情報版の比べ方（古い情報版を適用しない。B-INV-12 の版の代わり）を決める |
+| 39e | H2 のイベント発行記録の `platform.event_publication.serialized_event` は VARCHAR(4000)（h2/V20261001090300__create_event_publication.sql :9。PostgreSQL は TEXT）。DE-12 の JSON は寄港 1 つでおよそ 110 文字なので、寄港 60 の航海は 4000 を超える見込み（Bolt 39b3 のステップ 4 で見つけた。この Bolt では直さない） | 経路設計の DE-12 の listener を作ると発行記録が書かれるので、39e の開始準備で、H2 の列を広げる（スキーマの変更）か、H2 で動かすデモ環境（ADR-013）の扱いを人に諮る。寄港 60 の DE-12 が H2 の列に入るかを直列化の契約のテストで確かめる |
 
 ### 設計文書に直す箇所（ステップ 1）
 
@@ -334,7 +335,7 @@ rr ||--o| av : 分類が採用のときだけ 1 つ
 - [x] **1. 設計の文書**（2026-11-03、推奨のとおり承認として記録した（Recommend 承認の指示による。human:kakimomokuri）。リポジトリ・例外・イベントは用語集に足し、外部データの要素表は採用値の行だけを直した。承認済みの Bolt 39b2b の計画は :305 にだけ変更の印を付けた）: 上の「設計文書に直す箇所」（「人に諮ること」1・2 と確認ポイント 5 の決定を【前の決定の変更】の注として反映する。release_plan :896・:892、DE-12〜DE-14 の属性と出典、採用値の意味、OQ-02 の注の寄港の上限、ADR-004 :83 と改訂の経緯、architecture_backend :285、Bolt 39b2b の計画 :305 の変更の印）（完了の判定: 文書の差分。**承認ゲート**）
 - [x] **2. 外部原本のポートの約束（Red → Green）**（2026-11-03、推奨のとおり承認として記録した（Recommend 承認の指示による。human:kakimomokuri）。Red はテストのコンパイルの誤り 7 個。取込のサービスは計画のとおり例外を捕まえずに上げる。PostgreSQL で元の例外を原因に持つことを確かめた。SonarQube は PASS）: 行 12 の契約と単体のテストを先に直し（`ExternalDataRecordRepositoriesContract` :163、`InMemoryExternalRecordRepository` :28、`IngestionServiceTest` :398・:407 の期待を `DuplicateExternalRecordException` に。T-217 の一覧）、落ちることを確かめてから、例外の型、MyBatis の実装の写し、ポートの Javadoc を作る（完了の判定: 緑、`spotbugsMain`（T-232）、`sonar-local:check` の新しい違反（T-234）。**承認ゲート**（構造: ポートの約束））
 - [x] **3. 採用値（Red → Green）**（2026-11-03、推奨のとおり承認として記録した（Recommend 承認の指示による。human:kakimomokuri）。先に直したテストは取込のサービスの呼び出しの順の期待 3 か所とコンストラクタ（T-217）。Red はテストのコンパイルの誤り 64 個。重複・隔離で採用値を作らないことは呼び出しの記録で確かめた（T-236）。採用値の H2 の契約のテストはステップ 6 で足す。SonarQube は PASS）: 行 1・2・11・14・15 の単体と契約のテストを先に書いて落ちることを確かめ（寄港の上限で落ちる既存のテストを一覧にする。T-217）、`AdoptedValue`・`AdoptedValueRepository`（MyBatis の mapper と実装、メモリの実装、契約）、取込の値の要約、`VoyageValues.MAX_PORT_CALLS` と理由の値 `VoyageValuesRejectionReason.TOO_MANY_PORT_CALLS`（詳細「寄港が多すぎます（60 まで）」）と組み立ての行の誤り（`INVALID_PORT_CALLS`）、取込のサービスの採用値の追記を作る。`ExternalDataCopiedRulesTest` の Javadoc の「このテストが守らないもの」（:36）に寄港の数の上限 60（経路設計の `Voyage` は上限を持たず、意図して食い違う。39e に申し送る）を足す（完了の判定: 緑、`spotbugsMain`、`sonar-local:check` の新しい違反。**承認ゲート**（構造: 新しい集約とリポジトリ））
-- [ ] **4. イベント（Red → Green）**: 行 3〜8・10・13・16 の単体と直列化の契約のテストを先に書いて落ちることを確かめ、`externaldata.domain.events` の package-info（`@NamedInterface("events")`）と 3 つの record、取込のサービスの発行（記録する publisher で単体を確かめる。T-236）、組み立て（`ExternalDataConfiguration`）に publisher を渡す（完了の判定: 緑、`spotbugsMain`、`sonar-local:check` の新しい違反。**承認ゲート**（構造: 公表された言語と名前付きインターフェース））
+- [x] **4. イベント（Red → Green）**（2026-11-03、許可リストに `ApplicationEventPublisher` の 1 クラスだけを足すことは human:kakimomokuri が個別に決めた。ほかは推奨のとおり承認として記録した（Recommend 承認の指示による）。先に直したテストは呼び出しの記録の期待 4 か所とコンストラクタ（T-217）。Red はテストのコンパイルの誤り 70 個と、組み立てのクラスを拒む ModularityTest。起きないことは発行の記録で確かめた（T-236）。SonarQube は 1 件直して PASS）: 行 3〜8・10・13・16 の単体と直列化の契約のテストを先に書いて落ちることを確かめ、`externaldata.domain.events` の package-info（`@NamedInterface("events")`）と 3 つの record、取込のサービスの発行（記録する publisher で単体を確かめる。T-236）、組み立て（`ExternalDataConfiguration`）に publisher を渡す（完了の判定: 緑、`spotbugsMain`、`sonar-local:check` の新しい違反。**承認ゲート**（構造: 公表された言語と名前付きインターフェース））
 - [ ] **5. 統合と受入シナリオ（Red → Green）**: 行 1・2・8・9・15 の統合テスト（コミットの後にだけ受ける記録で発行と巻き戻りを確かめる）と、`ingest_external_records.feature` に採用値ができ再取込で増えないシナリオ（`@US-14`。ステップ定義は `ExternalRecordIngestionSteps`）（完了の判定: 緑。本体を変えたら `spotbugsMain`。**承認ゲート**（構造: 受入シナリオ））
 - [ ] **6. 品質ゲートと開発レビュー**: 変異、`check`、その後に SonarQube、開発レビューとその直し。push の前に `check`
 - [ ] **7. 終了報告**: push して CI とデモ環境の配備を確かめる。release_plan（39b3 の行の計画と終了報告のリンク）・開発の索引・mkdocs を直す。終了報告の既知の課題に 39b3b の行 b1〜b8 を書く。見える振る舞いは変わらないので、マニュアルは直さない（39c で新しい章）
@@ -366,6 +367,7 @@ rr ||--o| av : 分類が採用のときだけ 1 つ
 | 7 | **イベントに操作者を載せる** | ステップ 4 | 推奨のとおり。DE-12〜DE-14 に操作者（`UserId`・`CompanyId`）を載せる（監査の操作者。AUD-02 の項目）。下流の経路設計・追跡は使わない。代わりの案（監査の listener が取込 ID から操作者を引く）は、identity が外部データの公開 API に依存することになり、:896 の「`externaldata :: events` だけ」を越えるので取らない |
 | 8 | **発行の順と巻き戻り** | ステップ 4・5 | 推奨のとおり。行ごとに受信記録 → 採用値 → イベント、物理行の順。すべて取込のトランザクションの中で発行する（イベント発行記録と業務データが同じトランザクション。ADR-003） |
 | 9 | **変異** | ステップ 6 | 下の 10 個 |
+| 10 | **外部データのインフラストラクチャ層にイベントの発行を許す（構造）** | ステップ 4 | **決定**（2026-11-03、human:kakimomokuri が個別に決めた）。組み立て（`ExternalDataConfiguration`）が取込のサービスに `ApplicationEventPublisher` を渡すと、ModularityTest の外部データのインフラストラクチャ層の許可リスト（`org.springframework.context.annotation..` まで）に拒まれた。`org.springframework.context.ApplicationEventPublisher` の 1 クラスだけをクラス名の完全一致で許可リストに足す。`org.springframework.context` のパッケージ全体は許さない |
 
 ### 人に諮ること
 

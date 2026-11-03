@@ -7,6 +7,10 @@ import com.example.cargotracker.externaldata.application.internal.commands.Inges
 import com.example.cargotracker.externaldata.application.internal.commandservices.IngestionOutcome.Ingested;
 import com.example.cargotracker.externaldata.application.internal.commandservices.IngestionOutcome.RowResult;
 import com.example.cargotracker.externaldata.application.internal.commandservices.IngestionOutcome.Unreadable;
+import com.example.cargotracker.externaldata.domain.events.ExternalRecordQuarantined;
+import com.example.cargotracker.externaldata.domain.events.MilestoneAdoptedValueAccepted;
+import com.example.cargotracker.externaldata.domain.events.VoyageAdoptedValueUpdated;
+import com.example.cargotracker.externaldata.domain.events.VoyageAdoptedValueUpdated.AdoptedPortCall;
 import com.example.cargotracker.externaldata.domain.model.aggregates.AdoptedValue;
 import com.example.cargotracker.externaldata.domain.model.aggregates.AdoptedValue.TargetType;
 import com.example.cargotracker.externaldata.domain.model.aggregates.AdoptedValueRepository;
@@ -22,13 +26,19 @@ import com.example.cargotracker.externaldata.domain.model.aggregates.ReceivedRec
 import com.example.cargotracker.externaldata.domain.model.aggregates.ReceivedRecordRepository;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.Classification;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.IdempotencyKey;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.MilestoneKindValue;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.MilestoneValues;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PayloadHash;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PayloadObjectKey;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.RecordValues;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.TrackingNumberValue;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.VoyageValues;
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
+import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.Role;
+import com.example.cargotracker.shared.domain.Source;
+import com.example.cargotracker.shared.domain.SourceKind;
+import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -39,6 +49,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -47,7 +58,9 @@ import org.springframework.transaction.annotation.Transactional;
  * 隔離に分類した受信記録を取込に関連付けて残す（US-14 AC1〜AC4、BR-12、BR-18、ED-INV-01・ED-INV-02。Bolt 39b）。形式の誤りの行は
  * 原文を保存してから、ファイルの誤りはファイル全体の原本を指して、外部原本を持たない隔離（キーのない隔離）の受信記録にし、理由と物理行の範囲を
  * 業務の言葉で注記に書く。誤りの行は冪等性キーを信用できないので外部原本を引かず作らない（UC-15 2a。Bolt 39b2）。分類が採用の行は、
- * 受信記録の後に採用値を 1 つ追記する（US-14 AC1。重複・隔離には作らない。Bolt 39b3）。
+ * 受信記録の後に採用値を 1 つ追記する（US-14 AC1。重複・隔離には作らない。Bolt 39b3）。行ごとに受信記録 → 採用値 → イベントの順で、
+ * 採用は DE-12（航海）か DE-13（主要実績）、隔離（内容の違う原本とキーのない隔離）は DE-14 を取込のトランザクションの中で出し、重複には出さない
+ * （巻き戻ればイベント発行記録も残らない。ADR-003。Bolt 39b3）。
  *
  * <p>拒否の順は役割 → 情報源の有無 → 承認の状態で、拒否なら原本も保存しない（受け付けていない）。1 つの取込は 1 つのトランザクション
  * （外側）で、原本の保存は独立したトランザクションで残る（ADR-004 の改訂）。原本の保存の失敗と外部原本の一意制約の違反（同時の取込）は
@@ -75,8 +88,10 @@ public class IngestionService {
     private final ReceivedRecordRepository receivedRecords;
     private final AdoptedValueRepository adoptedValues;
     private final ExternalPayloadStorage payloadStorage;
+    private final ApplicationEventPublisher eventPublisher;
     private final Clock clock;
 
+    @SuppressWarnings("java:S107") // リポジトリのポート 5 つと保存と発行と時計を受ける組み立ての入口（ExternalDataConfiguration）
     public IngestionService(
             DataSourceRepository dataSources,
             IngestionRepository ingestions,
@@ -84,6 +99,7 @@ public class IngestionService {
             ReceivedRecordRepository receivedRecords,
             AdoptedValueRepository adoptedValues,
             ExternalPayloadStorage payloadStorage,
+            ApplicationEventPublisher eventPublisher,
             Clock clock) {
         this.dataSources = dataSources;
         this.ingestions = ingestions;
@@ -91,8 +107,12 @@ public class IngestionService {
         this.receivedRecords = receivedRecords;
         this.adoptedValues = adoptedValues;
         this.payloadStorage = payloadStorage;
+        this.eventPublisher = eventPublisher;
         this.clock = clock;
     }
+
+    /** 1 つの取込の文脈（情報源・取込・操作者・取込の時刻）。行ごとの処理とイベントの値に渡す。 */
+    private record Run(DataSource source, Ingestion ingestion, AuthenticatedActor operator, Instant now) {}
 
     /**
      * 1 ファイルを取り込む。
@@ -115,6 +135,7 @@ public class IngestionService {
         }
         Instant now = clock.instant();
         Ingestion ingestion = recordIngestion(operator, command, source, now);
+        Run run = new Run(source, ingestion, operator, now);
         List<RowResult> results = new ArrayList<>();
         List<IngestedRow> rows = command.rows();
         List<RejectedRow> rejectedRows = command.rejectedRows();
@@ -125,12 +146,9 @@ public class IngestionService {
                     || (next < rows.size()
                             && rows.get(next).lineNumber()
                                     < rejectedRows.get(nextRejected).lineNumber());
-            results.add(
-                    rowFirst
-                            ? classify(source, ingestion, rows.get(next++), now)
-                            : quarantine(ingestion, rejectedRows.get(nextRejected++), now));
+            results.add(rowFirst ? classify(run, rows.get(next++)) : quarantine(run, rejectedRows.get(nextRejected++)));
         }
-        Unreadable unreadable = command.unreadable() == null ? null : quarantine(ingestion, command.unreadable(), now);
+        Unreadable unreadable = command.unreadable() == null ? null : quarantine(run, command.unreadable());
         return new Ingested(
                 ingestion.id(), ingestion.receivedCount(), countByClassification(ingestion), results, unreadable);
     }
@@ -155,7 +173,10 @@ public class IngestionService {
         return ingestion;
     }
 
-    private RowResult classify(DataSource source, Ingestion ingestion, IngestedRow row, Instant now) {
+    private RowResult classify(Run run, IngestedRow row) {
+        DataSource source = run.source();
+        Ingestion ingestion = run.ingestion();
+        Instant now = run.now();
         byte[] payload = row.payload();
         PayloadObjectKey payloadKey = PayloadObjectKey.newRecordPayload();
         payloadStorage.store(payloadKey, payload);
@@ -180,11 +201,93 @@ public class IngestionService {
                 noteOf(classification, externalRecord, row),
                 now);
         receivedRecords.add(received);
-        if (classification == Classification.ADOPTED) {
-            adoptedValues.add(adoptedValueOf(received, row, now));
+        switch (classification) {
+            case ADOPTED -> {
+                AdoptedValue adopted = adoptedValueOf(received, row, now);
+                adoptedValues.add(adopted);
+                eventPublisher.publishEvent(adoptedEventOf(run, received, row, adopted));
+            }
+            case QUARANTINED ->
+                eventPublisher.publishEvent(quarantinedEventOf(
+                        run,
+                        received,
+                        key,
+                        ExternalRecordQuarantined.CONTENT_MISMATCH,
+                        row.lineNumber(),
+                        row.lastLineNumber()));
+            case DUPLICATE -> {
+                // 重複は採用値に影響しないので、採用値もイベントもない
+            }
         }
         return new RowResult(
                 row.lineNumber(), row.lastLineNumber(), classification, externalRecord.id(), received.id());
+    }
+
+    /**
+     * 採用値のイベント（DE-12・DE-13。Bolt 39b3）。値の写しを Java の標準と共有カーネルの型で持ち、出典の参照は受信記録 ID、取得時刻は
+     * ファイルの値、公開した時刻は採用値と同じ取込の時刻。
+     */
+    private static Object adoptedEventOf(Run run, ReceivedRecord received, IngestedRow row, AdoptedValue adopted) {
+        Source origin =
+                new Source(SourceKind.EXTERNAL_RECORD, received.id().toString(), new UtcInstant(row.acquiredAt()));
+        UtcInstant publishedAt = new UtcInstant(adopted.publishedAt());
+        return switch (row.values()) {
+            case VoyageValues voyage ->
+                new VoyageAdoptedValueUpdated(
+                        adopted.id(),
+                        run.ingestion().id(),
+                        run.source().id(),
+                        origin,
+                        voyage.voyageNumber(),
+                        voyage.portCalls().stream()
+                                .map(call -> new AdoptedPortCall(call.port(), call.arrivalAt(), call.departureAt()))
+                                .toList(),
+                        adopted.infoVersion(),
+                        run.operator().userId(),
+                        run.operator().companyId(),
+                        publishedAt);
+            case MilestoneValues(
+                    TrackingNumberValue trackingNumber,
+                    MilestoneKindValue kind,
+                    Location location,
+                    UtcInstant occurredAt) ->
+                new MilestoneAdoptedValueAccepted(
+                        adopted.id(),
+                        run.ingestion().id(),
+                        run.source().id(),
+                        origin,
+                        trackingNumber.value(),
+                        kind.name(),
+                        location,
+                        occurredAt,
+                        row.externalId(),
+                        adopted.infoVersion(),
+                        run.operator().userId(),
+                        run.operator().companyId(),
+                        publishedAt);
+        };
+    }
+
+    /**
+     * 外部原本を隔離した（DE-14。Bolt 39b3）。キーのない隔離は冪等性キーが {@code null} で、外部 ID・外部版も {@code null} になる。
+     * ファイルの誤りは物理行の範囲も {@code null}。
+     */
+    private static ExternalRecordQuarantined quarantinedEventOf(
+            Run run, ReceivedRecord received, IdempotencyKey key, String reason, Integer firstLine, Integer lastLine) {
+        return new ExternalRecordQuarantined(
+                received.id(),
+                run.ingestion().id(),
+                run.source().id(),
+                run.source().provider(),
+                run.source().recordType(),
+                key == null ? null : key.externalId(),
+                key == null ? null : key.externalVersion(),
+                reason,
+                firstLine,
+                lastLine,
+                run.operator().userId(),
+                run.operator().companyId(),
+                new UtcInstant(run.now()));
     }
 
     /**
@@ -209,55 +312,62 @@ public class IngestionService {
                 UUID.randomUUID(), received.id(), targetType, targetKey, values.summary(), row.externalVersion(), now);
     }
 
-    /** 行の誤り。行の原文を保存してから、キーのない隔離の受信記録を書く。 */
-    private RowResult quarantine(Ingestion ingestion, RejectedRow row, Instant now) {
+    /** 行の誤り。行の原文を保存してから、キーのない隔離の受信記録を書き、外部原本を隔離した（DE-14）を出す。 */
+    private RowResult quarantine(Run run, RejectedRow row) {
         byte[] payload = row.payload();
         PayloadObjectKey payloadKey = PayloadObjectKey.newRecordPayload();
         payloadStorage.store(payloadKey, payload);
         ReceivedRecord received = addKeylessQuarantine(
-                ingestion, PayloadHash.of(payload), payloadKey, row.defect().rowNote(row.range(), row.details()), now);
+                run, PayloadHash.of(payload), payloadKey, row.defect().rowNote(row.range(), row.details()));
+        eventPublisher.publishEvent(
+                quarantinedEventOf(run, received, null, row.defect().name(), row.lineNumber(), row.lastLineNumber()));
         return new RowResult(row.lineNumber(), row.lastLineNumber(), Classification.QUARANTINED, null, received.id());
     }
 
     /**
      * 取り込めなかった部分。ファイルの誤りはファイル全体の原本を指し、ファイルの終わりまで飲み込んだ範囲はその原文を保存してから、キーのない
-     * 隔離の受信記録を 1 つ書く。
+     * 隔離の受信記録を 1 つ書き、外部原本を隔離した（DE-14）を出す（物理行の範囲は、ファイルの誤りは {@code null}、ファイルの終わりまでの
+     * 範囲は始まりからファイルの終わりの物理行まで）。
      */
-    private Unreadable quarantine(Ingestion ingestion, UnreadablePart part, Instant now) {
+    private Unreadable quarantine(Run run, UnreadablePart part) {
+        Ingestion ingestion = run.ingestion();
         ReceivedRecord received;
+        Integer firstLine = null;
+        Integer lastLine = null;
         if (part.fileDefect()) {
             received = addKeylessQuarantine(
-                    ingestion,
+                    run,
                     ingestion.fileHash(),
                     ingestion.fileObjectKey(),
-                    part.defect().fileNote(part.details()),
-                    now);
+                    part.defect().fileNote(part.details()));
         } else {
             byte[] payload = part.payload();
             PayloadObjectKey payloadKey = PayloadObjectKey.newRecordPayload();
             payloadStorage.store(payloadKey, payload);
             received = addKeylessQuarantine(
-                    ingestion,
+                    run,
                     PayloadHash.of(payload),
                     payloadKey,
-                    part.defect().untilEndOfFileNote(part.fromLine(), part.lineCount(), part.details()),
-                    now);
+                    part.defect().untilEndOfFileNote(part.fromLine(), part.lineCount(), part.details()));
+            firstLine = part.fromLine();
+            lastLine = part.fromLine() + part.lineCount() - 1;
         }
+        eventPublisher.publishEvent(
+                quarantinedEventOf(run, received, null, part.defect().name(), firstLine, lastLine));
         return new Unreadable(part.fromLine(), part.lineCount(), received.id());
     }
 
-    private ReceivedRecord addKeylessQuarantine(
-            Ingestion ingestion, PayloadHash hash, PayloadObjectKey payloadKey, String note, Instant now) {
+    private ReceivedRecord addKeylessQuarantine(Run run, PayloadHash hash, PayloadObjectKey payloadKey, String note) {
         ReceivedRecord received = new ReceivedRecord(
                 UUID.randomUUID(),
                 null,
-                ingestion.id(),
+                run.ingestion().id(),
                 hash,
                 payloadKey,
                 null,
                 Classification.QUARANTINED,
                 withinNoteLimit(note),
-                now);
+                run.now());
         receivedRecords.add(received);
         return received;
     }

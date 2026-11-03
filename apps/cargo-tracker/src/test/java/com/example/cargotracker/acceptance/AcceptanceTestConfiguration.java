@@ -492,7 +492,7 @@ public class AcceptanceTestConfiguration {
             return new InMemoryExternalPayloadStorage();
         }
 
-        /** データ責任者が承認済みの情報源のファイルを取り込む（US-14。Bolt 39b。採用値は Bolt 39b3）。 */
+        /** データ責任者が承認済みの情報源のファイルを取り込む（US-14。Bolt 39b。採用値とイベントは Bolt 39b3）。 */
         @Bean
         IngestionService ingestionService(
                 InMemoryDataSourceRepository dataSources,
@@ -501,9 +501,17 @@ public class AcceptanceTestConfiguration {
                 InMemoryReceivedRecordRepository receivedRecords,
                 InMemoryAdoptedValueRepository adoptedValues,
                 InMemoryExternalPayloadStorage payloadStorage,
+                DeferredEventDelivery eventDelivery,
                 MutableClock clock) {
             return new IngestionService(
-                    dataSources, ingestions, externalRecords, receivedRecords, adoptedValues, payloadStorage, clock);
+                    dataSources,
+                    ingestions,
+                    externalRecords,
+                    receivedRecords,
+                    adoptedValues,
+                    payloadStorage,
+                    eventDelivery,
+                    clock);
         }
 
         /** パイロットの開始判定（ED-INV-01、BR-18。Bolt 39b）。 */

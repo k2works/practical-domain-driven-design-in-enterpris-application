@@ -11,6 +11,10 @@ import com.example.cargotracker.externaldata.application.internal.commands.Inges
 import com.example.cargotracker.externaldata.application.internal.commandservices.IngestionOutcome.Ingested;
 import com.example.cargotracker.externaldata.application.internal.commandservices.IngestionOutcome.RowResult;
 import com.example.cargotracker.externaldata.application.internal.commandservices.IngestionOutcome.Unreadable;
+import com.example.cargotracker.externaldata.domain.events.ExternalRecordQuarantined;
+import com.example.cargotracker.externaldata.domain.events.MilestoneAdoptedValueAccepted;
+import com.example.cargotracker.externaldata.domain.events.VoyageAdoptedValueUpdated;
+import com.example.cargotracker.externaldata.domain.events.VoyageAdoptedValueUpdated.AdoptedPortCall;
 import com.example.cargotracker.externaldata.domain.model.aggregates.AdoptedValue;
 import com.example.cargotracker.externaldata.domain.model.aggregates.AdoptedValue.TargetType;
 import com.example.cargotracker.externaldata.domain.model.aggregates.DataSource;
@@ -41,6 +45,8 @@ import com.example.cargotracker.shared.domain.AuthenticatedActor;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.Role;
+import com.example.cargotracker.shared.domain.Source;
+import com.example.cargotracker.shared.domain.SourceKind;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.lang.reflect.RecordComponent;
@@ -57,6 +63,7 @@ import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.springframework.context.ApplicationEventPublisher;
 
 /**
  * 取込のサービス（Bolt 39b の行 1〜5b・7〜8・9b・10〜12、形式の誤りは入れ子のクラスで Bolt 39b2 の行番号。US-14 AC1〜AC4、BR-12、BR-18、
@@ -91,6 +98,13 @@ class IngestionServiceTest {
     private final InMemoryAdoptedValueRepository adoptedValues = new InMemoryAdoptedValueRepository();
     private final InMemoryExternalPayloadStorage storage = new InMemoryExternalPayloadStorage();
     private final Clock clock = Clock.fixed(NOW, ZoneOffset.UTC);
+    /** 発行したイベント（出したイベントの値と、出さないことを発行の記録で確かめる。T-236）。 */
+    private final List<Object> published = new ArrayList<>();
+    /** 発行を記録する publisher。呼び出しの記録にも型の名前を残す（受信記録 → 採用値 → イベントの順を確かめる。Bolt 39b3）。 */
+    private final ApplicationEventPublisher publisher = event -> {
+        published.add(event);
+        calls.add("event:" + event.getClass().getSimpleName());
+    };
 
     private final AuthenticatedActor steward = actor(Role.DATA_STEWARD);
     private final DataSource milestoneSource = approvedSource("運送会社A-" + UUID.randomUUID(), "MILESTONE");
@@ -107,6 +121,7 @@ class IngestionServiceTest {
                 new RecordingReceivedRecords(),
                 new RecordingAdoptedValues(),
                 payloadStorage,
+                publisher,
                 clock);
     }
 
@@ -195,7 +210,13 @@ class IngestionServiceTest {
     void 行1_原本はファイル全体と行の順に保存してから受信記録を書く() {
         service().ingest(steward, file(milestoneSource, milestone(2, "MS-0001", "1", "CTABCDEFGH2345")));
 
-        assertThat(calls).containsExactly("store:ingestions", "store:records", "received:ADOPTED", "adopted:MILESTONE");
+        assertThat(calls)
+                .containsExactly(
+                        "store:ingestions",
+                        "store:records",
+                        "received:ADOPTED",
+                        "adopted:MILESTONE",
+                        "event:MilestoneAdoptedValueAccepted");
     }
 
     @Test
@@ -262,17 +283,167 @@ class IngestionServiceTest {
     }
 
     @Test
-    void 行2_重複の行は採用値を追記しない() {
+    void 行2_重複の行は採用値を追記せずイベントも出さない() {
         IngestedRow row = milestone(2, "MS-0001", "1", "CTABCDEFGH2345");
         ingested(service().ingest(steward, file(milestoneSource, row)));
         calls.clear();
+        published.clear();
 
         Ingested resent = ingested(service().ingest(steward, file(milestoneSource, row)));
 
         assertThat(resent.rows().getFirst().classification()).isEqualTo(Classification.DUPLICATE);
         assertThat(calls)
-                .as("重複の行では採用値の追記を呼ばない（T-236）")
+                .as("重複の行では採用値の追記もイベントの発行も呼ばない（T-236）")
                 .containsExactly("store:ingestions", "store:records", "received:DUPLICATE");
+        assertThat(published).isEmpty();
+    }
+
+    @Test
+    void 行3_内容の違う原本の隔離は採用値を追記せずキーと理由の区分CONTENT_MISMATCHと物理行の範囲を持つDE14を1つ出す() {
+        service().ingest(steward, file(milestoneSource, milestone(2, "MS-0001", "1", "CTABCDEFGH2345")));
+        calls.clear();
+        published.clear();
+
+        Ingested changed = ingested(
+                service().ingest(steward, file(milestoneSource, milestone(2, "MS-0001", "1", "CTABCDEFGH2346"))));
+
+        assertThat(calls)
+                .as("隔離の行では採用値の追記を呼ばない（T-236）")
+                .containsExactly(
+                        "store:ingestions", "store:records", "received:QUARANTINED", "event:ExternalRecordQuarantined");
+        assertThat(published)
+                .containsExactly(new ExternalRecordQuarantined(
+                        changed.rows().getFirst().receivedRecordId(),
+                        changed.ingestionId(),
+                        milestoneSource.id(),
+                        milestoneSource.provider(),
+                        "MILESTONE",
+                        "MS-0001",
+                        "1",
+                        ExternalRecordQuarantined.CONTENT_MISMATCH,
+                        2,
+                        2,
+                        steward.userId(),
+                        steward.companyId(),
+                        new UtcInstant(NOW)));
+    }
+
+    @Test
+    void 行6_行13_航海の採用は出典と寄港の並びと情報版と操作者を持つDE12を1つ出し公開した時刻は取込の時刻で取得時刻はファイルの値() {
+        DataSource voyageSource = approvedSource("船会社B-" + UUID.randomUUID(), "VOYAGE");
+        String voyageLine = "V2611E,3," + ACQUIRED + ",JPTYO;;2026-11-20T00:00:00Z|USLAX;2026-12-01T00:00:00Z;";
+        UtcInstant departure = new UtcInstant(Instant.parse("2026-11-20T00:00:00Z"));
+        UtcInstant arrival = new UtcInstant(Instant.parse("2026-12-01T00:00:00Z"));
+        VoyageValues voyageValues = new VoyageValues(
+                "V2611E",
+                List.of(
+                        new PortCallValue(new Location("JPTYO"), null, departure),
+                        new PortCallValue(new Location("USLAX"), arrival, null)));
+        IngestedRow voyageRow = new IngestedRow(
+                2, 2, "V2611E", "3", ACQUIRED, voyageValues, voyageLine.getBytes(StandardCharsets.UTF_8));
+
+        Ingested result = ingested(service()
+                .ingest(
+                        steward,
+                        new IngestFileCommand(
+                                voyageSource.id(),
+                                ("external_id,external_version,acquired_at,port_calls\n" + voyageLine)
+                                        .getBytes(StandardCharsets.UTF_8),
+                                1,
+                                List.of(voyageRow),
+                                List.of(),
+                                null)));
+
+        UUID receivedRecordId = result.rows().getFirst().receivedRecordId();
+        assertThat(published)
+                .as("DE-13 は出ない")
+                .containsExactly(new VoyageAdoptedValueUpdated(
+                        adoptedValues.all().getFirst().id(),
+                        result.ingestionId(),
+                        voyageSource.id(),
+                        new Source(SourceKind.EXTERNAL_RECORD, receivedRecordId.toString(), new UtcInstant(ACQUIRED)),
+                        "V2611E",
+                        List.of(
+                                new AdoptedPortCall(new Location("JPTYO"), null, departure),
+                                new AdoptedPortCall(new Location("USLAX"), arrival, null)),
+                        "3",
+                        steward.userId(),
+                        steward.companyId(),
+                        new UtcInstant(NOW)));
+    }
+
+    @Test
+    void 行7_行13_主要実績の採用は追跡番号と種類と場所と発生時刻と外部IDと出典を持つDE13を1つ出す() {
+        Ingested result = ingested(
+                service().ingest(steward, file(milestoneSource, milestone(2, "MS-0001", "7", "CTABCDEFGH2345"))));
+
+        UUID receivedRecordId = result.rows().getFirst().receivedRecordId();
+        assertThat(published)
+                .as("DE-12 は出ない")
+                .containsExactly(new MilestoneAdoptedValueAccepted(
+                        adoptedValues.all().getFirst().id(),
+                        result.ingestionId(),
+                        milestoneSource.id(),
+                        new Source(SourceKind.EXTERNAL_RECORD, receivedRecordId.toString(), new UtcInstant(ACQUIRED)),
+                        "CTABCDEFGH2345",
+                        "DEPARTURE",
+                        new Location("JPTYO"),
+                        new UtcInstant(OCCURRED),
+                        "MS-0001",
+                        "7",
+                        steward.userId(),
+                        steward.companyId(),
+                        new UtcInstant(NOW)));
+    }
+
+    @Test
+    void 行8_同じ取込の複数の採用と後の同じキーと間の行の誤りは物理行の順に受信記録と採用値とイベントを書き重複には出さない() {
+        RejectedRow broken = new RejectedRow(
+                3, 3, FormatDefect.COLUMN_COUNT_MISMATCH, List.of(), "MS-0009,1,余分".getBytes(StandardCharsets.UTF_8));
+        List<IngestedRow> rows = List.of(
+                milestone(2, "MS-0001", "1", "CTABCDEFGH2345"),
+                milestone(4, "MS-0001", "1", "CTABCDEFGH2345"),
+                milestone(5, "MS-0001", "1", "CTABCDEFGH2346"),
+                milestone(6, "MS-0002", "1", "CTABCDEFGH2347"));
+        IngestFileCommand command = new IngestFileCommand(
+                milestoneSource.id(), "file".getBytes(StandardCharsets.UTF_8), 5, rows, List.of(broken), null);
+
+        Ingested result = ingested(service().ingest(steward, command));
+
+        assertThat(calls)
+                .filteredOn(call -> !call.startsWith("store:"))
+                .containsExactly(
+                        "received:ADOPTED",
+                        "adopted:MILESTONE",
+                        "event:MilestoneAdoptedValueAccepted",
+                        "received:QUARANTINED",
+                        "event:ExternalRecordQuarantined",
+                        "received:DUPLICATE",
+                        "received:QUARANTINED",
+                        "event:ExternalRecordQuarantined",
+                        "received:ADOPTED",
+                        "adopted:MILESTONE",
+                        "event:MilestoneAdoptedValueAccepted");
+        List<UUID> receivedIds =
+                result.rows().stream().map(RowResult::receivedRecordId).toList();
+        assertThat(published)
+                .extracting(event -> switch (event) {
+                    case MilestoneAdoptedValueAccepted accepted ->
+                        accepted.source().reference();
+                    case ExternalRecordQuarantined quarantined ->
+                        quarantined.receivedRecordId().toString();
+                    default -> throw new AssertionError(event);
+                })
+                .containsExactly(
+                        receivedIds.get(0).toString(),
+                        receivedIds.get(1).toString(),
+                        receivedIds.get(3).toString(),
+                        receivedIds.get(4).toString());
+        assertThat(published)
+                .filteredOn(MilestoneAdoptedValueAccepted.class::isInstance)
+                .extracting(event -> ((MilestoneAdoptedValueAccepted) event).adoptedValueId())
+                .containsExactlyElementsOf(
+                        adoptedValues.all().stream().map(AdoptedValue::id).toList());
     }
 
     @Test
@@ -521,7 +692,14 @@ class IngestionServiceTest {
             }
         };
         return new IngestionService(
-                sources, ingestions, racing, receivedRecords, adoptedValues, new RecordingStorage(storage), clock);
+                sources,
+                ingestions,
+                racing,
+                receivedRecords,
+                adoptedValues,
+                new RecordingStorage(storage),
+                publisher,
+                clock);
     }
 
     @Test
@@ -648,7 +826,8 @@ class IngestionServiceTest {
             assertThat(received.payloadHash()).isEqualTo(ingestion.fileHash());
             assertThat(received.ingestionId()).isEqualTo(ingestion.id());
             assertThat(received.classificationNote()).startsWith("ファイル: ヘッダーを読めません。");
-            assertThat(calls).containsExactly("store:ingestions", "received:QUARANTINED");
+            assertThat(calls)
+                    .containsExactly("store:ingestions", "received:QUARANTINED", "event:ExternalRecordQuarantined");
             assertThat(ingestion.unparsedFromLine()).isEqualTo(2);
             assertThat(ingestion.unparsedLineCount()).isEqualTo(2);
             assertThat(result.rows()).isEmpty();
@@ -704,8 +883,10 @@ class IngestionServiceTest {
                             "store:records",
                             "received:ADOPTED",
                             "adopted:MILESTONE",
+                            "event:MilestoneAdoptedValueAccepted",
                             "store:records",
-                            "received:QUARANTINED");
+                            "received:QUARANTINED",
+                            "event:ExternalRecordQuarantined");
             Ingestion ingestion = ingestions.all().getFirst();
             assertThat(ingestion.unparsedFromLine()).isEqualTo(3);
             assertThat(ingestion.unparsedLineCount()).isEqualTo(3);
@@ -824,11 +1005,14 @@ class IngestionServiceTest {
                             "store:records",
                             "received:ADOPTED",
                             "adopted:MILESTONE",
+                            "event:MilestoneAdoptedValueAccepted",
                             "store:records",
                             "received:QUARANTINED",
+                            "event:ExternalRecordQuarantined",
                             "store:records",
                             "received:ADOPTED",
-                            "adopted:MILESTONE");
+                            "adopted:MILESTONE",
+                            "event:MilestoneAdoptedValueAccepted");
             assertThat(result.rows())
                     .extracting(RowResult::lineNumber, RowResult::classification, RowResult::externalRecordId)
                     .containsExactly(
@@ -843,6 +1027,83 @@ class IngestionServiceTest {
             assertThat(result.unreadable()).isNull();
             assertThat(result.requiresReview()).isFalse();
             assertThat(result.reconciles()).isTrue();
+        }
+
+        /** キーのない隔離の DE-14（Bolt 39b3 の行 4・5）。外部 ID・外部版は null、理由の区分は形式の誤りの名前。 */
+        private ExternalRecordQuarantined keyless(
+                UUID receivedRecordId, FormatDefect defect, Integer firstLine, Integer lastLine) {
+            return new ExternalRecordQuarantined(
+                    receivedRecordId,
+                    ingestions.all().getFirst().id(),
+                    milestoneSource.id(),
+                    milestoneSource.provider(),
+                    "MILESTONE",
+                    null,
+                    null,
+                    defect.name(),
+                    firstLine,
+                    lastLine,
+                    steward.userId(),
+                    steward.companyId(),
+                    new UtcInstant(NOW));
+        }
+
+        @Test
+        void 行4_行の誤りは採用値を追記せず外部IDと外部版がnullで理由の区分が形式の誤りの名前のDE14を物理行の範囲で1つ出す() {
+            IngestFileCommand command = command(
+                    utf8("file"),
+                    2,
+                    List.of(),
+                    List.of(rejected(3, 4, FormatDefect.TEXT_AFTER_CLOSING_QUOTE, "MS-0002,\"1\"x,\"a\nb\"")),
+                    null);
+
+            ingested(service().ingest(steward, command));
+
+            assertThat(calls)
+                    .as("行の誤りでは採用値の追記を呼ばない（T-236）")
+                    .containsExactly(
+                            "store:ingestions",
+                            "store:records",
+                            "received:QUARANTINED",
+                            "event:ExternalRecordQuarantined");
+            assertThat(published)
+                    .containsExactly(
+                            keyless(onlyKeylessQuarantine().id(), FormatDefect.TEXT_AFTER_CLOSING_QUOTE, 3, 4));
+        }
+
+        @Test
+        void 行5_ファイルの誤りは物理行の範囲もnullのDE14を1つ出す() {
+            IngestFileCommand command = command(
+                    utf8("file"),
+                    2,
+                    List.of(),
+                    List.of(),
+                    new UnreadablePart(2, 2, FormatDefect.UNDECODABLE, List.of(), null));
+
+            ingested(service().ingest(steward, command));
+
+            assertThat(published)
+                    .containsExactly(keyless(onlyKeylessQuarantine().id(), FormatDefect.UNDECODABLE, null, null));
+        }
+
+        @Test
+        void 行5_引用符の閉じ忘れは前の行のイベントの後に始まりの物理行とファイルの終わりの物理行のDE14を1つ出す() {
+            IngestedRow before = milestone(2, "MS-0001", "1", "CTABCDEFGH2345");
+            String unclosed = "MS-0002,1,\"" + ACQUIRED + ",CTABCDEFGH2346\n" + line("MS-0003", "CTABCDEFGH2347") + "\n"
+                    + line("MS-0004", "CTABCDEFGH2348");
+            IngestFileCommand command = command(
+                    utf8("file"),
+                    4,
+                    List.of(before),
+                    List.of(),
+                    new UnreadablePart(3, 3, FormatDefect.UNCLOSED_QUOTE, List.of(), utf8(unclosed)));
+
+            ingested(service().ingest(steward, command));
+
+            assertThat(published).hasSize(2);
+            assertThat(published.getFirst()).isInstanceOf(MilestoneAdoptedValueAccepted.class);
+            assertThat(published.getLast())
+                    .isEqualTo(keyless(onlyKeylessQuarantine().id(), FormatDefect.UNCLOSED_QUOTE, 3, 5));
         }
 
         @Test

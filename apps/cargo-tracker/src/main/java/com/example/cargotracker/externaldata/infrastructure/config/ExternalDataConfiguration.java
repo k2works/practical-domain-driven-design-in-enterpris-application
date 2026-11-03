@@ -9,6 +9,7 @@ import com.example.cargotracker.externaldata.domain.model.aggregates.ExternalRec
 import com.example.cargotracker.externaldata.domain.model.aggregates.IngestionRepository;
 import com.example.cargotracker.externaldata.domain.model.aggregates.ReceivedRecordRepository;
 import java.time.Clock;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -32,8 +33,16 @@ public class ExternalDataConfiguration {
             ReceivedRecordRepository receivedRecords,
             AdoptedValueRepository adoptedValues,
             ExternalPayloadStorage payloadStorage,
+            ApplicationEventPublisher eventPublisher,
             Clock clock) {
         return new IngestionService(
-                dataSources, ingestions, externalRecords, receivedRecords, adoptedValues, payloadStorage, clock);
+                dataSources,
+                ingestions,
+                externalRecords,
+                receivedRecords,
+                adoptedValues,
+                payloadStorage,
+                eventPublisher,
+                clock);
     }
 }
