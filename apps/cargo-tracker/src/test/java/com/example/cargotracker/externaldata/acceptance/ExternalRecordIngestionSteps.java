@@ -119,11 +119,11 @@ public class ExternalRecordIngestionSteps {
         // 取得時刻は取込時刻より前（T-230）
         assertThat(acquiredAt).isBefore(clock.instant());
         String line = externalId + "," + version + "," + acquiredAt + "," + trackingNumber;
-        IngestedRow row = new IngestedRow(2, externalId, version, acquiredAt, line.getBytes(StandardCharsets.UTF_8));
+        IngestedRow row = new IngestedRow(2, 2, externalId, version, acquiredAt, line.getBytes(StandardCharsets.UTF_8));
         byte[] file = (MILESTONE_HEADER + "\n" + line).getBytes(StandardCharsets.UTF_8);
         outcomes.add(ingestionService.ingest(
                 DATA_STEWARD,
-                new IngestFileCommand(sourcesByProvider.get(provider).id(), file, 1, List.of(row))));
+                new IngestFileCommand(sourcesByProvider.get(provider).id(), file, 1, List.of(row), List.of(), null)));
         if (firstExternalRecord == null && !externalRecords.all().isEmpty()) {
             firstExternalRecord = externalRecords.all().getFirst();
         }

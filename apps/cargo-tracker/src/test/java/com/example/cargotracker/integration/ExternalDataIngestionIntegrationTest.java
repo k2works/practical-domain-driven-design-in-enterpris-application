@@ -242,7 +242,8 @@ class ExternalDataIngestionIntegrationTest {
             acquiredAt = clock.instant().minus(Duration.ofMinutes(30));
         }
         String line = externalId + ",1," + acquiredAt + "," + trackingNumber;
-        return new IngestedRow(lineNumber, externalId, "1", acquiredAt, line.getBytes(StandardCharsets.UTF_8));
+        return new IngestedRow(
+                lineNumber, lineNumber, externalId, "1", acquiredAt, line.getBytes(StandardCharsets.UTF_8));
     }
 
     private static IngestFileCommand file(UUID sourceId, IngestedRow... rows) {
@@ -251,7 +252,12 @@ class ExternalDataIngestionIntegrationTest {
             content.append('\n').append(new String(row.payload(), StandardCharsets.UTF_8));
         }
         return new IngestFileCommand(
-                sourceId, content.toString().getBytes(StandardCharsets.UTF_8), rows.length, List.of(rows));
+                sourceId,
+                content.toString().getBytes(StandardCharsets.UTF_8),
+                rows.length,
+                List.of(rows),
+                List.of(),
+                null);
     }
 
     private static Ingested ingested(IngestionOutcome outcome) {
