@@ -26,7 +26,6 @@ import java.util.UUID;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 /**
@@ -575,22 +574,22 @@ class IngestFileCommandAssemblerTest {
                     "JPTYO;2026-11-20T00:00:00Z|USLAX;2026-12-01T00:00:00Z;",
                     FormatDefect.INVALID_PORT_CALLS,
                     "port_calls",
-                    "1 つ目の寄港");
+                    "1 つ目の寄港: 港;到着;出発 の 3 つに区切れません");
             assertVoyageRejected(
                     "JPTYO;;2026-11-20T00:00:00Z;|USLAX;2026-12-01T00:00:00Z;",
                     FormatDefect.INVALID_PORT_CALLS,
                     "port_calls",
-                    "1 つ目の寄港");
+                    "1 つ目の寄港: 港;到着;出発 の 3 つに区切れません");
             assertVoyageRejected(
                     "JPTYO;;2026-11-20T00:00:00Z||USLAX;2026-12-01T00:00:00Z;",
                     FormatDefect.INVALID_PORT_CALLS,
                     "port_calls",
-                    "2 つ目の寄港");
+                    "2 つ目の寄港: 港;到着;出発 の 3 つに区切れません");
             assertVoyageRejected(
                     "JPTYO;;2026-11-20T00:00:00Z|USLAX;2026-12-01T00:00:00Z;|",
                     FormatDefect.INVALID_PORT_CALLS,
                     "port_calls",
-                    "3 つ目の寄港");
+                    "3 つ目の寄港: 港;到着;出発 の 3 つに区切れません");
         }
 
         @Test
@@ -618,14 +617,12 @@ class IngestFileCommandAssemblerTest {
                     "JPTYO;2026-11-20T10:00:00Z;2026-11-20T09:00:00Z|USLAX;2026-12-01T00:00:00Z;",
                     FormatDefect.INVALID_PORT_CALLS,
                     "port_calls",
-                    "1 つ目の寄港",
-                    "到着より前に出発しています");
+                    "1 つ目の寄港: 到着より前に出発しています");
             assertVoyageRejected(
                     "JPTYO;;2026-11-20T00:00:00Z|USLAX;;",
                     FormatDefect.INVALID_PORT_CALLS,
                     "port_calls",
-                    "2 つ目の寄港",
-                    "到着か出発が要ります");
+                    "2 つ目の寄港: 到着か出発が要ります");
         }
 
         @Test
@@ -651,7 +648,7 @@ class IngestFileCommandAssemblerTest {
                     "JPTYO;;2026-11-20T00:00:00Z" + visit + visit + "|JPTYO;2026-12-15T00:00:00Z;",
                     FormatDefect.INVALID_PORT_CALLS,
                     "port_calls",
-                    "同じ寄港があります");
+                    "2 つ目と 3 つ目の寄港が同じです");
 
             IngestFileCommand roundTrip = voyages(VOYAGE_HEADER + "\n"
                     + voyageLine("V2611E", "JPTYO;;2026-11-20T00:00:00Z" + visit + "|JPTYO;2026-12-15T00:00:00Z;")
@@ -668,10 +665,12 @@ class IngestFileCommandAssemblerTest {
                                     call("JPTYO", "2026-12-15T00:00:00Z", null))));
         }
 
+        /** 6 つの種類は種類の一覧から作らず直書きにする（種類の一覧から 1 つ外しても落ちる。変異 V2）。 */
         @ParameterizedTest
-        @EnumSource(MilestoneKindValue.class)
-        void 行8_主要実績の正しい行は追跡番号と種類と場所と発生時刻を持つ主要実績の値にする(MilestoneKindValue kind) {
-            String raw = milestoneLine(TRACKING_NUMBER, kind.name(), "JPTYO", "2026-11-03T17:00:00+09:00");
+        @ValueSource(strings = {"PICKUP", "RECEIPT_AT_ORIGIN", "DEPARTURE", "TRANSSHIPMENT", "ARRIVAL", "DELIVERY"})
+        void 行8_主要実績の正しい行は追跡番号と種類と場所と発生時刻を持つ主要実績の値にする(String kindName) {
+            MilestoneKindValue kind = MilestoneKindValue.valueOf(kindName);
+            String raw = milestoneLine(TRACKING_NUMBER, kindName, "JPTYO", "2026-11-03T17:00:00+09:00");
 
             IngestFileCommand command = milestones(MILESTONE_HEADER + "\n" + raw + "\n");
 

@@ -4,6 +4,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -46,5 +50,25 @@ class TrackingNumberValueTest {
         assertThat(defect.occursIn(FormatDefect.Extent.FILE)).isFalse();
         assertThat(defect.rowNote(new PhysicalLineRange(12, 12), List.of("tracking_number")))
                 .isEqualTo("12 行目: 追跡番号の形が違います（tracking_number）。CT と英大文字・数字 12 桁（0・O・1・I・L を除く）で書いてください。");
+    }
+
+    @Test
+    void 行11_追跡番号の形の誤りの言葉が除く文字は追跡番号の値が拒む英大文字と数字の集合と一致する() {
+        String note = FormatDefect.INVALID_TRACKING_NUMBER.rowNote(new PhysicalLineRange(1, 1), List.of());
+        Matcher excluded = Pattern.compile("（([^（）]+) を除く）").matcher(note);
+        assertThat(excluded.find()).as("注記に除く文字がある: %s", note).isTrue();
+        Set<String> worded = Set.of(excluded.group(1).split("・"));
+
+        Set<String> rejected = new TreeSet<>();
+        for (char c : "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".toCharArray()) {
+            String twelve = String.valueOf(c).repeat(12);
+            try {
+                new TrackingNumberValue("CT" + twelve);
+            } catch (IllegalArgumentException _) {
+                rejected.add(String.valueOf(c));
+            }
+        }
+
+        assertThat(worded).containsExactlyInAnyOrderElementsOf(rejected);
     }
 }

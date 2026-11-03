@@ -33,8 +33,10 @@ class PortCallValueTest {
     @Test
     void 行5_到着と出発の両方が空の寄港は作れない() {
         assertThatThrownBy(() -> new PortCallValue(TOKYO, null, null))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("到着か出発が要ります");
+                .isInstanceOfSatisfying(VoyageValuesRejected.class, rejected -> {
+                    assertThat(rejected.reason()).isEqualTo(VoyageValuesRejectionReason.NO_ARRIVAL_OR_DEPARTURE);
+                    assertThat(rejected.detail()).isEqualTo("到着か出発が要ります");
+                });
     }
 
     @Test
@@ -43,8 +45,10 @@ class PortCallValueTest {
         UtcInstant departure = at("2026-11-20T07:59:59Z");
 
         assertThatThrownBy(() -> new PortCallValue(TOKYO, arrival, departure))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("到着より前に出発しています");
+                .isInstanceOfSatisfying(
+                        VoyageValuesRejected.class,
+                        rejected -> assertThat(rejected.reason())
+                                .isEqualTo(VoyageValuesRejectionReason.DEPARTURE_BEFORE_ARRIVAL));
     }
 
     @Test

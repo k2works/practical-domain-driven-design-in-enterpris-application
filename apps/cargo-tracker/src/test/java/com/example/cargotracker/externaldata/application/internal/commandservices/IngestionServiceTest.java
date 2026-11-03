@@ -74,7 +74,16 @@ class IngestionServiceTest {
     private final List<String> calls = new ArrayList<>();
     private final InMemoryDataSourceRepository sources = new InMemoryDataSourceRepository();
     private final InMemoryIngestionRepository ingestions = new InMemoryIngestionRepository();
-    private final InMemoryExternalRecordRepository externalRecords = new InMemoryExternalRecordRepository();
+    /** 外部原本を引いたキーの記録（形式の誤り・値の誤りの行で引かないことを確かめる。行 14・18、変異 V8）。 */
+    private final List<IdempotencyKey> lookups = new ArrayList<>();
+
+    private final InMemoryExternalRecordRepository externalRecords = new InMemoryExternalRecordRepository() {
+        @Override
+        public Optional<ExternalRecord> findByKey(IdempotencyKey key) {
+            lookups.add(key);
+            return super.findByKey(key);
+        }
+    };
     private final InMemoryReceivedRecordRepository receivedRecords = new InMemoryReceivedRecordRepository();
     private final InMemoryExternalPayloadStorage storage = new InMemoryExternalPayloadStorage();
     private final Clock clock = Clock.fixed(NOW, ZoneOffset.UTC);
@@ -770,31 +779,16 @@ class IngestionServiceTest {
         }
 
         private void assertSameKeyErrorRowIsIgnored(int correctLine, int errorLine) {
-            List<IdempotencyKey> lookups = new ArrayList<>();
-            InMemoryExternalRecordRepository looking = new InMemoryExternalRecordRepository() {
-                @Override
-                public Optional<ExternalRecord> findByKey(IdempotencyKey key) {
-                    lookups.add(key);
-                    return super.findByKey(key);
-                }
-            };
             IngestedRow correct = milestone(correctLine, "MS-0001", "1", "CTABCDEFGH2345");
             RejectedRow error = rejected(
                     errorLine, errorLine, FormatDefect.BARE_QUOTE, "MS-0001,1," + ACQUIRED + ",CT\"ABCDEFGH2345");
             IngestFileCommand command = command(utf8("file"), 2, List.of(correct), List.of(error), null);
 
-            Ingested result = ingested(new IngestionService(
-                            sources,
-                            ingestions,
-                            looking,
-                            new RecordingReceivedRecords(),
-                            new RecordingStorage(storage),
-                            clock)
-                    .ingest(steward, command));
+            Ingested result = ingested(service().ingest(steward, command));
 
             assertThat(lookups).containsExactly(keyOf(milestoneSource, "MS-0001", "1"));
-            assertThat(looking.all()).hasSize(1);
-            assertThat(storage.read(looking.all().getFirst().payloadObjectKey()))
+            assertThat(externalRecords.all()).hasSize(1);
+            assertThat(storage.read(externalRecords.all().getFirst().payloadObjectKey()))
                     .isEqualTo(correct.payload());
             assertThat(result.rows())
                     .extracting(RowResult::lineNumber, RowResult::classification)
@@ -1053,12 +1047,12 @@ class IngestionServiceTest {
         }
 
         @Test
-        void 行18_同じキーの値の誤りの行が先でも外部原本を作らず後の正しい行を採用する() {
+        void 行18_同じキーの値の誤りの行が先でも外部原本を引かず作らず後の正しい行を採用する() {
             assertOnlyCorrectRowIsAdopted(3, 2);
         }
 
         @Test
-        void 行18_同じキーの値の誤りの行が後でも外部原本を作らず先の正しい行を採用する() {
+        void 行18_同じキーの値の誤りの行が後でも外部原本を引かず作らず先の正しい行を採用する() {
             assertOnlyCorrectRowIsAdopted(2, 3);
         }
 
@@ -1069,6 +1063,9 @@ class IngestionServiceTest {
 
             Ingested result = ingested(service().ingest(steward, command));
 
+            assertThat(lookups)
+                    .as("値の誤りの行では冪等性キーの外部原本を引かない（変異 V8）")
+                    .containsExactly(keyOf(milestoneSource, "MS-0001", "1"));
             assertThat(externalRecords.all()).hasSize(1);
             assertThat(storage.read(externalRecords.all().getFirst().payloadObjectKey()))
                     .isEqualTo(correct.payload());

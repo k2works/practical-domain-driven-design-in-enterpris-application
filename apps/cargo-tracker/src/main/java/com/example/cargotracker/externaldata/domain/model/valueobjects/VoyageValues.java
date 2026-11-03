@@ -1,7 +1,6 @@
 package com.example.cargotracker.externaldata.domain.model.valueobjects;
 
 import com.example.cargotracker.shared.annotation.ddd.ValueObject;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 
@@ -22,20 +21,37 @@ public record VoyageValues(String voyageNumber, List<PortCallValue> portCalls) i
     /** 寄港の下限の数（経路設計の航海と同じ）。 */
     public static final int MIN_PORT_CALLS = 2;
 
+    /** 拒むときは理由（{@link VoyageValuesRejected}）を返す。 */
     public VoyageValues {
-        Objects.requireNonNull(voyageNumber, "voyageNumber");
-        if (voyageNumber.isBlank()) {
-            throw new IllegalArgumentException("航海番号が空です");
-        }
-        if (voyageNumber.codePointCount(0, voyageNumber.length()) > VOYAGE_NUMBER_MAX_LENGTH) {
-            throw new IllegalArgumentException("航海番号が " + VOYAGE_NUMBER_MAX_LENGTH + " 文字より長い: " + voyageNumber);
-        }
+        requireVoyageNumber(voyageNumber);
         portCalls = List.copyOf(portCalls);
         if (portCalls.size() < MIN_PORT_CALLS) {
-            throw new IllegalArgumentException("寄港が足りません（" + MIN_PORT_CALLS + " つ以上）: " + voyageNumber);
+            throw new VoyageValuesRejected(VoyageValuesRejectionReason.TOO_FEW_PORT_CALLS);
         }
-        if (new HashSet<>(portCalls).size() < portCalls.size()) {
-            throw new IllegalArgumentException("同じ寄港があります: " + voyageNumber);
+        for (int later = 1; later < portCalls.size(); later++) {
+            int earlier = portCalls.subList(0, later).indexOf(portCalls.get(later));
+            if (earlier >= 0) {
+                throw new VoyageValuesRejected(
+                        VoyageValuesRejectionReason.DUPLICATE_PORT_CALLS, List.of(earlier + 1, later + 1));
+            }
         }
+    }
+
+    /**
+     * 航海番号の規則（空でなく、上限の文字数まで）。寄港の列より先に航海番号を確かめる組み立てが、型の判定をそのまま使う。
+     *
+     * @param voyageNumber 航海番号
+     * @return 規則に合う航海番号（そのまま）
+     * @throws VoyageValuesRejected 規則に合わないとき（理由を持つ）
+     */
+    public static String requireVoyageNumber(String voyageNumber) {
+        Objects.requireNonNull(voyageNumber, "voyageNumber");
+        if (voyageNumber.isBlank()) {
+            throw new VoyageValuesRejected(VoyageValuesRejectionReason.VOYAGE_NUMBER_BLANK);
+        }
+        if (voyageNumber.codePointCount(0, voyageNumber.length()) > VOYAGE_NUMBER_MAX_LENGTH) {
+            throw new VoyageValuesRejected(VoyageValuesRejectionReason.VOYAGE_NUMBER_TOO_LONG);
+        }
+        return voyageNumber;
     }
 }

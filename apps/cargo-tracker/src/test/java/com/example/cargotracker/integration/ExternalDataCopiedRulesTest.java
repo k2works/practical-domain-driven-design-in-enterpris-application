@@ -32,6 +32,17 @@ import org.junit.jupiter.params.provider.MethodSource;
  * <p>寄港の重複（同じ港・同じ到着・同じ出発の寄港を重ねない）の規則は外部データの {@code VoyageValues} の片側だけにあり、経路設計の
  * 航海は確かめていないので、このテストは守らない（入力の寄港はどれも互いに違う）。経路設計の航海の規則を足す 39e で、写しとこのテストを
  * 直す。
+ *
+ * <p>このテストが守らないもの（ほかに置き場所がある、または意図した食い違い）:
+ *
+ * <ul>
+ *   <li>空白だけの航海番号。経路設計の航海（{@code Voyage}）は NULL だけを拒んで受け、写しの {@code VoyageValues} は拒む（外部 ID の列の
+ *       空の値として先に隔離する）。意図した食い違いなので比べない
+ *   <li>航海番号の 30 文字（{@code VoyageValues.VOYAGE_NUMBER_MAX_LENGTH}）と {@code routing.voyage.voyage_number VARCHAR(30)}。
+ *       経路設計の航海は長さを確かめないので、表の列の上限との一致は値の型の単体テスト（行 14）と表の定義で守る
+ *   <li>DB の {@code ck_port_call_times}（到着か出発の少なくとも一方）と {@code ck_milestone_kind}（{@code milestone.kind} の 6 値）の
+ *       CHECK。このテストは型どうしを比べ、DB の制約は比べない（制約の名前を挙げて確かめるテストはまだない）
+ * </ul>
  */
 class ExternalDataCopiedRulesTest {
 

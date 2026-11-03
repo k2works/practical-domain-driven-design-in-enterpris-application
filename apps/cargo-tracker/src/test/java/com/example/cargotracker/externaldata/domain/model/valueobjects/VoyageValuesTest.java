@@ -36,8 +36,10 @@ class VoyageValuesTest {
         List<PortCallValue> oneCall = List.of(TOKYO_DEPARTURE);
 
         assertThatThrownBy(() -> new VoyageValues("V2611E", oneCall))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("寄港が足りません（2 つ以上）");
+                .isInstanceOfSatisfying(VoyageValuesRejected.class, rejected -> {
+                    assertThat(rejected.reason()).isEqualTo(VoyageValuesRejectionReason.TOO_FEW_PORT_CALLS);
+                    assertThat(rejected.detail()).isEqualTo("寄港が足りません（2 つ以上）");
+                });
     }
 
     @Test
@@ -47,8 +49,10 @@ class VoyageValuesTest {
         List<PortCallValue> repeated = List.of(TOKYO_DEPARTURE, LOS_ANGELES_ARRIVAL, sameAgain);
 
         assertThatThrownBy(() -> new VoyageValues("V2611E", repeated))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("同じ寄港があります");
+                .isInstanceOfSatisfying(VoyageValuesRejected.class, rejected -> {
+                    assertThat(rejected.reason()).isEqualTo(VoyageValuesRejectionReason.DUPLICATE_PORT_CALLS);
+                    assertThat(rejected.detail()).isEqualTo("1 つ目と 3 つ目の寄港が同じです");
+                });
     }
 
     @Test
@@ -70,7 +74,17 @@ class VoyageValuesTest {
                 .isEqualTo(thirtyWithSupplementary);
         String tooLong = "V".repeat(31);
         List<PortCallValue> portCalls = List.of(TOKYO_DEPARTURE, LOS_ANGELES_ARRIVAL);
-        assertThatThrownBy(() -> new VoyageValues(tooLong, portCalls)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> new VoyageValues(tooLong, portCalls))
+                .isInstanceOfSatisfying(
+                        VoyageValuesRejected.class,
+                        rejected -> assertThat(rejected.reason())
+                                .isEqualTo(VoyageValuesRejectionReason.VOYAGE_NUMBER_TOO_LONG));
+        assertThatThrownBy(() -> VoyageValues.requireVoyageNumber(tooLong))
+                .isInstanceOfSatisfying(
+                        VoyageValuesRejected.class,
+                        rejected -> assertThat(rejected.reason())
+                                .isEqualTo(VoyageValuesRejectionReason.VOYAGE_NUMBER_TOO_LONG));
+        assertThat(VoyageValues.requireVoyageNumber(thirtyWithSupplementary)).isEqualTo(thirtyWithSupplementary);
     }
 
     @Test
@@ -79,7 +93,11 @@ class VoyageValuesTest {
 
         assertThatThrownBy(() -> new VoyageValues(null, portCalls)).isInstanceOf(NullPointerException.class);
         assertThatThrownBy(() -> new VoyageValues("", portCalls)).isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> new VoyageValues(" ", portCalls)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> new VoyageValues(" ", portCalls))
+                .isInstanceOfSatisfying(
+                        VoyageValuesRejected.class,
+                        rejected -> assertThat(rejected.reason())
+                                .isEqualTo(VoyageValuesRejectionReason.VOYAGE_NUMBER_BLANK));
         assertThatThrownBy(() -> new VoyageValues("V2611E", null)).isInstanceOf(NullPointerException.class);
         List<PortCallValue> none = List.of();
         assertThatThrownBy(() -> new VoyageValues("V2611E", none)).isInstanceOf(IllegalArgumentException.class);
@@ -98,14 +116,30 @@ class VoyageValuesTest {
     }
 
     @Test
-    void 行2_寄港の列の誤りは行の誤りで寄港の書き方を示す() {
+    void 行2_寄港の列の誤りは行の誤りで原因を詳細に書き記法を前に出さずに確かめ方を示す() {
         FormatDefect defect = FormatDefect.INVALID_PORT_CALLS;
 
         assertThat(defect.occursIn(FormatDefect.Extent.ROW)).isTrue();
         assertThat(defect.occursIn(FormatDefect.Extent.FILE)).isFalse();
         assertThat(defect.rowNote(new PhysicalLineRange(5, 5), List.of("port_calls", "寄港が足りません（2 つ以上）")))
-                .isEqualTo("5 行目: 寄港の列の形が違います（port_calls、寄港が足りません（2 つ以上））。"
-                        + "寄港は 2 つ以上を | で区切り、各寄港は UN/LOCODE;到着;出発 で到着か出発を書き、出発は到着以後にし、"
-                        + "同じ寄港を重ねないでください。");
+                .isEqualTo("5 行目: 寄港の列の形が違います（port_calls、寄港が足りません（2 つ以上））。寄港の並びを提供元に確かめてください。");
+    }
+
+    @Test
+    void 行2_寄港の下限の言葉は寄港の下限の数から作る() {
+        assertThat(VoyageValuesRejectionReason.TOO_FEW_PORT_CALLS.wording())
+                .isEqualTo("寄港が足りません（" + VoyageValues.MIN_PORT_CALLS + " つ以上）");
+    }
+
+    @Test
+    void 行3_寄港の番号を持つ拒否は寄港の番号と原因を詳細に書く() {
+        assertThat(new VoyageValuesRejected(VoyageValuesRejectionReason.UNSPLITTABLE_PORT_CALL)
+                        .at(3)
+                        .detail())
+                .isEqualTo("3 つ目の寄港: 港;到着;出発 の 3 つに区切れません");
+        assertThat(new VoyageValuesRejected(VoyageValuesRejectionReason.NO_ARRIVAL_OR_DEPARTURE)
+                        .at(2)
+                        .detail())
+                .isEqualTo("2 つ目の寄港: 到着か出発が要ります");
     }
 }

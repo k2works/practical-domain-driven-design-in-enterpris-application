@@ -49,11 +49,10 @@ public enum FormatDefect {
     /** 追跡番号が追跡番号の形でない（行の誤り。Bolt 39b2b）。 */
     INVALID_TRACKING_NUMBER("追跡番号の形が違います", "CT と英大文字・数字 12 桁（0・O・1・I・L を除く）で書いてください。", Extent.ROW),
     /**
-     * 寄港の列の形が違う（寄港の区切り、寄港の数（2 つ以上）、到着か出発の有無、到着と出発の順、寄港の重複。詳細の言葉で分ける。行の誤り。
-     * Bolt 39b2b）。
+     * 寄港の列の形が違う（寄港の区切り、寄港の数（{@link VoyageValues#MIN_PORT_CALLS} 以上）、到着か出発の有無、到着と出発の順、寄港の重複。
+     * 原因と寄港の番号は詳細に書き（{@link VoyageValuesRejected#detail()}）、どうすればよいかは短い業務の言葉にする。行の誤り。Bolt 39b2b）。
      */
-    INVALID_PORT_CALLS(
-            "寄港の列の形が違います", "寄港は 2 つ以上を | で区切り、各寄港は UN/LOCODE;到着;出発 で到着か出発を書き、出発は到着以後にし、同じ寄港を重ねないでください。", Extent.ROW);
+    INVALID_PORT_CALLS("寄港の列の形が違います", "寄港の並びを提供元に確かめてください。", Extent.ROW);
 
     /** どうすればよいかの言葉で、理由をまたいで使うもの。 */
     private static final class Remedy {

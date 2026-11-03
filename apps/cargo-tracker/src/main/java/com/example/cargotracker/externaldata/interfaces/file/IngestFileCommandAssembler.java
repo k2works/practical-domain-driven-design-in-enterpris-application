@@ -11,6 +11,8 @@ import com.example.cargotracker.externaldata.domain.model.valueobjects.PortCallV
 import com.example.cargotracker.externaldata.domain.model.valueobjects.RecordValues;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.TrackingNumberValue;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.VoyageValues;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.VoyageValuesRejected;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.VoyageValuesRejectionReason;
 import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.nio.charset.StandardCharsets;
@@ -36,7 +38,8 @@ import java.util.function.Supplier;
  * 最初のデータ行から受け取った件数のすべて、なければ始まりなしで 0）にする。引用符が閉じないままファイルの終わりまで飲み込んだ範囲は原文付きの
  * 取り込めなかった部分に、ほかの読めなかった行は行の誤りにする。読めた行はキーの列（外部 ID・外部版・取得時刻）を先に、次に値の列を必要な列の
  * 順（{@link CsvFileKind}）に検証し、最初の 1 つの誤りを行の誤りにする。空（空白だけを含む）・長すぎる（表の列の上限）・時刻の書式の誤りは
- * 組み立てが見つけ、場所・種類・追跡番号・寄港の形の誤りは取込の値の型の拒否を形式の誤りに写す。正しい行は取込の値（航海の値か主要実績の値。
+ * 組み立てが見つけ、場所・種類・追跡番号・寄港の形の誤りは取込の値の型の拒否を形式の誤りに写す（寄港の列と航海番号は型が返す理由
+ * （{@link VoyageValuesRejected}）をそのまま詳細にし、型の外で理由を推し量らない）。正しい行は取込の値（航海の値か主要実績の値。
  * 航海番号は外部 ID の列の値）を持つ取り込む行にする。値は加工せずに渡し（前後の空白・小文字を直さない）、原文は UTF-8 のバイト列にする。
  */
 public final class IngestFileCommandAssembler {
@@ -161,8 +164,10 @@ public final class IngestFileCommandAssembler {
      * （寄港をすべて読んだ後）の順に確かめる。
      */
     private static Read<RecordValues> voyageValues(String voyageNumber, RowColumns columns) {
-        if (voyageNumber.codePointCount(0, voyageNumber.length()) > VoyageValues.VOYAGE_NUMBER_MAX_LENGTH) {
-            return Read.failed(FormatDefect.TOO_LONG, EXTERNAL_ID, VoyageValues.VOYAGE_NUMBER_MAX_LENGTH + " 文字まで");
+        try {
+            VoyageValues.requireVoyageNumber(voyageNumber);
+        } catch (VoyageValuesRejected rejected) {
+            return Read.failed(voyageNumberViolation(rejected));
         }
         String portCalls = columns.get(PORT_CALLS);
         if (portCalls.isBlank()) {
@@ -177,20 +182,23 @@ public final class IngestFileCommandAssembler {
             }
             calls.add(call.value());
         }
-        String rejection = calls.size() < VoyageValues.MIN_PORT_CALLS
-                ? "寄港が足りません（" + VoyageValues.MIN_PORT_CALLS + " つ以上）"
-                : "同じ寄港があります";
-        return attempt(
-                () -> new VoyageValues(voyageNumber, calls),
-                new Violation(FormatDefect.INVALID_PORT_CALLS, List.of(PORT_CALLS, rejection)));
+        try {
+            return Read.of(new VoyageValues(voyageNumber, calls));
+        } catch (VoyageValuesRejected rejected) {
+            return Read.failed(portCallsViolation(rejected));
+        }
     }
 
-    /** 寄港の値（{@code UN/LOCODE;到着;出発}。到着・出発は空なら無し）。注記の詳細に寄港の番号を書く。 */
+    /**
+     * 寄港の値（{@code UN/LOCODE;到着;出発}。到着・出発は空なら無し）。注記の詳細に寄港の番号を書き、寄港の値の拒否はその番号の寄港の
+     * 理由にする。
+     */
     private static Read<PortCallValue> portCall(int number, String text) {
         String position = number + " つ目の寄港";
         String[] fields = text.split(FIELD_SEPARATOR, -1);
         if (fields.length != PORT_CALL_FIELDS) {
-            return Read.failed(FormatDefect.INVALID_PORT_CALLS, PORT_CALLS, position);
+            return Read.failed(portCallsViolation(
+                    new VoyageValuesRejected(VoyageValuesRejectionReason.UNSPLITTABLE_PORT_CALL).at(number)));
         }
         Read<Location> port = attempt(
                 () -> new Location(fields[0]), Violation.of(FormatDefect.INVALID_LOCATION, PORT_CALLS, position));
@@ -205,10 +213,29 @@ public final class IngestFileCommandAssembler {
         if (departure.hasViolation()) {
             return departure.failure();
         }
-        String rejection = arrival.value() == null && departure.value() == null ? "到着か出発が要ります" : "到着より前に出発しています";
-        return attempt(
-                () -> new PortCallValue(port.value(), arrival.value(), departure.value()),
-                Violation.of(FormatDefect.INVALID_PORT_CALLS, PORT_CALLS, position, rejection));
+        try {
+            return Read.of(new PortCallValue(port.value(), arrival.value(), departure.value()));
+        } catch (VoyageValuesRejected rejected) {
+            return Read.failed(portCallsViolation(rejected.at(number)));
+        }
+    }
+
+    /** 寄港の列の拒否を、型の理由の言葉をそのまま詳細にした寄港の列の形の誤りにする。 */
+    private static Violation portCallsViolation(VoyageValuesRejected rejected) {
+        return Violation.of(FormatDefect.INVALID_PORT_CALLS, PORT_CALLS, rejected.detail());
+    }
+
+    /**
+     * 航海番号の拒否。長すぎる航海番号は外部 ID の列の長すぎる値として上限を書く（キーの列の長さの誤りと同じ言葉）。空の航海番号は外部 ID の
+     * 列の空の値（キーの列で先に見つかるので、ここには来ない）。
+     */
+    private static Violation voyageNumberViolation(VoyageValuesRejected rejected) {
+        return switch (rejected.reason()) {
+            case VOYAGE_NUMBER_TOO_LONG ->
+                Violation.of(FormatDefect.TOO_LONG, EXTERNAL_ID, VoyageValues.VOYAGE_NUMBER_MAX_LENGTH + " 文字まで");
+            case VOYAGE_NUMBER_BLANK -> Violation.of(FormatDefect.EMPTY_VALUE, EXTERNAL_ID);
+            default -> throw new IllegalStateException("航海番号の拒否ではない理由: " + rejected.reason(), rejected);
+        };
     }
 
     /** 寄港の到着か出発（空なら無し）。 */

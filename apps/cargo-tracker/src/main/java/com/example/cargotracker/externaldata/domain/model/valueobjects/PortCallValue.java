@@ -20,10 +20,10 @@ public record PortCallValue(Location port, UtcInstant arrivalAt, UtcInstant depa
     public PortCallValue {
         Objects.requireNonNull(port, "port");
         if (arrivalAt == null && departureAt == null) {
-            throw new IllegalArgumentException("到着か出発が要ります: " + port.unLocode());
+            throw new VoyageValuesRejected(VoyageValuesRejectionReason.NO_ARRIVAL_OR_DEPARTURE);
         }
         if (arrivalAt != null && departureAt != null && departureAt.instant().isBefore(arrivalAt.instant())) {
-            throw new IllegalArgumentException("到着より前に出発しています: " + port.unLocode());
+            throw new VoyageValuesRejected(VoyageValuesRejectionReason.DEPARTURE_BEFORE_ARRIVAL);
         }
     }
 }

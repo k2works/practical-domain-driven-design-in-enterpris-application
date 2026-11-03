@@ -4,7 +4,7 @@ title: "cargo-tracker ドメインモデル"
 description: "cargo-tracker の業務領域の分類、ユビキタス言語、7 つの境界づけられたコンテキスト（通知を含む）の集約・エンティティ・値オブジェクト・ドメインルール、コマンド・クエリ・イベント、予約サガ。"
 tags: [design, domain-model, ddd]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-03T07:41:41Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-03T09:22:24Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:41:04Z }
   - { by: human:kakimomokuri, at: 2026-10-01T07:48:17Z }
@@ -329,7 +329,7 @@ quadrantChart
 | 採用 | ADOPTED | 受信記録の分類の 1 つ。新しい冪等性キーで検証を通った原本（ADR-004 決定 2）。別名「採用済み」（BR-12・UC-15 6a・US-15 の初版の語。2026-11-02 に「採用」にそろえた。Bolt 39、W7 の確認ポイント 1） | 外部データ |
 | 重複 | DUPLICATE | 受信記録の分類の 1 つ。同じ冪等性キーで同じ payload（ハッシュが外部原本と同じ）の原本。採用値に影響しない（ED-INV-02、BR-12。Bolt 39a3） | 外部データ |
 | 隔離 | QUARANTINED | 受信記録の分類の 1 つ。同じ冪等性キーで違う payload の原本と、形式を検証できないファイルと行（UC-15 2a）。データ責任者が判断するまで採用値に影響しない。形式の誤りの隔離は冪等性キーを信用できないので外部原本を引かず作らない（キーのない隔離。外部原本と取得時刻を持たない。Bolt 39b2） | 外部データ |
-| 形式の誤り | FormatDefect | 取込のファイルと行を隔離する理由の値オブジェクト（enum。`externaldata.domain.model.valueobjects`）。ファイルの誤り（文字コード `UNDECODABLE`、ヘッダーが読めない `UNREADABLE_HEADER`、必要な列がない `MISSING_COLUMN`、同じ名前の列 `DUPLICATE_COLUMN`）、取込全体の要確認にする引用符の閉じ忘れ `UNCLOSED_QUOTE`、行の誤り（閉じた引用符の後の文字 `TEXT_AFTER_CLOSING_QUOTE`、引用符で囲まない値の中の引用符 `BARE_QUOTE`、列数の違い `COLUMN_COUNT_MISMATCH`、空の値 `EMPTY_VALUE`、時刻の書式 `INVALID_TIME`、長すぎる値 `TOO_LONG`、場所の形 `INVALID_LOCATION`、種類 `INVALID_KIND`、追跡番号の形 `INVALID_TRACKING_NUMBER`、寄港の列の形 `INVALID_PORT_CALLS`）。空の値・時刻の書式・長すぎる値はキーの列に限らず値の列にも使う（空白だけの値も空とみなす）。寄港の列の誤り（区切り・数・到着か出発の有無・到着と出発の順・重複）は `INVALID_PORT_CALLS` 1 つにまとめ、詳細の言葉（列名と寄港の番号）で分ける（Bolt 39b2b）。注記の業務の言葉（「12 行目: 列の数がヘッダーと違います（ヘッダー 4 列、この行 5 列）。」の形）を作る（Bolt 39b2）。理由ごとに、なりうる範囲（ファイル・行・ファイルの終わりまで）を持ち、行の誤り・取り込めなかった部分・ヘッダーのファイルの誤りの組み合わせをこの範囲で確かめる（Bolt 39b2 の開発レビュー） | 外部データ |
+| 形式の誤り | FormatDefect | 取込のファイルと行を隔離する理由の値オブジェクト（enum。`externaldata.domain.model.valueobjects`）。ファイルの誤り（文字コード `UNDECODABLE`、ヘッダーが読めない `UNREADABLE_HEADER`、必要な列がない `MISSING_COLUMN`、同じ名前の列 `DUPLICATE_COLUMN`）、取込全体の要確認にする引用符の閉じ忘れ `UNCLOSED_QUOTE`、行の誤り（閉じた引用符の後の文字 `TEXT_AFTER_CLOSING_QUOTE`、引用符で囲まない値の中の引用符 `BARE_QUOTE`、列数の違い `COLUMN_COUNT_MISMATCH`、空の値 `EMPTY_VALUE`、時刻の書式 `INVALID_TIME`、長すぎる値 `TOO_LONG`、場所の形 `INVALID_LOCATION`、種類 `INVALID_KIND`、追跡番号の形 `INVALID_TRACKING_NUMBER`、寄港の列の形 `INVALID_PORT_CALLS`）。空の値・時刻の書式・長すぎる値はキーの列に限らず値の列にも使う（空白だけの値も空とみなす）。寄港の列の誤り（区切り・数・到着か出発の有無・到着と出発の順・重複）は `INVALID_PORT_CALLS` 1 つにまとめ、詳細の言葉（列名と、航海の値・寄港の値が返す拒否の理由 `VoyageValuesRejectionReason` の言葉と寄港の番号）で分ける（Bolt 39b2b）。注記の業務の言葉（「12 行目: 列の数がヘッダーと違います（ヘッダー 4 列、この行 5 列）。」の形）を作る（Bolt 39b2）。理由ごとに、なりうる範囲（ファイル・行・ファイルの終わりまで）を持ち、行の誤り・取り込めなかった部分・ヘッダーのファイルの誤りの組み合わせをこの範囲で確かめる（Bolt 39b2 の開発レビュー） | 外部データ |
 | 物理行の範囲 | PhysicalLineRange | 取込ファイルの 1 行（引用符の中の改行で複数の物理行にまたがる）か誤りが、ファイルの物理行のどこからどこまでかを表す値オブジェクト（`externaldata.domain.model.valueobjects`）。始まりと終わり（1 から、終わりは始まり以上）、物理行の数（受け取った件数との突き合わせ）、注記の範囲の言葉（「12 行目」「12 行目から 13 行目まで」）を持つ（Bolt 39b2 の開発レビュー） | 外部データ |
 | 取込の組み立て | IngestFileCommandAssembler | CSV の解析とヘッダーの検証の結果から取込のコマンド（`IngestFileCommand`）を作る関数（`externaldata.interfaces.file`。Spring の部品にしない）。キーの列（外部 ID・外部版・取得時刻）を検証し、形式の正しい行・行の誤り・取り込めなかった部分に分ける。リポジトリは使わない（Bolt 39b2）。キーの列の次に値の列を必要な列の順に検証し、最初の 1 つの誤りを行の誤りにする。空・長さは型を作る前に確かめ、形の誤りは値の型の拒否を形式の誤りに写す。値は加工しない。正しい行は取込の値を取り込む行に載せる（Bolt 39b2b） | 外部データ |
 | 取込の値 | RecordValues | 採用の前に行から読んだ値で、採用値（`AdoptedValue`）とは別。航海の値か主要実績の値（sealed interface。`externaldata.domain.model.valueobjects`）。取り込む行（`IngestedRow`）に載せ、受信記録の列には書かない（値は payload の行の原文に残る）。採用値（Bolt 39b3）の材料になる（Bolt 39b2b） | 外部データ |
