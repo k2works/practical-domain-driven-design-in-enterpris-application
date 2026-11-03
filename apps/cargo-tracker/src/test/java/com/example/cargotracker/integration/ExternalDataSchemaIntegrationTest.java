@@ -78,7 +78,9 @@ class ExternalDataSchemaIntegrationTest {
             UUID externalRecordId = insertExternalRecord(connection, newProvider(), "1");
 
             assertViolation(
-                    connection, () -> insertReceivedRecord(connection, externalRecordId, null, "ACCEPTED"), CHECK_VIOLATION);
+                    connection,
+                    () -> insertReceivedRecord(connection, externalRecordId, null, "ACCEPTED"),
+                    CHECK_VIOLATION);
         });
     }
 
@@ -87,7 +89,8 @@ class ExternalDataSchemaIntegrationTest {
         inRolledBackTransaction(connection -> {
             UUID receivedRecordId = insertReceivedRecord(connection);
 
-            assertViolation(connection, () -> insertDecision(connection, receivedRecordId, "APPROVED"), CHECK_VIOLATION);
+            assertViolation(
+                    connection, () -> insertDecision(connection, receivedRecordId, "APPROVED"), CHECK_VIOLATION);
         });
     }
 
@@ -96,7 +99,8 @@ class ExternalDataSchemaIntegrationTest {
         inRolledBackTransaction(connection -> {
             UUID receivedRecordId = insertReceivedRecord(connection);
 
-            assertViolation(connection, () -> insertAdoptedValue(connection, receivedRecordId, "PORT"), CHECK_VIOLATION);
+            assertViolation(
+                    connection, () -> insertAdoptedValue(connection, receivedRecordId, "PORT"), CHECK_VIOLATION);
         });
     }
 
@@ -119,22 +123,37 @@ class ExternalDataSchemaIntegrationTest {
             insertAdoptedValue(connection, quarantined, "VOYAGE");
             insertAdoptedValue(connection, discrepancy, "MILESTONE");
 
-            assertThat(count(connection, "SELECT count(*) FROM external_data.data_source WHERE provider = ?"
-                            + " AND approved_by IS NULL AND approved_at IS NULL", provider))
+            assertThat(count(
+                            connection,
+                            "SELECT count(*) FROM external_data.data_source WHERE provider = ?"
+                                    + " AND approved_by IS NULL AND approved_at IS NULL",
+                            provider))
                     .isEqualTo(3);
-            assertThat(count(connection, "SELECT count(*) FROM external_data.received_record WHERE external_record_id = ?"
-                            + " AND classification_note IS NULL", externalRecordId))
+            assertThat(count(
+                            connection,
+                            "SELECT count(*) FROM external_data.received_record WHERE external_record_id = ?"
+                                    + " AND classification_note IS NULL",
+                            externalRecordId))
                     .isEqualTo(4);
-            assertThat(count(connection, "SELECT count(*) FROM external_data.received_record WHERE external_record_id = ?"
-                            + " AND ingestion_id IS NULL", externalRecordId))
+            assertThat(count(
+                            connection,
+                            "SELECT count(*) FROM external_data.received_record WHERE external_record_id = ?"
+                                    + " AND ingestion_id IS NULL",
+                            externalRecordId))
                     .isEqualTo(3);
-            assertThat(count(connection, "SELECT count(*) FROM external_data.received_record_decision d"
-                            + " JOIN external_data.received_record r ON r.id = d.received_record_id"
-                            + " WHERE r.external_record_id = ? AND d.reason IS NULL", externalRecordId))
+            assertThat(count(
+                            connection,
+                            "SELECT count(*) FROM external_data.received_record_decision d"
+                                    + " JOIN external_data.received_record r ON r.id = d.received_record_id"
+                                    + " WHERE r.external_record_id = ? AND d.reason IS NULL",
+                            externalRecordId))
                     .isEqualTo(2);
-            assertThat(count(connection, "SELECT count(*) FROM external_data.adopted_value a"
-                            + " JOIN external_data.received_record r ON r.id = a.received_record_id"
-                            + " WHERE r.external_record_id = ?", externalRecordId))
+            assertThat(count(
+                            connection,
+                            "SELECT count(*) FROM external_data.adopted_value a"
+                                    + " JOIN external_data.received_record r ON r.id = a.received_record_id"
+                                    + " WHERE r.external_record_id = ?",
+                            externalRecordId))
                     .isEqualTo(2);
         });
     }
@@ -145,7 +164,8 @@ class ExternalDataSchemaIntegrationTest {
             UUID receivedRecordId = insertReceivedRecord(connection);
             insertDecision(connection, receivedRecordId, "ADOPTED");
 
-            assertViolation(connection, () -> insertDecision(connection, receivedRecordId, "REJECTED"), UNIQUE_VIOLATION);
+            assertViolation(
+                    connection, () -> insertDecision(connection, receivedRecordId, "REJECTED"), UNIQUE_VIOLATION);
         });
     }
 
@@ -177,7 +197,9 @@ class ExternalDataSchemaIntegrationTest {
             assertViolation(
                     connection, () -> insertDecision(connection, UUID.randomUUID(), "ADOPTED"), FOREIGN_KEY_VIOLATION);
             assertViolation(
-                    connection, () -> insertAdoptedValue(connection, UUID.randomUUID(), "VOYAGE"), FOREIGN_KEY_VIOLATION);
+                    connection,
+                    () -> insertAdoptedValue(connection, UUID.randomUUID(), "VOYAGE"),
+                    FOREIGN_KEY_VIOLATION);
         });
     }
 
@@ -260,8 +282,8 @@ class ExternalDataSchemaIntegrationTest {
 
     private static void insertDecision(Connection connection, UUID receivedRecordId, String decision)
             throws SQLException {
-        try (PreparedStatement statement = connection.prepareStatement(
-                "INSERT INTO external_data.received_record_decision"
+        try (PreparedStatement statement =
+                connection.prepareStatement("INSERT INTO external_data.received_record_decision"
                         + " (id, received_record_id, decision, decided_by, decided_at, reason)"
                         + " VALUES (?, ?, ?, ?, ?, NULL)")) {
             statement.setObject(1, UUID.randomUUID());
@@ -308,8 +330,7 @@ class ExternalDataSchemaIntegrationTest {
         }
     }
 
-    private static void assertViolation(Connection connection, SqlAction action, String sqlState)
-            throws SQLException {
+    private static void assertViolation(Connection connection, SqlAction action, String sqlState) throws SQLException {
         Savepoint savepoint = connection.setSavepoint();
         assertThatThrownBy(action::run)
                 .isInstanceOfSatisfying(
