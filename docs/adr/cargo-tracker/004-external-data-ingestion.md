@@ -4,7 +4,7 @@ title: "ADR-004: 外部原本は Inbox・隔離・照合の 3 段で取り込む
 description: "ARCH-HO-03 と BR-08・BR-12・BR-18 を満たすため、外部原本を無加工で保存し、冪等性キーで採用・重複・隔離・差異に分類し、復旧時に件数照合する決定。2026-11-02（W7、Bolt 39）に、置き場所（externaldata）、原本の保存のポートと消さない補償、分類 4 つ、形式の誤りの隔離、解析の置き場所を改訂した。"
 tags: [adr, architecture]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-03T07:41:41Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-03T11:16:32Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:11:13Z }
   - { by: human:kakimomokuri, at: 2026-11-02T06:52:27Z }
@@ -80,7 +80,7 @@ verified:
   - **分類（決定 2・3）**: 分類は採用・重複・隔離・差異の 4 つにする（US-14 AC5、data_model の `receipt.classification`）。初版の 3 つ（採用・重複・隔離）を改める。差異は US-15 の復旧照合の差異（`reconciliation_discrepancy`）と区別する。
   - **形式の誤り**: 形式を検証できないファイルと行も、原本を保存したうえで隔離する（UC-15 2a）。
   - **解析の置き場所**: 取込ファイルの解析は `externaldata.interfaces.file` で行い、application には値だけを渡す。形式は OQ-02 の回答が届くまで仮の CSV（RFC 4180）とする。
-  - **監査**: 外部原本の採否の監査（AUD-01）は、外部データが出す隔離と判断のイベントを identity が受けて書く。外部データは identity に依存しない。
+  - **監査**: 外部原本の採否の監査（AUD-01）は、外部データが出す隔離と判断のイベントを identity が受けて書く。外部データは identity に依存しない。→ 【前の決定の変更】2026-11-03、human:kakimomokuri が決めた: 取込での自動の採用の DE-12・DE-13 も監査する。監査の listener は 39b3b で作る（下の Bolt 39b3 の項）。
 - 2026-11-02（W7、Bolt 39a2）: Bolt 39 で 39a2 に送った巻き戻りとの関係を、次のように決めた（[Bolt 39a2 計画](../../development/cargo-tracker/bolt_39a2_plan.md) の開始準備の決定 (1) と確認ポイント 4。human:kakimomokuri が決定）。
   - **巻き戻りとの関係**: W7〜W9 の DB の保存（`external_data.stored_payload`）は、受信記録とは独立したトランザクション（REQUIRES_NEW）で行う。外側のトランザクションが巻き戻っても原本は残る（W10 の S3 と同じ振る舞い）。保存は外側のトランザクションの中から呼べる（ADR-019 のように外側の中で拒む形は取らない。39b の取込のサービスは外側の中から呼ぶ）。キーは取込ごとに新しい UUID から作る（`PayloadObjectKey.newIngestionFile()`・`newRecordPayload()`）ので、外側が巻き戻った後に同じファイルを取り込み直しても主キーの違反にならない。
   - **接続**: 独立したトランザクションは外側の接続を握ったまま 2 本目の接続を取るので、接続プールの大きさ（既定 10）以上の同時の取込で接続が枯渇しうる。取込は 1 日 1〜4 ファイルで同時に走らない想定なので受け入れる（REQUIRES_NEW の経路の同時実行は前例の採番でも確かめていない）。39b の PERF-06 の計測で、取込の経路が一度に握る接続の数（外側 1・内側 1）も測る。
@@ -97,6 +97,13 @@ verified:
   - **規則の写し**: 外部データは追跡・経路設計の型を参照できないので、追跡番号の形（追跡の `TrackingNumber`）・実績の種類（`MilestoneKind`）・寄港の規則（経路設計の `Voyage`・`PortCall`）を値の型（`externaldata.domain.model.valueobjects`）の写しとして持つ。写しを守るテスト（`com.example.cargotracker.integration.ExternalDataCopiedRulesTest`）で、同じ入力に同じ可否を返すことを確かめる（推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）。
   - **寄港の規則**: 経路設計にそろえる。寄港は 2 つ以上、各寄港に到着か出発の少なくとも一方（両方も可）、出発は到着以後（同じ時刻は受ける）。合わない行は行の誤り（`INVALID_PORT_CALLS`）として、行の原文を保存してからキーのない隔離にする。OQ-02 の仮の形式（寄港は 1 つ以上、到着・出発は空を許す）を改めた（requirements_definition の OQ-02 の注の【前の決定の変更】。human:kakimomokuri が決定）。
   - **値の持ち方**: 値は取り込む行（`IngestedRow`）に載せ、受信記録・外部原本の列には書かない（値は payload の行の原文に残る。スキーマは変えない）。採用値は 39b3 で値から作る。
+- 2026-11-03（W7、Bolt 39b3）: 採用値とイベントの発行を、次のように決めた（[Bolt 39b3 計画](../../development/cargo-tracker/bolt_39b3_plan.md) の開始準備で決めたこと (1)〜(5)、確認ポイント 2・5、人に諮ること 1・2）。
+  - **分け方**: 39b3 を縦に 2 本に分けた。39b3 は採用値と DE-12・DE-13・DE-14 の発行、39b3b は identity の監査の listener（`externaldata :: events`）・毒入りのメッセージ・W6 横断レビュー M-2・層の規則の汎用化（推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）。上の Bolt 39b の項の「identity の監査は 39b3」は 39b3b で作る。
+  - **イベントの型**: DE-12・DE-13・DE-14 は `externaldata.domain.events`（名前付きインターフェース `events`）の record にし、値の写しを Java の標準と共有カーネルの型（文字列・`UUID`・`Source`・`Location`・`UtcInstant`・`UserId`・`CompanyId`）だけで持つ。寄港は入れ子の record `AdoptedPortCall` にする。DE-12・DE-13 の出典は `Source(EXTERNAL_RECORD, 受信記録 ID, 取得時刻)` にする。値の型を `events` に含める案（層の規則の例外が要る）と、識別子だけにして下流が公開 API で引く案（W7 の設計の決定の変更が要る）は取らない（human:kakimomokuri が決定）。
+  - **採否の監査の範囲**: 上の Bolt 39 の項の「監査」を広げ、隔離（DE-14）と判断のイベントに加え、取込での自動の採用の DE-12・DE-13 も監査する（AUD-01 の「採」。human:kakimomokuri が決定）。監査記録の形と冪等の取り方は 39b3b の開始準備で決める。
+  - **寄港の数の上限**: 寄港は 60 まで（`adopted_value.value_summary` の 4000 文字に要約が収まるため）。超える行は行の誤り（`INVALID_PORT_CALLS`）にする。上の Bolt 39b2b の項の「寄港の規則」（経路設計にそろえる）に、経路設計と意図して食い違う外部データの片側だけの規則を 1 つ足す（requirements_definition の OQ-02 の注の【前の決定の変更】。human:kakimomokuri が決定）。経路設計の `Voyage` に上限を足すかは 39e で決める。
+  - **キーのない隔離の DE-14**: DE-14 は行の誤り・ファイルの誤り・取り込めなかった部分のキーのない隔離にも出す（外部 ID・外部版は空）。重複は出さない（推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）。
+  - **外部原本のポートの約束**: 外部原本の一意制約の違反は、Spring の `DuplicateKeyException` ではなく名前付きの例外 `DuplicateExternalRecordException`（`externaldata.domain.model.aggregates`）で約束する。取込全体を巻き戻す振る舞いは変えない（推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）。
 
 ## 備考
 

@@ -4,7 +4,7 @@ title: "cargo-tracker データモデル"
 description: "cargo-tracker の概念データモデル、スキーマ分割、命名と型の規約（H2 と PostgreSQL の共通部分）、コンテキストごとの論理データモデルと ER 図、版・追記専用・冪等性・イベント配信の表現。"
 tags: [design, data-model]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-03T07:41:41Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-03T11:16:32Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:48:17Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:37Z }
@@ -1149,7 +1149,7 @@ ds ||--o{ ff
 | `stored_payload` | 原本のオブジェクトキー（`object_key`。`PayloadObjectKey` の値）が主キー。`content`（原本の内容）はバイト列で NOT NULL、0 バイトを許す。型は `BYTEA`（共通の置き場所。H2 は別名として受けて `binary varying` になり、0 バイト・0x00・0xFF を読み書きできることを Bolt 39a2 のステップ 2 で確かめた。H2 の `binary varying` には長さの上限があり PostgreSQL の `BYTEA` と違うが、開発の範囲では影響しない）。`stored_at`（保存した時刻）は Clock から取りマイクロ秒に切り捨てる。ハッシュは持たない（`ingestion.file_hash`・`external_record.payload_hash`・`received_record.payload_hash` が持つ）。`file_object_key`・`payload_object_key` とは外部キーを張らない（W10 で S3 に差し替えるため）。追記専用の印を付け、UPDATE・DELETE の権限なし | ADR-004、PV-01 |
 | `received_record` | 受け取るたびに 1 行。`classification` IN（`ADOPTED`、`DUPLICATE`、`QUARANTINED`、`DISCREPANCY`）。ハッシュが外部原本と同じなら重複、違えば隔離。`ingestion_id` は NULL を許す。取込で書くときは、取込の行を先に書き、行の原本を保存してから受信記録を書く（Bolt 39b）。形式の誤りの受信記録は外部原本と取得時刻を持たない（キーのない隔離）。`external_record_id` と `acquired_at` は NULL を許し、CHECK `ck_received_record_keyless_quarantine`（`(external_record_id IS NULL) = (acquired_at IS NULL) AND (classification = 'QUARANTINED' OR external_record_id IS NOT NULL)`）で 2 列の NULL をそろえ（片方だけの NULL は拒む。Bolt 39b2 の開発レビュー）、NULL を隔離だけに限る。行の誤りの受信記録は行の原文（物理行の範囲）を保存した原本を指し、ファイルの誤り（文字コード、ヘッダーが読めない、必要な列がない、同じ名前の列）の受信記録は 1 つで、取込の `file_object_key`（`externaldata/ingestions/{UUID}` のキー）を指す。引用符の閉じ忘れは、その行からファイルの終わりまでの原文を保存した原本を指す受信記録を 1 つ書く。理由と物理行の範囲は `classification_note` に業務の言葉で書き、1000 文字を超えたら末尾を切る（Bolt 39b2）。値の列（寄港・追跡番号・種類・場所・発生時刻）は持たず、値は payload の行の原文に残る。値の検証の誤りも形式の誤りの行としてキーのない隔離にする（Bolt 39b2b。スキーマは変えない）。追記専用の印を付け、UPDATE・DELETE の権限なし | BR-12、US-14、UC-15 2a |
 | `received_record_decision` | 受信記録の判断。受信記録 1 件につき 1 つ（`received_record_id` の一意制約）。判断のやり直しは提供元からの再送（新しい受信記録）で扱う。`decision` IN（`ADOPTED`、`REJECTED`。前例の `review_record` の過去分詞にそろえる）。`reason` は NULL を許す。判断は隔離・差異の受信記録だけに付く。判断と分類の整合は表の制約で守らず、アプリケーションで判定する（Bolt 39d）。追記専用の印を付け、UPDATE・DELETE の権限なし（Bolt 39a3） | US-14 |
-| `adopted_value` | 採用した受信記録ごとに 1 つ（`received_record_id` の一意制約）。`target_type` IN（`VOYAGE`、`MILESTONE`。港湾は D-92 で Release 1.1）。採用値は分類が採用の受信記録と、採用と判断した受信記録だけに付く。採用値と判断・分類の整合は表の制約で守らず、アプリケーションで判定する（Bolt 39d）。ここから DE-12・DE-13 を発行する。追記専用の印を付け、UPDATE・DELETE の権限なし | ADR-004 |
+| `adopted_value` | 採用した受信記録ごとに 1 つ（`received_record_id` の一意制約）。`target_type` IN（`VOYAGE`、`MILESTONE`。港湾は D-92 で Release 1.1）。採用値は分類が採用の受信記録と、採用と判断した受信記録だけに付く。採用値と判断・分類の整合は表の制約で守らず、アプリケーションで判定する（Bolt 39d）。ここから DE-12・DE-13 を発行する。追記専用の印を付け、UPDATE・DELETE の権限なし。列の意味（Bolt 39b3）: `target_key` は航海なら航海番号、主要実績なら追跡番号（外部 ID とは限らない）。`value_summary` は取込の値から作る正規の文字列で、航海は寄港を `\|` で区切った「UN/LOCODE;到着;出発」（例 `JPTYO;;2026-11-19T23:00:00.000000Z\|USLAX;2026-12-01T14:00:00.000000Z;`）、主要実績は「種類;場所;発生時刻」（例 `DEPARTURE;JPTYO;2026-11-19T23:00:00.000000Z`）。時刻は UTC の ISO 8601 でマイクロ秒の 6 桁に固定し、空は空にする。4000 コードポイントまで（寄港は 60 までなので、航海の要約は最大 3719 文字）。`info_version` は外部版（100 文字まで）。`published_at` は取込の時刻（Clock から 1 回取った値） | ADR-004 |
 | `manual_entry` | 出典・入力者・入力時刻・仮状態を NOT NULL にする | BR-08 |
 | `recovery_reconciliation` | 停止期間ごとに 1 つ。完了には全件の分類、件数の一致、差異の解消が必要（アプリケーションで判定） | BR-12、US-15 |
 
