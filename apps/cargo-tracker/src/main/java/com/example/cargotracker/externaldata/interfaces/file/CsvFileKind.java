@@ -3,7 +3,7 @@ package com.example.cargotracker.externaldata.interfaces.file;
 import java.util.List;
 
 /**
- * 取込ファイルの種別。種別ごとにヘッダーに必要な列が違う（Bolt 39。application に渡す値の組の型は 39b で決める）。
+ * 取込ファイルの種別。種別ごとにヘッダーに必要な列が違う（Bolt 39。キーの列だけ。値の列は Bolt 39b2b で足す）。
  */
 public enum CsvFileKind {
     /** 航海。 */

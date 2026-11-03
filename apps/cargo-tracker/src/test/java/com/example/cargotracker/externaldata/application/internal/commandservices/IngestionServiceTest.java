@@ -190,7 +190,7 @@ class IngestionServiceTest {
         assertThat(second.rows().getFirst().classification()).isEqualTo(Classification.QUARANTINED);
         ReceivedRecord received = receivedRecords.all().getLast();
         assertThat(received.payloadHash()).isNotEqualTo(before.payloadHash());
-        assertThat(received.classificationNote()).contains("同じ外部 ID・外部版で内容の違う原本を受け取った（最初の受信: ");
+        assertThat(received.classificationNote()).startsWith("2 行目: 同じ外部 ID・外部版で内容の違う原本を受け取りました（最初の受信: ");
     }
 
     @Test
@@ -894,7 +894,7 @@ class IngestionServiceTest {
             service().ingest(steward, file(milestoneSource, milestone(2, "MS-0001", "1", "CTABCDEFGH2346")));
 
             assertThat(receivedRecords.all().getLast().classificationNote())
-                    .isEqualTo("同じ外部 ID・外部版で内容の違う原本を受け取った（最初の受信: 2026-11-03 09:00:00 UTC）");
+                    .isEqualTo("2 行目: 同じ外部 ID・外部版で内容の違う原本を受け取りました（最初の受信: 2026-11-03 09:00:00 UTC）。");
         }
     }
 

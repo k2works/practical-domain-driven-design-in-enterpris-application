@@ -18,6 +18,7 @@ import com.example.cargotracker.externaldata.domain.model.aggregates.IngestionRe
 import com.example.cargotracker.externaldata.domain.model.aggregates.ReceivedRecord;
 import com.example.cargotracker.externaldata.domain.model.aggregates.ReceivedRecordRepository;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.Classification;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.FormatDefect;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.IdempotencyKey;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PayloadHash;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PayloadObjectKey;
@@ -54,7 +55,8 @@ public class IngestionService {
     private static final int NOTE_LIMIT = 1000;
 
     private static final String DUPLICATE_NOTE = "同じ原本を受け取り済み";
-    private static final String QUARANTINED_NOTE = "同じ外部 ID・外部版で内容の違う原本を受け取った（最初の受信: %s）";
+    /** 内容の違う原本の隔離の注記（「&lt;物理行の範囲&gt;: &lt;理由&gt;。」の形。Bolt 39b2 の確認ポイント 6）。 */
+    private static final String QUARANTINED_NOTE = "%s: 同じ外部 ID・外部版で内容の違う原本を受け取りました（最初の受信: %s）。";
 
     /** 注記の時刻（秒まで、UTC と明記。保存した文は見る人のタイムゾーンで変えられないため。Bolt 39b2 の確認ポイント 6）。 */
     private static final DateTimeFormatter NOTE_TIME =
@@ -165,7 +167,7 @@ public class IngestionService {
                 payloadKey,
                 row.acquiredAt(),
                 classification,
-                noteOf(classification, externalRecord),
+                noteOf(classification, externalRecord, row),
                 now);
         receivedRecords.add(received);
         return new RowResult(
@@ -229,11 +231,14 @@ public class IngestionService {
         return received;
     }
 
-    private static String noteOf(Classification classification, ExternalRecord externalRecord) {
+    private static String noteOf(Classification classification, ExternalRecord externalRecord, IngestedRow row) {
         return switch (classification) {
             case ADOPTED -> null;
             case DUPLICATE -> DUPLICATE_NOTE;
-            case QUARANTINED -> QUARANTINED_NOTE.formatted(NOTE_TIME.format(externalRecord.firstReceivedAt()));
+            case QUARANTINED ->
+                QUARANTINED_NOTE.formatted(
+                        FormatDefect.lineRange(row.lineNumber(), row.lastLineNumber()),
+                        NOTE_TIME.format(externalRecord.firstReceivedAt()));
         };
     }
 

@@ -107,7 +107,7 @@ class CsvRecordsTest {
     void 空のファイルはヘッダーも行も誤りもない() {
         CsvRecords records = parse("");
 
-        assertThat(records).isEqualTo(new CsvRecords(List.of(), List.of(), List.of(), false, 0));
+        assertThat(records).isEqualTo(new CsvRecords(List.of(), List.of(), List.of(), false, 0, null));
         assertThat(records.headerUnreadable()).isFalse();
     }
 
@@ -271,9 +271,9 @@ class CsvRecordsTest {
         CsvRecords bomOnly = CsvRecords.parse(new byte[] {(byte) 0xEF, (byte) 0xBB, (byte) 0xBF});
         CsvRecords headerOnly = parse("a,b\n\n");
 
-        assertThat(empty).isEqualTo(new CsvRecords(List.of(), List.of(), List.of(), false, 0));
-        assertThat(bomOnly).isEqualTo(new CsvRecords(List.of(), List.of(), List.of(), false, 0));
-        assertThat(headerOnly).isEqualTo(new CsvRecords(List.of("a", "b"), List.of(), List.of(), false, 0));
+        assertThat(empty).isEqualTo(new CsvRecords(List.of(), List.of(), List.of(), false, 0, null));
+        assertThat(bomOnly).isEqualTo(new CsvRecords(List.of(), List.of(), List.of(), false, 0, null));
+        assertThat(headerOnly).isEqualTo(new CsvRecords(List.of("a", "b"), List.of(), List.of(), false, 0, null));
     }
 
     @Test

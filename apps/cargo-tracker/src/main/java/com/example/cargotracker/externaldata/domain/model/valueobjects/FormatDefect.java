@@ -6,7 +6,7 @@ import java.util.List;
 /**
  * 形式の誤り。取込のファイルと行を隔離する理由（UC-15 2a。Bolt 39b2）。解析・ヘッダーの検証・組み立てがこの値を直接持ち、application に渡す。
  * 理由の名前は Bolt 39 で決めた名前を変えない。隔離の受信記録の注記を業務の言葉で作る（「&lt;物理行の範囲&gt;: &lt;理由&gt;。&lt;どうすればよいか&gt;」）。
- * 組み立ての検証の理由（空の値・時刻の書式・長すぎる値）は、それを使うステップで足す。
+ * 空の値・時刻の書式・長すぎる値は組み立て（{@code interfaces.file}）がキーの列を検証して見つける。
  */
 @ValueObject
 public enum FormatDefect {
@@ -25,7 +25,13 @@ public enum FormatDefect {
     /** 引用符で囲まない値の中に引用符がある（RFC 4180 では引用符を含む値は引用符で囲む。行の誤り）。 */
     BARE_QUOTE("引用符で囲まない値の中に引用符があります", "引用符を含む値は引用符で囲んでください。"),
     /** 列数がヘッダーと違う（行の誤り）。 */
-    COLUMN_COUNT_MISMATCH("列の数がヘッダーと違います", "");
+    COLUMN_COUNT_MISMATCH("列の数がヘッダーと違います", ""),
+    /** キーの列の値が空か空白だけ（値は加工せずに確かめる。行の誤り）。 */
+    EMPTY_VALUE("値が空です", ""),
+    /** 時刻がオフセット付きの ISO 8601 でない（オフセットのない値と、日付として誤りの値を含む。行の誤り）。 */
+    INVALID_TIME("時刻の書式が違います", "オフセット付きの ISO 8601（例 2026-11-03T09:00:00+09:00）で書いてください。"),
+    /** 値が表の列の上限の文字数より長い（行の誤り）。 */
+    TOO_LONG("値が長すぎます", "");
 
     private final String reason;
     private final String remedy;
@@ -52,9 +58,17 @@ public enum FormatDefect {
      * @param details 理由にかかわる列名・列数など
      */
     public String rowNote(int lineNumber, int lastLineNumber, List<String> details) {
-        String range =
-                lineNumber == lastLineNumber ? lineNumber + " 行目" : lineNumber + " 行目から " + lastLineNumber + " 行目まで";
-        return range + ": " + sentence(details);
+        return lineRange(lineNumber, lastLineNumber) + ": " + sentence(details);
+    }
+
+    /**
+     * 注記の物理行の範囲の言葉（「12 行目」「12 行目から 13 行目まで」）。隔離の受信記録の注記で共通に使う（内容の違う原本の隔離を含む）。
+     *
+     * @param lineNumber 行が始まる物理行の番号
+     * @param lastLineNumber 行が終わる物理行の番号
+     */
+    public static String lineRange(int lineNumber, int lastLineNumber) {
+        return lineNumber == lastLineNumber ? lineNumber + " 行目" : lineNumber + " 行目から " + lastLineNumber + " 行目まで";
     }
 
     /**

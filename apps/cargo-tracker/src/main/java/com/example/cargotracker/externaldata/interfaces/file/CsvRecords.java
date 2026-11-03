@@ -28,9 +28,16 @@ import java.util.List;
  * @param errors 読めなかった行の誤り（ファイルの順）
  * @param undecodable 文字コードの誤り（UTF-8 として読めないバイト列がある）か
  * @param dataLineCount 物理データ行の数（ヘッダーの後の物理行のうち、レコードの外の空行を除いた数）
+ * @param firstDataLineNumber 最初の物理データ行の番号（物理データ行がなければ {@code null}。ファイルの誤りの取り込めなかった行の始まり。
+ *     Bolt 39b2）
  */
 public record CsvRecords(
-        List<String> header, List<CsvRow> rows, List<CsvRowError> errors, boolean undecodable, int dataLineCount) {
+        List<String> header,
+        List<CsvRow> rows,
+        List<CsvRowError> errors,
+        boolean undecodable,
+        int dataLineCount,
+        Integer firstDataLineNumber) {
 
     /** UTF-8 の BOM（U+FEFF）。見えない文字をソースに書かないよう数で書く。 */
     private static final char BOM = (char) 0xFEFF;
@@ -39,6 +46,9 @@ public record CsvRecords(
         header = List.copyOf(header);
         rows = List.copyOf(rows);
         errors = List.copyOf(errors);
+        if ((dataLineCount == 0) != (firstDataLineNumber == null)) {
+            throw new IllegalArgumentException("物理データ行の数と最初の番号が合わない: " + dataLineCount + "・" + firstDataLineNumber);
+        }
     }
 
     /** UTF-8 のバイト列を厳密に読む。 */
@@ -54,7 +64,7 @@ public record CsvRecords(
         } catch (CharacterCodingException e) {
             // バイトを 1 つずつ文字にして LF を数える（ISO-8859-1 はどのバイト列も 1 バイト 1 文字で読める。LF は UTF-8 でも 1 バイト）
             String bytesAsText = new String(bytes, StandardCharsets.ISO_8859_1);
-            return new CsvRecords(List.of(), List.of(), List.of(), true, nonBlankLinesAfterFirst(bytesAsText));
+            return withoutRows(List.of(), true, afterFirst(nonBlankLineNumbers(bytesAsText, 0, 1)));
         }
         return new Parser(text.startsWith(String.valueOf(BOM)) ? text.substring(1) : text).parse();
     }
@@ -64,25 +74,42 @@ public record CsvRecords(
         return header.isEmpty() && !errors.isEmpty();
     }
 
-    /** 最初の空でない行（ヘッダー）の後の、空でない物理行の数。 */
-    private static int nonBlankLinesAfterFirst(String text) {
-        return Math.max(0, nonBlankLines(text, 0) - 1);
+    /** 行を読まなかった結果（ヘッダーがなく、物理データ行は空でない物理行の番号の並びから数える）。 */
+    private static CsvRecords withoutRows(List<CsvRowError> errors, boolean undecodable, List<Integer> dataLines) {
+        return new CsvRecords(
+                List.of(),
+                List.of(),
+                errors,
+                undecodable,
+                dataLines.size(),
+                dataLines.isEmpty() ? null : dataLines.getFirst());
     }
 
-    /** 読む位置から後の、空でない物理行の数（LF で区切る。空の行と CR だけの行は数えない）。 */
-    private static int nonBlankLines(String text, int from) {
-        int count = 0;
+    /** 最初の空でない行（ヘッダー）を除いた並び。 */
+    private static List<Integer> afterFirst(List<Integer> lineNumbers) {
+        return lineNumbers.isEmpty() ? lineNumbers : lineNumbers.subList(1, lineNumbers.size());
+    }
+
+    /**
+     * 読む位置から後の、空でない物理行の番号（LF で区切る。空の行と CR だけの行は数えない）。
+     *
+     * @param lineAtFrom 読む位置の物理行の番号
+     */
+    private static List<Integer> nonBlankLineNumbers(String text, int from, int lineAtFrom) {
+        List<Integer> lineNumbers = new ArrayList<>();
         int start = from;
+        int lineNumber = lineAtFrom;
         while (start < text.length()) {
             int end = text.indexOf('\n', start);
             int lineEnd = end < 0 ? text.length() : end;
             String line = text.substring(start, lineEnd);
             if (!line.isEmpty() && !"\r".equals(line)) {
-                count++;
+                lineNumbers.add(lineNumber);
             }
             start = lineEnd + 1;
+            lineNumber++;
         }
-        return count;
+        return lineNumbers;
     }
 
     /** 1 レコードを読んだ結果。 */
@@ -120,16 +147,16 @@ public record CsvRecords(
         CsvRecords parse() {
             skipBlankLines();
             if (position >= text.length()) {
-                return new CsvRecords(List.of(), List.of(), List.of(), false, 0);
+                return withoutRows(List.of(), false, List.of());
             }
             return switch (readRecord()) {
                 case Failed(CsvRowError error) ->
-                    new CsvRecords(
-                            List.of(),
-                            List.of(),
+                    withoutRows(
                             List.of(error),
                             false,
-                            error.untilEndOfFile() ? nonBlankLinesAfterFirst(text) : nonBlankLines(text, position));
+                            error.untilEndOfFile()
+                                    ? afterFirst(nonBlankLineNumbers(text, 0, 1))
+                                    : nonBlankLineNumbers(text, position, line));
                 case Read header -> readRows(header.values());
             };
         }
@@ -139,8 +166,12 @@ public record CsvRecords(
             List<CsvRow> rows = new ArrayList<>();
             List<CsvRowError> errors = new ArrayList<>();
             int dataLineCount = 0;
+            Integer firstDataLine = null;
             skipBlankLines();
             while (position < text.length()) {
+                if (firstDataLine == null) {
+                    firstDataLine = line;
+                }
                 switch (readRecord()) {
                     case Read read when read.values().size() != header.size() -> errors.add(read.columnCountMismatch());
                     case Read read -> rows.add(read.row());
@@ -154,7 +185,7 @@ public record CsvRecords(
             for (CsvRowError error : errors) {
                 dataLineCount += error.lastLineNumber() - error.lineNumber() + 1;
             }
-            return new CsvRecords(header, rows, errors, false, dataLineCount);
+            return new CsvRecords(header, rows, errors, false, dataLineCount, firstDataLine);
         }
 
         /** 1 レコードを読む。読む位置は次のレコードの先頭に進める。 */
