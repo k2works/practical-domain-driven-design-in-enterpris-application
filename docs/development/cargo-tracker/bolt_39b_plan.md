@@ -2,9 +2,10 @@
 type: Plan
 title: "Bolt 39b 計画 - 外部原本の取込と分類（採用・重複・隔離）と情報源の照会"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-03T04:02:14Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-03T04:25:15Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-11-03T02:25:16Z }
+  - { by: human:kakimomokuri, at: 2026-11-03T04:25:15Z }
 ---
 
 # Bolt 39b 計画 - 外部原本の取込と分類（採用・重複・隔離）と情報源の照会
@@ -291,8 +292,8 @@ er ||--o{ rr
 - [x] **3. 分類の規則と取込のサービス（Red → Green）**（2026-11-03、推奨のとおり承認として記録した（Recommend 承認の指示による。human:kakimomokuri）。Red はテストのコンパイルの誤りと、DddAnnotationArchitectureTest（commands の公開クラスに `@Command`）。`IngestedRow` は `IngestFileCommand` の入れ子の record、受信記録の取込の ID は必須（39b に取込によらない受信がない）、`IngestionService` の組み立てはリポジトリの Bean ができるステップ 4）: 行 1〜5b・7〜8・9b・10〜12 の単体のテストを先に書き、`IdempotencyKey`・`Classification`・コマンド・`IngestionService`・ポートとメモリの実装を作る（完了の判定: 緑。**承認ゲート**（セキュリティ: 役割の確かめ。構造: 新しいパッケージ））
 - [x] **4. MyBatis の読み書き（Red → Green）**（2026-11-03、推奨のとおり承認として記録した（Recommend 承認の指示による。human:kakimomokuri）。Red は H2・PostgreSQL の `NoSuchBeanDefinitionException` と追記専用の一覧。契約は 3 つのポートを 1 本にまとめた（前例 `AuthenticationFactorRepositoriesContract`）。継ぐ側の `@Transactional` が契約から継いだテストに効かなかったので契約のクラスに付けた。前例の契約も巻き戻っていない疑いは既知の課題としてステップ 6 で確かめる）: 取込・外部原本・受信記録のポートの契約のテスト（H2・PostgreSQL）を先に書き、マッパーと実装、取込の表の追記専用の印（行 13）を作る（完了の判定: 緑。**承認ゲート**（スキーマ））
 - [x] **5. 統合と受入シナリオ（Red → Green）**（2026-11-03、推奨のとおり承認として記録した（Recommend 承認の指示による。human:kakimomokuri）。Red は受入シナリオ 5 本の `UndefinedStepException`。統合テスト 4 本はステップ 3・4 で既に緑だったので、変異（取込の `@Transactional` を外す）で行 9 が落ちることを確かめた。メモリの実装はステップ 3 の置き場所のまま使う。行 9 はテストのあいだだけ承認済みの情報源をコミットし、終わりに消す）: 行 2・4・9・11 の統合テストと、`features/external_data/ingest_external_records.feature`（AC2・AC3・AC4）とステップ定義、AcceptanceStepArchitectureTest の外部データの規則（行 15）（完了の判定: 緑。**承認ゲート**（構造: 受入テストの規則））
-- [ ] **6. 品質ゲートと開発レビュー**: 変異、`check`、その後に SonarQube、開発レビューとその直し。push の前に `check`
-- [ ] **7. 終了報告**: push して CI とデモ環境の配備を確かめる。release_plan・開発の索引・mkdocs を直す。見える振る舞いは変わらないので、マニュアルは直さない（39c で新しい章）
+- [x] **6. 品質ゲートと開発レビュー**（`a366d927f`。SpotBugs の抑止の追加と SonarQube の 12 件、開発レビューの高 1・中 2・低 2 を直した。前例の契約 5 組は W7 の締めへ）: 変異、`check`、その後に SonarQube、開発レビューとその直し。push の前に `check`
+- [x] **7. 終了報告**（[終了報告](bolt_39b_report.md)を 2026-11-03 に推奨のとおり承認として記録した。Recommend 承認の指示による）: push して CI とデモ環境の配備を確かめる。release_plan・開発の索引・mkdocs を直す。見える振る舞いは変わらないので、マニュアルは直さない（39c で新しい章）
 
 ### 時間の配分と打ち切り
 
