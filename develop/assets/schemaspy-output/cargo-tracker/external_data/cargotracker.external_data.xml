@@ -1,8 +1,143 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <database name="cargotracker" schema="external_data" type="PostgreSQL - 18.6 (Debian 18.6-1.pgdg13+2)">
    <tables>
+      <table name="adopted_value" remarks="採用値 [append-only]" schema="external_data" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="id" nullable="false" remarks="採用値 ID" size="2147483647" type="uuid" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="received_record_id" nullable="false" remarks="受信記録 ID" size="2147483647" type="uuid" typeCode="1111">
+            <parent column="id" foreignKey="fk_adopted_value_received_record" implied="false" onDeleteCascade="false" schema="external_data" table="received_record"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="target_type" nullable="false" remarks="対象の種類（VOYAGE・MILESTONE）" size="30" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="target_key" nullable="false" remarks="対象のキー" size="100" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="value_summary" nullable="false" remarks="値" size="4000" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="5" name="info_version" nullable="false" remarks="情報版" size="100" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="6" name="published_at" nullable="false" remarks="公開した時刻" size="35" type="timestamptz" typeCode="93"/>
+         <primaryKey column="id" sequenceNumberInPK="1"/>
+         <index name="pk_adopted_value" unique="true">
+            <column ascending="true" name="id"/>
+         </index>
+         <index name="uk_adopted_value_received_record" unique="true">
+            <column ascending="true" name="received_record_id"/>
+         </index>
+         <checkConstraint constraint="((target_type)::text = ANY ((ARRAY['VOYAGE'::character varying, 'MILESTONE'::character varying])::text[]))" name="ck_adopted_value_target_type"/>
+      </table>
+      <table name="data_source" remarks="情報源" schema="external_data" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="id" nullable="false" remarks="情報源 ID" size="2147483647" type="uuid" typeCode="1111">
+            <child column="data_source_id" foreignKey="fk_ingestion_data_source" implied="false" onDeleteCascade="false" schema="external_data" table="ingestion"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="provider" nullable="false" remarks="提供元" size="100" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="record_type" nullable="false" remarks="原本種別" size="50" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="approval_status" nullable="false" remarks="選定・承認状態（CANDIDATE・APPROVED・SUSPENDED）" size="30" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="approved_by" nullable="true" remarks="承認者" size="2147483647" type="uuid" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="5" name="approved_at" nullable="true" remarks="承認した時刻" size="35" type="timestamptz" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="6" name="version" nullable="false" remarks="版（楽観ロック）" size="19" type="int8" typeCode="-5"/>
+         <primaryKey column="id" sequenceNumberInPK="1"/>
+         <index name="pk_data_source" unique="true">
+            <column ascending="true" name="id"/>
+         </index>
+         <index name="uk_data_source" unique="true">
+            <column ascending="true" name="provider"/>
+            <column ascending="true" name="record_type"/>
+         </index>
+         <checkConstraint constraint="((approval_status)::text = ANY ((ARRAY['CANDIDATE'::character varying, 'APPROVED'::character varying, 'SUSPENDED'::character varying])::text[]))" name="ck_data_source_approval_status"/>
+      </table>
+      <table name="external_record" remarks="外部原本" schema="external_data" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="id" nullable="false" remarks="外部原本 ID" size="2147483647" type="uuid" typeCode="1111">
+            <child column="external_record_id" foreignKey="fk_received_record_external_record" implied="false" onDeleteCascade="false" schema="external_data" table="received_record"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="provider" nullable="false" remarks="提供元" size="100" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="record_type" nullable="false" remarks="原本種別" size="50" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="external_id" nullable="false" remarks="外部 ID" size="200" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="external_version" nullable="false" remarks="外部版" size="100" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="5" name="payload_hash" nullable="false" remarks="最初に受け取った payload のハッシュ" size="64" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="6" name="payload_object_key" nullable="false" remarks="最初に受け取った payload のオブジェクトキー" size="500" type="varchar" typeCode="12">
+            <parent column="object_key" foreignKey="Implied Constraint" implied="true" onDeleteCascade="false" schema="external_data" table="stored_payload"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="7" name="first_received_at" nullable="false" remarks="最初の受信時刻" size="35" type="timestamptz" typeCode="93"/>
+         <primaryKey column="id" sequenceNumberInPK="1"/>
+         <index name="pk_external_record" unique="true">
+            <column ascending="true" name="id"/>
+         </index>
+         <index name="uk_external_record_idempotency_key" unique="true">
+            <column ascending="true" name="provider"/>
+            <column ascending="true" name="record_type"/>
+            <column ascending="true" name="external_id"/>
+            <column ascending="true" name="external_version"/>
+         </index>
+      </table>
+      <table name="ingestion" remarks="取込" schema="external_data" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="id" nullable="false" remarks="取込 ID" size="2147483647" type="uuid" typeCode="1111">
+            <child column="ingestion_id" foreignKey="fk_received_record_ingestion" implied="false" onDeleteCascade="false" schema="external_data" table="received_record"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="data_source_id" nullable="false" remarks="情報源 ID" size="2147483647" type="uuid" typeCode="1111">
+            <parent column="id" foreignKey="fk_ingestion_data_source" implied="false" onDeleteCascade="false" schema="external_data" table="data_source"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="file_object_key" nullable="false" remarks="ファイルの原本のオブジェクトキー" size="500" type="varchar" typeCode="12">
+            <parent column="object_key" foreignKey="Implied Constraint" implied="true" onDeleteCascade="false" schema="external_data" table="stored_payload"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="file_hash" nullable="false" remarks="ファイルのハッシュ" size="64" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="ingested_by" nullable="false" remarks="取込者" size="2147483647" type="uuid" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="5" name="ingested_at" nullable="false" remarks="取込時刻" size="35" type="timestamptz" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="6" name="received_count" nullable="false" remarks="受信件数" size="10" type="int4" typeCode="4"/>
+         <primaryKey column="id" sequenceNumberInPK="1"/>
+         <index name="pk_ingestion" unique="true">
+            <column ascending="true" name="id"/>
+         </index>
+      </table>
+      <table name="received_record" remarks="受信記録 [append-only]" schema="external_data" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="id" nullable="false" remarks="受信記録 ID" size="2147483647" type="uuid" typeCode="1111">
+            <child column="received_record_id" foreignKey="fk_adopted_value_received_record" implied="false" onDeleteCascade="false" schema="external_data" table="adopted_value"/>
+            <child column="received_record_id" foreignKey="fk_received_record_decision_received_record" implied="false" onDeleteCascade="false" schema="external_data" table="received_record_decision"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="external_record_id" nullable="false" remarks="外部原本 ID" size="2147483647" type="uuid" typeCode="1111">
+            <parent column="id" foreignKey="fk_received_record_external_record" implied="false" onDeleteCascade="false" schema="external_data" table="external_record"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="ingestion_id" nullable="true" remarks="取込 ID（取込によらない受信は NULL）" size="2147483647" type="uuid" typeCode="1111">
+            <parent column="id" foreignKey="fk_received_record_ingestion" implied="false" onDeleteCascade="false" schema="external_data" table="ingestion"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="payload_hash" nullable="false" remarks="payload のハッシュ" size="64" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="payload_object_key" nullable="false" remarks="payload のオブジェクトキー" size="500" type="varchar" typeCode="12">
+            <parent column="object_key" foreignKey="Implied Constraint" implied="true" onDeleteCascade="false" schema="external_data" table="stored_payload"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="5" name="acquired_at" nullable="false" remarks="取得時刻" size="35" type="timestamptz" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="6" name="classification" nullable="false" remarks="分類（ADOPTED・DUPLICATE・QUARANTINED・DISCREPANCY）" size="30" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="7" name="classification_note" nullable="true" remarks="分類の注記" size="1000" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="8" name="classified_at" nullable="false" remarks="分類の時刻" size="35" type="timestamptz" typeCode="93"/>
+         <primaryKey column="id" sequenceNumberInPK="1"/>
+         <index name="pk_received_record" unique="true">
+            <column ascending="true" name="id"/>
+         </index>
+         <index name="ix_received_record_classification" unique="false">
+            <column ascending="true" name="classification"/>
+         </index>
+         <index name="ix_received_record_ingestion" unique="false">
+            <column ascending="true" name="ingestion_id"/>
+         </index>
+         <checkConstraint constraint="((classification)::text = ANY ((ARRAY['ADOPTED'::character varying, 'DUPLICATE'::character varying, 'QUARANTINED'::character varying, 'DISCREPANCY'::character varying])::text[]))" name="ck_received_record_classification"/>
+      </table>
+      <table name="received_record_decision" remarks="受信記録の判断 [append-only]" schema="external_data" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="id" nullable="false" remarks="受信記録の判断 ID" size="2147483647" type="uuid" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="received_record_id" nullable="false" remarks="受信記録 ID" size="2147483647" type="uuid" typeCode="1111">
+            <parent column="id" foreignKey="fk_received_record_decision_received_record" implied="false" onDeleteCascade="false" schema="external_data" table="received_record"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="decision" nullable="false" remarks="判断（ADOPTED・REJECTED）" size="30" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="decided_by" nullable="false" remarks="判断者" size="2147483647" type="uuid" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="4" name="decided_at" nullable="false" remarks="判断の時刻" size="35" type="timestamptz" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="5" name="reason" nullable="true" remarks="理由" size="1000" type="varchar" typeCode="12"/>
+         <primaryKey column="id" sequenceNumberInPK="1"/>
+         <index name="pk_received_record_decision" unique="true">
+            <column ascending="true" name="id"/>
+         </index>
+         <index name="uk_received_record_decision_received_record" unique="true">
+            <column ascending="true" name="received_record_id"/>
+         </index>
+         <checkConstraint constraint="((decision)::text = ANY ((ARRAY['ADOPTED'::character varying, 'REJECTED'::character varying])::text[]))" name="ck_received_record_decision_decision"/>
+      </table>
       <table name="stored_payload" remarks="保存した原本 [append-only]" schema="external_data" type="TABLE">
-         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="object_key" nullable="false" remarks="原本のオブジェクトキー" size="500" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="object_key" nullable="false" remarks="原本のオブジェクトキー" size="500" type="varchar" typeCode="12">
+            <child column="payload_object_key" foreignKey="Implied Constraint" implied="true" onDeleteCascade="false" schema="external_data" table="external_record"/>
+            <child column="file_object_key" foreignKey="Implied Constraint" implied="true" onDeleteCascade="false" schema="external_data" table="ingestion"/>
+            <child column="payload_object_key" foreignKey="Implied Constraint" implied="true" onDeleteCascade="false" schema="external_data" table="received_record"/>
+         </column>
          <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="content" nullable="false" remarks="原本の内容" size="2147483647" type="bytea" typeCode="-2"/>
          <column autoUpdated="false" defaultValue="null" digits="6" id="2" name="stored_at" nullable="false" remarks="保存した時刻" size="35" type="timestamptz" typeCode="93"/>
          <primaryKey column="object_key" sequenceNumberInPK="1"/>

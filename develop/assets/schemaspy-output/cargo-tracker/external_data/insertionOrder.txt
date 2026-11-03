@@ -1,1 +1,7 @@
 stored_payload
+data_source
+external_record
+ingestion
+received_record
+adopted_value
+received_record_decision
