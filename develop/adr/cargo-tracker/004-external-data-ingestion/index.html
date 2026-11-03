@@ -14315,6 +14315,10 @@
 <li>2026-11-03（W7、Bolt 39b2）: 上の Bolt 39 の項の「形式の誤り」と「補償」の受信記録の持ち方を、次のように決めた（<a href="../../../development/cargo-tracker/bolt_39b2_plan/">Bolt 39b2 計画</a> の開始準備で決めたこと (1)・(2) と確認ポイント 1・2・10。推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）。決定は変えない。</li>
 <li><strong>形式の誤りの受信記録</strong>: 形式の誤りの受信記録は外部原本と取得時刻を持たない隔離にする（キーのない隔離。冪等性キーを信用できないので外部原本を引かず作らない）。表の CHECK で、外部原本のない受信記録を隔離だけに限る。行の誤りは行の原文を保存してから指し、ファイルの誤り（文字コード、ヘッダーが読めない、必要な列がない、同じ名前の列）はファイル全体の原本（取込の <code>file_object_key</code>）を指す受信記録を 1 つ書く。引用符の閉じ忘れは推測で読み直さず、その行からファイルの終わりまでの原文を保存して受信記録を 1 つ書き、取込に取り込めなかった行の始まりと数を持たせて取込全体を要確認にする。</li>
 <li><strong>参照されない原本の数え方</strong>: 「補償」の項の受信記録から参照されない原本は、保存した原本のキーのうち、取込のファイル全体の原本と受信記録の原本のどちらからも参照されないものとして数える（W10 の S3 ではオブジェクトの一覧と突き合わせる）。数える照会は照合を作る 39h で作る。</li>
+<li>2026-11-03（W7、Bolt 39b2b）: 値の列の検証と、追跡・経路設計の規則の写しを、次のように決めた（<a href="../../../development/cargo-tracker/bolt_39b2b_plan/">Bolt 39b2b 計画</a> の開始準備で決めたこと (1)〜(4)、確認ポイント 1・2・5、人に諮ること 1）。決定は変えない。</li>
+<li><strong>規則の写し</strong>: 外部データは追跡・経路設計の型を参照できないので、追跡番号の形（追跡の <code>TrackingNumber</code>）・実績の種類（<code>MilestoneKind</code>）・寄港の規則（経路設計の <code>Voyage</code>・<code>PortCall</code>）を値の型（<code>externaldata.domain.model.valueobjects</code>）の写しとして持つ。写しを守るテスト（<code>com.example.cargotracker.integration.ExternalDataCopiedRulesTest</code>）で、同じ入力に同じ可否を返すことを確かめる（推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）。</li>
+<li><strong>寄港の規則</strong>: 経路設計にそろえる。寄港は 2 つ以上、各寄港に到着か出発の少なくとも一方（両方も可）、出発は到着以後（同じ時刻は受ける）。合わない行は行の誤り（<code>INVALID_PORT_CALLS</code>）として、行の原文を保存してからキーのない隔離にする。OQ-02 の仮の形式（寄港は 1 つ以上、到着・出発は空を許す）を改めた（requirements_definition の OQ-02 の注の【前の決定の変更】。human:kakimomokuri が決定）。</li>
+<li><strong>値の持ち方</strong>: 値は取り込む行（<code>IngestedRow</code>）に載せ、受信記録・外部原本の列には書かない（値は payload の行の原文に残る。スキーマは変えない）。採用値は 39b3 で値から作る。</li>
 </ul>
 <h2 id="_10">備考<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>
 <ul>

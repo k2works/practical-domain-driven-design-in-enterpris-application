@@ -17236,7 +17236,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">39b2b</td>
-<td style="text-align: left;">値の列（航海・主要実績。仮の形式、OQ-02）とその検証（UN/LOCODE・時刻・種類・追跡番号・寄港の列）、<code>CsvFileKind</code> の必要な列の追加、値の列の長さの上限、追跡番号の形の写し（外部データの中の形）が追跡の <code>TrackingNumber</code> と同じであることを守るテスト（Bolt 39b2 の開始準備で 39b2 から分けた）</td>
+<td style="text-align: left;">値の列（航海・主要実績。仮の形式、OQ-02）とその検証（UN/LOCODE・時刻・種類・追跡番号・寄港の列）、<code>CsvFileKind</code> の必要な列の追加、値の列の長さの上限、追跡番号の形の写し（外部データの中の形）が追跡の <code>TrackingNumber</code> と同じであることを守るテスト（Bolt 39b2 の開始準備で 39b2 から分けた）。開始準備で、寄港の規則を経路設計にそろえると決めた（human:kakimomokuri）。<a href="../bolt_39b2b_plan/">Bolt 39b2b 計画</a>（承認済み）</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: left;">インサイドアウト</td>
 <td style="text-align: left;">ステップごと（構造）</td>
@@ -19894,12 +19894,22 @@
 </tr>
 <tr>
 <td style="text-align: left;">2026-11-03</td>
+<td style="text-align: left;"><a href="../bolt_39b2b_plan/">Bolt 39b2b 計画</a>を作り、整合性検証の指摘を反映して承認した（寄港の規則は個別に、ほかは推奨のとおり。Recommend 承認の指示による）</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-11-03</td>
 <td style="text-align: left;">Bolt 39b のステップ 1（設計の文書）: W7 の設計の決定（取込の置き場所）と確認ポイント 4・6 に、39b を 4 本に分けたことによる【前の決定の変更】の注を足した</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5</td>
 </tr>
 <tr>
 <td style="text-align: left;">2026-11-03</td>
 <td style="text-align: left;">Bolt 39b2 のステップ 1（設計の文書）: W7 の確認ポイント 6 に、形式の誤りの受信記録は外部原本を持たないことの注を足した</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-11-03</td>
+<td style="text-align: left;">Bolt 39b2b のステップ 1（設計の文書）: 寄港の規則を経路設計にそろえた【前の決定の変更】は requirements_definition の OQ-02 の注に置き、「取込ファイルの形式」は直さない。設計文書（domain_model・data_model・system_usecase・architecture_backend・ADR-004）を直した</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5</td>
 </tr>
 <tr>
