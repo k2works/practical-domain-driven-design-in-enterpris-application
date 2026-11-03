@@ -4,7 +4,7 @@ title: "cargo-tracker データモデル"
 description: "cargo-tracker の概念データモデル、スキーマ分割、命名と型の規約（H2 と PostgreSQL の共通部分）、コンテキストごとの論理データモデルと ER 図、版・追記専用・冪等性・イベント配信の表現。"
 tags: [design, data-model]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-03T00:29:59Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-03T01:10:49Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:48:17Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:37Z }
@@ -1141,8 +1141,8 @@ ds ||--o{ ff
 | `external_record` | 冪等性キー（提供元、原本種別、外部 ID、外部版）の一意制約。最初に受け取った payload のハッシュを持つ。`data_source` への外部キーは張らない（冪等性キーは情報源の承認の状態と独立し、出典は受信記録 → 取込 → 情報源でたどれるため。Bolt 39a3） | BR-12 |
 | `stored_payload` | 原本のオブジェクトキー（`object_key`。`PayloadObjectKey` の値）が主キー。`content`（原本の内容）はバイト列で NOT NULL、0 バイトを許す。型は `BYTEA`（共通の置き場所。H2 は別名として受けて `binary varying` になり、0 バイト・0x00・0xFF を読み書きできることを Bolt 39a2 のステップ 2 で確かめた。H2 の `binary varying` には長さの上限があり PostgreSQL の `BYTEA` と違うが、開発の範囲では影響しない）。`stored_at`（保存した時刻）は Clock から取りマイクロ秒に切り捨てる。ハッシュは持たない（`ingestion.file_hash`・`external_record.payload_hash`・`received_record.payload_hash` が持つ）。`file_object_key`・`payload_object_key` とは外部キーを張らない（W10 で S3 に差し替えるため）。追記専用の印を付け、UPDATE・DELETE の権限なし | ADR-004、PV-01 |
 | `received_record` | 受け取るたびに 1 行。`classification` IN（`ADOPTED`、`DUPLICATE`、`QUARANTINED`、`DISCREPANCY`）。ハッシュが外部原本と同じなら重複、違えば隔離。`ingestion_id` は NULL を許す。追記専用の印を付け、UPDATE・DELETE の権限なし | BR-12、US-14 |
-| `received_record_decision` | 受信記録の判断。受信記録 1 件につき 1 つ（`received_record_id` の一意制約）。判断のやり直しは提供元からの再送（新しい受信記録）で扱う。`decision` IN（`ADOPTED`、`REJECTED`。前例の `review_record` の過去分詞にそろえる）。`reason` は NULL を許す。判断の対象（隔離・差異の受信記録だけ）はアプリケーションで守る（Bolt 39d）。追記専用の印を付け、UPDATE・DELETE の権限なし（Bolt 39a3） | US-14 |
-| `adopted_value` | 採用した受信記録ごとに 1 つ（`received_record_id` の一意制約）。`target_type` IN（`VOYAGE`、`MILESTONE`。港湾は D-92 で Release 1.1）。ここから DE-12・DE-13 を発行する。追記専用の印を付け、UPDATE・DELETE の権限なし | ADR-004 |
+| `received_record_decision` | 受信記録の判断。受信記録 1 件につき 1 つ（`received_record_id` の一意制約）。判断のやり直しは提供元からの再送（新しい受信記録）で扱う。`decision` IN（`ADOPTED`、`REJECTED`。前例の `review_record` の過去分詞にそろえる）。`reason` は NULL を許す。判断は隔離・差異の受信記録だけに付く。判断と分類の整合は表の制約で守らず、アプリケーションで判定する（Bolt 39d）。追記専用の印を付け、UPDATE・DELETE の権限なし（Bolt 39a3） | US-14 |
+| `adopted_value` | 採用した受信記録ごとに 1 つ（`received_record_id` の一意制約）。`target_type` IN（`VOYAGE`、`MILESTONE`。港湾は D-92 で Release 1.1）。採用値は分類が採用の受信記録と、採用と判断した受信記録だけに付く。採用値と判断・分類の整合は表の制約で守らず、アプリケーションで判定する（Bolt 39d）。ここから DE-12・DE-13 を発行する。追記専用の印を付け、UPDATE・DELETE の権限なし | ADR-004 |
 | `manual_entry` | 出典・入力者・入力時刻・仮状態を NOT NULL にする | BR-08 |
 | `recovery_reconciliation` | 停止期間ごとに 1 つ。完了には全件の分類、件数の一致、差異の解消が必要（アプリケーションで判定） | BR-12、US-15 |
 
