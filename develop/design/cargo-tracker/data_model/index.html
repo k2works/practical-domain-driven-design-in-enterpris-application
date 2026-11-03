@@ -14780,12 +14780,12 @@
 </tr>
 <tr>
 <td style="text-align: left;"><code>received_record_decision</code></td>
-<td style="text-align: left;">受信記録の判断。受信記録 1 件につき 1 つ（<code>received_record_id</code> の一意制約）。判断のやり直しは提供元からの再送（新しい受信記録）で扱う。<code>decision</code> IN（<code>ADOPTED</code>、<code>REJECTED</code>。前例の <code>review_record</code> の過去分詞にそろえる）。<code>reason</code> は NULL を許す。判断の対象（隔離・差異の受信記録だけ）はアプリケーションで守る（Bolt 39d）。追記専用の印を付け、UPDATE・DELETE の権限なし（Bolt 39a3）</td>
+<td style="text-align: left;">受信記録の判断。受信記録 1 件につき 1 つ（<code>received_record_id</code> の一意制約）。判断のやり直しは提供元からの再送（新しい受信記録）で扱う。<code>decision</code> IN（<code>ADOPTED</code>、<code>REJECTED</code>。前例の <code>review_record</code> の過去分詞にそろえる）。<code>reason</code> は NULL を許す。判断は隔離・差異の受信記録だけに付く。判断と分類の整合は表の制約で守らず、アプリケーションで判定する（Bolt 39d）。追記専用の印を付け、UPDATE・DELETE の権限なし（Bolt 39a3）</td>
 <td style="text-align: left;">US-14</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>adopted_value</code></td>
-<td style="text-align: left;">採用した受信記録ごとに 1 つ（<code>received_record_id</code> の一意制約）。<code>target_type</code> IN（<code>VOYAGE</code>、<code>MILESTONE</code>。港湾は D-92 で Release 1.1）。ここから DE-12・DE-13 を発行する。追記専用の印を付け、UPDATE・DELETE の権限なし</td>
+<td style="text-align: left;">採用した受信記録ごとに 1 つ（<code>received_record_id</code> の一意制約）。<code>target_type</code> IN（<code>VOYAGE</code>、<code>MILESTONE</code>。港湾は D-92 で Release 1.1）。採用値は分類が採用の受信記録と、採用と判断した受信記録だけに付く。採用値と判断・分類の整合は表の制約で守らず、アプリケーションで判定する（Bolt 39d）。ここから DE-12・DE-13 を発行する。追記専用の印を付け、UPDATE・DELETE の権限なし</td>
 <td style="text-align: left;">ADR-004</td>
 </tr>
 <tr>
