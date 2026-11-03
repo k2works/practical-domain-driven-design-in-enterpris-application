@@ -4,7 +4,7 @@ title: "リリース計画 - cargo-tracker（A 社国際貨物輸送管理シス
 description: "cargo-tracker MVP のリリース計画。1 人 + AI、時間単位の Bolt（= イテレーション）と週次の見直しで、最初の縦の流れ（R0.1）、パイロット準備完了（R1.0）、本格展開前（R1.1）の 3 段階、Unit のエントロピー評価、SP、バッファ、パイロット開始の条件、引継ぎ ID の台帳、業務責任者に確かめる事項の台帳。"
 tags: [development,release-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-02T13:43:29Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-03T00:27:51Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T09:29:53Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:38:26Z }
@@ -36,6 +36,7 @@ verified:
   - { by: human:kakimomokuri, at: 2026-11-02T11:09:18Z }
   - { by: human:kakimomokuri, at: 2026-11-02T11:39:37Z }
   - { by: human:kakimomokuri, at: 2026-11-02T13:43:30Z }
+  - { by: human:kakimomokuri, at: 2026-11-03T00:27:52Z }
 ---
 
 # リリース計画 - cargo-tracker（A 社国際貨物輸送管理システム）
@@ -931,7 +932,7 @@ US-18 の Bolt の順序は 31b → 31c → 31d → 32 → 32c → 32d → 32b �
 | 38h | W6 の返済（[W6 横断レビュー](../../review/cargo-tracker/w6_review_20261102.md)の高 5 件と、38h とした中・低。2026-11-02、human:kakimomokuri が決めた）: 再設計要・出発済みの案件の相談の結論の決まりをマニュアル 4.2・6.4・7.1・8.2 に書き、互いを指し合う案内を直す（「案件を終える」操作は W9 の荷主の辞退の開始準備で決める）。S-20 の利用者の一覧に担当企業の列、業務担当者の登録の完了で担当範囲へ導く案内。8 章の候補の画面のキャプチャの撮り直し。担当企業がないときの S-02 の形と語。予約・経路設計・追跡に「ない対象の POST は記録しない」「割り当ての変更は次の request から効く」のテスト。マニュアルの入口（00 章・用語集・2.8）と domain_model の追従、出発済みの文、Javadoc と ADR の状態。評価の入口（39f）の前に終える。開始準備で、分けずに 1 つで進め（分割の規則の例外。約 6.7 時間。打ち切りで送る先は 38h2）、再設計要・出発済みの社内の案内の次の行動の句を「新しい見積依頼を出すよう案内」に置き換え、一覧の担当企業は役割で絞り管理範囲の外は数だけにし、動画は撮らないと決めた（human:kakimomokuri）。[Bolt 38h 計画](bolt_38h_plan.md)（承認済み）・[終了報告](bolt_38h_report.md)（承認済み。約 2.5 時間で終え、打ち切りの点検に届かなかったので 38h2 は作らない） | 0 | アウトサイドイン（画面と受入シナリオから。既存の振る舞いを揃える） | 計画と終了報告（画面・認可の意味・前の決定の変更） |
 | 39 | 外部データのコンテキストの骨格（構造とポートと解析。DB を使わない）: パッケージと `package-info`（外部データは `shared` だけ。下流の `allowedDependencies` は listener を作る 39b・39e・39g で足す。【前の決定の変更】初案の「外部データ・経路設計・追跡・identity の `allowedDependencies`」を Bolt 39 の開始準備の決定 (7) で変えた）、ModularityTest の許可リストの規則、MapperSchemaArchitectureTest の対応表、コンテキストの一覧の一致の規則（W6 横断レビュー M-3）、原本の保存のポート（ファイル全体と行の payload。補償は消さない）とオブジェクトキーとハッシュ、仮の CSV（RFC 4180）の解析、ADR-004 の改訂、分類 3 つの箇所、担当範囲の判定の置き方の既定（M-1）、用語集。開始準備で 39 と 39a2 に分けた（human:kakimomokuri）。[Bolt 39 計画](bolt_39_plan.md)（承認済み）・[終了報告](bolt_39_report.md)（承認済み） | 0 | 規則は技術タスク、ポートと解析はインサイドアウト（ドメインの値とポートから） | ステップごと（構造・ADR・規則の変更） |
 | 39a2 | 外部原本の保存の DB の実装: `external_data` のスキーマと原本の表（`stored_payload`。追記専用）、原本の保存の DB の実装（受信記録とは独立したトランザクション。契約のテストを継ぐ）、型の依存の許可リストを層別にし MyBatis を infrastructure だけに許す、`SchemaCommentIntegrationTest`・`AppendOnlyGrantIntegrationTest`・`afterMigrate`・SchemaSpy の一覧、data_model の payload の注と ADR-004 の改訂（Bolt 39 の開始準備で 39 から分けた）。【前の決定の変更】初案の範囲（6 表・`receipt`・受信記録のクラス名・domain_model の要素表）を [Bolt 39a2 計画](bolt_39a2_plan.md) の開始準備の決定 (4) で 39a2 と 39a3 に縦に分けた（human:kakimomokuri）。[Bolt 39a2 計画](bolt_39a2_plan.md)（承認済み）・[終了報告](bolt_39a2_report.md)（承認済み） | 0 | インサイドアウト（データ → 永続化の実装）。規則の層別は技術タスク | ステップごと（スキーマ・構造・ADR） |
-| 39a3 | `external_data` の残りの表（`data_source`・`ingestion`・`external_record`・`received_record`・`received_record_decision`・`adopted_value`）、data_model の `receipt` を `received_record` に改名（クラスは `ReceivedRecord`。Bolt 39a2 の開始準備の決定 (3)）、domain_model の要素表と用語集の分類 4 つ（Bolt 39a2 の開始準備で 39a2 から分けた） | 0 | インサイドアウト（一意制約と分類の表から） | ステップごと（スキーマ） |
+| 39a3 | `external_data` の残りの表（`data_source`・`ingestion`・`external_record`・`received_record`・`received_record_decision`・`adopted_value`）、data_model の `receipt` を `received_record` に改名（クラスは `ReceivedRecord`。Bolt 39a2 の開始準備の決定 (3)）、domain_model の要素表と用語集の分類 4 つ（Bolt 39a2 の開始準備で 39a2 から分けた）。開始準備で、表と文書だけにし、判断は受信記録 1 件につき 1 つ（`ADOPTED`・`REJECTED`）、情報源に一意制約、追記専用は 3 表と決めた（human:kakimomokuri）。[Bolt 39a3 計画](bolt_39a3_plan.md)（承認済み） | 0 | インサイドアウト（一意制約と分類の表から） | ステップごと（スキーマ） |
 | 39b | 分類と取込のサービス: 採用・重複・隔離・差異の分類（冪等性キー BR-12。AC1・AC3・AC4）、形式の検証に失敗した行の隔離（UC-15 2a）、承認済みの情報源のない取込の拒否と `PilotReadiness`（AC2）、DE-14 と identity の監査の listener、1 万件の時間（PERF-06）。業務ルール層のシナリオ（`features/external_data/`） | 0 | インサイドアウト | ステップごと（セキュリティ・監査・構造） |
 | 39c | S-16 外部データの取込の画面: ファイルの選択、分類別の件数、認可（データ責任者）と CSRF、ナビゲーション、axe、マニュアルの新しい章とキャプチャ | 0 | アウトサイドイン（S-16 から。局面とアプローチの段落の理由） | ステップごと（認可・画面・新しいファイル） |
 | 39d | S-17 隔離・差異の確認: 判断（採用・却下）の記録と判断者、採用の判断で採用値と DE-12・DE-13、判断のイベントと監査、隔離した payload の再送の扱い、マニュアルとキャプチャ、axe | 0 | アウトサイドイン（S-17 から。局面とアプローチの段落の理由） | ステップごと（スキーマ・認可） |
@@ -1504,4 +1505,5 @@ xychart-beta
 | 2026-11-02 | [Bolt 39](bolt_39_report.md)（外部データのコンテキストの骨格）を計画・ステップごと・終了報告まで承認した。開始準備で 39 と 39a2 に分け、39a2 の開始準備で 39a2 と 39a3 に縦に分けた（W7 の Bolt の表に 39a2・39a3 の行。下流の `allowedDependencies` は listener を作る Bolt で足す） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-11-02 | [Bolt 39a2 計画](bolt_39a2_plan.md)を承認し、ステップ 1（設計の文書。`376e1ceb4`）を承認した | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-11-02 | Bolt 39a2 のステップ 2・3 と[終了報告](bolt_39a2_report.md)を承認した（共通の `BYTEA`、独立したトランザクションの DB の実装、層別の許可リスト） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
+| 2026-11-03 | [Bolt 39a3 計画](bolt_39a3_plan.md)を作り、整合性検証の指摘を反映して承認した | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-28 | Bolt 38f2 のステップ 1 で、デモ項目の動画を撮る Bolt を 38f2b に直した | anthropic/claude-opus-5-5 |

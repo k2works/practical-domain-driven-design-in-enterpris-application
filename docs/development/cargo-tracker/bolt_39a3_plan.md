@@ -2,7 +2,9 @@
 type: Plan
 title: "Bolt 39a3 計画 - 外部データの残りの 6 表（情報源・取込・外部原本・受信記録・判断・採用値）と改名"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-02T23:46:06Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-03T00:27:51Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-11-03T00:27:52Z }
 ---
 
 # Bolt 39a3 計画 - 外部データの残りの 6 表（情報源・取込・外部原本・受信記録・判断・採用値）と改名
@@ -194,6 +196,7 @@ received_record ||--o| adopted_value
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-11-03 | 計画を承認した（確認ポイント 1〜6 を推奨のとおり） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-11-03 | 整合性検証の指摘を反映した（承認待ち。重大 2・中 4・軽 8）。開始準備の決定 (3)〜(5)（情報源の一意制約と外部キーを張らない、追記専用は 3 表、判断の値は `ADOPTED`・`REJECTED`）は human:kakimomokuri。決定を変えない直し: 行 4b（正しい値と NULL）と V2 の落ちる先、テストのデータを残さない形、行番号、`receipt` の箇所の漏れと完了条件の範囲、operation.md、テストの置き場所と SQLState、ER 図の多重度、トレースの AC2、用語集の英語名、ADR-004 の書き方、Red の 42P01 | anthropic/claude-opus-5-5 |
 | 2026-11-02 | 初版作成（承認待ち）。開始準備で、表と文書だけにし読み書きは使う Bolt で作る、判断は受信記録 1 件につき 1 つと決めた（human:kakimomokuri） | anthropic/claude-opus-5-5 |
 
