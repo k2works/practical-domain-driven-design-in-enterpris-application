@@ -2,7 +2,7 @@
 type: Plan
 title: "Bolt 39b 計画 - 外部原本の取込と分類（採用・重複・隔離）と情報源の照会"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-03T02:25:15Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-03T02:30:38Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-11-03T02:25:16Z }
 ---
@@ -286,7 +286,7 @@ er ||--o{ rr
 
 ## ステップ計画（ステップごとに止める）
 
-- [ ] **1. 設計の文書**: 上の「設計文書に直す箇所」と release_plan（完了の判定: 文書の差分。**承認ゲート**）
+- [x] **1. 設計の文書**（2026-11-03、推奨のとおり承認として記録した（Recommend 承認の指示による。human:kakimomokuri）。test_strategy :517・:518 は列が受入条件の数で値が正しいので直さず、W7 の確認ポイント 20 に取り下げの注を足した。ADR-004 は改訂の経緯を書き換えず Bolt 39b の項を足した）: 上の「設計文書に直す箇所」と release_plan（完了の判定: 文書の差分。**承認ゲート**）
 - [ ] **2. 情報源の読み取りと開始判定、開発データ（Red → Green）**: 行 6・14 のテストを先に書いて落ちることを確かめ（落ちた理由を記録する。T-217）、`DataSourceRepository`（メモリ・MyBatis）と `PilotReadinessQueryService`、組み立てのクラス `ExternalDataConfiguration`（確認ポイント 14）、dev-data のマイグレーション（DATA_STEWARD の開発利用者 `…0307` と情報源）を作る（完了の判定: 緑。**承認ゲート**（データベース・開発データ。構造: 組み立てのクラスと ModularityTest の許可リスト））
 - [ ] **3. 分類の規則と取込のサービス（Red → Green）**: 行 1〜5b・7〜8・9b・10〜12 の単体のテストを先に書き、`IdempotencyKey`・`Classification`・コマンド・`IngestionService`・ポートとメモリの実装を作る（完了の判定: 緑。**承認ゲート**（セキュリティ: 役割の確かめ。構造: 新しいパッケージ））
 - [ ] **4. MyBatis の読み書き（Red → Green）**: 取込・外部原本・受信記録のポートの契約のテスト（H2・PostgreSQL）を先に書き、マッパーと実装、取込の表の追記専用の印（行 13）を作る（完了の判定: 緑。**承認ゲート**（スキーマ））

@@ -4,7 +4,7 @@ title: "ADR-004: 外部原本は Inbox・隔離・照合の 3 段で取り込む
 description: "ARCH-HO-03 と BR-08・BR-12・BR-18 を満たすため、外部原本を無加工で保存し、冪等性キーで採用・重複・隔離・差異に分類し、復旧時に件数照合する決定。2026-11-02（W7、Bolt 39）に、置き場所（externaldata）、原本の保存のポートと消さない補償、分類 4 つ、形式の誤りの隔離、解析の置き場所を改訂した。"
 tags: [adr, architecture]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-03T00:29:59Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-03T02:30:38Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:11:13Z }
   - { by: human:kakimomokuri, at: 2026-11-02T06:52:27Z }
@@ -88,6 +88,8 @@ verified:
   - **S3 の接続の扱い**: S3 の実装が外部への通信の間に DB の接続を握るかどうか（ADR-010 の「外部への通信の間に接続を保持しない」との違い）は、W10 の開始準備で決める。
 - 2026-11-03（W7、Bolt 39a3）: 受信記録の表の名前を改めた（[Bolt 39a3 計画](../../development/cargo-tracker/bolt_39a3_plan.md) の開始準備で決めたこと。human:kakimomokuri が決定）。決定は変えない。
   - **改名の注**: 上の Bolt 39 の項の `receipt` は当時の表の名前で、受信記録の表は `external_data.received_record`（分類は `received_record.classification`）、受信記録の判断の表は `external_data.received_record_decision` にした。クラス名は `ReceivedRecord`（Bolt 39a2 の開始準備の決定 (3)）。
+- 2026-11-03（W7、Bolt 39b）: 39b を開始準備で縦に 4 本（39b・39b2・39b3・39b4）に分けた（[Bolt 39b 計画](../../development/cargo-tracker/bolt_39b_plan.md) の開始準備で決めたこと (1)。推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）。決定は変えない。
+  - **分け方の注**: 上の Bolt 39a2 の項の「39b の取込のサービス」は `externaldata.application.internal.commandservices.IngestionService`（Bolt 39b）で、外側のトランザクションの中から保存を呼ぶ。「接続」と「量」の項の 39b の PERF-06 の計測（取込の経路が握る接続の数、1 万件を 5 分以内、足りなければ一括の保存）は 39b4 で行う。形式の誤りの隔離（上の Bolt 39 の項の「形式の誤り」）は 39b2、隔離と判断のイベントと identity の監査（同じく「監査」）は 39b3 で作る。
 
 ## 備考
 

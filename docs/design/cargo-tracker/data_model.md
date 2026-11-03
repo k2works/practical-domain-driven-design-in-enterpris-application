@@ -4,7 +4,7 @@ title: "cargo-tracker データモデル"
 description: "cargo-tracker の概念データモデル、スキーマ分割、命名と型の規約（H2 と PostgreSQL の共通部分）、コンテキストごとの論理データモデルと ER 図、版・追記専用・冪等性・イベント配信の表現。"
 tags: [design, data-model]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-03T01:10:49Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-03T02:30:38Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:48:17Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:37Z }
@@ -174,7 +174,7 @@ ADR-007 により、DDL は H2（PostgreSQL 互換モード）と PostgreSQL 18 
 | 表 | 許す操作 | 守り方 |
 | :--- | :--- | :--- |
 | `identity.audit_record`、`identity.kpi_baseline` | INSERT、SELECT | PostgreSQL ではアプリケーションの DB 利用者から UPDATE・DELETE の権限を外す |
-| `quotation.transport_request_version`、`quotation.review_record`、`quotation.required_document`、`booking.booking_version`、`booking.processed_command`、`external_data.stored_payload`、`external_data.received_record`、`external_data.received_record_decision`、`external_data.adopted_value` | INSERT、SELECT | UPDATE・DELETE の権限を外す（`review_record` は判断の事実で後から変えないため。2026-10-02 に承認、Bolt 5。`required_document` は版に付く書類の事実のため。2026-10-03 に承認、Bolt 7。`stored_payload` は受け取った原本を上書きしない（ADR-004）ため。2026-11-02 に承認、Bolt 39a2。`received_record`・`received_record_decision`・`adopted_value` は受け取り・判断・採用の事実のため。2026-11-03 に承認、Bolt 39a3。`external_record`・`ingestion`・`data_source` には付けない。誤って採用した `ADOPTED` を取り消す経路がスキーマにないことは Bolt 39d の既知の課題） |
+| `quotation.transport_request_version`、`quotation.review_record`、`quotation.required_document`、`booking.booking_version`、`booking.processed_command`、`external_data.stored_payload`、`external_data.ingestion`、`external_data.received_record`、`external_data.received_record_decision`、`external_data.adopted_value` | INSERT、SELECT | UPDATE・DELETE の権限を外す（`review_record` は判断の事実で後から変えないため。2026-10-02 に承認、Bolt 5。`required_document` は版に付く書類の事実のため。2026-10-03 に承認、Bolt 7。`stored_payload` は受け取った原本を上書きしない（ADR-004）ため。2026-11-02 に承認、Bolt 39a2。`received_record`・`received_record_decision`・`adopted_value` は受け取り・判断・採用の事実のため。2026-11-03 に承認、Bolt 39a3。`ingestion` は受け取った件数を書いた後に変えない取込の事実のため。2026-11-03 に承認、Bolt 39b。【前の決定の変更】Bolt 39a3 の開始準備の決定 (4) の「追記専用は 3 表」を、Bolt 39b の確認ポイント 2 で `ingestion` を足して 4 表に変えた（推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）。`external_record`・`data_source` には付けない。誤って採用した `ADOPTED` を取り消す経路がスキーマにないことは Bolt 39d の既知の課題） |
 | `tracking.milestone` | INSERT、SELECT、状態と下書き内容の UPDATE | DELETE の権限を外す。採用済みの内容を変えないことはドメインと PostgreSQL の統合テストで確かめる（T-INV-01、T-INV-07） |
 | `routing.route_version` | INSERT、SELECT、UPDATE | 状態が変わる（確定 → 再設計要 → 旧版）ため権限では守らない。確定した経路版の内容（候補・区間・判断根拠・承認）を変えないことは、ドメインと PostgreSQL の統合テストで確かめる（R-INV-06） |
 
@@ -1138,10 +1138,11 @@ ds ||--o{ ff
 
 | 表 | 主な制約 | 対応する規則 |
 | :--- | :--- | :--- |
-| `data_source` | 情報源の単位（提供元、原本種別）の一意制約 `uk_data_source`（Bolt 39a3）。`approval_status` IN（`CANDIDATE`、`APPROVED`、`SUSPENDED`）。承認済みが 0 件ならパイロットを開始しない（アプリケーションで判定） | BR-18 |
+| `data_source` | 情報源の単位（提供元、原本種別）の一意制約 `uk_data_source`（Bolt 39a3）。`approval_status` IN（`CANDIDATE`、`APPROVED`、`SUSPENDED`）。承認済みが 0 件ならパイロットを開始しない（アプリケーションで判定）。`record_type` の値は取込ファイルの種別 `CsvFileKind` の名前（`VOYAGE`、`MILESTONE`）にそろえる。CHECK は足さない（港湾は D-92 で Release 1.1 に増えるため。Bolt 39b） | BR-18 |
+| `ingestion` | 1 ファイルを 1 つの取込にする。`received_count`（受け取った件数）は、ファイルの物理データ行の数（ヘッダーを除く）。取込の行を書くときに入れ、更新しない。39b2 で形式の誤りの行が受信記録にならなくなっても意味を変えない。分類別の件数は受信記録から数える（形式の誤りのない範囲では分類別の合計が `received_count` と一致し、39b2 からは取り込めなかった件数を足して突き合わせる）。受信記録が取込への外部キーを持つので、取込の行は受信記録より先に書く。追記専用の印を付け、UPDATE・DELETE の権限なし（Bolt 39b） | BR-12 |
 | `external_record` | 冪等性キー（提供元、原本種別、外部 ID、外部版）の一意制約。最初に受け取った payload のハッシュを持つ。`data_source` への外部キーは張らない（冪等性キーは情報源の承認の状態と独立し、出典は受信記録 → 取込 → 情報源でたどれるため。Bolt 39a3） | BR-12 |
 | `stored_payload` | 原本のオブジェクトキー（`object_key`。`PayloadObjectKey` の値）が主キー。`content`（原本の内容）はバイト列で NOT NULL、0 バイトを許す。型は `BYTEA`（共通の置き場所。H2 は別名として受けて `binary varying` になり、0 バイト・0x00・0xFF を読み書きできることを Bolt 39a2 のステップ 2 で確かめた。H2 の `binary varying` には長さの上限があり PostgreSQL の `BYTEA` と違うが、開発の範囲では影響しない）。`stored_at`（保存した時刻）は Clock から取りマイクロ秒に切り捨てる。ハッシュは持たない（`ingestion.file_hash`・`external_record.payload_hash`・`received_record.payload_hash` が持つ）。`file_object_key`・`payload_object_key` とは外部キーを張らない（W10 で S3 に差し替えるため）。追記専用の印を付け、UPDATE・DELETE の権限なし | ADR-004、PV-01 |
-| `received_record` | 受け取るたびに 1 行。`classification` IN（`ADOPTED`、`DUPLICATE`、`QUARANTINED`、`DISCREPANCY`）。ハッシュが外部原本と同じなら重複、違えば隔離。`ingestion_id` は NULL を許す。追記専用の印を付け、UPDATE・DELETE の権限なし | BR-12、US-14 |
+| `received_record` | 受け取るたびに 1 行。`classification` IN（`ADOPTED`、`DUPLICATE`、`QUARANTINED`、`DISCREPANCY`）。ハッシュが外部原本と同じなら重複、違えば隔離。`ingestion_id` は NULL を許す。取込で書くときは、取込の行を先に書き、行の原本を保存してから受信記録を書く（Bolt 39b）。追記専用の印を付け、UPDATE・DELETE の権限なし | BR-12、US-14 |
 | `received_record_decision` | 受信記録の判断。受信記録 1 件につき 1 つ（`received_record_id` の一意制約）。判断のやり直しは提供元からの再送（新しい受信記録）で扱う。`decision` IN（`ADOPTED`、`REJECTED`。前例の `review_record` の過去分詞にそろえる）。`reason` は NULL を許す。判断は隔離・差異の受信記録だけに付く。判断と分類の整合は表の制約で守らず、アプリケーションで判定する（Bolt 39d）。追記専用の印を付け、UPDATE・DELETE の権限なし（Bolt 39a3） | US-14 |
 | `adopted_value` | 採用した受信記録ごとに 1 つ（`received_record_id` の一意制約）。`target_type` IN（`VOYAGE`、`MILESTONE`。港湾は D-92 で Release 1.1）。採用値は分類が採用の受信記録と、採用と判断した受信記録だけに付く。採用値と判断・分類の整合は表の制約で守らず、アプリケーションで判定する（Bolt 39d）。ここから DE-12・DE-13 を発行する。追記専用の印を付け、UPDATE・DELETE の権限なし | ADR-004 |
 | `manual_entry` | 出典・入力者・入力時刻・仮状態を NOT NULL にする | BR-08 |

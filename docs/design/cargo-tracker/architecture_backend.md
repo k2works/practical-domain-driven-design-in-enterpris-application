@@ -4,7 +4,7 @@ title: "cargo-tracker バックエンドアーキテクチャ"
 description: "cargo-tracker の境界づけられたコンテキスト、コンテキストごとのドメインロジックパターン、パッケージ構成、サガとドメインイベントによる連携（ARCH-HO-01〜03）、受信サービスの方針。"
 tags: [design, architecture, backend]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-02T11:30:33Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-03T02:30:38Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:11:12Z }
   - { by: human:kakimomokuri, at: 2026-10-01T07:41:04Z }
@@ -129,7 +129,7 @@ end note
 | 経路設計 → 予約 | R → B | 顧客-供給者 | 経路算出方法を予約に漏らさない |
 | 予約 → 追跡 | B → T | 顧客-供給者 | 見積りの内部情報を追跡へ公開しない。追跡は DE-07（荷主・荷受人の企業 ID を含む）を購読し、結果を `booking :: api` で返す（ADR-015。Bolt 25） |
 | 経路設計 → 追跡 | R → T | 顧客-供給者 | 候補計算の内部過程を追跡へ公開しない。追跡は `routing :: api` で確定した経路版の区間を引く（Bolt 25） |
-| 外部データ → 経路設計・追跡 | X → R、T | 公開ホスト + 公表された言語 | 未検証の原本を採用値として渡さない。外部データ（`externaldata`。スキーマは `external_data`）はほかのコンテキストに依存しない上流で、採用値・隔離・判断をイベントで公開し（39b 以降）、経路設計の表を書かない。`allowedDependencies` は今は `shared` だけで、`platform :: web` は画面を作る 39c、`domain.events` の名前付きインターフェース（`events`）は最初のイベントを作る 39b で足す。下流（経路設計・追跡と、採否の監査を書くアクセス・監査）が `externaldata :: events` を足すのは、各 listener を作る Bolt（アクセス・監査は 39b、経路設計は 39e、追跡は 39g）。外部データのクラスが依存してよい型は、ModularityTest の許可リスト（`java..`・`externaldata..`・`shared..`・フレームワーク）で確かめる（Bolt 39。ADR-004 の改訂）。フレームワークの許可は使う Bolt で、使う層に限って足す（Bolt 39 は `org.springframework..` だけ）。許可リストは層別にする: `infrastructure` でないクラスは上の 4 つだけ、`externaldata..infrastructure..` のクラスはそれに加えて MyBatis（`org.apache.ibatis..`）に依存してよい（Bolt 39a2 の開始準備の決定 (2)）。前者が実際に守る層は `interfaces`（domain は DomainArchitectureTest、application は LayerArchitectureTest が先に守る）。W10 の AWS SDK も infrastructure に限って足す |
+| 外部データ → 経路設計・追跡 | X → R、T | 公開ホスト + 公表された言語 | 未検証の原本を採用値として渡さない。外部データ（`externaldata`。スキーマは `external_data`）はほかのコンテキストに依存しない上流で、採用値・隔離・判断をイベントで公開し（39b3 以降）、経路設計の表を書かない。`allowedDependencies` は今は `shared` だけで、`platform :: web` は画面を作る 39c、`domain.events` の名前付きインターフェース（`events`）は最初のイベントを作る 39b3 で足す。下流（経路設計・追跡と、採否の監査を書くアクセス・監査）が `externaldata :: events` を足すのは、各 listener を作る Bolt（アクセス・監査は 39b3、経路設計は 39e、追跡は 39g）。イベントと identity の listener は、Bolt 39b の開始準備で 39b を縦に 4 本に分けたときに 39b から 39b3 に移した。外部データのクラスが依存してよい型は、ModularityTest の許可リスト（`java..`・`externaldata..`・`shared..`・フレームワーク）で確かめる（Bolt 39。ADR-004 の改訂）。フレームワークの許可は使う Bolt で、使う層に限って足す（Bolt 39 は `org.springframework..` だけ）。許可リストは層別にする: `infrastructure` でないクラスは上の 4 つだけ、`externaldata..infrastructure..` のクラスはそれに加えて MyBatis（`org.apache.ibatis..`）に依存してよい（Bolt 39a2 の開始準備の決定 (2)）。前者が実際に守る層は `interfaces`（domain は DomainArchitectureTest、application は LayerArchitectureTest が先に守る）。W10 の AWS SDK も infrastructure に限って足す |
 | 外部 → 外部データ | EXT → X | 腐敗防止層 | 提供元の形式を経路規則へ直接漏らさない |
 | アクセス・監査 → 全体 | IA → 全体 | 公開ホスト | 認証方式・監査方式を業務規則へ埋め込まない |
 | 共有カーネル | 全業務コンテキスト | 共有カーネル（第 3 章） | 業務の意味を持たない基本型だけに限る。例外は担当範囲の外の試行の記録のポート `OutOfScopeAttemptRecorder` 1 つ（ADR-019。Bolt 38f） |
@@ -445,7 +445,7 @@ end note
 
 | 段階 | 方式 | 対応する規則 |
 | :--- | :--- | :--- |
-| 受信 | 原本を無加工で保存し、冪等性キー（提供元、原本種別、外部 ID、外部版）と payload のハッシュを付ける。原本はファイル全体と行の payload の両方を、保存のポート（`externaldata.domain.model.aggregates.ExternalPayloadStorage`。キーは呼び手が作る `PayloadObjectKey`、ハッシュは `PayloadHash`）を通して保存する。保存に成功するまで受信記録を書かない（保存 → 受信記録の順）。同じキーを上書きしない。補償は消さない（トランザクションが巻き戻っても原本は残し、受信記録から参照されない原本は照合で数える。ADR-010 の消す補償とは違う）。保存先は W7 は DB（39a2）、W10 で S3（Object Lock、RET-03）に差し替える（ADR-004 の改訂。Bolt 39）。DB の実装（`external_data.stored_payload`）は受信記録とは独立したトランザクション（REQUIRES_NEW）で保存し、外側のトランザクションが巻き戻っても原本を残す（S3 と同じ振る舞い）。外側のトランザクションの中から呼べる。同時の取込による接続の枯渇は受け入れ、行ごとの保存の量は 39b の PERF-06 で測る。S3 の実装の接続の扱いは W10 で決める（ADR-004 の改訂。Bolt 39a2） | BR-12、PV-01 の外部原本消失 0 件 |
+| 受信 | 原本を無加工で保存し、冪等性キー（提供元、原本種別、外部 ID、外部版）と payload のハッシュを付ける。原本はファイル全体と行の payload の両方を、保存のポート（`externaldata.domain.model.aggregates.ExternalPayloadStorage`。キーは呼び手が作る `PayloadObjectKey`、ハッシュは `PayloadHash`）を通して保存する。保存に成功するまで受信記録を書かない（保存 → 受信記録の順）。同じキーを上書きしない。補償は消さない（トランザクションが巻き戻っても原本は残し、受信記録から参照されない原本は照合で数える。ADR-010 の消す補償とは違う）。保存先は W7 は DB（39a2）、W10 で S3（Object Lock、RET-03）に差し替える（ADR-004 の改訂。Bolt 39）。DB の実装（`external_data.stored_payload`）は受信記録とは独立したトランザクション（REQUIRES_NEW）で保存し、外側のトランザクションが巻き戻っても原本を残す（S3 と同じ振る舞い）。外側のトランザクションの中から呼べる。同時の取込による接続の枯渇は受け入れ、行ごとの保存の量は 39b4 の PERF-06 で測る（Bolt 39b の開始準備で 39b から分けた）。S3 の実装の接続の扱いは W10 で決める（ADR-004 の改訂。Bolt 39a2） | BR-12、PV-01 の外部原本消失 0 件 |
 | 分類 | 同じキーで同じ payload は「重複」、同じキーで違う payload は「隔離」、新しいキーは検証して「採用」、同じ外部レコードの版の逆転と既存の採用値との矛盾は「差異」（US-14 AC5）。分類は採用・重複・隔離・差異の 4 つで、受信記録が持つ（Bolt 39 で 3 つから改めた。ADR-004 の改訂）。形式を検証できないファイルと行も、原本を保存したうえで隔離する（UC-15 2a） | BR-12 |
 | 採用値の公開 | 採用した値だけを、出典・版・発生時刻・取得時刻付きのドメインイベントとして公開する。経路設計は航海（Voyage）集約を、追跡は主要実績を、それぞれ自分のコマンドで更新する | units.md U5 → U2、U3 の契約 |
 | 手動入力 | 停止時の手動入力は出典・入力者・入力時刻・仮状態を必須にし、原本と同じ Inbox に別の種別で記録する | BR-08 |

@@ -4,7 +4,7 @@ title: "リリース計画 - cargo-tracker（A 社国際貨物輸送管理シス
 description: "cargo-tracker MVP のリリース計画。1 人 + AI、時間単位の Bolt（= イテレーション）と週次の見直しで、最初の縦の流れ（R0.1）、パイロット準備完了（R1.0）、本格展開前（R1.1）の 3 段階、Unit のエントロピー評価、SP、バッファ、パイロット開始の条件、引継ぎ ID の台帳、業務責任者に確かめる事項の台帳。"
 tags: [development,release-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-03T02:25:15Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-03T02:30:38Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T09:29:53Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:38:26Z }
@@ -884,7 +884,7 @@ US-18 の Bolt の順序は 31b → 31c → 31d → 32 → 32c → 32d → 32b �
 | 事項 | 決定 | 反映 |
 | :--- | :--- | :--- |
 | 取込ファイルの形式（OQ-02 の残り。回答なし） | 仮の形式で作る。CSV を 1 ファイル 1 種別にし、1 行に外部 ID・外部版・取得時刻・値を持つ（主要実績は追跡番号も持つ。DE-13 の属性）。署名の検証は形式の検証とハッシュだけにする（UC-15 2a）。回答が届いたら差し替えの Bolt を足す（Unit の評価の U5 の方針）。OQ-02 は台帳に残す | requirements_definition（OQ-02 の注）、system_usecase（UC-15 2a）、domain_model、test_strategy |
-| 取込の置き場所 | 新しいコンテキスト `externaldata`（スキーマは `external_data`）。外部データはほかのコンテキストに依存しない（`allowedDependencies` は `shared`・`platform :: web` だけ）。採用値と隔離と判断を DE-12（航海）・DE-13（主要実績）・DE-14（隔離）と判断のイベントで公開し、経路設計・追跡・identity が listener で受ける（それぞれの `allowedDependencies` に `externaldata :: events` を足す）。ModularityTest のモジュール一覧と型の依存の規則を足す（構造）。ADR に記録する（39 の計画で ADR-004 の改訂か ADR-020 かを諮る）。【前の決定の変更】Bolt 39 の開始準備の決定 (2)・(7)（2026-11-02、human:kakimomokuri）: ADR は ADR-004 を改訂する。「`shared`・`platform :: web` だけ」は許す範囲の上限と読み、39 の宣言は `shared` だけにする（`platform :: web` は画面を作る 39c、`domain.events` の名前付きインターフェースは最初のイベントを作る 39b で足す）。下流に `externaldata :: events` を足すのは、39 で 4 つのコンテキストをまとめてではなく、各 listener を作る Bolt（identity は 39b、経路設計は 39e、追跡は 39g）にする（[Bolt 39 計画](bolt_39_plan.md)） | architecture_backend（ARCH-HO-03 を含む）、ADR、ModularityTest、package-info |
+| 取込の置き場所 | 新しいコンテキスト `externaldata`（スキーマは `external_data`）。外部データはほかのコンテキストに依存しない（`allowedDependencies` は `shared`・`platform :: web` だけ）。採用値と隔離と判断を DE-12（航海）・DE-13（主要実績）・DE-14（隔離）と判断のイベントで公開し、経路設計・追跡・identity が listener で受ける（それぞれの `allowedDependencies` に `externaldata :: events` を足す）。ModularityTest のモジュール一覧と型の依存の規則を足す（構造）。ADR に記録する（39 の計画で ADR-004 の改訂か ADR-020 かを諮る）。【前の決定の変更】Bolt 39 の開始準備の決定 (2)・(7)（2026-11-02、human:kakimomokuri）: ADR は ADR-004 を改訂する。「`shared`・`platform :: web` だけ」は許す範囲の上限と読み、39 の宣言は `shared` だけにする（`platform :: web` は画面を作る 39c、`domain.events` の名前付きインターフェースは最初のイベントを作る 39b で足す）。下流に `externaldata :: events` を足すのは、39 で 4 つのコンテキストをまとめてではなく、各 listener を作る Bolt（identity は 39b、経路設計は 39e、追跡は 39g）にする（[Bolt 39 計画](bolt_39_plan.md)）。【前の決定の変更】Bolt 39b の開始準備の決定 (1)（2026-11-03、推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）: 39b を縦に 4 本に分けたので、`domain.events` の名前付きインターフェースと identity の監査の listener（identity の `externaldata :: events`）は 39b3 で足す（[Bolt 39b 計画](bolt_39b_plan.md)） | architecture_backend（ARCH-HO-03 を含む）、ADR、ModularityTest、package-info |
 | payload の保存【前の決定の変更】 | 保存のポートを `externaldata.domain.model.aggregates` に、実装を `externaldata.infrastructure` に置く（CLAUDE.md・ADR-017。前例は `RequiredDocumentStorage`）。W7 の実装は DB（開発はローカルのファイルでもよい）にし、DB にはキーとハッシュを持つ形をはじめから守る。「保存に成功するまで受信記録を書かない」順序と補償をポートの約束にしておく（ADR-010 の必要書類と同じ問題を W10 で起こさないため）。W10 で S3（Object Lock、RET-03 の 7 年）に差し替える。ADR-004 の決定 1（オブジェクトストレージ）と data_model の payload の注を W7 の間だけ変えるので、ADR に記録する | ADR-004・ADR、data_model（payload の注）、W10 の行 |
 | 情報源の管理（S-19） | 画面にせず運用タスクにし、W10 の運用準備で作る（W6 の管理範囲の割り当てと同じ）。情報源は（提供元、原本種別）の単位（`data_source.record_type`）。W7 は開発データとテストの準備で情報源を入れ、US-14 AC2 は照会（`PilotReadiness`）と、承認済みの情報源のない取込の拒否で確かめる | ui_design（S-19 の注と画面遷移図の「業務ホーム → S-19 → S-16」）、W10 の行 |
 | 取り込んだ主要実績（DE-13）の登録 | 前の決定（DE-13 で下書き `DRAFT` を作る。BR-05・US-13 AC4・UC-10 3c）を変えない。追跡管理者が下書きを採用する操作を W7 で作る。完了済みの追跡には受けたときに原本だけ（`RETAINED_ONLY`。AC5）、取消済みの予約には受けたときに拒否して記録する（AC4）。時系列に反する実績は、採用のときと手入力のときに確認中（`UNDER_REVIEW`、DE-18。AC3）にする | domain_model（DE-13・T-INV-03〜05・確認中の理由）、user_story（US-12 の決定） |
@@ -898,9 +898,9 @@ US-18 の Bolt の順序は 31b → 31c → 31d → 32 → 32c → 32d → 32b �
 | 1 | 受信記録の分類の数【前の決定の変更】 | 4 つ（採用・重複・隔離・差異）にする。US-14 AC5、domain_model の `Ingestion`（:1458）、data_model の `receipt.classification`（:1122）、S-16 の画面イメージ（:1757）に合わせ、3 つと書いた箇所を直す: ADR-004 の決定 2・3、domain_model :311、requirements_definition の BR-12（:732）、architecture_backend :447・:450 の ARCH-HO-03、system_usecase の UC-15 6a |
 | 2 | 隔離・差異の判断（S-17 の採用・却下と UC-15 の 6 段目の判断者）の記録 | `receipt` は追記専用（data_model :173）のまま、判断を別の追記専用の表（例: `external_data.receipt_decision`。判断・判断者・時刻・理由）に置く（スキーマ）。採用の判断で `adopted_value` を作り、DE-12・DE-13 を出す。隔離した payload を採用した後に同じ payload が再送されたとき（`external_record` は最初の payload のハッシュで比べる。data_model :1121）は重複にするか、39d の計画で決める |
 | 3 | 取込と判断をする役割 | データ責任者（`DATA_STEWARD`。`shared.domain.Role` に既にある）。取込（S-16）と判断（S-17）の認可、`/staff/external-data/**`、CSRF、ナビゲーション（データ責任者の業務ホームからの入口。ui_design :74・:141-142）とその検証のテスト。担当範囲では絞らない（情報源の単位で、荷主企業を持たない） |
-| 4 | 取込の単位と一括処理、PERF-06 | 1 ファイルを 1 つの取込（`Ingestion`）とし、行ごとに分類して受信記録を書く。1 ファイル 1 万件以下（non_functional :50）、DB の 1 文の上限（:81）の中に収める。39b の統合テストで 1 万件のファイルの時間を測る（PERF-06）。リスク台帳の PERF-06 の行（版の競合の連鎖）に従い、同じ追跡番号への集中を 39g の統合テストで確かめる。負荷テストは W10 |
+| 4 | 取込の単位と一括処理、PERF-06 | 1 ファイルを 1 つの取込（`Ingestion`）とし、行ごとに分類して受信記録を書く。1 ファイル 1 万件以下（non_functional :50）、DB の 1 文の上限（:81）の中に収める。39b の統合テストで 1 万件のファイルの時間を測る（PERF-06）。リスク台帳の PERF-06 の行（版の競合の連鎖）に従い、同じ追跡番号への集中を 39g の統合テストで確かめる。負荷テストは W10。【前の決定の変更】Bolt 39b の開始準備の決定 (1)（2026-11-03、推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）: 1 万件のファイルの時間を測る統合テストは 39b4 で作る（39b を縦に 4 本に分けたため） |
 | 5 | ファイルの解析の置き場所 | 解析は `externaldata.interfaces`（ADR-004 の `interfaces.file`）で行い、application には値だけを渡す（LayerArchitectureTest :86・:276。application は `MultipartFile` などの Web の技術に依存しない）。規則に当たったら諮る |
-| 6 | 形式の検証に失敗した行（UC-15 2a） | 39b で、隔離して理由を残す（DE-14）。データ責任者への通知は W9 の通知で受ける（W7 は S-17 の一覧に出す） |
+| 6 | 形式の検証に失敗した行（UC-15 2a） | 39b で、隔離して理由を残す（DE-14）。データ責任者への通知は W9 の通知で受ける（W7 は S-17 の一覧に出す）。【前の決定の変更】Bolt 39b の開始準備の決定 (1)（2026-11-03、推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）: 形式の誤りの隔離は 39b2、DE-14 は 39b3 で作る（39b を縦に 4 本に分けたため） |
 | 7 | 順序の逆転を判定する場所（ADR-004 は規則を 2 か所に分ける案を却下している） | 外部データの差異（US-14 AC5、39h）は、同じ外部レコードの版の逆転と、既存の採用値との矛盾だけを判定する。追跡の確認中（US-12 AC3、39g）は、追跡の実績の時系列（出典をまたぐ）だけを判定する。境界を domain_model の外部データの節と追跡の節に書く。実行の順は 39g の後に 39h のまま |
 | 8 | 手入力の実績への確認中の規則【前の決定の変更】 | 追跡管理者の手入力も、時系列に反すれば確認中にする（US-12 AC3。domain_model :1022 の「追跡管理者が登録した実績は採用」を変える） |
 | 9 | 取消済みの予約（US-12 AC4） | 予約を取消済みにする経路（DE-08 の受け手）は US-05（W11）なので、W7 は開発データとテストデータの取消済みの追跡で確かめる。拒否の記録は追跡に置く。有人例外案件（`service_case` の表はまだない）の起票は W8（US-20）でこの記録を受けてつなぐ。受入条件の照合の表では「有人例外案件に引き継ぐ」を W8 に送ったと書く（US-24・US-04 の前例） |
@@ -914,7 +914,7 @@ US-18 の Bolt の順序は 31b → 31c → 31d → 32 → 32c → 32d → 32b �
 | 17 | D-65 の残りのうち取込で変わるもの | `Voyage`・`ConnectionRule` の class 化と、航海の照会を時間の窓と港で絞ることは、書き手を作る 39e で行う。候補探索の量（航海が数百本のとき）は W10 の性能テストで確かめる。UC-07 5a（依頼の後の再提出で経路条件が得られない）は W7 の範囲の外として台帳に残す |
 | 18 | Golden dataset の G-06 | 欠落・矛盾の案件を 39h で足す（W6 の確認ポイント 11。v0 は古さだけ） |
 | 19 | DE-09・DE-10 を ADR-014 の形に直す（W7 に送られていた。architecture_backend :134、domain_model :1026・:1628、Bolt 26b 計画 :67・:312、Bolt 23 終了報告 :128。B-INV-06 と US-05（W11）の前提） | Bolt 39g2 を足して W7 で行う。Bolt 26b 終了報告 :107 の到着見込みと鮮度、P-3（追加する実績の選び方。版を通さずに実績を書く経路ができるため）も 39g2 |
-| 20 | SP の食い違い | US-14 は 8 SP（ユーザーストーリー一覧）。test_strategy :517 の 5 SP を直す。あわせて :518 の US-15 の 4 SP を W12 の行の 5 SP にそろえる |
+| 20 | SP の食い違い | US-14 は 8 SP（ユーザーストーリー一覧）。test_strategy :517 の 5 SP を直す。あわせて :518 の US-15 の 4 SP を W12 の行の 5 SP にそろえる。【取り下げ】2026-11-03（Bolt 39b のステップ 1）: test_strategy の列は SP ではなく受入条件の数で、US-14 の 5・US-15 の 4 は user_story の受入条件の数と一致するので直さない（事実の読み違いの訂正） |
 | 21 | 取込がない日の通知（FRS-04）と、隔離が 24 時間未判断の警告（OBS-06） | W7 では作らず、W10 の監視で作る |
 | 22 | 用語「差異」の重なり | 受信記録の分類の「差異」（`DISCREPANCY`）と、US-15 の復旧照合の差異（`reconciliation_discrepancy`）を用語集で区別する（39 のステップ 1） |
 | 23 | ユーザーマニュアル | 外部データの取込と隔離・差異の確認の章を新しく作る（新しいファイル。39c・39d）。主要実績の下書きの採用と確認中・取消済み・完了後は 9 章（追跡管理）に足す（39g）。振る舞いが変わる Bolt はマニュアルの更新を完了条件に入れる |
@@ -1513,4 +1513,5 @@ xychart-beta
 | 2026-11-03 | [Bolt 39a3 計画](bolt_39a3_plan.md)を作り、整合性検証の指摘を反映して承認した | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-11-03 | Bolt 39a3 のステップ 1・2 と[終了報告](bolt_39a3_report.md)を承認した（ステップ 2 から後は推奨のとおり。Recommend 承認の指示による） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-11-03 | 39b を 39b・39b2・39b3・39b4 に縦に分け、[Bolt 39b 計画](bolt_39b_plan.md)を作り、整合性検証の指摘を反映して承認した（規則の変更は個別に、ほかは推奨のとおり。Recommend 承認の指示による） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
+| 2026-11-03 | Bolt 39b のステップ 1（設計の文書）: W7 の設計の決定（取込の置き場所）と確認ポイント 4・6 に、39b を 4 本に分けたことによる【前の決定の変更】の注を足した | anthropic/claude-opus-5-5 |
 | 2026-10-28 | Bolt 38f2 のステップ 1 で、デモ項目の動画を撮る Bolt を 38f2b に直した | anthropic/claude-opus-5-5 |
