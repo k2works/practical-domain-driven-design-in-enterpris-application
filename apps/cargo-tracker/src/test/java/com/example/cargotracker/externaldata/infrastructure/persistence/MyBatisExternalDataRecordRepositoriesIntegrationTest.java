@@ -12,6 +12,7 @@ import com.example.cargotracker.externaldata.domain.model.valueobjects.Classific
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PayloadHash;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PayloadObjectKey;
 import com.example.cargotracker.shared.domain.UserId;
+import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.Optional;
 import java.util.UUID;
@@ -86,7 +87,8 @@ class MyBatisExternalDataRecordRepositoriesIntegrationTest extends ExternalDataR
     static Optional<Ingestion> readIngestion(JdbcTemplate jdbc, UUID id) {
         return jdbc
                 .query(
-                        "SELECT id, data_source_id, file_object_key, file_hash, ingested_by, ingested_at, received_count"
+                        "SELECT id, data_source_id, file_object_key, file_hash, ingested_by, ingested_at, received_count,"
+                                + " unparsed_from_line, unparsed_line_count"
                                 + " FROM external_data.ingestion WHERE id = ?",
                         (rs, rowNum) -> new Ingestion(
                                 rs.getObject("id", UUID.class),
@@ -96,7 +98,9 @@ class MyBatisExternalDataRecordRepositoriesIntegrationTest extends ExternalDataR
                                 new UserId(rs.getObject("ingested_by", UUID.class)),
                                 rs.getObject("ingested_at", OffsetDateTime.class)
                                         .toInstant(),
-                                rs.getInt("received_count")),
+                                rs.getInt("received_count"),
+                                rs.getObject("unparsed_from_line", Integer.class),
+                                rs.getInt("unparsed_line_count")),
                         id)
                 .stream()
                 .findFirst();
@@ -115,8 +119,7 @@ class MyBatisExternalDataRecordRepositoriesIntegrationTest extends ExternalDataR
                                 rs.getObject("ingestion_id", UUID.class),
                                 new PayloadHash(rs.getString("payload_hash")),
                                 new PayloadObjectKey(rs.getString("payload_object_key")),
-                                rs.getObject("acquired_at", OffsetDateTime.class)
-                                        .toInstant(),
+                                instantOrNull(rs.getObject("acquired_at", OffsetDateTime.class)),
                                 Classification.valueOf(rs.getString("classification")),
                                 rs.getString("classification_note"),
                                 rs.getObject("classified_at", OffsetDateTime.class)
@@ -124,5 +127,10 @@ class MyBatisExternalDataRecordRepositoriesIntegrationTest extends ExternalDataR
                         id)
                 .stream()
                 .findFirst();
+    }
+
+    /** キーのない隔離の取得時刻は NULL（Bolt 39b2 の行 18）。 */
+    private static Instant instantOrNull(OffsetDateTime value) {
+        return value == null ? null : value.toInstant();
     }
 }

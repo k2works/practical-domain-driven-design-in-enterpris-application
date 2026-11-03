@@ -24,6 +24,8 @@ public class MyBatisIngestionRepository implements IngestionRepository {
                 ingestion.fileHash().value(),
                 ingestion.ingestedBy().value(),
                 ingestion.ingestedAt().atOffset(ZoneOffset.UTC),
-                ingestion.receivedCount()));
+                ingestion.receivedCount(),
+                ingestion.unparsedFromLine(),
+                ingestion.unparsedLineCount()));
     }
 }

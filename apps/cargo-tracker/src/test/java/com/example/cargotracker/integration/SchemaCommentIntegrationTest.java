@@ -82,6 +82,21 @@ class SchemaCommentIntegrationTest {
     }
 
     @Test
+    void 外部データの件数とキーのない隔離の列の注釈は今の意味に合う() throws SQLException {
+        // Bolt 39b2: 受け取った件数は物理データ行の数、外部原本 ID と取得時刻は隔離だけ NULL を許す
+        Map<String, String> comments = query("SELECT c.table_name || '.' || c.column_name,"
+                + " col_description(('external_data.' || c.table_name)::regclass, c.ordinal_position)"
+                + " FROM information_schema.columns c WHERE c.table_schema = 'external_data'"
+                + " AND c.table_name IN ('ingestion', 'received_record')");
+
+        assertThat(comments.get("ingestion.received_count"))
+                .as("受け取った件数の単位は物理データ行")
+                .contains("物理データ行");
+        assertThat(comments.get("received_record.external_record_id")).contains("隔離は NULL 可");
+        assertThat(comments.get("received_record.acquired_at")).contains("隔離は NULL 可");
+    }
+
+    @Test
     void 追記専用の表は日本語名の後ろに印を付ける() throws SQLException {
         Map<String, String> comments =
                 query("SELECT n.nspname || '.' || c.relname, obj_description(c.oid, 'pg_class') FROM pg_class c"

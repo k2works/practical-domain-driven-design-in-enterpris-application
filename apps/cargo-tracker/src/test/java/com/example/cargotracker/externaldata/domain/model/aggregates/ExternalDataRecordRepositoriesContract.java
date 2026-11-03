@@ -19,7 +19,7 @@ import org.springframework.dao.DuplicateKeyException;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * 取込・外部原本・受信記録のリポジトリの契約（Bolt 39b の行 7・9b・10・12）。メモリ・H2・PostgreSQL の実装が継いで同じ約束を確かめる。
+ * 取込・外部原本・受信記録のリポジトリの契約（Bolt 39b の行 7・9b・10・12、Bolt 39b2 の行 18・19）。メモリ・H2・PostgreSQL の実装が継いで同じ約束を確かめる。
  * 取込と受信記録のポートは追記と数えることだけを持つので、書いた行の往復は継ぐ側が {@link #storedIngestion(UUID)}・
  * {@link #storedReceivedRecord(UUID)} で読む（ポートの外）。提供元の名前は乱数の UUID を含めて自分の行で絞る。
  *
@@ -64,6 +64,10 @@ public abstract class ExternalDataRecordRepositoriesContract {
     }
 
     private Ingestion ingestion(int receivedCount) {
+        return ingestion(receivedCount, null, 0);
+    }
+
+    private Ingestion ingestion(int receivedCount, Integer unparsedFromLine, int unparsedLineCount) {
         return new Ingestion(
                 UUID.randomUUID(),
                 source.id(),
@@ -71,7 +75,9 @@ public abstract class ExternalDataRecordRepositoriesContract {
                 hash("ファイル"),
                 new UserId(UUID.randomUUID()),
                 INGESTED_AT,
-                receivedCount);
+                receivedCount,
+                unparsedFromLine,
+                unparsedLineCount);
     }
 
     private ExternalRecord externalRecord(IdempotencyKey key) {
@@ -169,6 +175,87 @@ public abstract class ExternalDataRecordRepositoriesContract {
         receivedRecords().add(quarantined);
 
         assertThat(storedReceivedRecord(quarantined.id())).contains(quarantined);
+    }
+
+    @Test
+    void 行19_取込の取り込めなかった行の始まりと数を往復する() {
+        // 40 データ行のうち 12 行目（物理行）の引用符の閉じ忘れからファイルの終わりまで 29 行を取り込めなかった
+        Ingestion unclosed = ingestion(40, 12, 29);
+
+        ingestions().add(unclosed);
+
+        assertThat(storedIngestion(unclosed.id())).contains(unclosed);
+    }
+
+    @Test
+    void 行19_取り込めなかった行のない取込は始まりがNULLで数が0() {
+        Ingestion ingestion = ingestion(3);
+
+        ingestions().add(ingestion);
+
+        assertThat(storedIngestion(ingestion.id())).hasValueSatisfying(stored -> {
+            assertThat(stored.unparsedFromLine()).isNull();
+            assertThat(stored.unparsedLineCount()).isZero();
+        });
+    }
+
+    @Test
+    void 行19_取り込めなかった行の始まりと数の組み合わせが表のCHECKに反する取込は作れない() {
+        assertThatThrownBy(() -> ingestion(3, null, 3)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> ingestion(3, 2, 0)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> ingestion(3, null, -1)).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void 行18_外部原本と取得時刻のないキーのない隔離の受信記録を書いて読める() {
+        // ファイルの誤り（必要な列がない）。データ行は 2 行目から 3 行で、すべてを取り込めず、受信記録はファイル全体の原本を指す
+        Ingestion ingestion = ingestion(3, 2, 3);
+        ingestions().add(ingestion);
+        ReceivedRecord keyless = new ReceivedRecord(
+                UUID.randomUUID(),
+                null,
+                ingestion.id(),
+                ingestion.fileHash(),
+                ingestion.fileObjectKey(),
+                null,
+                Classification.QUARANTINED,
+                "ファイル: 必要な列がありません（acquired_at）。",
+                INGESTED_AT);
+
+        receivedRecords().add(keyless);
+
+        assertThat(storedReceivedRecord(keyless.id())).contains(keyless);
+        assertThat(receivedRecords().countByIngestionAndClassification(ingestion.id(), Classification.QUARANTINED))
+                .isEqualTo(1);
+    }
+
+    @Test
+    void 行18_外部原本か取得時刻のない受信記録は隔離のほかは表のCHECKと同じく作れない() {
+        for (Classification classification : Classification.values()) {
+            if (classification == Classification.QUARANTINED) {
+                continue;
+            }
+            assertThatThrownBy(() -> keylessReceivedRecord(null, ACQUIRED_AT, classification))
+                    .as("外部原本のない %s", classification)
+                    .isInstanceOf(IllegalArgumentException.class);
+            assertThatThrownBy(() -> keylessReceivedRecord(UUID.randomUUID(), null, classification))
+                    .as("取得時刻のない %s", classification)
+                    .isInstanceOf(IllegalArgumentException.class);
+        }
+    }
+
+    private static ReceivedRecord keylessReceivedRecord(
+            UUID externalRecordId, Instant acquiredAt, Classification classification) {
+        return new ReceivedRecord(
+                UUID.randomUUID(),
+                externalRecordId,
+                UUID.randomUUID(),
+                hash("行"),
+                PayloadObjectKey.newRecordPayload(),
+                acquiredAt,
+                classification,
+                null,
+                INGESTED_AT);
     }
 
     @Test

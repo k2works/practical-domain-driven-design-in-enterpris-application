@@ -2,7 +2,7 @@
 type: Plan
 title: "Bolt 39b2 計画 - 形式の誤りの隔離（ファイル・行・閉じ忘れ・文字コード）と件数の突き合わせ"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-03T04:53:51Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-03T05:04:31Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-11-03T04:48:45Z }
 ---
@@ -337,7 +337,7 @@ er |o--o{ rr
 ## ステップ計画（ステップごとに止める）
 
 - [x] **1. 設計の文書**（2026-11-03、推奨のとおり承認として記録した（Recommend 承認の指示による。human:kakimomokuri）。取込の CHECK の名前はステップ 2 で決めて ER 図にそろえる）: 上の「設計文書に直す箇所」（完了の判定: 文書の差分。**承認ゲート**）
-- [ ] **2. スキーマとポート（Red → Green）**: 行 18・19 のスキーマのテストと、キーのない隔離・取込の取り込めなかった行の往復の契約のテスト（`@Transactional` は契約のクラスに。T-231）を先に書いて落ちることを確かめ（落ちた理由を記録する。T-217）、common の新しい版、`ReceivedRecord`・`Ingestion` とメモリ・MyBatis の実装を直す（完了の判定: 緑、`spotbugsMain`（T-232）。**承認ゲート**（データベース））
+- [x] **2. スキーマとポート（Red → Green）**（2026-11-03、推奨のとおり承認として記録した（Recommend 承認の指示による。human:kakimomokuri）。Red はコンパイルの誤りと、コンポーネントだけを足したときの 22 本（規則がない・列がない・NOT NULL の違反・COMMENT）。マイグレーションは common の 1 版、CHECK は `ck_received_record_keyless_quarantine`・`ck_ingestion_unparsed_lines`。`ReceivedRecord` の型の規則のテストは契約のクラスに置いた。spotbugsMain は指摘なし）: 行 18・19 のスキーマのテストと、キーのない隔離・取込の取り込めなかった行の往復の契約のテスト（`@Transactional` は契約のクラスに。T-231）を先に書いて落ちることを確かめ（落ちた理由を記録する。T-217）、common の新しい版、`ReceivedRecord`・`Ingestion` とメモリ・MyBatis の実装を直す（完了の判定: 緑、`spotbugsMain`（T-232）。**承認ゲート**（データベース））
 - [ ] **3. 解析（Red → Green）**: 行 5b・6・6b・10〜12・15 の解析の単体のテストを先に書き、厳密な UTF-8、終わりの物理行と原文、物理データ行の数を作る（完了の判定: 緑、`spotbugsMain`。**承認ゲート**）
 - [ ] **4. 形式の誤りと取込のサービス（Red → Green）**: 行 1・5・6b・10・12〜17・20 のサービスの単体のテストを先に書き、`FormatDefect`、コマンドと結果の型の変更、キーのない隔離の受信記録、取込の取り込めなかった行、注記の文言、`reconciles()` を作る（完了の判定: 緑、`spotbugsMain`。**承認ゲート**（構造: 新しい値オブジェクト、コマンドと結果の型））
 - [ ] **5. 組み立て（Red → Green）**: 行 1〜12（5b・6b を含む）・17 の組み立ての単体のテストを先に書き、`IngestFileCommandAssembler` を作る（完了の判定: 緑、`spotbugsMain`。**承認ゲート**（構造: 新しいクラス））

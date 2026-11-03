@@ -25,7 +25,9 @@ public class MyBatisReceivedRecordRepository implements ReceivedRecordRepository
                 receivedRecord.ingestionId(),
                 receivedRecord.payloadHash().value(),
                 receivedRecord.payloadObjectKey().value(),
-                receivedRecord.acquiredAt().atOffset(ZoneOffset.UTC),
+                receivedRecord.acquiredAt() == null
+                        ? null
+                        : receivedRecord.acquiredAt().atOffset(ZoneOffset.UTC),
                 receivedRecord.classification().name(),
                 receivedRecord.classificationNote(),
                 receivedRecord.classifiedAt().atOffset(ZoneOffset.UTC)));

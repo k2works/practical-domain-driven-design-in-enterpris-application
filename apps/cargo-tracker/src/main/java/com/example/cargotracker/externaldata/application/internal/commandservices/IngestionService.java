@@ -107,7 +107,9 @@ public class IngestionService {
                 PayloadHash.of(file),
                 operator.userId(),
                 now,
-                command.receivedCount());
+                command.receivedCount(),
+                null,
+                0);
         ingestions.add(ingestion);
         return ingestion;
     }
