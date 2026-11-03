@@ -58,7 +58,7 @@ public sealed interface CsvHeader {
     }
 
     /**
-     * ファイルの誤り。
+     * ファイルの誤り。理由はファイルの誤りになりうるものに限る（{@link FormatDefect#occursIn(FormatDefect.Extent)}）。
      *
      * @param defect 形式の誤り
      * @param columns 理由にかかわる列の名前（足りない列、重なった列）
@@ -66,6 +66,9 @@ public sealed interface CsvHeader {
     record FileError(FormatDefect defect, List<String> columns) implements CsvHeader {
 
         public FileError {
+            if (!defect.occursIn(FormatDefect.Extent.FILE)) {
+                throw new IllegalArgumentException("ファイルの誤りにならない理由: " + defect);
+            }
             columns = List.copyOf(columns);
         }
     }

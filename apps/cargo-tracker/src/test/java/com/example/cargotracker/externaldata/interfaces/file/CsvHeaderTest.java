@@ -1,6 +1,7 @@
 package com.example.cargotracker.externaldata.interfaces.file;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.example.cargotracker.externaldata.domain.model.valueobjects.FormatDefect;
 import java.nio.charset.Charset;
@@ -81,5 +82,21 @@ class CsvHeaderTest {
         assertThat(CsvHeader.check(
                         List.of("external_id", "external_version", "acquired_at", "external_id"), CsvFileKind.VOYAGE))
                 .isEqualTo(new CsvHeader.FileError(FormatDefect.DUPLICATE_COLUMN, List.of("external_id")));
+    }
+
+    @Test
+    void 行1_ファイルの誤りにならない形式の誤りはファイルの誤りにできない() {
+        List<String> none = List.of();
+
+        for (FormatDefect defect : List.of(
+                FormatDefect.UNCLOSED_QUOTE,
+                FormatDefect.TEXT_AFTER_CLOSING_QUOTE,
+                FormatDefect.BARE_QUOTE,
+                FormatDefect.COLUMN_COUNT_MISMATCH,
+                FormatDefect.EMPTY_VALUE)) {
+            assertThatThrownBy(() -> new CsvHeader.FileError(defect, none))
+                    .as("ファイルの誤りの %s", defect)
+                    .isInstanceOf(IllegalArgumentException.class);
+        }
     }
 }

@@ -12,7 +12,7 @@ import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 
 /**
- * 仮の CSV（RFC 4180）の解析（Bolt 39 の行 9〜11 と、開発レビューで決めたヘッダー・空の行・誤りの範囲。Bolt 39b2 の行 5b・6・6b・10〜12・15。
+ * 仮の CSV（RFC 4180）の解析（Bolt 39 の行 9〜11 と、開発レビューで決めたヘッダー・空の行・誤りの範囲。Bolt 39b2 の行 1・4・5b・6・6b・10〜12・15・15b。
  * 厳密な UTF-8、終わりの物理行と原文、物理データ行の数）。
  */
 class CsvRecordsTest {
@@ -36,6 +36,10 @@ class CsvRecordsTest {
         return new CsvRowError(lineNumber, lastLineNumber, defect, raw, false);
     }
 
+    private static CsvRowError mismatch(int lineNumber, int lastLineNumber, int columnCount, String raw) {
+        return new CsvRowError(lineNumber, lastLineNumber, FormatDefect.COLUMN_COUNT_MISMATCH, raw, false, columnCount);
+    }
+
     private static CsvRowError untilEndOfFile(int lineNumber, int lastLineNumber, FormatDefect defect, String raw) {
         return new CsvRowError(lineNumber, lastLineNumber, defect, raw, true);
     }
@@ -43,8 +47,8 @@ class CsvRecordsTest {
     /** 行の結果と誤りの物理行の数の合計（受け取った件数と突き合わせる値）。 */
     private static int spannedLines(CsvRecords records) {
         return Stream.concat(
-                        records.rows().stream().map(r -> r.lastLineNumber() - r.lineNumber() + 1),
-                        records.errors().stream().map(e -> e.lastLineNumber() - e.lineNumber() + 1))
+                        records.rows().stream().map(r -> r.range().lineCount()),
+                        records.errors().stream().map(e -> e.range().lineCount()))
                 .mapToInt(Integer::intValue)
                 .sum();
     }
@@ -133,10 +137,7 @@ class CsvRecordsTest {
         CsvRecords records = parse("a,b\n1,2,3\n4\n5,6\n");
 
         assertThat(records.rows()).containsExactly(row(4, "5,6", "5", "6"));
-        assertThat(records.errors())
-                .containsExactly(
-                        error(2, 2, FormatDefect.COLUMN_COUNT_MISMATCH, "1,2,3"),
-                        error(3, 3, FormatDefect.COLUMN_COUNT_MISMATCH, "4"));
+        assertThat(records.errors()).containsExactly(mismatch(2, 2, 3, "1,2,3"), mismatch(3, 3, 1, "4"));
     }
 
     @Test
@@ -144,7 +145,18 @@ class CsvRecordsTest {
         CsvRecords records = parse("a,b\n\"x\ny\"\n3,4\n");
 
         assertThat(records.rows()).containsExactly(row(4, "3,4", "3", "4"));
-        assertThat(records.errors()).containsExactly(error(2, 3, FormatDefect.COLUMN_COUNT_MISMATCH, "\"x\ny\""));
+        assertThat(records.errors()).containsExactly(mismatch(2, 3, 1, "\"x\ny\""));
+    }
+
+    @Test
+    void 行4_列数の違う行の誤りは解析で数えたその行の列数を持ちほかの誤りは列数を持たない() {
+        CsvRecords records = parse("a,b\n1,\"x,\ny\",3\n4,5\"6\n");
+
+        assertThat(records.errors()).extracting(CsvRowError::columnCount).containsExactly(3, null);
+        assertThatThrownBy(() -> new CsvRowError(2, 2, FormatDefect.COLUMN_COUNT_MISMATCH, "1", false, null))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> new CsvRowError(2, 2, FormatDefect.BARE_QUOTE, "1", false, 2))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
@@ -193,6 +205,25 @@ class CsvRecordsTest {
     }
 
     @Test
+    void 行1_読めなかった行の誤りにファイルの誤りの理由と飲み込めない理由を持たせられない() {
+        for (FormatDefect defect : List.of(
+                FormatDefect.UNDECODABLE,
+                FormatDefect.UNREADABLE_HEADER,
+                FormatDefect.MISSING_COLUMN,
+                FormatDefect.DUPLICATE_COLUMN)) {
+            assertThatThrownBy(() -> new CsvRowError(2, 2, defect, "x", false))
+                    .as("行の誤りの %s", defect)
+                    .isInstanceOf(IllegalArgumentException.class);
+            assertThatThrownBy(() -> new CsvRowError(2, 2, defect, "x", true))
+                    .as("飲み込んだ %s", defect)
+                    .isInstanceOf(IllegalArgumentException.class);
+        }
+        assertThatThrownBy(() -> new CsvRowError(2, 2, FormatDefect.EMPTY_VALUE, "x", true))
+                .as("飲み込んだ空の値")
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
     void ヘッダーの行が読めなければヘッダーを読めないとしてほかの行を読まない() {
         CsvRecords records = parse("a,b\"c\n1,2\n\n3,4");
 
@@ -222,14 +253,38 @@ class CsvRecordsTest {
     }
 
     @Test
-    void 行5b_ヘッダーの閉じ忘れはヘッダーを読めず件数は最初のLFの後の空行を除いた物理行で数える() {
+    void 行5b_ヘッダーの閉じ忘れはヘッダーを読めず件数はヘッダーの行の後の飲み込んだ物理行を空行も含めて数える() {
         CsvRecords records = parse("a,\"b\n1,2\n\n3,4\n");
 
         assertThat(records.headerUnreadable()).isTrue();
         assertThat(records.rows()).isEmpty();
         assertThat(records.errors())
                 .containsExactly(untilEndOfFile(1, 4, FormatDefect.UNCLOSED_QUOTE, "a,\"b\n1,2\n\n3,4"));
-        assertThat(records.dataLineCount()).isEqualTo(2);
+        assertThat(records.dataLineCount()).isEqualTo(3);
+        assertThat(records.firstDataLineNumber()).isEqualTo(2);
+    }
+
+    @Test
+    void 行15b_飲み込んだ範囲は壊れたレコードの中なので空行も物理行として数える() {
+        CsvRecords dataRow = parse("a,b\n1,2\n\"3,4\n\n5,6\n");
+        CsvRecords header = parse("\n\"a\"x,\"b\n\n1,2\n");
+
+        assertThat(dataRow.errors()).containsExactly(untilEndOfFile(3, 5, FormatDefect.UNCLOSED_QUOTE, "\"3,4\n\n5,6"));
+        assertThat(dataRow.dataLineCount()).isEqualTo(4).isEqualTo(spannedLines(dataRow));
+        assertThat(header.errors())
+                .containsExactly(untilEndOfFile(2, 4, FormatDefect.TEXT_AFTER_CLOSING_QUOTE, "\"a\"x,\"b\n\n1,2"));
+        assertThat(header.dataLineCount()).isEqualTo(2);
+        assertThat(header.firstDataLineNumber()).isEqualTo(3);
+    }
+
+    @Test
+    void 行15b_飲み込まずに読まなかったヘッダーの後と文字コードの誤りは空行を除いて数える() {
+        CsvRecords unreadHeader = parse("a,b\"c\n1,2\n\n3,4");
+        CsvRecords undecodable = CsvRecords.parse("a,b\n航海\n\n1,2\n".getBytes(Charset.forName("Shift_JIS")));
+
+        assertThat(unreadHeader.dataLineCount()).isEqualTo(2);
+        assertThat(undecodable.undecodable()).isTrue();
+        assertThat(undecodable.dataLineCount()).isEqualTo(2);
     }
 
     @Test
@@ -256,7 +311,7 @@ class CsvRecordsTest {
     }
 
     @Test
-    void 行6b_ヘッダーで飲み込めばヘッダーを読めず件数は最初のLFの後の物理行で数える() {
+    void 行6b_ヘッダーで飲み込めばヘッダーを読めず件数はヘッダーの行の後の飲み込んだ物理行で数える() {
         CsvRecords records = parse("\"a\"x,\"b\n1,2\n");
 
         assertThat(records.headerUnreadable()).isTrue();

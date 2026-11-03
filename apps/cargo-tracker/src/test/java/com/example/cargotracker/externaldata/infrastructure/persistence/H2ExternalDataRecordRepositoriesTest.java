@@ -6,11 +6,15 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.example.cargotracker.externaldata.domain.model.aggregates.DataSource;
 import com.example.cargotracker.externaldata.domain.model.aggregates.DataSource.ApprovalStatus;
 import com.example.cargotracker.externaldata.domain.model.aggregates.ExternalDataRecordRepositoriesContract;
+import com.example.cargotracker.externaldata.domain.model.aggregates.ExternalRecord;
 import com.example.cargotracker.externaldata.domain.model.aggregates.ExternalRecordRepository;
 import com.example.cargotracker.externaldata.domain.model.aggregates.Ingestion;
 import com.example.cargotracker.externaldata.domain.model.aggregates.IngestionRepository;
 import com.example.cargotracker.externaldata.domain.model.aggregates.ReceivedRecord;
 import com.example.cargotracker.externaldata.domain.model.aggregates.ReceivedRecordRepository;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.IdempotencyKey;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.PayloadHash;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.PayloadObjectKey;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -88,6 +92,29 @@ class H2ExternalDataRecordRepositoriesTest extends ExternalDataRecordRepositorie
                     .satisfies(e ->
                             assertThat(e.getMessage()).containsIgnoringCase("ck_received_record_keyless_quarantine"));
         }
+    }
+
+    @Test
+    void 行18_H2でも外部原本と取得時刻の片方だけがNULLの隔離は制約の違反() {
+        ExternalRecord externalRecord = new ExternalRecord(
+                UUID.randomUUID(),
+                new IdempotencyKey("H2 の提供元-" + UUID.randomUUID(), "VOYAGE", "V-101", "1"),
+                PayloadHash.of(new byte[] {1}),
+                PayloadObjectKey.newRecordPayload(),
+                NOW.toInstant());
+        externalRecords.add(externalRecord);
+        UUID externalRecordId = externalRecord.id();
+
+        assertThatThrownBy(() -> insertReceivedRecord(null, NOW, "QUARANTINED"))
+                .as("外部原本だけがない隔離")
+                .isInstanceOf(DataIntegrityViolationException.class)
+                .satisfies(
+                        e -> assertThat(e.getMessage()).containsIgnoringCase("ck_received_record_keyless_quarantine"));
+        assertThatThrownBy(() -> insertReceivedRecord(externalRecordId, null, "QUARANTINED"))
+                .as("取得時刻だけがない隔離")
+                .isInstanceOf(DataIntegrityViolationException.class)
+                .satisfies(
+                        e -> assertThat(e.getMessage()).containsIgnoringCase("ck_received_record_keyless_quarantine"));
     }
 
     @Test

@@ -175,7 +175,7 @@ class IngestionServiceTest {
         assertThat(resent.externalRecordId()).isEqualTo(first.rows().getFirst().externalRecordId());
         ReceivedRecord received = receivedRecords.all().getLast();
         assertThat(received.ingestionId()).isEqualTo(second.ingestionId());
-        assertThat(received.classificationNote()).contains("同じ原本を受け取り済み");
+        assertThat(received.classificationNote()).isEqualTo("2 行目: 同じ原本を受け取り済みです。");
     }
 
     @Test
@@ -293,11 +293,12 @@ class IngestionServiceTest {
     @Test
     void 行7_別の原本種別の情報源で同じ外部IDと外部版の行は別のキーでどちらも採用() {
         DataSource voyageSource = approvedSource(milestoneSource.provider(), "VOYAGE");
-        String voyageLine = "MS-0001,1," + ACQUIRED;
+        // 航海の外部 ID は航海番号の形にする（T-230）。主要実績と同じ外部 ID でも原本種別が違えば別のキー
+        String voyageLine = "V-101,1," + ACQUIRED;
         IngestedRow voyageRow =
-                new IngestedRow(2, 2, "MS-0001", "1", ACQUIRED, voyageLine.getBytes(StandardCharsets.UTF_8));
+                new IngestedRow(2, 2, "V-101", "1", ACQUIRED, voyageLine.getBytes(StandardCharsets.UTF_8));
 
-        service().ingest(steward, file(milestoneSource, milestone(2, "MS-0001", "1", "CTABCDEFGH2345")));
+        service().ingest(steward, file(milestoneSource, milestone(2, "V-101", "1", "CTABCDEFGH2345")));
         Ingested voyage = ingested(service()
                 .ingest(
                         steward,
@@ -679,7 +680,7 @@ class IngestionServiceTest {
             ReceivedRecord received = onlyKeylessQuarantine();
             assertThat(storage.read(received.payloadObjectKey())).isEqualTo(utf8(broken));
             assertThat(received.payloadHash()).isEqualTo(PayloadHash.of(utf8(broken)));
-            assertThat(received.classificationNote()).isEqualTo("3 行目: 列の数がヘッダーと違います（ヘッダー 4 列、この行 5 列）。");
+            assertThat(received.classificationNote()).isEqualTo("3 行目: 列の数がヘッダーと違います（ヘッダー 4 列、この行 5 列）。提供元に確かめてください。");
             assertThat(calls)
                     .containsExactly(
                             "store:ingestions",
@@ -717,7 +718,8 @@ class IngestionServiceTest {
 
             ingested(service().ingest(steward, command));
 
-            assertThat(onlyKeylessQuarantine().classificationNote()).isEqualTo("3 行目から 4 行目まで: 閉じた引用符の後に文字があります。");
+            assertThat(onlyKeylessQuarantine().classificationNote())
+                    .isEqualTo("3 行目から 4 行目まで: 閉じた引用符の後に文字があります。提供元に確かめてください。");
         }
 
         @Test
@@ -797,26 +799,86 @@ class IngestionServiceTest {
 
         @Test
         void 行15_取り込めなかった物理行があるのに始まりがない部分はコマンドにできない() {
-            assertThatThrownBy(() -> new UnreadablePart(null, 2, FormatDefect.UNCLOSED_QUOTE, List.of(), utf8("x")))
+            byte[] raw = utf8("x");
+            List<String> none = List.of();
+
+            assertThatThrownBy(() -> new UnreadablePart(null, 2, FormatDefect.UNCLOSED_QUOTE, none, raw))
                     .isInstanceOf(IllegalArgumentException.class);
-            assertThatThrownBy(() -> new UnreadablePart(3, 0, FormatDefect.UNCLOSED_QUOTE, List.of(), utf8("x")))
+            assertThatThrownBy(() -> new UnreadablePart(3, 0, FormatDefect.UNCLOSED_QUOTE, none, raw))
                     .isInstanceOf(IllegalArgumentException.class);
-            assertThatThrownBy(() -> new UnreadablePart(null, 0, FormatDefect.UNCLOSED_QUOTE, List.of(), utf8("x")))
+            assertThatThrownBy(() -> new UnreadablePart(null, 0, FormatDefect.UNCLOSED_QUOTE, none, raw))
                     .isInstanceOf(IllegalArgumentException.class);
         }
 
         @Test
         void 行15_終わりが始まりより前の行はコマンドにできない() {
-            assertThatThrownBy(() -> rejected(4, 3, FormatDefect.BARE_QUOTE, "x"))
+            byte[] raw = utf8("x");
+            List<String> none = List.of();
+
+            assertThatThrownBy(() -> new RejectedRow(4, 3, FormatDefect.BARE_QUOTE, none, raw))
                     .isInstanceOf(IllegalArgumentException.class);
-            assertThatThrownBy(() -> new IngestedRow(4, 3, "MS-0001", "1", ACQUIRED, utf8("x")))
+            assertThatThrownBy(() -> new IngestedRow(4, 3, "MS-0001", "1", ACQUIRED, raw))
                     .isInstanceOf(IllegalArgumentException.class);
         }
 
         @Test
         void 行15_外部原本を持たない行の結果は隔離だけ() {
-            assertThatThrownBy(() -> new RowResult(2, 2, Classification.ADOPTED, null, UUID.randomUUID()))
+            UUID receivedRecordId = UUID.randomUUID();
+
+            assertThatThrownBy(() -> new RowResult(2, 2, Classification.ADOPTED, null, receivedRecordId))
                     .isInstanceOf(IllegalArgumentException.class);
+        }
+
+        @Test
+        void 行1_行の誤りにならない形式の誤りは行の誤りのコマンドにできない() {
+            byte[] raw = utf8("x");
+            List<String> none = List.of();
+
+            for (FormatDefect defect : List.of(
+                    FormatDefect.UNCLOSED_QUOTE,
+                    FormatDefect.UNDECODABLE,
+                    FormatDefect.UNREADABLE_HEADER,
+                    FormatDefect.MISSING_COLUMN,
+                    FormatDefect.DUPLICATE_COLUMN)) {
+                assertThatThrownBy(() -> new RejectedRow(2, 2, defect, none, raw))
+                        .as("行の誤りの %s", defect)
+                        .isInstanceOf(IllegalArgumentException.class);
+            }
+        }
+
+        @Test
+        void 行1_ファイルの誤りは原文を持たずファイルの終わりまでの範囲は原文を持つ() {
+            byte[] raw = utf8("x");
+            List<String> none = List.of();
+
+            assertThatThrownBy(() -> new UnreadablePart(2, 1, FormatDefect.MISSING_COLUMN, none, raw))
+                    .as("原文を持つファイルの誤り")
+                    .isInstanceOf(IllegalArgumentException.class);
+            assertThatThrownBy(() -> new UnreadablePart(2, 1, FormatDefect.UNCLOSED_QUOTE, none, null))
+                    .as("原文を持たない閉じ忘れ")
+                    .isInstanceOf(IllegalArgumentException.class);
+            assertThatThrownBy(() -> new UnreadablePart(2, 1, FormatDefect.BARE_QUOTE, none, null))
+                    .as("原文を持たない飲み込み")
+                    .isInstanceOf(IllegalArgumentException.class);
+        }
+
+        @Test
+        void 行1_ファイルの誤りにもファイルの終わりまでの範囲にもならない形式の誤りは取り込めなかった部分にできない() {
+            byte[] raw = utf8("x");
+            List<String> none = List.of();
+
+            for (FormatDefect defect : List.of(
+                    FormatDefect.COLUMN_COUNT_MISMATCH,
+                    FormatDefect.EMPTY_VALUE,
+                    FormatDefect.INVALID_TIME,
+                    FormatDefect.TOO_LONG)) {
+                assertThatThrownBy(() -> new UnreadablePart(2, 1, defect, none, raw))
+                        .as("原文付きの %s", defect)
+                        .isInstanceOf(IllegalArgumentException.class);
+                assertThatThrownBy(() -> new UnreadablePart(2, 1, defect, none, null))
+                        .as("原文のない %s", defect)
+                        .isInstanceOf(IllegalArgumentException.class);
+            }
         }
 
         @Test

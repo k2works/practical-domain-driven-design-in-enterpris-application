@@ -1,6 +1,8 @@
 package com.example.cargotracker.externaldata.application.internal.commands;
 
 import com.example.cargotracker.externaldata.domain.model.valueobjects.FormatDefect;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.FormatDefect.Extent;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.PhysicalLineRange;
 import com.example.cargotracker.shared.annotation.ddd.Command;
 import java.time.Instant;
 import java.util.Arrays;
@@ -29,6 +31,9 @@ public record IngestFileCommand(
         List<IngestedRow> rows,
         List<RejectedRow> rejectedRows,
         UnreadablePart unreadable) {
+
+    /** 文字列の表現の原本の大きさの見出し（原本の中身は表現に出さない）。 */
+    private static final String SIZE = ", size=";
 
     public IngestFileCommand {
         Objects.requireNonNull(dataSourceId, "dataSourceId");
@@ -71,7 +76,7 @@ public record IngestFileCommand(
 
     @Override
     public String toString() {
-        return "IngestFileCommand[dataSourceId=" + dataSourceId + ", size=" + filePayload.length + ", receivedCount="
+        return "IngestFileCommand[dataSourceId=" + dataSourceId + SIZE + filePayload.length + ", receivedCount="
                 + receivedCount + ", rows=" + rows.size() + ", rejectedRows=" + rejectedRows.size() + ", unreadable="
                 + unreadable + "]";
     }
@@ -101,6 +106,11 @@ public record IngestFileCommand(
             Objects.requireNonNull(acquiredAt, "acquiredAt");
             payload = Objects.requireNonNull(payload, "payload").clone();
             requireLineRange(lineNumber, lastLineNumber);
+        }
+
+        /** 行の物理行の範囲。 */
+        public PhysicalLineRange range() {
+            return new PhysicalLineRange(lineNumber, lastLineNumber);
         }
 
         @Override
@@ -136,14 +146,14 @@ public record IngestFileCommand(
         @Override
         public String toString() {
             return "IngestedRow[lineNumber=" + lineNumber + ", lastLineNumber=" + lastLineNumber + ", externalId="
-                    + externalId + ", externalVersion=" + externalVersion + ", acquiredAt=" + acquiredAt + ", size="
+                    + externalId + ", externalVersion=" + externalVersion + ", acquiredAt=" + acquiredAt + SIZE
                     + payload.length + "]";
         }
     }
 
     /**
      * 行の誤り。形式の誤りで外部原本を持てない 1 行（Bolt 39b2）。payload はその行の物理行の原文（形式の正しい行と同じ範囲。UTF-8）で、
-     * 取込のサービスが保存してからキーのない隔離の受信記録にする。
+     * 取込のサービスが保存してからキーのない隔離の受信記録にする。理由は行の誤りになりうるものに限る（{@link Extent#ROW}）。
      *
      * @param lineNumber 行が始まる物理行の番号
      * @param lastLineNumber 行が終わる物理行の番号
@@ -159,6 +169,14 @@ public record IngestFileCommand(
             details = List.copyOf(Objects.requireNonNull(details, "details"));
             payload = Objects.requireNonNull(payload, "payload").clone();
             requireLineRange(lineNumber, lastLineNumber);
+            if (!defect.occursIn(Extent.ROW)) {
+                throw new IllegalArgumentException("行の誤りにならない理由: " + defect);
+            }
+        }
+
+        /** 行の物理行の範囲。 */
+        public PhysicalLineRange range() {
+            return new PhysicalLineRange(lineNumber, lastLineNumber);
         }
 
         @Override
@@ -191,7 +209,7 @@ public record IngestFileCommand(
         @Override
         public String toString() {
             return "RejectedRow[lineNumber=" + lineNumber + ", lastLineNumber=" + lastLineNumber + ", defect=" + defect
-                    + ", details=" + details + ", size=" + payload.length + "]";
+                    + ", details=" + details + SIZE + payload.length + "]";
         }
     }
 
@@ -199,7 +217,8 @@ public record IngestFileCommand(
      * 取り込めなかった部分（Bolt 39b2）。ファイルの誤り（文字コード・ヘッダーが読めない・必要な列がない・同じ名前の列）は原文を持たず
      * （{@code payload} が {@code null}）、取込のサービスはファイル全体の原本を指す。データ行があれば始まりは最初のデータ行、数は受け取った
      * 件数のすべてで、データ行がなければ始まりは {@code null}、数は 0。引用符が閉じないままファイルの終わりまで飲み込んだ範囲は、始まりの行から
-     * ファイルの終わりまでの原文を持つ。どちらも取込全体の要確認になる。
+     * ファイルの終わりまでの原文を持つ。どちらも取込全体の要確認になる。ファイルの誤りかどうかは理由の範囲（{@link Extent}）で決め、理由と
+     * 原文の有無と物理行の組み合わせをコンストラクタで確かめる（原文の有無でファイルの誤りを判定しない。Bolt 39b2 の開発レビュー）。
      *
      * @param fromLine 取り込めなかった行の始まり（物理行の番号。数が 0 なら {@code null}）
      * @param lineCount 取り込めなかった物理行の数
@@ -219,8 +238,19 @@ public record IngestFileCommand(
             if (!none && !some) {
                 throw new IllegalArgumentException("取り込めなかった行の始まりと数が合わない: " + fromLine + "・" + lineCount);
             }
-            if (payload != null && none) {
-                throw new IllegalArgumentException("原文を持つ取り込めなかった部分は物理行を持つ: " + defect);
+            requireExtent(defect, payload != null, none);
+        }
+
+        /** 理由の範囲と、原文の有無・物理行の有無の組み合わせを確かめる。 */
+        private static void requireExtent(FormatDefect defect, boolean hasPayload, boolean noLines) {
+            if (defect.occursIn(Extent.FILE)) {
+                if (hasPayload) {
+                    throw new IllegalArgumentException("ファイルの誤りは原文を持たずファイル全体の原本を指す: " + defect);
+                }
+            } else if (!defect.occursIn(Extent.UNTIL_END_OF_FILE)) {
+                throw new IllegalArgumentException("取り込めなかった部分にならない理由: " + defect);
+            } else if (!hasPayload || noLines) {
+                throw new IllegalArgumentException("ファイルの終わりまでの範囲は物理行と原文を持つ: " + defect);
             }
         }
 
@@ -229,9 +259,9 @@ public record IngestFileCommand(
             return payload == null ? null : payload.clone();
         }
 
-        /** ファイルの誤りか（原文を持たず、ファイル全体の原本を指す）。 */
+        /** ファイルの誤りか（理由の範囲がファイル。原文を持たず、ファイル全体の原本を指す）。 */
         public boolean fileDefect() {
-            return payload == null;
+            return defect.occursIn(Extent.FILE);
         }
 
         @Override
@@ -259,7 +289,7 @@ public record IngestFileCommand(
         @Override
         public String toString() {
             return "UnreadablePart[fromLine=" + fromLine + ", lineCount=" + lineCount + ", defect=" + defect
-                    + ", details=" + details + ", size=" + (payload == null ? "-" : payload.length) + "]";
+                    + ", details=" + details + SIZE + (payload == null ? "-" : payload.length) + "]";
         }
     }
 

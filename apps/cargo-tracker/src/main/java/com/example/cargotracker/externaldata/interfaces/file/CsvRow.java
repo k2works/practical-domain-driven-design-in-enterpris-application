@@ -1,5 +1,6 @@
 package com.example.cargotracker.externaldata.interfaces.file;
 
+import com.example.cargotracker.externaldata.domain.model.valueobjects.PhysicalLineRange;
 import java.util.List;
 import java.util.Objects;
 
@@ -19,5 +20,10 @@ public record CsvRow(int lineNumber, int lastLineNumber, List<String> values, St
         if (lastLineNumber < lineNumber) {
             throw new IllegalArgumentException("行の終わりが始まりより前: " + lineNumber + ".." + lastLineNumber);
         }
+    }
+
+    /** 行の物理行の範囲。 */
+    public PhysicalLineRange range() {
+        return new PhysicalLineRange(lineNumber, lastLineNumber);
     }
 }

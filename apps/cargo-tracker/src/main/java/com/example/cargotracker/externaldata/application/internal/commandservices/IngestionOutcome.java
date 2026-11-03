@@ -1,6 +1,7 @@
 package com.example.cargotracker.externaldata.application.internal.commandservices;
 
 import com.example.cargotracker.externaldata.domain.model.valueobjects.Classification;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.PhysicalLineRange;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -45,9 +46,8 @@ public sealed interface IngestionOutcome {
          * 取り込めなかった物理行の数。単位はどちらも物理行。
          */
         public boolean reconciles() {
-            int rowLines = rows.stream()
-                    .mapToInt(row -> row.lastLineNumber() - row.lineNumber() + 1)
-                    .sum();
+            int rowLines =
+                    rows.stream().mapToInt(row -> row.range().lineCount()).sum();
             int unreadableLines = unreadable == null ? 0 : unreadable.lineCount();
             return receivedCount == rowLines + unreadableLines;
         }
@@ -83,6 +83,11 @@ public sealed interface IngestionOutcome {
             if (classification != Classification.QUARANTINED && externalRecordId == null) {
                 throw new IllegalArgumentException("外部原本 ID を持たない行の結果は隔離だけ: " + classification);
             }
+        }
+
+        /** 行の物理行の範囲。 */
+        public PhysicalLineRange range() {
+            return new PhysicalLineRange(lineNumber, lastLineNumber);
         }
     }
 

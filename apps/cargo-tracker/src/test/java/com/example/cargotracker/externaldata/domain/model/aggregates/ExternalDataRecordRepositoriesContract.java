@@ -19,7 +19,7 @@ import org.springframework.dao.DuplicateKeyException;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * 取込・外部原本・受信記録のリポジトリの契約（Bolt 39b の行 7・9b・10・12、Bolt 39b2 の行 18・19）。メモリ・H2・PostgreSQL の実装が継いで同じ約束を確かめる。
+ * 取込・外部原本・受信記録のリポジトリの契約（Bolt 39b の行 7・9b・10・12、Bolt 39b2 の行 17・18・19）。メモリ・H2・PostgreSQL の実装が継いで同じ約束を確かめる。
  * 取込と受信記録のポートは追記と数えることだけを持つので、書いた行の往復は継ぐ側が {@link #storedIngestion(UUID)}・
  * {@link #storedReceivedRecord(UUID)} で読む（ポートの外）。提供元の名前は乱数の UUID を含めて自分の行で絞る。
  *
@@ -231,6 +231,7 @@ public abstract class ExternalDataRecordRepositoriesContract {
 
     @Test
     void 行18_外部原本か取得時刻のない受信記録は隔離のほかは表のCHECKと同じく作れない() {
+        UUID externalRecordId = UUID.randomUUID();
         for (Classification classification : Classification.values()) {
             if (classification == Classification.QUARANTINED) {
                 continue;
@@ -238,10 +239,46 @@ public abstract class ExternalDataRecordRepositoriesContract {
             assertThatThrownBy(() -> keylessReceivedRecord(null, ACQUIRED_AT, classification))
                     .as("外部原本のない %s", classification)
                     .isInstanceOf(IllegalArgumentException.class);
-            assertThatThrownBy(() -> keylessReceivedRecord(UUID.randomUUID(), null, classification))
+            assertThatThrownBy(() -> keylessReceivedRecord(externalRecordId, null, classification))
                     .as("取得時刻のない %s", classification)
                     .isInstanceOf(IllegalArgumentException.class);
         }
+    }
+
+    @Test
+    void 行18_外部原本と取得時刻の片方だけがない隔離の受信記録は表のCHECKと同じく作れない() {
+        UUID externalRecordId = UUID.randomUUID();
+
+        assertThatThrownBy(() -> keylessReceivedRecord(null, ACQUIRED_AT, Classification.QUARANTINED))
+                .as("外部原本だけがない隔離")
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> keylessReceivedRecord(externalRecordId, null, Classification.QUARANTINED))
+                .as("取得時刻だけがない隔離")
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void 行17_上限の1000文字の注記を往復する() {
+        Ingestion ingestion = ingestion(1, 2, 1);
+        ingestions().add(ingestion);
+        // 取込のサービスが 1000 文字で切った注記（classification_note VARCHAR(1000)）が、日本語を含めて欠けずに往復する
+        String head = "ファイル: 必要な列がありません（";
+        String note = head + "列".repeat(999 - head.length()) + "…";
+        assertThat(note).hasSize(1000);
+        ReceivedRecord keyless = new ReceivedRecord(
+                UUID.randomUUID(),
+                null,
+                ingestion.id(),
+                ingestion.fileHash(),
+                ingestion.fileObjectKey(),
+                null,
+                Classification.QUARANTINED,
+                note,
+                INGESTED_AT);
+
+        receivedRecords().add(keyless);
+
+        assertThat(storedReceivedRecord(keyless.id())).contains(keyless);
     }
 
     private static ReceivedRecord keylessReceivedRecord(

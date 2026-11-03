@@ -12,7 +12,7 @@ import java.util.UUID;
  * 受信記録。外部原本を受け取るたびの、または形式の誤りで外部原本を持てない行・ファイルの追記専用の記録で、分類を一度だけ持つ
  * （data_model の {@code external_data.received_record}。ED-INV-02。Bolt 39b、39b2）。リポジトリのポートが受け渡す record で、
  * 振る舞いを持たない（トランザクションスクリプト。ADR-002）。取込によらない受信（表では {@code ingestion_id} が NULL 可）はまだないので、
- * 取込 ID を必ず持つ。外部原本 ID と取得時刻が NULL なのは隔離だけ（キーのない隔離。表の CHECK
+ * 取込 ID を必ず持つ。外部原本 ID と取得時刻はそろって NULL かそろって NULL でなく、NULL なのは隔離だけ（キーのない隔離。表の CHECK
  * {@code ck_received_record_keyless_quarantine} と同じ規則。Bolt 39b2）。
  *
  * @param id 受信記録 ID
@@ -44,7 +44,10 @@ public record ReceivedRecord(
         Objects.requireNonNull(payloadObjectKey, "payloadObjectKey");
         Objects.requireNonNull(classification, "classification");
         Objects.requireNonNull(classifiedAt, "classifiedAt");
-        if (classification != Classification.QUARANTINED && (externalRecordId == null || acquiredAt == null)) {
+        if ((externalRecordId == null) != (acquiredAt == null)) {
+            throw new IllegalArgumentException("外部原本 ID と取得時刻はそろって持つかそろって持たない: " + classification);
+        }
+        if (classification != Classification.QUARANTINED && externalRecordId == null) {
             throw new IllegalArgumentException("外部原本 ID と取得時刻を持たない受信記録は隔離だけ: " + classification);
         }
     }

@@ -18,7 +18,6 @@ import com.example.cargotracker.externaldata.domain.model.aggregates.IngestionRe
 import com.example.cargotracker.externaldata.domain.model.aggregates.ReceivedRecord;
 import com.example.cargotracker.externaldata.domain.model.aggregates.ReceivedRecordRepository;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.Classification;
-import com.example.cargotracker.externaldata.domain.model.valueobjects.FormatDefect;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.IdempotencyKey;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PayloadHash;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PayloadObjectKey;
@@ -54,7 +53,8 @@ public class IngestionService {
     /** 受信記録の注記の上限（{@code classification_note VARCHAR(1000)}）。 */
     private static final int NOTE_LIMIT = 1000;
 
-    private static final String DUPLICATE_NOTE = "同じ原本を受け取り済み";
+    /** 同じ原本の重複の注記（「&lt;物理行の範囲&gt;: &lt;理由&gt;。」の形。Bolt 39b2 の開発レビュー）。 */
+    private static final String DUPLICATE_NOTE = "%s: 同じ原本を受け取り済みです。";
     /** 内容の違う原本の隔離の注記（「&lt;物理行の範囲&gt;: &lt;理由&gt;。」の形。Bolt 39b2 の確認ポイント 6）。 */
     private static final String QUARANTINED_NOTE = "%s: 同じ外部 ID・外部版で内容の違う原本を受け取りました（最初の受信: %s）。";
 
@@ -180,11 +180,7 @@ public class IngestionService {
         PayloadObjectKey payloadKey = PayloadObjectKey.newRecordPayload();
         payloadStorage.store(payloadKey, payload);
         ReceivedRecord received = addKeylessQuarantine(
-                ingestion,
-                PayloadHash.of(payload),
-                payloadKey,
-                row.defect().rowNote(row.lineNumber(), row.lastLineNumber(), row.details()),
-                now);
+                ingestion, PayloadHash.of(payload), payloadKey, row.defect().rowNote(row.range(), row.details()), now);
         return new RowResult(row.lineNumber(), row.lastLineNumber(), Classification.QUARANTINED, null, received.id());
     }
 
@@ -234,11 +230,9 @@ public class IngestionService {
     private static String noteOf(Classification classification, ExternalRecord externalRecord, IngestedRow row) {
         return switch (classification) {
             case ADOPTED -> null;
-            case DUPLICATE -> DUPLICATE_NOTE;
+            case DUPLICATE -> DUPLICATE_NOTE.formatted(row.range().wording());
             case QUARANTINED ->
-                QUARANTINED_NOTE.formatted(
-                        FormatDefect.lineRange(row.lineNumber(), row.lastLineNumber()),
-                        NOTE_TIME.format(externalRecord.firstReceivedAt()));
+                QUARANTINED_NOTE.formatted(row.range().wording(), NOTE_TIME.format(externalRecord.firstReceivedAt()));
         };
     }
 

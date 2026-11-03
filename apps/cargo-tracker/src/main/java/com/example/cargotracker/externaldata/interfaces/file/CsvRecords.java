@@ -7,6 +7,7 @@ import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.IntStream;
 
 /**
  * 仮の CSV（RFC 4180）を読んだ結果。ヘッダー（最初の行）、読めた行、読めなかった行の誤り、文字コードの誤りか、物理データ行の数を持つ（Bolt 39。
@@ -20,8 +21,9 @@ import java.util.List;
  * 1 つの誤りにする（取込全体の要確認。依存を足さずに自前で読む。開始準備の決定 (4)。開発レビューの決定。2026-11-02）。
  *
  * <p>物理データ行の数（受け取った件数）は、ヘッダーの後の物理行のうちレコードの外の空行を除いた数で、読めた行と誤りの物理行の範囲の和に一致する。
- * 文字コードの誤りと、ヘッダーがファイルの終わりまで飲み込んだときはレコードの境目が分からないので、最初の空でない行をヘッダーとし、その後を空行は
- * 除いて LF で数える（Bolt 39b2 の決定）。
+ * 引用符が閉じないまま飲み込んだ範囲は壊れたレコードの中なので、空行も物理行として数える（ヘッダーで飲み込んだときは、ヘッダーの行の後から
+ * ファイルの終わりまで。Bolt 39b2 の開発レビュー）。文字コードの誤りと、飲み込まずに読めなかったヘッダーの後は解析しないので、最初の空でない行を
+ * ヘッダーとし、その後を空行は除いて LF で数える（Bolt 39b2 の決定）。
  *
  * @param header ヘッダーの列名（ファイルが空か、ヘッダーの行を読めないか、文字コードの誤りなら空）
  * @param rows 読めた行（ヘッダーを除く。ファイルの順）
@@ -61,7 +63,7 @@ public record CsvRecords(
                     .onUnmappableCharacter(CodingErrorAction.REPORT)
                     .decode(ByteBuffer.wrap(bytes))
                     .toString();
-        } catch (CharacterCodingException e) {
+        } catch (CharacterCodingException _) {
             // バイトを 1 つずつ文字にして LF を数える（ISO-8859-1 はどのバイト列も 1 バイト 1 文字で読める。LF は UTF-8 でも 1 バイト）
             String bytesAsText = new String(bytes, StandardCharsets.ISO_8859_1);
             return withoutRows(List.of(), true, afterFirst(nonBlankLineNumbers(bytesAsText, 0, 1)));
@@ -116,19 +118,7 @@ public record CsvRecords(
     private sealed interface Outcome {}
 
     /** 読めたレコード。 */
-    private record Read(CsvRow row) implements Outcome {
-
-        /** 読めたレコードの値の並び。 */
-        List<String> values() {
-            return row.values();
-        }
-
-        /** 列数の違う行の誤り。 */
-        CsvRowError columnCountMismatch() {
-            return new CsvRowError(
-                    row.lineNumber(), row.lastLineNumber(), FormatDefect.COLUMN_COUNT_MISMATCH, row.raw(), false);
-        }
-    }
+    private record Read(CsvRow row) implements Outcome {}
 
     /** 読めなかったレコード。 */
     private record Failed(CsvRowError error) implements Outcome {}
@@ -155,10 +145,31 @@ public record CsvRecords(
                             List.of(error),
                             false,
                             error.untilEndOfFile()
-                                    ? afterFirst(nonBlankLineNumbers(text, 0, 1))
+                                    ? swallowedAfterHeaderLine(error)
                                     : nonBlankLineNumbers(text, position, line));
-                case Read header -> readRows(header.values());
+                case Read(CsvRow header) -> readRows(header.values());
             };
+        }
+
+        /**
+         * ヘッダーがファイルの終わりまで飲み込んだときの物理データ行（ヘッダーの行の後から、飲み込んだ範囲の終わりまで）。飲み込んだ範囲は
+         * 壊れたレコードの中なので、データ行のときと同じく空行も物理行として数える。
+         */
+        private static List<Integer> swallowedAfterHeaderLine(CsvRowError error) {
+            return IntStream.rangeClosed(error.lineNumber() + 1, error.lastLineNumber())
+                    .boxed()
+                    .toList();
+        }
+
+        /** 列数の違う行の誤り（解析で読んだ値の数を列数として持たせる。組み立ては原文を読み直さない）。 */
+        private static CsvRowError columnCountMismatch(CsvRow row) {
+            return new CsvRowError(
+                    row.lineNumber(),
+                    row.lastLineNumber(),
+                    FormatDefect.COLUMN_COUNT_MISMATCH,
+                    row.raw(),
+                    false,
+                    row.values().size());
         }
 
         /** ヘッダーの後の行を、ヘッダーの列数を基準に読む。物理データ行の数は行と誤りの物理行の範囲の和。 */
@@ -173,17 +184,18 @@ public record CsvRecords(
                     firstDataLine = line;
                 }
                 switch (readRecord()) {
-                    case Read read when read.values().size() != header.size() -> errors.add(read.columnCountMismatch());
-                    case Read read -> rows.add(read.row());
+                    case Read(CsvRow row)
+                    when row.values().size() != header.size() -> errors.add(columnCountMismatch(row));
+                    case Read(CsvRow row) -> rows.add(row);
                     case Failed(CsvRowError error) -> errors.add(error);
                 }
                 skipBlankLines();
             }
             for (CsvRow row : rows) {
-                dataLineCount += row.lastLineNumber() - row.lineNumber() + 1;
+                dataLineCount += row.range().lineCount();
             }
             for (CsvRowError error : errors) {
-                dataLineCount += error.lastLineNumber() - error.lineNumber() + 1;
+                dataLineCount += error.range().lineCount();
             }
             return new CsvRecords(header, rows, errors, false, dataLineCount, firstDataLine);
         }

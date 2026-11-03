@@ -229,6 +229,22 @@ class ExternalDataSchemaIntegrationTest {
     }
 
     @Test
+    void 行18_外部原本と取得時刻の片方だけがNULLの隔離はキーのない隔離のCHECKの違反() throws SQLException {
+        inRolledBackTransaction(connection -> {
+            UUID externalRecordId = insertExternalRecord(connection, newProvider(), "1");
+
+            assertViolation(
+                    connection,
+                    () -> insertReceivedRecord(connection, null, null, NOW, "QUARANTINED"),
+                    CHECK_VIOLATION);
+            assertViolation(
+                    connection,
+                    () -> insertReceivedRecord(connection, externalRecordId, null, null, "QUARANTINED"),
+                    CHECK_VIOLATION);
+        });
+    }
+
+    @Test
     void 行19_取込の取り込めなかった行の始まりと数の組み合わせはCHECKで守り列を書かない行は数0() throws SQLException {
         inRolledBackTransaction(connection -> {
             UUID dataSourceId = insertDataSource(connection, newProvider(), "VOYAGE_SCHEDULE", "CANDIDATE");

@@ -80,11 +80,7 @@ public final class IngestFileCommandAssembler {
         for (CsvRowError error : records.errors()) {
             if (error.untilEndOfFile()) {
                 unreadable = new UnreadablePart(
-                        error.lineNumber(),
-                        error.lastLineNumber() - error.lineNumber() + 1,
-                        error.defect(),
-                        List.of(),
-                        utf8(error.raw()));
+                        error.lineNumber(), error.range().lineCount(), error.defect(), List.of(), utf8(error.raw()));
             } else {
                 rejectedRows.add(new RejectedRow(
                         error.lineNumber(),
@@ -98,14 +94,12 @@ public final class IngestFileCommandAssembler {
         return new IngestFileCommand(dataSourceId, file, records.dataLineCount(), rows, rejectedRows, unreadable);
     }
 
-    /** 読めなかった行の注記の詳細。列数の違う行は、ヘッダーとその行の列数を書く。 */
+    /** 読めなかった行の注記の詳細。列数の違う行は、ヘッダーとその行の列数（解析が読んだ値の数）を書く。 */
     private static List<String> detailsOf(CsvRowError error, int headerColumns) {
-        if (error.defect() != FormatDefect.COLUMN_COUNT_MISMATCH) {
+        if (error.columnCount() == null) {
             return List.of();
         }
-        // 列数の違う行は 1 つのレコードとして読めた行なので、原文を読み直せば値の並び（ヘッダーの位置）になる
-        int rowColumns = CsvRecords.parse(utf8(error.raw())).header().size();
-        return List.of("ヘッダー " + headerColumns + " 列", "この行 " + rowColumns + " 列");
+        return List.of("ヘッダー " + headerColumns + " 列", "この行 " + error.columnCount() + " 列");
     }
 
     private static byte[] utf8(String raw) {
@@ -182,7 +176,7 @@ public final class IngestFileCommandAssembler {
                 return OffsetDateTime.parse(value, DateTimeFormatter.ISO_OFFSET_DATE_TIME)
                         .toInstant()
                         .truncatedTo(ChronoUnit.MICROS);
-            } catch (DateTimeParseException e) {
+            } catch (DateTimeParseException _) {
                 return null;
             }
         }

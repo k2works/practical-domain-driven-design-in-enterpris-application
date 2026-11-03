@@ -1,5 +1,6 @@
 package com.example.cargotracker.externaldata.interfaces.file;
 
+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.example.cargotracker.externaldata.application.internal.commands.IngestFileCommand;
@@ -7,6 +8,9 @@ import com.example.cargotracker.externaldata.application.internal.commands.Inges
 import com.example.cargotracker.externaldata.application.internal.commands.IngestFileCommand.RejectedRow;
 import com.example.cargotracker.externaldata.application.internal.commands.IngestFileCommand.UnreadablePart;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.FormatDefect;
+import com.tngtech.archunit.core.domain.JavaClasses;
+import com.tngtech.archunit.core.importer.ClassFileImporter;
+import com.tngtech.archunit.core.importer.ImportOption;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
@@ -15,7 +19,7 @@ import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
 /**
- * 取込の組み立て（Bolt 39b2 の行 1〜12（5b・6b を含む）・17）。解析とヘッダーの検証の結果から、形式の正しい行・行の誤り・取り込めなかった部分を
+ * 取込の組み立て（Bolt 39b2 の行 1〜12（5b・6b を含む）・15b・17・22）。解析とヘッダーの検証の結果から、形式の正しい行・行の誤り・取り込めなかった部分を
  * 持つ取込のコマンドを作る。キーの列（外部 ID・外部版・取得時刻）だけを検証する（値の列は 39b2b）。ファイルの誤りのときは行を読まない（変異 V10）。
  */
 class IngestFileCommandAssemblerTest {
@@ -218,6 +222,16 @@ class IngestFileCommandAssemblerTest {
     }
 
     @Test
+    void 行15b_ヘッダーで飲み込んだ範囲の空行も受け取った件数と取り込めなかった物理行に数える() {
+        IngestFileCommand command = milestones("external_id,\"external_version,acquired_at,tracking_number\n"
+                + line("MS-0001", "CTABCDEFGH2345") + "\n\n" + line("MS-0002", "CTABCDEFGH2346") + "\n");
+
+        assertNoRows(command);
+        assertThat(command.receivedCount()).isEqualTo(3);
+        assertThat(command.unreadable()).isEqualTo(fileDefect(2, 3, FormatDefect.UNREADABLE_HEADER, List.of()));
+    }
+
+    @Test
     void 行6_閉じた引用符の後の文字の行は引用符の対応を追った終わりまでを行の誤りにし空行と改行を含む値の後の行も読む() {
         String broken = "MS-0001,\"1\"x," + ACQUIRED + ",\"CT\nAB\"";
         String multiLine = "MS-0002,1," + ACQUIRED + ",\"CTABCDEFGH2346\nNOTE\"";
@@ -392,6 +406,33 @@ class IngestFileCommandAssemblerTest {
                 .containsExactly(
                         rejected(3, 3, FormatDefect.TOO_LONG, List.of("external_id", "200 文字まで"), idTooLong),
                         rejected(4, 4, FormatDefect.TOO_LONG, List.of("external_version", "100 文字まで"), versionTooLong));
+    }
+
+    /**
+     * 行 22 の層の規則を外部データに絞って確かめる（全体の規則は LayerArchitectureTest・ModularityTest、形式の誤りと物理行の範囲が用語集に
+     * あることは LivingGlossaryConsistencyTest）。application は解析と組み立ての型を参照せず、組み立てはリポジトリを使わない。
+     */
+    @Test
+    void 行22_applicationはinterfaces_fileを参照せず組み立てはリポジトリを使わない() {
+        JavaClasses classes = new ClassFileImporter()
+                .withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS)
+                .importPackages("com.example.cargotracker.externaldata");
+
+        noClasses()
+                .that()
+                .resideInAPackage("..externaldata.application..")
+                .should()
+                .dependOnClassesThat()
+                .resideInAPackage("..externaldata.interfaces.file..")
+                .check(classes);
+        noClasses()
+                .that()
+                .resideInAPackage("..externaldata.interfaces.file..")
+                .should()
+                .dependOnClassesThat()
+                .haveSimpleNameEndingWith("Repository")
+                .check(classes);
+        assertThat(classes.contain(IngestFileCommandAssembler.class)).isTrue();
     }
 
     @Test
