@@ -123,6 +123,8 @@ class ModularityTest {
     /**
      * 外部データのインフラストラクチャ層は MyBatis と、Spring のうち実際に使う範囲（例外の変換・トランザクション・ステレオタイプ）に
      * 依存してよい（外部原本の保存の DB の実装。Bolt 39a2）。フレームワークの許可は、使う Bolt で、使う層に限って足す。
+     * 組み立てのクラス（{@code infrastructure.config} の {@code @Configuration}・{@code @Bean}）のため
+     * {@code org.springframework.context.annotation} を足した（Bolt 39b の確認ポイント 14。2026-11-03 の人の決定）。
      */
     @Test
     void 外部データのインフラストラクチャ層はMyBatisと使う範囲のSpringに依存してよい() {
@@ -138,6 +140,7 @@ class ModularityTest {
                         "org.springframework.dao..",
                         "org.springframework.transaction..",
                         "org.springframework.stereotype..",
+                        "org.springframework.context.annotation..",
                         "org.apache.ibatis..")
                 .check(PRODUCTION_CLASSES);
     }

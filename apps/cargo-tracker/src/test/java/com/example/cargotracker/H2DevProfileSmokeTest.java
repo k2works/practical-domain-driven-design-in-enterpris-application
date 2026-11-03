@@ -2,6 +2,10 @@ package com.example.cargotracker;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.example.cargotracker.externaldata.application.internal.queryservices.PilotReadiness;
+import com.example.cargotracker.externaldata.application.internal.queryservices.PilotReadinessQueryService;
+import com.example.cargotracker.externaldata.domain.model.aggregates.DataSource.ApprovalStatus;
+import com.example.cargotracker.externaldata.domain.model.aggregates.DataSourceRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.KpiObservationRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.KpiObservationRepositoryContract;
 import com.example.cargotracker.identity.domain.model.aggregates.UserRepository;
@@ -51,6 +55,12 @@ class H2DevProfileSmokeTest extends KpiObservationRepositoryContract {
 
     @Autowired
     UserRepository users;
+
+    @Autowired
+    PilotReadinessQueryService pilotReadiness;
+
+    @Autowired
+    DataSourceRepository dataSources;
 
     @Override
     protected KpiObservationRepository repository() {
@@ -107,5 +117,34 @@ class H2DevProfileSmokeTest extends KpiObservationRepositoryContract {
                     assertThat(user.companyId().value()).hasToString("00000000-0000-0000-0000-000000000003");
                     assertThat(user.roles()).containsExactly(Role.TRACKING_MANAGER);
                 });
+    }
+
+    /** Bolt 39b の行 14。開発データの承認済みの情報源 2 つと候補 1 つ、データ責任者の開発利用者（確認ポイント 9）。 */
+    @Test
+    void 行14_devでは開発用のデータ責任者と承認済みの情報源2つが入りパイロットを開始できる() {
+        assertThat(users.findByEmail(EmailAddress.of("data-steward@dev.cargo-tracker.example")))
+                .hasValueSatisfying(user -> {
+                    assertThat(user.id().value()).hasToString("00000000-0000-0000-0000-000000000307");
+                    assertThat(user.companyId().value()).hasToString("00000000-0000-0000-0000-000000000003");
+                    assertThat(user.roles()).containsExactly(Role.DATA_STEWARD);
+                });
+        assertThat(dataSources.findById(UUID.fromString("00000000-0000-0000-0000-000000003901")))
+                .hasValueSatisfying(source -> {
+                    assertThat(source.recordType()).isEqualTo("VOYAGE");
+                    assertThat(source.approvalStatus()).isEqualTo(ApprovalStatus.APPROVED);
+                });
+        assertThat(dataSources.findById(UUID.fromString("00000000-0000-0000-0000-000000003902")))
+                .hasValueSatisfying(source -> {
+                    assertThat(source.recordType()).isEqualTo("MILESTONE");
+                    assertThat(source.approvalStatus()).isEqualTo(ApprovalStatus.APPROVED);
+                });
+        assertThat(dataSources.findById(UUID.fromString("00000000-0000-0000-0000-000000003903")))
+                .hasValueSatisfying(
+                        source -> assertThat(source.approvalStatus()).isEqualTo(ApprovalStatus.CANDIDATE));
+
+        PilotReadiness readiness = pilotReadiness.readiness();
+
+        assertThat(readiness.approvedCount()).isEqualTo(2);
+        assertThat(readiness.canStart()).isTrue();
     }
 }

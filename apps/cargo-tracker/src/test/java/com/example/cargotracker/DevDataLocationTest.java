@@ -32,6 +32,27 @@ class DevDataLocationTest {
         }
     }
 
+    /** Bolt 39b の行 14。情報源の選定・承認は W10 の運用タスクで、開発用の情報源をステージング・本番に作らない。 */
+    @Test
+    void 行14_共通とベンダーのマイグレーションは情報源を入れない() throws IOException {
+        try (Stream<Path> files = Files.walk(DB.resolve("migration"))) {
+            assertThat(files.filter(Files::isRegularFile)
+                            .filter(file -> read(file)
+                                    .toLowerCase(java.util.Locale.ROOT)
+                                    .contains("insert into external_data.data_source")))
+                    .isEmpty();
+        }
+    }
+
+    @Test
+    void 行14_開発用の情報源はdevだけの場所に置く() throws IOException {
+        try (Stream<Path> files = Files.walk(DB.resolve("dev-data"))) {
+            assertThat(files.filter(Files::isRegularFile).map(DevDataLocationTest::read))
+                    .anySatisfy(sql -> assertThat(sql.toLowerCase(java.util.Locale.ROOT))
+                            .contains("insert into external_data.data_source"));
+        }
+    }
+
     @Test
     void 開発用の利用者はdevだけの場所に置く() throws IOException {
         try (Stream<Path> files = Files.walk(DB.resolve("dev-data"))) {

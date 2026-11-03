@@ -1,0 +1,57 @@
+package com.example.cargotracker.externaldata.domain.model.aggregates;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+import com.example.cargotracker.externaldata.domain.model.aggregates.DataSource.ApprovalStatus;
+import java.util.UUID;
+import org.junit.jupiter.api.Test;
+
+/**
+ * 情報源のリポジトリの契約（Bolt 39b の行 6）。メモリの実装と PostgreSQL の実装が継いで同じ約束を確かめる。
+ * 情報源の選定・承認は W10 の運用タスクなので、ポートは読み取りだけを持ち、情報源は継ぐ側が {@link #given(DataSource)} で入れる。
+ * 件数は差で確かめる（開発データや他のテストの情報源が入っていても崩れない）。提供元の名前は乱数の UUID を含めて自分の行で絞る。
+ */
+public abstract class DataSourceRepositoryContract {
+
+    protected abstract DataSourceRepository repository();
+
+    /** 情報源を入れる（ポートの外。メモリなら足し、DB なら行を書く）。 */
+    protected abstract void given(DataSource source);
+
+    private static DataSource source(ApprovalStatus status) {
+        return new DataSource(UUID.randomUUID(), "契約の提供元-" + UUID.randomUUID(), "VOYAGE", status);
+    }
+
+    @Test
+    void 行6_IDで情報源を引ける() {
+        DataSource approved = source(ApprovalStatus.APPROVED);
+        given(approved);
+
+        assertThat(repository().findById(approved.id())).contains(approved);
+    }
+
+    @Test
+    void 行6_入れていないIDの情報源は引けない() {
+        assertThat(repository().findById(UUID.randomUUID())).isEmpty();
+    }
+
+    @Test
+    void 行6_候補と停止中は承認済みに数えない() {
+        int before = repository().countApproved();
+
+        given(source(ApprovalStatus.CANDIDATE));
+        given(source(ApprovalStatus.SUSPENDED));
+
+        assertThat(repository().countApproved()).isEqualTo(before);
+    }
+
+    @Test
+    void 行6_承認済みの情報源を数える() {
+        int before = repository().countApproved();
+
+        given(source(ApprovalStatus.APPROVED));
+        given(source(ApprovalStatus.APPROVED));
+
+        assertThat(repository().countApproved()).isEqualTo(before + 2);
+    }
+}
