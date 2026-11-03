@@ -2,6 +2,7 @@ package com.example.cargotracker.integration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.tuple;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.doThrow;
@@ -16,6 +17,8 @@ import com.example.cargotracker.externaldata.application.internal.commandservice
 import com.example.cargotracker.externaldata.domain.model.aggregates.ExternalPayloadStorage;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.Classification;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PayloadObjectKey;
+import com.example.cargotracker.externaldata.interfaces.file.CsvFileKind;
+import com.example.cargotracker.externaldata.interfaces.file.IngestFileCommandAssembler;
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Role;
@@ -24,8 +27,10 @@ import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -40,7 +45,8 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
 /**
- * 取込のサービスを PostgreSQL 18 で確かめる（Bolt 39b の行 2・4・9・11。US-14 AC3・AC4、BR-12、ED-INV-02）。
+ * 取込のサービスを PostgreSQL 18 で確かめる（Bolt 39b の行 2・4・9・11。US-14 AC3・AC4、BR-12、ED-INV-02。Bolt 39b2 の行 5・15・21 は
+ * CSV のバイト列から組み立て（{@code interfaces.file}）を通して取り込む。UC-15 2a）。
  *
  * <p>共有の DB に承認済みの情報源を残さない。行 2・4・11 はテストのトランザクションの中で取込のサービスを呼び（サービスの
  * {@code @Transactional} は外側に加わる）、最後に巻き戻す。行 9 は取込のサービス自身のトランザクションが巻き戻ることを確かめるので、
@@ -193,6 +199,155 @@ class ExternalDataIngestionIntegrationTest {
         } finally {
             removeSource(sourceId);
         }
+    }
+
+    @Test
+    void 行5_引用符の閉じ忘れは前の行を分類し取り込めなかった行の始まりと数を取込に書き範囲の原文を指すキーのない隔離を残す() {
+        inRolledBackTransaction(() -> {
+            String provider = newProvider();
+            UUID sourceId = insertApprovedSource(provider);
+            String unreadable =
+                    "MS-0002,1,\"" + acquired() + ",CTABCDEFGH2346\n" + "MS-0003,1," + acquired() + ",CTABCDEFGH2347";
+            byte[] csv = (MILESTONE_HEADER + "\n" + "MS-0001,1," + acquired() + ",CTABCDEFGH2345\n" + unreadable)
+                    .getBytes(StandardCharsets.UTF_8);
+
+            Ingested result = ingested(ingestionService.ingest(
+                    steward, IngestFileCommandAssembler.assemble(sourceId, CsvFileKind.MILESTONE, csv)));
+
+            assertThat(result.rows()).extracting(RowResult::classification).containsExactly(Classification.ADOPTED);
+            assertThat(result.requiresReview()).isTrue();
+            assertThat(jdbc.queryForList(
+                            "SELECT unparsed_from_line, unparsed_line_count FROM external_data.ingestion WHERE id = ?",
+                            result.ingestionId()))
+                    .singleElement()
+                    .satisfies(row -> {
+                        assertThat(row).containsEntry("unparsed_from_line", 3);
+                        assertThat(row).containsEntry("unparsed_line_count", 2);
+                    });
+            Map<String, Object> quarantined = jdbc.queryForMap(
+                    "SELECT external_record_id, acquired_at, classification, classification_note, payload_object_key"
+                            + " FROM external_data.received_record WHERE id = ? AND ingestion_id = ?",
+                    result.unreadable().receivedRecordId(),
+                    result.ingestionId());
+            assertThat(quarantined)
+                    .containsEntry("external_record_id", null)
+                    .containsEntry("acquired_at", null)
+                    .containsEntry("classification", Classification.QUARANTINED.name())
+                    .containsEntry(
+                            "classification_note", "3 行目からファイルの終わりまで: 引用符が閉じていません。2 行を取り込めませんでした。ファイルを確かめてください。");
+            assertThat(storedPayload((String) quarantined.get("payload_object_key")))
+                    .isEqualTo(unreadable.getBytes(StandardCharsets.UTF_8));
+            // 閉じ忘れの範囲の行（MS-0002・MS-0003）は外部原本を作らない
+            assertThat(externalRecordCount(provider)).isEqualTo(1);
+        });
+    }
+
+    @Test
+    void 行15_受け取った件数は引用符の中の改行と閉じ忘れを含めた物理行の数で空行を数えず行の結果と取り込めなかった行の数の合計と突き合う() {
+        inRolledBackTransaction(() -> {
+            String provider = newProvider();
+            UUID sourceId = insertApprovedSource(provider);
+            String header = MILESTONE_HEADER + ",remarks";
+            String csv = String.join(
+                    "\n",
+                    header,
+                    "MS-0001,1," + acquired() + ",CTABCDEFGH2345,",
+                    "MS-0002,1," + acquired() + ",CTABCDEFGH2346,\"港で荷役待ち",
+                    "翌日に積み込み\"",
+                    "",
+                    "MS-0003,1," + acquired() + ",CTABCDEFGH2347,余分な列,",
+                    "MS-0004,1,\"" + acquired() + ",CTABCDEFGH2348,",
+                    "MS-0005,1," + acquired() + ",CTABCDEFGH2349,");
+
+            Ingested result = ingested(ingestionService.ingest(
+                    steward,
+                    IngestFileCommandAssembler.assemble(
+                            sourceId, CsvFileKind.MILESTONE, csv.getBytes(StandardCharsets.UTF_8))));
+
+            // 物理データ行は 2・3・4・6・7・8 行目（5 行目の空行は数えない）
+            Map<String, Object> stored = jdbc.queryForMap(
+                    "SELECT received_count, unparsed_from_line, unparsed_line_count FROM external_data.ingestion"
+                            + " WHERE id = ?",
+                    result.ingestionId());
+            assertThat(stored)
+                    .containsEntry("received_count", 6)
+                    .containsEntry("unparsed_from_line", 7)
+                    .containsEntry("unparsed_line_count", 2);
+            assertThat(result.rows())
+                    .extracting(RowResult::lineNumber, RowResult::lastLineNumber, RowResult::classification)
+                    .containsExactly(
+                            tuple(2, 2, Classification.ADOPTED),
+                            tuple(3, 4, Classification.ADOPTED),
+                            tuple(6, 6, Classification.QUARANTINED));
+            assertThat(result.reconciles()).isTrue();
+            int rowLines = result.rows().stream()
+                    .mapToInt(row -> row.lastLineNumber() - row.lineNumber() + 1)
+                    .sum();
+            assertThat(rowLines + (Integer) stored.get("unparsed_line_count")).isEqualTo(stored.get("received_count"));
+            // 分類別の件数は受信記録の数（行の結果 3 件と取り込めなかった部分 1 件）で、物理行の数と単位が違う
+            assertThat(receivedRecordCount(result.ingestionId())).isEqualTo(4);
+        });
+    }
+
+    @Test
+    void 行21_外側が巻き戻ると行の誤りの原文とファイルの原本は残り受信記録からも取込からも参照されない() {
+        String rejectedLine = "MS-0002,1," + acquired() + ",CTABCDEFGH2346,余分な列";
+        byte[][] payloads = new byte[1][];
+        inRolledBackTransaction(() -> {
+            UUID sourceId = insertApprovedSource(newProvider());
+            byte[] csv = String.join(
+                            "\n", MILESTONE_HEADER, "MS-0001,1," + acquired() + ",CTABCDEFGH2345", rejectedLine)
+                    .getBytes(StandardCharsets.UTF_8);
+            payloads[0] = csv;
+
+            Ingested result = ingested(ingestionService.ingest(
+                    steward, IngestFileCommandAssembler.assemble(sourceId, CsvFileKind.MILESTONE, csv)));
+
+            assertThat(result.rows())
+                    .extracting(RowResult::classification)
+                    .containsExactly(Classification.ADOPTED, Classification.QUARANTINED);
+        });
+
+        String rejectedKey = storedKeyOf(rejectedLine.getBytes(StandardCharsets.UTF_8));
+        String fileKey = storedKeyOf(payloads[0]);
+        for (String key : List.of(rejectedKey, fileKey)) {
+            assertThat(count("SELECT COUNT(*) FROM external_data.stored_payload WHERE object_key = ?", key))
+                    .as("保存した原本 %s", key)
+                    .isEqualTo(1);
+            assertThat(count("SELECT COUNT(*) FROM external_data.received_record WHERE payload_object_key = ?", key))
+                    .as("原本 %s を指す受信記録", key)
+                    .isZero();
+            assertThat(count("SELECT COUNT(*) FROM external_data.ingestion WHERE file_object_key = ?", key))
+                    .as("原本 %s を指す取込", key)
+                    .isZero();
+        }
+    }
+
+    /** 取得時刻の文字列（取込時刻より前。T-230）。 */
+    private String acquired() {
+        if (acquiredAt == null) {
+            acquiredAt = clock.instant().minus(Duration.ofMinutes(30)).truncatedTo(ChronoUnit.SECONDS);
+        }
+        return acquiredAt.toString();
+    }
+
+    /** spy が受けた保存の呼び出しのうち、そのバイト列を保存したオブジェクトキー。 */
+    private String storedKeyOf(byte[] payload) {
+        ArgumentCaptor<PayloadObjectKey> keys = ArgumentCaptor.forClass(PayloadObjectKey.class);
+        ArgumentCaptor<byte[]> stored = ArgumentCaptor.forClass(byte[].class);
+        Mockito.verify(payloadStorage, Mockito.atLeastOnce()).store(keys.capture(), stored.capture());
+        List<byte[]> all = stored.getAllValues();
+        for (int i = 0; i < all.size(); i++) {
+            if (Arrays.equals(all.get(i), payload)) {
+                return keys.getAllValues().get(i).value();
+            }
+        }
+        throw new AssertionError("保存していない原本: " + new String(payload, StandardCharsets.UTF_8));
+    }
+
+    private byte[] storedPayload(String objectKey) {
+        return jdbc.queryForObject(
+                "SELECT content FROM external_data.stored_payload WHERE object_key = ?", byte[].class, objectKey);
     }
 
     private void inRolledBackTransaction(Runnable body) {

@@ -1,6 +1,7 @@
 package com.example.cargotracker.externaldata.domain.model.aggregates;
 
 import com.example.cargotracker.externaldata.domain.model.aggregates.DataSource.ApprovalStatus;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -21,6 +22,11 @@ public class InMemoryDataSourceRepository implements DataSourceRepository {
     /** シナリオの開始時に消す（受入シナリオ。Bolt 39b）。 */
     public void clear() {
         sources.clear();
+    }
+
+    /** 入れた情報源のすべて（ポートの外。受入シナリオが提供元の名前で引く。Bolt 39b2）。 */
+    public List<DataSource> all() {
+        return List.copyOf(sources.values());
     }
 
     @Override
