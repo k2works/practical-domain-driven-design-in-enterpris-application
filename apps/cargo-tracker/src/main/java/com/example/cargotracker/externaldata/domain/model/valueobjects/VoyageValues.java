@@ -17,9 +17,10 @@ import java.util.Objects;
 public record VoyageValues(String voyageNumber, List<PortCallValue> portCalls) implements RecordValues {
 
     /** 航海番号の上限の文字数（コードポイント）。 */
-    private static final int VOYAGE_NUMBER_MAX_LENGTH = 30;
+    public static final int VOYAGE_NUMBER_MAX_LENGTH = 30;
 
-    private static final int MIN_PORT_CALLS = 2;
+    /** 寄港の下限の数（経路設計の航海と同じ）。 */
+    public static final int MIN_PORT_CALLS = 2;
 
     public VoyageValues {
         Objects.requireNonNull(voyageNumber, "voyageNumber");

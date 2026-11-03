@@ -3,6 +3,7 @@ package com.example.cargotracker.externaldata.application.internal.commands;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.FormatDefect;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.FormatDefect.Extent;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PhysicalLineRange;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.RecordValues;
 import com.example.cargotracker.shared.annotation.ddd.Command;
 import java.time.Instant;
 import java.util.Arrays;
@@ -13,7 +14,7 @@ import java.util.UUID;
 /**
  * 取込のコマンド。情報源の 1 ファイルを取り込む入力（Bolt 39b。行の誤りと取り込めなかった部分は Bolt 39b2）。受け取った件数はファイルの
  * 物理データ行の数（ヘッダーとレコードの外の空行を除く）で、行の並びとは別に持つ。受け取った件数は、形式の正しい行と行の誤りの物理行の数の
- * 合計に取り込めなかった物理行の数を足したものに一致する（突き合わせは取込の結果。Bolt 39b2 の確認ポイント 9）。解析とキーの列の検証は
+ * 合計に取り込めなかった物理行の数を足したものに一致する（突き合わせは取込の結果。Bolt 39b2 の確認ポイント 9）。解析とキーの列・値の列の検証は
  * {@code interfaces.file} の組み立てが行い、このコマンドは値だけを受ける（不変条件は NULL と行番号だけ）。
  *
  * @param dataSourceId 情報源 ID
@@ -83,13 +84,15 @@ public record IngestFileCommand(
 
     /**
      * 取り込む行。取込ファイルの形式の正しい 1 行の値と原本。payload はその行の物理行の原文（最後の行末の改行を除き、引用符の中の改行は
-     * 含む。UTF-8）で、主要実績の追跡番号は payload の中にだけある（値の列は 39b2b）。コマンドの一部なので入れ子にする（単独のコマンドではない）。
+     * 含む。UTF-8）。値の列から作った取込の値（航海の値か主要実績の値）を持つ（Bolt 39b2b）。取込のサービスは値を使わず、受信記録の列にも
+     * 書かない（値は payload の行の原文に残る。採用値の材料は 39b3）。コマンドの一部なので入れ子にする（単独のコマンドではない）。
      *
      * @param lineNumber 行が始まる物理行の番号
      * @param lastLineNumber 行が終わる物理行の番号（引用符の中の改行で複数の物理行にまたがれば始まりより後。Bolt 39b2）
      * @param externalId 外部 ID
      * @param externalVersion 外部版
      * @param acquiredAt 取得時刻
+     * @param values 取込の値
      * @param payload 行の原本のバイト列
      */
     public record IngestedRow(
@@ -98,12 +101,14 @@ public record IngestFileCommand(
             String externalId,
             String externalVersion,
             Instant acquiredAt,
+            RecordValues values,
             byte[] payload) {
 
         public IngestedRow {
             Objects.requireNonNull(externalId, "externalId");
             Objects.requireNonNull(externalVersion, "externalVersion");
             Objects.requireNonNull(acquiredAt, "acquiredAt");
+            Objects.requireNonNull(values, "values");
             payload = Objects.requireNonNull(payload, "payload").clone();
             requireLineRange(lineNumber, lastLineNumber);
         }
@@ -128,26 +133,34 @@ public record IngestFileCommand(
                                     String otherId,
                                     String otherVersion,
                                     Instant otherAcquired,
+                                    RecordValues otherValues,
                                     byte[] otherPayload)
                     && lineNumber == otherLine
                     && lastLineNumber == otherLast
                     && externalId.equals(otherId)
                     && externalVersion.equals(otherVersion)
                     && acquiredAt.equals(otherAcquired)
+                    && values.equals(otherValues)
                     && Arrays.equals(payload, otherPayload);
         }
 
         @Override
         public int hashCode() {
             return Objects.hash(
-                    lineNumber, lastLineNumber, externalId, externalVersion, acquiredAt, Arrays.hashCode(payload));
+                    lineNumber,
+                    lastLineNumber,
+                    externalId,
+                    externalVersion,
+                    acquiredAt,
+                    values,
+                    Arrays.hashCode(payload));
         }
 
         @Override
         public String toString() {
             return "IngestedRow[lineNumber=" + lineNumber + ", lastLineNumber=" + lastLineNumber + ", externalId="
-                    + externalId + ", externalVersion=" + externalVersion + ", acquiredAt=" + acquiredAt + SIZE
-                    + payload.length + "]";
+                    + externalId + ", externalVersion=" + externalVersion + ", acquiredAt=" + acquiredAt + ", values="
+                    + values + SIZE + payload.length + "]";
         }
     }
 

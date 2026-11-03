@@ -33,7 +33,9 @@ class VoyageValuesTest {
 
     @Test
     void 行2_寄港が1つの航海の値は作れない() {
-        assertThatThrownBy(() -> new VoyageValues("V2611E", List.of(TOKYO_DEPARTURE)))
+        List<PortCallValue> oneCall = List.of(TOKYO_DEPARTURE);
+
+        assertThatThrownBy(() -> new VoyageValues("V2611E", oneCall))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("寄港が足りません（2 つ以上）");
     }
@@ -42,7 +44,9 @@ class VoyageValuesTest {
     void 行7_同じ港と同じ到着と同じ出発の寄港を重ねた航海の値は作れない() {
         PortCallValue sameAgain = new PortCallValue(new Location("JPTYO"), null, at("2026-11-19T23:00:00Z"));
 
-        assertThatThrownBy(() -> new VoyageValues("V2611E", List.of(TOKYO_DEPARTURE, LOS_ANGELES_ARRIVAL, sameAgain)))
+        List<PortCallValue> repeated = List.of(TOKYO_DEPARTURE, LOS_ANGELES_ARRIVAL, sameAgain);
+
+        assertThatThrownBy(() -> new VoyageValues("V2611E", repeated))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("同じ寄港があります");
     }
@@ -64,8 +68,9 @@ class VoyageValuesTest {
         assertThat(new VoyageValues(thirtyWithSupplementary, List.of(TOKYO_DEPARTURE, LOS_ANGELES_ARRIVAL))
                         .voyageNumber())
                 .isEqualTo(thirtyWithSupplementary);
-        assertThatThrownBy(() -> new VoyageValues("V".repeat(31), List.of(TOKYO_DEPARTURE, LOS_ANGELES_ARRIVAL)))
-                .isInstanceOf(IllegalArgumentException.class);
+        String tooLong = "V".repeat(31);
+        List<PortCallValue> portCalls = List.of(TOKYO_DEPARTURE, LOS_ANGELES_ARRIVAL);
+        assertThatThrownBy(() -> new VoyageValues(tooLong, portCalls)).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
@@ -76,7 +81,8 @@ class VoyageValuesTest {
         assertThatThrownBy(() -> new VoyageValues("", portCalls)).isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> new VoyageValues(" ", portCalls)).isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> new VoyageValues("V2611E", null)).isInstanceOf(NullPointerException.class);
-        assertThatThrownBy(() -> new VoyageValues("V2611E", List.of())).isInstanceOf(IllegalArgumentException.class);
+        List<PortCallValue> none = List.of();
+        assertThatThrownBy(() -> new VoyageValues("V2611E", none)).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
@@ -87,7 +93,8 @@ class VoyageValuesTest {
         source.clear();
 
         assertThat(values.portCalls()).hasSize(2);
-        assertThatThrownBy(() -> values.portCalls().clear()).isInstanceOf(UnsupportedOperationException.class);
+        List<PortCallValue> portCalls = values.portCalls();
+        assertThatThrownBy(portCalls::clear).isInstanceOf(UnsupportedOperationException.class);
     }
 
     @Test

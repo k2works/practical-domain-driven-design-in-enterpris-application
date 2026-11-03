@@ -39,15 +39,19 @@ class PortCallValueTest {
 
     @Test
     void 行5_到着より前に出発する寄港は作れない() {
-        assertThatThrownBy(() -> new PortCallValue(TOKYO, at("2026-11-20T08:00:00Z"), at("2026-11-20T07:59:59Z")))
+        UtcInstant arrival = at("2026-11-20T08:00:00Z");
+        UtcInstant departure = at("2026-11-20T07:59:59Z");
+
+        assertThatThrownBy(() -> new PortCallValue(TOKYO, arrival, departure))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("到着より前に出発しています");
     }
 
     @Test
     void 行24_寄港の値は港のNULLを拒む() {
-        assertThatThrownBy(() -> new PortCallValue(null, at("2026-11-20T08:00:00Z"), null))
-                .isInstanceOf(NullPointerException.class);
+        UtcInstant arrival = at("2026-11-20T08:00:00Z");
+
+        assertThatThrownBy(() -> new PortCallValue(null, arrival, null)).isInstanceOf(NullPointerException.class);
     }
 
     @Test

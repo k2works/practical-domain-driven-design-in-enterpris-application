@@ -20,15 +20,21 @@ import com.example.cargotracker.externaldata.domain.model.aggregates.InMemoryIng
 import com.example.cargotracker.externaldata.domain.model.aggregates.InMemoryReceivedRecordRepository;
 import com.example.cargotracker.externaldata.domain.model.aggregates.ReceivedRecord;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.Classification;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.MilestoneKindValue;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.MilestoneValues;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.TrackingNumberValue;
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
 import com.example.cargotracker.shared.domain.CompanyId;
+import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.Role;
 import com.example.cargotracker.shared.domain.UserId;
+import com.example.cargotracker.shared.domain.UtcInstant;
 import io.cucumber.java.ja.ならば;
 import io.cucumber.java.ja.もし;
 import io.cucumber.java.ja.前提;
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -43,7 +49,8 @@ import java.util.UUID;
  */
 public class ExternalRecordIngestionSteps {
 
-    private static final String MILESTONE_HEADER = "external_id,external_version,acquired_at,tracking_number";
+    private static final String MILESTONE_HEADER =
+            "external_id,external_version,acquired_at,tracking_number,kind,location_unlocode,occurred_at";
 
     /** 受入シナリオのデータ責任者。 */
     private static final AuthenticatedActor DATA_STEWARD = new AuthenticatedActor(
@@ -118,8 +125,17 @@ public class ExternalRecordIngestionSteps {
         Instant acquiredAt = Instant.parse(acquired);
         // 取得時刻は取込時刻より前（T-230）
         assertThat(acquiredAt).isBefore(clock.instant());
-        String line = externalId + "," + version + "," + acquiredAt + "," + trackingNumber;
-        IngestedRow row = new IngestedRow(2, 2, externalId, version, acquiredAt, line.getBytes(StandardCharsets.UTF_8));
+        // 値の列は出発・東京、発生時刻は取得時刻の 30 分前（T-230。取込のサービスは値を使わない。Bolt 39b2b）
+        Instant occurredAt = acquiredAt.minus(Duration.ofMinutes(30));
+        String line =
+                externalId + "," + version + "," + acquiredAt + "," + trackingNumber + ",DEPARTURE,JPTYO," + occurredAt;
+        MilestoneValues values = new MilestoneValues(
+                new TrackingNumberValue(trackingNumber),
+                MilestoneKindValue.DEPARTURE,
+                new Location("JPTYO"),
+                new UtcInstant(occurredAt));
+        IngestedRow row =
+                new IngestedRow(2, 2, externalId, version, acquiredAt, values, line.getBytes(StandardCharsets.UTF_8));
         byte[] file = (MILESTONE_HEADER + "\n" + line).getBytes(StandardCharsets.UTF_8);
         outcomes.add(ingestionService.ingest(
                 DATA_STEWARD,

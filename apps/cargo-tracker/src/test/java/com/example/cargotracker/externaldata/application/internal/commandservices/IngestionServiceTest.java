@@ -25,18 +25,28 @@ import com.example.cargotracker.externaldata.domain.model.aggregates.ReceivedRec
 import com.example.cargotracker.externaldata.domain.model.valueobjects.Classification;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.FormatDefect;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.IdempotencyKey;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.MilestoneKindValue;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.MilestoneValues;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PayloadHash;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PayloadObjectKey;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.PortCallValue;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.RecordValues;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.TrackingNumberValue;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.VoyageValues;
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
 import com.example.cargotracker.shared.domain.CompanyId;
+import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.Role;
 import com.example.cargotracker.shared.domain.UserId;
+import com.example.cargotracker.shared.domain.UtcInstant;
+import java.lang.reflect.RecordComponent;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -54,7 +64,12 @@ class IngestionServiceTest {
 
     private static final Instant NOW = Instant.parse("2026-11-03T09:00:00.123456Z");
     private static final Instant ACQUIRED = Instant.parse("2026-11-03T08:30:00Z");
-    private static final String MILESTONE_HEADER = "external_id,external_version,acquired_at,tracking_number";
+    private static final String MILESTONE_HEADER =
+            "external_id,external_version,acquired_at,tracking_number,kind,location_unlocode,occurred_at";
+    private static final Instant OCCURRED = Instant.parse("2026-11-03T08:00:00Z");
+
+    /** 主要実績の行の値の列（追跡番号の後。出発・東京・取得時刻より前の発生時刻。T-230）。 */
+    private static final String MILESTONE_TAIL = ",DEPARTURE,JPTYO," + OCCURRED;
 
     private final List<String> calls = new ArrayList<>();
     private final InMemoryDataSourceRepository sources = new InMemoryDataSourceRepository();
@@ -92,9 +107,24 @@ class IngestionServiceTest {
     }
 
     private static IngestedRow milestone(int lineNumber, String externalId, String version, String trackingNumber) {
-        String line = externalId + "," + version + "," + ACQUIRED + "," + trackingNumber;
+        String line = externalId + "," + version + "," + ACQUIRED + "," + trackingNumber + MILESTONE_TAIL;
         return new IngestedRow(
-                lineNumber, lineNumber, externalId, version, ACQUIRED, line.getBytes(StandardCharsets.UTF_8));
+                lineNumber,
+                lineNumber,
+                externalId,
+                version,
+                ACQUIRED,
+                milestoneValues(trackingNumber),
+                line.getBytes(StandardCharsets.UTF_8));
+    }
+
+    /** 値の既定（出発・東京・発生時刻）の主要実績の値。取込のサービスは値を使わない（Bolt 39b2b）。 */
+    private static MilestoneValues milestoneValues(String trackingNumber) {
+        return new MilestoneValues(
+                new TrackingNumberValue(trackingNumber),
+                MilestoneKindValue.DEPARTURE,
+                new Location("JPTYO"),
+                new UtcInstant(OCCURRED));
     }
 
     private static IngestFileCommand file(DataSource source, IngestedRow... rows) {
@@ -294,9 +324,16 @@ class IngestionServiceTest {
     void 行7_別の原本種別の情報源で同じ外部IDと外部版の行は別のキーでどちらも採用() {
         DataSource voyageSource = approvedSource(milestoneSource.provider(), "VOYAGE");
         // 航海の外部 ID は航海番号の形にする（T-230）。主要実績と同じ外部 ID でも原本種別が違えば別のキー
-        String voyageLine = "V-101,1," + ACQUIRED;
-        IngestedRow voyageRow =
-                new IngestedRow(2, 2, "V-101", "1", ACQUIRED, voyageLine.getBytes(StandardCharsets.UTF_8));
+        String voyageLine = "V-101,1," + ACQUIRED + ",JPTYO;;2026-11-20T00:00:00Z|USLAX;2026-12-01T00:00:00Z;";
+        VoyageValues voyageValues = new VoyageValues(
+                "V-101",
+                List.of(
+                        new PortCallValue(
+                                new Location("JPTYO"), null, new UtcInstant(Instant.parse("2026-11-20T00:00:00Z"))),
+                        new PortCallValue(
+                                new Location("USLAX"), new UtcInstant(Instant.parse("2026-12-01T00:00:00Z")), null)));
+        IngestedRow voyageRow = new IngestedRow(
+                2, 2, "V-101", "1", ACQUIRED, voyageValues, voyageLine.getBytes(StandardCharsets.UTF_8));
 
         service().ingest(steward, file(milestoneSource, milestone(2, "V-101", "1", "CTABCDEFGH2345")));
         Ingested voyage = ingested(service()
@@ -304,7 +341,7 @@ class IngestionServiceTest {
                         steward,
                         new IngestFileCommand(
                                 voyageSource.id(),
-                                ("external_id,external_version,acquired_at\n" + voyageLine)
+                                ("external_id,external_version,acquired_at,port_calls\n" + voyageLine)
                                         .getBytes(StandardCharsets.UTF_8),
                                 1,
                                 List.of(voyageRow),
@@ -458,7 +495,7 @@ class IngestionServiceTest {
         }
 
         private static String line(String externalId, String trackingNumber) {
-            return externalId + ",1," + ACQUIRED + "," + trackingNumber;
+            return externalId + ",1," + ACQUIRED + "," + trackingNumber + MILESTONE_TAIL;
         }
 
         private static RejectedRow rejected(int lineNumber, int lastLineNumber, FormatDefect defect, String raw) {
@@ -768,8 +805,9 @@ class IngestionServiceTest {
 
         @Test
         void 行15_受け取った件数は行の結果の物理行の合計と取り込めなかった物理行の数の和に一致する() {
-            String multiLine = "MS-0001,1," + ACQUIRED + ",CTABCDEFGH2345,\"備考の 1 行目\n備考の 2 行目\"";
-            IngestedRow spanning = new IngestedRow(2, 3, "MS-0001", "1", ACQUIRED, utf8(multiLine));
+            String multiLine = line("MS-0001", "CTABCDEFGH2345") + ",\"備考の 1 行目\n備考の 2 行目\"";
+            IngestedRow spanning =
+                    new IngestedRow(2, 3, "MS-0001", "1", ACQUIRED, milestoneValues("CTABCDEFGH2345"), utf8(multiLine));
             String unclosed = "MS-0003,1,\"x\n" + line("MS-0004", "CTABCDEFGH2348");
             IngestFileCommand command = command(
                     utf8("file"),
@@ -817,7 +855,8 @@ class IngestionServiceTest {
 
             assertThatThrownBy(() -> new RejectedRow(4, 3, FormatDefect.BARE_QUOTE, none, raw))
                     .isInstanceOf(IllegalArgumentException.class);
-            assertThatThrownBy(() -> new IngestedRow(4, 3, "MS-0001", "1", ACQUIRED, raw))
+            MilestoneValues values = milestoneValues("CTABCDEFGH2345");
+            assertThatThrownBy(() -> new IngestedRow(4, 3, "MS-0001", "1", ACQUIRED, values, raw))
                     .isInstanceOf(IllegalArgumentException.class);
         }
 
@@ -957,6 +996,101 @@ class IngestionServiceTest {
 
             assertThat(receivedRecords.all().getLast().classificationNote())
                     .isEqualTo("2 行目: 同じ外部 ID・外部版で内容の違う原本を受け取りました（最初の受信: 2026-11-03 09:00:00 UTC）。");
+        }
+    }
+
+    /**
+     * 値の誤り（Bolt 39b2b の行 17・18・20。UC-15 2a、ED-INV-02）。値の誤りの行は組み立てが行の誤りにするので、取込のサービスは 39b2 の
+     * とおり原文を保存してからキーのない隔離にする。取込のサービスは取り込む行の値を使わず、受信記録の列に値を書かない。
+     */
+    @Nested
+    class 値の誤り {
+
+        private static final String WRONG_TRACKING_NUMBER = "CTABCDEFGH234O";
+
+        private static byte[] utf8(String text) {
+            return text.getBytes(StandardCharsets.UTF_8);
+        }
+
+        private static RejectedRow valueError(int lineNumber, String externalId, FormatDefect defect, String column) {
+            String raw = externalId + ",1," + ACQUIRED + "," + WRONG_TRACKING_NUMBER + MILESTONE_TAIL;
+            return new RejectedRow(lineNumber, lineNumber, defect, List.of(column), utf8(raw));
+        }
+
+        private IngestFileCommand command(int receivedCount, List<IngestedRow> rows, List<RejectedRow> rejectedRows) {
+            return new IngestFileCommand(milestoneSource.id(), utf8("file"), receivedCount, rows, rejectedRows, null);
+        }
+
+        @Test
+        void 行17_正しい行と値の誤りの行が混ざれば行の結果は物理行の順で値の誤りの行は原文を保存してキーのない隔離にする() {
+            RejectedRow wrong = valueError(3, "MS-0002", FormatDefect.INVALID_TRACKING_NUMBER, "tracking_number");
+            IngestFileCommand command = command(
+                    3,
+                    List.of(
+                            milestone(2, "MS-0001", "1", "CTABCDEFGH2345"),
+                            milestone(4, "MS-0003", "1", "CTABCDEFGH2347")),
+                    List.of(wrong));
+
+            Ingested result = ingested(service().ingest(steward, command));
+
+            assertThat(result.rows())
+                    .extracting(RowResult::lineNumber, RowResult::classification)
+                    .containsExactly(
+                            tuple(2, Classification.ADOPTED),
+                            tuple(3, Classification.QUARANTINED),
+                            tuple(4, Classification.ADOPTED));
+            assertThat(result.reconciles()).isTrue();
+            List<ReceivedRecord> keyless = receivedRecords.all().stream()
+                    .filter(received -> received.externalRecordId() == null)
+                    .toList();
+            assertThat(keyless).hasSize(1);
+            ReceivedRecord quarantined = keyless.getFirst();
+            assertThat(quarantined.classificationNote())
+                    .isEqualTo("3 行目: 追跡番号の形が違います（tracking_number）。CT と英大文字・数字 12 桁（0・O・1・I・L を除く）で書いてください。");
+            assertThat(storage.read(quarantined.payloadObjectKey())).isEqualTo(wrong.payload());
+            assertThat(externalRecords.findByKey(keyOf(milestoneSource, "MS-0002", "1")))
+                    .isEmpty();
+        }
+
+        @Test
+        void 行18_同じキーの値の誤りの行が先でも外部原本を作らず後の正しい行を採用する() {
+            assertOnlyCorrectRowIsAdopted(3, 2);
+        }
+
+        @Test
+        void 行18_同じキーの値の誤りの行が後でも外部原本を作らず先の正しい行を採用する() {
+            assertOnlyCorrectRowIsAdopted(2, 3);
+        }
+
+        private void assertOnlyCorrectRowIsAdopted(int correctLine, int errorLine) {
+            IngestedRow correct = milestone(correctLine, "MS-0001", "1", "CTABCDEFGH2345");
+            IngestFileCommand command = command(
+                    2, List.of(correct), List.of(valueError(errorLine, "MS-0001", FormatDefect.INVALID_KIND, "kind")));
+
+            Ingested result = ingested(service().ingest(steward, command));
+
+            assertThat(externalRecords.all()).hasSize(1);
+            assertThat(storage.read(externalRecords.all().getFirst().payloadObjectKey()))
+                    .isEqualTo(correct.payload());
+            assertThat(result.rows())
+                    .filteredOn(row -> row.lineNumber() == correctLine)
+                    .extracting(RowResult::classification)
+                    .containsExactly(Classification.ADOPTED);
+        }
+
+        @Test
+        void 行20_受信記録と外部原本は取り込む行の値を持たずpayloadは行の原文と同じバイト列() {
+            IngestedRow row = milestone(2, "MS-0001", "1", "CTABCDEFGH2345");
+
+            ingested(service().ingest(steward, command(1, List.of(row), List.of())));
+
+            ReceivedRecord received = receivedRecords.all().getFirst();
+            assertThat(storage.read(received.payloadObjectKey())).isEqualTo(row.payload());
+            for (Class<?> type : List.of(ReceivedRecord.class, ExternalRecord.class)) {
+                assertThat(Arrays.stream(type.getRecordComponents()).map(RecordComponent::getType))
+                        .as("%s の列", type.getSimpleName())
+                        .noneMatch(RecordValues.class::isAssignableFrom);
+            }
         }
     }
 

@@ -16,13 +16,18 @@ import com.example.cargotracker.externaldata.application.internal.commandservice
 import com.example.cargotracker.externaldata.application.internal.commandservices.IngestionService;
 import com.example.cargotracker.externaldata.domain.model.aggregates.ExternalPayloadStorage;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.Classification;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.MilestoneKindValue;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.MilestoneValues;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PayloadObjectKey;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.TrackingNumberValue;
 import com.example.cargotracker.externaldata.interfaces.file.CsvFileKind;
 import com.example.cargotracker.externaldata.interfaces.file.IngestFileCommandAssembler;
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
 import com.example.cargotracker.shared.domain.CompanyId;
+import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.Role;
 import com.example.cargotracker.shared.domain.UserId;
+import com.example.cargotracker.shared.domain.UtcInstant;
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Duration;
@@ -58,7 +63,8 @@ import org.springframework.transaction.support.TransactionTemplate;
 @Import(TestcontainersConfiguration.class)
 class ExternalDataIngestionIntegrationTest {
 
-    private static final String MILESTONE_HEADER = "external_id,external_version,acquired_at,tracking_number";
+    private static final String MILESTONE_HEADER =
+            "external_id,external_version,acquired_at,tracking_number,kind,location_unlocode,occurred_at";
 
     private final AuthenticatedActor steward = new AuthenticatedActor(
             new UserId(UUID.randomUUID()),
@@ -206,9 +212,10 @@ class ExternalDataIngestionIntegrationTest {
         inRolledBackTransaction(() -> {
             String provider = newProvider();
             UUID sourceId = insertApprovedSource(provider);
-            String unreadable =
-                    "MS-0002,1,\"" + acquired() + ",CTABCDEFGH2346\n" + "MS-0003,1," + acquired() + ",CTABCDEFGH2347";
-            byte[] csv = (MILESTONE_HEADER + "\n" + "MS-0001,1," + acquired() + ",CTABCDEFGH2345\n" + unreadable)
+            String unreadable = "MS-0002,1,\"" + acquired() + ",CTABCDEFGH2346" + tail() + "\n" + "MS-0003,1,"
+                    + acquired() + ",CTABCDEFGH2347" + tail();
+            byte[] csv = (MILESTONE_HEADER + "\n" + "MS-0001,1," + acquired() + ",CTABCDEFGH2345" + tail() + "\n"
+                            + unreadable)
                     .getBytes(StandardCharsets.UTF_8);
 
             Ingested result = ingested(ingestionService.ingest(
@@ -251,13 +258,13 @@ class ExternalDataIngestionIntegrationTest {
             String csv = String.join(
                     "\n",
                     header,
-                    "MS-0001,1," + acquired() + ",CTABCDEFGH2345,",
-                    "MS-0002,1," + acquired() + ",CTABCDEFGH2346,\"港で荷役待ち",
+                    "MS-0001,1," + acquired() + ",CTABCDEFGH2345" + tail() + ",",
+                    "MS-0002,1," + acquired() + ",CTABCDEFGH2346" + tail() + ",\"港で荷役待ち",
                     "翌日に積み込み\"",
                     "",
-                    "MS-0003,1," + acquired() + ",CTABCDEFGH2347,余分な列,",
-                    "MS-0004,1,\"" + acquired() + ",CTABCDEFGH2348,",
-                    "MS-0005,1," + acquired() + ",CTABCDEFGH2349,");
+                    "MS-0003,1," + acquired() + ",CTABCDEFGH2347" + tail() + ",余分な列,",
+                    "MS-0004,1,\"" + acquired() + ",CTABCDEFGH2348" + tail() + ",",
+                    "MS-0005,1," + acquired() + ",CTABCDEFGH2349" + tail() + ",");
 
             Ingested result = ingested(ingestionService.ingest(
                     steward,
@@ -291,12 +298,15 @@ class ExternalDataIngestionIntegrationTest {
 
     @Test
     void 行21_外側が巻き戻ると行の誤りの原文とファイルの原本は残り受信記録からも取込からも参照されない() {
-        String rejectedLine = "MS-0002,1," + acquired() + ",CTABCDEFGH2346,余分な列";
+        String rejectedLine = "MS-0002,1," + acquired() + ",CTABCDEFGH2346" + tail() + ",余分な列";
         byte[][] payloads = new byte[1][];
         inRolledBackTransaction(() -> {
             UUID sourceId = insertApprovedSource(newProvider());
             byte[] csv = String.join(
-                            "\n", MILESTONE_HEADER, "MS-0001,1," + acquired() + ",CTABCDEFGH2345", rejectedLine)
+                            "\n",
+                            MILESTONE_HEADER,
+                            "MS-0001,1," + acquired() + ",CTABCDEFGH2345" + tail(),
+                            rejectedLine)
                     .getBytes(StandardCharsets.UTF_8);
             payloads[0] = csv;
 
@@ -329,6 +339,11 @@ class ExternalDataIngestionIntegrationTest {
             acquiredAt = clock.instant().minus(Duration.ofMinutes(30)).truncatedTo(ChronoUnit.SECONDS);
         }
         return acquiredAt.toString();
+    }
+
+    /** 主要実績の行の値の列（追跡番号の後。出発・東京、発生時刻は取得時刻と同じ。T-230。Bolt 39b2b）。 */
+    private String tail() {
+        return ",DEPARTURE,JPTYO," + acquired();
     }
 
     /** spy が受けた保存の呼び出しのうち、そのバイト列を保存したオブジェクトキー。 */
@@ -396,9 +411,14 @@ class ExternalDataIngestionIntegrationTest {
             // テストの中で 1 回だけ決める（行ごとに時計を読むと、同じ内容のはずの行の payload が違ってしまう）
             acquiredAt = clock.instant().minus(Duration.ofMinutes(30));
         }
-        String line = externalId + ",1," + acquiredAt + "," + trackingNumber;
+        String line = externalId + ",1," + acquiredAt + "," + trackingNumber + ",DEPARTURE,JPTYO," + acquiredAt;
+        MilestoneValues values = new MilestoneValues(
+                new TrackingNumberValue(trackingNumber),
+                MilestoneKindValue.DEPARTURE,
+                new Location("JPTYO"),
+                new UtcInstant(acquiredAt));
         return new IngestedRow(
-                lineNumber, lineNumber, externalId, "1", acquiredAt, line.getBytes(StandardCharsets.UTF_8));
+                lineNumber, lineNumber, externalId, "1", acquiredAt, values, line.getBytes(StandardCharsets.UTF_8));
     }
 
     private static IngestFileCommand file(UUID sourceId, IngestedRow... rows) {

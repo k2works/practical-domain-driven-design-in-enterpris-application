@@ -55,7 +55,7 @@ class ExternalDataCopiedRulesTest {
         try {
             construction.run();
             return true;
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException _) {
             return false;
         }
     }
