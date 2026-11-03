@@ -64,7 +64,7 @@
             <column ascending="true" name="external_version"/>
          </index>
       </table>
-      <table name="ingestion" remarks="取込" schema="external_data" type="TABLE">
+      <table name="ingestion" remarks="取込 [append-only]" schema="external_data" type="TABLE">
          <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="id" nullable="false" remarks="取込 ID" size="2147483647" type="uuid" typeCode="1111">
             <child column="ingestion_id" foreignKey="fk_received_record_ingestion" implied="false" onDeleteCascade="false" schema="external_data" table="received_record"/>
          </column>

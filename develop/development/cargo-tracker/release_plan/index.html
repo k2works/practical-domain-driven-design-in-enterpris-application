@@ -16899,7 +16899,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">取込の置き場所</td>
-<td style="text-align: left;">新しいコンテキスト <code>externaldata</code>（スキーマは <code>external_data</code>）。外部データはほかのコンテキストに依存しない（<code>allowedDependencies</code> は <code>shared</code>・<code>platform :: web</code> だけ）。採用値と隔離と判断を DE-12（航海）・DE-13（主要実績）・DE-14（隔離）と判断のイベントで公開し、経路設計・追跡・identity が listener で受ける（それぞれの <code>allowedDependencies</code> に <code>externaldata :: events</code> を足す）。ModularityTest のモジュール一覧と型の依存の規則を足す（構造）。ADR に記録する（39 の計画で ADR-004 の改訂か ADR-020 かを諮る）。【前の決定の変更】Bolt 39 の開始準備の決定 (2)・(7)（2026-11-02、human:kakimomokuri）: ADR は ADR-004 を改訂する。「<code>shared</code>・<code>platform :: web</code> だけ」は許す範囲の上限と読み、39 の宣言は <code>shared</code> だけにする（<code>platform :: web</code> は画面を作る 39c、<code>domain.events</code> の名前付きインターフェースは最初のイベントを作る 39b で足す）。下流に <code>externaldata :: events</code> を足すのは、39 で 4 つのコンテキストをまとめてではなく、各 listener を作る Bolt（identity は 39b、経路設計は 39e、追跡は 39g）にする（<a href="../bolt_39_plan/">Bolt 39 計画</a>）</td>
+<td style="text-align: left;">新しいコンテキスト <code>externaldata</code>（スキーマは <code>external_data</code>）。外部データはほかのコンテキストに依存しない（<code>allowedDependencies</code> は <code>shared</code>・<code>platform :: web</code> だけ）。採用値と隔離と判断を DE-12（航海）・DE-13（主要実績）・DE-14（隔離）と判断のイベントで公開し、経路設計・追跡・identity が listener で受ける（それぞれの <code>allowedDependencies</code> に <code>externaldata :: events</code> を足す）。ModularityTest のモジュール一覧と型の依存の規則を足す（構造）。ADR に記録する（39 の計画で ADR-004 の改訂か ADR-020 かを諮る）。【前の決定の変更】Bolt 39 の開始準備の決定 (2)・(7)（2026-11-02、human:kakimomokuri）: ADR は ADR-004 を改訂する。「<code>shared</code>・<code>platform :: web</code> だけ」は許す範囲の上限と読み、39 の宣言は <code>shared</code> だけにする（<code>platform :: web</code> は画面を作る 39c、<code>domain.events</code> の名前付きインターフェースは最初のイベントを作る 39b で足す）。下流に <code>externaldata :: events</code> を足すのは、39 で 4 つのコンテキストをまとめてではなく、各 listener を作る Bolt（identity は 39b、経路設計は 39e、追跡は 39g）にする（<a href="../bolt_39_plan/">Bolt 39 計画</a>）。【前の決定の変更】Bolt 39b の開始準備の決定 (1)（2026-11-03、推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）: 39b を縦に 4 本に分けたので、<code>domain.events</code> の名前付きインターフェースと identity の監査の listener（identity の <code>externaldata :: events</code>）は 39b3 で足す（<a href="../bolt_39b_plan/">Bolt 39b 計画</a>）</td>
 <td style="text-align: left;">architecture_backend（ARCH-HO-03 を含む）、ADR、ModularityTest、package-info</td>
 </tr>
 <tr>
@@ -16957,7 +16957,7 @@
 <tr>
 <td style="text-align: left;">4</td>
 <td style="text-align: left;">取込の単位と一括処理、PERF-06</td>
-<td style="text-align: left;">1 ファイルを 1 つの取込（<code>Ingestion</code>）とし、行ごとに分類して受信記録を書く。1 ファイル 1 万件以下（non_functional :50）、DB の 1 文の上限（:81）の中に収める。39b の統合テストで 1 万件のファイルの時間を測る（PERF-06）。リスク台帳の PERF-06 の行（版の競合の連鎖）に従い、同じ追跡番号への集中を 39g の統合テストで確かめる。負荷テストは W10</td>
+<td style="text-align: left;">1 ファイルを 1 つの取込（<code>Ingestion</code>）とし、行ごとに分類して受信記録を書く。1 ファイル 1 万件以下（non_functional :50）、DB の 1 文の上限（:81）の中に収める。39b の統合テストで 1 万件のファイルの時間を測る（PERF-06）。リスク台帳の PERF-06 の行（版の競合の連鎖）に従い、同じ追跡番号への集中を 39g の統合テストで確かめる。負荷テストは W10。【前の決定の変更】Bolt 39b の開始準備の決定 (1)（2026-11-03、推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）: 1 万件のファイルの時間を測る統合テストは 39b4 で作る（39b を縦に 4 本に分けたため）</td>
 </tr>
 <tr>
 <td style="text-align: left;">5</td>
@@ -16967,7 +16967,7 @@
 <tr>
 <td style="text-align: left;">6</td>
 <td style="text-align: left;">形式の検証に失敗した行（UC-15 2a）</td>
-<td style="text-align: left;">39b で、隔離して理由を残す（DE-14）。データ責任者への通知は W9 の通知で受ける（W7 は S-17 の一覧に出す）</td>
+<td style="text-align: left;">39b で、隔離して理由を残す（DE-14）。データ責任者への通知は W9 の通知で受ける（W7 は S-17 の一覧に出す）。【前の決定の変更】Bolt 39b の開始準備の決定 (1)（2026-11-03、推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）: 形式の誤りの隔離は 39b2、DE-14 は 39b3 で作る（39b を縦に 4 本に分けたため）</td>
 </tr>
 <tr>
 <td style="text-align: left;">7</td>
@@ -17037,7 +17037,7 @@
 <tr>
 <td style="text-align: left;">20</td>
 <td style="text-align: left;">SP の食い違い</td>
-<td style="text-align: left;">US-14 は 8 SP（ユーザーストーリー一覧）。test_strategy :517 の 5 SP を直す。あわせて :518 の US-15 の 4 SP を W12 の行の 5 SP にそろえる</td>
+<td style="text-align: left;">US-14 は 8 SP（ユーザーストーリー一覧）。test_strategy :517 の 5 SP を直す。あわせて :518 の US-15 の 4 SP を W12 の行の 5 SP にそろえる。【取り下げ】2026-11-03（Bolt 39b のステップ 1）: test_strategy の列は SP ではなく受入条件の数で、US-14 の 5・US-15 の 4 は user_story の受入条件の数と一致するので直さない（事実の読み違いの訂正）</td>
 </tr>
 <tr>
 <td style="text-align: left;">21</td>
@@ -17110,10 +17110,31 @@
 </tr>
 <tr>
 <td style="text-align: left;">39b</td>
-<td style="text-align: left;">分類と取込のサービス: 採用・重複・隔離・差異の分類（冪等性キー BR-12。AC1・AC3・AC4）、形式の検証に失敗した行の隔離（UC-15 2a）、承認済みの情報源のない取込の拒否と <code>PilotReadiness</code>（AC2）、DE-14 と identity の監査の listener、1 万件の時間（PERF-06）。業務ルール層のシナリオ（<code>features/external_data/</code>）</td>
+<td style="text-align: left;">取込と分類の縦: 形式の正しい行を冪等性キー（BR-12）で採用・重複・隔離に分類する（ED-INV-02、AC3・AC4。差異は 39h）、取込・外部原本・受信記録の読み書き（追記専用の表に更新・削除を持たせない）、ファイル全体と行の原本の保存、承認済みの情報源のない取込の拒否と <code>PilotReadiness</code>（ED-INV-01、AC2）、開発データの情報源と DATA_STEWARD の開発利用者、業務ルール層のシナリオ（<code>features/external_data/</code>）。【前の決定の変更】初案の 39b（分類と取込のサービス、形式の誤りの隔離、<code>PilotReadiness</code>、DE-14 と監査の listener、PERF-06）を、開始準備で半日を超えるので 39b・39b2・39b3・39b4 に縦に分けた（2026-11-03、推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）。<a href="../bolt_39b_plan/">Bolt 39b 計画</a>（承認済み。組み立ての規則の変更は human:kakimomokuri が個別に決めた）</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: left;">インサイドアウト</td>
-<td style="text-align: left;">ステップごと（セキュリティ・監査・構造）</td>
+<td style="text-align: left;">ステップごと（データベース・構造）</td>
+</tr>
+<tr>
+<td style="text-align: left;">39b2</td>
+<td style="text-align: left;">形式の誤りの隔離（ファイル・行。UC-15 2a）と値の列（航海・主要実績。仮の形式、OQ-02）の検証、引用符の閉じ忘れのファイルの要確認と取り込めなかった件数、誤りの理由を業務の言葉で、件数の突き合わせ、文字コードの誤り。キーのない隔離のため <code>received_record.external_record_id</code> を NULL 可にする</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;">インサイドアウト</td>
+<td style="text-align: left;">ステップごと（スキーマ）</td>
+</tr>
+<tr>
+<td style="text-align: left;">39b3</td>
+<td style="text-align: left;">採用値と DE-12・DE-13・DE-14、<code>domain.events</code>、identity の監査の listener（<code>externaldata :: events</code>）と毒入りのメッセージ、W6 横断レビュー M-2、<code>PublicApiArchitectureTest</code> の汎用化、手書きの規則の写し（AC1 の採用値）</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;">インサイドアウト</td>
+<td style="text-align: left;">ステップごと（監査・構造）</td>
+</tr>
+<tr>
+<td style="text-align: left;">39b4</td>
+<td style="text-align: left;">PERF-06（1 万件を 5 分以内）、行ごとのコミットの量と接続の数、要れば一括の保存、原本 1 件の大きさの上限、数えるテストは自分のキーで絞る規約</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;">インサイドアウト</td>
+<td style="text-align: left;">ステップごと（構造）</td>
 </tr>
 <tr>
 <td style="text-align: left;">39c</td>
@@ -17173,7 +17194,7 @@
 </tr>
 </tbody>
 </table>
-<p>順序は 38h → 39 → 39a2 → 39a3 → 39b → 39c → 39d → 39e → 39f → 39g → 39g2 → 39h → 39i（38h は W6 の締めで足した。評価の入口の 39f より前に、再設計要・出発済みの運用の決まりをマニュアルに置くため）。39e・39f は 39d の採用値（DE-12）を受け、39g は 39d の DE-13 を受けるので後に置く。39h は 39g の確認中との境界（確認ポイント 7）の後に置く。半日を超えそうな Bolt（39・39b・39f・39g）は開始準備で分ける。W5・W6 の実績（見込みの約 1.5 倍の本数）から、W7 も 15 本前後になる見込みである。W6 までで計画より約 3 週早いので、バッファ消費ルールの範囲で吸収し、W7 の週の見直しで確かめる。</p>
+<p>順序は 38h → 39 → 39a2 → 39a3 → 39b → 39b2 → 39b3 → 39b4 → 39c → 39d → 39e → 39f → 39g → 39g2 → 39h → 39i（38h は W6 の締めで足した。評価の入口の 39f より前に、再設計要・出発済みの運用の決まりをマニュアルに置くため）。39e・39f は 39d の採用値（DE-12）を受け、39g は 39d の DE-13 を受けるので後に置く。39h は 39g の確認中との境界（確認ポイント 7）の後に置く。半日を超えそうな Bolt（39・39b・39f・39g）は開始準備で分ける。W5・W6 の実績（見込みの約 1.5 倍の本数）から、W7 も 15 本前後になる見込みである。W6 までで計画より約 3 週早いので、バッファ消費ルールの範囲で吸収し、W7 の週の見直しで確かめる。</p>
 <p><strong>W6 の Try の持ち込み</strong>: 各 Bolt 計画の確認ポイントに、T-204・T-212（サブエージェントへの指示の最初に heredoc を使わないと書く。<code>orchestrating-development</code> の <code>PROJECT.md</code>）、T-217（本体を直す前に Red を流し、落ちた理由を記録する）、T-225・T-213（push の前に <code>check</code>）、T-182・T-211・T-216（状態の組み合わせの表に重複・隔離・差異と順序逆転・出口・誤った入力の行を置く）、T-184（listener は配信まで確かめる）、T-219（変異の対象に単体・統合・契約のテスト）、T-215・T-222（Gradle を流す担当を 1 つに、計画の初稿を先にコミット）、T-191（環境の前提に設定ファイルの行を添える）を入れる。</p>
 <p><strong>Living Documentation</strong>: 外部データのコンテキストの ADR、<code>package-info</code> の <code>allowedDependencies</code>、ModularityTest と MapperSchemaArchitectureTest の対応表、用語集の整合テスト（外部原本・受信記録・隔離・差異・採用値・下書き・確認中・原本だけ）、受入条件の照合の表（US-14、US-12 の Release 1.0 の範囲）</p>
 <p><strong>デモ項目</strong>: ファイルの取込と分類の結果（<code>@US-14</code>。重複・隔離・差異）、隔離・差異の判断、航海の更新から確定した経路が再設計要になる流れ（<code>@US-06</code>・<code>@US-07</code>）、取り込んだ実績の下書きの採用と、順序逆転・取消済み・完了後（<code>@US-12</code>）。動画は画面の振る舞いが変わる Bolt（39c・39d・39f・39g・39h）で <code>@demo-&lt;Bolt&gt;</code> を撮る</p>
@@ -19731,6 +19752,16 @@
 <td style="text-align: left;">2026-11-03</td>
 <td style="text-align: left;">Bolt 39a3 のステップ 1・2 と<a href="../bolt_39a3_report/">終了報告</a>を承認した（ステップ 2 から後は推奨のとおり。Recommend 承認の指示による）</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-11-03</td>
+<td style="text-align: left;">39b を 39b・39b2・39b3・39b4 に縦に分け、<a href="../bolt_39b_plan/">Bolt 39b 計画</a>を作り、整合性検証の指摘を反映して承認した（規則の変更は個別に、ほかは推奨のとおり。Recommend 承認の指示による）</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-11-03</td>
+<td style="text-align: left;">Bolt 39b のステップ 1（設計の文書）: W7 の設計の決定（取込の置き場所）と確認ポイント 4・6 に、39b を 4 本に分けたことによる【前の決定の変更】の注を足した</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
 </tr>
 <tr>
 <td style="text-align: left;">2026-10-28</td>

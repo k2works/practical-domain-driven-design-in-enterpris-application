@@ -15861,7 +15861,7 @@
 <tr>
 <td style="text-align: left;">情報源</td>
 <td style="text-align: left;">DataSource</td>
-<td style="text-align: left;">データ責任者が選定・承認した運送会社・港湾などの原本の提供元（BR-18）</td>
+<td style="text-align: left;">データ責任者が選定・承認した運送会社・港湾などの原本の提供元（BR-18）。情報源・取込・外部原本・受信記録は、リポジトリのポートが受け渡す Java の record（<code>externaldata.domain.model.aggregates</code>、<code>@Entity</code>）で、振る舞いを持たない（トランザクションスクリプト。ADR-002、Bolt 39b）</td>
 <td style="text-align: left;">外部データ</td>
 </tr>
 <tr>
@@ -15885,7 +15885,55 @@
 <tr>
 <td style="text-align: left;">取込</td>
 <td style="text-align: left;">Ingestion</td>
-<td style="text-align: left;">データ責任者が 1 ファイルを取り込む 1 回の単位。ファイル全体の原本と分類別の件数を持ち、照合に使う</td>
+<td style="text-align: left;">データ責任者が 1 ファイルを取り込む 1 回の単位。ファイル全体の原本と受け取った件数を持ち、照合に使う。受け取った件数（<code>received_count</code>）はファイルの物理データ行の数（ヘッダーを除く）で、取込を書くときに入れ、更新しない（追記専用）。分類別の件数は受信記録から数える（Bolt 39b で「分類別の件数を持ち」を改めた）</td>
+<td style="text-align: left;">外部データ</td>
+</tr>
+<tr>
+<td style="text-align: left;">情報源のリポジトリ</td>
+<td style="text-align: left;">DataSourceRepository</td>
+<td style="text-align: left;">情報源を ID で引き（<code>findById</code>）、承認済みの情報源を数える（<code>countApproved</code>。<code>SUSPENDED</code> は数えない）ドメインのポート（<code>externaldata.domain.model.aggregates</code>）。読み取りだけを持つ（情報源の選定・承認は W10 の運用タスク。Bolt 39b）</td>
+<td style="text-align: left;">外部データ</td>
+</tr>
+<tr>
+<td style="text-align: left;">取込のリポジトリ</td>
+<td style="text-align: left;">IngestionRepository</td>
+<td style="text-align: left;">取込を追記する（<code>add</code>）ドメインのポート。追記専用の表なので更新・削除のメソッドを持たない（H2 は権限で守れないため。前例は <code>AuditRecordRepository</code>。Bolt 39b）</td>
+<td style="text-align: left;">外部データ</td>
+</tr>
+<tr>
+<td style="text-align: left;">外部原本のリポジトリ</td>
+<td style="text-align: left;">ExternalRecordRepository</td>
+<td style="text-align: left;">外部原本を冪等性キーで引き（<code>findByKey</code>）、足す（<code>add</code>）ドメインのポート。同じキーの 2 回目の追加（同時の取込）は一意制約の違反（<code>DuplicateKeyException</code>）のまま上げ、取込全体を巻き戻す（Bolt 39b）</td>
+<td style="text-align: left;">外部データ</td>
+</tr>
+<tr>
+<td style="text-align: left;">受信記録のリポジトリ</td>
+<td style="text-align: left;">ReceivedRecordRepository</td>
+<td style="text-align: left;">受信記録を追記し（<code>add</code>）、取込と分類ごとに数える（<code>countByIngestionAndClassification</code>）ドメインのポート。追記専用の表なので更新・削除のメソッドを持たない（Bolt 39b）</td>
+<td style="text-align: left;">外部データ</td>
+</tr>
+<tr>
+<td style="text-align: left;">取込のサービス</td>
+<td style="text-align: left;">IngestionService</td>
+<td style="text-align: left;">外部データのアプリケーションのサービス（<code>externaldata.application.internal.commandservices</code>。外側のトランザクション）。操作者がデータ責任者か、情報源があり承認済みかを確かめ、ファイル全体の原本を保存し、取込を書き、行の順に行の原本を保存してから冪等性キーで分類した受信記録を書く。時刻は Clock から 1 回取り、取込・外部原本・受信記録に使う（Bolt 39b）</td>
+<td style="text-align: left;">外部データ</td>
+</tr>
+<tr>
+<td style="text-align: left;">取込の結果</td>
+<td style="text-align: left;">IngestionOutcome</td>
+<td style="text-align: left;">取込のサービスの結果（sealed）。取り込んだ <code>Ingested</code>（取込 ID、受け取った件数、分類別の件数、行ごとの結果）、情報源が承認済みでない <code>DataSourceNotApproved</code>、情報源がない <code>DataSourceNotFound</code>、操作者がデータ責任者でない <code>NotPermitted</code>。拒否のときは原本も含めて何も保存しない（<code>commandservices</code>。Bolt 39b）</td>
+<td style="text-align: left;">外部データ</td>
+</tr>
+<tr>
+<td style="text-align: left;">開始判定の照会</td>
+<td style="text-align: left;">PilotReadinessQueryService</td>
+<td style="text-align: left;">承認済みの情報源の件数と、パイロットを開始できるか、開始できない理由を <code>PilotReadiness</code> で返すアプリケーションのサービス（<code>externaldata.application.internal.queryservices</code>。ED-INV-01、BR-18。Bolt 39b）</td>
+<td style="text-align: left;">外部データ</td>
+</tr>
+<tr>
+<td style="text-align: left;">分類</td>
+<td style="text-align: left;">Classification</td>
+<td style="text-align: left;">受信記録の分類（採用 <code>ADOPTED</code>・重複 <code>DUPLICATE</code>・隔離 <code>QUARANTINED</code>）の値オブジェクト（enum。<code>externaldata.domain.model.valueobjects</code>）。既にある外部原本と今のハッシュから分類を決める（ED-INV-02）。差異 <code>DISCREPANCY</code> は Bolt 39h で足す（Bolt 39b）</td>
 <td style="text-align: left;">外部データ</td>
 </tr>
 <tr>
@@ -15933,7 +15981,7 @@
 <tr>
 <td style="text-align: left;">冪等性キー</td>
 <td style="text-align: left;">IdempotencyKey</td>
-<td style="text-align: left;">提供元、原本種別、外部 ID、外部版の組（BR-12）</td>
+<td style="text-align: left;">提供元、原本種別、外部 ID、外部版の組（BR-12）。値オブジェクト（<code>externaldata.domain.model.valueobjects</code>。Bolt 39b）</td>
 <td style="text-align: left;">外部データ</td>
 </tr>
 <tr>
@@ -17033,8 +17081,8 @@
 <tr>
 <td style="text-align: left;">取込</td>
 <td style="text-align: left;">Ingestion</td>
-<td style="text-align: left;">取込 ID、情報源、ファイル、取込者、取込時刻、件数</td>
-<td style="text-align: left;">取込単位で件数を数え、照合に使う</td>
+<td style="text-align: left;">取込 ID、情報源、ファイル、取込者、取込時刻、受け取った件数</td>
+<td style="text-align: left;">受け取った件数はファイルの物理データ行の数（ヘッダーを除く）で、取込を書くときに入れ、更新しない。分類別の件数は受信記録から数え、照合に使う。取込は受信記録より先に書く。追記専用（Bolt 39b）</td>
 </tr>
 <tr>
 <td style="text-align: left;">外部原本</td>
@@ -17046,7 +17094,7 @@
 <td style="text-align: left;">受信記録</td>
 <td style="text-align: left;">ReceivedRecord</td>
 <td style="text-align: left;">外部原本、取込、payload とそのハッシュ、取得時刻、分類（採用・重複・隔離・差異）、分類の注記、分類の時刻</td>
-<td style="text-align: left;">ED-INV-02: 同じキー・同じハッシュは重複、同じキー・違うハッシュは隔離する。ED-INV-03: 順序逆転・既存値との矛盾は差異として自動で上書きしない（BR-12、US-14）。追記専用</td>
+<td style="text-align: left;">ED-INV-02: 同じキー・同じハッシュは重複、同じキー・違うハッシュは隔離する。ED-INV-03: 順序逆転・既存値との矛盾は差異として自動で上書きしない（BR-12、US-14）。同じファイルの中に同じキーが 2 行あれば行の順に処理し、先の行を採用、後の行は同じハッシュなら重複・違えば隔離にする（Bolt 39b）。追記専用</td>
 </tr>
 <tr>
 <td style="text-align: left;">受信記録の判断</td>
@@ -17205,7 +17253,7 @@
 <tbody>
 <tr>
 <td style="text-align: left;">パイロット開始可否を判定する（PilotReadiness）</td>
-<td style="text-align: left;">承認済みの情報源の件数を返し、0 件なら開始不可とその理由を示す。運用の開始前チェックで使う</td>
+<td style="text-align: left;">承認済みの情報源の件数を返し、0 件なら開始不可とその理由を示す。理由の文言は「承認済みの情報源がありません。情報源を選定し、承認してください」。停止中（<code>SUSPENDED</code>）の情報源は数えない。運用の開始前チェックで使う（照会は <code>PilotReadinessQueryService</code>。Bolt 39b）</td>
 <td style="text-align: left;">BR-18、US-14</td>
 </tr>
 </tbody>
