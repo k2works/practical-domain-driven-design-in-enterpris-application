@@ -15,11 +15,10 @@ import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.dao.DuplicateKeyException;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * 取込・外部原本・受信記録のリポジトリの契約（Bolt 39b の行 7・9b・10・12、Bolt 39b2 の行 17・18・19）。メモリ・H2・PostgreSQL の実装が継いで同じ約束を確かめる。
+ * 取込・外部原本・受信記録のリポジトリの契約（Bolt 39b の行 7・9b・10・12、Bolt 39b2 の行 17・18・19、Bolt 39b3 の行 12）。メモリ・H2・PostgreSQL の実装が継いで同じ約束を確かめる。
  * 取込と受信記録のポートは追記と数えることだけを持つので、書いた行の往復は継ぐ側が {@link #storedIngestion(UUID)}・
  * {@link #storedReceivedRecord(UUID)} で読む（ポートの外）。提供元の名前は乱数の UUID を含めて自分の行で絞る。
  *
@@ -154,13 +153,13 @@ public abstract class ExternalDataRecordRepositoriesContract {
     }
 
     @Test
-    void 行9b_同じ冪等性キーの外部原本の2回目の追加は一意制約の違反() {
+    void 行9b_行12_同じ冪等性キーの外部原本の2回目の追加は名前付きの例外() {
         IdempotencyKey key = key("VOYAGE", "V-009");
         ExternalRecordRepository repository = externalRecords();
         repository.add(externalRecord(key));
         ExternalRecord again = externalRecord(key);
 
-        assertThatThrownBy(() -> repository.add(again)).isInstanceOf(DuplicateKeyException.class);
+        assertThatThrownBy(() -> repository.add(again)).isInstanceOf(DuplicateExternalRecordException.class);
     }
 
     @Test

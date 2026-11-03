@@ -13,6 +13,7 @@ import com.example.cargotracker.externaldata.application.internal.commandservice
 import com.example.cargotracker.externaldata.application.internal.commandservices.IngestionOutcome.Unreadable;
 import com.example.cargotracker.externaldata.domain.model.aggregates.DataSource;
 import com.example.cargotracker.externaldata.domain.model.aggregates.DataSource.ApprovalStatus;
+import com.example.cargotracker.externaldata.domain.model.aggregates.DuplicateExternalRecordException;
 import com.example.cargotracker.externaldata.domain.model.aggregates.ExternalPayloadStorage;
 import com.example.cargotracker.externaldata.domain.model.aggregates.ExternalRecord;
 import com.example.cargotracker.externaldata.domain.model.aggregates.InMemoryDataSourceRepository;
@@ -53,7 +54,6 @@ import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.springframework.dao.DuplicateKeyException;
 
 /**
  * 取込のサービス（Bolt 39b の行 1〜5b・7〜8・9b・10〜12、形式の誤りは入れ子のクラスで Bolt 39b2 の行番号。US-14 AC1〜AC4、BR-12、BR-18、
@@ -390,12 +390,13 @@ class IngestionServiceTest {
     }
 
     @Test
-    void 行9b_同時の取込で同じ新しいキーを先に書かれたら一意制約の違反のまま例外を上げる() {
+    void 行9b_行12_同時の取込で同じ新しいキーを先に書かれたら名前付きの例外を捕まえずに上げる() {
         IngestedRow row = milestone(2, "MS-0001", "1", "CTABCDEFGH2345");
         IngestionService racingService = racingService(row);
         IngestFileCommand command = file(milestoneSource, row);
 
-        assertThatThrownBy(() -> racingService.ingest(steward, command)).isInstanceOf(DuplicateKeyException.class);
+        assertThatThrownBy(() -> racingService.ingest(steward, command))
+                .isInstanceOf(DuplicateExternalRecordException.class);
         assertThat(receivedRecords.all()).isEmpty();
     }
 
@@ -404,7 +405,8 @@ class IngestionServiceTest {
         IngestedRow row = milestone(2, "MS-0001", "1", "CTABCDEFGH2345");
         IngestionService racingService = racingService(row);
         IngestFileCommand command = file(milestoneSource, row);
-        assertThatThrownBy(() -> racingService.ingest(steward, command)).isInstanceOf(DuplicateKeyException.class);
+        assertThatThrownBy(() -> racingService.ingest(steward, command))
+                .isInstanceOf(DuplicateExternalRecordException.class);
 
         Ingested retried = ingested(racingService.ingest(steward, command));
         Ingested changed = ingested(

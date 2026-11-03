@@ -15,8 +15,10 @@ public interface ExternalRecordRepository {
     /**
      * 外部原本を足す。
      *
-     * <p>同じ冪等性キーの外部原本がもうあれば（同時の取込）、一意制約の違反（{@code DuplicateKeyException}）のまま上げ、取込全体を
-     * 巻き戻す（Bolt 39b の確認ポイント 7）。
+     * <p>同じ冪等性キーの外部原本がもうあれば（同時の取込）、{@link DuplicateExternalRecordException} を投げる。取込のサービスは
+     * 捕まえずに上げ、取込全体を巻き戻す（Bolt 39b の確認ポイント 7、Bolt 39b3 の行 12）。
+     *
+     * @throws DuplicateExternalRecordException 同じ冪等性キーの外部原本がもうあるとき
      */
     void add(ExternalRecord externalRecord);
 }

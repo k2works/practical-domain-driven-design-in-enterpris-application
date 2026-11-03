@@ -2,7 +2,7 @@
 type: Plan
 title: "Bolt 39b3 計画 - 採用値と DE-12・DE-13・DE-14 の発行"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-03T11:16:32Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-03T11:29:05Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-11-03T11:09:44Z }
 ---
@@ -332,7 +332,7 @@ rr ||--o| av : 分類が採用のときだけ 1 つ
 ## ステップ計画（ステップごとに止める）
 
 - [x] **1. 設計の文書**（2026-11-03、推奨のとおり承認として記録した（Recommend 承認の指示による。human:kakimomokuri）。リポジトリ・例外・イベントは用語集に足し、外部データの要素表は採用値の行だけを直した。承認済みの Bolt 39b2b の計画は :305 にだけ変更の印を付けた）: 上の「設計文書に直す箇所」（「人に諮ること」1・2 と確認ポイント 5 の決定を【前の決定の変更】の注として反映する。release_plan :896・:892、DE-12〜DE-14 の属性と出典、採用値の意味、OQ-02 の注の寄港の上限、ADR-004 :83 と改訂の経緯、architecture_backend :285、Bolt 39b2b の計画 :305 の変更の印）（完了の判定: 文書の差分。**承認ゲート**）
-- [ ] **2. 外部原本のポートの約束（Red → Green）**: 行 12 の契約と単体のテストを先に直し（`ExternalDataRecordRepositoriesContract` :163、`InMemoryExternalRecordRepository` :28、`IngestionServiceTest` :398・:407 の期待を `DuplicateExternalRecordException` に。T-217 の一覧）、落ちることを確かめてから、例外の型、MyBatis の実装の写し、ポートの Javadoc を作る（完了の判定: 緑、`spotbugsMain`（T-232）、`sonar-local:check` の新しい違反（T-234）。**承認ゲート**（構造: ポートの約束））
+- [x] **2. 外部原本のポートの約束（Red → Green）**（2026-11-03、推奨のとおり承認として記録した（Recommend 承認の指示による。human:kakimomokuri）。Red はテストのコンパイルの誤り 7 個。取込のサービスは計画のとおり例外を捕まえずに上げる。PostgreSQL で元の例外を原因に持つことを確かめた。SonarQube は PASS）: 行 12 の契約と単体のテストを先に直し（`ExternalDataRecordRepositoriesContract` :163、`InMemoryExternalRecordRepository` :28、`IngestionServiceTest` :398・:407 の期待を `DuplicateExternalRecordException` に。T-217 の一覧）、落ちることを確かめてから、例外の型、MyBatis の実装の写し、ポートの Javadoc を作る（完了の判定: 緑、`spotbugsMain`（T-232）、`sonar-local:check` の新しい違反（T-234）。**承認ゲート**（構造: ポートの約束））
 - [ ] **3. 採用値（Red → Green）**: 行 1・2・11・14・15 の単体と契約のテストを先に書いて落ちることを確かめ（寄港の上限で落ちる既存のテストを一覧にする。T-217）、`AdoptedValue`・`AdoptedValueRepository`（MyBatis の mapper と実装、メモリの実装、契約）、取込の値の要約、`VoyageValues.MAX_PORT_CALLS` と理由の値 `VoyageValuesRejectionReason.TOO_MANY_PORT_CALLS`（詳細「寄港が多すぎます（60 まで）」）と組み立ての行の誤り（`INVALID_PORT_CALLS`）、取込のサービスの採用値の追記を作る。`ExternalDataCopiedRulesTest` の Javadoc の「このテストが守らないもの」（:36）に寄港の数の上限 60（経路設計の `Voyage` は上限を持たず、意図して食い違う。39e に申し送る）を足す（完了の判定: 緑、`spotbugsMain`、`sonar-local:check` の新しい違反。**承認ゲート**（構造: 新しい集約とリポジトリ））
 - [ ] **4. イベント（Red → Green）**: 行 3〜8・10・13・16 の単体と直列化の契約のテストを先に書いて落ちることを確かめ、`externaldata.domain.events` の package-info（`@NamedInterface("events")`）と 3 つの record、取込のサービスの発行（記録する publisher で単体を確かめる。T-236）、組み立て（`ExternalDataConfiguration`）に publisher を渡す（完了の判定: 緑、`spotbugsMain`、`sonar-local:check` の新しい違反。**承認ゲート**（構造: 公表された言語と名前付きインターフェース））
 - [ ] **5. 統合と受入シナリオ（Red → Green）**: 行 1・2・8・9・15 の統合テスト（コミットの後にだけ受ける記録で発行と巻き戻りを確かめる）と、`ingest_external_records.feature` に採用値ができ再取込で増えないシナリオ（`@US-14`。ステップ定義は `ExternalRecordIngestionSteps`）（完了の判定: 緑。本体を変えたら `spotbugsMain`。**承認ゲート**（構造: 受入シナリオ））

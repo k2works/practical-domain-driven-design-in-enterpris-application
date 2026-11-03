@@ -6,11 +6,10 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
-import org.springframework.dao.DuplicateKeyException;
 
 /**
- * メモリ上の外部原本のリポジトリ（テスト用。Bolt 39b）。冪等性キーの一意制約を写し、同じキーの 2 回目の追加は DB と同じく
- * {@link DuplicateKeyException} にする。
+ * メモリ上の外部原本のリポジトリ（テスト用。Bolt 39b）。冪等性キーの一意制約を写し、同じキーの 2 回目の追加は MyBatis の実装と同じく
+ * {@link DuplicateExternalRecordException} にする（Bolt 39b3 の行 12）。
  */
 public class InMemoryExternalRecordRepository implements ExternalRecordRepository {
 
@@ -25,7 +24,7 @@ public class InMemoryExternalRecordRepository implements ExternalRecordRepositor
     public void add(ExternalRecord externalRecord) {
         Objects.requireNonNull(externalRecord, "externalRecord");
         if (records.putIfAbsent(externalRecord.key(), externalRecord) != null) {
-            throw new DuplicateKeyException("冪等性キーの外部原本がもうある: " + externalRecord.key());
+            throw new DuplicateExternalRecordException("冪等性キーの外部原本がもうある: " + externalRecord.key(), null);
         }
     }
 

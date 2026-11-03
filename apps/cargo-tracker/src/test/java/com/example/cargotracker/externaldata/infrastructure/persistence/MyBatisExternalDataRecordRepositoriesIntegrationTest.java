@@ -1,14 +1,19 @@
 package com.example.cargotracker.externaldata.infrastructure.persistence;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
 import com.example.cargotracker.TestcontainersConfiguration;
 import com.example.cargotracker.externaldata.domain.model.aggregates.DataSource;
+import com.example.cargotracker.externaldata.domain.model.aggregates.DuplicateExternalRecordException;
 import com.example.cargotracker.externaldata.domain.model.aggregates.ExternalDataRecordRepositoriesContract;
+import com.example.cargotracker.externaldata.domain.model.aggregates.ExternalRecord;
 import com.example.cargotracker.externaldata.domain.model.aggregates.ExternalRecordRepository;
 import com.example.cargotracker.externaldata.domain.model.aggregates.Ingestion;
 import com.example.cargotracker.externaldata.domain.model.aggregates.IngestionRepository;
 import com.example.cargotracker.externaldata.domain.model.aggregates.ReceivedRecord;
 import com.example.cargotracker.externaldata.domain.model.aggregates.ReceivedRecordRepository;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.Classification;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.IdempotencyKey;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PayloadHash;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PayloadObjectKey;
 import com.example.cargotracker.shared.domain.UserId;
@@ -16,13 +21,15 @@ import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.Optional;
 import java.util.UUID;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 /**
- * 取込・外部原本・受信記録のリポジトリの MyBatis 実装を PostgreSQL 18 で確かめる（Bolt 39b の行 7・9b・10・12）。契約を継ぐ。
+ * 取込・外部原本・受信記録のリポジトリの MyBatis 実装を PostgreSQL 18 で確かめる（Bolt 39b の行 7・9b・10・12、Bolt 39b3 の行 12）。契約を継ぐ。
  * テストのトランザクションは契約のクラスの {@code @Transactional} で開き、書いた行はロールバックで消える（追記専用の表の行も、
  * コミットしないので残らない）。
  */
@@ -70,6 +77,26 @@ class MyBatisExternalDataRecordRepositoriesIntegrationTest extends ExternalDataR
     @Override
     protected Optional<ReceivedRecord> storedReceivedRecord(UUID id) {
         return readReceivedRecord(jdbc, id);
+    }
+
+    @Test
+    void 行12_一意制約の違反の名前付きの例外は元の例外を原因に持つ() {
+        IdempotencyKey key = new IdempotencyKey("PostgreSQL の提供元-" + UUID.randomUUID(), "VOYAGE", "V-012", "1");
+        externalRecords.add(externalRecord(key));
+        ExternalRecord again = externalRecord(key);
+
+        assertThatThrownBy(() -> externalRecords.add(again))
+                .isInstanceOf(DuplicateExternalRecordException.class)
+                .hasCauseInstanceOf(DuplicateKeyException.class);
+    }
+
+    private static ExternalRecord externalRecord(IdempotencyKey key) {
+        return new ExternalRecord(
+                UUID.randomUUID(),
+                key,
+                PayloadHash.of(new byte[] {1}),
+                PayloadObjectKey.newRecordPayload(),
+                Instant.parse("2026-11-03T01:02:03Z"));
     }
 
     /** 情報源の行を書く（H2 の契約のテストと共有する）。 */
