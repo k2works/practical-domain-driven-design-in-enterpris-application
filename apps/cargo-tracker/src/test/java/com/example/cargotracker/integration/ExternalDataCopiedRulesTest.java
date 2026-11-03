@@ -40,6 +40,9 @@ import org.junit.jupiter.params.provider.MethodSource;
  *       空の値として先に隔離する）。意図した食い違いなので比べない
  *   <li>航海番号の 30 文字（{@code VoyageValues.VOYAGE_NUMBER_MAX_LENGTH}）と {@code routing.voyage.voyage_number VARCHAR(30)}。
  *       経路設計の航海は長さを確かめないので、表の列の上限との一致は値の型の単体テスト（行 14）と表の定義で守る
+ *   <li>寄港の数の上限 60（{@code VoyageValues.MAX_PORT_CALLS}。Bolt 39b3）。採用値の要約（{@code value_summary VARCHAR(4000)}）に
+ *       入れるための外部データの片側だけの規則で、経路設計の航海（{@code Voyage}）は上限を持たない。意図した食い違いなので比べない
+ *       （経路設計に上限を足すかは 39e で決める）。上限は値の型の単体テスト（行 11）で守る
  *   <li>DB の {@code ck_port_call_times}（到着か出発の少なくとも一方）と {@code ck_milestone_kind}（{@code milestone.kind} の 6 値）の
  *       CHECK。このテストは型どうしを比べ、DB の制約は比べない（制約の名前を挙げて確かめるテストはまだない）
  * </ul>

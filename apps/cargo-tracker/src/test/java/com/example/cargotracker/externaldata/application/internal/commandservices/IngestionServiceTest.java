@@ -11,11 +11,14 @@ import com.example.cargotracker.externaldata.application.internal.commands.Inges
 import com.example.cargotracker.externaldata.application.internal.commandservices.IngestionOutcome.Ingested;
 import com.example.cargotracker.externaldata.application.internal.commandservices.IngestionOutcome.RowResult;
 import com.example.cargotracker.externaldata.application.internal.commandservices.IngestionOutcome.Unreadable;
+import com.example.cargotracker.externaldata.domain.model.aggregates.AdoptedValue;
+import com.example.cargotracker.externaldata.domain.model.aggregates.AdoptedValue.TargetType;
 import com.example.cargotracker.externaldata.domain.model.aggregates.DataSource;
 import com.example.cargotracker.externaldata.domain.model.aggregates.DataSource.ApprovalStatus;
 import com.example.cargotracker.externaldata.domain.model.aggregates.DuplicateExternalRecordException;
 import com.example.cargotracker.externaldata.domain.model.aggregates.ExternalPayloadStorage;
 import com.example.cargotracker.externaldata.domain.model.aggregates.ExternalRecord;
+import com.example.cargotracker.externaldata.domain.model.aggregates.InMemoryAdoptedValueRepository;
 import com.example.cargotracker.externaldata.domain.model.aggregates.InMemoryDataSourceRepository;
 import com.example.cargotracker.externaldata.domain.model.aggregates.InMemoryExternalPayloadStorage;
 import com.example.cargotracker.externaldata.domain.model.aggregates.InMemoryExternalRecordRepository;
@@ -85,6 +88,7 @@ class IngestionServiceTest {
         }
     };
     private final InMemoryReceivedRecordRepository receivedRecords = new InMemoryReceivedRecordRepository();
+    private final InMemoryAdoptedValueRepository adoptedValues = new InMemoryAdoptedValueRepository();
     private final InMemoryExternalPayloadStorage storage = new InMemoryExternalPayloadStorage();
     private final Clock clock = Clock.fixed(NOW, ZoneOffset.UTC);
 
@@ -97,7 +101,13 @@ class IngestionServiceTest {
 
     private IngestionService service(ExternalPayloadStorage payloadStorage) {
         return new IngestionService(
-                sources, ingestions, externalRecords, new RecordingReceivedRecords(), payloadStorage, clock);
+                sources,
+                ingestions,
+                externalRecords,
+                new RecordingReceivedRecords(),
+                new RecordingAdoptedValues(),
+                payloadStorage,
+                clock);
     }
 
     private static AuthenticatedActor actor(Role role) {
@@ -127,7 +137,7 @@ class IngestionServiceTest {
                 line.getBytes(StandardCharsets.UTF_8));
     }
 
-    /** 値の既定（出発・東京・発生時刻）の主要実績の値。取込のサービスは値を使わない（Bolt 39b2b）。 */
+    /** 値の既定（出発・東京・発生時刻）の主要実績の値。取込のサービスは採用値の材料にだけ使う（Bolt 39b3）。 */
     private static MilestoneValues milestoneValues(String trackingNumber) {
         return new MilestoneValues(
                 new TrackingNumberValue(trackingNumber),
@@ -185,7 +195,84 @@ class IngestionServiceTest {
     void 行1_原本はファイル全体と行の順に保存してから受信記録を書く() {
         service().ingest(steward, file(milestoneSource, milestone(2, "MS-0001", "1", "CTABCDEFGH2345")));
 
-        assertThat(calls).containsExactly("store:ingestions", "store:records", "received:ADOPTED");
+        assertThat(calls).containsExactly("store:ingestions", "store:records", "received:ADOPTED", "adopted:MILESTONE");
+    }
+
+    @Test
+    void 行1_行13_採用の主要実績の行は採用値を1つ追記し要約は値から作り情報版は外部版で公開した時刻は取込の時刻() {
+        IngestedRow row = milestone(2, "MS-0001", "7", "CTABCDEFGH2345");
+
+        ingested(service().ingest(steward, file(milestoneSource, row)));
+
+        ReceivedRecord received = receivedRecords.all().getFirst();
+        assertThat(adoptedValues.all()).singleElement().satisfies(adopted -> {
+            assertThat(adopted.receivedRecordId()).isEqualTo(received.id());
+            assertThat(adopted.targetType()).isEqualTo(TargetType.MILESTONE);
+            assertThat(adopted.valueSummary()).isEqualTo("DEPARTURE;JPTYO;2026-11-03T08:00:00.000000Z");
+            assertThat(adopted.infoVersion()).isEqualTo("7");
+            assertThat(adopted.publishedAt()).isEqualTo(NOW);
+        });
+    }
+
+    @Test
+    void 行14_主要実績の採用値の対象のキーは外部IDではなく追跡番号() {
+        ingested(service().ingest(steward, file(milestoneSource, milestone(2, "MS-0001", "1", "CTABCDEFGH2345"))));
+
+        assertThat(adoptedValues.findByReceivedRecordId(
+                        receivedRecords.all().getFirst().id()))
+                .hasValueSatisfying(adopted -> assertThat(adopted.targetKey()).isEqualTo("CTABCDEFGH2345"));
+    }
+
+    @Test
+    void 行1_行14_採用の航海の行は対象のキーを航海番号にした採用値を1つ追記する() {
+        DataSource voyageSource = approvedSource("船会社B-" + UUID.randomUUID(), "VOYAGE");
+        String voyageLine = "V2611E,3," + ACQUIRED + ",JPTYO;;2026-11-20T00:00:00Z|USLAX;2026-12-01T00:00:00Z;";
+        VoyageValues voyageValues = new VoyageValues(
+                "V2611E",
+                List.of(
+                        new PortCallValue(
+                                new Location("JPTYO"), null, new UtcInstant(Instant.parse("2026-11-20T00:00:00Z"))),
+                        new PortCallValue(
+                                new Location("USLAX"), new UtcInstant(Instant.parse("2026-12-01T00:00:00Z")), null)));
+        IngestedRow voyageRow = new IngestedRow(
+                2, 2, "V2611E", "3", ACQUIRED, voyageValues, voyageLine.getBytes(StandardCharsets.UTF_8));
+
+        ingested(service()
+                .ingest(
+                        steward,
+                        new IngestFileCommand(
+                                voyageSource.id(),
+                                ("external_id,external_version,acquired_at,port_calls\n" + voyageLine)
+                                        .getBytes(StandardCharsets.UTF_8),
+                                1,
+                                List.of(voyageRow),
+                                List.of(),
+                                null)));
+
+        assertThat(adoptedValues.all()).singleElement().satisfies(adopted -> {
+            assertThat(adopted.receivedRecordId())
+                    .isEqualTo(receivedRecords.all().getFirst().id());
+            assertThat(adopted.targetType()).isEqualTo(TargetType.VOYAGE);
+            assertThat(adopted.targetKey()).isEqualTo("V2611E");
+            assertThat(adopted.valueSummary())
+                    .isEqualTo("JPTYO;;2026-11-20T00:00:00.000000Z|USLAX;2026-12-01T00:00:00.000000Z;");
+            assertThat(adopted.infoVersion()).isEqualTo("3");
+            assertThat(adopted.publishedAt()).isEqualTo(NOW);
+        });
+    }
+
+    @Test
+    void 行2_重複の行は採用値を追記しない() {
+        IngestedRow row = milestone(2, "MS-0001", "1", "CTABCDEFGH2345");
+        ingested(service().ingest(steward, file(milestoneSource, row)));
+        calls.clear();
+
+        Ingested resent = ingested(service().ingest(steward, file(milestoneSource, row)));
+
+        assertThat(resent.rows().getFirst().classification()).isEqualTo(Classification.DUPLICATE);
+        assertThat(calls)
+                .as("重複の行では採用値の追記を呼ばない（T-236）")
+                .containsExactly("store:ingestions", "store:records", "received:DUPLICATE");
     }
 
     @Test
@@ -433,7 +520,8 @@ class IngestionServiceTest {
                 return found;
             }
         };
-        return new IngestionService(sources, ingestions, racing, receivedRecords, new RecordingStorage(storage), clock);
+        return new IngestionService(
+                sources, ingestions, racing, receivedRecords, adoptedValues, new RecordingStorage(storage), clock);
     }
 
     @Test
@@ -615,6 +703,7 @@ class IngestionServiceTest {
                             "store:ingestions",
                             "store:records",
                             "received:ADOPTED",
+                            "adopted:MILESTONE",
                             "store:records",
                             "received:QUARANTINED");
             Ingestion ingestion = ingestions.all().getFirst();
@@ -734,10 +823,12 @@ class IngestionServiceTest {
                             "store:ingestions",
                             "store:records",
                             "received:ADOPTED",
+                            "adopted:MILESTONE",
                             "store:records",
                             "received:QUARANTINED",
                             "store:records",
-                            "received:ADOPTED");
+                            "received:ADOPTED",
+                            "adopted:MILESTONE");
             assertThat(result.rows())
                     .extracting(RowResult::lineNumber, RowResult::classification, RowResult::externalRecordId)
                     .containsExactly(
@@ -997,7 +1088,7 @@ class IngestionServiceTest {
 
     /**
      * 値の誤り（Bolt 39b2b の行 17・18・20。UC-15 2a、ED-INV-02）。値の誤りの行は組み立てが行の誤りにするので、取込のサービスは 39b2 の
-     * とおり原文を保存してからキーのない隔離にする。取込のサービスは取り込む行の値を使わず、受信記録の列に値を書かない。
+     * とおり原文を保存してからキーのない隔離にする。取込のサービスは受信記録の列に取り込む行の値を書かない（値は採用値の材料にだけ使う。Bolt 39b3）。
      */
     @Nested
     class 値の誤り {
@@ -1111,6 +1202,21 @@ class IngestionServiceTest {
         @Override
         public byte[] read(PayloadObjectKey key) {
             return delegate.read(key);
+        }
+    }
+
+    /** 採用値の追記を記録する（追記しないことを件数ではなく呼び出しで確かめる。T-236）。 */
+    private class RecordingAdoptedValues extends InMemoryAdoptedValueRepository {
+
+        @Override
+        public void add(AdoptedValue adoptedValue) {
+            adoptedValues.add(adoptedValue);
+            calls.add("adopted:" + adoptedValue.targetType());
+        }
+
+        @Override
+        public Optional<AdoptedValue> findByReceivedRecordId(UUID receivedRecordId) {
+            return adoptedValues.findByReceivedRecordId(receivedRecordId);
         }
     }
 

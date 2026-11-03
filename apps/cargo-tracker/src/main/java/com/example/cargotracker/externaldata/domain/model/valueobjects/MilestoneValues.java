@@ -24,4 +24,10 @@ public record MilestoneValues(
         Objects.requireNonNull(location, "location");
         Objects.requireNonNull(occurredAt, "occurredAt");
     }
+
+    /** 要約は「種類;場所;発生時刻」（例「DEPARTURE;JPTYO;2026-11-19T23:00:00.000000Z」。Bolt 39b3）。 */
+    @Override
+    public String summary() {
+        return kind.name() + ";" + location.unLocode() + ";" + RecordValues.summaryTime(occurredAt);
+    }
 }

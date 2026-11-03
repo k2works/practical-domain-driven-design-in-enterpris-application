@@ -2,6 +2,7 @@ package com.example.cargotracker.externaldata.infrastructure.config;
 
 import com.example.cargotracker.externaldata.application.internal.commandservices.IngestionService;
 import com.example.cargotracker.externaldata.application.internal.queryservices.PilotReadinessQueryService;
+import com.example.cargotracker.externaldata.domain.model.aggregates.AdoptedValueRepository;
 import com.example.cargotracker.externaldata.domain.model.aggregates.DataSourceRepository;
 import com.example.cargotracker.externaldata.domain.model.aggregates.ExternalPayloadStorage;
 import com.example.cargotracker.externaldata.domain.model.aggregates.ExternalRecordRepository;
@@ -29,8 +30,10 @@ public class ExternalDataConfiguration {
             IngestionRepository ingestions,
             ExternalRecordRepository externalRecords,
             ReceivedRecordRepository receivedRecords,
+            AdoptedValueRepository adoptedValues,
             ExternalPayloadStorage payloadStorage,
             Clock clock) {
-        return new IngestionService(dataSources, ingestions, externalRecords, receivedRecords, payloadStorage, clock);
+        return new IngestionService(
+                dataSources, ingestions, externalRecords, receivedRecords, adoptedValues, payloadStorage, clock);
     }
 }

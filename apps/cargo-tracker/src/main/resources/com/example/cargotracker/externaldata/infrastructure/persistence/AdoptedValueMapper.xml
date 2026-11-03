@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 採用値（Bolt 39b3）。追記専用なので INSERT と受信記録 ID での SELECT だけを持つ。受信記録ごとに 1 つ（uk_adopted_value_received_record）。
+     受信記録より後に書く。H2 と PostgreSQL の共通の構文で書く（ADR-007）。 -->
+<mapper namespace="com.example.cargotracker.externaldata.infrastructure.persistence.AdoptedValueMapper">
+
+    <resultMap id="adoptedValueRow" type="com.example.cargotracker.externaldata.infrastructure.persistence.AdoptedValueRow">
+        <constructor>
+            <idArg column="id" name="id" javaType="java.util.UUID"/>
+            <arg column="received_record_id" name="receivedRecordId" javaType="java.util.UUID"/>
+            <arg column="target_type" name="targetType" javaType="String"/>
+            <arg column="target_key" name="targetKey" javaType="String"/>
+            <arg column="value_summary" name="valueSummary" javaType="String"/>
+            <arg column="info_version" name="infoVersion" javaType="String"/>
+            <arg column="published_at" name="publishedAt" javaType="java.time.OffsetDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <select id="selectByReceivedRecordId" resultMap="adoptedValueRow">
+        SELECT id, received_record_id, target_type, target_key, value_summary, info_version, published_at
+          FROM external_data.adopted_value
+         WHERE received_record_id = #{receivedRecordId}
+    </select>
+
+    <insert id="insert">
+        INSERT INTO external_data.adopted_value
+            (id, received_record_id, target_type, target_key, value_summary, info_version, published_at)
+        VALUES (#{id}, #{receivedRecordId}, #{targetType}, #{targetKey}, #{valueSummary}, #{infoVersion},
+                #{publishedAt})
+    </insert>
+</mapper>

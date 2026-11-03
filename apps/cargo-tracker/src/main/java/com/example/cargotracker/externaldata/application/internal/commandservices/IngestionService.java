@@ -7,6 +7,9 @@ import com.example.cargotracker.externaldata.application.internal.commands.Inges
 import com.example.cargotracker.externaldata.application.internal.commandservices.IngestionOutcome.Ingested;
 import com.example.cargotracker.externaldata.application.internal.commandservices.IngestionOutcome.RowResult;
 import com.example.cargotracker.externaldata.application.internal.commandservices.IngestionOutcome.Unreadable;
+import com.example.cargotracker.externaldata.domain.model.aggregates.AdoptedValue;
+import com.example.cargotracker.externaldata.domain.model.aggregates.AdoptedValue.TargetType;
+import com.example.cargotracker.externaldata.domain.model.aggregates.AdoptedValueRepository;
 import com.example.cargotracker.externaldata.domain.model.aggregates.DataSource;
 import com.example.cargotracker.externaldata.domain.model.aggregates.DataSource.ApprovalStatus;
 import com.example.cargotracker.externaldata.domain.model.aggregates.DataSourceRepository;
@@ -19,8 +22,11 @@ import com.example.cargotracker.externaldata.domain.model.aggregates.ReceivedRec
 import com.example.cargotracker.externaldata.domain.model.aggregates.ReceivedRecordRepository;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.Classification;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.IdempotencyKey;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.MilestoneValues;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PayloadHash;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PayloadObjectKey;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.RecordValues;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.VoyageValues;
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
 import com.example.cargotracker.shared.domain.Role;
 import java.time.Clock;
@@ -40,7 +46,8 @@ import org.springframework.transaction.annotation.Transactional;
  * 取込のサービス。データ責任者が承認済みの情報源のファイルを取り込み、形式の正しい行ごとに原本を保存してから、冪等性キーで採用・重複・
  * 隔離に分類した受信記録を取込に関連付けて残す（US-14 AC1〜AC4、BR-12、BR-18、ED-INV-01・ED-INV-02。Bolt 39b）。形式の誤りの行は
  * 原文を保存してから、ファイルの誤りはファイル全体の原本を指して、外部原本を持たない隔離（キーのない隔離）の受信記録にし、理由と物理行の範囲を
- * 業務の言葉で注記に書く。誤りの行は冪等性キーを信用できないので外部原本を引かず作らない（UC-15 2a。Bolt 39b2）。
+ * 業務の言葉で注記に書く。誤りの行は冪等性キーを信用できないので外部原本を引かず作らない（UC-15 2a。Bolt 39b2）。分類が採用の行は、
+ * 受信記録の後に採用値を 1 つ追記する（US-14 AC1。重複・隔離には作らない。Bolt 39b3）。
  *
  * <p>拒否の順は役割 → 情報源の有無 → 承認の状態で、拒否なら原本も保存しない（受け付けていない）。1 つの取込は 1 つのトランザクション
  * （外側）で、原本の保存は独立したトランザクションで残る（ADR-004 の改訂）。原本の保存の失敗と外部原本の一意制約の違反（同時の取込）は
@@ -66,6 +73,7 @@ public class IngestionService {
     private final IngestionRepository ingestions;
     private final ExternalRecordRepository externalRecords;
     private final ReceivedRecordRepository receivedRecords;
+    private final AdoptedValueRepository adoptedValues;
     private final ExternalPayloadStorage payloadStorage;
     private final Clock clock;
 
@@ -74,12 +82,14 @@ public class IngestionService {
             IngestionRepository ingestions,
             ExternalRecordRepository externalRecords,
             ReceivedRecordRepository receivedRecords,
+            AdoptedValueRepository adoptedValues,
             ExternalPayloadStorage payloadStorage,
             Clock clock) {
         this.dataSources = dataSources;
         this.ingestions = ingestions;
         this.externalRecords = externalRecords;
         this.receivedRecords = receivedRecords;
+        this.adoptedValues = adoptedValues;
         this.payloadStorage = payloadStorage;
         this.clock = clock;
     }
@@ -170,8 +180,33 @@ public class IngestionService {
                 noteOf(classification, externalRecord, row),
                 now);
         receivedRecords.add(received);
+        if (classification == Classification.ADOPTED) {
+            adoptedValues.add(adoptedValueOf(received, row, now));
+        }
         return new RowResult(
                 row.lineNumber(), row.lastLineNumber(), classification, externalRecord.id(), received.id());
+    }
+
+    /**
+     * 採用の受信記録の採用値（Bolt 39b3）。対象の種類とキーは取込の値の型から決め（航海は航海番号、主要実績は追跡番号）、要約は取込の値から
+     * 作り、情報版は外部版、公開した時刻は取込の時刻。
+     */
+    private static AdoptedValue adoptedValueOf(ReceivedRecord received, IngestedRow row, Instant now) {
+        RecordValues values = row.values();
+        TargetType targetType;
+        String targetKey;
+        switch (values) {
+            case VoyageValues voyage -> {
+                targetType = TargetType.VOYAGE;
+                targetKey = voyage.voyageNumber();
+            }
+            case MilestoneValues milestone -> {
+                targetType = TargetType.MILESTONE;
+                targetKey = milestone.trackingNumber().value();
+            }
+        }
+        return new AdoptedValue(
+                UUID.randomUUID(), received.id(), targetType, targetKey, values.summary(), row.externalVersion(), now);
     }
 
     /** 行の誤り。行の原文を保存してから、キーのない隔離の受信記録を書く。 */

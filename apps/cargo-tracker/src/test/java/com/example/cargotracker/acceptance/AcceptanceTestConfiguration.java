@@ -12,6 +12,7 @@ import com.example.cargotracker.booking.infrastructure.persistence.RandomTrackin
 import com.example.cargotracker.booking.interfaces.api.internal.TrackingStartNotificationAdapter;
 import com.example.cargotracker.externaldata.application.internal.commandservices.IngestionService;
 import com.example.cargotracker.externaldata.application.internal.queryservices.PilotReadinessQueryService;
+import com.example.cargotracker.externaldata.domain.model.aggregates.InMemoryAdoptedValueRepository;
 import com.example.cargotracker.externaldata.domain.model.aggregates.InMemoryDataSourceRepository;
 import com.example.cargotracker.externaldata.domain.model.aggregates.InMemoryExternalPayloadStorage;
 import com.example.cargotracker.externaldata.domain.model.aggregates.InMemoryExternalRecordRepository;
@@ -482,21 +483,27 @@ public class AcceptanceTestConfiguration {
         }
 
         @Bean
+        InMemoryAdoptedValueRepository adoptedValueRepository() {
+            return new InMemoryAdoptedValueRepository();
+        }
+
+        @Bean
         InMemoryExternalPayloadStorage externalPayloadStorage() {
             return new InMemoryExternalPayloadStorage();
         }
 
-        /** データ責任者が承認済みの情報源のファイルを取り込む（US-14。Bolt 39b）。 */
+        /** データ責任者が承認済みの情報源のファイルを取り込む（US-14。Bolt 39b。採用値は Bolt 39b3）。 */
         @Bean
         IngestionService ingestionService(
                 InMemoryDataSourceRepository dataSources,
                 InMemoryIngestionRepository ingestions,
                 InMemoryExternalRecordRepository externalRecords,
                 InMemoryReceivedRecordRepository receivedRecords,
+                InMemoryAdoptedValueRepository adoptedValues,
                 InMemoryExternalPayloadStorage payloadStorage,
                 MutableClock clock) {
             return new IngestionService(
-                    dataSources, ingestions, externalRecords, receivedRecords, payloadStorage, clock);
+                    dataSources, ingestions, externalRecords, receivedRecords, adoptedValues, payloadStorage, clock);
         }
 
         /** パイロットの開始判定（ED-INV-01、BR-18。Bolt 39b）。 */

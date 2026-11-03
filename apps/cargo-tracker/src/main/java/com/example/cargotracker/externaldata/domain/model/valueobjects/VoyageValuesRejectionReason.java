@@ -11,6 +11,8 @@ public enum VoyageValuesRejectionReason {
     VOYAGE_NUMBER_TOO_LONG("航海番号が " + VoyageValues.VOYAGE_NUMBER_MAX_LENGTH + " 文字より長いです"),
     /** 寄港が下限の数（{@link VoyageValues#MIN_PORT_CALLS}）より少ない。 */
     TOO_FEW_PORT_CALLS("寄港が足りません（" + VoyageValues.MIN_PORT_CALLS + " つ以上）"),
+    /** 寄港が上限の数（{@link VoyageValues#MAX_PORT_CALLS}）より多い（Bolt 39b3）。 */
+    TOO_MANY_PORT_CALLS("寄港が多すぎます（" + VoyageValues.MAX_PORT_CALLS + " まで）"),
     /** 同じ港・同じ到着・同じ出発の寄港が重なる（重なる寄港の番号を持つ）。 */
     DUPLICATE_PORT_CALLS("寄港が同じです"),
     /** 寄港を港・到着・出発の 3 つに区切れない（組み立てが見つける）。 */

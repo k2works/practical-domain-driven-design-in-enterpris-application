@@ -28,6 +28,19 @@ class MilestoneValuesTest {
     }
 
     @Test
+    void 行1_主要実績の要約は種類と場所と発生時刻をセミコロンで区切り時刻はUTCのマイクロ秒6桁にする() {
+        MilestoneValues values = new MilestoneValues(
+                TRACKING_NUMBER,
+                MilestoneKindValue.DEPARTURE,
+                TOKYO,
+                new UtcInstant(Instant.parse("2026-11-19T23:00:00.000001Z")));
+
+        assertThat(values.summary()).isEqualTo("DEPARTURE;JPTYO;2026-11-19T23:00:00.000001Z");
+        assertThat(new MilestoneValues(TRACKING_NUMBER, MilestoneKindValue.ARRIVAL, TOKYO, OCCURRED_AT).summary())
+                .isEqualTo("ARRIVAL;JPTYO;2026-11-19T23:00:00.000000Z");
+    }
+
+    @Test
     void 行24_主要実績の値はどの値のNULLも拒む() {
         MilestoneKindValue kind = MilestoneKindValue.DEPARTURE;
 

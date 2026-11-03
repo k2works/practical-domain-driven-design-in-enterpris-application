@@ -125,7 +125,7 @@ public class ExternalRecordIngestionSteps {
         Instant acquiredAt = Instant.parse(acquired);
         // 取得時刻は取込時刻より前（T-230）
         assertThat(acquiredAt).isBefore(clock.instant());
-        // 値の列は出発・東京、発生時刻は取得時刻の 30 分前（T-230。取込のサービスは値を使わない。Bolt 39b2b）
+        // 値の列は出発・東京、発生時刻は取得時刻の 30 分前（T-230。値は採用値の材料になる。Bolt 39b3）
         Instant occurredAt = acquiredAt.minus(Duration.ofMinutes(30));
         String line =
                 externalId + "," + version + "," + acquiredAt + "," + trackingNumber + ",DEPARTURE,JPTYO," + occurredAt;

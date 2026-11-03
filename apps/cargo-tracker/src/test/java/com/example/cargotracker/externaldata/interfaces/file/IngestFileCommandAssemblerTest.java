@@ -21,6 +21,7 @@ import com.tngtech.archunit.core.importer.ImportOption;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Nested;
@@ -560,6 +561,24 @@ class IngestFileCommandAssemblerTest {
                                             call("JPTYO", null, "2026-11-20T00:00:00Z"),
                                             call("SGSIN", "2026-11-25T00:00:00Z", "2026-11-25T00:00:00Z"),
                                             call("NLRTM", "2026-12-10T00:00:00.123456Z", null))));
+        }
+
+        /** 港は同じで到着の違う寄港を数だけ並べた寄港の列。 */
+        private static String portCalls(int count) {
+            List<String> calls = new ArrayList<>();
+            for (int i = 0; i < count; i++) {
+                calls.add("JPTYO;" + Instant.parse("2026-11-19T00:00:00Z").plusSeconds(3600L * i) + ";");
+            }
+            return String.join("|", calls);
+        }
+
+        @Test
+        void 行11_寄港が60の航海の行は取り込み61は寄港が多すぎる寄港の列の形の行の誤りにする() {
+            IngestFileCommand sixty = voyages(VOYAGE_HEADER + "\n" + voyageLine("V2611E", portCalls(60)) + "\n");
+
+            assertThat(sixty.rejectedRows()).isEmpty();
+            assertThat(sixty.rows()).hasSize(1);
+            assertVoyageRejected(portCalls(61), FormatDefect.INVALID_PORT_CALLS, "port_calls", "寄港が多すぎます（60 まで）");
         }
 
         @Test

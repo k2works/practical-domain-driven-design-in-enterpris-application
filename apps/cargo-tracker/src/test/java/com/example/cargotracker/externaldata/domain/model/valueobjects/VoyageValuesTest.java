@@ -31,6 +31,46 @@ class VoyageValuesTest {
         assertThat(values).isInstanceOf(RecordValues.class);
     }
 
+    /** 港は同じで時刻の違う寄港を数だけ作る（重複の規則に当たらない。到着と出発の両方を持ち、要約が最も長い形）。 */
+    private static List<PortCallValue> portCalls(int count) {
+        Instant base = Instant.parse("2026-11-19T00:00:00.123456Z");
+        List<PortCallValue> calls = new ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            Instant arrival = base.plusSeconds(7200L * i);
+            calls.add(new PortCallValue(
+                    new Location("JPTYO"), new UtcInstant(arrival), new UtcInstant(arrival.plusSeconds(3600))));
+        }
+        return calls;
+    }
+
+    @Test
+    void 行1_航海の要約は寄港を縦棒で区切りUTCのマイクロ秒6桁で空の時刻は空にする() {
+        VoyageValues values = new VoyageValues("V2611E", List.of(TOKYO_DEPARTURE, LOS_ANGELES_ARRIVAL));
+
+        assertThat(values.summary()).isEqualTo("JPTYO;;2026-11-19T23:00:00.000000Z|USLAX;2026-12-01T14:00:00.000000Z;");
+    }
+
+    @Test
+    void 行11_寄港は60まで受け要約は4000コードポイントに収まる() {
+        VoyageValues values = new VoyageValues("V".repeat(30), portCalls(60));
+
+        assertThat(VoyageValues.MAX_PORT_CALLS).isEqualTo(60);
+        assertThat(values.portCalls()).hasSize(60);
+        String summary = values.summary();
+        assertThat(summary.codePointCount(0, summary.length())).isEqualTo(3719).isLessThanOrEqualTo(4000);
+    }
+
+    @Test
+    void 行11_寄港が61の航海の値は作れない() {
+        List<PortCallValue> tooMany = portCalls(61);
+
+        assertThatThrownBy(() -> new VoyageValues("V2611E", tooMany))
+                .isInstanceOfSatisfying(VoyageValuesRejected.class, rejected -> {
+                    assertThat(rejected.reason()).isEqualTo(VoyageValuesRejectionReason.TOO_MANY_PORT_CALLS);
+                    assertThat(rejected.detail()).isEqualTo("寄港が多すぎます（60 まで）");
+                });
+    }
+
     @Test
     void 行2_寄港が1つの航海の値は作れない() {
         List<PortCallValue> oneCall = List.of(TOKYO_DEPARTURE);
