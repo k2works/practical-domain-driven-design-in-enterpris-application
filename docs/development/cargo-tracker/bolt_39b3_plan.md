@@ -2,7 +2,7 @@
 type: Plan
 title: "Bolt 39b3 計画 - 採用値と DE-12・DE-13・DE-14 の発行"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-03T12:55:33Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-03T13:14:40Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-11-03T11:09:44Z }
 ---
@@ -336,7 +336,7 @@ rr ||--o| av : 分類が採用のときだけ 1 つ
 - [x] **2. 外部原本のポートの約束（Red → Green）**（2026-11-03、推奨のとおり承認として記録した（Recommend 承認の指示による。human:kakimomokuri）。Red はテストのコンパイルの誤り 7 個。取込のサービスは計画のとおり例外を捕まえずに上げる。PostgreSQL で元の例外を原因に持つことを確かめた。SonarQube は PASS）: 行 12 の契約と単体のテストを先に直し（`ExternalDataRecordRepositoriesContract` :163、`InMemoryExternalRecordRepository` :28、`IngestionServiceTest` :398・:407 の期待を `DuplicateExternalRecordException` に。T-217 の一覧）、落ちることを確かめてから、例外の型、MyBatis の実装の写し、ポートの Javadoc を作る（完了の判定: 緑、`spotbugsMain`（T-232）、`sonar-local:check` の新しい違反（T-234）。**承認ゲート**（構造: ポートの約束））
 - [x] **3. 採用値（Red → Green）**（2026-11-03、推奨のとおり承認として記録した（Recommend 承認の指示による。human:kakimomokuri）。先に直したテストは取込のサービスの呼び出しの順の期待 3 か所とコンストラクタ（T-217）。Red はテストのコンパイルの誤り 64 個。重複・隔離で採用値を作らないことは呼び出しの記録で確かめた（T-236）。採用値の H2 の契約のテストはステップ 6 で足す。SonarQube は PASS）: 行 1・2・11・14・15 の単体と契約のテストを先に書いて落ちることを確かめ（寄港の上限で落ちる既存のテストを一覧にする。T-217）、`AdoptedValue`・`AdoptedValueRepository`（MyBatis の mapper と実装、メモリの実装、契約）、取込の値の要約、`VoyageValues.MAX_PORT_CALLS` と理由の値 `VoyageValuesRejectionReason.TOO_MANY_PORT_CALLS`（詳細「寄港が多すぎます（60 まで）」）と組み立ての行の誤り（`INVALID_PORT_CALLS`）、取込のサービスの採用値の追記を作る。`ExternalDataCopiedRulesTest` の Javadoc の「このテストが守らないもの」（:36）に寄港の数の上限 60（経路設計の `Voyage` は上限を持たず、意図して食い違う。39e に申し送る）を足す（完了の判定: 緑、`spotbugsMain`、`sonar-local:check` の新しい違反。**承認ゲート**（構造: 新しい集約とリポジトリ））
 - [x] **4. イベント（Red → Green）**（2026-11-03、許可リストに `ApplicationEventPublisher` の 1 クラスだけを足すことは human:kakimomokuri が個別に決めた。ほかは推奨のとおり承認として記録した（Recommend 承認の指示による）。先に直したテストは呼び出しの記録の期待 4 か所とコンストラクタ（T-217）。Red はテストのコンパイルの誤り 70 個と、組み立てのクラスを拒む ModularityTest。起きないことは発行の記録で確かめた（T-236）。SonarQube は 1 件直して PASS）: 行 3〜8・10・13・16 の単体と直列化の契約のテストを先に書いて落ちることを確かめ、`externaldata.domain.events` の package-info（`@NamedInterface("events")`）と 3 つの record、取込のサービスの発行（記録する publisher で単体を確かめる。T-236）、組み立て（`ExternalDataConfiguration`）に publisher を渡す（完了の判定: 緑、`spotbugsMain`、`sonar-local:check` の新しい違反。**承認ゲート**（構造: 公表された言語と名前付きインターフェース））
-- [ ] **5. 統合と受入シナリオ（Red → Green）**: 行 1・2・8・9・15 の統合テスト（コミットの後にだけ受ける記録で発行と巻き戻りを確かめる）と、`ingest_external_records.feature` に採用値ができ再取込で増えないシナリオ（`@US-14`。ステップ定義は `ExternalRecordIngestionSteps`）（完了の判定: 緑。本体を変えたら `spotbugsMain`。**承認ゲート**（構造: 受入シナリオ））
+- [x] **5. 統合と受入シナリオ（Red → Green）**（2026-11-03、推奨のとおり承認として記録した（Recommend 承認の指示による。human:kakimomokuri）。Red は新しいシナリオ 2 本の `UndefinedStepException` と、`clear` を入れる前の前のシナリオの残り。統合テストは既に緑だったので変異 4 つ（採用値の追記を消す・発行を消す・重複でも作る・`@Transactional` を外す）で落ちることを確かめた。行 9 の同時の取込は照会の spy で模した。SonarQube は PASS）: 行 1・2・8・9・15 の統合テスト（コミットの後にだけ受ける記録で発行と巻き戻りを確かめる）と、`ingest_external_records.feature` に採用値ができ再取込で増えないシナリオ（`@US-14`。ステップ定義は `ExternalRecordIngestionSteps`）（完了の判定: 緑。本体を変えたら `spotbugsMain`。**承認ゲート**（構造: 受入シナリオ））
 - [ ] **6. 品質ゲートと開発レビュー**: 変異、`check`、その後に SonarQube、開発レビューとその直し。push の前に `check`
 - [ ] **7. 終了報告**: push して CI とデモ環境の配備を確かめる。release_plan（39b3 の行の計画と終了報告のリンク）・開発の索引・mkdocs を直す。終了報告の既知の課題に 39b3b の行 b1〜b8 を書く。見える振る舞いは変わらないので、マニュアルは直さない（39c で新しい章）
 

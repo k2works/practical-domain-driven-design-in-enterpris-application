@@ -2,6 +2,7 @@ package com.example.cargotracker.acceptance;
 
 import com.example.cargotracker.booking.acceptance.InMemoryBookingRepository;
 import com.example.cargotracker.booking.acceptance.InMemoryBookingSagaRepository;
+import com.example.cargotracker.externaldata.domain.model.aggregates.InMemoryAdoptedValueRepository;
 import com.example.cargotracker.externaldata.domain.model.aggregates.InMemoryDataSourceRepository;
 import com.example.cargotracker.externaldata.domain.model.aggregates.InMemoryExternalPayloadStorage;
 import com.example.cargotracker.externaldata.domain.model.aggregates.InMemoryExternalRecordRepository;
@@ -45,6 +46,7 @@ public class ScenarioReset {
     private final InMemoryIngestionRepository ingestionRepository;
     private final InMemoryExternalRecordRepository externalRecordRepository;
     private final InMemoryReceivedRecordRepository receivedRecordRepository;
+    private final InMemoryAdoptedValueRepository adoptedValueRepository;
     private final InMemoryExternalPayloadStorage externalPayloadStorage;
 
     public ScenarioReset(
@@ -66,6 +68,7 @@ public class ScenarioReset {
             InMemoryIngestionRepository ingestionRepository,
             InMemoryExternalRecordRepository externalRecordRepository,
             InMemoryReceivedRecordRepository receivedRecordRepository,
+            InMemoryAdoptedValueRepository adoptedValueRepository,
             InMemoryExternalPayloadStorage externalPayloadStorage) {
         this.clock = clock;
         this.transportRequestRepository = transportRequestRepository;
@@ -85,6 +88,7 @@ public class ScenarioReset {
         this.ingestionRepository = ingestionRepository;
         this.externalRecordRepository = externalRecordRepository;
         this.receivedRecordRepository = receivedRecordRepository;
+        this.adoptedValueRepository = adoptedValueRepository;
         this.externalPayloadStorage = externalPayloadStorage;
     }
 
@@ -108,6 +112,7 @@ public class ScenarioReset {
         ingestionRepository.clear();
         externalRecordRepository.clear();
         receivedRecordRepository.clear();
+        adoptedValueRepository.clear();
         externalPayloadStorage.clear();
     }
 }

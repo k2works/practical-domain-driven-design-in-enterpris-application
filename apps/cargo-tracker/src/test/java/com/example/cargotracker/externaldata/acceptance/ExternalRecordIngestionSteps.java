@@ -10,9 +10,12 @@ import com.example.cargotracker.externaldata.application.internal.commandservice
 import com.example.cargotracker.externaldata.application.internal.commandservices.IngestionService;
 import com.example.cargotracker.externaldata.application.internal.queryservices.PilotReadiness;
 import com.example.cargotracker.externaldata.application.internal.queryservices.PilotReadinessQueryService;
+import com.example.cargotracker.externaldata.domain.model.aggregates.AdoptedValue;
+import com.example.cargotracker.externaldata.domain.model.aggregates.AdoptedValue.TargetType;
 import com.example.cargotracker.externaldata.domain.model.aggregates.DataSource;
 import com.example.cargotracker.externaldata.domain.model.aggregates.DataSource.ApprovalStatus;
 import com.example.cargotracker.externaldata.domain.model.aggregates.ExternalRecord;
+import com.example.cargotracker.externaldata.domain.model.aggregates.InMemoryAdoptedValueRepository;
 import com.example.cargotracker.externaldata.domain.model.aggregates.InMemoryDataSourceRepository;
 import com.example.cargotracker.externaldata.domain.model.aggregates.InMemoryExternalPayloadStorage;
 import com.example.cargotracker.externaldata.domain.model.aggregates.InMemoryExternalRecordRepository;
@@ -64,6 +67,7 @@ public class ExternalRecordIngestionSteps {
     private final InMemoryIngestionRepository ingestions;
     private final InMemoryExternalRecordRepository externalRecords;
     private final InMemoryReceivedRecordRepository receivedRecords;
+    private final InMemoryAdoptedValueRepository adoptedValues;
     private final InMemoryExternalPayloadStorage payloadStorage;
     private final IngestionService ingestionService;
     private final PilotReadinessQueryService pilotReadinessQueryService;
@@ -80,6 +84,7 @@ public class ExternalRecordIngestionSteps {
             InMemoryIngestionRepository ingestions,
             InMemoryExternalRecordRepository externalRecords,
             InMemoryReceivedRecordRepository receivedRecords,
+            InMemoryAdoptedValueRepository adoptedValues,
             InMemoryExternalPayloadStorage payloadStorage,
             IngestionService ingestionService,
             PilotReadinessQueryService pilotReadinessQueryService,
@@ -88,6 +93,7 @@ public class ExternalRecordIngestionSteps {
         this.ingestions = ingestions;
         this.externalRecords = externalRecords;
         this.receivedRecords = receivedRecords;
+        this.adoptedValues = adoptedValues;
         this.payloadStorage = payloadStorage;
         this.ingestionService = ingestionService;
         this.pilotReadinessQueryService = pilotReadinessQueryService;
@@ -185,6 +191,47 @@ public class ExternalRecordIngestionSteps {
                 .hasSize(count)
                 .extracting(ReceivedRecord::classification)
                 .containsExactly(classification(first), classification(second));
+    }
+
+    @ならば("受信記録は {int} 件で、分類は順に {string}・{string}・{string} である")
+    public void 受信記録の分類(int count, String first, String second, String third) {
+        assertThat(receivedRecords.all())
+                .hasSize(count)
+                .extracting(ReceivedRecord::classification)
+                .containsExactly(classification(first), classification(second), classification(third));
+    }
+
+    @ならば("行は {string} に分類され、その受信記録に採用値が {int} 件できる")
+    public void 採用値ができる(String classification, int count) {
+        RowResult row = lastRow();
+        assertThat(row.classification()).isEqualTo(classification(classification));
+        assertThat(adoptedValues.all())
+                .filteredOn(adopted -> adopted.receivedRecordId().equals(row.receivedRecordId()))
+                .hasSize(count);
+        assertThat(adoptedValues.findByReceivedRecordId(row.receivedRecordId())).isPresent();
+    }
+
+    @ならば("採用値の対象は {string} の {string}、要約は {string}、情報版は {string}、公開した時刻は {string} である")
+    public void 採用値の中身(String recordType, String targetKey, String summary, String infoVersion, String publishedAt) {
+        AdoptedValue adopted = adoptedValues
+                .findByReceivedRecordId(lastRow().receivedRecordId())
+                .orElseThrow();
+        assertThat(adopted.targetType()).isEqualTo(TargetType.valueOf(recordType(recordType)));
+        assertThat(adopted.targetKey()).isEqualTo(targetKey);
+        assertThat(adopted.valueSummary()).isEqualTo(summary);
+        assertThat(adopted.infoVersion()).isEqualTo(infoVersion);
+        assertThat(adopted.publishedAt()).isEqualTo(Instant.parse(publishedAt));
+    }
+
+    /** 起きないことは追記の記録で確かめる（重複・隔離は追記しない。T-236）。 */
+    @ならば("追記した採用値は最初の採用の受信記録の 1 件だけである")
+    public void 採用値は最初の1件だけ() {
+        assertThat(outcomes).isNotEmpty().first().isInstanceOf(Ingested.class);
+        RowResult firstRow = ((Ingested) outcomes.getFirst()).rows().getFirst();
+        assertThat(firstRow.classification()).isEqualTo(Classification.ADOPTED);
+        assertThat(adoptedValues.all())
+                .extracting(AdoptedValue::receivedRecordId)
+                .containsExactly(firstRow.receivedRecordId());
     }
 
     private IngestionOutcome lastOutcome() {

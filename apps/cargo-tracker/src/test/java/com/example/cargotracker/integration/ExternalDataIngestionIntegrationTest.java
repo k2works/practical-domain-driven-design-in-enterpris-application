@@ -14,12 +14,21 @@ import com.example.cargotracker.externaldata.application.internal.commandservice
 import com.example.cargotracker.externaldata.application.internal.commandservices.IngestionOutcome.Ingested;
 import com.example.cargotracker.externaldata.application.internal.commandservices.IngestionOutcome.RowResult;
 import com.example.cargotracker.externaldata.application.internal.commandservices.IngestionService;
+import com.example.cargotracker.externaldata.domain.events.ExternalRecordQuarantined;
+import com.example.cargotracker.externaldata.domain.events.MilestoneAdoptedValueAccepted;
+import com.example.cargotracker.externaldata.domain.events.VoyageAdoptedValueUpdated;
+import com.example.cargotracker.externaldata.domain.model.aggregates.AdoptedValue;
+import com.example.cargotracker.externaldata.domain.model.aggregates.AdoptedValueRepository;
+import com.example.cargotracker.externaldata.domain.model.aggregates.DuplicateExternalRecordException;
 import com.example.cargotracker.externaldata.domain.model.aggregates.ExternalPayloadStorage;
+import com.example.cargotracker.externaldata.domain.model.aggregates.ExternalRecordRepository;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.Classification;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.MilestoneKindValue;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.MilestoneValues;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PayloadObjectKey;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.PortCallValue;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.TrackingNumberValue;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.VoyageValues;
 import com.example.cargotracker.externaldata.interfaces.file.CsvFileKind;
 import com.example.cargotracker.externaldata.interfaces.file.IngestFileCommandAssembler;
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
@@ -32,12 +41,16 @@ import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CopyOnWriteArrayList;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
@@ -47,6 +60,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.event.TransactionalEventListener;
 import org.springframework.transaction.support.TransactionTemplate;
 
 /**
@@ -58,9 +72,13 @@ import org.springframework.transaction.support.TransactionTemplate;
  * 情報源をコミットし、最後に停止中にしてから消す。原本の保存は独立したトランザクションでコミットされて残る（ADR-004 の改訂）ので、
  * 確かめる行はテストごとの UUID を含む提供元の名前と、保存した原本のオブジェクトキーで絞る。取得時刻は取込時刻より前、主要実績の行は
  * payload に追跡番号を持つ（T-230）。
+ *
+ * <p>Bolt 39b3 の行 1・2・8・9・15 は採用値とイベント（DE-12〜DE-14）を確かめる。発行はテストの中のコミットの後にだけ受ける記録
+ * （{@link CommittedEventRecorder}）とイベント発行記録（{@code platform.event_publication}）で確かめ、どちらも自分の情報源 ID で絞る。
+ * 起きないことは採用値の追記の呼び出しの記録で確かめる（T-236）。
  */
 @SpringBootTest
-@Import(TestcontainersConfiguration.class)
+@Import({TestcontainersConfiguration.class, ExternalDataIngestionIntegrationTest.CommittedEventRecorder.class})
 class ExternalDataIngestionIntegrationTest {
 
     private static final String MILESTONE_HEADER =
@@ -78,6 +96,15 @@ class ExternalDataIngestionIntegrationTest {
 
     @MockitoSpyBean
     ExternalPayloadStorage payloadStorage;
+
+    @MockitoSpyBean
+    ExternalRecordRepository externalRecords;
+
+    @MockitoSpyBean
+    AdoptedValueRepository adoptedValues;
+
+    @Autowired
+    CommittedEventRecorder committedEvents;
 
     @Autowired
     JdbcTemplate jdbc;
@@ -385,6 +412,340 @@ class ExternalDataIngestionIntegrationTest {
         });
     }
 
+    @Test
+    void 行1_採用の主要実績と航海の行は受信記録IDで引ける採用値を1つずつ取込の時刻で書く() {
+        inRolledBackTransaction(() -> {
+            UUID milestoneSource = insertApprovedSource(newProvider());
+            UUID voyageSource = insertApprovedSource("船会社-" + UUID.randomUUID(), "VOYAGE");
+
+            Ingested milestones = ingested(
+                    ingestionService.ingest(steward, file(milestoneSource, milestone(2, "MS-0001", "CTABCDEFGH2345"))));
+            Ingested voyages = ingested(ingestionService.ingest(steward, voyageFile(voyageSource)));
+
+            assertThat(adoptedValueOf(milestones.rows().getFirst()))
+                    .containsEntry("target_type", "MILESTONE")
+                    .containsEntry("target_key", "CTABCDEFGH2345")
+                    .containsEntry("value_summary", "DEPARTURE;JPTYO;" + summaryTime(acquiredAt))
+                    .containsEntry("info_version", "1")
+                    .containsEntry("published_at", ingestedAt(milestones.ingestionId()));
+            assertThat(adoptedValueOf(voyages.rows().getFirst()))
+                    .containsEntry("target_type", "VOYAGE")
+                    .containsEntry("target_key", "V2611E")
+                    .containsEntry(
+                            "value_summary", "JPTYO;;2026-11-20T00:00:00.000000Z|USLAX;2026-12-01T00:00:00.000000Z;")
+                    .containsEntry("info_version", "3")
+                    .containsEntry("published_at", ingestedAt(voyages.ingestionId()));
+        });
+    }
+
+    @Test
+    void 行2_同じファイルの再取込は重複の受信記録に採用値を作らず採用値の数が変わらない() {
+        inRolledBackTransaction(() -> {
+            UUID sourceId = insertApprovedSource(newProvider());
+            IngestFileCommand file = file(
+                    sourceId, milestone(2, "MS-0001", "CTABCDEFGH2345"), milestone(3, "MS-0002", "CTABCDEFGH2346"));
+
+            Ingested first = ingested(ingestionService.ingest(steward, file));
+            Ingested second = ingested(ingestionService.ingest(steward, file));
+
+            assertThat(adoptedValueCount(first.ingestionId())).isEqualTo(2);
+            assertThat(adoptedValueCount(second.ingestionId())).isZero();
+            // 起きないことは追記の呼び出しの記録で確かめる（T-236）。2 回目の取込は追記を呼ばない
+            ArgumentCaptor<AdoptedValue> added = ArgumentCaptor.forClass(AdoptedValue.class);
+            Mockito.verify(adoptedValues, Mockito.times(2)).add(added.capture());
+            assertThat(added.getAllValues())
+                    .extracting(AdoptedValue::receivedRecordId)
+                    .containsExactlyElementsOf(first.rows().stream()
+                            .map(RowResult::receivedRecordId)
+                            .toList());
+        });
+    }
+
+    @Test
+    void 行8_同じ取込の中の複数の採用は採用値とイベントを行ごとに物理行の順でコミットの後に届け発行記録に残す() {
+        String provider = newProvider();
+        UUID sourceId = insertApprovedSource(provider);
+        try {
+            String adopted = "MS-0001,1," + acquired() + ",CTABCDEFGH2345" + tail();
+            byte[] csv = String.join(
+                            "\n",
+                            MILESTONE_HEADER,
+                            adopted,
+                            "MS-0002,1," + acquired() + ",CTABCDEFGH2346" + tail(),
+                            adopted,
+                            "MS-0003,1," + acquired() + ",CTABCDEFGH2347" + tail() + ",余分な列",
+                            "MS-0002,1," + acquired() + ",CTABCDEFGH2348" + tail())
+                    .getBytes(StandardCharsets.UTF_8);
+
+            Ingested result = ingested(ingestionService.ingest(
+                    steward, IngestFileCommandAssembler.assemble(sourceId, CsvFileKind.MILESTONE, csv)));
+
+            assertThat(result.rows())
+                    .extracting(RowResult::classification)
+                    .containsExactly(
+                            Classification.ADOPTED,
+                            Classification.ADOPTED,
+                            Classification.DUPLICATE,
+                            Classification.QUARANTINED,
+                            Classification.QUARANTINED);
+            List<Object> events = committedEvents.of(sourceId);
+            assertThat(events)
+                    .extracting(event -> event.getClass().getSimpleName())
+                    .containsExactly(
+                            "MilestoneAdoptedValueAccepted",
+                            "MilestoneAdoptedValueAccepted",
+                            "ExternalRecordQuarantined",
+                            "ExternalRecordQuarantined");
+            MilestoneAdoptedValueAccepted firstAdopted = (MilestoneAdoptedValueAccepted) events.get(0);
+            MilestoneAdoptedValueAccepted secondAdopted = (MilestoneAdoptedValueAccepted) events.get(1);
+            assertThat(List.of(firstAdopted, secondAdopted))
+                    .extracting(
+                            MilestoneAdoptedValueAccepted::trackingNumber,
+                            event -> event.source().reference(),
+                            MilestoneAdoptedValueAccepted::ingestionId)
+                    .containsExactly(
+                            tuple(
+                                    "CTABCDEFGH2345",
+                                    result.rows().get(0).receivedRecordId().toString(),
+                                    result.ingestionId()),
+                            tuple(
+                                    "CTABCDEFGH2346",
+                                    result.rows().get(1).receivedRecordId().toString(),
+                                    result.ingestionId()));
+            assertThat(List.of(firstAdopted.adoptedValueId(), secondAdopted.adoptedValueId()))
+                    .containsExactly(
+                            adoptedValueId(result.rows().get(0)),
+                            adoptedValueId(result.rows().get(1)));
+            assertThat(events.subList(2, 4))
+                    .map(ExternalRecordQuarantined.class::cast)
+                    .extracting(
+                            ExternalRecordQuarantined::externalId,
+                            ExternalRecordQuarantined::reason,
+                            ExternalRecordQuarantined::firstLine)
+                    .containsExactly(
+                            tuple(null, "COLUMN_COUNT_MISMATCH", 5),
+                            tuple("MS-0002", ExternalRecordQuarantined.CONTENT_MISMATCH, 6));
+            assertThat(adoptedValueCount(result.ingestionId())).isEqualTo(2);
+            // Spring Modulith のイベント発行記録に、自分の情報源のイベントが配信の完了まで残る
+            assertThat(completedPublications(MilestoneAdoptedValueAccepted.class, sourceId))
+                    .isEqualTo(2);
+            assertThat(completedPublications(ExternalRecordQuarantined.class, sourceId))
+                    .isEqualTo(2);
+            assertThat(publications(VoyageAdoptedValueUpdated.class, sourceId)).isZero();
+        } finally {
+            removeSource(sourceId);
+        }
+    }
+
+    @Test
+    void 行9_行の途中で原本の保存に失敗すると採用値もイベントの発行記録も残らずコミットの後の記録に届かない() {
+        UUID sourceId = insertApprovedSource(newProvider());
+        try {
+            IngestedRow failing = milestone(4, "MS-0003", "CTABCDEFGH2347");
+            IngestFileCommand file = file(
+                    sourceId,
+                    milestone(2, "MS-0001", "CTABCDEFGH2345"),
+                    milestone(3, "MS-0002", "CTABCDEFGH2346"),
+                    failing);
+            doThrow(new IllegalStateException("原本の保存に失敗した（テスト）"))
+                    .when(payloadStorage)
+                    .store(any(), argThat(payload -> Arrays.equals(payload, failing.payload())));
+
+            assertThatThrownBy(() -> ingestionService.ingest(steward, file)).isInstanceOf(IllegalStateException.class);
+
+            assertRolledBackAfterAdopting(sourceId, 2);
+            // 原本だけ残る（ファイル全体の原本）
+            assertThat(count(
+                            "SELECT COUNT(*) FROM external_data.stored_payload WHERE object_key = ?",
+                            storedKeyOf(file.filePayload())))
+                    .isEqualTo(1);
+        } finally {
+            removeSource(sourceId);
+        }
+    }
+
+    @Test
+    void 行9_外部原本の一意制約に違反すると取込全体が巻き戻り採用値もイベントの発行記録も残らない() {
+        String provider = newProvider();
+        UUID sourceId = insertApprovedSource(provider);
+        try {
+            IngestFileCommand file = file(
+                    sourceId,
+                    milestone(2, "MS-0001", "CTABCDEFGH2345"),
+                    milestone(3, "MS-0002", "CTABCDEFGH2346"),
+                    milestone(4, "MS-0002", "CTABCDEFGH2346"));
+            // 同時の取込を模す: 4 行目の照会では 3 行目の外部原本が見えず、追記が一意制約に当たる
+            Mockito.doCallRealMethod()
+                    .doReturn(Optional.empty())
+                    .when(externalRecords)
+                    .findByKey(argThat(key ->
+                            key.provider().equals(provider) && key.externalId().equals("MS-0002")));
+
+            assertThatThrownBy(() -> ingestionService.ingest(steward, file))
+                    .isInstanceOf(DuplicateExternalRecordException.class);
+
+            assertRolledBackAfterAdopting(sourceId, 2);
+            assertThat(externalRecordCount(provider)).isZero();
+            assertThat(count(
+                            "SELECT COUNT(*) FROM external_data.stored_payload WHERE object_key = ?",
+                            storedKeyOf(file.filePayload())))
+                    .isEqualTo(1);
+        } finally {
+            removeSource(sourceId);
+        }
+    }
+
+    @Test
+    void 行15_再取込と内容の違う原本の取込は最初の採用値を書き換えず追記もしない() {
+        inRolledBackTransaction(() -> {
+            UUID sourceId = insertApprovedSource(newProvider());
+            IngestFileCommand file = file(sourceId, milestone(2, "MS-0001", "CTABCDEFGH2345"));
+            Ingested first = ingested(ingestionService.ingest(steward, file));
+            Map<String, Object> before = adoptedValueOf(first.rows().getFirst());
+
+            Ingested duplicate = ingested(ingestionService.ingest(steward, file));
+            Ingested quarantined = ingested(
+                    ingestionService.ingest(steward, file(sourceId, milestone(2, "MS-0001", "CTABCDEFGH2346"))));
+
+            assertThat(duplicate.rows())
+                    .extracting(RowResult::classification)
+                    .containsExactly(Classification.DUPLICATE);
+            assertThat(quarantined.rows())
+                    .extracting(RowResult::classification)
+                    .containsExactly(Classification.QUARANTINED);
+            assertThat(adoptedValueOf(first.rows().getFirst())).isEqualTo(before);
+            Mockito.verify(adoptedValues, Mockito.times(1)).add(any());
+        });
+    }
+
+    /**
+     * 取込のトランザクションが巻き戻ったことを確かめる。採用値の追記と発行は呼ばれた（呼び出しの記録。T-236）が、その採用値も、それを指す
+     * イベントの発行記録も残らず、コミットの後にだけ受ける記録にも届かない。
+     */
+    private void assertRolledBackAfterAdopting(UUID sourceId, int adoptedRows) {
+        ArgumentCaptor<AdoptedValue> added = ArgumentCaptor.forClass(AdoptedValue.class);
+        Mockito.verify(adoptedValues, Mockito.times(adoptedRows)).add(added.capture());
+        for (AdoptedValue value : added.getAllValues()) {
+            assertThat(count("SELECT COUNT(*) FROM external_data.adopted_value WHERE id = ?", value.id()))
+                    .as("採用値 %s", value.id())
+                    .isZero();
+            assertThat(count(
+                            "SELECT COUNT(*) FROM platform.event_publication WHERE serialized_event LIKE ?",
+                            "%" + value.id() + "%"))
+                    .as("採用値 %s のイベントの発行記録", value.id())
+                    .isZero();
+        }
+        assertThat(count("SELECT COUNT(*) FROM external_data.ingestion WHERE data_source_id = ?", sourceId))
+                .isZero();
+        assertThat(publications(MilestoneAdoptedValueAccepted.class, sourceId)).isZero();
+        assertThat(committedEvents.of(sourceId)).isEmpty();
+    }
+
+    private IngestFileCommand voyageFile(UUID sourceId) {
+        String line = "V2611E,3," + acquired() + ",JPTYO;;2026-11-20T00:00:00Z|USLAX;2026-12-01T00:00:00Z;";
+        VoyageValues values = new VoyageValues(
+                "V2611E",
+                List.of(
+                        new PortCallValue(
+                                new Location("JPTYO"), null, new UtcInstant(Instant.parse("2026-11-20T00:00:00Z"))),
+                        new PortCallValue(
+                                new Location("USLAX"), new UtcInstant(Instant.parse("2026-12-01T00:00:00Z")), null)));
+        IngestedRow row =
+                new IngestedRow(2, 2, "V2611E", "3", acquiredAt, values, line.getBytes(StandardCharsets.UTF_8));
+        return new IngestFileCommand(
+                sourceId,
+                ("external_id,external_version,acquired_at,port_calls\n" + line).getBytes(StandardCharsets.UTF_8),
+                1,
+                List.of(row),
+                List.of(),
+                null);
+    }
+
+    private static String summaryTime(Instant instant) {
+        return DateTimeFormatter.ofPattern("uuuu-MM-dd'T'HH:mm:ss.SSSSSS'Z'")
+                .withZone(ZoneOffset.UTC)
+                .format(instant);
+    }
+
+    private Map<String, Object> adoptedValueOf(RowResult row) {
+        return jdbc.queryForMap(
+                "SELECT id, target_type, target_key, value_summary, info_version, published_at"
+                        + " FROM external_data.adopted_value WHERE received_record_id = ?",
+                row.receivedRecordId());
+    }
+
+    private UUID adoptedValueId(RowResult row) {
+        return (UUID) adoptedValueOf(row).get("id");
+    }
+
+    private Object ingestedAt(UUID ingestionId) {
+        return jdbc.queryForObject(
+                "SELECT ingested_at FROM external_data.ingestion WHERE id = ?", Object.class, ingestionId);
+    }
+
+    private int adoptedValueCount(UUID ingestionId) {
+        return count(
+                "SELECT COUNT(*) FROM external_data.adopted_value a"
+                        + " JOIN external_data.received_record r ON r.id = a.received_record_id WHERE r.ingestion_id = ?",
+                ingestionId);
+    }
+
+    /** 自分の情報源のイベントの発行記録の数（情報源 ID で絞る。全体を数えない）。 */
+    private int publications(Class<?> eventType, UUID sourceId) {
+        return count(
+                "SELECT COUNT(*) FROM platform.event_publication WHERE event_type = ? AND serialized_event LIKE ?",
+                eventType.getName(),
+                "%" + sourceId + "%");
+    }
+
+    private int completedPublications(Class<?> eventType, UUID sourceId) {
+        return count(
+                "SELECT COUNT(*) FROM platform.event_publication WHERE event_type = ? AND serialized_event LIKE ?"
+                        + " AND completion_date IS NOT NULL",
+                eventType.getName(),
+                "%" + sourceId + "%");
+    }
+
+    /**
+     * コミットの後にだけ受ける記録（Bolt 39b3 の行 8・9。listener は作らない。発行と巻き戻りを確かめるためのテストの中の受け手）。Spring
+     * Modulith はこの受け手ごとにイベント発行記録を書き、受けた後に完了にする。
+     */
+    static class CommittedEventRecorder {
+
+        private final List<Object> events = new CopyOnWriteArrayList<>();
+
+        @TransactionalEventListener
+        public void on(VoyageAdoptedValueUpdated event) {
+            events.add(event);
+        }
+
+        @TransactionalEventListener
+        public void on(MilestoneAdoptedValueAccepted event) {
+            events.add(event);
+        }
+
+        @TransactionalEventListener
+        public void on(ExternalRecordQuarantined event) {
+            events.add(event);
+        }
+
+        /** 情報源のイベントを受けた順に返す（ほかのテストの取込を混ぜない）。 */
+        List<Object> of(UUID dataSourceId) {
+            return events.stream()
+                    .filter(event -> dataSourceId.equals(dataSourceIdOf(event)))
+                    .toList();
+        }
+
+        private static UUID dataSourceIdOf(Object event) {
+            return switch (event) {
+                case VoyageAdoptedValueUpdated voyage -> voyage.dataSourceId();
+                case MilestoneAdoptedValueAccepted milestone -> milestone.dataSourceId();
+                case ExternalRecordQuarantined quarantined -> quarantined.dataSourceId();
+                default -> null;
+            };
+        }
+    }
+
     /** 取得時刻の文字列（取込時刻より前。T-230）。 */
     private String acquired() {
         if (acquiredAt == null) {
@@ -439,12 +800,17 @@ class ExternalDataIngestionIntegrationTest {
     }
 
     private UUID insertApprovedSource(String provider) {
+        return insertApprovedSource(provider, "MILESTONE");
+    }
+
+    private UUID insertApprovedSource(String provider, String recordType) {
         UUID id = UUID.randomUUID();
         jdbc.update(
                 "INSERT INTO external_data.data_source (id, provider, record_type, approval_status, version)"
-                        + " VALUES (?, ?, 'MILESTONE', 'APPROVED', 0)",
+                        + " VALUES (?, ?, ?, 'APPROVED', 0)",
                 id,
-                provider);
+                provider,
+                recordType);
         return id;
     }
 
