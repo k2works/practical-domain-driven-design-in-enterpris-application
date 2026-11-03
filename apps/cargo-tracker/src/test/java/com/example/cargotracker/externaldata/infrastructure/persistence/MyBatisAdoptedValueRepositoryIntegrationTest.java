@@ -9,6 +9,7 @@ import com.example.cargotracker.externaldata.domain.model.aggregates.AdoptedValu
 import com.example.cargotracker.externaldata.domain.model.aggregates.AdoptedValueRepositoryContract;
 import com.example.cargotracker.externaldata.domain.model.aggregates.DataSource;
 import com.example.cargotracker.externaldata.domain.model.aggregates.DataSource.ApprovalStatus;
+import com.example.cargotracker.externaldata.domain.model.aggregates.DuplicateAdoptedValueException;
 import com.example.cargotracker.externaldata.domain.model.aggregates.ExternalRecord;
 import com.example.cargotracker.externaldata.domain.model.aggregates.ExternalRecordRepository;
 import com.example.cargotracker.externaldata.domain.model.aggregates.Ingestion;
@@ -62,6 +63,15 @@ class MyBatisAdoptedValueRepositoryIntegrationTest extends AdoptedValueRepositor
 
     @Override
     protected UUID givenReceivedRecord() {
+        return insertAdoptedReceivedRecord(jdbc, ingestions, externalRecords, receivedRecords);
+    }
+
+    /** 情報源・取込・外部原本・採用の受信記録を書き、受信記録 ID を返す（H2 の契約のテストも使う）。 */
+    static UUID insertAdoptedReceivedRecord(
+            JdbcTemplate jdbc,
+            IngestionRepository ingestions,
+            ExternalRecordRepository externalRecords,
+            ReceivedRecordRepository receivedRecords) {
         DataSource source =
                 new DataSource(UUID.randomUUID(), "採用値の提供元-" + UUID.randomUUID(), "VOYAGE", ApprovalStatus.APPROVED);
         MyBatisExternalDataRecordRepositoriesIntegrationTest.insertDataSource(jdbc, source);
@@ -99,12 +109,14 @@ class MyBatisAdoptedValueRepositoryIntegrationTest extends AdoptedValueRepositor
     }
 
     @Test
-    void 行15_同じ受信記録の2つ目の採用値は一意制約で拒む() {
+    void 行15_同じ受信記録の2つ目の採用値は一意制約の違反を原因に持つ名前付きの例外() {
         UUID receivedRecordId = givenReceivedRecord();
         adoptedValues.add(adoptedValue(receivedRecordId));
         AdoptedValue again = adoptedValue(receivedRecordId);
 
-        assertThatThrownBy(() -> adoptedValues.add(again)).isInstanceOf(DuplicateKeyException.class);
+        assertThatThrownBy(() -> adoptedValues.add(again))
+                .isInstanceOf(DuplicateAdoptedValueException.class)
+                .hasCauseInstanceOf(DuplicateKeyException.class);
     }
 
     private static AdoptedValue adoptedValue(UUID receivedRecordId) {

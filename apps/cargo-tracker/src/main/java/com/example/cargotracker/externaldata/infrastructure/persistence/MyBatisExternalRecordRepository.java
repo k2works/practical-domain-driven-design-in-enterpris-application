@@ -44,7 +44,7 @@ public class MyBatisExternalRecordRepository implements ExternalRecordRepository
                     externalRecord.payloadObjectKey().value(),
                     externalRecord.firstReceivedAt().atOffset(ZoneOffset.UTC)));
         } catch (DuplicateKeyException e) {
-            throw new DuplicateExternalRecordException("冪等性キーの外部原本がもうある: " + key, e);
+            throw DuplicateExternalRecordException.of(key, e);
         }
     }
 

@@ -24,7 +24,7 @@ public class InMemoryExternalRecordRepository implements ExternalRecordRepositor
     public void add(ExternalRecord externalRecord) {
         Objects.requireNonNull(externalRecord, "externalRecord");
         if (records.putIfAbsent(externalRecord.key(), externalRecord) != null) {
-            throw new DuplicateExternalRecordException("冪等性キーの外部原本がもうある: " + externalRecord.key(), null);
+            throw DuplicateExternalRecordException.of(externalRecord.key(), null);
         }
     }
 

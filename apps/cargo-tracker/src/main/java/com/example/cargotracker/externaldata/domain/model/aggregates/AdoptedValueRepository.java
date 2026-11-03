@@ -10,7 +10,12 @@ import java.util.UUID;
  */
 public interface AdoptedValueRepository {
 
-    /** 採用値を追記する。同じ受信記録の 2 つ目は一意制約の違反になる（受信記録ごとに 1 つ）。 */
+    /**
+     * 採用値を追記する。受信記録ごとに 1 つ。
+     *
+     * @param adoptedValue 採用値
+     * @throws DuplicateAdoptedValueException 同じ受信記録の採用値がもうあるとき（一意制約の違反）
+     */
     void add(AdoptedValue adoptedValue);
 
     /** 受信記録の採用値を引く。ないときは空。 */

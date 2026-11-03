@@ -8,11 +8,6 @@ import com.example.cargotracker.externaldata.application.internal.commandservice
 import com.example.cargotracker.externaldata.application.internal.commandservices.IngestionOutcome.RowResult;
 import com.example.cargotracker.externaldata.application.internal.commandservices.IngestionOutcome.Unreadable;
 import com.example.cargotracker.externaldata.domain.events.ExternalRecordQuarantined;
-import com.example.cargotracker.externaldata.domain.events.MilestoneAdoptedValueAccepted;
-import com.example.cargotracker.externaldata.domain.events.VoyageAdoptedValueUpdated;
-import com.example.cargotracker.externaldata.domain.events.VoyageAdoptedValueUpdated.AdoptedPortCall;
-import com.example.cargotracker.externaldata.domain.model.aggregates.AdoptedValue;
-import com.example.cargotracker.externaldata.domain.model.aggregates.AdoptedValue.TargetType;
 import com.example.cargotracker.externaldata.domain.model.aggregates.AdoptedValueRepository;
 import com.example.cargotracker.externaldata.domain.model.aggregates.DataSource;
 import com.example.cargotracker.externaldata.domain.model.aggregates.DataSource.ApprovalStatus;
@@ -26,18 +21,10 @@ import com.example.cargotracker.externaldata.domain.model.aggregates.ReceivedRec
 import com.example.cargotracker.externaldata.domain.model.aggregates.ReceivedRecordRepository;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.Classification;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.IdempotencyKey;
-import com.example.cargotracker.externaldata.domain.model.valueobjects.MilestoneKindValue;
-import com.example.cargotracker.externaldata.domain.model.valueobjects.MilestoneValues;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PayloadHash;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PayloadObjectKey;
-import com.example.cargotracker.externaldata.domain.model.valueobjects.RecordValues;
-import com.example.cargotracker.externaldata.domain.model.valueobjects.TrackingNumberValue;
-import com.example.cargotracker.externaldata.domain.model.valueobjects.VoyageValues;
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
-import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.Role;
-import com.example.cargotracker.shared.domain.Source;
-import com.example.cargotracker.shared.domain.SourceKind;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Clock;
 import java.time.Instant;
@@ -201,71 +188,31 @@ public class IngestionService {
                 noteOf(classification, externalRecord, row),
                 now);
         receivedRecords.add(received);
-        switch (classification) {
-            case ADOPTED -> {
-                AdoptedValue adopted = adoptedValueOf(received, row, now);
-                adoptedValues.add(adopted);
-                eventPublisher.publishEvent(adoptedEventOf(run, received, row, adopted));
-            }
-            case QUARANTINED ->
-                eventPublisher.publishEvent(quarantinedEventOf(
-                        run,
-                        received,
-                        key,
-                        ExternalRecordQuarantined.CONTENT_MISMATCH,
-                        row.lineNumber(),
-                        row.lastLineNumber()));
-            case DUPLICATE -> {
-                // 重複は採用値に影響しないので、採用値もイベントもない
-            }
-        }
+        Optional<Object> event =
+                switch (classification) {
+                    case ADOPTED -> Optional.of(adopt(run, received, row));
+                    case QUARANTINED ->
+                        Optional.of(quarantinedEventOf(
+                                run,
+                                received,
+                                key,
+                                ExternalRecordQuarantined.CONTENT_MISMATCH,
+                                row.lineNumber(),
+                                row.lastLineNumber()));
+                    // 重複は採用値に影響しないので、採用値もイベントもない
+                    case DUPLICATE -> Optional.empty();
+                };
+        event.ifPresent(eventPublisher::publishEvent);
         return new RowResult(
                 row.lineNumber(), row.lastLineNumber(), classification, externalRecord.id(), received.id());
     }
 
-    /**
-     * 採用値のイベント（DE-12・DE-13。Bolt 39b3）。値の写しを Java の標準と共有カーネルの型で持ち、出典の参照は受信記録 ID、取得時刻は
-     * ファイルの値、公開した時刻は採用値と同じ取込の時刻。
-     */
-    private static Object adoptedEventOf(Run run, ReceivedRecord received, IngestedRow row, AdoptedValue adopted) {
-        Source origin =
-                new Source(SourceKind.EXTERNAL_RECORD, received.id().toString(), new UtcInstant(row.acquiredAt()));
-        UtcInstant publishedAt = new UtcInstant(adopted.publishedAt());
-        return switch (row.values()) {
-            case VoyageValues voyage ->
-                new VoyageAdoptedValueUpdated(
-                        adopted.id(),
-                        run.ingestion().id(),
-                        run.source().id(),
-                        origin,
-                        voyage.voyageNumber(),
-                        voyage.portCalls().stream()
-                                .map(call -> new AdoptedPortCall(call.port(), call.arrivalAt(), call.departureAt()))
-                                .toList(),
-                        adopted.infoVersion(),
-                        run.operator().userId(),
-                        run.operator().companyId(),
-                        publishedAt);
-            case MilestoneValues(
-                    TrackingNumberValue trackingNumber,
-                    MilestoneKindValue kind,
-                    Location location,
-                    UtcInstant occurredAt) ->
-                new MilestoneAdoptedValueAccepted(
-                        adopted.id(),
-                        run.ingestion().id(),
-                        run.source().id(),
-                        origin,
-                        trackingNumber.value(),
-                        kind.name(),
-                        location,
-                        occurredAt,
-                        row.externalId(),
-                        adopted.infoVersion(),
-                        run.operator().userId(),
-                        run.operator().companyId(),
-                        publishedAt);
-        };
+    /** 採用の受信記録の採用値を追記し、そのイベント（DE-12・DE-13）を返す（組み立ては {@link AdoptionFactory}。Bolt 39b3）。 */
+    private Object adopt(Run run, ReceivedRecord received, IngestedRow row) {
+        AdoptionFactory.Adoption adoption = AdoptionFactory.adopt(
+                received, row, run.ingestion().id(), run.source().id(), run.operator(), run.now());
+        adoptedValues.add(adoption.adoptedValue());
+        return adoption.event();
     }
 
     /**
@@ -288,28 +235,6 @@ public class IngestionService {
                 run.operator().userId(),
                 run.operator().companyId(),
                 new UtcInstant(run.now()));
-    }
-
-    /**
-     * 採用の受信記録の採用値（Bolt 39b3）。対象の種類とキーは取込の値の型から決め（航海は航海番号、主要実績は追跡番号）、要約は取込の値から
-     * 作り、情報版は外部版、公開した時刻は取込の時刻。
-     */
-    private static AdoptedValue adoptedValueOf(ReceivedRecord received, IngestedRow row, Instant now) {
-        RecordValues values = row.values();
-        TargetType targetType;
-        String targetKey;
-        switch (values) {
-            case VoyageValues voyage -> {
-                targetType = TargetType.VOYAGE;
-                targetKey = voyage.voyageNumber();
-            }
-            case MilestoneValues milestone -> {
-                targetType = TargetType.MILESTONE;
-                targetKey = milestone.trackingNumber().value();
-            }
-        }
-        return new AdoptedValue(
-                UUID.randomUUID(), received.id(), targetType, targetKey, values.summary(), row.externalVersion(), now);
     }
 
     /** 行の誤り。行の原文を保存してから、キーのない隔離の受信記録を書き、外部原本を隔離した（DE-14）を出す。 */

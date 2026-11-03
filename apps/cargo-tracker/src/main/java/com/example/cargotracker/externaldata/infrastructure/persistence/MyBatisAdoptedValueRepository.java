@@ -3,12 +3,17 @@ package com.example.cargotracker.externaldata.infrastructure.persistence;
 import com.example.cargotracker.externaldata.domain.model.aggregates.AdoptedValue;
 import com.example.cargotracker.externaldata.domain.model.aggregates.AdoptedValue.TargetType;
 import com.example.cargotracker.externaldata.domain.model.aggregates.AdoptedValueRepository;
+import com.example.cargotracker.externaldata.domain.model.aggregates.DuplicateAdoptedValueException;
 import java.time.ZoneOffset;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Repository;
 
-/** 採用値のリポジトリの MyBatis 実装（Bolt 39b3）。追記専用なので、追加と受信記録 ID での照会だけを持つ。 */
+/**
+ * 採用値のリポジトリの MyBatis 実装（Bolt 39b3）。追記専用なので、追加と受信記録 ID での照会だけを持つ。受信記録 ID の一意制約の違反
+ * （{@link DuplicateKeyException}）は、元の例外を原因に持つ {@link DuplicateAdoptedValueException} に写して上げる（行 15）。
+ */
 @Repository
 public class MyBatisAdoptedValueRepository implements AdoptedValueRepository {
 
@@ -20,14 +25,18 @@ public class MyBatisAdoptedValueRepository implements AdoptedValueRepository {
 
     @Override
     public void add(AdoptedValue adoptedValue) {
-        mapper.insert(new AdoptedValueRow(
-                adoptedValue.id(),
-                adoptedValue.receivedRecordId(),
-                adoptedValue.targetType().name(),
-                adoptedValue.targetKey(),
-                adoptedValue.valueSummary(),
-                adoptedValue.infoVersion(),
-                adoptedValue.publishedAt().atOffset(ZoneOffset.UTC)));
+        try {
+            mapper.insert(new AdoptedValueRow(
+                    adoptedValue.id(),
+                    adoptedValue.receivedRecordId(),
+                    adoptedValue.targetType().name(),
+                    adoptedValue.targetKey(),
+                    adoptedValue.valueSummary(),
+                    adoptedValue.infoVersion(),
+                    adoptedValue.publishedAt().atOffset(ZoneOffset.UTC)));
+        } catch (DuplicateKeyException e) {
+            throw DuplicateAdoptedValueException.of(adoptedValue.receivedRecordId(), e);
+        }
     }
 
     @Override
