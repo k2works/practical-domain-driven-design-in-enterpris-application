@@ -19,6 +19,7 @@ import com.example.cargotracker.externaldata.domain.model.aggregates.Ingestion;
 import com.example.cargotracker.externaldata.domain.model.aggregates.IngestionRepository;
 import com.example.cargotracker.externaldata.domain.model.aggregates.ReceivedRecord;
 import com.example.cargotracker.externaldata.domain.model.aggregates.ReceivedRecordRepository;
+import com.example.cargotracker.externaldata.domain.model.rules.IngestionFileLimit;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.Classification;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.IdempotencyKey;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PayloadHash;
@@ -49,8 +50,8 @@ import org.springframework.transaction.annotation.Transactional;
  * 採用は DE-12（航海）か DE-13（主要実績）、隔離（内容の違う原本とキーのない隔離）は DE-14 を取込のトランザクションの中で出し、重複には出さない
  * （巻き戻ればイベント発行記録も残らない。ADR-003。Bolt 39b3）。
  *
- * <p>拒否の順は役割 → 情報源の有無 → 承認の状態で、拒否なら原本も保存しない（受け付けていない）。1 つの取込は 1 つのトランザクション
- * （外側）で、原本の保存は独立したトランザクションで残る（ADR-004 の改訂）。原本の保存の失敗と外部原本の一意制約の違反（同時の取込）は
+ * <p>拒否の順は役割 → 情報源の有無 → 承認の状態 → 大きさ（取込のファイルの上限。Bolt 39b4）で、拒否なら原本も保存しない
+ * （受け付けていない）。1 つの取込は 1 つのトランザクション（外側）で、原本の保存は独立したトランザクションで残る（ADR-004 の改訂）。原本の保存の失敗と外部原本の一意制約の違反（同時の取込）は
  * 例外のまま上げて取込全体を巻き戻す。時刻は Clock から 1 回取り、取込・外部原本・受信記録に使う（取込を 1 つの時点として再現できる）。
  * 処理の順は、ファイル全体の原本 → 取込の行（取り込めなかった行の始まりと数を入れ、更新しない）→ 物理行の順の行 → 取り込めなかった部分。
  */
@@ -117,11 +118,13 @@ public class IngestionService {
             return new IngestionOutcome.DataSourceNotFound();
         }
         DataSource source = found.get();
-        if (source.approvalStatus() != ApprovalStatus.APPROVED) {
-            return new IngestionOutcome.DataSourceNotApproved();
+        byte[] file = command.filePayload();
+        Optional<IngestionOutcome> refusal = refusalOf(source, command.receivedCount(), file);
+        if (refusal.isPresent()) {
+            return refusal.get();
         }
         Instant now = clock.instant();
-        Ingestion ingestion = recordIngestion(operator, command, source, now);
+        Ingestion ingestion = recordIngestion(operator, command, file, source, now);
         Run run = new Run(source, ingestion, operator, now);
         List<RowResult> results = new ArrayList<>();
         List<IngestedRow> rows = command.rows();
@@ -140,9 +143,19 @@ public class IngestionService {
                 ingestion.id(), ingestion.receivedCount(), countByClassification(ingestion), results, unreadable);
     }
 
+    /** 情報源の後の拒否（承認の状態 → 取込のファイルの上限の順。Bolt 39b4）。受けるなら空。 */
+    private static Optional<IngestionOutcome> refusalOf(DataSource source, int receivedCount, byte[] file) {
+        if (source.approvalStatus() != ApprovalStatus.APPROVED) {
+            return Optional.of(new IngestionOutcome.DataSourceNotApproved());
+        }
+        if (IngestionFileLimit.exceeds(receivedCount, file.length)) {
+            return Optional.of(new IngestionOutcome.FileTooLarge());
+        }
+        return Optional.empty();
+    }
+
     private Ingestion recordIngestion(
-            AuthenticatedActor operator, IngestFileCommand command, DataSource source, Instant now) {
-        byte[] file = command.filePayload();
+            AuthenticatedActor operator, IngestFileCommand command, byte[] file, DataSource source, Instant now) {
         PayloadObjectKey fileKey = PayloadObjectKey.newIngestionFile();
         payloadStorage.store(fileKey, file);
         UnreadablePart unreadable = command.unreadable();

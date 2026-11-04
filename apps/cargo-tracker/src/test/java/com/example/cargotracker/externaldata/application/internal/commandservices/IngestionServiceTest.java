@@ -1445,6 +1445,62 @@ class IngestionServiceTest {
         }
     }
 
+    /**
+     * 原本の大きさの上限（Bolt 39b4 の行 5・6）。上限は物理データ行 10,000 件と 41,943,040 バイト（40 MiB）で、承認の状態の確かめの後に
+     * 判定する。大きさは値だけで確かめ、1 万行の原本を組み立てない（行 6）。上限の値は定数を参照せず数で書く（定数を変えたら落ちる）。
+     */
+    @Nested
+    class 原本の大きさの上限 {
+
+        private static IngestFileCommand sized(DataSource source, int byteLength, int receivedCount) {
+            return new IngestFileCommand(source.id(), new byte[byteLength], receivedCount, List.of(), List.of(), null);
+        }
+
+        @Test
+        void 行5_物理データ行が10001件のファイルは拒否し原本を保存しない() {
+            IngestionOutcome outcome = service().ingest(steward, sized(milestoneSource, 100, 10_001));
+
+            assertThat(outcome).isInstanceOf(IngestionOutcome.FileTooLarge.class);
+            assertNothingWritten();
+            assertThat(published).isEmpty();
+        }
+
+        @Test
+        void 行5_41943041バイトのファイルは拒否し原本を保存しない() {
+            IngestionOutcome outcome = service().ingest(steward, sized(milestoneSource, 41_943_041, 1));
+
+            assertThat(outcome).isInstanceOf(IngestionOutcome.FileTooLarge.class);
+            assertNothingWritten();
+            assertThat(published).isEmpty();
+        }
+
+        @Test
+        void 行5_承認されていない情報源の大きすぎるファイルは承認の状態で拒否する() {
+            DataSource candidate = source("運送会社C-" + UUID.randomUUID(), "MILESTONE", ApprovalStatus.CANDIDATE);
+
+            IngestionOutcome outcome = service().ingest(steward, sized(candidate, 41_943_041, 10_001));
+
+            assertThat(outcome).isInstanceOf(IngestionOutcome.DataSourceNotApproved.class);
+            assertNothingWritten();
+        }
+
+        @Test
+        void 行6_物理データ行が10000件ちょうどのファイルは受けて取り込む() {
+            Ingested result = ingested(service().ingest(steward, sized(milestoneSource, 100, 10_000)));
+
+            assertThat(result.receivedCount()).isEqualTo(10_000);
+            assertThat(calls).containsExactly("store:ingestions");
+        }
+
+        @Test
+        void 行6_41943040バイトちょうどのファイルは受けて取り込む() {
+            ingested(service().ingest(steward, sized(milestoneSource, 41_943_040, 1)));
+
+            Ingestion ingestion = ingestions.all().getFirst();
+            assertThat(storage.read(ingestion.fileObjectKey())).hasSize(41_943_040);
+        }
+    }
+
     /** 保存の呼び出しを記録する（保存 → 受信記録の順を確かめる）。 */
     private class RecordingStorage implements ExternalPayloadStorage {
 

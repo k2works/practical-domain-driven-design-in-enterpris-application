@@ -108,4 +108,10 @@ public sealed interface IngestionOutcome {
 
     /** 操作者がデータ責任者でない（URL の認可に加えてサービスでも確かめる）。 */
     record NotPermitted() implements IngestionOutcome {}
+
+    /**
+     * ファイルが取込のファイルの上限（物理データ行 10,000 件、または 41,943,040 バイト（40 MiB））を超える（Bolt 39b4。
+     * {@link com.example.cargotracker.externaldata.domain.model.rules.IngestionFileLimit}）。承認の状態の確かめの後に判定し、原本を保存しない。
+     */
+    record FileTooLarge() implements IngestionOutcome {}
 }
