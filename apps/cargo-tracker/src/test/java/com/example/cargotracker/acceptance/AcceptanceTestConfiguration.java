@@ -478,8 +478,9 @@ public class AcceptanceTestConfiguration {
         }
 
         @Bean
-        InMemoryReceivedRecordRepository receivedRecordRepository() {
-            return new InMemoryReceivedRecordRepository();
+        InMemoryReceivedRecordRepository receivedRecordRepository(
+                InMemoryIngestionRepository ingestions, InMemoryExternalRecordRepository externalRecords) {
+            return new InMemoryReceivedRecordRepository(ingestions, externalRecords);
         }
 
         @Bean

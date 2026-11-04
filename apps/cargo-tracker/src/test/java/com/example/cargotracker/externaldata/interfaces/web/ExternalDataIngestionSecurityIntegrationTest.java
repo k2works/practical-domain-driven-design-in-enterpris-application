@@ -249,7 +249,8 @@ class ExternalDataIngestionSecurityIntegrationTest {
         String second = body(session, ingested(session, content));
 
         assertThat(counts(second)).containsExactly(0, 1, 1);
-        assertThat(second).doesNotContain("差異");
+        // 差異の行は 39h。ナビの「隔離・差異の確認」（Bolt 39d）と区別するため、表の行の見出しで見る
+        assertThat(second).doesNotContain("<th scope=\"row\">差異</th>");
     }
 
     // --- 行 15: 画面の POST から監査の配信まで ---
@@ -641,6 +642,90 @@ class ExternalDataIngestionSecurityIntegrationTest {
                 assertThat(summary.unreadable().lineCount())
                         .isEqualTo(outcome.unreadable().lineCount());
             }
+        }
+    }
+
+    /**
+     * Bolt 39d の行 1・2・6・16（S-17 の判断を待つ隔離の一覧の認可と DB の通し）。取込のサービスで画面から取り込み、S-16 の結果の画面の入口と
+     * 同じ取込で絞った S-17 を開いて、内容の違う原本と形式の誤りが種類と外部 ID・外部版とともにファイルの行の順に出ること、ほかの取込の隔離が
+     * 出ないことを確かめる。S-17 は今の {@code /staff/external-data/**} の規則のまま、データ責任者だけが開ける。39c〜39c4 の同じ番号の行と
+     * 名前が衝突しないよう入れ子にする。
+     */
+    @Nested
+    class Bolt39d_判断を待つ隔離の一覧 {
+
+        private static final String LIST_URL = "/staff/external-data/undecided-records";
+
+        @Test
+        void 行1_行2_行6_取込で絞った一覧に内容の違う原本と形式の誤りが行の順に出てほかの取込の隔離は出ない() throws Exception {
+            Cookie session = login(user(Set.of(Role.DATA_STEWARD)));
+            String first = ingested(
+                    session,
+                    file(row("V-1", PORT_CALLS), row("V-1", CHANGED_PORT_CALLS), row("V-2", PORT_CALLS) + ",余分"));
+            String other = ingested(session, file(row("V-9", PORT_CALLS), row("V-9", CHANGED_PORT_CALLS)));
+            UUID ingestionId = UUID.fromString(first.substring(first.lastIndexOf('/') + 1));
+            String entry = LIST_URL + "?ingestion=" + ingestionId;
+            assertThat(body(session, first)).contains("href=\"" + entry + "\"");
+            assertThat(other).isNotEqualTo(first);
+
+            String page = body(session, entry);
+
+            assertThat(page).contains("<p>この取込の判断を待つ隔離 2 件（1〜2 件目を示しています）</p>").doesNotContain("V-9");
+            assertThat(rows(page))
+                    .containsExactly(
+                            List.of(
+                                    provider + "（航海）",
+                                    "3 行目",
+                                    "内容の違う原本",
+                                    "V-1・1",
+                                    "3 行目: 同じ外部 ID・外部版で内容の違う原本を受け取りました（最初の受信: 2026-11-16 01:05:00 UTC）。"),
+                            List.of(
+                                    provider + "（航海）",
+                                    "4 行目",
+                                    "形式の誤り",
+                                    "—なし",
+                                    "4 行目: 列の数がヘッダーと違います（ヘッダー 4 列、この行 5 列）。提供元に確かめてください。"));
+        }
+
+        @Test
+        void 行16_ほかの7つの役割はS17で403になり未ログインはA01へ移る() throws Exception {
+            for (Role role : EnumSet.complementOf(EnumSet.of(Role.DATA_STEWARD))) {
+                Cookie session = login(user(Set.of(role)));
+
+                mvc.perform(get(LIST_URL).cookie(session)).andExpect(status().isForbidden());
+            }
+            assertThat(mvc.perform(get(LIST_URL)).andReturn().getResponse().getRedirectedUrl())
+                    .endsWith("/login");
+        }
+
+        @Test
+        void 行16_データ責任者はS17を開ける() throws Exception {
+            mvc.perform(get(LIST_URL).cookie(login(user(Set.of(Role.DATA_STEWARD)))))
+                    .andExpect(status().isOk());
+        }
+
+        /** 一覧の表の行ごとの、取り込んだ日時を除く項目の文字（タグを除き、HTML の文字参照を戻す）。 */
+        private List<List<String>> rows(String page) {
+            java.util.regex.Matcher tbody = java.util.regex.Pattern.compile(
+                            "<tbody>(.*?)</tbody>", java.util.regex.Pattern.DOTALL)
+                    .matcher(page);
+            assertThat(tbody.find()).as("一覧の表").isTrue();
+            java.util.regex.Matcher row = java.util.regex.Pattern.compile(
+                            "<tr>(.*?)</tr>", java.util.regex.Pattern.DOTALL)
+                    .matcher(tbody.group(1));
+            List<List<String>> rows = new java.util.ArrayList<>();
+            while (row.find()) {
+                java.util.regex.Matcher cell = java.util.regex.Pattern.compile(
+                                "<td>(.*?)</td>", java.util.regex.Pattern.DOTALL)
+                        .matcher(row.group(1));
+                List<String> cells = new java.util.ArrayList<>();
+                while (cell.find()) {
+                    cells.add(org.springframework.web.util.HtmlUtils.htmlUnescape(
+                            cell.group(1).replaceAll("<[^>]+>", "")));
+                }
+                rows.add(cells.subList(1, cells.size()));
+            }
+            return rows;
         }
     }
 

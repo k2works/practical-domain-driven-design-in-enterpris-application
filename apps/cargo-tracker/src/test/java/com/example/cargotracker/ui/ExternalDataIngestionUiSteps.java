@@ -75,8 +75,8 @@ public class ExternalDataIngestionUiSteps {
         return browser.page();
     }
 
-    /** 選択肢の名前（「提供元（原本種別の名前）」。Bolt 39c 計画の開始準備の決定 (4)）。 */
-    private String sourceLabel() {
+    /** 選択肢の名前（「提供元（原本種別の名前）」。Bolt 39c 計画の開始準備の決定 (4)）。S-17 の一覧の情報源の列も同じ名前（Bolt 39d）。 */
+    String sourceLabel() {
         return provider + "（航海）";
     }
 
@@ -216,6 +216,24 @@ public class ExternalDataIngestionUiSteps {
                 voyageLine("V2611E", acquiredAt, PORT_CALLS),
                 voyageLine("V2612E", acquiredAt, CHANGED_PORT_CALLS),
                 voyageLine("V2614E", acquiredAt, PORT_CALLS)));
+        submit();
+    }
+
+    /**
+     * Bolt 39d の行 5・18（S-17 のページ送り）。航海の 102 行（採用 1・内容の違う原本 1・列数の誤り 100）。2 行目と 3 行目は同じ外部 ID・外部版で
+     * 内容が違い（3 行目が隔離）、4〜103 行目は列が 1 つ多い（行の誤り）。
+     */
+    @かつ("キー操作だけで承認済みの航海の情報源を選び、内容の違う原本 1 行と列の数の誤り 100 行を含む航海のファイルを選んで取り込む")
+    public void 隔離が100件を超えるファイルを取り込む() {
+        chooseSource();
+        String acquiredAt = acquiredAt();
+        String[] lines = new String[102];
+        lines[0] = voyageLine("V2611E", acquiredAt, PORT_CALLS);
+        lines[1] = voyageLine("V2611E", acquiredAt, CHANGED_PORT_CALLS);
+        for (int i = 2; i < lines.length; i++) {
+            lines[i] = voyageLine("V%05d".formatted(i), acquiredAt, PORT_CALLS) + ",余分";
+        }
+        chooseFile(voyageFile(lines));
         submit();
     }
 

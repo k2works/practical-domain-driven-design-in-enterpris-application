@@ -10,7 +10,8 @@ class InMemoryExternalDataRecordRepositoriesTest extends ExternalDataRecordRepos
 
     private final InMemoryExternalRecordRepository externalRecords = new InMemoryExternalRecordRepository();
 
-    private final InMemoryReceivedRecordRepository receivedRecords = new InMemoryReceivedRecordRepository();
+    private final InMemoryReceivedRecordRepository receivedRecords =
+            new InMemoryReceivedRecordRepository(ingestions, externalRecords);
 
     @Override
     protected IngestionRepository ingestions() {

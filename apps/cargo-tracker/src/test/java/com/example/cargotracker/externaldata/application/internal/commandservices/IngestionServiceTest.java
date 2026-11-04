@@ -102,7 +102,8 @@ class IngestionServiceTest {
             return super.findByKey(key);
         }
     };
-    private final InMemoryReceivedRecordRepository receivedRecords = new InMemoryReceivedRecordRepository();
+    private final InMemoryReceivedRecordRepository receivedRecords =
+            new InMemoryReceivedRecordRepository(ingestions, externalRecords);
     private final InMemoryAdoptedValueRepository adoptedValues = new InMemoryAdoptedValueRepository();
     private final InMemoryExternalPayloadStorage storage = new InMemoryExternalPayloadStorage();
     private final Clock clock = Clock.fixed(NOW, ZoneOffset.UTC);
@@ -1748,6 +1749,10 @@ class IngestionServiceTest {
 
     /** 受信記録の追記を記録する。 */
     private class RecordingReceivedRecords extends InMemoryReceivedRecordRepository {
+
+        RecordingReceivedRecords() {
+            super(ingestions, externalRecords);
+        }
 
         @Override
         public void add(ReceivedRecord receivedRecord) {

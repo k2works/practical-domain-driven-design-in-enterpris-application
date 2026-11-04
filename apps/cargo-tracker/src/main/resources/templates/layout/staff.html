@@ -71,6 +71,13 @@
                        th:attr="aria-current=${active == 'external-data'} ? 'page' : null"
                        th:href="@{/staff/external-data/ingestions/new}">外部データの取込</a>
                 </li>
+                <!--/* 隔離・差異の確認（S-17）もデータ責任者を持つ利用者だけ、外部データの取込の後（Bolt 39d） */-->
+                <li class="nav-item"
+                    th:if="${currentActor != null and currentActor.hasRole(T(com.example.cargotracker.shared.domain.Role).DATA_STEWARD)}">
+                    <a class="nav-link" th:classappend="${active == 'undecided-records'} ? 'fw-bold'"
+                       th:attr="aria-current=${active == 'undecided-records'} ? 'page' : null"
+                       th:href="@{/staff/external-data/undecided-records}">隔離・差異の確認</a>
+                </li>
                 <li class="nav-item"
                     th:if="${currentActor != null and currentActor.hasRole(T(com.example.cargotracker.shared.domain.Role).SYSTEM_ADMIN)}">
                     <a class="nav-link" th:classappend="${active == 'users'} ? 'fw-bold'"

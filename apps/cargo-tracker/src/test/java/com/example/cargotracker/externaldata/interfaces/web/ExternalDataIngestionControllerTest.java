@@ -579,7 +579,8 @@ class ExternalDataIngestionControllerTest {
                 .andExpect(content().string(containsString("<td>4</td>")))
                 .andExpect(content().string(containsString("<th scope=\"row\">隔離</th>")))
                 .andExpect(content().string(containsString("<td>3</td>")))
-                .andExpect(content().string(not(containsString("差異"))))
+                // 差異の行は 39h。ナビの「隔離・差異の確認」（Bolt 39d）と区別するため、表の行の見出しで見る
+                .andExpect(content().string(not(containsString("<th scope=\"row\">差異</th>"))))
                 .andExpect(content().string(containsString("href=\"/staff/external-data/ingestions/new\">続けて取り込む</a>")))
                 .andExpect(content().string(not(containsString("role=\"status\""))));
     }
@@ -835,6 +836,70 @@ class ExternalDataIngestionControllerTest {
                     .contains("href=\"#no-source\">情報源: " + message + "</a>")
                     .contains(NO_SOURCE_PARAGRAPH + NO_SOURCE + "</p>");
             assertThat(page.indexOf(message)).isPositive().isLessThan(page.indexOf(NO_SOURCE_PARAGRAPH));
+        }
+    }
+
+    /**
+     * Bolt 39d の行 11・12（S-17 への入口。開始準備の決定 (2)）。結果の画面の隔離の理由の領域の最後（「続けて取り込む」の前）に、隔離が 1 件以上の
+     * ときだけ「この取込の隔離をすべて確認する」（その取込で絞る）を出し、ナビに「隔離・差異の確認」を出す。39c〜39c4 の同じ番号の行と名前が
+     * 衝突しないよう入れ子にする。
+     */
+    @Nested
+    class Bolt39d_入口 {
+
+        private static final String ENTRY_LINK =
+                "<a href=\"/staff/external-data/undecided-records?ingestion=" + INGESTION_ID + "\">この取込の隔離をすべて確認する</a>";
+
+        private IngestionSummaryView summaryWith(int quarantinedCount, List<String> notes) {
+            return new IngestionSummaryView(
+                    INGESTION_ID,
+                    "開発海運（架空）",
+                    "VOYAGE",
+                    Instant.parse("2026-11-16T01:05:00Z"),
+                    2,
+                    2 - quarantinedCount,
+                    0,
+                    quarantinedCount,
+                    notes,
+                    0,
+                    null);
+        }
+
+        private String resultPage(IngestionSummaryView summary) throws Exception {
+            given(summaries.summaryOf(INGESTION_ID)).willReturn(Optional.of(summary));
+            return mockMvc.perform(get(INGEST_URL + "/" + INGESTION_ID))
+                    .andExpect(status().isOk())
+                    .andReturn()
+                    .getResponse()
+                    .getContentAsString(StandardCharsets.UTF_8);
+        }
+
+        @Test
+        void 行11_隔離があれば隔離の理由の領域の最後で続けて取り込むの前にこの取込の隔離をすべて確認するリンクを出す() throws Exception {
+            String page = resultPage(summaryWith(1, List.of("3 行目: 値が空です（external_id）。提供元に確かめてください。")));
+
+            assertThat(page).contains(ENTRY_LINK);
+            assertThat(page.indexOf(ENTRY_LINK))
+                    .isGreaterThan(page.indexOf("<h2 id=\"quarantine-notes-heading\">隔離の理由</h2>"))
+                    .isGreaterThan(page.indexOf("3 行目: 値が空です"))
+                    .isLessThan(page.indexOf("</section>", page.indexOf("quarantine-notes-heading")))
+                    .isLessThan(page.indexOf(">続けて取り込む</a>"));
+        }
+
+        @Test
+        void 行11_隔離が0件ならこの取込の隔離をすべて確認するリンクを出さない() throws Exception {
+            String page = resultPage(summaryWith(0, List.of()));
+
+            assertThat(page).doesNotContain("この取込の隔離をすべて確認する").doesNotContain("undecided-records?ingestion=");
+        }
+
+        @Test
+        void 行12_結果の画面のナビには外部データの取込の後に現在の項目でない隔離差異の確認が出る() throws Exception {
+            String page = resultPage(summaryWith(0, List.of()));
+            String navItem = "<a class=\"nav-link\" href=\"/staff/external-data/undecided-records\">隔離・差異の確認</a>";
+
+            assertThat(page).contains(navItem);
+            assertThat(page.indexOf(navItem)).isGreaterThan(page.indexOf(">外部データの取込</a>"));
         }
     }
 }

@@ -267,8 +267,11 @@ public class ExternalDataIngestionController {
                 .findFirst();
     }
 
-    /** 情報源の名前「提供元（原本種別の名前）」（Bolt 39c 計画の開始準備の決定 (4)）。知らない原本種別はそのまま示す。 */
-    private static String sourceLabel(String provider, String recordType) {
+    /**
+     * 情報源の名前「提供元（原本種別の名前）」（Bolt 39c 計画の開始準備の決定 (4)）。知らない原本種別はそのまま示す。S-17 の一覧の情報源の列も
+     * 同じ名前にする（Bolt 39d）。
+     */
+    static String sourceLabel(String provider, String recordType) {
         return provider + "（" + kindOf(recordType).map(KIND_LABELS::get).orElse(recordType) + "）";
     }
 

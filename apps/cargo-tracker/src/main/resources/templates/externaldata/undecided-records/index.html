@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/staff :: layout(~{::title}, ~{::main}, ~{}, 'undecided-records')}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>隔離・差異の確認 - cargo-tracker</title>
+</head>
+<body>
+<main>
+    <h1>隔離・差異の確認</h1>
+    <!--/* S-17 の一覧（Bolt 39d、US-14 AC4）。判断を待つ隔離を取込の新しい順・ファイルの行の順に 100 件ずつ示す（並びは照会が決め、画面で並べ直さない）。
+           文は controller が組み立てる。注記には取込ファイルから来た値が入るので th:text で示す。判断の列は 39d2・39d3、差異の行は 39h で足す */-->
+    <p th:if="${ingestionNotFound}" th:text="${ingestionNotFound}">指定された取込が見つかりません。</p>
+    <p th:if="${emptyText}" th:text="${emptyText}">判断を待つ隔離はありません。</p>
+    <p th:if="${countText}" th:text="${countText}">この取込の判断を待つ隔離 9,901 件（101〜200 件目を示しています）</p>
+    <p th:if="${filtered}"><a th:href="@{/staff/external-data/undecided-records}">すべての取込の隔離を見る</a></p>
+    <p th:if="${emptyText != null and !filtered}"><a th:href="@{/staff/external-data/ingestions/new}">外部データの取込へ</a></p>
+    <div th:unless="${#lists.isEmpty(rows)}" class="table-scroll" tabindex="0" role="region" aria-label="判断を待つ隔離">
+        <table class="table">
+            <caption>判断を待つ隔離</caption>
+            <thead>
+            <tr>
+                <th scope="col">取り込んだ日時</th>
+                <th scope="col">情報源</th>
+                <th scope="col">行</th>
+                <th scope="col">種類</th>
+                <th scope="col">外部 ID・外部版</th>
+                <th scope="col">隔離の理由</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="row : ${rows}">
+                <td th:text="${row.ingestedAt()}">2026-11-16 10:05 Asia/Tokyo（UTC+09:00）（UTC 2026-11-16 01:05）</td>
+                <td th:text="${row.source()}">開発海運（架空）（航海）</td>
+                <td th:text="${row.lines() != null} ? ${row.lines()} : '—'">102 行目</td>
+                <td th:text="${row.kind()}">形式の誤り</td>
+                <td th:if="${row.externalKey() != null}" th:text="${row.externalKey()}">DEMO-201・3</td>
+                <td th:unless="${row.externalKey() != null}"><span aria-hidden="true">—</span><span class="visually-hidden">なし</span></td>
+                <td th:text="${row.note()}">102 行目: 寄港の列の値が正しくありません（…）。提供元に確かめてください。</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <nav th:if="${previousUrl != null or nextUrl != null}" aria-label="判断を待つ隔離のページ">
+        <ul class="list-inline">
+            <li class="list-inline-item" th:if="${previousUrl}"><a th:href="${previousUrl}" th:text="|前の ${pageSize} 件|">前の 100 件</a></li>
+            <li class="list-inline-item" th:if="${nextUrl}"><a th:href="${nextUrl}" th:text="|次の ${pageSize} 件|">次の 100 件</a></li>
+        </ul>
+    </nav>
+</main>
+</body>
+</html>

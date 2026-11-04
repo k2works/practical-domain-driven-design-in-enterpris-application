@@ -45,4 +45,47 @@
          ORDER BY first_line_number NULLS FIRST, id
          LIMIT #{limit}
     </select>
+
+    <!-- 判断を待つ隔離（Bolt 39d、S-17）。隔離で、受信記録の判断の行がないもの。取込を結び（取込のない受信記録は落ちる）、外部原本を左外部結合して
+         取込の時刻・情報源 ID・外部 ID・外部版を 1 本の SQL で読む。索引は ix_received_record_ingestion・ix_received_record_classification を使う -->
+    <resultMap id="undecidedQuarantineRow"
+               type="com.example.cargotracker.externaldata.infrastructure.persistence.ReceivedRecordMapper$UndecidedQuarantineRow">
+        <constructor>
+            <idArg column="id" name="id" javaType="java.util.UUID"/>
+            <arg column="ingestion_id" name="ingestionId" javaType="java.util.UUID"/>
+            <arg column="ingested_at" name="ingestedAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="data_source_id" name="dataSourceId" javaType="java.util.UUID"/>
+            <arg column="first_line_number" name="firstLineNumber" javaType="Integer"/>
+            <arg column="last_line_number" name="lastLineNumber" javaType="Integer"/>
+            <arg column="external_id" name="externalId" javaType="String"/>
+            <arg column="external_version" name="externalVersion" javaType="String"/>
+            <arg column="classification_note" name="classificationNote" javaType="String"/>
+        </constructor>
+    </resultMap>
+
+    <sql id="undecidedQuarantineSource">
+          FROM external_data.received_record r
+          JOIN external_data.ingestion i ON i.id = r.ingestion_id
+          LEFT JOIN external_data.external_record e ON e.id = r.external_record_id
+         WHERE r.classification = 'QUARANTINED'
+           AND NOT EXISTS (SELECT 1 FROM external_data.received_record_decision d WHERE d.received_record_id = r.id)
+        <if test="ingestionId != null">
+           AND r.ingestion_id = #{ingestionId}
+        </if>
+    </sql>
+
+    <!-- 取込の新しい順、同じ時刻は取込 ID の順、同じ取込はファイルの誤りを先に行の範囲の始まりの順、受信記録 ID の順（時刻・数・UUID だけで並べ、
+         文字列の照合順序に頼らない。Bolt 39d 計画の開始準備の決定 (3)） -->
+    <select id="undecidedQuarantines" resultMap="undecidedQuarantineRow">
+        SELECT r.id, r.ingestion_id, i.ingested_at, i.data_source_id, r.first_line_number, r.last_line_number,
+               e.external_id, e.external_version, r.classification_note
+        <include refid="undecidedQuarantineSource"/>
+         ORDER BY i.ingested_at DESC, r.ingestion_id, r.first_line_number NULLS FIRST, r.id
+         LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="countUndecidedQuarantines" resultType="int">
+        SELECT COUNT(*)
+        <include refid="undecidedQuarantineSource"/>
+    </select>
 </mapper>

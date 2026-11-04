@@ -2,16 +2,30 @@ package com.example.cargotracker.externaldata.domain.model.aggregates;
 
 import com.example.cargotracker.externaldata.domain.model.valueobjects.Classification;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PhysicalLineRange;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.UndecidedQuarantine;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.stream.Stream;
 
-/** メモリ上の受信記録のリポジトリ（テスト用。Bolt 39b）。追記と数えることと、取込の隔離を読むこと（Bolt 39c3）だけを持つ。 */
+/**
+ * メモリ上の受信記録のリポジトリ（テスト用。Bolt 39b）。追記と数えることと、取込の隔離を読むこと（Bolt 39c3）と、判断を待つ隔離を読み数えること
+ * （Bolt 39d。メモリの取込と外部原本のリポジトリを結ぶ）だけを持つ。
+ */
 public class InMemoryReceivedRecordRepository implements ReceivedRecordRepository {
 
     private final List<ReceivedRecord> records = new CopyOnWriteArrayList<>();
+    private final InMemoryIngestionRepository ingestions;
+    private final InMemoryExternalRecordRepository externalRecords;
+
+    public InMemoryReceivedRecordRepository(
+            InMemoryIngestionRepository ingestions, InMemoryExternalRecordRepository externalRecords) {
+        this.ingestions = Objects.requireNonNull(ingestions, "ingestions");
+        this.externalRecords = Objects.requireNonNull(externalRecords, "externalRecords");
+    }
 
     @Override
     public void add(ReceivedRecord receivedRecord) {
@@ -41,6 +55,58 @@ public class InMemoryReceivedRecordRepository implements ReceivedRecordRepositor
                         .thenComparing(receivedRecord -> receivedRecord.id().toString()))
                 .limit(limit)
                 .toList();
+    }
+
+    /**
+     * 判断を待つ隔離（Bolt 39d）。メモリの取込のリポジトリと結び（取込のない受信記録は落ちる）、外部原本の外部 ID・外部版を引く。SQL の
+     * {@code ORDER BY i.ingested_at DESC, r.ingestion_id, r.first_line_number NULLS FIRST, r.id} と同じ順（UUID は DB と同じく文字列の表現の
+     * 順で比べる）。判断の表を持たないので、39d2 で判断のポートができるまで隔離をすべて返す。
+     */
+    @Override
+    public List<UndecidedQuarantine> undecidedQuarantines(UUID ingestionIdOrNull, int offset, int limit) {
+        return undecided(ingestionIdOrNull)
+                .sorted(Comparator.comparing(UndecidedQuarantine::ingestedAt)
+                        .reversed()
+                        .thenComparing(quarantine -> quarantine.ingestionId().toString())
+                        .thenComparing(
+                                UndecidedQuarantine::lineRange,
+                                Comparator.nullsFirst(Comparator.comparingInt(PhysicalLineRange::first)))
+                        .thenComparing(
+                                quarantine -> quarantine.receivedRecordId().toString()))
+                .skip(offset)
+                .limit(limit)
+                .toList();
+    }
+
+    @Override
+    public int countUndecidedQuarantines(UUID ingestionIdOrNull) {
+        return (int) undecided(ingestionIdOrNull).count();
+    }
+
+    private Stream<UndecidedQuarantine> undecided(UUID ingestionIdOrNull) {
+        return records.stream()
+                .filter(receivedRecord -> receivedRecord.classification() == Classification.QUARANTINED)
+                .filter(receivedRecord -> ingestionIdOrNull == null
+                        || receivedRecord.ingestionId().equals(ingestionIdOrNull))
+                .flatMap(receivedRecord -> ingestions.findById(receivedRecord.ingestionId()).stream()
+                        .map(ingestion -> undecided(receivedRecord, ingestion)));
+    }
+
+    private UndecidedQuarantine undecided(ReceivedRecord receivedRecord, Ingestion ingestion) {
+        Optional<ExternalRecord> externalRecord = receivedRecord.externalRecordId() == null
+                ? Optional.empty()
+                : externalRecords.all().stream()
+                        .filter(candidate -> candidate.id().equals(receivedRecord.externalRecordId()))
+                        .findFirst();
+        return new UndecidedQuarantine(
+                receivedRecord.id(),
+                ingestion.id(),
+                ingestion.ingestedAt(),
+                ingestion.dataSourceId(),
+                receivedRecord.lineRange(),
+                externalRecord.map(found -> found.key().externalId()).orElse(null),
+                externalRecord.map(found -> found.key().externalVersion()).orElse(null),
+                receivedRecord.classificationNote());
     }
 
     /** シナリオの開始時に消す（受入シナリオ。Bolt 39b）。 */

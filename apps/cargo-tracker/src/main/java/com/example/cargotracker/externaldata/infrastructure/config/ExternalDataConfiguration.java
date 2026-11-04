@@ -4,6 +4,7 @@ import com.example.cargotracker.externaldata.application.internal.commandservice
 import com.example.cargotracker.externaldata.application.internal.queryservices.IngestibleDataSourceQueryService;
 import com.example.cargotracker.externaldata.application.internal.queryservices.IngestionSummaryQueryService;
 import com.example.cargotracker.externaldata.application.internal.queryservices.PilotReadinessQueryService;
+import com.example.cargotracker.externaldata.application.internal.queryservices.UndecidedRecordQueryService;
 import com.example.cargotracker.externaldata.domain.model.aggregates.AdoptedValueRepository;
 import com.example.cargotracker.externaldata.domain.model.aggregates.DataSourceRepository;
 import com.example.cargotracker.externaldata.domain.model.aggregates.ExternalPayloadStorage;
@@ -40,6 +41,15 @@ public class ExternalDataConfiguration {
             DataSourceRepository dataSources,
             ReceivedRecordRepository receivedRecords) {
         return new IngestionSummaryQueryService(ingestions, dataSources, receivedRecords);
+    }
+
+    /** S-17 の判断を待つ隔離の一覧の照会（Bolt 39d）。 */
+    @Bean
+    UndecidedRecordQueryService undecidedRecordQueryService(
+            ReceivedRecordRepository receivedRecords,
+            IngestionRepository ingestions,
+            DataSourceRepository dataSources) {
+        return new UndecidedRecordQueryService(receivedRecords, ingestions, dataSources);
     }
 
     @Bean

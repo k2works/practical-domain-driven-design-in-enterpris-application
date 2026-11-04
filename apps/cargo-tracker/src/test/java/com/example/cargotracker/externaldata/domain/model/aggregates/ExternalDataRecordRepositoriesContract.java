@@ -9,6 +9,7 @@ import com.example.cargotracker.externaldata.domain.model.valueobjects.Idempoten
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PayloadHash;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PayloadObjectKey;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PhysicalLineRange;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.UndecidedQuarantine;
 import com.example.cargotracker.shared.domain.UserId;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
@@ -412,6 +413,144 @@ public abstract class ExternalDataRecordRepositoriesContract {
         receivedRecords().add(rowError);
 
         assertThat(receivedRecords().quarantinedOf(ingestion.id(), 100)).containsExactly(quarantined, rowError);
+    }
+
+    // --- Bolt 39d の行 3・4・6・15（S-17 の判断を待つ隔離の一覧の照会。開始準備の決定 (3)・(4)）。名前の頭に Bolt39d_ を付ける。
+    // 絞らない照会は共有の DB のほかの隔離も返すので、自分の取込の時刻をほかより新しい未来に置き、先頭の行で確かめる。行 7（判断の表に行のある
+    // 隔離）は判断の行を JDBC で入れる H2 と PostgreSQL のテストだけに置く（メモリの実装は 39d2 まで判断の表を持たない） ---
+
+    /** ほかのテストのどの取込より新しい時刻（絞らない照会の先頭に自分の隔離が来る）。 */
+    private static final Instant FUTURE = Instant.parse("2099-01-01T00:00:00.123456Z");
+
+    private Ingestion ingestionAt(Instant ingestedAt) {
+        return ingestionAt(UUID.randomUUID(), ingestedAt);
+    }
+
+    private Ingestion ingestionAt(UUID id, Instant ingestedAt) {
+        return new Ingestion(
+                id,
+                source.id(),
+                PayloadObjectKey.newIngestionFile(),
+                hash("ファイル"),
+                new UserId(UUID.randomUUID()),
+                ingestedAt,
+                3,
+                null,
+                0);
+    }
+
+    /** 先頭の 1 文字を決めた乱数の UUID（同じ時刻の取込を取込 ID の順に並べる確かめ。符号つきの比べ方と順が違う 8〜f を含める）。 */
+    private static UUID uuidStartingWith(char head) {
+        return UUID.fromString(head + UUID.randomUUID().toString().substring(1));
+    }
+
+    /** 受信記録から期待する判断を待つ隔離（外部原本のないときは外部 ID・外部版が null）。 */
+    private UndecidedQuarantine undecided(ReceivedRecord received, Ingestion ingestion, ExternalRecord externalRecord) {
+        return new UndecidedQuarantine(
+                received.id(),
+                ingestion.id(),
+                ingestion.ingestedAt(),
+                ingestion.dataSourceId(),
+                received.lineRange(),
+                externalRecord == null ? null : externalRecord.key().externalId(),
+                externalRecord == null ? null : externalRecord.key().externalVersion(),
+                received.classificationNote());
+    }
+
+    @Test
+    void Bolt39d_行3_判断を待つ隔離の照会と件数は採用と重複の受信記録を含めない() {
+        Ingestion ingestion = ingestionAt(FUTURE);
+        ingestions().add(ingestion);
+        ExternalRecord externalRecord = externalRecord(key("VOYAGE", "V-39D-3"));
+        externalRecords().add(externalRecord);
+        receivedRecords().add(keyed(externalRecord, ingestion, Classification.ADOPTED, 2));
+        receivedRecords().add(keyed(externalRecord, ingestion, Classification.DUPLICATE, 3));
+        ReceivedRecord quarantined = keyed(externalRecord, ingestion, Classification.QUARANTINED, 4);
+        ReceivedRecord rowError = keyless(ingestion, new PhysicalLineRange(5, 5));
+        receivedRecords().add(quarantined);
+        receivedRecords().add(rowError);
+
+        assertThat(receivedRecords().undecidedQuarantines(ingestion.id(), 0, 100))
+                .containsExactly(
+                        undecided(quarantined, ingestion, externalRecord), undecided(rowError, ingestion, null));
+        assertThat(receivedRecords().countUndecidedQuarantines(ingestion.id())).isEqualTo(2);
+    }
+
+    @Test
+    void Bolt39d_行4_判断を待つ隔離は取込の新しい順で同じ時刻は取込IDの順で同じ取込はファイルの誤りを先に行の範囲の順() {
+        // 書く順を期待の順と逆にする（T-245）: 古い取込から書き、同じ取込の受信記録は行の範囲の逆の順に書く
+        Ingestion older = ingestionAt(FUTURE.minusSeconds(60));
+        Ingestion sameTimeLater = ingestionAt(uuidStartingWith('c'), FUTURE);
+        Ingestion sameTimeEarlier = ingestionAt(uuidStartingWith('1'), FUTURE);
+        ingestions().add(older);
+        ingestions().add(sameTimeLater);
+        ingestions().add(sameTimeEarlier);
+        ExternalRecord externalRecord = externalRecord(key("VOYAGE", "V-39D-4"));
+        externalRecords().add(externalRecord);
+        ReceivedRecord olderRow = keyless(older, new PhysicalLineRange(2, 2));
+        ReceivedRecord laterRow = keyless(sameTimeLater, new PhysicalLineRange(2, 2));
+        ReceivedRecord untilEnd = keyless(sameTimeEarlier, new PhysicalLineRange(12, 40));
+        ReceivedRecord mismatch = keyed(externalRecord, sameTimeEarlier, Classification.QUARANTINED, 5);
+        ReceivedRecord twoLines = keyless(sameTimeEarlier, new PhysicalLineRange(3, 4));
+        ReceivedRecord fileError = keyless(sameTimeEarlier, null);
+        receivedRecords().add(olderRow);
+        receivedRecords().add(laterRow);
+        receivedRecords().add(untilEnd);
+        receivedRecords().add(mismatch);
+        receivedRecords().add(twoLines);
+        receivedRecords().add(fileError);
+        List<UndecidedQuarantine> expected = List.of(
+                undecided(fileError, sameTimeEarlier, null),
+                undecided(twoLines, sameTimeEarlier, null),
+                undecided(mismatch, sameTimeEarlier, externalRecord),
+                undecided(untilEnd, sameTimeEarlier, null),
+                undecided(laterRow, sameTimeLater, null),
+                undecided(olderRow, older, null));
+
+        assertThat(receivedRecords().undecidedQuarantines(null, 0, 6)).isEqualTo(expected);
+        assertThat(receivedRecords().undecidedQuarantines(null, 2, 3)).isEqualTo(expected.subList(2, 5));
+    }
+
+    @Test
+    void Bolt39d_行6_取込で絞るとその取込の隔離だけを返し数える() {
+        Ingestion ingestion = ingestionAt(FUTURE);
+        Ingestion other = ingestionAt(FUTURE.plusSeconds(1));
+        ingestions().add(ingestion);
+        ingestions().add(other);
+        ReceivedRecord first = keyless(ingestion, new PhysicalLineRange(2, 2));
+        ReceivedRecord second = keyless(ingestion, new PhysicalLineRange(3, 3));
+        receivedRecords().add(first);
+        receivedRecords().add(keyless(other, new PhysicalLineRange(2, 2)));
+        receivedRecords().add(second);
+
+        assertThat(receivedRecords().undecidedQuarantines(ingestion.id(), 0, 100))
+                .containsExactly(undecided(first, ingestion, null), undecided(second, ingestion, null));
+        assertThat(receivedRecords().undecidedQuarantines(ingestion.id(), 1, 100))
+                .containsExactly(undecided(second, ingestion, null));
+        assertThat(receivedRecords().countUndecidedQuarantines(ingestion.id())).isEqualTo(2);
+        assertThat(receivedRecords().countUndecidedQuarantines(other.id())).isEqualTo(1);
+        assertThat(receivedRecords().countUndecidedQuarantines(UUID.randomUUID()))
+                .isZero();
+    }
+
+    @Test
+    void Bolt39d_行15_読んでいる間に取込が増えると読み直したときに新しい取込の隔離が先頭に出る() {
+        Ingestion ingestion = ingestionAt(FUTURE);
+        ingestions().add(ingestion);
+        ReceivedRecord existing = keyless(ingestion, new PhysicalLineRange(2, 2));
+        receivedRecords().add(existing);
+        List<UndecidedQuarantine> before = receivedRecords().undecidedQuarantines(null, 0, 1);
+        int countBefore = receivedRecords().countUndecidedQuarantines(null);
+        Ingestion newer = ingestionAt(FUTURE.plusSeconds(60));
+        ingestions().add(newer);
+        ReceivedRecord added = keyless(newer, new PhysicalLineRange(2, 2));
+        receivedRecords().add(added);
+
+        List<UndecidedQuarantine> after = receivedRecords().undecidedQuarantines(null, 0, 2);
+
+        assertThat(before).containsExactly(undecided(existing, ingestion, null));
+        assertThat(after).containsExactly(undecided(added, newer, null), undecided(existing, ingestion, null));
+        assertThat(receivedRecords().countUndecidedQuarantines(null)).isEqualTo(countBefore + 1);
     }
 
     @Test
