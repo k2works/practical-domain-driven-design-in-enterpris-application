@@ -174,6 +174,7 @@ public class ExternalDataIngestionUiSteps {
 
     @ならば("情報源の取込はない")
     public void 情報源の取込はない() {
+        // ここでは取込の件数だけを見る。原本を保存しないことは、セキュリティの統合テスト（行 1・2・5）で原本の保存の呼び出しの記録として確かめる
         Integer ingestions = jdbc.queryForObject(
                 "SELECT COUNT(*) FROM external_data.ingestion WHERE data_source_id = ?", Integer.class, sourceId);
         Assertions.assertThat(ingestions).isZero();

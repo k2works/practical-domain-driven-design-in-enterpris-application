@@ -293,7 +293,7 @@ class ExternalDataIngestionSecurityIntegrationTest {
 
     /**
      * Bolt 39c2 の行 1・2・5（取り込めない送信は本物の取込のサービスで拒まれ、取込も原本も残らない）。起きないことは取込のサービスの結果の
-     * 画面と、原本の保存の spy の呼び出しの記録で確かめる（T-236）。39c の同じ番号の行と名前が衝突しないよう入れ子にする。
+     * 画面と、原本の保存の spy の呼び出しの記録と、自分の情報源のイベントの発行記録が 0 件であること（T-184）で確かめる（T-236）。39c の同じ番号の行と名前が衝突しないよう入れ子にする。
      */
     @Nested
     class Bolt39c2_取り込めない送信 {
@@ -315,6 +315,7 @@ class ExternalDataIngestionSecurityIntegrationTest {
             assertThat(page).contains(FILE_TOO_LARGE);
             verify(payloadStorage, never()).store(any(), any());
             assertThat(ingestionsOfSource()).isZero();
+            assertThat(eventPublicationsOfSource()).isZero();
         }
 
         @Test
@@ -331,6 +332,7 @@ class ExternalDataIngestionSecurityIntegrationTest {
             assertThat(page).contains(FILE_TOO_LARGE);
             verify(payloadStorage, never()).store(any(), any());
             assertThat(ingestionsOfSource()).isZero();
+            assertThat(eventPublicationsOfSource()).isZero();
         }
 
         @Test
@@ -344,6 +346,7 @@ class ExternalDataIngestionSecurityIntegrationTest {
             assertThat(page).contains(NOT_APPROVED).doesNotContain(">" + provider + "（航海）</label>");
             verify(payloadStorage, never()).store(any(), any());
             assertThat(ingestionsOfSource()).isZero();
+            assertThat(eventPublicationsOfSource()).isZero();
         }
 
         /** 取込の送信が選ぶ画面（200）で拒まれ、取込のサービスを 1 回呼んだことを確かめて、画面を返す。 */
@@ -437,6 +440,18 @@ class ExternalDataIngestionSecurityIntegrationTest {
     private int ingestionsOfSource() {
         Integer value = jdbc.queryForObject(
                 "SELECT COUNT(*) FROM external_data.ingestion WHERE data_source_id = ?", Integer.class, sourceId);
+        return value == null ? 0 : value;
+    }
+
+    /**
+     * 自分の情報源のイベントの発行記録の数（Bolt 39c2 の行 1・2・5。W6 の Try T-184）。取込のイベントはどれも情報源 ID を持つので、
+     * 直列化したイベントの中の情報源 ID で絞る（{@link #awaitCompletedAuditPublication} の受信記録 ID の絞り方と同じ）。
+     */
+    private int eventPublicationsOfSource() {
+        Integer value = jdbc.queryForObject(
+                "SELECT COUNT(*) FROM platform.event_publication WHERE serialized_event LIKE ?",
+                Integer.class,
+                "%" + sourceId + "%");
         return value == null ? 0 : value;
     }
 

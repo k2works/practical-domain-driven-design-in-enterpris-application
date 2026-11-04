@@ -27,7 +27,8 @@
         <!--/* ファイルはブラウザの決まりで画面に戻せないので、選んでいたら選び直しを求める */-->
         <p th:if="${reselectFile}">選んだファイルは残っていません。もう一度選んでください。</p>
     </div>
-    <p id="no-source" th:if="${#lists.isEmpty(sources)}" th:text="${noIngestibleSource}">取り込める情報源がありません。承認済みの情報源がありません。情報源を選定し、承認してください。承認は運用の手順で行います。</p>
+    <!--/* エラー要約のリンクの先なので、フォーカスを受けられるよう tabindex="-1" を付ける（Bolt 39c2 ステップ 6） */-->
+    <p id="no-source" tabindex="-1" th:if="${#lists.isEmpty(sources)}" th:text="${noIngestibleSource}">取り込める情報源がありません。承認済みの情報源がありません。情報源を選定し、承認してください。承認は運用の手順で行います。</p>
     <form th:unless="${#lists.isEmpty(sources)}" th:action="@{/staff/external-data/ingestions}"
           th:object="${ingestionForm}" method="post" enctype="multipart/form-data" novalidate>
         <!--/* 欄ごとの誤りは社内の S-01 の企業の欄（identity/users/registration-company.html）と同じ形。誤りのないときは aria-invalid を出さない */-->

@@ -292,6 +292,8 @@ class ExternalDataIngestionControllerTest {
         private static final String NOT_FOUND = "選んだ情報源が見つかりません。画面を開き直して、情報源を選び直してください。";
         private static final String RESELECT_FILE = "選んだファイルは残っていません。もう一度選んでください。";
         private static final String VOYAGE_CHECKED = "value=\"" + VOYAGE_SOURCE + "\"[^>]*checked=\"checked\"";
+        /** 0 件の全文の段落。エラー要約のリンクの先なので、フォーカスを受けられる（tabindex="-1"）。 */
+        private static final String NO_SOURCE_PARAGRAPH = "<p id=\"no-source\" tabindex=\"-1\">";
 
         @Test
         void 行1_上限を超えるファイルは取込ファイルの欄の誤りとしてエラー要約と欄の下に理由と次の行動を示し選んだ情報源を戻す() throws Exception {
@@ -337,13 +339,12 @@ class ExternalDataIngestionControllerTest {
 
             assertThat(page)
                     .contains("href=\"#no-source\">情報源: " + NOT_APPROVED + "</a>")
-                    .contains("<p id=\"no-source\">" + NO_SOURCE + "</p>")
+                    // 要約のリンクでフォーカスが段落に移るよう tabindex="-1" を付ける（Bolt 39c2 ステップ 6）
+                    .contains(NO_SOURCE_PARAGRAPH + NO_SOURCE + "</p>")
                     .doesNotContain("type=\"file\"")
                     .doesNotContain(">取り込む</button>")
                     .doesNotContain("<legend>情報源</legend>");
-            assertThat(page.indexOf("id=\"error-summary\""))
-                    .isPositive()
-                    .isLessThan(page.indexOf("<p id=\"no-source\">"));
+            assertThat(page.indexOf("id=\"error-summary\"")).isPositive().isLessThan(page.indexOf(NO_SOURCE_PARAGRAPH));
         }
 
         @Test
@@ -385,7 +386,7 @@ class ExternalDataIngestionControllerTest {
             mockMvc.perform(get(NEW_URL))
                     .andExpect(status().isOk())
                     .andExpect(content()
-                            .string(containsString("<p id=\"no-source\">"
+                            .string(containsString(NO_SOURCE_PARAGRAPH
                                     + ExternalDataIngestionController.NO_INGESTIBLE_SOURCE + "</p>")))
                     .andExpect(content().string(not(containsString("type=\"file\""))))
                     .andExpect(content().string(not(containsString(">取り込む</button>"))))
@@ -393,24 +394,31 @@ class ExternalDataIngestionControllerTest {
             assertThat(ExternalDataIngestionController.NO_INGESTIBLE_SOURCE).isEqualTo(NO_SOURCE);
         }
 
-        /** 行 8 の拒否の種類。取込のサービスの拒否（{@code NotPermitted} のほか）と、サービスを呼ぶ前の拒否。 */
+        /**
+         * 行 8 の拒否の種類。取込のサービスの拒否（{@code NotPermitted} のほか）と、サービスを呼ぶ前の拒否。どの欄の誤りになるか（欄の名前と
+         * 表示名）まで縛り、欄の取り違え（変異 V1: {@code FileTooLarge} を情報源の欄の誤りにする）を拾う（Bolt 39c2 ステップ 6）。
+         */
         enum Refusal {
-            SERVICE_NOT_FOUND(IngestionOutcome.DataSourceNotFound.class),
-            SERVICE_NOT_APPROVED(IngestionOutcome.DataSourceNotApproved.class),
-            SERVICE_FILE_TOO_LARGE(IngestionOutcome.FileTooLarge.class),
-            UNKNOWN_SOURCE(null),
-            MALFORMED_SOURCE(null);
+            SERVICE_NOT_FOUND(IngestionOutcome.DataSourceNotFound.class, "dataSourceId", "情報源"),
+            SERVICE_NOT_APPROVED(IngestionOutcome.DataSourceNotApproved.class, "dataSourceId", "情報源"),
+            SERVICE_FILE_TOO_LARGE(IngestionOutcome.FileTooLarge.class, "file", "取込ファイル"),
+            UNKNOWN_SOURCE(null, "dataSourceId", "情報源"),
+            MALFORMED_SOURCE(null, "dataSourceId", "情報源");
 
             private final Class<?> outcome;
+            private final String field;
+            private final String label;
 
-            Refusal(Class<?> outcome) {
+            Refusal(Class<?> outcome, String field, String label) {
                 this.outcome = outcome;
+                this.field = field;
+                this.label = label;
             }
         }
 
         @ParameterizedTest(name = "{0}")
         @EnumSource(Refusal.class)
-        void 行8_どの拒否も空でない欄の誤り1件だけになり大域の誤りを出さない(Refusal refusal) throws Exception {
+        void 行8_どの拒否も決まった欄の空でない誤り1件だけになり大域の誤りを出さない(Refusal refusal) throws Exception {
             UUID unknown = UUID.randomUUID();
             given(dataSources.recordTypeOf(unknown)).willReturn(Optional.empty());
             MockMultipartHttpServletRequestBuilder request =
@@ -439,8 +447,10 @@ class ExternalDataIngestionControllerTest {
             assertThat(items)
                     .singleElement()
                     .asString()
-                    .matches("<a href=\"#(dataSourceId|file)\">(情報源|取込ファイル): [^<]+</a>");
-            assertThat(page).doesNotContain(COMMON_REFUSAL);
+                    .matches("<a href=\"#" + refusal.field + "\">" + refusal.label + ": [^<]+</a>");
+            assertThat(page)
+                    .contains("<p id=\"" + refusal.field + "-error\" class=\"text-danger\">")
+                    .doesNotContain(COMMON_REFUSAL);
         }
 
         @Test

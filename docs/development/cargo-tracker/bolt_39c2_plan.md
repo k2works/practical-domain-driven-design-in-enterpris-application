@@ -2,7 +2,7 @@
 type: Plan
 title: "Bolt 39c2 計画 - S-16 取り込めない送信を理由ごとに示す（情報源の拒否・上限を超えるファイル・413）"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-04T11:24:46Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-04T12:23:24Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-11-04T10:41:12Z }
 ---
@@ -150,6 +150,12 @@ controller は WebMvc のテスト（`ExternalDataIngestionControllerTest`。取
 | 39d | 選択肢の並び（DB の照合順序とメモリの実装。39c の計画 :161）、S-17 への入口、隔離・差異の判断 | 39d |
 | 39h | 分類別の件数の差異の行 | 39h |
 | W10 | 取り込んだファイルの名前を取込に残すか（39c の計画 :165） | W10 の運用準備 |
+| 次の Bolt | 情報源の拒否の文言の「画面を開き直して」（開始準備の決定 (2) で承認済み）。開き直さなくても選ぶ画面は選択肢を引き直して示すので、文言が実際の操作と合わない | 次の Bolt の開始準備で諮る候補。案は「示された情報源から選び直してください」 |
+| 既知の課題 | 行 2（41,943,041 バイトのファイル）のセキュリティの統合テストは MockMvc で、Tomcat の multipart の上限（55 MB）を通らない。40 MiB を超え 55 MB 以下の送信がコントローラーまで届くことは自動のテストで確かめていない | 既知の課題として残す。55 MB を超える送信の 413 は `ExternalDataUploadLimitIntegrationTest`（本物の Tomcat）で確かめている |
+| 既知の課題 | `PilotReadiness.NO_APPROVED_SOURCE` を public にした（開始準備の決定 (5)）。定数の公開より、理由を返すメソッドの方が「承認済みの情報源がないときの理由」という意図が型に残る | 照会の側を直すときの返済の候補 |
+| 既知の課題 | マニュアルのキャプチャの撮り直しで、対象外の章のキャプチャも差分になる | キャプチャの撮り直しの範囲を章で絞れるようにする改善の候補 |
+| 既知の課題 | TOTP の秘密の直書きと、利用者を作る処理のテストの写し（18 か所。ExternalDataIngestionSecurityIntegrationTest の `user` など） | identity のテスト用のヘルパーに寄せる返済の候補 |
+| 既知の課題 | `transport-request-form.js` を見積依頼と S-16 で共用している（エラー要約へのフォーカス） | エラー要約の共通部品（JavaScript）に分ける切れ目 |
 
 ### 設計文書に直す箇所（ステップ 1）
 
@@ -343,11 +349,11 @@ IngestionService ..> IngestionFileLimit
 
 | # | 変異 | 落ちる見込み |
 | :--- | :--- | :--- |
-| V1 | `FileTooLarge` を情報源の欄の誤りにする | 行 1・2・22 |
+| V1 | `FileTooLarge` を情報源の欄の誤りにする | 行 1・2・22。ステップ 6 の直しで行 8 も拒否の種類ごとに期待する欄（`file`・`dataSourceId`）まで縛り、V1 で行 8 の `SERVICE_FILE_TOO_LARGE` も落ちる |
 | V2 | 承認されていない情報源とない情報源の文言を入れ違える | 行 5・6 |
 | V3 | 413 の案内のパスの判定を外す（取込の送信に一般の案内が出る） | 行 4 |
 | V4 | 0 件の文言をテンプレートの直書きに戻し、1 字違える | 行 7 |
-| V5 | 画面の説明の上限の行数を `IngestionFileLimit` から引かず 1,000 にする | 39c の行 4（選ぶ画面の上限の説明。ExternalDataIngestionControllerTest :117）・行 22（UI の通し） |
+| V5 | 画面の説明の上限の行数を `IngestionFileLimit` から引かず 1,000 にする | 39c の行 4（選ぶ画面の上限の説明。ExternalDataIngestionControllerTest :121）と UI の 39c のシナリオ（選ぶ画面の上限の説明） |
 | V6 | ない情報源でも取込のサービスを呼ぶ | 行 6（呼び出しの記録） |
 
 ## 完了条件
@@ -365,6 +371,7 @@ IngestionService ..> IngestionFileLimit
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-11-04 | ステップ 6 のレビューの直しを反映した（推奨のとおり（Recommend 承認の指示による。human:kakimomokuri））。変異の表の V1（行 8 でも落ちる）と V5（39c の行 4 と UI の 39c のシナリオ）を直し、申し送りに文言の候補と既知の課題 6 行を足した | anthropic/claude-opus-5-5 |
 | 2026-11-04 | 計画を承認した。整合性検証の指摘（詳細: 中 5・軽 6、横断: 中 7・軽 7）を反映し、0 件になった画面の示し方を含め推奨のとおり（Recommend 承認の指示による） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-11-04 | 初版作成（承認待ち）。開始準備の決定: 縦に 39c2（取り込めない送信。約 3 時間 35 分）と 39c3（要確認と注記。約 4 時間 15 分）に分ける（【前の決定の変更】）、拒否の理由ごとの文言を欄の誤りに、上限の数を `IngestionFileLimit` から、413 の案内に取込の文、0 件の文言を画面の層の定数に、受信記録の行の範囲の列（スキーマ。実装は 39c3。【前の決定の変更】）、変異の偏りは既知の課題を閉じる、上限いっぱいの計測は画面の POST から、マニュアル 12.1 と付録 B とキャプチャ 1 枚（2026-11-04、推奨のとおり（Recommend 承認の指示による。human:kakimomokuri））。人に諮ることはない | anthropic/claude-opus-5-5 |
 

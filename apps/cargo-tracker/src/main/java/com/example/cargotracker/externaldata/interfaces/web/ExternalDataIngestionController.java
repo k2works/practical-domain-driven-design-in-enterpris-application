@@ -40,6 +40,9 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
  * <p>取込ファイルの種別は情報源の原本種別から決める（種別を別に選ばせない。Bolt 39c 計画の開始準備の決定 (3)）。情報源とファイルを選んで
  * いない誤りはサービスを呼ばずに選ぶ画面で示す。拒否（ない情報源・承認されていない情報源・大きすぎるファイル）は理由と次の行動を欄の誤りで
  * 示す（Bolt 39c2 の開始準備の決定 (2)）。上限の数は取込の規則（{@link IngestionFileLimit}）から作る（同 (3)）。
+ *
+ * <p>誤りは欄の誤り（{@code rejectValue}）だけにし、大域の誤り（{@code reject}）は使わない。選ぶ画面のエラー要約は欄の名前で
+ * 表示名（{@code FIELD_LABELS}）を引くので、欄の名前のない大域の誤りは示せない（Bolt 39c2 ステップ 6。controller のテストの行 8 が縛る）。
  */
 @Controller
 @RequestMapping("/staff/external-data/ingestions")
