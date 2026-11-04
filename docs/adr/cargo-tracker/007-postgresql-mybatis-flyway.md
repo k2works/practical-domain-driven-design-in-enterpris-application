@@ -4,7 +4,7 @@ title: "ADR-007: 開発環境は H2、本番は PostgreSQL 18 を使い、永続
 description: "開発体験を優先してローカルのアプリ起動は H2、ステージング・本番と SQL を検証するテストは PostgreSQL 18 を使い、永続化に MyBatis、マイグレーションに Flyway を使う決定。"
 tags: [adr, tech-stack]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-04T05:58:43Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-04T20:08:47Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:29:05Z }
   - { by: human:kakimomokuri, at: 2026-10-01T07:48:17Z }
@@ -92,6 +92,8 @@ verified:
   - **H2 のイベント発行記録の列**: Spring Modulith のイベント発行記録の H2 の定義（spring-modulith-events-jdbc の schema-h2.sql の写し。`db/migration/h2/V20261001090300__create_event_publication.sql`）の `serialized_event VARCHAR(4000)` を、H2 だけのマイグレーション（`db/migration/h2/V20261104103700__widen_event_publication_serialized_event.sql`）で `VARCHAR(1000000)`（H2 の VARCHAR の上限）（2026-11-04 訂正: 「H2 の VARCHAR の上限」は誤り。H2 2.4.240 の `org.h2.engine.Constants.MAX_STRING_LENGTH` は 1,000,000,000 で、1,000,000 は寄港 60 の DE-12 が入るように広げた値。マイグレーションは変えない。Bolt 39b4 の開始準備で jar を読んで確かめた）に広げる。索引 `(listener_id, serialized_event)` は広げた列で作り直され、同じ名前と列のまま残る（`H2EventPublicationCapacityTest`）。寄港 60 の DE-12（約 6,700 文字）が入らず、H2 の取込が発行記録の INSERT で巻き戻るため。前例は H2 だけの列の幅の変更 `db/migration/h2/V20261006150000__widen_spring_session_principal_name.sql`。PostgreSQL は TEXT のままで、ステージング・本番は変わらない。寄港の上限を下げる案と DE-12 の値を減らす案は、前の人の決定（寄港 60、イベントの型）を H2 の都合で変えるので取らない。
 - 2026-11-04（W7、Bolt 39b4 のステップ 5）: 次を足した（[Bolt 39b4 計画](../../development/cargo-tracker/bolt_39b4_plan.md) の開始準備の決定 (8)。推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）。
   - **H2 の受信記録の注記の列**: H2 の VARCHAR は長さを UTF-16 の単位で数え、PostgreSQL は文字（コードポイント）で数える。取込のサービスは注記をコードポイントで 1,000 文字に切るので、補助文字を含む注記が H2 の `received_record.classification_note VARCHAR(1000)` に入らず、取込全体が巻き戻った（`H2ReceivedRecordNoteTest` の Red。補助文字 1,000 コードポイントは 2,000 単位）。H2 だけのマイグレーション（`db/migration/h2/V20261104145000__widen_received_record_classification_note.sql`）で `VARCHAR(2000)` に広げる。上限の判定はサービスのコードポイントのまま。PostgreSQL は `VARCHAR(1000)` のままで、ステージング・本番は変わらない。広げるのはこの 1 つの列だけにする。
+- 2026-11-05（W7、Bolt 39d2）: 次を足した（[Bolt 39d2 計画](../../development/cargo-tracker/bolt_39d2_plan.md) の開始準備の決定 (2) と【前の決定の変更】(4)。推奨のとおり。Recommend 承認の指示による。human:kakimomokuri。スキーマの承認ゲートは 39d2 のステップ 3 で通す）。
+  - **H2 の受信記録の判断の理由の列**: 却下の理由は 1,000 文字をコードポイントで数える。上の注記の列と同じ事情で、補助文字を含む 1,000 コードポイントの理由が H2 の `received_record_decision.reason VARCHAR(1000)`（Bolt 39a3 で決めた。`V20261103100000`）に入らないので、H2 だけのマイグレーション（`db/migration/h2/V20261105100000__widen_received_record_decision_reason.sql`。版はステップ 3 の開始ですべての場所の最新より後に決める）で `VARCHAR(2000)` に広げる。上の Bolt 39b4 の項の「広げるのはこの 1 つの列だけ」に、この列を足して 2 つにする。PostgreSQL と共通のマイグレーションは変えず、ステージング・本番は変わらない。契約のテストに補助文字を含む 1,000 文字の理由の往復を足す（メモリ・H2・PostgreSQL。前例 `H2ReceivedRecordNoteTest`）。
 
 ## 備考
 

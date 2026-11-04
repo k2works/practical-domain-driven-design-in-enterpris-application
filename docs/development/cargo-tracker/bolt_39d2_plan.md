@@ -2,7 +2,7 @@
 type: Plan
 title: "Bolt 39d2 計画 - S-17 で隔離を却下する（判断の記録・判断のイベントと監査）"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-04T20:02:48Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-04T20:08:47Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-11-04T20:02:49Z }
 ---
@@ -224,23 +224,7 @@ end note
 
 ### 状態遷移図（受信記録の判断）
 
-この図はステップ 1 で domain_model の受信記録の判断の節に移し、計画からは domain_model を指す（横断 B4）。
-
-```plantuml
-@startuml
-title 隔離の受信記録の判断（Bolt 39d2）
-[*] --> 判断を待つ隔離 : 取込で隔離（39b2）
-判断を待つ隔離 --> 却下済み : データ責任者が却下（理由は必須。39d2）
-判断を待つ隔離 --> 採用済み : データ責任者が採用（39d3）
-却下済み --> [*]
-採用済み --> [*]
-note right of 却下済み
-  取り消さない（【業務の判断】(e)）。
-  やり直しは提供元の送り直し
-  （新しい受信記録が再び隔離。39d4）
-end note
-@enduml
-```
+ステップ 1 で [ドメインモデル](../../design/cargo-tracker/domain_model.md) の外部データの節の「受信記録の判断」に移した（横断 B4）。判断を待つ隔離から却下済み（39d2）・採用済み（39d3）に移り、取り消さない（【業務の判断】(e)）。
 
 ### 画面イメージ
 
@@ -387,7 +371,7 @@ rcd ..> ar : DE-29（コミットの後）
 
 ## ステップ計画（ステップごとに止める）
 
-- [ ] **1. 設計の文書**（ui_design・domain_model・data_model・system_usecase・test_strategy・release_plan・ADR-004・ADR-007）: 上の「設計文書に直す箇所」（開始準備の決定 (1)〜(12) と【前の決定の変更】(1)〜(4) を反映する）（完了の判定: 文書の差分。**承認ゲート**）
+- [x] **1. 設計の文書**（ui_design・domain_model（受信記録の判断の節と状態遷移図）・data_model・ADR-004・ADR-007・system_usecase・test_strategy・release_plan。【業務の判断】(g) の台帳への記載は 39d2b の開始準備で足す。推奨のとおり承認として記録した。Recommend 承認の指示による）（ui_design・domain_model・data_model・system_usecase・test_strategy・release_plan・ADR-004・ADR-007）: 上の「設計文書に直す箇所」（開始準備の決定 (1)〜(12) と【前の決定の変更】(1)〜(4) を反映する）（完了の判定: 文書の差分。**承認ゲート**）
 - [ ] **2. テストの Red（外側から）**: 行 14・17・19 の feature の Red（今は「判断する」も判断の画面もなく落ちることを確かめる）、続いて行 3〜5・7・8・17・18・22 の controller、行 1〜6・9・10・22 のサービスとドメイン、行 4〜6・16・21・22 の契約、行 11〜13 の監査、行 1・9 のセキュリティの統合テスト。直す既存のテストを一覧にする（T-217）（完了の判定: 期待した理由で落ちる記録。**承認ゲート**（画面の振る舞いの契約））
 - [ ] **3. 判断の型とポートとスキーマ**: `ReceivedRecordDecision`（record）・`DecisionKind`・`ReceivedRecordDecisionRepository`・例外、MyBatis（H2・PostgreSQL）とメモリの実装、H2 だけのマイグレーション（決定 (2)。版は開始で全部の場所の最新を確かめて決める）、`ReceivedRecordRepository.findById`・`undecidedQuarantine`（マッパー・メモリの実装）、メモリの受信記録のリポジトリが判断を見る、行 7 を契約のテストへ移す。行 2〜6・16・21・22 のドメインと契約が緑（完了の判定: 緑、`spotbugsMain`・`checkstyleMain`・`sonar-local:check`。**承認ゲート**（スキーマ（H2 だけ。【前の決定の変更】(4)）、新しいファイル））
 - [ ] **4. 却下のサービスとイベント**: `ReceivedRecordDecisionService`（情報源 ID は `IngestionRepository.findById` から）・`DecisionOutcome`・`RejectReceivedRecordCommand`（`@Command`）・DE-29（判断は `String`）、`ExternalDataConfiguration` の `@Bean`、照会のサービスの ID で 1 件を引くメソッド。行 1・3〜6・9・10・22 が緑（完了の判定: 同上。**承認ゲート**）
