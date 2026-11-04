@@ -6,13 +6,18 @@ import static com.tngtech.archunit.core.domain.JavaClass.Predicates.assignableTo
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.equivalentTo;
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.resideInAPackage;
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.resideInAnyPackage;
+import static com.tngtech.archunit.core.domain.JavaClass.Predicates.simpleName;
 import static com.tngtech.archunit.core.domain.properties.HasName.Predicates.nameMatching;
 import static com.tngtech.archunit.core.domain.properties.HasOwner.Predicates.With.owner;
+import static com.tngtech.archunit.lang.conditions.ArchConditions.accessField;
+import static com.tngtech.archunit.lang.conditions.ArchConditions.callMethodWhere;
+import static com.tngtech.archunit.lang.conditions.ArchConditions.dependOnClassesThat;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.fields;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noMethods;
 import static com.tngtech.archunit.library.Architectures.layeredArchitecture;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import com.example.cargotracker.identity.domain.model.aggregates.AuditRecord;
 import com.example.cargotracker.identity.domain.model.valueobjects.PasswordResetTokenPurpose;
@@ -22,13 +27,20 @@ import com.example.cargotracker.shared.domain.OutOfScopeAttemptRecorder;
 import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.JavaCall;
 import com.tngtech.archunit.core.domain.JavaClass;
+import com.tngtech.archunit.core.domain.JavaClasses;
+import com.tngtech.archunit.core.importer.ClassFileImporter;
 import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
+import com.tngtech.archunit.lang.ArchCondition;
 import com.tngtech.archunit.lang.ArchRule;
+import com.tngtech.archunit.lang.CompositeArchRule;
+import com.tngtech.archunit.lang.EvaluationResult;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
+import java.util.List;
+import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Controller;
@@ -329,31 +341,8 @@ class LayerArchitectureTest {
     /** 範囲外の試行の記録の書き手（Bolt 34f。S-20 の詳細の部品）。 */
     private static final String SCOPE_DENIAL_WRITER = "com.example.cargotracker.identity.interfaces.web.UserDetailPage";
 
-    /**
-     * 範囲外の試行の記録のサービス（Bolt 34b）は、S-20 の詳細の部品（とその組み立て）だけが呼ぶ。書き手を 1 か所にして、記録の漏れと
-     * 二重の記録を防ぐ（IA-INV-08、Bolt 34b の開発レビュー）。Bolt 34f で、画面の層のパッケージ全体から部品の 1 つに絞った
-     * （2026-10-19、human:kakimomokuri。W6 の controller が記録のサービスを直接受けると落ちる）。
-     */
-    @ArchTest
-    static final ArchRule 範囲外の試行の記録は詳細の部品からだけ呼ぶ = noClasses()
-            .that()
-            .resideOutsideOfPackages("..identity.infrastructure.config..")
-            .and()
-            .doNotHaveFullyQualifiedName(SCOPE_DENIAL_WRITER)
-            .and()
-            .doNotHaveSimpleName("AdministrationScopeDenialService")
-            .should()
-            .dependOnClassesThat()
-            .haveSimpleName("AdministrationScopeDenialService");
-
-    /** 例外の名前が実在し続けることの見張り。部品を動かしたり名前を変えたりすると落ちる（T-135）。 */
-    @ArchTest
-    static final ArchRule 範囲外の試行の記録の書き手は詳細の部品 = classes()
-            .that()
-            .haveFullyQualifiedName(SCOPE_DENIAL_WRITER)
-            .should()
-            .dependOnClassesThat()
-            .haveSimpleName("AdministrationScopeDenialService");
+    /** 範囲外の試行の記録のサービス（Bolt 34b）。 */
+    private static final String SCOPE_DENIAL_SERVICE = "AdministrationScopeDenialService";
 
     /** 範囲外の企業への登録の試行の記録の書き手（Bolt 38b2。登録のサービスの確定の口）。 */
     private static final String COMPANY_SCOPE_DENIAL_WRITER =
@@ -363,55 +352,12 @@ class LayerArchitectureTest {
     private static final DescribedPredicate<JavaCall<?>> COMPANY_SCOPE_DENIAL =
             target(owner(equivalentTo(AuditRecord.class))).and(target(nameMatching("adminScopeDeniedCompany")));
 
-    /**
-     * 範囲外の企業への登録の試行の記録は、登録のサービスだけが作る（Bolt 38b2b。Bolt 38b2 の終了報告の議題 2、2026-10-25、
-     * human:kakimomokuri。T-205。計画の行 8）。書き手を 1 か所にして、記録の漏れと二重の記録を防ぐ（IA-INV-14）。守るのは呼び出しだけで、メソッド参照
-     * （{@code AuditRecord::adminScopeDeniedCompany}）は捕まえない。
-     */
-    @ArchTest
-    static final ArchRule 範囲外の企業の記録は登録のサービスだけが作る = noClasses()
-            .that()
-            .doNotHaveFullyQualifiedName(COMPANY_SCOPE_DENIAL_WRITER)
-            .should()
-            .callMethodWhere(COMPANY_SCOPE_DENIAL);
-
-    /** 書き手の名前と呼び出しが実在し続けることの見張り（計画の行 8）。書き手を動かす・名前を変える・呼ばなくなると落ちる（T-135）。 */
-    @ArchTest
-    static final ArchRule 範囲外の企業の記録の書き手は登録のサービス = classes()
-            .that()
-            .haveFullyQualifiedName(COMPANY_SCOPE_DENIAL_WRITER)
-            .should()
-            .callMethodWhere(COMPANY_SCOPE_DENIAL);
-
     /** 招待の用途で発行する部品（Bolt 38b2c。DE-25 のハンドラー）。 */
     private static final String INVITATION_ISSUER =
             "com.example.cargotracker.identity.application.internal.eventhandlers.UserInvitationMailEventHandler";
 
     /** 招待の用途の定数の名前。 */
     private static final String INVITATION_PURPOSE = "USER_INVITATION";
-
-    /**
-     * 招待の用途（{@code PasswordResetTokenPurpose.USER_INVITATION}）を参照するのは招待のハンドラーだけ（Bolt 38b2c の開始準備の決定 (4)、
-     * 2026-10-26、human:kakimomokuri。T-205。計画の行 9）。招待のトークンの書き手を 1 か所にして、ほかの道で 24 時間のリンクを出させない。
-     * 守るのは定数の参照で、{@code valueOf}・{@code values()} は捕まえない。用途の {@code switch} は、形によって合成のクラスが参照して当たるか、
-     * すり抜ける。用途による出し分け（Bolt 38b4）は、外から定数を参照せず、用途の型のメソッドで問い合わせる（列挙の中の参照は外す）。
-     */
-    @ArchTest
-    static final ArchRule 招待の用途を参照するのは招待のハンドラーだけ = noClasses()
-            .that()
-            .doNotHaveFullyQualifiedName(INVITATION_ISSUER)
-            .and()
-            .areNotAssignableTo(PasswordResetTokenPurpose.class)
-            .should()
-            .accessField(PasswordResetTokenPurpose.class, INVITATION_PURPOSE);
-
-    /** 招待のハンドラーの名前と参照が実在し続けることの見張り（計画の行 9）。動かす・名前を変える・参照しなくなると落ちる（T-135）。 */
-    @ArchTest
-    static final ArchRule 招待の用途を参照する書き手は招待のハンドラー = classes()
-            .that()
-            .haveFullyQualifiedName(INVITATION_ISSUER)
-            .should()
-            .accessField(PasswordResetTokenPurpose.class, INVITATION_PURPOSE);
 
     /** 担当範囲の外の試行の記録の書き手（Bolt 38f。アクセス・監査の記録のサービス）。 */
     private static final String ASSIGNED_SCOPE_DENIAL_WRITER =
@@ -421,42 +367,18 @@ class LayerArchitectureTest {
     private static final DescribedPredicate<JavaCall<?>> ASSIGNED_SCOPE_DENIAL =
             target(owner(equivalentTo(AuditRecord.class))).and(target(nameMatching("assignedScopeDenied")));
 
-    /**
-     * 担当範囲の外の試行の記録は、記録のサービスだけが作る（Bolt 38f の決定 (5)、計画の行 15。T-205）。書き手を 1 か所にして、記録の漏れと
-     * 二重の記録を防ぐ（IA-INV-08）。守るのは呼び出しだけで、メソッド参照は捕まえない。
-     */
-    @ArchTest
-    static final ArchRule 担当範囲の外の記録は記録のサービスだけが作る = noClasses()
-            .that()
-            .doNotHaveFullyQualifiedName(ASSIGNED_SCOPE_DENIAL_WRITER)
-            .should()
-            .callMethodWhere(ASSIGNED_SCOPE_DENIAL);
-
-    /** 書き手の名前と呼び出しが実在し続けることの見張り（計画の行 15）。動かす・名前を変える・呼ばなくなると落ちる（T-135）。 */
-    @ArchTest
-    static final ArchRule 担当範囲の外の記録の書き手は記録のサービス = classes()
-            .that()
-            .haveFullyQualifiedName(ASSIGNED_SCOPE_DENIAL_WRITER)
-            .should()
-            .callMethodWhere(ASSIGNED_SCOPE_DENIAL);
-
     /** 担当範囲の外の試行の記録のサービスを呼ぶアダプター（Bolt 38f。identity の公開の入口の実装）。 */
     private static final String OUT_OF_SCOPE_RECORDER_ADAPTER =
             "com.example.cargotracker.identity.interfaces.api.internal.OutOfScopeAttemptRecorderAdapter";
 
-    /**
-     * 担当範囲の外の試行の記録のサービスを呼ぶのは、ポートのアダプターだけ（Bolt 38f の開発レビューの低 10 (a)）。アダプターを通さずに
-     * サービスを直接呼ぶと、ポートの見張りの規則を抜けられる。
-     */
-    @ArchTest
-    static final ArchRule 担当範囲の外の記録のサービスはポートのアダプターだけが呼ぶ = noClasses()
-            .that()
-            .doNotHaveFullyQualifiedName(OUT_OF_SCOPE_RECORDER_ADAPTER)
-            .and()
-            .doNotHaveFullyQualifiedName(ASSIGNED_SCOPE_DENIAL_WRITER)
-            .should()
-            .callMethodWhere(target(owner(nameMatching(ASSIGNED_SCOPE_DENIAL_WRITER.replace(".", "\\."))))
-                    .and(target(nameMatching("recordDenied"))));
+    /** 担当範囲の外の試行の記録のサービスの呼び出し（{@code AssignedScopeDenialService.recordDenied}）。 */
+    private static final DescribedPredicate<JavaCall<?>> ASSIGNED_SCOPE_DENIAL_SERVICE_CALL = target(
+                    owner(nameMatching(ASSIGNED_SCOPE_DENIAL_WRITER.replace(".", "\\."))))
+            .and(target(nameMatching("recordDenied")));
+
+    /** 担当範囲を確かめずに輸送要求を読む部品（Bolt 38f の開発レビュー M3。担当範囲の判定の部品）。 */
+    private static final String STAFF_TRANSPORT_REQUEST_READER =
+            "com.example.cargotracker.quotation.application.internal.queryservices.StaffTransportRequestScope";
 
     /** 社内の側の輸送要求の読み出し（担当範囲を確かめない）。 */
     private static final DescribedPredicate<JavaCall<?>> STAFF_TRANSPORT_REQUEST_READ = target(
@@ -465,18 +387,118 @@ class LayerArchitectureTest {
                                     "com\\.example\\.cargotracker\\.quotation\\.domain\\.model\\.aggregates\\.TransportRequestRepository")))
             .and(target(nameMatching("findByNumberForStaff")));
 
+    /** 外部原本の採否の監査記録の書き手（Bolt 39b3b。DE-12・DE-13・DE-14 の監査の listener）。 */
+    private static final String EXTERNAL_RECORD_AUDIT_WRITER =
+            "com.example.cargotracker.identity.application.internal.eventhandlers.ExternalRecordAuditEventHandler";
+
+    /** 外部原本の採否の監査記録を作る呼び出し（{@code AuditRecord.externalRecordAdopted}・{@code externalRecordQuarantined}）。 */
+    private static final DescribedPredicate<JavaCall<?>> EXTERNAL_RECORD_AUDIT = target(
+                    owner(equivalentTo(AuditRecord.class)))
+            .and(target(nameMatching("externalRecordAdopted|externalRecordQuarantined")));
+
+    /** 書き手のほかに例外がない行の印。 */
+    private static final DescribedPredicate<JavaClass> NO_OTHER_EXCEPTION =
+            DescribedPredicate.describe("なし", (JavaClass javaClass) -> false);
+
     /**
-     * 担当範囲を確かめずに輸送要求を読む口を呼べるのは、担当範囲の判定の部品だけ（Bolt 38f の開発レビュー M3。決定 (10)
-     * 「範囲を知らないまま読み書きできる道を残さない」）。予約の側の照会（{@code BookableQuotationQueryService}）は 38f2 で担当範囲の判定の
-     * 部品を通すようにし、例外から外した。
+     * 「書き手は 1 か所」の表（W6 横断レビュー M-2。Bolt 39b3b の計画の「人に諮ること」4、2026-11-03、human:kakimomokuri。T-205）。書き手を 1 か所に
+     * して、記録の漏れと二重の記録、ほかの道での発行を防ぐ。行ごとに、ヘルパー（{@link SoleWriter}）が「書き手（と例外）のほかは触らない」と
+     * 「書き手は実在して触る」（T-135。書き手を動かす・名前を変える・触らなくなると落ちる）の 2 つの規則を作る。書き手を足すときは、規則を
+     * 書かずに行を足す（規則の変更として人に諮る）。
+     *
+     * <p>守るのは呼び出し・定数の参照・依存で、呼び出しの行はメソッド参照（{@code AuditRecord::adminScopeDeniedCompany}）を捕まえない。
+     * 招待の用途の行は {@code valueOf}・{@code values()} を捕まえず、用途の {@code switch} は形によって合成のクラスが参照して当たるか、
+     * すり抜ける。用途による出し分け（Bolt 38b4）は、外から定数を参照せず、用途の型のメソッドで問い合わせる（列挙の中の参照は外す）。
+     * 書き手が複数で名前の規則と閉じた一覧で守る担当範囲の外の記録のポートの部品は、この表に入れず下の規則で守る。
      */
+    private static final List<SoleWriter> SOLE_WRITERS = List.of(
+            // Bolt 34b・34f（IA-INV-08）。画面の層のパッケージ全体から S-20 の詳細の部品の 1 つに絞った（2026-10-19、human:kakimomokuri。
+            // W6 の controller が記録のサービスを直接受けると落ちる）。組み立て（identity の合成ルート）とサービス自身は例外
+            new SoleWriter(
+                    "範囲外の試行の記録のサービス（S-20 の詳細の部品だけが呼ぶ）",
+                    SCOPE_DENIAL_WRITER,
+                    resideInAPackage("..identity.infrastructure.config..").or(simpleName(SCOPE_DENIAL_SERVICE)),
+                    dependOnClassesThat(simpleName(SCOPE_DENIAL_SERVICE))),
+            // Bolt 38b2b（Bolt 38b2 の終了報告の議題 2、2026-10-25、human:kakimomokuri。IA-INV-14）
+            new SoleWriter(
+                    "範囲外の企業への登録の試行の記録（登録のサービスだけが作る）",
+                    COMPANY_SCOPE_DENIAL_WRITER,
+                    NO_OTHER_EXCEPTION,
+                    callMethodWhere(COMPANY_SCOPE_DENIAL)),
+            // Bolt 38b2c の開始準備の決定 (4)（2026-10-26、human:kakimomokuri）。ほかの道で 24 時間のリンクを出させない。列挙の中の参照は例外
+            new SoleWriter(
+                    "招待の用途（招待のハンドラーだけが参照する）",
+                    INVITATION_ISSUER,
+                    assignableTo(PasswordResetTokenPurpose.class),
+                    accessField(PasswordResetTokenPurpose.class, INVITATION_PURPOSE)),
+            // Bolt 38f の決定 (5)（IA-INV-08）
+            new SoleWriter(
+                    "担当範囲の外の試行の記録（記録のサービスだけが作る）",
+                    ASSIGNED_SCOPE_DENIAL_WRITER,
+                    NO_OTHER_EXCEPTION,
+                    callMethodWhere(ASSIGNED_SCOPE_DENIAL)),
+            // Bolt 38f の開発レビューの低 10 (a)。アダプターを通さずにサービスを直接呼ぶと、ポートの見張りの規則を抜けられる。サービス自身は例外
+            new SoleWriter(
+                    "担当範囲の外の試行の記録のサービス（ポートのアダプターだけが呼ぶ）",
+                    OUT_OF_SCOPE_RECORDER_ADAPTER,
+                    DescribedPredicate.describe(
+                            "記録のサービス自身",
+                            (JavaClass javaClass) -> javaClass.getName().equals(ASSIGNED_SCOPE_DENIAL_WRITER)),
+                    callMethodWhere(ASSIGNED_SCOPE_DENIAL_SERVICE_CALL)),
+            // Bolt 38f の開発レビュー M3（決定 (10)「範囲を知らないまま読み書きできる道を残さない」）。予約の側の照会は 38f2 で判定の部品を通す
+            // ようにし、例外から外した
+            new SoleWriter(
+                    "担当範囲を確かめない輸送要求の読み出し（担当範囲の判定の部品だけが呼ぶ）",
+                    STAFF_TRANSPORT_REQUEST_READER,
+                    NO_OTHER_EXCEPTION,
+                    callMethodWhere(STAFF_TRANSPORT_REQUEST_READ)),
+            // Bolt 39b3b の行 14（AUD-01、IA-INV-15）。受信記録ごとに 1 つ、イベントの時刻で書く
+            new SoleWriter(
+                    "外部原本の採否の監査記録（監査の listener だけが作る）",
+                    EXTERNAL_RECORD_AUDIT_WRITER,
+                    NO_OTHER_EXCEPTION,
+                    callMethodWhere(EXTERNAL_RECORD_AUDIT)));
+
+    /** 表の行の書き手（と例外）のほかは、行の呼び出し・参照・依存をしない（M-2。行ごとの違反は理由に行の名前が出る）。 */
     @ArchTest
-    static final ArchRule 担当範囲を確かめない輸送要求の読み出しは判定の部品だけが呼ぶ = noClasses()
-            .that()
-            .doNotHaveFullyQualifiedName(
-                    "com.example.cargotracker.quotation.application.internal.queryservices.StaffTransportRequestScope")
-            .should()
-            .callMethodWhere(STAFF_TRANSPORT_REQUEST_READ);
+    static final ArchRule 書き手のほかは触らない = CompositeArchRule.of(
+            SOLE_WRITERS.stream().map(SoleWriter::othersDoNot).toList());
+
+    /** 表の行の書き手の名前と呼び出し・参照・依存が実在し続ける（T-135。行ごとに 1 本。「A か B」にすると片方が無くても通る）。 */
+    @ArchTest
+    static final ArchRule 書き手は実在して触る = CompositeArchRule.of(
+            SOLE_WRITERS.stream().map(SoleWriter::writerDoes).toList());
+
+    /**
+     * 書き手の表の 1 行と、行から 2 つの規則を作るヘルパー（M-2）。
+     *
+     * @param what 書き手だけが触るもの（違反の理由に出す）
+     * @param writer 書き手のクラスの完全な名前
+     * @param alsoAllowed 書き手のほかに触ってよいクラス（組み立てや、触られる側そのもの）
+     * @param access 書き手だけに許す呼び出し・参照・依存
+     */
+    private record SoleWriter(
+            String what, String writer, DescribedPredicate<JavaClass> alsoAllowed, ArchCondition<JavaClass> access) {
+
+        ArchRule othersDoNot() {
+            return noClasses()
+                    .that(DescribedPredicate.describe(
+                                    "書き手でない",
+                                    (JavaClass javaClass) ->
+                                            !javaClass.getName().equals(writer))
+                            .and(not(alsoAllowed)))
+                    .should(access)
+                    .because(what + "。書き手は " + writer);
+        }
+
+        ArchRule writerDoes() {
+            return classes()
+                    .that()
+                    .haveFullyQualifiedName(writer)
+                    .should(access)
+                    .because(what + "。書き手の名前と呼び出しが実在し続ける（T-135）");
+        }
+    }
 
     /** 担当範囲の外の試行の記録のポートを呼ぶ部品（Bolt 38f。見積りの社内の画面の層）。 */
     private static final String OUT_OF_SCOPE_RESPONDER =
@@ -609,4 +631,34 @@ class LayerArchitectureTest {
             .should()
             .onlyDependOnClassesThat()
             .resideInAnyPackage("java..", "org.apache.ibatis..", "com.example.cargotracker.platform..");
+
+    /**
+     * 行 14: 書き手の表の規則は、監査の listener のほかが外部原本の採否の監査記録を作ると落とす（Bolt 39b3b。表の行の読み落とし（変異 V8）を
+     * 捕まえる。本体の解析はテストのクラスを読まないので、ここで規則に別のクラスを読ませて確かめる）。
+     */
+    @Test
+    void 行14_監査のlistenerのほかが外部原本の採否の監査記録を作ると書き手の表の規則が落とす() {
+        JavaClasses intruder = new ClassFileImporter().importClasses(ExternalRecordAuditIntruder.class);
+
+        EvaluationResult result = 書き手のほかは触らない.evaluate(intruder);
+
+        assertThat(result.hasViolation()).isTrue();
+        assertThat(result.getFailureReport().toString())
+                .contains("externalRecordAdopted")
+                .contains("externalRecordQuarantined");
+    }
+
+    /** 行 14 の変異のためのクラス（監査の listener でないのに外部原本の採否の監査記録を作る）。呼ばれることはない。 */
+    static final class ExternalRecordAuditIntruder {
+
+        private ExternalRecordAuditIntruder() {}
+
+        static Object adopt() {
+            return AuditRecord.externalRecordAdopted(null, null, null, null, null);
+        }
+
+        static Object quarantine() {
+            return AuditRecord.externalRecordQuarantined(null, null, null, null, null, null);
+        }
+    }
 }

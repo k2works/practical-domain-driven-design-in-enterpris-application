@@ -4,7 +4,7 @@ title: "cargo-tracker テスト戦略"
 description: "cargo-tracker のテスト形状、テストレベルと責務、BDD（Cucumber）のシナリオ階層とタグ規約、不変条件・ユーザーストーリーとテストの対応、カバレッジ目標、CI での実行。"
 tags: [design, test-strategy, bdd]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-04T00:49:10Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-04T02:40:11Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T08:12:04Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:38Z }
@@ -301,7 +301,7 @@ CI で毎回実行する。
 | AT-02 | 依存は `interfaces` → `application` → `domain` ← `infrastructure` の向きに限る | ArchUnit | バックエンドアーキテクチャ |
 | AT-03 | モジュール（コンテキスト）間の依存は公開 API とドメインイベントだけ | Spring Modulith `ApplicationModules.verify()` | ADR-001 |
 | AT-04 | 各コンテキストのマッパーの SQL は自分のスキーマ（と `platform` の許可された表）以外を参照しない | マッパー XML を読む独自のテスト（`MapperSchemaArchitectureTest`。Bolt 25 で実装。既知の限界: `FROM`・`JOIN`・`INTO`・`UPDATE` の直後の `スキーマ.表` だけを見るので、カンマ結合の 2 つ目の表、`USING`、修飾のない表名、引用符付きの識別子、Java の注釈の SQL（今は使っていない）は拾わない。検査するスキーマの一覧は手で保つ。Bolt 25 レビュー A-5） | ADR-001（改訂）、データモデル |
-| AT-05 | 業務のルールの層のステップ定義（`<コンテキスト>.acceptance`）は、自分のコンテキストのアプリケーション層・ドメイン層と共有カーネル、他のコンテキストの公開 API にだけ依存し、自分のインフラストラクチャ層・画面・公開 API の実装（`interfaces.api.internal`）と他のコンテキストの内部（ドメインイベントを含む）に依存しない（入力ポートのほか、コマンドの組み立てと結果の確かめにドメインの値オブジェクト・集約を使うことは認める。画面の層のステップ定義と、受入テストの組み立て（`acceptance`・`shared.acceptance`。メモリのリポジトリや公開 API の実装をつなぐのが役目）は対象外） | ArchUnit（`AcceptanceStepArchitectureTest`。Bolt 28 で、Bolt 2 から後に回していたものを実態に合わせて作った） | 本書 BDD |
+| AT-05 | 業務のルールの層のステップ定義（`<コンテキスト>.acceptance`）は、自分のコンテキストのアプリケーション層・ドメイン層と共有カーネル、他のコンテキストの公開 API にだけ依存し、自分のインフラストラクチャ層・画面・公開 API の実装（`interfaces.api.internal`）と他のコンテキストの内部（ドメインイベントを含む）に依存しない（入力ポートのほか、コマンドの組み立てと結果の確かめにドメインの値オブジェクト・集約を使うことは認める。画面の層のステップ定義と、受入テストの組み立て（`acceptance`・`shared.acceptance`。メモリのリポジトリや公開 API の実装をつなぐのが役目）は対象外） | ArchUnit（`AcceptanceStepArchitectureTest`。Bolt 28 で、Bolt 2 から後に回していたものを実態に合わせて作った。Bolt 39b3b で、コンテキストごとの手書きの規則を、依存元のパッケージからコンテキストを決める 1 つの規則にした） | 本書 BDD |
 | AT-06 | 本番の実行クラスパスに H2・Hibernate ORM・JPA が含まれない | Gradle のビルド検査 | ADR-007 |
 | AT-07 | identity の合成ルート（`identity.infrastructure.config`）の `@Bean` のメソッドが返す型は、`identity.application.internal..`・`identity.infrastructure.security..`・`org.springframework..` （そのパッケージとその下）の型か `AesGcmSecretCipher`・dev の `DevTotpCodeSource` に限り、送信アダプター（persistence・crypto）のコンストラクターを呼ばない（送信アダプターは部品探索で拾う） | 見張りのテスト（Bolt 32d） | バックエンドアーキテクチャの identity の合成ルートの規則 |
 | AT-08 | 画面の層のテスト（`com.example.cargotracker.ui`）は `java.util.regex.Pattern.quote` を呼ばず、Playwright の正規表現に渡す文字列は共通の補助（`PlaywrightText.literal`）でエスケープする（エスケープの漏れと書き方のばらつきを防ぐ。Bolt 33a の Try T-128。`documentation` の正しい使い方は対象外）。対象が空でないことを見張り、違反を控えのファイルに入れて落ちることを確かめる（T-107・T-112・T-131） | ArchUnit（テストのクラスを読む。前例 `AcceptanceStepArchitectureTest`。Bolt 33c） | Bolt 33a の議題 7 |

@@ -1,14 +1,18 @@
 package com.example.cargotracker.architecture;
 
+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
+import com.tngtech.archunit.lang.ArchCondition;
 import com.tngtech.archunit.lang.ArchRule;
+import com.tngtech.archunit.lang.ConditionEvents;
+import com.tngtech.archunit.lang.SimpleConditionEvent;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -28,24 +32,32 @@ class AcceptanceStepArchitectureTest {
     private static final List<String> CONTEXTS =
             List.of("quotation", "routing", "booking", "tracking", "identity", "notification", "externaldata");
 
-    @ArchTest
-    static final ArchRule 見積りのステップ定義は自分のコンテキストと公開APIだけに依存する = rule("quotation");
+    /** 依存元のステップ定義のコンテキストを決め、そのコンテキストに許さない依存を違反にする。 */
+    private static final ArchCondition<JavaClass> DEPEND_ONLY_ON_OWN_CONTEXT_AND_PUBLIC_APIS =
+            new ArchCondition<>("自分のインフラストラクチャ層・画面・公開 API の実装と、他のコンテキストの公開 API 以外に依存しない") {
+                @Override
+                public void check(JavaClass item, ConditionEvents events) {
+                    contextOf(item.getPackageName())
+                            .ifPresent(context -> item.getDirectDependenciesFromSelf().stream()
+                                    .filter(dependency -> forbidden(
+                                            context, dependency.getTargetClass().getPackageName()))
+                                    .forEach(dependency -> events.add(
+                                            SimpleConditionEvent.violated(dependency, dependency.getDescription()))));
+                }
+            };
 
+    /**
+     * 行 13: 業務のルールの層のステップ定義（{@code <コンテキスト>.acceptance}）すべてに当てる 1 つの規則（Bolt 39b3b の計画の「人に諮ること」5。2026-11-03、
+     * human:kakimomokuri）。コンテキストごとに手書きした規則の写しをやめ、依存元のパッケージからコンテキストを決める。コンテキストを足しても
+     * 規則を書き足さずに済み、acceptance のないコンテキスト（通知）に空の規則を作って落ちること（ArchUnit の既定の failOnEmptyShould）もない。
+     * 業務のコンテキストでない {@code shared.acceptance}（受入テストの組み立て）は対象にしない。
+     */
     @ArchTest
-    static final ArchRule 経路設計のステップ定義は自分のコンテキストと公開APIだけに依存する = rule("routing");
-
-    @ArchTest
-    static final ArchRule 予約のステップ定義は自分のコンテキストと公開APIだけに依存する = rule("booking");
-
-    @ArchTest
-    static final ArchRule 追跡のステップ定義は自分のコンテキストと公開APIだけに依存する = rule("tracking");
-
-    @ArchTest
-    static final ArchRule アクセス監査のステップ定義は自分のコンテキストと公開APIだけに依存する = rule("identity");
-
-    /** 外部データのステップ定義（Bolt 39b。手書きの規則の写しの汎用化は 39b3 で M-2 と一緒に扱う）。 */
-    @ArchTest
-    static final ArchRule 外部データのステップ定義は自分のコンテキストと公開APIだけに依存する = rule("externaldata");
+    static final ArchRule 行13_業務のルールの層のステップ定義は自分のコンテキストと公開APIだけに依存する = classes()
+            .that()
+            .resideInAPackage(ROOT + "*.acceptance..")
+            .should(DEPEND_ONLY_ON_OWN_CONTEXT_AND_PUBLIC_APIS)
+            .because("AT-05: ステップ定義は自分の入力ポート・ドメインと他のコンテキストの公開 API だけを使う（テスト戦略）");
 
     /**
      * 画面の層のステップは {@code Pattern.quote} を呼ばない（Bolt 33c、Try T-128）。Playwright は正規表現をブラウザーの JavaScript で照合し、
@@ -81,24 +93,32 @@ class AcceptanceStepArchitectureTest {
         assertThat(forbidden("booking", ROOT + "shared.domain")).isFalse();
     }
 
+    /** 行 13: 依存元のパッケージからコンテキストを決める。業務のコンテキストでないもの（共有カーネル、ルート）はコンテキストを持たない。 */
+    @Test
+    void 行13_ステップ定義のコンテキストは依存元のパッケージの最初の名前で業務のコンテキストに限る() {
+        assertThat(contextOf(ROOT + "booking.acceptance")).contains("booking");
+        assertThat(contextOf(ROOT + "externaldata.acceptance.sub")).contains("externaldata");
+        assertThat(contextOf(ROOT + "notification.acceptance")).contains("notification");
+        assertThat(contextOf(ROOT + "shared.acceptance")).isEmpty();
+        assertThat(contextOf(ROOT + "acceptance")).isEmpty();
+    }
+
     /**
-     * コンテキストの一覧は、業務のコンテキスト（モジュールから共有カーネルと基盤を除いたもの）に一致する（W6 横断レビュー M-3。Bolt 39）。
-     * 守るのは一覧（{@code CONTEXTS}）の写しで、コンテキストごとに手書きした規則（上の {@code @ArchTest}）の写しは 39b で M-2 と一緒に扱う。
+     * 行 13: コンテキストの一覧は、業務のコンテキスト（モジュールから共有カーネルと基盤を除いたもの。通知を含む 7 つ）に一致する（W6 横断レビュー
+     * M-3。Bolt 39）。一覧（{@code CONTEXTS}）は規則のコンテキストの判定と、他のコンテキストへの依存の判定に使う。
      */
     @Test
-    void コンテキストの一覧は業務のコンテキストに一致する() {
+    void 行13_コンテキストの一覧は業務のコンテキストに一致する() {
         assertThat(BusinessContexts.all()).containsExactlyInAnyOrderElementsOf(CONTEXTS);
     }
 
-    private static ArchRule rule(String context) {
-        return noClasses()
-                .that()
-                .resideInAPackage(ROOT + context + ".acceptance..")
-                .should()
-                .dependOnClassesThat(DescribedPredicate.describe(
-                        context + " のインフラストラクチャ層・画面・公開 API の実装、または他のコンテキストの公開 API 以外",
-                        (JavaClass target) -> forbidden(context, target.getPackageName())))
-                .because("AT-05: ステップ定義は自分の入力ポート・ドメインと他のコンテキストの公開 API だけを使う（テスト戦略）");
+    /** {@code packageName} のステップ定義が属する業務のコンテキスト（{@code ROOT} の次の名前）。 */
+    static Optional<String> contextOf(String packageName) {
+        if (!packageName.startsWith(ROOT)) {
+            return Optional.empty();
+        }
+        String first = packageName.substring(ROOT.length()).split("\\.", 2)[0];
+        return CONTEXTS.contains(first) ? Optional.of(first) : Optional.empty();
     }
 
     /** {@code context} のステップ定義が {@code packageName} のクラスに依存してはいけないか。 */
