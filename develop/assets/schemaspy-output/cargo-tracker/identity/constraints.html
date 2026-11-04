@@ -264,6 +264,11 @@
                                         <td>(last_used_step &gt;&#61; 0)</td>
                                     </tr>
                                     <tr>
+                                        <td><a href='tables/audit_record.html'>audit_record</a></td>
+                                        <td>ck_audit_record_result</td>
+                                        <td>((result)::text &#61; ANY ((ARRAY[&#39;SUCCESS&#39;::character varying, &#39;FAILURE&#39;::character varying])::text[]))</td>
+                                    </tr>
+                                    <tr>
                                         <td><a href='tables/password_reset_token.html'>password_reset_token</a></td>
                                         <td>ck_password_reset_token_expires_at</td>
                                         <td>(expires_at &gt; issued_at)</td>
@@ -277,11 +282,6 @@
                                         <td><a href='tables/password_reset_token.html'>password_reset_token</a></td>
                                         <td>ck_password_reset_token_used_or_invalidated</td>
                                         <td>((used_at IS NULL) OR (invalidated_at IS NULL))</td>
-                                    </tr>
-                                    <tr>
-                                        <td><a href='tables/audit_record.html'>audit_record</a></td>
-                                        <td>ck_audit_record_result</td>
-                                        <td>((result)::text &#61; ANY ((ARRAY[&#39;SUCCESS&#39;::character varying, &#39;FAILURE&#39;::character varying])::text[]))</td>
                                     </tr>
                                     <tr>
                                         <td><a href='tables/app_user.html'>app_user</a></td>

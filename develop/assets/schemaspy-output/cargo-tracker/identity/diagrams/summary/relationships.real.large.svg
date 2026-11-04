@@ -135,63 +135,10 @@
 <polygon fill="#000000" stroke="#000000" points="363.4844,-867.4584 369.7663,-873.582 367.2422,-868.8292 371,-870.2 371,-870.2 371,-870.2 367.2422,-868.8292 372.2337,-866.818 363.4844,-867.4584 363.4844,-867.4584"/>
 <ellipse fill="none" stroke="#000000" cx="360.4782" cy="-866.3617" rx="3.2" ry="3.2"/>
 </g>
-<!-- password_reset_token -->
-<g id="node3" class="node">
-<title>password_reset_token</title>
-<g id="a_node3"><a xlink:href="../../tables/password_reset_token.html" xlink:title="password_reset_token" target="_top">
-<polygon fill="#ffffff" stroke="transparent" points="342,-513.2 342,-753.2 544,-753.2 544,-513.2 342,-513.2"/>
-<polygon fill="#f5f5f5" stroke="transparent" points="342,-730.2 342,-753.2 544,-753.2 544,-730.2 342,-730.2"/>
-<polygon fill="none" stroke="#000000" points="342,-730.2 342,-753.2 544,-753.2 544,-730.2 342,-730.2"/>
-<text text-anchor="start" x="347" y="-738.8" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00" fill="#000000">password_reset_token</text>
-<text text-anchor="start" x="509.5219" y="-738.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">[table]</text>
-<polygon fill="none" stroke="#000000" points="342,-708.2 342,-730.2 544,-730.2 544,-708.2 342,-708.2"/>
-<image xlink:href="../../images/primaryKeys.png" width="11px" height="12px" preserveAspectRatio="xMinYMin meet" x="347" y="-725.2"/>
-<text text-anchor="start" x="371" y="-715.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">id</text>
-<polygon fill="#ffffff" stroke="transparent" points="342,-686.2 342,-708.2 544,-708.2 544,-686.2 342,-686.2"/>
-<polygon fill="none" stroke="#000000" points="342,-686.2 342,-708.2 544,-708.2 544,-686.2 342,-686.2"/>
-<text text-anchor="start" x="371" y="-693.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">request_id</text>
-<polygon fill="#ffffff" stroke="transparent" points="342,-664.2 342,-686.2 544,-686.2 544,-664.2 342,-664.2"/>
-<polygon fill="none" stroke="#000000" points="342,-664.2 342,-686.2 544,-686.2 544,-664.2 342,-664.2"/>
-<image xlink:href="../../images/foreignKeys.png" width="11px" height="12px" preserveAspectRatio="xMinYMin meet" x="347" y="-681.2"/>
-<text text-anchor="start" x="371" y="-671.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">user_id</text>
-<polygon fill="#ffffff" stroke="transparent" points="342,-642.2 342,-664.2 544,-664.2 544,-642.2 342,-642.2"/>
-<polygon fill="none" stroke="#000000" points="342,-642.2 342,-664.2 544,-664.2 544,-642.2 342,-642.2"/>
-<text text-anchor="start" x="371" y="-649.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">token_hash</text>
-<polygon fill="#ffffff" stroke="transparent" points="342,-620.2 342,-642.2 544,-642.2 544,-620.2 342,-620.2"/>
-<polygon fill="none" stroke="#000000" points="342,-620.2 342,-642.2 544,-642.2 544,-620.2 342,-620.2"/>
-<text text-anchor="start" x="371" y="-627.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">issued_at</text>
-<polygon fill="none" stroke="#000000" points="342,-598.2 342,-620.2 544,-620.2 544,-598.2 342,-598.2"/>
-<text text-anchor="start" x="371" y="-605.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">expires_at</text>
-<polygon fill="none" stroke="#000000" points="342,-576.2 342,-598.2 544,-598.2 544,-576.2 342,-576.2"/>
-<text text-anchor="start" x="371" y="-583.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">used_at</text>
-<polygon fill="none" stroke="#000000" points="342,-554.2 342,-576.2 544,-576.2 544,-554.2 342,-554.2"/>
-<text text-anchor="start" x="371" y="-561.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">invalidated_at</text>
-<polygon fill="none" stroke="#000000" points="342,-532.2 342,-554.2 544,-554.2 544,-532.2 342,-532.2"/>
-<text text-anchor="start" x="371" y="-539.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">purpose</text>
-<polygon fill="#ffffff" stroke="transparent" points="342,-513.2 342,-532.2 544,-532.2 544,-513.2 342,-513.2"/>
-<polygon fill="none" stroke="#000000" points="342,-513.2 342,-532.2 544,-532.2 544,-513.2 342,-513.2"/>
-<polygon fill="#ffffff" stroke="transparent" points="343,-514.2 343,-531.2 416,-531.2 416,-514.2 343,-514.2"/>
-<text text-anchor="start" x="345" y="-519.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">&lt; 1</text>
-<polygon fill="#ffffff" stroke="transparent" points="416,-514.2 416,-531.2 480,-531.2 480,-514.2 416,-514.2"/>
-<text text-anchor="start" x="444.9431" y="-519.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000"> &#160;</text>
-<polygon fill="#ffffff" stroke="transparent" points="480,-514.2 480,-531.2 543,-531.2 543,-514.2 480,-514.2"/>
-<text text-anchor="start" x="534.8862" y="-519.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000"> &#160;</text>
-<polygon fill="#000000" stroke="#000000" points="416,-514.2 416,-531.2 416,-531.2 416,-514.2 416,-514.2"/>
-<polygon fill="#000000" stroke="#000000" points="480,-514.2 480,-531.2 480,-531.2 480,-514.2 480,-514.2"/>
-</a>
-</g>
-</g>
-<!-- password_reset_token&#45;&gt;app_user -->
-<g id="edge3" class="edge">
-<title>password_reset_token:w&#45;&gt;app_user:e</title>
-<path fill="none" stroke="#000000" d="M327.8766,-671.3206C300.4355,-651.9034 340.0975,-566.2 293,-566.2"/>
-<polygon fill="#000000" stroke="#000000" points="334.2857,-673.081 341.0465,-678.6714 338.1429,-674.1405 342,-675.2 342,-675.2 342,-675.2 338.1429,-674.1405 342.9535,-671.7286 334.2857,-673.081 334.2857,-673.081"/>
-<ellipse fill="none" stroke="#000000" cx="331.2" cy="-672.2334" rx="3.2" ry="3.2"/>
-</g>
 <!-- audit_record -->
-<g id="node4" class="node">
+<g id="node3" class="node">
 <title>audit_record</title>
-<g id="a_node4"><a xlink:href="../../tables/audit_record.html" xlink:title="audit_record" target="_top">
+<g id="a_node3"><a xlink:href="../../tables/audit_record.html" xlink:title="audit_record" target="_top">
 <polygon fill="#ffffff" stroke="transparent" points="644,-939.2 644,-1267.2 795,-1267.2 795,-939.2 644,-939.2"/>
 <polygon fill="#f5f5f5" stroke="transparent" points="644.5,-1244.2 644.5,-1267.2 795.5,-1267.2 795.5,-1244.2 644.5,-1244.2"/>
 <polygon fill="none" stroke="#000000" points="644.5,-1244.2 644.5,-1267.2 795.5,-1267.2 795.5,-1244.2 644.5,-1244.2"/>
@@ -240,6 +187,59 @@
 <polygon fill="#000000" stroke="#000000" points="745.5,-940.2 745.5,-957.2 745.5,-957.2 745.5,-940.2 745.5,-940.2"/>
 </a>
 </g>
+</g>
+<!-- password_reset_token -->
+<g id="node4" class="node">
+<title>password_reset_token</title>
+<g id="a_node4"><a xlink:href="../../tables/password_reset_token.html" xlink:title="password_reset_token" target="_top">
+<polygon fill="#ffffff" stroke="transparent" points="342,-513.2 342,-753.2 544,-753.2 544,-513.2 342,-513.2"/>
+<polygon fill="#f5f5f5" stroke="transparent" points="342,-730.2 342,-753.2 544,-753.2 544,-730.2 342,-730.2"/>
+<polygon fill="none" stroke="#000000" points="342,-730.2 342,-753.2 544,-753.2 544,-730.2 342,-730.2"/>
+<text text-anchor="start" x="347" y="-738.8" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00" fill="#000000">password_reset_token</text>
+<text text-anchor="start" x="509.5219" y="-738.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">[table]</text>
+<polygon fill="none" stroke="#000000" points="342,-708.2 342,-730.2 544,-730.2 544,-708.2 342,-708.2"/>
+<image xlink:href="../../images/primaryKeys.png" width="11px" height="12px" preserveAspectRatio="xMinYMin meet" x="347" y="-725.2"/>
+<text text-anchor="start" x="371" y="-715.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">id</text>
+<polygon fill="#ffffff" stroke="transparent" points="342,-686.2 342,-708.2 544,-708.2 544,-686.2 342,-686.2"/>
+<polygon fill="none" stroke="#000000" points="342,-686.2 342,-708.2 544,-708.2 544,-686.2 342,-686.2"/>
+<text text-anchor="start" x="371" y="-693.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">request_id</text>
+<polygon fill="#ffffff" stroke="transparent" points="342,-664.2 342,-686.2 544,-686.2 544,-664.2 342,-664.2"/>
+<polygon fill="none" stroke="#000000" points="342,-664.2 342,-686.2 544,-686.2 544,-664.2 342,-664.2"/>
+<image xlink:href="../../images/foreignKeys.png" width="11px" height="12px" preserveAspectRatio="xMinYMin meet" x="347" y="-681.2"/>
+<text text-anchor="start" x="371" y="-671.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">user_id</text>
+<polygon fill="#ffffff" stroke="transparent" points="342,-642.2 342,-664.2 544,-664.2 544,-642.2 342,-642.2"/>
+<polygon fill="none" stroke="#000000" points="342,-642.2 342,-664.2 544,-664.2 544,-642.2 342,-642.2"/>
+<text text-anchor="start" x="371" y="-649.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">token_hash</text>
+<polygon fill="#ffffff" stroke="transparent" points="342,-620.2 342,-642.2 544,-642.2 544,-620.2 342,-620.2"/>
+<polygon fill="none" stroke="#000000" points="342,-620.2 342,-642.2 544,-642.2 544,-620.2 342,-620.2"/>
+<text text-anchor="start" x="371" y="-627.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">issued_at</text>
+<polygon fill="none" stroke="#000000" points="342,-598.2 342,-620.2 544,-620.2 544,-598.2 342,-598.2"/>
+<text text-anchor="start" x="371" y="-605.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">expires_at</text>
+<polygon fill="none" stroke="#000000" points="342,-576.2 342,-598.2 544,-598.2 544,-576.2 342,-576.2"/>
+<text text-anchor="start" x="371" y="-583.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">used_at</text>
+<polygon fill="none" stroke="#000000" points="342,-554.2 342,-576.2 544,-576.2 544,-554.2 342,-554.2"/>
+<text text-anchor="start" x="371" y="-561.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">invalidated_at</text>
+<polygon fill="none" stroke="#000000" points="342,-532.2 342,-554.2 544,-554.2 544,-532.2 342,-532.2"/>
+<text text-anchor="start" x="371" y="-539.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">purpose</text>
+<polygon fill="#ffffff" stroke="transparent" points="342,-513.2 342,-532.2 544,-532.2 544,-513.2 342,-513.2"/>
+<polygon fill="none" stroke="#000000" points="342,-513.2 342,-532.2 544,-532.2 544,-513.2 342,-513.2"/>
+<polygon fill="#ffffff" stroke="transparent" points="343,-514.2 343,-531.2 416,-531.2 416,-514.2 343,-514.2"/>
+<text text-anchor="start" x="345" y="-519.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">&lt; 1</text>
+<polygon fill="#ffffff" stroke="transparent" points="416,-514.2 416,-531.2 480,-531.2 480,-514.2 416,-514.2"/>
+<text text-anchor="start" x="444.9431" y="-519.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000"> &#160;</text>
+<polygon fill="#ffffff" stroke="transparent" points="480,-514.2 480,-531.2 543,-531.2 543,-514.2 480,-514.2"/>
+<text text-anchor="start" x="534.8862" y="-519.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000"> &#160;</text>
+<polygon fill="#000000" stroke="#000000" points="416,-514.2 416,-531.2 416,-531.2 416,-514.2 416,-514.2"/>
+<polygon fill="#000000" stroke="#000000" points="480,-514.2 480,-531.2 480,-531.2 480,-514.2 480,-514.2"/>
+</a>
+</g>
+</g>
+<!-- password_reset_token&#45;&gt;app_user -->
+<g id="edge3" class="edge">
+<title>password_reset_token:w&#45;&gt;app_user:e</title>
+<path fill="none" stroke="#000000" d="M327.8766,-671.3206C300.4355,-651.9034 340.0975,-566.2 293,-566.2"/>
+<polygon fill="#000000" stroke="#000000" points="334.2857,-673.081 341.0465,-678.6714 338.1429,-674.1405 342,-675.2 342,-675.2 342,-675.2 338.1429,-674.1405 342.9535,-671.7286 334.2857,-673.081 334.2857,-673.081"/>
+<ellipse fill="none" stroke="#000000" cx="331.2" cy="-672.2334" rx="3.2" ry="3.2"/>
 </g>
 <!-- company -->
 <g id="node8" class="node">
