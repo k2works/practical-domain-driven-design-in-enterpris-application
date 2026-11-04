@@ -2,7 +2,9 @@
 type: Plan
 title: "Bolt 39c2 計画 - S-16 取り込めない送信を理由ごとに示す（情報源の拒否・上限を超えるファイル・413）"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-04T10:31:16Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-04T10:41:11Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-11-04T10:41:12Z }
 ---
 
 # Bolt 39c2 計画 - S-16 取り込めない送信を理由ごとに示す（情報源の拒否・上限を超えるファイル・413）
@@ -12,21 +14,21 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-11-04T10:31:16Z }
 | 項目 | 内容 |
 | :--- | :--- |
 | Bolt | 第 39c2 回（W7 の 12 本目。release_plan :958 の 39c2 の行を、開始準備で縦に 39c2・39c3 の 2 本に分けた 1 つ目。下の「開始準備で決めたこと」(1)） |
-| 状態 | 初稿（承認待ち） |
+| 状態 | 承認済み（2026-11-04、推奨のとおり。Recommend 承認の指示による。human:kakimomokuri。整合性検証の指摘を反映した） |
 | 予定 | W7（2026-11-16 の週。前倒しで着手できる）。作業は約 3 時間 35 分（`check`・`uiTest`・`manualScreenshots`・`demoVideo`・`performanceTest`・SonarQube・CI とステップごとの承認の待ちを除く） |
 | アプローチ | アウトサイドイン（S-16 から。画面の層の受入シナリオ（`@ui`）の Red から入る。release_plan :958 の 39c2 の行のとおり。取込のサービスの拒否の 4 つ（IngestionOutcome.java :104・:107・:110・:116）は 39b〜39b4 で固まっていて、画面の示し方が受入条件の中心） |
 | 対象 | (1) 拒否の理由ごとの文言（承認されていない情報源・ない情報源・上限を超えるファイル `FileTooLarge`）を欄の誤りにし、39c の共通の文言（ExternalDataIngestionController.java :54-55）をやめる、(2) 上限の数（データ行 10,000 行・40 MB）を `IngestionFileLimit`（IngestionFileLimit.java :13・:16）から引き、画面の説明と誤りの文言の 2 か所の直書きをやめる、(3) multipart の 55 MB を超えた送信の 413 の案内（error/413.html）に取込の文を足す、(4) 承認済みの情報源がないときの全文を 1 か所（画面の層の定数）に寄せ、テンプレートとテストはそこから引く（39c の申し送り）、(5) 上限を超えるファイルの受入シナリオ（Bolt 39b4 の申し送り）、(6) 画面の経路で上限いっぱい（データ行 10,000 行）の計測（`performanceTest`。39c の行 18）、(7) マニュアル 12 章の上限と拒否の説明・付録 B の早見表・キャプチャ 1 枚、(8) デモの動画（`@demo-bolt-39c2/too-large`） |
-| トレース | US-14 AC1（手動取込）・AC2（承認済みの情報源のない取込の拒否）、UC-15 の主シナリオ 1〜3、PERF-06（non_functional :62）、ui_design の S-16（:141・:190-192、画面イメージ :1745-1812）、エラー要約（ui_design :954）、ACC-01（WCAG 2.2 AA） |
+| トレース | US-14 AC1（手動取込）・AC2（承認済みの情報源のない取込の拒否）・横断の受入条件（入力エラーで、エラー要約・該当項目・理由・修正方法を示す。user_story :39）、UC-15 の主シナリオ 1〜3 と代替 2c（上限を超えるファイルは原本を保存せずに拒否し、データ責任者がファイルを分けて取り込む。system_usecase :525）、BR-13（エラー要約。requirements_definition :734）、PERF-06（non_functional :62）、ui_design の S-16（:141・:190-192、画面イメージ :1745-1812）、エラー要約（ui_design :954）、ACC-01（WCAG 2.2 AA） |
 | GitHub | [#18](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/issues/18)（US-14。クローズは 39h） |
 | SP | 0 |
-| 承認ゲート | **ステップごとに止める**（release_plan :958 の「ステップごと（画面・スキーマ・新しいファイル）」）。画面（拒否の文言と 413 の案内）、新しいファイル（キャプチャ `docs/manual/assets/12-ingestion-too-large.png`。下の一覧）。スキーマは 39c2 では変えない（受信記録の行の範囲の列は 39c3。開始準備の決定 (6)）。注: 2026-11-04 の人の指示「Recommend 承認で進めて」（重ねての指示）により、各ステップの終わりで止めて推奨の案を承認として記録する（人が個別に見ていないことが分かるように「推奨のとおり（Recommend 承認の指示による）」と書く）。ステップを飛ばしたり束ねたりはしない |
-| 開始準備で決めたこと | 2026-11-04、推奨のとおり（Recommend 承認の指示による。human:kakimomokuri）: (1) **分け方**: 縦に 2 本に分ける。release_plan :958 の 39c2 の範囲と Bolt 39c の申し送り（[計画](bolt_39c_plan.md) :150-162、[終了報告](bolt_39c_report.md) :98・:101）を 1 本にすると約 7 時間 40 分（重なる設計の文書・品質ゲート・報告をまとめても約 6 時間 40 分）で半日を超える（下の「時間の配分と打ち切り」）。**39c2** は「取り込めない送信（情報源の拒否・上限を超えるファイル・55 MB を超える送信）を、理由とどうすればよいかで示す」縦（約 3 時間 35 分）、**39c3** は「取り込んだファイルの要確認と注記（隔離の理由）を、業務の言葉で行の順に示す」縦（受信記録の行の範囲の列（スキーマ）、要確認を DB から復元する照会と `requiresReview()` の一致、注記の照会と並び、ファイルの誤りの「どうすればよいか」、0 バイトのファイルと種別の違うファイルの受入シナリオ、マニュアルの注記の読み方。約 4 時間 15 分。39c3 の開始準備で見積り直す）。どちらの縦もマニュアルの更新を完了条件に入れる。代わりの案（39c の計画 :363 の例「行の番号の列と注記の並びだけを 39c3 に送る」）は取らない。取り込めなかった部分の注記（閉じ忘れなど）を画面に出すには、その受信記録を DB で見分ける手段が要るが、いまはファイルの終わりまでの範囲の受信記録も行の誤りの受信記録も外部原本 ID が NULL のキーのない隔離で（IngestionService.java :283-292・:299-311）、見分けられるのは注記の文の頭だけになる。行の範囲の列なしで要確認の注記を出すと、注記の文の形に照会が依存する。要確認と注記は行の範囲の列と同じ縦に置く、(2) **拒否の文言**: 3 つの拒否をエラー要約の欄の誤りにする（ui_design :954 の「表示名: 文言」。見出しは「取り込めませんでした」のまま）。情報源「選んだ情報源は承認済みではないため取り込めません。画面を開き直して、承認済みの情報源を選んでください。」（`DataSourceNotApproved`。選択肢は承認済みだけなので、起きるのは画面を開いた後に情報源が停止されたときと、画面を経ない送信）、情報源「選んだ情報源が見つかりません。画面を開き直して、情報源を選び直してください。」（`DataSourceNotFound` と、controller が取込のサービスを呼ぶ前に見つける ID の形の誤り・ない ID・知らない原本種別（ExternalDataIngestionController.java :101-106）。原本種別は `CsvFileKind` の名前だけ（DataSource.java :13）なので、知らない原本種別は起きない前提で同じ文言にする）、取込ファイル「ファイルが大きすぎます（1 ファイルにつきデータ行 10,000 行・40 MB まで）。ファイルを分けて取り込んでください。」（`FileTooLarge`）。共通の文言 `REFUSED`（:54-55）と大域の誤り（new.html :27）は使わなくなるので外す。`NotPermitted` は 403 のまま（:114）、(3) **上限の数の出どころ**: 画面の説明（new.html :47）と `FileTooLarge` の文言の「10,000 行」「40 MB」を `IngestionFileLimit.MAX_DATA_LINES`・`MAX_BYTES`（IngestionFileLimit.java :13・:16）から作る。画面の層（`interfaces`）が `domain` を読むことは層の規則が許す（LayerArchitectureTest :101-102）。ドメインの規則のクラスは `Repository` で終わらない（:255-260 の規則に当たらない）、(4) **413 の案内**: error/413.html に、パスが `/staff/external-data/ingestions` で始まるときの取込の文を足す（前例は見積依頼の送信 :14-19。ほかは一般の文 :20-24 のまま）。見出し「取込ファイルが大きすぎます」、本文「1 ファイルにつきデータ行 10,000 行・40 MB までです。ブラウザの「戻る」で外部データの取込の画面に戻り、ファイルを分けて取り込んでください。」、リンク「外部データの取込へ」（`/staff/external-data/ingestions/new`）。413 の案内は認証の前の画面と同じレイアウト（error/413.html :2-6）で業務データを出さないので、数は文に書く（定数を引くモデルがない。下の「設計の決定」の 413 の行）、(5) **承認済みの情報源がないときの文言の置き場所**: 全文を画面の層の定数（例 `ExternalDataIngestionController.NO_INGESTIBLE_SOURCE`）にし、理由の部分は `PilotReadiness.NO_APPROVED_SOURCE`（PilotReadiness.java :13。いまはパッケージの中だけで読める）を公開して引く。テンプレート（new.html :17）はモデルの値を出し、テスト（ExternalDataIngestionControllerTest :62 の `NO_SOURCE`）は定数で確かめる。マニュアル（12 章 :93・付録 B :215）は文書なので定数から引けない（マニュアルを読むテストはない。`docs/manual` を読むテストは ManualScreenshotSteps だけ）。ステップ 5 の突き合わせ（T-197）で確かめる、(6) **受信記録の行の範囲の列（スキーマ。実装は 39c3）**: 受信記録に `first_line_number`・`last_line_number`（INTEGER、NULL 可。2 列はそろって NULL かそろって値を持ち、1 以上で始まりが終わり以下の CHECK）を足す。値は行ごとの結果（形式の正しい行と行の誤り。IngestionOutcome.java :67-68 の始まりと終わり）と、ファイルの終わりまで取り込めなかった範囲（始まりからファイルの終わりの物理行まで。IngestionService.java :291-292）。ファイルの誤りの受信記録（ファイル全体の原本を指す。:276-281）と既存の行は NULL（受信記録は追記専用で更新しない。V20261103100000 :96）。注記は行の範囲の順（NULL のファイルの誤りを先）に並べる。DE-14 はすでに同じ物理行の範囲を持つ（IngestionService.java :236-251）。代わりの案は取らない: (a) 注記の文の頭の行の番号を読む（文の形に照会が依存し、注記は 1,000 文字で切られる（:323-329）。ファイルの誤りの文には番号がない）、(b) 原本のキーを決まった順にする（キーは前置きと乱数の形に検査され（PayloadObjectKey.java :19-20）、保存の契約と形の検査を変えることになる）、(c) 分類の時刻で並べる（1 つの取込の受信記録はすべて Clock から 1 回取った同じ時刻（IngestionService.java :127・:203・:309）で、並びを決められない）、(d) 表示の並びを諦める（データ責任者は行の番号で原本のファイルと照らす。S-17 の一覧（39d）も同じ並びが要る）。スキーマの変更なので【前の決定の変更】の注で跡を残す（下）、(7) **変異の検知の偏り（39c の既知の課題）**: テストは足さない。V2（CSRF）を検知する 1 件は行 2 を名乗るテスト、V7（ナビ）を検知する 1 件は行 13 を名乗るテスト（ExternalDataIngestionSecurityIntegrationTest :268）で、落ちたテストの名前が原因を示す。V8（ホーム）は UI の 4 本も止めるが、行 13 のホームのテスト（AuthenticationSecurityIntegrationTest :647）が同時に落ちるので原因を絞れる。既知の課題を閉じる、(8) **上限いっぱいの計測の経路**: `ExternalDataIngestionPerformanceTest`（`@Tag("NFR-PERF-06")`。:54・:61・:64）に、画面の POST（MockMvc の multipart。認証は ExternalDataIngestionSecurityIntegrationTest の POST の書き方）でデータ行 10,000 行のファイルを送り、結果の画面への移動（302）までの 1 本を足す。Tomcat の multipart の受け取りは MockMvc の外なので測らず、計測の範囲に書く。PERF-06 の判定は前例どおり Linux の CI の手動のジョブ（:47-48）、(9) **マニュアル**: 12 章の上限の説明（12-外部データ.md :89。いまは 39c の共通の文言を書いている）を理由ごとの文言に直し、55 MB を超えたときの 413 の案内と、情報源の拒否の 2 つを足す。付録 B の早見表（:215 の近く）に新しい 4 つの文言の行を足す。キャプチャは上限を超えるファイルの拒否の 1 枚を足す（新しいファイル）。413 の案内はキャプチャにしない（一般のレイアウトで、文で足りる） |
+| 承認ゲート | **ステップごとに止める**（release_plan :958 の「ステップごと（画面・スキーマ・新しいファイル）」）。画面（拒否の文言と 413 の案内）、新しいファイル（413 の統合テスト `ExternalDataUploadLimitIntegrationTest` とキャプチャ `docs/manual/assets/12-ingestion-too-large.png`。下の一覧）。スキーマは 39c2 では変えない（受信記録の行の範囲の列は 39c3。開始準備の決定 (6)）。注: 2026-11-04 の人の指示「Recommend 承認で進めて」（重ねての指示）により、各ステップの終わりで止めて推奨の案を承認として記録する（人が個別に見ていないことが分かるように「推奨のとおり（Recommend 承認の指示による）」と書く）。ステップを飛ばしたり束ねたりはしない |
+| 開始準備で決めたこと | 2026-11-04、推奨のとおり（Recommend 承認の指示による。human:kakimomokuri）: (1) **分け方**: 縦に 2 本に分ける。release_plan :958 の 39c2 の範囲と Bolt 39c の申し送り（[計画](bolt_39c_plan.md) :150-162、[終了報告](bolt_39c_report.md) :98・:101）を 1 本にすると約 7 時間 40 分（重なる設計の文書・品質ゲート・報告をまとめても約 6 時間 40 分）で半日を超える（下の「時間の配分と打ち切り」）。**39c2** は「取り込めない送信（情報源の拒否・上限を超えるファイル・55 MB を超える送信）を、理由とどうすればよいかで示す」縦（約 3 時間 35 分）、**39c3** は「取り込んだファイルの要確認と注記（隔離の理由）を、業務の言葉で行の順に示す」縦（受信記録の行の範囲の列（スキーマ）、要確認を DB から復元する照会と `requiresReview()` の一致、注記の照会と並び、ファイルの誤りの「どうすればよいか」、0 バイトのファイルと種別の違うファイルの受入シナリオ、マニュアルの注記の読み方。約 4 時間 15 分。39c3 の開始準備で見積り直す）。どちらの縦もマニュアルの更新を完了条件に入れる。代わりの案（39c の計画 :363 の例「行の番号の列と注記の並びだけを 39c3 に送る」）は取らない。取り込めなかった部分の注記（閉じ忘れなど）を画面に出すには、その受信記録を DB で見分ける手段が要るが、いまはファイルの終わりまでの範囲の受信記録も行の誤りの受信記録も外部原本 ID が NULL のキーのない隔離で（IngestionService.java :283-292・:299-311）、見分けられるのは注記の文の頭だけになる。行の範囲の列なしで要確認の注記を出すと、注記の文の形に照会が依存する。要確認と注記は行の範囲の列と同じ縦に置く。39c の計画の見積り（約 4 時間 15 分。[計画](bolt_39c_plan.md) :363）との差（約 3.4 時間）の内訳（概算）は、縦を 2 本にした重なり（設計の文書 20 分・品質ゲート 30 分・報告 10 分）約 60 分、39c の見積りになかった申し送り（0 件の文言の置き場所・変異の偏り・上限の数の出どころ）と 413 の統合テスト約 40 分、ステップごとの承認に向けた Red の記録と直す既存のテストの一覧（T-217）約 20 分、キャプチャ（39c の見積りの 25 分に対し 2 本で約 60 分）約 35 分、デモの動画（39c の見積りになかった）約 10 分、変異（ステップ 6）と計測の区切り（T-241）約 15 分、0 バイト・種別の違うファイル・混在の受入シナリオとファイルの誤りの「どうすればよいか」の網羅（T-240）約 25 分、(2) **拒否の文言**: 3 つの拒否をエラー要約の欄の誤りにする（ui_design :954 の「表示名: 文言」。見出しは「取り込めませんでした」のまま）。情報源「選んだ情報源は承認済みではないため取り込めません。画面を開き直して、承認済みの情報源を選んでください。」（`DataSourceNotApproved`。選択肢は承認済みだけなので、起きるのは画面を開いた後に情報源が停止されたときと、画面を経ない送信）、情報源「選んだ情報源が見つかりません。画面を開き直して、情報源を選び直してください。」（`DataSourceNotFound` と、controller が取込のサービスを呼ぶ前に見つける ID の形の誤り・ない ID・知らない原本種別（ExternalDataIngestionController.java :101-106）。原本種別は `CsvFileKind` の名前だけ（DataSource.java :13）なので、知らない原本種別は起きない前提で同じ文言にする）、取込ファイル「ファイルが大きすぎます（1 ファイルにつきデータ行 10,000 行・40 MB まで）。ファイルを分けて取り込んでください。」（`FileTooLarge`）。共通の文言 `REFUSED`（:54-55）と大域の誤り（new.html :27）は使わなくなるので外す。`NotPermitted` は 403 のまま（:114）、(3) **上限の数の出どころ**: 画面の説明（new.html :47）と `FileTooLarge` の文言の「10,000 行」「40 MB」を `IngestionFileLimit.MAX_DATA_LINES`・`MAX_BYTES`（IngestionFileLimit.java :13・:16）から作る。画面の層（`interfaces`）が `domain` を読むことは層の規則が許す（LayerArchitectureTest :101-102）。ドメインの規則のクラスは `Repository` で終わらない（:255-260 の規則に当たらない）、(4) **413 の案内**: error/413.html に、パスが `/staff/external-data/ingestions` で始まるときの取込の文を足す（前例は見積依頼の送信 :14-19。ほかは一般の文 :20-24 のまま）。見出し「取込ファイルが大きすぎます」、本文「1 ファイルにつきデータ行 10,000 行・40 MB までです。ブラウザの「戻る」で外部データの取込の画面に戻り、ファイルを分けて取り込んでください。」、リンク「外部データの取込へ」（`/staff/external-data/ingestions/new`）。413 の案内は認証の前の画面と同じレイアウト（error/413.html :2-6）で業務データを出さないので、数は文に書く（定数を引くモデルがない。下の「設計の決定」の 413 の行）、(5) **承認済みの情報源がないときの文言の置き場所**: 全文を画面の層の定数（例 `ExternalDataIngestionController.NO_INGESTIBLE_SOURCE`）にし、理由の部分は `PilotReadiness.NO_APPROVED_SOURCE`（PilotReadiness.java :13。いまはパッケージの中だけで読める）を公開して引く。`PilotReadiness.reason()` を呼ばず定数を公開するのは、0 件の画面の文言は承認済みの情報源がないときの決まった文で、照会の結果（理由の有無）に依存させずに 1 か所の定数から作るという 39c の申し送り（[計画](bolt_39c_plan.md) :159）に沿うため。テンプレート（new.html :17）はモデルの値を出し、テスト（ExternalDataIngestionControllerTest :62 の `NO_SOURCE`）は定数で確かめる。マニュアル（12 章 :93・付録 B :215）は文書なので定数から引けない（マニュアルを読むテストはない。`docs/manual` を読むテストは ManualScreenshotSteps だけ）。ステップ 5 の突き合わせ（T-197）で確かめる、(6) **受信記録の行の範囲の列（スキーマ。実装は 39c3）**: 受信記録に `first_line_number`・`last_line_number`（INTEGER、NULL 可。2 列はそろって NULL かそろって値を持ち、1 以上で始まりが終わり以下の CHECK）を足す。値は行ごとの結果（形式の正しい行と行の誤り。IngestionOutcome.java :67-68 の始まりと終わり）と、ファイルの終わりまで取り込めなかった範囲（始まりからファイルの終わりの物理行まで。IngestionService.java :291-292）。ファイルの誤りの受信記録（ファイル全体の原本を指す。:276-281）と既存の行は NULL（受信記録は追記専用で更新しない。V20261103100000 :96）。注記は行の範囲の順（NULL のファイルの誤りを先）に並べる。DE-14 はすでに同じ物理行の範囲を持つ（IngestionService.java :236-251）。代わりの案は取らない: (a) 注記の文の頭の行の番号を読む（文の形に照会が依存し、注記は 1,000 文字で切られる（:323-329）。ファイルの誤りの文には番号がない）、(b) 原本のキーを決まった順にする（キーは前置きと乱数の形に検査され（PayloadObjectKey.java :19-20）、保存の契約と形の検査を変えることになる）、(c) 分類の時刻で並べる（1 つの取込の受信記録はすべて Clock から 1 回取った同じ時刻（IngestionService.java :127・:203・:309）で、並びを決められない）、(d) 表示の並びを諦める（データ責任者は行の番号で原本のファイルと照らす。S-17 の一覧（39d）も同じ並びが要る）。スキーマの変更なので【前の決定の変更】の注で跡を残す（下）、(7) **変異の検知の偏り（39c の既知の課題）**: テストは足さない。V2（CSRF）を検知する 1 件は行 2 を名乗るテスト（ExternalDataIngestionSecurityIntegrationTest :189）、V7（ナビ）を検知する 1 件は行 13 を名乗るテスト（ExternalDataIngestionSecurityIntegrationTest :268）で、落ちたテストの名前が原因を示す。V8（ホーム）は UI の 4 本も止めるが、行 13 のホームのテスト（AuthenticationSecurityIntegrationTest :647）が同時に落ちるので原因を絞れる。既知の課題を閉じる、(8) **上限いっぱいの計測の経路**: `ExternalDataIngestionPerformanceTest`（`@Tag("NFR-PERF-06")`。:54・:61・:64）に、画面の POST（MockMvc の multipart。認証は ExternalDataIngestionSecurityIntegrationTest の POST の書き方）でデータ行 10,000 行のファイルを送り、結果の画面への移動（302）までの 1 本を足す。Tomcat の multipart の受け取りは MockMvc の外なので測らず、計測の範囲に書く。PERF-06 の判定は前例どおり Linux の CI の手動のジョブ（:47-48）、(9) **マニュアル**: 12 章のエラー要約の行（12-外部データ.md :51。選んだ情報源の扱い）と上限・停止の説明（:89-91。いまは 39c の共通の文言を書いている）を理由ごとの文言に直し、55 MB を超えたときの 413 の案内と、情報源の拒否の 2 つを足す。付録 B の早見表の共通の文言の行（付録B-トラブルシューティング.md :214）を新しい 4 つの文言の行に置き換える。キャプチャは上限を超えるファイルの拒否の 1 枚を足す（新しいファイル）。413 の案内はキャプチャにしない（一般のレイアウトで、文で足りる） |
 
 【前の決定の変更】(1): release_plan :958 の 39c2 の行（初案。Bolt 39c の開始準備で 39c から分けた範囲）を、この開始準備で 39c2 と 39c3 に縦に分ける。順序（:967）は 39c → 39c2 → 39c3 → 39d にする（2026-11-04、推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）。
 
 【前の決定の変更】(6): 受信記録の表（Bolt 39a3 の V20261103100000 :75-91、data_model :1046-1058・:1151）は行の番号を持たない形で決めた。39c3 で行の範囲の 2 列を足す（共通のマイグレーション。H2 と PostgreSQL の両方で通る形）。受信記録の record（ReceivedRecord.java :29-38）と、受信記録を作る 2 か所（IngestionService.java :194-203・:300-309）と、テストの組み立て（契約 ExternalDataRecordRepositoriesContract の 4 か所、MyBatis の統合テスト 2 つ）が変わる（2026-11-04、推奨のとおり。Recommend 承認の指示による。human:kakimomokuri。スキーマの承認ゲートは 39c3 の計画で通す）。
 
-新しいファイル（39c2）: キャプチャ `docs/manual/assets/12-ingestion-too-large.png`。本体・テストのファイルは足さない（`ExternalDataIngestionController`・`new.html`・`error/413.html`・`PilotReadiness`、`ExternalDataIngestionControllerTest`・`ExternalDataIngestionSecurityIntegrationTest`・`UploadLimitIntegrationTest`（または外部データの側に同じ形のテストを足すかはステップ 2 で決める。足すなら新しいファイルとして諮る）・`ExternalDataIngestionPerformanceTest`・`ingest_external_data_ui.feature`・`ExternalDataIngestionUiSteps`・`manual_screenshots.feature` を直す）。
+新しいファイル（39c2）: 413 の統合テスト `apps/cargo-tracker/src/test/java/com/example/cargotracker/externaldata/interfaces/web/ExternalDataUploadLimitIntegrationTest.java`（RANDOM_PORT。前例 UploadLimitIntegrationTest の形。前例は quotation のパッケージ（UploadLimitIntegrationTest.java :1）にあり、外部データのパスを足すとコンテキストの独立が崩れるので外部データの側に作る。設計の決定の 413 の行）と、キャプチャ `docs/manual/assets/12-ingestion-too-large.png`。本体のファイルは足さない（`ExternalDataIngestionController`・`new.html`・`error/413.html`・`PilotReadiness` を直す）。テストは `ExternalDataIngestionControllerTest`・`ExternalDataIngestionSecurityIntegrationTest`・`ExternalDataIngestionPerformanceTest`・`ingest_external_data_ui.feature`・`ExternalDataIngestionUiSteps`・`manual_screenshots.feature` を直す（`UploadLimitIntegrationTest` は直さない）。
 
 ## Bolt ゴール
 
@@ -34,7 +36,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-11-04T10:31:16Z }
 
 ### 開始準備で確かめたこと
 
-- **release_plan の 39c2 の行**（:958）: 「拒否の理由ごとの文言（承認されていない・ない情報源、上限を超えるファイル `FileTooLarge`）と 413 の案内の取込の文、形式の誤り・文字コードの誤り・閉じ忘れの要確認と注記、要確認を DB から復元する照会と `requiresReview()` の一致、ファイルの誤りの「どうすればよいか」、注記の並び（受信記録の行の番号の列。スキーマは開始準備で諮る）、上限いっぱいの画面の経路の計測（PERF-06）、形式の誤り・値の誤りの注記のマニュアルの説明」、アプローチはアウトサイドイン、承認ゲートは「ステップごと（画面・スキーマ・新しいファイル）」。順序は :967、デモ項目は :973（動画は画面の振る舞いが変わる Bolt で撮る）
+- **release_plan の 39c2 の行**（:958）: 「拒否の理由ごとの文言（承認されていない・ない情報源、上限を超えるファイル `FileTooLarge`）と 413 の案内の取込の文、形式の誤り・文字コードの誤り・閉じ忘れの要確認と注記、要確認を DB から復元する照会と `requiresReview()` の一致、ファイルの誤りの「どうすればよいか」、注記の並び（受信記録の行の番号の列。スキーマは開始準備で諮る）、上限いっぱいの画面の経路の計測（PERF-06）、形式の誤り・値の誤りの注記のマニュアルの説明」、アプローチはアウトサイドイン、承認ゲートは「ステップごと（画面・スキーマ・新しいファイル）」。順序は :967、デモ項目は :973（動画は画面の振る舞いが変わる Bolt で撮る）。注: 計画の承認で 39c2 の行を直し 39c3 の行（:959）を足したので、順序は :968、デモ項目は :974 に移った
 - **前の Bolt の申し送り**: Bolt 39c（[計画](bolt_39c_plan.md) :150-162 の 39c2 の 10 行、[終了報告](bolt_39c_report.md) :98（既知の課題）・:101（変異 V8））、Bolt 39b2（[終了報告](bolt_39b2_report.md) :87・:104・:108。要確認を DB から復元する照会と `requiresReview()` の一致、注記を画面で読む形、ファイルの誤りの「どうすればよいか」、形式の誤りの注記のマニュアルの説明）、Bolt 39b2b（[終了報告](bolt_39b2b_report.md) :81。値の誤りの注記のマニュアルの説明）、Bolt 39b4（[終了報告](bolt_39b4_report.md) :68・:80・:95。上限を超えるファイルの受入シナリオ、画面での拒否の示し方、マニュアルの上限の説明）。このうち 39c2 は拒否・上限・413・文言の置き場所・計測・変異の偏り、39c3 は要確認と注記（下の申し送り）
 - **controller の今の形**（ExternalDataIngestionController.java）: 情報源・ファイルを選ばない誤りは欄の誤り（:90-100）。ID の形の誤り・ない情報源・知らない原本種別はサービスを呼ばずに共通の文言（:101-106・:145-148）。サービスの結果は `Ingested` で PRG、`NotPermitted` で 403、ほかの 3 つは共通の文言（:109-118）。`switch` は sealed の型で網羅を確かめる（IngestionOutcome.java :14）
 - **取込のサービスの拒否の順**（IngestionService.java）: 役割（:113-115）→ 情報源の有無（:116-119）→ 承認の状態（:149-151）→ 大きさ（:152-154）。拒否なら原本も保存しない（:53-54 の Javadoc。原本の保存は :126 より後）
@@ -42,7 +44,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-11-04T10:31:16Z }
 - **multipart と 413**: 1 回 55 MB（application.properties :48-49）、上限の少し上（60 MB）までは Tomcat が読み捨てて 413 の案内を返す（:50-51）。413 の案内（error/413.html）は CSRF の確認が本体を読むのでコントローラーより前で起きる（:2-5）、見積依頼の送信だけに専用の文（:14-19）、ほかは一般の文（:20-24）。前例のテストは `UploadLimitIntegrationTest`（RANDOM_PORT。:23・:33-37・:41-44）。40 MiB を超え 55 MB 以下の送信はコントローラーに届き `FileTooLarge` になる
 - **承認済みの情報源がないときの文言**: テンプレート（new.html :17）、テスト（ExternalDataIngestionControllerTest :62）、マニュアル（12-外部データ.md :93、付録B-トラブルシューティング.md :215）の 4 か所に直書き。理由の部分は `PilotReadiness.NO_APPROVED_SOURCE`（PilotReadiness.java :13。パッケージの中だけで読める `static final`。末尾の「。」を持たない）
 - **要確認と注記の今の形（39c3 の前提）**: `requiresReview()` は取り込めなかった部分があるか（IngestionOutcome.java :55-61）。ファイルの誤りはデータ行の有無にかかわらず取り込めなかった部分になる（IngestFileCommandAssembler.java :81-88。データ行がなければ始まりは NULL で数 0。CsvRecords.java :33）。DB の定めは「取り込めなかった物理行の数が 0 より大きい、またはファイルの誤りの隔離の受信記録がある」（V20261103150000 :5・:13-17）で、ファイルの誤りの受信記録は取込のファイル全体のキーを持つ（IngestionService.java :276-281）。受信記録は行の番号を持たず（V20261103100000 :75-91）、照会は件数を数えるだけ（ReceivedRecordMapper.xml :16-19）。原本のキーは乱数（PayloadObjectKey.java :30-37）。注記の文の頭にだけ行の範囲がある（IngestionService.java :65・:67、FormatDefect.java :111-113・:123-125）。ファイルの誤りの「どうすればよいか」は必要な列がない・同じ名前の列が空（FormatDefect.java :25・:27）
-- **変異の検知（39c）**: V2 は行 2、V7 は行 13（ExternalDataIngestionSecurityIntegrationTest :254・:268）、V8 は行 13 のホーム（AuthenticationSecurityIntegrationTest :647）と UI の 4 本（[39c の終了報告](bolt_39c_report.md) :51・:101）
+- **変異の検知（39c）**: V2 は行 2（ExternalDataIngestionSecurityIntegrationTest :189）、V7 は行 13（:268）、V8 は行 13 のホーム（AuthenticationSecurityIntegrationTest :647）と UI の 4 本（[39c の終了報告](bolt_39c_report.md) :51・:101）
 - **性能のテスト**: `ExternalDataIngestionPerformanceTest`（`@Tag("NFR-PERF-06")`、1 万件 :61、5 分 :64）は組み立てから取込のコミットまでを測る（:41-48。行 1・2・10・11・12 :108・:115・:133）。`performanceTest` は `check` と push の CI に入れない（build.gradle :138-143）
 - **マニュアル**: 12 章の節は 12.1 だけ（12-外部データ.md :23 から。小見出しは :25〜:87）。隔離の理由の読み方は「後の版で本章に足します」（:83）。キャプチャは 3 枚（`docs/manual/assets/12-ingestion-new.png`・`12-ingestion-rejected.png`・`12-ingestion-result.png`）
 
@@ -54,11 +56,12 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-11-04T10:31:16Z }
 | 拒否の文言 | 開始準備の決定 (2)。欄の誤りとして `rejectValue` する（情報源は `dataSourceId`、上限は `file`）。リンクは各欄へ（情報源は最初のラジオの `dataSourceId`、取込ファイルは `file`）。誤りの画面で選んでいたファイルは「選んだファイルは残っていません。もう一度選んでください。」（new.html :31）をそのまま出す。承認されていない・ない情報源の誤りの後は、選んだ情報源を戻さない（選択肢にない値は戻せない。開き直した選択肢から選ばせる） | ui_design :954、ExternalDataIngestionController.java :92-100 |
 | 拒否の網羅（T-240） | 理由ごとの文言は `switch` の 3 つの拒否と controller の手前の拒否から作り、すべての拒否が空でない欄の誤りになることを、拒否の種類ごとのテスト（行 1・2・5・6）で確かめる | IngestionOutcome.java :104・:107・:116 |
 | 上限の数 | 開始準備の決定 (3)。「40 MB」は `MAX_BYTES / (1024 * 1024)`、「10,000 行」は `MAX_DATA_LINES` を 3 桁の区切りで書く（画面の説明と誤りの文言の 2 か所）。マニュアルはバイト数（41,943,040 バイト）も書く（12-外部データ.md :89 のまま） | IngestionFileLimit.java :13・:16 |
-| 413 の案内 | 開始準備の決定 (4)。413 の案内のテンプレートは `${path}` だけを読む（error/413.html :14・:20）ので、数は文に直書きにし、テスト（行 4）で `IngestionFileLimit` の数と合うことを確かめる。見積依頼の文と一般の文の判定は変えない。60 MB を超えると Tomcat が読み捨てず接続が切れる（application.properties :50-51）のは今と同じで、マニュアルに「ファイルを分けて」を書く | error/413.html :14-24、UploadLimitIntegrationTest :33-44 |
+| 413 の案内 | 開始準備の決定 (4)。413 の案内のテンプレートは `${path}` だけを読む（error/413.html :14・:20）ので、数は文に直書きにし、テスト（行 4）で `IngestionFileLimit` の数と合うことを確かめる。取込の案内も送信が拒まれた印（`main` の `data-session-input="rejected"`。ui_design :1869）の中に置き、行 4 のテストで確かめる。テストは外部データの側（`externaldata.interfaces.web`）に新しいファイル `ExternalDataUploadLimitIntegrationTest` を作る（前例 UploadLimitIntegrationTest は quotation のパッケージにあり、外部データのパスを足すとコンテキストの独立が崩れる。2026-11-04、推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）。見積依頼の文と一般の文の判定は変えない。60 MB を超えると Tomcat が読み捨てず接続が切れる（application.properties :50-51）のは今と同じで、マニュアルに「ファイルを分けて」を書く | error/413.html :14-24、UploadLimitIntegrationTest :33-44 |
 | 0 件の文言 | 開始準備の決定 (5)。`PilotReadiness.NO_APPROVED_SOURCE` を `public` にし、画面の層の定数を「取り込める情報源がありません。」＋理由＋「。承認は運用の手順で行います。」で作る。画面の文言は変えない（39c の文言と 1 字も違えない。ExternalDataIngestionControllerTest :62 と同じ全文） | PilotReadiness.java :13、new.html :17 |
 | 画面を開いた後に停止した情報源 | 選ぶ画面を開いた後に情報源が停止（`SUSPENDED`）されると、送信は `DataSourceNotApproved` になる（承認の状態はサービスが送信の時に確かめる。IngestionService.java :149-151）。セキュリティの統合テスト（PostgreSQL）で、自分の UUID を含む情報源を承認済みで作り、停止してから送る（T-230） | IngestionService.java :149-151 |
+| 停止で承認済みが 0 件になったとき | 停止で承認済みの情報源が 0 件になると、誤りの画面はフォーム（`th:unless="${#lists.isEmpty(sources)}"`。new.html :18）を出さないので、フォームの中のエラー要約も出なくなる。エラー要約をフォームの外（`th:unless` の外）に出し、先にエラー要約（情報源の拒否の文言）、その下に 0 件の全文を示す（ui_design :954 のエラー要約の決まりと US-14 AC2 の両方を満たす）。情報源の欄がないので、要約のリンクの先は 0 件の全文の段落にする。状態の組み合わせの行 5 の「残りが 0 件のとき」で確かめる（T-182）（2026-11-04、推奨のとおり。Recommend 承認の指示による。human:kakimomokuri） | new.html :17-18、ui_design :954、US-14 AC2 |
 | 上限を超えるファイルのテストのデータ | 行数の超過は航海のデータ行 10,001 行（寄港 2、数百 KB）で UI まで通す。バイト数の超過（41,943,041 バイト以上 55 MB 以下）はセキュリティの統合テストで 1 本（長い値の 1 行でもよい。大きさの判定は承認の状態の後で、行の形式より前の拒否なので、ファイルの中身の形式を問わない（IngestionService.java :152-154 は組み立ての後だが、拒否なら何も保存しない））。controller のテストは取込のサービスを mock して `FileTooLarge` を返す | IngestionService.java :148-156 |
-| 上限いっぱいの計測 | 開始準備の決定 (8)。計測の値はログに「PERF-06 web」で始まる行で出す（前例 :173 の形）。multipart の解析（MockMvc）・組み立て・取込を区切って測る（T-241） | ExternalDataIngestionPerformanceTest :41-48・:173 |
+| 上限いっぱいの計測 | 開始準備の決定 (8)。計測の値はログに「PERF-06 web」で始まる行で出す（前例 :173 の形）。multipart の解析（MockMvc）・組み立て・取込を区切って測る（T-241）。組み立てと取込の時間は、取込のサービスを spy にして `ingest` の呼び出しの前後の時刻を取り、画面の POST 全体の時間から引いて分ける | ExternalDataIngestionPerformanceTest :41-48・:173 |
 | 変異の偏り | 開始準備の決定 (7)。テストを足さず、既知の課題を閉じる | ExternalDataIngestionSecurityIntegrationTest :268、AuthenticationSecurityIntegrationTest :647 |
 
 ## ふりかえりと前の Bolt からの引き継ぎ
@@ -66,7 +69,8 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-11-04T10:31:16Z }
 | 出典 | 内容 | この Bolt での扱い |
 | :--- | :--- | :--- |
 | W6 の Try T-204・T-212、Bolt 38h の T-227、Bolt 39b の T-233 | サブエージェントへの指示の最初に heredoc（`<<`）と標準入力を待つコマンドを使わないと書く | 任せるときの指示の最初に書く。ファイルは Write・Edit で書く |
-| W6 の Try T-217、Bolt 39b2 の Try | 本体を直す前に Red を流し、落ちた理由を記録する。Red の記録に、直したテストの一覧を添える | ステップ 2 の Red（feature・controller・セキュリティ・413・計測）。共通の文言をやめて落ちる既存のテスト（ExternalDataIngestionControllerTest の行 5 の 39c の分と、`REFUSED` を参照するテスト）を、ステップ 2 の開始で grep して一覧にする |
+| W6 の Try T-217、Bolt 39b2 の Try | 本体を直す前に Red を流し、落ちた理由を記録する。Red の記録に、直したテストの一覧を添える | ステップ 2 の Red（feature・controller・セキュリティ・413・計測）。共通の文言をやめて落ちる既存のテスト（ExternalDataIngestionControllerTest の 39c の行 5 の 5 本（:225・:235・:244・:253・:265）と、`REFUSED` を参照するテスト）を、ステップ 2 の開始で grep して一覧にする。39c の行4_・行5_ のテストは消さず、39c の拒否の共通の文言を確かめていたテストは 39c2 で理由ごとの文言に変わるのでこの一覧で直す（新しい振る舞いは 39c2 の入れ子のクラスで確かめる） |
+| W6 の Try T-191 | 環境の前提に設定ファイルの行を添える | multipart の 55 MB と 413 の読み捨ての 60 MB（application.properties :48-51）を、開始準備で確かめたことと行 4 に添えた |
 | W6 の Try T-225・T-213 | push の前に `check` | ステップ 6（`uiTest` も流す） |
 | W6 の Try T-182・T-211・T-216 | 状態の組み合わせの表に重複・隔離と出口・誤った入力の行を置く | 下の表（行 1〜23。39c3 の行も先に置き、送り先を書く） |
 | W6 の Try T-184 | listener は配信まで確かめる | 拒否は取込のトランザクションでイベントを出さない（IngestionService.java :112-124 は保存の前に返す）。行 1・2・5 の統合テストで、自分の情報源の取込とイベント発行記録がないことを確かめる |
@@ -89,15 +93,15 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-11-04T10:31:16Z }
 
 ## 状態の組み合わせ（行ごとにテストを 1 本。T-182）
 
-controller は WebMvc のテスト（`ExternalDataIngestionControllerTest`。取込のサービスと照会は mock）、拒否から DB と原本の保存の呼び出しまではセキュリティの統合テスト（`ExternalDataIngestionSecurityIntegrationTest`。PostgreSQL、提供元の名前に自分の UUID を含めて絞る）、413 は RANDOM_PORT の統合テスト（前例 `UploadLimitIntegrationTest`）、画面の通しは `ingest_external_data_ui.feature`（Feature の `@ui @US-14 @must`、幅 320 px、axe）。テストの名前は「行 N_」で始める（39c の行の番号と区別するため「39c2 行 N_」とはしない。テストのクラスの Javadoc に Bolt 39c2 の行と書く）。送り先が 39c3 の行は 39c3 の計画で書き直す。
+controller は WebMvc のテスト（`ExternalDataIngestionControllerTest`。取込のサービスと照会は mock）、拒否から DB と原本の保存の呼び出しまではセキュリティの統合テスト（`ExternalDataIngestionSecurityIntegrationTest`。PostgreSQL、提供元の名前に自分の UUID を含めて絞る）、413 は RANDOM_PORT の統合テスト（新しいファイル `ExternalDataUploadLimitIntegrationTest`。前例 `UploadLimitIntegrationTest` の形）、画面の通しは `ingest_external_data_ui.feature`（Feature の `@ui @US-14 @must`、幅 320 px、axe）。テストの名前は「行 N_」で始め、既存のテストのクラスでは 39c2 の行のテストを `@Nested class Bolt39c2_…`（例 `Bolt39c2_取り込めない送信`）にまとめて、39c の同じ番号の行（例 39c の 行4_・行5_）と名前が衝突しないようにする（前例 IngestionServiceTest の入れ子のクラス :768・:1357・:1455。2026-11-04、推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）。39c の 行4_・行5_ のテストは消さない。送り先が 39c3 の行は 39c3 の計画で書き直す。
 
 | 行 | 状況 | 期待 | 確かめ方 |
 | :--- | :--- | :--- | :--- |
 | 1 | 上限を超えるファイル（物理データ行 10,001 行） | 選ぶ画面にエラー要約「取込ファイル: ファイルが大きすぎます（1 ファイルにつきデータ行 10,000 行・40 MB まで）。ファイルを分けて取り込んでください。」（取込ファイルの欄へのリンク、欄の下に同じ文言）。取込も原本もない | controller のテスト（`FileTooLarge` を mock）、UI（10,001 行の航海のファイル。Bolt 39b4 の申し送りの受入シナリオ）、セキュリティの統合テスト（自分の情報源の取込がなく、原本の保存を呼ばない。T-236） |
 | 2 | 上限を超えるファイル（41,943,041 バイト以上 55 MB 以下） | 行 1 と同じ文言。取込も原本もない | セキュリティの統合テスト（本物の取込のサービス） |
-| 3 | 上限ちょうど（データ行 10,000 行・41,943,040 バイト） | 受ける（IngestionFileLimit.java :21） | ステップ 2 の開始で `IngestionFileLimit` のちょうどの値の単体テストがあるかを grep で確かめ、なければ足す。画面の経路のちょうどの行数は行 21 |
-| 4 | multipart の 55 MB を超える送信（56 MB） | 413 と取込の案内（見出し「取込ファイルが大きすぎます」、「データ行 10,000 行・40 MB まで」の文が `IngestionFileLimit` の数と合う、リンク「外部データの取込へ」）。見積依頼の案内は出さない。見積依頼の送信には今の案内のまま、ほかの送信には一般の案内のまま | RANDOM_PORT の統合テスト（前例 UploadLimitIntegrationTest :33-44 の形。外部データの送信の 1 本と、一般の案内に取込の文が出ないことの 1 本） |
-| 5 | 承認されていない情報源（画面を開いた後に停止された、または画面を経ない候補の情報源の送信） | エラー要約「情報源: 選んだ情報源は承認済みではないため取り込めません。画面を開き直して、承認済みの情報源を選んでください。」。選択肢は開き直した承認済みだけ。取込も原本もない | controller のテスト（`DataSourceNotApproved` を mock）、セキュリティの統合テスト（承認済みで作った自分の情報源を停止してから送る。原本の保存を呼ばない） |
+| 3 | 上限ちょうど（データ行 10,000 行・41,943,040 バイト） | 受ける（IngestionFileLimit.java :21） | 既存のテスト（IngestionServiceTest :1504 の 10,000 行ちょうど、:1512 の 41,943,040 バイトちょうど）で確かめてあり、足さない。画面の経路のちょうどの行数は行 21 |
+| 4 | multipart の 55 MB を超える送信（56 MB） | 413 と取込の案内（見出し「取込ファイルが大きすぎます」、「データ行 10,000 行・40 MB まで」の文が `IngestionFileLimit` の数と合う、リンク「外部データの取込へ」）。取込の案内も送信が拒まれた印（`main` の `data-session-input="rejected"`。error/413.html :13）の中にある。見積依頼の案内は出さない。見積依頼の送信には今の案内のまま、ほかの送信には一般の案内のまま | RANDOM_PORT の統合テスト（新しいファイル `ExternalDataUploadLimitIntegrationTest`。前例 UploadLimitIntegrationTest :33-44 の形。外部データの送信の 1 本と、一般の案内に取込の文が出ないことの 1 本。上限は application.properties :48-51） |
+| 5 | 承認されていない情報源（画面を開いた後に停止された、または画面を経ない候補の情報源の送信） | エラー要約「情報源: 選んだ情報源は承認済みではないため取り込めません。画面を開き直して、承認済みの情報源を選んでください。」。選択肢は開き直した承認済みだけ。取込も原本もない。残りが 0 件のとき（停止で承認済みの情報源がなくなった）は、フォームの外に先にエラー要約（この文言）、その下に 0 件の全文を示し、ファイルの欄と「取り込む」を出さない（設計の決定「停止で承認済みが 0 件になったとき」） | controller のテスト（`DataSourceNotApproved` を mock。残りが 0 件のときは照会を mock して 0 件にし、エラー要約と 0 件の全文の両方と、その順を確かめる）、セキュリティの統合テスト（承認済みで作った自分の情報源を停止してから送る。原本の保存を呼ばない） |
 | 6 | ない情報源（ID の形の誤り・ない ID） | エラー要約「情報源: 選んだ情報源が見つかりません。画面を開き直して、情報源を選び直してください。」。取込のサービスを呼ばない（T-236） | controller のテスト（照会を mock して空。サービスの呼び出しの記録）。サービスが返す `DataSourceNotFound` も同じ文言（controller のテスト） |
 | 7 | 承認済みの情報源がない | 選ぶ画面に、画面の層の定数の全文を示し、ファイルの欄と「取り込む」を出さない（US-14 AC2。39c の行 4 の文言のまま） | controller のテスト（照会を mock して 0 件。期待の文は定数から。T-243） |
 | 8 | 拒否の網羅（T-240） | 取込のサービスの拒否のうち `NotPermitted` のほかの 3 つと controller の手前の拒否が、すべて空でない欄の誤りになり、大域の誤り（共通の文言）を出さない | controller のテスト（拒否の種類ごとのパラメーターのテスト） |
@@ -122,7 +126,7 @@ controller は WebMvc のテスト（`ExternalDataIngestionControllerTest`。取
 ### 入れるもの
 
 - 行 1〜8・21〜23 のテスト。`ExternalDataIngestionController` の拒否の文言（欄の誤り）と上限の数、`new.html` の説明と 0 件の文言をモデルから、`PilotReadiness.NO_APPROVED_SOURCE` の公開、`error/413.html` の取込の文、`ExternalDataIngestionPerformanceTest` の画面の経路の 1 本、`ingest_external_data_ui.feature` と Steps の上限を超えるファイルのシナリオ、キャプチャのシナリオ、デモのシナリオ（`@demo @demo-bolt-39c2/too-large`）
-- マニュアル: `docs/manual/12-外部データ.md` の 12.1（上限と拒否の説明（:89）、情報源の拒否 2 つ、55 MB を超えたときの案内、キャプチャ 1 枚）、`付録B-トラブルシューティング.md` の早見表（:215 の近くに 4 行）
+- マニュアル: `docs/manual/12-外部データ.md` の 12.1（エラー要約の行（:51）の選んだ情報源の扱い、上限と拒否の説明（:89-91）の停止のときの文言と理由ごとの示し方、55 MB を超えたときの案内、キャプチャ 1 枚）、`付録B-トラブルシューティング.md` の早見表（:214 の共通の文言の行を新しい 4 行に置き換える）
 - 文書: 下の「設計文書に直す箇所」（ステップ 1）
 
 ### 入れないもの
@@ -141,6 +145,7 @@ controller は WebMvc のテスト（`ExternalDataIngestionControllerTest`。取
 | 39c3 | 結果の画面に示す注記の範囲。推奨は隔離（形式の誤りと内容の違う原本）の注記だけを行の順に示し、重複の注記は示さない（重複は採用値に影響せず、データ責任者の行動が要らない。IngestionService.java :216-217）。多いとき（最大 1 万件）は最初の 100 件と残りの件数を示し、すべては S-17（39d）の一覧で見る | 39c3 の開始準備で決める |
 | 39c3 | ファイルの誤り（必要な列がない・同じ名前の列）の「どうすればよいか」（FormatDefect.java :25・:27 が空。Bolt 39b2 の申し送り）と T-240 の網羅のテスト（行 14） | 39c3。案は必要な列がない「選んだ情報源の種別に合ったファイルか確かめてください。合っていれば提供元に確かめてください。」、同じ名前の列「提供元に確かめてください。」（`Remedy.ASK_PROVIDER`。:61） |
 | 39c3 | 0 バイトのファイルと選んだ情報源と違う種別のファイルが隔離 1・要確認になることの受入シナリオ（39c の終了報告 :98。マニュアル :83 は設計の文書を根拠に書いた） | 39c3 の受入シナリオ |
+| 39c3 | 誤りの理由を表の列（理由の符号）で持つか（[Bolt 39b2 計画](bolt_39b2_plan.md) :153 の「39c・39d で一覧の絞り込みが要れば足す」） | 39c3 の開始準備で、行の範囲の列（スキーマ）と合わせて決める（S-17 の一覧の絞り込み（39d）が要るか） |
 | 39c3 | マニュアル 12 章の要確認と注記の読み方、形式の誤り・値の誤りの注記の説明（Bolt 39b2・39b2b の申し送り。12-外部データ.md :83 の「後の版で本章に足します」） | 39c3 のマニュアルの更新 |
 | 39d | 選択肢の並び（DB の照合順序とメモリの実装。39c の計画 :161）、S-17 への入口、隔離・差異の判断 | 39d |
 | 39h | 分類別の件数の差異の行 | 39h |
@@ -148,12 +153,13 @@ controller は WebMvc のテスト（`ExternalDataIngestionControllerTest`。取
 
 ### 設計文書に直す箇所（ステップ 1）
 
-- ui_design: S-16 の行（:141）の「取り込めないファイルと要確認の示し方は 39c2」を「拒否・上限・413 は 39c2、要確認と注記は 39c3」に、URL の表の POST の行（:191）に理由ごとの 3 つの文言（欄の誤り）と 413 の取込の案内（見出し・本文・リンク）、結果の行（:192）の「要確認・取り込めなかった部分・注記は 39c2」を 39c3 に、S-16 の画面イメージの段落（:1747）の 39c2 を 39c3 に、選ぶ画面の誤りの画面イメージ（:1769-1786）に上限を超えるファイルの拒否の例を足す、結果の画面イメージの注（:1806）の 39c2 を 39c3 に
+- ui_design: S-16 の行（:141）の「取り込めないファイルと要確認の示し方は 39c2」を「拒否・上限・413 は 39c2、要確認と注記は 39c3」に、URL の表の POST の行（:191）に理由ごとの 3 つの文言（欄の誤り）と 413 の取込の案内（見出し・本文・リンク）、結果の行（:192）の「要確認・取り込めなかった部分・注記は 39c2」を 39c3 に、S-16 の画面イメージの段落（:1747）の 39c2 を 39c3 に、選ぶ画面の誤りの画面イメージ（:1769-1786）に上限を超えるファイルの拒否の例を足す、結果の画面イメージの注（:1806）の 39c2 を 39c3 に、社内業務 Web（外部データ・管理）の画面遷移図（:503-531）に「取込 → 413 の案内 → 取込」（413 の案内も送信が拒まれた印 `data-session-input="rejected"` の中に置く。:1869）
+- non_functional: PERF-06 の行（:62）に、画面の経路の計測の 1 本（Bolt 39c2。MockMvc の multipart で画面の POST から結果の画面への移動まで）とその範囲（Tomcat の multipart の受け取りは範囲の外）
 - data_model: 受信記録の ER（:1046-1058）と表の説明（:1151）に「行の範囲の 2 列は Bolt 39c3 で足す（開始準備の決定 (6)）」の注（【前の決定の変更】(6)）
 - domain_model: 取込の要約（:336）の「要確認と取り込めなかった部分は 39c2 で足す」を 39c3 に
-- test_strategy: 外部データの取込の行（:384）に 39c2 の上限を超えるファイルの受入シナリオと 413 の統合テスト、「取り込めないファイルと要確認の示し方は 39c2」を「要確認と注記は 39c3」に
-- release_plan: 39c2 の行（:958）を 39c2 の範囲に直し、39c3 の行を足す（【前の決定の変更】(1)）。順序（:967）に 39c3。デモ項目（:973）の動画を撮る Bolt に 39c2・39c3
-- development_strategy: :350 の W7 の行の画面の Bolt に 39c3 を足す
+- test_strategy: 外部データの取込の画面の行（:347）に 39c2 の理由ごとの拒否（controller のテストとセキュリティの統合テスト）と 413 の統合テスト（`ExternalDataUploadLimitIntegrationTest`）、外部データの取込の行（:384）に 39c2 の上限を超えるファイルの受入シナリオ、「取り込めないファイルと要確認の示し方は 39c2」を「要確認と注記は 39c3」に
+- release_plan: 39c2 の行（:958）を 39c2 の範囲に直し、39c3 の行を足す（【前の決定の変更】(1)。計画の承認の時に直した）。順序（:968）に 39c3（同）。局面とアプローチ（:891）の外部データの画面と、ユーザーマニュアルの行（:933）の章を作る Bolt に 39c2・39c3。デモ項目（:974）の動画を撮る Bolt に 39c2・39c3
+- development_strategy: :350 の W7 の行の 39c2 の説明（「取り込めないファイルと要確認の縦」）を「取り込めない送信の縦」に書き直し、39c3（要確認と注記の縦）を足す
 - コードのコメント（触るステップで直す）: `ExternalDataIngestionController` の Javadoc（:37-39 の「39c では共通の文言で示し、理由ごとの文言は 39c2」）、`new.html` のコメント（:14-16）、`result.html` のコメント（:14 の「要確認と注記は 39c2」を 39c3 に）、`IngestionSummaryView` の Javadoc（:9 の 39c2 を 39c3 に）、`error/413.html` のコメント（:2-5 に取込の送信を足す）
 
 ## 設計（この Bolt の範囲）
@@ -257,9 +263,11 @@ package "externaldata.interfaces.web" {
     拒否を欄の誤りにする <<39c2>>
   }
 }
-package "externaldata.application.internal" {
+package "externaldata.application.internal.commandservices" {
   class IngestionService
   interface IngestionOutcome <<sealed>>
+}
+package "externaldata.application.internal.queryservices" {
   class PilotReadiness {
     NO_APPROVED_SOURCE <<39c2 で public>>
   }
@@ -289,10 +297,10 @@ IngestionService ..> IngestionFileLimit
 ## ステップ計画（ステップごとに止める）
 
 - [ ] **1. 設計の文書**: 上の「設計文書に直す箇所」（開始準備の決定 (1)〜(9) を反映する）（完了の判定: 文書の差分。**承認ゲート**）
-- [ ] **2. テストの Red（外側から）**: 行 22 の feature の Red（上限を超えるファイルで、今は共通の文言が出て期待した理由で落ちることを確かめる）、続いて行 1・2・4〜8 の controller・セキュリティ・413 のテストと行 21 の計測のテスト。行 3 のちょうどの値の単体テストの有無を grep で確かめる。共通の文言をやめて落ちる既存のテストを一覧にする（T-217）（完了の判定: 期待した理由で落ちる記録。**承認ゲート**（画面の振る舞いの契約））
-- [ ] **3. 実装の Green**: controller の拒否の文言と上限の数、0 件の文言の定数と `PilotReadiness` の公開、`new.html`、`error/413.html`、文言の Javadoc とコメント（完了の判定: 緑、`spotbugsMain`（T-232）、`checkstyleMain`（T-237）、`sonar-local:check`（T-234）。**承認ゲート**（画面））
+- [ ] **2. テストの Red（外側から）**: 行 22 の feature の Red（上限を超えるファイルで、今は共通の文言が出て期待した理由で落ちることを確かめる）、続いて行 1・2・4〜8 の controller・セキュリティ・413（新しいファイル `ExternalDataUploadLimitIntegrationTest`）のテストと行 21 の計測のテスト。既存のテストのクラスでは `@Nested class Bolt39c2_…` にまとめる。共通の文言をやめて落ちる既存のテストを一覧にする（T-217）（完了の判定: 期待した理由で落ちる記録。**承認ゲート**（画面の振る舞いの契約、新しいファイル））
+- [ ] **3. 実装の Green**: controller の拒否の文言と上限の数、0 件の文言の定数と `PilotReadiness` の公開、`new.html`（エラー要約をフォームの外に出す）、`error/413.html`、文言の Javadoc とコメント（完了の判定: 緑、`spotbugsMain`（T-232）、`checkstyleMain`（T-237）、`sonar-local:check`（T-234）。**承認ゲート**（画面））
 - [ ] **4. 上限いっぱいの計測**: `performanceTest` で行 21 を流し、区切りの値を記録する（T-241・T-242）。Windows の Docker Desktop では遅れが足されるので、判定は Linux の CI の手動のジョブ `performance` で行う（ExternalDataIngestionPerformanceTest :47-48）（完了の判定: CI のログの「PERF-06 web」の行。5 分以内）
-- [ ] **5. マニュアルとキャプチャ**: 12 章の 12.1（:89 の上限と拒否、情報源の拒否 2 つ、55 MB を超えたとき）、付録 B の早見表、`manualScreenshots`（行 23。新しいキャプチャ 1 枚）。章の文言と画面の文言を突き合わせる（T-197。0 件の文言は定数と）（完了の判定: キャプチャの差分と突き合わせの記録。**承認ゲート**（新しいファイル））
+- [ ] **5. マニュアルとキャプチャ**: 12 章の 12.1（:51 のエラー要約の選んだ情報源の扱い、:89-91 の上限と停止のときの文言と理由ごとの示し方、55 MB を超えたとき）、付録 B の早見表（:214 の共通の文言の行を新しい 4 行に置き換える）、`manualScreenshots`（行 23。新しいキャプチャ 1 枚）。章の文言と画面の文言を突き合わせる（T-197。0 件の文言は定数と）（完了の判定: キャプチャの差分と突き合わせの記録。**承認ゲート**（新しいファイル））
 - [ ] **6. 品質ゲートと開発レビュー**: 変異、`check`・`uiTest`、その後に SonarQube、開発レビューとその直し。push の前に `check`（T-225）
 - [ ] **7. 終了報告**: push して CI とデモ環境の配備を確かめ（デモ環境でデータ責任者でログインし、上限を超えるファイルの拒否の文言を見る）、`demoVideo` で `@demo-bolt-39c2/too-large` を撮る。release_plan（39c2 の行の計画と終了報告のリンク）・開発の索引・mkdocs を直す
 
@@ -308,7 +316,7 @@ IngestionService ..> IngestionFileLimit
 | 6 | 30 分（待ちを除く） | — |
 | 7 | 10 分（CI と動画の待ちを除く） | — |
 
-合計 205 分（約 3 時間 25 分）に、予備の 10 分を足して約 3 時間 35 分。半日に収まる。39c3（取り込んだファイルの要確認と注記: 設計の文書 20 分、受信記録の行の範囲の列（スキーマ）45 分、要確認の復元の照会と `requiresReview()` の一致 35 分、注記の照会と結果の画面の表示 40 分、ファイルの誤りの「どうすればよいか」15 分、受入シナリオ（0 バイト・種別の違うファイル・閉じ忘れ・混在）25 分、マニュアルとキャプチャ 35 分、品質ゲート 30 分、報告 10 分。約 4 時間 15 分）は、39c3 の開始準備で見積り直し、半日を超えるなら縦に分け直す（例: 注記の多いときの示し方と S-17 への入口を 39d に寄せる）。1 本にした場合（39c2 と 39c3 の合計で約 7 時間 40 分。重なる設計の文書・品質ゲート・報告をまとめても約 6 時間 40 分）は半日を超える。
+合計 205 分（約 3 時間 25 分）に、予備の 10 分を足して約 3 時間 35 分。半日に収まる。39c3（取り込んだファイルの要確認と注記: 設計の文書 20 分、受信記録の行の範囲の列（スキーマ）45 分、要確認の復元の照会と `requiresReview()` の一致 35 分、注記の照会と結果の画面の表示 40 分、ファイルの誤りの「どうすればよいか」15 分、受入シナリオ（0 バイト・種別の違うファイル・閉じ忘れ・混在）25 分、マニュアルとキャプチャ 35 分、品質ゲート 30 分、報告 10 分。約 4 時間 15 分）は目安を超えるので、39c3 の開始準備で再分割が前提（release_plan :959 の注。範囲を 39d に寄せるか（例: 注記の多いときの示し方と S-17 への入口）は 39c3 の開始準備で決める）。1 本にした場合（39c2 と 39c3 の合計で約 7 時間 40 分。重なる設計の文書・品質ゲート・報告をまとめても約 6 時間 40 分）は半日を超える。
 
 ## 確認ポイント（計画の承認の場でまとめて確認する。Try T-6）
 
@@ -324,6 +332,8 @@ IngestionService ..> IngestionFileLimit
 | 8 | **上限いっぱいの計測の経路** | 開始準備の決定 (8) | 推奨のとおり。MockMvc の multipart で画面の POST から 302 まで。Tomcat の受け取りは範囲の外と書く |
 | 9 | **マニュアル** | 開始準備の決定 (9) | 推奨のとおり。12.1 の上限と拒否、付録 B に 4 行、キャプチャ 1 枚。要確認と注記の読み方は 39c3 |
 | 10 | **変異** | ステップ 6 | 下の 6 個 |
+| 11 | **停止で承認済みが 0 件になったとき**（整合性検証の指摘） | 設計の決定、行 5 | 推奨のとおり（Recommend 承認の指示による。human:kakimomokuri）。エラー要約をフォームの外に出し、先にエラー要約、その下に 0 件の全文 |
+| 12 | **テストの名前と 413 のテストの置き場所**（整合性検証の指摘） | 状態の組み合わせの前文、設計の決定の 413 の行 | 推奨のとおり。39c2 の行は `@Nested class Bolt39c2_…` に、413 のテストは外部データの側の新しいファイルに |
 
 ### 人に諮ること
 
@@ -337,13 +347,14 @@ IngestionService ..> IngestionFileLimit
 | V2 | 承認されていない情報源とない情報源の文言を入れ違える | 行 5・6 |
 | V3 | 413 の案内のパスの判定を外す（取込の送信に一般の案内が出る） | 行 4 |
 | V4 | 0 件の文言をテンプレートの直書きに戻し、1 字違える | 行 7 |
-| V5 | 画面の説明の上限の行数を `IngestionFileLimit` から引かず 1,000 にする | 行 1（誤りの文言）・行 22 |
+| V5 | 画面の説明の上限の行数を `IngestionFileLimit` から引かず 1,000 にする | 39c の行 4（選ぶ画面の上限の説明。ExternalDataIngestionControllerTest :117）・行 22（UI の通し） |
 | V6 | ない情報源でも取込のサービスを呼ぶ | 行 6（呼び出しの記録） |
 
 ## 完了条件
 
 - [ ] 上のステップ 1〜7 の完了の判定を満たす（ステップごとの承認を受ける）
-- [ ] 行 1〜8・21〜23 に、それを名乗るテストがある（行 9〜20 は 39c3 の計画に書き写してある）
+- [ ] 行 1〜8・21〜23 に、それを名乗るテストがある（既存のテストのクラスでは `@Nested class Bolt39c2_…` の中。行 5 は残りが 0 件のときを含む。行 9〜20 は 39c3 の計画に書き写してある）
+- [ ] 413 の統合テストの新しいファイル（`ExternalDataUploadLimitIntegrationTest`）が外部データの側にある
 - [ ] マニュアル 12 章（12.1 の上限と拒否）・付録 B とキャプチャ（`12-ingestion-too-large.png`）が実装と合っている
 - [ ] デモの動画（`@demo-bolt-39c2/too-large`）があり、終了報告のデモ項目からリンクしている
 - [ ] `check`・`uiTest` が緑、SonarQube が PASS、CI が緑、`performance` のジョブで行 21 が 5 分以内、デモ環境が新しい版で動く
@@ -354,6 +365,7 @@ IngestionService ..> IngestionFileLimit
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-11-04 | 計画を承認した。整合性検証の指摘（詳細: 中 5・軽 6、横断: 中 7・軽 7）を反映し、0 件になった画面の示し方を含め推奨のとおり（Recommend 承認の指示による） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-11-04 | 初版作成（承認待ち）。開始準備の決定: 縦に 39c2（取り込めない送信。約 3 時間 35 分）と 39c3（要確認と注記。約 4 時間 15 分）に分ける（【前の決定の変更】）、拒否の理由ごとの文言を欄の誤りに、上限の数を `IngestionFileLimit` から、413 の案内に取込の文、0 件の文言を画面の層の定数に、受信記録の行の範囲の列（スキーマ。実装は 39c3。【前の決定の変更】）、変異の偏りは既知の課題を閉じる、上限いっぱいの計測は画面の POST から、マニュアル 12.1 と付録 B とキャプチャ 1 枚（2026-11-04、推奨のとおり（Recommend 承認の指示による。human:kakimomokuri））。人に諮ることはない | anthropic/claude-opus-5-5 |
 
 ## 関連ドキュメント
