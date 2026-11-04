@@ -11,7 +11,8 @@
     <h1>取込の結果</h1>
     <!--/* S-16 の結果の画面（Bolt 39c、US-14 AC1）。取込の POST の PRG の行き先で、DB から読み直す（読み込み直しても取り込み直さない）。
            知らせは PRG の直後だけ。受け取った件数は物理データ行で、分類別の件数（受信記録の数）と単位が違うので表の外に置く。
-           差異の行は 39h、「隔離・差異を確認する」（S-17）は 39d、要確認と注記は 39c3 で足す */-->
+           隔離の理由（注記）は隔離が 1 件以上のときだけ、照会の順（ファイルの行の順）に最初の 100 件と示さなかった数を示す（Bolt 39c3）。
+           注記には取込ファイルから来た値が入るので th:text で示す。差異の行は 39h、「隔離・差異を確認する」（S-17）は 39d、要確認は 39c4 で足す */-->
     <p role="status" th:if="${result}" th:text="${result}">取り込みました。</p>
     <dl class="text-break">
         <dt>情報源</dt>
@@ -44,6 +45,14 @@
         </tr>
         </tbody>
     </table>
+    <section th:if="${summary.quarantinedCount() > 0}" aria-labelledby="quarantine-notes-heading">
+        <h2 id="quarantine-notes-heading">隔離の理由</h2>
+        <p>ファイルの行の順に示します。</p>
+        <ul aria-labelledby="quarantine-notes-heading">
+            <li th:each="note : ${summary.quarantineNotes()}" th:text="${note}">4 行目: 列の数がヘッダーと違います（ヘッダー 4 列、この行 5 列）。提供元に確かめてください。</li>
+        </ul>
+        <p th:if="${remainingQuarantine}" th:text="${remainingQuarantine}">ほかに 9,900 件の隔離があります（最初の 100 件だけを示しています）。</p>
+    </section>
     <p><a th:href="@{/staff/external-data/ingestions/new}">続けて取り込む</a></p>
 </main>
 </body>

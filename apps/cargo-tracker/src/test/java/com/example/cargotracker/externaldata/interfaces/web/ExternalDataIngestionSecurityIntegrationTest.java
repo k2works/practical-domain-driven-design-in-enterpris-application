@@ -16,6 +16,8 @@ import com.example.cargotracker.externaldata.domain.events.ExternalRecordQuarant
 import com.example.cargotracker.externaldata.domain.events.VoyageAdoptedValueUpdated;
 import com.example.cargotracker.externaldata.domain.model.aggregates.ExternalPayloadStorage;
 import com.example.cargotracker.externaldata.domain.model.rules.IngestionFileLimit;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.FormatDefect;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.FormatDefect.Extent;
 import com.example.cargotracker.identity.IdentityIntegrationTest;
 import com.example.cargotracker.identity.IdentityLogins;
 import com.example.cargotracker.identity.application.internal.eventhandlers.ExternalRecordAuditEventHandler;
@@ -40,14 +42,18 @@ import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.mock.web.MockMultipartFile;
@@ -58,7 +64,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
 
 /**
- * S-16 外部データの取込のセキュリティの統合テスト（Bolt 39c の行 1・2・6・7・13・13b・15、Bolt 39c2 の行 1・2・5 は入れ子のクラス。US-14 AC1）。本物のフィルターの連なりと
+ * S-16 外部データの取込のセキュリティの統合テスト（Bolt 39c の行 1・2・6・7・13・13b・15、Bolt 39c2 の行 1・2・5、Bolt 39c3 の行 10・11・15 は入れ子のクラス。US-14 AC1・AC4）。本物のフィルターの連なりと
  * PostgreSQL の上で、{@code /staff/external-data/**} はデータ責任者だけが開けること（ほかの 7 つの役割は A-04、未ログインは A-01）、
  * CSRF のトークンのない multipart の送信で取り込まないこと（取込のサービスの spy の呼び出しの記録。T-236）、画面の POST（トランザクションの
  * 外）から DB の件数と DE-12・DE-14 の監査の発行記録の完了まで（T-184）、ナビの項目がデータ責任者を持つ利用者にだけ出ることを確かめる。
@@ -361,7 +367,213 @@ class ExternalDataIngestionSecurityIntegrationTest {
         }
     }
 
+    /**
+     * Bolt 39c3 の行 10・11・15（取込から結果の画面の隔離の理由まで、本物の照会と PostgreSQL で通す）。画面の注記の一覧の全体を期待の一覧と
+     * 比べる（T-244）。39c・39c2 の同じ番号の行と名前が衝突しないよう入れ子にする。主要実績の情報源は提供元の名前に UUID を含めて作り、
+     * 最後に停止中にする（前例は外のクラスの航海の情報源）。
+     */
+    @Nested
+    class Bolt39c3_隔離の理由 {
+
+        private static final String ACQUIRED = NOW.minus(Duration.ofMinutes(30)).toString();
+        private static final String OCCURRED = NOW.minus(Duration.ofMinutes(60)).toString();
+        private static final String MILESTONE_HEADER =
+                "external_id,external_version,acquired_at,tracking_number,kind,location_unlocode,occurred_at";
+        private static final String ASK_PROVIDER = "提供元に確かめてください。";
+
+        private UUID milestoneSourceId;
+
+        /** 理由と、その行の注記の全文（範囲の言葉 ＋ 理由 ＋ どうすればよいか）。 */
+        record ExpectedNote(FormatDefect defect, String note) {}
+
+        /**
+         * 行の範囲を持つ理由（{@code occursIn(Extent.ROW)}）の行を 1 つずつ持つファイルと、その画面の注記の一覧（行の順）。航海のファイルの最後の
+         * 行と主要実績のファイルの最後の行は正しい行で、注記を持たない（採用）。
+         */
+        record NotesCase(String recordType, byte[] content, List<ExpectedNote> expected) {
+
+            @Override
+            public String toString() {
+                return recordType;
+            }
+        }
+
+        static Stream<NotesCase> 行の範囲を持つ理由のファイルと注記() {
+            return Stream.of(
+                    new NotesCase(
+                            "VOYAGE",
+                            file(
+                                    "\"V-1\"x,1," + ACQUIRED + "," + PORT_CALLS,
+                                    "V-2,1\"b," + ACQUIRED + "," + PORT_CALLS,
+                                    row("V-3", PORT_CALLS) + ",余分",
+                                    "V-4,," + ACQUIRED + "," + PORT_CALLS,
+                                    "V-5,1,2026-11-16T00:35:00," + PORT_CALLS,
+                                    row("V" + "0".repeat(30), PORT_CALLS),
+                                    row(
+                                            "V-7",
+                                            "XXXX;2026-12-01T00:00:00Z;2026-12-01T12:00:00Z|USLAX;2026-12-10T00:00:00Z;"
+                                                    + "2026-12-10T12:00:00Z"),
+                                    row("V-8", "JPTYO;2026-12-01T00:00:00Z;2026-12-01T12:00:00Z"),
+                                    row("V-9", PORT_CALLS)),
+                            List.of(
+                                    new ExpectedNote(
+                                            FormatDefect.TEXT_AFTER_CLOSING_QUOTE,
+                                            "2 行目: 閉じた引用符の後に文字があります。" + ASK_PROVIDER),
+                                    new ExpectedNote(
+                                            FormatDefect.BARE_QUOTE, "3 行目: 引用符で囲まない値の中に引用符があります。引用符を含む値は引用符で囲んでください。"),
+                                    new ExpectedNote(
+                                            FormatDefect.COLUMN_COUNT_MISMATCH,
+                                            "4 行目: 列の数がヘッダーと違います（ヘッダー 4 列、この行 5 列）。" + ASK_PROVIDER),
+                                    new ExpectedNote(
+                                            FormatDefect.EMPTY_VALUE, "5 行目: 値が空です（external_version）。" + ASK_PROVIDER),
+                                    new ExpectedNote(
+                                            FormatDefect.INVALID_TIME,
+                                            "6 行目: 時刻の書式が違います（acquired_at）。"
+                                                    + "オフセット付きの ISO 8601（例 2026-11-03T09:00:00+09:00）で書いてください。"),
+                                    new ExpectedNote(
+                                            FormatDefect.TOO_LONG,
+                                            "7 行目: 値が長すぎます（external_id、30 文字まで）。" + ASK_PROVIDER),
+                                    new ExpectedNote(
+                                            FormatDefect.INVALID_LOCATION,
+                                            "8 行目: 場所の形が違います（port_calls、1 つ目の寄港）。"
+                                                    + "UN/LOCODE（国コード 2 文字 + 地点コード 3 文字。例 JPTYO）で書いてください。"),
+                                    new ExpectedNote(
+                                            FormatDefect.INVALID_PORT_CALLS,
+                                            "9 行目: 寄港の列の形が違います（port_calls、寄港が足りません（2 つ以上））。" + "寄港の並びを提供元に確かめてください。"))),
+                    new NotesCase(
+                            "MILESTONE",
+                            milestoneFile(
+                                    "MS-1,1," + ACQUIRED + ",CTABCDEFGH2345,departure,JPTYO," + OCCURRED,
+                                    "MS-2,1," + ACQUIRED + ",CTABCDEFGH234O,DEPARTURE,JPTYO," + OCCURRED,
+                                    "MS-3,1," + ACQUIRED + ",CTABCDEFGH2347,DEPARTURE,JPTYO," + OCCURRED),
+                            List.of(
+                                    new ExpectedNote(
+                                            FormatDefect.INVALID_KIND,
+                                            "2 行目: 種類が違います（kind）。"
+                                                    + "PICKUP・RECEIPT_AT_ORIGIN・DEPARTURE・TRANSSHIPMENT・ARRIVAL・DELIVERY"
+                                                    + " のどれかで書いてください。"),
+                                    new ExpectedNote(
+                                            FormatDefect.INVALID_TRACKING_NUMBER,
+                                            "3 行目: 追跡番号の形が違います（tracking_number）。"
+                                                    + "CT と英大文字・数字 12 桁（0・O・1・I・L を除く）で書いてください。"))));
+        }
+
+        private static byte[] milestoneFile(String... rows) {
+            return (MILESTONE_HEADER + "\n" + String.join("\n", rows) + "\n").getBytes(StandardCharsets.UTF_8);
+        }
+
+        @BeforeEach
+        void 承認済みの主要実績の情報源を用意する() {
+            milestoneSourceId = UUID.randomUUID();
+            jdbc.update(
+                    "INSERT INTO external_data.data_source (id, provider, record_type, approval_status, version)"
+                            + " VALUES (?, ?, 'MILESTONE', 'APPROVED', 0)",
+                    milestoneSourceId,
+                    provider);
+        }
+
+        @AfterEach
+        void 主要実績の情報源を承認済みのまま残さない() {
+            jdbc.update(
+                    "UPDATE external_data.data_source SET approval_status = 'SUSPENDED' WHERE id = ?",
+                    milestoneSourceId);
+            jdbc.update(
+                    "DELETE FROM external_data.data_source WHERE id = ?"
+                            + " AND NOT EXISTS (SELECT 1 FROM external_data.ingestion WHERE data_source_id = ?)",
+                    milestoneSourceId,
+                    milestoneSourceId);
+        }
+
+        @ParameterizedTest(name = "{0}")
+        @MethodSource("行の範囲を持つ理由のファイルと注記")
+        void 行10_行の誤りの注記は理由ごとの全文で結果の画面に行の順に並ぶ(NotesCase notesCase) throws Exception {
+            Cookie session = login(user(Set.of(Role.DATA_STEWARD)));
+            UUID source = "VOYAGE".equals(notesCase.recordType()) ? sourceId : milestoneSourceId;
+
+            String page = body(session, ingested(session, source, notesCase.content()));
+
+            assertThat(notes(page))
+                    .containsExactlyElementsOf(notesCase.expected().stream()
+                            .map(ExpectedNote::note)
+                            .toList());
+        }
+
+        @Test
+        void 行10_期待の組は行の範囲を持つ理由をすべて含む() {
+            // 表から作る規則の網羅（T-240）。理由を足したら期待の組にも足す
+            List<FormatDefect> rowDefects = Arrays.stream(FormatDefect.values())
+                    .filter(defect -> defect.occursIn(Extent.ROW))
+                    .toList();
+
+            assertThat(行の範囲を持つ理由のファイルと注記()
+                            .flatMap(notesCase -> notesCase.expected().stream())
+                            .map(ExpectedNote::defect))
+                    .containsExactlyInAnyOrderElementsOf(rowDefects);
+        }
+
+        @Test
+        void 行11_航海の情報源に主要実績のファイルを取り込むと必要な列がない注記が隔離の理由の先頭に次の行動とともに出る() throws Exception {
+            Cookie session = login(user(Set.of(Role.DATA_STEWARD)));
+            byte[] content = milestoneFile("MS-1,1," + ACQUIRED + ",CTABCDEFGH2345,DEPARTURE,JPTYO," + OCCURRED);
+
+            String page = body(session, ingested(session, sourceId, content));
+
+            assertThat(notes(page))
+                    .containsExactly(
+                            "ファイル: 必要な列がありません（port_calls）。" + "選んだ情報源の種別に合ったファイルか確かめてください。合っていれば提供元に確かめてください。");
+        }
+
+        @Test
+        void 行15_閉じ忘れで取り込めなかった部分の注記は前の行の注記の後の最後に出る() throws Exception {
+            Cookie session = login(user(Set.of(Role.DATA_STEWARD)));
+            byte[] content = file(
+                    row("V-1", PORT_CALLS) + ",余分",
+                    row("V-2", PORT_CALLS),
+                    "V-3,1,\"" + ACQUIRED + "," + PORT_CALLS,
+                    row("V-4", PORT_CALLS));
+
+            String page = body(session, ingested(session, sourceId, content));
+
+            assertThat(notes(page))
+                    .containsExactly(
+                            "2 行目: 列の数がヘッダーと違います（ヘッダー 4 列、この行 5 列）。" + ASK_PROVIDER,
+                            "4 行目からファイルの終わりまで: 引用符が閉じていません。2 行を取り込めませんでした。ファイルを確かめてください。");
+        }
+
+        /** 選んだ情報源で取り込み、結果の画面の URL（PRG の行き先）を返す。 */
+        private String ingested(Cookie session, UUID source, byte[] content) throws Exception {
+            String location = mvc.perform(((MockMultipartHttpServletRequestBuilder) multipart(INGEST_URL)
+                                    .file(new MockMultipartFile("file", "file.csv", "text/csv", content))
+                                    .param("dataSourceId", source.toString()))
+                            .cookie(session)
+                            .with(csrf()))
+                    .andExpect(status().is3xxRedirection())
+                    .andReturn()
+                    .getResponse()
+                    .getRedirectedUrl();
+            assertThat(location).matches(INGEST_URL + "/[0-9a-f-]{36}");
+            return location;
+        }
+    }
+
     // --- helpers ---
+
+    /** 結果の画面の隔離の理由の一覧の項目（画面の順。Bolt 39c3）。領域がなければ空。 */
+    private static List<String> notes(String page) {
+        java.util.regex.Matcher list = java.util.regex.Pattern.compile(
+                        "<ul aria-labelledby=\"quarantine-notes-heading\">(.*?)</ul>", java.util.regex.Pattern.DOTALL)
+                .matcher(page);
+        if (!list.find()) {
+            return List.of();
+        }
+        java.util.regex.Matcher item = java.util.regex.Pattern.compile("<li>(.*?)</li>", java.util.regex.Pattern.DOTALL)
+                .matcher(list.group(1));
+        List<String> notes = new java.util.ArrayList<>();
+        while (item.find()) {
+            notes.add(org.springframework.web.util.HtmlUtils.htmlUnescape(item.group(1)));
+        }
+        return notes;
+    }
 
     private String user(Set<Role> roles) {
         boolean shipperRole = roles.contains(Role.SHIPPER);

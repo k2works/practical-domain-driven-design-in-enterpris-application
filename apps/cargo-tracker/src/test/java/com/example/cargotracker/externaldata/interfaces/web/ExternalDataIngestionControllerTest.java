@@ -40,6 +40,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,7 +52,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
 
 /**
- * S-16 外部データの取込（データ責任者。US-14 AC1・AC2。Bolt 39c の行 3〜6・14、Bolt 39c2 の行 1・5〜8 は入れ子のクラス）。取込のサービスと照会は mock にし、画面の振る舞い
+ * S-16 外部データの取込（データ責任者。US-14 AC1・AC2。Bolt 39c の行 3〜6・14、Bolt 39c2 の行 1・5〜8、Bolt 39c3 の行 13・16〜18 は入れ子のクラス）。取込のサービスと照会は mock にし、画面の振る舞い
  * （選ぶ画面、画面で見る誤り、PRG と知らせ、結果の画面、404）だけを見る。認証・認可・CSRF はセキュリティの統合テストで確かめる。
  * 「起きないこと」（サービスを呼ばない）は呼び出しの記録で確かめる（T-236）。
  */
@@ -539,7 +540,19 @@ class ExternalDataIngestionControllerTest {
 
     private static IngestionSummaryView summary() {
         return new IngestionSummaryView(
-                INGESTION_ID, "開発海運（架空）", "VOYAGE", Instant.parse("2026-11-16T01:05:00Z"), 125, 118, 4, 3);
+                INGESTION_ID,
+                "開発海運（架空）",
+                "VOYAGE",
+                Instant.parse("2026-11-16T01:05:00Z"),
+                125,
+                118,
+                4,
+                3,
+                List.of(
+                        "3 行目: 値が空です（external_id）。提供元に確かめてください。",
+                        "5 行目: 値が空です（external_id）。提供元に確かめてください。",
+                        "9 行目: 値が空です（external_id）。提供元に確かめてください。"),
+                0);
     }
 
     @Test
@@ -595,5 +608,83 @@ class ExternalDataIngestionControllerTest {
         mockMvc.perform(get(INGEST_URL + "/not-a-uuid")).andExpect(status().isNotFound());
 
         then(summaries).should(never()).summaryOf(any());
+    }
+
+    /**
+     * Bolt 39c3 の行 13・16〜18（結果の画面の隔離の理由。開始準備の決定 (4)・(9)）。照会は mock にし、テンプレートが注記を変えずに照会の順に
+     * 示すこと、残りの件数の文、隔離が 0 件なら領域を出さないこと、注記の文字を文字として示すことを確かめる。39c・39c2 の同じ番号の行と名前が
+     * 衝突しないよう入れ子にする。
+     */
+    @Nested
+    class Bolt39c3_隔離の理由 {
+
+        private static final String NOTES_HEADING = "<h2 id=\"quarantine-notes-heading\">隔離の理由</h2>";
+        private static final String UNDECODABLE = "ファイル: 文字コードが UTF-8 ではありません。UTF-8 で保存し直したファイルを取り込んでください。";
+        private static final String UNREADABLE_HEADER = "ファイル: ヘッダーを読めません。ヘッダーの引用符を確かめてください。";
+
+        private IngestionSummaryView summaryWith(int quarantinedCount, List<String> notes, int remaining) {
+            return new IngestionSummaryView(
+                    INGESTION_ID,
+                    "開発海運（架空）",
+                    "VOYAGE",
+                    Instant.parse("2026-11-16T01:05:00Z"),
+                    2,
+                    0,
+                    0,
+                    quarantinedCount,
+                    notes,
+                    remaining);
+        }
+
+        private org.springframework.test.web.servlet.ResultActions resultOf(IngestionSummaryView summary)
+                throws Exception {
+            given(summaries.summaryOf(INGESTION_ID)).willReturn(Optional.of(summary));
+            return mockMvc.perform(get(INGEST_URL + "/" + INGESTION_ID)).andExpect(status().isOk());
+        }
+
+        @Test
+        void 行13_ファイルの誤りの注記は今のどうすればよいかのまま照会の順に隔離の理由の一覧に出る() throws Exception {
+            resultOf(summaryWith(2, List.of(UNDECODABLE, UNREADABLE_HEADER), 0))
+                    .andExpect(content().string(containsString(NOTES_HEADING)))
+                    .andExpect(content().string(containsString("<p>ファイルの行の順に示します。</p>")))
+                    .andExpect(content()
+                            .string(matchesPattern(Pattern.compile(
+                                    ".*<ul aria-labelledby=\"quarantine-notes-heading\">\\s*<li>"
+                                            + Pattern.quote(UNDECODABLE) + "</li>\\s*<li>"
+                                            + Pattern.quote(UNREADABLE_HEADER) + "</li>\\s*</ul>.*",
+                                    Pattern.DOTALL))))
+                    .andExpect(content().string(not(containsString("ほかに"))));
+        }
+
+        @ParameterizedTest(name = "残り {0} 件")
+        @CsvSource({"1, 1", "9900, '9,900'"})
+        void 行16_示さなかった隔離があれば残りの件数を3桁の区切りで示す(int remaining, String shownRemaining) throws Exception {
+            int limit = IngestionSummaryQueryService.SHOWN_QUARANTINE_LIMIT;
+
+            resultOf(summaryWith(limit + remaining, List.of(UNDECODABLE), remaining))
+                    .andExpect(content()
+                            .string(containsString(
+                                    "<p>ほかに " + shownRemaining + " 件の隔離があります（最初の " + limit + " 件だけを示しています）。</p>")));
+        }
+
+        @Test
+        void 行17_隔離が0件なら隔離の理由の領域を出さない() throws Exception {
+            resultOf(summaryWith(0, List.of(), 0))
+                    .andExpect(content().string(not(containsString("隔離の理由"))))
+                    .andExpect(content().string(not(containsString("ファイルの行の順に示します。"))));
+        }
+
+        @Test
+        void 行18_取込ファイルから来た文字を含む注記は文字として示す() throws Exception {
+            String note = "ファイル: 同じ名前の列があります（<b>id</b>、<script>alert(1)</script>）。提供元に確かめてください。";
+
+            resultOf(summaryWith(1, List.of(note), 0))
+                    .andExpect(content()
+                            .string(containsString(
+                                    "<li>ファイル: 同じ名前の列があります（&lt;b&gt;id&lt;/b&gt;、&lt;script&gt;alert(1)&lt;/script&gt;）。"
+                                            + "提供元に確かめてください。</li>")))
+                    .andExpect(content().string(not(containsString("<b>id</b>"))))
+                    .andExpect(content().string(not(containsString("<script>alert"))));
+        }
     }
 }

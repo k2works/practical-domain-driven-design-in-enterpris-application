@@ -15,13 +15,14 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.UUID;
+import java.util.regex.Pattern;
 import org.assertj.core.api.Assertions;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 /**
- * データ責任者の S-16 外部データの取込（選ぶ画面と結果の画面。US-14 AC1。Bolt 39c、上限を超えるファイルの拒否は Bolt 39c2）の画面の層のステップ定義。承認済みの情報源はシナリオごとに
+ * データ責任者の S-16 外部データの取込（選ぶ画面と結果の画面。US-14 AC1。Bolt 39c、上限を超えるファイルの拒否は Bolt 39c2、隔離の理由は Bolt 39c3）の画面の層のステップ定義。承認済みの情報源はシナリオごとに
  * 提供元の名前にシナリオの UUID を含めて作り、選択肢を名前で選ぶ（共有の PostgreSQL のほかの情報源の数に左右されない。T-230）。ファイルは
  * 寄港 2 つ・時刻の順のドメインの規則に合う航海の行で作る（T-230）。ファイルの選択はブラウザのファイルの選択の窓を開かずに入れる。
  */
@@ -30,6 +31,10 @@ public class ExternalDataIngestionUiSteps {
     private static final String NEW_URL = "/staff/external-data/ingestions/new";
     private static final String FILE_LABEL = "取込ファイル（CSV、UTF-8）";
     private static final String COUNTS_CAPTION = "分類別の件数（受信記録の数）";
+    /** 結果の画面の隔離の理由の見出しと説明（Bolt 39c3）。 */
+    private static final String NOTES_HEADING = "隔離の理由";
+
+    private static final String NOTES_ORDER = "ファイルの行の順に示します。";
     private static final String VOYAGE_HEADER = "external_id,external_version,acquired_at,port_calls";
     /** 寄港 2 つ（時刻の順）。内容の違う行は到着の時刻だけを変える。 */
     private static final String PORT_CALLS =
@@ -187,6 +192,60 @@ public class ExternalDataIngestionUiSteps {
         chooseFile(voyageFile(
                 voyageLine("V2611E", acquiredAt, PORT_CALLS), voyageLine("V2611E", acquiredAt, CHANGED_PORT_CALLS)));
         submit();
+    }
+
+    /**
+     * Bolt 39c3 の行 9。航海の 6 行（採用 3・重複 1・列数の誤り 1・内容の違う原本 1）。2 行目と 5 行目は同じ内容（重複）、3 行目と 6 行目は
+     * 同じ外部 ID・外部版で内容が違い（隔離）、4 行目は列が 1 つ多い（行の誤り）。
+     */
+    @かつ("キー操作だけで承認済みの航海の情報源を選び、正しい行と誤りの行の混ざった航海 6 行のファイルを選んで取り込む")
+    public void 混ざったファイルを取り込む() {
+        chooseSource();
+        String acquiredAt = acquiredAt();
+        chooseFile(voyageFile(
+                voyageLine("V2611E", acquiredAt, PORT_CALLS),
+                voyageLine("V2612E", acquiredAt, PORT_CALLS),
+                voyageLine("V2613E", acquiredAt, PORT_CALLS) + ",余分",
+                voyageLine("V2611E", acquiredAt, PORT_CALLS),
+                voyageLine("V2612E", acquiredAt, CHANGED_PORT_CALLS),
+                voyageLine("V2614E", acquiredAt, PORT_CALLS)));
+        submit();
+    }
+
+    /** Bolt 39c3 の行 17。隔離が 0 件の結果の画面は「隔離の理由」の領域を出さない。 */
+    @かつ("隔離の理由は示されない")
+    public void 隔離の理由は示されない() {
+        assertThat(page().getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName(NOTES_HEADING)))
+                .hasCount(0);
+    }
+
+    @かつ("隔離の理由に {int} 行目の内容の違う原本の注記だけが示される")
+    public void 内容の違う原本の注記だけが示される(int lineNumber) {
+        assertThat(notes()).hasText(new Pattern[] {contentMismatchNote(lineNumber)});
+        browser.checkAccessibility();
+    }
+
+    @かつ("隔離の理由に 4 行目の列の数の誤りと 6 行目の内容の違う原本の注記がこの順に示され、重複の注記は示されない")
+    public void 混ざったファイルの隔離の理由が行の順に示される() {
+        assertThat(page().getByText(NOTES_ORDER)).isVisible();
+        // 一覧の全体の一致で、重複の注記（「同じ原本を受け取り済みです」）を示さないことも確かめる（T-236）
+        assertThat(notes()).hasText(new Pattern[] {
+            Pattern.compile("^" + PlaywrightText.literal("4 行目: 列の数がヘッダーと違います（ヘッダー 4 列、この行 5 列）。提供元に確かめてください。") + "$"),
+            contentMismatchNote(6)
+        });
+        browser.checkAccessibility();
+    }
+
+    /** 隔離の理由の一覧の項目（見出しで名前の付いた一覧）。 */
+    private Locator notes() {
+        return page().getByRole(AriaRole.LIST, new Page.GetByRoleOptions().setName(NOTES_HEADING))
+                .getByRole(AriaRole.LISTITEM);
+    }
+
+    /** 内容の違う原本の注記（最初の受信の時刻は取込の時刻で、秒までの UTC。IngestionService の注記の文）。 */
+    private static Pattern contentMismatchNote(int lineNumber) {
+        return Pattern.compile("^" + lineNumber + " 行目: 同じ外部 ID・外部版で内容の違う原本を受け取りました（最初の受信: "
+                + "\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2} UTC）。$");
     }
 
     @かつ("キー操作だけで承認済みの航海の情報源を選び、同じファイルをもう一度選んで取り込む")

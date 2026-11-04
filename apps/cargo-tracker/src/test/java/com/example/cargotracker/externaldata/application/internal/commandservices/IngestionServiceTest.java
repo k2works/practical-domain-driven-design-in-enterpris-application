@@ -40,6 +40,7 @@ import com.example.cargotracker.externaldata.domain.model.valueobjects.Milestone
 import com.example.cargotracker.externaldata.domain.model.valueobjects.MilestoneValues;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PayloadHash;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PayloadObjectKey;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.PhysicalLineRange;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PortCallValue;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.RecordValues;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.TrackingNumberValue;
@@ -64,8 +65,12 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.context.ApplicationEventPublisher;
 
 /**
@@ -945,7 +950,8 @@ class IngestionServiceTest {
             ReceivedRecord received = onlyKeylessQuarantine();
             assertThat(received.payloadObjectKey()).isEqualTo(ingestion.fileObjectKey());
             assertThat(received.classificationNote())
-                    .isEqualTo("ファイル: 必要な列がありません（external_id、external_version、acquired_at、tracking_number）。");
+                    .isEqualTo("ファイル: 必要な列がありません（external_id、external_version、acquired_at、tracking_number）。"
+                            + "選んだ情報源の種別に合ったファイルか確かめてください。合っていれば提供元に確かめてください。");
             assertThat(ingestion.receivedCount()).isZero();
             assertThat(ingestion.unparsedFromLine()).isNull();
             assertThat(ingestion.unparsedLineCount()).isZero();
@@ -1517,6 +1523,193 @@ class IngestionServiceTest {
         }
     }
 
+    /**
+     * Bolt 39c3 の行 1〜5・11・12（受信記録の行の範囲と、ファイルの誤りの「どうすればよいか」。開始準備の決定 (5)・(8)）。39b2・39b3 の同じ番号の
+     * 行と名前が衝突しないよう入れ子にする。
+     */
+    @Nested
+    class Bolt39c3_隔離の理由 {
+
+        private static byte[] utf8(String text) {
+            return text.getBytes(StandardCharsets.UTF_8);
+        }
+
+        private IngestFileCommand command(
+                int receivedCount, List<IngestedRow> rows, List<RejectedRow> rejectedRows, UnreadablePart unreadable) {
+            return new IngestFileCommand(
+                    milestoneSource.id(), utf8("file"), receivedCount, rows, rejectedRows, unreadable);
+        }
+
+        private ReceivedRecord onlyReceivedRecord() {
+            assertThat(receivedRecords.all()).hasSize(1);
+            return receivedRecords.all().getFirst();
+        }
+
+        private ReceivedRecord receivedRecordOf(UUID id) {
+            return receivedRecords.all().stream()
+                    .filter(received -> received.id().equals(id))
+                    .findFirst()
+                    .orElseThrow();
+        }
+
+        private static IngestedRow milestoneOver(int lineNumber, int lastLineNumber, String externalId, String tn) {
+            String line = externalId + ",1," + ACQUIRED + "," + tn + MILESTONE_TAIL;
+            return new IngestedRow(
+                    lineNumber, lastLineNumber, externalId, "1", ACQUIRED, milestoneValues(tn), utf8(line));
+        }
+
+        @Test
+        void 行1_形式の正しい行の受信記録の行の範囲は採用と重複と内容の違う隔離のどれも行の結果の範囲と同じ() {
+            // 3 行目から 4 行目は引用符の中の改行で 2 物理行にまたがる行。5 行目は 2 行目と同じ内容（重複）、6 行目は 3 行目と内容が違う（隔離）
+            IngestFileCommand command = command(
+                    5,
+                    List.of(
+                            milestone(2, "MS-0001", "1", "CTABCDEFGH2345"),
+                            milestoneOver(3, 4, "MS-0002", "CTABCDEFGH2346"),
+                            milestone(5, "MS-0001", "1", "CTABCDEFGH2345"),
+                            milestone(6, "MS-0002", "1", "CTABCDEFGH2347")),
+                    List.of(),
+                    null);
+
+            Ingested result = ingested(service().ingest(steward, command));
+
+            assertThat(result.rows())
+                    .extracting(
+                            RowResult::classification,
+                            row -> receivedRecordOf(row.receivedRecordId()).lineRange())
+                    .containsExactly(
+                            tuple(Classification.ADOPTED, new PhysicalLineRange(2, 2)),
+                            tuple(Classification.ADOPTED, new PhysicalLineRange(3, 4)),
+                            tuple(Classification.DUPLICATE, new PhysicalLineRange(5, 5)),
+                            tuple(Classification.QUARANTINED, new PhysicalLineRange(6, 6)));
+        }
+
+        @Test
+        void 行2_行の誤りの受信記録の行の範囲は行の誤りの範囲と同じ() {
+            IngestFileCommand command = command(
+                    3,
+                    List.of(),
+                    List.of(
+                            new RejectedRow(
+                                    2,
+                                    2,
+                                    FormatDefect.INVALID_TRACKING_NUMBER,
+                                    List.of("tracking_number"),
+                                    utf8("MS-0001")),
+                            new RejectedRow(
+                                    3,
+                                    4,
+                                    FormatDefect.TEXT_AFTER_CLOSING_QUOTE,
+                                    List.of(),
+                                    utf8("MS-0002,\"1\"x,\"a\nb\""))),
+                    null);
+
+            Ingested result = ingested(service().ingest(steward, command));
+
+            assertThat(result.rows())
+                    .extracting(row -> receivedRecordOf(row.receivedRecordId()).lineRange())
+                    .containsExactly(new PhysicalLineRange(2, 2), new PhysicalLineRange(3, 4));
+        }
+
+        @ParameterizedTest(name = "{0} 行目から {1} 行")
+        @CsvSource({"12, 29, 40", "12, 1, 12"})
+        void 行3_ファイルの終わりまで取り込めなかった範囲の受信記録の行の範囲は始まりから始まりと数から1を引いた行まで(int fromLine, int lineCount, int lastLine) {
+            IngestFileCommand command = command(
+                    fromLine - 2 + lineCount,
+                    List.of(),
+                    List.of(),
+                    new UnreadablePart(fromLine, lineCount, FormatDefect.UNCLOSED_QUOTE, List.of(), utf8("\"")));
+
+            ingested(service().ingest(steward, command));
+
+            assertThat(onlyReceivedRecord().lineRange()).isEqualTo(new PhysicalLineRange(fromLine, lastLine));
+        }
+
+        static Stream<UnreadablePart> ファイルの誤り() {
+            return Stream.of(
+                    new UnreadablePart(2, 2, FormatDefect.UNREADABLE_HEADER, List.of(), null),
+                    new UnreadablePart(null, 0, FormatDefect.MISSING_COLUMN, List.of("external_id"), null),
+                    new UnreadablePart(2, 2, FormatDefect.UNDECODABLE, List.of(), null));
+        }
+
+        @ParameterizedTest
+        @MethodSource("ファイルの誤り")
+        void 行4_ファイルの誤りの受信記録はデータ行の有無と文字コードの誤りによらず行の範囲を持たない(UnreadablePart part) {
+            IngestFileCommand command = command(part.lineCount(), List.of(), List.of(), part);
+
+            ingested(service().ingest(steward, command));
+
+            assertThat(onlyReceivedRecord().lineRange()).isNull();
+        }
+
+        @Test
+        void 行5_隔離のすべての種類でDE14の物理行の範囲と受信記録の行の範囲が一致する() {
+            IngestFileCommand rows = command(
+                    5,
+                    List.of(
+                            milestone(2, "MS-0001", "1", "CTABCDEFGH2345"),
+                            milestone(3, "MS-0001", "1", "CTABCDEFGH2346")),
+                    List.of(new RejectedRow(
+                            4, 4, FormatDefect.COLUMN_COUNT_MISMATCH, List.of("ヘッダー 7 列", "この行 8 列"), utf8("x"))),
+                    new UnreadablePart(5, 2, FormatDefect.UNCLOSED_QUOTE, List.of(), utf8("\"")));
+            ingested(service().ingest(steward, rows));
+            IngestFileCommand fileError = command(
+                    2, List.of(), List.of(), new UnreadablePart(2, 2, FormatDefect.UNDECODABLE, List.of(), null));
+            ingested(service().ingest(steward, fileError));
+
+            List<ExternalRecordQuarantined> quarantined = published.stream()
+                    .filter(ExternalRecordQuarantined.class::isInstance)
+                    .map(ExternalRecordQuarantined.class::cast)
+                    .toList();
+            assertThat(quarantined)
+                    .extracting(ExternalRecordQuarantined::reason)
+                    .containsExactly(
+                            ExternalRecordQuarantined.CONTENT_MISMATCH,
+                            FormatDefect.COLUMN_COUNT_MISMATCH.name(),
+                            FormatDefect.UNCLOSED_QUOTE.name(),
+                            FormatDefect.UNDECODABLE.name());
+            for (ExternalRecordQuarantined event : quarantined) {
+                PhysicalLineRange range =
+                        receivedRecordOf(event.receivedRecordId()).lineRange();
+                assertThat(range == null ? null : range.first())
+                        .as(event.reason())
+                        .isEqualTo(event.firstLine());
+                assertThat(range == null ? null : range.last())
+                        .as(event.reason())
+                        .isEqualTo(event.lastLine());
+            }
+        }
+
+        @Test
+        void 行11_必要な列がないファイルの注記は選んだ情報源の種別に合うファイルかを確かめる次の行動を持つ() {
+            IngestFileCommand command = command(
+                    2,
+                    List.of(),
+                    List.of(),
+                    new UnreadablePart(2, 2, FormatDefect.MISSING_COLUMN, List.of("kind", "occurred_at"), null));
+
+            ingested(service().ingest(steward, command));
+
+            assertThat(onlyReceivedRecord().classificationNote())
+                    .isEqualTo(
+                            "ファイル: 必要な列がありません（kind、occurred_at）。" + "選んだ情報源の種別に合ったファイルか確かめてください。合っていれば提供元に確かめてください。");
+        }
+
+        @Test
+        void 行12_同じ名前の列があるファイルの注記は提供元に確かめる次の行動を持つ() {
+            IngestFileCommand command = command(
+                    2,
+                    List.of(),
+                    List.of(),
+                    new UnreadablePart(2, 2, FormatDefect.DUPLICATE_COLUMN, List.of("external_id"), null));
+
+            ingested(service().ingest(steward, command));
+
+            assertThat(onlyReceivedRecord().classificationNote())
+                    .isEqualTo("ファイル: 同じ名前の列があります（external_id）。提供元に確かめてください。");
+        }
+    }
+
     /** 保存の呼び出しを記録する（保存 → 受信記録の順を確かめる）。 */
     private class RecordingStorage implements ExternalPayloadStorage {
 
@@ -1565,6 +1758,11 @@ class IngestionServiceTest {
         @Override
         public int countByIngestionAndClassification(UUID ingestionId, Classification classification) {
             return receivedRecords.countByIngestionAndClassification(ingestionId, classification);
+        }
+
+        @Override
+        public List<ReceivedRecord> quarantinedOf(UUID ingestionId, int limit) {
+            return receivedRecords.quarantinedOf(ingestionId, limit);
         }
     }
 }

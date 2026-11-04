@@ -24,6 +24,7 @@ import com.example.cargotracker.externaldata.domain.model.valueobjects.Classific
 import com.example.cargotracker.externaldata.domain.model.valueobjects.IdempotencyKey;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PayloadHash;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PayloadObjectKey;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.PhysicalLineRange;
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
 import com.example.cargotracker.shared.domain.Role;
 import com.example.cargotracker.shared.domain.UtcInstant;
@@ -54,6 +55,7 @@ import org.springframework.transaction.annotation.Transactional;
  * （受け付けていない）。1 つの取込は 1 つのトランザクション（外側）で、原本の保存は独立したトランザクションで残る（ADR-004 の改訂）。原本の保存の失敗と外部原本の一意制約の違反（同時の取込）は
  * 例外のまま上げて取込全体を巻き戻す。時刻は Clock から 1 回取り、取込・外部原本・受信記録に使う（取込を 1 つの時点として再現できる）。
  * 処理の順は、ファイル全体の原本 → 取込の行（取り込めなかった行の始まりと数を入れ、更新しない）→ 物理行の順の行 → 取り込めなかった部分。
+ * 受信記録には DE-14 と同じ物理行の範囲を入れ、ファイルの誤りは範囲を持たない（隔離の理由を行の順に読むため。Bolt 39c3）。
  */
 @Service // JIG がユースケースとして読む印（組み立ては ExternalDataConfiguration）
 public class IngestionService {
@@ -200,7 +202,8 @@ public class IngestionService {
                 row.acquiredAt(),
                 classification,
                 noteOf(classification, externalRecord, row),
-                now);
+                now,
+                row.range());
         receivedRecords.add(received);
         Optional<Object> event =
                 switch (classification) {
@@ -257,7 +260,11 @@ public class IngestionService {
         PayloadObjectKey payloadKey = PayloadObjectKey.newRecordPayload();
         payloadStorage.store(payloadKey, payload);
         ReceivedRecord received = addKeylessQuarantine(
-                run, PayloadHash.of(payload), payloadKey, row.defect().rowNote(row.range(), row.details()));
+                run,
+                PayloadHash.of(payload),
+                payloadKey,
+                row.defect().rowNote(row.range(), row.details()),
+                row.range());
         eventPublisher.publishEvent(
                 quarantinedEventOf(run, received, null, row.defect().name(), row.lineNumber(), row.lastLineNumber()));
         return new RowResult(row.lineNumber(), row.lastLineNumber(), Classification.QUARANTINED, null, received.id());
@@ -271,32 +278,38 @@ public class IngestionService {
     private Unreadable quarantine(Run run, UnreadablePart part) {
         Ingestion ingestion = run.ingestion();
         ReceivedRecord received;
-        Integer firstLine = null;
-        Integer lastLine = null;
+        PhysicalLineRange range = null;
         if (part.fileDefect()) {
             received = addKeylessQuarantine(
                     run,
                     ingestion.fileHash(),
                     ingestion.fileObjectKey(),
-                    part.defect().fileNote(part.details()));
+                    part.defect().fileNote(part.details()),
+                    null);
         } else {
             byte[] payload = part.payload();
             PayloadObjectKey payloadKey = PayloadObjectKey.newRecordPayload();
             payloadStorage.store(payloadKey, payload);
+            range = new PhysicalLineRange(part.fromLine(), part.fromLine() + part.lineCount() - 1);
             received = addKeylessQuarantine(
                     run,
                     PayloadHash.of(payload),
                     payloadKey,
-                    part.defect().untilEndOfFileNote(part.fromLine(), part.lineCount(), part.details()));
-            firstLine = part.fromLine();
-            lastLine = part.fromLine() + part.lineCount() - 1;
+                    part.defect().untilEndOfFileNote(part.fromLine(), part.lineCount(), part.details()),
+                    range);
         }
-        eventPublisher.publishEvent(
-                quarantinedEventOf(run, received, null, part.defect().name(), firstLine, lastLine));
+        eventPublisher.publishEvent(quarantinedEventOf(
+                run,
+                received,
+                null,
+                part.defect().name(),
+                range == null ? null : range.first(),
+                range == null ? null : range.last()));
         return new Unreadable(part.fromLine(), part.lineCount(), received.id());
     }
 
-    private ReceivedRecord addKeylessQuarantine(Run run, PayloadHash hash, PayloadObjectKey payloadKey, String note) {
+    private ReceivedRecord addKeylessQuarantine(
+            Run run, PayloadHash hash, PayloadObjectKey payloadKey, String note, PhysicalLineRange range) {
         ReceivedRecord received = new ReceivedRecord(
                 UUID.randomUUID(),
                 null,
@@ -306,7 +319,8 @@ public class IngestionService {
                 null,
                 Classification.QUARANTINED,
                 withinNoteLimit(note),
-                run.now());
+                run.now(),
+                range);
         receivedRecords.add(received);
         return received;
     }

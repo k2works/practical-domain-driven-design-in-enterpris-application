@@ -1,20 +1,48 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<!-- 受信記録（Bolt 39b、ED-INV-02）。追記専用なので INSERT と数えることだけを持つ。取込と外部原本より後に書く（外部キー）。
-     取込ごとの件数は ix_received_record_ingestion を使う。キーのない隔離（Bolt 39b2）は外部原本 ID と取得時刻が NULL。H2 と PostgreSQL の共通の構文で書く（ADR-007）。 -->
+<!-- 受信記録（Bolt 39b、ED-INV-02）。追記専用なので INSERT と数えることと、取込の隔離を行の範囲の順に読む SELECT（Bolt 39c3）だけを持つ。
+     取込と外部原本より後に書く（外部キー）。取込ごとの件数と隔離の照会は ix_received_record_ingestion を使う。キーのない隔離（Bolt 39b2）は
+     外部原本 ID と取得時刻が NULL。行の範囲の 2 列（Bolt 39c3）はファイルの誤りと既存の行で NULL。H2 と PostgreSQL の共通の構文で書く（ADR-007）。 -->
 <mapper namespace="com.example.cargotracker.externaldata.infrastructure.persistence.ReceivedRecordMapper">
+
+    <resultMap id="receivedRecordRow" type="com.example.cargotracker.externaldata.infrastructure.persistence.ReceivedRecordRow">
+        <constructor>
+            <idArg column="id" name="id" javaType="java.util.UUID"/>
+            <arg column="external_record_id" name="externalRecordId" javaType="java.util.UUID"/>
+            <arg column="ingestion_id" name="ingestionId" javaType="java.util.UUID"/>
+            <arg column="payload_hash" name="payloadHash" javaType="String"/>
+            <arg column="payload_object_key" name="payloadObjectKey" javaType="String"/>
+            <arg column="acquired_at" name="acquiredAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="classification" name="classification" javaType="String"/>
+            <arg column="classification_note" name="classificationNote" javaType="String"/>
+            <arg column="classified_at" name="classifiedAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="first_line_number" name="firstLineNumber" javaType="Integer"/>
+            <arg column="last_line_number" name="lastLineNumber" javaType="Integer"/>
+        </constructor>
+    </resultMap>
 
     <insert id="insert">
         INSERT INTO external_data.received_record
             (id, external_record_id, ingestion_id, payload_hash, payload_object_key, acquired_at, classification,
-             classification_note, classified_at)
+             classification_note, classified_at, first_line_number, last_line_number)
         VALUES (#{id}, #{externalRecordId,jdbcType=OTHER}, #{ingestionId}, #{payloadHash}, #{payloadObjectKey},
                 #{acquiredAt,jdbcType=TIMESTAMP_WITH_TIMEZONE},
-                #{classification}, #{classificationNote,jdbcType=VARCHAR}, #{classifiedAt})
+                #{classification}, #{classificationNote,jdbcType=VARCHAR}, #{classifiedAt},
+                #{firstLineNumber,jdbcType=INTEGER}, #{lastLineNumber,jdbcType=INTEGER})
     </insert>
 
     <select id="countByIngestionAndClassification" resultType="int">
         SELECT COUNT(*) FROM external_data.received_record
          WHERE ingestion_id = #{ingestionId} AND classification = #{classification}
+    </select>
+
+    <!-- 範囲のないファイルの誤りを先に、行の範囲の始まりの順。同じ始まりはない（1 つの取込の範囲は重ならない）が、決まった順にするため ID で並べ直す -->
+    <select id="quarantinedOf" resultMap="receivedRecordRow">
+        SELECT id, external_record_id, ingestion_id, payload_hash, payload_object_key, acquired_at, classification,
+               classification_note, classified_at, first_line_number, last_line_number
+          FROM external_data.received_record
+         WHERE ingestion_id = #{ingestionId} AND classification = 'QUARANTINED'
+         ORDER BY first_line_number NULLS FIRST, id
+         LIMIT #{limit}
     </select>
 </mapper>

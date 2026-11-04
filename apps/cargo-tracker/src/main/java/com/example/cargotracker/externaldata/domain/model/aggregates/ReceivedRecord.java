@@ -3,6 +3,7 @@ package com.example.cargotracker.externaldata.domain.model.aggregates;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.Classification;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PayloadHash;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PayloadObjectKey;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.PhysicalLineRange;
 import com.example.cargotracker.shared.annotation.ddd.Entity;
 import java.time.Instant;
 import java.util.Objects;
@@ -13,7 +14,9 @@ import java.util.UUID;
  * （data_model の {@code external_data.received_record}。ED-INV-02。Bolt 39b、39b2）。リポジトリのポートが受け渡す record で、
  * 振る舞いを持たない（トランザクションスクリプト。ADR-002）。取込によらない受信（表では {@code ingestion_id} が NULL 可）はまだないので、
  * 取込 ID を必ず持つ。外部原本 ID と取得時刻はそろって NULL かそろって NULL でなく、NULL なのは隔離だけ（キーのない隔離。表の CHECK
- * {@code ck_received_record_keyless_quarantine} と同じ規則。Bolt 39b2）。
+ * {@code ck_received_record_keyless_quarantine} と同じ規則。Bolt 39b2）。行の範囲は取込ファイルの物理行のどこからどこまでかで、隔離の理由を
+ * 行の順に読む並びに使う。ファイルの誤り（ファイル全体の原本を指す）と Bolt 39c3 より前の受信記録は持たない（表の 2 列はそろって NULL。
+ * CHECK {@code ck_received_record_line_range}。Bolt 39c3）。
  *
  * @param id 受信記録 ID
  * @param externalRecordId 外部原本 ID（キーのない隔離は {@code null}）
@@ -24,6 +27,7 @@ import java.util.UUID;
  * @param classification 分類
  * @param classificationNote 分類の注記（採用は注記なしで {@code null}）
  * @param classifiedAt 分類の時刻
+ * @param lineRange 行の範囲（ファイルの誤りと Bolt 39c3 より前の受信記録は {@code null}）
  */
 @Entity
 public record ReceivedRecord(
@@ -35,7 +39,8 @@ public record ReceivedRecord(
         Instant acquiredAt,
         Classification classification,
         String classificationNote,
-        Instant classifiedAt) {
+        Instant classifiedAt,
+        PhysicalLineRange lineRange) {
 
     public ReceivedRecord {
         Objects.requireNonNull(id, "id");

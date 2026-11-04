@@ -8,9 +8,11 @@ import com.example.cargotracker.externaldata.domain.model.valueobjects.Classific
 import com.example.cargotracker.externaldata.domain.model.valueobjects.IdempotencyKey;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PayloadHash;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PayloadObjectKey;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.PhysicalLineRange;
 import com.example.cargotracker.shared.domain.UserId;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -19,7 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 取込・外部原本・受信記録のリポジトリの契約（Bolt 39b の行 7・9b・10・12、Bolt 39b2 の行 17・18・19、Bolt 39b3 の行 12）。メモリ・H2・PostgreSQL の実装が継いで同じ約束を確かめる。
- * 取込と受信記録のポートは追記と数えることだけを持つので、書いた行の往復は継ぐ側が {@link #storedIngestion(UUID)}・
+ * 取込と受信記録のポートは追記と数えること（と隔離を読む照会。Bolt 39c3）だけを持つので、書いた行の往復は継ぐ側が {@link #storedIngestion(UUID)}・
  * {@link #storedReceivedRecord(UUID)} で読む（ポートの外）。提供元の名前は乱数の UUID を含めて自分の行で絞る。
  *
  * <p>{@code @Transactional} は継ぐ側ではなくこのクラスに付ける。テストのトランザクションの属性はテストのメソッドを宣言したクラスから
@@ -103,7 +105,8 @@ public abstract class ExternalDataRecordRepositoriesContract {
                 ACQUIRED_AT,
                 classification,
                 note,
-                INGESTED_AT);
+                INGESTED_AT,
+                null);
     }
 
     @Test
@@ -234,7 +237,8 @@ public abstract class ExternalDataRecordRepositoriesContract {
                 null,
                 Classification.QUARANTINED,
                 "ファイル: 必要な列がありません（acquired_at）。",
-                INGESTED_AT);
+                INGESTED_AT,
+                null);
 
         receivedRecords().add(keyless);
 
@@ -288,7 +292,8 @@ public abstract class ExternalDataRecordRepositoriesContract {
                 null,
                 Classification.QUARANTINED,
                 note,
-                INGESTED_AT);
+                INGESTED_AT,
+                null);
 
         receivedRecords().add(keyless);
 
@@ -306,7 +311,107 @@ public abstract class ExternalDataRecordRepositoriesContract {
                 acquiredAt,
                 classification,
                 null,
-                INGESTED_AT);
+                INGESTED_AT,
+                null);
+    }
+
+    // --- Bolt 39c3 の行 1・4・7・8（受信記録の行の範囲の往復と、隔離を行の範囲の順に読む照会）。39b の同じ番号の行と名前が衝突しないよう、
+    // 名前の頭に Bolt39c3_ を付ける（入れ子のクラスにすると、継ぐ側のクラスの Spring のテストの文脈を引けない） ---
+
+    /** 行の範囲を持つキーのない隔離（範囲が null ならファイルの誤り）。 */
+    private ReceivedRecord keyless(Ingestion ingestion, PhysicalLineRange range) {
+        return new ReceivedRecord(
+                UUID.randomUUID(),
+                null,
+                ingestion.id(),
+                hash("行-" + range),
+                PayloadObjectKey.newRecordPayload(),
+                null,
+                Classification.QUARANTINED,
+                "隔離-" + range,
+                INGESTED_AT,
+                range);
+    }
+
+    private ReceivedRecord keyed(
+            ExternalRecord externalRecord, Ingestion ingestion, Classification classification, int line) {
+        return new ReceivedRecord(
+                UUID.randomUUID(),
+                externalRecord.id(),
+                ingestion.id(),
+                externalRecord.payloadHash(),
+                PayloadObjectKey.newRecordPayload(),
+                ACQUIRED_AT,
+                classification,
+                classification == Classification.ADOPTED ? null : classification + "-" + line,
+                INGESTED_AT,
+                new PhysicalLineRange(line, line));
+    }
+
+    @Test
+    void Bolt39c3_行1_受信記録の行の範囲を往復する() {
+        Ingestion ingestion = ingestion(2);
+        ingestions().add(ingestion);
+        ReceivedRecord twoLines = keyless(ingestion, new PhysicalLineRange(2, 3));
+
+        receivedRecords().add(twoLines);
+
+        assertThat(storedReceivedRecord(twoLines.id())).contains(twoLines);
+    }
+
+    @Test
+    void Bolt39c3_行4_行の範囲のない受信記録は範囲がNULLのまま往復する() {
+        Ingestion ingestion = ingestion(2, 2, 2);
+        ingestions().add(ingestion);
+        ReceivedRecord fileError = keyless(ingestion, null);
+
+        receivedRecords().add(fileError);
+
+        assertThat(storedReceivedRecord(fileError.id()))
+                .hasValueSatisfying(stored -> assertThat(stored.lineRange()).isNull());
+    }
+
+    @Test
+    void Bolt39c3_行7_取込の隔離を範囲のないものを先に行の範囲の始まりの順に返しほかの取込の隔離は返さない() {
+        Ingestion ingestion = ingestion(40);
+        Ingestion other = ingestion(1);
+        ingestions().add(ingestion);
+        ingestions().add(other);
+        ReceivedRecord untilEnd = keyless(ingestion, new PhysicalLineRange(12, 40));
+        ReceivedRecord twoLines = keyless(ingestion, new PhysicalLineRange(5, 6));
+        ReceivedRecord oneLine = keyless(ingestion, new PhysicalLineRange(3, 3));
+        ReceivedRecord fileError = keyless(ingestion, null);
+        // 期待の順と逆に書く（T-229）
+        receivedRecords().add(untilEnd);
+        receivedRecords().add(twoLines);
+        receivedRecords().add(oneLine);
+        receivedRecords().add(fileError);
+        receivedRecords().add(keyless(other, new PhysicalLineRange(2, 2)));
+
+        List<ReceivedRecord> first = receivedRecords().quarantinedOf(ingestion.id(), 100);
+        List<ReceivedRecord> again = receivedRecords().quarantinedOf(ingestion.id(), 100);
+
+        assertThat(first).containsExactly(fileError, oneLine, twoLines, untilEnd);
+        assertThat(again).isEqualTo(first);
+        assertThat(receivedRecords().quarantinedOf(ingestion.id(), 2)).containsExactly(fileError, oneLine);
+    }
+
+    @Test
+    void Bolt39c3_行8_隔離の照会は採用と重複の受信記録を返さない() {
+        Ingestion ingestion = ingestion(4);
+        ingestions().add(ingestion);
+        ExternalRecord externalRecord = externalRecord(key("VOYAGE", "V-39C3"));
+        externalRecords().add(externalRecord);
+        ReceivedRecord adopted = keyed(externalRecord, ingestion, Classification.ADOPTED, 2);
+        ReceivedRecord duplicate = keyed(externalRecord, ingestion, Classification.DUPLICATE, 3);
+        ReceivedRecord quarantined = keyed(externalRecord, ingestion, Classification.QUARANTINED, 4);
+        ReceivedRecord rowError = keyless(ingestion, new PhysicalLineRange(5, 5));
+        receivedRecords().add(adopted);
+        receivedRecords().add(duplicate);
+        receivedRecords().add(quarantined);
+        receivedRecords().add(rowError);
+
+        assertThat(receivedRecords().quarantinedOf(ingestion.id(), 100)).containsExactly(quarantined, rowError);
     }
 
     @Test

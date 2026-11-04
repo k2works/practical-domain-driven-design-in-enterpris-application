@@ -1,12 +1,15 @@
 package com.example.cargotracker.externaldata.application.internal.queryservices;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
 /**
  * 取込の要約。取込の要約の照会の値（S-16 の結果の画面。Bolt 39c）。取込のサービスの結果（取込の結果 {@code IngestionOutcome}）とは別で、
- * DB から読み直した値。受け取った件数は物理データ行で、分類別の件数（受信記録の数）と単位が違う。要確認と取り込めなかった部分は 39c3 で足す。
+ * DB から読み直した値。受け取った件数は物理データ行で、分類別の件数（受信記録の数）と単位が違う。隔離の理由（注記）は行の順に最初の
+ * {@link IngestionSummaryQueryService#SHOWN_QUARANTINE_LIMIT} 件と、示さなかった隔離の数を持つ（Bolt 39c3）。要確認と取り込めなかった部分は
+ * 39c4 で足す。
  *
  * @param ingestionId 取込 ID
  * @param provider 情報源の提供元
@@ -16,6 +19,8 @@ import java.util.UUID;
  * @param adoptedCount 採用の受信記録の数
  * @param duplicateCount 重複の受信記録の数
  * @param quarantinedCount 隔離の受信記録の数（キーのない隔離を含む）
+ * @param quarantineNotes 示す隔離の注記（ファイルの行の順。範囲のないファイルの誤りが先）
+ * @param remainingQuarantineCount 示さなかった隔離の数（隔離の件数 − 示した数）
  */
 public record IngestionSummaryView(
         UUID ingestionId,
@@ -25,12 +30,15 @@ public record IngestionSummaryView(
         int receivedCount,
         int adoptedCount,
         int duplicateCount,
-        int quarantinedCount) {
+        int quarantinedCount,
+        List<String> quarantineNotes,
+        int remainingQuarantineCount) {
 
     public IngestionSummaryView {
         Objects.requireNonNull(ingestionId, "ingestionId");
         Objects.requireNonNull(provider, "provider");
         Objects.requireNonNull(recordType, "recordType");
         Objects.requireNonNull(ingestedAt, "ingestedAt");
+        quarantineNotes = List.copyOf(Objects.requireNonNull(quarantineNotes, "quarantineNotes"));
     }
 }

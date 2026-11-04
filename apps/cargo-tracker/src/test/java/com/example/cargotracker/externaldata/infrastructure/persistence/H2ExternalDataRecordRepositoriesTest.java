@@ -19,6 +19,7 @@ import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -147,6 +148,43 @@ class H2ExternalDataRecordRepositoriesTest extends ExternalDataRecordRepositorie
         assertThatThrownBy(() -> insertIngestion(dataSourceId, 2, 0))
                 .isInstanceOf(DataIntegrityViolationException.class)
                 .satisfies(e -> assertThat(e.getMessage()).containsIgnoringCase("ck_ingestion_unparsed_lines"));
+    }
+
+    /** Bolt 39c3 の行 6（受信記録の行の範囲の CHECK）。39b2 の同じ番号の行と名前が衝突しないよう入れ子にする。 */
+    @Nested
+    class Bolt39c3_受信記録の行の範囲 {
+
+        @Test
+        void 行6_H2でも行の範囲は2列そろってNULLかそろって1以上で始まりが終わり以下でほかは制約の違反() {
+            insertKeylessQuarantine(null, null);
+            insertKeylessQuarantine(3, 3);
+            insertKeylessQuarantine(3, 5);
+
+            for (Integer[] range : List.of(
+                    new Integer[] {null, 3}, new Integer[] {3, null}, new Integer[] {0, 0}, new Integer[] {5, 3})) {
+                assertThatThrownBy(() -> insertKeylessQuarantine(range[0], range[1]))
+                        .as("行の範囲 %s〜%s", range[0], range[1])
+                        .isInstanceOf(DataIntegrityViolationException.class)
+                        .satisfies(
+                                e -> assertThat(e.getMessage()).containsIgnoringCase("ck_received_record_line_range"));
+            }
+        }
+
+        /** 行の範囲を指定したキーのない隔離の受信記録をポートを通さず書く（record は型で拒むため）。 */
+        private void insertKeylessQuarantine(Integer firstLine, Integer lastLine) {
+            UUID id = UUID.randomUUID();
+            jdbc.update(
+                    "INSERT INTO external_data.received_record (id, external_record_id, ingestion_id, payload_hash,"
+                            + " payload_object_key, acquired_at, classification, classification_note, classified_at,"
+                            + " first_line_number, last_line_number)"
+                            + " VALUES (?, NULL, NULL, ?, ?, NULL, 'QUARANTINED', NULL, ?, ?, ?)",
+                    id,
+                    HASH,
+                    "externaldata/records/" + id,
+                    NOW,
+                    firstLine,
+                    lastLine);
+        }
     }
 
     private void insertReceivedRecord(UUID externalRecordId, OffsetDateTime acquiredAt, String classification) {

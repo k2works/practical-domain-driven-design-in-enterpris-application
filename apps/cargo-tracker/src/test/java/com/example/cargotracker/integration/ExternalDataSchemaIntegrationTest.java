@@ -14,6 +14,7 @@ import java.sql.Types;
 import java.time.Instant;
 import java.util.UUID;
 import javax.sql.DataSource;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -263,6 +264,45 @@ class ExternalDataSchemaIntegrationTest {
             assertThat(constraintExists(connection, "ingestion", "ck_ingestion_unparsed_lines"))
                     .isTrue();
         });
+    }
+
+    /** Bolt 39c3 の行 6（受信記録の行の範囲の 2 列と CHECK。開始準備の決定 (6)）。39a3 の同じ番号の行と名前が衝突しないよう入れ子にする。 */
+    @Nested
+    class Bolt39c3_受信記録の行の範囲 {
+
+        @Test
+        void 行6_行の範囲は2列そろってNULLかそろって1以上で始まりが終わり以下でほかはCHECKの違反() throws SQLException {
+            inRolledBackTransaction(connection -> {
+                insertKeylessQuarantine(connection, null, null);
+                insertKeylessQuarantine(connection, 3, 3);
+                insertKeylessQuarantine(connection, 3, 5);
+
+                assertViolation(connection, () -> insertKeylessQuarantine(connection, null, 3), CHECK_VIOLATION);
+                assertViolation(connection, () -> insertKeylessQuarantine(connection, 3, null), CHECK_VIOLATION);
+                assertViolation(connection, () -> insertKeylessQuarantine(connection, 0, 0), CHECK_VIOLATION);
+                assertViolation(connection, () -> insertKeylessQuarantine(connection, 5, 3), CHECK_VIOLATION);
+                assertThat(constraintExists(connection, "received_record", "ck_received_record_line_range"))
+                        .isTrue();
+            });
+        }
+
+        /** 行の範囲を指定したキーのない隔離の受信記録をポートを通さず書く（record は型で拒むため）。 */
+        private static void insertKeylessQuarantine(Connection connection, Integer firstLine, Integer lastLine)
+                throws SQLException {
+            UUID id = UUID.randomUUID();
+            try (PreparedStatement statement = connection.prepareStatement("INSERT INTO external_data.received_record"
+                    + " (id, external_record_id, ingestion_id, payload_hash, payload_object_key, acquired_at,"
+                    + " classification, classification_note, classified_at, first_line_number, last_line_number)"
+                    + " VALUES (?, NULL, NULL, ?, ?, NULL, 'QUARANTINED', NULL, ?, ?, ?)")) {
+                statement.setObject(1, id);
+                statement.setString(2, HASH);
+                statement.setString(3, "record/" + id);
+                statement.setTimestamp(4, NOW);
+                statement.setObject(5, firstLine, Types.INTEGER);
+                statement.setObject(6, lastLine, Types.INTEGER);
+                statement.executeUpdate();
+            }
+        }
     }
 
     @Test

@@ -103,7 +103,8 @@ class MyBatisAdoptedValueRepositoryIntegrationTest extends AdoptedValueRepositor
                 NOW.minusSeconds(60),
                 Classification.ADOPTED,
                 null,
-                NOW);
+                NOW,
+                null);
         receivedRecords.add(received);
         return received.id();
     }

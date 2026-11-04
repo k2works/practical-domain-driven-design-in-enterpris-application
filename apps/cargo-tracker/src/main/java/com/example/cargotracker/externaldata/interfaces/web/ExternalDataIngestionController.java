@@ -76,6 +76,10 @@ public class ExternalDataIngestionController {
     private static final String SOURCE_NOT_APPROVED = "選んだ情報源は承認済みではないため取り込めません。画面を開き直して、承認済みの情報源を選んでください。";
     private static final String SOURCE_NOT_FOUND = "選んだ情報源が見つかりません。画面を開き直して、情報源を選び直してください。";
 
+    /** 示さなかった隔離の数の文（数は 3 桁の区切り。上限は照会の定数。Bolt 39c3 の開始準備の決定 (4)）。 */
+    private static final String REMAINING_QUARANTINE =
+            "ほかに %s 件の隔離があります（最初の " + IngestionSummaryQueryService.SHOWN_QUARANTINE_LIMIT + " 件だけを示しています）。";
+
     /** 原本種別（取込ファイルの種別）の表示名。 */
     private static final Map<CsvFileKind, String> KIND_LABELS =
             Map.of(CsvFileKind.VOYAGE, "航海", CsvFileKind.MILESTONE, "主要実績");
@@ -164,6 +168,12 @@ public class ExternalDataIngestionController {
         model.addAttribute("source", sourceLabel(summary.provider(), summary.recordType()));
         model.addAttribute("ingestedAt", DateTimeDisplay.staff(summary.ingestedAt()));
         model.addAttribute("summary", summary);
+        if (summary.remainingQuarantineCount() > 0) {
+            model.addAttribute(
+                    "remainingQuarantine",
+                    REMAINING_QUARANTINE.formatted(
+                            String.format(Locale.ROOT, "%,d", summary.remainingQuarantineCount())));
+        }
         return RESULT_VIEW;
     }
 
