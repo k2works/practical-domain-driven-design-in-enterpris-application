@@ -2,7 +2,7 @@
 type: Plan
 title: "Bolt 39b4 計画 - 外部原本の取込の性能（PERF-06）と量・接続の計測"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-04T04:20:56Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-04T04:58:20Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-11-04T04:15:10Z }
 ---
@@ -241,7 +241,7 @@ end note
 ## ステップ計画（ステップごとに止める）
 
 - [x] **1. 設計の文書**（2026-11-04、推奨のとおり承認として記録した（Recommend 承認の指示による。human:kakimomokuri）。測った値はステップ 7 で書く。US-14 に「Bolt 39b4 の決定」の段落を作り AC1 の注を置いた。H2 の VARCHAR の上限の誤りを訂正の注で直した）: 上の「設計文書に直す箇所」（「人に諮ること」1 の決定を反映する。測った値と H2 の結果はステップ 3・5・7 で足す）（完了の判定: 文書の差分。**承認ゲート**）
-- [ ] **2. 接続とコミットを数える部品（Red → Green）**: `ConnectionUsageRecorder` と、行 3・4・7 の 1,000 件の統合テスト（`ExternalDataIngestionConnectionTest`）を書く。今のコードで緑なら、変異（保存を外側のトランザクションで書く・保存の中で REQUIRES_NEW を入れ子にする・件数を全体で数える）で落ちることを確かめて Red の代わりにする（T-217）（完了の判定: 緑、`sonar-local:check` の新しい違反（T-234）。**承認ゲート**（構造: テストの部品））
+- [x] **2. 接続とコミットを数える部品（Red → Green）**（2026-11-04、推奨のとおり承認として記録した（Recommend 承認の指示による。human:kakimomokuri）。部品を足した時点で緑だったので変異 3 つ（REQUIRES_NEW を外す・入れ子にする・全体で数える）で落ちることを確かめた。1,000 件で接続の最大 2、コミットは行の数 ＋ 2。部品は `TestcontainersConfiguration` に入れて共有の文脈に乗せた（同期の発行記録の受け手と同じ組にするとコミットが増えるため））: `ConnectionUsageRecorder` と、行 3・4・7 の 1,000 件の統合テスト（`ExternalDataIngestionConnectionTest`）を書く。今のコードで緑なら、変異（保存を外側のトランザクションで書く・保存の中で REQUIRES_NEW を入れ子にする・件数を全体で数える）で落ちることを確かめて Red の代わりにする（T-217）（完了の判定: 緑、`sonar-local:check` の新しい違反（T-234）。**承認ゲート**（構造: テストの部品））
 - [ ] **3. 1 万件の計測（Red → Green）**: 行 1・2・8・10・11・12 のテスト（`ExternalDataIngestionPerformanceTest`、`PerformanceTestTagArchitectureTest`）、`test` の `excludeTags` に `performance`、`performanceTest` のタスク（`outputs.upToDateWhen { false }`・`shouldRunAfter 'test'`）。Red は規則（タグのない `*PerformanceTest` のクラス）と、判定を 1 ms にした変異で時間の判定が落ちること。`performanceTest` を流して測った値を記録し、行 12 で寄港 60 の航海 1 万件のファイルの大きさと時間を測る（40 MiB の確かめ。行の最大の大きさも測り、「人に諮ること」1 の見込み 3.4 KB を確かめる。T-239）。2 分 30 秒を超えたら止めて 39b4b を足す（下の「時間の配分と打ち切り」）（完了の判定: `test` と `performanceTest` の緑、測った値の記録、`sonar-local:check`。**承認ゲート**（構造: Gradle のタスク））
 - [ ] **4. 原本の大きさの上限（Red → Green）**: 行 5・6 の単体を先に書いて落ちることを確かめ（`IngestionOutcome` に値を足して落ちる既存のテストを一覧にする。T-217）、`IngestionOutcome.FileTooLarge`、上限の定数（`externaldata.domain.model.rules` と `package-info`。新規ファイル）、取込のサービスの判定（承認の状態の確かめの後。バイト数は :145 の `file` の長さ、件数は `command.receivedCount()`）を作る（完了の判定: 緑、`spotbugsMain`（T-232）、`checkstyleMain`（T-237）、`sonar-local:check`（T-234）。**承認ゲート**（構造: 取込の拒否））
 - [ ] **5. H2 の補助文字（Red → Green）**: 行 9 の H2 の統合テスト（`H2ReceivedRecordNoteTest`。dev プロファイル）を先に書き、今の H2 で補助文字 1,000 コードポイントの注記が入るかを確かめる。入れば緑のまま記録し、マイグレーションを足さない。入らなければ H2 だけのマイグレーション（`db/migration/h2/V<作るときの日時>__widen_received_record_classification_note.sql`）で `VARCHAR(2000)` に広げる（完了の判定: 緑、dev プロファイルの起動（`DevSampleDataSmokeTest`）。マイグレーションを足したら **承認ゲート**（スキーマ（H2））、足さなければ **承認ゲート**（構造: テスト））

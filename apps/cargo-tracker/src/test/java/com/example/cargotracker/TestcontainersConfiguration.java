@@ -1,12 +1,19 @@
 package com.example.cargotracker;
 
+import com.example.cargotracker.integration.ConnectionUsageRecorder;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 import org.testcontainers.utility.DockerImageName;
 
+/**
+ * PostgreSQL 18 の統合テストの組み立て。接続とコミットを数える部品（{@link ConnectionUsageRecorder}。Bolt 39b4）もここで読み込み、
+ * 部品を使うテストが Spring の文脈を増やさないようにする（記録していないときは接続を包まない）。
+ */
 @TestConfiguration(proxyBeanMethods = false)
+@Import(ConnectionUsageRecorder.class)
 public class TestcontainersConfiguration {
 
     @Bean
