@@ -10137,6 +10137,69 @@
   
   
     <li class="md-nav__item">
+      <a href="../bolt_39d2_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 39d2 計画
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../bolt_39d2_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 39d2 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../release_report-0_1/" class="md-nav__link">
         
   
@@ -17859,14 +17922,14 @@
 </tr>
 <tr>
 <td style="text-align: left;">39d2</td>
-<td style="text-align: left;">S-17 で隔離を却下する縦: 受信記録の判断のポートと MyBatis の実装（追記専用、受信記録 1 件に 1 つ）、判断するのは隔離（のちに差異も）の受信記録だけをアプリケーションで守る、却下の POST（PRG・CSRF・理由は必須）、判断のイベント（DE-29）と identity の監査の listener（<code>EXTERNAL_RECORD_DECIDED</code>。配信まで）、一覧から判断済みが消えること、行 7 を契約のテストに上げる（39d の申し送り）、マニュアル 12.2 の却下とキャプチャ、デモの動画（Bolt 39d の開始準備で 39d から分けた）。判断の理由の列は H2 だけ <code>VARCHAR(2000)</code> に広げる（スキーマ。H2 の VARCHAR は UTF-16 の単位で数える。前例 Bolt 39b4）。【前の決定の変更】Bolt 39d の開始準備の決定 (1) の 39d2 を、開始準備で半日を超える（約 6 時間 30 分）ので 39d2・39d2b に縦に分けた（2026-11-05、推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）。<a href="../bolt_39d2_plan/">Bolt 39d2 計画</a>（承認済み。推奨のとおり。Recommend 承認の指示による）</td>
+<td style="text-align: left;">S-17 で隔離を却下する縦: 受信記録の判断のポートと MyBatis の実装（追記専用、受信記録 1 件に 1 つ）、判断するのは隔離（のちに差異も）の受信記録だけをアプリケーションで守る、却下の POST（PRG・CSRF・理由は必須）、判断のイベント（DE-29）と identity の監査の listener（<code>EXTERNAL_RECORD_DECIDED</code>。配信まで）、一覧から判断済みが消えること、行 7 を契約のテストに上げる（39d の申し送り）、マニュアル 12.2 の却下とキャプチャ、デモの動画（Bolt 39d の開始準備で 39d から分けた）。判断の理由の列は H2 だけ <code>VARCHAR(2000)</code> に広げる（スキーマ。H2 の VARCHAR は UTF-16 の単位で数える。前例 Bolt 39b4）。【前の決定の変更】Bolt 39d の開始準備の決定 (1) の 39d2 を、開始準備で半日を超える（約 6 時間 30 分）ので 39d2・39d2b に縦に分けた（2026-11-05、推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）。<a href="../bolt_39d2_plan/">Bolt 39d2 計画</a>（承認済み。推奨のとおり。Recommend 承認の指示による）・<a href="../bolt_39d2_report/">終了報告</a>（承認済み）</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: left;">アウトサイドイン（S-17 の判断から）</td>
 <td style="text-align: left;">ステップごと（スキーマ・監査・画面）</td>
 </tr>
 <tr>
 <td style="text-align: left;">39d2b</td>
-<td style="text-align: left;">1 つの取込のキーのない隔離をまとめて却下する縦（【業務の判断】(g)）: 一覧を取込で絞ったときの「この取込の形式の誤りをまとめて却下する」、理由は 1 つ、受信記録ごとに判断・DE-29・監査を 1 つずつ、上限いっぱい（1 万件）の時間の計測、件数と 1 ページの照会の間に件数が減ったときの示し方（39d の申し送り。見積りを目安に収めるため 39d2 から送った）、マニュアルとキャプチャ、デモの動画（Bolt 39d2 の開始準備で 39d2 から分けた）、39d の行 7 を契約のテストに上げる（39d2 の行 16。見積りを目安に収めるため 39d2 から送った）</td>
+<td style="text-align: left;">1 つの取込のキーのない隔離をまとめて却下する縦（【業務の判断】(g)）: 一覧を取込で絞ったときの「この取込の形式の誤りをまとめて却下する」、理由は 1 つ、受信記録ごとに判断・DE-29・監査を 1 つずつ、上限いっぱい（1 万件）の時間の計測、件数と 1 ページの照会の間に件数が減ったときの示し方（39d の申し送り。見積りを目安に収めるため 39d2 から送った）、マニュアルとキャプチャ、デモの動画（Bolt 39d2 の開始準備で 39d2 から分けた）、39d の行 7 を契約のテストに上げる（39d2 の行 16。見積りを目安に収めるため 39d2 から送った）、S-17 のページ送りが 100 個の「判断する」の後にあるキーボードの負担（39d2 の開発レビュー）</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: left;">アウトサイドイン（S-17 のまとめての却下から）</td>
 <td style="text-align: left;">ステップごと（画面）</td>
@@ -17880,7 +17943,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">39d4</td>
-<td style="text-align: left;">判断の後に送り直されたときの扱いの縦: 採用した後の外部原本の基準のハッシュの付け替え、採用・元・却下した payload の再送の受入シナリオ、直した行の取り込み直しと新しい外部版の送り直しの受入シナリオ、同じ外部版は隔離・版をまたげば差異（39h）、重複の定義と注記の「最初の受信」の直し、情報源の並びの規則の実装、マニュアル 12 章の「直して送り直すとき」と付録 B、デモの動画（Bolt 39d の開始準備で 39d から分けた）、S-17 の一覧の上限いっぱいの照会の計測（39d の行 19。見積りを目安に収めるため 39d から送った）</td>
+<td style="text-align: left;">判断の後に送り直されたときの扱いの縦: 採用した後の外部原本の基準のハッシュの付け替え、採用・元・却下した payload の再送の受入シナリオ、直した行の取り込み直しと新しい外部版の送り直しの受入シナリオ、同じ外部版は隔離・版をまたげば差異（39h）、重複の定義と注記の「最初の受信」の直し、情報源の並びの規則の実装、マニュアル 12 章の「直して送り直すとき」と付録 B、デモの動画（Bolt 39d の開始準備で 39d から分けた）、S-17 の一覧の上限いっぱいの照会の計測（39d の行 19。見積りを目安に収めるため 39d から送った）、却下した原本をそのまま送り直すと重複になり判断を待つ一覧に戻らないおそれを開始準備で最初に確かめる（39d2 の終了報告の議題 2。【業務の判断】(e) が通るか）</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: left;">インサイドアウト（分類の規則から）</td>
 <td style="text-align: left;">ステップごと</td>
@@ -20632,6 +20695,11 @@
 <tr>
 <td style="text-align: left;">2026-11-05</td>
 <td style="text-align: left;">39d2 を 39d2・39d2b に分け、<a href="../bolt_39d2_plan/">Bolt 39d2 計画</a>を承認した（推奨のとおり。Recommend 承認の指示による）。W7 の節の 39d2 の行に計画へのリンクと【前の決定の変更】の注、判断の理由の列を H2 だけ広げること（スキーマ）を足し、39d2b（まとめての却下、件数が減ったときの示し方）の行を足した</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-11-05</td>
+<td style="text-align: left;">Bolt 39d2 のステップ 1〜8 と<a href="../bolt_39d2_report/">終了報告</a>を承認した（推奨のとおり。Recommend 承認の指示による）</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
 </tr>
 <tr>
