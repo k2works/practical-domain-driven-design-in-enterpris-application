@@ -2,7 +2,7 @@
 type: Plan
 title: "Bolt 39b3b 計画 - 外部原本の採否の監査と層の規則の汎用化"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-04T01:35:07Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-04T02:11:41Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-11-04T00:44:18Z }
 ---
@@ -283,8 +283,8 @@ note right of ep : PostgreSQL は TEXT のまま（人に諮ること 3 の決�
 - [x] **1. 設計の文書**（2026-11-04、推奨のとおり承認として記録した（Recommend 承認の指示による。human:kakimomokuri）。ADR-007 に改訂の経緯の節を作った。まだ作っていない規則の汎用化と H2 のマイグレーションを決定として書いたので、ステップ 4・6 で中身が変わったら合わせて直す）: 上の「設計文書に直す箇所」（「人に諮ること」1〜6 の決定を反映する。ADR-007 の改訂を含む）（完了の判定: 文書の差分。**承認ゲート**）
 - [x] **2. 監査記録の作り方と冪等の照会（Red → Green）**（2026-11-04、推奨のとおり承認として記録した（Recommend 承認の指示による。human:kakimomokuri）。先に直したテストはポートの偽の実装 9 個（T-217）。Red はテストのコンパイルの誤り。冪等の照会は `COUNT(*) > 0`（スキーマは変えない）。契約を H2・PostgreSQL で継いだ）: 行 1〜4 の監査記録の単体、行 3・5 の照会の契約（PostgreSQL と H2。`@Transactional` は契約のクラスに付ける。T-231）を先に書いて落ちることを確かめ（`AuditAction` の値を足して落ちる既存のテストを一覧にする。T-217）、`AuditAction` の 2 つの値、`AuditRecord` の 2 つの作り方、`AuditRecordRepository.existsByActionAndTarget` と MyBatis の実装を作る（完了の判定: 緑、`spotbugsMain`（T-232）、`checkstyleMain`（T-237）、`sonar-local:check` の新しい違反（T-234）。**承認ゲート**（構造: 監査記録の新しい操作））
 - [x] **3. 監査の listener と依存の宣言（Red → Green）**（2026-11-04、推奨のとおり承認として記録した（Recommend 承認の指示による）。Red は listener のテストのコンパイルの誤りと、`allowedDependencies` のない ModularityTest の行 11。監査の listener で受け手ごとの発行記録が増え、既存の統合テストの行 8 の数え方を受け手で絞る形に直した（T-217 の一覧の漏れ）。SonarQube は 1 件直して PASS）: 行 1〜7・11・15・16 の単体と ModularityTest を先に書いて落ちることを確かめ、`ExternalRecordAuditEventHandler`、`IdentityConfiguration` の組み立て、identity の `allowedDependencies` を作る（完了の判定: 緑、`spotbugsMain`、`checkstyleMain`、`sonar-local:check` の新しい違反。**承認ゲート**（構造: 依存の宣言とイベントから監査を書く最初の listener））
-- [ ] **4. H2 のイベント発行記録（Red → Green）**: 行 10 の H2 の統合テスト（寄港 60 の取込がコミットされる）を先に書き、広げる前の H2 で INSERT が落ちることを確かめてから、「人に諮ること」3 の決定のマイグレーションを足す（完了の判定: 緑、dev プロファイルの起動（`DevSampleDataSmokeTest`）、`spotbugsMain`・`checkstyleMain`・`sonar-local:check`（本体を変えたら）。**承認ゲート**（スキーマ（H2）: イベント発行記録の列））
-- [ ] **5. 配信の統合テスト（Red → Green）**: 行 5・6・8・9・10（PostgreSQL）・15 の統合テスト（前例 `TransportRequestSubmittedDeliveryIntegrationTest` :45-64）。既に緑なら、変異（listener の登録を外す・照会を外す）で落ちることを確かめる（完了の判定: 緑。本体を変えたら `spotbugsMain`・`checkstyleMain`。**承認ゲート**（構造: 配信））
+- [x] **4. H2 のイベント発行記録（Red → Green）**（2026-11-04、推奨のとおり承認として記録した（Recommend 承認の指示による。human:kakimomokuri）。Red は寄港 60 の取込の発行記録の INSERT が長過ぎて落ちるのと列の幅。版は作るときの日時の V20261104103700。索引は ALTER の後も残った。件数を数える既存のテストに直すものはなかった）: 行 10 の H2 の統合テスト（寄港 60 の取込がコミットされる）を先に書き、広げる前の H2 で INSERT が落ちることを確かめてから、「人に諮ること」3 の決定のマイグレーションを足す（完了の判定: 緑、dev プロファイルの起動（`DevSampleDataSmokeTest`）、`spotbugsMain`・`checkstyleMain`・`sonar-local:check`（本体を変えたら）。**承認ゲート**（スキーマ（H2）: イベント発行記録の列））
+- [x] **5. 配信の統合テスト（Red → Green）**（2026-11-04、推奨のとおり承認として記録した（Recommend 承認の指示による）。既に緑だったので、listener の Bean を外す変異と冪等の照会を外す変異で落ちることを確かめた。行 5 は前の配信の完了を待ってから再発行する形に直した。行 9 は監査記録のリポジトリの spy で呼ばれないことを確かめた。SonarQube は 9 件直して PASS）: 行 5・6・8・9・10（PostgreSQL）・15 の統合テスト（前例 `TransportRequestSubmittedDeliveryIntegrationTest` :45-64）。既に緑なら、変異（listener の登録を外す・照会を外す）で落ちることを確かめる（完了の判定: 緑。本体を変えたら `spotbugsMain`・`checkstyleMain`。**承認ゲート**（構造: 配信））
 - [ ] **6. 層の規則（Red → Green）**: 行 12〜14 の規則。M-2 の表とヘルパーに置き換える前後で同じ規則が同じ違反を捕まえることを、書き手の行を 1 つ外す変異で確かめる。`PublicApiArchitectureTest` の汎用化で今ある依存が落ちたら、置き場所を動かさず止めて諮る（T-125、ADR-017）（完了の判定: 緑。**承認ゲート**（構造: 層の規則））
 - [ ] **7. 品質ゲートと開発レビュー**: 変異、`check`、その後に SonarQube、開発レビューとその直し。push の前に `check`
 - [ ] **8. 終了報告**: push して CI とデモ環境の配備を確かめる（デモ環境で寄港の多い航海を取り込めることは、画面がないので統合テストで代える）。release_plan（39b3b の行の計画と終了報告のリンク）・開発の索引・mkdocs を直す。見える振る舞いは変わらないので、マニュアルは直さない
