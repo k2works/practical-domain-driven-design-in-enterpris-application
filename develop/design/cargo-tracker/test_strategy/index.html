@@ -14838,7 +14838,7 @@
 <tr>
 <td style="text-align: left;"><code>@NFR-&lt;ID&gt;</code></td>
 <td style="text-align: left;">非機能要件の ID（該当する統合テスト・性能テストに付ける）</td>
-<td style="text-align: left;"><code>@NFR-RTY-02</code></td>
+<td style="text-align: left;"><code>@NFR-RTY-02</code>。JUnit では <code>@Tag("NFR-PERF-06")</code>（Bolt 39b4）</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>@BR-nn</code></td>
@@ -15705,7 +15705,7 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 <tbody>
 <tr>
 <td style="text-align: left;">PERF-01〜09（応答時間、候補算出、取込、通知）</td>
-<td style="text-align: left;">負荷テスト（ツールはリリース計画の最初の性能テストの Bolt で選ぶ、TS-05）。ステージングで本番相当のデータ量（SCL-04）に対して実行する。PERF-06 は同じ追跡番号への実績の集中による版の競合を必ず含める</td>
+<td style="text-align: left;">負荷テスト（ツールはリリース計画の最初の性能テストの Bolt で選ぶ、TS-05）。ステージングで本番相当のデータ量（SCL-04）に対して実行する。PERF-06 は同じ追跡番号への実績の集中による版の競合を必ず含める。PERF-06 は Bolt 39b4 から統合テスト（<code>performanceTest</code>。<code>@Tag("performance")</code>・<code>@Tag("NFR-PERF-06")</code>。<code>check</code> と push の CI に入れない）でも測る。PERF-06 の判定は Linux の CI の手動のジョブ <code>performance</code>（<code>gh workflow run cargo-tracker-ci.yml --ref develop -f job=performance</code>）で行う。Windows の Docker Desktop の上では、ポート転送が 8 KB を超える文ごとに約 41 ms の人工の遅れを足し（寄港 60 の航海の DE-12 は直列化で 8,043 文字）、寄港 60 の航海 1 万件が 5 分を超えるので、手元の値で判定しない</td>
 <td style="text-align: left;">パイロット開始前、大きな変更のたび</td>
 </tr>
 <tr>
@@ -15852,7 +15852,7 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 </tr>
 <tr>
 <td style="text-align: left;">統合・E2E</td>
-<td style="text-align: left;">テストごとにデータを作り、テストの順序に依存しない。共有のマスタ（企業・利用者・接続時間規則）は準備用のステップで作る</td>
+<td style="text-align: left;">テストごとにデータを作り、テストの順序に依存しない。共有のマスタ（企業・利用者・接続時間規則）は準備用のステップで作る。数えるテストは自分のキー（取込 ID・提供元・オブジェクトキー・受信記録 ID、発行記録は受け手とイベントの値）で絞り、原本・受信記録・発行記録を全体で数えない（共有の PostgreSQL に追記専用の行が残るため。Bolt 39b4）</td>
 </tr>
 <tr>
 <td style="text-align: left;">本番データ</td>

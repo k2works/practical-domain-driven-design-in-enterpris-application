@@ -17237,7 +17237,7 @@
 <tr>
 <td style="text-align: left;">4</td>
 <td style="text-align: left;">取込の単位と一括処理、PERF-06</td>
-<td style="text-align: left;">1 ファイルを 1 つの取込（<code>Ingestion</code>）とし、行ごとに分類して受信記録を書く。1 ファイル 1 万件以下（non_functional :50）、DB の 1 文の上限（:81）の中に収める。39b の統合テストで 1 万件のファイルの時間を測る（PERF-06）。リスク台帳の PERF-06 の行（版の競合の連鎖）に従い、同じ追跡番号への集中を 39g の統合テストで確かめる。負荷テストは W10。【前の決定の変更】Bolt 39b の開始準備の決定 (1)（2026-11-03、推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）: 1 万件のファイルの時間を測る統合テストは 39b4 で作る（39b を縦に 4 本に分けたため）</td>
+<td style="text-align: left;">1 ファイルを 1 つの取込（<code>Ingestion</code>）とし、行ごとに分類して受信記録を書く。1 ファイル 1 万件以下（non_functional :50）、DB の 1 文の上限（:81）の中に収める。39b の統合テストで 1 万件のファイルの時間を測る（PERF-06）。リスク台帳の PERF-06 の行（版の競合の連鎖）に従い、同じ追跡番号への集中を 39g の統合テストで確かめる。負荷テストは W10。【前の決定の変更】Bolt 39b の開始準備の決定 (1)（2026-11-03、推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）: 1 万件のファイルの時間を測る統合テストは 39b4 で作る（39b を縦に 4 本に分けたため）。→ Bolt 39b4 の計画の「人に諮ること」1（2026-11-04、推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）: 規模の前提「1 ファイル 1 万件以下」を受付の上限にする。上限はファイル全体で、物理データ行 10,000 件と 41,943,040 バイト（40 MiB）。超えるファイルは承認の状態の確かめの後、原本を保存せずに拒否し（<code>FileTooLarge</code>）、データ責任者が分けて取り込む（案内の文は 39c）。計測は航海と主要実績の 1 万件を組み立てから取込のコミットまで測り（<code>performanceTest</code>。<code>check</code> と CI に入れない）、監査の配信は参考の値にする。測った値は 39b4 のステップ 7 で書く（<a href="../bolt_39b4_plan/">Bolt 39b4 計画</a>）</td>
 </tr>
 <tr>
 <td style="text-align: left;">5</td>
@@ -17425,10 +17425,10 @@
 </tr>
 <tr>
 <td style="text-align: left;">39b4</td>
-<td style="text-align: left;">PERF-06（1 万件を 5 分以内）、行ごとのコミットの量と接続の数、要れば一括の保存、原本 1 件の大きさの上限、数えるテストは自分のキーで絞る規約</td>
+<td style="text-align: left;">PERF-06（1 万件を 5 分以内）、行ごとのコミットの量と接続の数、要れば一括の保存、原本の大きさの上限、数えるテストは自分のキーで絞る規約、分類ごとの件数の照会（3 本のままにするか）、H2 の受信記録の注記と補助文字。【前の決定の変更】初案の「原本 1 件の大きさの上限」は、計画の「人に諮ること」1 でファイル全体の上限（物理データ行 10,000 件と 41,943,040 バイト。超えるファイルは原本を保存せずに拒否する）に決めた（2026-11-04、推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）。<a href="../bolt_39b4_plan/">Bolt 39b4 計画</a>（承認済み。原本の大きさの上限は推奨のとおり。Recommend 承認の指示による）</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: left;">インサイドアウト</td>
-<td style="text-align: left;">ステップごと（構造）</td>
+<td style="text-align: left;">ステップごと（構造。H2 の列を広げるときはスキーマ（H2））</td>
 </tr>
 <tr>
 <td style="text-align: left;">39c</td>
@@ -17552,7 +17552,7 @@
 <td style="text-align: left;">W10</td>
 <td style="text-align: left;">12-07 〜 12-11</td>
 <td style="text-align: left;">運用準備</td>
-<td style="text-align: left;">AWS 環境（Terraform）、CI/CD、監視、運用タスクとランブック（管理範囲の割り当てと最初のシステム管理者を作る運用タスク。W6 の開始準備で W6 から移した。本番の配備の前に要る。Bolt 34b）、必要書類の S3 の保存とウイルスの検査（Bolt 7）、外部原本の payload の S3 への差し替え（Object Lock、RET-03）と情報源の管理（S-19）の運用タスク、取込がない日の通知（FRS-04）と隔離の未判断の警告（OBS-06）（W7 の開始準備で決めた）、監査の欠落の検知（毒入りのイベントを捨てた ERROR のログの通知先と AUD-04 の照合）と複数インスタンスにする前の監査の二重の防ぎ（監査の表の一意制約（<code>event_id</code> か（操作、対象））か ShedLock）（Bolt 39b3b のステップ 7 で決めた）、性能テスト（負荷テストのツールの選定 TS-05、R-36）、時点復旧の訓練、Spring Boot 4.2 への追従（公開済みなら）</td>
+<td style="text-align: left;">AWS 環境（Terraform）、CI/CD、監視、運用タスクとランブック（管理範囲の割り当てと最初のシステム管理者を作る運用タスク。W6 の開始準備で W6 から移した。本番の配備の前に要る。Bolt 34b）、必要書類の S3 の保存とウイルスの検査（Bolt 7）、外部原本の payload の S3 への差し替え（Object Lock、RET-03）と情報源の管理（S-19）の運用タスク、取込がない日の通知（FRS-04）と隔離の未判断の警告（OBS-06）（W7 の開始準備で決めた）、監査の欠落の検知（毒入りのイベントを捨てた ERROR のログの通知先と AUD-04 の照合）と複数インスタンスにする前の監査の二重の防ぎ（監査の表の一意制約（<code>event_id</code> か（操作、対象））か ShedLock）（Bolt 39b3b のステップ 7 で決めた）、性能テスト（負荷テストのツールの選定 TS-05、R-36）と、同時の取込で要る接続（取込 1 つで外側 1・内側 1 の 2 本と監査の配信の非同期のスレッドの分）と接続のプールの大きさ、DB の文の timeout の設定（non_functional の timeout。Bolt 39b4 の開始準備で決めた）、時点復旧の訓練、Spring Boot 4.2 への追従（公開済みなら）</td>
 <td style="text-align: right;">0（技術タスク）</td>
 </tr>
 </tbody>
@@ -20110,6 +20110,11 @@
 <td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
 </tr>
 <tr>
+<td style="text-align: left;">2026-11-04</td>
+<td style="text-align: left;"><a href="../bolt_39b4_plan/">Bolt 39b4 計画</a>を作り、整合性検証の指摘を反映して承認した（推奨のとおり。Recommend 承認の指示による）</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
+</tr>
+<tr>
 <td style="text-align: left;">2026-11-03</td>
 <td style="text-align: left;">Bolt 39b のステップ 1（設計の文書）: W7 の設計の決定（取込の置き場所）と確認ポイント 4・6 に、39b を 4 本に分けたことによる【前の決定の変更】の注を足した</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5</td>
@@ -20132,6 +20137,11 @@
 <tr>
 <td style="text-align: left;">2026-11-04</td>
 <td style="text-align: left;">Bolt 39b3b のステップ 1（設計の文書）: W7 の設計の決定（外部原本の採否の監査）に、監査記録の形と冪等の取り方の決定を足した</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-11-04</td>
+<td style="text-align: left;">Bolt 39b4 のステップ 1（設計の文書）: W7 の確認ポイント 4 に原本の大きさの上限の決定と計測の範囲を、39b4 の行に分類ごとの件数の照会・H2 の補助文字・スキーマ（H2）の承認ゲートとファイル全体の上限の【前の決定の変更】の注を、W10 の行に同時の取込の接続とプールの大きさと文の timeout を足した</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5</td>
 </tr>
 <tr>

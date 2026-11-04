@@ -14699,7 +14699,7 @@
 <tr>
 <td style="text-align: left;">外部原本の取込</td>
 <td style="text-align: left;">1 日 1〜4 ファイル、1 ファイル 1 万件以下</td>
-<td style="text-align: left;">BR-18 の手動取込</td>
+<td style="text-align: left;">BR-18 の手動取込。1 ファイルの物理データ行 1 万件・41,943,040 バイト（40 MiB）を超えるファイルは受け付けない（2026-11-04、Bolt 39b4。human:kakimomokuri）。上限を超えるファイルは受付の前に原本を保存せずに拒否し、PV-01 の消失に数えない。データ責任者がファイルを分けて取り込む</td>
 </tr>
 <tr>
 <td style="text-align: left;">データの保持年数</td>
@@ -14760,7 +14760,7 @@
 <td style="text-align: left;">外部原本の取込</td>
 <td style="text-align: left;">1 万件のファイルを 5 分以内に分類・採用</td>
 <td style="text-align: left;">提案</td>
-<td style="text-align: left;">BR-18 の手動取込の 1 回分。件数はファイルの物理データ行の数（2026-11-03、Bolt 39b2）</td>
+<td style="text-align: left;">BR-18 の手動取込の 1 回分。件数はファイルの物理データ行の数（2026-11-03、Bolt 39b2）。Bolt 39b4 の統合テスト（<code>performanceTest</code>、<code>NFR-PERF-06</code>）で航海・主要実績の 1 万件を測る。範囲は組み立てから取込のコミットまでで、監査の配信は含めない（参考の値として記録する）</td>
 </tr>
 <tr>
 <td style="text-align: left;">PERF-07</td>
@@ -14825,7 +14825,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">DB の 1 文</td>
-<td style="text-align: left;">5 秒（取込・照合の一括処理は 60 秒）</td>
+<td style="text-align: left;">5 秒（取込・照合の一括処理は 60 秒。取込は行ごとの小さな文で、60 秒の一括の文はない。timeout の設定は W10。Bolt 39b4）</td>
 <td style="text-align: left;">提案</td>
 </tr>
 <tr>
@@ -14903,7 +14903,7 @@
 <td style="text-align: left;">RPO（外部原本）</td>
 <td style="text-align: left;">0（失わない）</td>
 <td style="text-align: left;">確定</td>
-<td style="text-align: left;">PV-01 の外部原本消失 0 件。S3 のバージョニングと Object Lock（ADR-008）</td>
+<td style="text-align: left;">PV-01 の外部原本消失 0 件。S3 のバージョニングと Object Lock（ADR-008）。注: 上限（物理データ行 1 万件・41,943,040 バイト）を超えるファイルは受付の前に原本を保存せずに拒否し、受け付けていないので PV-01 の消失に数えない（Bolt 39b4）</td>
 </tr>
 <tr>
 <td style="text-align: left;">RCV-03</td>

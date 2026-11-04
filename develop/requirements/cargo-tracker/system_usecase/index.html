@@ -16199,6 +16199,12 @@
 <td style="text-align: center;">MVP</td>
 </tr>
 <tr>
+<td style="text-align: left;">2c</td>
+<td style="text-align: left;">ファイルが上限（物理データ行 1 万件・41,943,040 バイト（40 MiB））を超える</td>
+<td style="text-align: left;">原本を保存せずに拒否し、取込・受信記録を作らない。データ責任者がファイルを分けて取り込む。拒否は承認の状態を確かめた後に判定する（2026-11-04、Bolt 39b4。human:kakimomokuri。推奨のとおり。Recommend 承認の指示による）。受け付けていないので PV-01 の原本の消失に数えない</td>
+<td style="text-align: center;">MVP</td>
+</tr>
+<tr>
 <td style="text-align: left;">3a</td>
 <td style="text-align: left;">同一の冪等性キーと同一 payload の原本が再送される</td>
 <td style="text-align: left;">重複として記録し、採用値を生成せず既存の処理結果を返す</td>
