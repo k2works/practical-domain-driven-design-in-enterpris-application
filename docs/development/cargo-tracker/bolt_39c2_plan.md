@@ -2,9 +2,10 @@
 type: Plan
 title: "Bolt 39c2 計画 - S-16 取り込めない送信を理由ごとに示す（情報源の拒否・上限を超えるファイル・413）"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-04T12:23:24Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-04T12:43:18Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-11-04T10:41:12Z }
+  - { by: human:kakimomokuri, at: 2026-11-04T12:43:19Z }
 ---
 
 # Bolt 39c2 計画 - S-16 取り込めない送信を理由ごとに示す（情報源の拒否・上限を超えるファイル・413）
@@ -307,8 +308,8 @@ IngestionService ..> IngestionFileLimit
 - [x] **3. 実装の Green**（2026-11-04、推奨のとおり承認として記録した（Recommend 承認の指示による）。外部データと ArchUnit の 799 本、S-16 の uiTest 5 本と axe 違反 0。checkstyle の循環的複雑度で `respond` を抜き出した）: controller の拒否の文言と上限の数、0 件の文言の定数と `PilotReadiness` の公開、`new.html`（エラー要約をフォームの外に出す）、`error/413.html`、文言の Javadoc とコメント（完了の判定: 緑、`spotbugsMain`（T-232）、`checkstyleMain`（T-237）、`sonar-local:check`（T-234）。**承認ゲート**（画面））
 - [x] **4. 上限いっぱいの計測**（2026-11-04、推奨のとおり承認として記録した（Recommend 承認の指示による）。ローカル（Windows）で画面の POST から 302 まで 44.1 秒（取込の前 0.4 秒・取込 43.6 秒・後 0.1 秒）。判定は Linux の CI のジョブ performance で push の後に行う）: `performanceTest` で行 21 を流し、区切りの値を記録する（T-241・T-242）。Windows の Docker Desktop では遅れが足されるので、判定は Linux の CI の手動のジョブ `performance` で行う（ExternalDataIngestionPerformanceTest :47-48）（完了の判定: CI のログの「PERF-06 web」の行。5 分以内）
 - [x] **5. マニュアルとキャプチャ**（2026-11-04、推奨のとおり承認として記録した（Recommend 承認の指示による。human:kakimomokuri）。12 章に上限を超えたときの画面と文言・55 MB を超えたときの案内・情報源の拒否・0 件のときを書き、付録 B の共通の文言の行を理由ごとの 4 行に置き換えた。キャプチャ 12-ingestion-too-large.png）: 12 章の 12.1（:51 のエラー要約の選んだ情報源の扱い、:89-91 の上限と停止のときの文言と理由ごとの示し方、55 MB を超えたとき）、付録 B の早見表（:214 の共通の文言の行を新しい 4 行に置き換える）、`manualScreenshots`（行 23。新しいキャプチャ 1 枚）。章の文言と画面の文言を突き合わせる（T-197。0 件の文言は定数と）（完了の判定: キャプチャの差分と突き合わせの記録。**承認ゲート**（新しいファイル））
-- [ ] **6. 品質ゲートと開発レビュー**: 変異、`check`・`uiTest`、その後に SonarQube、開発レビューとその直し。push の前に `check`（T-225）
-- [ ] **7. 終了報告**: push して CI とデモ環境の配備を確かめ（デモ環境でデータ責任者でログインし、上限を超えるファイルの拒否の文言を見る）、`demoVideo` で `@demo-bolt-39c2/too-large` を撮る。release_plan（39c2 の行の計画と終了報告のリンク）・開発の索引・mkdocs を直す
+- [x] **6. 品質ゲートと開発レビュー**（`b4e275930`。開発レビューの中 3・低 2 とテストの穴（行 8 が欄の取り違えを拾わない）を直した）: 変異、`check`・`uiTest`、その後に SonarQube、開発レビューとその直し。push の前に `check`（T-225）
+- [x] **7. 終了報告**（[終了報告](bolt_39c2_report.md)を 2026-11-04 に推奨のとおり承認として記録した。Recommend 承認の指示による）: push して CI とデモ環境の配備を確かめ（デモ環境でデータ責任者でログインし、上限を超えるファイルの拒否の文言を見る）、`demoVideo` で `@demo-bolt-39c2/too-large` を撮る。release_plan（39c2 の行の計画と終了報告のリンク）・開発の索引・mkdocs を直す
 
 ### 時間の配分と打ち切り
 

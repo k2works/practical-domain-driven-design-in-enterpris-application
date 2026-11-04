@@ -138,6 +138,7 @@ Bolt がイテレーションに当たります。ふりかえりは各 Bolt の
 | 39b3b | [外部原本の採否の監査の listener と層の規則の汎用化](bolt_39b3b_plan.md) | [終了報告](bolt_39b3b_report.md) | W7 | 完了 |
 | 39b4 | [PERF-06（1 万件の取込）と取込のファイルの上限](bolt_39b4_plan.md) | [終了報告](bolt_39b4_report.md) | W7 | 完了 |
 | 39c | [S-16 外部データの取込の画面（取り込んで分類別の件数を見る）](bolt_39c_plan.md) | [終了報告](bolt_39c_report.md)（[動画](../../assets/demo/bolt-39c/ingest.webm){:target="_blank"}） | W7 | 完了 |
+| 39c2 | [取り込めない送信を理由ごとに示す](bolt_39c2_plan.md) | [終了報告](bolt_39c2_report.md)（[動画](../../assets/demo/bolt-39c2/too-large.webm){:target="_blank"}） | W7 | 完了 |
 
 Bolt を始めるときに行を追加します。
 
