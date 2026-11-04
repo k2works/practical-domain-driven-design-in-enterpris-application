@@ -16491,7 +16491,7 @@
 <tr>
 <td style="text-align: left;">取込の結果</td>
 <td style="text-align: left;">IngestionOutcome</td>
-<td style="text-align: left;">取込のサービスの結果（sealed）。取り込んだ <code>Ingested</code>（取込 ID、受け取った件数、分類別の件数、行ごとの結果、取り込めなかった部分（始まり・物理行の数・受信記録 ID）。<code>reconciles()</code> は「受け取った件数 ＝ 行の結果の物理行の数の合計 ＋ 取り込めなかった物理行の数」を確かめる。ファイルの誤りと閉じ忘れの受信記録は行の結果に入れず、取り込めなかった部分として返す。Bolt 39b2）、情報源が承認済みでない <code>DataSourceNotApproved</code>、情報源がない <code>DataSourceNotFound</code>、操作者がデータ責任者でない <code>NotPermitted</code>、ファイルが上限（物理データ行 10,000 件、または 41,943,040 バイト（40 MiB））を超える <code>FileTooLarge</code>（Bolt 39b4。拒否の順は役割 → 情報源の有無 → 承認の状態 → 大きさ。件数は <code>receivedCount</code>（物理データ行）、バイト数はファイル全体の原本の長さで判定する）。拒否のときは原本も含めて何も保存しない（<code>commandservices</code>。Bolt 39b）</td>
+<td style="text-align: left;">取込のサービスの結果（sealed）。取り込んだ <code>Ingested</code>（取込 ID、受け取った件数、分類別の件数、行ごとの結果、取り込めなかった部分（始まり・物理行の数・受信記録 ID）。<code>reconciles()</code> は「受け取った件数 ＝ 行の結果の物理行の数の合計 ＋ 取り込めなかった物理行の数」を確かめる。ファイルの誤りと閉じ忘れの受信記録は行の結果に入れず、取り込めなかった部分として返す。Bolt 39b2。<code>requiresReview()</code> は取込全体の要確認で、取り込めなかった部分があるか（引用符の閉じ忘れなどで取り込めなかった物理行がある、またはファイルの誤りの隔離がある。データ行がなくても）。行の誤りだけなら要確認にせず、その行の隔離の理由で示す。取り込めなかった部分の値 <code>Unreadable</code> は、取込のコマンドの取り込めなかった部分 <code>IngestFileCommand.UnreadablePart</code>（形式の誤り・注記の詳細・範囲の原文を持つ取込の入力）と違い、受信記録 ID を持ち、形式の誤りと原文を持たない。要確認の定義は Bolt 39c4 で書き足した）、情報源が承認済みでない <code>DataSourceNotApproved</code>、情報源がない <code>DataSourceNotFound</code>、操作者がデータ責任者でない <code>NotPermitted</code>、ファイルが上限（物理データ行 10,000 件、または 41,943,040 バイト（40 MiB））を超える <code>FileTooLarge</code>（Bolt 39b4。拒否の順は役割 → 情報源の有無 → 承認の状態 → 大きさ。件数は <code>receivedCount</code>（物理データ行）、バイト数はファイル全体の原本の長さで判定する）。拒否のときは原本も含めて何も保存しない（<code>commandservices</code>。Bolt 39b）</td>
 <td style="text-align: left;">外部データ</td>
 </tr>
 <tr>
@@ -16521,13 +16521,13 @@
 <tr>
 <td style="text-align: left;">取込の要約の照会</td>
 <td style="text-align: left;">IngestionSummaryQueryService</td>
-<td style="text-align: left;">S-16 の結果の画面のアプリケーションのサービス（<code>externaldata.application.internal.queryservices</code>。<code>ExternalDataConfiguration</code> の <code>@Bean</code>）。取込 ID から、情報源の提供元と原本種別、取り込んだ日時、受け取った件数、分類別の件数（採用・重複・隔離）を <code>IngestionSummaryView</code> で返す。ない取込 ID は空を返す。取込のサービスの結果「取込の結果」（<code>IngestionOutcome</code>）とは別の語で、DB から読み直した値（Bolt 39c）。Bolt 39c3 で隔離の注記（行の範囲の順の最初の 100 件。上限は照会の定数）と残りの件数（隔離の件数 − 示した数）も返す。隔離が 0 件なら受信記録の照会を呼ばない</td>
+<td style="text-align: left;">S-16 の結果の画面のアプリケーションのサービス（<code>externaldata.application.internal.queryservices</code>。<code>ExternalDataConfiguration</code> の <code>@Bean</code>）。取込 ID から、情報源の提供元と原本種別、取り込んだ日時、受け取った件数、分類別の件数（採用・重複・隔離）を <code>IngestionSummaryView</code> で返す。ない取込 ID は空を返す。取込のサービスの結果「取込の結果」（<code>IngestionOutcome</code>）とは別の語で、DB から読み直した値（Bolt 39c）。Bolt 39c3 で隔離の注記（行の範囲の順の最初の 100 件。上限は照会の定数）と残りの件数（隔離の件数 − 示した数）も返す。隔離が 0 件なら受信記録の照会を呼ばない。Bolt 39c4 で取込全体の要確認と取り込めなかった部分も返す。要確認は列で持たず、取込の取り込めなかった物理行の数（<code>unparsed_line_count</code>）が 0 より大きいか、読んだ隔離の受信記録にファイル全体の原本を指すもの（受信記録の原本のキーが取込の <code>file_object_key</code> と同じ）があるかで復元する（0 バイトのファイルは数が 0 で、受信記録でしか見分けられない）。受信記録のポートは変えない（隔離が 0 件の取込はファイルの誤りも閉じ忘れも持たないので、受信記録の照会を呼ばないまま。Bolt 39c4 の【前の決定の変更】(2)）</td>
 <td style="text-align: left;">外部データ</td>
 </tr>
 <tr>
 <td style="text-align: left;">取込の要約</td>
 <td style="text-align: left;">IngestionSummaryView</td>
-<td style="text-align: left;">取込の要約の照会の値。受け取った件数は物理データ行で、分類別の件数（受信記録の数）と単位が違う（Bolt 39c。隔離の理由（注記）と残りの件数は 39c3、要確認と取り込めなかった部分は 39c4。Bolt 39c2 の開始準備で 39c2 から、Bolt 39c3 の開始準備で 39c3 から縦に分けた）</td>
+<td style="text-align: left;">取込の要約の照会の値。受け取った件数は物理データ行で、分類別の件数（受信記録の数）と単位が違う（Bolt 39c。隔離の理由（注記）と残りの件数は 39c3、要確認と取り込めなかった部分は 39c4。Bolt 39c2 の開始準備で 39c2 から、Bolt 39c3 の開始準備で 39c3 から縦に分けた）。Bolt 39c4 で取り込めなかった部分 <code>UnreadableRegion</code>（入れ子の record。始まり <code>fromLine</code>（数が 0 なら NULL）・物理行の数 <code>lineCount</code>・ファイル全体の原本を指す隔離があるか <code>wholeFile</code>。要確認でなければ値がない）と <code>requiresReview()</code>（<code>UnreadableRegion</code> がある。取込の結果の <code>IngestionOutcome.Ingested.requiresReview()</code> と同じ形）を足す（【前の決定の変更】(2)）。始まりと数は取込の列のまま（ファイルの誤りでデータ行があれば最初のデータ行と受け取った件数、0 バイトなら NULL と 0）。名前は取込の結果の取り込めなかった部分 <code>IngestionOutcome.Unreadable</code>（受信記録 ID を持ち、<code>wholeFile</code> を持たない）と分け、照会の値は <code>wholeFile</code> を持ち受信記録 ID を持たない。取込のコマンドの <code>IngestFileCommand.UnreadablePart</code>（形式の誤り・注記の詳細・範囲の原文を持つ取込の入力）とも違い、理由は隔離の理由（注記）で示す</td>
 <td style="text-align: left;">外部データ</td>
 </tr>
 <tr>
