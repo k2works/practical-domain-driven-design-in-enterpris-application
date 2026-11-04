@@ -3,6 +3,8 @@ type: Plan
 title: "Bolt 39c3 計画 - S-16 取り込んだファイルの隔離の理由を行の順に示す（受信記録の行の範囲の列）"
 tags: [plan]
 generated: { by: anthropic/claude-opus-5-5, at: 2026-11-04T13:07:46Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-11-04T13:08:02Z }
 ---
 
 # Bolt 39c3 計画 - S-16 取り込んだファイルの隔離の理由を行の順に示す（受信記録の行の範囲の列）
