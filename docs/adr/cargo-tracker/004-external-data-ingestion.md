@@ -4,7 +4,7 @@ title: "ADR-004: 外部原本は Inbox・隔離・照合の 3 段で取り込む
 description: "ARCH-HO-03 と BR-08・BR-12・BR-18 を満たすため、外部原本を無加工で保存し、冪等性キーで採用・重複・隔離・差異に分類し、復旧時に件数照合する決定。2026-11-02（W7、Bolt 39）に、置き場所（externaldata）、原本の保存のポートと消さない補償、分類 4 つ、形式の誤りの隔離、解析の置き場所を改訂した。"
 tags: [adr, architecture]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-04T07:42:12Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-04T13:12:43Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:11:13Z }
   - { by: human:kakimomokuri, at: 2026-11-02T06:52:27Z }
@@ -119,6 +119,9 @@ verified:
   - **画面の層**: 上の Bolt 39 の項の「解析の置き場所」に、画面の層 `externaldata.interfaces.web` を足す。画面の controller がファイルを受け、情報源の原本種別からファイルの種別を決めて、`interfaces.file` の組み立てを呼ぶ。解析と組み立ては `interfaces.file` のまま。
   - **依存の宣言**: 【前の決定の変更】外部データの `allowedDependencies` に `platform :: web`（日時の表示）を足し、`shared`・`platform :: web` にする（W7 の設計の決定「取込の置き場所」の上限のとおり）。
   - **型の依存の許可リスト**: 【前の決定の変更】ModularityTest の許可リストは「フレームワークの許可は、使う Bolt で、使う層に限って足す」。画面の層（`externaldata.interfaces.web..`）の規則を別の 1 本に分け、`java..`・`externaldata..`・`shared..`・`org.springframework..` に加えて `com.example.cargotracker.platform.web..` を許す。ほかの `infrastructure` でないクラスの規則は変えない。`platform.web` を画面の層だけが参照する全体の規則（LayerArchitectureTest）も変えない。
+- 2026-11-04（W7、Bolt 39c3）: 取込の結果の画面（S-16）に隔離の理由を行の順に示すにあたり、上の Bolt 39b2 の項の「形式の誤りの受信記録」の受信記録の持ち方を、次のように決めた（[Bolt 39c3 計画](../../development/cargo-tracker/bolt_39c3_plan.md) の開始準備で決めたこと (3)・(5)・(6) と【前の決定の変更】(2)、確認ポイント 3・5・6。形は Bolt 39c2 の開始準備の決定 (6) で決めた。推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）。決定は変えない。
+  - **行の範囲の 2 列**: 受信記録に行の範囲の 2 列（`first_line_number`・`last_line_number`。NULL 可）と CHECK `ck_received_record_line_range`（2 列はそろって NULL かそろって値を持ち、始まりは 1 以上で終わり以下）を足す。形式の正しい行と行の誤りは行の範囲、ファイルの終わりまで取り込めなかった範囲は始まりから「始まり ＋ 数 − 1」、ファイルの誤りはファイル全体の原本を指すので NULL。この Bolt より前の受信記録は NULL のまま（受信記録は追記専用で更新しない）。受信記録の record は `PhysicalLineRange`（NULL 可）を 1 つ持つ。
+  - **隔離を読む照会**: 受信記録のポートに、取込ごとの隔離の受信記録を行の範囲の始まりの順（範囲が NULL のファイルの誤りを先、同じなら受信記録 ID の順）に最大 `limit` 件読む照会 `quarantinedOf` を足す。追記と数えるだけのポートに読み出しが加わり、更新・削除は持たないまま。並びは照会で決め、画面で並べ直さない。索引は足さず、既存の `ix_received_record_ingestion` で 1 つの取込に絞ってから並べる（上限いっぱいの照会の計測は 39c4）。
 
 ## 備考
 
