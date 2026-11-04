@@ -3,7 +3,7 @@ type: Plan
 title: "Bolt 39d2b 計画 - S-17 で 1 つの取込の形式の誤りをまとめて却下する（件数が減ったときの示し方・ページ送り）"
 tags: [plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-04T22:54:20Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-04T22:59:23Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-11-04T22:54:21Z }
 ---
@@ -383,7 +383,7 @@ rcd ..> ar : DE-29（コミットの後。受信記録ごと）
 
 ## ステップ計画（ステップごとに止める）
 
-- [ ] **1. 設計の文書**（ui_design・domain_model・user_story・system_usecase・non_functional・test_strategy・release_plan・ADR-004）: 上の「設計文書に直す箇所」（開始準備の決定 (1)〜(10) と【前の決定の変更】(1)〜(3) を反映する）（完了の判定: 文書の差分。**承認ゲート**）
+- [x] **1. 設計の文書**（ui_design・domain_model・user_story・system_usecase・non_functional・test_strategy・release_plan・ADR-004 を直した。39d4 の行に同じファイルの取り込み直しの受入シナリオも足した（決定 (9) で送ったもの）。推奨のとおり承認として記録した。Recommend 承認の指示による）（ui_design・domain_model・user_story・system_usecase・non_functional・test_strategy・release_plan・ADR-004）: 上の「設計文書に直す箇所」（開始準備の決定 (1)〜(10) と【前の決定の変更】(1)〜(3) を反映する）（完了の判定: 文書の差分。**承認ゲート**）
 - [ ] **2. テストの Red（外側から）**: 行 1・4・18・19・22 の feature の Red（今は一覧にリンクがなく、ページ送りが表の後にあって落ちることを確かめる）、続いて行 1〜3・6・7・9・10・16・18・23 の controller、行 4・8〜12・14 のサービス、行 2・15・16 の照会のサービス、行 5 の契約、行 13 の配信、行 11・14 のセキュリティの統合テスト。直す既存のテストを一覧にする（T-217。`reject_quarantine_ui.feature`・`RejectQuarantineUiSteps`・`manual_screenshots.feature` を含む）（完了の判定: 期待した理由で落ちる記録。**承認ゲート**（画面の振る舞いの契約））
 - [ ] **3. 対象の照会**: `undecidedKeylessQuarantinesOf`・`countUndecidedKeylessQuarantines`（ポート・マッパー（.java・.xml）・MyBatis・メモリの実装）、行 5 の契約。行 5 がメモリ・H2・PostgreSQL で緑（行 17 は 39d4。決定 (6)）（完了の判定: 緑、`spotbugsMain`・`checkstyleMain`・`sonar-local:check`。**承認ゲート**）
 - [ ] **4. まとめての却下のサービスと照会と計測**: `rejectKeyless`・`KeylessRejectionOutcome`・`RejectKeylessQuarantinesCommand`（`@Command`）、照会のサービスの `keylessRejectionTarget`・`KeylessRejectionTarget`・一覧のキーのない隔離の件数・件数が減ったときの読み直し（決定 (8)）、配信の統合テスト。行 2・4・8〜16 のサービスと照会と配信が緑。続いて行 21 の計測（`ExternalDataIngestionPerformanceTest` に 1 本。CI の手動のジョブ `performance` で流し、「PERF-06 keyless-rejection」の行の値を non_functional の PERF-06 の行に書く。計測の後で CI の性能のジョブの本数の注（cargo-tracker-ci.yml :167-168）を 6 本に直す）（完了の判定: 同上と計測の値。止める条件（5 分、一覧の照会の 1 秒）を超えたら値を記録して止め、分け方を諮る。**承認ゲート**（新しいファイル））

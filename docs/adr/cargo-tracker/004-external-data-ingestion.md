@@ -4,7 +4,7 @@ title: "ADR-004: 外部原本は Inbox・隔離・照合の 3 段で取り込む
 description: "ARCH-HO-03 と BR-08・BR-12・BR-18 を満たすため、外部原本を無加工で保存し、冪等性キーで採用・重複・隔離・差異に分類し、復旧時に件数照合する決定。2026-11-02（W7、Bolt 39）に、置き場所（externaldata）、原本の保存のポートと消さない補償、分類 4 つ、形式の誤りの隔離、解析の置き場所を改訂した。"
 tags: [adr, architecture]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-04T20:08:47Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-04T22:59:23Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:11:13Z }
   - { by: human:kakimomokuri, at: 2026-11-02T06:52:27Z }
@@ -133,7 +133,7 @@ verified:
   - **判断の記録**: 受信記録の判断は record の `ReceivedRecordDecision`（集約を持たない。ADR-002）とリポジトリのポート `ReceivedRecordDecisionRepository`（追記と判断の有無だけ。更新・削除を持たない）で、Bolt 39a3 の判断の表に追記する。同じ受信記録への 2 つ目の判断は一意制約の違反を名前付きの例外 `DuplicateReceivedRecordDecisionException` に変える（前例 `DuplicateExternalRecordException`）。判断の表の列は変えず、理由の列を H2 だけ `VARCHAR(2000)` に広げる（ADR-007）。
   - **判断するのは隔離だけ**: 判断できる受信記録は、取込で書いた受信記録で、分類が隔離で、判断がないものと定め、却下のファクトリーで分類を確かめる（表の制約は足さない。差異は 39h で足す）。
   - **判断のイベントと監査**: 却下ごとに DE-29（`ReceivedRecordDecided`。判断は名前の文字列、判断者の企業を持つ）を出し、identity の `ExternalRecordAuditEventHandler` が却下のコミットの後に受けて、監査の操作を採用・隔離の 2 つから判断（`EXTERNAL_RECORD_DECIDED`）を足して 3 つにする。判断の監査の `reason` 列は判断（`REJECTED`）で、却下の理由の文は 100 文字の `reason` 列に収まらないので `after_state` の要約の最後に置く（`decision=REJECTED;ingestionId=…;dataSourceId=…;reason=<理由の文>`）。冪等の取り方（操作と対象で引く）と書き手（listener だけ）は変えない。
-  - **39d2b の予定**: 1 つの取込の判断を待つキーのない隔離のまとめての却下（理由は 1 つ、受信記録ごとに判断・DE-29・監査を 1 つずつ。【業務の判断】(g)）と、件数と 1 ページの照会の間に件数が減ったときの示し方は 39d2b で作る。
+  - **39d2b の予定**: 1 つの取込の判断を待つキーのない隔離のまとめての却下（理由は 1 つ、受信記録ごとに判断・DE-29・監査を 1 つずつ。【業務の判断】(g)）と、件数と 1 ページの照会の間に件数が減ったときの示し方は 39d2b で作る。注（2026-11-05、Bolt 39d2b）: 39d2b で作った（[Bolt 39d2b 計画](../../development/cargo-tracker/bolt_39d2b_plan.md) の開始準備で決めたこと (2)・(4)・(5)・(8)。推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）。判断の記録と監査の形は 39d2 のまま変えない（今の判断の型・DE-29 の v1 の形・`EXTERNAL_RECORD_DECIDED` の書き手と規則の行をそのまま使い、まとめたことを示す印は足さない。スキーマも変えない）。対象の照会は受信記録のポートに足し（`undecidedKeylessQuarantinesOf`・`countUndecidedKeylessQuarantines`。追記・数える・読むだけのまま）、まとめての却下は今の判断のサービスに `rejectKeyless` として足す。
 
 ## 備考
 
