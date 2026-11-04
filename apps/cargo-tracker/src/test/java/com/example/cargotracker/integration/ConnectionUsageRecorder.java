@@ -66,7 +66,7 @@ public class ConnectionUsageRecorder implements BeanPostProcessor {
         return Thread.currentThread() == recordingThread;
     }
 
-    private Connection record(Connection connection) {
+    private Connection track(Connection connection) {
         peakConnections.accumulateAndGet(openConnections.incrementAndGet(), Math::max);
         return (Connection) Proxy.newProxyInstance(
                 Connection.class.getClassLoader(),
@@ -83,7 +83,7 @@ public class ConnectionUsageRecorder implements BeanPostProcessor {
             if (result instanceof Connection connection
                     && "getConnection".equals(invocation.getMethod().getName())
                     && recording()) {
-                return record(connection);
+                return track(connection);
             }
             return result;
         }

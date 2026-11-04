@@ -4,7 +4,7 @@ title: "cargo-tracker テスト戦略"
 description: "cargo-tracker のテスト形状、テストレベルと責務、BDD（Cucumber）のシナリオ階層とタグ規約、不変条件・ユーザーストーリーとテストの対応、カバレッジ目標、CI での実行。"
 tags: [design, test-strategy, bdd]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-04T04:20:56Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-04T05:36:01Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T08:12:04Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:38Z }
@@ -406,7 +406,7 @@ identity の統合テストは、時計を差し替えるなら合成注釈 `@Id
 
 | 非機能要件 | テストの種類 | 時期 |
 | :--- | :--- | :--- |
-| PERF-01〜09（応答時間、候補算出、取込、通知） | 負荷テスト（ツールはリリース計画の最初の性能テストの Bolt で選ぶ、TS-05）。ステージングで本番相当のデータ量（SCL-04）に対して実行する。PERF-06 は同じ追跡番号への実績の集中による版の競合を必ず含める。PERF-06 は Bolt 39b4 から統合テスト（`performanceTest`。`@Tag("performance")`・`@Tag("NFR-PERF-06")`。`check` と CI に入れない）でも測る | パイロット開始前、大きな変更のたび |
+| PERF-01〜09（応答時間、候補算出、取込、通知） | 負荷テスト（ツールはリリース計画の最初の性能テストの Bolt で選ぶ、TS-05）。ステージングで本番相当のデータ量（SCL-04）に対して実行する。PERF-06 は同じ追跡番号への実績の集中による版の競合を必ず含める。PERF-06 は Bolt 39b4 から統合テスト（`performanceTest`。`@Tag("performance")`・`@Tag("NFR-PERF-06")`。`check` と push の CI に入れない）でも測る。PERF-06 の判定は Linux の CI の手動のジョブ `performance`（`gh workflow run cargo-tracker-ci.yml --ref develop -f job=performance`）で行う。Windows の Docker Desktop の上では、ポート転送が 8 KB を超える文ごとに約 41 ms の人工の遅れを足し（寄港 60 の航海の DE-12 は直列化で 8,043 文字）、寄港 60 の航海 1 万件が 5 分を超えるので、手元の値で判定しない | パイロット開始前、大きな変更のたび |
 | RTY-01〜03（再配信、予約サガの滞留の判定） | 統合テスト（Clock を固定した境界） | CI で毎回 |
 | FRS-01〜04（鮮度） | 統合テスト（Clock を固定した境界） | CI で毎回 |
 | SVC-01〜07（受領・回答期限、営業日カレンダー） | ユニットテスト（デシジョンテーブル）と統合テスト | CI で毎回 |

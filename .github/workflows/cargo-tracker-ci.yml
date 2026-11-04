@@ -20,8 +20,17 @@ on:
       # 用語集の整合テストが読む設計文書
       - 'docs/design/cargo-tracker/**'
       - '.github/workflows/cargo-tracker-ci.yml'
-  # develop で手で配備し直すとき（deploy-demo は develop でだけ動く）
+  # develop で手で配備し直すとき（deploy-demo は develop でだけ動く）。job に performance を選ぶと、性能の計測（performance ジョブ）だけを
+  # 動かし、check・ui・deploy-demo は動かさない（Bolt 39b4。PERF-06 の判定は Linux のランナーで行う）
   workflow_dispatch:
+    inputs:
+      job:
+        description: 'deploy: check・ui の後に develop をデモ環境へ配備する / performance: 性能の計測（PERF-06）だけを動かす'
+        type: choice
+        options:
+          - deploy
+          - performance
+        default: deploy
 
 permissions:
   contents: read
@@ -38,6 +47,8 @@ defaults:
 
 jobs:
   check:
+    # 手動の性能の計測（job=performance）では動かさない（push・pull_request では inputs が空なので動く）
+    if: inputs.job != 'performance'
     runs-on: ubuntu-latest
     concurrency:
       group: cargo-tracker-ci-${{ github.ref }}-check
@@ -103,6 +114,8 @@ jobs:
 
   ui:
     # 画面の層の受入シナリオ（@ui）。Playwright の Chromium と axe-core で、画面の流れとアクセシビリティを確かめる（テスト戦略）
+    # 手動の性能の計測（job=performance）では動かさない。deploy-demo は check・ui に依存するので、あわせて動かない
+    if: inputs.job != 'performance'
     runs-on: ubuntu-latest
     # W6 で 15〜19 分かかり時間切れが出たので 30 分にした（Bolt 37f）。25 分を超えたら分けて並べることを諮る（テスト戦略）
     timeout-minutes: 30
@@ -143,6 +156,64 @@ jobs:
             apps/cargo-tracker/build/reports/cucumber-ui/
             apps/cargo-tracker/build/reports/tests/uiTest/
             apps/cargo-tracker/build/test-results/uiTest/
+          retention-days: 14
+
+  performance:
+    # 性能の計測（@Tag("performance")。PERF-06 の 1 万件の取込を 5 分以内。Bolt 39b4）。手で起動したときだけ動かし、push の CI に入れない。
+    # Windows の Docker Desktop のポート転送は 8 KB を超える文ごとに約 41 ms の人工の遅れを足し、寄港 60 の航海が 5 分を超えるので、
+    # PERF-06 の判定は Linux のランナーで行う。起動: gh workflow run cargo-tracker-ci.yml --ref develop -f job=performance
+    if: github.event_name == 'workflow_dispatch' && inputs.job == 'performance'
+    runs-on: ubuntu-latest
+    # 3 本それぞれ 5 分の判定と、監査の配信を待つ上限 10 分（参考の値）を見込む
+    timeout-minutes: 60
+    concurrency:
+      group: cargo-tracker-ci-${{ github.ref }}-performance
+      cancel-in-progress: false
+    steps:
+      - name: リポジトリを取得する
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: JDK 25（Corretto）を用意する
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: corretto
+          java-version: '25'
+
+      - name: Gradle を用意する
+        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+
+      - name: 性能の計測（PERF-06）を動かす
+        run: ./gradlew performanceTest
+
+      # 測った値（取込の時間・コミットの数・接続の最大・ファイルの大きさ・監査の配信の時間）は、テストのログの「PERF-06」で始まる行。
+      # テストの結果の XML から抜き出してログと実行の要約に出す（失敗したときも出す）
+      - name: 測った値をログと要約に出す
+        if: always()
+        run: |
+          set -euo pipefail
+          results=build/test-results/performanceTest
+          if [ ! -d "$results" ]; then
+            echo '::warning::performanceTest の結果がありません'
+            exit 0
+          fi
+          values=$(grep -ohE 'PERF-06 [^<]*' "$results"/*.xml || true)
+          echo "$values"
+          {
+            echo '### PERF-06（1 万件の取込）の測った値'
+            echo
+            echo '```text'
+            echo "$values"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: 性能の計測の結果を保存する
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: cargo-tracker-performance-reports
+          path: |
+            apps/cargo-tracker/build/reports/tests/performanceTest/
+            apps/cargo-tracker/build/test-results/performanceTest/
           retention-days: 14
 
   deploy-demo:

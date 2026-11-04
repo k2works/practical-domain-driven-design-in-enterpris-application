@@ -2,7 +2,7 @@
 type: Plan
 title: "Bolt 39b4 計画 - 外部原本の取込の性能（PERF-06）と量・接続の計測"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-04T04:58:20Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-04T05:36:01Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-11-04T04:15:10Z }
 ---
@@ -59,6 +59,7 @@ verified:
 | 一括の保存 | 作らない（ステップ 3 で 2 分 30 秒以内なら）。超えたら 39b4b で、`ExternalPayloadStorage` に複数の原本を 1 つの独立したトランザクションで保存する操作を足す（「保存に成功するまで受信記録を書かない」約束を守るため、取込のサービスはまとめて保存してから受信記録を書く順に変わる）。ADR-004 :87 の「足りなければ一括の保存」の送り先を 39b4b にする（【前の決定の変更】の注を ADR-004 に残す） | ADR-004 :87 |
 | 分類ごとの件数の照会 | 開始準備の決定 (6)。3 本のまま（`Classification` は 3 値。差異は 39h で 4 本）。ステップ 3 の 1 万件で 3 本の合計を測る | IngestionService.java :317-324 |
 | H2 の補助文字 | 開始準備の決定 (8)。H2 が受けなければ `db/migration/h2/` に `classification_note` を `VARCHAR(2000)` に広げるマイグレーションを足す（1,000 コードポイントの補助文字は UTF-16 で 2,000 単位。上限の判定はサービスのコードポイントのまま）。ADR-007 に記録する | 前例 h2/V20261104103700 :4 |
+| 計測の環境 | ステップ 3 で決めた（2026-11-04、推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）。【前の決定の変更】開始準備の決定 (4) と確認ポイント 4 の「`check` と CI に入れない」は、push の CI（check・ui・deploy-demo）に入れず、**PERF-06 の判定を Linux の CI の手動のジョブ `performance` で行う**形にした（起動は `gh workflow run cargo-tracker-ci.yml --ref develop -f job=performance`。測った値はジョブのログと実行の要約の「PERF-06」で始まる行）。**Windows の Docker Desktop の上では 8 KB を超える文ごとに約 41 ms の人工の遅れが入る**: ホストの JVM から localhost のマップしたポートを通ってコンテナに届くポート転送で、1 つの文の送信が約 8 KB を超えると 1 文ごとに約 41 ms 止まる（INSERT 300 本で 8,000 文字は 1 文 0.70 ms、8,100 文字からは 1 文 41.06〜41.44 ms。ドライバーの `tcpNoDelay`・送受信のバッファ 1 MiB・`prepareThreshold=0`・`preferQueryMode=simple` でも変わらない。同じ postgres:18.6 でもコンテナの中・コンテナ間の TCP では崖が出ず、200 件 183〜335 ms）。寄港 60 の航海の DE-12 は直列化で 8,043 文字（寄港 5 は 1,112 文字）で、イベントの発行記録の INSERT が崖を越える。1,000 件の取込のプロファイルは寄港 5 で 1 件 4.91 ms、寄港 60 で 1 件 44.90 ms（90.4% が発行記録の INSERT の応答の待ち）で、アプリの処理は 1 件 4〜5 ms で寄港の数にほとんど左右されない。イベントの形と寄港の上限（60）は変えない。手元の 3 本の値（Windows、Docker Desktop）: 寄港 5 の航海 1 万件 total 44.6 秒（組み立て 0.2 秒・取込 44.4 秒、2,860,051 バイト）、主要実績 1 万件 total 47.3 秒（0.2 秒・47.1 秒、850,096 バイト）、寄港 60 の航海 1 万件 total 453.4 秒（2.5 秒・451.0 秒、36,960,051 バイト、行の最大 3,695 バイト。上の遅れのため 5 分を超えた）。3 本とも接続の最大 2、コミット 10,002 回、分類ごとの件数の照会 3 本の合計 0.0 秒。2 分 30 秒の打ち切り（39b4b）と 5 分の判定は CI の値で行う。ローカルでは寄港 60 の `performanceTest` を判定に使わない | 調べた担当の実測（ポート転送・INSERT の大きさ・ドライバーの設定の切り分け、1,000・3,000 件のプロファイル） |
 
 ```text
 計測のログの形（1 万件の航海。数字は形を示す仮の値で、測った値ではない）:
@@ -242,7 +243,7 @@ end note
 
 - [x] **1. 設計の文書**（2026-11-04、推奨のとおり承認として記録した（Recommend 承認の指示による。human:kakimomokuri）。測った値はステップ 7 で書く。US-14 に「Bolt 39b4 の決定」の段落を作り AC1 の注を置いた。H2 の VARCHAR の上限の誤りを訂正の注で直した）: 上の「設計文書に直す箇所」（「人に諮ること」1 の決定を反映する。測った値と H2 の結果はステップ 3・5・7 で足す）（完了の判定: 文書の差分。**承認ゲート**）
 - [x] **2. 接続とコミットを数える部品（Red → Green）**（2026-11-04、推奨のとおり承認として記録した（Recommend 承認の指示による。human:kakimomokuri）。部品を足した時点で緑だったので変異 3 つ（REQUIRES_NEW を外す・入れ子にする・全体で数える）で落ちることを確かめた。1,000 件で接続の最大 2、コミットは行の数 ＋ 2。部品は `TestcontainersConfiguration` に入れて共有の文脈に乗せた（同期の発行記録の受け手と同じ組にするとコミットが増えるため））: `ConnectionUsageRecorder` と、行 3・4・7 の 1,000 件の統合テスト（`ExternalDataIngestionConnectionTest`）を書く。今のコードで緑なら、変異（保存を外側のトランザクションで書く・保存の中で REQUIRES_NEW を入れ子にする・件数を全体で数える）で落ちることを確かめて Red の代わりにする（T-217）（完了の判定: 緑、`sonar-local:check` の新しい違反（T-234）。**承認ゲート**（構造: テストの部品））
-- [ ] **3. 1 万件の計測（Red → Green）**: 行 1・2・8・10・11・12 のテスト（`ExternalDataIngestionPerformanceTest`、`PerformanceTestTagArchitectureTest`）、`test` の `excludeTags` に `performance`、`performanceTest` のタスク（`outputs.upToDateWhen { false }`・`shouldRunAfter 'test'`）。Red は規則（タグのない `*PerformanceTest` のクラス）と、判定を 1 ms にした変異で時間の判定が落ちること。`performanceTest` を流して測った値を記録し、行 12 で寄港 60 の航海 1 万件のファイルの大きさと時間を測る（40 MiB の確かめ。行の最大の大きさも測り、「人に諮ること」1 の見込み 3.4 KB を確かめる。T-239）。2 分 30 秒を超えたら止めて 39b4b を足す（下の「時間の配分と打ち切り」）（完了の判定: `test` と `performanceTest` の緑、測った値の記録、`sonar-local:check`。**承認ゲート**（構造: Gradle のタスク））
+- [ ] **3. 1 万件の計測（Red → Green）**: 行 1・2・8・10・11・12 のテスト（`ExternalDataIngestionPerformanceTest`、`PerformanceTestTagArchitectureTest`）、`test` の `excludeTags` に `performance`、`performanceTest` のタスク（`outputs.upToDateWhen { false }`・`shouldRunAfter 'test'`）。Red は規則（タグのない `*PerformanceTest` のクラス）と、判定を 1 ms にした変異で時間の判定が落ちること。`performanceTest` を流して測った値を記録し、行 12 で寄港 60 の航海 1 万件のファイルの大きさと時間を測る（40 MiB の確かめ。行の最大の大きさも測り、「人に諮ること」1 の見込み 3.4 KB を確かめる。T-239）。2 分 30 秒を超えたら止めて 39b4b を足す（下の「時間の配分と打ち切り」）（完了の判定: `test` と `performanceTest` の緑、測った値の記録、`sonar-local:check`。**承認ゲート**（構造: Gradle のタスク、CI の手動のジョブ `performance`））。【前の決定の変更】`performanceTest` の判定（5 分と 2 分 30 秒）は Linux の CI の手動のジョブ `performance` の値で行う（設計の決定「計測の環境」。手元の Windows では寄港 60 が人工の遅れで 5 分を超える。寄港 5 と主要実績は手元で緑）。CI のジョブはステップ 7 の push の後に起動し、値を終了報告に書く
 - [ ] **4. 原本の大きさの上限（Red → Green）**: 行 5・6 の単体を先に書いて落ちることを確かめ（`IngestionOutcome` に値を足して落ちる既存のテストを一覧にする。T-217）、`IngestionOutcome.FileTooLarge`、上限の定数（`externaldata.domain.model.rules` と `package-info`。新規ファイル）、取込のサービスの判定（承認の状態の確かめの後。バイト数は :145 の `file` の長さ、件数は `command.receivedCount()`）を作る（完了の判定: 緑、`spotbugsMain`（T-232）、`checkstyleMain`（T-237）、`sonar-local:check`（T-234）。**承認ゲート**（構造: 取込の拒否））
 - [ ] **5. H2 の補助文字（Red → Green）**: 行 9 の H2 の統合テスト（`H2ReceivedRecordNoteTest`。dev プロファイル）を先に書き、今の H2 で補助文字 1,000 コードポイントの注記が入るかを確かめる。入れば緑のまま記録し、マイグレーションを足さない。入らなければ H2 だけのマイグレーション（`db/migration/h2/V<作るときの日時>__widen_received_record_classification_note.sql`）で `VARCHAR(2000)` に広げる（完了の判定: 緑、dev プロファイルの起動（`DevSampleDataSmokeTest`）。マイグレーションを足したら **承認ゲート**（スキーマ（H2））、足さなければ **承認ゲート**（構造: テスト））
 - [ ] **6. 品質ゲートと開発レビュー**: 変異、`check`、`performanceTest`、その後に SonarQube、開発レビューとその直し。push の前に `check`
@@ -269,7 +270,7 @@ end note
 | 1 | **分け方** | 計画の初稿 | 推奨のとおり（Recommend 承認の指示による。human:kakimomokuri）。1 本（約 3 時間 10 分）。ステップ 3 の計測で 2 分 30 秒を超えたら一括の保存を 39b4b に送る（開始準備の決定 (1)） |
 | 2 | **計測の範囲** | ステップ 3 | 推奨のとおり。組み立てから取込のコミットまで。監査の配信は参考の値（行 10）。代わりの案（配信の完了まで含める）は、PERF-06 の「分類・採用」の外の非同期の処理を含め、下流の listener（39e・39g）が増えるたびに PERF-06 の判定が変わるので取らない |
 | 3 | **代表** | ステップ 3 | 推奨のとおり。航海と主要実績の両方。代わりの案（航海だけ）は、主要実績の追跡番号の列と DE-13 の量を見落とすので取らない |
-| 4 | **計測のテストの置き場所とタグ** | ステップ 3 | 推奨のとおり。`@Tag("performance")`・`@Tag("NFR-PERF-06")`、`performanceTest` のタスク、`check` と CI に入れない。接続とコミットの 1,000 件は `test`。代わりの案（CI に別のジョブを足す）は、共有の実行環境の時間の揺れで 5 分の判定が不安定になり、外部の CI の設定を変えるので取らない（W10 の負荷テストで扱う） |
+| 4 | **計測のテストの置き場所とタグ** | ステップ 3 | 推奨のとおり。`@Tag("performance")`・`@Tag("NFR-PERF-06")`、`performanceTest` のタスク、`check` と CI に入れない。接続とコミットの 1,000 件は `test`。代わりの案（CI に別のジョブを足す）は、共有の実行環境の時間の揺れで 5 分の判定が不安定になり、外部の CI の設定を変えるので取らない（W10 の負荷テストで扱う）。【前の決定の変更】ステップ 3 で、Windows の Docker Desktop の人工の遅れのため、PERF-06 の判定を Linux の CI の手動のジョブ `performance` で行う形にした（push の CI には入れない。設計の決定「計測の環境」） |
 | 5 | **分類ごとの件数の照会** | ステップ 3 | 推奨のとおり。3 本のまま（`Classification` は 3 値。索引 `ix_received_record_ingestion`）。1 秒を超えたら 1 本にする |
 | 6 | **数えるテストの規約** | ステップ 1 | 推奨のとおり。test_strategy :480 に書き、規則のテストは作らない（今の数える SQL はすべて絞っている） |
 | 7 | **H2 の補助文字** | ステップ 5 | 推奨のとおり。Red で確かめ、入らなければ H2 だけ `VARCHAR(2000)` に広げる（PostgreSQL は変えない） |
@@ -304,13 +305,14 @@ end note
 - [ ] 1 万件の航海・主要実績の取込が 5 分以内で、測った値が non_functional・ADR-004・終了報告に書いてある
 - [ ] 「人に諮ること」1 の決定が計画・release_plan・non_functional・data_model・domain_model・user_story・system_usecase・requirements_definition・ADR-004 に反映されている（上の「設計文書に直す箇所」）
 - [ ] 終了報告の承認の議題の先頭に「人に諮ること」1 の決定（推奨のとおり決めた業務の判断）を置いている
-- [ ] `check` と `performanceTest` が緑、SonarQube が PASS、CI が緑、デモ環境が新しい版で動く
+- [ ] `check` と `performanceTest`（判定は Linux の CI の手動のジョブ `performance`）が緑、SonarQube が PASS、CI が緑、デモ環境が新しい版で動く
 - [ ] 終了報告が承認されている
 
 ## 更新履歴
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-11-04 | ステップ 3: 寄港 60 の航海 1 万件が手元で 453.4 秒になった原因（Windows の Docker Desktop のポート転送が 8 KB を超える文ごとに約 41 ms 止まる）を設計の決定「計測の環境」に書き、PERF-06 の判定を Linux の CI の手動のジョブ `performance` で行う形にした（【前の決定の変更】開始準備の決定 (4)・確認ポイント 4。イベントの形と寄港の上限は変えない。推奨のとおり。Recommend 承認の指示による） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-11-04 | 計画を承認した。原本の大きさの上限 (a)・拒否の位置・定数の置き場所を含め、整合性検証の指摘（詳細: 重大 1・中 6・軽 6、横断: 中 4・軽 7）を反映し、推奨のとおり（Recommend 承認の指示による） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-11-04 | 初版作成（承認待ち）。開始準備の決定: 1 本にする（約 3 時間 10 分。計測で 2 分 30 秒を超えたら一括の保存を 39b4b に）、計測の範囲は組み立てから取込のコミットまで、航海と主要実績の両方、`performance` のタグと `performanceTest` のタスク（`check` と CI に入れない）、分類ごとの件数の照会は 4 本のまま（承認で 3 本に直した。分類は 3 値）、数えるテストの規約は test_strategy に、H2 の補助文字は Red で確かめる（推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）。原本の大きさの上限と上限を超えるファイルの扱いは人に諮る（同日の承認で (a) に決めた） | anthropic/claude-opus-5-5 |
 

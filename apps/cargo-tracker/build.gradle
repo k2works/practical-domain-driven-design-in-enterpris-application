@@ -109,9 +109,10 @@ tasks.withType(Test).configureEach {
 }
 
 tasks.named('test') {
-	// 画面の層（@ui）は実ブラウザを使い、用語集の整合（documentation）は設計文書を読むため、それぞれ別のタスクで動かす
+	// 画面の層（@ui）は実ブラウザを使い、用語集の整合（documentation）は設計文書を読み、性能の計測（performance）は
+	// 1 万件を取り込んで時間を測るため、それぞれ別のタスクで動かす
 	useJUnitPlatform {
-		excludeTags 'ui', 'documentation'
+		excludeTags 'ui', 'documentation', 'performance'
 	}
 	// Spring Modulith の図（ModuleDocumentationTest）を出力として宣言し、キャッシュから復元しても図が残るようにする
 	outputs.dir(layout.buildDirectory.dir('spring-modulith-docs')).withPropertyName('moduleDocumentation')
@@ -131,6 +132,23 @@ tasks.register('uiTest', Test) {
 		excludeTags 'manual'
 		excludeEngines 'archunit'
 	}
+	shouldRunAfter 'test'
+}
+
+// 性能の計測（@Tag("performance")。PERF-06 の 1 万件の取込を PostgreSQL で測る。Bolt 39b4）。測るたびに流す。check と push の CI に入れない
+// （共有の実行環境の時間は揺れ、5 分の判定が不安定になる。性能の継続的な確認は W10 の負荷テスト）。PERF-06 の判定は CI の手動のジョブ
+// performance（Linux）で行う。Windows の Docker Desktop のポート転送は 8 KB を超える文ごとに約 41 ms の人工の遅れを足す
+tasks.register('performanceTest', Test) {
+	group = 'verification'
+	description = '性能の計測のテスト（@Tag("performance")。PERF-06 の 1 万件の取込）を動かし、測った値をログに出す'
+	testClassesDirs = sourceSets.test.output.classesDirs
+	classpath = sourceSets.test.runtimeClasspath
+	useJUnitPlatform {
+		includeTags 'performance'
+		excludeEngines 'archunit', 'junit-platform-suite'
+	}
+	maxHeapSize = '1g'
+	outputs.upToDateWhen { false }
 	shouldRunAfter 'test'
 }
 
