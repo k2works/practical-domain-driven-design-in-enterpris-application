@@ -85,7 +85,31 @@ public class ExternalDataIngestionUiSteps {
     @前提("承認済みの航海の情報源 {string} がある")
     public void 名前を指定した承認済みの航海の情報源がある(String providerName) {
         provider = providerName;
-        承認済みの航海の情報源がある();
+        // DB を前の実行から引き継いだとき（同じコンテナや配備した環境に向けて撮り直すとき）は、後始末で停止中にした同じ名前の情報源が
+        // 残っているので、入れずに承認済みに戻して使う（入れると uk_data_source に違反する）
+        java.util.List<UUID> existing = jdbc.queryForList(
+                "SELECT id FROM external_data.data_source WHERE provider = ? AND record_type = 'VOYAGE'",
+                UUID.class,
+                provider);
+        if (existing.isEmpty()) {
+            承認済みの航海の情報源がある();
+            return;
+        }
+        sourceId = existing.get(0);
+        jdbc.update("UPDATE external_data.data_source SET approval_status = 'APPROVED' WHERE id = ?", sourceId);
+    }
+
+    /**
+     * シナリオで作った情報源を停止中にする。情報源は取込が参照する（{@code fk_ingestion_data_source}）ので消さない。共有の PostgreSQL に
+     * 承認済みのまま残すと、ほかのシナリオの選ぶ画面の選択肢が増え、マニュアルのキャプチャに写る（Bolt 39c ステップ 6）。前例は
+     * {@link RoutingUiSteps} の航海の後片付け（作る手順と印のあるクラスに置く）。
+     */
+    @io.cucumber.java.After("@ui")
+    public void シナリオの情報源を停止中にする() {
+        if (sourceId == null) {
+            return;
+        }
+        jdbc.update("UPDATE external_data.data_source SET approval_status = 'SUSPENDED' WHERE id = ?", sourceId);
     }
 
     /** データ責任者でログインし直してから、ホーム（{@code /}）を開く。ホームはデータ責任者を S-16 の選ぶ画面へ移す。 */
@@ -111,11 +135,18 @@ public class ExternalDataIngestionUiSteps {
     @もし("キー操作だけで承認済みの航海の情報源を選び、航海 2 行のファイルを選んで取り込む")
     public void 航海2行のファイルを取り込む() {
         chooseSource();
-        // 外部 ID は航海番号で 30 文字まで。冪等性キーは提供元を含むので、シナリオの UUID は提供元の名前に入れれば足りる
         String acquiredAt = acquiredAt();
         chooseFile(
-                voyageFile("V2611E,1," + acquiredAt + "," + PORT_CALLS, "V2612E,1," + acquiredAt + "," + PORT_CALLS));
+                voyageFile(voyageLine("V2611E", acquiredAt, PORT_CALLS), voyageLine("V2612E", acquiredAt, PORT_CALLS)));
         submit();
+    }
+
+    /**
+     * 航海の 1 行（外部版 1）。外部 ID は航海番号で 30 文字まで。冪等性キーは提供元を含むが、名前を指定した情報源は前の実行から
+     * 引き継ぐことがあるので、航海番号にもシナリオの印を付けて、撮り直しても分類別の件数が変わらないようにする（Bolt 39c ステップ 6）。
+     */
+    private String voyageLine(String voyageBase, String acquiredAt, String portCalls) {
+        return voyageBase + "-" + suffix.substring(0, 8) + ",1," + acquiredAt + "," + portCalls;
     }
 
     @もし("キー操作だけで承認済みの航海の情報源を選び、同じ外部 ID・外部版で内容の違う 2 行のファイルを選んで取り込む")
@@ -123,7 +154,7 @@ public class ExternalDataIngestionUiSteps {
         chooseSource();
         String acquiredAt = acquiredAt();
         chooseFile(voyageFile(
-                "V2611E,1," + acquiredAt + "," + PORT_CALLS, "V2611E,1," + acquiredAt + "," + CHANGED_PORT_CALLS));
+                voyageLine("V2611E", acquiredAt, PORT_CALLS), voyageLine("V2611E", acquiredAt, CHANGED_PORT_CALLS)));
         submit();
     }
 

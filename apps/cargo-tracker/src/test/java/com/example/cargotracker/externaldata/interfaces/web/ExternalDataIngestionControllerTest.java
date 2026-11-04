@@ -194,6 +194,31 @@ class ExternalDataIngestionControllerTest {
         then(ingestionService).should(never()).ingest(any(), any());
     }
 
+    // 欄ごとの誤りの示し方（社内の S-01 の企業の欄と同じ形。Bolt 39c ステップ 6）
+
+    @Test
+    void 行3_誤りのない選ぶ画面はどの欄にもaria_invalidを付けない() throws Exception {
+        mockMvc.perform(get(NEW_URL)).andExpect(content().string(not(containsString("aria-invalid"))));
+    }
+
+    @Test
+    void 行3_情報源の誤りは凡例の直後に赤字で示し誤りのないファイルの欄にはaria_invalidを付けない() throws Exception {
+        mockMvc.perform(ingest(null, "voyage.csv", VOYAGE_CSV))
+                .andExpect(content()
+                        .string(containsPattern("<fieldset[^>]*aria-invalid=\"true\"[^>]*>\\s*<legend>情報源</legend>\\s*"
+                                + "<p id=\"dataSourceId-error\" class=\"text-danger\">取り込む情報源を 1 つ選んでください。</p>")))
+                .andExpect(content().string(containsPattern("<input id=\"file\"(?![^>]*aria-invalid)[^>]*>")));
+    }
+
+    @Test
+    void 行3_ファイルの誤りは赤字で示し誤りのない情報源の欄にはaria_invalidを付けない() throws Exception {
+        mockMvc.perform(ingest(VOYAGE_SOURCE, "", ""))
+                .andExpect(content()
+                        .string(containsString("<p id=\"file-error\" class=\"text-danger\">取り込むファイルを選んでください。</p>")))
+                .andExpect(content().string(containsPattern("<input id=\"file\"[^>]*aria-invalid=\"true\"[^>]*>")))
+                .andExpect(content().string(containsPattern("<fieldset(?![^>]*aria-invalid)[^>]*>")));
+    }
+
     // 拒否（39c は共通の文言。理由ごとの文言は 39c2）
 
     @Test

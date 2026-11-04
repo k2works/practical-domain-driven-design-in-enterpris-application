@@ -74,6 +74,14 @@ class DevLoginPrefillDevProfileTest {
         mvc.perform(get("/").cookie(session)).andExpect(redirectedUrl("/staff/transport-requests"));
     }
 
+    @Test
+    void データ責任者の開発用の利用者を選ぶとA02が入力済みで確認すると外部データの取込の画面へ移る() throws Exception {
+        // Bolt 39c の行 17。dev のログインの口座 accounts[8]（application-dev.properties）
+        Cookie session = signIn("data-steward@dev.cargo-tracker.example");
+
+        mvc.perform(get("/").cookie(session)).andExpect(redirectedUrl("/staff/external-data/ingestions/new"));
+    }
+
     /**
      * 開発用の利用者のボタンと同じ送信（password の段）の後に、A-02 が入力済みであることを確かめ、そのコードを送る（Bolt 31）。
      * 同じ利用者のテストの間で同じ刻みのコードを使い回さないよう、使った刻みを戻す（テストの準備。確認ポイント 7）。
