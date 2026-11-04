@@ -79,6 +79,11 @@ class LoginAttemptServiceTest {
         public Optional<SuspensionRecord> findLatestUserSuspension(UserId target) {
             return Optional.empty();
         }
+
+        @Override
+        public boolean existsByActionAndTarget(AuditAction action, String targetType, String targetId) {
+            return false;
+        }
     };
     private final RecordingTransactionManager transactions = new RecordingTransactionManager();
     private final LoginAttemptService service =
@@ -202,6 +207,11 @@ class LoginAttemptServiceTest {
                     @Override
                     public Optional<SuspensionRecord> findLatestUserSuspension(UserId target) {
                         return Optional.empty();
+                    }
+
+                    @Override
+                    public boolean existsByActionAndTarget(AuditAction action, String targetType, String targetId) {
+                        return false;
                     }
                 },
                 new LockPolicy(),

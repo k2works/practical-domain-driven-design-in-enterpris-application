@@ -293,4 +293,14 @@
          ORDER BY a.occurred_at DESC, a.id DESC
          LIMIT 1
     </select>
+
+    <!-- Bolt 39b3b。イベント経由の監査の冪等（IA-INV-15）。操作と対象で引き、あれば listener は書かない。索引 ix_audit_record_target
+         （target_type, target_id, occurred_at）を使う。スキーマは変えない（人に諮ること 2 の決定） -->
+    <select id="existsAuditRecordByActionAndTarget" resultType="boolean">
+        SELECT COUNT(*) > 0
+          FROM identity.audit_record
+         WHERE target_type = #{targetType}
+           AND target_id = #{targetId}
+           AND action = #{action}
+    </select>
 </mapper>

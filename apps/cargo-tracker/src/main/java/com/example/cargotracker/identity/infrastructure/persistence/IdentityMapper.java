@@ -90,4 +90,8 @@ public interface IdentityMapper {
 
     /** 対象の利用者の今の停止の記録を、操作者の今の表示名とともに読む（Bolt 38c2）。対象の ID は文字列（列が VARCHAR）。 */
     SuspensionRecordRow selectLatestUserSuspension(@Param("targetId") String targetId);
+
+    /** 操作と対象の監査記録があるか（Bolt 39b3b。イベント経由の監査の冪等。索引 ix_audit_record_target）。 */
+    boolean existsAuditRecordByActionAndTarget(
+            @Param("action") String action, @Param("targetType") String targetType, @Param("targetId") String targetId);
 }

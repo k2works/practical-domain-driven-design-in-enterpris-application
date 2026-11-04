@@ -2,7 +2,7 @@ package com.example.cargotracker.identity.domain.model.valueobjects;
 
 /**
  * 監査記録の操作（データモデル `audit_record.action`）。Bolt 14 はログインの成功・失敗とログアウト。Bolt 31 で password の段の
- * 成功を分けた（ADR-012 の見直しの 1）。
+ * 成功を分けた（ADR-012 の見直しの 1）。Bolt 39b3b で、ドメインイベントを経て書く外部原本の採否（採用と隔離）を足した（IA-INV-15）。
  */
 public enum AuditAction {
     /** password を確かめた（2 段階のログインの 1 段目。まだ業務の画面は開けない）。 */
@@ -85,5 +85,15 @@ public enum AuditAction {
      * （利用者と更新した後の版）と変更前後の担当企業（管理範囲の外を含む全体を企業 ID の昇順にカンマでつないだ一覧）を {@link AuditTarget}
      * に残す。企業名は変わりうるので残さない。拒んだ変更と古い版からの変更は記録しない。
      */
-    ASSIGNMENTS_CHANGED
+    ASSIGNMENTS_CHANGED,
+    /**
+     * 外部原本を取込で自動に採用した（DE-12・DE-13 を監査する。Bolt 39b3b、AUD-01、IA-INV-15）。成功だけを記録し、理由は持たない。操作者と
+     * 時刻はイベントのもの、対象は受信記録（{@code RECEIVED_RECORD}、受信記録 ID。版と変更前は持たない）、変更後は正規の要約。
+     */
+    EXTERNAL_RECORD_ADOPTED,
+    /**
+     * 外部原本を隔離した（DE-14 を監査する。Bolt 39b3b、AUD-01、IA-INV-15）。成功だけを記録し、理由は隔離の理由の区分
+     * （{@code CONTENT_MISMATCH} か形式の誤りの名前）。対象と変更後は {@link #EXTERNAL_RECORD_ADOPTED} と同じ形。
+     */
+    EXTERNAL_RECORD_QUARANTINED
 }

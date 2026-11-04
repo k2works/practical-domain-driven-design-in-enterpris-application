@@ -95,6 +95,11 @@ class SessionRevalidationServiceTest {
         public Optional<SuspensionRecord> findLatestUserSuspension(UserId target) {
             return Optional.empty();
         }
+
+        @Override
+        public boolean existsByActionAndTarget(AuditAction action, String targetType, String targetId) {
+            return false;
+        }
     };
     private final UserStandingRepository standings = id -> {
         reads.incrementAndGet();

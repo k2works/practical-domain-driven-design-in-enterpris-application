@@ -703,12 +703,17 @@ class ExternalDataIngestionIntegrationTest {
                 "%" + sourceId + "%");
     }
 
+    /**
+     * テストの中の受け手（{@link CommittedEventRecorder}）の発行記録のうち完了したものの数。Bolt 39b3b で監査の listener が同じイベントを
+     * 受けるようになり、受け手ごとに発行記録ができるので、この受け手の分に絞る。
+     */
     private int completedPublications(Class<?> eventType, UUID sourceId) {
         return count(
                 "SELECT COUNT(*) FROM platform.event_publication WHERE event_type = ? AND serialized_event LIKE ?"
-                        + " AND completion_date IS NOT NULL",
+                        + " AND listener_id LIKE ? AND completion_date IS NOT NULL",
                 eventType.getName(),
-                "%" + sourceId + "%");
+                "%" + sourceId + "%",
+                "%" + CommittedEventRecorder.class.getSimpleName() + "%");
     }
 
     /**

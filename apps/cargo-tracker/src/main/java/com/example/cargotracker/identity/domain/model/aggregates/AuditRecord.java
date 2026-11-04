@@ -45,6 +45,9 @@ public final class AuditRecord {
     /** 対象の種類の企業（Bolt 38b2。範囲外の企業への登録の試行）。 */
     private static final String COMPANY_TARGET = "COMPANY";
 
+    /** 対象の種類の受信記録（Bolt 39b3b。外部原本の採否の監査）。 */
+    private static final String RECEIVED_RECORD_TARGET = "RECEIVED_RECORD";
+
     /** 理由: 管理範囲外（`ADMIN_SCOPE_DENIED` の理由。Bolt 34b）。 */
     static final String OUT_OF_SCOPE = "OUT_OF_SCOPE";
 
@@ -440,6 +443,77 @@ public final class AuditRecord {
                 "ENROLLED",
                 "method=" + method.name() + ";verifiedAt=" + verifiedAt.instant(),
                 at);
+    }
+
+    /**
+     * 外部原本の取込での自動の採用を記録する（DE-12・DE-13 の監査。Bolt 39b3b、AUD-01、IA-INV-15）。操作者と時刻はイベントのもの、対象は
+     * 受信記録（版と変更前は持たない）、変更後は正規の要約。理由は持たない。結果は成功。必須の値がなければ {@link IllegalArgumentException}
+     * （内容の欠けたイベント。listener が捨てる）。
+     */
+    public static AuditRecord externalRecordAdopted(
+            UserId actor, CompanyId actorCompany, String receivedRecordId, String summary, UtcInstant at) {
+        return externalRecordDecided(
+                actor, actorCompany, AuditAction.EXTERNAL_RECORD_ADOPTED, null, receivedRecordId, summary, at);
+    }
+
+    /**
+     * 外部原本の隔離を記録する（DE-14 の監査。Bolt 39b3b、AUD-01、IA-INV-15）。理由は隔離の理由の区分（{@code CONTENT_MISMATCH} か形式の誤りの
+     * 名前）。対象・変更後・必須の値は {@link #externalRecordAdopted} と同じ。結果は成功。
+     */
+    public static AuditRecord externalRecordQuarantined(
+            UserId actor,
+            CompanyId actorCompany,
+            String receivedRecordId,
+            String reason,
+            String summary,
+            UtcInstant at) {
+        return externalRecordDecided(
+                actor,
+                actorCompany,
+                AuditAction.EXTERNAL_RECORD_QUARANTINED,
+                requiredText(reason, REASON_ARGUMENT),
+                receivedRecordId,
+                summary,
+                at);
+    }
+
+    private static AuditRecord externalRecordDecided(
+            UserId actor,
+            CompanyId actorCompany,
+            AuditAction action,
+            String reason,
+            String receivedRecordId,
+            String summary,
+            UtcInstant at) {
+        return new AuditRecord(
+                UUID.randomUUID(),
+                required(at, "at"),
+                required(actor, USER_ARGUMENT),
+                required(actorCompany, COMPANY_ARGUMENT),
+                action,
+                AuditResult.SUCCESS,
+                reason,
+                new AuditTarget(
+                        RECEIVED_RECORD_TARGET,
+                        requiredText(receivedRecordId, "receivedRecordId"),
+                        null,
+                        null,
+                        requiredText(summary, "summary")));
+    }
+
+    /** イベントから作る記録の必須の値（欠けは {@link IllegalArgumentException}。listener が内容の欠けとして捨てる）。 */
+    private static <T> T required(T value, String name) {
+        if (value == null) {
+            throw new IllegalArgumentException("監査記録の値がない: " + name);
+        }
+        return value;
+    }
+
+    private static String requiredText(String value, String name) {
+        if (required(value, name).isBlank()) {
+            throw new IllegalArgumentException("監査記録の値がない: " + name);
+        }
+        return value;
     }
 
     /** 利用者を対象にした成功の記録（利用状態の変更とログインの資格の記録が共有する）。変更前後は記録の文字列のまま持つ。 */

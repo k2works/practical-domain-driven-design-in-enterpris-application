@@ -342,4 +342,61 @@ class AuditRecordTest {
                         USER, COMPANY, target, 1L, IdentityVerificationMethod.IN_PERSON, null, AT))
                 .isInstanceOf(NullPointerException.class);
     }
+
+    @Test
+    void 行1_外部原本の採用は成功として受信記録を対象に版と変更前を持たず変更後の要約を記録する() {
+        // Bolt 39b3b（人に諮ること 1 の決定）
+        String receivedRecordId = UUID.randomUUID().toString();
+        String summary = "recordType=VOYAGE;targetKey=V001;infoVersion=9";
+
+        AuditRecord auditRecord = AuditRecord.externalRecordAdopted(USER, COMPANY, receivedRecordId, summary, AT);
+
+        assertThat(auditRecord.action()).isEqualTo(AuditAction.EXTERNAL_RECORD_ADOPTED);
+        assertThat(auditRecord.result()).isEqualTo(AuditResult.SUCCESS);
+        assertThat(auditRecord.reason()).isNull();
+        assertThat(auditRecord.actorUserId()).isEqualTo(USER);
+        assertThat(auditRecord.actorCompanyId()).isEqualTo(COMPANY);
+        assertThat(auditRecord.occurredAt()).isEqualTo(AT);
+        assertThat(auditRecord.target())
+                .isEqualTo(new AuditTarget("RECEIVED_RECORD", receivedRecordId, null, null, summary));
+    }
+
+    @Test
+    void 行3_外部原本の隔離は成功として理由の区分を記録し版と変更前を持たない() {
+        String receivedRecordId = UUID.randomUUID().toString();
+        String summary = "provider=P;recordType=VOYAGE;externalId=V001;externalVersion=9";
+
+        AuditRecord auditRecord =
+                AuditRecord.externalRecordQuarantined(USER, COMPANY, receivedRecordId, "CONTENT_MISMATCH", summary, AT);
+
+        assertThat(auditRecord.action()).isEqualTo(AuditAction.EXTERNAL_RECORD_QUARANTINED);
+        assertThat(auditRecord.result()).isEqualTo(AuditResult.SUCCESS);
+        assertThat(auditRecord.reason()).isEqualTo("CONTENT_MISMATCH");
+        assertThat(auditRecord.occurredAt()).isEqualTo(AT);
+        assertThat(auditRecord.target())
+                .isEqualTo(new AuditTarget("RECEIVED_RECORD", receivedRecordId, null, null, summary));
+    }
+
+    @Test
+    void 行7_外部原本の採否の記録は操作者と受信記録IDと要約と時刻と理由を欠かせない() {
+        // 内容の欠けは IllegalArgumentException（listener が毒入りとして捨てる）
+        String id = UUID.randomUUID().toString();
+
+        assertThatThrownBy(() -> AuditRecord.externalRecordAdopted(null, COMPANY, id, "s", AT))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> AuditRecord.externalRecordAdopted(USER, null, id, "s", AT))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> AuditRecord.externalRecordAdopted(USER, COMPANY, null, "s", AT))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> AuditRecord.externalRecordAdopted(USER, COMPANY, " ", "s", AT))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> AuditRecord.externalRecordAdopted(USER, COMPANY, id, " ", AT))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> AuditRecord.externalRecordAdopted(USER, COMPANY, id, "s", null))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> AuditRecord.externalRecordQuarantined(USER, COMPANY, id, null, "s", AT))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> AuditRecord.externalRecordQuarantined(null, COMPANY, id, "CONTENT_MISMATCH", "s", AT))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
 }

@@ -69,6 +69,11 @@ public class MyBatisAuditRecordRepository implements AuditRecordRepository {
                         new UtcInstant(row.occurredAt().toInstant())));
     }
 
+    @Override
+    public boolean existsByActionAndTarget(AuditAction action, String targetType, String targetId) {
+        return mapper.existsAuditRecordByActionAndTarget(action.name(), targetType, targetId);
+    }
+
     private static AuditRecord toAggregate(AuditRecordRow row) {
         return AuditRecord.reconstitute(
                 row.id(),

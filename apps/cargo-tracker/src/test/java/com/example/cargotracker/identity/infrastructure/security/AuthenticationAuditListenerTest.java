@@ -70,6 +70,11 @@ class AuthenticationAuditListenerTest {
                 public Optional<SuspensionRecord> findLatestUserSuspension(UserId target) {
                     return Optional.empty();
                 }
+
+                @Override
+                public boolean existsByActionAndTarget(AuditAction action, String targetType, String targetId) {
+                    return false;
+                }
             },
             new CargoUserDetailsService(users(), companies()),
             companies(),

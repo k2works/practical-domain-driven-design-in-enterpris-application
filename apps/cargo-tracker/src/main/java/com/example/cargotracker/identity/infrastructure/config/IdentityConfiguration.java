@@ -15,6 +15,7 @@ import com.example.cargotracker.identity.application.internal.commandservices.Us
 import com.example.cargotracker.identity.application.internal.commandservices.UserRegistrationService;
 import com.example.cargotracker.identity.application.internal.commandservices.UserRoleChangeService;
 import com.example.cargotracker.identity.application.internal.commandservices.UserStatusChangeService;
+import com.example.cargotracker.identity.application.internal.eventhandlers.ExternalRecordAuditEventHandler;
 import com.example.cargotracker.identity.application.internal.eventhandlers.KpiObservationEventHandler;
 import com.example.cargotracker.identity.application.internal.eventhandlers.PasswordResetMailEventHandler;
 import com.example.cargotracker.identity.application.internal.eventhandlers.TotpEnrollmentMailEventHandler;
@@ -352,6 +353,12 @@ public class IdentityConfiguration {
     @Bean
     KpiObservationEventHandler kpiObservationEventHandler(KpiObservationRepository repository) {
         return new KpiObservationEventHandler(repository);
+    }
+
+    /** 外部原本の採否の監査（DE-12・DE-13・DE-14 を受ける。Bolt 39b3b、IA-INV-15）。 */
+    @Bean
+    ExternalRecordAuditEventHandler externalRecordAuditEventHandler(AuditRecordRepository auditRecords) {
+        return new ExternalRecordAuditEventHandler(auditRecords);
     }
 
     /** password の再設定（リンクを開く、A-06 で設定する。Bolt 33a、US-18 AC8）。方針はこの中で組む（AT-07。LockPolicy と同じ）。 */

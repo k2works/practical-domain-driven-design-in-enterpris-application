@@ -1,5 +1,6 @@
 package com.example.cargotracker.identity.domain.model.aggregates;
 
+import com.example.cargotracker.identity.domain.model.valueobjects.AuditAction;
 import com.example.cargotracker.identity.domain.model.valueobjects.SuspensionRecord;
 import com.example.cargotracker.shared.domain.UserId;
 import java.util.List;
@@ -21,4 +22,10 @@ public interface AuditRecordRepository {
      * なければ空（DB を直接書き換えた行。前の停止には戻らない）。停止した人の利用者の行がなければ、表示名を空にして記録は返す。
      */
     Optional<SuspensionRecord> findLatestUserSuspension(UserId target);
+
+    /**
+     * 操作と対象（種類と ID）の監査記録があるか（Bolt 39b3b。イベント経由の監査の冪等。IA-INV-15）。再配信で同じ記録を重ねないために、
+     * listener が追記の前に引く。前提は「（操作、対象）ごとにイベントは 1 つ」。
+     */
+    boolean existsByActionAndTarget(AuditAction action, String targetType, String targetId);
 }

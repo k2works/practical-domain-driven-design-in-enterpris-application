@@ -1,6 +1,8 @@
 package com.example.cargotracker.architecture;
 
+import static com.tngtech.archunit.core.domain.JavaClass.Predicates.resideInAPackage;
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.resideInAnyPackage;
+import static com.tngtech.archunit.core.domain.JavaClass.Predicates.resideOutsideOfPackage;
 import static com.tngtech.archunit.core.domain.properties.HasName.Predicates.name;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
@@ -11,6 +13,7 @@ import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
 import com.tngtech.archunit.core.importer.ImportOption;
 import org.junit.jupiter.api.Test;
+import org.springframework.modulith.ApplicationModule;
 import org.springframework.modulith.core.ApplicationModules;
 
 /**
@@ -55,6 +58,26 @@ class ModularityTest {
                         .getNamedInterfaces()
                         .getByName("events"))
                 .isPresent();
+    }
+
+    /**
+     * アクセス・監査は外部原本の採否を監査するため外部データの公表された言語（{@code externaldata :: events}）を宣言し、外部データの
+     * イベントのほかは参照しない（Bolt 39b3b の行 11、IA-INV-15）。外部データがアクセス・監査を含むほかのコンテキストに依存しないことは
+     * 外部データの許可リストの規則が守る。
+     */
+    @Test
+    void 行11_アクセス監査は外部データのイベントだけに依存を宣言して参照する() throws ClassNotFoundException {
+        ApplicationModule identity =
+                Class.forName("com.example.cargotracker.identity.package-info").getAnnotation(ApplicationModule.class);
+        assertThat(identity.allowedDependencies()).contains("externaldata :: events");
+
+        noClasses()
+                .that()
+                .resideInAPackage("com.example.cargotracker.identity..")
+                .should()
+                .dependOnClassesThat(resideInAPackage("com.example.cargotracker.externaldata..")
+                        .and(resideOutsideOfPackage("com.example.cargotracker.externaldata.domain.events..")))
+                .check(PRODUCTION_CLASSES);
     }
 
     /** 予約は見積りの下流で、見積りは予約の型（イベントを含む）を参照しない（ADR-014。Bolt 23。Bolt 20 レビュー D-78 の一般化）。 */

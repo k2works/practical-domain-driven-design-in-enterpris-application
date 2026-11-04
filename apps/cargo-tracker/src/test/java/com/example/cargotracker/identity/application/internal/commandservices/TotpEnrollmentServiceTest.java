@@ -116,6 +116,11 @@ class TotpEnrollmentServiceTest {
         public Optional<SuspensionRecord> findLatestUserSuspension(UserId target) {
             return Optional.empty();
         }
+
+        @Override
+        public boolean existsByActionAndTarget(AuditAction action, String targetType, String targetId) {
+            return false;
+        }
     };
     private final FakeIssuer issuer = new FakeIssuer();
     /** 出したイベント（Bolt 38d の DE-28）。 */

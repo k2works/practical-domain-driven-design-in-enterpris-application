@@ -112,6 +112,11 @@ class RecoveryCodeVerificationServiceTest {
         public Optional<SuspensionRecord> findLatestUserSuspension(UserId target) {
             return Optional.empty();
         }
+
+        @Override
+        public boolean existsByActionAndTarget(AuditAction action, String targetType, String targetId) {
+            return false;
+        }
     };
     private final RecordingTransactionManager transactions = new RecordingTransactionManager();
     private final RecoveryCodeVerificationService service = new RecoveryCodeVerificationService(
@@ -242,6 +247,11 @@ class RecoveryCodeVerificationServiceTest {
                     @Override
                     public Optional<SuspensionRecord> findLatestUserSuspension(UserId target) {
                         return Optional.empty();
+                    }
+
+                    @Override
+                    public boolean existsByActionAndTarget(AuditAction action, String targetType, String targetId) {
+                        return false;
                     }
                 },
                 hasher,

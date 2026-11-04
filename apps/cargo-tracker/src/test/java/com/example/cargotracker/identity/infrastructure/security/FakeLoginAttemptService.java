@@ -5,6 +5,7 @@ import com.example.cargotracker.identity.application.internal.commandservices.Lo
 import com.example.cargotracker.identity.domain.model.aggregates.AuditRecord;
 import com.example.cargotracker.identity.domain.model.aggregates.AuditRecordRepository;
 import com.example.cargotracker.identity.domain.model.rules.LockPolicy;
+import com.example.cargotracker.identity.domain.model.valueobjects.AuditAction;
 import com.example.cargotracker.identity.domain.model.valueobjects.AuthenticationRejection;
 import com.example.cargotracker.identity.domain.model.valueobjects.SuspensionRecord;
 import com.example.cargotracker.shared.domain.CompanyId;
@@ -71,6 +72,11 @@ class FakeLoginAttemptService extends LoginAttemptService {
         @Override
         public Optional<SuspensionRecord> findLatestUserSuspension(UserId target) {
             return Optional.empty();
+        }
+
+        @Override
+        public boolean existsByActionAndTarget(AuditAction action, String targetType, String targetId) {
+            return false;
         }
     }
 
