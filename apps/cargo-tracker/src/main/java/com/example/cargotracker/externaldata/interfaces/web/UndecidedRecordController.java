@@ -200,6 +200,7 @@ public class UndecidedRecordController {
         model.addAttribute("externalKey", externalKey == null ? NO_EXTERNAL_KEY : externalKey);
         model.addAttribute("note", item.note());
         model.addAttribute("keyless", item.keyless());
+        model.addAttribute("reasonLimit", ReceivedRecordDecision.REASON_LIMIT);
         model.addAttribute("backUrl", pageUrl(back, backPage));
         model.addAttribute("actionUrl", LIST_URL + "/" + id + "/decision" + query(back, backPage));
         return DECISION_VIEW;

@@ -17,6 +17,7 @@ import com.example.cargotracker.externaldata.application.internal.commandservice
 import com.example.cargotracker.externaldata.application.internal.commandservices.ReceivedRecordDecisionService;
 import com.example.cargotracker.externaldata.application.internal.queryservices.UndecidedRecordPage;
 import com.example.cargotracker.externaldata.application.internal.queryservices.UndecidedRecordQueryService;
+import com.example.cargotracker.externaldata.domain.model.aggregates.ReceivedRecordDecision;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PhysicalLineRange;
 import com.example.cargotracker.identity.infrastructure.security.WithAuthenticatedActor;
 import com.example.cargotracker.shared.domain.Role;
@@ -485,6 +486,23 @@ class UndecidedRecordControllerTest {
                     .contains(IRREVOCABLE)
                     .contains(">却下する</button>")
                     .doesNotContain("採用する");
+        }
+
+        @Test
+        void 行18_理由の欄の説明の上限は判断の理由の上限から示し欄は必須と読み上げる() throws Exception {
+            givenDecidable(mismatch());
+
+            String page = mockMvc.perform(get(DECISION_URL))
+                    .andExpect(status().isOk())
+                    .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.model()
+                            .attribute("reasonLimit", ReceivedRecordDecision.REASON_LIMIT))
+                    .andReturn()
+                    .getResponse()
+                    .getContentAsString(java.nio.charset.StandardCharsets.UTF_8);
+
+            org.assertj.core.api.Assertions.assertThat(page)
+                    .contains("<p id=\"reason-hint\">必須、" + ReceivedRecordDecision.REASON_LIMIT + " 文字まで</p>")
+                    .containsPattern("<textarea[^>]*id=\"reason\"[^>]*aria-required=\"true\"");
         }
 
         // --- 行 3〜5・22: 判断の画面の行き先（判断できる受信記録の定義は GET と POST で 1 つ） ---

@@ -42,9 +42,10 @@
     <form th:action="${actionUrl}" th:object="${rejectionForm}" method="post" novalidate>
         <div>
             <label for="reason">却下の理由</label>
-            <p id="reason-hint">必須、1000 文字まで</p>
+            <!--/* 上限は判断の理由の上限（controller が渡す）から示し、欄の誤りの文と食い違わせない */-->
+            <p id="reason-hint" th:text="|必須、${reasonLimit} 文字まで|">必須、1000 文字まで</p>
             <p id="reason-error" class="text-danger" th:if="${#fields.hasErrors('reason')}" th:errors="*{reason}"></p>
-            <textarea class="form-control" id="reason" name="reason" rows="4" th:text="*{reason}"
+            <textarea class="form-control" id="reason" name="reason" rows="4" aria-required="true" th:text="*{reason}"
                       th:attr="aria-invalid=${#fields.hasErrors('reason')} ? 'true' : null,aria-describedby=${#fields.hasErrors('reason')} ? 'reason-hint reason-error' : 'reason-hint'"></textarea>
         </div>
         <p id="irrevocable">却下すると取り消せません。誤って却下したときは、提供元に同じ原本を送り直してもらってください。</p>
