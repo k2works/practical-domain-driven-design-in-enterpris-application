@@ -2,7 +2,7 @@
 type: Plan
 title: "Bolt 39c 計画 - S-16 外部データの取込の画面（選択・取込・分類別の件数・認可とナビゲーション）"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-04T08:38:49Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-04T08:47:28Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-11-04T07:37:51Z }
 ---
@@ -338,8 +338,8 @@ IngestionSummaryQueryService ..> ReceivedRecordRepository
 - [x] **1. 設計の文書**（2026-11-04、推奨のとおり承認として記録した（Recommend 承認の指示による。human:kakimomokuri）。ナビの行（ui_design :237）にも外部データの取込はデータ責任者にだけ出すと足した。照会の名前はステップ 3 で確定し、用語集の「名前はステップ 3 で決める」を外す）: 上の「設計文書に直す箇所」（開始準備の決定 (1)〜(9) を反映する）（完了の判定: 文書の差分。**承認ゲート**）
 - [x] **2. テストの Red（外側から）**（2026-11-04、推奨のとおり承認として記録した（Recommend 承認の指示による。human:kakimomokuri）。先に直したテストは AuthenticationSecurityIntegrationTest のホームのない役割の例（監査担当者に）と UI の補助（T-217）。Red は 35 件が期待した理由で落ちた（コントローラー 21・セキュリティ 6・契約 7・ホーム 1・ArchUnit 1・UI 4））: 行 16 の feature の Red（空の controller とテンプレートで、期待した理由で落ちることを確かめる）、続いて行 1〜4・6・7・13・13b・14・15 の controller・セキュリティ・照会の統合・契約のテスト。ナビとホームと開発データで落ちる既存のテストを一覧にする（T-217）。分かっているもの: `AuthenticationSecurityIntegrationTest` の「画面のまだない役割の利用者はログインできてもホームは権限なしになり行き先が循環しない」（:635-644。データ責任者をホームのない役割の例に使う。例を監査担当者かカスタマーサポートに替える）、`DevTotpCredentialsDevProfileTest` :43 の `hasSize(8)`（`accounts[8]` を足すので 9 に。直すのはステップ 4）（完了の判定: 期待した理由で落ちる記録。**承認ゲート**（認可・画面の振る舞いの契約））
 - [x] **3. 実装の Green**（2026-11-04、推奨のとおり承認として記録した（Recommend 承認の指示による）。uiTest の S-16 の 4 シナリオと axe は違反 0。SpotBugs は EI_EXPOSE_REP2 を前例どおり除外に足し、NP はコードで直した。SonarQube は 3 件直して PASS。S-16 の feature だけを流すには `JAVA_TOOL_OPTIONS=-Dcucumber.features=...` を使う）: `allowedDependencies` と許可リストの規則（【前の決定の変更】の注）、`SecurityConfiguration` の行、`HomeController` のホーム、ナビの項目、ポートの照会と MyBatis・メモリの実装、照会のサービス 2 つ（取り込める情報源・取込の要約）と `ExternalDataConfiguration` の `@Bean`（ExternalDataConfiguration.java :23-26 の前例。サービスは部品探索の外）、controller とフォーム、テンプレート 2 つ、文言（完了の判定: 緑、`spotbugsMain`（T-232）、`checkstyleMain`（T-237）、`sonar-local:check`（T-234）。**承認ゲート**（認可・画面・構造・新しいファイル））
-- [ ] **4. 開発データ**: データ責任者の TOTP の資格の dev だけのマイグレーション（新しいファイル）、`accounts[8]`、行 17（完了の判定: 緑、dev プロファイルの起動（`DevSampleDataSmokeTest`）。**承認ゲート**（データベース: 開発データ））
-- [ ] **5. マニュアルとキャプチャ**: 12 章（新しいファイル）、`00-はじめに.md`・`index.md`・`mkdocs.yml`・`02-ログインと共通の画面.md`・用語集、`manualScreenshots`（行 20）。章の文言と画面の文言を突き合わせる（T-197）（完了の判定: キャプチャの差分と突き合わせの記録。**承認ゲート**（新しいファイル））
+- [x] **4. 開発データ**（2026-11-04、推奨のとおり承認として記録した（Recommend 承認の指示による。human:kakimomokuri）。Red は DevTotpCredentialsDevProfileTest の件数（9 のはずが 8）。dev だけのマイグレーション V20261104160900 と accounts[8]）: データ責任者の TOTP の資格の dev だけのマイグレーション（新しいファイル）、`accounts[8]`、行 17（完了の判定: 緑、dev プロファイルの起動（`DevSampleDataSmokeTest`）。**承認ゲート**（データベース: 開発データ））
+- [x] **5. マニュアルとキャプチャ**（2026-11-04、推奨のとおり承認として記録した（Recommend 承認の指示による）。12 章を新しく作り、00 章・02 章・用語集・索引・mkdocs を合わせた。キャプチャは 3 枚（選ぶ・拒否・結果）を生成 spec で撮り、既存のキャプチャも撮り直された。キャプチャの情報源は「サンプル海運（架空）」（T-230 の UUID の規則の例外））: 12 章（新しいファイル）、`00-はじめに.md`・`index.md`・`mkdocs.yml`・`02-ログインと共通の画面.md`・用語集、`manualScreenshots`（行 20）。章の文言と画面の文言を突き合わせる（T-197）（完了の判定: キャプチャの差分と突き合わせの記録。**承認ゲート**（新しいファイル））
 - [ ] **6. 品質ゲートと開発レビュー**: 変異、`check`・`uiTest`、その後に SonarQube、開発レビューとその直し。push の前に `check`（T-225）
 - [ ] **7. 終了報告**: push して CI とデモ環境の配備を確かめ（デモ環境でデータ責任者でログインして S-16 を開く）、`demoVideo` で `@demo-bolt-39c/ingest` を撮る。release_plan（39c の行の計画と終了報告のリンク）・開発の索引・mkdocs を直す
 

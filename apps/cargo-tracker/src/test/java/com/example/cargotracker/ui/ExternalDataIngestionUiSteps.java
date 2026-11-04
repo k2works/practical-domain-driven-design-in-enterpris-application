@@ -41,8 +41,8 @@ public class ExternalDataIngestionUiSteps {
     private final JdbcTemplate jdbc;
     private final String baseUrl;
     private final String suffix = UUID.randomUUID().toString();
-    /** 承認済みの航海の情報源の提供元（シナリオの UUID を含む）。 */
-    private final String provider = "UI 海運-" + suffix;
+    /** 承認済みの航海の情報源の提供元（既定はシナリオの UUID を含む。マニュアルのキャプチャでは名前を指定する）。 */
+    private String provider = "UI 海運-" + suffix;
 
     private UUID sourceId;
     /** 最後に選んだファイルの中身（同じファイルをもう一度選ぶため）。 */
@@ -76,6 +76,16 @@ public class ExternalDataIngestionUiSteps {
                         + " VALUES (?, ?, 'VOYAGE', 'APPROVED', 0)",
                 sourceId,
                 provider);
+    }
+
+    /**
+     * マニュアルのキャプチャ（{@code @manual}）に写る提供元の名前を指定して作る。名前は提供元と原本種別で一意（{@code uk_data_source}）
+     * なので、1 回の実行で 1 つのシナリオだけが使う名前にする。
+     */
+    @前提("承認済みの航海の情報源 {string} がある")
+    public void 名前を指定した承認済みの航海の情報源がある(String providerName) {
+        provider = providerName;
+        承認済みの航海の情報源がある();
     }
 
     /** データ責任者でログインし直してから、ホーム（{@code /}）を開く。ホームはデータ責任者を S-16 の選ぶ画面へ移す。 */
