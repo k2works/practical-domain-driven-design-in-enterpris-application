@@ -14,6 +14,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.example.cargotracker.externaldata.application.internal.commandservices.IngestionService;
 import com.example.cargotracker.externaldata.domain.events.ExternalRecordQuarantined;
 import com.example.cargotracker.externaldata.domain.events.VoyageAdoptedValueUpdated;
+import com.example.cargotracker.externaldata.domain.model.aggregates.ExternalPayloadStorage;
+import com.example.cargotracker.externaldata.domain.model.rules.IngestionFileLimit;
 import com.example.cargotracker.identity.IdentityIntegrationTest;
 import com.example.cargotracker.identity.IdentityLogins;
 import com.example.cargotracker.identity.application.internal.eventhandlers.ExternalRecordAuditEventHandler;
@@ -44,6 +46,7 @@ import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -55,7 +58,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
 
 /**
- * S-16 外部データの取込のセキュリティの統合テスト（Bolt 39c の行 1・2・6・7・13・13b・15。US-14 AC1）。本物のフィルターの連なりと
+ * S-16 外部データの取込のセキュリティの統合テスト（Bolt 39c の行 1・2・6・7・13・13b・15、Bolt 39c2 の行 1・2・5 は入れ子のクラス。US-14 AC1）。本物のフィルターの連なりと
  * PostgreSQL の上で、{@code /staff/external-data/**} はデータ責任者だけが開けること（ほかの 7 つの役割は A-04、未ログインは A-01）、
  * CSRF のトークンのない multipart の送信で取り込まないこと（取込のサービスの spy の呼び出しの記録。T-236）、画面の POST（トランザクションの
  * 外）から DB の件数と DE-12・DE-14 の監査の発行記録の完了まで（T-184）、ナビの項目がデータ責任者を持つ利用者にだけ出ることを確かめる。
@@ -109,6 +112,10 @@ class ExternalDataIngestionSecurityIntegrationTest {
 
     @MockitoSpyBean
     IngestionService ingestionService;
+
+    /** 拒否で原本を保存しないことを呼び出しの記録で確かめる（Bolt 39c2 の行 1・2・5。T-236）。 */
+    @MockitoSpyBean
+    ExternalPayloadStorage payloadStorage;
 
     private Company operator;
     private Company shipper;
@@ -282,6 +289,73 @@ class ExternalDataIngestionSecurityIntegrationTest {
                 .containsPattern(NAV_LINK)
                 .contains(">見積依頼</a>");
         assertThat(body(session, NEW_URL)).containsPattern(NAV_LINK).contains(">見積依頼</a>");
+    }
+
+    /**
+     * Bolt 39c2 の行 1・2・5（取り込めない送信は本物の取込のサービスで拒まれ、取込も原本も残らない）。起きないことは取込のサービスの結果の
+     * 画面と、原本の保存の spy の呼び出しの記録で確かめる（T-236）。39c の同じ番号の行と名前が衝突しないよう入れ子にする。
+     */
+    @Nested
+    class Bolt39c2_取り込めない送信 {
+
+        private static final String FILE_TOO_LARGE =
+                "取込ファイル: ファイルが大きすぎます（1 ファイルにつきデータ行 10,000 行・40 MB まで）。ファイルを分けて取り込んでください。";
+        private static final String NOT_APPROVED = "情報源: 選んだ情報源は承認済みではないため取り込めません。画面を開き直して、承認済みの情報源を選んでください。";
+
+        @Test
+        void 行1_物理データ行10001行のファイルは上限を超える文言で拒まれ取込も原本も残らない() throws Exception {
+            Cookie session = login(user(Set.of(Role.DATA_STEWARD)));
+            String[] rows = new String[IngestionFileLimit.MAX_DATA_LINES + 1];
+            for (int i = 0; i < rows.length; i++) {
+                rows[i] = row("V-%05d".formatted(i), PORT_CALLS);
+            }
+
+            String page = refusedPage(session, file(rows));
+
+            assertThat(page).contains(FILE_TOO_LARGE);
+            verify(payloadStorage, never()).store(any(), any());
+            assertThat(ingestionsOfSource()).isZero();
+        }
+
+        @Test
+        void 行2_41943041バイトのファイルは上限を超える文言で拒まれ取込も原本も残らない() throws Exception {
+            // 大きさの判定は行の形式より前の拒否なので、2 行目は長い値の 1 行で上限を 1 バイト超える
+            Cookie session = login(user(Set.of(Role.DATA_STEWARD)));
+            byte[] head = file(row("V-1", PORT_CALLS));
+            byte[] content = new byte[IngestionFileLimit.MAX_BYTES + 1];
+            java.util.Arrays.fill(content, (byte) 'x');
+            System.arraycopy(head, 0, content, 0, head.length);
+
+            String page = refusedPage(session, content);
+
+            assertThat(page).contains(FILE_TOO_LARGE);
+            verify(payloadStorage, never()).store(any(), any());
+            assertThat(ingestionsOfSource()).isZero();
+        }
+
+        @Test
+        void 行5_選ぶ画面を開いた後に停止された情報源の送信は承認済みでない文言で拒まれ取込も原本も残らない() throws Exception {
+            Cookie session = login(user(Set.of(Role.DATA_STEWARD)));
+            assertThat(body(session, NEW_URL)).contains(">" + provider + "（航海）</label>");
+            jdbc.update("UPDATE external_data.data_source SET approval_status = 'SUSPENDED' WHERE id = ?", sourceId);
+
+            String page = refusedPage(session, file(row("V-1", PORT_CALLS)));
+
+            assertThat(page).contains(NOT_APPROVED).doesNotContain(">" + provider + "（航海）</label>");
+            verify(payloadStorage, never()).store(any(), any());
+            assertThat(ingestionsOfSource()).isZero();
+        }
+
+        /** 取込の送信が選ぶ画面（200）で拒まれ、取込のサービスを 1 回呼んだことを確かめて、画面を返す。 */
+        private String refusedPage(Cookie session, byte[] content) throws Exception {
+            String page = postIngest(session, content)
+                    .andExpect(status().isOk())
+                    .andReturn()
+                    .getResponse()
+                    .getContentAsString(StandardCharsets.UTF_8);
+            verify(ingestionService).ingest(any(), any());
+            return page;
+        }
     }
 
     // --- helpers ---

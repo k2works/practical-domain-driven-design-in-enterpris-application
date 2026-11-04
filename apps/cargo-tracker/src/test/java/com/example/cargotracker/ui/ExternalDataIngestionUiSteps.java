@@ -2,6 +2,7 @@ package com.example.cargotracker.ui;
 
 import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
 
+import com.example.cargotracker.externaldata.domain.model.rules.IngestionFileLimit;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
@@ -20,7 +21,7 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 /**
- * データ責任者の S-16 外部データの取込（選ぶ画面と結果の画面。US-14 AC1。Bolt 39c）の画面の層のステップ定義。承認済みの情報源はシナリオごとに
+ * データ責任者の S-16 外部データの取込（選ぶ画面と結果の画面。US-14 AC1。Bolt 39c、上限を超えるファイルの拒否は Bolt 39c2）の画面の層のステップ定義。承認済みの情報源はシナリオごとに
  * 提供元の名前にシナリオの UUID を含めて作り、選択肢を名前で選ぶ（共有の PostgreSQL のほかの情報源の数に左右されない。T-230）。ファイルは
  * 寄港 2 つ・時刻の順のドメインの規則に合う航海の行で作る（T-230）。ファイルの選択はブラウザのファイルの選択の窓を開かずに入れる。
  */
@@ -147,6 +148,35 @@ public class ExternalDataIngestionUiSteps {
      */
     private String voyageLine(String voyageBase, String acquiredAt, String portCalls) {
         return voyageBase + "-" + suffix.substring(0, 8) + ",1," + acquiredAt + "," + portCalls;
+    }
+
+    /** Bolt 39c2 の行 22。物理データ行が上限（{@link IngestionFileLimit#MAX_DATA_LINES}）を 1 行超える航海のファイル。 */
+    @かつ("キー操作だけで承認済みの航海の情報源を選び、データ行 10,001 行の航海のファイルを選んで取り込む")
+    public void 上限を超えるファイルを取り込む() {
+        chooseSource();
+        String acquiredAt = acquiredAt();
+        String[] lines = new String[IngestionFileLimit.MAX_DATA_LINES + 1];
+        for (int i = 0; i < lines.length; i++) {
+            lines[i] = voyageLine("V%05d".formatted(i), acquiredAt, PORT_CALLS);
+        }
+        chooseFile(voyageFile(lines));
+        submit();
+    }
+
+    @ならば("取込のエラー要約のリンクは取込ファイルの欄を指し、選んだファイルの選び直しを求める")
+    public void エラー要約のリンクは取込ファイルの欄を指す() {
+        Locator summary = errorSummary();
+        assertThat(summary.getByRole(AriaRole.LINK)).hasAttribute("href", "#file");
+        assertThat(summary).containsText("選んだファイルは残っていません。もう一度選んでください。");
+        assertThat(page().locator("#file-error"))
+                .hasText("ファイルが大きすぎます（1 ファイルにつきデータ行 10,000 行・40 MB まで）。ファイルを分けて取り込んでください。");
+    }
+
+    @ならば("情報源の取込はない")
+    public void 情報源の取込はない() {
+        Integer ingestions = jdbc.queryForObject(
+                "SELECT COUNT(*) FROM external_data.ingestion WHERE data_source_id = ?", Integer.class, sourceId);
+        Assertions.assertThat(ingestions).isZero();
     }
 
     @もし("キー操作だけで承認済みの航海の情報源を選び、同じ外部 ID・外部版で内容の違う 2 行のファイルを選んで取り込む")

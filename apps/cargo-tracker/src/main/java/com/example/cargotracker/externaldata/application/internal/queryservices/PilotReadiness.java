@@ -9,8 +9,8 @@ import java.util.Optional;
  */
 public record PilotReadiness(int approvedCount) {
 
-    /** 開始できない理由の文言（ドメインモデルの開始判定の照会）。 */
-    static final String NO_APPROVED_SOURCE = "承認済みの情報源がありません。情報源を選定し、承認してください";
+    /** 開始できない理由の文言（ドメインモデルの開始判定の照会）。S-16 の 0 件の画面の文言もここから作る（Bolt 39c2 の開始準備の決定 (5)）。 */
+    public static final String NO_APPROVED_SOURCE = "承認済みの情報源がありません。情報源を選定し、承認してください";
 
     public PilotReadiness {
         if (approvedCount < 0) {

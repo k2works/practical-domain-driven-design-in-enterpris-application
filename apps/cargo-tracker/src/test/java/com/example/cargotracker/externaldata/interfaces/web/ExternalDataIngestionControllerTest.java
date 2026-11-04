@@ -30,13 +30,17 @@ import com.example.cargotracker.shared.domain.AuthenticatedActor;
 import com.example.cargotracker.shared.domain.Role;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.regex.Pattern;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -47,7 +51,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
 
 /**
- * S-16 外部データの取込（データ責任者。US-14 AC1・AC2。Bolt 39c の行 3〜6・14）。取込のサービスと照会は mock にし、画面の振る舞い
+ * S-16 外部データの取込（データ責任者。US-14 AC1・AC2。Bolt 39c の行 3〜6・14、Bolt 39c2 の行 1・5〜8 は入れ子のクラス）。取込のサービスと照会は mock にし、画面の振る舞い
  * （選ぶ画面、画面で見る誤り、PRG と知らせ、結果の画面、404）だけを見る。認証・認可・CSRF はセキュリティの統合テストで確かめる。
  * 「起きないこと」（サービスを呼ばない）は呼び出しの記録で確かめる（T-236）。
  */
@@ -219,58 +223,247 @@ class ExternalDataIngestionControllerTest {
                 .andExpect(content().string(containsPattern("<fieldset(?![^>]*aria-invalid)[^>]*>")));
     }
 
-    // 拒否（39c は共通の文言。理由ごとの文言は 39c2）
+    // 拒否（39c はエラー要約を示すこと。理由ごとの文言は下の Bolt39c2_取り込めない送信。Bolt 39c2 ステップ 2 で共通の文言の確かめを外した）
 
     @Test
-    void 行5_承認されていない情報源の送信は共通の文言のエラー要約を示す() throws Exception {
+    void 行5_承認されていない情報源の送信はエラー要約を示す() throws Exception {
         given(ingestionService.ingest(any(), any())).willReturn(new IngestionOutcome.DataSourceNotApproved());
 
         mockMvc.perform(ingest(VOYAGE_SOURCE, "voyage.csv", VOYAGE_CSV))
                 .andExpect(status().isOk())
-                .andExpect(content().string(containsString("id=\"error-summary\"")))
-                .andExpect(content().string(containsString(COMMON_REFUSAL)));
+                .andExpect(content().string(containsString("id=\"error-summary\"")));
     }
 
     @Test
-    void 行5_上限を超えるファイルは39cでは共通の文言のエラー要約を示す() throws Exception {
+    void 行5_上限を超えるファイルはエラー要約を示す() throws Exception {
         given(ingestionService.ingest(any(), any())).willReturn(new IngestionOutcome.FileTooLarge());
 
         mockMvc.perform(ingest(VOYAGE_SOURCE, "voyage.csv", VOYAGE_CSV))
                 .andExpect(status().isOk())
-                .andExpect(content().string(containsString(COMMON_REFUSAL)));
+                .andExpect(content().string(containsString("id=\"error-summary\"")));
     }
 
     @Test
-    void 行5_サービスがない情報源を返すと共通の文言のエラー要約を示す() throws Exception {
+    void 行5_サービスがない情報源を返すとエラー要約を示す() throws Exception {
         given(ingestionService.ingest(any(), any())).willReturn(new IngestionOutcome.DataSourceNotFound());
 
         mockMvc.perform(ingest(VOYAGE_SOURCE, "voyage.csv", VOYAGE_CSV))
                 .andExpect(status().isOk())
-                .andExpect(content().string(containsString(COMMON_REFUSAL)));
+                .andExpect(content().string(containsString("id=\"error-summary\"")));
     }
 
     @Test
-    void 行5_ない情報源の送信は原本種別を引けないので共通の文言を示しサービスを呼ばない() throws Exception {
+    void 行5_ない情報源の送信は原本種別を引けないのでエラー要約を示しサービスを呼ばない() throws Exception {
         UUID unknown = UUID.randomUUID();
         given(dataSources.recordTypeOf(unknown)).willReturn(Optional.empty());
 
         mockMvc.perform(ingest(unknown, "voyage.csv", VOYAGE_CSV))
                 .andExpect(status().isOk())
-                .andExpect(content().string(containsString(COMMON_REFUSAL)));
+                .andExpect(content().string(containsString("id=\"error-summary\"")));
 
         then(ingestionService).should(never()).ingest(any(), any());
     }
 
     @Test
-    void 行5_形の誤った情報源IDの送信は共通の文言を示しサービスを呼ばない() throws Exception {
-        mockMvc.perform(multipart(INGEST_URL)
-                        .file(new MockMultipartFile(
-                                "file", "voyage.csv", "text/csv", VOYAGE_CSV.getBytes(StandardCharsets.UTF_8)))
-                        .param("dataSourceId", "not-a-uuid"))
+    void 行5_形の誤った情報源IDの送信はエラー要約を示しサービスを呼ばない() throws Exception {
+        mockMvc.perform(malformedSource())
                 .andExpect(status().isOk())
-                .andExpect(content().string(containsString(COMMON_REFUSAL)));
+                .andExpect(content().string(containsString("id=\"error-summary\"")));
 
         then(ingestionService).should(never()).ingest(any(), any());
+    }
+
+    private static MockMultipartHttpServletRequestBuilder malformedSource() {
+        return (MockMultipartHttpServletRequestBuilder) multipart(INGEST_URL)
+                .file(new MockMultipartFile(
+                        "file", "voyage.csv", "text/csv", VOYAGE_CSV.getBytes(StandardCharsets.UTF_8)))
+                .param("dataSourceId", "not-a-uuid");
+    }
+
+    /**
+     * Bolt 39c2 の行 1・5〜8（取り込めない送信を理由と次の行動で示す。開始準備の決定 (2)・(5)）。39c の同じ番号の行と名前が衝突しないよう
+     * 入れ子にする（前例 IngestionServiceTest の入れ子のクラス）。
+     */
+    @Nested
+    class Bolt39c2_取り込めない送信 {
+
+        private static final String FILE_TOO_LARGE = "ファイルが大きすぎます（1 ファイルにつきデータ行 10,000 行・40 MB まで）。ファイルを分けて取り込んでください。";
+        private static final String NOT_APPROVED = "選んだ情報源は承認済みではないため取り込めません。画面を開き直して、承認済みの情報源を選んでください。";
+        private static final String NOT_FOUND = "選んだ情報源が見つかりません。画面を開き直して、情報源を選び直してください。";
+        private static final String RESELECT_FILE = "選んだファイルは残っていません。もう一度選んでください。";
+        private static final String VOYAGE_CHECKED = "value=\"" + VOYAGE_SOURCE + "\"[^>]*checked=\"checked\"";
+
+        @Test
+        void 行1_上限を超えるファイルは取込ファイルの欄の誤りとしてエラー要約と欄の下に理由と次の行動を示し選んだ情報源を戻す() throws Exception {
+            given(ingestionService.ingest(any(), any())).willReturn(new IngestionOutcome.FileTooLarge());
+
+            mockMvc.perform(ingest(VOYAGE_SOURCE, "voyage.csv", VOYAGE_CSV))
+                    .andExpect(status().isOk())
+                    .andExpect(content().string(containsString("href=\"#file\">取込ファイル: " + FILE_TOO_LARGE + "</a>")))
+                    .andExpect(content()
+                            .string(containsString(
+                                    "<p id=\"file-error\" class=\"text-danger\">" + FILE_TOO_LARGE + "</p>")))
+                    .andExpect(content().string(containsString(RESELECT_FILE)))
+                    .andExpect(content().string(containsPattern(VOYAGE_CHECKED)))
+                    .andExpect(content().string(not(containsString(COMMON_REFUSAL))));
+        }
+
+        @Test
+        void 行5_承認されていない情報源は情報源の欄の誤りとして示し選んだ情報源を戻さない() throws Exception {
+            given(ingestionService.ingest(any(), any())).willReturn(new IngestionOutcome.DataSourceNotApproved());
+
+            mockMvc.perform(ingest(VOYAGE_SOURCE, "voyage.csv", VOYAGE_CSV))
+                    .andExpect(status().isOk())
+                    .andExpect(content().string(containsString("href=\"#dataSourceId\">情報源: " + NOT_APPROVED + "</a>")))
+                    .andExpect(content()
+                            .string(containsString(
+                                    "<p id=\"dataSourceId-error\" class=\"text-danger\">" + NOT_APPROVED + "</p>")))
+                    .andExpect(content().string(containsString(RESELECT_FILE)))
+                    .andExpect(content().string(not(containsPattern(VOYAGE_CHECKED))))
+                    .andExpect(content().string(not(containsString(COMMON_REFUSAL))));
+        }
+
+        @Test
+        void 行5_停止で承認済みの情報源が0件になるとフォームの外に先にエラー要約その下に0件の全文を示しファイルの欄を出さない() throws Exception {
+            // 画面を開いた後に停止され、開き直した選択肢が 0 件（設計の決定「停止で承認済みが 0 件になったとき」。T-182）
+            given(dataSources.ingestibleSources()).willReturn(List.of());
+            given(ingestionService.ingest(any(), any())).willReturn(new IngestionOutcome.DataSourceNotApproved());
+
+            String page = mockMvc.perform(ingest(VOYAGE_SOURCE, "voyage.csv", VOYAGE_CSV))
+                    .andExpect(status().isOk())
+                    .andReturn()
+                    .getResponse()
+                    .getContentAsString(StandardCharsets.UTF_8);
+
+            assertThat(page)
+                    .contains("href=\"#no-source\">情報源: " + NOT_APPROVED + "</a>")
+                    .contains("<p id=\"no-source\">" + NO_SOURCE + "</p>")
+                    .doesNotContain("type=\"file\"")
+                    .doesNotContain(">取り込む</button>")
+                    .doesNotContain("<legend>情報源</legend>");
+            assertThat(page.indexOf("id=\"error-summary\""))
+                    .isPositive()
+                    .isLessThan(page.indexOf("<p id=\"no-source\">"));
+        }
+
+        @Test
+        void 行6_ない情報源の送信は見つからない文言を情報源の欄の誤りとして示しサービスを呼ばない() throws Exception {
+            UUID unknown = UUID.randomUUID();
+            given(dataSources.recordTypeOf(unknown)).willReturn(Optional.empty());
+
+            mockMvc.perform(ingest(unknown, "voyage.csv", VOYAGE_CSV))
+                    .andExpect(status().isOk())
+                    .andExpect(content().string(containsString("href=\"#dataSourceId\">情報源: " + NOT_FOUND + "</a>")))
+                    .andExpect(content().string(not(containsString(COMMON_REFUSAL))));
+
+            then(ingestionService).should(never()).ingest(any(), any());
+        }
+
+        @Test
+        void 行6_形の誤った情報源IDの送信は見つからない文言を示しサービスを呼ばない() throws Exception {
+            mockMvc.perform(malformedSource())
+                    .andExpect(status().isOk())
+                    .andExpect(content().string(containsString("href=\"#dataSourceId\">情報源: " + NOT_FOUND + "</a>")));
+
+            then(ingestionService).should(never()).ingest(any(), any());
+        }
+
+        @Test
+        void 行6_サービスがない情報源を返すと見つからない文言を示す() throws Exception {
+            given(ingestionService.ingest(any(), any())).willReturn(new IngestionOutcome.DataSourceNotFound());
+
+            mockMvc.perform(ingest(VOYAGE_SOURCE, "voyage.csv", VOYAGE_CSV))
+                    .andExpect(status().isOk())
+                    .andExpect(content().string(containsString("href=\"#dataSourceId\">情報源: " + NOT_FOUND + "</a>")));
+        }
+
+        @Test
+        void 行7_承認済みの情報源がないと画面の層の定数の全文を示しファイルの欄と取り込むボタンを出さない() throws Exception {
+            // 照会を mock して 0 件にする（共有の PostgreSQL では作れない。T-243）。全文は 39c の文言と 1 字も違えない
+            given(dataSources.ingestibleSources()).willReturn(List.of());
+
+            mockMvc.perform(get(NEW_URL))
+                    .andExpect(status().isOk())
+                    .andExpect(content()
+                            .string(containsString("<p id=\"no-source\">"
+                                    + ExternalDataIngestionController.NO_INGESTIBLE_SOURCE + "</p>")))
+                    .andExpect(content().string(not(containsString("type=\"file\""))))
+                    .andExpect(content().string(not(containsString(">取り込む</button>"))))
+                    .andExpect(content().string(not(containsString("id=\"error-summary\""))));
+            assertThat(ExternalDataIngestionController.NO_INGESTIBLE_SOURCE).isEqualTo(NO_SOURCE);
+        }
+
+        /** 行 8 の拒否の種類。取込のサービスの拒否（{@code NotPermitted} のほか）と、サービスを呼ぶ前の拒否。 */
+        enum Refusal {
+            SERVICE_NOT_FOUND(IngestionOutcome.DataSourceNotFound.class),
+            SERVICE_NOT_APPROVED(IngestionOutcome.DataSourceNotApproved.class),
+            SERVICE_FILE_TOO_LARGE(IngestionOutcome.FileTooLarge.class),
+            UNKNOWN_SOURCE(null),
+            MALFORMED_SOURCE(null);
+
+            private final Class<?> outcome;
+
+            Refusal(Class<?> outcome) {
+                this.outcome = outcome;
+            }
+        }
+
+        @ParameterizedTest(name = "{0}")
+        @EnumSource(Refusal.class)
+        void 行8_どの拒否も空でない欄の誤り1件だけになり大域の誤りを出さない(Refusal refusal) throws Exception {
+            UUID unknown = UUID.randomUUID();
+            given(dataSources.recordTypeOf(unknown)).willReturn(Optional.empty());
+            MockMultipartHttpServletRequestBuilder request =
+                    switch (refusal) {
+                        case SERVICE_NOT_FOUND -> serviceRefuses(new IngestionOutcome.DataSourceNotFound());
+                        case SERVICE_NOT_APPROVED -> serviceRefuses(new IngestionOutcome.DataSourceNotApproved());
+                        case SERVICE_FILE_TOO_LARGE -> serviceRefuses(new IngestionOutcome.FileTooLarge());
+                        case UNKNOWN_SOURCE -> ingest(unknown, "voyage.csv", VOYAGE_CSV);
+                        case MALFORMED_SOURCE -> malformedSource();
+                    };
+
+            String page = mockMvc.perform(request)
+                    .andExpect(status().isOk())
+                    .andReturn()
+                    .getResponse()
+                    .getContentAsString(StandardCharsets.UTF_8);
+
+            java.util.regex.Matcher summary = Pattern.compile("(?s)<div id=\"error-summary\".*?<ul>(.*?)</ul>")
+                    .matcher(page);
+            assertThat(summary.find()).as("エラー要約").isTrue();
+            List<String> items = Pattern.compile("(?s)<li>(.*?)</li>")
+                    .matcher(summary.group(1))
+                    .results()
+                    .map(match -> match.group(1).strip())
+                    .toList();
+            assertThat(items)
+                    .singleElement()
+                    .asString()
+                    .matches("<a href=\"#(dataSourceId|file)\">(情報源|取込ファイル): [^<]+</a>");
+            assertThat(page).doesNotContain(COMMON_REFUSAL);
+        }
+
+        @Test
+        void 行8_取込のサービスのNotPermittedのほかの拒否はすべて行8の拒否の種類にある() {
+            // sealed の型に拒否が増えたら、行 8 の拒否の種類に足す（T-240）
+            List<String> serviceRefusals = Arrays.stream(IngestionOutcome.class.getPermittedSubclasses())
+                    .filter(type ->
+                            type != IngestionOutcome.Ingested.class && type != IngestionOutcome.NotPermitted.class)
+                    .map(Class::getName)
+                    .toList();
+
+            assertThat(Arrays.stream(Refusal.values())
+                            .map(refusal -> refusal.outcome)
+                            .filter(java.util.Objects::nonNull)
+                            .map(Class::getName)
+                            .toList())
+                    .containsExactlyInAnyOrderElementsOf(serviceRefusals);
+        }
+
+        private MockMultipartHttpServletRequestBuilder serviceRefuses(IngestionOutcome outcome) {
+            given(ingestionService.ingest(any(), any())).willReturn(outcome);
+            return ingest(VOYAGE_SOURCE, "voyage.csv", VOYAGE_CSV);
+        }
     }
 
     @Test

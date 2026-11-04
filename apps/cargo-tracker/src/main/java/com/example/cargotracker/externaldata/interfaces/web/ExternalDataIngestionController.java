@@ -6,6 +6,8 @@ import com.example.cargotracker.externaldata.application.internal.commandservice
 import com.example.cargotracker.externaldata.application.internal.queryservices.IngestibleDataSourceQueryService;
 import com.example.cargotracker.externaldata.application.internal.queryservices.IngestionSummaryQueryService;
 import com.example.cargotracker.externaldata.application.internal.queryservices.IngestionSummaryView;
+import com.example.cargotracker.externaldata.application.internal.queryservices.PilotReadiness;
+import com.example.cargotracker.externaldata.domain.model.rules.IngestionFileLimit;
 import com.example.cargotracker.externaldata.interfaces.file.CsvFileKind;
 import com.example.cargotracker.externaldata.interfaces.file.IngestFileCommandAssembler;
 import com.example.cargotracker.platform.web.DateTimeDisplay;
@@ -13,6 +15,7 @@ import com.example.cargotracker.shared.domain.AuthenticatedActor;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.Arrays;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -35,8 +38,8 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
  * 大きさ・分類）を持たない。
  *
  * <p>取込ファイルの種別は情報源の原本種別から決める（種別を別に選ばせない。Bolt 39c 計画の開始準備の決定 (3)）。情報源とファイルを選んで
- * いない誤りはサービスを呼ばずに選ぶ画面で示す。拒否（ない情報源・承認されていない情報源・大きすぎるファイル）は 39c では共通の文言で示し、
- * 理由ごとの文言は 39c2 で作る。
+ * いない誤りはサービスを呼ばずに選ぶ画面で示す。拒否（ない情報源・承認されていない情報源・大きすぎるファイル）は理由と次の行動を欄の誤りで
+ * 示す（Bolt 39c2 の開始準備の決定 (2)）。上限の数は取込の規則（{@link IngestionFileLimit}）から作る（同 (3)）。
  */
 @Controller
 @RequestMapping("/staff/external-data/ingestions")
@@ -51,8 +54,24 @@ public class ExternalDataIngestionController {
     /** エラー要約に出す項目の名前。文言は項目の名前で始めない（共通部品「エラー要約」）。 */
     private static final Map<String, String> FIELD_LABELS = Map.of(DATA_SOURCE_ID, "情報源", FILE, "取込ファイル");
 
-    /** 拒否の共通の文言（理由ごとの文言は 39c2）。 */
-    static final String REFUSED = "取り込めませんでした。情報源とファイルを確かめてください。";
+    /** 承認済みの情報源がないときの全文（US-14 AC2。理由は開始判定の文言。Bolt 39c2 の開始準備の決定 (5)）。 */
+    static final String NO_INGESTIBLE_SOURCE =
+            "取り込める情報源がありません。" + PilotReadiness.NO_APPROVED_SOURCE + "。承認は運用の手順で行います。";
+
+    /** 上限（「1 ファイルにつきデータ行 10,000 行・40 MB まで」）。数は取込の規則から作る（Bolt 39c2 の開始準備の決定 (3)）。 */
+    private static final String LIMIT = "1 ファイルにつきデータ行 %s 行・%d MB まで"
+            .formatted(
+                    String.format(Locale.ROOT, "%,d", IngestionFileLimit.MAX_DATA_LINES),
+                    IngestionFileLimit.MAX_BYTES / (1024 * 1024));
+
+    /** 取込ファイルの欄の説明。 */
+    private static final String FILE_HINT = LIMIT + "。超えるときはファイルを分けて取り込んでください。";
+
+    /** 拒否の理由と次の行動（欄の誤り。Bolt 39c2 の開始準備の決定 (2)）。 */
+    private static final String FILE_TOO_LARGE = "ファイルが大きすぎます（" + LIMIT + "）。ファイルを分けて取り込んでください。";
+
+    private static final String SOURCE_NOT_APPROVED = "選んだ情報源は承認済みではないため取り込めません。画面を開き直して、承認済みの情報源を選んでください。";
+    private static final String SOURCE_NOT_FOUND = "選んだ情報源が見つかりません。画面を開き直して、情報源を選び直してください。";
 
     /** 原本種別（取込ファイルの種別）の表示名。 */
     private static final Map<CsvFileKind, String> KIND_LABELS =
@@ -102,19 +121,34 @@ public class ExternalDataIngestionController {
         Optional<CsvFileKind> kind =
                 sourceId.flatMap(dataSources::recordTypeOf).flatMap(ExternalDataIngestionController::kindOf);
         if (sourceId.isEmpty() || kind.isEmpty()) {
-            return refused(form, bindingResult, model);
+            return sourceRefused(form, bindingResult, "dataSourceId.notFound", SOURCE_NOT_FOUND, model);
         }
         IngestFileCommand command =
                 IngestFileCommandAssembler.assemble(sourceId.get(), kind.get(), bytesOf(form.getFile()));
-        return switch (ingestionService.ingest(actor, command)) {
+        return respond(ingestionService.ingest(actor, command), form, bindingResult, model, redirectAttributes);
+    }
+
+    /** 取込のサービスの結果を行き先に変える。拒否は理由と次の行動を欄の誤りで示す（Bolt 39c2 の開始準備の決定 (2)）。 */
+    private String respond(
+            IngestionOutcome outcome,
+            IngestionForm form,
+            BindingResult bindingResult,
+            Model model,
+            RedirectAttributes redirectAttributes) {
+        return switch (outcome) {
             case IngestionOutcome.Ingested ingested -> {
                 redirectAttributes.addFlashAttribute("result", "取り込みました。");
                 yield "redirect:/staff/external-data/ingestions/" + ingested.ingestionId();
             }
             case IngestionOutcome.NotPermitted _ -> throw new ResponseStatusException(HttpStatus.FORBIDDEN);
-            case IngestionOutcome.DataSourceNotFound _,
-                    IngestionOutcome.DataSourceNotApproved _,
-                    IngestionOutcome.FileTooLarge _ -> refused(form, bindingResult, model);
+            case IngestionOutcome.DataSourceNotFound _ ->
+                sourceRefused(form, bindingResult, "dataSourceId.notFound", SOURCE_NOT_FOUND, model);
+            case IngestionOutcome.DataSourceNotApproved _ ->
+                sourceRefused(form, bindingResult, "dataSourceId.notApproved", SOURCE_NOT_APPROVED, model);
+            case IngestionOutcome.FileTooLarge _ -> {
+                bindingResult.rejectValue(FILE, "file.tooLarge", FILE_TOO_LARGE);
+                yield rejected(form, model);
+            }
         };
     }
 
@@ -139,11 +173,19 @@ public class ExternalDataIngestionController {
                                 new Option(source.id().toString(), sourceLabel(source.provider(), source.recordType())))
                         .toList());
         model.addAttribute("fieldLabels", FIELD_LABELS);
+        model.addAttribute("noIngestibleSource", NO_INGESTIBLE_SOURCE);
+        model.addAttribute("fileHint", FILE_HINT);
         return NEW_VIEW;
     }
 
-    private String refused(IngestionForm form, BindingResult bindingResult, Model model) {
-        bindingResult.reject("ingestion.refused", REFUSED);
+    /**
+     * 情報源の拒否（ない・承認されていない）を情報源の欄の誤りにする。選んだ情報源は戻さない（開き直した選択肢にない値は戻せないので、
+     * 選び直させる。Bolt 39c2 の設計の決定「拒否の文言」）。
+     */
+    private String sourceRefused(
+            IngestionForm form, BindingResult bindingResult, String code, String message, Model model) {
+        form.setDataSourceId(null);
+        bindingResult.rejectValue(DATA_SOURCE_ID, code, message);
         return rejected(form, model);
     }
 
@@ -173,7 +215,7 @@ public class ExternalDataIngestionController {
     private static Optional<UUID> parse(String value) {
         try {
             return Optional.of(UUID.fromString(value));
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException _) {
             return Optional.empty();
         }
     }

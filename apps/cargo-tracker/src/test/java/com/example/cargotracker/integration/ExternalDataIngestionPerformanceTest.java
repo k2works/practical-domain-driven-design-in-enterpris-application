@@ -2,9 +2,14 @@ package com.example.cargotracker.integration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 
 import com.example.cargotracker.TestcontainersConfiguration;
 import com.example.cargotracker.externaldata.application.internal.commands.IngestFileCommand;
+import com.example.cargotracker.externaldata.application.internal.commandservices.IngestionOutcome;
 import com.example.cargotracker.externaldata.application.internal.commandservices.IngestionOutcome.Ingested;
 import com.example.cargotracker.externaldata.application.internal.commandservices.IngestionService;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.Classification;
@@ -12,11 +17,25 @@ import com.example.cargotracker.externaldata.domain.model.valueobjects.Milestone
 import com.example.cargotracker.externaldata.domain.model.valueobjects.VoyageValues;
 import com.example.cargotracker.externaldata.interfaces.file.CsvFileKind;
 import com.example.cargotracker.externaldata.interfaces.file.IngestFileCommandAssembler;
+import com.example.cargotracker.identity.IdentityLogins;
 import com.example.cargotracker.identity.application.internal.eventhandlers.ExternalRecordAuditEventHandler;
+import com.example.cargotracker.identity.domain.model.aggregates.Company;
+import com.example.cargotracker.identity.domain.model.aggregates.CompanyRepository;
+import com.example.cargotracker.identity.domain.model.aggregates.TotpCodeGenerator;
+import com.example.cargotracker.identity.domain.model.aggregates.TotpCredential;
+import com.example.cargotracker.identity.domain.model.aggregates.TotpCredentialRepository;
+import com.example.cargotracker.identity.domain.model.aggregates.User;
+import com.example.cargotracker.identity.domain.model.aggregates.UserRepository;
+import com.example.cargotracker.identity.domain.model.valueobjects.CompanyKind;
+import com.example.cargotracker.identity.domain.model.valueobjects.EmailAddress;
+import com.example.cargotracker.identity.domain.model.valueobjects.UserStatus;
+import com.example.cargotracker.identity.infrastructure.crypto.AesGcmSecretCipher;
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Role;
 import com.example.cargotracker.shared.domain.UserId;
+import com.example.cargotracker.shared.domain.UtcInstant;
+import jakarta.servlet.http.Cookie;
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Duration;
@@ -27,6 +46,8 @@ import java.time.temporal.ChronoUnit;
 import java.util.Set;
 import java.util.StringJoiner;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.IntFunction;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -34,11 +55,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
 
 /**
- * PERF-06（1 万件のファイルを 5 分以内に分類・採用）を PostgreSQL 18 で測る（Bolt 39b4 の行 1・2・10・11・12。non_functional の PERF-06）。
+ * PERF-06（1 万件のファイルを 5 分以内に分類・採用）を PostgreSQL 18 で測る（Bolt 39b4 の行 1・2・10・11・12、Bolt 39c2 の行 21 の画面の経路。non_functional の PERF-06）。
  * 時間は CSV の組み立て（{@link IngestFileCommandAssembler#assemble}）の前から取込のサービスが戻るまで（取込のコミットを含む）で、
  * 監査の listener の配信はコミットの後の非同期で PERF-06 の外なので、完了までを待って参考の値としてログに出す。測った値（全体・組み立て・
  * 取込、接続の最大とコミットの数、分類ごとの件数の照会の合計、ファイルの大きさ）はテストのログに出す。
@@ -53,6 +81,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 @Tag("performance")
 @Tag("NFR-PERF-06")
 @SpringBootTest
+@AutoConfigureMockMvc
 @Import(TestcontainersConfiguration.class)
 class ExternalDataIngestionPerformanceTest {
 
@@ -85,6 +114,8 @@ class ExternalDataIngestionPerformanceTest {
 
     private static final String AUDIT_LISTENER = ExternalRecordAuditEventHandler.class.getSimpleName();
 
+    private static final byte[] TOTP_SECRET = "12345678901234567890".getBytes(StandardCharsets.US_ASCII);
+
     private final AuthenticatedActor steward = new AuthenticatedActor(
             new UserId(UUID.randomUUID()),
             new CompanyId(UUID.randomUUID()),
@@ -92,8 +123,30 @@ class ExternalDataIngestionPerformanceTest {
             "データ責任者",
             "運営会社");
 
-    @Autowired
+    /** 行 21 で {@code ingest} の前後の時刻を取るため spy にする（ほかの行は本物をそのまま呼ぶ）。 */
+    @MockitoSpyBean
     IngestionService ingestionService;
+
+    @Autowired
+    MockMvc mvc;
+
+    @Autowired
+    CompanyRepository companies;
+
+    @Autowired
+    UserRepository users;
+
+    @Autowired
+    TotpCredentialRepository totpCredentials;
+
+    @Autowired
+    TotpCodeGenerator totpCodes;
+
+    @Autowired
+    AesGcmSecretCipher cipher;
+
+    @Autowired
+    PasswordEncoder passwordEncoder;
 
     @Autowired
     ConnectionUsageRecorder connectionUsage;
@@ -146,6 +199,91 @@ class ExternalDataIngestionPerformanceTest {
 
         assertThat((long) csv.length).isLessThanOrEqualTo(MAX_FILE_BYTES);
         measure("voyage(port-calls=60)", "VOYAGE", CsvFileKind.VOYAGE, csv);
+    }
+
+    /**
+     * 行 21（Bolt 39c2。T-242）: 画面の経路で上限いっぱい（データ行 10,000 行）のファイルを取り込む。MockMvc の multipart で画面の POST
+     * （本物のフィルターの連なりと、password と TOTP でログインしたデータ責任者の session と CSRF のトークン）から結果の画面への移動（302）
+     * までを測る。Tomcat の multipart の受け取りは MockMvc の外なので範囲の外。取込のサービスの spy で {@code ingest} の呼び出しの前後の
+     * 時刻を取り、POST 全体から「取込の前（フィルター・束縛・ファイルの読み出し・組み立て）」「取込（コミットまで）」「取込の後（PRG の応答）」
+     * に分ける（T-241）。
+     */
+    @Test
+    void 行21_画面のPOSTで寄港5の航海1万件のファイルを送ると結果の画面への移動まで5分以内で採用1万件になる() throws Exception {
+        byte[] csv = voyageCsv(5, acquiredAt());
+        UUID sourceId = insertApprovedSource(ExternalDataIngestionConnectionTest.newProvider(), "VOYAGE");
+        Cookie session = login(dataSteward());
+        AtomicLong ingestStarted = new AtomicLong();
+        AtomicLong ingestFinished = new AtomicLong();
+        AtomicReference<IngestionOutcome> outcome = new AtomicReference<>();
+        doAnswer(invocation -> {
+                    ingestStarted.set(System.nanoTime());
+                    try {
+                        IngestionOutcome value = (IngestionOutcome) invocation.callRealMethod();
+                        outcome.set(value);
+                        return value;
+                    } finally {
+                        ingestFinished.set(System.nanoTime());
+                    }
+                })
+                .when(ingestionService)
+                .ingest(any(), any());
+        Ingested result = null;
+        try {
+            MockMultipartHttpServletRequestBuilder request =
+                    (MockMultipartHttpServletRequestBuilder) multipart("/staff/external-data/ingestions")
+                            .file(new MockMultipartFile("file", "voyage.csv", "text/csv", csv))
+                            .param("dataSourceId", sourceId.toString())
+                            .cookie(session)
+                            .with(csrf());
+            long started = System.nanoTime();
+            MvcResult response = mvc.perform(request).andReturn();
+            long finished = System.nanoTime();
+            result = ExternalDataIngestionConnectionTest.ingested(outcome.get());
+            LOG.info(
+                    "PERF-06 web voyage(port-calls=5) rows={} file-bytes={} before-ingest={} ingest={} after-ingest={}"
+                            + " total={} limit={}",
+                    result.receivedCount(),
+                    csv.length,
+                    seconds(ingestStarted.get() - started),
+                    seconds(ingestFinished.get() - ingestStarted.get()),
+                    seconds(finished - ingestFinished.get()),
+                    seconds(finished - started),
+                    seconds(LIMIT.toNanos()));
+
+            assertThat(response.getResponse().getStatus()).isEqualTo(302);
+            assertThat(response.getResponse().getRedirectedUrl())
+                    .isEqualTo("/staff/external-data/ingestions/" + result.ingestionId());
+            assertThat(Duration.ofNanos(finished - started)).isLessThanOrEqualTo(LIMIT);
+            assertThat(result.receivedCount()).isEqualTo(ROWS);
+            assertThat(result.countOf(Classification.ADOPTED)).isEqualTo(ROWS);
+            assertThat(adoptedValueCount(result.ingestionId())).isEqualTo(ROWS);
+        } finally {
+            finish("web voyage(port-calls=5)", result, sourceId);
+        }
+    }
+
+    /** 画面の経路のデータ責任者（運営会社の利用者。TOTP を登録済み）。メールアドレスを返す。 */
+    private String dataSteward() {
+        Company operator = Company.of(new CompanyId(UUID.randomUUID()), "A 社", CompanyKind.OPERATOR, true);
+        companies.add(operator);
+        String email = "external-data-performance-" + UUID.randomUUID() + "@example.com";
+        UserId userId = new UserId(UUID.randomUUID());
+        users.add(User.of(
+                userId,
+                operator.id(),
+                EmailAddress.of(email),
+                "データ責任者",
+                passwordEncoder.encode(IdentityLogins.PASSWORD),
+                UserStatus.ACTIVE,
+                Set.of(Role.DATA_STEWARD)));
+        totpCredentials.add(TotpCredential.enroll(
+                userId, cipher.encrypt(TOTP_SECRET.clone(), userId), new UtcInstant(clock.instant())));
+        return email;
+    }
+
+    private Cookie login(String email) throws Exception {
+        return new IdentityLogins(mvc, jdbc, totpCredentials, totpCodes, clock).login(email);
     }
 
     /**
