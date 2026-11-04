@@ -2,6 +2,7 @@ package com.example.cargotracker.architecture;
 
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 
+import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
@@ -35,6 +36,21 @@ class PerformanceTestTagArchitectureTest {
             .resideInAPackage("..integration..")
             .andShould(havePerformanceAndNfrTags())
             .allowEmptyShould(false);
+
+    /** 逆向き。{@code performance} のタグを持つのに名前が違うクラスは、上の規則に選ばれず置き場所と NFR のタグを確かめられない。 */
+    @ArchTest
+    static final ArchRule performanceのタグを持つクラスは名前がPerformanceTestで終わる = classes()
+            .that(haveTag(PERFORMANCE))
+            .should()
+            .haveSimpleNameEndingWith("PerformanceTest")
+            .allowEmptyShould(false);
+
+    private static DescribedPredicate<JavaClass> haveTag(String tag) {
+        return DescribedPredicate.describe(
+                "have the tag " + tag,
+                item -> Arrays.stream(item.reflect().getAnnotationsByType(Tag.class))
+                        .anyMatch(annotation -> annotation.value().equals(tag)));
+    }
 
     private static ArchCondition<JavaClass> havePerformanceAndNfrTags() {
         return new ArchCondition<>("have the tags " + PERFORMANCE + " and " + NFR_PREFIX + "<ID>") {

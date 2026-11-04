@@ -148,14 +148,17 @@ class ExternalDataIngestionPerformanceTest {
         measure("voyage(port-calls=60)", "VOYAGE", CsvFileKind.VOYAGE, csv);
     }
 
-    /** 1 つのファイルを組み立てから取り込み、測った値をログに出して判定し、監査の配信の完了を待つ。 */
+    /**
+     * 1 つのファイルを組み立てから取り込み、測った値をログに出して判定し、監査の配信の完了を待つ。配信の完了待ちは判定が落ちても
+     * {@code finally} で（情報源を停止にする前に）行い、1 万件の非同期の配信を裏で走らせたまま次の計測に進まない。
+     */
     private void measure(String label, String recordType, CsvFileKind kind, byte[] csv) {
         UUID sourceId = insertApprovedSource(ExternalDataIngestionConnectionTest.newProvider(), recordType);
+        Ingested result = null;
         try {
             connectionUsage.start();
             long started = System.nanoTime();
             IngestFileCommand command;
-            Ingested result;
             long assembled;
             try {
                 command = IngestFileCommandAssembler.assemble(sourceId, kind, csv);
@@ -191,13 +194,22 @@ class ExternalDataIngestionPerformanceTest {
             assertThat(connectionUsage.peakConnections()).isEqualTo(2);
             assertThat(connectionUsage.commits()).isEqualTo(ROWS + 2);
             assertThat(countQueries).isLessThanOrEqualTo(COUNT_QUERIES_LIMIT);
+        } finally {
+            finish(label, result, sourceId);
+        }
+    }
 
-            long deliveryStarted = System.nanoTime();
-            awaitCompletedAuditPublications(result);
-            LOG.info(
-                    "PERF-06 {} audit delivery completed in {} (reference, outside PERF-06)",
-                    label,
-                    seconds(System.nanoTime() - deliveryStarted));
+    /** 取り込めていれば監査の配信の完了を待ち（参考の値としてログに出す）、待てても待てなくても情報源を停止にする。 */
+    private void finish(String label, Ingested result, UUID sourceId) {
+        try {
+            if (result != null) {
+                long deliveryStarted = System.nanoTime();
+                awaitCompletedAuditPublications(result);
+                LOG.info(
+                        "PERF-06 {} audit delivery completed in {} (reference, outside PERF-06)",
+                        label,
+                        seconds(System.nanoTime() - deliveryStarted));
+            }
         } finally {
             removeSource(sourceId);
         }

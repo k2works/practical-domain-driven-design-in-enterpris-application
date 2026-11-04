@@ -69,13 +69,19 @@ class H2ReceivedRecordNoteTest {
     void 行9_H2の注記の列は補助文字だけの1000コードポイントを受けて同じ値を返す() {
         UUID sourceId = insertApprovedSource("運送会社-" + UUID.randomUUID());
         try {
-            UUID receivedRecordId = ingestFileDefect(sourceId, "x");
+            UUID ingestedRecordId = ingestFileDefect(sourceId, "x");
+            UUID receivedRecordId = UUID.randomUUID();
             String note = SUPPLEMENTARY.repeat(1_000);
 
+            // 受信記録は追記専用なので書き換えず、取込が書いた行の列を写して注記だけを変えた行を足す（列の幅だけを確かめる）
             jdbc.update(
-                    "UPDATE external_data.received_record SET classification_note = ? WHERE id = ?",
+                    "INSERT INTO external_data.received_record (id, external_record_id, ingestion_id, payload_hash,"
+                            + " payload_object_key, acquired_at, classification, classification_note, classified_at)"
+                            + " SELECT ?, external_record_id, ingestion_id, payload_hash, payload_object_key, acquired_at,"
+                            + " classification, ?, classified_at FROM external_data.received_record WHERE id = ?",
+                    receivedRecordId,
                     note,
-                    receivedRecordId);
+                    ingestedRecordId);
 
             assertThat(noteOf(receivedRecordId)).isEqualTo(note);
         } finally {

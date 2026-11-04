@@ -3,6 +3,9 @@ package com.example.cargotracker.externaldata.application.internal.commandservic
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.tuple;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 
 import com.example.cargotracker.externaldata.application.internal.commands.IngestFileCommand;
 import com.example.cargotracker.externaldata.application.internal.commands.IngestFileCommand.IngestedRow;
@@ -1482,6 +1485,19 @@ class IngestionServiceTest {
 
             assertThat(outcome).isInstanceOf(IngestionOutcome.DataSourceNotApproved.class);
             assertNothingWritten();
+        }
+
+        @Test
+        void 行5_拒否する経路ではファイルの原本を複製しない() {
+            DataSource candidate = source("運送会社C-" + UUID.randomUUID(), "MILESTONE", ApprovalStatus.CANDIDATE);
+            IngestFileCommand notApproved = spy(sized(candidate, 100, 1));
+            IngestFileCommand tooLarge = spy(sized(milestoneSource, 41_943_041, 1));
+
+            service().ingest(steward, notApproved);
+            service().ingest(steward, tooLarge);
+
+            verify(notApproved, never()).filePayload();
+            verify(tooLarge, never()).filePayload();
         }
 
         @Test

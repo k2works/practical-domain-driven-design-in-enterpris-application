@@ -1,12 +1,12 @@
 package com.example.cargotracker.integration;
 
+import com.zaxxer.hikari.HikariDataSource;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.sql.Connection;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import javax.sql.DataSource;
 import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
 import org.springframework.aop.framework.ProxyFactory;
@@ -18,8 +18,12 @@ import org.springframework.beans.factory.config.BeanPostProcessor;
  * {@link Connection#commit()} の回数。監査の listener の非同期のスレッドなど、ほかのスレッドの接続は数えない。
  *
  * <p>{@code TestcontainersConfiguration} が読み込み、PostgreSQL の統合テストの Spring の文脈を分けない（Bolt 39b4 の設計の決定）。
- * 記録していないときは接続を包まずにそのまま返す。包みは {@code DataSource} の実装のクラスの子にし（{@code HikariDataSource} を型で受ける
- * テストを壊さない）、{@code unwrap} などほかの呼び出しは包む前の Bean に渡す。
+ * 記録していないときは接続を包まずにそのまま返す。包むのは接続のプールの {@link HikariDataSource} だけで（ほかの {@code DataSource} の
+ * Bean を作られても数えない）、包みはその実装のクラスの子にし（{@code HikariDataSource} を型で受けるテストを壊さない）、{@code unwrap}
+ * などほかの呼び出しは包む前の Bean に渡す。
+ *
+ * <p>記録するスレッドは同時に 1 本だけで、{@link #start()} が数を 0 に戻す。この部品を読む Spring の文脈は統合テストで共有されるので、
+ * 記録するテストを並列で流さない（並列で流すと、あとから {@code start()} したテストが先のテストの数を消し、記録するスレッドを奪う）。
  */
 public class ConnectionUsageRecorder implements BeanPostProcessor {
 
@@ -30,7 +34,7 @@ public class ConnectionUsageRecorder implements BeanPostProcessor {
 
     @Override
     public Object postProcessAfterInitialization(Object bean, String beanName) {
-        if (!(bean instanceof DataSource)) {
+        if (!(bean instanceof HikariDataSource)) {
             return bean;
         }
         ProxyFactory factory = new ProxyFactory(bean);

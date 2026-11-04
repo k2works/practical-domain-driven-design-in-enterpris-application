@@ -2,6 +2,7 @@
 
 ## 2026-11-04
 * **Update**: [bolt_39b4_plan](/development/cargo-tracker/bolt_39b4_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39b4_plan](/development/cargo-tracker/bolt_39b4_plan.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [007-postgresql-mybatis-flyway](/adr/cargo-tracker/007-postgresql-mybatis-flyway.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [bolt_39b4_plan](/development/cargo-tracker/bolt_39b4_plan.md) を更新（anthropic/claude-opus-5-5）

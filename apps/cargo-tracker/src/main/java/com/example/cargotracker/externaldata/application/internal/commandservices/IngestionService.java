@@ -118,11 +118,12 @@ public class IngestionService {
             return new IngestionOutcome.DataSourceNotFound();
         }
         DataSource source = found.get();
-        byte[] file = command.filePayload();
-        Optional<IngestionOutcome> refusal = refusalOf(source, command.receivedCount(), file);
+        Optional<IngestionOutcome> refusal = refusalOf(source, command);
         if (refusal.isPresent()) {
             return refusal.get();
         }
+        // 原本の複製（最大 40 MiB）は受け付けると決めた後に 1 回だけ取る
+        byte[] file = command.filePayload();
         Instant now = clock.instant();
         Ingestion ingestion = recordIngestion(operator, command, file, source, now);
         Run run = new Run(source, ingestion, operator, now);
@@ -143,12 +144,12 @@ public class IngestionService {
                 ingestion.id(), ingestion.receivedCount(), countByClassification(ingestion), results, unreadable);
     }
 
-    /** 情報源の後の拒否（承認の状態 → 取込のファイルの上限の順。Bolt 39b4）。受けるなら空。 */
-    private static Optional<IngestionOutcome> refusalOf(DataSource source, int receivedCount, byte[] file) {
+    /** 情報源の後の拒否（承認の状態 → 取込のファイルの上限の順。Bolt 39b4）。受けるなら空。大きさは原本を複製せず長さで判定する。 */
+    private static Optional<IngestionOutcome> refusalOf(DataSource source, IngestFileCommand command) {
         if (source.approvalStatus() != ApprovalStatus.APPROVED) {
             return Optional.of(new IngestionOutcome.DataSourceNotApproved());
         }
-        if (IngestionFileLimit.exceeds(receivedCount, file.length)) {
+        if (IngestionFileLimit.exceeds(command.receivedCount(), command.filePayloadLength())) {
             return Optional.of(new IngestionOutcome.FileTooLarge());
         }
         return Optional.empty();

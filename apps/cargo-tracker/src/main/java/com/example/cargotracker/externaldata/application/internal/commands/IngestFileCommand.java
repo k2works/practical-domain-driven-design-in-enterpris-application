@@ -51,6 +51,11 @@ public record IngestFileCommand(
         return filePayload.clone();
     }
 
+    /** ファイル全体の原本のバイト数（複製しない。大きさの上限を原本を受ける前に判定する。Bolt 39b4）。 */
+    public int filePayloadLength() {
+        return filePayload.length;
+    }
+
     @Override
     public boolean equals(Object other) {
         return other
