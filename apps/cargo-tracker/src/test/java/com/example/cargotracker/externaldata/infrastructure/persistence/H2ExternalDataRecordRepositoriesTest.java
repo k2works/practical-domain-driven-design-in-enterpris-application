@@ -11,6 +11,8 @@ import com.example.cargotracker.externaldata.domain.model.aggregates.ExternalRec
 import com.example.cargotracker.externaldata.domain.model.aggregates.Ingestion;
 import com.example.cargotracker.externaldata.domain.model.aggregates.IngestionRepository;
 import com.example.cargotracker.externaldata.domain.model.aggregates.ReceivedRecord;
+import com.example.cargotracker.externaldata.domain.model.aggregates.ReceivedRecordDecision;
+import com.example.cargotracker.externaldata.domain.model.aggregates.ReceivedRecordDecisionRepository;
 import com.example.cargotracker.externaldata.domain.model.aggregates.ReceivedRecordRepository;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.IdempotencyKey;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PayloadHash;
@@ -80,6 +82,24 @@ class H2ExternalDataRecordRepositoriesTest extends ExternalDataRecordRepositorie
     @Override
     protected Optional<ReceivedRecord> storedReceivedRecord(UUID id) {
         return MyBatisExternalDataRecordRepositoriesIntegrationTest.readReceivedRecord(jdbc, id);
+    }
+
+    @Autowired
+    ReceivedRecordDecisionRepository receivedRecordDecisions;
+
+    @Override
+    protected ReceivedRecordDecisionRepository receivedRecordDecisions() {
+        return receivedRecordDecisions;
+    }
+
+    @Override
+    protected Optional<ReceivedRecordDecision> storedDecision(UUID receivedRecordId) {
+        return MyBatisExternalDataRecordRepositoriesIntegrationTest.readDecision(jdbc, receivedRecordId);
+    }
+
+    @Override
+    protected UUID receivedRecordWithoutIngestion() {
+        return MyBatisExternalDataRecordRepositoriesIntegrationTest.insertReceivedRecordWithoutIngestion(jdbc);
     }
 
     @Test

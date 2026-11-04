@@ -11,12 +11,13 @@ import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.stereotype.Repository;
 
 /**
  * 受信記録のリポジトリの MyBatis 実装（Bolt 39b）。追記専用なので、追加と数えることと、取込の隔離を読むこと（Bolt 39c3）と、判断を待つ隔離を
- * 読み数えること（Bolt 39d）だけを持つ。
+ * 読み数えること（Bolt 39d）と、ID で引くこと（Bolt 39d2）だけを持つ。
  */
 @Repository
 public class MyBatisReceivedRecordRepository implements ReceivedRecordRepository {
@@ -68,6 +69,16 @@ public class MyBatisReceivedRecordRepository implements ReceivedRecordRepository
     @Override
     public int countUndecidedQuarantines(UUID ingestionIdOrNull) {
         return mapper.countUndecidedQuarantines(ingestionIdOrNull);
+    }
+
+    @Override
+    public Optional<ReceivedRecord> findById(UUID id) {
+        return mapper.selectById(id).map(MyBatisReceivedRecordRepository::toDomain);
+    }
+
+    @Override
+    public Optional<UndecidedQuarantine> undecidedQuarantine(UUID receivedRecordId) {
+        return mapper.undecidedQuarantine(receivedRecordId, null).map(MyBatisReceivedRecordRepository::toDomain);
     }
 
     private static UndecidedQuarantine toDomain(ReceivedRecordMapper.UndecidedQuarantineRow row) {

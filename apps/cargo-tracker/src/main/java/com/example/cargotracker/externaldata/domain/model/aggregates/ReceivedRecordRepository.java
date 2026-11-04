@@ -3,11 +3,12 @@ package com.example.cargotracker.externaldata.domain.model.aggregates;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.Classification;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.UndecidedQuarantine;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
  * 受信記録のリポジトリ。受信記録を追記し、取込と分類ごとに数え、取込の隔離を行の範囲の順に読むドメインのポート（Bolt 39b。読む照会は
- * Bolt 39c3。判断を待つ隔離の一覧の照会は Bolt 39d）。受信記録の表は追記専用なので、更新・削除の
+ * Bolt 39c3。判断を待つ隔離の一覧の照会は Bolt 39d。ID で引く照会は Bolt 39d2）。受信記録の表は追記専用なので、更新・削除の
  * メソッドを持たない（H2 は権限で守れないため）。呼び手は原本の保存に成功してから書く。
  */
 public interface ReceivedRecordRepository {
@@ -35,4 +36,16 @@ public interface ReceivedRecordRepository {
 
     /** 判断を待つ隔離の件数（{@link #undecidedQuarantines} と同じ絞り込み。Bolt 39d）。 */
     int countUndecidedQuarantines(UUID ingestionIdOrNull);
+
+    /**
+     * ID で受信記録を引く（判断できる受信記録の確かめ。Bolt 39d2）。取込で書いた受信記録だけを返し、取込のない（{@code ingestion_id} が NULL の）
+     * 受信記録とないときは空（受信記録の record は取込 ID を必ず持つ）。分類では絞らない。
+     */
+    Optional<ReceivedRecord> findById(UUID id);
+
+    /**
+     * ID で絞った判断を待つ隔離（S-17 の判断の画面の中身。{@link #undecidedQuarantines} と同じ定め。Bolt 39d2）。隔離でない・判断のある・取込の
+     * ない受信記録とないときは空。
+     */
+    Optional<UndecidedQuarantine> undecidedQuarantine(UUID receivedRecordId);
 }

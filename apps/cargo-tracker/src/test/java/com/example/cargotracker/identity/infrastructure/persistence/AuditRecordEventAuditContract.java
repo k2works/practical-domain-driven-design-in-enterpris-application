@@ -3,6 +3,7 @@ package com.example.cargotracker.identity.infrastructure.persistence;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.example.cargotracker.externaldata.domain.events.ExternalRecordQuarantined;
+import com.example.cargotracker.externaldata.domain.events.ReceivedRecordDecided;
 import com.example.cargotracker.identity.application.internal.eventhandlers.ExternalRecordAuditEventHandler;
 import com.example.cargotracker.identity.domain.model.aggregates.AuditRecord;
 import com.example.cargotracker.identity.domain.model.aggregates.AuditRecordRepository;
@@ -102,6 +103,32 @@ abstract class AuditRecordEventAuditContract {
                         .existsByActionAndTarget(
                                 AuditAction.EXTERNAL_RECORD_ADOPTED, RECEIVED_RECORD, receivedRecordId))
                 .isTrue();
+    }
+
+    @Test
+    void Bolt39d2_行11_補助文字を含む1000文字の却下の理由の要約が変更後の列に入り判断の操作と対象で引ける() {
+        // 却下の理由は 1000 コードポイントまで（Bolt 39d2 の開始準備の決定 (10)）。要約は監査の listener で作る
+        UserId actor = newUser();
+        UUID receivedRecordId = UUID.randomUUID();
+        String reason = new String(Character.toChars(0x20BB7)).repeat(1_000);
+        ReceivedRecordDecided event = new ReceivedRecordDecided(
+                receivedRecordId, UUID.randomUUID(), UUID.randomUUID(), "REJECTED", reason, actor, newCompany(), AT);
+
+        new ExternalRecordAuditEventHandler(auditRecords()).on(event);
+
+        assertThat(auditRecords().findByActorUserId(actor)).singleElement().satisfies(written -> {
+            assertThat(written.action()).isEqualTo(AuditAction.EXTERNAL_RECORD_DECIDED);
+            assertThat(written.reason()).isEqualTo("REJECTED");
+            assertThat(written.target().afterState()).endsWith(";reason=" + reason);
+        });
+        assertThat(auditRecords()
+                        .existsByActionAndTarget(
+                                AuditAction.EXTERNAL_RECORD_DECIDED, RECEIVED_RECORD, receivedRecordId.toString()))
+                .isTrue();
+        assertThat(auditRecords()
+                        .existsByActionAndTarget(
+                                AuditAction.EXTERNAL_RECORD_QUARANTINED, RECEIVED_RECORD, receivedRecordId.toString()))
+                .isFalse();
     }
 
     @Test

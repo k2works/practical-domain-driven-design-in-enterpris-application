@@ -9,6 +9,7 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import com.example.cargotracker.externaldata.domain.events.ExternalRecordQuarantined;
 import com.example.cargotracker.externaldata.domain.events.MilestoneAdoptedValueAccepted;
+import com.example.cargotracker.externaldata.domain.events.ReceivedRecordDecided;
 import com.example.cargotracker.externaldata.domain.events.VoyageAdoptedValueUpdated;
 import com.example.cargotracker.identity.domain.model.aggregates.AuditRecord;
 import com.example.cargotracker.identity.domain.model.aggregates.AuditRecordRepository;
@@ -29,6 +30,7 @@ import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataAccessResourceFailureException;
@@ -331,6 +333,93 @@ class ExternalRecordAuditEventHandlerTest {
         assertThat(auditRecords.appended)
                 .singleElement()
                 .satisfies(written -> assertThat(written.occurredAt()).isEqualTo(PUBLISHED_AT));
+    }
+
+    /**
+     * Bolt 39d2 の行 11（DE-29 受信記録を判断した の監査。開始準備の決定 (6)）。人の判断として新しい操作 {@code EXTERNAL_RECORD_DECIDED} で書き、
+     * 理由の列は判断、却下の理由の文は変更後の要約の最後に置く。39b3b の同じ番号の行と名前が衝突しないよう入れ子にする。
+     */
+    @Nested
+    class Bolt39d2_受信記録の判断の監査 {
+
+        private static final UtcInstant DECIDED_AT = new UtcInstant(Instant.parse("2026-11-16T02:00:00.123456Z"));
+
+        private ReceivedRecordDecided decided(UUID receivedRecordId, UserId decidedBy, String reason) {
+            return new ReceivedRecordDecided(
+                    receivedRecordId,
+                    INGESTION,
+                    DATA_SOURCE,
+                    "REJECTED",
+                    reason,
+                    decidedBy,
+                    OPERATOR_COMPANY,
+                    DECIDED_AT);
+        }
+
+        @Test
+        void 行11_DE29を受けると受信記録を対象に判断の監査記録を1つ書き理由の文は要約の最後に置く() {
+            UUID receivedRecordId = UUID.randomUUID();
+
+            handler.on(decided(receivedRecordId, OPERATOR, "提供元に確かめた; 誤送信"));
+
+            assertThat(auditRecords.appended).singleElement().satisfies(written -> {
+                assertThat(written.action()).isEqualTo(AuditAction.EXTERNAL_RECORD_DECIDED);
+                assertThat(written.result()).isEqualTo(AuditResult.SUCCESS);
+                assertThat(written.reason()).isEqualTo("REJECTED");
+                assertThat(written.actorUserId()).isEqualTo(OPERATOR);
+                assertThat(written.actorCompanyId()).isEqualTo(OPERATOR_COMPANY);
+                assertThat(written.occurredAt()).isEqualTo(DECIDED_AT);
+                assertThat(written.target())
+                        .isEqualTo(new AuditTarget(
+                                RECEIVED_RECORD,
+                                receivedRecordId.toString(),
+                                null,
+                                null,
+                                "decision=REJECTED;ingestionId=" + INGESTION + ";dataSourceId=" + DATA_SOURCE
+                                        + ";reason=提供元に確かめた; 誤送信"));
+            });
+        }
+
+        @Test
+        void 行11_同じDE29が再び届いても追記は1回で照会は判断の操作と対象で引く() {
+            UUID receivedRecordId = UUID.randomUUID();
+            ReceivedRecordDecided event = decided(receivedRecordId, OPERATOR, "理由");
+
+            handler.on(event);
+            handler.on(event);
+
+            assertThat(auditRecords.appendCalls).isEqualTo(1);
+            assertThat(auditRecords.existsQueries)
+                    .containsExactly(
+                            "EXTERNAL_RECORD_DECIDED|RECEIVED_RECORD|" + receivedRecordId,
+                            "EXTERNAL_RECORD_DECIDED|RECEIVED_RECORD|" + receivedRecordId);
+        }
+
+        @Test
+        void 行11_判断者のないDE29は書かずにERRORのログを1つ残して捨てる() {
+            UUID receivedRecordId = UUID.randomUUID();
+
+            handler.on(decided(receivedRecordId, null, "理由"));
+
+            assertThat(auditRecords.appendCalls).isZero();
+            assertThat(auditRecords.existsQueries).isEmpty();
+            assertThat(logs.list).singleElement().satisfies(log -> {
+                assertThat(log.getLevel()).isEqualTo(Level.ERROR);
+                assertThat(log.getFormattedMessage())
+                        .contains(receivedRecordId.toString(), INGESTION.toString(), "EXTERNAL_RECORD_DECIDED");
+            });
+        }
+
+        @Test
+        void 行11_理由のないDE29は要約にnullを入れずに捨てる() {
+            handler.on(decided(UUID.randomUUID(), OPERATOR, null));
+
+            assertThat(auditRecords.appendCalls).isZero();
+            assertThat(logs.list).singleElement().satisfies(log -> {
+                assertThat(log.getLevel()).isEqualTo(Level.ERROR);
+                assertThat(log.getFormattedMessage()).contains("EXTERNAL_RECORD_DECIDED", "reason");
+            });
+        }
     }
 
     /** 追記と照会の呼び出しを記録する監査記録のリポジトリ（T-236）。{@code failing} なら追記で DB の失敗を投げる。 */

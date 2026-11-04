@@ -26,6 +26,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.IntStream;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -241,6 +242,60 @@ class UndecidedRecordQueryServiceTest {
         then(receivedRecords).should(never()).countUndecidedQuarantines(missing);
         then(receivedRecords).should().undecidedQuarantines(null, 0, UndecidedRecordQueryService.PAGE_SIZE);
         then(ingestions).should(times(1)).findById(missing);
+    }
+
+    /** Bolt 39d2 の行 18（判断の画面の中身。開始準備の決定 (3)）。ID で絞った判断を待つ隔離を一覧と同じ項目にする。 */
+    @Nested
+    class Bolt39d2_判断の画面の中身 {
+
+        @Test
+        void 行18_IDで絞った判断を待つ隔離を一覧と同じ項目で返し情報源を1回引く() {
+            UndecidedQuarantine mismatch = new UndecidedQuarantine(
+                    UUID.randomUUID(),
+                    ingestionId,
+                    INGESTED_AT,
+                    voyage.id(),
+                    new PhysicalLineRange(140, 141),
+                    "DEMO-201",
+                    "3",
+                    "140 行目: 同じ外部 ID・外部版で内容の違う原本を受け取りました（最初の受信: 2026-11-15 09:00:00 UTC）。");
+            given(receivedRecords.undecidedQuarantine(mismatch.receivedRecordId()))
+                    .willReturn(Optional.of(mismatch));
+
+            assertThat(service.undecidedQuarantine(mismatch.receivedRecordId()))
+                    .contains(new UndecidedRecordPage.Item(
+                            mismatch.receivedRecordId(),
+                            INGESTED_AT,
+                            voyage.provider(),
+                            "VOYAGE",
+                            new PhysicalLineRange(140, 141),
+                            false,
+                            "DEMO-201",
+                            "3",
+                            mismatch.note()));
+            then(dataSources).should(times(1)).findById(voyage.id());
+        }
+
+        @Test
+        void 行18_キーのない隔離は形式の誤りの印を持つ() {
+            UndecidedQuarantine keyless = keyless(milestone, 4);
+            given(receivedRecords.undecidedQuarantine(keyless.receivedRecordId()))
+                    .willReturn(Optional.of(keyless));
+
+            assertThat(service.undecidedQuarantine(keyless.receivedRecordId())).hasValueSatisfying(item -> {
+                assertThat(item.keyless()).isTrue();
+                assertThat(item.recordType()).isEqualTo("MILESTONE");
+            });
+        }
+
+        @Test
+        void 行5_判断を待つ隔離でなければ空で情報源を引かない() {
+            UUID decided = UUID.randomUUID();
+            given(receivedRecords.undecidedQuarantine(decided)).willReturn(Optional.empty());
+
+            assertThat(service.undecidedQuarantine(decided)).isEmpty();
+            then(dataSources).should(never()).findById(any());
+        }
     }
 
     private Ingestion ingestion(UUID id) {

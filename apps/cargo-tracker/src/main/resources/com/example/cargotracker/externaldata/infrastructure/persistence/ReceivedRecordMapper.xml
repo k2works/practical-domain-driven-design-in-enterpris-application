@@ -88,4 +88,20 @@
         SELECT COUNT(*)
         <include refid="undecidedQuarantineSource"/>
     </select>
+
+    <!-- 取込で書いた受信記録を ID で引く（Bolt 39d2。判断できる受信記録の確かめ）。取込のない受信記録（ingestion_id が NULL）は返さない -->
+    <select id="selectById" resultMap="receivedRecordRow">
+        SELECT id, external_record_id, ingestion_id, payload_hash, payload_object_key, acquired_at, classification,
+               classification_note, classified_at, first_line_number, last_line_number
+          FROM external_data.received_record
+         WHERE id = #{id} AND ingestion_id IS NOT NULL
+    </select>
+
+    <!-- ID で絞った判断を待つ隔離（Bolt 39d2。S-17 の判断の画面の中身）。一覧と同じ断片に受信記録 ID の絞り込みを足す -->
+    <select id="undecidedQuarantine" resultMap="undecidedQuarantineRow">
+        SELECT r.id, r.ingestion_id, i.ingested_at, i.data_source_id, r.first_line_number, r.last_line_number,
+               e.external_id, e.external_version, r.classification_note
+        <include refid="undecidedQuarantineSource"/>
+           AND r.id = #{receivedRecordId}
+    </select>
 </mapper>

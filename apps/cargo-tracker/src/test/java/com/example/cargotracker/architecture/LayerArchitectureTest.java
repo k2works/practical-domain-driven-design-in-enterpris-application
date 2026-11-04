@@ -391,10 +391,13 @@ class LayerArchitectureTest {
     private static final String EXTERNAL_RECORD_AUDIT_WRITER =
             "com.example.cargotracker.identity.application.internal.eventhandlers.ExternalRecordAuditEventHandler";
 
-    /** 外部原本の採否の監査記録を作る呼び出し（{@code AuditRecord.externalRecordAdopted}・{@code externalRecordQuarantined}）。 */
+    /**
+     * 外部原本の採否の監査記録を作る呼び出し（{@code AuditRecord.externalRecordAdopted}・{@code externalRecordQuarantined}、受信記録の判断の
+     * {@code externalRecordDecided}。判断は Bolt 39d2 の行 13 で足した。書き手は同じ listener で増やさない）。
+     */
     private static final DescribedPredicate<JavaCall<?>> EXTERNAL_RECORD_AUDIT = target(
                     owner(equivalentTo(AuditRecord.class)))
-            .and(target(nameMatching("externalRecordAdopted|externalRecordQuarantined")));
+            .and(target(nameMatching("externalRecordAdopted|externalRecordQuarantined|externalRecordDecided")));
 
     /** 書き手のほかに例外がない行の印。 */
     private static final DescribedPredicate<JavaClass> NO_OTHER_EXCEPTION =

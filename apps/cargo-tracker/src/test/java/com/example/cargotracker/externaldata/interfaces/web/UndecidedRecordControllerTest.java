@@ -8,9 +8,13 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.example.cargotracker.externaldata.application.internal.commands.RejectReceivedRecordCommand;
+import com.example.cargotracker.externaldata.application.internal.commandservices.DecisionOutcome;
+import com.example.cargotracker.externaldata.application.internal.commandservices.ReceivedRecordDecisionService;
 import com.example.cargotracker.externaldata.application.internal.queryservices.UndecidedRecordPage;
 import com.example.cargotracker.externaldata.application.internal.queryservices.UndecidedRecordQueryService;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PhysicalLineRange;
@@ -21,6 +25,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.regex.Pattern;
 import java.util.stream.IntStream;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -53,6 +58,10 @@ class UndecidedRecordControllerTest {
 
     @MockitoBean
     UndecidedRecordQueryService query;
+
+    /** 判断の画面の行き先と却下（Bolt 39d2）。 */
+    @MockitoBean
+    ReceivedRecordDecisionService decisions;
 
     private static UndecidedRecordPage.Item keyless(int line) {
         return new UndecidedRecordPage.Item(
@@ -114,19 +123,26 @@ class UndecidedRecordControllerTest {
                         .string(matchesPattern(
                                 Pattern.compile("(?s).*<th scope=\"col\">取り込んだ日時</th>\\s*<th scope=\"col\">情報源</th>\\s*"
                                         + "<th scope=\"col\">行</th>\\s*<th scope=\"col\">種類</th>\\s*"
-                                        + "<th scope=\"col\">外部 ID・外部版</th>\\s*<th scope=\"col\">隔離の理由</th>.*"))))
-                .andExpect(content()
-                        .string(matchesPattern(Pattern.compile("(?s).*<tr>\\s*"
-                                + "<td>2026-11-16 10:05 Asia/Tokyo（UTC\\+09:00）（UTC 2026-11-16 01:05）</td>\\s*"
-                                + "<td>開発海運（架空）（主要実績）</td>\\s*"
-                                // 行を持たないファイルの誤りの「—」は読み上げで「ファイル全体」と読む（Bolt 39d の開発レビュー）
-                                + "<td><span aria-hidden=\"true\">—</span><span class=\"visually-hidden\">ファイル全体</span></td>\\s*"
-                                + "<td>形式の誤り</td>\\s*"
-                                + "<td><span aria-hidden=\"true\">—</span><span class=\"visually-hidden\">なし</span></td>\\s*"
-                                + "<td>ファイル: 必要な列がありません（port_calls）。</td>\\s*</tr>\\s*<tr>\\s*"
-                                + "<td>2026-11-16 10:05 Asia/Tokyo（UTC\\+09:00）（UTC 2026-11-16 01:05）</td>\\s*"
-                                + "<td>開発海運（架空）（航海）</td>\\s*<td>140〜141 行目</td>\\s*<td>内容の違う原本</td>\\s*"
-                                + "<td>DEMO-201・3</td>\\s*<td>140 行目: .*</td>\\s*</tr>.*"))));
+                                        + "<th scope=\"col\">外部 ID・外部版</th>\\s*<th scope=\"col\">隔離の理由</th>\\s*"
+                                        // 判断の列は Bolt 39d2 で足した
+                                        + "<th scope=\"col\">判断</th>.*"))))
+                .andExpect(
+                        content()
+                                .string(
+                                        matchesPattern(
+                                                Pattern.compile(
+                                                        "(?s).*<tr>\\s*"
+                                                                + "<td>2026-11-16 10:05 Asia/Tokyo（UTC\\+09:00）（UTC 2026-11-16 01:05）</td>\\s*"
+                                                                + "<td>開発海運（架空）（主要実績）</td>\\s*"
+                                                                // 行を持たないファイルの誤りの「—」は読み上げで「ファイル全体」と読む（Bolt 39d の開発レビュー）
+                                                                + "<td><span aria-hidden=\"true\">—</span><span class=\"visually-hidden\">ファイル全体</span></td>\\s*"
+                                                                + "<td>形式の誤り</td>\\s*"
+                                                                + "<td><span aria-hidden=\"true\">—</span><span class=\"visually-hidden\">なし</span></td>\\s*"
+                                                                + "<td>ファイル: 必要な列がありません（port_calls）。</td>\\s*<td><a [^>]*>判断する.*?</a></td>\\s*"
+                                                                + "</tr>\\s*<tr>\\s*"
+                                                                + "<td>2026-11-16 10:05 Asia/Tokyo（UTC\\+09:00）（UTC 2026-11-16 01:05）</td>\\s*"
+                                                                + "<td>開発海運（架空）（航海）</td>\\s*<td>140〜141 行目</td>\\s*<td>内容の違う原本</td>\\s*"
+                                                                + "<td>DEMO-201・3</td>\\s*<td>140 行目: .*?</td>\\s*<td><a [^>]*>判断する.*?</a></td>\\s*</tr>.*"))));
     }
 
     @Test
@@ -310,5 +326,332 @@ class UndecidedRecordControllerTest {
                                 + "&lt;script&gt;alert(1)&lt;/script&gt;、&amp;amp;）。提供元に確かめてください。</td>")))
                 .andExpect(content().string(not(containsString("<b>id</b>"))))
                 .andExpect(content().string(not(containsString("<script>alert"))));
+    }
+
+    /**
+     * Bolt 39d2 の行 1・3〜5・7・8・17・18・22（S-17 の判断の画面と却下の POST。開始準備の決定 (3)・(5)・(10)・(11)、T-240・T-244）。判断の
+     * サービスと照会は mock にし、行き先（404・一覧に戻る・判断の画面）と文言、欄の誤り、戻り先の URL を確かめる。39d の同じ番号の行と名前が
+     * 衝突しないよう入れ子にする。
+     */
+    @Nested
+    class Bolt39d2_判断の画面と却下 {
+
+        private static final UUID RECORD_ID = UUID.fromString("39d20000-0000-0000-0000-0000000000bb");
+        private static final String DECISION_URL = LIST_URL + "/" + RECORD_ID;
+        private static final String POST_URL = DECISION_URL + "/decision";
+        private static final String REJECTED = "隔離を却下しました。";
+        private static final String ALREADY_DECIDED = "この隔離は判断済みです。";
+        private static final String REASON_REQUIRED = "却下の理由を書いてください。";
+        private static final String REASON_TOO_LONG = "却下の理由は 1000 文字までで書いてください。";
+        private static final String IRREVOCABLE = "却下すると取り消せません。誤って却下したときは、提供元に同じ原本を送り直してもらってください。";
+        private static final String KEYLESS_GUIDE = "形式の誤りは採用できません。直したファイルを取り込み直してください。";
+        /** 補助文字（U+20BB7。UTF-16 で 2 単位）。 */
+        private static final String SUPPLEMENTARY = new String(Character.toChars(0x20BB7));
+
+        private UndecidedRecordPage.Item mismatch() {
+            return new UndecidedRecordPage.Item(
+                    RECORD_ID,
+                    INGESTED_AT,
+                    "開発海運（架空）",
+                    "VOYAGE",
+                    new PhysicalLineRange(140, 141),
+                    false,
+                    "DEMO-201",
+                    "3",
+                    "140 行目: 同じ外部 ID・外部版で内容の違う原本を受け取りました（<b>最初の受信</b>: 2026-11-15 09:00:00 UTC）。");
+        }
+
+        private UndecidedRecordPage.Item keylessItem() {
+            return new UndecidedRecordPage.Item(
+                    RECORD_ID,
+                    INGESTED_AT,
+                    "開発海運（架空）",
+                    "VOYAGE",
+                    new PhysicalLineRange(4, 4),
+                    true,
+                    null,
+                    null,
+                    "4 行目: 列の数がヘッダーと違います（ヘッダー 4 列、この行 5 列）。提供元に確かめてください。");
+        }
+
+        private void givenDecidable(UndecidedRecordPage.Item item) {
+            given(decisions.refusalOf(RECORD_ID)).willReturn(java.util.Optional.empty());
+            given(query.undecidedQuarantine(RECORD_ID)).willReturn(java.util.Optional.of(item));
+        }
+
+        private String decisionPage(String url) throws Exception {
+            return mockMvc.perform(get(url))
+                    .andExpect(status().isOk())
+                    .andReturn()
+                    .getResponse()
+                    .getContentAsString(java.nio.charset.StandardCharsets.UTF_8);
+        }
+
+        private ResultActions postReason(String url, String reason) throws Exception {
+            return mockMvc.perform(post(url).param("reason", reason));
+        }
+
+        // --- 行 17: 一覧の「判断する」と戻り先 ---
+
+        @Test
+        void 行17_一覧の各行に元の取込とページへの戻り先を持つ判断するのリンクがあり読み上げに行の範囲と外部IDを含める() throws Exception {
+            UndecidedRecordPage.Item item = mismatch();
+            given(query.page(INGESTION_ID, 2))
+                    .willReturn(new UndecidedRecordPage(List.of(item), 101, 2, 2, INGESTION_ID, false));
+
+            list("?ingestion=" + INGESTION_ID + "&page=2")
+                    .andExpect(
+                            content()
+                                    .string(
+                                            containsString(
+                                                    "<a href=\"" + DECISION_URL + "?ingestion=" + INGESTION_ID
+                                                            + "&amp;page=2\">判断する<span class=\"visually-hidden\">（140〜141 行目、DEMO-201・3）</span></a>")));
+        }
+
+        @Test
+        void 行17_絞らない一覧のキーのない隔離の判断するはページだけを持ち外部IDなしと読む() throws Exception {
+            given(query.page(null, 1))
+                    .willReturn(new UndecidedRecordPage(List.of(keylessItem()), 1, 1, 1, null, false));
+
+            list("").andExpect(content()
+                    .string(containsString("<a href=\"" + DECISION_URL
+                            + "?page=1\">判断する<span class=\"visually-hidden\">（4 行目、外部 ID なし）</span></a>")));
+        }
+
+        @Test
+        void 行17_判断の画面の一覧に戻ると却下の送り先は元の取込とページを持つ() throws Exception {
+            givenDecidable(mismatch());
+
+            String page = decisionPage(DECISION_URL + "?ingestion=" + INGESTION_ID + "&page=2");
+
+            org.assertj.core.api.Assertions.assertThat(page)
+                    .contains("<a href=\"" + LIST_URL + "?ingestion=" + INGESTION_ID + "&amp;page=2\">一覧に戻る</a>")
+                    .contains("action=\"" + POST_URL + "?ingestion=" + INGESTION_ID + "&amp;page=2\"");
+        }
+
+        @Test
+        void 行17_読めない取込とページの戻り先は捨てて既定の一覧にする() throws Exception {
+            givenDecidable(mismatch());
+            given(decisions.reject(any(), any())).willReturn(new DecisionOutcome.Rejected(RECORD_ID));
+
+            String page = decisionPage(DECISION_URL + "?ingestion=%3Cscript%3E&page=abc");
+
+            org.assertj.core.api.Assertions.assertThat(page)
+                    .contains("<a href=\"" + LIST_URL + "?page=1\">一覧に戻る</a>")
+                    .doesNotContain("script%3E")
+                    .doesNotContain("&lt;script");
+            postReason(POST_URL + "?ingestion=evil&page=-3", "理由")
+                    .andExpect(status().is3xxRedirection())
+                    .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl(
+                            LIST_URL + "?page=1"));
+        }
+
+        // --- 行 18: 判断の画面の中身 ---
+
+        @Test
+        void 行18_内容の違う原本の判断の画面は一覧と同じ項目と隔離の理由の全文と取り消せないことを示す() throws Exception {
+            givenDecidable(mismatch());
+
+            String page = decisionPage(DECISION_URL);
+
+            org.assertj.core.api.Assertions.assertThat(page)
+                    .contains("<h1>隔離の判断</h1>")
+                    .containsPattern(
+                            "<dt>取り込んだ日時</dt>\\s*<dd>2026-11-16 10:05 Asia/Tokyo（UTC\\+09:00）（UTC 2026-11-16 01:05）</dd>")
+                    .containsPattern("<dt>情報源</dt>\\s*<dd>開発海運（架空）（航海）</dd>")
+                    .containsPattern("<dt>行</dt>\\s*<dd>140〜141 行目</dd>")
+                    .containsPattern("<dt>種類</dt>\\s*<dd>内容の違う原本</dd>")
+                    .containsPattern("<dt>外部 ID・外部版</dt>\\s*<dd>DEMO-201・3</dd>")
+                    // 注記には取込ファイルから来た値が入るので文字として示す
+                    .contains("<dd>140 行目: 同じ外部 ID・外部版で内容の違う原本を受け取りました（&lt;b&gt;最初の受信&lt;/b&gt;: "
+                            + "2026-11-15 09:00:00 UTC）。</dd>")
+                    .doesNotContain("<b>最初の受信</b>")
+                    .contains(IRREVOCABLE)
+                    .doesNotContain(KEYLESS_GUIDE)
+                    .contains("<label for=\"reason\">却下の理由</label>")
+                    .contains(">却下する</button>");
+        }
+
+        @Test
+        void 行18_キーのない隔離の判断の画面は却下だけと直したファイルを取り込み直す案内を示す() throws Exception {
+            givenDecidable(keylessItem());
+
+            String page = decisionPage(DECISION_URL);
+
+            org.assertj.core.api.Assertions.assertThat(page)
+                    .containsPattern("<dt>種類</dt>\\s*<dd>形式の誤り</dd>")
+                    .containsPattern("<dt>外部 ID・外部版</dt>\\s*<dd>なし</dd>")
+                    .contains(KEYLESS_GUIDE)
+                    .contains(IRREVOCABLE)
+                    .contains(">却下する</button>")
+                    .doesNotContain("採用する");
+        }
+
+        // --- 行 3〜5・22: 判断の画面の行き先（判断できる受信記録の定義は GET と POST で 1 つ） ---
+
+        @ParameterizedTest(name = "{0}")
+        @ValueSource(strings = {"NotFound", "NotDecidable"})
+        void 行3_行4_行22_読めない受信記録と隔離でない受信記録の判断の画面は404(String refusal) throws Exception {
+            given(decisions.refusalOf(RECORD_ID))
+                    .willReturn(java.util.Optional.of(
+                            "NotFound".equals(refusal)
+                                    ? new DecisionOutcome.NotFound()
+                                    : new DecisionOutcome.NotDecidable()));
+
+            mockMvc.perform(get(DECISION_URL)).andExpect(status().isNotFound());
+            then(query).should(org.mockito.Mockito.never()).undecidedQuarantine(any());
+        }
+
+        @ParameterizedTest(name = "{0}")
+        @ValueSource(strings = {"not-a-uuid", "123", "39d20000-0000-0000-0000-0000000000bb-x"})
+        void 行4_UUIDでない受信記録IDは判断の画面もPOSTも400にせず404にしサービスを呼ばない(String id) throws Exception {
+            mockMvc.perform(get(LIST_URL + "/" + id)).andExpect(status().isNotFound());
+            postReason(LIST_URL + "/" + id + "/decision", "理由").andExpect(status().isNotFound());
+            then(decisions).shouldHaveNoInteractions();
+        }
+
+        @Test
+        void 行5_判断済みの隔離の判断の画面は元の一覧に戻って判断済みと知らせる() throws Exception {
+            given(decisions.refusalOf(RECORD_ID))
+                    .willReturn(java.util.Optional.of(new DecisionOutcome.AlreadyDecided()));
+
+            mockMvc.perform(get(DECISION_URL + "?ingestion=" + INGESTION_ID + "&page=2"))
+                    .andExpect(status().is3xxRedirection())
+                    .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl(
+                            LIST_URL + "?ingestion=" + INGESTION_ID + "&page=2"))
+                    .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash()
+                            .attribute("result", ALREADY_DECIDED));
+        }
+
+        @Test
+        void 行5_行き先を決めた後に判断されて中身が読めないときも判断済みと知らせる() throws Exception {
+            given(decisions.refusalOf(RECORD_ID)).willReturn(java.util.Optional.empty());
+            given(query.undecidedQuarantine(RECORD_ID)).willReturn(java.util.Optional.empty());
+
+            mockMvc.perform(get(DECISION_URL))
+                    .andExpect(status().is3xxRedirection())
+                    .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash()
+                            .attribute("result", ALREADY_DECIDED));
+        }
+
+        @Test
+        void 行5_一覧は知らせを状態の領域に示す() throws Exception {
+            given(query.page(null, 1)).willReturn(page(0, 1, null));
+
+            mockMvc.perform(get(LIST_URL).flashAttr("result", REJECTED))
+                    .andExpect(content().string(containsString("<p role=\"status\">" + REJECTED + "</p>")));
+        }
+
+        // --- 行 1・3〜6・9: 却下の POST の結果ごとの行き先（T-240。結果のすべてに行き先がある） ---
+
+        static java.util.stream.Stream<org.junit.jupiter.params.provider.Arguments> outcomes() {
+            return java.util.stream.Stream.of(
+                    org.junit.jupiter.params.provider.Arguments.of(
+                            new DecisionOutcome.Rejected(RECORD_ID), 302, REJECTED),
+                    org.junit.jupiter.params.provider.Arguments.of(
+                            new DecisionOutcome.AlreadyDecided(), 302, ALREADY_DECIDED),
+                    org.junit.jupiter.params.provider.Arguments.of(new DecisionOutcome.NotFound(), 404, null),
+                    org.junit.jupiter.params.provider.Arguments.of(new DecisionOutcome.NotDecidable(), 404, null),
+                    org.junit.jupiter.params.provider.Arguments.of(new DecisionOutcome.NotPermitted(), 403, null));
+        }
+
+        @ParameterizedTest(name = "{0}")
+        @org.junit.jupiter.params.provider.MethodSource("outcomes")
+        void 行1_行3から行6_行9_却下の結果ごとに一覧に戻って知らせるか404か403にする(DecisionOutcome outcome, int status, String notice)
+                throws Exception {
+            given(decisions.reject(any(), any())).willReturn(outcome);
+
+            ResultActions result = postReason(POST_URL + "?ingestion=" + INGESTION_ID + "&page=2", "提供元に確かめた。")
+                    .andExpect(status().is(status));
+
+            if (notice != null) {
+                result.andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl(
+                                LIST_URL + "?ingestion=" + INGESTION_ID + "&page=2"))
+                        .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash()
+                                .attribute("result", notice));
+            }
+            then(decisions)
+                    .should()
+                    .reject(
+                            any(),
+                            org.mockito.ArgumentMatchers.eq(new RejectReceivedRecordCommand(RECORD_ID, "提供元に確かめた。")));
+        }
+
+        @Test
+        void 行1_結果の型のすべてを行き先の組で縛る() {
+            List<Class<?>> covered = outcomes()
+                    .<Class<?>>map(arguments -> arguments.get()[0].getClass())
+                    .toList();
+            org.assertj.core.api.Assertions.assertThat(covered)
+                    .containsExactlyInAnyOrder(DecisionOutcome.class.getPermittedSubclasses());
+        }
+
+        // --- 行 7・8: 理由の欄の誤り（T-244） ---
+
+        @ParameterizedTest(name = "[{0}]")
+        @ValueSource(strings = {"", " ", "　", "\n"})
+        void 行7_理由が空か空白だけなら判断の画面に戻り理由の欄に誤りを示してサービスを呼ばない(String reason) throws Exception {
+            givenDecidable(mismatch());
+
+            String page = postReason(POST_URL, reason)
+                    .andExpect(status().isOk())
+                    .andReturn()
+                    .getResponse()
+                    .getContentAsString(java.nio.charset.StandardCharsets.UTF_8);
+
+            assertFieldError(page, REASON_REQUIRED);
+            then(decisions).should(org.mockito.Mockito.never()).reject(any(), any());
+        }
+
+        @Test
+        void 行8_補助文字を含む1000文字の理由はそのままサービスに渡す() throws Exception {
+            String thousand = SUPPLEMENTARY.repeat(500) + "あ".repeat(500);
+            given(decisions.reject(any(), any())).willReturn(new DecisionOutcome.Rejected(RECORD_ID));
+
+            postReason(POST_URL, thousand).andExpect(status().is3xxRedirection());
+
+            then(decisions)
+                    .should()
+                    .reject(
+                            any(),
+                            org.mockito.ArgumentMatchers.eq(new RejectReceivedRecordCommand(RECORD_ID, thousand)));
+        }
+
+        @Test
+        void 行8_1001文字の理由は判断の画面に戻り長さの誤りを示して書いた理由を残す() throws Exception {
+            String thousandAndOne = SUPPLEMENTARY.repeat(500) + "あ".repeat(501);
+            givenDecidable(mismatch());
+
+            String page = postReason(POST_URL, thousandAndOne)
+                    .andExpect(status().isOk())
+                    .andReturn()
+                    .getResponse()
+                    .getContentAsString(java.nio.charset.StandardCharsets.UTF_8);
+
+            assertFieldError(page, REASON_TOO_LONG);
+            org.assertj.core.api.Assertions.assertThat(page).contains(thousandAndOne + "</textarea>");
+            then(decisions).should(org.mockito.Mockito.never()).reject(any(), any());
+        }
+
+        @Test
+        void 行7_欄の誤りのあとに判断済みになっていれば一覧に戻って知らせる() throws Exception {
+            given(decisions.refusalOf(RECORD_ID))
+                    .willReturn(java.util.Optional.of(new DecisionOutcome.AlreadyDecided()));
+
+            postReason(POST_URL, " ")
+                    .andExpect(status().is3xxRedirection())
+                    .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash()
+                            .attribute("result", ALREADY_DECIDED));
+        }
+
+        /** エラー要約（理由の欄を指す）と欄の誤り（aria-invalid・aria-describedby で説明と誤りに結ぶ）。 */
+        private void assertFieldError(String page, String message) {
+            org.assertj.core.api.Assertions.assertThat(page)
+                    .contains("<title>却下できませんでした - 隔離の判断 - cargo-tracker</title>")
+                    .contains("<a href=\"#reason\">" + message + "</a>")
+                    .contains("<p id=\"reason-error\" class=\"text-danger\">" + message + "</p>")
+                    .containsPattern("<textarea[^>]*id=\"reason\"[^>]*aria-invalid=\"true\"")
+                    .containsPattern("<textarea[^>]*aria-describedby=\"reason-hint reason-error\"");
+        }
     }
 }

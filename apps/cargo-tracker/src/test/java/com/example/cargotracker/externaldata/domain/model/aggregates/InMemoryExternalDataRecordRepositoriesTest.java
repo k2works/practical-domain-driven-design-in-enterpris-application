@@ -10,8 +10,28 @@ class InMemoryExternalDataRecordRepositoriesTest extends ExternalDataRecordRepos
 
     private final InMemoryExternalRecordRepository externalRecords = new InMemoryExternalRecordRepository();
 
+    private final InMemoryReceivedRecordDecisionRepository decisions = new InMemoryReceivedRecordDecisionRepository();
+
     private final InMemoryReceivedRecordRepository receivedRecords =
-            new InMemoryReceivedRecordRepository(ingestions, externalRecords);
+            new InMemoryReceivedRecordRepository(ingestions, externalRecords, decisions);
+
+    @Override
+    protected ReceivedRecordDecisionRepository receivedRecordDecisions() {
+        return decisions;
+    }
+
+    @Override
+    protected Optional<ReceivedRecordDecision> storedDecision(UUID receivedRecordId) {
+        return decisions.all().stream()
+                .filter(decision -> decision.receivedRecordId().equals(receivedRecordId))
+                .findFirst();
+    }
+
+    @Override
+    protected UUID receivedRecordWithoutIngestion() {
+        // メモリの実装は取込 ID のない受信記録を持てない（record が取込 ID を必ず持つ）
+        return UUID.randomUUID();
+    }
 
     @Override
     protected IngestionRepository ingestions() {

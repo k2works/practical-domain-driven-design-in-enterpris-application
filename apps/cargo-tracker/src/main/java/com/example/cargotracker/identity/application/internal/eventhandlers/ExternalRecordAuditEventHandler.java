@@ -2,6 +2,7 @@ package com.example.cargotracker.identity.application.internal.eventhandlers;
 
 import com.example.cargotracker.externaldata.domain.events.ExternalRecordQuarantined;
 import com.example.cargotracker.externaldata.domain.events.MilestoneAdoptedValueAccepted;
+import com.example.cargotracker.externaldata.domain.events.ReceivedRecordDecided;
 import com.example.cargotracker.externaldata.domain.events.VoyageAdoptedValueUpdated;
 import com.example.cargotracker.identity.domain.model.aggregates.AuditRecord;
 import com.example.cargotracker.identity.domain.model.aggregates.AuditRecordRepository;
@@ -17,7 +18,8 @@ import org.springframework.stereotype.Service;
 
 /**
  * 外部原本の採否の監査のイベントハンドラー。外部データの DE-12・DE-13・DE-14 を取込のコミットの後に別のトランザクションで受け、受信記録ごとに
- * 外部原本の採否の監査記録を 1 つ書く（Bolt 39b3b。AUD-01・AUD-02、IA-INV-15、ADR-003・ADR-004）。操作者と発生時刻はイベントのもの。
+ * 外部原本の採否の監査記録を 1 つ書く（Bolt 39b3b。AUD-01・AUD-02、IA-INV-15、ADR-003・ADR-004）。DE-29（データ責任者の受信記録の判断）も
+ * 判断のコミットの後に受け、（操作、受信記録）ごとに 1 つ書く（Bolt 39d2）。操作者と発生時刻はイベントのもの。
  * 配信は少なくとも 1 回なので、操作と対象（受信記録）で引いて記録があれば書かない。内容の欠けたイベント
  * （{@link AuditRecord.MissingEventValueException}）は再配信しても直らないので、ERROR のログを残して捨てる。DB の失敗とほかの例外（プログラムの
  * 誤り）は上げ、発行記録を未完了に残して起動のときに配り直させる（前例 {@link KpiObservationEventHandler}）。
@@ -103,9 +105,30 @@ public class ExternalRecordAuditEventHandler {
                                 + ";externalId=" + orNone(event.externalId())
                                 + ";externalVersion=" + orNone(event.externalVersion())
                                 + ";lines=" + lines(event.firstLine(), event.lastLine())
-                                + ";ingestionId=" + part(event.ingestionId(), "ingestionId")
-                                + ";dataSourceId=" + part(event.dataSourceId(), "dataSourceId"),
+                                + origin(event.ingestionId(), event.dataSourceId()),
                         event.quarantinedAt()));
+    }
+
+    /**
+     * DE-29 受信記録を判断した を受けて、データ責任者の判断を監査する（Bolt 39d2）。理由は判断、却下の理由の文は要約の最後に置く（理由の文に
+     * 区切りの {@code ;} があっても最後なので読み違えない）。
+     */
+    @ApplicationModuleListener
+    public void on(ReceivedRecordDecided event) {
+        String receivedRecordId = Objects.toString(event.receivedRecordId(), null);
+        appendOnce(
+                AuditAction.EXTERNAL_RECORD_DECIDED,
+                receivedRecordId,
+                event.ingestionId(),
+                () -> AuditRecord.externalRecordDecided(
+                        event.decidedBy(),
+                        event.decidedByCompanyId(),
+                        receivedRecordId,
+                        event.decision(),
+                        "decision=" + part(event.decision(), "decision")
+                                + origin(event.ingestionId(), event.dataSourceId())
+                                + ";reason=" + part(event.reason(), "reason"),
+                        event.decidedAt()));
     }
 
     /**
@@ -138,9 +161,14 @@ public class ExternalRecordAuditEventHandler {
 
     private static String adoptedTail(String infoVersion, UUID ingestionId, UUID dataSourceId, UUID adoptedValueId) {
         return ";infoVersion=" + part(infoVersion, "infoVersion")
-                + ";ingestionId=" + part(ingestionId, "ingestionId")
-                + ";dataSourceId=" + part(dataSourceId, "dataSourceId")
+                + origin(ingestionId, dataSourceId)
                 + ";adoptedValueId=" + part(adoptedValueId, "adoptedValueId");
+    }
+
+    /** 要約の出どころの部品（取込 ID と情報源 ID。採用・隔離・判断で共通。Bolt 39d2 で 1 か所にまとめた）。 */
+    private static String origin(UUID ingestionId, UUID dataSourceId) {
+        return ";ingestionId=" + part(ingestionId, "ingestionId") + ";dataSourceId="
+                + part(dataSourceId, "dataSourceId");
     }
 
     /**

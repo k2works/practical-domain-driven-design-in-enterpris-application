@@ -12,8 +12,11 @@ import com.example.cargotracker.externaldata.domain.model.aggregates.ExternalRec
 import com.example.cargotracker.externaldata.domain.model.aggregates.Ingestion;
 import com.example.cargotracker.externaldata.domain.model.aggregates.IngestionRepository;
 import com.example.cargotracker.externaldata.domain.model.aggregates.ReceivedRecord;
+import com.example.cargotracker.externaldata.domain.model.aggregates.ReceivedRecordDecision;
+import com.example.cargotracker.externaldata.domain.model.aggregates.ReceivedRecordDecisionRepository;
 import com.example.cargotracker.externaldata.domain.model.aggregates.ReceivedRecordRepository;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.Classification;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.DecisionKind;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.IdempotencyKey;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PayloadHash;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PayloadObjectKey;
@@ -82,6 +85,57 @@ class MyBatisExternalDataRecordRepositoriesIntegrationTest extends ExternalDataR
     @Override
     protected Optional<ReceivedRecord> storedReceivedRecord(UUID id) {
         return readReceivedRecord(jdbc, id);
+    }
+
+    @Autowired
+    ReceivedRecordDecisionRepository receivedRecordDecisions;
+
+    @Override
+    protected ReceivedRecordDecisionRepository receivedRecordDecisions() {
+        return receivedRecordDecisions;
+    }
+
+    @Override
+    protected Optional<ReceivedRecordDecision> storedDecision(UUID receivedRecordId) {
+        return readDecision(jdbc, receivedRecordId);
+    }
+
+    @Override
+    protected UUID receivedRecordWithoutIngestion() {
+        return insertReceivedRecordWithoutIngestion(jdbc);
+    }
+
+    /** 受信記録の判断の行を受信記録 ID で読む（H2 の契約のテストと共有する。Bolt 39d2）。 */
+    static Optional<ReceivedRecordDecision> readDecision(JdbcTemplate jdbc, UUID receivedRecordId) {
+        return jdbc
+                .query(
+                        "SELECT id, received_record_id, decision, decided_by, decided_at, reason"
+                                + " FROM external_data.received_record_decision WHERE received_record_id = ?",
+                        (rs, rowNum) -> new ReceivedRecordDecision(
+                                rs.getObject("id", UUID.class),
+                                rs.getObject("received_record_id", UUID.class),
+                                DecisionKind.valueOf(rs.getString("decision")),
+                                new UserId(rs.getObject("decided_by", UUID.class)),
+                                rs.getObject("decided_at", OffsetDateTime.class).toInstant(),
+                                rs.getString("reason")),
+                        receivedRecordId)
+                .stream()
+                .findFirst();
+    }
+
+    /** 取込のない（{@code ingestion_id} が NULL の）キーのない隔離の受信記録を書き、ID を返す（H2 の契約のテストと共有する。Bolt 39d2 の行 22）。 */
+    static UUID insertReceivedRecordWithoutIngestion(JdbcTemplate jdbc) {
+        UUID id = UUID.randomUUID();
+        jdbc.update(
+                "INSERT INTO external_data.received_record (id, external_record_id, ingestion_id, payload_hash,"
+                        + " payload_object_key, acquired_at, classification, classification_note, classified_at)"
+                        + " VALUES (?, NULL, NULL, ?, ?, NULL, 'QUARANTINED', ?, ?)",
+                id,
+                "0".repeat(64),
+                "externaldata/records/" + id,
+                "取込のない隔離",
+                OffsetDateTime.parse("2099-01-01T00:00:00Z"));
+        return id;
     }
 
     @Test

@@ -8,6 +8,7 @@ import com.example.cargotracker.externaldata.domain.model.valueobjects.Undecided
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -67,6 +68,22 @@ public class UndecidedRecordQueryService {
                                 id -> dataSources.findById(id).orElseThrow())))
                 .toList();
         return new UndecidedRecordPage(items, total, page, pageCount, filter, notFound);
+    }
+
+    /**
+     * ID で絞った判断を待つ隔離 1 件（S-17 の判断の画面の中身。Bolt 39d2）。一覧と同じ項目で、隔離でない・判断のある・取込のない受信記録と
+     * ないときは空（情報源を引かない）。
+     *
+     * @param receivedRecordId 受信記録 ID
+     */
+    @Transactional(readOnly = true)
+    public Optional<UndecidedRecordPage.Item> undecidedQuarantine(UUID receivedRecordId) {
+        return receivedRecords
+                .undecidedQuarantine(receivedRecordId)
+                .map(quarantine -> item(
+                        quarantine,
+                        // 取込は情報源への外部キーを持つので、情報源は必ずある
+                        dataSources.findById(quarantine.dataSourceId()).orElseThrow()));
     }
 
     private static UndecidedRecordPage.Item item(UndecidedQuarantine quarantine, DataSource source) {

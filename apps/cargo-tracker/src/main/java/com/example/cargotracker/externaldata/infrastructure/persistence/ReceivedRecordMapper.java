@@ -2,6 +2,7 @@ package com.example.cargotracker.externaldata.infrastructure.persistence;
 
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -25,6 +26,16 @@ public interface ReceivedRecordMapper {
             @Param("ingestionId") UUID ingestionId, @Param("offset") int offset, @Param("limit") int limit);
 
     int countUndecidedQuarantines(@Param("ingestionId") UUID ingestionId);
+
+    /** 取込で書いた受信記録を ID で引く（Bolt 39d2）。取込のない受信記録は返さない。 */
+    Optional<ReceivedRecordRow> selectById(@Param("id") UUID id);
+
+    /**
+     * ID で絞った判断を待つ隔離（Bolt 39d2）。一覧と同じ SQL の断片を使うので、断片の取込の絞り込みの引数 {@code ingestionId} も受ける
+     * （リポジトリは {@code null} を渡す）。
+     */
+    Optional<UndecidedQuarantineRow> undecidedQuarantine(
+            @Param("receivedRecordId") UUID receivedRecordId, @Param("ingestionId") UUID ingestionId);
 
     /**
      * 判断を待つ隔離の照会の 1 行（受信記録に取込と外部原本を結んだ行。Bolt 39d）。外部原本のないキーのない隔離は外部 ID・外部版が

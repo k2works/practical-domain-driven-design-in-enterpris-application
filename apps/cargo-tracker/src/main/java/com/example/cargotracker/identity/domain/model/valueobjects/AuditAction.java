@@ -95,5 +95,11 @@ public enum AuditAction {
      * 外部原本を隔離した（DE-14 を監査する。Bolt 39b3b、AUD-01、IA-INV-15）。成功だけを記録し、理由は隔離の理由の区分
      * （{@code CONTENT_MISMATCH} か形式の誤りの名前）。対象と変更後は {@link #EXTERNAL_RECORD_ADOPTED} と同じ形。
      */
-    EXTERNAL_RECORD_QUARANTINED
+    EXTERNAL_RECORD_QUARANTINED,
+    /**
+     * データ責任者が受信記録を判断した（DE-29 を監査する。Bolt 39d2、AUD-01、IA-INV-15）。人の判断として成功だけを記録し、理由は判断
+     * （{@code REJECTED}。39d3 で {@code ADOPTED}）。却下の理由の文は 100 文字の理由の列に収まらないので、変更後の要約の最後に置く。対象は
+     * {@link #EXTERNAL_RECORD_ADOPTED} と同じ形。
+     */
+    EXTERNAL_RECORD_DECIDED
 }

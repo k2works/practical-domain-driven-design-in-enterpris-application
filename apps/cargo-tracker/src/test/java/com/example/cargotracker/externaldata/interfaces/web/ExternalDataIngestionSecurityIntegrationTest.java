@@ -9,10 +9,12 @@ import static org.mockito.Mockito.verify;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.example.cargotracker.externaldata.application.internal.commandservices.IngestionOutcome.Ingested;
 import com.example.cargotracker.externaldata.application.internal.commandservices.IngestionService;
+import com.example.cargotracker.externaldata.application.internal.commandservices.ReceivedRecordDecisionService;
 import com.example.cargotracker.externaldata.application.internal.queryservices.IngestionSummaryQueryService;
 import com.example.cargotracker.externaldata.application.internal.queryservices.IngestionSummaryView;
 import com.example.cargotracker.externaldata.domain.events.ExternalRecordQuarantined;
@@ -128,6 +130,10 @@ class ExternalDataIngestionSecurityIntegrationTest {
     /** 拒否で原本を保存しないことを呼び出しの記録で確かめる（Bolt 39c2 の行 1・2・5。T-236）。 */
     @MockitoSpyBean
     ExternalPayloadStorage payloadStorage;
+
+    /** 権限なしと CSRF のトークンのない送信で却下しないことを呼び出しの記録で確かめる（Bolt 39d2 の行 9。T-236）。 */
+    @MockitoSpyBean
+    ReceivedRecordDecisionService decisionService;
 
     private Company operator;
     private Company shipper;
@@ -723,9 +729,130 @@ class ExternalDataIngestionSecurityIntegrationTest {
                     cells.add(org.springframework.web.util.HtmlUtils.htmlUnescape(
                             cell.group(1).replaceAll("<[^>]+>", "")));
                 }
-                rows.add(cells.subList(1, cells.size()));
+                // 取り込んだ日時と、Bolt 39d2 で足した判断の列（「判断する」のリンク）を除く
+                rows.add(cells.subList(1, cells.size() - 1));
             }
             return rows;
+        }
+    }
+
+    /**
+     * Bolt 39d2 の行 1・9（S-17 の却下。本物のフィルターの連なりと PostgreSQL の上で）。データ責任者が判断の画面から却下すると PRG で元の取込の
+     * 一覧に戻り、判断の表に判断者と理由が残り、その隔離は一覧から消える。判断の画面と却下の POST は今の {@code /staff/external-data/**} の
+     * 規則のまま、ほかの役割は 403、未ログインは A-01、CSRF のトークンのない POST は却下しない。39c〜39d の同じ番号の行と名前が衝突しないよう
+     * 入れ子にする。
+     */
+    @Nested
+    class Bolt39d2_隔離の却下 {
+
+        private static final String LIST_URL = "/staff/external-data/undecided-records";
+
+        /** 内容の違う原本 1 つを取り込み、その受信記録 ID と取込 ID を返す。 */
+        private UUID[] quarantined(Cookie session) throws Exception {
+            String location = ingested(session, file(row("V-1", PORT_CALLS), row("V-1", CHANGED_PORT_CALLS)));
+            UUID ingestionId = UUID.fromString(location.substring(location.lastIndexOf('/') + 1));
+            return new UUID[] {receivedRecordOf(ingestionId, "QUARANTINED"), ingestionId};
+        }
+
+        private int decisionsOf(UUID receivedRecordId) {
+            Integer value = jdbc.queryForObject(
+                    "SELECT COUNT(*) FROM external_data.received_record_decision WHERE received_record_id = ?",
+                    Integer.class,
+                    receivedRecordId);
+            return value == null ? 0 : value;
+        }
+
+        @Test
+        void 行1_データ責任者は判断の画面から却下すると元の取込の一覧に戻り判断が残り隔離は一覧から消える() throws Exception {
+            String email = user(Set.of(Role.DATA_STEWARD));
+            Cookie session = login(email);
+            UUID[] ids = quarantined(session);
+            UUID receivedRecordId = ids[0];
+            String entry = LIST_URL + "?ingestion=" + ids[1] + "&page=1";
+            String decisionUrl = LIST_URL + "/" + receivedRecordId;
+            assertThat(body(session, LIST_URL + "?ingestion=" + ids[1]))
+                    .contains("href=\"" + decisionUrl + "?ingestion=" + ids[1] + "&amp;page=1\"");
+            assertThat(body(session, decisionUrl + "?ingestion=" + ids[1] + "&page=1"))
+                    .contains("<h1>隔離の判断</h1>");
+
+            MvcResult rejected = mvc.perform(post(decisionUrl + "/decision?ingestion=" + ids[1] + "&page=1")
+                            .param("reason", "提供元に確かめ、誤って送った原本と分かった。")
+                            .cookie(session)
+                            .with(csrf()))
+                    .andExpect(status().is3xxRedirection())
+                    .andReturn();
+
+            assertThat(rejected.getResponse().getRedirectedUrl()).isEqualTo(entry);
+            assertThat((java.util.Map<String, Object>) rejected.getFlashMap()).containsEntry("result", "隔離を却下しました。");
+            assertThat(body(session, entry)).contains("<p>この取込に判断を待つ隔離はありません。</p>");
+            assertThat(jdbc.queryForMap(
+                            "SELECT decision, reason FROM external_data.received_record_decision"
+                                    + " WHERE received_record_id = ?",
+                            receivedRecordId))
+                    .containsEntry("decision", "REJECTED")
+                    .containsEntry("reason", "提供元に確かめ、誤って送った原本と分かった。");
+            // 判断済みの隔離の判断の画面と 2 度目の送信は、一覧に戻って判断済みと知らせる（行 5）
+            MvcResult again = mvc.perform(post(decisionUrl + "/decision")
+                            .param("reason", "二重の送信")
+                            .cookie(session)
+                            .with(csrf()))
+                    .andExpect(status().is3xxRedirection())
+                    .andReturn();
+            assertThat((java.util.Map<String, Object>) again.getFlashMap()).containsEntry("result", "この隔離は判断済みです。");
+            assertThat(decisionsOf(receivedRecordId)).isEqualTo(1);
+        }
+
+        @Test
+        void 行9_ほかの7つの役割は判断の画面と却下で403になり却下しない() throws Exception {
+            UUID receivedRecordId = quarantined(login(user(Set.of(Role.DATA_STEWARD))))[0];
+            String decisionUrl = LIST_URL + "/" + receivedRecordId;
+            for (Role role : EnumSet.complementOf(EnumSet.of(Role.DATA_STEWARD))) {
+                Cookie session = login(user(Set.of(role)));
+
+                mvc.perform(get(decisionUrl).cookie(session)).andExpect(status().isForbidden());
+                mvc.perform(post(decisionUrl + "/decision")
+                                .param("reason", "理由")
+                                .cookie(session)
+                                .with(csrf()))
+                        .andExpect(status().isForbidden());
+            }
+            verify(decisionService, never()).reject(any(), any());
+            assertThat(decisionsOf(receivedRecordId)).isZero();
+        }
+
+        @Test
+        void 行9_未ログインは判断の画面と却下でA01へ移り却下しない() throws Exception {
+            UUID receivedRecordId = quarantined(login(user(Set.of(Role.DATA_STEWARD))))[0];
+            String decisionUrl = LIST_URL + "/" + receivedRecordId;
+
+            assertThat(mvc.perform(get(decisionUrl)).andReturn().getResponse().getRedirectedUrl())
+                    .endsWith("/login");
+            assertThat(mvc.perform(post(decisionUrl + "/decision")
+                                    .param("reason", "理由")
+                                    .with(csrf()))
+                            .andReturn()
+                            .getResponse()
+                            .getRedirectedUrl())
+                    .endsWith("/login");
+            verify(decisionService, never()).reject(any(), any());
+            assertThat(decisionsOf(receivedRecordId)).isZero();
+        }
+
+        @Test
+        void 行9_CSRFのトークンのない却下の送信は拒まれ却下のサービスを呼ばない() throws Exception {
+            Cookie session = login(user(Set.of(Role.DATA_STEWARD)));
+            UUID receivedRecordId = quarantined(session)[0];
+            String decisionUrl = LIST_URL + "/" + receivedRecordId;
+
+            MvcResult rejected = mvc.perform(post(decisionUrl + "/decision")
+                            .param("reason", "理由")
+                            .cookie(session))
+                    .andExpect(status().is3xxRedirection())
+                    .andReturn();
+
+            assertThat(rejected.getResponse().getRedirectedUrl()).doesNotStartWith(LIST_URL);
+            verify(decisionService, never()).reject(any(), any());
+            assertThat(decisionsOf(receivedRecordId)).isZero();
         }
     }
 

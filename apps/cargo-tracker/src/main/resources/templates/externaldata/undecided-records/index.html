@@ -10,7 +10,9 @@
 <main>
     <h1>隔離・差異の確認</h1>
     <!--/* S-17 の一覧（Bolt 39d、US-14 AC4）。判断を待つ隔離を取込の新しい順・ファイルの行の順に 100 件ずつ示す（並びは照会が決め、画面で並べ直さない）。
-           文は controller が組み立てる。注記には取込ファイルから来た値が入るので th:text で示す。判断の列は 39d2・39d3、差異の行は 39h で足す */-->
+           文は controller が組み立てる。注記には取込ファイルから来た値が入るので th:text で示す。判断の列（「判断する」。読み上げに行の範囲と
+           外部 ID を足し、元の取込とページを判断の画面に渡す）と判断の後の知らせは Bolt 39d2、採用は 39d3、差異の行は 39h で足す */-->
+    <p role="status" th:if="${result}" th:text="${result}">隔離を却下しました。</p>
     <p th:if="${ingestionNotFound}" th:text="${ingestionNotFound}">指定された取込が見つかりません。</p>
     <p th:if="${emptyText}" th:text="${emptyText}">判断を待つ隔離はありません。</p>
     <p th:if="${countText}" th:text="${countText}">この取込の判断を待つ隔離 9,901 件（101〜200 件目を示しています）</p>
@@ -27,6 +29,7 @@
                 <th scope="col">種類</th>
                 <th scope="col">外部 ID・外部版</th>
                 <th scope="col">隔離の理由</th>
+                <th scope="col">判断</th>
             </tr>
             </thead>
             <tbody>
@@ -39,6 +42,7 @@
                 <td th:if="${row.externalKey() != null}" th:text="${row.externalKey()}">DEMO-201・3</td>
                 <td th:unless="${row.externalKey() != null}"><span aria-hidden="true">—</span><span class="visually-hidden">なし</span></td>
                 <td th:text="${row.note()}">102 行目: 寄港の列の値が正しくありません（…）。提供元に確かめてください。</td>
+                <td><a th:href="${row.decisionUrl()}">判断する<span class="visually-hidden" th:text="|（${row.decisionLabel()}）|">（102 行目、外部 ID なし）</span></a></td>
             </tr>
             </tbody>
         </table>

@@ -399,4 +399,45 @@ class AuditRecordTest {
         assertThatThrownBy(() -> AuditRecord.externalRecordQuarantined(null, COMPANY, id, "CONTENT_MISMATCH", "s", AT))
                 .isInstanceOf(AuditRecord.MissingEventValueException.class);
     }
+
+    /** Bolt 39d2 の行 11（受信記録の判断の監査。開始準備の決定 (6)）。39b3b の同じ番号の行と名前が衝突しないよう入れ子にする。 */
+    @org.junit.jupiter.api.Nested
+    class Bolt39d2_受信記録の判断 {
+
+        @Test
+        void 行11_受信記録の判断は成功として理由の列に判断を記録し版と変更前を持たない() {
+            String receivedRecordId = UUID.randomUUID().toString();
+            String summary = "decision=REJECTED;ingestionId=i;dataSourceId=d;reason=提供元に確かめた";
+
+            AuditRecord auditRecord =
+                    AuditRecord.externalRecordDecided(USER, COMPANY, receivedRecordId, "REJECTED", summary, AT);
+
+            assertThat(auditRecord.action()).isEqualTo(AuditAction.EXTERNAL_RECORD_DECIDED);
+            assertThat(auditRecord.result()).isEqualTo(AuditResult.SUCCESS);
+            assertThat(auditRecord.reason()).isEqualTo("REJECTED");
+            assertThat(auditRecord.actorUserId()).isEqualTo(USER);
+            assertThat(auditRecord.actorCompanyId()).isEqualTo(COMPANY);
+            assertThat(auditRecord.occurredAt()).isEqualTo(AT);
+            assertThat(auditRecord.target())
+                    .isEqualTo(new AuditTarget("RECEIVED_RECORD", receivedRecordId, null, null, summary));
+        }
+
+        @Test
+        void 行11_受信記録の判断の記録は判断者と企業と受信記録IDと判断と要約と時刻を欠かせない() {
+            String id = UUID.randomUUID().toString();
+
+            assertThatThrownBy(() -> AuditRecord.externalRecordDecided(null, COMPANY, id, "REJECTED", "s", AT))
+                    .isInstanceOf(AuditRecord.MissingEventValueException.class);
+            assertThatThrownBy(() -> AuditRecord.externalRecordDecided(USER, null, id, "REJECTED", "s", AT))
+                    .isInstanceOf(AuditRecord.MissingEventValueException.class);
+            assertThatThrownBy(() -> AuditRecord.externalRecordDecided(USER, COMPANY, " ", "REJECTED", "s", AT))
+                    .isInstanceOf(AuditRecord.MissingEventValueException.class);
+            assertThatThrownBy(() -> AuditRecord.externalRecordDecided(USER, COMPANY, id, null, "s", AT))
+                    .isInstanceOf(AuditRecord.MissingEventValueException.class);
+            assertThatThrownBy(() -> AuditRecord.externalRecordDecided(USER, COMPANY, id, "REJECTED", " ", AT))
+                    .isInstanceOf(AuditRecord.MissingEventValueException.class);
+            assertThatThrownBy(() -> AuditRecord.externalRecordDecided(USER, COMPANY, id, "REJECTED", "s", null))
+                    .isInstanceOf(AuditRecord.MissingEventValueException.class);
+        }
+    }
 }

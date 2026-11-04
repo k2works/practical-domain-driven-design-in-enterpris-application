@@ -52,6 +52,18 @@ public abstract class ExternalDataRecordRepositoriesContract {
     /** 書いた受信記録を読む（ポートの外。往復の確かめ）。 */
     protected abstract Optional<ReceivedRecord> storedReceivedRecord(UUID id);
 
+    /** 受信記録の判断のリポジトリ（Bolt 39d2）。 */
+    protected abstract ReceivedRecordDecisionRepository receivedRecordDecisions();
+
+    /** 書いた判断を受信記録 ID で読む（ポートの外。往復の確かめ。Bolt 39d2）。 */
+    protected abstract Optional<ReceivedRecordDecision> storedDecision(UUID receivedRecordId);
+
+    /**
+     * 取込のない（{@code ingestion_id} が NULL の）キーのない隔離の受信記録をポートを通さず書き、ID を返す（Bolt 39d2 の行 22。受信記録の
+     * record は取込 ID を必ず持つので、ポートでは書けない）。メモリの実装はそのような受信記録を持てないので、書かずに新しい ID を返す。
+     */
+    protected abstract UUID receivedRecordWithoutIngestion();
+
     private final String provider = "契約の提供元-" + UUID.randomUUID();
 
     private final DataSource source = new DataSource(UUID.randomUUID(), provider, "VOYAGE", ApprovalStatus.APPROVED);
@@ -575,5 +587,137 @@ public abstract class ExternalDataRecordRepositoriesContract {
                 .isZero();
         assertThat(receivedRecords().countByIngestionAndClassification(other.id(), Classification.DUPLICATE))
                 .isEqualTo(1);
+    }
+
+    // --- Bolt 39d2 の行 2・4〜6・21・22（受信記録の判断のポートと、受信記録を ID で引く照会。開始準備の決定 (2)・(3)）。名前の頭に Bolt39d2_ を
+    // 付ける。行 7 を判断のポートで書き直すこと（行 16）は 39d2b に送った ---
+
+    /** 補助文字（U+20BB7。UTF-16 で 2 単位）。 */
+    private static final String SUPPLEMENTARY = new String(Character.toChars(0x20BB7));
+
+    /** マイクロ秒までの判断の時刻（DB の精度）。 */
+    private static final Instant DECIDED_AT = Instant.parse("2099-01-01T00:10:00.654321Z");
+
+    private final UserId steward = new UserId(UUID.randomUUID());
+
+    @Test
+    void Bolt39d2_行4_受信記録をIDで引くと取込で書いた受信記録を分類によらず返し書いていないIDは空() {
+        Ingestion ingestion = ingestionAt(FUTURE);
+        ingestions().add(ingestion);
+        ExternalRecord externalRecord = externalRecord(key("VOYAGE", "V-39D2-4"));
+        externalRecords().add(externalRecord);
+        ReceivedRecord adopted = keyed(externalRecord, ingestion, Classification.ADOPTED, 2);
+        ReceivedRecord rowError = keyless(ingestion, new PhysicalLineRange(3, 3));
+        receivedRecords().add(adopted);
+        receivedRecords().add(rowError);
+
+        assertThat(receivedRecords().findById(adopted.id())).contains(adopted);
+        assertThat(receivedRecords().findById(rowError.id())).contains(rowError);
+        assertThat(receivedRecords().findById(UUID.randomUUID())).isEmpty();
+        assertThat(receivedRecords().undecidedQuarantine(UUID.randomUUID())).isEmpty();
+    }
+
+    @Test
+    void Bolt39d2_行4_IDで絞った照会は判断を待つ隔離の一覧と同じ中身を返し隔離でない受信記録は空() {
+        Ingestion ingestion = ingestionAt(FUTURE);
+        ingestions().add(ingestion);
+        ExternalRecord externalRecord = externalRecord(key("VOYAGE", "V-39D2-4B"));
+        externalRecords().add(externalRecord);
+        ReceivedRecord duplicate = keyed(externalRecord, ingestion, Classification.DUPLICATE, 2);
+        ReceivedRecord mismatch = keyed(externalRecord, ingestion, Classification.QUARANTINED, 3);
+        ReceivedRecord fileError = keyless(ingestion, null);
+        receivedRecords().add(duplicate);
+        receivedRecords().add(mismatch);
+        receivedRecords().add(fileError);
+
+        assertThat(receivedRecords().undecidedQuarantine(mismatch.id()))
+                .contains(undecided(mismatch, ingestion, externalRecord));
+        assertThat(receivedRecords().undecidedQuarantine(fileError.id()))
+                .contains(undecided(fileError, ingestion, null));
+        assertThat(receivedRecords().undecidedQuarantine(duplicate.id())).isEmpty();
+    }
+
+    @Test
+    void Bolt39d2_行5_判断を追記すると判断があると分かりIDで絞った照会と一覧と件数から消える() {
+        Ingestion ingestion = ingestionAt(FUTURE);
+        ingestions().add(ingestion);
+        ReceivedRecord decided = keyless(ingestion, new PhysicalLineRange(2, 2));
+        ReceivedRecord undecided = keyless(ingestion, new PhysicalLineRange(3, 3));
+        receivedRecords().add(decided);
+        receivedRecords().add(undecided);
+        assertThat(receivedRecords().undecidedQuarantine(decided.id())).isPresent();
+        assertThat(receivedRecordDecisions().existsFor(decided.id())).isFalse();
+
+        receivedRecordDecisions().add(ReceivedRecordDecision.reject(decided, "提供元に確かめた。", steward, DECIDED_AT));
+
+        assertThat(receivedRecordDecisions().existsFor(decided.id())).isTrue();
+        assertThat(receivedRecordDecisions().existsFor(undecided.id())).isFalse();
+        assertThat(receivedRecords().undecidedQuarantine(decided.id())).isEmpty();
+        assertThat(receivedRecords().undecidedQuarantine(undecided.id())).isPresent();
+        assertThat(receivedRecords().undecidedQuarantines(ingestion.id(), 0, 100))
+                .extracting(UndecidedQuarantine::receivedRecordId)
+                .containsExactly(undecided.id());
+        assertThat(receivedRecords().countUndecidedQuarantines(ingestion.id())).isEqualTo(1);
+        // 判断の後も受信記録は追記専用のまま ID で引ける（判断できるかは分類と判断の有無で決める）
+        assertThat(receivedRecords().findById(decided.id())).contains(decided);
+    }
+
+    @Test
+    void Bolt39d2_行2_判断を判断者と判断の時刻と理由ごとマイクロ秒まで往復する() {
+        Ingestion ingestion = ingestionAt(FUTURE);
+        ingestions().add(ingestion);
+        ReceivedRecord quarantined = keyless(ingestion, new PhysicalLineRange(2, 2));
+        receivedRecords().add(quarantined);
+        ReceivedRecordDecision decision =
+                ReceivedRecordDecision.reject(quarantined, "直したファイルを取り込み直した。", steward, DECIDED_AT);
+
+        receivedRecordDecisions().add(decision);
+
+        assertThat(storedDecision(quarantined.id())).contains(decision);
+    }
+
+    @Test
+    void Bolt39d2_行6_同じ受信記録の2つ目の判断は名前付きの例外になり判断は1つのまま() {
+        Ingestion ingestion = ingestionAt(FUTURE);
+        ingestions().add(ingestion);
+        ReceivedRecord quarantined = keyless(ingestion, new PhysicalLineRange(2, 2));
+        receivedRecords().add(quarantined);
+        ReceivedRecordDecision first = ReceivedRecordDecision.reject(quarantined, "先の判断。", steward, DECIDED_AT);
+        receivedRecordDecisions().add(first);
+        ReceivedRecordDecision second =
+                ReceivedRecordDecision.reject(quarantined, "後の判断。", new UserId(UUID.randomUUID()), DECIDED_AT);
+
+        ReceivedRecordDecisionRepository decisions = receivedRecordDecisions();
+        assertThatThrownBy(() -> decisions.add(second))
+                .isInstanceOf(DuplicateReceivedRecordDecisionException.class)
+                .hasMessageContaining(quarantined.id().toString());
+        assertThat(storedDecision(quarantined.id())).contains(first);
+        assertThat(receivedRecords().undecidedQuarantine(quarantined.id())).isEmpty();
+    }
+
+    @Test
+    void Bolt39d2_行21_補助文字を含む1000文字の理由の判断を往復する() {
+        Ingestion ingestion = ingestionAt(FUTURE);
+        ingestions().add(ingestion);
+        ReceivedRecord quarantined = keyless(ingestion, new PhysicalLineRange(2, 2));
+        receivedRecords().add(quarantined);
+        String reason = SUPPLEMENTARY.repeat(1_000);
+        ReceivedRecordDecision decision = ReceivedRecordDecision.reject(quarantined, reason, steward, DECIDED_AT);
+
+        receivedRecordDecisions().add(decision);
+
+        assertThat(storedDecision(quarantined.id())).hasValueSatisfying(stored -> {
+            assertThat(stored.reason()).isEqualTo(reason);
+            assertThat(stored.reason().codePointCount(0, stored.reason().length()))
+                    .isEqualTo(1_000);
+        });
+    }
+
+    @Test
+    void Bolt39d2_行22_取込のない受信記録はIDで引けずIDで絞った照会にも出ない() {
+        UUID withoutIngestion = receivedRecordWithoutIngestion();
+
+        assertThat(receivedRecords().findById(withoutIngestion)).isEmpty();
+        assertThat(receivedRecords().undecidedQuarantine(withoutIngestion)).isEmpty();
     }
 }

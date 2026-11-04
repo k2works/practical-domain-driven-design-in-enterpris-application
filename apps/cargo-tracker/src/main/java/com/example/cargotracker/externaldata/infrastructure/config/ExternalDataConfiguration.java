@@ -1,6 +1,7 @@
 package com.example.cargotracker.externaldata.infrastructure.config;
 
 import com.example.cargotracker.externaldata.application.internal.commandservices.IngestionService;
+import com.example.cargotracker.externaldata.application.internal.commandservices.ReceivedRecordDecisionService;
 import com.example.cargotracker.externaldata.application.internal.queryservices.IngestibleDataSourceQueryService;
 import com.example.cargotracker.externaldata.application.internal.queryservices.IngestionSummaryQueryService;
 import com.example.cargotracker.externaldata.application.internal.queryservices.PilotReadinessQueryService;
@@ -10,6 +11,7 @@ import com.example.cargotracker.externaldata.domain.model.aggregates.DataSourceR
 import com.example.cargotracker.externaldata.domain.model.aggregates.ExternalPayloadStorage;
 import com.example.cargotracker.externaldata.domain.model.aggregates.ExternalRecordRepository;
 import com.example.cargotracker.externaldata.domain.model.aggregates.IngestionRepository;
+import com.example.cargotracker.externaldata.domain.model.aggregates.ReceivedRecordDecisionRepository;
 import com.example.cargotracker.externaldata.domain.model.aggregates.ReceivedRecordRepository;
 import java.time.Clock;
 import org.springframework.context.ApplicationEventPublisher;
@@ -50,6 +52,17 @@ public class ExternalDataConfiguration {
             IngestionRepository ingestions,
             DataSourceRepository dataSources) {
         return new UndecidedRecordQueryService(receivedRecords, ingestions, dataSources);
+    }
+
+    /** S-17 の隔離の却下（Bolt 39d2）。 */
+    @Bean
+    ReceivedRecordDecisionService receivedRecordDecisionService(
+            ReceivedRecordRepository receivedRecords,
+            ReceivedRecordDecisionRepository decisions,
+            IngestionRepository ingestions,
+            ApplicationEventPublisher eventPublisher,
+            Clock clock) {
+        return new ReceivedRecordDecisionService(receivedRecords, decisions, ingestions, eventPublisher, clock);
     }
 
     @Bean

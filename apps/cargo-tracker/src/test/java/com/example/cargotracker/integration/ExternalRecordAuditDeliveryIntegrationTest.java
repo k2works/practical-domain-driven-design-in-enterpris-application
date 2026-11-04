@@ -7,12 +7,16 @@ import static org.mockito.ArgumentMatchers.argThat;
 import com.example.cargotracker.TestcontainersConfiguration;
 import com.example.cargotracker.externaldata.application.internal.commands.IngestFileCommand;
 import com.example.cargotracker.externaldata.application.internal.commands.IngestFileCommand.IngestedRow;
+import com.example.cargotracker.externaldata.application.internal.commands.RejectReceivedRecordCommand;
+import com.example.cargotracker.externaldata.application.internal.commandservices.DecisionOutcome;
 import com.example.cargotracker.externaldata.application.internal.commandservices.IngestionOutcome;
 import com.example.cargotracker.externaldata.application.internal.commandservices.IngestionOutcome.Ingested;
 import com.example.cargotracker.externaldata.application.internal.commandservices.IngestionOutcome.RowResult;
 import com.example.cargotracker.externaldata.application.internal.commandservices.IngestionService;
+import com.example.cargotracker.externaldata.application.internal.commandservices.ReceivedRecordDecisionService;
 import com.example.cargotracker.externaldata.domain.events.ExternalRecordQuarantined;
 import com.example.cargotracker.externaldata.domain.events.MilestoneAdoptedValueAccepted;
+import com.example.cargotracker.externaldata.domain.events.ReceivedRecordDecided;
 import com.example.cargotracker.externaldata.domain.events.VoyageAdoptedValueUpdated;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.Classification;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.MilestoneKindValue;
@@ -286,6 +290,97 @@ class ExternalRecordAuditDeliveryIntegrationTest {
                                 .anyMatch(id -> id.toString().equals(argument)
                                         || (argument instanceof AuditRecord auditRecord && targets(auditRecord, id)))))
                 .isEmpty();
+    }
+
+    /**
+     * Bolt 39d2 の行 12（DE-29 の監査の配信。T-184）。却下のコミットの後に監査の listener が DE-29 を受け、判断の監査記録を 1 つ書く。巻き戻った
+     * 却下には発行記録も監査記録もない。39b3b の同じ番号の行と名前が衝突しないよう入れ子にする。
+     */
+    @org.junit.jupiter.api.Nested
+    class Bolt39d2_判断の監査の配信 {
+
+        @Autowired
+        ReceivedRecordDecisionService decisionService;
+
+        /** 内容の違う原本の隔離を 1 つ取り込み、その受信記録 ID を返す。 */
+        private UUID quarantined(UUID sourceId) {
+            Ingested result = ingested(ingestionService.ingest(
+                    steward,
+                    milestoneFile(
+                            sourceId,
+                            milestone(2, "MS-0001", "CTABCDEFGH2345"),
+                            milestone(3, "MS-0001", "CTABCDEFGH2346"))));
+            return result.rows().get(1).receivedRecordId();
+        }
+
+        @Test
+        void 行12_却下のコミットの後に監査のlistenerがDE29を受け判断の監査記録を1つ書き発行記録が完了になる() {
+            UUID sourceId = insertApprovedSource("運送会社-" + UUID.randomUUID(), "MILESTONE");
+            try {
+                UUID receivedRecordId = quarantined(sourceId);
+
+                DecisionOutcome outcome = decisionService.reject(
+                        steward, new RejectReceivedRecordCommand(receivedRecordId, "提供元に確かめた; 誤送信"));
+
+                assertThat(outcome).isEqualTo(new DecisionOutcome.Rejected(receivedRecordId));
+                awaitCompletedAuditPublication(ReceivedRecordDecided.class, receivedRecordId);
+                assertThat(auditRecordOf(AuditAction.EXTERNAL_RECORD_DECIDED, receivedRecordId))
+                        .containsEntry("result", "SUCCESS")
+                        .containsEntry("actor_user_id", steward.userId().value())
+                        .containsEntry("reason", "REJECTED")
+                        .containsEntry(
+                                "occurred_at",
+                                jdbc.queryForObject(
+                                        "SELECT decided_at FROM external_data.received_record_decision"
+                                                + " WHERE received_record_id = ?",
+                                        Object.class,
+                                        receivedRecordId));
+                assertThat(count(
+                                "SELECT COUNT(*) FROM identity.audit_record WHERE action = 'EXTERNAL_RECORD_DECIDED'"
+                                        + " AND target_type = 'RECEIVED_RECORD' AND target_id = ?",
+                                receivedRecordId.toString()))
+                        .isEqualTo(1);
+            } finally {
+                removeSource(sourceId);
+            }
+        }
+
+        @Test
+        void 行12_巻き戻った却下には判断の発行記録も監査記録もなく監査のlistenerは呼ばれない() {
+            UUID sourceId = insertApprovedSource("運送会社-" + UUID.randomUUID(), "MILESTONE");
+            try {
+                UUID receivedRecordId = quarantined(sourceId);
+
+                transactionTemplate.executeWithoutResult(status -> {
+                    assertThat(decisionService.reject(
+                                    steward, new RejectReceivedRecordCommand(receivedRecordId, "巻き戻す却下")))
+                            .isInstanceOf(DecisionOutcome.Rejected.class);
+                    status.setRollbackOnly();
+                });
+
+                assertThat(count(
+                                "SELECT COUNT(*) FROM platform.event_publication WHERE event_type = ?"
+                                        + " AND serialized_event LIKE ?",
+                                ReceivedRecordDecided.class.getName(),
+                                "%" + receivedRecordId + "%"))
+                        .isZero();
+                assertThat(count(
+                                "SELECT COUNT(*) FROM external_data.received_record_decision WHERE received_record_id = ?",
+                                receivedRecordId))
+                        .isZero();
+                assertThat(count(
+                                "SELECT COUNT(*) FROM identity.audit_record WHERE action = 'EXTERNAL_RECORD_DECIDED'"
+                                        + " AND target_id = ?",
+                                receivedRecordId.toString()))
+                        .isZero();
+                // 起きないことは呼び出しの記録で確かめる（T-236）。判断の監査の照会は呼ばれていない
+                Mockito.verify(auditRecords, Mockito.never())
+                        .existsByActionAndTarget(
+                                AuditAction.EXTERNAL_RECORD_DECIDED, "RECEIVED_RECORD", receivedRecordId.toString());
+            } finally {
+                removeSource(sourceId);
+            }
+        }
     }
 
     /** 監査の listener の、この受信記録のイベントの発行記録が完了になるまで待つ。 */

@@ -1,21 +1,35 @@
 package com.example.cargotracker.externaldata.interfaces.web;
 
+import com.example.cargotracker.externaldata.application.internal.commands.RejectReceivedRecordCommand;
+import com.example.cargotracker.externaldata.application.internal.commandservices.DecisionOutcome;
+import com.example.cargotracker.externaldata.application.internal.commandservices.ReceivedRecordDecisionService;
 import com.example.cargotracker.externaldata.application.internal.queryservices.UndecidedRecordPage;
 import com.example.cargotracker.externaldata.application.internal.queryservices.UndecidedRecordQueryService;
+import com.example.cargotracker.externaldata.domain.model.aggregates.ReceivedRecordDecision;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PhysicalLineRange;
 import com.example.cargotracker.platform.web.DateTimeDisplay;
+import com.example.cargotracker.shared.domain.AuthenticatedActor;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.UUID;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 /**
  * S-17 隔離・差異の確認（データ責任者。US-14 AC4。Bolt 39d）。判断を待つ隔離を取込の新しい順・ファイルの行の順に 100 件ずつ示す。取込で絞れ
  * （{@code ?ingestion=<取込 ID>}。S-16 の結果の画面の入口）、前後のページへ移れる（{@code ?page=<1 から>}）。トランザクションを持たず、照会の値を
- * 文言と項目に変えるだけで、並びとページの境（最後より後は最後のページ）を決めない。判断（却下・採用）は 39d2・39d3 で足す。
+ * 文言と項目に変えるだけで、並びとページの境（最後より後は最後のページ）を決めない。各行の「判断する」から判断の画面を開き、理由を書いて
+ * 却下すると PRG で元の一覧に戻る（Bolt 39d2）。判断できる受信記録の定めと却下は判断のサービスが持つ。採用は 39d3 で足す。
  *
  * <p>取込 ID が UUID でないときは 400 にせず、ない取込と同じく絞らない一覧に「指定された取込が見つかりません。」を示す。ページが数でない・1 より
  * 前のときは 1 ページ目を照会する（Bolt 39d 計画の状態の組み合わせの行 13・14）。
@@ -41,10 +55,33 @@ public class UndecidedRecordController {
 
     private static final String FORMAT_ERROR = "形式の誤り";
 
-    private final UndecidedRecordQueryService query;
+    private static final String DECISION_VIEW = "externaldata/undecided-records/decision";
+    private static final String FORM = "rejectionForm";
+    private static final String REASON = "reason";
+    private static final String RESULT = "result";
 
-    public UndecidedRecordController(UndecidedRecordQueryService query) {
+    /** 判断の後の知らせ（Bolt 39d2 の開始準備の決定 (5)）。 */
+    private static final String REJECTED = "隔離を却下しました。";
+
+    private static final String ALREADY_DECIDED = "この隔離は判断済みです。";
+
+    /** 理由の欄の誤り（【業務の判断】(d)。必須、1000 文字まで）。 */
+    private static final String REASON_REQUIRED = "却下の理由を書いてください。";
+
+    private static final String REASON_TOO_LONG = "却下の理由は " + ReceivedRecordDecision.REASON_LIMIT + " 文字までで書いてください。";
+
+    /** 行の範囲・外部 ID・外部版のないときの示し方。 */
+    private static final String WHOLE_FILE = "ファイル全体";
+
+    private static final String NO_EXTERNAL_KEY = "なし";
+    private static final String NO_EXTERNAL_ID = "外部 ID なし";
+
+    private final UndecidedRecordQueryService query;
+    private final ReceivedRecordDecisionService decisions;
+
+    public UndecidedRecordController(UndecidedRecordQueryService query, ReceivedRecordDecisionService decisions) {
         this.query = query;
+        this.decisions = decisions;
     }
 
     /** 一覧。 */
@@ -74,7 +111,9 @@ public class UndecidedRecordController {
         }
         model.addAttribute(
                 "rows",
-                result.items().stream().map(UndecidedRecordController::row).toList());
+                result.items().stream()
+                        .map(item -> row(item, result.ingestionFilter(), result.page()))
+                        .toList());
         model.addAttribute("pageSize", UndecidedRecordQueryService.PAGE_SIZE);
         if (result.hasPrevious()) {
             model.addAttribute("previousUrl", pageUrl(result.ingestionFilter(), result.page() - 1));
@@ -85,14 +124,122 @@ public class UndecidedRecordController {
         return VIEW;
     }
 
-    private static Row row(UndecidedRecordPage.Item item) {
+    /**
+     * 判断の画面（Bolt 39d2）。判断できる受信記録（取込で書いた受信記録で、分類が隔離で、判断がない）の中身と隔離の理由の全文、却下の理由の欄を
+     * 示す。UUID でない・ない・取込のない・隔離でない受信記録は 404、判断済みは元の一覧に戻って知らせる。{@code ingestion}・{@code page} は
+     * 一覧に戻る先で、読めない値は捨てて既定にする。
+     */
+    @GetMapping("/{receivedRecordId}")
+    public String decision(
+            @PathVariable String receivedRecordId,
+            @RequestParam(name = "ingestion", required = false) String ingestion,
+            @RequestParam(name = "page", required = false) String page,
+            Model model,
+            RedirectAttributes redirectAttributes) {
+        UUID id = parseUuid(receivedRecordId);
+        if (id == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        }
+        return decisionView(id, parseUuid(ingestion), parsePage(page), model, redirectAttributes);
+    }
+
+    /**
+     * 却下する（Bolt 39d2）。理由が空・上限を超えれば判断の画面に戻って欄の誤りを示し、却下したら PRG で元の一覧に戻って知らせる。
+     */
+    @PostMapping("/{receivedRecordId}/decision")
+    @SuppressWarnings("java:S107") // 画面の入力と戻り先と誤りと操作者を受ける MVC の入口
+    public String reject(
+            @PathVariable String receivedRecordId,
+            @RequestParam(name = "ingestion", required = false) String ingestion,
+            @RequestParam(name = "page", required = false) String page,
+            @ModelAttribute(FORM) RejectionForm form,
+            BindingResult bindingResult,
+            AuthenticatedActor actor,
+            Model model,
+            RedirectAttributes redirectAttributes) {
+        UUID id = parseUuid(receivedRecordId);
+        if (id == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        }
+        UUID back = parseUuid(ingestion);
+        int backPage = parsePage(page);
+        String reason = form.getReason() == null ? "" : form.getReason().strip();
+        if (reason.isEmpty()) {
+            bindingResult.rejectValue(REASON, "reason.required", REASON_REQUIRED);
+        } else if (reason.codePointCount(0, reason.length()) > ReceivedRecordDecision.REASON_LIMIT) {
+            bindingResult.rejectValue(REASON, "reason.tooLong", REASON_TOO_LONG);
+        }
+        if (bindingResult.hasErrors()) {
+            return decisionView(id, back, backPage, model, redirectAttributes);
+        }
+        DecisionOutcome outcome = decisions.reject(actor, new RejectReceivedRecordCommand(id, form.getReason()));
+        return respond(outcome, back, backPage, redirectAttributes);
+    }
+
+    /** 判断の画面を組み立てる。行き先は判断のサービスの判断できる受信記録の定めで決め、中身は照会で読む。 */
+    private String decisionView(UUID id, UUID back, int backPage, Model model, RedirectAttributes redirectAttributes) {
+        Optional<DecisionOutcome> refusal = decisions.refusalOf(id);
+        if (refusal.isPresent()) {
+            return respond(refusal.get(), back, backPage, redirectAttributes);
+        }
+        Optional<UndecidedRecordPage.Item> found = query.undecidedQuarantine(id);
+        if (found.isEmpty()) {
+            // 行き先を決めた後に判断された
+            return respond(new DecisionOutcome.AlreadyDecided(), back, backPage, redirectAttributes);
+        }
+        UndecidedRecordPage.Item item = found.get();
+        if (!model.containsAttribute(FORM)) {
+            model.addAttribute(FORM, new RejectionForm());
+        }
+        String lines = lines(item.lineRange());
+        String externalKey = externalKey(item);
+        model.addAttribute("ingestedAt", DateTimeDisplay.staff(item.ingestedAt()));
+        model.addAttribute("source", ExternalDataIngestionController.sourceLabel(item.provider(), item.recordType()));
+        model.addAttribute("lines", lines == null ? WHOLE_FILE : lines);
+        model.addAttribute("kind", item.keyless() ? FORMAT_ERROR : CONTENT_MISMATCH);
+        model.addAttribute("externalKey", externalKey == null ? NO_EXTERNAL_KEY : externalKey);
+        model.addAttribute("note", item.note());
+        model.addAttribute("keyless", item.keyless());
+        model.addAttribute("backUrl", pageUrl(back, backPage));
+        model.addAttribute("actionUrl", LIST_URL + "/" + id + "/decision" + query(back, backPage));
+        return DECISION_VIEW;
+    }
+
+    /** 判断の結果を行き先に変える（結果のすべてに行き先がある。T-240）。 */
+    private static String respond(
+            DecisionOutcome outcome, UUID back, int backPage, RedirectAttributes redirectAttributes) {
+        return switch (outcome) {
+            case DecisionOutcome.Rejected _ -> {
+                redirectAttributes.addFlashAttribute(RESULT, REJECTED);
+                yield "redirect:" + pageUrl(back, backPage);
+            }
+            case DecisionOutcome.AlreadyDecided _ -> {
+                redirectAttributes.addFlashAttribute(RESULT, ALREADY_DECIDED);
+                yield "redirect:" + pageUrl(back, backPage);
+            }
+            case DecisionOutcome.NotFound _, DecisionOutcome.NotDecidable _ ->
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+            case DecisionOutcome.NotPermitted _ -> throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        };
+    }
+
+    private static Row row(UndecidedRecordPage.Item item, UUID ingestionFilter, int page) {
+        String lines = lines(item.lineRange());
+        String externalKey = externalKey(item);
         return new Row(
                 DateTimeDisplay.staff(item.ingestedAt()),
                 ExternalDataIngestionController.sourceLabel(item.provider(), item.recordType()),
-                lines(item.lineRange()),
+                lines,
                 item.keyless() ? FORMAT_ERROR : CONTENT_MISMATCH,
-                item.keyless() ? null : item.externalId() + "・" + item.externalVersion(),
-                item.note());
+                externalKey,
+                item.note(),
+                LIST_URL + "/" + item.receivedRecordId() + query(ingestionFilter, page),
+                (lines == null ? WHOLE_FILE : lines) + "、" + (externalKey == null ? NO_EXTERNAL_ID : externalKey));
+    }
+
+    /** 外部 ID・外部版（キーのない隔離は {@code null}）。 */
+    private static String externalKey(UndecidedRecordPage.Item item) {
+        return item.keyless() ? null : item.externalId() + "・" + item.externalVersion();
     }
 
     /** 行の範囲（「N 行目」「N〜M 行目」。行を持たないファイルの誤りは {@code null} で、画面は「—」を示す）。 */
@@ -104,7 +251,12 @@ public class UndecidedRecordController {
     }
 
     private static String pageUrl(UUID ingestionFilter, int page) {
-        return LIST_URL + "?" + (ingestionFilter == null ? "" : "ingestion=" + ingestionFilter + "&") + "page=" + page;
+        return LIST_URL + query(ingestionFilter, page);
+    }
+
+    /** 一覧の取込とページの問い合わせ（読んだ UUID と数だけから組み、受け取った文字列をそのまま URL に入れない）。 */
+    private static String query(UUID ingestionFilter, int page) {
+        return "?" + (ingestionFilter == null ? "" : "ingestion=" + ingestionFilter + "&") + "page=" + page;
     }
 
     private static String grouped(int value) {
@@ -143,6 +295,16 @@ public class UndecidedRecordController {
      * @param kind 種類
      * @param externalKey 外部 ID・外部版（キーのない隔離は {@code null}）
      * @param note 隔離の理由
+     * @param decisionUrl 判断の画面の URL（元の取込とページを持つ。Bolt 39d2）
+     * @param decisionLabel 「判断する」の読み上げに足す行の範囲と外部 ID・外部版（Bolt 39d2）
      */
-    record Row(String ingestedAt, String source, String lines, String kind, String externalKey, String note) {}
+    record Row(
+            String ingestedAt,
+            String source,
+            String lines,
+            String kind,
+            String externalKey,
+            String note,
+            String decisionUrl,
+            String decisionLabel) {}
 }

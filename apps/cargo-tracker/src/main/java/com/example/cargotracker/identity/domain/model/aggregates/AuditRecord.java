@@ -452,7 +452,7 @@ public final class AuditRecord {
      */
     public static AuditRecord externalRecordAdopted(
             UserId actor, CompanyId actorCompany, String receivedRecordId, String summary, UtcInstant at) {
-        return externalRecordDecided(
+        return receivedRecordAudit(
                 actor, actorCompany, AuditAction.EXTERNAL_RECORD_ADOPTED, null, receivedRecordId, summary, at);
     }
 
@@ -467,7 +467,7 @@ public final class AuditRecord {
             String reason,
             String summary,
             UtcInstant at) {
-        return externalRecordDecided(
+        return receivedRecordAudit(
                 actor,
                 actorCompany,
                 AuditAction.EXTERNAL_RECORD_QUARANTINED,
@@ -477,7 +477,29 @@ public final class AuditRecord {
                 at);
     }
 
-    private static AuditRecord externalRecordDecided(
+    /**
+     * データ責任者の受信記録の判断を記録する（DE-29 の監査。Bolt 39d2、AUD-01、IA-INV-15）。理由は判断（{@code REJECTED}）で、却下の理由の文は
+     * 変更後の要約の最後に置く（理由の列は 100 文字まで）。対象・変更後・必須の値は {@link #externalRecordAdopted} と同じ。結果は成功。
+     */
+    public static AuditRecord externalRecordDecided(
+            UserId actor,
+            CompanyId actorCompany,
+            String receivedRecordId,
+            String decision,
+            String summary,
+            UtcInstant at) {
+        return receivedRecordAudit(
+                actor,
+                actorCompany,
+                AuditAction.EXTERNAL_RECORD_DECIDED,
+                requiredText(decision, REASON_ARGUMENT),
+                receivedRecordId,
+                summary,
+                at);
+    }
+
+    /** 受信記録を対象にする監査記録（採用・隔離・判断の共通の形。Bolt 39d2 で公開のファクトリーと同じ名前を避けて名前を変えた）。 */
+    private static AuditRecord receivedRecordAudit(
             UserId actor,
             CompanyId actorCompany,
             AuditAction action,

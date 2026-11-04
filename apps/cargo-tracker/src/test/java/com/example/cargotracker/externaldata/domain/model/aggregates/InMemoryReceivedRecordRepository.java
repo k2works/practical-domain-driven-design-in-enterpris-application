@@ -20,11 +20,22 @@ public class InMemoryReceivedRecordRepository implements ReceivedRecordRepositor
     private final List<ReceivedRecord> records = new CopyOnWriteArrayList<>();
     private final InMemoryIngestionRepository ingestions;
     private final InMemoryExternalRecordRepository externalRecords;
+    private final InMemoryReceivedRecordDecisionRepository decisions;
 
+    /** 判断を書かない呼び手（取込のテストと受入シナリオ）の組み立て。判断の表は空のまま。 */
     public InMemoryReceivedRecordRepository(
             InMemoryIngestionRepository ingestions, InMemoryExternalRecordRepository externalRecords) {
+        this(ingestions, externalRecords, new InMemoryReceivedRecordDecisionRepository());
+    }
+
+    /** 判断のある隔離を判断を待つ隔離から除くため、メモリの判断のリポジトリを受け取る（Bolt 39d2）。 */
+    public InMemoryReceivedRecordRepository(
+            InMemoryIngestionRepository ingestions,
+            InMemoryExternalRecordRepository externalRecords,
+            InMemoryReceivedRecordDecisionRepository decisions) {
         this.ingestions = Objects.requireNonNull(ingestions, "ingestions");
         this.externalRecords = Objects.requireNonNull(externalRecords, "externalRecords");
+        this.decisions = Objects.requireNonNull(decisions, "decisions");
     }
 
     @Override
@@ -60,7 +71,7 @@ public class InMemoryReceivedRecordRepository implements ReceivedRecordRepositor
     /**
      * 判断を待つ隔離（Bolt 39d）。メモリの取込のリポジトリと結び（取込のない受信記録は落ちる）、外部原本の外部 ID・外部版を引く。SQL の
      * {@code ORDER BY i.ingested_at DESC, r.ingestion_id, r.first_line_number NULLS FIRST, r.id} と同じ順（UUID は DB と同じく文字列の表現の
-     * 順で比べる）。判断の表を持たないので、39d2 で判断のポートができるまで隔離をすべて返す。
+     * 順で比べる）。メモリの判断のリポジトリに判断のある隔離は除く（Bolt 39d2）。
      */
     @Override
     public List<UndecidedQuarantine> undecidedQuarantines(UUID ingestionIdOrNull, int offset, int limit) {
@@ -83,9 +94,25 @@ public class InMemoryReceivedRecordRepository implements ReceivedRecordRepositor
         return (int) undecided(ingestionIdOrNull).count();
     }
 
+    /** メモリの受信記録はどれも取込 ID を持つ（取込のない受信記録を持てない）。 */
+    @Override
+    public Optional<ReceivedRecord> findById(UUID id) {
+        return records.stream()
+                .filter(receivedRecord -> receivedRecord.id().equals(id))
+                .findFirst();
+    }
+
+    @Override
+    public Optional<UndecidedQuarantine> undecidedQuarantine(UUID receivedRecordId) {
+        return undecided(null)
+                .filter(quarantine -> quarantine.receivedRecordId().equals(receivedRecordId))
+                .findFirst();
+    }
+
     private Stream<UndecidedQuarantine> undecided(UUID ingestionIdOrNull) {
         return records.stream()
                 .filter(receivedRecord -> receivedRecord.classification() == Classification.QUARANTINED)
+                .filter(receivedRecord -> !decisions.existsFor(receivedRecord.id()))
                 .filter(receivedRecord -> ingestionIdOrNull == null
                         || receivedRecord.ingestionId().equals(ingestionIdOrNull))
                 .flatMap(receivedRecord -> ingestions.findById(receivedRecord.ingestionId()).stream()

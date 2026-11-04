@@ -6,6 +6,7 @@ import com.example.cargotracker.TestcontainersConfiguration;
 import com.example.cargotracker.booking.domain.events.BookingConfirmed;
 import com.example.cargotracker.externaldata.domain.events.ExternalRecordQuarantined;
 import com.example.cargotracker.externaldata.domain.events.MilestoneAdoptedValueAccepted;
+import com.example.cargotracker.externaldata.domain.events.ReceivedRecordDecided;
 import com.example.cargotracker.externaldata.domain.events.VoyageAdoptedValueUpdated;
 import com.example.cargotracker.externaldata.domain.events.VoyageAdoptedValueUpdated.AdoptedPortCall;
 import com.example.cargotracker.quotation.domain.events.TransportRequestReviewed;
@@ -234,8 +235,39 @@ class DomainEventSerializationContractTest {
             DATA_STEWARD_COMPANY,
             new UtcInstant(Instant.parse("2026-11-03T09:00:00.123456Z")));
 
+    /** DE-29 受信記録を判断した（Bolt 39d2）。判断は文字列で持つ（イベントはドメインの型を持たない）。 */
+    private static final String RECEIVED_RECORD_DECIDED_V1 = """
+            {"receivedRecordId":"99999999-9999-9999-9999-999999999999",\
+            "ingestionId":"77777777-7777-7777-7777-777777777777",\
+            "dataSourceId":"88888888-8888-8888-8888-888888888888",\
+            "decision":"REJECTED","reason":"提供元に確かめた; 誤送信",\
+            "decidedBy":{"value":"00000000-0000-0000-0000-000000000501"},\
+            "decidedByCompanyId":{"value":"00000000-0000-0000-0000-000000000001"},\
+            "decidedAt":{"instant":"2026-11-16T01:05:00.123456Z"}}""";
+
+    private static final ReceivedRecordDecided RECEIVED_RECORD_DECIDED = new ReceivedRecordDecided(
+            UUID.fromString("99999999-9999-9999-9999-999999999999"),
+            UUID.fromString("77777777-7777-7777-7777-777777777777"),
+            UUID.fromString("88888888-8888-8888-8888-888888888888"),
+            "REJECTED",
+            "提供元に確かめた; 誤送信",
+            DATA_STEWARD,
+            DATA_STEWARD_COMPANY,
+            new UtcInstant(Instant.parse("2026-11-16T01:05:00.123456Z")));
+
     @Autowired
     EventSerializer serializer;
+
+    @Test
+    void Bolt39d2_行10_保存済みのDE29のJSONから復元できる() {
+        assertThat(serializer.deserialize(RECEIVED_RECORD_DECIDED_V1, ReceivedRecordDecided.class))
+                .isEqualTo(RECEIVED_RECORD_DECIDED);
+    }
+
+    @Test
+    void Bolt39d2_行10_DE29のJSONの形が変わっていない() {
+        assertThat(serializer.serialize(RECEIVED_RECORD_DECIDED)).isEqualTo(RECEIVED_RECORD_DECIDED_V1);
+    }
 
     @Test
     void 行10_保存済みのDE12のJSONから寄港の並びと出典を復元できる() {

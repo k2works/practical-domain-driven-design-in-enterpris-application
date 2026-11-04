@@ -25,6 +25,9 @@ public class UndecidedRecordUiSteps {
     private static final String ENTRY_LINK = "この取込の隔離をすべて確認する";
     private static final Pattern RESULT_URL = Pattern.compile(".*/staff/external-data/ingestions/([0-9a-f-]{36})$");
 
+    /** 画面の終わりからページ送りへ戻る Shift+Tab の上限（失敗までの上限で、フォーカスの順序の仕様ではない）。 */
+    private static final int MAX_BACK_TABS = 20;
+
     private static final int SOURCE = 1;
     private static final int LINES = 2;
     private static final int KIND = 3;
@@ -137,11 +140,20 @@ public class UndecidedRecordUiSteps {
         browser.checkAccessibility();
     }
 
-    /** Bolt 39d の行 5。ページ送りのリンクへ Tab で進めて押す。 */
+    /**
+     * Bolt 39d の行 5。ページ送りのリンクへ Shift+Tab で戻して押す。表の後にあるので、Bolt 39d2 で各行に「判断する」のリンク（1 ページ 100 個）を
+     * 足してからは、先頭から Tab で進めると上限に届く。画面の終わりから戻る（ページ送りは表の後、画面の終わりの近く）。
+     */
     @もし("キー操作だけで判断を待つ隔離の {string} を開く")
     public void ページ送りのリンクを開く(String name) {
+        Locator target = pageLink(name);
+        assertThat(target).isAttached();
         page().locator("body").focus();
-        browser.tabUntilFocused(pageLink(name));
+        Locator focused = target.and(page().locator(":focus"));
+        for (int i = 0; i < MAX_BACK_TABS && focused.count() == 0; i++) {
+            page().keyboard().press("Shift+Tab");
+        }
+        assertThat(target).isFocused();
         page().keyboard().press("Enter");
         page().waitForURL(url -> url.contains("page="));
         browser.checkAccessibility();
