@@ -4,7 +4,7 @@ title: "リリース計画 - cargo-tracker（A 社国際貨物輸送管理シス
 description: "cargo-tracker MVP のリリース計画。1 人 + AI、時間単位の Bolt（= イテレーション）と週次の見直しで、最初の縦の流れ（R0.1）、パイロット準備完了（R1.0）、本格展開前（R1.1）の 3 段階、Unit のエントロピー評価、SP、バッファ、パイロット開始の条件、引継ぎ ID の台帳、業務責任者に確かめる事項の台帳。"
 tags: [development,release-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-04T04:20:56Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-04T07:12:57Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T09:29:53Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:38:26Z }
@@ -49,6 +49,7 @@ verified:
   - { by: human:kakimomokuri, at: 2026-11-04T00:44:18Z }
   - { by: human:kakimomokuri, at: 2026-11-04T03:51:38Z }
   - { by: human:kakimomokuri, at: 2026-11-04T04:15:10Z }
+  - { by: human:kakimomokuri, at: 2026-11-04T07:12:58Z }
 ---
 
 # リリース計画 - cargo-tracker（A 社国際貨物輸送管理システム）
@@ -950,7 +951,7 @@ US-18 の Bolt の順序は 31b → 31c → 31d → 32 → 32c → 32d → 32b �
 | 39b2b | 値の列（航海・主要実績。仮の形式、OQ-02）とその検証（UN/LOCODE・時刻・種類・追跡番号・寄港の列）、`CsvFileKind` の必要な列の追加、値の列の長さの上限、追跡番号の形の写し（外部データの中の形）が追跡の `TrackingNumber` と同じであることを守るテスト（Bolt 39b2 の開始準備で 39b2 から分けた）。開始準備で、寄港の規則を経路設計にそろえると決めた（human:kakimomokuri）。[Bolt 39b2b 計画](bolt_39b2b_plan.md)（承認済み）・[終了報告](bolt_39b2b_report.md)（承認済み。写しを守るテストの範囲を追跡番号から実績の種類と寄港の規則に広げた） | 0 | インサイドアウト | ステップごと（構造） |
 | 39b3 | 採用値と DE-12・DE-13・DE-14 の発行、`domain.events`（AC1 の採用値）。【前の決定の変更】初案の 39b3（採用値と DE-12・DE-13・DE-14、`domain.events`、identity の監査の listener と毒入りのメッセージ、W6 横断レビュー M-2、`PublicApiArchitectureTest` の汎用化、手書きの規則の写し）を、開始準備で半日を超えるので 39b3 と 39b3b に縦に分けた（2026-11-03、推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）。[Bolt 39b3 計画](bolt_39b3_plan.md)（承認済み。イベントの型・採否の監査の範囲・寄港の上限は human:kakimomokuri が個別に決めた）・[終了報告](bolt_39b3_report.md)（承認済み） | 0 | インサイドアウト | ステップごと（監査・構造） |
 | 39b3b | identity の監査の listener（`externaldata :: events`。DE-12・DE-13・DE-14 を監査する）、配信の確認（T-184）、毒入りのメッセージ、W6 横断レビュー M-2、`PublicApiArchitectureTest` の汎用化、手書きの規則の写し、H2 のイベント発行記録の `serialized_event` の幅（寄港 60 の DE-12）（Bolt 39b3 の開始準備で 39b3 から分けた）。[Bolt 39b3b 計画](bolt_39b3b_plan.md)（承認済み。監査記録の形・冪等・H2 の発行記録の列・規則の汎用化・ADR-007 の改訂は human:kakimomokuri が個別に決めた）・[終了報告](bolt_39b3b_report.md)（承認済み） | 0 | インサイドアウト | ステップごと（監査・構造・スキーマ（H2）） |
-| 39b4 | PERF-06（1 万件を 5 分以内）、行ごとのコミットの量と接続の数、要れば一括の保存、原本の大きさの上限、数えるテストは自分のキーで絞る規約、分類ごとの件数の照会（3 本のままにするか）、H2 の受信記録の注記と補助文字。【前の決定の変更】初案の「原本 1 件の大きさの上限」は、計画の「人に諮ること」1 でファイル全体の上限（物理データ行 10,000 件と 41,943,040 バイト。超えるファイルは原本を保存せずに拒否する）に決めた（2026-11-04、推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）。[Bolt 39b4 計画](bolt_39b4_plan.md)（承認済み。原本の大きさの上限は推奨のとおり。Recommend 承認の指示による） | 0 | インサイドアウト | ステップごと（構造。H2 の列を広げるときはスキーマ（H2）） |
+| 39b4 | PERF-06（1 万件を 5 分以内）、行ごとのコミットの量と接続の数、要れば一括の保存、原本の大きさの上限、数えるテストは自分のキーで絞る規約、分類ごとの件数の照会（3 本のままにするか）、H2 の受信記録の注記と補助文字。【前の決定の変更】初案の「原本 1 件の大きさの上限」は、計画の「人に諮ること」1 でファイル全体の上限（物理データ行 10,000 件と 41,943,040 バイト。超えるファイルは原本を保存せずに拒否する）に決めた（2026-11-04、推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）。[Bolt 39b4 計画](bolt_39b4_plan.md)（承認済み。原本の大きさの上限は推奨のとおり。Recommend 承認の指示による）・[終了報告](bolt_39b4_report.md)（承認済み。PERF-06 は Linux の CI で 3 本とも 26 秒以内） | 0 | インサイドアウト | ステップごと（構造。H2 の列を広げるときはスキーマ（H2）） |
 | 39c | S-16 外部データの取込の画面: ファイルの選択、分類別の件数、認可（データ責任者）と CSRF、ナビゲーション、axe、マニュアルの新しい章とキャプチャ | 0 | アウトサイドイン（S-16 から。局面とアプローチの段落の理由） | ステップごと（認可・画面・新しいファイル） |
 | 39d | S-17 隔離・差異の確認: 判断（採用・却下）の記録と判断者、採用の判断で採用値と DE-12・DE-13、判断のイベントと監査、隔離した payload の再送の扱い、マニュアルとキャプチャ、axe。注: 開始準備の論点として、キーのない隔離（形式の誤り。Bolt 39b2）は外部原本も冪等性キーも持たないので採用値を作れない。判断は却下と再送だけかを決める | 0 | アウトサイドイン（S-17 から。局面とアプローチの段落の理由） | ステップごと（スキーマ・認可） |
 | 39e | 経路設計の航海の書き手: DE-12 の listener、`Voyage`・`ConnectionRule` の class 化、`version` の楽観ロック、航海の照会を時間の窓と港で絞る、見本の航海を分ける（確認ポイント 14） | 0 | アウトサイドイン（受入シナリオから） | 計画と終了報告（構造・開発データ） |
@@ -1537,6 +1538,7 @@ xychart-beta
 | 2026-11-03 | [Bolt 39b3b 計画](bolt_39b3b_plan.md)を作り、整合性検証の指摘を反映して承認した（6 つの決定は個別に、ほかは推奨のとおり。Recommend 承認の指示による） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-11-04 | Bolt 39b3b のステップ 1〜7 と[終了報告](bolt_39b3b_report.md)を承認した（推奨のとおり。Recommend 承認の指示による） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-11-04 | [Bolt 39b4 計画](bolt_39b4_plan.md)を作り、整合性検証の指摘を反映して承認した（推奨のとおり。Recommend 承認の指示による） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
+| 2026-11-04 | Bolt 39b4 のステップ 1〜6 と[終了報告](bolt_39b4_report.md)を承認した（推奨のとおり。Recommend 承認の指示による） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-11-03 | Bolt 39b のステップ 1（設計の文書）: W7 の設計の決定（取込の置き場所）と確認ポイント 4・6 に、39b を 4 本に分けたことによる【前の決定の変更】の注を足した | anthropic/claude-opus-5-5 |
 | 2026-11-03 | Bolt 39b2 のステップ 1（設計の文書）: W7 の確認ポイント 6 に、形式の誤りの受信記録は外部原本を持たないことの注を足した | anthropic/claude-opus-5-5 |
 | 2026-11-03 | Bolt 39b2b のステップ 1（設計の文書）: 寄港の規則を経路設計にそろえた【前の決定の変更】は requirements_definition の OQ-02 の注に置き、「取込ファイルの形式」は直さない。設計文書（domain_model・data_model・system_usecase・architecture_backend・ADR-004）を直した | anthropic/claude-opus-5-5 |

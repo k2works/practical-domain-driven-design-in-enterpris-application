@@ -136,6 +136,7 @@ Bolt がイテレーションに当たります。ふりかえりは各 Bolt の
 | 39b2b | [値の列（航海・主要実績）とその検証、写しを守るテスト](bolt_39b2b_plan.md) | [終了報告](bolt_39b2b_report.md) | W7 | 完了 |
 | 39b3 | [採用値と DE-12・DE-13・DE-14 の発行](bolt_39b3_plan.md) | [終了報告](bolt_39b3_report.md) | W7 | 完了 |
 | 39b3b | [外部原本の採否の監査の listener と層の規則の汎用化](bolt_39b3b_plan.md) | [終了報告](bolt_39b3b_report.md) | W7 | 完了 |
+| 39b4 | [PERF-06（1 万件の取込）と取込のファイルの上限](bolt_39b4_plan.md) | [終了報告](bolt_39b4_report.md) | W7 | 完了 |
 
 Bolt を始めるときに行を追加します。
 
