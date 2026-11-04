@@ -17143,8 +17143,8 @@
 </tr>
 <tr>
 <td style="text-align: left;">外部原本の採否の監査（AUD-01）</td>
-<td style="text-align: left;">外部データは隔離（DE-14）と判断のイベントを出すだけにし、identity の listener が監査記録を書く（identity に <code>externaldata :: events</code> への依存が加わる。依存の宣言は <code>quotation :: events</code> と同じ形。イベントから監査記録を書く listener は 39b3b が最初）。外部データは identity に依存しない。【前の決定の変更】Bolt 39b3 の計画の「人に諮ること」2（2026-11-03、human:kakimomokuri が決めた）: 隔離（DE-14）と判断のイベントに加え、取込での自動の採用の DE-12・DE-13 も監査する（AUD-01 の「採」。取込での自動の採用が監査に残らないと AUD-04 の照合で採用値の件数と合わない）。監査の listener は 39b3b で作る。監査記録の形（操作の種類・記録の形）と冪等の取り方は 39b3b の開始準備で諮る（<a href="../bolt_39b3_plan/">Bolt 39b3 計画</a>）</td>
-<td style="text-align: left;">domain_model（AuditRecord・IA-INV-08・DE-14 の受け手）、architecture_backend</td>
+<td style="text-align: left;">外部データは隔離（DE-14）と判断のイベントを出すだけにし、identity の listener が監査記録を書く（identity に <code>externaldata :: events</code> への依存が加わる。依存の宣言は <code>quotation :: events</code> と同じ形。イベントから監査記録を書く listener は 39b3b が最初）。外部データは identity に依存しない。【前の決定の変更】Bolt 39b3 の計画の「人に諮ること」2（2026-11-03、human:kakimomokuri が決めた）: 隔離（DE-14）と判断のイベントに加え、取込での自動の採用の DE-12・DE-13 も監査する（AUD-01 の「採」。取込での自動の採用が監査に残らないと AUD-04 の照合で採用値の件数と合わない）。監査の listener は 39b3b で作る。監査記録の形（操作の種類・記録の形）と冪等の取り方は 39b3b の開始準備で諮る（<a href="../bolt_39b3_plan/">Bolt 39b3 計画</a>）。→ Bolt 39b3b の計画の「人に諮ること」1・2（2026-11-03、human:kakimomokuri が決めた）: 操作は採用 <code>EXTERNAL_RECORD_ADOPTED</code>（DE-12・DE-13）と隔離 <code>EXTERNAL_RECORD_QUARANTINED</code>（DE-14）、対象は受信記録（<code>RECEIVED_RECORD</code>、受信記録 ID。版と変更前は持たず、外部版は変更後の要約に入れる）、操作者と時刻はイベントのもの。冪等は操作と対象で引いてあれば書かない（既存の索引。identity のスキーマは変えず、data_model の <code>event_id</code> の一意制約の記述を実際に合わせて改めた。IA-INV-15）（<a href="../bolt_39b3b_plan/">Bolt 39b3b 計画</a>）</td>
+<td style="text-align: left;">domain_model（AuditRecord・IA-INV-08・IA-INV-15・DE-12〜DE-14 の受け手）、data_model、architecture_backend</td>
 </tr>
 <tr>
 <td style="text-align: left;">コンテキスト名とスキーマ名の違い</td>
@@ -17362,10 +17362,10 @@
 </tr>
 <tr>
 <td style="text-align: left;">39b3b</td>
-<td style="text-align: left;">identity の監査の listener（<code>externaldata :: events</code>。DE-12・DE-13・DE-14 を監査する）、配信の確認（T-184）、毒入りのメッセージ、W6 横断レビュー M-2、<code>PublicApiArchitectureTest</code> の汎用化、手書きの規則の写し（Bolt 39b3 の開始準備で 39b3 から分けた）。開始準備で、監査記録の形（操作の種類・記録の形）と冪等の取り方を諮る</td>
+<td style="text-align: left;">identity の監査の listener（<code>externaldata :: events</code>。DE-12・DE-13・DE-14 を監査する）、配信の確認（T-184）、毒入りのメッセージ、W6 横断レビュー M-2、<code>PublicApiArchitectureTest</code> の汎用化、手書きの規則の写し、H2 のイベント発行記録の <code>serialized_event</code> の幅（寄港 60 の DE-12）（Bolt 39b3 の開始準備で 39b3 から分けた）。<a href="../bolt_39b3b_plan/">Bolt 39b3b 計画</a>（承認済み。監査記録の形・冪等・H2 の発行記録の列・規則の汎用化・ADR-007 の改訂は human:kakimomokuri が個別に決めた）</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: left;">インサイドアウト</td>
-<td style="text-align: left;">ステップごと（監査・構造）</td>
+<td style="text-align: left;">ステップごと（監査・構造・スキーマ（H2））</td>
 </tr>
 <tr>
 <td style="text-align: left;">39b4</td>
@@ -17496,7 +17496,7 @@
 <td style="text-align: left;">W10</td>
 <td style="text-align: left;">12-07 〜 12-11</td>
 <td style="text-align: left;">運用準備</td>
-<td style="text-align: left;">AWS 環境（Terraform）、CI/CD、監視、運用タスクとランブック（管理範囲の割り当てと最初のシステム管理者を作る運用タスク。W6 の開始準備で W6 から移した。本番の配備の前に要る。Bolt 34b）、必要書類の S3 の保存とウイルスの検査（Bolt 7）、外部原本の payload の S3 への差し替え（Object Lock、RET-03）と情報源の管理（S-19）の運用タスク、取込がない日の通知（FRS-04）と隔離の未判断の警告（OBS-06）（W7 の開始準備で決めた）、性能テスト（負荷テストのツールの選定 TS-05、R-36）、時点復旧の訓練、Spring Boot 4.2 への追従（公開済みなら）</td>
+<td style="text-align: left;">AWS 環境（Terraform）、CI/CD、監視、運用タスクとランブック（管理範囲の割り当てと最初のシステム管理者を作る運用タスク。W6 の開始準備で W6 から移した。本番の配備の前に要る。Bolt 34b）、必要書類の S3 の保存とウイルスの検査（Bolt 7）、外部原本の payload の S3 への差し替え（Object Lock、RET-03）と情報源の管理（S-19）の運用タスク、取込がない日の通知（FRS-04）と隔離の未判断の警告（OBS-06）（W7 の開始準備で決めた）、監査の欠落の検知（毒入りのイベントを捨てた ERROR のログの通知先と AUD-04 の照合）と複数インスタンスにする前の監査の二重の防ぎ（監査の表の一意制約（<code>event_id</code> か（操作、対象））か ShedLock）（Bolt 39b3b のステップ 7 で決めた）、性能テスト（負荷テストのツールの選定 TS-05、R-36）、時点復旧の訓練、Spring Boot 4.2 への追従（公開済みなら）</td>
 <td style="text-align: right;">0（技術タスク）</td>
 </tr>
 </tbody>
@@ -17915,6 +17915,18 @@
 <td style="text-align: center;">中</td>
 <td style="text-align: center;">中</td>
 <td style="text-align: left;">W7 で同じ追跡番号への集中を含めて確かめ、W10 の性能テストで再確認する</td>
+</tr>
+<tr>
+<td style="text-align: left;">ADR とコードの食い違い: ADR-003 :50・architecture_backend :378・tech_stack :59 は「定期の再配信と ShedLock で 1 インスタンスに限る」を決定として書くが、ShedLock は build.gradle にも main のコードにもなく、定期の再配信もない（あるのは起動のときの配り直し <code>republish-outstanding-events-on-restart=true</code> だけ。data_model の <code>shedlock</code> の表もない）。複数インスタンスにすると、同じイベントの同時の配信で外部原本の採否の監査（照会してから追記。IA-INV-15）が二重になりうる。未完了の発行記録は次の再起動まで配り直されない</td>
+<td style="text-align: center;">中</td>
+<td style="text-align: center;">低</td>
+<td style="text-align: left;">今は単一インスタンス（デモは Heroku の 1 台・H2 のインメモリ）なので同時の配信は起きない。複数インスタンスにする前（W10 の運用準備）に、監査の表の一意制約（<code>event_id</code> か（操作、対象）の一意制約）か ShedLock を入れ、定期の再配信の要否を決める。ADR は書き換えず、W10 で ADR とコードを合わせる（Bolt 39b3b のステップ 7 で見つけた。2026-11-04）</td>
+</tr>
+<tr>
+<td style="text-align: left;">外部原本の採否の監査の欠落に気付けない（毒入りのイベントを捨てたときは ERROR のログだけ、AUD-04 の照合は提案のまま）</td>
+<td style="text-align: center;">中</td>
+<td style="text-align: center;">低</td>
+<td style="text-align: left;">W10 の監視で ERROR のログの通知先と AUD-04 の照合を作る（Bolt 39b3b のステップ 7 で決めた）</td>
 </tr>
 <tr>
 <td style="text-align: left;">AI の出力品質が最初の Bolt（ウォーキングスケルトン）と Release 0.1 で想定より低い</td>
@@ -20033,6 +20045,11 @@
 </tr>
 <tr>
 <td style="text-align: left;">2026-11-03</td>
+<td style="text-align: left;"><a href="../bolt_39b3b_plan/">Bolt 39b3b 計画</a>を作り、整合性検証の指摘を反映して承認した（6 つの決定は個別に、ほかは推奨のとおり。Recommend 承認の指示による）</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-11-03</td>
 <td style="text-align: left;">Bolt 39b のステップ 1（設計の文書）: W7 の設計の決定（取込の置き場所）と確認ポイント 4・6 に、39b を 4 本に分けたことによる【前の決定の変更】の注を足した</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5</td>
 </tr>
@@ -20049,6 +20066,11 @@
 <tr>
 <td style="text-align: left;">2026-11-03</td>
 <td style="text-align: left;">Bolt 39b3 のステップ 1（設計の文書）: W7 の設計の決定（取込の置き場所、外部原本の採否の監査）に、39b3 を 2 本に分けたことと DE-12・DE-13 も監査することの【前の決定の変更】の注を足した</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-11-04</td>
+<td style="text-align: left;">Bolt 39b3b のステップ 1（設計の文書）: W7 の設計の決定（外部原本の採否の監査）に、監査記録の形と冪等の取り方の決定を足した</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5</td>
 </tr>
 <tr>

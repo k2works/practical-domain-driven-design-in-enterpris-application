@@ -14414,7 +14414,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">データ</td>
-<td style="text-align: left;">H2 のインメモリと dyno の <code>/tmp</code>。dyno の再起動（自動の再起動、配備、スリープ、Config Vars の変更）で <code>db/dev-data</code> の初期状態に戻る。永続化しない。初期状態にはサンプルの見積依頼 5 件と経路設計の案件 2 件、架空の航海が入っており、日時は起動した日からの相対（Bolt 18、2026-10-07 に human:kakimomokuri が決定）</td>
+<td style="text-align: left;">H2 のインメモリと dyno の <code>/tmp</code>。dyno の再起動（自動の再起動、配備、スリープ、Config Vars の変更）で <code>db/dev-data</code> の初期状態に戻る。永続化しない。初期状態にはサンプルの見積依頼 5 件と経路設計の案件 2 件、架空の航海が入っており、日時は起動した日からの相対（Bolt 18、2026-10-07 に human:kakimomokuri が決定）。注（Bolt 39b3b）: H2 のイベント発行記録の <code>serialized_event</code> を広げたので、デモ環境でも寄港 60 の航海を取り込める（ADR-007 の改訂の経緯）</td>
 </tr>
 <tr>
 <td style="text-align: left;">アクセス</td>
@@ -14555,6 +14555,7 @@
 <ul>
 <li>2026-10-15: Bolt 33 の計画の承認で、決定にメール（dev ではログに出す、公開の base URL を Config Vars に足す）、ネガティブに再設定のメールがログに出ることと #48 の範囲に dev のメールの守りを加えること、コンプライアンスにログに出す送信の守りを足した（human:kakimomokuri が決定。<a href="../017-notification-module-and-mail/">ADR-017</a>）。</li>
 <li>2026-10-15: Bolt 33 の開発レビューで、ネガティブにデモには実在のメールアドレスを登録しないことと仮の A-06 を書き、コンプライアンスの送信の守りを 1 つの Bean の中で切り替える形に直した（human:kakimomokuri が決定）。</li>
+<li>2026-11-03: Bolt 39b3b の計画の承認で、決定のデータの行に、H2 のイベント発行記録の <code>serialized_event</code> を広げてデモ環境でも寄港 60 の航海を取り込めるという注を足した（human:kakimomokuri が決定。<a href="../../../development/cargo-tracker/bolt_39b3b_plan/">Bolt 39b3b 計画</a> の人に諮ること 3、<a href="../007-postgresql-mybatis-flyway/">ADR-007</a> の改訂の経緯）。決定は変えない。</li>
 </ul>
 <h2 id="_11">参考資料<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h2>
 <ul>

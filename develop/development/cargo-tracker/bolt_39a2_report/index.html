@@ -14505,7 +14505,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">CI</td>
-<td style="text-align: left;"><code>548f0596d</code> で <code>check</code>・<code>ui</code>・<code>deploy-demo</code> が成功した（デモ環境の PostgreSQL に <code>external_data</code> のスキーマと原本の表ができた）</td>
+<td style="text-align: left;"><code>548f0596d</code> で <code>check</code>・<code>ui</code>・<code>deploy-demo</code> が成功した（デモ環境の PostgreSQL に <code>external_data</code> のスキーマと原本の表ができた）（2026-11-04 訂正: デモ環境は H2 のインメモリで、PostgreSQL ではない。マイグレーションは H2 で通った）</td>
 </tr>
 </tbody>
 </table>
@@ -14614,6 +14614,11 @@
 </tr>
 </thead>
 <tbody>
+<tr>
+<td style="text-align: left;">2026-11-04</td>
+<td style="text-align: left;">デモ環境のデータベースの誤り（PostgreSQL → H2 のインメモリ）に訂正の注を足した（Bolt 39b3b の整合性検証で見つけた）</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
+</tr>
 <tr>
 <td style="text-align: left;">2026-11-02</td>
 <td style="text-align: left;">human:kakimomokuri が承認した（議題 1〜4 を報告のとおり）</td>

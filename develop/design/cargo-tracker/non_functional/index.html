@@ -15249,7 +15249,7 @@
 <tr>
 <td style="text-align: left;">AUD-01</td>
 <td style="text-align: left;">記録の対象</td>
-<td style="text-align: left;">状態を変える全操作、認証の成功・失敗・ロック、権限の変更、参照許可の発行・取消し、権限外のアクセス試行、データの訂正、外部原本の採否。認証と権限外のアクセス試行は、ドメインイベントを経ずに同期で記録する（IA-INV-08）。ロックは、その失敗でロックしたときだけ <code>ACCOUNT_LOCKED</code> を 1 行、失敗の回数と同じトランザクションで記録し、ロック中の試行は <code>LOGIN_FAILED</code>（理由 <code>LOCKED</code>）で記録する（Bolt 32）。request ごとの確かめで利用停止・無効な企業・利用者なしを見つけて session を捨てたときは <code>SESSION_REVOKED</code> を記録する（Bolt 32c）。password の再設定の依頼は <code>PASSWORD_RESET_REQUESTED</code> を依頼と同じトランザクションで記録する（有効な利用者は成功、止められた利用者・所属企業の無効・登録のないアドレスは理由付きの失敗。登録のないアドレスは操作者を空にし、アドレスを残さない。Bolt 33。ADR-012）</td>
+<td style="text-align: left;">状態を変える全操作、認証の成功・失敗・ロック、権限の変更、参照許可の発行・取消し、権限外のアクセス試行、データの訂正、外部原本の採否。認証と権限外のアクセス試行は、ドメインイベントを経ずに同期で記録する（IA-INV-08）。ロックは、その失敗でロックしたときだけ <code>ACCOUNT_LOCKED</code> を 1 行、失敗の回数と同じトランザクションで記録し、ロック中の試行は <code>LOGIN_FAILED</code>（理由 <code>LOCKED</code>）で記録する（Bolt 32）。request ごとの確かめで利用停止・無効な企業・利用者なしを見つけて session を捨てたときは <code>SESSION_REVOKED</code> を記録する（Bolt 32c）。password の再設定の依頼は <code>PASSWORD_RESET_REQUESTED</code> を依頼と同じトランザクションで記録する（有効な利用者は成功、止められた利用者・所属企業の無効・登録のないアドレスは理由付きの失敗。登録のないアドレスは操作者を空にし、アドレスを残さない。Bolt 33。ADR-012）。外部原本の採否は、外部データのイベント（DE-12・DE-13・DE-14）をアクセス・監査が受け、取込のコミットの後に非同期に記録する（採用 <code>EXTERNAL_RECORD_ADOPTED</code>・隔離 <code>EXTERNAL_RECORD_QUARANTINED</code>。対象は受信記録。操作と対象で冪等。IA-INV-15。Bolt 39b3b）</td>
 <td style="text-align: left;">提案（NFR-AUDIT-01、US-16〜19）</td>
 </tr>
 <tr>

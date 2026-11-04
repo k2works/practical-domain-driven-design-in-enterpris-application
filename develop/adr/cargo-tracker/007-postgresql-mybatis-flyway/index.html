@@ -11390,6 +11390,17 @@
   <a href="#_9" class="md-nav__link">
     <span class="md-ellipsis">
       
+        改訂の経緯
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
         備考
       
     </span>
@@ -14346,7 +14357,7 @@
 <p>開発体験を優先してローカルは H2 で起動し、SQL の正しさは PostgreSQL のテストで担保する。</p>
 <p>日付: 2026-10-01</p>
 <h2 id="_1">ステータス<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
-<p>承認済み（開発環境を H2、本番を PostgreSQL とする方針は human:kakimomokuri が 2026-10-01 に決定。本 ADR は方式を記録する）</p>
+<p>承認済み（開発環境を H2、本番を PostgreSQL とする方針は human:kakimomokuri が 2026-10-01 に決定。本 ADR は方式を記録する。コンプライアンスの H2 のリポジトリのテストの行は 2026-11-03 に Bolt 39b3b で改訂した。下の「改訂の経緯」）</p>
 <h2 id="_2">コンテキスト<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
 <ul>
 <li>ADR-001 で、DB は 1 つにし、コンテキストごとにスキーマを分けると決めた。</li>
@@ -14470,11 +14481,17 @@
 <h2 id="_8">コンプライアンス<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h2>
 <ul>
 <li>本番の実行クラスパスに H2・Hibernate ORM・JPA が含まれないことをビルドで検証する。</li>
-<li>リポジトリのテストは Testcontainers の PostgreSQL 18 で実行し、H2 でリポジトリのテストを書かない。</li>
+<li>リポジトリのテストは Testcontainers の PostgreSQL 18 で実行し、H2 でリポジトリのテストを書かない。（2026-11-03 改訂: リポジトリの契約のテストは PostgreSQL と H2 の両方で継ぐ。デモ環境とローカル起動が H2 で動くため。SQL の正しさは引き続き PostgreSQL で判断する。下の「改訂の経緯」）</li>
 <li>CI で、H2 でアプリが起動しマイグレーションが通ることをスモークテストで確認する。</li>
 <li>追記専用の表について、アプリケーションの DB 利用者が UPDATE・DELETE できないことを PostgreSQL の統合テストで確認する。</li>
 </ul>
-<h2 id="_9">備考<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h2>
+<h2 id="_9">改訂の経緯<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h2>
+<ul>
+<li>2026-11-03（W7、Bolt 39b3b）: 次のように改めた（<a href="../../../development/cargo-tracker/bolt_39b3b_plan/">Bolt 39b3b 計画</a> の人に諮ること 3・6。human:kakimomokuri が決定）。</li>
+<li><strong>H2 でのリポジトリのテスト（コンプライアンス）</strong>: 「H2 でリポジトリのテストを書かない」を、今の運用に合わせて改めた。リポジトリの契約のテスト（抽象の契約のクラス。前例 <code>AuditRecordSuspensionContract</code>）を、Testcontainers の PostgreSQL 18 と H2 の両方で継ぐ（前例 <code>MyBatisAuditRecordSuspensionIntegrationTest</code>・<code>H2AuditRecordSuspensionTest</code>）。デモ環境（ADR-013）とローカル起動が H2 で動くので、H2 でも同じ約束が守られることを確かめる。SQL の正しさを H2 だけで判断しない決定（上の「決定」）は変えない。</li>
+<li><strong>H2 のイベント発行記録の列</strong>: Spring Modulith のイベント発行記録の H2 の定義（spring-modulith-events-jdbc の schema-h2.sql の写し。<code>db/migration/h2/V20261001090300__create_event_publication.sql</code>）の <code>serialized_event VARCHAR(4000)</code> を、H2 だけのマイグレーション（<code>db/migration/h2/V20261104103700__widen_event_publication_serialized_event.sql</code>）で <code>VARCHAR(1000000)</code>（H2 の VARCHAR の上限）に広げる。索引 <code>(listener_id, serialized_event)</code> は広げた列で作り直され、同じ名前と列のまま残る（<code>H2EventPublicationCapacityTest</code>）。寄港 60 の DE-12（約 6,700 文字）が入らず、H2 の取込が発行記録の INSERT で巻き戻るため。前例は H2 だけの列の幅の変更 <code>db/migration/h2/V20261006150000__widen_spring_session_principal_name.sql</code>。PostgreSQL は TEXT のままで、ステージング・本番は変わらない。寄港の上限を下げる案と DE-12 の値を減らす案は、前の人の決定（寄港 60、イベントの型）を H2 の都合で変えるので取らない。</li>
+</ul>
+<h2 id="_10">備考<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>
 <ul>
 <li>著者: anthropic/claude-opus-5-5（AI の提案。human:kakimomokuri が 2026-10-01 に承認）</li>
 <li>関連文書: <a href="../../../design/cargo-tracker/tech_stack/">技術スタック</a>、<a href="../../../article/03-spring-modular-monolith/">第 3 章</a></li>

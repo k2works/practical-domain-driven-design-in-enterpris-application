@@ -15581,13 +15581,13 @@
 <tr>
 <td style="text-align: left;">監査の操作</td>
 <td style="text-align: left;">AuditAction</td>
-<td style="text-align: left;">監査記録の操作。password の段の成功（<code>PASSWORD_VERIFIED</code>）、ログインの成功（<code>LOGIN_SUCCEEDED</code>。2 つの要素がそろった）、ログインの失敗（<code>LOGIN_FAILED</code>）、TOTP の登録（<code>TOTP_ENROLLED</code>。Bolt 31b）、回復コードの使用（<code>RECOVERY_CODE_USED</code>。Bolt 31c）、ロック（<code>ACCOUNT_LOCKED</code>。その失敗でロックしたときだけ。Bolt 32）、session の取消し（<code>SESSION_REVOKED</code>。request ごとの確かめで利用停止・無効な企業・利用者なしを見つけて session を捨てた。Bolt 32c）、ログアウト（<code>LOGOUT</code>）、password の再設定の依頼（<code>PASSWORD_RESET_REQUESTED</code>。Bolt 33）、password の再設定の完了（<code>PASSWORD_RESET_COMPLETED</code>。成功だけ。Bolt 33a）、TOTP の再登録（<code>TOTP_RE_ENROLLED</code>。成功だけ。Bolt 33b）。Bolt 34 で役割の変更（<code>ROLES_CHANGED</code>。対象・版・変更前後を持つ）を、Bolt 34b で管理範囲外の試行（<code>ADMIN_SCOPE_DENIED</code>。結果は失敗、理由 <code>OUT_OF_SCOPE</code>、対象は利用者）を足した。Bolt 34d で利用停止（<code>USER_SUSPENDED</code>。結果は成功、理由は停止の理由の名前、対象・版・変更前後を持つ）と利用再開（<code>USER_REACTIVATED</code>。理由なし、対象・版・変更前後を持つ）を足した。Bolt 38b2 で利用者の登録（<code>USER_REGISTERED</code>。成功だけ、対象は新しい利用者・版 0・変更後は役割の名前）を足し、<code>ADMIN_SCOPE_DENIED</code> の対象に企業（管理範囲外の企業への登録の試行）を足した。招待のリンクで初回の password を設定した（<code>INITIAL_PASSWORD_SET</code>。成功だけ。Bolt 38b4）。システム管理者のロックの解除（<code>ACCOUNT_UNLOCKED</code>）と TOTP の解除（<code>TOTP_RESET_BY_ADMIN</code>。理由 <code>IDENTITY_VERIFIED</code>、変更後に本人確認の手段と日時。Bolt 38c）</td>
+<td style="text-align: left;">監査記録の操作。password の段の成功（<code>PASSWORD_VERIFIED</code>）、ログインの成功（<code>LOGIN_SUCCEEDED</code>。2 つの要素がそろった）、ログインの失敗（<code>LOGIN_FAILED</code>）、TOTP の登録（<code>TOTP_ENROLLED</code>。Bolt 31b）、回復コードの使用（<code>RECOVERY_CODE_USED</code>。Bolt 31c）、ロック（<code>ACCOUNT_LOCKED</code>。その失敗でロックしたときだけ。Bolt 32）、session の取消し（<code>SESSION_REVOKED</code>。request ごとの確かめで利用停止・無効な企業・利用者なしを見つけて session を捨てた。Bolt 32c）、ログアウト（<code>LOGOUT</code>）、password の再設定の依頼（<code>PASSWORD_RESET_REQUESTED</code>。Bolt 33）、password の再設定の完了（<code>PASSWORD_RESET_COMPLETED</code>。成功だけ。Bolt 33a）、TOTP の再登録（<code>TOTP_RE_ENROLLED</code>。成功だけ。Bolt 33b）。Bolt 34 で役割の変更（<code>ROLES_CHANGED</code>。対象・版・変更前後を持つ）を、Bolt 34b で管理範囲外の試行（<code>ADMIN_SCOPE_DENIED</code>。結果は失敗、理由 <code>OUT_OF_SCOPE</code>、対象は利用者）を足した。Bolt 34d で利用停止（<code>USER_SUSPENDED</code>。結果は成功、理由は停止の理由の名前、対象・版・変更前後を持つ）と利用再開（<code>USER_REACTIVATED</code>。理由なし、対象・版・変更前後を持つ）を足した。Bolt 38b2 で利用者の登録（<code>USER_REGISTERED</code>。成功だけ、対象は新しい利用者・版 0・変更後は役割の名前）を足し、<code>ADMIN_SCOPE_DENIED</code> の対象に企業（管理範囲外の企業への登録の試行）を足した。招待のリンクで初回の password を設定した（<code>INITIAL_PASSWORD_SET</code>。成功だけ。Bolt 38b4）。システム管理者のロックの解除（<code>ACCOUNT_UNLOCKED</code>）と TOTP の解除（<code>TOTP_RESET_BY_ADMIN</code>。理由 <code>IDENTITY_VERIFIED</code>、変更後に本人確認の手段と日時。Bolt 38c）。Bolt 39b3b で外部原本の採否（AUD-01）の採用（<code>EXTERNAL_RECORD_ADOPTED</code>。DE-12・DE-13 の取込での自動の採用）と隔離（<code>EXTERNAL_RECORD_QUARANTINED</code>。DE-14。理由は隔離の理由の区分）を足した。どちらも成功だけで、対象は受信記録（<code>RECEIVED_RECORD</code>）、操作者と時刻はイベントのもの（IA-INV-15）</td>
 <td style="text-align: left;">アクセス・監査。Bolt 38f で、担当範囲の外の試行（<code>ASSIGNED_SCOPE_DENIED</code>）を足した（管理範囲の外の試行 <code>ADMIN_SCOPE_DENIED</code> と用語を分ける）</td>
 </tr>
 <tr>
 <td style="text-align: left;">監査記録の対象</td>
 <td style="text-align: left;">AuditTarget</td>
-<td style="text-align: left;">監査記録の対象の種類・ID・版と変更前後の要約（Bolt 34。<code>audit_record.target_type</code> など）。役割の変更では利用者と更新した後の版、変更前後の役割の名前を持つ。利用状態の変更（Bolt 34d）では利用者と更新した後の版、変更前後の利用状態の名前（<code>ACTIVE</code>・<code>SUSPENDED</code>）を持つ。対象のない記録（ログインなど）は持たない</td>
+<td style="text-align: left;">監査記録の対象の種類・ID・版と変更前後の要約（Bolt 34。<code>audit_record.target_type</code> など）。役割の変更では利用者と更新した後の版、変更前後の役割の名前を持つ。利用状態の変更（Bolt 34d）では利用者と更新した後の版、変更前後の利用状態の名前（<code>ACTIVE</code>・<code>SUSPENDED</code>）を持つ。外部原本の採否（Bolt 39b3b）では、種類 <code>RECEIVED_RECORD</code> と受信記録 ID、変更後の要約（<code>key=value</code> を <code>;</code> でつなぐ。外部版も要約に入れる）を持ち、版と変更前は持たない。対象のない記録（ログインなど）は持たない</td>
 <td style="text-align: left;">アクセス・監査</td>
 </tr>
 <tr>
@@ -16079,7 +16079,13 @@
 <tr>
 <td style="text-align: left;">監査記録</td>
 <td style="text-align: left;">AuditRecord</td>
-<td style="text-align: left;">操作者・時刻・対象・変更前後・理由・承認・出典の追記専用の記録。リポジトリ（<code>AuditRecordRepository</code>）は追記と照会だけを持ち、更新と削除はしない（IA-INV-07）。Bolt 38c2 から、対象の利用者の最新の停止の記録を引く（<code>findLatestUserSuspension</code>。索引 <code>ix_audit_record_target</code>）</td>
+<td style="text-align: left;">操作者・時刻・対象・変更前後・理由・承認・出典の追記専用の記録。リポジトリ（<code>AuditRecordRepository</code>）は追記と照会だけを持ち、更新と削除はしない（IA-INV-07）。Bolt 38c2 から、対象の利用者の最新の停止の記録を引く（<code>findLatestUserSuspension</code>。索引 <code>ix_audit_record_target</code>）。Bolt 39b3b から、外部原本の採否の記録を作り方 <code>externalRecordAdopted</code>・<code>externalRecordQuarantined</code> で作り（対象は受信記録 <code>RECEIVED_RECORD</code>。必須の値がなければ <code>IllegalArgumentException</code>）、イベント経由の監査の冪等のために操作と対象で記録の有無を引く（<code>existsByActionAndTarget</code>。同じ索引。IA-INV-15）</td>
+<td style="text-align: left;">アクセス・監査</td>
+</tr>
+<tr>
+<td style="text-align: left;">外部原本の採否の監査のイベントハンドラー</td>
+<td style="text-align: left;">ExternalRecordAuditEventHandler</td>
+<td style="text-align: left;">DE-12・DE-13・DE-14 を取込のコミットの後に別のトランザクションで受け、受信記録ごとに外部原本の採否の監査記録（<code>EXTERNAL_RECORD_ADOPTED</code>・<code>EXTERNAL_RECORD_QUARANTINED</code>）を 1 つ書くハンドラー（<code>eventhandlers</code>、<code>@ApplicationModuleListener</code>。組み立ては <code>IdentityConfiguration</code>）。操作と対象で引いてあれば書かない。内容の欠けたイベントは ERROR のログを残して捨て、DB の失敗は例外を上げて配り直させる（前例 <code>KpiObservationEventHandler</code>）。外部原本の採否の監査記録を作るのはこのクラスだけ（ArchUnit の規則。IA-INV-15、Bolt 39b3b）</td>
 <td style="text-align: left;">アクセス・監査</td>
 </tr>
 <tr>
@@ -17261,7 +17267,7 @@
 <td style="text-align: left;">監査記録（AuditRecord）</td>
 <td style="text-align: left;">監査記録 ID</td>
 <td style="text-align: left;">操作者、時刻、対象と版、変更前後、理由、承認、出典、結果</td>
-<td style="text-align: left;">追記専用の証跡</td>
+<td style="text-align: left;">追記専用の証跡。外部原本の採否（受信記録が対象）はイベント経由で書き、操作と対象で冪等にする（IA-INV-15。Bolt 39b3b）</td>
 </tr>
 <tr>
 <td style="text-align: left;">KPI 計測</td>
@@ -17319,7 +17325,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">IA-INV-08</td>
-<td style="text-align: left;">認証の成功・失敗・ロック、権限外のアクセス試行は、ドメインイベントを経ずに同じ request の中で同期に監査記録へ書く。ログインの失敗の回数とその監査記録（<code>LOGIN_FAILED</code>・<code>ACCOUNT_LOCKED</code>）、成功で 0 に戻すことと <code>LOGIN_SUCCEEDED</code> は 1 つのトランザクションにし、監査記録の追記が失敗したら回数も戻す。ロックの監査はその失敗でロックしたときだけ 1 行書く（Bolt 32）。回復コードのログインでは、コードの使用と <code>RECOVERY_CODE_USED</code> が 1 つのトランザクション、<code>LOGIN_SUCCEEDED</code> と回数の戻しが別のトランザクションになる。後者の追記が失敗すると、例外が伝わってログインは 500 になり通らない。session は password の段のまま残り（2 つ目の要素の入力に戻れる。業務の画面は A-02 の <code>/login/totp?factor.type=totp</code> へ導く）、同じ session で別の回復コードを送り直せるが、送るたびにまた 500 になり、コードが 1 つずつ使用済みになる。コードの使用と <code>RECOVERY_CODE_USED</code> は先にコミットしているので、使ったコードは戻らない（<code>RECOVERY_CODE_USED</code> は残り、<code>LOGIN_SUCCEEDED</code> と回数の戻しは書かれず、誤りとしても数えない。Bolt 34c で <code>AuthenticationErrorHandlingIntegrationTest</code> の特性テストで固定した。変えるかは後の Bolt の議題）。request ごとの確かめで session を捨てたときの <code>SESSION_REVOKED</code> も、その request の中で 1 つのトランザクションで書き、追記が失敗したら session を捨てて 500 にする（Bolt 32c）。管理範囲外の試行（<code>ADMIN_SCOPE_DENIED</code>。Bolt 34b）は、役割の変更のトランザクションの外で単独のトランザクションで書き、追記が失敗したら 500 にする。利用者の登録の監査記録（<code>USER_REGISTERED</code>。Bolt 38b2）は利用者と役割と同じトランザクションで書き、追記が失敗したら利用者も残さない。利用停止と再開の監査記録（<code>USER_SUSPENDED</code>・<code>USER_REACTIVATED</code>。Bolt 34d）は利用状態の変更と同じトランザクションで書き、追記が失敗したら利用状態も戻す（停止で無効にした再設定のトークンも戻る。IA-INV-12）。変更前の状態は判定に使った利用者の状態から渡し、変わっていない変更は記録しない。再開の後の session の消去は確定のトランザクションの外で行い、消せなくても記録と再開は戻さない（IA-INV-04）。招待のリンクの初回の設定の <code>INITIAL_PASSWORD_SET</code> も、トークンの使用と password の更新と同じトランザクションで書く（Bolt 38b4）。ロックの解除と TOTP の解除の監査は、解除と同じトランザクションで書く（Bolt 38c）</td>
+<td style="text-align: left;">認証の成功・失敗・ロック、権限外のアクセス試行は、ドメインイベントを経ずに同じ request の中で同期に監査記録へ書く。ログインの失敗の回数とその監査記録（<code>LOGIN_FAILED</code>・<code>ACCOUNT_LOCKED</code>）、成功で 0 に戻すことと <code>LOGIN_SUCCEEDED</code> は 1 つのトランザクションにし、監査記録の追記が失敗したら回数も戻す。ロックの監査はその失敗でロックしたときだけ 1 行書く（Bolt 32）。回復コードのログインでは、コードの使用と <code>RECOVERY_CODE_USED</code> が 1 つのトランザクション、<code>LOGIN_SUCCEEDED</code> と回数の戻しが別のトランザクションになる。後者の追記が失敗すると、例外が伝わってログインは 500 になり通らない。session は password の段のまま残り（2 つ目の要素の入力に戻れる。業務の画面は A-02 の <code>/login/totp?factor.type=totp</code> へ導く）、同じ session で別の回復コードを送り直せるが、送るたびにまた 500 になり、コードが 1 つずつ使用済みになる。コードの使用と <code>RECOVERY_CODE_USED</code> は先にコミットしているので、使ったコードは戻らない（<code>RECOVERY_CODE_USED</code> は残り、<code>LOGIN_SUCCEEDED</code> と回数の戻しは書かれず、誤りとしても数えない。Bolt 34c で <code>AuthenticationErrorHandlingIntegrationTest</code> の特性テストで固定した。変えるかは後の Bolt の議題）。request ごとの確かめで session を捨てたときの <code>SESSION_REVOKED</code> も、その request の中で 1 つのトランザクションで書き、追記が失敗したら session を捨てて 500 にする（Bolt 32c）。管理範囲外の試行（<code>ADMIN_SCOPE_DENIED</code>。Bolt 34b）は、役割の変更のトランザクションの外で単独のトランザクションで書き、追記が失敗したら 500 にする。利用者の登録の監査記録（<code>USER_REGISTERED</code>。Bolt 38b2）は利用者と役割と同じトランザクションで書き、追記が失敗したら利用者も残さない。利用停止と再開の監査記録（<code>USER_SUSPENDED</code>・<code>USER_REACTIVATED</code>。Bolt 34d）は利用状態の変更と同じトランザクションで書き、追記が失敗したら利用状態も戻す（停止で無効にした再設定のトークンも戻る。IA-INV-12）。変更前の状態は判定に使った利用者の状態から渡し、変わっていない変更は記録しない。再開の後の session の消去は確定のトランザクションの外で行い、消せなくても記録と再開は戻さない（IA-INV-04）。招待のリンクの初回の設定の <code>INITIAL_PASSWORD_SET</code> も、トークンの使用と password の更新と同じトランザクションで書く（Bolt 38b4）。ロックの解除と TOTP の解除の監査は、解除と同じトランザクションで書く（Bolt 38c）。注（Bolt 39b3b）: この規則は request の中で同期に書く監査のもので、ドメインイベントを経て非同期に書く監査（外部原本の採否）は IA-INV-15</td>
 <td style="text-align: left;">AUD-01、US-16〜US-19。管理範囲の外の試行（<code>ADMIN_SCOPE_DENIED</code>）と担当範囲の外の試行（<code>ASSIGNED_SCOPE_DENIED</code>。Bolt 38f）は、どちらも確定の POST だけを記録し、GET の範囲の外は 404 だけにする（SEC-12）</td>
 </tr>
 <tr>
@@ -17351,6 +17357,11 @@
 <td style="text-align: left;">IA-INV-14</td>
 <td style="text-align: left;">システム管理者は、管理範囲（<code>user_assignment</code> の <code>COMPANY</code> で割り当てた企業）の利用者だけを一覧し、詳細を開き、役割を変えられ、利用停止と再開ができる（利用停止と再開は Bolt 34d）。範囲外の利用者は存在しない利用者と同じに扱い（404）、役割の変更と利用状態の変更の試行（確定の POST）を監査記録に同じ request の中で書く。利用者の登録（Bolt 38b2）も管理範囲の企業にだけ行い、範囲の外の企業は存在しない企業と同じ応答にして、確定の試行を監査記録（対象は企業）に書く。登録できる企業の照会（Bolt 38b3）も管理範囲の企業だけを返し、範囲外の企業は状態によらず範囲外として返す。範囲の判定は対象の所属企業だけで見る（自分の詳細にも例外を作らない）。IA-INV-02 の管理者版（Bolt 34b）。ロックの解除と TOTP の解除も管理範囲の利用者だけ（Bolt 38c）。担当範囲（担当企業）の割り当ても管理範囲の利用者に、管理範囲の中の有効な荷主の企業だけ（Bolt 38e）</td>
 <td style="text-align: left;">BR-15、UC-16 の 2a、US-16 AC2</td>
+</tr>
+<tr>
+<td style="text-align: left;">IA-INV-15</td>
+<td style="text-align: left;">ドメインイベントを経る監査（外部原本の採否。DE-12・DE-13・DE-14）は、発行元のコミット（取込のコミット）の後に非同期に別のトランザクションで書く。巻き戻った取込には監査記録がない。操作者と発生時刻はイベントの操作者と時刻で、listener の時刻を使わない（再配信でも変わらない）。操作と対象（<code>RECEIVED_RECORD</code>、受信記録 ID）で引いて記録があれば書かない（冪等。前提は「（操作、受信記録）ごとにイベントは 1 つ」で、39d の隔離した行の採用もこれを守る）。内容の欠けたイベント（受信記録 ID・操作者・要約の必須の部品がないなど。<code>AuditRecord.MissingEventValueException</code>）は照会も追記もせずに ERROR のログを残して捨て、DB の失敗とほかの例外は上げて発行記録を未完了に残し、起動のときに配り直す（定期の再配信はない）。照会してから追記するので、同じイベントの同時の配信は二重になりうる。今は単一インスタンス（デモは Heroku の 1 台・H2 のインメモリ）なので同時の配信は起きない。ShedLock は未実装（ADR-003 の決定とコードの食い違い。release_plan のリスク台帳）で、複数インスタンスにする前（W10）に監査の表の一意制約（<code>event_id</code> か（操作、対象））か ShedLock を入れる。外部原本の採否の監査記録を作るのは <code>ExternalRecordAuditEventHandler</code> だけ（Bolt 39b3b。2026-11-03、human:kakimomokuri が決めた）</td>
+<td style="text-align: left;">AUD-01・AUD-02・AUD-04、ADR-003、ADR-004</td>
 </tr>
 <tr>
 <td style="text-align: left;">KPI-INV-01</td>
@@ -17752,7 +17763,7 @@
 <td style="text-align: left;">航海の採用値を更新した</td>
 <td style="text-align: left;">外部データ</td>
 <td style="text-align: left;">航海番号、採用値、出典、情報版（航海番号と採用値は取り込む行の取込の値（航海の値）から作り、情報版・取得時刻・出典は取り込む行のキーの列（外部版・取得時刻）と情報源から作る。作るのは Bolt 39b3。Bolt 39b2b）。<code>VoyageAdoptedValueUpdated</code>（<code>externaldata.domain.events</code>。Bolt 39b3）: 採用値 ID、取込 ID、情報源 ID、出典 <code>Source</code>（種類 <code>EXTERNAL_RECORD</code>、参照は受信記録 ID、取得時刻はファイルの値）、航海番号、寄港の並び（入れ子の record <code>AdoptedPortCall</code>: 港 <code>Location</code>、到着・出発 <code>UtcInstant</code>。空は null）、情報版（外部版）、操作者（<code>UserId</code>・<code>CompanyId</code>）、公開した時刻（取込の時刻）。Java の標準と共有カーネルの型だけで持つ。発行元の集約の版は持たず、情報版で代える</td>
-<td style="text-align: left;">経路設計: 航海を更新し、確定済みの経路版を再評価する（Bolt 39e）。監査（Bolt 39b3b。取込での自動の採用を監査する）</td>
+<td style="text-align: left;">経路設計: 航海を更新し、確定済みの経路版を再評価する（Bolt 39e）。監査（Bolt 39b3b。取込での自動の採用を監査する。<code>ExternalRecordAuditEventHandler</code> が <code>EXTERNAL_RECORD_ADOPTED</code> を書く。IA-INV-15）</td>
 <td style="text-align: left;">EV-05</td>
 </tr>
 <tr>
@@ -17760,7 +17771,7 @@
 <td style="text-align: left;">主要実績の採用値を受け付けた</td>
 <td style="text-align: left;">外部データ</td>
 <td style="text-align: left;">追跡番号、実績、出典（追跡番号と実績は取り込む行の取込の値（主要実績の値）から作り、取得時刻・出典は取り込む行のキーの列と情報源から作る。作るのは Bolt 39b3。Bolt 39b2b）。<code>MilestoneAdoptedValueAccepted</code>（<code>externaldata.domain.events</code>。Bolt 39b3）: 採用値 ID、取込 ID、情報源 ID、出典 <code>Source</code>（DE-12 と同じ）、追跡番号（文字列）、種類（文字列）、場所 <code>Location</code>、発生時刻 <code>UtcInstant</code>、外部 ID、情報版、操作者、公開した時刻。発行元の集約の版は持たず、情報版で代える</td>
-<td style="text-align: left;">追跡: 主要実績を登録する（下書き。Bolt 39g。出典を <code>source_kind</code>・<code>source_ref</code> に写し、再配信で重ねない）。監査（Bolt 39b3b。取込での自動の採用を監査する）</td>
+<td style="text-align: left;">追跡: 主要実績を登録する（下書き。Bolt 39g。出典を <code>source_kind</code>・<code>source_ref</code> に写し、再配信で重ねない）。監査（Bolt 39b3b。取込での自動の採用を監査する。<code>ExternalRecordAuditEventHandler</code> が <code>EXTERNAL_RECORD_ADOPTED</code> を書く。IA-INV-15）</td>
 <td style="text-align: left;">EV-06</td>
 </tr>
 <tr>
@@ -17768,7 +17779,7 @@
 <td style="text-align: left;">外部原本を隔離した</td>
 <td style="text-align: left;">外部データ</td>
 <td style="text-align: left;">冪等性キー（キーのない隔離は空）、理由の区分、物理行の範囲。<code>ExternalRecordQuarantined</code>（<code>externaldata.domain.events</code>。Bolt 39b3）: 受信記録 ID、取込 ID、情報源 ID、提供元、原本種別、外部 ID・外部版（キーのない隔離は null）、理由の区分（文字列。内容の違う原本は <code>CONTENT_MISMATCH</code>、形式の誤りは形式の誤り <code>FormatDefect</code> の名前）、物理行の範囲の始まりと終わり（ファイルの誤りは null）、操作者、隔離した時刻（取込の時刻）。内容の違う原本の隔離に加え、行の誤り・ファイルの誤り・取り込めなかった部分のキーのない隔離にも同じ「外部原本を隔離した」を出す。重複は出さない（採用値に影響しない）</td>
-<td style="text-align: left;">監査（Bolt 39b3b）、データ責任者への表示（Bolt 39c・39d）</td>
+<td style="text-align: left;">監査（Bolt 39b3b。<code>ExternalRecordAuditEventHandler</code> が <code>EXTERNAL_RECORD_QUARANTINED</code> を書く。IA-INV-15）、データ責任者への表示（Bolt 39c・39d）</td>
 <td style="text-align: left;">EV-05</td>
 </tr>
 <tr>

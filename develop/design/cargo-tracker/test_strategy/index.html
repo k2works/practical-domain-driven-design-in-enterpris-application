@@ -15194,7 +15194,7 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 <td style="text-align: left;">IA-INV-07（監査記録の追記専用と欠落の検知）</td>
 <td style="text-align: left;">—</td>
 <td style="text-align: left;">—</td>
-<td style="text-align: left;">○（UPDATE・DELETE の権限なし、<code>event_id</code> の一意、欠落の照合の定期処理）</td>
+<td style="text-align: left;">○（UPDATE・DELETE の権限なし、操作と対象での冪等（イベント経由の監査。IA-INV-15。Bolt 39b3b で <code>event_id</code> の一意から改めた）、欠落の照合の定期処理）</td>
 <td style="text-align: left;">—</td>
 </tr>
 <tr>
@@ -15296,7 +15296,7 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 <tr>
 <td style="text-align: left;">AT-05</td>
 <td style="text-align: left;">業務のルールの層のステップ定義（<code>&lt;コンテキスト&gt;.acceptance</code>）は、自分のコンテキストのアプリケーション層・ドメイン層と共有カーネル、他のコンテキストの公開 API にだけ依存し、自分のインフラストラクチャ層・画面・公開 API の実装（<code>interfaces.api.internal</code>）と他のコンテキストの内部（ドメインイベントを含む）に依存しない（入力ポートのほか、コマンドの組み立てと結果の確かめにドメインの値オブジェクト・集約を使うことは認める。画面の層のステップ定義と、受入テストの組み立て（<code>acceptance</code>・<code>shared.acceptance</code>。メモリのリポジトリや公開 API の実装をつなぐのが役目）は対象外）</td>
-<td style="text-align: left;">ArchUnit（<code>AcceptanceStepArchitectureTest</code>。Bolt 28 で、Bolt 2 から後に回していたものを実態に合わせて作った）</td>
+<td style="text-align: left;">ArchUnit（<code>AcceptanceStepArchitectureTest</code>。Bolt 28 で、Bolt 2 から後に回していたものを実態に合わせて作った。Bolt 39b3b で、コンテキストごとの手書きの規則を、依存元のパッケージからコンテキストを決める 1 つの規則にした）</td>
 <td style="text-align: left;">本書 BDD</td>
 </tr>
 <tr>

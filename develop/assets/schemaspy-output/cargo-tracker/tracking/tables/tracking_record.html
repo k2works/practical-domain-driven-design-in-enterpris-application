@@ -507,16 +507,16 @@
                                 </thead>
                                 <tbody>
                                 <tr>
-                                    <td>ck_tracking_record_booking_status</td>
-                                    <td>((booking_status)::text &#61; ANY ((ARRAY[&#39;CONFIRMED&#39;::character varying, &#39;CANCELLED&#39;::character varying, &#39;COMPLETED&#39;::character varying])::text[]))</td>
+                                    <td>ck_tracking_record_current_status</td>
+                                    <td>((current_status)::text &#61; ANY ((ARRAY[&#39;BOOKED&#39;::character varying, &#39;PICKUP_SCHEDULED&#39;::character varying, &#39;PICKED_UP&#39;::character varying, &#39;RECEIVED_AT_ORIGIN&#39;::character varying, &#39;IN_TRANSIT&#39;::character varying, &#39;TRANSSHIPPING&#39;::character varying, &#39;ARRIVED_AT_DESTINATION&#39;::character varying, &#39;READY_FOR_DELIVERY&#39;::character varying, &#39;DELIVERED&#39;::character varying, &#39;UNDER_REVIEW&#39;::character varying])::text[]))</td>
                                 </tr>
                                 <tr>
                                     <td>ck_tracking_record_route_version</td>
                                     <td>(((routing_case_number IS NULL) AND (route_version_no IS NULL)) OR ((routing_case_number IS NOT NULL) AND (route_version_no &gt;&#61; 1)))</td>
                                 </tr>
                                 <tr>
-                                    <td>ck_tracking_record_current_status</td>
-                                    <td>((current_status)::text &#61; ANY ((ARRAY[&#39;BOOKED&#39;::character varying, &#39;PICKUP_SCHEDULED&#39;::character varying, &#39;PICKED_UP&#39;::character varying, &#39;RECEIVED_AT_ORIGIN&#39;::character varying, &#39;IN_TRANSIT&#39;::character varying, &#39;TRANSSHIPPING&#39;::character varying, &#39;ARRIVED_AT_DESTINATION&#39;::character varying, &#39;READY_FOR_DELIVERY&#39;::character varying, &#39;DELIVERED&#39;::character varying, &#39;UNDER_REVIEW&#39;::character varying])::text[]))</td>
+                                    <td>ck_tracking_record_booking_status</td>
+                                    <td>((booking_status)::text &#61; ANY ((ARRAY[&#39;CONFIRMED&#39;::character varying, &#39;CANCELLED&#39;::character varying, &#39;COMPLETED&#39;::character varying])::text[]))</td>
                                 </tr>
                                 </tbody>
                             </table>
