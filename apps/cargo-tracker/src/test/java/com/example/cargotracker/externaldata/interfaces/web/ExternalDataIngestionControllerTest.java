@@ -68,6 +68,11 @@ class ExternalDataIngestionControllerTest {
     private static final String COMMON_REFUSAL = "取り込めませんでした。情報源とファイルを確かめてください。";
     private static final String NO_SOURCE = "取り込める情報源がありません。承認済みの情報源がありません。情報源を選定し、承認してください。" + "承認は運用の手順で行います。";
     private static final String LIMIT = "1 ファイルにつきデータ行 10,000 行・40 MB まで。超えるときはファイルを分けて取り込んでください。";
+    // 情報源の拒否の 2 つの文言（Bolt 39c2 の行 5・6 と Bolt 39c4 の行 14・15・19 で使う）。Bolt 39c4 で「示された情報源から選び直してください。」の形に直した（【前の決定の変更】(1)）
+    private static final String NOT_APPROVED = "選んだ情報源は承認済みではないため取り込めません。示された情報源から選び直してください。";
+    private static final String NOT_FOUND = "選んだ情報源が見つかりません。示された情報源から選び直してください。";
+    /** 0 件の全文の段落。エラー要約のリンクの先なので、フォーカスを受けられる（tabindex="-1"）。 */
+    private static final String NO_SOURCE_PARAGRAPH = "<p id=\"no-source\" tabindex=\"-1\">";
 
     private static final UUID VOYAGE_SOURCE = UUID.fromString("39c00000-0000-0000-0000-000000000001");
     private static final UUID MILESTONE_SOURCE = UUID.fromString("39c00000-0000-0000-0000-000000000002");
@@ -291,13 +296,8 @@ class ExternalDataIngestionControllerTest {
     class Bolt39c2_取り込めない送信 {
 
         private static final String FILE_TOO_LARGE = "ファイルが大きすぎます（1 ファイルにつきデータ行 10,000 行・40 MB まで）。ファイルを分けて取り込んでください。";
-        // Bolt 39c4 の行 14・15 で「示された情報源から選び直してください。」の形に直した（【前の決定の変更】(1)）
-        private static final String NOT_APPROVED = "選んだ情報源は承認済みではないため取り込めません。示された情報源から選び直してください。";
-        private static final String NOT_FOUND = "選んだ情報源が見つかりません。示された情報源から選び直してください。";
         private static final String RESELECT_FILE = "選んだファイルは残っていません。もう一度選んでください。";
         private static final String VOYAGE_CHECKED = "value=\"" + VOYAGE_SOURCE + "\"[^>]*checked=\"checked\"";
-        /** 0 件の全文の段落。エラー要約のリンクの先なので、フォーカスを受けられる（tabindex="-1"）。 */
-        private static final String NO_SOURCE_PARAGRAPH = "<p id=\"no-source\" tabindex=\"-1\">";
 
         @Test
         void 行1_上限を超えるファイルは取込ファイルの欄の誤りとしてエラー要約と欄の下に理由と次の行動を示し選んだ情報源を戻す() throws Exception {
@@ -704,9 +704,6 @@ class ExternalDataIngestionControllerTest {
         private static final String REVIEW_HEADING = "<h2 id=\"review-heading\">要確認</h2>";
         private static final String REVIEW_GUIDE =
                 "<p>取り込めなかった部分があります。取り込めなかった部分の行は分類されていません。" + "下の「隔離の理由」で理由とどうすればよいかを確かめてください。</p>";
-        private static final String NOT_APPROVED = "選んだ情報源は承認済みではないため取り込めません。示された情報源から選び直してください。";
-        private static final String NOT_FOUND = "選んだ情報源が見つかりません。示された情報源から選び直してください。";
-        private static final String NO_SOURCE_PARAGRAPH = "<p id=\"no-source\" tabindex=\"-1\">";
 
         private IngestionSummaryView summaryWith(IngestionSummaryView.UnreadableRegion unreadable) {
             return new IngestionSummaryView(

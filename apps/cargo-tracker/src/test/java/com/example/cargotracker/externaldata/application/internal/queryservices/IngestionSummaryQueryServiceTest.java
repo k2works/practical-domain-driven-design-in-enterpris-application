@@ -22,6 +22,7 @@ import com.example.cargotracker.externaldata.domain.model.valueobjects.PhysicalL
 import com.example.cargotracker.shared.domain.UserId;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.IntStream;
@@ -198,8 +199,8 @@ class IngestionSummaryQueryServiceTest {
                 boolean expectedWholeFile) {
             Ingestion target = ingestionWith(unparsedFromLine, unparsedLineCount);
             // ファイルの誤りの受信記録は範囲を持たず照会の先頭に来る。ほかに行の誤りの隔離を 1 つ置く（ファイルの誤りでないときの隔離）
-            java.util.List<ReceivedRecord> quarantined =
-                    fileKey ? java.util.List.of(fileDefect(target)) : java.util.List.of(ownPayload(target, 3, 3));
+            List<ReceivedRecord> quarantined =
+                    fileKey ? List.of(fileDefect(target)) : List.of(ownPayload(target, 3, 3));
             given(receivedRecords.countByIngestionAndClassification(target.id(), Classification.QUARANTINED))
                     .willReturn(quarantined.size());
             given(receivedRecords.quarantinedOf(target.id(), IngestionSummaryQueryService.SHOWN_QUARANTINE_LIMIT))

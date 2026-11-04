@@ -51,6 +51,8 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.IntFunction;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -328,14 +330,10 @@ class ExternalDataIngestionPerformanceTest {
 
     /** 結果の画面の隔離の理由の一覧の項目の数。 */
     private static int shownNotes(String page) {
-        java.util.regex.Matcher list = java.util.regex.Pattern.compile(
-                        "<ul aria-labelledby=\"quarantine-notes-heading\">(.*?)</ul>", java.util.regex.Pattern.DOTALL)
+        Matcher list = Pattern.compile("<ul aria-labelledby=\"quarantine-notes-heading\">(.*?)</ul>", Pattern.DOTALL)
                 .matcher(page);
         return list.find()
-                ? (int) java.util.regex.Pattern.compile("<li>")
-                        .matcher(list.group(1))
-                        .results()
-                        .count()
+                ? (int) Pattern.compile("<li>").matcher(list.group(1)).results().count()
                 : 0;
     }
 
