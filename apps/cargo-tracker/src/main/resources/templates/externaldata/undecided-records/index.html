@@ -33,7 +33,8 @@
             <tr th:each="row : ${rows}">
                 <td th:text="${row.ingestedAt()}">2026-11-16 10:05 Asia/Tokyo（UTC+09:00）（UTC 2026-11-16 01:05）</td>
                 <td th:text="${row.source()}">開発海運（架空）（航海）</td>
-                <td th:text="${row.lines() != null} ? ${row.lines()} : '—'">102 行目</td>
+                <td th:if="${row.lines() != null}" th:text="${row.lines()}">102 行目</td>
+                <td th:unless="${row.lines() != null}"><span aria-hidden="true">—</span><span class="visually-hidden">ファイル全体</span></td>
                 <td th:text="${row.kind()}">形式の誤り</td>
                 <td th:if="${row.externalKey() != null}" th:text="${row.externalKey()}">DEMO-201・3</td>
                 <td th:unless="${row.externalKey() != null}"><span aria-hidden="true">—</span><span class="visually-hidden">なし</span></td>

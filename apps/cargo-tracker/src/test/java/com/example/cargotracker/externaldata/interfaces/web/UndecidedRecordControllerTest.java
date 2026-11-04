@@ -118,7 +118,10 @@ class UndecidedRecordControllerTest {
                 .andExpect(content()
                         .string(matchesPattern(Pattern.compile("(?s).*<tr>\\s*"
                                 + "<td>2026-11-16 10:05 Asia/Tokyo（UTC\\+09:00）（UTC 2026-11-16 01:05）</td>\\s*"
-                                + "<td>開発海運（架空）（主要実績）</td>\\s*<td>—</td>\\s*<td>形式の誤り</td>\\s*"
+                                + "<td>開発海運（架空）（主要実績）</td>\\s*"
+                                // 行を持たないファイルの誤りの「—」は読み上げで「ファイル全体」と読む（Bolt 39d の開発レビュー）
+                                + "<td><span aria-hidden=\"true\">—</span><span class=\"visually-hidden\">ファイル全体</span></td>\\s*"
+                                + "<td>形式の誤り</td>\\s*"
                                 + "<td><span aria-hidden=\"true\">—</span><span class=\"visually-hidden\">なし</span></td>\\s*"
                                 + "<td>ファイル: 必要な列がありません（port_calls）。</td>\\s*</tr>\\s*<tr>\\s*"
                                 + "<td>2026-11-16 10:05 Asia/Tokyo（UTC\\+09:00）（UTC 2026-11-16 01:05）</td>\\s*"
