@@ -2,7 +2,7 @@
 type: Plan
 title: "Bolt 39d2 計画 - S-17 で隔離を却下する（判断の記録・判断のイベントと監査）"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-04T20:08:47Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-04T21:21:40Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-11-04T20:02:49Z }
 ---
@@ -377,7 +377,7 @@ rcd ..> ar : DE-29（コミットの後）
 - [x] **4. 却下のサービスとイベント**（緑。判断の画面の行き先は判断のサービスの refusalOf(UUID) が決める（画面はポートを直接呼べないため。クラス図にないメソッド）。推奨のとおり承認として記録した。Recommend 承認の指示による）: `ReceivedRecordDecisionService`（情報源 ID は `IngestionRepository.findById` から）・`DecisionOutcome`・`RejectReceivedRecordCommand`（`@Command`）・DE-29（判断は `String`）、`ExternalDataConfiguration` の `@Bean`、照会のサービスの ID で 1 件を引くメソッド。行 1・3〜6・9・10・22 が緑（完了の判定: 同上。**承認ゲート**）
 - [x] **5. 監査**（緑。private のヘルパーは receivedRecordAudit に名前を変えた。推奨のとおり承認として記録した。Recommend 承認の指示による）: `AuditAction.EXTERNAL_RECORD_DECIDED`、`AuditRecord.externalRecordDecided`（private のヘルパーの名前を変える）、listener の `on`、規則の行、配信の統合テスト。行 11〜13 が緑（完了の判定: 同上。**承認ゲート**（監査、規則の行の変更））
 - [x] **6. 画面**（緑。S-17・S-16 の UI 17 本、axe 違反 0、test 4,359 件、SonarQube PASS（9 件を直した）。判断の画面にエラー要約を足し、39d のページ送りのステップを Shift+Tab に直した。ページ送りが 100 個の「判断する」の後にある負担は 39d2b で扱う。推奨のとおり承認として記録した。Recommend 承認の指示による）: `UndecidedRecordController` の判断の画面と POST、`RejectionForm`、`decision.html`（キーのない隔離は却下だけと「直したファイルを取り込み直してください」）、一覧の「判断する」と知らせ、パス変数を `String` で受けて 404、戻り先を `parseUuid`・`parsePage` に通す。行 4・5・7・8・14・17〜19・22 が緑、受入シナリオが緑、39d の S-17 と S-16 の UI のシナリオが緑（完了の判定: 緑、`spotbugsMain`・`checkstyleMain`・`sonar-local:check`、`uiTest` と axe 違反 0。**承認ゲート**（画面、新しいファイル））
-- [ ] **7. マニュアルとキャプチャ**: 12.2 の「隔離を却下する」・画面の説明・注意・補足、用語集、付録 B の早見表の 1 行（「この隔離は判断済みです。」）、`manualScreenshots`（行 20。新しい `12-undecided-record-decision.png` と `12-undecided-records.png` の撮り直し）。知らせ・欄の誤り・判断済みの文を controller の定数とテンプレートに突き合わせる（T-197）（完了の判定: キャプチャの差分と突き合わせの記録。**承認ゲート**（マニュアル、新しいファイル））
+- [x] **7. マニュアルとキャプチャ**（12.2 に「隔離を却下する」、用語集、付録 B の 1 行、00-はじめに・index の 12 章の概要。12-undecided-record-decision.png を足し、12-undecided-records.png を撮り直した（関係のない 49 枚は時刻の画素だけなので戻した）。controller の定数とテンプレートの文と一字ずつ一致（T-197）。却下した原本の送り直しが重複になり一覧に戻らないおそれは 39d4 の開始準備で確かめる。推奨のとおり承認として記録した。Recommend 承認の指示による）: 12.2 の「隔離を却下する」・画面の説明・注意・補足、用語集、付録 B の早見表の 1 行（「この隔離は判断済みです。」）、`manualScreenshots`（行 20。新しい `12-undecided-record-decision.png` と `12-undecided-records.png` の撮り直し）。知らせ・欄の誤り・判断済みの文を controller の定数とテンプレートに突き合わせる（T-197）（完了の判定: キャプチャの差分と突き合わせの記録。**承認ゲート**（マニュアル、新しいファイル））
 - [ ] **8. 品質ゲートと開発レビュー**: 変異、`check`・`uiTest`、その後に SonarQube、開発レビューとその直し。push の前に `check`（T-225）
 - [ ] **9. 終了報告**: push して CI とデモ環境の配備を確かめ（デモ環境でデータ責任者でログインし、内容の違う原本の取込から S-17 で 1 件を却下する）、`demoVideo` で `@demo-bolt-39d2/reject` を撮る（新しいファイル）。release_plan（39d2 の行の計画と終了報告のリンク）・開発の索引・mkdocs を直す。【業務の判断】(a)・(d)・(e)・(g) を終了報告の議題の先頭に置く
 
