@@ -2,7 +2,7 @@
 type: Plan
 title: "Bolt 39d 計画 - S-17 判断を待つ隔離の一覧（すべての隔離と S-16 からの入口）"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-04T17:30:24Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-04T17:39:10Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-11-04T17:30:25Z }
 ---
@@ -398,7 +398,7 @@ end note
 
 ## ステップ計画（ステップごとに止める）
 
-- [ ] **1. 設計の文書**（ui_design・domain_model・data_model・system_usecase・test_strategy・non_functional・release_plan・ADR-004・台帳）: 上の「設計文書に直す箇所」（開始準備の決定 (1)〜(15) を反映する）（完了の判定: 文書の差分。**承認ゲート**）
+- [x] **1. 設計の文書**（ui_design の 7 か所と S-17 の節、domain_model、data_model、system_usecase、test_strategy、non_functional、ADR-004、release_plan、台帳 D-95。推奨のとおり承認として記録した。Recommend 承認の指示による）（ui_design・domain_model・data_model・system_usecase・test_strategy・non_functional・release_plan・ADR-004・台帳）: 上の「設計文書に直す箇所」（開始準備の決定 (1)〜(15) を反映する）（完了の判定: 文書の差分。**承認ゲート**）
 - [ ] **2. テストの Red（外側から）**: 行 10〜12・18 の feature の Red（今は S-17 がなく 404 で落ちることを確かめる）、続いて行 5・9〜14・17 の controller、行 1・2・5・8・9 の照会、行 3・4・6・7・15 の契約、行 1・2・6・16 のセキュリティの統合テスト、行 19 の計測（`performanceTest` は人の側で流す）。直す既存のテストを一覧にする（T-217。ナビのテスト、S-16 の結果の画面の controller のテスト）（完了の判定: 期待した理由で落ちる記録。**承認ゲート**（画面の振る舞いの契約））
 - [ ] **3. 一覧の照会とポート**: `ReceivedRecordRepository` の 2 つの読み出し、照会専用の record `UndecidedQuarantine`、MyBatis（H2・PostgreSQL。`JOIN ingestion` と `LEFT JOIN external_record`）とメモリの実装（メモリの取込のリポジトリを受け取って並べる）、`ExternalDataConfiguration` の結線。行 3・4・6・7・15 が緑（完了の判定: 緑、`spotbugsMain`・`checkstyleMain`・`sonar-local:check`。**承認ゲート**）
 - [ ] **4. 照会のサービスと値**: `UndecidedRecordQueryService`・`UndecidedRecordPage`（`ingestionNotFound` を含む）、情報源の引き方、`ExternalDataConfiguration` の `@Bean`。行 1・2・5・8・9 が緑（完了の判定: 同上。**承認ゲート**）

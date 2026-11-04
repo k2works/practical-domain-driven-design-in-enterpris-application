@@ -4,7 +4,7 @@ title: "cargo-tracker 非機能要件"
 description: "cargo-tracker の性能・可用性・復旧・データ鮮度・セキュリティ・プライバシー・保持・アクセシビリティ・保守性・拡張性の測定可能な目標値、根拠、決定者、検証方法。"
 tags: [design, non-functional]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-04T15:21:04Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-04T17:39:10Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T08:22:09Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:38Z }
@@ -54,7 +54,7 @@ verified:
 
 | ID | 対象 | 目標値 | 状態 | 根拠 |
 | :--- | :--- | :--- | :--- | :--- |
-| PERF-01 | 画面の表示（全画面の遷移） | p95 1.0 秒以内、p99 2.0 秒以内 | 提案 | サーバー描画（ADR-005）の業務画面として一般的な水準。S-20 の詳細（確認の画面と確定を含む）は、停止中の利用者のときだけ監査記録を索引 `ix_audit_record_target` で 1 行読む分が増える（Bolt 38c2）。社内の経路設計案件一覧（S-05）は担当企業の `IN` で絞り、索引 `ix_routing_case_shipper`（`shipper_company_id`、`quotation_expires_at`）を使う。社内の追跡記録の一覧は `ix_tracking_record_shipper` を使う（Bolt 38g） |
+| PERF-01 | 画面の表示（全画面の遷移） | p95 1.0 秒以内、p99 2.0 秒以内 | 提案 | サーバー描画（ADR-005）の業務画面として一般的な水準。S-20 の詳細（確認の画面と確定を含む）は、停止中の利用者のときだけ監査記録を索引 `ix_audit_record_target` で 1 行読む分が増える（Bolt 38c2）。社内の経路設計案件一覧（S-05）は担当企業の `IN` で絞り、索引 `ix_routing_case_shipper`（`shipper_company_id`、`quotation_expires_at`）を使う。社内の追跡記録の一覧は `ix_tracking_record_shipper` を使う（Bolt 38g）。S-17 の判断を待つ隔離の一覧（1 ページ 100 件）は `ix_received_record_ingestion`・`ix_received_record_classification` を使い、上限いっぱい（隔離 1 万件の取込の最後のページと絞らない 1 ページ目）の照会と描画の時間を `ExternalDataIngestionPerformanceTest` でログの「PERF-06 undecided」の行に出して CI の手動のジョブ `performance` で記録する。計測は Bolt 39d4 で行う（Bolt 39d の計画の承認で 39d から送った）。照会が 1 秒を超えたら値を記録して止め、索引を足すかを諮る |
 | PERF-02 | 部分更新（一覧の絞り込み、状態の更新） | p95 0.5 秒以内 | 提案 | 操作の直後に結果を返す必要がある |
 | PERF-03 | 経路候補の算出（S-06） | p95 3.0 秒以内（航海 500 件、候補 50 件以下） | 提案 | 経路提示リードタイム（KPI-01）の短縮に必要。超える場合は算出中の表示を出す |
 | PERF-04 | 本予約の確定（確認画面の確定から結果表示まで） | p95 2.0 秒以内 | 提案 | 冪等性の確認と ACL 越しの確認を含む |
