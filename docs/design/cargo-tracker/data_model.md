@@ -4,7 +4,7 @@ title: "cargo-tracker データモデル"
 description: "cargo-tracker の概念データモデル、スキーマ分割、命名と型の規約（H2 と PostgreSQL の共通部分）、コンテキストごとの論理データモデルと ER 図、版・追記専用・冪等性・イベント配信の表現。"
 tags: [design, data-model]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-03T11:16:32Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-04T00:49:10Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:48:17Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:37Z }
@@ -872,10 +872,10 @@ entity "audit_record\n監査記録" as au {
   before_state : VARCHAR(4000)
   after_state : VARCHAR(4000)
   reason : VARCHAR(4000)（DB は VARCHAR(100)。Bolt 34d の注）
-  approval_ref : VARCHAR(200)
-  source_ref : VARCHAR(200)
+  approval_ref : VARCHAR(200)（DB にまだない。Bolt 39b3b の注）
+  source_ref : VARCHAR(200)（DB にまだない。Bolt 39b3b の注）
   correlation_id : VARCHAR(100)
-  event_id : UUID <<UK>>
+  .. event_id は作らない（Bolt 39b3b。冪等は操作と対象） ..
 }
 entity "kpi_observation\nKPI 計測記録" as ko {
   * transport_request_id : UUID <<PK>>
@@ -933,7 +933,7 @@ co ||--o{ ag
 | `recovery_code` | 利用者ごとに 10 行。`user_id` の索引。消費は `UPDATE ... SET used_at = :now WHERE id = :id AND user_id = :userId AND used_at IS NULL` の更新件数で判定し、行を残す（ほかの利用者のコードの行は使えない。同じコードを同時に使っても 1 つだけが通る）。発行のたびに利用者の行を消して入れ直す（追記専用の印を付けない）。bcrypt は塩が毎回違うので、`(user_id, code_hash)` の一意制約は置かない。初回の発行は `totp_credential` の行の追加（主キーで同時の登録を 1 つに絞る）と同じトランザクションで行う（Bolt 31b）。未使用のコードの読み出しは並び順を約束しない（照合はすべての未使用のコードと比べる。SQL の `ORDER BY issued_at, id` は残すが、並びは契約にしない。Bolt 31b）。Bolt 31c から、ログインで回復コードを使う（読み出しと照合はトランザクションの外で行い、消費の `UPDATE` と監査記録 `RECOVERY_CODE_USED` の追加だけを 1 つのトランザクションにする。ADR-011 の決定 7）。Bolt 33b から、認証アプリの再登録の完了でも発行し直す（`totp_credential` の置き換えと同じトランザクションで、利用者の行を消して 10 行を入れ直す。重なった回復コードのログインの消費の `UPDATE` は、置き換えの後は 0 件になる）。Bolt 38c から、システム管理者の TOTP の解除では利用者の行をすべて消す（資格の削除と同じトランザクション） | IA-INV-11 |
 | `password_reset_token` | 主キー `id`（UUID）。`purpose`（Bolt 38b）: 用途。`RESET`（再設定）・`USER_INVITATION`（利用者の招待）の CHECK（`ck_password_reset_token_purpose`）付きで、既定の値は `RESET`（Bolt 38b の前の行と、用途を省いた INSERT）。期限は用途で決まる（再設定 30 分、利用者の招待 24 時間）。繰り返しの依頼の抑えの「前の発行の時刻」は `purpose = 'RESET'` の行だけで読み、前の未使用のトークンの無効化は用途を問わない。UK（`request_id`）: 同じ依頼（利用者の招待では登録）の ID のトークンは 1 つだけで、`PasswordResetRequested` と `UserRegistered`（DE-25。Bolt 38b2c）の再配信で 2 通送らない冪等の正。UK（`token_hash`）: トークンの SHA-256 の 16 進 64 文字（`CHAR(64)`）だけを置き、平文のトークンとリンクは置かない。`user_id` は `app_user` への外部キー。`issued_at`・`expires_at` は NOT NULL（期限は発行から用途の期限）、`used_at`・`invalidated_at` は NULL 可。同じ利用者の新しい発行の前に、`UPDATE ... SET invalidated_at = :now WHERE user_id = :userId AND used_at IS NULL AND invalidated_at IS NULL` で前の未使用のトークンを無効にする。使用（Bolt 33a）も同じ形の条件付きの更新の件数で判定する（`UPDATE ... SET used_at = :now WHERE id = :id AND used_at IS NULL AND invalidated_at IS NULL AND expires_at > :now`。0 件なら使えない。ドメインの `isUsable(now)` と同じ条件であることを契約テストで確かめる。`version` を持たない例外）。設定の完了では、使った行のほかに、同じ利用者の未使用のトークンを上の無効化の更新で無効にする（Bolt 33a）。同時の発行は、発行の前に `app_user` の行を `SELECT ... FOR UPDATE` でロックして直列にする。行は消さず、追記専用の印も付けない（状態の列を更新する）。インデックス（`user_id`、`issued_at`）は無効化と繰り返しの判定（前の発行から 1 分以内）に使う。保持の期間は非機能要件（W10）で決める（Bolt 33） | IA-INV-12 |
 | `access_grant` | `status` IN（`INVITED`、`ACTIVE`、`REVOKED`、`EXPIRED`）。同じ予約・荷受人企業に有効な許可を重複させないことはアプリケーションで確認する | IA-INV-05、IA-INV-06 |
-| `audit_record` | UPDATE・DELETE の権限なし。`event_id` の一意制約で、イベントの再配信による重複記録を防ぐ。認証の失敗と権限外のアクセス試行は `event_id` を持たず、同期で書く | IA-INV-07、IA-INV-08 |
+| `audit_record` | UPDATE・DELETE の権限なし。イベント経由の監査は操作と対象で冪等にする（（操作、受信記録）ごとにイベントは 1 つ。既存の索引 `ix_audit_record_target` で操作と対象を引き、あれば書かない）。`event_id` の列は作っていない。認証の失敗と権限外のアクセス試行は同期で書く（【前の決定の変更】Bolt 39b3b、2026-11-03、human:kakimomokuri が決めた。前は「`event_id` の一意制約で、イベントの再配信による重複記録を防ぐ」） | IA-INV-07、IA-INV-08、IA-INV-15 |
 | `kpi_observation` | 輸送要求ごとに 1 行。DE-01 で作り、DE-03 で最初の提示時刻を記録する。2 回目以降の提示では、届いた提示時刻のほうが早いとき（届く順の入れ替わり）だけ書き換える条件付きの更新にする（Bolt 21。KPI-INV-01）。`ck_kpi_observation_first_presented_at` で最初の提示時刻が提出時刻より前にならないことを確かめる（KPI-INV-03）。Bolt 21 より前に提示した見積りの DE-03 は購読者がいなかったため、その輸送要求の `first_presented_at` は NULL のままである（パイロットの前で本番の記録はない）。`transport_request_number` は DE-01 の表示用の業務番号の写しで、社内の一覧に UUID の代わりに出す（Bolt 4）。Bolt 4 より前の DE-01 は業務番号を持たないため null を許す | KPI-INV-01、KPI-INV-03 |
 | `kpi_baseline` | UPDATE・DELETE の権限なし。訂正は `supersedes_id` で前の行を指す新しい行にする | KPI-INV-02 |
 
@@ -958,6 +958,7 @@ Bolt 14 で作る範囲（2026-10-06、human:kakimomokuri。[Bolt 14 計画](../
 - Bolt 38f で、担当範囲の外の試行の監査記録 `ASSIGNED_SCOPE_DENIED` を足す（表と列は変えない）。`result` は `FAILURE`、`reason` は `OUT_OF_SCOPE`、対象の種類は `TRANSPORT_REQUEST`・`QUOTATION`、対象の ID は業務番号（見積りは「業務番号/見積り番号」）、版と変更前・変更後は null。確定の POST だけで書く（SEC-12）。Bolt 38f2 から、予約の確定の POST の範囲の外も書く（対象の種類は `QUOTATION`、対象の ID は「業務番号/見積り番号」。表と列は変えない）。Bolt 38g から、経路設計の候補の算出・確定の POST（対象の種類は `ROUTING_CASE`、対象の ID は案件番号）とマイルストーンの登録の POST（`TRACKING_RECORD`、追跡番号）の範囲の外も書き、「確定の POST だけ」を「状態を変える POST」に改める（表と列は変えない）
 - Bolt 34d で、利用状態の変更の監査記録 `USER_SUSPENDED`・`USER_REACTIVATED` も対象の列を使う（対象 `USER`・利用者 ID・更新した後の版、変更前後は利用状態の名前 `ACTIVE`・`SUSPENDED`。結果は `SUCCESS`。`USER_SUSPENDED` の `reason` は停止の理由の名前、`USER_REACTIVATED` の `reason` は空）。`app_user.status` の更新と同じトランザクションで書き、拒否と古い版は書かない（IA-INV-08）。スキーマは変えないので、DB の列のコメント（`V20261016100000__add_identity_audit_record_target.sql` の `target_type`・`target_id`・`target_version`・`before_state`・`after_state` の「役割の変更では」）は直さずに残す。`audit_record.reason` は上の ER では `VARCHAR(4000)` だが、DB（`V20261006140000__create_identity_users.sql`）は `VARCHAR(100)` で食い違う。停止の理由の名前は最長 11 文字（`TRANSFERRED`）で `VARCHAR(100)` に収まるので、この Bolt では食い違いを記すだけにし、解消は入れない（Bolt 34d の計画のスコープ。2026-10-17、human:kakimomokuri が承認）。
 - Bolt 38c で、ロックの解除の監査記録 `ACCOUNT_UNLOCKED`（対象 `USER`・利用者 ID・利用者の今の版（変わらない）、変更前 `LOCKED`・変更後 `UNLOCKED`、`reason` は空）と、管理者による TOTP の解除の監査記録 `TOTP_RESET_BY_ADMIN`（対象 `USER`・利用者 ID・利用者の今の版、変更前 `ENROLLED`、変更後は `method=PHONE_CALLBACK;verifiedAt=2026-11-09T01:30:00Z` の形（本人確認の手段の名前と UTC の ISO-8601）、`reason` は `IDENTITY_VERIFIED`）も対象の列を使う。結果はどちらも `SUCCESS`。拒否と「既に解除」は書かない。スキーマは変えない（`action` に CHECK はなく、3 つの表の DELETE は権限で許されている）
+- Bolt 39b3b で、外部原本の採否の監査記録 `EXTERNAL_RECORD_ADOPTED`（DE-12・DE-13。取込での自動の採用）・`EXTERNAL_RECORD_QUARANTINED`（DE-14）を足す（表と列は変えない）。identity の監査の listener（`ExternalRecordAuditEventHandler`）がイベントを受けて、取込のコミットの後に別のトランザクションで書く（IA-INV-15）。結果は `SUCCESS`。操作者と `occurred_at` はイベントの操作者（データ責任者）と時刻（取込の時刻）。対象の種類は `RECEIVED_RECORD`、対象の ID は受信記録 ID、`target_version` と `before_state` は null（外部版は 100 文字まであり `VARCHAR(50)` に入らないので、変更後の要約に入れる）。`reason` は隔離の理由の区分（`CONTENT_MISMATCH` か形式の誤りの名前。採用は空）。`after_state` は `key=value` を `;` でつなぐ要約で、採用は `recordType`・`targetKey`・`infoVersion`・`ingestionId`・`dataSourceId`・`adoptedValueId`（主要実績は `externalId` も）、隔離は `provider`・`recordType`・`externalId`・`externalVersion`・`lines`・`ingestionId`・`dataSourceId`（キーのない隔離は外部 ID・外部版を `-`、ファイルの誤りは行も `-`）。要約は人が読むためのもので、機械では解析しない。各部品の上限の合計は 4000 文字に収まる。ER の `approval_ref`・`source_ref` は DB にまだなく（上の Bolt 34 の項）、外部原本の採否の出典（AUD-02）は作らずに要約の `dataSourceId` で代える。冪等は（`action`、`target_type`、`target_id`）で引いてあれば書かない形にし、既存の索引 `ix_audit_record_target` を使う（`event_id` の列は作らない。2026-11-03、human:kakimomokuri が決めた）
 - Bolt 14 の認可はログインの時点の役割で行っていた。Bolt 32c で、権限の取消し（US-18 AC6）とあわせて request ごとに `app_user`・`user_role`・`company` を 1 回で確かめる形に置き換えた。スキーマは変えていない。
 
 ### 通知（`notification`）
@@ -1163,7 +1164,7 @@ ds ||--o{ ff
 | `spring_session`、`spring_session_attributes` | Spring Session JDBC | 複数インスタンス間で共有する session |
 | `shedlock` | ShedLock | 定期処理（再配信、予約サガの滞留の判定、日次の処理）を 1 インスタンスに限るためのロック |
 
-`spring_session` と `spring_session_attributes` は Bolt 14 で作る（`principal_name` はログインのメールアドレスを入れるため 320 文字に広げた。Spring Session JDBC の DDL を `platform` スキーマに置く。無操作 30 分の期限は session の `MAX_INACTIVE_INTERVAL`（`spring.session.timeout`）、発行から 8 時間の上限は session の属性に置いた認証時刻で判定する）。Bolt 33a から、password の再設定の完了のコミットの後に、その利用者の session を `principal_name`（ログインのメールアドレス。`CargoUserDetails.getUsername()`）の索引で探して消す。消すのは Spring Session の `FindByIndexNameSessionRepository`（Spring Session JDBC は自分のトランザクション（`REQUIRES_NEW`）で動く）で、マッパーから `platform.spring_session` を直接消さない（AT-04）。完了の要求の新しい session は主体を持たないので消えない（主体のない session とほかの利用者の session が残ることを統合テストで確かめる）。表は変えない。表の定義はフレームワークの提供する DDL に従う。DDL は DB ごとに違うため、Flyway の `db/migration/{vendor}/` に H2 用と PostgreSQL 用を分けて置く（ADR-007）。完了したイベント発行記録は 30 日（RET-05）で削除する。
+`spring_session` と `spring_session_attributes` は Bolt 14 で作る（`principal_name` はログインのメールアドレスを入れるため 320 文字に広げた。Spring Session JDBC の DDL を `platform` スキーマに置く。無操作 30 分の期限は session の `MAX_INACTIVE_INTERVAL`（`spring.session.timeout`）、発行から 8 時間の上限は session の属性に置いた認証時刻で判定する）。Bolt 33a から、password の再設定の完了のコミットの後に、その利用者の session を `principal_name`（ログインのメールアドレス。`CargoUserDetails.getUsername()`）の索引で探して消す。消すのは Spring Session の `FindByIndexNameSessionRepository`（Spring Session JDBC は自分のトランザクション（`REQUIRES_NEW`）で動く）で、マッパーから `platform.spring_session` を直接消さない（AT-04）。完了の要求の新しい session は主体を持たないので消えない（主体のない session とほかの利用者の session が残ることを統合テストで確かめる）。表は変えない。表の定義はフレームワークの提供する DDL に従う。DDL は DB ごとに違うため、Flyway の `db/migration/{vendor}/` に H2 用と PostgreSQL 用を分けて置く（ADR-007）。完了したイベント発行記録は 30 日（RET-05）で削除する。注（Bolt 39b3b）: H2 の `event_publication.serialized_event` は Spring Modulith の H2 の定義では `VARCHAR(4000)` で、寄港 60 の DE-12（約 6,700 文字）が入らない。H2 だけのマイグレーション（`db/migration/h2/`）で `VARCHAR(1000000)`（H2 の VARCHAR の上限）に広げ、ローカル起動とデモ環境でも寄港の多い航海を取り込めるようにする。PostgreSQL は `TEXT` のままで変えない（2026-11-03、human:kakimomokuri が決めた。ADR-007 の改訂の経緯）。
 
 ## マイグレーションの構成
 

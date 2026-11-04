@@ -4,7 +4,7 @@ title: "ADR-007: 開発環境は H2、本番は PostgreSQL 18 を使い、永続
 description: "開発体験を優先してローカルのアプリ起動は H2、ステージング・本番と SQL を検証するテストは PostgreSQL 18 を使い、永続化に MyBatis、マイグレーションに Flyway を使う決定。"
 tags: [adr, tech-stack]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T08:48:18Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-04T00:49:10Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:29:05Z }
   - { by: human:kakimomokuri, at: 2026-10-01T07:48:17Z }
@@ -19,7 +19,7 @@ verified:
 
 ## ステータス
 
-承認済み（開発環境を H2、本番を PostgreSQL とする方針は human:kakimomokuri が 2026-10-01 に決定。本 ADR は方式を記録する）
+承認済み（開発環境を H2、本番を PostgreSQL とする方針は human:kakimomokuri が 2026-10-01 に決定。本 ADR は方式を記録する。コンプライアンスの H2 のリポジトリのテストの行は 2026-11-03 に Bolt 39b3b で改訂した。下の「改訂の経緯」）
 
 ## コンテキスト
 
@@ -81,9 +81,15 @@ verified:
 ## コンプライアンス
 
 - 本番の実行クラスパスに H2・Hibernate ORM・JPA が含まれないことをビルドで検証する。
-- リポジトリのテストは Testcontainers の PostgreSQL 18 で実行し、H2 でリポジトリのテストを書かない。
+- リポジトリのテストは Testcontainers の PostgreSQL 18 で実行し、H2 でリポジトリのテストを書かない。（2026-11-03 改訂: リポジトリの契約のテストは PostgreSQL と H2 の両方で継ぐ。デモ環境とローカル起動が H2 で動くため。SQL の正しさは引き続き PostgreSQL で判断する。下の「改訂の経緯」）
 - CI で、H2 でアプリが起動しマイグレーションが通ることをスモークテストで確認する。
 - 追記専用の表について、アプリケーションの DB 利用者が UPDATE・DELETE できないことを PostgreSQL の統合テストで確認する。
+
+## 改訂の経緯
+
+- 2026-11-03（W7、Bolt 39b3b）: 次のように改めた（[Bolt 39b3b 計画](../../development/cargo-tracker/bolt_39b3b_plan.md) の人に諮ること 3・6。human:kakimomokuri が決定）。
+  - **H2 でのリポジトリのテスト（コンプライアンス）**: 「H2 でリポジトリのテストを書かない」を、今の運用に合わせて改めた。リポジトリの契約のテスト（抽象の契約のクラス。前例 `AuditRecordSuspensionContract`）を、Testcontainers の PostgreSQL 18 と H2 の両方で継ぐ（前例 `MyBatisAuditRecordSuspensionIntegrationTest`・`H2AuditRecordSuspensionTest`）。デモ環境（ADR-013）とローカル起動が H2 で動くので、H2 でも同じ約束が守られることを確かめる。SQL の正しさを H2 だけで判断しない決定（上の「決定」）は変えない。
+  - **H2 のイベント発行記録の列**: Spring Modulith のイベント発行記録の H2 の定義（spring-modulith-events-jdbc の schema-h2.sql の写し。`db/migration/h2/V20261001090300__create_event_publication.sql`）の `serialized_event VARCHAR(4000)` を、H2 だけのマイグレーションで `VARCHAR(1000000)`（H2 の VARCHAR の上限）に広げる。寄港 60 の DE-12（約 6,700 文字）が入らず、H2 の取込が発行記録の INSERT で巻き戻るため。前例は H2 だけの列の幅の変更 `db/migration/h2/V20261006150000__widen_spring_session_principal_name.sql`。PostgreSQL は TEXT のままで、ステージング・本番は変わらない。寄港の上限を下げる案と DE-12 の値を減らす案は、前の人の決定（寄港 60、イベントの型）を H2 の都合で変えるので取らない。
 
 ## 備考
 

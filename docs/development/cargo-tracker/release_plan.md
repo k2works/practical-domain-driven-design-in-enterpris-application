@@ -4,7 +4,7 @@ title: "リリース計画 - cargo-tracker（A 社国際貨物輸送管理シス
 description: "cargo-tracker MVP のリリース計画。1 人 + AI、時間単位の Bolt（= イテレーション）と週次の見直しで、最初の縦の流れ（R0.1）、パイロット準備完了（R1.0）、本格展開前（R1.1）の 3 段階、Unit のエントロピー評価、SP、バッファ、パイロット開始の条件、引継ぎ ID の台帳、業務責任者に確かめる事項の台帳。"
 tags: [development,release-plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-04T00:44:17Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-04T00:49:10Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T09:29:53Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:38:26Z }
@@ -896,7 +896,7 @@ US-18 の Bolt の順序は 31b → 31c → 31d → 32 → 32c → 32d → 32b �
 | payload の保存【前の決定の変更】 | 保存のポートを `externaldata.domain.model.aggregates` に、実装を `externaldata.infrastructure` に置く（CLAUDE.md・ADR-017。前例は `RequiredDocumentStorage`）。W7 の実装は DB（開発はローカルのファイルでもよい）にし、DB にはキーとハッシュを持つ形をはじめから守る。「保存に成功するまで受信記録を書かない」順序と補償をポートの約束にしておく（ADR-010 の必要書類と同じ問題を W10 で起こさないため）。W10 で S3（Object Lock、RET-03 の 7 年）に差し替える。ADR-004 の決定 1（オブジェクトストレージ）と data_model の payload の注を W7 の間だけ変えるので、ADR に記録する | ADR-004・ADR、data_model（payload の注）、W10 の行 |
 | 情報源の管理（S-19） | 画面にせず運用タスクにし、W10 の運用準備で作る（W6 の管理範囲の割り当てと同じ）。情報源は（提供元、原本種別）の単位（`data_source.record_type`）。W7 は開発データとテストの準備で情報源を入れ、US-14 AC2 は照会（`PilotReadiness`）と、承認済みの情報源のない取込の拒否で確かめる | ui_design（S-19 の注と画面遷移図の「業務ホーム → S-19 → S-16」）、W10 の行 |
 | 取り込んだ主要実績（DE-13）の登録 | 前の決定（DE-13 で下書き `DRAFT` を作る。BR-05・US-13 AC4・UC-10 3c）を変えない。追跡管理者が下書きを採用する操作を W7 で作る。完了済みの追跡には受けたときに原本だけ（`RETAINED_ONLY`。AC5）、取消済みの予約には受けたときに拒否して記録する（AC4）。時系列に反する実績は、採用のときと手入力のときに確認中（`UNDER_REVIEW`、DE-18。AC3）にする | domain_model（DE-13・T-INV-03〜05・確認中の理由）、user_story（US-12 の決定） |
-| 外部原本の採否の監査（AUD-01） | 外部データは隔離（DE-14）と判断のイベントを出すだけにし、identity の listener が監査記録を書く（identity に `externaldata :: events` への依存が加わる。依存の宣言は `quotation :: events` と同じ形。イベントから監査記録を書く listener は 39b3b が最初）。外部データは identity に依存しない。【前の決定の変更】Bolt 39b3 の計画の「人に諮ること」2（2026-11-03、human:kakimomokuri が決めた）: 隔離（DE-14）と判断のイベントに加え、取込での自動の採用の DE-12・DE-13 も監査する（AUD-01 の「採」。取込での自動の採用が監査に残らないと AUD-04 の照合で採用値の件数と合わない）。監査の listener は 39b3b で作る。監査記録の形（操作の種類・記録の形）と冪等の取り方は 39b3b の開始準備で諮る（[Bolt 39b3 計画](bolt_39b3_plan.md)） | domain_model（AuditRecord・IA-INV-08・DE-14 の受け手）、architecture_backend |
+| 外部原本の採否の監査（AUD-01） | 外部データは隔離（DE-14）と判断のイベントを出すだけにし、identity の listener が監査記録を書く（identity に `externaldata :: events` への依存が加わる。依存の宣言は `quotation :: events` と同じ形。イベントから監査記録を書く listener は 39b3b が最初）。外部データは identity に依存しない。【前の決定の変更】Bolt 39b3 の計画の「人に諮ること」2（2026-11-03、human:kakimomokuri が決めた）: 隔離（DE-14）と判断のイベントに加え、取込での自動の採用の DE-12・DE-13 も監査する（AUD-01 の「採」。取込での自動の採用が監査に残らないと AUD-04 の照合で採用値の件数と合わない）。監査の listener は 39b3b で作る。監査記録の形（操作の種類・記録の形）と冪等の取り方は 39b3b の開始準備で諮る（[Bolt 39b3 計画](bolt_39b3_plan.md)）。→ Bolt 39b3b の計画の「人に諮ること」1・2（2026-11-03、human:kakimomokuri が決めた）: 操作は採用 `EXTERNAL_RECORD_ADOPTED`（DE-12・DE-13）と隔離 `EXTERNAL_RECORD_QUARANTINED`（DE-14）、対象は受信記録（`RECEIVED_RECORD`、受信記録 ID。版と変更前は持たず、外部版は変更後の要約に入れる）、操作者と時刻はイベントのもの。冪等は操作と対象で引いてあれば書かない（既存の索引。identity のスキーマは変えず、data_model の `event_id` の一意制約の記述を実際に合わせて改めた。IA-INV-15）（[Bolt 39b3b 計画](bolt_39b3b_plan.md)） | domain_model（AuditRecord・IA-INV-08・IA-INV-15・DE-12〜DE-14 の受け手）、data_model、architecture_backend |
 | コンテキスト名とスキーマ名の違い | MapperSchemaArchitectureTest に「コンテキスト → スキーマ」の対応表を足す（規則の変更）。`externaldata` は `external_data` を読める。名前はどちらも変えない | MapperSchemaArchitectureTest、architecture_backend |
 
 **確認ポイント**（AI の推奨を、2026-11-02 の計画の承認で推奨のとおり決めた（human:kakimomokuri）。【前の決定の変更】は前に人が決めたことを変えるもの）:
@@ -1535,4 +1535,5 @@ xychart-beta
 | 2026-11-03 | Bolt 39b2 のステップ 1（設計の文書）: W7 の確認ポイント 6 に、形式の誤りの受信記録は外部原本を持たないことの注を足した | anthropic/claude-opus-5-5 |
 | 2026-11-03 | Bolt 39b2b のステップ 1（設計の文書）: 寄港の規則を経路設計にそろえた【前の決定の変更】は requirements_definition の OQ-02 の注に置き、「取込ファイルの形式」は直さない。設計文書（domain_model・data_model・system_usecase・architecture_backend・ADR-004）を直した | anthropic/claude-opus-5-5 |
 | 2026-11-03 | Bolt 39b3 のステップ 1（設計の文書）: W7 の設計の決定（取込の置き場所、外部原本の採否の監査）に、39b3 を 2 本に分けたことと DE-12・DE-13 も監査することの【前の決定の変更】の注を足した | anthropic/claude-opus-5-5 |
+| 2026-11-04 | Bolt 39b3b のステップ 1（設計の文書）: W7 の設計の決定（外部原本の採否の監査）に、監査記録の形と冪等の取り方の決定を足した | anthropic/claude-opus-5-5 |
 | 2026-10-28 | Bolt 38f2 のステップ 1 で、デモ項目の動画を撮る Bolt を 38f2b に直した | anthropic/claude-opus-5-5 |

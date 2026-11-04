@@ -2,7 +2,7 @@
 type: Plan
 title: "Bolt 39b3b 計画 - 外部原本の採否の監査と層の規則の汎用化"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-04T00:44:17Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-04T00:49:10Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-11-04T00:44:18Z }
 ---
@@ -280,7 +280,7 @@ note right of ep : PostgreSQL は TEXT のまま（人に諮ること 3 の決�
 
 ## ステップ計画（ステップごとに止める）
 
-- [ ] **1. 設計の文書**: 上の「設計文書に直す箇所」（「人に諮ること」1〜6 の決定を反映する。ADR-007 の改訂を含む）（完了の判定: 文書の差分。**承認ゲート**）
+- [x] **1. 設計の文書**（2026-11-04、推奨のとおり承認として記録した（Recommend 承認の指示による。human:kakimomokuri）。ADR-007 に改訂の経緯の節を作った。まだ作っていない規則の汎用化と H2 のマイグレーションを決定として書いたので、ステップ 4・6 で中身が変わったら合わせて直す）: 上の「設計文書に直す箇所」（「人に諮ること」1〜6 の決定を反映する。ADR-007 の改訂を含む）（完了の判定: 文書の差分。**承認ゲート**）
 - [ ] **2. 監査記録の作り方と冪等の照会（Red → Green）**: 行 1〜4 の監査記録の単体、行 3・5 の照会の契約（PostgreSQL と H2。`@Transactional` は契約のクラスに付ける。T-231）を先に書いて落ちることを確かめ（`AuditAction` の値を足して落ちる既存のテストを一覧にする。T-217）、`AuditAction` の 2 つの値、`AuditRecord` の 2 つの作り方、`AuditRecordRepository.existsByActionAndTarget` と MyBatis の実装を作る（完了の判定: 緑、`spotbugsMain`（T-232）、`checkstyleMain`（T-237）、`sonar-local:check` の新しい違反（T-234）。**承認ゲート**（構造: 監査記録の新しい操作））
 - [ ] **3. 監査の listener と依存の宣言（Red → Green）**: 行 1〜7・11・15・16 の単体と ModularityTest を先に書いて落ちることを確かめ、`ExternalRecordAuditEventHandler`、`IdentityConfiguration` の組み立て、identity の `allowedDependencies` を作る（完了の判定: 緑、`spotbugsMain`、`checkstyleMain`、`sonar-local:check` の新しい違反。**承認ゲート**（構造: 依存の宣言とイベントから監査を書く最初の listener））
 - [ ] **4. H2 のイベント発行記録（Red → Green）**: 行 10 の H2 の統合テスト（寄港 60 の取込がコミットされる）を先に書き、広げる前の H2 で INSERT が落ちることを確かめてから、「人に諮ること」3 の決定のマイグレーションを足す（完了の判定: 緑、dev プロファイルの起動（`DevSampleDataSmokeTest`）、`spotbugsMain`・`checkstyleMain`・`sonar-local:check`（本体を変えたら）。**承認ゲート**（スキーマ（H2）: イベント発行記録の列））

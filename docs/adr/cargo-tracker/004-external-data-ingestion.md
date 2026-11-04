@@ -4,7 +4,7 @@ title: "ADR-004: 外部原本は Inbox・隔離・照合の 3 段で取り込む
 description: "ARCH-HO-03 と BR-08・BR-12・BR-18 を満たすため、外部原本を無加工で保存し、冪等性キーで採用・重複・隔離・差異に分類し、復旧時に件数照合する決定。2026-11-02（W7、Bolt 39）に、置き場所（externaldata）、原本の保存のポートと消さない補償、分類 4 つ、形式の誤りの隔離、解析の置き場所を改訂した。"
 tags: [adr, architecture]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-03T11:16:32Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-04T00:49:10Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:11:13Z }
   - { by: human:kakimomokuri, at: 2026-11-02T06:52:27Z }
@@ -100,10 +100,15 @@ verified:
 - 2026-11-03（W7、Bolt 39b3）: 採用値とイベントの発行を、次のように決めた（[Bolt 39b3 計画](../../development/cargo-tracker/bolt_39b3_plan.md) の開始準備で決めたこと (1)〜(5)、確認ポイント 2・5、人に諮ること 1・2）。
   - **分け方**: 39b3 を縦に 2 本に分けた。39b3 は採用値と DE-12・DE-13・DE-14 の発行、39b3b は identity の監査の listener（`externaldata :: events`）・毒入りのメッセージ・W6 横断レビュー M-2・層の規則の汎用化（推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）。上の Bolt 39b の項の「identity の監査は 39b3」は 39b3b で作る。
   - **イベントの型**: DE-12・DE-13・DE-14 は `externaldata.domain.events`（名前付きインターフェース `events`）の record にし、値の写しを Java の標準と共有カーネルの型（文字列・`UUID`・`Source`・`Location`・`UtcInstant`・`UserId`・`CompanyId`）だけで持つ。寄港は入れ子の record `AdoptedPortCall` にする。DE-12・DE-13 の出典は `Source(EXTERNAL_RECORD, 受信記録 ID, 取得時刻)` にする。値の型を `events` に含める案（層の規則の例外が要る）と、識別子だけにして下流が公開 API で引く案（W7 の設計の決定の変更が要る）は取らない（human:kakimomokuri が決定）。
-  - **採否の監査の範囲**: 上の Bolt 39 の項の「監査」を広げ、隔離（DE-14）と判断のイベントに加え、取込での自動の採用の DE-12・DE-13 も監査する（AUD-01 の「採」。human:kakimomokuri が決定）。監査記録の形と冪等の取り方は 39b3b の開始準備で決める。
+  - **採否の監査の範囲**: 上の Bolt 39 の項の「監査」を広げ、隔離（DE-14）と判断のイベントに加え、取込での自動の採用の DE-12・DE-13 も監査する（AUD-01 の「採」。human:kakimomokuri が決定）。監査記録の形と冪等の取り方は 39b3b の開始準備で決める。→ 39b3b の開始準備で決めた（下の Bolt 39b3b の項）。
   - **寄港の数の上限**: 寄港は 60 まで（`adopted_value.value_summary` の 4000 文字に要約が収まるため）。超える行は行の誤り（`INVALID_PORT_CALLS`）にする。上の Bolt 39b2b の項の「寄港の規則」（経路設計にそろえる）に、経路設計と意図して食い違う外部データの片側だけの規則を 1 つ足す（requirements_definition の OQ-02 の注の【前の決定の変更】。human:kakimomokuri が決定）。経路設計の `Voyage` に上限を足すかは 39e で決める。
   - **キーのない隔離の DE-14**: DE-14 は行の誤り・ファイルの誤り・取り込めなかった部分のキーのない隔離にも出す（外部 ID・外部版は空）。重複は出さない（推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）。
   - **外部原本のポートの約束**: 外部原本の一意制約の違反は、Spring の `DuplicateKeyException` ではなく名前付きの例外 `DuplicateExternalRecordException`（`externaldata.domain.model.aggregates`）で約束する。取込全体を巻き戻す振る舞いは変えない（推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）。
+- 2026-11-03（W7、Bolt 39b3b）: 上の Bolt 39b3 の項の「採否の監査の範囲」で送った監査記録の形と冪等の取り方を、次のように決めた（[Bolt 39b3b 計画](../../development/cargo-tracker/bolt_39b3b_plan.md) の開始準備で決めたこと (2)〜(4)、人に諮ること 1・2。human:kakimomokuri が決定）。決定は変えない。
+  - **監査の listener**: identity の `identity.application.internal.eventhandlers.ExternalRecordAuditEventHandler` が DE-12・DE-13・DE-14 を `@ApplicationModuleListener` で受け、取込のコミットの後に非同期に新しいトランザクションで監査記録を書く（ADR-003）。identity は `externaldata :: events` だけに依存し、外部データは identity に依存しない。
+  - **監査記録の形**: 操作は採用（`EXTERNAL_RECORD_ADOPTED`。DE-12・DE-13）と隔離（`EXTERNAL_RECORD_QUARANTINED`。DE-14）の 2 つ。結果は `SUCCESS`。対象は受信記録（種類 `RECEIVED_RECORD`、ID は受信記録 ID）で、版と変更前は持たない。外部版は `target_version`（50 文字）に入れず、変更後の要約（`key=value` を `;` でつなぐ）に入れる。理由は DE-14 の理由の区分だけ。操作者と発生時刻はイベントの操作者と時刻（取込の時刻）。出典は要約の `dataSourceId` で代える。操作を原本種別で分ける案、対象を採用値にする案、`target_version` を広げる案は取らない。
+  - **冪等の取り方**: 操作と対象で引いてあれば書かない（`AuditRecordRepository.existsByActionAndTarget`。既存の索引 `ix_audit_record_target`。identity のスキーマは変えない）。前提は「（操作、受信記録）ごとにイベントは 1 つ」で、39d はこれを守る。監査の表に `event_id` の列と一意制約を足す案は、イベントが ID を持たず、ID を足すと直列化の契約の変更になるので取らない。同じイベントを 2 つのインスタンスが同時に配ると二重になりうる危険は受け入れ、AUD-04 の照合で見つける。
+  - **毒入りのメッセージ**: 内容のせいで書けないイベント（必須の値がない）は ERROR のログを残して捨て、DB の失敗は例外を上げて発行記録を未完了に残し、起動のときに配り直す（前例 `KpiObservationEventHandler`。推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）。
 
 ## 備考
 
