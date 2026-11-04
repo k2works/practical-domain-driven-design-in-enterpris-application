@@ -22,7 +22,7 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 /**
- * データ責任者の S-16 外部データの取込（選ぶ画面と結果の画面。US-14 AC1。Bolt 39c、上限を超えるファイルの拒否は Bolt 39c2、隔離の理由は Bolt 39c3）の画面の層のステップ定義。承認済みの情報源はシナリオごとに
+ * データ責任者の S-16 外部データの取込（選ぶ画面と結果の画面。US-14 AC1。Bolt 39c、上限を超えるファイルの拒否は Bolt 39c2、隔離の理由は Bolt 39c3、要確認は Bolt 39c4）の画面の層のステップ定義。承認済みの情報源はシナリオごとに
  * 提供元の名前にシナリオの UUID を含めて作り、選択肢を名前で選ぶ（共有の PostgreSQL のほかの情報源の数に左右されない。T-230）。ファイルは
  * 寄港 2 つ・時刻の順のドメインの規則に合う航海の行で作る（T-230）。ファイルの選択はブラウザのファイルの選択の窓を開かずに入れる。
  */
@@ -35,7 +35,14 @@ public class ExternalDataIngestionUiSteps {
     private static final String NOTES_HEADING = "隔離の理由";
 
     private static final String NOTES_ORDER = "ファイルの行の順に示します。";
+    /** 結果の画面の要確認の見出しと案内の文（Bolt 39c4 の開始準備の決定 (4)）。 */
+    private static final String REVIEW_HEADING = "要確認";
+
+    private static final String REVIEW_GUIDE =
+            "取り込めなかった部分があります。取り込めなかった部分の行は分類されていません。" + "下の「隔離の理由」で理由とどうすればよいかを確かめてください。";
     private static final String VOYAGE_HEADER = "external_id,external_version,acquired_at,port_calls";
+    private static final String MILESTONE_HEADER =
+            "external_id,external_version,acquired_at,tracking_number,kind,location_unlocode,occurred_at";
     /** 寄港 2 つ（時刻の順）。内容の違う行は到着の時刻だけを変える。 */
     private static final String PORT_CALLS =
             "JPTYO;2026-12-01T00:00:00Z;2026-12-01T12:00:00Z|USLAX;2026-12-10T00:00:00Z;2026-12-10T12:00:00Z";
@@ -233,6 +240,86 @@ public class ExternalDataIngestionUiSteps {
             Pattern.compile("^" + PlaywrightText.literal("4 行目: 列の数がヘッダーと違います（ヘッダー 4 列、この行 5 列）。提供元に確かめてください。") + "$"),
             contentMismatchNote(6)
         });
+        browser.checkAccessibility();
+    }
+
+    /**
+     * Bolt 39c4 の行 10〜13・17。取り込めなかった部分のあるファイル（0 バイト・選んだ情報源と違う種別・ヘッダーのない・閉じ忘れ）を取り込む。
+     * 違う種別は主要実績の 2 行、ヘッダーのないファイルは航海のデータ行だけの 2 行（1 行目の値はどれも違い列の名前と重ならないので、必要な
+     * 列がないになる。CsvHeader）、閉じ忘れは正しい航海 2 行の後の 4 行目で引用符を開いたまま航海 1 行を続ける（T-230）。
+     */
+    @かつ("キー操作だけで承認済みの航海の情報源を選び、取り込めなかった部分のある {string} を選んで取り込む")
+    public void 取り込めなかった部分のあるファイルを取り込む(String kind) {
+        chooseSource();
+        String acquiredAt = acquiredAt();
+        String first = voyageLine("V2611E", acquiredAt, PORT_CALLS);
+        String second = voyageLine("V2612E", acquiredAt, PORT_CALLS);
+        byte[] content =
+                switch (kind) {
+                    case "0 バイトのファイル" -> new byte[0];
+                    case "主要実績のファイル" ->
+                        (MILESTONE_HEADER + "\n"
+                                        + milestoneLine("MS-1", acquiredAt) + "\n"
+                                        + milestoneLine("MS-2", acquiredAt) + "\n")
+                                .getBytes(StandardCharsets.UTF_8);
+                    case "ヘッダーのないファイル" -> (first + "\n" + second + "\n").getBytes(StandardCharsets.UTF_8);
+                    case "閉じ忘れのあるファイル" ->
+                        voyageFile(
+                                first,
+                                second,
+                                "V2613E-" + suffix.substring(0, 8) + ",1,\"" + acquiredAt + "," + PORT_CALLS,
+                                voyageLine("V2614E", acquiredAt, PORT_CALLS));
+                    default -> throw new IllegalArgumentException("知らないファイル: " + kind);
+                };
+        chooseFile(content);
+        submit();
+    }
+
+    /** 主要実績の 1 行（発生の時刻は取得の時刻と同じ。外部 ID にシナリオの印を付ける）。 */
+    private String milestoneLine(String base, String acquiredAt) {
+        return base + "-" + suffix.substring(0, 8) + ",1," + acquiredAt + ",CTABCDEFGH2345,DEPARTURE,JPTYO,"
+                + acquiredAt;
+    }
+
+    /** Bolt 39c4 の行 8。要確認でない結果の画面は「要確認」の領域を出さない。 */
+    @かつ("要確認は示されない")
+    public void 要確認は示されない() {
+        assertThat(page().getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName(REVIEW_HEADING)))
+                .hasCount(0);
+    }
+
+    /**
+     * Bolt 39c4 の行 10〜13・17。「要確認」の領域（見出し・案内の文・取り込めなかった部分）が、受け取った件数の後・分類別の件数の表の前に出る。
+     */
+    @ならば("分類別の件数の前に要確認と {string} が示される")
+    public void 分類別の件数の前に要確認が示される(String region) {
+        page().waitForURL(url -> url.matches(".*/staff/external-data/ingestions/[0-9a-f-]{36}$"));
+        Locator review = page().getByRole(AriaRole.REGION, new Page.GetByRoleOptions().setName(REVIEW_HEADING));
+        assertThat(review.getByRole(AriaRole.HEADING, new Locator.GetByRoleOptions().setName(REVIEW_HEADING)))
+                .isVisible();
+        assertThat(review).containsText(REVIEW_GUIDE);
+        assertThat(review.getByText(region, new Locator.GetByTextOptions().setExact(true)))
+                .isVisible();
+        // 件数を読む前に要確認が分かるよう、受け取った件数の dl の後・分類別の件数の表の前に置く（開始準備の決定 (4)）
+        Assertions.assertThat((Boolean) page().evaluate(
+                                "([caption, heading]) => {"
+                                        + " const table = [...document.querySelectorAll('table')]"
+                                        + "   .find(t => t.caption && t.caption.textContent.trim() === caption);"
+                                        + " const review = [...document.querySelectorAll('h2')]"
+                                        + "   .find(h => h.textContent.trim() === heading).closest('section');"
+                                        + " const dl = document.querySelector('main dl');"
+                                        + " return !!(dl.compareDocumentPosition(review) & Node.DOCUMENT_POSITION_FOLLOWING)"
+                                        + "   && !!(review.compareDocumentPosition(table) & Node.DOCUMENT_POSITION_FOLLOWING); }",
+                                java.util.List.of(COUNTS_CAPTION, REVIEW_HEADING)))
+                .as("要確認は受け取った件数の後・分類別の件数の表の前")
+                .isTrue();
+        browser.checkAccessibility();
+    }
+
+    /** Bolt 39c4 の行 10〜13。隔離の理由の一覧の全体が 1 件の注記（取り込めなかった部分の注記）だけである。 */
+    @かつ("隔離の理由に {string} だけが示される")
+    public void 隔離の理由に注記だけが示される(String note) {
+        assertThat(notes()).hasText(new String[] {note});
         browser.checkAccessibility();
     }
 

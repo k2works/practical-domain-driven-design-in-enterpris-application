@@ -11,13 +11,18 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.example.cargotracker.externaldata.application.internal.commandservices.IngestionOutcome.Ingested;
 import com.example.cargotracker.externaldata.application.internal.commandservices.IngestionService;
+import com.example.cargotracker.externaldata.application.internal.queryservices.IngestionSummaryQueryService;
+import com.example.cargotracker.externaldata.application.internal.queryservices.IngestionSummaryView;
 import com.example.cargotracker.externaldata.domain.events.ExternalRecordQuarantined;
 import com.example.cargotracker.externaldata.domain.events.VoyageAdoptedValueUpdated;
 import com.example.cargotracker.externaldata.domain.model.aggregates.ExternalPayloadStorage;
 import com.example.cargotracker.externaldata.domain.model.rules.IngestionFileLimit;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.FormatDefect;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.FormatDefect.Extent;
+import com.example.cargotracker.externaldata.interfaces.file.CsvFileKind;
+import com.example.cargotracker.externaldata.interfaces.file.IngestFileCommandAssembler;
 import com.example.cargotracker.identity.IdentityIntegrationTest;
 import com.example.cargotracker.identity.IdentityLogins;
 import com.example.cargotracker.identity.application.internal.eventhandlers.ExternalRecordAuditEventHandler;
@@ -33,6 +38,7 @@ import com.example.cargotracker.identity.domain.model.valueobjects.EmailAddress;
 import com.example.cargotracker.identity.domain.model.valueobjects.UserStatus;
 import com.example.cargotracker.identity.infrastructure.crypto.AesGcmSecretCipher;
 import com.example.cargotracker.shared.acceptance.MutableClock;
+import com.example.cargotracker.shared.domain.AuthenticatedActor;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Role;
 import com.example.cargotracker.shared.domain.UserId;
@@ -64,7 +70,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
 
 /**
- * S-16 外部データの取込のセキュリティの統合テスト（Bolt 39c の行 1・2・6・7・13・13b・15、Bolt 39c2 の行 1・2・5、Bolt 39c3 の行 10・11・15 は入れ子のクラス。US-14 AC1・AC4）。本物のフィルターの連なりと
+ * S-16 外部データの取込のセキュリティの統合テスト（Bolt 39c の行 1・2・6・7・13・13b・15、Bolt 39c2 の行 1・2・5、Bolt 39c3 の行 10・11・15、Bolt 39c4 の行 1〜5 は入れ子のクラス。US-14 AC1・AC4）。本物のフィルターの連なりと
  * PostgreSQL の上で、{@code /staff/external-data/**} はデータ責任者だけが開けること（ほかの 7 つの役割は A-04、未ログインは A-01）、
  * CSRF のトークンのない multipart の送信で取り込まないこと（取込のサービスの spy の呼び出しの記録。T-236）、画面の POST（トランザクションの
  * 外）から DB の件数と DE-12・DE-14 の監査の発行記録の完了まで（T-184）、ナビの項目がデータ責任者を持つ利用者にだけ出ることを確かめる。
@@ -306,7 +312,8 @@ class ExternalDataIngestionSecurityIntegrationTest {
 
         private static final String FILE_TOO_LARGE =
                 "取込ファイル: ファイルが大きすぎます（1 ファイルにつきデータ行 10,000 行・40 MB まで）。ファイルを分けて取り込んでください。";
-        private static final String NOT_APPROVED = "情報源: 選んだ情報源は承認済みではないため取り込めません。画面を開き直して、承認済みの情報源を選んでください。";
+        // Bolt 39c4 の行 14 で「示された情報源から選び直してください。」の形に直した（【前の決定の変更】(1)）
+        private static final String NOT_APPROVED = "情報源: 選んだ情報源は承認済みではないため取り込めません。示された情報源から選び直してください。";
 
         @Test
         void 行1_物理データ行10001行のファイルは上限を超える文言で拒まれ取込も原本も残らない() throws Exception {
@@ -553,6 +560,87 @@ class ExternalDataIngestionSecurityIntegrationTest {
                     .getRedirectedUrl();
             assertThat(location).matches(INGEST_URL + "/[0-9a-f-]{36}");
             return location;
+        }
+    }
+
+    /**
+     * Bolt 39c4 の行 1〜5（要確認の復元。開始準備の決定 (2)・(3)）。取込のサービスで取り込み、取込の要約の照会で DB から読み直した要確認と
+     * 取り込めなかった部分が、取込のサービスの結果（{@code requiresReview()} と取り込めなかった部分の始まり・数）と一致することを、取込の種類と
+     * 期待の値の組で確かめる（T-244）。39c・39c2・39c3 の同じ番号の行と名前が衝突しないよう入れ子にする。
+     */
+    @Nested
+    class Bolt39c4_要確認の復元 {
+
+        private static final String ACQUIRED = NOW.minus(Duration.ofMinutes(30)).toString();
+        private static final String MILESTONE_HEADER =
+                "external_id,external_version,acquired_at,tracking_number,kind,location_unlocode,occurred_at";
+
+        @Autowired
+        IngestionSummaryQueryService summaries;
+
+        /** 取込の種類と、読み直した取り込めなかった部分の期待（要確認でなければ {@code null}）。 */
+        record ReviewCase(String label, byte[] content, IngestionSummaryView.UnreadableRegion expected) {
+
+            @Override
+            public String toString() {
+                return label;
+            }
+        }
+
+        static Stream<ReviewCase> 取込の種類と取り込めなかった部分() {
+            return Stream.of(
+                    new ReviewCase("行1_形式の正しいファイル", file(row("V-1", PORT_CALLS), row("V-2", PORT_CALLS)), null),
+                    new ReviewCase(
+                            "行2_行の誤りだけ（列数の誤りを含む）",
+                            file(
+                                    row("V-1", PORT_CALLS) + ",余分",
+                                    "V-2,," + ACQUIRED + "," + PORT_CALLS,
+                                    row("V-3", PORT_CALLS)),
+                            null),
+                    new ReviewCase(
+                            "行3_ファイルの誤り（データ行あり。必要な列がない）",
+                            (MILESTONE_HEADER + "\n"
+                                            + "MS-1,1," + ACQUIRED + ",CTABCDEFGH2345,DEPARTURE,JPTYO," + ACQUIRED
+                                            + "\n"
+                                            + "MS-2,1," + ACQUIRED + ",CTABCDEFGH2347,DEPARTURE,JPTYO," + ACQUIRED
+                                            + "\n")
+                                    .getBytes(StandardCharsets.UTF_8),
+                            new IngestionSummaryView.UnreadableRegion(2, 2, true)),
+                    new ReviewCase(
+                            "行4_ファイルの誤り（データ行 0。0 バイト）",
+                            new byte[0],
+                            new IngestionSummaryView.UnreadableRegion(null, 0, true)),
+                    new ReviewCase(
+                            "行5_閉じ忘れ（前に正しい行と列数の誤りの行）",
+                            file(
+                                    row("V-1", PORT_CALLS),
+                                    row("V-2", PORT_CALLS) + ",余分",
+                                    "V-3,1,\"" + ACQUIRED + "," + PORT_CALLS,
+                                    row("V-4", PORT_CALLS)),
+                            new IngestionSummaryView.UnreadableRegion(4, 2, false)));
+        }
+
+        @ParameterizedTest(name = "{0}")
+        @MethodSource("取込の種類と取り込めなかった部分")
+        void 行1から行5_読み直した要確認と取り込めなかった部分は取込のサービスの結果と一致する(ReviewCase reviewCase) {
+            AuthenticatedActor steward = new AuthenticatedActor(
+                    new UserId(UUID.randomUUID()), operator.id(), Set.of(Role.DATA_STEWARD), "データ責任者", "A 社");
+            Ingested outcome = (Ingested) ingestionService.ingest(
+                    steward, IngestFileCommandAssembler.assemble(sourceId, CsvFileKind.VOYAGE, reviewCase.content()));
+
+            IngestionSummaryView summary =
+                    summaries.summaryOf(outcome.ingestionId()).orElseThrow();
+
+            boolean expectedReview = reviewCase.expected() != null;
+            assertThat(outcome.requiresReview()).as("取込のサービスの要確認").isEqualTo(expectedReview);
+            assertThat(summary.requiresReview()).as("読み直した要確認").isEqualTo(outcome.requiresReview());
+            assertThat(summary.unreadable()).isEqualTo(reviewCase.expected());
+            if (expectedReview) {
+                assertThat(summary.unreadable().fromLine())
+                        .isEqualTo(outcome.unreadable().fromLine());
+                assertThat(summary.unreadable().lineCount())
+                        .isEqualTo(outcome.unreadable().lineCount());
+            }
         }
     }
 

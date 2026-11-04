@@ -5,6 +5,7 @@ import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 
 import com.example.cargotracker.TestcontainersConfiguration;
@@ -12,6 +13,7 @@ import com.example.cargotracker.externaldata.application.internal.commands.Inges
 import com.example.cargotracker.externaldata.application.internal.commandservices.IngestionOutcome;
 import com.example.cargotracker.externaldata.application.internal.commandservices.IngestionOutcome.Ingested;
 import com.example.cargotracker.externaldata.application.internal.commandservices.IngestionService;
+import com.example.cargotracker.externaldata.application.internal.queryservices.IngestionSummaryQueryService;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.Classification;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.MilestoneKindValue;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.VoyageValues;
@@ -66,7 +68,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
 
 /**
- * PERF-06（1 万件のファイルを 5 分以内に分類・採用）を PostgreSQL 18 で測る（Bolt 39b4 の行 1・2・10・11・12、Bolt 39c2 の行 21 の画面の経路。non_functional の PERF-06）。
+ * PERF-06（1 万件のファイルを 5 分以内に分類・採用）を PostgreSQL 18 で測る（Bolt 39b4 の行 1・2・10・11・12、Bolt 39c2 の行 21 の画面の経路、Bolt 39c4 の行 16 の結果の画面の照会。non_functional の PERF-06）。
  * 時間は CSV の組み立て（{@link IngestFileCommandAssembler#assemble}）の前から取込のサービスが戻るまで（取込のコミットを含む）で、
  * 監査の listener の配信はコミットの後の非同期で PERF-06 の外なので、完了までを待って参考の値としてログに出す。測った値（全体・組み立て・
  * 取込、接続の最大とコミットの数、分類ごとの件数の照会の合計、ファイルの大きさ）はテストのログに出す。
@@ -126,6 +128,10 @@ class ExternalDataIngestionPerformanceTest {
     /** 行 21 で {@code ingest} の前後の時刻を取るため spy にする（ほかの行は本物をそのまま呼ぶ）。 */
     @MockitoSpyBean
     IngestionService ingestionService;
+
+    /** 行 16 で {@code summaryOf} の前後の時刻を取るため spy にする（Bolt 39c4）。 */
+    @MockitoSpyBean
+    IngestionSummaryQueryService summaries;
 
     @Autowired
     MockMvc mvc;
@@ -261,6 +267,81 @@ class ExternalDataIngestionPerformanceTest {
         } finally {
             finish("web voyage(port-calls=5)", result, sourceId);
         }
+    }
+
+    /**
+     * 行 16（Bolt 39c4。39c3 の行 19。T-241・T-242）: 上限いっぱいの隔離（値の誤りだけのデータ行 10,000 行。T-230）の取込の結果の画面の GET
+     * （MockMvc。本物のフィルターの連なりとログインしたデータ責任者の session）を測る。取込の要約の照会の spy で {@code summaryOf} の前後の
+     * 時刻を取り、GET 全体から照会（{@code summaryOf}）と、それ以外（フィルター・controller・画面の描画）に分けて「PERF-06 notes」の行に出す。
+     * 目安の NFR はない参考の値なので時間で落とさない（non_functional の PERF-06。1 秒を超えたら値を記録して止め、索引を足すかを諮る）。
+     */
+    @Test
+    void 行16_隔離1万件の取込の結果の画面のGETは最初の100件の注記と残りの件数を示し照会と描画の時間をログに出す() throws Exception {
+        Instant acquiredAt = acquiredAt();
+        IntFunction<String> valid = voyageLine(5, acquiredAt);
+        // 外部版を空にした値の誤りだけの行（行の誤りのキーのない隔離。取り込めなかった部分はなく、要確認でない）
+        byte[] csv = ExternalDataIngestionConnectionTest.csv(
+                VOYAGE_HEADER, ROWS, row -> valid.apply(row).replaceFirst(",1,", ",,"));
+        UUID sourceId = insertApprovedSource(ExternalDataIngestionConnectionTest.newProvider(), "VOYAGE");
+        AtomicLong queryStarted = new AtomicLong();
+        AtomicLong queryFinished = new AtomicLong();
+        doAnswer(invocation -> {
+                    queryStarted.set(System.nanoTime());
+                    try {
+                        return invocation.callRealMethod();
+                    } finally {
+                        queryFinished.set(System.nanoTime());
+                    }
+                })
+                .when(summaries)
+                .summaryOf(any());
+        Ingested result = null;
+        try {
+            result = ExternalDataIngestionConnectionTest.ingested(ingestionService.ingest(
+                    steward, IngestFileCommandAssembler.assemble(sourceId, CsvFileKind.VOYAGE, csv)));
+            Cookie session = login(dataSteward());
+            String url = "/staff/external-data/ingestions/" + result.ingestionId();
+
+            long started = System.nanoTime();
+            MvcResult response = mvc.perform(get(url).cookie(session)).andReturn();
+            long finished = System.nanoTime();
+            String page = response.getResponse().getContentAsString(StandardCharsets.UTF_8);
+            LOG.info(
+                    "PERF-06 notes rows={} quarantined={} shown={} query={} render={} total={} (reference, no NFR)",
+                    result.receivedCount(),
+                    result.countOf(Classification.QUARANTINED),
+                    shownNotes(page),
+                    preciseSeconds(queryFinished.get() - queryStarted.get()),
+                    preciseSeconds((finished - started) - (queryFinished.get() - queryStarted.get())),
+                    preciseSeconds(finished - started));
+
+            assertThat(response.getResponse().getStatus()).isEqualTo(200);
+            assertThat(result.countOf(Classification.QUARANTINED)).isEqualTo(ROWS);
+            assertThat(shownNotes(page)).isEqualTo(IngestionSummaryQueryService.SHOWN_QUARANTINE_LIMIT);
+            assertThat(page)
+                    .contains("ほかに 9,900 件の隔離があります（最初の 100 件だけを示しています）。")
+                    .doesNotContain("要確認");
+        } finally {
+            finish("notes", result, sourceId);
+        }
+    }
+
+    /** 結果の画面の隔離の理由の一覧の項目の数。 */
+    private static int shownNotes(String page) {
+        java.util.regex.Matcher list = java.util.regex.Pattern.compile(
+                        "<ul aria-labelledby=\"quarantine-notes-heading\">(.*?)</ul>", java.util.regex.Pattern.DOTALL)
+                .matcher(page);
+        return list.find()
+                ? (int) java.util.regex.Pattern.compile("<li>")
+                        .matcher(list.group(1))
+                        .results()
+                        .count()
+                : 0;
+    }
+
+    /** 1 秒の前後を読む参考の値なので、ミリ秒まで出す。 */
+    private static String preciseSeconds(long nanos) {
+        return "%.3fs".formatted(nanos / 1_000_000_000.0);
     }
 
     /** 画面の経路のデータ責任者（運営会社の利用者。TOTP を登録済み）。メールアドレスを返す。 */

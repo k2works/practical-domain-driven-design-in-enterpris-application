@@ -36,12 +36,14 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -52,7 +54,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
 
 /**
- * S-16 外部データの取込（データ責任者。US-14 AC1・AC2。Bolt 39c の行 3〜6・14、Bolt 39c2 の行 1・5〜8、Bolt 39c3 の行 13・16〜18 は入れ子のクラス）。取込のサービスと照会は mock にし、画面の振る舞い
+ * S-16 外部データの取込（データ責任者。US-14 AC1・AC2。Bolt 39c の行 3〜6・14、Bolt 39c2 の行 1・5〜8、Bolt 39c3 の行 13・16〜18、Bolt 39c4 の行 8・9・14・15・19 は入れ子のクラス）。取込のサービスと照会は mock にし、画面の振る舞い
  * （選ぶ画面、画面で見る誤り、PRG と知らせ、結果の画面、404）だけを見る。認証・認可・CSRF はセキュリティの統合テストで確かめる。
  * 「起きないこと」（サービスを呼ばない）は呼び出しの記録で確かめる（T-236）。
  */
@@ -289,8 +291,9 @@ class ExternalDataIngestionControllerTest {
     class Bolt39c2_取り込めない送信 {
 
         private static final String FILE_TOO_LARGE = "ファイルが大きすぎます（1 ファイルにつきデータ行 10,000 行・40 MB まで）。ファイルを分けて取り込んでください。";
-        private static final String NOT_APPROVED = "選んだ情報源は承認済みではないため取り込めません。画面を開き直して、承認済みの情報源を選んでください。";
-        private static final String NOT_FOUND = "選んだ情報源が見つかりません。画面を開き直して、情報源を選び直してください。";
+        // Bolt 39c4 の行 14・15 で「示された情報源から選び直してください。」の形に直した（【前の決定の変更】(1)）
+        private static final String NOT_APPROVED = "選んだ情報源は承認済みではないため取り込めません。示された情報源から選び直してください。";
+        private static final String NOT_FOUND = "選んだ情報源が見つかりません。示された情報源から選び直してください。";
         private static final String RESELECT_FILE = "選んだファイルは残っていません。もう一度選んでください。";
         private static final String VOYAGE_CHECKED = "value=\"" + VOYAGE_SOURCE + "\"[^>]*checked=\"checked\"";
         /** 0 件の全文の段落。エラー要約のリンクの先なので、フォーカスを受けられる（tabindex="-1"）。 */
@@ -552,7 +555,8 @@ class ExternalDataIngestionControllerTest {
                         "3 行目: 値が空です（external_id）。提供元に確かめてください。",
                         "5 行目: 値が空です（external_id）。提供元に確かめてください。",
                         "9 行目: 値が空です（external_id）。提供元に確かめてください。"),
-                0);
+                0,
+                null);
     }
 
     @Test
@@ -633,7 +637,8 @@ class ExternalDataIngestionControllerTest {
                     0,
                     quarantinedCount,
                     notes,
-                    remaining);
+                    remaining,
+                    null);
         }
 
         private org.springframework.test.web.servlet.ResultActions resultOf(IngestionSummaryView summary)
@@ -685,6 +690,154 @@ class ExternalDataIngestionControllerTest {
                                             + "提供元に確かめてください。</li>")))
                     .andExpect(content().string(not(containsString("<b>id</b>"))))
                     .andExpect(content().string(not(containsString("<script>alert"))));
+        }
+    }
+
+    /**
+     * Bolt 39c4 の行 8・9・14・15・19（結果の画面の要確認と、情報源の拒否の文言。開始準備の決定 (4)・(7)）。照会は mock にし、要確認のときだけ
+     * 受け取った件数の {@code dl} の後・分類別の件数の表の前に領域を出すこと、取り込めなかった部分の 3 つの形の全文、拒否の 2 つの文言を
+     * 確かめる。39c・39c2・39c3 の同じ番号の行と名前が衝突しないよう入れ子にする。
+     */
+    @Nested
+    class Bolt39c4_要確認 {
+
+        private static final String REVIEW_HEADING = "<h2 id=\"review-heading\">要確認</h2>";
+        private static final String REVIEW_GUIDE =
+                "<p>取り込めなかった部分があります。取り込めなかった部分の行は分類されていません。" + "下の「隔離の理由」で理由とどうすればよいかを確かめてください。</p>";
+        private static final String NOT_APPROVED = "選んだ情報源は承認済みではないため取り込めません。示された情報源から選び直してください。";
+        private static final String NOT_FOUND = "選んだ情報源が見つかりません。示された情報源から選び直してください。";
+        private static final String NO_SOURCE_PARAGRAPH = "<p id=\"no-source\" tabindex=\"-1\">";
+
+        private IngestionSummaryView summaryWith(IngestionSummaryView.UnreadableRegion unreadable) {
+            return new IngestionSummaryView(
+                    INGESTION_ID,
+                    "開発海運（架空）",
+                    "VOYAGE",
+                    Instant.parse("2026-11-16T01:05:00Z"),
+                    31,
+                    2,
+                    0,
+                    1,
+                    List.of("12 行目からファイルの終わりまで: 引用符が閉じていません。29 行を取り込めませんでした。ファイルを確かめてください。"),
+                    0,
+                    unreadable);
+        }
+
+        private String resultPage(IngestionSummaryView summary) throws Exception {
+            given(summaries.summaryOf(INGESTION_ID)).willReturn(Optional.of(summary));
+            return mockMvc.perform(get(INGEST_URL + "/" + INGESTION_ID))
+                    .andExpect(status().isOk())
+                    .andReturn()
+                    .getResponse()
+                    .getContentAsString(StandardCharsets.UTF_8);
+        }
+
+        @Test
+        void 行8_要確認でない結果の画面は要確認の領域を出さない() throws Exception {
+            String page = resultPage(summaryWith(null));
+
+            assertThat(page).doesNotContain("要確認").doesNotContain("取り込めなかった部分");
+        }
+
+        /** 取り込めなかった部分の形（ファイルの終わりまで・ファイル全体でデータ行あり・データ行なし）。行 9 の期待の組の網羅に使う（T-240）。 */
+        enum RegionForm {
+            UNTIL_END_OF_FILE,
+            WHOLE_FILE_WITH_LINES,
+            WHOLE_FILE_WITHOUT_LINES;
+
+            static RegionForm of(IngestionSummaryView.UnreadableRegion region) {
+                if (!region.wholeFile()) {
+                    return UNTIL_END_OF_FILE;
+                }
+                return region.lineCount() > 0 ? WHOLE_FILE_WITH_LINES : WHOLE_FILE_WITHOUT_LINES;
+            }
+        }
+
+        /** 行 9 の形と期待の全文の組（T-244）。 */
+        record RegionCase(IngestionSummaryView.UnreadableRegion region, String expected) {
+
+            @Override
+            public String toString() {
+                return expected;
+            }
+        }
+
+        static Stream<RegionCase> 取り込めなかった部分と期待の全文() {
+            return Stream.of(
+                    new RegionCase(new IngestionSummaryView.UnreadableRegion(12, 29, false), "12 行目からファイルの終わりまで（29 行）"),
+                    new RegionCase(new IngestionSummaryView.UnreadableRegion(2, 1234, true), "ファイル全体（データ行 1,234 行）"),
+                    new RegionCase(new IngestionSummaryView.UnreadableRegion(null, 0, true), "ファイル全体（データ行なし）"));
+        }
+
+        @ParameterizedTest(name = "{0}")
+        @MethodSource("取り込めなかった部分と期待の全文")
+        void 行9_要確認の領域は受け取った件数の後と分類別の件数の表の前に見出しと案内の文と取り込めなかった部分の全文を示す(RegionCase regionCase) throws Exception {
+            String page = resultPage(summaryWith(regionCase.region()));
+
+            String region = "<p>取り込めなかった部分: " + regionCase.expected() + "</p>";
+            assertThat(page)
+                    .containsPattern("<section aria-labelledby=\"review-heading\">\\s*" + Pattern.quote(REVIEW_HEADING)
+                            + "\\s*" + Pattern.quote(REVIEW_GUIDE) + "\\s*" + Pattern.quote(region) + "\\s*</section>")
+                    .doesNotContain("role=\"alert\"");
+            assertThat(page.indexOf("</dl>")).isPositive().isLessThan(page.indexOf(REVIEW_HEADING));
+            assertThat(page.indexOf(REVIEW_HEADING)).isLessThan(page.indexOf("<table"));
+        }
+
+        @Test
+        void 行9_期待の組は取り込めなかった部分の3つの形をすべて含む() {
+            assertThat(取り込めなかった部分と期待の全文().map(regionCase -> RegionForm.of(regionCase.region())))
+                    .containsExactlyInAnyOrder(RegionForm.values());
+        }
+
+        @Test
+        void 行14_承認されていない情報源の拒否はエラー要約と欄に示された情報源から選び直す文言を示す() throws Exception {
+            given(ingestionService.ingest(any(), any())).willReturn(new IngestionOutcome.DataSourceNotApproved());
+
+            mockMvc.perform(ingest(VOYAGE_SOURCE, "voyage.csv", VOYAGE_CSV))
+                    .andExpect(status().isOk())
+                    .andExpect(content().string(containsString("href=\"#dataSourceId\">情報源: " + NOT_APPROVED + "</a>")))
+                    .andExpect(content()
+                            .string(containsString(
+                                    "<p id=\"dataSourceId-error\" class=\"text-danger\">" + NOT_APPROVED + "</p>")))
+                    .andExpect(content().string(not(containsString("画面を開き直して"))));
+        }
+
+        @Test
+        void 行15_ない情報源の拒否はエラー要約と欄に示された情報源から選び直す文言を示す() throws Exception {
+            given(ingestionService.ingest(any(), any())).willReturn(new IngestionOutcome.DataSourceNotFound());
+
+            mockMvc.perform(ingest(VOYAGE_SOURCE, "voyage.csv", VOYAGE_CSV))
+                    .andExpect(status().isOk())
+                    .andExpect(content().string(containsString("href=\"#dataSourceId\">情報源: " + NOT_FOUND + "</a>")))
+                    .andExpect(content()
+                            .string(containsString(
+                                    "<p id=\"dataSourceId-error\" class=\"text-danger\">" + NOT_FOUND + "</p>")))
+                    .andExpect(content().string(not(containsString("画面を開き直して"))));
+        }
+
+        @ParameterizedTest(name = "{0}")
+        @CsvSource({"NOT_APPROVED", "NOT_FOUND"})
+        void 行19_拒否の後に承認済みの情報源が0件なら拒否の文言のままの理由が先でその下に0件の全文を示し要約のリンクは0件の段落へ向く(String refusal) throws Exception {
+            // 照会を mock して 0 件にする（共有の PostgreSQL では作れない。T-243）
+            given(dataSources.ingestibleSources()).willReturn(List.of());
+            boolean notApproved = "NOT_APPROVED".equals(refusal);
+            given(ingestionService.ingest(any(), any()))
+                    .willReturn(
+                            notApproved
+                                    ? new IngestionOutcome.DataSourceNotApproved()
+                                    : new IngestionOutcome.DataSourceNotFound());
+            String message = notApproved ? NOT_APPROVED : NOT_FOUND;
+
+            String page = mockMvc.perform(ingest(VOYAGE_SOURCE, "voyage.csv", VOYAGE_CSV))
+                    .andExpect(status().isOk())
+                    .andReturn()
+                    .getResponse()
+                    .getContentAsString(StandardCharsets.UTF_8);
+
+            assertThat(page)
+                    .contains("href=\"#no-source\">情報源: " + message + "</a>")
+                    .contains(NO_SOURCE_PARAGRAPH + NO_SOURCE + "</p>");
+            assertThat(page.indexOf(message)).isPositive().isLessThan(page.indexOf(NO_SOURCE_PARAGRAPH));
         }
     }
 }

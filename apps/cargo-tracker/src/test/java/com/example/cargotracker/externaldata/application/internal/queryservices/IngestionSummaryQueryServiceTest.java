@@ -26,6 +26,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.IntStream;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -33,7 +34,7 @@ import org.junit.jupiter.params.provider.CsvSource;
 /**
  * 取込の要約の照会（Bolt 39c3 の行 16・17。開始準備の決定 (4)、T-236・T-244）。ポートを mock にし、隔離の注記を最初の
  * {@link IngestionSummaryQueryService#SHOWN_QUARANTINE_LIMIT} 件だけ読み、残りの件数を隔離の件数から引くこと、隔離が 0 件なら照会を
- * 呼ばないこと（呼び出しの記録）を確かめる。
+ * 呼ばないこと（呼び出しの記録）を確かめる。要確認の復元（Bolt 39c4 の行 6・7）は入れ子のクラス。
  */
 class IngestionSummaryQueryServiceTest {
 
@@ -122,5 +123,110 @@ class IngestionSummaryQueryServiceTest {
         assertThat(summary.quarantineNotes()).isEmpty();
         assertThat(summary.remainingQuarantineCount()).isZero();
         then(receivedRecords).should(never()).quarantinedOf(any(), anyInt());
+    }
+
+    /**
+     * Bolt 39c4 の行 6・7（要確認の復元。開始準備の決定 (2)・(3)）。取込の取り込めなかった行（始まり・数）と、読んだ隔離の受信記録にファイル
+     * 全体の原本のキーを持つものがあるかの組から、取り込めなかった部分の値を組み立てる。39c3 の同じ番号の行と名前が衝突しないよう入れ子にする。
+     */
+    @Nested
+    class Bolt39c4_要確認 {
+
+        /** 取り込めなかった行を持つ取込（始まりと数は表の CHECK と同じ組）。 */
+        private Ingestion ingestionWith(Integer unparsedFromLine, int unparsedLineCount) {
+            Ingestion withUnparsed = new Ingestion(
+                    UUID.randomUUID(),
+                    source.id(),
+                    PayloadObjectKey.newIngestionFile(),
+                    PayloadHash.of("ファイル".getBytes(StandardCharsets.UTF_8)),
+                    new UserId(UUID.randomUUID()),
+                    NOW,
+                    9,
+                    unparsedFromLine,
+                    unparsedLineCount);
+            given(ingestions.findById(withUnparsed.id())).willReturn(Optional.of(withUnparsed));
+            return withUnparsed;
+        }
+
+        /** ファイルの誤りの隔離（ファイル全体の原本のキーを持ち、範囲を持たない。IngestionService の取り込めなかった部分）。 */
+        private ReceivedRecord fileDefect(Ingestion target) {
+            return new ReceivedRecord(
+                    UUID.randomUUID(),
+                    null,
+                    target.id(),
+                    target.fileHash(),
+                    target.fileObjectKey(),
+                    null,
+                    Classification.QUARANTINED,
+                    "ファイル: 必要な列がありません（port_calls）。選んだ情報源の種別に合ったファイルか確かめてください。合っていれば提供元に確かめてください。",
+                    NOW,
+                    null);
+        }
+
+        /** 行の誤り、またはファイルの終わりまでの隔離（自分の原文のキーを持つ）。 */
+        private ReceivedRecord ownPayload(Ingestion target, int fromLine, int lastLine) {
+            return new ReceivedRecord(
+                    UUID.randomUUID(),
+                    null,
+                    target.id(),
+                    PayloadHash.of(new byte[] {(byte) fromLine}),
+                    PayloadObjectKey.newRecordPayload(),
+                    null,
+                    Classification.QUARANTINED,
+                    fromLine + " 行目: 列の数がヘッダーと違います（ヘッダー 4 列、この行 5 列）。提供元に確かめてください。",
+                    NOW,
+                    new PhysicalLineRange(fromLine, lastLine));
+        }
+
+        @ParameterizedTest(name = "{0}")
+        @CsvSource(
+                nullValues = "NULL",
+                value = {
+                    "数 0・キーなし, NULL, 0, false, false, NULL, 0, false",
+                    "数 0・キーあり, NULL, 0, true, true, NULL, 0, true",
+                    "数あり・キーなし, 4, 2, false, true, 4, 2, false",
+                    "数あり・キーあり, 2, 9, true, true, 2, 9, true"
+                })
+        void 行6_取込の取り込めなかった行とファイル全体の原本を指す隔離の有無の組から取り込めなかった部分を組み立てる(
+                String label,
+                Integer unparsedFromLine,
+                int unparsedLineCount,
+                boolean fileKey,
+                boolean requiresReview,
+                Integer expectedFromLine,
+                int expectedLineCount,
+                boolean expectedWholeFile) {
+            Ingestion target = ingestionWith(unparsedFromLine, unparsedLineCount);
+            // ファイルの誤りの受信記録は範囲を持たず照会の先頭に来る。ほかに行の誤りの隔離を 1 つ置く（ファイルの誤りでないときの隔離）
+            java.util.List<ReceivedRecord> quarantined =
+                    fileKey ? java.util.List.of(fileDefect(target)) : java.util.List.of(ownPayload(target, 3, 3));
+            given(receivedRecords.countByIngestionAndClassification(target.id(), Classification.QUARANTINED))
+                    .willReturn(quarantined.size());
+            given(receivedRecords.quarantinedOf(target.id(), IngestionSummaryQueryService.SHOWN_QUARANTINE_LIMIT))
+                    .willReturn(quarantined);
+
+            IngestionSummaryView summary = service.summaryOf(target.id()).orElseThrow();
+
+            assertThat(summary.requiresReview()).as(label).isEqualTo(requiresReview);
+            if (requiresReview) {
+                assertThat(summary.unreadable())
+                        .isEqualTo(new IngestionSummaryView.UnreadableRegion(
+                                expectedFromLine, expectedLineCount, expectedWholeFile));
+            } else {
+                assertThat(summary.unreadable()).isNull();
+            }
+        }
+
+        @Test
+        void 行7_隔離が0件なら要確認でなく隔離の照会を呼ばない() {
+            given(receivedRecords.countByIngestionAndClassification(ingestion.id(), Classification.QUARANTINED))
+                    .willReturn(0);
+
+            IngestionSummaryView summary = service.summaryOf(ingestion.id()).orElseThrow();
+
+            assertThat(summary.requiresReview()).isFalse();
+            assertThat(summary.unreadable()).isNull();
+            then(receivedRecords).should(never()).quarantinedOf(any(), anyInt());
+        }
     }
 }

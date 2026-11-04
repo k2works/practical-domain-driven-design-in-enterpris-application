@@ -73,12 +73,26 @@ public class ExternalDataIngestionController {
     /** 拒否の理由と次の行動（欄の誤り。Bolt 39c2 の開始準備の決定 (2)）。 */
     private static final String FILE_TOO_LARGE = "ファイルが大きすぎます（" + LIMIT + "）。ファイルを分けて取り込んでください。";
 
-    private static final String SOURCE_NOT_APPROVED = "選んだ情報源は承認済みではないため取り込めません。画面を開き直して、承認済みの情報源を選んでください。";
-    private static final String SOURCE_NOT_FOUND = "選んだ情報源が見つかりません。画面を開き直して、情報源を選び直してください。";
+    /**
+     * 情報源の拒否。選ぶ画面は誤りの後に選択肢を引き直して示すので、次の行動は「示された情報源から選び直す」（Bolt 39c4 の開始準備の
+     * 決定 (7)。Bolt 39c3 の【前の決定の変更】(3)）。
+     */
+    private static final String SOURCE_NOT_APPROVED = "選んだ情報源は承認済みではないため取り込めません。示された情報源から選び直してください。";
+
+    private static final String SOURCE_NOT_FOUND = "選んだ情報源が見つかりません。示された情報源から選び直してください。";
 
     /** 示さなかった隔離の数の文（数は 3 桁の区切り。上限は照会の定数。Bolt 39c3 の開始準備の決定 (4)）。 */
     private static final String REMAINING_QUARANTINE =
             "ほかに %s 件の隔離があります（最初の " + IngestionSummaryQueryService.SHOWN_QUARANTINE_LIMIT + " 件だけを示しています）。";
+
+    /**
+     * 取り込めなかった部分（要確認の「どこ」）の 3 つの形（数は 3 桁の区切り。Bolt 39c4 の開始準備の決定 (4)）。ファイルの終わりまで（閉じ忘れ
+     * など）、ファイルの誤りでデータ行あり、データ行なし。
+     */
+    private static final String UNREADABLE_UNTIL_END_OF_FILE = "%d 行目からファイルの終わりまで（%s 行）";
+
+    private static final String UNREADABLE_WHOLE_FILE = "ファイル全体（データ行 %s 行）";
+    private static final String UNREADABLE_WHOLE_EMPTY_FILE = "ファイル全体（データ行なし）";
 
     /** 原本種別（取込ファイルの種別）の表示名。 */
     private static final Map<CsvFileKind, String> KIND_LABELS =
@@ -174,7 +188,19 @@ public class ExternalDataIngestionController {
                     REMAINING_QUARANTINE.formatted(
                             String.format(Locale.ROOT, "%,d", summary.remainingQuarantineCount())));
         }
+        if (summary.requiresReview()) {
+            model.addAttribute("unreadableRegion", regionText(summary.unreadable()));
+        }
         return RESULT_VIEW;
+    }
+
+    /** 取り込めなかった部分の「どこ」の文（Bolt 39c4 の開始準備の決定 (4)）。 */
+    private static String regionText(IngestionSummaryView.UnreadableRegion region) {
+        String lines = String.format(Locale.ROOT, "%,d", region.lineCount());
+        if (!region.wholeFile()) {
+            return UNREADABLE_UNTIL_END_OF_FILE.formatted(region.fromLine(), lines);
+        }
+        return region.lineCount() > 0 ? UNREADABLE_WHOLE_FILE.formatted(lines) : UNREADABLE_WHOLE_EMPTY_FILE;
     }
 
     private String form(IngestionForm form, Model model) {
@@ -192,8 +218,9 @@ public class ExternalDataIngestionController {
     }
 
     /**
-     * 情報源の拒否（ない・承認されていない）を情報源の欄の誤りにする。選んだ情報源は戻さない（開き直した選択肢にない値は戻せないので、
-     * 選び直させる。Bolt 39c2 の設計の決定「拒否の文言」）。
+     * 情報源の拒否（ない・承認されていない）を情報源の欄の誤りにする。選んだ情報源は戻さない（引き直した選択肢にない値は戻せないので、
+     * 示した選択肢から選び直させる。Bolt 39c2 の設計の決定「拒否の文言」、文言は Bolt 39c4 の開始準備の決定 (7)）。引き直した承認済みの情報源が
+     * 0 件でも文言は変えない（拒否の理由の下に 0 件の全文が出る）。
      */
     private String sourceRefused(
             IngestionForm form, BindingResult bindingResult, String code, String message, Model model) {
