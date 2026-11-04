@@ -2,7 +2,7 @@
 type: Plan
 title: "Bolt 39c4 計画 - S-16 取込全体の要確認（取り込めなかった部分）を示す"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-04T15:17:09Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-04T15:21:04Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-11-04T15:17:10Z }
 ---
@@ -340,7 +340,7 @@ end note
 
 ## ステップ計画（ステップごとに止める）
 
-- [ ] **1. 設計の文書**: 上の「設計文書に直す箇所」（開始準備の決定 (1)〜(9) を反映する）（完了の判定: 文書の差分。**承認ゲート**）
+- [x] **1. 設計の文書**（ui_design・domain_model・system_usecase・data_model・test_strategy・non_functional・release_plan・ADR-004。推奨のとおり承認として記録した。Recommend 承認の指示による）: 上の「設計文書に直す箇所」（開始準備の決定 (1)〜(9) を反映する）（完了の判定: 文書の差分。**承認ゲート**）
 - [ ] **2. テストの Red（外側から）**: 行 10〜13 の feature の Red（今は「要確認」が出ず期待した理由で落ちることを確かめる）、続いて行 8・9・14・15・19 の controller、行 6・7 の照会、行 1〜5 のセキュリティの統合テスト、行 16 の計測（`performanceTest` は人の側で流す。Red は描画の区切りのログがないことで確かめる）。既存のテストのクラスでは `@Nested class Bolt39c4_…` にまとめる。直す既存のテストを一覧にする（T-217。ExternalDataIngestionControllerTest :542 の `summary()`・:626 の `summaryWith()`、:292-293 の定数を使う 39c2 の行 5・6、ExternalDataIngestionSecurityIntegrationTest :309、`IngestionSummaryQueryServiceTest`）（完了の判定: 期待した理由で落ちる記録。**承認ゲート**（画面の振る舞いの契約））
 - [ ] **3. 要確認の復元**: `IngestionSummaryView` の `UnreadableRegion` と `requiresReview()`、`IngestionSummaryQueryService` の復元、Javadoc。行 1〜7 が緑（完了の判定: 緑、`spotbugsMain`・`checkstyleMain`・`sonar-local:check`（T-232・T-237・T-234）。**承認ゲート**）
 - [ ] **4. 結果の画面の要確認**: controller の「どこ」の文、`result.html` の領域とコメント。行 8・9・17 が緑、UI の 39c・39c2・39c3 のシナリオが緑（完了の判定: 緑、`spotbugsMain`・`checkstyleMain`・`sonar-local:check`、S-16 の `uiTest` と axe 違反 0。**承認ゲート**（画面））
