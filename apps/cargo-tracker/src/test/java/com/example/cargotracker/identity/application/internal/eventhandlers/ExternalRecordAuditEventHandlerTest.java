@@ -69,12 +69,16 @@ class ExternalRecordAuditEventHandlerTest {
     }
 
     private static VoyageAdoptedValueUpdated voyage(String receivedRecordId, UserId operator) {
+        return voyage(receivedRecordId, operator, "V001");
+    }
+
+    private static VoyageAdoptedValueUpdated voyage(String receivedRecordId, UserId operator, String voyageNumber) {
         return new VoyageAdoptedValueUpdated(
                 ADOPTED_VALUE,
                 INGESTION,
                 DATA_SOURCE,
                 source(receivedRecordId),
-                "V001",
+                voyageNumber,
                 List.of(new VoyageAdoptedValueUpdated.AdoptedPortCall(new Location("JPTYO"), null, ACQUIRED_AT)),
                 "9",
                 operator,
@@ -83,16 +87,21 @@ class ExternalRecordAuditEventHandlerTest {
     }
 
     private static MilestoneAdoptedValueAccepted milestone(String receivedRecordId) {
+        return milestone(receivedRecordId, "TRK-0001", "M-77");
+    }
+
+    private static MilestoneAdoptedValueAccepted milestone(
+            String receivedRecordId, String trackingNumber, String externalId) {
         return new MilestoneAdoptedValueAccepted(
                 ADOPTED_VALUE,
                 INGESTION,
                 DATA_SOURCE,
                 source(receivedRecordId),
-                "TRK-0001",
+                trackingNumber,
                 "DEPARTURE",
                 new Location("JPTYO"),
                 ACQUIRED_AT,
-                "M-77",
+                externalId,
                 "3",
                 OPERATOR,
                 OPERATOR_COMPANY,
@@ -155,6 +164,7 @@ class ExternalRecordAuditEventHandlerTest {
 
         assertThat(auditRecords.appended).singleElement().satisfies(written -> {
             assertThat(written.action()).isEqualTo(AuditAction.EXTERNAL_RECORD_ADOPTED);
+            assertThat(written.occurredAt()).isEqualTo(PUBLISHED_AT);
             assertThat(written.target())
                     .isEqualTo(new AuditTarget(
                             RECEIVED_RECORD,
@@ -196,6 +206,7 @@ class ExternalRecordAuditEventHandlerTest {
 
         assertThat(auditRecords.appended).singleElement().satisfies(written -> {
             assertThat(written.reason()).isEqualTo("COLUMN_COUNT_MISMATCH");
+            assertThat(written.occurredAt()).isEqualTo(PUBLISHED_AT);
             assertThat(written.target().afterState())
                     .isEqualTo("provider=P-1;recordType=VOYAGE;externalId=-;externalVersion=-;lines=12-14;ingestionId="
                             + INGESTION + ";dataSourceId=" + DATA_SOURCE);
@@ -210,6 +221,7 @@ class ExternalRecordAuditEventHandlerTest {
 
         assertThat(auditRecords.appended).singleElement().satisfies(written -> {
             assertThat(written.reason()).isEqualTo("MISSING_COLUMN");
+            assertThat(written.occurredAt()).isEqualTo(PUBLISHED_AT);
             assertThat(written.target().afterState())
                     .isEqualTo("provider=P-1;recordType=VOYAGE;externalId=-;externalVersion=-;lines=-;ingestionId="
                             + INGESTION + ";dataSourceId=" + DATA_SOURCE);
@@ -253,6 +265,7 @@ class ExternalRecordAuditEventHandlerTest {
         handler.on(voyage(receivedRecordId, null));
 
         assertThat(auditRecords.appendCalls).isZero();
+        assertThat(auditRecords.existsQueries).isEmpty();
         assertThat(logs.list).singleElement().satisfies(log -> {
             assertThat(log.getLevel()).isEqualTo(Level.ERROR);
             assertThat(log.getFormattedMessage())
@@ -266,11 +279,44 @@ class ExternalRecordAuditEventHandlerTest {
         handler.on(quarantined(null, "V001", "9", ExternalRecordQuarantined.CONTENT_MISMATCH, 1, 1));
 
         assertThat(auditRecords.appendCalls).isZero();
+        // 受信記録 ID がないので DB に問い合わせない（内容を確かめてから照会する）
+        assertThat(auditRecords.existsQueries).isEmpty();
         assertThat(logs.list).singleElement().satisfies(log -> {
             assertThat(log.getLevel()).isEqualTo(Level.ERROR);
             assertThat(log.getFormattedMessage())
                     .contains(INGESTION.toString(), "EXTERNAL_RECORD_QUARANTINED")
                     .doesNotContain("V001");
+        });
+    }
+
+    @Test
+    void 行7_航海番号のないDE12は要約にnullを入れずに捨てる() {
+        handler.on(voyage(UUID.randomUUID().toString(), OPERATOR, null));
+
+        assertDiscarded("voyageNumber");
+    }
+
+    @Test
+    void 行7_追跡番号のないDE13は要約にnullを入れずに捨てる() {
+        handler.on(milestone(UUID.randomUUID().toString(), null, "M-77"));
+
+        assertDiscarded("trackingNumber");
+    }
+
+    @Test
+    void 行7_外部IDのないDE13は要約にnullを入れずに捨てる() {
+        handler.on(milestone(UUID.randomUUID().toString(), "TRK-0001", null));
+
+        assertDiscarded("externalId");
+    }
+
+    /** 採用の要約に任意の部品はない（「-」はキーのない隔離だけ）ので、欠けは内容の欠けとして捨て、照会も追記もしない。 */
+    private void assertDiscarded(String missing) {
+        assertThat(auditRecords.appendCalls).isZero();
+        assertThat(auditRecords.existsQueries).isEmpty();
+        assertThat(logs.list).singleElement().satisfies(log -> {
+            assertThat(log.getLevel()).isEqualTo(Level.ERROR);
+            assertThat(log.getFormattedMessage()).contains("EXTERNAL_RECORD_ADOPTED", missing);
         });
     }
 

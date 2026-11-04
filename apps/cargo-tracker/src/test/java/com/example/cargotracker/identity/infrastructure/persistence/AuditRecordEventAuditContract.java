@@ -2,6 +2,8 @@ package com.example.cargotracker.identity.infrastructure.persistence;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.example.cargotracker.externaldata.domain.events.ExternalRecordQuarantined;
+import com.example.cargotracker.identity.application.internal.eventhandlers.ExternalRecordAuditEventHandler;
 import com.example.cargotracker.identity.domain.model.aggregates.AuditRecord;
 import com.example.cargotracker.identity.domain.model.aggregates.AuditRecordRepository;
 import com.example.cargotracker.identity.domain.model.valueobjects.AuditAction;
@@ -51,6 +53,36 @@ abstract class AuditRecordEventAuditContract {
             assertThat(written.reason()).isEqualTo("CONTENT_MISMATCH");
             assertThat(written.target())
                     .isEqualTo(new AuditTarget(RECEIVED_RECORD, receivedRecordId, null, null, summary));
+        });
+    }
+
+    @Test
+    void 行3_各部品を上限にそろえた隔離の要約が変更後の列に入る() {
+        // 提供元 100・外部 ID 200・外部版 100（V20261103100000 の列の上限）と最大の物理行。要約は監査の listener で作る
+        UserId actor = newUser();
+        UUID receivedRecordId = UUID.randomUUID();
+        ExternalRecordQuarantined event = new ExternalRecordQuarantined(
+                receivedRecordId,
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                "P".repeat(100),
+                "MILESTONE",
+                "E".repeat(200),
+                "9".repeat(100),
+                ExternalRecordQuarantined.CONTENT_MISMATCH,
+                Integer.MAX_VALUE,
+                Integer.MAX_VALUE,
+                actor,
+                newCompany(),
+                AT);
+
+        new ExternalRecordAuditEventHandler(auditRecords()).on(event);
+
+        assertThat(auditRecords().findByActorUserId(actor)).singleElement().satisfies(written -> {
+            assertThat(written.target().id()).isEqualTo(receivedRecordId.toString());
+            assertThat(written.target().afterState())
+                    .contains("P".repeat(100), "E".repeat(200), "9".repeat(100))
+                    .hasSizeLessThanOrEqualTo(4000);
         });
     }
 

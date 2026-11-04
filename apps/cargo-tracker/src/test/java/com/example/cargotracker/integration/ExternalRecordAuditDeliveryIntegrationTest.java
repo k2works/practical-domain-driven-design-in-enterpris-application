@@ -51,10 +51,10 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Import;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.modulith.events.CompletedEventPublications;
 import org.springframework.modulith.events.EventPublication;
 import org.springframework.modulith.events.IncompleteEventPublications;
 import org.springframework.modulith.events.core.EventPublicationRepository;
+import org.springframework.modulith.events.core.EventSerializer;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -95,7 +95,7 @@ class ExternalRecordAuditDeliveryIntegrationTest {
     AuditRecordRepository auditRecords;
 
     @Autowired
-    CompletedEventPublications completedEventPublications;
+    EventSerializer eventSerializer;
 
     @Autowired
     IncompleteEventPublications incompleteEventPublications;
@@ -181,13 +181,7 @@ class ExternalRecordAuditDeliveryIntegrationTest {
             awaitCompletedAuditPublication(MilestoneAdoptedValueAccepted.class, receivedRecordId);
             Object occurredAt = auditRecordOf(AuditAction.EXTERNAL_RECORD_ADOPTED, receivedRecordId)
                     .get("occurred_at");
-            MilestoneAdoptedValueAccepted delivered = completedEventPublications.findAll().stream()
-                    .map(EventPublication::getEvent)
-                    .filter(MilestoneAdoptedValueAccepted.class::isInstance)
-                    .map(MilestoneAdoptedValueAccepted.class::cast)
-                    .filter(event -> event.source().reference().equals(receivedRecordId.toString()))
-                    .findFirst()
-                    .orElseThrow();
+            MilestoneAdoptedValueAccepted delivered = completedAuditEvent(receivedRecordId);
 
             // 続けて 2 回配り直す（前の配信が完了してから次のトランザクションで渡す）
             for (int deliveries = 2; deliveries <= 3; deliveries++) {
@@ -309,6 +303,20 @@ class ExternalRecordAuditDeliveryIntegrationTest {
                 eventType.getName(),
                 "%" + receivedRecordId + "%",
                 "%" + AUDIT_LISTENER + "%");
+    }
+
+    /**
+     * 監査の listener が受け終えた、この受信記録の DE-13（受け手と受信記録 ID で SQL で絞る。共有の DB の発行記録をすべて読み込まない）。
+     */
+    private MilestoneAdoptedValueAccepted completedAuditEvent(UUID receivedRecordId) {
+        String serialized = jdbc.queryForObject(
+                "SELECT serialized_event FROM platform.event_publication WHERE event_type = ? AND serialized_event LIKE ?"
+                        + " AND listener_id LIKE ? AND completion_date IS NOT NULL",
+                String.class,
+                MilestoneAdoptedValueAccepted.class.getName(),
+                "%" + receivedRecordId + "%",
+                "%" + AUDIT_LISTENER + "%");
+        return eventSerializer.deserialize(serialized, MilestoneAdoptedValueAccepted.class);
     }
 
     /** 監査の listener の、この受信記録のイベントの発行記録のうち失敗したもの（前例 QuotationPresentedDeliveryIntegrationTest）。 */

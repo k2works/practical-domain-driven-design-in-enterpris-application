@@ -447,7 +447,7 @@ public final class AuditRecord {
 
     /**
      * 外部原本の取込での自動の採用を記録する（DE-12・DE-13 の監査。Bolt 39b3b、AUD-01、IA-INV-15）。操作者と時刻はイベントのもの、対象は
-     * 受信記録（版と変更前は持たない）、変更後は正規の要約。理由は持たない。結果は成功。必須の値がなければ {@link IllegalArgumentException}
+     * 受信記録（版と変更前は持たない）、変更後は正規の要約。理由は持たない。結果は成功。必須の値がなければ {@link MissingEventValueException}
      * （内容の欠けたイベント。listener が捨てる）。
      */
     public static AuditRecord externalRecordAdopted(
@@ -501,19 +501,33 @@ public final class AuditRecord {
                         requiredText(summary, "summary")));
     }
 
-    /** イベントから作る記録の必須の値（欠けは {@link IllegalArgumentException}。listener が内容の欠けとして捨てる）。 */
+    /** イベントから作る記録の必須の値（欠けは {@link MissingEventValueException}。listener が内容の欠けとして捨てる）。 */
     private static <T> T required(T value, String name) {
         if (value == null) {
-            throw new IllegalArgumentException("監査記録の値がない: " + name);
+            throw new MissingEventValueException(name);
         }
         return value;
     }
 
     private static String requiredText(String value, String name) {
         if (required(value, name).isBlank()) {
-            throw new IllegalArgumentException("監査記録の値がない: " + name);
+            throw new MissingEventValueException(name);
         }
         return value;
+    }
+
+    /**
+     * イベントから作る監査記録の値が欠けている（内容の欠けたイベント。再配信しても直らない。Bolt 39b3b、IA-INV-15）。listener はこの型だけを
+     * 毒入りとして捨て、ほかの例外（プログラムの誤りや DB の失敗）は上げる。
+     */
+    public static final class MissingEventValueException extends IllegalArgumentException {
+
+        private static final long serialVersionUID = 1L;
+
+        /** @param name 欠けている値の名前（ログに出す。値そのものは出さない） */
+        public MissingEventValueException(String name) {
+            super("監査記録の値がない: " + name);
+        }
     }
 
     /** 利用者を対象にした成功の記録（利用状態の変更とログインの資格の記録が共有する）。変更前後は記録の文字列のまま持つ。 */

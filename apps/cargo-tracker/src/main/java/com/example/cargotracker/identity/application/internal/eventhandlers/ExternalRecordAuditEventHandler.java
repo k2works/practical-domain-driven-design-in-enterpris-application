@@ -18,8 +18,9 @@ import org.springframework.stereotype.Service;
 /**
  * 外部原本の採否の監査のイベントハンドラー。外部データの DE-12・DE-13・DE-14 を取込のコミットの後に別のトランザクションで受け、受信記録ごとに
  * 外部原本の採否の監査記録を 1 つ書く（Bolt 39b3b。AUD-01・AUD-02、IA-INV-15、ADR-003・ADR-004）。操作者と発生時刻はイベントのもの。
- * 配信は少なくとも 1 回なので、操作と対象（受信記録）で引いて記録があれば書かない。内容の欠けたイベントは再配信しても直らないので、ERROR の
- * ログを残して捨てる。DB の失敗は例外を上げ、発行記録を未完了に残して起動のときに配り直させる（前例 {@link KpiObservationEventHandler}）。
+ * 配信は少なくとも 1 回なので、操作と対象（受信記録）で引いて記録があれば書かない。内容の欠けたイベント
+ * （{@link AuditRecord.MissingEventValueException}）は再配信しても直らないので、ERROR のログを残して捨てる。DB の失敗とほかの例外（プログラムの
+ * 誤り）は上げ、発行記録を未完了に残して起動のときに配り直させる（前例 {@link KpiObservationEventHandler}）。
  *
  * <p>{@code @Service} は JIG がユースケースとして読むための印で、部品探索の対象にはしない（CargoTrackerApplication）。
  * 組み立ては {@code IdentityConfiguration} が担う。
@@ -53,7 +54,7 @@ public class ExternalRecordAuditEventHandler {
                         event.operatorUserId(),
                         event.operatorCompanyId(),
                         receivedRecordId,
-                        "recordType=VOYAGE;targetKey=" + event.voyageNumber()
+                        "recordType=VOYAGE;targetKey=" + part(event.voyageNumber(), "voyageNumber")
                                 + adoptedTail(
                                         event.infoVersion(),
                                         event.ingestionId(),
@@ -74,7 +75,8 @@ public class ExternalRecordAuditEventHandler {
                         event.operatorUserId(),
                         event.operatorCompanyId(),
                         receivedRecordId,
-                        "recordType=MILESTONE;targetKey=" + event.trackingNumber() + ";externalId=" + event.externalId()
+                        "recordType=MILESTONE;targetKey=" + part(event.trackingNumber(), "trackingNumber")
+                                + ";externalId=" + part(event.externalId(), "externalId")
                                 + adoptedTail(
                                         event.infoVersion(),
                                         event.ingestionId(),
@@ -96,31 +98,35 @@ public class ExternalRecordAuditEventHandler {
                         event.operatorCompanyId(),
                         receivedRecordId,
                         event.reason(),
-                        "provider=" + event.provider()
-                                + ";recordType=" + event.recordType()
+                        "provider=" + part(event.provider(), "provider")
+                                + ";recordType=" + part(event.recordType(), "recordType")
                                 + ";externalId=" + orNone(event.externalId())
                                 + ";externalVersion=" + orNone(event.externalVersion())
                                 + ";lines=" + lines(event.firstLine(), event.lastLine())
-                                + ";ingestionId=" + event.ingestionId()
-                                + ";dataSourceId=" + event.dataSourceId(),
+                                + ";ingestionId=" + part(event.ingestionId(), "ingestionId")
+                                + ";dataSourceId=" + part(event.dataSourceId(), "dataSourceId"),
                         event.quarantinedAt()));
     }
 
+    /**
+     * 内容を確かめて（記録を作って）から照会し、なければ追記する。内容の欠けは {@link AuditRecord.MissingEventValueException} だけで、
+     * 受信記録 ID がなければ DB に問い合わせない。ほかの例外（プログラムの誤り・DB の失敗）は捕まえずに上げ、発行記録を未完了に残す。
+     */
     private void appendOnce(
             AuditAction action, String receivedRecordId, UUID ingestionId, Supplier<AuditRecord> create) {
-        if (auditRecords.existsByActionAndTarget(action, RECEIVED_RECORD, receivedRecordId)) {
-            return;
-        }
         AuditRecord auditRecord;
         try {
             auditRecord = create.get();
-        } catch (IllegalArgumentException e) {
+        } catch (AuditRecord.MissingEventValueException e) {
             LOG.error(
                     "外部原本の採否の監査記録を書かずに捨てた（イベントの内容が欠けている。再配信しても直らない。調査が要る）:" + " 操作 {}、受信記録 {}、取込 {}、欠け {}",
                     action,
                     receivedRecordId,
                     ingestionId,
                     e.getMessage());
+            return;
+        }
+        if (auditRecords.existsByActionAndTarget(action, RECEIVED_RECORD, receivedRecordId)) {
             return;
         }
         auditRecords.append(auditRecord);
@@ -131,10 +137,21 @@ public class ExternalRecordAuditEventHandler {
     }
 
     private static String adoptedTail(String infoVersion, UUID ingestionId, UUID dataSourceId, UUID adoptedValueId) {
-        return ";infoVersion=" + infoVersion
-                + ";ingestionId=" + ingestionId
-                + ";dataSourceId=" + dataSourceId
-                + ";adoptedValueId=" + adoptedValueId;
+        return ";infoVersion=" + part(infoVersion, "infoVersion")
+                + ";ingestionId=" + part(ingestionId, "ingestionId")
+                + ";dataSourceId=" + part(dataSourceId, "dataSourceId")
+                + ";adoptedValueId=" + part(adoptedValueId, "adoptedValueId");
+    }
+
+    /**
+     * 要約の必須の部品。採用の要約に任意の部品はなく、隔離で任意なのは外部 ID・外部版・物理行だけ（{@link #orNone}・{@link #lines}）。
+     * 欠けは要約に「null」と入れずに内容の欠けとして扱う（計画の「変更後の要約」）。
+     */
+    private static String part(Object value, String name) {
+        if (value == null || value.toString().isBlank()) {
+            throw new AuditRecord.MissingEventValueException(name);
+        }
+        return value.toString();
     }
 
     private static String orNone(String value) {

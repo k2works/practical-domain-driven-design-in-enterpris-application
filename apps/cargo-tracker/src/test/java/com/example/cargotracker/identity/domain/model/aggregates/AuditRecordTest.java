@@ -379,24 +379,24 @@ class AuditRecordTest {
 
     @Test
     void 行7_外部原本の採否の記録は操作者と受信記録IDと要約と時刻と理由を欠かせない() {
-        // 内容の欠けは IllegalArgumentException（listener が毒入りとして捨てる）
+        // 内容の欠けは専用の型 MissingEventValueException（IllegalArgumentException の子。listener はこの型だけを毒入りとして捨てる）
         String id = UUID.randomUUID().toString();
 
         assertThatThrownBy(() -> AuditRecord.externalRecordAdopted(null, COMPANY, id, "s", AT))
-                .isInstanceOf(IllegalArgumentException.class);
+                .isInstanceOf(AuditRecord.MissingEventValueException.class);
         assertThatThrownBy(() -> AuditRecord.externalRecordAdopted(USER, null, id, "s", AT))
-                .isInstanceOf(IllegalArgumentException.class);
+                .isInstanceOf(AuditRecord.MissingEventValueException.class);
         assertThatThrownBy(() -> AuditRecord.externalRecordAdopted(USER, COMPANY, null, "s", AT))
-                .isInstanceOf(IllegalArgumentException.class);
+                .isInstanceOf(AuditRecord.MissingEventValueException.class);
         assertThatThrownBy(() -> AuditRecord.externalRecordAdopted(USER, COMPANY, " ", "s", AT))
-                .isInstanceOf(IllegalArgumentException.class);
+                .isInstanceOf(AuditRecord.MissingEventValueException.class);
         assertThatThrownBy(() -> AuditRecord.externalRecordAdopted(USER, COMPANY, id, " ", AT))
-                .isInstanceOf(IllegalArgumentException.class);
+                .isInstanceOf(AuditRecord.MissingEventValueException.class);
         assertThatThrownBy(() -> AuditRecord.externalRecordAdopted(USER, COMPANY, id, "s", null))
-                .isInstanceOf(IllegalArgumentException.class);
+                .isInstanceOf(AuditRecord.MissingEventValueException.class);
         assertThatThrownBy(() -> AuditRecord.externalRecordQuarantined(USER, COMPANY, id, null, "s", AT))
-                .isInstanceOf(IllegalArgumentException.class);
+                .isInstanceOf(AuditRecord.MissingEventValueException.class);
         assertThatThrownBy(() -> AuditRecord.externalRecordQuarantined(null, COMPANY, id, "CONTENT_MISMATCH", "s", AT))
-                .isInstanceOf(IllegalArgumentException.class);
+                .isInstanceOf(AuditRecord.MissingEventValueException.class);
     }
 }

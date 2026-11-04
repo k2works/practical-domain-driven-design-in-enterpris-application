@@ -648,6 +648,21 @@ class LayerArchitectureTest {
                 .contains("externalRecordQuarantined");
     }
 
+    /**
+     * 書き手の表の全部の行が 2 つの規則に入っている（Bolt 39b3b のステップ 7。表の行を読み落とす変異（{@code SOLE_WRITERS.stream().skip(1)}）
+     * は行 14 の負例では捕まらない。規則の説明には行ごとに書き手だけが触るもの（{@code what}）が出る）。
+     */
+    @Test
+    void 書き手の表の全部の行から規則を作る() {
+        String othersDoNot = 書き手のほかは触らない.getDescription();
+        String writerDoes = 書き手は実在して触る.getDescription();
+
+        assertThat(SOLE_WRITERS).isNotEmpty().allSatisfy(row -> {
+            assertThat(othersDoNot).as("書き手のほかは触らない").contains(row.what() + "。書き手は " + row.writer());
+            assertThat(writerDoes).as("書き手は実在して触る").contains(row.what() + "。書き手の名前と呼び出しが実在し続ける");
+        });
+    }
+
     /** 行 14 の変異のためのクラス（監査の listener でないのに外部原本の採否の監査記録を作る）。呼ばれることはない。 */
     static final class ExternalRecordAuditIntruder {
 
