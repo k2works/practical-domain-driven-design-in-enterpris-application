@@ -16362,7 +16362,7 @@
 <tr>
 <td style="text-align: left;">受信記録</td>
 <td style="text-align: left;">ReceivedRecord</td>
-<td style="text-align: left;">外部原本を受け取るたびと、形式の誤りを見つけるたびの追記専用の記録。分類（採用・重複・隔離・差異）を持つ（data_model の <code>received_record.classification</code>。表は <code>external_data.received_record</code>。Bolt 39a3）。形式の誤りの受信記録は外部原本と取得時刻を持たない隔離（キーのない隔離）で、行の原文かファイル全体の原本を指す（Bolt 39b2。はじめの「外部原本を受け取るたびの」を改めた）。クラス名は通知の公開 API の結果（<code>PasswordResetMailReceipt</code> など）と紛れないよう <code>Receipt</code> を避けた（Bolt 39a2 の開始準備の決定 (3)）</td>
+<td style="text-align: left;">外部原本を受け取るたびと、形式の誤りを見つけるたびの追記専用の記録。分類（採用・重複・隔離・差異）を持つ（data_model の <code>received_record.classification</code>。表は <code>external_data.received_record</code>。Bolt 39a3）。形式の誤りの受信記録は外部原本と取得時刻を持たない隔離（キーのない隔離）で、行の原文かファイル全体の原本を指す（Bolt 39b2。はじめの「外部原本を受け取るたびの」を改めた）。行の範囲（<code>PhysicalLineRange</code>）を持つ。ファイルの誤り（ファイル全体の原本を指す）と Bolt 39c3 より前の受信記録は範囲を持たない（なし）。表は 2 列（<code>first_line_number</code>・<code>last_line_number</code>）で持つ（Bolt 39c3）。クラス名は通知の公開 API の結果（<code>PasswordResetMailReceipt</code> など）と紛れないよう <code>Receipt</code> を避けた（Bolt 39a2 の開始準備の決定 (3)）</td>
 <td style="text-align: left;">外部データ</td>
 </tr>
 <tr>
@@ -16398,7 +16398,7 @@
 <tr>
 <td style="text-align: left;">受信記録のリポジトリ</td>
 <td style="text-align: left;">ReceivedRecordRepository</td>
-<td style="text-align: left;">受信記録を追記し（<code>add</code>）、取込と分類ごとに数える（<code>countByIngestionAndClassification</code>）ドメインのポート。追記専用の表なので更新・削除のメソッドを持たない（Bolt 39b）</td>
+<td style="text-align: left;">受信記録を追記し（<code>add</code>）、取込と分類ごとに数える（<code>countByIngestionAndClassification</code>）ドメインのポート。追記専用の表なので更新・削除のメソッドを持たない（Bolt 39b）。Bolt 39c3 で読む照会 <code>quarantinedOf</code> を足す（その取込の隔離の受信記録を、行の範囲の順（なしを先、同じなら受信記録 ID の順）に最大 <code>limit</code> 件。追記と数えることに読み出しが加わる。更新・削除は持たないまま）</td>
 <td style="text-align: left;">外部データ</td>
 </tr>
 <tr>
@@ -16458,13 +16458,13 @@
 <tr>
 <td style="text-align: left;">取込の要約の照会</td>
 <td style="text-align: left;">IngestionSummaryQueryService</td>
-<td style="text-align: left;">S-16 の結果の画面のアプリケーションのサービス（<code>externaldata.application.internal.queryservices</code>。<code>ExternalDataConfiguration</code> の <code>@Bean</code>）。取込 ID から、情報源の提供元と原本種別、取り込んだ日時、受け取った件数、分類別の件数（採用・重複・隔離）を <code>IngestionSummaryView</code> で返す。ない取込 ID は空を返す。取込のサービスの結果「取込の結果」（<code>IngestionOutcome</code>）とは別の語で、DB から読み直した値（Bolt 39c）</td>
+<td style="text-align: left;">S-16 の結果の画面のアプリケーションのサービス（<code>externaldata.application.internal.queryservices</code>。<code>ExternalDataConfiguration</code> の <code>@Bean</code>）。取込 ID から、情報源の提供元と原本種別、取り込んだ日時、受け取った件数、分類別の件数（採用・重複・隔離）を <code>IngestionSummaryView</code> で返す。ない取込 ID は空を返す。取込のサービスの結果「取込の結果」（<code>IngestionOutcome</code>）とは別の語で、DB から読み直した値（Bolt 39c）。Bolt 39c3 で隔離の注記（行の範囲の順の最初の 100 件。上限は照会の定数）と残りの件数（隔離の件数 − 示した数）も返す。隔離が 0 件なら受信記録の照会を呼ばない</td>
 <td style="text-align: left;">外部データ</td>
 </tr>
 <tr>
 <td style="text-align: left;">取込の要約</td>
 <td style="text-align: left;">IngestionSummaryView</td>
-<td style="text-align: left;">取込の要約の照会の値。受け取った件数は物理データ行で、分類別の件数（受信記録の数）と単位が違う（Bolt 39c。要確認と取り込めなかった部分は 39c3 で足す。Bolt 39c2 の開始準備で 39c2 から縦に分けた）</td>
+<td style="text-align: left;">取込の要約の照会の値。受け取った件数は物理データ行で、分類別の件数（受信記録の数）と単位が違う（Bolt 39c。隔離の理由（注記）と残りの件数は 39c3、要確認と取り込めなかった部分は 39c4。Bolt 39c2 の開始準備で 39c2 から、Bolt 39c3 の開始準備で 39c3 から縦に分けた）</td>
 <td style="text-align: left;">外部データ</td>
 </tr>
 <tr>
@@ -16494,13 +16494,13 @@
 <tr>
 <td style="text-align: left;">形式の誤り</td>
 <td style="text-align: left;">FormatDefect</td>
-<td style="text-align: left;">取込のファイルと行を隔離する理由の値オブジェクト（enum。<code>externaldata.domain.model.valueobjects</code>）。ファイルの誤り（文字コード <code>UNDECODABLE</code>、ヘッダーが読めない <code>UNREADABLE_HEADER</code>、必要な列がない <code>MISSING_COLUMN</code>、同じ名前の列 <code>DUPLICATE_COLUMN</code>）、取込全体の要確認にする引用符の閉じ忘れ <code>UNCLOSED_QUOTE</code>、行の誤り（閉じた引用符の後の文字 <code>TEXT_AFTER_CLOSING_QUOTE</code>、引用符で囲まない値の中の引用符 <code>BARE_QUOTE</code>、列数の違い <code>COLUMN_COUNT_MISMATCH</code>、空の値 <code>EMPTY_VALUE</code>、時刻の書式 <code>INVALID_TIME</code>、長すぎる値 <code>TOO_LONG</code>、場所の形 <code>INVALID_LOCATION</code>、種類 <code>INVALID_KIND</code>、追跡番号の形 <code>INVALID_TRACKING_NUMBER</code>、寄港の列の形 <code>INVALID_PORT_CALLS</code>）。空の値・時刻の書式・長すぎる値はキーの列に限らず値の列にも使う（空白だけの値も空とみなす）。寄港の列の誤り（区切り・数・到着か出発の有無・到着と出発の順・重複）は <code>INVALID_PORT_CALLS</code> 1 つにまとめ（数は 2 つ以上 60 まで。上限を超える行は拒否の理由 <code>TOO_MANY_PORT_CALLS</code>、詳細「寄港が多すぎます（60 まで）」。Bolt 39b3）、詳細の言葉（列名と、航海の値・寄港の値が返す拒否の理由 <code>VoyageValuesRejectionReason</code> の言葉と寄港の番号）で分ける（Bolt 39b2b）。注記の業務の言葉（「12 行目: 列の数がヘッダーと違います（ヘッダー 4 列、この行 5 列）。」の形）を作る（Bolt 39b2）。理由ごとに、なりうる範囲（ファイル・行・ファイルの終わりまで）を持ち、行の誤り・取り込めなかった部分・ヘッダーのファイルの誤りの組み合わせをこの範囲で確かめる（Bolt 39b2 の開発レビュー）</td>
+<td style="text-align: left;">取込のファイルと行を隔離する理由の値オブジェクト（enum。<code>externaldata.domain.model.valueobjects</code>）。ファイルの誤り（文字コード <code>UNDECODABLE</code>、ヘッダーが読めない <code>UNREADABLE_HEADER</code>、必要な列がない <code>MISSING_COLUMN</code>、同じ名前の列 <code>DUPLICATE_COLUMN</code>）、取込全体の要確認にする引用符の閉じ忘れ <code>UNCLOSED_QUOTE</code>、行の誤り（閉じた引用符の後の文字 <code>TEXT_AFTER_CLOSING_QUOTE</code>、引用符で囲まない値の中の引用符 <code>BARE_QUOTE</code>、列数の違い <code>COLUMN_COUNT_MISMATCH</code>、空の値 <code>EMPTY_VALUE</code>、時刻の書式 <code>INVALID_TIME</code>、長すぎる値 <code>TOO_LONG</code>、場所の形 <code>INVALID_LOCATION</code>、種類 <code>INVALID_KIND</code>、追跡番号の形 <code>INVALID_TRACKING_NUMBER</code>、寄港の列の形 <code>INVALID_PORT_CALLS</code>）。空の値・時刻の書式・長すぎる値はキーの列に限らず値の列にも使う（空白だけの値も空とみなす）。寄港の列の誤り（区切り・数・到着か出発の有無・到着と出発の順・重複）は <code>INVALID_PORT_CALLS</code> 1 つにまとめ（数は 2 つ以上 60 まで。上限を超える行は拒否の理由 <code>TOO_MANY_PORT_CALLS</code>、詳細「寄港が多すぎます（60 まで）」。Bolt 39b3）、詳細の言葉（列名と、航海の値・寄港の値が返す拒否の理由 <code>VoyageValuesRejectionReason</code> の言葉と寄港の番号）で分ける（Bolt 39b2b）。注記の業務の言葉（「12 行目: 列の数がヘッダーと違います（ヘッダー 4 列、この行 5 列）。」の形）を作る（Bolt 39b2）。理由ごとに、なりうる範囲（ファイル・行・ファイルの終わりまで）を持ち、行の誤り・取り込めなかった部分・ヘッダーのファイルの誤りの組み合わせをこの範囲で確かめる（Bolt 39b2 の開発レビュー）。範囲がファイルの理由はすべて「どうすればよいか」を持つ: 必要な列がないは「選んだ情報源の種別に合ったファイルか確かめてください。合っていれば提供元に確かめてください。」、同じ名前の列は「提供元に確かめてください。」（Bolt 39c3）</td>
 <td style="text-align: left;">外部データ</td>
 </tr>
 <tr>
 <td style="text-align: left;">物理行の範囲</td>
 <td style="text-align: left;">PhysicalLineRange</td>
-<td style="text-align: left;">取込ファイルの 1 行（引用符の中の改行で複数の物理行にまたがる）か誤りが、ファイルの物理行のどこからどこまでかを表す値オブジェクト（<code>externaldata.domain.model.valueobjects</code>）。始まりと終わり（1 から、終わりは始まり以上）、物理行の数（受け取った件数との突き合わせ）、注記の範囲の言葉（「12 行目」「12 行目から 13 行目まで」）を持つ（Bolt 39b2 の開発レビュー）</td>
+<td style="text-align: left;">取込ファイルの 1 行（引用符の中の改行で複数の物理行にまたがる）か誤りが、ファイルの物理行のどこからどこまでかを表す値オブジェクト（<code>externaldata.domain.model.valueobjects</code>）。始まりと終わり（1 から、終わりは始まり以上）、物理行の数（受け取った件数との突き合わせ）、注記の範囲の言葉（「12 行目」「12 行目から 13 行目まで」）を持つ（Bolt 39b2 の開発レビュー）。受信記録の行の範囲にも使い、隔離の注記を行の順に並べる（Bolt 39c3）</td>
 <td style="text-align: left;">外部データ</td>
 </tr>
 <tr>

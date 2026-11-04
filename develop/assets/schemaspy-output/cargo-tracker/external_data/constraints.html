@@ -238,6 +238,11 @@
                                         <td>(((external_record_id IS NULL) &#61; (acquired_at IS NULL)) AND (((classification)::text &#61; &#39;QUARANTINED&#39;::text) OR (external_record_id IS NOT NULL)))</td>
                                     </tr>
                                     <tr>
+                                        <td><a href='tables/received_record.html'>received_record</a></td>
+                                        <td>ck_received_record_line_range</td>
+                                        <td>(((first_line_number IS NULL) &#61; (last_line_number IS NULL)) AND ((first_line_number IS NULL) OR ((first_line_number &gt;&#61; 1) AND (first_line_number &lt;&#61; last_line_number))))</td>
+                                    </tr>
+                                    <tr>
                                         <td><a href='tables/data_source.html'>data_source</a></td>
                                         <td>ck_data_source_approval_status</td>
                                         <td>((approval_status)::text &#61; ANY ((ARRAY[&#39;CANDIDATE&#39;::character varying, &#39;APPROVED&#39;::character varying, &#39;SUSPENDED&#39;::character varying])::text[]))</td>

@@ -671,6 +671,34 @@
         "comments": "<p>分類の時刻</p>"
     },
     {
+        "tableName": "received_record",
+        "tableFileName": "received_record",
+        "tableType": "Table",
+        "keyClass": "",
+        "keyTitle": "",
+        "name": "first_line_number",
+        "type": "int4",
+        "length": 10,
+        "nullable": "√",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>行の範囲の始まり（物理行の番号。ファイルの誤りと Bolt 39c3 より前の行は NULL）</p>"
+    },
+    {
+        "tableName": "received_record",
+        "tableFileName": "received_record",
+        "tableType": "Table",
+        "keyClass": "",
+        "keyTitle": "",
+        "name": "last_line_number",
+        "type": "int4",
+        "length": 10,
+        "nullable": "√",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>行の範囲の終わり（物理行の番号。ファイルの誤りと Bolt 39c3 より前の行は NULL）</p>"
+    },
+    {
         "tableName": "received_record_decision",
         "tableFileName": "received_record_decision",
         "tableType": "Table",

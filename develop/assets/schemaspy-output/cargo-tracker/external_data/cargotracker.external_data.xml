@@ -105,6 +105,8 @@
          <column autoUpdated="false" defaultValue="null" digits="0" id="6" name="classification" nullable="false" remarks="分類（ADOPTED・DUPLICATE・QUARANTINED・DISCREPANCY）" size="30" type="varchar" typeCode="12"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="7" name="classification_note" nullable="true" remarks="分類の注記" size="1000" type="varchar" typeCode="12"/>
          <column autoUpdated="false" defaultValue="null" digits="6" id="8" name="classified_at" nullable="false" remarks="分類の時刻" size="35" type="timestamptz" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="9" name="first_line_number" nullable="true" remarks="行の範囲の始まり（物理行の番号。ファイルの誤りと Bolt 39c3 より前の行は NULL）" size="10" type="int4" typeCode="4"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="10" name="last_line_number" nullable="true" remarks="行の範囲の終わり（物理行の番号。ファイルの誤りと Bolt 39c3 より前の行は NULL）" size="10" type="int4" typeCode="4"/>
          <primaryKey column="id" sequenceNumberInPK="1"/>
          <index name="pk_received_record" unique="true">
             <column ascending="true" name="id"/>
@@ -117,6 +119,7 @@
          </index>
          <checkConstraint constraint="((classification)::text = ANY ((ARRAY['ADOPTED'::character varying, 'DUPLICATE'::character varying, 'QUARANTINED'::character varying, 'DISCREPANCY'::character varying])::text[]))" name="ck_received_record_classification"/>
          <checkConstraint constraint="(((external_record_id IS NULL) = (acquired_at IS NULL)) AND (((classification)::text = 'QUARANTINED'::text) OR (external_record_id IS NOT NULL)))" name="ck_received_record_keyless_quarantine"/>
+         <checkConstraint constraint="(((first_line_number IS NULL) = (last_line_number IS NULL)) AND ((first_line_number IS NULL) OR ((first_line_number &gt;= 1) AND (first_line_number &lt;= last_line_number))))" name="ck_received_record_line_range"/>
       </table>
       <table name="received_record_decision" remarks="受信記録の判断 [append-only]" schema="external_data" type="TABLE">
          <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="id" nullable="false" remarks="受信記録の判断 ID" size="2147483647" type="uuid" typeCode="1111"/>

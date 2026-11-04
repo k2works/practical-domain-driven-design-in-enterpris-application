@@ -299,6 +299,40 @@
                                     </td>
                                     <td><p>分類の時刻</p></td>
                                 </tr>
+                                <tr>
+                                    <td><span id="first_line_number">first_line_number</span></td>
+                                    <td>int4</td>
+                                    <td>10</td>
+                                    <td title='nullable'>√</td>
+                                    <td title=''></td>
+                                    <td>null</td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                        </table>
+                                    </td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                        </table>
+                                    </td>
+                                    <td><p>行の範囲の始まり（物理行の番号。ファイルの誤りと Bolt 39c3 より前の行は NULL）</p></td>
+                                </tr>
+                                <tr>
+                                    <td><span id="last_line_number">last_line_number</span></td>
+                                    <td>int4</td>
+                                    <td>10</td>
+                                    <td title='nullable'>√</td>
+                                    <td title=''></td>
+                                    <td>null</td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                        </table>
+                                    </td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                        </table>
+                                    </td>
+                                    <td><p>行の範囲の終わり（物理行の番号。ファイルの誤りと Bolt 39c3 より前の行は NULL）</p></td>
+                                </tr>
                                 </tbody>
                             </table>
                         </div>
@@ -376,12 +410,16 @@
                                 </thead>
                                 <tbody>
                                 <tr>
-                                    <td>ck_received_record_keyless_quarantine</td>
-                                    <td>(((external_record_id IS NULL) &#61; (acquired_at IS NULL)) AND (((classification)::text &#61; &#39;QUARANTINED&#39;::text) OR (external_record_id IS NOT NULL)))</td>
-                                </tr>
-                                <tr>
                                     <td>ck_received_record_classification</td>
                                     <td>((classification)::text &#61; ANY ((ARRAY[&#39;ADOPTED&#39;::character varying, &#39;DUPLICATE&#39;::character varying, &#39;QUARANTINED&#39;::character varying, &#39;DISCREPANCY&#39;::character varying])::text[]))</td>
+                                </tr>
+                                <tr>
+                                    <td>ck_received_record_line_range</td>
+                                    <td>(((first_line_number IS NULL) &#61; (last_line_number IS NULL)) AND ((first_line_number IS NULL) OR ((first_line_number &gt;&#61; 1) AND (first_line_number &lt;&#61; last_line_number))))</td>
+                                </tr>
+                                <tr>
+                                    <td>ck_received_record_keyless_quarantine</td>
+                                    <td>(((external_record_id IS NULL) &#61; (acquired_at IS NULL)) AND (((classification)::text &#61; &#39;QUARANTINED&#39;::text) OR (external_record_id IS NOT NULL)))</td>
                                 </tr>
                                 </tbody>
                             </table>
