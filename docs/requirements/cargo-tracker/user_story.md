@@ -4,7 +4,7 @@ title: "cargo-tracker ユーザーストーリー"
 description: "cargo-tracker MVP の価値単位のユーザーストーリー、受入条件、上流要件へのトレーサビリティ。"
 tags: [requirements, user-story]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-03T04:53:51Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-04T04:20:56Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T05:20:11Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:39Z }
@@ -560,6 +560,10 @@ MVP の決定: 通知はメールだけとし、配信設定・静穏時間・�
 - Given 同一の提供元・原本種別・外部 ID・外部版かつ同一 payload の再送、When 取り込む、Then 重複として記録され採用値を重複生成せず既存結果が返される。
 - Given 同一の提供元・原本種別・外部 ID・外部版で異なる payload、When 取り込む、Then 既存原本と採用値を上書きせず隔離されデータ責任者へ示される。
 - Given 順序逆転または既存値との矛盾、When 取り込む、Then 自動上書きせず差異としてデータ責任者へ示される。
+
+Bolt 39b4 の決定（2026-11-04。[Bolt 39b4 計画](../../development/cargo-tracker/bolt_39b4_plan.md) の「人に諮ること」1。推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）:
+
+- AC1 の注: 上限（物理データ行 1 万件・41,943,040 バイト（40 MiB））を超えるファイルは原本を保存せずに拒否し、データ責任者がファイルを分けて取り込む。拒否は承認の状態を確かめた後に判定する。受け付けていないので PV-01 の原本の消失に数えない。画面の案内の文は Bolt 39c で決める。
 
 ### US-15 外部連携停止から復旧する
 
