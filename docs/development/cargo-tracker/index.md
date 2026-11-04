@@ -140,6 +140,7 @@ Bolt がイテレーションに当たります。ふりかえりは各 Bolt の
 | 39c | [S-16 外部データの取込の画面（取り込んで分類別の件数を見る）](bolt_39c_plan.md) | [終了報告](bolt_39c_report.md)（[動画](../../assets/demo/bolt-39c/ingest.webm){:target="_blank"}） | W7 | 完了 |
 | 39c2 | [取り込めない送信を理由ごとに示す](bolt_39c2_plan.md) | [終了報告](bolt_39c2_report.md)（[動画](../../assets/demo/bolt-39c2/too-large.webm){:target="_blank"}） | W7 | 完了 |
 | 39c3 | [S-16 取り込んだファイルの隔離の理由を行の順に示す](bolt_39c3_plan.md) | [終了報告](bolt_39c3_report.md)（[動画](../../assets/demo/bolt-39c3/notes.webm){:target="_blank"}） | W7 | 完了 |
+| 39c4 | [S-16 取込全体の要確認と取り込めなかった部分を示す](bolt_39c4_plan.md) | [終了報告](bolt_39c4_report.md)（[動画](../../assets/demo/bolt-39c4/review.webm){:target="_blank"}） | W7 | 完了 |
 
 Bolt を始めるときに行を追加します。
 
