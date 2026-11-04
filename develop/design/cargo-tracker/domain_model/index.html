@@ -16494,7 +16494,7 @@
 <tr>
 <td style="text-align: left;">受信記録の判断</td>
 <td style="text-align: left;">ReceivedRecordDecision</td>
-<td style="text-align: left;">隔離・差異の受信記録に対するデータ責任者の判断（採用 <code>ADOPTED</code>・却下 <code>REJECTED</code>）、判断者、判断の時刻、理由の追記専用の記録。受信記録 1 件につき 1 つで、判断のやり直しは提供元からの再送（新しい受信記録）で扱う（表は <code>external_data.received_record_decision</code>。Bolt 39a3）。英語名は仮で、クラスは判断を作る Bolt 39d で作る</td>
+<td style="text-align: left;">隔離・差異の受信記録に対するデータ責任者の判断（採用 <code>ADOPTED</code>・却下 <code>REJECTED</code>）、判断者、判断の時刻、理由の追記専用の記録。受信記録 1 件につき 1 つで、判断のやり直しは提供元からの再送（新しい受信記録）で扱う（表は <code>external_data.received_record_decision</code>。Bolt 39a3）。英語名は仮で、クラスは判断を作る Bolt 39d2（却下）・39d3（採用）で作る（Bolt 39d の開始準備で 39d を 39d〜39d4 に縦に分けた。39d は判断を待つ隔離の一覧だけで、判断の行を読み書きしない）</td>
 <td style="text-align: left;">外部データ</td>
 </tr>
 <tr>
@@ -16591,6 +16591,24 @@
 <td style="text-align: left;">取込の要約</td>
 <td style="text-align: left;">IngestionSummaryView</td>
 <td style="text-align: left;">取込の要約の照会の値。受け取った件数は物理データ行で、分類別の件数（受信記録の数）と単位が違う（Bolt 39c。隔離の理由（注記）と残りの件数は 39c3、要確認と取り込めなかった部分は 39c4。Bolt 39c2 の開始準備で 39c2 から、Bolt 39c3 の開始準備で 39c3 から縦に分けた）。Bolt 39c4 で取り込めなかった部分 <code>UnreadableRegion</code>（入れ子の record。始まり <code>fromLine</code>（数が 0 なら NULL）・物理行の数 <code>lineCount</code>・ファイル全体の原本を指す隔離があるか <code>wholeFile</code>。要確認でなければ値がない）と <code>requiresReview()</code>（<code>UnreadableRegion</code> がある。取込の結果の <code>IngestionOutcome.Ingested.requiresReview()</code> と同じ形）を足す（【前の決定の変更】(2)）。始まりと数は取込の列のまま（ファイルの誤りでデータ行があれば最初のデータ行と受け取った件数、0 バイトなら NULL と 0）。名前は取込の結果の取り込めなかった部分 <code>IngestionOutcome.Unreadable</code>（受信記録 ID を持ち、<code>wholeFile</code> を持たない）と分け、照会の値は <code>wholeFile</code> を持ち受信記録 ID を持たない。取込のコマンドの <code>IngestFileCommand.UnreadablePart</code>（形式の誤り・注記の詳細・範囲の原文を持つ取込の入力）とも違い、理由は隔離の理由（注記）で示す</td>
+<td style="text-align: left;">外部データ</td>
+</tr>
+<tr>
+<td style="text-align: left;">判断を待つ隔離</td>
+<td style="text-align: left;">UndecidedQuarantine</td>
+<td style="text-align: left;">分類が隔離で、受信記録の判断（<code>ReceivedRecordDecision</code>）の行がない受信記録。S-17 の一覧に出す（Bolt 39d）。差異は 39h で同じ一覧に足し、そのとき用語を「判断を待つ隔離・差異」に広げて名前を見直す。英語名は受信記録のポートの照会専用の record（<code>externaldata.domain.model.valueobjects</code>。受信記録 ID、取込 ID、取込の時刻、情報源 ID、行の範囲、外部 ID・外部版（外部原本のないときは NULL）、注記。前例 <code>RoutingCaseSummary</code>・<code>BookingSummary</code>）で、受信記録の record <code>ReceivedRecord</code> に外部 ID・外部版を足さない。見積りの審査（<code>ReviewRecord</code>）と読み違えるので「Review」を使わない（Bolt 39d の開始準備の決定 (4)・(5)）</td>
+<td style="text-align: left;">外部データ</td>
+</tr>
+<tr>
+<td style="text-align: left;">判断を待つ隔離の照会</td>
+<td style="text-align: left;">UndecidedRecordQueryService</td>
+<td style="text-align: left;">S-17 の一覧のアプリケーションのサービス（<code>externaldata.application.internal.queryservices</code>。<code>ExternalDataConfiguration</code> の <code>@Bean</code>）。取込 ID（任意）とページから、判断を待つ隔離を取込の新しい順・同じ時刻は取込 ID の順・同じ取込はファイルの誤りを先に行の範囲の始まりの順・受信記録 ID の順に 100 件ずつ <code>UndecidedRecordPage</code> で返す。受信記録のポートに 2 つの読み出し（<code>undecidedQuarantines(ingestionIdOrNull, offset, limit)</code>・<code>countUndecidedQuarantines(ingestionIdOrNull)</code>）を足し、取込の時刻・情報源 ID・外部 ID・外部版はページの照会の結合で読む。情報源はページの中の異なる情報源 ID ごとに 1 回だけ引く。絞った取込の有無は取込のリポジトリで 1 回だけ確かめる。判断を待つ隔離が 0 件ならページの照会も取込・情報源も引かない（Bolt 39d）</td>
+<td style="text-align: left;">外部データ</td>
+</tr>
+<tr>
+<td style="text-align: left;">判断を待つ隔離の一覧の頁</td>
+<td style="text-align: left;">UndecidedRecordPage</td>
+<td style="text-align: left;">判断を待つ隔離の照会の値（<code>externaldata.application.internal.queryservices</code>）。示す項目（入れ子の record <code>Item</code>: 受信記録 ID、取り込んだ日時、提供元・原本種別、行の範囲、キーのない隔離か、外部 ID・外部版、注記）、件数、ページ、ページ数、絞った取込、絞った取込が見つからないか（<code>ingestionNotFound</code>）を持つ。判断の項目は 39d2 で足す（Bolt 39d）</td>
 <td style="text-align: left;">外部データ</td>
 </tr>
 <tr>
@@ -17775,7 +17793,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">IA-INV-15</td>
-<td style="text-align: left;">ドメインイベントを経る監査（外部原本の採否。DE-12・DE-13・DE-14）は、発行元のコミット（取込のコミット）の後に非同期に別のトランザクションで書く。巻き戻った取込には監査記録がない。操作者と発生時刻はイベントの操作者と時刻で、listener の時刻を使わない（再配信でも変わらない）。操作と対象（<code>RECEIVED_RECORD</code>、受信記録 ID）で引いて記録があれば書かない（冪等。前提は「（操作、受信記録）ごとにイベントは 1 つ」で、39d の隔離した行の採用もこれを守る）。内容の欠けたイベント（受信記録 ID・操作者・要約の必須の部品がないなど。<code>AuditRecord.MissingEventValueException</code>）は照会も追記もせずに ERROR のログを残して捨て、DB の失敗とほかの例外は上げて発行記録を未完了に残し、起動のときに配り直す（定期の再配信はない）。照会してから追記するので、同じイベントの同時の配信は二重になりうる。今は単一インスタンス（デモは Heroku の 1 台・H2 のインメモリ）なので同時の配信は起きない。ShedLock は未実装（ADR-003 の決定とコードの食い違い。release_plan のリスク台帳）で、複数インスタンスにする前（W10）に監査の表の一意制約（<code>event_id</code> か（操作、対象））か ShedLock を入れる。外部原本の採否の監査記録を作るのは <code>ExternalRecordAuditEventHandler</code> だけ（Bolt 39b3b。2026-11-03、human:kakimomokuri が決めた）</td>
+<td style="text-align: left;">ドメインイベントを経る監査（外部原本の採否。DE-12・DE-13・DE-14）は、発行元のコミット（取込のコミット）の後に非同期に別のトランザクションで書く。巻き戻った取込には監査記録がない。操作者と発生時刻はイベントの操作者と時刻で、listener の時刻を使わない（再配信でも変わらない）。操作と対象（<code>RECEIVED_RECORD</code>、受信記録 ID）で引いて記録があれば書かない（冪等。前提は「（操作、受信記録）ごとにイベントは 1 つ」で、39d3 の隔離した行の採用もこれを守る。Bolt 39d の開始準備の決定 (12) で、39d2 の判断は DE-29 を受けて新しい操作 <code>EXTERNAL_RECORD_DECIDED</code> で人の判断として書き、39d3 の採用の判断はほかに DE-12・DE-13 を受けて既存の <code>EXTERNAL_RECORD_ADOPTED</code> を書く予定にした。同じ受信記録に隔離・判断・採用の監査が 1 つずつで、同じ受信記録を 2 回判断しないことは判断の表の一意制約で守る）。内容の欠けたイベント（受信記録 ID・操作者・要約の必須の部品がないなど。<code>AuditRecord.MissingEventValueException</code>）は照会も追記もせずに ERROR のログを残して捨て、DB の失敗とほかの例外は上げて発行記録を未完了に残し、起動のときに配り直す（定期の再配信はない）。照会してから追記するので、同じイベントの同時の配信は二重になりうる。今は単一インスタンス（デモは Heroku の 1 台・H2 のインメモリ）なので同時の配信は起きない。ShedLock は未実装（ADR-003 の決定とコードの食い違い。release_plan のリスク台帳）で、複数インスタンスにする前（W10）に監査の表の一意制約（<code>event_id</code> か（操作、対象））か ShedLock を入れる。外部原本の採否の監査記録を作るのは <code>ExternalRecordAuditEventHandler</code> だけ（Bolt 39b3b。2026-11-03、human:kakimomokuri が決めた）</td>
 <td style="text-align: left;">AUD-01・AUD-02・AUD-04、ADR-003、ADR-004</td>
 </tr>
 <tr>
@@ -17828,7 +17846,7 @@
 <td style="text-align: left;">外部原本</td>
 <td style="text-align: left;">ExternalRecord</td>
 <td style="text-align: left;">冪等性キー（提供元、原本種別、外部 ID、外部版）、最初に受け取った payload とそのハッシュ、最初の受信時刻</td>
-<td style="text-align: left;">冪等性キーごとに 1 つ（BR-12）</td>
+<td style="text-align: left;">冪等性キーごとに 1 つ（BR-12）。Bolt 39d4 で、隔離した payload の採用の判断のときに基準のハッシュと原本のキーを採用した payload に付け替え、採用した payload の再送は重複、元の payload の再送は隔離にする予定（Bolt 39d の開始準備の決定 (9)、【前の決定の変更】(3)、【業務の判断】(b)。付け替えるまでは最初に受け取った payload のまま。重複の定義と注記の「最初の受信」は 39d4 で直す）</td>
 </tr>
 <tr>
 <td style="text-align: left;">受信記録</td>
@@ -17840,7 +17858,7 @@
 <td style="text-align: left;">受信記録の判断</td>
 <td style="text-align: left;">ReceivedRecordDecision</td>
 <td style="text-align: left;">受信記録、判断（採用・却下）、判断者、判断の時刻、理由</td>
-<td style="text-align: left;">受信記録 1 件につき 1 つ。判断するのは隔離・差異の受信記録だけ（Bolt 39d で守る。US-14）。追記専用</td>
+<td style="text-align: left;">受信記録 1 件につき 1 つ。判断するのは隔離・差異の受信記録だけ（Bolt 39d2 で守る。US-14）。クラスは 39d2（却下）・39d3（採用）で作る。キーのない隔離は採用できず却下だけ（【業務の判断】(a)）、却下の理由は必須で採用の理由は任意（【業務の判断】(d)）、誤った判断を取り消す操作は Release 1.0 では作らず送り直しで扱う（【業務の判断】(e)）（Bolt 39d の開始準備の決定 (7)・(11)・(13)）。追記専用</td>
 </tr>
 <tr>
 <td style="text-align: left;">取込の値</td>
@@ -18244,6 +18262,14 @@
 <td style="text-align: left;">監査記録の ID、利用者の ID、登録の時刻だけ（A-07 の登録のトランザクションで出す。Bolt 38d）</td>
 <td style="text-align: left;">アクセス・監査: <code>TotpEnrollmentMailEventHandler</code> が本人へ登録のお知らせを送る</td>
 <td style="text-align: left;">—</td>
+</tr>
+<tr>
+<td style="text-align: left;">DE-29</td>
+<td style="text-align: left;">受信記録を判断した（<code>ReceivedRecordDecided</code>。予約。Bolt 39d2 で作る）</td>
+<td style="text-align: left;">外部データ</td>
+<td style="text-align: left;">受信記録 ID、取込 ID、情報源 ID、判断（<code>ADOPTED</code>・<code>REJECTED</code>）、理由、判断者、判断の時刻（<code>externaldata.domain.events</code>。判断ごとに 1 つ。Bolt 39d の開始準備の決定 (12)）</td>
+<td style="text-align: left;">監査（<code>ExternalRecordAuditEventHandler</code> が新しい操作 <code>EXTERNAL_RECORD_DECIDED</code> で人の判断として書く。IA-INV-15。39d2）。採用の判断はほかに DE-12・DE-13 を出す（39d3）</td>
+<td style="text-align: left;">US-14 AC4</td>
 </tr>
 </tbody>
 </table>

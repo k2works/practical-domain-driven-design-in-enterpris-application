@@ -15054,7 +15054,7 @@
 <td style="text-align: left;">画面の表示（全画面の遷移）</td>
 <td style="text-align: left;">p95 1.0 秒以内、p99 2.0 秒以内</td>
 <td style="text-align: left;">提案</td>
-<td style="text-align: left;">サーバー描画（ADR-005）の業務画面として一般的な水準。S-20 の詳細（確認の画面と確定を含む）は、停止中の利用者のときだけ監査記録を索引 <code>ix_audit_record_target</code> で 1 行読む分が増える（Bolt 38c2）。社内の経路設計案件一覧（S-05）は担当企業の <code>IN</code> で絞り、索引 <code>ix_routing_case_shipper</code>（<code>shipper_company_id</code>、<code>quotation_expires_at</code>）を使う。社内の追跡記録の一覧は <code>ix_tracking_record_shipper</code> を使う（Bolt 38g）</td>
+<td style="text-align: left;">サーバー描画（ADR-005）の業務画面として一般的な水準。S-20 の詳細（確認の画面と確定を含む）は、停止中の利用者のときだけ監査記録を索引 <code>ix_audit_record_target</code> で 1 行読む分が増える（Bolt 38c2）。社内の経路設計案件一覧（S-05）は担当企業の <code>IN</code> で絞り、索引 <code>ix_routing_case_shipper</code>（<code>shipper_company_id</code>、<code>quotation_expires_at</code>）を使う。社内の追跡記録の一覧は <code>ix_tracking_record_shipper</code> を使う（Bolt 38g）。S-17 の判断を待つ隔離の一覧（1 ページ 100 件）は <code>ix_received_record_ingestion</code>・<code>ix_received_record_classification</code> を使い、上限いっぱい（隔離 1 万件の取込の最後のページと絞らない 1 ページ目）の照会と描画の時間を <code>ExternalDataIngestionPerformanceTest</code> でログの「PERF-06 undecided」の行に出して CI の手動のジョブ <code>performance</code> で記録する。計測は Bolt 39d4 で行う（Bolt 39d の計画の承認で 39d から送った）。照会が 1 秒を超えたら値を記録して止め、索引を足すかを諮る</td>
 </tr>
 <tr>
 <td style="text-align: left;">PERF-02</td>
