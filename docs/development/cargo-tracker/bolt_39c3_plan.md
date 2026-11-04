@@ -383,7 +383,7 @@ end note
 
 ## ステップ計画（ステップごとに止める）
 
-- [ ] **1. 設計の文書**: 上の「設計文書に直す箇所」（開始準備の決定 (1)〜(11) を反映する）（完了の判定: 文書の差分。**承認ゲート**）
+- [x] **1. 設計の文書**（`bc7cdb358`。遷移図の「取込 → 隔離差異」は「取込の結果 → 隔離差異」に置き換えた。推奨のとおり承認として記録した。Recommend 承認の指示による）: 上の「設計文書に直す箇所」（開始準備の決定 (1)〜(11) を反映する）（完了の判定: 文書の差分。**承認ゲート**）
 - [ ] **2. テストの Red（外側から）**: 行 9 の feature の Red（混在のファイルで、今は「隔離の理由」が出ず期待した理由で落ちることを確かめる）、続いて行 13・16〜18 の controller、行 16・17 の照会、行 1〜8 の取込のサービスと契約と CHECK、行 10・11・15 のセキュリティ、行 14 の `FormatDefectTest`（新しいファイル）。既存のテストのクラスでは `@Nested class Bolt39c3_…` にまとめる。直す既存のテストを一覧にする（T-217）（完了の判定: 期待した理由で落ちる記録。**承認ゲート**（画面の振る舞いの契約、新しいファイル））
 - [ ] **3. スキーマと受信記録の範囲**: マイグレーション（新しいファイル。2 列と CHECK と 2 列の日本語の `COMMENT ON COLUMN`。開始準備の決定 (6)）、`ExternalDataSchemaIntegrationTest` の CHECK の確かめ（行 6）と SchemaCommentIntegrationTest :53-56 が緑、`ReceivedRecord`・`ReceivedRecordRow`・INSERT・メモリの実装、`IngestionService` の 2 か所、テストの組み立ての直し（【前の決定の変更】(2) の一覧）。行 1〜6 が緑（完了の判定: 緑、`spotbugsMain`（T-232）、`checkstyleMain`（T-237）、`sonar-local:check`（T-234）、H2 と PostgreSQL の両方でマイグレーションが通る。**承認ゲート**（スキーマ））
 - [ ] **4. 隔離の照会と結果の画面**: ポートの `quarantinedOf`（メモリ・MyBatis の `ReceivedRecordMapper.java` と XML）、`IngestionSummaryView`・`IngestionSummaryQueryService`、`result.html`、Javadoc とコメント。行 7〜10・13・15〜18・20 が緑、UI の 39c・39c2 のシナリオが緑（内容の違う行のシナリオ :29-30 に足した「隔離の理由」の 1 行を含む。行 9）（完了の判定: 緑、`spotbugsMain`・`checkstyleMain`・`sonar-local:check`、S-16 の `uiTest` と axe 違反 0。**承認ゲート**（画面））
