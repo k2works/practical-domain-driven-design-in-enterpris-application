@@ -10162,6 +10162,41 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../manual/12-%E5%A4%96%E9%83%A8%E3%83%87%E3%83%BC%E3%82%BF/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    12 章 外部データ
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../manual/%E7%94%A8%E8%AA%9E%E9%9B%86/" class="md-nav__link">
         
   
@@ -16233,13 +16268,13 @@
 <tr>
 <td style="text-align: left;">情報源のリポジトリ</td>
 <td style="text-align: left;">DataSourceRepository</td>
-<td style="text-align: left;">情報源を ID で引き（<code>findById</code>）、承認済みの情報源を数える（<code>countApproved</code>。<code>SUSPENDED</code> は数えない）ドメインのポート（<code>externaldata.domain.model.aggregates</code>）。読み取りだけを持つ（情報源の選定・承認は W10 の運用タスク。Bolt 39b）</td>
+<td style="text-align: left;">情報源を ID で引き（<code>findById</code>）、承認済みの情報源を数え（<code>countApproved</code>。<code>SUSPENDED</code> は数えない）、承認済みの情報源を提供元・原本種別の順に並べる（<code>findApproved</code>。<code>SUSPENDED</code> と候補は並べない。S-16 の選択肢。Bolt 39c）ドメインのポート（<code>externaldata.domain.model.aggregates</code>）。読み取りだけを持つ（情報源の選定・承認は W10 の運用タスク。Bolt 39b）</td>
 <td style="text-align: left;">外部データ</td>
 </tr>
 <tr>
 <td style="text-align: left;">取込のリポジトリ</td>
 <td style="text-align: left;">IngestionRepository</td>
-<td style="text-align: left;">取込を追記する（<code>add</code>）ドメインのポート。追記専用の表なので更新・削除のメソッドを持たない（H2 は権限で守れないため。前例は <code>AuditRecordRepository</code>。Bolt 39b）</td>
+<td style="text-align: left;">取込を追記し（<code>add</code>）、取込 ID で引く（<code>findById</code>。S-16 の結果の画面。Bolt 39c）ドメインのポート。追記専用の表なので更新・削除のメソッドを持たない（H2 は権限で守れないため。前例は <code>AuditRecordRepository</code>。Bolt 39b）</td>
 <td style="text-align: left;">外部データ</td>
 </tr>
 <tr>
@@ -16294,6 +16329,30 @@
 <td style="text-align: left;">開始判定の照会</td>
 <td style="text-align: left;">PilotReadinessQueryService</td>
 <td style="text-align: left;">承認済みの情報源の件数と、パイロットを開始できるか、開始できない理由を <code>PilotReadiness</code> で返すアプリケーションのサービス（<code>externaldata.application.internal.queryservices</code>。ED-INV-01、BR-18。Bolt 39b）</td>
+<td style="text-align: left;">外部データ</td>
+</tr>
+<tr>
+<td style="text-align: left;">取り込める情報源の照会</td>
+<td style="text-align: left;">IngestibleDataSourceQueryService</td>
+<td style="text-align: left;">S-16 の選ぶ画面のアプリケーションのサービス（<code>externaldata.application.internal.queryservices</code>。<code>ExternalDataConfiguration</code> の <code>@Bean</code>）。承認済みの情報源を提供元・原本種別の順に <code>IngestibleDataSource</code> で返し、情報源 ID から原本種別の文字列（<code>data_source.record_type</code>）を引く（承認の状態を問わない。承認は取込のサービスが確かめる）。<code>interfaces.file</code> に依存しない（原本種別を <code>CsvFileKind</code> に変えるのは画面の層。Bolt 39c）</td>
+<td style="text-align: left;">外部データ</td>
+</tr>
+<tr>
+<td style="text-align: left;">取り込める情報源</td>
+<td style="text-align: left;">IngestibleDataSource</td>
+<td style="text-align: left;">S-16 の選択肢 1 つ。情報源 ID、提供元、原本種別を持つ照会の値（Bolt 39c）</td>
+<td style="text-align: left;">外部データ</td>
+</tr>
+<tr>
+<td style="text-align: left;">取込の要約の照会</td>
+<td style="text-align: left;">IngestionSummaryQueryService</td>
+<td style="text-align: left;">S-16 の結果の画面のアプリケーションのサービス（<code>externaldata.application.internal.queryservices</code>。<code>ExternalDataConfiguration</code> の <code>@Bean</code>）。取込 ID から、情報源の提供元と原本種別、取り込んだ日時、受け取った件数、分類別の件数（採用・重複・隔離）を <code>IngestionSummaryView</code> で返す。ない取込 ID は空を返す。取込のサービスの結果「取込の結果」（<code>IngestionOutcome</code>）とは別の語で、DB から読み直した値（Bolt 39c）</td>
+<td style="text-align: left;">外部データ</td>
+</tr>
+<tr>
+<td style="text-align: left;">取込の要約</td>
+<td style="text-align: left;">IngestionSummaryView</td>
+<td style="text-align: left;">取込の要約の照会の値。受け取った件数は物理データ行で、分類別の件数（受信記録の数）と単位が違う（Bolt 39c。要確認と取り込めなかった部分は 39c2 で足す）</td>
 <td style="text-align: left;">外部データ</td>
 </tr>
 <tr>

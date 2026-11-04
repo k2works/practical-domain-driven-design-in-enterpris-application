@@ -9973,6 +9973,41 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../manual/12-%E5%A4%96%E9%83%A8%E3%83%87%E3%83%BC%E3%82%BF/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    12 章 外部データ
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../manual/%E7%94%A8%E8%AA%9E%E9%9B%86/" class="md-nav__link">
         
   
@@ -14795,7 +14830,7 @@
 <td style="text-align: left;">外部データ → 経路設計・追跡・アクセス・監査</td>
 <td style="text-align: left;">X → R、T、IA</td>
 <td style="text-align: left;">公開ホスト + 公表された言語</td>
-<td style="text-align: left;">未検証の原本を採用値として渡さない。外部データ（<code>externaldata</code>。スキーマは <code>external_data</code>）はほかのコンテキストに依存しない上流で、採用値・隔離・判断をイベントで公開し（39b3 以降）、経路設計の表を書かない。<code>allowedDependencies</code> は今は <code>shared</code> だけで、<code>platform :: web</code> は画面を作る 39c、<code>domain.events</code> の名前付きインターフェース（<code>events</code>）は最初のイベントを作る 39b3 で足す。下流（経路設計・追跡と、採否の監査を書くアクセス・監査）が <code>externaldata :: events</code> を足すのは、各 listener を作る Bolt（アクセス・監査は 39b3、経路設計は 39e、追跡は 39g）。イベントと identity の listener は、Bolt 39b の開始準備で 39b を縦に 4 本に分けたときに 39b から 39b3 に移した。【前の決定の変更】Bolt 39b3 の開始準備で 39b3 を縦に 2 本に分けたので、名前付きインターフェース <code>events</code> と DE-12・DE-13・DE-14 は 39b3 で足し、アクセス・監査の listener とアクセス・監査の <code>externaldata :: events</code> は 39b3b で足す（上の「アクセス・監査は 39b3」は 39b3b と読む）。Bolt 39b3b で、アクセス・監査の監査の listener（<code>identity.application.internal.eventhandlers.ExternalRecordAuditEventHandler</code>。DE-12・DE-13・DE-14 を受けて外部原本の採否の監査記録を書く。IA-INV-15）と、アクセス・監査の <code>allowedDependencies</code> の <code>externaldata :: events</code> を足す（行の見出しにアクセス・監査を足した）。外部データの宣言は変えず、アクセス・監査に依存しない。イベントは値の写しを Java の標準と共有カーネルの型で持つ（Bolt 39b3。human:kakimomokuri が決定）。外部データのクラスが依存してよい型は、ModularityTest の許可リスト（<code>java..</code>・<code>externaldata..</code>・<code>shared..</code>・フレームワーク）で確かめる（Bolt 39。ADR-004 の改訂）。フレームワークの許可は使う Bolt で、使う層に限って足す（Bolt 39 は <code>org.springframework..</code> だけ）。許可リストは層別にする: <code>infrastructure</code> でないクラスは上の 4 つだけ、<code>externaldata..infrastructure..</code> のクラスはそれに加えて MyBatis（<code>org.apache.ibatis..</code>）に依存してよい（Bolt 39a2 の開始準備の決定 (2)）。前者が実際に守る層は <code>interfaces</code>（domain は DomainArchitectureTest、application は LayerArchitectureTest が先に守る）。W10 の AWS SDK も infrastructure に限って足す</td>
+<td style="text-align: left;">未検証の原本を採用値として渡さない。外部データ（<code>externaldata</code>。スキーマは <code>external_data</code>）はほかのコンテキストに依存しない上流で、採用値・隔離・判断をイベントで公開し（39b3 以降）、経路設計の表を書かない。<code>allowedDependencies</code> は今は <code>shared</code> だけで、<code>platform :: web</code> は画面を作る 39c、<code>domain.events</code> の名前付きインターフェース（<code>events</code>）は最初のイベントを作る 39b3 で足す。下流（経路設計・追跡と、採否の監査を書くアクセス・監査）が <code>externaldata :: events</code> を足すのは、各 listener を作る Bolt（アクセス・監査は 39b3、経路設計は 39e、追跡は 39g）。イベントと identity の listener は、Bolt 39b の開始準備で 39b を縦に 4 本に分けたときに 39b から 39b3 に移した。【前の決定の変更】Bolt 39b3 の開始準備で 39b3 を縦に 2 本に分けたので、名前付きインターフェース <code>events</code> と DE-12・DE-13・DE-14 は 39b3 で足し、アクセス・監査の listener とアクセス・監査の <code>externaldata :: events</code> は 39b3b で足す（上の「アクセス・監査は 39b3」は 39b3b と読む）。Bolt 39b3b で、アクセス・監査の監査の listener（<code>identity.application.internal.eventhandlers.ExternalRecordAuditEventHandler</code>。DE-12・DE-13・DE-14 を受けて外部原本の採否の監査記録を書く。IA-INV-15）と、アクセス・監査の <code>allowedDependencies</code> の <code>externaldata :: events</code> を足す（行の見出しにアクセス・監査を足した）。外部データの宣言は変えず、アクセス・監査に依存しない。イベントは値の写しを Java の標準と共有カーネルの型で持つ（Bolt 39b3。human:kakimomokuri が決定）。外部データのクラスが依存してよい型は、ModularityTest の許可リスト（<code>java..</code>・<code>externaldata..</code>・<code>shared..</code>・フレームワーク）で確かめる（Bolt 39。ADR-004 の改訂）。フレームワークの許可は使う Bolt で、使う層に限って足す（Bolt 39 は <code>org.springframework..</code> だけ）。許可リストは層別にする: <code>infrastructure</code> でないクラスは上の 4 つだけ、<code>externaldata..infrastructure..</code> のクラスはそれに加えて MyBatis（<code>org.apache.ibatis..</code>）に依存してよい（Bolt 39a2 の開始準備の決定 (2)）。前者が実際に守る層は <code>interfaces</code>（domain は DomainArchitectureTest、application は LayerArchitectureTest が先に守る）。W10 の AWS SDK も infrastructure に限って足す。【前の決定の変更】Bolt 39c で、外部データの <code>allowedDependencies</code> に <code>platform :: web</code> を足し、許可リストの規則を画面の層で分けた: 画面の層（<code>externaldata.interfaces.web..</code>）のクラスは上の 4 つに加えて画面の基盤（<code>com.example.cargotracker.platform.web..</code>）に依存してよい。ほかの <code>infrastructure</code> でないクラスは上の 4 つのまま。<code>platform.web</code> を参照できるのは画面の層だけという全体の規則（LayerArchitectureTest）は変えない（2026-11-04、推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）</td>
 </tr>
 <tr>
 <td style="text-align: left;">外部 → 外部データ</td>
@@ -15103,7 +15138,7 @@
 <li>覚えた要求は、Bean は作らず、覚えた要求の属性の名前（<code>SessionKeys.SAVED_REQUEST</code> = <code>SPRING_SECURITY_SAVED_REQUEST</code>。Spring Security の <code>HttpSessionRequestCache</code> の既定の名前）だけを共有する（2026-10-15、human:kakimomokuri が決定）。失効の部品 <code>ExpiredSessionRequestSaver</code> は、戻れる業務の画面の <code>RequestMatcher</code> とこの名前を明示した <code>HttpSessionRequestCache</code> で覚える。A-08 の <code>TotpReEnrollmentController</code> は、この名前を明示した <code>HttpSessionRequestCache</code> で読んで消す（読み出しの <code>getRequest</code>・<code>removeRequest</code> は matcher を使わない）。回復コードと TOTP の成功の扱い <code>FirstTotpSuccessHandler</code> と未認証の入口（<code>ExceptionTranslationFilter</code>）は、Spring Security の既定（同じ名前）のまま。開始準備では <code>RequestCache</code> を identity の合成ルートの 1 つの Bean にして 3 つの部品で共有し、Spring Security の既定には渡さないと決めていたが、実装で、<code>RequestCache</code> の Bean を作ると、Spring Security の <code>RequestCacheConfigurer</code> が型でその Bean を見つけ、<code>http.requestCache</code> に渡さなくても未認証の入口で使うので、未認証の入口が覚える範囲が変わることが分かったので改めた。<code>ExpiredSessionRequestSaver.SAVED_REQUEST</code> は <code>SessionKeys.SAVED_REQUEST</code> に移した</li>
 <li>A-01 の「5 回」「15 分」は、<code>LoginController</code> がロックの方針 <code>LockPolicy</code> の値をモデルに入れ、テンプレートが <code>[[${lockFailures}]]</code>・<code>[[${lockMinutes}]]</code> で描く（表示は変えない）</li>
 <li>通知の依存の制約（Bolt 33 の開始準備の決定 6）: 通知は <code>identity</code> に依存しない。宛先（利用者の ID とアドレス）は呼ぶ側が渡す。荷主への通知（US-22）の宛先の渡し方は W9 の開始準備で決める</li>
-<li>各コンテキストの <code>package-info.java</code> に、依存してよいモジュールを <code>allowedDependencies</code> で宣言する（例: アクセス・監査は <code>shared</code>・<code>quotation :: events</code>・<code>platform :: web</code>・<code>notification :: api</code>（Bolt 33）、通知は <code>shared</code> だけ、外部データは <code>shared</code> だけ（Bolt 39））</li>
+<li>各コンテキストの <code>package-info.java</code> に、依存してよいモジュールを <code>allowedDependencies</code> で宣言する（例: アクセス・監査は <code>shared</code>・<code>quotation :: events</code>・<code>platform :: web</code>・<code>notification :: api</code>（Bolt 33）、通知は <code>shared</code> だけ、外部データは <code>shared</code> だけ（Bolt 39）、画面を作る Bolt 39c から <code>shared</code>・<code>platform :: web</code>）</li>
 </ul>
 <p>ドメインイベントは発行記録に JSON で保存され、未完了のものは後で復元されて再配信される。そのため、イベントの形を次の規則で進化させる（Bolt 1 レビュー R-05・R-37）。</p>
 <table>
@@ -15303,7 +15338,7 @@
 </tr>
 </tbody>
 </table>
-<p>パイロットではファイル取込（<code>interfaces.file</code>）だけを作る。取込ファイルの解析は <code>externaldata.interfaces.file</code> で行い、application には値だけを渡す（application は Web の技術に依存しない。LayerArchitectureTest）。形式は OQ-02 の回答が届くまで仮の CSV（RFC 4180。引用符を許し、依存を足さずに解析する）とする（Bolt 39）。解析とヘッダーの検証の結果から取込のコマンド（<code>IngestFileCommand</code>）を作る組み立て（<code>externaldata.interfaces.file.IngestFileCommandAssembler</code>）も <code>interfaces.file</code> に置く。Spring の部品にせず（S-16 の画面の層がつなぐ。39c）、リポジトリを使わない。キーの列（外部 ID・外部版・取得時刻）の形もここで検証し、形式の誤りの理由は domain の値オブジェクト <code>FormatDefect</code> で渡す（application は interfaces の型を受けられないため。Bolt 39b2）。値の列（寄港・追跡番号・種類・場所・発生時刻）も組み立てが検証し、値は domain の値オブジェクト（取込の値 <code>RecordValues</code> ほか。<code>externaldata.domain.model.valueobjects</code>）として取り込む行に載せる。受信記録の列には書かない。外部データは追跡・経路設計の型を参照できない（ModularityTest）ので、追跡番号の形・実績の種類・寄港の規則は写しとして持ち、両方のコンテキストを参照できるテストの置き場所 <code>com.example.cargotracker.integration</code> の写しを守るテスト（<code>ExternalDataCopiedRulesTest</code>）で、追跡・経路設計の規則と一致することを確かめる（Bolt 39b2b）。第 2 段階で API の受信口を足しても、Inbox 以降の処理は変えない。</p>
+<p>パイロットではファイル取込（<code>interfaces.file</code>）だけを作る。取込ファイルの解析は <code>externaldata.interfaces.file</code> で行い、application には値だけを渡す（application は Web の技術に依存しない。LayerArchitectureTest）。形式は OQ-02 の回答が届くまで仮の CSV（RFC 4180。引用符を許し、依存を足さずに解析する）とする（Bolt 39）。解析とヘッダーの検証の結果から取込のコマンド（<code>IngestFileCommand</code>）を作る組み立て（<code>externaldata.interfaces.file.IngestFileCommandAssembler</code>）も <code>interfaces.file</code> に置く。Spring の部品にせず（S-16 の画面の層がつなぐ。39c）、リポジトリを使わない。キーの列（外部 ID・外部版・取得時刻）の形もここで検証し、形式の誤りの理由は domain の値オブジェクト <code>FormatDefect</code> で渡す（application は interfaces の型を受けられないため。Bolt 39b2）。値の列（寄港・追跡番号・種類・場所・発生時刻）も組み立てが検証し、値は domain の値オブジェクト（取込の値 <code>RecordValues</code> ほか。<code>externaldata.domain.model.valueobjects</code>）として取り込む行に載せる。受信記録の列には書かない。外部データは追跡・経路設計の型を参照できない（ModularityTest）ので、追跡番号の形・実績の種類・寄港の規則は写しとして持ち、両方のコンテキストを参照できるテストの置き場所 <code>com.example.cargotracker.integration</code> の写しを守るテスト（<code>ExternalDataCopiedRulesTest</code>）で、追跡・経路設計の規則と一致することを確かめる（Bolt 39b2b）。第 2 段階で API の受信口を足しても、Inbox 以降の処理は変えない。Bolt 39c で、取込の画面（S-16）の controller を画面の層（<code>externaldata.interfaces.web</code>）に足した。controller はトランザクションを持たず、情報源の原本種別を照会で引いて <code>CsvFileKind</code> を決め、<code>interfaces.file</code> の組み立てを呼んでから取込のサービスを呼ぶ（ファイルの種別は画面で選ばせない）。画面の照会（取り込める情報源と取込の要約）は <code>application.internal.queryservices</code> に置き、<code>interfaces.file</code> に依存しない。日時の表示に <code>platform :: web</code> を使う（外部データの <code>allowedDependencies</code> に足した）。</p>
 <h2 id="_11">データの所有と永続化<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -15358,7 +15393,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">ファイル取込（<code>interfaces.file</code>）</td>
-<td style="text-align: left;">データ責任者が承認済みファイルを取り込む</td>
+<td style="text-align: left;">データ責任者が承認済みファイルを取り込む。ファイルは S-16 の画面（<code>interfaces.web</code>。Bolt 39c）から受け、解析と組み立てを <code>interfaces.file</code> で行う</td>
 <td style="text-align: left;">BR-18</td>
 </tr>
 <tr>

@@ -10089,6 +10089,41 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../manual/12-%E5%A4%96%E9%83%A8%E3%83%87%E3%83%BC%E3%82%BF/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    12 章 外部データ
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../manual/%E7%94%A8%E8%AA%9E%E9%9B%86/" class="md-nav__link">
         
   
@@ -15582,6 +15617,10 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 <td style="text-align: left;">A-06 の初回の設定</td>
 <td style="text-align: left;">Bolt 38b4（US-16 AC1・US-18 AC7）。完了のサービスの単体のテスト（初回の監査、<code>setupOf</code>）、セキュリティの統合テスト（<code>AuthenticationSecurityIntegrationTest</code>。初回の見出しと title、初回の知らせ、監査、方針の誤りと利用停止の組み合わせ、使えないリンクの案内の全文）、画面の層の受入シナリオ（登録から A-07 まで。<code>@demo-bolt-38b4</code>）</td>
 </tr>
+<tr>
+<td style="text-align: left;">外部データの取込の画面</td>
+<td style="text-align: left;">Bolt 39c（US-14 AC1・AC2）。WebMvc のテスト（<code>ExternalDataIngestionControllerTest</code>。取込のサービスと照会は mock。画面で見る誤りでサービスを呼ばない（呼び出しの記録）、承認済みの情報源がないときの文言とボタンを出さないこと、PRG と知らせ、ない取込 ID の 404）。セキュリティの統合テスト（<code>ExternalDataIngestionSecurityIntegrationTest</code>。3 つの URL の認可（データ責任者と、ほかの 7 つの役割の A-04、未ログインの A-01）、CSRF のトークンのない multipart の送信で取り込まないこと（spy の呼び出しの記録）、画面の POST から DB の件数と DE-12・DE-14 の監査の発行記録の完了まで（T-184））。照会の MyBatis の統合テストとメモリの実装の契約（承認済みの情報源の一覧、取込を ID で引く）。ホームとナビは <code>AuthenticationSecurityIntegrationTest</code> のホームの行とレイアウトのテスト（データ責任者だけ・ほかの業務の役割と重ねた利用者）</td>
+</tr>
 </tbody>
 </table>
 <p>統合テストは Testcontainers の PostgreSQL を使い、H2 で書かない（ADR-007）。H2 で確かめるのはスモークテストだけとする。</p>
@@ -15684,7 +15723,7 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 </tr>
 <tr>
 <td style="text-align: left;">外部データの取込</td>
-<td style="text-align: left;">ファイル取込と分類結果の表示</td>
+<td style="text-align: left;">ファイル取込と分類結果の表示。Bolt 39c は <code>ingest_external_data_ui.feature</code>（<code>@US-14-AC1</code>）で、ホームから S-16 を開き、承認済みの情報源を選んでファイルを取り込み、結果の画面の件数を確かめる。選ばずに送るとエラー要約（幅 320 px、axe）。承認済みの情報源がない画面（AC2）は共有の PostgreSQL で作れないので WebMvc のテストで確かめる。取り込めないファイルと要確認の示し方は 39c2</td>
 <td style="text-align: left;">US-14</td>
 </tr>
 <tr>

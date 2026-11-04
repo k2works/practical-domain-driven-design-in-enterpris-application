@@ -13,7 +13,7 @@
       
       
       
-        <link rel="prev" href="../11-%E5%88%A9%E7%94%A8%E8%80%85%E3%81%AE%E7%AE%A1%E7%90%86/">
+        <link rel="prev" href="../12-%E5%A4%96%E9%83%A8%E3%83%87%E3%83%BC%E3%82%BF/">
       
       
         <link rel="next" href="../%E4%BB%98%E9%8C%B2B-%E3%83%88%E3%83%A9%E3%83%96%E3%83%AB%E3%82%B7%E3%83%A5%E3%83%BC%E3%83%86%E3%82%A3%E3%83%B3%E3%82%B0/">
@@ -9698,6 +9698,41 @@
                 
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../12-%E5%A4%96%E9%83%A8%E3%83%87%E3%83%BC%E3%82%BF/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    12 章 外部データ
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
     
   
   
@@ -14517,7 +14552,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">採用</td>
-<td style="text-align: left;">現在状態を決めるのに使う主要実績の状態。追跡管理者が登録した実績は採用になります</td>
+<td style="text-align: left;">現在状態を決めるのに使う主要実績の状態。追跡管理者が登録した実績は採用になります。外部データの取込の分類の「採用」は別の意味です（採用（外部データの取込））</td>
 </tr>
 <tr>
 <td style="text-align: left;">現在状態（現在の状態）</td>
@@ -14530,6 +14565,30 @@
 <tr>
 <td style="text-align: left;">KPI-01</td>
 <td style="text-align: left;">経路提示リードタイム。見積依頼の最初の提出から最初の見積りの提示までの時間</td>
+</tr>
+<tr>
+<td style="text-align: left;">データ責任者</td>
+<td style="text-align: left;">運送会社・港湾などから受け取った外部データを取り込み、分類を確かめる役割（<a href="../12-%E5%A4%96%E9%83%A8%E3%83%87%E3%83%BC%E3%82%BF/">12 章</a>）。A 社に所属します</td>
+</tr>
+<tr>
+<td style="text-align: left;">情報源</td>
+<td style="text-align: left;">外部データの提供元（運送会社・港湾など）と原本の種別（航海・主要実績など）の組み合わせ。運用の手順で選定し承認したもの（承認済みの情報源）だけから取り込めます</td>
+</tr>
+<tr>
+<td style="text-align: left;">取込</td>
+<td style="text-align: left;">情報源から受け取った CSV ファイルを cargo-tracker に取り込むこと。データ責任者が外部データの取込の画面で行います（<a href="../12-%E5%A4%96%E9%83%A8%E3%83%87%E3%83%BC%E3%82%BF/#121-外部データの取込">12.1</a>）</td>
+</tr>
+<tr>
+<td style="text-align: left;">採用（外部データの取込）</td>
+<td style="text-align: left;">取り込んだ行の分類の 1 つ。初めて受け取った行で、業務で使う値として記録されます</td>
+</tr>
+<tr>
+<td style="text-align: left;">重複</td>
+<td style="text-align: left;">取り込んだ行の分類の 1 つ。すでに受け取った行と、提供元・原本の種別・外部 ID・外部版も内容も同じ行。値は増えません</td>
+</tr>
+<tr>
+<td style="text-align: left;">隔離</td>
+<td style="text-align: left;">取り込んだ行の分類の 1 つ。すでに受け取った行と、提供元・原本の種別・外部 ID・外部版が同じなのに内容が違う行。前の原本と値を上書きせずに残します。ファイルや行の形式を確かめられないとき（中身が空のファイルや、選んだ情報源と違う種別のファイルなど）も隔離になります。まず選んだ情報源とファイルの組み合わせを確かめ、それでも分からなければ提供元に確かめます（<a href="../12-%E5%A4%96%E9%83%A8%E3%83%87%E3%83%BC%E3%82%BF/#121-外部データの取込">12.1</a>）</td>
 </tr>
 </tbody>
 </table>

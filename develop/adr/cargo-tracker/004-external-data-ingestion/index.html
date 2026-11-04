@@ -9696,6 +9696,41 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../manual/12-%E5%A4%96%E9%83%A8%E3%83%87%E3%83%BC%E3%82%BF/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    12 章 外部データ
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../manual/%E7%94%A8%E8%AA%9E%E9%9B%86/" class="md-nav__link">
         
   
@@ -14561,6 +14596,10 @@
 <li><strong>原本の大きさの上限</strong>: 上限はファイル全体で、物理データ行 10,000 件と 41,943,040 バイト（40 MiB）。行の原本はファイルの一部なので、ファイルの上限を超えない。超えるファイルは承認の状態の確かめの後、原本を保存する前に拒否する（<code>IngestionOutcome.FileTooLarge</code>。拒否の順は役割 → 情報源の有無 → 承認の状態 → 大きさ）。決定 1 の「保存に成功するまで受け付けたと扱わない」に従い、上限を超えるファイルは受付の前に拒否したもので、PV-01 の原本の消失に数えない。データ責任者がファイルを分けて取り込む（画面の案内は 39c）。</li>
 <li>2026-11-04（W7、Bolt 39b4 ステップ 3）: 1 万件の計測の環境を次のように決めた（<a href="../../../development/cargo-tracker/bolt_39b4_plan/">Bolt 39b4 計画</a> の設計の決定「計測の環境」。推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）。決定は変えない。イベントの形と寄港の上限（60）も変えない。</li>
 <li><strong>計測の環境</strong>: 【前の決定の変更】上の Bolt 39b4 の項の「<code>check</code> と CI に入れない」は、push の CI（check・ui・deploy-demo）に入れず、PERF-06 の判定を Linux の CI の手動のジョブ <code>performance</code>（<code>workflow_dispatch</code> の <code>job=performance</code>）で行う形にした。Windows の Docker Desktop の上では、ホストの JVM から localhost のマップしたポートを通ってコンテナに届くポート転送が、約 8 KB を超える 1 つの文の送信ごとに約 41 ms 止まる（8,000 文字の INSERT は 1 文 0.5〜0.7 ms、8,100 文字からは 1 文 41 ms。ドライバーの <code>tcpNoDelay</code>・送受信のバッファ・<code>prepareThreshold</code>・<code>preferQueryMode</code> では変わらない。同じ postgres:18.6 でもコンテナの中・コンテナ間の TCP では出ない）。寄港 60 の航海の DE-12 は直列化で 8,043 文字で、発行記録の INSERT がこれに当たる。アプリの処理は 1 件 4〜5 ms で寄港の数にほとんど左右されない。手元の Windows で測った値は、寄港 5 の航海 1 万件 44.6 秒、主要実績 1 万件 47.3 秒、寄港 60 の航海 1 万件 453.4 秒（取込 451.0 秒。この遅れのため）で、3 本とも接続の最大 2・コミット 10,002 回、寄港 60 のファイルは 36,960,051 バイト（行の最大 3,695 バイト）。2 分 30 秒の打ち切り（上の「一括の保存」）も CI の値で判定する。</li>
+<li>2026-11-04（W7、Bolt 39c）: 取込の画面（S-16）を作るにあたり、外部データのモジュールの境界を次のように改めた（<a href="../../../development/cargo-tracker/bolt_39c_plan/">Bolt 39c 計画</a> の開始準備で決めたこと (3)・(8) と確認ポイント 3・8。推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）。決定は変えない。</li>
+<li><strong>画面の層</strong>: 上の Bolt 39 の項の「解析の置き場所」に、画面の層 <code>externaldata.interfaces.web</code> を足す。画面の controller がファイルを受け、情報源の原本種別からファイルの種別を決めて、<code>interfaces.file</code> の組み立てを呼ぶ。解析と組み立ては <code>interfaces.file</code> のまま。</li>
+<li><strong>依存の宣言</strong>: 【前の決定の変更】外部データの <code>allowedDependencies</code> に <code>platform :: web</code>（日時の表示）を足し、<code>shared</code>・<code>platform :: web</code> にする（W7 の設計の決定「取込の置き場所」の上限のとおり）。</li>
+<li><strong>型の依存の許可リスト</strong>: 【前の決定の変更】ModularityTest の許可リストは「フレームワークの許可は、使う Bolt で、使う層に限って足す」。画面の層（<code>externaldata.interfaces.web..</code>）の規則を別の 1 本に分け、<code>java..</code>・<code>externaldata..</code>・<code>shared..</code>・<code>org.springframework..</code> に加えて <code>com.example.cargotracker.platform.web..</code> を許す。ほかの <code>infrastructure</code> でないクラスの規則は変えない。<code>platform.web</code> を画面の層だけが参照する全体の規則（LayerArchitectureTest）も変えない。</li>
 </ul>
 <h2 id="_10">備考<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>
 <ul>
