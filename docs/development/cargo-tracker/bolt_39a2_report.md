@@ -2,7 +2,7 @@
 type: Plan
 title: "Bolt 39a2 終了報告 - 外部原本の保存の DB の実装（原本の表、独立したトランザクション、層別の許可リスト）"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-02T13:43:29Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-04T00:44:17Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-11-02T13:43:30Z }
 ---
@@ -50,7 +50,7 @@ verified:
 | 変異 | V1〜V5 のすべてが狙ったテストで落ちた（V1 は行 2 と行 4。行 4 の実際の落ち方は、一意制約の違反で PostgreSQL が外側のトランザクションを中断し外側の次の SQL が失敗すること。V2 は契約の上書きの拒否と行 4、V3 は規則 (a) だけ、V4 は追記専用の 2 件、V5 は行 5 だけ）。開発レビューで足したテストも、Clock なし・1 MB で切り詰め・例外を変えない・infrastructure から spring-jdbc の各変異で落ちた |
 | SonarQube | Quality Gate は PASS（新しいコードのカバレッジ 96.0%、重複 0.028%、違反 0）。1 回目はテストのラムダの中の 2 つの呼び出し（MAJOR）、2 回目は catch の変数の名前（MINOR）で FAIL し、直して PASS した |
 | `okf:check` | ERROR 0 |
-| CI | `548f0596d` で `check`・`ui`・`deploy-demo` が成功した（デモ環境の PostgreSQL に `external_data` のスキーマと原本の表ができた） |
+| CI | `548f0596d` で `check`・`ui`・`deploy-demo` が成功した（デモ環境の PostgreSQL に `external_data` のスキーマと原本の表ができた）（2026-11-04 訂正: デモ環境は H2 のインメモリで、PostgreSQL ではない。マイグレーションは H2 で通った） |
 
 ### 開発レビューの指摘と扱い
 
@@ -107,6 +107,7 @@ Bolt 39a3（残りの 6 表と改名）。表を作るので、ステップご�
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-11-04 | デモ環境のデータベースの誤り（PostgreSQL → H2 のインメモリ）に訂正の注を足した（Bolt 39b3b の整合性検証で見つけた） | anthropic/claude-opus-5-5 |
 | 2026-11-02 | human:kakimomokuri が承認した（議題 1〜4 を報告のとおり） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-11-02 | 初版作成（承認待ち） | anthropic/claude-opus-5-5 |
 

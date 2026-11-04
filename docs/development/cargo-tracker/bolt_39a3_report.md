@@ -2,7 +2,7 @@
 type: Plan
 title: "Bolt 39a3 終了報告 - 外部データの残りの 6 表（情報源・取込・外部原本・受信記録・判断・採用値）と改名"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-03T01:43:32Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-04T00:44:17Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-11-03T01:43:33Z }
 ---
@@ -48,7 +48,7 @@ verified:
 | 変異 | V1〜V5 のすべてが狙ったテストで落ちた（V1・V5 は行 3 の各 1 本、V2 は行 4b、V3 は行 5、V4 は追記専用の 2 本）。開発レビューで足した NOT NULL のテストも、列を NULL 可にする変異 V6・V7 で落ちた |
 | SonarQube | Quality Gate は PASS（新しいコードのカバレッジ 96.0%、重複 0.028%、違反 0） |
 | `okf:check` | ERROR 0 |
-| CI | `7b2ecb4d6` で `check`・`ui`・`deploy-demo` が成功した（デモ環境の PostgreSQL に 6 表ができた） |
+| CI | `7b2ecb4d6` で `check`・`ui`・`deploy-demo` が成功した（デモ環境の PostgreSQL に 6 表ができた）（2026-11-04 訂正: デモ環境は H2 のインメモリで、PostgreSQL ではない。マイグレーションは H2 で通った） |
 
 ### 開発レビューの指摘と扱い
 
@@ -100,6 +100,7 @@ Bolt 39b（分類と取込のサービス）。
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-11-04 | デモ環境のデータベースの誤り（PostgreSQL → H2 のインメモリ）に訂正の注を足した（Bolt 39b3b の整合性検証で見つけた） | anthropic/claude-opus-5-5 |
 | 2026-11-03 | 推奨のとおり承認として記録した（議題 1〜3。Recommend 承認の指示による。human:kakimomokuri） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-11-03 | 初版作成 | anthropic/claude-opus-5-5 |
 
