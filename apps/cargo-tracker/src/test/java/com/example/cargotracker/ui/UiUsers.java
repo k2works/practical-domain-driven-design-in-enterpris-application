@@ -326,6 +326,7 @@ public class UiUsers {
             case SYSTEM_ADMIN -> "管理 次郎";
             case AUDITOR -> "監査 花子";
             case CUSTOMER_SUPPORT -> "窓口 三郎";
+            case DATA_STEWARD -> "データ 四郎";
             default -> throw new IllegalArgumentException("画面の層のテストの利用者を用意していない役割です: " + role);
         };
     }

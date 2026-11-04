@@ -1,5 +1,6 @@
 package com.example.cargotracker.externaldata.infrastructure.persistence;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.apache.ibatis.annotations.Mapper;
@@ -11,6 +12,8 @@ import org.apache.ibatis.annotations.Mapper;
 public interface DataSourceMapper {
 
     Optional<DataSourceRow> selectById(UUID id);
+
+    List<DataSourceRow> selectApproved();
 
     int countApproved();
 }

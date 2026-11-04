@@ -2,6 +2,7 @@ package com.example.cargotracker.externaldata.infrastructure.persistence;
 
 import com.example.cargotracker.externaldata.domain.model.aggregates.DataSource;
 import com.example.cargotracker.externaldata.domain.model.aggregates.DataSourceRepository;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.stereotype.Repository;
@@ -19,6 +20,13 @@ public class MyBatisDataSourceRepository implements DataSourceRepository {
     @Override
     public Optional<DataSource> findById(UUID id) {
         return mapper.selectById(id).map(MyBatisDataSourceRepository::toDomain);
+    }
+
+    @Override
+    public List<DataSource> findApproved() {
+        return mapper.selectApproved().stream()
+                .map(MyBatisDataSourceRepository::toDomain)
+                .toList();
     }
 
     @Override

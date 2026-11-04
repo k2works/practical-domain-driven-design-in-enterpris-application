@@ -140,20 +140,44 @@ class ModularityTest {
      * 許可リストは層別にする（Bolt 39a2）。この規則はインフラストラクチャ層の外を見るが、domain は DomainArchitectureTest、
      * application は LayerArchitectureTest が先に守るので、実質この規則だけが守るのは interfaces。
      * フレームワークの許可は、使う Bolt で、使う層に限って足す（W10 の AWS SDK もインフラストラクチャ層に足す）。
+     * 画面の層（{@code interfaces.web}）は次の規則で別に見る（Bolt 39c）。
      */
     @Test
-    void 外部データのインフラストラクチャ層の外は共有カーネルとJavaとSpringにだけ依存する() {
+    void 外部データのインフラストラクチャ層と画面の層の外は共有カーネルとJavaとSpringにだけ依存する() {
         classes()
                 .that()
                 .resideInAPackage("com.example.cargotracker.externaldata..")
                 .and()
-                .resideOutsideOfPackage("com.example.cargotracker.externaldata.infrastructure..")
+                .resideOutsideOfPackages(
+                        "com.example.cargotracker.externaldata.infrastructure..",
+                        "com.example.cargotracker.externaldata.interfaces.web..")
                 .should()
                 .onlyDependOnClassesThat()
                 .resideInAnyPackage(
                         "java..",
                         "com.example.cargotracker.externaldata..",
                         "com.example.cargotracker.shared..",
+                        "org.springframework..")
+                .check(PRODUCTION_CLASSES);
+    }
+
+    /**
+     * 外部データの画面の層（{@code interfaces.web}。S-16）は、上の許可リストに加えて画面の表示の部品（{@code platform.web}。日時表示）に
+     * 依存してよい（Bolt 39c の【前の決定の変更】。2026-11-04、推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）。
+     * {@code platform.web} を参照できるのは画面の層だけという全体の規則（LayerArchitectureTest）はそのまま守る。
+     */
+    @Test
+    void 外部データの画面の層は共有カーネルと画面の基盤とJavaとSpringにだけ依存する() {
+        classes()
+                .that()
+                .resideInAPackage("com.example.cargotracker.externaldata.interfaces.web..")
+                .should()
+                .onlyDependOnClassesThat()
+                .resideInAnyPackage(
+                        "java..",
+                        "com.example.cargotracker.externaldata..",
+                        "com.example.cargotracker.shared..",
+                        "com.example.cargotracker.platform.web..",
                         "org.springframework..")
                 .check(PRODUCTION_CLASSES);
     }

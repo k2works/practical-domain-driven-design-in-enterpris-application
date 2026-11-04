@@ -1,6 +1,8 @@
 package com.example.cargotracker.externaldata.infrastructure.config;
 
 import com.example.cargotracker.externaldata.application.internal.commandservices.IngestionService;
+import com.example.cargotracker.externaldata.application.internal.queryservices.IngestibleDataSourceQueryService;
+import com.example.cargotracker.externaldata.application.internal.queryservices.IngestionSummaryQueryService;
 import com.example.cargotracker.externaldata.application.internal.queryservices.PilotReadinessQueryService;
 import com.example.cargotracker.externaldata.domain.model.aggregates.AdoptedValueRepository;
 import com.example.cargotracker.externaldata.domain.model.aggregates.DataSourceRepository;
@@ -23,6 +25,21 @@ public class ExternalDataConfiguration {
     @Bean
     PilotReadinessQueryService pilotReadinessQueryService(DataSourceRepository dataSources) {
         return new PilotReadinessQueryService(dataSources);
+    }
+
+    /** S-16 の選ぶ画面の照会（Bolt 39c）。 */
+    @Bean
+    IngestibleDataSourceQueryService ingestibleDataSourceQueryService(DataSourceRepository dataSources) {
+        return new IngestibleDataSourceQueryService(dataSources);
+    }
+
+    /** S-16 の結果の画面の照会（Bolt 39c）。 */
+    @Bean
+    IngestionSummaryQueryService ingestionSummaryQueryService(
+            IngestionRepository ingestions,
+            DataSourceRepository dataSources,
+            ReceivedRecordRepository receivedRecords) {
+        return new IngestionSummaryQueryService(ingestions, dataSources, receivedRecords);
     }
 
     @Bean

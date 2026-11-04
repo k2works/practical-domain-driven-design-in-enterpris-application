@@ -1,7 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<!-- 取込（Bolt 39b。取り込めなかった行の 2 列は Bolt 39b2）。追記専用なので INSERT だけを持つ。受信記録より先に書く。H2 と PostgreSQL の共通の構文で書く（ADR-007）。 -->
+<!-- 取込（Bolt 39b。取り込めなかった行の 2 列は Bolt 39b2）。追記専用なので INSERT と ID で引く SELECT（Bolt 39c）だけを持つ。受信記録より先に書く。H2 と PostgreSQL の共通の構文で書く（ADR-007）。 -->
 <mapper namespace="com.example.cargotracker.externaldata.infrastructure.persistence.IngestionMapper">
+
+    <resultMap id="ingestionRow" type="com.example.cargotracker.externaldata.infrastructure.persistence.IngestionRow">
+        <constructor>
+            <idArg column="id" name="id" javaType="java.util.UUID"/>
+            <arg column="data_source_id" name="dataSourceId" javaType="java.util.UUID"/>
+            <arg column="file_object_key" name="fileObjectKey" javaType="String"/>
+            <arg column="file_hash" name="fileHash" javaType="String"/>
+            <arg column="ingested_by" name="ingestedBy" javaType="java.util.UUID"/>
+            <arg column="ingested_at" name="ingestedAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="received_count" name="receivedCount" javaType="_int"/>
+            <arg column="unparsed_from_line" name="unparsedFromLine" javaType="Integer"/>
+            <arg column="unparsed_line_count" name="unparsedLineCount" javaType="_int"/>
+        </constructor>
+    </resultMap>
+
+    <select id="selectById" resultMap="ingestionRow">
+        SELECT id, data_source_id, file_object_key, file_hash, ingested_by, ingested_at, received_count,
+               unparsed_from_line, unparsed_line_count
+          FROM external_data.ingestion WHERE id = #{id}
+    </select>
 
     <insert id="insert">
         INSERT INTO external_data.ingestion

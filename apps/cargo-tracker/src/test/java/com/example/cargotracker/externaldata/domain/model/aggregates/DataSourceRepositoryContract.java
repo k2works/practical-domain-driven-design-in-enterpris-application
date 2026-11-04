@@ -60,4 +60,24 @@ public abstract class DataSourceRepositoryContract {
 
         assertThat(repository().countApproved()).isEqualTo(before + 2);
     }
+
+    @Test
+    void 行4_承認済みの情報源だけを提供元と原本種別の順に並べる() {
+        // Bolt 39c の行 4。候補と停止中は並べない。名前は自分の UUID で絞り、順は ASCII の末尾の文字で決まる組にする（照合順序に左右されない）
+        String prefix = "契約の提供元-" + UUID.randomUUID();
+        DataSource secondVoyage = new DataSource(UUID.randomUUID(), prefix + "-B", "VOYAGE", ApprovalStatus.APPROVED);
+        DataSource firstVoyage = new DataSource(UUID.randomUUID(), prefix + "-A", "VOYAGE", ApprovalStatus.APPROVED);
+        DataSource firstMilestone =
+                new DataSource(UUID.randomUUID(), prefix + "-A", "MILESTONE", ApprovalStatus.APPROVED);
+        given(secondVoyage);
+        // 情報源は（提供元、原本種別）で一意なので、候補と停止中は別の提供元にする
+        given(new DataSource(UUID.randomUUID(), prefix + "-0", "VOYAGE", ApprovalStatus.CANDIDATE));
+        given(firstVoyage);
+        given(new DataSource(UUID.randomUUID(), prefix + "-C", "VOYAGE", ApprovalStatus.SUSPENDED));
+        given(firstMilestone);
+
+        assertThat(repository().findApproved())
+                .filteredOn(source -> source.provider().startsWith(prefix))
+                .containsExactly(firstMilestone, firstVoyage, secondVoyage);
+    }
 }

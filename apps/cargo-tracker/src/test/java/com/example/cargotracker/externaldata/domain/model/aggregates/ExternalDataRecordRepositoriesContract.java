@@ -116,6 +116,21 @@ public abstract class ExternalDataRecordRepositoriesContract {
     }
 
     @Test
+    void 行6_取込をIDで引くと書いた取込を取り込めなかった行の始まりと数を含めて返す() {
+        // Bolt 39c の行 6（結果の画面の取込の要約の照会）
+        Ingestion ingestion = ingestion(5, 4, 2);
+        ingestions().add(ingestion);
+
+        assertThat(ingestions().findById(ingestion.id())).contains(ingestion);
+    }
+
+    @Test
+    void 行14_書いていないIDの取込は引けない() {
+        // Bolt 39c の行 14（ない取込 ID は共通の 404）
+        assertThat(ingestions().findById(UUID.randomUUID())).isEmpty();
+    }
+
+    @Test
     void 行10_取込の取込者と取込時刻をマイクロ秒まで往復する() {
         Ingestion ingestion = ingestion(3);
 

@@ -634,13 +634,32 @@ class AuthenticationSecurityIntegrationTest {
 
     @Test
     void 画面のまだない役割の利用者はログインできてもホームは権限なしになり行き先が循環しない() throws Exception {
-        // 経路設計者は Bolt 17、追跡管理者は Bolt 26 でホームを持った。画面のまだない役割の例をデータ責任者にした
-        Cookie session = logins().login(user(staffCompany(), Role.DATA_STEWARD, UserStatus.ACTIVE));
+        // 経路設計者は Bolt 17、追跡管理者は Bolt 26、データ責任者は Bolt 39c でホームを持った。画面のまだない役割の例を監査担当者にした
+        Cookie session = logins().login(user(staffCompany(), Role.AUDITOR, UserStatus.ACTIVE));
 
         mvc.perform(get("/").cookie(session)).andExpect(status().isForbidden());
         mvc.perform(get("/staff/transport-requests").cookie(session)).andExpect(status().isForbidden());
         mvc.perform(get("/staff/routing-cases").cookie(session)).andExpect(status().isForbidden());
         mvc.perform(get("/staff/tracking-records").cookie(session)).andExpect(status().isForbidden());
+    }
+
+    @Test
+    void 行13_データ責任者だけを持つ利用者はログインすると外部データの取込の画面へ移る() throws Exception {
+        // Bolt 39c の行 13
+        Cookie session = logins().login(user(staffCompany(), Role.DATA_STEWARD, UserStatus.ACTIVE));
+
+        mvc.perform(get("/").cookie(session)).andExpect(redirectedUrl("/staff/external-data/ingestions/new"));
+        mvc.perform(get("/staff/external-data/ingestions/new").cookie(session)).andExpect(status().isOk());
+    }
+
+    @Test
+    void 行13b_営業担当者とデータ責任者を重ねた利用者のホームは営業担当者のホームで外部データの取込も開ける() throws Exception {
+        // Bolt 39c の行 13b。HOMES の先に当たる役割のホーム（RoleAssignmentPolicy でデータ責任者はほかの業務の役割と重ねられる）
+        Cookie session = logins().login(user(staffCompany(), Set.of(Role.SALES, Role.DATA_STEWARD)));
+
+        mvc.perform(get("/").cookie(session)).andExpect(redirectedUrl("/staff/transport-requests"));
+        mvc.perform(get("/staff/external-data/ingestions/new").cookie(session)).andExpect(status().isOk());
+        mvc.perform(get("/staff/transport-requests").cookie(session)).andExpect(status().isOk());
     }
 
     @Test
@@ -1731,15 +1750,18 @@ class AuthenticationSecurityIntegrationTest {
     }
 
     private String user(Company company, Role role, UserStatus status, String email) {
+        return user(company, Set.of(role), status, email);
+    }
+
+    /** 役割を重ねた利用中の利用者（Bolt 39c の行 13b）。 */
+    private String user(Company company, Set<Role> roles) {
+        return user(company, roles, UserStatus.ACTIVE, "user-" + UUID.randomUUID() + "@example.com");
+    }
+
+    private String user(Company company, Set<Role> roles, UserStatus status, String email) {
         UserId userId = new UserId(UUID.randomUUID());
         users.add(User.of(
-                userId,
-                company.id(),
-                EmailAddress.of(email),
-                "利用者",
-                passwordEncoder.encode(PASSWORD),
-                status,
-                Set.of(role)));
+                userId, company.id(), EmailAddress.of(email), "利用者", passwordEncoder.encode(PASSWORD), status, roles));
         totpCredentials.add(TotpCredential.enroll(
                 userId, cipher.encrypt(TOTP_SECRET.clone(), userId), new UtcInstant(clock.instant())));
         return email;

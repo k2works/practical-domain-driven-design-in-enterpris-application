@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/staff :: layout(~{::title}, ~{::main}, ~{::script}, 'external-data')}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${#fields.hasErrors('${ingestionForm.*}')} ? '取り込めませんでした - 外部データの取込 - cargo-tracker' : '外部データの取込 - cargo-tracker'">外部データの取込 - cargo-tracker</title>
+    <!--/* 送信の失敗のときにエラー要約へフォーカスを移す（社内の S-03・S-13 と同じ） */-->
+    <script th:src="@{/js/transport-request-form.js}" defer></script>
+</head>
+<body>
+<main>
+    <h1>外部データの取込</h1>
+    <!--/* S-16 の選ぶ画面（Bolt 39c、US-14 AC1・AC2）。承認済みの情報源を 1 つ選び、ファイルの種別は情報源の原本種別から決める。
+           承認済みの情報源がないときは、取り込めない理由と次の行動だけを示し、ファイルの欄とボタンを出さない（US-14 AC2）。
+           取り込めないファイルと要確認の示し方は 39c2 */-->
+    <p th:if="${#lists.isEmpty(sources)}">取り込める情報源がありません。承認済みの情報源がありません。情報源を選定し、承認してください。承認は運用の手順で行います。</p>
+    <form th:unless="${#lists.isEmpty(sources)}" th:action="@{/staff/external-data/ingestions}"
+          th:object="${ingestionForm}" method="post" enctype="multipart/form-data" novalidate>
+        <div id="error-summary" th:if="${#fields.hasErrors('*')}" tabindex="-1" role="alert"
+             aria-labelledby="error-summary-title">
+            <h2 id="error-summary-title">取り込めませんでした</h2>
+            <ul>
+                <li th:each="error : ${#fields.detailedErrors('*')}">
+                    <a th:unless="${error.global}" th:href="|#${error.fieldName}|"
+                       th:text="|${fieldLabels[error.fieldName]}: ${error.message}|">情報源: 取り込む情報源を 1 つ選んでください。</a>
+                    <th:block th:if="${error.global}" th:text="${error.message}">取り込めませんでした。情報源とファイルを確かめてください。</th:block>
+                </li>
+            </ul>
+            <!--/* ファイルはブラウザの決まりで画面に戻せないので、選んでいたら選び直しを求める */-->
+            <p th:if="${reselectFile}">選んだファイルは残っていません。もう一度選んでください。</p>
+        </div>
+
+        <fieldset th:attr="aria-invalid=${#fields.hasErrors('dataSourceId')},aria-describedby=${#fields.hasErrors('dataSourceId')} ? 'dataSourceId-error' : null">
+            <legend>情報源</legend>
+            <div th:each="option, stat : ${sources}" class="form-check">
+                <input type="radio" class="form-check-input" th:field="*{dataSourceId}" th:value="${option.value()}"
+                       th:id="${stat.first} ? 'dataSourceId' : |dataSourceId-${stat.index}|">
+                <label class="form-check-label text-break" th:for="${stat.first} ? 'dataSourceId' : |dataSourceId-${stat.index}|"
+                       th:text="${option.label()}">開発海運（架空）（航海）</label>
+            </div>
+            <p id="dataSourceId-error" th:if="${#fields.hasErrors('dataSourceId')}" th:errors="*{dataSourceId}"></p>
+        </fieldset>
+        <div>
+            <label for="file">取込ファイル（CSV、UTF-8）</label>
+            <p id="file-hint">1 ファイルにつきデータ行 10,000 行・40 MB まで。超えるときはファイルを分けて取り込んでください。</p>
+            <input id="file" name="file" type="file" class="form-control" accept=".csv,text/csv"
+                   th:attr="aria-invalid=${#fields.hasErrors('file')},aria-describedby=${#fields.hasErrors('file')} ? 'file-hint file-error' : 'file-hint'">
+            <p id="file-error" th:if="${#fields.hasErrors('file')}" th:errors="*{file}"></p>
+        </div>
+        <p><button type="submit" class="btn btn-primary">取り込む</button></p>
+    </form>
+</main>
+</body>
+</html>

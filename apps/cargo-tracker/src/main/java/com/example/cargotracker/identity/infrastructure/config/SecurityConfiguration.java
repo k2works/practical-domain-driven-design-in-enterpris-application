@@ -66,7 +66,8 @@ import org.springframework.security.web.util.matcher.RequestMatcher;
  *       認証が要るすべての URL に求める（Bolt 13 レビューの R-08 の比較で全体の注釈を採った）。password の要素だけで開けるのは
  *       A-02（{@code /login/totp}）と登録の案内（{@code /login/totp/enroll}）だけ。足りない要素の画面へ導く
  *   <li>荷主の画面（{@code /customer/**}）は荷主担当者、社内の画面（{@code /staff/**}）は営業担当者。経路設計（{@code /staff/routing-cases/**}）は
- *       経路設計者、追跡（{@code /staff/tracking-records/**}）は追跡管理者。request ごとの今の役割で判定する（Bolt 32c。
+ *       経路設計者、追跡（{@code /staff/tracking-records/**}）は追跡管理者、利用者の管理（{@code /staff/users/**}）はシステム管理者、
+ *       外部データの取込（{@code /staff/external-data/**}。Bolt 39c）はデータ責任者。request ごとの今の役割で判定する（Bolt 32c。
  *       {@link SessionRevalidationFilter} が主体を作り直す。ADR-012 の見直しの 3）
  *   <li>利用停止・無効な企業・利用者なしは、次の request で session を捨てて A-03（Bolt 32c、US-18 AC6）
  *   <li>session の固定化の防止（ログインで session ID を付け替える。既定）、CSRF の同期トークン（既定）
@@ -219,6 +220,9 @@ public class SecurityConfiguration {
                         // 利用者の管理（S-20）はシステム管理者だけ（Bolt 34。/staff/** より先に書く）
                         .requestMatchers("/staff/users/**")
                         .hasRole(Role.SYSTEM_ADMIN.name())
+                        // 外部データの取込（S-16）はデータ責任者だけ（Bolt 39c。W7 の確認ポイント 3。/staff/** より先に書く）
+                        .requestMatchers("/staff/external-data/**")
+                        .hasRole(Role.DATA_STEWARD.name())
                         .requestMatchers("/staff/**")
                         .hasRole(Role.SALES.name())
                         .anyRequest()

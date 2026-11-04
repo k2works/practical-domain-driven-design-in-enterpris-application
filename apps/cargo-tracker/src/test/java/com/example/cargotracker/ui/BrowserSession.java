@@ -97,7 +97,7 @@ public class BrowserSession implements DisposableBean {
     /**
      * 画面を開く。荷主の画面（{@code /customer/}）は荷主担当者、経路設計の画面（{@code /staff/routing-cases}）は経路設計者
      * （Bolt 17）、追跡の画面（{@code /staff/tracking-records}）は追跡管理者（Bolt 26）、利用者の管理（{@code /staff/users}）はシステム管理者
-     * （Bolt 34）、ほかの社内の画面（{@code /staff/}）は営業担当者でログインしてから開く（Bolt 14）。いまの利用者の役割が違えば、Cookie を消して A-01 からログインし直す。
+     * （Bolt 34）、外部データの取込（{@code /staff/external-data}）はデータ責任者（Bolt 39c）、ほかの社内の画面（{@code /staff/}）は営業担当者でログインしてから開く（Bolt 14）。いまの利用者の役割が違えば、Cookie を消して A-01 からログインし直す。
      */
     public void navigate(String url) {
         Role role = url.contains("/customer/")
@@ -108,7 +108,9 @@ public class BrowserSession implements DisposableBean {
                                 ? Role.TRACKING_MANAGER
                                 : url.contains("/staff/users")
                                         ? Role.SYSTEM_ADMIN
-                                        : url.contains("/staff/") ? Role.SALES : null;
+                                        : url.contains("/staff/external-data")
+                                                ? Role.DATA_STEWARD
+                                                : url.contains("/staff/") ? Role.SALES : null;
         if (role != null && role != signedIn) {
             signInAs(role, URI.create(url).resolve("/login").toString());
         }

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/staff :: layout(~{::title}, ~{::main}, ~{}, 'external-data')}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>取込の結果 - 外部データの取込 - cargo-tracker</title>
+</head>
+<body>
+<main>
+    <h1>取込の結果</h1>
+    <!--/* S-16 の結果の画面（Bolt 39c、US-14 AC1）。取込の POST の PRG の行き先で、DB から読み直す（読み込み直しても取り込み直さない）。
+           知らせは PRG の直後だけ。受け取った件数は物理データ行で、分類別の件数（受信記録の数）と単位が違うので表の外に置く。
+           差異の行は 39h、「隔離・差異を確認する」（S-17）は 39d、要確認と注記は 39c2 で足す */-->
+    <p role="status" th:if="${result}" th:text="${result}">取り込みました。</p>
+    <dl class="text-break">
+        <dt>情報源</dt>
+        <dd th:text="${source}">開発海運（架空）（航海）</dd>
+        <dt>取り込んだ日時</dt>
+        <dd th:text="${ingestedAt}">2026-11-16 10:05 Asia/Tokyo（UTC+09:00）（UTC 2026-11-16 01:05）</dd>
+        <dt>受け取った件数（データ行）</dt>
+        <dd th:text="${summary.receivedCount()}">125</dd>
+    </dl>
+    <table class="table">
+        <caption>分類別の件数（受信記録の数）</caption>
+        <thead>
+        <tr>
+            <th scope="col">分類</th>
+            <th scope="col">件数</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <th scope="row">採用</th>
+            <td th:text="${summary.adoptedCount()}">118</td>
+        </tr>
+        <tr>
+            <th scope="row">重複</th>
+            <td th:text="${summary.duplicateCount()}">4</td>
+        </tr>
+        <tr>
+            <th scope="row">隔離</th>
+            <td th:text="${summary.quarantinedCount()}">3</td>
+        </tr>
+        </tbody>
+    </table>
+    <p><a th:href="@{/staff/external-data/ingestions/new}">続けて取り込む</a></p>
+</main>
+</body>
+</html>

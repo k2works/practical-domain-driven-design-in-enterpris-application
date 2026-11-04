@@ -1,6 +1,7 @@
 package com.example.cargotracker.externaldata.domain.model.aggregates;
 
 import com.example.cargotracker.externaldata.domain.model.aggregates.DataSource.ApprovalStatus;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -32,6 +33,14 @@ public class InMemoryDataSourceRepository implements DataSourceRepository {
     @Override
     public Optional<DataSource> findById(UUID id) {
         return Optional.ofNullable(sources.get(id));
+    }
+
+    @Override
+    public List<DataSource> findApproved() {
+        return sources.values().stream()
+                .filter(source -> source.approvalStatus() == ApprovalStatus.APPROVED)
+                .sorted(Comparator.comparing(DataSource::provider).thenComparing(DataSource::recordType))
+                .toList();
     }
 
     @Override
