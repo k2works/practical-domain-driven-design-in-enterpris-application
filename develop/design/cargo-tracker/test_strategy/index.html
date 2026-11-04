@@ -9513,6 +9513,62 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_39c_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 39c 計画
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_39c_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 39c 終了報告
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../development/cargo-tracker/release_report-0_1/" class="md-nav__link">
         
   
@@ -15619,7 +15675,7 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 </tr>
 <tr>
 <td style="text-align: left;">外部データの取込の画面</td>
-<td style="text-align: left;">Bolt 39c（US-14 AC1・AC2）。WebMvc のテスト（<code>ExternalDataIngestionControllerTest</code>。取込のサービスと照会は mock。画面で見る誤りでサービスを呼ばない（呼び出しの記録）、承認済みの情報源がないときの文言とボタンを出さないこと、PRG と知らせ、ない取込 ID の 404）。セキュリティの統合テスト（<code>ExternalDataIngestionSecurityIntegrationTest</code>。3 つの URL の認可（データ責任者と、ほかの 7 つの役割の A-04、未ログインの A-01）、CSRF のトークンのない multipart の送信で取り込まないこと（spy の呼び出しの記録）、画面の POST から DB の件数と DE-12・DE-14 の監査の発行記録の完了まで（T-184））。照会の MyBatis の統合テストとメモリの実装の契約（承認済みの情報源の一覧、取込を ID で引く）。ホームとナビは <code>AuthenticationSecurityIntegrationTest</code> のホームの行とレイアウトのテスト（データ責任者だけ・ほかの業務の役割と重ねた利用者）</td>
+<td style="text-align: left;">Bolt 39c（US-14 AC1・AC2）。WebMvc のテスト（<code>ExternalDataIngestionControllerTest</code>。取込のサービスと照会は mock。画面で見る誤りでサービスを呼ばない（呼び出しの記録）、承認済みの情報源がないときの文言とボタンを出さないこと、PRG と知らせ、ない取込 ID の 404）。セキュリティの統合テスト（<code>ExternalDataIngestionSecurityIntegrationTest</code>。3 つの URL の認可（データ責任者と、ほかの 7 つの役割の A-04、未ログインの A-01）、CSRF のトークンのない multipart の送信で取り込まないこと（spy の呼び出しの記録）、画面の POST から DB の件数と DE-12・DE-14 の監査の発行記録の完了まで（T-184））。照会の MyBatis の統合テストとメモリの実装の契約（承認済みの情報源の一覧、取込を ID で引く）。ホームとナビは <code>AuthenticationSecurityIntegrationTest</code> のホームの行とレイアウトのテスト（データ責任者だけ・ほかの業務の役割と重ねた利用者）。Bolt 39c2 で取り込めない送信を理由ごとに確かめる: WebMvc のテストで、取込のサービスの拒否（<code>DataSourceNotApproved</code>・<code>DataSourceNotFound</code>・<code>FileTooLarge</code> を mock）と controller の手前のない情報源が、すべて空でない欄の誤りになり共通の文言を出さないこと（拒否の種類ごとのパラメーターのテスト。T-240）、ない情報源で取込のサービスを呼ばないこと（呼び出しの記録）、停止で承認済みが 0 件になったときにエラー要約と 0 件の全文をその順に示すこと、0 件の文言を画面の層の定数で確かめること。セキュリティの統合テストで、上限を超えるファイル（行数とバイト数）と画面を開いた後に停止した情報源の送信で、自分の情報源の取込もイベント発行記録もなく原本の保存を呼ばないこと（spy の呼び出しの記録）。RANDOM_PORT の統合テスト（<code>ExternalDataUploadLimitIntegrationTest</code>。外部データの側に置く）で、55 MB を超える取込の送信が 413 と取込の案内（数が <code>IngestionFileLimit</code> と合う、送信が拒まれた印の中）になり、一般の案内に取込の文が出ないこと。39c の行のテストと名前が衝突しないよう、既存のテストのクラスでは <code>@Nested class Bolt39c2_…</code> にまとめる</td>
 </tr>
 </tbody>
 </table>
@@ -15723,7 +15779,7 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 </tr>
 <tr>
 <td style="text-align: left;">外部データの取込</td>
-<td style="text-align: left;">ファイル取込と分類結果の表示。Bolt 39c は <code>ingest_external_data_ui.feature</code>（<code>@US-14-AC1</code>）で、ホームから S-16 を開き、承認済みの情報源を選んでファイルを取り込み、結果の画面の件数を確かめる。選ばずに送るとエラー要約（幅 320 px、axe）。承認済みの情報源がない画面（AC2）は共有の PostgreSQL で作れないので WebMvc のテストで確かめる。取り込めないファイルと要確認の示し方は 39c2</td>
+<td style="text-align: left;">ファイル取込と分類結果の表示。Bolt 39c は <code>ingest_external_data_ui.feature</code>（<code>@US-14-AC1</code>）で、ホームから S-16 を開き、承認済みの情報源を選んでファイルを取り込み、結果の画面の件数を確かめる。選ばずに送るとエラー要約（幅 320 px、axe）。承認済みの情報源がない画面（AC2）は共有の PostgreSQL で作れないので WebMvc のテストで確かめる。Bolt 39c2 で上限を超えるファイル（航海のデータ行 10,001 行）を選んで取り込むと、エラー要約にフォーカスが移り、取込ファイルの欄へのリンクで示され、上限の中のファイルを選び直して取り込めるシナリオを足す（<code>@demo-bolt-39c2/too-large</code>。Bolt 39b4 の申し送り）。取り込んだファイルの要確認と注記は 39c3</td>
 <td style="text-align: left;">US-14</td>
 </tr>
 <tr>

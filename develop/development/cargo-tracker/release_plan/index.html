@@ -9836,6 +9836,62 @@
   
   
     <li class="md-nav__item">
+      <a href="../bolt_39c_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 39c 計画
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../bolt_39c_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 39c 終了報告
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../release_report-0_1/" class="md-nav__link">
         
   
@@ -17251,7 +17307,7 @@
 <p><strong>状態</strong>: 計画済み（2026-11-02 に初案を作り、詳細整合性検証と横断整合性検証の指摘を反映した（重大 4 件・中 15 件・軽 11 件。人に諮る 3 件（下書き、監査、名前の違い）は human:kakimomokuri が決めた）。同日に human:kakimomokuri が承認した（確認ポイント 1〜24 を推奨のとおり））</p>
 <p><strong>ゴール</strong>: 外部原本を安全に取り込み（US-14）、取り込んだ航海の更新から確定した経路版の評価をつなぎ、取り込んだ主要実績を下書きから採用する道と、確認中・取消済み・完了後の扱いを作る（US-12 の残り）。</p>
 <p><strong>開始条件の確かめ</strong>: 「外部情報の更新（DE-12）から評価を起こす入口をつなぐ Bolt は、Bolt 37e3b を終えてから始める」（W5〜W10 の表の W7 の行、リスク台帳の 37e3・37e3b の行）は満たされている（Bolt 37e3b の終了報告を 2026-10-23 に承認済み）。承認の後に、W7 の行とリスク台帳の文を「満たした」に直す。</p>
-<p><strong>局面とアプローチ</strong>: 中盤（<a href="../development_strategy/">開発戦略</a>）。外部データは新しいコンテキストで、トランザクションスクリプト（domain_model の外部データの節）なので <strong>インサイドアウト</strong>（外部原本・受信記録の一意制約と分類から。開発戦略の W7 の行）。外部データの画面（39c・39d）は、内側を 39・39b で固めた後に画面を足すので <strong>アウトサイドイン</strong>（表の「中盤」から外れる理由: 画面の振る舞いと認可が受入条件の中心で、内側は先に固まっているため）。経路設計の書き手と評価の入口（39e・39f）、追跡の下書きの採用と確認中・取消済み・完了後（39g）、DE-09・DE-10 の作り直し（39g2）は、既存の集約に受入条件を足すので <strong>アウトサイドイン</strong>（中盤の例外。序盤の集約を広げる）。</p>
+<p><strong>局面とアプローチ</strong>: 中盤（<a href="../development_strategy/">開発戦略</a>）。外部データは新しいコンテキストで、トランザクションスクリプト（domain_model の外部データの節）なので <strong>インサイドアウト</strong>（外部原本・受信記録の一意制約と分類から。開発戦略の W7 の行）。外部データの画面（39c・39c2・39c3・39d）は、内側を 39・39b で固めた後に画面を足すので <strong>アウトサイドイン</strong>（表の「中盤」から外れる理由: 画面の振る舞いと認可が受入条件の中心で、内側は先に固まっているため）。経路設計の書き手と評価の入口（39e・39f）、追跡の下書きの採用と確認中・取消済み・完了後（39g）、DE-09・DE-10 の作り直し（39g2）は、既存の集約に受入条件を足すので <strong>アウトサイドイン</strong>（中盤の例外。序盤の集約を広げる）。</p>
 <p><strong>承認ゲート</strong>: 外部原本の取込（39〜39d・39h）は <strong>ステップごとに止める</strong>。<code>/goal</code> の下でもステップのゲートを外さない（W5・W6 の締めの決定）。経路設計と追跡の Bolt（39e〜39g2・39i）は既定（計画と終了報告で止め、確認必須は計画の確認ポイントにする）。規則に当たったら、置き場所を規則に合わせて動かさず、止めて諮る（T-125、ADR-017）。</p>
 <p><strong>設計の決定</strong>（2026-11-02 に human:kakimomokuri が決定。W7 の開始準備の 2 回の質問への回答）:</p>
 <table>
@@ -17328,7 +17384,7 @@
 <tr>
 <td style="text-align: left;">4</td>
 <td style="text-align: left;">取込の単位と一括処理、PERF-06</td>
-<td style="text-align: left;">1 ファイルを 1 つの取込（<code>Ingestion</code>）とし、行ごとに分類して受信記録を書く。1 ファイル 1 万件以下（non_functional :50）、DB の 1 文の上限（:81）の中に収める。39b の統合テストで 1 万件のファイルの時間を測る（PERF-06）。リスク台帳の PERF-06 の行（版の競合の連鎖）に従い、同じ追跡番号への集中を 39g の統合テストで確かめる。負荷テストは W10。【前の決定の変更】Bolt 39b の開始準備の決定 (1)（2026-11-03、推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）: 1 万件のファイルの時間を測る統合テストは 39b4 で作る（39b を縦に 4 本に分けたため）。→ Bolt 39b4 の計画の「人に諮ること」1（2026-11-04、推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）: 規模の前提「1 ファイル 1 万件以下」を受付の上限にする。上限はファイル全体で、物理データ行 10,000 件と 41,943,040 バイト（40 MiB）。超えるファイルは承認の状態の確かめの後、原本を保存せずに拒否し（<code>FileTooLarge</code>）、データ責任者が分けて取り込む（案内の文は 39c）。計測は航海と主要実績の 1 万件を組み立てから取込のコミットまで測り（<code>performanceTest</code>。<code>check</code> と CI に入れない）、監査の配信は参考の値にする。測った値は 39b4 のステップ 7 で書く（<a href="../bolt_39b4_plan/">Bolt 39b4 計画</a>）</td>
+<td style="text-align: left;">1 ファイルを 1 つの取込（<code>Ingestion</code>）とし、行ごとに分類して受信記録を書く。1 ファイル 1 万件以下（non_functional :50）、DB の 1 文の上限（:81）の中に収める。39b の統合テストで 1 万件のファイルの時間を測る（PERF-06）。リスク台帳の PERF-06 の行（版の競合の連鎖）に従い、同じ追跡番号への集中を 39g の統合テストで確かめる。負荷テストは W10。【前の決定の変更】Bolt 39b の開始準備の決定 (1)（2026-11-03、推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）: 1 万件のファイルの時間を測る統合テストは 39b4 で作る（39b を縦に 4 本に分けたため）。→ Bolt 39b4 の計画の「人に諮ること」1（2026-11-04、推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）: 規模の前提「1 ファイル 1 万件以下」を受付の上限にする。上限はファイル全体で、物理データ行 10,000 件と 41,943,040 バイト（40 MiB）。超えるファイルは承認の状態の確かめの後、原本を保存せずに拒否し（<code>FileTooLarge</code>）、データ責任者が分けて取り込む（案内の文は 39c。→ Bolt 39c の開始準備で 39c2 に分けた。文言は Bolt 39c2 の開始準備の決定 (2)〜(4)）。計測は航海と主要実績の 1 万件を組み立てから取込のコミットまで測り（<code>performanceTest</code>。<code>check</code> と CI に入れない）、監査の配信は参考の値にする。測った値は 39b4 のステップ 7 で書く（<a href="../bolt_39b4_plan/">Bolt 39b4 計画</a>）</td>
 </tr>
 <tr>
 <td style="text-align: left;">5</td>
@@ -17423,7 +17479,7 @@
 <tr>
 <td style="text-align: left;">23</td>
 <td style="text-align: left;">ユーザーマニュアル</td>
-<td style="text-align: left;">外部データの取込と隔離・差異の確認の章を新しく作る（新しいファイル。39c・39d）。主要実績の下書きの採用と確認中・取消済み・完了後は 9 章（追跡管理）に足す（39g）。振る舞いが変わる Bolt はマニュアルの更新を完了条件に入れる</td>
+<td style="text-align: left;">外部データの取込と隔離・差異の確認の章を新しく作る（新しいファイル。39c・39d。39c2 は取り込めない送信の説明、39c3 は要確認と注記の読み方を足す）。主要実績の下書きの採用と確認中・取消済み・完了後は 9 章（追跡管理）に足す（39g）。振る舞いが変わる Bolt はマニュアルの更新を完了条件に入れる</td>
 </tr>
 <tr>
 <td style="text-align: left;">24</td>
@@ -17523,14 +17579,21 @@
 </tr>
 <tr>
 <td style="text-align: left;">39c</td>
-<td style="text-align: left;">S-16 外部データの取込の画面（取り込んで分類別の件数を見る縦）: 承認済みの情報源とファイルの選択、取込の POST（PRG）と結果の画面の分類別の件数（採用・重複・隔離）、認可（データ責任者）と CSRF、ホームとナビゲーション、外部データの <code>platform :: web</code> と許可リストの規則を画面の層で分ける、開発用のデータ責任者の TOTP の資格と dev のログインの口座、axe、マニュアルの新しい章（12 章）とキャプチャ、デモの動画。【前の決定の変更】初案の 39c の範囲を、開始準備で半日を超えるので 39c と 39c2 に縦に分けた（2026-11-04、推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）。<a href="../bolt_39c_plan/">Bolt 39c 計画</a>（承認済み。推奨のとおり。Recommend 承認の指示による）</td>
+<td style="text-align: left;">S-16 外部データの取込の画面（取り込んで分類別の件数を見る縦）: 承認済みの情報源とファイルの選択、取込の POST（PRG）と結果の画面の分類別の件数（採用・重複・隔離）、認可（データ責任者）と CSRF、ホームとナビゲーション、外部データの <code>platform :: web</code> と許可リストの規則を画面の層で分ける、開発用のデータ責任者の TOTP の資格と dev のログインの口座、axe、マニュアルの新しい章（12 章）とキャプチャ、デモの動画。【前の決定の変更】初案の 39c の範囲を、開始準備で半日を超えるので 39c と 39c2 に縦に分けた（2026-11-04、推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）。<a href="../bolt_39c_plan/">Bolt 39c 計画</a>（承認済み。推奨のとおり。Recommend 承認の指示による）・<a href="../bolt_39c_report/">終了報告</a>（承認済み）</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: left;">アウトサイドイン（S-16 から。局面とアプローチの段落の理由）</td>
 <td style="text-align: left;">ステップごと（認可・画面・新しいファイル）</td>
 </tr>
 <tr>
 <td style="text-align: left;">39c2</td>
-<td style="text-align: left;">S-16 の取り込めないファイルと要確認を示す縦: 拒否の理由ごとの文言（承認されていない・ない情報源、上限を超えるファイル <code>FileTooLarge</code>）と 413 の案内の取込の文、形式の誤り・文字コードの誤り・閉じ忘れの要確認と注記、要確認を DB から復元する照会と <code>requiresReview()</code> の一致、ファイルの誤りの「どうすればよいか」、注記の並び（受信記録の行の番号の列。スキーマは開始準備で諮る）、上限いっぱいの画面の経路の計測（PERF-06）、形式の誤り・値の誤りの注記のマニュアルの説明（Bolt 39c の開始準備で 39c から分けた）</td>
+<td style="text-align: left;">S-16 の取り込めない送信を理由ごとに示す縦: 拒否の理由ごとの文言（承認されていない・ない情報源、上限を超えるファイル <code>FileTooLarge</code>）を欄の誤りに、上限の数を <code>IngestionFileLimit</code> から、413 の案内の取込の文、承認済みの情報源がないときの文言を 1 か所に、停止で承認済みが 0 件になったときのエラー要約と 0 件の全文、上限を超えるファイルの受入シナリオ、上限いっぱいの画面の経路の計測（PERF-06）、マニュアル 12 章・付録 B とキャプチャ、デモの動画（Bolt 39c の開始準備で 39c から分けた）。【前の決定の変更】初案の 39c2 の範囲を、開始準備で半日を超えるので 39c2 と 39c3 に縦に分けた（2026-11-04、推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）。<a href="../bolt_39c2_plan/">Bolt 39c2 計画</a>（承認済み。推奨のとおり。Recommend 承認の指示による）</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;">アウトサイドイン（S-16 から）</td>
+<td style="text-align: left;">ステップごと（画面・新しいファイル）</td>
+</tr>
+<tr>
+<td style="text-align: left;">39c3</td>
+<td style="text-align: left;">S-16 の取り込んだファイルの要確認と注記（隔離の理由）を業務の言葉で行の順に示す縦: 受信記録の行の範囲の列（スキーマ。Bolt 39c2 の開始準備の決定 (6)）、要確認を DB から復元する照会と <code>requiresReview()</code> の一致、注記の照会と並び、ファイルの誤りの「どうすればよいか」、0 バイトのファイルと種別の違うファイルの受入シナリオ、形式の誤り・値の誤りの注記のマニュアルの説明（Bolt 39c2 の開始準備で 39c2 から分けた）。注: 見積り（約 4 時間 15 分）が目安を超えるので、開始準備で再分割が前提（範囲を 39d に寄せるかは 39c3 の開始準備で決める）</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: left;">アウトサイドイン（S-16 から）</td>
 <td style="text-align: left;">ステップごと（画面・スキーマ・新しいファイル）</td>
@@ -17586,10 +17649,10 @@
 </tr>
 </tbody>
 </table>
-<p>順序は 38h → 39 → 39a2 → 39a3 → 39b → 39b2 → 39b2b → 39b3 → 39b3b → 39b4 → 39c → 39c2 → 39d → 39e → 39f → 39g → 39g2 → 39h → 39i（38h は W6 の締めで足した。評価の入口の 39f より前に、再設計要・出発済みの運用の決まりをマニュアルに置くため）。39e・39f は採用値の DE-12（取込での自動の採用は 39b3、隔離した行の採用は 39d）を受け、39g は同じく DE-13 を受けるので後に置く。39h は 39g の確認中との境界（確認ポイント 7）の後に置く。半日を超えそうな Bolt（39・39b・39f・39g）は開始準備で分ける。W5・W6 の実績（見込みの約 1.5 倍の本数）から、W7 も 15 本前後になる見込みである。W6 までで計画より約 3 週早いので、バッファ消費ルールの範囲で吸収し、W7 の週の見直しで確かめる。</p>
+<p>順序は 38h → 39 → 39a2 → 39a3 → 39b → 39b2 → 39b2b → 39b3 → 39b3b → 39b4 → 39c → 39c2 → 39c3 → 39d → 39e → 39f → 39g → 39g2 → 39h → 39i（38h は W6 の締めで足した。評価の入口の 39f より前に、再設計要・出発済みの運用の決まりをマニュアルに置くため）。39e・39f は採用値の DE-12（取込での自動の採用は 39b3、隔離した行の採用は 39d）を受け、39g は同じく DE-13 を受けるので後に置く。39h は 39g の確認中との境界（確認ポイント 7）の後に置く。半日を超えそうな Bolt（39・39b・39f・39g）は開始準備で分ける。W5・W6 の実績（見込みの約 1.5 倍の本数）から、W7 も 15 本前後になる見込みである。W6 までで計画より約 3 週早いので、バッファ消費ルールの範囲で吸収し、W7 の週の見直しで確かめる。</p>
 <p><strong>W6 の Try の持ち込み</strong>: 各 Bolt 計画の確認ポイントに、T-204・T-212（サブエージェントへの指示の最初に heredoc を使わないと書く。<code>orchestrating-development</code> の <code>PROJECT.md</code>）、T-217（本体を直す前に Red を流し、落ちた理由を記録する）、T-225・T-213（push の前に <code>check</code>）、T-182・T-211・T-216（状態の組み合わせの表に重複・隔離・差異と順序逆転・出口・誤った入力の行を置く）、T-184（listener は配信まで確かめる）、T-219（変異の対象に単体・統合・契約のテスト）、T-215・T-222（Gradle を流す担当を 1 つに、計画の初稿を先にコミット）、T-191（環境の前提に設定ファイルの行を添える）を入れる。</p>
 <p><strong>Living Documentation</strong>: 外部データのコンテキストの ADR、<code>package-info</code> の <code>allowedDependencies</code>、ModularityTest と MapperSchemaArchitectureTest の対応表、用語集の整合テスト（外部原本・受信記録・隔離・差異・採用値・下書き・確認中・原本だけ）、受入条件の照合の表（US-14、US-12 の Release 1.0 の範囲）</p>
-<p><strong>デモ項目</strong>: ファイルの取込と分類の結果（<code>@US-14</code>。重複・隔離・差異）、隔離・差異の判断、航海の更新から確定した経路が再設計要になる流れ（<code>@US-06</code>・<code>@US-07</code>）、取り込んだ実績の下書きの採用と、順序逆転・取消済み・完了後（<code>@US-12</code>）。動画は画面の振る舞いが変わる Bolt（39c・39d・39f・39g・39h）で <code>@demo-&lt;Bolt&gt;</code> を撮る</p>
+<p><strong>デモ項目</strong>: ファイルの取込と分類の結果（<code>@US-14</code>。重複・隔離・差異）、隔離・差異の判断、航海の更新から確定した経路が再設計要になる流れ（<code>@US-06</code>・<code>@US-07</code>）、取り込んだ実績の下書きの採用と、順序逆転・取消済み・完了後（<code>@US-12</code>）。動画は画面の振る舞いが変わる Bolt（39c・39c2・39c3・39d・39f・39g・39h）で <code>@demo-&lt;Bolt&gt;</code> を撮る</p>
 <p><strong>主なタスク</strong>:</p>
 <ul class="task-list">
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> W7 の開始準備（本節。2026-11-02）: 計画の承認、詳細整合性検証・横断整合性検証（指摘を反映）、承認の後に直す文書、GitHub の同期</li>
@@ -20228,6 +20291,16 @@
 <td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
 </tr>
 <tr>
+<td style="text-align: left;">2026-11-04</td>
+<td style="text-align: left;">Bolt 39c のステップ 1〜6 と<a href="../bolt_39c_report/">終了報告</a>を承認した（推奨のとおり。Recommend 承認の指示による）</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-11-04</td>
+<td style="text-align: left;">39c2 を 39c2・39c3 に分け、<a href="../bolt_39c2_plan/">Bolt 39c2 計画</a>を作り、整合性検証の指摘を反映して承認した（推奨のとおり。Recommend 承認の指示による）</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
+</tr>
+<tr>
 <td style="text-align: left;">2026-11-03</td>
 <td style="text-align: left;">Bolt 39b のステップ 1（設計の文書）: W7 の設計の決定（取込の置き場所）と確認ポイント 4・6 に、39b を 4 本に分けたことによる【前の決定の変更】の注を足した</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5</td>
@@ -20260,6 +20333,11 @@
 <tr>
 <td style="text-align: left;">2026-11-04</td>
 <td style="text-align: left;">Bolt 39c のステップ 1（設計の文書）: W7 の設計の決定の取込の置き場所に <code>platform :: web</code> を 39c で足したこと（許可リストの規則を画面の層で分けた【前の決定の変更】）を、情報源の管理（S-19）の反映の欄に画面遷移図を「業務ホーム → S-16」に直したことを足した</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-11-04</td>
+<td style="text-align: left;">Bolt 39c2 のステップ 1（設計の文書）: W7 の局面とアプローチの外部データの画面、確認ポイント 23（ユーザーマニュアル）、デモ項目の動画を撮る Bolt に 39c2・39c3 を足し、確認ポイント 4 の案内の文の送り先を 39c2 に直した</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5</td>
 </tr>
 <tr>
