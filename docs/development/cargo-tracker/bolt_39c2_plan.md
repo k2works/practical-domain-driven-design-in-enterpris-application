@@ -2,7 +2,7 @@
 type: Plan
 title: "Bolt 39c2 計画 - S-16 取り込めない送信を理由ごとに示す（情報源の拒否・上限を超えるファイル・413）"
 tags: [plan]
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-04T10:41:11Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-04T10:44:42Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-11-04T10:41:12Z }
 ---
@@ -296,7 +296,7 @@ IngestionService ..> IngestionFileLimit
 
 ## ステップ計画（ステップごとに止める）
 
-- [ ] **1. 設計の文書**: 上の「設計文書に直す箇所」（開始準備の決定 (1)〜(9) を反映する）（完了の判定: 文書の差分。**承認ゲート**）
+- [x] **1. 設計の文書**（2026-11-04、推奨のとおり承認として記録した（Recommend 承認の指示による。human:kakimomokuri）。release_plan の確認ポイント 4 の「案内の文は 39c」に「→ 39c2」の注を足した）: 上の「設計文書に直す箇所」（開始準備の決定 (1)〜(9) を反映する）（完了の判定: 文書の差分。**承認ゲート**）
 - [ ] **2. テストの Red（外側から）**: 行 22 の feature の Red（上限を超えるファイルで、今は共通の文言が出て期待した理由で落ちることを確かめる）、続いて行 1・2・4〜8 の controller・セキュリティ・413（新しいファイル `ExternalDataUploadLimitIntegrationTest`）のテストと行 21 の計測のテスト。既存のテストのクラスでは `@Nested class Bolt39c2_…` にまとめる。共通の文言をやめて落ちる既存のテストを一覧にする（T-217）（完了の判定: 期待した理由で落ちる記録。**承認ゲート**（画面の振る舞いの契約、新しいファイル））
 - [ ] **3. 実装の Green**: controller の拒否の文言と上限の数、0 件の文言の定数と `PilotReadiness` の公開、`new.html`（エラー要約をフォームの外に出す）、`error/413.html`、文言の Javadoc とコメント（完了の判定: 緑、`spotbugsMain`（T-232）、`checkstyleMain`（T-237）、`sonar-local:check`（T-234）。**承認ゲート**（画面））
 - [ ] **4. 上限いっぱいの計測**: `performanceTest` で行 21 を流し、区切りの値を記録する（T-241・T-242）。Windows の Docker Desktop では遅れが足されるので、判定は Linux の CI の手動のジョブ `performance` で行う（ExternalDataIngestionPerformanceTest :47-48）（完了の判定: CI のログの「PERF-06 web」の行。5 分以内）

@@ -4,7 +4,7 @@ title: "cargo-tracker ドメインモデル"
 description: "cargo-tracker の業務領域の分類、ユビキタス言語、7 つの境界づけられたコンテキスト（通知を含む）の集約・エンティティ・値オブジェクト・ドメインルール、コマンド・クエリ・イベント、予約サガ。"
 tags: [design, domain-model, ddd]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-04T08:38:49Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-04T10:44:42Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:41:04Z }
   - { by: human:kakimomokuri, at: 2026-10-01T07:48:17Z }
@@ -333,7 +333,7 @@ quadrantChart
 | 取り込める情報源の照会 | IngestibleDataSourceQueryService | S-16 の選ぶ画面のアプリケーションのサービス（`externaldata.application.internal.queryservices`。`ExternalDataConfiguration` の `@Bean`）。承認済みの情報源を提供元・原本種別の順に `IngestibleDataSource` で返し、情報源 ID から原本種別の文字列（`data_source.record_type`）を引く（承認の状態を問わない。承認は取込のサービスが確かめる）。`interfaces.file` に依存しない（原本種別を `CsvFileKind` に変えるのは画面の層。Bolt 39c） | 外部データ |
 | 取り込める情報源 | IngestibleDataSource | S-16 の選択肢 1 つ。情報源 ID、提供元、原本種別を持つ照会の値（Bolt 39c） | 外部データ |
 | 取込の要約の照会 | IngestionSummaryQueryService | S-16 の結果の画面のアプリケーションのサービス（`externaldata.application.internal.queryservices`。`ExternalDataConfiguration` の `@Bean`）。取込 ID から、情報源の提供元と原本種別、取り込んだ日時、受け取った件数、分類別の件数（採用・重複・隔離）を `IngestionSummaryView` で返す。ない取込 ID は空を返す。取込のサービスの結果「取込の結果」（`IngestionOutcome`）とは別の語で、DB から読み直した値（Bolt 39c） | 外部データ |
-| 取込の要約 | IngestionSummaryView | 取込の要約の照会の値。受け取った件数は物理データ行で、分類別の件数（受信記録の数）と単位が違う（Bolt 39c。要確認と取り込めなかった部分は 39c2 で足す） | 外部データ |
+| 取込の要約 | IngestionSummaryView | 取込の要約の照会の値。受け取った件数は物理データ行で、分類別の件数（受信記録の数）と単位が違う（Bolt 39c。要確認と取り込めなかった部分は 39c3 で足す。Bolt 39c2 の開始準備で 39c2 から縦に分けた） | 外部データ |
 | 分類 | Classification | 受信記録の分類（採用 `ADOPTED`・重複 `DUPLICATE`・隔離 `QUARANTINED`）の値オブジェクト（enum。`externaldata.domain.model.valueobjects`）。既にある外部原本と今のハッシュから分類を決める（ED-INV-02）。差異 `DISCREPANCY` は Bolt 39h で足す（Bolt 39b） | 外部データ |
 | 採用 | ADOPTED | 受信記録の分類の 1 つ。新しい冪等性キーで検証を通った原本（ADR-004 決定 2）。別名「採用済み」（BR-12・UC-15 6a・US-15 の初版の語。2026-11-02 に「採用」にそろえた。Bolt 39、W7 の確認ポイント 1） | 外部データ |
 | 重複 | DUPLICATE | 受信記録の分類の 1 つ。同じ冪等性キーで同じ payload（ハッシュが外部原本と同じ）の原本。採用値に影響しない（ED-INV-02、BR-12。Bolt 39a3） | 外部データ |
