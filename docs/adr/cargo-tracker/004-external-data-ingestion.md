@@ -4,7 +4,7 @@ title: "ADR-004: 外部原本は Inbox・隔離・照合の 3 段で取り込む
 description: "ARCH-HO-03 と BR-08・BR-12・BR-18 を満たすため、外部原本を無加工で保存し、冪等性キーで採用・重複・隔離・差異に分類し、復旧時に件数照合する決定。2026-11-02（W7、Bolt 39）に、置き場所（externaldata）、原本の保存のポートと消さない補償、分類 4 つ、形式の誤りの隔離、解析の置き場所を改訂した。"
 tags: [adr, architecture]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-04T05:36:01Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-04T07:42:12Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:11:13Z }
   - { by: human:kakimomokuri, at: 2026-11-02T06:52:27Z }
@@ -115,6 +115,10 @@ verified:
   - **原本の大きさの上限**: 上限はファイル全体で、物理データ行 10,000 件と 41,943,040 バイト（40 MiB）。行の原本はファイルの一部なので、ファイルの上限を超えない。超えるファイルは承認の状態の確かめの後、原本を保存する前に拒否する（`IngestionOutcome.FileTooLarge`。拒否の順は役割 → 情報源の有無 → 承認の状態 → 大きさ）。決定 1 の「保存に成功するまで受け付けたと扱わない」に従い、上限を超えるファイルは受付の前に拒否したもので、PV-01 の原本の消失に数えない。データ責任者がファイルを分けて取り込む（画面の案内は 39c）。
 - 2026-11-04（W7、Bolt 39b4 ステップ 3）: 1 万件の計測の環境を次のように決めた（[Bolt 39b4 計画](../../development/cargo-tracker/bolt_39b4_plan.md) の設計の決定「計測の環境」。推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）。決定は変えない。イベントの形と寄港の上限（60）も変えない。
   - **計測の環境**: 【前の決定の変更】上の Bolt 39b4 の項の「`check` と CI に入れない」は、push の CI（check・ui・deploy-demo）に入れず、PERF-06 の判定を Linux の CI の手動のジョブ `performance`（`workflow_dispatch` の `job=performance`）で行う形にした。Windows の Docker Desktop の上では、ホストの JVM から localhost のマップしたポートを通ってコンテナに届くポート転送が、約 8 KB を超える 1 つの文の送信ごとに約 41 ms 止まる（8,000 文字の INSERT は 1 文 0.5〜0.7 ms、8,100 文字からは 1 文 41 ms。ドライバーの `tcpNoDelay`・送受信のバッファ・`prepareThreshold`・`preferQueryMode` では変わらない。同じ postgres:18.6 でもコンテナの中・コンテナ間の TCP では出ない）。寄港 60 の航海の DE-12 は直列化で 8,043 文字で、発行記録の INSERT がこれに当たる。アプリの処理は 1 件 4〜5 ms で寄港の数にほとんど左右されない。手元の Windows で測った値は、寄港 5 の航海 1 万件 44.6 秒、主要実績 1 万件 47.3 秒、寄港 60 の航海 1 万件 453.4 秒（取込 451.0 秒。この遅れのため）で、3 本とも接続の最大 2・コミット 10,002 回、寄港 60 のファイルは 36,960,051 バイト（行の最大 3,695 バイト）。2 分 30 秒の打ち切り（上の「一括の保存」）も CI の値で判定する。
+- 2026-11-04（W7、Bolt 39c）: 取込の画面（S-16）を作るにあたり、外部データのモジュールの境界を次のように改めた（[Bolt 39c 計画](../../development/cargo-tracker/bolt_39c_plan.md) の開始準備で決めたこと (3)・(8) と確認ポイント 3・8。推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）。決定は変えない。
+  - **画面の層**: 上の Bolt 39 の項の「解析の置き場所」に、画面の層 `externaldata.interfaces.web` を足す。画面の controller がファイルを受け、情報源の原本種別からファイルの種別を決めて、`interfaces.file` の組み立てを呼ぶ。解析と組み立ては `interfaces.file` のまま。
+  - **依存の宣言**: 【前の決定の変更】外部データの `allowedDependencies` に `platform :: web`（日時の表示）を足し、`shared`・`platform :: web` にする（W7 の設計の決定「取込の置き場所」の上限のとおり）。
+  - **型の依存の許可リスト**: 【前の決定の変更】ModularityTest の許可リストは「フレームワークの許可は、使う Bolt で、使う層に限って足す」。画面の層（`externaldata.interfaces.web..`）の規則を別の 1 本に分け、`java..`・`externaldata..`・`shared..`・`org.springframework..` に加えて `com.example.cargotracker.platform.web..` を許す。ほかの `infrastructure` でないクラスの規則は変えない。`platform.web` を画面の層だけが参照する全体の規則（LayerArchitectureTest）も変えない。
 
 ## 備考
 

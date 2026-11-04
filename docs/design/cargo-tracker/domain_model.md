@@ -4,7 +4,7 @@ title: "cargo-tracker ドメインモデル"
 description: "cargo-tracker の業務領域の分類、ユビキタス言語、7 つの境界づけられたコンテキスト（通知を含む）の集約・エンティティ・値オブジェクト・ドメインルール、コマンド・クエリ・イベント、予約サガ。"
 tags: [design, domain-model, ddd]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-04T04:20:56Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-04T07:42:12Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:41:04Z }
   - { by: human:kakimomokuri, at: 2026-10-01T07:48:17Z }
@@ -319,8 +319,8 @@ quadrantChart
 | 受信記録 | ReceivedRecord | 外部原本を受け取るたびと、形式の誤りを見つけるたびの追記専用の記録。分類（採用・重複・隔離・差異）を持つ（data_model の `received_record.classification`。表は `external_data.received_record`。Bolt 39a3）。形式の誤りの受信記録は外部原本と取得時刻を持たない隔離（キーのない隔離）で、行の原文かファイル全体の原本を指す（Bolt 39b2。はじめの「外部原本を受け取るたびの」を改めた）。クラス名は通知の公開 API の結果（`PasswordResetMailReceipt` など）と紛れないよう `Receipt` を避けた（Bolt 39a2 の開始準備の決定 (3)） | 外部データ |
 | 受信記録の判断 | ReceivedRecordDecision | 隔離・差異の受信記録に対するデータ責任者の判断（採用 `ADOPTED`・却下 `REJECTED`）、判断者、判断の時刻、理由の追記専用の記録。受信記録 1 件につき 1 つで、判断のやり直しは提供元からの再送（新しい受信記録）で扱う（表は `external_data.received_record_decision`。Bolt 39a3）。英語名は仮で、クラスは判断を作る Bolt 39d で作る | 外部データ |
 | 取込 | Ingestion | データ責任者が 1 ファイルを取り込む 1 回の単位。ファイル全体の原本と受け取った件数を持ち、照合に使う。受け取った件数（`received_count`）はファイルの物理データ行の数（ヘッダーとレコードの外の空行を除く）で、取込を書くときに入れ、更新しない（追記専用）。分類別の件数は受信記録から数える（Bolt 39b で「分類別の件数を持ち」を改めた）。取り込めなかった行（引用符の閉じ忘れの行からファイルの終わりまで、またはファイルの誤りのときのデータ行のすべて）の始まりと物理行の数も書くときに入れる。取込全体の要確認は、取り込めなかった物理行の数が 0 より大きいか、ファイルの誤りの隔離の受信記録があることをいい、状態として持たない（Bolt 39b2） | 外部データ |
-| 情報源のリポジトリ | DataSourceRepository | 情報源を ID で引き（`findById`）、承認済みの情報源を数える（`countApproved`。`SUSPENDED` は数えない）ドメインのポート（`externaldata.domain.model.aggregates`）。読み取りだけを持つ（情報源の選定・承認は W10 の運用タスク。Bolt 39b） | 外部データ |
-| 取込のリポジトリ | IngestionRepository | 取込を追記する（`add`）ドメインのポート。追記専用の表なので更新・削除のメソッドを持たない（H2 は権限で守れないため。前例は `AuditRecordRepository`。Bolt 39b） | 外部データ |
+| 情報源のリポジトリ | DataSourceRepository | 情報源を ID で引き（`findById`）、承認済みの情報源を数え（`countApproved`。`SUSPENDED` は数えない）、承認済みの情報源を提供元・原本種別の順に並べる（`findApproved`。`SUSPENDED` と候補は並べない。S-16 の選択肢。Bolt 39c）ドメインのポート（`externaldata.domain.model.aggregates`）。読み取りだけを持つ（情報源の選定・承認は W10 の運用タスク。Bolt 39b） | 外部データ |
+| 取込のリポジトリ | IngestionRepository | 取込を追記し（`add`）、取込 ID で引く（`findById`。S-16 の結果の画面。Bolt 39c）ドメインのポート。追記専用の表なので更新・削除のメソッドを持たない（H2 は権限で守れないため。前例は `AuditRecordRepository`。Bolt 39b） | 外部データ |
 | 外部原本のリポジトリ | ExternalRecordRepository | 外部原本を冪等性キーで引き（`findByKey`）、足す（`add`）ドメインのポート。同じキーの 2 回目の追加（同時の取込）は一意制約の違反で、外部原本の重複の例外（`DuplicateExternalRecordException`）を上げ、取込全体を巻き戻す（Bolt 39b。Bolt 39b3 で Spring の `DuplicateKeyException` の名指しを名前付きの例外に改めた） | 外部データ |
 | 受信記録のリポジトリ | ReceivedRecordRepository | 受信記録を追記し（`add`）、取込と分類ごとに数える（`countByIngestionAndClassification`）ドメインのポート。追記専用の表なので更新・削除のメソッドを持たない（Bolt 39b） | 外部データ |
 | 外部原本の重複の例外 | DuplicateExternalRecordException | 同じ冪等性キーの外部原本を 2 回足したとき（同時の取込）に、外部原本のリポジトリが上げる例外（`externaldata.domain.model.aggregates`。`RuntimeException`、原因に元の例外を持つ）。MyBatis の実装は一意制約の違反（Spring の `DuplicateKeyException`）を写し、メモリの実装も同じ例外を上げる。取込のサービスは捕まえずに上げ、取込全体を巻き戻す（前例は `DuplicateBookingException`。Bolt 39b3） | 外部データ |
@@ -330,6 +330,10 @@ quadrantChart
 | 取込の結果 | IngestionOutcome | 取込のサービスの結果（sealed）。取り込んだ `Ingested`（取込 ID、受け取った件数、分類別の件数、行ごとの結果、取り込めなかった部分（始まり・物理行の数・受信記録 ID）。`reconciles()` は「受け取った件数 ＝ 行の結果の物理行の数の合計 ＋ 取り込めなかった物理行の数」を確かめる。ファイルの誤りと閉じ忘れの受信記録は行の結果に入れず、取り込めなかった部分として返す。Bolt 39b2）、情報源が承認済みでない `DataSourceNotApproved`、情報源がない `DataSourceNotFound`、操作者がデータ責任者でない `NotPermitted`、ファイルが上限（物理データ行 10,000 件、または 41,943,040 バイト（40 MiB））を超える `FileTooLarge`（Bolt 39b4。拒否の順は役割 → 情報源の有無 → 承認の状態 → 大きさ。件数は `receivedCount`（物理データ行）、バイト数はファイル全体の原本の長さで判定する）。拒否のときは原本も含めて何も保存しない（`commandservices`。Bolt 39b） | 外部データ |
 | 取込のファイルの上限 | IngestionFileLimit | 1 つの取込で受けるファイルの上限をまとめたドメインルール。物理データ行 10,000 件と 41,943,040 バイト（40 MiB）を持ち、取込のサービスが承認の状態の確かめの後に判定する。行の原本はファイルの一部なので、行ごとの上限は持たない（2026-11-04、Bolt 39b4 の「人に諮ること」1。human:kakimomokuri。推奨のとおり。Recommend 承認の指示による。`externaldata.domain.model.rules`。前例 `SessionPolicy`・`LockPolicy`。クラスの名前は Bolt 39b4 のステップ 4 で決め、変えたらここを直す） | 外部データ |
 | 開始判定の照会 | PilotReadinessQueryService | 承認済みの情報源の件数と、パイロットを開始できるか、開始できない理由を `PilotReadiness` で返すアプリケーションのサービス（`externaldata.application.internal.queryservices`。ED-INV-01、BR-18。Bolt 39b） | 外部データ |
+| 取り込める情報源の照会 | IngestibleDataSourceQueryService | S-16 の選ぶ画面のアプリケーションのサービス（`externaldata.application.internal.queryservices`。`ExternalDataConfiguration` の `@Bean`）。承認済みの情報源を提供元・原本種別の順に `IngestibleDataSource` で返し、情報源 ID から原本種別の文字列（`data_source.record_type`）を引く（承認の状態を問わない。承認は取込のサービスが確かめる）。`interfaces.file` に依存しない（原本種別を `CsvFileKind` に変えるのは画面の層。Bolt 39c。名前はステップ 3 で決める） | 外部データ |
+| 取り込める情報源 | IngestibleDataSource | S-16 の選択肢 1 つ。情報源 ID、提供元、原本種別を持つ照会の値（Bolt 39c） | 外部データ |
+| 取込の要約の照会 | IngestionSummaryQueryService | S-16 の結果の画面のアプリケーションのサービス（`externaldata.application.internal.queryservices`。`ExternalDataConfiguration` の `@Bean`）。取込 ID から、情報源の提供元と原本種別、取り込んだ日時、受け取った件数、分類別の件数（採用・重複・隔離）を `IngestionSummaryView` で返す。ない取込 ID は空を返す。取込のサービスの結果「取込の結果」（`IngestionOutcome`）とは別の語で、DB から読み直した値（Bolt 39c。名前はステップ 3 で決める） | 外部データ |
+| 取込の要約 | IngestionSummaryView | 取込の要約の照会の値。受け取った件数は物理データ行で、分類別の件数（受信記録の数）と単位が違う（Bolt 39c。要確認と取り込めなかった部分は 39c2 で足す） | 外部データ |
 | 分類 | Classification | 受信記録の分類（採用 `ADOPTED`・重複 `DUPLICATE`・隔離 `QUARANTINED`）の値オブジェクト（enum。`externaldata.domain.model.valueobjects`）。既にある外部原本と今のハッシュから分類を決める（ED-INV-02）。差異 `DISCREPANCY` は Bolt 39h で足す（Bolt 39b） | 外部データ |
 | 採用 | ADOPTED | 受信記録の分類の 1 つ。新しい冪等性キーで検証を通った原本（ADR-004 決定 2）。別名「採用済み」（BR-12・UC-15 6a・US-15 の初版の語。2026-11-02 に「採用」にそろえた。Bolt 39、W7 の確認ポイント 1） | 外部データ |
 | 重複 | DUPLICATE | 受信記録の分類の 1 つ。同じ冪等性キーで同じ payload（ハッシュが外部原本と同じ）の原本。採用値に影響しない（ED-INV-02、BR-12。Bolt 39a3） | 外部データ |

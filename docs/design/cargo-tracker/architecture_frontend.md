@@ -4,7 +4,7 @@ title: "cargo-tracker フロントエンドアーキテクチャ"
 description: "cargo-tracker の利用チャネル、サーバーサイドレンダリングとハイパーメディアによる画面提供、画面の配置、アクセシビリティと開示制御の構造的な担保。"
 tags: [design, architecture, frontend]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-16T04:36:21Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-04T07:42:12Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:11:12Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:37Z }
@@ -50,7 +50,7 @@ MVP の画面は、フォーム入力、一覧・詳細の照会、比較、承�
 | UI-02 社内予約・見積 | 見積り、予約 |
 | UI-03 経路設計 | 経路設計 |
 | UI-04 顧客追跡、UI-05 追跡管理 | 追跡 |
-| 取込・照合 | 外部データ |
+| 取込・照合 | 外部データ（S-16 は Bolt 39c。controller は `externaldata.interfaces.web`、テンプレートは `templates/externaldata/ingestions/`） |
 | 利用者管理、RP-02 監査証跡 | アクセス・監査 |
 | RP-01 予約・経路確認書 | 予約 |
 
