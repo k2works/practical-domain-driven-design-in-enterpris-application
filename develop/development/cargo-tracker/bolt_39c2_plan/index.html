@@ -14842,6 +14842,36 @@
 <td style="text-align: left;">取り込んだファイルの名前を取込に残すか（39c の計画 :165）</td>
 <td style="text-align: left;">W10 の運用準備</td>
 </tr>
+<tr>
+<td style="text-align: left;">次の Bolt</td>
+<td style="text-align: left;">情報源の拒否の文言の「画面を開き直して」（開始準備の決定 (2) で承認済み）。開き直さなくても選ぶ画面は選択肢を引き直して示すので、文言が実際の操作と合わない</td>
+<td style="text-align: left;">次の Bolt の開始準備で諮る候補。案は「示された情報源から選び直してください」</td>
+</tr>
+<tr>
+<td style="text-align: left;">既知の課題</td>
+<td style="text-align: left;">行 2（41,943,041 バイトのファイル）のセキュリティの統合テストは MockMvc で、Tomcat の multipart の上限（55 MB）を通らない。40 MiB を超え 55 MB 以下の送信がコントローラーまで届くことは自動のテストで確かめていない</td>
+<td style="text-align: left;">既知の課題として残す。55 MB を超える送信の 413 は <code>ExternalDataUploadLimitIntegrationTest</code>（本物の Tomcat）で確かめている</td>
+</tr>
+<tr>
+<td style="text-align: left;">既知の課題</td>
+<td style="text-align: left;"><code>PilotReadiness.NO_APPROVED_SOURCE</code> を public にした（開始準備の決定 (5)）。定数の公開より、理由を返すメソッドの方が「承認済みの情報源がないときの理由」という意図が型に残る</td>
+<td style="text-align: left;">照会の側を直すときの返済の候補</td>
+</tr>
+<tr>
+<td style="text-align: left;">既知の課題</td>
+<td style="text-align: left;">マニュアルのキャプチャの撮り直しで、対象外の章のキャプチャも差分になる</td>
+<td style="text-align: left;">キャプチャの撮り直しの範囲を章で絞れるようにする改善の候補</td>
+</tr>
+<tr>
+<td style="text-align: left;">既知の課題</td>
+<td style="text-align: left;">TOTP の秘密の直書きと、利用者を作る処理のテストの写し（18 か所。ExternalDataIngestionSecurityIntegrationTest の <code>user</code> など）</td>
+<td style="text-align: left;">identity のテスト用のヘルパーに寄せる返済の候補</td>
+</tr>
+<tr>
+<td style="text-align: left;">既知の課題</td>
+<td style="text-align: left;"><code>transport-request-form.js</code> を見積依頼と S-16 で共用している（エラー要約へのフォーカス）</td>
+<td style="text-align: left;">エラー要約の共通部品（JavaScript）に分ける切れ目</td>
+</tr>
 </tbody>
 </table>
 <h3 id="1">設計文書に直す箇所（ステップ 1）<a class="headerlink" href="#1" title="Permanent link">&para;</a></h3>
@@ -15030,7 +15060,7 @@
 <tr>
 <td style="text-align: left;">V1</td>
 <td style="text-align: left;"><code>FileTooLarge</code> を情報源の欄の誤りにする</td>
-<td style="text-align: left;">行 1・2・22</td>
+<td style="text-align: left;">行 1・2・22。ステップ 6 の直しで行 8 も拒否の種類ごとに期待する欄（<code>file</code>・<code>dataSourceId</code>）まで縛り、V1 で行 8 の <code>SERVICE_FILE_TOO_LARGE</code> も落ちる</td>
 </tr>
 <tr>
 <td style="text-align: left;">V2</td>
@@ -15050,7 +15080,7 @@
 <tr>
 <td style="text-align: left;">V5</td>
 <td style="text-align: left;">画面の説明の上限の行数を <code>IngestionFileLimit</code> から引かず 1,000 にする</td>
-<td style="text-align: left;">39c の行 4（選ぶ画面の上限の説明。ExternalDataIngestionControllerTest :117）・行 22（UI の通し）</td>
+<td style="text-align: left;">39c の行 4（選ぶ画面の上限の説明。ExternalDataIngestionControllerTest :121）と UI の 39c のシナリオ（選ぶ画面の上限の説明）</td>
 </tr>
 <tr>
 <td style="text-align: left;">V6</td>
@@ -15080,6 +15110,11 @@
 </tr>
 </thead>
 <tbody>
+<tr>
+<td style="text-align: left;">2026-11-04</td>
+<td style="text-align: left;">ステップ 6 のレビューの直しを反映した（推奨のとおり（Recommend 承認の指示による。human:kakimomokuri））。変異の表の V1（行 8 でも落ちる）と V5（39c の行 4 と UI の 39c のシナリオ）を直し、申し送りに文言の候補と既知の課題 6 行を足した</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
+</tr>
 <tr>
 <td style="text-align: left;">2026-11-04</td>
 <td style="text-align: left;">計画を承認した。整合性検証の指摘（詳細: 中 5・軽 6、横断: 中 7・軽 7）を反映し、0 件になった画面の示し方を含め推奨のとおり（Recommend 承認の指示による）</td>
