@@ -11,13 +11,14 @@ import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.stereotype.Repository;
 
 /**
  * 受信記録のリポジトリの MyBatis 実装（Bolt 39b）。追記専用なので、追加と数えることと、取込の隔離を読むこと（Bolt 39c3）と、判断を待つ隔離を
- * 読み数えること（Bolt 39d）と、ID で引くこと（Bolt 39d2）だけを持つ。
+ * 読み数えること（Bolt 39d）と、ID で引くこと（Bolt 39d2）と、取込の判断を待つキーのない隔離を読み数えること（Bolt 39d2b）だけを持つ。
  */
 @Repository
 public class MyBatisReceivedRecordRepository implements ReceivedRecordRepository {
@@ -79,6 +80,19 @@ public class MyBatisReceivedRecordRepository implements ReceivedRecordRepository
     @Override
     public Optional<UndecidedQuarantine> undecidedQuarantine(UUID receivedRecordId) {
         return mapper.undecidedQuarantine(receivedRecordId, null).map(MyBatisReceivedRecordRepository::toDomain);
+    }
+
+    /** 取込 ID は必須（SQL の断片は取込 ID が NULL なら絞らないので、ここで拒む）。 */
+    @Override
+    public List<ReceivedRecord> undecidedKeylessQuarantinesOf(UUID ingestionId) {
+        return mapper.undecidedKeylessQuarantinesOf(Objects.requireNonNull(ingestionId, "ingestionId")).stream()
+                .map(MyBatisReceivedRecordRepository::toDomain)
+                .toList();
+    }
+
+    @Override
+    public int countUndecidedKeylessQuarantines(UUID ingestionId) {
+        return mapper.countUndecidedKeylessQuarantines(Objects.requireNonNull(ingestionId, "ingestionId"));
     }
 
     private static UndecidedQuarantine toDomain(ReceivedRecordMapper.UndecidedQuarantineRow row) {

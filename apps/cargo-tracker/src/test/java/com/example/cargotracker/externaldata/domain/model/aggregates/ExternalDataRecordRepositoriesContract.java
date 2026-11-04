@@ -720,4 +720,95 @@ public abstract class ExternalDataRecordRepositoriesContract {
         assertThat(receivedRecords().findById(withoutIngestion)).isEmpty();
         assertThat(receivedRecords().undecidedQuarantine(withoutIngestion)).isEmpty();
     }
+
+    // --- Bolt 39d2b の行 5（まとめての却下の対象の照会と件数。開始準備の決定 (2)、T-240・T-245）。名前の頭に Bolt39d2b_ を付ける。
+    // 39d の行 7 を判断のポートで書き直すこと（行 17）は 39d4 に送った ---
+
+    @Test
+    void Bolt39d2b_行5_対象は1つの取込の判断を待つキーのない隔離だけでファイルの誤りを先に行の範囲の順() {
+        Ingestion ingestion = ingestionAt(FUTURE);
+        Ingestion other = ingestionAt(FUTURE);
+        ingestions().add(ingestion);
+        ingestions().add(other);
+        ExternalRecord externalRecord = externalRecord(key("VOYAGE", "V-39D2B-5"));
+        externalRecords().add(externalRecord);
+        ReceivedRecord untilEnd = keyless(ingestion, new PhysicalLineRange(12, 40));
+        ReceivedRecord twoLines = keyless(ingestion, new PhysicalLineRange(5, 6));
+        ReceivedRecord oneLine = keyless(ingestion, new PhysicalLineRange(3, 3));
+        ReceivedRecord fileError = keyless(ingestion, null);
+        ReceivedRecord decided = keyless(ingestion, new PhysicalLineRange(8, 8));
+        // 期待の順と逆に書く（T-245）
+        receivedRecords().add(untilEnd);
+        receivedRecords().add(twoLines);
+        receivedRecords().add(oneLine);
+        receivedRecords().add(fileError);
+        receivedRecords().add(decided);
+        receivedRecords().add(keyed(externalRecord, ingestion, Classification.QUARANTINED, 2));
+        receivedRecords().add(keyed(externalRecord, ingestion, Classification.ADOPTED, 9));
+        receivedRecords().add(keyed(externalRecord, ingestion, Classification.DUPLICATE, 10));
+        receivedRecords().add(keyless(other, new PhysicalLineRange(2, 2)));
+        receivedRecordDecisions().add(ReceivedRecordDecision.reject(decided, "先に 1 件ずつ却下した。", steward, DECIDED_AT));
+
+        assertThat(receivedRecords().undecidedKeylessQuarantinesOf(ingestion.id()))
+                .containsExactly(fileError, oneLine, twoLines, untilEnd);
+        assertThat(receivedRecords().countUndecidedKeylessQuarantines(ingestion.id()))
+                .isEqualTo(4);
+    }
+
+    @Test
+    void Bolt39d2b_行5_キーのない隔離のない取込とない取込は空で0件() {
+        Ingestion ingestion = ingestionAt(FUTURE);
+        ingestions().add(ingestion);
+        ExternalRecord externalRecord = externalRecord(key("VOYAGE", "V-39D2B-5B"));
+        externalRecords().add(externalRecord);
+        receivedRecords().add(keyed(externalRecord, ingestion, Classification.QUARANTINED, 2));
+
+        assertThat(receivedRecords().undecidedKeylessQuarantinesOf(ingestion.id()))
+                .isEmpty();
+        assertThat(receivedRecords().countUndecidedKeylessQuarantines(ingestion.id()))
+                .isZero();
+        assertThat(receivedRecords().undecidedKeylessQuarantinesOf(UUID.randomUUID()))
+                .isEmpty();
+        assertThat(receivedRecords().countUndecidedKeylessQuarantines(UUID.randomUUID()))
+                .isZero();
+    }
+
+    /** 分類のすべてと外部原本の有無の組（受信記録の不変条件が外部原本のない受信記録を隔離だけに絞るので、作れる組だけ。T-240）。 */
+    static java.util.stream.Stream<org.junit.jupiter.params.provider.Arguments> classificationsAndExternalRecord() {
+        return java.util.Arrays.stream(Classification.values())
+                .flatMap(classification -> java.util.stream.Stream.of(true, false)
+                        .filter(hasExternalRecord -> hasExternalRecord || classification == Classification.QUARANTINED)
+                        .map(hasExternalRecord ->
+                                org.junit.jupiter.params.provider.Arguments.of(classification, hasExternalRecord)));
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest(name = "{0} 外部原本 {1}")
+    @org.junit.jupiter.params.provider.MethodSource("classificationsAndExternalRecord")
+    void Bolt39d2b_行5_対象に入るのは外部原本のない隔離だけ(Classification classification, boolean hasExternalRecord) {
+        Ingestion ingestion = ingestionAt(FUTURE);
+        ingestions().add(ingestion);
+        ReceivedRecord received;
+        if (hasExternalRecord) {
+            ExternalRecord externalRecord = externalRecord(key("VOYAGE", "V-39D2B-" + UUID.randomUUID()));
+            externalRecords().add(externalRecord);
+            received = keyed(externalRecord, ingestion, classification, 2);
+        } else {
+            received = keyless(ingestion, new PhysicalLineRange(2, 2));
+        }
+        receivedRecords().add(received);
+        boolean target = classification == Classification.QUARANTINED && !hasExternalRecord;
+
+        assertThat(receivedRecords().undecidedKeylessQuarantinesOf(ingestion.id()))
+                .isEqualTo(target ? List.of(received) : List.of());
+        assertThat(receivedRecords().countUndecidedKeylessQuarantines(ingestion.id()))
+                .isEqualTo(target ? 1 : 0);
+    }
+
+    @Test
+    void Bolt39d2b_行5_作れる組は分類のすべてと外部原本のない隔離を含む() {
+        assertThat(classificationsAndExternalRecord().map(arguments -> arguments.get()[0]))
+                .containsAll(List.of(Classification.values()));
+        assertThat(classificationsAndExternalRecord().map(arguments -> List.of(arguments.get())))
+                .contains(List.of(Classification.QUARANTINED, false));
+    }
 }

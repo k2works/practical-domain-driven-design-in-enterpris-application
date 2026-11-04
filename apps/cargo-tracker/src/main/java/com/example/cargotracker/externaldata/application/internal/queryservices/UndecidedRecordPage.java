@@ -16,9 +16,17 @@ import java.util.UUID;
  * @param pageCount 頁の数
  * @param ingestionFilter 絞った取込 ID（絞らないとき、絞った取込が見つからないときは {@code null}）
  * @param ingestionNotFound 絞った取込が見つからず、絞らない一覧を返したか
+ * @param keylessQuarantineCount 絞った取込の判断を待つキーのない隔離の件数（まとめての却下のリンクの件数。取込で絞ったときだけ数え、
+ *     絞らないとき・見つからないとき・判断を待つ隔離が 0 件のときは 0。Bolt 39d2b）
  */
 public record UndecidedRecordPage(
-        List<Item> items, int total, int page, int pageCount, UUID ingestionFilter, boolean ingestionNotFound) {
+        List<Item> items,
+        int total,
+        int page,
+        int pageCount,
+        UUID ingestionFilter,
+        boolean ingestionNotFound,
+        int keylessQuarantineCount) {
 
     public UndecidedRecordPage {
         items = List.copyOf(Objects.requireNonNull(items, "items"));

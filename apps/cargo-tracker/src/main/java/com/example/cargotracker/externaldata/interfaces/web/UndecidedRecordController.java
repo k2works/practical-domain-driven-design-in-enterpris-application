@@ -1,8 +1,11 @@
 package com.example.cargotracker.externaldata.interfaces.web;
 
+import com.example.cargotracker.externaldata.application.internal.commands.RejectKeylessQuarantinesCommand;
 import com.example.cargotracker.externaldata.application.internal.commands.RejectReceivedRecordCommand;
 import com.example.cargotracker.externaldata.application.internal.commandservices.DecisionOutcome;
+import com.example.cargotracker.externaldata.application.internal.commandservices.KeylessRejectionOutcome;
 import com.example.cargotracker.externaldata.application.internal.commandservices.ReceivedRecordDecisionService;
+import com.example.cargotracker.externaldata.application.internal.queryservices.KeylessRejectionTarget;
 import com.example.cargotracker.externaldata.application.internal.queryservices.UndecidedRecordPage;
 import com.example.cargotracker.externaldata.application.internal.queryservices.UndecidedRecordQueryService;
 import com.example.cargotracker.externaldata.domain.model.aggregates.ReceivedRecordDecision;
@@ -29,7 +32,9 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
  * S-17 隔離・差異の確認（データ責任者。US-14 AC4。Bolt 39d）。判断を待つ隔離を取込の新しい順・ファイルの行の順に 100 件ずつ示す。取込で絞れ
  * （{@code ?ingestion=<取込 ID>}。S-16 の結果の画面の入口）、前後のページへ移れる（{@code ?page=<1 から>}）。トランザクションを持たず、照会の値を
  * 文言と項目に変えるだけで、並びとページの境（最後より後は最後のページ）を決めない。各行の「判断する」から判断の画面を開き、理由を書いて
- * 却下すると PRG で元の一覧に戻る（Bolt 39d2）。判断できる受信記録の定めと却下は判断のサービスが持つ。採用は 39d3 で足す。
+ * 却下すると PRG で元の一覧に戻る（Bolt 39d2）。取込で絞った一覧に形式の誤りがあれば、まとめての却下の画面へのリンクを出し、その取込の
+ * 形式の誤りを 1 つの理由でまとめて却下すると PRG で取込で絞った一覧に戻る（Bolt 39d2b）。ページ送りは表の前に置く（Bolt 39d2b）。
+ * 判断できる受信記録の定めと却下は判断のサービスが持つ。採用は 39d3 で足す。
  *
  * <p>取込 ID が UUID でないときは 400 にせず、ない取込と同じく絞らない一覧に「指定された取込が見つかりません。」を示す。ページが数でない・1 より
  * 前のときは 1 ページ目を照会する（Bolt 39d 計画の状態の組み合わせの行 13・14）。
@@ -70,6 +75,14 @@ public class UndecidedRecordController {
 
     private static final String REASON_TOO_LONG = "却下の理由は " + ReceivedRecordDecision.REASON_LIMIT + " 文字までで書いてください。";
 
+    /** 1 つの取込の形式の誤りのまとめての却下（Bolt 39d2b の開始準備の決定 (3)）。件数は 3 桁の区切り。 */
+    private static final String KEYLESS_REJECTION_PATH = "/keyless-rejection";
+
+    private static final String KEYLESS_REJECTION_VIEW = "externaldata/undecided-records/keyless-rejection";
+    private static final String KEYLESS_REJECTION_LINK = "この取込の形式の誤りをまとめて却下する（%s 件）";
+    private static final String KEYLESS_REJECTED = "形式の誤り %s 件を却下しました。";
+    private static final String NOTHING_TO_REJECT = "この取込にまとめて却下できる形式の誤りはありません。";
+
     /** 行の範囲・外部 ID・外部版のないときの示し方。 */
     private static final String WHOLE_FILE = "ファイル全体";
 
@@ -98,17 +111,7 @@ public class UndecidedRecordController {
             model.addAttribute("ingestionNotFound", INGESTION_NOT_FOUND);
         }
         model.addAttribute("filtered", filtered);
-        if (result.total() == 0) {
-            model.addAttribute("emptyText", filtered ? FILTERED_NONE : NONE);
-        } else {
-            model.addAttribute(
-                    "countText",
-                    (filtered ? FILTERED_COUNT : COUNT)
-                            .formatted(
-                                    grouped(result.total()),
-                                    grouped(result.firstShown()),
-                                    grouped(result.lastShown())));
-        }
+        addCount(result, filtered, model);
         model.addAttribute(
                 "rows",
                 result.items().stream()
@@ -122,6 +125,26 @@ public class UndecidedRecordController {
             model.addAttribute("nextUrl", pageUrl(result.ingestionFilter(), result.page() + 1));
         }
         return VIEW;
+    }
+
+    /**
+     * 件数の文（0 件の文か、件数と示す範囲）と、取込で絞って形式の誤りがあるときのまとめての却下のリンク（Bolt 39d2b。押しても行き先のない
+     * リンクは出さない）。
+     */
+    private static void addCount(UndecidedRecordPage result, boolean filtered, Model model) {
+        if (result.total() == 0) {
+            model.addAttribute("emptyText", filtered ? FILTERED_NONE : NONE);
+            return;
+        }
+        model.addAttribute(
+                "countText",
+                (filtered ? FILTERED_COUNT : COUNT)
+                        .formatted(grouped(result.total()), grouped(result.firstShown()), grouped(result.lastShown())));
+        if (filtered && result.keylessQuarantineCount() > 0) {
+            model.addAttribute("keylessRejectionUrl", keylessRejectionUrl(result.ingestionFilter()));
+            model.addAttribute(
+                    "keylessRejectionText", KEYLESS_REJECTION_LINK.formatted(grouped(result.keylessQuarantineCount())));
+        }
     }
 
     /**
@@ -163,17 +186,107 @@ public class UndecidedRecordController {
         }
         UUID back = parseUuid(ingestion);
         int backPage = parsePage(page);
+        if (hasReasonErrors(form, bindingResult)) {
+            return decisionView(id, back, backPage, model, redirectAttributes);
+        }
+        DecisionOutcome outcome = decisions.reject(actor, new RejectReceivedRecordCommand(id, form.getReason()));
+        return respond(outcome, back, backPage, redirectAttributes);
+    }
+
+    /**
+     * 1 つの取込の形式の誤りのまとめての却下の画面（Bolt 39d2b）。取込の時刻・情報源・判断を待つキーのない隔離の件数と、却下の理由の欄を示す。
+     * 取込の指定がない・UUID でない・ない取込は 404、形式の誤りが 0 件なら取込で絞った一覧に戻って知らせる。判断の画面の
+     * {@code /{receivedRecordId}} より文字の一致が先に選ばれる。
+     */
+    @GetMapping(KEYLESS_REJECTION_PATH)
+    public String keylessRejection(
+            @RequestParam(name = "ingestion", required = false) String ingestion,
+            Model model,
+            RedirectAttributes redirectAttributes) {
+        return keylessRejectionView(requiredIngestion(ingestion), model, redirectAttributes);
+    }
+
+    /**
+     * まとめて却下する（Bolt 39d2b）。理由が空・上限を超えれば、対象を読み直してまとめての却下の画面に戻り欄の誤りを示す（対象が 0 件・取込が
+     * なければ画面と同じ行き先）。却下したら PRG で取込で絞った一覧の 1 ページ目に戻って、実際に却下した件数を知らせる。
+     */
+    @PostMapping(KEYLESS_REJECTION_PATH)
+    public String rejectKeyless(
+            @RequestParam(name = "ingestion", required = false) String ingestion,
+            @ModelAttribute(FORM) RejectionForm form,
+            BindingResult bindingResult,
+            AuthenticatedActor actor,
+            Model model,
+            RedirectAttributes redirectAttributes) {
+        UUID ingestionId = requiredIngestion(ingestion);
+        if (hasReasonErrors(form, bindingResult)) {
+            return keylessRejectionView(ingestionId, model, redirectAttributes);
+        }
+        KeylessRejectionOutcome outcome =
+                decisions.rejectKeyless(actor, new RejectKeylessQuarantinesCommand(ingestionId, form.getReason()));
+        return respond(outcome, ingestionId, redirectAttributes);
+    }
+
+    /** 理由の欄の誤り（必須、前後の空白を除いて上限まで）を足し、誤りがあれば真（判断の画面とまとめての却下の画面で同じ）。 */
+    private static boolean hasReasonErrors(RejectionForm form, BindingResult bindingResult) {
         String reason = form.getReason() == null ? "" : form.getReason().strip();
         if (reason.isEmpty()) {
             bindingResult.rejectValue(REASON, "reason.required", REASON_REQUIRED);
         } else if (reason.codePointCount(0, reason.length()) > ReceivedRecordDecision.REASON_LIMIT) {
             bindingResult.rejectValue(REASON, "reason.tooLong", REASON_TOO_LONG);
         }
-        if (bindingResult.hasErrors()) {
-            return decisionView(id, back, backPage, model, redirectAttributes);
+        return bindingResult.hasErrors();
+    }
+
+    /** まとめての却下の画面を組み立てる。行き先と中身は照会で読む（ない取込は 404、0 件は一覧に戻る）。 */
+    private String keylessRejectionView(UUID ingestionId, Model model, RedirectAttributes redirectAttributes) {
+        KeylessRejectionTarget target = query.keylessRejectionTarget(ingestionId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        if (target.count() == 0) {
+            return respond(new KeylessRejectionOutcome.NothingToReject(), ingestionId, redirectAttributes);
         }
-        DecisionOutcome outcome = decisions.reject(actor, new RejectReceivedRecordCommand(id, form.getReason()));
-        return respond(outcome, back, backPage, redirectAttributes);
+        if (!model.containsAttribute(FORM)) {
+            model.addAttribute(FORM, new RejectionForm());
+        }
+        model.addAttribute("ingestedAt", DateTimeDisplay.staff(target.ingestedAt()));
+        model.addAttribute(
+                "source", ExternalDataIngestionController.sourceLabel(target.provider(), target.recordType()));
+        model.addAttribute("count", grouped(target.count()) + " 件");
+        model.addAttribute("reasonLimit", ReceivedRecordDecision.REASON_LIMIT);
+        model.addAttribute("backUrl", pageUrl(ingestionId, 1));
+        model.addAttribute("actionUrl", keylessRejectionUrl(ingestionId));
+        return KEYLESS_REJECTION_VIEW;
+    }
+
+    /** まとめての却下の結果を行き先に変える（結果のすべてに行き先がある。T-240）。一覧は取込で絞った 1 ページ目に戻る。 */
+    private static String respond(
+            KeylessRejectionOutcome outcome, UUID ingestionId, RedirectAttributes redirectAttributes) {
+        return switch (outcome) {
+            case KeylessRejectionOutcome.RejectedAll(int count) -> {
+                redirectAttributes.addFlashAttribute(RESULT, KEYLESS_REJECTED.formatted(grouped(count)));
+                yield "redirect:" + pageUrl(ingestionId, 1);
+            }
+            case KeylessRejectionOutcome.NothingToReject _ -> {
+                redirectAttributes.addFlashAttribute(RESULT, NOTHING_TO_REJECT);
+                yield "redirect:" + pageUrl(ingestionId, 1);
+            }
+            case KeylessRejectionOutcome.NotFound _ -> throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+            case KeylessRejectionOutcome.NotPermitted _ -> throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        };
+    }
+
+    /** 取込の指定（UUID でない・ないときは 404。まとめての却下の画面は取込がないと示すものがない）。 */
+    private static UUID requiredIngestion(String ingestion) {
+        UUID ingestionId = parseUuid(ingestion);
+        if (ingestionId == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        }
+        return ingestionId;
+    }
+
+    /** まとめての却下の画面の URL（読んだ UUID だけから組む）。 */
+    private static String keylessRejectionUrl(UUID ingestionId) {
+        return LIST_URL + KEYLESS_REJECTION_PATH + "?ingestion=" + ingestionId;
     }
 
     /** 判断の画面を組み立てる。行き先は判断のサービスの判断できる受信記録の定めで決め、中身は照会で読む。 */

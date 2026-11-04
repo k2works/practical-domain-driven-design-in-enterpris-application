@@ -298,6 +298,147 @@ class UndecidedRecordQueryServiceTest {
         }
     }
 
+    /**
+     * Bolt 39d2b の行 2・3・15・16（一覧のキーのない隔離の件数、まとめての却下の画面の中身、件数と 1 ページの照会の間に件数が減ったときの
+     * 読み直し。開始準備の決定 (3)・(8)、T-236）。数え直さないこと・数えないことは呼び出しの記録で確かめる。
+     */
+    @Nested
+    class Bolt39d2b_まとめての却下と件数が減ったとき {
+
+        // --- 行 2: 一覧のキーのない隔離の件数 ---
+
+        @Test
+        void 行2_取込で絞った一覧はその取込の判断を待つキーのない隔離を数えてページに持たせる() {
+            given(ingestions.findById(ingestionId)).willReturn(Optional.of(ingestion(ingestionId)));
+            givenUndecided(ingestionId, 3);
+            given(receivedRecords.countUndecidedKeylessQuarantines(ingestionId)).willReturn(2);
+
+            UndecidedRecordPage result = service.page(ingestionId, 1);
+
+            assertThat(result.keylessQuarantineCount()).isEqualTo(2);
+            then(receivedRecords).should(times(1)).countUndecidedKeylessQuarantines(ingestionId);
+        }
+
+        @Test
+        void 行2_絞らない一覧はキーのない隔離を数えない() {
+            givenUndecided(null, 3);
+
+            assertThat(service.page(null, 1).keylessQuarantineCount()).isZero();
+            then(receivedRecords).should(never()).countUndecidedKeylessQuarantines(any());
+        }
+
+        @Test
+        void 行2_絞った取込が見つからない一覧はキーのない隔離を数えない() {
+            UUID missing = UUID.randomUUID();
+            given(ingestions.findById(missing)).willReturn(Optional.empty());
+            givenUndecided(null, 3);
+
+            assertThat(service.page(missing, 1).keylessQuarantineCount()).isZero();
+            then(receivedRecords).should(never()).countUndecidedKeylessQuarantines(any());
+        }
+
+        @Test
+        void 行2_取込で絞って判断を待つ隔離が0件ならキーのない隔離を数えない() {
+            given(ingestions.findById(ingestionId)).willReturn(Optional.of(ingestion(ingestionId)));
+            given(receivedRecords.countUndecidedQuarantines(ingestionId)).willReturn(0);
+
+            assertThat(service.page(ingestionId, 1).keylessQuarantineCount()).isZero();
+            then(receivedRecords).should(never()).countUndecidedKeylessQuarantines(any());
+        }
+
+        // --- 行 3: まとめての却下の画面の中身 ---
+
+        @Test
+        void 行3_まとめての却下の画面の中身は取込の時刻と情報源とその取込の判断を待つキーのない隔離の件数() {
+            given(ingestions.findById(ingestionId)).willReturn(Optional.of(ingestion(ingestionId)));
+            given(receivedRecords.countUndecidedKeylessQuarantines(ingestionId)).willReturn(9_900);
+
+            assertThat(service.keylessRejectionTarget(ingestionId))
+                    .contains(new KeylessRejectionTarget(ingestionId, INGESTED_AT, voyage.provider(), "VOYAGE", 9_900));
+            then(dataSources).should(times(1)).findById(voyage.id());
+        }
+
+        @Test
+        void 行10_ない取込のまとめての却下の画面の中身は空で数えず情報源を引かない() {
+            given(ingestions.findById(ingestionId)).willReturn(Optional.empty());
+
+            assertThat(service.keylessRejectionTarget(ingestionId)).isEmpty();
+            then(receivedRecords).should(never()).countUndecidedKeylessQuarantines(any());
+            then(dataSources).should(never()).findById(any());
+        }
+
+        // --- 行 15・16: 件数と 1 ページの照会の間に件数が減ったとき（39d の申し送り） ---
+
+        @Test
+        void 行15_読んだページが空で件数が0より大きければ数え直して最後のページを1回だけ読み直す() {
+            given(receivedRecords.countUndecidedQuarantines(null)).willReturn(101, 100);
+            given(receivedRecords.undecidedQuarantines(null, 100, UndecidedRecordQueryService.PAGE_SIZE))
+                    .willReturn(List.of());
+            given(receivedRecords.undecidedQuarantines(null, 0, UndecidedRecordQueryService.PAGE_SIZE))
+                    .willReturn(IntStream.range(0, 100)
+                            .mapToObj(n -> keyless(voyage, n + 2))
+                            .toList());
+
+            UndecidedRecordPage result = service.page(null, 2);
+
+            assertThat(result.total()).isEqualTo(100);
+            assertThat(result.page()).isEqualTo(1);
+            assertThat(result.pageCount()).isEqualTo(1);
+            assertThat(result.items()).hasSize(100);
+            assertThat(result.firstShown()).isEqualTo(1);
+            assertThat(result.lastShown()).isEqualTo(100);
+            assertThat(result.hasNext()).isFalse();
+            then(receivedRecords).should(times(2)).countUndecidedQuarantines(null);
+            then(receivedRecords).should(times(2)).undecidedQuarantines(any(), anyInt(), anyInt());
+        }
+
+        @Test
+        void 行15_読んだページが空でなければ数え直さない() {
+            givenUndecided(null, 101);
+
+            service.page(null, 2);
+
+            then(receivedRecords).should(times(1)).countUndecidedQuarantines(null);
+            then(receivedRecords).should(times(1)).undecidedQuarantines(any(), anyInt(), anyInt());
+        }
+
+        @Test
+        void 行16_数え直して0件なら読み直さず0件のページを返す() {
+            given(ingestions.findById(ingestionId)).willReturn(Optional.of(ingestion(ingestionId)));
+            given(receivedRecords.countUndecidedQuarantines(ingestionId)).willReturn(1, 0);
+            given(receivedRecords.undecidedQuarantines(any(), anyInt(), anyInt()))
+                    .willReturn(List.of());
+
+            UndecidedRecordPage result = service.page(ingestionId, 1);
+
+            assertThat(result.total()).isZero();
+            assertThat(result.items()).isEmpty();
+            assertThat(result.page()).isEqualTo(1);
+            assertThat(result.pageCount()).isZero();
+            assertThat(result.ingestionFilter()).isEqualTo(ingestionId);
+            assertThat(result.keylessQuarantineCount()).isZero();
+            then(receivedRecords).should(times(1)).undecidedQuarantines(any(), anyInt(), anyInt());
+            then(receivedRecords).should(never()).countUndecidedKeylessQuarantines(any());
+        }
+
+        @Test
+        void 行16_読み直しても空なら0件のページを返す() {
+            given(receivedRecords.countUndecidedQuarantines(null)).willReturn(201, 150);
+            given(receivedRecords.undecidedQuarantines(any(), anyInt(), anyInt()))
+                    .willReturn(List.of());
+
+            UndecidedRecordPage result = service.page(null, 3);
+
+            assertThat(result.total()).isZero();
+            assertThat(result.items()).isEmpty();
+            assertThat(result.firstShown()).isZero();
+            assertThat(result.lastShown()).isZero();
+            then(receivedRecords).should().undecidedQuarantines(null, 200, UndecidedRecordQueryService.PAGE_SIZE);
+            then(receivedRecords).should().undecidedQuarantines(null, 100, UndecidedRecordQueryService.PAGE_SIZE);
+            then(receivedRecords).should(times(2)).countUndecidedQuarantines(null);
+        }
+    }
+
     private Ingestion ingestion(UUID id) {
         return new Ingestion(
                 id,

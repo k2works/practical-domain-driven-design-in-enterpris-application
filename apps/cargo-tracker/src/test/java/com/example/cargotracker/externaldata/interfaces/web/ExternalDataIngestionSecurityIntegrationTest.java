@@ -135,6 +135,10 @@ class ExternalDataIngestionSecurityIntegrationTest {
     @MockitoSpyBean
     ReceivedRecordDecisionService decisionService;
 
+    /** まとめての却下の途中の失敗で巻き戻ることを、2 件目の追記で失敗させて確かめる（Bolt 39d2b の行 14）。 */
+    @MockitoSpyBean
+    com.example.cargotracker.externaldata.domain.model.aggregates.ReceivedRecordDecisionRepository decisionRepository;
+
     private Company operator;
     private Company shipper;
     private final String provider = "画面の提供元-" + UUID.randomUUID();
@@ -853,6 +857,185 @@ class ExternalDataIngestionSecurityIntegrationTest {
             assertThat(rejected.getResponse().getRedirectedUrl()).doesNotStartWith(LIST_URL);
             verify(decisionService, never()).reject(any(), any());
             assertThat(decisionsOf(receivedRecordId)).isZero();
+        }
+    }
+
+    /**
+     * Bolt 39d2b の行 4・8・11・14（S-17 の形式の誤りのまとめての却下。本物のフィルターの連なりと PostgreSQL の上で）。データ責任者が取込で
+     * 絞った一覧のリンクからまとめての却下の画面を開いて却下すると、PRG で取込で絞った一覧に戻り、その取込の形式の誤りごとに同じ判断者・
+     * 時刻・理由の判断が残り、内容の違う原本は残る。まとめての却下の画面と POST は今の {@code /staff/external-data/**} の規則のまま、ほかの役割は
+     * 403、未ログインは A-01、CSRF のトークンのない POST は却下しない。途中の追記の失敗はトランザクションごと巻き戻る。39c〜39d2 の同じ番号の
+     * 行と名前が衝突しないよう入れ子にする。
+     */
+    @Nested
+    class Bolt39d2b_形式の誤りのまとめての却下 {
+
+        private static final String LIST_URL = "/staff/external-data/undecided-records";
+        private static final String REASON = "列の数を直したファイルを取り込み直した。";
+
+        /** 形式の誤り 2 行と内容の違う原本 1 行を含むファイルを取り込み、取込 ID を返す（T-230）。 */
+        private UUID ingestion(Cookie session) throws Exception {
+            String location = ingested(
+                    session,
+                    file(
+                            row("V-1", PORT_CALLS),
+                            row("V-1", CHANGED_PORT_CALLS),
+                            row("V-2", PORT_CALLS) + ",余分",
+                            row("V-3", PORT_CALLS) + ",余分"));
+            return UUID.fromString(location.substring(location.lastIndexOf('/') + 1));
+        }
+
+        private int decisionsOfIngestion(UUID ingestionId) {
+            Integer value = jdbc.queryForObject(
+                    "SELECT COUNT(*) FROM external_data.received_record_decision d"
+                            + " JOIN external_data.received_record r ON r.id = d.received_record_id WHERE r.ingestion_id = ?",
+                    Integer.class,
+                    ingestionId);
+            return value == null ? 0 : value;
+        }
+
+        private String screenUrl(UUID ingestionId) {
+            return LIST_URL + "/keyless-rejection?ingestion=" + ingestionId;
+        }
+
+        @Test
+        void 行4_データ責任者は一覧のリンクからまとめて却下すると取込で絞った一覧に戻り形式の誤りごとに同じ判断が残る() throws Exception {
+            String email = user(Set.of(Role.DATA_STEWARD));
+            Cookie session = login(email);
+            UUID ingestionId = ingestion(session);
+            String entry = LIST_URL + "?ingestion=" + ingestionId + "&page=1";
+            assertThat(body(session, LIST_URL + "?ingestion=" + ingestionId))
+                    .contains("<a href=\"" + screenUrl(ingestionId) + "\">この取込の形式の誤りをまとめて却下する（2 件）</a>");
+            assertThat(body(session, screenUrl(ingestionId)))
+                    .contains("<h1>形式の誤りのまとめての却下</h1>")
+                    .containsPattern("<dt>形式の誤り</dt>\\s*<dd>2 件</dd>");
+
+            MvcResult rejected = mvc.perform(post(screenUrl(ingestionId))
+                            .param("reason", REASON)
+                            .cookie(session)
+                            .with(csrf()))
+                    .andExpect(status().is3xxRedirection())
+                    .andReturn();
+
+            assertThat(rejected.getResponse().getRedirectedUrl()).isEqualTo(entry);
+            assertThat((java.util.Map<String, Object>) rejected.getFlashMap())
+                    .containsEntry("result", "形式の誤り 2 件を却下しました。");
+            assertThat(body(session, entry))
+                    .contains("<p>この取込の判断を待つ隔離 1 件（1〜1 件目を示しています）</p>")
+                    .doesNotContain("まとめて却下する");
+            List<java.util.Map<String, Object>> decisions = jdbc.queryForList(
+                    "SELECT d.decision, d.reason, d.decided_by, d.decided_at FROM external_data.received_record_decision d"
+                            + " JOIN external_data.received_record r ON r.id = d.received_record_id"
+                            + " WHERE r.ingestion_id = ? AND r.external_record_id IS NULL",
+                    ingestionId);
+            assertThat(decisions).hasSize(2);
+            // 判断者・時刻・理由は全件で同じ
+            assertThat(decisions.stream()
+                            .map(decision -> List.of(
+                                    decision.get("decision"),
+                                    decision.get("reason"),
+                                    decision.get("decided_by"),
+                                    decision.get("decided_at")))
+                            .distinct())
+                    .hasSize(1);
+            assertThat(decisions.getFirst())
+                    .containsEntry("decision", "REJECTED")
+                    .containsEntry("reason", REASON);
+            assertThat(decisionsOfIngestion(ingestionId)).isEqualTo(2);
+            // 二重の送信は判断を作らず、まとめて却下できる形式の誤りはないと知らせる（行 9）
+            MvcResult again = mvc.perform(post(screenUrl(ingestionId))
+                            .param("reason", "二重の送信")
+                            .cookie(session)
+                            .with(csrf()))
+                    .andExpect(status().is3xxRedirection())
+                    .andReturn();
+            assertThat((java.util.Map<String, Object>) again.getFlashMap())
+                    .containsEntry("result", "この取込にまとめて却下できる形式の誤りはありません。");
+            assertThat(decisionsOfIngestion(ingestionId)).isEqualTo(2);
+        }
+
+        @Test
+        void 行11_ほかの7つの役割はまとめての却下の画面とPOSTで403になり却下しない() throws Exception {
+            UUID ingestionId = ingestion(login(user(Set.of(Role.DATA_STEWARD))));
+            for (Role role : EnumSet.complementOf(EnumSet.of(Role.DATA_STEWARD))) {
+                Cookie session = login(user(Set.of(role)));
+
+                mvc.perform(get(screenUrl(ingestionId)).cookie(session)).andExpect(status().isForbidden());
+                mvc.perform(post(screenUrl(ingestionId))
+                                .param("reason", REASON)
+                                .cookie(session)
+                                .with(csrf()))
+                        .andExpect(status().isForbidden());
+            }
+            verify(decisionService, never()).rejectKeyless(any(), any());
+            assertThat(decisionsOfIngestion(ingestionId)).isZero();
+        }
+
+        @Test
+        void 行11_未ログインはまとめての却下の画面とPOSTでA01へ移り却下しない() throws Exception {
+            UUID ingestionId = ingestion(login(user(Set.of(Role.DATA_STEWARD))));
+
+            assertThat(mvc.perform(get(screenUrl(ingestionId)))
+                            .andReturn()
+                            .getResponse()
+                            .getRedirectedUrl())
+                    .endsWith("/login");
+            assertThat(mvc.perform(post(screenUrl(ingestionId))
+                                    .param("reason", REASON)
+                                    .with(csrf()))
+                            .andReturn()
+                            .getResponse()
+                            .getRedirectedUrl())
+                    .endsWith("/login");
+            verify(decisionService, never()).rejectKeyless(any(), any());
+            assertThat(decisionsOfIngestion(ingestionId)).isZero();
+        }
+
+        @Test
+        void 行11_CSRFのトークンのないまとめての却下の送信は拒まれ却下のサービスを呼ばない() throws Exception {
+            Cookie session = login(user(Set.of(Role.DATA_STEWARD)));
+            UUID ingestionId = ingestion(session);
+
+            MvcResult rejected = mvc.perform(
+                            post(screenUrl(ingestionId)).param("reason", REASON).cookie(session))
+                    .andExpect(status().is3xxRedirection())
+                    .andReturn();
+
+            assertThat(rejected.getResponse().getRedirectedUrl()).doesNotStartWith(LIST_URL);
+            verify(decisionService, never()).rejectKeyless(any(), any());
+            assertThat(decisionsOfIngestion(ingestionId)).isZero();
+        }
+
+        @Test
+        void 行14_2件目の追記がDBの失敗ならトランザクションごと巻き戻り判断もDE29も残らない() throws Exception {
+            UUID ingestionId = ingestion(login(user(Set.of(Role.DATA_STEWARD))));
+            java.util.concurrent.atomic.AtomicInteger calls = new java.util.concurrent.atomic.AtomicInteger();
+            org.mockito.Mockito.doAnswer(invocation -> {
+                        if (calls.incrementAndGet() == 2) {
+                            throw new org.springframework.dao.DataAccessResourceFailureException("2 件目の追記の失敗");
+                        }
+                        return invocation.callRealMethod();
+                    })
+                    .when(decisionRepository)
+                    .add(any());
+            AuthenticatedActor steward = new AuthenticatedActor(
+                    new UserId(UUID.randomUUID()), operator.id(), Set.of(Role.DATA_STEWARD), "データ責任者", "A 社");
+            com.example.cargotracker.externaldata.application.internal.commands.RejectKeylessQuarantinesCommand
+                    command =
+                            new com.example.cargotracker.externaldata.application.internal.commands
+                                    .RejectKeylessQuarantinesCommand(ingestionId, REASON);
+
+            org.assertj.core.api.Assertions.assertThatThrownBy(() -> decisionService.rejectKeyless(steward, command))
+                    .isInstanceOf(org.springframework.dao.DataAccessResourceFailureException.class);
+
+            assertThat(calls.get()).isEqualTo(2);
+            assertThat(decisionsOfIngestion(ingestionId)).isZero();
+            assertThat(jdbc.queryForObject(
+                            "SELECT COUNT(*) FROM platform.event_publication WHERE event_type = ? AND serialized_event LIKE ?",
+                            Integer.class,
+                            com.example.cargotracker.externaldata.domain.events.ReceivedRecordDecided.class.getName(),
+                            "%" + ingestionId + "%"))
+                    .isZero();
         }
     }
 

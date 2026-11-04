@@ -9,7 +9,8 @@ import org.apache.ibatis.annotations.Param;
 
 /**
  * 受信記録の MyBatis マッパー（Bolt 39b）。SQL は同じパッケージの ReceivedRecordMapper.xml に置く。受信記録の表は追記専用なので、
- * 追加と数えることと、取込の隔離を行の範囲の順に読むこと（Bolt 39c3）と、判断を待つ隔離を読み数えること（Bolt 39d）だけを持つ。
+ * 追加と数えることと、取込の隔離を行の範囲の順に読むこと（Bolt 39c3）と、判断を待つ隔離を読み数えること（Bolt 39d）と、取込の判断を待つ
+ * キーのない隔離を読み数えること（Bolt 39d2b）だけを持つ。
  */
 @Mapper
 public interface ReceivedRecordMapper {
@@ -36,6 +37,11 @@ public interface ReceivedRecordMapper {
      */
     Optional<UndecidedQuarantineRow> undecidedQuarantine(
             @Param("receivedRecordId") UUID receivedRecordId, @Param("ingestionId") UUID ingestionId);
+
+    /** その取込の判断を待つキーのない隔離（Bolt 39d2b。まとめての却下の対象）。{@code ingestionId} は必須。 */
+    List<ReceivedRecordRow> undecidedKeylessQuarantinesOf(@Param("ingestionId") UUID ingestionId);
+
+    int countUndecidedKeylessQuarantines(@Param("ingestionId") UUID ingestionId);
 
     /**
      * 判断を待つ隔離の照会の 1 行（受信記録に取込と外部原本を結んだ行。Bolt 39d）。外部原本のないキーのない隔離は外部 ID・外部版が

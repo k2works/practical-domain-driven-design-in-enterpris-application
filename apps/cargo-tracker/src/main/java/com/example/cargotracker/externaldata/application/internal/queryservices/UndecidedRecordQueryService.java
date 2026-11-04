@@ -17,7 +17,9 @@ import org.springframework.transaction.annotation.Transactional;
  * 判断を待つ隔離の照会。S-17 の一覧に、判断を待つ隔離を取込の新しい順・ファイルの行の順に {@link #PAGE_SIZE} 件ずつ返す（Bolt 39d。開始準備の
  * 決定 (3)・(4)）。取込の時刻と外部 ID・外部版は受信記録の照会が結んで読み、情報源だけをページの中の異なる情報源 ID ごとに 1 回引く。
  * 絞った取込があるかは取込を 1 回引いて確かめ、なければ絞らない一覧を返して見つからないことを示す。判断を待つ隔離が 0 件ならページの照会と
- * 情報源を引かない。求めた頁が 1 より前なら 1 頁目、最後より後なら最後の頁を返す。
+ * 情報源を引かない。求めた頁が 1 より前なら 1 頁目、最後より後なら最後の頁を返す。件数を数えてから頁を読むまでに件数が減って読んだ頁が
+ * 空なら、数え直して 1 回だけ読み直す（Bolt 39d2b）。取込で絞ったときだけ、まとめての却下のリンクのためにその取込の判断を待つキーのない
+ * 隔離を数える（Bolt 39d2b）。
  * 組み立ては {@code externaldata.infrastructure.config} の {@code @Bean} が担う。
  */
 @Service
@@ -51,13 +53,20 @@ public class UndecidedRecordQueryService {
                 && ingestions.findById(ingestionIdOrNull).isEmpty();
         UUID filter = notFound ? null : ingestionIdOrNull;
         int total = receivedRecords.countUndecidedQuarantines(filter);
-        int pageCount = (total + PAGE_SIZE - 1) / PAGE_SIZE;
-        int page = Math.clamp(requestedPage, 1, Math.max(1, pageCount));
-        if (total == 0) {
-            return new UndecidedRecordPage(List.of(), 0, page, 0, filter, notFound);
+        int page = pageOf(total, requestedPage);
+        List<UndecidedQuarantine> quarantines = total == 0 ? List.of() : quarantinesOf(filter, page);
+        if (quarantines.isEmpty() && total > 0) {
+            // 件数を数えてからページを読むまでに、そのページの隔離がすべて判断された（まとめての却下で起きやすい）。数え直して最後の
+            // ページに寄せ、1 回だけ読み直す。読み直しても空なら 0 件にする（「0〜0 件目」を示さない。Bolt 39d2b の開始準備の決定 (8)）
+            total = receivedRecords.countUndecidedQuarantines(filter);
+            page = pageOf(total, page);
+            quarantines = total == 0 ? List.of() : quarantinesOf(filter, page);
         }
-        List<UndecidedQuarantine> quarantines =
-                receivedRecords.undecidedQuarantines(filter, (page - 1) * PAGE_SIZE, PAGE_SIZE);
+        if (quarantines.isEmpty()) {
+            return new UndecidedRecordPage(List.of(), 0, 1, 0, filter, notFound, 0);
+        }
+        int pageCount = pageCountOf(total);
+        int keylessCount = filter == null ? 0 : receivedRecords.countUndecidedKeylessQuarantines(filter);
         Map<UUID, DataSource> sources = new HashMap<>();
         List<UndecidedRecordPage.Item> items = quarantines.stream()
                 .map(quarantine -> item(
@@ -67,7 +76,40 @@ public class UndecidedRecordQueryService {
                                 quarantine.dataSourceId(),
                                 id -> dataSources.findById(id).orElseThrow())))
                 .toList();
-        return new UndecidedRecordPage(items, total, page, pageCount, filter, notFound);
+        return new UndecidedRecordPage(items, total, page, pageCount, filter, notFound, keylessCount);
+    }
+
+    /**
+     * 1 つの取込の形式の誤りのまとめての却下の画面の中身（Bolt 39d2b）。取込の時刻と情報源と、その取込の判断を待つキーのない隔離の件数。
+     * 取込がなければ空（数えず、情報源を引かない）。件数が 0 でも返す（画面が一覧に戻って知らせる）。
+     *
+     * @param ingestionId 取込 ID
+     */
+    @Transactional(readOnly = true)
+    public Optional<KeylessRejectionTarget> keylessRejectionTarget(UUID ingestionId) {
+        return ingestions.findById(ingestionId).map(ingestion -> {
+            // 取込は情報源への外部キーを持つので、情報源は必ずある
+            DataSource source = dataSources.findById(ingestion.dataSourceId()).orElseThrow();
+            return new KeylessRejectionTarget(
+                    ingestion.id(),
+                    ingestion.ingestedAt(),
+                    source.provider(),
+                    source.recordType(),
+                    receivedRecords.countUndecidedKeylessQuarantines(ingestion.id()));
+        });
+    }
+
+    /** 件数と求めた頁から示す頁（1 より前なら 1、最後より後なら最後。件数が 0 なら 1）。 */
+    private static int pageOf(int total, int requestedPage) {
+        return Math.clamp(requestedPage, 1, Math.max(1, pageCountOf(total)));
+    }
+
+    private static int pageCountOf(int total) {
+        return (total + PAGE_SIZE - 1) / PAGE_SIZE;
+    }
+
+    private List<UndecidedQuarantine> quarantinesOf(UUID filter, int page) {
+        return receivedRecords.undecidedQuarantines(filter, (page - 1) * PAGE_SIZE, PAGE_SIZE);
     }
 
     /**

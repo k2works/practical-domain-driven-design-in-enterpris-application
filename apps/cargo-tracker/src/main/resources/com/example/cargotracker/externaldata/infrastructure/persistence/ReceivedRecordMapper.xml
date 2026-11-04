@@ -104,4 +104,20 @@
         <include refid="undecidedQuarantineSource"/>
            AND r.id = #{receivedRecordId}
     </select>
+
+    <!-- その取込の判断を待つキーのない隔離（Bolt 39d2b。まとめての却下の対象）。一覧と同じ断片に外部原本を持たないことを足す。取込 ID は必須
+         （リポジトリが NULL を拒む）で、ix_received_record_ingestion で取込の受信記録に絞る。並びは取込の隔離の照会（quarantinedOf）と同じ -->
+    <select id="undecidedKeylessQuarantinesOf" resultMap="receivedRecordRow">
+        SELECT r.id, r.external_record_id, r.ingestion_id, r.payload_hash, r.payload_object_key, r.acquired_at,
+               r.classification, r.classification_note, r.classified_at, r.first_line_number, r.last_line_number
+        <include refid="undecidedQuarantineSource"/>
+           AND r.external_record_id IS NULL
+         ORDER BY r.first_line_number NULLS FIRST, r.id
+    </select>
+
+    <select id="countUndecidedKeylessQuarantines" resultType="int">
+        SELECT COUNT(*)
+        <include refid="undecidedQuarantineSource"/>
+           AND r.external_record_id IS NULL
+    </select>
 </mapper>

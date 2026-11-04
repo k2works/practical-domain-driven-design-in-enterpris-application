@@ -2,6 +2,7 @@ package com.example.cargotracker.externaldata.application.internal.commandservic
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.example.cargotracker.externaldata.application.internal.commands.RejectKeylessQuarantinesCommand;
 import com.example.cargotracker.externaldata.application.internal.commands.RejectReceivedRecordCommand;
 import com.example.cargotracker.externaldata.domain.events.ReceivedRecordDecided;
 import com.example.cargotracker.externaldata.domain.model.aggregates.DuplicateReceivedRecordDecisionException;
@@ -51,10 +52,18 @@ class ReceivedRecordDecisionServiceTest {
     private final List<ReceivedRecordDecision> addCalls = new ArrayList<>();
 
     private boolean duplicateOnAdd;
+
+    /** 何回目（1 から）の追記で投げるか（Bolt 39d2b の行 8・14。{@code null} を返せば投げない）。 */
+    private java.util.function.IntFunction<RuntimeException> failureOnAdd = call -> null;
+
     private final InMemoryReceivedRecordDecisionRepository decisions = new InMemoryReceivedRecordDecisionRepository() {
         @Override
         public synchronized void add(ReceivedRecordDecision decision) {
             addCalls.add(decision);
+            RuntimeException failure = failureOnAdd.apply(addCalls.size());
+            if (failure != null) {
+                throw failure;
+            }
             if (duplicateOnAdd) {
                 throw DuplicateReceivedRecordDecisionException.of(decision.receivedRecordId(), null);
             }
@@ -246,5 +255,212 @@ class ReceivedRecordDecisionServiceTest {
         assertThat(addCalls).isEmpty();
         assertThat(published).isEmpty();
         assertThat(receivedRecords.undecidedQuarantine(quarantined.id())).isPresent();
+    }
+
+    /**
+     * Bolt 39d2b の行 4・8〜12・14（1 つの取込の形式の誤りのまとめての却下。開始準備の決定 (2)・(4)・(5)）。「起きないこと」（0 件・権限なし・
+     * ない取込で判断を追記せずイベントを出さない、とばした受信記録の DE-29 を出さない、失敗の後の受信記録を追記しない）は、判断の追記と
+     * イベントの発行の呼び出しの記録で確かめる（T-236）。39d2 の同じ番号の行と名前が衝突しないよう入れ子にする。
+     */
+    @org.junit.jupiter.api.Nested
+    class Bolt39d2b_形式の誤りのまとめての却下 {
+
+        private static final String REASON = "列の数を直したファイルを取り込み直した。";
+
+        private final Ingestion other = new Ingestion(
+                UUID.randomUUID(),
+                dataSourceId,
+                PayloadObjectKey.newIngestionFile(),
+                PayloadHash.of(new byte[] {3}),
+                new UserId(UUID.randomUUID()),
+                Instant.parse("2026-11-16T01:01:00Z"),
+                1,
+                null,
+                0);
+
+        @org.junit.jupiter.api.BeforeEach
+        void 取込がある() {
+            ingestions.add(ingestion);
+            ingestions.add(other);
+        }
+
+        /** その取込のキーのない隔離（範囲が null ならファイルの誤り）。 */
+        private ReceivedRecord keyless(Ingestion of, PhysicalLineRange range) {
+            ReceivedRecord received = new ReceivedRecord(
+                    UUID.randomUUID(),
+                    null,
+                    of.id(),
+                    PayloadHash.of(new byte[] {4}),
+                    PayloadObjectKey.newRecordPayload(),
+                    null,
+                    Classification.QUARANTINED,
+                    "形式の誤り",
+                    of.ingestedAt(),
+                    range);
+            receivedRecords.add(received);
+            return received;
+        }
+
+        private ReceivedRecord mismatch(int line) {
+            ReceivedRecord received = new ReceivedRecord(
+                    UUID.randomUUID(),
+                    UUID.randomUUID(),
+                    ingestion.id(),
+                    PayloadHash.of(new byte[] {5}),
+                    PayloadObjectKey.newRecordPayload(),
+                    Instant.parse("2026-11-16T00:30:00Z"),
+                    Classification.QUARANTINED,
+                    "内容の違う原本",
+                    ingestion.ingestedAt(),
+                    new PhysicalLineRange(line, line));
+            receivedRecords.add(received);
+            return received;
+        }
+
+        private KeylessRejectionOutcome rejectKeyless(AuthenticatedActor actor, UUID ingestionId) {
+            return service.rejectKeyless(actor, new RejectKeylessQuarantinesCommand(ingestionId, REASON));
+        }
+
+        @Test
+        void 行4_その取込の判断を待つ形式の誤りのすべてに同じ判断者と時刻と理由の却下を1つずつ追記し内容の違う原本とほかの取込は残す() {
+            ReceivedRecord rowError = keyless(ingestion, new PhysicalLineRange(4, 4));
+            ReceivedRecord fileError = keyless(ingestion, null);
+            ReceivedRecord untilEnd = keyless(ingestion, new PhysicalLineRange(7, 9));
+            ReceivedRecord contentMismatch = mismatch(3);
+            ReceivedRecord ofOther = keyless(other, new PhysicalLineRange(2, 2));
+
+            KeylessRejectionOutcome outcome = rejectKeyless(steward, ingestion.id());
+
+            assertThat(outcome).isEqualTo(new KeylessRejectionOutcome.RejectedAll(3));
+            assertThat(decisions.all())
+                    .extracting(ReceivedRecordDecision::receivedRecordId)
+                    .containsExactly(fileError.id(), rowError.id(), untilEnd.id());
+            assertThat(decisions.all()).allSatisfy(decision -> {
+                assertThat(decision.decision()).isEqualTo(DecisionKind.REJECTED);
+                assertThat(decision.decidedBy()).isEqualTo(steward.userId());
+                assertThat(decision.decidedAt()).isEqualTo(Instant.parse("2026-11-16T01:05:00.123456Z"));
+                assertThat(decision.reason()).isEqualTo(REASON);
+            });
+            assertThat(receivedRecords.undecidedQuarantine(contentMismatch.id()))
+                    .isPresent();
+            assertThat(receivedRecords.undecidedQuarantine(ofOther.id())).isPresent();
+        }
+
+        @Test
+        void 行8_読んだ後に1件ずつ却下された受信記録の一意制約の違反はとばして数えずDE29も出さずほかは却下する() {
+            ReceivedRecord first = keyless(ingestion, new PhysicalLineRange(2, 2));
+            ReceivedRecord decidedMeanwhile = keyless(ingestion, new PhysicalLineRange(3, 3));
+            ReceivedRecord third = keyless(ingestion, new PhysicalLineRange(4, 4));
+            failureOnAdd =
+                    call -> call == 2 ? DuplicateReceivedRecordDecisionException.of(decidedMeanwhile.id(), null) : null;
+
+            KeylessRejectionOutcome outcome = rejectKeyless(steward, ingestion.id());
+
+            assertThat(outcome).isEqualTo(new KeylessRejectionOutcome.RejectedAll(2));
+            assertThat(addCalls).hasSize(3);
+            assertThat(published)
+                    .extracting(event -> ((ReceivedRecordDecided) event).receivedRecordId())
+                    .containsExactly(first.id(), third.id());
+        }
+
+        @Test
+        void 行9_判断を待つ形式の誤りが0件なら判断を作らずイベントを出さず却下するものがない結果を返す() {
+            mismatch(3);
+            keyless(other, new PhysicalLineRange(2, 2));
+
+            assertThat(rejectKeyless(steward, ingestion.id())).isEqualTo(new KeylessRejectionOutcome.NothingToReject());
+            assertThat(addCalls).isEmpty();
+            assertThat(published).isEmpty();
+        }
+
+        @Test
+        void 行9_二重送信の2度目は判断を作らず却下するものがない結果を返す() {
+            keyless(ingestion, new PhysicalLineRange(2, 2));
+            assertThat(rejectKeyless(steward, ingestion.id())).isEqualTo(new KeylessRejectionOutcome.RejectedAll(1));
+            addCalls.clear();
+            published.clear();
+
+            assertThat(rejectKeyless(actor(Role.DATA_STEWARD), ingestion.id()))
+                    .isEqualTo(new KeylessRejectionOutcome.NothingToReject());
+            assertThat(addCalls).isEmpty();
+            assertThat(published).isEmpty();
+        }
+
+        @Test
+        void 行9_全部がとばされたら却下するものがない結果を返しイベントを出さない() {
+            ReceivedRecord one = keyless(ingestion, new PhysicalLineRange(2, 2));
+            ReceivedRecord two = keyless(ingestion, new PhysicalLineRange(3, 3));
+            List<UUID> ids = List.of(one.id(), two.id());
+            failureOnAdd = call -> DuplicateReceivedRecordDecisionException.of(ids.get(call - 1), null);
+
+            assertThat(rejectKeyless(steward, ingestion.id())).isEqualTo(new KeylessRejectionOutcome.NothingToReject());
+            assertThat(addCalls).hasSize(2);
+            assertThat(published).isEmpty();
+        }
+
+        @Test
+        void 行10_ない取込は判断を作らずないの結果を返す() {
+            keyless(ingestion, new PhysicalLineRange(2, 2));
+
+            assertThat(rejectKeyless(steward, UUID.randomUUID())).isEqualTo(new KeylessRejectionOutcome.NotFound());
+            assertThat(addCalls).isEmpty();
+            assertThat(published).isEmpty();
+        }
+
+        @ParameterizedTest(name = "{0}")
+        @EnumSource(value = Role.class, names = "DATA_STEWARD", mode = EnumSource.Mode.EXCLUDE)
+        void 行11_データ責任者でなければ判断を作らず権限なしの結果を返す(Role role) {
+            ReceivedRecord rowError = keyless(ingestion, new PhysicalLineRange(2, 2));
+
+            assertThat(rejectKeyless(actor(role), ingestion.id()))
+                    .isEqualTo(new KeylessRejectionOutcome.NotPermitted());
+            assertThat(addCalls).isEmpty();
+            assertThat(published).isEmpty();
+            assertThat(receivedRecords.undecidedQuarantine(rowError.id())).isPresent();
+        }
+
+        @Test
+        void 行12_却下した受信記録ごとに1件ずつの却下と同じ形のDE29を1つ出す() {
+            ReceivedRecord fileError = keyless(ingestion, null);
+            ReceivedRecord rowError = keyless(ingestion, new PhysicalLineRange(4, 4));
+
+            rejectKeyless(steward, ingestion.id());
+
+            UtcInstant decidedAt = new UtcInstant(Instant.parse("2026-11-16T01:05:00.123456Z"));
+            assertThat(published)
+                    .containsExactly(
+                            new ReceivedRecordDecided(
+                                    fileError.id(),
+                                    ingestion.id(),
+                                    dataSourceId,
+                                    "REJECTED",
+                                    REASON,
+                                    steward.userId(),
+                                    steward.companyId(),
+                                    decidedAt),
+                            new ReceivedRecordDecided(
+                                    rowError.id(),
+                                    ingestion.id(),
+                                    dataSourceId,
+                                    "REJECTED",
+                                    REASON,
+                                    steward.userId(),
+                                    steward.companyId(),
+                                    decidedAt));
+        }
+
+        @Test
+        void 行14_一意制約の違反でない追記の失敗は握りつぶさず上げ後の受信記録を追記しない() {
+            keyless(ingestion, new PhysicalLineRange(2, 2));
+            keyless(ingestion, new PhysicalLineRange(3, 3));
+            keyless(ingestion, new PhysicalLineRange(4, 4));
+            failureOnAdd =
+                    call -> call == 2 ? new org.springframework.dao.DataAccessResourceFailureException("DB の失敗") : null;
+
+            RejectKeylessQuarantinesCommand command = new RejectKeylessQuarantinesCommand(ingestion.id(), REASON);
+            org.assertj.core.api.Assertions.assertThatThrownBy(() -> service.rejectKeyless(steward, command))
+                    .isInstanceOf(org.springframework.dao.DataAccessResourceFailureException.class);
+            assertThat(addCalls).hasSize(2);
+        }
     }
 }

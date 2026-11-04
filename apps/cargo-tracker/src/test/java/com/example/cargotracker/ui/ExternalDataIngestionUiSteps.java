@@ -237,6 +237,23 @@ public class ExternalDataIngestionUiSteps {
         submit();
     }
 
+    /**
+     * Bolt 39d2b の行 1・4・22（S-17 のまとめての却下）。航海の 5 行（採用 2・内容の違う原本 1・列数の誤り 2）。2 行目と 3 行目は同じ外部 ID・
+     * 外部版で内容が違い（3 行目が隔離）、4 行目と 5 行目は列が 1 つ多い（行の誤り）、6 行目は別の航海（採用）。
+     */
+    @かつ("キー操作だけで承認済みの航海の情報源を選び、形式の誤り 2 行と内容の違う原本 1 行を含む航海のファイルを選んで取り込む")
+    public void 形式の誤りと内容の違う原本を含むファイルを取り込む() {
+        chooseSource();
+        String acquiredAt = acquiredAt();
+        chooseFile(voyageFile(
+                voyageLine("V2611E", acquiredAt, PORT_CALLS),
+                voyageLine("V2611E", acquiredAt, CHANGED_PORT_CALLS),
+                voyageLine("V2612E", acquiredAt, PORT_CALLS) + ",余分",
+                voyageLine("V2613E", acquiredAt, PORT_CALLS) + ",余分",
+                voyageLine("V2614E", acquiredAt, PORT_CALLS)));
+        submit();
+    }
+
     /** Bolt 39c3 の行 17。隔離が 0 件の結果の画面は「隔離の理由」の領域を出さない。 */
     @かつ("隔離の理由は示されない")
     public void 隔離の理由は示されない() {

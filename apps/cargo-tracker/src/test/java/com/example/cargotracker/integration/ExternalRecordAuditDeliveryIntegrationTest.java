@@ -7,12 +7,14 @@ import static org.mockito.ArgumentMatchers.argThat;
 import com.example.cargotracker.TestcontainersConfiguration;
 import com.example.cargotracker.externaldata.application.internal.commands.IngestFileCommand;
 import com.example.cargotracker.externaldata.application.internal.commands.IngestFileCommand.IngestedRow;
+import com.example.cargotracker.externaldata.application.internal.commands.RejectKeylessQuarantinesCommand;
 import com.example.cargotracker.externaldata.application.internal.commands.RejectReceivedRecordCommand;
 import com.example.cargotracker.externaldata.application.internal.commandservices.DecisionOutcome;
 import com.example.cargotracker.externaldata.application.internal.commandservices.IngestionOutcome;
 import com.example.cargotracker.externaldata.application.internal.commandservices.IngestionOutcome.Ingested;
 import com.example.cargotracker.externaldata.application.internal.commandservices.IngestionOutcome.RowResult;
 import com.example.cargotracker.externaldata.application.internal.commandservices.IngestionService;
+import com.example.cargotracker.externaldata.application.internal.commandservices.KeylessRejectionOutcome;
 import com.example.cargotracker.externaldata.application.internal.commandservices.ReceivedRecordDecisionService;
 import com.example.cargotracker.externaldata.domain.events.ExternalRecordQuarantined;
 import com.example.cargotracker.externaldata.domain.events.MilestoneAdoptedValueAccepted;
@@ -377,6 +379,63 @@ class ExternalRecordAuditDeliveryIntegrationTest {
                 Mockito.verify(auditRecords, Mockito.never())
                         .existsByActionAndTarget(
                                 AuditAction.EXTERNAL_RECORD_DECIDED, "RECEIVED_RECORD", receivedRecordId.toString());
+            } finally {
+                removeSource(sourceId);
+            }
+        }
+    }
+
+    /**
+     * Bolt 39d2b の行 13（まとめての却下の DE-29 の監査の配信。T-184、IA-INV-15）。まとめて 3 件を却下したコミットの後に監査の listener が
+     * 受信記録ごとに DE-29 を受け、判断の監査記録を受信記録ごとに 1 つずつ、計 3 つ書く。39d2 の同じ番号の行と名前が衝突しないよう入れ子にする。
+     */
+    @org.junit.jupiter.api.Nested
+    class Bolt39d2b_まとめての却下の監査の配信 {
+
+        @Autowired
+        ReceivedRecordDecisionService decisionService;
+
+        @Test
+        void 行13_まとめて3件を却下したコミットの後に監査のlistenerが受信記録ごとに判断の監査記録を1つずつ書く() {
+            UUID sourceId = insertApprovedSource("運送会社-" + UUID.randomUUID(), "MILESTONE");
+            try {
+                Instant acquiredAt = acquiredAt();
+                String valid = "MS-0001,1," + acquiredAt + ",CTABCDEFGH2345,DEPARTURE,JPTYO," + acquiredAt;
+                // 3 行は列が 1 つ多い（行の誤りのキーのない隔離。T-230）
+                String csv = MILESTONE_HEADER + "\n" + valid + "\n" + valid.replace("MS-0001", "MS-0002") + ",余分\n"
+                        + valid.replace("MS-0001", "MS-0003") + ",余分\n" + valid.replace("MS-0001", "MS-0004")
+                        + ",余分\n";
+                Ingested result = ingested(ingestionService.ingest(
+                        steward,
+                        com.example.cargotracker.externaldata.interfaces.file.IngestFileCommandAssembler.assemble(
+                                sourceId,
+                                com.example.cargotracker.externaldata.interfaces.file.CsvFileKind.MILESTONE,
+                                csv.getBytes(StandardCharsets.UTF_8))));
+                List<UUID> keyless = jdbc.queryForList(
+                        "SELECT id FROM external_data.received_record WHERE ingestion_id = ?"
+                                + " AND external_record_id IS NULL",
+                        UUID.class,
+                        result.ingestionId());
+                assertThat(keyless).hasSize(3);
+
+                KeylessRejectionOutcome outcome = decisionService.rejectKeyless(
+                        steward, new RejectKeylessQuarantinesCommand(result.ingestionId(), "直したファイルを取り込み直した。"));
+
+                assertThat(outcome).isEqualTo(new KeylessRejectionOutcome.RejectedAll(3));
+                for (UUID receivedRecordId : keyless) {
+                    awaitCompletedAuditPublication(ReceivedRecordDecided.class, receivedRecordId);
+                    assertThat(auditRecordOf(AuditAction.EXTERNAL_RECORD_DECIDED, receivedRecordId))
+                            .containsEntry("result", "SUCCESS")
+                            .containsEntry("actor_user_id", steward.userId().value())
+                            .containsEntry("reason", "REJECTED");
+                }
+                assertThat(count(
+                                "SELECT COUNT(*) FROM identity.audit_record a JOIN external_data.received_record r"
+                                        + " ON a.target_id = CAST(r.id AS VARCHAR)"
+                                        + " WHERE a.action = 'EXTERNAL_RECORD_DECIDED' AND a.target_type = 'RECEIVED_RECORD'"
+                                        + " AND r.ingestion_id = ?",
+                                result.ingestionId()))
+                        .isEqualTo(3);
             } finally {
                 removeSource(sourceId);
             }

@@ -10,10 +10,16 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 
 import com.example.cargotracker.TestcontainersConfiguration;
 import com.example.cargotracker.externaldata.application.internal.commands.IngestFileCommand;
+import com.example.cargotracker.externaldata.application.internal.commands.RejectKeylessQuarantinesCommand;
 import com.example.cargotracker.externaldata.application.internal.commandservices.IngestionOutcome;
 import com.example.cargotracker.externaldata.application.internal.commandservices.IngestionOutcome.Ingested;
 import com.example.cargotracker.externaldata.application.internal.commandservices.IngestionService;
+import com.example.cargotracker.externaldata.application.internal.commandservices.KeylessRejectionOutcome;
+import com.example.cargotracker.externaldata.application.internal.commandservices.ReceivedRecordDecisionService;
 import com.example.cargotracker.externaldata.application.internal.queryservices.IngestionSummaryQueryService;
+import com.example.cargotracker.externaldata.application.internal.queryservices.UndecidedRecordPage;
+import com.example.cargotracker.externaldata.application.internal.queryservices.UndecidedRecordQueryService;
+import com.example.cargotracker.externaldata.domain.events.ReceivedRecordDecided;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.Classification;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.MilestoneKindValue;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.VoyageValues;
@@ -70,7 +76,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
 
 /**
- * PERF-06（1 万件のファイルを 5 分以内に分類・採用）を PostgreSQL 18 で測る（Bolt 39b4 の行 1・2・10・11・12、Bolt 39c2 の行 21 の画面の経路、Bolt 39c4 の行 16 の結果の画面の照会。non_functional の PERF-06）。
+ * PERF-06（1 万件のファイルを 5 分以内に分類・採用）を PostgreSQL 18 で測る（Bolt 39b4 の行 1・2・10・11・12、Bolt 39c2 の行 21 の画面の経路、Bolt 39c4 の行 16 の結果の画面の照会、Bolt 39d2b の行 21 のまとめての却下。non_functional の PERF-06）。
  * 時間は CSV の組み立て（{@link IngestFileCommandAssembler#assemble}）の前から取込のサービスが戻るまで（取込のコミットを含む）で、
  * 監査の listener の配信はコミットの後の非同期で PERF-06 の外なので、完了までを待って参考の値としてログに出す。測った値（全体・組み立て・
  * 取込、接続の最大とコミットの数、分類ごとの件数の照会の合計、ファイルの大きさ）はテストのログに出す。
@@ -98,6 +104,12 @@ class ExternalDataIngestionPerformanceTest {
 
     /** 分類ごとの件数の照会の合計の上限（超えたら 1 本の照会にする。開始準備の決定 (6)）。 */
     private static final Duration COUNT_QUERIES_LIMIT = Duration.ofSeconds(1);
+
+    /** まとめての却下のトランザクションの間の一覧の照会の上限（超えたら値を記録して止め、分け方を諮る。Bolt 39d2b の開始準備の決定 (1)）。 */
+    private static final Duration LIST_QUERY_LIMIT = Duration.ofSeconds(1);
+
+    /** まとめての却下の終わりを待つ間隔（その間隔ごとに一覧を照会する）。 */
+    private static final Duration LIST_QUERY_INTERVAL = Duration.ofMillis(500);
 
     /** 1 万件の監査の配信を待つ上限（設計の決定「共有の DB の他の行」。超えたら落とす）。 */
     private static final Duration DELIVERY_TIMEOUT = Duration.ofMinutes(10);
@@ -134,6 +146,14 @@ class ExternalDataIngestionPerformanceTest {
     /** 行 16 で {@code summaryOf} の前後の時刻を取るため spy にする（Bolt 39c4）。 */
     @MockitoSpyBean
     IngestionSummaryQueryService summaries;
+
+    /** 行 21 のまとめての却下（Bolt 39d2b）。 */
+    @Autowired
+    ReceivedRecordDecisionService decisionService;
+
+    /** 行 21 のまとめての却下のトランザクションの間の一覧の照会（Bolt 39d2b）。 */
+    @Autowired
+    UndecidedRecordQueryService undecidedRecords;
 
     @Autowired
     MockMvc mvc;
@@ -326,6 +346,100 @@ class ExternalDataIngestionPerformanceTest {
         } finally {
             finish("notes", result, sourceId);
         }
+    }
+
+    /**
+     * 行 21（Bolt 39d2b。T-241・T-242）: 上限いっぱいのキーのない隔離（値の誤りだけのデータ行 10,000 行）の取込を、まとめての却下で 1 つの
+     * トランザクションで却下する時間（{@code rejectKeyless} の呼び出しからコミットまで。PERF-06 と同じ 5 分）と、そのトランザクションの間に
+     * 別の接続で一覧の 1 ページを照会する時間（1 秒）を測り、「PERF-06 keyless-rejection」の行に出す。まとめての却下は受信記録ごとに判断の
+     * リポジトリのセーブポイントを作るので、取込の時間から見積もれない（開始準備の決定 (1)）。却下は別のスレッドで動かし、終わるまで
+     * 一覧の照会を繰り返す（取込の監査の配信は測る前に終わらせ、測る間に裏で走らせない）。監査の配信 1 万件の完了までは参考の値。
+     */
+    @Test
+    void Bolt39d2b_行21_キーのない隔離1万件のまとめての却下は5分以内でトランザクションの間の一覧の照会は1秒以内() throws Exception {
+        Instant acquiredAt = acquiredAt();
+        IntFunction<String> valid = voyageLine(5, acquiredAt);
+        // 外部版を空にした値の誤りだけの行（行の誤りのキーのない隔離。行 16 と同じ）
+        byte[] csv = ExternalDataIngestionConnectionTest.csv(
+                VOYAGE_HEADER, ROWS, row -> valid.apply(row).replaceFirst(",1,", ",,"));
+        UUID sourceId = insertApprovedSource(ExternalDataIngestionConnectionTest.newProvider(), "VOYAGE");
+        java.util.concurrent.ExecutorService executor = java.util.concurrent.Executors.newSingleThreadExecutor();
+        UUID rejectedIngestion = null;
+        try {
+            Ingested result = ExternalDataIngestionConnectionTest.ingested(ingestionService.ingest(
+                    steward, IngestFileCommandAssembler.assemble(sourceId, CsvFileKind.VOYAGE, csv)));
+            awaitCompletedAuditPublications(result);
+            UUID ingestionId = result.ingestionId();
+            assertThat(undecidedRecords.keylessRejectionTarget(ingestionId))
+                    .hasValueSatisfying(target -> assertThat(target.count()).isEqualTo(ROWS));
+
+            AtomicLong rejectNanos = new AtomicLong();
+            java.util.concurrent.Future<KeylessRejectionOutcome> rejecting = executor.submit(() -> {
+                long started = System.nanoTime();
+                try {
+                    return decisionService.rejectKeyless(
+                            steward, new RejectKeylessQuarantinesCommand(ingestionId, "列を直したファイルを取り込み直した。"));
+                } finally {
+                    rejectNanos.set(System.nanoTime() - started);
+                }
+            });
+            rejectedIngestion = ingestionId;
+            java.util.List<Long> listQueries = new java.util.ArrayList<>();
+            KeylessRejectionOutcome outcome = null;
+            while (outcome == null) {
+                try {
+                    outcome = rejecting.get(LIST_QUERY_INTERVAL.toMillis(), java.util.concurrent.TimeUnit.MILLISECONDS);
+                } catch (java.util.concurrent.TimeoutException _) {
+                    // 却下のトランザクションの間に、別の接続で取込で絞った一覧の 1 ページを照会する
+                    long started = System.nanoTime();
+                    UndecidedRecordPage page = undecidedRecords.page(ingestionId, 1);
+                    listQueries.add(System.nanoTime() - started);
+                    assertThat(page.items()).isNotEmpty();
+                }
+            }
+            long listMax = listQueries.stream().mapToLong(Long::longValue).max().orElse(0);
+            LOG.info(
+                    "PERF-06 keyless-rejection rows={} rejected={} reject={} limit={} list-queries={} list-max={} list-limit={}",
+                    ROWS,
+                    outcome instanceof KeylessRejectionOutcome.RejectedAll(int count) ? count : 0,
+                    seconds(rejectNanos.get()),
+                    seconds(LIMIT.toNanos()),
+                    listQueries.size(),
+                    preciseSeconds(listMax),
+                    preciseSeconds(LIST_QUERY_LIMIT.toNanos()));
+
+            assertThat(outcome).isEqualTo(new KeylessRejectionOutcome.RejectedAll(ROWS));
+            assertThat(Duration.ofNanos(rejectNanos.get())).isLessThanOrEqualTo(LIMIT);
+            assertThat(listQueries).isNotEmpty();
+            assertThat(Duration.ofNanos(listMax)).isLessThanOrEqualTo(LIST_QUERY_LIMIT);
+            assertThat(undecidedRecords.page(ingestionId, 1).total()).isZero();
+        } finally {
+            executor.shutdown();
+            try {
+                if (rejectedIngestion != null) {
+                    long deliveryStarted = System.nanoTime();
+                    awaitCompletedDecidedAuditPublications(rejectedIngestion);
+                    LOG.info(
+                            "PERF-06 keyless-rejection audit delivery completed in {} (reference, outside PERF-06)",
+                            seconds(System.nanoTime() - deliveryStarted));
+                }
+            } finally {
+                removeSource(sourceId);
+            }
+        }
+    }
+
+    /** まとめての却下の DE-29 の監査の発行記録が 1 万件すべて完了になるまで待つ（待つ条件は取込 ID とイベントの型と監査の受け手。T-184）。 */
+    private void awaitCompletedDecidedAuditPublications(UUID ingestionId) {
+        await().atMost(DELIVERY_TIMEOUT)
+                .pollInterval(Duration.ofSeconds(2))
+                .until(() -> count(
+                                "SELECT COUNT(*) FROM platform.event_publication WHERE event_type = ?"
+                                        + " AND serialized_event LIKE ? AND listener_id LIKE ? AND completion_date IS NOT NULL",
+                                ReceivedRecordDecided.class.getName(),
+                                "%" + ingestionId + "%",
+                                "%" + AUDIT_LISTENER + "%")
+                        == ROWS);
     }
 
     /** 結果の画面の隔離の理由の一覧の項目の数。 */

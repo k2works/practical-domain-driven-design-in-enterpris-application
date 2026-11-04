@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/staff :: layout(~{::title}, ~{::main}, ~{::script}, 'undecided-records')}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${#fields.hasErrors('${rejectionForm.*}')} ? '却下できませんでした - 形式の誤りのまとめての却下 - cargo-tracker' : '形式の誤りのまとめての却下 - cargo-tracker'">形式の誤りのまとめての却下 - cargo-tracker</title>
+    <!--/* 送信の失敗のときにエラー要約へフォーカスを移す（判断の画面・S-16 と同じ） */-->
+    <script th:src="@{/js/transport-request-form.js}" defer></script>
+</head>
+<body>
+<main>
+    <h1>形式の誤りのまとめての却下</h1>
+    <!--/* S-17 のまとめての却下の画面（Bolt 39d2b、US-14 AC4、UC-15 2a、【業務の判断】(g)・(h)）。取込で絞った一覧のリンクから開き、取込の
+           情報源と件数を確かめてから、1 つの理由でその取込の判断を待つ形式の誤り（キーのない隔離）をすべて却下する。内容の違う原本は含まない。
+           対象の行は並べない（一覧で読める）。取り込み直しの案内と取り消せないことの文は判断の画面と同じ（【業務の判断】(a)・(e)）。
+           送り先と戻り先の URL は controller が読んだ取込 ID から組み立てる */-->
+    <div id="error-summary" th:if="${#fields.hasErrors('${rejectionForm.*}')}" tabindex="-1" role="alert"
+         aria-labelledby="error-summary-title">
+        <h2 id="error-summary-title">却下できませんでした</h2>
+        <ul>
+            <li th:each="error : ${#fields.detailedErrors('${rejectionForm.*}')}">
+                <a th:href="|#${error.fieldName}|" th:text="${error.message}">却下の理由を書いてください。</a>
+            </li>
+        </ul>
+    </div>
+    <dl class="text-break">
+        <dt>取り込んだ日時</dt>
+        <dd th:text="${ingestedAt}">2026-11-16 10:05 Asia/Tokyo（UTC+09:00）（UTC 2026-11-16 01:05）</dd>
+        <dt>情報源</dt>
+        <dd th:text="${source}">開発海運（架空）（航海）</dd>
+        <dt>形式の誤り</dt>
+        <dd th:text="${count}">9,900 件</dd>
+    </dl>
+    <p>この取込の判断を待つ形式の誤りをすべて、同じ理由で却下します。</p>
+    <p>内容の違う原本は含みません。一覧で 1 件ずつ判断してください。</p>
+    <p>形式の誤りは採用できません。直したファイルを取り込み直してください。</p>
+    <form th:action="${actionUrl}" th:object="${rejectionForm}" method="post" novalidate>
+        <div>
+            <label for="reason">却下の理由</label>
+            <!--/* 上限は判断の理由の上限（controller が渡す）から示し、欄の誤りの文と食い違わせない */-->
+            <p id="reason-hint" th:text="|必須、${reasonLimit} 文字まで|">必須、1000 文字まで</p>
+            <p id="reason-error" class="text-danger" th:if="${#fields.hasErrors('reason')}" th:errors="*{reason}"></p>
+            <textarea class="form-control" id="reason" name="reason" rows="4" aria-required="true" th:text="*{reason}"
+                      th:attr="aria-invalid=${#fields.hasErrors('reason')} ? 'true' : null,aria-describedby=${#fields.hasErrors('reason')} ? 'reason-hint reason-error' : 'reason-hint'"></textarea>
+        </div>
+        <p id="irrevocable">却下すると取り消せません。誤って却下したときは、提供元に同じ原本を送り直してもらってください。</p>
+        <p><button type="submit" class="btn btn-primary" aria-describedby="irrevocable">まとめて却下する</button></p>
+    </form>
+    <p><a th:href="${backUrl}">一覧に戻る</a></p>
+</main>
+</body>
+</html>

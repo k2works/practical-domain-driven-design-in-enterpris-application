@@ -13,7 +13,7 @@ import java.util.stream.Stream;
 
 /**
  * メモリ上の受信記録のリポジトリ（テスト用。Bolt 39b）。追記と数えることと、取込の隔離を読むこと（Bolt 39c3）と、判断を待つ隔離を読み数えること
- * （Bolt 39d。メモリの取込と外部原本のリポジトリを結ぶ）だけを持つ。
+ * （Bolt 39d。メモリの取込と外部原本のリポジトリを結ぶ）と、取込の判断を待つキーのない隔離を読み数えること（Bolt 39d2b）だけを持つ。
  */
 public class InMemoryReceivedRecordRepository implements ReceivedRecordRepository {
 
@@ -53,17 +53,18 @@ public class InMemoryReceivedRecordRepository implements ReceivedRecordRepositor
 
     /**
      * 範囲のないものを先に行の範囲の始まりの順、同じなら受信記録 ID の順（SQL の {@code ORDER BY first_line_number NULLS FIRST, id} と同じ
-     * 順。ID は DB と同じく文字列の表現の順で比べる）。
+     * 順。ID は DB と同じく文字列の表現の順で比べる）。取込の隔離の照会とまとめての却下の対象の照会（Bolt 39d2b）が使う。
      */
+    private static final Comparator<ReceivedRecord> LINE_ORDER = Comparator.comparing(
+                    ReceivedRecord::lineRange, Comparator.nullsFirst(Comparator.comparingInt(PhysicalLineRange::first)))
+            .thenComparing(receivedRecord -> receivedRecord.id().toString());
+
     @Override
     public List<ReceivedRecord> quarantinedOf(UUID ingestionId, int limit) {
         return records.stream()
                 .filter(receivedRecord -> receivedRecord.ingestionId().equals(ingestionId))
                 .filter(receivedRecord -> receivedRecord.classification() == Classification.QUARANTINED)
-                .sorted(Comparator.comparing(
-                                ReceivedRecord::lineRange,
-                                Comparator.nullsFirst(Comparator.comparingInt(PhysicalLineRange::first)))
-                        .thenComparing(receivedRecord -> receivedRecord.id().toString()))
+                .sorted(LINE_ORDER)
                 .limit(limit)
                 .toList();
     }
@@ -107,6 +108,28 @@ public class InMemoryReceivedRecordRepository implements ReceivedRecordRepositor
         return undecided(null)
                 .filter(quarantine -> quarantine.receivedRecordId().equals(receivedRecordId))
                 .findFirst();
+    }
+
+    /**
+     * その取込の判断を待つキーのない隔離（Bolt 39d2b）。判断を待つ隔離と同じく取込のリポジトリと結び、外部原本を持たないものに絞って、
+     * {@link #quarantinedOf} と同じ順に並べる。
+     */
+    @Override
+    public List<ReceivedRecord> undecidedKeylessQuarantinesOf(UUID ingestionId) {
+        Objects.requireNonNull(ingestionId, "ingestionId");
+        return records.stream()
+                .filter(receivedRecord -> receivedRecord.ingestionId().equals(ingestionId))
+                .filter(receivedRecord -> receivedRecord.classification() == Classification.QUARANTINED)
+                .filter(receivedRecord -> receivedRecord.externalRecordId() == null)
+                .filter(receivedRecord -> !decisions.existsFor(receivedRecord.id()))
+                .filter(receivedRecord -> ingestions.findById(ingestionId).isPresent())
+                .sorted(LINE_ORDER)
+                .toList();
+    }
+
+    @Override
+    public int countUndecidedKeylessQuarantines(UUID ingestionId) {
+        return undecidedKeylessQuarantinesOf(ingestionId).size();
     }
 
     private Stream<UndecidedQuarantine> undecided(UUID ingestionIdOrNull) {

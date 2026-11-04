@@ -52,6 +52,8 @@
             <Class name="com.example.cargotracker.identity.interfaces.web.PasswordResetController"/>
             <!-- S-16 の画面は、DI の部品（取込のサービスと 2 つの照会）を保持するだけ（Bolt 39c） -->
             <Class name="com.example.cargotracker.externaldata.interfaces.web.ExternalDataIngestionController"/>
+            <!-- S-17 の画面は、DI の部品（判断のサービスと照会）を保持するだけ。Bolt 39d2b で判断のサービスにまとめての却下を足して指摘された -->
+            <Class name="com.example.cargotracker.externaldata.interfaces.web.UndecidedRecordController"/>
         </Or>
     </Match>
     <!--

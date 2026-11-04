@@ -48,4 +48,14 @@ public interface ReceivedRecordRepository {
      * ない受信記録とないときは空。
      */
     Optional<UndecidedQuarantine> undecidedQuarantine(UUID receivedRecordId);
+
+    /**
+     * その取込の判断を待つキーのない隔離（分類が隔離で、外部原本を持たず、受信記録の判断の行がない受信記録）を、行の範囲の始まりの順（範囲の
+     * ないファイルの誤りを先、同じなら受信記録 ID の順。{@link #quarantinedOf} と同じ並び）に、件数の上限なしで（まとめての却下の対象。
+     * Bolt 39d2b）。1 つの取込のキーのない隔離はデータ行の上限 10,000 件と取り込めなかった部分・ファイルの誤りの数件に収まる。
+     */
+    List<ReceivedRecord> undecidedKeylessQuarantinesOf(UUID ingestionId);
+
+    /** その取込の判断を待つキーのない隔離の件数（{@link #undecidedKeylessQuarantinesOf} と同じ定め。Bolt 39d2b）。 */
+    int countUndecidedKeylessQuarantines(UUID ingestionId);
 }

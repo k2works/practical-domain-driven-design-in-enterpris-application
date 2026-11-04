@@ -12,9 +12,12 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.example.cargotracker.externaldata.application.internal.commands.RejectKeylessQuarantinesCommand;
 import com.example.cargotracker.externaldata.application.internal.commands.RejectReceivedRecordCommand;
 import com.example.cargotracker.externaldata.application.internal.commandservices.DecisionOutcome;
+import com.example.cargotracker.externaldata.application.internal.commandservices.KeylessRejectionOutcome;
 import com.example.cargotracker.externaldata.application.internal.commandservices.ReceivedRecordDecisionService;
+import com.example.cargotracker.externaldata.application.internal.queryservices.KeylessRejectionTarget;
 import com.example.cargotracker.externaldata.application.internal.queryservices.UndecidedRecordPage;
 import com.example.cargotracker.externaldata.application.internal.queryservices.UndecidedRecordQueryService;
 import com.example.cargotracker.externaldata.domain.model.aggregates.ReceivedRecordDecision;
@@ -84,7 +87,7 @@ class UndecidedRecordControllerTest {
     private static UndecidedRecordPage page(int total, int page, UUID filter) {
         int pageCount = (total + 99) / 100;
         int shown = total == 0 ? 0 : Math.min(100, total - (page - 1) * 100);
-        return new UndecidedRecordPage(items(shown), total, page, pageCount, filter, false);
+        return new UndecidedRecordPage(items(shown), total, page, pageCount, filter, false, 0);
     }
 
     private ResultActions list(String query) throws Exception {
@@ -116,7 +119,7 @@ class UndecidedRecordControllerTest {
                 null,
                 "ファイル: 必要な列がありません（port_calls）。");
         given(query.page(null, 1))
-                .willReturn(new UndecidedRecordPage(List.of(fileError, mismatch), 2, 1, 1, null, false));
+                .willReturn(new UndecidedRecordPage(List.of(fileError, mismatch), 2, 1, 1, null, false, 0));
 
         list("").andExpect(content().string(containsString("<h1>隔離・差異の確認</h1>")))
                 .andExpect(content().string(containsString(TABLE)))
@@ -148,7 +151,7 @@ class UndecidedRecordControllerTest {
 
     @Test
     void 行1_1行の範囲はN行目で示す() throws Exception {
-        given(query.page(null, 1)).willReturn(new UndecidedRecordPage(List.of(keyless(102)), 1, 1, 1, null, false));
+        given(query.page(null, 1)).willReturn(new UndecidedRecordPage(List.of(keyless(102)), 1, 1, 1, null, false, 0));
 
         list("").andExpect(content().string(containsString("<td>102 行目</td>")));
     }
@@ -271,7 +274,7 @@ class UndecidedRecordControllerTest {
     @Test
     void 行13_ない取込IDは照会の見つからない印で同じ文を示す() throws Exception {
         UUID missing = UUID.randomUUID();
-        given(query.page(missing, 1)).willReturn(new UndecidedRecordPage(items(2), 2, 1, 1, null, true));
+        given(query.page(missing, 1)).willReturn(new UndecidedRecordPage(items(2), 2, 1, 1, null, true, 0));
 
         list("?ingestion=" + missing)
                 .andExpect(content().string(containsString("<p>指定された取込が見つかりません。</p>")))
@@ -320,7 +323,7 @@ class UndecidedRecordControllerTest {
                 null,
                 null,
                 "ファイル: 同じ名前の列があります（<b>id</b>、<script>alert(1)</script>、&amp;）。提供元に確かめてください。");
-        given(query.page(null, 1)).willReturn(new UndecidedRecordPage(List.of(item), 1, 1, 1, null, false));
+        given(query.page(null, 1)).willReturn(new UndecidedRecordPage(List.of(item), 1, 1, 1, null, false, 0));
 
         list("").andExpect(content()
                         .string(containsString("<td>ファイル: 同じ名前の列があります（&lt;b&gt;id&lt;/b&gt;、"
@@ -398,7 +401,7 @@ class UndecidedRecordControllerTest {
         void 行17_一覧の各行に元の取込とページへの戻り先を持つ判断するのリンクがあり読み上げに行の範囲と外部IDを含める() throws Exception {
             UndecidedRecordPage.Item item = mismatch();
             given(query.page(INGESTION_ID, 2))
-                    .willReturn(new UndecidedRecordPage(List.of(item), 101, 2, 2, INGESTION_ID, false));
+                    .willReturn(new UndecidedRecordPage(List.of(item), 101, 2, 2, INGESTION_ID, false, 0));
 
             list("?ingestion=" + INGESTION_ID + "&page=2")
                     .andExpect(
@@ -412,7 +415,7 @@ class UndecidedRecordControllerTest {
         @Test
         void 行17_絞らない一覧のキーのない隔離の判断するはページだけを持ち外部IDなしと読む() throws Exception {
             given(query.page(null, 1))
-                    .willReturn(new UndecidedRecordPage(List.of(keylessItem()), 1, 1, 1, null, false));
+                    .willReturn(new UndecidedRecordPage(List.of(keylessItem()), 1, 1, 1, null, false, 0));
 
             list("").andExpect(content()
                     .string(containsString("<a href=\"" + DECISION_URL
@@ -670,6 +673,323 @@ class UndecidedRecordControllerTest {
                     .contains("<p id=\"reason-error\" class=\"text-danger\">" + message + "</p>")
                     .containsPattern("<textarea[^>]*id=\"reason\"[^>]*aria-invalid=\"true\"")
                     .containsPattern("<textarea[^>]*aria-describedby=\"reason-hint reason-error\"");
+        }
+    }
+
+    /**
+     * Bolt 39d2b の行 1〜3・6・7・9・10・16・18・23（S-17 の形式の誤りのまとめての却下。開始準備の決定 (3)・(7)・(8)、T-240・T-244）。
+     * 判断のサービスと照会は mock にし、一覧のリンクと知らせとページ送りの位置、まとめての却下の画面の中身と行き先（404・一覧に戻る・画面に
+     * 戻る）、欄の誤りを確かめる。39d・39d2 の同じ番号の行と名前が衝突しないよう入れ子にする。
+     */
+    @Nested
+    class Bolt39d2b_形式の誤りのまとめての却下 {
+
+        private static final String KEYLESS_URL = LIST_URL + "/keyless-rejection";
+        private static final String SCREEN_URL = KEYLESS_URL + "?ingestion=" + INGESTION_ID;
+        private static final String BACK_URL = LIST_URL + "?ingestion=" + INGESTION_ID + "&page=1";
+        private static final String NOTHING_TO_REJECT = "この取込にまとめて却下できる形式の誤りはありません。";
+        private static final String REASON_REQUIRED = "却下の理由を書いてください。";
+        private static final String REASON_TOO_LONG = "却下の理由は 1000 文字までで書いてください。";
+        private static final String EXCLUDES_MISMATCH = "内容の違う原本は含みません。一覧で 1 件ずつ判断してください。";
+        private static final String KEYLESS_GUIDE = "形式の誤りは採用できません。直したファイルを取り込み直してください。";
+        private static final String IRREVOCABLE = "却下すると取り消せません。誤って却下したときは、提供元に同じ原本を送り直してもらってください。";
+        /** 補助文字（U+20BB7。UTF-16 で 2 単位）。 */
+        private static final String SUPPLEMENTARY = new String(Character.toChars(0x20BB7));
+
+        private static KeylessRejectionTarget target(int count) {
+            return new KeylessRejectionTarget(INGESTION_ID, INGESTED_AT, "開発海運（架空）", "VOYAGE", count);
+        }
+
+        private static UndecidedRecordPage filtered(int total, int keylessCount) {
+            int shown = Math.min(100, total);
+            return new UndecidedRecordPage(
+                    items(shown), total, 1, (total + 99) / 100, INGESTION_ID, false, keylessCount);
+        }
+
+        private static String linkOf(String count) {
+            return "<a href=\"" + KEYLESS_URL + "?ingestion=" + INGESTION_ID + "\">この取込の形式の誤りをまとめて却下する（" + count
+                    + " 件）</a>";
+        }
+
+        private String body(org.springframework.test.web.servlet.RequestBuilder request) throws Exception {
+            return mockMvc.perform(request)
+                    .andExpect(status().isOk())
+                    .andReturn()
+                    .getResponse()
+                    .getContentAsString(java.nio.charset.StandardCharsets.UTF_8);
+        }
+
+        private ResultActions postReason(String url, String reason) throws Exception {
+            return mockMvc.perform(post(url).param("reason", reason));
+        }
+
+        // --- 行 1・2・6・18: 一覧のリンクとページ送りの位置 ---
+
+        @Test
+        void 行1_取込で絞った一覧で形式の誤りがあれば件数の文の後にまとめての却下のリンクを出す() throws Exception {
+            given(query.page(INGESTION_ID, 1)).willReturn(filtered(3, 2));
+
+            String page = body(get(LIST_URL + "?ingestion=" + INGESTION_ID));
+
+            org.assertj.core.api.Assertions.assertThat(page).contains(linkOf("2"));
+            org.assertj.core.api.Assertions.assertThat(page.indexOf("この取込の判断を待つ隔離 3 件"))
+                    .isLessThan(page.indexOf(linkOf("2")));
+        }
+
+        static java.util.stream.Stream<org.junit.jupiter.params.provider.Arguments> withoutLink() {
+            return java.util.stream.Stream.of(
+                    org.junit.jupiter.params.provider.Arguments.of(
+                            "絞らない一覧", null, new UndecidedRecordPage(items(2), 2, 1, 1, null, false, 0)),
+                    org.junit.jupiter.params.provider.Arguments.of(
+                            "取込が見つからない一覧", INGESTION_ID, new UndecidedRecordPage(items(2), 2, 1, 1, null, true, 0)),
+                    org.junit.jupiter.params.provider.Arguments.of("形式の誤りが 0 件の取込", INGESTION_ID, filtered(1, 0)));
+        }
+
+        @ParameterizedTest(name = "{0}")
+        @org.junit.jupiter.params.provider.MethodSource("withoutLink")
+        void 行2_絞らない一覧と取込が見つからない一覧と形式の誤りが0件の取込にはまとめての却下のリンクを出さない(String name, UUID filter, UndecidedRecordPage result)
+                throws Exception {
+            given(query.page(filter, 1)).willReturn(result);
+
+            list(filter == null ? "" : "?ingestion=" + filter)
+                    .andExpect(content().string(not(containsString("まとめて却下する"))))
+                    .andExpect(content().string(not(containsString("keyless-rejection"))));
+        }
+
+        @ParameterizedTest(name = "{0} 件")
+        @CsvSource({"1, 1", "1000, '1,000'", "10001, '10,001'"})
+        void 行6_リンクと画面と知らせの件数を3桁の区切りで示す(int count, String grouped) throws Exception {
+            given(query.page(INGESTION_ID, 1)).willReturn(filtered(count, count));
+            given(query.keylessRejectionTarget(INGESTION_ID)).willReturn(java.util.Optional.of(target(count)));
+            given(decisions.rejectKeyless(any(), any())).willReturn(new KeylessRejectionOutcome.RejectedAll(count));
+
+            list("?ingestion=" + INGESTION_ID).andExpect(content().string(containsString(linkOf(grouped))));
+            org.assertj.core.api.Assertions.assertThat(body(get(SCREEN_URL)))
+                    .containsPattern("<dt>形式の誤り</dt>\\s*<dd>" + grouped + " 件</dd>");
+            postReason(SCREEN_URL, "直したファイルを取り込み直した。")
+                    .andExpect(status().is3xxRedirection())
+                    .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash()
+                            .attribute("result", "形式の誤り " + grouped + " 件を却下しました。"));
+        }
+
+        @Test
+        void 行18_ページ送りは件数の文とまとめての却下のリンクとすべての取込の隔離を見るの後で表の前に1つだけある() throws Exception {
+            UndecidedRecordPage second = new UndecidedRecordPage(items(100), 10001, 2, 101, INGESTION_ID, false, 10000);
+            given(query.page(INGESTION_ID, 2)).willReturn(second);
+
+            String page = body(get(LIST_URL + "?ingestion=" + INGESTION_ID + "&page=2"));
+
+            int count = page.indexOf("この取込の判断を待つ隔離 10,001 件");
+            int link = page.indexOf(linkOf("10,000"));
+            int all = page.indexOf(">すべての取込の隔離を見る</a>");
+            String navTag = "<nav aria-label=\"判断を待つ隔離のページ\">";
+            int nav = page.indexOf(navTag);
+            int table = page.indexOf(TABLE);
+            org.assertj.core.api.Assertions.assertThat(List.of(count, link, all, nav, table))
+                    .doesNotContain(-1)
+                    .isSorted();
+            org.assertj.core.api.Assertions.assertThat(page.indexOf("判断を待つ隔離のページ", nav + navTag.length()))
+                    .isEqualTo(-1);
+        }
+
+        // --- 行 16: 件数が減って 0 件になった一覧 ---
+
+        @Test
+        void 行16_照会が0件を返せば取込で絞った0件の文を示し0から0件目を出さない() throws Exception {
+            given(query.page(INGESTION_ID, 3))
+                    .willReturn(new UndecidedRecordPage(List.of(), 0, 1, 0, INGESTION_ID, false, 0));
+
+            list("?ingestion=" + INGESTION_ID + "&page=3")
+                    .andExpect(content().string(containsString("<p>この取込に判断を待つ隔離はありません。</p>")))
+                    .andExpect(content().string(not(containsString("0〜0 件目"))))
+                    .andExpect(content().string(not(containsString("<table"))));
+        }
+
+        // --- 行 3: まとめての却下の画面の中身 ---
+
+        @Test
+        void 行3_まとめての却下の画面は取込と情報源と件数と含まないものと取り消せないことと理由の欄を示す() throws Exception {
+            given(query.keylessRejectionTarget(INGESTION_ID)).willReturn(java.util.Optional.of(target(2)));
+
+            String page = mockMvc.perform(get(SCREEN_URL))
+                    .andExpect(status().isOk())
+                    .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.model()
+                            .attribute("reasonLimit", ReceivedRecordDecision.REASON_LIMIT))
+                    .andReturn()
+                    .getResponse()
+                    .getContentAsString(java.nio.charset.StandardCharsets.UTF_8);
+
+            org.assertj.core.api.Assertions.assertThat(page)
+                    .contains("<title>形式の誤りのまとめての却下 - cargo-tracker</title>")
+                    .contains("<h1>形式の誤りのまとめての却下</h1>")
+                    .containsPattern(
+                            "<dt>取り込んだ日時</dt>\\s*<dd>2026-11-16 10:05 Asia/Tokyo（UTC\\+09:00）（UTC 2026-11-16 01:05）</dd>")
+                    .containsPattern("<dt>情報源</dt>\\s*<dd>開発海運（架空）（航海）</dd>")
+                    .containsPattern("<dt>形式の誤り</dt>\\s*<dd>2 件</dd>")
+                    .contains("この取込の判断を待つ形式の誤りをすべて、同じ理由で却下します。")
+                    .contains(EXCLUDES_MISMATCH)
+                    .contains(KEYLESS_GUIDE)
+                    .contains("<label for=\"reason\">却下の理由</label>")
+                    .contains("<p id=\"reason-hint\">必須、" + ReceivedRecordDecision.REASON_LIMIT + " 文字まで</p>")
+                    .containsPattern("<textarea[^>]*id=\"reason\"[^>]*aria-required=\"true\"")
+                    .contains(IRREVOCABLE)
+                    .contains("action=\"" + SCREEN_URL + "\"")
+                    .contains(">まとめて却下する</button>")
+                    .contains("<a href=\"" + LIST_URL + "?ingestion=" + INGESTION_ID + "&amp;page=1\">一覧に戻る</a>")
+                    .doesNotContain("error-summary");
+        }
+
+        // --- 行 9・10: 画面の行き先 ---
+
+        @Test
+        void 行9_画面を開いた時点で0件なら取込で絞った一覧に戻ってまとめて却下できる形式の誤りはないと知らせる() throws Exception {
+            given(query.keylessRejectionTarget(INGESTION_ID)).willReturn(java.util.Optional.of(target(0)));
+
+            mockMvc.perform(get(SCREEN_URL))
+                    .andExpect(status().is3xxRedirection())
+                    .andExpect(
+                            org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl(BACK_URL))
+                    .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash()
+                            .attribute("result", NOTHING_TO_REJECT));
+        }
+
+        @ParameterizedTest(name = "[{0}]")
+        @ValueSource(
+                strings = {"", "?ingestion=", "?ingestion=not-a-uuid", "?ingestion=39d2b000-0000-0000-0000-0000000000cc"
+                })
+        void 行10_取込の指定がないかUUIDでないかない取込ならGETもPOSTも404で判断の画面に入らない(String parameter) throws Exception {
+            given(query.keylessRejectionTarget(any())).willReturn(java.util.Optional.empty());
+            given(decisions.rejectKeyless(any(), any())).willReturn(new KeylessRejectionOutcome.NotFound());
+
+            mockMvc.perform(get(KEYLESS_URL + parameter)).andExpect(status().isNotFound());
+            postReason(KEYLESS_URL + parameter, "理由").andExpect(status().isNotFound());
+            // keyless-rejection は判断の画面の /{受信記録 ID} より先に選ばれる（受信記録 ID として読まない）
+            then(decisions).should(org.mockito.Mockito.never()).refusalOf(any());
+            then(query).should(org.mockito.Mockito.never()).undecidedQuarantine(any());
+        }
+
+        // --- 行 1・4・9〜11: POST の結果ごとの行き先（T-240。結果のすべてに行き先がある） ---
+
+        static java.util.stream.Stream<org.junit.jupiter.params.provider.Arguments> outcomes() {
+            return java.util.stream.Stream.of(
+                    org.junit.jupiter.params.provider.Arguments.of(
+                            new KeylessRejectionOutcome.RejectedAll(2), 302, "形式の誤り 2 件を却下しました。"),
+                    org.junit.jupiter.params.provider.Arguments.of(
+                            new KeylessRejectionOutcome.NothingToReject(), 302, NOTHING_TO_REJECT),
+                    org.junit.jupiter.params.provider.Arguments.of(new KeylessRejectionOutcome.NotFound(), 404, null),
+                    org.junit.jupiter.params.provider.Arguments.of(
+                            new KeylessRejectionOutcome.NotPermitted(), 403, null));
+        }
+
+        @ParameterizedTest(name = "{0}")
+        @org.junit.jupiter.params.provider.MethodSource("outcomes")
+        void 行4_行9_行10_行11_まとめての却下の結果ごとに取込で絞った一覧に戻って知らせるか404か403にする(
+                KeylessRejectionOutcome outcome, int status, String notice) throws Exception {
+            given(decisions.rejectKeyless(any(), any())).willReturn(outcome);
+
+            ResultActions result =
+                    postReason(SCREEN_URL, "列の数を直したファイルを取り込み直した。").andExpect(status().is(status));
+
+            if (notice != null) {
+                result.andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl(
+                                BACK_URL))
+                        .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash()
+                                .attribute("result", notice));
+            }
+            then(decisions)
+                    .should()
+                    .rejectKeyless(
+                            any(),
+                            org.mockito.ArgumentMatchers.eq(
+                                    new RejectKeylessQuarantinesCommand(INGESTION_ID, "列の数を直したファイルを取り込み直した。")));
+        }
+
+        @Test
+        void 行1_まとめての却下の結果の型のすべてを行き先の組で縛る() {
+            List<Class<?>> covered = outcomes()
+                    .<Class<?>>map(arguments -> arguments.get()[0].getClass())
+                    .toList();
+            org.assertj.core.api.Assertions.assertThat(covered)
+                    .containsExactlyInAnyOrder(KeylessRejectionOutcome.class.getPermittedSubclasses());
+        }
+
+        @Test
+        void 行4_一覧はまとめての却下の知らせを状態の領域に示す() throws Exception {
+            given(query.page(INGESTION_ID, 1)).willReturn(filtered(1, 0));
+
+            mockMvc.perform(get(BACK_URL).flashAttr("result", "形式の誤り 2 件を却下しました。"))
+                    .andExpect(content().string(containsString("<p role=\"status\">形式の誤り 2 件を却下しました。</p>")));
+        }
+
+        // --- 行 7・23: 理由の欄の誤り（T-244） ---
+
+        static java.util.stream.Stream<org.junit.jupiter.params.provider.Arguments> invalidReasons() {
+            return java.util.stream.Stream.of(
+                    org.junit.jupiter.params.provider.Arguments.of("空", "", REASON_REQUIRED),
+                    org.junit.jupiter.params.provider.Arguments.of("半角の空白だけ", " ", REASON_REQUIRED),
+                    org.junit.jupiter.params.provider.Arguments.of("全角の空白だけ", "　", REASON_REQUIRED),
+                    org.junit.jupiter.params.provider.Arguments.of(
+                            "補助文字を含む 1001 文字", SUPPLEMENTARY.repeat(500) + "あ".repeat(501), REASON_TOO_LONG));
+        }
+
+        @ParameterizedTest(name = "{0}")
+        @org.junit.jupiter.params.provider.MethodSource("invalidReasons")
+        void 行7_理由が空か空白だけか1001文字ならまとめての却下の画面に戻り欄の誤りを示してサービスを呼ばない(String name, String reason, String message)
+                throws Exception {
+            given(query.keylessRejectionTarget(INGESTION_ID)).willReturn(java.util.Optional.of(target(2)));
+
+            String page = mockMvc.perform(post(SCREEN_URL).param("reason", reason))
+                    .andExpect(status().isOk())
+                    .andReturn()
+                    .getResponse()
+                    .getContentAsString(java.nio.charset.StandardCharsets.UTF_8);
+
+            org.assertj.core.api.Assertions.assertThat(page)
+                    .contains("<title>却下できませんでした - 形式の誤りのまとめての却下 - cargo-tracker</title>")
+                    .contains("<a href=\"#reason\">" + message + "</a>")
+                    .contains("<p id=\"reason-error\" class=\"text-danger\">" + message + "</p>")
+                    .containsPattern("<textarea[^>]*id=\"reason\"[^>]*aria-invalid=\"true\"")
+                    .containsPattern("<textarea[^>]*aria-describedby=\"reason-hint reason-error\"")
+                    .containsPattern("<dt>形式の誤り</dt>\\s*<dd>2 件</dd>");
+            then(decisions).should(org.mockito.Mockito.never()).rejectKeyless(any(), any());
+        }
+
+        @Test
+        void 行7_補助文字を含む1000文字の理由はそのままサービスに渡す() throws Exception {
+            String thousand = SUPPLEMENTARY.repeat(500) + "あ".repeat(500);
+            given(decisions.rejectKeyless(any(), any())).willReturn(new KeylessRejectionOutcome.RejectedAll(2));
+
+            postReason(SCREEN_URL, thousand).andExpect(status().is3xxRedirection());
+
+            then(decisions)
+                    .should()
+                    .rejectKeyless(
+                            any(),
+                            org.mockito.ArgumentMatchers.eq(
+                                    new RejectKeylessQuarantinesCommand(INGESTION_ID, thousand)));
+        }
+
+        @Test
+        void 行23_理由の誤りのときに対象が0件になっていれば取込で絞った一覧に戻って知らせる() throws Exception {
+            given(query.keylessRejectionTarget(INGESTION_ID)).willReturn(java.util.Optional.of(target(0)));
+
+            postReason(SCREEN_URL, " ")
+                    .andExpect(status().is3xxRedirection())
+                    .andExpect(
+                            org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl(BACK_URL))
+                    .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash()
+                            .attribute("result", NOTHING_TO_REJECT));
+            then(query).should().keylessRejectionTarget(INGESTION_ID);
+            then(decisions).should(org.mockito.Mockito.never()).rejectKeyless(any(), any());
+        }
+
+        @Test
+        void 行23_理由の誤りのときに取込がなくなっていれば404() throws Exception {
+            given(query.keylessRejectionTarget(INGESTION_ID)).willReturn(java.util.Optional.empty());
+
+            postReason(SCREEN_URL, "").andExpect(status().isNotFound());
+            then(query).should().keylessRejectionTarget(INGESTION_ID);
+            then(decisions).should(org.mockito.Mockito.never()).rejectKeyless(any(), any());
         }
     }
 }
