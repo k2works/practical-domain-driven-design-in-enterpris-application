@@ -10270,6 +10270,76 @@
   
   
     <li class="md-nav__item">
+      <a href="../bolt_39d3_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 39d3 計画
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../bolt_39d3_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 39d3 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../release_report-0_1/" class="md-nav__link">
         
   
@@ -18006,21 +18076,21 @@
 </tr>
 <tr>
 <td style="text-align: left;">39d3</td>
-<td style="text-align: left;">S-17 の判断の画面で航海の内容の違う原本の受け取った値とこの外部版の採用値を比べる縦: 受信記録に値の列（<code>target_key</code>・<code>value_summary</code>。NULL 可。CHECK と外部原本 ID の索引。スキーマ。H2 は広げない）と取込での書き込み（外部原本を持つ受信記録。航海・主要実績）、航海の要約から値に戻す規則（<code>VoyageValues.ofSummary</code>）、この外部版の採用値の照会（同じ外部原本（同じ外部 ID と外部版）の採用値のうち公開した時刻の新しいもの。別の外部版の採用値は含めない。【業務の判断】(j)）、判断の画面の「受け取った値」「この外部版の採用値」とそれぞれの取得時刻、同じ値の文（値も取得時刻も同じ・取得時刻だけが違う）（【業務の判断】(i)）、マニュアル 12.2 の判断の画面の説明とキャプチャ、デモの動画（Bolt 39d の開始準備で 39d から分けた）。【前の決定の変更】初案の 39d3（採用まで）を、開始準備で半日を超える（1 本で約 7 時間 15 分）ので 39d3・39d3c・39d3b の 3 本に縦に分けた（Bolt 39d3 の開始準備の決定 (1)。2 本では 39d3 が約 4 時間 40 分、39d3b が約 4 時間 15 分で、半日を 4 時間と読むとどちらも超えるので、主要実績の値の示し方を 39d3c に分けた。2026-11-05、推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）。ADR-004 の「受信記録の列には書かない」を改める（Bolt 39d3 の【前の決定の変更】(2)）。約 4 時間 05 分の見込み。<a href="../bolt_39d3_plan/">Bolt 39d3 計画</a>（承認済み。推奨のとおり。Recommend 承認の指示による）</td>
+<td style="text-align: left;">S-17 の判断の画面で航海の内容の違う原本の受け取った値とこの外部版の採用値を比べる縦: 受信記録に値の列（<code>target_key</code>・<code>value_summary</code>。NULL 可。CHECK と外部原本 ID の索引。スキーマ。H2 は広げない）と取込での書き込み（外部原本を持つ受信記録。航海・主要実績）、航海の要約から値に戻す規則（<code>VoyageValues.ofSummary</code>）、この外部版の採用値の照会（同じ外部原本（同じ外部 ID と外部版）の採用値のうち公開した時刻の新しいもの。別の外部版の採用値は含めない。【業務の判断】(j)）、判断の画面の「受け取った値」「この外部版の採用値」とそれぞれの取得時刻、同じ値の文（値も取得時刻も同じ・取得時刻だけが違う）（【業務の判断】(i)）、マニュアル 12.2 の判断の画面の説明とキャプチャ、デモの動画（Bolt 39d の開始準備で 39d から分けた）。【前の決定の変更】初案の 39d3（採用まで）を、開始準備で半日を超える（1 本で約 7 時間 15 分）ので 39d3・39d3c・39d3b の 3 本に縦に分けた（Bolt 39d3 の開始準備の決定 (1)。2 本では 39d3 が約 4 時間 40 分、39d3b が約 4 時間 15 分で、半日を 4 時間と読むとどちらも超えるので、主要実績の値の示し方を 39d3c に分けた。2026-11-05、推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）。ADR-004 の「受信記録の列には書かない」を改める（Bolt 39d3 の【前の決定の変更】(2)）。約 4 時間 05 分の見込み。<a href="../bolt_39d3_plan/">Bolt 39d3 計画</a>（承認済み。推奨のとおり。Recommend 承認の指示による）・<a href="../bolt_39d3_report/">終了報告</a>（承認済み）</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: left;">アウトサイドイン（S-17 の判断の画面の値から）</td>
 <td style="text-align: left;">ステップごと（スキーマ・画面）</td>
 </tr>
 <tr>
 <td style="text-align: left;">39d3c</td>
-<td style="text-align: left;">S-17 の判断の画面で主要実績の内容の違う原本の値を比べ、値を読めない隔離も却下で片付けられる縦（Bolt 39d3 の開始準備で 39d3 から分けた）: 主要実績の要約から値に戻す規則（<code>MilestoneValues.ofSummary</code>）と型で分ける入口（<code>RecordValues.ofSummary</code>）、判断の画面の主要実績の追跡番号・種類（日本語の名前。種類の表示名の写し）・場所・発生時刻、読めない値（壊れた要約・知らない原本種別。500 にせず「値を読めませんでした。」を示し、却下を残す）、上限いっぱいの確かめ（寄港 60 と補助文字を含む 30 文字の航海番号の往復、寄港 60 の幅 320 px。見積りを目安に収めるため 39d3 から送る）、採用の組み立て役を受け取った値から作れる形にし、キーを <code>targetKey()</code> に寄せる（取込での自動の採用の振る舞いを変えないリファクタリング。39d3b を目安に収めるため 39d3b から送る）、マニュアル 12.2 の主要実績の値と読めない値の文、デモの動画。39d3b の採用の前に主要実績の値を読めるようにするので 39d3b の前に置く。約 3 時間 05 分の見込み</td>
+<td style="text-align: left;">S-17 の判断の画面で主要実績の内容の違う原本の値を比べ、値を読めない隔離も却下で片付けられる縦（Bolt 39d3 の開始準備で 39d3 から分けた）: 主要実績の要約から値に戻す規則（<code>MilestoneValues.ofSummary</code>）と型で分ける入口（<code>RecordValues.ofSummary</code>）、判断の画面の主要実績の追跡番号・種類（日本語の名前。種類の表示名の写し）・場所・発生時刻、読めない値（壊れた要約・知らない原本種別。500 にせず「値を読めませんでした。」を示し、却下を残す）、上限いっぱいの確かめ（寄港 60 と補助文字を含む 30 文字の航海番号の往復、寄港 60 の幅 320 px。見積りを目安に収めるため 39d3 から送る）、採用の組み立て役を受け取った値から作れる形にし、キーを <code>targetKey()</code> に寄せる（取込での自動の採用の振る舞いを変えないリファクタリング。39d3b を目安に収めるため 39d3b から送る）、マニュアル 12.2 の主要実績の値と読めない値の文、デモの動画。39d3b の採用の前に主要実績の値を読めるようにするので 39d3b の前に置く。約 3 時間 05 分の見込み、39d3 の開発レビューから: 値の領域のフラグメントを <code>externaldata/fragments/</code> の新しいファイルに移す、「取得時刻」と「取得した日時」の語をそろえる（推奨は「取得した日時」）</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: left;">アウトサイドイン（S-17 の判断の画面の主要実績の値から）</td>
 <td style="text-align: left;">ステップごと（画面）</td>
 </tr>
 <tr>
 <td style="text-align: left;">39d3b</td>
-<td style="text-align: left;">S-17 で内容の違う原本の隔離を採用する縦（Bolt 39d3 の開始準備で 39d3 から分けた）: 外部原本のポートの <code>findById</code>、採用の判断（<code>DecisionKind.ADOPTED</code>、理由は任意。【業務の判断】(d)）、39d3c で値から作れる形にした採用の組み立て役で、受け取った値から採用値と DE-12・DE-13（操作者は判断者、公開した時刻は判断の時刻）と DE-29（<code>ADOPTED</code>）、キーのない隔離と値の列のない隔離は採用を出さない、監査の不変条件（IA-INV-15）と理由のない DE-29 を受ける listener の直し、<code>EXTERNAL_RECORD_ADOPTED</code> の Javadoc と DE-12・DE-13 の <code>publishedAt</code> の直し、判断の画面の「採用する」と POST、マニュアル 12.2 の採用（誤って採用したときの案内。【業務の判断】(e)、D-95）と付録 B、デモの動画。【業務の判断】(b)・(f) を終了報告の議題の先頭に置く（Bolt 39d の開始準備の決定 (9) の 39d3 を 39d3b に読み替える）。約 3 時間 55 分の見込み</td>
+<td style="text-align: left;">S-17 で内容の違う原本の隔離を採用する縦（Bolt 39d3 の開始準備で 39d3 から分けた）: 外部原本のポートの <code>findById</code>、採用の判断（<code>DecisionKind.ADOPTED</code>、理由は任意。【業務の判断】(d)）、39d3c で値から作れる形にした採用の組み立て役で、受け取った値から採用値と DE-12・DE-13（操作者は判断者、公開した時刻は判断の時刻）と DE-29（<code>ADOPTED</code>）、キーのない隔離と値の列のない隔離は採用を出さない、監査の不変条件（IA-INV-15）と理由のない DE-29 を受ける listener の直し、<code>EXTERNAL_RECORD_ADOPTED</code> の Javadoc と DE-12・DE-13 の <code>publishedAt</code> の直し、判断の画面の「採用する」と POST、マニュアル 12.2 の採用（誤って採用したときの案内。【業務の判断】(e)、D-95）と付録 B、デモの動画。【業務の判断】(b)・(f) を終了報告の議題の先頭に置く（Bolt 39d の開始準備の決定 (9) の 39d3 を 39d3b に読み替える）。約 3 時間 55 分の見込み、39d3 の開発レビューから: 却下の欄の見出し、同じ公開時刻の採用値を ID の順で選ぶときの H2 の UUID の比べ方</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: left;">アウトサイドイン（S-17 の採用から）</td>
 <td style="text-align: left;">ステップごと（監査・画面）</td>
@@ -20832,6 +20902,11 @@
 <tr>
 <td style="text-align: left;">2026-11-05</td>
 <td style="text-align: left;">39d3 を 39d3・39d3c・39d3b に分け、<a href="../bolt_39d3_plan/">Bolt 39d3 計画</a>を承認した（推奨のとおり。Recommend 承認の指示による）。W7 の節の 39d3 の行を承認済みにし、【前の決定の変更】の注を決定にし、39d3c・39d3b の行の「案」を外した（Bolt 39d3 のステップ 1 で書いた）</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-11-05</td>
+<td style="text-align: left;">Bolt 39d3 のステップ 1〜8 と<a href="../bolt_39d3_report/">終了報告</a>を承認した（推奨のとおり。Recommend 承認の指示による）</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
 </tr>
 <tr>
