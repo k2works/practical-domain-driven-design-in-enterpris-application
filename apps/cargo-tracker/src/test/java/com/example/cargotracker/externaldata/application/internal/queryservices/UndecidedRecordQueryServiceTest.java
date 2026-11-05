@@ -860,22 +860,27 @@ class UndecidedRecordQueryServiceTest {
 
         // --- 行 23: WARN のログ（ID・原本種別・例外の型だけ。要約の中身と例外の文は書かない） ---
 
-        @Test
-        void 行23_読めないときはWARNのログに受信記録IDと原本種別と例外の型だけを残す() {
+        /**
+         * 航海の入口の例外の文は壊れた要約を含む（{@code VoyageValues.ofSummary} の「寄港の要約は…: 」の後）ので、航海の組が「例外の文を書かない」
+         * ことを確かめる（主要実績の例外の文は要約を含まないので、主要実績の組だけでは確かめられない。Bolt 39d3c の開発レビュー）。
+         */
+        @ParameterizedTest(name = "{0}")
+        @CsvSource({"VOYAGE", "MILESTONE"})
+        void 行23_読めないときはWARNのログに受信記録IDと原本種別と例外の型だけを残す(String recordType) {
             ReceivedRecord quarantine = received(
-                    Classification.QUARANTINED, RECEIVED_ACQUIRED_AT, new ReceivedValue(TRACKING_NUMBER, BROKEN));
+                    Classification.QUARANTINED, RECEIVED_ACQUIRED_AT, new ReceivedValue(keyOf(recordType), BROKEN));
             ReceivedRecord adoptedRecord = received(Classification.ADOPTED, ADOPTED_ACQUIRED_AT, null);
-            AdoptedValue adopted = adoptedValue(adoptedRecord.id(), "MILESTONE", BROKEN);
+            AdoptedValue adopted = adoptedValue(adoptedRecord.id(), recordType, BROKEN);
             given(receivedRecords.findById(quarantine.id())).willReturn(Optional.of(quarantine));
             given(receivedRecords.findById(adoptedRecord.id())).willReturn(Optional.of(adoptedRecord));
             given(adoptedValues.currentOf(externalRecordId)).willReturn(Optional.of(adopted));
 
-            service.quarantineValues(item(quarantine.id(), "MILESTONE"));
+            service.quarantineValues(item(quarantine.id(), recordType));
 
             assertThat(logs.list).hasSize(2).allSatisfy(event -> {
                 assertThat(event.getLevel()).isEqualTo(ch.qos.logback.classic.Level.WARN);
                 assertThat(event.getFormattedMessage())
-                        .contains("MILESTONE")
+                        .contains(recordType)
                         .contains(IllegalArgumentException.class.getName())
                         .doesNotContain(BROKEN);
                 assertThat(event.getThrowableProxy()).isNull();
@@ -887,17 +892,25 @@ class UndecidedRecordQueryServiceTest {
                     .contains(adoptedRecord.id().toString());
         }
 
+        /** 改行・復帰・ベルに加え、行の区切り（U+2028）・段落の区切り（U+2029）・書式の文字（U+202E）も置き換える（前例 DisplayNameRule）。 */
         @Test
         void 行23_知らない原本種別の制御文字は置き換えてログに書く() {
-            query("CON\nTAI\rNER\u0007", new ReceivedValue(VOYAGE_NUMBER, summaryOf("VOYAGE", false)), "VOYAGE", null);
+            query(
+                    "CON\nTAI\rNER\u0007X Y Z‮",
+                    new ReceivedValue(VOYAGE_NUMBER, summaryOf("VOYAGE", false)),
+                    "VOYAGE",
+                    null);
 
             assertThat(logs.list)
                     .singleElement()
                     .satisfies(event -> assertThat(event.getFormattedMessage())
-                            .contains("CON_TAI_NER_")
+                            .contains("CON_TAI_NER_X_Y_Z_")
                             .doesNotContain("\n")
                             .doesNotContain("\r")
-                            .doesNotContain("\u0007"));
+                            .doesNotContain("\u0007")
+                            .doesNotContain(" ")
+                            .doesNotContain(" ")
+                            .doesNotContain("‮"));
         }
 
         @Test

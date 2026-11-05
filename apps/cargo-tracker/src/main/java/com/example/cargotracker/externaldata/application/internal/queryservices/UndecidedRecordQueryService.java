@@ -128,11 +128,22 @@ public class UndecidedRecordQueryService {
         }
     }
 
-    /** ログに書く原本種別（表を直に書き換えて入りうる文字列なので、改行などの制御文字を置き換える。ログの偽造を防ぐ）。 */
+    /**
+     * ログに書く原本種別（表を直に書き換えて入りうる文字列なので、改行などの制御文字・行と段落の区切り・書式の文字を置き換える。ログの偽造を
+     * 防ぐ。判定は表示名の規則 {@code DisplayNameRule} の見分けにくい文字と同じ）。
+     */
     private static String printable(String text) {
         StringBuilder printable = new StringBuilder(text.length());
-        text.codePoints().forEach(c -> printable.appendCodePoint(Character.isISOControl(c) ? '_' : c));
+        text.codePoints().forEach(c -> printable.appendCodePoint(isUnprintable(c) ? '_' : c));
         return printable.toString();
+    }
+
+    private static boolean isUnprintable(int codePoint) {
+        int type = Character.getType(codePoint);
+        return Character.isISOControl(codePoint)
+                || type == Character.FORMAT
+                || type == Character.LINE_SEPARATOR
+                || type == Character.PARAGRAPH_SEPARATOR;
     }
 
     /**
