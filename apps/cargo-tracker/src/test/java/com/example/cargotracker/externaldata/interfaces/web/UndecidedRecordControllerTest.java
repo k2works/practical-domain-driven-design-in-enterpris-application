@@ -1008,7 +1008,8 @@ class UndecidedRecordControllerTest {
     /**
      * Bolt 39d3 の行 9〜12・20〜22（判断の画面の航海の値の領域。開始準備の決定 (6)・(7)、【業務の判断】(i)・(j)）。照会は mock にし、値の
      * 照会の結果を領域と文に変える振る舞いだけを見る。値を記録する前の隔離（行 10）とこの外部版の採用値がない隔離（行 11）は UI で作れない
-     * ので、ここで確かめる（T-243）。主要実績の値と値を読めない文は 39d3c。
+     * ので、ここで確かめる（T-243）。主要実績の値と値を読めない文は {@link Bolt39d3c_判断の画面の主要実績と読めない値}。行 22 の文は Bolt 39d3c で
+     * 「取得した日時」に語をそろえた。
      */
     @Nested
     class Bolt39d3_判断の画面の値 {
@@ -1020,7 +1021,7 @@ class UndecidedRecordControllerTest {
         private static final String ADOPTED_SECTION =
                 "<section aria-labelledby=\"adopted-values-heading\">\\s*<h2 id=\"adopted-values-heading\">この外部版の採用値</h2>";
         private static final String SAME_VALUES = "受け取った値はこの外部版の採用値と同じです。原本の書き方（引用符・空白など）だけが違います。";
-        private static final String SAME_VALUES_BUT_ACQUIRED_AT = "受け取った値はこの外部版の採用値と同じで、取得時刻だけが違います。";
+        private static final String SAME_VALUES_BUT_ACQUIRED_AT = "受け取った値はこの外部版の採用値と同じで、取得した日時だけが違います。";
         private static final String NOT_RECORDED = "この隔離は、受け取った値を記録する前に取り込みました。値は原本のファイルで確かめてください。";
         private static final String NO_ADOPTED = "この外部版の採用値はありません。";
         private static final Instant RECEIVED_ACQUIRED_AT = Instant.parse("2026-11-16T00:30:00Z");
@@ -1165,7 +1166,7 @@ class UndecidedRecordControllerTest {
         // --- 行 12・20: 値の領域を出さない隔離と、判断の画面の行き先 ---
 
         @ParameterizedTest(name = "{0}")
-        @CsvSource({"キーのない隔離（形式の誤り）, VOYAGE, true", "主要実績の内容の違う原本（39d3c まで）, MILESTONE, false"})
+        @CsvSource({"キーのない隔離（形式の誤り）, VOYAGE, true"})
         void 行12_値の照会が空なら値の領域を出さず判断の画面と却下の欄は今のまま(String name, String recordType, boolean keyless) throws Exception {
             UndecidedRecordPage.Item item = new UndecidedRecordPage.Item(
                     RECORD_ID,
@@ -1234,6 +1235,275 @@ class UndecidedRecordControllerTest {
                 org.assertj.core.api.Assertions.assertThat(indexOf(page, Pattern.quote(expected)))
                         .isLessThan(indexOf(page, RECEIVED_SECTION));
             }
+        }
+    }
+
+    /**
+     * Bolt 39d3c の行 14・23・24（判断の画面の主要実績の値と読めない値。開始準備の決定 (4)・(5)、【業務の判断】(k)）。照会は mock にし、値の照会の
+     * 結果を領域と文に変える振る舞いだけを見る。読めない値は UI で作れないので、ここで確かめる（T-243）。
+     */
+    @Nested
+    class Bolt39d3c_判断の画面の主要実績と読めない値 {
+
+        private static final UUID RECORD_ID = UUID.fromString("39d3c000-0000-0000-0000-0000000000cc");
+        private static final String DECISION_URL = LIST_URL + "/" + RECORD_ID;
+        private static final String RECEIVED_SECTION =
+                "<section aria-labelledby=\"received-values-heading\">\\s*<h2 id=\"received-values-heading\">受け取った値</h2>";
+        private static final String ADOPTED_SECTION =
+                "<section aria-labelledby=\"adopted-values-heading\">\\s*<h2 id=\"adopted-values-heading\">この外部版の採用値</h2>";
+        private static final String RECEIVED_META =
+                "<p>取得した日時 2026-11-16 09:30 Asia/Tokyo（UTC\\+09:00）（UTC 2026-11-16 00:30）</p>";
+        private static final String ADOPTED_META =
+                "<p>情報版 2・公開した日時 2026-11-15 18:00 Asia/Tokyo（UTC\\+09:00）（UTC 2026-11-15 09:00）・取得した日時"
+                        + " 2026-11-15 17:30 Asia/Tokyo（UTC\\+09:00）（UTC 2026-11-15 08:30）</p>";
+        private static final String ILLEGIBLE = "値を読めませんでした。";
+        private static final String NOT_RECORDED = "この隔離は、受け取った値を記録する前に取り込みました。値は原本のファイルで確かめてください。";
+        private static final String NO_ADOPTED = "この外部版の採用値はありません。";
+        private static final String SAME_VALUES = "受け取った値はこの外部版の採用値と同じです。原本の書き方（引用符・空白など）だけが違います。";
+        private static final String SAME_VALUES_BUT_ACQUIRED_AT = "受け取った値はこの外部版の採用値と同じで、取得した日時だけが違います。";
+        private static final Instant RECEIVED_ACQUIRED_AT = Instant.parse("2026-11-16T00:30:00Z");
+        private static final Instant ADOPTED_ACQUIRED_AT = Instant.parse("2026-11-15T08:30:00Z");
+        private static final Instant PUBLISHED_AT = Instant.parse("2026-11-15T09:00:00Z");
+
+        private UndecidedRecordPage.Item mismatch(String recordType) {
+            return new UndecidedRecordPage.Item(
+                    RECORD_ID,
+                    INGESTED_AT,
+                    "開発港運（架空）",
+                    recordType,
+                    new PhysicalLineRange(3, 3),
+                    false,
+                    "MS-0201",
+                    "2",
+                    "3 行目: 同じ外部 ID・外部版で内容の違う原本を受け取りました（最初の受信: 2026-11-15 09:00:00 UTC）。");
+        }
+
+        /** 東京の出発（発生時刻だけを変えられる。T-230）。 */
+        private static com.example.cargotracker.externaldata.domain.model.valueobjects.MilestoneValues milestone(
+                String occurredAt) {
+            return new com.example.cargotracker.externaldata.domain.model.valueobjects.MilestoneValues(
+                    new com.example.cargotracker.externaldata.domain.model.valueobjects.TrackingNumberValue(
+                            "CTABCDEFGH2345"),
+                    com.example.cargotracker.externaldata.domain.model.valueobjects.MilestoneKindValue.DEPARTURE,
+                    new Location("JPTYO"),
+                    new UtcInstant(Instant.parse(occurredAt)));
+        }
+
+        private static VoyageValues voyage(String losAngelesArrival) {
+            return new VoyageValues(
+                    "DEMO-201",
+                    List.of(
+                            new PortCallValue(
+                                    new Location("JPTYO"), null, new UtcInstant(Instant.parse("2026-11-18T23:00:00Z"))),
+                            new PortCallValue(
+                                    new Location("USLAX"), new UtcInstant(Instant.parse(losAngelesArrival)), null)));
+        }
+
+        private static com.example.cargotracker.externaldata.domain.model.valueobjects.RecordValues valuesOf(
+                String recordType) {
+            return "MILESTONE".equals(recordType) ? milestone("2026-11-19T00:00:00Z") : voyage("2026-12-01T14:00:00Z");
+        }
+
+        private static QuarantineValues.Adopted adopted(
+                com.example.cargotracker.externaldata.domain.model.valueobjects.RecordValues values,
+                Instant acquiredAt) {
+            return new QuarantineValues.Adopted(values, "2", PUBLISHED_AT, acquiredAt);
+        }
+
+        private static QuarantineValues.Adopted illegibleAdopted() {
+            return new QuarantineValues.Adopted(null, true, "2", PUBLISHED_AT, ADOPTED_ACQUIRED_AT);
+        }
+
+        private String decisionPageWith(UndecidedRecordPage.Item item, QuarantineValues values) throws Exception {
+            given(decisions.refusalOf(RECORD_ID)).willReturn(java.util.Optional.empty());
+            given(query.undecidedQuarantine(RECORD_ID)).willReturn(java.util.Optional.of(item));
+            given(query.quarantineValues(item)).willReturn(java.util.Optional.ofNullable(values));
+            return mockMvc.perform(get(DECISION_URL))
+                    .andExpect(status().isOk())
+                    .andReturn()
+                    .getResponse()
+                    .getContentAsString(java.nio.charset.StandardCharsets.UTF_8);
+        }
+
+        private static String milestoneList(String occurredAt) {
+            return "\\s*<dl class=\"text-break\">"
+                    + "\\s*<dt>追跡番号</dt>\\s*<dd>CTABCDEFGH2345</dd>"
+                    + "\\s*<dt>実績の種類</dt>\\s*<dd>出発</dd>"
+                    + "\\s*<dt>場所</dt>\\s*<dd>JPTYO</dd>"
+                    + "\\s*<dt>発生時刻</dt>\\s*<dd>" + occurredAt + "</dd>"
+                    + "\\s*</dl>\\s*</section>";
+        }
+
+        // --- 行 14: 主要実績の値の領域 ---
+
+        @Test
+        void 行14_主要実績は追跡番号と実績の種類と場所と発生時刻を取得した日時の後に示し寄港の並びを出さない() throws Exception {
+            String page = decisionPageWith(
+                    mismatch("MILESTONE"),
+                    new QuarantineValues(
+                            milestone("2026-11-19T01:00:00Z"),
+                            RECEIVED_ACQUIRED_AT,
+                            adopted(milestone("2026-11-19T00:00:00Z"), ADOPTED_ACQUIRED_AT)));
+
+            org.assertj.core.api.Assertions.assertThat(page)
+                    .containsPattern(RECEIVED_SECTION + "\\s*" + RECEIVED_META
+                            + milestoneList("2026-11-19 10:00 Asia/Tokyo（UTC\\+09:00）（UTC 2026-11-19 01:00）"))
+                    .containsPattern(ADOPTED_SECTION + "\\s*" + ADOPTED_META
+                            + milestoneList("2026-11-19 09:00 Asia/Tokyo（UTC\\+09:00）（UTC 2026-11-19 00:00）"))
+                    .doesNotContain("<ol")
+                    .doesNotContain(SAME_VALUES)
+                    .doesNotContain(SAME_VALUES_BUT_ACQUIRED_AT)
+                    .contains("<label for=\"reason\">却下の理由</label>");
+        }
+
+        // --- 行 23: 読めない値（T-243・T-244） ---
+
+        static java.util.stream.Stream<org.junit.jupiter.params.provider.Arguments> illegibleCases() {
+            String receivedIllegible =
+                    RECEIVED_SECTION + "\\s*" + RECEIVED_META + "\\s*<p>" + ILLEGIBLE + "</p>\\s*</section>";
+            String adoptedIllegible =
+                    ADOPTED_SECTION + "\\s*" + ADOPTED_META + "\\s*<p>" + ILLEGIBLE + "</p>\\s*</section>";
+            String receivedNotRecorded = RECEIVED_SECTION + "\\s*<p>" + NOT_RECORDED + "</p>\\s*</section>";
+            String adoptedNone = ADOPTED_SECTION + "\\s*<p>" + NO_ADOPTED + "</p>\\s*</section>";
+            String receivedShown = RECEIVED_SECTION + "\\s*" + RECEIVED_META + "\\s*<dl class=\"text-break\">";
+            String adoptedShown = ADOPTED_SECTION + "\\s*" + ADOPTED_META + "\\s*<dl class=\"text-break\">";
+            java.util.List<org.junit.jupiter.params.provider.Arguments> cases = new java.util.ArrayList<>();
+            for (String type : List.of("VOYAGE", "MILESTONE")) {
+                cases.add(org.junit.jupiter.params.provider.Arguments.of(
+                        type + " (a) 受け取った値が読めない",
+                        type,
+                        new QuarantineValues(
+                                null, true, RECEIVED_ACQUIRED_AT, adopted(valuesOf(type), ADOPTED_ACQUIRED_AT)),
+                        receivedIllegible,
+                        adoptedShown));
+                cases.add(org.junit.jupiter.params.provider.Arguments.of(
+                        type + " (b) 採用値が読めない",
+                        type,
+                        new QuarantineValues(valuesOf(type), false, RECEIVED_ACQUIRED_AT, illegibleAdopted()),
+                        receivedShown,
+                        adoptedIllegible));
+                cases.add(org.junit.jupiter.params.provider.Arguments.of(
+                        type + " (a)・(b) 両側が読めない",
+                        type,
+                        new QuarantineValues(null, true, RECEIVED_ACQUIRED_AT, illegibleAdopted()),
+                        receivedIllegible,
+                        adoptedIllegible));
+            }
+            cases.add(org.junit.jupiter.params.provider.Arguments.of(
+                    "(c) 知らない原本種別",
+                    "CONTAINER",
+                    new QuarantineValues(
+                            null, true, RECEIVED_ACQUIRED_AT, adopted(valuesOf("VOYAGE"), ADOPTED_ACQUIRED_AT)),
+                    receivedIllegible,
+                    adoptedShown));
+            cases.add(org.junit.jupiter.params.provider.Arguments.of(
+                    "値の列がない × 知らない原本種別",
+                    "CONTAINER",
+                    new QuarantineValues(
+                            null, false, RECEIVED_ACQUIRED_AT, adopted(valuesOf("VOYAGE"), ADOPTED_ACQUIRED_AT)),
+                    receivedNotRecorded,
+                    adoptedShown));
+            cases.add(org.junit.jupiter.params.provider.Arguments.of(
+                    "値の列がない × 採用値が読めない",
+                    "MILESTONE",
+                    new QuarantineValues(null, false, RECEIVED_ACQUIRED_AT, illegibleAdopted()),
+                    receivedNotRecorded,
+                    adoptedIllegible));
+            cases.add(org.junit.jupiter.params.provider.Arguments.of(
+                    "受け取った値が読めない × 採用値がない",
+                    "MILESTONE",
+                    new QuarantineValues(null, true, RECEIVED_ACQUIRED_AT, null),
+                    receivedIllegible,
+                    adoptedNone));
+            return cases.stream();
+        }
+
+        @ParameterizedTest(name = "{0}")
+        @org.junit.jupiter.params.provider.MethodSource("illegibleCases")
+        void 行23_読めない側は取得した日時の後に値を読めない文を示し読める側は値を示して却下の欄を残す(
+                String name, String recordType, QuarantineValues values, String receivedPattern, String adoptedPattern)
+                throws Exception {
+            String page = decisionPageWith(mismatch(recordType), values);
+
+            org.assertj.core.api.Assertions.assertThat(page)
+                    .containsPattern(receivedPattern)
+                    .containsPattern(adoptedPattern)
+                    .doesNotContain(SAME_VALUES)
+                    .doesNotContain(SAME_VALUES_BUT_ACQUIRED_AT)
+                    .contains("<label for=\"reason\">却下の理由</label>")
+                    .contains("却下すると取り消せません。");
+        }
+
+        // --- 行 24: 主要実績の同じ値の 2 つの文 ---
+
+        static java.util.stream.Stream<org.junit.jupiter.params.provider.Arguments> sameMilestoneCases() {
+            return java.util.stream.Stream.of(
+                    org.junit.jupiter.params.provider.Arguments.of(
+                            "値も取得時刻も同じ", "2026-11-19T01:00:00Z", RECEIVED_ACQUIRED_AT, SAME_VALUES),
+                    org.junit.jupiter.params.provider.Arguments.of(
+                            "値は同じで取得時刻が違う", "2026-11-19T01:00:00Z", ADOPTED_ACQUIRED_AT, SAME_VALUES_BUT_ACQUIRED_AT),
+                    org.junit.jupiter.params.provider.Arguments.of(
+                            "値が違い取得時刻は同じ", "2026-11-19T00:00:00Z", RECEIVED_ACQUIRED_AT, null));
+        }
+
+        @ParameterizedTest(name = "{0}")
+        @org.junit.jupiter.params.provider.MethodSource("sameMilestoneCases")
+        void 行24_主要実績も値と取得時刻の組で同じ値の文を選び2つの領域の前に示す(
+                String name, String adoptedOccurredAt, Instant adoptedAcquiredAt, String expected) throws Exception {
+            String page = decisionPageWith(
+                    mismatch("MILESTONE"),
+                    new QuarantineValues(
+                            milestone("2026-11-19T01:00:00Z"),
+                            RECEIVED_ACQUIRED_AT,
+                            adopted(milestone(adoptedOccurredAt), adoptedAcquiredAt)));
+
+            for (String sentence : List.of(SAME_VALUES, SAME_VALUES_BUT_ACQUIRED_AT)) {
+                org.assertj.core.api.Assertions.assertThat(page.contains("<p>" + sentence + "</p>"))
+                        .as(sentence)
+                        .isEqualTo(sentence.equals(expected));
+            }
+            if (expected != null) {
+                org.assertj.core.api.Assertions.assertThat(page.indexOf(expected))
+                        .isLessThan(page.indexOf("<h2 id=\"received-values-heading\">"));
+            }
+        }
+    }
+
+    /**
+     * Bolt 39d3c の行 18（種類の表示名の写し。開始準備の決定 (5)、T-240・T-244）。画面の層の {@code QuarantineValueViews} の単体（新しいテストの
+     * クラスを作らず、同じパッケージのこのクラスに置く）。名前は用語集の実績の種類の名前（docs/manual/用語集.md）を書き並べ、追跡の表示名を
+     * 参照しない。
+     */
+    @Nested
+    class Bolt39d3c_種類の表示名の写し {
+
+        @ParameterizedTest(name = "{0} は {1}")
+        @CsvSource({
+            "PICKUP, 集荷",
+            "RECEIPT_AT_ORIGIN, 搬入",
+            "DEPARTURE, 出発",
+            "TRANSSHIPMENT, 積替",
+            "ARRIVAL, 到着",
+            "DELIVERY, 引渡し"
+        })
+        void 行18_実績の種類の表示名は用語集の名前(
+                com.example.cargotracker.externaldata.domain.model.valueobjects.MilestoneKindValue kind, String name) {
+            org.assertj.core.api.Assertions.assertThat(QuarantineValueViews.kindName(kind))
+                    .isEqualTo(name);
+        }
+
+        @Test
+        void 行18_書き並べた組の数は実績の種類の値の数と同じ() throws Exception {
+            java.lang.reflect.Method method = getClass()
+                    .getDeclaredMethod(
+                            "行18_実績の種類の表示名は用語集の名前",
+                            com.example.cargotracker.externaldata.domain.model.valueobjects.MilestoneKindValue.class,
+                            String.class);
+
+            org.assertj.core.api.Assertions.assertThat(
+                            method.getAnnotation(CsvSource.class).value())
+                    .hasSize(com.example.cargotracker.externaldata.domain.model.valueobjects.MilestoneKindValue.values()
+                            .length);
         }
     }
 }

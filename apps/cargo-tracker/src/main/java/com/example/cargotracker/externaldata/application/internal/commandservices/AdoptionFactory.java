@@ -1,14 +1,15 @@
 package com.example.cargotracker.externaldata.application.internal.commandservices;
 
-import com.example.cargotracker.externaldata.application.internal.commands.IngestFileCommand.IngestedRow;
 import com.example.cargotracker.externaldata.domain.events.MilestoneAdoptedValueAccepted;
 import com.example.cargotracker.externaldata.domain.events.VoyageAdoptedValueUpdated;
 import com.example.cargotracker.externaldata.domain.events.VoyageAdoptedValueUpdated.AdoptedPortCall;
 import com.example.cargotracker.externaldata.domain.model.aggregates.AdoptedValue;
 import com.example.cargotracker.externaldata.domain.model.aggregates.AdoptedValue.TargetType;
 import com.example.cargotracker.externaldata.domain.model.aggregates.ReceivedRecord;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.IdempotencyKey;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.MilestoneKindValue;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.MilestoneValues;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.RecordValues;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.TrackingNumberValue;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.VoyageValues;
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
@@ -20,10 +21,12 @@ import java.time.Instant;
 import java.util.UUID;
 
 /**
- * 採用の結果の組み立て役（Bolt 39b3）。採用の受信記録から、採用値とそのイベント（航海は DE-12、主要実績は DE-13）を取込の値の型の分岐
- * 1 か所で作る（取込のサービスの開発レビュー）。対象の種類とキーは取込の値の型から決め（航海は航海番号、主要実績は追跡番号）、要約は取込の
- * 値から作り、情報版は外部版、公開した時刻は取込の時刻。イベントは値の写しを Java の標準と共有カーネルの型で持ち、出典の参照は受信記録
- * ID、取得時刻はファイルの値。書き込みと発行は取込のサービスが行う。
+ * 採用の結果の組み立て役（Bolt 39b3）。採用の受信記録と冪等性キーと受け取った値から、採用値とそのイベント（航海は DE-12、主要実績は DE-13）を
+ * 作る（取込の行を受けない。Bolt 39d3c の開始準備の決定 (9)。39d3b の採用の判断も受け取った値から呼べる）。対象の種類は受け取った値の型から、
+ * 対象のキーは受け取った値の {@link RecordValues#targetKey()}（航海は航海番号、主要実績は追跡番号）、要約は受け取った値から作り、情報版は
+ * 冪等性キーの外部版、公開した時刻は呼び出しが渡す時刻。取込 ID と取得時刻は受信記録から読む。値の型の分岐はイベントの組み立てだけに残す
+ * （DE-12 は寄港の並び、DE-13 は種類・場所・発生時刻を持つ）。イベントは値の写しを Java の標準と共有カーネルの型で持ち、出典の参照は受信記録
+ * ID、取得時刻は受信記録の取得時刻。書き込みと発行は呼び出しが行う。
  */
 final class AdoptionFactory {
 
@@ -40,32 +43,32 @@ final class AdoptionFactory {
     /**
      * 採用の受信記録の採用値とイベントを作る。
      *
-     * @param received 採用の受信記録
-     * @param row 取込の行
-     * @param ingestionId 取込 ID
+     * @param received 採用の受信記録（取込 ID と取得時刻を読む）
+     * @param key 外部原本の冪等性キー（外部 ID と外部版を読む）
+     * @param values 受け取った値
      * @param dataSourceId 情報源 ID
      * @param operator 操作者（データ責任者）
-     * @param now 取込の時刻
+     * @param publishedAt 公開した時刻（取込での採用は取込の時刻）
      * @return 採用の結果
      */
     static Adoption adopt(
             ReceivedRecord received,
-            IngestedRow row,
-            UUID ingestionId,
+            IdempotencyKey key,
+            RecordValues values,
             UUID dataSourceId,
             AuthenticatedActor operator,
-            Instant now) {
+            Instant publishedAt) {
         UUID adoptedValueId = UUID.randomUUID();
         Source origin =
-                new Source(SourceKind.EXTERNAL_RECORD, received.id().toString(), new UtcInstant(row.acquiredAt()));
-        UtcInstant publishedAt = new UtcInstant(now);
-        return switch (row.values()) {
+                new Source(SourceKind.EXTERNAL_RECORD, received.id().toString(), new UtcInstant(received.acquiredAt()));
+        UtcInstant published = new UtcInstant(publishedAt);
+        return switch (values) {
             case VoyageValues voyage ->
                 new Adoption(
-                        adoptedValue(adoptedValueId, received, row, TargetType.VOYAGE, voyage.voyageNumber(), now),
+                        adoptedValue(adoptedValueId, received, key, TargetType.VOYAGE, values, publishedAt),
                         new VoyageAdoptedValueUpdated(
                                 adoptedValueId,
-                                ingestionId,
+                                received.ingestionId(),
                                 dataSourceId,
                                 origin,
                                 voyage.voyageNumber(),
@@ -73,37 +76,48 @@ final class AdoptionFactory {
                                         .map(call ->
                                                 new AdoptedPortCall(call.port(), call.arrivalAt(), call.departureAt()))
                                         .toList(),
-                                row.externalVersion(),
+                                key.externalVersion(),
                                 operator.userId(),
                                 operator.companyId(),
-                                publishedAt));
+                                published));
             case MilestoneValues(
                     TrackingNumberValue trackingNumber,
                     MilestoneKindValue kind,
                     Location location,
                     UtcInstant occurredAt) ->
                 new Adoption(
-                        adoptedValue(adoptedValueId, received, row, TargetType.MILESTONE, trackingNumber.value(), now),
+                        adoptedValue(adoptedValueId, received, key, TargetType.MILESTONE, values, publishedAt),
                         new MilestoneAdoptedValueAccepted(
                                 adoptedValueId,
-                                ingestionId,
+                                received.ingestionId(),
                                 dataSourceId,
                                 origin,
                                 trackingNumber.value(),
                                 kind.name(),
                                 location,
                                 occurredAt,
-                                row.externalId(),
-                                row.externalVersion(),
+                                key.externalId(),
+                                key.externalVersion(),
                                 operator.userId(),
                                 operator.companyId(),
-                                publishedAt));
+                                published));
         };
     }
 
     private static AdoptedValue adoptedValue(
-            UUID id, ReceivedRecord received, IngestedRow row, TargetType targetType, String targetKey, Instant now) {
+            UUID id,
+            ReceivedRecord received,
+            IdempotencyKey key,
+            TargetType targetType,
+            RecordValues values,
+            Instant publishedAt) {
         return new AdoptedValue(
-                id, received.id(), targetType, targetKey, row.values().summary(), row.externalVersion(), now);
+                id,
+                received.id(),
+                targetType,
+                values.targetKey(),
+                values.summary(),
+                key.externalVersion(),
+                publishedAt);
     }
 }

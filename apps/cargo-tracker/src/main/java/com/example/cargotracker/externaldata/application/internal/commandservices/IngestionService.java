@@ -211,7 +211,7 @@ public class IngestionService {
         receivedRecords.add(received);
         Optional<Object> event =
                 switch (classification) {
-                    case ADOPTED -> Optional.of(adopt(run, received, row));
+                    case ADOPTED -> Optional.of(adopt(run, received, key, row));
                     case QUARANTINED ->
                         Optional.of(quarantinedEventOf(
                                 run,
@@ -228,10 +228,13 @@ public class IngestionService {
                 row.lineNumber(), row.lastLineNumber(), classification, externalRecord.id(), received.id());
     }
 
-    /** 採用の受信記録の採用値を追記し、そのイベント（DE-12・DE-13）を返す（組み立ては {@link AdoptionFactory}。Bolt 39b3）。 */
-    private Object adopt(Run run, ReceivedRecord received, IngestedRow row) {
-        AdoptionFactory.Adoption adoption = AdoptionFactory.adopt(
-                received, row, run.ingestion().id(), run.source().id(), run.operator(), run.now());
+    /**
+     * 採用の受信記録の採用値を追記し、そのイベント（DE-12・DE-13）を返す（組み立ては {@link AdoptionFactory}。Bolt 39b3。受信記録・冪等性キー・
+     * 取込の値から作り、公開した時刻は取込の時刻。Bolt 39d3c）。
+     */
+    private Object adopt(Run run, ReceivedRecord received, IdempotencyKey key, IngestedRow row) {
+        AdoptionFactory.Adoption adoption =
+                AdoptionFactory.adopt(received, key, row.values(), run.source().id(), run.operator(), run.now());
         adoptedValues.add(adoption.adoptedValue());
         return adoption.event();
     }

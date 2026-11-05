@@ -10,10 +10,11 @@ import io.cucumber.java.ja.ならば;
 import java.util.regex.Pattern;
 
 /**
- * データ責任者の S-17 隔離・差異の確認の判断の画面で、航海の内容の違う原本の受け取った値とこの外部版の採用値を見比べる（US-14 AC4、UC-15 の
- * 主成功シナリオ 5。Bolt 39d3、【業務の判断】(i)・(j)）画面の層のステップ定義。取り込みは S-16 のステップ定義
+ * データ責任者の S-17 隔離・差異の確認の判断の画面で、内容の違う原本の受け取った値とこの外部版の採用値を見比べる（US-14 AC4、UC-15 の
+ * 主成功シナリオ 5。Bolt 39d3、主要実績と寄港 60 は Bolt 39d3c、【業務の判断】(i)・(j)）画面の層のステップ定義。取り込みは S-16 のステップ定義
  * （{@link ExternalDataIngestionUiSteps}）、判断の画面を開くことと却下は判断の画面のステップ定義（{@link RejectQuarantineUiSteps}）が受け持ち、
- * この定義は値の領域（見出しで名前の付いた領域。取得した日時・情報版・公開した日時・航海番号・寄港の並び）と同じ値の文を確かめる。
+ * この定義は値の領域（見出しで名前の付いた領域。取得した日時・情報版・公開した日時・航海番号・寄港の並び、主要実績の追跡番号・実績の種類・
+ * 場所・発生時刻）と同じ値の文を確かめる。
  */
 public class CompareQuarantineValuesUiSteps {
 
@@ -24,7 +25,7 @@ public class CompareQuarantineValuesUiSteps {
     private static final String STAFF_TIME =
             "\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2} Asia/Tokyo（UTC\\+09:00）（UTC \\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}）";
 
-    /** 同じ値の文の頭（値も取得時刻も同じとき、取得時刻だけが違うときの 2 つの文に共通）。 */
+    /** 同じ値の文の頭（値も取得時刻も同じとき、取得した日時だけが違うときの 2 つの文に共通）。 */
     private static final String SAME_VALUES_HEAD = "受け取った値はこの外部版の採用値と同じ";
 
     private final BrowserSession browser;
@@ -78,6 +79,52 @@ public class CompareQuarantineValuesUiSteps {
                         });
         org.assertj.core.api.Assertions.assertThat(before).isEqualTo(true);
         browser.checkAccessibility();
+    }
+
+    /** Bolt 39d3c の行 15（上限いっぱい。寄港 60 の航海）。2 つの領域に寄港の番号付きの並びが 60 ずつ示される。 */
+    @ならば("隔離の判断の画面の受け取った値とこの外部版の採用値にそれぞれ寄港 {int} の並びが示される")
+    public void 寄港の並びがそれぞれ示される(int count) {
+        for (String heading : java.util.List.of(RECEIVED_HEADING, ADOPTED_HEADING)) {
+            assertThat(region(heading).getByRole(AriaRole.LIST).getByRole(AriaRole.LISTITEM))
+                    .hasCount(count);
+        }
+        browser.checkAccessibility();
+    }
+
+    /** Bolt 39d3c の行 14・27（受け取った値。主要実績の取込ファイルの 3 行目）。 */
+    @ならば("隔離の判断の画面の受け取った値に取得した日時と追跡番号と実績の種類 {string} と場所 {string} と発生時刻 {string} が示される")
+    public void 主要実績の受け取った値が示される(String kind, String location, String occurredAt) {
+        Locator received = region(RECEIVED_HEADING);
+        assertThat(received.getByText(Pattern.compile("^取得した日時 " + STAFF_TIME + "$")))
+                .isVisible();
+        assertMilestone(received, kind, location, occurredAt);
+        browser.checkAccessibility();
+    }
+
+    /** Bolt 39d3c の行 14・27（この外部版の採用値。主要実績の取込ファイルの 2 行目を取込で採用した値）。 */
+    @かつ("隔離の判断の画面のこの外部版の採用値に情報版 {string} と公開した日時と取得した日時と追跡番号と実績の種類 {string} と場所 {string} と発生時刻 {string} が示される")
+    public void 主要実績のこの外部版の採用値が示される(String infoVersion, String kind, String location, String occurredAt) {
+        Locator adopted = region(ADOPTED_HEADING);
+        assertThat(adopted.getByText(Pattern.compile("^情報版 " + PlaywrightText.literal(infoVersion) + "・公開した日時 "
+                        + STAFF_TIME + "・取得した日時 " + STAFF_TIME + "$")))
+                .isVisible();
+        assertMilestone(adopted, kind, location, occurredAt);
+        browser.checkAccessibility();
+    }
+
+    /**
+     * 主要実績の値（追跡番号・実績の種類（日本語の名前）・場所・発生時刻（{@code DateTimeDisplay.staff} の形））。寄港の並びは出さない
+     * （Bolt 39d3c の行 14）。
+     */
+    private static void assertMilestone(Locator values, String kind, String location, String occurredAt) {
+        assertThat(values.locator("dt")).hasText(new String[] {"追跡番号", "実績の種類", "場所", "発生時刻"});
+        assertThat(values.locator("dt:text-is('追跡番号') + dd")).hasText("CTABCDEFGH2345");
+        assertThat(values.locator("dt:text-is('実績の種類') + dd")).hasText(kind);
+        assertThat(values.locator("dt:text-is('場所') + dd")).hasText(location);
+        assertThat(values.locator("dt:text-is('発生時刻') + dd"))
+                .hasText(Pattern.compile("^" + PlaywrightText.literal(occurredAt) + " Asia/Tokyo（UTC\\+09:00）（UTC "
+                        + "\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}）$"));
+        assertThat(values.getByRole(AriaRole.LIST)).hasCount(0);
     }
 
     /**

@@ -50,6 +50,16 @@ public class ExternalDataIngestionUiSteps {
     private static final String CHANGED_PORT_CALLS =
             "JPTYO;2026-12-02T00:00:00Z;2026-12-02T12:00:00Z|USLAX;2026-12-10T00:00:00Z;2026-12-10T12:00:00Z";
 
+    /** 情報源の原本種別（取込ファイルの種別の名前）。 */
+    private static final String VOYAGE = "VOYAGE";
+
+    private static final String MILESTONE = "MILESTONE";
+
+    /** Bolt 39d3c の行 27。主要実績の 2 行の発生時刻（内容の違う行は 1 時間遅らせる。T-230）。 */
+    private static final String OCCURRED_AT = "2026-11-19T00:00:00Z";
+
+    private static final String CHANGED_OCCURRED_AT = "2026-11-19T01:00:00Z";
+
     private final BrowserSession browser;
     private final JdbcTemplate jdbc;
     private final String baseUrl;
@@ -58,6 +68,8 @@ public class ExternalDataIngestionUiSteps {
     private String provider = "UI 海運-" + suffix;
 
     private UUID sourceId;
+    /** 作った情報源の原本種別（選択肢の名前を決める。Bolt 39d3c）。 */
+    private String recordType = VOYAGE;
     /** 最後に選んだファイルの中身（同じファイルをもう一度選ぶため）。 */
     private byte[] lastFile;
 
@@ -75,20 +87,35 @@ public class ExternalDataIngestionUiSteps {
         return browser.page();
     }
 
-    /** 選択肢の名前（「提供元（原本種別の名前）」。Bolt 39c 計画の開始準備の決定 (4)）。S-17 の一覧の情報源の列も同じ名前（Bolt 39d）。 */
+    /**
+     * 選択肢の名前（「提供元（原本種別の名前）」。Bolt 39c 計画の開始準備の決定 (4)）。S-17 の一覧の情報源の列も同じ名前（Bolt 39d）。原本種別の
+     * 名前は作った情報源の原本種別から決める（Bolt 39d3c）。
+     */
     String sourceLabel() {
-        return provider + "（航海）";
+        return provider + (MILESTONE.equals(recordType) ? "（主要実績）" : "（航海）");
     }
 
     /** 情報源の選定・承認は W10 の運用タスクで画面がないので、テストの準備として表に入れる。 */
     @前提("承認済みの航海の情報源がある")
     public void 承認済みの航海の情報源がある() {
+        insertApprovedSource(VOYAGE);
+    }
+
+    /** Bolt 39d3c の行 27。主要実績の内容の違う原本を作るための情報源。 */
+    @前提("承認済みの主要実績の情報源がある")
+    public void 承認済みの主要実績の情報源がある() {
+        insertApprovedSource(MILESTONE);
+    }
+
+    private void insertApprovedSource(String type) {
         sourceId = UUID.randomUUID();
+        recordType = type;
         jdbc.update(
                 "INSERT INTO external_data.data_source (id, provider, record_type, approval_status, version)"
-                        + " VALUES (?, ?, 'VOYAGE', 'APPROVED', 0)",
+                        + " VALUES (?, ?, ?, 'APPROVED', 0)",
                 sourceId,
-                provider);
+                provider,
+                type);
     }
 
     /**
@@ -216,6 +243,50 @@ public class ExternalDataIngestionUiSteps {
     }
 
     /**
+     * Bolt 39d3c の行 15（上限いっぱい）。航海の 2 行（採用 1・内容の違う原本 1）。どちらも寄港 60（{@code VoyageValues.MAX_PORT_CALLS}）で、
+     * 3 行目は最初の寄港の到着を 1 日早めた（到着は出発より後にできない）。
+     */
+    @かつ("キー操作だけで承認済みの航海の情報源を選び、同じ外部 ID・外部版で内容の違う寄港 60 の 2 行のファイルを選んで取り込む")
+    public void 寄港60の内容の違う2行のファイルを取り込む() {
+        chooseSource();
+        String acquiredAt = acquiredAt();
+        chooseFile(voyageFile(
+                voyageLine("V2611E", acquiredAt, portCalls(60, 0)),
+                voyageLine("V2611E", acquiredAt, portCalls(60, 1))));
+        submit();
+    }
+
+    /**
+     * 東京に (count) 回寄港する周回の航路（同じ港で時刻の違う寄港。到着の 1 時間後に出発し、次の寄港は 2 時間後）。{@code firstEarlierDays} 日だけ
+     * 最初の寄港の到着を早める。
+     */
+    private static String portCalls(int count, int firstEarlierDays) {
+        Instant base = Instant.parse("2026-12-01T00:00:00Z");
+        java.util.List<String> calls = new java.util.ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            Instant arrival = base.plus(2L * i, ChronoUnit.HOURS);
+            Instant departure = arrival.plus(1, ChronoUnit.HOURS);
+            if (i == 0) {
+                arrival = arrival.minus(firstEarlierDays, ChronoUnit.DAYS);
+            }
+            calls.add("JPTYO;" + arrival + ";" + departure);
+        }
+        return String.join("|", calls);
+    }
+
+    /** Bolt 39d3c の行 27。主要実績の 2 行（採用 1・内容の違う原本 1）。3 行目は発生時刻を 1 時間遅らせた。 */
+    @かつ("キー操作だけで承認済みの主要実績の情報源を選び、同じ外部 ID・外部版で発生時刻の違う 2 行のファイルを選んで取り込む")
+    public void 発生時刻の違う主要実績2行のファイルを取り込む() {
+        chooseSource();
+        String acquiredAt = acquiredAt();
+        chooseFile((MILESTONE_HEADER + "\n"
+                        + milestoneLine("MS-0201", acquiredAt, OCCURRED_AT) + "\n"
+                        + milestoneLine("MS-0201", acquiredAt, CHANGED_OCCURRED_AT) + "\n")
+                .getBytes(StandardCharsets.UTF_8));
+        submit();
+    }
+
+    /**
      * Bolt 39c3 の行 9。航海の 6 行（採用 3・重複 1・列数の誤り 1・内容の違う原本 1）。2 行目と 5 行目は同じ内容（重複）、3 行目と 6 行目は
      * 同じ外部 ID・外部版で内容が違い（隔離）、4 行目は列が 1 つ多い（行の誤り）。
      */
@@ -326,8 +397,13 @@ public class ExternalDataIngestionUiSteps {
 
     /** 主要実績の 1 行（発生の時刻は取得の時刻と同じ。外部 ID にシナリオの印を付ける）。 */
     private String milestoneLine(String base, String acquiredAt) {
+        return milestoneLine(base, acquiredAt, acquiredAt);
+    }
+
+    /** 主要実績の 1 行（東京の出発。外部 ID にシナリオの印を付ける）。 */
+    private String milestoneLine(String base, String acquiredAt, String occurredAt) {
         return base + "-" + suffix.substring(0, 8) + ",1," + acquiredAt + ",CTABCDEFGH2345,DEPARTURE,JPTYO,"
-                + acquiredAt;
+                + occurredAt;
     }
 
     /** Bolt 39c4 の行 8。要確認でない結果の画面は「要確認」の領域を出さない。 */

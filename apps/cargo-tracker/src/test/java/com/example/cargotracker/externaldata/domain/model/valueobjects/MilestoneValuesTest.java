@@ -73,4 +73,85 @@ class MilestoneValuesTest {
                 .isEqualTo("7 行目: 種類が違います（kind）。"
                         + "PICKUP・RECEIPT_AT_ORIGIN・DEPARTURE・TRANSSHIPMENT・ARRIVAL・DELIVERY のどれかで書いてください。");
     }
+
+    /**
+     * Bolt 39d3c の行 6・7（主要実績の要約から値に戻す。開始準備の決定 (2)、T-244）。往復の約束は航海と同じく「取込の値 {@code v} について
+     * {@code ofSummary(v.targetKey(), v.summary())} が {@code v} と等しい」。規則に合わない要約は黙って読まずに {@link IllegalArgumentException}
+     * （空の発生時刻も {@link NullPointerException} にしない）。
+     */
+    @org.junit.jupiter.api.Nested
+    class Bolt39d3c_主要実績の要約から値に戻す {
+
+        @org.junit.jupiter.params.ParameterizedTest(name = "{0}")
+        @org.junit.jupiter.params.provider.EnumSource(MilestoneKindValue.class)
+        void 行6_主要実績の6種類の要約から戻した値は元の値と等しい(MilestoneKindValue kind) {
+            MilestoneValues values = new MilestoneValues(
+                    TRACKING_NUMBER,
+                    kind,
+                    new Location("USLAX"),
+                    new UtcInstant(Instant.parse("2026-11-19T23:00:00.123456Z")));
+
+            assertThat(values.summary()).isEqualTo(kind.name() + ";USLAX;2026-11-19T23:00:00.123456Z");
+            assertThat(MilestoneValues.ofSummary(values.targetKey(), values.summary()))
+                    .isEqualTo(values);
+        }
+
+        @org.junit.jupiter.params.ParameterizedTest(name = "{0}")
+        @org.junit.jupiter.params.provider.CsvSource(
+                delimiter = '!',
+                value = {
+                    "区切りの数が違う ! CTABCDEFGH2345 ! DEPARTURE;JPTYO",
+                    "区切りの数が多い ! CTABCDEFGH2345 ! DEPARTURE;JPTYO;2026-11-19T23:00:00.000000Z;",
+                    "種類の名前がない ! CTABCDEFGH2345 ! UNKNOWN;JPTYO;2026-11-19T23:00:00.000000Z",
+                    "場所が UN/LOCODE でない ! CTABCDEFGH2345 ! DEPARTURE;jptyo;2026-11-19T23:00:00.000000Z",
+                    "発生時刻が読めない ! CTABCDEFGH2345 ! DEPARTURE;JPTYO;2026-11-19 23:00",
+                    "発生時刻が空 ! CTABCDEFGH2345 ! DEPARTURE;JPTYO;",
+                    "追跡番号の形が違う ! CT0000 ! DEPARTURE;JPTYO;2026-11-19T23:00:00.000000Z"
+                })
+        void 行7_規則に合わない主要実績の要約は黙って読まず不正な引数の例外にする(String name, String trackingNumber, String summary) {
+            assertThatThrownBy(() -> MilestoneValues.ofSummary(trackingNumber, summary))
+                    .isExactlyInstanceOf(IllegalArgumentException.class);
+        }
+    }
+
+    /**
+     * Bolt 39d3c の行 6（型で分ける入口。開始準備の決定 (3)、T-240・T-244）。{@code RecordValues} は interface でテストのクラスがないので、ここに
+     * 置く。原本種別で航海か主要実績の要約から値に戻し、知らない原本種別は {@link IllegalArgumentException}。
+     */
+    @org.junit.jupiter.api.Nested
+    class Bolt39d3c_型で分ける入口 {
+
+        private static final String VOYAGE_SUMMARY =
+                "JPTYO;;2026-11-19T23:00:00.000000Z|USLAX;2026-12-01T14:00:00.000000Z;";
+        private static final String MILESTONE_SUMMARY = "DEPARTURE;JPTYO;2026-11-19T23:00:00.000000Z";
+
+        @Test
+        void 行6_航海は航海の値に主要実績は主要実績の値に戻す() {
+            assertThat(RecordValues.ofSummary("VOYAGE", "V2611E", VOYAGE_SUMMARY))
+                    .isEqualTo(VoyageValues.ofSummary("V2611E", VOYAGE_SUMMARY));
+            assertThat(RecordValues.ofSummary("MILESTONE", "CTABCDEFGH2345", MILESTONE_SUMMARY))
+                    .isEqualTo(new MilestoneValues(TRACKING_NUMBER, MilestoneKindValue.DEPARTURE, TOKYO, OCCURRED_AT));
+        }
+
+        /** 取込ファイルの種別（{@code CsvFileKind}）のすべての名前を入口が扱う（T-240）。 */
+        @org.junit.jupiter.params.ParameterizedTest(name = "{0}")
+        @org.junit.jupiter.params.provider.EnumSource(
+                com.example.cargotracker.externaldata.interfaces.file.CsvFileKind.class)
+        void 行6_取込ファイルのすべての種別を入口が扱う(com.example.cargotracker.externaldata.interfaces.file.CsvFileKind kind) {
+            String targetKey = kind.name().equals("VOYAGE") ? "V2611E" : "CTABCDEFGH2345";
+            String summary = kind.name().equals("VOYAGE") ? VOYAGE_SUMMARY : MILESTONE_SUMMARY;
+
+            RecordValues values = RecordValues.ofSummary(kind.name(), targetKey, summary);
+
+            assertThat(values.targetKey()).isEqualTo(targetKey);
+            assertThat(values.summary()).isEqualTo(summary);
+        }
+
+        @org.junit.jupiter.params.ParameterizedTest(name = "「{0}」")
+        @org.junit.jupiter.params.provider.ValueSource(strings = {"CONTAINER", "", "voyage"})
+        void 行6_知らない原本種別は不正な引数の例外にする(String recordType) {
+            assertThatThrownBy(() -> RecordValues.ofSummary(recordType, "V2611E", VOYAGE_SUMMARY))
+                    .isExactlyInstanceOf(IllegalArgumentException.class);
+        }
+    }
 }

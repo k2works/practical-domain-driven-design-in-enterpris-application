@@ -820,7 +820,55 @@ public abstract class ExternalDataRecordRepositoriesContract {
     }
 
     // --- Bolt 39d3 の行 4・5（受信記録の値の不変条件と往復。開始準備の決定 (3)）。上限いっぱい（寄港 60・補助文字を含む 30 文字の航海番号）の
-    // 往復は 39d3c ---
+    // 往復は Bolt 39d3c の行 5 ---
+
+    /**
+     * Bolt 39d3c の行 5（上限いっぱいの往復。開始準備の決定 (8)、T-242）。寄港 60 で到着と出発の両方を持つ航海の要約（3719 文字）と、補助文字を
+     * 含む 30 文字（コードポイント）の航海番号の受信記録の値が、追記と ID の照会・取込の隔離の照会で往復する（H2 を広げない判断の確かめ。
+     * ADR-007）。
+     */
+    @Test
+    void Bolt39d3c_行5_上限いっぱいの航海の受信記録の値が往復する() {
+        String voyageNumber = "V"
+                + "𠮷"
+                        .repeat(com.example.cargotracker.externaldata.domain.model.valueobjects.VoyageValues
+                                        .VOYAGE_NUMBER_MAX_LENGTH
+                                - 1);
+        List<com.example.cargotracker.externaldata.domain.model.valueobjects.PortCallValue> portCalls =
+                java.util.stream.IntStream.range(
+                                0,
+                                com.example.cargotracker.externaldata.domain.model.valueobjects.VoyageValues
+                                        .MAX_PORT_CALLS)
+                        .mapToObj(
+                                i -> new com.example.cargotracker.externaldata.domain.model.valueobjects.PortCallValue(
+                                        new com.example.cargotracker.shared.domain.Location("JPTYO"),
+                                        new com.example.cargotracker.shared.domain.UtcInstant(
+                                                java.time.Instant.parse("2026-12-01T00:00:00.123456Z")
+                                                        .plusSeconds(7200L * i)),
+                                        new com.example.cargotracker.shared.domain.UtcInstant(
+                                                java.time.Instant.parse("2026-12-01T01:00:00.654321Z")
+                                                        .plusSeconds(7200L * i))))
+                        .toList();
+        ReceivedValue value =
+                ReceivedValue.of(new com.example.cargotracker.externaldata.domain.model.valueobjects.VoyageValues(
+                        voyageNumber, portCalls));
+        assertThat(value.summary()).hasSize(3719);
+        assertThat(value.targetKey().codePointCount(0, value.targetKey().length()))
+                .isEqualTo(30);
+        Ingestion ingestion = ingestionAt(FUTURE);
+        ingestions().add(ingestion);
+        ExternalRecord voyage = externalRecord(key("VOYAGE", "V-39D3C-5-" + UUID.randomUUID()));
+        externalRecords().add(voyage);
+        ReceivedRecord quarantined = valued(voyage, ingestion, Classification.QUARANTINED, 2, value);
+
+        receivedRecords().add(quarantined);
+
+        assertThat(receivedRecords().findById(quarantined.id()))
+                .hasValueSatisfying(found -> assertThat(found.value()).isEqualTo(value));
+        assertThat(receivedRecords().quarantinedOf(ingestion.id(), 10))
+                .singleElement()
+                .satisfies(found -> assertThat(found.value()).isEqualTo(value));
+    }
 
     /** 寄港 2 つの航海の値（{@code VoyageValues#summary()} の形。T-230）。 */
     private static final ReceivedValue VOYAGE_VALUE =

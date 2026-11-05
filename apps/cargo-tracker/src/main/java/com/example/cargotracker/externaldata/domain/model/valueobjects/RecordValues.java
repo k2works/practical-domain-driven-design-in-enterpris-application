@@ -30,6 +30,25 @@ public sealed interface RecordValues permits VoyageValues, MilestoneValues {
     String targetKey();
 
     /**
+     * 原本種別で分けて要約から取込の値に戻す（Bolt 39d3c の開始準備の決定 (3)）。航海（{@code VOYAGE}）は {@link VoyageValues#ofSummary}、主要実績
+     * （{@code MILESTONE}）は {@link MilestoneValues#ofSummary} を呼ぶ。原本種別の名前は冪等性キーの原本種別と取込ファイルの種別の名前と同じ。
+     * 表の原本種別の列には CHECK がないので、知らない原本種別は黙って読まずに例外にする。
+     *
+     * @param recordType 原本種別
+     * @param targetKey 対象のキー（航海は航海番号、主要実績は追跡番号）
+     * @param summary 値の要約
+     * @return 取込の値
+     * @throws IllegalArgumentException 知らない原本種別のとき、要約が規則に合わないとき
+     */
+    static RecordValues ofSummary(String recordType, String targetKey, String summary) {
+        return switch (recordType) {
+            case "VOYAGE" -> VoyageValues.ofSummary(targetKey, summary);
+            case "MILESTONE" -> MilestoneValues.ofSummary(targetKey, summary);
+            default -> throw new IllegalArgumentException("知らない原本種別です");
+        };
+    }
+
+    /**
      * 値の要約の時刻の書き方（UTC の ISO 8601、マイクロ秒の 6 桁に固定。例「2026-11-19T23:00:00.000000Z」。ないときは空）。
      *
      * @param time 時刻（ないときは null）

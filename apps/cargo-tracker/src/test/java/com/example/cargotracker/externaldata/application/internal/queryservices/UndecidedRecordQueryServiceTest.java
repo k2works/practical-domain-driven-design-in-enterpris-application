@@ -454,7 +454,7 @@ class UndecidedRecordQueryServiceTest {
 
     /**
      * Bolt 39d3 の行 10・12・13（判断の画面の値の照会。開始準備の決定 (5)・(6)、T-236）。引く数と引かないことは呼び出しの記録で確かめる。
-     * 主要実績の値と読めない値は 39d3c。
+     * 主要実績の値と読めない値は {@link Bolt39d3c_主要実績と読めない値の照会}。
      */
     @Nested
     class Bolt39d3_判断の画面の値の照会 {
@@ -574,8 +574,8 @@ class UndecidedRecordQueryServiceTest {
         }
 
         @ParameterizedTest(name = "{0}")
-        @CsvSource({"キーのない隔離（形式の誤り）, VOYAGE, true", "主要実績の内容の違う原本（39d3c まで）, MILESTONE, false"})
-        void 行12_キーのない隔離と主要実績の内容の違う原本は受信記録も採用値も引かず空(String name, String recordType, boolean keyless) {
+        @CsvSource({"キーのない隔離（形式の誤り）, VOYAGE, true"})
+        void 行12_キーのない隔離は受信記録も採用値も引かず空(String name, String recordType, boolean keyless) {
             assertThat(service.quarantineValues(item(UUID.randomUUID(), recordType, keyless)))
                     .isEmpty();
             then(receivedRecords).shouldHaveNoInteractions();
@@ -605,6 +605,343 @@ class UndecidedRecordQueryServiceTest {
 
             then(adoptedValues).shouldHaveNoInteractions();
             then(receivedRecords).should(never()).findById(any());
+        }
+    }
+
+    /**
+     * Bolt 39d3c の行 13・23（主要実績の値と読めない値の照会。開始準備の決定 (4)、【業務の判断】(k)、T-236・T-244）。受け取った値は判断の画面の
+     * 中身の原本種別で、採用値は採用値の対象の種類で型で分ける入口を呼ぶ。入口の {@link IllegalArgumentException} だけを受けて、その側を読めない
+     * 印にし、WARN のログに ID・原本種別（制御文字を置き換える）・例外の型だけを残す。値の列がないことを読めないことより先に判定する。
+     */
+    @Nested
+    class Bolt39d3c_主要実績と読めない値の照会 {
+
+        private static final Instant RECEIVED_ACQUIRED_AT = Instant.parse("2026-11-16T00:30:00Z");
+        private static final Instant ADOPTED_ACQUIRED_AT = Instant.parse("2026-11-15T08:30:00Z");
+        private static final Instant PUBLISHED_AT = Instant.parse("2026-11-15T09:00:00Z");
+        private static final String TRACKING_NUMBER = "CTABCDEFGH2345";
+        private static final String VOYAGE_NUMBER = "DEMO-201";
+        /** 壊れた要約（例外の文に入るので、ログに出ないことを確かめる印）。 */
+        private static final String BROKEN = "BROKEN-SUMMARY-39D3C";
+
+        private final UUID externalRecordId = UUID.randomUUID();
+        private final ch.qos.logback.classic.Logger logger =
+                (ch.qos.logback.classic.Logger) org.slf4j.LoggerFactory.getLogger(UndecidedRecordQueryService.class);
+        private final ch.qos.logback.core.read.ListAppender<ch.qos.logback.classic.spi.ILoggingEvent> logs =
+                new ch.qos.logback.core.read.ListAppender<>();
+
+        @BeforeEach
+        void captureLogs() {
+            logs.start();
+            logger.addAppender(logs);
+        }
+
+        @org.junit.jupiter.api.AfterEach
+        void releaseLogs() {
+            logger.detachAppender(logs);
+        }
+
+        private UndecidedRecordPage.Item item(UUID receivedRecordId, String recordType) {
+            return new UndecidedRecordPage.Item(
+                    receivedRecordId,
+                    INGESTED_AT,
+                    milestone.provider(),
+                    recordType,
+                    new PhysicalLineRange(3, 3),
+                    false,
+                    "MS-0201",
+                    "2",
+                    "3 行目: 注記");
+        }
+
+        private ReceivedRecord received(Classification classification, Instant acquiredAt, ReceivedValue value) {
+            return new ReceivedRecord(
+                    UUID.randomUUID(),
+                    externalRecordId,
+                    ingestionId,
+                    PayloadHash.of(new byte[] {3}),
+                    PayloadObjectKey.newRecordPayload(),
+                    acquiredAt,
+                    classification,
+                    classification == Classification.ADOPTED ? null : "注記",
+                    INGESTED_AT,
+                    new PhysicalLineRange(3, 3),
+                    value);
+        }
+
+        private static String keyOf(String recordType) {
+            return "MILESTONE".equals(recordType) ? TRACKING_NUMBER : VOYAGE_NUMBER;
+        }
+
+        /** 型ごとの読める要約（受け取った値と採用値で発生時刻・到着の時刻だけが違う。T-230）。 */
+        private static String summaryOf(String recordType, boolean adopted) {
+            String time = adopted ? "2026-11-19T00:00:00.000000Z" : "2026-11-19T01:00:00.000000Z";
+            return "MILESTONE".equals(recordType)
+                    ? "DEPARTURE;JPTYO;" + time
+                    : "JPTYO;;2026-11-18T23:00:00.000000Z|USLAX;" + time + ";";
+        }
+
+        private static com.example.cargotracker.externaldata.domain.model.valueobjects.RecordValues valuesOf(
+                String recordType, boolean adopted) {
+            return com.example.cargotracker.externaldata.domain.model.valueobjects.RecordValues.ofSummary(
+                    recordType, keyOf(recordType), summaryOf(recordType, adopted));
+        }
+
+        private AdoptedValue adoptedValue(UUID receivedRecordId, String targetType, String summary) {
+            return new AdoptedValue(
+                    UUID.randomUUID(),
+                    receivedRecordId,
+                    TargetType.valueOf(targetType),
+                    keyOf(targetType),
+                    summary,
+                    "2",
+                    PUBLISHED_AT);
+        }
+
+        /** 隔離と採用の受信記録と採用値を用意して照会する（採用値の要約が null なら採用値はない）。 */
+        private QuarantineValues query(
+                String itemRecordType, ReceivedValue receivedValue, String adoptedTargetType, String adoptedSummary) {
+            ReceivedRecord quarantine = received(Classification.QUARANTINED, RECEIVED_ACQUIRED_AT, receivedValue);
+            given(receivedRecords.findById(quarantine.id())).willReturn(Optional.of(quarantine));
+            if (adoptedSummary == null) {
+                given(adoptedValues.currentOf(externalRecordId)).willReturn(Optional.empty());
+            } else {
+                ReceivedRecord adoptedRecord = received(Classification.ADOPTED, ADOPTED_ACQUIRED_AT, null);
+                given(receivedRecords.findById(adoptedRecord.id())).willReturn(Optional.of(adoptedRecord));
+                given(adoptedValues.currentOf(externalRecordId))
+                        .willReturn(Optional.of(adoptedValue(adoptedRecord.id(), adoptedTargetType, adoptedSummary)));
+            }
+            return service.quarantineValues(item(quarantine.id(), itemRecordType))
+                    .orElseThrow();
+        }
+
+        // --- 行 13: 主要実績の値と引く数 ---
+
+        @Test
+        void 行13_主要実績の内容の違う原本は航海と同じ数だけ引いて受け取った値とこの外部版の採用値を返す() {
+            ReceivedRecord quarantine = received(
+                    Classification.QUARANTINED,
+                    RECEIVED_ACQUIRED_AT,
+                    new ReceivedValue(TRACKING_NUMBER, summaryOf("MILESTONE", false)));
+            ReceivedRecord adoptedRecord = received(Classification.ADOPTED, ADOPTED_ACQUIRED_AT, null);
+            given(receivedRecords.findById(quarantine.id())).willReturn(Optional.of(quarantine));
+            given(receivedRecords.findById(adoptedRecord.id())).willReturn(Optional.of(adoptedRecord));
+            given(adoptedValues.currentOf(externalRecordId))
+                    .willReturn(
+                            Optional.of(adoptedValue(adoptedRecord.id(), "MILESTONE", summaryOf("MILESTONE", true))));
+
+            Optional<QuarantineValues> values = service.quarantineValues(item(quarantine.id(), "MILESTONE"));
+
+            assertThat(values)
+                    .contains(new QuarantineValues(
+                            valuesOf("MILESTONE", false),
+                            RECEIVED_ACQUIRED_AT,
+                            new QuarantineValues.Adopted(
+                                    valuesOf("MILESTONE", true), "2", PUBLISHED_AT, ADOPTED_ACQUIRED_AT)));
+            then(receivedRecords).should(times(1)).findById(quarantine.id());
+            then(adoptedValues).should(times(1)).currentOf(externalRecordId);
+            then(receivedRecords).should(times(1)).findById(adoptedRecord.id());
+            then(receivedRecords).shouldHaveNoMoreInteractions();
+            then(ingestions).shouldHaveNoInteractions();
+            then(dataSources).shouldHaveNoInteractions();
+            assertThat(logs.list).isEmpty();
+        }
+
+        @ParameterizedTest(name = "{0}")
+        @CsvSource({"VOYAGE", "MILESTONE"})
+        void 行13_読めない値でも引く数は同じ(String recordType) {
+            ReceivedRecord quarantine = received(
+                    Classification.QUARANTINED, RECEIVED_ACQUIRED_AT, new ReceivedValue(keyOf(recordType), BROKEN));
+            ReceivedRecord adoptedRecord = received(Classification.ADOPTED, ADOPTED_ACQUIRED_AT, null);
+            given(receivedRecords.findById(quarantine.id())).willReturn(Optional.of(quarantine));
+            given(receivedRecords.findById(adoptedRecord.id())).willReturn(Optional.of(adoptedRecord));
+            given(adoptedValues.currentOf(externalRecordId))
+                    .willReturn(Optional.of(adoptedValue(adoptedRecord.id(), recordType, BROKEN)));
+
+            service.quarantineValues(item(quarantine.id(), recordType));
+
+            then(receivedRecords).should(times(1)).findById(quarantine.id());
+            then(adoptedValues).should(times(1)).currentOf(externalRecordId);
+            then(receivedRecords).should(times(1)).findById(adoptedRecord.id());
+            then(receivedRecords).shouldHaveNoMoreInteractions();
+            then(ingestions).shouldHaveNoInteractions();
+            then(dataSources).shouldHaveNoInteractions();
+        }
+
+        // --- 行 23: 読めない値（航海・主要実績 × 受け取った値・採用値・両側、知らない原本種別、組み合わせ） ---
+
+        @ParameterizedTest(name = "{0} の受け取った値の要約が壊れている")
+        @CsvSource({"VOYAGE", "MILESTONE"})
+        void 行23a_受け取った値が読めなければ受け取った値だけを読めない印にして採用値は示す(String recordType) {
+            QuarantineValues values = query(
+                    recordType, new ReceivedValue(keyOf(recordType), BROKEN), recordType, summaryOf(recordType, true));
+
+            assertThat(values)
+                    .isEqualTo(new QuarantineValues(
+                            null,
+                            true,
+                            RECEIVED_ACQUIRED_AT,
+                            new QuarantineValues.Adopted(
+                                    valuesOf(recordType, true), "2", PUBLISHED_AT, ADOPTED_ACQUIRED_AT)));
+            assertThat(values.sameValues()).isFalse();
+        }
+
+        @ParameterizedTest(name = "{0} の採用値の要約が壊れている")
+        @CsvSource({"VOYAGE", "MILESTONE"})
+        void 行23b_採用値が読めなければ採用値だけを読めない印にして情報版と公開した時刻と取得時刻は示す(String recordType) {
+            QuarantineValues values = query(
+                    recordType, new ReceivedValue(keyOf(recordType), summaryOf(recordType, false)), recordType, BROKEN);
+
+            assertThat(values)
+                    .isEqualTo(new QuarantineValues(
+                            valuesOf(recordType, false),
+                            false,
+                            RECEIVED_ACQUIRED_AT,
+                            new QuarantineValues.Adopted(null, true, "2", PUBLISHED_AT, ADOPTED_ACQUIRED_AT)));
+            assertThat(values.sameValues()).isFalse();
+        }
+
+        @ParameterizedTest(name = "{0} の両側の要約が壊れている")
+        @CsvSource({"VOYAGE", "MILESTONE"})
+        void 行23ab_両側が読めなければ両側を読めない印にする(String recordType) {
+            QuarantineValues values =
+                    query(recordType, new ReceivedValue(keyOf(recordType), BROKEN), recordType, BROKEN);
+
+            assertThat(values)
+                    .isEqualTo(new QuarantineValues(
+                            null,
+                            true,
+                            RECEIVED_ACQUIRED_AT,
+                            new QuarantineValues.Adopted(null, true, "2", PUBLISHED_AT, ADOPTED_ACQUIRED_AT)));
+            assertThat(logs.list).hasSize(2);
+        }
+
+        @ParameterizedTest(name = "採用値の対象は {0}")
+        @CsvSource({"VOYAGE", "MILESTONE"})
+        void 行23c_知らない原本種別は受け取った値だけが読めず採用値は対象の種類で読む(String adoptedTargetType) {
+            QuarantineValues values = query(
+                    "CONTAINER",
+                    new ReceivedValue(keyOf(adoptedTargetType), summaryOf(adoptedTargetType, false)),
+                    adoptedTargetType,
+                    summaryOf(adoptedTargetType, true));
+
+            assertThat(values.received()).isNull();
+            assertThat(values.receivedIllegible()).isTrue();
+            assertThat(values.adopted().illegible()).isFalse();
+            assertThat(values.adopted().values()).isEqualTo(valuesOf(adoptedTargetType, true));
+        }
+
+        @Test
+        void 行23_値の列がないことを知らない原本種別より先に判定し読めない印を立てない() {
+            QuarantineValues values = query("CONTAINER", null, "VOYAGE", summaryOf("VOYAGE", true));
+
+            assertThat(values.received()).isNull();
+            assertThat(values.receivedIllegible()).isFalse();
+            assertThat(values.adopted().values()).isEqualTo(valuesOf("VOYAGE", true));
+            assertThat(logs.list).isEmpty();
+        }
+
+        @Test
+        void 行23_値の列がなく採用値が読めなければ受け取った値は値の列のない形で採用値だけが読めない() {
+            QuarantineValues values = query("MILESTONE", null, "MILESTONE", BROKEN);
+
+            assertThat(values.received()).isNull();
+            assertThat(values.receivedIllegible()).isFalse();
+            assertThat(values.adopted().illegible()).isTrue();
+            assertThat(values.adopted().values()).isNull();
+        }
+
+        @Test
+        void 行23_受け取った値が読めず採用値がなければ受け取った値だけを読めない印にする() {
+            QuarantineValues values = query("MILESTONE", new ReceivedValue(TRACKING_NUMBER, BROKEN), "MILESTONE", null);
+
+            assertThat(values).isEqualTo(new QuarantineValues(null, true, RECEIVED_ACQUIRED_AT, null));
+        }
+
+        // --- 行 23: WARN のログ（ID・原本種別・例外の型だけ。要約の中身と例外の文は書かない） ---
+
+        @Test
+        void 行23_読めないときはWARNのログに受信記録IDと原本種別と例外の型だけを残す() {
+            ReceivedRecord quarantine = received(
+                    Classification.QUARANTINED, RECEIVED_ACQUIRED_AT, new ReceivedValue(TRACKING_NUMBER, BROKEN));
+            ReceivedRecord adoptedRecord = received(Classification.ADOPTED, ADOPTED_ACQUIRED_AT, null);
+            AdoptedValue adopted = adoptedValue(adoptedRecord.id(), "MILESTONE", BROKEN);
+            given(receivedRecords.findById(quarantine.id())).willReturn(Optional.of(quarantine));
+            given(receivedRecords.findById(adoptedRecord.id())).willReturn(Optional.of(adoptedRecord));
+            given(adoptedValues.currentOf(externalRecordId)).willReturn(Optional.of(adopted));
+
+            service.quarantineValues(item(quarantine.id(), "MILESTONE"));
+
+            assertThat(logs.list).hasSize(2).allSatisfy(event -> {
+                assertThat(event.getLevel()).isEqualTo(ch.qos.logback.classic.Level.WARN);
+                assertThat(event.getFormattedMessage())
+                        .contains("MILESTONE")
+                        .contains(IllegalArgumentException.class.getName())
+                        .doesNotContain(BROKEN);
+                assertThat(event.getThrowableProxy()).isNull();
+            });
+            assertThat(logs.list.get(0).getFormattedMessage())
+                    .contains(quarantine.id().toString());
+            assertThat(logs.list.get(1).getFormattedMessage())
+                    .contains(adopted.id().toString())
+                    .contains(adoptedRecord.id().toString());
+        }
+
+        @Test
+        void 行23_知らない原本種別の制御文字は置き換えてログに書く() {
+            query("CON\nTAI\rNER\u0007", new ReceivedValue(VOYAGE_NUMBER, summaryOf("VOYAGE", false)), "VOYAGE", null);
+
+            assertThat(logs.list)
+                    .singleElement()
+                    .satisfies(event -> assertThat(event.getFormattedMessage())
+                            .contains("CON_TAI_NER_")
+                            .doesNotContain("\n")
+                            .doesNotContain("\r")
+                            .doesNotContain("\u0007"));
+        }
+
+        @Test
+        void 行23_リポジトリの不正な引数の例外は読めない値にせず上げる() {
+            UUID id = UUID.randomUUID();
+            given(receivedRecords.findById(id)).willThrow(new IllegalArgumentException("リポジトリの誤り"));
+            UndecidedRecordPage.Item quarantine = item(id, "MILESTONE");
+
+            org.assertj.core.api.Assertions.assertThatThrownBy(() -> service.quarantineValues(quarantine))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessage("リポジトリの誤り");
+        }
+
+        // --- 行 23: QuarantineValues の不変条件（T-244） ---
+
+        @Test
+        void 行23_読めない印と値の両方を持つ受け取った値は作れない() {
+            com.example.cargotracker.externaldata.domain.model.valueobjects.RecordValues values =
+                    valuesOf("MILESTONE", false);
+
+            org.assertj.core.api.Assertions.assertThatThrownBy(
+                            () -> new QuarantineValues(values, true, RECEIVED_ACQUIRED_AT, null))
+                    .isInstanceOf(IllegalArgumentException.class);
+            assertThat(new QuarantineValues(null, true, RECEIVED_ACQUIRED_AT, null).receivedIllegible())
+                    .isTrue();
+            assertThat(new QuarantineValues(null, false, RECEIVED_ACQUIRED_AT, null).receivedIllegible())
+                    .isFalse();
+        }
+
+        @Test
+        void 行23_採用値は読めないときだけ値がない() {
+            com.example.cargotracker.externaldata.domain.model.valueobjects.RecordValues values =
+                    valuesOf("MILESTONE", true);
+
+            org.assertj.core.api.Assertions.assertThatThrownBy(
+                            () -> new QuarantineValues.Adopted(values, true, "2", PUBLISHED_AT, ADOPTED_ACQUIRED_AT))
+                    .isInstanceOf(IllegalArgumentException.class);
+            org.assertj.core.api.Assertions.assertThatThrownBy(
+                            () -> new QuarantineValues.Adopted(null, false, "2", PUBLISHED_AT, ADOPTED_ACQUIRED_AT))
+                    .isInstanceOf(IllegalArgumentException.class);
+            assertThat(new QuarantineValues.Adopted(null, true, "2", PUBLISHED_AT, ADOPTED_ACQUIRED_AT).values())
+                    .isNull();
+            assertThat(new QuarantineValues.Adopted(values, "2", PUBLISHED_AT, ADOPTED_ACQUIRED_AT).illegible())
+                    .isFalse();
         }
     }
 

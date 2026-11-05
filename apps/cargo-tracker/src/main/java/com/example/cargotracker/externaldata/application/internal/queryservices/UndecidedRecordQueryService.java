@@ -9,13 +9,16 @@ import com.example.cargotracker.externaldata.domain.model.aggregates.ReceivedRec
 import com.example.cargotracker.externaldata.domain.model.aggregates.ReceivedRecordRepository;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.Classification;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.ReceivedValue;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.RecordValues;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.UndecidedQuarantine;
-import com.example.cargotracker.externaldata.domain.model.valueobjects.VoyageValues;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Supplier;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,8 +28,8 @@ import org.springframework.transaction.annotation.Transactional;
  * 絞った取込があるかは取込を 1 回引いて確かめ、なければ絞らない一覧を返して見つからないことを示す。判断を待つ隔離が 0 件ならページの照会と
  * 情報源を引かない。求めた頁が 1 より前なら 1 頁目、最後より後なら最後の頁を返す。件数を数えてから頁を読むまでに件数が減って読んだ頁が
  * 空なら、数え直して 1 回だけ読み直す（Bolt 39d2b）。取込で絞ったときだけ、まとめての却下のリンクのためにその取込の判断を待つキーのない
- * 隔離を数える（Bolt 39d2b）。判断の画面の中身とは別に、航海の内容の違う原本の受け取った値とこの外部版の採用値を返す（Bolt 39d3）。一覧の
- * 照会は値も採用値も読まない。
+ * 隔離を数える（Bolt 39d2b）。判断の画面の中身とは別に、内容の違う原本の受け取った値とこの外部版の採用値を返す（航海は Bolt 39d3、主要実績と
+ * 読めない値は Bolt 39d3c）。一覧の照会は値も採用値も読まない。
  * 組み立ては {@code externaldata.infrastructure.config} の {@code @Bean} が担う。
  */
 @Service
@@ -35,8 +38,7 @@ public class UndecidedRecordQueryService {
     /** 1 ページの件数（S-16 の結果の画面の隔離の理由の 100 件にそろえる。Bolt 39d 計画の開始準備の決定 (3)）。 */
     public static final int PAGE_SIZE = 100;
 
-    /** 判断の画面に値を示す原本種別（航海。主要実績は 39d3c で足す。取込ファイルの種別の名前）。 */
-    private static final String VOYAGE = "VOYAGE";
+    private static final Logger LOG = LoggerFactory.getLogger(UndecidedRecordQueryService.class);
 
     private final ReceivedRecordRepository receivedRecords;
     private final IngestionRepository ingestions;
@@ -55,44 +57,82 @@ public class UndecidedRecordQueryService {
     }
 
     /**
-     * 内容の違う原本の判断の画面の値（Bolt 39d3 の開始準備の決定 (5)・(6)）。値を返すのは、分類が隔離で外部原本を持つ受信記録のうち、原本種別が
-     * 航海のものだけ。キーのない隔離と主要実績の内容の違う原本（39d3c まで）は受信記録も採用値も引かずに空、ない受信記録・隔離でない受信記録は
-     * 採用値を引かずに空。原本種別は判断の画面の中身から受け、取込と情報源を読み直さない。引くのは受信記録の ID の照会 1 回、この外部版の
-     * 採用値の照会 1 回、採用値があればその受信記録の ID の照会 1 回（採用値の取得時刻）。
+     * 内容の違う原本の判断の画面の値（Bolt 39d3 の開始準備の決定 (5)・(6)、航海と主要実績は Bolt 39d3c の開始準備の決定 (4)）。値を返すのは、分類が
+     * 隔離で外部原本を持つ受信記録。キーのない隔離は受信記録も採用値も引かずに空、ない受信記録・隔離でない受信記録は採用値を引かずに空。
+     * 受け取った値は判断の画面の中身の原本種別で、採用値は採用値の対象の種類で型で分ける入口を呼ぶ（原本種別は判断の画面の中身から受け、取込と
+     * 情報源を読み直さない）。入口が要約か原本種別を読めない（{@link IllegalArgumentException}）ときは、その側を読めない印にして WARN のログに
+     * ID・原本種別・例外の型だけを残す（【業務の判断】(k)。要約の中身と例外の文は取込ファイルから来た値を含むので書かない）。値の列がないことを
+     * 読めないことより先に判定する。引くのは受信記録の ID の照会 1 回、この外部版の採用値の照会 1 回、採用値があればその受信記録の ID の照会
+     * 1 回（採用値の取得時刻）で、読めない値でも変わらない。
      *
      * @param quarantine 判断の画面の中身（{@link #undecidedQuarantine} の値）
      */
     @Transactional(readOnly = true)
     public Optional<QuarantineValues> quarantineValues(UndecidedRecordPage.Item quarantine) {
-        if (quarantine.keyless() || !VOYAGE.equals(quarantine.recordType())) {
+        if (quarantine.keyless()) {
             return Optional.empty();
         }
         return receivedRecords
                 .findById(quarantine.receivedRecordId())
                 .filter(received ->
                         received.classification() == Classification.QUARANTINED && received.externalRecordId() != null)
-                .map(this::valuesOf);
+                .map(received -> valuesOf(received, quarantine.recordType()));
     }
 
-    private QuarantineValues valuesOf(ReceivedRecord quarantine) {
+    private QuarantineValues valuesOf(ReceivedRecord quarantine, String recordType) {
         ReceivedValue value = quarantine.value();
-        VoyageValues received = value == null ? null : VoyageValues.ofSummary(value.targetKey(), value.summary());
+        // 値の列がない（Bolt 39d3 より前の隔離）ときは入口を呼ばず、読めない印を立てない
+        Optional<RecordValues> received = value == null
+                ? Optional.empty()
+                : readable(recordType, value.targetKey(), value.summary(), () -> "受信記録 " + quarantine.id());
         QuarantineValues.Adopted adopted = adoptedValues
                 .currentOf(quarantine.externalRecordId())
                 .map(this::adoptedOf)
                 .orElse(null);
-        return new QuarantineValues(received, quarantine.acquiredAt(), adopted);
+        return new QuarantineValues(
+                received.orElse(null), value != null && received.isEmpty(), quarantine.acquiredAt(), adopted);
     }
 
     private QuarantineValues.Adopted adoptedOf(AdoptedValue adopted) {
         // 採用値は受信記録への外部キーを持ち、採用の受信記録は外部原本と取得時刻を持つ
         ReceivedRecord adoptedRecord =
                 receivedRecords.findById(adopted.receivedRecordId()).orElseThrow();
+        Optional<RecordValues> values = readable(
+                adopted.targetType().name(),
+                adopted.targetKey(),
+                adopted.valueSummary(),
+                () -> "採用値 " + adopted.id() + "（受信記録 " + adopted.receivedRecordId() + "）");
         return new QuarantineValues.Adopted(
-                VoyageValues.ofSummary(adopted.targetKey(), adopted.valueSummary()),
+                values.orElse(null),
+                values.isEmpty(),
                 adopted.infoVersion(),
                 adopted.publishedAt(),
                 adoptedRecord.acquiredAt());
+    }
+
+    /**
+     * 型で分ける入口で要約から値に戻す。入口の {@link IllegalArgumentException} だけを受けて空にし、WARN のログを残す（try は入口の呼び出し
+     * だけを囲む。ほかの例外は受けない）。
+     */
+    private static Optional<RecordValues> readable(
+            String recordType, String targetKey, String summary, Supplier<String> subject) {
+        try {
+            return Optional.of(RecordValues.ofSummary(recordType, targetKey, summary));
+        } catch (IllegalArgumentException e) {
+            LOG.warn(
+                    "判断の画面の値を読めませんでした: {}、原本種別 {}、{}",
+                    subject.get(),
+                    printable(recordType),
+                    e.getClass().getName());
+            return Optional.empty();
+        }
+    }
+
+    /** ログに書く原本種別（表を直に書き換えて入りうる文字列なので、改行などの制御文字を置き換える。ログの偽造を防ぐ）。 */
+    private static String printable(String text) {
+        StringBuilder printable = new StringBuilder(text.length());
+        text.codePoints().forEach(c -> printable.appendCodePoint(Character.isISOControl(c) ? '_' : c));
+        return printable.toString();
     }
 
     /**

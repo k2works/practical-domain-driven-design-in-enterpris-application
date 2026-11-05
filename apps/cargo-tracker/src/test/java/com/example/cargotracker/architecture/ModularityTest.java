@@ -141,6 +141,9 @@ class ModularityTest {
      * application は LayerArchitectureTest が先に守るので、実質この規則だけが守るのは interfaces。
      * フレームワークの許可は、使う Bolt で、使う層に限って足す（W10 の AWS SDK もインフラストラクチャ層に足す）。
      * 画面の層（{@code interfaces.web}）は次の規則で別に見る（Bolt 39c）。
+     * Bolt 39d3c の【前の決定の変更】: application 層の照会のサービスの WARN のログのため {@code org.slf4j} を許す（2026-11-05、推奨のとおり。
+     * Recommend 承認の指示による。human:kakimomokuri）。domain は DomainArchitectureTest が Java の標準とドメイン層と注釈の語彙だけに絞るので、
+     * domain にロガーは入らない。
      */
     @Test
     void 外部データのインフラストラクチャ層と画面の層の外は共有カーネルとJavaとSpringにだけ依存する() {
@@ -157,7 +160,8 @@ class ModularityTest {
                         "java..",
                         "com.example.cargotracker.externaldata..",
                         "com.example.cargotracker.shared..",
-                        "org.springframework..")
+                        "org.springframework..",
+                        "org.slf4j..")
                 .check(PRODUCTION_CLASSES);
     }
 
