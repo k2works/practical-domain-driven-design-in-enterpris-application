@@ -896,7 +896,7 @@ class UndecidedRecordQueryServiceTest {
         @Test
         void 行23_知らない原本種別の制御文字は置き換えてログに書く() {
             query(
-                    "CON\nTAI\rNER\u0007X Y Z‮",
+                    "CON\nTAI\rNER\u0007X\u2028Y\u2029Z\u202E",
                     new ReceivedValue(VOYAGE_NUMBER, summaryOf("VOYAGE", false)),
                     "VOYAGE",
                     null);
@@ -908,9 +908,9 @@ class UndecidedRecordQueryServiceTest {
                             .doesNotContain("\n")
                             .doesNotContain("\r")
                             .doesNotContain("\u0007")
-                            .doesNotContain(" ")
-                            .doesNotContain(" ")
-                            .doesNotContain("‮"));
+                            .doesNotContain("\u2028")
+                            .doesNotContain("\u2029")
+                            .doesNotContain("\u202E"));
         }
 
         @Test

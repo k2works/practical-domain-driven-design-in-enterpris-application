@@ -759,6 +759,33 @@ export default function (gulp) {
     }
   });
 
+  // セキュリティのホットスポットを一覧する（読むだけ。見直しの状態は変えない）。
+  // Quality Gate の new_security_hotspots_reviewed で落ちたとき、どれを見直すかを確かめる
+  gulp.task('sonar-local:hotspots', (done) => {
+    try {
+      const projectKey = sonarProjectKey();
+      const hostUrl = sonarHostUrl();
+      console.log('=== セキュリティのホットスポット ===');
+      for (const inNewCodePeriod of ['true', 'false']) {
+        const data = sonarApi('/api/hotspots/search', { projectKey, inNewCodePeriod, ps: '500' });
+        const hotspots = data.hotspots || [];
+        console.log('');
+        console.log(`── ${inNewCodePeriod === 'true' ? '新しいコード' : 'すべて'} (${hotspots.length} 件) ──`);
+        for (const h of hotspots) {
+          const component = (h.component || '').replace(`${projectKey}:`, '');
+          const line = h.line ? `:${h.line}` : '';
+          console.log(`  [${h.vulnerabilityProbability || '-'}/${h.status}${h.resolution ? '/' + h.resolution : ''}] ${component}${line}`);
+          console.log(`    ${h.securityCategory || '-'} ${h.ruleKey || ''}: ${h.message}`);
+        }
+      }
+      console.log('');
+      console.log(`詳細: ${hostUrl}/security_hotspots?id=${projectKey}`);
+      done();
+    } catch (error) {
+      done(error);
+    }
+  });
+
   // スキャン → Quality Gate 確認の一連フロー
   // 品質プロファイルを sonarqube.config.json の qualityProfiles のとおりにそろえる（定義がなければ何もしない）
   gulp.task('sonar-local:profile', (done) => {
@@ -809,6 +836,7 @@ SonarQube ローカル タスク一覧
 分析:
   sonar-local:gate           Quality Gate ステータス確認
   sonar-local:issues         メトリクス・イシュー・重複コード詳細表示
+  sonar-local:hotspots       セキュリティのホットスポットを一覧（読むだけ）
   sonar-local:check          スキャン → Quality Gate 確認の一連フロー
 
 管理:
