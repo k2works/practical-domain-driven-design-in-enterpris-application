@@ -284,6 +284,32 @@ class ReceivedRecordDecisionServiceTest {
             ingestions.add(other);
         }
 
+        /** 呼ぶたびに 1 秒進む Clock（判断の時刻を 1 回だけ取ることを確かめる。固定の Clock では受信記録ごとに取っても同じ時刻になる）。 */
+        private static final class TickingClock extends Clock {
+
+            private final Instant start;
+            private int calls;
+
+            TickingClock(Instant start) {
+                this.start = start;
+            }
+
+            @Override
+            public java.time.ZoneId getZone() {
+                return ZoneOffset.UTC;
+            }
+
+            @Override
+            public Clock withZone(java.time.ZoneId zone) {
+                return this;
+            }
+
+            @Override
+            public Instant instant() {
+                return start.plusSeconds(calls++);
+            }
+        }
+
         /** その取込のキーのない隔離（範囲が null ならファイルの誤り）。 */
         private ReceivedRecord keyless(Ingestion of, PhysicalLineRange range) {
             ReceivedRecord received = new ReceivedRecord(
@@ -344,6 +370,21 @@ class ReceivedRecordDecisionServiceTest {
             assertThat(receivedRecords.undecidedQuarantine(contentMismatch.id()))
                     .isPresent();
             assertThat(receivedRecords.undecidedQuarantine(ofOther.id())).isPresent();
+        }
+
+        @Test
+        void 行4_判断の時刻は呼ぶたびに進むClockからも1回だけ取り全件で同じにする() {
+            keyless(ingestion, new PhysicalLineRange(2, 2));
+            keyless(ingestion, new PhysicalLineRange(3, 3));
+            keyless(ingestion, new PhysicalLineRange(4, 4));
+            ReceivedRecordDecisionService withTickingClock = new ReceivedRecordDecisionService(
+                    receivedRecords, decisions, ingestions, publisher, new TickingClock(NOW));
+
+            withTickingClock.rejectKeyless(steward, new RejectKeylessQuarantinesCommand(ingestion.id(), REASON));
+
+            assertThat(decisions.all())
+                    .extracting(ReceivedRecordDecision::decidedAt)
+                    .containsOnly(Instant.parse("2026-11-16T01:05:00.123456Z"));
         }
 
         @Test

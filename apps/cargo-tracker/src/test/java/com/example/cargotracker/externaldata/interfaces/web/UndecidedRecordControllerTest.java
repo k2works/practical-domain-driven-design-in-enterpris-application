@@ -742,7 +742,14 @@ class UndecidedRecordControllerTest {
                             "絞らない一覧", null, new UndecidedRecordPage(items(2), 2, 1, 1, null, false, 0)),
                     org.junit.jupiter.params.provider.Arguments.of(
                             "取込が見つからない一覧", INGESTION_ID, new UndecidedRecordPage(items(2), 2, 1, 1, null, true, 0)),
-                    org.junit.jupiter.params.provider.Arguments.of("形式の誤りが 0 件の取込", INGESTION_ID, filtered(1, 0)));
+                    org.junit.jupiter.params.provider.Arguments.of("形式の誤りが 0 件の取込", INGESTION_ID, filtered(1, 0)),
+                    // 照会が絞らない一覧に件数を持たせても、画面は取込で絞っていなければリンクを出さない（守りは照会と画面の 2 か所）
+                    org.junit.jupiter.params.provider.Arguments.of(
+                            "照会が件数を持たせた絞らない一覧", null, new UndecidedRecordPage(items(2), 2, 1, 1, null, false, 2)),
+                    org.junit.jupiter.params.provider.Arguments.of(
+                            "照会が件数を持たせた取込が見つからない一覧",
+                            INGESTION_ID,
+                            new UndecidedRecordPage(items(2), 2, 1, 1, null, true, 2)));
         }
 
         @ParameterizedTest(name = "{0}")
