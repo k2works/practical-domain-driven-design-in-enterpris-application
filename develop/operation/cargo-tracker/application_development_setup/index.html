@@ -15184,6 +15184,7 @@ git<span class="w"> </span>config<span class="w"> </span>blame.ignoreRevsFile<sp
 npx<span class="w"> </span>gulp<span class="w"> </span>sonar-local:profile<span class="w">  </span><span class="c1"># 品質プロファイルを sonarqube.config.json のとおりにそろえる（check が先に流す）</span>
 npx<span class="w"> </span>gulp<span class="w"> </span>sonar-local:check<span class="w">    </span><span class="c1"># プロファイルをそろえ、スキャンして Quality Gate を判定する（不合格なら失敗で終わる）</span>
 npx<span class="w"> </span>gulp<span class="w"> </span>sonar-local:issues<span class="w">   </span><span class="c1"># 指摘の一覧</span>
+npx<span class="w"> </span>gulp<span class="w"> </span>sonar-local:hotspots<span class="w"> </span><span class="c1"># セキュリティのホットスポットの一覧（読むだけ。new_security_hotspots_reviewed で落ちたときに見る）</span>
 </code></pre></div>
 <p>品質プロファイルは、<code>sonarqube.config.json</code> の <code>qualityProfiles</code> に書いた「cargo-tracker way」（Sonar way を継承し、整形の規則と正反対の <code>java:S8445</code> だけを外す。2026-10-09 に human:kakimomokuri が決定、Bolt 24）を、<code>sonar-local:profile</code> が作り、cargo-tracker に割り当てる。何度流しても同じ状態になる。品質プロファイルを変えるので、<code>SONAR_TOKEN</code> は <strong>User Token</strong>（管理者の利用者のもの）にする。解析用のトークン（Global・Project Analysis Token）では HTTP 403（Insufficient privileges）になる。外す規則を足すときは、<code>deactivateRules</code> に規則と理由を書く。</p>
 <h2 id="5">5. 生成物の場所<a class="headerlink" href="#5" title="Permanent link">&para;</a></h2>
