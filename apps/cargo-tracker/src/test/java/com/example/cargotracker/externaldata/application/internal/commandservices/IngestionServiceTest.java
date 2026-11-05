@@ -42,6 +42,7 @@ import com.example.cargotracker.externaldata.domain.model.valueobjects.PayloadHa
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PayloadObjectKey;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PhysicalLineRange;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PortCallValue;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.ReceivedValue;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.RecordValues;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.TrackingNumberValue;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.VoyageValues;
@@ -104,7 +105,7 @@ class IngestionServiceTest {
     };
     private final InMemoryReceivedRecordRepository receivedRecords =
             new InMemoryReceivedRecordRepository(ingestions, externalRecords);
-    private final InMemoryAdoptedValueRepository adoptedValues = new InMemoryAdoptedValueRepository();
+    private final InMemoryAdoptedValueRepository adoptedValues = new InMemoryAdoptedValueRepository(receivedRecords);
     private final InMemoryExternalPayloadStorage storage = new InMemoryExternalPayloadStorage();
     private final Clock clock = Clock.fixed(NOW, ZoneOffset.UTC);
     /** 発行したイベント（出したイベントの値と、出さないことを発行の記録で確かめる。T-236）。 */
@@ -1711,6 +1712,156 @@ class IngestionServiceTest {
         }
     }
 
+    /**
+     * Bolt 39d3 の行 2〜4・19（受信記録の値。開始準備の決定 (3)・(4)）。外部原本を持つ受信記録（採用・重複・内容の違う原本の隔離）は取込の
+     * 値の対象のキーと要約を持ち、形式の誤り（キーのない隔離）は持たない。採用値と同じ規則の文字列であることは、同じ行の採用値と比べて縛る
+     * （採用の組み立て役のキーを {@code targetKey()} に寄せる 39d3c のリファクタリングを守る）。
+     */
+    @Nested
+    class Bolt39d3_受信記録の値 {
+
+        private static final String VOYAGE_HEADER = "external_id,external_version,acquired_at,port_calls";
+
+        private IngestedRow voyageRow(int lineNumber, String voyageNumber, String losAngelesArrival) {
+            String line =
+                    voyageNumber + ",3," + ACQUIRED + ",JPTYO;;2026-11-20T00:00:00Z|USLAX;" + losAngelesArrival + ";";
+            VoyageValues values = new VoyageValues(
+                    voyageNumber,
+                    List.of(
+                            new PortCallValue(
+                                    new Location("JPTYO"), null, new UtcInstant(Instant.parse("2026-11-20T00:00:00Z"))),
+                            new PortCallValue(
+                                    new Location("USLAX"), new UtcInstant(Instant.parse(losAngelesArrival)), null)));
+            return new IngestedRow(
+                    lineNumber, lineNumber, voyageNumber, "3", ACQUIRED, values, line.getBytes(StandardCharsets.UTF_8));
+        }
+
+        private IngestFileCommand voyageFile(DataSource source, IngestedRow... rows) {
+            StringBuilder content = new StringBuilder(VOYAGE_HEADER);
+            for (IngestedRow row : rows) {
+                content.append('\n').append(new String(row.payload(), StandardCharsets.UTF_8));
+            }
+            return new IngestFileCommand(
+                    source.id(),
+                    content.toString().getBytes(StandardCharsets.UTF_8),
+                    rows.length,
+                    List.of(rows),
+                    List.of(),
+                    null);
+        }
+
+        private ReceivedRecord receivedRecordOf(UUID id) {
+            return receivedRecords.all().stream()
+                    .filter(received -> received.id().equals(id))
+                    .findFirst()
+                    .orElseThrow();
+        }
+
+        // --- 行 2・19: 採用の行の値と採用値の一致 ---
+
+        @Test
+        void 行2_行19_採用の航海の行の受信記録は航海番号と採用値と同じ要約の値を持つ() {
+            DataSource voyageSource = approvedSource("船会社B-" + UUID.randomUUID(), "VOYAGE");
+
+            ingested(service()
+                    .ingest(steward, voyageFile(voyageSource, voyageRow(2, "V2611E", "2026-12-01T00:00:00Z"))));
+
+            ReceivedRecord received = receivedRecords.all().getFirst();
+            AdoptedValue adopted = adoptedValues.all().getFirst();
+            assertThat(received.value())
+                    .isEqualTo(new ReceivedValue(
+                            "V2611E", "JPTYO;;2026-11-20T00:00:00.000000Z|USLAX;2026-12-01T00:00:00.000000Z;"));
+            assertThat(received.value().targetKey()).isEqualTo(adopted.targetKey());
+            assertThat(received.value().summary()).isEqualTo(adopted.valueSummary());
+        }
+
+        @Test
+        void 行2_行19_採用の主要実績の行の受信記録は追跡番号と採用値と同じ要約の値を持つ() {
+            ingested(service().ingest(steward, file(milestoneSource, milestone(2, "MS-0001", "1", "CTABCDEFGH2345"))));
+
+            ReceivedRecord received = receivedRecords.all().getFirst();
+            AdoptedValue adopted = adoptedValues.all().getFirst();
+            assertThat(received.value())
+                    .isEqualTo(new ReceivedValue("CTABCDEFGH2345", "DEPARTURE;JPTYO;2026-11-03T08:00:00.000000Z"));
+            assertThat(received.value().targetKey()).isEqualTo(adopted.targetKey());
+            assertThat(received.value().summary()).isEqualTo(adopted.valueSummary());
+        }
+
+        // --- 行 3: 重複と内容の違う原本 ---
+
+        @Test
+        void 行3_重複の行と内容の違う原本の行の受信記録もその行の値を持ち採用値は採用の行だけ() {
+            DataSource voyageSource = approvedSource("船会社B-" + UUID.randomUUID(), "VOYAGE");
+            IngestedRow adopted = voyageRow(2, "V2611E", "2026-12-01T00:00:00Z");
+            IngestedRow duplicate = voyageRow(3, "V2611E", "2026-12-01T00:00:00Z");
+            IngestedRow mismatch = voyageRow(4, "V2611E", "2026-12-02T00:00:00Z");
+
+            Ingested result =
+                    ingested(service().ingest(steward, voyageFile(voyageSource, adopted, duplicate, mismatch)));
+
+            assertThat(result.rows())
+                    .extracting(
+                            RowResult::classification,
+                            row -> receivedRecordOf(row.receivedRecordId()).value())
+                    .containsExactly(
+                            tuple(Classification.ADOPTED, ReceivedValue.of(adopted.values())),
+                            tuple(Classification.DUPLICATE, ReceivedValue.of(duplicate.values())),
+                            tuple(Classification.QUARANTINED, ReceivedValue.of(mismatch.values())));
+            assertThat(receivedRecordOf(result.rows().get(2).receivedRecordId())
+                            .value()
+                            .summary())
+                    .isEqualTo("JPTYO;;2026-11-20T00:00:00.000000Z|USLAX;2026-12-02T00:00:00.000000Z;");
+            assertThat(adoptedValues.all()).hasSize(1);
+        }
+
+        // --- 行 4: 形式の誤りと取り込めなかった部分 ---
+
+        @Test
+        void 行4_行の誤りとファイルの終わりまで取り込めなかった部分の受信記録は値を持たない() {
+            IngestFileCommand command = new IngestFileCommand(
+                    milestoneSource.id(),
+                    "file".getBytes(StandardCharsets.UTF_8),
+                    3,
+                    List.of(milestone(2, "MS-0001", "1", "CTABCDEFGH2345")),
+                    List.of(new RejectedRow(
+                            3,
+                            3,
+                            FormatDefect.INVALID_TRACKING_NUMBER,
+                            List.of("tracking_number"),
+                            "MS-0002".getBytes(StandardCharsets.UTF_8))),
+                    new UnreadablePart(
+                            4,
+                            1,
+                            FormatDefect.UNCLOSED_QUOTE,
+                            List.of(),
+                            "\"MS-0003".getBytes(StandardCharsets.UTF_8)));
+
+            ingested(service().ingest(steward, command));
+
+            assertThat(receivedRecords.all())
+                    .extracting(received -> received.externalRecordId() != null, received -> received.value() != null)
+                    .containsExactly(tuple(true, true), tuple(false, false), tuple(false, false));
+        }
+
+        @Test
+        void 行4_ファイルの誤りの受信記録は値を持たない() {
+            IngestFileCommand command = new IngestFileCommand(
+                    milestoneSource.id(),
+                    "file".getBytes(StandardCharsets.UTF_8),
+                    2,
+                    List.of(),
+                    List.of(),
+                    new UnreadablePart(2, 2, FormatDefect.UNREADABLE_HEADER, List.of(), null));
+
+            ingested(service().ingest(steward, command));
+
+            assertThat(receivedRecords.all()).singleElement().satisfies(received -> {
+                assertThat(received.externalRecordId()).isNull();
+                assertThat(received.value()).isNull();
+            });
+        }
+    }
+
     /** 保存の呼び出しを記録する（保存 → 受信記録の順を確かめる）。 */
     private class RecordingStorage implements ExternalPayloadStorage {
 
@@ -1735,6 +1886,10 @@ class IngestionServiceTest {
     /** 採用値の追記を記録する（追記しないことを件数ではなく呼び出しで確かめる。T-236）。 */
     private class RecordingAdoptedValues extends InMemoryAdoptedValueRepository {
 
+        RecordingAdoptedValues() {
+            super(receivedRecords);
+        }
+
         @Override
         public void add(AdoptedValue adoptedValue) {
             adoptedValues.add(adoptedValue);
@@ -1744,6 +1899,11 @@ class IngestionServiceTest {
         @Override
         public Optional<AdoptedValue> findByReceivedRecordId(UUID receivedRecordId) {
             return adoptedValues.findByReceivedRecordId(receivedRecordId);
+        }
+
+        @Override
+        public Optional<AdoptedValue> currentOf(UUID externalRecordId) {
+            return adoptedValues.currentOf(externalRecordId);
         }
     }
 

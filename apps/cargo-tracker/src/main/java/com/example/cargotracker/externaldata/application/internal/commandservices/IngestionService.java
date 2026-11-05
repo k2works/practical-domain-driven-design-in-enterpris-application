@@ -25,6 +25,7 @@ import com.example.cargotracker.externaldata.domain.model.valueobjects.Idempoten
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PayloadHash;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PayloadObjectKey;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PhysicalLineRange;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.ReceivedValue;
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
 import com.example.cargotracker.shared.domain.Role;
 import com.example.cargotracker.shared.domain.UtcInstant;
@@ -56,6 +57,8 @@ import org.springframework.transaction.annotation.Transactional;
  * 例外のまま上げて取込全体を巻き戻す。時刻は Clock から 1 回取り、取込・外部原本・受信記録に使う（取込を 1 つの時点として再現できる）。
  * 処理の順は、ファイル全体の原本 → 取込の行（取り込めなかった行の始まりと数を入れ、更新しない）→ 物理行の順の行 → 取り込めなかった部分。
  * 受信記録には DE-14 と同じ物理行の範囲を入れ、ファイルの誤りは範囲を持たない（隔離の理由を行の順に読むため。Bolt 39c3）。
+ * 形式の正しい行の受信記録（採用・重複・内容の違う原本の隔離。どれも外部原本を持つ）には取込の値の対象のキーと要約を受信記録の値として書き、
+ * キーのない隔離には書かない（判断の画面で受け取った値を示し、39d3b の採用が同じ規則で採用値を作り直すため。Bolt 39d3）。
  */
 @Service // JIG がユースケースとして読む印（組み立ては ExternalDataConfiguration）
 public class IngestionService {
@@ -203,7 +206,8 @@ public class IngestionService {
                 classification,
                 noteOf(classification, externalRecord, row),
                 now,
-                row.range());
+                row.range(),
+                ReceivedValue.of(row.values()));
         receivedRecords.add(received);
         Optional<Object> event =
                 switch (classification) {
@@ -320,7 +324,8 @@ public class IngestionService {
                 Classification.QUARANTINED,
                 withinNoteLimit(note),
                 run.now(),
-                range);
+                range,
+                null);
         receivedRecords.add(received);
         return received;
     }

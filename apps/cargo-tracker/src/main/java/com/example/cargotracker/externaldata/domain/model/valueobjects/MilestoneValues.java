@@ -30,4 +30,10 @@ public record MilestoneValues(
     public String summary() {
         return kind.name() + ";" + location.unLocode() + ";" + RecordValues.summaryTime(occurredAt);
     }
+
+    /** 対象のキーは追跡番号の値（採用値の対象のキーと同じ。Bolt 39d3）。 */
+    @Override
+    public String targetKey() {
+        return trackingNumber.value();
+    }
 }

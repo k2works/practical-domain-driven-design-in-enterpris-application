@@ -13,7 +13,7 @@
     <h1>隔離の判断</h1>
     <!--/* S-17 の判断の画面（Bolt 39d2、US-14 AC4、UC-15 3b）。一覧と同じ項目と隔離の理由の全文を読んでから、却下の理由を書いて却下する。
            注記には取込ファイルから来た値が入るので th:text で示す。キーのない隔離（形式の誤り）は採用できないので、却下だけと取り込み直しの
-           案内を示す（【業務の判断】(a)）。却下は取り消せない（【業務の判断】(e)）。採用は 39d3 で同じ画面に足す。
+           案内を示す（【業務の判断】(a)）。却下は取り消せない（【業務の判断】(e)）。採用は 39d3b で同じ画面に足す。
            送り先と戻り先の URL は controller が読んだ取込とページから組み立てる */-->
     <div id="error-summary" th:if="${#fields.hasErrors('${rejectionForm.*}')}" tabindex="-1" role="alert"
          aria-labelledby="error-summary-title">
@@ -38,6 +38,20 @@
         <dt>隔離の理由</dt>
         <dd th:text="${note}">140 行目: 同じ外部 ID・外部版で内容の違う原本を受け取りました（最初の受信: 2026-11-15 09:00:00 UTC）。</dd>
     </dl>
+    <!--/* 航海の内容の違う原本の受け取った値とこの外部版の採用値（Bolt 39d3、【業務の判断】(i)・(j)）。見出しで名前の付いた 2 つの領域に、
+           それぞれの取得した日時と航海番号と寄港の番号付きの並びを示す。値が同じなら 2 つの領域の前に文を 1 つ示す。キーのない隔離と
+           主要実績の内容の違う原本（39d3c まで）には出さない。値には取込ファイルから来た値が入るので th:text で示す */-->
+    <th:block th:if="${receivedValues}">
+        <p th:if="${sameValuesText}" th:text="${sameValuesText}">受け取った値はこの外部版の採用値と同じです。原本の書き方（引用符・空白など）だけが違います。</p>
+        <section aria-labelledby="received-values-heading">
+            <h2 id="received-values-heading">受け取った値</h2>
+            <th:block th:replace="~{externaldata/undecided-records/decision :: values(${receivedValues})}"></th:block>
+        </section>
+        <section aria-labelledby="adopted-values-heading">
+            <h2 id="adopted-values-heading">この外部版の採用値</h2>
+            <th:block th:replace="~{externaldata/undecided-records/decision :: values(${adoptedValues})}"></th:block>
+        </section>
+    </th:block>
     <p th:if="${keyless}">形式の誤りは採用できません。直したファイルを取り込み直してください。</p>
     <form th:action="${actionUrl}" th:object="${rejectionForm}" method="post" novalidate>
         <div>
@@ -53,5 +67,19 @@
     </form>
     <p><a th:href="${backUrl}">一覧に戻る</a></p>
 </main>
+<!--/* 値の領域の中身（Bolt 39d3）。main の外に置き、上の 2 つの領域から呼ぶ（レイアウトには main だけが入る） */-->
+<th:block th:fragment="values(v)">
+    <p th:if="${v.emptyText}" th:text="${v.emptyText}">この外部版の採用値はありません。</p>
+    <th:block th:unless="${v.emptyText}">
+        <p th:text="${v.meta}">取得した日時 2026-11-16 09:30 Asia/Tokyo（UTC+09:00）（UTC 2026-11-16 00:30）</p>
+        <dl class="text-break">
+            <dt>航海番号</dt>
+            <dd th:text="${v.voyageNumber}">DEMO-201</dd>
+        </dl>
+        <ol class="text-break">
+            <li th:each="portCall : ${v.portCalls}" th:text="${portCall}">港 JPTYO・到着 —・出発 2026-11-19 08:00 Asia/Tokyo（UTC+09:00）（UTC 2026-11-18 23:00）</li>
+        </ol>
+    </th:block>
+</th:block>
 </body>
 </html>

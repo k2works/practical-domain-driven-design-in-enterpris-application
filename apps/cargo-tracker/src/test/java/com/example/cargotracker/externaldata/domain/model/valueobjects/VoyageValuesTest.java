@@ -182,4 +182,56 @@ class VoyageValuesTest {
                         .detail())
                 .isEqualTo("2 つ目の寄港: 到着か出発が要ります");
     }
+
+    /**
+     * Bolt 39d3 の行 6・7（要約から値に戻す。開始準備の決定 (4)、T-244）。往復の約束は「取込の値 {@code v} について
+     * {@code ofSummary(v.targetKey(), v.summary())} が {@code v} と等しい」で、時刻はマイクロ秒に切り捨てた値に限る。規則に合わない要約は
+     * 黙って読まずに {@link IllegalArgumentException}。
+     */
+    @org.junit.jupiter.api.Nested
+    class Bolt39d3_要約から値に戻す {
+
+        static java.util.stream.Stream<org.junit.jupiter.params.provider.Arguments> roundTrips() {
+            PortCallValue tokyoArrival =
+                    new PortCallValue(new Location("JPTYO"), at("2026-11-19T00:00:00.123456Z"), null);
+            PortCallValue tokyoBoth = new PortCallValue(
+                    new Location("JPTYO"), at("2026-11-19T00:00:00.123456Z"), at("2026-11-19T23:00:00Z"));
+            return java.util.stream.Stream.of(
+                    org.junit.jupiter.params.provider.Arguments.of(
+                            "出発だけと到着だけの寄港 2",
+                            new VoyageValues("V2611E", List.of(TOKYO_DEPARTURE, LOS_ANGELES_ARRIVAL)),
+                            "JPTYO;;2026-11-19T23:00:00.000000Z|USLAX;2026-12-01T14:00:00.000000Z;"),
+                    org.junit.jupiter.params.provider.Arguments.of(
+                            "到着だけの寄港と到着と出発の両方の寄港",
+                            new VoyageValues("V2611E", List.of(tokyoArrival, tokyoBoth)),
+                            "JPTYO;2026-11-19T00:00:00.123456Z;|JPTYO;2026-11-19T00:00:00.123456Z;2026-11-19T23:00:00.000000Z"),
+                    org.junit.jupiter.params.provider.Arguments.of(
+                            "到着と出発の両方の寄港 60", new VoyageValues("V2611E", portCalls(60)), null));
+        }
+
+        @org.junit.jupiter.params.ParameterizedTest(name = "{0}")
+        @org.junit.jupiter.params.provider.MethodSource("roundTrips")
+        void 行6_航海の要約から戻した値は元の値と等しい(String name, VoyageValues values, String expectedSummary) {
+            if (expectedSummary != null) {
+                assertThat(values.summary()).isEqualTo(expectedSummary);
+            }
+
+            assertThat(values.targetKey()).isEqualTo("V2611E");
+            assertThat(VoyageValues.ofSummary(values.targetKey(), values.summary()))
+                    .isEqualTo(values);
+        }
+
+        @org.junit.jupiter.params.ParameterizedTest(name = "{0}")
+        @org.junit.jupiter.params.provider.CsvSource(
+                delimiter = '!',
+                value = {
+                    "区切りの数が違う寄港 ! JPTYO;2026-11-19T23:00:00.000000Z|USLAX;2026-12-01T14:00:00.000000Z;",
+                    "港が UN/LOCODE でない ! jptyo;;2026-11-19T23:00:00.000000Z|USLAX;2026-12-01T14:00:00.000000Z;",
+                    "読めない時刻 ! JPTYO;;2026-11-19 23:00|USLAX;2026-12-01T14:00:00.000000Z;"
+                })
+        void 行7_規則に合わない航海の要約は黙って読まず不正な引数の例外にする(String name, String summary) {
+            assertThatThrownBy(() -> VoyageValues.ofSummary("V2611E", summary))
+                    .isInstanceOf(IllegalArgumentException.class);
+        }
+    }
 }

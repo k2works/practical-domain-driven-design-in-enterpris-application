@@ -9,17 +9,27 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 
+import com.example.cargotracker.externaldata.domain.model.aggregates.AdoptedValue;
+import com.example.cargotracker.externaldata.domain.model.aggregates.AdoptedValue.TargetType;
+import com.example.cargotracker.externaldata.domain.model.aggregates.AdoptedValueRepository;
 import com.example.cargotracker.externaldata.domain.model.aggregates.DataSource;
 import com.example.cargotracker.externaldata.domain.model.aggregates.DataSource.ApprovalStatus;
 import com.example.cargotracker.externaldata.domain.model.aggregates.DataSourceRepository;
 import com.example.cargotracker.externaldata.domain.model.aggregates.Ingestion;
 import com.example.cargotracker.externaldata.domain.model.aggregates.IngestionRepository;
+import com.example.cargotracker.externaldata.domain.model.aggregates.ReceivedRecord;
 import com.example.cargotracker.externaldata.domain.model.aggregates.ReceivedRecordRepository;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.Classification;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PayloadHash;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PayloadObjectKey;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PhysicalLineRange;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.PortCallValue;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.ReceivedValue;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.UndecidedQuarantine;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.VoyageValues;
+import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.UserId;
+import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -43,8 +53,11 @@ class UndecidedRecordQueryServiceTest {
     private final ReceivedRecordRepository receivedRecords = mock(ReceivedRecordRepository.class);
     private final IngestionRepository ingestions = mock(IngestionRepository.class);
     private final DataSourceRepository dataSources = mock(DataSourceRepository.class);
+    /** この外部版の採用値の照会（Bolt 39d3。判断の画面の値の照会だけが引く）。 */
+    private final AdoptedValueRepository adoptedValues = mock(AdoptedValueRepository.class);
+
     private final UndecidedRecordQueryService service =
-            new UndecidedRecordQueryService(receivedRecords, ingestions, dataSources);
+            new UndecidedRecordQueryService(receivedRecords, ingestions, dataSources, adoptedValues);
 
     private final DataSource voyage =
             new DataSource(UUID.randomUUID(), "照会の提供元-" + UUID.randomUUID(), "VOYAGE", ApprovalStatus.APPROVED);
@@ -436,6 +449,162 @@ class UndecidedRecordQueryServiceTest {
             then(receivedRecords).should().undecidedQuarantines(null, 200, UndecidedRecordQueryService.PAGE_SIZE);
             then(receivedRecords).should().undecidedQuarantines(null, 100, UndecidedRecordQueryService.PAGE_SIZE);
             then(receivedRecords).should(times(2)).countUndecidedQuarantines(null);
+        }
+    }
+
+    /**
+     * Bolt 39d3 の行 10・12・13（判断の画面の値の照会。開始準備の決定 (5)・(6)、T-236）。引く数と引かないことは呼び出しの記録で確かめる。
+     * 主要実績の値と読めない値は 39d3c。
+     */
+    @Nested
+    class Bolt39d3_判断の画面の値の照会 {
+
+        private static final Instant RECEIVED_ACQUIRED_AT = Instant.parse("2026-11-16T00:30:00Z");
+        private static final Instant ADOPTED_ACQUIRED_AT = Instant.parse("2026-11-15T08:30:00Z");
+        private static final Instant PUBLISHED_AT = Instant.parse("2026-11-15T09:00:00Z");
+        private static final String RECEIVED_SUMMARY =
+                "JPTYO;;2026-11-18T23:00:00.000000Z|USLAX;2026-12-01T22:00:00.000000Z;";
+        private static final String ADOPTED_SUMMARY =
+                "JPTYO;;2026-11-18T23:00:00.000000Z|USLAX;2026-12-01T14:00:00.000000Z;";
+
+        private final UUID externalRecordId = UUID.randomUUID();
+
+        private UndecidedRecordPage.Item item(UUID receivedRecordId, String recordType, boolean keyless) {
+            return new UndecidedRecordPage.Item(
+                    receivedRecordId,
+                    INGESTED_AT,
+                    voyage.provider(),
+                    recordType,
+                    new PhysicalLineRange(3, 3),
+                    keyless,
+                    keyless ? null : "DEMO-201",
+                    keyless ? null : "3",
+                    "3 行目: 注記");
+        }
+
+        private ReceivedRecord received(Classification classification, Instant acquiredAt, String summaryOrNull) {
+            return new ReceivedRecord(
+                    UUID.randomUUID(),
+                    externalRecordId,
+                    ingestionId,
+                    PayloadHash.of(new byte[] {3}),
+                    PayloadObjectKey.newRecordPayload(),
+                    acquiredAt,
+                    classification,
+                    classification == Classification.ADOPTED ? null : "注記",
+                    INGESTED_AT,
+                    new PhysicalLineRange(3, 3),
+                    summaryOrNull == null ? null : new ReceivedValue("DEMO-201", summaryOrNull));
+        }
+
+        private static VoyageValues voyage(String losAngelesArrival) {
+            return new VoyageValues(
+                    "DEMO-201",
+                    List.of(
+                            new PortCallValue(
+                                    new Location("JPTYO"), null, new UtcInstant(Instant.parse("2026-11-18T23:00:00Z"))),
+                            new PortCallValue(
+                                    new Location("USLAX"), new UtcInstant(Instant.parse(losAngelesArrival)), null)));
+        }
+
+        private AdoptedValue adoptedValue(UUID receivedRecordId) {
+            return new AdoptedValue(
+                    UUID.randomUUID(),
+                    receivedRecordId,
+                    TargetType.VOYAGE,
+                    "DEMO-201",
+                    ADOPTED_SUMMARY,
+                    "3",
+                    PUBLISHED_AT);
+        }
+
+        @Test
+        void 行13_航海の内容の違う原本は受け取った値と取得時刻とこの外部版の採用値と情報版と公開した時刻と採用値の受信記録の取得時刻を返す() {
+            ReceivedRecord quarantine = received(Classification.QUARANTINED, RECEIVED_ACQUIRED_AT, RECEIVED_SUMMARY);
+            ReceivedRecord adoptedRecord = received(Classification.ADOPTED, ADOPTED_ACQUIRED_AT, ADOPTED_SUMMARY);
+            AdoptedValue adopted = adoptedValue(adoptedRecord.id());
+            given(receivedRecords.findById(quarantine.id())).willReturn(Optional.of(quarantine));
+            given(receivedRecords.findById(adoptedRecord.id())).willReturn(Optional.of(adoptedRecord));
+            given(adoptedValues.currentOf(externalRecordId)).willReturn(Optional.of(adopted));
+
+            Optional<QuarantineValues> values = service.quarantineValues(item(quarantine.id(), "VOYAGE", false));
+
+            assertThat(values)
+                    .contains(new QuarantineValues(
+                            voyage("2026-12-01T22:00:00Z"),
+                            RECEIVED_ACQUIRED_AT,
+                            new QuarantineValues.Adopted(
+                                    voyage("2026-12-01T14:00:00Z"), "3", PUBLISHED_AT, ADOPTED_ACQUIRED_AT)));
+            then(receivedRecords).should(times(1)).findById(quarantine.id());
+            then(adoptedValues).should(times(1)).currentOf(externalRecordId);
+            then(receivedRecords).should(times(1)).findById(adoptedRecord.id());
+            then(receivedRecords).shouldHaveNoMoreInteractions();
+            then(ingestions).shouldHaveNoInteractions();
+            then(dataSources).shouldHaveNoInteractions();
+        }
+
+        @Test
+        void 行13_この外部版の採用値がなければ採用値の受信記録を引かず採用値は空() {
+            ReceivedRecord quarantine = received(Classification.QUARANTINED, RECEIVED_ACQUIRED_AT, RECEIVED_SUMMARY);
+            given(receivedRecords.findById(quarantine.id())).willReturn(Optional.of(quarantine));
+            given(adoptedValues.currentOf(externalRecordId)).willReturn(Optional.empty());
+
+            Optional<QuarantineValues> values = service.quarantineValues(item(quarantine.id(), "VOYAGE", false));
+
+            assertThat(values)
+                    .contains(new QuarantineValues(voyage("2026-12-01T22:00:00Z"), RECEIVED_ACQUIRED_AT, null));
+            then(receivedRecords).should(times(1)).findById(any());
+            then(adoptedValues).should(times(1)).currentOf(externalRecordId);
+        }
+
+        @Test
+        void 行10_値の列のない隔離は受け取った値を空にして取得時刻とこの外部版の採用値を返す() {
+            ReceivedRecord quarantine = received(Classification.QUARANTINED, RECEIVED_ACQUIRED_AT, null);
+            ReceivedRecord adoptedRecord = received(Classification.ADOPTED, ADOPTED_ACQUIRED_AT, ADOPTED_SUMMARY);
+            given(receivedRecords.findById(quarantine.id())).willReturn(Optional.of(quarantine));
+            given(receivedRecords.findById(adoptedRecord.id())).willReturn(Optional.of(adoptedRecord));
+            given(adoptedValues.currentOf(externalRecordId)).willReturn(Optional.of(adoptedValue(adoptedRecord.id())));
+
+            QuarantineValues values = service.quarantineValues(item(quarantine.id(), "VOYAGE", false))
+                    .orElseThrow();
+
+            assertThat(values.received()).isNull();
+            assertThat(values.receivedAcquiredAt()).isEqualTo(RECEIVED_ACQUIRED_AT);
+            assertThat(values.adopted().values()).isEqualTo(voyage("2026-12-01T14:00:00Z"));
+        }
+
+        @ParameterizedTest(name = "{0}")
+        @CsvSource({"キーのない隔離（形式の誤り）, VOYAGE, true", "主要実績の内容の違う原本（39d3c まで）, MILESTONE, false"})
+        void 行12_キーのない隔離と主要実績の内容の違う原本は受信記録も採用値も引かず空(String name, String recordType, boolean keyless) {
+            assertThat(service.quarantineValues(item(UUID.randomUUID(), recordType, keyless)))
+                    .isEmpty();
+            then(receivedRecords).shouldHaveNoInteractions();
+            then(adoptedValues).shouldHaveNoInteractions();
+            then(ingestions).shouldHaveNoInteractions();
+            then(dataSources).shouldHaveNoInteractions();
+        }
+
+        @Test
+        void 行12_ない受信記録と隔離でない受信記録は採用値を引かず空() {
+            ReceivedRecord duplicate = received(Classification.DUPLICATE, RECEIVED_ACQUIRED_AT, RECEIVED_SUMMARY);
+            UUID missing = UUID.randomUUID();
+            given(receivedRecords.findById(duplicate.id())).willReturn(Optional.of(duplicate));
+            given(receivedRecords.findById(missing)).willReturn(Optional.empty());
+
+            assertThat(service.quarantineValues(item(duplicate.id(), "VOYAGE", false)))
+                    .isEmpty();
+            assertThat(service.quarantineValues(item(missing, "VOYAGE", false))).isEmpty();
+            then(adoptedValues).shouldHaveNoInteractions();
+        }
+
+        @Test
+        void 行13_一覧の照会はこの外部版の採用値を引かない() {
+            givenUndecided(null, 3);
+
+            service.page(null, 1);
+
+            then(adoptedValues).shouldHaveNoInteractions();
+            then(receivedRecords).should(never()).findById(any());
         }
     }
 

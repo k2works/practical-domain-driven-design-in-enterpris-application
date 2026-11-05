@@ -8,7 +8,7 @@ import com.example.cargotracker.shared.annotation.ddd.ValueObject;
  */
 @ValueObject
 public enum DecisionKind {
-    /** 採用（Bolt 39d3 で作る）。 */
+    /** 採用（Bolt 39d3b で作る）。 */
     ADOPTED,
     /** 却下（Bolt 39d2）。 */
     REJECTED

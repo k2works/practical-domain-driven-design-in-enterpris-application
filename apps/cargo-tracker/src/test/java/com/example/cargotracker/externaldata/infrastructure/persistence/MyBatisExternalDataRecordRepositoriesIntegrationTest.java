@@ -21,6 +21,7 @@ import com.example.cargotracker.externaldata.domain.model.valueobjects.Idempoten
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PayloadHash;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PayloadObjectKey;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PhysicalLineRange;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.ReceivedValue;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.UndecidedQuarantine;
 import com.example.cargotracker.shared.domain.UserId;
 import java.time.Instant;
@@ -221,7 +222,8 @@ class MyBatisExternalDataRecordRepositoriesIntegrationTest extends ExternalDataR
                 Classification.QUARANTINED,
                 line + " 行目: 値が空です（external_id）。提供元に確かめてください。",
                 ingestion.ingestedAt(),
-                new PhysicalLineRange(line, line));
+                new PhysicalLineRange(line, line),
+                null);
     }
 
     private static ExternalRecord externalRecord(IdempotencyKey key) {
@@ -272,7 +274,8 @@ class MyBatisExternalDataRecordRepositoriesIntegrationTest extends ExternalDataR
         return jdbc
                 .query(
                         "SELECT id, external_record_id, ingestion_id, payload_hash, payload_object_key, acquired_at,"
-                                + " classification, classification_note, classified_at, first_line_number, last_line_number"
+                                + " classification, classification_note, classified_at, first_line_number, last_line_number,"
+                                + " target_key, value_summary"
                                 + " FROM external_data.received_record WHERE id = ?",
                         (rs, rowNum) -> new ReceivedRecord(
                                 rs.getObject("id", UUID.class),
@@ -287,7 +290,8 @@ class MyBatisExternalDataRecordRepositoriesIntegrationTest extends ExternalDataR
                                         .toInstant(),
                                 lineRangeOrNull(
                                         rs.getObject("first_line_number", Integer.class),
-                                        rs.getObject("last_line_number", Integer.class))),
+                                        rs.getObject("last_line_number", Integer.class)),
+                                valueOrNull(rs.getString("target_key"), rs.getString("value_summary"))),
                         id)
                 .stream()
                 .findFirst();
@@ -296,6 +300,11 @@ class MyBatisExternalDataRecordRepositoriesIntegrationTest extends ExternalDataR
     /** ファイルの誤りと Bolt 39c3 より前の受信記録は行の範囲が NULL（Bolt 39c3 の行 4）。 */
     private static PhysicalLineRange lineRangeOrNull(Integer first, Integer last) {
         return first == null ? null : new PhysicalLineRange(first, last);
+    }
+
+    /** キーのない隔離と Bolt 39d3 より前の受信記録は値の 2 列が NULL（Bolt 39d3 の行 5）。 */
+    private static ReceivedValue valueOrNull(String targetKey, String summary) {
+        return targetKey == null ? null : new ReceivedValue(targetKey, summary);
     }
 
     /** キーのない隔離の取得時刻は NULL（Bolt 39b2 の行 18）。 */

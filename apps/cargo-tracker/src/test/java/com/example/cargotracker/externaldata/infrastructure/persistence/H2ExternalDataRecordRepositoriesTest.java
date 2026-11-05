@@ -218,6 +218,58 @@ class H2ExternalDataRecordRepositoriesTest extends ExternalDataRecordRepositorie
         }
     }
 
+    /** Bolt 39d3 の行 1（受信記録の値の 2 列の CHECK。開始準備の決定 (2)）。39b の同じ番号の行と名前が衝突しないよう入れ子にする。 */
+    @Nested
+    class Bolt39d3_受信記録の値 {
+
+        private static final String SUMMARY = "JPTYO;;2026-11-19T23:00:00.000000Z|USLAX;2026-12-01T14:00:00.000000Z;";
+
+        @Test
+        void 行1_H2でも値の2列は片方だけNULLと外部原本を持たない受信記録の値が制約の違反でそろってNULLは外部原本があっても通る() {
+            ExternalRecord externalRecord = new ExternalRecord(
+                    UUID.randomUUID(),
+                    new IdempotencyKey("H2 の提供元-" + UUID.randomUUID(), "VOYAGE", "V2611E", "1"),
+                    PayloadHash.of(new byte[] {1}),
+                    PayloadObjectKey.newRecordPayload(),
+                    NOW.toInstant());
+            externalRecords.add(externalRecord);
+            UUID externalRecordId = externalRecord.id();
+
+            insertValued(externalRecordId, NOW, "V2611E", SUMMARY);
+            insertValued(externalRecordId, NOW, null, null);
+            insertValued(null, null, null, null);
+
+            for (String[] value : List.of(new String[] {"V2611E", null}, new String[] {null, SUMMARY})) {
+                assertThatThrownBy(() -> insertValued(externalRecordId, NOW, value[0], value[1]))
+                        .as("片方だけの値 %s・%s", value[0], value[1])
+                        .isInstanceOf(DataIntegrityViolationException.class)
+                        .satisfies(e -> assertThat(e.getMessage()).containsIgnoringCase("ck_received_record_value"));
+            }
+            assertThatThrownBy(() -> insertValued(null, null, "V2611E", SUMMARY))
+                    .as("外部原本を持たない受信記録の値")
+                    .isInstanceOf(DataIntegrityViolationException.class)
+                    .satisfies(e -> assertThat(e.getMessage()).containsIgnoringCase("ck_received_record_value"));
+        }
+
+        /** 値の 2 列を指定した隔離の受信記録をポートを通さず書く（record は型で拒むため）。 */
+        private void insertValued(UUID externalRecordId, OffsetDateTime acquiredAt, String targetKey, String summary) {
+            UUID id = UUID.randomUUID();
+            jdbc.update(
+                    "INSERT INTO external_data.received_record (id, external_record_id, ingestion_id, payload_hash,"
+                            + " payload_object_key, acquired_at, classification, classification_note, classified_at,"
+                            + " target_key, value_summary)"
+                            + " VALUES (?, ?, NULL, ?, ?, ?, 'QUARANTINED', NULL, ?, ?, ?)",
+                    id,
+                    externalRecordId,
+                    HASH,
+                    "externaldata/records/" + id,
+                    acquiredAt,
+                    NOW,
+                    targetKey,
+                    summary);
+        }
+    }
+
     private void insertReceivedRecord(UUID externalRecordId, OffsetDateTime acquiredAt, String classification) {
         UUID id = UUID.randomUUID();
         jdbc.update(

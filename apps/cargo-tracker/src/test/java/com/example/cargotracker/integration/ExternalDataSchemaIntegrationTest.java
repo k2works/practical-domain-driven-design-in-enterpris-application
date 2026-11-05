@@ -305,6 +305,58 @@ class ExternalDataSchemaIntegrationTest {
         }
     }
 
+    /** Bolt 39d3 の行 1（受信記録の値の 2 列と CHECK と外部原本 ID の索引。開始準備の決定 (2)）。39b の同じ番号の行と名前が衝突しないよう入れ子にする。 */
+    @Nested
+    class Bolt39d3_受信記録の値 {
+
+        private static final String SUMMARY = "JPTYO;;2026-11-19T23:00:00.000000Z|USLAX;2026-12-01T14:00:00.000000Z;";
+
+        @Test
+        void 行1_値の2列は片方だけNULLと外部原本を持たない受信記録の値がCHECKの違反でそろってNULLは外部原本があっても通る() throws SQLException {
+            inRolledBackTransaction(connection -> {
+                UUID externalRecordId = insertExternalRecord(connection, newProvider(), "1");
+
+                insertValued(connection, externalRecordId, "V2611E", SUMMARY);
+                insertValued(connection, externalRecordId, null, null);
+                insertValued(connection, null, null, null);
+
+                assertViolation(
+                        connection, () -> insertValued(connection, externalRecordId, "V2611E", null), CHECK_VIOLATION);
+                assertViolation(
+                        connection, () -> insertValued(connection, externalRecordId, null, SUMMARY), CHECK_VIOLATION);
+                assertViolation(connection, () -> insertValued(connection, null, "V2611E", SUMMARY), CHECK_VIOLATION);
+                assertThat(constraintExists(connection, "received_record", "ck_received_record_value"))
+                        .isTrue();
+                assertThat(count(
+                                connection,
+                                "SELECT count(*) FROM pg_indexes WHERE schemaname = 'external_data'"
+                                        + " AND tablename = 'received_record' AND indexname = ?",
+                                "ix_received_record_external_record"))
+                        .isEqualTo(1);
+            });
+        }
+
+        /** 値の 2 列を指定した隔離の受信記録をポートを通さず書く（外部原本がなければ取得時刻も NULL。record は型で拒むため）。 */
+        private static void insertValued(Connection connection, UUID externalRecordId, String targetKey, String summary)
+                throws SQLException {
+            UUID id = UUID.randomUUID();
+            try (PreparedStatement statement = connection.prepareStatement("INSERT INTO external_data.received_record"
+                    + " (id, external_record_id, ingestion_id, payload_hash, payload_object_key, acquired_at,"
+                    + " classification, classification_note, classified_at, target_key, value_summary)"
+                    + " VALUES (?, ?, NULL, ?, ?, ?, 'QUARANTINED', NULL, ?, ?, ?)")) {
+                statement.setObject(1, id);
+                statement.setObject(2, externalRecordId);
+                statement.setString(3, HASH);
+                statement.setString(4, "record/" + id);
+                statement.setTimestamp(5, externalRecordId == null ? null : NOW);
+                statement.setTimestamp(6, NOW);
+                statement.setString(7, targetKey);
+                statement.setString(8, summary);
+                statement.executeUpdate();
+            }
+        }
+    }
+
     @Test
     void 受信記録の分類の時刻は必須() throws SQLException {
         inRolledBackTransaction(connection -> {

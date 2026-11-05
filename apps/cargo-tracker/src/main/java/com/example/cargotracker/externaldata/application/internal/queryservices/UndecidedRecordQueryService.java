@@ -1,10 +1,16 @@
 package com.example.cargotracker.externaldata.application.internal.queryservices;
 
+import com.example.cargotracker.externaldata.domain.model.aggregates.AdoptedValue;
+import com.example.cargotracker.externaldata.domain.model.aggregates.AdoptedValueRepository;
 import com.example.cargotracker.externaldata.domain.model.aggregates.DataSource;
 import com.example.cargotracker.externaldata.domain.model.aggregates.DataSourceRepository;
 import com.example.cargotracker.externaldata.domain.model.aggregates.IngestionRepository;
+import com.example.cargotracker.externaldata.domain.model.aggregates.ReceivedRecord;
 import com.example.cargotracker.externaldata.domain.model.aggregates.ReceivedRecordRepository;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.Classification;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.ReceivedValue;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.UndecidedQuarantine;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.VoyageValues;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,7 +25,8 @@ import org.springframework.transaction.annotation.Transactional;
  * 絞った取込があるかは取込を 1 回引いて確かめ、なければ絞らない一覧を返して見つからないことを示す。判断を待つ隔離が 0 件ならページの照会と
  * 情報源を引かない。求めた頁が 1 より前なら 1 頁目、最後より後なら最後の頁を返す。件数を数えてから頁を読むまでに件数が減って読んだ頁が
  * 空なら、数え直して 1 回だけ読み直す（Bolt 39d2b）。取込で絞ったときだけ、まとめての却下のリンクのためにその取込の判断を待つキーのない
- * 隔離を数える（Bolt 39d2b）。
+ * 隔離を数える（Bolt 39d2b）。判断の画面の中身とは別に、航海の内容の違う原本の受け取った値とこの外部版の採用値を返す（Bolt 39d3）。一覧の
+ * 照会は値も採用値も読まない。
  * 組み立ては {@code externaldata.infrastructure.config} の {@code @Bean} が担う。
  */
 @Service
@@ -28,17 +35,64 @@ public class UndecidedRecordQueryService {
     /** 1 ページの件数（S-16 の結果の画面の隔離の理由の 100 件にそろえる。Bolt 39d 計画の開始準備の決定 (3)）。 */
     public static final int PAGE_SIZE = 100;
 
+    /** 判断の画面に値を示す原本種別（航海。主要実績は 39d3c で足す。取込ファイルの種別の名前）。 */
+    private static final String VOYAGE = "VOYAGE";
+
     private final ReceivedRecordRepository receivedRecords;
     private final IngestionRepository ingestions;
     private final DataSourceRepository dataSources;
+    private final AdoptedValueRepository adoptedValues;
 
     public UndecidedRecordQueryService(
             ReceivedRecordRepository receivedRecords,
             IngestionRepository ingestions,
-            DataSourceRepository dataSources) {
+            DataSourceRepository dataSources,
+            AdoptedValueRepository adoptedValues) {
         this.receivedRecords = receivedRecords;
         this.ingestions = ingestions;
         this.dataSources = dataSources;
+        this.adoptedValues = adoptedValues;
+    }
+
+    /**
+     * 内容の違う原本の判断の画面の値（Bolt 39d3 の開始準備の決定 (5)・(6)）。値を返すのは、分類が隔離で外部原本を持つ受信記録のうち、原本種別が
+     * 航海のものだけ。キーのない隔離と主要実績の内容の違う原本（39d3c まで）は受信記録も採用値も引かずに空、ない受信記録・隔離でない受信記録は
+     * 採用値を引かずに空。原本種別は判断の画面の中身から受け、取込と情報源を読み直さない。引くのは受信記録の ID の照会 1 回、この外部版の
+     * 採用値の照会 1 回、採用値があればその受信記録の ID の照会 1 回（採用値の取得時刻）。
+     *
+     * @param quarantine 判断の画面の中身（{@link #undecidedQuarantine} の値）
+     */
+    @Transactional(readOnly = true)
+    public Optional<QuarantineValues> quarantineValues(UndecidedRecordPage.Item quarantine) {
+        if (quarantine.keyless() || !VOYAGE.equals(quarantine.recordType())) {
+            return Optional.empty();
+        }
+        return receivedRecords
+                .findById(quarantine.receivedRecordId())
+                .filter(received ->
+                        received.classification() == Classification.QUARANTINED && received.externalRecordId() != null)
+                .map(this::valuesOf);
+    }
+
+    private QuarantineValues valuesOf(ReceivedRecord quarantine) {
+        ReceivedValue value = quarantine.value();
+        VoyageValues received = value == null ? null : VoyageValues.ofSummary(value.targetKey(), value.summary());
+        QuarantineValues.Adopted adopted = adoptedValues
+                .currentOf(quarantine.externalRecordId())
+                .map(this::adoptedOf)
+                .orElse(null);
+        return new QuarantineValues(received, quarantine.acquiredAt(), adopted);
+    }
+
+    private QuarantineValues.Adopted adoptedOf(AdoptedValue adopted) {
+        // 採用値は受信記録への外部キーを持ち、採用の受信記録は外部原本と取得時刻を持つ
+        ReceivedRecord adoptedRecord =
+                receivedRecords.findById(adopted.receivedRecordId()).orElseThrow();
+        return new QuarantineValues.Adopted(
+                VoyageValues.ofSummary(adopted.targetKey(), adopted.valueSummary()),
+                adopted.infoVersion(),
+                adopted.publishedAt(),
+                adoptedRecord.acquiredAt());
     }
 
     /**

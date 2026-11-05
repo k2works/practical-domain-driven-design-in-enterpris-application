@@ -202,6 +202,20 @@ public class ExternalDataIngestionUiSteps {
     }
 
     /**
+     * Bolt 39d3 の行 21。航海の 2 行（採用 1・内容の違う原本 1）。3 行目は 2 行目と同じ値・同じ取得時刻で、寄港の列だけを引用符で囲み直した
+     * （行の原文が違うのでハッシュが違い隔離になるが、取込の値は同じ）。
+     */
+    @かつ("キー操作だけで承認済みの航海の情報源を選び、同じ外部 ID・外部版で寄港の列を引用符で囲み直した 2 行のファイルを選んで取り込む")
+    public void 寄港の列を引用符で囲み直した2行のファイルを取り込む() {
+        chooseSource();
+        String acquiredAt = acquiredAt();
+        chooseFile(voyageFile(
+                voyageLine("V2611E", acquiredAt, PORT_CALLS),
+                voyageLine("V2611E", acquiredAt, "\"" + PORT_CALLS + "\"")));
+        submit();
+    }
+
+    /**
      * Bolt 39c3 の行 9。航海の 6 行（採用 3・重複 1・列数の誤り 1・内容の違う原本 1）。2 行目と 5 行目は同じ内容（重複）、3 行目と 6 行目は
      * 同じ外部 ID・外部版で内容が違い（隔離）、4 行目は列が 1 つ多い（行の誤り）。
      */

@@ -4,6 +4,7 @@ import com.example.cargotracker.externaldata.domain.model.valueobjects.Classific
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PayloadHash;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PayloadObjectKey;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PhysicalLineRange;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.ReceivedValue;
 import com.example.cargotracker.shared.annotation.ddd.Entity;
 import java.time.Instant;
 import java.util.Objects;
@@ -16,7 +17,9 @@ import java.util.UUID;
  * 取込 ID を必ず持つ。外部原本 ID と取得時刻はそろって NULL かそろって NULL でなく、NULL なのは隔離だけ（キーのない隔離。表の CHECK
  * {@code ck_received_record_keyless_quarantine} と同じ規則。Bolt 39b2）。行の範囲は取込ファイルの物理行のどこからどこまでかで、隔離の理由を
  * 行の順に読む並びに使う。ファイルの誤り（ファイル全体の原本を指す）と Bolt 39c3 より前の受信記録は持たない（表の 2 列はそろって NULL。
- * CHECK {@code ck_received_record_line_range}。Bolt 39c3）。
+ * CHECK {@code ck_received_record_line_range}。Bolt 39c3）。外部原本を持つ受信記録は取込の値の対象のキーと値の要約（{@link ReceivedValue}）を
+ * 持ち、外部原本を持たない受信記録（キーのない隔離）は持たない（表の CHECK {@code ck_received_record_value} と同じ規則）。Bolt 39d3 より前の
+ * 受信記録は外部原本を持っても値を持たない（表の 2 列はそろって NULL。Bolt 39d3）。
  *
  * @param id 受信記録 ID
  * @param externalRecordId 外部原本 ID（キーのない隔離は {@code null}）
@@ -28,6 +31,7 @@ import java.util.UUID;
  * @param classificationNote 分類の注記（採用は注記なしで {@code null}）
  * @param classifiedAt 分類の時刻
  * @param lineRange 行の範囲（ファイルの誤りと Bolt 39c3 より前の受信記録は {@code null}）
+ * @param value 値（キーのない隔離と Bolt 39d3 より前の受信記録は {@code null}）
  */
 @Entity
 public record ReceivedRecord(
@@ -40,7 +44,8 @@ public record ReceivedRecord(
         Classification classification,
         String classificationNote,
         Instant classifiedAt,
-        PhysicalLineRange lineRange) {
+        PhysicalLineRange lineRange,
+        ReceivedValue value) {
 
     public ReceivedRecord {
         Objects.requireNonNull(id, "id");
@@ -54,6 +59,9 @@ public record ReceivedRecord(
         }
         if (classification != Classification.QUARANTINED && externalRecordId == null) {
             throw new IllegalArgumentException("外部原本 ID と取得時刻を持たない受信記録は隔離だけ: " + classification);
+        }
+        if (externalRecordId == null && value != null) {
+            throw new IllegalArgumentException("外部原本を持たない受信記録（キーのない隔離）は値を持たない");
         }
     }
 }

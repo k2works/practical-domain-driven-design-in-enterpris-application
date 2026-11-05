@@ -12,7 +12,7 @@
     <!--/* S-17 の一覧（Bolt 39d、US-14 AC4）。判断を待つ隔離を取込の新しい順・ファイルの行の順に 100 件ずつ示す（並びは照会が決め、画面で並べ直さない）。
            文は controller が組み立てる。注記には取込ファイルから来た値が入るので th:text で示す。判断の列（「判断する」。読み上げに行の範囲と
            外部 ID を足し、元の取込とページを判断の画面に渡す）と判断の後の知らせは Bolt 39d2、取込で絞ったときの形式の誤りのまとめての
-           却下のリンクは Bolt 39d2b、採用は 39d3、差異の行は 39h で足す */-->
+           却下のリンクは Bolt 39d2b、採用は 39d3b、差異の行は 39h で足す */-->
     <p role="status" th:if="${result}" th:text="${result}">隔離を却下しました。</p>
     <p th:if="${ingestionNotFound}" th:text="${ingestionNotFound}">指定された取込が見つかりません。</p>
     <p th:if="${emptyText}" th:text="${emptyText}">判断を待つ隔離はありません。</p>

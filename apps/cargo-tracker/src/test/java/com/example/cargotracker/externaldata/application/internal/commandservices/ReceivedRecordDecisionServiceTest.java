@@ -107,7 +107,8 @@ class ReceivedRecordDecisionServiceTest {
                 classification,
                 "注記",
                 ingestion.ingestedAt(),
-                new PhysicalLineRange(4, 4));
+                new PhysicalLineRange(4, 4),
+                null);
         receivedRecords.add(received);
         return received;
     }
@@ -322,7 +323,8 @@ class ReceivedRecordDecisionServiceTest {
                     Classification.QUARANTINED,
                     "形式の誤り",
                     of.ingestedAt(),
-                    range);
+                    range,
+                    null);
             receivedRecords.add(received);
             return received;
         }
@@ -338,7 +340,8 @@ class ReceivedRecordDecisionServiceTest {
                     Classification.QUARANTINED,
                     "内容の違う原本",
                     ingestion.ingestedAt(),
-                    new PhysicalLineRange(line, line));
+                    new PhysicalLineRange(line, line),
+                    null);
             receivedRecords.add(received);
             return received;
         }

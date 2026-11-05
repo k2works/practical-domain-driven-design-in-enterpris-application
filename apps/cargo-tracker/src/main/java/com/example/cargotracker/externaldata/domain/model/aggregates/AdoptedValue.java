@@ -1,5 +1,6 @@
 package com.example.cargotracker.externaldata.domain.model.aggregates;
 
+import com.example.cargotracker.externaldata.domain.model.valueobjects.ReceivedValue;
 import com.example.cargotracker.shared.annotation.ddd.Entity;
 import java.time.Instant;
 import java.util.Objects;
@@ -29,8 +30,8 @@ public record AdoptedValue(
         String infoVersion,
         Instant publishedAt) {
 
-    /** 値の要約の上限の文字数（コードポイント。{@code value_summary VARCHAR(4000)}）。 */
-    public static final int VALUE_SUMMARY_MAX_LENGTH = 4000;
+    /** 値の要約の上限の文字数（コードポイント。{@code value_summary VARCHAR(4000)}。受信記録の値と同じ上限。Bolt 39d3）。 */
+    public static final int VALUE_SUMMARY_MAX_LENGTH = ReceivedValue.SUMMARY_MAX_LENGTH;
 
     public AdoptedValue {
         Objects.requireNonNull(id, "id");

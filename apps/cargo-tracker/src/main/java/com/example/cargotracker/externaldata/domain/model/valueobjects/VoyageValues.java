@@ -1,8 +1,11 @@
 package com.example.cargotracker.externaldata.domain.model.valueobjects;
 
 import com.example.cargotracker.shared.annotation.ddd.ValueObject;
+import com.example.cargotracker.shared.domain.Location;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -33,6 +36,12 @@ public record VoyageValues(String voyageNumber, List<PortCallValue> portCalls) i
     /** 寄港の要約の区切り。 */
     private static final String PORT_CALL_SEPARATOR = "|";
 
+    /** 寄港の中の港・到着・出発の区切り。 */
+    private static final String FIELD_SEPARATOR = ";";
+
+    /** 寄港の要約の項目の数（港・到着・出発）。 */
+    private static final int PORT_CALL_FIELDS = 3;
+
     /** 拒むときは理由（{@link VoyageValuesRejected}）を返す。 */
     public VoyageValues {
         requireVoyageNumber(voyageNumber);
@@ -59,9 +68,44 @@ public record VoyageValues(String voyageNumber, List<PortCallValue> portCalls) i
     @Override
     public String summary() {
         return portCalls.stream()
-                .map(call -> call.port().unLocode() + ";" + RecordValues.summaryTime(call.arrivalAt()) + ";"
+                .map(call -> call.port().unLocode()
+                        + FIELD_SEPARATOR
+                        + RecordValues.summaryTime(call.arrivalAt())
+                        + FIELD_SEPARATOR
                         + RecordValues.summaryTime(call.departureAt()))
                 .collect(Collectors.joining(PORT_CALL_SEPARATOR));
+    }
+
+    /** 対象のキーは航海番号（採用値の対象のキーと同じ。Bolt 39d3）。 */
+    @Override
+    public String targetKey() {
+        return voyageNumber;
+    }
+
+    /**
+     * 要約から航海の値に戻す（{@link #summary()} の逆。Bolt 39d3 の開始準備の決定 (4)）。寄港を「|」で、各寄港を「;」で「UN/LOCODE;到着;出発」に
+     * 分け、空の時刻は null にする。値の規則（寄港 2〜60、重ねない、到着か出発の一方）は値のコンストラクタが守る。取込の値 {@code v} について
+     * {@code ofSummary(v.targetKey(), v.summary())} は {@code v} と等しい（時刻はマイクロ秒に切り捨てた値に限る）。
+     *
+     * @param voyageNumber 航海番号（受信記録・採用値の対象のキー）
+     * @param summary 値の要約
+     * @return 航海の値
+     * @throws IllegalArgumentException 要約が規則に合わないとき（区切りの数の違い、UN/LOCODE でない港、読めない時刻。黙って読まない）
+     */
+    public static VoyageValues ofSummary(String voyageNumber, String summary) {
+        Objects.requireNonNull(summary, "summary");
+        List<PortCallValue> portCalls = new ArrayList<>();
+        for (String portCall : summary.split(Pattern.quote(PORT_CALL_SEPARATOR), -1)) {
+            String[] fields = portCall.split(FIELD_SEPARATOR, -1);
+            if (fields.length != PORT_CALL_FIELDS) {
+                throw new IllegalArgumentException("寄港の要約は「港;到着;出発」の 3 つに区切ります: " + portCall);
+            }
+            portCalls.add(new PortCallValue(
+                    new Location(fields[0]),
+                    RecordValues.summaryTimeOf(fields[1]),
+                    RecordValues.summaryTimeOf(fields[2])));
+        }
+        return new VoyageValues(voyageNumber, portCalls);
     }
 
     /**

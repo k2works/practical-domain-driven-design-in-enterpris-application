@@ -6,12 +6,16 @@ import com.example.cargotracker.externaldata.application.internal.commandservice
 import com.example.cargotracker.externaldata.application.internal.commandservices.KeylessRejectionOutcome;
 import com.example.cargotracker.externaldata.application.internal.commandservices.ReceivedRecordDecisionService;
 import com.example.cargotracker.externaldata.application.internal.queryservices.KeylessRejectionTarget;
+import com.example.cargotracker.externaldata.application.internal.queryservices.QuarantineValues;
 import com.example.cargotracker.externaldata.application.internal.queryservices.UndecidedRecordPage;
 import com.example.cargotracker.externaldata.application.internal.queryservices.UndecidedRecordQueryService;
 import com.example.cargotracker.externaldata.domain.model.aggregates.ReceivedRecordDecision;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PhysicalLineRange;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.VoyageValues;
 import com.example.cargotracker.platform.web.DateTimeDisplay;
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
+import com.example.cargotracker.shared.domain.UtcInstant;
+import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
@@ -34,7 +38,9 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
  * 文言と項目に変えるだけで、並びとページの境（最後より後は最後のページ）を決めない。各行の「判断する」から判断の画面を開き、理由を書いて
  * 却下すると PRG で元の一覧に戻る（Bolt 39d2）。取込で絞った一覧に形式の誤りがあれば、まとめての却下の画面へのリンクを出し、その取込の
  * 形式の誤りを 1 つの理由でまとめて却下すると PRG で取込で絞った一覧に戻る（Bolt 39d2b）。ページ送りは表の前に置く（Bolt 39d2b）。
- * 判断できる受信記録の定めと却下は判断のサービスが持つ。採用は 39d3 で足す。
+ * 判断できる受信記録の定めと却下は判断のサービスが持つ。航海の内容の違う原本の判断の画面には、隔離の理由の後に受け取った値とこの外部版の
+ * 採用値をそれぞれの取得した日時とともに並べ、値が同じなら取得時刻で分けた文を前に示す（Bolt 39d3、【業務の判断】(i)・(j)。主要実績の値と
+ * 値を読めないときの文は 39d3c）。採用は 39d3b で足す。
  *
  * <p>取込 ID が UUID でないときは 400 にせず、ない取込と同じく絞らない一覧に「指定された取込が見つかりません。」を示す。ページが数でない・1 より
  * 前のときは 1 ページ目を照会する（Bolt 39d 計画の状態の組み合わせの行 13・14）。
@@ -88,6 +94,20 @@ public class UndecidedRecordController {
 
     private static final String NO_EXTERNAL_KEY = "なし";
     private static final String NO_EXTERNAL_ID = "外部 ID なし";
+
+    /** 判断の画面の値の領域（Bolt 39d3 の開始準備の決定 (7)）。日時は社内の画面の形（UTC を併記）。 */
+    private static final String RECEIVED_META = "取得した日時 %s";
+
+    private static final String ADOPTED_META = "情報版 %s・公開した日時 %s・取得した日時 %s";
+    private static final String PORT_CALL = "港 %s・到着 %s・出発 %s";
+    private static final String NO_TIME = "—";
+    private static final String NOT_RECORDED = "この隔離は、受け取った値を記録する前に取り込みました。値は原本のファイルで確かめてください。";
+    private static final String NO_ADOPTED = "この外部版の採用値はありません。";
+
+    /** 値が同じときの文（値も取得時刻も同じ、取得時刻だけが違う。取得時刻は原本のハッシュに入るが値に入らない）。 */
+    private static final String SAME_VALUES = "受け取った値はこの外部版の採用値と同じです。原本の書き方（引用符・空白など）だけが違います。";
+
+    private static final String SAME_VALUES_BUT_ACQUIRED_AT = "受け取った値はこの外部版の採用値と同じで、取得時刻だけが違います。";
 
     private final UndecidedRecordQueryService query;
     private final ReceivedRecordDecisionService decisions;
@@ -316,7 +336,36 @@ public class UndecidedRecordController {
         model.addAttribute("reasonLimit", ReceivedRecordDecision.REASON_LIMIT);
         model.addAttribute("backUrl", pageUrl(back, backPage));
         model.addAttribute("actionUrl", LIST_URL + "/" + id + "/decision" + query(back, backPage));
+        query.quarantineValues(item).ifPresent(values -> addValues(values, model));
         return DECISION_VIEW;
+    }
+
+    /**
+     * 受け取った値とこの外部版の採用値の領域（Bolt 39d3）。値のない隔離・採用値のないときはその旨の文。値が等しければ、取得時刻が同じかで
+     * 文を選ぶ（値が違えば出さない）。
+     */
+    private static void addValues(QuarantineValues values, Model model) {
+        model.addAttribute(
+                "receivedValues",
+                values.received() == null
+                        ? ValuesView.none(NOT_RECORDED)
+                        : ValuesView.of(
+                                RECEIVED_META.formatted(DateTimeDisplay.staff(values.receivedAcquiredAt())),
+                                values.received()));
+        QuarantineValues.Adopted adopted = values.adopted();
+        model.addAttribute(
+                "adoptedValues",
+                adopted == null
+                        ? ValuesView.none(NO_ADOPTED)
+                        : ValuesView.of(
+                                ADOPTED_META.formatted(
+                                        adopted.infoVersion(),
+                                        DateTimeDisplay.staff(adopted.publishedAt()),
+                                        DateTimeDisplay.staff(adopted.acquiredAt())),
+                                adopted.values()));
+        if (values.sameValues()) {
+            model.addAttribute("sameValuesText", values.sameAcquiredAt() ? SAME_VALUES : SAME_VALUES_BUT_ACQUIRED_AT);
+        }
     }
 
     /** 判断の結果を行き先に変える（結果のすべてに行き先がある。T-240）。 */
@@ -421,4 +470,39 @@ public class UndecidedRecordController {
             String note,
             String decisionUrl,
             String decisionLabel) {}
+
+    /**
+     * 判断の画面の値の領域の 1 つ（受け取った値か、この外部版の採用値。Bolt 39d3）。値がなければ文だけを持つ。寄港は運航の順の番号付きの
+     * 並びで示す（表にしない。幅 320 px で横スクロールを出さない。ACC-01）。
+     *
+     * @param meta 取得した日時（この外部版の採用値は情報版・公開した日時・取得した日時）の文（値がなければ {@code null}）
+     * @param voyageNumber 航海番号（取込ファイルの外部 ID の列の値。値がなければ {@code null}）
+     * @param portCalls 寄港の文（港・到着・出発。空の時刻は「—」）
+     * @param emptyText 値がないときの文（値があれば {@code null}）
+     */
+    record ValuesView(String meta, String voyageNumber, List<String> portCalls, String emptyText) {
+
+        ValuesView {
+            portCalls = List.copyOf(portCalls);
+        }
+
+        static ValuesView none(String emptyText) {
+            return new ValuesView(null, null, List.of(), emptyText);
+        }
+
+        static ValuesView of(String meta, VoyageValues values) {
+            return new ValuesView(
+                    meta,
+                    values.voyageNumber(),
+                    values.portCalls().stream()
+                            .map(call -> PORT_CALL.formatted(
+                                    call.port().unLocode(), time(call.arrivalAt()), time(call.departureAt())))
+                            .toList(),
+                    null);
+        }
+
+        private static String time(UtcInstant time) {
+            return time == null ? NO_TIME : DateTimeDisplay.staff(time.instant());
+        }
+    }
 }

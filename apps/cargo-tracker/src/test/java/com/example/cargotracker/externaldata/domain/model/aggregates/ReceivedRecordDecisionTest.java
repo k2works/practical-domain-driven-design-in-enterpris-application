@@ -40,7 +40,8 @@ class ReceivedRecordDecisionTest {
                 classification,
                 "注記",
                 Instant.parse("2026-11-16T01:00:00Z"),
-                new PhysicalLineRange(4, 4));
+                new PhysicalLineRange(4, 4),
+                null);
     }
 
     @Test

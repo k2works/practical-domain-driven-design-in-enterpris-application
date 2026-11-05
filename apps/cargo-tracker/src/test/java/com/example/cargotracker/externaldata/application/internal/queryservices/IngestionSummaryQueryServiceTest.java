@@ -88,7 +88,8 @@ class IngestionSummaryQueryServiceTest {
                 Classification.QUARANTINED,
                 (n + 1) + " 行目: 値が空です（external_id）。提供元に確かめてください。",
                 NOW,
-                new PhysicalLineRange(n + 1, n + 1));
+                new PhysicalLineRange(n + 1, n + 1),
+                null);
     }
 
     @ParameterizedTest(name = "隔離 {0} 件は {1} 件を示し残り {2} 件")
@@ -161,6 +162,7 @@ class IngestionSummaryQueryServiceTest {
                     Classification.QUARANTINED,
                     "ファイル: 必要な列がありません（port_calls）。選んだ情報源の種別に合ったファイルか確かめてください。合っていれば提供元に確かめてください。",
                     NOW,
+                    null,
                     null);
         }
 
@@ -176,7 +178,8 @@ class IngestionSummaryQueryServiceTest {
                     Classification.QUARANTINED,
                     fromLine + " 行目: 列の数がヘッダーと違います（ヘッダー 4 列、この行 5 列）。提供元に確かめてください。",
                     NOW,
-                    new PhysicalLineRange(fromLine, lastLine));
+                    new PhysicalLineRange(fromLine, lastLine),
+                    null);
         }
 
         @ParameterizedTest(name = "{0}")

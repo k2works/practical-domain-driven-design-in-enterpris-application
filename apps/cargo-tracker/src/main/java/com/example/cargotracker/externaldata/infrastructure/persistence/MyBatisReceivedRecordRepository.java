@@ -6,6 +6,7 @@ import com.example.cargotracker.externaldata.domain.model.valueobjects.Classific
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PayloadHash;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PayloadObjectKey;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PhysicalLineRange;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.ReceivedValue;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.UndecidedQuarantine;
 import java.time.Instant;
 import java.time.OffsetDateTime;
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Repository;
 /**
  * 受信記録のリポジトリの MyBatis 実装（Bolt 39b）。追記専用なので、追加と数えることと、取込の隔離を読むこと（Bolt 39c3）と、判断を待つ隔離を
  * 読み数えること（Bolt 39d）と、ID で引くこと（Bolt 39d2）と、取込の判断を待つキーのない隔離を読み数えること（Bolt 39d2b）だけを持つ。
+ * 受信記録の値（Bolt 39d3）は値の 2 列に書き、読むときは 2 列がそろって NULL なら値なしにする（表の CHECK が片方だけの NULL を拒む）。
  */
 @Repository
 public class MyBatisReceivedRecordRepository implements ReceivedRecordRepository {
@@ -32,6 +34,7 @@ public class MyBatisReceivedRecordRepository implements ReceivedRecordRepository
     @Override
     public void add(ReceivedRecord receivedRecord) {
         PhysicalLineRange range = receivedRecord.lineRange();
+        ReceivedValue value = receivedRecord.value();
         mapper.insert(new ReceivedRecordRow(
                 receivedRecord.id(),
                 receivedRecord.externalRecordId(),
@@ -45,7 +48,9 @@ public class MyBatisReceivedRecordRepository implements ReceivedRecordRepository
                 receivedRecord.classificationNote(),
                 receivedRecord.classifiedAt().atOffset(ZoneOffset.UTC),
                 range == null ? null : range.first(),
-                range == null ? null : range.last()));
+                range == null ? null : range.last(),
+                value == null ? null : value.targetKey(),
+                value == null ? null : value.summary()));
     }
 
     @Override
@@ -122,7 +127,8 @@ public class MyBatisReceivedRecordRepository implements ReceivedRecordRepository
                 Classification.valueOf(row.classification()),
                 row.classificationNote(),
                 row.classifiedAt().toInstant(),
-                lineRangeOrNull(row.firstLineNumber(), row.lastLineNumber()));
+                lineRangeOrNull(row.firstLineNumber(), row.lastLineNumber()),
+                row.targetKey() == null ? null : new ReceivedValue(row.targetKey(), row.valueSummary()));
     }
 
     private static Instant instantOrNull(OffsetDateTime value) {

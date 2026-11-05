@@ -2,7 +2,9 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <!-- 受信記録（Bolt 39b、ED-INV-02）。追記専用なので INSERT と数えることと、取込の隔離を行の範囲の順に読む SELECT（Bolt 39c3）だけを持つ。
      取込と外部原本より後に書く（外部キー）。取込ごとの件数と隔離の照会は ix_received_record_ingestion を使う。キーのない隔離（Bolt 39b2）は
-     外部原本 ID と取得時刻が NULL。行の範囲の 2 列（Bolt 39c3）はファイルの誤りと既存の行で NULL。H2 と PostgreSQL の共通の構文で書く（ADR-007）。 -->
+     外部原本 ID と取得時刻が NULL。行の範囲の 2 列（Bolt 39c3）はファイルの誤りと既存の行で NULL。値の 2 列（Bolt 39d3）は外部原本を持つ
+     受信記録の対象のキーと値の要約で、キーのない隔離と Bolt 39d3 より前の行は NULL。値は INSERT と受信記録を読む SELECT（resultMap
+     receivedRecordRow）だけが扱い、判断を待つ隔離の一覧の照会は読まない。H2 と PostgreSQL の共通の構文で書く（ADR-007）。 -->
 <mapper namespace="com.example.cargotracker.externaldata.infrastructure.persistence.ReceivedRecordMapper">
 
     <resultMap id="receivedRecordRow" type="com.example.cargotracker.externaldata.infrastructure.persistence.ReceivedRecordRow">
@@ -18,17 +20,20 @@
             <arg column="classified_at" name="classifiedAt" javaType="java.time.OffsetDateTime"/>
             <arg column="first_line_number" name="firstLineNumber" javaType="Integer"/>
             <arg column="last_line_number" name="lastLineNumber" javaType="Integer"/>
+            <arg column="target_key" name="targetKey" javaType="String"/>
+            <arg column="value_summary" name="valueSummary" javaType="String"/>
         </constructor>
     </resultMap>
 
     <insert id="insert">
         INSERT INTO external_data.received_record
             (id, external_record_id, ingestion_id, payload_hash, payload_object_key, acquired_at, classification,
-             classification_note, classified_at, first_line_number, last_line_number)
+             classification_note, classified_at, first_line_number, last_line_number, target_key, value_summary)
         VALUES (#{id}, #{externalRecordId,jdbcType=OTHER}, #{ingestionId}, #{payloadHash}, #{payloadObjectKey},
                 #{acquiredAt,jdbcType=TIMESTAMP_WITH_TIMEZONE},
                 #{classification}, #{classificationNote,jdbcType=VARCHAR}, #{classifiedAt},
-                #{firstLineNumber,jdbcType=INTEGER}, #{lastLineNumber,jdbcType=INTEGER})
+                #{firstLineNumber,jdbcType=INTEGER}, #{lastLineNumber,jdbcType=INTEGER},
+                #{targetKey,jdbcType=VARCHAR}, #{valueSummary,jdbcType=VARCHAR})
     </insert>
 
     <select id="countByIngestionAndClassification" resultType="int">
@@ -39,7 +44,7 @@
     <!-- 範囲のないファイルの誤りを先に、行の範囲の始まりの順。同じ始まりはない（1 つの取込の範囲は重ならない）が、決まった順にするため ID で並べ直す -->
     <select id="quarantinedOf" resultMap="receivedRecordRow">
         SELECT id, external_record_id, ingestion_id, payload_hash, payload_object_key, acquired_at, classification,
-               classification_note, classified_at, first_line_number, last_line_number
+               classification_note, classified_at, first_line_number, last_line_number, target_key, value_summary
           FROM external_data.received_record
          WHERE ingestion_id = #{ingestionId} AND classification = 'QUARANTINED'
          ORDER BY first_line_number NULLS FIRST, id
@@ -92,7 +97,7 @@
     <!-- 取込で書いた受信記録を ID で引く（Bolt 39d2。判断できる受信記録の確かめ）。取込のない受信記録（ingestion_id が NULL）は返さない -->
     <select id="selectById" resultMap="receivedRecordRow">
         SELECT id, external_record_id, ingestion_id, payload_hash, payload_object_key, acquired_at, classification,
-               classification_note, classified_at, first_line_number, last_line_number
+               classification_note, classified_at, first_line_number, last_line_number, target_key, value_summary
           FROM external_data.received_record
          WHERE id = #{id} AND ingestion_id IS NOT NULL
     </select>
@@ -109,7 +114,8 @@
          （リポジトリが NULL を拒む）で、ix_received_record_ingestion で取込の受信記録に絞る。並びは取込の隔離の照会（quarantinedOf）と同じ -->
     <select id="undecidedKeylessQuarantinesOf" resultMap="receivedRecordRow">
         SELECT r.id, r.external_record_id, r.ingestion_id, r.payload_hash, r.payload_object_key, r.acquired_at,
-               r.classification, r.classification_note, r.classified_at, r.first_line_number, r.last_line_number
+               r.classification, r.classification_note, r.classified_at, r.first_line_number, r.last_line_number,
+               r.target_key, r.value_summary
         <include refid="undecidedQuarantineSource"/>
            AND r.external_record_id IS NULL
          ORDER BY r.first_line_number NULLS FIRST, r.id

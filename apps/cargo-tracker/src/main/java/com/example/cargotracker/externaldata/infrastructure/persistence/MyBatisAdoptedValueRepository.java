@@ -11,7 +11,8 @@ import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Repository;
 
 /**
- * 採用値のリポジトリの MyBatis 実装（Bolt 39b3）。追記専用なので、追加と受信記録 ID での照会だけを持つ。受信記録 ID の一意制約の違反
+ * 採用値のリポジトリの MyBatis 実装（Bolt 39b3）。追記専用なので、追加と受信記録 ID での照会と、この外部版の採用値の照会（Bolt 39d3）だけを
+ * 持つ。受信記録 ID の一意制約の違反
  * （{@link DuplicateKeyException}）は、元の例外を原因に持つ {@link DuplicateAdoptedValueException} に写して上げる（行 15）。
  */
 @Repository
@@ -42,6 +43,11 @@ public class MyBatisAdoptedValueRepository implements AdoptedValueRepository {
     @Override
     public Optional<AdoptedValue> findByReceivedRecordId(UUID receivedRecordId) {
         return mapper.selectByReceivedRecordId(receivedRecordId).map(MyBatisAdoptedValueRepository::toDomain);
+    }
+
+    @Override
+    public Optional<AdoptedValue> currentOf(UUID externalRecordId) {
+        return mapper.selectCurrentOf(externalRecordId).map(MyBatisAdoptedValueRepository::toDomain);
     }
 
     private static AdoptedValue toDomain(AdoptedValueRow row) {

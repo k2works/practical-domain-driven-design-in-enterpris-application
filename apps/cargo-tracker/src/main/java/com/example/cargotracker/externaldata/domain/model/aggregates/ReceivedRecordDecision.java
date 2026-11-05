@@ -21,7 +21,7 @@ import java.util.UUID;
  * @param decision 判断の種類
  * @param decidedBy 判断者
  * @param decidedAt 判断の時刻
- * @param reason 理由（却下は必須。採用は任意で 39d3）
+ * @param reason 理由（却下は必須。採用は任意で 39d3b）
  */
 @Entity
 public record ReceivedRecordDecision(

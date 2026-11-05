@@ -55,6 +55,15 @@ class MilestoneValuesTest {
     }
 
     @Test
+    void Bolt39d3_行2_主要実績の対象のキーは追跡番号の値で受信記録の値はキーと要約を持つ() {
+        MilestoneValues values = new MilestoneValues(TRACKING_NUMBER, MilestoneKindValue.DEPARTURE, TOKYO, OCCURRED_AT);
+
+        assertThat(values.targetKey()).isEqualTo("CTABCDEFGH2345");
+        assertThat(ReceivedValue.of(values))
+                .isEqualTo(new ReceivedValue("CTABCDEFGH2345", "DEPARTURE;JPTYO;2026-11-19T23:00:00.000000Z"));
+    }
+
+    @Test
     void 行9_種類の誤りは行の誤りで6つの種類の名前を示す() {
         FormatDefect defect = FormatDefect.INVALID_KIND;
 

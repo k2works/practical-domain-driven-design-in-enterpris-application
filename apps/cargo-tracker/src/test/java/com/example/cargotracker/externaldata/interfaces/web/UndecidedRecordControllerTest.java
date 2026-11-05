@@ -18,12 +18,17 @@ import com.example.cargotracker.externaldata.application.internal.commandservice
 import com.example.cargotracker.externaldata.application.internal.commandservices.KeylessRejectionOutcome;
 import com.example.cargotracker.externaldata.application.internal.commandservices.ReceivedRecordDecisionService;
 import com.example.cargotracker.externaldata.application.internal.queryservices.KeylessRejectionTarget;
+import com.example.cargotracker.externaldata.application.internal.queryservices.QuarantineValues;
 import com.example.cargotracker.externaldata.application.internal.queryservices.UndecidedRecordPage;
 import com.example.cargotracker.externaldata.application.internal.queryservices.UndecidedRecordQueryService;
 import com.example.cargotracker.externaldata.domain.model.aggregates.ReceivedRecordDecision;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PhysicalLineRange;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.PortCallValue;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.VoyageValues;
 import com.example.cargotracker.identity.infrastructure.security.WithAuthenticatedActor;
+import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.Role;
+import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -997,6 +1002,238 @@ class UndecidedRecordControllerTest {
             postReason(SCREEN_URL, "").andExpect(status().isNotFound());
             then(query).should().keylessRejectionTarget(INGESTION_ID);
             then(decisions).should(org.mockito.Mockito.never()).rejectKeyless(any(), any());
+        }
+    }
+
+    /**
+     * Bolt 39d3 の行 9〜12・20〜22（判断の画面の航海の値の領域。開始準備の決定 (6)・(7)、【業務の判断】(i)・(j)）。照会は mock にし、値の
+     * 照会の結果を領域と文に変える振る舞いだけを見る。値を記録する前の隔離（行 10）とこの外部版の採用値がない隔離（行 11）は UI で作れない
+     * ので、ここで確かめる（T-243）。主要実績の値と値を読めない文は 39d3c。
+     */
+    @Nested
+    class Bolt39d3_判断の画面の値 {
+
+        private static final UUID RECORD_ID = UUID.fromString("39d30000-0000-0000-0000-0000000000cc");
+        private static final String DECISION_URL = LIST_URL + "/" + RECORD_ID;
+        private static final String RECEIVED_SECTION =
+                "<section aria-labelledby=\"received-values-heading\">\\s*<h2 id=\"received-values-heading\">受け取った値</h2>";
+        private static final String ADOPTED_SECTION =
+                "<section aria-labelledby=\"adopted-values-heading\">\\s*<h2 id=\"adopted-values-heading\">この外部版の採用値</h2>";
+        private static final String SAME_VALUES = "受け取った値はこの外部版の採用値と同じです。原本の書き方（引用符・空白など）だけが違います。";
+        private static final String SAME_VALUES_BUT_ACQUIRED_AT = "受け取った値はこの外部版の採用値と同じで、取得時刻だけが違います。";
+        private static final String NOT_RECORDED = "この隔離は、受け取った値を記録する前に取り込みました。値は原本のファイルで確かめてください。";
+        private static final String NO_ADOPTED = "この外部版の採用値はありません。";
+        private static final Instant RECEIVED_ACQUIRED_AT = Instant.parse("2026-11-16T00:30:00Z");
+        private static final Instant ADOPTED_ACQUIRED_AT = Instant.parse("2026-11-15T08:30:00Z");
+        private static final Instant PUBLISHED_AT = Instant.parse("2026-11-15T09:00:00Z");
+
+        private UndecidedRecordPage.Item mismatch(String recordType) {
+            return new UndecidedRecordPage.Item(
+                    RECORD_ID,
+                    INGESTED_AT,
+                    "開発海運（架空）",
+                    recordType,
+                    new PhysicalLineRange(140, 140),
+                    false,
+                    "DEMO-201",
+                    "3",
+                    "140 行目: 同じ外部 ID・外部版で内容の違う原本を受け取りました（最初の受信: 2026-11-15 09:00:00 UTC）。");
+        }
+
+        /** 東京を出発し、ロサンゼルスに到着する寄港 2 つの航海（ロサンゼルスの到着の時刻だけを変えられる。T-230）。 */
+        private static VoyageValues voyage(String voyageNumber, String losAngelesArrival) {
+            return new VoyageValues(
+                    voyageNumber,
+                    List.of(
+                            new PortCallValue(
+                                    new Location("JPTYO"), null, new UtcInstant(Instant.parse("2026-11-18T23:00:00Z"))),
+                            new PortCallValue(
+                                    new Location("USLAX"), new UtcInstant(Instant.parse(losAngelesArrival)), null)));
+        }
+
+        private static QuarantineValues.Adopted adopted(VoyageValues values, Instant acquiredAt) {
+            return new QuarantineValues.Adopted(values, "3", PUBLISHED_AT, acquiredAt);
+        }
+
+        private String decisionPageWith(UndecidedRecordPage.Item item, QuarantineValues values) throws Exception {
+            given(decisions.refusalOf(RECORD_ID)).willReturn(java.util.Optional.empty());
+            given(query.undecidedQuarantine(RECORD_ID)).willReturn(java.util.Optional.of(item));
+            given(query.quarantineValues(item)).willReturn(java.util.Optional.ofNullable(values));
+            return mockMvc.perform(get(DECISION_URL))
+                    .andExpect(status().isOk())
+                    .andReturn()
+                    .getResponse()
+                    .getContentAsString(java.nio.charset.StandardCharsets.UTF_8);
+        }
+
+        private static int indexOf(String page, String regex) {
+            java.util.regex.Matcher matcher = Pattern.compile(regex).matcher(page);
+            org.assertj.core.api.Assertions.assertThat(matcher.find()).as(regex).isTrue();
+            return matcher.start();
+        }
+
+        // --- 行 9: 値の領域の中身と順 ---
+
+        @Test
+        void 行9_隔離の理由の後に受け取った値とこの外部版の採用値をそれぞれの取得した日時と航海番号と寄港の番号付きの並びで示し却下の欄が続く() throws Exception {
+            String page = decisionPageWith(
+                    mismatch("VOYAGE"),
+                    new QuarantineValues(
+                            voyage("DEMO-201", "2026-12-01T22:00:00Z"),
+                            RECEIVED_ACQUIRED_AT,
+                            adopted(voyage("DEMO-201", "2026-12-01T14:00:00Z"), ADOPTED_ACQUIRED_AT)));
+
+            String received = RECEIVED_SECTION
+                    + "\\s*<p>取得した日時 2026-11-16 09:30 Asia/Tokyo（UTC\\+09:00）（UTC 2026-11-16 00:30）</p>"
+                    + "\\s*<dl class=\"text-break\">\\s*<dt>航海番号</dt>\\s*<dd>DEMO-201</dd>\\s*</dl>"
+                    + "\\s*<ol class=\"text-break\">"
+                    + "\\s*<li>港 JPTYO・到着 —・出発 2026-11-19 08:00 Asia/Tokyo（UTC\\+09:00）（UTC 2026-11-18 23:00）</li>"
+                    + "\\s*<li>港 USLAX・到着 2026-12-02 07:00 Asia/Tokyo（UTC\\+09:00）（UTC 2026-12-01 22:00）・出発 —</li>"
+                    + "\\s*</ol>\\s*</section>";
+            String adopted = ADOPTED_SECTION
+                    + "\\s*<p>情報版 3・公開した日時 2026-11-15 18:00 Asia/Tokyo（UTC\\+09:00）（UTC 2026-11-15 09:00）・取得した日時"
+                    + " 2026-11-15 17:30 Asia/Tokyo（UTC\\+09:00）（UTC 2026-11-15 08:30）</p>"
+                    + "\\s*<dl class=\"text-break\">\\s*<dt>航海番号</dt>\\s*<dd>DEMO-201</dd>\\s*</dl>"
+                    + "\\s*<ol class=\"text-break\">"
+                    + "\\s*<li>港 JPTYO・到着 —・出発 2026-11-19 08:00 Asia/Tokyo（UTC\\+09:00）（UTC 2026-11-18 23:00）</li>"
+                    + "\\s*<li>港 USLAX・到着 2026-12-01 23:00 Asia/Tokyo（UTC\\+09:00）（UTC 2026-12-01 14:00）・出発 —</li>"
+                    + "\\s*</ol>\\s*</section>";
+            org.assertj.core.api.Assertions.assertThat(page)
+                    .containsPattern(received)
+                    .containsPattern(adopted);
+            int note = indexOf(page, "<dt>隔離の理由</dt>");
+            int receivedAt = indexOf(page, RECEIVED_SECTION);
+            int adoptedAt = indexOf(page, ADOPTED_SECTION);
+            int form = indexOf(page, "<label for=\"reason\">却下の理由</label>");
+            org.assertj.core.api.Assertions.assertThat(List.of(note, receivedAt, adoptedAt, form))
+                    .isSorted();
+            org.assertj.core.api.Assertions.assertThat(page)
+                    .doesNotContain(SAME_VALUES)
+                    .doesNotContain(SAME_VALUES_BUT_ACQUIRED_AT);
+        }
+
+        @Test
+        void 行9_取込ファイルから来た航海番号は文字として示す() throws Exception {
+            String voyageNumber = "<b>DEMO-201</b>";
+
+            String page = decisionPageWith(
+                    mismatch("VOYAGE"),
+                    new QuarantineValues(
+                            voyage(voyageNumber, "2026-12-01T22:00:00Z"),
+                            RECEIVED_ACQUIRED_AT,
+                            adopted(voyage("DEMO-201", "2026-12-01T14:00:00Z"), ADOPTED_ACQUIRED_AT)));
+
+            org.assertj.core.api.Assertions.assertThat(page)
+                    .contains("<dd>&lt;b&gt;DEMO-201&lt;/b&gt;</dd>")
+                    .doesNotContain(voyageNumber);
+        }
+
+        // --- 行 10・11: 値のない隔離、この外部版の採用値がない隔離（T-243） ---
+
+        @Test
+        void 行10_値を記録する前に取り込んだ隔離は受け取った値の領域にその旨を示しこの外部版の採用値は示す() throws Exception {
+            String page = decisionPageWith(
+                    mismatch("VOYAGE"),
+                    new QuarantineValues(
+                            null,
+                            RECEIVED_ACQUIRED_AT,
+                            adopted(voyage("DEMO-201", "2026-12-01T14:00:00Z"), ADOPTED_ACQUIRED_AT)));
+
+            org.assertj.core.api.Assertions.assertThat(page)
+                    .containsPattern(RECEIVED_SECTION + "\\s*<p>" + NOT_RECORDED + "</p>\\s*</section>")
+                    .containsPattern(ADOPTED_SECTION + "\\s*<p>情報版 3・公開した日時 ")
+                    .contains("<li>港 USLAX・到着 2026-12-01 23:00 Asia/Tokyo（UTC+09:00）（UTC 2026-12-01 14:00）・出発 —</li>")
+                    .doesNotContain("取得した日時 2026-11-16 09:30")
+                    .doesNotContain(SAME_VALUES)
+                    .doesNotContain(SAME_VALUES_BUT_ACQUIRED_AT);
+        }
+
+        @Test
+        void 行11_この外部版の採用値がない隔離はその領域にないことを示し同じ値の文を出さない() throws Exception {
+            String page = decisionPageWith(
+                    mismatch("VOYAGE"),
+                    new QuarantineValues(voyage("DEMO-201", "2026-12-01T22:00:00Z"), RECEIVED_ACQUIRED_AT, null));
+
+            org.assertj.core.api.Assertions.assertThat(page)
+                    .containsPattern(RECEIVED_SECTION + "\\s*<p>取得した日時 2026-11-16 09:30 ")
+                    .containsPattern(ADOPTED_SECTION + "\\s*<p>" + NO_ADOPTED + "</p>\\s*</section>")
+                    .doesNotContain("情報版 ")
+                    .doesNotContain(SAME_VALUES)
+                    .doesNotContain(SAME_VALUES_BUT_ACQUIRED_AT);
+        }
+
+        // --- 行 12・20: 値の領域を出さない隔離と、判断の画面の行き先 ---
+
+        @ParameterizedTest(name = "{0}")
+        @CsvSource({"キーのない隔離（形式の誤り）, VOYAGE, true", "主要実績の内容の違う原本（39d3c まで）, MILESTONE, false"})
+        void 行12_値の照会が空なら値の領域を出さず判断の画面と却下の欄は今のまま(String name, String recordType, boolean keyless) throws Exception {
+            UndecidedRecordPage.Item item = new UndecidedRecordPage.Item(
+                    RECORD_ID,
+                    INGESTED_AT,
+                    "開発海運（架空）",
+                    recordType,
+                    new PhysicalLineRange(4, 4),
+                    keyless,
+                    keyless ? null : "MS-0001",
+                    keyless ? null : "1",
+                    "4 行目: 注記");
+
+            String page = decisionPageWith(item, null);
+
+            org.assertj.core.api.Assertions.assertThat(page)
+                    .contains("<h1>隔離の判断</h1>")
+                    .doesNotContain("受け取った値")
+                    .doesNotContain("この外部版の採用値")
+                    .contains("<label for=\"reason\">却下の理由</label>")
+                    .contains("<p><a href=\"" + LIST_URL + "?page=1\">一覧に戻る</a></p>");
+            org.assertj.core.api.Assertions.assertThat(page.contains("形式の誤りは採用できません。"))
+                    .isEqualTo(keyless);
+        }
+
+        @Test
+        void 行20_判断の画面の行き先は判断のサービスが決め値の照会を引かない() throws Exception {
+            given(decisions.refusalOf(RECORD_ID)).willReturn(java.util.Optional.of(new DecisionOutcome.NotDecidable()));
+
+            mockMvc.perform(get(DECISION_URL)).andExpect(status().isNotFound());
+
+            then(query).should(org.mockito.Mockito.never()).quarantineValues(any());
+        }
+
+        // --- 行 21・22: 同じ値の 2 つの文（V7・V8。T-244） ---
+
+        static java.util.stream.Stream<org.junit.jupiter.params.provider.Arguments> sameValueCases() {
+            return java.util.stream.Stream.of(
+                    org.junit.jupiter.params.provider.Arguments.of(
+                            "値も取得時刻も同じ", "2026-12-01T22:00:00Z", RECEIVED_ACQUIRED_AT, SAME_VALUES),
+                    org.junit.jupiter.params.provider.Arguments.of(
+                            "値は同じで取得時刻が違う", "2026-12-01T22:00:00Z", ADOPTED_ACQUIRED_AT, SAME_VALUES_BUT_ACQUIRED_AT),
+                    org.junit.jupiter.params.provider.Arguments.of(
+                            "値が違い取得時刻は同じ", "2026-12-01T14:00:00Z", RECEIVED_ACQUIRED_AT, null),
+                    org.junit.jupiter.params.provider.Arguments.of(
+                            "値も取得時刻も違う", "2026-12-01T14:00:00Z", ADOPTED_ACQUIRED_AT, null));
+        }
+
+        @ParameterizedTest(name = "{0}")
+        @org.junit.jupiter.params.provider.MethodSource("sameValueCases")
+        void 行21_行22_値と取得時刻の組で同じ値の文を選び2つの領域の前に示す(
+                String name, String adoptedLosAngelesArrival, Instant adoptedAcquiredAt, String expected)
+                throws Exception {
+            String page = decisionPageWith(
+                    mismatch("VOYAGE"),
+                    new QuarantineValues(
+                            voyage("DEMO-201", "2026-12-01T22:00:00Z"),
+                            RECEIVED_ACQUIRED_AT,
+                            adopted(voyage("DEMO-201", adoptedLosAngelesArrival), adoptedAcquiredAt)));
+
+            for (String sentence : List.of(SAME_VALUES, SAME_VALUES_BUT_ACQUIRED_AT)) {
+                org.assertj.core.api.Assertions.assertThat(page.contains("<p>" + sentence + "</p>"))
+                        .as(sentence)
+                        .isEqualTo(sentence.equals(expected));
+            }
+            if (expected != null) {
+                org.assertj.core.api.Assertions.assertThat(indexOf(page, Pattern.quote(expected)))
+                        .isLessThan(indexOf(page, RECEIVED_SECTION));
+            }
         }
     }
 }

@@ -483,9 +483,10 @@ public class AcceptanceTestConfiguration {
             return new InMemoryReceivedRecordRepository(ingestions, externalRecords);
         }
 
+        /** この外部版の採用値は受信記録の外部原本 ID で結ぶ（Bolt 39d3）。 */
         @Bean
-        InMemoryAdoptedValueRepository adoptedValueRepository() {
-            return new InMemoryAdoptedValueRepository();
+        InMemoryAdoptedValueRepository adoptedValueRepository(InMemoryReceivedRecordRepository receivedRecords) {
+            return new InMemoryAdoptedValueRepository(receivedRecords);
         }
 
         @Bean

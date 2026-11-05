@@ -9,6 +9,7 @@ import com.example.cargotracker.externaldata.domain.model.valueobjects.Idempoten
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PayloadHash;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PayloadObjectKey;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PhysicalLineRange;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.ReceivedValue;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.UndecidedQuarantine;
 import com.example.cargotracker.shared.domain.UserId;
 import java.nio.charset.StandardCharsets;
@@ -119,6 +120,7 @@ public abstract class ExternalDataRecordRepositoriesContract {
                 classification,
                 note,
                 INGESTED_AT,
+                null,
                 null);
     }
 
@@ -251,6 +253,7 @@ public abstract class ExternalDataRecordRepositoriesContract {
                 Classification.QUARANTINED,
                 "ファイル: 必要な列がありません（acquired_at）。",
                 INGESTED_AT,
+                null,
                 null);
 
         receivedRecords().add(keyless);
@@ -306,6 +309,7 @@ public abstract class ExternalDataRecordRepositoriesContract {
                 Classification.QUARANTINED,
                 note,
                 INGESTED_AT,
+                null,
                 null);
 
         receivedRecords().add(keyless);
@@ -325,6 +329,7 @@ public abstract class ExternalDataRecordRepositoriesContract {
                 classification,
                 null,
                 INGESTED_AT,
+                null,
                 null);
     }
 
@@ -343,7 +348,8 @@ public abstract class ExternalDataRecordRepositoriesContract {
                 Classification.QUARANTINED,
                 "隔離-" + range,
                 INGESTED_AT,
-                range);
+                range,
+                null);
     }
 
     private ReceivedRecord keyed(
@@ -358,7 +364,8 @@ public abstract class ExternalDataRecordRepositoriesContract {
                 classification,
                 classification == Classification.ADOPTED ? null : classification + "-" + line,
                 INGESTED_AT,
-                new PhysicalLineRange(line, line));
+                new PhysicalLineRange(line, line),
+                null);
     }
 
     @Test
@@ -810,5 +817,113 @@ public abstract class ExternalDataRecordRepositoriesContract {
                 .containsAll(List.of(Classification.values()));
         assertThat(classificationsAndExternalRecord().map(arguments -> List.of(arguments.get())))
                 .contains(List.of(Classification.QUARANTINED, false));
+    }
+
+    // --- Bolt 39d3 の行 4・5（受信記録の値の不変条件と往復。開始準備の決定 (3)）。上限いっぱい（寄港 60・補助文字を含む 30 文字の航海番号）の
+    // 往復は 39d3c ---
+
+    /** 寄港 2 つの航海の値（{@code VoyageValues#summary()} の形。T-230）。 */
+    private static final ReceivedValue VOYAGE_VALUE =
+            new ReceivedValue("V2611E", "JPTYO;;2026-11-19T23:00:00.000000Z|USLAX;2026-12-01T14:00:00.000000Z;");
+
+    /** 主要実績の値（{@code MilestoneValues#summary()} の形。T-230）。 */
+    private static final ReceivedValue MILESTONE_VALUE =
+            new ReceivedValue("CTABCDEFGH2345", "DEPARTURE;JPTYO;2026-11-19T23:00:00.000000Z");
+
+    private ReceivedRecord valued(
+            ExternalRecord externalRecord,
+            Ingestion ingestion,
+            Classification classification,
+            int line,
+            ReceivedValue value) {
+        ReceivedRecord received = keyed(externalRecord, ingestion, classification, line);
+        return new ReceivedRecord(
+                received.id(),
+                received.externalRecordId(),
+                received.ingestionId(),
+                received.payloadHash(),
+                received.payloadObjectKey(),
+                received.acquiredAt(),
+                received.classification(),
+                received.classificationNote(),
+                received.classifiedAt(),
+                received.lineRange(),
+                value);
+    }
+
+    @Test
+    void Bolt39d3_行5_航海と主要実績の受信記録の値をIDで引く照会と取込の隔離の照会で往復する() {
+        Ingestion ingestion = ingestionAt(FUTURE);
+        ingestions().add(ingestion);
+        ExternalRecord voyage = externalRecord(key("VOYAGE", "V-39D3-5A"));
+        ExternalRecord milestone = externalRecord(key("MILESTONE", "MS-39D3-5A"));
+        externalRecords().add(voyage);
+        externalRecords().add(milestone);
+        ReceivedRecord adopted = valued(voyage, ingestion, Classification.ADOPTED, 2, VOYAGE_VALUE);
+        ReceivedRecord quarantined = valued(milestone, ingestion, Classification.QUARANTINED, 3, MILESTONE_VALUE);
+        ReceivedRecord keyless = keyless(ingestion, new PhysicalLineRange(4, 4));
+
+        receivedRecords().add(adopted);
+        receivedRecords().add(quarantined);
+        receivedRecords().add(keyless);
+
+        assertThat(receivedRecords().findById(adopted.id())).contains(adopted);
+        assertThat(receivedRecords().findById(quarantined.id())).contains(quarantined);
+        assertThat(receivedRecords().quarantinedOf(ingestion.id(), 10)).containsExactly(quarantined, keyless);
+        assertThat(receivedRecords().undecidedKeylessQuarantinesOf(ingestion.id()))
+                .singleElement()
+                .satisfies(found -> assertThat(found.value()).isNull());
+    }
+
+    @Test
+    void Bolt39d3_行5_値を記録する前の形の外部原本を持つ受信記録は値なしで往復する() {
+        Ingestion ingestion = ingestionAt(FUTURE);
+        ingestions().add(ingestion);
+        ExternalRecord voyage = externalRecord(key("VOYAGE", "V-39D3-5B"));
+        externalRecords().add(voyage);
+        ReceivedRecord before = keyed(voyage, ingestion, Classification.QUARANTINED, 2);
+
+        receivedRecords().add(before);
+
+        assertThat(receivedRecords().findById(before.id()))
+                .hasValueSatisfying(found -> assertThat(found.value()).isNull());
+    }
+
+    @Test
+    void Bolt39d3_行4_外部原本を持たない受信記録に値を渡すと表のCHECKと同じく作れない() {
+        Ingestion ingestion = ingestionAt(FUTURE);
+        ReceivedRecord keyless = keyless(ingestion, new PhysicalLineRange(2, 2));
+        UUID id = keyless.id();
+        UUID ingestionId = keyless.ingestionId();
+        PayloadHash payloadHash = keyless.payloadHash();
+        PayloadObjectKey payloadObjectKey = keyless.payloadObjectKey();
+        String note = keyless.classificationNote();
+        Instant classifiedAt = keyless.classifiedAt();
+        PhysicalLineRange lineRange = keyless.lineRange();
+
+        assertThatThrownBy(() -> new ReceivedRecord(
+                        id,
+                        null,
+                        ingestionId,
+                        payloadHash,
+                        payloadObjectKey,
+                        null,
+                        Classification.QUARANTINED,
+                        note,
+                        classifiedAt,
+                        lineRange,
+                        VOYAGE_VALUE))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void Bolt39d3_行4_受信記録の値はキーと要約を必ず持ち要約は採用値と同じ4000コードポイントまで() {
+        String supplementary = new String(Character.toChars(0x20BB7));
+        String limit = supplementary.repeat(AdoptedValue.VALUE_SUMMARY_MAX_LENGTH);
+
+        assertThat(new ReceivedValue("V2611E", limit).summary()).isEqualTo(limit);
+        assertThatThrownBy(() -> new ReceivedValue("V2611E", limit + "A")).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> new ReceivedValue(null, "要約")).isInstanceOf(NullPointerException.class);
+        assertThatThrownBy(() -> new ReceivedValue("V2611E", null)).isInstanceOf(NullPointerException.class);
     }
 }

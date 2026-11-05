@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<!-- 採用値（Bolt 39b3）。追記専用なので INSERT と受信記録 ID での SELECT だけを持つ。受信記録ごとに 1 つ（uk_adopted_value_received_record）。
+<!-- 採用値（Bolt 39b3）。追記専用なので INSERT と受信記録 ID での SELECT と、この外部版の採用値の SELECT（Bolt 39d3）だけを持つ。受信記録ごとに 1 つ（uk_adopted_value_received_record）。
      受信記録より後に書く。H2 と PostgreSQL の共通の構文で書く（ADR-007）。 -->
 <mapper namespace="com.example.cargotracker.externaldata.infrastructure.persistence.AdoptedValueMapper">
 
@@ -20,6 +20,17 @@
         SELECT id, received_record_id, target_type, target_key, value_summary, info_version, published_at
           FROM external_data.adopted_value
          WHERE received_record_id = #{receivedRecordId}
+    </select>
+
+    <!-- この外部版の採用値（Bolt 39d3 の開始準備の決定 (5)）。同じ外部原本の受信記録の採用値のうち、公開した時刻の新しい順、同じ時刻は
+         採用値 ID の順の最後。受信記録は ix_received_record_external_record で外部原本に絞り、採用値は uk_adopted_value_received_record で結ぶ -->
+    <select id="selectCurrentOf" resultMap="adoptedValueRow">
+        SELECT a.id, a.received_record_id, a.target_type, a.target_key, a.value_summary, a.info_version, a.published_at
+          FROM external_data.adopted_value a
+          JOIN external_data.received_record r ON r.id = a.received_record_id
+         WHERE r.external_record_id = #{externalRecordId}
+         ORDER BY a.published_at DESC, a.id DESC
+         LIMIT 1
     </select>
 
     <insert id="insert">

@@ -36,6 +36,9 @@ class H2AdoptedValueRepositoryTest extends AdoptedValueRepositoryContract {
     @Autowired
     JdbcTemplate jdbc;
 
+    /** この外部版の採用値の契約の外部原本の提供元（テストのインスタンスごと。Bolt 39d3）。 */
+    private final String provider = "採用値の提供元-" + UUID.randomUUID();
+
     @Override
     protected AdoptedValueRepository adoptedValues() {
         return adoptedValues;
@@ -45,5 +48,17 @@ class H2AdoptedValueRepositoryTest extends AdoptedValueRepositoryContract {
     protected UUID givenReceivedRecord() {
         return MyBatisAdoptedValueRepositoryIntegrationTest.insertAdoptedReceivedRecord(
                 jdbc, ingestions, externalRecords, receivedRecords);
+    }
+
+    @Override
+    protected UUID givenExternalRecord(String externalId, String externalVersion) {
+        return MyBatisAdoptedValueRepositoryIntegrationTest.insertExternalRecord(
+                externalRecords, provider, externalId, externalVersion);
+    }
+
+    @Override
+    protected UUID givenReceivedRecordOf(UUID externalRecordId) {
+        return MyBatisAdoptedValueRepositoryIntegrationTest.insertAdoptedReceivedRecordOf(
+                jdbc, ingestions, receivedRecords, externalRecordId);
     }
 }
