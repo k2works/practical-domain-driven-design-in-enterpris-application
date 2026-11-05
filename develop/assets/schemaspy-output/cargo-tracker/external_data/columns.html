@@ -699,6 +699,34 @@
         "comments": "<p>行の範囲の終わり（物理行の番号。ファイルの誤りと Bolt 39c3 より前の行は NULL）</p>"
     },
     {
+        "tableName": "received_record",
+        "tableFileName": "received_record",
+        "tableType": "Table",
+        "keyClass": "",
+        "keyTitle": "",
+        "name": "target_key",
+        "type": "varchar",
+        "length": 100,
+        "nullable": "√",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>対象のキー（航海は航海番号、主要実績は追跡番号。キーのない隔離と Bolt 39d3 より前の行は NULL）</p>"
+    },
+    {
+        "tableName": "received_record",
+        "tableFileName": "received_record",
+        "tableType": "Table",
+        "keyClass": "",
+        "keyTitle": "",
+        "name": "value_summary",
+        "type": "varchar",
+        "length": 4000,
+        "nullable": "√",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>値の要約（採用値と同じ規則の正規の文字列。キーのない隔離と Bolt 39d3 より前の行は NULL）</p>"
+    },
+    {
         "tableName": "received_record_decision",
         "tableFileName": "received_record_decision",
         "tableType": "Table",

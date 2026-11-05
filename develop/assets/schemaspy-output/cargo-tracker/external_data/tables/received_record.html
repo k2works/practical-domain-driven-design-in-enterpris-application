@@ -333,6 +333,40 @@
                                     </td>
                                     <td><p>行の範囲の終わり（物理行の番号。ファイルの誤りと Bolt 39c3 より前の行は NULL）</p></td>
                                 </tr>
+                                <tr>
+                                    <td><span id="target_key">target_key</span></td>
+                                    <td>varchar</td>
+                                    <td>100</td>
+                                    <td title='nullable'>√</td>
+                                    <td title=''></td>
+                                    <td>null</td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                        </table>
+                                    </td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                        </table>
+                                    </td>
+                                    <td><p>対象のキー（航海は航海番号、主要実績は追跡番号。キーのない隔離と Bolt 39d3 より前の行は NULL）</p></td>
+                                </tr>
+                                <tr>
+                                    <td><span id="value_summary">value_summary</span></td>
+                                    <td>varchar</td>
+                                    <td>4000</td>
+                                    <td title='nullable'>√</td>
+                                    <td title=''></td>
+                                    <td>null</td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                        </table>
+                                    </td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                        </table>
+                                    </td>
+                                    <td><p>値の要約（採用値と同じ規則の正規の文字列。キーのない隔離と Bolt 39d3 より前の行は NULL）</p></td>
+                                </tr>
                                 </tbody>
                             </table>
                         </div>
@@ -376,6 +410,12 @@
                                     <td>classification</td>
                                 </tr>
                                 <tr>
+                                    <td title='Indexed'>ix_received_record_external_record</td>
+                                    <td>Performance</td>
+                                    <td><span title='Ascending'>Asc</span></td>
+                                    <td>external_record_id</td>
+                                </tr>
+                                <tr>
                                     <td title='Indexed'>ix_received_record_ingestion</td>
                                     <td>Performance</td>
                                     <td><span title='Ascending'>Asc</span></td>
@@ -409,6 +449,10 @@
                                 </tr>
                                 </thead>
                                 <tbody>
+                                <tr>
+                                    <td>ck_received_record_value</td>
+                                    <td>(((target_key IS NULL) &#61; (value_summary IS NULL)) AND ((external_record_id IS NOT NULL) OR (target_key IS NULL)))</td>
+                                </tr>
                                 <tr>
                                     <td>ck_received_record_keyless_quarantine</td>
                                     <td>(((external_record_id IS NULL) &#61; (acquired_at IS NULL)) AND (((classification)::text &#61; &#39;QUARANTINED&#39;::text) OR (external_record_id IS NOT NULL)))</td>
