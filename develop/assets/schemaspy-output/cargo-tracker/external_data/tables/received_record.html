@@ -410,12 +410,12 @@
                                 </thead>
                                 <tbody>
                                 <tr>
-                                    <td>ck_received_record_classification</td>
-                                    <td>((classification)::text &#61; ANY ((ARRAY[&#39;ADOPTED&#39;::character varying, &#39;DUPLICATE&#39;::character varying, &#39;QUARANTINED&#39;::character varying, &#39;DISCREPANCY&#39;::character varying])::text[]))</td>
-                                </tr>
-                                <tr>
                                     <td>ck_received_record_keyless_quarantine</td>
                                     <td>(((external_record_id IS NULL) &#61; (acquired_at IS NULL)) AND (((classification)::text &#61; &#39;QUARANTINED&#39;::text) OR (external_record_id IS NOT NULL)))</td>
+                                </tr>
+                                <tr>
+                                    <td>ck_received_record_classification</td>
+                                    <td>((classification)::text &#61; ANY ((ARRAY[&#39;ADOPTED&#39;::character varying, &#39;DUPLICATE&#39;::character varying, &#39;QUARANTINED&#39;::character varying, &#39;DISCREPANCY&#39;::character varying])::text[]))</td>
                                 </tr>
                                 <tr>
                                     <td>ck_received_record_line_range</td>
