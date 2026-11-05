@@ -46,8 +46,30 @@ class ReceivedRecordDecisionServiceTest {
     /** ナノ秒を持つ時刻（判断の時刻はマイクロ秒に切り捨てる。行 2）。 */
     private static final Instant NOW = Instant.parse("2026-11-16T01:05:00.123456789Z");
 
-    private final InMemoryIngestionRepository ingestions = new InMemoryIngestionRepository();
-    private final InMemoryExternalRecordRepository externalRecords = new InMemoryExternalRecordRepository();
+    /** 取込・情報源・外部原本の読み出しと判断・採用値の追記の呼び出しの記録（Bolt 39d3b の行 4・5・7・19。T-236）。 */
+    private final List<String> calls = new ArrayList<>();
+
+    private final InMemoryIngestionRepository ingestions = new InMemoryIngestionRepository() {
+        @Override
+        public Optional<Ingestion> findById(UUID id) {
+            calls.add(INGESTION_FIND);
+            return super.findById(id);
+        }
+    };
+    private final InMemoryExternalRecordRepository externalRecords = new InMemoryExternalRecordRepository() {
+        @Override
+        public Optional<ExternalRecord> findById(UUID id) {
+            calls.add(EXTERNAL_RECORD_FIND);
+            return super.findById(id);
+        }
+    };
+    private final InMemoryDataSourceRepository dataSources = new InMemoryDataSourceRepository() {
+        @Override
+        public Optional<DataSource> findById(UUID id) {
+            calls.add(DATA_SOURCE_FIND);
+            return super.findById(id);
+        }
+    };
     /** 判断の追記の呼び出しの記録（T-236）。{@code duplicateOnAdd} なら同時の判断に負けたときの一意制約の違反を投げる（行 6）。 */
     private final List<ReceivedRecordDecision> addCalls = new ArrayList<>();
 
@@ -60,6 +82,7 @@ class ReceivedRecordDecisionServiceTest {
         @Override
         public synchronized void add(ReceivedRecordDecision decision) {
             addCalls.add(decision);
+            calls.add(DECISION_ADD);
             RuntimeException failure = failureOnAdd.apply(addCalls.size());
             if (failure != null) {
                 throw failure;
@@ -72,10 +95,35 @@ class ReceivedRecordDecisionServiceTest {
     };
     private final InMemoryReceivedRecordRepository receivedRecords =
             new InMemoryReceivedRecordRepository(ingestions, externalRecords, decisions);
+    private final InMemoryAdoptedValueRepository adoptedValues = new InMemoryAdoptedValueRepository(receivedRecords) {
+        @Override
+        public synchronized void add(AdoptedValue adoptedValue) {
+            calls.add(ADOPTED_VALUE_ADD);
+            super.add(adoptedValue);
+        }
+
+        @Override
+        public Optional<AdoptedValue> currentOf(UUID externalRecordId) {
+            calls.add(ADOPTED_VALUE_CURRENT);
+            return super.currentOf(externalRecordId);
+        }
+    };
     private final List<Object> published = new ArrayList<>();
     private final ApplicationEventPublisher publisher = published::add;
-    private final ReceivedRecordDecisionService service = new ReceivedRecordDecisionService(
-            receivedRecords, decisions, ingestions, publisher, Clock.fixed(NOW, ZoneOffset.UTC));
+    private final ReceivedRecordDecisionService service = serviceWith(Clock.fixed(NOW, ZoneOffset.UTC));
+
+    private static final String INGESTION_FIND = "ingestions.findById";
+    private static final String DATA_SOURCE_FIND = "dataSources.findById";
+    private static final String EXTERNAL_RECORD_FIND = "externalRecords.findById";
+    private static final String DECISION_ADD = "decisions.add";
+    private static final String ADOPTED_VALUE_ADD = "adoptedValues.add";
+    private static final String ADOPTED_VALUE_CURRENT = "adoptedValues.currentOf";
+
+    /** 判断のサービスを組み立てる（Bolt 39d3b で外部原本・採用値・情報源のリポジトリを足した）。 */
+    private ReceivedRecordDecisionService serviceWith(Clock clock) {
+        return new ReceivedRecordDecisionService(
+                receivedRecords, decisions, ingestions, dataSources, externalRecords, adoptedValues, publisher, clock);
+    }
 
     private final AuthenticatedActor steward = actor(Role.DATA_STEWARD);
     private final UUID dataSourceId = UUID.randomUUID();
@@ -380,8 +428,7 @@ class ReceivedRecordDecisionServiceTest {
             keyless(ingestion, new PhysicalLineRange(2, 2));
             keyless(ingestion, new PhysicalLineRange(3, 3));
             keyless(ingestion, new PhysicalLineRange(4, 4));
-            ReceivedRecordDecisionService withTickingClock = new ReceivedRecordDecisionService(
-                    receivedRecords, decisions, ingestions, publisher, new TickingClock(NOW));
+            ReceivedRecordDecisionService withTickingClock = serviceWith(new TickingClock(NOW));
 
             withTickingClock.rejectKeyless(steward, new RejectKeylessQuarantinesCommand(ingestion.id(), REASON));
 
@@ -505,6 +552,439 @@ class ReceivedRecordDecisionServiceTest {
             org.assertj.core.api.Assertions.assertThatThrownBy(() -> service.rejectKeyless(steward, command))
                     .isInstanceOf(org.springframework.dao.DataAccessResourceFailureException.class);
             assertThat(addCalls).hasSize(2);
+        }
+    }
+
+    /**
+     * Bolt 39d3b の行 2・4〜7・19・20（航海の内容の違う原本の隔離の採用。開始準備の決定 (4)・(5)・(6)）。メモリの実装と固定の Clock で確かめる。
+     * 「起きないこと」（採用を出さない隔離・断る順・同時の判断で判断と採用値を追記せずイベントを出さない、取込・情報源・外部原本を引かない、
+     * この外部版の採用値を引かない）と書く順は、呼び出しの記録で確かめる（T-236）。39d2 の同じ番号の行と名前が衝突しないよう入れ子にする。
+     */
+    @Nested
+    class Bolt39d3b_航海の隔離の採用 {
+
+        private static final String PROVIDER = "開発海運（架空）";
+        private static final String REASON = "提供元に確かめ、到着の時刻を直した原本と分かった。";
+        private static final Instant ACQUIRED_AT = Instant.parse("2026-11-16T00:30:00Z");
+        private static final Instant DECIDED_AT = Instant.parse("2026-11-16T01:05:00.123456Z");
+
+        /** 東京を出発し、ロサンゼルスに到着する寄港 2 つの航海（ロサンゼルスの到着の時刻だけを変えられる。T-230）。 */
+        private static VoyageValues voyage(String losAngelesArrival) {
+            return new VoyageValues(
+                    "DEMO-201",
+                    List.of(
+                            new PortCallValue(
+                                    new Location("JPTYO"), null, new UtcInstant(Instant.parse("2026-11-18T23:00:00Z"))),
+                            new PortCallValue(
+                                    new Location("USLAX"), new UtcInstant(Instant.parse(losAngelesArrival)), null)));
+        }
+
+        private static final VoyageValues RECEIVED = voyage("2026-12-01T22:00:00Z");
+
+        private static MilestoneValues milestone() {
+            return new MilestoneValues(
+                    new TrackingNumberValue("CTABCDEFGH2345"),
+                    MilestoneKindValue.DEPARTURE,
+                    new Location("JPTYO"),
+                    new UtcInstant(Instant.parse("2026-11-18T23:00:00Z")));
+        }
+
+        /** 情報源と取込（情報源の承認の状態を変えられる）。 */
+        private void source(DataSource.ApprovalStatus status) {
+            dataSources.add(new DataSource(dataSourceId, PROVIDER, "VOYAGE", status));
+            ingestions.add(ingestion);
+        }
+
+        private ExternalRecord externalRecord(String recordType) {
+            ExternalRecord externalRecord = new ExternalRecord(
+                    UUID.randomUUID(),
+                    new IdempotencyKey(PROVIDER, recordType, "DEMO-201", "3"),
+                    PayloadHash.of(new byte[] {6}),
+                    PayloadObjectKey.newRecordPayload(),
+                    Instant.parse("2026-11-15T09:00:00Z"));
+            externalRecords.add(externalRecord);
+            return externalRecord;
+        }
+
+        /** 外部原本の内容の違う原本の隔離（値がなければ Bolt 39d3 より前の隔離）。 */
+        private ReceivedRecord quarantine(ExternalRecord externalRecord, ReceivedValue value) {
+            ReceivedRecord received = new ReceivedRecord(
+                    UUID.randomUUID(),
+                    externalRecord.id(),
+                    ingestion.id(),
+                    PayloadHash.of(new byte[] {7}),
+                    PayloadObjectKey.newRecordPayload(),
+                    ACQUIRED_AT,
+                    Classification.QUARANTINED,
+                    "3 行目: 内容の違う原本",
+                    ingestion.ingestedAt(),
+                    new PhysicalLineRange(3, 3),
+                    value);
+            receivedRecords.add(received);
+            return received;
+        }
+
+        /** 承認済みの航海の情報源の、受け取った値を読める内容の違う原本の隔離。 */
+        private ReceivedRecord adoptable() {
+            source(DataSource.ApprovalStatus.APPROVED);
+            return quarantine(externalRecord("VOYAGE"), ReceivedValue.of(RECEIVED));
+        }
+
+        private DecisionOutcome adopt(AuthenticatedActor actor, UUID receivedRecordId, String reason) {
+            return service.adopt(actor, new AdoptReceivedRecordCommand(receivedRecordId, reason));
+        }
+
+        private long callsOf(String call) {
+            return calls.stream().filter(call::equals).count();
+        }
+
+        private void assertNothingWritten() {
+            assertThat(callsOf(DECISION_ADD)).isZero();
+            assertThat(callsOf(ADOPTED_VALUE_ADD)).isZero();
+            assertThat(decisions.all()).isEmpty();
+            assertThat(published).isEmpty();
+        }
+
+        // --- 行 2: 採用（航海） ---
+
+        @ParameterizedTest(name = "この外部版の採用値がある {0}")
+        @ValueSource(booleans = {true, false})
+        void 行2_航海の内容の違う原本を採用すると判断と採用値を追記しDE29とDE12を出して採用した結果を返す(boolean withCurrent) {
+            ReceivedRecord received = adoptable();
+            if (withCurrent) {
+                // 同じ外部原本の、取込で採用した値（この外部版の採用値）
+                ReceivedRecord original = new ReceivedRecord(
+                        UUID.randomUUID(),
+                        received.externalRecordId(),
+                        ingestion.id(),
+                        PayloadHash.of(new byte[] {8}),
+                        PayloadObjectKey.newRecordPayload(),
+                        Instant.parse("2026-11-15T08:30:00Z"),
+                        Classification.ADOPTED,
+                        null,
+                        ingestion.ingestedAt(),
+                        new PhysicalLineRange(2, 2),
+                        ReceivedValue.of(voyage("2026-12-01T14:00:00Z")));
+                receivedRecords.add(original);
+                adoptedValues.add(new AdoptedValue(
+                        UUID.randomUUID(),
+                        original.id(),
+                        AdoptedValue.TargetType.VOYAGE,
+                        "DEMO-201",
+                        voyage("2026-12-01T14:00:00Z").summary(),
+                        "3",
+                        ingestion.ingestedAt()));
+                calls.clear();
+            }
+
+            DecisionOutcome outcome = adopt(steward, received.id(), REASON);
+
+            assertThat(outcome).isEqualTo(new DecisionOutcome.AdoptedQuarantine(received.id()));
+            assertThat(decisions.all()).singleElement().satisfies(decision -> {
+                assertThat(decision.receivedRecordId()).isEqualTo(received.id());
+                assertThat(decision.decision()).isEqualTo(DecisionKind.ADOPTED);
+                assertThat(decision.decidedBy()).isEqualTo(steward.userId());
+                assertThat(decision.decidedAt()).isEqualTo(DECIDED_AT);
+                assertThat(decision.reason()).isEqualTo(REASON);
+            });
+            AdoptedValue adoptedValue = adoptedValues.findByReceivedRecordId(received.id()).orElseThrow();
+            assertThat(adoptedValue.targetType()).isEqualTo(AdoptedValue.TargetType.VOYAGE);
+            assertThat(adoptedValue.targetKey()).isEqualTo("DEMO-201");
+            assertThat(adoptedValue.valueSummary()).isEqualTo(RECEIVED.summary());
+            assertThat(adoptedValue.infoVersion()).isEqualTo("3");
+            assertThat(adoptedValue.publishedAt()).isEqualTo(DECIDED_AT);
+            assertThat(published)
+                    .containsExactly(
+                            new ReceivedRecordDecided(
+                                    received.id(),
+                                    ingestion.id(),
+                                    dataSourceId,
+                                    "ADOPTED",
+                                    REASON,
+                                    steward.userId(),
+                                    steward.companyId(),
+                                    new UtcInstant(DECIDED_AT)),
+                            new VoyageAdoptedValueUpdated(
+                                    adoptedValue.id(),
+                                    ingestion.id(),
+                                    dataSourceId,
+                                    new Source(
+                                            SourceKind.EXTERNAL_RECORD,
+                                            received.id().toString(),
+                                            new UtcInstant(ACQUIRED_AT)),
+                                    "DEMO-201",
+                                    RECEIVED.portCalls().stream()
+                                            .map(call -> new VoyageAdoptedValueUpdated.AdoptedPortCall(
+                                                    call.port(), call.arrivalAt(), call.departureAt()))
+                                            .toList(),
+                                    "3",
+                                    steward.userId(),
+                                    steward.companyId(),
+                                    new UtcInstant(DECIDED_AT)));
+            assertThat(receivedRecords.undecidedQuarantine(received.id())).isEmpty();
+        }
+
+        // --- 行 4: 採用を出さない隔離（GET と POST で 1 つの定め） ---
+
+        /** 採用を出さない隔離の作り方と、取込・情報源・外部原本を引く数（T-244）。 */
+        record NotAdoptableCase(String name, java.util.function.Function<Bolt39d3b_航海の隔離の採用, ReceivedRecord> create,
+                int ingestionFinds, int dataSourceFinds, int externalRecordFinds) {
+
+            @Override
+            public String toString() {
+                return name;
+            }
+        }
+
+        static Stream<NotAdoptableCase> notAdoptable() {
+            return Stream.of(
+                    new NotAdoptableCase("(a) キーのない隔離", test -> test.keylessQuarantine(), 0, 0, 0),
+                    new NotAdoptableCase(
+                            "(b) 値の列のない隔離",
+                            test -> {
+                                test.source(DataSource.ApprovalStatus.APPROVED);
+                                return test.quarantine(test.externalRecord("VOYAGE"), null);
+                            },
+                            0,
+                            0,
+                            0),
+                    new NotAdoptableCase(
+                            "(c) 受け取った値の要約が壊れている",
+                            test -> {
+                                test.source(DataSource.ApprovalStatus.APPROVED);
+                                return test.quarantine(
+                                        test.externalRecord("VOYAGE"), new ReceivedValue("DEMO-201", "壊れた要約"));
+                            },
+                            1,
+                            1,
+                            1),
+                    new NotAdoptableCase(
+                            "(d) 空でない知らない原本種別",
+                            test -> {
+                                test.source(DataSource.ApprovalStatus.APPROVED);
+                                return test.quarantine(test.externalRecord("CONTAINER"), ReceivedValue.of(RECEIVED));
+                            },
+                            1,
+                            1,
+                            1),
+                    new NotAdoptableCase(
+                            "(e) 主要実績の隔離（39d3b2 まで）",
+                            test -> {
+                                test.source(DataSource.ApprovalStatus.APPROVED);
+                                return test.quarantine(test.externalRecord("MILESTONE"), ReceivedValue.of(milestone()));
+                            },
+                            1,
+                            1,
+                            1),
+                    new NotAdoptableCase(
+                            "(f) 停止した情報源の隔離",
+                            test -> {
+                                test.source(DataSource.ApprovalStatus.SUSPENDED);
+                                return test.quarantine(test.externalRecord("VOYAGE"), ReceivedValue.of(RECEIVED));
+                            },
+                            1,
+                            1,
+                            0));
+        }
+
+        private ReceivedRecord keylessQuarantine() {
+            ingestions.add(ingestion);
+            ReceivedRecord received = new ReceivedRecord(
+                    UUID.randomUUID(),
+                    null,
+                    ingestion.id(),
+                    PayloadHash.of(new byte[] {9}),
+                    PayloadObjectKey.newRecordPayload(),
+                    null,
+                    Classification.QUARANTINED,
+                    "4 行目: 形式の誤り",
+                    ingestion.ingestedAt(),
+                    new PhysicalLineRange(4, 4),
+                    null);
+            receivedRecords.add(received);
+            return received;
+        }
+
+        @ParameterizedTest(name = "{0}")
+        @MethodSource("notAdoptable")
+        void 行4_採用を出さない隔離は判断も採用値も追記せずイベントを出さず採用できるかの照会も同じ結果を返す(NotAdoptableCase notAdoptableCase) {
+            ReceivedRecord received = notAdoptableCase.create().apply(this);
+            calls.clear();
+
+            DecisionOutcome outcome = adopt(steward, received.id(), REASON);
+
+            assertThat(outcome).isEqualTo(new DecisionOutcome.NotAdoptable());
+            assertNothingWritten();
+            assertThat(callsOf(INGESTION_FIND)).isEqualTo(notAdoptableCase.ingestionFinds());
+            assertThat(callsOf(DATA_SOURCE_FIND)).isEqualTo(notAdoptableCase.dataSourceFinds());
+            assertThat(callsOf(EXTERNAL_RECORD_FIND)).isEqualTo(notAdoptableCase.externalRecordFinds());
+            assertThat(service.adoptionRefusalOf(received.id())).contains(new DecisionOutcome.NotAdoptable());
+            assertThat(receivedRecords.undecidedQuarantine(received.id())).isPresent();
+        }
+
+        @Test
+        void 行4_採用できる隔離では採用できるかの照会は空を返し判断を追記しない() {
+            ReceivedRecord received = adoptable();
+
+            assertThat(service.adoptionRefusalOf(received.id())).isEmpty();
+            assertNothingWritten();
+        }
+
+        // --- 行 5: 採用値の側だけ読めない隔離 ---
+
+        @Test
+        void 行5_この外部版の採用値の要約が壊れていても受け取った値を読めれば採用でき採用値を引かない() {
+            ReceivedRecord received = adoptable();
+            ReceivedRecord original = new ReceivedRecord(
+                    UUID.randomUUID(),
+                    received.externalRecordId(),
+                    ingestion.id(),
+                    PayloadHash.of(new byte[] {10}),
+                    PayloadObjectKey.newRecordPayload(),
+                    Instant.parse("2026-11-15T08:30:00Z"),
+                    Classification.ADOPTED,
+                    null,
+                    ingestion.ingestedAt(),
+                    new PhysicalLineRange(2, 2),
+                    ReceivedValue.of(voyage("2026-12-01T14:00:00Z")));
+            receivedRecords.add(original);
+            adoptedValues.add(new AdoptedValue(
+                    UUID.randomUUID(),
+                    original.id(),
+                    AdoptedValue.TargetType.VOYAGE,
+                    "DEMO-201",
+                    "壊れた要約",
+                    "3",
+                    ingestion.ingestedAt()));
+            calls.clear();
+
+            assertThat(service.adoptionRefusalOf(received.id())).isEmpty();
+            assertThat(adopt(steward, received.id(), null)).isEqualTo(new DecisionOutcome.AdoptedQuarantine(received.id()));
+
+            assertThat(adoptedValues.findByReceivedRecordId(received.id()))
+                    .get()
+                    .extracting(AdoptedValue::valueSummary)
+                    .isEqualTo(RECEIVED.summary());
+            assertThat(published)
+                    .hasSize(2)
+                    .last()
+                    .isInstanceOf(VoyageAdoptedValueUpdated.class);
+            assertThat(callsOf(ADOPTED_VALUE_CURRENT)).isZero();
+        }
+
+        // --- 行 6: 断る順（却下と同じ順で、採用できるかより先） ---
+
+        @Test
+        void 行6_データ責任者でなければ取込も情報源も外部原本も引かず権限なしを返す() {
+            ReceivedRecord received = adoptable();
+            calls.clear();
+
+            for (Role role : EnumSet.complementOf(EnumSet.of(Role.DATA_STEWARD))) {
+                assertThat(adopt(actor(role), received.id(), REASON)).isEqualTo(new DecisionOutcome.NotPermitted());
+            }
+            assertThat(calls).isEmpty();
+            assertNothingWritten();
+        }
+
+        static Stream<Arguments> refusals() {
+            return Stream.of(
+                    Arguments.of("ない受信記録", new DecisionOutcome.NotFound()),
+                    Arguments.of("隔離でない受信記録", new DecisionOutcome.NotDecidable()),
+                    Arguments.of("判断済み", new DecisionOutcome.AlreadyDecided()));
+        }
+
+        @ParameterizedTest(name = "{0}")
+        @MethodSource("refusals")
+        void 行6_ない受信記録と隔離でない受信記録と判断済みは採用できるかより先に断り取込も情報源も外部原本も引かない(
+                String name, DecisionOutcome refusal) {
+            source(DataSource.ApprovalStatus.APPROVED);
+            ExternalRecord externalRecord = externalRecord("VOYAGE");
+            UUID receivedRecordId = switch (refusal) {
+                case DecisionOutcome.NotFound _ -> UUID.randomUUID();
+                case DecisionOutcome.NotDecidable _ -> {
+                    ReceivedRecord adopted = new ReceivedRecord(
+                            UUID.randomUUID(),
+                            externalRecord.id(),
+                            ingestion.id(),
+                            PayloadHash.of(new byte[] {11}),
+                            PayloadObjectKey.newRecordPayload(),
+                            ACQUIRED_AT,
+                            Classification.ADOPTED,
+                            null,
+                            ingestion.ingestedAt(),
+                            new PhysicalLineRange(2, 2),
+                            ReceivedValue.of(RECEIVED));
+                    receivedRecords.add(adopted);
+                    yield adopted.id();
+                }
+                default -> {
+                    ReceivedRecord decided = quarantine(externalRecord, ReceivedValue.of(RECEIVED));
+                    decisions.add(ReceivedRecordDecision.reject(decided, "先の却下。", steward.userId(), NOW));
+                    yield decided.id();
+                }
+            };
+            calls.clear();
+            published.clear();
+            int decisionsBefore = decisions.all().size();
+
+            assertThat(adopt(steward, receivedRecordId, REASON)).isEqualTo(refusal);
+            assertThat(service.adoptionRefusalOf(receivedRecordId)).contains(refusal);
+
+            assertThat(calls).doesNotContain(INGESTION_FIND, DATA_SOURCE_FIND, EXTERNAL_RECORD_FIND, ADOPTED_VALUE_ADD);
+            assertThat(callsOf(DECISION_ADD)).isZero();
+            assertThat(decisions.all()).hasSize(decisionsBefore);
+            assertThat(published).isEmpty();
+        }
+
+        // --- 行 7・19: 同時の判断と書く順 ---
+
+        @Test
+        void 行7_同時の判断に負けて一意制約に違反すると判断済みを返し採用値を追記せずイベントを出さない() {
+            ReceivedRecord received = adoptable();
+            duplicateOnAdd = true;
+            calls.clear();
+
+            assertThat(adopt(steward, received.id(), REASON)).isEqualTo(new DecisionOutcome.AlreadyDecided());
+
+            assertThat(callsOf(DECISION_ADD)).isEqualTo(1);
+            assertThat(callsOf(ADOPTED_VALUE_ADD)).isZero();
+            assertThat(adoptedValues.findByReceivedRecordId(received.id())).isEmpty();
+            assertThat(published).isEmpty();
+        }
+
+        @Test
+        void 行19_判断の追記が採用値の追記より先に呼ばれる() {
+            ReceivedRecord received = adoptable();
+            calls.clear();
+
+            adopt(steward, received.id(), REASON);
+
+            assertThat(calls.stream()
+                            .filter(call -> call.equals(DECISION_ADD) || call.equals(ADOPTED_VALUE_ADD))
+                            .toList())
+                    .containsExactly(DECISION_ADD, ADOPTED_VALUE_ADD);
+        }
+
+        // --- 行 20: 時刻 ---
+
+        @Test
+        void 行20_判断の時刻は呼ぶたびに進むClockからも1回だけ取り判断と採用値とDE12とDE29で同じにする() {
+            ReceivedRecord received = adoptable();
+            ReceivedRecordDecisionService withTickingClock =
+                    serviceWith(new Bolt39d2b_形式の誤りのまとめての却下.TickingClock(NOW));
+
+            withTickingClock.adopt(steward, new AdoptReceivedRecordCommand(received.id(), null));
+
+            assertThat(decisions.all()).singleElement().extracting(ReceivedRecordDecision::decidedAt).isEqualTo(DECIDED_AT);
+            assertThat(adoptedValues.findByReceivedRecordId(received.id()))
+                    .get()
+                    .extracting(AdoptedValue::publishedAt)
+                    .isEqualTo(DECIDED_AT);
+            assertThat(published)
+                    .extracting(event -> event instanceof ReceivedRecordDecided decided
+                            ? decided.decidedAt()
+                            : ((VoyageAdoptedValueUpdated) event).publishedAt())
+                    .containsExactly(new UtcInstant(DECIDED_AT), new UtcInstant(DECIDED_AT));
         }
     }
 }

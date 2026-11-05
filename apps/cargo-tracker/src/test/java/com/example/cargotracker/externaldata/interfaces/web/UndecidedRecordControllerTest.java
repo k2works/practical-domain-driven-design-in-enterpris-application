@@ -5,13 +5,17 @@ import static org.hamcrest.Matchers.matchesPattern;
 import static org.hamcrest.Matchers.not;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.example.cargotracker.externaldata.application.internal.commands.AdoptReceivedRecordCommand;
 import com.example.cargotracker.externaldata.application.internal.commands.RejectKeylessQuarantinesCommand;
 import com.example.cargotracker.externaldata.application.internal.commands.RejectReceivedRecordCommand;
 import com.example.cargotracker.externaldata.application.internal.commandservices.DecisionOutcome;
@@ -29,16 +33,25 @@ import com.example.cargotracker.identity.infrastructure.security.WithAuthenticat
 import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.Role;
 import com.example.cargotracker.shared.domain.UtcInstant;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -386,6 +399,12 @@ class UndecidedRecordControllerTest {
         private void givenDecidable(UndecidedRecordPage.Item item) {
             given(decisions.refusalOf(RECORD_ID)).willReturn(java.util.Optional.empty());
             given(query.undecidedQuarantine(RECORD_ID)).willReturn(java.util.Optional.of(item));
+            // キーのない隔離は採用できない（Bolt 39d3b で採用の欄を足した。【業務の判断】(a)）
+            given(decisions.adoptionRefusalOf(RECORD_ID))
+                    .willReturn(
+                            item.keyless()
+                                    ? java.util.Optional.of(new DecisionOutcome.NotAdoptable())
+                                    : java.util.Optional.empty());
         }
 
         private String decisionPage(String url) throws Exception {
@@ -604,12 +623,16 @@ class UndecidedRecordControllerTest {
         }
 
         @Test
-        void 行1_結果の型のすべてを行き先の組で縛る() {
+        void 行1_却下が返す結果の型のすべてを行き先の組で縛る() {
             List<Class<?>> covered = outcomes()
                     .<Class<?>>map(arguments -> arguments.get()[0].getClass())
                     .toList();
-            org.assertj.core.api.Assertions.assertThat(covered)
-                    .containsExactlyInAnyOrder(DecisionOutcome.class.getPermittedSubclasses());
+            // 採用だけが返す結果（Bolt 39d3b）は Bolt39d3b_判断の画面の採用 の行 14 が縛る
+            List<Class<?>> rejectionOutcomes = Arrays.stream(DecisionOutcome.class.getPermittedSubclasses())
+                    .filter(type -> type != DecisionOutcome.AdoptedQuarantine.class
+                            && type != DecisionOutcome.NotAdoptable.class)
+                    .toList();
+            org.assertj.core.api.Assertions.assertThat(covered).containsExactlyInAnyOrderElementsOf(rejectionOutcomes);
         }
 
         // --- 行 7・8: 理由の欄の誤り（T-244） ---
@@ -1504,6 +1527,302 @@ class UndecidedRecordControllerTest {
                             method.getAnnotation(CsvSource.class).value())
                     .hasSize(com.example.cargotracker.externaldata.domain.model.valueobjects.MilestoneKindValue.values()
                             .length);
+        }
+    }
+
+    /**
+     * Bolt 39d3b の行 12〜14（S-17 の判断の画面の「却下する」「採用する」の 2 つの見出しの欄と採用の POST。開始準備の決定 (8)・(9)、T-240・
+     * T-244）。判断のサービスと照会は mock にし、採用の欄の有無が判断のサービスの採用できるかの照会（{@code adoptionRefusalOf}）だけで決まり
+     * 照会の値によらないこと、欄の id と順、採用の欄の誤り、採用の POST の行き先を確かめる。認可と CSRF はセキュリティの統合のテスト（行 22）。
+     */
+    @Nested
+    class Bolt39d3b_判断の画面の採用 {
+
+        private static final UUID RECORD_ID = UUID.fromString("39d3b000-0000-0000-0000-0000000000dd");
+        private static final String DECISION_URL = LIST_URL + "/" + RECORD_ID;
+        private static final String ADOPTION_URL = DECISION_URL + "/adoption";
+        private static final String REJECTED = "隔離を却下しました。";
+        private static final String ADOPTED = "隔離を採用しました。";
+        private static final String ALREADY_DECIDED = "この隔離は判断済みです。";
+        private static final String REASON_TOO_LONG = "採用の理由は 1000 文字までで書いてください。";
+        private static final String ADOPTION_IRREVOCABLE =
+                "採用すると取り消せません。誤って採用したときは、提供元に新しい外部版で正しい原本を送ってもらってください。";
+        private static final String KEYLESS_GUIDE = "形式の誤りは採用できません。直したファイルを取り込み直してください。";
+        private static final String ADOPTED_SECTION =
+                "<section aria-labelledby=\"adopted-values-heading\">\\s*<h2 id=\"adopted-values-heading\">この外部版の採用値</h2>";
+        private static final String REJECTION_SECTION =
+                "<section aria-labelledby=\"rejection-heading\">\\s*<h2 id=\"rejection-heading\">却下する</h2>";
+        private static final String ADOPTION_SECTION =
+                "<section aria-labelledby=\"adoption-heading\">\\s*<h2 id=\"adoption-heading\">採用する</h2>";
+        private static final String BACK_LINK = ">一覧に戻る</a>";
+        /** 補助文字（U+20BB7。UTF-16 で 2 単位）。 */
+        private static final String SUPPLEMENTARY = new String(Character.toChars(0x20BB7));
+
+        private static final Instant ACQUIRED_AT = Instant.parse("2026-11-16T00:30:00Z");
+        private static final Instant PUBLISHED_AT = Instant.parse("2026-11-15T09:00:00Z");
+
+        private static UndecidedRecordPage.Item item(boolean keyless) {
+            return new UndecidedRecordPage.Item(
+                    RECORD_ID,
+                    INGESTED_AT,
+                    "開発海運（架空）",
+                    "VOYAGE",
+                    new PhysicalLineRange(140, 140),
+                    keyless,
+                    keyless ? null : "DEMO-201",
+                    keyless ? null : "3",
+                    "140 行目: 理由");
+        }
+
+        private static VoyageValues voyage(String losAngelesArrival) {
+            return new VoyageValues(
+                    "DEMO-201",
+                    List.of(
+                            new PortCallValue(
+                                    new Location("JPTYO"), null, new UtcInstant(Instant.parse("2026-11-18T23:00:00Z"))),
+                            new PortCallValue(
+                                    new Location("USLAX"), new UtcInstant(Instant.parse(losAngelesArrival)), null)));
+        }
+
+        private static QuarantineValues readable() {
+            return new QuarantineValues(
+                    voyage("2026-12-01T22:00:00Z"),
+                    ACQUIRED_AT,
+                    new QuarantineValues.Adopted(voyage("2026-12-01T14:00:00Z"), "3", PUBLISHED_AT, ACQUIRED_AT));
+        }
+
+        private void givenDecision(
+                UndecidedRecordPage.Item item, QuarantineValues values, Optional<DecisionOutcome> adoptionRefusal) {
+            given(decisions.refusalOf(RECORD_ID)).willReturn(Optional.empty());
+            given(decisions.adoptionRefusalOf(RECORD_ID)).willReturn(adoptionRefusal);
+            given(query.undecidedQuarantine(RECORD_ID)).willReturn(Optional.of(item));
+            given(query.quarantineValues(item)).willReturn(Optional.ofNullable(values));
+        }
+
+        private String body(ResultActions result) throws Exception {
+            return result.andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
+        }
+
+        private String decisionPage() throws Exception {
+            return body(mockMvc.perform(get(DECISION_URL)).andExpect(status().isOk()));
+        }
+
+        private ResultActions postAdoption(String url, String reason) throws Exception {
+            return mockMvc.perform(post(url).param("reason", reason));
+        }
+
+        private static int indexOf(String page, String regex) {
+            Matcher matcher = Pattern.compile(regex).matcher(page);
+            Assertions.assertThat(matcher.find()).as(regex).isTrue();
+            return matcher.start();
+        }
+
+        private static int occurrences(String page, String text) {
+            return page.split(Pattern.quote(text), -1).length - 1;
+        }
+
+        // --- 行 12: 判断の画面の 2 つの欄 ---
+
+        @Test
+        void 行12_採用できる隔離は値の領域の後に却下するの欄と採用するの欄がこの順に並び欄のidは重ならない() throws Exception {
+            givenDecision(item(false), readable(), Optional.empty());
+
+            String page = decisionPage();
+
+            Assertions.assertThat(List.of(
+                            indexOf(page, ADOPTED_SECTION),
+                            indexOf(page, REJECTION_SECTION),
+                            indexOf(page, "<label for=\"reason\">却下の理由</label>"),
+                            indexOf(page, ADOPTION_SECTION),
+                            indexOf(page, "<label for=\"adoption-reason\">採用の理由</label>"),
+                            indexOf(page, BACK_LINK)))
+                    .isSorted();
+            Assertions.assertThat(page)
+                    .contains("<p id=\"adoption-reason-hint\">任意、" + ReceivedRecordDecision.REASON_LIMIT + " 文字まで</p>")
+                    .containsPattern("<textarea[^>]*id=\"adoption-reason\"[^>]*name=\"reason\"")
+                    .containsPattern("<textarea[^>]*id=\"adoption-reason\"[^>]*aria-describedby=\"adoption-reason-hint\"")
+                    .doesNotContainPattern("<textarea[^>]*id=\"adoption-reason\"[^>]*aria-required")
+                    .contains("<p id=\"adoption-irrevocable\">" + ADOPTION_IRREVOCABLE + "</p>")
+                    .contains("<button type=\"submit\" class=\"btn btn-primary\" aria-describedby=\"adoption-irrevocable\">"
+                            + "採用する</button>")
+                    .contains("action=\"" + ADOPTION_URL + "?page=1\"")
+                    .doesNotContain(KEYLESS_GUIDE);
+            for (String id : List.of(
+                    "reason",
+                    "reason-hint",
+                    "irrevocable",
+                    "adoption-reason",
+                    "adoption-reason-hint",
+                    "adoption-irrevocable",
+                    "rejection-heading",
+                    "adoption-heading")) {
+                Assertions.assertThat(occurrences(page, "id=\"" + id + "\"")).as(id).isEqualTo(1);
+            }
+        }
+
+        static Stream<Arguments> valueStates() {
+            QuarantineValues.Adopted adopted =
+                    new QuarantineValues.Adopted(voyage("2026-12-01T14:00:00Z"), "3", PUBLISHED_AT, ACQUIRED_AT);
+            QuarantineValues.Adopted illegibleAdopted =
+                    new QuarantineValues.Adopted(null, true, "3", PUBLISHED_AT, ACQUIRED_AT);
+            List<Arguments> states = List.of(
+                    Arguments.of("受け取った値を読めた", readable()),
+                    Arguments.of("受け取った値を読めない", new QuarantineValues(null, true, ACQUIRED_AT, adopted)),
+                    Arguments.of("値の列なし", new QuarantineValues(null, ACQUIRED_AT, adopted)),
+                    Arguments.of("この外部版の採用値がない", new QuarantineValues(voyage("2026-12-01T22:00:00Z"), ACQUIRED_AT, null)),
+                    Arguments.of(
+                            "採用値の側だけ読めない",
+                            new QuarantineValues(voyage("2026-12-01T22:00:00Z"), ACQUIRED_AT, illegibleAdopted)));
+            return states.stream()
+                    .flatMap(state -> Stream.of(true, false)
+                            .map(adoptable -> Arguments.of(state.get()[0], state.get()[1], adoptable)));
+        }
+
+        @ParameterizedTest(name = "{0}・採用できる {2}")
+        @MethodSource("valueStates")
+        void 行12_採用の欄の有無は採用できるかの照会の結果だけで決まり照会の値によらない(
+                String name, QuarantineValues values, boolean adoptable) throws Exception {
+            givenDecision(
+                    item(false), values, adoptable ? Optional.empty() : Optional.of(new DecisionOutcome.NotAdoptable()));
+
+            String page = decisionPage();
+
+            Assertions.assertThat(Pattern.compile(ADOPTION_SECTION).matcher(page).find())
+                    .as(name)
+                    .isEqualTo(adoptable);
+            Assertions.assertThat(page.contains("id=\"adoption-reason\"")).isEqualTo(adoptable);
+            Assertions.assertThat(page)
+                    .containsPattern(REJECTION_SECTION)
+                    .contains("<label for=\"reason\">却下の理由</label>")
+                    .doesNotContain(KEYLESS_GUIDE);
+            then(decisions).should().adoptionRefusalOf(RECORD_ID);
+        }
+
+        @Test
+        void 行12_キーのない隔離は却下するの欄とその後の今の文だけを示し採用の欄を出さない() throws Exception {
+            givenDecision(item(true), null, Optional.of(new DecisionOutcome.NotAdoptable()));
+
+            String page = decisionPage();
+
+            Assertions.assertThat(page).doesNotContainPattern(ADOPTION_SECTION).doesNotContain("adoption-reason");
+            Assertions.assertThat(List.of(
+                            indexOf(page, REJECTION_SECTION),
+                            indexOf(page, ">却下する</button>"),
+                            indexOf(page, "<p>" + KEYLESS_GUIDE + "</p>"),
+                            indexOf(page, BACK_LINK)))
+                    .isSorted();
+        }
+
+        // --- 行 13: 採用の欄の誤り ---
+
+        @Test
+        void 行13_前後の空白を除いて1001文字の採用の理由は判断の画面に戻り採用の欄に誤りを示して書いた理由を残しサービスを呼ばない()
+                throws Exception {
+            String thousandAndOne = " " + SUPPLEMENTARY.repeat(500) + "あ".repeat(501) + " ";
+            givenDecision(item(false), readable(), Optional.empty());
+
+            String page = body(postAdoption(ADOPTION_URL, thousandAndOne).andExpect(status().isOk()));
+
+            Assertions.assertThat(page)
+                    .contains("<title>採用できませんでした - 隔離の判断 - cargo-tracker</title>")
+                    .contains("<h2 id=\"error-summary-title\">採用できませんでした</h2>")
+                    .contains("<a href=\"#adoption-reason\">" + REASON_TOO_LONG + "</a>")
+                    .contains("<p id=\"adoption-reason-error\" class=\"text-danger\">" + REASON_TOO_LONG + "</p>")
+                    .containsPattern("<textarea[^>]*id=\"adoption-reason\"[^>]*aria-invalid=\"true\"")
+                    .containsPattern(
+                            "<textarea[^>]*id=\"adoption-reason\"[^>]*aria-describedby=\"adoption-reason-hint adoption-reason-error\"")
+                    .contains(thousandAndOne + "</textarea>")
+                    // 却下の欄に誤りは出ず、空で描く
+                    .doesNotContain("id=\"reason-error\"")
+                    .doesNotContain("却下できませんでした")
+                    .containsPattern("<textarea[^>]*id=\"reason\"[^>]*aria-describedby=\"reason-hint\"[^>]*></textarea>");
+            then(decisions).should(Mockito.never()).adopt(any(), any());
+        }
+
+        @Test
+        void 行13_却下の欄の誤りで戻った画面にも採用の欄を空で描く() throws Exception {
+            givenDecision(item(false), readable(), Optional.empty());
+
+            String page = body(mockMvc.perform(post(DECISION_URL + "/decision").param("reason", " "))
+                    .andExpect(status().isOk()));
+
+            Assertions.assertThat(page)
+                    .contains("<title>却下できませんでした - 隔離の判断 - cargo-tracker</title>")
+                    .containsPattern(ADOPTION_SECTION)
+                    .doesNotContain("id=\"adoption-reason-error\"")
+                    .containsPattern("<textarea[^>]*id=\"adoption-reason\"[^>]*aria-describedby=\"adoption-reason-hint\"[^>]*></textarea>");
+        }
+
+        static Stream<Arguments> acceptedReasons() {
+            String thousand = SUPPLEMENTARY.repeat(500) + "あ".repeat(500);
+            return Stream.of(
+                    Arguments.of("ちょうど1000文字", thousand),
+                    Arguments.of("前後に空白を足した1000文字", "  " + thousand + "\n"),
+                    Arguments.of("空", ""),
+                    Arguments.of("空白だけ", " 　"));
+        }
+
+        @ParameterizedTest(name = "{0}")
+        @MethodSource("acceptedReasons")
+        void 行13_上限までの理由と空の理由は書いたままサービスに渡して採用する(String name, String reason) throws Exception {
+            given(decisions.adopt(any(), any())).willReturn(new DecisionOutcome.AdoptedQuarantine(RECORD_ID));
+
+            postAdoption(ADOPTION_URL, reason).andExpect(status().is3xxRedirection());
+
+            then(decisions).should().adopt(any(), eq(new AdoptReceivedRecordCommand(RECORD_ID, reason)));
+        }
+
+        // --- 行 14: 採用の POST の行き先（T-240。結果のすべてに行き先がある） ---
+
+        static Stream<Arguments> outcomes() {
+            return Stream.of(
+                    Arguments.of(new DecisionOutcome.AdoptedQuarantine(RECORD_ID), 302, ADOPTED),
+                    Arguments.of(new DecisionOutcome.Rejected(RECORD_ID), 302, REJECTED),
+                    Arguments.of(new DecisionOutcome.AlreadyDecided(), 302, ALREADY_DECIDED),
+                    Arguments.of(new DecisionOutcome.NotFound(), 404, null),
+                    Arguments.of(new DecisionOutcome.NotDecidable(), 404, null),
+                    Arguments.of(new DecisionOutcome.NotAdoptable(), 404, null),
+                    Arguments.of(new DecisionOutcome.NotPermitted(), 403, null));
+        }
+
+        @ParameterizedTest(name = "{0}")
+        @MethodSource("outcomes")
+        void 行14_採用の結果ごとに元の一覧に戻って知らせるか404か403にする(DecisionOutcome outcome, int status, String notice)
+                throws Exception {
+            given(decisions.adopt(any(), any())).willReturn(outcome);
+
+            ResultActions result = postAdoption(ADOPTION_URL + "?ingestion=" + INGESTION_ID + "&page=2", "提供元に確かめた。")
+                    .andExpect(status().is(status));
+
+            if (notice != null) {
+                result.andExpect(redirectedUrl(LIST_URL + "?ingestion=" + INGESTION_ID + "&page=2"))
+                        .andExpect(flash().attribute("result", notice));
+            }
+            then(decisions).should().adopt(any(), eq(new AdoptReceivedRecordCommand(RECORD_ID, "提供元に確かめた。")));
+        }
+
+        @Test
+        void 行14_結果の型のすべてを採用の行き先の組で縛る() {
+            List<Class<?>> covered = outcomes()
+                    .<Class<?>>map(arguments -> arguments.get()[0].getClass())
+                    .toList();
+            Assertions.assertThat(covered).containsExactlyInAnyOrder(DecisionOutcome.class.getPermittedSubclasses());
+        }
+
+        @ParameterizedTest(name = "{0}")
+        @ValueSource(strings = {"not-a-uuid", "123"})
+        void 行14_UUIDでない受信記録IDの採用のPOSTは404にしサービスを呼ばない(String id) throws Exception {
+            postAdoption(LIST_URL + "/" + id + "/adoption", "理由").andExpect(status().isNotFound());
+            then(decisions).shouldHaveNoInteractions();
+        }
+
+        @Test
+        void 行14_画面で採用の欄を出さない照会の結果を採用のPOSTが返すと404で画面と同じ結果から決まる() throws Exception {
+            givenDecision(item(false), readable(), Optional.of(new DecisionOutcome.NotAdoptable()));
+            given(decisions.adopt(any(), any())).willReturn(new DecisionOutcome.NotAdoptable());
+
+            Assertions.assertThat(decisionPage()).doesNotContainPattern(ADOPTION_SECTION);
+            postAdoption(ADOPTION_URL, "理由").andExpect(status().isNotFound());
         }
     }
 }

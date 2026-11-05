@@ -53,6 +53,7 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Stream;
@@ -857,6 +858,91 @@ class ExternalDataIngestionSecurityIntegrationTest {
             assertThat(rejected.getResponse().getRedirectedUrl()).doesNotStartWith(LIST_URL);
             verify(decisionService, never()).reject(any(), any());
             assertThat(decisionsOf(receivedRecordId)).isZero();
+        }
+    }
+
+    /**
+     * Bolt 39d3b の行 22（S-17 の採用の POST。本物のフィルターの連なりの上で）。データ責任者が CSRF のトークン付きで航海の内容の違う原本の隔離を
+     * 採用すると、PRG で元の取込の一覧に戻り、判断（{@code ADOPTED}）と採用値が 1 行ずつ残る。採用の POST は却下と同じ
+     * {@code /staff/external-data/**} の規則の中で、ほかの役割は 403、CSRF のトークンのない POST は採用しない（今の却下と同じく拒否の行き先へ移る）。
+     * 39c〜39d2b の同じ番号の行と名前が衝突しないよう入れ子にする。
+     */
+    @Nested
+    class Bolt39d3b_隔離の採用 {
+
+        private static final String LIST_URL = "/staff/external-data/undecided-records";
+
+        /** 航海の内容の違う原本 1 つを取り込み、その受信記録 ID と取込 ID を返す。 */
+        private UUID[] quarantined(Cookie session) throws Exception {
+            String location = ingested(session, file(row("V-1", PORT_CALLS), row("V-1", CHANGED_PORT_CALLS)));
+            UUID ingestionId = UUID.fromString(location.substring(location.lastIndexOf('/') + 1));
+            return new UUID[] {receivedRecordOf(ingestionId, "QUARANTINED"), ingestionId};
+        }
+
+        private int countOf(String table, UUID receivedRecordId) {
+            Integer value = jdbc.queryForObject(
+                    "SELECT COUNT(*) FROM external_data." + table + " WHERE received_record_id = ?",
+                    Integer.class,
+                    receivedRecordId);
+            return value == null ? 0 : value;
+        }
+
+        @Test
+        void 行22_データ責任者はCSRFのトークン付きで採用すると元の取込の一覧に戻り判断と採用値が1行ずつ残る() throws Exception {
+            Cookie session = login(user(Set.of(Role.DATA_STEWARD)));
+            UUID[] ids = quarantined(session);
+            UUID receivedRecordId = ids[0];
+            String entry = LIST_URL + "?ingestion=" + ids[1] + "&page=1";
+            String adoptionUrl = LIST_URL + "/" + receivedRecordId + "/adoption";
+
+            MvcResult adopted = mvc.perform(post(adoptionUrl + "?ingestion=" + ids[1] + "&page=1")
+                            .param("reason", "")
+                            .cookie(session)
+                            .with(csrf()))
+                    .andExpect(status().is3xxRedirection())
+                    .andReturn();
+
+            assertThat(adopted.getResponse().getRedirectedUrl()).isEqualTo(entry);
+            assertThat((Map<String, Object>) adopted.getFlashMap()).containsEntry("result", "隔離を採用しました。");
+            assertThat(jdbc.queryForMap(
+                            "SELECT decision, reason FROM external_data.received_record_decision"
+                                    + " WHERE received_record_id = ?",
+                            receivedRecordId))
+                    .containsEntry("decision", "ADOPTED")
+                    .containsEntry("reason", null);
+            assertThat(countOf("adopted_value", receivedRecordId)).isEqualTo(1);
+        }
+
+        @Test
+        void 行22_ほかの7つの役割は採用のPOSTで403になり判断も採用値も書かない() throws Exception {
+            UUID receivedRecordId = quarantined(login(user(Set.of(Role.DATA_STEWARD))))[0];
+            String adoptionUrl = LIST_URL + "/" + receivedRecordId + "/adoption";
+            for (Role role : EnumSet.complementOf(EnumSet.of(Role.DATA_STEWARD))) {
+                Cookie session = login(user(Set.of(role)));
+
+                mvc.perform(post(adoptionUrl).param("reason", "理由").cookie(session).with(csrf()))
+                        .andExpect(status().isForbidden());
+            }
+            verify(decisionService, never()).adopt(any(), any());
+            assertThat(countOf("received_record_decision", receivedRecordId)).isZero();
+            assertThat(countOf("adopted_value", receivedRecordId)).isZero();
+        }
+
+        @Test
+        void 行22_CSRFのトークンのない採用の送信は拒まれ採用のサービスを呼ばない() throws Exception {
+            Cookie session = login(user(Set.of(Role.DATA_STEWARD)));
+            UUID receivedRecordId = quarantined(session)[0];
+
+            MvcResult refused = mvc.perform(post(LIST_URL + "/" + receivedRecordId + "/adoption")
+                            .param("reason", "理由")
+                            .cookie(session))
+                    .andExpect(status().is3xxRedirection())
+                    .andReturn();
+
+            assertThat(refused.getResponse().getRedirectedUrl()).doesNotStartWith(LIST_URL);
+            verify(decisionService, never()).adopt(any(), any());
+            assertThat(countOf("received_record_decision", receivedRecordId)).isZero();
+            assertThat(countOf("adopted_value", receivedRecordId)).isZero();
         }
     }
 
