@@ -3,7 +3,7 @@ type: Plan
 title: "Bolt 39d2b 計画 - S-17 で 1 つの取込の形式の誤りをまとめて却下する（件数が減ったときの示し方・ページ送り）"
 tags: [plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-05T00:47:02Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-05T01:12:41Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-11-04T22:54:21Z }
 ---
@@ -390,7 +390,7 @@ rcd ..> ar : DE-29（コミットの後。受信記録ごと）
 - [x] **5. 画面**（緑。UI 20 シナリオ、axe 違反 0、test 4,440 件、SonarQube PASS。spotbugs の除外の DI の部品の一覧に UndecidedRecordController を足した（ExternalDataIngestionController の前例。設定の変更として推奨のとおり受け入れた）。推奨のとおり承認として記録した。Recommend 承認の指示による）: `UndecidedRecordController` のまとめての却下の画面と POST、`keyless-rejection.html`、一覧のリンクと知らせ、ページ送りを表の前に移す、39d の UI のステップを Tab に戻す、受入シナリオの Steps。行 1〜3・6・7・9〜11・14・16・18・19・22・23 が緑、受入シナリオが緑、39d・39d2 の S-17 と S-16 の UI のシナリオが緑（完了の判定: 緑、`spotbugsMain`・`checkstyleMain`・`sonar-local:check`、`uiTest` と axe 違反 0。**承認ゲート**（画面、新しいファイル））
 - [x] **6. マニュアルとキャプチャ**（12.2 に「形式の誤りをまとめて却下する」、一覧の画面の説明を画面の順に振り直した、付録 B・用語集・index。12-undecided-records-keyless-rejection.png を足し 12-undecided-records.png を撮り直した（時刻の画素だけの 52 枚は戻した）。controller の定数とテンプレートの文と一字ずつ一致（T-197）。CI の計測（却下 5.6 秒）を non_functional の PERF-06 に書いた。推奨のとおり承認として記録した。Recommend 承認の指示による）: 12.2 の「形式の誤りをまとめて却下する」・一覧の画面の説明の表（まとめての却下のリンクの行を足し、ページ送りを含めて番号を画面の上からの順に振り直す。12-外部データ.md :208-214）・操作手順（:216-223）と「この画面でできること」（:191-195）の番号の参照・注意・補足、付録 B の早見表の 1 行、`manualScreenshots`（行 20。新しい `12-undecided-records-keyless-rejection.png` と、まとめての却下のリンク（1 件）が写る `12-undecided-records.png` の撮り直し。関係のないキャプチャが時刻の画素だけで変わったら戻す）。リンク・知らせ・欄の誤り・0 件の文を controller の定数とテンプレートに突き合わせる（T-197）（完了の判定: キャプチャの差分と突き合わせの記録。**承認ゲート**（マニュアル、新しいファイル））
 - [x] **7. 品質ゲートと開発レビュー**（変異 17 個がすべて落ちた（V5a・V9 は生き残ったのでテストを足した）。レビューは高 0・中 2・低 5。test 4,443 件、uiTest 196 シナリオ、失敗 0、axe 違反 0、SonarQube PASS（カバレッジ 95.8%、重複 0.02%、違反 0）。絞らない一覧から取込で絞る入口は 39h、二重送信の止め方は W8 の共通の部品に送る。推奨のとおり承認として記録した。Recommend 承認の指示による）: 変異、`check`・`uiTest`、その後に SonarQube、開発レビューとその直し。push の前に `check`（T-225）
-- [ ] **8. 終了報告**: push して CI とデモ環境の配備を確かめ（デモ環境でデータ責任者でログインし、形式の誤りと内容の違う原本の混ざる取込を取り込んで、S-17 を取込で絞ってまとめて却下する）、`demoVideo` で `@demo-bolt-39d2b/reject-keyless` を撮る（新しいファイル）。release_plan（39d2b の行の計画と終了報告のリンク）・開発の索引・mkdocs を直す。【業務の判断】(g)・(h) を終了報告の議題の先頭に置く
+- [x] **8. 終了報告**（[終了報告](bolt_39d2b_report.md)を 2026-11-05 に推奨のとおり承認として記録した。Recommend 承認の指示による）: push して CI とデモ環境の配備を確かめ（デモ環境でデータ責任者でログインし、形式の誤りと内容の違う原本の混ざる取込を取り込んで、S-17 を取込で絞ってまとめて却下する）、`demoVideo` で `@demo-bolt-39d2b/reject-keyless` を撮る（新しいファイル）。release_plan（39d2b の行の計画と終了報告のリンク）・開発の索引・mkdocs を直す。【業務の判断】(g)・(h) を終了報告の議題の先頭に置く
 
 ### 時間の配分と打ち切り
 
