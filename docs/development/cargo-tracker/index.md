@@ -144,6 +144,7 @@ Bolt がイテレーションに当たります。ふりかえりは各 Bolt の
 | 39d | [S-17 判断を待つ隔離の一覧](bolt_39d_plan.md) | [終了報告](bolt_39d_report.md)（[動画](../../assets/demo/bolt-39d/list.webm){:target="_blank"}） | W7 | 完了 |
 | 39d2 | [S-17 で隔離を却下する](bolt_39d2_plan.md) | [終了報告](bolt_39d2_report.md)（[動画](../../assets/demo/bolt-39d2/reject.webm){:target="_blank"}） | W7 | 完了 |
 | 39d2b | [S-17 で取込のキーのない隔離をまとめて却下する](bolt_39d2b_plan.md) | [終了報告](bolt_39d2b_report.md)（[動画](../../assets/demo/bolt-39d2b/reject-keyless.webm){:target="_blank"}） | W7 | 完了 |
+| 39d3 | [S-17 の判断の画面で航海の値をこの外部版の採用値と比べる](bolt_39d3_plan.md) | [終了報告](bolt_39d3_report.md)（[動画](../../assets/demo/bolt-39d3/compare.webm){:target="_blank"}） | W7 | 完了 |
 
 Bolt を始めるときに行を追加します。
 
