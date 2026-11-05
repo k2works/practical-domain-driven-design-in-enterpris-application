@@ -3,7 +3,7 @@ type: Plan
 title: "Bolt 39d3 計画 - S-17 の判断の画面で内容の違う原本の受け取った値とこの外部版の採用値を比べる（受信記録の値の列）"
 tags: [plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-05T02:09:53Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-05T02:20:38Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-11-05T02:09:53Z }
 ---
@@ -398,7 +398,7 @@ rc ||--o| av
 
 ## ステップ計画（ステップごとに止める）
 
-- [ ] **1. 設計の文書**（data_model・domain_model・ui_design・user_story・system_usecase・test_strategy・release_plan・development_strategy・ADR-004・ADR-007）: 上の「設計文書に直す箇所」（開始準備の決定 (1)〜(10) と【前の決定の変更】(1)・(2)、【業務の判断】(i)・(j)、台帳 D-97 と D-95 の直しを反映する）。始めに docs を「39d3」で検索し、採用を指す古い参照を 39d3b に直す（挙がった場所は「設計文書に直す箇所」に名前で書いた。release_plan :976 の「隔離した行の採用は 39d3」「39d3 を待たない」を含む）（完了の判定: 文書の差分と検索の記録。**承認ゲート**）
+- [x] **1. 設計の文書**（data_model・domain_model・ui_design・user_story・system_usecase・test_strategy・development_strategy・release_plan（D-95・D-97、27 本前後）・ADR-004・ADR-007 を直し、文書の「39d3 = 採用」の古い参照を 39d3b に直した。推奨のとおり承認として記録した。Recommend 承認の指示による）（data_model・domain_model・ui_design・user_story・system_usecase・test_strategy・release_plan・development_strategy・ADR-004・ADR-007）: 上の「設計文書に直す箇所」（開始準備の決定 (1)〜(10) と【前の決定の変更】(1)・(2)、【業務の判断】(i)・(j)、台帳 D-97 と D-95 の直しを反映する）。始めに docs を「39d3」で検索し、採用を指す古い参照を 39d3b に直す（挙がった場所は「設計文書に直す箇所」に名前で書いた。release_plan :976 の「隔離した行の採用は 39d3」「39d3 を待たない」を含む）（完了の判定: 文書の差分と検索の記録。**承認ゲート**）
 - [ ] **2. テストの Red（外側から）**: 行 9・15・21 の feature の Red（今は判断の画面に値の領域がなく落ちることを確かめる）、続いて行 9〜12・21・22 の controller、行 12・13 の照会のサービス、行 2〜4・19 のサービス、行 6・7 の値の型、行 5・8 の契約、行 1 の JDBC。直す既存のテストを一覧にする（T-217。受信記録を組み立てる 16 か所、`reject_quarantine_ui.feature`・`RejectQuarantineUiSteps`・`manual_screenshots.feature` を含む）（完了の判定: 期待した理由で落ちる記録。**承認ゲート**（画面の振る舞いの契約））
 - [ ] **3. 値の列と受信記録の値**（スキーマ）: マイグレーション（決定 (2)。版はこのステップの開始で最新を確かめる）、`ReceivedValue`、受信記録の値と不変条件、MyBatis の行・resultMap `receivedRecordRow`・`insert`・3 つの SELECT、メモリの実装、受信記録を組み立てる 19 か所。行 1・4（不変条件）・5 が緑（メモリ・H2・PostgreSQL）（完了の判定: 緑、`spotbugsMain`・`checkstyleMain`・`sonar-local:check`。**承認ゲート**（スキーマ、新しいファイル））
 - [ ] **4. 取込で値を書く・航海の要約から値に戻す**: `RecordValues.targetKey()`（航海・主要実績）・`VoyageValues.ofSummary`、取込のサービスの書き込み、`RecordValues`（:10）と `IngestFileCommand`（:91-93）の Javadoc の直し（採用の組み立て役と主要実績の `ofSummary`・入口は直さない。39d3c）。行 2〜4・6・7・19 が緑（完了の判定: 同上。**承認ゲート**）

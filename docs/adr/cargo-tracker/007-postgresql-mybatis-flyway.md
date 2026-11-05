@@ -4,7 +4,7 @@ title: "ADR-007: 開発環境は H2、本番は PostgreSQL 18 を使い、永続
 description: "開発体験を優先してローカルのアプリ起動は H2、ステージング・本番と SQL を検証するテストは PostgreSQL 18 を使い、永続化に MyBatis、マイグレーションに Flyway を使う決定。"
 tags: [adr, tech-stack]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-04T20:08:47Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-05T02:20:38Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:29:05Z }
   - { by: human:kakimomokuri, at: 2026-10-01T07:48:17Z }
@@ -94,6 +94,8 @@ verified:
   - **H2 の受信記録の注記の列**: H2 の VARCHAR は長さを UTF-16 の単位で数え、PostgreSQL は文字（コードポイント）で数える。取込のサービスは注記をコードポイントで 1,000 文字に切るので、補助文字を含む注記が H2 の `received_record.classification_note VARCHAR(1000)` に入らず、取込全体が巻き戻った（`H2ReceivedRecordNoteTest` の Red。補助文字 1,000 コードポイントは 2,000 単位）。H2 だけのマイグレーション（`db/migration/h2/V20261104145000__widen_received_record_classification_note.sql`）で `VARCHAR(2000)` に広げる。上限の判定はサービスのコードポイントのまま。PostgreSQL は `VARCHAR(1000)` のままで、ステージング・本番は変わらない。広げるのはこの 1 つの列だけにする。
 - 2026-11-05（W7、Bolt 39d2）: 次を足した（[Bolt 39d2 計画](../../development/cargo-tracker/bolt_39d2_plan.md) の開始準備の決定 (2) と【前の決定の変更】(4)。推奨のとおり。Recommend 承認の指示による。human:kakimomokuri。スキーマの承認ゲートは 39d2 のステップ 3 で通す）。
   - **H2 の受信記録の判断の理由の列**: 却下の理由は 1,000 文字をコードポイントで数える。上の注記の列と同じ事情で、補助文字を含む 1,000 コードポイントの理由が H2 の `received_record_decision.reason VARCHAR(1000)`（Bolt 39a3 で決めた。`V20261103100000`）に入らないので、H2 だけのマイグレーション（`db/migration/h2/V20261105100000__widen_received_record_decision_reason.sql`。版はステップ 3 の開始ですべての場所の最新より後に決める）で `VARCHAR(2000)` に広げる。上の Bolt 39b4 の項の「広げるのはこの 1 つの列だけ」に、この列を足して 2 つにする。PostgreSQL と共通のマイグレーションは変えず、ステージング・本番は変わらない。契約のテストに補助文字を含む 1,000 文字の理由の往復を足す（メモリ・H2・PostgreSQL。前例 `H2ReceivedRecordNoteTest`）。
+- 2026-11-05（W7、Bolt 39d3）: 次を足した（[Bolt 39d3 計画](../../development/cargo-tracker/bolt_39d3_plan.md) の開始準備の決定 (2)。推奨のとおり。Recommend 承認の指示による。human:kakimomokuri。スキーマの承認ゲートは 39d3 のステップ 3 で通す）。
+  - **H2 で広げない受信記録の値の 2 列**: 受信記録の値の 2 列（`target_key VARCHAR(100)`・`value_summary VARCHAR(4000)`。共通のマイグレーション）は ASCII と値の型の上限に収まるので H2 で広げない（要約は UN/LOCODE・UTC の時刻・enum の名前・区切りの ASCII だけで UTF-16 の単位とコードポイントの数が同じ、キーは航海番号ならコードポイントで 30 文字（補助文字だけでも 60 単位）、追跡番号なら ASCII 14 文字。採用値の同じ 2 列も H2 で広げていない）。上の「広げる列」は 2 つのまま。上限いっぱい（寄港 60 の要約と補助文字を含む 30 文字の航海番号）が H2 と PostgreSQL で往復することは契約のテストで確かめる（39d3c）。
 
 ## 備考
 

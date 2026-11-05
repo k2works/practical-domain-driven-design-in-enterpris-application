@@ -4,7 +4,7 @@ title: "ADR-004: 外部原本は Inbox・隔離・照合の 3 段で取り込む
 description: "ARCH-HO-03 と BR-08・BR-12・BR-18 を満たすため、外部原本を無加工で保存し、冪等性キーで採用・重複・隔離・差異に分類し、復旧時に件数照合する決定。2026-11-02（W7、Bolt 39）に、置き場所（externaldata）、原本の保存のポートと消さない補償、分類 4 つ、形式の誤りの隔離、解析の置き場所を改訂した。"
 tags: [adr, architecture]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-04T22:59:23Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-05T02:20:38Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:11:13Z }
   - { by: human:kakimomokuri, at: 2026-11-02T06:52:27Z }
@@ -96,7 +96,7 @@ verified:
 - 2026-11-03（W7、Bolt 39b2b）: 値の列の検証と、追跡・経路設計の規則の写しを、次のように決めた（[Bolt 39b2b 計画](../../development/cargo-tracker/bolt_39b2b_plan.md) の開始準備で決めたこと (1)〜(4)、確認ポイント 1・2・5、人に諮ること 1）。決定は変えない。
   - **規則の写し**: 外部データは追跡・経路設計の型を参照できないので、追跡番号の形（追跡の `TrackingNumber`）・実績の種類（`MilestoneKind`）・寄港の規則（経路設計の `Voyage`・`PortCall`）を値の型（`externaldata.domain.model.valueobjects`）の写しとして持つ。写しを守るテスト（`com.example.cargotracker.integration.ExternalDataCopiedRulesTest`）で、同じ入力に同じ可否を返すことを確かめる（推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）。
   - **寄港の規則**: 経路設計にそろえる。寄港は 2 つ以上、各寄港に到着か出発の少なくとも一方（両方も可）、出発は到着以後（同じ時刻は受ける）。合わない行は行の誤り（`INVALID_PORT_CALLS`）として、行の原文を保存してからキーのない隔離にする。OQ-02 の仮の形式（寄港は 1 つ以上、到着・出発は空を許す）を改めた（requirements_definition の OQ-02 の注の【前の決定の変更】。human:kakimomokuri が決定）。
-  - **値の持ち方**: 値は取り込む行（`IngestedRow`）に載せ、受信記録・外部原本の列には書かない（値は payload の行の原文に残る。スキーマは変えない）。採用値は 39b3 で値から作る。
+  - **値の持ち方**: 値は取り込む行（`IngestedRow`）に載せ、受信記録・外部原本の列には書かない（値は payload の行の原文に残る。スキーマは変えない）。採用値は 39b3 で値から作る。注（2026-11-05、Bolt 39d3）: 受信記録の列には書かないことを、下の Bolt 39d3 の項で改めた（外部原本の列には書かないまま）。
 - 2026-11-03（W7、Bolt 39b3）: 採用値とイベントの発行を、次のように決めた（[Bolt 39b3 計画](../../development/cargo-tracker/bolt_39b3_plan.md) の開始準備で決めたこと (1)〜(5)、確認ポイント 2・5、人に諮ること 1・2）。
   - **分け方**: 39b3 を縦に 2 本に分けた。39b3 は採用値と DE-12・DE-13・DE-14 の発行、39b3b は identity の監査の listener（`externaldata :: events`）・毒入りのメッセージ・W6 横断レビュー M-2・層の規則の汎用化（推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）。上の Bolt 39b の項の「identity の監査は 39b3」は 39b3b で作る。
   - **イベントの型**: DE-12・DE-13・DE-14 は `externaldata.domain.events`（名前付きインターフェース `events`）の record にし、値の写しを Java の標準と共有カーネルの型（文字列・`UUID`・`Source`・`Location`・`UtcInstant`・`UserId`・`CompanyId`）だけで持つ。寄港は入れ子の record `AdoptedPortCall` にする。DE-12・DE-13 の出典は `Source(EXTERNAL_RECORD, 受信記録 ID, 取得時刻)` にする。値の型を `events` に含める案（層の規則の例外が要る）と、識別子だけにして下流が公開 API で引く案（W7 の設計の決定の変更が要る）は取らない（human:kakimomokuri が決定）。
@@ -128,12 +128,16 @@ verified:
 - 2026-11-05（W7、Bolt 39d）: 隔離・差異の確認（S-17）で判断を待つ隔離をすべて一覧で示すにあたり、隔離の受信記録の読み方と判断の進め方を、次のように決めた（[Bolt 39d 計画](../../development/cargo-tracker/bolt_39d_plan.md) の開始準備で決めたこと (1)・(4)・(6)・(8)・(9) と【前の決定の変更】(1)〜(3)、確認ポイント 1・4・6・8・9。推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）。決定は変えない。
   - **判断を待つ隔離の照会**: 判断を待つ隔離は、分類が隔離で、受信記録の判断の表に行のない受信記録と定める。受信記録のポートに、判断を待つ隔離を取込の新しい順・行の範囲の順にページで読む照会と数える照会を足し、取込と外部原本を SQL で結んで、照会専用の値（`UndecidedQuarantine`）に読む。追記・数える・読むだけで、更新・削除は持たないまま。スキーマと索引は変えない（上限いっぱいの照会の計測は Bolt 39d4。1 秒を超えたら索引を諮る）。
   - **理由の符号を列で持たない**: S-17 は理由で絞らず、理由は分類の注記の文で読む。符号は DE-14 と監査に残る。理由で絞る必要が業務で出たら、その Bolt で NULL 可の列を足す。
-  - **39d2〜39d4 の予定**: 却下の判断と判断のイベント（DE-29）は 39d2、受信記録の値の列（`target_key`・`value_summary`。NULL 可）と採用の判断で採用値と DE-12・DE-13 を作るのは 39d3（Bolt 39b2b の「値は受信記録に書かない」を変える）、採用の判断で外部原本の基準のハッシュと原本のキーを採用した payload に付け替えるのは 39d4（「最初に受け取った payload のハッシュ」を「採用中の payload のハッシュ」に変える）。同じ外部 ID・外部版で採用中の値と内容が違えば隔離、外部版をまたいで矛盾すれば差異（39h）。スキーマの変更は各 Bolt のステップの承認ゲートで扱う。
+  - **39d2〜39d4 の予定**: 却下の判断と判断のイベント（DE-29）は 39d2、受信記録の値の列（`target_key`・`value_summary`。NULL 可）は 39d3（Bolt 39b2b の「値は受信記録に書かない」を変える）、採用の判断で採用値と DE-12・DE-13 を作るのは 39d3b（Bolt 39d3 の開始準備で 39d3 から分けた。[Bolt 39d3 計画](../../development/cargo-tracker/bolt_39d3_plan.md) の開始準備で決めたこと (1)）、採用の判断で外部原本の基準のハッシュと原本のキーを採用した payload に付け替えるのは 39d4（「最初に受け取った payload のハッシュ」を「採用中の payload のハッシュ」に変える）。同じ外部 ID・外部版で採用中の値と内容が違えば隔離、外部版をまたいで矛盾すれば差異（39h）。スキーマの変更は各 Bolt のステップの承認ゲートで扱う。
 - 2026-11-05（W7、Bolt 39d2）: S-17 でデータ責任者が隔離を 1 件ずつ却下するにあたり、判断の記録と監査を、次のように決めた（[Bolt 39d2 計画](../../development/cargo-tracker/bolt_39d2_plan.md) の開始準備で決めたこと (1)〜(4)・(6)・(9) と【前の決定の変更】(1)・(3)・(4)、確認ポイント 1〜4・6・9。推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）。決定は変えない。
   - **判断の記録**: 受信記録の判断は record の `ReceivedRecordDecision`（集約を持たない。ADR-002）とリポジトリのポート `ReceivedRecordDecisionRepository`（追記と判断の有無だけ。更新・削除を持たない）で、Bolt 39a3 の判断の表に追記する。同じ受信記録への 2 つ目の判断は一意制約の違反を名前付きの例外 `DuplicateReceivedRecordDecisionException` に変える（前例 `DuplicateExternalRecordException`）。判断の表の列は変えず、理由の列を H2 だけ `VARCHAR(2000)` に広げる（ADR-007）。
   - **判断するのは隔離だけ**: 判断できる受信記録は、取込で書いた受信記録で、分類が隔離で、判断がないものと定め、却下のファクトリーで分類を確かめる（表の制約は足さない。差異は 39h で足す）。
   - **判断のイベントと監査**: 却下ごとに DE-29（`ReceivedRecordDecided`。判断は名前の文字列、判断者の企業を持つ）を出し、identity の `ExternalRecordAuditEventHandler` が却下のコミットの後に受けて、監査の操作を採用・隔離の 2 つから判断（`EXTERNAL_RECORD_DECIDED`）を足して 3 つにする。判断の監査の `reason` 列は判断（`REJECTED`）で、却下の理由の文は 100 文字の `reason` 列に収まらないので `after_state` の要約の最後に置く（`decision=REJECTED;ingestionId=…;dataSourceId=…;reason=<理由の文>`）。冪等の取り方（操作と対象で引く）と書き手（listener だけ）は変えない。
   - **39d2b の予定**: 1 つの取込の判断を待つキーのない隔離のまとめての却下（理由は 1 つ、受信記録ごとに判断・DE-29・監査を 1 つずつ。【業務の判断】(g)）と、件数と 1 ページの照会の間に件数が減ったときの示し方は 39d2b で作る。注（2026-11-05、Bolt 39d2b）: 39d2b で作った（[Bolt 39d2b 計画](../../development/cargo-tracker/bolt_39d2b_plan.md) の開始準備で決めたこと (2)・(4)・(5)・(8)。推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）。判断の記録と監査の形は 39d2 のまま変えない（今の判断の型・DE-29 の v1 の形・`EXTERNAL_RECORD_DECIDED` の書き手と規則の行をそのまま使い、まとめたことを示す印は足さない。スキーマも変えない）。対象の照会は受信記録のポートに足し（`undecidedKeylessQuarantinesOf`・`countUndecidedKeylessQuarantines`。追記・数える・読むだけのまま）、まとめての却下は今の判断のサービスに `rejectKeyless` として足す。
+- 2026-11-05（W7、Bolt 39d3）: S-17 の判断の画面で内容の違う原本の受け取った値とこの外部版の採用値を比べるにあたり、受信記録に値の 2 列を足し、上の Bolt 39b2b の項の「値の持ち方」の「受信記録・外部原本の列には書かない」を改めた【前の決定の変更】（[Bolt 39d3 計画](../../development/cargo-tracker/bolt_39d3_plan.md) の開始準備で決めたこと (2)〜(5) と【前の決定の変更】(2)、【業務の判断】(i)・(j)。改めることは Bolt 39d の開始準備の決定 (8) で決めてあった。推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）。外部原本の列には書かないまま。
+  - **受信記録の値**: 受信記録に対象のキーと値の要約の 2 列（`target_key VARCHAR(100)`・`value_summary VARCHAR(4000)`。NULL 可。採用値の同じ名前の列と同じ型）と CHECK `ck_received_record_value`（2 列はそろって NULL かそろって NULL でない、外部原本を持たない受信記録は値を持たない）を足し、外部原本を持つ受信記録（採用・重複・内容の違う原本の隔離）に取込で採用値と同じ規則の値を書く（値オブジェクト `ReceivedValue`。キーは取込の値の `targetKey()`、要約は `summary()`）。書くのは取込の外側のトランザクションの中の受信記録の INSERT で、セーブポイントもイベントも足さない。Bolt 39d3 より前の受信記録は NULL のまま（追記専用で埋め直さない）。H2 は広げない（ADR-007）。
+  - **要約から値に戻す**: 要約から値に戻す規則は値の型に置く（航海は `VoyageValues.ofSummary`。主要実績と型で分ける入口は 39d3c）。往復の約束は「取込の値 `v` について `ofSummary(v.targetKey(), v.summary())` が `v` と等しい」で、規則に合わない要約は `IllegalArgumentException` にする（黙って読まない）。39d3b の採用は同じ規則で受け取った値から採用値と DE-12・DE-13 を作り直す。
+  - **この外部版の採用値**: 内容の違う原本と比べる相手は、同じ外部原本（同じ外部 ID と外部版）の受信記録に付いた採用値のうち公開した時刻の最も新しいもの（採用値のポートの `currentOf`。受信記録の外部原本 ID の索引 `ix_received_record_external_record` を足す）。同じ外部 ID の別の外部版の採用値は含めない（版をまたぐ比べは差異。39h）。上の Bolt 39d の項の「採用中の値」の語は 39d の意味のまま残す（台帳 D-97）。
 
 ## 備考
 
