@@ -10457,6 +10457,76 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_39e2_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 39e2 計画
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_39e2_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 39e2 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../development/cargo-tracker/release_report-0_1/" class="md-nav__link">
         
   
@@ -16041,13 +16111,13 @@
 <tr>
 <td style="text-align: left;">区間</td>
 <td style="text-align: left;">Leg</td>
-<td style="text-align: left;">航海、積地、揚地、出発予定、到着予定</td>
+<td style="text-align: left;">航海、積地、揚地、出発予定、到着予定。Bolt 39f で、確定した寄港の位置（<code>loadCallNo</code>・<code>dischargeCallNo</code>。<code>port_call.call_no</code> の値で 1 始まりの運航の順）を足した。そろって null（Bolt 39f より前に算出した候補）か、そろって値を持ち積地の位置が小さい。位置が使われるのは積地か揚地に 2 度寄る航海の組が 2 つ以上あるときだけ（下の Bolt 39f で決めたこと）</td>
 <td style="text-align: left;">経路設計（写しは見積り。追跡は予定区間として持つ）</td>
 </tr>
 <tr>
 <td style="text-align: left;">航海</td>
 <td style="text-align: left;">Voyage</td>
-<td style="text-align: left;">航海番号で識別される運航予定。外部原本から採用した版を持つ。Bolt 39e で record から class にし、採用した航海の値から作る操作（<code>adoptedFrom</code>）と適用する操作（<code>apply</code>。順の規則で厳密に新しいときだけ適用し、適用しないなら false を返す）を持つ。Bolt 39e2 で、区間が今の航海と一致するかの判定（<code>matchesLeg</code>。航海番号と採用情報版が同じで、積地の寄港の出発予定と、その後ろの揚地の寄港の到着予定が区間の予定と同じ組が 1 つ以上あるときに真。R-INV-03）を足した。出典・公開した時刻・集約の版も持つが、等しさはこれまでと同じ 4 項目（航海番号・寄港・採用情報版・取得時刻）で比べる。取込を経ない仮の航海（開発データ。公開した時刻は null、版 0）も作れる</td>
+<td style="text-align: left;">航海番号で識別される運航予定。外部原本から採用した版を持つ。Bolt 39e で record から class にし、採用した航海の値から作る操作（<code>adoptedFrom</code>）と適用する操作（<code>apply</code>。順の規則で厳密に新しいときだけ適用し、適用しないなら false を返す）を持つ。Bolt 39e2 で、区間が今の航海と一致するかの判定（<code>matchesLeg</code>。航海番号と採用情報版が同じで、積地の寄港の出発予定と、その後ろの揚地の寄港の到着予定が区間の予定と同じ組が 1 つ以上あるときに真。R-INV-03）を足した。Bolt 39f で、<code>matchesLeg</code> に一致する組が 2 つ以上のときだけ確定の寄港の位置の組があることを足し（位置がない区間は今のまま）、更新を適用した後の DE-30 を作る操作（<code>updated</code>）を足した。出典・公開した時刻・集約の版も持つが、等しさはこれまでと同じ 4 項目（航海番号・寄港・採用情報版・取得時刻）で比べる。取込を経ない仮の航海（開発データ。公開した時刻は null、版 0）も作れる</td>
 <td style="text-align: left;">経路設計</td>
 </tr>
 <tr>
@@ -16083,7 +16153,19 @@
 <tr>
 <td style="text-align: left;">航海の更新のイベントハンドラー</td>
 <td style="text-align: left;">VoyageUpdateEventHandler</td>
-<td style="text-align: left;"><code>VoyageAdoptedValueUpdated</code>（DE-12）を取込と採用の判断のコミットの後に別のトランザクションで受けるハンドラー（<code>routing.application.internal.eventhandlers</code>、<code>@ApplicationModuleListener</code>。Bolt 39e）。航海を読み、なければ作り、あれば順の規則（下の Bolt 39e で決めたこと）で適用して保存する。版の競合と初めての航海の同時は読み直して適用し直す（3 回まで）。内容の欠けた DE-12 は ERROR のログを残して捨てる</td>
+<td style="text-align: left;"><code>VoyageAdoptedValueUpdated</code>（DE-12）を取込と採用の判断のコミットの後に別のトランザクションで受けるハンドラー（<code>routing.application.internal.eventhandlers</code>、<code>@ApplicationModuleListener</code>。Bolt 39e）。航海を読み、なければ作り、あれば順の規則（下の Bolt 39e で決めたこと）で適用して保存する。版の競合と初めての航海の同時は読み直して適用し直す（3 回まで）。内容の欠けた DE-12 は ERROR のログを残して捨てる。Bolt 39f で、更新を適用したら同じトランザクションで DE-30 を発行する</td>
+<td style="text-align: left;">経路設計</td>
+</tr>
+<tr>
+<td style="text-align: left;">航海を更新した（DE-30）</td>
+<td style="text-align: left;">VoyageUpdated</td>
+<td style="text-align: left;">経路設計の航海を DE-12 で更新したことを、経路設計の中の listener に伝えるイベント（<code>routing.domain.events</code>。Bolt 39f）。航海番号・情報版・公開した時刻を持つ。下のイベント一覧の DE-30</td>
+<td style="text-align: left;">経路設計</td>
+</tr>
+<tr>
+<td style="text-align: left;">確定した経路の評価のイベントハンドラー</td>
+<td style="text-align: left;">ConfirmedRouteEvaluationEventHandler</td>
+<td style="text-align: left;">DE-30 を航海の更新のコミットの後に別のトランザクションで受けるハンドラー（<code>routing.application.internal.eventhandlers</code>、<code>@ApplicationModuleListener</code>。Bolt 39f）。航海番号から確定した経路版を持つ案件を引き（<code>RoutingCaseRepository.findCaseNumbersConfirmedOnVoyage</code>）、案件ごとに確定した経路版を評価する。競合は読み直して評価し直す（3 回まで）</td>
 <td style="text-align: left;">経路設計</td>
 </tr>
 <tr>
@@ -16155,7 +16237,7 @@
 <tr>
 <td style="text-align: left;">再設計要の理由の区分</td>
 <td style="text-align: left;">RedesignReasonCode</td>
-<td style="text-align: left;">再設計要にした不適合の区分（重ねない）。期限超過・接続不足・接続できない（除外理由の区分と同じ名前）と、航海を引き直せない（<code>VOYAGE_UNAVAILABLE</code>。区間の航海がなくなった、区間の積地・揚地に寄らなくなった、寄る順が逆になった、出発予定・到着予定がない、到着が出発より後でない、積地か揚地に 2 度寄って確定した寄港が分からない。画面の語は「航海の予定が使えない」）。DE-06 の理由の語彙（Bolt 37d）</td>
+<td style="text-align: left;">再設計要にした不適合の区分（重ねない）。期限超過・接続不足・接続できない（除外理由の区分と同じ名前）と、航海を引き直せない（<code>VOYAGE_UNAVAILABLE</code>。区間の航海がなくなった、区間の積地・揚地に寄らなくなった、寄る順が逆になった、出発予定・到着予定がない、到着が出発より後でない、積地か揚地に 2 度寄って確定した寄港を決められない（Bolt 39f から: 予定の一致する組がなく、確定の寄港の位置でも決められないとき）。画面の語は「航海の予定が使えない」）。DE-06 の理由の語彙（Bolt 37d）</td>
 <td style="text-align: left;">経路設計</td>
 </tr>
 <tr>
@@ -17756,7 +17838,7 @@
 <li>本予約の確定用の照会: 見積りの公開 API に <code>BookableQuotationQuery.findForConfirmation(BookableQuotationRequest)</code> を足す。見積りの行を（輸送要求 ID・見積り番号）で単表から最初に <code>SELECT ... FOR UPDATE</code> で読み、そのあと今の照会（<code>find</code>）と同じ判定と写しを返す（照会の結果の形は変えない）。入力ポートの操作は <code>@Transactional(propagation = MANDATORY)</code> で、呼び手のトランザクションの外では落とす。ロックは呼び手（本予約の確定）のトランザクションが終わるまで持つ。リポジトリの操作は目的の名前 <code>lockForBooking</code> にする（<code>PasswordResetTokenRepository.lockForIssue</code> の前例）。予約の腐敗防止層 <code>QuotationBookability</code> は、本予約の確定（POST）で確定用の照会を使い、S-09 の GET（<code>@Transactional(readOnly = true)</code>）は今の照会のまま（read-only では <code>FOR UPDATE</code> を使えない。確定の可否は POST で決める。ADR-016）。</li>
 <li>本予約の確定と印を付ける更新: 確定用の照会が見積りの行を押さえた後の印を付ける更新は、確定のコミットまで待ってから付く。予約は残る（R-INV-07）。印を付ける更新が行を押さえた後の確定用の照会は、印のコミットまで待ち、キャッシュを使わずに印を読んで再設計要で拒否する（同じトランザクションでその前に見積りを読んでいても）。予約の層は Bolt 37e3 まで <code>QuotationUnavailable(NOT_APPROVED)</code> と示すが、拒否は保たれる。再見積り（置換）との競合も同じロックで待つ（ADR-016）。</li>
 <li>ロックの規則: ロックの照会は単表で、その表で最初の読み込みにし（本予約の確定は、その前に予約と輸送要求を読む）、<code>flushCache="true"</code> と待ちの上限（<code>timeout</code>。JDBC の問い合わせの時間切れで、H2 と PostgreSQL の両方で効く）を付ける。組み立ての読み込みはその後にする（同じトランザクションの同じ照会を MyBatis のセッションのキャッシュが返すため。Bolt 37e の学び）。時間切れは例外のまま上げる（listener は発行記録を未完了に残し、本予約の確定は既存の例外の画面）。値は 10 秒（ADR-016。Bolt 37e2 のステップ 5 で決めた）。確定用の照会は見積りの 1 行だけを押さえ、複数の見積りを書く側（印を付ける入力ポート）は照会の順（<code>ORDER BY transport_request_id, quotation_no</code>）で書く。案件の行のロックは経路設計の中の自分の集約に閉じる。見積りの行のロックは予約のトランザクションが見積りの行を押さえるので、コンテキストの境界をまたぐ（ADR-016 のネガティブ）。</li>
-<li>見える変化: listener をつなぐので、評価が経路版を再設計要にすると印が付き、C-04 の承認の操作が消え、C-17 は既定の文言で拒否し、S-09 は「荷主の承認がまだ」と誤って示し、S-02 に印のある見積りが残る（Bolt 37e3 で直す）。本番とデモには評価の入口が W7（US-14）までなく、開発データにも再設計要の見本がないので、見える変化は起きない。W7 の評価の入口をつなぐ Bolt は Bolt 37e3 を終えてから始める（リリース計画のリスク台帳。Bolt 37e3 の開始準備で「Bolt 37e3b を終えてから」に改めた）。画面の文言とマニュアルは Bolt 37e3 のまま（Bolt 37e3 の開始準備で、画面の文言は 37e3、マニュアルは 37e3b に分けた）。</li>
+<li>見える変化: listener をつなぐので、評価が経路版を再設計要にすると印が付き、C-04 の承認の操作が消え、C-17 は既定の文言で拒否し、S-09 は「荷主の承認がまだ」と誤って示し、S-02 に印のある見積りが残る（Bolt 37e3 で直す）。本番とデモには評価の入口が W7（US-14）までなく（Bolt 39f でつないだ）、開発データにも再設計要の見本がないので、見える変化は起きない。W7 の評価の入口をつなぐ Bolt は Bolt 37e3 を終えてから始める（リリース計画のリスク台帳。Bolt 37e3 の開始準備で「Bolt 37e3b を終えてから」に改めた）。画面の文言とマニュアルは Bolt 37e3 のまま（Bolt 37e3 の開始準備で、画面の文言は 37e3、マニュアルは 37e3b に分けた）。</li>
 </ul>
 <p>Bolt 37e3（US-07 AC5 の予約と画面の側）で決めたこと（<a href="../../../development/cargo-tracker/bolt_37e3_plan/">Bolt 37e3 計画</a> の確認ポイント 1〜10。2026-10-23 に human:kakimomokuri が承認。出発済みの判定（D-88）は Bolt 37e4、開発データの見本・マニュアル・デモは Bolt 37e3b）:</p>
 <ul>
@@ -17961,14 +18043,14 @@
 </ul>
 <p>Bolt 37d2（US-07 AC4 の経路設計の側）で決めたこと（<a href="../../../development/cargo-tracker/bolt_37d2_plan/">Bolt 37d2 計画</a> の確認ポイント 1〜6。2026-10-22 に human:kakimomokuri が承認。見積り・予約への伝え方は Bolt 37e・37e2・37e3 に分けた。見積りの側の印と判定は 37e、DE-06 の listener は 37e2、予約と画面は 37e3）:</p>
 <ul>
-<li>評価の入口は、入力ポートの「案件番号で確定した経路版を今の外部情報で評価する」操作（<code>RoutingCaseCommandService.evaluateConfirmedRoute</code>）にする。外部情報の更新を受けたシステムの操作で、期待版は取らず、読み込んだ案件の版で競合を検知する。画面の操作は作らない。DE-12 の受け取りと、航海番号から評価する案件を引く照会は W7（US-14。DE-12 を受けて航海を書くのは Bolt 39e、評価を起こす照会は Bolt 39f）。結果は「見つからない・変わらない・再設計要・競合」。最新が確定の案件を書くのは評価だけなので、競合したときは先の評価がすでに再設計要にして DE-06 を出しており、再試行は要らない。</li>
-<li>評価は最新の経路版が確定のときだけ行う。確定の記録の候補の区間がどれも今の航海と一致するなら評価しない（接続時間規則だけが変わったときも評価のきっかけにしない）。照合は確定と同じ情報版と区間の予定の組（<code>Voyage.matchesLeg</code>。読むのは Bolt 39e から区間の航海番号の航海だけで、全件を読まない。航海がない区間は変わったとみなす）で、同じ情報版で区間の予定が変わると評価し、不適合なら再設計要にする（評価の入口は Bolt 39f。Bolt 39e2 の【前の決定の変更】(1)。Bolt 37d2 の決定は情報版だけの照合だった）。保存した判定は使わず、区間ごとに今の航海で引き直し、引き直した区間の列を制約適合判定（期限・接続。規則は接続の時刻で選ぶ。D-90）にかけ直す。鮮度と貨物種別は見ない（Bolt 37c の決定）。出発済みの区間も評価に含める（実行済みの区間を変えない再設計は US-08）。</li>
-<li>引き直しは経路候補探索（<code>RouteCandidateFinder</code>）が行う。同じ航海番号の航海で、区間の積地の寄港（出発予定がある）と、その後で区間の揚地に寄る寄港（到着予定がある）の組を探す。候補探索は積地から後のどの寄港も揚地にできるので、確定した寄港を 1 つに決められない組は選ばない。航海がない、組がない（寄る順が逆、出発予定か到着予定がない）、組が 2 つ以上ある（積地に 2 度寄る。積地の後で揚地（到着予定がある寄港）に 2 度寄る場合も組が 2 つになる）、到着が出発より後でないなら、選ばずに引き直せないとして <code>VOYAGE_UNAVAILABLE</code> にする。揚地が積地より前にも寄る（B→A→B）場合は積地の後ろだけを見るので引き直せる。区間の作り方（出発予定・到着予定・採用情報版・取得時刻）は算出と共通にする。</li>
-<li>既知の制限: 積地か揚地に 2 度寄る航海の確定経路は、時刻が変わらなくても情報版が上がると再設計要になる（理由は <code>VOYAGE_UNAVAILABLE</code>）。確定の区間に寄港の位置を持たないため、評価で確定した寄港を決められない。区間に寄港の位置を持たせるかは US-08 か W7 の材料にする。</li>
+<li>評価の入口は、入力ポートの「案件番号で確定した経路版を今の外部情報で評価する」操作（<code>RoutingCaseCommandService.evaluateConfirmedRoute</code>）にする。外部情報の更新を受けたシステムの操作で、期待版は取らず、読み込んだ案件の版で競合を検知する。画面の操作は作らない。DE-12 の受け取りと、航海番号から評価する案件を引く照会は W7（US-14。DE-12 を受けて航海を書くのは Bolt 39e、DE-30 の後に評価を起こすのは Bolt 39f。下の Bolt 39f で決めたこと）。結果は「見つからない・変わらない・再設計要・競合」。競合を受けたら入口の listener が読み直して評価し直す（3 回まで。W7 の確認ポイント 11、Bolt 39f の決定 (5)）。先の評価が再設計要にしていれば読み直しの結果は「変わらない」で、DE-06 は重ならない。</li>
+<li>評価は最新の経路版が確定のときだけ行う。確定の記録の候補の区間がどれも今の航海と一致するなら評価しない（接続時間規則だけが変わったときも評価のきっかけにしない）。照合は確定と同じ情報版と区間の予定の組（<code>Voyage.matchesLeg</code>。読むのは Bolt 39e から区間の航海番号の航海だけで、全件を読まない。航海がない区間は変わったとみなす）で、同じ情報版で区間の予定が変わると評価し、不適合なら再設計要にする（入口は Bolt 39f の DE-30 の listener。Bolt 39e2 の【前の決定の変更】(1)。Bolt 37d2 の決定は情報版だけの照合だった）。保存した判定は使わず、区間ごとに今の航海で引き直し、引き直した区間の列を制約適合判定（期限・接続。規則は接続の時刻で選ぶ。D-90）にかけ直す。鮮度と貨物種別は見ない（Bolt 37c の決定）。出発済みの区間も評価に含める（実行済みの区間を変えない再設計は US-08）。</li>
+<li>引き直しは経路候補探索（<code>RouteCandidateFinder</code>）が行う。同じ航海番号の航海で、区間の積地の寄港（出発予定がある）と、その後で区間の揚地に寄る寄港（到着予定がある）の組を探す。候補探索は積地から後のどの寄港も揚地にできるので、確定した寄港を 1 つに決められない組は選ばない。組が 1 つなら今のまま引き直す（位置は見ない）。組が 2 つ以上ある（積地に 2 度寄る。積地の後で揚地（到着予定がある寄港）に 2 度寄る場合も組が 2 つになる）ときは、出発と到着が区間と一致する組が 1 つあればそれを選び、なければ確定の区間の寄港の位置の組を選ぶ（Bolt 39f の【業務の判断】(u)、【前の決定の変更】(5)。Bolt 37d2 の決定は「組が 2 つ以上あるなら引き直せない」だった）。航海がない、組がない（寄る順が逆、出発予定か到着予定がない）、組が 2 つ以上で一致する組も使える位置の組もない（位置がない、位置が範囲外、位置の寄港が組に入らない）、到着が出発より後でないなら、選ばずに引き直せないとして <code>VOYAGE_UNAVAILABLE</code> にする。揚地が積地より前にも寄る（B→A→B）場合は積地の後ろだけを見るので引き直せる。区間の作り方（出発予定・到着予定・採用情報版・取得時刻）は算出と共通にする。</li>
+<li>既知の制限（Bolt 39f で解消した）: Bolt 39f までは、積地か揚地に 2 度寄る航海の確定経路は、時刻が変わらなくても情報版が上がると再設計要になった（理由は <code>VOYAGE_UNAVAILABLE</code>）。確定の区間に寄港の位置を持たないため、評価で確定した寄港を決められなかった。Bolt 39f で確定の区間に寄港の位置を持たせた（W7 の確認ポイント 13。下の Bolt 39f で決めたこと）。残るのは Bolt 39f より前に算出した候補（位置が NULL）で、ステージング・本番に案件の行はない。</li>
 <li>画面の語: <code>VOYAGE_UNAVAILABLE</code> の画面の語は「航海の予定が使えない」にする（Bolt 37d2 レビューで「航海を引き直せない」から変えた。区分の意味は変えない。「引き直す」は利用者の語にしない）。</li>
 <li>理由の写し: 制約適合判定の理由の区分のうち、期限超過・接続不足・接続できないを同じ名前の再設計要の理由の区分に写し、同じ区分は 1 つにまとめて最初に出た順に並べる。貨物種別・情報不足が出たら評価の前提が崩れているので例外にする。</li>
 <li>不適合なら最新の経路版を再設計要にし（再設計要の記録は評価の時刻と理由）、候補・区間・確定の記録はそのまま残す（旧情報版の保持。R-INV-07）。予約は取り消さない。DE-06（<code>RouteRedesignRequired</code>）を返し、入力ポートが保存と同じトランザクションで発行する。業務キーと冪等のキーは（経路設計案件 ID・経路版番号）。すでに再設計要なら評価せず DE-06 も出さない（1 度だけ）。原因が解消しても確定に戻さない（UC-08 1a）。</li>
-<li>評価の保存は利用者の操作ではないので、保存のポートに操作者を渡さず、<code>updated_by</code>（最後に候補を算出・確定した経路設計者）を変えない。案件の版は上げる。</li>
+<li>評価の保存は利用者の操作ではないので、保存のポートに操作者を渡さず、<code>updated_by</code>（最後に候補を算出・確定した経路設計者）を変えない。案件の版は上げる。Bolt 39f で、保存のポートをシステムの更新の操作（<code>RoutingCaseRepository.updateBySystem</code>）に分け、<code>update</code> は操作者を必須にした（W7 の確認ポイント 13、Bolt 39f の決定 (7)）。</li>
 <li>判定の部品（航海・規則・評価の時刻・候補探索・制約適合判定）は 1 つの値にまとめない。算出・確定・評価の 3 つの使い手で受け取るものが違い、まとめても呼び出しの直しが増えるだけのため（Bolt 37c の宿題の決着）。</li>
 <li>DE-05 が再設計要の後に再配信されると、見積りへの割当ては再設計要の経路版を割り当てる（確定の記録で引くため）。37d2 では DE-06 の購読者も評価を起こす本番の入口もないので害は出ない。DE-05 と DE-06 の届く順の扱いは Bolt 37e2 で決める（Bolt 37e を 3 つに分けた。見積りの印と判定は Bolt 37e、DE-06 の listener と届く順は Bolt 37e2。上の見積りの Bolt 37e で決めたこと）。決着（Bolt 37e2）: DE-05 の listener が案件の行をロックして読み、割り当てた経路版が再設計要の記録を持てば続けて再設計要を伝える。<code>RouteAssignmentRequest</code> に項目は増えない（上の見積りの Bolt 37e2 で決めたこと）。再設計要から旧版への移行と記録の引き継ぎは US-08。</li>
 </ul>
@@ -17978,7 +18060,7 @@
 <li>確定できるかの状態の判定は、理由を返す集約の操作（<code>RoutingCase.confirmationRejection()</code>）の 1 か所に置く。S-07 を開く GET は集約の確定に届く前にこの操作を使い、確定（<code>RoutingCase.confirm</code>）も同じ操作から理由を返す。GET と POST が同じ理由を返す。確かめる順（経路設計者 → 状態 → 候補 → 除外 → …。Bolt 37c）は変えない。</li>
 <li>再設計要は S-06 に戻す理由の組に入れる（状態の理由と同じ）。文言は ui_design の S-07 の行。R-INV-06 の「再設計要の経路版は再確定に使えない」の拒否の理由を名前で示すもので、守る規則は変えない。</li>
 </ul>
-<p>Bolt 39e（US-14 AC1 の経路設計の側。採用した航海の値で候補を算出する）で決めたこと（<a href="../../../development/cargo-tracker/bolt_39e_plan/">Bolt 39e 計画</a> の開始準備の決定 (2)〜(6)・(8)〜(10)・(13)、【業務の判断】(r)・(t)、【前の決定の変更】(2)・(3)。2026-11-09、推奨のとおり。Recommend 承認の指示による。human:kakimomokuri。R-INV-03 の照合を区間の予定まで広げることと見本の航海は下の Bolt 39e2、評価の入口は Bolt 39f）:</p>
+<p>Bolt 39e（US-14 AC1 の経路設計の側。採用した航海の値で候補を算出する）で決めたこと（<a href="../../../development/cargo-tracker/bolt_39e_plan/">Bolt 39e 計画</a> の開始準備の決定 (2)〜(6)・(8)〜(10)・(13)、【業務の判断】(r)・(t)、【前の決定の変更】(2)・(3)。2026-11-09、推奨のとおり。Recommend 承認の指示による。human:kakimomokuri。R-INV-03 の照合を区間の予定まで広げることと見本の航海は下の Bolt 39e2、評価の入口は下の Bolt 39f）:</p>
 <ul>
 <li>書き手: 経路設計の中の listener <code>VoyageUpdateEventHandler</code>（<code>routing.application.internal.eventhandlers</code>）が DE-12 を受け、航海を読んで適用し、保存する。外部データは経路設計の表を書かない（確認ポイント 11、ADR-004）。<code>routing</code> の <code>allowedDependencies</code> に <code>externaldata :: events</code> を足す。航海がないときは初めての DE-12 で行を作る。更新の順は <code>voyage</code> の条件付きの UPDATE が先で、0 件なら例外にして <code>port_call</code> を触らない。寄港は行を消して入れ直す。</li>
 <li>値の対応: 情報版は DE-12 の外部版（<code>infoVersion</code>）、出典・取得時刻は <code>source()</code>（参照は受信記録 ID）、公開した時刻は <code>publishedAt</code>。</li>
@@ -17997,12 +18079,26 @@
 <p>Bolt 39e2（US-07 AC3・AC4。確定の照合と見本の航海）で決めたこと（<a href="../../../development/cargo-tracker/bolt_39e2_plan/">Bolt 39e2 計画</a> の開始準備の決定 (2)〜(5)・(7)、【業務の判断】(s)、【前の決定の変更】(1)・(4)。2026-11-10、推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）:</p>
 <ul>
 <li>照合（【業務の判断】(s)、台帳 D-106。仮。【前の決定の変更】(1)）: 候補を算出した後に区間の予定が変わったら、情報版が同じでも確定を拒否する。情報版が同じで予定が変わらなければ拒否しない。情報版が違えば予定が同じでも今のとおり拒否する。元の値に採用し直すと、元の値で算出した候補は情報鮮度の内なら確定できる。US-07 AC3 の「情報版」を、同じ版で値が変わる採用の判断があるので区間の予定まで含めて読む。</li>
-<li>判定の置き場所: <code>Voyage.matchesLeg(Leg)</code>。<code>entities</code> の <code>RouteCandidate</code> が <code>aggregates</code> の <code>Voyage</code> を参照しないように航海の側に置く。真になるのは、航海番号が同じで、情報版が同じで、積地の港の寄港の出発予定が区間の出発予定と同じで、その後ろに揚地の港の寄港があり、その到着予定が区間の到着予定と同じ組が 1 つ以上あるとき。寄港の時刻は欠けることがあるので、出発のない寄港を積地に、到着のない寄港を揚地にしない。時刻は文字ではなく時点（<code>UtcInstant</code> の等しさ）で比べる。<code>RouteCandidate.legsWithChangedInfo</code> と <code>RoutingCase.infoVersionsOf</code> は消した。</li>
-<li>確定と評価: <code>RoutingCase</code> の確定と確定した経路版の評価は、同じ private の判定（<code>anyLegChanged</code>）を使う。航海がない区間は変わったとみなす（今のまま）。同じ情報版で区間の予定が変わると評価し、不適合なら再設計要にする（評価の入口は Bolt 39f）。</li>
-<li>2 度寄る航海: 組は 1 つ以上あればよい。評価の引き直しの「1 つに決める」（組が 2 つ以上なら引き直せない）とは別で、積地や揚地に 2 度寄っても区間の予定の組が残っていれば変わっていない。確定の区間に寄港の位置を持たせて組を 1 つに狭めるのは Bolt 39f（W7 の確認ポイント 13）。</li>
+<li>判定の置き場所: <code>Voyage.matchesLeg(Leg)</code>。<code>entities</code> の <code>RouteCandidate</code> が <code>aggregates</code> の <code>Voyage</code> を参照しないように航海の側に置く。真になるのは、航海番号が同じで、情報版が同じで、積地の港の寄港の出発予定が区間の出発予定と同じで、その後ろに揚地の港の寄港があり、その到着予定が区間の到着予定と同じ組が 1 つ以上あるとき。寄港の時刻は欠けることがあるので、出発のない寄港を積地に、到着のない寄港を揚地にしない。時刻は文字ではなく時点（<code>UtcInstant</code> の等しさ）で比べる。<code>RouteCandidate.legsWithChangedInfo</code> と <code>RoutingCase.infoVersionsOf</code> は消した。Bolt 39f で、一致する組が 2 つ以上のときだけ確定の寄港の位置の組があることを足した（下の Bolt 39f で決めたこと）。</li>
+<li>確定と評価: <code>RoutingCase</code> の確定と確定した経路版の評価は、同じ private の判定（<code>anyLegChanged</code>）を使う。航海がない区間は変わったとみなす（今のまま）。同じ情報版で区間の予定が変わると評価し、不適合なら再設計要にする（入口は Bolt 39f の DE-30 の listener）。</li>
+<li>2 度寄る航海: 組は 1 つ以上あればよい。評価の引き直しの「1 つに決める」とは別で、積地や揚地に 2 度寄っても区間の予定の組が残っていれば変わっていない。Bolt 39f の【前の決定の変更】(5) で、一致する組が 2 つ以上のときだけ位置の組があることを足した。一致する組が 2 つ以上になるのは同じ港に同じ時刻で 2 度寄る航海だけなので、照合の狭まりは実際にはほぼ効かず、効くのは評価の引き直し（W7 の確認ポイント 13）。</li>
 <li>変えないもの: 拒否の理由（<code>INFO_VERSION_CHANGED</code>）と文（「候補を算出した後に航海の情報が更新されたため確定できません。…」）、確定の順、情報鮮度の判定（確定のときは読み直した航海の取得時刻）、DE-12 の型と順の規則（【業務の判断】(r)）、スキーマ。比べた案のうち、版の列を足す案はスキーマが増えて同じ値の組でも拒否し、適用のたびに情報版を作り直す案は画面の版と提供元の版が食い違い、同じ情報版の 2 つ目を適用しない案は ADR-004 に反するので採らない。</li>
 <li>S-07 の注（【前の決定の変更】(4)）: 確定のときに見るものの列挙を「最新の航海の情報（情報版、区間の予定、取得から経った時間）」に直す。列挙が情報版のままだと「情報版が同じなら通る」と読めるため。配置と URL は変えない。</li>
 <li>見本の航海: dev だけのマイグレーションで見本専用の航海 <code>DEMO-901</code> を足し、<code>RC-2026-0908</code>・<code>0909</code> の候補の区間と割り当てた区間の写し（TR-2026-0911・0912）の航海番号を直す（W7 の確認ポイント 14。Bolt 37e4b の決定 (2) を変える）。情報版・出典・取得時刻は <code>DEMO-101</code> の行から、寄港の時刻は <code>RC-2026-0908</code> の区間から写すので、見本の写しと必ず一致する。判定時刻より後に出発する寄港を持たないので、候補の算出には入らない。</li>
+</ul>
+<p>Bolt 39f（US-07 AC4、US-14 AC1。航海の更新から確定した経路を評価する入口と、2 度寄る航海の寄港の位置）で決めたこと（<a href="../../../development/cargo-tracker/bolt_39f_plan/">Bolt 39f 計画</a> の開始準備の決定 (2)〜(7)・(11)〜(13)、【業務の判断】(u)・(v)・(x)、【前の決定の変更】(5)〜(7)。2026-11-10、推奨のとおり。Recommend 承認の指示による。human:kakimomokuri。UC-06 4a と S-06 の古くなった候補は Bolt 39f2 に分けた。【前の決定の変更】(7)）:</p>
+<ul>
+<li>評価の入口は 2 段（【前の決定の変更】(6)）: <code>VoyageUpdateEventHandler</code> が DE-12 を受けて更新を適用したら、航海の更新と同じトランザクションで DE-30（<code>VoyageUpdated</code>）を発行する。<code>ConfirmedRouteEvaluationEventHandler</code> が DE-30 をコミットの後に受け、案件ごとに <code>evaluateConfirmedRoute</code> を呼ぶ。W7 の確認ポイント 12 の「DE-12 の listener が航海を更新した後に呼ぶ」を改める。DE-12 の listener のトランザクションで評価すると、同じファイルの 2 行で別々の航海が同時に更新されたときに互いの古い値を読み、片方ずつなら適合で両方なら不適合の組を見落とす。2 段にすると、後にコミットした側の評価が両方の値を見る。比べた案のうち、同じ DE-12 を受ける 2 つ目の listener は航海の書き込みとの順が保証されず、1 段のまま案件の行をロックする案は評価の失敗で航海の更新も戻り、複数案件の順で deadlock の余地があるので採らない。</li>
+<li>DE-30: <code>Voyage</code> が作り（ドメインイベントは集約から公開する。ガイドライン第 3 章）、listener が <code>update</code> の成功の後に発行する。予定が同じでも <code>apply</code> が真なら発行するので名前は「航海を更新した」。初めての航海（<code>save</code>。確定の区間はまだない）、古い DE-12、完全に同じ DE-12 の再配信、内容の欠けた DE-12 では発行しない。<code>routing</code> の中だけで受け、新しいコンテキスト間の依存はない。</li>
+<li>照会: <code>RoutingCaseRepository.findCaseNumbersConfirmedOnVoyage</code> は、最新の経路版が確定で、確定の候補の区間にその航海がある案件番号を重複なしで返す。確定でない候補の区間だけにある、候補提示済み、再設計要、旧版の案件は返さない。索引は <code>ix_candidate_leg_voyage</code>。</li>
+<li>トランザクションと競合: 案件は 1 つのトランザクションで評価する（<code>evaluateConfirmedRoute</code> は listener のトランザクションに参加する）。<code>Conflict</code> は同じトランザクションで読み直して評価し直す（3 回まで。<code>VoyageUpdateEventHandler</code> と同じ）。3 回とも競合したら例外を上げて全体を戻し、DE-30 の発行記録に残して再起動の再配信に任せる（1 件目の再設計要と DE-06 も戻り、再配信で両方とも評価し直す。案件ごとの切り離しは要れば W10）。照会の後に案件がない（<code>NotFound</code>）は WARN のログを残して次の案件へ進む。</li>
+<li>寄港の位置（【業務の判断】(u)、台帳 D-108。仮。【前の決定の変更】(5)）: 候補探索が区間に <code>port_call.call_no</code> の値を書く。引き直しは、組が 1 つなら今のまま、2 つ以上なら、出発と到着が区間と一致する組が 1 つあればそれを選び（位置は見ない。ほかの港の寄港の増減で位置がずれていても、予定が同じなら引き直せる）、なければ位置の組を選ぶ。位置が範囲外か、位置の寄港が組に入らないか、到着が出発より後でないときは、例外にせず引き直せないとする（1 件の失敗で全体を戻さない）。位置がない（Bolt 39f より前に算出した候補）組が 2 つ以上の航海は今のまま引き直せない。受け入れること: ほかの港の寄港の増減で位置がずれ、区間の予定も変わると再設計要になり、戻らない（UC-08 1a）。位置の港が偶然同じなら、別の寄港を選んで判定する。運ぶ寄港を決められない経路を確定のまま残さない方に倒す（Bolt 37d2 の「選ばずに失敗に倒す」のまま）。比べた案のうち、「その港への n 度目」は同じ港の増減で壊れる点が同じで数える手間が増え、寄港 ID は <code>port_call</code> を更新のたびに入れ直すので保てない。</li>
+<li>情報版だけが上がったとき: 2 度寄る航海でも、予定の一致する組があれば再設計要にしない（Bolt 37d2 の既知の制限を解消した）。</li>
+<li>確定と同時の DE-12（【業務の判断】(v)、台帳 D-109。仮）: 確定のトランザクションが航海を読んだ後、コミットの前に DE-30 の照会が走ると、その案件はまだ確定でないので評価されない。窓は確定の 1 トランザクションの間（ミリ秒）で、残るのはその航海の次の DE-12 で評価されるまで。受け入れて W10 の OBS の項目に送る（行のロックは足さない。W7 の確認ポイント 11 のまま）。</li>
+<li>誤った採用（【業務の判断】(x)、台帳 D-111。仮）: 誤った採用を新しい外部版で直しても、再設計要になった確定の経路は戻らない（UC-08 1a のまま。【業務の判断】(e)・(t)）。業務責任者に確かめる（Release 1.0 のパイロットの前）。</li>
+<li>システムの更新の操作: 上の Bolt 37d2 の「評価の保存」の項。<code>update(routingCase, null)</code> は作らない（Bolt 37d2 の確認ポイント 5 を W7 の確認ポイント 13 で改めた）。</li>
+<li>変えないもの: <code>evaluateConfirmedRoute</code> の判定の中身（鮮度と貨物種別は見ない）、確定の照合の順と拒否の文、DE-06 と見積りの印、<code>Voyage.apply</code> の順の規則（【業務の判断】(r)）、接続時間規則だけの変更は評価のきっかけにしない、再設計要は原因が解消しても戻さない（UC-08 1a）、S-05・S-06・S-07 の配置と URL。</li>
+<li>Bolt 39f2 に送るもの（【前の決定の変更】(7)、【業務の判断】(w)、台帳 D-110。仮）: UC-06 4a の「候補を旧版として保持し、再算出を要求する」は、候補の行を残したまま、S-06 を開いた時刻の航海と比べて「古くなった候補」と示し、再算出を促す文を添え、「この候補で確定へ」を出さないことと読む。状態は持たない。</li>
 </ul>
 <h3 id="bookingu6">予約（Booking、U6）<a class="headerlink" href="#bookingu6" title="Permanent link">&para;</a></h3>
 <h4 id="_14">予約の集約<a class="headerlink" href="#_14" title="Permanent link">&para;</a></h4>
@@ -18947,8 +19043,16 @@
 <td style="text-align: left;">航海の採用値を更新した</td>
 <td style="text-align: left;">外部データ</td>
 <td style="text-align: left;">航海番号、採用値、出典、情報版（航海番号と採用値は取り込む行の取込の値（航海の値）から作り、情報版・取得時刻・出典は受信記録の取得時刻と冪等性キーの外部 ID・外部版と情報源から作る。作るのは Bolt 39b3。Bolt 39b2b）。<code>VoyageAdoptedValueUpdated</code>（<code>externaldata.domain.events</code>。Bolt 39b3）: 採用値 ID、取込 ID、情報源 ID、出典 <code>Source</code>（種類 <code>EXTERNAL_RECORD</code>、参照は受信記録 ID、取得時刻はファイルの値）、航海番号、寄港の並び（入れ子の record <code>AdoptedPortCall</code>: 港 <code>Location</code>、到着・出発 <code>UtcInstant</code>。空は null）、情報版（外部版）、操作者（<code>UserId</code>・<code>CompanyId</code>。取込の操作者か判断者）、公開した時刻（取込での採用は取込の時刻、採用の判断は判断の時刻。Bolt 39d3b）。Java の標準と共有カーネルの型だけで持つ。発行元の集約の版は持たず、公開した時刻の順で代える（Bolt 39e。この節の最初の注）。Bolt 39d3b で、データ責任者の採用の判断も同じ組み立て役で DE-12 を出す（出典の参照は隔離の受信記録 ID、取得時刻はその受信記録の取得時刻）</td>
-<td style="text-align: left;">経路設計: 航海を更新する（Bolt 39e。<code>VoyageUpdateEventHandler</code>）。確定済みの経路版を再評価するのは Bolt 39f。監査（Bolt 39b3b。取込での自動の採用と、採用の判断（Bolt 39d3b）を監査する。<code>ExternalRecordAuditEventHandler</code> が <code>EXTERNAL_RECORD_ADOPTED</code> を書く。IA-INV-15）</td>
+<td style="text-align: left;">経路設計: 航海を更新する（Bolt 39e。<code>VoyageUpdateEventHandler</code>）。更新を適用したら同じトランザクションで DE-30 を発行する（Bolt 39f。確定済みの経路版の再評価は DE-30 の listener がコミットの後に行う）。監査（Bolt 39b3b。取込での自動の採用と、採用の判断（Bolt 39d3b）を監査する。<code>ExternalRecordAuditEventHandler</code> が <code>EXTERNAL_RECORD_ADOPTED</code> を書く。IA-INV-15）</td>
 <td style="text-align: left;">EV-05</td>
+</tr>
+<tr>
+<td style="text-align: left;">DE-30</td>
+<td style="text-align: left;">航海を更新した（<code>VoyageUpdated</code>。Bolt 39f）</td>
+<td style="text-align: left;">経路設計</td>
+<td style="text-align: left;">航海番号、情報版、公開した時刻（<code>routing.domain.events</code>。<code>Voyage.updated()</code> が作り、<code>VoyageUpdateEventHandler</code> が航海の更新の成功の後に同じトランザクションで発行する。更新を適用した DE-12 ごとに 1 件で、予定が同じでも発行する。初めての航海と適用しない DE-12 では発行しない）。注: 経路設計の中の知らせで、監査しない（監査は DE-12 で足りる）。発行元の集約の版を持たない（評価は今の航海を読み直すので順を見ない）</td>
+<td style="text-align: left;">経路設計: <code>ConfirmedRouteEvaluationEventHandler</code> がコミットの後に別のトランザクションで受け、航海番号から確定した経路版を持つ案件を引き、案件ごとに確定した経路版を評価する（不適合なら再設計要にし、DE-06 を発行する。競合は読み直す。3 回で例外を上げて再配信に任せる）。再配信は再設計要を重ねない（Bolt 39f）</td>
+<td style="text-align: left;">—</td>
 </tr>
 <tr>
 <td style="text-align: left;">DE-13</td>

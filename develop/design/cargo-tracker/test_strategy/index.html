@@ -10367,6 +10367,76 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_39e2_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 39e2 計画
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_39e2_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 39e2 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../development/cargo-tracker/release_report-0_1/" class="md-nav__link">
         
   
@@ -16481,7 +16551,11 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 </tr>
 <tr>
 <td style="text-align: left;">確定の照合と見本の航海</td>
-<td style="text-align: left;">Bolt 39e2（US-07 AC3・AC4、US-14 AC1）。照合は <code>VoyageTest</code> の <code>@Nested class Bolt39e2_…</code>（<code>matchesLeg</code> のパラメーター。始港から終港・途中の寄港から途中の寄港・組が 2 つある航海の一方は真、情報版違い・出発違い・到着違い・積地の港違い・揚地の港違い・組の順が逆・積地の寄港に出発がない・揚地の寄港に到着がない・航海番号違いは偽。T-244）。確定は <code>RoutingCaseConfirmationTest</code>（同じ情報版で区間の出発か到着が違うと <code>INFO_VERSION_CHANGED</code> で候補は変えない、ほかの寄港や取得時刻だけが変わると確定できる、値の違う 2 つの DE-12 の間を行き来する組、2 度寄る航海）、評価は <code>RoutingCaseEvaluationTest</code>（同じ情報版で区間の予定が違うと評価に入り、同じ予定なら評価しない。入口は 39f）。見本は <code>DevSampleDataSmokeTest</code>（0911・0912 の区間と写しが <code>DEMO-901</code> で予定と一致する、ほかの見本は <code>DEMO-101</code> のまま、<code>DEMO-901</code> の取得時刻と情報版は <code>DEMO-101</code> と同じ、候補の算出に入らない、<code>DEMO-%</code> のすべての区間の情報版と予定の組が今の航海の寄港にある（航海のない区間も数える））。画面の層は <code>adopted_voyage_reflected_ui.feature</code>（確定の画面を開いた後に同じ情報版で区間の予定が違う隔離を採用すると確定が拒否されて比較の画面に戻る、S-07 の注に区間の予定が示される。axe）</td>
+<td style="text-align: left;">Bolt 39e2（US-07 AC3・AC4、US-14 AC1）。照合は <code>VoyageTest</code> の <code>@Nested class Bolt39e2_…</code>（<code>matchesLeg</code> のパラメーター。始港から終港・途中の寄港から途中の寄港・組が 2 つある航海の一方は真、情報版違い・出発違い・到着違い・積地の港違い・揚地の港違い・組の順が逆・積地の寄港に出発がない・揚地の寄港に到着がない・航海番号違いは偽。T-244）。確定は <code>RoutingCaseConfirmationTest</code>（同じ情報版で区間の出発か到着が違うと <code>INFO_VERSION_CHANGED</code> で候補は変えない、ほかの寄港や取得時刻だけが変わると確定できる、値の違う 2 つの DE-12 の間を行き来する組、2 度寄る航海）、評価は <code>RoutingCaseEvaluationTest</code>（同じ情報版で区間の予定が違うと評価に入り、同じ予定なら評価しない。入口は下の Bolt 39f の行）。見本は <code>DevSampleDataSmokeTest</code>（0911・0912 の区間と写しが <code>DEMO-901</code> で予定と一致する、ほかの見本は <code>DEMO-101</code> のまま、<code>DEMO-901</code> の取得時刻と情報版は <code>DEMO-101</code> と同じ、候補の算出に入らない、<code>DEMO-%</code> のすべての区間の情報版と予定の組が今の航海の寄港にある（航海のない区間も数える））。画面の層は <code>adopted_voyage_reflected_ui.feature</code>（確定の画面を開いた後に同じ情報版で区間の予定が違う隔離を採用すると確定が拒否されて比較の画面に戻る、S-07 の注に区間の予定が示される。axe）</td>
+</tr>
+<tr>
+<td style="text-align: left;">評価の入口と寄港の位置</td>
+<td style="text-align: left;">Bolt 39f（US-07 AC4、US-14 AC1）。寄港の位置は <code>LegTest</code>（片方だけの値と位置の順の誤りは例外。パラメーター）、<code>RouteCandidateFinderTest</code>（A→B→A→C の航海で 2 候補がそれぞれの <code>call_no</code> を持つ、書く順を逆にした航海も置く。引き直しは組が 1 つなら今のまま、2 つ以上で予定の一致する組が 1 つならその組、なければ位置の組、位置を使えなければ <code>VOYAGE_UNAVAILABLE</code>、位置がなければ今のまま）、<code>VoyageTest</code>（<code>matchesLeg</code> の入力と期待の組まで縛る）、<code>RoutingCaseEvaluationTest</code>（2 度寄る経路で情報版だけが上がる組は確定のまま DE-06 は 0 件、確定した寄港の到着が期限を過ぎると再設計要、範囲外の位置でも例外にしない）。照会は <code>MyBatisRoutingRepositoriesIntegrationTest</code> と <code>InMemoryRoutingCaseRepository</code>（最新の経路版が確定の案件だけを返す。パラメーター）。スキーマは <code>SchemaCommentIntegrationTest</code> と CHECK の確かめ。DE-30 の発行は <code>VoyageUpdateEventHandlerTest</code>（「発行しない」は呼び出しの記録で確かめる。T-236）。listener は <code>ConfirmedRouteEvaluationEventHandlerTest</code>（案件なし・2 件、競合 1 回は読み直して <code>Unchanged</code>、競合 3 回は例外、<code>NotFound</code> は次の案件へ）。配信は <code>ConfirmedRouteEvaluationDeliveryIntegrationTest</code>（PostgreSQL。DE-12 から DE-30、評価、再設計要、DE-06、見積りの印まで、発行記録の完了を待って確かめる。T-184。同じ情報版で予定が違う組、誤った採用を戻す組、予定が同じ組、再配信、競合 3 回で全体が戻る組）。同時は別々の航海の 2 つの DE-12 のトランザクションをラッチで重ね、片方ずつなら適合で両方なら接続不足の組で両方のコミットの後の評価が再設計要にすること、2 つの DE-30 の評価が重なっても DE-06 は 1 件であること（H2 と PostgreSQL）。画面の層は <code>adopted_voyage_reflected_ui.feature</code>（確定した後にデータ責任者が期限を過ぎる隔離を採用すると S-06 に再設計要と理由が出る。axe）、接続を満たさなくなる組は <code>evaluate_confirmed_route.feature</code>（W6 レビュー L-8）</td>
 </tr>
 </tbody>
 </table>
@@ -16560,7 +16634,7 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 </tr>
 <tr>
 <td style="text-align: left;">再設計要の見積りの拒否</td>
-<td style="text-align: left;">背景は前例（<code>requote_after_approval_ui.feature</code>）の形で経路の確定から荷主の承認まで画面で進め、再設計要の印は見積りの公開 API（<code>RouteRedesignNotification</code>）を呼ぶステップで付け、案件の再設計要の記録は <code>JdbcTemplate</code> で入れる（本番に評価の入口がなくても確かめる）。C-04 に承認の操作が出ず理由が出る、C-17 を開くと C-04 に戻って理由が出る、S-02 の印のある行に「経路が再設計要」と出て本予約の入口が出ない、S-09 を開くと S-02 に戻って理由が出る、S-07 を開くと S-06 に戻って理由が出る。axe を通す（<code>route_redesign_required_ui.feature</code>、<code>@US-07 @ui</code>。Bolt 37e3 計画の状態の組み合わせの表の行 1・4・5・9・12。ほかの行は WebMvc・単体・統合のテスト）</td>
+<td style="text-align: left;">背景は前例（<code>requote_after_approval_ui.feature</code>）の形で経路の確定から荷主の承認まで画面で進め、再設計要の印は見積りの公開 API（<code>RouteRedesignNotification</code>）を呼ぶステップで付け、案件の再設計要の記録は <code>JdbcTemplate</code> で入れる（見積りの側の理由を網羅するため。Bolt 39f で評価の入口ができても形を変えない。入口からの流れは <code>adopted_voyage_reflected_ui.feature</code>）。C-04 に承認の操作が出ず理由が出る、C-17 を開くと C-04 に戻って理由が出る、S-02 の印のある行に「経路が再設計要」と出て本予約の入口が出ない、S-09 を開くと S-02 に戻って理由が出る、S-07 を開くと S-06 に戻って理由が出る。axe を通す（<code>route_redesign_required_ui.feature</code>、<code>@US-07 @ui</code>。Bolt 37e3 計画の状態の組み合わせの表の行 1・4・5・9・12。ほかの行は WebMvc・単体・統合のテスト）</td>
 <td style="text-align: left;">US-07、US-24、US-04</td>
 </tr>
 <tr>
