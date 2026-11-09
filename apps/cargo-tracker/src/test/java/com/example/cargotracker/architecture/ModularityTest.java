@@ -137,23 +137,42 @@ class ModularityTest {
     /**
      * 外部データはほかのコンテキストに依存しない上流で、依存してよい相手を許可リストで並べる（ADR-004 の改訂。Bolt 39）。
      * 禁止する相手を名前で並べる形では、新しいコンテキストを足すたびに規則を書き足す必要があるため、許してよい相手だけを書く。
-     * 許可リストは層別にする（Bolt 39a2）。この規則はインフラストラクチャ層の外を見るが、domain は DomainArchitectureTest、
-     * application は LayerArchitectureTest が先に守るので、実質この規則だけが守るのは interfaces。
+     * 許可リストは層別にする（Bolt 39a2）。この規則はドメイン層とファイルの読み取りの層（{@code interfaces.file}）を見るが、domain は
+     * DomainArchitectureTest が先に守るので、実質この規則だけが守るのは {@code interfaces.file}。
      * フレームワークの許可は、使う Bolt で、使う層に限って足す（W10 の AWS SDK もインフラストラクチャ層に足す）。
-     * 画面の層（{@code interfaces.web}）は次の規則で別に見る（Bolt 39c）。
-     * Bolt 39d3c の【前の決定の変更】: application 層の照会のサービスの WARN のログのため {@code org.slf4j} を許す（2026-11-05、推奨のとおり。
-     * Recommend 承認の指示による。human:kakimomokuri）。domain は DomainArchitectureTest が Java の標準とドメイン層と注釈の語彙だけに絞るので、
-     * domain にロガーは入らない。
+     * アプリケーション層は次の規則で、画面の層（{@code interfaces.web}）はその次の規則で別に見る（Bolt 39c・39d3b2）。
      */
     @Test
-    void 外部データのインフラストラクチャ層と画面の層の外は共有カーネルとJavaとSpringにだけ依存する() {
+    void 外部データのドメイン層とファイルの読み取りの層は共有カーネルとJavaとSpringにだけ依存する() {
         classes()
                 .that()
                 .resideInAPackage("com.example.cargotracker.externaldata..")
                 .and()
                 .resideOutsideOfPackages(
                         "com.example.cargotracker.externaldata.infrastructure..",
-                        "com.example.cargotracker.externaldata.interfaces.web..")
+                        "com.example.cargotracker.externaldata.interfaces.web..",
+                        "com.example.cargotracker.externaldata.application..")
+                .should()
+                .onlyDependOnClassesThat()
+                .resideInAnyPackage(
+                        "java..",
+                        "com.example.cargotracker.externaldata..",
+                        "com.example.cargotracker.shared..",
+                        "org.springframework..")
+                .check(PRODUCTION_CLASSES);
+    }
+
+    /**
+     * 外部データのアプリケーション層は、上の許可リストに加えて {@code org.slf4j} に依存してよい。Bolt 39d3c の【前の決定の変更】: application 層の照会のサービスの
+     * WARN のログのため {@code org.slf4j} を許す（2026-11-05、推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）。
+     * Bolt 39d3b2 の【前の決定の変更】(1): その許可を application 層に限り、{@code interfaces.file} には許さない（2026-11-09、推奨のとおり。Recommend 承認の指示に
+     * よる。human:kakimomokuri）。domain は DomainArchitectureTest が Java の標準とドメイン層と注釈の語彙だけに絞るので、domain にロガーは入らない。
+     */
+    @Test
+    void 外部データのアプリケーション層は共有カーネルとJavaとSpringとSLF4Jにだけ依存する() {
+        classes()
+                .that()
+                .resideInAPackage("com.example.cargotracker.externaldata.application..")
                 .should()
                 .onlyDependOnClassesThat()
                 .resideInAnyPackage(

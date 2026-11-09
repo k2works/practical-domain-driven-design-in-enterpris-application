@@ -447,7 +447,8 @@ class ExternalRecordAuditDeliveryIntegrationTest {
     /**
      * Bolt 39d3b の行 11（採用の判断の監査の配信。T-184、IA-INV-15）。航海の内容の違う原本の隔離を理由なしで採用したコミットの後に、監査の listener が
      * DE-29 と DE-12 を受け、隔離の受信記録に判断の監査記録（理由は判断）と採用の監査記録を 1 つずつ書き、取込のときの隔離の監査記録と合わせて 3 つになる。
-     * 同じイベントを配り直しても増えない。主要実績（DE-13）は 39d3b2 で足す。39b3b の同じ番号の行と名前が衝突しないよう入れ子にする。
+     * 同じイベントを配り直しても増えない。主要実績（DE-13）は {@code Bolt39d3b2_主要実績の採用の判断の監査の配信}。39b3b の同じ番号の行と名前が衝突しないよう
+     * 入れ子にする。
      */
     @org.junit.jupiter.api.Nested
     class Bolt39d3b_採用の判断の監査の配信 {
@@ -529,6 +530,106 @@ class ExternalRecordAuditDeliveryIntegrationTest {
                     assertThat(completedAuditPublications(ReceivedRecordDecided.class, receivedRecordId))
                             .isEqualTo(2);
                     assertThat(completedAuditPublications(VoyageAdoptedValueUpdated.class, receivedRecordId))
+                            .isEqualTo(2);
+                });
+                assertThat(auditRecordCountOf(receivedRecordId)).isEqualTo(3);
+            } finally {
+                removeSource(sourceId);
+            }
+        }
+
+        private int auditRecordCountOf(UUID receivedRecordId) {
+            return count(
+                    "SELECT COUNT(*) FROM identity.audit_record WHERE target_type = 'RECEIVED_RECORD' AND target_id = ?",
+                    receivedRecordId.toString());
+        }
+    }
+
+    /**
+     * Bolt 39d3b2 の行 2（主要実績の採用の判断の監査の配信。T-184、IA-INV-15）。主要実績の内容の違う原本の隔離を採用したコミットの後に、監査の listener が
+     * DE-29 と DE-13 を受け、隔離の受信記録に判断の監査記録と採用の監査記録（要約は主要実績の形）を 1 つずつ書き、取込のときの隔離の監査記録と合わせて 3 つに
+     * なる。同じイベントを配り直しても増えない。
+     */
+    @org.junit.jupiter.api.Nested
+    class Bolt39d3b2_主要実績の採用の判断の監査の配信 {
+
+        private static final String TRACKING_NUMBER = "CTABCDEFGH2345";
+
+        @Autowired
+        ReceivedRecordDecisionService decisionService;
+
+        private IngestedRow milestoneRow(int lineNumber, Instant acquiredAt, Instant occurredAt) {
+            String line = "MS-0201,1," + acquiredAt + "," + TRACKING_NUMBER + ",DEPARTURE,JPTYO," + occurredAt;
+            MilestoneValues values = new MilestoneValues(
+                    new TrackingNumberValue(TRACKING_NUMBER),
+                    MilestoneKindValue.DEPARTURE,
+                    new Location("JPTYO"),
+                    new UtcInstant(occurredAt));
+            return new IngestedRow(
+                    lineNumber, lineNumber, "MS-0201", "1", acquiredAt, values, line.getBytes(StandardCharsets.UTF_8));
+        }
+
+        /** 発生時刻だけが違う主要実績の内容の違う原本の隔離を 1 つ取り込み、その受信記録 ID を返す（T-230）。 */
+        private UUID quarantinedMilestone(UUID sourceId) {
+            Instant acquiredAt = acquiredAt();
+            Ingested result = ingested(ingestionService.ingest(
+                    steward,
+                    milestoneFile(
+                            sourceId,
+                            milestoneRow(2, acquiredAt, acquiredAt),
+                            milestoneRow(3, acquiredAt, acquiredAt.plus(Duration.ofHours(1))))));
+            assertThat(result.rows())
+                    .extracting(RowResult::classification)
+                    .containsExactly(Classification.ADOPTED, Classification.QUARANTINED);
+            return result.rows().get(1).receivedRecordId();
+        }
+
+        @Test
+        void 行2_主要実績の採用のコミットの後に判断と採用の監査記録が1つずつ書かれ隔離の監査記録と合わせて3つで配り直しても増えない() {
+            UUID sourceId = insertApprovedSource("運送会社-" + UUID.randomUUID(), "MILESTONE");
+            try {
+                UUID receivedRecordId = quarantinedMilestone(sourceId);
+
+                DecisionOutcome outcome =
+                        decisionService.adopt(steward, new AdoptReceivedRecordCommand(receivedRecordId, "提供元に確かめた。"));
+
+                assertThat(outcome).isEqualTo(new DecisionOutcome.AdoptedQuarantine(receivedRecordId));
+                awaitCompletedAuditPublication(ExternalRecordQuarantined.class, receivedRecordId);
+                awaitCompletedAuditPublication(ReceivedRecordDecided.class, receivedRecordId);
+                awaitCompletedAuditPublication(MilestoneAdoptedValueAccepted.class, receivedRecordId);
+                Object decidedAt = jdbc.queryForObject(
+                        "SELECT decided_at FROM external_data.received_record_decision WHERE received_record_id = ?",
+                        Object.class,
+                        receivedRecordId);
+                assertThat(auditRecordOf(AuditAction.EXTERNAL_RECORD_DECIDED, receivedRecordId))
+                        .containsEntry("result", "SUCCESS")
+                        .containsEntry("actor_user_id", steward.userId().value())
+                        .containsEntry("reason", "ADOPTED")
+                        .containsEntry("occurred_at", decidedAt);
+                assertThat(auditRecordOf(AuditAction.EXTERNAL_RECORD_ADOPTED, receivedRecordId))
+                        .containsEntry("result", "SUCCESS")
+                        .containsEntry("actor_user_id", steward.userId().value())
+                        .containsEntry("occurred_at", decidedAt);
+                assertThat(jdbc.queryForObject(
+                                "SELECT after_state FROM identity.audit_record WHERE action = ? AND target_type ="
+                                        + " 'RECEIVED_RECORD' AND target_id = ?",
+                                String.class,
+                                AuditAction.EXTERNAL_RECORD_ADOPTED.name(),
+                                receivedRecordId.toString()))
+                        .startsWith("recordType=MILESTONE;targetKey=" + TRACKING_NUMBER + ";externalId=MS-0201");
+                assertThat(auditRecordCountOf(receivedRecordId)).isEqualTo(3);
+
+                ReceivedRecordDecided decided = completedAuditEvent(ReceivedRecordDecided.class, receivedRecordId);
+                MilestoneAdoptedValueAccepted accepted =
+                        completedAuditEvent(MilestoneAdoptedValueAccepted.class, receivedRecordId);
+                transactionTemplate.executeWithoutResult(status -> {
+                    events.publishEvent(decided);
+                    events.publishEvent(accepted);
+                });
+                await().atMost(TIMEOUT).untilAsserted(() -> {
+                    assertThat(completedAuditPublications(ReceivedRecordDecided.class, receivedRecordId))
+                            .isEqualTo(2);
+                    assertThat(completedAuditPublications(MilestoneAdoptedValueAccepted.class, receivedRecordId))
                             .isEqualTo(2);
                 });
                 assertThat(auditRecordCountOf(receivedRecordId)).isEqualTo(3);

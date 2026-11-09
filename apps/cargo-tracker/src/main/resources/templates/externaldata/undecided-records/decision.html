@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title th:text="${#fields.hasErrors('${rejectionForm.*}')} ? '却下できませんでした - 隔離の判断 - cargo-tracker' : (${#fields.hasErrors('${adoptionForm.*}')} ? '採用できませんでした - 隔離の判断 - cargo-tracker' : '隔離の判断 - cargo-tracker')">隔離の判断 - cargo-tracker</title>
+    <title th:text="${#fields.hasErrors('${rejectionForm.*}')} ? '却下できませんでした - 隔離の判断 - cargo-tracker' : (${#fields.hasErrors('${adoptionForm.*}') or (adoptionRefused != null and adoptionRefusalText != null)} ? '採用できませんでした - 隔離の判断 - cargo-tracker' : '隔離の判断 - cargo-tracker')">隔離の判断 - cargo-tracker</title>
     <!--/* 送信の失敗のときにエラー要約へフォーカスを移す（S-16 と同じ） */-->
     <script th:src="@{/js/transport-request-form.js}" defer></script>
 </head>
@@ -12,10 +12,17 @@
 <main>
     <h1>隔離の判断</h1>
     <!--/* S-17 の判断の画面（Bolt 39d2、US-14 AC4、UC-15 3b）。一覧と同じ項目と隔離の理由の全文を読んでから、却下の理由を書いて却下する。
-           注記には取込ファイルから来た値が入るので th:text で示す。キーのない隔離（形式の誤り）は採用できないので、却下だけと取り込み直しの
-           案内を示す（【業務の判断】(a)）。却下と採用は取り消せない（【業務の判断】(e)）。採用の欄は判断のサービスの定めで採用できる隔離にだけ示す（航海は
-           Bolt 39d3b）。送り先と戻り先の URL は controller が読んだ取込とページから組み立てる。1 回の POST は 1 つのフォームなので 2 つのエラー要約は同時に出ない。
-           採用の欄の名前も reason なので、採用のエラー要約のリンクは欄の id（adoption-reason）を明示する */-->
+           注記には取込ファイルから来た値が入るので th:text で示す。却下と採用は取り消せない（【業務の判断】(e)）。採用の欄は判断のサービスの定めで採用できる隔離に
+           だけ示し（航海は Bolt 39d3b、主要実績は Bolt 39d3b2）、採用できない隔離には却下の欄の後に理由と次の道の文を示す（Bolt 39d3b2）。送り先と戻り先の URL は
+           controller が読んだ取込とページから組み立てる。1 回の POST は 1 つのフォームで、開いた後に採用できなくなったときの要約は PRG の GET で出るので、3 つの
+           エラー要約は同時に出ない。採用の欄の名前も reason なので、採用のエラー要約のリンクは欄の id（adoption-reason）を明示する */-->
+    <div id="error-summary" th:if="${adoptionRefused != null and adoptionRefusalText != null}" tabindex="-1" role="alert"
+         aria-labelledby="error-summary-title">
+        <h2 id="error-summary-title">採用できませんでした</h2>
+        <ul>
+            <li><a href="#adoption-refusal" th:text="${adoptionRefusalText}">情報源が承認済みではないため採用できません。</a></li>
+        </ul>
+    </div>
     <div id="error-summary" th:if="${#fields.hasErrors('${rejectionForm.*}')}" tabindex="-1" role="alert"
          aria-labelledby="error-summary-title">
         <h2 id="error-summary-title">却下できませんでした</h2>
@@ -91,7 +98,8 @@
             <p><button type="submit" class="btn btn-primary" aria-describedby="adoption-irrevocable">採用する</button></p>
         </form>
     </section>
-    <p th:if="${keyless}">形式の誤りは採用できません。直したファイルを取り込み直してください。</p>
+    <!--/* tabindex="-1" はエラー要約のリンクの受け口（標準のフラグメント移動でフォーカスが移る） */-->
+    <p id="adoption-refusal" tabindex="-1" th:if="${adoptionRefusalText}" th:text="${adoptionRefusalText}">形式の誤りは採用できません。直したファイルを取り込み直してください。</p>
     <p><a th:href="${backUrl}">一覧に戻る</a></p>
 </main>
 </body>

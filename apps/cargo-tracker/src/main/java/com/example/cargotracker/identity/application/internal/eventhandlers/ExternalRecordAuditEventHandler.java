@@ -69,7 +69,7 @@ public class ExternalRecordAuditEventHandler {
                         event.publishedAt()));
     }
 
-    /** DE-13 主要実績の採用値を受け付けた を受けて、取込での自動の採用を監査する（採用の判断は Bolt 39d3b2）。要約に追跡番号と外部 ID を入れる。 */
+    /** DE-13 主要実績の採用値を受け付けた を受けて、取込での自動の採用と採用の判断を監査する。対象は出典の参照（受信記録 ID）。要約に追跡番号と外部 ID を入れる。 */
     @ApplicationModuleListener
     public void on(MilestoneAdoptedValueAccepted event) {
         String receivedRecordId = reference(event.source());

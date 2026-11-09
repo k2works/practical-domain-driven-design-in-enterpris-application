@@ -60,6 +60,11 @@ public class ExternalDataIngestionUiSteps {
 
     private static final String CHANGED_OCCURRED_AT = "2026-11-19T01:00:00Z";
 
+    /** Bolt 39d3b2 の行 16。追跡番号（形は TrackingNumberValue に合わせる。T-230）。 */
+    private static final String TRACKING_NUMBER = "CTABCDEFGH2345";
+
+    private static final String OTHER_TRACKING_NUMBER = "CTABCDEFGH2346";
+
     private final BrowserSession browser;
     private final JdbcTemplate jdbc;
     private final String baseUrl;
@@ -286,6 +291,18 @@ public class ExternalDataIngestionUiSteps {
         submit();
     }
 
+    /** Bolt 39d3b2 の行 16。主要実績の 2 行（採用 1・内容の違う原本 1）。3 行目は形に合う別の追跡番号にした（T-230）。 */
+    @かつ("キー操作だけで承認済みの主要実績の情報源を選び、同じ外部 ID・外部版で追跡番号の違う 2 行のファイルを選んで取り込む")
+    public void 追跡番号の違う主要実績2行のファイルを取り込む() {
+        chooseSource();
+        String acquiredAt = acquiredAt();
+        chooseFile((MILESTONE_HEADER + "\n"
+                        + milestoneLine("MS-0201", acquiredAt, TRACKING_NUMBER, OCCURRED_AT) + "\n"
+                        + milestoneLine("MS-0201", acquiredAt, OTHER_TRACKING_NUMBER, OCCURRED_AT) + "\n")
+                .getBytes(StandardCharsets.UTF_8));
+        submit();
+    }
+
     /**
      * Bolt 39c3 の行 9。航海の 6 行（採用 3・重複 1・列数の誤り 1・内容の違う原本 1）。2 行目と 5 行目は同じ内容（重複）、3 行目と 6 行目は
      * 同じ外部 ID・外部版で内容が違い（隔離）、4 行目は列が 1 つ多い（行の誤り）。
@@ -402,7 +419,11 @@ public class ExternalDataIngestionUiSteps {
 
     /** 主要実績の 1 行（東京の出発。外部 ID にシナリオの印を付ける）。 */
     private String milestoneLine(String base, String acquiredAt, String occurredAt) {
-        return base + "-" + suffix.substring(0, 8) + ",1," + acquiredAt + ",CTABCDEFGH2345,DEPARTURE,JPTYO,"
+        return milestoneLine(base, acquiredAt, TRACKING_NUMBER, occurredAt);
+    }
+
+    private String milestoneLine(String base, String acquiredAt, String trackingNumber, String occurredAt) {
+        return base + "-" + suffix.substring(0, 8) + ",1," + acquiredAt + "," + trackingNumber + ",DEPARTURE,JPTYO,"
                 + occurredAt;
     }
 

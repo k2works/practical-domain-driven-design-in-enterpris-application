@@ -39,7 +39,8 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
  * 判断できる受信記録の定めと却下は判断のサービスが持つ。内容の違う原本の判断の画面には、隔離の理由の後に受け取った値とこの外部版の採用値を
  * それぞれの取得した日時とともに並べ、値が同じなら取得時刻で分けた文を前に示す（航海は Bolt 39d3、【業務の判断】(i)・(j)。主要実績の値と
  * 値を読めないときの文は Bolt 39d3c、【業務の判断】(k)）。却下の欄の後に、採用できる隔離（判断のサービスの定め）にだけ採用の欄を示し、採用すると
- * PRG で元の一覧に戻る（航海は Bolt 39d3b。主要実績は 39d3b2）。
+ * PRG で元の一覧に戻る（航海は Bolt 39d3b、主要実績は Bolt 39d3b2）。採用できない隔離には採用できない理由と次の道の文を示し、開いた後に採用できなくなった
+ * POST は PRG で判断の画面に戻ってエラー要約で知らせる（Bolt 39d3b2 の開始準備の決定 (5)）。
  *
  * <p>取込 ID が UUID でないときは 400 にせず、ない取込と同じく絞らない一覧に「指定された取込が見つかりません。」を示す。ページが数でない・1 より
  * 前のときは 1 ページ目を照会する（Bolt 39d 計画の状態の組み合わせの行 13・14）。
@@ -85,6 +86,21 @@ public class UndecidedRecordController {
     /** 採用の理由の欄の誤り（【業務の判断】(d)。任意、1000 文字まで。Bolt 39d3b）。 */
     private static final String ADOPTION_REASON_TOO_LONG =
             "採用の理由は " + ReceivedRecordDecision.REASON_LIMIT + " 文字までで書いてください。";
+
+    /** 開いた後に採用できなくなって判断の画面へ戻るときの印（フラッシュの名前。Bolt 39d3b2）。 */
+    private static final String ADOPTION_REFUSED = "adoptionRefused";
+
+    /** 採用できない理由と次の道の文（Bolt 39d3b2 の開始準備の決定 (5)。固定の文で、取込ファイルから来た値を含まない）。 */
+    private static final String KEYLESS_REFUSAL = "形式の誤りは採用できません。直したファイルを取り込み直してください。";
+
+    private static final String VALUE_NOT_RECORDED_REFUSAL =
+            "受け取った値を記録する前に取り込んだ隔離は採用できません。受け取った値を使うときは、提供元に新しい外部版で送り直してもらってください。";
+    private static final String VALUE_UNREADABLE_REFUSAL =
+            "受け取った値を読めないので採用できません。受け取った値を使うときは、提供元に新しい外部版で送り直してもらってください。";
+    private static final String SOURCE_NOT_APPROVED_REFUSAL =
+            "情報源が承認済みではないため採用できません。受け取った値を使うときは、運用の手順で情報源を承認し直してから、この隔離を開き直してください。";
+    private static final String TRACKING_NUMBER_DIFFERS_REFUSAL =
+            "追跡番号がこの外部版の採用値と違うので採用できません。正しい原本を使うときは、提供元に新しい外部版で送り直してもらってください。";
 
     /** 1 つの取込の形式の誤りのまとめての却下（Bolt 39d2b の開始準備の決定 (3)）。件数は 3 桁の区切り。 */
     private static final String KEYLESS_REJECTION_PATH = "/keyless-rejection";
@@ -225,7 +241,7 @@ public class UndecidedRecordController {
         UUID back = parseUuid(ingestion);
         int backPage = parsePage(page);
         if (hasAdoptionReasonErrors(form, bindingResult)) {
-            // 採用できない隔離の画面には採用の欄がなく、エラー要約のリンクの先がないので、欄の誤りを示さず採用の POST と同じ行き先にする
+            // 採用できない隔離の画面には採用の欄がなく、欄の誤りのエラー要約のリンクの先がないので、欄の誤りを示さず採用の POST と同じ行き先にする
             Optional<DecisionOutcome> refusal = decisions.adoptionRefusalOf(id);
             return refusal.isPresent()
                     ? respond(refusal.get(), back, backPage, redirectAttributes)
@@ -358,8 +374,12 @@ public class UndecidedRecordController {
         if (!model.containsAttribute(ADOPTION_FORM)) {
             model.addAttribute(ADOPTION_FORM, new AdoptionForm());
         }
-        // 採用の欄は判断のサービスの定めだけで決める（POST と同じ定め。照会の値からは決めない。Bolt 39d3b の開始準備の決定 (8)）
-        model.addAttribute("adoptable", decisions.adoptionRefusalOf(id).isEmpty());
+        // 採用の欄と理由の文は判断のサービスの定めだけで決める（POST と同じ定め。照会の値からは決めない。Bolt 39d3b の開始準備の決定 (8)）
+        Optional<DecisionOutcome> adoptionRefusal = decisions.adoptionRefusalOf(id);
+        model.addAttribute("adoptable", adoptionRefusal.isEmpty());
+        if (adoptionRefusal.orElse(null) instanceof DecisionOutcome.NotAdoptable refused) {
+            model.addAttribute("adoptionRefusalText", refusalTextOf(refused.reason()));
+        }
         String lines = lines(item.lineRange());
         String externalKey = externalKey(item);
         model.addAttribute("ingestedAt", DateTimeDisplay.staff(item.ingestedAt()));
@@ -368,7 +388,6 @@ public class UndecidedRecordController {
         model.addAttribute("kind", item.keyless() ? FORMAT_ERROR : CONTENT_MISMATCH);
         model.addAttribute("externalKey", externalKey == null ? NO_EXTERNAL_KEY : externalKey);
         model.addAttribute("note", item.note());
-        model.addAttribute("keyless", item.keyless());
         model.addAttribute("reasonLimit", ReceivedRecordDecision.REASON_LIMIT);
         model.addAttribute("backUrl", pageUrl(back, backPage));
         model.addAttribute("actionUrl", LIST_URL + "/" + id + "/decision" + query(back, backPage));
@@ -389,6 +408,17 @@ public class UndecidedRecordController {
         }
     }
 
+    /** 採用できない理由の文（理由のすべてに文がある。{@code default} を置かない。T-240）。 */
+    private static String refusalTextOf(DecisionOutcome.NotAdoptableReason reason) {
+        return switch (reason) {
+            case KEYLESS -> KEYLESS_REFUSAL;
+            case VALUE_NOT_RECORDED -> VALUE_NOT_RECORDED_REFUSAL;
+            case VALUE_UNREADABLE -> VALUE_UNREADABLE_REFUSAL;
+            case SOURCE_NOT_APPROVED -> SOURCE_NOT_APPROVED_REFUSAL;
+            case TRACKING_NUMBER_DIFFERS -> TRACKING_NUMBER_DIFFERS_REFUSAL;
+        };
+    }
+
     /** 判断の結果を行き先に変える（結果のすべてに行き先がある。T-240）。 */
     private static String respond(
             DecisionOutcome outcome, UUID back, int backPage, RedirectAttributes redirectAttributes) {
@@ -405,7 +435,12 @@ public class UndecidedRecordController {
                 redirectAttributes.addFlashAttribute(RESULT, ADOPTED);
                 yield "redirect:" + pageUrl(back, backPage);
             }
-            case DecisionOutcome.NotFound _, DecisionOutcome.NotDecidable _, DecisionOutcome.NotAdoptable _ ->
+            case DecisionOutcome.NotAdoptable refused -> {
+                // 開いた後に採用できなくなった。判断の画面へ戻り、読み直した理由を示す（Bolt 39d3b2 の【前の決定の変更】(2)）
+                redirectAttributes.addFlashAttribute(ADOPTION_REFUSED, true);
+                yield "redirect:" + LIST_URL + "/" + refused.receivedRecordId() + query(back, backPage);
+            }
+            case DecisionOutcome.NotFound _, DecisionOutcome.NotDecidable _ ->
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND);
             case DecisionOutcome.NotPermitted _ -> throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         };

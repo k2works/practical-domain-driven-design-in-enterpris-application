@@ -4,7 +4,6 @@ import com.example.cargotracker.externaldata.application.internal.commands.Adopt
 import com.example.cargotracker.externaldata.application.internal.commands.RejectKeylessQuarantinesCommand;
 import com.example.cargotracker.externaldata.application.internal.commands.RejectReceivedRecordCommand;
 import com.example.cargotracker.externaldata.domain.events.ReceivedRecordDecided;
-import com.example.cargotracker.externaldata.domain.model.aggregates.AdoptedValue;
 import com.example.cargotracker.externaldata.domain.model.aggregates.AdoptedValueRepository;
 import com.example.cargotracker.externaldata.domain.model.aggregates.DataSource;
 import com.example.cargotracker.externaldata.domain.model.aggregates.DataSourceRepository;
@@ -17,6 +16,7 @@ import com.example.cargotracker.externaldata.domain.model.aggregates.ReceivedRec
 import com.example.cargotracker.externaldata.domain.model.aggregates.ReceivedRecordDecisionRepository;
 import com.example.cargotracker.externaldata.domain.model.aggregates.ReceivedRecordRepository;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.IdempotencyKey;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.MilestoneValues;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.ReceivedValue;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.RecordValues;
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
@@ -31,8 +31,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * 受信記録の判断のサービス。データ責任者が S-17 の判断の画面で隔離の受信記録を却下する（US-14 AC4、UC-15 3b。Bolt 39d2）か、航海の内容の違う原本の
- * 隔離を採用する（{@link #adopt}。UC-15 の主成功シナリオ 5。Bolt 39d3b。主要実績は 39d3b2）。却下は、1 つの
+ * 受信記録の判断のサービス。データ責任者が S-17 の判断の画面で隔離の受信記録を却下する（US-14 AC4、UC-15 3b。Bolt 39d2）か、内容の違う原本の
+ * 隔離を採用する（{@link #adopt}。UC-15 の主成功シナリオ 5。航海は Bolt 39d3b、主要実績は Bolt 39d3b2）。却下は、1 つの
  * トランザクションで、役割 → 受信記録（{@code findById}）→ 隔離か → 判断済みか（{@code existsFor}）の順に確かめ、判断を追記して DE-29 を出す。
  * 同時の判断に負けた一意制約の違反も判断済みとして返す（判断のリポジトリがセーブポイントに戻す）。情報源 ID は受信記録の取込から読む。判断の
  * 時刻は Clock から 1 回取る（判断の不変条件がマイクロ秒に切り捨てる）。判断できる受信記録の定め（{@link #refusalOf}）は判断の画面の
@@ -41,9 +41,6 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Service // JIG がユースケースとして読む印（組み立ては ExternalDataConfiguration）
 public class ReceivedRecordDecisionService {
-
-    /** 採用できる原本種別（航海だけ。主要実績は Bolt 39d3b2 で足す）。冪等性キーの原本種別と採用値の対象の種類は同じ名前。 */
-    private static final String ADOPTABLE_RECORD_TYPE = AdoptedValue.TargetType.VOYAGE.name();
 
     private final ReceivedRecordRepository receivedRecords;
     private final ReceivedRecordDecisionRepository decisions;
@@ -89,17 +86,18 @@ public class ReceivedRecordDecisionService {
         if (refusal.isPresent()) {
             return refusal;
         }
-        return adoptionPartsOf(found.get()).isPresent()
+        DecisionOutcome.NotAdoptableReason reason = adoptionCheckOf(found.get()).refusal();
+        return reason == null
                 ? Optional.empty()
-                : Optional.of(new DecisionOutcome.NotAdoptable());
+                : Optional.of(new DecisionOutcome.NotAdoptable(receivedRecordId, reason));
     }
 
     /**
-     * 航海の内容の違う原本の隔離を採用する（Bolt 39d3b の開始準備の決定 (4)〜(6)）。1 つのトランザクションで、役割 → 受信記録 → 隔離か → 判断済みか →
-     * 採用できるかの順に確かめ、判断をセーブポイントの中で先に追記し、同時の判断に負けなければ採用値をセーブポイントなしで追記して、DE-29・DE-12 の
-     * 順に出す。負けた側は採用値を書かず判断済みを返す（PostgreSQL は制約違反でトランザクションを中断するので、判断を先に書く）。採用値の一意制約の
-     * 違反は判断の一意制約を通った後には起きない経路なので捕まえずに上げ、トランザクションごと巻き戻す。判断の時刻は Clock から 1 回取り、採用値と
-     * DE-12 の公開した時刻も同じ値にする。
+     * 内容の違う原本の隔離を採用する（航海は Bolt 39d3b の開始準備の決定 (4)〜(6)、主要実績は Bolt 39d3b2）。1 つのトランザクションで、役割 → 受信記録 →
+     * 隔離か → 判断済みか → 採用できるかの順に確かめ、判断をセーブポイントの中で先に追記し、同時の判断に負けなければ採用値をセーブポイントなしで追記して、
+     * DE-29・採用値のイベント（航海は DE-12、主要実績は DE-13）の順に出す。負けた側は採用値を書かず判断済みを返す（PostgreSQL は制約違反でトランザクションを
+     * 中断するので、判断を先に書く）。採用値の一意制約の違反は判断の一意制約を通った後には起きない経路なので捕まえずに上げ、トランザクションごと巻き戻す。
+     * 判断の時刻は Clock から 1 回取り、採用値と採用値のイベントの公開した時刻も同じ値にする。
      *
      * @param actor 操作者（データ責任者）
      * @param command 採用のコマンド
@@ -118,11 +116,11 @@ public class ReceivedRecordDecisionService {
         if (refusal.isPresent()) {
             return refusal.get();
         }
-        Optional<AdoptionParts> adoptable = adoptionPartsOf(receivedRecord);
-        if (adoptable.isEmpty()) {
-            return new DecisionOutcome.NotAdoptable();
+        AdoptionCheck check = adoptionCheckOf(receivedRecord);
+        if (check.refusal() != null) {
+            return new DecisionOutcome.NotAdoptable(receivedRecord.id(), check.refusal());
         }
-        AdoptionParts parts = adoptable.get();
+        AdoptionParts parts = check.parts();
         ReceivedRecordDecision decision =
                 ReceivedRecordDecision.adopt(receivedRecord, command.reason(), actor.userId(), clock.instant());
         if (!added(decision)) {
@@ -142,29 +140,49 @@ public class ReceivedRecordDecisionService {
     }
 
     /**
-     * 採用できる隔離の定めと、採用に要るもの（判断できる隔離について呼ぶ）。外部原本を持ち（【業務の判断】(a)）、受け取った値の列があり、情報源が
-     * 承認済みで（【業務の判断】(n)）、原本種別が航海で（主要実績は 39d3b2 まで）、受け取った値を読める（【業務の判断】(k)）ときだけ値を返す。この外部版の
-     * 採用値は引かない（採用値の側だけ読めない隔離も採用できる。【業務の判断】(l)）。読めない値の WARN は判断の画面の照会のサービスが書く。
+     * 採用できる隔離の定めと、採用に要るものか断る理由（判断できる隔離について呼ぶ。GET と POST で 1 つの定め）。外部原本を持ち（【業務の判断】(a)）、受け取った
+     * 値の列があり、情報源が判断の時点で承認済みで（【業務の判断】(n)・(o)）、受け取った値を読め（【業務の判断】(k)）、主要実績は追跡番号がこの外部版の採用値と
+     * 同じ（【業務の判断】(m)）ときだけ採用できる。この順に確かめ、先の理由で片付く隔離で後の照会を引かない。原本種別は定めに置かず、値を読めるかで決まる
+     * （知らない原本種別は読めない）。読めない値の WARN は判断の画面の照会のサービスが書く。
      */
-    private Optional<AdoptionParts> adoptionPartsOf(ReceivedRecord receivedRecord) {
+    private AdoptionCheck adoptionCheckOf(ReceivedRecord receivedRecord) {
         ReceivedValue value = receivedRecord.value();
-        if (receivedRecord.externalRecordId() == null || value == null) {
-            return Optional.empty();
+        if (receivedRecord.externalRecordId() == null) {
+            return AdoptionCheck.refused(DecisionOutcome.NotAdoptableReason.KEYLESS);
+        }
+        if (value == null) {
+            return AdoptionCheck.refused(DecisionOutcome.NotAdoptableReason.VALUE_NOT_RECORDED);
         }
         // 受信記録は取込と外部原本への、取込は情報源への外部キーを持つので、どれも必ずある
         Ingestion ingestion = ingestions.findById(receivedRecord.ingestionId()).orElseThrow();
         DataSource dataSource = dataSources.findById(ingestion.dataSourceId()).orElseThrow();
         if (dataSource.approvalStatus() != DataSource.ApprovalStatus.APPROVED) {
-            return Optional.empty();
+            return AdoptionCheck.refused(DecisionOutcome.NotAdoptableReason.SOURCE_NOT_APPROVED);
         }
         IdempotencyKey key = externalRecords
                 .findById(receivedRecord.externalRecordId())
                 .orElseThrow()
                 .key();
-        if (!ADOPTABLE_RECORD_TYPE.equals(key.recordType())) {
-            return Optional.empty();
+        Optional<RecordValues> values = valuesOf(key, value);
+        if (values.isEmpty()) {
+            return AdoptionCheck.refused(DecisionOutcome.NotAdoptableReason.VALUE_UNREADABLE);
         }
-        return valuesOf(key, value).map(values -> new AdoptionParts(ingestion, key, values));
+        if (trackingNumberDiffers(receivedRecord, values.get())) {
+            return AdoptionCheck.refused(DecisionOutcome.NotAdoptableReason.TRACKING_NUMBER_DIFFERS);
+        }
+        return new AdoptionCheck(new AdoptionParts(ingestion, key, values.get()), null);
+    }
+
+    /**
+     * 主要実績の受け取った値の追跡番号が、この外部版の採用値の対象のキーと違うか（【業務の判断】(m)）。採用値の要約は読まず（【業務の判断】(l)）、対象のキーの
+     * 文字列を比べる。採用値がなければ比べない。航海は航海番号が外部 ID の列の値で同じ外部 ID なら同じなので、採用値を引かない。
+     */
+    private boolean trackingNumberDiffers(ReceivedRecord receivedRecord, RecordValues values) {
+        return values instanceof MilestoneValues
+                && adoptedValues
+                        .currentOf(receivedRecord.externalRecordId())
+                        .filter(current -> !current.targetKey().equals(values.targetKey()))
+                        .isPresent();
     }
 
     /** 受け取った値を読む（読めなければ空。入口の {@link IllegalArgumentException} だけを受ける）。 */
@@ -301,4 +319,17 @@ public class ReceivedRecordDecisionService {
      * @param values 受け取った値
      */
     private record AdoptionParts(Ingestion ingestion, IdempotencyKey key, RecordValues values) {}
+
+    /**
+     * 採用できる隔離の定めの結果（どちらか一方が {@code null} でない。Bolt 39d3b2 の開始準備の決定 (3)）。
+     *
+     * @param parts 採用に要るもの（採用できないときは {@code null}）
+     * @param refusal 採用できない理由（採用できるときは {@code null}）
+     */
+    private record AdoptionCheck(AdoptionParts parts, DecisionOutcome.NotAdoptableReason refusal) {
+
+        private static AdoptionCheck refused(DecisionOutcome.NotAdoptableReason reason) {
+            return new AdoptionCheck(null, reason);
+        }
+    }
 }

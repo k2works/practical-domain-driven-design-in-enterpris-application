@@ -25,6 +25,8 @@ public class AdoptQuarantineUiSteps {
     private static final String REASON_LABEL = "採用の理由";
     private static final String IRREVOCABLE = "採用すると取り消せません。誤って採用したときは、提供元に新しい外部版で正しい原本を送ってもらってください。";
     private static final String KEYLESS_GUIDE = "形式の誤りは採用できません。直したファイルを取り込み直してください。";
+    private static final String TRACKING_NUMBER_DIFFERS_GUIDE =
+            "追跡番号がこの外部版の採用値と違うので採用できません。正しい原本を使うときは、提供元に新しい外部版で送り直してもらってください。";
 
     private final BrowserSession browser;
 
@@ -75,12 +77,22 @@ public class AdoptQuarantineUiSteps {
     /** Bolt 39d3b の行 15（キーのない隔離は採用の欄を出さない。【業務の判断】(a)）。今の文は「却下する」の欄の後に置く。 */
     @ならば("隔離の判断の画面に採用するの欄は示されず、却下するの欄の後に形式の誤りは採用できない案内が示される")
     public void 採用の欄は示されない() {
+        採用の欄がなく却下の欄の後に案内が示される(KEYLESS_GUIDE);
+    }
+
+    /** Bolt 39d3b2 の行 16（追跡番号が違う主要実績の隔離は採用の欄を出さない。【業務の判断】(m)）。 */
+    @ならば("隔離の判断の画面に採用するの欄は示されず、却下するの欄の後に追跡番号が違うので採用できない案内が示される")
+    public void 追跡番号が違う隔離に採用の欄は示されない() {
+        採用の欄がなく却下の欄の後に案内が示される(TRACKING_NUMBER_DIFFERS_GUIDE);
+    }
+
+    private void 採用の欄がなく却下の欄の後に案内が示される(String guide) {
         assertThat(heading(REJECTION_HEADING)).isVisible();
         assertThat(heading(ADOPTION_HEADING)).hasCount(0);
         assertThat(reasonField()).hasCount(0);
         assertThat(button()).hasCount(0);
-        assertThat(page().locator("section:has(> h2:text-is('" + REJECTION_HEADING + "')) ~ p:text-is('" + KEYLESS_GUIDE
-                        + "')"))
+        assertThat(page().locator(
+                                "section:has(> h2:text-is('" + REJECTION_HEADING + "')) ~ p:text-is('" + guide + "')"))
                 .hasCount(1);
         browser.checkAccessibility();
     }

@@ -981,6 +981,78 @@ class ExternalDataIngestionSecurityIntegrationTest {
     }
 
     /**
+     * Bolt 39d3b2 の行 20（開いた後の情報源の停止。本物のフィルターの連なりと PostgreSQL の上で。【業務の判断】(n)・(o)、【前の決定の変更】(2)）。データ責任者が
+     * 判断の画面を開いた後に情報源を停止すると、CSRF のトークン付きの採用の POST は判断の画面へ戻り、判断も採用値も書かれず、続く画面に理由とエラー要約が示される。
+     * 情報源の承認が戻れば同じ隔離を採用できる。39c〜39d3b の同じ番号の行と名前が衝突しないよう入れ子にする。
+     */
+    @Nested
+    class Bolt39d3b2_開いた後の情報源の停止 {
+
+        private static final String LIST_URL = "/staff/external-data/undecided-records";
+        private static final String SOURCE_NOT_APPROVED_TEXT =
+                "情報源が承認済みではないため採用できません。受け取った値を使うときは、運用の手順で情報源を承認し直してから、この隔離を開き直してください。";
+
+        private int countOf(String table, UUID receivedRecordId) {
+            Integer value = jdbc.queryForObject(
+                    "SELECT COUNT(*) FROM external_data." + table + " WHERE received_record_id = ?",
+                    Integer.class,
+                    receivedRecordId);
+            return value == null ? 0 : value;
+        }
+
+        private void approvalOfSource(String status) {
+            jdbc.update("UPDATE external_data.data_source SET approval_status = ? WHERE id = ?", status, sourceId);
+        }
+
+        @Test
+        void 行20_開いた後に情報源を停止すると採用のPOSTは判断の画面へ戻り判断も採用値も書かず承認が戻れば採用できる() throws Exception {
+            Cookie session = login(user(Set.of(Role.DATA_STEWARD)));
+            String location = ingested(session, file(row("V-1", PORT_CALLS), row("V-1", CHANGED_PORT_CALLS)));
+            UUID ingestionId = UUID.fromString(location.substring(location.lastIndexOf('/') + 1));
+            UUID receivedRecordId = receivedRecordOf(ingestionId, "QUARANTINED");
+            String decisionUrl = LIST_URL + "/" + receivedRecordId + "?ingestion=" + ingestionId + "&page=1";
+            String adoptionUrl = LIST_URL + "/" + receivedRecordId + "/adoption?ingestion=" + ingestionId + "&page=1";
+            assertThat(body(session, decisionUrl)).contains("<h2 id=\"adoption-heading\">採用する</h2>");
+
+            approvalOfSource("SUSPENDED");
+            MvcResult refused = mvc.perform(post(adoptionUrl)
+                            .param("reason", "")
+                            .cookie(session)
+                            .with(csrf()))
+                    .andExpect(status().is3xxRedirection())
+                    .andReturn();
+
+            assertThat(refused.getResponse().getRedirectedUrl()).isEqualTo(decisionUrl);
+            assertThat((Map<String, Object>) refused.getFlashMap()).containsEntry("adoptionRefused", true);
+            assertThat(countOf("received_record_decision", receivedRecordId)).isZero();
+            assertThat(countOf("adopted_value", receivedRecordId)).isZero();
+            String page = mvc.perform(get(decisionUrl).cookie(session).flashAttrs(refused.getFlashMap()))
+                    .andExpect(status().isOk())
+                    .andReturn()
+                    .getResponse()
+                    .getContentAsString(StandardCharsets.UTF_8);
+            assertThat(page)
+                    .contains("<h2 id=\"error-summary-title\">採用できませんでした</h2>")
+                    .contains("<a href=\"#adoption-refusal\">" + SOURCE_NOT_APPROVED_TEXT + "</a>")
+                    .contains("<p id=\"adoption-refusal\" tabindex=\"-1\">" + SOURCE_NOT_APPROVED_TEXT + "</p>")
+                    .doesNotContain("<h2 id=\"adoption-heading\">採用する</h2>");
+
+            approvalOfSource("APPROVED");
+            assertThat(body(session, decisionUrl)).contains("<h2 id=\"adoption-heading\">採用する</h2>");
+            MvcResult adopted = mvc.perform(post(adoptionUrl)
+                            .param("reason", "")
+                            .cookie(session)
+                            .with(csrf()))
+                    .andExpect(status().is3xxRedirection())
+                    .andReturn();
+
+            assertThat((Map<String, Object>) adopted.getFlashMap()).containsEntry("result", "隔離を採用しました。");
+            assertThat(countOf("received_record_decision", receivedRecordId)).isEqualTo(1);
+            assertThat(countOf("adopted_value", receivedRecordId)).isEqualTo(1);
+        }
+    }
+
+    /**
      * Bolt 39d2b の行 4・8・11・14（S-17 の形式の誤りのまとめての却下。本物のフィルターの連なりと PostgreSQL の上で）。データ責任者が取込で
      * 絞った一覧のリンクからまとめての却下の画面を開いて却下すると、PRG で取込で絞った一覧に戻り、その取込の形式の誤りごとに同じ判断者・
      * 時刻・理由の判断が残り、内容の違う原本は残る。まとめての却下の画面と POST は今の {@code /staff/external-data/**} の規則のまま、ほかの役割は

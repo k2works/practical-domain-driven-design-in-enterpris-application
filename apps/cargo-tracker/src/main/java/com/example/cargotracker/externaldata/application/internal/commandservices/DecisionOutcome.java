@@ -17,7 +17,7 @@ public sealed interface DecisionOutcome {
     record Rejected(UUID receivedRecordId) implements DecisionOutcome {
 
         public Rejected {
-            Objects.requireNonNull(receivedRecordId, "receivedRecordId");
+            requireReceivedRecordId(receivedRecordId);
         }
     }
 
@@ -29,12 +29,42 @@ public sealed interface DecisionOutcome {
     record AdoptedQuarantine(UUID receivedRecordId) implements DecisionOutcome {
 
         public AdoptedQuarantine {
-            Objects.requireNonNull(receivedRecordId, "receivedRecordId");
+            requireReceivedRecordId(receivedRecordId);
         }
     }
 
-    /** 判断を待つ隔離だが採用できない（Bolt 39d3b。却下はできる。【業務の判断】(a)・(k)・(n)。主要実績の隔離は 39d3b2 まで）。 */
-    record NotAdoptable() implements DecisionOutcome {}
+    /**
+     * 判断を待つ隔離だが採用できない（Bolt 39d3b。却下はできる）。理由で画面の文を選び、受信記録 ID で判断の画面へ戻す（Bolt 39d3b2）。
+     *
+     * @param receivedRecordId 受信記録 ID
+     * @param reason 採用できない理由
+     */
+    record NotAdoptable(UUID receivedRecordId, NotAdoptableReason reason) implements DecisionOutcome {
+
+        public NotAdoptable {
+            requireReceivedRecordId(receivedRecordId);
+            Objects.requireNonNull(reason, "reason");
+        }
+    }
+
+    /** 受信記録 ID を持つ結果の null の確かめ（3 つの結果で同じ）。 */
+    private static void requireReceivedRecordId(UUID receivedRecordId) {
+        Objects.requireNonNull(receivedRecordId, "receivedRecordId");
+    }
+
+    /** 採用できない理由（Bolt 39d3b2。業務の見分けで、画面の文は持たない）。判断のサービスがこの順に確かめる。 */
+    enum NotAdoptableReason {
+        /** 外部原本がない隔離（形式の誤り。【業務の判断】(a)）。 */
+        KEYLESS,
+        /** 受け取った値の列がない隔離（Bolt 39d の決定 (8)）。 */
+        VALUE_NOT_RECORDED,
+        /** 情報源の承認の状態が承認済みでない隔離（【業務の判断】(n)・(o)）。 */
+        SOURCE_NOT_APPROVED,
+        /** 受け取った値を読めない隔離、知らない原本種別の隔離（【業務の判断】(k)）。 */
+        VALUE_UNREADABLE,
+        /** 受け取った値の追跡番号がこの外部版の採用値と違う主要実績の隔離（【業務の判断】(m)）。 */
+        TRACKING_NUMBER_DIFFERS
+    }
 
     /** 操作者がデータ責任者でない（URL の認可に加えてサービスでも確かめる）。 */
     record NotPermitted() implements DecisionOutcome {}
