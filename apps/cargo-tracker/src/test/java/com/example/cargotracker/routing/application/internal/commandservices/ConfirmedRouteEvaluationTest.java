@@ -80,9 +80,16 @@ class ConfirmedRouteEvaluationTest {
     }
 
     @Test
-    void 不適合になれば再設計要を操作者なしで保存してDE06を発行する() {
+    void 不適合になれば再設計要をシステムの操作で保存してDE06を発行する() {
+        List<RoutingCaseNumber> savedBySystem = new ArrayList<>();
         List<UUID> operators = new ArrayList<>();
         InMemoryRoutingCaseRepository repository = new InMemoryRoutingCaseRepository() {
+            @Override
+            public synchronized void updateBySystem(RoutingCase routingCase) {
+                savedBySystem.add(routingCase.number());
+                super.updateBySystem(routingCase);
+            }
+
             @Override
             public synchronized void update(RoutingCase routingCase, UUID operatorId) {
                 operators.add(operatorId);
@@ -98,8 +105,9 @@ class ConfirmedRouteEvaluationTest {
         RoutingCase saved = repository.findByNumber(confirmed.number()).orElseThrow();
         assertThat(saved.routeVersion().status()).isEqualTo(RouteVersionStatus.REDESIGN_REQUIRED);
         assertThat(saved.aggregateVersion()).isEqualTo(confirmed.aggregateVersion() + 1);
-        // 評価は利用者の操作ではないので、最終更新者を変えない（確認ポイント 5）
-        assertThat(operators).containsExactly((UUID) null);
+        // 評価は利用者の操作ではないので、操作者のある更新を使わない（Bolt 39f の行 29）
+        assertThat(savedBySystem).containsExactly(confirmed.number());
+        assertThat(operators).isEmpty();
         assertThat(published).singleElement().isInstanceOfSatisfying(RouteRedesignRequired.class, event -> {
             assertThat(event.routeVersionNo()).isEqualTo(1);
             assertThat(event.requiredAt()).isEqualTo(new UtcInstant(EVALUATED_AT));
@@ -110,13 +118,13 @@ class ConfirmedRouteEvaluationTest {
 
     @Test
     void 読み込んだ後に案件が更新されていれば競合でイベントを発行しない() {
-        // 先の評価がすでに再設計要にして DE-06 を出しているので、再試行しない（確認ポイント 5）。読み込んだ直後に
+        // 入力ポートは競合を返すだけで、読み直しは DE-30 の listener が行う（Bolt 39f の決定 (5)）。読み込んだ直後に
         // ほかの更新で案件の版を進め、版の照合で競合させる
         InMemoryRoutingCaseRepository repository = new InMemoryRoutingCaseRepository() {
             @Override
             public Optional<RoutingCase> findByNumber(RoutingCaseNumber number) {
                 Optional<RoutingCase> loaded = super.findByNumber(number);
-                super.findByNumber(number).ifPresent(other -> super.update(other, null));
+                super.findByNumber(number).ifPresent(super::updateBySystem);
                 return loaded;
             }
         };

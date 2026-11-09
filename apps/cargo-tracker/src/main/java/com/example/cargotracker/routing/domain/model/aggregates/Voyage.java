@@ -1,13 +1,16 @@
 package com.example.cargotracker.routing.domain.model.aggregates;
 
+import com.example.cargotracker.routing.domain.events.VoyageUpdated;
 import com.example.cargotracker.routing.domain.model.valueobjects.Leg;
 import com.example.cargotracker.routing.domain.model.valueobjects.PortCall;
 import com.example.cargotracker.routing.domain.model.valueobjects.VoyageAdoption;
 import com.example.cargotracker.shared.annotation.ddd.AggregateRoot;
+import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.Source;
 import com.example.cargotracker.shared.domain.SourceKind;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -112,6 +115,11 @@ public final class Voyage {
         return true;
     }
 
+    /** DE-30 航海を更新した（{@link #apply} が適用したときに、保存の後で発行する。Bolt 39f）。 */
+    public VoyageUpdated updated() {
+        return new VoyageUpdated(voyageNumber, adoptedInfoVersion, publishedAt);
+    }
+
     /** 採用値の新しさを比べる値。 */
     private record Freshness(Instant publishedAt, Instant acquiredAt, String receivedRecordId) {}
 
@@ -128,9 +136,9 @@ public final class Voyage {
     }
 
     /**
-     * 区間が今の航海と一致するか（R-INV-03、【業務の判断】(s)。Bolt 39e2）。航海番号と情報版が同じで、積地の寄港の出発予定が区間の出発予定と同じで、その後ろに
-     * 揚地の寄港があり到着予定が区間の到着予定と同じ組が 1 つ以上あるときだけ真になる。同じ情報版で値の違う DE-12 が適用されるので（【業務の判断】(r)）、情報版だけでは
-     * 区間の予定の変更を見落とす。2 度寄る航海は組が残っていれば一致する（Bolt 39e2 の決定 (3)）。出発のない寄港は積地に、到着のない寄港は揚地にならない。
+     * 区間が今の航海と一致するか（R-INV-03、【業務の判断】(s)。Bolt 39e2）。航海番号と情報版が同じで、区間の出発予定と到着予定に一致する積地と揚地の寄港の組が 1 つ以上あるときに
+     * 真になる。同じ情報版で値の違う DE-12 が適用されるので（【業務の判断】(r)）、情報版だけでは区間の予定の変更を見落とす。一致する組が 2 つ以上（同じ港に同じ時刻で 2 度寄る）のときは、
+     * 区間の寄港の位置の組がそのうちにあることも求める（位置を持たない Bolt 39f より前の区間は求めない。【前の決定の変更】(5)）。一致する組が 1 つなら、位置がずれていても一致する。
      *
      * @return 区間の情報版と予定の組が今の航海にあれば真
      */
@@ -138,22 +146,57 @@ public final class Voyage {
         if (!voyageNumber.equals(leg.voyageNumber()) || !adoptedInfoVersion.equals(leg.infoVersion())) {
             return false;
         }
-        for (int load = 0; load < portCalls.size(); load++) {
-            if (isLoadingOf(portCalls.get(load), leg) && hasDischargeOfAfter(leg, load)) {
-                return true;
+        List<CallPair> matching = callPairs(leg.load(), leg.discharge()).stream()
+                .filter(pair -> pair.hasScheduleOf(leg))
+                .toList();
+        if (matching.size() < 2 || !leg.hasCallPositions()) {
+            return !matching.isEmpty();
+        }
+        return matching.stream().anyMatch(pair -> pair.isAtPositionsOf(leg));
+    }
+
+    /**
+     * 港 {@code load} を出発する寄港と、その後で港 {@code discharge} に到着する寄港の組（確定の照合と引き直しが使う。Bolt 39f）。出発のない寄港は積地に、到着のない寄港は揚地にならない。
+     *
+     * @return 運航の順の組
+     */
+    public List<CallPair> callPairs(Location load, Location discharge) {
+        List<CallPair> pairs = new ArrayList<>();
+        for (int from = 0; from < portCalls.size(); from++) {
+            PortCall loading = portCalls.get(from);
+            if (!loading.port().equals(load) || loading.departureAt() == null) {
+                continue;
+            }
+            for (int to = from + 1; to < portCalls.size(); to++) {
+                PortCall discharging = portCalls.get(to);
+                if (discharging.port().equals(discharge) && discharging.arrivalAt() != null) {
+                    pairs.add(new CallPair(from + 1, to + 1, loading, discharging));
+                }
             }
         }
-        return false;
+        return List.copyOf(pairs);
     }
 
-    private static boolean isLoadingOf(PortCall call, Leg leg) {
-        return call.port().equals(leg.load()) && leg.departureAt().equals(call.departureAt());
-    }
+    /**
+     * 積地の寄港と揚地の寄港の組。
+     *
+     * @param loadCallNo 積地の寄港の位置（運航の順で 1 始まり）
+     * @param dischargeCallNo 揚地の寄港の位置
+     * @param load 積地の寄港（出発予定がある）
+     * @param discharge 揚地の寄港（到着予定がある）
+     */
+    public record CallPair(int loadCallNo, int dischargeCallNo, PortCall load, PortCall discharge) {
 
-    private boolean hasDischargeOfAfter(Leg leg, int load) {
-        return portCalls.subList(load + 1, portCalls.size()).stream()
-                .anyMatch(call ->
-                        call.port().equals(leg.discharge()) && leg.arrivalAt().equals(call.arrivalAt()));
+        /** 出発予定と到着予定が区間と同じか。 */
+        public boolean hasScheduleOf(Leg leg) {
+            return leg.departureAt().equals(load.departureAt())
+                    && leg.arrivalAt().equals(discharge.arrivalAt());
+        }
+
+        /** 区間の寄港の位置の組か（位置を持たない区間は偽）。 */
+        public boolean isAtPositionsOf(Leg leg) {
+            return leg.hasCallPositions() && leg.loadCallNo() == loadCallNo && leg.dischargeCallNo() == dischargeCallNo;
+        }
     }
 
     public String voyageNumber() {

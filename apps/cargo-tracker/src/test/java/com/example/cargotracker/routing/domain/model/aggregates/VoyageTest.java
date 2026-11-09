@@ -2,6 +2,7 @@ package com.example.cargotracker.routing.domain.model.aggregates;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.example.cargotracker.routing.domain.events.VoyageUpdated;
 import com.example.cargotracker.routing.domain.model.valueobjects.Leg;
 import com.example.cargotracker.routing.domain.model.valueobjects.PortCall;
 import com.example.cargotracker.routing.domain.model.valueobjects.VoyageAdoption;
@@ -316,6 +317,70 @@ class VoyageTest {
             Voyage voyage = new Voyage("V2611E", calls, "1", new UtcInstant(T0));
 
             assertThat(voyage.matchesLeg(leg)).as(description).isEqualTo(matches);
+        }
+    }
+
+    /** 一致する組が 2 つ以上のときだけ位置を見る（【前の決定の変更】(5)。Bolt 39f の決定 (3)、行 9）。 */
+    @Nested
+    class Bolt39f_区間の照合と寄港の位置 {
+
+        private static final String DEPARTURE = "2026-12-01T00:00:00Z";
+        private static final String ARRIVAL = "2026-12-20T00:00:00Z";
+
+        /** 東京に 2 度寄る。出発が違うので、区間の予定に一致する組は 1 つ（(1,4)）。 */
+        private static final List<PortCall> ONE_MATCHING_PAIR = List.of(
+                new PortCall(TOKYO, null, at(DEPARTURE)),
+                new PortCall(SINGAPORE, at("2026-12-05T00:00:00Z"), at("2026-12-06T00:00:00Z")),
+                new PortCall(TOKYO, at("2026-12-08T00:00:00Z"), at("2026-12-09T00:00:00Z")),
+                new PortCall(ROTTERDAM, at(ARRIVAL), null));
+        /** 東京に同じ出発の時刻で 2 度寄る。区間の予定に一致する組は 2 つ（(1,4)・(3,4)）。 */
+        private static final List<PortCall> TWO_MATCHING_PAIRS = List.of(
+                new PortCall(TOKYO, null, at(DEPARTURE)),
+                new PortCall(SINGAPORE, at("2026-11-20T00:00:00Z"), at("2026-11-21T00:00:00Z")),
+                new PortCall(TOKYO, at("2026-11-30T00:00:00Z"), at(DEPARTURE)),
+                new PortCall(ROTTERDAM, at(ARRIVAL), null));
+
+        private static Leg leg(Integer loadCallNo, Integer dischargeCallNo) {
+            return new Leg(
+                    "V2611E",
+                    TOKYO,
+                    ROTTERDAM,
+                    at(DEPARTURE),
+                    at(ARRIVAL),
+                    "1",
+                    new UtcInstant(T0),
+                    loadCallNo,
+                    dischargeCallNo);
+        }
+
+        static Stream<Arguments> legs() {
+            return Stream.of(
+                    Arguments.of("一致する組が 1 つで位置も合う", ONE_MATCHING_PAIR, leg(1, 4), true),
+                    Arguments.of("一致する組が 1 つで位置がほかの組を指す", ONE_MATCHING_PAIR, leg(3, 4), true),
+                    Arguments.of("一致する組が 1 つで位置が寄港の数を超える", ONE_MATCHING_PAIR, leg(9, 10), true),
+                    Arguments.of("一致する組が 2 つで位置が前の組", TWO_MATCHING_PAIRS, leg(1, 4), true),
+                    Arguments.of("一致する組が 2 つで位置が後の組", TWO_MATCHING_PAIRS, leg(3, 4), true),
+                    Arguments.of("一致する組が 2 つで位置が組にない", TWO_MATCHING_PAIRS, leg(2, 4), false),
+                    Arguments.of("一致する組が 2 つで位置が寄港の数を超える", TWO_MATCHING_PAIRS, leg(1, 9), false),
+                    Arguments.of("一致する組が 2 つで位置がない（Bolt 39f より前の候補）", TWO_MATCHING_PAIRS, leg(null, null), true),
+                    Arguments.of("一致する組がなければ位置が合っても一致しない", P2, leg(1, 2), false));
+        }
+
+        @ParameterizedTest(name = "{0} なら {3}")
+        @MethodSource("legs")
+        void 行9_一致する組が2つ以上のときだけ位置の組があることを求める(String description, List<PortCall> calls, Leg leg, boolean matches) {
+            Voyage voyage = new Voyage("V2611E", calls, "1", new UtcInstant(T0));
+
+            assertThat(voyage.matchesLeg(leg)).as(description).isEqualTo(matches);
+        }
+
+        @Test
+        void 行13_適用した後のDE30は航海番号と今の情報版と公開した時刻を持つ() {
+            Voyage voyage = Voyage.adoptedFrom(adoption(P1, "1", T1));
+
+            voyage.apply(adoption(P2, "2", T2));
+
+            assertThat(voyage.updated()).isEqualTo(new VoyageUpdated("V2611E", "2", new UtcInstant(T2)));
         }
     }
 

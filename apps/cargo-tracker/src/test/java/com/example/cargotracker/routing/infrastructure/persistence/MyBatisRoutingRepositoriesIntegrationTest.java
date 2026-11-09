@@ -14,6 +14,7 @@ import com.example.cargotracker.routing.domain.model.aggregates.RoutingCaseNumbe
 import com.example.cargotracker.routing.domain.model.aggregates.RoutingCaseRepository;
 import com.example.cargotracker.routing.domain.model.aggregates.Voyage;
 import com.example.cargotracker.routing.domain.model.aggregates.VoyageRepository;
+import com.example.cargotracker.routing.domain.model.entities.RouteCandidate;
 import com.example.cargotracker.routing.domain.model.entities.RouteVersion;
 import com.example.cargotracker.routing.domain.model.rules.ConstraintEvaluator;
 import com.example.cargotracker.routing.domain.model.rules.InfoFreshnessPolicy;
@@ -34,17 +35,24 @@ import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseSum
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.UtcInstant;
+import java.sql.Types;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
+import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.SqlParameterValue;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -522,34 +530,247 @@ class MyBatisRoutingRepositoriesIntegrationTest {
                 .isEqualTo("CONNECTION_TOO_SHORT DEADLINE_EXCEEDED");
     }
 
-    @Test
-    void 操作者を渡さない更新は案件の版を上げ最終更新者を変えない() {
-        // Bolt 37d2: 確定した経路の評価は外部情報の更新を受けたシステムの操作なので、最後に確定した経路設計者を残す
-        RoutingCase confirmed = confirmedAndSaved();
-        RoutingCase loaded = repository.findByNumber(confirmed.number()).orElseThrow();
-        RouteVersion version = loaded.routeVersion();
-        RoutingCase redesigned = RoutingCaseFixture.withRouteVersions(
-                loaded,
-                List.of(new RouteVersion(
-                        version.routeVersionNo(),
-                        RouteVersionStatus.REDESIGN_REQUIRED,
-                        version.candidates(),
-                        version.evaluatedAt().orElseThrow(),
-                        version.candidatesFound(),
-                        version.confirmation().orElseThrow(),
-                        new RedesignRecord(
-                                at("2083-10-08T00:00:00Z"), List.of(RedesignReasonCode.VOYAGE_UNAVAILABLE)))));
+    /** 確定の航海の照会、寄港の位置、システムの更新（Bolt 39f の行 1〜3・29）。 */
+    @Nested
+    class Bolt39f_照会と寄港の位置とシステムの更新 {
 
-        repository.update(redesigned, null);
+        @Autowired
+        SqlSessionTemplate sqlSession;
 
-        RoutingCase found = repository.findByNumber(confirmed.number()).orElseThrow();
-        assertThat(found.aggregateVersion()).isEqualTo(loaded.aggregateVersion() + 1);
-        assertThat(found.routeVersion().status()).isEqualTo(RouteVersionStatus.REDESIGN_REQUIRED);
-        assertThat(jdbc.queryForObject(
-                        "SELECT updated_by FROM routing.routing_case WHERE id = ?",
-                        UUID.class,
-                        confirmed.id().value()))
-                .isEqualTo(APPROVER.userId());
+        /** 積替え 1 回の航海（候補は IT-39F-FEED → IT-39F-MAIN の 1 つ）。 */
+        private static List<Voyage> transshipment() {
+            return List.of(
+                    voyage(
+                            "IT-39F-FEED",
+                            call(TOKYO, null, "2083-10-10T00:00:00Z"),
+                            call(SINGAPORE, "2083-10-20T00:00:00Z", null)),
+                    voyage(
+                            "IT-39F-MAIN",
+                            call(SINGAPORE, null, "2083-10-21T00:00:00Z"),
+                            call(ROTTERDAM, "2083-10-30T00:00:00Z", null)));
+        }
+
+        private RoutingCase calculatedOn(List<Voyage> voyages) {
+            RoutingCase routingCase = open(UUID.randomUUID(), "2083-10-06T02:00:00Z");
+            repository.save(routingCase);
+            RoutingCase loaded = repository.findByNumber(routingCase.number()).orElseThrow();
+            loaded.calculateCandidates(
+                    voyages,
+                    rules(),
+                    JUDGED_AT,
+                    new RouteCandidateFinder(),
+                    new ConstraintEvaluator(),
+                    new InfoFreshnessPolicy(Duration.ofHours(24)));
+            repository.update(loaded, OPERATOR);
+            return repository.findByNumber(routingCase.number()).orElseThrow();
+        }
+
+        private RoutingCase confirmedOn(List<Voyage> voyages) {
+            RoutingCase loaded = calculatedOn(voyages);
+            loaded.confirm(
+                    1,
+                    "積替えの余裕がある。",
+                    APPROVER,
+                    voyages,
+                    rules(),
+                    at("2083-10-07T04:00:00Z"),
+                    new ConstraintEvaluator(),
+                    new InfoFreshnessPolicy(Duration.ofHours(24)));
+            repository.update(loaded, APPROVER.userId());
+            return repository.findByNumber(loaded.number()).orElseThrow();
+        }
+
+        private RoutingCase redesigned(RoutingCase loaded) {
+            RouteVersion version = loaded.routeVersion();
+            return RoutingCaseFixture.withRouteVersions(
+                    loaded,
+                    List.of(new RouteVersion(
+                            version.routeVersionNo(),
+                            RouteVersionStatus.REDESIGN_REQUIRED,
+                            version.candidates(),
+                            version.evaluatedAt().orElseThrow(),
+                            version.candidatesFound(),
+                            version.confirmation().orElseThrow(),
+                            new RedesignRecord(
+                                    at("2083-10-08T00:00:00Z"), List.of(RedesignReasonCode.VOYAGE_UNAVAILABLE)))));
+        }
+
+        @ParameterizedTest(name = "{0}")
+        @CsvSource({"1 区間目の航海, IT-39F-FEED", "2 区間目の航海, IT-39F-MAIN"})
+        void 行1_確定の候補の区間にその航海がある案件を返す(String description, String voyageNumber) {
+            RoutingCase confirmed = confirmedOn(transshipment());
+
+            assertThat(repository.findCaseNumbersConfirmedOnVoyage(voyageNumber))
+                    .as(description)
+                    .containsExactly(confirmed.number());
+        }
+
+        @Test
+        void 行1_確定でない候補の区間だけにある航海では返さない() {
+            confirmedAndSaved();
+
+            // IT-DIRECT の候補を確定した案件の、確定していない候補の区間の航海
+            assertThat(repository.findCaseNumbersConfirmedOnVoyage("IT-LATE")).isEmpty();
+            assertThat(repository.findCaseNumbersConfirmedOnVoyage("IT-DIRECT")).hasSize(1);
+        }
+
+        @Test
+        void 行1_候補提示済みの案件は返さない() {
+            calculatedAndSaved();
+
+            assertThat(repository.findCaseNumbersConfirmedOnVoyage("IT-DIRECT")).isEmpty();
+        }
+
+        @Test
+        void 行1_再設計要の案件は返さない() {
+            RoutingCase loaded = confirmedOn(transshipment());
+            repository.updateBySystem(redesigned(loaded));
+
+            assertThat(repository.findCaseNumbersConfirmedOnVoyage("IT-39F-FEED"))
+                    .isEmpty();
+        }
+
+        @Test
+        void 行1_最新でない経路版が確定でも返さない() {
+            RoutingCase confirmed = confirmedOn(transshipment());
+            jdbc.update(
+                    "INSERT INTO routing.route_version (routing_case_id, route_version_no, status, candidates_found, created_at)"
+                            + " VALUES (?, 2, 'DRAFT', 0, CURRENT_TIMESTAMP)",
+                    confirmed.id().value());
+            sqlSession.clearCache();
+
+            assertThat(repository.findCaseNumbersConfirmedOnVoyage("IT-39F-FEED"))
+                    .isEmpty();
+        }
+
+        @Test
+        void 行1_ほかの航海では返さない() {
+            confirmedOn(transshipment());
+
+            assertThat(repository.findCaseNumbersConfirmedOnVoyage("IT-39F-OTHER"))
+                    .isEmpty();
+        }
+
+        @Test
+        void 行1_確定の候補の2つの区間に同じ航海があっても案件は1件() {
+            RoutingCase confirmed = confirmedOn(transshipment());
+            jdbc.update(
+                    "INSERT INTO routing.candidate_leg (routing_case_id, route_version_no, candidate_no, leg_no, voyage_number,"
+                            + " load_unlocode, discharge_unlocode, departure_at, arrival_at, info_version, info_acquired_at, executed)"
+                            + " SELECT routing_case_id, route_version_no, candidate_no, 3, voyage_number, load_unlocode,"
+                            + " discharge_unlocode, departure_at, arrival_at, info_version, info_acquired_at, executed"
+                            + " FROM routing.candidate_leg WHERE routing_case_id = ? AND leg_no = 1",
+                    confirmed.id().value());
+
+            assertThat(repository.findCaseNumbersConfirmedOnVoyage("IT-39F-FEED"))
+                    .containsExactly(confirmed.number());
+        }
+
+        @Test
+        void 行2_区間の航海番号の索引がある() {
+            assertThat(jdbc.queryForObject(
+                            "SELECT COUNT(*) FROM pg_indexes WHERE schemaname = 'routing' AND tablename = 'candidate_leg'"
+                                    + " AND indexname = 'ix_candidate_leg_voyage'",
+                            Integer.class))
+                    .isEqualTo(1);
+        }
+
+        @ParameterizedTest(name = "{0}")
+        @ValueSource(strings = {"load_call_no", "discharge_call_no"})
+        void 行2_寄港の位置の列に日本語のコメントがある(String column) {
+            assertThat(jdbc.queryForObject(
+                            "SELECT col_description('routing.candidate_leg'::regclass, attnum) FROM pg_attribute"
+                                    + " WHERE attrelid = 'routing.candidate_leg'::regclass AND attname = ?",
+                            String.class,
+                            column))
+                    .contains("寄港の位置");
+        }
+
+        @ParameterizedTest(name = "積地 {0}・揚地 {1}")
+        @CsvSource(
+                nullValues = "null",
+                value = {"1, null", "null, 2", "2, 2", "3, 2"})
+        void 行2_片方だけの位置と積地が揚地より後の位置はCHECKで拒否する(Integer loadCallNo, Integer dischargeCallNo) {
+            RoutingCase calculated = calculatedAndSaved();
+            SqlParameterValue load = new SqlParameterValue(Types.INTEGER, loadCallNo);
+            SqlParameterValue discharge = new SqlParameterValue(Types.INTEGER, dischargeCallNo);
+            UUID id = calculated.id().value();
+
+            assertThatThrownBy(() -> jdbc.update(
+                            "UPDATE routing.candidate_leg SET load_call_no = ?, discharge_call_no = ? WHERE routing_case_id = ?",
+                            load,
+                            discharge,
+                            id))
+                    .isInstanceOf(DataIntegrityViolationException.class);
+        }
+
+        @Test
+        void 行3_候補の算出で書いた寄港の位置を読み直して同じ値になる() {
+            RoutingCase calculated = calculatedOn(List.of(voyage(
+                    "IT-39F-THREE",
+                    call(HONG_KONG, null, "2083-10-08T00:00:00Z"),
+                    call(TOKYO, "2083-10-09T00:00:00Z", "2083-10-10T00:00:00Z"),
+                    call(ROTTERDAM, "2083-10-30T00:00:00Z", null))));
+
+            assertThat(calculated.routeVersion().candidates().getFirst().legs())
+                    .singleElement()
+                    .satisfies(leg -> {
+                        assertThat(leg.loadCallNo()).isEqualTo(2);
+                        assertThat(leg.dischargeCallNo()).isEqualTo(3);
+                    });
+        }
+
+        @Test
+        void 行3_Bolt39fより前の行のNULLはNULLで読む() {
+            RoutingCase calculated = calculatedAndSaved();
+            jdbc.update(
+                    "UPDATE routing.candidate_leg SET load_call_no = NULL, discharge_call_no = NULL WHERE routing_case_id = ?",
+                    calculated.id().value());
+            sqlSession.clearCache();
+
+            RoutingCase found = repository.findByNumber(calculated.number()).orElseThrow();
+
+            assertThat(found.routeVersion().candidates())
+                    .flatExtracting(RouteCandidate::legs)
+                    .isNotEmpty()
+                    .allSatisfy(leg -> {
+                        assertThat(leg.loadCallNo()).isNull();
+                        assertThat(leg.dischargeCallNo()).isNull();
+                    });
+        }
+
+        @Test
+        void 行29_システムの更新は案件の版を上げ最終更新者を変えない() {
+            // 確定した経路の評価は外部情報の更新を受けたシステムの操作なので、最後に確定した経路設計者を残す（Bolt 37d2）
+            RoutingCase confirmed = confirmedAndSaved();
+            RoutingCase loaded = repository.findByNumber(confirmed.number()).orElseThrow();
+
+            repository.updateBySystem(redesigned(loaded));
+
+            RoutingCase found = repository.findByNumber(confirmed.number()).orElseThrow();
+            assertThat(found.aggregateVersion()).isEqualTo(loaded.aggregateVersion() + 1);
+            assertThat(found.routeVersion().status()).isEqualTo(RouteVersionStatus.REDESIGN_REQUIRED);
+            assertThat(jdbc.queryForObject(
+                            "SELECT updated_by FROM routing.routing_case WHERE id = ?",
+                            UUID.class,
+                            confirmed.id().value()))
+                    .isEqualTo(APPROVER.userId());
+        }
+
+        @Test
+        void 行29_updateに操作者nullを渡すと例外で案件の版を進めない() {
+            RoutingCase confirmed = confirmedAndSaved();
+            RoutingCase loaded = repository.findByNumber(confirmed.number()).orElseThrow();
+            long versionBefore = loaded.aggregateVersion();
+
+            assertThatThrownBy(() -> repository.update(loaded, null)).isInstanceOf(NullPointerException.class);
+
+            assertThat(jdbc.queryForObject(
+                            "SELECT version FROM routing.routing_case WHERE id = ?",
+                            Long.class,
+                            confirmed.id().value()))
+                    .isEqualTo(versionBefore);
+        }
     }
 
     @Test

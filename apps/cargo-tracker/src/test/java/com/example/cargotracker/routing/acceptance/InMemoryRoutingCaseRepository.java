@@ -4,6 +4,7 @@ import com.example.cargotracker.routing.domain.model.aggregates.ConcurrentRoutin
 import com.example.cargotracker.routing.domain.model.aggregates.DuplicateRoutingCaseException;
 import com.example.cargotracker.routing.domain.model.aggregates.RoutingCase;
 import com.example.cargotracker.routing.domain.model.aggregates.RoutingCaseRepository;
+import com.example.cargotracker.routing.domain.model.valueobjects.RouteVersionStatus;
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseNumber;
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseSummary;
 import com.example.cargotracker.shared.domain.CompanyId;
@@ -12,6 +13,7 @@ import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -40,6 +42,16 @@ public class InMemoryRoutingCaseRepository implements RoutingCaseRepository {
 
     @Override
     public synchronized void update(RoutingCase routingCase, UUID operatorId) {
+        Objects.requireNonNull(operatorId, "operatorId");
+        write(routingCase);
+    }
+
+    @Override
+    public synchronized void updateBySystem(RoutingCase routingCase) {
+        write(routingCase);
+    }
+
+    private void write(RoutingCase routingCase) {
         RoutingCase stored = store.get(routingCase.number());
         if (stored == null || stored.aggregateVersion() != routingCase.aggregateVersion()) {
             throw new ConcurrentRoutingCaseUpdateException(routingCase.number(), routingCase.aggregateVersion());
@@ -56,6 +68,16 @@ public class InMemoryRoutingCaseRepository implements RoutingCaseRepository {
     @Override
     public Optional<RoutingCase> findByNumberForRouteAssignment(RoutingCaseNumber number) {
         return findByNumber(number);
+    }
+
+    @Override
+    public List<RoutingCaseNumber> findCaseNumbersConfirmedOnVoyage(String voyageNumber) {
+        return store.values().stream()
+                .filter(found -> found.routeVersion().status() == RouteVersionStatus.CONFIRMED)
+                .filter(found -> found.confirmedVoyageNumbers().contains(voyageNumber))
+                .map(RoutingCase::number)
+                .sorted(Comparator.comparing(RoutingCaseNumber::text))
+                .toList();
     }
 
     @Override

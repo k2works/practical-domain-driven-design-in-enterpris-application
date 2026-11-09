@@ -66,5 +66,8 @@ public interface RoutingCaseMapper {
 
     List<ExclusionReasonRow> selectExclusionReasons(UUID routingCaseId);
 
+    /** 最新の経路版が確定で、確定の候補の区間にその航海がある案件番号（Bolt 39f）。 */
+    List<String> selectCaseNumbersConfirmedOnVoyage(String voyageNumber);
+
     List<RoutingCaseSummaryRow> selectSummaries(@Param("shipperCompanyIds") Collection<UUID> shipperCompanyIds);
 }

@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.MethodSource;
 
 /**
@@ -52,7 +53,9 @@ class RouteCandidateFinderTest {
                         at("2026-10-08T00:00:00Z"),
                         at("2026-10-30T09:00:00Z"),
                         "V-101@1",
-                        at("2026-10-01T06:10:00Z"))));
+                        at("2026-10-01T06:10:00Z"),
+                        1,
+                        3)));
     }
 
     @Test
@@ -306,7 +309,9 @@ class RouteCandidateFinderTest {
                         at("2026-10-08T06:00:00Z"),
                         at("2026-11-03T00:00:00Z"),
                         "V-101@2",
-                        at("2026-10-08T05:00:00Z")));
+                        at("2026-10-08T05:00:00Z"),
+                        1,
+                        3));
     }
 
     @Test
@@ -380,7 +385,7 @@ class RouteCandidateFinderTest {
                 call(TOKYO, "2026-10-07T00:00:00Z", "2026-10-08T00:00:00Z"),
                 call(ROTTERDAM, "2026-10-30T09:00:00Z", null));
 
-        assertThat(finder.refresh(CONFIRMED_LEG, List.of(updated))).contains(CONFIRMED_LEG);
+        assertThat(finder.refresh(CONFIRMED_LEG, List.of(updated))).contains(confirmedLegAt(2, 3));
     }
 
     @Test
@@ -405,7 +410,21 @@ class RouteCandidateFinderTest {
                 call(TOKYO, null, "2026-10-08T00:00:00Z"),
                 call(ROTTERDAM, "2026-10-30T09:00:00Z", null));
 
-        assertThat(finder.refresh(CONFIRMED_LEG, List.of(updated))).contains(CONFIRMED_LEG);
+        assertThat(finder.refresh(CONFIRMED_LEG, List.of(updated))).contains(confirmedLegAt(3, 4));
+    }
+
+    /** {@link #CONFIRMED_LEG} を今の航海の寄港の位置で引き直した区間（Bolt 39f）。 */
+    private static Leg confirmedLegAt(int loadCallNo, int dischargeCallNo) {
+        return new Leg(
+                CONFIRMED_LEG.voyageNumber(),
+                CONFIRMED_LEG.load(),
+                CONFIRMED_LEG.discharge(),
+                CONFIRMED_LEG.departureAt(),
+                CONFIRMED_LEG.arrivalAt(),
+                CONFIRMED_LEG.infoVersion(),
+                CONFIRMED_LEG.infoAcquiredAt(),
+                loadCallNo,
+                dischargeCallNo);
     }
 
     @Nested
@@ -447,6 +466,171 @@ class RouteCandidateFinderTest {
                     .as(description)
                     .extracting(RouteCandidateFinderTest::voyageNumbers)
                     .containsExactly(List.of("V-GOOD"));
+        }
+    }
+
+    /** 確定の区間の寄港の位置（【前の決定の変更】(5)。Bolt 39f の決定 (3)）。 */
+    @Nested
+    class Bolt39f_寄港の位置 {
+
+        private static Leg confirmedLeg(Integer loadCallNo, Integer dischargeCallNo) {
+            return new Leg(
+                    "V-101",
+                    TOKYO,
+                    ROTTERDAM,
+                    at("2026-10-08T00:00:00Z"),
+                    at("2026-10-30T09:00:00Z"),
+                    "V-101@1",
+                    at("2026-10-01T06:10:00Z"),
+                    loadCallNo,
+                    dischargeCallNo);
+        }
+
+        /** 東京 → ロッテルダム → 香港 → ロッテルダム（組は (1,2) と (1,4)）。 */
+        private static Voyage rotterdamTwice(String firstArrival, String secondArrival) {
+            return new Voyage(
+                    "V-101",
+                    List.of(
+                            call(TOKYO, null, "2026-10-08T00:00:00Z"),
+                            call(ROTTERDAM, firstArrival, "2026-10-31T00:00:00Z"),
+                            call(HONG_KONG, "2026-11-10T00:00:00Z", "2026-11-11T00:00:00Z"),
+                            call(ROTTERDAM, secondArrival, null)),
+                    "V-101@2",
+                    at("2026-10-08T05:00:00Z"));
+        }
+
+        static Stream<Arguments> tokyoTwiceVoyages() {
+            return Stream.of(
+                    Arguments.of(
+                            "運航の順に書いた航海",
+                            voyage(
+                                    "V-AGAIN",
+                                    call(TOKYO, null, "2026-10-08T00:00:00Z"),
+                                    call(SINGAPORE, "2026-10-12T00:00:00Z", "2026-10-13T00:00:00Z"),
+                                    call(TOKYO, "2026-10-17T00:00:00Z", "2026-10-18T00:00:00Z"),
+                                    call(ROTTERDAM, "2026-10-30T00:00:00Z", null)),
+                            "2026-10-08T00:00:00Z",
+                            "2026-10-18T00:00:00Z"),
+                    Arguments.of(
+                            "前の寄港の出発を後の寄港より遅く書いた航海（位置は書いた順。T-245）",
+                            voyage(
+                                    "V-AGAIN",
+                                    call(TOKYO, null, "2026-10-18T00:00:00Z"),
+                                    call(SINGAPORE, "2026-10-12T00:00:00Z", "2026-10-13T00:00:00Z"),
+                                    call(TOKYO, "2026-10-07T12:00:00Z", "2026-10-08T00:00:00Z"),
+                                    call(ROTTERDAM, "2026-10-30T00:00:00Z", null)),
+                            "2026-10-18T00:00:00Z",
+                            "2026-10-08T00:00:00Z"));
+        }
+
+        @ParameterizedTest(name = "{0}")
+        @MethodSource("tokyoTwiceVoyages")
+        void 行4_候補探索は区間ごとに運航の順の1始まりの位置を持つ(
+                String description, Voyage voyage, String firstCallDeparture, String thirdCallDeparture) {
+            List<List<Leg>> found = finder.find(SPEC, List.of(voyage), JUDGED_AT);
+
+            assertThat(found)
+                    .as(description)
+                    .extracting(
+                            legs -> legs.getFirst().departureAt(),
+                            legs -> legs.getFirst().loadCallNo(),
+                            legs -> legs.getFirst().dischargeCallNo())
+                    .containsExactlyInAnyOrder(
+                            org.assertj.core.groups.Tuple.tuple(at(firstCallDeparture), 1, 4),
+                            org.assertj.core.groups.Tuple.tuple(at(thirdCallDeparture), 3, 4));
+        }
+
+        @Test
+        void 行5_組が1つなら位置がずれていても今のまま引き直す() {
+            Voyage updated = new Voyage(
+                    "V-101",
+                    List.of(
+                            call(HONG_KONG, null, "2026-10-01T00:00:00Z"),
+                            call(TOKYO, "2026-10-07T00:00:00Z", "2026-10-08T06:00:00Z"),
+                            call(ROTTERDAM, "2026-11-01T00:00:00Z", null)),
+                    "V-101@2",
+                    at("2026-10-08T05:00:00Z"));
+
+            assertThat(finder.refresh(confirmedLeg(1, 2), List.of(updated))).hasValueSatisfying(leg -> {
+                assertThat(leg.departureAt()).isEqualTo(at("2026-10-08T06:00:00Z"));
+                assertThat(leg.arrivalAt()).isEqualTo(at("2026-11-01T00:00:00Z"));
+                assertThat(leg.loadCallNo()).isEqualTo(2);
+                assertThat(leg.dischargeCallNo()).isEqualTo(3);
+            });
+        }
+
+        @ParameterizedTest(name = "位置 ({0},{1}) は到着 {2}")
+        @CsvSource({"1, 2, 2026-10-30T12:00:00Z", "1, 4, 2026-12-01T00:00:00Z"})
+        void 行6_組が2つ以上で予定の一致する組がなければ位置の組で新しい時刻の区間を作る(int loadCallNo, int dischargeCallNo, String expectedArrival) {
+            Voyage updated = rotterdamTwice("2026-10-30T12:00:00Z", "2026-12-01T00:00:00Z");
+
+            assertThat(finder.refresh(confirmedLeg(loadCallNo, dischargeCallNo), List.of(updated)))
+                    .hasValueSatisfying(leg -> {
+                        assertThat(leg.arrivalAt()).isEqualTo(at(expectedArrival));
+                        assertThat(leg.dischargeCallNo()).isEqualTo(dischargeCallNo);
+                        assertThat(leg.infoVersion()).isEqualTo("V-101@2");
+                    });
+        }
+
+        @Test
+        void 行6b_組が2つ以上で出発と到着の一致する組が1つならその組を選び位置は見ない() {
+            // 確定の後に先頭へ寄港が 1 つ増えて位置がずれた。予定が同じ組は (2,3) で、位置 (1,4) の寄港は別の組を指す
+            Voyage updated = new Voyage(
+                    "V-101",
+                    List.of(
+                            call(HONG_KONG, null, "2026-10-01T00:00:00Z"),
+                            call(TOKYO, "2026-10-07T00:00:00Z", "2026-10-08T00:00:00Z"),
+                            call(ROTTERDAM, "2026-10-30T09:00:00Z", "2026-10-31T00:00:00Z"),
+                            call(HONG_KONG, "2026-11-10T00:00:00Z", "2026-11-11T00:00:00Z"),
+                            call(ROTTERDAM, "2026-12-01T00:00:00Z", null)),
+                    "V-101@2",
+                    at("2026-10-08T05:00:00Z"));
+
+            assertThat(finder.refresh(confirmedLeg(1, 4), List.of(updated))).hasValueSatisfying(leg -> {
+                assertThat(leg.arrivalAt()).isEqualTo(at("2026-10-30T09:00:00Z"));
+                assertThat(leg.loadCallNo()).isEqualTo(2);
+                assertThat(leg.dischargeCallNo()).isEqualTo(3);
+            });
+        }
+
+        static Stream<Arguments> unusablePositions() {
+            Voyage updated = rotterdamTwice("2026-10-30T12:00:00Z", "2026-12-01T00:00:00Z");
+            Voyage middleWithoutArrival = new Voyage(
+                    "V-101",
+                    List.of(
+                            call(TOKYO, null, "2026-10-08T00:00:00Z"),
+                            call(ROTTERDAM, null, "2026-10-31T00:00:00Z"),
+                            call(HONG_KONG, "2026-11-10T00:00:00Z", "2026-11-11T00:00:00Z"),
+                            call(ROTTERDAM, "2026-12-01T00:00:00Z", null),
+                            call(HONG_KONG, "2026-12-05T00:00:00Z", "2026-12-06T00:00:00Z"),
+                            call(ROTTERDAM, "2026-12-10T00:00:00Z", null)),
+                    "V-101@2",
+                    at("2026-10-08T05:00:00Z"));
+            Voyage loadWithoutDeparture = new Voyage(
+                    "V-101",
+                    List.of(
+                            call(TOKYO, null, "2026-10-08T00:00:00Z"),
+                            call(TOKYO, "2026-10-09T00:00:00Z", null),
+                            call(ROTTERDAM, "2026-10-30T12:00:00Z", "2026-10-31T00:00:00Z"),
+                            call(HONG_KONG, "2026-11-10T00:00:00Z", "2026-11-11T00:00:00Z"),
+                            call(ROTTERDAM, "2026-12-01T00:00:00Z", null)),
+                    "V-101@2",
+                    at("2026-10-08T05:00:00Z"));
+            Voyage arrivalNotAfterDeparture = rotterdamTwice("2026-10-07T00:00:00Z", "2026-12-01T00:00:00Z");
+            return Stream.of(
+                    Arguments.of("揚地の位置の港が違う", updated, confirmedLeg(1, 3)),
+                    Arguments.of("位置の組が組の中にない（積地の位置の港が違う）", updated, confirmedLeg(2, 4)),
+                    Arguments.of("揚地の位置が寄港の数を超える", updated, confirmedLeg(1, 9)),
+                    Arguments.of("積地の位置が寄港の数を超える", updated, confirmedLeg(9, 10)),
+                    Arguments.of("揚地の位置の寄港に到着がない", middleWithoutArrival, confirmedLeg(1, 2)),
+                    Arguments.of("積地の位置の寄港に出発がない", loadWithoutDeparture, confirmedLeg(2, 3)),
+                    Arguments.of("位置の組の到着が出発より後でない", arrivalNotAfterDeparture, confirmedLeg(1, 2)));
+        }
+
+        @ParameterizedTest(name = "{0}")
+        @MethodSource("unusablePositions")
+        void 行7_一致する組がなく位置の組を使えなければ選ばずに引き直せない(String description, Voyage voyage, Leg leg) {
+            assertThat(finder.refresh(leg, List.of(voyage))).as(description).isEmpty();
         }
     }
 

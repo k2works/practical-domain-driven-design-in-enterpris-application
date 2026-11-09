@@ -1,12 +1,20 @@
 package com.example.cargotracker.routing.infrastructure.persistence;
 
+import com.example.cargotracker.routing.application.internal.queryservices.RoutingCaseScope;
+import com.example.cargotracker.routing.domain.model.aggregates.ConnectionRuleRepository;
+import com.example.cargotracker.routing.domain.model.aggregates.RoutingCaseRepository;
 import com.example.cargotracker.routing.domain.model.aggregates.VoyageRepository;
+import com.example.cargotracker.routing.domain.model.rules.InfoFreshnessPolicy;
+import com.example.cargotracker.routing.infrastructure.persistence.MyBatisVoyageConcurrentUpdateIntegrationTest.Evaluations;
 import com.example.cargotracker.routing.infrastructure.persistence.MyBatisVoyageConcurrentUpdateIntegrationTest.Repositories;
+import java.time.Clock;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -28,8 +36,45 @@ class H2VoyageConcurrentUpdateTest {
     @Autowired
     PlatformTransactionManager transactionManager;
 
+    @Autowired
+    RoutingCaseRepository routingCases;
+
+    @Autowired
+    ConnectionRuleRepository connectionRules;
+
+    @Autowired
+    ApplicationEventPublisher events;
+
+    @Autowired
+    Clock clock;
+
+    @Autowired
+    InfoFreshnessPolicy freshness;
+
+    @Autowired
+    RoutingCaseScope scope;
+
     private Repositories repositories() {
         return new Repositories(voyages, jdbc, transactionManager);
+    }
+
+    /** 確定した経路の評価の同時（Bolt 39f の行 25・26。本体は PostgreSQL のテストと共有する）。 */
+    @Nested
+    class Bolt39f_同時 {
+
+        private Evaluations evaluations() {
+            return new Evaluations(repositories(), routingCases, connectionRules, events, clock, freshness, scope);
+        }
+
+        @Test
+        void 行25_H2でも別々の航海の2つのDE12のトランザクションが重なっても両方のコミットの後の評価で接続不足になる() throws Exception {
+            MyBatisVoyageConcurrentUpdateIntegrationTest.assertBothVoyageUpdatesAreEvaluated(evaluations());
+        }
+
+        @Test
+        void 行26_H2でも2つのDE30の評価が同じ案件で重なると遅れた方は読み直してDE06は1件() throws Exception {
+            MyBatisVoyageConcurrentUpdateIntegrationTest.assertOverlappingEvaluationsRedesignOnce(evaluations());
+        }
     }
 
     @Test

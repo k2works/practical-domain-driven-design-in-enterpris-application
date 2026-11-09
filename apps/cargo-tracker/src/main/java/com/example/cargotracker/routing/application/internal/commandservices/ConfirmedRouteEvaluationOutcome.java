@@ -33,8 +33,8 @@ public sealed interface ConfirmedRouteEvaluationOutcome {
     record NotFound() implements ConfirmedRouteEvaluationOutcome {}
 
     /**
-     * 読み込んだ後に案件が更新された（楽観ロックの競合）。最新が確定の案件を書くのは今は評価だけなので、先の評価がすでに再設計要にして
-     * DE-06 を出している。再試行は要らない（US-08 の再設計で書き手が増えたら見直す）。
+     * 読み込んだ後に案件が更新された（楽観ロックの競合）。DE-30 の listener が同じトランザクションで読み直して評価し直す（3 回まで。Bolt 39f の決定 (5)）。先の評価が
+     * 再設計要にしていれば、読み直した評価は {@link Unchanged} になり DE-06 は重ならない。
      */
     record Conflict() implements ConfirmedRouteEvaluationOutcome {}
 }

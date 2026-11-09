@@ -9,6 +9,7 @@ import com.example.cargotracker.routing.domain.model.valueobjects.VoyageAdoption
 import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.modulith.events.ApplicationModuleListener;
 import org.springframework.stereotype.Service;
 
@@ -16,6 +17,9 @@ import org.springframework.stereotype.Service;
  * DE-12 航海の採用値を更新した を購読し、経路設計の航海を書く（US-14 AC1、ADR-004。Bolt 39e）。外部データは経路設計の表を書かず、採用値だけを公開する。
  * 取込か採用の判断のコミットの後に、非同期で、新しいトランザクションの中で処理する。配信は少なくとも 1 回で順も保たれないので、航海が今の値より
  * 厳密に新しい採用値だけを適用する（【業務の判断】(r)。比べるのは {@link Voyage#apply}）。
+ *
+ * <p>航海を更新したら同じトランザクションで DE-30 を発行し、コミットの後に確定した経路を評価させる（別々の航海の DE-12 が同時に適用されても後にコミットした側の評価が両方の値を見る。
+ * Bolt 39f の決定 (4)）。初めての航海では発行しない（確定の区間はまだない）。
  *
  * <p>版の競合と初めての航海の同時（一意制約）は読み直して適用し直す（3 回まで。読み直した航海の方が新しければ適用しない）。3 回とも負けたら例外を
  * 上げ、発行記録に残して再起動の再配信に任せる。内容の欠けた DE-12 は再配信しても直らないので、ERROR のログを残して捨てる。DB の失敗と
@@ -32,9 +36,11 @@ public class VoyageUpdateEventHandler {
     private static final int MAX_ATTEMPTS = 3;
 
     private final VoyageRepository repository;
+    private final ApplicationEventPublisher eventPublisher;
 
-    public VoyageUpdateEventHandler(VoyageRepository repository) {
+    public VoyageUpdateEventHandler(VoyageRepository repository, ApplicationEventPublisher eventPublisher) {
         this.repository = repository;
+        this.eventPublisher = eventPublisher;
     }
 
     @ApplicationModuleListener
@@ -70,6 +76,7 @@ public class VoyageUpdateEventHandler {
         Voyage voyage = current.get();
         if (voyage.apply(adoption)) {
             repository.update(voyage);
+            eventPublisher.publishEvent(voyage.updated());
         }
     }
 

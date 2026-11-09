@@ -368,6 +368,39 @@ public class RoutingUiSteps {
                 "採用した航海の予定が経路設計の航海に反映されない: " + adoptedVoyage());
     }
 
+    /** DE-12 と DE-30 の 2 段の配信は非同期なので、確定の候補の区間にこの航海がある経路版が再設計要になるまで待つ（Bolt 39f の決定 (8)）。 */
+    @かつ("確定した経路が航海の更新を受けて再設計要になる")
+    public void 確定した経路が再設計要になる() {
+        awaitVoyageCondition(
+                "SELECT COUNT(*) FROM routing.route_version v JOIN routing.candidate_leg l"
+                        + " ON l.routing_case_id = v.routing_case_id AND l.route_version_no = v.route_version_no"
+                        + " AND l.candidate_no = v.selected_candidate_no"
+                        + " WHERE v.status = 'REDESIGN_REQUIRED' AND l.voyage_number = ?",
+                "確定した経路が再設計要にならない（DE-12・DE-30 の評価を待ちきれない）: " + adoptedVoyage());
+    }
+
+    @もし("経路設計者が案件を開き直す")
+    public void 経路設計者が案件を開き直す() {
+        browser.navigate(baseUrl + "/staff/routing-cases");
+        page().getByRole(AriaRole.ROW)
+                .filter(new Locator.FilterOptions().setHasText(state.transportRequestNumber()))
+                .getByRole(AriaRole.LINK)
+                .first()
+                .click();
+        page().waitForURL("**/staff/routing-cases/RC-*");
+    }
+
+    @ならば("確定した経路に再設計要の経路と理由 {string} が示される")
+    public void 確定した経路に再設計要が示される(String reason) {
+        Locator route = page().getByRole(
+                        AriaRole.REGION, new Page.GetByRoleOptions().setName(Pattern.compile("^再設計要の経路（候補 \\d+）$")));
+        // 利用者が理由を読むところまで画面を送る（デモの動画に理由を写す）
+        route.scrollIntoViewIfNeeded();
+        assertThat(route).containsText("再設計要の理由");
+        assertThat(route).containsText(reason);
+        browser.checkAccessibility();
+    }
+
     private void awaitVoyageCondition(String countSql, String message) {
         for (int i = 0; i < 40; i++) {
             Integer found = jdbc.queryForObject(countSql, Integer.class, adoptedVoyage());

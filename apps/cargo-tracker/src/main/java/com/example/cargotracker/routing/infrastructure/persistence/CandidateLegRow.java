@@ -18,4 +18,6 @@ public record CandidateLegRow(
         OffsetDateTime arrivalAt,
         String infoVersion,
         OffsetDateTime infoAcquiredAt,
-        boolean executed) {}
+        boolean executed,
+        Integer loadCallNo,
+        Integer dischargeCallNo) {}

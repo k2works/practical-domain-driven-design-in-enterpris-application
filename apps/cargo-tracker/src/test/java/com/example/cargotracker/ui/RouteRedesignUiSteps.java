@@ -21,7 +21,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 /**
  * 割り当てた経路が再設計要になった見積りの、荷主の見積依頼の詳細（C-04）・承認（C-17）、営業担当者の受付一覧（S-02）・本予約の確定
  * （S-09）、経路設計者の確定（S-07）の画面の層のステップ定義（US-07 AC5。Bolt 37e3）。見積依頼は、同じシナリオで荷主が提出したもの
- * （{@link UiScenarioState}）とする。本番には評価の入口がまだない（W7）ので、経路版の再設計要の記録はデータベースで入れ、見積りの印は
+ * （{@link UiScenarioState}）とする。見積りと予約の側の見え方の網羅が主題なので（航海の更新からの通しは Bolt 39f の adopted_voyage_reflected_ui.feature）、経路版の再設計要の記録はデータベースで入れ、見積りの印は
  * 見積りの公開 API で付ける（本番の DE-06 の listener と同じ契約を通す）。
  */
 public class RouteRedesignUiSteps {

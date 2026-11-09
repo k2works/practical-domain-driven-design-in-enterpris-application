@@ -72,6 +72,8 @@
             <arg column="info_version" name="infoVersion" javaType="String"/>
             <arg column="info_acquired_at" name="infoAcquiredAt" javaType="java.time.OffsetDateTime"/>
             <arg column="executed" name="executed" javaType="_boolean"/>
+            <arg column="load_call_no" name="loadCallNo" javaType="Integer"/>
+            <arg column="discharge_call_no" name="dischargeCallNo" javaType="Integer"/>
         </constructor>
     </resultMap>
 
@@ -136,10 +138,11 @@
     <insert id="insertLeg">
         INSERT INTO routing.candidate_leg
             (routing_case_id, route_version_no, candidate_no, leg_no, voyage_number, load_unlocode, discharge_unlocode,
-             departure_at, arrival_at, cargo_cutoff_at, doc_cutoff_at, info_version, info_acquired_at, executed)
+             departure_at, arrival_at, cargo_cutoff_at, doc_cutoff_at, info_version, info_acquired_at, executed,
+             load_call_no, discharge_call_no)
         VALUES (#{routingCaseId}, #{routeVersionNo}, #{candidateNo}, #{legNo}, #{voyageNumber}, #{loadUnlocode},
                 #{dischargeUnlocode}, #{departureAt}, #{arrivalAt}, NULL, NULL, #{infoVersion}, #{infoAcquiredAt},
-                #{executed})
+                #{executed}, #{loadCallNo,jdbcType=INTEGER}, #{dischargeCallNo,jdbcType=INTEGER})
     </insert>
 
     <insert id="insertExclusionReason">
@@ -222,9 +225,24 @@
 
     <select id="selectLegs" resultMap="candidateLegRow">
         SELECT routing_case_id, route_version_no, candidate_no, leg_no, voyage_number, load_unlocode,
-               discharge_unlocode, departure_at, arrival_at, info_version, info_acquired_at, executed
+               discharge_unlocode, departure_at, arrival_at, info_version, info_acquired_at, executed,
+               load_call_no, discharge_call_no
           FROM routing.candidate_leg WHERE routing_case_id = #{routingCaseId}
          ORDER BY route_version_no, candidate_no, leg_no
+    </select>
+
+    <!-- 最新の経路版が確定で、確定の候補の区間にその航海がある案件（航海の更新の評価の対象。Bolt 39f の決定 (2)。索引 ix_candidate_leg_voyage） -->
+    <select id="selectCaseNumbersConfirmedOnVoyage" resultType="String">
+        SELECT DISTINCT c.case_number
+          FROM routing.candidate_leg l
+          JOIN routing.route_version v ON v.routing_case_id = l.routing_case_id
+               AND v.route_version_no = l.route_version_no AND v.selected_candidate_no = l.candidate_no
+          JOIN routing.routing_case c ON c.id = v.routing_case_id
+         WHERE l.voyage_number = #{voyageNumber}
+           AND v.status = 'CONFIRMED'
+           AND v.route_version_no = (SELECT MAX(m.route_version_no) FROM routing.route_version m
+                                      WHERE m.routing_case_id = c.id)
+         ORDER BY c.case_number
     </select>
 
     <select id="selectExclusionReasons" resultMap="exclusionReasonRow">

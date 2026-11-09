@@ -53,7 +53,7 @@ class MyBatisRoutingCaseLockIntegrationTest {
                 () -> {
                     RoutingCase loaded =
                             repository.findByNumber(routingCase.number()).orElseThrow();
-                    repository.update(loaded, null);
+                    repository.updateBySystem(loaded);
                     return loaded.aggregateVersion();
                 });
 
@@ -73,7 +73,7 @@ class MyBatisRoutingCaseLockIntegrationTest {
                 () -> {
                     RoutingCase loaded =
                             repository.findByNumber(routingCase.number()).orElseThrow();
-                    repository.update(loaded, null);
+                    repository.updateBySystem(loaded);
                     return loaded.aggregateVersion();
                 },
                 () -> repository

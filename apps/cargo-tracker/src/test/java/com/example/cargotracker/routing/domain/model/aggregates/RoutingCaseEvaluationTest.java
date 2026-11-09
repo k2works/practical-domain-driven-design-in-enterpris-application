@@ -32,8 +32,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 /**
  * 確定した経路版の評価（US-07 AC4、R-INV-07。Bolt 37d2）。状態の組み合わせの表の行ごとに 1 本（T-163）。
@@ -290,6 +294,107 @@ class RoutingCaseEvaluationTest {
                     List.of(SINGAPORE_8H));
 
             assertReasons(routingCase, RedesignReasonCode.DEADLINE_EXCEEDED);
+        }
+    }
+
+    /** 2 度寄る航海の確定の区間の評価（【前の決定の変更】(5)。Bolt 39f の決定 (3)）。 */
+    @Nested
+    class Bolt39f_2度寄る航海の評価 {
+
+        private static final Location HONG_KONG = new Location("HKHKG");
+        private static final String DEPARTURE = "2026-10-08T00:00:00Z";
+        private static final String ARRIVAL = "2026-10-30T00:00:00Z";
+
+        /** 揚地に 2 度寄る航海。組は (1,2) と (1,4)。 */
+        private static Voyage rotterdamTwice(String infoVersion, String firstArrival, String secondArrival) {
+            return new Voyage(
+                    "V-TWICE",
+                    List.of(
+                            new PortCall(TOKYO, null, at(DEPARTURE)),
+                            new PortCall(ROTTERDAM, at(firstArrival), at("2026-11-04T00:00:00Z")),
+                            new PortCall(HONG_KONG, at("2026-11-10T00:00:00Z"), at("2026-11-11T00:00:00Z")),
+                            new PortCall(ROTTERDAM, at(secondArrival), null)),
+                    infoVersion,
+                    at("2026-10-07T05:30:00Z"));
+        }
+
+        private static Leg confirmedLeg(Integer loadCallNo, Integer dischargeCallNo) {
+            return new Leg(
+                    "V-TWICE",
+                    TOKYO,
+                    ROTTERDAM,
+                    at(DEPARTURE),
+                    at(ARRIVAL),
+                    "V-TWICE@1",
+                    at("2026-10-07T01:00:00Z"),
+                    loadCallNo,
+                    dischargeCallNo);
+        }
+
+        private Optional<RouteRedesignRequired> evaluateTwice(RoutingCase routingCase, Voyage voyage) {
+            return routingCase.evaluateConfirmedRoute(
+                    List.of(voyage), List.of(SINGAPORE_8H), EVALUATED_AT, finder, evaluator);
+        }
+
+        @Test
+        void 行10_情報版だけが上がり予定が同じなら確定のままでDE06を出さない() {
+            RoutingCase routingCase = confirmedWith(List.of(confirmedLeg(1, 2)));
+            RouteVersion before = routingCase.routeVersion();
+
+            Optional<RouteRedesignRequired> event =
+                    evaluateTwice(routingCase, rotterdamTwice("V-TWICE@2", ARRIVAL, "2026-11-30T00:00:00Z"));
+
+            assertThat(event).isEmpty();
+            assertThat(routingCase.routeVersion()).isEqualTo(before);
+        }
+
+        @Test
+        void 行11_確定した寄港の到着が期限を過ぎると期限超過で再設計要になりDE06を返す() {
+            RoutingCase routingCase = confirmedWith(List.of(confirmedLeg(1, 2)));
+
+            Optional<RouteRedesignRequired> event = evaluateTwice(
+                    routingCase, rotterdamTwice("V-TWICE@2", "2026-11-03T00:00:00Z", "2026-11-30T00:00:00Z"));
+
+            assertThat(event).isPresent();
+            assertReasons(routingCase, RedesignReasonCode.DEADLINE_EXCEEDED);
+        }
+
+        @Test
+        void 行11_確定していない方の寄港の変更だけでは評価に入らない() {
+            RoutingCase routingCase = confirmedWith(List.of(confirmedLeg(1, 2)));
+
+            Optional<RouteRedesignRequired> event =
+                    evaluateTwice(routingCase, rotterdamTwice("V-TWICE@1", ARRIVAL, "2026-12-30T00:00:00Z"));
+
+            assertThat(event).isEmpty();
+            assertThat(routingCase.routeVersion().status()).isEqualTo(RouteVersionStatus.CONFIRMED);
+        }
+
+        static Stream<Arguments> unusablePositions() {
+            String lateFirst = "2026-10-31T00:00:00Z";
+            return Stream.of(
+                    Arguments.of(
+                            "位置が寄港の数を超える",
+                            new int[] {1, 9},
+                            rotterdamTwice("V-TWICE@2", lateFirst, "2026-11-30T00:00:00Z")),
+                    Arguments.of(
+                            "位置の寄港が組に入らない（揚地の位置の港が違う）",
+                            new int[] {1, 3},
+                            rotterdamTwice("V-TWICE@2", lateFirst, "2026-11-30T00:00:00Z")),
+                    Arguments.of(
+                            "到着が出発より後でない",
+                            new int[] {1, 2},
+                            rotterdamTwice("V-TWICE@2", "2026-10-07T00:00:00Z", "2026-11-30T00:00:00Z")));
+        }
+
+        @ParameterizedTest(name = "{0}")
+        @MethodSource("unusablePositions")
+        void 行7b_位置を使えなければ例外にせず航海を引き直せないで再設計要(String description, int[] positions, Voyage voyage) {
+            RoutingCase routingCase = confirmedWith(List.of(confirmedLeg(positions[0], positions[1])));
+
+            assertThat(evaluateTwice(routingCase, voyage)).as(description).isPresent();
+
+            assertReasons(routingCase, RedesignReasonCode.VOYAGE_UNAVAILABLE);
         }
     }
 

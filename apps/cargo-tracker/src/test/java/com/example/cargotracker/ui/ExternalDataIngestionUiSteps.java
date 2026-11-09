@@ -73,6 +73,10 @@ public class ExternalDataIngestionUiSteps {
     private static final String CHANGED_ROTTERDAM_PORT_CALLS =
             "JPTYO;2099-10-12T00:00:00Z;2099-10-12T12:00:00Z|NLRTM;2099-10-31T00:00:00Z;2099-10-31T12:00:00Z";
 
+    /** 内容の違う原本（ロッテルダムの到着が希望到着期限 2099-11-02 09:00 JST より後。Bolt 39f の行 30）。 */
+    private static final String PAST_DEADLINE_ROTTERDAM_PORT_CALLS =
+            "JPTYO;2099-10-12T00:00:00Z;2099-10-12T12:00:00Z|NLRTM;2099-11-05T00:00:00Z;2099-11-05T12:00:00Z";
+
     private final BrowserSession browser;
     private final UiScenarioState state;
     private final JdbcTemplate jdbc;
@@ -275,9 +279,18 @@ public class ExternalDataIngestionUiSteps {
     /** Bolt 39e の行 40。採用 1・内容の違う原本 1（3 行目はロッテルダムの到着を 1 日遅らせた）。 */
     @かつ("キー操作だけで承認済みの航海の情報源を選び、東京からロッテルダムへの同じ外部 ID・外部版で到着の違う 2 行のファイルを選んで取り込む")
     public void ロッテルダムへの到着の違う2行を取り込む() {
+        ingestAdoptedAndQuarantined(CHANGED_ROTTERDAM_PORT_CALLS);
+    }
+
+    /** Bolt 39f の行 30。採用 1・内容の違う原本 1（3 行目のロッテルダムの到着が希望到着期限を過ぎる）。 */
+    @かつ("キー操作だけで承認済みの航海の情報源を選び、東京からロッテルダムへの同じ外部 ID・外部版で到着が希望到着期限を過ぎる行を含む 2 行のファイルを選んで取り込む")
+    public void ロッテルダムへの到着が期限を過ぎる行を含む2行を取り込む() {
+        ingestAdoptedAndQuarantined(PAST_DEADLINE_ROTTERDAM_PORT_CALLS);
+    }
+
+    private void ingestAdoptedAndQuarantined(String quarantinedPortCalls) {
         chooseSource();
-        chooseFile(
-                voyageFile(adoptedVoyageLine(ROTTERDAM_PORT_CALLS), adoptedVoyageLine(CHANGED_ROTTERDAM_PORT_CALLS)));
+        chooseFile(voyageFile(adoptedVoyageLine(ROTTERDAM_PORT_CALLS), adoptedVoyageLine(quarantinedPortCalls)));
         submit();
         page().waitForURL(url -> url.matches(".*/staff/external-data/ingestions/[0-9a-f-]{36}$"));
         ingestionResultUrl = page().url();

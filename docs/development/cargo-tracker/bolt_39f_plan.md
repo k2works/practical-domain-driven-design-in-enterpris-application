@@ -3,7 +3,7 @@ type: Plan
 title: "Bolt 39f 計画 - 航海の更新から確定した経路を評価する入口をつなぎ、2 度寄る航海の寄港の位置を持たせる"
 tags: [plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-09T17:25:43Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-09T18:37:08Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-11-09T16:46:43Z }
 ---
@@ -368,11 +368,11 @@ leg ..> call : 外部キーなし（call_no の値を写す）
 ## ステップ計画（ゲートは下の各ステップに書く）
 
 - [x] **1. 設計の文書**（2026-11-10 に実施した）: 上の「設計文書に直す箇所」。【業務の判断】(u)・(v)・(w)・(x)、【前の決定の変更】(5)〜(7) を反映する。始めに検索する（完了の判定: 文書の差分と検索の記録。ゲート: 既定（確認ポイント 2〜5 で計画の承認に含む））
-- [ ] **2. 受入シナリオとテストの Red**: 外から入る。まず `adopted_voyage_reflected_ui.feature` に行 30 を書いて Red を記録する（確定した後に期限を過ぎる隔離を採用しても S-06 に再設計要が出ない）。続いて行 1〜7b・9〜11b・13〜30（行 8・12 は回帰の守りで最初から緑の見込み。行 11b は 39f の入口によらず最初から緑の見込みで、緑なら記録する）。骨組み（`findCaseNumbersConfirmedOnVoyage` は空を返す、`VoyageUpdated`、`updateBySystem` は `update` に委ねる、`Leg` の 9 引数のコンストラクタ、listener の中身なし）でコンパイルを通す（T-254）。直す既存のテストを一覧にする（T-217）（完了の判定: 期待した理由で落ちる記録。Red の行は `wip/` か stash に置き、develop に落ちるテストを積まない。ゲート: 既定）
-- [ ] **3. 寄港の位置**: マイグレーション、`CandidateLegRow`、`Leg`、候補探索、`matchesLeg`、引き直し（決定 (3)）、`RedesignReasonCode.java` :17 の Javadoc。行 2〜11b が緑、`test` 全体で既存のテストの影響を確かめる、`spotbugsMain`・`checkstyleMain`・`sonar-local:check`（完了の判定: 緑と影響の一覧。ゲート: 既定（確認ポイント 2・4 で計画の承認に含む））
-- [ ] **4. 照会・DE-30・評価の listener・システムの更新**: 決定 (2)・(4)・(5)・(7)。行 1・13〜17・18・29 が緑（行 17b はステップ 5）。`ModularityTest`・`LayerArchitectureTest` を流す（当たったら止めて諮る）。`spotbugsMain`・`checkstyleMain`・`sonar-local:check`（完了の判定: 緑。ゲート: 既定（確認ポイント 3・5 で計画の承認に含む））
-- [ ] **5. 配信までの統合と同時**: 行 17b・19〜28 が緑（完了の判定: 緑。発行記録の完了まで待って確かめる。T-184。ゲート: 既定）
-- [ ] **6. 受入シナリオの緑と動画**: 行 30・32 が緑、axe 違反 0、幅 320 px、`@demo-bolt-39f/redesign-by-adoption` を撮る（完了の判定: `uiTest` の該当の feature と動画。ゲート: 既定）
+- [x] **2. 受入シナリオとテストの Red**: （結果: 行 30 は「確定した経路が再設計要にならない」、ほかは DE-30 が届かない・位置がない・照会が空の期待した理由で落ちた。行 8・12 は緑。行 11b は Red の実行に含めず、実装の後の test で緑）外から入る。まず `adopted_voyage_reflected_ui.feature` に行 30 を書いて Red を記録する（確定した後に期限を過ぎる隔離を採用しても S-06 に再設計要が出ない）。続いて行 1〜7b・9〜11b・13〜30（行 8・12 は回帰の守りで最初から緑の見込み。行 11b は 39f の入口によらず最初から緑の見込みで、緑なら記録する）。骨組み（`findCaseNumbersConfirmedOnVoyage` は空を返す、`VoyageUpdated`、`updateBySystem` は `update` に委ねる、`Leg` の 9 引数のコンストラクタ、listener の中身なし）でコンパイルを通す（T-254）。直す既存のテストを一覧にする（T-217）（完了の判定: 期待した理由で落ちる記録。Red の行は `wip/` か stash に置き、develop に落ちるテストを積まない。ゲート: 既定）
+- [x] **3. 寄港の位置**: （結果: V20261110100000、行 2〜11b が緑。`Leg` の等しさで直したテストは 5 か所）マイグレーション、`CandidateLegRow`、`Leg`、候補探索、`matchesLeg`、引き直し（決定 (3)）、`RedesignReasonCode.java` :17 の Javadoc。行 2〜11b が緑、`test` 全体で既存のテストの影響を確かめる、`spotbugsMain`・`checkstyleMain`・`sonar-local:check`（完了の判定: 緑と影響の一覧。ゲート: 既定（確認ポイント 2・4 で計画の承認に含む））
+- [x] **4. 照会・DE-30・評価の listener・システムの更新**: （結果: 行 1・13〜18・29 が緑。層の規則に当たらなかった）決定 (2)・(4)・(5)・(7)。行 1・13〜17・18・29 が緑（行 17b はステップ 5）。`ModularityTest`・`LayerArchitectureTest` を流す（当たったら止めて諮る）。`spotbugsMain`・`checkstyleMain`・`sonar-local:check`（完了の判定: 緑。ゲート: 既定（確認ポイント 3・5 で計画の承認に含む））
+- [x] **5. 配信までの統合と同時**: （結果: 行 17b・19〜28 が緑。行 25・26 は H2 と PostgreSQL の両方）行 17b・19〜28 が緑（完了の判定: 緑。発行記録の完了まで待って確かめる。T-184。ゲート: 既定）
+- [x] **6. 受入シナリオの緑と動画**: （結果: 行 30・32 が緑、axe 違反 0、幅 320 px、`docs/assets/demo/bolt-39f/redesign-by-adoption.webm`）行 30・32 が緑、axe 違反 0、幅 320 px、`@demo-bolt-39f/redesign-by-adoption` を撮る（完了の判定: `uiTest` の該当の feature と動画。ゲート: 既定）
 - [ ] **7. マニュアル**: 08-経路設計.md :95 と 12-外部データ.md :343・:449（決定 (9)）。文を実装と【業務の判断】(u)・(x) の文に一字ずつ突き合わせる（T-197・T-251）（完了の判定: 突き合わせの記録と行 31。ゲート: 既定）
 - [ ] **8. 品質ゲートと開発レビュー**: 変異（下の表）、`check`・`uiTest`、その後に SonarQube（落ちたら先に中身を一覧する。T-252）、人の側の `performanceTest` で配信の参考の値を測り直す、開発レビューとその直し。文書のステップの行を一覧で突き合わせる（T-197）（完了の判定: 緑と指摘の扱いと突き合わせの記録。ゲート: 既定）
 - [ ] **9. 終了報告**: push して CI とデモ環境の配備を確かめる。release_plan（39f の行の計画と終了報告のリンク）・開発の索引・mkdocs を直す。【業務の判断】(u)・(v)・(x) と【前の決定の変更】(5)・(6)・(7) を議題の先頭に置き、既知の課題に申し送りの表を書く（完了の判定: 報告の承認。**承認ゲート**（終了報告））

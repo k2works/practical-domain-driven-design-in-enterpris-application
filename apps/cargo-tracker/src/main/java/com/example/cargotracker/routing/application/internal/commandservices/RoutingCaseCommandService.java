@@ -103,7 +103,7 @@ public class RoutingCaseCommandService {
 
     /**
      * 判断根拠を記録して経路を確定する（US-07 AC1〜AC3）。確定の時刻（承認 commit 時刻）は Clock から得る。航海と接続時間規則を
-     * 同じトランザクションで読み直して判定し直す（規則は接続の時刻に有効なもの。D-90。航海は情報版と区間の予定の組の照合と情報不足。Bolt 37c・39e2。ロックしない）。確定したら DE-05 を発行する（購読は US-24 AC4）。
+     * 同じトランザクションで読み直して判定し直す（規則は接続の時刻に有効なもの。D-90。航海は情報版と区間の予定の組の照合と情報不足。Bolt 37c・39e2。ロックしない。確定のトランザクションの間に届いた DE-12 の評価が抜ける窓は受け入れる。【業務の判断】(v)）。確定したら DE-05 を発行する（購読は US-24 AC4）。
      */
     @Transactional
     public RouteConfirmationOutcome confirm(ConfirmRouteCommand command, AuthenticatedActor operator) {
@@ -145,9 +145,9 @@ public class RoutingCaseCommandService {
     }
 
     /**
-     * 外部情報の更新を受けて確定した経路版を評価する（US-07 AC4。Bolt 37d2）。評価の時刻は Clock から得る。航海と接続時間規則を読み直して
-     * 判定し直し、再設計要になったら保存して DE-06 を発行する（同じトランザクション。読み込んだ案件の版で競合を検知する）。評価は利用者の
-     * 操作ではないので、保存に操作者を渡さない（最終更新者を変えない）。再設計要にしなければ保存しない。
+     * 外部情報の更新を受けて確定した経路版を評価する（US-07 AC4。Bolt 37d2。呼び手は DE-30 の listener。Bolt 39f）。評価の時刻は Clock から得る。航海と接続時間規則を読み直して
+     * 判定し直し、再設計要になったら保存して DE-06 を発行する（同じトランザクション。読み込んだ案件の版で競合を検知する。競合の読み直しは listener が行う）。評価は利用者の
+     * 操作ではないので、システムの更新で保存する（最終更新者を変えない）。再設計要にしなければ保存しない。
      */
     @Transactional
     public ConfirmedRouteEvaluationOutcome evaluateConfirmedRoute(EvaluateConfirmedRouteCommand command) {
@@ -166,7 +166,7 @@ public class RoutingCaseCommandService {
             return new ConfirmedRouteEvaluationOutcome.Unchanged();
         }
         try {
-            repository.update(routingCase, null);
+            repository.updateBySystem(routingCase);
         } catch (ConcurrentRoutingCaseUpdateException _) {
             return new ConfirmedRouteEvaluationOutcome.Conflict();
         }

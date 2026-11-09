@@ -11,6 +11,7 @@ import ch.qos.logback.core.read.ListAppender;
 import com.example.cargotracker.externaldata.domain.events.VoyageAdoptedValueUpdated;
 import com.example.cargotracker.externaldata.domain.events.VoyageAdoptedValueUpdated.AdoptedPortCall;
 import com.example.cargotracker.routing.acceptance.InMemoryVoyageRepository;
+import com.example.cargotracker.routing.domain.events.VoyageUpdated;
 import com.example.cargotracker.routing.domain.model.aggregates.ConcurrentVoyageUpdateException;
 import com.example.cargotracker.routing.domain.model.aggregates.DuplicateVoyageException;
 import com.example.cargotracker.routing.domain.model.aggregates.Voyage;
@@ -54,7 +55,8 @@ class VoyageUpdateEventHandlerTest {
             new Source(SourceKind.EXTERNAL_RECORD, UUID.randomUUID().toString(), ACQUIRED);
 
     private final RecordingRepository repository = new RecordingRepository();
-    private final VoyageUpdateEventHandler handler = new VoyageUpdateEventHandler(repository);
+    private final List<Object> published = new ArrayList<>();
+    private final VoyageUpdateEventHandler handler = new VoyageUpdateEventHandler(repository, published::add);
 
     private static UtcInstant at(String text) {
         return new UtcInstant(Instant.parse(text));
@@ -209,7 +211,7 @@ class VoyageUpdateEventHandlerTest {
                 }
             };
 
-            new VoyageUpdateEventHandler(racing).on(event(LATER, LATER_ARRIVAL));
+            new VoyageUpdateEventHandler(racing, published::add).on(event(LATER, LATER_ARRIVAL));
 
             Voyage voyage = racing.findByVoyageNumber("V2611E").orElseThrow();
             assertThat(voyage.publishedAt()).contains(LATER);
@@ -226,7 +228,7 @@ class VoyageUpdateEventHandlerTest {
                 }
             };
             VoyageAdoptedValueUpdated event = event(LATER, LATER_ARRIVAL);
-            VoyageUpdateEventHandler duplicateHandler = new VoyageUpdateEventHandler(alwaysDuplicate);
+            VoyageUpdateEventHandler duplicateHandler = new VoyageUpdateEventHandler(alwaysDuplicate, published::add);
 
             assertThatThrownBy(() -> duplicateHandler.on(event)).isInstanceOf(DuplicateVoyageException.class);
         }
@@ -239,6 +241,80 @@ class VoyageUpdateEventHandlerTest {
 
             assertThat(repository.updated).isEmpty();
             assertThat(stored().publishedAt()).contains(LATER);
+        }
+    }
+
+    /** DE-30 の発行（Bolt 39f の決定 (4)、行 13。呼び出しの記録。T-236）。 */
+    @Nested
+    class Bolt39f_DE30の発行 {
+
+        private final VoyageUpdated updated = new VoyageUpdated("V2611E", "1", LATER);
+
+        @Test
+        void 行13_更新を適用したDE12でDE30を1件発行する() {
+            handler.on(event(PUBLISHED, ARRIVAL));
+
+            handler.on(event(LATER, LATER_ARRIVAL));
+
+            assertThat(published).containsExactly(updated);
+        }
+
+        @Test
+        void 行13_初めての航海では発行しない() {
+            handler.on(event(PUBLISHED, ARRIVAL));
+
+            assertThat(repository.saved).hasSize(1);
+            assertThat(published).isEmpty();
+        }
+
+        @Test
+        void 行13_古いDE12では発行しない() {
+            handler.on(event(LATER, LATER_ARRIVAL));
+
+            handler.on(event(PUBLISHED, ARRIVAL));
+
+            assertThat(published).isEmpty();
+        }
+
+        @Test
+        void 行13_完全に同じDE12の再配信では発行しない() {
+            VoyageAdoptedValueUpdated first = event(PUBLISHED, ARRIVAL);
+            handler.on(first);
+            handler.on(event(LATER, LATER_ARRIVAL));
+            published.clear();
+
+            handler.on(event(LATER, LATER_ARRIVAL));
+
+            assertThat(published).isEmpty();
+        }
+
+        @Test
+        void 行13_内容の欠けたDE12では発行しない() {
+            handler.on(event(null, portCalls(ARRIVAL), "1", SOURCE, PUBLISHED));
+
+            assertThat(published).isEmpty();
+        }
+
+        @Test
+        void 行13_競合で読み直すと古くて適用しないDE12では発行しない() {
+            handler.on(event(PUBLISHED, ARRIVAL));
+            repository.racingPublishedAts.add(at("2026-11-09T03:00:00Z"));
+
+            handler.on(event(LATER, LATER_ARRIVAL));
+
+            assertThat(repository.updated).hasSize(1);
+            assertThat(published).isEmpty();
+        }
+
+        @Test
+        void 行13_競合で読み直して適用したときも1件だけ発行する() {
+            handler.on(event(PUBLISHED, ARRIVAL));
+            repository.racingPublishedAts.add(at("2026-11-09T01:30:00Z"));
+
+            handler.on(event(LATER, LATER_ARRIVAL));
+
+            assertThat(repository.updated).hasSize(2);
+            assertThat(published).containsExactly(updated);
         }
     }
 

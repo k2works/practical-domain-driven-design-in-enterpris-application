@@ -30,6 +30,7 @@ import java.time.ZoneOffset;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -82,6 +83,16 @@ public class MyBatisRoutingCaseRepository implements RoutingCaseRepository {
 
     @Override
     public void update(RoutingCase routingCase, UUID operatorId) {
+        write(routingCase, Objects.requireNonNull(operatorId, "operatorId"));
+    }
+
+    @Override
+    public void updateBySystem(RoutingCase routingCase) {
+        write(routingCase, null);
+    }
+
+    /** 案件を書く。操作者が null なら最終更新者を変えない（システムの操作。Bolt 37d2）。 */
+    private void write(RoutingCase routingCase, UUID operatorId) {
         UUID id = routingCase.id().value();
         if (mapper.touchRoutingCase(id, routingCase.aggregateVersion(), OffsetDateTime.now(clock), operatorId) == 0) {
             throw new ConcurrentRoutingCaseUpdateException(routingCase.number(), routingCase.aggregateVersion());
@@ -126,6 +137,13 @@ public class MyBatisRoutingCaseRepository implements RoutingCaseRepository {
             return Optional.empty();
         }
         return findByNumber(number);
+    }
+
+    @Override
+    public List<RoutingCaseNumber> findCaseNumbersConfirmedOnVoyage(String voyageNumber) {
+        return mapper.selectCaseNumbersConfirmedOnVoyage(voyageNumber).stream()
+                .map(RoutingCaseNumber::parse)
+                .toList();
     }
 
     @Override
@@ -185,7 +203,9 @@ public class MyBatisRoutingCaseRepository implements RoutingCaseRepository {
                         toOffset(leg.arrivalAt()),
                         leg.infoVersion(),
                         toOffset(leg.infoAcquiredAt()),
-                        false));
+                        false,
+                        leg.loadCallNo(),
+                        leg.dischargeCallNo()));
             }
             for (int i = 0; i < evaluation.reasons().size(); i++) {
                 ExclusionReason reason = evaluation.reasons().get(i);
@@ -295,7 +315,9 @@ public class MyBatisRoutingCaseRepository implements RoutingCaseRepository {
                                 toUtc(leg.departureAt()),
                                 toUtc(leg.arrivalAt()),
                                 leg.infoVersion(),
-                                toUtc(leg.infoAcquiredAt())))
+                                toUtc(leg.infoAcquiredAt()),
+                                leg.loadCallNo(),
+                                leg.dischargeCallNo()))
                         .toList(),
                 new ConstraintEvaluation(
                         toUtc(row.estimatedArrivalAt()),

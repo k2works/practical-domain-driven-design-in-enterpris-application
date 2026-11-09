@@ -4,6 +4,7 @@ import com.example.cargotracker.quotation.interfaces.api.RouteAssignment;
 import com.example.cargotracker.quotation.interfaces.api.RouteConditionQuery;
 import com.example.cargotracker.quotation.interfaces.api.RouteRedesignNotification;
 import com.example.cargotracker.routing.application.internal.commandservices.RoutingCaseCommandService;
+import com.example.cargotracker.routing.application.internal.eventhandlers.ConfirmedRouteEvaluationEventHandler;
 import com.example.cargotracker.routing.application.internal.eventhandlers.QuotationRouteAssignmentEventHandler;
 import com.example.cargotracker.routing.application.internal.eventhandlers.QuotationRouteRedesignEventHandler;
 import com.example.cargotracker.routing.application.internal.eventhandlers.RoutingCaseOpeningEventHandler;
@@ -90,8 +91,16 @@ public class RoutingConfiguration {
 
     /** DE-12 を受けて経路設計の航海を書く（Spring Modulith のイベントの記録を経て、別のトランザクションで動く。Bolt 39e）。 */
     @Bean
-    VoyageUpdateEventHandler voyageUpdateEventHandler(VoyageRepository repository) {
-        return new VoyageUpdateEventHandler(repository);
+    VoyageUpdateEventHandler voyageUpdateEventHandler(
+            VoyageRepository repository, ApplicationEventPublisher eventPublisher) {
+        return new VoyageUpdateEventHandler(repository, eventPublisher);
+    }
+
+    /** DE-30 を受けて確定した経路を評価する（航海の更新のコミットの後に、別のトランザクションで動く。Bolt 39f）。 */
+    @Bean
+    ConfirmedRouteEvaluationEventHandler confirmedRouteEvaluationEventHandler(
+            RoutingCaseRepository repository, RoutingCaseCommandService commandService) {
+        return new ConfirmedRouteEvaluationEventHandler(repository, commandService);
     }
 
     @Bean

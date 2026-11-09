@@ -1,6 +1,7 @@
 package com.example.cargotracker.routing.domain.model.rules;
 
 import com.example.cargotracker.routing.domain.model.aggregates.Voyage;
+import com.example.cargotracker.routing.domain.model.aggregates.Voyage.CallPair;
 import com.example.cargotracker.routing.domain.model.valueobjects.Leg;
 import com.example.cargotracker.routing.domain.model.valueobjects.PortCall;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteSpecification;
@@ -123,7 +124,7 @@ public class RouteCandidateFinder {
                             .arrivalAt()
                             .instant()
                             .isAfter(load.departureAt().instant())) {
-                legs.add(leg(voyage, load, discharge));
+                legs.add(leg(voyage, new CallPair(from + 1, j + 1, load, discharge)));
             }
             if (discharge.port().equals(passing)) {
                 break;
@@ -134,13 +135,14 @@ public class RouteCandidateFinder {
 
     /**
      * 区間を今の航海で引き直す（確定した経路版の評価。US-07 AC4。Bolt 37d2）。同じ航海番号の航海で、区間の積地の寄港（出発予定がある）と、
-     * その後で区間の揚地に寄る寄港（到着予定がある）の組を探す。揚地が積地より前にも寄るときは積地の後ろだけを見る。候補探索は積地から後の
-     * どの寄港も揚地にできるので、組が 2 つ以上ある（積地か揚地に 2 度寄る）と確定した寄港が分からない。航海がない、組がない、組が 2 つ以上
-     * ある、到着が出発より後でないなら、選ばずに引き直せないとする（失敗に倒す。2 度寄る航海は情報版か区間の予定が変わるたびに再設計要になる）。
+     * その後で区間の揚地に寄る寄港（到着予定がある）の組を探す。揚地が積地より前にも寄るときは積地の後ろだけを見る。組が 1 つならその組を選ぶ（位置は見ない）。
+     * 組が 2 つ以上（積地か揚地に 2 度寄る）なら、確定の区間の寄港の位置で確定した寄港を見分ける（【業務の判断】(u)、【前の決定の変更】(5)。Bolt 39f）: 位置を持たない区間（Bolt 39f
+     * より前に算出した候補）は引き直せない。位置を持てば、出発と到着が区間と一致する組が 1 つあればそれを選び、なければ位置の組を選ぶ。位置が範囲外か、位置の寄港が組に入らないときは
+     * 組の中に見つからないので、例外にせず引き直せないとする。航海がない、組がない、到着が出発より後でないときも、選ばずに引き直せないとする（失敗に倒す）。
      *
      * @param leg 確定した区間
      * @param voyages 今の航海の一覧
-     * @return 今の航海の出発予定・到着予定・採用情報版・取得時刻の区間。引き直せなければ空
+     * @return 今の航海の出発予定・到着予定・採用情報版・取得時刻・寄港の位置の区間。引き直せなければ空
      */
     public Optional<Leg> refresh(Leg leg, List<Voyage> voyages) {
         Optional<Voyage> found = voyages.stream()
@@ -150,46 +152,41 @@ public class RouteCandidateFinder {
             return Optional.empty();
         }
         Voyage voyage = found.get();
-        List<PortCall> calls = voyage.portCalls();
-        List<CallPair> pairs = new ArrayList<>();
-        for (int i = 0; i < calls.size(); i++) {
-            PortCall load = calls.get(i);
-            if (load.port().equals(leg.load()) && load.departureAt() != null) {
-                arrivalsAfter(calls, i, leg.discharge()).forEach(discharge -> pairs.add(new CallPair(load, discharge)));
-            }
-        }
-        if (pairs.size() != 1) {
-            return Optional.empty();
-        }
-        CallPair pair = pairs.getFirst();
-        return pair.discharge()
+        return chosenPair(leg, voyage.callPairs(leg.load(), leg.discharge()))
+                .filter(pair -> pair.discharge()
                         .arrivalAt()
                         .instant()
-                        .isAfter(pair.load().departureAt().instant())
-                ? Optional.of(leg(voyage, pair.load(), pair.discharge()))
-                : Optional.empty();
+                        .isAfter(pair.load().departureAt().instant()))
+                .map(pair -> leg(voyage, pair));
     }
 
-    /** 積地の寄港と揚地の寄港の組。 */
-    private record CallPair(PortCall load, PortCall discharge) {}
-
-    /** 寄港 {@code from} の後で港に寄り、到着予定がある寄港（候補探索が揚地にできる寄港）。 */
-    private static List<PortCall> arrivalsAfter(List<PortCall> calls, int from, Location port) {
-        return calls.subList(from + 1, calls.size()).stream()
-                .filter(call -> call.port().equals(port) && call.arrivalAt() != null)
-                .toList();
+    private static Optional<CallPair> chosenPair(Leg leg, List<CallPair> pairs) {
+        if (pairs.size() < 2) {
+            return pairs.stream().findFirst();
+        }
+        if (!leg.hasCallPositions()) {
+            return Optional.empty();
+        }
+        List<CallPair> sameSchedule =
+                pairs.stream().filter(pair -> pair.hasScheduleOf(leg)).toList();
+        if (sameSchedule.size() == 1) {
+            return Optional.of(sameSchedule.getFirst());
+        }
+        return pairs.stream().filter(pair -> pair.isAtPositionsOf(leg)).findFirst();
     }
 
-    /** 航海の積地の寄港から揚地の寄港までの区間（出発予定・到着予定・採用情報版・取得時刻を写す）。 */
-    private static Leg leg(Voyage voyage, PortCall load, PortCall discharge) {
+    /** 航海の寄港の組の区間（出発予定・到着予定・採用情報版・取得時刻と寄港の位置を写す）。 */
+    private static Leg leg(Voyage voyage, CallPair pair) {
         return new Leg(
                 voyage.voyageNumber(),
-                load.port(),
-                discharge.port(),
-                load.departureAt(),
-                discharge.arrivalAt(),
+                pair.load().port(),
+                pair.discharge().port(),
+                pair.load().departureAt(),
+                pair.discharge().arrivalAt(),
                 voyage.adoptedInfoVersion(),
-                voyage.acquiredAt());
+                voyage.acquiredAt(),
+                pair.loadCallNo(),
+                pair.dischargeCallNo());
     }
 
     private static boolean departsAfter(PortCall load, UtcInstant after, boolean inclusive) {

@@ -6,10 +6,25 @@ import static org.awaitility.Awaitility.await;
 import com.example.cargotracker.TestcontainersConfiguration;
 import com.example.cargotracker.externaldata.domain.events.VoyageAdoptedValueUpdated;
 import com.example.cargotracker.externaldata.domain.events.VoyageAdoptedValueUpdated.AdoptedPortCall;
+import com.example.cargotracker.routing.application.internal.commandservices.RoutingCaseCommandService;
+import com.example.cargotracker.routing.application.internal.eventhandlers.ConfirmedRouteEvaluationEventHandler;
 import com.example.cargotracker.routing.application.internal.eventhandlers.VoyageUpdateEventHandler;
+import com.example.cargotracker.routing.application.internal.queryservices.RoutingCaseScope;
+import com.example.cargotracker.routing.domain.events.RouteRedesignRequired;
+import com.example.cargotracker.routing.domain.events.VoyageUpdated;
+import com.example.cargotracker.routing.domain.model.aggregates.ConnectionRuleRepository;
+import com.example.cargotracker.routing.domain.model.aggregates.RoutingCase;
+import com.example.cargotracker.routing.domain.model.aggregates.RoutingCaseRepository;
 import com.example.cargotracker.routing.domain.model.aggregates.Voyage;
 import com.example.cargotracker.routing.domain.model.aggregates.VoyageRepository;
+import com.example.cargotracker.routing.domain.model.rules.ConstraintEvaluator;
+import com.example.cargotracker.routing.domain.model.rules.InfoFreshnessPolicy;
+import com.example.cargotracker.routing.domain.model.rules.RouteCandidateFinder;
 import com.example.cargotracker.routing.domain.model.valueobjects.PortCall;
+import com.example.cargotracker.routing.domain.model.valueobjects.RouteApprover;
+import com.example.cargotracker.routing.domain.model.valueobjects.RouteSpecification;
+import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseId;
+import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseNumber;
 import com.example.cargotracker.routing.domain.model.valueobjects.VoyageAdoption;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Location;
@@ -17,24 +32,35 @@ import com.example.cargotracker.shared.domain.Source;
 import com.example.cargotracker.shared.domain.SourceKind;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
+import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.mockito.AdditionalAnswers;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -60,6 +86,11 @@ class MyBatisVoyageConcurrentUpdateIntegrationTest {
     private static final Location TOKYO = new Location("JPTYO");
     private static final Location LOS_ANGELES = new Location("USLAX");
     private static final Duration HOLD_WHILE_BLOCKED = Duration.ofMillis(300);
+    /** DE-30 の評価まで動かさないテストの発行先（Bolt 39f の前の行）。 */
+    private static final ApplicationEventPublisher NO_EVENTS = event -> {};
+
+    private static final AtomicInteger CASE_SEQUENCE = new AtomicInteger();
+    private static final Location TRANSSHIPMENT_PORT = new Location("AEJEA");
 
     @Autowired
     VoyageRepository voyages;
@@ -69,6 +100,348 @@ class MyBatisVoyageConcurrentUpdateIntegrationTest {
 
     @Autowired
     PlatformTransactionManager transactionManager;
+
+    @Autowired
+    RoutingCaseRepository routingCases;
+
+    @Autowired
+    ConnectionRuleRepository connectionRules;
+
+    @Autowired
+    ApplicationEventPublisher events;
+
+    @Autowired
+    Clock clock;
+
+    @Autowired
+    InfoFreshnessPolicy freshness;
+
+    @Autowired
+    RoutingCaseScope scope;
+
+    /** 確定した経路の評価の同時（Bolt 39f の行 25・26）。本体は H2 のテストと共有する。 */
+    @Nested
+    class Bolt39f_同時 {
+
+        private Evaluations evaluations() {
+            return new Evaluations(
+                    new Repositories(voyages, jdbc, transactionManager),
+                    routingCases,
+                    connectionRules,
+                    events,
+                    clock,
+                    freshness,
+                    scope);
+        }
+
+        @Test
+        void 行25_別々の航海の2つのDE12のトランザクションが重なっても両方のコミットの後の評価で接続不足になる() throws Exception {
+            assertBothVoyageUpdatesAreEvaluated(evaluations());
+        }
+
+        @Test
+        void 行26_2つのDE30の評価が同じ案件で重なると遅れた方は読み直してDE06は1件() throws Exception {
+            assertOverlappingEvaluationsRedesignOnce(evaluations());
+        }
+    }
+
+    /** 確定した経路の評価の同時の入力（H2 と PostgreSQL のテストが共有する。Bolt 39f）。 */
+    record Evaluations(
+            Repositories repositories,
+            RoutingCaseRepository cases,
+            ConnectionRuleRepository rules,
+            ApplicationEventPublisher events,
+            Clock clock,
+            InfoFreshnessPolicy freshness,
+            RoutingCaseScope scope) {}
+
+    /** 書いた後、相手も書き終えるまでコミットに進まないリポジトリ（2 つのトランザクションを重ねる。行 25）。 */
+    private static final class WaitingForBothWrites extends DelegatingVoyageRepository {
+        private final CyclicBarrier bothWrote;
+
+        WaitingForBothWrites(VoyageRepository delegate, CyclicBarrier bothWrote) {
+            super(delegate);
+            this.bothWrote = bothWrote;
+        }
+
+        @Override
+        public void update(Voyage voyage) {
+            delegate.update(voyage);
+            try {
+                bothWrote.await(20, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new IllegalStateException(e);
+            } catch (BrokenBarrierException | TimeoutException e) {
+                throw new IllegalStateException("相手の DE-12 を待ちきれない", e);
+            }
+        }
+    }
+
+    private static Voyage adoptedVoyage(String number, List<PortCall> calls) {
+        return Voyage.adoptedFrom(new VoyageAdoption(
+                number,
+                calls,
+                "1",
+                new Source(SourceKind.EXTERNAL_RECORD, UUID.randomUUID().toString(), new UtcInstant(ACQUIRED)),
+                new UtcInstant(ACQUIRED)));
+    }
+
+    private static VoyageAdoptedValueUpdated adoptedEvent(String number, List<AdoptedPortCall> calls) {
+        return new VoyageAdoptedValueUpdated(
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                new Source(SourceKind.EXTERNAL_RECORD, UUID.randomUUID().toString(), new UtcInstant(ACQUIRED)),
+                number,
+                calls,
+                "1",
+                new UserId(UUID.randomUUID()),
+                new CompanyId(UUID.randomUUID()),
+                NEWER_PUBLISHED);
+    }
+
+    /** 候補 1 を確定した案件（希望到着期限は 2098-01-01）。 */
+    private static RoutingCase confirmedCase(Evaluations evaluations, List<Voyage> routeVoyages) {
+        Location origin = routeVoyages.getFirst().portCalls().getFirst().port();
+        Location destination = routeVoyages.getLast().portCalls().getLast().port();
+        RoutingCase opened = RoutingCase.open(
+                new RoutingCaseId(UUID.randomUUID()),
+                new RoutingCaseNumber(2094, CASE_SEQUENCE.incrementAndGet()),
+                UUID.randomUUID(),
+                "TR-2094-0001",
+                1,
+                UUID.randomUUID(),
+                List.of(),
+                new RouteSpecification(
+                        origin, destination, new UtcInstant(Instant.parse("2098-01-01T00:00:00Z")), "GENERAL"),
+                new UtcInstant(ACQUIRED),
+                new UtcInstant(Instant.parse("2097-11-01T00:00:00Z")),
+                UUID.randomUUID(),
+                new CompanyId(UUID.randomUUID()));
+        ConstraintEvaluator evaluator = new ConstraintEvaluator();
+        UtcInstant now = new UtcInstant(evaluations.clock().instant());
+        TransactionTemplate transaction = evaluations.repositories().transaction();
+        transaction.executeWithoutResult(status -> evaluations.cases().save(opened));
+        transaction.executeWithoutResult(status -> {
+            RoutingCase loaded =
+                    evaluations.cases().findByNumber(opened.number()).orElseThrow();
+            loaded.calculateCandidates(
+                    routeVoyages,
+                    evaluations.rules().findAll(),
+                    now,
+                    new RouteCandidateFinder(),
+                    evaluator,
+                    evaluations.freshness());
+            evaluations.cases().update(loaded, UUID.randomUUID());
+        });
+        transaction.executeWithoutResult(status -> {
+            RoutingCase loaded =
+                    evaluations.cases().findByNumber(opened.number()).orElseThrow();
+            loaded.confirm(
+                    1,
+                    "同時の確かめの根拠。",
+                    new RouteApprover(UUID.randomUUID(), true),
+                    routeVoyages,
+                    evaluations.rules().findAll(),
+                    now,
+                    evaluator,
+                    evaluations.freshness());
+            evaluations.cases().update(loaded, UUID.randomUUID());
+        });
+        return evaluations.cases().findByNumber(opened.number()).orElseThrow();
+    }
+
+    private static Map<String, Object> routeVersionOf(Evaluations evaluations, RoutingCase routingCase) {
+        return evaluations
+                .repositories()
+                .jdbc()
+                .queryForMap(
+                        "SELECT status, redesign_reasons FROM routing.route_version WHERE routing_case_id = ?",
+                        routingCase.id().value());
+    }
+
+    private static int redesignPublications(Evaluations evaluations, RoutingCase routingCase) {
+        Integer count = evaluations
+                .repositories()
+                .jdbc()
+                .queryForObject(
+                        "SELECT COUNT(*) FROM platform.event_publication WHERE event_type LIKE '%RouteRedesignRequired'"
+                                + " AND listener_id LIKE '%QuotationRouteRedesignEventHandler%' AND serialized_event LIKE ?",
+                        Integer.class, "%" + routingCase.number().text() + "%");
+        return count == null ? 0 : count;
+    }
+
+    private static int completedEvaluations(Evaluations evaluations, String voyageNumber) {
+        Integer count = evaluations
+                .repositories()
+                .jdbc()
+                .queryForObject(
+                        "SELECT COUNT(*) FROM platform.event_publication WHERE listener_id LIKE '%ConfirmedRouteEvaluationEventHandler%'"
+                                + " AND serialized_event LIKE ? AND completion_date IS NOT NULL",
+                        Integer.class, "%" + voyageNumber + "%");
+        return count == null ? 0 : count;
+    }
+
+    /**
+     * 別々の航海 V（到着が遅れる）と W（出発が早まる）の DE-12 のトランザクションを、両方が書いた後にコミットさせる。片方だけなら接続 14 時間で適合、両方で接続 4 時間（規則 8 時間）。
+     * 後にコミットした側の DE-30 の評価が両方の値を見て再設計要にする（1 段に戻す変異 V9 は、どちらのトランザクションも相手の値を読めないので落ちる）。
+     */
+    static void assertBothVoyageUpdatesAreEvaluated(Evaluations evaluations) throws Exception {
+        Repositories repositories = evaluations.repositories();
+        String feeder = "C-" + UUID.randomUUID().toString().substring(0, 12);
+        String mainline = "C-" + UUID.randomUUID().toString().substring(0, 12);
+        UUID ruleId = UUID.randomUUID();
+        UtcInstant arrival = new UtcInstant(Instant.parse("2097-12-10T00:00:00Z"));
+        UtcInstant lateArrival = new UtcInstant(Instant.parse("2097-12-10T10:00:00Z"));
+        UtcInstant connecting = new UtcInstant(Instant.parse("2097-12-11T00:00:00Z"));
+        UtcInstant earlyConnecting = new UtcInstant(Instant.parse("2097-12-10T14:00:00Z"));
+        UtcInstant finalArrival = new UtcInstant(Instant.parse("2097-12-20T00:00:00Z"));
+        try {
+            repositories
+                    .jdbc()
+                    .update(
+                            "INSERT INTO routing.connection_rule (id, route_scope, port_unlocode, min_connection_minutes, valid_from,"
+                                    + " valid_to, version) VALUES (?, '*', ?, 480, ?, NULL, 0)",
+                            ruleId,
+                            TRANSSHIPMENT_PORT.unLocode(),
+                            OffsetDateTime.parse("2026-01-01T00:00:00Z"));
+            Voyage feederVoyage = adoptedVoyage(
+                    feeder,
+                    List.of(new PortCall(TOKYO, null, DEPARTURE), new PortCall(TRANSSHIPMENT_PORT, arrival, null)));
+            Voyage mainlineVoyage = adoptedVoyage(
+                    mainline,
+                    List.of(
+                            new PortCall(TRANSSHIPMENT_PORT, null, connecting),
+                            new PortCall(LOS_ANGELES, finalArrival, null)));
+            repositories.transaction().executeWithoutResult(status -> {
+                repositories.voyages().save(feederVoyage);
+                repositories.voyages().save(mainlineVoyage);
+            });
+            RoutingCase confirmed = confirmedCase(evaluations, List.of(feederVoyage, mainlineVoyage));
+            CyclicBarrier bothWrote = new CyclicBarrier(2);
+            VoyageUpdateEventHandler feederHandler = new VoyageUpdateEventHandler(
+                    new WaitingForBothWrites(repositories.voyages(), bothWrote), evaluations.events());
+            VoyageUpdateEventHandler mainlineHandler = new VoyageUpdateEventHandler(
+                    new WaitingForBothWrites(repositories.voyages(), bothWrote), evaluations.events());
+            VoyageAdoptedValueUpdated feederUpdate = adoptedEvent(
+                    feeder,
+                    List.of(
+                            new AdoptedPortCall(TOKYO, null, DEPARTURE),
+                            new AdoptedPortCall(TRANSSHIPMENT_PORT, lateArrival, null)));
+            VoyageAdoptedValueUpdated mainlineUpdate = adoptedEvent(
+                    mainline,
+                    List.of(
+                            new AdoptedPortCall(TRANSSHIPMENT_PORT, null, earlyConnecting),
+                            new AdoptedPortCall(LOS_ANGELES, finalArrival, null)));
+
+            try (ExecutorService executor = Executors.newFixedThreadPool(2)) {
+                Future<?> first = executor.submit(() ->
+                        repositories.transaction().executeWithoutResult(status -> feederHandler.on(feederUpdate)));
+                Future<?> second = executor.submit(() ->
+                        repositories.transaction().executeWithoutResult(status -> mainlineHandler.on(mainlineUpdate)));
+                first.get(30, TimeUnit.SECONDS);
+                second.get(30, TimeUnit.SECONDS);
+            }
+
+            await().atMost(Duration.ofSeconds(20)).untilAsserted(() -> {
+                assertThat(completedEvaluations(evaluations, feeder)).isEqualTo(1);
+                assertThat(completedEvaluations(evaluations, mainline)).isEqualTo(1);
+            });
+            assertThat(routeVersionOf(evaluations, confirmed))
+                    .containsEntry("status", "REDESIGN_REQUIRED")
+                    .containsEntry("redesign_reasons", "CONNECTION_TOO_SHORT");
+            assertThat(redesignPublications(evaluations, confirmed)).isEqualTo(1);
+        } finally {
+            repositories.delete(feeder);
+            repositories.delete(mainline);
+            repositories.jdbc().update("DELETE FROM routing.connection_rule WHERE id = ?", ruleId);
+        }
+    }
+
+    /**
+     * 負ける評価が案件を読んだ後に、先の評価をコミットさせる。遅れた方は 0 件の UPDATE で競合を受け、同じトランザクションで読み直して再設計要を見て終わる（DE-06 は重ならない）。
+     * 入力ポートをテストで組み立て、発行したイベントを記録する（DE-30 の配信は通さない）。
+     */
+    static void assertOverlappingEvaluationsRedesignOnce(Evaluations evaluations) throws Exception {
+        Repositories repositories = evaluations.repositories();
+        String voyageNumber = "C-" + UUID.randomUUID().toString().substring(0, 12);
+        try {
+            Voyage voyage = adoptedVoyage(
+                    voyageNumber,
+                    List.of(new PortCall(TOKYO, null, DEPARTURE), new PortCall(LOS_ANGELES, ARRIVAL, null)));
+            repositories
+                    .transaction()
+                    .executeWithoutResult(status -> repositories.voyages().save(voyage));
+            RoutingCase confirmed = confirmedCase(evaluations, List.of(voyage));
+            repositories.transaction().executeWithoutResult(status -> {
+                Voyage updated =
+                        repositories.voyages().findByVoyageNumber(voyageNumber).orElseThrow();
+                updated.apply(new VoyageAdoption(
+                        voyageNumber,
+                        List.of(
+                                new PortCall(TOKYO, null, DEPARTURE),
+                                new PortCall(LOS_ANGELES, new UtcInstant(Instant.parse("2098-02-01T00:00:00Z")), null)),
+                        "1",
+                        new Source(SourceKind.EXTERNAL_RECORD, UUID.randomUUID().toString(), new UtcInstant(ACQUIRED)),
+                        NEWER_PUBLISHED));
+                repositories.voyages().update(updated);
+            });
+            List<Object> published = new CopyOnWriteArrayList<>();
+            CountDownLatch loserRead = new CountDownLatch(1);
+            CountDownLatch winnerCommitted = new CountDownLatch(1);
+            AtomicBoolean paused = new AtomicBoolean();
+            RoutingCaseRepository pausing =
+                    Mockito.mock(RoutingCaseRepository.class, AdditionalAnswers.delegatesTo(evaluations.cases()));
+            Mockito.doAnswer(invocation -> {
+                        Optional<RoutingCase> found = evaluations.cases().findByNumber(invocation.getArgument(0));
+                        if (paused.compareAndSet(false, true)) {
+                            loserRead.countDown();
+                            awaitLatch(winnerCommitted);
+                        }
+                        return found;
+                    })
+                    .when(pausing)
+                    .findByNumber(Mockito.any());
+            ConfirmedRouteEvaluationEventHandler loser =
+                    new ConfirmedRouteEvaluationEventHandler(pausing, commandService(evaluations, pausing, published));
+            ConfirmedRouteEvaluationEventHandler winner = new ConfirmedRouteEvaluationEventHandler(
+                    evaluations.cases(), commandService(evaluations, evaluations.cases(), published));
+            VoyageUpdated event = new VoyageUpdated(voyageNumber, "1", NEWER_PUBLISHED);
+
+            try (ExecutorService executor = Executors.newSingleThreadExecutor()) {
+                Future<?> losing = executor.submit(
+                        () -> repositories.transaction().executeWithoutResult(status -> loser.on(event)));
+                awaitLatch(loserRead);
+                repositories.transaction().executeWithoutResult(status -> winner.on(event));
+                winnerCommitted.countDown();
+                losing.get(30, TimeUnit.SECONDS);
+            }
+
+            assertThat(routeVersionOf(evaluations, confirmed)).containsEntry("status", "REDESIGN_REQUIRED");
+            assertThat(published).singleElement().isInstanceOf(RouteRedesignRequired.class);
+            assertThat(evaluations
+                            .cases()
+                            .findByNumber(confirmed.number())
+                            .orElseThrow()
+                            .aggregateVersion())
+                    .isEqualTo(confirmed.aggregateVersion() + 1);
+        } finally {
+            repositories.delete(voyageNumber);
+        }
+    }
+
+    private static RoutingCaseCommandService commandService(
+            Evaluations evaluations, RoutingCaseRepository cases, List<Object> published) {
+        return new RoutingCaseCommandService(
+                cases,
+                evaluations.repositories().voyages(),
+                evaluations.rules(),
+                published::add,
+                evaluations.clock(),
+                evaluations.freshness(),
+                evaluations.scope());
+    }
 
     @Test
     void Bolt39e_行19_既存の行で読んだ後に新しいDE12が先にコミットすると古いDE12は適用されず版は1() throws Exception {
@@ -270,8 +643,8 @@ class MyBatisVoyageConcurrentUpdateIntegrationTest {
             CountDownLatch loserRead = new CountDownLatch(1);
             CountDownLatch winnerCommitted = new CountDownLatch(1);
             VoyageUpdateEventHandler loser = new VoyageUpdateEventHandler(
-                    new PausingAfterFirstRead(repositories.voyages(), loserRead, winnerCommitted));
-            VoyageUpdateEventHandler winner = new VoyageUpdateEventHandler(repositories.voyages());
+                    new PausingAfterFirstRead(repositories.voyages(), loserRead, winnerCommitted), NO_EVENTS);
+            VoyageUpdateEventHandler winner = new VoyageUpdateEventHandler(repositories.voyages(), NO_EVENTS);
             VoyageAdoptedValueUpdated winning = winnerIsNewer ? newer : older;
             VoyageAdoptedValueUpdated losing = winnerIsNewer ? older : newer;
 
@@ -310,9 +683,9 @@ class MyBatisVoyageConcurrentUpdateIntegrationTest {
             CountDownLatch winnerRelease = new CountDownLatch(1);
             CountDownLatch loserWriting = new CountDownLatch(1);
             VoyageUpdateEventHandler winner = new VoyageUpdateEventHandler(
-                    new HoldingAfterWrite(repositories.voyages(), winnerWrote, winnerRelease));
-            VoyageUpdateEventHandler loser =
-                    new VoyageUpdateEventHandler(new AnnouncingBeforeWrite(repositories.voyages(), loserWriting));
+                    new HoldingAfterWrite(repositories.voyages(), winnerWrote, winnerRelease), NO_EVENTS);
+            VoyageUpdateEventHandler loser = new VoyageUpdateEventHandler(
+                    new AnnouncingBeforeWrite(repositories.voyages(), loserWriting), NO_EVENTS);
             VoyageAdoptedValueUpdated winning = winnerIsNewer ? newer : older;
             VoyageAdoptedValueUpdated losing = winnerIsNewer ? older : newer;
 

@@ -415,7 +415,11 @@ class DevSampleDataSmokeTest {
                 infoFreshnessPolicy);
 
         RouteVersion expected = recalculated.routeVersion();
-        assertThat(seeded.routeVersion()).isEqualTo(expected);
+        // 見本の候補は算出し直すまで寄港の位置を持たない（Bolt 39f の決定 (3)）ので、位置のほかを比べる
+        assertThat(seeded.routeVersion())
+                .usingRecursiveComparison()
+                .ignoringFieldsMatchingRegexes(".*CallNo")
+                .isEqualTo(expected);
         assertThat(expected.candidates()).hasSize(5);
         assertThat(expected.candidates())
                 .filteredOn(candidate -> candidate.evaluation().conforming())
