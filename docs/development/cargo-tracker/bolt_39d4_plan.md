@@ -3,7 +3,7 @@ type: Plan
 title: "Bolt 39d4 計画 - 判断の後に送り直された原本を業務の決まりどおりに分類し、直して送り直す道を示す"
 tags: [plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-09T07:50:35Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-09T07:58:23Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-11-09T07:50:35Z }
 ---
@@ -432,7 +432,7 @@ rc ||--o| av
 
 ## ステップ計画（ステップごとに止める）
 
-- [ ] **1. 設計の文書**: 上の「設計文書に直す箇所」。開始準備の決定 (1)〜(15)、【業務の判断】(p)・(q)（台帳 D-103・D-104 を仮の決定として足す）、【前の決定の変更】(1)・(2) を反映する。始めに docs を「39d4」で検索する（完了の判定: 文書の差分と検索の記録。**承認ゲート**）
+- [x] **1. 設計の文書**（data_model・domain_model・ui_design・test_strategy・user_story・system_usecase・ADR-004・architecture_backend・release_plan（D-103・D-104 を仮の決定として足した）を直した。計測の値は測った後に non_functional と ADR-004 に書く。推奨のとおり承認として記録した。Recommend 承認の指示による）: 上の「設計文書に直す箇所」。開始準備の決定 (1)〜(15)、【業務の判断】(p)・(q)（台帳 D-103・D-104 を仮の決定として足す）、【前の決定の変更】(1)・(2) を反映する。始めに docs を「39d4」で検索する（完了の判定: 文書の差分と検索の記録。**承認ゲート**）
 - [ ] **2. テストの Red（内側から）**: このステップで行 1〜9・10・11・13〜16・21・28 のテストを書く（ステップ 3〜5 の目安にテストを書く時間は入れない）。まず骨組み（`changeAdoptedPayload` をポートとメモリ・MyBatis に足し中身は何もしない、例外のクラス `ConcurrentExternalRecordUpdateException`、`NotAdoptableReason.PAYLOAD_ALREADY_ADOPTED` と理由の文。T-254）、続いて行 13・14 の契約、行 6・7 の判断のサービス、行 1〜5・8・9・11 の分類、行 10 の統合（新しいクラス）、行 15・16 の文、行 28 の controller。直す既存のテストを一覧にする（T-217。上の引き継ぎの表の行）（完了の判定: 期待した理由で落ちる記録。行 3 (a)・4・5・9 (a)・11 は **今の振る舞いを固定する行** で、Red の記録に入れず緑の記録を別に残す。Red の行は `wip/` のブランチか stash に置き、develop に落ちるテストを積まない。このステップで develop に入れるのは緑の骨組みと今の振る舞いを固定する行のテストだけ。**承認ゲート**（契約、新しいファイル（例外・テスト）））
 - [ ] **3. 基準の付け替えの実装とマイグレーション**: `changeAdoptedPayload`（マッパー・MyBatis・メモリ）、列のコメントのマイグレーション（共通）。行 13・14 が緑、`spotbugsMain`・`checkstyleMain`・`sonar-local:check`（完了の判定: 緑。**承認ゲート**（スキーマ・新しいファイル））
 - [ ] **4. 判断のサービスと負けた採用の行き先**: `adopt` の付け替えと `AdoptionParts`（決定 (3)・(4)）、`adoptionCheckOf` の `PAYLOAD_ALREADY_ADOPTED`（決定 (7)）、`UndecidedRecordController` の負けた採用の行き先と `decision.html` のエラー要約（決定 (4)）、行 12 の PostgreSQL の統合のテスト。行 1・3 (b)・6・7・8・9 (b)(c)・10・12・28 が緑（完了の判定: 緑、`spotbugsMain`・`checkstyleMain`・`sonar-local:check`、S-17 の `uiTest` と axe 違反 0。**承認ゲート**（画面））
