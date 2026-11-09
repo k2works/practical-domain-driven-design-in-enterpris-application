@@ -4,7 +4,7 @@ title: "cargo-tracker データモデル"
 description: "cargo-tracker の概念データモデル、スキーマ分割、命名と型の規約（H2 と PostgreSQL の共通部分）、コンテキストごとの論理データモデルと ER 図、版・追記専用・冪等性・イベント配信の表現。"
 tags: [design, data-model]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-09T15:22:34Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-09T17:25:43Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:48:17Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:37Z }
@@ -431,6 +431,8 @@ entity "candidate_leg\n区間" as leg {
   * voyage_number : VARCHAR(30)
   * load_unlocode : CHAR(5)
   * discharge_unlocode : CHAR(5)
+  load_call_no : INTEGER
+  discharge_call_no : INTEGER
   * departure_at : TIMESTAMPTZ
   * arrival_at : TIMESTAMPTZ
   cargo_cutoff_at : TIMESTAMPTZ
@@ -503,8 +505,8 @@ riv }o..|| v : 航海番号
 | `routing_case` | UK（`transport_request_id`、`transport_request_version_no`）で、詳細経路設計の依頼（DE-16）が再配信されても案件を重複させない。確定した経路版は `route_version` の状態で表す（Bolt 37d で `confirmed_route_version_no` を消した。確定は案件に 1 つを PostgreSQL の部分一意インデックス `ux_route_version_confirmed` と集約で守る） | R-INV-05、R-INV-10 |
 | `route_version` | `status` IN（`DRAFT`、`CANDIDATES_PRESENTED`、`EXPERT_REVIEW`、`CONFIRMED`、`REDESIGN_REQUIRED`、`SUPERSEDED`）。確定時は `approved_by`・`approved_at`・`rationale` が NOT NULL（アプリケーションで検証） | R-INV-03、R-INV-04、R-INV-06 |
 | `exclusion_reason` | `reason_code` IN（`DEADLINE_EXCEEDED`、`CONNECTION_TOO_SHORT`、`CARGO_NOT_SUPPORTED`、`NOT_CONNECTABLE`、`INFO_INSUFFICIENT`） | R-INV-02 |
-| `referenced_info_version` | 確定時に参照した航海ごとの情報版。承認時の再検証と、確定後の再評価に使う（Bolt 37c の注: この表はまだ作っていない。承認時の再検証は、区間の写しの情報版 `candidate_leg.info_version` と区間の予定 `departure_at`・`arrival_at` の組で今の航海と照合する（Bolt 39e2 の【前の決定の変更】(1)。スキーマは変えない）。Bolt 37d の決定: この表は作らない。旧情報版は確定の記録の候補の区間に残る。航海番号から評価する案件を引く照会は W7 で `candidate_leg.voyage_number` の索引として決める） | R-INV-03、R-INV-07 |
-| `candidate_leg` | `executed` は再設計の対象から外す区間を示す | R-INV-08 |
+| `referenced_info_version` | 確定時に参照した航海ごとの情報版。承認時の再検証と、確定後の再評価に使う（Bolt 37c の注: この表はまだ作っていない。承認時の再検証は、区間の写しの情報版 `candidate_leg.info_version` と区間の予定 `departure_at`・`arrival_at` の組で今の航海と照合する（Bolt 39e2 の【前の決定の変更】(1)。スキーマは変えない）。Bolt 37d の決定: この表は作らない。旧情報版は確定の記録の候補の区間に残る。航海番号から評価する案件を引く照会は Bolt 39f で `candidate_leg.voyage_number` の索引 `ix_candidate_leg_voyage` を足した） | R-INV-03、R-INV-07 |
+| `candidate_leg` | `executed` は再設計の対象から外す区間を示す。`load_call_no`・`discharge_call_no` はそろって NULL か、そろって値を持ち `load_call_no` が小さい（CHECK。Bolt 39f） | R-INV-08 |
 | `port_call` | 寄港に到着予定か出発予定の少なくとも一方を要する（CHECK `ck_port_call_times`。V20261007100000__create_routing.sql）。寄港を 2 つ以上要すること・出発予定は到着予定以後であることは集約（`Voyage`・`PortCall`）が守る。外部データの取込の値は同じ規則を写しとして持つ（Bolt 39b2b）。航海の更新では寄港の行を消して入れ直す（置き換え。`voyage` の条件付きの更新が通った後。`candidate_leg` から航海への外部キーはないので影響しない。Bolt 39e） | — |
 
 「確定は案件に 1 つ」は PostgreSQL の部分一意インデックス `ux_route_version_confirmed`（`route_version (routing_case_id) WHERE status = 'CONFIRMED'`。`migration/postgresql`）で表す。H2（開発環境・デモ環境）では部分インデックスを使えないので、集約（`RoutingCase` の経路版の検査）が守る（Bolt 37d。それまでは案件のヘッダに `confirmed_route_version_no` を持っていたが、書くだけで読まれず、再設計要にすると NULL で上書きされるので消した。D-72 を解消した）。
@@ -522,6 +524,7 @@ Bolt 17（US-06 AC1〜AC3）で作る範囲（[Bolt 17 計画](../../development
 - Bolt 38g（US-16 AC4）で足す列: `routing_case.shipper_company_id`（荷主企業。見積りの公開 API「経路条件の照会」の結果の写しで、社内の経路設計の画面を担当企業で絞るのに使う。NOT NULL）。3 段で入れる: common の `V20261029100000` で null 可で足し索引 `ix_routing_case_shipper`（`shipper_company_id`、`quotation_expires_at`）を付ける → dev だけの `V20261029100900` で既存の行を輸送要求の荷主企業から埋める → common の `V20261029101000` で `SET NOT NULL`。ステージング・本番には行がない
 - 航海・寄港は、外部原本の取込（US-14、W7）で採用した値を経路設計の listener が書く（Bolt 39e）。出典 `EXTERNAL_RECORD`、参照は受信記録 ID、情報版は外部版。ステージング・本番では初めての DE-12 で行を作る。開発環境の `db/dev-data` の仮の航海（出典 `MANUAL_ENTRY`、情報版 `PROVISIONAL-1`、架空の航海番号）はそのまま残す。接続時間規則は、規則の管理ができるまで `db/dev-data` にだけ入れる仮のデータで、ステージング・本番では 0 件。
 - Bolt 39e（US-14）で足す列: `voyage.published_at`（採用値を公開した時刻。NULL を許す。取込を経ない仮の航海は NULL で、どの DE-12 より古いとみなす）。同じ航海の DE-12 の順の判定に使う。`updated_at` は監査用の列の規約のままで、公開した時刻に使わない。共通のマイグレーションで足す。索引は足さない（港ごとの出発の索引は W10 の性能テストと一緒に見る）。
+- Bolt 39f（US-07 AC4）で足す列と索引: `candidate_leg.load_call_no`・`discharge_call_no`（確定の区間の寄港の位置。INTEGER、NULL を許す。`port_call.call_no` の値（1 始まりの運航の順）を写す。外部キーはない（寄港は更新のたびに消して入れ直すので、位置は値として持つ））。CHECK はそろって NULL か、そろって値を持ち `load_call_no` が小さい。NULL は Bolt 39f より前に算出した候補だけで、埋め直さない（ステージング・本番に案件の行はなく、開発データの見本は算出し直すまで NULL のまま）。使うのは積地か揚地に 2 度寄る航海で組が 2 つ以上あるときの評価の引き直しと照合だけ（domain_model の Bolt 39f で決めたこと。【業務の判断】(u)）。索引 `ix_candidate_leg_voyage`（`candidate_leg (voyage_number)`）を足す（航海番号から確定した経路版を持つ案件を引く照会）。共通のマイグレーション `V20261110100000__add_routing_candidate_leg_call_no_and_voyage_index.sql` で足す。
 
 ### 予約（`booking`）
 
@@ -1214,7 +1217,8 @@ src/main/resources/db/
 | `quotation.quotation` | `ix_quotation_assigned_route`（`routing_case_number`、`route_version_no`） | 経路設計が再設計要にした経路版を割り当てた見積り（再見積りの旧版と新しい見積りの両方）を引き、再設計要の印を付ける（US-07 AC5。Bolt 37e） |
 | `routing.routing_case` | （`transport_request_id`） | 輸送要求から経路設計案件 |
 | `routing.routing_case` | `ix_routing_case_shipper`（`shipper_company_id`、`quotation_expires_at`） | 社内の経路設計案件一覧（S-05）を担当企業で絞り、見積有効期限の近い順に並べる（Bolt 38g） |
-| `routing.referenced_info_version` | （`voyage_number`） | 航海の更新で再評価する確定済み経路版の検索（DE-12）（Bolt 37d: この表は作らない。W7 で `candidate_leg.voyage_number` の索引として決める） |
+| `routing.referenced_info_version` | （`voyage_number`） | 航海の更新で再評価する確定済み経路版の検索（DE-12）（Bolt 37d: この表は作らない。下の `routing.candidate_leg` の索引で引く） |
+| `routing.candidate_leg` | `ix_candidate_leg_voyage`（`voyage_number`） | 航海の更新（DE-30）で、航海番号から確定した経路版を持つ案件を引く（US-07 AC4。Bolt 39f） |
 | `booking.booking` | `tracking_number`（一意）、（`shipper_company_id`、`status`）、（`transport_request_number`）、（`transport_request_number`、`quotation_no`）（一意） | 追跡番号での照会、荷主の予約一覧、業務番号から予約をたどる社内の照会（Bolt 23、R-31）、見積りの照会の前に同じ見積りの予約を引く（Bolt 24）。S-10 予約一覧（Bolt 25b）は予約版 1 の `committed_at` の新しい順に引くが、R0.1 では予約が数十件なので索引を足さない（確定時刻の索引は W11 の一覧の本体で決める）。C-06 予約一覧（荷主。Bolt 27b）は（`shipper_company_id`、`status`）の索引 `ix_booking_shipper_status` で荷主企業を絞り、索引は足さない |
 | `booking.booking_saga` | （`status`、`started_at`） | 処理中の滞留の判定（RTY-02、OBS-04） |
 | `tracking.tracking_record` | `ix_tracking_record_shipper`（`shipper_company_id`、`created_at`）、（`consignee_company_id`） | 荷主の照会（C-10。Bolt 27 で足した。荷主企業で絞って追跡の開始時刻の新しい順に並べる一覧のため、並びの列を含めた複合の索引にした）・荷受人の照会（荷受人の照会を作る US-10・R1.1 で足す）。`booking_id` は一意制約が索引を兼ねる。S-11 の追跡の開始時刻（`created_at`）の並びの索引は、R0.1 では追跡記録が数十件なので足さない（一覧の絞り込みとページ送りを作る W7 以後に決める。Bolt 26） |

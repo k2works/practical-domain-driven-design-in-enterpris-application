@@ -4,7 +4,7 @@ title: "ADR-004: 外部原本は Inbox・隔離・照合の 3 段で取り込む
 description: "ARCH-HO-03 と BR-08・BR-12・BR-18 を満たすため、外部原本を無加工で保存し、冪等性キーで採用・重複・隔離・差異に分類し、復旧時に件数照合する決定。2026-11-02（W7、Bolt 39）に、置き場所（externaldata）、原本の保存のポートと消さない補償、分類 4 つ、形式の誤りの隔離、解析の置き場所を改訂した。"
 tags: [adr, architecture]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-09T15:22:34Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-09T17:25:43Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:11:13Z }
   - { by: human:kakimomokuri, at: 2026-11-02T06:52:27Z }
@@ -158,6 +158,9 @@ verified:
   - **書き手**: 経路設計の listener `VoyageUpdateEventHandler` が DE-12 を受けて航海を書く（`routing` の `allowedDependencies` に `externaldata :: events` を足す）。`version` の楽観ロックで守り、競合は読み直して適用し直す（3 回まで）。内容の欠けた DE-12 は ERROR のログを残して捨てる。
   - **寄港の規則の写し**: 上の Bolt 39b3 の項で 39e に預けた経路設計の `Voyage` の上限（60）と寄港の重複の規則は足さない（意図した食い違いのまま）。
   - **誤って採用したときの道**: 新しい外部版で正しい原本を送ってもらうのを基本の道にし、元の原本を同じ外部版のまま送り直して採用するのは新しい外部版を出してもらえないときの道にする（【業務の判断】(t)、台帳 D-107。仮）。R-INV-03 の照合は Bolt 39e2 で情報版と区間の予定の組に広げた（【業務の判断】(s)、台帳 D-106）。
+- 2026-11-10（W7、Bolt 39f）: DE-12 から確定した経路の評価までを、次のように決めた（[Bolt 39f 計画](../../development/cargo-tracker/bolt_39f_plan.md) の開始準備の決定 (4)・(5)、【前の決定の変更】(6)。推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）。決定は変えない（採用値だけを公開し、経路設計は航海集約を自分のコマンドで更新する。DE-12 の型と発行は変えない）。
+  - **2 段の配信**: 経路設計の listener `VoyageUpdateEventHandler` は DE-12 を受けて更新を適用したら、航海の更新と同じトランザクションで経路設計のイベント DE-30（`VoyageUpdated`）を発行する。`ConfirmedRouteEvaluationEventHandler` が DE-30 をコミットの後に受けて、確定した経路版を評価する。同じファイルの 2 行で別々の航海が並行して更新されても、後にコミットした側の評価が両方の値を見る。DE-12 の listener のトランザクションで評価すると、片方ずつなら適合で両方なら不適合の組を見落とす。
+  - **未完了の配信**: 評価が 3 回競合したら例外を上げ、DE-30 の発行記録に残して再起動の再配信に任せる（DE-12 と同じ）。運用で気づく手段は W10 の OBS の項目に DE-12 と一緒に送る。
 
 ## 備考
 
