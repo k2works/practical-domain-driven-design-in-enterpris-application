@@ -112,6 +112,61 @@ public class ExternalDataIngestionUiSteps {
         insertApprovedSource(MILESTONE);
     }
 
+    /** 最初の原本（送り直しの行の出どころ。同じ取得時刻の行でないと同じ原本にならない。Bolt 39d4）。 */
+    private static final String FIRST_PAYLOAD = "最初の原本";
+
+    private static final String SECOND_PAYLOAD = "2 つ目の原本";
+
+    /** 3 つ目の内容の違う原本の寄港（東京の到着と出発を 2 日遅らせる。T-230）。 */
+    private static final String THIRD_PORT_CALLS =
+            "JPTYO;2026-12-03T00:00:00Z;2026-12-03T12:00:00Z|USLAX;2026-12-10T00:00:00Z;2026-12-10T12:00:00Z";
+
+    /** 取り込んだ行の原文（原本の名前ごと。送り直しのファイルに同じ行を使う。Bolt 39d4 の行 17・20）。 */
+    private final java.util.Map<String, String> sentLines = new java.util.HashMap<>();
+
+    /** Bolt 39d4 の行 17。航海の 3 行（採用 1・内容の違う原本 2。到着の時刻だけが違う。T-230）。 */
+    @かつ("キー操作だけで承認済みの航海の情報源を選び、同じ外部 ID・外部版で内容の違う 3 行のファイルを選んで取り込む")
+    public void 内容の違う3行のファイルを取り込む() {
+        chooseSource();
+        String acquiredAt = acquiredAt();
+        sentLines.put(FIRST_PAYLOAD, voyageLine("V2611E", acquiredAt, PORT_CALLS));
+        sentLines.put(SECOND_PAYLOAD, voyageLine("V2611E", acquiredAt, CHANGED_PORT_CALLS));
+        chooseFile(voyageFile(
+                sentLines.get(FIRST_PAYLOAD),
+                sentLines.get(SECOND_PAYLOAD),
+                voyageLine("V2611E", acquiredAt, THIRD_PORT_CALLS)));
+        submit();
+    }
+
+    /**
+     * Bolt 39d4 の行 17・20。その外部 ID・外部版の 1 行だけのファイルを取り込む。「最初の原本」「2 つ目の原本」は取り込んだ行の原文のまま、「新しい外部版の行」は外部版だけを変え、「同じ外部版のまま直した行」は
+     * 寄港の時刻を直した（T-230）。
+     */
+    @かつ("キー操作だけで承認済みの航海の情報源を選び、{string} の 1 行のファイルを選んで取り込む")
+    public void 一行のファイルを取り込む(String payload) {
+        chooseSource();
+        String line =
+                switch (payload) {
+                    case FIRST_PAYLOAD, SECOND_PAYLOAD -> sentLines.get(payload);
+                    case "新しい外部版の行" ->
+                        voyageLine("V2611E", acquiredAt(), PORT_CALLS).replace(",1,", ",2,");
+                    case "同じ外部版のまま直した行" -> voyageLine("V2611E", acquiredAt(), THIRD_PORT_CALLS);
+                    default -> throw new IllegalArgumentException("知らない原本: " + payload);
+                };
+        chooseFile(voyageFile(line));
+        submit();
+    }
+
+    /** Bolt 39d4 の行 19。形式の誤り 2 行（列が 1 つ多い行）を直した航海 2 行（その外部 ID・外部版を初めて受け取る。T-230）。 */
+    @かつ("キー操作だけで承認済みの航海の情報源を選び、形式の誤りの 2 行を直したファイルを選んで取り込む")
+    public void 形式の誤りを直したファイルを取り込む() {
+        chooseSource();
+        String acquiredAt = acquiredAt();
+        chooseFile(
+                voyageFile(voyageLine("V2612E", acquiredAt, PORT_CALLS), voyageLine("V2613E", acquiredAt, PORT_CALLS)));
+        submit();
+    }
+
     private void insertApprovedSource(String type) {
         sourceId = UUID.randomUUID();
         recordType = type;
@@ -238,8 +293,9 @@ public class ExternalDataIngestionUiSteps {
     public void 内容の違う2行のファイルを取り込む() {
         chooseSource();
         String acquiredAt = acquiredAt();
-        chooseFile(voyageFile(
-                voyageLine("V2611E", acquiredAt, PORT_CALLS), voyageLine("V2611E", acquiredAt, CHANGED_PORT_CALLS)));
+        sentLines.put(FIRST_PAYLOAD, voyageLine("V2611E", acquiredAt, PORT_CALLS));
+        sentLines.put(SECOND_PAYLOAD, voyageLine("V2611E", acquiredAt, CHANGED_PORT_CALLS));
+        chooseFile(voyageFile(sentLines.get(FIRST_PAYLOAD), sentLines.get(SECOND_PAYLOAD)));
         submit();
     }
 
@@ -485,10 +541,9 @@ public class ExternalDataIngestionUiSteps {
                 .getByRole(AriaRole.LISTITEM);
     }
 
-    /** 内容の違う原本の注記（最初の受信の時刻は取込の時刻で、秒までの UTC。IngestionService の注記の文）。 */
+    /** 内容の違う原本の注記（IngestionService の注記の文）。 */
     private static Pattern contentMismatchNote(int lineNumber) {
-        return Pattern.compile("^" + lineNumber + " 行目: 同じ外部 ID・外部版で内容の違う原本を受け取りました（最初の受信: "
-                + "\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2} UTC）。$");
+        return Pattern.compile("^" + lineNumber + " 行目: 同じ外部 ID・外部版で内容の違う原本を受け取りました。$");
     }
 
     @かつ("キー操作だけで承認済みの航海の情報源を選び、同じファイルをもう一度選んで取り込む")

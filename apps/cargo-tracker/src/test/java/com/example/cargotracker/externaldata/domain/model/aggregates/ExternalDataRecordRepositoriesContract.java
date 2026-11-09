@@ -19,6 +19,8 @@ import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -446,7 +448,7 @@ public abstract class ExternalDataRecordRepositoriesContract {
 
     // --- Bolt 39d の行 3・4・6・15（S-17 の判断を待つ隔離の一覧の照会。開始準備の決定 (3)・(4)）。名前の頭に Bolt39d_ を付ける。
     // 絞らない照会は共有の DB のほかの隔離も返すので、自分の取込の時刻をほかより新しい未来に置き、先頭の行で確かめる。行 7（判断の表に行のある
-    // 隔離）は判断の行を JDBC で入れる H2 と PostgreSQL のテストだけに置く（メモリの実装は 39d2 まで判断の表を持たない） ---
+    // 隔離）は Bolt 39d4 の行 22（判断のポートで書く）に上げた ---
 
     /** ほかのテストのどの取込より新しい時刻（絞らない照会の先頭に自分の隔離が来る）。 */
     private static final Instant FUTURE = Instant.parse("2099-01-01T00:00:00.123456Z");
@@ -607,7 +609,7 @@ public abstract class ExternalDataRecordRepositoriesContract {
     }
 
     // --- Bolt 39d2 の行 2・4〜6・21・22（受信記録の判断のポートと、受信記録を ID で引く照会。開始準備の決定 (2)・(3)）。名前の頭に Bolt39d2_ を
-    // 付ける。行 7 を判断のポートで書き直すこと（行 16）は 39d2b に送った ---
+    // 付ける。行 7 を判断のポートで書き直すことは Bolt 39d4 の行 22 ---
 
     /** 補助文字（U+20BB7。UTF-16 で 2 単位）。 */
     private static final String SUPPLEMENTARY = new String(Character.toChars(0x20BB7));
@@ -738,8 +740,71 @@ public abstract class ExternalDataRecordRepositoriesContract {
         assertThat(receivedRecords().undecidedQuarantine(withoutIngestion)).isEmpty();
     }
 
+    // --- Bolt 39d4 の行 13・14（外部原本の基準の付け替え。開始準備の決定 (3)・(4)）。名前の頭に Bolt39d4_ を付ける ---
+
+    @Test
+    void Bolt39d4_行13_付け替えるとハッシュとオブジェクトキーだけが変わり冪等性キーと最初の受信時刻は同じでほかの外部原本は変わらない() {
+        ExternalRecord target = externalRecord(key("VOYAGE", "V-39D4-13"));
+        ExternalRecord other = externalRecord(key("VOYAGE", "V-39D4-13B"));
+        externalRecords().add(target);
+        externalRecords().add(other);
+        PayloadHash adoptedHash = hash("採用した payload");
+        PayloadObjectKey adoptedObjectKey = PayloadObjectKey.newRecordPayload();
+
+        externalRecords().changeAdoptedPayload(target.id(), target.payloadHash(), adoptedHash, adoptedObjectKey);
+
+        ExternalRecord expected =
+                new ExternalRecord(target.id(), target.key(), adoptedHash, adoptedObjectKey, target.firstReceivedAt());
+        assertThat(externalRecords().findByKey(target.key())).contains(expected);
+        assertThat(externalRecords().findById(target.id())).contains(expected);
+        assertThat(externalRecords().findByKey(other.key())).contains(other);
+    }
+
+    @ParameterizedTest(name = "ない ID {0}")
+    @ValueSource(booleans = {false, true})
+    void Bolt39d4_行14_条件のハッシュが違うかないIDなら名前付きの例外になり行は変わらない(boolean unknownId) {
+        ExternalRecord target = externalRecord(key("VOYAGE", "V-39D4-14"));
+        externalRecords().add(target);
+        UUID id = unknownId ? UUID.randomUUID() : target.id();
+        PayloadHash expectedHash = unknownId ? target.payloadHash() : hash("読んだ後に付け替えられた payload");
+        PayloadHash adoptedHash = hash("採用した payload");
+        PayloadObjectKey adoptedObjectKey = PayloadObjectKey.newRecordPayload();
+        ExternalRecordRepository repository = externalRecords();
+
+        assertThatThrownBy(() -> repository.changeAdoptedPayload(id, expectedHash, adoptedHash, adoptedObjectKey))
+                .isInstanceOf(ConcurrentExternalRecordUpdateException.class)
+                .hasMessageContaining(id.toString());
+        assertThat(externalRecords().findById(target.id())).contains(target);
+    }
+
+    // --- Bolt 39d4 の行 22（39d の行 7。判断のポートで書き、3 つの実装で確かめる。開始準備の決定 (11)）。絞らない件数と照会は共有の DB のほかの隔離も含むので、差と自分の受信記録だけを確かめる
+    // ---
+
+    @Test
+    void Bolt39d4_行22_判断のポートで却下を追記した隔離は取込で絞った一覧と件数と絞らない一覧と件数から消える() {
+        Ingestion ingestion = ingestionAt(FUTURE);
+        ingestions().add(ingestion);
+        ReceivedRecord decided = keyless(ingestion, new PhysicalLineRange(2, 2));
+        ReceivedRecord undecided = keyless(ingestion, new PhysicalLineRange(3, 3));
+        receivedRecords().add(decided);
+        receivedRecords().add(undecided);
+        int allBefore = receivedRecords().countUndecidedQuarantines(null);
+
+        receivedRecordDecisions().add(ReceivedRecordDecision.reject(decided, "提供元に確かめた。", steward, DECIDED_AT));
+
+        assertThat(receivedRecords().undecidedQuarantines(ingestion.id(), 0, 100))
+                .extracting(UndecidedQuarantine::receivedRecordId)
+                .containsExactly(undecided.id());
+        assertThat(receivedRecords().countUndecidedQuarantines(ingestion.id())).isEqualTo(1);
+        assertThat(receivedRecords().countUndecidedQuarantines(null)).isEqualTo(allBefore - 1);
+        assertThat(receivedRecords().undecidedQuarantines(null, 0, 2))
+                .extracting(UndecidedQuarantine::receivedRecordId)
+                .contains(undecided.id())
+                .doesNotContain(decided.id());
+    }
+
     // --- Bolt 39d2b の行 5（まとめての却下の対象の照会と件数。開始準備の決定 (2)、T-240・T-245）。名前の頭に Bolt39d2b_ を付ける。
-    // 39d の行 7 を判断のポートで書き直すこと（行 17）は 39d4 に送った ---
+    // 39d の行 7 を判断のポートで書き直すことは Bolt 39d4 の行 22 ---
 
     @Test
     void Bolt39d2b_行5_対象は1つの取込の判断を待つキーのない隔離だけでファイルの誤りを先に行の範囲の順() {

@@ -34,6 +34,7 @@ import com.example.cargotracker.externaldata.domain.model.valueobjects.PayloadOb
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PhysicalLineRange;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PortCallValue;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.ReceivedValue;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.RecordValues;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.TrackingNumberValue;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.VoyageValues;
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
@@ -90,7 +91,35 @@ class ReceivedRecordDecisionServiceTest {
             calls.add(EXTERNAL_RECORD_FIND);
             return super.findById(id);
         }
+
+        @Override
+        public void changeAdoptedPayload(
+                UUID externalRecordId,
+                PayloadHash expectedHash,
+                PayloadHash adoptedHash,
+                PayloadObjectKey adoptedObjectKey) {
+            calls.add(EXTERNAL_RECORD_CHANGE);
+            payloadChanges.add(new PayloadChange(externalRecordId, expectedHash, adoptedHash, adoptedObjectKey));
+            super.changeAdoptedPayload(externalRecordId, expectedHash, adoptedHash, adoptedObjectKey);
+        }
     };
+
+    /**
+     * 基準の付け替えの呼び出しの記録（Bolt 39d4 の行 6・7。T-236）。
+     *
+     * @param externalRecordId 外部原本 ID
+     * @param expectedHash 読んだ基準のハッシュ
+     * @param adoptedHash 採用した payload のハッシュ
+     * @param adoptedObjectKey 採用した payload のオブジェクトキー
+     */
+    private record PayloadChange(
+            UUID externalRecordId,
+            PayloadHash expectedHash,
+            PayloadHash adoptedHash,
+            PayloadObjectKey adoptedObjectKey) {}
+
+    private final List<PayloadChange> payloadChanges = new ArrayList<>();
+
     private final InMemoryDataSourceRepository dataSources = new InMemoryDataSourceRepository() {
         @Override
         public Optional<DataSource> findById(UUID id) {
@@ -137,7 +166,12 @@ class ReceivedRecordDecisionServiceTest {
         }
     };
     private final List<Object> published = new ArrayList<>();
-    private final ApplicationEventPublisher publisher = published::add;
+    /** 発行を記録する publisher。呼び出しの記録にも型の名前を残す（Bolt 39d4 の行 6 の呼ぶ順）。 */
+    private final ApplicationEventPublisher publisher = event -> {
+        published.add(event);
+        calls.add(EVENT_PREFIX + event.getClass().getSimpleName());
+    };
+
     private final ReceivedRecordDecisionService service = serviceWith(Clock.fixed(NOW, ZoneOffset.UTC));
 
     private static final String INGESTION_FIND = "ingestions.findById";
@@ -146,6 +180,8 @@ class ReceivedRecordDecisionServiceTest {
     private static final String DECISION_ADD = "decisions.add";
     private static final String ADOPTED_VALUE_ADD = "adoptedValues.add";
     private static final String ADOPTED_VALUE_CURRENT = "adoptedValues.currentOf";
+    private static final String EXTERNAL_RECORD_CHANGE = "externalRecords.changeAdoptedPayload";
+    private static final String EVENT_PREFIX = "event:";
 
     /** 判断のサービスを組み立てる（Bolt 39d3b で外部原本・採用値・情報源のリポジトリを足した）。 */
     private ReceivedRecordDecisionService serviceWith(Clock clock) {
@@ -1132,11 +1168,15 @@ class ReceivedRecordDecisionServiceTest {
         }
 
         private ReceivedRecord quarantine(ExternalRecord externalRecord, ReceivedValue value) {
+            return quarantine(externalRecord, value, PayloadHash.of(new byte[] {7}));
+        }
+
+        private ReceivedRecord quarantine(ExternalRecord externalRecord, ReceivedValue value, PayloadHash hash) {
             ReceivedRecord received = new ReceivedRecord(
                     UUID.randomUUID(),
                     externalRecord.id(),
                     ingestion.id(),
-                    PayloadHash.of(new byte[] {7}),
+                    hash,
                     PayloadObjectKey.newRecordPayload(),
                     ACQUIRED_AT,
                     Classification.QUARANTINED,
@@ -1328,7 +1368,9 @@ class ReceivedRecordDecisionServiceTest {
             ExternalRecord externalRecord = externalRecord(MILESTONE);
             ReceivedRecord first = quarantine(externalRecord, ReceivedValue.of(RECEIVED));
             ReceivedRecord second = quarantine(
-                    externalRecord, ReceivedValue.of(milestone(OTHER_TRACKING_NUMBER, "2026-11-19T01:00:00Z")));
+                    externalRecord,
+                    ReceivedValue.of(milestone(OTHER_TRACKING_NUMBER, "2026-11-19T01:00:00Z")),
+                    PayloadHash.of(new byte[] {8}));
 
             assertThat(adopt(first.id())).isEqualTo(new DecisionOutcome.AdoptedQuarantine(first.id()));
 
@@ -1538,6 +1580,360 @@ class ReceivedRecordDecisionServiceTest {
             assertThat(adopt(received.id())).isEqualTo(new DecisionOutcome.NotAdoptable(received.id(), reason));
 
             assertThat(callsOf(ADOPTED_VALUE_CURRENT)).isZero();
+        }
+    }
+
+    /**
+     * Bolt 39d4 の行 6・7・9 (b)（採用で外部原本の基準を付け替える。開始準備の決定 (3)・(7)、【業務の判断】(b)・(p)）。「起きないこと」は呼び出しの記録で確かめる（T-236）。
+     * 39d3b の同じ番号の行と名前が衝突しないよう入れ子にする。
+     */
+    @Nested
+    class Bolt39d4_基準の付け替え {
+
+        private static final String PROVIDER = "開発海運（架空）";
+        private static final String REASON = "提供元に確かめた。";
+        private static final String VOYAGE = "VOYAGE";
+        private static final String MILESTONE = "MILESTONE";
+        private static final String TRACKING_NUMBER = "CTABCDEFGH2345";
+        private static final Instant ACQUIRED_AT = Instant.parse("2026-11-16T00:30:00Z");
+        private static final Instant FIRST_RECEIVED_AT = Instant.parse("2026-11-15T09:00:00Z");
+        private static final PayloadHash BASE_HASH = PayloadHash.of(new byte[] {6});
+        private static final PayloadHash QUARANTINE_HASH = PayloadHash.of(new byte[] {7});
+        private static final ReceivedValue BROKEN_VALUE = new ReceivedValue("DEMO-201", "壊れた要約");
+
+        private static final VoyageValues VOYAGE_VALUES = new VoyageValues(
+                "DEMO-201",
+                List.of(
+                        new PortCallValue(
+                                new Location("JPTYO"), null, new UtcInstant(Instant.parse("2026-11-18T23:00:00Z"))),
+                        new PortCallValue(
+                                new Location("USLAX"), new UtcInstant(Instant.parse("2026-12-01T22:00:00Z")), null)));
+
+        private static MilestoneValues milestone(String trackingNumber) {
+            return new MilestoneValues(
+                    new TrackingNumberValue(trackingNumber),
+                    MilestoneKindValue.DEPARTURE,
+                    new Location("JPTYO"),
+                    new UtcInstant(Instant.parse("2026-11-19T01:00:00Z")));
+        }
+
+        private void source(String recordType, DataSource.ApprovalStatus status) {
+            dataSources.add(new DataSource(dataSourceId, PROVIDER, recordType, status));
+            ingestions.add(ingestion);
+        }
+
+        private ExternalRecord externalRecord(String recordType) {
+            ExternalRecord externalRecord = new ExternalRecord(
+                    UUID.randomUUID(),
+                    new IdempotencyKey(PROVIDER, recordType, "DEMO-201", "3"),
+                    BASE_HASH,
+                    PayloadObjectKey.newRecordPayload(),
+                    FIRST_RECEIVED_AT);
+            externalRecords.add(externalRecord);
+            return externalRecord;
+        }
+
+        private ReceivedRecord quarantine(ExternalRecord externalRecord, ReceivedValue value, PayloadHash hash) {
+            ReceivedRecord received = new ReceivedRecord(
+                    UUID.randomUUID(),
+                    externalRecord.id(),
+                    ingestion.id(),
+                    hash,
+                    PayloadObjectKey.newRecordPayload(),
+                    ACQUIRED_AT,
+                    Classification.QUARANTINED,
+                    "3 行目: 内容の違う原本",
+                    ingestion.ingestedAt(),
+                    new PhysicalLineRange(3, 3),
+                    value);
+            receivedRecords.add(received);
+            return received;
+        }
+
+        private ReceivedRecord approvedQuarantine(ReceivedValue value, PayloadHash hash) {
+            source(VOYAGE, DataSource.ApprovalStatus.APPROVED);
+            return quarantine(externalRecord(VOYAGE), value, hash);
+        }
+
+        private ReceivedRecord keyless() {
+            ingestions.add(ingestion);
+            ReceivedRecord received = new ReceivedRecord(
+                    UUID.randomUUID(),
+                    null,
+                    ingestion.id(),
+                    PayloadHash.of(new byte[] {9}),
+                    PayloadObjectKey.newRecordPayload(),
+                    null,
+                    Classification.QUARANTINED,
+                    "4 行目: 形式の誤り",
+                    ingestion.ingestedAt(),
+                    new PhysicalLineRange(4, 4),
+                    null);
+            receivedRecords.add(received);
+            return received;
+        }
+
+        /** 理由ごとの採用を出さない隔離（理由のすべてに作り方がある。{@code default} を置かない。T-240）。 */
+        private ReceivedRecord refusedBy(NotAdoptableReason reason) {
+            return switch (reason) {
+                case KEYLESS -> keyless();
+                case VALUE_NOT_RECORDED -> approvedQuarantine(null, QUARANTINE_HASH);
+                case SOURCE_NOT_APPROVED -> {
+                    source(VOYAGE, DataSource.ApprovalStatus.SUSPENDED);
+                    yield quarantine(externalRecord(VOYAGE), ReceivedValue.of(VOYAGE_VALUES), QUARANTINE_HASH);
+                }
+                case PAYLOAD_ALREADY_ADOPTED -> approvedQuarantine(ReceivedValue.of(VOYAGE_VALUES), BASE_HASH);
+                case VALUE_UNREADABLE -> approvedQuarantine(BROKEN_VALUE, QUARANTINE_HASH);
+                case TRACKING_NUMBER_DIFFERS -> trackingNumberDiffers(QUARANTINE_HASH);
+            };
+        }
+
+        private ReceivedRecord trackingNumberDiffers(PayloadHash hash) {
+            source(MILESTONE, DataSource.ApprovalStatus.APPROVED);
+            ReceivedRecord received =
+                    quarantine(externalRecord(MILESTONE), ReceivedValue.of(milestone(TRACKING_NUMBER)), hash);
+            currentAdoptedValue(
+                    received.externalRecordId(),
+                    AdoptedValue.TargetType.MILESTONE,
+                    "CTABCDEFGH2346",
+                    milestone("CTABCDEFGH2346").summary());
+            return received;
+        }
+
+        private DecisionOutcome adopt(UUID receivedRecordId) {
+            return service.adopt(steward, new AdoptReceivedRecordCommand(receivedRecordId, REASON));
+        }
+
+        private long callsOf(String call) {
+            return calls.stream().filter(call::equals).count();
+        }
+
+        private void assertNothingWrittenAndNotChanged() {
+            assertThat(callsOf(DECISION_ADD)).isZero();
+            assertThat(callsOf(ADOPTED_VALUE_ADD)).isZero();
+            assertThat(published).isEmpty();
+            assertThat(payloadChanges).isEmpty();
+        }
+
+        static Stream<Arguments> kinds() {
+            return Stream.of(
+                    Arguments.of(VOYAGE, VOYAGE_VALUES, VoyageAdoptedValueUpdated.class),
+                    Arguments.of(MILESTONE, milestone(TRACKING_NUMBER), MilestoneAdoptedValueAccepted.class));
+        }
+
+        // --- 行 6: 採用で基準を付け替える ---
+
+        @ParameterizedTest(name = "{0}")
+        @MethodSource("kinds")
+        void 行6_採用すると読んだ基準のハッシュと受信記録のハッシュとオブジェクトキーで1回付け替え判断と採用値の後でイベントの前に呼び外部原本を読み直さない(
+                String recordType, RecordValues values, Class<?> adoptedEvent) {
+            source(recordType, DataSource.ApprovalStatus.APPROVED);
+            ExternalRecord externalRecord = externalRecord(recordType);
+            ReceivedRecord received = quarantine(externalRecord, ReceivedValue.of(values), QUARANTINE_HASH);
+            calls.clear();
+
+            assertThat(adopt(received.id())).isEqualTo(new DecisionOutcome.AdoptedQuarantine(received.id()));
+
+            assertThat(payloadChanges)
+                    .containsExactly(new PayloadChange(
+                            externalRecord.id(), BASE_HASH, QUARANTINE_HASH, received.payloadObjectKey()));
+            assertThat(calls.stream()
+                            .filter(call -> call.equals(DECISION_ADD)
+                                    || call.equals(ADOPTED_VALUE_ADD)
+                                    || call.equals(EXTERNAL_RECORD_CHANGE)
+                                    || call.startsWith(EVENT_PREFIX))
+                            .toList())
+                    .containsExactly(
+                            DECISION_ADD,
+                            ADOPTED_VALUE_ADD,
+                            EXTERNAL_RECORD_CHANGE,
+                            EVENT_PREFIX + "ReceivedRecordDecided",
+                            EVENT_PREFIX + adoptedEvent.getSimpleName());
+            assertThat(callsOf(EXTERNAL_RECORD_FIND)).isEqualTo(1);
+        }
+
+        @Test
+        void 行6_付け替えた外部原本の冪等性キーと最初の受信時刻は変わらない() {
+            source(VOYAGE, DataSource.ApprovalStatus.APPROVED);
+            ExternalRecord externalRecord = externalRecord(VOYAGE);
+            ReceivedRecord received = quarantine(externalRecord, ReceivedValue.of(VOYAGE_VALUES), QUARANTINE_HASH);
+
+            adopt(received.id());
+
+            assertThat(externalRecords.findById(externalRecord.id()))
+                    .contains(new ExternalRecord(
+                            externalRecord.id(),
+                            externalRecord.key(),
+                            QUARANTINE_HASH,
+                            received.payloadObjectKey(),
+                            FIRST_RECEIVED_AT));
+        }
+
+        // --- 行 7: 付け替えない（T-236・T-240） ---
+
+        @ParameterizedTest(name = "{0}")
+        @EnumSource(NotAdoptableReason.class)
+        void 行7_採用を出さない隔離はどの理由でも付け替えない(NotAdoptableReason reason) {
+            ReceivedRecord received = refusedBy(reason);
+            calls.clear();
+
+            assertThat(adopt(received.id())).isEqualTo(new DecisionOutcome.NotAdoptable(received.id(), reason));
+
+            assertNothingWrittenAndNotChanged();
+        }
+
+        /** 付け替えない判断の呼び方（名前と実行）。 */
+        record NoChangeCase(String name, Function<Bolt39d4_基準の付け替え, Object> act) {
+
+            @Override
+            public String toString() {
+                return name;
+            }
+        }
+
+        static Stream<NoChangeCase> noChanges() {
+            return Stream.of(
+                    new NoChangeCase("却下", test -> {
+                        ReceivedRecord received =
+                                test.approvedQuarantine(ReceivedValue.of(VOYAGE_VALUES), QUARANTINE_HASH);
+                        return test.outer()
+                                .service
+                                .reject(test.outer().steward, new RejectReceivedRecordCommand(received.id(), REASON));
+                    }),
+                    new NoChangeCase("まとめての却下", test -> {
+                        test.keyless();
+                        return test.outer()
+                                .service
+                                .rejectKeyless(
+                                        test.outer().steward,
+                                        new RejectKeylessQuarantinesCommand(
+                                                test.outer().ingestion.id(), REASON));
+                    }),
+                    new NoChangeCase("判断済み", test -> {
+                        ReceivedRecord received =
+                                test.approvedQuarantine(ReceivedValue.of(VOYAGE_VALUES), QUARANTINE_HASH);
+                        test.outer()
+                                .decisions
+                                .add(ReceivedRecordDecision.reject(
+                                        received, "先の却下。", test.outer().steward.userId(), NOW));
+                        return test.adopt(received.id());
+                    }),
+                    new NoChangeCase("同時の判断に負けた", test -> {
+                        ReceivedRecord received =
+                                test.approvedQuarantine(ReceivedValue.of(VOYAGE_VALUES), QUARANTINE_HASH);
+                        test.outer().duplicateOnAdd = true;
+                        return test.adopt(received.id());
+                    }),
+                    new NoChangeCase("ない受信記録", test -> test.adopt(UUID.randomUUID())),
+                    new NoChangeCase(
+                            "隔離でない受信記録",
+                            test -> test.adopt(test.outer()
+                                    .stored(Classification.DUPLICATE, false)
+                                    .id())),
+                    new NoChangeCase("権限なし", test -> {
+                        ReceivedRecord received =
+                                test.approvedQuarantine(ReceivedValue.of(VOYAGE_VALUES), QUARANTINE_HASH);
+                        return test.outer()
+                                .service
+                                .adopt(
+                                        actor(Role.TRACKING_MANAGER),
+                                        new AdoptReceivedRecordCommand(received.id(), REASON));
+                    }));
+        }
+
+        private ReceivedRecordDecisionServiceTest outer() {
+            return ReceivedRecordDecisionServiceTest.this;
+        }
+
+        @ParameterizedTest(name = "{0}")
+        @MethodSource("noChanges")
+        void 行7_却下と判断済みと断る結果では付け替えない(NoChangeCase noChangeCase) {
+            noChangeCase.act().apply(this);
+
+            assertThat(payloadChanges).isEmpty();
+        }
+
+        // --- 行 9 (b): 基準と同じハッシュの隔離 ---
+
+        @Test
+        void 行9_b_基準と同じハッシュの隔離は採用を断り判断も採用値もイベントも付け替えも作らず却下はできる() {
+            ReceivedRecord received = approvedQuarantine(ReceivedValue.of(VOYAGE_VALUES), BASE_HASH);
+            DecisionOutcome expected =
+                    new DecisionOutcome.NotAdoptable(received.id(), NotAdoptableReason.PAYLOAD_ALREADY_ADOPTED);
+            calls.clear();
+
+            assertThat(service.adoptionRefusalOf(received.id())).contains(expected);
+            assertThat(adopt(received.id())).isEqualTo(expected);
+
+            assertNothingWrittenAndNotChanged();
+            assertThat(service.reject(steward, new RejectReceivedRecordCommand(received.id(), REASON)))
+                    .isEqualTo(new DecisionOutcome.Rejected(received.id()));
+        }
+
+        /** 基準と同じハッシュの隔離の、先の理由との順（T-240）と外部原本・この外部版の採用値を引く数。 */
+        record SameHashOrderCase(
+                String name,
+                Function<Bolt39d4_基準の付け替え, ReceivedRecord> create,
+                NotAdoptableReason reason,
+                int externalRecordFinds,
+                int currentFinds) {
+
+            @Override
+            public String toString() {
+                return name;
+            }
+        }
+
+        static Stream<SameHashOrderCase> sameHashOrders() {
+            return Stream.of(
+                    new SameHashOrderCase(
+                            "値の列のない隔離は値の列の理由が先",
+                            test -> test.approvedQuarantine(null, BASE_HASH),
+                            NotAdoptableReason.VALUE_NOT_RECORDED,
+                            0,
+                            0),
+                    new SameHashOrderCase(
+                            "停止した情報源は情報源の理由が先",
+                            test -> {
+                                test.source(VOYAGE, DataSource.ApprovalStatus.SUSPENDED);
+                                return test.quarantine(
+                                        test.externalRecord(VOYAGE), ReceivedValue.of(VOYAGE_VALUES), BASE_HASH);
+                            },
+                            NotAdoptableReason.SOURCE_NOT_APPROVED,
+                            0,
+                            0),
+                    new SameHashOrderCase(
+                            "読めない値より同じ原本が先（値を読まない）",
+                            test -> test.approvedQuarantine(BROKEN_VALUE, BASE_HASH),
+                            NotAdoptableReason.PAYLOAD_ALREADY_ADOPTED,
+                            1,
+                            0),
+                    new SameHashOrderCase(
+                            "追跡番号の違いより同じ原本が先（採用値を引かない）",
+                            test -> test.trackingNumberDiffers(BASE_HASH),
+                            NotAdoptableReason.PAYLOAD_ALREADY_ADOPTED,
+                            1,
+                            0));
+        }
+
+        @ParameterizedTest(name = "{0}")
+        @MethodSource("sameHashOrders")
+        void 行9_b_同じ原本の確かめは情報源の次で値を読むより先(SameHashOrderCase orderCase) {
+            ReceivedRecord received = orderCase.create().apply(this);
+            calls.clear();
+
+            assertThat(adopt(received.id()))
+                    .isEqualTo(new DecisionOutcome.NotAdoptable(received.id(), orderCase.reason()));
+
+            assertThat(callsOf(EXTERNAL_RECORD_FIND)).isEqualTo(orderCase.externalRecordFinds());
+            assertThat(callsOf(ADOPTED_VALUE_CURRENT)).isEqualTo(orderCase.currentFinds());
+        }
+
+        @Test
+        void 行9_b_比べるのはハッシュだけで書き方だけが違う原本は採用できる() {
+            ReceivedRecord received = approvedQuarantine(ReceivedValue.of(VOYAGE_VALUES), QUARANTINE_HASH);
+
+            assertThat(service.adoptionRefusalOf(received.id())).isEmpty();
         }
     }
 }

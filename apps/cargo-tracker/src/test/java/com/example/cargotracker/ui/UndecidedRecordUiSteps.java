@@ -187,9 +187,8 @@ public class UndecidedRecordUiSteps {
         return row.locator("td").nth(index);
     }
 
-    /** 内容の違う原本の注記（最初の受信の時刻は秒までの UTC。IngestionService の注記の文）。 */
+    /** 内容の違う原本の注記（IngestionService の注記の文）。 */
     private static Pattern contentMismatchNote(int lineNumber) {
-        return Pattern.compile("^" + lineNumber + " 行目: 同じ外部 ID・外部版で内容の違う原本を受け取りました（最初の受信: "
-                + "\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2} UTC）。$");
+        return Pattern.compile("^" + lineNumber + " 行目: 同じ外部 ID・外部版で内容の違う原本を受け取りました。$");
     }
 }

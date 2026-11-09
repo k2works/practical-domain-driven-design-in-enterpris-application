@@ -60,6 +60,8 @@ public sealed interface DecisionOutcome {
         VALUE_NOT_RECORDED,
         /** 情報源の承認の状態が承認済みでない隔離（【業務の判断】(n)・(o)）。 */
         SOURCE_NOT_APPROVED,
+        /** 外部原本の基準と同じハッシュの隔離（同じ原本がすでに採用されている。【業務の判断】(p)。却下で片付ける）。 */
+        PAYLOAD_ALREADY_ADOPTED,
         /** 受け取った値を読めない隔離、知らない原本種別の隔離（【業務の判断】(k)）。 */
         VALUE_UNREADABLE,
         /** 受け取った値の追跡番号がこの外部版の採用値と違う主要実績の隔離（【業務の判断】(m)）。 */

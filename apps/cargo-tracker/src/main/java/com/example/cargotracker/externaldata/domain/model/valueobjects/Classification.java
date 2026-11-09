@@ -12,24 +12,23 @@ import java.util.Optional;
 public enum Classification {
     /** 採用。新しい冪等性キーの原本。 */
     ADOPTED,
-    /** 重複。同じ冪等性キーで、外部原本の最初のハッシュと同じ原本。 */
+    /** 重複。同じ冪等性キーで、外部原本の採用中の payload のハッシュと同じ原本（Bolt 39d4 の【業務の判断】(f)）。 */
     DUPLICATE,
     /**
-     * 隔離。同じ冪等性キーで、外部原本の最初のハッシュと違う原本。形式の誤りの行とファイルも、外部原本を持たない隔離（キーのない隔離）に
+     * 隔離。同じ冪等性キーで、外部原本の採用中の payload のハッシュと違う原本。形式の誤りの行とファイルも、外部原本を持たない隔離（キーのない隔離）に
      * なる（UC-15 2a。Bolt 39b2）。
      */
     QUARANTINED;
 
     /**
-     * 既にある外部原本の最初のハッシュと今のハッシュから分類を決める。
+     * 既にある外部原本の基準のハッシュ（採用中の payload のハッシュ）と今のハッシュから分類を決める。
      *
-     * @param firstReceived その冪等性キーの外部原本の最初のハッシュ（外部原本がなければ空）
+     * @param adopted その冪等性キーの外部原本の基準のハッシュ（外部原本がなければ空）
      * @param current 今受け取った原本のハッシュ
      */
-    public static Classification classify(Optional<PayloadHash> firstReceived, PayloadHash current) {
+    public static Classification classify(Optional<PayloadHash> adopted, PayloadHash current) {
         Objects.requireNonNull(current, "current");
-        return firstReceived
-                .map(first -> first.equals(current) ? DUPLICATE : QUARANTINED)
+        return adopted.map(base -> base.equals(current) ? DUPLICATE : QUARANTINED)
                 .orElse(ADOPTED);
     }
 }

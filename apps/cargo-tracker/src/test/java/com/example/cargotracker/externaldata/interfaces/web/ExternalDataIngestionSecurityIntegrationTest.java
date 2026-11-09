@@ -694,7 +694,7 @@ class ExternalDataIngestionSecurityIntegrationTest {
                                     "3 行目",
                                     "内容の違う原本",
                                     "V-1・1",
-                                    "3 行目: 同じ外部 ID・外部版で内容の違う原本を受け取りました（最初の受信: 2026-11-16 01:05:00 UTC）。"),
+                                    "3 行目: 同じ外部 ID・外部版で内容の違う原本を受け取りました。"),
                             List.of(
                                     provider + "（航海）",
                                     "4 行目",

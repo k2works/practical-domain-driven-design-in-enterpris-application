@@ -28,7 +28,6 @@ import com.example.cargotracker.externaldata.domain.model.valueobjects.PayloadOb
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PhysicalLineRange;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PortCallValue;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.ReceivedValue;
-import com.example.cargotracker.externaldata.domain.model.valueobjects.UndecidedQuarantine;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.VoyageValues;
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
 import com.example.cargotracker.shared.domain.CompanyId;
@@ -169,19 +168,6 @@ class MyBatisExternalDataRecordRepositoriesIntegrationTest extends ExternalDataR
                 .hasCauseInstanceOf(DuplicateKeyException.class);
     }
 
-    /**
-     * Bolt 39d の行 7（判断の表に行のある隔離は判断を待つ隔離の一覧に出ず、件数にも数えない）。判断の読み書きのポートは 39d2 で作るので、
-     * 判断の行は JDBC で入れる（前例 ExternalDataSchemaIntegrationTest）。トランザクションは契約のクラスの {@code @Transactional} を受ける。
-     */
-    @Nested
-    class Bolt39d_判断を待つ隔離 {
-
-        @Test
-        void 行7_判断の表に行のある隔離は一覧に出ず件数にも数えない() {
-            assertDecidedQuarantineIsNotListed(jdbc, ingestions, receivedRecords);
-        }
-    }
-
     @Autowired
     DataSourceRepository dataSources;
 
@@ -319,69 +305,6 @@ class MyBatisExternalDataRecordRepositoriesIntegrationTest extends ExternalDataR
             assertThat(decision.decision()).isEqualTo(winner);
             assertThat(decision.decidedBy()).isEqualTo(winnerUser);
         });
-    }
-
-    /** 行 7 の本体（H2 の契約のテストと共有する）。 */
-    static void assertDecidedQuarantineIsNotListed(
-            JdbcTemplate jdbc, IngestionRepository ingestions, ReceivedRecordRepository receivedRecords) {
-        assertThat(TransactionSynchronizationManager.isActualTransactionActive())
-                .as("判断の行はロールバックで消す")
-                .isTrue();
-        DataSource source = new DataSource(
-                UUID.randomUUID(), "判断の提供元-" + UUID.randomUUID(), "VOYAGE", DataSource.ApprovalStatus.APPROVED);
-        insertDataSource(jdbc, source);
-        Ingestion ingestion = new Ingestion(
-                UUID.randomUUID(),
-                source.id(),
-                PayloadObjectKey.newIngestionFile(),
-                PayloadHash.of(new byte[] {7}),
-                new UserId(UUID.randomUUID()),
-                Instant.parse("2099-01-01T00:00:00Z"),
-                2,
-                null,
-                0);
-        // 判断の行は JDBC で入れ、MyBatis の 1 つのトランザクションの中の照会の控え（同じ引数の結果）を消さないので、全体の件数は
-        // ポートで書く前（書くと控えが消える）に数える
-        int allBefore = receivedRecords.countUndecidedQuarantines(null);
-        ingestions.add(ingestion);
-        ReceivedRecord decided = keylessQuarantine(ingestion, 2);
-        ReceivedRecord undecided = keylessQuarantine(ingestion, 3);
-        receivedRecords.add(decided);
-        receivedRecords.add(undecided);
-
-        jdbc.update(
-                "INSERT INTO external_data.received_record_decision"
-                        + " (id, received_record_id, decision, decided_by, decided_at, reason)"
-                        + " VALUES (?, ?, 'REJECTED', ?, ?, ?)",
-                UUID.randomUUID(),
-                decided.id(),
-                UUID.randomUUID(),
-                OffsetDateTime.parse("2099-01-01T00:10:00Z"),
-                "提供元に確かめた");
-
-        assertThat(receivedRecords.undecidedQuarantines(ingestion.id(), 0, 100))
-                .extracting(UndecidedQuarantine::receivedRecordId)
-                .containsExactly(undecided.id());
-        assertThat(receivedRecords.countUndecidedQuarantines(ingestion.id())).isEqualTo(1);
-        assertThat(receivedRecords.countUndecidedQuarantines(null)).isEqualTo(allBefore + 1);
-        assertThat(receivedRecords.undecidedQuarantines(null, 0, 1))
-                .extracting(UndecidedQuarantine::receivedRecordId)
-                .containsExactly(undecided.id());
-    }
-
-    private static ReceivedRecord keylessQuarantine(Ingestion ingestion, int line) {
-        return new ReceivedRecord(
-                UUID.randomUUID(),
-                null,
-                ingestion.id(),
-                PayloadHash.of(new byte[] {(byte) line}),
-                PayloadObjectKey.newRecordPayload(),
-                null,
-                Classification.QUARANTINED,
-                line + " 行目: 値が空です（external_id）。提供元に確かめてください。",
-                ingestion.ingestedAt(),
-                new PhysicalLineRange(line, line),
-                null);
     }
 
     private static ExternalRecord externalRecord(IdempotencyKey key) {

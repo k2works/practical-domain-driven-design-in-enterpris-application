@@ -31,8 +31,6 @@ import com.example.cargotracker.shared.domain.Role;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Clock;
 import java.time.Instant;
-import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
@@ -45,7 +43,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 取込のサービス。データ責任者が承認済みの情報源のファイルを取り込み、形式の正しい行ごとに原本を保存してから、冪等性キーで採用・重複・
- * 隔離に分類した受信記録を取込に関連付けて残す（US-14 AC1〜AC4、BR-12、BR-18、ED-INV-01・ED-INV-02。Bolt 39b）。形式の誤りの行は
+ * 隔離に分類した受信記録を取込に関連付けて残す（US-14 AC1〜AC4、BR-12、BR-18、ED-INV-01・ED-INV-02。Bolt 39b）。比べる相手は外部原本の
+ * 採用中の payload で、既にある外部原本を更新しない（基準は採用の判断が付け替える。Bolt 39d4）。形式の誤りの行は
  * 原文を保存してから、ファイルの誤りはファイル全体の原本を指して、外部原本を持たない隔離（キーのない隔離）の受信記録にし、理由と物理行の範囲を
  * 業務の言葉で注記に書く。誤りの行は冪等性キーを信用できないので外部原本を引かず作らない（UC-15 2a。Bolt 39b2）。分類が採用の行は、
  * 受信記録の後に採用値を 1 つ追記する（US-14 AC1。重複・隔離には作らない。Bolt 39b3）。行ごとに受信記録 → 採用値 → イベントの順で、
@@ -68,12 +67,11 @@ public class IngestionService {
 
     /** 同じ原本の重複の注記（「&lt;物理行の範囲&gt;: &lt;理由&gt;。」の形。Bolt 39b2 の開発レビュー）。 */
     private static final String DUPLICATE_NOTE = "%s: 同じ原本を受け取り済みです。";
-    /** 内容の違う原本の隔離の注記（「&lt;物理行の範囲&gt;: &lt;理由&gt;。」の形。Bolt 39b2 の確認ポイント 6）。 */
-    private static final String QUARANTINED_NOTE = "%s: 同じ外部 ID・外部版で内容の違う原本を受け取りました（最初の受信: %s）。";
-
-    /** 注記の時刻（秒まで、UTC と明記。保存した文は見る人のタイムゾーンで変えられないため。Bolt 39b2 の確認ポイント 6）。 */
-    private static final DateTimeFormatter NOTE_TIME =
-            DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm:ss 'UTC'").withZone(ZoneOffset.UTC);
+    /**
+     * 内容の違う原本の隔離の注記（「&lt;物理行の範囲&gt;: &lt;理由&gt;。」の形）。比べる相手の時刻は 1 つに決められない（付け替えの後の基準の受信時刻は外部原本に持たない）ので書かず、値と
+     * 時刻は判断の画面で読む（Bolt 39d4 の【前の決定の変更】(2)）。
+     */
+    private static final String QUARANTINED_NOTE = "%s: 同じ外部 ID・外部版で内容の違う原本を受け取りました。";
 
     private final DataSourceRepository dataSources;
     private final IngestionRepository ingestions;
@@ -204,7 +202,7 @@ public class IngestionService {
                 payloadKey,
                 row.acquiredAt(),
                 classification,
-                noteOf(classification, externalRecord, row),
+                noteOf(classification, row),
                 now,
                 row.range(),
                 ReceivedValue.of(row.values()));
@@ -333,12 +331,11 @@ public class IngestionService {
         return received;
     }
 
-    private static String noteOf(Classification classification, ExternalRecord externalRecord, IngestedRow row) {
+    private static String noteOf(Classification classification, IngestedRow row) {
         return switch (classification) {
             case ADOPTED -> null;
             case DUPLICATE -> DUPLICATE_NOTE.formatted(row.range().wording());
-            case QUARANTINED ->
-                QUARANTINED_NOTE.formatted(row.range().wording(), NOTE_TIME.format(externalRecord.firstReceivedAt()));
+            case QUARANTINED -> QUARANTINED_NOTE.formatted(row.range().wording());
         };
     }
 

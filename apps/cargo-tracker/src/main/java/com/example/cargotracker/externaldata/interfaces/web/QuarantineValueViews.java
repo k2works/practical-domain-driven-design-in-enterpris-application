@@ -31,7 +31,7 @@ final class QuarantineValueViews {
     private static final String ILLEGIBLE = "値を読めませんでした。";
 
     /** 値が同じときの文（値も取得時刻も同じ、取得した日時だけが違う。取得時刻は原本のハッシュに入るが値に入らない）。 */
-    private static final String SAME_VALUES = "受け取った値はこの外部版の採用値と同じです。原本の書き方（引用符・空白など）だけが違います。";
+    private static final String SAME_VALUES = "受け取った値はこの外部版の採用値と同じです。同じ原本か、原本の書き方（引用符・空白など）だけが違います。";
 
     private static final String SAME_VALUES_BUT_ACQUIRED_AT = "受け取った値はこの外部版の採用値と同じで、取得した日時だけが違います。";
 

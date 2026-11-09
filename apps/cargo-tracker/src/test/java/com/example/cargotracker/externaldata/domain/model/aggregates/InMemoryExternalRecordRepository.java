@@ -1,6 +1,8 @@
 package com.example.cargotracker.externaldata.domain.model.aggregates;
 
 import com.example.cargotracker.externaldata.domain.model.valueobjects.IdempotencyKey;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.PayloadHash;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.PayloadObjectKey;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -34,6 +36,23 @@ public class InMemoryExternalRecordRepository implements ExternalRecordRepositor
         if (records.putIfAbsent(externalRecord.key(), externalRecord) != null) {
             throw DuplicateExternalRecordException.of(externalRecord.key(), null);
         }
+    }
+
+    @Override
+    public void changeAdoptedPayload(
+            UUID externalRecordId,
+            PayloadHash expectedHash,
+            PayloadHash adoptedHash,
+            PayloadObjectKey adoptedObjectKey) {
+        ExternalRecord current = records.values().stream()
+                .filter(found -> found.id().equals(externalRecordId))
+                .filter(found -> found.payloadHash().equals(expectedHash))
+                .findFirst()
+                .orElseThrow(() -> ConcurrentExternalRecordUpdateException.of(externalRecordId));
+        records.put(
+                current.key(),
+                new ExternalRecord(
+                        current.id(), current.key(), adoptedHash, adoptedObjectKey, current.firstReceivedAt()));
     }
 
     /** シナリオの開始時に消す（受入シナリオ。Bolt 39b）。 */

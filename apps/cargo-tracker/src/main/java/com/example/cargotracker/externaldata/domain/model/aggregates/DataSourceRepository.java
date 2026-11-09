@@ -14,7 +14,7 @@ public interface DataSourceRepository {
     /** ID で情報源を引く。ないときは空。 */
     Optional<DataSource> findById(UUID id);
 
-    /** 承認済み（{@link DataSource.ApprovalStatus#APPROVED}）の情報源を提供元・原本種別の順に並べる（S-16 の選択肢。Bolt 39c）。 */
+    /** 承認済み（{@link DataSource.ApprovalStatus#APPROVED}）の情報源を返す（S-16 の選択肢。Bolt 39c）。順は約束しない（並べるのは照会のサービス。Bolt 39d4）。 */
     List<DataSource> findApproved();
 
     /** 承認済み（{@link DataSource.ApprovalStatus#APPROVED}）の情報源の件数。候補と停止中は数えない。 */

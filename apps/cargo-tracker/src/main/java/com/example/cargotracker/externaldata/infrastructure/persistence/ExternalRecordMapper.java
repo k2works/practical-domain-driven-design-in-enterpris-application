@@ -18,4 +18,11 @@ public interface ExternalRecordMapper {
     Optional<ExternalRecordRow> selectById(@Param("id") UUID id);
 
     void insert(ExternalRecordRow row);
+
+    /** 読んだハッシュを条件に基準を付け替え、更新した行の数を返す（Bolt 39d4）。 */
+    int updateAdoptedPayload(
+            @Param("id") UUID id,
+            @Param("expectedHash") String expectedHash,
+            @Param("adoptedHash") String adoptedHash,
+            @Param("adoptedObjectKey") String adoptedObjectKey);
 }

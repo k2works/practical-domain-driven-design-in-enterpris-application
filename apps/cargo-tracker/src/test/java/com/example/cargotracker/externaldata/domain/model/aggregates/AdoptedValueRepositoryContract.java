@@ -9,6 +9,8 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -138,6 +140,26 @@ public abstract class AdoptedValueRepositoryContract {
         adoptedValues().add(first);
 
         assertThat(adoptedValues().currentOf(externalRecordId)).contains(last);
+    }
+
+    @ParameterizedTest(name = "小さい方から書く {0}")
+    @ValueSource(booleans = {true, false})
+    void Bolt39d4_行23_同じ公開した時刻の採用値は符号で違うUUIDでも符号なしの順の最後を返す(boolean lowFirst) {
+        // Bolt 39d4 の決定 (12)。上の位が符号で違う 2 つの UUID（符号付きで比べると 80000000 が先になる組）。書く順を両方にする（T-245）
+        UUID externalRecordId = givenExternalRecord("V2611E", "3");
+        AdoptedValue low = adoptedValueAt(
+                UUID.fromString("7fffffff-0000-0000-0000-000000000000"),
+                givenReceivedRecordOf(externalRecordId),
+                PUBLISHED_AT);
+        AdoptedValue high = adoptedValueAt(
+                UUID.fromString("80000000-0000-0000-0000-000000000000"),
+                givenReceivedRecordOf(externalRecordId),
+                PUBLISHED_AT);
+
+        adoptedValues().add(lowFirst ? low : high);
+        adoptedValues().add(lowFirst ? high : low);
+
+        assertThat(adoptedValues().currentOf(externalRecordId)).contains(high);
     }
 
     @Test

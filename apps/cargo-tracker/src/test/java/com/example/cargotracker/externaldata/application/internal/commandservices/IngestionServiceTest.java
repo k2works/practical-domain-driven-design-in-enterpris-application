@@ -7,15 +7,21 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 
+import com.example.cargotracker.externaldata.application.internal.commands.AdoptReceivedRecordCommand;
 import com.example.cargotracker.externaldata.application.internal.commands.IngestFileCommand;
 import com.example.cargotracker.externaldata.application.internal.commands.IngestFileCommand.IngestedRow;
 import com.example.cargotracker.externaldata.application.internal.commands.IngestFileCommand.RejectedRow;
 import com.example.cargotracker.externaldata.application.internal.commands.IngestFileCommand.UnreadablePart;
+import com.example.cargotracker.externaldata.application.internal.commands.RejectKeylessQuarantinesCommand;
+import com.example.cargotracker.externaldata.application.internal.commands.RejectReceivedRecordCommand;
 import com.example.cargotracker.externaldata.application.internal.commandservices.IngestionOutcome.Ingested;
 import com.example.cargotracker.externaldata.application.internal.commandservices.IngestionOutcome.RowResult;
 import com.example.cargotracker.externaldata.application.internal.commandservices.IngestionOutcome.Unreadable;
+import com.example.cargotracker.externaldata.application.internal.queryservices.UndecidedRecordPage;
+import com.example.cargotracker.externaldata.application.internal.queryservices.UndecidedRecordQueryService;
 import com.example.cargotracker.externaldata.domain.events.ExternalRecordQuarantined;
 import com.example.cargotracker.externaldata.domain.events.MilestoneAdoptedValueAccepted;
+import com.example.cargotracker.externaldata.domain.events.ReceivedRecordDecided;
 import com.example.cargotracker.externaldata.domain.events.VoyageAdoptedValueUpdated;
 import com.example.cargotracker.externaldata.domain.events.VoyageAdoptedValueUpdated.AdoptedPortCall;
 import com.example.cargotracker.externaldata.domain.model.aggregates.AdoptedValue;
@@ -30,6 +36,7 @@ import com.example.cargotracker.externaldata.domain.model.aggregates.InMemoryDat
 import com.example.cargotracker.externaldata.domain.model.aggregates.InMemoryExternalPayloadStorage;
 import com.example.cargotracker.externaldata.domain.model.aggregates.InMemoryExternalRecordRepository;
 import com.example.cargotracker.externaldata.domain.model.aggregates.InMemoryIngestionRepository;
+import com.example.cargotracker.externaldata.domain.model.aggregates.InMemoryReceivedRecordDecisionRepository;
 import com.example.cargotracker.externaldata.domain.model.aggregates.InMemoryReceivedRecordRepository;
 import com.example.cargotracker.externaldata.domain.model.aggregates.Ingestion;
 import com.example.cargotracker.externaldata.domain.model.aggregates.ReceivedRecord;
@@ -70,7 +77,9 @@ import java.util.stream.Stream;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.context.ApplicationEventPublisher;
 
@@ -100,9 +109,28 @@ class IngestionServiceTest {
         @Override
         public Optional<ExternalRecord> findByKey(IdempotencyKey key) {
             lookups.add(key);
-            return super.findByKey(key);
+            Optional<ExternalRecord> found = super.findByKey(key);
+            afterFindByKey.run();
+            return found;
+        }
+
+        @Override
+        public void changeAdoptedPayload(
+                UUID externalRecordId,
+                PayloadHash expectedHash,
+                PayloadHash adoptedHash,
+                PayloadObjectKey adoptedObjectKey) {
+            adoptedPayloadChanges.add(externalRecordId);
+            super.changeAdoptedPayload(externalRecordId, expectedHash, adoptedHash, adoptedObjectKey);
         }
     };
+
+    /** 基準の付け替えの呼び出しの記録（Bolt 39d4 の行 7。T-236）。 */
+    private final List<UUID> adoptedPayloadChanges = new ArrayList<>();
+
+    /** 外部原本を引いた直後に差し込む処理（Bolt 39d4 の行 11。取込が基準を読んだ直後の別の採用）。 */
+    private Runnable afterFindByKey = () -> {};
+
     private final InMemoryReceivedRecordRepository receivedRecords =
             new InMemoryReceivedRecordRepository(ingestions, externalRecords);
     private final InMemoryAdoptedValueRepository adoptedValues = new InMemoryAdoptedValueRepository(receivedRecords);
@@ -486,7 +514,7 @@ class IngestionServiceTest {
     }
 
     @Test
-    void 行3_同じキーで内容の違う行は隔離になり外部原本の最初のハッシュとオブジェクトキーは変わらない() {
+    void 行3_同じキーで内容の違う行は隔離になり外部原本の基準のハッシュとオブジェクトキーは変わらない() {
         service().ingest(steward, file(milestoneSource, milestone(2, "MS-0001", "1", "CTABCDEFGH2345")));
         ExternalRecord before = externalRecords.all().getFirst();
 
@@ -497,7 +525,7 @@ class IngestionServiceTest {
         assertThat(second.rows().getFirst().classification()).isEqualTo(Classification.QUARANTINED);
         ReceivedRecord received = receivedRecords.all().getLast();
         assertThat(received.payloadHash()).isNotEqualTo(before.payloadHash());
-        assertThat(received.classificationNote()).startsWith("2 行目: 同じ外部 ID・外部版で内容の違う原本を受け取りました（最初の受信: ");
+        assertThat(received.classificationNote()).isEqualTo("2 行目: 同じ外部 ID・外部版で内容の違う原本を受け取りました。");
     }
 
     @Test
@@ -1348,13 +1376,532 @@ class IngestionServiceTest {
         }
 
         @Test
-        void 行20_内容の違う原本の隔離の注記の時刻は秒までのUTCと明記した形にする() {
+        void 行20_内容の違う原本の隔離の注記は時刻を含まない() {
             service().ingest(steward, file(milestoneSource, milestone(2, "MS-0001", "1", "CTABCDEFGH2345")));
 
             service().ingest(steward, file(milestoneSource, milestone(2, "MS-0001", "1", "CTABCDEFGH2346")));
 
             assertThat(receivedRecords.all().getLast().classificationNote())
-                    .isEqualTo("2 行目: 同じ外部 ID・外部版で内容の違う原本を受け取りました（最初の受信: 2026-11-03 09:00:00 UTC）。");
+                    .isEqualTo("2 行目: 同じ外部 ID・外部版で内容の違う原本を受け取りました。");
+        }
+    }
+
+    /**
+     * 判断の後の送り直しの分類（Bolt 39d4 の行 1〜5・7・8・9 (a)(c)・11・15。【業務の判断】(b)・(c)・(e)・(f)・(p)・(q)）。取込と判断と照会のサービスをメモリの実装で
+     * 通す。P1 は最初に受け取った原本、P2・P3 は同じ外部 ID・外部版で内容の違う原本（寄港の時刻か発生時刻を変える。T-230）。公開した時刻で採用値を選ぶので、時計は読むたびに進める。
+     */
+    @Nested
+    class Bolt39d4_判断の後の送り直し {
+
+        private static final int P1 = 1;
+        private static final int P2 = 2;
+        private static final int P3 = 3;
+        private static final String VERSION = "1";
+        private static final String REASON = "提供元に確かめた。";
+        private static final String DUPLICATE_NOTE = "2 行目: 同じ原本を受け取り済みです。";
+        private static final String QUARANTINED_NOTE = "2 行目: 同じ外部 ID・外部版で内容の違う原本を受け取りました。";
+
+        enum RecordKind {
+            VOYAGE,
+            MILESTONE
+        }
+
+        /** 読むたびに 1 秒進む時計。 */
+        private final Clock advancing = new Clock() {
+            private Instant current = NOW;
+
+            @Override
+            public java.time.ZoneId getZone() {
+                return ZoneOffset.UTC;
+            }
+
+            @Override
+            public Clock withZone(java.time.ZoneId zone) {
+                return this;
+            }
+
+            @Override
+            public Instant instant() {
+                current = current.plusSeconds(1);
+                return current;
+            }
+        };
+
+        private final InMemoryReceivedRecordDecisionRepository decisions =
+                new InMemoryReceivedRecordDecisionRepository();
+        private final InMemoryReceivedRecordRepository records =
+                new InMemoryReceivedRecordRepository(ingestions, externalRecords, decisions);
+        private final InMemoryAdoptedValueRepository adopted = new InMemoryAdoptedValueRepository(records);
+        private final IngestionService ingestion = new IngestionService(
+                sources, ingestions, externalRecords, records, adopted, storage, publisher, advancing);
+        private final ReceivedRecordDecisionService decision = new ReceivedRecordDecisionService(
+                records, decisions, ingestions, sources, externalRecords, adopted, publisher, advancing);
+        private final UndecidedRecordQueryService query =
+                new UndecidedRecordQueryService(records, ingestions, sources, adopted);
+        private final DataSource voyageSource = approvedSource("開発海運-" + UUID.randomUUID(), "VOYAGE");
+
+        private DataSource sourceOf(RecordKind kind) {
+            return kind == RecordKind.VOYAGE ? voyageSource : milestoneSource;
+        }
+
+        private static String externalIdOf(RecordKind kind) {
+            return kind == RecordKind.VOYAGE ? "V-101" : "MS-0001";
+        }
+
+        private static RecordValues valuesOf(RecordKind kind, int content) {
+            if (kind == RecordKind.VOYAGE) {
+                return new VoyageValues(
+                        "V-101",
+                        List.of(
+                                new PortCallValue(
+                                        new Location("JPTYO"),
+                                        null,
+                                        new UtcInstant(Instant.parse("2026-11-20T00:00:00Z"))),
+                                new PortCallValue(
+                                        new Location("USLAX"),
+                                        new UtcInstant(Instant.parse("2026-12-01T00:00:00Z")
+                                                .plusSeconds(3600L * content)),
+                                        null)));
+            }
+            return new MilestoneValues(
+                    new TrackingNumberValue("CTABCDEFGH2345"),
+                    MilestoneKindValue.DEPARTURE,
+                    new Location("JPTYO"),
+                    new UtcInstant(OCCURRED.plusSeconds(60L * content)));
+        }
+
+        private static IngestedRow row(RecordKind kind, String version, int content) {
+            String payload = externalIdOf(kind) + "," + version + "," + ACQUIRED + ","
+                    + valuesOf(kind, content).summary();
+            return new IngestedRow(
+                    2,
+                    2,
+                    externalIdOf(kind),
+                    version,
+                    ACQUIRED,
+                    valuesOf(kind, content),
+                    payload.getBytes(StandardCharsets.UTF_8));
+        }
+
+        private static PayloadHash hashOf(RecordKind kind, int content) {
+            return PayloadHash.of(row(kind, VERSION, content).payload());
+        }
+
+        private RowResult send(RecordKind kind, String version, int content) {
+            return ingested(ingestion.ingest(steward, file(sourceOf(kind), row(kind, version, content))))
+                    .rows()
+                    .getFirst();
+        }
+
+        private RowResult send(RecordKind kind, int content) {
+            return send(kind, VERSION, content);
+        }
+
+        private void adopt(RowResult quarantined) {
+            assertThat(decision.adopt(steward, new AdoptReceivedRecordCommand(quarantined.receivedRecordId(), REASON)))
+                    .isEqualTo(new DecisionOutcome.AdoptedQuarantine(quarantined.receivedRecordId()));
+        }
+
+        private void reject(RowResult quarantined) {
+            assertThat(decision.reject(
+                            steward, new RejectReceivedRecordCommand(quarantined.receivedRecordId(), REASON)))
+                    .isEqualTo(new DecisionOutcome.Rejected(quarantined.receivedRecordId()));
+        }
+
+        /** P1 を受け取り、P2 の隔離を採用する（基準は P2 になる）。 */
+        private void adoptedP2(RecordKind kind) {
+            send(kind, P1);
+            adopt(send(kind, P2));
+        }
+
+        private ExternalRecord externalRecordOf(RecordKind kind) {
+            return externalRecords.all().stream()
+                    .filter(found -> found.key().equals(keyOf(sourceOf(kind), externalIdOf(kind), VERSION)))
+                    .findFirst()
+                    .orElseThrow();
+        }
+
+        private PayloadHash baseHashOf(RecordKind kind) {
+            return externalRecordOf(kind).payloadHash();
+        }
+
+        private ReceivedRecord lastRecord() {
+            return records.all().getLast();
+        }
+
+        private AdoptedValue currentOf(RecordKind kind) {
+            return adopted.currentOf(externalRecordOf(kind).id()).orElseThrow();
+        }
+
+        private RecordValues comparedWith(RowResult quarantined) {
+            return query.quarantineValues(query.undecidedQuarantine(quarantined.receivedRecordId())
+                            .orElseThrow())
+                    .orElseThrow()
+                    .adopted()
+                    .values();
+        }
+
+        private List<UUID> undecidedIds() {
+            return query.page(null, 1).items().stream()
+                    .map(UndecidedRecordPage.Item::receivedRecordId)
+                    .toList();
+        }
+
+        private long decidedEvents() {
+            return published.stream()
+                    .filter(ReceivedRecordDecided.class::isInstance)
+                    .count();
+        }
+
+        // --- 行 1: 採用した原本の再送 ---
+
+        @ParameterizedTest(name = "{0}")
+        @EnumSource(RecordKind.class)
+        void 行1_採用した原本の再送は重複で採用値もイベントも増えず基準は採用した原本のまま(RecordKind kind) {
+            adoptedP2(kind);
+            int valuesBefore = adopted.all().size();
+            published.clear();
+
+            RowResult resent = send(kind, P2);
+
+            assertThat(resent.classification()).isEqualTo(Classification.DUPLICATE);
+            assertThat(lastRecord().classificationNote()).isEqualTo(DUPLICATE_NOTE);
+            assertThat(adopted.all()).hasSize(valuesBefore);
+            assertThat(published).isEmpty();
+            assertThat(baseHashOf(kind)).isEqualTo(hashOf(kind, P2));
+            assertThat(undecidedIds()).doesNotContain(resent.receivedRecordId());
+        }
+
+        // --- 行 2: 元の原本の再送 ---
+
+        @ParameterizedTest(name = "{0}")
+        @EnumSource(RecordKind.class)
+        void 行2_a_元の原本の再送は隔離で採用値を作らずDE14を出して注記は新しい文で基準は採用した原本のまま(RecordKind kind) {
+            adoptedP2(kind);
+            int valuesBefore = adopted.all().size();
+            published.clear();
+
+            RowResult resent = send(kind, P1);
+
+            assertThat(resent.classification()).isEqualTo(Classification.QUARANTINED);
+            assertThat(lastRecord().classificationNote()).isEqualTo(QUARANTINED_NOTE);
+            assertThat(adopted.all()).hasSize(valuesBefore);
+            assertThat(published).singleElement().isInstanceOf(ExternalRecordQuarantined.class);
+            assertThat(baseHashOf(kind)).isEqualTo(hashOf(kind, P2));
+        }
+
+        @ParameterizedTest(name = "{0}")
+        @EnumSource(RecordKind.class)
+        void 行2_b_元の原本の隔離を却下して元の原本を受け取ると再び隔離の新しい受信記録ができ一覧に出る(RecordKind kind) {
+            adoptedP2(kind);
+            RowResult first = send(kind, P1);
+            reject(first);
+
+            RowResult again = send(kind, P1);
+
+            assertThat(again.classification()).isEqualTo(Classification.QUARANTINED);
+            assertThat(again.receivedRecordId()).isNotEqualTo(first.receivedRecordId());
+            assertThat(undecidedIds()).containsExactly(again.receivedRecordId());
+            assertThat(baseHashOf(kind)).isEqualTo(hashOf(kind, P2));
+        }
+
+        @ParameterizedTest(name = "{0}")
+        @EnumSource(RecordKind.class)
+        void 行2_c_元の原本の隔離を採用すると基準が元の原本に戻り元の原本の再送は重複で採用した原本の再送は隔離(RecordKind kind) {
+            adoptedP2(kind);
+
+            adopt(send(kind, P1));
+
+            assertThat(baseHashOf(kind)).isEqualTo(hashOf(kind, P1));
+            assertThat(currentOf(kind).valueSummary())
+                    .isEqualTo(valuesOf(kind, P1).summary());
+            assertThat(send(kind, P1).classification()).isEqualTo(Classification.DUPLICATE);
+            assertThat(send(kind, P2).classification()).isEqualTo(Classification.QUARANTINED);
+        }
+
+        // --- 行 3: 却下した原本の再送 ---
+
+        @ParameterizedTest(name = "{0}")
+        @EnumSource(RecordKind.class)
+        void 行3_a_却下した原本の再送は隔離の新しい受信記録で判断を待つ一覧と件数に出て元の判断は残る(RecordKind kind) {
+            send(kind, P1);
+            RowResult rejected = send(kind, P2);
+            reject(rejected);
+
+            RowResult again = send(kind, P2);
+
+            assertThat(again.classification()).isEqualTo(Classification.QUARANTINED);
+            assertThat(again.receivedRecordId()).isNotEqualTo(rejected.receivedRecordId());
+            assertThat(decisions.existsFor(again.receivedRecordId())).isFalse();
+            assertThat(decisions.existsFor(rejected.receivedRecordId())).isTrue();
+            assertThat(undecidedIds()).containsExactly(again.receivedRecordId());
+            assertThat(records.countUndecidedQuarantines(null)).isEqualTo(1);
+        }
+
+        @ParameterizedTest(name = "{0}")
+        @EnumSource(RecordKind.class)
+        void 行3_b_P2を却下しP3を採用した後のP2の再送も隔離で基準はP3(RecordKind kind) {
+            send(kind, P1);
+            reject(send(kind, P2));
+            adopt(send(kind, P3));
+
+            assertThat(send(kind, P2).classification()).isEqualTo(Classification.QUARANTINED);
+
+            assertThat(baseHashOf(kind)).isEqualTo(hashOf(kind, P3));
+        }
+
+        // --- 行 4: 形式の誤りの取り込み直し ---
+
+        static Stream<Arguments> keylessFiles() {
+            byte[] line = "MS-0001,1".getBytes(StandardCharsets.UTF_8);
+            return Stream.of(
+                    Arguments.of(
+                            "行の誤り",
+                            List.of(new RejectedRow(2, 2, FormatDefect.COLUMN_COUNT_MISMATCH, List.of(), line)),
+                            null),
+                    Arguments.of(
+                            "ファイルの誤り",
+                            List.of(),
+                            new UnreadablePart(2, 2, FormatDefect.UNREADABLE_HEADER, List.of(), null)));
+        }
+
+        @ParameterizedTest(name = "{0}")
+        @MethodSource("keylessFiles")
+        void 行4_キーのない隔離を却下した後に同じファイルを受け取ると再びキーのない隔離の新しい受信記録ができ外部原本を作らず一覧に出る(
+                String name, List<RejectedRow> rejectedRows, UnreadablePart unreadable) {
+            IngestFileCommand command = new IngestFileCommand(
+                    milestoneSource.id(),
+                    "ヘッダー\nMS-0001,1".getBytes(StandardCharsets.UTF_8),
+                    1,
+                    List.of(),
+                    rejectedRows,
+                    unreadable);
+            Ingested first = ingested(ingestion.ingest(steward, command));
+            ReceivedRecord firstKeyless = lastRecord();
+            assertThat(decision.rejectKeyless(
+                            steward, new RejectKeylessQuarantinesCommand(first.ingestionId(), REASON)))
+                    .isEqualTo(new KeylessRejectionOutcome.RejectedAll(1));
+
+            ingested(ingestion.ingest(steward, command));
+
+            ReceivedRecord again = lastRecord();
+            assertThat(again.id()).isNotEqualTo(firstKeyless.id());
+            assertThat(again.externalRecordId()).isNull();
+            assertThat(again.classification()).isEqualTo(Classification.QUARANTINED);
+            assertThat(externalRecords.all()).isEmpty();
+            assertThat(undecidedIds()).containsExactly(again.id());
+        }
+
+        // --- 行 5: 直した行と版 ---
+
+        private void keylessRow() {
+            ingested(ingestion.ingest(
+                    steward,
+                    new IngestFileCommand(
+                            milestoneSource.id(),
+                            "ヘッダー\nMS-0001,1".getBytes(StandardCharsets.UTF_8),
+                            1,
+                            List.of(),
+                            List.of(new RejectedRow(
+                                    2,
+                                    2,
+                                    FormatDefect.COLUMN_COUNT_MISMATCH,
+                                    List.of(),
+                                    "MS-0001,1".getBytes(StandardCharsets.UTF_8))),
+                            null)));
+        }
+
+        @Test
+        void 行5_a_キーのない隔離を直した行はキーの外部原本がなければ採用() {
+            keylessRow();
+
+            assertThat(send(RecordKind.MILESTONE, P1).classification()).isEqualTo(Classification.ADOPTED);
+        }
+
+        @ParameterizedTest(name = "{0}")
+        @EnumSource(RecordKind.class)
+        void 行5_b_新しい外部版は採用で元の外部版の基準は変わらない(RecordKind kind) {
+            send(kind, P1);
+
+            RowResult newer = send(kind, "2", P2);
+
+            assertThat(newer.classification()).isEqualTo(Classification.ADOPTED);
+            assertThat(baseHashOf(kind)).isEqualTo(hashOf(kind, P1));
+        }
+
+        @ParameterizedTest(name = "{0}")
+        @EnumSource(RecordKind.class)
+        void 行5_c_同じ外部版のまま内容を直した行は隔離(RecordKind kind) {
+            send(kind, P1);
+
+            RowResult corrected = send(kind, P2);
+
+            assertThat(corrected.classification()).isEqualTo(Classification.QUARANTINED);
+            assertThat(lastRecord().classificationNote()).isEqualTo(QUARANTINED_NOTE);
+        }
+
+        @ParameterizedTest(name = "{0}")
+        @EnumSource(RecordKind.class)
+        void 行5_d_外部版をまたいで採用中の値と矛盾する行は今は採用で39hで差異になる(RecordKind kind) {
+            send(kind, P1);
+
+            assertThat(send(kind, "2", P3).classification()).isEqualTo(Classification.ADOPTED);
+        }
+
+        static Stream<Arguments> correctedRows() {
+            return Stream.of(
+                    Arguments.of(P1, Classification.DUPLICATE, DUPLICATE_NOTE),
+                    Arguments.of(P2, Classification.QUARANTINED, QUARANTINED_NOTE));
+        }
+
+        @ParameterizedTest(name = "原本 {0} は {1}")
+        @MethodSource("correctedRows")
+        void 行5_e_キーの外部原本がすでにある行を直すと基準と同じなら重複で違えば隔離(int content, Classification classification, String note) {
+            send(RecordKind.MILESTONE, P1);
+            keylessRow();
+
+            RowResult corrected = send(RecordKind.MILESTONE, content);
+
+            assertThat(corrected.classification()).isEqualTo(classification);
+            assertThat(lastRecord().classificationNote()).isEqualTo(note);
+        }
+
+        // --- 行 7: 取込は付け替えない ---
+
+        @Test
+        void 行7_取込の採用と重複と隔離では付け替えない() {
+            send(RecordKind.MILESTONE, P1);
+            send(RecordKind.MILESTONE, P1);
+            send(RecordKind.MILESTONE, P2);
+
+            assertThat(adoptedPayloadChanges).isEmpty();
+        }
+
+        // --- 行 8: 同じ外部原本の別の隔離 ---
+
+        @ParameterizedTest(name = "{0}")
+        @EnumSource(RecordKind.class)
+        void 行8_P2を採用するとP3と新しい隔離の比べる相手はP2の値で続けてP3を採用すると基準と比べる相手はP3(RecordKind kind) {
+            send(kind, P1);
+            RowResult second = send(kind, P2);
+            RowResult third = send(kind, P3);
+
+            adopt(second);
+            RowResult resentOriginal = send(kind, P1);
+
+            assertThat(comparedWith(third)).isEqualTo(valuesOf(kind, P2));
+            assertThat(comparedWith(resentOriginal)).isEqualTo(valuesOf(kind, P2));
+
+            adopt(third);
+
+            assertThat(baseHashOf(kind)).isEqualTo(hashOf(kind, P3));
+            assertThat(comparedWith(resentOriginal)).isEqualTo(valuesOf(kind, P3));
+            assertThat(send(kind, P2).classification()).isEqualTo(Classification.QUARANTINED);
+            assertThat(send(kind, P3).classification()).isEqualTo(Classification.DUPLICATE);
+        }
+
+        @ParameterizedTest(name = "{0}")
+        @EnumSource(RecordKind.class)
+        void 行8_P3の判断の画面を開いた後にP2の採用がコミットしてもP3の採用は成功し両方の判断とDE29が残り基準と採用値はP3(RecordKind kind) {
+            send(kind, P1);
+            RowResult second = send(kind, P2);
+            RowResult third = send(kind, P3);
+            // 判断の画面を開いた時点の比べる相手は取込の P1 の値
+            assertThat(comparedWith(third)).isEqualTo(valuesOf(kind, P1));
+
+            adopt(second);
+            adopt(third);
+
+            assertThat(decisions.all()).hasSize(2);
+            assertThat(decidedEvents()).isEqualTo(2);
+            assertThat(baseHashOf(kind)).isEqualTo(hashOf(kind, P3));
+            assertThat(currentOf(kind).valueSummary())
+                    .isEqualTo(valuesOf(kind, P3).summary());
+        }
+
+        // --- 行 9 (a)・(c): 同じ内容の判断を待つ隔離 ---
+
+        @ParameterizedTest(name = "{0}")
+        @EnumSource(RecordKind.class)
+        void 行9_a_同じ原本の隔離が2つあり1つ目を採用すると2つ目は一覧に残り判断の行を作らない(RecordKind kind) {
+            send(kind, P1);
+            RowResult first = send(kind, P2);
+            RowResult second = send(kind, P2);
+
+            adopt(first);
+
+            assertThat(undecidedIds()).contains(second.receivedRecordId());
+            assertThat(decisions.existsFor(second.receivedRecordId())).isFalse();
+            assertThat(adopted.findByReceivedRecordId(second.receivedRecordId()))
+                    .isEmpty();
+        }
+
+        @ParameterizedTest(name = "{0}")
+        @EnumSource(RecordKind.class)
+        void 行9_c_残った隔離を却下して同じ原本を送り直すと重複で判断は要らない(RecordKind kind) {
+            send(kind, P1);
+            RowResult first = send(kind, P2);
+            RowResult second = send(kind, P2);
+            adopt(first);
+            reject(second);
+
+            RowResult resent = send(kind, P2);
+
+            assertThat(resent.classification()).isEqualTo(Classification.DUPLICATE);
+            assertThat(undecidedIds()).doesNotContain(resent.receivedRecordId());
+        }
+
+        // --- 行 11: 取込と採用の同時 ---
+
+        static Stream<Arguments> races() {
+            return Stream.of(
+                    Arguments.of("基準を読んだ後の採用", true, P1, Classification.DUPLICATE),
+                    Arguments.of("基準を読んだ後の採用", true, P2, Classification.QUARANTINED),
+                    Arguments.of("基準を読む前の採用", false, P1, Classification.QUARANTINED),
+                    Arguments.of("基準を読む前の採用", false, P2, Classification.DUPLICATE));
+        }
+
+        @ParameterizedTest(name = "{0} 原本 {2} は {3}")
+        @MethodSource("races")
+        void 行11_取込は読んだ基準で分類し値も基準も変えない(String name, boolean afterRead, int content, Classification classification) {
+            RecordKind kind = RecordKind.MILESTONE;
+            send(kind, P1);
+            ExternalRecord read = externalRecordOf(kind);
+            Runnable otherAdoption = () -> externalRecords.changeAdoptedPayload(
+                    read.id(), read.payloadHash(), hashOf(kind, P2), PayloadObjectKey.newRecordPayload());
+            if (afterRead) {
+                afterFindByKey = () -> {
+                    afterFindByKey = () -> {};
+                    otherAdoption.run();
+                };
+            } else {
+                otherAdoption.run();
+            }
+            int valuesBefore = adopted.all().size();
+
+            RowResult result = send(kind, content);
+
+            assertThat(result.classification()).isEqualTo(classification);
+            assertThat(adopted.all()).hasSize(valuesBefore);
+            assertThat(baseHashOf(kind)).isEqualTo(hashOf(kind, P2));
+        }
+
+        // --- 行 15: 注記の文 ---
+
+        static Stream<Arguments> notes() {
+            return Stream.of(
+                    Arguments.of(P2, Classification.QUARANTINED, QUARANTINED_NOTE),
+                    Arguments.of(P1, Classification.DUPLICATE, DUPLICATE_NOTE));
+        }
+
+        @ParameterizedTest(name = "{1}")
+        @MethodSource("notes")
+        void 行15_注記は全文のとおりで最初の受信を含まない(int content, Classification classification, String note) {
+            send(RecordKind.MILESTONE, P1);
+
+            assertThat(send(RecordKind.MILESTONE, content).classification()).isEqualTo(classification);
+
+            assertThat(lastRecord().classificationNote()).isEqualTo(note).doesNotContain("最初の受信");
         }
     }
 

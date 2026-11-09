@@ -164,8 +164,8 @@ jobs:
     # PERF-06 の判定は Linux のランナーで行う。起動: gh workflow run cargo-tracker-ci.yml --ref develop -f job=performance
     if: github.event_name == 'workflow_dispatch' && inputs.job == 'performance'
     runs-on: ubuntu-latest
-    # 6 本（Bolt 39b4 の 3 本、39c2 の画面の POST、39c4 の結果の画面の照会、39d2b のまとめての却下）。取込を判定する 4 本とまとめての却下は
-    # それぞれ 5 分の判定、6 本とも監査の配信を待つ上限 10 分（参考の値。まとめての却下は取込と却下の 2 回）を見込む。4 本のときの実測は
+    # 7 本（Bolt 39b4 の 3 本、39c2 の画面の POST、39c4 の結果の画面の照会、39d2b のまとめての却下、39d4 の S-17 の一覧の照会）。取込を判定する 4 本とまとめての却下は
+    # それぞれ 5 分の判定、7 本とも監査の配信を待つ上限 10 分（参考の値。まとめての却下は取込と却下の 2 回）を見込む。4 本のときの実測は
     # 約 4 分（2026-11-04 の手動の実行）
     timeout-minutes: 60
     concurrency:

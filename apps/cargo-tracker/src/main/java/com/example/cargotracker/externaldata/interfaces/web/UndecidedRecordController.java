@@ -10,6 +10,7 @@ import com.example.cargotracker.externaldata.application.internal.queryservices.
 import com.example.cargotracker.externaldata.application.internal.queryservices.QuarantineValues;
 import com.example.cargotracker.externaldata.application.internal.queryservices.UndecidedRecordPage;
 import com.example.cargotracker.externaldata.application.internal.queryservices.UndecidedRecordQueryService;
+import com.example.cargotracker.externaldata.domain.model.aggregates.ConcurrentExternalRecordUpdateException;
 import com.example.cargotracker.externaldata.domain.model.aggregates.ReceivedRecordDecision;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PhysicalLineRange;
 import com.example.cargotracker.platform.web.DateTimeDisplay;
@@ -90,6 +91,11 @@ public class UndecidedRecordController {
     /** 開いた後に採用できなくなって判断の画面へ戻るときの印（フラッシュの名前。Bolt 39d3b2）。 */
     private static final String ADOPTION_REFUSED = "adoptionRefused";
 
+    /** 負けた採用で判断の画面へ戻るときの文（フラッシュの名前と文。固定の文。Bolt 39d4 の開始準備の決定 (4)）。 */
+    private static final String ADOPTION_CONFLICT = "adoptionConflictText";
+
+    private static final String ADOPTION_CONFLICT_TEXT = "ほかの隔離が先に採用されたため採用できませんでした。この外部版の採用値を読み直して、もう一度判断してください。";
+
     /** 採用できない理由と次の道の文（Bolt 39d3b2 の開始準備の決定 (5)。固定の文で、取込ファイルから来た値を含まない）。 */
     private static final String KEYLESS_REFUSAL = "形式の誤りは採用できません。直したファイルを取り込み直してください。";
 
@@ -101,6 +107,7 @@ public class UndecidedRecordController {
             "情報源が承認済みではないため採用できません。受け取った値を使うときは、運用の手順で情報源を承認し直してから、この隔離を開き直してください。";
     private static final String TRACKING_NUMBER_DIFFERS_REFUSAL =
             "追跡番号がこの外部版の採用値と違うので採用できません。正しい原本を使うときは、提供元に新しい外部版で送り直してもらってください。";
+    private static final String PAYLOAD_ALREADY_ADOPTED_REFUSAL = "同じ原本がすでに採用されているので採用できません。却下で片付けてください。";
 
     /** 1 つの取込の形式の誤りのまとめての却下（Bolt 39d2b の開始準備の決定 (3)）。件数は 3 桁の区切り。 */
     private static final String KEYLESS_REJECTION_PATH = "/keyless-rejection";
@@ -221,7 +228,8 @@ public class UndecidedRecordController {
     }
 
     /**
-     * 採用する（Bolt 39d3b）。理由は任意で、前後の空白を除いて上限を超えれば判断の画面に戻って欄の誤りを示し、採用したら PRG で元の一覧に戻って知らせる。
+     * 採用する（Bolt 39d3b）。理由は任意で、前後の空白を除いて上限を超えれば判断の画面に戻って欄の誤りを示し、採用したら PRG で元の一覧に戻って知らせる。同じ外部原本の別の隔離の採用に負けたら、
+     * 判断の画面へ PRG で戻ってエラー要約で知らせる（Bolt 39d4）。
      */
     @PostMapping("/{receivedRecordId}/adoption")
     @SuppressWarnings("java:S107") // 画面の入力と戻り先と誤りと操作者を受ける MVC の入口
@@ -247,7 +255,14 @@ public class UndecidedRecordController {
                     ? respond(refusal.get(), back, backPage, redirectAttributes)
                     : decisionView(id, back, backPage, model, redirectAttributes);
         }
-        DecisionOutcome outcome = decisions.adopt(actor, new AdoptReceivedRecordCommand(id, form.getReason()));
+        DecisionOutcome outcome;
+        try {
+            outcome = decisions.adopt(actor, new AdoptReceivedRecordCommand(id, form.getReason()));
+        } catch (ConcurrentExternalRecordUpdateException _) {
+            // 同じ外部原本の別の隔離が先に採用された（判断も採用値も巻き戻っている）。判断の画面へ戻り、読み直してもらう（Bolt 39d4 の開始準備の決定 (4)）
+            redirectAttributes.addFlashAttribute(ADOPTION_CONFLICT, ADOPTION_CONFLICT_TEXT);
+            return "redirect:" + LIST_URL + "/" + id + query(back, backPage);
+        }
         return respond(outcome, back, backPage, redirectAttributes);
     }
 
@@ -416,6 +431,7 @@ public class UndecidedRecordController {
             case VALUE_UNREADABLE -> VALUE_UNREADABLE_REFUSAL;
             case SOURCE_NOT_APPROVED -> SOURCE_NOT_APPROVED_REFUSAL;
             case TRACKING_NUMBER_DIFFERS -> TRACKING_NUMBER_DIFFERS_REFUSAL;
+            case PAYLOAD_ALREADY_ADOPTED -> PAYLOAD_ALREADY_ADOPTED_REFUSAL;
         };
     }
 

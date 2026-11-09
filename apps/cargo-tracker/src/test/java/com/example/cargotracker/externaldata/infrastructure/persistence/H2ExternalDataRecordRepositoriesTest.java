@@ -212,17 +212,6 @@ class H2ExternalDataRecordRepositoriesTest extends ExternalDataRecordRepositorie
         }
     }
 
-    /** Bolt 39d の行 7（判断の表に行のある隔離）。本体は PostgreSQL のテストと共有する。39b の行 7 と名前が衝突しないよう入れ子にする。 */
-    @Nested
-    class Bolt39d_判断を待つ隔離 {
-
-        @Test
-        void 行7_H2でも判断の表に行のある隔離は一覧に出ず件数にも数えない() {
-            MyBatisExternalDataRecordRepositoriesIntegrationTest.assertDecidedQuarantineIsNotListed(
-                    jdbc, ingestions, receivedRecords);
-        }
-    }
-
     @Autowired
     DataSourceRepository dataSources;
 

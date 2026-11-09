@@ -1,6 +1,8 @@
 package com.example.cargotracker.externaldata.domain.model.aggregates;
 
 import com.example.cargotracker.externaldata.domain.model.valueobjects.IdempotencyKey;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.PayloadHash;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.PayloadObjectKey;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -25,4 +27,20 @@ public interface ExternalRecordRepository {
      * @throws DuplicateExternalRecordException 同じ冪等性キーの外部原本がもうあるとき
      */
     void add(ExternalRecord externalRecord);
+
+    /**
+     * 外部原本の基準を採用した payload に付け替える（Bolt 39d4 の開始準備の決定 (3)・(4)、【業務の判断】(b)）。読んだハッシュを条件にした更新で、冪等性キーと最初の受信時刻は
+     * 変えない。条件のハッシュが今の基準と違う（読んだ後にほかの採用が先に付け替えた）か、外部原本がないときは例外を投げる。
+     *
+     * @param externalRecordId 外部原本 ID
+     * @param expectedHash 読んだ基準のハッシュ
+     * @param adoptedHash 採用した payload のハッシュ
+     * @param adoptedObjectKey 採用した payload のオブジェクトキー
+     * @throws ConcurrentExternalRecordUpdateException 条件のハッシュが今の基準と違う、または外部原本がないとき
+     */
+    void changeAdoptedPayload(
+            UUID externalRecordId,
+            PayloadHash expectedHash,
+            PayloadHash adoptedHash,
+            PayloadObjectKey adoptedObjectKey);
 }

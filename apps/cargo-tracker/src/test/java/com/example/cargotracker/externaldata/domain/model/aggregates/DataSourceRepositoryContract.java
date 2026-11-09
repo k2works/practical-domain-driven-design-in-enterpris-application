@@ -62,8 +62,8 @@ public abstract class DataSourceRepositoryContract {
     }
 
     @Test
-    void 行4_承認済みの情報源だけを提供元と原本種別の順に並べる() {
-        // Bolt 39c の行 4。候補と停止中は並べない。名前は自分の UUID で絞り、順は ASCII の末尾の文字で決まる組にする（照合順序に左右されない）
+    void 行4_承認済みの情報源だけを返し順は約束しない() {
+        // Bolt 39c の行 4。候補と停止中は返さない。名前は自分の UUID で絞る。順は約束しない（並べるのは照会のサービス。Bolt 39d4 の行 21）
         String prefix = "契約の提供元-" + UUID.randomUUID();
         DataSource secondVoyage = new DataSource(UUID.randomUUID(), prefix + "-B", "VOYAGE", ApprovalStatus.APPROVED);
         DataSource firstVoyage = new DataSource(UUID.randomUUID(), prefix + "-A", "VOYAGE", ApprovalStatus.APPROVED);
@@ -78,6 +78,6 @@ public abstract class DataSourceRepositoryContract {
 
         assertThat(repository().findApproved())
                 .filteredOn(source -> source.provider().startsWith(prefix))
-                .containsExactly(firstMilestone, firstVoyage, secondVoyage);
+                .containsExactlyInAnyOrder(firstMilestone, firstVoyage, secondVoyage);
     }
 }

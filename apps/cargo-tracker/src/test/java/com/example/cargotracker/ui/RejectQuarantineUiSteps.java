@@ -82,9 +82,7 @@ public class RejectQuarantineUiSteps {
         assertThat(definition("行")).hasText(line + " 行目");
         assertThat(definition("種類")).hasText("内容の違う原本");
         assertThat(definition("外部 ID・外部版")).hasText(Pattern.compile("^V2611E-[0-9a-f]{8}・1$"));
-        assertThat(definition("隔離の理由"))
-                .hasText(Pattern.compile("^" + line + " 行目: 同じ外部 ID・外部版で内容の違う原本を受け取りました（最初の受信: "
-                        + "\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2} UTC）。$"));
+        assertThat(definition("隔離の理由")).hasText(Pattern.compile("^" + line + " 行目: 同じ外部 ID・外部版で内容の違う原本を受け取りました。$"));
         assertThat(page().getByText(IRREVOCABLE, new Page.GetByTextOptions().setExact(true)))
                 .isVisible();
         assertThat(page().getByText(KEYLESS_GUIDE)).hasCount(0);

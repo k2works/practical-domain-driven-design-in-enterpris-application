@@ -2,6 +2,7 @@ package com.example.cargotracker.externaldata.application.internal.queryservices
 
 import com.example.cargotracker.externaldata.domain.model.aggregates.DataSource;
 import com.example.cargotracker.externaldata.domain.model.aggregates.DataSourceRepository;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -22,10 +23,11 @@ public class IngestibleDataSourceQueryService {
         this.dataSources = dataSources;
     }
 
-    /** 取り込める情報源（承認済み。提供元・原本種別の順）。 */
+    /** 取り込める情報源（承認済み。提供元・原本種別の Java の {@link String} の順。ポートの返す順にも DB の照合順序にも頼らない。Bolt 39d4 の開始準備の決定 (9)）。 */
     @Transactional(readOnly = true)
     public List<IngestibleDataSource> ingestibleSources() {
         return dataSources.findApproved().stream()
+                .sorted(Comparator.comparing(DataSource::provider).thenComparing(DataSource::recordType))
                 .map(source -> new IngestibleDataSource(source.id(), source.provider(), source.recordType()))
                 .toList();
     }

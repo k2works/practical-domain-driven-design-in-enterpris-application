@@ -1,5 +1,6 @@
 package com.example.cargotracker.externaldata.infrastructure.persistence;
 
+import com.example.cargotracker.externaldata.domain.model.aggregates.ConcurrentExternalRecordUpdateException;
 import com.example.cargotracker.externaldata.domain.model.aggregates.DuplicateExternalRecordException;
 import com.example.cargotracker.externaldata.domain.model.aggregates.ExternalRecord;
 import com.example.cargotracker.externaldata.domain.model.aggregates.ExternalRecordRepository;
@@ -51,6 +52,19 @@ public class MyBatisExternalRecordRepository implements ExternalRecordRepository
                     externalRecord.firstReceivedAt().atOffset(ZoneOffset.UTC)));
         } catch (DuplicateKeyException e) {
             throw DuplicateExternalRecordException.of(key, e);
+        }
+    }
+
+    @Override
+    public void changeAdoptedPayload(
+            UUID externalRecordId,
+            PayloadHash expectedHash,
+            PayloadHash adoptedHash,
+            PayloadObjectKey adoptedObjectKey) {
+        if (mapper.updateAdoptedPayload(
+                        externalRecordId, expectedHash.value(), adoptedHash.value(), adoptedObjectKey.value())
+                == 0) {
+            throw ConcurrentExternalRecordUpdateException.of(externalRecordId);
         }
     }
 

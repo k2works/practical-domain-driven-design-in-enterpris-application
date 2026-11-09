@@ -26,6 +26,7 @@ import com.example.cargotracker.externaldata.application.internal.queryservices.
 import com.example.cargotracker.externaldata.application.internal.queryservices.QuarantineValues;
 import com.example.cargotracker.externaldata.application.internal.queryservices.UndecidedRecordPage;
 import com.example.cargotracker.externaldata.application.internal.queryservices.UndecidedRecordQueryService;
+import com.example.cargotracker.externaldata.domain.model.aggregates.ConcurrentExternalRecordUpdateException;
 import com.example.cargotracker.externaldata.domain.model.aggregates.ReceivedRecordDecision;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PhysicalLineRange;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PortCallValue;
@@ -1044,8 +1045,8 @@ class UndecidedRecordControllerTest {
         private static final String RECEIVED_SECTION =
                 "<section aria-labelledby=\"received-values-heading\">\\s*<h2 id=\"received-values-heading\">受け取った値</h2>";
         private static final String ADOPTED_SECTION =
-                "<section aria-labelledby=\"adopted-values-heading\">\\s*<h2 id=\"adopted-values-heading\">この外部版の採用値</h2>";
-        private static final String SAME_VALUES = "受け取った値はこの外部版の採用値と同じです。原本の書き方（引用符・空白など）だけが違います。";
+                "<section aria-labelledby=\"adopted-values-heading\">\\s*<h2 id=\"adopted-values-heading\" tabindex=\"-1\">この外部版の採用値</h2>";
+        private static final String SAME_VALUES = "受け取った値はこの外部版の採用値と同じです。同じ原本か、原本の書き方（引用符・空白など）だけが違います。";
         private static final String SAME_VALUES_BUT_ACQUIRED_AT = "受け取った値はこの外部版の採用値と同じで、取得した日時だけが違います。";
         private static final String NOT_RECORDED = "この隔離は、受け取った値を記録する前に取り込みました。値は原本のファイルで確かめてください。";
         private static final String NO_ADOPTED = "この外部版の採用値はありません。";
@@ -1278,7 +1279,7 @@ class UndecidedRecordControllerTest {
         private static final String RECEIVED_SECTION =
                 "<section aria-labelledby=\"received-values-heading\">\\s*<h2 id=\"received-values-heading\">受け取った値</h2>";
         private static final String ADOPTED_SECTION =
-                "<section aria-labelledby=\"adopted-values-heading\">\\s*<h2 id=\"adopted-values-heading\">この外部版の採用値</h2>";
+                "<section aria-labelledby=\"adopted-values-heading\">\\s*<h2 id=\"adopted-values-heading\" tabindex=\"-1\">この外部版の採用値</h2>";
         private static final String RECEIVED_META =
                 "<p>取得した日時 2026-11-16 09:30 Asia/Tokyo（UTC\\+09:00）（UTC 2026-11-16 00:30）</p>";
         private static final String ADOPTED_META =
@@ -1287,7 +1288,7 @@ class UndecidedRecordControllerTest {
         private static final String ILLEGIBLE = "値を読めませんでした。";
         private static final String NOT_RECORDED = "この隔離は、受け取った値を記録する前に取り込みました。値は原本のファイルで確かめてください。";
         private static final String NO_ADOPTED = "この外部版の採用値はありません。";
-        private static final String SAME_VALUES = "受け取った値はこの外部版の採用値と同じです。原本の書き方（引用符・空白など）だけが違います。";
+        private static final String SAME_VALUES = "受け取った値はこの外部版の採用値と同じです。同じ原本か、原本の書き方（引用符・空白など）だけが違います。";
         private static final String SAME_VALUES_BUT_ACQUIRED_AT = "受け取った値はこの外部版の採用値と同じで、取得した日時だけが違います。";
         private static final Instant RECEIVED_ACQUIRED_AT = Instant.parse("2026-11-16T00:30:00Z");
         private static final Instant ADOPTED_ACQUIRED_AT = Instant.parse("2026-11-15T08:30:00Z");
@@ -1550,7 +1551,7 @@ class UndecidedRecordControllerTest {
         private static final String ADOPTION_IRREVOCABLE = "採用すると取り消せません。誤って採用したときは、提供元に新しい外部版で正しい原本を送ってもらってください。";
         private static final String KEYLESS_GUIDE = "形式の誤りは採用できません。直したファイルを取り込み直してください。";
         private static final String ADOPTED_SECTION =
-                "<section aria-labelledby=\"adopted-values-heading\">\\s*<h2 id=\"adopted-values-heading\">この外部版の採用値</h2>";
+                "<section aria-labelledby=\"adopted-values-heading\">\\s*<h2 id=\"adopted-values-heading\" tabindex=\"-1\">この外部版の採用値</h2>";
         private static final String REJECTION_SECTION =
                 "<section aria-labelledby=\"rejection-heading\">\\s*<h2 id=\"rejection-heading\">却下する</h2>";
         private static final String ADOPTION_SECTION =
@@ -1849,6 +1850,7 @@ class UndecidedRecordControllerTest {
                 "情報源が承認済みではないため採用できません。受け取った値を使うときは、運用の手順で情報源を承認し直してから、この隔離を開き直してください。";
         private static final String TRACKING_NUMBER_DIFFERS_TEXT =
                 "追跡番号がこの外部版の採用値と違うので採用できません。正しい原本を使うときは、提供元に新しい外部版で送り直してもらってください。";
+        private static final String PAYLOAD_ALREADY_ADOPTED_TEXT = "同じ原本がすでに採用されているので採用できません。却下で片付けてください。";
 
         private static UndecidedRecordPage.Item item() {
             return new UndecidedRecordPage.Item(
@@ -1897,7 +1899,8 @@ class UndecidedRecordControllerTest {
                     Arguments.of(NotAdoptableReason.VALUE_NOT_RECORDED, VALUE_NOT_RECORDED_TEXT),
                     Arguments.of(NotAdoptableReason.VALUE_UNREADABLE, VALUE_UNREADABLE_TEXT),
                     Arguments.of(NotAdoptableReason.SOURCE_NOT_APPROVED, SOURCE_NOT_APPROVED_TEXT),
-                    Arguments.of(NotAdoptableReason.TRACKING_NUMBER_DIFFERS, TRACKING_NUMBER_DIFFERS_TEXT));
+                    Arguments.of(NotAdoptableReason.TRACKING_NUMBER_DIFFERS, TRACKING_NUMBER_DIFFERS_TEXT),
+                    Arguments.of(NotAdoptableReason.PAYLOAD_ALREADY_ADOPTED, PAYLOAD_ALREADY_ADOPTED_TEXT));
         }
 
         // --- 行 9: 判断の画面の理由の文 ---
@@ -2074,6 +2077,112 @@ class UndecidedRecordControllerTest {
                     .<Class<?>>map(arguments -> arguments.get()[0].getClass())
                     .toList();
             Assertions.assertThat(covered).containsExactlyInAnyOrder(DecisionOutcome.class.getPermittedSubclasses());
+        }
+    }
+
+    /**
+     * Bolt 39d4 の行 28（負けた採用の行き先と同じ原本の文。開始準備の決定 (4)・(7)）。文は一字ずつ確かめる。39d3b の同じ番号の行と名前が衝突しないよう入れ子にする。
+     */
+    @Nested
+    class Bolt39d4_負けた採用の行き先と同じ原本の文 {
+
+        private static final UUID RECORD_ID = UUID.fromString("39d40000-0000-0000-0000-0000000000ee");
+        private static final String DECISION_URL = LIST_URL + "/" + RECORD_ID;
+        private static final String ADOPTION_URL = DECISION_URL + "/adoption";
+        private static final String CONFLICT_FLASH = "adoptionConflictText";
+        private static final String CONFLICT_TEXT = "ほかの隔離が先に採用されたため採用できませんでした。この外部版の採用値を読み直して、もう一度判断してください。";
+        private static final String SAME_PAYLOAD_TEXT = "同じ原本がすでに採用されているので採用できません。却下で片付けてください。";
+        private static final String ADOPTION_HEADING = "<h2 id=\"adoption-heading\">採用する</h2>";
+
+        private void givenDecision(Optional<DecisionOutcome> adoptionRefusal, Optional<QuarantineValues> values) {
+            given(decisions.refusalOf(RECORD_ID)).willReturn(Optional.empty());
+            given(decisions.adoptionRefusalOf(RECORD_ID)).willReturn(adoptionRefusal);
+            given(query.undecidedQuarantine(RECORD_ID))
+                    .willReturn(Optional.of(new UndecidedRecordPage.Item(
+                            RECORD_ID,
+                            INGESTED_AT,
+                            "開発海運（架空）",
+                            "VOYAGE",
+                            new PhysicalLineRange(3, 3),
+                            false,
+                            "DEMO-201",
+                            "3",
+                            "3 行目: 理由")));
+            given(query.quarantineValues(any())).willReturn(values);
+        }
+
+        private static QuarantineValues adoptedDiffers() {
+            VoyageValues received = new VoyageValues(
+                    "DEMO-201",
+                    List.of(
+                            new PortCallValue(
+                                    new Location("JPTYO"), null, new UtcInstant(Instant.parse("2026-11-18T23:00:00Z"))),
+                            new PortCallValue(
+                                    new Location("USLAX"),
+                                    new UtcInstant(Instant.parse("2026-12-01T22:00:00Z")),
+                                    null)));
+            VoyageValues adopted = new VoyageValues(
+                    "DEMO-201",
+                    List.of(
+                            new PortCallValue(
+                                    new Location("JPTYO"), null, new UtcInstant(Instant.parse("2026-11-18T23:00:00Z"))),
+                            new PortCallValue(
+                                    new Location("USLAX"),
+                                    new UtcInstant(Instant.parse("2026-12-01T23:00:00Z")),
+                                    null)));
+            return new QuarantineValues(
+                    received,
+                    Instant.parse("2026-11-16T00:30:00Z"),
+                    new QuarantineValues.Adopted(adopted, "3", INGESTED_AT, Instant.parse("2026-11-15T09:00:00Z")));
+        }
+
+        @Test
+        void 行28_負けた採用は500にせず元の取込とページを持つ判断の画面へ戻り文をフラッシュで渡す() throws Exception {
+            given(decisions.adopt(any(), any())).willThrow(ConcurrentExternalRecordUpdateException.of(RECORD_ID));
+
+            mockMvc.perform(post(ADOPTION_URL + "?ingestion=" + INGESTION_ID + "&page=2")
+                            .param("reason", "提供元に確かめた。"))
+                    .andExpect(status().is3xxRedirection())
+                    .andExpect(redirectedUrl(DECISION_URL + "?ingestion=" + INGESTION_ID + "&page=2"))
+                    .andExpect(flash().attribute(CONFLICT_FLASH, CONFLICT_TEXT));
+        }
+
+        @Test
+        void 行28_戻った判断の画面はエラー要約に文を示しこの外部版の採用値の領域を指しタイトルを採用できませんでしたにする() throws Exception {
+            givenDecision(Optional.empty(), Optional.of(adoptedDiffers()));
+
+            String page = mockMvc.perform(get(DECISION_URL).flashAttr(CONFLICT_FLASH, CONFLICT_TEXT))
+                    .andExpect(status().isOk())
+                    .andReturn()
+                    .getResponse()
+                    .getContentAsString(StandardCharsets.UTF_8);
+
+            Assertions.assertThat(page)
+                    .contains("<title>採用できませんでした - 隔離の判断 - cargo-tracker</title>")
+                    .containsPattern(
+                            "<div id=\"error-summary\" tabindex=\"-1\" role=\"alert\"\\s+aria-labelledby=\"error-summary-title\">")
+                    .contains("<h2 id=\"error-summary-title\">採用できませんでした</h2>")
+                    .contains("<a href=\"#adopted-values-heading\">" + CONFLICT_TEXT + "</a>")
+                    .contains("<h2 id=\"adopted-values-heading\" tabindex=\"-1\">この外部版の採用値</h2>")
+                    .contains(ADOPTION_HEADING);
+        }
+
+        @Test
+        void 行28_同じ原本がすでに採用された隔離は採用の欄を出さず文を却下の欄の後に示す() throws Exception {
+            givenDecision(
+                    Optional.of(new DecisionOutcome.NotAdoptable(
+                            RECORD_ID, DecisionOutcome.NotAdoptableReason.PAYLOAD_ALREADY_ADOPTED)),
+                    Optional.empty());
+
+            String page = mockMvc.perform(get(DECISION_URL))
+                    .andExpect(status().isOk())
+                    .andReturn()
+                    .getResponse()
+                    .getContentAsString(StandardCharsets.UTF_8);
+
+            Assertions.assertThat(page)
+                    .doesNotContain(ADOPTION_HEADING)
+                    .contains("<p id=\"adoption-refusal\" tabindex=\"-1\">" + SAME_PAYLOAD_TEXT + "</p>");
         }
     }
 }

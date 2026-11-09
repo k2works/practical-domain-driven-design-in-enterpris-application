@@ -16,11 +16,10 @@
         SELECT id, provider, record_type, approval_status FROM external_data.data_source WHERE id = #{id}
     </select>
 
-    <!-- S-16 の選択肢（Bolt 39c）。承認済みだけを提供元・原本種別の順に並べる -->
+    <!-- S-16 の選択肢（Bolt 39c）。承認済みだけを返す。順は約束しない（並べるのは照会のサービス。Bolt 39d4） -->
     <select id="selectApproved" resultMap="dataSourceRow">
         SELECT id, provider, record_type, approval_status FROM external_data.data_source
          WHERE approval_status = 'APPROVED'
-         ORDER BY provider, record_type
     </select>
 
     <!-- ED-INV-01。候補（CANDIDATE）と停止中（SUSPENDED）は数えない -->

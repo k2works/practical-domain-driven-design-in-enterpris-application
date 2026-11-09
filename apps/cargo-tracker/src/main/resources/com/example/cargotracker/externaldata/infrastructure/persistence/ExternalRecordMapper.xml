@@ -42,4 +42,13 @@
         VALUES (#{id}, #{provider}, #{recordType}, #{externalId}, #{externalVersion}, #{payloadHash},
                 #{payloadObjectKey}, #{firstReceivedAt})
     </insert>
+
+    <!-- 採用の判断で基準を付け替える（Bolt 39d4 の開始準備の決定 (3)・(4)）。読んだハッシュを条件にし、更新の数で競り合いを見分ける。外部原本は版の列を持たない -->
+    <update id="updateAdoptedPayload">
+        UPDATE external_data.external_record
+           SET payload_hash = #{adoptedHash},
+               payload_object_key = #{adoptedObjectKey}
+         WHERE id = #{id}
+           AND payload_hash = #{expectedHash}
+    </update>
 </mapper>

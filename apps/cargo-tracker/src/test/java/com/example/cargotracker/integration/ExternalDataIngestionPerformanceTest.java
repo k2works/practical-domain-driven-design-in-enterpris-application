@@ -3,6 +3,7 @@ package com.example.cargotracker.integration;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doAnswer;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -151,8 +152,8 @@ class ExternalDataIngestionPerformanceTest {
     @Autowired
     ReceivedRecordDecisionService decisionService;
 
-    /** 行 21 のまとめての却下のトランザクションの間の一覧の照会（Bolt 39d2b）。 */
-    @Autowired
+    /** 行 21 のまとめての却下のトランザクションの間の一覧の照会（Bolt 39d2b）。Bolt 39d4 の行 24 で {@code page} の前後の時刻を取るため spy にする。 */
+    @MockitoSpyBean
     UndecidedRecordQueryService undecidedRecords;
 
     @Autowired
@@ -346,6 +347,70 @@ class ExternalDataIngestionPerformanceTest {
         } finally {
             finish("notes", result, sourceId);
         }
+    }
+
+    /**
+     * Bolt 39d4 の行 24（Bolt 39d の行 19。T-241・T-242）: 上限いっぱいの隔離（値の誤りだけのデータ行 10,000 行）の取込の S-17 の最後のページ（{@code page=100}）と絞らない 1 ページ目の
+     * GET を測る。照会のサービスの spy で {@code page} の前後の時刻を取り、照会（件数と頁）と、それ以外（フィルター・controller・画面の描画）に分けて「PERF-06 undecided」の行に出す。
+     * 目安の NFR はない参考の値なので時間で落とさない（1 秒を超えたら値を記録して止め、索引を足すか（スキーマ）を諮る。開始準備の決定 (10)）。
+     */
+    @Test
+    void Bolt39d4_行24_隔離1万件の取込のS17の最後のページと絞らない1ページ目のGETの照会と描画の時間をログに出す() throws Exception {
+        Instant acquiredAt = acquiredAt();
+        IntFunction<String> valid = voyageLine(5, acquiredAt);
+        byte[] csv = ExternalDataIngestionConnectionTest.csv(
+                VOYAGE_HEADER, ROWS, row -> valid.apply(row).replaceFirst(",1,", ",,"));
+        UUID sourceId = insertApprovedSource(ExternalDataIngestionConnectionTest.newProvider(), "VOYAGE");
+        AtomicLong queryStarted = new AtomicLong();
+        AtomicLong queryFinished = new AtomicLong();
+        doAnswer(invocation -> {
+                    queryStarted.set(System.nanoTime());
+                    try {
+                        return invocation.callRealMethod();
+                    } finally {
+                        queryFinished.set(System.nanoTime());
+                    }
+                })
+                .when(undecidedRecords)
+                .page(any(), anyInt());
+        Ingested result = null;
+        try {
+            result = ExternalDataIngestionConnectionTest.ingested(ingestionService.ingest(
+                    steward, IngestFileCommandAssembler.assemble(sourceId, CsvFileKind.VOYAGE, csv)));
+            Cookie session = login(dataSteward());
+            String list = "/staff/external-data/undecided-records";
+
+            String lastPage = measureUndecidedPage(
+                    "filtered-last-page",
+                    list + "?ingestion=" + result.ingestionId() + "&page=100",
+                    session,
+                    queryStarted,
+                    queryFinished);
+            String firstPage =
+                    measureUndecidedPage("unfiltered-first-page", list, session, queryStarted, queryFinished);
+
+            assertThat(lastPage).contains("この取込の判断を待つ隔離 10,000 件（9,901〜10,000 件目を示しています）");
+            assertThat(firstPage).contains("1〜100 件目を示しています");
+        } finally {
+            finish("undecided", result, sourceId);
+        }
+    }
+
+    private String measureUndecidedPage(
+            String label, String url, Cookie session, AtomicLong queryStarted, AtomicLong queryFinished)
+            throws Exception {
+        long started = System.nanoTime();
+        MvcResult response = mvc.perform(get(url).cookie(session)).andReturn();
+        long finished = System.nanoTime();
+        long query = queryFinished.get() - queryStarted.get();
+        LOG.info(
+                "PERF-06 undecided {} query={} render={} total={} (reference, no NFR; stop at query 1s)",
+                label,
+                preciseSeconds(query),
+                preciseSeconds((finished - started) - query),
+                preciseSeconds(finished - started));
+        assertThat(response.getResponse().getStatus()).isEqualTo(200);
+        return response.getResponse().getContentAsString(StandardCharsets.UTF_8);
     }
 
     /**
