@@ -3,7 +3,7 @@ type: Plan
 title: "Bolt 39d3b2 計画 - S-17 で主要実績の内容の違う原本の隔離を採用し、採用できない隔離の理由を示す"
 tags: [plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-09T04:35:29Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-09T04:41:49Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-11-09T04:35:29Z }
 ---
@@ -424,7 +424,7 @@ AdoptionFactory ..> MilestoneAdoptedValueAccepted : DE-13
 
 ## ステップ計画（ステップごとに止める）
 
-- [ ] **1. 設計の文書**: 上の「設計文書に直す箇所」（data_model・domain_model・ui_design（画面遷移図、画面イメージ 2 つ）・user_story・system_usecase・test_strategy・ADR-004・release_plan（39d3b2 の行、D-95・D-100・D-101 の直し、D-102 を仮の決定として足す、W10 の申し送り））。開始準備の決定 (1)〜(10)、【前の決定の変更】(1)・(2)、【業務の判断】(o) を反映する。始めに docs を「39d3b2」で検索する（完了の判定: 文書の差分と検索の記録。**承認ゲート**）
+- [x] **1. 設計の文書**（data_model・domain_model（NotAdoptableReason の行）・ui_design（PRG と理由の文）・test_strategy・user_story・system_usecase・ADR-004・release_plan（D-101 の直し、D-102 を仮の決定として足した）を直した。推奨のとおり承認として記録した。Recommend 承認の指示による）: 上の「設計文書に直す箇所」（data_model・domain_model・ui_design（画面遷移図、画面イメージ 2 つ）・user_story・system_usecase・test_strategy・ADR-004・release_plan（39d3b2 の行、D-95・D-100・D-101 の直し、D-102 を仮の決定として足す、W10 の申し送り））。開始準備の決定 (1)〜(10)、【前の決定の変更】(1)・(2)、【業務の判断】(o) を反映する。始めに docs を「39d3b2」で検索する（完了の判定: 文書の差分と検索の記録。**承認ゲート**）
 - [ ] **2. テストの Red（外側から）**: このステップで行 1〜16・20 のテストを書く（ステップ 3〜5 の目安にテストを書く時間は入れない。下の「時間の配分と打ち切り」）。まず骨組み（`NotAdoptable(id, reason)` と `NotAdoptableReason`、判断のサービスは今の定めのまま固定の理由 1 つ（`KEYLESS`）を返す形にして、テスト 9 か所を同時に直す。理由の分岐はステップ 3 で書く（Red を弱めないため）。コンパイルの通らない状態を作らない。T-254）、続いて行 15・16 の feature の Red（主要実績の判断の画面に「採用する」の欄がないことで落ちる）、行 9〜14 の controller、行 20 の統合、行 1・3〜8 の判断のサービス、行 2 の配信。直す既存のテストを一覧にする（T-217。上の引き継ぎの表の行）（完了の判定: 期待した理由で落ちる記録。各ステップのコミットには、そのステップで緑になる行のテストだけを入れ、まだ Red の行は `wip/` のブランチか stash に置く。develop に落ちるテストを積まない（T-254）。このステップで develop に入れるのは緑の骨組みだけで、Red の行はステップ 3〜6 の緑にするコミットに入れる。**承認ゲート**（画面の振る舞いの契約））
 - [ ] **3. 判断のサービス**: 原本種別の定めを消す（決定 (2)）、追跡番号の比べ（決定 (4)）、`AdoptionCheck` と理由（決定 (3)）、`MilestoneAdoptedValueAccepted`・listener の Javadoc、判断のサービスの Javadoc（ReceivedRecordDecisionService.java :34・:98-102・:145-147）、コードの注記（判断のサービス・結果の種類の分）。行 1〜8 が緑（完了の判定: 緑、`spotbugsMain`・`checkstyleMain`・`sonar-local:check`。**承認ゲート**）
 - [ ] **4. 画面**: 理由の文と `adoptionRefusalText`、`keyless` の条件を置き換える、`respond` の `NotAdoptable`、フラッシュ `adoptionRefused`、エラー要約と `title`、コードの注記（画面の分）。行 9〜14・20 が緑、39d・39d2・39d2b・39d3・39d3c・39d3b の S-17 と S-16 の UI のシナリオが緑（行 15・16 の新しいシナリオはステップ 6）（完了の判定: 緑、`spotbugsMain`・`checkstyleMain`・`sonar-local:check`、`uiTest` と axe 違反 0。**承認ゲート**（画面））
