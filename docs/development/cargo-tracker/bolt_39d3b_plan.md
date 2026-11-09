@@ -3,7 +3,7 @@ type: Plan
 title: "Bolt 39d3b 計画 - S-17 で航海の内容の違う原本の隔離を採用する"
 tags: [plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-05T09:21:39Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-09T01:31:26Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-11-05T09:21:39Z }
 ---
@@ -466,7 +466,7 @@ ExternalRecordAuditEventHandler ..> MilestoneAdoptedValueAccepted
 
 ## ステップ計画（ステップごとに止める）
 
-- [ ] **1. 設計の文書**: 上の「設計文書に直す箇所」（data_model・domain_model・ui_design（画面遷移図、画面イメージ 2 つ）・user_story・system_usecase・test_strategy・ADR-004・release_plan（39d3b・39d3b2・39d4・39h の行、D-95・D-98 の直し、D-99・D-100・D-101 を仮の決定として足す））。39d4 に送るテストの完全修飾名をクラスごとに数え直し、39d4 の行に数と見積りを書く（決定 (11)）。開始準備の決定 (1)〜(12)、【前の決定の変更】(1)・(2)、【業務の判断】(l)・(m)・(n) を反映する。始めに docs を「39d3b」で検索する（完了の判定: 文書の差分と検索と数え直しの記録。**承認ゲート**）
+- [x] **1. 設計の文書**（data_model・domain_model・ui_design・user_story・system_usecase・test_strategy・release_plan（D-98 の直し、D-99〜D-101 を仮の決定として足した、28 本前後）・development_strategy（39d3b2）・ADR-004 を直した。途中で止めて 11-09 に仕上げた。推奨のとおり承認として記録した。Recommend 承認の指示による）: 上の「設計文書に直す箇所」（data_model・domain_model・ui_design（画面遷移図、画面イメージ 2 つ）・user_story・system_usecase・test_strategy・ADR-004・release_plan（39d3b・39d3b2・39d4・39h の行、D-95・D-98 の直し、D-99・D-100・D-101 を仮の決定として足す））。39d4 に送るテストの完全修飾名をクラスごとに数え直し、39d4 の行に数と見積りを書く（決定 (11)）。開始準備の決定 (1)〜(12)、【前の決定の変更】(1)・(2)、【業務の判断】(l)・(m)・(n) を反映する。始めに docs を「39d3b」で検索する（完了の判定: 文書の差分と検索と数え直しの記録。**承認ゲート**）
 - [ ] **2. テストの Red（外側から）**: このステップで行 1・2・4〜15・19・20・22 のテストを書く（ステップ 3〜6 の目安にテストを書く時間は入れない。下の「時間の配分と打ち切り」）。まず新しいファイルの骨組み（`adopt_quarantine_ui.feature` と `AdoptQuarantineUiSteps.java`。決定 (12)）を作り、行 15 の feature の Red（今は判断の画面に「採用する」の欄がないことで落ちることを確かめる）、続いて行 12〜14 の controller、行 22 のセキュリティの統合、行 2・4〜7・19・20 の判断のサービス、行 10 の listener、行 1 の判断の型、行 9 の契約、行 7・11 の統合。行 8 は照会のサービスの今の形で通る見込み（採用値の追記の順を逆にしたデータと、別の外部版のデータで確かめる）。直す既存のテストを一覧にする（T-217。判断のサービスの組み立て 2 か所、listener の理由の扱いのテスト、判断の画面の HTML の順のテスト。ステップ 2 の開始で grep する）（完了の判定: 期待した理由で落ちる記録。**承認ゲート**（画面の振る舞いの契約、新しいファイル））
 - [ ] **3. ドメインと契約**: `ReceivedRecordDecision.adopt`、外部原本の `findById`（ポート・MyBatis・メモリ）。行 1・9 が緑（メモリ・H2・PostgreSQL）（完了の判定: 緑、`spotbugsMain`・`checkstyleMain`・`sonar-local:check`。**承認ゲート**）
 - [ ] **4. 判断のサービスの採用**: `AdoptReceivedRecordCommand`（`@Command`）、`ReceivedRecordDecisionService.adopt`・`adoptionRefusalOf`、`DecisionOutcome` の 2 つ、組み立て（ExternalDataConfiguration.java :66。8 つの引数と `java:S107` の注記）、取込・情報源・外部原本を読む → 判断 → 採用値 → イベントの順、採用値と DE-12・DE-29・採用の組み立て役の Javadoc。行 2・4〜8・19・20 が緑、行 7 の統合のテスト（H2・PostgreSQL）が緑（完了の判定: 同上。**承認ゲート**）
