@@ -32,13 +32,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 /**
  * 確定した経路版の評価（US-07 AC4、R-INV-07。Bolt 37d2）。状態の組み合わせの表の行ごとに 1 本（T-163）。
  *
  * <p>確定するのは候補 2（V-FEED で SGSIN に 10-09T00:00Z に着き、V-CONN で 10-09T10:00Z に出て 10-30T00:00Z に着く。接続 10 時間、
- * 規則 8 時間、希望到着期限 11-02T00:00Z）。評価の時刻は確定の 2 時間後。区間の航海の情報版が変わったときだけ評価し、区間を今の航海で
+ * 規則 8 時間、希望到着期限 11-02T00:00Z）。評価の時刻は確定の 2 時間後。区間の情報版か区間の予定が今の航海と違うときだけ評価し、区間を今の航海で
  * 引き直して判定し直す（保存した判定は使わない）。
  */
 class RoutingCaseEvaluationTest {
@@ -273,6 +274,23 @@ class RoutingCaseEvaluationTest {
         assertThat(routingCase.routeVersions())
                 .extracting(RouteVersion::status)
                 .containsExactly(RouteVersionStatus.SUPERSEDED, RouteVersionStatus.DRAFT);
+    }
+
+    /** 確定した経路の評価も情報版と区間の予定の組で照合する（【業務の判断】(s)、【前の決定の変更】(1)。Bolt 39e2 の行 7）。 */
+    @Nested
+    class Bolt39e2_評価の照合 {
+
+        @Test
+        void 行7_同じ情報版で区間の到着が期限を過ぎると評価に入り再設計要になる() {
+            RoutingCase routingCase = confirmed(List.of(SINGAPORE_8H));
+
+            evaluate(
+                    routingCase,
+                    replaced(VOYAGES, connection("V-CONN@1", "2026-10-09T10:00:00Z", "2026-11-03T00:00:00Z")),
+                    List.of(SINGAPORE_8H));
+
+            assertReasons(routingCase, RedesignReasonCode.DEADLINE_EXCEEDED);
+        }
     }
 
     private void evaluate(RoutingCase routingCase, List<Voyage> voyages, List<ConnectionRule> rules) {

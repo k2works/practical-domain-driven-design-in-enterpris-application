@@ -38,6 +38,7 @@ import com.example.cargotracker.routing.domain.model.aggregates.ConnectionRuleRe
 import com.example.cargotracker.routing.domain.model.aggregates.RoutingCase;
 import com.example.cargotracker.routing.domain.model.aggregates.RoutingCaseNumberIssuer;
 import com.example.cargotracker.routing.domain.model.aggregates.RoutingCaseRepository;
+import com.example.cargotracker.routing.domain.model.aggregates.Voyage;
 import com.example.cargotracker.routing.domain.model.aggregates.VoyageRepository;
 import com.example.cargotracker.routing.domain.model.entities.RouteCandidate;
 import com.example.cargotracker.routing.domain.model.entities.RouteVersion;
@@ -59,8 +60,10 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -645,6 +648,113 @@ class DevSampleDataSmokeTest {
                     .containsExactlyElementsOf(quotation.assignedRoute().orElseThrow().legs().stream()
                             .map(leg -> org.assertj.core.groups.Tuple.tuple(leg.departureAt(), leg.arrivalAt()))
                             .toList());
+        }
+    }
+
+    /** 見本 0911・0912 の区間を見本専用の航海に分ける（W7 の確認ポイント 14。Bolt 39e2 の行 8・10）。 */
+    @Nested
+    class Bolt39e2_見本の航海 {
+
+        private static final String DEPARTED_VOYAGE = "DEMO-901";
+        private static final String DEPARTED_CASES =
+                "('00000000-0000-0000-0000-000000000950', '00000000-0000-0000-0000-000000000951')";
+        private static final String DEPARTED_QUOTATIONS =
+                "('00000000-0000-0000-0000-000000000948', '00000000-0000-0000-0000-000000000949')";
+
+        private int count(String sql) {
+            return jdbc.queryForObject(sql, Integer.class);
+        }
+
+        private Voyage departedVoyage() {
+            return voyages.findByVoyageNumbers(List.of(DEPARTED_VOYAGE)).getFirst();
+        }
+
+        @Test
+        void 行8_見本0911と0912の候補の区間と割り当てた区間の写しは見本専用の航海を指しその予定と一致する() {
+            assertThat(voyages.findByVoyageNumbers(List.of(DEPARTED_VOYAGE))).hasSize(1);
+            Voyage voyage = departedVoyage();
+            for (int sequence : List.of(908, 909)) {
+                assertThat(routingCases
+                                .findByNumber(new RoutingCaseNumber(2026, sequence))
+                                .orElseThrow()
+                                .confirmedCandidateOf(1)
+                                .orElseThrow()
+                                .legs())
+                        .singleElement()
+                        .satisfies(leg -> {
+                            assertThat(leg.voyageNumber()).isEqualTo(DEPARTED_VOYAGE);
+                            assertThat(voyage.matchesLeg(leg)).isTrue();
+                        });
+            }
+            for (int sequence : List.of(911, 912)) {
+                assertThat(departedSampleQuotation(sequence)
+                                .assignedRoute()
+                                .orElseThrow()
+                                .legs())
+                        .singleElement()
+                        .satisfies(leg -> {
+                            assertThat(leg.voyageNumber()).isEqualTo(DEPARTED_VOYAGE);
+                            assertThat(leg.departureAt())
+                                    .isEqualTo(voyage.portCalls().getFirst().departureAt());
+                            assertThat(leg.arrivalAt())
+                                    .isEqualTo(voyage.portCalls().getLast().arrivalAt());
+                        });
+            }
+        }
+
+        @Test
+        void 行8_ほかの見本は元の航海のままで見本0911と0912の区間と写しは元の航海を指さない() {
+            assertThat(count("SELECT COUNT(*) FROM routing.candidate_leg WHERE voyage_number = 'DEMO-101'"
+                            + " AND routing_case_id NOT IN " + DEPARTED_CASES))
+                    .isPositive();
+            assertThat(count("SELECT COUNT(*) FROM quotation.assigned_route_leg WHERE voyage_number = 'DEMO-101'"
+                            + " AND quotation_id NOT IN " + DEPARTED_QUOTATIONS))
+                    .isPositive();
+            assertThat(count("SELECT COUNT(*) FROM routing.candidate_leg WHERE voyage_number = 'DEMO-101'"
+                            + " AND routing_case_id IN " + DEPARTED_CASES))
+                    .isZero();
+            assertThat(count("SELECT COUNT(*) FROM quotation.assigned_route_leg WHERE voyage_number = 'DEMO-101'"
+                            + " AND quotation_id IN " + DEPARTED_QUOTATIONS))
+                    .isZero();
+            assertThat(count("SELECT COUNT(*) FROM routing.candidate_leg WHERE voyage_number = 'DEMO-901'"
+                            + " AND routing_case_id NOT IN " + DEPARTED_CASES))
+                    .isZero();
+            assertThat(count("SELECT COUNT(*) FROM quotation.assigned_route_leg WHERE voyage_number = 'DEMO-901'"
+                            + " AND quotation_id NOT IN " + DEPARTED_QUOTATIONS))
+                    .isZero();
+        }
+
+        @Test
+        void 行8_見本専用の航海の取得時刻と情報版は元の航海と同じで候補の算出に入らない() {
+            assertThat(voyages.findByVoyageNumbers(List.of(DEPARTED_VOYAGE))).hasSize(1);
+            Voyage voyage = departedVoyage();
+            Voyage original = voyages.findByVoyageNumbers(List.of("DEMO-101")).getFirst();
+            UtcInstant evaluatedAt = routingCases
+                    .findByNumber(new RoutingCaseNumber(2026, 902))
+                    .orElseThrow()
+                    .routeVersion()
+                    .evaluatedAt()
+                    .orElseThrow();
+
+            assertThat(voyage.acquiredAt()).isEqualTo(original.acquiredAt());
+            assertThat(voyage.adoptedInfoVersion()).isEqualTo(original.adoptedInfoVersion());
+            assertThat(voyages.findCandidateVoyages(evaluatedAt))
+                    .extracting(Voyage::voyageNumber)
+                    .doesNotContain(DEPARTED_VOYAGE);
+        }
+
+        @Test
+        void 行10_すべての見本の候補の区間の情報版と予定の組が今の航海の寄港にある() {
+            assertThat(count("SELECT COUNT(*) FROM routing.candidate_leg l WHERE l.voyage_number LIKE 'DEMO-%'"
+                            + " AND NOT EXISTS (SELECT 1 FROM routing.voyage v"
+                            + " JOIN routing.port_call loading ON loading.voyage_number = v.voyage_number"
+                            + " JOIN routing.port_call discharging ON discharging.voyage_number = v.voyage_number"
+                            + " AND discharging.call_no > loading.call_no"
+                            + " WHERE v.voyage_number = l.voyage_number AND v.adopted_info_version = l.info_version"
+                            + " AND loading.port_unlocode = l.load_unlocode AND loading.departure_at = l.departure_at"
+                            + " AND discharging.port_unlocode = l.discharge_unlocode"
+                            + " AND discharging.arrival_at = l.arrival_at)"))
+                    .isZero();
         }
     }
 

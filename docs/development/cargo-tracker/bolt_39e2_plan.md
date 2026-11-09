@@ -3,7 +3,7 @@ type: Plan
 title: "Bolt 39e2 計画 - 確定の照合を情報版と区間の予定の組にし、見本の航海を分ける"
 tags: [plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-09T15:16:57Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-09T16:14:44Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-11-09T15:16:57Z }
 ---
@@ -350,11 +350,11 @@ voyage ||..o{ assigned_route_leg : voyage_number（外部キーなし）
 ## ステップ計画（ゲートは下の各ステップに書く）
 
 - [x] **1. 設計の文書**（2026-11-10 に実施した）: 上の「設計文書に直す箇所」。【業務の判断】(s)・【前の決定の変更】(1)・(4) を反映する。始めに検索する（完了の判定: 文書の差分と検索の記録。ゲート: 既定（確認ポイント 2・4 で計画の承認に含む））
-- [ ] **2. 受入シナリオとテストの Red**: 外から入る。まず `adopted_voyage_reflected_ui.feature` に行 9 を書いて Red を記録する（同じ情報版の採用の後でも確定が成功する）。続いて行 1〜3・5〜8・10・11（行 3・6 は回帰の守りで最初から緑）。骨組みの `matchesLeg` を足してコンパイルを通す（T-254）。直す既存のテスト（決定 (4)）を一覧にする（T-217）（完了の判定: 期待した理由で落ちる記録。Red の行は `wip/` のブランチか stash に置き、develop に落ちるテストを積まない。ゲート: 既定）
-- [ ] **3. R-INV-03 の照合**: `Voyage.matchesLeg`、`RoutingCase` の切り替え（`anyLegChanged`）、`legsWithChangedInfo` と `infoVersionsOf` を消す、注と例外の文（決定 (2)〜(4)）。行 1〜7 が緑、`test` 全体を流して既存のテストの影響を確かめる、`spotbugsMain`・`checkstyleMain`・`sonar-local:check`（完了の判定: 緑と影響の一覧。ゲート: 既定（確認ポイント 2 で計画の承認に含む））
-- [ ] **4. 見本の航海を分ける**: dev のマイグレーション（決定 (5)）。行 8・10・13（見本）が緑、`spotbugsMain`・`checkstyleMain`（完了の判定: 緑。ゲート: 既定（確認ポイント 3・5 で計画の承認に含む））
-- [ ] **5. マニュアルと S-07 の注**: confirmation.html :61、08-経路設計.md :138・:119、`08-confirmation` のキャプチャの撮り直し（決定 (7)。`manualScreenshots` のあと `08-confirmation` 以外の差分は戻す）。文を controller の定数と【業務の判断】(s) の文に一字ずつ突き合わせる（T-197・T-251）。行 12 を確かめる（完了の判定: 突き合わせの記録。ゲート: 既定（確認ポイント 4 で計画の承認に含む））
-- [ ] **6. 受入シナリオの緑**: 行 9・11・13 が緑（S-07 の注はステップ 5 で直してある）（完了の判定: `uiTest` の該当の feature と axe 違反 0。ゲート: 既定）
+- [x] **2. 受入シナリオとテストの Red**（結果: 行 9 は同じ情報版の採用の後でも確定が成功し、比較の画面の警告（alert）が出ずに落ちた。行 11 は確定の画面に「情報版、区間の予定、取得から経った時間」がなく落ちた。行 1 は真の 4 件が骨組みの false で落ち（偽の 9 件は骨組みで緑）、行 2 と行 5 の前半は拒否されず、行 7 は評価に入らず、行 8 は `DEMO-901` がなく、行 10 は 2 件はみ出して落ちた。行 3・6 と行 5 の P2 の再算出は最初から緑。直す既存のテストは決定 (4) の `RoutingCaseConfirmationTest` の `legsWithChangedInfo` の 1 本だけ）: 外から入る。まず `adopted_voyage_reflected_ui.feature` に行 9 を書いて Red を記録する（同じ情報版の採用の後でも確定が成功する）。続いて行 1〜3・5〜8・10・11（行 3・6 は回帰の守りで最初から緑）。骨組みの `matchesLeg` を足してコンパイルを通す（T-254）。直す既存のテスト（決定 (4)）を一覧にする（T-217）（完了の判定: 期待した理由で落ちる記録。Red の行は `wip/` のブランチか stash に置き、develop に落ちるテストを積まない。ゲート: 既定）
+- [x] **3. R-INV-03 の照合**（結果: 行 1〜7 が緑。`test` 全体でほかに落ちたテストは 0 本で、決定 (4) の見込みのとおり。`spotbugsMain`・`checkstyleMain` は緑、`sonar-local:check` はステップ 6 の後にまとめて流した。決定 (4) に載っていない注 `ConfirmedRouteEvaluationOutcome.java` :29 も直した）: `Voyage.matchesLeg`、`RoutingCase` の切り替え（`anyLegChanged`）、`legsWithChangedInfo` と `infoVersionsOf` を消す、注と例外の文（決定 (2)〜(4)）。行 1〜7 が緑、`test` 全体を流して既存のテストの影響を確かめる、`spotbugsMain`・`checkstyleMain`・`sonar-local:check`（完了の判定: 緑と影響の一覧。ゲート: 既定（確認ポイント 2 で計画の承認に含む））
+- [x] **4. 見本の航海を分ける**（結果: `V20261109130900__split_dev_sample_departed_voyage.sql`。開始のときの全部の場所の最新は `V20261109110000`。行 8・10 と `DevSampleDataSmokeTest` の全件が緑、`RC-2026-0902` の再算出は 5 件のまま。`spotbugsMain`・`checkstyleMain` は緑）: dev のマイグレーション（決定 (5)）。行 8・10・13（見本）が緑、`spotbugsMain`・`checkstyleMain`（完了の判定: 緑。ゲート: 既定（確認ポイント 3・5 で計画の承認に含む））
+- [x] **5. マニュアルと S-07 の注**（結果: confirmation.html の注と 8 章 :119・:138 を直し、`08-confirmation` を撮り直した。`08-confirmation` 以外の PNG 51 枚の差分はファイルを指定して戻した。controller の拒否の文、注の文、(s) の用語、8 章の文を一字ずつ突き合わせ 12 項目すべて一致した）: confirmation.html :61、08-経路設計.md :138・:119、`08-confirmation` のキャプチャの撮り直し（決定 (7)。`manualScreenshots` のあと `08-confirmation` 以外の差分は戻す）。文を controller の定数と【業務の判断】(s) の文に一字ずつ突き合わせる（T-197・T-251）。行 12 を確かめる（完了の判定: 突き合わせの記録。ゲート: 既定（確認ポイント 4 で計画の承認に含む））
+- [x] **6. 受入シナリオの緑**（結果: `adopted_voyage_reflected_ui.feature` の 3 シナリオが緑で、行 9・11 は axe の違反 0。整形の後に `check`（test 4,927 件）と全体の `uiTest`（215 シナリオ、失敗 0）を流して緑、`sonar-local:check` は Quality Gate PASS）: 行 9・11・13 が緑（S-07 の注はステップ 5 で直してある）（完了の判定: `uiTest` の該当の feature と axe 違反 0。ゲート: 既定）
 - [ ] **7. 品質ゲートと開発レビュー**: 変異、`check`・`uiTest`、その後に SonarQube（落ちたら先に中身を一覧する。T-252）、開発レビューとその直し。計画の文書のステップに挙げた行（「設計文書に直す箇所」とステップ 5）は、実装のコミットの前に一覧で突き合わせ、直したかを行ごとに確かめる（T-197。bolt_37f2_report.md :85）（完了の判定: 緑と指摘の扱いと突き合わせの記録。ゲート: 既定）
 - [ ] **8. 終了報告**: push して CI とデモ環境の配備を確かめる（デモ環境で見本 0911・0912 の航海番号が `DEMO-901` で出発済みの見え方が変わらないことを見る）。release_plan（39e2 の行の計画と終了報告のリンク）・開発の索引・mkdocs を直す。【業務の判断】(s) と【前の決定の変更】(1)（確定した経路の評価も同じ照合に入ることを含む）を議題の先頭に置き、続けて【前の決定の変更】(4)、既知の課題に申し送りの表を書く（完了の判定: 報告の承認。**承認ゲート**（終了報告））
 

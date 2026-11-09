@@ -26,7 +26,6 @@ import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -225,7 +224,7 @@ public final class RoutingCase {
      * 経路を確定する（候補提示済み → 確定。US-07 AC1〜AC3）。承認者が経路設計者で、選んだ候補が適合で、判断根拠があることを
      * 確かめ、確定のときに読み直した航海・接続時間規則と希望到着期限で判定し直す（R-INV-03）。規則は確定の時刻ではなく、
      * 接続の時刻（次の区間の出発予定）に有効なものを使う（D-90、Bolt 37。算出の後に登録・変更された規則を拾う）。
-     * 確かめる順は、状態・候補・除外 → 情報版の更新（区間の採用情報版と読み直した航海の採用情報版が違う。航海がないときも）→
+     * 確かめる順は、状態・候補・除外 → 航海の情報の更新（区間の情報版と区間の予定の組が読み直した航海にない。航海がないときも。【業務の判断】(s)）→
      * 判断根拠 → 出発済み（最初の区間が確定の時刻と同時刻または前に出発する）→ 情報不足（読み直した航海の取得時刻で、確定の時刻に
      * 許容時間を過ぎている）→ 規則の判定し直し（Bolt 37c）。候補の比較に戻す理由を判断根拠より前に確かめる。
      *
@@ -260,8 +259,8 @@ public final class RoutingCase {
         // 読み直した候補の区間の航海（航海番号はデータベースの主キーで重ならない）
         Map<String, Voyage> current =
                 voyages.stream().collect(Collectors.toMap(Voyage::voyageNumber, voyage -> voyage));
-        if (!candidate.legsWithChangedInfo(infoVersionsOf(current)).isEmpty()) {
-            throw reject(RouteConfirmationRejectionReason.INFO_VERSION_CHANGED, "候補を算出した後に区間の航海の情報版が更新されました");
+        if (anyLegChanged(candidate, current)) {
+            throw reject(RouteConfirmationRejectionReason.INFO_VERSION_CHANGED, "候補を算出した後に区間の航海の情報が更新されました");
         }
         DecisionRationale.rejectionOf(rationale).ifPresent(reason -> {
             throw reject(
@@ -274,7 +273,7 @@ public final class RoutingCase {
         if (!candidate.legs().getFirst().departureAt().instant().isAfter(commitAt.instant())) {
             throw reject(RouteConfirmationRejectionReason.ALREADY_DEPARTED, "最初の区間が出発済みです");
         }
-        // 航海がない区間は情報版の更新で先に拒否しているが、判定の順に頼らないよう、ないときも情報不足として扱う
+        // 航海がない区間は航海の情報の更新で先に拒否しているが、判定の順に頼らないよう、ないときも情報不足として扱う
         if (candidate.legs().stream()
                 .anyMatch(leg -> Optional.ofNullable(current.get(leg.voyageNumber()))
                         .map(voyage -> freshness.insufficient(voyage.acquiredAt(), commitAt))
@@ -305,8 +304,8 @@ public final class RoutingCase {
 
     /**
      * 確定した経路版を外部情報の更新で評価する（確定 → 再設計要。US-07 AC4、R-INV-07。Bolt 37d2）。外部情報の更新を受けたシステムの操作で、
-     * 利用者の操作ではない。最新の経路版が確定のときだけ評価し、確定の記録の候補に情報版の違う区間がなければ評価しない（接続時間規則だけの
-     * 変更はきっかけにしない）。保存した判定は使わず、区間ごとに今の航海で引き直し（候補探索）、引き直した区間の列を制約適合判定に
+     * 利用者の操作ではない。最新の経路版が確定のときだけ評価し、確定の記録の候補のすべての区間の情報版と区間の予定の組が今の航海にあれば
+     * 評価しない（接続時間規則だけの変更はきっかけにしない。【業務の判断】(s)）。保存した判定は使わず、区間ごとに今の航海で引き直し（候補探索）、引き直した区間の列を制約適合判定に
      * かけ直す。引き直せない区間があれば「航海を引き直せない」、不適合なら制約適合判定の理由の区分を写して（同じ区分は 1 つに
      * まとめ、最初に出た順）再設計要にする。候補・区間・確定の記録は変えない（旧情報版の保持）。すでに再設計要なら何もしない
      * （原因が解消しても戻さない。UC-08 1a）。
@@ -327,7 +326,7 @@ public final class RoutingCase {
                 confirmedCandidateOf(routeVersion.routeVersionNo()).orElseThrow();
         Map<String, Voyage> current =
                 voyages.stream().collect(Collectors.toMap(Voyage::voyageNumber, voyage -> voyage));
-        if (candidate.legsWithChangedInfo(infoVersionsOf(current)).isEmpty()) {
+        if (!anyLegChanged(candidate, current)) {
             return Optional.empty();
         }
         List<RedesignReasonCode> reasons = redesignReasons(candidate.legs(), voyages, rules, finder, evaluator);
@@ -375,11 +374,12 @@ public final class RoutingCase {
                 .toList();
     }
 
-    /** 航海番号ごとの今の採用情報版（確定と評価で区間の情報版と比べる）。 */
-    private static Map<String, String> infoVersionsOf(Map<String, Voyage> current) {
-        Map<String, String> infoVersions = new HashMap<>();
-        current.forEach((voyageNumber, voyage) -> infoVersions.put(voyageNumber, voyage.adoptedInfoVersion()));
-        return infoVersions;
+    /** 候補の区間のどれかが今の航海と一致しないか（確定と評価の照合。R-INV-03。航海がない区間は変わったとみなす）。 */
+    private static boolean anyLegChanged(RouteCandidate candidate, Map<String, Voyage> current) {
+        return candidate.legs().stream()
+                .anyMatch(leg -> Optional.ofNullable(current.get(leg.voyageNumber()))
+                        .map(voyage -> !voyage.matchesLeg(leg))
+                        .orElse(true));
     }
 
     private static RouteConfirmationRejected reject(RouteConfirmationRejectionReason reason, String message) {

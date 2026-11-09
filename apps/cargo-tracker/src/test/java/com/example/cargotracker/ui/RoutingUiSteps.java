@@ -34,6 +34,7 @@ public class RoutingUiSteps {
     private final UiScenarioState state;
     private final JdbcTemplate jdbc;
     private final String baseUrl;
+    private String confirmationUrl;
 
     public RoutingUiSteps(
             BrowserSession browser,
@@ -219,14 +220,33 @@ public class RoutingUiSteps {
 
     @もし("直行の航海の候補の確定へ進む")
     public void 直行の候補の確定へ進む() {
-        candidate(voyage("DIRECT"))
+        openConfirmationOf(voyage("DIRECT"));
+    }
+
+    /** 1 つのページを役割で切り替えるので、開いた確定の画面は開き直せるように URL を覚える（Bolt 39e2 の決定 (6)）。 */
+    @かつ("取り込んだ航海の候補の確定へ進む")
+    public void 取り込んだ航海の候補の確定へ進む() {
+        openConfirmationOf(adoptedVoyage());
+        assertThat(page().locator("main")).containsText("最新の航海の情報（情報版、区間の予定、取得から経った時間）");
+        confirmationUrl = page().url();
+    }
+
+    @もし("経路設計者が確定の画面を開き直す")
+    public void 経路設計者が確定の画面を開き直す() {
+        browser.navigate(confirmationUrl);
+        assertThat(page().locator("main")).containsText("この経路で確定しますか");
+        browser.checkAccessibility();
+    }
+
+    private void openConfirmationOf(String voyageNumber) {
+        candidate(voyageNumber)
                 .getByRole(AriaRole.LINK, new Locator.GetByRoleOptions().setName("この候補で確定へ"))
                 .click();
         page().waitForURL("**/confirmation?candidate=*");
         assertThat(page().getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setLevel(1)))
                 .containsText("経路の確定");
         assertThat(page().locator("main")).containsText("この経路で確定しますか");
-        assertThat(page().locator("main")).containsText(voyage("DIRECT"));
+        assertThat(page().locator("main")).containsText(voyageNumber);
         browser.checkAccessibility();
     }
 
@@ -273,6 +293,15 @@ public class RoutingUiSteps {
 
     @ならば("比較の画面に戻って航海の情報が更新されたため再算出して判断し直すよう示され、経路はまだ確定していない")
     public void 情報版の更新で比較の画面に戻る() {
+        assertReturnedToComparisonFor(voyage("DIRECT"));
+    }
+
+    @ならば("比較の画面に戻って航海の情報が更新されたため再算出して判断し直すよう示され、取り込んだ航海の候補の経路はまだ確定していない")
+    public void 取り込んだ航海の候補の確定が拒否され比較の画面に戻る() {
+        assertReturnedToComparisonFor(adoptedVoyage());
+    }
+
+    private void assertReturnedToComparisonFor(String voyageNumber) {
         assertThat(page().getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setLevel(1)))
                 .containsText("経路候補の比較");
         Locator problem = page().getByRole(AriaRole.ALERT).first();
@@ -280,7 +309,7 @@ public class RoutingUiSteps {
         problem.scrollIntoViewIfNeeded();
         assertThat(problem).containsText("候補を算出した後に航海の情報が更新されたため確定できません");
         assertThat(problem).containsText("候補を再算出して判断し直してください");
-        assertThat(candidate(voyage("DIRECT"))).not().containsText("確定した経路");
+        assertThat(candidate(voyageNumber)).not().containsText("確定した経路");
         browser.checkAccessibility();
     }
 

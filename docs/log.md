@@ -1,6 +1,8 @@
 # Docs Update Log
 
 ## 2026-11-09
+* **Update**: [08-経路設計](/manual/08-経路設計.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39e2_plan](/development/cargo-tracker/bolt_39e2_plan.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [system_usecase](/requirements/cargo-tracker/system_usecase.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [heroku_demo_setup](/operation/cargo-tracker/heroku_demo_setup.md) を更新（anthropic/claude-opus-5-5）

@@ -1,5 +1,6 @@
 package com.example.cargotracker.routing.domain.model.aggregates;
 
+import com.example.cargotracker.routing.domain.model.valueobjects.Leg;
 import com.example.cargotracker.routing.domain.model.valueobjects.PortCall;
 import com.example.cargotracker.routing.domain.model.valueobjects.VoyageAdoption;
 import com.example.cargotracker.shared.annotation.ddd.AggregateRoot;
@@ -124,6 +125,35 @@ public final class Voyage {
             throw new IllegalArgumentException("航海には 2 つ以上の寄港が要ります: " + voyageNumber);
         }
         return copied;
+    }
+
+    /**
+     * 区間が今の航海と一致するか（R-INV-03、【業務の判断】(s)。Bolt 39e2）。航海番号と情報版が同じで、積地の寄港の出発予定が区間の出発予定と同じで、その後ろに
+     * 揚地の寄港があり到着予定が区間の到着予定と同じ組が 1 つ以上あるときだけ真になる。同じ情報版で値の違う DE-12 が適用されるので（【業務の判断】(r)）、情報版だけでは
+     * 区間の予定の変更を見落とす。2 度寄る航海は組が残っていれば一致する（Bolt 39e2 の決定 (3)）。出発のない寄港は積地に、到着のない寄港は揚地にならない。
+     *
+     * @return 区間の情報版と予定の組が今の航海にあれば真
+     */
+    public boolean matchesLeg(Leg leg) {
+        if (!voyageNumber.equals(leg.voyageNumber()) || !adoptedInfoVersion.equals(leg.infoVersion())) {
+            return false;
+        }
+        for (int load = 0; load < portCalls.size(); load++) {
+            if (isLoadingOf(portCalls.get(load), leg) && hasDischargeOfAfter(leg, load)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean isLoadingOf(PortCall call, Leg leg) {
+        return call.port().equals(leg.load()) && leg.departureAt().equals(call.departureAt());
+    }
+
+    private boolean hasDischargeOfAfter(Leg leg, int load) {
+        return portCalls.subList(load + 1, portCalls.size()).stream()
+                .anyMatch(call ->
+                        call.port().equals(leg.discharge()) && leg.arrivalAt().equals(call.arrivalAt()));
     }
 
     public String voyageNumber() {

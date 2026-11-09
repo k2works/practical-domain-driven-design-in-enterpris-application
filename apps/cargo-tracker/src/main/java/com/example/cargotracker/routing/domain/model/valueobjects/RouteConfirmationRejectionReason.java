@@ -12,7 +12,7 @@ public enum RouteConfirmationRejectionReason {
     CANDIDATE_NOT_FOUND,
     /** 除外の候補。 */
     CANDIDATE_EXCLUDED,
-    /** 候補を算出した後に、区間の航海の情報版が更新された（航海がなくなったときも。US-07 AC3、R-INV-03。Bolt 37c）。 */
+    /** 候補を算出した後に、区間の航海の情報が更新された（情報版が変わった、同じ情報版で区間の予定が変わった、航海がなくなった。US-07 AC3、R-INV-03。Bolt 37c・39e2）。 */
     INFO_VERSION_CHANGED,
     /** 判断根拠がない（空・空白だけ）。 */
     RATIONALE_MISSING,

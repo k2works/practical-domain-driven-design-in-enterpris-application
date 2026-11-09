@@ -26,7 +26,7 @@ public sealed interface ConfirmedRouteEvaluationOutcome {
         }
     }
 
-    /** 再設計要にしなかった（最新の経路版が確定でない、区間の情報版が変わらない、今の予定でも適合する。保存しない）。 */
+    /** 再設計要にしなかった（最新の経路版が確定でない、区間の情報版と区間の予定の組が今の航海にある、今の予定でも適合する。保存しない）。 */
     record Unchanged() implements ConfirmedRouteEvaluationOutcome {}
 
     /** 案件番号の案件がない。 */

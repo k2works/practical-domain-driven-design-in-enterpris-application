@@ -17,7 +17,7 @@ import com.example.cargotracker.routing.domain.model.rules.ConstraintEvaluator;
 import com.example.cargotracker.routing.domain.model.rules.InfoFreshnessPolicy;
 import com.example.cargotracker.routing.domain.model.rules.RouteCandidateFinder;
 import com.example.cargotracker.routing.domain.model.valueobjects.DecisionRationale;
-import com.example.cargotracker.routing.domain.model.valueobjects.Leg;
+import com.example.cargotracker.routing.domain.model.valueobjects.PortCall;
 import com.example.cargotracker.routing.domain.model.valueobjects.RedesignReasonCode;
 import com.example.cargotracker.routing.domain.model.valueobjects.RedesignRecord;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteApprover;
@@ -32,10 +32,14 @@ import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Stream;
 import org.assertj.core.api.ThrowableAssert.ThrowingCallable;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 /**
@@ -46,7 +50,7 @@ import org.junit.jupiter.params.provider.ValueSource;
  *
  * <p>確定では規則を読み直して同じ判定にかける。規則は接続の時刻（次の区間の出発予定）に有効なものを使う（D-90、Bolt 37）。
  *
- * <p>確定では航海も読み直し、区間の情報版と比べ、確定の時刻で情報不足を判定する（US-07 AC3。Bolt 37c）。航海の取得時刻は
+ * <p>確定では航海も読み直し、区間の情報版と区間の予定の組が今の航海にあるかを比べ（Bolt 39e2）、確定の時刻で情報不足を判定する（US-07 AC3。Bolt 37c）。航海の取得時刻は
  * 2026-10-07T01:00Z（判定時刻の 2 時間前）。
  */
 class RoutingCaseConfirmationTest {
@@ -601,20 +605,6 @@ class RoutingCaseConfirmationTest {
     }
 
     @Test
-    void 候補は情報版の違う区間を区間の順に返す() {
-        RouteCandidate candidate = presented().routeVersion().candidates().get(1);
-
-        assertThat(candidate.legsWithChangedInfo(java.util.Map.of("V-FEED", "V-FEED@2", "V-CONN", "V-CONN@1")))
-                .extracting(Leg::voyageNumber)
-                .containsExactly("V-FEED");
-        assertThat(candidate.legsWithChangedInfo(java.util.Map.of("V-CONN", "V-CONN@3")))
-                .extracting(Leg::voyageNumber)
-                .containsExactly("V-FEED", "V-CONN");
-        assertThat(candidate.legsWithChangedInfo(java.util.Map.of("V-FEED", "V-FEED@1", "V-CONN", "V-CONN@1")))
-                .isEmpty();
-    }
-
-    @Test
     void 情報版の更新は判断根拠の不足より先に確かめる() {
         RoutingCase routingCase = presented();
         List<Voyage> reloaded = withVoyage("V-CONN", "V-CONN@2", COMMIT_AT);
@@ -797,6 +787,128 @@ class RoutingCaseConfirmationTest {
         assertThat(confirmed.confirmable()).isFalse();
     }
 
+    /** R-INV-03 の照合を情報版と区間の予定の組にする（【業務の判断】(s)。Bolt 39e2 の行 2・3・5・6）。候補 2 の V-CONN は同じ情報版のまま変える。 */
+    @Nested
+    class Bolt39e2_確定の照合 {
+
+        private static final String CONN_DEPARTURE =
+                CONNECTION_DEPARTURE.instant().toString();
+        private static final String CONN_ARRIVAL = "2026-10-30T00:00:00Z";
+        private static final List<ConnectionRule> RULES = List.of(SINGAPORE_8H);
+
+        private static List<Voyage> connectionScheduledAs(String departure, String arrival) {
+            return withPortCalls(
+                    "V-CONN", fromSingapore("V-CONN", departure, arrival).portCalls());
+        }
+
+        @ParameterizedTest(name = "{0}")
+        @CsvSource({
+            "区間の出発が違う, 2026-10-09T11:00:00Z, 2026-10-30T00:00:00Z",
+            "区間の到着が違う, 2026-10-09T10:00:00Z, 2026-10-30T01:00:00Z"
+        })
+        void 行2_同じ情報版で区間の予定が違えば情報版の更新で確定せず候補は変えない(String description, String departure, String arrival) {
+            RoutingCase routingCase = presented();
+            List<Voyage> reloaded = connectionScheduledAs(departure, arrival);
+
+            assertRejected(
+                    () -> routingCase.confirm(
+                            2, "根拠", ROUTE_DESIGNER, reloaded, RULES, COMMIT_AT, evaluator, FRESHNESS),
+                    RouteConfirmationRejectionReason.INFO_VERSION_CHANGED);
+            assertThat(routingCase.routeVersion()).isEqualTo(presented().routeVersion());
+        }
+
+        static Stream<Arguments> unchangedSchedules() {
+            return Stream.of(
+                    Arguments.of(
+                            "区間の外の寄港だけ変わる",
+                            withPortCalls(
+                                    "V-FEED",
+                                    List.of(
+                                            new PortCall(TOKYO, null, at("2026-10-08T00:00:00Z")),
+                                            new PortCall(
+                                                    SINGAPORE, at("2026-10-09T00:00:00Z"), at("2026-10-09T02:00:00Z")),
+                                            new PortCall(new Location("HKHKG"), at("2026-10-11T00:00:00Z"), null)))),
+                    Arguments.of("取得時刻だけ変わる", withVoyage("V-CONN", "V-CONN@1", at("2026-10-07T03:30:00Z"))));
+        }
+
+        @ParameterizedTest(name = "{0}")
+        @MethodSource("unchangedSchedules")
+        void 行3_同じ情報版で区間の予定が同じなら確定する(String description, List<Voyage> reloaded) {
+            RoutingCase routingCase = presented();
+
+            routingCase.confirm(2, "根拠", ROUTE_DESIGNER, reloaded, RULES, COMMIT_AT, evaluator, FRESHNESS);
+
+            assertThat(routingCase.routeVersion().status()).isEqualTo(RouteVersionStatus.CONFIRMED);
+        }
+
+        @Test
+        void 行5_P1で算出してP2を採用している間は拒否し元のP1に採用し直すと確定できる() {
+            RoutingCase routingCase = presented();
+            List<Voyage> p2 = connectionScheduledAs(CONN_DEPARTURE, "2026-10-30T01:00:00Z");
+            List<Voyage> backToP1 = connectionScheduledAs(CONN_DEPARTURE, CONN_ARRIVAL);
+
+            assertRejected(
+                    () -> routingCase.confirm(2, "根拠", ROUTE_DESIGNER, p2, RULES, COMMIT_AT, evaluator, FRESHNESS),
+                    RouteConfirmationRejectionReason.INFO_VERSION_CHANGED);
+            routingCase.confirm(2, "根拠", ROUTE_DESIGNER, backToP1, RULES, COMMIT_AT, evaluator, FRESHNESS);
+
+            assertThat(routingCase.routeVersion().status()).isEqualTo(RouteVersionStatus.CONFIRMED);
+        }
+
+        @Test
+        void 行5_P2で再算出した候補はP2のまま確定できる() {
+            RoutingCase routingCase = presented();
+            List<Voyage> p2 = connectionScheduledAs(CONN_DEPARTURE, "2026-10-30T01:00:00Z");
+            routingCase.calculateCandidates(p2, RULES, JUDGED_AT, finder, evaluator, FRESHNESS);
+
+            routingCase.confirm(2, "根拠", ROUTE_DESIGNER, p2, RULES, COMMIT_AT, evaluator, FRESHNESS);
+
+            assertThat(routingCase
+                            .confirmedCandidateOf(1)
+                            .orElseThrow()
+                            .legs()
+                            .getLast()
+                            .arrivalAt())
+                    .isEqualTo(at("2026-10-30T01:00:00Z"));
+        }
+
+        private static Voyage tokyoTwice(String secondDeparture) {
+            return new Voyage(
+                    "V-TWICE",
+                    List.of(
+                            new PortCall(TOKYO, null, at("2026-10-08T00:00:00Z")),
+                            new PortCall(SINGAPORE, at("2026-10-10T00:00:00Z"), at("2026-10-11T00:00:00Z")),
+                            new PortCall(TOKYO, at("2026-10-13T00:00:00Z"), at(secondDeparture)),
+                            new PortCall(ROTTERDAM, at("2026-10-30T00:00:00Z"), null)),
+                    "V-TWICE@1",
+                    ACQUIRED_AT);
+        }
+
+        @ParameterizedTest(name = "候補 {0}")
+        @ValueSource(ints = {1, 2})
+        void 行6_積地に2度寄る航海でも区間の組があれば確定する(int candidateNo) {
+            RoutingCase routingCase = RoutingCaseTest.open();
+            List<Voyage> voyages = List.of(tokyoTwice("2026-10-14T00:00:00Z"));
+            routingCase.calculateCandidates(voyages, RULES, JUDGED_AT, finder, evaluator, FRESHNESS);
+
+            routingCase.confirm(candidateNo, "根拠", ROUTE_DESIGNER, voyages, RULES, COMMIT_AT, evaluator, FRESHNESS);
+
+            assertThat(routingCase.routeVersion().status()).isEqualTo(RouteVersionStatus.CONFIRMED);
+        }
+
+        @Test
+        void 行6_2度目の寄港の出発だけが変わっても1度目の組が残っていれば確定する() {
+            RoutingCase routingCase = RoutingCaseTest.open();
+            routingCase.calculateCandidates(
+                    List.of(tokyoTwice("2026-10-14T00:00:00Z")), RULES, JUDGED_AT, finder, evaluator, FRESHNESS);
+            List<Voyage> reloaded = List.of(tokyoTwice("2026-10-15T00:00:00Z"));
+
+            routingCase.confirm(1, "根拠", ROUTE_DESIGNER, reloaded, RULES, COMMIT_AT, evaluator, FRESHNESS);
+
+            assertThat(routingCase.routeVersion().status()).isEqualTo(RouteVersionStatus.CONFIRMED);
+        }
+    }
+
     /** 候補 3 件（適合 2、除外 1）を算出した案件。 */
     private RoutingCase presented() {
         RoutingCase routingCase = RoutingCaseTest.open();
@@ -809,6 +921,15 @@ class RoutingCaseConfirmationTest {
         return VOYAGES.stream()
                 .map(voyage -> voyage.voyageNumber().equals(voyageNumber)
                         ? new Voyage(voyageNumber, voyage.portCalls(), infoVersion, acquiredAt)
+                        : voyage)
+                .toList();
+    }
+
+    /** 確定で読み直した航海の一覧（1 本だけ、情報版と取得時刻を変えずに寄港を変える）。 */
+    private static List<Voyage> withPortCalls(String voyageNumber, List<PortCall> portCalls) {
+        return VOYAGES.stream()
+                .map(voyage -> voyage.voyageNumber().equals(voyageNumber)
+                        ? new Voyage(voyageNumber, portCalls, voyage.adoptedInfoVersion(), voyage.acquiredAt())
                         : voyage)
                 .toList();
     }
