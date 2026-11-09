@@ -16229,7 +16229,7 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 <tr>
 <td style="text-align: left;">T-INV-01〜05（追記、重複、確認中、取消済み、完了後）</td>
 <td style="text-align: left;">○（Bolt 26b: 同じ出典の既存の実績を返す、未来の発生時刻の拒否（T-INV-13）、実績番号の連番）</td>
-<td style="text-align: left;">○（Bolt 26b: <code>@US-12-AC1</code>・<code>@US-12-AC2 @T-INV-02</code>。Bolt 26c: 画面の層の <code>@ui @US-12-AC1</code>・<code>@US-12-AC2</code>。確認中・取消済み・完了後は W7）</td>
+<td style="text-align: left;">○（Bolt 26b: <code>@US-12-AC1</code>・<code>@US-12-AC2 @T-INV-02</code>。Bolt 26c: 画面の層の <code>@ui @US-12-AC1</code>・<code>@US-12-AC2</code>。Bolt 39g: 取り込みの分の取消済み・完了後は <code>@US-12-AC4</code>・<code>@US-12-AC5</code>。確認中と手入力の分は Bolt 39gc）</td>
 <td style="text-align: left;">一意制約、DELETE の権限なし（Bolt 26b: <code>uk_milestone_source</code> の違反と版の不一致はセーブポイントに戻して競合、<code>[no-delete]</code>）</td>
 <td style="text-align: left;">—</td>
 </tr>
@@ -16630,6 +16630,10 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 <tr>
 <td style="text-align: left;">古くなった候補</td>
 <td style="text-align: left;">Bolt 39f2（UC-06 4a、US-07 AC3。<a href="../../../development/cargo-tracker/bolt_39f2_plan/">Bolt 39f2 計画</a> の状態の組み合わせの表の行ごと）。判定は <code>RoutingCaseStaleLegsTest</code>（理由の 4 区分と 1 区間に 1 件の順、3 区間の 2 区間目だけが古い組の入力と期待の組、同じ情報版で元の値に戻ると空、新しい外部版で元の予定に戻ると <code>INFO_VERSION_CHANGED</code>、許容時間の直前・同時刻・直後、今の航海の取得時刻で判定すること、確定の拒否との同値（行 8b）、除外の候補の不一致と鮮度、2 度寄る航海の <code>matchesLeg</code>、経路版の状態の全値、算出の直後は空。T-244）。照会は <code>RoutingCaseQueryServiceTest</code>（「読まないこと」は呼び出しの記録。候補 0 件、確定できない状態、20 候補 × 3 区間で <code>findByVoyageNumbers</code> を 1 回だけ重複のない番号で呼ぶ。T-236・T-106）。上限の読みは <code>VoyageRepositoryContract</code>（H2・PostgreSQL・メモリ。60 航海 × 寄港 60。読みの時間はログの「PERF-01 S-06」の行に出す。時間では落とさない）。画面は <code>RoutingCaseControllerTest</code>（印と判定の印の class、一部・すべて・除外が混ざるときの上の文と n の数え方、案内の順、鮮度の文の分岐、区間の文の 4 区分、確定済みと再設計要に出ないこと、範囲の外で判定を呼ばないこと、読み上げの文の全文）。画面の層は <code>adopted_voyage_reflected_ui.feature</code>（<code>@US-06-AC1 @US-14-AC1 @R-INV-03 @demo @demo-bolt-39f2/stale-candidate</code>。データ責任者が同じ情報版で到着の違う隔離を採用すると開き直した S-06 に古くなった候補が出て、再算出すると消えて「この候補で確定へ」が出る。同じ情報版のまま確定を拒否されて戻ると、変わった区間の下に文が出る。axe、幅 320 px）。元の値に戻る組は単体で確かめ、画面の層では取り込み直しを作らない。S-07 を古い候補の URL で開く組は既存のシナリオ</td>
+</tr>
+<tr>
+<td style="text-align: left;">追跡の DE-13 の受け手</td>
+<td style="text-align: left;">Bolt 39g（US-12 AC1・AC2・AC4・AC5 の取り込みの分、US-14 AC1。<a href="../../../development/cargo-tracker/bolt_39g_plan/">Bolt 39g 計画</a>）。受け取りは <code>TrackingRecordExternalMilestoneTest</code>（下書き・3 列・同じ出典・完了後・未来の発生時刻。T-INV-08）、<code>MilestoneTest</code>（外部の識別の不変条件。パラメーター）、判定の順は <code>ExternalMilestoneEventHandlerTest</code>（取消済み・知らない追跡番号は拒否の記録と WARN、内容の欠けた DE-13 は ERROR で捨てる、DB の失敗は例外で再配信に任せる、ロックして読むことは呼び出しの記録。T-236）。保存は <code>MyBatisTrackingRecordRepositoryIntegrationTest</code>、行のロックは <code>MyBatisTrackingRecordLockIntegrationTest</code>、CHECK と追記専用は <code>SchemaCommentIntegrationTest</code>・<code>AppendOnlyGrantIntegrationTest</code>。配信は <code>ExternalMilestoneDeliveryIntegrationTest</code>（PostgreSQL。T-184。受け手で絞って発行記録の完了まで待つ。再配信 3 組（下書きの後に取消済み・完了、拒否の記録の後に追跡記録ができる）、同時は H2 と PostgreSQL、1 つのファイルの 200 行が同じ追跡番号に集中する組）。受入シナリオは <code>register_milestone.feature</code>（<code>@US-12-AC4</code>・<code>@US-12-AC5</code>）と <code>adopted_milestone_reflected_ui.feature</code>（<code>@US-14-AC1 @T-INV-08</code>）。候補の判定は 39gb、確認中は 39gc</td>
 </tr>
 </tbody>
 </table>
@@ -17448,6 +17452,18 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 <td style="text-align: left;">AC5（旧版・再設計要の経路版は再確定・新規予約への割当てに使えず、新しい経路版の作成が求められる）</td>
 <td style="text-align: left;">37d2（再設計要の経路版の再確定の拒否）、37e（見積りの印と荷主の承認・本予約の判定）、37e2（DE-06 の listener と DE-05・DE-06 の届く順）、37e3（再設計要の理由と文言、予約の追従）、37e3b（開発データの見本・マニュアル・デモ）、37e4（出発済みの判定（D-88）・理由・文言・マニュアル）、37e4b（出発済みの開発データの見本・デモ）、37e4c（37e2 の既知の課題 3 つ、#16 のクローズ）</td>
 <td style="text-align: left;"><code>@US-07-AC5</code>（<code>evaluate_confirmed_route.feature</code>。再設計要の経路版は確定し直せず、もう一度評価しても DE-06 は出ない）。37e: <code>@US-07-AC5</code>（<code>route_redesign_required.feature</code>。荷主の承認と本予約の照会が再設計要で拒否される、もう一度伝わっても印の時刻は最初のまま、再見積りした新しい見積りの承認も拒否される）、見積りの集約の状態の組み合わせの表の行ごとのテスト、入力ポート（届く順）と公開 API のアダプターのテスト、保存の統合テスト。37e2: <code>@US-07-AC5</code>（<code>route_redesign_required.feature</code>。確定した経路を評価して再設計要にすると DE-06 の配信で見積りに印が付き荷主は承認できない（順 A: 確定 → 配る → 評価 → 配る）、DE-06 がもう一度届いても印の時刻は最初のまま）、DE-06 と DE-05 の listener の単体テスト（状態の組み合わせの表の行ごと。DE-06 が先に届く順 B は DE-05 の listener のテストで）、PostgreSQL の並行の統合テスト（<code>OverlappingTransactions</code>。DE-05 の listener が案件の行を押さえている間に評価の保存が待つ、本予約の確定用の照会と印を付ける更新が互いを待つ）、予約の腐敗防止層と本予約の確定・S-09 の GET の単体テスト（確定は確定用の照会、GET は今の照会）、dev（H2）の起動と本予約の確定、変異 7 つ。37e3: 画面の層のシナリオ（<code>route_redesign_required_ui.feature</code>、<code>@US-07 @ui</code>。C-04・C-17・S-02・S-09・S-07。axe）と、状態の組み合わせの表の行 1〜13 のそれぞれを名乗るテスト（C-04・C-17 は <code>QuotationViews</code>・<code>TransportRequestLabels</code>・<code>QuotationApprovalController</code> のテスト（行 1〜4）、S-02 は照会の PostgreSQL の統合テストと <code>TransportRequestReviewControllerTest</code>（行 5〜8）、S-09 と予約の腐敗防止層は <code>BookingControllerTest</code> と腐敗防止層の単体テスト（行 9・13）、S-04 は集約のテストと <code>StaffQuotationControllerTest</code>（行 10・11）、S-07 は集約のテスト（GET と POST で同じ理由）と <code>RoutingCaseControllerTest</code>（行 12。すべての理由に文言がある既存のテスト））、変わる既存の期待値（Bolt 37e の行 14b・14c と受入シナリオ、<code>NOT_CONFIRMABLE_STATE</code> の 3 つ）の直し、予約から見積りの <code>domain</code>・<code>application</code> への依存を拒む ArchUnit の規則（#50）、変異 8 つ。37e3b: 開発データの見本 2 件（TR-2026-0909 は荷主承認待ち、TR-2026-0910 は承認済み。どちらも割り当てた経路が再設計要）の <code>DevSampleDataSmokeTest</code>（状態、時刻の順と出発が起動より後、荷主の承認・本予約の照会・再見積り・経路の確定の拒否の理由、予約の確定待ちの行の印、案件の再設計要の記録と見積りの印の時刻の一致、KPI 計測）、dev（H2）で 3 つの役割で画面を開く確かめ、マニュアルのキャプチャ、変異 5 つ。37e4: 画面の層のシナリオ（<code>features/ui/route_already_departed_ui.feature</code>、<code>@US-07 @ui</code>。C-04・C-17・S-02・S-09。axe）と、状態の組み合わせの表の行 1〜16 のそれぞれを名乗るテスト（見積りの集約の荷主の承認・本予約の照会・理由の順・再見積り（行 1〜7。境界の同時刻を含む）、C-04・C-17 は <code>TransportRequestLabels</code>・<code>TransportRequestControllerTest</code>・<code>QuotationApprovalControllerTest</code>（行 8〜11。古い文言が出ないこと。T-185）、S-02 は照会の PostgreSQL の統合テストと <code>TransportRequestReviewControllerTest</code>（行 12・13）、S-04 は <code>StaffQuotationControllerTest</code>（行 14）、S-09 と予約の腐敗防止層は <code>BookingControllerTest</code> と腐敗防止層の単体テスト（行 15・16））、変異 11 個。37e4b: 出発済みの開発データの見本 2 件（TR-2026-0911 は荷主承認待ち、TR-2026-0912 は承認済み。どちらも割り当てた経路の最初の区間が起動した日の前日に出発）の <code>DevSampleDataSmokeTest</code>（状態、時刻の順と出発が起動より前、荷主の承認・本予約の照会・再見積りの拒否の理由、予約の確定待ちの行の出発の判定、経路設計中・荷主承認待ちの表、案件の確定の時刻と有効期限の写しの一致、候補の区間と割り当てた区間の写しの一致、KPI 計測、既存の見本が出発済みでない陰性の対照）、dev（H2）で 3 つの役割で画面を開く確かめ、デモの動画 2 本、変異 6 つ。37e4c: 届く順 B の受入シナリオ（<code>evaluate_confirmed_route.feature</code>、<code>@US-07-AC5 @DE-06 @Q-INV-10</code>。再設計要のイベントだけを先に配ると見積りに経路はまだなく、続けて経路を確定したイベントを配ると割り当てた後に続けて伝わって印が付き、荷主は承認できない。テストの配信の部品の <code>deliverOnly</code>）。予約の画面で予約が残ることは AC4 の行</td>
+</tr>
+<tr>
+<td style="text-align: left;">US-12</td>
+<td style="text-align: left;">AC4 の取り込みの分（取消済みの予約に届いた DE-13 は実績を作らず拒否の記録に残す。「有人例外案件に引き継ぐ」は W8（US-20）に送った。手入力の分は 39gc）</td>
+<td style="text-align: left;">39g</td>
+<td style="text-align: left;"><code>@US-12-AC4</code>（<code>register_milestone.feature</code>）、<code>ExternalMilestoneEventHandlerTest</code>、<code>ExternalMilestoneDeliveryIntegrationTest</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">US-12</td>
+<td style="text-align: left;">AC5 の取り込みの分（完了後の追跡に届いた DE-13 は保持のみで残り、現在状態は変わらない。完了後は予約状態が完了か現在状態が引渡し済み。手入力の分は 39gc）</td>
+<td style="text-align: left;">39g</td>
+<td style="text-align: left;"><code>@US-12-AC5</code>（<code>register_milestone.feature</code>）、<code>TrackingRecordExternalMilestoneTest</code>、<code>ExternalMilestoneDeliveryIntegrationTest</code></td>
 </tr>
 </tbody>
 </table>
