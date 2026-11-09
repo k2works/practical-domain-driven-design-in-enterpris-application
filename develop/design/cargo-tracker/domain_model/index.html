@@ -16241,6 +16241,24 @@
 <td style="text-align: left;">経路設計</td>
 </tr>
 <tr>
+<td style="text-align: left;">古くなった候補</td>
+<td style="text-align: left;">—</td>
+<td style="text-align: left;">算出の後に、区間が今の航海と合わなくなった候補（航海がないときも。適合・除外とも）と、適合の候補で今の航海の取得時刻から許容時間を過ぎた候補。S-06 を開いた時点の読み取りの結果で、状態ではない（UC-06 4a、【業務の判断】(w)・(y)・(z)。Bolt 39f2）。情報不足（算出のときに許容時間を過ぎた候補の除外の理由）とは別の語で、算出の後に情報不足になった適合の候補を含む。経路版の「旧版」（<code>SUPERSEDED</code>。R-INV-05）とも別の語</td>
+<td style="text-align: left;">経路設計</td>
+</tr>
+<tr>
+<td style="text-align: left;">古くなった区間</td>
+<td style="text-align: left;">StaleLeg</td>
+<td style="text-align: left;">古くなった候補の区間 1 つを、候補番号・候補の中の区間の 1 始まりの位置・理由の区分で示す値（<code>RoutingCase.staleLegs</code> が返す。保存しない。Bolt 39f2）</td>
+<td style="text-align: left;">経路設計</td>
+</tr>
+<tr>
+<td style="text-align: left;">古くなった理由の区分</td>
+<td style="text-align: left;">StaleLegReason</td>
+<td style="text-align: left;">区間が古くなった理由の区分。航海がない <code>VOYAGE_MISSING</code>、情報版が違う <code>INFO_VERSION_CHANGED</code>、同じ情報版で予定が違う <code>SCHEDULE_CHANGED</code>、取得から許容時間を過ぎた <code>INFO_INSUFFICIENT</code>（適合の候補だけ）。1 区間に 1 つ（Bolt 39f2）</td>
+<td style="text-align: left;">経路設計</td>
+</tr>
+<tr>
 <td style="text-align: left;">本予約</td>
 <td style="text-align: left;">—</td>
 <td style="text-align: left;">A 社と荷主の間で輸送の条件（見積り・経路版・貨物）を確定すること。運送会社による船腹の確保（ブッキングの確認）とは別の事実であり、確認書でも区別して示す（要確認: 業務責任者）</td>
@@ -18045,7 +18063,7 @@
 <ul>
 <li>評価の入口は、入力ポートの「案件番号で確定した経路版を今の外部情報で評価する」操作（<code>RoutingCaseCommandService.evaluateConfirmedRoute</code>）にする。外部情報の更新を受けたシステムの操作で、期待版は取らず、読み込んだ案件の版で競合を検知する。画面の操作は作らない。DE-12 の受け取りと、航海番号から評価する案件を引く照会は W7（US-14。DE-12 を受けて航海を書くのは Bolt 39e、DE-30 の後に評価を起こすのは Bolt 39f。下の Bolt 39f で決めたこと）。結果は「見つからない・変わらない・再設計要・競合」。競合を受けたら入口の listener が読み直して評価し直す（3 回まで。W7 の確認ポイント 11、Bolt 39f の決定 (5)）。先の評価が再設計要にしていれば読み直しの結果は「変わらない」で、DE-06 は重ならない。</li>
 <li>評価は最新の経路版が確定のときだけ行う。確定の記録の候補の区間がどれも今の航海と一致するなら評価しない（接続時間規則だけが変わったときも評価のきっかけにしない）。照合は確定と同じ情報版と区間の予定の組（<code>Voyage.matchesLeg</code>。読むのは Bolt 39e から区間の航海番号の航海だけで、全件を読まない。航海がない区間は変わったとみなす）で、同じ情報版で区間の予定が変わると評価し、不適合なら再設計要にする（入口は Bolt 39f の DE-30 の listener。Bolt 39e2 の【前の決定の変更】(1)。Bolt 37d2 の決定は情報版だけの照合だった）。保存した判定は使わず、区間ごとに今の航海で引き直し、引き直した区間の列を制約適合判定（期限・接続。規則は接続の時刻で選ぶ。D-90）にかけ直す。鮮度と貨物種別は見ない（Bolt 37c の決定）。出発済みの区間も評価に含める（実行済みの区間を変えない再設計は US-08）。</li>
-<li>引き直しは経路候補探索（<code>RouteCandidateFinder</code>）が行う。同じ航海番号の航海で、区間の積地の寄港（出発予定がある）と、その後で区間の揚地に寄る寄港（到着予定がある）の組を探す。候補探索は積地から後のどの寄港も揚地にできるので、確定した寄港を 1 つに決められない組は選ばない。組が 1 つなら今のまま引き直す（位置は見ない）。組が 2 つ以上ある（積地に 2 度寄る。積地の後で揚地（到着予定がある寄港）に 2 度寄る場合も組が 2 つになる）ときは、出発と到着が区間と一致する組が 1 つあればそれを選び、なければ確定の区間の寄港の位置の組を選ぶ（Bolt 39f の【業務の判断】(u)、【前の決定の変更】(5)。Bolt 37d2 の決定は「組が 2 つ以上あるなら引き直せない」だった）。航海がない、組がない（寄る順が逆、出発予定か到着予定がない）、組が 2 つ以上で一致する組も使える位置の組もない（位置がない、位置が範囲外、位置の寄港が組に入らない）、到着が出発より後でないなら、選ばずに引き直せないとして <code>VOYAGE_UNAVAILABLE</code> にする。揚地が積地より前にも寄る（B→A→B）場合は積地の後ろだけを見るので引き直せる。区間の作り方（出発予定・到着予定・採用情報版・取得時刻）は算出と共通にする。</li>
+<li>引き直しは経路候補探索（<code>RouteCandidateFinder</code>）が行う。同じ航海番号の航海で、区間の積地の寄港（出発予定がある）と、その後で区間の揚地に寄る寄港（到着予定がある）の組を探す。候補探索は積地から後のどの寄港も揚地にできるので、確定した寄港を 1 つに決められない組は選ばない。組が 1 つなら今のまま引き直す（位置は見ない）。組が 2 つ以上ある（積地に 2 度寄る。積地の後で揚地（到着予定がある寄港）に 2 度寄る場合も組が 2 つになる）ときは、出発と到着が区間と一致する組が 1 つあればそれを選び、なければ確定の区間の寄港の位置の組を選ぶ（Bolt 39f の【業務の判断】(u)、【前の決定の変更】(5)。Bolt 37d2 の決定は「組が 2 つ以上あるなら引き直せない」だった）。航海がない、組がない（寄る順が逆、出発予定か到着予定がない）、組が 2 つ以上で一致する組も使える位置の組もない（位置がない、位置が範囲外、位置の寄港が組に入らない）、到着が出発より後でないなら、選ばずに引き直せないとして <code>VOYAGE_UNAVAILABLE</code> にする。揚地が積地より前にも寄る（B→A→B）場合は積地の後ろだけを見るので引き直せる。区間の作り方（出発予定・到着予定・採用情報版・取得時刻）は算出と共通にする。位置がない区間（Bolt 39f より前の区間）は、組が 2 つ以上なら予定の照合より先に引き直せないとする。</li>
 <li>既知の制限（Bolt 39f で解消した）: Bolt 39f までは、積地か揚地に 2 度寄る航海の確定経路は、時刻が変わらなくても情報版が上がると再設計要になった（理由は <code>VOYAGE_UNAVAILABLE</code>）。確定の区間に寄港の位置を持たないため、評価で確定した寄港を決められなかった。Bolt 39f で確定の区間に寄港の位置を持たせた（W7 の確認ポイント 13。下の Bolt 39f で決めたこと）。残るのは Bolt 39f より前に算出した候補（位置が NULL）で、ステージング・本番に案件の行はない。</li>
 <li>画面の語: <code>VOYAGE_UNAVAILABLE</code> の画面の語は「航海の予定が使えない」にする（Bolt 37d2 レビューで「航海を引き直せない」から変えた。区分の意味は変えない。「引き直す」は利用者の語にしない）。</li>
 <li>理由の写し: 制約適合判定の理由の区分のうち、期限超過・接続不足・接続できないを同じ名前の再設計要の理由の区分に写し、同じ区分は 1 つにまとめて最初に出た順に並べる。貨物種別・情報不足が出たら評価の前提が崩れているので例外にする。</li>
@@ -18098,7 +18116,18 @@
 <li>誤った採用（【業務の判断】(x)、台帳 D-111。仮）: 誤った採用を新しい外部版で直しても、再設計要になった確定の経路は戻らない（UC-08 1a のまま。【業務の判断】(e)・(t)）。業務責任者に確かめる（Release 1.0 のパイロットの前）。</li>
 <li>システムの更新の操作: 上の Bolt 37d2 の「評価の保存」の項。<code>update(routingCase, null)</code> は作らない（Bolt 37d2 の確認ポイント 5 を W7 の確認ポイント 13 で改めた）。</li>
 <li>変えないもの: <code>evaluateConfirmedRoute</code> の判定の中身（鮮度と貨物種別は見ない）、確定の照合の順と拒否の文、DE-06 と見積りの印、<code>Voyage.apply</code> の順の規則（【業務の判断】(r)）、接続時間規則だけの変更は評価のきっかけにしない、再設計要は原因が解消しても戻さない（UC-08 1a）、S-05・S-06・S-07 の配置と URL。</li>
-<li>Bolt 39f2 に送るもの（【前の決定の変更】(7)、【業務の判断】(w)、台帳 D-110。仮）: UC-06 4a の「候補を旧版として保持し、再算出を要求する」は、候補の行を残したまま、S-06 を開いた時刻の航海と比べて「古くなった候補」と示し、再算出を促す文を添え、「この候補で確定へ」を出さないことと読む。状態は持たない。</li>
+<li>Bolt 39f2 に送ったもの（【前の決定の変更】(7)、【業務の判断】(w)、台帳 D-110。仮）: UC-06 4a の「候補を旧版として保持し、再算出を要求する」は、候補の行を残したまま、S-06 を開いた時刻の航海と比べて「古くなった候補」と示し、再算出を促す文を添え、「この候補で確定へ」を出さないことと読む。状態は持たない（下の Bolt 39f2 で決めたこと）。</li>
+</ul>
+<p>Bolt 39f2（UC-06 4a、US-07 AC3。算出の後に古くなった候補の読み取りの判定）で決めたこと（<a href="../../../development/cargo-tracker/bolt_39f2_plan/">Bolt 39f2 計画</a> の開始準備の決定 (2)〜(7)・(12)、【業務の判断】(w)・(y)・(z)。2026-11-10、推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）:</p>
+<ul>
+<li>読み取りの判定（【業務の判断】(w)、台帳 D-110。仮）: <code>RoutingCase.staleLegs(List&lt;Voyage&gt; voyages, InfoFreshnessPolicy freshness, UtcInstant judgedAt)</code> が <code>List&lt;StaleLeg&gt;</code> を返す。<code>confirmable</code> が偽なら空を返す（候補提示済みで確定した経路版がないときだけ判定する）。状態・列・候補の並びは変えず、保存しない。同じ情報版で元の値に戻れば空に戻る（【業務の判断】(s) と同じ）。新しい外部版で元の予定に戻したときは情報版が違うので古いまま（【業務の判断】(t) の基本の道）。比べた案のうち、<code>RoutingCaseViews</code> の中で比べる案は画面の部品に R-INV-03 の知識が写って確定と食い違う余地ができ、経路版に「旧版」の状態を持たせる案は R-INV-05 の旧版と語が重なり元の値に戻したときに戻せないので採らない。</li>
+<li>確定と同じ部品: 集約の private に <code>Optional&lt;StaleLegReason&gt; changeOf(Leg leg, Map&lt;String, Voyage&gt; current)</code>（航海がない・情報版が違う・予定が違う）を置き、<code>anyLegChanged</code> をその <code>isPresent</code> にする（確定と評価の振る舞いは変えない。照合を 2 つにしない）。判定は <code>Voyage.matchesLeg</code> の 1 か所に残し、情報版の比較（<code>Leg.infoVersion</code> と <code>Voyage.adoptedInfoVersion</code>）は <code>matchesLeg</code> が偽のときの説明の分け方に使うだけにする。<code>RouteCandidate</code> は <code>Voyage</code> を参照しないので、航海を受ける集約に置く。</li>
+<li>区間 1 つに理由は 1 つ。順は、航海がない → 今の航海と合わない（情報版が違えば <code>INFO_VERSION_CHANGED</code>、同じなら <code>SCHEDULE_CHANGED</code>）→ 適合の候補だけ取得から許容時間を過ぎた（<code>INFO_INSUFFICIENT</code>）。取得時刻は区間の写しではなく今の航海の値で比べる（Bolt 37c の確定と同じ。同じ情報版を取り込み直して取得時刻が新しくなれば古くない）。</li>
+<li><code>INFO_VERSION_CHANGED</code> の範囲の違い（注）: 確定の拒否の理由の <code>INFO_VERSION_CHANGED</code> は予定の変更を含み（Bolt 39e2 の【前の決定の変更】(1)）、<code>StaleLegReason</code> の <code>INFO_VERSION_CHANGED</code> は含まない（予定の変更は <code>SCHEDULE_CHANGED</code>）。同じ名前で範囲が違う。W10 の改名（Bolt 39e2 の終了報告の既知の課題）に含める。</li>
+<li>「古くなった候補」の範囲（【業務の判断】(y)、台帳 D-112。仮）: 候補の区間が今の航海と一致しない（航海がないときも）候補と、適合の候補の航海の情報が取得から許容時間を過ぎた候補だけとする。接続時間規則の変更と最初の区間の出発済みは入れず、確定のときの拒否（<code>NO_LONGER_CONFORMING</code>・<code>ALREADY_DEPARTED</code>）のままにする。受け入れること: 算出の後に規則が変わった候補や出発済みの候補は S-06 で適合と示される。</li>
+<li>除外の候補（【業務の判断】(z)、台帳 D-113。仮）: 区間が今の航海と合わないときは区間の理由を返し、取得から許容時間を過ぎただけのときは返さない（情報不足で除外した直後の候補に再算出を促す文を出さない）。受け入れること: 書き方違いの採用で取得時刻だけ新しくなると、情報不足で除外した候補に何も出ない。</li>
+<li>読みの組み立てと性能: <code>RoutingCaseQueryService.staleLegsOf(RoutingCase routingCase, Instant now)</code> が <code>RoutingCase.candidateVoyageNumbers()</code>（候補の区間の航海番号を重複なしで集める）で集めた番号で <code>VoyageRepository.findByVoyageNumbers</code> を 1 回呼ぶ（S-06 の GET に SQL 1 文。N+1 にしない。索引とスキーマは変えない。non_functional の PERF-01）。確定できないときと航海番号が空のときは航海を読まない。controller は <code>clock.instant()</code> を 1 回だけ読み、判定と表示に同じ時刻を渡す。S-07 の <code>RoutingCaseViews.confirmation</code> には古い区間を渡さない。</li>
+<li>変えないもの: <code>Voyage.matchesLeg</code>、確定と評価の照合、確定の拒否の理由と文（S-06 の表示は確定の前の案内で、確定のときの照合 R-INV-03 が最後の守りのまま残る）、S-07 の画面と GET、候補の並びと「適合する候補がありません」の文、経路版の状態、スキーマ、DE-12・DE-30、接続時間規則と出発済みの扱い。</li>
 </ul>
 <h3 id="bookingu6">予約（Booking、U6）<a class="headerlink" href="#bookingu6" title="Permanent link">&para;</a></h3>
 <h4 id="_14">予約の集約<a class="headerlink" href="#_14" title="Permanent link">&para;</a></h4>

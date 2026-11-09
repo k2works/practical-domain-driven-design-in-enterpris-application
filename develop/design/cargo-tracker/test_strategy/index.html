@@ -16557,6 +16557,10 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 <td style="text-align: left;">評価の入口と寄港の位置</td>
 <td style="text-align: left;">Bolt 39f（US-07 AC4、US-14 AC1）。寄港の位置は <code>LegTest</code>（片方だけの値と位置の順の誤りは例外。パラメーター）、<code>RouteCandidateFinderTest</code>（A→B→A→C の航海で 2 候補がそれぞれの <code>call_no</code> を持つ、書く順を逆にした航海も置く。引き直しは組が 1 つなら今のまま、2 つ以上で予定の一致する組が 1 つならその組、なければ位置の組、位置を使えなければ <code>VOYAGE_UNAVAILABLE</code>、位置がなければ今のまま）、<code>VoyageTest</code>（<code>matchesLeg</code> の入力と期待の組まで縛る）、<code>RoutingCaseEvaluationTest</code>（2 度寄る経路で情報版だけが上がる組は確定のまま DE-06 は 0 件、確定した寄港の到着が期限を過ぎると再設計要、範囲外の位置でも例外にしない）。照会は <code>MyBatisRoutingRepositoriesIntegrationTest</code> と <code>InMemoryRoutingCaseRepository</code>（最新の経路版が確定の案件だけを返す。パラメーター）。スキーマは <code>SchemaCommentIntegrationTest</code> と CHECK の確かめ。DE-30 の発行は <code>VoyageUpdateEventHandlerTest</code>（「発行しない」は呼び出しの記録で確かめる。T-236）。listener は <code>ConfirmedRouteEvaluationEventHandlerTest</code>（案件なし・2 件、競合 1 回は読み直して <code>Unchanged</code>、競合 3 回は例外、<code>NotFound</code> は次の案件へ）。配信は <code>ConfirmedRouteEvaluationDeliveryIntegrationTest</code>（PostgreSQL。DE-12 から DE-30、評価、再設計要、DE-06、見積りの印まで、発行記録の完了を待って確かめる。T-184。同じ情報版で予定が違う組、誤った採用を戻す組、予定が同じ組、再配信、競合 3 回で全体が戻る組）。同時は別々の航海の 2 つの DE-12 のトランザクションをラッチで重ね、片方ずつなら適合で両方なら接続不足の組で両方のコミットの後の評価が再設計要にすること、2 つの DE-30 の評価が重なっても DE-06 は 1 件であること（H2 と PostgreSQL）。画面の層は <code>adopted_voyage_reflected_ui.feature</code>（確定した後にデータ責任者が期限を過ぎる隔離を採用すると S-06 に再設計要と理由が出る。axe）、接続を満たさなくなる組は <code>evaluate_confirmed_route.feature</code>（W6 レビュー L-8）</td>
 </tr>
+<tr>
+<td style="text-align: left;">古くなった候補</td>
+<td style="text-align: left;">Bolt 39f2（UC-06 4a、US-07 AC3。<a href="../../../development/cargo-tracker/bolt_39f2_plan/">Bolt 39f2 計画</a> の状態の組み合わせの表の行ごと）。判定は <code>RoutingCaseStaleLegsTest</code>（理由の 4 区分と 1 区間に 1 件の順、3 区間の 2 区間目だけが古い組の入力と期待の組、同じ情報版で元の値に戻ると空、新しい外部版で元の予定に戻ると <code>INFO_VERSION_CHANGED</code>、許容時間の直前・同時刻・直後、今の航海の取得時刻で判定すること、確定の拒否との同値（行 8b）、除外の候補の不一致と鮮度、2 度寄る航海の <code>matchesLeg</code>、経路版の状態の全値、算出の直後は空。T-244）。照会は <code>RoutingCaseQueryServiceTest</code>（「読まないこと」は呼び出しの記録。候補 0 件、確定できない状態、20 候補 × 3 区間で <code>findByVoyageNumbers</code> を 1 回だけ重複のない番号で呼ぶ。T-236・T-106）。上限の読みは <code>VoyageRepositoryContract</code>（H2・PostgreSQL・メモリ。60 航海 × 寄港 60。読みの時間はログの「PERF-01 S-06」の行に出す。時間では落とさない）。画面は <code>RoutingCaseControllerTest</code>（印と判定の印の class、一部・すべて・除外が混ざるときの上の文と n の数え方、案内の順、鮮度の文の分岐、区間の文の 4 区分、確定済みと再設計要に出ないこと、範囲の外で判定を呼ばないこと、読み上げの文の全文）。画面の層は <code>adopted_voyage_reflected_ui.feature</code>（<code>@US-06-AC1 @US-14-AC1 @R-INV-03 @demo @demo-bolt-39f2/stale-candidate</code>。データ責任者が同じ情報版で到着の違う隔離を採用すると開き直した S-06 に古くなった候補が出て、再算出すると消えて「この候補で確定へ」が出る。同じ情報版のまま確定を拒否されて戻ると、変わった区間の下に文が出る。axe、幅 320 px）。元の値に戻る組は単体で確かめ、画面の層では取り込み直しを作らない。S-07 を古い候補の URL で開く組は既存のシナリオ</td>
+</tr>
 </tbody>
 </table>
 <p>統合テストは Testcontainers の PostgreSQL を使い、H2 で書かない（ADR-007）。H2 で確かめるのはスモークテストだけとする。</p>
@@ -17352,9 +17356,15 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 <td style="text-align: left;"><code>@golden</code>（<code>routing/golden/route_candidates_golden_v0.feature</code> のシナリオアウトライン 4 行、<code>special_cargo_golden_v0.feature</code> の 3 行）、<code>RoutingCaseGoldenDatasetTest</code>（案件のデータの候補一覧の全体）</td>
 </tr>
 <tr>
+<td style="text-align: left;">US-06</td>
+<td style="text-align: left;">UC-06 4a（候補の根拠の航海が算出の後に変わるか取得から許容時間を過ぎると、S-06 で古くなった候補と示し、再算出を促し、「この候補で確定へ」を出さない。US-06 に 4a を直接書いた受入条件はないので、受入シナリオのタグは AC1 につなぐ。【業務の判断】(w)・(y)・(z)）</td>
+<td style="text-align: left;">39f2</td>
+<td style="text-align: left;"><code>@US-06-AC1</code>（<code>adopted_voyage_reflected_ui.feature</code>。<code>@demo-bolt-39f2/stale-candidate</code>）、<code>RoutingCaseStaleLegsTest</code>・<code>RoutingCaseQueryServiceTest</code>・<code>RoutingCaseControllerTest</code>（上の「古くなった候補」の行）</td>
+</tr>
+<tr>
 <td style="text-align: left;">US-07</td>
 <td style="text-align: left;">AC3（承認中に区間の航海の情報版が更新されているか、同じ情報版でも区間の予定が変わっていれば確定は拒否され、候補の比較に戻って再判断が求められる。確定の時刻に情報不足でも確定できない）</td>
-<td style="text-align: left;">37c、39e2（情報版と区間の予定の組の照合）</td>
+<td style="text-align: left;">37c、39e2（情報版と区間の予定の組の照合）、39f2（拒否されて戻った S-06 に、変わった区間の下の文が出る）</td>
 <td style="text-align: left;"><code>@US-07-AC3</code>（<code>confirm_route.feature</code>・<code>confirm_route_ui.feature</code>・<code>adopted_voyage_reflected_ui.feature</code>）、<code>RoutingCaseConfirmationTest</code>（情報版と区間の予定の組の照合を含む）・<code>VoyageTest</code>（<code>matchesLeg</code>）・<code>InfoFreshnessPolicyTest</code>、<code>RoutingCaseControllerTest</code></td>
 </tr>
 <tr>

@@ -484,16 +484,16 @@
                                 </thead>
                                 <tbody>
                                 <tr>
+                                    <td>ck_candidate_leg_call_no</td>
+                                    <td>(((load_call_no IS NULL) AND (discharge_call_no IS NULL)) OR ((load_call_no IS NOT NULL) AND (discharge_call_no IS NOT NULL) AND (load_call_no &lt; discharge_call_no)))</td>
+                                </tr>
+                                <tr>
                                     <td>ck_candidate_leg_no</td>
                                     <td>(leg_no &gt;&#61; 1)</td>
                                 </tr>
                                 <tr>
                                     <td>ck_candidate_leg_dates</td>
                                     <td>(arrival_at &gt; departure_at)</td>
-                                </tr>
-                                <tr>
-                                    <td>ck_candidate_leg_call_no</td>
-                                    <td>(((load_call_no IS NULL) AND (discharge_call_no IS NULL)) OR ((load_call_no IS NOT NULL) AND (discharge_call_no IS NOT NULL) AND (load_call_no &lt; discharge_call_no)))</td>
                                 </tr>
                                 </tbody>
                             </table>

@@ -454,16 +454,16 @@
                                     <td>(((external_record_id IS NULL) &#61; (acquired_at IS NULL)) AND (((classification)::text &#61; &#39;QUARANTINED&#39;::text) OR (external_record_id IS NOT NULL)))</td>
                                 </tr>
                                 <tr>
-                                    <td>ck_received_record_classification</td>
-                                    <td>((classification)::text &#61; ANY ((ARRAY[&#39;ADOPTED&#39;::character varying, &#39;DUPLICATE&#39;::character varying, &#39;QUARANTINED&#39;::character varying, &#39;DISCREPANCY&#39;::character varying])::text[]))</td>
-                                </tr>
-                                <tr>
                                     <td>ck_received_record_value</td>
                                     <td>(((target_key IS NULL) &#61; (value_summary IS NULL)) AND ((external_record_id IS NOT NULL) OR (target_key IS NULL)))</td>
                                 </tr>
                                 <tr>
                                     <td>ck_received_record_line_range</td>
                                     <td>(((first_line_number IS NULL) &#61; (last_line_number IS NULL)) AND ((first_line_number IS NULL) OR ((first_line_number &gt;&#61; 1) AND (first_line_number &lt;&#61; last_line_number))))</td>
+                                </tr>
+                                <tr>
+                                    <td>ck_received_record_classification</td>
+                                    <td>((classification)::text &#61; ANY ((ARRAY[&#39;ADOPTED&#39;::character varying, &#39;DUPLICATE&#39;::character varying, &#39;QUARANTINED&#39;::character varying, &#39;DISCREPANCY&#39;::character varying])::text[]))</td>
                                 </tr>
                                 </tbody>
                             </table>
