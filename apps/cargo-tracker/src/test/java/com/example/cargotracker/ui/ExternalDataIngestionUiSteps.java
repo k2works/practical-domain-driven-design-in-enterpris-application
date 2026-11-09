@@ -154,6 +154,16 @@ public class ExternalDataIngestionUiSteps {
         if (sourceId == null) {
             return;
         }
+        suspendSource();
+    }
+
+    /** Bolt 39d3b2 の行 11・20 の画面の通し。情報源の停止は W10 の運用タスクで画面がないので、表を直に変える。 */
+    @もし("判断の画面を開いた後に情報源が停止される")
+    public void 判断の画面を開いた後に情報源が停止される() {
+        suspendSource();
+    }
+
+    private void suspendSource() {
         jdbc.update("UPDATE external_data.data_source SET approval_status = 'SUSPENDED' WHERE id = ?", sourceId);
     }
 

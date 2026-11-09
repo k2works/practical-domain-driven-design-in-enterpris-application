@@ -49,6 +49,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.mockito.invocation.Invocation;
@@ -300,7 +301,7 @@ class ExternalRecordAuditDeliveryIntegrationTest {
      * Bolt 39d2 の行 12（DE-29 の監査の配信。T-184）。却下のコミットの後に監査の listener が DE-29 を受け、判断の監査記録を 1 つ書く。巻き戻った
      * 却下には発行記録も監査記録もない。39b3b の同じ番号の行と名前が衝突しないよう入れ子にする。
      */
-    @org.junit.jupiter.api.Nested
+    @Nested
     class Bolt39d2_判断の監査の配信 {
 
         @Autowired
@@ -391,7 +392,7 @@ class ExternalRecordAuditDeliveryIntegrationTest {
      * Bolt 39d2b の行 13（まとめての却下の DE-29 の監査の配信。T-184、IA-INV-15）。まとめて 3 件を却下したコミットの後に監査の listener が
      * 受信記録ごとに DE-29 を受け、判断の監査記録を受信記録ごとに 1 つずつ、計 3 つ書く。39d2 の同じ番号の行と名前が衝突しないよう入れ子にする。
      */
-    @org.junit.jupiter.api.Nested
+    @Nested
     class Bolt39d2b_まとめての却下の監査の配信 {
 
         @Autowired
@@ -450,7 +451,7 @@ class ExternalRecordAuditDeliveryIntegrationTest {
      * 同じイベントを配り直しても増えない。主要実績（DE-13）は {@code Bolt39d3b2_主要実績の採用の判断の監査の配信}。39b3b の同じ番号の行と名前が衝突しないよう
      * 入れ子にする。
      */
-    @org.junit.jupiter.api.Nested
+    @Nested
     class Bolt39d3b_採用の判断の監査の配信 {
 
         @Autowired
@@ -550,7 +551,7 @@ class ExternalRecordAuditDeliveryIntegrationTest {
      * DE-29 と DE-13 を受け、隔離の受信記録に判断の監査記録と採用の監査記録（要約は主要実績の形）を 1 つずつ書き、取込のときの隔離の監査記録と合わせて 3 つに
      * なる。同じイベントを配り直しても増えない。
      */
-    @org.junit.jupiter.api.Nested
+    @Nested
     class Bolt39d3b2_主要実績の採用の判断の監査の配信 {
 
         private static final String TRACKING_NUMBER = "CTABCDEFGH2345";

@@ -53,6 +53,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -1354,7 +1355,7 @@ class ReceivedRecordDecisionServiceTest {
         /** 採用を出さない隔離の作り方、理由、取込・情報源・外部原本・この外部版の採用値を引く数。 */
         record RefusalCase(
                 String name,
-                java.util.function.Function<Bolt39d3b2_主要実績の採用と採用できない理由, ReceivedRecord> create,
+                Function<Bolt39d3b2_主要実績の採用と採用できない理由, ReceivedRecord> create,
                 NotAdoptableReason reason,
                 int ingestionFinds,
                 int dataSourceFinds,

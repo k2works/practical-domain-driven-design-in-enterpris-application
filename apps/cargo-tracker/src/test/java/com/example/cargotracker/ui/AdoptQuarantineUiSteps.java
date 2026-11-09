@@ -27,6 +27,11 @@ public class AdoptQuarantineUiSteps {
     private static final String KEYLESS_GUIDE = "形式の誤りは採用できません。直したファイルを取り込み直してください。";
     private static final String TRACKING_NUMBER_DIFFERS_GUIDE =
             "追跡番号がこの外部版の採用値と違うので採用できません。正しい原本を使うときは、提供元に新しい外部版で送り直してもらってください。";
+    private static final String SOURCE_NOT_APPROVED_GUIDE =
+            "情報源が承認済みではないため採用できません。受け取った値を使うときは、運用の手順で情報源を承認し直してから、この隔離を開き直してください。";
+    private static final String REFUSED_TITLE = "採用できませんでした - 隔離の判断 - cargo-tracker";
+    private static final String ERROR_SUMMARY = "#error-summary";
+    private static final String REFUSAL_PARAGRAPH = "#adoption-refusal";
 
     private final BrowserSession browser;
 
@@ -84,6 +89,36 @@ public class AdoptQuarantineUiSteps {
     @ならば("隔離の判断の画面に採用するの欄は示されず、却下するの欄の後に追跡番号が違うので採用できない案内が示される")
     public void 追跡番号が違う隔離に採用の欄は示されない() {
         採用の欄がなく却下の欄の後に案内が示される(TRACKING_NUMBER_DIFFERS_GUIDE);
+    }
+
+    /** Bolt 39d3b2 の行 11（エラー要約へのフォーカスは transport-request-form.js が移す。ブラウザーでしか確かめられない）。 */
+    @ならば("採用されずに判断の画面に戻り、エラー要約にフォーカスが移って情報源が承認済みでない理由が示される")
+    public void エラー要約にフォーカスが移って理由が示される() {
+        assertThat(page()).hasTitle(REFUSED_TITLE);
+        assertThat(page().locator(ERROR_SUMMARY)).isFocused();
+        assertThat(refusalLink()).hasText(SOURCE_NOT_APPROVED_GUIDE);
+        assertThat(heading(ADOPTION_HEADING)).hasCount(0);
+        assertThat(heading(REJECTION_HEADING)).isVisible();
+        browser.checkAccessibility();
+    }
+
+    @もし("キー操作だけでエラー要約の理由の文のリンクを開く")
+    public void エラー要約のリンクを開く() {
+        browser.tabUntilFocused(refusalLink());
+        page().keyboard().press("Enter");
+    }
+
+    /** Bolt 39d3b2 の行 11（段落の tabindex="-1" がブラウザーの標準のフラグメント移動の受け口）。 */
+    @ならば("却下するの欄の後の理由の文にフォーカスが移る")
+    public void 理由の文にフォーカスが移る() {
+        Locator paragraph = page().locator(REFUSAL_PARAGRAPH);
+        assertThat(paragraph).isFocused();
+        assertThat(paragraph).hasText(SOURCE_NOT_APPROVED_GUIDE);
+        browser.checkAccessibility();
+    }
+
+    private Locator refusalLink() {
+        return page().locator(ERROR_SUMMARY + " a[href='" + REFUSAL_PARAGRAPH + "']");
     }
 
     private void 採用の欄がなく却下の欄の後に案内が示される(String guide) {
