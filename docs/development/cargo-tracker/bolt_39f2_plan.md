@@ -3,7 +3,7 @@ type: Plan
 title: "Bolt 39f2 計画 - 算出の後に古くなった候補を S-06 で示し、再算出を促す"
 tags: [plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-09T18:06:44Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-09T18:43:30Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-11-09T18:06:43Z }
   - { by: human:kakimomokuri, at: 2026-11-09T18:06:55Z }
@@ -365,7 +365,7 @@ StaleLeg --> StaleLegReason
 
 ## ステップ計画（ゲートは下の各ステップに書く）
 
-- [ ] **1. 設計の文書**: 上の「設計文書に直す箇所」。【業務の判断】(w)・(y)・(z)、【前の決定の変更】(8)〜(10) を反映する。始めに検索する（完了の判定: 文書の差分と検索の記録。ゲート: 既定（確認ポイント 2〜5 で計画の承認に含む））
+- [x] **1. 設計の文書**（2026-11-10 に実施した）: 上の「設計文書に直す箇所」。【業務の判断】(w)・(y)・(z)、【前の決定の変更】(8)〜(10) を反映する。始めに検索する（完了の判定: 文書の差分と検索の記録。ゲート: 既定（確認ポイント 2〜5 で計画の承認に含む））
 - [ ] **2. 受入シナリオとテストの Red**: 39f の完了の後のコードで、基準のコミット `bc72a77f7` からの行番号のずれを確かめ直す。外から入る。まず `adopted_voyage_reflected_ui.feature` に行 29 を書いて Red を記録する（古くなった候補が「✓ 適合」と「この候補で確定へ」のままで落ちる）。続いて行 1〜26・28・30 を書く（行 27・32 は既存のテスト）。骨組み（`staleLegs` は空を返す、`StaleLeg`・`StaleLegReason`、`staleLegsOf` は空を返す、コンストラクタの足し算）でコンパイルを通す（T-254）。直す既存のテストを一覧にする（T-217）（完了の判定: 期待した理由で落ちる記録。Red の行は `wip/` か stash に置き、develop に落ちるテストを積まない。ゲート: 既定）
 - [ ] **3. 判定と照会**: 決定 (2)・(4)・(5)（`changeOf` に寄せ、`anyLegChanged` の振る舞いを変えない）。行 1〜17 が緑。`ModularityTest`・`LayerArchitectureTest` を流す（当たったら止めて諮る。T-125）。`spotbugsMain`・`checkstyleMain`・`sonar-local:check`（完了の判定: 緑。行 17 の読みの時間を記録する。ゲート: 既定）
 - [ ] **4. S-06 の表示**: 決定 (3)。`RoutingCaseViews`・`show.html`・controller。行 18〜26 が緑。`spotbugsMain`・`checkstyleMain`・`sonar-local:check`（完了の判定: 緑。ゲート: 既定（確認ポイント 3 で計画の承認に含む））
