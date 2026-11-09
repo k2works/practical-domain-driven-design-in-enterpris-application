@@ -18,14 +18,17 @@ public class UiScenarioState {
     private String transportRequestNumber;
     private String trackingNumber;
 
-    /** シナリオごとに一意の航海番号（30 文字の上限の内。取込の Steps と経路設計の Steps で同じ番号を使う。Bolt 39e の決定 (12)）。 */
+    /**
+     * シナリオごとに一意の航海番号（30 文字の上限の内。取込の Steps と経路設計の Steps で同じ番号を使う。Bolt 39e の決定 (12)）。
+     * ハイフンで折り返せないよう区切りを入れない（幅 320 CSS px で切れ目のない上限の長さを確かめる。Bolt 39f2 の開発レビュー）。
+     */
     public String voyageNumber(String name) {
-        return "UI-" + voyageMark + "-" + name;
+        return "UI" + voyageMark + name;
     }
 
     /** このシナリオの航海番号の LIKE の形（後片付け）。 */
     public String voyageNumberPattern() {
-        return "UI-" + voyageMark + "-%";
+        return "UI" + voyageMark + "%";
     }
 
     /** 航海を入れた（取り込んだ）印を付ける。印を付けたシナリオだけ航海を後片付けする。 */

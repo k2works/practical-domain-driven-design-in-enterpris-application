@@ -27,8 +27,8 @@ public class RoutingUiSteps {
 
     private static final String CALCULATE = "候補を算出";
     private static final String CONFIRM = "この経路で確定する";
-    /** 取込の Steps が使う航海の名前（航海番号の末尾。Bolt 39e）。航海番号の上限の 30 文字にして、幅 320 CSS px の折り返しを確かめる（18 文字。Bolt 39f2 の行 30）。 */
-    static final String ADOPTED = "ADOPTED-VOYAGE-NO1";
+    /** 取込の Steps が使う航海の名前（航海番号の末尾。Bolt 39e）。航海番号の上限の 30 文字にして、幅 320 CSS px の折り返しを確かめる（20 文字。Bolt 39f2 の行 30）。 */
+    static final String ADOPTED = "ADOPTEDVOYAGENUMBER1";
 
     private static final String STALE_MARK = "古くなった候補";
     private static final String CONFIRM_ENTRY = "この候補で確定へ";

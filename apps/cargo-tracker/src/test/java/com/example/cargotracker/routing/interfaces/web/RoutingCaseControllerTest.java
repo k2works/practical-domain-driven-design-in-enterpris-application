@@ -904,7 +904,10 @@ class RoutingCaseControllerTest {
                     assertThat(block).as(description).doesNotContain(ENTRY);
                 } else {
                     assertThat(heading(block)).as(description).endsWith("✓ 適合").doesNotContain(STALE_MARK);
-                    assertThat(block).as(description).contains(ENTRY);
+                    assertThat(block)
+                            .as(description)
+                            .containsPattern("class=\"badge text-bg-success\"[^>]*>✓ 適合<")
+                            .contains(ENTRY);
                 }
             }
             assertThat(html)
