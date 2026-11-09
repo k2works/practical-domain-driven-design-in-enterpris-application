@@ -50,7 +50,7 @@ class RoutingCaseEvaluationTest {
     private final ConstraintEvaluator evaluator = new ConstraintEvaluator();
 
     @Test
-    void 区間の情報版が変わらなければ規則だけが変わっても評価せず確定のまま() {
+    void 区間の情報版と区間の予定の組が今の航海にあれば規則だけが変わっても評価せず確定のまま() {
         // 行 1
         RoutingCase routingCase = confirmed(List.of(SINGAPORE_8H));
         List<Voyage> otherUpdated = replaced(VOYAGES, direct("V-EARLY", "V-EARLY@2", "2026-10-29T00:00:00Z"));

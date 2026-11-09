@@ -67,7 +67,7 @@ class ConfirmedRouteEvaluationTest {
     }
 
     @Test
-    void 区間の情報版が変わらなければ変わらないで保存もイベントの発行もしない() {
+    void 区間の情報版と区間の予定の組が今の航海にあれば変わらないで保存もイベントの発行もしない() {
         InMemoryRoutingCaseRepository repository = new InMemoryRoutingCaseRepository();
         repository.save(confirmed);
         voyages.add(earlyVoyage("V-EARLY@1", "2026-10-29T00:00:00Z"));

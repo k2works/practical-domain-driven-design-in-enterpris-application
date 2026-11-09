@@ -222,6 +222,7 @@ class VoyageTest {
         private static final String DEPARTURE = "2026-12-01T00:00:00Z";
         private static final String ARRIVAL = "2026-12-20T00:00:00Z";
         private static final String LATER_DEPARTURE = "2026-12-09T00:00:00Z";
+        private static final String EARLIER_ARRIVAL = "2026-12-05T00:00:00Z";
         private static final String SINGAPORE_DEPARTURE = "2026-12-10T12:00:00Z";
         private static final String COLOMBO_ARRIVAL = "2026-12-15T00:00:00Z";
 
@@ -234,6 +235,11 @@ class VoyageTest {
                 new PortCall(TOKYO, null, at(DEPARTURE)),
                 new PortCall(SINGAPORE, at("2026-12-05T00:00:00Z"), at("2026-12-06T00:00:00Z")),
                 new PortCall(TOKYO, at("2026-12-08T00:00:00Z"), at(LATER_DEPARTURE)),
+                new PortCall(ROTTERDAM, at(ARRIVAL), null));
+        private static final List<PortCall> ROTTERDAM_TWICE = List.of(
+                new PortCall(TOKYO, null, at(DEPARTURE)),
+                new PortCall(ROTTERDAM, at(EARLIER_ARRIVAL), at("2026-12-06T00:00:00Z")),
+                new PortCall(SINGAPORE, at("2026-12-10T00:00:00Z"), at(SINGAPORE_DEPARTURE)),
                 new PortCall(ROTTERDAM, at(ARRIVAL), null));
         /** 揚地の寄港が積地の寄港より前に並ぶ（書く順を逆にしたデータ。T-245）。どちらの寄港も到着と出発を持つ。 */
         private static final List<PortCall> DISCHARGE_BEFORE_LOAD = List.of(
@@ -276,6 +282,13 @@ class VoyageTest {
                     Arguments.of("組が 2 つある航海の前の組", TOKYO_TWICE, leg("1", TOKYO, DEPARTURE, ROTTERDAM, ARRIVAL), true),
                     Arguments.of(
                             "組が 2 つある航海の後の組", TOKYO_TWICE, leg("1", TOKYO, LATER_DEPARTURE, ROTTERDAM, ARRIVAL), true),
+                    Arguments.of(
+                            "揚地に 2 度寄る航海の前の組",
+                            ROTTERDAM_TWICE,
+                            leg("1", TOKYO, DEPARTURE, ROTTERDAM, EARLIER_ARRIVAL),
+                            true),
+                    Arguments.of(
+                            "揚地に 2 度寄る航海の後の組", ROTTERDAM_TWICE, leg("1", TOKYO, DEPARTURE, ROTTERDAM, ARRIVAL), true),
                     Arguments.of("情報版が違う", P1, leg("2", TOKYO, DEPARTURE, ROTTERDAM, ARRIVAL), false),
                     Arguments.of("出発が違う", P1, leg("1", TOKYO, "2026-12-01T00:00:01Z", ROTTERDAM, ARRIVAL), false),
                     Arguments.of("到着が違う", P1, leg("1", TOKYO, DEPARTURE, ROTTERDAM, "2026-12-20T00:00:01Z"), false),

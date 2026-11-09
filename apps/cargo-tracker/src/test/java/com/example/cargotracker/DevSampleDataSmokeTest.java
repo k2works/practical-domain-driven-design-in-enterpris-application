@@ -477,7 +477,7 @@ class DevSampleDataSmokeTest {
 
     @Test
     void 荷主が承認した見本は見積りの公開APIで本予約の確定に使える() {
-        for (String number : java.util.List.of("TR-2026-0906", "TR-2026-0907")) {
+        for (String number : List.of("TR-2026-0906", "TR-2026-0907")) {
             assertThat(bookableQuotations.find(
                             new BookableQuotationRequest(number, 1, new UtcInstant(Instant.now()), SALES)))
                     .as(number)
@@ -547,7 +547,7 @@ class DevSampleDataSmokeTest {
     void 再設計要の見本は提示と回答と経路の確定と承認と再設計要と起動と出発と有効期限の順に並ぶ() {
         // 直接入れた事実の順を守る（T-162）。出発を起動の後にして、出発済みの判定（D-88。Bolt 37e4）と混ぜない
         Instant now = Instant.now();
-        for (int sequence : java.util.List.of(909, 910)) {
+        for (int sequence : List.of(909, 910)) {
             Quotation quotation = routeRedesignQuotation(sequence);
             Instant presentedAt = quotation.presentedAt().orElseThrow().instant();
             Instant respondedAt = quotation.respondedAt().orElseThrow().instant();
@@ -615,7 +615,7 @@ class DevSampleDataSmokeTest {
     @Test
     void 再設計要の見本は有効期限まで再見積りできない() {
         // 行 8
-        for (int sequence : java.util.List.of(909, 910)) {
+        for (int sequence : List.of(909, 910)) {
             assertThat(routeRedesignQuotation(sequence).requoteRejectionAt(new UtcInstant(Instant.now())))
                     .as("TR-2026-0" + sequence)
                     .contains(QuotationRejection.ROUTE_REDESIGN_REQUIRED);
@@ -768,7 +768,7 @@ class DevSampleDataSmokeTest {
         assertThat(departedSampleQuotation(912).status()).isEqualTo(QuotationStatus.APPROVED);
         assertThat(departedSampleQuotation(911).shipperApproval()).isEmpty();
         assertThat(departedSampleQuotation(912).shipperApproval()).isPresent();
-        for (int sequence : java.util.List.of(911, 912)) {
+        for (int sequence : List.of(911, 912)) {
             assertThat(departedSampleRequest(sequence).currentVersion().versionNo())
                     .isEqualTo(1);
             // 理由が出発済みになるように、再設計要の印を持たない（理由は再設計要が先。Bolt 37e4）
@@ -901,7 +901,7 @@ class DevSampleDataSmokeTest {
     void 出発済みでない見本の見積りと予約の確定待ちの行は出発済みでない() {
         // 行 8。陰性の対照（出発の写し違いで、ほかの見本が出発済みになっていないこと）。見本があり出発が起動より後であることを先に確かめる
         UtcInstant now = new UtcInstant(Instant.now());
-        for (int sequence : java.util.List.of(906, 907, 908, 909, 910)) {
+        for (int sequence : List.of(906, 907, 908, 909, 910)) {
             Quotation quotation = sampleQuotation(sequence);
             assertThat(quotation
                             .assignedRoute()
