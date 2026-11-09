@@ -2,11 +2,16 @@ package com.example.cargotracker.routing.application.internal.queryservices;
 
 import com.example.cargotracker.routing.domain.model.aggregates.RoutingCase;
 import com.example.cargotracker.routing.domain.model.aggregates.RoutingCaseRepository;
+import com.example.cargotracker.routing.domain.model.aggregates.VoyageRepository;
 import com.example.cargotracker.routing.domain.model.entities.RouteCandidate;
+import com.example.cargotracker.routing.domain.model.rules.InfoFreshnessPolicy;
 import com.example.cargotracker.routing.domain.model.valueobjects.Leg;
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseNumber;
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseSummary;
+import com.example.cargotracker.routing.domain.model.valueobjects.StaleLeg;
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
+import com.example.cargotracker.shared.domain.UtcInstant;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.stereotype.Service;
@@ -23,10 +28,34 @@ public class RoutingCaseQueryService {
 
     private final RoutingCaseRepository repository;
     private final RoutingCaseScope scope;
+    private final VoyageRepository voyages;
+    private final InfoFreshnessPolicy freshness;
 
-    public RoutingCaseQueryService(RoutingCaseRepository repository, RoutingCaseScope scope) {
+    public RoutingCaseQueryService(
+            RoutingCaseRepository repository,
+            RoutingCaseScope scope,
+            VoyageRepository voyages,
+            InfoFreshnessPolicy freshness) {
         this.repository = repository;
         this.scope = scope;
+        this.voyages = voyages;
+        this.freshness = freshness;
+    }
+
+    /**
+     * 算出の後に古くなった区間（S-06。経路設計者が案件を開いた時刻の航海で判定する。UC-06 4a。Bolt 39f2）。担当範囲を確かめた案件にだけ呼ぶ。候補の航海を 1 文だけ読み（N+1 にしない）、
+     * 確定できない状態や候補がないときは読まない（PERF-01）。
+     *
+     * @param routingCase 担当範囲の中の案件
+     * @param now 判定時刻（画面の時刻と同じ値）
+     * @return 候補番号と区間の順の古くなった区間（なければ空）
+     */
+    public List<StaleLeg> staleLegsOf(RoutingCase routingCase, Instant now) {
+        List<String> voyageNumbers = routingCase.candidateVoyageNumbers();
+        if (!routingCase.confirmable() || voyageNumbers.isEmpty()) {
+            return List.of();
+        }
+        return routingCase.staleLegs(voyages.findByVoyageNumbers(voyageNumbers), freshness, new UtcInstant(now));
     }
 
     /** 案件一覧（S-05）。操作者の担当企業の案件だけを、見積有効期限の近い順に返す（担当企業がなければ空）。 */

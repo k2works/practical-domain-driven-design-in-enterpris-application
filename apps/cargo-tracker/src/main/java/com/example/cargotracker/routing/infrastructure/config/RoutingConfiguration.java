@@ -124,8 +124,11 @@ public class RoutingConfiguration {
 
     @Bean
     RoutingCaseQueryService routingCaseQueryService(
-            RoutingCaseRepository repository, RoutingCaseScope routingCaseScope) {
-        return new RoutingCaseQueryService(repository, routingCaseScope);
+            RoutingCaseRepository repository,
+            RoutingCaseScope routingCaseScope,
+            VoyageRepository voyageRepository,
+            InfoFreshnessPolicy infoFreshnessPolicy) {
+        return new RoutingCaseQueryService(repository, routingCaseScope, voyageRepository, infoFreshnessPolicy);
     }
 
     /** 社内の経路設計案件の担当範囲の判定（照会とコマンドのサービスが使う。Bolt 38g）。 */

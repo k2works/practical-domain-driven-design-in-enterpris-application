@@ -66,6 +66,9 @@
 
     <th:block th:if="${routingCase.calculated()}">
         <h2>経路候補</h2>
+        <!--/* 画面を開いたときに読む文でライブリージョンの通知ではないので role を持たない（Bolt 39f2 の決定 (3)）。算出の後に古くなった候補にだけ出す */-->
+        <div class="alert alert-warning" th:if="${routingCase.staleNotice() != null}"
+             th:text="${routingCase.staleNotice()}">古くなった候補が 1 件あります。</div>
         <p>適合を先に、到着予定の早い順に示します。期限と同時刻・必要最小接続時間と同値は適合です。</p>
         <p th:if="${routingCase.omittedCandidates() > 0}"
            th:text="|ほかに ${routingCase.omittedCandidates()} 件の候補があります（適合を先に、到着予定の早い順に 20 件まで示しています）。|">ほかに 2 件の候補があります</p>
@@ -76,8 +79,9 @@
             <div class="card-body">
                 <h3 class="h5" th:id="|candidate-${candidate.candidateNo()}|">
                     <span th:text="|候補 ${candidate.candidateNo()}（${candidate.routeSummary()}）|">候補 1（直行）</span>
-                    <span th:class="${candidate.conforming()} ? 'badge text-bg-success' : 'badge text-bg-secondary'"
+                    <span th:class="${candidate.conforming() and !candidate.stale()} ? 'badge text-bg-success' : 'badge text-bg-secondary'"
                           th:text="${candidate.judgementBadge()}">✓ 適合</span>
+                    <span class="badge text-bg-warning" th:if="${candidate.stale()}">古くなった候補</span>
                     <span class="badge text-bg-primary" th:if="${candidate.confirmed()}"
                           th:text="${routingCase.confirmedRoute().label()}">確定した経路</span>
                 </h3>
@@ -95,6 +99,8 @@
                         <span th:text="|${leg.voyageNumber()}　${leg.route()}|">V-101　JPTYO から NLRTM</span><br>
                         <span th:text="|出発予定 ${leg.departure()}|">出発予定 …</span><br>
                         <span th:text="|到着予定 ${leg.arrival()}|">到着予定 …</span>
+                        <strong class="d-block" th:if="${leg.staleNote() != null}"
+                                th:text="${leg.staleNote()}">参照した航海情報の版が変わりました。</strong>
                     </li>
                 </ol>
                 <h4 class="h6" th:text="${candidate.conforming()} ? '判定の根拠' : '除外の理由'">除外の理由</h4>

@@ -20,6 +20,8 @@ import com.example.cargotracker.routing.domain.model.valueobjects.RouteSpecifica
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteVersionStatus;
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseId;
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseNumber;
+import com.example.cargotracker.routing.domain.model.valueobjects.StaleLeg;
+import com.example.cargotracker.routing.domain.model.valueobjects.StaleLegReason;
 import com.example.cargotracker.shared.annotation.ddd.AggregateRoot;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Location;
@@ -256,9 +258,7 @@ public final class RoutingCase {
         if (!candidate.evaluation().conforming()) {
             throw reject(RouteConfirmationRejectionReason.CANDIDATE_EXCLUDED, "除外の候補は確定できません");
         }
-        // 読み直した候補の区間の航海（航海番号はデータベースの主キーで重ならない）
-        Map<String, Voyage> current =
-                voyages.stream().collect(Collectors.toMap(Voyage::voyageNumber, voyage -> voyage));
+        Map<String, Voyage> current = byVoyageNumber(voyages);
         if (anyLegChanged(candidate, current)) {
             throw reject(RouteConfirmationRejectionReason.INFO_VERSION_CHANGED, "候補を算出した後に区間の航海の情報が更新されました");
         }
@@ -324,8 +324,7 @@ public final class RoutingCase {
         }
         RouteCandidate candidate =
                 confirmedCandidateOf(routeVersion.routeVersionNo()).orElseThrow();
-        Map<String, Voyage> current =
-                voyages.stream().collect(Collectors.toMap(Voyage::voyageNumber, voyage -> voyage));
+        Map<String, Voyage> current = byVoyageNumber(voyages);
         if (!anyLegChanged(candidate, current)) {
             return Optional.empty();
         }
@@ -376,10 +375,30 @@ public final class RoutingCase {
 
     /** 候補の区間のどれかが今の航海と一致しないか（確定と評価の照合。R-INV-03。航海がない区間は変わったとみなす）。 */
     private static boolean anyLegChanged(RouteCandidate candidate, Map<String, Voyage> current) {
-        return candidate.legs().stream()
-                .anyMatch(leg -> Optional.ofNullable(current.get(leg.voyageNumber()))
-                        .map(voyage -> !voyage.matchesLeg(leg))
-                        .orElse(true));
+        return candidate.legs().stream().anyMatch(leg -> changeOf(leg, current).isPresent());
+    }
+
+    /**
+     * 区間が今の航海と一致しない理由（一致すれば空。確定と評価の照合と S-06 の判定が同じ部品を使う。Bolt 39f2）。判定は {@link Voyage#matchesLeg} の 1 か所で、情報版の比較は
+     * 一致しないときの説明の分け方に使うだけ。
+     */
+    private static Optional<StaleLegReason> changeOf(Leg leg, Map<String, Voyage> current) {
+        Voyage voyage = current.get(leg.voyageNumber());
+        if (voyage == null) {
+            return Optional.of(StaleLegReason.VOYAGE_MISSING);
+        }
+        if (voyage.matchesLeg(leg)) {
+            return Optional.empty();
+        }
+        return Optional.of(
+                voyage.adoptedInfoVersion().equals(leg.infoVersion())
+                        ? StaleLegReason.SCHEDULE_CHANGED
+                        : StaleLegReason.INFO_VERSION_CHANGED);
+    }
+
+    /** 読み直した航海（航海番号はデータベースの主キーで重ならない）。 */
+    private static Map<String, Voyage> byVoyageNumber(List<Voyage> voyages) {
+        return voyages.stream().collect(Collectors.toMap(Voyage::voyageNumber, voyage -> voyage));
     }
 
     private static RouteConfirmationRejected reject(RouteConfirmationRejectionReason reason, String message) {
@@ -540,6 +559,54 @@ public final class RoutingCase {
         return confirmedCandidateOf(routeVersion().routeVersionNo())
                 .map(RoutingCase::voyageNumbersOf)
                 .orElse(List.of());
+    }
+
+    /** いまの経路版のすべての候補の区間の航海番号（重複なし。S-06 を開くときに 1 文で読む航海。Bolt 39f2）。候補がなければ空。 */
+    public List<String> candidateVoyageNumbers() {
+        return routeVersion().candidates().stream()
+                .flatMap(candidate -> candidate.legs().stream())
+                .map(Leg::voyageNumber)
+                .distinct()
+                .toList();
+    }
+
+    /**
+     * 算出の後に古くなった区間を、S-06 を開いた時刻の航海と比べて返す（UC-06 4a、【業務の判断】(w)・(y)・(z)。Bolt 39f2）。状態も列も変えず保存しない読み取りの判定で、
+     * 同じ情報版で元の値に戻れば空に戻る。確定できるときだけ判定する（{@link #confirmable()} が偽なら空）。区間 1 つに理由は 1 つで、順は航海がない → 今の航海と合わない →
+     * 適合の候補だけ取得から許容時間を過ぎた（今の航海の取得時刻で比べる。確定と同じ。Bolt 37c）。除外の候補は取得から許容時間を過ぎただけでは示さない。
+     *
+     * @return 候補番号と区間の順の古くなった区間（なければ空）
+     */
+    public List<StaleLeg> staleLegs(List<Voyage> voyages, InfoFreshnessPolicy freshness, UtcInstant judgedAt) {
+        if (!confirmable()) {
+            return List.of();
+        }
+        Map<String, Voyage> current = byVoyageNumber(voyages);
+        List<StaleLeg> staleLegs = new ArrayList<>();
+        for (RouteCandidate candidate : routeVersion().candidates()) {
+            List<Leg> legs = candidate.legs();
+            for (int index = 0; index < legs.size(); index++) {
+                int legNo = index + 1;
+                staleReasonOf(candidate, legs.get(index), current, freshness, judgedAt)
+                        .ifPresent(reason -> staleLegs.add(new StaleLeg(candidate.candidateNo(), legNo, reason)));
+            }
+        }
+        return List.copyOf(staleLegs);
+    }
+
+    private static Optional<StaleLegReason> staleReasonOf(
+            RouteCandidate candidate,
+            Leg leg,
+            Map<String, Voyage> current,
+            InfoFreshnessPolicy freshness,
+            UtcInstant judgedAt) {
+        Optional<StaleLegReason> change = changeOf(leg, current);
+        if (change.isPresent() || !candidate.evaluation().conforming()) {
+            return change;
+        }
+        return freshness.insufficient(current.get(leg.voyageNumber()).acquiredAt(), judgedAt)
+                ? Optional.of(StaleLegReason.INFO_INSUFFICIENT)
+                : Optional.empty();
     }
 
     private static List<String> voyageNumbersOf(RouteCandidate candidate) {

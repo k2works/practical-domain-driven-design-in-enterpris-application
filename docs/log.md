@@ -1,6 +1,10 @@
 # Docs Update Log
 
 ## 2026-11-09
+* **Update**: [用語集](/manual/用語集.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [12-外部データ](/manual/12-外部データ.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [08-経路設計](/manual/08-経路設計.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39f2_plan](/development/cargo-tracker/bolt_39f2_plan.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [bolt_39g_plan](/development/cargo-tracker/bolt_39g_plan.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [development_strategy](/development/cargo-tracker/development_strategy.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）

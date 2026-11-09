@@ -27,8 +27,11 @@ public class RoutingUiSteps {
 
     private static final String CALCULATE = "候補を算出";
     private static final String CONFIRM = "この経路で確定する";
-    /** 取込の Steps が使う航海の名前（航海番号の末尾。Bolt 39e）。 */
-    static final String ADOPTED = "ADOPTED";
+    /** 取込の Steps が使う航海の名前（航海番号の末尾。Bolt 39e）。航海番号の上限の 30 文字にして、幅 320 CSS px の折り返しを確かめる（18 文字。Bolt 39f2 の行 30）。 */
+    static final String ADOPTED = "ADOPTED-VOYAGE-NO1";
+
+    private static final String STALE_MARK = "古くなった候補";
+    private static final String CONFIRM_ENTRY = "この候補で確定へ";
 
     private final BrowserSession browser;
     private final UiScenarioState state;
@@ -240,7 +243,7 @@ public class RoutingUiSteps {
 
     private void openConfirmationOf(String voyageNumber) {
         candidate(voyageNumber)
-                .getByRole(AriaRole.LINK, new Locator.GetByRoleOptions().setName("この候補で確定へ"))
+                .getByRole(AriaRole.LINK, new Locator.GetByRoleOptions().setName(CONFIRM_ENTRY))
                 .click();
         page().waitForURL("**/confirmation?candidate=*");
         assertThat(page().getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setLevel(1)))
@@ -442,6 +445,42 @@ public class RoutingUiSteps {
         page().waitForURL("**/staff/routing-cases/RC-*");
         assertThat(page().getByRole(AriaRole.STATUS)).containsText("算出しました");
         browser.checkAccessibility();
+    }
+
+    /** 候補の見出しの判定の印と「古くなった候補」、確定の入口がないこと、再算出を促す上の文（Bolt 39f2 の行 29）。 */
+    @ならば("取り込んだ航海の候補は判定の印 {string} とともに古くなった候補と示され、確定へ進む操作は出ない")
+    public void 取り込んだ航海の候補は古くなった候補と示される(String judgement) {
+        Locator candidate = candidate(adoptedVoyage());
+        // 利用者が印を読むところまで画面を送る（デモの動画に印を写す）
+        candidate.scrollIntoViewIfNeeded();
+        Locator heading = candidate.getByRole(AriaRole.HEADING, new Locator.GetByRoleOptions().setLevel(3));
+        assertThat(heading).containsText(judgement);
+        assertThat(heading).containsText(STALE_MARK);
+        assertThat(entryOf(candidate)).hasCount(0);
+        // 共有の DB のほかの航海で候補の数が変わるので、「一部」と「すべて」に共通の文を確かめる（数の網羅は単体。行 19・20）
+        assertThat(page().locator("main .alert-warning")).containsText("古くなった候補は確定できません。");
+        assertThat(page().locator("main .alert-warning")).containsText("「候補を再算出」して比べ直してください。");
+        browser.checkAccessibility();
+    }
+
+    /** 区間の下の文（Bolt 39f2 の行 28・29。今の値は示さず、変わったことだけを示す。決定 (3)）。 */
+    @かつ("取り込んだ航海の候補の区間の下に {string} が示される")
+    public void 取り込んだ航海の候補の区間の下の文(String note) {
+        assertThat(candidate(adoptedVoyage()).locator("ol li")).containsText(note);
+        browser.checkAccessibility();
+    }
+
+    /** 再算出すると古くなった候補の表示が消える（Bolt 39f2 の行 29）。 */
+    @かつ("取り込んだ航海の候補に古くなった候補の印がなく、確定へ進む操作が出る")
+    public void 取り込んだ航海の候補に古くなった候補の印がない() {
+        Locator candidate = candidate(adoptedVoyage());
+        assertThat(candidate).not().containsText(STALE_MARK);
+        assertThat(entryOf(candidate)).hasCount(1);
+        browser.checkAccessibility();
+    }
+
+    private static Locator entryOf(Locator candidate) {
+        return candidate.getByRole(AriaRole.LINK, new Locator.GetByRoleOptions().setName(CONFIRM_ENTRY));
     }
 
     @もし("営業担当者が経路設計の案件一覧の URL を直接開く")

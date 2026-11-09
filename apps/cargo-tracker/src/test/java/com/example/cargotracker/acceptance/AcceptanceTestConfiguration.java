@@ -210,8 +210,13 @@ public class AcceptanceTestConfiguration {
         }
 
         @Bean
-        RoutingCaseQueryService routingCaseQueryService(InMemoryRoutingCaseRepository repository) {
-            return new RoutingCaseQueryService(repository, new RoutingCaseScope(repository));
+        RoutingCaseQueryService routingCaseQueryService(
+                InMemoryRoutingCaseRepository repository, InMemoryVoyageRepository voyageRepository) {
+            return new RoutingCaseQueryService(
+                    repository,
+                    new RoutingCaseScope(repository),
+                    voyageRepository,
+                    new InfoFreshnessPolicy(Duration.ofHours(24)));
         }
 
         @Bean

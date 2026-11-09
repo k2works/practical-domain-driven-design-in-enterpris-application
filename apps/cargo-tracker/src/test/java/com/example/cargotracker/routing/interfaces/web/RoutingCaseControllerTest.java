@@ -25,11 +25,15 @@ import com.example.cargotracker.routing.application.internal.queryservices.Routi
 import com.example.cargotracker.routing.domain.model.aggregates.ConnectionRule;
 import com.example.cargotracker.routing.domain.model.aggregates.RoutingCase;
 import com.example.cargotracker.routing.domain.model.aggregates.Voyage;
+import com.example.cargotracker.routing.domain.model.entities.RouteCandidate;
 import com.example.cargotracker.routing.domain.model.entities.RouteVersion;
 import com.example.cargotracker.routing.domain.model.rules.ConstraintEvaluator;
 import com.example.cargotracker.routing.domain.model.rules.InfoFreshnessPolicy;
 import com.example.cargotracker.routing.domain.model.rules.RouteCandidateFinder;
 import com.example.cargotracker.routing.domain.model.valueobjects.CandidateCalculation;
+import com.example.cargotracker.routing.domain.model.valueobjects.ConstraintEvaluation;
+import com.example.cargotracker.routing.domain.model.valueobjects.ExclusionReason;
+import com.example.cargotracker.routing.domain.model.valueobjects.Leg;
 import com.example.cargotracker.routing.domain.model.valueobjects.PortCall;
 import com.example.cargotracker.routing.domain.model.valueobjects.RedesignReasonCode;
 import com.example.cargotracker.routing.domain.model.valueobjects.RedesignRecord;
@@ -40,25 +44,38 @@ import com.example.cargotracker.routing.domain.model.valueobjects.RouteVersionSt
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseId;
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseNumber;
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseSummary;
+import com.example.cargotracker.routing.domain.model.valueobjects.StaleLeg;
+import com.example.cargotracker.routing.domain.model.valueobjects.StaleLegReason;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.Role;
 import com.example.cargotracker.shared.domain.UtcInstant;
+import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Stream;
 import org.hamcrest.Matchers;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.InOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -732,6 +749,320 @@ class RoutingCaseControllerTest {
         mockMvc.perform(get(SHOW))
                 .andExpect(content().string(Matchers.containsString("&lt;script&gt;alert(1)&lt;/script&gt;")))
                 .andExpect(content().string(Matchers.not(Matchers.containsString("<script>alert(1)"))));
+    }
+
+    @Nested
+    @Import(FixedClock.class)
+    class Bolt39f2_古くなった候補の表示 {
+
+        private static final String STALE_MARK = "古くなった候補";
+        private static final String ENTRY = "この候補で確定へ";
+        private static final String WHEN_CALCULATED = "（算出のとき）";
+        private static final String PARTIAL_LEAD = "古くなった候補が %d 件あります。";
+        private static final String ALL_LEAD = "適合の候補はすべて古くなっています。";
+        private static final String COMMON_TAIL = "古くなった候補は確定できません。航海の情報が更新された候補は「候補を再算出」して比べ直してください。";
+        private static final String INSUFFICIENT_TAIL = "取得から許容時間を過ぎた航海は、先に航海の情報の取込をデータ責任者に依頼し、取り込まれたら再算出してください。";
+        private static final String SCHEDULE_NOTE = "参照した航海情報の版は同じですが、この区間の予定が変わりました。";
+        private static final Instant CLOCK_INSTANT = Instant.parse("2026-10-07T00:00:00Z");
+
+        private String shown(RoutingCase routingCase, StaleLeg... staleLegs) throws Exception {
+            when(queryService.findByNumber(eq(NUMBER), any())).thenReturn(Optional.of(routingCase));
+            when(queryService.staleLegsOf(any(), any())).thenReturn(List.of(staleLegs));
+            return mockMvc.perform(get(SHOW))
+                    .andExpect(status().isOk())
+                    .andReturn()
+                    .getResponse()
+                    .getContentAsString(StandardCharsets.UTF_8);
+        }
+
+        private static RoutingCase presentedWith(RouteCandidate... candidates) {
+            return reconstitute(new RouteVersion(
+                    1, RouteVersionStatus.CANDIDATES_PRESENTED, List.of(candidates), at("2026-10-07T03:00:00Z")));
+        }
+
+        private static Leg leg(String voyageNumber) {
+            return new Leg(
+                    voyageNumber,
+                    TOKYO,
+                    ROTTERDAM,
+                    at("2026-10-10T00:00:00Z"),
+                    at("2026-10-30T00:00:00Z"),
+                    voyageNumber + "@1",
+                    at("2026-10-07T01:00:00Z"));
+        }
+
+        private static RouteCandidate conforming(int candidateNo, String... voyageNumbers) {
+            return candidate(candidateNo, List.of(), voyageNumbers);
+        }
+
+        private static RouteCandidate excluded(int candidateNo, String... voyageNumbers) {
+            return candidate(
+                    candidateNo,
+                    List.of(ExclusionReason.deadlineExceeded(at("2026-11-03T12:00:00Z"), DEADLINE, "V-X@1")),
+                    voyageNumbers);
+        }
+
+        private static RouteCandidate candidate(
+                int candidateNo, List<ExclusionReason> reasons, String... voyageNumbers) {
+            return new RouteCandidate(
+                    candidateNo,
+                    Arrays.stream(voyageNumbers).map(Bolt39f2_古くなった候補の表示::leg).toList(),
+                    new ConstraintEvaluation(at("2026-10-30T00:00:00Z"), reasons, null),
+                    at("2026-10-07T03:00:00Z"));
+        }
+
+        private static StaleLeg stale(int candidateNo, int legNo) {
+            return new StaleLeg(candidateNo, legNo, StaleLegReason.SCHEDULE_CHANGED);
+        }
+
+        /** 候補ごとの article（どの候補に出たかまで縛る。T-244）。 */
+        private static String block(String html, int candidateNo) {
+            Matcher matcher = Pattern.compile(
+                            "(?s)<article[^>]*aria-labelledby=\"candidate-" + candidateNo + "\".*?</article>")
+                    .matcher(html);
+            assertThat(matcher.find()).as("候補 %d の article", candidateNo).isTrue();
+            return matcher.group();
+        }
+
+        /** 候補の見出しの全文（タグを除き、空白を 1 つにまとめる。読み上げの名前）。 */
+        private static String heading(String block) {
+            Matcher matcher = Pattern.compile("(?s)<h3[^>]*>(.*?)</h3>").matcher(block);
+            assertThat(matcher.find()).isTrue();
+            return matcher.group(1)
+                    .replaceAll("<[^>]+>", " ")
+                    .replaceAll("\\s+", " ")
+                    .trim();
+        }
+
+        private static List<String> legItems(String block) {
+            Matcher matcher = Pattern.compile("(?s)<ol[^>]*>(.*?)</ol>").matcher(block);
+            assertThat(matcher.find()).isTrue();
+            return Arrays.stream(matcher.group(1).split("<li>")).skip(1).toList();
+        }
+
+        private static long count(String html, String text) {
+            return html.split(Pattern.quote(text), -1).length - 1L;
+        }
+
+        @Test
+        void 行18_適合の候補が1つで古いと時点を添えた判定の印と古くなった候補の印と区間の文を示し確定の入口を出さない() throws Exception {
+            RoutingCase routingCase = presentedWith(conforming(1, "V-1"));
+
+            String html = shown(routingCase, stale(1, 1));
+
+            String block = block(html, 1);
+            assertThat(heading(block)).contains("✓ 適合（算出のとき）").contains(STALE_MARK);
+            assertThat(block)
+                    .containsPattern("class=\"badge text-bg-secondary\"[^>]*>✓ 適合（算出のとき）")
+                    .doesNotContain("text-bg-success")
+                    .contains(SCHEDULE_NOTE)
+                    .doesNotContain(ENTRY);
+            // 判定は開いた時刻の時計で 1 回呼ぶ（範囲の中では呼ぶことの確かめ。行 26 の T-106。T-229）
+            verify(queryService).staleLegsOf(routingCase, CLOCK_INSTANT);
+        }
+
+        static Stream<Arguments> partlyStale() {
+            return Stream.of(
+                    Arguments.of(
+                            "(a) 候補 2 つのうち候補 2 に古い区間 1 つ",
+                            new RouteCandidate[] {conforming(1, "V-1"), conforming(2, "V-2")},
+                            new StaleLeg[] {stale(2, 1)},
+                            1,
+                            Set.of(2)),
+                    Arguments.of(
+                            "(b) 候補 2 に古い区間 2 つでも候補の数で数える",
+                            new RouteCandidate[] {conforming(1, "V-1"), conforming(2, "V-2", "V-3")},
+                            new StaleLeg[] {stale(2, 1), stale(2, 2)},
+                            1,
+                            Set.of(2)),
+                    Arguments.of(
+                            "(c) 候補 3 つのうち 2 つに古い区間 1 つずつ",
+                            new RouteCandidate[] {conforming(1, "V-1"), conforming(2, "V-2"), conforming(3, "V-3")},
+                            new StaleLeg[] {stale(2, 1), stale(3, 1)},
+                            2,
+                            Set.of(2, 3)));
+        }
+
+        @ParameterizedTest(name = "{0}")
+        @MethodSource("partlyStale")
+        void 行19_一部だけ古いと古い候補だけに印と文を示し新しい候補は今のまま(
+                String description,
+                RouteCandidate[] candidates,
+                StaleLeg[] staleLegs,
+                int expected,
+                Set<Integer> staleNos)
+                throws Exception {
+            String html = shown(presentedWith(candidates), staleLegs);
+
+            for (RouteCandidate candidate : candidates) {
+                String block = block(html, candidate.candidateNo());
+                if (staleNos.contains(candidate.candidateNo())) {
+                    assertThat(heading(block))
+                            .as(description)
+                            .contains(WHEN_CALCULATED)
+                            .contains(STALE_MARK);
+                    assertThat(block).as(description).doesNotContain(ENTRY);
+                } else {
+                    assertThat(heading(block)).as(description).endsWith("✓ 適合").doesNotContain(STALE_MARK);
+                    assertThat(block).as(description).contains(ENTRY);
+                }
+            }
+            assertThat(html)
+                    .as(description)
+                    .contains(PARTIAL_LEAD.formatted(expected) + COMMON_TAIL)
+                    .doesNotContain(ALL_LEAD);
+        }
+
+        static Stream<Arguments> excludedMixedIn() {
+            return Stream.of(
+                    Arguments.of(
+                            "(a) 適合 2 つのうち 1 つが古く、除外 1 つも区間が合わない",
+                            new RouteCandidate[] {conforming(1, "V-1"), conforming(2, "V-2"), excluded(3, "V-3")},
+                            new StaleLeg[] {stale(2, 1), stale(3, 1)},
+                            2),
+                    Arguments.of(
+                            "(b) 適合は新しく、除外 1 つだけ区間が合わない",
+                            new RouteCandidate[] {conforming(1, "V-1"), excluded(2, "V-2")},
+                            new StaleLeg[] {stale(2, 1)},
+                            1));
+        }
+
+        @ParameterizedTest(name = "{0}")
+        @MethodSource("excludedMixedIn")
+        void 行19b_除外が混ざると適合と除外を合わせて数え一部の文で新しい適合の候補の入口は残る(
+                String description, RouteCandidate[] candidates, StaleLeg[] staleLegs, int expected) throws Exception {
+            String html = shown(presentedWith(candidates), staleLegs);
+
+            assertThat(html)
+                    .as(description)
+                    .contains(PARTIAL_LEAD.formatted(expected))
+                    .doesNotContain(ALL_LEAD);
+            assertThat(block(html, 1)).as(description).contains(ENTRY);
+        }
+
+        @Test
+        void 行20_適合の候補がすべて古いと全部の文で確定の入口は0個で再算出は出る() throws Exception {
+            String html = shown(
+                    presentedWith(conforming(1, "V-1"), conforming(2, "V-2"), excluded(3, "V-3")),
+                    stale(1, 1),
+                    stale(2, 1));
+
+            assertThat(html)
+                    .contains(ALL_LEAD + COMMON_TAIL, "候補を再算出")
+                    .doesNotContain(PARTIAL_LEAD.formatted(2), ENTRY);
+        }
+
+        @Test
+        void 行20b_すべて除外で区間が合わないと一部の文で古くなった候補の文が適合する候補がありませんより先() throws Exception {
+            String html = shown(presentedWith(excluded(1, "V-1"), excluded(2, "V-2")), stale(1, 1), stale(2, 1));
+
+            assertThat(html).doesNotContain(ALL_LEAD);
+            assertThat(html.indexOf(PARTIAL_LEAD.formatted(2))).isPositive().isLessThan(html.indexOf("適合する候補がありません。"));
+        }
+
+        static Stream<Arguments> freshnessNotice() {
+            return Stream.of(
+                    Arguments.of("取得から許容時間を過ぎた区間がある", StaleLegReason.INFO_INSUFFICIENT, true),
+                    Arguments.of("過ぎた区間がない", StaleLegReason.SCHEDULE_CHANGED, false));
+        }
+
+        @ParameterizedTest(name = "{0}")
+        @MethodSource("freshnessNotice")
+        void 行20c_鮮度の案内の文は取得から許容時間を過ぎた区間があるときだけ出る(String description, StaleLegReason reason, boolean expected)
+                throws Exception {
+            String html = shown(presentedWith(conforming(1, "V-1")), new StaleLeg(1, 1, reason));
+
+            assertThat(html.contains(INSUFFICIENT_TAIL)).as(description).isEqualTo(expected);
+        }
+
+        static Stream<Arguments> legNotes() {
+            return Stream.of(
+                    Arguments.of(StaleLegReason.VOYAGE_MISSING, "今の航海の情報にこの航海がありません。"),
+                    Arguments.of(StaleLegReason.INFO_VERSION_CHANGED, "参照した航海情報の版が変わりました。"),
+                    Arguments.of(StaleLegReason.SCHEDULE_CHANGED, SCHEDULE_NOTE),
+                    Arguments.of(StaleLegReason.INFO_INSUFFICIENT, "航海の情報が取得から許容時間を過ぎています。取込をデータ責任者に依頼してください。"));
+        }
+
+        @ParameterizedTest(name = "{0}")
+        @MethodSource("legNotes")
+        void 行21_区間の文は区分ごとに1つで内部の語がなく古くない区間には文がない(StaleLegReason reason, String note) throws Exception {
+            String html = shown(presentedWith(conforming(1, "V-1", "V-2")), new StaleLeg(1, 2, reason));
+
+            List<String> items = legItems(block(html, 1));
+            assertThat(items).hasSize(2);
+            assertThat(items.get(1)).contains(note);
+            assertThat(legNotes().map(arguments -> (String) arguments.get()[1]))
+                    .isNotEmpty()
+                    .allSatisfy(text -> assertThat(items.get(0)).doesNotContain(text));
+            assertThat(count(html, note)).isEqualTo(1);
+            assertThat(html).doesNotContain("引き直す");
+        }
+
+        @Test
+        void 行22_除外の候補の区間が合わないと時点を添えた除外の印と古くなった候補の印を示し除外の理由は残す() throws Exception {
+            String html = shown(presentedWith(conforming(1, "V-1"), excluded(2, "V-2")), stale(2, 1));
+
+            String block = block(html, 2);
+            assertThat(heading(block)).contains("✕ 除外（算出のとき）").contains(STALE_MARK);
+            assertThat(block).contains("除外の理由").contains("期限超過");
+        }
+
+        @Test
+        void 行23_確定済みの案件は古くなった候補も時点の語も出さず今の表示のまま() throws Exception {
+            String html = shown(confirmed());
+
+            assertThat(heading(block(html, 1))).contains("✓ 適合").contains("確定した経路");
+            assertThat(html).doesNotContain(STALE_MARK).doesNotContain(WHEN_CALCULATED);
+        }
+
+        @Test
+        void 行24_再設計要の案件は確定のときの判定の印のままで算出のときの語も古くなった候補も出さない() throws Exception {
+            RouteVersion version = confirmed().routeVersion();
+            RoutingCase redesignRequired = reconstitute(new RouteVersion(
+                    1,
+                    RouteVersionStatus.REDESIGN_REQUIRED,
+                    version.candidates(),
+                    version.candidatesEvaluatedAt(),
+                    version.candidatesFound(),
+                    version.routeConfirmation(),
+                    new RedesignRecord(at("2026-10-08T06:00:00Z"), List.of(RedesignReasonCode.DEADLINE_EXCEEDED))));
+
+            String html = shown(redesignRequired);
+
+            assertThat(heading(block(html, 1))).contains("✓ 適合（確定のとき）").contains("再設計要の経路");
+            assertThat(html).doesNotContain(STALE_MARK).doesNotContain(WHEN_CALCULATED);
+        }
+
+        @Test
+        void 行25_見出しの全文と区間の文と上の文が読み上げの形になる() throws Exception {
+            String html = shown(presentedWith(conforming(1, "V-1"), conforming(2, "V-2")), stale(2, 1));
+
+            String block = block(html, 2);
+            assertThat(block).contains("aria-labelledby=\"candidate-2\"");
+            assertThat(heading(block)).isEqualTo("候補 2（直行） ✓ 適合（算出のとき） 古くなった候補");
+            assertThat(legItems(block).getFirst()).contains(SCHEDULE_NOTE);
+            assertThat(html)
+                    .containsPattern("<div class=\"alert alert-warning\">" + Pattern.quote(PARTIAL_LEAD.formatted(1)));
+        }
+
+        @Test
+        void 行26_担当範囲の外とない案件は404のままで判定を呼ばない() throws Exception {
+            when(queryService.findByNumber(any(), any())).thenReturn(Optional.empty());
+
+            mockMvc.perform(get(SHOW)).andExpect(status().isNotFound());
+
+            verify(queryService, never()).staleLegsOf(any(), any());
+        }
+
+        @Test
+        void 行27_確定の画面のGETは判定を呼ばず古い候補のURLでも開く() throws Exception {
+            when(queryService.findByNumber(eq(NUMBER), any()))
+                    .thenReturn(Optional.of(presentedWith(conforming(1, "V-1"))));
+
+            mockMvc.perform(get(SHOW + "/confirmation").param("candidate", "1")).andExpect(status().isOk());
+
+            verify(queryService, never()).staleLegsOf(any(), any());
+        }
     }
 
     static RoutingCase withExpiry(RoutingCase source, String expiresAt) {

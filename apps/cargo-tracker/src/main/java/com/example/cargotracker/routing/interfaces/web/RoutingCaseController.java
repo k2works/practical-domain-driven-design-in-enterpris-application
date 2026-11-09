@@ -97,15 +97,16 @@ public class RoutingCaseController {
         return LIST_VIEW;
     }
 
-    /** S-06。算出の前は候補の算出の操作を、算出の後は候補と再算出の操作を示す。範囲の外は 404（記録しない）。 */
+    /**
+     * S-06。算出の前は候補の算出の操作を、算出の後は候補と再算出の操作を示す。範囲の外は 404（記録しない）。担当範囲を確かめた案件にだけ、開いた時刻の航海で古くなった候補を判定する
+     * （UC-06 4a。Bolt 39f2。判定と表示に同じ時刻を渡す。T-229）。
+     */
     @GetMapping("/{number}")
     public String show(@PathVariable String number, AuthenticatedActor actor, Model model) {
+        RoutingCase routingCase = find(parse(number), actor);
+        Instant now = clock.instant();
         model.addAttribute(
-                "routingCase",
-                queryService
-                        .findByNumber(parse(number), actor)
-                        .map(routingCase -> RoutingCaseViews.detail(routingCase, clock.instant()))
-                        .orElseThrow(RoutingCaseController::notFound));
+                "routingCase", RoutingCaseViews.detail(routingCase, queryService.staleLegsOf(routingCase, now), now));
         return SHOW_VIEW;
     }
 

@@ -3,9 +3,12 @@ package com.example.cargotracker.routing.interfaces.api.internal;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.example.cargotracker.routing.acceptance.InMemoryRoutingCaseRepository;
+import com.example.cargotracker.routing.acceptance.InMemoryVoyageRepository;
 import com.example.cargotracker.routing.application.internal.queryservices.RoutingCaseQueryService;
 import com.example.cargotracker.routing.application.internal.queryservices.RoutingCaseScope;
 import com.example.cargotracker.routing.domain.model.aggregates.RoutingCaseFixture;
+import com.example.cargotracker.routing.domain.model.rules.InfoFreshnessPolicy;
+import java.time.Duration;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -16,8 +19,11 @@ import org.junit.jupiter.api.Test;
 class RouteVersionLegQueryAdapterTest {
 
     private final InMemoryRoutingCaseRepository repository = new InMemoryRoutingCaseRepository();
-    private final RouteVersionLegQueryAdapter adapter =
-            new RouteVersionLegQueryAdapter(new RoutingCaseQueryService(repository, new RoutingCaseScope(repository)));
+    private final RouteVersionLegQueryAdapter adapter = new RouteVersionLegQueryAdapter(new RoutingCaseQueryService(
+            repository,
+            new RoutingCaseScope(repository),
+            new InMemoryVoyageRepository(),
+            new InfoFreshnessPolicy(Duration.ofHours(24))));
 
     @Test
     void 確定した経路版の区間を区間の順に返す() {

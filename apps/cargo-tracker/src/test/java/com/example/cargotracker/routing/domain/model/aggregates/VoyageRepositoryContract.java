@@ -23,6 +23,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -40,6 +42,9 @@ public abstract class VoyageRepositoryContract {
     private static final Location ROTTERDAM = new Location("NLRTM");
     /** 判定時刻（マイクロ秒までの DB の精度）。 */
     private static final Instant JUDGED_AT = Instant.parse("2097-10-07T03:00:00.123456Z");
+
+    private static final int MAX_VOYAGES_ON_S06 = 60;
+    private static final Logger LOG = LoggerFactory.getLogger(VoyageRepositoryContract.class);
 
     protected abstract VoyageRepository voyages();
 
@@ -310,5 +315,27 @@ public abstract class VoyageRepositoryContract {
         saved("A", threeCalls());
 
         assertThat(voyages().findByVoyageNumbers(List.of())).isEmpty();
+    }
+
+    /** S-06 を開くときの上限（20 候補 × 3 区間 = 60 航海）。読みの時間は参考の値で、時間では落とさない（決定 (4)。1 秒を超えたら値を記録して止める）。 */
+    @Test
+    void Bolt39f2_行17_上限の60航海の寄港60をすべて寄港の順に読み読みの時間をログに出す() {
+        List<String> numbers = new ArrayList<>();
+        for (int i = 0; i < MAX_VOYAGES_ON_S06; i++) {
+            saved("U" + i, sixtyCalls());
+            numbers.add(number("U" + i));
+        }
+
+        long started = System.nanoTime();
+        List<Voyage> found = voyages().findByVoyageNumbers(numbers);
+        long elapsedMillis = (System.nanoTime() - started) / 1_000_000;
+
+        LOG.info(
+                "PERF-01 S-06 上限の読み（{} 航海 × 寄港 60）: {} ms（{}）",
+                numbers.size(),
+                elapsedMillis,
+                voyages().getClass().getSimpleName());
+        assertThat(numbersOf(found)).containsExactlyInAnyOrderElementsOf(numbers);
+        assertThat(found).allSatisfy(voyage -> assertThat(voyage.portCalls()).containsExactlyElementsOf(sixtyCalls()));
     }
 }

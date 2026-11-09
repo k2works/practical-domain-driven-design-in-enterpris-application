@@ -12,12 +12,15 @@ import com.example.cargotracker.routing.domain.model.valueobjects.RedesignRecord
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteConfirmation;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteVersionStatus;
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseSummary;
+import com.example.cargotracker.routing.domain.model.valueobjects.StaleLeg;
+import com.example.cargotracker.routing.domain.model.valueobjects.StaleLegReason;
 import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -35,6 +38,17 @@ final class RoutingCaseViews {
 
     private static final String NO_EXPIRY = "期限の記録なし";
 
+    /** 再算出を促す上の文の先頭（一部の候補が古い。n は候補の数。Bolt 39f2 の決定 (3)）。 */
+    private static final String STALE_NOTICE_PARTIAL_LEAD = "古くなった候補が %d 件あります。";
+
+    /** 再算出を促す上の文の先頭（適合の候補がすべて古い）。 */
+    private static final String STALE_NOTICE_ALL_LEAD = "適合の候補はすべて古くなっています。";
+
+    private static final String STALE_NOTICE_TAIL = "古くなった候補は確定できません。航海の情報が更新された候補は「候補を再算出」して比べ直してください。";
+
+    /** 取得から許容時間を過ぎた区間があるときだけ続ける文（再算出しても変わらないので、取込の依頼が先）。 */
+    private static final String STALE_NOTICE_INSUFFICIENT = "取得から許容時間を過ぎた航海は、先に航海の情報の取込をデータ責任者に依頼し、取り込まれたら再算出してください。";
+
     private RoutingCaseViews() {}
 
     /** 案件一覧の 1 行。 */
@@ -48,7 +62,13 @@ final class RoutingCaseViews {
             String requestedAt,
             String status) {}
 
-    /** 経路候補の比較の案件。 */
+    /**
+     * 経路候補の比較の案件。
+     *
+     * @param staleCandidates 古くなった候補の数（区間ではなく候補を数える。Bolt 39f2）
+     * @param allConformingStale 適合の候補が 1 件以上あり、そのすべてが古い
+     * @param infoInsufficientStale 取得から許容時間を過ぎた区間がある
+     */
     record CaseDetail(
             String number,
             String transportRequest,
@@ -64,7 +84,21 @@ final class RoutingCaseViews {
             String evaluatedAt,
             int omittedCandidates,
             ConfirmedRouteView confirmedRoute,
-            List<CandidateView> candidates) {}
+            List<CandidateView> candidates,
+            int staleCandidates,
+            boolean allConformingStale,
+            boolean infoInsufficientStale) {
+
+        /** 再算出を促す上の文（再算出は案件に 1 つの操作なので候補ごとに繰り返さない。Bolt 39f2 の決定 (3)）。古くなった候補がなければ null。 */
+        public String staleNotice() {
+            if (staleCandidates == 0) {
+                return null;
+            }
+            String lead =
+                    allConformingStale ? STALE_NOTICE_ALL_LEAD : STALE_NOTICE_PARTIAL_LEAD.formatted(staleCandidates);
+            return lead + STALE_NOTICE_TAIL + (infoInsufficientStale ? STALE_NOTICE_INSUFFICIENT : "");
+        }
+    }
 
     /**
      * 確定した経路（S-06 の確定の後）。確定の後に再設計要になった経路版では、再設計要にした時刻と理由も示す（Bolt 37d2）。
@@ -115,17 +149,27 @@ final class RoutingCaseViews {
             String infoAcquiredAt,
             boolean confirmable,
             boolean confirmed,
-            boolean judgedAtConfirmation) {
+            boolean judgedAtConfirmation,
+            boolean stale) {
 
-        /** 判定の印。再設計要の経路版では、判定が確定のときのものと分かるように示す（Bolt 37d2 レビュー）。 */
+        /**
+         * 判定の印。再設計要の経路版では、判定が確定のときのものと分かるように示す（Bolt 37d2 レビュー）。古くなった候補では、判定を消さず算出のときのものと分かるように示す（Bolt 39f2）。
+         */
         public String judgementBadge() {
             String badge = conforming ? "✓ 適合" : "✕ 除外";
-            return judgedAtConfirmation ? badge + "（確定のとき）" : badge;
+            if (judgedAtConfirmation) {
+                return badge + "（確定のとき）";
+            }
+            return stale ? badge + "（算出のとき）" : badge;
         }
     }
 
-    /** 区間 1 つ。 */
-    record LegView(String voyageNumber, String route, String departure, String arrival) {}
+    /**
+     * 区間 1 つ。
+     *
+     * @param staleNote 古くなった区間の文（古くなければ null。Bolt 39f2）
+     */
+    record LegView(String voyageNumber, String route, String departure, String arrival, String staleNote) {}
 
     /** 案件一覧の 1 行。見積有効期限を過ぎていれば期限切れと示す（経路設計は期限で確定を拒否しない。Bolt 19）。 */
     static CaseRow row(RoutingCaseSummary summary, Instant now) {
@@ -142,11 +186,28 @@ final class RoutingCaseViews {
                 status(summary.status()));
     }
 
-    static CaseDetail detail(RoutingCase routingCase, Instant now) {
+    /**
+     * 経路候補の比較（S-06）の画面。
+     *
+     * @param staleLegs 開いた時刻の航海で判定した、古くなった区間（Bolt 39f2）
+     */
+    static CaseDetail detail(RoutingCase routingCase, List<StaleLeg> staleLegs, Instant now) {
         RouteVersion version = routingCase.routeVersion();
         boolean confirmable = routingCase.confirmable();
         Integer confirmedNo =
                 version.confirmation().map(RouteConfirmation::candidateNo).orElse(null);
+        Map<Integer, Map<Integer, StaleLegReason>> staleByCandidate = staleLegs.stream()
+                .collect(Collectors.groupingBy(
+                        StaleLeg::candidateNo, Collectors.toMap(StaleLeg::legNo, StaleLeg::reason)));
+        List<CandidateView> candidates = version.candidates().stream()
+                .map(candidate -> candidate(
+                        candidate,
+                        routingCase.specification().arrivalDeadline(),
+                        confirmable,
+                        Integer.valueOf(candidate.candidateNo()).equals(confirmedNo),
+                        version.redesign().isPresent(),
+                        staleByCandidate.getOrDefault(candidate.candidateNo(), Map.of())))
+                .toList();
         return new CaseDetail(
                 routingCase.number().text(),
                 transportRequest(routingCase.transportRequestNumber(), routingCase.transportRequestVersionNo()),
@@ -170,14 +231,16 @@ final class RoutingCaseViews {
                 version.confirmation()
                         .map(confirmation -> confirmedRoute(confirmation, version.redesign()))
                         .orElse(null),
-                version.candidates().stream()
-                        .map(candidate -> candidate(
-                                candidate,
-                                routingCase.specification().arrivalDeadline(),
-                                confirmable,
-                                Integer.valueOf(candidate.candidateNo()).equals(confirmedNo),
-                                version.redesign().isPresent()))
-                        .toList());
+                candidates,
+                staleByCandidate.size(),
+                allConformingStale(candidates),
+                staleLegs.stream().anyMatch(staleLeg -> staleLeg.reason() == StaleLegReason.INFO_INSUFFICIENT));
+    }
+
+    /** 適合の候補が 1 件以上あり、そのすべてが古いか（適合が 0 件は「一部」の文。行 20b）。 */
+    private static boolean allConformingStale(List<CandidateView> candidates) {
+        return candidates.stream().anyMatch(CandidateView::conforming)
+                && candidates.stream().filter(CandidateView::conforming).allMatch(CandidateView::stale);
     }
 
     /** 経路の確定（S-07）の画面。 */
@@ -192,7 +255,7 @@ final class RoutingCaseViews {
                 expiresAt(routingCase),
                 expired(routingCase, now),
                 routingCase.aggregateVersion(),
-                candidate(candidate, routingCase.specification().arrivalDeadline(), true, false, false));
+                candidate(candidate, routingCase.specification().arrivalDeadline(), true, false, false, Map.of()));
     }
 
     /** 見積有効期限と同時刻または後は期限切れ（見積りの失効 Q-INV-07 と同じ向き）。経路設計は期限で確定を拒否しない。 */
@@ -252,20 +315,16 @@ final class RoutingCaseViews {
             UtcInstant deadline,
             boolean versionConfirmable,
             boolean confirmed,
-            boolean judgedAtConfirmation) {
+            boolean judgedAtConfirmation,
+            Map<Integer, StaleLegReason> staleReasons) {
         boolean conforming = candidate.evaluation().conforming();
+        boolean stale = !staleReasons.isEmpty();
         return new CandidateView(
                 candidate.candidateNo(),
                 conforming,
                 conforming ? "適合" : "除外",
                 routeSummary(candidate.legs()),
-                candidate.legs().stream()
-                        .map(leg -> new LegView(
-                                leg.voyageNumber(),
-                                route(leg.load(), leg.discharge()),
-                                dateTime(leg.departureAt()),
-                                dateTime(leg.arrivalAt())))
-                        .toList(),
+                legs(candidate.legs(), staleReasons),
                 dateTime(candidate.evaluation().estimatedArrivalAt()),
                 candidate
                         .evaluation()
@@ -274,9 +333,35 @@ final class RoutingCaseViews {
                         .orElse("直行（積替えなし）"),
                 reasons(candidate, deadline),
                 dateTime(candidate.oldestInfoAcquiredAt()),
-                versionConfirmable && conforming,
+                versionConfirmable && conforming && !stale,
                 confirmed,
-                judgedAtConfirmation);
+                judgedAtConfirmation,
+                stale);
+    }
+
+    private static List<LegView> legs(List<Leg> legs, Map<Integer, StaleLegReason> staleReasons) {
+        List<LegView> views = new ArrayList<>();
+        for (int index = 0; index < legs.size(); index++) {
+            Leg leg = legs.get(index);
+            StaleLegReason reason = staleReasons.get(index + 1);
+            views.add(new LegView(
+                    leg.voyageNumber(),
+                    route(leg.load(), leg.discharge()),
+                    dateTime(leg.departureAt()),
+                    dateTime(leg.arrivalAt()),
+                    reason == null ? null : staleNote(reason)));
+        }
+        return views;
+    }
+
+    /** 区間の下の文。変わったことだけを示し、今の値は示さない（Bolt 39f2 の決定 (3)）。 */
+    static String staleNote(StaleLegReason reason) {
+        return switch (reason) {
+            case VOYAGE_MISSING -> "今の航海の情報にこの航海がありません。";
+            case INFO_VERSION_CHANGED -> "参照した航海情報の版が変わりました。";
+            case SCHEDULE_CHANGED -> "参照した航海情報の版は同じですが、この区間の予定が変わりました。";
+            case INFO_INSUFFICIENT -> "航海の情報が取得から許容時間を過ぎています。取込をデータ責任者に依頼してください。";
+        };
     }
 
     /** 経由の要約（直行、または積替えの港）。 */

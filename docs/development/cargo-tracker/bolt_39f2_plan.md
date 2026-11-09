@@ -3,7 +3,7 @@ type: Plan
 title: "Bolt 39f2 計画 - 算出の後に古くなった候補を S-06 で示し、再算出を促す"
 tags: [plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-09T18:43:30Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-09T21:52:24Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-11-09T18:06:43Z }
   - { by: human:kakimomokuri, at: 2026-11-09T18:06:55Z }
@@ -366,11 +366,11 @@ StaleLeg --> StaleLegReason
 ## ステップ計画（ゲートは下の各ステップに書く）
 
 - [x] **1. 設計の文書**（2026-11-10 に実施した）: 上の「設計文書に直す箇所」。【業務の判断】(w)・(y)・(z)、【前の決定の変更】(8)〜(10) を反映する。始めに検索する（完了の判定: 文書の差分と検索の記録。ゲート: 既定（確認ポイント 2〜5 で計画の承認に含む））
-- [ ] **2. 受入シナリオとテストの Red**: 39f の完了の後のコードで、基準のコミット `bc72a77f7` からの行番号のずれを確かめ直す。外から入る。まず `adopted_voyage_reflected_ui.feature` に行 29 を書いて Red を記録する（古くなった候補が「✓ 適合」と「この候補で確定へ」のままで落ちる）。続いて行 1〜26・28・30 を書く（行 27・32 は既存のテスト）。骨組み（`staleLegs` は空を返す、`StaleLeg`・`StaleLegReason`、`staleLegsOf` は空を返す、コンストラクタの足し算）でコンパイルを通す（T-254）。直す既存のテストを一覧にする（T-217）（完了の判定: 期待した理由で落ちる記録。Red の行は `wip/` か stash に置き、develop に落ちるテストを積まない。ゲート: 既定）
-- [ ] **3. 判定と照会**: 決定 (2)・(4)・(5)（`changeOf` に寄せ、`anyLegChanged` の振る舞いを変えない）。行 1〜17 が緑。`ModularityTest`・`LayerArchitectureTest` を流す（当たったら止めて諮る。T-125）。`spotbugsMain`・`checkstyleMain`・`sonar-local:check`（完了の判定: 緑。行 17 の読みの時間を記録する。ゲート: 既定）
-- [ ] **4. S-06 の表示**: 決定 (3)。`RoutingCaseViews`・`show.html`・controller。行 18〜26 が緑。`spotbugsMain`・`checkstyleMain`・`sonar-local:check`（完了の判定: 緑。ゲート: 既定（確認ポイント 3 で計画の承認に含む））
-- [ ] **5. 受入シナリオの緑と動画**: 行 27〜30・32 が緑、axe 違反 0、幅 320 px、`@demo-bolt-39f2/stale-candidate` を撮る（完了の判定: `uiTest` の該当の feature と動画。ゲート: 既定）
-- [ ] **6. マニュアルとキャプチャ**: 決定 (9)。08-経路設計.md・12-外部データ.md・用語集・`08-candidates-stale`。`08-candidates-stale` 以外の PNG の差分を戻す。文を実装と【業務の判断】(w)・(y)・(z) の文に一字ずつ突き合わせる（T-197・T-251）（完了の判定: 突き合わせの記録と行 31。ゲート: 既定）
+- [x] **2. 受入シナリオとテストの Red**（2026-11-10 に実施した。行番号のずれは `RoutingUiSteps` の再算出の Step :396 → :429、`Voyage.matchesLeg` :137-147 → :145-156、`RoutingConfiguration` :117-120 → :125-129。行 29 の Red は見出しが「✓ 適合」のままで落ちる。直す既存のテストは `AcceptanceTestConfiguration`・`RouteVersionLegQueryAdapterTest` のコンストラクタだけ）: 39f の完了の後のコードで、基準のコミット `bc72a77f7` からの行番号のずれを確かめ直す。外から入る。まず `adopted_voyage_reflected_ui.feature` に行 29 を書いて Red を記録する（古くなった候補が「✓ 適合」と「この候補で確定へ」のままで落ちる）。続いて行 1〜26・28・30 を書く（行 27・32 は既存のテスト）。骨組み（`staleLegs` は空を返す、`StaleLeg`・`StaleLegReason`、`staleLegsOf` は空を返す、コンストラクタの足し算）でコンパイルを通す（T-254）。直す既存のテストを一覧にする（T-217）（完了の判定: 期待した理由で落ちる記録。Red の行は `wip/` か stash に置き、develop に落ちるテストを積まない。ゲート: 既定）
+- [x] **3. 判定と照会**（2026-11-10 に実施した。行 1〜17 が緑。層の規則に当たらない。行 17 の上限の読みは最後の `check` で H2 30 ms、PostgreSQL 17 ms。`sonar-local:check` は最後にまとめて流した）: 決定 (2)・(4)・(5)（`changeOf` に寄せ、`anyLegChanged` の振る舞いを変えない）。行 1〜17 が緑。`ModularityTest`・`LayerArchitectureTest` を流す（当たったら止めて諮る。T-125）。`spotbugsMain`・`checkstyleMain`・`sonar-local:check`（完了の判定: 緑。行 17 の読みの時間を記録する。ゲート: 既定）
+- [x] **4. S-06 の表示**（2026-11-10 に実施した。行 18〜27 が緑。`sonar-local:check` は最後にまとめて流した）: 決定 (3)。`RoutingCaseViews`・`show.html`・controller。行 18〜26 が緑。`spotbugsMain`・`checkstyleMain`・`sonar-local:check`（完了の判定: 緑。ゲート: 既定（確認ポイント 3 で計画の承認に含む））
+- [x] **5. 受入シナリオの緑と動画**（2026-11-10 に実施した。動画は `docs/assets/demo/bolt-39f2/stale-candidate.webm`。足した Step は「古くなった候補の表示」と区間の文で、「経路設計者が案件を開き直す」は 39f で足されていた）: 行 27〜30・32 が緑、axe 違反 0、幅 320 px、`@demo-bolt-39f2/stale-candidate` を撮る（完了の判定: `uiTest` の該当の feature と動画。ゲート: 既定）
+- [x] **6. マニュアルとキャプチャ**（2026-11-10 に実施した。`08-candidates-stale` を足し、ほかの PNG の差分を戻した。区間の文と上の文を計画・実装・テスト・マニュアルで突き合わせて一致。39f の開発レビューの指摘で 8 章の 2 度寄る航海の注を別の項目に分けた）: 決定 (9)。08-経路設計.md・12-外部データ.md・用語集・`08-candidates-stale`。`08-candidates-stale` 以外の PNG の差分を戻す。文を実装と【業務の判断】(w)・(y)・(z) の文に一字ずつ突き合わせる（T-197・T-251）（完了の判定: 突き合わせの記録と行 31。ゲート: 既定）
 - [ ] **7. 品質ゲートと開発レビュー**: 変異（下の表）、`check`・`uiTest`、その後に SonarQube（落ちたら先に中身を一覧する。T-252）、開発レビュー（マニュアルを書く立場の観点を入れる。T-90）とその直し。文書のステップの行を一覧で突き合わせる（T-197）（完了の判定: 緑と指摘の扱いと突き合わせの記録。ゲート: 既定）
 - [ ] **8. 終了報告**: push して CI とデモ環境の配備を確かめる。release_plan（39f2 の行の計画と終了報告のリンク）・開発の索引・mkdocs を直す。#50 の「S-06 が、算出の後に古くなった候補を「適合」と示したまま」にチェックを付け、画面を変えた分の手動確認の項目（S-06。行 25 の読み上げの文）を載せる（Bolt 37e4c の前例）。【業務の判断】(w)・(y)・(z)、【前の決定の変更】(8)〜(10) を議題の先頭に置き、既知の課題に申し送りの表を書く（完了の判定: 報告の承認。**承認ゲート**（終了報告））
 
