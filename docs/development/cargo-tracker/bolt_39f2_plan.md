@@ -6,6 +6,7 @@ status: stable
 generated: { by: anthropic/claude-opus-5-5, at: 2026-11-09T18:06:44Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-11-09T18:06:43Z }
+  - { by: human:kakimomokuri, at: 2026-11-09T18:06:55Z }
 ---
 
 # Bolt 39f2 計画 - 算出の後に古くなった候補を S-06 で示し、再算出を促す
@@ -15,7 +16,7 @@ verified:
 | 項目 | 内容 |
 | :--- | :--- |
 | Bolt | 第 39f2 回（W7 の 26 本目。release_plan :974 の 39f2 の行） |
-| 状態 | **draft（人の承認待ち）**。2 つの整合性検証（`validating-iteration-plan`・`validating-design`）の指摘を反映した |
+| 状態 | 承認済み（2026-11-10。推奨のとおり。Recommend 承認の指示による）。2 つの整合性検証（`validating-iteration-plan`・`validating-design`）の指摘を反映した |
 | 予定 | W7（2026-11-16 の週。前倒しで着手できる）。Bolt 39f の完了の後、39g の前に着手する（release_plan :980）。作業は約 2 時間 52 分（172 分。決定 (1)）。行番号の基準のコミットは `bc72a77f7` で、ステップ 2 で確かめ直す。下の「時間の配分と打ち切り」。`check`・`uiTest`・`manualScreenshots`・SonarQube・CI と承認の待ちを除く |
 | アプローチ | アウトサイドイン（S-06 の古くなった候補から。release_plan :974。状態の組み合わせの表を先に書く。T-182）。ステップ 2 で受入シナリオを先に Red にし、内側に入る |
 | 対象 | (1) 候補の区間ごとに今の航海と比べる読み取りの判定（`RoutingCase.staleLegs`。状態を持たない。【業務の判断】(w)・(y)・(z)）、(2) S-06 を開くときに 1 文で航海を読む照会（`RoutingCaseQueryService.staleLegsOf`）、(3) S-06 の表示（「古くなった候補」の印、判定の印の「（算出のとき）」、区間ごとの文、再算出を促す文、「この候補で確定へ」を出さない）、(4) UC-06 4a の読み方を文書にする、(5) マニュアル 8 章・用語集とキャプチャ、動画 |
