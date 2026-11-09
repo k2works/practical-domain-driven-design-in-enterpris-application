@@ -146,6 +146,7 @@ Bolt がイテレーションに当たります。ふりかえりは各 Bolt の
 | 39d2b | [S-17 で取込のキーのない隔離をまとめて却下する](bolt_39d2b_plan.md) | [終了報告](bolt_39d2b_report.md)（[動画](../../assets/demo/bolt-39d2b/reject-keyless.webm){:target="_blank"}） | W7 | 完了 |
 | 39d3 | [S-17 の判断の画面で航海の値をこの外部版の採用値と比べる](bolt_39d3_plan.md) | [終了報告](bolt_39d3_report.md)（[動画](../../assets/demo/bolt-39d3/compare.webm){:target="_blank"}） | W7 | 完了 |
 | 39d3c | [S-17 の判断の画面で主要実績の値を比べ、読めない値も却下で片付ける](bolt_39d3c_plan.md) | [終了報告](bolt_39d3c_report.md)（[動画](../../assets/demo/bolt-39d3c/compare-milestone.webm){:target="_blank"}） | W7 | 完了 |
+| 39d3b | [S-17 で航海の内容の違う原本の隔離を採用する](bolt_39d3b_plan.md) | [終了報告](bolt_39d3b_report.md)（[動画](../../assets/demo/bolt-39d3b/adopt.webm){:target="_blank"}） | W7 | 完了 |
 
 Bolt を始めるときに行を追加します。
 
