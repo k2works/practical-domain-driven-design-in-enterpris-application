@@ -151,6 +151,7 @@ Bolt がイテレーションに当たります。ふりかえりは各 Bolt の
 | 39d4 | [判断の後に送り直された原本を業務の決まりどおりに分類する](bolt_39d4_plan.md) | [終了報告](bolt_39d4_report.md)（[動画](../../assets/demo/bolt-39d4/resend.webm){:target="_blank"}） | W7 | 完了 |
 | 39e | [採用した航海の値を経路設計の航海に書き、候補の算出で使う](bolt_39e_plan.md) | [終了報告](bolt_39e_report.md) | W7 | 完了 |
 | 39e2 | [確定のときに情報版と区間の予定の組で照合し、見本の航海を分ける](bolt_39e2_plan.md) | [終了報告](bolt_39e2_report.md) | W7 | 完了 |
+| 39f | [航海の更新から確定した経路を評価する入口をつなぎ、2 度寄る航海の寄港の位置を持たせる](bolt_39f_plan.md) | [終了報告](bolt_39f_report.md) | W7 | 完了 |
 
 Bolt を始めるときに行を追加します。
 
