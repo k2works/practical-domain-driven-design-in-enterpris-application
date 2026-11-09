@@ -18032,7 +18032,7 @@
 <tr>
 <td style="text-align: left;">2</td>
 <td style="text-align: left;">隔離・差異の判断（S-17 の採用・却下と UC-15 の 6 段目の判断者）の記録</td>
-<td style="text-align: left;"><code>receipt</code> は追記専用（data_model :173）のまま、判断を別の追記専用の表（例: <code>external_data.receipt_decision</code>。判断・判断者・時刻・理由）に置く（スキーマ）。採用の判断で <code>adopted_value</code> を作り、DE-12・DE-13 を出す。隔離した payload を採用した後に同じ payload が再送されたとき（<code>external_record</code> は最初の payload のハッシュで比べる。data_model :1121）は重複にするか、39d の開始準備で決めた（39d4 で外部原本の基準を採用した payload に付け替え、採用した payload の再送は重複、元の payload の再送は隔離。<a href="../bolt_39d_plan/">Bolt 39d 計画</a> の開始準備の決定 (9)、【業務の判断】(b)・(f)。2026-11-05、推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）</td>
+<td style="text-align: left;"><code>receipt</code> は追記専用（data_model :173）のまま、判断を別の追記専用の表（例: <code>external_data.receipt_decision</code>。判断・判断者・時刻・理由）に置く（スキーマ）。採用の判断で <code>adopted_value</code> を作り、DE-12・DE-13 を出す。隔離した payload を採用した後に同じ payload が再送されたとき（<code>external_record</code> は最初の payload のハッシュで比べる。data_model :1121）は重複にするか、39d の開始準備で決めた（外部原本の基準を採用した payload に付け替え、採用した payload の再送は重複、元の payload の再送は隔離。<a href="../bolt_39d_plan/">Bolt 39d 計画</a> の開始準備の決定 (9)、【業務の判断】(b)・(f)。2026-11-05、推奨のとおり。Recommend 承認の指示による。human:kakimomokuri。付け替えは Bolt 39d4 で作った。読んだ基準のハッシュを条件にした更新で、比べる相手は採用中の payload。<a href="../bolt_39d4_plan/">Bolt 39d4 計画</a> の開始準備の決定 (3)・(4)）</td>
 </tr>
 <tr>
 <td style="text-align: left;">3</td>
@@ -18314,14 +18314,14 @@
 </tr>
 <tr>
 <td style="text-align: left;">39d4</td>
-<td style="text-align: left;">判断の後に送り直されたときの扱いの縦: 採用した後の外部原本の基準のハッシュの付け替え、採用・元・却下した payload の再送の受入シナリオ、直した行の取り込み直しと新しい外部版の送り直しの受入シナリオ、同じ外部版は隔離・版をまたげば差異（39h）、重複の定義と注記の「最初の受信」の直し、情報源の並びの規則の実装、マニュアル 12 章の「直して送り直すとき」と付録 B、デモの動画（Bolt 39d の開始準備で 39d から分けた）、S-17 の一覧の上限いっぱいの照会の計測（39d の行 19。見積りを目安に収めるため 39d から送った）、却下した原本をそのまま送り直すと重複になり判断を待つ一覧に戻らないおそれを開始準備で最初に確かめる（39d2 の終了報告の議題 2。【業務の判断】(e) が通るか）、39d の行 7 を契約のテストに上げる（39d2b から送った。契約のテストに「判断のポートで判断を追記した隔離は絞らない一覧と件数からも消える」を足し、追記の前と後の絞らない件数の差が 1 で確かめ、JDBC の行 7 と <code>keylessQuarantine</code>、H2 の行 7 を消す。約 10 分。Bolt 39d2b の開始準備の決定 (6)）、同じファイルを取り込み直すと形式の誤りが再び判断を待つ隔離になる受入シナリオ（39d2b から送った。Bolt 39d2b の開始準備の決定 (9)）。39d3b から送った（Bolt 39d3b の開始準備の決定 (11)）: 同じ公開時刻の採用値を ID の順で選ぶときの H2 の UUID の比べ方（上の位が符号で違う 2 つの UUID で、メモリ・H2・PostgreSQL の契約のテスト。H2 だけが逆なら、選び方（SQL の並び）を変えるかを諮る。約 10 分）、テストの完全修飾名を import にまとめる（bolt_39d3c_report.md :74。Bolt 39d3b のステップ 1 で <code>988aa49ef</code> の版をクラスごとに数え直した。import・package の行を除き、決定 (11) の数え方（<code>com.example.cargotracker</code>・<code>java.util</code>・<code>java.time</code>・<code>ch.qos</code>・<code>org.slf4j</code> の完全修飾名を、注釈の行を除いて数える）で UndecidedRecordControllerTest 46（45 行）・ExternalDataRecordRepositoriesContract 14・UndecidedRecordQueryServiceTest 11（9 行）・MilestoneValuesTest 2 の計 73 か所と、<code>org.junit.jupiter.params.provider.Arguments</code> の 42 か所（Controller 40・Contract 2）で、計 115 か所・約 20 分。この数え方の外に、同じ 4 つのクラスに <code>org.assertj</code>・<code>org.mockito</code>・<code>org.springframework</code> の完全修飾名が本文に 73 か所（Controller 69（<code>Assertions.assertThat</code> 39・<code>MockMvcResultMatchers</code> 16・<code>Mockito.never</code> 9・<code>ArgumentMatchers.eq</code> 4・<code>RequestBuilder</code> 1）、QueryServiceTest 4（<code>assertThatThrownBy</code>））と、注釈の行に 20 か所（Controller 7（<code>@org.junit.jupiter.params.provider.MethodSource</code>）・Contract 2・QueryServiceTest 1・MilestoneValuesTest 10）ある。これも含めるかを 39d4 の開始準備で決める（含めれば計 208 か所で約 35 分。名前の重なりで完全修飾名が要る箇所は残す）。39d3b で足すテストは import で書き、送った分を増やさない）、39d3 の申し送り（bolt_39d3_plan.md :249。片方を採用したとき、もう片方の比べる相手が変わる）のうち、外部原本の基準の付け替えと組み合わせて確かめる分（採用した後に送り直したとき、同じ外部原本のもう 1 つの隔離の比べる相手。付け替えの受入シナリオの中で確かめる。比べる相手が採用した値に変わることは 39d3b の行 8 で確かめる）。39d3b から送った分の見積りは計約 30 分（H2 の UUID の比べ方 10 分、テストの完全修飾名 20 分。完全修飾名の数え方の外の 93 か所を含めれば計約 45 分）</td>
+<td style="text-align: left;">判断の後に送り直されたときの扱いの縦: 採用した後の外部原本の基準のハッシュの付け替え、採用・元・却下した payload の再送の受入シナリオ、直した行の取り込み直しと新しい外部版の送り直しの受入シナリオ、同じ外部版は隔離・版をまたげば差異（39h）、重複の定義と注記の「最初の受信」の直し、情報源の並びの規則の実装、マニュアル 12 章の「直して送り直すとき」と付録 B、デモの動画（Bolt 39d の開始準備で 39d から分けた）、S-17 の一覧の上限いっぱいの照会の計測（39d の行 19。見積りを目安に収めるため 39d から送った）、却下した原本をそのまま送り直すと重複になり判断を待つ一覧に戻らないおそれを開始準備で最初に確かめる（39d2 の終了報告の議題 2。【業務の判断】(e) が通るか）、39d の行 7 を契約のテストに上げる（39d2b から送った。契約のテストに「判断のポートで判断を追記した隔離は絞らない一覧と件数からも消える」を足し、追記の前と後の絞らない件数の差が 1 で確かめ、JDBC の行 7 と <code>keylessQuarantine</code>、H2 の行 7 を消す。約 10 分。Bolt 39d2b の開始準備の決定 (6)）、同じファイルを取り込み直すと形式の誤りが再び判断を待つ隔離になる受入シナリオ（39d2b から送った。Bolt 39d2b の開始準備の決定 (9)）。39d3b から送った（Bolt 39d3b の開始準備の決定 (11)）: 同じ公開時刻の採用値を ID の順で選ぶときの H2 の UUID の比べ方（上の位が符号で違う 2 つの UUID で、メモリ・H2・PostgreSQL の契約のテスト。H2 だけが逆なら、選び方（SQL の並び）を変えるかを諮る。約 10 分）、テストの完全修飾名を import にまとめる（bolt_39d3c_report.md :74。Bolt 39d3b のステップ 1 で <code>988aa49ef</code> の版をクラスごとに数え直した。import・package の行を除き、決定 (11) の数え方（<code>com.example.cargotracker</code>・<code>java.util</code>・<code>java.time</code>・<code>ch.qos</code>・<code>org.slf4j</code> の完全修飾名を、注釈の行を除いて数える）で UndecidedRecordControllerTest 46（45 行）・ExternalDataRecordRepositoriesContract 14・UndecidedRecordQueryServiceTest 11（9 行）・MilestoneValuesTest 2 の計 73 か所と、<code>org.junit.jupiter.params.provider.Arguments</code> の 42 か所（Controller 40・Contract 2）で、計 115 か所・約 20 分。この数え方の外に、同じ 4 つのクラスに <code>org.assertj</code>・<code>org.mockito</code>・<code>org.springframework</code> の完全修飾名が本文に 73 か所（Controller 69（<code>Assertions.assertThat</code> 39・<code>MockMvcResultMatchers</code> 16・<code>Mockito.never</code> 9・<code>ArgumentMatchers.eq</code> 4・<code>RequestBuilder</code> 1）、QueryServiceTest 4（<code>assertThatThrownBy</code>））と、注釈の行に 20 か所（Controller 7（<code>@org.junit.jupiter.params.provider.MethodSource</code>）・Contract 2・QueryServiceTest 1・MilestoneValuesTest 10）ある。これも含めるかを 39d4 の開始準備で決める（含めれば計 208 か所で約 35 分。名前の重なりで完全修飾名が要る箇所は残す）。39d3b で足すテストは import で書き、送った分を増やさない）、39d3 の申し送り（bolt_39d3_plan.md :249。片方を採用したとき、もう片方の比べる相手が変わる）のうち、外部原本の基準の付け替えと組み合わせて確かめる分（採用した後に送り直したとき、同じ外部原本のもう 1 つの隔離の比べる相手。付け替えの受入シナリオの中で確かめる。比べる相手が採用した値に変わることは 39d3b の行 8 で確かめる）。39d3b から送った分の見積りは計約 30 分（H2 の UUID の比べ方 10 分、テストの完全修飾名 20 分。完全修飾名の数え方の外の 93 か所を含めれば計約 45 分）。開始準備で、コードで確かめて約 3 時間 49 分に引き直し、2 つの整合性検証の指摘の反映で 257 分になって目安（4 時間 05 分。T-250）を超えたので、テストの完全修飾名の 115 か所（約 20 分）を W7 の締めに送り、約 3 時間 57 分にした（分けない。Bolt 39d4 の開始準備の決定 (1)）。数え方の外の 93 か所も含めず W7 の締めに送った（計 208 か所・約 35 分。W7 の締めの返済の候補に挙げる。決定 (13)）。開始準備で決めたこと: 【業務の判断】(e) の案内は通る（比べる相手は基準のハッシュだけで、却下は基準を変えない。決定 (2)）、採用の判断と同じトランザクションで読んだ基準のハッシュを条件にした更新で基準を付け替える（<code>version</code> の列を足さず、列のコメントだけのマイグレーション。取込と採用はロックしない。負けた採用はトランザクションごと巻き戻し判断の画面へ戻す。決定 (3)・(4)）、比べる相手を採用中の payload にし注記の「最初の受信」を消す（決定 (5)）、基準と同じハッシュの隔離は一覧に残すが採用を出さず却下だけ（<code>PAYLOAD_ALREADY_ADOPTED</code>。【業務の判断】(p)、台帳 D-103）、開いた後に別の採用がコミットしても後の判断が効く（【業務の判断】(q)、台帳 D-104）、情報源の並びは照会のサービスで Java の <code>String</code> の順（決定 (9)）。【前の決定の変更】(1) 同じ値の文に「同じ原本か、」を足す（Bolt 39d3 の決定 (7) を改める）。(2) 内容の違う原本の注記の「最初の受信: 時刻」を消す（Bolt 39b2 の確認ポイント 6 を改める）。<a href="../bolt_39d4_plan/">Bolt 39d4 計画</a>（2026-11-09 承認）</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: left;">インサイドアウト（分類の規則から）</td>
 <td style="text-align: left;">ステップごと</td>
 </tr>
 <tr>
 <td style="text-align: left;">39e</td>
-<td style="text-align: left;">経路設計の航海の書き手: DE-12 の listener、<code>Voyage</code>・<code>ConnectionRule</code> の class 化、<code>version</code> の楽観ロック、航海の照会を時間の窓と港で絞る、見本の航海を分ける（確認ポイント 14）。Bolt 39d3b の開始準備の申し送り: 採用の判断の DE-12 は、取込で採用した値と同じ情報版（外部版）で値が違いうる（AdoptionFactory.java :79・:120）。同じ情報版のときに公開した時刻の新しい方を効かせるか、R-INV-03 の照合（domain_model :863・:916 の区間の採用情報版）をどう直すかを開始準備で決め、その組（同じ情報版で値の違う 2 つの DE-12）を状態の組み合わせに置く</td>
+<td style="text-align: left;">経路設計の航海の書き手: DE-12 の listener、<code>Voyage</code>・<code>ConnectionRule</code> の class 化、<code>version</code> の楽観ロック、航海の照会を時間の窓と港で絞る、見本の航海を分ける（確認ポイント 14）。Bolt 39d3b の開始準備の申し送り: 採用の判断の DE-12 は、取込で採用した値と同じ情報版（外部版）で値が違いうる（AdoptionFactory.java :79・:120）。同じ情報版のときに公開した時刻の新しい方を効かせるか、R-INV-03 の照合（domain_model :863・:916 の区間の採用情報版）をどう直すかを開始準備で決め、その組（同じ情報版で値の違う 2 つの DE-12）を状態の組み合わせに置く、書き方や取得時刻だけが違う原本の採用で出る、同じ情報版で同じ値の DE-12 の組も開始準備で決める（Bolt 39d4 の決定 (7) から）</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: left;">アウトサイドイン（受入シナリオから）</td>
 <td style="text-align: left;">計画と終了報告（構造・開発データ）</td>
@@ -18335,7 +18335,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">39g</td>
-<td style="text-align: left;">追跡の DE-13 と US-12 AC3〜AC5: 下書きの登録と採用の操作、確認中と DE-18、取消済みの拒否の記録、完了後の原本だけ、手入力にも確認中の規則、同じ追跡番号への集中の統合テスト（PERF-06）、P-5・P-6・P-7（#50）、マニュアル 9 章、<code>@US-12</code>。#19 をクローズして US-12 の 2 SP を数える。Bolt 39d3b の開始準備の申し送り: 採用の判断の DE-13（39d3b2）は、取込で採用した値と同じ情報版（外部版）で値が違いうる（AdoptionFactory.java :100・:120）。同じ情報版のときに公開した時刻の新しい方を効かせるかを開始準備で決め、その組（同じ情報版で値の違う 2 つの DE-13）を状態の組み合わせに置く。追跡番号がこの外部版の採用値と違う主要実績の内容の違う原本（キーが変わる原本）は 39d3b2 で採用を出さない（【業務の判断】(m)）。キーが変わる原本の扱い（元の追跡番号の採用値と実績をどうするか）を 39h（差異）と開始準備で決める</td>
+<td style="text-align: left;">追跡の DE-13 と US-12 AC3〜AC5: 下書きの登録と採用の操作、確認中と DE-18、取消済みの拒否の記録、完了後の原本だけ、手入力にも確認中の規則、同じ追跡番号への集中の統合テスト（PERF-06）、P-5・P-6・P-7（#50）、マニュアル 9 章、<code>@US-12</code>。#19 をクローズして US-12 の 2 SP を数える。Bolt 39d3b の開始準備の申し送り: 採用の判断の DE-13（39d3b2）は、取込で採用した値と同じ情報版（外部版）で値が違いうる（AdoptionFactory.java :100・:120）。同じ情報版のときに公開した時刻の新しい方を効かせるかを開始準備で決め、その組（同じ情報版で値の違う 2 つの DE-13）を状態の組み合わせに置く。追跡番号がこの外部版の採用値と違う主要実績の内容の違う原本（キーが変わる原本）は 39d3b2 で採用を出さない（【業務の判断】(m)）。キーが変わる原本の扱い（元の追跡番号の採用値と実績をどうするか）を 39h（差異）と開始準備で決める、書き方や取得時刻だけが違う原本の採用で出る、同じ情報版で同じ値の DE-13 の組も開始準備で決める（Bolt 39d4 の決定 (7) から）</td>
 <td style="text-align: right;">2</td>
 <td style="text-align: left;">アウトサイドイン（状態の組み合わせの表を先に書く）</td>
 <td style="text-align: left;">計画と終了報告（スキーマ）</td>
@@ -18790,7 +18790,7 @@
 <td style="text-align: left;">US-14、UC-15、data_model（<code>received_record_decision</code>・<code>adopted_value</code>）、domain_model（受信記録の判断）</td>
 <td style="text-align: left;"><a href="../bolt_39d_plan/">Bolt 39d 計画</a> の開始準備の決定 (13)【業務の判断】(e)（Bolt 39a3 の申し送り）</td>
 <td style="text-align: left;">Release 1.1 の計画の見直し</td>
-<td style="text-align: left;">既知の課題（2026-11-05、推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）。注（2026-11-05、Bolt 39d3 の計画の承認）: 採用を 39d3 から 39d3b に分けたので、マニュアルに書く Bolt を「39d3・39d4」から「39d3b・39d4」に直した（<a href="../bolt_39d3_plan/">Bolt 39d3 計画</a> の【前の決定の変更】(1) の注）。注（2026-11-05、Bolt 39d3b）: 誤って採用したときの案内は、Bolt 39d3b で判断の画面の採用の欄の取り消せないことの文（「採用すると取り消せません。誤って採用したときは、提供元に新しい外部版で正しい原本を送ってもらってください。」）とマニュアル 12.2 の「隔離を採用する」の節に書いた（主要実績の採用の分は Bolt 39d3b2 で書いた。<a href="../bolt_39d3b_plan/">Bolt 39d3b 計画</a> の開始準備の決定 (8)）</td>
+<td style="text-align: left;">既知の課題（2026-11-05、推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）。注（2026-11-05、Bolt 39d3 の計画の承認）: 採用を 39d3 から 39d3b に分けたので、マニュアルに書く Bolt を「39d3・39d4」から「39d3b・39d4」に直した（<a href="../bolt_39d3_plan/">Bolt 39d3 計画</a> の【前の決定の変更】(1) の注）。注（2026-11-05、Bolt 39d3b）: 誤って採用したときの案内は、Bolt 39d3b で判断の画面の採用の欄の取り消せないことの文（「採用すると取り消せません。誤って採用したときは、提供元に新しい外部版で正しい原本を送ってもらってください。」）とマニュアル 12.2 の「隔離を採用する」の節に書いた（主要実績の採用の分は Bolt 39d3b2 で書いた。<a href="../bolt_39d3b_plan/">Bolt 39d3b 計画</a> の開始準備の決定 (8)）。注（2026-11-09、Bolt 39d4）: 誤って却下したときの案内（同じ原本を送り直してもらう）が通ることをコードで確かめた（比べる相手は基準のハッシュだけで、却下は基準を変えないので、同じ原本を送り直すと再び隔離になり判断を待つ一覧に戻る。<a href="../bolt_39d4_plan/">Bolt 39d4 計画</a> の開始準備の決定 (2)）。例外は却下の再送で、同じ内容の別の隔離をすでに採用していたときは重複になり判断を待つ一覧に戻らない（その内容はすでに業務で使われているので判断は要らない。D-103）。送り直しの案内は Bolt 39d4 でマニュアル 12 章の「直して送り直すとき」と取り消せないことの文に書く</td>
 </tr>
 <tr>
 <td style="text-align: left;">D-96</td>
@@ -18854,6 +18854,24 @@
 <td style="text-align: left;"><a href="../bolt_39d3b2_plan/">Bolt 39d3b2 計画</a> の開始準備の決定 (6)【業務の判断】(o)</td>
 <td style="text-align: left;">データ責任者に確かめる（Release 1.0 のパイロットの前）</td>
 <td style="text-align: left;">仮（2026-11-09、推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）。<a href="../bolt_39d3b2_plan/">Bolt 39d3b2 計画</a>で作った</td>
+</tr>
+<tr>
+<td style="text-align: left;">D-103</td>
+<td style="text-align: left;">同じ内容の判断を待つ隔離（同じ原本を判断の前に 2 度受け取り、1 つを採用した後のもう 1 つ。外部原本の基準と同じハッシュ）を、どう扱うか</td>
+<td style="text-align: left;">一覧に残すが、採用は出さず却下だけにする。判断の画面に同じ値の文と採用できない理由を示す。自動で判断しない。比べるのはハッシュだけで、書き方だけが違う原本は今のまま採用できる。却下の再送は再び隔離の例外: 同じ内容の別の隔離を採用した後は、残った隔離を却下して同じ原本を送り直すと重複で、判断を待つ一覧に戻らない（その内容はすでに業務で使われているので判断は要らない）。取らない案: 採用のときに同じ内容の判断を待つ隔離を自動で却下または採用済みにする（データ責任者の判断でない判断が記録と監査に残る）、同じ内容の隔離にも採用を出し、値が同じなら却下で片付けてもらう（2 つ目の採用値と DE-12・DE-13 が出て、US-14 AC3 の「採用値を重複生成せず」に反する）</td>
+<td style="text-align: left;">US-14 AC3・AC4、UC-15 3b、domain_model（受信記録の判断・<code>NotAdoptableReason</code>）、ui_design（S-17 の判断の画面）、マニュアル 12 章・付録 B</td>
+<td style="text-align: left;"><a href="../bolt_39d4_plan/">Bolt 39d4 計画</a> の開始準備の決定 (7)【業務の判断】(p)</td>
+<td style="text-align: left;">データ責任者に確かめる（Release 1.0 のパイロットの前）</td>
+<td style="text-align: left;">仮（2026-11-09、推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）。<a href="../bolt_39d4_plan/">Bolt 39d4 計画</a>で作る</td>
+</tr>
+<tr>
+<td style="text-align: left;">D-104</td>
+<td style="text-align: left;">判断の画面を開いて値を読んだ後に別の採用がコミットしてから「採用する」を送ったときに、採用を断るか</td>
+<td style="text-align: left;">断らない。POST の時点の基準を読むので採用は成功し、後の判断が効く（基準とこの外部版の採用値は後の側）。両方の判断と監査は残る。データ責任者は採用値の画面と監査で確かめられる。同じ POST の定めで読んでから付け替えるまでの間に別の採用がコミットしたときだけ、後の側は採用されず判断の画面に戻る。取らない案: 画面に読んだ基準のハッシュをトークンとして持たせ、POST で比べて断る（画面の項目と断る形が増える。開いた後の採用はまれ）</td>
+<td style="text-align: left;">US-14 AC4、UC-15 3b、domain_model（受信記録の判断）、ui_design（S-17 の採用）、マニュアル 12 章・付録 B</td>
+<td style="text-align: left;"><a href="../bolt_39d4_plan/">Bolt 39d4 計画</a> の開始準備の決定 (4)【業務の判断】(q)</td>
+<td style="text-align: left;">データ責任者に確かめる（Release 1.0 のパイロットの前）</td>
+<td style="text-align: left;">仮（2026-11-09、推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）。<a href="../bolt_39d4_plan/">Bolt 39d4 計画</a>で作る</td>
 </tr>
 </tbody>
 </table>
@@ -21275,6 +21293,11 @@
 <td style="text-align: left;">2026-11-09</td>
 <td style="text-align: left;">Bolt 39d3b2 のステップ 1〜8 と<a href="../bolt_39d3b2_report/">終了報告</a>を承認した（推奨のとおり。Recommend 承認の指示による）</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-11-09</td>
+<td style="text-align: left;">Bolt 39d4 のステップ 1（設計の文書）: 39d4 の行に引き直した見積り（約 3 時間 57 分）、テストの完全修飾名の 115 か所と数え方の外の 93 か所を W7 の締めに送ったこと、開始準備で決めたこと、【前の決定の変更】(1)・(2)、計画へのリンクを足した。確認ポイント 2 の付け替えを作ったことに直した。台帳の D-95 に (e) の案内が通ることと却下の再送の例外の注を、D-103（【業務の判断】(p)）・D-104（【業務の判断】(q)）を仮の決定として足した</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
 </tr>
 <tr>
 <td style="text-align: left;">2026-10-28</td>

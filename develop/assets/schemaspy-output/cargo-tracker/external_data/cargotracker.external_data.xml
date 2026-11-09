@@ -48,8 +48,8 @@
          <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="record_type" nullable="false" remarks="原本種別" size="50" type="varchar" typeCode="12"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="external_id" nullable="false" remarks="外部 ID" size="200" type="varchar" typeCode="12"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="external_version" nullable="false" remarks="外部版" size="100" type="varchar" typeCode="12"/>
-         <column autoUpdated="false" defaultValue="null" digits="0" id="5" name="payload_hash" nullable="false" remarks="最初に受け取った payload のハッシュ" size="64" type="varchar" typeCode="12"/>
-         <column autoUpdated="false" defaultValue="null" digits="0" id="6" name="payload_object_key" nullable="false" remarks="最初に受け取った payload のオブジェクトキー" size="500" type="varchar" typeCode="12">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="5" name="payload_hash" nullable="false" remarks="採用中の payload のハッシュ（はじめは最初に受け取った payload。採用の判断で付け替える）" size="64" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="6" name="payload_object_key" nullable="false" remarks="採用中の payload のオブジェクトキー（はじめは最初に受け取った payload。採用の判断で付け替える）" size="500" type="varchar" typeCode="12">
             <parent column="object_key" foreignKey="Implied Constraint" implied="true" onDeleteCascade="false" schema="external_data" table="stored_payload"/>
          </column>
          <column autoUpdated="false" defaultValue="null" digits="6" id="7" name="first_received_at" nullable="false" remarks="最初の受信時刻" size="35" type="timestamptz" typeCode="93"/>
