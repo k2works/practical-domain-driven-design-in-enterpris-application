@@ -1744,6 +1744,16 @@ class UndecidedRecordControllerTest {
         }
 
         @Test
+        void 行13_採用できない隔離へ上限を超えた理由を送ると欄のない画面のエラー要約を出さず404にしてサービスを呼ばない() throws Exception {
+            String thousandAndOne = "あ".repeat(ReceivedRecordDecision.REASON_LIMIT + 1);
+            givenDecision(item(false), readable(), Optional.of(new DecisionOutcome.NotAdoptable()));
+
+            postAdoption(ADOPTION_URL, thousandAndOne).andExpect(status().isNotFound());
+
+            then(decisions).should(Mockito.never()).adopt(any(), any());
+        }
+
+        @Test
         void 行13_却下の欄の誤りで戻った画面にも採用の欄を空で描く() throws Exception {
             givenDecision(item(false), readable(), Optional.empty());
 

@@ -2,6 +2,7 @@ package com.example.cargotracker.externaldata.interfaces.web;
 
 import static com.example.cargotracker.identity.IdentityLogins.PASSWORD;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
@@ -12,13 +13,16 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.example.cargotracker.externaldata.application.internal.commands.AdoptReceivedRecordCommand;
 import com.example.cargotracker.externaldata.application.internal.commandservices.IngestionOutcome.Ingested;
 import com.example.cargotracker.externaldata.application.internal.commandservices.IngestionService;
 import com.example.cargotracker.externaldata.application.internal.commandservices.ReceivedRecordDecisionService;
 import com.example.cargotracker.externaldata.application.internal.queryservices.IngestionSummaryQueryService;
 import com.example.cargotracker.externaldata.application.internal.queryservices.IngestionSummaryView;
 import com.example.cargotracker.externaldata.domain.events.ExternalRecordQuarantined;
+import com.example.cargotracker.externaldata.domain.events.ReceivedRecordDecided;
 import com.example.cargotracker.externaldata.domain.events.VoyageAdoptedValueUpdated;
+import com.example.cargotracker.externaldata.domain.model.aggregates.DuplicateAdoptedValueException;
 import com.example.cargotracker.externaldata.domain.model.aggregates.ExternalPayloadStorage;
 import com.example.cargotracker.externaldata.domain.model.rules.IngestionFileLimit;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.FormatDefect;
@@ -50,6 +54,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
@@ -946,6 +951,32 @@ class ExternalDataIngestionSecurityIntegrationTest {
             verify(decisionService, never()).adopt(any(), any());
             assertThat(countOf("received_record_decision", receivedRecordId)).isZero();
             assertThat(countOf("adopted_value", receivedRecordId)).isZero();
+        }
+
+        @Test
+        void 行7_採用値の一意制約の違反はトランザクションごと巻き戻り判断もDE29も残らない() throws Exception {
+            UUID receivedRecordId = quarantined(login(user(Set.of(Role.DATA_STEWARD))))[0];
+            jdbc.update(
+                    "INSERT INTO external_data.adopted_value (id, received_record_id, target_type, target_key,"
+                            + " value_summary, info_version, published_at) VALUES (?, ?, 'VOYAGE', 'V-1', '先の値', '1', ?)",
+                    UUID.randomUUID(),
+                    receivedRecordId,
+                    OffsetDateTime.parse("2026-11-16T00:00:00Z"));
+            AuthenticatedActor steward = new AuthenticatedActor(
+                    new UserId(UUID.randomUUID()), operator.id(), Set.of(Role.DATA_STEWARD), "データ責任者", "A 社");
+            AdoptReceivedRecordCommand command = new AdoptReceivedRecordCommand(receivedRecordId, "理由");
+
+            assertThatThrownBy(() -> decisionService.adopt(steward, command))
+                    .isInstanceOf(DuplicateAdoptedValueException.class);
+
+            assertThat(countOf("received_record_decision", receivedRecordId)).isZero();
+            assertThat(countOf("adopted_value", receivedRecordId)).isEqualTo(1);
+            assertThat(jdbc.queryForObject(
+                            "SELECT COUNT(*) FROM platform.event_publication WHERE event_type = ? AND serialized_event LIKE ?",
+                            Integer.class,
+                            ReceivedRecordDecided.class.getName(),
+                            "%" + receivedRecordId + "%"))
+                    .isZero();
         }
     }
 

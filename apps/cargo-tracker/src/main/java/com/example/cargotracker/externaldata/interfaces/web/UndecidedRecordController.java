@@ -225,7 +225,11 @@ public class UndecidedRecordController {
         UUID back = parseUuid(ingestion);
         int backPage = parsePage(page);
         if (hasAdoptionReasonErrors(form, bindingResult)) {
-            return decisionView(id, back, backPage, model, redirectAttributes);
+            // 採用できない隔離の画面には採用の欄がなく、エラー要約のリンクの先がないので、欄の誤りを示さず採用の POST と同じ行き先にする
+            Optional<DecisionOutcome> refusal = decisions.adoptionRefusalOf(id);
+            return refusal.isPresent()
+                    ? respond(refusal.get(), back, backPage, redirectAttributes)
+                    : decisionView(id, back, backPage, model, redirectAttributes);
         }
         DecisionOutcome outcome = decisions.adopt(actor, new AdoptReceivedRecordCommand(id, form.getReason()));
         return respond(outcome, back, backPage, redirectAttributes);

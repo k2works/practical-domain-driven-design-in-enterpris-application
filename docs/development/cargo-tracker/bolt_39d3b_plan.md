@@ -3,7 +3,7 @@ type: Plan
 title: "Bolt 39d3b 計画 - S-17 で航海の内容の違う原本の隔離を採用する"
 tags: [plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-09T02:21:12Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-09T03:42:03Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-11-05T09:21:39Z }
 ---
@@ -229,7 +229,7 @@ verified:
 | 11 | 採用の監査の配信 | 採用の判断のコミットの後に、隔離の受信記録に `EXTERNAL_RECORD_DECIDED`（理由は `ADOPTED`、操作者は判断者、時刻は判断の時刻）と `EXTERNAL_RECORD_ADOPTED`（操作者は判断者、時刻は公開した時刻＝判断の時刻）が 1 つずつ書かれ、取込のときの `EXTERNAL_RECORD_QUARANTINED` と合わせて 3 つ。同じイベントを配り直しても増えない（IA-INV-15）。39d3b は航海（DE-12）で確かめ、主要実績（DE-13 → `EXTERNAL_RECORD_ADOPTED`）は 39d3b2 でパラメーターに足す | 統合のテスト（イベントの発行記録を通す。T-184） |
 | 12 | 判断の画面（2 つの欄） | 採用できるかの照会（`adoptionRefusalOf`。mock）が空なら、値の領域の後に見出し「却下する」の欄（今のフォーム）と見出し「採用する」の欄（「採用の理由」、説明「任意、1000 文字まで」、取り消せないことの文、「採用する」）がこの順に並ぶ。欄の id は却下の `reason`・`reason-hint`・`reason-error`・`irrevocable` と採用の `adoption-reason`・`adoption-reason-hint`・`adoption-reason-error`・`adoption-irrevocable` で重ならず、採用の欄の `aria-describedby` とボタンの `aria-describedby` が採用の id を指す。照会が `NotAdoptable` なら採用の欄を出さない。キーのない隔離は「却下する」の欄と、その後に今の文だけ。採用の欄の有無は照会の結果だけで決まり、照会の値（受け取った値を読めた・読めない・値の列なし・この外部版の採用値がない・採用値の側だけ読めない）を変えても変わらない（パラメーター） | controller（パラメーター。HTML の文字と順と id） |
 | 13 | 採用の欄の誤り | 採用の理由が前後の空白を除いて 1001 文字（コードポイント）なら判断の画面に戻り、エラー要約「採用できませんでした」とリンク `#adoption-reason`、欄の誤り「採用の理由は 1000 文字までで書いてください。」と `aria-invalid`、書いた理由を残し、`title` は「採用できませんでした - 隔離の判断 - cargo-tracker」。判断のサービスを呼ばない。却下の欄に誤りは出ず、却下の欄は空で描く（決定 (9)）。ちょうど 1000 文字（前後に空白を足した 1000 文字も）は採用する。理由が空でも採用する | controller（パラメーター） |
-| 14 | 採用の POST の行き先 | `AdoptedQuarantine` → PRG で元の一覧（`ingestion`・`page`）に戻り「隔離を採用しました。」、`AlreadyDecided` → 一覧に戻り「この隔離は判断済みです。」、`NotFound`・`NotDecidable`・`NotAdoptable` → 404、`NotPermitted` → 403、UUID でない ID → 404、CSRF のトークンがない → 403。`DecisionOutcome` のすべての値に行き先がある（T-240）。行 12 で採用の欄を出さない照会の結果（`NotAdoptable`）を `adopt` が返すと 404 で、GET の欄の有無と POST の行き先が同じ結果から決まる | controller（パラメーター） |
+| 14 | 採用の POST の行き先 | `AdoptedQuarantine` → PRG で元の一覧（`ingestion`・`page`）に戻り「隔離を採用しました。」、`AlreadyDecided` → 一覧に戻り「この隔離は判断済みです。」、`NotFound`・`NotDecidable`・`NotAdoptable` → 404、`NotPermitted` → 403、UUID でない ID → 404（CSRF のトークンがない POST は controller に届かない。行 22）。`DecisionOutcome` のすべての値に行き先がある（T-240）。行 12 で採用の欄を出さない照会の結果（`NotAdoptable`）を `adopt` が返すと 404 で、GET の欄の有無と POST の行き先が同じ結果から決まる | controller（パラメーター） |
 | 15 | UI（採用する） | 承認済みの航海の情報源で同じ外部 ID・外部版の内容の違う 2 行を取り込み、判断の画面で値を見比べ、キー操作だけで「採用する」の欄の理由を書いて「採用する」と、一覧に「隔離を採用しました。」が示されその隔離は一覧から消える。判断の画面と一覧で axe の違反 0、判断の画面は幅 320 CSS px で横スクロールが出ない。キーのない隔離の判断の画面に「採用する」の見出しが出ない | `adopt_quarantine_ui.feature`（`@demo-bolt-39d3b/adopt`） |
 | 16 | 却下は今のまま | 「却下する」の見出しを足しても、却下（理由の欄の誤り・判断済み・PRG）の振る舞い、欄の id `reason`、Tab の順の先（値の領域の後は却下の理由の欄）が変わらない | 39d2 の `reject_quarantine_ui.feature`、controller の今の行 |
 | 17 | 追跡番号が違う主要実績の隔離（39d3b2） | 主要実績の内容の違う原本の追跡番号がこの外部版の採用値の対象のキーと違えば `NotAdoptable` で、判断も採用値も追記せず、イベントを出さない。採用値の要約は読まない（【業務の判断】(l)）。追跡番号が同じなら採用できる。この外部版の採用値がなければ比べずに採用できる。画面は採用の欄を出さず、追跡番号が違うので採用できないことと、新しい外部版で正しい原本を送り直してもらう道を示す（【業務の判断】(m)） | 39d3b2 の判断のサービスの単体（パラメーター）と controller |
@@ -237,7 +237,7 @@ verified:
 | 19 | トランザクションの順 | 判断の追記が採用値の追記より先に呼ばれる | 判断のサービスの単体（呼び出しの記録） |
 | 20 | 時刻 | 判断の時刻は Clock から 1 回取り、マイクロ秒に切り捨てた同じ値が判断の `decidedAt`・採用値の `publishedAt`・DE-12 の `publishedAt`・DE-29 の `decidedAt` になる（DE-13 は 39d3b2） | 判断のサービスの単体（呼ぶたびに進む Clock。前例 ReceivedRecordDecisionServiceTest.java :288-289 の `TickingClock`） |
 | 21 | マニュアルのキャプチャ | `12-undecided-record-decision.png` を撮り直し、2 つの見出しの欄が写る（判断の画面の並びが変わる）。関係のないキャプチャが時刻の画素だけで変わったら戻す。マニュアルの文（航海の採用の手順、誤って採用したときの案内、採用の欄が出ない隔離、付録 B の行）が実装と一致する（T-197） | `manual_screenshots.feature`、ステップ 8 の突き合わせ |
-| 22 | 採用の POST の認可と CSRF | `POST …/{受信記録 ID}/adoption` は、データ責任者でない役割（ほかの社員の役割と荷主）では 403、CSRF のトークンがなければ拒否（403）で、判断と採用値は書かれない。データ責任者が CSRF のトークン付きで採用すると、判断（`ADOPTED`）と採用値が H2 に 1 行ずつ残る | `ExternalDataIngestionSecurityIntegrationTest` の `@Nested class Bolt39d3b_隔離の採用`（前例 :749-750 の `Bolt39d2_隔離の却下`。パラメーター） |
+| 22 | 採用の POST の認可と CSRF | `POST …/{受信記録 ID}/adoption` は、データ責任者でない役割（ほかの社員の役割と荷主）では 403、CSRF のトークンがなければ拒否（業務の画面の CSRF の拒否は 403 でなく案内の画面へ 302 で移す。Bolt 32f の `markingCsrfRejection`。却下の POST の Bolt 39d2 の行 9 と同じ）で、判断と採用値は書かれない。データ責任者が CSRF のトークン付きで採用すると、判断（`ADOPTED`）と採用値が H2 に 1 行ずつ残る | `ExternalDataIngestionSecurityIntegrationTest` の `@Nested class Bolt39d3b_隔離の採用`（前例 :749-750 の `Bolt39d2_隔離の却下`。パラメーター） |
 
 ## スコープ
 
@@ -474,7 +474,7 @@ ExternalRecordAuditEventHandler ..> MilestoneAdoptedValueAccepted
 - [x] **6. 画面**（結果: 行 12〜14・16・22 が緑、ArchUnit の規則は変えずに通過、`uiTest` 全 204 シナリオが緑で axe の違反 0、`spotbugsMain`・`checkstyleMain` が通過。承認ゲートは人の確認待ち）: `AdoptionForm`、`UndecidedRecordController.adopt`（POST `…/adoption`、行き先）と判断の画面の採用の欄の出し分け（`adoptionRefusalOf`）、`decisionView` の 2 つのフォーム、decision.html の 2 つの見出しの欄・キーのない隔離の文の位置・欄の id・エラー要約（`#adoption-reason`、`title`）、コードの「39d3b」の注記（画面・判断・イベント・監査の分）。行 12〜14・16・22 が緑、39d・39d2・39d2b・39d3・39d3c の S-17 と S-16 の UI のシナリオが緑（完了の判定: 緑、`spotbugsMain`・`checkstyleMain`・`sonar-local:check`、`uiTest` と axe 違反 0。**承認ゲート**（画面））（推奨のとおり承認として記録した。Recommend 承認の指示による）
 - [x] **7. 受入シナリオ**（結果: 行 15 の 3 シナリオが緑で axe の違反 0。最後に `check`（4636 件）・`uiTest`・`sonar-local:check`（Quality Gate PASS）が緑。承認ゲートは人の確認待ち）: `adopt_quarantine_ui.feature`・`AdoptQuarantineUiSteps.java`（ステップ 2 の骨組みを仕上げる。今の内容の違う原本を作る Steps を使う）、`@demo-bolt-39d3b/adopt`（決定 (12)）。行 15 が緑（完了の判定: `uiTest` と axe 違反 0。**承認ゲート**）（推奨のとおり承認として記録した。Recommend 承認の指示による）
 - [x] **8. マニュアルとキャプチャ**（12.2 に「隔離を採用する」と 2 つの見出しの欄の説明（①〜⑭）、付録 B の 4 行、用語集の採用、00-はじめに・index。12-undecided-record-decision.png を撮り直した（時刻の画素だけの 51 枚は戻した）。実装の文と一字ずつ一致（T-197）。停止した情報源の隔離を受け取るときの運用は 39d3b2 で決める。推奨のとおり承認として記録した。Recommend 承認の指示による）: 12 章の description・冒頭の文と表・12.2 の要約、12.2 の「隔離を採用する」の節（航海の採用、誤って採用したときの案内、採用の欄が出ない隔離、(l)）、画面の説明の表、注意・補足の :359・:360、付録 B の 4 行（:221 の形の 1 行を足し、:222・:223・:224 を直す）、`manualScreenshots`（行 21。`12-undecided-record-decision.png` を撮り直し、時刻の画素だけで変わったキャプチャは戻す）。見出し・欄・文・知らせを controller の定数とテンプレートに突き合わせる（T-197）（完了の判定: キャプチャの差分と突き合わせの記録。**承認ゲート**（マニュアル））
-- [ ] **9. 品質ゲートと開発レビュー**: 変異、`check`・`uiTest`、その後に SonarQube（落ちたら先に中身を一覧する。T-252）、開発レビューとその直し。push の前に `check`（T-225）（完了の判定: 緑と指摘の扱いの記録。**承認ゲート**）
+- [x] **9. 品質ゲートと開発レビュー**（変異はすべて落ちた（X12 は生き残ったので行 7 にテストを足した。X17 は等価）。レビューは高 0・中 2・低 6。test 4,639 件、uiTest 204 シナリオ、失敗 0、axe 違反 0、SonarQube PASS（カバレッジ 96.0%、重複 0.02%、違反 0）。推奨のとおり承認として記録した。Recommend 承認の指示による）: 変異、`check`・`uiTest`、その後に SonarQube（落ちたら先に中身を一覧する。T-252）、開発レビューとその直し。push の前に `check`（T-225）（完了の判定: 緑と指摘の扱いの記録。**承認ゲート**）
 - [ ] **10. 終了報告**: push して CI とデモ環境の配備を確かめ（デモ環境でデータ責任者でログインし、同じ外部 ID・外部版で寄港の時刻を変えた航海のファイルを 2 度取り込んで、S-17 の判断の画面で値を見比べて採用し、一覧から消えることを見る）、`demoVideo` で `@demo-bolt-39d3b/adopt` を撮る（新しいファイル）。release_plan（39d3b の行の計画と終了報告のリンク）・開発の索引・mkdocs を直す。**【業務の判断】(b)・(f) を終了報告の議題の先頭に置き**（Bolt 39d の決定 (9) の 39d3 を 39d3b に読み替える。bolt_39d3_plan.md :244）、続けて (l)・(m)・(n) と【前の決定の変更】(1)・(2) を置く。既知の課題に 39d4 の申し送り（付け替え、H2 の UUID の比べ方、完全修飾名、:249 の付け替えと組み合わせる分）、39d3b2 に分けたもの、39e・39g の申し送り（同じ情報版で値が違う DE-12・DE-13）、39g・39h の申し送り（キーが変わる原本。(m)）を書く
 
 ### 時間の配分と打ち切り

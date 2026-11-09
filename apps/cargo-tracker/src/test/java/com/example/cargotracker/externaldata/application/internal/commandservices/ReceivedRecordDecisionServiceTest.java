@@ -1,6 +1,7 @@
 package com.example.cargotracker.externaldata.application.internal.commandservices;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.example.cargotracker.externaldata.application.internal.commands.AdoptReceivedRecordCommand;
 import com.example.cargotracker.externaldata.application.internal.commands.RejectKeylessQuarantinesCommand;
@@ -9,6 +10,7 @@ import com.example.cargotracker.externaldata.domain.events.ReceivedRecordDecided
 import com.example.cargotracker.externaldata.domain.events.VoyageAdoptedValueUpdated;
 import com.example.cargotracker.externaldata.domain.model.aggregates.AdoptedValue;
 import com.example.cargotracker.externaldata.domain.model.aggregates.DataSource;
+import com.example.cargotracker.externaldata.domain.model.aggregates.DuplicateAdoptedValueException;
 import com.example.cargotracker.externaldata.domain.model.aggregates.DuplicateReceivedRecordDecisionException;
 import com.example.cargotracker.externaldata.domain.model.aggregates.ExternalRecord;
 import com.example.cargotracker.externaldata.domain.model.aggregates.InMemoryAdoptedValueRepository;
@@ -975,6 +977,26 @@ class ReceivedRecordDecisionServiceTest {
             assertThat(callsOf(DECISION_ADD)).isEqualTo(1);
             assertThat(callsOf(ADOPTED_VALUE_ADD)).isZero();
             assertThat(adoptedValues.findByReceivedRecordId(received.id())).isEmpty();
+            assertThat(published).isEmpty();
+        }
+
+        @Test
+        void 行7_採用値の一意制約の違反は判断済みにせず捕まえずに上げてイベントを出さない() {
+            ReceivedRecord received = adoptable();
+            adoptedValues.add(new AdoptedValue(
+                    UUID.randomUUID(),
+                    received.id(),
+                    AdoptedValue.TargetType.VOYAGE,
+                    "DEMO-201",
+                    RECEIVED.summary(),
+                    "3",
+                    ingestion.ingestedAt()));
+
+            UUID receivedRecordId = received.id();
+
+            assertThatThrownBy(() -> adopt(steward, receivedRecordId, REASON))
+                    .isInstanceOf(DuplicateAdoptedValueException.class);
+
             assertThat(published).isEmpty();
         }
 
