@@ -2184,5 +2184,25 @@ class UndecidedRecordControllerTest {
                     .doesNotContain(ADOPTION_HEADING)
                     .contains("<p id=\"adoption-refusal\" tabindex=\"-1\">" + SAME_PAYLOAD_TEXT + "</p>");
         }
+
+        @Test
+        void 行28_負けた採用で戻った隔離が先の採用と同じ原本ならエラー要約は負けた採用の文だけで採用の欄の代わりに同じ原本の文を示す() throws Exception {
+            givenDecision(
+                    Optional.of(new DecisionOutcome.NotAdoptable(
+                            RECORD_ID, DecisionOutcome.NotAdoptableReason.PAYLOAD_ALREADY_ADOPTED)),
+                    Optional.of(adoptedDiffers()));
+
+            String page = mockMvc.perform(get(DECISION_URL).flashAttr(CONFLICT_FLASH, CONFLICT_TEXT))
+                    .andExpect(status().isOk())
+                    .andReturn()
+                    .getResponse()
+                    .getContentAsString(StandardCharsets.UTF_8);
+
+            Assertions.assertThat(page)
+                    .contains("<a href=\"#adopted-values-heading\">" + CONFLICT_TEXT + "</a>")
+                    .contains("<p id=\"adoption-refusal\" tabindex=\"-1\">" + SAME_PAYLOAD_TEXT + "</p>")
+                    .doesNotContain(ADOPTION_HEADING);
+            Assertions.assertThat(page.split("id=\"error-summary\"", -1)).hasSize(2);
+        }
     }
 }

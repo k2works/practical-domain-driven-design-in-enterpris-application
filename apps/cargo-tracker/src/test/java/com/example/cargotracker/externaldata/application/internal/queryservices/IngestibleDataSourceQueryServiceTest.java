@@ -55,7 +55,8 @@ class IngestibleDataSourceQueryServiceTest {
     void 行21_提供元と原本種別の順に並べポートの返す順によらない() {
         DataSource firstMilestone = approved("A", "MILESTONE");
         DataSource firstVoyage = approved("A", "VOYAGE");
-        DataSource second = approved("B", "VOYAGE");
+        // 原本種別で先に並べると B が A の VOYAGE より前になる組
+        DataSource second = approved("B", "MILESTONE");
         List<DataSource> sources = new ArrayList<>(List.of(firstMilestone, firstVoyage, second));
 
         List<IngestibleDataSource> inOrder =

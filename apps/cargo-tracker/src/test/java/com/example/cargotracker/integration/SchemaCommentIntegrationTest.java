@@ -97,6 +97,17 @@ class SchemaCommentIntegrationTest {
     }
 
     @Test
+    void Bolt39d4_外部原本の基準の列の注釈は採用中のpayloadの意味に合う() throws SQLException {
+        Map<String, String> comments = query("SELECT c.column_name,"
+                + " col_description('external_data.external_record'::regclass, c.ordinal_position)"
+                + " FROM information_schema.columns c WHERE c.table_schema = 'external_data'"
+                + " AND c.table_name = 'external_record'");
+
+        assertThat(comments.get("payload_hash")).startsWith("採用中の payload のハッシュ");
+        assertThat(comments.get("payload_object_key")).startsWith("採用中の payload のオブジェクトキー");
+    }
+
+    @Test
     void 追記専用の表は日本語名の後ろに印を付ける() throws SQLException {
         Map<String, String> comments =
                 query("SELECT n.nspname || '.' || c.relname, obj_description(c.oid, 'pg_class') FROM pg_class c"
