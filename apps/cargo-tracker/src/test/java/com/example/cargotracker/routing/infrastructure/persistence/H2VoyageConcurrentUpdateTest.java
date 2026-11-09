@@ -3,6 +3,8 @@ package com.example.cargotracker.routing.infrastructure.persistence;
 import com.example.cargotracker.routing.domain.model.aggregates.VoyageRepository;
 import com.example.cargotracker.routing.infrastructure.persistence.MyBatisVoyageConcurrentUpdateIntegrationTest.Repositories;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -48,6 +50,13 @@ class H2VoyageConcurrentUpdateTest {
     @Test
     void Bolt39e_行20_H2でも初めての航海で古いDE12が先にコミットすると負けた新しいDE12が適用される() throws Exception {
         MyBatisVoyageConcurrentUpdateIntegrationTest.assertConcurrentAdoptions(repositories(), false, false);
+    }
+
+    @ParameterizedTest(name = "既存の行 {0}、先に書くのが新しい DE-12 {1}")
+    @CsvSource({"true, true", "true, false", "false, true", "false, false"})
+    void Bolt39e_行19_行20_H2でも書きが重なっても待たされた側は読み直し公開した時刻の新しい方が残る(boolean existing, boolean winnerIsNewer)
+            throws Exception {
+        MyBatisVoyageConcurrentUpdateIntegrationTest.assertOverlappingWrites(repositories(), existing, winnerIsNewer);
     }
 
     @Test

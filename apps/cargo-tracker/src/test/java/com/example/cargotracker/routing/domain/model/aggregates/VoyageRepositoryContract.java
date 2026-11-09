@@ -23,7 +23,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -128,6 +127,16 @@ public abstract class VoyageRepositoryContract {
         assertThat(found.aggregateVersion()).isZero();
     }
 
+    @Test
+    void Bolt39e_行4_保存した航海を読み直して同じ採用値を適用しても適用されない再配信で版が進まない() {
+        VoyageAdoption same = adoption(number("A"), threeCalls(), "1", hoursAfterJudged(5));
+        voyages().save(Voyage.adoptedFrom(same));
+
+        boolean applied = read("A").apply(same);
+
+        assertThat(applied).isFalse();
+    }
+
     static Stream<Arguments> updatedPortCalls() {
         return Stream.of(
                 Arguments.of("寄港 3 → 2", direct(hoursAfterJudged(1), hoursAfterJudged(90))),
@@ -140,13 +149,15 @@ public abstract class VoyageRepositoryContract {
         saved("A", threeCalls());
         Voyage other = saved("B", threeCalls());
         Voyage voyage = read("A");
-        voyage.apply(adoption(number("A"), newCalls, "2", hoursAfterJudged(9)));
+        Source newSource = new Source(SourceKind.FIELD_RECORD, UUID.randomUUID().toString(), hoursAfterJudged(3));
+        voyage.apply(new VoyageAdoption(number("A"), newCalls, "2", newSource, hoursAfterJudged(9)));
 
         voyages().update(voyage);
 
         Voyage found = read("A");
         assertThat(found.portCalls()).as(description).containsExactlyElementsOf(newCalls);
         assertThat(found.adoptedInfoVersion()).isEqualTo("2");
+        assertThat(found.source()).isEqualTo(newSource);
         assertThat(found.publishedAt()).contains(hoursAfterJudged(9));
         assertThat(found.aggregateVersion()).isEqualTo(1);
         assertThat(read("B")).isEqualTo(other);
@@ -294,9 +305,8 @@ public abstract class VoyageRepositoryContract {
                 .isEqualTo(expected.stream().map(this::number).collect(Collectors.toSet()));
     }
 
-    @ParameterizedTest(name = "空の一覧 {0}")
-    @ValueSource(ints = {0})
-    void Bolt39e_行33_空の一覧は空を返しSQLの空のINを出さない(int ignored) {
+    @Test
+    void Bolt39e_行33_空の一覧は空を返しSQLの空のINを出さない() {
         saved("A", threeCalls());
 
         assertThat(voyages().findByVoyageNumbers(List.of())).isEmpty();

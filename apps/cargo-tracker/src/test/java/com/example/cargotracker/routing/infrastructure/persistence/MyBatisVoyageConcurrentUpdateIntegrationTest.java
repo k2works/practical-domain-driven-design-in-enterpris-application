@@ -1,6 +1,7 @@
 package com.example.cargotracker.routing.infrastructure.persistence;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 import com.example.cargotracker.TestcontainersConfiguration;
 import com.example.cargotracker.externaldata.domain.events.VoyageAdoptedValueUpdated;
@@ -16,6 +17,7 @@ import com.example.cargotracker.shared.domain.Source;
 import com.example.cargotracker.shared.domain.SourceKind;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
@@ -29,6 +31,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
@@ -55,6 +59,7 @@ class MyBatisVoyageConcurrentUpdateIntegrationTest {
     private static final UtcInstant NEWER_PUBLISHED = new UtcInstant(ACQUIRED.plusSeconds(7200));
     private static final Location TOKYO = new Location("JPTYO");
     private static final Location LOS_ANGELES = new Location("USLAX");
+    private static final Duration HOLD_WHILE_BLOCKED = Duration.ofMillis(300);
 
     @Autowired
     VoyageRepository voyages;
@@ -85,6 +90,12 @@ class MyBatisVoyageConcurrentUpdateIntegrationTest {
         assertConcurrentAdoptions(new Repositories(voyages, jdbc, transactionManager), false, false);
     }
 
+    @ParameterizedTest(name = "既存の行 {0}、先に書くのが新しい DE-12 {1}")
+    @CsvSource({"true, true", "true, false", "false, true", "false, false"})
+    void Bolt39e_行19_行20_書きが重なっても待たされた側は読み直し公開した時刻の新しい方が残る(boolean existing, boolean winnerIsNewer) throws Exception {
+        assertOverlappingWrites(new Repositories(voyages, jdbc, transactionManager), existing, winnerIsNewer);
+    }
+
     @Test
     void Bolt39e_行45_読みの途中で更新がコミットされても寄港が空の航海を読まず例外にならない() throws Exception {
         assertReadsDuringWrites(new Repositories(voyages, jdbc, transactionManager));
@@ -108,27 +119,17 @@ class MyBatisVoyageConcurrentUpdateIntegrationTest {
         }
     }
 
-    /** 最初の読みの直後で、先の DE-12 のコミットを待つリポジトリ（読んだ後に先を越される順を作る）。 */
-    private static final class PausingAfterFirstRead implements VoyageRepository {
-        private final VoyageRepository delegate;
-        private final CountDownLatch read;
-        private final CountDownLatch resume;
-        private final AtomicBoolean paused = new AtomicBoolean();
+    /** 本物のリポジトリに任せる土台（同時の順を作るリポジトリが必要なメソッドだけを変える）。 */
+    private static class DelegatingVoyageRepository implements VoyageRepository {
+        final VoyageRepository delegate;
 
-        PausingAfterFirstRead(VoyageRepository delegate, CountDownLatch read, CountDownLatch resume) {
+        DelegatingVoyageRepository(VoyageRepository delegate) {
             this.delegate = delegate;
-            this.read = read;
-            this.resume = resume;
         }
 
         @Override
         public Optional<Voyage> findByVoyageNumber(String voyageNumber) {
-            Optional<Voyage> found = delegate.findByVoyageNumber(voyageNumber);
-            if (paused.compareAndSet(false, true)) {
-                read.countDown();
-                await(resume);
-            }
-            return found;
+            return delegate.findByVoyageNumber(voyageNumber);
         }
 
         @Override
@@ -150,16 +151,90 @@ class MyBatisVoyageConcurrentUpdateIntegrationTest {
         public void update(Voyage voyage) {
             delegate.update(voyage);
         }
+    }
 
-        private static void await(CountDownLatch latch) {
-            try {
-                if (!latch.await(20, TimeUnit.SECONDS)) {
-                    throw new AssertionError("先の DE-12 のコミットを待ちきれない");
-                }
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                throw new IllegalStateException(e);
+    /** 最初の読みの直後で、先の DE-12 のコミットを待つリポジトリ（読んだ後に先を越される順を作る）。 */
+    private static final class PausingAfterFirstRead extends DelegatingVoyageRepository {
+        private final CountDownLatch read;
+        private final CountDownLatch resume;
+        private final AtomicBoolean paused = new AtomicBoolean();
+
+        PausingAfterFirstRead(VoyageRepository delegate, CountDownLatch read, CountDownLatch resume) {
+            super(delegate);
+            this.read = read;
+            this.resume = resume;
+        }
+
+        @Override
+        public Optional<Voyage> findByVoyageNumber(String voyageNumber) {
+            Optional<Voyage> found = delegate.findByVoyageNumber(voyageNumber);
+            if (paused.compareAndSet(false, true)) {
+                read.countDown();
+                awaitLatch(resume);
             }
+            return found;
+        }
+    }
+
+    /** 書いた後、コミットの前で止まるリポジトリ（行のロックか一意の索引を持ったまま、後の DE-12 を待たせる）。 */
+    private static final class HoldingAfterWrite extends DelegatingVoyageRepository {
+        private final CountDownLatch wrote;
+        private final CountDownLatch release;
+
+        HoldingAfterWrite(VoyageRepository delegate, CountDownLatch wrote, CountDownLatch release) {
+            super(delegate);
+            this.wrote = wrote;
+            this.release = release;
+        }
+
+        @Override
+        public void save(Voyage voyage) {
+            delegate.save(voyage);
+            hold();
+        }
+
+        @Override
+        public void update(Voyage voyage) {
+            delegate.update(voyage);
+            hold();
+        }
+
+        private void hold() {
+            wrote.countDown();
+            awaitLatch(release);
+        }
+    }
+
+    /** 書く直前に知らせるリポジトリ（後の DE-12 が書きに入ったことを先の DE-12 に伝える）。 */
+    private static final class AnnouncingBeforeWrite extends DelegatingVoyageRepository {
+        private final CountDownLatch writing;
+
+        AnnouncingBeforeWrite(VoyageRepository delegate, CountDownLatch writing) {
+            super(delegate);
+            this.writing = writing;
+        }
+
+        @Override
+        public void save(Voyage voyage) {
+            writing.countDown();
+            delegate.save(voyage);
+        }
+
+        @Override
+        public void update(Voyage voyage) {
+            writing.countDown();
+            delegate.update(voyage);
+        }
+    }
+
+    private static void awaitLatch(CountDownLatch latch) {
+        try {
+            if (!latch.await(20, TimeUnit.SECONDS)) {
+                throw new AssertionError("相手の DE-12 を待ちきれない");
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException(e);
         }
     }
 
@@ -188,21 +263,7 @@ class MyBatisVoyageConcurrentUpdateIntegrationTest {
         String voyageNumber = "C-" + UUID.randomUUID().toString().substring(0, 12);
         try {
             if (existing) {
-                repositories
-                        .transaction()
-                        .executeWithoutResult(status -> repositories
-                                .voyages()
-                                .save(Voyage.adoptedFrom(new VoyageAdoption(
-                                        voyageNumber,
-                                        List.of(
-                                                new PortCall(TOKYO, null, DEPARTURE),
-                                                new PortCall(LOS_ANGELES, ARRIVAL, null)),
-                                        "1",
-                                        new Source(
-                                                SourceKind.EXTERNAL_RECORD,
-                                                UUID.randomUUID().toString(),
-                                                new UtcInstant(ACQUIRED)),
-                                        new UtcInstant(ACQUIRED)))));
+                seed(repositories, voyageNumber);
             }
             VoyageAdoptedValueUpdated older = event(voyageNumber, OLDER_ARRIVAL, OLDER_PUBLISHED);
             VoyageAdoptedValueUpdated newer = event(voyageNumber, NEWER_ARRIVAL, NEWER_PUBLISHED);
@@ -223,14 +284,83 @@ class MyBatisVoyageConcurrentUpdateIntegrationTest {
                 losingDelivery.get(30, TimeUnit.SECONDS);
             }
 
-            Voyage result = repositories.read(voyageNumber);
-            assertThat(result.publishedAt()).contains(NEWER_PUBLISHED);
-            assertThat(result.portCalls().getLast().arrivalAt()).isEqualTo(NEWER_ARRIVAL);
-            long expectedVersion = (existing ? 1 : 0) + (winnerIsNewer ? 0 : 1);
-            assertThat(result.aggregateVersion()).isEqualTo(expectedVersion);
+            assertNewerRemains(repositories, voyageNumber, existing, winnerIsNewer);
         } finally {
             repositories.delete(voyageNumber);
         }
+    }
+
+    /**
+     * 先の DE-12 が書いてコミットする前に、後の DE-12 が書きに入る（UPDATE は行のロックで、INSERT は一意の索引で待たされ、先のコミットの後に 0 件か重複になる）。
+     * どちらの順でも公開した時刻の新しい方が残る。
+     *
+     * @param existing 既存の行があるとき真（行 19）、初めての航海のとき偽（行 20）
+     * @param winnerIsNewer 先に書くのが新しい DE-12 のとき真
+     */
+    static void assertOverlappingWrites(Repositories repositories, boolean existing, boolean winnerIsNewer)
+            throws Exception {
+        String voyageNumber = "C-" + UUID.randomUUID().toString().substring(0, 12);
+        try {
+            if (existing) {
+                seed(repositories, voyageNumber);
+            }
+            VoyageAdoptedValueUpdated older = event(voyageNumber, OLDER_ARRIVAL, OLDER_PUBLISHED);
+            VoyageAdoptedValueUpdated newer = event(voyageNumber, NEWER_ARRIVAL, NEWER_PUBLISHED);
+            CountDownLatch winnerWrote = new CountDownLatch(1);
+            CountDownLatch winnerRelease = new CountDownLatch(1);
+            CountDownLatch loserWriting = new CountDownLatch(1);
+            VoyageUpdateEventHandler winner = new VoyageUpdateEventHandler(
+                    new HoldingAfterWrite(repositories.voyages(), winnerWrote, winnerRelease));
+            VoyageUpdateEventHandler loser =
+                    new VoyageUpdateEventHandler(new AnnouncingBeforeWrite(repositories.voyages(), loserWriting));
+            VoyageAdoptedValueUpdated winning = winnerIsNewer ? newer : older;
+            VoyageAdoptedValueUpdated losing = winnerIsNewer ? older : newer;
+
+            try (ExecutorService executor = Executors.newFixedThreadPool(2)) {
+                Future<?> winningDelivery = executor.submit(
+                        () -> repositories.transaction().executeWithoutResult(status -> winner.on(winning)));
+                awaitLatch(winnerWrote);
+                Future<?> losingDelivery = executor.submit(
+                        () -> repositories.transaction().executeWithoutResult(status -> loser.on(losing)));
+                awaitLatch(loserWriting);
+                // 後の DE-12 が書きの中で待たされる間を置く（間に合わなくても先のコミットの後に書く順になるだけで、期待は変わらない）
+                await().pollDelay(HOLD_WHILE_BLOCKED)
+                        .atMost(Duration.ofSeconds(5))
+                        .until(() -> true);
+                winnerRelease.countDown();
+                winningDelivery.get(30, TimeUnit.SECONDS);
+                losingDelivery.get(30, TimeUnit.SECONDS);
+            }
+
+            assertNewerRemains(repositories, voyageNumber, existing, winnerIsNewer);
+        } finally {
+            repositories.delete(voyageNumber);
+        }
+    }
+
+    private static void seed(Repositories repositories, String voyageNumber) {
+        repositories
+                .transaction()
+                .executeWithoutResult(status -> repositories
+                        .voyages()
+                        .save(Voyage.adoptedFrom(new VoyageAdoption(
+                                voyageNumber,
+                                List.of(new PortCall(TOKYO, null, DEPARTURE), new PortCall(LOS_ANGELES, ARRIVAL, null)),
+                                "1",
+                                new Source(
+                                        SourceKind.EXTERNAL_RECORD,
+                                        UUID.randomUUID().toString(),
+                                        new UtcInstant(ACQUIRED)),
+                                new UtcInstant(ACQUIRED)))));
+    }
+
+    private static void assertNewerRemains(
+            Repositories repositories, String voyageNumber, boolean existing, boolean winnerIsNewer) {
+        Voyage result = repositories.read(voyageNumber);
+        assertThat(result.publishedAt()).contains(NEWER_PUBLISHED);
+        assertThat(result.portCalls().getLast().arrivalAt()).isEqualTo(NEWER_ARRIVAL);
+        long expectedVersion = (existing ? 1 : 0) + (winnerIsNewer ? 0 : 1);
+        assertThat(result.aggregateVersion()).isEqualTo(expectedVersion);
     }
 
     /** 書き手が航海を保存・更新している間に読み手が読み続け、例外が 1 つも出ない（読みは航海と寄港の 1 文）。 */
