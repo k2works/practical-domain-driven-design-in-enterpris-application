@@ -4,7 +4,7 @@ title: "cargo-tracker データモデル"
 description: "cargo-tracker の概念データモデル、スキーマ分割、命名と型の規約（H2 と PostgreSQL の共通部分）、コンテキストごとの論理データモデルと ER 図、版・追記専用・冪等性・イベント配信の表現。"
 tags: [design, data-model]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-09T07:58:23Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-09T11:34:57Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:48:17Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:37Z }
@@ -153,7 +153,7 @@ ADR-007 により、DDL は H2（PostgreSQL 互換モード）と PostgreSQL 18 
 | 区分値 | `VARCHAR(30)` に英語の定数名（例: `UNDER_REVIEW`）を入れ、`CHECK` 制約で値を限る | 列挙型（`CREATE TYPE`）は H2 と PostgreSQL で構文が違う |
 | 真偽 | `BOOLEAN` | 両方で使える |
 | 使わないもの | `JSONB`、部分インデックス、`CREATE TYPE`、シーケンスの方言、トリガー | H2 で動かない。必要になったら ADR-007 に従って別の ADR で判断する |
-| 楽観ロック | 集約ルートの表に `version BIGINT NOT NULL` を置き、`UPDATE ... SET ..., version = version + 1 WHERE id = ? AND version = ?` で更新する。更新が 0 件なら、ほかの更新が先に入ったとして失敗させる（Bolt 5 の輸送要求の状態の更新で使い始める）。例外: `identity` の `totp_credential`・`recovery_code`・`login_failure` は `version` を持たず、値の条件付きの更新の件数で判定する（Bolt 30）。`identity.password_reset_token` は `version` を持たず、無効化と使用を `used_at IS NULL AND invalidated_at IS NULL` を条件にした更新の件数で判定する。`notification.notification` は `version` を持たず、送信の結果を `status = 'PENDING'` を条件にした更新で書く（どちらも Bolt 33。条件付きの更新が版の代わりになる）。`external_data.external_record` は `version` を持たず、読んだハッシュを条件にした更新の件数で判定する（Bolt 39d4） | ARCH-HO-01 の期待版の照合 |
+| 楽観ロック | 集約ルートの表に `version BIGINT NOT NULL` を置き、`UPDATE ... SET ..., version = version + 1 WHERE id = ? AND version = ?` で更新する。更新が 0 件なら、ほかの更新が先に入ったとして失敗させる（Bolt 5 の輸送要求の状態の更新で使い始める）。例外: `identity` の `totp_credential`・`recovery_code`・`login_failure` は `version` を持たず、値の条件付きの更新の件数で判定する（Bolt 30）。`identity.password_reset_token` は `version` を持たず、無効化と使用を `used_at IS NULL AND invalidated_at IS NULL` を条件にした更新の件数で判定する。`notification.notification` は `version` を持たず、送信の結果を `status = 'PENDING'` を条件にした更新で書く（どちらも Bolt 33。条件付きの更新が版の代わりになる）。`external_data.external_record` は `version` を持たず、読んだハッシュを条件にした更新の件数で判定する（Bolt 39d4）。`routing.voyage` はこの規約のとおり `version` で更新する（Bolt 39e で使い始めた。DE-12 の listener が書く） | ARCH-HO-01 の期待版の照合 |
 | 監査用の列 | 集約ルートの表に `created_at`、`created_by`、`updated_at`、`updated_by` を置く。例外: `identity.password_reset_token` は監査用の列を持たず、発行時刻（`issued_at`）が作った時刻を兼ねる。`notification.notification` は `created_at` だけを持つ（どちらも行は利用者の操作でなくシステムが作る。`tracking_record` と同じ考え方。Bolt 33） | ガイドの共通設計原則。業務上の証跡は監査記録が持つ |
 
 ## 版・追記専用・冪等性の表し方
@@ -465,6 +465,7 @@ entity "voyage\n航海" as v {
   * source_kind : VARCHAR(30)
   * source_ref : VARCHAR(200)
   * acquired_at : TIMESTAMPTZ
+  published_at : TIMESTAMPTZ
   * version : BIGINT
   * updated_at : TIMESTAMPTZ
 }
@@ -504,7 +505,7 @@ riv }o..|| v : 航海番号
 | `exclusion_reason` | `reason_code` IN（`DEADLINE_EXCEEDED`、`CONNECTION_TOO_SHORT`、`CARGO_NOT_SUPPORTED`、`NOT_CONNECTABLE`、`INFO_INSUFFICIENT`） | R-INV-02 |
 | `referenced_info_version` | 確定時に参照した航海ごとの情報版。承認時の再検証と、確定後の再評価に使う（Bolt 37c の注: この表はまだ作っていない。承認時の再検証は区間の写し `candidate_leg.info_version` で行う。Bolt 37d の決定: この表は作らない。旧情報版は確定の記録の候補の区間に残る。航海番号から評価する案件を引く照会は W7 で `candidate_leg.voyage_number` の索引として決める） | R-INV-03、R-INV-07 |
 | `candidate_leg` | `executed` は再設計の対象から外す区間を示す | R-INV-08 |
-| `port_call` | 寄港に到着予定か出発予定の少なくとも一方を要する（CHECK `ck_port_call_times`。V20261007100000__create_routing.sql）。寄港を 2 つ以上要すること・出発予定は到着予定以後であることは集約（`Voyage`・`PortCall`）が守る。外部データの取込の値は同じ規則を写しとして持つ（Bolt 39b2b） | — |
+| `port_call` | 寄港に到着予定か出発予定の少なくとも一方を要する（CHECK `ck_port_call_times`。V20261007100000__create_routing.sql）。寄港を 2 つ以上要すること・出発予定は到着予定以後であることは集約（`Voyage`・`PortCall`）が守る。外部データの取込の値は同じ規則を写しとして持つ（Bolt 39b2b）。航海の更新では寄港の行を消して入れ直す（置き換え。`voyage` の条件付きの更新が通った後。`candidate_leg` から航海への外部キーはないので影響しない。Bolt 39e） | — |
 
 「確定は案件に 1 つ」は PostgreSQL の部分一意インデックス `ux_route_version_confirmed`（`route_version (routing_case_id) WHERE status = 'CONFIRMED'`。`migration/postgresql`）で表す。H2（開発環境・デモ環境）では部分インデックスを使えないので、集約（`RoutingCase` の経路版の検査）が守る（Bolt 37d。それまでは案件のヘッダに `confirmed_route_version_no` を持っていたが、書くだけで読まれず、再設計要にすると NULL で上書きされるので消した。D-72 を解消した）。
 
@@ -519,7 +520,8 @@ Bolt 17（US-06 AC1〜AC3）で作る範囲（[Bolt 17 計画](../../development
 - Bolt 37d（US-07 AC4 の準備）で足す列と消す列: `route_version` の `redesign_required_at`（再設計要にした時刻）と `redesign_reasons`（不適合の理由の区分の名前を空白で区切る。`DEADLINE_EXCEEDED`・`CONNECTION_TOO_SHORT`・`NOT_CONNECTABLE`・`VOYAGE_UNAVAILABLE`）。2 列はそろって NULL かそろって値を持ち、値を持てるのは再設計要と旧版だけ、再設計要は必ず持つ（CHECK `ck_route_version_redesign`）。再設計要は確定の記録も持つ（CHECK `ck_route_version_redesign_confirmed`）。設計の `redesign_cause`（US-08 の再設計の変更根拠）とは別の列。`routing_case.confirmed_route_version_no` と外部キーを消した。
 - 経路設計の表と見積りの表の間に外部キーは張らない（スキーマの所有。ADR-001）。輸送要求・見積りの ID は、見積りの公開 API とイベントから得た値の写し。
 - Bolt 38g（US-16 AC4）で足す列: `routing_case.shipper_company_id`（荷主企業。見積りの公開 API「経路条件の照会」の結果の写しで、社内の経路設計の画面を担当企業で絞るのに使う。NOT NULL）。3 段で入れる: common の `V20261029100000` で null 可で足し索引 `ix_routing_case_shipper`（`shipper_company_id`、`quotation_expires_at`）を付ける → dev だけの `V20261029100900` で既存の行を輸送要求の荷主企業から埋める → common の `V20261029101000` で `SET NOT NULL`。ステージング・本番には行がない
-- 航海・寄港・接続時間規則は、外部原本の取込（US-14、W7）と規則の管理ができるまで、開発環境の `db/dev-data` にだけ入れる仮のデータ（出典 `MANUAL_ENTRY`、情報版 `PROVISIONAL-1`、架空の航海番号）。ステージング・本番では 0 件。
+- 航海・寄港は、外部原本の取込（US-14、W7）で採用した値を経路設計の listener が書く（Bolt 39e）。出典 `EXTERNAL_RECORD`、参照は受信記録 ID、情報版は外部版。ステージング・本番では初めての DE-12 で行を作る。開発環境の `db/dev-data` の仮の航海（出典 `MANUAL_ENTRY`、情報版 `PROVISIONAL-1`、架空の航海番号）はそのまま残す。接続時間規則は、規則の管理ができるまで `db/dev-data` にだけ入れる仮のデータで、ステージング・本番では 0 件。
+- Bolt 39e（US-14）で足す列: `voyage.published_at`（採用値を公開した時刻。NULL を許す。取込を経ない仮の航海は NULL で、どの DE-12 より古いとみなす）。同じ航海の DE-12 の順の判定に使う。`updated_at` は監査用の列の規約のままで、公開した時刻に使わない。共通のマイグレーションで足す。索引は足さない（港ごとの出発の索引は W10 の性能テストと一緒に見る）。
 
 ### 予約（`booking`）
 

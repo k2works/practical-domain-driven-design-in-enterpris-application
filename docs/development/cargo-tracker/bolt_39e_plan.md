@@ -3,7 +3,7 @@ type: Plan
 title: "Bolt 39e 計画 - 採用した航海の値を経路設計の航海に書き、候補の算出と確定で使う"
 tags: [plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-09T11:25:23Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-09T11:34:57Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-11-09T11:25:23Z }
 ---
@@ -456,7 +456,7 @@ l }o..|| v : 航海番号
 
 ## ステップ計画（ゲートは下の各ステップに書く）
 
-- [ ] **1. 設計の文書**: 上の「設計文書に直す箇所」。決定 (1)〜(17)、【業務の判断】(r)・(t) と台帳 D-105〜D-107（(s) を含め仮の決定として足す）、【前の決定の変更】(2)・(3) を反映する（「39e2 の分」と書いた箇所は 39e2 のステップ 1）。始めに docs を「39e」と「W7」で検索する（完了の判定: 文書の差分と検索の記録。ゲート: 既定（計画の承認に含む））
+- [x] **1. 設計の文書**（domain_model・data_model・user_story・requirements_definition・ADR-004・architecture_backend・test_strategy・release_plan（39e2 の行、D-97 の注、D-105〜D-107）・development_strategy を直した。推奨のとおり承認として記録した。Recommend 承認の指示による）: 上の「設計文書に直す箇所」。決定 (1)〜(17)、【業務の判断】(r)・(t) と台帳 D-105〜D-107（(s) を含め仮の決定として足す）、【前の決定の変更】(2)・(3) を反映する（「39e2 の分」と書いた箇所は 39e2 のステップ 1）。始めに docs を「39e」と「W7」で検索する（完了の判定: 文書の差分と検索の記録。ゲート: 既定（計画の承認に含む））
 - [ ] **2. 受入シナリオとテストの Red**: 外から入る。まず `adopted_voyage_reflected_ui.feature`（行 39・40）を書いて Red を記録し（取込の航海が候補に出ない）、続いて行 1〜8・10〜13・14〜18・19〜22・29・30・32〜34・36・44〜46。骨組み（ポートのメソッドの中身なし、新しい例外と `VoyageAdoption`、class の `Voyage`）を先に足してコンパイルを通す（T-254）。直す既存のテストを一覧にする（T-217）（完了の判定: 期待した理由で落ちる記録。Red の行は `wip/` のブランチか stash に置き、develop に落ちるテストを積まない。ゲート: 既定（確認ポイント 14 で計画の承認に含む））
 - [ ] **3. class 化とマイグレーション**: `Voyage` の class 化（決定 (9)）、`published_at` のマイグレーションと `VoyageRow`（決定 (4)）。行 1〜8 が緑、`spotbugsMain`・`checkstyleMain`・`sonar-local:check`（完了の判定: 緑。ゲート: 既定（確認ポイント 3・14 で計画の承認に含む））
 - [ ] **4. 書き手と listener**: ポートの実装（MyBatis・メモリ）、`VoyageUpdateEventHandler`、組み立て、`allowedDependencies`、`ModularityTest`。行 10〜22・36 が緑、`spotbugsMain`・`checkstyleMain`・`sonar-local:check`（完了の判定: 緑。ゲート: 既定（確認ポイント 11・14 で計画の承認に含む））
