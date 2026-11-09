@@ -3,7 +3,7 @@ type: Plan
 title: "Bolt 39d3b2 計画 - S-17 で主要実績の内容の違う原本の隔離を採用し、採用できない隔離の理由を示す"
 tags: [plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-09T04:41:49Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-09T05:47:01Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-11-09T04:35:29Z }
 ---
@@ -430,7 +430,7 @@ AdoptionFactory ..> MilestoneAdoptedValueAccepted : DE-13
 - [x] **4. 画面**（結果: 行 9〜14・20 が緑、全体の `uiTest` 412 件が緑で axe 違反 0、`spotbugsMain`・`checkstyleMain` 通過、`sonar-local:check` PASS。行 14 のテストは 39d3b の入れ子から 39d3b2 の入れ子へ移した）: 理由の文と `adoptionRefusalText`、`keyless` の条件を置き換える、`respond` の `NotAdoptable`、フラッシュ `adoptionRefused`、エラー要約と `title`、コードの注記（画面の分）。行 9〜14・20 が緑、39d・39d2・39d2b・39d3・39d3c・39d3b の S-17 と S-16 の UI のシナリオが緑（行 15・16 の新しいシナリオはステップ 6）（完了の判定: 緑、`spotbugsMain`・`checkstyleMain`・`sonar-local:check`、`uiTest` と axe 違反 0。**承認ゲート**（画面））（推奨のとおり承認として記録した。Recommend 承認の指示による）
 - [x] **5. 層の規則**（結果: 行 18 が緑。変異 V10（`IngestFileCommandAssembler` にロガー）は分けた規則 `外部データのドメイン層とファイルの読み取りの層は…` で落ち、戻した）: `ModularityTest` の 2 つの規則（決定 (7)）。行 18 が緑、変異 V10 を流して落ちることを確かめて戻す（完了の判定: 緑。**承認ゲート**（層の規則。【前の決定の変更】(1)））（推奨のとおり承認として記録した。Recommend 承認の指示による）
 - [x] **6. 受入シナリオ**（結果: `adopt_quarantine_ui.feature` の 5 シナリオが緑で axe 違反 0、幅 320 px で横スクロールなし。定数の直しの後に S-17 の 5 つの feature（20 シナリオ）を流し直して緑）: `adopt_quarantine_ui.feature`（機能名、冒頭の文 :4-5、背景を前提に下ろす、行 15・16）と Steps（`ExternalDataIngestionUiSteps` に追跡番号の違う 2 行、`AdoptQuarantineUiSteps` に文を確かめる手順）、`@demo-bolt-39d3b2/adopt-milestone`。行 15〜17 が緑（完了の判定: `uiTest` と axe 違反 0。**承認ゲート**）（推奨のとおり承認として記録した。Recommend 承認の指示による）
-- [ ] **7. マニュアル**: 上の「入れるもの」のマニュアル（12 章、付録 B、00-はじめに・index・用語集）。5 つの文と「採用できませんでした」を controller の定数とテンプレートに突き合わせる（T-197）。行 19（完了の判定: 突き合わせの記録。**承認ゲート**（マニュアル））
+- [x] **7. マニュアル**（12 章に主要実績の採用と採用できない理由の 5 つの文、開いた後の案内、付録 B の 5 行、用語集、はじめに・index を直した。実装の文と一字ずつ一致（T-197）。キャプチャは文だけの変更なので撮り直していない。採用した値がまだ経路設計と追跡に反映されないことを注意・補足に足した。推奨のとおり承認として記録した。Recommend 承認の指示による）: 上の「入れるもの」のマニュアル（12 章、付録 B、00-はじめに・index・用語集）。5 つの文と「採用できませんでした」を controller の定数とテンプレートに突き合わせる（T-197）。行 19（完了の判定: 突き合わせの記録。**承認ゲート**（マニュアル））
 - [ ] **8. 品質ゲートと開発レビュー**: 変異、`check`・`uiTest`、その後に SonarQube（落ちたら先に中身を一覧する。T-252）、開発レビューとその直し。push の前に `check`（T-225）（完了の判定: 緑と指摘の扱いの記録。**承認ゲート**）
 - [ ] **9. 終了報告**: push して CI とデモ環境の配備を確かめ（デモ環境でデータ責任者でログインし、同じ外部 ID・外部版で発生時刻を変えた主要実績のファイルを 2 度取り込んで、S-17 の判断の画面で値を見比べて採用し、一覧から消えることを見る）、`demoVideo` で `@demo-bolt-39d3b2/adopt-milestone` を撮る（新しいファイル）。release_plan（39d3b2 の行の計画と終了報告のリンク）・開発の索引・mkdocs を直す。【業務の判断】(m)・(o) と【前の決定の変更】(1)・(2) を議題の先頭に置き、既知の課題に申し送りの表を書く
 
