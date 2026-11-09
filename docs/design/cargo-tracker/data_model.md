@@ -4,7 +4,7 @@ title: "cargo-tracker データモデル"
 description: "cargo-tracker の概念データモデル、スキーマ分割、命名と型の規約（H2 と PostgreSQL の共通部分）、コンテキストごとの論理データモデルと ER 図、版・追記専用・冪等性・イベント配信の表現。"
 tags: [design, data-model]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-09T11:34:57Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-09T15:22:34Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:48:17Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:37Z }
@@ -503,7 +503,7 @@ riv }o..|| v : 航海番号
 | `routing_case` | UK（`transport_request_id`、`transport_request_version_no`）で、詳細経路設計の依頼（DE-16）が再配信されても案件を重複させない。確定した経路版は `route_version` の状態で表す（Bolt 37d で `confirmed_route_version_no` を消した。確定は案件に 1 つを PostgreSQL の部分一意インデックス `ux_route_version_confirmed` と集約で守る） | R-INV-05、R-INV-10 |
 | `route_version` | `status` IN（`DRAFT`、`CANDIDATES_PRESENTED`、`EXPERT_REVIEW`、`CONFIRMED`、`REDESIGN_REQUIRED`、`SUPERSEDED`）。確定時は `approved_by`・`approved_at`・`rationale` が NOT NULL（アプリケーションで検証） | R-INV-03、R-INV-04、R-INV-06 |
 | `exclusion_reason` | `reason_code` IN（`DEADLINE_EXCEEDED`、`CONNECTION_TOO_SHORT`、`CARGO_NOT_SUPPORTED`、`NOT_CONNECTABLE`、`INFO_INSUFFICIENT`） | R-INV-02 |
-| `referenced_info_version` | 確定時に参照した航海ごとの情報版。承認時の再検証と、確定後の再評価に使う（Bolt 37c の注: この表はまだ作っていない。承認時の再検証は区間の写し `candidate_leg.info_version` で行う。Bolt 37d の決定: この表は作らない。旧情報版は確定の記録の候補の区間に残る。航海番号から評価する案件を引く照会は W7 で `candidate_leg.voyage_number` の索引として決める） | R-INV-03、R-INV-07 |
+| `referenced_info_version` | 確定時に参照した航海ごとの情報版。承認時の再検証と、確定後の再評価に使う（Bolt 37c の注: この表はまだ作っていない。承認時の再検証は、区間の写しの情報版 `candidate_leg.info_version` と区間の予定 `departure_at`・`arrival_at` の組で今の航海と照合する（Bolt 39e2 の【前の決定の変更】(1)。スキーマは変えない）。Bolt 37d の決定: この表は作らない。旧情報版は確定の記録の候補の区間に残る。航海番号から評価する案件を引く照会は W7 で `candidate_leg.voyage_number` の索引として決める） | R-INV-03、R-INV-07 |
 | `candidate_leg` | `executed` は再設計の対象から外す区間を示す | R-INV-08 |
 | `port_call` | 寄港に到着予定か出発予定の少なくとも一方を要する（CHECK `ck_port_call_times`。V20261007100000__create_routing.sql）。寄港を 2 つ以上要すること・出発予定は到着予定以後であることは集約（`Voyage`・`PortCall`）が守る。外部データの取込の値は同じ規則を写しとして持つ（Bolt 39b2b）。航海の更新では寄港の行を消して入れ直す（置き換え。`voyage` の条件付きの更新が通った後。`candidate_leg` から航海への外部キーはないので影響しない。Bolt 39e） | — |
 
