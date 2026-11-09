@@ -5,6 +5,7 @@ import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.argThat;
 
 import com.example.cargotracker.TestcontainersConfiguration;
+import com.example.cargotracker.externaldata.application.internal.commands.AdoptReceivedRecordCommand;
 import com.example.cargotracker.externaldata.application.internal.commands.IngestFileCommand;
 import com.example.cargotracker.externaldata.application.internal.commands.IngestFileCommand.IngestedRow;
 import com.example.cargotracker.externaldata.application.internal.commands.RejectKeylessQuarantinesCommand;
@@ -187,7 +188,8 @@ class ExternalRecordAuditDeliveryIntegrationTest {
             awaitCompletedAuditPublication(MilestoneAdoptedValueAccepted.class, receivedRecordId);
             Object occurredAt = auditRecordOf(AuditAction.EXTERNAL_RECORD_ADOPTED, receivedRecordId)
                     .get("occurred_at");
-            MilestoneAdoptedValueAccepted delivered = completedAuditEvent(receivedRecordId);
+            MilestoneAdoptedValueAccepted delivered =
+                    completedAuditEvent(MilestoneAdoptedValueAccepted.class, receivedRecordId);
 
             // 続けて 2 回配り直す（前の配信が完了してから次のトランザクションで渡す）
             for (int deliveries = 2; deliveries <= 3; deliveries++) {
@@ -442,6 +444,106 @@ class ExternalRecordAuditDeliveryIntegrationTest {
         }
     }
 
+    /**
+     * Bolt 39d3b の行 11（採用の判断の監査の配信。T-184、IA-INV-15）。航海の内容の違う原本の隔離を理由なしで採用したコミットの後に、監査の listener が
+     * DE-29 と DE-12 を受け、隔離の受信記録に判断の監査記録（理由は判断）と採用の監査記録を 1 つずつ書き、取込のときの隔離の監査記録と合わせて 3 つになる。
+     * 同じイベントを配り直しても増えない。主要実績（DE-13）は 39d3b2 で足す。39b3b の同じ番号の行と名前が衝突しないよう入れ子にする。
+     */
+    @org.junit.jupiter.api.Nested
+    class Bolt39d3b_採用の判断の監査の配信 {
+
+        @Autowired
+        ReceivedRecordDecisionService decisionService;
+
+        private IngestedRow voyageRow(int lineNumber, Instant losAngelesArrival) {
+            Instant acquiredAt = acquiredAt();
+            VoyageValues values = new VoyageValues(
+                    "V2611E",
+                    List.of(
+                            new PortCallValue(new Location("JPTYO"), null, new UtcInstant(FIRST_CALL)),
+                            new PortCallValue(new Location("USLAX"), new UtcInstant(losAngelesArrival), null)));
+            String line = "V2611E,1," + acquiredAt + ",JPTYO;;" + FIRST_CALL + "|USLAX;" + losAngelesArrival + ";";
+            return new IngestedRow(
+                    lineNumber, lineNumber, "V2611E", "1", acquiredAt, values, line.getBytes(StandardCharsets.UTF_8));
+        }
+
+        /** 航海の内容の違う原本の隔離を 1 つ取り込み、その受信記録 ID を返す。 */
+        private UUID quarantinedVoyage(UUID sourceId) {
+            IngestedRow first = voyageRow(2, FIRST_CALL.plus(Duration.ofDays(10)));
+            IngestedRow changed = voyageRow(3, FIRST_CALL.plus(Duration.ofDays(11)));
+            Ingested result = ingested(ingestionService.ingest(
+                    steward,
+                    new IngestFileCommand(
+                            sourceId,
+                            ("external_id,external_version,acquired_at,port_calls\n"
+                                            + new String(first.payload(), StandardCharsets.UTF_8) + "\n"
+                                            + new String(changed.payload(), StandardCharsets.UTF_8))
+                                    .getBytes(StandardCharsets.UTF_8),
+                            2,
+                            List.of(first, changed),
+                            List.of(),
+                            null)));
+            assertThat(result.rows())
+                    .extracting(RowResult::classification)
+                    .containsExactly(Classification.ADOPTED, Classification.QUARANTINED);
+            return result.rows().get(1).receivedRecordId();
+        }
+
+        @Test
+        void 行11_理由のない採用のコミットの後に判断と採用の監査記録が1つずつ書かれ隔離の監査記録と合わせて3つで配り直しても増えない() {
+            UUID sourceId = insertApprovedSource("船会社-" + UUID.randomUUID(), "VOYAGE");
+            try {
+                UUID receivedRecordId = quarantinedVoyage(sourceId);
+
+                DecisionOutcome outcome =
+                        decisionService.adopt(steward, new AdoptReceivedRecordCommand(receivedRecordId, null));
+
+                assertThat(outcome).isEqualTo(new DecisionOutcome.AdoptedQuarantine(receivedRecordId));
+                awaitCompletedAuditPublication(ExternalRecordQuarantined.class, receivedRecordId);
+                awaitCompletedAuditPublication(ReceivedRecordDecided.class, receivedRecordId);
+                awaitCompletedAuditPublication(VoyageAdoptedValueUpdated.class, receivedRecordId);
+                Object decidedAt = jdbc.queryForObject(
+                        "SELECT decided_at FROM external_data.received_record_decision WHERE received_record_id = ?",
+                        Object.class,
+                        receivedRecordId);
+                assertThat(auditRecordOf(AuditAction.EXTERNAL_RECORD_DECIDED, receivedRecordId))
+                        .containsEntry("result", "SUCCESS")
+                        .containsEntry("actor_user_id", steward.userId().value())
+                        .containsEntry("reason", "ADOPTED")
+                        .containsEntry("occurred_at", decidedAt);
+                assertThat(auditRecordOf(AuditAction.EXTERNAL_RECORD_ADOPTED, receivedRecordId))
+                        .containsEntry("result", "SUCCESS")
+                        .containsEntry("actor_user_id", steward.userId().value())
+                        .containsEntry("reason", null)
+                        .containsEntry("occurred_at", decidedAt);
+                assertThat(auditRecordCountOf(receivedRecordId)).isEqualTo(3);
+
+                ReceivedRecordDecided decided = completedAuditEvent(ReceivedRecordDecided.class, receivedRecordId);
+                VoyageAdoptedValueUpdated updated =
+                        completedAuditEvent(VoyageAdoptedValueUpdated.class, receivedRecordId);
+                transactionTemplate.executeWithoutResult(status -> {
+                    events.publishEvent(decided);
+                    events.publishEvent(updated);
+                });
+                await().atMost(TIMEOUT).untilAsserted(() -> {
+                    assertThat(completedAuditPublications(ReceivedRecordDecided.class, receivedRecordId))
+                            .isEqualTo(2);
+                    assertThat(completedAuditPublications(VoyageAdoptedValueUpdated.class, receivedRecordId))
+                            .isEqualTo(2);
+                });
+                assertThat(auditRecordCountOf(receivedRecordId)).isEqualTo(3);
+            } finally {
+                removeSource(sourceId);
+            }
+        }
+
+        private int auditRecordCountOf(UUID receivedRecordId) {
+            return count(
+                    "SELECT COUNT(*) FROM identity.audit_record WHERE target_type = 'RECEIVED_RECORD' AND target_id = ?",
+                    receivedRecordId.toString());
+        }
+    }
+
     /** 監査の listener の、この受信記録のイベントの発行記録が完了になるまで待つ。 */
     private void awaitCompletedAuditPublication(Class<?> eventType, UUID receivedRecordId) {
         await().atMost(TIMEOUT)
@@ -460,17 +562,17 @@ class ExternalRecordAuditDeliveryIntegrationTest {
     }
 
     /**
-     * 監査の listener が受け終えた、この受信記録の DE-13（受け手と受信記録 ID で SQL で絞る。共有の DB の発行記録をすべて読み込まない）。
+     * 監査の listener が受け終えた、この受信記録のイベント（受け手と受信記録 ID で SQL で絞る。共有の DB の発行記録をすべて読み込まない）。
      */
-    private MilestoneAdoptedValueAccepted completedAuditEvent(UUID receivedRecordId) {
+    private <T> T completedAuditEvent(Class<T> eventType, UUID receivedRecordId) {
         String serialized = jdbc.queryForObject(
                 "SELECT serialized_event FROM platform.event_publication WHERE event_type = ? AND serialized_event LIKE ?"
                         + " AND listener_id LIKE ? AND completion_date IS NOT NULL",
                 String.class,
-                MilestoneAdoptedValueAccepted.class.getName(),
+                eventType.getName(),
                 "%" + receivedRecordId + "%",
                 "%" + AUDIT_LISTENER + "%");
-        return eventSerializer.deserialize(serialized, MilestoneAdoptedValueAccepted.class);
+        return eventType.cast(eventSerializer.deserialize(serialized, eventType));
     }
 
     /** 監査の listener の、この受信記録のイベントの発行記録のうち失敗したもの（前例 QuotationPresentedDeliveryIntegrationTest）。 */

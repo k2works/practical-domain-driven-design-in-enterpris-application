@@ -5,7 +5,7 @@ import java.util.UUID;
 
 /**
  * 受信記録の判断の結果（{@link ReceivedRecordDecisionService}。Bolt 39d2）。断るときは判断を追記せず、イベントも出さない（例外にせず種類で返す）。
- * 判断できる受信記録は「取込で書いた受信記録で、分類が隔離で、判断がない」で、判断の画面（GET）と却下（POST）で同じ定めを使う。
+ * 判断できる受信記録は「取込で書いた受信記録で、分類が隔離で、判断がない」で、判断の画面（GET）と却下・採用（POST）で同じ定めを使う。
  */
 public sealed interface DecisionOutcome {
 
@@ -20,6 +20,21 @@ public sealed interface DecisionOutcome {
             Objects.requireNonNull(receivedRecordId, "receivedRecordId");
         }
     }
+
+    /**
+     * 採用した（Bolt 39d3b）。
+     *
+     * @param receivedRecordId 受信記録 ID
+     */
+    record AdoptedQuarantine(UUID receivedRecordId) implements DecisionOutcome {
+
+        public AdoptedQuarantine {
+            Objects.requireNonNull(receivedRecordId, "receivedRecordId");
+        }
+    }
+
+    /** 判断を待つ隔離だが採用できない（Bolt 39d3b。却下はできる。【業務の判断】(a)・(k)・(n)。主要実績の隔離は 39d3b2 まで）。 */
+    record NotAdoptable() implements DecisionOutcome {}
 
     /** 操作者がデータ責任者でない（URL の認可に加えてサービスでも確かめる）。 */
     record NotPermitted() implements DecisionOutcome {}

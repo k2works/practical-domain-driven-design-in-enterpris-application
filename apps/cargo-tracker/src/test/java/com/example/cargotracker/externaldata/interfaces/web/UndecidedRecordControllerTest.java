@@ -401,10 +401,7 @@ class UndecidedRecordControllerTest {
             given(query.undecidedQuarantine(RECORD_ID)).willReturn(java.util.Optional.of(item));
             // キーのない隔離は採用できない（Bolt 39d3b で採用の欄を足した。【業務の判断】(a)）
             given(decisions.adoptionRefusalOf(RECORD_ID))
-                    .willReturn(
-                            item.keyless()
-                                    ? java.util.Optional.of(new DecisionOutcome.NotAdoptable())
-                                    : java.util.Optional.empty());
+                    .willReturn(item.keyless() ? Optional.of(new DecisionOutcome.NotAdoptable()) : Optional.empty());
         }
 
         private String decisionPage(String url) throws Exception {
@@ -1545,8 +1542,7 @@ class UndecidedRecordControllerTest {
         private static final String ADOPTED = "隔離を採用しました。";
         private static final String ALREADY_DECIDED = "この隔離は判断済みです。";
         private static final String REASON_TOO_LONG = "採用の理由は 1000 文字までで書いてください。";
-        private static final String ADOPTION_IRREVOCABLE =
-                "採用すると取り消せません。誤って採用したときは、提供元に新しい外部版で正しい原本を送ってもらってください。";
+        private static final String ADOPTION_IRREVOCABLE = "採用すると取り消せません。誤って採用したときは、提供元に新しい外部版で正しい原本を送ってもらってください。";
         private static final String KEYLESS_GUIDE = "形式の誤りは採用できません。直したファイルを取り込み直してください。";
         private static final String ADOPTED_SECTION =
                 "<section aria-labelledby=\"adopted-values-heading\">\\s*<h2 id=\"adopted-values-heading\">この外部版の採用値</h2>";
@@ -1640,11 +1636,13 @@ class UndecidedRecordControllerTest {
             Assertions.assertThat(page)
                     .contains("<p id=\"adoption-reason-hint\">任意、" + ReceivedRecordDecision.REASON_LIMIT + " 文字まで</p>")
                     .containsPattern("<textarea[^>]*id=\"adoption-reason\"[^>]*name=\"reason\"")
-                    .containsPattern("<textarea[^>]*id=\"adoption-reason\"[^>]*aria-describedby=\"adoption-reason-hint\"")
+                    .containsPattern(
+                            "<textarea[^>]*id=\"adoption-reason\"[^>]*aria-describedby=\"adoption-reason-hint\"")
                     .doesNotContainPattern("<textarea[^>]*id=\"adoption-reason\"[^>]*aria-required")
                     .contains("<p id=\"adoption-irrevocable\">" + ADOPTION_IRREVOCABLE + "</p>")
-                    .contains("<button type=\"submit\" class=\"btn btn-primary\" aria-describedby=\"adoption-irrevocable\">"
-                            + "採用する</button>")
+                    .contains(
+                            "<button type=\"submit\" class=\"btn btn-primary\" aria-describedby=\"adoption-irrevocable\">"
+                                    + "採用する</button>")
                     .contains("action=\"" + ADOPTION_URL + "?page=1\"")
                     .doesNotContain(KEYLESS_GUIDE);
             for (String id : List.of(
@@ -1656,7 +1654,9 @@ class UndecidedRecordControllerTest {
                     "adoption-irrevocable",
                     "rejection-heading",
                     "adoption-heading")) {
-                Assertions.assertThat(occurrences(page, "id=\"" + id + "\"")).as(id).isEqualTo(1);
+                Assertions.assertThat(occurrences(page, "id=\"" + id + "\""))
+                        .as(id)
+                        .isEqualTo(1);
             }
         }
 
@@ -1669,7 +1669,8 @@ class UndecidedRecordControllerTest {
                     Arguments.of("受け取った値を読めた", readable()),
                     Arguments.of("受け取った値を読めない", new QuarantineValues(null, true, ACQUIRED_AT, adopted)),
                     Arguments.of("値の列なし", new QuarantineValues(null, ACQUIRED_AT, adopted)),
-                    Arguments.of("この外部版の採用値がない", new QuarantineValues(voyage("2026-12-01T22:00:00Z"), ACQUIRED_AT, null)),
+                    Arguments.of(
+                            "この外部版の採用値がない", new QuarantineValues(voyage("2026-12-01T22:00:00Z"), ACQUIRED_AT, null)),
                     Arguments.of(
                             "採用値の側だけ読めない",
                             new QuarantineValues(voyage("2026-12-01T22:00:00Z"), ACQUIRED_AT, illegibleAdopted)));
@@ -1680,14 +1681,17 @@ class UndecidedRecordControllerTest {
 
         @ParameterizedTest(name = "{0}・採用できる {2}")
         @MethodSource("valueStates")
-        void 行12_採用の欄の有無は採用できるかの照会の結果だけで決まり照会の値によらない(
-                String name, QuarantineValues values, boolean adoptable) throws Exception {
+        void 行12_採用の欄の有無は採用できるかの照会の結果だけで決まり照会の値によらない(String name, QuarantineValues values, boolean adoptable)
+                throws Exception {
             givenDecision(
-                    item(false), values, adoptable ? Optional.empty() : Optional.of(new DecisionOutcome.NotAdoptable()));
+                    item(false),
+                    values,
+                    adoptable ? Optional.empty() : Optional.of(new DecisionOutcome.NotAdoptable()));
 
             String page = decisionPage();
 
-            Assertions.assertThat(Pattern.compile(ADOPTION_SECTION).matcher(page).find())
+            Assertions.assertThat(
+                            Pattern.compile(ADOPTION_SECTION).matcher(page).find())
                     .as(name)
                     .isEqualTo(adoptable);
             Assertions.assertThat(page.contains("id=\"adoption-reason\"")).isEqualTo(adoptable);
@@ -1716,8 +1720,7 @@ class UndecidedRecordControllerTest {
         // --- 行 13: 採用の欄の誤り ---
 
         @Test
-        void 行13_前後の空白を除いて1001文字の採用の理由は判断の画面に戻り採用の欄に誤りを示して書いた理由を残しサービスを呼ばない()
-                throws Exception {
+        void 行13_前後の空白を除いて1001文字の採用の理由は判断の画面に戻り採用の欄に誤りを示して書いた理由を残しサービスを呼ばない() throws Exception {
             String thousandAndOne = " " + SUPPLEMENTARY.repeat(500) + "あ".repeat(501) + " ";
             givenDecision(item(false), readable(), Optional.empty());
 
@@ -1735,7 +1738,8 @@ class UndecidedRecordControllerTest {
                     // 却下の欄に誤りは出ず、空で描く
                     .doesNotContain("id=\"reason-error\"")
                     .doesNotContain("却下できませんでした")
-                    .containsPattern("<textarea[^>]*id=\"reason\"[^>]*aria-describedby=\"reason-hint\"[^>]*></textarea>");
+                    .containsPattern(
+                            "<textarea[^>]*id=\"reason\"[^>]*aria-describedby=\"reason-hint\"[^>]*></textarea>");
             then(decisions).should(Mockito.never()).adopt(any(), any());
         }
 
@@ -1750,7 +1754,8 @@ class UndecidedRecordControllerTest {
                     .contains("<title>却下できませんでした - 隔離の判断 - cargo-tracker</title>")
                     .containsPattern(ADOPTION_SECTION)
                     .doesNotContain("id=\"adoption-reason-error\"")
-                    .containsPattern("<textarea[^>]*id=\"adoption-reason\"[^>]*aria-describedby=\"adoption-reason-hint\"[^>]*></textarea>");
+                    .containsPattern(
+                            "<textarea[^>]*id=\"adoption-reason\"[^>]*aria-describedby=\"adoption-reason-hint\"[^>]*></textarea>");
         }
 
         static Stream<Arguments> acceptedReasons() {
@@ -1787,8 +1792,7 @@ class UndecidedRecordControllerTest {
 
         @ParameterizedTest(name = "{0}")
         @MethodSource("outcomes")
-        void 行14_採用の結果ごとに元の一覧に戻って知らせるか404か403にする(DecisionOutcome outcome, int status, String notice)
-                throws Exception {
+        void 行14_採用の結果ごとに元の一覧に戻って知らせるか404か403にする(DecisionOutcome outcome, int status, String notice) throws Exception {
             given(decisions.adopt(any(), any())).willReturn(outcome);
 
             ResultActions result = postAdoption(ADOPTION_URL + "?ingestion=" + INGESTION_ID + "&page=2", "提供元に確かめた。")

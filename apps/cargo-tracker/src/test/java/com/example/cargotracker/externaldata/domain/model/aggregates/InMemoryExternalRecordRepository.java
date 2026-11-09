@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -18,6 +19,13 @@ public class InMemoryExternalRecordRepository implements ExternalRecordRepositor
     @Override
     public Optional<ExternalRecord> findByKey(IdempotencyKey key) {
         return Optional.ofNullable(records.get(key));
+    }
+
+    @Override
+    public Optional<ExternalRecord> findById(UUID externalRecordId) {
+        return records.values().stream()
+                .filter(externalRecord -> externalRecord.id().equals(externalRecordId))
+                .findFirst();
     }
 
     @Override

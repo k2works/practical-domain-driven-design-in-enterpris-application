@@ -920,7 +920,10 @@ class ExternalDataIngestionSecurityIntegrationTest {
             for (Role role : EnumSet.complementOf(EnumSet.of(Role.DATA_STEWARD))) {
                 Cookie session = login(user(Set.of(role)));
 
-                mvc.perform(post(adoptionUrl).param("reason", "理由").cookie(session).with(csrf()))
+                mvc.perform(post(adoptionUrl)
+                                .param("reason", "理由")
+                                .cookie(session)
+                                .with(csrf()))
                         .andExpect(status().isForbidden());
             }
             verify(decisionService, never()).adopt(any(), any());

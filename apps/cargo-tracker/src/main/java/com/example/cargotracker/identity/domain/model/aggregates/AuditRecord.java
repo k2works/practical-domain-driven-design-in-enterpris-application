@@ -446,7 +446,7 @@ public final class AuditRecord {
     }
 
     /**
-     * 外部原本の取込での自動の採用を記録する（DE-12・DE-13 の監査。Bolt 39b3b、AUD-01、IA-INV-15）。操作者と時刻はイベントのもの、対象は
+     * 外部原本の取込での自動の採用とデータ責任者の採用の判断を記録する（DE-12・DE-13 の監査。Bolt 39b3b・39d3b、AUD-01、IA-INV-15）。操作者と時刻はイベントのもの、対象は
      * 受信記録（版と変更前は持たない）、変更後は正規の要約。理由は持たない。結果は成功。必須の値がなければ {@link MissingEventValueException}
      * （内容の欠けたイベント。listener が捨てる）。
      */
@@ -478,8 +478,9 @@ public final class AuditRecord {
     }
 
     /**
-     * データ責任者の受信記録の判断を記録する（DE-29 の監査。Bolt 39d2、AUD-01、IA-INV-15）。理由は判断（{@code REJECTED}）で、却下の理由の文は
-     * 変更後の要約の最後に置く（理由の列は 100 文字まで）。対象・変更後・必須の値は {@link #externalRecordAdopted} と同じ。結果は成功。
+     * データ責任者の受信記録の判断を記録する（DE-29 の監査。Bolt 39d2・39d3b、AUD-01、IA-INV-15）。理由は判断（{@code REJECTED} か {@code ADOPTED}）で、
+     * 判断の理由の文があれば変更後の要約の最後に置き（理由の列は 100 文字まで）、理由のない採用は {@code reason} の部品を省く。対象・変更後・必須の値は
+     * {@link #externalRecordAdopted} と同じ。結果は成功。
      */
     public static AuditRecord externalRecordDecided(
             UserId actor,

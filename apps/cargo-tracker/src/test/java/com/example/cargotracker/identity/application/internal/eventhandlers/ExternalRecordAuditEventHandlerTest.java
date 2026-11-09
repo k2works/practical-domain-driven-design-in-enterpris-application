@@ -28,10 +28,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataAccessResourceFailureException;
 
@@ -415,6 +421,67 @@ class ExternalRecordAuditEventHandlerTest {
             handler.on(decided(UUID.randomUUID(), OPERATOR, null));
 
             assertThat(auditRecords.appendCalls).isZero();
+            assertThat(logs.list).singleElement().satisfies(log -> {
+                assertThat(log.getLevel()).isEqualTo(Level.ERROR);
+                assertThat(log.getFormattedMessage()).contains("EXTERNAL_RECORD_DECIDED", "reason");
+            });
+        }
+    }
+
+    /**
+     * Bolt 39d3b の行 10（理由のない採用の判断の DE-29 の監査。開始準備の決定 (7)）。採用の理由は任意なので、理由のない採用は要約から
+     * {@code ;reason=} の部品を省いて書く。却下の理由は必須のままで、理由のない却下は内容の欠けとして捨てる。39d2 の同じ番号の行と名前が衝突しないよう入れ子にする。
+     */
+    @Nested
+    class Bolt39d3b_採用の判断の監査 {
+
+        private static final UtcInstant DECIDED_AT = new UtcInstant(Instant.parse("2026-11-16T02:00:00.123456Z"));
+
+        private ReceivedRecordDecided decided(UUID receivedRecordId, String decision, String reason) {
+            return new ReceivedRecordDecided(
+                    receivedRecordId, INGESTION, DATA_SOURCE, decision, reason, OPERATOR, OPERATOR_COMPANY, DECIDED_AT);
+        }
+
+        static Stream<Arguments> summaries() {
+            return Stream.of(
+                    Arguments.of("理由のない採用", "ADOPTED", null, ""),
+                    Arguments.of("空白だけの理由の採用", "ADOPTED", " ", ""),
+                    Arguments.of("理由のある採用", "ADOPTED", "提供元に確かめた", ";reason=提供元に確かめた"),
+                    Arguments.of("区切りを含む理由の採用", "ADOPTED", "確かめた; 直した", ";reason=確かめた; 直した"),
+                    Arguments.of("理由のある却下", "REJECTED", "誤送信", ";reason=誤送信"));
+        }
+
+        @ParameterizedTest(name = "{0}")
+        @MethodSource("summaries")
+        void 行10_判断と理由の有無で要約の理由の部品が決まり理由があれば最後に置く(String name, String decision, String reason, String tail) {
+            UUID receivedRecordId = UUID.randomUUID();
+
+            handler.on(decided(receivedRecordId, decision, reason));
+
+            assertThat(auditRecords.appended).singleElement().satisfies(written -> {
+                assertThat(written.action()).isEqualTo(AuditAction.EXTERNAL_RECORD_DECIDED);
+                assertThat(written.reason()).isEqualTo(decision);
+                assertThat(written.occurredAt()).isEqualTo(DECIDED_AT);
+                assertThat(written.target())
+                        .isEqualTo(new AuditTarget(
+                                RECEIVED_RECORD,
+                                receivedRecordId.toString(),
+                                null,
+                                null,
+                                "decision=" + decision + ";ingestionId=" + INGESTION + ";dataSourceId=" + DATA_SOURCE
+                                        + tail));
+            });
+            assertThat(logs.list).isEmpty();
+        }
+
+        @ParameterizedTest(name = "[{0}]")
+        @NullAndEmptySource
+        @ValueSource(strings = " ")
+        void 行10_理由のない却下は今のまま書かずにERRORのログを残す(String reason) {
+            handler.on(decided(UUID.randomUUID(), "REJECTED", reason));
+
+            assertThat(auditRecords.appendCalls).isZero();
+            assertThat(auditRecords.existsQueries).isEmpty();
             assertThat(logs.list).singleElement().satisfies(log -> {
                 assertThat(log.getLevel()).isEqualTo(Level.ERROR);
                 assertThat(log.getFormattedMessage()).contains("EXTERNAL_RECORD_DECIDED", "reason");

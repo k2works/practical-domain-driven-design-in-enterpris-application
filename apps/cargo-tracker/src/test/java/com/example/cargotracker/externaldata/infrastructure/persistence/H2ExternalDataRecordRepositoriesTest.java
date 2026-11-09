@@ -3,8 +3,10 @@ package com.example.cargotracker.externaldata.infrastructure.persistence;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.example.cargotracker.externaldata.domain.model.aggregates.AdoptedValueRepository;
 import com.example.cargotracker.externaldata.domain.model.aggregates.DataSource;
 import com.example.cargotracker.externaldata.domain.model.aggregates.DataSource.ApprovalStatus;
+import com.example.cargotracker.externaldata.domain.model.aggregates.DataSourceRepository;
 import com.example.cargotracker.externaldata.domain.model.aggregates.ExternalDataRecordRepositoriesContract;
 import com.example.cargotracker.externaldata.domain.model.aggregates.ExternalRecord;
 import com.example.cargotracker.externaldata.domain.model.aggregates.ExternalRecordRepository;
@@ -14,6 +16,7 @@ import com.example.cargotracker.externaldata.domain.model.aggregates.ReceivedRec
 import com.example.cargotracker.externaldata.domain.model.aggregates.ReceivedRecordDecision;
 import com.example.cargotracker.externaldata.domain.model.aggregates.ReceivedRecordDecisionRepository;
 import com.example.cargotracker.externaldata.domain.model.aggregates.ReceivedRecordRepository;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.DecisionKind;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.IdempotencyKey;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PayloadHash;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PayloadObjectKey;
@@ -23,6 +26,8 @@ import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -215,6 +220,27 @@ class H2ExternalDataRecordRepositoriesTest extends ExternalDataRecordRepositorie
         void 行7_H2でも判断の表に行のある隔離は一覧に出ず件数にも数えない() {
             MyBatisExternalDataRecordRepositoriesIntegrationTest.assertDecidedQuarantineIsNotListed(
                     jdbc, ingestions, receivedRecords);
+        }
+    }
+
+    @Autowired
+    DataSourceRepository dataSources;
+
+    @Autowired
+    AdoptedValueRepository adoptedValues;
+
+    /** Bolt 39d3b の行 7（同時の判断に負けた採用）。本体は PostgreSQL のテストと共有する。39b の行 7 と名前が衝突しないよう入れ子にする。 */
+    @Nested
+    class Bolt39d3b_同時の判断 {
+
+        @ParameterizedTest(name = "勝った判断 {0}")
+        @EnumSource(DecisionKind.class)
+        void 行7_H2でも一意制約に負けた採用はセーブポイントに戻って判断済みを返し採用値を書かずトランザクションは続く(DecisionKind winner) {
+            MyBatisExternalDataRecordRepositoriesIntegrationTest.assertLosingAdoption(
+                    new MyBatisExternalDataRecordRepositoriesIntegrationTest.AdoptionRepositories(
+                            jdbc, ingestions, externalRecords, receivedRecords, receivedRecordDecisions, adoptedValues),
+                    dataSources,
+                    winner);
         }
     }
 

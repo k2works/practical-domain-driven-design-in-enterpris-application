@@ -4,7 +4,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.example.cargotracker.TestcontainersConfiguration;
+import com.example.cargotracker.externaldata.application.internal.commands.AdoptReceivedRecordCommand;
+import com.example.cargotracker.externaldata.application.internal.commandservices.DecisionOutcome;
+import com.example.cargotracker.externaldata.application.internal.commandservices.ReceivedRecordDecisionService;
+import com.example.cargotracker.externaldata.domain.model.aggregates.AdoptedValueRepository;
 import com.example.cargotracker.externaldata.domain.model.aggregates.DataSource;
+import com.example.cargotracker.externaldata.domain.model.aggregates.DataSourceRepository;
 import com.example.cargotracker.externaldata.domain.model.aggregates.DuplicateExternalRecordException;
 import com.example.cargotracker.externaldata.domain.model.aggregates.ExternalDataRecordRepositoriesContract;
 import com.example.cargotracker.externaldata.domain.model.aggregates.ExternalRecord;
@@ -21,15 +26,29 @@ import com.example.cargotracker.externaldata.domain.model.valueobjects.Idempoten
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PayloadHash;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PayloadObjectKey;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PhysicalLineRange;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.PortCallValue;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.ReceivedValue;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.UndecidedQuarantine;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.VoyageValues;
+import com.example.cargotracker.shared.domain.AuthenticatedActor;
+import com.example.cargotracker.shared.domain.CompanyId;
+import com.example.cargotracker.shared.domain.Location;
+import com.example.cargotracker.shared.domain.Role;
 import com.example.cargotracker.shared.domain.UserId;
+import com.example.cargotracker.shared.domain.UtcInstant;
+import java.time.Clock;
 import java.time.Instant;
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
@@ -161,6 +180,145 @@ class MyBatisExternalDataRecordRepositoriesIntegrationTest extends ExternalDataR
         void 行7_判断の表に行のある隔離は一覧に出ず件数にも数えない() {
             assertDecidedQuarantineIsNotListed(jdbc, ingestions, receivedRecords);
         }
+    }
+
+    @Autowired
+    DataSourceRepository dataSources;
+
+    @Autowired
+    AdoptedValueRepository adoptedValues;
+
+    /** Bolt 39d3b の行 7（同時の判断に負けた採用）。39b の行 7 と名前が衝突しないよう入れ子にする。 */
+    @Nested
+    class Bolt39d3b_同時の判断 {
+
+        @ParameterizedTest(name = "勝った判断 {0}")
+        @EnumSource(DecisionKind.class)
+        void 行7_一意制約に負けた採用はセーブポイントに戻って判断済みを返し採用値を書かずトランザクションは続く(DecisionKind winner) {
+            assertLosingAdoption(
+                    new AdoptionRepositories(
+                            jdbc, ingestions, externalRecords, receivedRecords, receivedRecordDecisions, adoptedValues),
+                    dataSources,
+                    winner);
+        }
+    }
+
+    /**
+     * Bolt 39d3b の行 7 で使う実リポジトリ（H2 の契約のテストと共有する）。
+     *
+     * @param jdbc 準備と確かめの SQL
+     * @param ingestions 取込
+     * @param externalRecords 外部原本
+     * @param receivedRecords 受信記録
+     * @param decisions 判断（セーブポイントの中で追記する実リポジトリ）
+     * @param adoptedValues 採用値
+     */
+    record AdoptionRepositories(
+            JdbcTemplate jdbc,
+            IngestionRepository ingestions,
+            ExternalRecordRepository externalRecords,
+            ReceivedRecordRepository receivedRecords,
+            ReceivedRecordDecisionRepository decisions,
+            AdoptedValueRepository adoptedValues) {}
+
+    /**
+     * Bolt 39d3b の行 7 の本体（H2 の契約のテストと共有する）。読んだ後に別の人の判断が先にコミットした競り合いを、判断の有無の照会だけが偽を返す形で実リポジトリに
+     * 差し込む（前例 ReceivedRecordDecisionServiceTest の追記の差し替え）。負けた採用はセーブポイントに戻り、PostgreSQL でもトランザクションを中断させない。
+     */
+    static void assertLosingAdoption(
+            AdoptionRepositories repositories, DataSourceRepository dataSources, DecisionKind winner) {
+        assertThat(TransactionSynchronizationManager.isActualTransactionActive())
+                .as("書いた行はロールバックで消す")
+                .isTrue();
+        DataSource source = new DataSource(
+                UUID.randomUUID(), "採用の提供元-" + UUID.randomUUID(), "VOYAGE", DataSource.ApprovalStatus.APPROVED);
+        insertDataSource(repositories.jdbc(), source);
+        Instant ingestedAt = Instant.parse("2099-01-01T00:00:00Z");
+        Ingestion ingestion = new Ingestion(
+                UUID.randomUUID(),
+                source.id(),
+                PayloadObjectKey.newIngestionFile(),
+                PayloadHash.of(new byte[] {8}),
+                new UserId(UUID.randomUUID()),
+                ingestedAt,
+                1,
+                null,
+                0);
+        repositories.ingestions().add(ingestion);
+        ExternalRecord externalRecord = new ExternalRecord(
+                UUID.randomUUID(),
+                new IdempotencyKey(source.provider(), "VOYAGE", "DEMO-201", "3"),
+                PayloadHash.of(new byte[] {9}),
+                PayloadObjectKey.newRecordPayload(),
+                ingestedAt);
+        repositories.externalRecords().add(externalRecord);
+        VoyageValues values = new VoyageValues(
+                "DEMO-201",
+                List.of(
+                        new PortCallValue(
+                                new Location("JPTYO"), null, new UtcInstant(Instant.parse("2099-02-01T00:00:00Z"))),
+                        new PortCallValue(
+                                new Location("USLAX"), new UtcInstant(Instant.parse("2099-02-10T00:00:00Z")), null)));
+        ReceivedRecord quarantine = new ReceivedRecord(
+                UUID.randomUUID(),
+                externalRecord.id(),
+                ingestion.id(),
+                PayloadHash.of(new byte[] {10}),
+                PayloadObjectKey.newRecordPayload(),
+                ingestedAt.minusSeconds(60),
+                Classification.QUARANTINED,
+                "内容の違う原本",
+                ingestedAt,
+                new PhysicalLineRange(3, 3),
+                ReceivedValue.of(values));
+        repositories.receivedRecords().add(quarantine);
+        Instant decidedAt = Instant.parse("2099-01-01T00:10:00Z");
+        UserId winnerUser = new UserId(UUID.randomUUID());
+        repositories
+                .decisions()
+                .add(
+                        winner == DecisionKind.REJECTED
+                                ? ReceivedRecordDecision.reject(quarantine, "先の却下。", winnerUser, decidedAt)
+                                : ReceivedRecordDecision.adopt(quarantine, null, winnerUser, decidedAt));
+        ReceivedRecordDecisionRepository racing = new ReceivedRecordDecisionRepository() {
+            @Override
+            public void add(ReceivedRecordDecision decision) {
+                repositories.decisions().add(decision);
+            }
+
+            @Override
+            public boolean existsFor(UUID receivedRecordId) {
+                return false;
+            }
+        };
+        List<Object> published = new ArrayList<>();
+        ReceivedRecordDecisionService service = new ReceivedRecordDecisionService(
+                repositories.receivedRecords(),
+                racing,
+                repositories.ingestions(),
+                dataSources,
+                repositories.externalRecords(),
+                repositories.adoptedValues(),
+                published::add,
+                Clock.fixed(Instant.parse("2099-01-01T00:20:00Z"), ZoneOffset.UTC));
+        AuthenticatedActor steward = new AuthenticatedActor(
+                new UserId(UUID.randomUUID()),
+                new CompanyId(UUID.randomUUID()),
+                Set.of(Role.DATA_STEWARD),
+                "データ責任者",
+                "運営会社");
+
+        DecisionOutcome outcome = service.adopt(steward, new AdoptReceivedRecordCommand(quarantine.id(), "負ける採用の理由"));
+
+        assertThat(outcome).isEqualTo(new DecisionOutcome.AlreadyDecided());
+        assertThat(published).isEmpty();
+        // セーブポイントに戻っていなければ、PostgreSQL はこの照会をトランザクションの中断の誤りにする
+        assertThat(repositories.adoptedValues().findByReceivedRecordId(quarantine.id()))
+                .isEmpty();
+        assertThat(readDecision(repositories.jdbc(), quarantine.id())).get().satisfies(decision -> {
+            assertThat(decision.decision()).isEqualTo(winner);
+            assertThat(decision.decidedBy()).isEqualTo(winnerUser);
+        });
     }
 
     /** 行 7 の本体（H2 の契約のテストと共有する）。 */

@@ -1,6 +1,7 @@
 package com.example.cargotracker.externaldata.infrastructure.persistence;
 
 import java.util.Optional;
+import java.util.UUID;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -13,6 +14,8 @@ public interface ExternalRecordMapper {
             @Param("recordType") String recordType,
             @Param("externalId") String externalId,
             @Param("externalVersion") String externalVersion);
+
+    Optional<ExternalRecordRow> selectById(@Param("id") UUID id);
 
     void insert(ExternalRecordRow row);
 }

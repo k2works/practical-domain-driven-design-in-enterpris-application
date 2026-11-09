@@ -27,6 +27,14 @@
            AND external_version = #{externalVersion}
     </select>
 
+    <!-- 採用の判断が受信記録の外部原本 ID から冪等性キーを読む（Bolt 39d3b） -->
+    <select id="selectById" resultMap="externalRecordRow">
+        SELECT id, provider, record_type, external_id, external_version, payload_hash, payload_object_key,
+               first_received_at
+          FROM external_data.external_record
+         WHERE id = #{id}
+    </select>
+
     <insert id="insert">
         INSERT INTO external_data.external_record
             (id, provider, record_type, external_id, external_version, payload_hash, payload_object_key,

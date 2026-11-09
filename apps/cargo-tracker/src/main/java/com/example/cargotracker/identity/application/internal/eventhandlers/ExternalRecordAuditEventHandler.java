@@ -17,9 +17,10 @@ import org.springframework.modulith.events.ApplicationModuleListener;
 import org.springframework.stereotype.Service;
 
 /**
- * 外部原本の採否の監査のイベントハンドラー。外部データの DE-12・DE-13・DE-14 を取込のコミットの後に別のトランザクションで受け、受信記録ごとに
- * 外部原本の採否の監査記録を 1 つ書く（Bolt 39b3b。AUD-01・AUD-02、IA-INV-15、ADR-003・ADR-004）。DE-29（データ責任者の受信記録の判断）も
- * 判断のコミットの後に受け、（操作、受信記録）ごとに 1 つ書く（Bolt 39d2）。操作者と発生時刻はイベントのもの。
+ * 外部原本の採否の監査のイベントハンドラー。外部データの DE-12・DE-13・DE-14 を取込のコミットの後（DE-12・DE-13 は採用の判断のコミットの後にも。
+ * Bolt 39d3b）に別のトランザクションで受け、受信記録ごとに外部原本の採否の監査記録を 1 つ書く（Bolt 39b3b。AUD-01・AUD-02、IA-INV-15、ADR-003・
+ * ADR-004）。DE-29（データ責任者の受信記録の判断）も判断のコミットの後に受け、（操作、受信記録）ごとに 1 つ書く（Bolt 39d2）。操作者と発生時刻は
+ * イベントのもの。
  * 配信は少なくとも 1 回なので、操作と対象（受信記録）で引いて記録があれば書かない。内容の欠けたイベント
  * （{@link AuditRecord.MissingEventValueException}）は再配信しても直らないので、ERROR のログを残して捨てる。DB の失敗とほかの例外（プログラムの
  * 誤り）は上げ、発行記録を未完了に残して起動のときに配り直させる（前例 {@link KpiObservationEventHandler}）。
@@ -38,13 +39,16 @@ public class ExternalRecordAuditEventHandler {
     /** 要約の値がないときの印（キーのない隔離の外部 ID・外部版、ファイルの誤りの行）。 */
     private static final String NONE = "-";
 
+    /** DE-29 の判断のうち、理由が任意の採用（イベントは判断を種類の名前の文字列で持つ）。 */
+    private static final String ADOPTED = "ADOPTED";
+
     private final AuditRecordRepository auditRecords;
 
     public ExternalRecordAuditEventHandler(AuditRecordRepository auditRecords) {
         this.auditRecords = auditRecords;
     }
 
-    /** DE-12 航海の採用値を更新した を受けて、取込での自動の採用を監査する。対象は出典の参照（受信記録 ID）。 */
+    /** DE-12 航海の採用値を更新した を受けて、取込での自動の採用と採用の判断を監査する。対象は出典の参照（受信記録 ID）。 */
     @ApplicationModuleListener
     public void on(VoyageAdoptedValueUpdated event) {
         String receivedRecordId = reference(event.source());
@@ -65,7 +69,7 @@ public class ExternalRecordAuditEventHandler {
                         event.publishedAt()));
     }
 
-    /** DE-13 主要実績の採用値を受け付けた を受けて、取込での自動の採用を監査する。要約に追跡番号と外部 ID を入れる。 */
+    /** DE-13 主要実績の採用値を受け付けた を受けて、取込での自動の採用を監査する（採用の判断は Bolt 39d3b2）。要約に追跡番号と外部 ID を入れる。 */
     @ApplicationModuleListener
     public void on(MilestoneAdoptedValueAccepted event) {
         String receivedRecordId = reference(event.source());
@@ -110,8 +114,8 @@ public class ExternalRecordAuditEventHandler {
     }
 
     /**
-     * DE-29 受信記録を判断した を受けて、データ責任者の判断を監査する（Bolt 39d2）。理由は判断、却下の理由の文は要約の最後に置く（理由の文に
-     * 区切りの {@code ;} があっても最後なので読み違えない）。
+     * DE-29 受信記録を判断した を受けて、データ責任者の判断を監査する（Bolt 39d2）。理由は判断、判断の理由の文は要約の最後に置く（理由の文に
+     * 区切りの {@code ;} があっても最後なので読み違えない）。採用の理由は任意なので、理由のない採用は要約から理由の部品を省く（Bolt 39d3b）。
      */
     @ApplicationModuleListener
     public void on(ReceivedRecordDecided event) {
@@ -127,8 +131,20 @@ public class ExternalRecordAuditEventHandler {
                         event.decision(),
                         "decision=" + part(event.decision(), "decision")
                                 + origin(event.ingestionId(), event.dataSourceId())
-                                + ";reason=" + part(event.reason(), "reason"),
+                                + reasonPart(event),
                         event.decidedAt()));
+    }
+
+    /**
+     * 要約の判断の理由の部品。理由のない採用は部品を省く（理由は利用者の書く文字列なので、{@link #NONE} の印と区別できない。Bolt 39d3b の開始準備の
+     * 決定 (7)）。却下の理由は必須なので、ほかの欠けは内容の欠けとして扱う。
+     */
+    private static String reasonPart(ReceivedRecordDecided event) {
+        boolean withoutReason = event.reason() == null || event.reason().isBlank();
+        if (withoutReason && ADOPTED.equals(event.decision())) {
+            return "";
+        }
+        return ";reason=" + part(event.reason(), "reason");
     }
 
     /**

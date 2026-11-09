@@ -1,5 +1,6 @@
 package com.example.cargotracker.externaldata.interfaces.web;
 
+import com.example.cargotracker.externaldata.application.internal.commands.AdoptReceivedRecordCommand;
 import com.example.cargotracker.externaldata.application.internal.commands.RejectKeylessQuarantinesCommand;
 import com.example.cargotracker.externaldata.application.internal.commands.RejectReceivedRecordCommand;
 import com.example.cargotracker.externaldata.application.internal.commandservices.DecisionOutcome;
@@ -37,7 +38,8 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
  * 形式の誤りを 1 つの理由でまとめて却下すると PRG で取込で絞った一覧に戻る（Bolt 39d2b）。ページ送りは表の前に置く（Bolt 39d2b）。
  * 判断できる受信記録の定めと却下は判断のサービスが持つ。内容の違う原本の判断の画面には、隔離の理由の後に受け取った値とこの外部版の採用値を
  * それぞれの取得した日時とともに並べ、値が同じなら取得時刻で分けた文を前に示す（航海は Bolt 39d3、【業務の判断】(i)・(j)。主要実績の値と
- * 値を読めないときの文は Bolt 39d3c、【業務の判断】(k)）。採用は 39d3b で足す。
+ * 値を読めないときの文は Bolt 39d3c、【業務の判断】(k)）。却下の欄の後に、採用できる隔離（判断のサービスの定め）にだけ採用の欄を示し、採用すると
+ * PRG で元の一覧に戻る（航海は Bolt 39d3b。主要実績は 39d3b2）。
  *
  * <p>取込 ID が UUID でないときは 400 にせず、ない取込と同じく絞らない一覧に「指定された取込が見つかりません。」を示す。ページが数でない・1 より
  * 前のときは 1 ページ目を照会する（Bolt 39d 計画の状態の組み合わせの行 13・14）。
@@ -65,18 +67,24 @@ public class UndecidedRecordController {
 
     private static final String DECISION_VIEW = "externaldata/undecided-records/decision";
     private static final String FORM = "rejectionForm";
+    private static final String ADOPTION_FORM = "adoptionForm";
     private static final String REASON = "reason";
     private static final String RESULT = "result";
 
     /** 判断の後の知らせ（Bolt 39d2 の開始準備の決定 (5)）。 */
     private static final String REJECTED = "隔離を却下しました。";
 
+    private static final String ADOPTED = "隔離を採用しました。";
     private static final String ALREADY_DECIDED = "この隔離は判断済みです。";
 
     /** 理由の欄の誤り（【業務の判断】(d)。必須、1000 文字まで）。 */
     private static final String REASON_REQUIRED = "却下の理由を書いてください。";
 
     private static final String REASON_TOO_LONG = "却下の理由は " + ReceivedRecordDecision.REASON_LIMIT + " 文字までで書いてください。";
+
+    /** 採用の理由の欄の誤り（【業務の判断】(d)。任意、1000 文字まで。Bolt 39d3b）。 */
+    private static final String ADOPTION_REASON_TOO_LONG =
+            "採用の理由は " + ReceivedRecordDecision.REASON_LIMIT + " 文字までで書いてください。";
 
     /** 1 つの取込の形式の誤りのまとめての却下（Bolt 39d2b の開始準備の決定 (3)）。件数は 3 桁の区切り。 */
     private static final String KEYLESS_REJECTION_PATH = "/keyless-rejection";
@@ -197,6 +205,42 @@ public class UndecidedRecordController {
     }
 
     /**
+     * 採用する（Bolt 39d3b）。理由は任意で、前後の空白を除いて上限を超えれば判断の画面に戻って欄の誤りを示し、採用したら PRG で元の一覧に戻って知らせる。
+     */
+    @PostMapping("/{receivedRecordId}/adoption")
+    @SuppressWarnings("java:S107") // 画面の入力と戻り先と誤りと操作者を受ける MVC の入口
+    public String adopt(
+            @PathVariable String receivedRecordId,
+            @RequestParam(name = "ingestion", required = false) String ingestion,
+            @RequestParam(name = "page", required = false) String page,
+            @ModelAttribute(ADOPTION_FORM) AdoptionForm form,
+            BindingResult bindingResult,
+            AuthenticatedActor actor,
+            Model model,
+            RedirectAttributes redirectAttributes) {
+        UUID id = parseUuid(receivedRecordId);
+        if (id == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        }
+        UUID back = parseUuid(ingestion);
+        int backPage = parsePage(page);
+        if (hasAdoptionReasonErrors(form, bindingResult)) {
+            return decisionView(id, back, backPage, model, redirectAttributes);
+        }
+        DecisionOutcome outcome = decisions.adopt(actor, new AdoptReceivedRecordCommand(id, form.getReason()));
+        return respond(outcome, back, backPage, redirectAttributes);
+    }
+
+    /** 採用の理由の欄の誤り（任意、前後の空白を除いて上限まで）を足し、誤りがあれば真。 */
+    private static boolean hasAdoptionReasonErrors(AdoptionForm form, BindingResult bindingResult) {
+        String reason = form.getReason() == null ? "" : form.getReason().strip();
+        if (reason.codePointCount(0, reason.length()) > ReceivedRecordDecision.REASON_LIMIT) {
+            bindingResult.rejectValue(REASON, "reason.tooLong", ADOPTION_REASON_TOO_LONG);
+        }
+        return bindingResult.hasErrors();
+    }
+
+    /**
      * 1 つの取込の形式の誤りのまとめての却下の画面（Bolt 39d2b）。取込の時刻・情報源・判断を待つキーのない隔離の件数と、却下の理由の欄を示す。
      * 取込の指定がない・UUID でない・ない取込は 404、形式の誤りが 0 件なら取込で絞った一覧に戻って知らせる。判断の画面の
      * {@code /{receivedRecordId}} より文字の一致が先に選ばれる。
@@ -307,6 +351,11 @@ public class UndecidedRecordController {
         if (!model.containsAttribute(FORM)) {
             model.addAttribute(FORM, new RejectionForm());
         }
+        if (!model.containsAttribute(ADOPTION_FORM)) {
+            model.addAttribute(ADOPTION_FORM, new AdoptionForm());
+        }
+        // 採用の欄は判断のサービスの定めだけで決める（POST と同じ定め。照会の値からは決めない。Bolt 39d3b の開始準備の決定 (8)）
+        model.addAttribute("adoptable", decisions.adoptionRefusalOf(id).isEmpty());
         String lines = lines(item.lineRange());
         String externalKey = externalKey(item);
         model.addAttribute("ingestedAt", DateTimeDisplay.staff(item.ingestedAt()));
@@ -319,6 +368,7 @@ public class UndecidedRecordController {
         model.addAttribute("reasonLimit", ReceivedRecordDecision.REASON_LIMIT);
         model.addAttribute("backUrl", pageUrl(back, backPage));
         model.addAttribute("actionUrl", LIST_URL + "/" + id + "/decision" + query(back, backPage));
+        model.addAttribute("adoptionActionUrl", LIST_URL + "/" + id + "/adoption" + query(back, backPage));
         query.quarantineValues(item).ifPresent(values -> addValues(values, model));
         return DECISION_VIEW;
     }
@@ -347,7 +397,11 @@ public class UndecidedRecordController {
                 redirectAttributes.addFlashAttribute(RESULT, ALREADY_DECIDED);
                 yield "redirect:" + pageUrl(back, backPage);
             }
-            case DecisionOutcome.NotFound _, DecisionOutcome.NotDecidable _ ->
+            case DecisionOutcome.AdoptedQuarantine _ -> {
+                redirectAttributes.addFlashAttribute(RESULT, ADOPTED);
+                yield "redirect:" + pageUrl(back, backPage);
+            }
+            case DecisionOutcome.NotFound _, DecisionOutcome.NotDecidable _, DecisionOutcome.NotAdoptable _ ->
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND);
             case DecisionOutcome.NotPermitted _ -> throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         };

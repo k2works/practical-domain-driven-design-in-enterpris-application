@@ -10,8 +10,8 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * DE-12 航海の採用値を更新した（US-14 AC1。Bolt 39b3）。取込で航海の採用値を追記したとき、取込と同じトランザクションで出す。経路設計
- * （航海の更新。39e）と監査（取込での自動の採用。39b3b）が購読する。値の写しを Java の標準と共有カーネルの型だけで持ち、外部データの値の型を
+ * DE-12 航海の採用値を更新した（US-14 AC1。Bolt 39b3）。取込か採用の判断（Bolt 39d3b）で航海の採用値を追記したとき、同じトランザクションで出す。経路設計
+ * （航海の更新。39e）と監査（取込での自動の採用と採用の判断。39b3b）が購読する。値の写しを Java の標準と共有カーネルの型だけで持ち、外部データの値の型を
  * 持たない。採用値は追記だけで版を持たないので、発行元の集約の版は持たず情報版で代える。出典の参照は受信記録 ID、取得時刻はファイルの値。
  *
  * @param adoptedValueId 採用値 ID
@@ -21,9 +21,9 @@ import java.util.UUID;
  * @param voyageNumber 航海番号
  * @param portCalls 寄港の並び（運航の順）
  * @param infoVersion 情報版（外部版）
- * @param operatorUserId 操作者（データ責任者）の利用者 ID
+ * @param operatorUserId 操作者（取込の操作者か判断者。データ責任者）の利用者 ID
  * @param operatorCompanyId 操作者の所属企業 ID
- * @param publishedAt 公開した時刻（取込の時刻）
+ * @param publishedAt 公開した時刻（取込での採用は取込の時刻、採用の判断は判断の時刻）
  */
 @DomainEvent
 public record VoyageAdoptedValueUpdated(

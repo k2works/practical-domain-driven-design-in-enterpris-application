@@ -23,8 +23,7 @@ public class AdoptQuarantineUiSteps {
     private static final String ADOPTION_HEADING = "採用する";
     private static final String ADOPTED_VALUES_HEADING = "この外部版の採用値";
     private static final String REASON_LABEL = "採用の理由";
-    private static final String IRREVOCABLE =
-            "採用すると取り消せません。誤って採用したときは、提供元に新しい外部版で正しい原本を送ってもらってください。";
+    private static final String IRREVOCABLE = "採用すると取り消せません。誤って採用したときは、提供元に新しい外部版で正しい原本を送ってもらってください。";
     private static final String KEYLESS_GUIDE = "形式の誤りは採用できません。直したファイルを取り込み直してください。";
 
     private final BrowserSession browser;
@@ -41,7 +40,8 @@ public class AdoptQuarantineUiSteps {
     @かつ("隔離の判断の画面の値の後に却下するの欄と採用するの欄がこの順に見出しを付けて示される")
     public void 却下と採用の欄がこの順に示される() {
         List<String> headings = page().locator("main h2").allTextContents();
-        Assertions.assertThat(headings).containsSubsequence(ADOPTED_VALUES_HEADING, REJECTION_HEADING, ADOPTION_HEADING);
+        Assertions.assertThat(headings)
+                .containsSubsequence(ADOPTED_VALUES_HEADING, REJECTION_HEADING, ADOPTION_HEADING);
         assertThat(reasonField()).isVisible();
         assertThat(reasonField()).not().hasAttribute("aria-required", "true");
         assertThat(page().getByText(IRREVOCABLE, new Page.GetByTextOptions().setExact(true)))

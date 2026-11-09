@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title th:text="${#fields.hasErrors('${rejectionForm.*}')} ? '却下できませんでした - 隔離の判断 - cargo-tracker' : '隔離の判断 - cargo-tracker'">隔離の判断 - cargo-tracker</title>
+    <title th:text="${#fields.hasErrors('${rejectionForm.*}')} ? '却下できませんでした - 隔離の判断 - cargo-tracker' : (${#fields.hasErrors('${adoptionForm.*}')} ? '採用できませんでした - 隔離の判断 - cargo-tracker' : '隔離の判断 - cargo-tracker')">隔離の判断 - cargo-tracker</title>
     <!--/* 送信の失敗のときにエラー要約へフォーカスを移す（S-16 と同じ） */-->
     <script th:src="@{/js/transport-request-form.js}" defer></script>
 </head>
@@ -13,14 +13,24 @@
     <h1>隔離の判断</h1>
     <!--/* S-17 の判断の画面（Bolt 39d2、US-14 AC4、UC-15 3b）。一覧と同じ項目と隔離の理由の全文を読んでから、却下の理由を書いて却下する。
            注記には取込ファイルから来た値が入るので th:text で示す。キーのない隔離（形式の誤り）は採用できないので、却下だけと取り込み直しの
-           案内を示す（【業務の判断】(a)）。却下は取り消せない（【業務の判断】(e)）。採用は 39d3b で同じ画面に足す。
-           送り先と戻り先の URL は controller が読んだ取込とページから組み立てる */-->
+           案内を示す（【業務の判断】(a)）。却下と採用は取り消せない（【業務の判断】(e)）。採用の欄は判断のサービスの定めで採用できる隔離にだけ示す（航海は
+           Bolt 39d3b）。送り先と戻り先の URL は controller が読んだ取込とページから組み立てる。1 回の POST は 1 つのフォームなので 2 つのエラー要約は同時に出ない。
+           採用の欄の名前も reason なので、採用のエラー要約のリンクは欄の id（adoption-reason）を明示する */-->
     <div id="error-summary" th:if="${#fields.hasErrors('${rejectionForm.*}')}" tabindex="-1" role="alert"
          aria-labelledby="error-summary-title">
         <h2 id="error-summary-title">却下できませんでした</h2>
         <ul>
             <li th:each="error : ${#fields.detailedErrors('${rejectionForm.*}')}">
                 <a th:href="|#${error.fieldName}|" th:text="${error.message}">却下の理由を書いてください。</a>
+            </li>
+        </ul>
+    </div>
+    <div id="error-summary" th:if="${#fields.hasErrors('${adoptionForm.*}')}" tabindex="-1" role="alert"
+         aria-labelledby="error-summary-title">
+        <h2 id="error-summary-title">採用できませんでした</h2>
+        <ul>
+            <li th:each="error : ${#fields.detailedErrors('${adoptionForm.*}')}">
+                <a href="#adoption-reason" th:text="${error.message}">採用の理由は 1000 文字までで書いてください。</a>
             </li>
         </ul>
     </div>
@@ -52,19 +62,36 @@
             <th:block th:replace="~{externaldata/fragments/quarantine-values :: values(${adoptedValues})}"></th:block>
         </section>
     </th:block>
+    <section aria-labelledby="rejection-heading">
+        <h2 id="rejection-heading">却下する</h2>
+        <form th:action="${actionUrl}" th:object="${rejectionForm}" method="post" novalidate>
+            <div>
+                <label for="reason">却下の理由</label>
+                <!--/* 上限は判断の理由の上限（controller が渡す）から示し、欄の誤りの文と食い違わせない */-->
+                <p id="reason-hint" th:text="|必須、${reasonLimit} 文字まで|">必須、1000 文字まで</p>
+                <p id="reason-error" class="text-danger" th:if="${#fields.hasErrors('reason')}" th:errors="*{reason}"></p>
+                <textarea class="form-control" id="reason" name="reason" rows="4" aria-required="true" th:text="*{reason}"
+                          th:attr="aria-invalid=${#fields.hasErrors('reason')} ? 'true' : null,aria-describedby=${#fields.hasErrors('reason')} ? 'reason-hint reason-error' : 'reason-hint'"></textarea>
+            </div>
+            <p id="irrevocable">却下すると取り消せません。誤って却下したときは、提供元に同じ原本を送り直してもらってください。</p>
+            <p><button type="submit" class="btn btn-primary" aria-describedby="irrevocable">却下する</button></p>
+        </form>
+    </section>
+    <section th:if="${adoptable}" aria-labelledby="adoption-heading">
+        <h2 id="adoption-heading">採用する</h2>
+        <form th:action="${adoptionActionUrl}" th:object="${adoptionForm}" method="post" novalidate>
+            <div>
+                <label for="adoption-reason">採用の理由</label>
+                <p id="adoption-reason-hint" th:text="|任意、${reasonLimit} 文字まで|">任意、1000 文字まで</p>
+                <p id="adoption-reason-error" class="text-danger" th:if="${#fields.hasErrors('reason')}" th:errors="*{reason}"></p>
+                <textarea class="form-control" id="adoption-reason" name="reason" rows="4" th:text="*{reason}"
+                          th:attr="aria-invalid=${#fields.hasErrors('reason')} ? 'true' : null,aria-describedby=${#fields.hasErrors('reason')} ? 'adoption-reason-hint adoption-reason-error' : 'adoption-reason-hint'"></textarea>
+            </div>
+            <p id="adoption-irrevocable">採用すると取り消せません。誤って採用したときは、提供元に新しい外部版で正しい原本を送ってもらってください。</p>
+            <p><button type="submit" class="btn btn-primary" aria-describedby="adoption-irrevocable">採用する</button></p>
+        </form>
+    </section>
     <p th:if="${keyless}">形式の誤りは採用できません。直したファイルを取り込み直してください。</p>
-    <form th:action="${actionUrl}" th:object="${rejectionForm}" method="post" novalidate>
-        <div>
-            <label for="reason">却下の理由</label>
-            <!--/* 上限は判断の理由の上限（controller が渡す）から示し、欄の誤りの文と食い違わせない */-->
-            <p id="reason-hint" th:text="|必須、${reasonLimit} 文字まで|">必須、1000 文字まで</p>
-            <p id="reason-error" class="text-danger" th:if="${#fields.hasErrors('reason')}" th:errors="*{reason}"></p>
-            <textarea class="form-control" id="reason" name="reason" rows="4" aria-required="true" th:text="*{reason}"
-                      th:attr="aria-invalid=${#fields.hasErrors('reason')} ? 'true' : null,aria-describedby=${#fields.hasErrors('reason')} ? 'reason-hint reason-error' : 'reason-hint'"></textarea>
-        </div>
-        <p id="irrevocable">却下すると取り消せません。誤って却下したときは、提供元に同じ原本を送り直してもらってください。</p>
-        <p><button type="submit" class="btn btn-primary" aria-describedby="irrevocable">却下する</button></p>
-    </form>
     <p><a th:href="${backUrl}">一覧に戻る</a></p>
 </main>
 </body>

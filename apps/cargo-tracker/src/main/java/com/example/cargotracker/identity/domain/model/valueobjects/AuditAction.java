@@ -87,7 +87,7 @@ public enum AuditAction {
      */
     ASSIGNMENTS_CHANGED,
     /**
-     * 外部原本を取込で自動に採用した（DE-12・DE-13 を監査する。Bolt 39b3b、AUD-01、IA-INV-15）。成功だけを記録し、理由は持たない。操作者と
+     * 外部原本を採用した（取込での自動の採用と、データ責任者の採用の判断。DE-12・DE-13 を監査する。Bolt 39b3b・39d3b、AUD-01、IA-INV-15）。成功だけを記録し、理由は持たない。操作者と
      * 時刻はイベントのもの、対象は受信記録（{@code RECEIVED_RECORD}、受信記録 ID。版と変更前は持たない）、変更後は正規の要約。
      */
     EXTERNAL_RECORD_ADOPTED,
@@ -98,7 +98,7 @@ public enum AuditAction {
     EXTERNAL_RECORD_QUARANTINED,
     /**
      * データ責任者が受信記録を判断した（DE-29 を監査する。Bolt 39d2、AUD-01、IA-INV-15）。人の判断として成功だけを記録し、理由は判断
-     * （{@code REJECTED}。39d3b で {@code ADOPTED}）。却下の理由の文は 100 文字の理由の列に収まらないので、変更後の要約の最後に置く。対象は
+     * （{@code REJECTED} か {@code ADOPTED}。採用は Bolt 39d3b）。判断の理由の文は 100 文字の理由の列に収まらないので、あれば変更後の要約の最後に置き、理由のない採用は要約の {@code reason} の部品を省く。対象は
      * {@link #EXTERNAL_RECORD_ADOPTED} と同じ形。
      */
     EXTERNAL_RECORD_DECIDED

@@ -2,10 +2,17 @@ package com.example.cargotracker.externaldata.application.internal.commandservic
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.example.cargotracker.externaldata.application.internal.commands.AdoptReceivedRecordCommand;
 import com.example.cargotracker.externaldata.application.internal.commands.RejectKeylessQuarantinesCommand;
 import com.example.cargotracker.externaldata.application.internal.commands.RejectReceivedRecordCommand;
 import com.example.cargotracker.externaldata.domain.events.ReceivedRecordDecided;
+import com.example.cargotracker.externaldata.domain.events.VoyageAdoptedValueUpdated;
+import com.example.cargotracker.externaldata.domain.model.aggregates.AdoptedValue;
+import com.example.cargotracker.externaldata.domain.model.aggregates.DataSource;
 import com.example.cargotracker.externaldata.domain.model.aggregates.DuplicateReceivedRecordDecisionException;
+import com.example.cargotracker.externaldata.domain.model.aggregates.ExternalRecord;
+import com.example.cargotracker.externaldata.domain.model.aggregates.InMemoryAdoptedValueRepository;
+import com.example.cargotracker.externaldata.domain.model.aggregates.InMemoryDataSourceRepository;
 import com.example.cargotracker.externaldata.domain.model.aggregates.InMemoryExternalRecordRepository;
 import com.example.cargotracker.externaldata.domain.model.aggregates.InMemoryIngestionRepository;
 import com.example.cargotracker.externaldata.domain.model.aggregates.InMemoryReceivedRecordDecisionRepository;
@@ -15,12 +22,22 @@ import com.example.cargotracker.externaldata.domain.model.aggregates.ReceivedRec
 import com.example.cargotracker.externaldata.domain.model.aggregates.ReceivedRecordDecision;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.Classification;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.DecisionKind;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.IdempotencyKey;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.MilestoneKindValue;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.MilestoneValues;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PayloadHash;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PayloadObjectKey;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PhysicalLineRange;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.PortCallValue;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.ReceivedValue;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.TrackingNumberValue;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.VoyageValues;
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
 import com.example.cargotracker.shared.domain.CompanyId;
+import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.Role;
+import com.example.cargotracker.shared.domain.Source;
+import com.example.cargotracker.shared.domain.SourceKind;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Clock;
@@ -29,11 +46,17 @@ import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Stream;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.context.ApplicationEventPublisher;
 
 /**
@@ -687,7 +710,8 @@ class ReceivedRecordDecisionServiceTest {
                 assertThat(decision.decidedAt()).isEqualTo(DECIDED_AT);
                 assertThat(decision.reason()).isEqualTo(REASON);
             });
-            AdoptedValue adoptedValue = adoptedValues.findByReceivedRecordId(received.id()).orElseThrow();
+            AdoptedValue adoptedValue =
+                    adoptedValues.findByReceivedRecordId(received.id()).orElseThrow();
             assertThat(adoptedValue.targetType()).isEqualTo(AdoptedValue.TargetType.VOYAGE);
             assertThat(adoptedValue.targetKey()).isEqualTo("DEMO-201");
             assertThat(adoptedValue.valueSummary()).isEqualTo(RECEIVED.summary());
@@ -727,8 +751,12 @@ class ReceivedRecordDecisionServiceTest {
         // --- 行 4: 採用を出さない隔離（GET と POST で 1 つの定め） ---
 
         /** 採用を出さない隔離の作り方と、取込・情報源・外部原本を引く数（T-244）。 */
-        record NotAdoptableCase(String name, java.util.function.Function<Bolt39d3b_航海の隔離の採用, ReceivedRecord> create,
-                int ingestionFinds, int dataSourceFinds, int externalRecordFinds) {
+        record NotAdoptableCase(
+                String name,
+                java.util.function.Function<Bolt39d3b_航海の隔離の採用, ReceivedRecord> create,
+                int ingestionFinds,
+                int dataSourceFinds,
+                int externalRecordFinds) {
 
             @Override
             public String toString() {
@@ -859,16 +887,14 @@ class ReceivedRecordDecisionServiceTest {
             calls.clear();
 
             assertThat(service.adoptionRefusalOf(received.id())).isEmpty();
-            assertThat(adopt(steward, received.id(), null)).isEqualTo(new DecisionOutcome.AdoptedQuarantine(received.id()));
+            assertThat(adopt(steward, received.id(), null))
+                    .isEqualTo(new DecisionOutcome.AdoptedQuarantine(received.id()));
 
             assertThat(adoptedValues.findByReceivedRecordId(received.id()))
                     .get()
                     .extracting(AdoptedValue::valueSummary)
                     .isEqualTo(RECEIVED.summary());
-            assertThat(published)
-                    .hasSize(2)
-                    .last()
-                    .isInstanceOf(VoyageAdoptedValueUpdated.class);
+            assertThat(published).hasSize(2).last().isInstanceOf(VoyageAdoptedValueUpdated.class);
             assertThat(callsOf(ADOPTED_VALUE_CURRENT)).isZero();
         }
 
@@ -895,34 +921,34 @@ class ReceivedRecordDecisionServiceTest {
 
         @ParameterizedTest(name = "{0}")
         @MethodSource("refusals")
-        void 行6_ない受信記録と隔離でない受信記録と判断済みは採用できるかより先に断り取込も情報源も外部原本も引かない(
-                String name, DecisionOutcome refusal) {
+        void 行6_ない受信記録と隔離でない受信記録と判断済みは採用できるかより先に断り取込も情報源も外部原本も引かない(String name, DecisionOutcome refusal) {
             source(DataSource.ApprovalStatus.APPROVED);
             ExternalRecord externalRecord = externalRecord("VOYAGE");
-            UUID receivedRecordId = switch (refusal) {
-                case DecisionOutcome.NotFound _ -> UUID.randomUUID();
-                case DecisionOutcome.NotDecidable _ -> {
-                    ReceivedRecord adopted = new ReceivedRecord(
-                            UUID.randomUUID(),
-                            externalRecord.id(),
-                            ingestion.id(),
-                            PayloadHash.of(new byte[] {11}),
-                            PayloadObjectKey.newRecordPayload(),
-                            ACQUIRED_AT,
-                            Classification.ADOPTED,
-                            null,
-                            ingestion.ingestedAt(),
-                            new PhysicalLineRange(2, 2),
-                            ReceivedValue.of(RECEIVED));
-                    receivedRecords.add(adopted);
-                    yield adopted.id();
-                }
-                default -> {
-                    ReceivedRecord decided = quarantine(externalRecord, ReceivedValue.of(RECEIVED));
-                    decisions.add(ReceivedRecordDecision.reject(decided, "先の却下。", steward.userId(), NOW));
-                    yield decided.id();
-                }
-            };
+            UUID receivedRecordId =
+                    switch (refusal) {
+                        case DecisionOutcome.NotFound _ -> UUID.randomUUID();
+                        case DecisionOutcome.NotDecidable _ -> {
+                            ReceivedRecord adopted = new ReceivedRecord(
+                                    UUID.randomUUID(),
+                                    externalRecord.id(),
+                                    ingestion.id(),
+                                    PayloadHash.of(new byte[] {11}),
+                                    PayloadObjectKey.newRecordPayload(),
+                                    ACQUIRED_AT,
+                                    Classification.ADOPTED,
+                                    null,
+                                    ingestion.ingestedAt(),
+                                    new PhysicalLineRange(2, 2),
+                                    ReceivedValue.of(RECEIVED));
+                            receivedRecords.add(adopted);
+                            yield adopted.id();
+                        }
+                        default -> {
+                            ReceivedRecord decided = quarantine(externalRecord, ReceivedValue.of(RECEIVED));
+                            decisions.add(ReceivedRecordDecision.reject(decided, "先の却下。", steward.userId(), NOW));
+                            yield decided.id();
+                        }
+                    };
             calls.clear();
             published.clear();
             int decisionsBefore = decisions.all().size();
@@ -970,12 +996,14 @@ class ReceivedRecordDecisionServiceTest {
         @Test
         void 行20_判断の時刻は呼ぶたびに進むClockからも1回だけ取り判断と採用値とDE12とDE29で同じにする() {
             ReceivedRecord received = adoptable();
-            ReceivedRecordDecisionService withTickingClock =
-                    serviceWith(new Bolt39d2b_形式の誤りのまとめての却下.TickingClock(NOW));
+            ReceivedRecordDecisionService withTickingClock = serviceWith(new Bolt39d2b_形式の誤りのまとめての却下.TickingClock(NOW));
 
             withTickingClock.adopt(steward, new AdoptReceivedRecordCommand(received.id(), null));
 
-            assertThat(decisions.all()).singleElement().extracting(ReceivedRecordDecision::decidedAt).isEqualTo(DECIDED_AT);
+            assertThat(decisions.all())
+                    .singleElement()
+                    .extracting(ReceivedRecordDecision::decidedAt)
+                    .isEqualTo(DECIDED_AT);
             assertThat(adoptedValues.findByReceivedRecordId(received.id()))
                     .get()
                     .extracting(AdoptedValue::publishedAt)

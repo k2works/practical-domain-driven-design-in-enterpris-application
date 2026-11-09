@@ -12,9 +12,12 @@ import com.example.cargotracker.shared.domain.UserId;
 import java.time.Instant;
 import java.util.EnumSet;
 import java.util.UUID;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 /**
@@ -109,6 +112,66 @@ class ReceivedRecordDecisionTest {
         assertThatThrownBy(() -> ReceivedRecordDecision.reject(quarantined, thousandAndOne, STEWARD, DECIDED_AT))
                 .isInstanceOf(IllegalArgumentException.class);
         assertThat(ReceivedRecordDecision.REASON_LIMIT).isEqualTo(1000);
+    }
+
+    /**
+     * Bolt 39d3b の行 1（採用の判断のファクトリー。開始準備の決定 (2)、【業務の判断】(d)）。理由は任意で、空白だけなら持たず、ほかは前後の空白を除いて
+     * 1000 文字（コードポイント）まで。39d2 の同じ番号の行と名前が衝突しないよう入れ子にする。
+     */
+    @Nested
+    class Bolt39d3b_採用の判断 {
+
+        @Test
+        void 行1_隔離を採用すると判断者と理由を持ち時刻をマイクロ秒に切り捨てた採用の判断になる() {
+            ReceivedRecord mismatch = received(Classification.QUARANTINED, false);
+
+            ReceivedRecordDecision decision =
+                    ReceivedRecordDecision.adopt(mismatch, "  提供元に確かめ、到着の時刻を直した原本と分かった。\n", STEWARD, DECIDED_AT);
+
+            assertThat(decision.id()).isNotNull();
+            assertThat(decision.receivedRecordId()).isEqualTo(mismatch.id());
+            assertThat(decision.decision()).isEqualTo(DecisionKind.ADOPTED);
+            assertThat(decision.decidedBy()).isEqualTo(STEWARD);
+            assertThat(decision.decidedAt()).isEqualTo(Instant.parse("2026-11-16T01:05:00.123456Z"));
+            assertThat(decision.reason()).isEqualTo("提供元に確かめ、到着の時刻を直した原本と分かった。");
+        }
+
+        @ParameterizedTest(name = "[{0}]")
+        @NullAndEmptySource
+        @ValueSource(strings = {" ", "　", "\n\t"})
+        void 行1_採用の理由がないか空か空白だけなら理由を持たない(String reason) {
+            ReceivedRecord mismatch = received(Classification.QUARANTINED, false);
+
+            assertThat(ReceivedRecordDecision.adopt(mismatch, reason, STEWARD, DECIDED_AT)
+                            .reason())
+                    .isNull();
+        }
+
+        @ParameterizedTest(name = "{0}")
+        @CsvSource({"前後の空白なし,''", "前後に空白あり,'  '"})
+        void 行1_補助文字を含む1000文字の理由は採用でき1001文字は作らない(String name, String padding) {
+            ReceivedRecord mismatch = received(Classification.QUARANTINED, false);
+            String thousand = SUPPLEMENTARY.repeat(500) + "あ".repeat(500);
+            String padded = padding + thousand + padding;
+            String thousandAndOne = padding + thousand + "い" + padding;
+
+            assertThat(ReceivedRecordDecision.adopt(mismatch, padded, STEWARD, DECIDED_AT)
+                            .reason())
+                    .as(name)
+                    .isEqualTo(thousand);
+            assertThatThrownBy(() -> ReceivedRecordDecision.adopt(mismatch, thousandAndOne, STEWARD, DECIDED_AT))
+                    .isInstanceOf(IllegalArgumentException.class);
+        }
+
+        @ParameterizedTest(name = "{0}")
+        @EnumSource(value = Classification.class, names = "QUARANTINED", mode = EnumSource.Mode.EXCLUDE)
+        void 行1_隔離でない受信記録は採用の判断を作らない(Classification classification) {
+            ReceivedRecord received = received(classification, false);
+
+            assertThatThrownBy(() -> ReceivedRecordDecision.adopt(received, "理由", STEWARD, DECIDED_AT))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining(classification.name());
+        }
     }
 
     @Test

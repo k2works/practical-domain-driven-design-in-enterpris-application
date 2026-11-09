@@ -2,6 +2,7 @@ package com.example.cargotracker.externaldata.domain.model.aggregates;
 
 import com.example.cargotracker.externaldata.domain.model.valueobjects.IdempotencyKey;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * 外部原本のリポジトリ。外部原本を冪等性キーで引き、足すドメインのポート（Bolt 39b）。同じトランザクションで先に足した外部原本も引ける
@@ -11,6 +12,9 @@ public interface ExternalRecordRepository {
 
     /** 冪等性キー（提供元・原本種別・外部 ID・外部版の 4 つ）で外部原本を引く。ないときは空。 */
     Optional<ExternalRecord> findByKey(IdempotencyKey key);
+
+    /** 外部原本を ID で引く。ないときは空（Bolt 39d3b。採用の判断が受信記録の外部原本 ID から冪等性キーを読む）。 */
+    Optional<ExternalRecord> findById(UUID externalRecordId);
 
     /**
      * 外部原本を足す。

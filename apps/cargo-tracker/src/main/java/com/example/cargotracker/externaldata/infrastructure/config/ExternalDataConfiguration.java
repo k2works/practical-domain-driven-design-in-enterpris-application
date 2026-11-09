@@ -55,15 +55,27 @@ public class ExternalDataConfiguration {
         return new UndecidedRecordQueryService(receivedRecords, ingestions, dataSources, adoptedValues);
     }
 
-    /** S-17 の隔離の却下（Bolt 39d2）。 */
+    /** S-17 の隔離の却下（Bolt 39d2）と採用（Bolt 39d3b）。 */
     @Bean
+    @SuppressWarnings("java:S107") // 判断のサービスの組み立ての入口（前例 ingestionService）
     ReceivedRecordDecisionService receivedRecordDecisionService(
             ReceivedRecordRepository receivedRecords,
             ReceivedRecordDecisionRepository decisions,
             IngestionRepository ingestions,
+            DataSourceRepository dataSources,
+            ExternalRecordRepository externalRecords,
+            AdoptedValueRepository adoptedValues,
             ApplicationEventPublisher eventPublisher,
             Clock clock) {
-        return new ReceivedRecordDecisionService(receivedRecords, decisions, ingestions, eventPublisher, clock);
+        return new ReceivedRecordDecisionService(
+                receivedRecords,
+                decisions,
+                ingestions,
+                dataSources,
+                externalRecords,
+                adoptedValues,
+                eventPublisher,
+                clock);
     }
 
     @Bean

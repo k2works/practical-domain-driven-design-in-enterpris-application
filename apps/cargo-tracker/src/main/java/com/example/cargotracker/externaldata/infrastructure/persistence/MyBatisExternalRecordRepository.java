@@ -8,6 +8,7 @@ import com.example.cargotracker.externaldata.domain.model.valueobjects.PayloadHa
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PayloadObjectKey;
 import java.time.ZoneOffset;
 import java.util.Optional;
+import java.util.UUID;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Repository;
 
@@ -28,6 +29,11 @@ public class MyBatisExternalRecordRepository implements ExternalRecordRepository
     public Optional<ExternalRecord> findByKey(IdempotencyKey key) {
         return mapper.selectByKey(key.provider(), key.recordType(), key.externalId(), key.externalVersion())
                 .map(MyBatisExternalRecordRepository::toDomain);
+    }
+
+    @Override
+    public Optional<ExternalRecord> findById(UUID externalRecordId) {
+        return mapper.selectById(externalRecordId).map(MyBatisExternalRecordRepository::toDomain);
     }
 
     @Override

@@ -317,6 +317,16 @@ public abstract class ExternalDataRecordRepositoriesContract {
         assertThat(storedReceivedRecord(keyless.id())).contains(keyless);
     }
 
+    @Test
+    void Bolt39d3b_行9_足した外部原本をIDで引くと冪等性キーとハッシュとオブジェクトキーと最初の受信時刻が同じでないIDは空() {
+        ExternalRecord externalRecord = externalRecord(key("VOYAGE", "V-039"));
+
+        externalRecords().add(externalRecord);
+
+        assertThat(externalRecords().findById(externalRecord.id())).contains(externalRecord);
+        assertThat(externalRecords().findById(UUID.randomUUID())).isEmpty();
+    }
+
     private static ReceivedRecord keylessReceivedRecord(
             UUID externalRecordId, Instant acquiredAt, Classification classification) {
         return new ReceivedRecord(
