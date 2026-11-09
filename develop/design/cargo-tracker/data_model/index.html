@@ -15816,7 +15816,7 @@
 </tr>
 <tr>
 <td style="text-align: left;"><code>referenced_info_version</code></td>
-<td style="text-align: left;">確定時に参照した航海ごとの情報版。承認時の再検証と、確定後の再評価に使う（Bolt 37c の注: この表はまだ作っていない。承認時の再検証は区間の写し <code>candidate_leg.info_version</code> で行う。Bolt 37d の決定: この表は作らない。旧情報版は確定の記録の候補の区間に残る。航海番号から評価する案件を引く照会は W7 で <code>candidate_leg.voyage_number</code> の索引として決める）</td>
+<td style="text-align: left;">確定時に参照した航海ごとの情報版。承認時の再検証と、確定後の再評価に使う（Bolt 37c の注: この表はまだ作っていない。承認時の再検証は、区間の写しの情報版 <code>candidate_leg.info_version</code> と区間の予定 <code>departure_at</code>・<code>arrival_at</code> の組で今の航海と照合する（Bolt 39e2 の【前の決定の変更】(1)。スキーマは変えない）。Bolt 37d の決定: この表は作らない。旧情報版は確定の記録の候補の区間に残る。航海番号から評価する案件を引く照会は W7 で <code>candidate_leg.voyage_number</code> の索引として決める）</td>
 <td style="text-align: left;">R-INV-03、R-INV-07</td>
 </tr>
 <tr>

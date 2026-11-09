@@ -16479,6 +16479,10 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 <td style="text-align: left;">経路設計の航海の書き手</td>
 <td style="text-align: left;">Bolt 39e（US-14 AC1、US-06）。順の規則は <code>VoyageTest</code>（パラメーター。届く順を両方、<code>SourceKind</code> の全値、同じ情報版で値の違う組、同じ外部版の採用し直し、外部版をまたいだ採用の判断）。listener は単体のテスト（メモリの実装と呼び出しの記録。行がないときの保存、競合の読み直しと 3 回の上限、適用しないときに更新を呼ばない、内容の欠けた DE-12 を捨てて DB の失敗は上げる）。ポートは契約のテスト <code>VoyageRepositoryContract</code>（メモリ・H2・PostgreSQL。寄港の置き換え、上限いっぱいの 60、版の違う更新と重複、時間の窓の境界、窓の上の端がない、窓に区間の航海が返る、航海番号で引く）。同時と配信は統合のテスト（<code>@Transactional</code> を付けず、既存の行と初めての航海の 2 つの DE-12 の同時と読みの同時を H2 と PostgreSQL で。<code>VoyageUpdateDeliveryIntegrationTest</code> は取込と採用の判断の両方で <code>event_publication</code> の完了まで。T-184）。確定と評価が区間の航海番号だけを読むことは呼び出しの記録（T-236）。寄港の時刻の順が矛盾した航海がほかの候補を巻き込まないことは <code>RouteCandidateFinderTest</code>。モジュールの依存は <code>ModularityTest</code>。画面の層は <code>adopted_voyage_reflected_ui.feature</code>（取り込んだ航海が候補に出る、採用の判断で再算出した候補が新しい予定で比較に出る。axe、幅 320 px）</td>
 </tr>
+<tr>
+<td style="text-align: left;">確定の照合と見本の航海</td>
+<td style="text-align: left;">Bolt 39e2（US-07 AC3・AC4、US-14 AC1）。照合は <code>VoyageTest</code> の <code>@Nested class Bolt39e2_…</code>（<code>matchesLeg</code> のパラメーター。始港から終港・途中の寄港から途中の寄港・組が 2 つある航海の一方は真、情報版違い・出発違い・到着違い・積地の港違い・揚地の港違い・組の順が逆・積地の寄港に出発がない・揚地の寄港に到着がない・航海番号違いは偽。T-244）。確定は <code>RoutingCaseConfirmationTest</code>（同じ情報版で区間の出発か到着が違うと <code>INFO_VERSION_CHANGED</code> で候補は変えない、ほかの寄港や取得時刻だけが変わると確定できる、値の違う 2 つの DE-12 の間を行き来する組、2 度寄る航海）、評価は <code>RoutingCaseEvaluationTest</code>（同じ情報版で区間の予定が違うと評価に入り、同じ予定なら評価しない。入口は 39f）。見本は <code>DevSampleDataSmokeTest</code>（0911・0912 の区間と写しが <code>DEMO-901</code> で予定と一致する、ほかの見本は <code>DEMO-101</code> のまま、<code>DEMO-901</code> の取得時刻と情報版は <code>DEMO-101</code> と同じ、候補の算出に入らない、<code>DEMO-%</code> のすべての区間の情報版と予定の組が今の航海の寄港にある（航海のない区間も数える））。画面の層は <code>adopted_voyage_reflected_ui.feature</code>（確定の画面を開いた後に同じ情報版で区間の予定が違う隔離を採用すると確定が拒否されて比較の画面に戻る、S-07 の注に区間の予定が示される。axe）</td>
+</tr>
 </tbody>
 </table>
 <p>統合テストは Testcontainers の PostgreSQL を使い、H2 で書かない（ADR-007）。H2 で確かめるのはスモークテストだけとする。</p>
@@ -17275,14 +17279,14 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 </tr>
 <tr>
 <td style="text-align: left;">US-07</td>
-<td style="text-align: left;">AC3（承認中に区間の航海の情報版が更新されていれば確定は拒否され、候補の比較に戻って再判断が求められる。確定の時刻に情報不足でも確定できない）</td>
-<td style="text-align: left;">37c</td>
-<td style="text-align: left;"><code>@US-07-AC3</code>（<code>confirm_route.feature</code>・<code>confirm_route_ui.feature</code>）、<code>RoutingCaseConfirmationTest</code>（候補の版の違う区間を含む）・<code>InfoFreshnessPolicyTest</code>、<code>RoutingCaseControllerTest</code></td>
+<td style="text-align: left;">AC3（承認中に区間の航海の情報版が更新されているか、同じ情報版でも区間の予定が変わっていれば確定は拒否され、候補の比較に戻って再判断が求められる。確定の時刻に情報不足でも確定できない）</td>
+<td style="text-align: left;">37c、39e2（情報版と区間の予定の組の照合）</td>
+<td style="text-align: left;"><code>@US-07-AC3</code>（<code>confirm_route.feature</code>・<code>confirm_route_ui.feature</code>・<code>adopted_voyage_reflected_ui.feature</code>）、<code>RoutingCaseConfirmationTest</code>（情報版と区間の予定の組の照合を含む）・<code>VoyageTest</code>（<code>matchesLeg</code>）・<code>InfoFreshnessPolicyTest</code>、<code>RoutingCaseControllerTest</code></td>
 </tr>
 <tr>
 <td style="text-align: left;">US-07</td>
-<td style="text-align: left;">AC4（確定した経路版の区間の航海が更新され、期限・接続を満たさなくなるか航海を引き直せなくなると、評価で再設計要になり、候補・区間・確定の記録（旧情報版）が残り、DE-06 が理由と旧情報版を運んで 1 度だけ出る。満たし続けるときと情報版が変わらないときは確定のまま。予約を自動で取り消さないことの確かめは 37e）</td>
-<td style="text-align: left;">37d2、37e4c（予約は自動取消しされないことを本物の本予約の確定で）</td>
+<td style="text-align: left;">AC4（確定した経路版の区間の航海が更新され、期限・接続を満たさなくなるか航海を引き直せなくなると、評価で再設計要になり、候補・区間・確定の記録（旧情報版）が残り、DE-06 が理由と旧情報版を運んで 1 度だけ出る。満たし続けるときと情報版も区間の予定も変わらないときは確定のまま。予約を自動で取り消さないことの確かめは 37e）</td>
+<td style="text-align: left;">37d2、37e4c（予約は自動取消しされないことを本物の本予約の確定で）、39e2（同じ情報版で区間の予定が変わると評価する）</td>
 <td style="text-align: left;"><code>@US-07-AC4</code>（<code>evaluate_confirmed_route.feature</code>）、<code>RoutingCaseEvaluationTest</code>（状態の組み合わせの表の行ごと）・<code>RouteCandidateFinderTest</code>（引き直し）・<code>RedesignReasonCodeTest</code>（理由の写し）・<code>ConfirmedRouteEvaluationTest</code>（入力ポート。見つからない・変わらない・再設計要・競合）、保存の統合テスト（評価で <code>updated_by</code> を変えない）、<code>RoutingCaseControllerTest</code>（S-06 の再設計要の表示）・<code>RoutingCaseViewsTest</code>（理由の画面の語）。37e4c: 本予約の確定が見積りの行を押さえている間に来た再設計要の印は確定のコミットを待って付き、予約は確定のまま 1 件残り、輸送要求は予約確定済みになり、予約の画面（S-24）の照会は予約を返す（<code>integration/BookingConfirmationWithRouteRedesignIntegrationTest</code>、PostgreSQL。<code>pg_blocking_pids</code> で待ちを確かめる）</td>
 </tr>
 <tr>

@@ -15492,7 +15492,7 @@
 <li><strong>公開した時刻の列</strong>: <code>routing.voyage.published_at</code> を足す（NULL を許す。スキーマ）。DE-12 の型と発行は変えない。</li>
 <li><strong>書き手</strong>: 経路設計の listener <code>VoyageUpdateEventHandler</code> が DE-12 を受けて航海を書く（<code>routing</code> の <code>allowedDependencies</code> に <code>externaldata :: events</code> を足す）。<code>version</code> の楽観ロックで守り、競合は読み直して適用し直す（3 回まで）。内容の欠けた DE-12 は ERROR のログを残して捨てる。</li>
 <li><strong>寄港の規則の写し</strong>: 上の Bolt 39b3 の項で 39e に預けた経路設計の <code>Voyage</code> の上限（60）と寄港の重複の規則は足さない（意図した食い違いのまま）。</li>
-<li><strong>誤って採用したときの道</strong>: 新しい外部版で正しい原本を送ってもらうのを基本の道にし、元の原本を同じ外部版のまま送り直して採用するのは新しい外部版を出してもらえないときの道にする（【業務の判断】(t)、台帳 D-107。仮）。R-INV-03 の照合を情報版と区間の予定の組に広げるのは Bolt 39e2（【業務の判断】(s)、台帳 D-106）。</li>
+<li><strong>誤って採用したときの道</strong>: 新しい外部版で正しい原本を送ってもらうのを基本の道にし、元の原本を同じ外部版のまま送り直して採用するのは新しい外部版を出してもらえないときの道にする（【業務の判断】(t)、台帳 D-107。仮）。R-INV-03 の照合は Bolt 39e2 で情報版と区間の予定の組に広げた（【業務の判断】(s)、台帳 D-106）。</li>
 </ul>
 <h2 id="_10">備考<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>
 <ul>
