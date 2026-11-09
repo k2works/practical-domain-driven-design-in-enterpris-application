@@ -3,7 +3,7 @@ type: Plan
 title: "Bolt 39g 計画 - 採用した主要実績を追跡の下書きとして受け、順の規則と取消済み・完了後を決める"
 tags: [plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-09T20:57:44Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-09T21:08:50Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-11-09T20:57:44Z }
 ---
@@ -433,7 +433,7 @@ entity "tracking.rejected_milestone\n拒否した主要実績 [append-only]" as 
 
 ## ステップ計画（ゲートは下の各ステップに書く）
 
-- [ ] **1. 設計の文書**: 上の「設計文書に直す箇所」。【業務の判断】(aa)〜(af)、【前の決定の変更】(11)〜(13) を反映する。始めに検索する（完了の判定: 文書の差分と検索の記録。ゲート: 既定（確認ポイント 2〜6 で計画の承認に含む））
+- [x] **1. 設計の文書**（2026-11-10 に実施した）: 上の「設計文書に直す箇所」。【業務の判断】(aa)〜(af)、【前の決定の変更】(11)〜(13) を反映する。始めに検索する（完了の判定: 文書の差分と検索の記録。ゲート: 既定（確認ポイント 2〜6 で計画の承認に含む））
 - [ ] **2. 受入シナリオとテストの Red**: 外から入る。まず `adopted_milestone_reflected_ui.feature` に行 45 を書いて Red を記録する（データ責任者の取込の後、S-12 に下書きが出ない）。続いて行 1〜4・1b・13・16〜42・32b〜32d・46・47（行 14・44 は回帰の守りで最初から緑の見込み）。骨組み（`findByTrackingNumberForExternalMilestone` は読むだけ、`receiveExternalMilestone` は既存を返す、`ExternalMilestone` の型、listener の中身なし）でコンパイルを通す（T-254）。直す既存のテストを一覧にする（T-217）（完了の判定: 期待した理由で落ちる記録。Red の行は `wip/` か stash に置き、develop に落ちるテストを積まない。ゲート: 既定）
 - [ ] **3. スキーマと実績の受け取り**: マイグレーション、`MilestoneRow`・マッパー、`ExternalMilestone`・`ExternalOrigin`・`Milestone`、`MilestoneRejectionReason`、`receiveExternalMilestone`、P-7（13 引数の写しを `withMilestones` にまとめる）、拒否の記録のポートと実装。行 1〜4・1b・16・18・19・25〜28 が緑、`test` 全体で既存のテストの影響を確かめる、`spotbugsMain`・`checkstyleMain`・`sonar-local:check`（完了の判定: 緑と影響の一覧。ゲート: 既定（確認ポイント 2 で計画の承認に含む））
 - [ ] **4. listener と組み立て**: `ExternalMilestoneEventHandler`、`TrackingConfiguration`、`package-info` の `allowedDependencies`、`ModularityTest`。行 17・20〜23・47 が緑。`ModularityTest`・`LayerArchitectureTest` を流す（当たったら止めて諮る）。`spotbugsMain`・`checkstyleMain`・`sonar-local:check`（完了の判定: 緑。ゲート: 既定（確認ポイント 3 で計画の承認に含む））
