@@ -40,6 +40,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -115,7 +116,8 @@ class ConfirmedRouteEvaluationEventHandlerTest {
 
             assertThatThrownBy(() -> handler.on(EVENT))
                     .isInstanceOf(IllegalStateException.class)
-                    .hasMessageContaining(FIRST.text());
+                    .hasMessageContaining(FIRST.text())
+                    .hasMessageContaining("V-EARLY");
 
             verify(service, times(3)).evaluateConfirmedRoute(EVALUATE_FIRST);
         }
@@ -190,11 +192,13 @@ class ConfirmedRouteEvaluationEventHandlerTest {
                             new PortCall(new Location("NLRTM"), at("2026-11-05T00:00:00Z"), null)),
                     "V-EARLY@2",
                     at("2026-10-07T05:00:00Z")));
+            AtomicInteger reads = new AtomicInteger();
             InMemoryRoutingCaseRepository racing = new InMemoryRoutingCaseRepository() {
                 private boolean raced;
 
                 @Override
                 public Optional<RoutingCase> findByNumber(RoutingCaseNumber number) {
+                    reads.incrementAndGet();
                     Optional<RoutingCase> loaded = super.findByNumber(number);
                     if (!raced) {
                         raced = true;
@@ -208,6 +212,8 @@ class ConfirmedRouteEvaluationEventHandlerTest {
 
             new ConfirmedRouteEvaluationEventHandler(racing, realService).on(EVENT);
 
+            // 負ける評価の読み込み、割り込んだ評価の読み込み、競合の後の読み直しの 3 回
+            assertThat(reads).hasValue(3);
             RoutingCase saved = racing.findByNumber(confirmed.number()).orElseThrow();
             assertThat(saved.routeVersion().status()).isEqualTo(RouteVersionStatus.REDESIGN_REQUIRED);
             assertThat(saved.aggregateVersion()).isEqualTo(confirmed.aggregateVersion() + 1);

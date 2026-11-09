@@ -16,7 +16,7 @@ import java.util.Objects;
  * @param arrivalAt 到着予定（揚地）
  * @param infoVersion 航海の採用情報版
  * @param infoAcquiredAt 航海の情報の取得時刻
- * @param loadCallNo 積地の寄港の位置（航海の運航の順で 1 始まり。Bolt 39f より前に算出した区間はない）
+ * @param loadCallNo 積地の寄港の位置（航海の運航の順で 1 始まり。Bolt 39f より前に算出した区間は null）
  * @param dischargeCallNo 揚地の寄港の位置
  */
 @ValueObject

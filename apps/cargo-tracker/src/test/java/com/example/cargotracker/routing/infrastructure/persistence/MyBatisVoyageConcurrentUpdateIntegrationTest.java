@@ -418,6 +418,8 @@ class MyBatisVoyageConcurrentUpdateIntegrationTest {
                 losing.get(30, TimeUnit.SECONDS);
             }
 
+            // 遅れた方は競合を受けて読み直す（最初の読み込みと読み直しの 2 回）
+            Mockito.verify(pausing, Mockito.times(2)).findByNumber(Mockito.any());
             assertThat(routeVersionOf(evaluations, confirmed)).containsEntry("status", "REDESIGN_REQUIRED");
             assertThat(published).singleElement().isInstanceOf(RouteRedesignRequired.class);
             assertThat(evaluations

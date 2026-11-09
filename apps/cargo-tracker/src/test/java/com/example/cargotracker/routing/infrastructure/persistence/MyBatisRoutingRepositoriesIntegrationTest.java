@@ -644,6 +644,44 @@ class MyBatisRoutingRepositoriesIntegrationTest {
         }
 
         @Test
+        void 行1_最新の経路版が確定でも旧版の区間にだけある航海では返さない() {
+            // 再設計（US-08）の形を表に直接作る: 経路版 1 は再設計要、経路版 2 の同じ候補番号を確定して別の航海に載せる
+            RoutingCase loaded = confirmedOn(transshipment());
+            repository.updateBySystem(redesigned(loaded));
+            UUID caseId = loaded.id().value();
+            jdbc.update(
+                    "INSERT INTO routing.route_version (routing_case_id, route_version_no, status, candidates_found, created_at)"
+                            + " VALUES (?, 2, 'DRAFT', 1, CURRENT_TIMESTAMP)",
+                    caseId);
+            jdbc.update(
+                    "INSERT INTO routing.route_candidate (routing_case_id, route_version_no, candidate_no, conforming,"
+                            + " estimated_arrival_at, min_connection_slack_minutes, evaluated_at, oldest_info_acquired_at, info_insufficient)"
+                            + " SELECT routing_case_id, 2, candidate_no, conforming, estimated_arrival_at, min_connection_slack_minutes,"
+                            + " evaluated_at, oldest_info_acquired_at, info_insufficient"
+                            + " FROM routing.route_candidate WHERE routing_case_id = ? AND route_version_no = 1 AND candidate_no = 1",
+                    caseId);
+            jdbc.update(
+                    "INSERT INTO routing.candidate_leg (routing_case_id, route_version_no, candidate_no, leg_no, voyage_number,"
+                            + " load_unlocode, discharge_unlocode, departure_at, arrival_at, info_version, info_acquired_at, executed)"
+                            + " SELECT routing_case_id, 2, candidate_no, leg_no, 'IT-39F-NEW', load_unlocode, discharge_unlocode,"
+                            + " departure_at, arrival_at, info_version, info_acquired_at, executed"
+                            + " FROM routing.candidate_leg WHERE routing_case_id = ? AND route_version_no = 1 AND candidate_no = 1",
+                    caseId);
+            jdbc.update(
+                    "UPDATE routing.route_version SET status = 'CONFIRMED', candidates_evaluated_at = CURRENT_TIMESTAMP,"
+                            + " selected_candidate_no = 1, rationale = '再設計の根拠。', approved_by = ?, approved_at = CURRENT_TIMESTAMP"
+                            + " WHERE routing_case_id = ? AND route_version_no = 2",
+                    APPROVER.userId(),
+                    caseId);
+            sqlSession.clearCache();
+
+            assertThat(repository.findCaseNumbersConfirmedOnVoyage("IT-39F-FEED"))
+                    .isEmpty();
+            assertThat(repository.findCaseNumbersConfirmedOnVoyage("IT-39F-NEW"))
+                    .containsExactly(loaded.number());
+        }
+
+        @Test
         void 行1_ほかの航海では返さない() {
             confirmedOn(transshipment());
 

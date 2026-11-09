@@ -366,7 +366,7 @@ class RouteCandidateFinderTest {
     }
 
     @Test
-    void 同じ港に2度寄って積地と揚地の組が2つあれば選ばずに引き直せない() {
+    void 行8_位置のない区間は同じ港に2度寄って積地と揚地の組が2つあれば予定が一致する組があっても選ばずに引き直せない() {
         Voyage updated = voyage(
                 "V-101",
                 call(TOKYO, null, "2026-10-08T00:00:00Z"),
@@ -389,7 +389,7 @@ class RouteCandidateFinderTest {
     }
 
     @Test
-    void 積地の後で揚地に2度寄れば確定した寄港が分からないので選ばずに引き直せない() {
+    void 行8_位置のない区間は積地の後で揚地に2度寄れば確定した寄港が分からないので選ばずに引き直せない() {
         // Bolt 37d2 レビュー M-1。候補探索は積地から後のどの寄港も揚地にできるので、A→B→C→B では A→B が 2 つある
         Voyage updated = voyage(
                 "V-101",
@@ -591,6 +591,35 @@ class RouteCandidateFinderTest {
                 assertThat(leg.loadCallNo()).isEqualTo(2);
                 assertThat(leg.dischargeCallNo()).isEqualTo(3);
             });
+        }
+
+        /** 東京に同じ出発の時刻で 2 度寄る。区間の予定に一致する組は (1,4) と (3,4) の 2 つ。 */
+        private static Voyage tokyoTwiceAtSameDeparture() {
+            return new Voyage(
+                    "V-101",
+                    List.of(
+                            call(TOKYO, null, "2026-10-08T00:00:00Z"),
+                            call(HONG_KONG, "2026-10-02T00:00:00Z", "2026-10-03T00:00:00Z"),
+                            call(TOKYO, "2026-10-07T00:00:00Z", "2026-10-08T00:00:00Z"),
+                            call(ROTTERDAM, "2026-10-30T09:00:00Z", null)),
+                    "V-101@2",
+                    at("2026-10-08T05:00:00Z"));
+        }
+
+        @ParameterizedTest(name = "位置 ({0},{1})")
+        @CsvSource({"1, 4", "3, 4"})
+        void 行6b_出発と到着の一致する組が2つ以上なら位置の組を選ぶ(int loadCallNo, int dischargeCallNo) {
+            assertThat(finder.refresh(confirmedLeg(loadCallNo, dischargeCallNo), List.of(tokyoTwiceAtSameDeparture())))
+                    .hasValueSatisfying(leg -> {
+                        assertThat(leg.loadCallNo()).isEqualTo(loadCallNo);
+                        assertThat(leg.dischargeCallNo()).isEqualTo(dischargeCallNo);
+                    });
+        }
+
+        @Test
+        void 行7_出発と到着の一致する組が2つ以上で位置の組がなければ選ばずに引き直せない() {
+            assertThat(finder.refresh(confirmedLeg(2, 4), List.of(tokyoTwiceAtSameDeparture())))
+                    .isEmpty();
         }
 
         static Stream<Arguments> unusablePositions() {

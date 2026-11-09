@@ -56,6 +56,7 @@ public class ConfirmedRouteEvaluationEventHandler {
                 return;
             }
         }
-        throw new IllegalStateException("確定した経路の評価が " + MAX_ATTEMPTS + " 回とも競合した: " + caseNumber);
+        throw new IllegalStateException(
+                "確定した経路の評価が " + MAX_ATTEMPTS + " 回とも競合した: 案件 " + caseNumber + "、航海 " + event.voyageNumber());
     }
 }

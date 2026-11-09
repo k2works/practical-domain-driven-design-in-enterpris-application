@@ -762,6 +762,57 @@ class DevSampleDataSmokeTest {
         }
     }
 
+    /** 評価の入口（DE-30）が開発データで動いたときの見本（Bolt 39f の開発レビュー。V20261023200900 の注の「W7 の評価の入口をつなぐときに見直す」の判定）。 */
+    @Nested
+    class Bolt39f_見本と評価の入口 {
+
+        private List<RoutingCaseNumber> confirmedSamples() {
+            return jdbc
+                    .queryForList(
+                            "SELECT voyage_number FROM routing.voyage WHERE voyage_number LIKE 'DEMO-%'", String.class)
+                    .stream()
+                    .flatMap(voyage -> routingCases.findCaseNumbersConfirmedOnVoyage(voyage).stream())
+                    .distinct()
+                    .toList();
+        }
+
+        private void assertStaysConfirmed(RoutingCaseNumber number, String infoVersion) {
+            RoutingCase routingCase = routingCases.findByNumber(number).orElseThrow();
+            List<Voyage> current = voyages.findByVoyageNumbers(routingCase.confirmedVoyageNumbers()).stream()
+                    .map(voyage -> infoVersion == null
+                            ? voyage
+                            : new Voyage(voyage.voyageNumber(), voyage.portCalls(), infoVersion, voyage.acquiredAt()))
+                    .toList();
+
+            assertThat(routingCase.evaluateConfirmedRoute(
+                            current,
+                            rules.findAll(),
+                            new UtcInstant(Instant.now()),
+                            new RouteCandidateFinder(),
+                            new ConstraintEvaluator()))
+                    .as(number.text())
+                    .isEmpty();
+        }
+
+        @Test
+        void 出発済みの見本0911と0912は見本専用の航海で評価の対象になる() {
+            assertThat(routingCases.findCaseNumbersConfirmedOnVoyage("DEMO-901"))
+                    .containsExactly(new RoutingCaseNumber(2026, 908), new RoutingCaseNumber(2026, 909));
+        }
+
+        @Test
+        void 確定の見本は今の航海で評価しても再設計要にならない() {
+            assertThat(confirmedSamples()).isNotEmpty().allSatisfy(number -> assertStaysConfirmed(number, null));
+        }
+
+        @Test
+        void 確定の見本は情報版だけが上がって予定が同じなら出発済みでも再設計要にならない() {
+            assertThat(confirmedSamples())
+                    .isNotEmpty()
+                    .allSatisfy(number -> assertStaysConfirmed(number, "PROVISIONAL-2"));
+        }
+    }
+
     // 割り当てた経路の最初の区間が出発した見本（US-07 AC5、D-88。Bolt 37e4b の状態の組み合わせの行 1〜9）
 
     @Test
