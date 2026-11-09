@@ -7,6 +7,7 @@ import com.example.cargotracker.routing.application.internal.commandservices.Rou
 import com.example.cargotracker.routing.application.internal.eventhandlers.QuotationRouteAssignmentEventHandler;
 import com.example.cargotracker.routing.application.internal.eventhandlers.QuotationRouteRedesignEventHandler;
 import com.example.cargotracker.routing.application.internal.eventhandlers.RoutingCaseOpeningEventHandler;
+import com.example.cargotracker.routing.application.internal.eventhandlers.VoyageUpdateEventHandler;
 import com.example.cargotracker.routing.application.internal.outboundservices.acl.QuotationRouteAssignments;
 import com.example.cargotracker.routing.application.internal.outboundservices.acl.QuotationRouteConditions;
 import com.example.cargotracker.routing.application.internal.outboundservices.acl.QuotationRouteRedesigns;
@@ -85,6 +86,12 @@ public class RoutingConfiguration {
     InfoFreshnessPolicy infoFreshnessPolicy(
             @Value("${cargotracker.routing.info-freshness-tolerance}") Duration tolerance) {
         return new InfoFreshnessPolicy(tolerance);
+    }
+
+    /** DE-12 を受けて経路設計の航海を書く（Spring Modulith のイベントの記録を経て、別のトランザクションで動く。Bolt 39e）。 */
+    @Bean
+    VoyageUpdateEventHandler voyageUpdateEventHandler(VoyageRepository repository) {
+        return new VoyageUpdateEventHandler(repository);
     }
 
     @Bean

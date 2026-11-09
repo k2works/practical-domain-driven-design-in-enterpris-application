@@ -85,10 +85,11 @@ public class RoutingCaseCommandService {
         if (routingCase.aggregateVersion() != command.expectedVersion()) {
             return new CandidateCalculationOutcome.Conflict();
         }
+        UtcInstant judgedAt = new UtcInstant(clock.instant());
         CandidateCalculation calculation = routingCase.calculateCandidates(
-                voyageRepository.findAll(),
+                voyageRepository.findCandidateVoyages(judgedAt),
                 connectionRuleRepository.findAll(),
-                new UtcInstant(clock.instant()),
+                judgedAt,
                 finder,
                 evaluator,
                 freshness);
@@ -125,7 +126,7 @@ public class RoutingCaseCommandService {
                     command.candidateNo(),
                     command.rationale(),
                     new RouteApprover(command.approver().value(), command.routeDesigner()),
-                    voyageRepository.findAll(),
+                    voyageRepository.findByVoyageNumbers(routingCase.voyageNumbersOf(command.candidateNo())),
                     connectionRuleRepository.findAll(),
                     new UtcInstant(clock.instant()),
                     evaluator,
@@ -156,7 +157,7 @@ public class RoutingCaseCommandService {
         }
         RoutingCase routingCase = found.get();
         Optional<RouteRedesignRequired> required = routingCase.evaluateConfirmedRoute(
-                voyageRepository.findAll(),
+                voyageRepository.findByVoyageNumbers(routingCase.confirmedVoyageNumbers()),
                 connectionRuleRepository.findAll(),
                 new UtcInstant(clock.instant()),
                 finder,

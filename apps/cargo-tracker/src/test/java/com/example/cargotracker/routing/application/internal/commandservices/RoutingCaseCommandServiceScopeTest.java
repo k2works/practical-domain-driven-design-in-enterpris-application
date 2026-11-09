@@ -16,6 +16,7 @@ import com.example.cargotracker.shared.domain.AuthenticatedActor;
 import com.example.cargotracker.shared.domain.AuthenticatedActorFixture;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.UserId;
+import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -23,7 +24,9 @@ import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 /**
  * 入力ポートの候補の算出と経路の確定の担当範囲（Bolt 38g の行 5c・5d。US-16 AC4）。操作者の担当企業の外の案件は、何も書かずに範囲外の結果を
@@ -96,6 +99,42 @@ class RoutingCaseCommandServiceScopeTest {
         assertThat(service.calculateCandidates(calculate(missing, 0), designer()))
                 .isEqualTo(new CandidateCalculationOutcome.NotFound());
         assertThat(service.confirm(confirm(missing, 0), designer())).isEqualTo(new RouteConfirmationOutcome.NotFound());
+    }
+
+    @Nested
+    class Bolt39e_航海の読み方 {
+
+        private final InMemoryVoyageRepository recordingVoyages = Mockito.spy(new InMemoryVoyageRepository());
+        private final RoutingCaseCommandService recordingService = new RoutingCaseCommandService(
+                repository,
+                recordingVoyages,
+                new InMemoryConnectionRuleRepository(),
+                published::add,
+                Clock.fixed(Instant.parse("2026-10-07T06:00:00Z"), ZoneOffset.UTC),
+                new InfoFreshnessPolicy(Duration.ofHours(24)),
+                new RoutingCaseScope(repository));
+
+        @Test
+        void 行34_算出はfindCandidateVoyagesだけを判定時刻で呼びfindByVoyageNumbersを呼ばない() {
+            RoutingCase routingCase = saved();
+
+            recordingService.calculateCandidates(calculate(routingCase.number(), 0), designer(SHIPPER));
+
+            Mockito.verify(recordingVoyages)
+                    .findCandidateVoyages(new UtcInstant(Instant.parse("2026-10-07T06:00:00Z")));
+            Mockito.verify(recordingVoyages, Mockito.never()).findByVoyageNumbers(Mockito.anyCollection());
+        }
+
+        @Test
+        void 行34_確定はfindByVoyageNumbersだけを呼びfindCandidateVoyagesを呼ばず候補がなければ空の一覧で従来の理由で拒否する() {
+            RoutingCase routingCase = saved();
+
+            assertThat(recordingService.confirm(confirm(routingCase.number(), 0), designer(SHIPPER)))
+                    .isInstanceOf(RouteConfirmationOutcome.Rejected.class);
+
+            Mockito.verify(recordingVoyages).findByVoyageNumbers(List.of());
+            Mockito.verify(recordingVoyages, Mockito.never()).findCandidateVoyages(Mockito.any());
+        }
     }
 
     private RoutingCase saved() {

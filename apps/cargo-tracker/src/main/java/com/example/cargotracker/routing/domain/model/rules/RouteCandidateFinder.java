@@ -108,6 +108,8 @@ public class RouteCandidateFinder {
     /**
      * 寄港 {@code from} から後の各寄港までの区間。積地と同じ港へは運ばない。途中で {@code passing}（目的地）に寄ったら、
      * その先の港へは運ばない（目的地を通り過ぎてから積み替えて戻る候補は、直行に劣り比較を惑わせる。Bolt 17 レビュー D-60）。
+     * 到着が積地の出発より後でない組は区間にしない（寄港をまたいだ時刻の順は取込も航海も確かめないので、矛盾した航海がその港から出る案件の算出を
+     * 巻き込まないようにする。{@link #refresh} と同じ失敗に倒す。Bolt 39e の決定 (13)）。
      */
     private static List<Leg> legsFromCall(Voyage voyage, int from, Location passing) {
         List<PortCall> calls = voyage.portCalls();
@@ -115,7 +117,12 @@ public class RouteCandidateFinder {
         List<Leg> legs = new ArrayList<>();
         for (int j = from + 1; j < calls.size(); j++) {
             PortCall discharge = calls.get(j);
-            if (discharge.arrivalAt() != null && !discharge.port().equals(load.port())) {
+            if (discharge.arrivalAt() != null
+                    && !discharge.port().equals(load.port())
+                    && discharge
+                            .arrivalAt()
+                            .instant()
+                            .isAfter(load.departureAt().instant())) {
                 legs.add(leg(voyage, load, discharge));
             }
             if (discharge.port().equals(passing)) {

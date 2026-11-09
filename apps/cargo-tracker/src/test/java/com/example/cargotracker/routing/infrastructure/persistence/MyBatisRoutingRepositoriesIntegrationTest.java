@@ -654,8 +654,7 @@ class MyBatisRoutingRepositoriesIntegrationTest {
                         + " TIMESTAMP WITH TIME ZONE '2083-01-01 00:00:00+00', TIMESTAMP WITH TIME ZONE '2084-01-01 00:00:00+00', 0)",
                 ruleId);
 
-        assertThat(voyageRepository.findAll())
-                .filteredOn(voyage -> voyage.voyageNumber().equals("IT-001"))
+        assertThat(voyageRepository.findByVoyageNumbers(List.of("IT-001")))
                 .containsExactly(new Voyage(
                         "IT-001",
                         List.of(

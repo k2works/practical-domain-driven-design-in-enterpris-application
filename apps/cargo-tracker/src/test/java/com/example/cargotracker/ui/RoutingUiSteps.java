@@ -27,14 +27,13 @@ public class RoutingUiSteps {
 
     private static final String CALCULATE = "候補を算出";
     private static final String CONFIRM = "この経路で確定する";
+    /** 取込の Steps が使う航海の名前（航海番号の末尾。Bolt 39e）。 */
+    static final String ADOPTED = "ADOPTED";
 
     private final BrowserSession browser;
     private final UiScenarioState state;
     private final JdbcTemplate jdbc;
     private final String baseUrl;
-    private final String suffix = UUID.randomUUID().toString().substring(0, 8).toUpperCase(java.util.Locale.ROOT);
-    /** このシナリオで航海を入れたか（入れたシナリオだけ後片付けする）。 */
-    private boolean voyagesInserted;
 
     public RoutingUiSteps(
             BrowserSession browser,
@@ -53,7 +52,7 @@ public class RoutingUiSteps {
     }
 
     private String voyage(String name) {
-        return "UI-" + suffix + "-" + name;
+        return state.voyageNumber(name);
     }
 
     /**
@@ -66,11 +65,11 @@ public class RoutingUiSteps {
      */
     @io.cucumber.java.After("@ui")
     public void シナリオの航海を消す() {
-        if (!voyagesInserted) {
+        if (!state.voyagesWritten()) {
             return;
         }
-        jdbc.update("DELETE FROM routing.port_call WHERE voyage_number LIKE ?", "UI-" + suffix + "-%");
-        jdbc.update("DELETE FROM routing.voyage WHERE voyage_number LIKE ?", "UI-" + suffix + "-%");
+        jdbc.update("DELETE FROM routing.port_call WHERE voyage_number LIKE ?", state.voyageNumberPattern());
+        jdbc.update("DELETE FROM routing.voyage WHERE voyage_number LIKE ?", state.voyageNumberPattern());
     }
 
     /**
@@ -103,7 +102,7 @@ public class RoutingUiSteps {
 
     private void insertVoyage(
             String name, String load, String departure, String discharge, String arrival, Duration age) {
-        voyagesInserted = true;
+        state.markVoyagesWritten();
         String number = voyage(name);
         jdbc.update(
                 "INSERT INTO routing.voyage (voyage_number, adopted_info_version, source_kind, source_ref, acquired_at,"
@@ -316,6 +315,71 @@ public class RoutingUiSteps {
         page().getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("経路候補の比較へ戻る"))
                 .click();
         assertThat(candidate(voyage("DIRECT"))).not().containsText("確定した経路");
+    }
+
+    /** 取込の航海番号（{@link ExternalDataIngestionUiSteps} と同じ。Bolt 39e の決定 (12)）。 */
+    private String adoptedVoyage() {
+        return voyage(ADOPTED);
+    }
+
+    /** DE-12 は非同期に配信されるので、航海の行が出るまで待つ（Bolt 39e の決定 (12)）。 */
+    @かつ("取り込んだ航海が経路設計の航海に反映される")
+    public void 取り込んだ航海が反映される() {
+        awaitVoyageCondition(
+                "SELECT COUNT(*) FROM routing.voyage WHERE voyage_number = ?",
+                "取り込んだ航海が経路設計の航海に反映されない（DE-12 の受け取りを待ちきれない）: " + adoptedVoyage());
+    }
+
+    /** 採用の判断の DE-12 も非同期なので、揚地の到着予定が新しい値になるまで待つ（画面だけでは前の値と区別できない。Bolt 39e の決定 (12)）。 */
+    @かつ("採用した航海の予定が経路設計の航海に反映される")
+    public void 採用した航海の予定が反映される() {
+        awaitVoyageCondition(
+                "SELECT COUNT(*) FROM routing.port_call WHERE voyage_number = ? AND call_no = 2"
+                        + " AND arrival_at = TIMESTAMP WITH TIME ZONE '2099-10-31 00:00:00+00'",
+                "採用した航海の予定が経路設計の航海に反映されない: " + adoptedVoyage());
+    }
+
+    private void awaitVoyageCondition(String countSql, String message) {
+        for (int i = 0; i < 40; i++) {
+            Integer found = jdbc.queryForObject(countSql, Integer.class, adoptedVoyage());
+            if (found != null && found > 0) {
+                return;
+            }
+            page().waitForTimeout(250);
+        }
+        throw new AssertionError(message);
+    }
+
+    @ならば("取り込んだ航海の候補は {string} と示され、参照した航海情報の版に取り込んだ外部版 {string} が示される")
+    public void 取り込んだ航海の候補(String judgement, String infoVersion) {
+        Locator candidate = candidate(adoptedVoyage());
+        assertThat(candidate).containsText(judgement);
+        assertThat(candidate).containsText("参照した航海情報の版 " + infoVersion);
+        browser.checkAccessibility();
+    }
+
+    @ならば("取り込んだ航海の候補の到着予定に {string} が示される")
+    public void 取り込んだ航海の到着予定(String arrival) {
+        assertThat(candidate(adoptedVoyage())).containsText(arrival);
+        browser.checkAccessibility();
+    }
+
+    @もし("経路設計者が案件を開き直して候補を再算出する")
+    public void 案件を開き直して再算出する() {
+        browser.navigate(baseUrl + "/staff/routing-cases");
+        page().getByRole(AriaRole.ROW)
+                .filter(new Locator.FilterOptions().setHasText(state.transportRequestNumber()))
+                .getByRole(AriaRole.LINK)
+                .first()
+                .click();
+        page().waitForURL("**/staff/routing-cases/RC-*");
+        page().getByRole(
+                        AriaRole.BUTTON,
+                        new Page.GetByRoleOptions().setName("候補を再算出").setExact(true))
+                .click();
+        page().waitForURL("**/staff/routing-cases/RC-*");
+        assertThat(page().getByRole(AriaRole.STATUS)).containsText("算出しました");
+        browser.checkAccessibility();
     }
 
     @もし("営業担当者が経路設計の案件一覧の URL を直接開く")

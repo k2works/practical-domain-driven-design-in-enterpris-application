@@ -2,18 +2,16 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.example.cargotracker.routing.infrastructure.persistence.RoutingReferenceMapper">
 
-    <resultMap id="voyageRow" type="com.example.cargotracker.routing.infrastructure.persistence.VoyageRow">
+    <resultMap id="voyagePortCallRow" type="com.example.cargotracker.routing.infrastructure.persistence.VoyagePortCallRow">
         <constructor>
-            <idArg column="voyage_number" name="voyageNumber" javaType="String"/>
+            <arg column="voyage_number" name="voyageNumber" javaType="String"/>
             <arg column="adopted_info_version" name="adoptedInfoVersion" javaType="String"/>
+            <arg column="source_kind" name="sourceKind" javaType="String"/>
+            <arg column="source_ref" name="sourceRef" javaType="String"/>
             <arg column="acquired_at" name="acquiredAt" javaType="java.time.OffsetDateTime"/>
-        </constructor>
-    </resultMap>
-
-    <resultMap id="portCallRow" type="com.example.cargotracker.routing.infrastructure.persistence.PortCallRow">
-        <constructor>
-            <idArg column="voyage_number" name="voyageNumber" javaType="String"/>
-            <idArg column="call_no" name="callNo" javaType="_int"/>
+            <arg column="published_at" name="publishedAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="version" name="version" javaType="_long"/>
+            <arg column="call_no" name="callNo" javaType="_int"/>
             <arg column="port_unlocode" name="portUnlocode" javaType="String"/>
             <arg column="arrival_at" name="arrivalAt" javaType="java.time.OffsetDateTime"/>
             <arg column="departure_at" name="departureAt" javaType="java.time.OffsetDateTime"/>
@@ -30,14 +28,54 @@
         </constructor>
     </resultMap>
 
-    <select id="selectVoyages" resultMap="voyageRow">
-        SELECT voyage_number, adopted_info_version, acquired_at FROM routing.voyage ORDER BY voyage_number
+    <!-- 航海と寄港を 1 文で読む（1 つのスナップショット。Bolt 39e の決定 (10)）。3 つの照会で条件だけを変える -->
+    <sql id="selectVoyageWithPortCalls">
+        SELECT v.voyage_number, v.adopted_info_version, v.source_kind, v.source_ref, v.acquired_at, v.published_at,
+               v.version, p.call_no, p.port_unlocode, p.arrival_at, p.departure_at
+          FROM routing.voyage v
+          JOIN routing.port_call p ON p.voyage_number = v.voyage_number
+    </sql>
+
+    <!-- 窓は航海の単位で絞る（判定時刻より前の寄港の行を落とすと航海の寄港が欠ける） -->
+    <select id="selectCandidateVoyages" resultMap="voyagePortCallRow">
+        <include refid="selectVoyageWithPortCalls"/>
+         WHERE EXISTS (SELECT 1 FROM routing.port_call d
+                        WHERE d.voyage_number = v.voyage_number AND d.departure_at &gt; #{departingAfter})
+         ORDER BY v.voyage_number, p.call_no
     </select>
 
-    <select id="selectPortCalls" resultMap="portCallRow">
-        SELECT voyage_number, call_no, port_unlocode, arrival_at, departure_at
-          FROM routing.port_call ORDER BY voyage_number, call_no
+    <select id="selectVoyagesByNumbers" resultMap="voyagePortCallRow">
+        <include refid="selectVoyageWithPortCalls"/>
+         WHERE v.voyage_number IN
+        <foreach item="voyageNumber" collection="voyageNumbers" open="(" separator="," close=")">
+            #{voyageNumber}
+        </foreach>
+         ORDER BY v.voyage_number, p.call_no
     </select>
+
+    <insert id="insertVoyage">
+        INSERT INTO routing.voyage
+            (voyage_number, adopted_info_version, source_kind, source_ref, acquired_at, published_at, version, updated_at)
+        VALUES (#{voyageNumber}, #{adoptedInfoVersion}, #{sourceKind}, #{sourceRef}, #{acquiredAt}, #{publishedAt},
+                #{version}, #{updatedAt})
+    </insert>
+
+    <!-- 楽観ロック（データモデル）。読み込んだときの版でなければ 0 件になる -->
+    <update id="updateVoyage">
+        UPDATE routing.voyage
+           SET adopted_info_version = #{adoptedInfoVersion}, source_kind = #{sourceKind}, source_ref = #{sourceRef},
+               acquired_at = #{acquiredAt}, published_at = #{publishedAt}, version = version + 1, updated_at = #{updatedAt}
+         WHERE voyage_number = #{voyageNumber} AND version = #{version}
+    </update>
+
+    <delete id="deletePortCalls">
+        DELETE FROM routing.port_call WHERE voyage_number = #{voyageNumber}
+    </delete>
+
+    <insert id="insertPortCall">
+        INSERT INTO routing.port_call (voyage_number, call_no, port_unlocode, arrival_at, departure_at)
+        VALUES (#{voyageNumber}, #{callNo}, #{portUnlocode}, #{arrivalAt}, #{departureAt})
+    </insert>
 
     <select id="selectConnectionRules" resultMap="connectionRuleRow">
         SELECT id, port_unlocode, min_connection_minutes, valid_from, valid_to FROM routing.connection_rule ORDER BY id

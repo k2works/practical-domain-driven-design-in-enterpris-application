@@ -80,6 +80,22 @@ class ModularityTest {
                 .check(PRODUCTION_CLASSES);
     }
 
+    /** 経路設計は外部データの公表された言語（{@code externaldata :: events}）を宣言し、外部データのイベントのほかは参照しない（Bolt 39e の行 36、ADR-004）。 */
+    @Test
+    void 行36_経路設計は外部データのイベントだけに依存を宣言して参照する() throws ClassNotFoundException {
+        ApplicationModule routing =
+                Class.forName("com.example.cargotracker.routing.package-info").getAnnotation(ApplicationModule.class);
+        assertThat(routing.allowedDependencies()).contains("externaldata :: events");
+
+        noClasses()
+                .that()
+                .resideInAPackage("com.example.cargotracker.routing..")
+                .should()
+                .dependOnClassesThat(resideInAPackage("com.example.cargotracker.externaldata..")
+                        .and(resideOutsideOfPackage("com.example.cargotracker.externaldata.domain.events..")))
+                .check(PRODUCTION_CLASSES);
+    }
+
     /** 予約は見積りの下流で、見積りは予約の型（イベントを含む）を参照しない（ADR-014。Bolt 23。Bolt 20 レビュー D-78 の一般化）。 */
     @Test
     void 見積りは予約に依存しない() {

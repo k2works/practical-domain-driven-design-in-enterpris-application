@@ -257,7 +257,7 @@ public final class RoutingCase {
         if (!candidate.evaluation().conforming()) {
             throw reject(RouteConfirmationRejectionReason.CANDIDATE_EXCLUDED, "除外の候補は確定できません");
         }
-        // 読み直した航海の全件（航海番号はデータベースの主キーで重ならない）
+        // 読み直した候補の区間の航海（航海番号はデータベースの主キーで重ならない）
         Map<String, Voyage> current =
                 voyages.stream().collect(Collectors.toMap(Voyage::voyageNumber, voyage -> voyage));
         if (!candidate.legsWithChangedInfo(infoVersionsOf(current)).isEmpty()) {
@@ -524,6 +524,26 @@ public final class RoutingCase {
                         .flatMap(confirmation -> version.candidates().stream()
                                 .filter(candidate -> candidate.candidateNo() == confirmation.candidateNo())
                                 .findFirst()));
+    }
+
+    /** いまの経路版の候補の区間の航海番号（確定のときに読み直す航海。Bolt 39e）。候補がなければ空。 */
+    public List<String> voyageNumbersOf(int candidateNo) {
+        return routeVersion().candidates().stream()
+                .filter(candidate -> candidate.candidateNo() == candidateNo)
+                .findFirst()
+                .map(RoutingCase::voyageNumbersOf)
+                .orElse(List.of());
+    }
+
+    /** いまの経路版の確定の記録の候補の区間の航海番号（評価のときに読み直す航海。Bolt 39e）。確定の記録がなければ空。 */
+    public List<String> confirmedVoyageNumbers() {
+        return confirmedCandidateOf(routeVersion().routeVersionNo())
+                .map(RoutingCase::voyageNumbersOf)
+                .orElse(List.of());
+    }
+
+    private static List<String> voyageNumbersOf(RouteCandidate candidate) {
+        return candidate.legs().stream().map(Leg::voyageNumber).distinct().toList();
     }
 
     public long aggregateVersion() {

@@ -65,10 +65,21 @@ public class ExternalDataIngestionUiSteps {
 
     private static final String OTHER_TRACKING_NUMBER = "CTABCDEFGH2346";
 
+    /** Bolt 39e の行 39・40。2099 年の東京発ロッテルダム行き（希望到着期限の内。T-230）。 */
+    private static final String ROTTERDAM_PORT_CALLS =
+            "JPTYO;2099-10-12T00:00:00Z;2099-10-12T12:00:00Z|NLRTM;2099-10-30T00:00:00Z;2099-10-30T12:00:00Z";
+
+    /** 内容の違う原本（ロッテルダムの到着を 1 日遅らせる。行 40）。 */
+    private static final String CHANGED_ROTTERDAM_PORT_CALLS =
+            "JPTYO;2099-10-12T00:00:00Z;2099-10-12T12:00:00Z|NLRTM;2099-10-31T00:00:00Z;2099-10-31T12:00:00Z";
+
     private final BrowserSession browser;
+    private final UiScenarioState state;
     private final JdbcTemplate jdbc;
     private final String baseUrl;
     private final String suffix = UUID.randomUUID().toString();
+    /** Bolt 39e の行 40。取込の結果の画面の URL（経路設計の画面から戻るため）。 */
+    private String ingestionResultUrl;
     /** 承認済みの航海の情報源の提供元（既定はシナリオの UUID を含む。マニュアルのキャプチャでは名前を指定する）。 */
     private String provider = "UI 海運-" + suffix;
 
@@ -80,10 +91,12 @@ public class ExternalDataIngestionUiSteps {
 
     public ExternalDataIngestionUiSteps(
             BrowserSession browser,
+            UiScenarioState state,
             JdbcTemplate jdbc,
             @LocalServerPort int port,
             @Value("${ui.base-url:}") String configuredBaseUrl) {
         this.browser = browser;
+        this.state = state;
         this.jdbc = jdbc;
         this.baseUrl = configuredBaseUrl.isBlank() ? "http://localhost:" + port : configuredBaseUrl;
     }
@@ -249,6 +262,37 @@ public class ExternalDataIngestionUiSteps {
         chooseFile(
                 voyageFile(voyageLine("V2611E", acquiredAt, PORT_CALLS), voyageLine("V2612E", acquiredAt, PORT_CALLS)));
         submit();
+    }
+
+    /** Bolt 39e の行 39。経路設計の航海に反映して候補に出す航海の 1 行。 */
+    @かつ("キー操作だけで承認済みの航海の情報源を選び、東京からロッテルダムへの航海 1 行のファイルを選んで取り込む")
+    public void ロッテルダムへの航海1行を取り込む() {
+        chooseSource();
+        chooseFile(voyageFile(adoptedVoyageLine(ROTTERDAM_PORT_CALLS)));
+        submit();
+    }
+
+    /** Bolt 39e の行 40。採用 1・内容の違う原本 1（3 行目はロッテルダムの到着を 1 日遅らせた）。 */
+    @かつ("キー操作だけで承認済みの航海の情報源を選び、東京からロッテルダムへの同じ外部 ID・外部版で到着の違う 2 行のファイルを選んで取り込む")
+    public void ロッテルダムへの到着の違う2行を取り込む() {
+        chooseSource();
+        chooseFile(
+                voyageFile(adoptedVoyageLine(ROTTERDAM_PORT_CALLS), adoptedVoyageLine(CHANGED_ROTTERDAM_PORT_CALLS)));
+        submit();
+        page().waitForURL(url -> url.matches(".*/staff/external-data/ingestions/[0-9a-f-]{36}$"));
+        ingestionResultUrl = page().url();
+    }
+
+    /** 航海番号は経路設計の Steps と共有する（シナリオの印で後片付けが効く。Bolt 39e の決定 (12)）。 */
+    private String adoptedVoyageLine(String portCalls) {
+        state.markVoyagesWritten();
+        return state.voyageNumber(RoutingUiSteps.ADOPTED) + ",1," + acquiredAt() + "," + portCalls;
+    }
+
+    @もし("データ責任者が取込の結果を開き直す")
+    public void データ責任者が取込の結果を開き直す() {
+        browser.navigate(ingestionResultUrl);
+        browser.checkAccessibility();
     }
 
     /**

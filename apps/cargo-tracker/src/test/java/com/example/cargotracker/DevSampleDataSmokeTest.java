@@ -404,7 +404,7 @@ class DevSampleDataSmokeTest {
                 routingCases.findByNumber(new RoutingCaseNumber(2026, 902)).orElseThrow();
 
         recalculated.calculateCandidates(
-                voyages.findAll(),
+                voyages.findCandidateVoyages(evaluatedAt),
                 rules.findAll(),
                 evaluatedAt,
                 new RouteCandidateFinder(),
@@ -427,7 +427,9 @@ class DevSampleDataSmokeTest {
                 routingCases.findByNumber(new RoutingCaseNumber(2026, 902)).orElseThrow();
         UtcInstant evaluatedAt = seeded.routeVersion().evaluatedAt().orElseThrow();
 
-        assertThat(voyages.findAll())
+        // 同じ JVM の H2 には取込のテストが書いた航海（DE-12）が残るので、見本の航海だけを引く（Bolt 39e の決定 (14)）
+        assertThat(voyages.findByVoyageNumbers(jdbc.queryForList(
+                        "SELECT voyage_number FROM routing.voyage WHERE voyage_number LIKE 'DEMO-%'", String.class)))
                 .isNotEmpty()
                 .allSatisfy(voyage -> assertThat(voyage.acquiredAt()).isEqualTo(evaluatedAt));
         assertThat(seeded.routeVersion().candidates())

@@ -141,7 +141,7 @@ class DomainEventSerializationContractTest {
             new CompanyId(UUID.fromString("00000000-0000-0000-0000-000000000001"));
 
     /**
-     * DE-12 航海の採用値を更新した（Bolt 39b3）。経路設計（39e）と監査（39b3b）が購読する公表された言語。寄港は入れ子の record
+     * DE-12 航海の採用値を更新した（Bolt 39b3）。経路設計（Bolt 39e）と監査（39b3b）が購読する公表された言語。寄港は入れ子の record
      * {@code AdoptedPortCall}（空の時刻は null）、出典は共有カーネルの {@code Source}（参照は受信記録 ID）。
      */
     private static final String VOYAGE_ADOPTED_VALUE_UPDATED_V1 = """

@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
  * （{@code routing.voyage.voyage_number VARCHAR(30)}。コードポイントで数える）。寄港は 2 つ以上 60 まで（上限は Bolt 39b3）で、
  * 同じ港・同じ到着・同じ出発の寄港を重ねない（同じ港で時刻の違う寄港は周回の航路として受ける）。経路設計の航海（{@code Voyage}）の規則の
  * 写し。ただし寄港の数の上限は、採用値の値の要約（{@code value_summary VARCHAR(4000)}）に入れるための外部データの片側だけの規則で、
- * 経路設計の航海は上限を持たない（意図した食い違い。経路設計に足すかは 39e で決める）。寄港の並びは写しを持つ。
+ * 経路設計の航海は上限を持たない（意図した食い違い。Bolt 39e の決定 (13) で足さないと決めた）。寄港の並びは写しを持つ。
  *
  * @param voyageNumber 航海番号
  * @param portCalls 寄港の値（運航の順。2 つ以上）

@@ -28,7 +28,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 /**
  * 入力ポートの確定した経路の評価（US-07 AC4。Bolt 37d2）。案件は直行 V-EARLY の候補 1 を確定したもの（RC-2026-0001）。
@@ -124,6 +126,32 @@ class ConfirmedRouteEvaluationTest {
         assertThat(service(repository).evaluateConfirmedRoute(command()))
                 .isEqualTo(new ConfirmedRouteEvaluationOutcome.Conflict());
         assertThat(published).isEmpty();
+    }
+
+    @Nested
+    class Bolt39e_航海の読み方 {
+
+        @Test
+        void 行34_評価はfindByVoyageNumbersだけを確定の区間の航海番号で呼びfindCandidateVoyagesを呼ばない() {
+            InMemoryRoutingCaseRepository repository = new InMemoryRoutingCaseRepository();
+            repository.save(confirmed);
+            voyages.add(earlyVoyage("V-EARLY@1", "2026-10-29T00:00:00Z"));
+            InMemoryVoyageRepository recordingVoyages = Mockito.spy(voyages);
+
+            new RoutingCaseCommandService(
+                            repository,
+                            recordingVoyages,
+                            rules,
+                            published::add,
+                            Clock.fixed(EVALUATED_AT, ZoneOffset.UTC),
+                            new InfoFreshnessPolicy(Duration.ofHours(24)),
+                            new RoutingCaseScope(repository))
+                    .evaluateConfirmedRoute(command());
+
+            Mockito.verify(recordingVoyages).findByVoyageNumbers(confirmed.confirmedVoyageNumbers());
+            Mockito.verify(recordingVoyages, Mockito.never()).findCandidateVoyages(Mockito.any());
+            assertThat(confirmed.confirmedVoyageNumbers()).isNotEmpty();
+        }
     }
 
     private RoutingCaseCommandService service(InMemoryRoutingCaseRepository repository) {

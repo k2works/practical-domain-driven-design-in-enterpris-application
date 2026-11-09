@@ -10,7 +10,12 @@ import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Instant;
 import java.util.List;
+import java.util.stream.Stream;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 /**
  * 経路候補探索（US-06 AC1）。R0.1 は直行と 1 回の積替え（区間 1〜2）を、確定的な順に列挙する（Bolt 17 の確認ポイント 8）。
@@ -401,6 +406,48 @@ class RouteCandidateFinderTest {
                 call(ROTTERDAM, "2026-10-30T09:00:00Z", null));
 
         assertThat(finder.refresh(CONFIRMED_LEG, List.of(updated))).contains(CONFIRMED_LEG);
+    }
+
+    @Nested
+    class Bolt39e_寄港の時刻の順が矛盾した航海 {
+
+        private static final Voyage GOOD = voyage(
+                "V-GOOD", call(TOKYO, null, "2026-10-08T00:00:00Z"), call(ROTTERDAM, "2026-10-30T00:00:00Z", null));
+
+        static Stream<Arguments> brokenSecondCalls() {
+            return Stream.of(
+                    Arguments.of("到着が前の寄港の出発より前", "2026-10-07T23:00:00Z"),
+                    Arguments.of("到着が前の寄港の出発と同時刻", "2026-10-08T00:00:00Z"));
+        }
+
+        @ParameterizedTest(name = "{0}")
+        @MethodSource("brokenSecondCalls")
+        void 行44_矛盾した組だけ区間を作らずその航海のほかの組とほかの航海の候補は残る(String description, String brokenArrival) {
+            Voyage broken = voyage(
+                    "V-BROKEN",
+                    call(TOKYO, null, "2026-10-08T00:00:00Z"),
+                    call(SINGAPORE, brokenArrival, "2026-10-09T00:00:00Z"),
+                    call(ROTTERDAM, "2026-11-01T00:00:00Z", null));
+
+            List<List<Leg>> found = finder.find(SPEC, List.of(broken, GOOD), JUDGED_AT);
+
+            assertThat(found)
+                    .as(description)
+                    .extracting(RouteCandidateFinderTest::voyageNumbers)
+                    .containsExactly(List.of("V-GOOD"), List.of("V-BROKEN"));
+        }
+
+        @ParameterizedTest(name = "{0}")
+        @MethodSource("brokenSecondCalls")
+        void 行44_目的地への組が矛盾した航海はその航海の候補がなくほかの航海の候補は残る(String description, String brokenArrival) {
+            Voyage broken =
+                    voyage("V-BROKEN", call(TOKYO, null, "2026-10-08T00:00:00Z"), call(ROTTERDAM, brokenArrival, null));
+
+            assertThat(finder.find(SPEC, List.of(broken, GOOD), JUDGED_AT))
+                    .as(description)
+                    .extracting(RouteCandidateFinderTest::voyageNumbers)
+                    .containsExactly(List.of("V-GOOD"));
+        }
     }
 
     static List<String> voyageNumbers(List<Leg> legs) {
