@@ -31,6 +31,7 @@
 <polygon fill="none" stroke="#000000" points="660.0629,-267.7 660.0629,-289.7 825.0629,-289.7 825.0629,-267.7 660.0629,-267.7"/>
 <image xlink:href="../../images/primaryKeys.png" width="11px" height="12px" preserveAspectRatio="xMinYMin meet" x="665.063" y="-284.7"/>
 <text text-anchor="start" x="680.0629" y="-274.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">leg_no</text>
+<polygon fill="#ffffff" stroke="transparent" points="660.0629,-245.7 660.0629,-267.7 825.0629,-267.7 825.0629,-245.7 660.0629,-245.7"/>
 <polygon fill="none" stroke="#000000" points="660.0629,-245.7 660.0629,-267.7 825.0629,-267.7 825.0629,-245.7 660.0629,-245.7"/>
 <image xlink:href="../../images/foreignKeys.png" width="11px" height="12px" preserveAspectRatio="xMinYMin meet" x="665.063" y="-262.7"/>
 <text text-anchor="start" x="680.0629" y="-252.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">voyage_number</text>

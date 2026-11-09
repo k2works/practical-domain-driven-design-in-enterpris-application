@@ -379,6 +379,40 @@
                                     </td>
                                     <td><p>実行済みか</p></td>
                                 </tr>
+                                <tr>
+                                    <td><span id="load_call_no">load_call_no</span></td>
+                                    <td>int4</td>
+                                    <td>10</td>
+                                    <td title='nullable'>√</td>
+                                    <td title=''></td>
+                                    <td>null</td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                        </table>
+                                    </td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                        </table>
+                                    </td>
+                                    <td><p>積地の寄港の位置（航海の運航の順で 1 始まり。Bolt 39f より前の候補は NULL）</p></td>
+                                </tr>
+                                <tr>
+                                    <td><span id="discharge_call_no">discharge_call_no</span></td>
+                                    <td>int4</td>
+                                    <td>10</td>
+                                    <td title='nullable'>√</td>
+                                    <td title=''></td>
+                                    <td>null</td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                        </table>
+                                    </td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                        </table>
+                                    </td>
+                                    <td><p>揚地の寄港の位置（航海の運航の順で 1 始まり。Bolt 39f より前の候補は NULL）</p></td>
+                                </tr>
                                 </tbody>
                             </table>
                         </div>
@@ -415,6 +449,12 @@
                                     <td><span title='Ascending'>Asc</span>/<span title='Ascending'>Asc</span>/<span title='Ascending'>Asc</span>/<span title='Ascending'>Asc</span></td>
                                     <td>routing_case_id + route_version_no + candidate_no + leg_no</td>
                                 </tr>
+                                <tr>
+                                    <td title='Indexed'>ix_candidate_leg_voyage</td>
+                                    <td>Performance</td>
+                                    <td><span title='Ascending'>Asc</span></td>
+                                    <td>voyage_number</td>
+                                </tr>
                                 </tbody>
                             </table>
                         </div><!-- /.box-body -->
@@ -450,6 +490,10 @@
                                 <tr>
                                     <td>ck_candidate_leg_dates</td>
                                     <td>(arrival_at &gt; departure_at)</td>
+                                </tr>
+                                <tr>
+                                    <td>ck_candidate_leg_call_no</td>
+                                    <td>(((load_call_no IS NULL) AND (discharge_call_no IS NULL)) OR ((load_call_no IS NOT NULL) AND (discharge_call_no IS NOT NULL) AND (load_call_no &lt; discharge_call_no)))</td>
                                 </tr>
                                 </tbody>
                             </table>

@@ -24,6 +24,8 @@
          <column autoUpdated="false" defaultValue="null" digits="0" id="11" name="info_version" nullable="false" remarks="航海の採用情報版" size="100" type="varchar" typeCode="12"/>
          <column autoUpdated="false" defaultValue="null" digits="6" id="12" name="info_acquired_at" nullable="false" remarks="航海の情報の取得時刻" size="35" type="timestamptz" typeCode="93"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="13" name="executed" nullable="false" remarks="実行済みか" size="1" type="bool" typeCode="-7"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="14" name="load_call_no" nullable="true" remarks="積地の寄港の位置（航海の運航の順で 1 始まり。Bolt 39f より前の候補は NULL）" size="10" type="int4" typeCode="4"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="15" name="discharge_call_no" nullable="true" remarks="揚地の寄港の位置（航海の運航の順で 1 始まり。Bolt 39f より前の候補は NULL）" size="10" type="int4" typeCode="4"/>
          <primaryKey column="routing_case_id" sequenceNumberInPK="1"/>
          <primaryKey column="route_version_no" sequenceNumberInPK="2"/>
          <primaryKey column="candidate_no" sequenceNumberInPK="3"/>
@@ -34,6 +36,10 @@
             <column ascending="true" name="candidate_no"/>
             <column ascending="true" name="leg_no"/>
          </index>
+         <index name="ix_candidate_leg_voyage" unique="false">
+            <column ascending="true" name="voyage_number"/>
+         </index>
+         <checkConstraint constraint="(((load_call_no IS NULL) AND (discharge_call_no IS NULL)) OR ((load_call_no IS NOT NULL) AND (discharge_call_no IS NOT NULL) AND (load_call_no &lt; discharge_call_no)))" name="ck_candidate_leg_call_no"/>
          <checkConstraint constraint="(arrival_at &gt; departure_at)" name="ck_candidate_leg_dates"/>
          <checkConstraint constraint="(leg_no &gt;= 1)" name="ck_candidate_leg_no"/>
       </table>

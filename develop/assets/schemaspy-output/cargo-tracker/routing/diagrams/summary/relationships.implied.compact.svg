@@ -347,6 +347,7 @@
 <polygon fill="none" stroke="#000000" points="839.5,-223.7 839.5,-245.7 1004.5,-245.7 1004.5,-223.7 839.5,-223.7"/>
 <image xlink:href="../../images/primaryKeys.png" width="11px" height="12px" preserveAspectRatio="xMinYMin meet" x="844.5" y="-240.7"/>
 <text text-anchor="start" x="859.5" y="-230.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">leg_no</text>
+<polygon fill="#ffffff" stroke="transparent" points="839.5,-201.7 839.5,-223.7 1004.5,-223.7 1004.5,-201.7 839.5,-201.7"/>
 <polygon fill="none" stroke="#000000" points="839.5,-201.7 839.5,-223.7 1004.5,-223.7 1004.5,-201.7 839.5,-201.7"/>
 <image xlink:href="../../images/foreignKeys.png" width="11px" height="12px" preserveAspectRatio="xMinYMin meet" x="844.5" y="-218.7"/>
 <text text-anchor="start" x="859.5" y="-208.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">voyage_number</text>
