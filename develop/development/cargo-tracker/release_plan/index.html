@@ -10410,6 +10410,76 @@
   
   
     <li class="md-nav__item">
+      <a href="../bolt_39d3b_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 39d3b 計画
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../bolt_39d3b_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 39d3b 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../release_report-0_1/" class="md-nav__link">
         
   
@@ -18160,14 +18230,14 @@
 </tr>
 <tr>
 <td style="text-align: left;">39d3b</td>
-<td style="text-align: left;">S-17 で航海の内容の違う原本の隔離を採用する縦（Bolt 39d3 の開始準備で 39d3 から分けた。Bolt 39d3b の開始準備で航海の採用に絞り、主要実績の採用・採用できない理由の文・<code>org.slf4j</code> の規則の分け方は 39d3b2 に分けた。行の最後の注）: 外部原本のポートの <code>findById</code>、採用の判断（<code>DecisionKind.ADOPTED</code>、理由は任意。【業務の判断】(d)）、39d3c で値から作れる形にした採用の組み立て役（<code>AdoptionFactory.adopt(received, key, values, dataSourceId, operator, publishedAt)</code>。受け取った値は <code>RecordValues.ofSummary(key.recordType(), value.targetKey(), value.summary())</code>、情報源 ID は取込から読む。採用に別の形が要るかは 39d3b の開始準備で確かめる）で、受け取った値から採用値と DE-12・DE-13（操作者は判断者、公開した時刻は判断の時刻）と DE-29（<code>ADOPTED</code>）、キーのない隔離と値の列のない隔離は採用を出さない、値を読めない隔離（受け取った値が読めない、原本種別を読めない）も採用を出さない（受け取った値から採用値とイベントを作り直せない。Bolt 39d3c の【業務の判断】(k)、台帳 D-98。採用値の側だけが読めない隔離を採用できるかは 39d3b の開始準備で決める）、監査の不変条件（IA-INV-15）と理由のない DE-29 を受ける listener の直し、<code>EXTERNAL_RECORD_ADOPTED</code> の Javadoc と DE-12・DE-13 の <code>publishedAt</code> の直し、判断の画面の「採用する」と POST、マニュアル 12.2 の採用（誤って採用したときの案内。【業務の判断】(e)、D-95）と付録 B、デモの動画。【業務の判断】(b)・(f) を終了報告の議題の先頭に置く（Bolt 39d の開始準備の決定 (9) の 39d3 を 39d3b に読み替える）。約 3 時間 55 分の見込み、39d3 の開発レビューから: 却下の欄の見出し、同じ公開時刻の採用値を ID の順で選ぶときの H2 の UUID の比べ方、39d3c の開発レビューから: 外部データの application に許した <code>org.slf4j</code> を application に限る規則の分け方（39d3c の終了報告の議題 2）、新しいテストの完全修飾名を import にまとめる。【前の決定の変更】開始準備で、39d3・39d3c の開発レビューの 4 つ、コードで確かめて見つかった作業、2 つの整合性検証の指摘で足した作業（採用できるかの照会 <code>adoptionRefusalOf</code> で GET と POST の定めを 1 つにする、採用の POST のセキュリティの統合のテスト、停止した情報源の隔離は採用を出さない（【業務の判断】(n)、台帳 D-101）など）を足すと約 4 時間 54 分になり、H2 の UUID の比べ方とテストの完全修飾名を 39d4 に送っても約 4 時間 24 分で目安を超えるので、主要実績の採用・採用できない理由の文・<code>org.slf4j</code> の規則の分け方を 39d3b2 に縦に分け、39d3b を航海の内容の違う原本の採用（約 4 時間 05 分。余りはない）にした（Bolt 39d3b の【前の決定の変更】(2)）。39d4 に送った: 同じ公開時刻の採用値の H2 の UUID の比べ方、テストの完全修飾名（Bolt 39d3b の開始準備の決定 (11)）。開始準備で決めたこと: 採用の組み立て役はそのまま使う（別の形は要らない）、採用値の側だけ読めない隔離も採用できる（【業務の判断】(l)、台帳 D-99）、判断を先にセーブポイントの中で追記してから採用値を書く、理由のない採用の監査は要約の <code>;reason=</code> を省く、判断の画面は「却下する」（先）と「採用する」（後）の 2 つの見出しの欄、<code>POST …/adoption</code>。<a href="../bolt_39d3b_plan/">Bolt 39d3b 計画</a>（2026-11-05 承認）</td>
+<td style="text-align: left;">S-17 で航海の内容の違う原本の隔離を採用する縦（Bolt 39d3 の開始準備で 39d3 から分けた。Bolt 39d3b の開始準備で航海の採用に絞り、主要実績の採用・採用できない理由の文・<code>org.slf4j</code> の規則の分け方は 39d3b2 に分けた。行の最後の注）: 外部原本のポートの <code>findById</code>、採用の判断（<code>DecisionKind.ADOPTED</code>、理由は任意。【業務の判断】(d)）、39d3c で値から作れる形にした採用の組み立て役（<code>AdoptionFactory.adopt(received, key, values, dataSourceId, operator, publishedAt)</code>。受け取った値は <code>RecordValues.ofSummary(key.recordType(), value.targetKey(), value.summary())</code>、情報源 ID は取込から読む。採用に別の形が要るかは 39d3b の開始準備で確かめる）で、受け取った値から採用値と DE-12・DE-13（操作者は判断者、公開した時刻は判断の時刻）と DE-29（<code>ADOPTED</code>）、キーのない隔離と値の列のない隔離は採用を出さない、値を読めない隔離（受け取った値が読めない、原本種別を読めない）も採用を出さない（受け取った値から採用値とイベントを作り直せない。Bolt 39d3c の【業務の判断】(k)、台帳 D-98。採用値の側だけが読めない隔離を採用できるかは 39d3b の開始準備で決める）、監査の不変条件（IA-INV-15）と理由のない DE-29 を受ける listener の直し、<code>EXTERNAL_RECORD_ADOPTED</code> の Javadoc と DE-12・DE-13 の <code>publishedAt</code> の直し、判断の画面の「採用する」と POST、マニュアル 12.2 の採用（誤って採用したときの案内。【業務の判断】(e)、D-95）と付録 B、デモの動画。【業務の判断】(b)・(f) を終了報告の議題の先頭に置く（Bolt 39d の開始準備の決定 (9) の 39d3 を 39d3b に読み替える）。約 3 時間 55 分の見込み、39d3 の開発レビューから: 却下の欄の見出し、同じ公開時刻の採用値を ID の順で選ぶときの H2 の UUID の比べ方、39d3c の開発レビューから: 外部データの application に許した <code>org.slf4j</code> を application に限る規則の分け方（39d3c の終了報告の議題 2）、新しいテストの完全修飾名を import にまとめる。【前の決定の変更】開始準備で、39d3・39d3c の開発レビューの 4 つ、コードで確かめて見つかった作業、2 つの整合性検証の指摘で足した作業（採用できるかの照会 <code>adoptionRefusalOf</code> で GET と POST の定めを 1 つにする、採用の POST のセキュリティの統合のテスト、停止した情報源の隔離は採用を出さない（【業務の判断】(n)、台帳 D-101）など）を足すと約 4 時間 54 分になり、H2 の UUID の比べ方とテストの完全修飾名を 39d4 に送っても約 4 時間 24 分で目安を超えるので、主要実績の採用・採用できない理由の文・<code>org.slf4j</code> の規則の分け方を 39d3b2 に縦に分け、39d3b を航海の内容の違う原本の採用（約 4 時間 05 分。余りはない）にした（Bolt 39d3b の【前の決定の変更】(2)）。39d4 に送った: 同じ公開時刻の採用値の H2 の UUID の比べ方、テストの完全修飾名（Bolt 39d3b の開始準備の決定 (11)）。開始準備で決めたこと: 採用の組み立て役はそのまま使う（別の形は要らない）、採用値の側だけ読めない隔離も採用できる（【業務の判断】(l)、台帳 D-99）、判断を先にセーブポイントの中で追記してから採用値を書く、理由のない採用の監査は要約の <code>;reason=</code> を省く、判断の画面は「却下する」（先）と「採用する」（後）の 2 つの見出しの欄、<code>POST …/adoption</code>。<a href="../bolt_39d3b_plan/">Bolt 39d3b 計画</a>（2026-11-05 承認）・<a href="../bolt_39d3b_report/">終了報告</a>（承認済み）</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: left;">アウトサイドイン（S-17 の採用から）</td>
 <td style="text-align: left;">ステップごと（監査・画面）</td>
 </tr>
 <tr>
 <td style="text-align: left;">39d3b2</td>
-<td style="text-align: left;">S-17 で主要実績の内容の違う原本の隔離を採用し、採用できない隔離では理由と次の道を知る縦（Bolt 39d3b の開始準備で 39d3b から分けた。Bolt 39d3b の【前の決定の変更】(2)。引き継ぐものは <a href="../bolt_39d3b_plan/">Bolt 39d3b 計画</a> の「39d3b2 に分けるもの」と状態の組み合わせの行 3・17・18）: 主要実績の隔離に採用を出す（DE-13、主要実績の採用の配信）、追跡番号がこの外部版の採用値と違う主要実績の隔離は採用を出さない（【業務の判断】(m)、台帳 D-100。新しい外部版で正しい原本を送り直してもらう道を示す。キーが変わる原本の扱いは 39g・39h）、採用できない理由の文（値の列のない隔離・受け取った値を読めない隔離・停止した情報源の隔離・追跡番号が違う主要実績）、外部データの <code>org.slf4j</code> の許可を application に限る規則の分け方（Bolt 39d3b の【前の決定の変更】(1)）、マニュアル 12.2 の主要実績の採用と採用できない隔離・付録 B、デモの動画。約 2 時間 25 分の見込み</td>
+<td style="text-align: left;">S-17 で主要実績の内容の違う原本の隔離を採用し、採用できない隔離では理由と次の道を知る縦（Bolt 39d3b の開始準備で 39d3b から分けた。Bolt 39d3b の【前の決定の変更】(2)。引き継ぐものは <a href="../bolt_39d3b_plan/">Bolt 39d3b 計画</a> の「39d3b2 に分けるもの」と状態の組み合わせの行 3・17・18）: 主要実績の隔離に採用を出す（DE-13、主要実績の採用の配信）、追跡番号がこの外部版の採用値と違う主要実績の隔離は採用を出さない（【業務の判断】(m)、台帳 D-100。新しい外部版で正しい原本を送り直してもらう道を示す。キーが変わる原本の扱いは 39g・39h）、採用できない理由の文（値の列のない隔離・受け取った値を読めない隔離・停止した情報源の隔離・追跡番号が違う主要実績）、外部データの <code>org.slf4j</code> の許可を application に限る規則の分け方（Bolt 39d3b の【前の決定の変更】(1)）、マニュアル 12.2 の主要実績の採用と採用できない隔離・付録 B、デモの動画。約 2 時間 25 分の見込み、39d3b の開発レビューから: 開いた後に情報源が停止されたときの案内、情報源が停止した隔離を受け取るときの運用</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: left;">アウトサイドイン（S-17 の主要実績の採用から）</td>
 <td style="text-align: left;">ステップごと（画面・層の規則）</td>
@@ -21111,6 +21181,11 @@
 <td style="text-align: left;">2026-11-05</td>
 <td style="text-align: left;">Bolt 39d3b のステップ 1（設計の文書）: 39d3b の行を承認した計画の内容にし（名前を「航海の内容の違う原本」に、【前の決定の変更】(2) の「案」を外し、39d4 に送った 2 つと開始準備で決めたこと、計画へのリンク）、39d3b2・39e・39g の行の「案」を外した。39d4 の行に送った 2 つ（H2 の UUID の比べ方、テストの完全修飾名。<code>988aa49ef</code> の版でクラスごとに数え直した計 115 か所・約 20 分と、数え方の外の 93 か所）、39d3 の申し送り（bolt_39d3_plan.md :249）の付け替えと組み合わせて確かめる分、送った分の見積りの計（約 30 分）を足した。39h の行にキーが変わる原本の扱いを 39g と決めることを足した。局面とアプローチ・承認ゲート・確認ポイント 23（ユーザーマニュアル）・順序と W7 の本数の見込み（28 本前後）・デモ項目の動画を撮る Bolt に 39d3b2 を足した。業務責任者に確かめる事項の台帳に D-99（採用値の側だけ読めない隔離。【業務の判断】(l)）・D-100（追跡番号が違う主要実績の隔離。【業務の判断】(m)）・D-101（停止した情報源の隔離。【業務の判断】(n)）を仮の決定として足し、D-98 の採用値の側だけ読めない隔離を D-99 に分け、D-95 に 39d3b で書く案内の注を足した</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-11-09</td>
+<td style="text-align: left;">Bolt 39d3b のステップ 1〜9 と<a href="../bolt_39d3b_report/">終了報告</a>を承認した（推奨のとおり。Recommend 承認の指示による）</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
 </tr>
 <tr>
 <td style="text-align: left;">2026-10-28</td>
