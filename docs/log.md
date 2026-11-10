@@ -2,6 +2,10 @@
 
 ## 2026-11-10
 * **Update**: [bolt_39g_plan](/development/cargo-tracker/bolt_39g_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [用語集](/manual/用語集.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [12-外部データ](/manual/12-外部データ.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [09-追跡管理](/manual/09-追跡管理.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39g_plan](/development/cargo-tracker/bolt_39g_plan.md) を更新（anthropic/claude-opus-5-5）
 
 ## 2026-11-09
 * **Verification**: [bolt_39f2_report](/development/cargo-tracker/bolt_39f2_report.md) を human:kakimomokuri が検証
