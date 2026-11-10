@@ -10900,6 +10900,76 @@
   
   
     <li class="md-nav__item">
+      <a href="../bolt_39g_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 39g 計画
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../bolt_39g_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 39g 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../release_report-0_1/" class="md-nav__link">
         
   
@@ -18699,7 +18769,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">39g</td>
-<td style="text-align: left;">採用した主要実績を追跡の下書きとして受ける縦（データ責任者が採用した主要実績が追跡管理者の S-12 に下書きで届き、現在状態を変えない。US-12 AC1・AC2・AC4・AC5 の取り込みの分、US-14 AC1。Bolt 39g の開始準備で候補の判定と表示・下書きの採用を 39gb に、確認中と DE-18・手入力の規則を 39gc に分けた。行の最後の注）: DE-13 の listener（<code>ExternalMilestoneEventHandler</code>。<code>tracking</code> の <code>allowedDependencies</code> に <code>externaldata :: events</code>）、実績に外部の識別の 3 列を足して書く（<code>tracking.milestone</code> の 3 列と CHECK。スキーマ）、取消済みと知らない追跡番号の拒否の記録（<code>tracking.rejected_milestone</code>。追記専用。スキーマ）、完了後の保持のみ（<code>RETAINED_ONLY</code>。AC5）、同じ追跡番号への集中を追跡記録の行のロックで直列にする（PERF-06）、配信までの統合テスト（T-184）、S-12 に下書きが見えること（表示の形は今のまま。競合の文だけ直す）、P-7（#50）、マニュアル 9 章・12 章・用語集、デモの動画（<code>@demo-bolt-39g/external-milestone-draft</code>。「下書きとして届く」まで）、受入シナリオ <code>@US-12-AC4</code>・<code>@US-12-AC5</code>（取り込みの分）と <code>@US-14-AC1</code>。開始準備で、コードで確かめて引き直し、2 つの整合性検証の指摘を入れるとまとめて約 9 時間 43 分（583 分）で目安（4 時間 05 分。T-250）を大きく超えるので、39g（238 分）・39gb（約 175 分）・39gc（約 170 分）の 3 本に縦に分け、39g を約 3 時間 58 分（238 分）にした（余りは 7 分。超えそうなら <a href="../bolt_39g_plan/">Bolt 39g 計画</a> の行 40、行 41 の時間の記録と配信の参考の値の測り直し、P-7 の順に 39gb へ送る。Bolt 39g の開始準備の決定 (1)）。開始準備で決めたこと（2026-11-10。推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）: 【業務の判断】(aa) 同じ主要実績（同じ追跡番号・情報源・外部 ID）の DE-13 は DE-13 ごとに実績を残し、公開した時刻 → 取得時刻 → 受信記録 ID の順で最も新しい下書きだけを採用の候補にする。外部版は比べない（台帳 D-114。仮。判定と表示は 39gb）、(ab) 外部版をまたいで追跡番号が変わった DE-13 は別の主要実績として受け、元の追跡番号の実績は変えない（台帳 D-115。仮）、(ac) 知らない追跡番号は拒否の記録に残し、後から追跡記録ができても実績にしない（台帳 D-116。仮）、(ad) 完了後は予約状態が完了か現在状態が引渡し済みのときで、取消済みの判定はそれより先（台帳 D-117。仮）、(ae) 未来の発生時刻の DE-13 も下書きで受ける（台帳 D-118。仮）、(af) 情報源の停止の後に届いた DE-13 も下書きで受ける（台帳 D-119。仮）。判定の順は拒否の記録あり → 同じ出典 → 取消済み → 完了後 → 通常の 1 つ（決定 (7)）。同じ追跡番号は追跡番号を <code>SELECT … FOR UPDATE</code> で押さえて読み直す（決定 (4)）。【前の決定の変更】(11) 39g の範囲を 39g・39gb・39gc に分け、確認ポイント 7・10・23・24 を読み替える。(12) Bolt 39d の決定 (13) と台帳 D-97 の注の「新しい外部版の採用値」を追跡の主要実績についても「最後に公開した採用値」に改める（DE-13 は情報版でなく公開した時刻の順で代える）。(13) T-INV-13 を追跡管理者の登録の規則に改める。Bolt 39d3b・39d4・39e の開始準備の申し送り（同じ情報版で値の違う DE-13 の順、キーが変わる原本、同じ値の組、同じ外部版の採用し直し、誤って採用したときの道、マニュアルの「まだ反映されません」の文）はこの 3 本で受けた（<a href="../bolt_39g_plan/">Bolt 39g 計画</a> の「前の Bolt から引き継いだもの」）。US-12 の 2 SP と #19 のクローズは 39gc で数える。新しいコンテキスト間の依存は <code>tracking</code> → <code>externaldata :: events</code> だけで、規則の例外は要らない見込み。<a href="../bolt_39g_plan/">Bolt 39g 計画</a>（2026-11-10 承認）</td>
+<td style="text-align: left;">採用した主要実績を追跡の下書きとして受ける縦（データ責任者が採用した主要実績が追跡管理者の S-12 に下書きで届き、現在状態を変えない。US-12 AC1・AC2・AC4・AC5 の取り込みの分、US-14 AC1。Bolt 39g の開始準備で候補の判定と表示・下書きの採用を 39gb に、確認中と DE-18・手入力の規則を 39gc に分けた。行の最後の注）: DE-13 の listener（<code>ExternalMilestoneEventHandler</code>。<code>tracking</code> の <code>allowedDependencies</code> に <code>externaldata :: events</code>）、実績に外部の識別の 3 列を足して書く（<code>tracking.milestone</code> の 3 列と CHECK。スキーマ）、取消済みと知らない追跡番号の拒否の記録（<code>tracking.rejected_milestone</code>。追記専用。スキーマ）、完了後の保持のみ（<code>RETAINED_ONLY</code>。AC5）、同じ追跡番号への集中を追跡記録の行のロックで直列にする（PERF-06）、配信までの統合テスト（T-184）、S-12 に下書きが見えること（表示の形は今のまま。競合の文だけ直す）、P-7（#50）、マニュアル 9 章・12 章・用語集、デモの動画（<code>@demo-bolt-39g/external-milestone-draft</code>。「下書きとして届く」まで）、受入シナリオ <code>@US-12-AC4</code>・<code>@US-12-AC5</code>（取り込みの分）と <code>@US-14-AC1</code>。開始準備で、コードで確かめて引き直し、2 つの整合性検証の指摘を入れるとまとめて約 9 時間 43 分（583 分）で目安（4 時間 05 分。T-250）を大きく超えるので、39g（238 分）・39gb（約 175 分）・39gc（約 170 分）の 3 本に縦に分け、39g を約 3 時間 58 分（238 分）にした（余りは 7 分。超えそうなら <a href="../bolt_39g_plan/">Bolt 39g 計画</a> の行 40、行 41 の時間の記録と配信の参考の値の測り直し、P-7 の順に 39gb へ送る。Bolt 39g の開始準備の決定 (1)）。開始準備で決めたこと（2026-11-10。推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）: 【業務の判断】(aa) 同じ主要実績（同じ追跡番号・情報源・外部 ID）の DE-13 は DE-13 ごとに実績を残し、公開した時刻 → 取得時刻 → 受信記録 ID の順で最も新しい下書きだけを採用の候補にする。外部版は比べない（台帳 D-114。仮。判定と表示は 39gb）、(ab) 外部版をまたいで追跡番号が変わった DE-13 は別の主要実績として受け、元の追跡番号の実績は変えない（台帳 D-115。仮）、(ac) 知らない追跡番号は拒否の記録に残し、後から追跡記録ができても実績にしない（台帳 D-116。仮）、(ad) 完了後は予約状態が完了か現在状態が引渡し済みのときで、取消済みの判定はそれより先（台帳 D-117。仮）、(ae) 未来の発生時刻の DE-13 も下書きで受ける（台帳 D-118。仮）、(af) 情報源の停止の後に届いた DE-13 も下書きで受ける（台帳 D-119。仮）。判定の順は拒否の記録あり → 同じ出典 → 取消済み → 完了後 → 通常の 1 つ（決定 (7)）。同じ追跡番号は追跡番号を <code>SELECT … FOR UPDATE</code> で押さえて読み直す（決定 (4)）。【前の決定の変更】(11) 39g の範囲を 39g・39gb・39gc に分け、確認ポイント 7・10・23・24 を読み替える。(12) Bolt 39d の決定 (13) と台帳 D-97 の注の「新しい外部版の採用値」を追跡の主要実績についても「最後に公開した採用値」に改める（DE-13 は情報版でなく公開した時刻の順で代える）。(13) T-INV-13 を追跡管理者の登録の規則に改める。Bolt 39d3b・39d4・39e の開始準備の申し送り（同じ情報版で値の違う DE-13 の順、キーが変わる原本、同じ値の組、同じ外部版の採用し直し、誤って採用したときの道、マニュアルの「まだ反映されません」の文）はこの 3 本で受けた（<a href="../bolt_39g_plan/">Bolt 39g 計画</a> の「前の Bolt から引き継いだもの」）。US-12 の 2 SP と #19 のクローズは 39gc で数える。新しいコンテキスト間の依存は <code>tracking</code> → <code>externaldata :: events</code> だけで、規則の例外は要らない見込み。<a href="../bolt_39g_plan/">Bolt 39g 計画</a>（2026-11-10 承認）・<a href="../bolt_39g_report/">終了報告</a>（承認済み）</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: left;">アウトサイドイン（状態の組み合わせの表を先に書く。T-182）</td>
 <td style="text-align: left;">計画と終了報告（スキーマ・構造）</td>
@@ -21860,6 +21930,11 @@
 <tr>
 <td style="text-align: left;">2026-11-10</td>
 <td style="text-align: left;">Bolt 39g のステップ 1（設計の文書）: 39g の行に引き直した見積り（約 3 時間 58 分）、開始準備で決めたこと、【業務の判断】(aa)〜(af)、【前の決定の変更】(11)〜(13)、計画へのリンクを足し、範囲を DE-13 を受けて下書きにする縦に直した。39g の後に 39gb（候補の判定と表示・下書きの採用。約 2 時間 55 分）と 39gc（確認中と DE-18・手入力の規則。約 2 時間 50 分。US-12 の 2 SP と #19 のクローズ）の行を足し、順序を 39f2 → 39g → 39gb → 39gc → 39g2 → 39h にして W7 が 32 本前後になることを順の行に書いた。確認ポイント 7・10・23・24 を読み替え、「原本だけ」を「保持のみ」にそろえた。デモ項目に 39g・39gb・39gc を足し、取消済み・完了後は画面では示さず統合テストで確かめると改めた。39g2・W8・W10 の行に申し送りを足した。業務責任者に確かめる事項の台帳に D-114〜D-119（仮）を足し、D-97・D-100 に注を足した（推奨のとおり。Recommend 承認の指示による）</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-11-10</td>
+<td style="text-align: left;">Bolt 39g のステップ 1〜8 と<a href="../bolt_39g_report/">終了報告</a>を承認した（推奨のとおり。Recommend 承認の指示による）</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
 </tr>
 <tr>
