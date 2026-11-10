@@ -13,7 +13,7 @@
            （Bolt 24 の前例）。競合は警告 */-->
     <p role="status" th:if="${result}" th:text="${result}">実績 1 を登録しました。</p>
     <p th:if="${resultLinkHref}"><a th:href="${resultLinkHref}" th:text="${resultLinkLabel}">実績 1 を一覧で見る</a></p>
-    <div class="alert alert-warning" role="alert" th:if="${problem}" th:text="${problem}">ほかの追跡管理者が先にこの追跡記録を更新しました。</div>
+    <div class="alert alert-warning" role="alert" th:if="${problem}" th:text="${problem}">ほかの更新が先にこの追跡記録を変更しました。最新の主要実績を確かめ、必要なら、もう一度登録してください。</div>
     <!--/* S-12（Bolt 26・26c）。訂正履歴・顧客への表示・有人案件のタブは後の Bolt。
            予定と実績を混同しない（T-INV-08）ので、予定区間と主要実績は別の見出しに分ける */-->
     <dl class="row">

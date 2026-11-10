@@ -1338,6 +1338,8 @@ class ReceivedRecordDecisionServiceTest {
 
             assertNothingWritten();
             assertThat(receivedRecords.undecidedQuarantine(received.id())).isPresent();
+            // Bolt 39g の行 14（【業務の判断】(m)）。DE-13 がないので追跡の実績は増えない
+            assertThat(published).noneMatch(MilestoneAdoptedValueAccepted.class::isInstance);
         }
 
         // --- 行 5: 比べの境界 ---

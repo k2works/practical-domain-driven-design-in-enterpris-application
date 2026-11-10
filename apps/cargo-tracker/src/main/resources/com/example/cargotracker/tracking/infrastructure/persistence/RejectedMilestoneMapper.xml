@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.cargotracker.tracking.infrastructure.persistence.RejectedMilestoneMapper">
+
+    <!-- 同じ出典（種類と参照）は 1 件だけ（uk_rejected_milestone_source。Bolt 39g） -->
+    <insert id="insert">
+        INSERT INTO tracking.rejected_milestone
+            (id, tracking_number, kind, location_unlocode, occurred_at, source_kind, source_ref, acquired_at,
+             data_source_id, external_id, reason, recorded_at)
+        VALUES
+            (#{id}, #{trackingNumber}, #{kind}, #{locationUnlocode}, #{occurredAt}, #{sourceKind}, #{sourceRef},
+             #{acquiredAt}, #{dataSourceId}, #{externalId}, #{reason}, #{recordedAt})
+    </insert>
+
+    <select id="countBySource" resultType="int">
+        SELECT COUNT(*) FROM tracking.rejected_milestone WHERE source_kind = #{sourceKind} AND source_ref = #{sourceRef}
+    </select>
+</mapper>

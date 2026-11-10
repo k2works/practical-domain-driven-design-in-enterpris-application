@@ -149,6 +149,7 @@ public class TrackingUiSteps {
         assertThat(item).containsText(summary);
         assertThat(item).containsText(source);
         assertThat(item).containsText(milestoneState);
+        browser.checkAccessibility();
     }
 
     @ならば("主要実績の一覧の実績は {int} 件だけである")

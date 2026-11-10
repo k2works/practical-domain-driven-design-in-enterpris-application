@@ -16,6 +16,7 @@ import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.tracking.domain.model.entities.Milestone;
 import com.example.cargotracker.tracking.domain.model.valueobjects.CustomerMilestone;
 import com.example.cargotracker.tracking.domain.model.valueobjects.CustomerTrackingView;
+import com.example.cargotracker.tracking.domain.model.valueobjects.ExternalOrigin;
 import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneKind;
 import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneState;
 import com.example.cargotracker.tracking.domain.model.valueobjects.TrackedBookingStatus;
@@ -74,6 +75,39 @@ class TrackingRecordCustomerViewTest {
                         new CustomerMilestone(MilestoneKind.PICKUP, tokyo(), at("2026-11-01T02:00:00Z"), source("F-1")),
                         new CustomerMilestone(
                                 MilestoneKind.RECEIPT_AT_ORIGIN, tokyo(), at("2026-11-01T05:00:00Z"), source("F-2")));
+    }
+
+    /** Bolt 39g の行 44（T-INV-09）。DE-13 の下書きと保持のみは荷主に出ない。 */
+    @Test
+    void Bolt39g_行44_外部原本の下書きと保持のみは荷主に見せない() {
+        Source external = new Source(SourceKind.EXTERNAL_RECORD, "R-1", at("2026-11-01T09:00:00Z"));
+        Source externalRetained = new Source(SourceKind.EXTERNAL_RECORD, "R-2", at("2026-11-01T09:00:00Z"));
+        ExternalOrigin origin = new ExternalOrigin(UUID.randomUUID(), "MS-1", at("2026-11-01T09:00:00Z"));
+        TrackingRecord trackingRecord = withMilestones(
+                TrackingStatus.PICKUP_SCHEDULED,
+                List.of(
+                        new Milestone(
+                                1,
+                                MilestoneKind.DEPARTURE,
+                                tokyo(),
+                                at("2026-11-01T06:00:00Z"),
+                                external,
+                                MilestoneState.DRAFT,
+                                REGISTRANT,
+                                at("2026-11-01T09:00:00Z"),
+                                origin),
+                        new Milestone(
+                                2,
+                                MilestoneKind.ARRIVAL,
+                                tokyo(),
+                                at("2026-11-01T07:00:00Z"),
+                                externalRetained,
+                                MilestoneState.RETAINED_ONLY,
+                                REGISTRANT,
+                                at("2026-11-01T09:00:00Z"),
+                                origin)));
+
+        assertThat(trackingRecord.customerView().milestones()).isEmpty();
     }
 
     @Test

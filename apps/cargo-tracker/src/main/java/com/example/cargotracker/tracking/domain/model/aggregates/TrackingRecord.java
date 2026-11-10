@@ -13,6 +13,7 @@ import com.example.cargotracker.tracking.domain.model.rules.CurrentStatusDeriver
 import com.example.cargotracker.tracking.domain.model.valueobjects.CustomerMilestone;
 import com.example.cargotracker.tracking.domain.model.valueobjects.CustomerTrackingView;
 import com.example.cargotracker.tracking.domain.model.valueobjects.DerivedStatus;
+import com.example.cargotracker.tracking.domain.model.valueobjects.ExternalMilestone;
 import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneKind;
 import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneRejectionReason;
 import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneState;
@@ -199,24 +200,70 @@ public final class TrackingRecord {
                 MilestoneState.ADOPTED,
                 registrant,
                 registeredAt);
-        List<Milestone> registered = new ArrayList<>(milestones);
-        registered.add(milestone);
+        List<Milestone> registered = milestonesPlus(milestone);
         DerivedStatus derived = DERIVER.derive(registered);
-        TrackingRecord trackingRecord = new TrackingRecord(
+        return new MilestoneRegistration(
+                withMilestones(registered, derived.status(), derived.basisMilestoneNo()), milestone, false);
+    }
+
+    /**
+     * DE-13 の値を受け取る（US-12 AC4・AC5 の取り込みの分。Bolt 39g）。判定の順は、同じ出典 → 取消済み → 完了後 → 通常（決定 (7)。同じ出典を先に見るので、受けた後に
+     * 状態が変わってから再配信されても結果が変わらない）。取消済みは実績を作らず、完了後は保持のみ、それ以外は下書きで足す。どちらも現在状態と根拠の実績番号を変えない
+     * （T-INV-05・T-INV-08）。発生時刻が受けた時刻より後でも受ける（T-INV-13 は追跡管理者の登録の規則）。
+     *
+     * @param external 採用した主要実績の値
+     * @param receivedAt 受けた時刻（実績の登録時刻）
+     * @return 受け取りの結果
+     */
+    public ExternalMilestoneReceipt receiveExternalMilestone(ExternalMilestone external, UtcInstant receivedAt) {
+        Optional<Milestone> sameSource = milestoneOf(external.source());
+        if (sameSource.isPresent()) {
+            return new ExternalMilestoneReceipt.AlreadyReceived(sameSource.get());
+        }
+        if (bookingStatus == TrackedBookingStatus.CANCELLED) {
+            return new ExternalMilestoneReceipt.BookingCancelled();
+        }
+        Milestone milestone = new Milestone(
+                milestones.size() + 1,
+                external.kind(),
+                external.location(),
+                external.occurredAt(),
+                external.source(),
+                isCompleted() ? MilestoneState.RETAINED_ONLY : MilestoneState.DRAFT,
+                external.operator(),
+                receivedAt,
+                external.origin());
+        return new ExternalMilestoneReceipt.Received(
+                withMilestones(milestonesPlus(milestone), currentStatus, statusBasisMilestoneNo), milestone);
+    }
+
+    /** 完了後か（予約状態が完了か、現在状態が引渡し済み。【業務の判断】(ad)、T-INV-05）。 */
+    private boolean isCompleted() {
+        return bookingStatus == TrackedBookingStatus.COMPLETED || currentStatus == TrackingStatus.DELIVERED;
+    }
+
+    private List<Milestone> milestonesPlus(Milestone milestone) {
+        List<Milestone> plus = new ArrayList<>(milestones);
+        plus.add(milestone);
+        return plus;
+    }
+
+    private TrackingRecord withMilestones(
+            List<Milestone> newMilestones, TrackingStatus newCurrentStatus, OptionalInt newStatusBasisMilestoneNo) {
+        return new TrackingRecord(
                 trackingNumber,
                 bookingId,
                 shipperCompanyId,
                 consigneeCompanyId,
                 bookingStatus,
                 schedule,
-                derived.status(),
-                derived.basisMilestoneNo(),
-                registered,
+                newCurrentStatus,
+                newStatusBasisMilestoneNo,
+                newMilestones,
                 originalEta,
                 latestEta,
                 startedAt,
                 aggregateVersion);
-        return new MilestoneRegistration(trackingRecord, milestone, false);
     }
 
     /**

@@ -12,6 +12,7 @@ import com.example.cargotracker.booking.infrastructure.persistence.RandomTrackin
 import com.example.cargotracker.booking.interfaces.api.internal.TrackingStartNotificationAdapter;
 import com.example.cargotracker.externaldata.application.internal.commandservices.IngestionService;
 import com.example.cargotracker.externaldata.application.internal.queryservices.PilotReadinessQueryService;
+import com.example.cargotracker.externaldata.domain.events.MilestoneAdoptedValueAccepted;
 import com.example.cargotracker.externaldata.domain.model.aggregates.InMemoryAdoptedValueRepository;
 import com.example.cargotracker.externaldata.domain.model.aggregates.InMemoryDataSourceRepository;
 import com.example.cargotracker.externaldata.domain.model.aggregates.InMemoryExternalPayloadStorage;
@@ -80,9 +81,13 @@ import com.example.cargotracker.routing.interfaces.api.internal.RouteVersionLegQ
 import com.example.cargotracker.shared.acceptance.DeferredEventDelivery;
 import com.example.cargotracker.shared.acceptance.MutableClock;
 import com.example.cargotracker.shared.acceptance.ScenarioContext;
+import com.example.cargotracker.shared.domain.CompanyId;
+import com.example.cargotracker.tracking.acceptance.ExternalMilestoneArrival;
+import com.example.cargotracker.tracking.acceptance.InMemoryRejectedMilestoneRepository;
 import com.example.cargotracker.tracking.acceptance.InMemoryTrackingRecordRepository;
 import com.example.cargotracker.tracking.application.internal.commandservices.TrackingRecordCommandService;
 import com.example.cargotracker.tracking.application.internal.eventhandlers.BookingTrackingStartNotificationEventHandler;
+import com.example.cargotracker.tracking.application.internal.eventhandlers.ExternalMilestoneEventHandler;
 import com.example.cargotracker.tracking.application.internal.eventhandlers.TrackingStartEventHandler;
 import com.example.cargotracker.tracking.application.internal.outboundservices.acl.BookingTrackingStarts;
 import com.example.cargotracker.tracking.application.internal.outboundservices.acl.RoutingScheduledLegs;
@@ -92,6 +97,7 @@ import com.example.cargotracker.tracking.domain.events.TrackingStarted;
 import io.cucumber.spring.CucumberContextConfiguration;
 import java.time.Duration;
 import java.util.Random;
+import java.util.UUID;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
@@ -260,6 +266,39 @@ public class AcceptanceTestConfiguration {
         @Bean
         InMemoryTrackingRecordRepository trackingRecordRepository() {
             return new InMemoryTrackingRecordRepository();
+        }
+
+        @Bean
+        InMemoryRejectedMilestoneRepository rejectedMilestoneRepository() {
+            return new InMemoryRejectedMilestoneRepository();
+        }
+
+        /** 追跡は DE-13 を受けて実績か拒否の記録を書く（Bolt 39g）。業務ルール層のシナリオは listener を直接呼ぶ。 */
+        @Bean
+        ExternalMilestoneEventHandler externalMilestoneEventHandler(
+                InMemoryTrackingRecordRepository repository,
+                InMemoryRejectedMilestoneRepository rejectedMilestones,
+                MutableClock clock) {
+            return new ExternalMilestoneEventHandler(repository, rejectedMilestones, clock);
+        }
+
+        /** 外部原本の主要実績が届くこと（DE-13 への組み立て。ステップ定義は他のコンテキストのイベントに依存しない。AT-05）。 */
+        @Bean
+        ExternalMilestoneArrival externalMilestoneArrival(ExternalMilestoneEventHandler handler) {
+            return milestone -> handler.on(new MilestoneAdoptedValueAccepted(
+                    UUID.randomUUID(),
+                    UUID.randomUUID(),
+                    milestone.origin().dataSourceId(),
+                    milestone.source(),
+                    milestone.trackingNumber().value(),
+                    milestone.kind().name(),
+                    milestone.location(),
+                    milestone.occurredAt(),
+                    milestone.origin().externalId(),
+                    "1",
+                    milestone.operator(),
+                    new CompanyId(UUID.randomUUID()),
+                    milestone.origin().publishedAt()));
         }
 
         /** 追跡は DE-07 を受け、経路設計の公開 API から確定した経路版の区間を引いて追跡を開始する（ADR-015。Bolt 25）。 */

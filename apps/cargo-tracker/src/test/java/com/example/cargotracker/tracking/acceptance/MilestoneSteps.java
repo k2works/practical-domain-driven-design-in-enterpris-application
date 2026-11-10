@@ -15,8 +15,12 @@ import com.example.cargotracker.tracking.application.internal.commandservices.Tr
 import com.example.cargotracker.tracking.domain.model.TrackingFixture;
 import com.example.cargotracker.tracking.domain.model.aggregates.TrackingRecord;
 import com.example.cargotracker.tracking.domain.model.entities.Milestone;
+import com.example.cargotracker.tracking.domain.model.valueobjects.ExternalMilestone;
+import com.example.cargotracker.tracking.domain.model.valueobjects.ExternalOrigin;
 import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneKind;
+import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneRejectionReason;
 import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneState;
+import com.example.cargotracker.tracking.domain.model.valueobjects.TrackedBookingStatus;
 import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingNumber;
 import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingStatus;
 import io.cucumber.java.ja.ならば;
@@ -37,15 +41,21 @@ public class MilestoneSteps {
 
     private final InMemoryTrackingRecordRepository trackingRecords;
     private final TrackingRecordCommandService commandService;
+    private final InMemoryRejectedMilestoneRepository rejectedMilestones;
+    private final ExternalMilestoneArrival externalMilestoneArrival;
     private final Clock clock;
     private MilestoneRegistrationOutcome outcome;
 
     public MilestoneSteps(
             InMemoryTrackingRecordRepository trackingRecords,
             TrackingRecordCommandService commandService,
+            InMemoryRejectedMilestoneRepository rejectedMilestones,
+            ExternalMilestoneArrival externalMilestoneArrival,
             Clock clock) {
         this.trackingRecords = trackingRecords;
         this.commandService = commandService;
+        this.rejectedMilestones = rejectedMilestones;
+        this.externalMilestoneArrival = externalMilestoneArrival;
         this.clock = clock;
     }
 
@@ -59,6 +69,55 @@ public class MilestoneSteps {
                         TrackingFixture.schedule(),
                         TrackingFixture.STARTED_AT)
                 .trackingRecord());
+    }
+
+    /** Bolt 39g の行 46。予約状態の書き手（DE-08）は W11 なので、取消済みの追跡記録を直接作る（W7 の確認ポイント 9）。 */
+    @前提("追跡番号 {string} の予約は取消済みである")
+    public void 予約は取消済みである(String trackingNumber) {
+        TrackingRecord started = trackingRecords
+                .findByTrackingNumber(new TrackingNumber(trackingNumber))
+                .orElseThrow();
+        trackingRecords.clear();
+        trackingRecords.save(TrackingRecord.reconstitute(
+                started.trackingNumber(),
+                started.bookingId(),
+                started.shipperCompanyId(),
+                started.consigneeCompanyId(),
+                TrackedBookingStatus.CANCELLED,
+                started.schedule(),
+                started.currentStatus(),
+                started.statusBasisMilestoneNo(),
+                started.milestones(),
+                started.originalEta(),
+                started.latestEta(),
+                started.startedAt(),
+                started.aggregateVersion()));
+    }
+
+    @もし("追跡番号 {string} に外部原本の主要実績が届く")
+    public void 外部原本の主要実績が届く(String trackingNumber) {
+        UtcInstant now = new UtcInstant(clock.instant());
+        externalMilestoneArrival.arrive(new ExternalMilestone(
+                new TrackingNumber(trackingNumber),
+                MilestoneKind.DEPARTURE,
+                new Location("JPTYO"),
+                at("2026-11-01T02:00:00Z"),
+                new Source(SourceKind.EXTERNAL_RECORD, "00000000-0000-0000-0000-000000026b06", now),
+                new ExternalOrigin(UUID.fromString("00000000-0000-0000-0000-000000026b05"), "MS-0001", now),
+                new UserId(UUID.fromString("00000000-0000-0000-0000-000000026b07"))));
+    }
+
+    @ならば("拒否の記録が理由 {string} で {int} 件ある")
+    public void 拒否の記録がある(String reason, int count) {
+        assertThat(rejectedMilestones.all()).hasSize(count);
+        assertThat(rejectedMilestones.all())
+                .allSatisfy(rejected -> assertThat(rejected.reason()).isEqualTo(reason(reason)));
+    }
+
+    @ならば("実績 {int} の状態は {string} である")
+    public void 実績の状態(int milestoneNo, String state) {
+        assertThat(onlyTrackingRecord().milestones().get(milestoneNo - 1).state())
+                .isEqualTo(state(state));
     }
 
     @もし("追跡管理者が追跡番号 {string} に実績 {string} を場所 {string}・発生時刻 {string}・出典 {string} の参照 {string} で登録する")
@@ -168,6 +227,7 @@ public class MilestoneSteps {
     private static MilestoneState state(String name) {
         return switch (name) {
             case "採用" -> MilestoneState.ADOPTED;
+            case "保持のみ" -> MilestoneState.RETAINED_ONLY;
             default -> throw new IllegalArgumentException("未知の実績の状態: " + name);
         };
     }
@@ -175,7 +235,16 @@ public class MilestoneSteps {
     private static TrackingStatus status(String name) {
         return switch (name) {
             case "集荷済み" -> TrackingStatus.PICKED_UP;
+            case "引渡し済み" -> TrackingStatus.DELIVERED;
             default -> throw new IllegalArgumentException("未知の追跡状態: " + name);
+        };
+    }
+
+    private static MilestoneRejectionReason reason(String name) {
+        return switch (name) {
+            case "取消済み" -> MilestoneRejectionReason.BOOKING_CANCELLED;
+            case "知らない追跡番号" -> MilestoneRejectionReason.UNKNOWN_TRACKING_NUMBER;
+            default -> throw new IllegalArgumentException("未知の拒否の理由: " + name);
         };
     }
 }

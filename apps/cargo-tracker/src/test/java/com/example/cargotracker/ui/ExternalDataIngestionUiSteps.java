@@ -414,6 +414,32 @@ public class ExternalDataIngestionUiSteps {
         submit();
     }
 
+    /** Bolt 39g の行 45。本予約の確定で発行された追跡番号の主要実績の 1 行（T-230）。 */
+    @かつ("キー操作だけで承認済みの主要実績の情報源を選び、確定した予約の追跡番号の主要実績 1 行のファイルを選んで取り込む")
+    public void 確定した予約の追跡番号の主要実績1行を取り込む() {
+        chooseSource();
+        chooseFile((MILESTONE_HEADER + "\n"
+                        + milestoneLine("MS-0301", acquiredAt(), state.trackingNumber(), OCCURRED_AT) + "\n")
+                .getBytes(StandardCharsets.UTF_8));
+        submit();
+    }
+
+    /** DE-13 の配信は非同期なので、実績の行ができるまで待つ（Bolt 39g の決定 (9)。前例は経路設計の航海の反映）。 */
+    @かつ("取り込んだ主要実績が追跡の実績に反映される")
+    public void 取り込んだ主要実績が追跡の実績に反映される() {
+        for (int i = 0; i < 40; i++) {
+            Integer found = jdbc.queryForObject(
+                    "SELECT COUNT(*) FROM tracking.milestone WHERE tracking_number = ?",
+                    Integer.class,
+                    state.trackingNumber());
+            if (found != null && found > 0) {
+                return;
+            }
+            page().waitForTimeout(250);
+        }
+        throw new AssertionError("取り込んだ主要実績が追跡の実績に反映されない（DE-13 の受け取りを待ちきれない）: " + state.trackingNumber());
+    }
+
     /** Bolt 39d3b2 の行 16。主要実績の 2 行（採用 1・内容の違う原本 1）。3 行目は形に合う別の追跡番号にした（T-230）。 */
     @かつ("キー操作だけで承認済みの主要実績の情報源を選び、同じ外部 ID・外部版で追跡番号の違う 2 行のファイルを選んで取り込む")
     public void 追跡番号の違う主要実績2行のファイルを取り込む() {

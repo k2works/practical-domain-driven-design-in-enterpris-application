@@ -74,6 +74,13 @@ public class InMemoryTrackingRecordRepository implements TrackingRecordRepositor
                 .findFirst();
     }
 
+    /** メモリの実装は押さえる行がないので読むだけ（全メソッドが同期する。Bolt 39g）。 */
+    @Override
+    public synchronized Optional<TrackingRecord> findByTrackingNumberForExternalMilestone(
+            TrackingNumber trackingNumber) {
+        return findByTrackingNumber(trackingNumber);
+    }
+
     /** PostgreSQL の照会と同じく、荷主企業で絞る（他社は空。Bolt 27）。 */
     @Override
     public synchronized Optional<TrackingRecord> findByTrackingNumber(

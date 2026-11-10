@@ -32,7 +32,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 /**
  * S-11 追跡一覧、S-12 追跡の詳細、S-13 主要実績の登録（追跡管理者。Bolt 26・26c）。追跡管理者のホームは S-11。絞り込み
- * （確認中・鮮度超過・訂正承認待ち）は W7 以後、訂正は US-13。
+ * （確認中・鮮度超過・訂正承認待ち）は 39gc 以後、訂正は US-13。
  *
  * <p>S-13 はコマンドサービスの結果を文言と行き先に変えるだけで、業務の判定（同じ出典・未来の発生時刻）を持たない。
  *
@@ -51,7 +51,7 @@ public class TrackingRecordController {
     private static final String RESULT_LINK_HREF = "resultLinkHref";
     private static final String RESULT_LINK_LABEL = "resultLinkLabel";
     private static final String PROBLEM = "problem";
-    private static final String CONFLICT_MESSAGE = "ほかの追跡管理者が先にこの追跡記録を更新しました。最新の主要実績を確かめ、必要なら、もう一度登録してください。";
+    private static final String CONFLICT_MESSAGE = "ほかの更新が先にこの追跡記録を変更しました。最新の主要実績を確かめ、必要なら、もう一度登録してください。";
 
     /** エラー要約に出す項目の名前。文言は項目の名前で始めない（共通部品「エラー要約」）。 */
     private static final Map<String, String> FIELD_LABELS = Map.of(
@@ -157,6 +157,9 @@ public class TrackingRecordController {
     private static String rejection(MilestoneRejectionReason reason) {
         return switch (reason) {
             case OCCURRED_IN_FUTURE -> "いまより前の日時を入力してください";
+            // S-13 の手入力の拒否の理由は 39gc まで未来の発生時刻だけ（DE-13 の拒否の記録の理由はここへ来ない）
+            case BOOKING_CANCELLED, UNKNOWN_TRACKING_NUMBER ->
+                throw new IllegalStateException("画面の登録で起きない理由: " + reason);
         };
     }
 

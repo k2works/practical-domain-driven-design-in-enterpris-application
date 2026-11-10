@@ -19,6 +19,7 @@ import com.example.cargotracker.routing.acceptance.InMemoryRoutingCaseRepository
 import com.example.cargotracker.routing.acceptance.InMemoryVoyageRepository;
 import com.example.cargotracker.shared.acceptance.DeferredEventDelivery;
 import com.example.cargotracker.shared.acceptance.MutableClock;
+import com.example.cargotracker.tracking.acceptance.InMemoryRejectedMilestoneRepository;
 import com.example.cargotracker.tracking.acceptance.InMemoryTrackingRecordRepository;
 import io.cucumber.java.Before;
 import java.time.Instant;
@@ -42,6 +43,7 @@ public class ScenarioReset {
     private final InMemoryBookingRepository bookingRepository;
     private final InMemoryBookingSagaRepository bookingSagaRepository;
     private final InMemoryTrackingRecordRepository trackingRecordRepository;
+    private final InMemoryRejectedMilestoneRepository rejectedMilestoneRepository;
     private final InMemoryDataSourceRepository dataSourceRepository;
     private final InMemoryIngestionRepository ingestionRepository;
     private final InMemoryExternalRecordRepository externalRecordRepository;
@@ -64,6 +66,7 @@ public class ScenarioReset {
             InMemoryBookingRepository bookingRepository,
             InMemoryBookingSagaRepository bookingSagaRepository,
             InMemoryTrackingRecordRepository trackingRecordRepository,
+            InMemoryRejectedMilestoneRepository rejectedMilestoneRepository,
             InMemoryDataSourceRepository dataSourceRepository,
             InMemoryIngestionRepository ingestionRepository,
             InMemoryExternalRecordRepository externalRecordRepository,
@@ -84,6 +87,7 @@ public class ScenarioReset {
         this.bookingRepository = bookingRepository;
         this.bookingSagaRepository = bookingSagaRepository;
         this.trackingRecordRepository = trackingRecordRepository;
+        this.rejectedMilestoneRepository = rejectedMilestoneRepository;
         this.dataSourceRepository = dataSourceRepository;
         this.ingestionRepository = ingestionRepository;
         this.externalRecordRepository = externalRecordRepository;
@@ -108,6 +112,7 @@ public class ScenarioReset {
         bookingRepository.clear();
         bookingSagaRepository.clear();
         trackingRecordRepository.clear();
+        rejectedMilestoneRepository.clear();
         dataSourceRepository.clear();
         ingestionRepository.clear();
         externalRecordRepository.clear();

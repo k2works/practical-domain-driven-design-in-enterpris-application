@@ -3,7 +3,7 @@ type: Plan
 title: "Bolt 39g 計画 - 採用した主要実績を追跡の下書きとして受け、順の規則と取消済み・完了後を決める"
 tags: [plan]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-09T21:08:50Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-10T00:44:11Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-11-09T20:57:44Z }
 ---
@@ -434,11 +434,11 @@ entity "tracking.rejected_milestone\n拒否した主要実績 [append-only]" as 
 ## ステップ計画（ゲートは下の各ステップに書く）
 
 - [x] **1. 設計の文書**（2026-11-10 に実施した）: 上の「設計文書に直す箇所」。【業務の判断】(aa)〜(af)、【前の決定の変更】(11)〜(13) を反映する。始めに検索する（完了の判定: 文書の差分と検索の記録。ゲート: 既定（確認ポイント 2〜6 で計画の承認に含む））
-- [ ] **2. 受入シナリオとテストの Red**: 外から入る。まず `adopted_milestone_reflected_ui.feature` に行 45 を書いて Red を記録する（データ責任者の取込の後、S-12 に下書きが出ない）。続いて行 1〜4・1b・13・16〜42・32b〜32d・46・47（行 14・44 は回帰の守りで最初から緑の見込み）。骨組み（`findByTrackingNumberForExternalMilestone` は読むだけ、`receiveExternalMilestone` は既存を返す、`ExternalMilestone` の型、listener の中身なし）でコンパイルを通す（T-254）。直す既存のテストを一覧にする（T-217）（完了の判定: 期待した理由で落ちる記録。Red の行は `wip/` か stash に置き、develop に落ちるテストを積まない。ゲート: 既定）
-- [ ] **3. スキーマと実績の受け取り**: マイグレーション、`MilestoneRow`・マッパー、`ExternalMilestone`・`ExternalOrigin`・`Milestone`、`MilestoneRejectionReason`、`receiveExternalMilestone`、P-7（13 引数の写しを `withMilestones` にまとめる）、拒否の記録のポートと実装。行 1〜4・1b・16・18・19・25〜28 が緑、`test` 全体で既存のテストの影響を確かめる、`spotbugsMain`・`checkstyleMain`・`sonar-local:check`（完了の判定: 緑と影響の一覧。ゲート: 既定（確認ポイント 2 で計画の承認に含む））
-- [ ] **4. listener と組み立て**: `ExternalMilestoneEventHandler`、`TrackingConfiguration`、`package-info` の `allowedDependencies`、`ModularityTest`。行 17・20〜23・47 が緑。`ModularityTest`・`LayerArchitectureTest` を流す（当たったら止めて諮る）。`spotbugsMain`・`checkstyleMain`・`sonar-local:check`（完了の判定: 緑。ゲート: 既定（確認ポイント 3 で計画の承認に含む））
-- [ ] **5. 配信までの統合と同時と集中**: 行 13・14・24・29〜41・32b〜32d が緑。行 37〜39 は H2 と PostgreSQL の両方（完了の判定: 緑。発行記録の完了まで待って確かめる。T-184。行 41 の時間と行 37 の H2 の待ちの上限を記録する。ゲート: 既定）
-- [ ] **6. S-12 と受入シナリオの緑と動画**: 競合の文（決定 (8)）。行 42・44〜46・49 が緑、axe 違反 0、幅 320 px、`@demo-bolt-39g/external-milestone-draft` を「下書きとして届く」まで撮る（完了の判定: `uiTest` の該当の feature と動画。ゲート: 既定）
+- [x] **2. 受入シナリオとテストの Red**（2026-11-10 に実施した。UI は取込の後に実績の行ができない AssertionError、単体・配信は下書きと拒否の記録ができないことで落ちた）: 外から入る。まず `adopted_milestone_reflected_ui.feature` に行 45 を書いて Red を記録する（データ責任者の取込の後、S-12 に下書きが出ない）。続いて行 1〜4・1b・13・16〜42・32b〜32d・46・47（行 14・44 は回帰の守りで最初から緑の見込み）。骨組み（`findByTrackingNumberForExternalMilestone` は読むだけ、`receiveExternalMilestone` は既存を返す、`ExternalMilestone` の型、listener の中身なし）でコンパイルを通す（T-254）。直す既存のテストを一覧にする（T-217）（完了の判定: 期待した理由で落ちる記録。Red の行は `wip/` か stash に置き、develop に落ちるテストを積まない。ゲート: 既定）
+- [x] **3. スキーマと実績の受け取り**（2026-11-10 に実施した。`V20261110150000`）: マイグレーション、`MilestoneRow`・マッパー、`ExternalMilestone`・`ExternalOrigin`・`Milestone`、`MilestoneRejectionReason`、`receiveExternalMilestone`、P-7（13 引数の写しを `withMilestones` にまとめる）、拒否の記録のポートと実装。行 1〜4・1b・16・18・19・25〜28 が緑、`test` 全体で既存のテストの影響を確かめる、`spotbugsMain`・`checkstyleMain`・`sonar-local:check`（完了の判定: 緑と影響の一覧。ゲート: 既定（確認ポイント 2 で計画の承認に含む））
+- [x] **4. listener と組み立て**（2026-11-10 に実施した）: `ExternalMilestoneEventHandler`、`TrackingConfiguration`、`package-info` の `allowedDependencies`、`ModularityTest`。行 17・20〜23・47 が緑。`ModularityTest`・`LayerArchitectureTest` を流す（当たったら止めて諮る）。`spotbugsMain`・`checkstyleMain`・`sonar-local:check`（完了の判定: 緑。ゲート: 既定（確認ポイント 3 で計画の承認に含む））
+- [x] **5. 配信までの統合と同時と集中**（2026-11-10 に実施した。行 41 の 200 行は約 3 秒。行 37 の H2 の `FOR UPDATE` の待ちの上限は `timeout="10"` でなく H2 の既定のロックの待ち約 2 秒で `CannotAcquireLockException`）: 行 13・14・24・29〜41・32b〜32d が緑。行 37〜39 は H2 と PostgreSQL の両方（完了の判定: 緑。発行記録の完了まで待って確かめる。T-184。行 41 の時間と行 37 の H2 の待ちの上限を記録する。ゲート: 既定）
+- [x] **6. S-12 と受入シナリオの緑と動画**（2026-11-10 に実施した。`docs/assets/demo/bolt-39g/external-milestone-draft.webm`）: 競合の文（決定 (8)）。行 42・44〜46・49 が緑、axe 違反 0、幅 320 px、`@demo-bolt-39g/external-milestone-draft` を「下書きとして届く」まで撮る（完了の判定: `uiTest` の該当の feature と動画。ゲート: 既定）
 - [ ] **7. マニュアルとキャプチャ**: 09-追跡管理.md（9.2 の ④・:87、下書きを採用する操作はまだない文、:125 の競合の文）、12-外部データ.md（:339・:343・:360・:450）、用語集（3 項目と :56・:57）、`manual_screenshots.feature` に `09-tracking-detail-draft`（決定 (10)）。文を実装と【業務の判断】(aa)〜(ad) の文に一字ずつ突き合わせる（T-197・T-251）（完了の判定: 突き合わせの記録と行 48、撮ったキャプチャ。ゲート: 既定）
 - [ ] **8. 品質ゲートと開発レビュー**: 変異（下の表）、`check`・`uiTest`、その後に SonarQube（落ちたら先に中身を一覧する。T-252）、人の側の `performanceTest` で配信の参考の値を測り直す、開発レビューとその直し。文書のステップの行を一覧で突き合わせる（T-197）（完了の判定: 緑と指摘の扱いと突き合わせの記録。ゲート: 既定）
 - [ ] **9. 終了報告**: push して CI とデモ環境の配備を確かめる。release_plan（39g の行の計画と終了報告のリンク）・開発の索引・mkdocs を直す。【業務の判断】(aa)〜(af) と【前の決定の変更】(11)〜(13) を議題の先頭に置き、既知の課題に申し送りの表を書く。配備の前にステージング・本番に `EXTERNAL_RECORD` の実績がないことを確かめる（完了の判定: 報告の承認。**承認ゲート**（終了報告））

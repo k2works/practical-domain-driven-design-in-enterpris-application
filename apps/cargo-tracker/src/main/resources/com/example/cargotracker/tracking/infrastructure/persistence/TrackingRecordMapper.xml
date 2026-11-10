@@ -48,6 +48,9 @@
             <arg column="state" name="state" javaType="String"/>
             <arg column="registered_by" name="registeredBy" javaType="java.util.UUID"/>
             <arg column="registered_at" name="registeredAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="data_source_id" name="dataSourceId" javaType="java.util.UUID"/>
+            <arg column="external_id" name="externalId" javaType="String"/>
+            <arg column="published_at" name="publishedAt" javaType="java.time.OffsetDateTime"/>
         </constructor>
     </resultMap>
 
@@ -94,10 +97,10 @@
     <insert id="insertMilestone">
         INSERT INTO tracking.milestone
             (tracking_number, milestone_no, kind, location_unlocode, occurred_at, source_kind, source_ref, acquired_at,
-             state, registered_by, registered_at)
+             state, registered_by, registered_at, data_source_id, external_id, published_at)
         VALUES
             (#{trackingNumber}, #{milestoneNo}, #{kind}, #{locationUnlocode}, #{occurredAt}, #{sourceKind}, #{sourceRef},
-             #{acquiredAt}, #{state}, #{registeredBy}, #{registeredAt})
+             #{acquiredAt}, #{state}, #{registeredBy}, #{registeredAt}, #{dataSourceId}, #{externalId}, #{publishedAt})
     </insert>
 
     <insert id="insertScheduledLeg">
@@ -112,6 +115,12 @@
         SELECT <include refid="trackingRecordColumns"/>
           FROM tracking.tracking_record
          WHERE booking_id = #{bookingId}
+    </select>
+
+    <!-- 追跡番号の行を呼び手のトランザクションが終わるまで押さえる（DE-13 の listener を直列にする。Bolt 39g の決定 (4)）。単表で最初に読み、後の読み込みがセッションの
+         キャッシュを使わないよう flushCache を付ける。待ちは 10 秒で打ち切る（前例 RoutingCaseMapper.lockByNumber） -->
+    <select id="lockByTrackingNumber" resultType="String" flushCache="true" timeout="10">
+        SELECT tracking_number FROM tracking.tracking_record WHERE tracking_number = #{trackingNumber} FOR UPDATE
     </select>
 
     <select id="findTrackingRecordByTrackingNumber" resultMap="trackingRecordRow">
@@ -150,7 +159,7 @@
     <!-- 追跡記録の組み立てで、主要実績を実績番号の順に読む（Bolt 26b） -->
     <select id="findMilestones" resultMap="milestoneRow">
         SELECT tracking_number, milestone_no, kind, location_unlocode, occurred_at, source_kind, source_ref, acquired_at,
-               state, registered_by, registered_at
+               state, registered_by, registered_at, data_source_id, external_id, published_at
           FROM tracking.milestone
          WHERE tracking_number = #{trackingNumber}
          ORDER BY milestone_no

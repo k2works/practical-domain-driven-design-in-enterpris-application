@@ -50,6 +50,6 @@ public sealed interface MilestoneRegistrationOutcome {
      */
     record OutOfScope() implements MilestoneRegistrationOutcome {}
 
-    /** 画面を開いた後に、ほかの追跡管理者が先に追跡記録を更新した（版の不一致・楽観ロックの競合）。 */
+    /** 画面を開いた後に、ほかの更新が先にこの追跡記録を変更した（版の不一致・楽観ロックの競合）。ほかの更新は追跡管理者の登録と DE-13 の受け取り（Bolt 39g）。 */
     record Conflict() implements MilestoneRegistrationOutcome {}
 }

@@ -4,12 +4,14 @@ import com.example.cargotracker.booking.interfaces.api.TrackingStartNotification
 import com.example.cargotracker.routing.interfaces.api.RouteVersionLegQuery;
 import com.example.cargotracker.tracking.application.internal.commandservices.TrackingRecordCommandService;
 import com.example.cargotracker.tracking.application.internal.eventhandlers.BookingTrackingStartNotificationEventHandler;
+import com.example.cargotracker.tracking.application.internal.eventhandlers.ExternalMilestoneEventHandler;
 import com.example.cargotracker.tracking.application.internal.eventhandlers.TrackingStartEventHandler;
 import com.example.cargotracker.tracking.application.internal.outboundservices.acl.BookingTrackingStarts;
 import com.example.cargotracker.tracking.application.internal.outboundservices.acl.RoutingScheduledLegs;
 import com.example.cargotracker.tracking.application.internal.queryservices.CustomerTrackingQueryService;
 import com.example.cargotracker.tracking.application.internal.queryservices.TrackingRecordQueryService;
 import com.example.cargotracker.tracking.application.internal.queryservices.TrackingRecordScope;
+import com.example.cargotracker.tracking.domain.model.aggregates.RejectedMilestoneRepository;
 import com.example.cargotracker.tracking.domain.model.aggregates.TrackingRecordRepository;
 import java.time.Clock;
 import org.springframework.context.ApplicationEventPublisher;
@@ -50,6 +52,13 @@ public class TrackingConfiguration {
     BookingTrackingStartNotificationEventHandler bookingTrackingStartNotificationEventHandler(
             BookingTrackingStarts trackingStarts) {
         return new BookingTrackingStartNotificationEventHandler(trackingStarts);
+    }
+
+    /** DE-13 を受けて追跡の実績か拒否の記録を書く（Spring Modulith のイベントの記録を経て、別のトランザクションで動く。Bolt 39g）。 */
+    @Bean
+    ExternalMilestoneEventHandler externalMilestoneEventHandler(
+            TrackingRecordRepository repository, RejectedMilestoneRepository rejectedMilestones, Clock clock) {
+        return new ExternalMilestoneEventHandler(repository, rejectedMilestones, clock);
     }
 
     /** 追跡管理者による主要実績の登録（US-12。Bolt 26b）。 */

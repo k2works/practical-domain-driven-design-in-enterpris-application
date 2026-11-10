@@ -10,6 +10,7 @@ import com.example.cargotracker.tracking.domain.model.aggregates.ConcurrentTrack
 import com.example.cargotracker.tracking.domain.model.aggregates.TrackingRecord;
 import com.example.cargotracker.tracking.domain.model.aggregates.TrackingRecordRepository;
 import com.example.cargotracker.tracking.domain.model.entities.Milestone;
+import com.example.cargotracker.tracking.domain.model.valueobjects.ExternalOrigin;
 import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneKind;
 import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneState;
 import com.example.cargotracker.tracking.domain.model.valueobjects.Schedule;
@@ -121,6 +122,7 @@ public class MyBatisTrackingRecordRepository implements TrackingRecordRepository
     }
 
     private static MilestoneRow toRow(String trackingNumber, Milestone milestone) {
+        ExternalOrigin origin = milestone.externalOrigin();
         return new MilestoneRow(
                 trackingNumber,
                 milestone.milestoneNo(),
@@ -132,10 +134,16 @@ public class MyBatisTrackingRecordRepository implements TrackingRecordRepository
                 offset(milestone.source().acquiredAt()),
                 milestone.state().name(),
                 milestone.registeredBy().value(),
-                offset(milestone.registeredAt()));
+                offset(milestone.registeredAt()),
+                origin == null ? null : origin.dataSourceId(),
+                origin == null ? null : origin.externalId(),
+                origin == null ? null : offset(origin.publishedAt()));
     }
 
     private static Milestone toMilestone(MilestoneRow row) {
+        ExternalOrigin origin = row.dataSourceId() == null
+                ? null
+                : new ExternalOrigin(row.dataSourceId(), row.externalId(), utc(row.publishedAt()));
         return new Milestone(
                 row.milestoneNo(),
                 MilestoneKind.valueOf(row.kind()),
@@ -144,7 +152,8 @@ public class MyBatisTrackingRecordRepository implements TrackingRecordRepository
                 new Source(SourceKind.valueOf(row.sourceKind()), row.sourceRef(), utc(row.acquiredAt())),
                 MilestoneState.valueOf(row.state()),
                 new UserId(row.registeredBy()),
-                utc(row.registeredAt()));
+                utc(row.registeredAt()),
+                origin);
     }
 
     @Override
@@ -193,6 +202,16 @@ public class MyBatisTrackingRecordRepository implements TrackingRecordRepository
     @Override
     public Optional<TrackingRecord> findByTrackingNumber(TrackingNumber trackingNumber) {
         return mapper.findTrackingRecordByTrackingNumber(trackingNumber.value()).map(this::toRecord);
+    }
+
+    /** 追跡番号の行を押さえてから組み立てる（押さえる前に読んだ値をキャッシュから使わない。Bolt 39g の決定 (4)）。 */
+    @Override
+    @Transactional(propagation = Propagation.MANDATORY)
+    public Optional<TrackingRecord> findByTrackingNumberForExternalMilestone(TrackingNumber trackingNumber) {
+        if (mapper.lockByTrackingNumber(trackingNumber.value()) == null) {
+            return Optional.empty();
+        }
+        return findByTrackingNumber(trackingNumber);
     }
 
     @Override

@@ -36,6 +36,7 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.OffsetDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -76,7 +77,10 @@ import org.springframework.transaction.support.TransactionTemplate;
 @Import(TestcontainersConfiguration.class)
 class MyBatisVoyageConcurrentUpdateIntegrationTest {
 
-    private static final Instant ACQUIRED = Instant.parse("2026-11-09T00:00:00Z");
+    /** 情報鮮度の許容（24 時間）の内にする（固定の時刻だと、実の時計が進むと候補が除外になって落ちる）。 */
+    private static final Instant ACQUIRED =
+            Instant.now().minus(3, ChronoUnit.HOURS).truncatedTo(ChronoUnit.MICROS);
+
     private static final UtcInstant DEPARTURE = new UtcInstant(Instant.parse("2097-12-01T00:00:00Z"));
     private static final UtcInstant ARRIVAL = new UtcInstant(Instant.parse("2097-12-20T00:00:00Z"));
     private static final UtcInstant OLDER_ARRIVAL = new UtcInstant(Instant.parse("2097-12-18T00:00:00Z"));

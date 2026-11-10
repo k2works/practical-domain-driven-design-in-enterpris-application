@@ -9,6 +9,7 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Savepoint;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.HashSet;
@@ -43,7 +44,8 @@ class AppendOnlyGrantIntegrationTest {
             "external_data.ingestion",
             "external_data.received_record",
             "external_data.received_record_decision",
-            "external_data.adopted_value");
+            "external_data.adopted_value",
+            "tracking.rejected_milestone");
 
     /**
      * データモデルの「追記専用」の表のうち、状態などを UPDATE するので DELETE だけを外す表（印は {@code [no-delete]}。Bolt 26b）。
@@ -165,6 +167,41 @@ class AppendOnlyGrantIntegrationTest {
                         .isInstanceOfSatisfying(
                                 SQLException.class,
                                 e -> assertThat(e.getSQLState()).isEqualTo(INSUFFICIENT_PRIVILEGE));
+            }
+            connection.rollback();
+        }
+    }
+
+    /** Bolt 39g の行 27。拒否の記録は追記専用（消せない行を共有の DB に残さないよう、1 つのトランザクションで確かめて戻す）。 */
+    @Test
+    void Bolt39g_行27_アプリケーション利用者は拒否の記録を追加できるが更新も削除もできない() throws SQLException {
+        Timestamp now = Timestamp.from(Instant.parse("2026-11-20T00:00:00Z"));
+        try (Connection connection = connectAsApplicationUser()) {
+            connection.setAutoCommit(false);
+            try (PreparedStatement insert = connection.prepareStatement("INSERT INTO tracking.rejected_milestone"
+                    + " (id, tracking_number, kind, location_unlocode, occurred_at, source_kind, source_ref, acquired_at,"
+                    + " data_source_id, external_id, reason, recorded_at)"
+                    + " VALUES (?, 'CTZZZZZZZZZZZZ', 'DEPARTURE', 'JPTYO', ?, 'EXTERNAL_RECORD', ?, ?, ?, 'MS-1',"
+                    + " 'UNKNOWN_TRACKING_NUMBER', ?)")) {
+                insert.setObject(1, UUID.randomUUID());
+                insert.setTimestamp(2, now);
+                insert.setString(3, UUID.randomUUID().toString());
+                insert.setTimestamp(4, now);
+                insert.setObject(5, UUID.randomUUID());
+                insert.setTimestamp(6, now);
+                assertThat(insert.executeUpdate()).isEqualTo(1);
+            }
+            for (String sql : new String[] {
+                "UPDATE tracking.rejected_milestone SET external_id = '書き換え'", "DELETE FROM tracking.rejected_milestone"
+            }) {
+                Savepoint savepoint = connection.setSavepoint();
+                try (PreparedStatement statement = connection.prepareStatement(sql)) {
+                    assertThatThrownBy(statement::executeUpdate)
+                            .isInstanceOfSatisfying(
+                                    SQLException.class,
+                                    e -> assertThat(e.getSQLState()).isEqualTo(INSUFFICIENT_PRIVILEGE));
+                }
+                connection.rollback(savepoint);
             }
             connection.rollback();
         }

@@ -12,20 +12,31 @@ import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import com.example.cargotracker.tracking.domain.model.TrackingFixture;
 import com.example.cargotracker.tracking.domain.model.aggregates.ConcurrentTrackingRecordUpdateException;
+import com.example.cargotracker.tracking.domain.model.aggregates.ExternalMilestoneReceipt;
+import com.example.cargotracker.tracking.domain.model.aggregates.RejectedMilestone;
+import com.example.cargotracker.tracking.domain.model.aggregates.RejectedMilestoneRepository;
 import com.example.cargotracker.tracking.domain.model.aggregates.TrackingRecord;
 import com.example.cargotracker.tracking.domain.model.entities.Milestone;
+import com.example.cargotracker.tracking.domain.model.valueobjects.ExternalMilestone;
+import com.example.cargotracker.tracking.domain.model.valueobjects.ExternalOrigin;
 import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneKind;
+import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneRejectionReason;
 import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingNumber;
 import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingRecordSummary;
 import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingStatus;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.List;
 import java.util.OptionalInt;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Stream;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -414,6 +425,199 @@ class MyBatisTrackingRecordRepositoryIntegrationTest {
     @Test
     void 主要実績の状態は決めた値だけ() {
         assertMilestoneConstraint("state = 'DELETED'");
+    }
+
+    /** DE-13 の実績の外部の識別と拒否の記録（Bolt 39g の行 25〜27）。クラスの @Transactional で戻す。 */
+    @Nested
+    class Bolt39g_外部の識別と拒否の記録 {
+
+        @Autowired
+        RejectedMilestoneRepository rejectedMilestones;
+
+        private static final UUID DATA_SOURCE = UUID.fromString("00000000-0000-0000-0000-000000003921");
+        private static final UtcInstant PUBLISHED_AT = new UtcInstant(Instant.parse("2026-11-19T15:00:00.123456Z"));
+
+        private ExternalMilestone external(TrackingNumber number, String receivedRecordId) {
+            return new ExternalMilestone(
+                    number,
+                    MilestoneKind.DEPARTURE,
+                    new Location("JPTYO"),
+                    new UtcInstant(Instant.parse("2026-11-19T14:00:00Z")),
+                    new Source(SourceKind.EXTERNAL_RECORD, receivedRecordId, NOW),
+                    new ExternalOrigin(DATA_SOURCE, "MS-0001", PUBLISHED_AT),
+                    new UserId(UUID.fromString("00000000-0000-0000-0000-000000003922")));
+        }
+
+        @Test
+        void 行25_外部の3列が往復し手入力の実績は3列ともNULL() {
+            TrackingRecord saved = started(UUID.randomUUID(), trackingNumber());
+            repository.save(saved);
+            TrackingRecord withManual = register(saved, MilestoneKind.PICKUP, "2026-11-01T02:30:00Z", "F-118");
+            repository.update(withManual);
+            TrackingRecord reloaded =
+                    repository.findByTrackingNumber(saved.trackingNumber()).orElseThrow();
+            ExternalMilestoneReceipt.Received received =
+                    (ExternalMilestoneReceipt.Received) reloaded.receiveExternalMilestone(
+                            external(saved.trackingNumber(), UUID.randomUUID().toString()), NOW);
+
+            repository.update(received.trackingRecord());
+
+            List<Milestone> found = repository
+                    .findByTrackingNumber(saved.trackingNumber())
+                    .orElseThrow()
+                    .milestones();
+            assertThat(found).hasSize(2);
+            assertThat(found.get(0).externalOrigin()).isNull();
+            assertThat(found.get(1).externalOrigin())
+                    .isEqualTo(new ExternalOrigin(DATA_SOURCE, "MS-0001", PUBLISHED_AT));
+            assertThat(found.get(1)).isEqualTo(received.milestone());
+            assertThat(jdbc.queryForMap(
+                            "SELECT data_source_id, external_id, published_at FROM tracking.milestone"
+                                    + " WHERE tracking_number = ? AND milestone_no = 1",
+                            saved.trackingNumber().value()))
+                    .containsEntry("data_source_id", null)
+                    .containsEntry("external_id", null)
+                    .containsEntry("published_at", null);
+        }
+
+        private int insertMilestone(String sourceKind, UUID dataSourceId, String externalId, Timestamp publishedAt) {
+            TrackingRecord saved = started(UUID.randomUUID(), trackingNumber());
+            repository.save(saved);
+            Timestamp at = Timestamp.from(Instant.parse("2026-11-19T14:00:00Z"));
+            return jdbc.update(
+                    "INSERT INTO tracking.milestone (tracking_number, milestone_no, kind, location_unlocode, occurred_at,"
+                            + " source_kind, source_ref, acquired_at, state, registered_by, registered_at,"
+                            + " data_source_id, external_id, published_at)"
+                            + " VALUES (?, 1, 'DEPARTURE', 'JPTYO', ?, ?, 'R-1', ?, 'DRAFT', ?, ?, ?, ?, ?)",
+                    saved.trackingNumber().value(),
+                    at,
+                    sourceKind,
+                    at,
+                    UUID.randomUUID(),
+                    at,
+                    dataSourceId,
+                    externalId,
+                    publishedAt);
+        }
+
+        private static final Timestamp PUBLISHED = Timestamp.from(Instant.parse("2026-11-19T15:00:00Z"));
+
+        static Stream<Arguments> inconsistentExternalColumns() {
+            UUID id = UUID.randomUUID();
+            return Stream.of(
+                    Arguments.of("外部原本で情報源 ID がない", "EXTERNAL_RECORD", null, "MS-1", PUBLISHED),
+                    Arguments.of("外部原本で外部 ID がない", "EXTERNAL_RECORD", id, null, PUBLISHED),
+                    Arguments.of("外部原本で公開した時刻がない", "EXTERNAL_RECORD", id, "MS-1", null),
+                    Arguments.of("外部原本で 3 列ともない", "EXTERNAL_RECORD", null, null, null),
+                    Arguments.of("現場記録で情報源 ID がある", "FIELD_RECORD", id, null, null),
+                    Arguments.of("社内確認で外部 ID がある", "INTERNAL_CHECK", null, "MS-1", null),
+                    Arguments.of("手動入力で公開した時刻がある", "MANUAL_ENTRY", null, null, PUBLISHED),
+                    Arguments.of("現場記録で 3 列ともある", "FIELD_RECORD", id, "MS-1", PUBLISHED));
+        }
+
+        @ParameterizedTest(name = "{0}")
+        @MethodSource("inconsistentExternalColumns")
+        void 行26_出典の種類と外部の3列がそろわない行はCHECKで拒否する(
+                String description, String sourceKind, UUID dataSourceId, String externalId, Timestamp publishedAt) {
+            assertThatThrownBy(() -> insertMilestone(sourceKind, dataSourceId, externalId, publishedAt))
+                    .as(description)
+                    .isInstanceOf(DataIntegrityViolationException.class)
+                    .hasMessageContaining("ck_milestone_external_origin");
+        }
+
+        @Test
+        void 行26_外部原本で3列がそろう行は入る() {
+            assertThat(insertMilestone("EXTERNAL_RECORD", UUID.randomUUID(), "MS-1", PUBLISHED))
+                    .isEqualTo(1);
+        }
+
+        @Test
+        void 行26_手入力の出典で3列ともNULLの行は入る() {
+            assertThat(insertMilestone("FIELD_RECORD", null, null, null)).isEqualTo(1);
+        }
+
+        private RejectedMilestone rejected(String reference, MilestoneRejectionReason reason) {
+            return RejectedMilestone.of(UUID.randomUUID(), external(trackingNumber(), reference), reason, NOW);
+        }
+
+        @Test
+        void 行27_拒否の記録を書くと値が往復し同じ出典の2度目は増えない() {
+            String reference = UUID.randomUUID().toString();
+            RejectedMilestone first = rejected(reference, MilestoneRejectionReason.UNKNOWN_TRACKING_NUMBER);
+
+            rejectedMilestones.saveIfAbsent(first);
+            rejectedMilestones.saveIfAbsent(rejected(reference, MilestoneRejectionReason.BOOKING_CANCELLED));
+
+            assertThat(rejectedMilestones.existsBySource(first.source())).isTrue();
+            assertThat(jdbc.queryForMap(
+                            "SELECT id, tracking_number, kind, location_unlocode, source_kind, data_source_id, external_id,"
+                                    + " reason FROM tracking.rejected_milestone WHERE source_ref = ?",
+                            reference))
+                    .containsEntry("id", first.id())
+                    .containsEntry("tracking_number", first.trackingNumber().value())
+                    .containsEntry("kind", "DEPARTURE")
+                    .containsEntry("location_unlocode", "JPTYO")
+                    .containsEntry("source_kind", "EXTERNAL_RECORD")
+                    .containsEntry("data_source_id", DATA_SOURCE)
+                    .containsEntry("external_id", "MS-0001")
+                    .containsEntry("reason", "UNKNOWN_TRACKING_NUMBER");
+        }
+
+        @Test
+        void 行27_出典が違えば別の拒否の記録になり種類が違う出典は別と判定する() {
+            String reference = UUID.randomUUID().toString();
+            rejectedMilestones.saveIfAbsent(rejected(reference, MilestoneRejectionReason.UNKNOWN_TRACKING_NUMBER));
+
+            assertThat(rejectedMilestones.existsBySource(new Source(SourceKind.EXTERNAL_RECORD, reference, NOW)))
+                    .isTrue();
+            assertThat(rejectedMilestones.existsBySource(new Source(SourceKind.FIELD_RECORD, reference, NOW)))
+                    .isFalse();
+            assertThat(rejectedMilestones.existsBySource(new Source(
+                            SourceKind.EXTERNAL_RECORD, UUID.randomUUID().toString(), NOW)))
+                    .isFalse();
+        }
+
+        @Test
+        void 行26_拒否の理由は決めた値だけ() {
+            Timestamp at = Timestamp.from(Instant.parse("2026-11-19T14:00:00Z"));
+            UUID id = UUID.randomUUID();
+            String reference = UUID.randomUUID().toString();
+            UUID dataSource = UUID.randomUUID();
+
+            assertThatThrownBy(() -> jdbc.update(
+                            "INSERT INTO tracking.rejected_milestone (id, tracking_number, kind, location_unlocode,"
+                                    + " occurred_at, source_kind, source_ref, acquired_at, data_source_id, external_id,"
+                                    + " reason, recorded_at)"
+                                    + " VALUES (?, 'CTZZZZZZZZZZZZ', 'DEPARTURE', 'JPTYO', ?, 'EXTERNAL_RECORD', ?, ?, ?,"
+                                    + " 'MS-1', 'OCCURRED_IN_FUTURE', ?)",
+                            id,
+                            at,
+                            reference,
+                            at,
+                            dataSource,
+                            at))
+                    .isInstanceOf(DataIntegrityViolationException.class)
+                    .hasMessageContaining("ck_rejected_milestone_reason");
+        }
+
+        @Test
+        void 行26_拒否の記録は同じ出典の種類と参照を一意にする() {
+            Timestamp at = Timestamp.from(Instant.parse("2026-11-19T14:00:00Z"));
+            String reference = UUID.randomUUID().toString();
+            String insert = "INSERT INTO tracking.rejected_milestone (id, tracking_number, kind, location_unlocode,"
+                    + " occurred_at, source_kind, source_ref, acquired_at, data_source_id, external_id,"
+                    + " reason, recorded_at)"
+                    + " VALUES (?, 'CTZZZZZZZZZZZZ', 'DEPARTURE', 'JPTYO', ?, 'EXTERNAL_RECORD', ?, ?, ?,"
+                    + " 'MS-1', 'BOOKING_CANCELLED', ?)";
+            jdbc.update(insert, UUID.randomUUID(), at, reference, at, UUID.randomUUID(), at);
+
+            UUID secondId = UUID.randomUUID();
+            UUID dataSource = UUID.randomUUID();
+
+            assertThatThrownBy(() -> jdbc.update(insert, secondId, at, reference, at, dataSource, at))
+                    .isInstanceOf(DataIntegrityViolationException.class)
+                    .hasMessageContaining("uk_rejected_milestone_source");
+        }
     }
 
     private void assertMilestoneConstraint(String assignment) {

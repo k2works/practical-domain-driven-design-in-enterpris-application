@@ -189,6 +189,12 @@ class TrackingRecordQueryServiceTest {
         }
 
         @Override
+        public Optional<TrackingRecord> findByTrackingNumberForExternalMilestone(TrackingNumber trackingNumber) {
+            detailQueries++;
+            return delegate.findByTrackingNumberForExternalMilestone(trackingNumber);
+        }
+
+        @Override
         public Optional<TrackingRecord> findByTrackingNumber(
                 TrackingNumber trackingNumber, CompanyId shipperCompanyId) {
             detailQueries++;

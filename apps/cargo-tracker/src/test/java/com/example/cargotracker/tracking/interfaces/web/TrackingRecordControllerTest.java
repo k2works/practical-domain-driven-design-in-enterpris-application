@@ -16,12 +16,14 @@ import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.Role;
 import com.example.cargotracker.shared.domain.Source;
 import com.example.cargotracker.shared.domain.SourceKind;
+import com.example.cargotracker.shared.domain.UtcInstant;
 import com.example.cargotracker.tracking.application.internal.commandservices.TrackingRecordCommandService;
 import com.example.cargotracker.tracking.application.internal.queryservices.RecentTrackingRecords;
 import com.example.cargotracker.tracking.application.internal.queryservices.TrackingRecordQueryService;
 import com.example.cargotracker.tracking.domain.model.TrackingFixture;
 import com.example.cargotracker.tracking.domain.model.aggregates.TrackingRecord;
 import com.example.cargotracker.tracking.domain.model.entities.Milestone;
+import com.example.cargotracker.tracking.domain.model.valueobjects.ExternalOrigin;
 import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneKind;
 import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneState;
 import com.example.cargotracker.tracking.domain.model.valueobjects.TrackedBookingStatus;
@@ -31,6 +33,8 @@ import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingStatu
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalInt;
+import java.util.UUID;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -317,9 +321,56 @@ class TrackingRecordControllerTest {
         given(queryService.detail(eq(TrackingFixture.TRACKING_NUMBER), any()))
                 .willReturn(Optional.of(trackingRecord(TrackingStatus.PICKUP_SCHEDULED)));
 
-        mockMvc.perform(get(DETAIL).flashAttr("problem", "ほかの追跡管理者が先にこの追跡記録を更新しました。"))
+        mockMvc.perform(get(DETAIL).flashAttr("problem", "ほかの更新が先にこの追跡記録を変更しました。最新の主要実績を確かめ、必要なら、もう一度登録してください。"))
                 .andExpect(content().string(containsString("role=\"alert\"")))
-                .andExpect(content().string(containsString("ほかの追跡管理者が先にこの追跡記録を更新しました。")));
+                .andExpect(content().string(containsString("ほかの更新が先にこの追跡記録を変更しました。最新の主要実績を確かめ、必要なら、もう一度登録してください。")));
+    }
+
+    /** Bolt 39g の行 42（決定 (8)）。DE-13 の下書きは形を変えずに示し、現在状態は変えない。 */
+    @Nested
+    class Bolt39g_外部原本の下書き {
+
+        @Test
+        void 行42_下書きの実績を状態と外部原本の出典とともに示し現在状態は集荷予定のまま() throws Exception {
+            UtcInstant published = TrackingFixture.at("2026-11-19T15:00:00Z");
+            Milestone draft = new Milestone(
+                    1,
+                    MilestoneKind.DEPARTURE,
+                    new Location("JPTYO"),
+                    TrackingFixture.at("2026-11-19T14:00:00Z"),
+                    new Source(
+                            SourceKind.EXTERNAL_RECORD,
+                            "9f1c0000-0000-0000-0000-000000000001",
+                            TrackingFixture.at("2026-11-19T14:30:00Z")),
+                    MilestoneState.DRAFT,
+                    TestActors.STAFF_USER,
+                    published,
+                    new ExternalOrigin(UUID.randomUUID(), "MS-0301", published));
+            TrackingRecord withDraft = TrackingRecord.reconstitute(
+                    TrackingFixture.TRACKING_NUMBER,
+                    TrackingFixture.BOOKING_ID,
+                    TrackingFixture.SHIPPER,
+                    TrackingFixture.CONSIGNEE,
+                    TrackedBookingStatus.CONFIRMED,
+                    TrackingFixture.schedule(),
+                    TrackingStatus.PICKUP_SCHEDULED,
+                    OptionalInt.empty(),
+                    List.of(draft),
+                    TrackingFixture.at("2026-11-15T00:00:00Z"),
+                    TrackingFixture.at("2026-11-16T03:00:00Z"),
+                    TrackingFixture.STARTED_AT,
+                    1);
+            given(queryService.detail(eq(TrackingFixture.TRACKING_NUMBER), any()))
+                    .willReturn(Optional.of(withDraft));
+
+            mockMvc.perform(get(DETAIL))
+                    .andExpect(status().isOk())
+                    .andExpect(content().string(containsString("実績 1、出発、JPTYO")))
+                    .andExpect(content().string(containsString("出典 外部原本 9f1c0000-0000-0000-0000-000000000001（取得 ")))
+                    .andExpect(content().string(containsString("状態 下書き")))
+                    .andExpect(content().string(containsString("集荷予定")))
+                    .andExpect(content().string(not(containsString("状態 採用"))));
+        }
     }
 
     @ParameterizedTest

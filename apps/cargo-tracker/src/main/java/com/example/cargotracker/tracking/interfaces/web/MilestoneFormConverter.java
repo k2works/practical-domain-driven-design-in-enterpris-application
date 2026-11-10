@@ -30,7 +30,7 @@ final class MilestoneFormConverter {
 
     static final String OCCURRED_AT_PATTERN = "uuuu-MM-dd HH:mm";
 
-    /** 画面で選べる出典の種類。外部原本は外部原本の取込（W7）だけが作る（Bolt 26c 計画の確認ポイント 8）。 */
+    /** 画面で選べる出典の種類。外部原本は外部原本の取込（DE-13。Bolt 39g）だけが作る（Bolt 26c 計画の確認ポイント 8）。 */
     static final List<SourceKind> SELECTABLE_SOURCE_KINDS =
             List.of(SourceKind.FIELD_RECORD, SourceKind.INTERNAL_CHECK, SourceKind.MANUAL_ENTRY);
 

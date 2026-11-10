@@ -289,7 +289,7 @@ class MilestoneRegistrationControllerTest {
 
         mockMvc.perform(validRegistration())
                 .andExpect(redirectedUrl(DETAIL))
-                .andExpect(flash().attribute("problem", "ほかの追跡管理者が先にこの追跡記録を更新しました。最新の主要実績を確かめ、必要なら、もう一度登録してください。"));
+                .andExpect(flash().attribute("problem", "ほかの更新が先にこの追跡記録を変更しました。最新の主要実績を確かめ、必要なら、もう一度登録してください。"));
     }
 
     @Test

@@ -3,8 +3,10 @@ package com.example.cargotracker.tracking.domain.model.entities;
 import com.example.cargotracker.shared.annotation.ddd.Entity;
 import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.Source;
+import com.example.cargotracker.shared.domain.SourceKind;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
+import com.example.cargotracker.tracking.domain.model.valueobjects.ExternalOrigin;
 import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneKind;
 import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneState;
 import java.util.Objects;
@@ -21,8 +23,10 @@ import java.util.Objects;
  * @param state 状態
  * @param registeredBy 登録者
  * @param registeredAt 登録時刻
+ * @param externalOrigin 実績の外部の識別（出典が外部原本の実績だけが持つ。ほかの出典は {@code null}。Bolt 39g）
  */
 @Entity
+@SuppressWarnings("java:S107") // 実績の属性をそのまま持つ（保存の形と同じ）
 public record Milestone(
         int milestoneNo,
         MilestoneKind kind,
@@ -31,7 +35,8 @@ public record Milestone(
         Source source,
         MilestoneState state,
         UserId registeredBy,
-        UtcInstant registeredAt) {
+        UtcInstant registeredAt,
+        ExternalOrigin externalOrigin) {
 
     public Milestone {
         Objects.requireNonNull(kind, "kind");
@@ -41,5 +46,22 @@ public record Milestone(
         Objects.requireNonNull(state, "state");
         Objects.requireNonNull(registeredBy, "registeredBy");
         Objects.requireNonNull(registeredAt, "registeredAt");
+        // 表の CHECK（ck_milestone_external_origin）と同じ規則。8 引数のコンストラクタでも作れるので、ここで守る（Bolt 39g）
+        if ((source.kind() == SourceKind.EXTERNAL_RECORD) != (externalOrigin != null)) {
+            throw new IllegalArgumentException("出典が外部原本の実績だけが外部の識別を持ちます: 出典の種類 " + source.kind());
+        }
+    }
+
+    /** 外部の識別を持たない実績（出典が外部原本でない実績）を作る。 */
+    public Milestone(
+            int milestoneNo,
+            MilestoneKind kind,
+            Location location,
+            UtcInstant occurredAt,
+            Source source,
+            MilestoneState state,
+            UserId registeredBy,
+            UtcInstant registeredAt) {
+        this(milestoneNo, kind, location, occurredAt, source, state, registeredBy, registeredAt, null);
     }
 }

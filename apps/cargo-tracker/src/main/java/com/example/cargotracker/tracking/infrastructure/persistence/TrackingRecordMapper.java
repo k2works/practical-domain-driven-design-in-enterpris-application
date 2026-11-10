@@ -35,6 +35,9 @@ public interface TrackingRecordMapper {
 
     Optional<TrackingRecordRow> findTrackingRecordByTrackingNumber(@Param("trackingNumber") String trackingNumber);
 
+    /** 追跡番号の行を呼び手のトランザクションが終わるまで押さえる（Bolt 39g）。追跡記録がなければ null。 */
+    String lockByTrackingNumber(@Param("trackingNumber") String trackingNumber);
+
     /** C-10 照会の結果（Bolt 27）。追跡番号と荷主企業で絞る。 */
     Optional<TrackingRecordRow> findTrackingRecordByTrackingNumberAndShipper(
             @Param("trackingNumber") String trackingNumber, @Param("shipperCompanyId") UUID shipperCompanyId);
