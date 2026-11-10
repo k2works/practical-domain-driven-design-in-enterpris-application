@@ -60,6 +60,9 @@ public class ExternalDataIngestionUiSteps {
 
     private static final String CHANGED_OCCURRED_AT = "2026-11-19T01:00:00Z";
 
+    /** Bolt 39g の行 45。確定した予約の主要実績の発生時刻（過去の時刻にする。マニュアルのキャプチャに未来の発生時刻を写さない）。 */
+    private static final String DRAFT_OCCURRED_AT = "2026-10-02T00:00:00Z";
+
     /** Bolt 39d3b2 の行 16。追跡番号（形は TrackingNumberValue に合わせる。T-230）。 */
     private static final String TRACKING_NUMBER = "CTABCDEFGH2345";
 
@@ -419,7 +422,7 @@ public class ExternalDataIngestionUiSteps {
     public void 確定した予約の追跡番号の主要実績1行を取り込む() {
         chooseSource();
         chooseFile((MILESTONE_HEADER + "\n"
-                        + milestoneLine("MS-0301", acquiredAt(), state.trackingNumber(), OCCURRED_AT) + "\n")
+                        + milestoneLine("MS-0301", acquiredAt(), state.trackingNumber(), DRAFT_OCCURRED_AT) + "\n")
                 .getBytes(StandardCharsets.UTF_8));
         submit();
     }
@@ -429,7 +432,7 @@ public class ExternalDataIngestionUiSteps {
     public void 取り込んだ主要実績が追跡の実績に反映される() {
         for (int i = 0; i < 40; i++) {
             Integer found = jdbc.queryForObject(
-                    "SELECT COUNT(*) FROM tracking.milestone WHERE tracking_number = ?",
+                    "SELECT COUNT(*) FROM tracking.milestone WHERE tracking_number = ? AND source_kind = 'EXTERNAL_RECORD'",
                     Integer.class,
                     state.trackingNumber());
             if (found != null && found > 0) {

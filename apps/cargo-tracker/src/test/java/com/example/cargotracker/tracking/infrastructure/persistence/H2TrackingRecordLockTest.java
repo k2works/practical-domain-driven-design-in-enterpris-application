@@ -95,6 +95,13 @@ class H2TrackingRecordLockTest {
                     fixture(), externalFirst, HOLD_WHILE_BLOCKED);
         }
 
+        /** H2 は文の timeout でなく接続のロックの待ちの上限で打ち切る。既定の 2 秒だと PostgreSQL より早く諦め、インメモリの H2 は再起動で再配信もされない。 */
+        @Test
+        void 行22_H2のロックの待ちの上限はPostgreSQLの文のtimeoutと同じ10秒にする() {
+            assertThat(jdbc.queryForObject("SELECT LOCK_TIMEOUT()", Integer.class))
+                    .isEqualTo(10_000);
+        }
+
         @Test
         void 行37_H2のFORUPDATEの待ちの上限は例外になり待ちの時間を記録する() throws Exception {
             Fixture f = fixture();
