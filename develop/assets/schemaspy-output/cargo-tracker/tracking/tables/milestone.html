@@ -323,6 +323,62 @@
                                     </td>
                                     <td><p>登録時刻</p></td>
                                 </tr>
+                                <tr>
+                                    <td class='foreignKey' title='Foreign Key'><i class='icon ion-key iconkey' style='padding-left: 5px;'></i><span id="data_source_id">data_source_id</span></td>
+                                    <td>uuid</td>
+                                    <td>2147483647</td>
+                                    <td title='nullable'>√</td>
+                                    <td title=''></td>
+                                    <td>null</td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                        </table>
+                                    </td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                            <tr>
+                                                <td title="milestone.data_source_id&#39;s name implies that it&#39;s a child of rejected_milestone.id, but it doesn&#39;t reference that column."><a href='rejected_milestone.html'>rejected_milestone</a><span class='relatedKey'>.id</span></td>
+                                                <td class="constraint detail">Implied Constraint</td>
+                                                <td class="constraint detail"><span title='Restrict delete:&#10;Parent cannot be deleted if children exist'>R</span></td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                    <td><p>情報源 ID（出典が外部原本の実績だけが持つ）</p></td>
+                                </tr>
+                                <tr>
+                                    <td><span id="external_id">external_id</span></td>
+                                    <td>varchar</td>
+                                    <td>200</td>
+                                    <td title='nullable'>√</td>
+                                    <td title=''></td>
+                                    <td>null</td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                        </table>
+                                    </td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                        </table>
+                                    </td>
+                                    <td><p>外部 ID（出典が外部原本の実績だけが持つ。提供元の中でだけ一意）</p></td>
+                                </tr>
+                                <tr>
+                                    <td><span id="published_at">published_at</span></td>
+                                    <td>timestamptz</td>
+                                    <td>35,6</td>
+                                    <td title='nullable'>√</td>
+                                    <td title=''></td>
+                                    <td>null</td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                        </table>
+                                    </td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                        </table>
+                                    </td>
+                                    <td><p>外部データが採用値を公開した時刻（出典が外部原本の実績だけが持つ。順の規則に使う）</p></td>
+                                </tr>
                                 </tbody>
                             </table>
                         </div>
@@ -394,20 +450,24 @@
                                 </thead>
                                 <tbody>
                                 <tr>
-                                    <td>ck_milestone_kind</td>
-                                    <td>((kind)::text &#61; ANY ((ARRAY[&#39;PICKUP&#39;::character varying, &#39;RECEIPT_AT_ORIGIN&#39;::character varying, &#39;DEPARTURE&#39;::character varying, &#39;TRANSSHIPMENT&#39;::character varying, &#39;ARRIVAL&#39;::character varying, &#39;DELIVERY&#39;::character varying])::text[]))</td>
-                                </tr>
-                                <tr>
-                                    <td>ck_milestone_state</td>
-                                    <td>((state)::text &#61; ANY ((ARRAY[&#39;DRAFT&#39;::character varying, &#39;ADOPTED&#39;::character varying, &#39;UNDER_REVIEW&#39;::character varying, &#39;RETAINED_ONLY&#39;::character varying])::text[]))</td>
+                                    <td>ck_milestone_source_kind</td>
+                                    <td>((source_kind)::text &#61; ANY ((ARRAY[&#39;EXTERNAL_RECORD&#39;::character varying, &#39;FIELD_RECORD&#39;::character varying, &#39;INTERNAL_CHECK&#39;::character varying, &#39;MANUAL_ENTRY&#39;::character varying])::text[]))</td>
                                 </tr>
                                 <tr>
                                     <td>ck_milestone_no</td>
                                     <td>(milestone_no &gt;&#61; 1)</td>
                                 </tr>
                                 <tr>
-                                    <td>ck_milestone_source_kind</td>
-                                    <td>((source_kind)::text &#61; ANY ((ARRAY[&#39;EXTERNAL_RECORD&#39;::character varying, &#39;FIELD_RECORD&#39;::character varying, &#39;INTERNAL_CHECK&#39;::character varying, &#39;MANUAL_ENTRY&#39;::character varying])::text[]))</td>
+                                    <td>ck_milestone_external_origin</td>
+                                    <td>((((source_kind)::text &#61; &#39;EXTERNAL_RECORD&#39;::text) AND (data_source_id IS NOT NULL) AND (external_id IS NOT NULL) AND (published_at IS NOT NULL)) OR (((source_kind)::text &lt;&gt; &#39;EXTERNAL_RECORD&#39;::text) AND (data_source_id IS NULL) AND (external_id IS NULL) AND (published_at IS NULL)))</td>
+                                </tr>
+                                <tr>
+                                    <td>ck_milestone_state</td>
+                                    <td>((state)::text &#61; ANY ((ARRAY[&#39;DRAFT&#39;::character varying, &#39;ADOPTED&#39;::character varying, &#39;UNDER_REVIEW&#39;::character varying, &#39;RETAINED_ONLY&#39;::character varying])::text[]))</td>
+                                </tr>
+                                <tr>
+                                    <td>ck_milestone_kind</td>
+                                    <td>((kind)::text &#61; ANY ((ARRAY[&#39;PICKUP&#39;::character varying, &#39;RECEIPT_AT_ORIGIN&#39;::character varying, &#39;DEPARTURE&#39;::character varying, &#39;TRANSSHIPMENT&#39;::character varying, &#39;ARRIVAL&#39;::character varying, &#39;DELIVERY&#39;::character varying])::text[]))</td>
                                 </tr>
                                 </tbody>
                             </table>
@@ -428,6 +488,8 @@
                                 <ul class="nav nav-tabs pull-left ui-sortable-handle">
                                     <li class="active"><a href="#oneDegreeImg-chart" data-toggle="tab" aria-expanded="true">One</a></li>
                                     <li class=""><a href="#twodegreesDegreeImg-chart" data-toggle="tab" aria-expanded="true">Two degrees</a></li>
+                                    <li class=""><a href="#oneimpliedDegreeImg-chart" data-toggle="tab" aria-expanded="true">One implied</a></li>
+                                    <li class=""><a href="#twoimpliedDegreeImg-chart" data-toggle="tab" aria-expanded="true">Two implied</a></li>
                                 </ul>
                                 <div class="tab-content no-padding">
                                     <div class="chart tab-pane active" id="oneDegreeImg-chart" style="position: relative; overflow-x:auto;">
@@ -437,6 +499,14 @@
                                     <div class="chart tab-pane " id="twodegreesDegreeImg-chart" style="position: relative; overflow-x:auto;">
                                         
                                         <a name='diagram'><object type="image/svg+xml" id="twodegreesDegreeImg" data="../diagrams/tables/milestone.2degrees.svg" class="diagram" border="0" align="left"></object></a>
+                                    </div>
+                                    <div class="chart tab-pane " id="oneimpliedDegreeImg-chart" style="position: relative; overflow-x:auto;">
+                                        
+                                        <a name='diagram'><object type="image/svg+xml" id="oneimpliedDegreeImg" data="../diagrams/tables/milestone.implied1degrees.svg" class="diagram" border="0" align="left"></object></a>
+                                    </div>
+                                    <div class="chart tab-pane " id="twoimpliedDegreeImg-chart" style="position: relative; overflow-x:auto;">
+                                        
+                                        <a name='diagram'><object type="image/svg+xml" id="twoimpliedDegreeImg" data="../diagrams/tables/milestone.implied2degrees.svg" class="diagram" border="0" align="left"></object></a>
                                     </div>
                                 </div>
                             </div>

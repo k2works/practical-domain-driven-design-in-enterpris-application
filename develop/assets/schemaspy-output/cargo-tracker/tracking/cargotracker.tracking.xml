@@ -18,6 +18,11 @@
          <column autoUpdated="false" defaultValue="null" digits="0" id="8" name="state" nullable="false" remarks="状態" size="30" type="varchar" typeCode="12"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="9" name="registered_by" nullable="false" remarks="登録者" size="2147483647" type="uuid" typeCode="1111"/>
          <column autoUpdated="false" defaultValue="null" digits="6" id="10" name="registered_at" nullable="false" remarks="登録時刻" size="35" type="timestamptz" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="11" name="data_source_id" nullable="true" remarks="情報源 ID（出典が外部原本の実績だけが持つ）" size="2147483647" type="uuid" typeCode="1111">
+            <parent column="id" foreignKey="Implied Constraint" implied="true" onDeleteCascade="false" schema="tracking" table="rejected_milestone"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="12" name="external_id" nullable="true" remarks="外部 ID（出典が外部原本の実績だけが持つ。提供元の中でだけ一意）" size="200" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="13" name="published_at" nullable="true" remarks="外部データが採用値を公開した時刻（出典が外部原本の実績だけが持つ。順の規則に使う）" size="35" type="timestamptz" typeCode="93"/>
          <primaryKey column="tracking_number" sequenceNumberInPK="1"/>
          <primaryKey column="milestone_no" sequenceNumberInPK="2"/>
          <index name="pk_milestone" unique="true">
@@ -29,10 +34,43 @@
             <column ascending="true" name="source_kind"/>
             <column ascending="true" name="source_ref"/>
          </index>
+         <checkConstraint constraint="((((source_kind)::text = 'EXTERNAL_RECORD'::text) AND (data_source_id IS NOT NULL) AND (external_id IS NOT NULL) AND (published_at IS NOT NULL)) OR (((source_kind)::text &lt;&gt; 'EXTERNAL_RECORD'::text) AND (data_source_id IS NULL) AND (external_id IS NULL) AND (published_at IS NULL)))" name="ck_milestone_external_origin"/>
          <checkConstraint constraint="((kind)::text = ANY ((ARRAY['PICKUP'::character varying, 'RECEIPT_AT_ORIGIN'::character varying, 'DEPARTURE'::character varying, 'TRANSSHIPMENT'::character varying, 'ARRIVAL'::character varying, 'DELIVERY'::character varying])::text[]))" name="ck_milestone_kind"/>
          <checkConstraint constraint="(milestone_no &gt;= 1)" name="ck_milestone_no"/>
          <checkConstraint constraint="((source_kind)::text = ANY ((ARRAY['EXTERNAL_RECORD'::character varying, 'FIELD_RECORD'::character varying, 'INTERNAL_CHECK'::character varying, 'MANUAL_ENTRY'::character varying])::text[]))" name="ck_milestone_source_kind"/>
          <checkConstraint constraint="((state)::text = ANY ((ARRAY['DRAFT'::character varying, 'ADOPTED'::character varying, 'UNDER_REVIEW'::character varying, 'RETAINED_ONLY'::character varying])::text[]))" name="ck_milestone_state"/>
+      </table>
+      <table name="rejected_milestone" remarks="拒否した主要実績 [append-only]" schema="tracking" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="id" nullable="false" remarks="拒否の記録 ID" size="2147483647" type="uuid" typeCode="1111">
+            <child column="data_source_id" foreignKey="Implied Constraint" implied="true" onDeleteCascade="false" schema="tracking" table="milestone"/>
+            <child column="booking_id" foreignKey="Implied Constraint" implied="true" onDeleteCascade="false" schema="tracking" table="tracking_record"/>
+            <child column="consignee_company_id" foreignKey="Implied Constraint" implied="true" onDeleteCascade="false" schema="tracking" table="tracking_record"/>
+            <child column="shipper_company_id" foreignKey="Implied Constraint" implied="true" onDeleteCascade="false" schema="tracking" table="tracking_record"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="tracking_number" nullable="false" remarks="追跡番号（知らない追跡番号もそのまま写す）" size="20" type="varchar" typeCode="12">
+            <parent column="tracking_number" foreignKey="Implied Constraint" implied="true" onDeleteCascade="false" schema="tracking" table="tracking_record"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="kind" nullable="false" remarks="実績の種類" size="30" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="location_unlocode" nullable="false" remarks="場所（UN/LOCODE）" size="5" type="bpchar" typeCode="1"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="4" name="occurred_at" nullable="false" remarks="発生時刻" size="35" type="timestamptz" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="5" name="source_kind" nullable="false" remarks="出典の種類" size="30" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="6" name="source_ref" nullable="false" remarks="出典の参照（DE-13 は受信記録 ID）" size="200" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="7" name="acquired_at" nullable="false" remarks="出典の取得時刻" size="35" type="timestamptz" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="8" name="data_source_id" nullable="false" remarks="情報源 ID" size="2147483647" type="uuid" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="9" name="external_id" nullable="false" remarks="外部 ID" size="200" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="10" name="reason" nullable="false" remarks="拒否の理由（UNKNOWN_TRACKING_NUMBER: 知らない追跡番号、BOOKING_CANCELLED: 取消済みの予約）" size="30" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="11" name="recorded_at" nullable="false" remarks="記録した時刻" size="35" type="timestamptz" typeCode="93"/>
+         <primaryKey column="id" sequenceNumberInPK="1"/>
+         <index name="pk_rejected_milestone" unique="true">
+            <column ascending="true" name="id"/>
+         </index>
+         <index name="uk_rejected_milestone_source" unique="true">
+            <column ascending="true" name="source_kind"/>
+            <column ascending="true" name="source_ref"/>
+         </index>
+         <checkConstraint constraint="((kind)::text = ANY ((ARRAY['PICKUP'::character varying, 'RECEIPT_AT_ORIGIN'::character varying, 'DEPARTURE'::character varying, 'TRANSSHIPMENT'::character varying, 'ARRIVAL'::character varying, 'DELIVERY'::character varying])::text[]))" name="ck_rejected_milestone_kind"/>
+         <checkConstraint constraint="((reason)::text = ANY ((ARRAY['UNKNOWN_TRACKING_NUMBER'::character varying, 'BOOKING_CANCELLED'::character varying])::text[]))" name="ck_rejected_milestone_reason"/>
+         <checkConstraint constraint="((source_kind)::text = ANY ((ARRAY['EXTERNAL_RECORD'::character varying, 'FIELD_RECORD'::character varying, 'INTERNAL_CHECK'::character varying, 'MANUAL_ENTRY'::character varying])::text[]))" name="ck_rejected_milestone_source_kind"/>
       </table>
       <table name="scheduled_leg" remarks="予定区間" schema="tracking" type="TABLE">
          <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="tracking_number" nullable="false" remarks="追跡番号" size="20" type="varchar" typeCode="12">
@@ -56,12 +94,19 @@
       <table name="tracking_record" remarks="追跡記録" schema="tracking" type="TABLE">
          <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="tracking_number" nullable="false" remarks="追跡番号" size="20" type="varchar" typeCode="12">
             <child column="tracking_number" foreignKey="fk_milestone_tracking_record" implied="false" onDeleteCascade="false" schema="tracking" table="milestone"/>
+            <child column="tracking_number" foreignKey="Implied Constraint" implied="true" onDeleteCascade="false" schema="tracking" table="rejected_milestone"/>
             <child column="tracking_number" foreignKey="fk_scheduled_leg_tracking_record" implied="false" onDeleteCascade="false" schema="tracking" table="scheduled_leg"/>
             <parent column="tracking_number" foreignKey="fk_tracking_record_status_basis" implied="false" onDeleteCascade="false" schema="tracking" table="milestone"/>
          </column>
-         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="booking_id" nullable="false" remarks="予約 ID（写し）" size="2147483647" type="uuid" typeCode="1111"/>
-         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="shipper_company_id" nullable="false" remarks="荷主企業 ID（写し）" size="2147483647" type="uuid" typeCode="1111"/>
-         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="consignee_company_id" nullable="false" remarks="荷受人企業 ID（写し）" size="2147483647" type="uuid" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="booking_id" nullable="false" remarks="予約 ID（写し）" size="2147483647" type="uuid" typeCode="1111">
+            <parent column="id" foreignKey="Implied Constraint" implied="true" onDeleteCascade="false" schema="tracking" table="rejected_milestone"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="shipper_company_id" nullable="false" remarks="荷主企業 ID（写し）" size="2147483647" type="uuid" typeCode="1111">
+            <parent column="id" foreignKey="Implied Constraint" implied="true" onDeleteCascade="false" schema="tracking" table="rejected_milestone"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="consignee_company_id" nullable="false" remarks="荷受人企業 ID（写し）" size="2147483647" type="uuid" typeCode="1111">
+            <parent column="id" foreignKey="Implied Constraint" implied="true" onDeleteCascade="false" schema="tracking" table="rejected_milestone"/>
+         </column>
          <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="booking_status" nullable="false" remarks="予約の状態（写し）" size="30" type="varchar" typeCode="12"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="5" name="routing_case_number" nullable="false" remarks="予定の経路版の案件番号" size="20" type="varchar" typeCode="12"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="6" name="route_version_no" nullable="false" remarks="予定の経路版番号" size="10" type="int4" typeCode="4"/>

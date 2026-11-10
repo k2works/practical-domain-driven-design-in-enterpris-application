@@ -1,3 +1,4 @@
 milestone
 tracking_record
+rejected_milestone
 scheduled_leg
