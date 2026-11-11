@@ -45,7 +45,7 @@ public class TransportPhaseCommandService {
     @Transactional
     public TransportPhaseOutcome recordPickup(
             BookingId bookingId, UUID operator, String trackingNumber, int milestoneNo) {
-        return record(bookingId, operator, trackingNumber, milestoneNo, Booking::recordPickup);
+        return recordTransportPhase(bookingId, operator, trackingNumber, milestoneNo, Booking::recordPickup);
     }
 
     /**
@@ -60,10 +60,10 @@ public class TransportPhaseCommandService {
     @Transactional
     public TransportPhaseOutcome recordDelivery(
             BookingId bookingId, UUID operator, String trackingNumber, int milestoneNo) {
-        return record(bookingId, operator, trackingNumber, milestoneNo, Booking::recordDelivery);
+        return recordTransportPhase(bookingId, operator, trackingNumber, milestoneNo, Booking::recordDelivery);
     }
 
-    private TransportPhaseOutcome record(
+    private TransportPhaseOutcome recordTransportPhase(
             BookingId bookingId,
             UUID operator,
             String trackingNumber,
