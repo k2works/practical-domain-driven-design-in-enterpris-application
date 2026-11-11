@@ -1,5 +1,9 @@
 # Docs Update Log
 
+## 2026-11-11
+* **Update**: [bolt_39gb_plan](/development/cargo-tracker/bolt_39gb_plan.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-sonnet-5-5）
+
 ## 2026-11-10
 * **Verification**: [bolt_39g_report](/development/cargo-tracker/bolt_39g_report.md) を human:kakimomokuri が検証
 * **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
