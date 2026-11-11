@@ -4,7 +4,7 @@ title: "リリース計画 - cargo-tracker（A 社国際貨物輸送管理シス
 description: "cargo-tracker MVP のリリース計画。1 人 + AI、時間単位の Bolt（= イテレーション）と週次の見直しで、最初の縦の流れ（R0.1）、パイロット準備完了（R1.0）、本格展開前（R1.1）の 3 段階、Unit のエントロピー評価、SP、バッファ、パイロット開始の条件、引継ぎ ID の台帳、業務責任者に確かめる事項の台帳。"
 tags: [development,release-plan]
 status: stable
-generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-11T00:46:19Z }
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-11T03:17:16Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T09:29:53Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:38:26Z }
@@ -1641,4 +1641,5 @@ xychart-beta
 | 2026-11-10 | Bolt 39g のステップ 1〜8 と[終了報告](bolt_39g_report.md)を承認した（推奨のとおり。Recommend 承認の指示による） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-11-11 | Bolt 39gb のステップ 1（設計の文書）: 39gb の行に開始準備で決めたこと（組と候補の規則の置き場所、採用した人と時刻の列、採用の POST、採用できない組）を足し、業務責任者に確かめる事項の台帳に D-120〜D-122（仮）を足した（推奨のとおり。Recommend 承認の指示による） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-11-11 | Bolt 39gb のステップ 2〜9 を実施し、[終了報告](bolt_39gb_report.md)を作った（承認待ち。CI は push していないので未実行） | anthropic/claude-opus-5-5 |
+| 2026-11-11 | Bolt 39gb の終了報告を推奨のとおり承認として記録した（議題 1〜7。Recommend 承認の指示による。human:kakimomokuri） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-10-28 | Bolt 38f2 のステップ 1 で、デモ項目の動画を撮る Bolt を 38f2b に直した | anthropic/claude-opus-5-5 |

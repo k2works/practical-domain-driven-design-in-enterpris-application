@@ -2,15 +2,17 @@
 type: Plan
 title: "Bolt 39gb 終了報告 - 下書きの候補を判定して示し、追跡管理者が候補を採用する"
 tags: [plan]
-status: draft
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-11T03:00:00Z }
+status: stable
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-11T03:17:16Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-11-11T03:17:00Z }
 ---
 
 # Bolt 39gb 終了報告 - 下書きの候補を判定して示し、追跡管理者が候補を採用する
 
 ## 承認の議題（T-36。先に確かめてほしいこと）
 
-データ責任者が値を直して送り直した主要実績について、追跡管理者の S-12 が最後に公開された下書きだけを候補として示し、古い下書きに「後から公開された原本に置き換えられました」と示すようにしました。追跡管理者は候補を採用して現在状態に効かせられます。計画の確認ポイント 1〜8 は推奨のとおり承認済み（2026-11-11）として実装しました。この終了報告は**まだ承認されていません**。
+データ責任者が値を直して送り直した主要実績について、追跡管理者の S-12 が最後に公開された下書きだけを候補として示し、古い下書きに「後から公開された原本に置き換えられました」と示すようにしました。追跡管理者は候補を採用して現在状態に効かせられます。計画の確認ポイント 1〜8 は推奨のとおり承認済み（2026-11-11）として実装しました。議題 1〜7 はすべて推奨のとおり承認として記録した（2026-11-11。Recommend 承認の指示による）。
 
 | # | 確かめてほしいこと | 見る場所 |
 | :--- | :--- | :--- |
@@ -31,7 +33,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-11-11T03:00:00Z }
 | 対象 | `MilestoneGroup`・`MilestoneCandidateRule`・`AdoptionRejectionReason`・`MilestoneAdoption`、`TrackingRecord.groupsOf`・`isSupersededDraft`・`adoptCandidate`、`Milestone` の採用者・採用時刻、`TrackingRecordCommandService.adoptCandidate`、S-12 の採用の欄と POST、`tracking.milestone` の 2 列と CHECK、P-5・P-6、マニュアル 9 章・12 章・用語集 |
 | GitHub | #19（US-12。クローズは 39gc）、#50（P-5・P-6） |
 | SP | 0（2 SP は 39gc） |
-| ブランチ | develop（push していない） |
+| ブランチ | develop |
 | 計画 | [Bolt 39gb 計画](bolt_39gb_plan.md) |
 
 ## 成果
@@ -106,7 +108,8 @@ Bolt 39gc（確認中と DE-18、手入力の規則）。
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
-| 2026-11-11 | 初版作成（承認待ち） | anthropic/claude-opus-5-5 |
+| 2026-11-11 | 推奨のとおり承認として記録した（議題 1〜7。議題 7 は履歴を書き換えず、以後の帰属の行をその時点のシステム指示にそろえる。議題 6 は T-247 の議題に足す。Recommend 承認の指示による。human:kakimomokuri） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
+| 2026-11-11 | 初版作成 | anthropic/claude-opus-5-5 |
 
 ## 関連ドキュメント
 
