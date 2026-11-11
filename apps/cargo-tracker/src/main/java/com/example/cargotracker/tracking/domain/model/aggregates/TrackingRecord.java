@@ -289,11 +289,9 @@ public final class TrackingRecord {
         Optional<Milestone> target = milestones.stream()
                 .filter(milestone -> milestone.milestoneNo() == milestoneNo)
                 .findFirst();
-        Optional<MilestoneGroup> group = target.flatMap(this::groupOf);
-        if (target.isEmpty()
-                || group.flatMap(MilestoneGroup::candidate)
-                        .filter(target.get()::equals)
-                        .isEmpty()) {
+        Optional<MilestoneGroup> candidateGroup =
+                target.flatMap(this::groupOf).filter(group -> group.candidate().equals(target));
+        if (candidateGroup.isEmpty()) {
             return new MilestoneAdoption.Rejected(AdoptionRejectionReason.NOT_CANDIDATE);
         }
         if (bookingStatus == TrackedBookingStatus.CANCELLED) {
@@ -302,8 +300,9 @@ public final class TrackingRecord {
         if (isCompleted()) {
             return new MilestoneAdoption.Rejected(AdoptionRejectionReason.TRACKING_COMPLETED);
         }
-        Milestone candidate = target.get();
-        Optional<Milestone> adopted = group.get().adopted();
+        MilestoneGroup group = candidateGroup.get();
+        Milestone candidate = group.candidate().orElseThrow();
+        Optional<Milestone> adopted = group.adopted();
         if (adopted.isPresent()) {
             return adopted.get().hasSameValueAs(candidate)
                     ? new MilestoneAdoption.SameAsAdopted(adopted.get())

@@ -11,6 +11,8 @@ import com.example.cargotracker.tracking.domain.model.aggregates.MilestoneRegist
 import com.example.cargotracker.tracking.domain.model.aggregates.MilestoneRegistrationRejected;
 import com.example.cargotracker.tracking.domain.model.aggregates.TrackingRecord;
 import com.example.cargotracker.tracking.domain.model.aggregates.TrackingRecordRepository;
+import com.example.cargotracker.tracking.domain.model.entities.Milestone;
+import com.example.cargotracker.tracking.domain.model.valueobjects.AdoptionRejectionReason;
 import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingNumber;
 import java.time.Clock;
 import org.springframework.stereotype.Service;
@@ -119,9 +121,10 @@ public class TrackingRecordCommandService {
         }
         return switch (trackingRecord.adoptCandidate(milestoneNo, operator.userId(), new UtcInstant(clock.instant()))) {
             case MilestoneAdoption.Adopted adopted -> save(adopted);
-            case MilestoneAdoption.SameAsAdopted same ->
-                new MilestoneAdoptionOutcome.SameAsAdopted(same.adopted().milestoneNo());
-            case MilestoneAdoption.Rejected rejected -> new MilestoneAdoptionOutcome.Rejected(rejected.reason());
+            case MilestoneAdoption.SameAsAdopted(Milestone adopted) ->
+                new MilestoneAdoptionOutcome.SameAsAdopted(adopted.milestoneNo());
+            case MilestoneAdoption.Rejected(AdoptionRejectionReason reason) ->
+                new MilestoneAdoptionOutcome.Rejected(reason);
         };
     }
 
