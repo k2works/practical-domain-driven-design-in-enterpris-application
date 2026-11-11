@@ -1,6 +1,19 @@
 # Docs Update Log
 
 ## 2026-11-11
+* **Creation**: [bolt_39g2_report](/development/cargo-tracker/bolt_39g2_report.md) を作成（anthropic/claude-sonnet-5-5。承認待ち）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39g2 の終了報告）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39g2 ステップ 1・2〜9）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39g2 ステップ 1）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39g2 ステップ 1）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39g2 ステップ 1）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39g2 ステップ 1）
+* **Update**: [014-downstream-to-upstream-notification](/adr/cargo-tracker/014-downstream-to-upstream-notification.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39g2 ステップ 1）
+* **Update**: [development_strategy](/development/cargo-tracker/development_strategy.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39g2 ステップ 1）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39g2 ステップ 1）
+* **Update**: [07-本予約の確定と予約一覧](/manual/07-本予約の確定と予約一覧.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39g2）
+* **Update**: [09-追跡管理](/manual/09-追跡管理.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39g2）
+* **Update**: [用語集](/manual/用語集.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39g2）
 * **Verification**: [bolt_39g2_plan](/development/cargo-tracker/bolt_39g2_plan.md) を human:kakimomokuri が検証
 * **Update**: [bolt_39g2_plan](/development/cargo-tracker/bolt_39g2_plan.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
