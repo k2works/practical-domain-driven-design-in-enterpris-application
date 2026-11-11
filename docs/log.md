@@ -1,6 +1,10 @@
 # Docs Update Log
 
 ## 2026-11-11
+* **Creation**: [bolt_39gc_report](/development/cargo-tracker/bolt_39gc_report.md) を作成（anthropic/claude-sonnet-5-5。承認待ち）
+* **Update**: [09-追跡管理](/manual/09-追跡管理.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39gc）
+* **Update**: [用語集](/manual/用語集.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39gc）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39gc の終了報告）
 * **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39gc ステップ 1）
 * **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39gc ステップ 1）
 * **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39gc ステップ 1）
