@@ -440,6 +440,7 @@ class TrackingRecordMilestoneTest {
                     from.milestones(),
                     from.originalEta(),
                     from.latestEta(),
+                    from.lastAcquiredAt(),
                     from.startedAt(),
                     from.aggregateVersion());
         }
@@ -587,6 +588,117 @@ class TrackingRecordMilestoneTest {
         }
     }
 
+    /** Bolt 39g3 の行 9・12・13（手入力の登録で最新の到着見込みと最終取得時刻が動くのは採用のときだけ。T-INV-10）。 */
+    @Nested
+    class Bolt39g3_手入力の最新の到着見込み {
+
+        private static final UtcInstant LATER = at("2026-11-05T00:00:00Z");
+
+        private static MilestoneRegistration register(
+                TrackingRecord trackingRecord,
+                MilestoneKind kind,
+                String location,
+                String occurredAt,
+                String reference) {
+            return trackingRecord.registerMilestone(
+                    kind, new Location(location), at(occurredAt), laterSource(reference), REGISTRANT, LATER);
+        }
+
+        private static Source laterSource(String reference) {
+            return new Source(SourceKind.FIELD_RECORD, reference, LATER);
+        }
+
+        @Test
+        void 行9_採用の遅れた出発は見込みと最終取得時刻を変え当初の到着予定と予定は変えない() {
+            TrackingRecord before = started();
+
+            TrackingRecord after = register(before, MilestoneKind.DEPARTURE, "JPTYO", "2026-11-01T06:00:00Z", "F-1")
+                    .trackingRecord();
+
+            assertThat(after.milestones().getFirst().state()).isEqualTo(MilestoneState.ADOPTED);
+            assertThat(after.latestEta()).isEqualTo(at("2026-11-15T06:00:00Z"));
+            assertThat(after.lastAcquiredAt()).contains(LATER);
+            assertThat(after.originalEta()).isEqualTo(before.originalEta());
+            assertThat(after.schedule()).isEqualTo(before.schedule());
+        }
+
+        @Test
+        void 行9_確認中になる登録は見込みと最終取得時刻を変えない() {
+            TrackingRecord before = register(started(), MilestoneKind.PICKUP, "JPTYO", "2026-11-01T10:00:00Z", "F-1")
+                    .trackingRecord();
+
+            TrackingRecord after = register(before, MilestoneKind.DEPARTURE, "JPTYO", "2026-11-01T06:00:00Z", "F-2")
+                    .trackingRecord();
+
+            assertThat(after.milestones().get(1).state()).isEqualTo(MilestoneState.UNDER_REVIEW);
+            assertThat(after.latestEta()).isEqualTo(before.latestEta()).isEqualTo(before.originalEta());
+            assertThat(after.lastAcquiredAt()).isEqualTo(before.lastAcquiredAt());
+        }
+
+        @Test
+        void 行9と行13_完了後の保持のみは見込みと最終取得時刻を変えない() {
+            TrackingRecord before = register(started(), MilestoneKind.DELIVERY, "USLAX", "2026-11-01T06:00:00Z", "F-1")
+                    .trackingRecord();
+
+            TrackingRecord after = register(before, MilestoneKind.ARRIVAL, "USLAX", "2026-11-04T09:00:00Z", "F-2")
+                    .trackingRecord();
+
+            assertThat(after.milestones().get(1).state()).isEqualTo(MilestoneState.RETAINED_ONLY);
+            assertThat(after.latestEta()).isEqualTo(before.latestEta());
+            assertThat(after.lastAcquiredAt()).isEqualTo(before.lastAcquiredAt());
+        }
+
+        @Test
+        void 行9_拒否は見込みを変えない() {
+            TrackingRecord before = started();
+
+            assertThatThrownBy(() -> before.registerMilestone(
+                            MilestoneKind.DEPARTURE,
+                            tokyo(),
+                            at("2026-11-06T00:00:00Z"),
+                            laterSource("F-1"),
+                            REGISTRANT,
+                            LATER))
+                    .isInstanceOf(MilestoneRegistrationRejected.class);
+            assertThat(before.latestEta()).isEqualTo(before.originalEta());
+            assertThat(before.lastAcquiredAt()).isEmpty();
+        }
+
+        @Test
+        void 行9_同じ出典の再登録は見込みと最終取得時刻を変えない() {
+            TrackingRecord before = register(started(), MilestoneKind.DEPARTURE, "JPTYO", "2026-11-01T06:00:00Z", "F-1")
+                    .trackingRecord();
+
+            MilestoneRegistration again =
+                    register(before, MilestoneKind.DEPARTURE, "JPTYO", "2026-11-01T09:00:00Z", "F-1");
+
+            assertThat(again.alreadyRegistered()).isTrue();
+            assertThat(again.trackingRecord().latestEta()).isEqualTo(at("2026-11-15T06:00:00Z"));
+            assertThat(again.trackingRecord().lastAcquiredAt()).isEqualTo(before.lastAcquiredAt());
+        }
+
+        @Test
+        void 行12_確認中の追跡に時系列どおりの遅れた出発を採用すると見込みは動き現在状態は確認中のまま() {
+            TrackingRecord underReview = register(
+                            register(started(), MilestoneKind.PICKUP, "JPTYO", "2026-11-01T10:00:00Z", "F-1")
+                                    .trackingRecord(),
+                            MilestoneKind.DEPARTURE,
+                            "JPTYO",
+                            "2026-11-01T06:00:00Z",
+                            "F-2")
+                    .trackingRecord();
+            assertThat(underReview.currentStatus()).isEqualTo(TrackingStatus.UNDER_REVIEW);
+
+            TrackingRecord after = register(
+                            underReview, MilestoneKind.DEPARTURE, "KRPUS", "2026-11-04T05:00:00Z", "F-3")
+                    .trackingRecord();
+
+            assertThat(after.milestones().get(2).state()).isEqualTo(MilestoneState.ADOPTED);
+            assertThat(after.currentStatus()).isEqualTo(TrackingStatus.UNDER_REVIEW);
+            assertThat(after.latestEta()).isEqualTo(at("2026-11-15T05:00:00Z"));
+        }
+    }
+
     /** 予約状態だけを変えた追跡記録（予約状態の書き手は W11・39g2 なので組み立てで作る）。 */
     static TrackingRecord withBookingStatus(TrackingRecord from, TrackedBookingStatus bookingStatus) {
         return TrackingRecord.reconstitute(
@@ -602,6 +714,7 @@ class TrackingRecordMilestoneTest {
                 from.milestones(),
                 from.originalEta(),
                 from.latestEta(),
+                from.lastAcquiredAt(),
                 from.startedAt(),
                 from.aggregateVersion());
     }

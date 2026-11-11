@@ -46,6 +46,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.UUID;
+import java.util.regex.Pattern;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -89,6 +90,7 @@ class TrackingRecordControllerTest {
                 status,
                 TrackingFixture.at("2026-11-15T00:00:00Z"),
                 TrackingFixture.at("2026-11-16T03:00:00Z"),
+                Optional.empty(),
                 TrackingFixture.at("2026-10-26T01:00:00Z"));
     }
 
@@ -835,5 +837,107 @@ class TrackingRecordControllerTest {
     @Test
     void 形式の誤った追跡番号の追跡の詳細は404() throws Exception {
         mockMvc.perform(get("/staff/tracking-records/not-a-tracking-number")).andExpect(status().isNotFound());
+    }
+
+    /** Bolt 39g3 の行 17・18（本計画 CP-5。U-3）。当初の到着予定・最新の到着見込み・最終取得時刻はどれも違う値にして列の取り違えを拾う。 */
+    @Nested
+    class Bolt39g3_最新の到着見込みと最終取得時刻 {
+
+        // 正規表現で並びを確かめるので、日時の表記の「+」を文字として扱う
+        private static final String ORIGINAL =
+                Pattern.quote("2026-11-15 09:00 Asia/Tokyo（UTC+09:00）（UTC 2026-11-15 00:00）");
+        private static final String LATEST =
+                Pattern.quote("2026-11-16 12:00 Asia/Tokyo（UTC+09:00）（UTC 2026-11-16 03:00）");
+        private static final String ACQUIRED =
+                Pattern.quote("2026-11-01 12:00 Asia/Tokyo（UTC+09:00）（UTC 2026-11-01 03:00）");
+        private static final String STARTED =
+                Pattern.quote("2026-10-26 10:00 Asia/Tokyo（UTC+09:00）（UTC 2026-10-26 01:00）");
+
+        private static TrackingRecordSummary summary(Optional<UtcInstant> lastAcquiredAt) {
+            return new TrackingRecordSummary(
+                    TrackingFixture.TRACKING_NUMBER,
+                    TrackingStatus.IN_TRANSIT,
+                    TrackingFixture.at("2026-11-15T00:00:00Z"),
+                    TrackingFixture.at("2026-11-16T03:00:00Z"),
+                    lastAcquiredAt,
+                    TrackingFixture.at("2026-10-26T01:00:00Z"));
+        }
+
+        private static TrackingRecord withLastAcquiredAt(Optional<UtcInstant> lastAcquiredAt) {
+            return TrackingRecord.reconstitute(
+                    TrackingFixture.TRACKING_NUMBER,
+                    TrackingFixture.BOOKING_ID,
+                    TrackingFixture.SHIPPER,
+                    TrackingFixture.CONSIGNEE,
+                    TrackedBookingStatus.CONFIRMED,
+                    TrackingFixture.schedule(),
+                    TrackingStatus.PICKUP_SCHEDULED,
+                    OptionalInt.empty(),
+                    Optional.empty(),
+                    List.of(),
+                    TrackingFixture.at("2026-11-15T00:00:00Z"),
+                    TrackingFixture.at("2026-11-16T03:00:00Z"),
+                    lastAcquiredAt,
+                    TrackingFixture.STARTED_AT,
+                    0);
+        }
+
+        @Test
+        void 行17_追跡一覧の列は当初の到着予定の次に最新の到着見込みと最終取得時刻() throws Exception {
+            given(queryService.recent(any()))
+                    .willReturn(new RecentTrackingRecords(
+                            List.of(summary(Optional.of(TrackingFixture.at("2026-11-01T03:00:00Z")))), false, 50));
+
+            mockMvc.perform(get(LIST))
+                    .andExpect(status().isOk())
+                    .andExpect(content()
+                            .string(matchesPattern(
+                                    "(?s).*<th scope=\"col\">追跡番号</th>\\s*<th scope=\"col\">現在状態</th>\\s*"
+                                            + "<th scope=\"col\">当初の到着予定</th>\\s*<th scope=\"col\">最新の到着見込み</th>\\s*"
+                                            + "<th scope=\"col\">最終取得時刻</th>\\s*<th scope=\"col\">追跡の開始時刻</th>.*")))
+                    .andExpect(content()
+                            .string(matchesPattern("(?s).*<td>" + ORIGINAL + "</td>\\s*<td>" + LATEST + "</td>\\s*<td>"
+                                    + ACQUIRED + "</td>\\s*<td>" + STARTED + "</td>.*")));
+        }
+
+        @Test
+        void 行17_最終取得時刻がなければなしと示す() throws Exception {
+            given(queryService.recent(any()))
+                    .willReturn(new RecentTrackingRecords(List.of(summary(Optional.empty())), false, 50));
+
+            mockMvc.perform(get(LIST))
+                    .andExpect(status().isOk())
+                    .andExpect(content()
+                            .string(matchesPattern(
+                                    "(?s).*<td>" + LATEST + "</td>\\s*<td>なし</td>\\s*<td>" + STARTED + "</td>.*")));
+        }
+
+        @Test
+        void 行18_追跡の詳細は最新の到着見込みの次に最終取得時刻を示す() throws Exception {
+            given(queryService.detail(eq(TrackingFixture.TRACKING_NUMBER), any()))
+                    .willReturn(
+                            Optional.of(withLastAcquiredAt(Optional.of(TrackingFixture.at("2026-11-01T03:00:00Z")))));
+
+            mockMvc.perform(get(DETAIL))
+                    .andExpect(status().isOk())
+                    .andExpect(content()
+                            .string(matchesPattern(
+                                    "(?s).*<dt class=\"col-sm-3\">最新の到着見込み</dt>\\s*<dd class=\"col-sm-9\">"
+                                            + LATEST
+                                            + "</dd>\\s*<dt class=\"col-sm-3\">最終取得時刻</dt>\\s*<dd class=\"col-sm-9\">"
+                                            + ACQUIRED + "</dd>.*")));
+        }
+
+        @Test
+        void 行18_最終取得時刻がなければまだありませんと示す() throws Exception {
+            given(queryService.detail(eq(TrackingFixture.TRACKING_NUMBER), any()))
+                    .willReturn(Optional.of(withLastAcquiredAt(Optional.empty())));
+
+            mockMvc.perform(get(DETAIL))
+                    .andExpect(status().isOk())
+                    .andExpect(content()
+                            .string(matchesPattern("(?s).*<dt class=\"col-sm-3\">最終取得時刻</dt>\\s*"
+                                    + "<dd class=\"col-sm-9\">まだありません</dd>.*")));
+        }
     }
 }

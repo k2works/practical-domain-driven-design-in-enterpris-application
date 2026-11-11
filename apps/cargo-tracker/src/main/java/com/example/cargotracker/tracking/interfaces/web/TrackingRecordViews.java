@@ -110,10 +110,25 @@ final class TrackingRecordViews {
      * @param trackingNumber 追跡番号
      * @param status 現在状態の表示名
      * @param originalEta 当初の到着予定
+     * @param latestEta 最新の到着見込み（Bolt 39g3。U-3）
+     * @param lastAcquiredAt 最終取得時刻（なければ「なし」。Bolt 39g3）
      * @param startedAt 追跡の開始時刻
      * @param underReview 現在状態が確認中か（状態バッジで示す。Bolt 39gc）
      */
-    record Row(String trackingNumber, String status, String originalEta, String startedAt, boolean underReview) {}
+    record Row(
+            String trackingNumber,
+            String status,
+            String originalEta,
+            String latestEta,
+            String lastAcquiredAt,
+            String startedAt,
+            boolean underReview) {}
+
+    /** S-11 の最終取得時刻のないセルの文（本計画 CP-5。Bolt 39g3）。 */
+    static final String NO_LAST_ACQUIRED_IN_LIST = "なし";
+
+    /** S-12・C-10 の照会の結果の最終取得時刻がないときの文（本計画 CP-5。Bolt 39g3）。 */
+    static final String NO_LAST_ACQUIRED_YET = "まだありません";
 
     static List<Row> list(RecentTrackingRecords recent) {
         return recent.rows().stream()
@@ -121,6 +136,8 @@ final class TrackingRecordViews {
                         summary.trackingNumber().value(),
                         status(summary.currentStatus()),
                         staff(summary.originalEta()),
+                        staff(summary.latestEta()),
+                        summary.lastAcquiredAt().map(TrackingRecordViews::staff).orElse(NO_LAST_ACQUIRED_IN_LIST),
                         staff(summary.startedAt()),
                         summary.currentStatus() == TrackingStatus.UNDER_REVIEW))
                 .toList();
@@ -133,6 +150,7 @@ final class TrackingRecordViews {
      * @param status 現在状態の表示名
      * @param originalEta 当初の到着予定
      * @param latestEta 最新の到着見込み
+     * @param lastAcquiredAt 最終取得時刻（なければ「まだありません」。Bolt 39g3）
      * @param route 予定の経路版（案件番号と経路版）
      * @param legs 予定区間（区間の順）
      * @param milestones 主要実績（発生時刻の順。同じ時刻は実績番号の順。Bolt 26c）
@@ -146,6 +164,7 @@ final class TrackingRecordViews {
             String status,
             String originalEta,
             String latestEta,
+            String lastAcquiredAt,
             String route,
             List<LegView> legs,
             List<MilestoneView> milestones,
@@ -239,6 +258,7 @@ final class TrackingRecordViews {
                 status(trackingRecord.currentStatus()),
                 staff(trackingRecord.originalEta()),
                 staff(trackingRecord.latestEta()),
+                trackingRecord.lastAcquiredAt().map(TrackingRecordViews::staff).orElse(NO_LAST_ACQUIRED_YET),
                 schedule.routingCaseNumber() + " 版 " + schedule.routeVersionNo(),
                 legs(schedule.legs(), TrackingRecordViews::staff, TrackingRecordViews::legSummary),
                 trackingRecord.milestones().stream()
@@ -367,6 +387,7 @@ final class TrackingRecordViews {
      * @param status 現在状態の表示名
      * @param originalEta 当初の到着予定
      * @param latestEta 最新の到着見込み
+     * @param lastAcquiredAt 最終取得時刻（荷主の日時表示。なければ「まだありません」。Bolt 39g3）
      * @param legs 予定区間（区間の順）
      * @param milestones 採用済みの主要実績（発生時刻の順）
      */
@@ -375,6 +396,7 @@ final class TrackingRecordViews {
             String status,
             String originalEta,
             String latestEta,
+            String lastAcquiredAt,
             List<LegView> legs,
             List<CustomerMilestoneView> milestones) {}
 
@@ -394,6 +416,7 @@ final class TrackingRecordViews {
                 status(view.currentStatus()),
                 customer(view.originalEta()),
                 customer(view.latestEta()),
+                view.lastAcquiredAt().map(TrackingRecordViews::customer).orElse(NO_LAST_ACQUIRED_YET),
                 legs(view.legs(), TrackingRecordViews::customer, (legNo, leg) -> customerLegSummary(leg)),
                 view.milestones().stream()
                         .map(TrackingRecordViews::customerMilestone)

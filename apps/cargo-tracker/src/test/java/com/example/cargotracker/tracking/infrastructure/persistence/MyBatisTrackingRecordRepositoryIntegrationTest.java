@@ -29,7 +29,9 @@ import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingStatu
 import com.example.cargotracker.tracking.domain.model.valueobjects.UnderReviewReason;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.OptionalInt;
 import java.util.Random;
 import java.util.Set;
@@ -194,6 +196,7 @@ class MyBatisTrackingRecordRepositoryIntegrationTest {
                         TrackingStatus.PICKUP_SCHEDULED,
                         sameTimeDigit.originalEta(),
                         sameTimeDigit.latestEta(),
+                        sameTimeDigit.lastAcquiredAt(),
                         sameTimeDigit.startedAt()));
     }
 
@@ -1003,6 +1006,117 @@ class MyBatisTrackingRecordRepositoryIntegrationTest {
         assertThatThrownBy(() -> jdbc.update(
                         "UPDATE tracking.milestone SET " + assignment + " WHERE tracking_number = ?", trackingNumber))
                 .isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    /**
+     * Bolt 39g3 の行 14〜16（本計画 CP-6）。主要実績の保存は版の条件で {@code latest_eta}・{@code last_acquired_at} を書き、{@code original_eta}・
+     * 経路版・予定区間は書かない。組み立てと要約は {@code last_acquired_at} を読む（NULL は空）。出発は JPTYO（区間 1 の出発予定 2026-11-01 00:00）。
+     */
+    @Nested
+    class Bolt39g3_最新の到着見込みと最終取得時刻の保存 {
+
+        private static final UtcInstant DELAYED_ETA = new UtcInstant(Instant.parse("2026-11-15T02:30:00.654321Z"));
+
+        private TrackingRecord savedThenDeparted() {
+            TrackingRecord saved = started(UUID.randomUUID(), trackingNumber());
+            repository.save(saved);
+            repository.update(register(saved, MilestoneKind.DEPARTURE, "2026-11-01T02:30:00.654321Z", "F-1"));
+            return saved;
+        }
+
+        @Test
+        void 行14_保存は最新の到着見込みと最終取得時刻を書き当初の到着予定と経路版と予定区間は書かない() {
+            TrackingRecord saved = savedThenDeparted();
+
+            Map<String, Object> row = jdbc.queryForMap(
+                    "SELECT original_eta, latest_eta, last_acquired_at, routing_case_number, route_version_no, version"
+                            + " FROM tracking.tracking_record WHERE tracking_number = ?",
+                    saved.trackingNumber().value());
+            assertThat(instant(row.get("original_eta")))
+                    .isEqualTo(saved.originalEta().instant());
+            assertThat(instant(row.get("latest_eta"))).isEqualTo(DELAYED_ETA.instant());
+            assertThat(instant(row.get("last_acquired_at"))).isEqualTo(NOW.instant());
+            assertThat(row.get("routing_case_number"))
+                    .isEqualTo(saved.schedule().routingCaseNumber());
+            assertThat(row.get("route_version_no")).isEqualTo(saved.schedule().routeVersionNo());
+            assertThat(((Number) row.get("version")).longValue()).isEqualTo(saved.aggregateVersion() + 1);
+            assertThat(jdbc.queryForObject(
+                                    "SELECT departure_at FROM tracking.scheduled_leg WHERE tracking_number = ? AND leg_no = 1",
+                                    OffsetDateTime.class,
+                                    saved.trackingNumber().value())
+                            .toInstant())
+                    .isEqualTo(saved.schedule().legs().getFirst().departureAt().instant());
+        }
+
+        @Test
+        void 行14_実績のない追跡の開始は最終取得時刻をNULLで書く() {
+            TrackingRecord saved = started(UUID.randomUUID(), trackingNumber());
+            repository.save(saved);
+
+            assertThat(jdbc.queryForObject(
+                            "SELECT last_acquired_at FROM tracking.tracking_record WHERE tracking_number = ?",
+                            OffsetDateTime.class,
+                            saved.trackingNumber().value()))
+                    .isNull();
+        }
+
+        @Test
+        void 行14_版が違えば競合にして最新の到着見込みを書かない() {
+            TrackingRecord saved = savedThenDeparted();
+
+            assertThatThrownBy(() ->
+                            repository.update(register(saved, MilestoneKind.DEPARTURE, "2026-11-01T02:50:00Z", "F-2")))
+                    .isInstanceOf(ConcurrentTrackingRecordUpdateException.class);
+            assertThat(repository
+                            .findByTrackingNumber(saved.trackingNumber())
+                            .orElseThrow()
+                            .latestEta())
+                    .isEqualTo(DELAYED_ETA);
+        }
+
+        @Test
+        void 行15_読み直すと最新の到着見込みと最終取得時刻が保存した値と同じでNULLは空() {
+            TrackingRecord saved = savedThenDeparted();
+            TrackingRecord other = started(UUID.randomUUID(), trackingNumber());
+            repository.save(other);
+
+            TrackingRecord found =
+                    repository.findByTrackingNumber(saved.trackingNumber()).orElseThrow();
+            assertThat(found.latestEta()).isEqualTo(DELAYED_ETA);
+            assertThat(found.lastAcquiredAt()).contains(NOW);
+            assertThat(found.originalEta()).isEqualTo(saved.originalEta());
+            assertThat(repository
+                            .findByTrackingNumber(other.trackingNumber())
+                            .orElseThrow()
+                            .lastAcquiredAt())
+                    .isEmpty();
+        }
+
+        @Test
+        void 行16_要約は最新の到着見込みと最終取得時刻を持ち並びと絞りは変えない() {
+            TrackingRecord saved = savedThenDeparted();
+
+            TrackingRecordSummary summary =
+                    repository.findRecentSummaries(Set.of(saved.shipperCompanyId()), 10).stream()
+                            .filter(row -> row.trackingNumber().equals(saved.trackingNumber()))
+                            .findFirst()
+                            .orElseThrow();
+            assertThat(summary.latestEta()).isEqualTo(DELAYED_ETA);
+            assertThat(summary.lastAcquiredAt()).contains(NOW);
+            assertThat(summary.originalEta()).isEqualTo(saved.originalEta());
+            TrackingRecordSummary ofShipper = repository
+                    .findRecentSummariesByShipper(saved.shipperCompanyId(), 10)
+                    .getFirst();
+            assertThat(ofShipper.lastAcquiredAt()).contains(NOW);
+        }
+
+        private static Instant instant(Object value) {
+            return switch (value) {
+                case Timestamp timestamp -> timestamp.toInstant();
+                case OffsetDateTime offset -> offset.toInstant();
+                default -> throw new IllegalArgumentException("日時の列の型が想定外: " + value);
+            };
+        }
     }
 
     private static TrackingRecord register(

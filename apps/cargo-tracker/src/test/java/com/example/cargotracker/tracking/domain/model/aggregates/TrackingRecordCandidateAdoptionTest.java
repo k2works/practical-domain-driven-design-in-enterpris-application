@@ -771,4 +771,62 @@ class TrackingRecordCandidateAdoptionTest {
                     .isInstanceOf(IllegalArgumentException.class);
         }
     }
+
+    /**
+     * Bolt 39g3 の行 10（下書きの採用で最新の到着見込みと最終取得時刻が動くのは採用に移ったときだけ。T-INV-10）。外部原本の出発は JPTYO の 2026-11-19 00:00
+     * （区間 1 の出発予定 2026-11-01 00:00 の 18 日後）。拒否・判断済みと同じ値は追跡記録を返さないので変わらない。
+     */
+    @Nested
+    class Bolt39g3_採用の最新の到着見込み {
+
+        @Test
+        void 行10_採用に移ると見込みは遅れの分だけ動き最終取得時刻は採用した実績の取得時刻() {
+            TrackingRecord draft = received(arrival(TOKYO, "2026-11-19T10:00:00Z", "r-1"));
+            assertThat(draft.latestEta()).isEqualTo(at("2026-11-15T00:00:00Z"));
+            assertThat(draft.lastAcquiredAt()).isEmpty();
+
+            TrackingRecord adopted =
+                    ((MilestoneAdoption.Adopted) draft.adoptCandidate(1, MANAGER, ADOPTED_AT)).trackingRecord();
+
+            assertThat(adopted.latestEta()).isEqualTo(at("2026-12-03T00:00:00Z"));
+            assertThat(adopted.lastAcquiredAt()).contains(at("2026-11-19T01:00:00Z"));
+            assertThat(adopted.originalEta()).isEqualTo(at("2026-11-15T00:00:00Z"));
+        }
+
+        @Test
+        void 行10_確認中に移ると見込みと最終取得時刻は変わらない() {
+            TrackingRecord arrived = empty(TrackedBookingStatus.CONFIRMED, TrackingStatus.PICKUP_SCHEDULED)
+                    .registerMilestone(
+                            MilestoneKind.ARRIVAL,
+                            new Location("USLAX"),
+                            at("2026-11-18T00:00:00Z"),
+                            new Source(SourceKind.FIELD_RECORD, "F-1", at("2026-11-18T01:00:00Z")),
+                            MANAGER,
+                            ADOPTED_AT)
+                    .trackingRecord();
+            TrackingRecord draft = received(arrived, arrival(TOKYO, "2026-11-19T10:00:00Z", "r-1"));
+
+            MilestoneAdoption.Adopted adoption =
+                    (MilestoneAdoption.Adopted) draft.adoptCandidate(2, MANAGER, ADOPTED_AT);
+
+            assertThat(adoption.milestone().state()).isEqualTo(MilestoneState.UNDER_REVIEW);
+            assertThat(adoption.trackingRecord().latestEta()).isEqualTo(at("2026-11-18T00:00:00Z"));
+            assertThat(adoption.trackingRecord().lastAcquiredAt()).contains(at("2026-11-18T01:00:00Z"));
+        }
+
+        @Test
+        void 行10_拒否と判断済みと同じ値は追跡記録を返さない() {
+            TrackingRecord draft = received(arrival(TOKYO, "2026-11-19T10:00:00Z", "r-1"));
+            TrackingRecord adopted =
+                    ((MilestoneAdoption.Adopted) draft.adoptCandidate(1, MANAGER, ADOPTED_AT)).trackingRecord();
+            TrackingRecord sameValue = received(adopted, arrival(TOKYO, "2026-11-19T11:00:00Z", "r-2"));
+
+            assertThat(draft.adoptCandidate(1, MANAGER, at("2026-11-18T00:00:00Z")))
+                    .isInstanceOf(MilestoneAdoption.Rejected.class);
+            assertThat(sameValue.adoptCandidate(2, MANAGER, ADOPTED_AT))
+                    .isInstanceOf(MilestoneAdoption.SameAsAdopted.class);
+            assertThat(sameValue.latestEta()).isEqualTo(adopted.latestEta());
+            assertThat(sameValue.lastAcquiredAt()).isEqualTo(adopted.lastAcquiredAt());
+        }
+    }
 }

@@ -279,4 +279,43 @@ class TrackingRecordExternalMilestoneTest {
             assertThat(changed.milestones().getFirst().state()).isEqualTo(MilestoneState.DRAFT);
         }
     }
+
+    /**
+     * Bolt 39g3 の行 11（DE-13 の受け取りは採用の実績を変えないので、最新の到着見込みと最終取得時刻を保存した値のまま持つ。現在状態と同じく導出し直さない）。
+     * 組み立ての見込みは当初の到着予定と違う値（2026-11-16 03:00）にして、受け取りで導出し直していないことを確かめる。
+     */
+    @Nested
+    class Bolt39g3_受け取りの最新の到着見込み {
+
+        @Test
+        void 行11_下書きを足しても見込みと最終取得時刻は変わらない() {
+            TrackingRecord before = confirmed();
+
+            TrackingRecord after = received(before.receiveExternalMilestone(external(RECEIVED_RECORD), RECEIVED_AT))
+                    .trackingRecord();
+
+            assertThat(after.milestones().getFirst().state()).isEqualTo(MilestoneState.DRAFT);
+            assertThat(after.latestEta()).isEqualTo(at("2026-11-16T03:00:00Z"));
+            assertThat(after.lastAcquiredAt()).isEmpty();
+        }
+
+        @Test
+        void 行11_完了後の保持のみを足しても見込みと最終取得時刻は変わらない() {
+            TrackingRecord before = trackingRecord(TrackedBookingStatus.COMPLETED, TrackingStatus.DELIVERED);
+
+            TrackingRecord after = received(before.receiveExternalMilestone(external(RECEIVED_RECORD), RECEIVED_AT))
+                    .trackingRecord();
+
+            assertThat(after.milestones().getFirst().state()).isEqualTo(MilestoneState.RETAINED_ONLY);
+            assertThat(after.latestEta()).isEqualTo(at("2026-11-16T03:00:00Z"));
+            assertThat(after.lastAcquiredAt()).isEmpty();
+        }
+
+        @Test
+        void 行11_取消済みは実績を作らない() {
+            assertThat(trackingRecord(TrackedBookingStatus.CANCELLED, TrackingStatus.PICKUP_SCHEDULED)
+                            .receiveExternalMilestone(external(RECEIVED_RECORD), RECEIVED_AT))
+                    .isInstanceOf(ExternalMilestoneReceipt.BookingCancelled.class);
+        }
+    }
 }

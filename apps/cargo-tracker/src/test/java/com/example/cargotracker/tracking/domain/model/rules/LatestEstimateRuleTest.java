@@ -1,0 +1,170 @@
+package com.example.cargotracker.tracking.domain.model.rules;
+
+import static com.example.cargotracker.tracking.domain.model.TrackingFixture.at;
+import static com.example.cargotracker.tracking.domain.model.TrackingFixture.leg;
+import static com.example.cargotracker.tracking.domain.model.TrackingFixture.schedule;
+import static org.assertj.core.api.Assertions.assertThat;
+
+import com.example.cargotracker.shared.domain.Location;
+import com.example.cargotracker.shared.domain.Source;
+import com.example.cargotracker.shared.domain.SourceKind;
+import com.example.cargotracker.shared.domain.UserId;
+import com.example.cargotracker.shared.domain.UtcInstant;
+import com.example.cargotracker.tracking.domain.model.entities.Milestone;
+import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneKind;
+import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneState;
+import com.example.cargotracker.tracking.domain.model.valueobjects.Schedule;
+import java.util.List;
+import java.util.UUID;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.EnumSource;
+
+/**
+ * 最新の到着見込みの規則（T-INV-10。Bolt 39g3 の状態の組み合わせの行 1〜6。【業務の判断】(ao)）。予定は 2 区間（区間 1: JPTYO から KRPUS、
+ * 出発予定 2026-11-01 00:00、到着予定 2026-11-03 00:00。区間 2: KRPUS から USLAX、出発予定 2026-11-04 00:00、到着予定 2026-11-15 00:00。UTC）。
+ */
+class LatestEstimateRuleTest {
+
+    private static final UtcInstant ORIGINAL = at("2026-11-15T00:00:00Z");
+    private static final UserId REGISTRANT = new UserId(UUID.fromString("00000000-0000-0000-0000-000000039301"));
+
+    private final LatestEstimateRule rule = new LatestEstimateRule();
+
+    /** 行 1。対応づけの入力と期待の組（T-244）。発生時刻は結ぶ予定時刻の 6 時間後なので、結べば当初の到着予定から動く。 */
+    @ParameterizedTest(name = "行1 {0}: {1} {2} {3} → {4}")
+    @CsvSource({
+        "(a) 出発・JPTYO は区間 1 の出発予定, DEPARTURE, JPTYO, 2026-11-01T06:00:00Z, 2026-11-15T06:00:00Z",
+        "(b) 出発・KRPUS は区間 2 の出発予定, DEPARTURE, KRPUS, 2026-11-04T06:00:00Z, 2026-11-15T06:00:00Z",
+        "(c) 積替・KRPUS は区間 1 の到着予定, TRANSSHIPMENT, KRPUS, 2026-11-03T06:00:00Z, 2026-11-15T06:00:00Z",
+        "(d) 到着・USLAX は区間 2 の到着予定で実績の時刻, ARRIVAL, USLAX, 2026-11-15T06:00:00Z, 2026-11-15T06:00:00Z",
+        "(e) 集荷は結ばない, PICKUP, JPTYO, 2026-11-01T06:00:00Z, 2026-11-15T00:00:00Z",
+        "(e) 搬入は結ばない, RECEIPT_AT_ORIGIN, JPTYO, 2026-11-01T06:00:00Z, 2026-11-15T00:00:00Z",
+        "(e) 引渡しは結ばない, DELIVERY, USLAX, 2026-11-15T06:00:00Z, 2026-11-15T00:00:00Z",
+        "(f) 区間にない場所は結ばない, DEPARTURE, CNSHA, 2026-11-01T06:00:00Z, 2026-11-15T00:00:00Z",
+        "(g) 到着・KRPUS は最後の区間の揚地でないので結ばない, ARRIVAL, KRPUS, 2026-11-03T06:00:00Z, 2026-11-15T00:00:00Z",
+        "(g) 積替・USLAX は最後の区間の揚地なので結ばない, TRANSSHIPMENT, USLAX, 2026-11-15T06:00:00Z, 2026-11-15T00:00:00Z",
+        "(g) 出発・USLAX は積地にないので結ばない, DEPARTURE, USLAX, 2026-11-15T06:00:00Z, 2026-11-15T00:00:00Z"
+    })
+    void 行1_実績の種類と場所で予定区間の時刻に結ぶ(String row, MilestoneKind kind, String location, String occurredAt, String expected) {
+        assertThat(rule.estimate(schedule(), List.of(adopted(1, kind, location, occurredAt))))
+                .isEqualTo(at(expected));
+    }
+
+    /** 行 1 の守り。同じ場所が 2 つ以上の区間の積地に当たる出発は結ばない（予定の規則は同じ港を 2 度使うことを禁じていない）。 */
+    @Test
+    void 行1_同じ場所が2つ以上の区間に当たる実績は結ばない() {
+        Schedule looped = new Schedule(
+                "RC-2026-0001",
+                1,
+                List.of(
+                        leg("V100", "JPTYO", "KRPUS", "2026-11-01T00:00:00Z", "2026-11-03T00:00:00Z"),
+                        leg("V200", "KRPUS", "JPTYO", "2026-11-04T00:00:00Z", "2026-11-06T00:00:00Z"),
+                        leg("V300", "JPTYO", "USLAX", "2026-11-07T00:00:00Z", "2026-11-15T00:00:00Z")));
+
+        assertThat(rule.estimate(looped, List.of(adopted(1, MilestoneKind.DEPARTURE, "JPTYO", "2026-11-07T06:00:00Z"))))
+                .isEqualTo(ORIGINAL);
+    }
+
+    /** 行 2。出発・積替の遅れ。遅れだけを先へ送り、早い出発で見込みを早めない（本計画 CP-3）。 */
+    @ParameterizedTest(name = "行2 {0}")
+    @CsvSource({
+        "(a) 6 時間後, DEPARTURE, JPTYO, 2026-11-01T06:00:00Z, 2026-11-15T06:00:00Z",
+        "(b) ちょうど, DEPARTURE, JPTYO, 2026-11-01T00:00:00Z, 2026-11-15T00:00:00Z",
+        "(c) 3 時間前, DEPARTURE, JPTYO, 2026-10-31T21:00:00Z, 2026-11-15T00:00:00Z",
+        "(a) 積替の 6 時間後, TRANSSHIPMENT, KRPUS, 2026-11-03T06:00:00Z, 2026-11-15T06:00:00Z",
+        "(b) 積替のちょうど, TRANSSHIPMENT, KRPUS, 2026-11-03T00:00:00Z, 2026-11-15T00:00:00Z",
+        "(c) 積替の 3 時間前, TRANSSHIPMENT, KRPUS, 2026-11-02T21:00:00Z, 2026-11-15T00:00:00Z"
+    })
+    void 行2_出発と積替は正の遅れだけを当初の到着予定に足す(
+            String row, MilestoneKind kind, String location, String occurredAt, String expected) {
+        assertThat(rule.estimate(schedule(), List.of(adopted(1, kind, location, occurredAt))))
+                .isEqualTo(at(expected));
+    }
+
+    /** 行 3。到着（最後の区間の揚地）の実績なら見込みは実績の発生時刻（早着も実績にする）。 */
+    @ParameterizedTest(name = "行3 {0}")
+    @CsvSource({"(a) 遅い, 2026-11-15T09:00:00Z", "(b) 同じ, 2026-11-15T00:00:00Z", "(c) 早い, 2026-11-14T18:00:00Z"})
+    void 行3_到着の実績なら見込みは実績の発生時刻(String row, String occurredAt) {
+        assertThat(rule.estimate(schedule(), List.of(adopted(1, MilestoneKind.ARRIVAL, "USLAX", occurredAt))))
+                .isEqualTo(at(occurredAt));
+    }
+
+    /** 行 4 (a)。予定の順で最も後の実績を使う（積替港で遅れを取り戻した）。 */
+    @Test
+    void 行4a_予定の順で最も後の実績の遅れを使う() {
+        List<Milestone> milestones = List.of(
+                adopted(1, MilestoneKind.DEPARTURE, "JPTYO", "2026-11-01T06:00:00Z"),
+                adopted(2, MilestoneKind.DEPARTURE, "KRPUS", "2026-11-04T00:00:00Z"));
+
+        assertThat(rule.estimate(schedule(), milestones)).isEqualTo(ORIGINAL);
+    }
+
+    /** 行 4 (a) の逆の登録の順。実績番号の順でなく予定の順で選ぶ。 */
+    @Test
+    void 行4a_登録の順によらず予定の順で選ぶ() {
+        List<Milestone> milestones = List.of(
+                adopted(1, MilestoneKind.DEPARTURE, "KRPUS", "2026-11-04T02:00:00Z"),
+                adopted(2, MilestoneKind.DEPARTURE, "JPTYO", "2026-11-01T06:00:00Z"));
+
+        assertThat(rule.estimate(schedule(), milestones)).isEqualTo(at("2026-11-15T02:00:00Z"));
+    }
+
+    /** 行 4 (b)。同じ予定時刻に 2 つの出典の出発があれば発生時刻の遅い方。 */
+    @Test
+    void 行4b_同じ予定時刻なら発生時刻の遅い実績を使う() {
+        List<Milestone> milestones = List.of(
+                adopted(1, MilestoneKind.DEPARTURE, "JPTYO", "2026-11-01T06:00:00Z"),
+                adopted(2, MilestoneKind.DEPARTURE, "JPTYO", "2026-11-01T04:00:00Z"));
+
+        assertThat(rule.estimate(schedule(), milestones)).isEqualTo(at("2026-11-15T06:00:00Z"));
+    }
+
+    /** 行 5。採用だけが見込みを動かす（T-INV-08 と同じく現在状態に効く実績だけ）。 */
+    @ParameterizedTest(name = "行5 {0}")
+    @EnumSource(MilestoneState.class)
+    void 行5_採用の実績だけが見込みを動かす(MilestoneState state) {
+        Milestone milestone = new Milestone(
+                1,
+                MilestoneKind.DEPARTURE,
+                new Location("JPTYO"),
+                at("2026-11-01T06:00:00Z"),
+                source("F-1"),
+                state,
+                REGISTRANT,
+                at("2026-11-02T00:00:00Z"));
+
+        assertThat(rule.estimate(schedule(), List.of(milestone)))
+                .isEqualTo(state == MilestoneState.ADOPTED ? at("2026-11-15T06:00:00Z") : ORIGINAL);
+    }
+
+    /** 行 6。対応する採用の実績がなければ当初の到着予定。 */
+    @Test
+    void 行6_実績がなければ当初の到着予定() {
+        assertThat(rule.estimate(schedule(), List.of())).isEqualTo(ORIGINAL);
+    }
+
+    @Test
+    void 行6_集荷だけなら当初の到着予定() {
+        assertThat(rule.estimate(
+                        schedule(), List.of(adopted(1, MilestoneKind.PICKUP, "JPTYO", "2026-11-01T06:00:00Z"))))
+                .isEqualTo(ORIGINAL);
+    }
+
+    private static Milestone adopted(int no, MilestoneKind kind, String location, String occurredAt) {
+        return new Milestone(
+                no,
+                kind,
+                new Location(location),
+                at(occurredAt),
+                source("F-" + no),
+                MilestoneState.ADOPTED,
+                REGISTRANT,
+                at("2026-11-16T00:00:00Z"));
+    }
+
+    private static Source source(String reference) {
+        return new Source(SourceKind.FIELD_RECORD, reference, at("2026-11-16T00:00:00Z"));
+    }
+}

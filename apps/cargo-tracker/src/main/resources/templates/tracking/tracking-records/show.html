@@ -20,6 +20,8 @@
         <dd class="col-sm-9" th:text="${trackingRecord.originalEta()}">2026-11-15 09:00 Asia/Tokyo（UTC+09:00）</dd>
         <dt class="col-sm-3">最新の到着見込み</dt>
         <dd class="col-sm-9" th:text="${trackingRecord.latestEta()}">2026-11-16 12:00 Asia/Tokyo（UTC+09:00）</dd>
+        <dt class="col-sm-3">最終取得時刻</dt>
+        <dd class="col-sm-9" th:text="${trackingRecord.lastAcquiredAt()}">2026-11-01 12:00 Asia/Tokyo（UTC+09:00）</dd>
     </dl>
     <h2 class="h4" id="schedule-heading">予定</h2>
     <ol aria-labelledby="schedule-heading">

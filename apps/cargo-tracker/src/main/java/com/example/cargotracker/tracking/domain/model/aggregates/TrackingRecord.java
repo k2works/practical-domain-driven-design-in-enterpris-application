@@ -13,6 +13,7 @@ import com.example.cargotracker.tracking.domain.events.TrackingPlacedUnderReview
 import com.example.cargotracker.tracking.domain.events.TrackingStarted;
 import com.example.cargotracker.tracking.domain.model.entities.Milestone;
 import com.example.cargotracker.tracking.domain.model.rules.CurrentStatusDeriver;
+import com.example.cargotracker.tracking.domain.model.rules.LatestEstimateRule;
 import com.example.cargotracker.tracking.domain.model.rules.MilestoneSequenceRule;
 import com.example.cargotracker.tracking.domain.model.valueobjects.AdoptionRejectionReason;
 import com.example.cargotracker.tracking.domain.model.valueobjects.CustomerMilestone;
@@ -52,6 +53,10 @@ import java.util.UUID;
  *
  * <p>状態が採用になった集荷・引渡しの実績では、登録・採用の結果に DE-09・DE-10 を載せる（Bolt 39g2。予約の状態と輸送段階は追跡の listener が予約の
  * 公開 API で進める。ADR-014）。追跡記録の予約状態の写しは完了にしない（【前の決定の変更】(17)。完了後の判定は採用済みの実績から導いた状態で効く）。
+ *
+ * <p>最新の到着見込みと最終取得時刻は、現在状態と同じく実績が変わったとき（現在状態を導出し直すとき）に採用の実績から導いて持ち、保存した値を読む
+ * （Bolt 39g3。{@link LatestEstimateRule}。最終取得時刻は採用の実績の出典の取得時刻のうち最も新しいもの。【業務の判断】(ap)）。当初の到着予定は変えない
+ * （T-INV-10）。DE-13 の下書きと完了後の保持のみは採用の実績を変えないので導出し直さない。
  */
 @AggregateRoot
 @CoreConcept
@@ -60,6 +65,7 @@ public final class TrackingRecord {
     private static final long INITIAL_AGGREGATE_VERSION = 0;
     private static final CurrentStatusDeriver DERIVER = new CurrentStatusDeriver();
     private static final MilestoneSequenceRule SEQUENCE = new MilestoneSequenceRule();
+    private static final LatestEstimateRule ESTIMATE = new LatestEstimateRule();
 
     private final TrackingNumber trackingNumber;
     private final UUID bookingId;
@@ -73,6 +79,7 @@ public final class TrackingRecord {
     private final List<Milestone> milestones;
     private final UtcInstant originalEta;
     private final UtcInstant latestEta;
+    private final Optional<UtcInstant> lastAcquiredAt;
     private final UtcInstant startedAt;
     private final long aggregateVersion;
 
@@ -88,6 +95,7 @@ public final class TrackingRecord {
             List<Milestone> milestones,
             UtcInstant originalEta,
             UtcInstant latestEta,
+            Optional<UtcInstant> lastAcquiredAt,
             UtcInstant startedAt,
             long aggregateVersion) {
         this.trackingNumber = Objects.requireNonNull(trackingNumber, "trackingNumber");
@@ -103,6 +111,7 @@ public final class TrackingRecord {
         this.milestones = List.copyOf(milestones);
         this.originalEta = Objects.requireNonNull(originalEta, "originalEta");
         this.latestEta = Objects.requireNonNull(latestEta, "latestEta");
+        this.lastAcquiredAt = Objects.requireNonNull(lastAcquiredAt, "lastAcquiredAt");
         this.startedAt = Objects.requireNonNull(startedAt, "startedAt");
         this.aggregateVersion = aggregateVersion;
         for (int i = 0; i < this.milestones.size(); i++) {
@@ -142,6 +151,7 @@ public final class TrackingRecord {
                 List.of(),
                 schedule.finalArrival(),
                 schedule.finalArrival(),
+                Optional.empty(),
                 startedAt,
                 INITIAL_AGGREGATE_VERSION);
         return new TrackingStart(
@@ -149,7 +159,10 @@ public final class TrackingRecord {
                 new TrackingStarted(trackingNumber.value(), bookingId, startedAt, trackingRecord.aggregateVersion));
     }
 
-    /** 保存されている状態から組み立てる（リポジトリが使う）。現在状態が確認中なら理由を持つ（Bolt 39gc）。 */
+    /**
+     * 保存されている状態から組み立てる（リポジトリが使う）。現在状態が確認中なら理由を持つ（Bolt 39gc）。最新の到着見込みと最終取得時刻は保存した値を
+     * そのまま持つ（Bolt 39g3）。
+     */
     @SuppressWarnings("java:S107") // 保存されている状態から組み立てるため、集約の値をすべて受け取る
     public static TrackingRecord reconstitute(
             TrackingNumber trackingNumber,
@@ -164,6 +177,7 @@ public final class TrackingRecord {
             List<Milestone> milestones,
             UtcInstant originalEta,
             UtcInstant latestEta,
+            Optional<UtcInstant> lastAcquiredAt,
             UtcInstant startedAt,
             long aggregateVersion) {
         return new TrackingRecord(
@@ -177,11 +191,12 @@ public final class TrackingRecord {
                 milestones,
                 originalEta,
                 latestEta,
+                lastAcquiredAt,
                 startedAt,
                 aggregateVersion);
     }
 
-    /** 確認中でない保存されている状態から組み立てる（確認中の理由を持たない。Bolt 39gc の前の形）。 */
+    /** 確認中でなく最終取得時刻のない保存されている状態から組み立てる（確認中の理由と最終取得時刻を持たない。Bolt 39gc・39g3 の前の形）。 */
     @SuppressWarnings("java:S107") // 保存されている状態から組み立てるため、集約の値をすべて受け取る
     public static TrackingRecord reconstitute(
             TrackingNumber trackingNumber,
@@ -210,6 +225,7 @@ public final class TrackingRecord {
                 milestones,
                 originalEta,
                 latestEta,
+                Optional.empty(),
                 startedAt,
                 aggregateVersion);
     }
@@ -465,9 +481,21 @@ public final class TrackingRecord {
         return new DerivedStatus(currentStatus, statusBasisMilestoneNo, underReviewReason);
     }
 
-    /** 実績を差し替え、現在状態を導出し直した追跡記録。 */
+    /** 実績を差し替え、現在状態と最新の到着見込みと最終取得時刻を導出し直した追跡記録（Bolt 39g3）。 */
     private TrackingRecord derivedWith(List<Milestone> newMilestones) {
-        return withMilestones(newMilestones, DERIVER.derive(newMilestones));
+        return withMilestones(
+                newMilestones,
+                DERIVER.derive(newMilestones),
+                ESTIMATE.estimate(schedule, newMilestones),
+                lastAcquiredOf(newMilestones));
+    }
+
+    /** 採用の実績の出典の取得時刻のうち最も新しいもの（発生時刻の順と独立。下書き・確認中・保持のみは使わない。【業務の判断】(ap)）。 */
+    private static Optional<UtcInstant> lastAcquiredOf(List<Milestone> milestones) {
+        return milestones.stream()
+                .filter(milestone -> milestone.state() == MilestoneState.ADOPTED)
+                .map(milestone -> milestone.source().acquiredAt())
+                .max(Comparator.comparing(UtcInstant::instant));
     }
 
     private List<Milestone> milestonesPlus(Milestone milestone) {
@@ -476,7 +504,16 @@ public final class TrackingRecord {
         return plus;
     }
 
+    /** 実績を差し替え、現在状態と最新の到着見込みと最終取得時刻を保存した値のまま持つ追跡記録（採用の実績が変わらない DE-13 の下書きと保持のみ）。 */
     private TrackingRecord withMilestones(List<Milestone> newMilestones, DerivedStatus newCurrent) {
+        return withMilestones(newMilestones, newCurrent, latestEta, lastAcquiredAt);
+    }
+
+    private TrackingRecord withMilestones(
+            List<Milestone> newMilestones,
+            DerivedStatus newCurrent,
+            UtcInstant newLatestEta,
+            Optional<UtcInstant> newLastAcquiredAt) {
         return new TrackingRecord(
                 trackingNumber,
                 bookingId,
@@ -487,7 +524,8 @@ public final class TrackingRecord {
                 newCurrent,
                 newMilestones,
                 originalEta,
-                latestEta,
+                newLatestEta,
+                newLastAcquiredAt,
                 startedAt,
                 aggregateVersion);
     }
@@ -507,7 +545,7 @@ public final class TrackingRecord {
                         milestone.kind(), milestone.location(), milestone.occurredAt(), milestone.source()))
                 .toList();
         return new CustomerTrackingView(
-                trackingNumber, currentStatus, originalEta, latestEta, schedule.legs(), adopted);
+                trackingNumber, currentStatus, originalEta, latestEta, lastAcquiredAt, schedule.legs(), adopted);
     }
 
     /** 同じ出典識別子（出典の種類と参照）の実績（T-INV-02）。取得時刻は識別子に含めない。 */
@@ -566,9 +604,14 @@ public final class TrackingRecord {
         return originalEta;
     }
 
-    /** 最新の到着見込み（T-INV-10）。 */
+    /** 最新の到着見込み（T-INV-10。Bolt 39g3 から採用の実績で動く）。 */
     public UtcInstant latestEta() {
         return latestEta;
+    }
+
+    /** 最終取得時刻（採用の実績の出典の取得時刻のうち最も新しいもの。採用の実績がなければ空。Bolt 39g3）。 */
+    public Optional<UtcInstant> lastAcquiredAt() {
+        return lastAcquiredAt;
     }
 
     /** 追跡を開始した時刻（追跡記録の作成時刻）。 */

@@ -19,12 +19,15 @@ public interface TrackingRecordMapper {
     void insertScheduledLeg(ScheduledLegRow row);
 
     /** 導出し直した現在状態と根拠の実績番号と確認中の理由（Bolt 39gc）を書き、版を 1 増やす（Bolt 26b）。読み込んだときの版と違えば 0 件。 */
+    @SuppressWarnings("java:S107") // UPDATE の SET と WHERE の値を名前付きの引数で渡す（MyBatis の @Param）
     int updateTrackingRecord(
             @Param("trackingNumber") String trackingNumber,
             @Param("expectedVersion") long expectedVersion,
             @Param("currentStatus") String currentStatus,
             @Param("statusBasisMilestoneNo") Integer statusBasisMilestoneNo,
             @Param("underReviewReason") String underReviewReason,
+            @Param("latestEta") OffsetDateTime latestEta,
+            @Param("lastAcquiredAt") OffsetDateTime lastAcquiredAt,
             @Param("updatedAt") OffsetDateTime updatedAt);
 
     void insertMilestone(MilestoneRow row);

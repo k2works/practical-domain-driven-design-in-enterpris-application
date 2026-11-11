@@ -59,6 +59,7 @@ public class InMemoryTrackingRecordRepository implements TrackingRecordRepositor
                         trackingRecord.milestones(),
                         trackingRecord.originalEta(),
                         trackingRecord.latestEta(),
+                        trackingRecord.lastAcquiredAt(),
                         trackingRecord.startedAt(),
                         trackingRecord.aggregateVersion() + 1));
     }
@@ -119,6 +120,7 @@ public class InMemoryTrackingRecordRepository implements TrackingRecordRepositor
                         saved.currentStatus(),
                         saved.originalEta(),
                         saved.latestEta(),
+                        saved.lastAcquiredAt(),
                         saved.startedAt()))
                 .toList();
     }

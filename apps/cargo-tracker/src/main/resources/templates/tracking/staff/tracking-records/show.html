@@ -30,6 +30,8 @@
         <dd class="col-sm-9" th:text="${trackingRecord.originalEta()}">2026-11-15 09:00 Asia/Tokyo（UTC+09:00）（UTC 2026-11-15 00:00）</dd>
         <dt class="col-sm-3">最新の到着見込み</dt>
         <dd class="col-sm-9" th:text="${trackingRecord.latestEta()}">2026-11-15 09:00 Asia/Tokyo（UTC+09:00）（UTC 2026-11-15 00:00）</dd>
+        <dt class="col-sm-3">最終取得時刻</dt>
+        <dd class="col-sm-9" th:text="${trackingRecord.lastAcquiredAt()}">2026-11-01 12:00 Asia/Tokyo（UTC+09:00）（UTC 2026-11-01 03:00）</dd>
         <dt class="col-sm-3">経路</dt>
         <dd class="col-sm-9" th:text="${trackingRecord.route()}">RC-2026-0001 版 1</dd>
     </dl>

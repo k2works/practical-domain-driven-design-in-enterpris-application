@@ -2,6 +2,7 @@ package com.example.cargotracker.tracking.domain.model.valueobjects;
 
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * 追跡記録の要約（S-11 追跡一覧の読み取りモデル。Bolt 26）。集約を組み立てずに、一覧に要る値だけを追跡記録の表から引く。前例
@@ -10,7 +11,8 @@ import java.util.Objects;
  * @param trackingNumber 追跡番号
  * @param currentStatus 現在状態
  * @param originalEta 当初の到着予定（確定した経路版。T-INV-10）
- * @param latestEta 最新の到着見込み（T-INV-10。荷主の一覧 C-10 に示す。Bolt 27）
+ * @param latestEta 最新の到着見込み（T-INV-10。荷主の一覧 C-10 に示す。Bolt 27。S-11 にも示す。Bolt 39g3）
+ * @param lastAcquiredAt 最終取得時刻（S-11 に示す。なければ空。Bolt 39g3）
  * @param startedAt 追跡の開始時刻
  */
 public record TrackingRecordSummary(
@@ -18,6 +20,7 @@ public record TrackingRecordSummary(
         TrackingStatus currentStatus,
         UtcInstant originalEta,
         UtcInstant latestEta,
+        Optional<UtcInstant> lastAcquiredAt,
         UtcInstant startedAt) {
 
     public TrackingRecordSummary {
@@ -25,6 +28,7 @@ public record TrackingRecordSummary(
         Objects.requireNonNull(currentStatus, "currentStatus");
         Objects.requireNonNull(originalEta, "originalEta");
         Objects.requireNonNull(latestEta, "latestEta");
+        Objects.requireNonNull(lastAcquiredAt, "lastAcquiredAt");
         Objects.requireNonNull(startedAt, "startedAt");
     }
 }

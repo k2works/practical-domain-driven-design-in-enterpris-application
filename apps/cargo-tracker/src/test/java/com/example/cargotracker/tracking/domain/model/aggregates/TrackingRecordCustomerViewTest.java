@@ -13,9 +13,11 @@ import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.Source;
 import com.example.cargotracker.shared.domain.SourceKind;
 import com.example.cargotracker.shared.domain.UserId;
+import com.example.cargotracker.shared.domain.UtcInstant;
 import com.example.cargotracker.tracking.domain.model.entities.Milestone;
 import com.example.cargotracker.tracking.domain.model.valueobjects.CustomerMilestone;
 import com.example.cargotracker.tracking.domain.model.valueobjects.CustomerTrackingView;
+import com.example.cargotracker.tracking.domain.model.valueobjects.ExternalMilestone;
 import com.example.cargotracker.tracking.domain.model.valueobjects.ExternalOrigin;
 import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneKind;
 import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneState;
@@ -134,9 +136,64 @@ class TrackingRecordCustomerViewTest {
         // Bolt 27 の開発レビュー）。項目を足すときは開示してよいかを決めてから、ここも直す
         assertThat(Arrays.stream(CustomerTrackingView.class.getRecordComponents())
                         .map(RecordComponent::getName))
-                .containsExactly("trackingNumber", "currentStatus", "originalEta", "latestEta", "legs", "milestones");
+                .containsExactly(
+                        "trackingNumber",
+                        "currentStatus",
+                        "originalEta",
+                        "latestEta",
+                        "lastAcquiredAt",
+                        "legs",
+                        "milestones");
         assertThat(Arrays.stream(CustomerMilestone.class.getRecordComponents()).map(RecordComponent::getName))
                 .containsExactly("kind", "location", "occurredAt", "source");
+    }
+
+    /**
+     * Bolt 39g3 の行 19・20（T-INV-09）。荷主の照会の結果の最終取得時刻は採用の実績から決まり、取得時刻の新しい下書き・確認中の取得時刻を漏らさない
+     * （本計画 CP-4、【業務の判断】(ap)）。最新の到着見込みは採用の実績で動いた値を示す。
+     */
+    @Test
+    void Bolt39g3_行19と行20_最終取得時刻は採用の実績から決まり下書きと確認中の取得時刻を見せない() {
+        UtcInstant now = at("2026-11-02T00:00:00Z");
+        TrackingRecord pickedUp = TrackingRecord.start(
+                        TRACKING_NUMBER, BOOKING_ID, SHIPPER, CONSIGNEE, schedule(), STARTED_AT)
+                .trackingRecord()
+                .registerMilestone(
+                        MilestoneKind.PICKUP,
+                        tokyo(),
+                        at("2026-11-01T10:00:00Z"),
+                        new Source(SourceKind.FIELD_RECORD, "F-1", at("2026-11-01T11:00:00Z")),
+                        REGISTRANT,
+                        now)
+                .trackingRecord();
+        TrackingRecord underReview = pickedUp.registerMilestone(
+                        MilestoneKind.DEPARTURE,
+                        tokyo(),
+                        at("2026-11-01T06:00:00Z"),
+                        new Source(SourceKind.FIELD_RECORD, "F-2", at("2026-11-01T12:00:00Z")),
+                        REGISTRANT,
+                        now)
+                .trackingRecord();
+        TrackingRecord withDraft = ((ExternalMilestoneReceipt.Received) underReview.receiveExternalMilestone(
+                        new ExternalMilestone(
+                                TRACKING_NUMBER,
+                                MilestoneKind.DEPARTURE,
+                                new Location("KRPUS"),
+                                at("2026-11-01T09:00:00Z"),
+                                new Source(SourceKind.EXTERNAL_RECORD, "R-1", at("2026-11-01T13:00:00Z")),
+                                new ExternalOrigin(
+                                        UUID.fromString("00000000-0000-0000-0000-000000039304"),
+                                        "MS-0001",
+                                        at("2026-11-01T13:00:00Z")),
+                                REGISTRANT),
+                        now))
+                .trackingRecord();
+
+        CustomerTrackingView view = withDraft.customerView();
+
+        assertThat(view.lastAcquiredAt()).contains(at("2026-11-01T11:00:00Z"));
+        assertThat(view.latestEta()).isEqualTo(withDraft.latestEta());
+        assertThat(view.milestones()).hasSize(1);
     }
 
     private static TrackingRecord withMilestones(TrackingStatus status, List<Milestone> milestones) {

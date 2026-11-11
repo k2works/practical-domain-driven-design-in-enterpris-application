@@ -52,6 +52,7 @@ class TrackingRecordQueryServiceTest {
                         TrackingStatus.PICKUP_SCHEDULED,
                         TrackingFixture.at("2026-11-15T00:00:00Z"),
                         TrackingFixture.at("2026-11-15T00:00:00Z"),
+                        Optional.empty(),
                         TrackingFixture.at("2026-10-26T02:00:00Z")));
     }
 

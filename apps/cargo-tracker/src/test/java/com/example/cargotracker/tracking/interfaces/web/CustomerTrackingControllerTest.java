@@ -2,6 +2,7 @@ package com.example.cargotracker.tracking.interfaces.web;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.matchesPattern;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.stringContainsInOrder;
 import static org.mockito.ArgumentMatchers.any;
@@ -19,6 +20,7 @@ import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.Role;
 import com.example.cargotracker.shared.domain.Source;
 import com.example.cargotracker.shared.domain.SourceKind;
+import com.example.cargotracker.shared.domain.UtcInstant;
 import com.example.cargotracker.tracking.application.internal.queryservices.CustomerTrackingQueryService;
 import com.example.cargotracker.tracking.application.internal.queryservices.RecentTrackingRecords;
 import com.example.cargotracker.tracking.domain.model.TrackingFixture;
@@ -60,17 +62,63 @@ class CustomerTrackingControllerTest {
                 status,
                 TrackingFixture.at("2026-11-15T00:00:00Z"),
                 TrackingFixture.at("2026-11-16T03:00:00Z"),
+                Optional.empty(),
                 TrackingFixture.at("2026-10-26T01:00:00Z"));
     }
 
     private static CustomerTrackingView view(List<CustomerMilestone> milestones) {
+        return view(milestones, Optional.empty());
+    }
+
+    private static CustomerTrackingView view(List<CustomerMilestone> milestones, Optional<UtcInstant> lastAcquiredAt) {
         return new CustomerTrackingView(
                 TrackingFixture.TRACKING_NUMBER,
                 TrackingStatus.PICKED_UP,
                 TrackingFixture.at("2026-11-15T00:00:00Z"),
                 TrackingFixture.at("2026-11-16T03:00:00Z"),
+                lastAcquiredAt,
                 TrackingFixture.schedule().legs(),
                 milestones);
+    }
+
+    /** Bolt 39g3 の行 19（本計画 CP-5）。照会の結果は最新の到着見込みの次に最終取得時刻（荷主の日時表示）。一覧の列は変えない。 */
+    @Test
+    void Bolt39g3_行19_照会の結果は最新の到着見込みの次に最終取得時刻を示す() throws Exception {
+        given(queryService.find(TrackingFixture.TRACKING_NUMBER, TestActors.SHIPPER_COMPANY))
+                .willReturn(
+                        Optional.of(view(List.of(pickup()), Optional.of(TrackingFixture.at("2026-11-01T03:00:00Z")))));
+
+        mockMvc.perform(get(DETAIL))
+                .andExpect(status().isOk())
+                .andExpect(content()
+                        .string(matchesPattern("(?s).*<dt class=\"col-sm-3\">最新の到着見込み</dt>\\s*"
+                                + "<dd class=\"col-sm-9\">2026-11-16 12:00 Asia/Tokyo（UTC\\+09:00）</dd>\\s*"
+                                + "<dt class=\"col-sm-3\">最終取得時刻</dt>\\s*"
+                                + "<dd class=\"col-sm-9\">2026-11-01 12:00 Asia/Tokyo（UTC\\+09:00）</dd>.*")));
+    }
+
+    @Test
+    void Bolt39g3_行19_最終取得時刻がなければまだありませんと示す() throws Exception {
+        given(queryService.find(TrackingFixture.TRACKING_NUMBER, TestActors.SHIPPER_COMPANY))
+                .willReturn(Optional.of(view(List.of())));
+
+        mockMvc.perform(get(DETAIL))
+                .andExpect(status().isOk())
+                .andExpect(content()
+                        .string(matchesPattern("(?s).*<dt class=\"col-sm-3\">最終取得時刻</dt>\\s*"
+                                + "<dd class=\"col-sm-9\">まだありません</dd>.*")));
+    }
+
+    @Test
+    void Bolt39g3_行19_一覧の列は変えない() throws Exception {
+        given(queryService.recent(TestActors.SHIPPER_COMPANY))
+                .willReturn(new RecentTrackingRecords(
+                        List.of(summary("CTABCDEFGH2345", TrackingStatus.PICKED_UP)), false, 50));
+
+        mockMvc.perform(get(LIST))
+                .andExpect(status().isOk())
+                .andExpect(content().string(not(containsString("最終取得時刻"))))
+                .andExpect(content().string(containsString("2026-11-16 12:00 Asia/Tokyo（UTC+09:00）")));
     }
 
     private static CustomerMilestone pickup() {

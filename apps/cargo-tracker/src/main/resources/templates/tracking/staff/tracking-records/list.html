@@ -22,6 +22,8 @@
                 <th scope="col">追跡番号</th>
                 <th scope="col">現在状態</th>
                 <th scope="col">当初の到着予定</th>
+                <th scope="col">最新の到着見込み</th>
+                <th scope="col">最終取得時刻</th>
                 <th scope="col">追跡の開始時刻</th>
             </tr>
             </thead>
@@ -33,6 +35,9 @@
                 <td th:unless="${trackingRecord.underReview()}" th:text="${trackingRecord.status()}">集荷予定</td>
                 <td th:if="${trackingRecord.underReview()}"><span class="badge text-bg-warning"><span aria-hidden="true">⚠ </span><span th:text="${trackingRecord.status()}">確認中</span></span></td>
                 <td th:text="${trackingRecord.originalEta()}">2026-11-15 09:00 Asia/Tokyo（UTC+09:00）（UTC 2026-11-15 00:00）</td>
+                <!--/* 最新の到着見込みは採用の実績で動き、最終取得時刻は採用の実績の取得時刻の最大（なければ「なし」。Bolt 39g3。U-3） */-->
+                <td th:text="${trackingRecord.latestEta()}">2026-11-15 15:00 Asia/Tokyo（UTC+09:00）（UTC 2026-11-15 06:00）</td>
+                <td th:text="${trackingRecord.lastAcquiredAt()}">2026-11-01 12:00 Asia/Tokyo（UTC+09:00）（UTC 2026-11-01 03:00）</td>
                 <td th:text="${trackingRecord.startedAt()}">2026-10-26 10:00 Asia/Tokyo（UTC+09:00）（UTC 2026-10-26 01:00）</td>
             </tr>
             </tbody>
