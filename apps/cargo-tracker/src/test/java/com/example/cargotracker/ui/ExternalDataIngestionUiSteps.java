@@ -62,6 +62,8 @@ public class ExternalDataIngestionUiSteps {
 
     /** Bolt 39g の行 45。確定した予約の主要実績の発生時刻（過去の時刻にする。マニュアルのキャプチャに未来の発生時刻を写さない）。 */
     private static final String DRAFT_OCCURRED_AT = "2026-10-02T00:00:00Z";
+    /** Bolt 39gb の行 62。データ責任者が直した発生時刻（1 時間遅い）。 */
+    private static final String CORRECTED_DRAFT_OCCURRED_AT = "2026-10-02T01:00:00Z";
 
     /** Bolt 39d3b2 の行 16。追跡番号（形は TrackingNumberValue に合わせる。T-230）。 */
     private static final String TRACKING_NUMBER = "CTABCDEFGH2345";
@@ -427,20 +429,43 @@ public class ExternalDataIngestionUiSteps {
         submit();
     }
 
+    /** Bolt 39gb の行 62。データ責任者が同じ主要実績の発生時刻を直し、新しい外部版で送り直す（誤りを直す基本の道。【業務の判断】(t)）。 */
+    @かつ("キー操作だけで承認済みの主要実績の情報源を選び、確定した予約の追跡番号の主要実績の発生時刻を直した新しい外部版のファイルを選んで取り込む")
+    public void 発生時刻を直した新しい外部版を取り込む() {
+        chooseSource();
+        chooseFile((MILESTONE_HEADER + "\n"
+                        + milestoneLine("MS-0301", acquiredAt(), state.trackingNumber(), CORRECTED_DRAFT_OCCURRED_AT)
+                                .replaceFirst(",1,", ",2,")
+                        + "\n")
+                .getBytes(StandardCharsets.UTF_8));
+        submit();
+    }
+
+    /** Bolt 39gb の行 62。DE-13 の配信は非同期なので、外部原本の実績が件数に届くまで待つ。 */
+    @かつ("取り込んだ主要実績が追跡の実績に {int} 件反映される")
+    public void 取り込んだ主要実績が件数だけ反映される(int count) {
+        awaitExternalMilestones(count);
+    }
+
     /** DE-13 の配信は非同期なので、実績の行ができるまで待つ（Bolt 39g の決定 (9)。前例は経路設計の航海の反映）。 */
     @かつ("取り込んだ主要実績が追跡の実績に反映される")
     public void 取り込んだ主要実績が追跡の実績に反映される() {
+        awaitExternalMilestones(1);
+    }
+
+    private void awaitExternalMilestones(int count) {
         for (int i = 0; i < 40; i++) {
             Integer found = jdbc.queryForObject(
                     "SELECT COUNT(*) FROM tracking.milestone WHERE tracking_number = ? AND source_kind = 'EXTERNAL_RECORD'",
                     Integer.class,
                     state.trackingNumber());
-            if (found != null && found > 0) {
+            if (found != null && found >= count) {
                 return;
             }
             page().waitForTimeout(250);
         }
-        throw new AssertionError("取り込んだ主要実績が追跡の実績に反映されない（DE-13 の受け取りを待ちきれない）: " + state.trackingNumber());
+        throw new AssertionError("取り込んだ主要実績が追跡の実績に " + count + " 件反映されない（DE-13 の受け取りを待ちきれない）: "
+                + state.trackingNumber());
     }
 
     /** Bolt 39d3b2 の行 16。主要実績の 2 行（採用 1・内容の違う原本 1）。3 行目は形に合う別の追跡番号にした（T-230）。 */

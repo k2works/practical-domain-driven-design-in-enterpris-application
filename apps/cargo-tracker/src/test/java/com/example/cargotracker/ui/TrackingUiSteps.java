@@ -152,6 +152,37 @@ public class TrackingUiSteps {
         browser.checkAccessibility();
     }
 
+    /** Bolt 39gb の行 62。実績番号の項目（id は milestone-N）の文。 */
+    @ならば("主要実績の一覧の実績 {int} に {string} が示される")
+    public void 主要実績の一覧の実績に示される(int milestoneNo, String text) {
+        assertThat(page().locator("#milestone-" + milestoneNo)).containsText(text);
+        browser.checkAccessibility();
+    }
+
+    @ならば("主要実績の一覧の実績 {int} に採用のボタン {string} が示される")
+    public void 採用のボタンが示される(int milestoneNo, String label) {
+        assertThat(page().locator("#milestone-" + milestoneNo)
+                        .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName(label).setExact(true)))
+                .isVisible();
+    }
+
+    /**
+     * Bolt 39gb の行 62。Tab でボタンに移り Enter で押す。送る前と戻った後の URL が同じ（PRG で同じ追跡の詳細に戻る）ので URL では待てない。リダイレクトの後の
+     * 追跡の詳細の GET の応答と読み込みを待ってから検査する（遷移の途中で axe を動かさない）。
+     */
+    @もし("キー操作だけで採用のボタン {string} を押す")
+    public void キー操作だけで押す(String label) {
+        browser.tabUntilFocused(page().getByRole(
+                AriaRole.BUTTON, new Page.GetByRoleOptions().setName(label).setExact(true)));
+        String detail = "/staff/tracking-records/" + state.trackingNumber();
+        page().waitForResponse(
+                response -> "GET".equals(response.request().method()) && response.url().endsWith(detail),
+                () -> page().keyboard().press("Enter"));
+        page().waitForLoadState();
+        assertThat(page().getByRole(AriaRole.STATUS).or(page().getByRole(AriaRole.ALERT))).isVisible();
+        browser.checkAccessibility();
+    }
+
     @ならば("主要実績の一覧の実績は {int} 件だけである")
     public void 主要実績の件数(int count) {
         assertThat(milestones().getByRole(AriaRole.LISTITEM)).hasCount(count);
