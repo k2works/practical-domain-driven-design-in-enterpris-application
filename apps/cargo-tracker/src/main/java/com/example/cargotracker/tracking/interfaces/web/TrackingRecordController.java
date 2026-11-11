@@ -3,11 +3,13 @@ package com.example.cargotracker.tracking.interfaces.web;
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import com.example.cargotracker.tracking.application.internal.commands.RegisterMilestoneCommand;
+import com.example.cargotracker.tracking.application.internal.commandservices.MilestoneAdoptionOutcome;
 import com.example.cargotracker.tracking.application.internal.commandservices.MilestoneRegistrationOutcome;
 import com.example.cargotracker.tracking.application.internal.commandservices.TrackingRecordCommandService;
 import com.example.cargotracker.tracking.application.internal.queryservices.RecentTrackingRecords;
 import com.example.cargotracker.tracking.application.internal.queryservices.TrackingRecordQueryService;
 import com.example.cargotracker.tracking.domain.model.aggregates.TrackingRecord;
+import com.example.cargotracker.tracking.domain.model.valueobjects.AdoptionRejectionReason;
 import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneKind;
 import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneRejectionReason;
 import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingNumber;
@@ -27,6 +29,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -52,6 +55,8 @@ public class TrackingRecordController {
     private static final String RESULT_LINK_LABEL = "resultLinkLabel";
     private static final String PROBLEM = "problem";
     private static final String CONFLICT_MESSAGE = "ほかの更新が先にこの追跡記録を変更しました。最新の主要実績を確かめ、必要なら、もう一度登録してください。";
+    private static final String ADOPTION_CONFLICT_MESSAGE =
+            "ほかの更新が先にこの追跡記録を変更しました。最新の主要実績を確かめ、必要なら、もう一度採用してください。";
 
     /** エラー要約に出す項目の名前。文言は項目の名前で始めない（共通部品「エラー要約」）。 */
     private static final Map<String, String> FIELD_LABELS = Map.of(
@@ -91,8 +96,51 @@ public class TrackingRecordController {
     /** 追跡の詳細（S-12）。形式の誤った追跡番号は、ない追跡番号と同じく 404 にする。 */
     @GetMapping("/{trackingNumber}")
     public String detail(@PathVariable String trackingNumber, AuthenticatedActor actor, Model model) {
-        model.addAttribute("trackingRecord", TrackingRecordViews.detail(found(trackingNumber, actor)));
+        model.addAttribute(
+                "trackingRecord",
+                TrackingRecordViews.detail(
+                        found(trackingNumber, actor), actor.userId(), new UtcInstant(clock.instant())));
         return DETAIL_VIEW;
+    }
+
+    /**
+     * 下書きの候補を採用する（S-12、US-12 AC1・AC2 の外部の分。Bolt 39gb）。PRG で S-12 に戻って結果を示す。範囲の判定はコマンドより先（Bolt 38g の前例）。
+     * 採用済みと同じ値は望んだ結果が成り立っているので結果として、拒否と競合は警告として示す。
+     */
+    @PostMapping("/{trackingNumber}/milestones/{milestoneNo}/adopt")
+    public String adoptMilestone(
+            @PathVariable String trackingNumber,
+            @PathVariable int milestoneNo,
+            @RequestParam long expectedVersion,
+            AuthenticatedActor actor,
+            RedirectAttributes redirectAttributes) {
+        TrackingNumber number =
+                TrackingRecordViews.parseTrackingNumber(trackingNumber).orElseThrow(this::notFound);
+        rejectOutOfScope(number, actor);
+        switch (commandService.adoptCandidate(number, milestoneNo, expectedVersion, actor)) {
+            case MilestoneAdoptionOutcome.Adopted(int adopted, TrackingStatus currentStatus) ->
+                redirectAttributes.addFlashAttribute(
+                        RESULT,
+                        "実績 " + adopted + " を採用しました。現在状態は「" + TrackingRecordViews.status(currentStatus) + "」です。");
+            case MilestoneAdoptionOutcome.SameAsAdopted(int adoptedMilestoneNo) ->
+                redirectAttributes.addFlashAttribute(
+                        RESULT,
+                        "実績 " + milestoneNo + " は採用済みの実績 " + adoptedMilestoneNo + " と同じ値です。採用は要りません。");
+            case MilestoneAdoptionOutcome.Rejected(AdoptionRejectionReason reason) ->
+                redirectAttributes.addFlashAttribute(PROBLEM, adoptionProblem(milestoneNo, reason));
+            case MilestoneAdoptionOutcome.Conflict _ ->
+                redirectAttributes.addFlashAttribute(PROBLEM, ADOPTION_CONFLICT_MESSAGE);
+            case MilestoneAdoptionOutcome.NotFound _ -> throw notFound();
+            case MilestoneAdoptionOutcome.OutOfScope _ -> throw recordOutOfScope(number, actor);
+        }
+        return "redirect:/staff/tracking-records/{trackingNumber}";
+    }
+
+    private static String adoptionProblem(int milestoneNo, AdoptionRejectionReason reason) {
+        if (reason == AdoptionRejectionReason.NOT_CANDIDATE) {
+            return "実績 " + milestoneNo + " は候補ではありません。最新の主要実績を確かめてください。";
+        }
+        return "実績 " + milestoneNo + " は採用できません。" + TrackingRecordViews.adoptionRejection(reason) + "。";
     }
 
     /** 主要実績の登録（S-13）。画面を開いたときの追跡記録の版を隠し項目に入れる（競合の検出）。 */

@@ -10,7 +10,9 @@ import com.example.cargotracker.shared.domain.SourceKind;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import com.example.cargotracker.tracking.application.internal.commands.RegisterMilestoneCommand;
+import com.example.cargotracker.tracking.application.internal.commandservices.MilestoneAdoptionOutcome;
 import com.example.cargotracker.tracking.application.internal.commandservices.MilestoneRegistrationOutcome;
+import com.example.cargotracker.tracking.domain.model.valueobjects.AdoptionRejectionReason;
 import com.example.cargotracker.tracking.application.internal.commandservices.TrackingRecordCommandService;
 import com.example.cargotracker.tracking.domain.model.TrackingFixture;
 import com.example.cargotracker.tracking.domain.model.aggregates.TrackingRecord;
@@ -45,6 +47,7 @@ public class MilestoneSteps {
     private final ExternalMilestoneArrival externalMilestoneArrival;
     private final Clock clock;
     private MilestoneRegistrationOutcome outcome;
+    private MilestoneAdoptionOutcome adoptionOutcome;
 
     public MilestoneSteps(
             InMemoryTrackingRecordRepository trackingRecords,
@@ -112,6 +115,53 @@ public class MilestoneSteps {
         assertThat(rejectedMilestones.all()).hasSize(count);
         assertThat(rejectedMilestones.all())
                 .allSatisfy(rejected -> assertThat(rejected.reason()).isEqualTo(reason(reason)));
+    }
+
+    /** Bolt 39gb の行 63。同じ情報源・同じ外部 ID の主要実績の DE-13（受信記録 ID は公開した時刻ごとに違う）。発生時刻は現在時刻より前。 */
+    @前提("追跡番号 {string} に場所 {string} の外部原本の主要実績が公開した時刻 {string} で届く")
+    public void 公開した時刻の外部原本の主要実績が届く(String trackingNumber, String location, String publishedAt) {
+        externalMilestoneArrival.arrive(new ExternalMilestone(
+                new TrackingNumber(trackingNumber),
+                MilestoneKind.DEPARTURE,
+                new Location(location),
+                at("2026-11-01T02:00:00Z"),
+                new Source(SourceKind.EXTERNAL_RECORD, "received-" + publishedAt, at(publishedAt)),
+                new ExternalOrigin(UUID.fromString("00000000-0000-0000-0000-000000039b05"), "MS-0001", at(publishedAt)),
+                new UserId(UUID.fromString("00000000-0000-0000-0000-000000039b07"))));
+    }
+
+    /** Bolt 39gb の行 63。画面を開いたときの版は今の版。 */
+    @もし("追跡管理者が追跡番号 {string} の実績 {int} を採用する")
+    public void 実績を採用する(String trackingNumber, int milestoneNo) {
+        TrackingRecord trackingRecord = trackingRecords
+                .findByTrackingNumber(new TrackingNumber(trackingNumber))
+                .orElseThrow();
+        adoptionOutcome = commandService.adoptCandidate(
+                trackingRecord.trackingNumber(),
+                milestoneNo,
+                trackingRecord.aggregateVersion(),
+                AuthenticatedActorFixture.trackingManagerHandling(TRACKING_MANAGER, trackingRecord.shipperCompanyId()));
+    }
+
+    @ならば("実績 {int} が採用される")
+    public void 実績が採用される(int milestoneNo) {
+        assertThat(adoptionOutcome)
+                .isInstanceOfSatisfying(
+                        MilestoneAdoptionOutcome.Adopted.class,
+                        adopted -> assertThat(adopted.milestoneNo()).isEqualTo(milestoneNo));
+        assertThat(onlyTrackingRecord().milestones().get(milestoneNo - 1).adoptedBy()).isEqualTo(TRACKING_MANAGER);
+    }
+
+    @ならば("実績 {int} は候補でないので採用されない")
+    public void 候補でないので採用されない(int milestoneNo) {
+        assertThat(adoptionOutcome)
+                .isEqualTo(new MilestoneAdoptionOutcome.Rejected(AdoptionRejectionReason.NOT_CANDIDATE));
+        assertThat(onlyTrackingRecord().milestones().get(milestoneNo - 1).state()).isEqualTo(MilestoneState.DRAFT);
+    }
+
+    @ならば("採用済みの実績 {int} と同じ値なので採用は要らないと返される")
+    public void 採用済みと同じ値(int adoptedMilestoneNo) {
+        assertThat(adoptionOutcome).isEqualTo(new MilestoneAdoptionOutcome.SameAsAdopted(adoptedMilestoneNo));
     }
 
     @ならば("実績 {int} の状態は {string} である")
@@ -227,6 +277,7 @@ public class MilestoneSteps {
     private static MilestoneState state(String name) {
         return switch (name) {
             case "採用" -> MilestoneState.ADOPTED;
+            case "下書き" -> MilestoneState.DRAFT;
             case "保持のみ" -> MilestoneState.RETAINED_ONLY;
             default -> throw new IllegalArgumentException("未知の実績の状態: " + name);
         };
@@ -235,6 +286,7 @@ public class MilestoneSteps {
     private static TrackingStatus status(String name) {
         return switch (name) {
             case "集荷済み" -> TrackingStatus.PICKED_UP;
+            case "輸送中" -> TrackingStatus.IN_TRANSIT;
             case "引渡し済み" -> TrackingStatus.DELIVERED;
             default -> throw new IllegalArgumentException("未知の追跡状態: " + name);
         };

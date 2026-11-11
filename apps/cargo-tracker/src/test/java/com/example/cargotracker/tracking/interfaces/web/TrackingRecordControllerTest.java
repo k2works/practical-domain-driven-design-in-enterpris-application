@@ -4,10 +4,17 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.matchesPattern;
 import static org.hamcrest.Matchers.not;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.never;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.example.cargotracker.identity.infrastructure.security.TestActors;
@@ -17,7 +24,11 @@ import com.example.cargotracker.shared.domain.Role;
 import com.example.cargotracker.shared.domain.Source;
 import com.example.cargotracker.shared.domain.SourceKind;
 import com.example.cargotracker.shared.domain.UtcInstant;
+import com.example.cargotracker.tracking.application.internal.commandservices.MilestoneAdoptionOutcome;
 import com.example.cargotracker.tracking.application.internal.commandservices.TrackingRecordCommandService;
+import com.example.cargotracker.tracking.domain.model.valueobjects.AdoptionRejectionReason;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 import com.example.cargotracker.tracking.application.internal.queryservices.RecentTrackingRecords;
 import com.example.cargotracker.tracking.application.internal.queryservices.TrackingRecordQueryService;
 import com.example.cargotracker.tracking.domain.model.TrackingFixture;
@@ -370,6 +381,232 @@ class TrackingRecordControllerTest {
                     .andExpect(content().string(containsString("状態 下書き")))
                     .andExpect(content().string(containsString("集荷予定")))
                     .andExpect(content().string(not(containsString("状態 採用"))));
+        }
+    }
+
+    /** Bolt 39gb の行 43・51〜55・50・57（S-12 の候補の表示と採用の POST）。 */
+    @Nested
+    class Bolt39gb_下書きの候補と採用 {
+
+        private static final String ADOPT = DETAIL + "/milestones/2/adopt";
+        private static final UUID SOURCE_ID = UUID.fromString("00000000-0000-0000-0000-0000039b0c01");
+
+        private Milestone external(int no, Location location, String occurredAt, String publishedAt, MilestoneState state) {
+            UtcInstant published = TrackingFixture.at(publishedAt);
+            boolean adopted = state == MilestoneState.ADOPTED;
+            return new Milestone(
+                    no,
+                    MilestoneKind.DEPARTURE,
+                    location,
+                    TrackingFixture.at(occurredAt),
+                    new Source(SourceKind.EXTERNAL_RECORD, "r-" + no, published),
+                    state,
+                    TestActors.STAFF_USER,
+                    published,
+                    new ExternalOrigin(SOURCE_ID, "MS-0301", published),
+                    adopted ? TestActors.STAFF_USER : null,
+                    adopted ? published : null);
+        }
+
+        private TrackingRecord withMilestones(TrackedBookingStatus bookingStatus, List<Milestone> milestones) {
+            return TrackingRecord.reconstitute(
+                    TrackingFixture.TRACKING_NUMBER,
+                    TrackingFixture.BOOKING_ID,
+                    TrackingFixture.SHIPPER,
+                    TrackingFixture.CONSIGNEE,
+                    bookingStatus,
+                    TrackingFixture.schedule(),
+                    TrackingStatus.PICKUP_SCHEDULED,
+                    OptionalInt.empty(),
+                    milestones,
+                    TrackingFixture.at("2026-11-15T00:00:00Z"),
+                    TrackingFixture.at("2026-11-16T03:00:00Z"),
+                    TrackingFixture.STARTED_AT,
+                    7);
+        }
+
+        private String detailOf(TrackingRecord trackingRecord) throws Exception {
+            given(queryService.detail(eq(TrackingFixture.TRACKING_NUMBER), any()))
+                    .willReturn(Optional.of(trackingRecord));
+            return mockMvc.perform(get(DETAIL))
+                    .andExpect(status().isOk())
+                    .andReturn()
+                    .getResponse()
+                    .getContentAsString();
+        }
+
+        @Test
+        void 行43_置き換えられた下書きに文を示し候補には採用のボタンを出す() throws Exception {
+            String body = detailOf(withMilestones(
+                    TrackedBookingStatus.CONFIRMED,
+                    List.of(
+                            external(1, new Location("JPTYO"), "2026-10-30T00:00:00Z", "2026-10-31T00:00:00Z", MilestoneState.DRAFT),
+                            external(2, new Location("KRPUS"), "2026-10-30T01:00:00Z", "2026-10-31T01:00:00Z", MilestoneState.DRAFT))));
+
+            org.assertj.core.api.Assertions.assertThat(body)
+                    .containsOnlyOnce("後から公開された原本に置き換えられました")
+                    .contains("action=\"/staff/tracking-records/CTABCDEFGH2345/milestones/2/adopt\"")
+                    .contains("name=\"expectedVersion\" value=\"7\"")
+                    .contains("実績 2 を採用する")
+                    .doesNotContain("実績 1 を採用する");
+            org.assertj.core.api.Assertions.assertThat(body.indexOf("後から公開された原本に置き換えられました"))
+                    .isLessThan(body.indexOf("実績 2、出発"));
+        }
+
+        @Test
+        void 行43_元の値の原本が後から公開されると表示が変わる() throws Exception {
+            String body = detailOf(withMilestones(
+                    TrackedBookingStatus.CONFIRMED,
+                    List.of(
+                            external(1, new Location("JPTYO"), "2026-10-30T00:00:00Z", "2026-10-31T00:00:00Z", MilestoneState.DRAFT),
+                            external(2, new Location("KRPUS"), "2026-10-30T01:00:00Z", "2026-10-31T01:00:00Z", MilestoneState.DRAFT),
+                            external(3, new Location("JPTYO"), "2026-10-30T00:00:00Z", "2026-10-31T02:00:00Z", MilestoneState.DRAFT))));
+
+            org.assertj.core.api.Assertions.assertThat(body)
+                    .contains("実績 3 を採用する")
+                    .doesNotContain("実績 2 を採用する");
+        }
+
+        @Test
+        void 行52_採用済みと値が違う候補には採用を出さず理由を示す() throws Exception {
+            String body = detailOf(withMilestones(
+                    TrackedBookingStatus.CONFIRMED,
+                    List.of(
+                            external(1, new Location("JPTYO"), "2026-10-30T00:00:00Z", "2026-10-31T00:00:00Z", MilestoneState.ADOPTED),
+                            external(2, new Location("KRPUS"), "2026-10-30T01:00:00Z", "2026-10-31T01:00:00Z", MilestoneState.DRAFT))));
+
+            org.assertj.core.api.Assertions.assertThat(body)
+                    .contains("採用済みの実績と値が違います")
+                    .doesNotContain("を採用する")
+                    .doesNotContain("置き換えられました");
+        }
+
+        @Test
+        void 行53_採用済みと同じ値の候補には採用は要らないと示す() throws Exception {
+            String body = detailOf(withMilestones(
+                    TrackedBookingStatus.CONFIRMED,
+                    List.of(
+                            external(1, new Location("JPTYO"), "2026-10-30T00:00:00Z", "2026-10-31T00:00:00Z", MilestoneState.ADOPTED),
+                            external(2, new Location("JPTYO"), "2026-10-30T00:00:00Z", "2026-10-31T01:00:00Z", MilestoneState.DRAFT))));
+
+            org.assertj.core.api.Assertions.assertThat(body)
+                    .contains("採用済みの実績と同じ値です")
+                    .doesNotContain("を採用する");
+        }
+
+        @ParameterizedTest(name = "{0}")
+        @CsvSource({
+            "取消済み, CANCELLED, 2026-10-30T00:00:00Z, 取消済みの予約の実績は採用できません",
+            "完了後, COMPLETED, 2026-10-30T00:00:00Z, 完了した追跡の実績は採用できません",
+            "未来の発生時刻, CONFIRMED, 2026-11-01T03:00:01Z, 発生時刻がいまより後の実績は採用できません"
+        })
+        void 行54_55_採用できない候補には採用を出さず理由を示す(
+                String name, TrackedBookingStatus bookingStatus, String occurredAt, String reason) throws Exception {
+            String body = detailOf(withMilestones(
+                    bookingStatus,
+                    List.of(external(1, new Location("JPTYO"), occurredAt, "2026-10-31T00:00:00Z", MilestoneState.DRAFT))));
+
+            org.assertj.core.api.Assertions.assertThat(body).contains(reason).doesNotContain("を採用する");
+        }
+
+        @Test
+        void 行55_発生時刻がいまと同時刻の候補は採用できる() throws Exception {
+            String body = detailOf(withMilestones(
+                    TrackedBookingStatus.CONFIRMED,
+                    List.of(external(1, new Location("JPTYO"), "2026-11-01T03:00:00Z", "2026-10-31T00:00:00Z", MilestoneState.DRAFT))));
+
+            org.assertj.core.api.Assertions.assertThat(body).contains("実績 1 を採用する");
+        }
+
+        @Test
+        void 行50_採用したら結果と導出し直した現在状態を示して追跡の詳細に戻る() throws Exception {
+            given(commandService.adoptCandidate(eq(TrackingFixture.TRACKING_NUMBER), eq(2), eq(7L), any()))
+                    .willReturn(new MilestoneAdoptionOutcome.Adopted(2, TrackingStatus.IN_TRANSIT));
+
+            mockMvc.perform(post(ADOPT).param("expectedVersion", "7"))
+                    .andExpect(status().is3xxRedirection())
+                    .andExpect(redirectedUrl(DETAIL))
+                    .andExpect(flash().attribute("result", "実績 2 を採用しました。現在状態は「輸送中」です。"));
+        }
+
+        @Test
+        void 行53_採用済みと同じ値なら採用は要らないと結果に示す() throws Exception {
+            given(commandService.adoptCandidate(any(), eq(2), eq(7L), any()))
+                    .willReturn(new MilestoneAdoptionOutcome.SameAsAdopted(1));
+
+            mockMvc.perform(post(ADOPT).param("expectedVersion", "7"))
+                    .andExpect(redirectedUrl(DETAIL))
+                    .andExpect(flash().attribute("result", "実績 2 は採用済みの実績 1 と同じ値です。採用は要りません。"));
+        }
+
+        @ParameterizedTest(name = "{0}")
+        @CsvSource({
+            "NOT_CANDIDATE, 実績 2 は候補ではありません。最新の主要実績を確かめてください。",
+            "CONFLICTS_WITH_ADOPTED, 実績 2 は採用できません。採用済みの実績と値が違います。",
+            "BOOKING_CANCELLED, 実績 2 は採用できません。取消済みの予約の実績は採用できません。",
+            "TRACKING_COMPLETED, 実績 2 は採用できません。完了した追跡の実績は採用できません。",
+            "OCCURRED_IN_FUTURE, 実績 2 は採用できません。発生時刻がいまより後の実績は採用できません。"
+        })
+        void 行51_54_55_拒否の理由を警告で示す(AdoptionRejectionReason reason, String message) throws Exception {
+            given(commandService.adoptCandidate(any(), eq(2), eq(7L), any()))
+                    .willReturn(new MilestoneAdoptionOutcome.Rejected(reason));
+
+            mockMvc.perform(post(ADOPT).param("expectedVersion", "7"))
+                    .andExpect(redirectedUrl(DETAIL))
+                    .andExpect(flash().attribute("problem", message));
+        }
+
+        @Test
+        void 行57_版の不一致は読み直しを促す() throws Exception {
+            given(commandService.adoptCandidate(any(), eq(2), eq(7L), any()))
+                    .willReturn(new MilestoneAdoptionOutcome.Conflict());
+
+            mockMvc.perform(post(ADOPT).param("expectedVersion", "7"))
+                    .andExpect(redirectedUrl(DETAIL))
+                    .andExpect(flash()
+                            .attribute(
+                                    "problem",
+                                    "ほかの更新が先にこの追跡記録を変更しました。最新の主要実績を確かめ、必要なら、もう一度採用してください。"));
+        }
+
+        @Test
+        void ない追跡記録の採用は404() throws Exception {
+            given(commandService.adoptCandidate(any(), eq(2), eq(7L), any()))
+                    .willReturn(new MilestoneAdoptionOutcome.NotFound());
+
+            mockMvc.perform(post(ADOPT).param("expectedVersion", "7")).andExpect(status().isNotFound());
+        }
+
+        @Test
+        void 形式の誤った追跡番号の採用は404でコマンドを呼ばない() throws Exception {
+            mockMvc.perform(post("/staff/tracking-records/not-a-tracking-number/milestones/2/adopt")
+                            .param("expectedVersion", "7"))
+                    .andExpect(status().isNotFound());
+
+            then(commandService).should(never()).adoptCandidate(any(), anyInt(), anyLong(), any());
+        }
+
+        @Test
+        void 範囲の外の採用は記録して404でコマンドを呼ばない() throws Exception {
+            given(queryService.outOfScope(eq(TrackingFixture.TRACKING_NUMBER), any())).willReturn(true);
+            given(outOfScope.recordAndNotFound(any(), eq(TrackingFixture.TRACKING_NUMBER.value())))
+                    .willReturn(new ResponseStatusException(HttpStatus.NOT_FOUND));
+
+            mockMvc.perform(post(ADOPT).param("expectedVersion", "7")).andExpect(status().isNotFound());
+
+            then(commandService).should(never()).adoptCandidate(any(), anyInt(), anyLong(), any());
+        }
+
+        @Test
+        void 採用の途中で範囲の外になったら記録して404() throws Exception {
+            given(commandService.adoptCandidate(any(), eq(2), eq(7L), any()))
+                    .willReturn(new MilestoneAdoptionOutcome.OutOfScope());
+            given(outOfScope.recordAndNotFound(any(), eq(TrackingFixture.TRACKING_NUMBER.value())))
+                    .willReturn(new ResponseStatusException(HttpStatus.NOT_FOUND));
+
+            mockMvc.perform(post(ADOPT).param("expectedVersion", "7")).andExpect(status().isNotFound());
+
+            then(outOfScope).should().recordAndNotFound(any(), eq(TrackingFixture.TRACKING_NUMBER.value()));
         }
     }
 

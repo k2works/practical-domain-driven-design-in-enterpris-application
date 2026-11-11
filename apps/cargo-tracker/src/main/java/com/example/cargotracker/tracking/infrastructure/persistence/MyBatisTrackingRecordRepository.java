@@ -23,6 +23,9 @@ import java.time.Clock;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.Set;
@@ -40,6 +43,9 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Repository
 public class MyBatisTrackingRecordRepository implements TrackingRecordRepository {
+
+    /** 出典の一意制約（同じ出典の実績の同時の登録。T-INV-02。Bolt 39gb の P-6 で、この制約の違反だけを競合にする）。 */
+    private static final String SOURCE_UNIQUE_KEY = "uk_milestone_source";
 
     private final TrackingRecordMapper mapper;
     private final Clock clock;
@@ -85,9 +91,11 @@ public class MyBatisTrackingRecordRepository implements TrackingRecordRepository
 
     /**
      * 主要実績の登録を保存する（Bolt 26b）。読み込んだときの版と同じときだけ現在状態と根拠の実績番号を書いて版を 1 増やし、まだ表にない
-     * 主要実績を追加する（実績は削除・上書きしない。T-INV-01）。版が違えば、または同じ出典・同じ実績番号の実績が同時に登録されて一意制約に
-     * 違反したら、セーブポイントに戻して {@link ConcurrentTrackingRecordUpdateException} にする（PostgreSQL は制約違反で
-     * トランザクションを中断するため。貨物予約の保存と同じ）。
+     * 主要実績を追加する（実績は削除・上書きしない。T-INV-01）。表で下書きの実績が集約で採用になっていれば、状態と採用者・採用時刻だけを書き換える（Bolt 39gb）。
+     * 版が違えば、下書きの行がもう下書きでなければ、同じ出典の実績が同時に登録されて一意制約 {@code uk_milestone_source} に違反したら、または根拠の実績番号の実績が
+     * 表になければ（遅延の外部キーの違反がコミットのときに 500 になるのを先に拾う。P-5）、セーブポイントに戻して {@link ConcurrentTrackingRecordUpdateException}
+     * にする（PostgreSQL は制約違反でトランザクションを中断するため。貨物予約の保存と同じ）。ほかの一意制約の違反（実績番号の重なりなど）は版の条件の後には起きない
+     * はずの誤りなので、例外のまま上げる（P-6。前例は貨物予約の保存の制約の名前で分ける形）。
      */
     @Override
     @Transactional(propagation = Propagation.NESTED)
@@ -106,19 +114,53 @@ public class MyBatisTrackingRecordRepository implements TrackingRecordRepository
             throw new ConcurrentTrackingRecordUpdateException(
                     trackingRecord.trackingNumber(), trackingRecord.aggregateVersion());
         }
-        Set<Integer> saved = mapper.findMilestones(trackingNumber).stream()
-                .map(MilestoneRow::milestoneNo)
-                .collect(Collectors.toSet());
+        Map<Integer, MilestoneRow> savedRows = mapper.findMilestones(trackingNumber).stream()
+                .collect(Collectors.toMap(MilestoneRow::milestoneNo, row -> row));
         try {
             for (Milestone milestone : trackingRecord.milestones()) {
-                if (!saved.contains(milestone.milestoneNo())) {
-                    mapper.insertMilestone(toRow(trackingNumber, milestone));
+                MilestoneRow row = toRow(trackingNumber, milestone);
+                MilestoneRow saved = savedRows.get(milestone.milestoneNo());
+                if (saved == null) {
+                    mapper.insertMilestone(row);
+                } else if (!sameState(saved, row)
+                        && (!isAdoption(milestone) || mapper.updateMilestoneAdoption(row) == 0)) {
+                    // 表の状態が集約と違う。下書きの採用でなければ、または表の行がもう下書きでなければ（別の採用が先に書いた）、競合
+                    throw conflict(trackingRecord);
                 }
             }
-        } catch (DuplicateKeyException _) {
-            throw new ConcurrentTrackingRecordUpdateException(
-                    trackingRecord.trackingNumber(), trackingRecord.aggregateVersion());
+        } catch (DuplicateKeyException e) {
+            if (violates(e, SOURCE_UNIQUE_KEY)) {
+                throw conflict(trackingRecord);
+            }
+            throw new IllegalStateException("主要実績の一意制約に違反した（実績番号の重なりなど）: " + trackingNumber, e);
         }
+        if (statusBasisMilestoneNo != null && mapper.countMilestone(trackingNumber, statusBasisMilestoneNo) == 0) {
+            throw conflict(trackingRecord);
+        }
+    }
+
+    /** 表の行と集約の実績の状態・採用者・採用時刻が同じか（同じなら書き換えない。採用時刻は瞬間で比べる）。 */
+    private static boolean sameState(MilestoneRow saved, MilestoneRow row) {
+        return saved.state().equals(row.state())
+                && Objects.equals(saved.adoptedBy(), row.adoptedBy())
+                && Objects.equals(
+                        saved.adoptedAt() == null ? null : saved.adoptedAt().toInstant(),
+                        row.adoptedAt() == null ? null : row.adoptedAt().toInstant());
+    }
+
+    /** 下書きの採用で書き換える実績か（外部原本の採用済み。採用者を持つ）。 */
+    private static boolean isAdoption(Milestone milestone) {
+        return milestone.state() == MilestoneState.ADOPTED && milestone.adoptedBy() != null;
+    }
+
+    private static ConcurrentTrackingRecordUpdateException conflict(TrackingRecord trackingRecord) {
+        return new ConcurrentTrackingRecordUpdateException(
+                trackingRecord.trackingNumber(), trackingRecord.aggregateVersion());
+    }
+
+    private static boolean violates(DuplicateKeyException e, String constraint) {
+        String message = e.getMostSpecificCause().getMessage();
+        return message != null && message.toLowerCase(Locale.ROOT).contains(constraint);
     }
 
     private static MilestoneRow toRow(String trackingNumber, Milestone milestone) {
@@ -137,7 +179,9 @@ public class MyBatisTrackingRecordRepository implements TrackingRecordRepository
                 offset(milestone.registeredAt()),
                 origin == null ? null : origin.dataSourceId(),
                 origin == null ? null : origin.externalId(),
-                origin == null ? null : offset(origin.publishedAt()));
+                origin == null ? null : offset(origin.publishedAt()),
+                milestone.adoptedBy() == null ? null : milestone.adoptedBy().value(),
+                milestone.adoptedAt() == null ? null : offset(milestone.adoptedAt()));
     }
 
     private static Milestone toMilestone(MilestoneRow row) {
@@ -153,7 +197,9 @@ public class MyBatisTrackingRecordRepository implements TrackingRecordRepository
                 MilestoneState.valueOf(row.state()),
                 new UserId(row.registeredBy()),
                 utc(row.registeredAt()),
-                origin);
+                origin,
+                row.adoptedBy() == null ? null : new UserId(row.adoptedBy()),
+                row.adoptedAt() == null ? null : utc(row.adoptedAt()));
     }
 
     @Override

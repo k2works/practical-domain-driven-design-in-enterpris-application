@@ -28,6 +28,12 @@ public interface TrackingRecordMapper {
 
     void insertMilestone(MilestoneRow row);
 
+    /** 下書きを採用に書き換える（Bolt 39gb）。下書きでなければ 0 件。 */
+    int updateMilestoneAdoption(MilestoneRow row);
+
+    /** 実績番号の実績の件数（0 か 1。Bolt 39gb の P-5）。 */
+    int countMilestone(@Param("trackingNumber") String trackingNumber, @Param("milestoneNo") int milestoneNo);
+
     /** 主要実績を実績番号の順に（Bolt 26b）。 */
     List<MilestoneRow> findMilestones(@Param("trackingNumber") String trackingNumber);
 

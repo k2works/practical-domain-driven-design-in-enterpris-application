@@ -51,6 +51,8 @@
             <arg column="data_source_id" name="dataSourceId" javaType="java.util.UUID"/>
             <arg column="external_id" name="externalId" javaType="String"/>
             <arg column="published_at" name="publishedAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="adopted_by" name="adoptedBy" javaType="java.util.UUID"/>
+            <arg column="adopted_at" name="adoptedAt" javaType="java.time.OffsetDateTime"/>
         </constructor>
     </resultMap>
 
@@ -97,11 +99,28 @@
     <insert id="insertMilestone">
         INSERT INTO tracking.milestone
             (tracking_number, milestone_no, kind, location_unlocode, occurred_at, source_kind, source_ref, acquired_at,
-             state, registered_by, registered_at, data_source_id, external_id, published_at)
+             state, registered_by, registered_at, data_source_id, external_id, published_at, adopted_by, adopted_at)
         VALUES
             (#{trackingNumber}, #{milestoneNo}, #{kind}, #{locationUnlocode}, #{occurredAt}, #{sourceKind}, #{sourceRef},
-             #{acquiredAt}, #{state}, #{registeredBy}, #{registeredAt}, #{dataSourceId}, #{externalId}, #{publishedAt})
+             #{acquiredAt}, #{state}, #{registeredBy}, #{registeredAt}, #{dataSourceId}, #{externalId}, #{publishedAt},
+             #{adoptedBy}, #{adoptedAt})
     </insert>
+
+    <!-- 下書きの採用（Bolt 39gb）。状態と採用者・採用時刻だけを書き換え、下書きの行だけを対象にする。版の条件は同じトランザクションの追跡記録の UPDATE で掛ける -->
+    <update id="updateMilestoneAdoption">
+        UPDATE tracking.milestone
+           SET state = #{state},
+               adopted_by = #{adoptedBy},
+               adopted_at = #{adoptedAt}
+         WHERE tracking_number = #{trackingNumber}
+           AND milestone_no = #{milestoneNo}
+           AND state = 'DRAFT'
+    </update>
+
+    <!-- 根拠の実績番号の実績が表にあるか（Bolt 39gb の P-5。遅延の外部キーの違反をコミットの前に競合として拾う） -->
+    <select id="countMilestone" resultType="int">
+        SELECT COUNT(*) FROM tracking.milestone WHERE tracking_number = #{trackingNumber} AND milestone_no = #{milestoneNo}
+    </select>
 
     <insert id="insertScheduledLeg">
         INSERT INTO tracking.scheduled_leg
@@ -159,7 +178,7 @@
     <!-- 追跡記録の組み立てで、主要実績を実績番号の順に読む（Bolt 26b） -->
     <select id="findMilestones" resultMap="milestoneRow">
         SELECT tracking_number, milestone_no, kind, location_unlocode, occurred_at, source_kind, source_ref, acquired_at,
-               state, registered_by, registered_at, data_source_id, external_id, published_at
+               state, registered_by, registered_at, data_source_id, external_id, published_at, adopted_by, adopted_at
           FROM tracking.milestone
          WHERE tracking_number = #{trackingNumber}
          ORDER BY milestone_no

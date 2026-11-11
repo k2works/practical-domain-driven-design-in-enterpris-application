@@ -13,6 +13,7 @@ import com.example.cargotracker.shared.domain.UtcInstant;
 import com.example.cargotracker.tracking.domain.model.TrackingFixture;
 import com.example.cargotracker.tracking.domain.model.aggregates.ConcurrentTrackingRecordUpdateException;
 import com.example.cargotracker.tracking.domain.model.aggregates.ExternalMilestoneReceipt;
+import com.example.cargotracker.tracking.domain.model.aggregates.MilestoneAdoption;
 import com.example.cargotracker.tracking.domain.model.aggregates.RejectedMilestone;
 import com.example.cargotracker.tracking.domain.model.aggregates.RejectedMilestoneRepository;
 import com.example.cargotracker.tracking.domain.model.aggregates.TrackingRecord;
@@ -36,6 +37,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -617,6 +619,158 @@ class MyBatisTrackingRecordRepositoryIntegrationTest {
             assertThatThrownBy(() -> jdbc.update(insert, secondId, at, reference, at, dataSource, at))
                     .isInstanceOf(DataIntegrityViolationException.class)
                     .hasMessageContaining("uk_rejected_milestone_source");
+        }
+    }
+
+    /** 下書きの採用の保存と P-5・P-6（Bolt 39gb の行 50・57・59〜61）。クラスの @Transactional で戻す。 */
+    @Nested
+    class Bolt39gb_下書きの採用 {
+
+        private static final UUID DATA_SOURCE = UUID.fromString("00000000-0000-0000-0000-0000039b0e01");
+        private static final UserId MANAGER = new UserId(UUID.fromString("00000000-0000-0000-0000-0000039b0e02"));
+        private static final UtcInstant ADOPTED_AT = new UtcInstant(Instant.parse("2026-11-20T00:00:00.123456Z"));
+
+        private TrackingRecord withDraft() {
+            TrackingRecord saved = started(UUID.randomUUID(), trackingNumber());
+            repository.save(saved);
+            ExternalMilestone external = new ExternalMilestone(
+                    saved.trackingNumber(),
+                    MilestoneKind.DEPARTURE,
+                    new Location("JPTYO"),
+                    new UtcInstant(Instant.parse("2026-11-19T14:00:00Z")),
+                    new Source(SourceKind.EXTERNAL_RECORD, UUID.randomUUID().toString(), NOW),
+                    new ExternalOrigin(DATA_SOURCE, "MS-0001", NOW),
+                    MANAGER);
+            repository.update(((ExternalMilestoneReceipt.Received) saved.receiveExternalMilestone(external, NOW))
+                    .trackingRecord());
+            return repository.findByTrackingNumber(saved.trackingNumber()).orElseThrow();
+        }
+
+        @Test
+        void 行50_採用を保存すると状態と採用者と採用時刻が往復し現在状態と版を書き直す() {
+            TrackingRecord draft = withDraft();
+            MilestoneAdoption.Adopted adopted =
+                    (MilestoneAdoption.Adopted) draft.adoptCandidate(1, MANAGER, ADOPTED_AT);
+
+            repository.update(adopted.trackingRecord());
+
+            TrackingRecord found = repository.findByTrackingNumber(draft.trackingNumber()).orElseThrow();
+            assertThat(found.milestones()).containsExactly(adopted.milestone());
+            assertThat(found.currentStatus()).isEqualTo(TrackingStatus.IN_TRANSIT);
+            assertThat(found.statusBasisMilestoneNo()).isEqualTo(OptionalInt.of(1));
+            assertThat(found.aggregateVersion()).isEqualTo(draft.aggregateVersion() + 1);
+        }
+
+        @Test
+        void 行57_下書きの行がもう下書きでなければ競合にして戻す() {
+            TrackingRecord draft = withDraft();
+            // 別の採用が先に同じ行を採用にした（版はまだ増えていない瞬間を表に直接作る）
+            jdbc.update(
+                    "UPDATE tracking.milestone SET state = 'ADOPTED', adopted_by = ?, adopted_at = ?"
+                            + " WHERE tracking_number = ? AND milestone_no = 1",
+                    UUID.randomUUID(),
+                    Timestamp.from(NOW.instant()),
+                    draft.trackingNumber().value());
+            TrackingRecord adopted =
+                    ((MilestoneAdoption.Adopted) draft.adoptCandidate(1, MANAGER, ADOPTED_AT)).trackingRecord();
+
+            assertThatThrownBy(() -> repository.update(adopted))
+                    .isInstanceOf(ConcurrentTrackingRecordUpdateException.class);
+            assertThat(jdbc.queryForMap(
+                            "SELECT version, current_status FROM tracking.tracking_record WHERE tracking_number = ?",
+                            draft.trackingNumber().value()))
+                    .containsEntry("version", draft.aggregateVersion())
+                    .containsEntry("current_status", "PICKUP_SCHEDULED");
+        }
+
+        private int insertMilestone(String sourceKind, String state, UUID adoptedBy, Timestamp adoptedAt) {
+            TrackingRecord saved = started(UUID.randomUUID(), trackingNumber());
+            repository.save(saved);
+            Timestamp at = Timestamp.from(Instant.parse("2026-11-19T14:00:00Z"));
+            boolean external = "EXTERNAL_RECORD".equals(sourceKind);
+            return jdbc.update(
+                    "INSERT INTO tracking.milestone (tracking_number, milestone_no, kind, location_unlocode, occurred_at,"
+                            + " source_kind, source_ref, acquired_at, state, registered_by, registered_at,"
+                            + " data_source_id, external_id, published_at, adopted_by, adopted_at)"
+                            + " VALUES (?, 1, 'DEPARTURE', 'JPTYO', ?, ?, 'R-1', ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    saved.trackingNumber().value(),
+                    at,
+                    sourceKind,
+                    at,
+                    state,
+                    UUID.randomUUID(),
+                    at,
+                    external ? DATA_SOURCE : null,
+                    external ? "MS-1" : null,
+                    external ? at : null,
+                    adoptedBy,
+                    adoptedAt);
+        }
+
+        private static final Timestamp AT = Timestamp.from(Instant.parse("2026-11-20T00:00:00Z"));
+
+        static Stream<Arguments> inconsistentAdoption() {
+            UUID by = UUID.randomUUID();
+            return Stream.of(
+                    Arguments.of("外部原本の採用で採用者がない", "EXTERNAL_RECORD", "ADOPTED", null, AT),
+                    Arguments.of("外部原本の採用で採用時刻がない", "EXTERNAL_RECORD", "ADOPTED", by, null),
+                    Arguments.of("外部原本の確認中で 2 列ともない", "EXTERNAL_RECORD", "UNDER_REVIEW", null, null),
+                    Arguments.of("外部原本の下書きで採用者がある", "EXTERNAL_RECORD", "DRAFT", by, AT),
+                    Arguments.of("外部原本の保持のみで採用時刻がある", "EXTERNAL_RECORD", "RETAINED_ONLY", null, AT),
+                    Arguments.of("手入力の採用で 2 列ともある", "FIELD_RECORD", "ADOPTED", by, AT));
+        }
+
+        @ParameterizedTest(name = "{0}")
+        @MethodSource("inconsistentAdoption")
+        void 行59_採用者と採用時刻がそろわない行はCHECKで拒否する(
+                String description, String sourceKind, String state, UUID adoptedBy, Timestamp adoptedAt) {
+            assertThatThrownBy(() -> insertMilestone(sourceKind, state, adoptedBy, adoptedAt))
+                    .as(description)
+                    .isInstanceOf(DataIntegrityViolationException.class)
+                    .hasMessageContaining("ck_milestone_adoption");
+        }
+
+        @ParameterizedTest(name = "{0}")
+        @CsvSource({
+            "外部原本の採用, EXTERNAL_RECORD, ADOPTED, true",
+            "外部原本の確認中, EXTERNAL_RECORD, UNDER_REVIEW, true",
+            "外部原本の下書き, EXTERNAL_RECORD, DRAFT, false",
+            "手入力の採用, FIELD_RECORD, ADOPTED, false"
+        })
+        void 行59_そろう行は入る(String description, String sourceKind, String state, boolean withAdoption) {
+            assertThat(insertMilestone(
+                            sourceKind, state, withAdoption ? UUID.randomUUID() : null, withAdoption ? AT : null))
+                    .isEqualTo(1);
+        }
+
+        @Test
+        void 行60_根拠の実績番号の実績がなければ500にせず競合にする() {
+            TrackingRecord saved = started(UUID.randomUUID(), trackingNumber());
+            repository.save(saved);
+            // 集約の不変条件が破れた追跡記録（根拠の実績番号の実績がない）
+            TrackingRecord broken = TrackingRecord.reconstitute(
+                    saved.trackingNumber(),
+                    saved.bookingId(),
+                    saved.shipperCompanyId(),
+                    saved.consigneeCompanyId(),
+                    saved.bookingStatus(),
+                    saved.schedule(),
+                    TrackingStatus.PICKED_UP,
+                    OptionalInt.of(5),
+                    List.of(),
+                    saved.originalEta(),
+                    saved.latestEta(),
+                    saved.startedAt(),
+                    saved.aggregateVersion());
+
+            assertThatThrownBy(() -> repository.update(broken))
+                    .isInstanceOf(ConcurrentTrackingRecordUpdateException.class);
+            assertThat(jdbc.queryForMap(
+                            "SELECT version, status_basis_milestone_no FROM tracking.tracking_record"
+                                    + " WHERE tracking_number = ?",
+                            saved.trackingNumber().value()))
+                    .containsEntry("version", 0L)
+                    .containsEntry("status_basis_milestone_no", null);
         }
     }
 

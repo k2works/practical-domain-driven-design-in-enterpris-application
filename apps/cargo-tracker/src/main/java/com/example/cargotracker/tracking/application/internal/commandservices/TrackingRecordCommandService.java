@@ -6,6 +6,8 @@ import com.example.cargotracker.tracking.application.internal.commands.RegisterM
 import com.example.cargotracker.tracking.application.internal.queryservices.TrackingRecordLookup;
 import com.example.cargotracker.tracking.application.internal.queryservices.TrackingRecordScope;
 import com.example.cargotracker.tracking.domain.model.aggregates.ConcurrentTrackingRecordUpdateException;
+import com.example.cargotracker.tracking.domain.model.aggregates.MilestoneAdoption;
+import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingNumber;
 import com.example.cargotracker.tracking.domain.model.aggregates.MilestoneRegistration;
 import com.example.cargotracker.tracking.domain.model.aggregates.MilestoneRegistrationRejected;
 import com.example.cargotracker.tracking.domain.model.aggregates.TrackingRecord;
@@ -80,5 +82,55 @@ public class TrackingRecordCommandService {
         return new MilestoneRegistrationOutcome.Registered(
                 registration.milestone().milestoneNo(),
                 registration.trackingRecord().currentStatus());
+    }
+
+    /**
+     * 追跡管理者が下書きの候補を採用する（US-12 AC1・AC2 の外部の分。Bolt 39gb）。担当範囲を確かめた後、追跡番号の行を押さえて読み直し（DE-13 の受け取りと直列にする。
+     * 決定 (5a)）、画面を開いたときの版と比べる。採用の後に新しい DE-13 が届いていれば、版の不一致で競合にする（候補が変わったかもしれないので読み直してもらう）。
+     *
+     * @param trackingNumber 追跡番号
+     * @param milestoneNo 採用する実績の実績番号
+     * @param expectedVersion 画面を開いたときの追跡記録の版
+     * @param operator 操作者（採用者）
+     * @return 採用の結果
+     */
+    @Transactional
+    public MilestoneAdoptionOutcome adoptCandidate(
+            TrackingNumber trackingNumber, int milestoneNo, long expectedVersion, AuthenticatedActor operator) {
+        switch (scope.find(trackingNumber, operator)) {
+            case TrackingRecordLookup.Found _ -> {
+                // 範囲の中。ロックして読み直す
+            }
+            case TrackingRecordLookup.NotFound _ -> {
+                return new MilestoneAdoptionOutcome.NotFound();
+            }
+            case TrackingRecordLookup.OutOfScope _ -> {
+                return new MilestoneAdoptionOutcome.OutOfScope();
+            }
+        }
+        TrackingRecord trackingRecord =
+                repository.findByTrackingNumberForExternalMilestone(trackingNumber).orElse(null);
+        if (trackingRecord == null) {
+            return new MilestoneAdoptionOutcome.NotFound();
+        }
+        if (trackingRecord.aggregateVersion() != expectedVersion) {
+            return new MilestoneAdoptionOutcome.Conflict();
+        }
+        return switch (trackingRecord.adoptCandidate(milestoneNo, operator.userId(), new UtcInstant(clock.instant()))) {
+            case MilestoneAdoption.Adopted adopted -> save(adopted);
+            case MilestoneAdoption.SameAsAdopted same ->
+                new MilestoneAdoptionOutcome.SameAsAdopted(same.adopted().milestoneNo());
+            case MilestoneAdoption.Rejected rejected -> new MilestoneAdoptionOutcome.Rejected(rejected.reason());
+        };
+    }
+
+    private MilestoneAdoptionOutcome save(MilestoneAdoption.Adopted adopted) {
+        try {
+            repository.update(adopted.trackingRecord());
+        } catch (ConcurrentTrackingRecordUpdateException _) {
+            return new MilestoneAdoptionOutcome.Conflict();
+        }
+        return new MilestoneAdoptionOutcome.Adopted(
+                adopted.milestone().milestoneNo(), adopted.trackingRecord().currentStatus());
     }
 }

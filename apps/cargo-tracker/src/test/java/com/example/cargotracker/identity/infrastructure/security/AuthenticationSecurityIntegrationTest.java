@@ -692,6 +692,12 @@ class AuthenticationSecurityIntegrationTest {
                             .cookie(session)
                             .with(csrf()))
                     .andExpect(status().isForbidden());
+            // 下書きの採用も追跡管理者だけ（Bolt 39gb の行 58）
+            mvc.perform(post("/staff/tracking-records/CTABCDEFGH2345/milestones/1/adopt")
+                            .param("expectedVersion", "0")
+                            .cookie(session)
+                            .with(csrf()))
+                    .andExpect(status().isForbidden());
         }
     }
 

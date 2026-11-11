@@ -2,9 +2,12 @@ package com.example.cargotracker.tracking.interfaces.web;
 
 import com.example.cargotracker.platform.web.DateTimeDisplay;
 import com.example.cargotracker.shared.domain.SourceKind;
+import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import com.example.cargotracker.tracking.application.internal.queryservices.RecentTrackingRecords;
+import com.example.cargotracker.tracking.domain.model.aggregates.MilestoneAdoption;
 import com.example.cargotracker.tracking.domain.model.aggregates.TrackingRecord;
+import com.example.cargotracker.tracking.domain.model.valueobjects.AdoptionRejectionReason;
 import com.example.cargotracker.tracking.domain.model.entities.Milestone;
 import com.example.cargotracker.tracking.domain.model.valueobjects.CustomerMilestone;
 import com.example.cargotracker.tracking.domain.model.valueobjects.CustomerTrackingView;
@@ -131,6 +134,7 @@ final class TrackingRecordViews {
      * @param route 予定の経路版（案件番号と経路版）
      * @param legs 予定区間（区間の順）
      * @param milestones 主要実績（発生時刻の順。同じ時刻は実績番号の順。Bolt 26c）
+     * @param version 追跡記録の版（下書きの採用の隠し項目。競合の検出。Bolt 39gb）
      */
     record DetailView(
             String trackingNumber,
@@ -139,7 +143,8 @@ final class TrackingRecordViews {
             String latestEta,
             String route,
             List<LegView> legs,
-            List<MilestoneView> milestones) {}
+            List<MilestoneView> milestones,
+            long version) {}
 
     /**
      * 予定区間の 1 項目。
@@ -158,10 +163,46 @@ final class TrackingRecordViews {
      * @param occurredAt 発生時刻
      * @param source 出典（種類・参照・取得時刻）
      * @param state 状態の表示名
+     * @param milestoneNo 実績番号（採用の送り先）
+     * @param adoptable 採用のボタンを出すか（候補で採用できる下書き。Bolt 39gb）
+     * @param adoptionNote 採用の欄の文（置き換えられた下書き・採用できない理由。なければ {@code null}。Bolt 39gb）
      */
-    record MilestoneView(String anchor, String summary, String occurredAt, String source, String state) {}
+    record MilestoneView(
+            String anchor,
+            String summary,
+            String occurredAt,
+            String source,
+            String state,
+            int milestoneNo,
+            boolean adoptable,
+            String adoptionNote) {}
 
-    static DetailView detail(TrackingRecord trackingRecord) {
+    /** 置き換えられた下書きの文（Bolt 39gb の行 43。行 10・11 で「新しい原本」は偽になるのでこの文にする）。 */
+    static final String SUPERSEDED = "後から公開された原本に置き換えられました";
+
+    /** 採用済みと同じ値の候補の文（Bolt 39gb の行 53）。 */
+    static final String SAME_AS_ADOPTED = "採用済みの実績と同じ値です";
+
+    /** 採用の拒否の理由の文（Bolt 39gb。画面の欄と POST の結果で同じ文を使う）。 */
+    static String adoptionRejection(AdoptionRejectionReason reason) {
+        return switch (reason) {
+            case NOT_CANDIDATE -> "候補ではありません";
+            case CONFLICTS_WITH_ADOPTED -> "採用済みの実績と値が違います";
+            case BOOKING_CANCELLED -> "取消済みの予約の実績は採用できません";
+            case TRACKING_COMPLETED -> "完了した追跡の実績は採用できません";
+            case OCCURRED_IN_FUTURE -> "発生時刻がいまより後の実績は採用できません";
+        };
+    }
+
+    /**
+     * S-12 の表示。下書きの採用の欄は、閲覧者が今採用したらどうなるかを同じドメインの操作（{@link TrackingRecord#adoptCandidate}。純粋）で試して決める
+     * （ボタンと POST の判定をずらさない。Bolt 39gb）。
+     *
+     * @param trackingRecord 追跡記録
+     * @param viewer 閲覧者（採用者になる追跡管理者）
+     * @param now 今の時刻（未来の発生時刻の判定）
+     */
+    static DetailView detail(TrackingRecord trackingRecord, UserId viewer, UtcInstant now) {
         Schedule schedule = trackingRecord.schedule();
         return new DetailView(
                 trackingRecord.trackingNumber().value(),
@@ -174,8 +215,9 @@ final class TrackingRecordViews {
                         .sorted(Comparator.comparing((Milestone milestone) ->
                                         milestone.occurredAt().instant())
                                 .thenComparingInt(Milestone::milestoneNo))
-                        .map(TrackingRecordViews::milestone)
-                        .toList());
+                        .map(milestone -> milestone(trackingRecord, milestone, viewer, now))
+                        .toList(),
+                trackingRecord.aggregateVersion());
     }
 
     /**
@@ -208,14 +250,31 @@ final class TrackingRecordViews {
                 + leg.discharge().unLocode();
     }
 
-    private static MilestoneView milestone(Milestone milestone) {
+    private static MilestoneView milestone(
+            TrackingRecord trackingRecord, Milestone milestone, UserId viewer, UtcInstant now) {
+        boolean adoptable = false;
+        String note = null;
+        if (trackingRecord.isSupersededDraft(milestone)) {
+            note = SUPERSEDED;
+        } else if (milestone.state() == MilestoneState.DRAFT) {
+            switch (trackingRecord.adoptCandidate(milestone.milestoneNo(), viewer, now)) {
+                case MilestoneAdoption.Adopted _ -> adoptable = true;
+                case MilestoneAdoption.SameAsAdopted _ -> note = SAME_AS_ADOPTED;
+                case MilestoneAdoption.Rejected(AdoptionRejectionReason reason) ->
+                    // 組に入らない下書きはない（下書きは外部原本だけが作る）ので、候補でない理由は出さない
+                    note = reason == AdoptionRejectionReason.NOT_CANDIDATE ? null : adoptionRejection(reason);
+            }
+        }
         return new MilestoneView(
                 "milestone-" + milestone.milestoneNo(),
                 "実績 " + milestone.milestoneNo() + "、" + kind(milestone.kind()) + "、"
                         + milestone.location().unLocode(),
                 staff(milestone.occurredAt()),
                 source(milestone),
-                milestoneState(milestone.state()));
+                milestoneState(milestone.state()),
+                milestone.milestoneNo(),
+                adoptable,
+                note);
     }
 
     /** 出典の表記（「現場記録 F-118（取得 …）」）。結果の文言にも使う。 */
