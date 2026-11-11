@@ -198,6 +198,25 @@ public class TrackingUiSteps {
         assertThat(definition("現在状態")).hasText(status);
     }
 
+    /** Bolt 39gc の行 28。確認中は状態バッジ（文字とアイコン）と理由の文で示す。 */
+    @ならば("追跡の詳細の現在状態は確認中のバッジで、{string} が示される")
+    public void 追跡の詳細の現在状態は確認中(String note) {
+        Locator status = definition("現在状態");
+        assertThat(status.locator(".badge")).hasText("⚠ 確認中");
+        assertThat(status).containsText(note);
+        browser.checkAccessibility();
+    }
+
+    /** Bolt 39gc の行 28。 */
+    @ならば("追跡一覧の先頭の追跡の現在状態は確認中のバッジで示される")
+    public void 追跡一覧の先頭の現在状態は確認中() {
+        Locator firstRow = trackingList().locator("tbody tr").first();
+        assertThat(firstRow.getByRole(AriaRole.LINK, new Locator.GetByRoleOptions().setName(state.trackingNumber())))
+                .isVisible();
+        assertThat(firstRow.locator("td").nth(1).locator(".badge")).hasText("⚠ 確認中");
+        browser.checkAccessibility();
+    }
+
     @ならば("実績の登録のエラー要約にフォーカスが移り、{string} と {string} の誤りが示される")
     public void エラー要約が示される(String first, String second) {
         Locator summary = page().locator("#error-summary");
