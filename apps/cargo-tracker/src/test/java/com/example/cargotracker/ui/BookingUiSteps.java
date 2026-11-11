@@ -172,6 +172,32 @@ public class BookingUiSteps {
         }
     }
 
+    /**
+     * 営業担当者でログインし直して確定した予約の詳細（S-24）を開き、状態が期待の値になるまで開き直す（Bolt 39g2 の行 27）。予約の状態は追跡の DE-09・DE-10 を
+     * 受けた listener が非同期で進める（結果整合）。開き直すたびに GET の応答を待ってから状態を読む（Bolt 39gb の Try。URL でなく応答で待つ）。
+     */
+    @もし("営業担当者が確定した予約の詳細を開き、状態が {string} になるまで開き直す")
+    public void 予約の状態が進むまで開き直す(String expected) {
+        String url = baseUrl + "/staff/bookings/" + state.trackingNumber();
+        browser.navigate(url);
+        for (int i = 0;
+                i < 20 && !expected.equals(definition("状態").textContent().strip());
+                i++) {
+            page().waitForTimeout(500);
+            page().waitForResponse(
+                            response -> response.url().endsWith("/staff/bookings/" + state.trackingNumber())
+                                    && "GET".equals(response.request().method()),
+                            () -> page().navigate(url));
+        }
+    }
+
+    @ならば("予約の詳細の状態は {string} である")
+    public void 予約の詳細の状態(String expected) {
+        assertThat(definition("追跡番号")).hasText(state.trackingNumber());
+        assertThat(definition("状態")).hasText(expected);
+        browser.checkAccessibility();
+    }
+
     @ならば("予約の詳細の追跡の開始が {string} で、画面の更新の案内は出ない")
     public void 追跡の開始が完了と出る(String completed) {
         assertThat(definition("追跡の開始")).hasText(completed);

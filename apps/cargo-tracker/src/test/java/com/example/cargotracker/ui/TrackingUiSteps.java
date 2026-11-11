@@ -7,6 +7,9 @@ import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
 import io.cucumber.java.ja.ならば;
 import io.cucumber.java.ja.もし;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.web.server.LocalServerPort;
 
@@ -126,6 +129,17 @@ public class TrackingUiSteps {
         page().waitForURL(url -> !url.endsWith("/milestones/new"));
         page().waitForLoadState();
         browser.checkAccessibility();
+    }
+
+    /**
+     * 発生時刻を今の n 時間前（日本時間）にして登録する（Bolt 39g2。固定の日付を実の時計と比べるテストにしない。未来の発生時刻の拒否に当たらない）。
+     */
+    @もし("キー操作だけで実績 {string} を場所 {string}・発生時刻は今の {int} 時間前・出典 {string} の参照 {string} で登録する")
+    public void 今より前の発生時刻で実績を登録する(String kind, String location, int hoursAgo, String sourceKind, String reference) {
+        String occurredAt = ZonedDateTime.now(ZoneId.of("Asia/Tokyo"))
+                .minusHours(hoursAgo)
+                .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+        実績を登録する(kind, location, occurredAt, sourceKind, reference);
     }
 
     @ならば("追跡の詳細に結果 {string} が示される")

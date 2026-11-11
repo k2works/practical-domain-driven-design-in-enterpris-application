@@ -28,8 +28,10 @@ import com.example.cargotracker.booking.domain.model.BookingFixture;
 import com.example.cargotracker.booking.domain.model.aggregates.Booking;
 import com.example.cargotracker.booking.domain.model.valueobjects.BookingCondition;
 import com.example.cargotracker.booking.domain.model.valueobjects.BookingId;
+import com.example.cargotracker.booking.domain.model.valueobjects.BookingStatus;
 import com.example.cargotracker.booking.domain.model.valueobjects.BookingTerms;
 import com.example.cargotracker.booking.domain.model.valueobjects.TrackingNumber;
+import com.example.cargotracker.booking.domain.model.valueobjects.TransportPhase;
 import com.example.cargotracker.identity.infrastructure.security.TestActors;
 import com.example.cargotracker.identity.infrastructure.security.WithAuthenticatedActor;
 import com.example.cargotracker.shared.domain.CommandId;
@@ -42,6 +44,8 @@ import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -539,6 +543,29 @@ class BookingControllerTest {
     }
 
     // S-24 予約の詳細
+
+    /** Bolt 39g2 の行 25。集荷・引渡しの通知で進んだ予約の状態を、状態の欄に既存の表示名で示す。 */
+    @ParameterizedTest(name = "{0} は「{1}」")
+    @CsvSource({"IN_TRANSIT, AFTER_PICKUP, 輸送中", "COMPLETED, COMPLETED, 輸送完了"})
+    void 行25_予約の詳細に輸送中と輸送完了の状態を示す(BookingStatus status, TransportPhase phase, String shown) throws Exception {
+        Booking confirmed = Booking.confirm(
+                        new BookingId(UUID.randomUUID()),
+                        BookingFixture.allConditions(),
+                        BookingFixture.terms(),
+                        BookingFixture.TRACKING_NUMBER,
+                        BookingFixture.SALES,
+                        new UtcInstant(Instant.parse("2026-10-08T00:30:00Z")))
+                .booking();
+        Booking progressed = Booking.reconstitute(
+                confirmed.id(), confirmed.trackingNumber(), status, phase, confirmed.versions(), 1);
+        given(queryService.detail(eq(BookingFixture.TRACKING_NUMBER), any()))
+                .willReturn(Optional.of(new BookingDetail(progressed, BookingSagaStatus.COMPLETED)));
+
+        mockMvc.perform(get("/staff/bookings/CTABCDEFGH2345"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString(">" + shown + "</dd>")))
+                .andExpect(content().string(not(containsString(">確定済み</dd>"))));
+    }
 
     @Test
     void 予約の詳細に追跡番号と予約版と追跡の開始が処理中であることを示し完了とは示さない() throws Exception {
