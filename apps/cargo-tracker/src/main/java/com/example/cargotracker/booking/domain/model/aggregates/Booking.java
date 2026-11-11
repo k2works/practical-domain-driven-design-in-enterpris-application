@@ -10,6 +10,7 @@ import com.example.cargotracker.booking.domain.model.valueobjects.BookingStatus;
 import com.example.cargotracker.booking.domain.model.valueobjects.BookingTerms;
 import com.example.cargotracker.booking.domain.model.valueobjects.TrackingNumber;
 import com.example.cargotracker.booking.domain.model.valueobjects.TransportPhase;
+import com.example.cargotracker.booking.domain.model.valueobjects.TransportPhaseRefusal;
 import com.example.cargotracker.shared.annotation.ddd.AggregateRoot;
 import com.example.cargotracker.shared.annotation.ddd.CoreConcept;
 import com.example.cargotracker.shared.domain.CompanyId;
@@ -23,6 +24,7 @@ import java.util.UUID;
  * 貨物予約。本予約で確定した輸送の契約で、予約版と追跡番号を持つ（集約ルート。US-04、BR-01。Bolt 23）。
  * 予約版は不変で（B-INV-08）、変更は新しい予約版になる（US-05）。確定の 5 条件がそろったときだけ作る（B-INV-01）。
  * 見積りの有効性（commit 時刻での失効）は見積りが判定し、その結果を確定条件の「有効な見積り」として受け取る（ADR-016）。
+ * 追跡の集荷・引渡しの通知（DE-09・DE-10）で状態と輸送段階を進め、段は戻さない（Bolt 39g2。予約は追跡のイベントを購読せず、追跡が予約の公開 API を呼ぶ）。
  */
 @AggregateRoot
 @CoreConcept
@@ -126,6 +128,43 @@ public final class Booking {
             List<BookingVersion> versions,
             long aggregateVersion) {
         return new Booking(id, trackingNumber, status, transportPhase, List.copyOf(versions), aggregateVersion);
+    }
+
+    /**
+     * 集荷実績の採用を記録する（DE-09 の通知。BR-04。Bolt 39g2）。確定・集荷前の予約を輸送中・集荷後に進める。輸送中・完了なら記録済み（段を戻さない。
+     * 後から届いた古い通知を無視して B-INV-12 の版の比べに代える）。取消済み・申請中は記録しない（【業務の判断】(am)）。
+     *
+     * @return 記録の結果。進めた予約の版は変えない（リポジトリが保存のときに増やす）
+     */
+    public TransportPhaseChange recordPickup() {
+        return switch (status) {
+            case CONFIRMED -> changedTo(BookingStatus.IN_TRANSIT, TransportPhase.AFTER_PICKUP);
+            case IN_TRANSIT, COMPLETED -> new TransportPhaseChange.Unchanged();
+            case CANCELLED -> new TransportPhaseChange.Refused(TransportPhaseRefusal.BOOKING_CANCELLED);
+            case AMENDMENT_PENDING, CANCELLATION_PENDING, AMENDING ->
+                new TransportPhaseChange.Refused(TransportPhaseRefusal.BOOKING_UNDER_REQUEST);
+        };
+    }
+
+    /**
+     * 引渡しを記録する（DE-10 の通知。Bolt 39g2）。確定または輸送中の予約を完了・完了に進める（確定から直接進めるのは、集荷の通知より先に届いたとき
+     * か、集荷を採用しないまま引渡しを採用したとき）。完了なら記録済み。取消済み・申請中は記録しない（【業務の判断】(am)）。
+     *
+     * @return 記録の結果。進めた予約の版は変えない（リポジトリが保存のときに増やす）
+     */
+    public TransportPhaseChange recordDelivery() {
+        return switch (status) {
+            case CONFIRMED, IN_TRANSIT -> changedTo(BookingStatus.COMPLETED, TransportPhase.COMPLETED);
+            case COMPLETED -> new TransportPhaseChange.Unchanged();
+            case CANCELLED -> new TransportPhaseChange.Refused(TransportPhaseRefusal.BOOKING_CANCELLED);
+            case AMENDMENT_PENDING, CANCELLATION_PENDING, AMENDING ->
+                new TransportPhaseChange.Refused(TransportPhaseRefusal.BOOKING_UNDER_REQUEST);
+        };
+    }
+
+    private TransportPhaseChange changedTo(BookingStatus newStatus, TransportPhase newPhase) {
+        return new TransportPhaseChange.Changed(
+                new Booking(id, trackingNumber, newStatus, newPhase, versions, aggregateVersion));
     }
 
     public BookingId id() {

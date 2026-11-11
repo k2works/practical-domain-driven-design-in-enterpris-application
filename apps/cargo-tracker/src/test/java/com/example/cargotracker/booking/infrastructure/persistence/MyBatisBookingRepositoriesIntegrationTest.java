@@ -10,11 +10,14 @@ import com.example.cargotracker.booking.application.sagas.ConcurrentBookingSagaU
 import com.example.cargotracker.booking.domain.model.BookingFixture;
 import com.example.cargotracker.booking.domain.model.aggregates.Booking;
 import com.example.cargotracker.booking.domain.model.aggregates.DuplicateBookingException;
+import com.example.cargotracker.booking.domain.model.aggregates.TransportPhaseChange;
 import com.example.cargotracker.booking.domain.model.valueobjects.BookingId;
+import com.example.cargotracker.booking.domain.model.valueobjects.BookingStatus;
 import com.example.cargotracker.booking.domain.model.valueobjects.BookingSummary;
 import com.example.cargotracker.booking.domain.model.valueobjects.BookingTerms;
 import com.example.cargotracker.booking.domain.model.valueobjects.ProcessedCommand;
 import com.example.cargotracker.booking.domain.model.valueobjects.TrackingNumber;
+import com.example.cargotracker.booking.domain.model.valueobjects.TransportPhase;
 import com.example.cargotracker.shared.domain.CommandId;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.UserId;
@@ -24,10 +27,12 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.transaction.annotation.Transactional;
 
 /** 貨物予約と予約サガのリポジトリ（PostgreSQL。Bolt 23）。処理済みコマンドと業務番号・見積り番号での照会（Bolt 24）。 */
@@ -43,6 +48,9 @@ class MyBatisBookingRepositoriesIntegrationTest {
 
     @Autowired
     MyBatisBookingSagaRepository sagaRepository;
+
+    @Autowired
+    BookingMapper mapper;
 
     private final Random random = new Random();
 
@@ -266,6 +274,61 @@ class MyBatisBookingRepositoriesIntegrationTest {
                 .containsExactlyInAnyOrderEntriesOf(Map.of(
                         inProgress.id(), BookingSagaStatus.IN_PROGRESS, completed.id(), BookingSagaStatus.COMPLETED));
         assertThat(sagaRepository.findStatusesByBookingIds(Set.of())).isEmpty();
+    }
+
+    /** Bolt 39g2 の行 5・6（予約の状態と輸送段階の保存と、予約の行を押さえる読み出し）。 */
+    @Nested
+    class Bolt39g2_状態と輸送段階の保存 {
+
+        private static final UUID MANAGER = UUID.fromString("00000000-0000-0000-0000-00000039a231");
+
+        @Test
+        void 行5_状態と輸送段階と版と更新時刻と更新者だけを書き予約版は書かない() {
+            Booking saved = savedAt("2099-11-03T00:00:00Z", TrackingNumber.generate(random));
+            BookingRow before = mapper.findBookingById(saved.id().value()).orElseThrow();
+            Booking picked = ((TransportPhaseChange.Changed) saved.recordPickup()).booking();
+
+            repository.update(picked, MANAGER);
+
+            BookingRow after = mapper.findBookingById(saved.id().value()).orElseThrow();
+            assertThat(after.status()).isEqualTo("IN_TRANSIT");
+            assertThat(after.transportPhase()).isEqualTo("AFTER_PICKUP");
+            assertThat(after.version()).isEqualTo(before.version() + 1);
+            assertThat(after.updatedBy()).isEqualTo(MANAGER);
+            assertThat(after.updatedAt()).isNotNull();
+            assertThat(after.currentVersionNo()).isEqualTo(before.currentVersionNo());
+            assertThat(after.createdBy()).isEqualTo(before.createdBy());
+            assertThat(mapper.findVersions(saved.id().value())).hasSize(1);
+            Booking reloaded =
+                    repository.findByTrackingNumber(saved.trackingNumber()).orElseThrow();
+            assertThat(reloaded.status()).isEqualTo(BookingStatus.IN_TRANSIT);
+            assertThat(reloaded.transportPhase()).isEqualTo(TransportPhase.AFTER_PICKUP);
+            assertThat(reloaded.versions()).isEqualTo(saved.versions());
+        }
+
+        @Test
+        void 行5_版が違えば競合の例外にして書かない() {
+            Booking saved = savedAt("2099-11-04T00:00:00Z", TrackingNumber.generate(random));
+            Booking picked = ((TransportPhaseChange.Changed) saved.recordPickup()).booking();
+            repository.update(picked, MANAGER);
+
+            assertThatThrownBy(() -> repository.update(picked, MANAGER))
+                    .isInstanceOf(OptimisticLockingFailureException.class);
+            assertThat(mapper.findBookingById(saved.id().value()).orElseThrow().version())
+                    .isEqualTo(1);
+        }
+
+        @Test
+        void 行6_予約IDで行を押さえて読み行がなければ空() {
+            Booking saved = savedAt("2099-11-05T00:00:00Z", TrackingNumber.generate(random));
+
+            assertThat(repository.findByIdForUpdate(saved.id())).hasValueSatisfying(found -> {
+                assertThat(found.id()).isEqualTo(saved.id());
+                assertThat(found.versions()).isEqualTo(saved.versions());
+            });
+            assertThat(repository.findByIdForUpdate(new BookingId(UUID.randomUUID())))
+                    .isEmpty();
+        }
     }
 
     private Booking savedAt(String committedAt, TrackingNumber trackingNumber) {

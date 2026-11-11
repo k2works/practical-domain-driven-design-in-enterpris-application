@@ -16,6 +16,8 @@ import com.example.cargotracker.shared.domain.Source;
 import com.example.cargotracker.shared.domain.SourceKind;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
+import com.example.cargotracker.tracking.domain.events.DeliveryConfirmed;
+import com.example.cargotracker.tracking.domain.events.PickupMilestoneAdopted;
 import com.example.cargotracker.tracking.domain.events.TrackingPlacedUnderReview;
 import com.example.cargotracker.tracking.domain.model.entities.Milestone;
 import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneKind;
@@ -440,6 +442,148 @@ class TrackingRecordMilestoneTest {
                     from.latestEta(),
                     from.startedAt(),
                     from.aggregateVersion());
+        }
+    }
+
+    /** Bolt 39g2 の手入力の分（行 10・12〜15。DE-09・DE-10。【業務の判断】(al)）。 */
+    @Nested
+    class Bolt39g2_手入力のDE09とDE10 {
+
+        private static final UtcInstant LATER = at("2026-11-02T03:00:00Z");
+
+        /** 1 つの登録で出たイベントの名前（DE09・DE10・DE18。出なければ NONE）。 */
+        private static String eventOf(MilestoneRegistration registration) {
+            List<String> events = new java.util.ArrayList<>();
+            registration.pickupAdopted().ifPresent(event -> events.add("DE09"));
+            registration.deliveryConfirmed().ifPresent(event -> events.add("DE10"));
+            registration.placedUnderReview().ifPresent(event -> events.add("DE18"));
+            // 行 14。1 つの操作で出るイベントは DE-09・DE-10・DE-18 のどれか 1 つまで
+            assertThat(events).hasSizeLessThanOrEqualTo(1);
+            return events.isEmpty() ? "NONE" : events.getFirst();
+        }
+
+        /** 到着（02:00）を採用した追跡記録。 */
+        private TrackingRecord arrived() {
+            return started()
+                    .registerMilestone(
+                            MilestoneKind.ARRIVAL, tokyo(), at("2026-11-01T02:00:00Z"), source("F-1"), REGISTRANT, NOW)
+                    .trackingRecord();
+        }
+
+        /**
+         * 行 10・14。採用は始めたばかりの追跡、確認中は到着（02:00）の後の時系列に反する実績、保持のみは予約状態が完了の追跡に登録する。
+         */
+        @ParameterizedTest(name = "{0}")
+        @CsvSource({
+            "採用の集荷はDE09, ADOPTED, PICKUP, 2026-11-01T02:30:00Z, DE09",
+            "採用の引渡しはDE10, ADOPTED, DELIVERY, 2026-11-01T02:30:00Z, DE10",
+            "採用の搬入は出さない, ADOPTED, RECEIPT_AT_ORIGIN, 2026-11-01T02:30:00Z, NONE",
+            "確認中の集荷はDE18だけ, UNDER_REVIEW, PICKUP, 2026-11-01T02:30:00Z, DE18",
+            "確認中の引渡しはDE18だけ, UNDER_REVIEW, DELIVERY, 2026-11-01T01:00:00Z, DE18",
+            "確認中の搬入はDE18だけ, UNDER_REVIEW, RECEIPT_AT_ORIGIN, 2026-11-01T02:30:00Z, DE18",
+            "保持のみの集荷は出さない, RETAINED_ONLY, PICKUP, 2026-11-01T02:30:00Z, NONE",
+            "保持のみの引渡しは出さない, RETAINED_ONLY, DELIVERY, 2026-11-01T02:30:00Z, NONE",
+            "保持のみの搬入は出さない, RETAINED_ONLY, RECEIPT_AT_ORIGIN, 2026-11-01T02:30:00Z, NONE"
+        })
+        void 行10_登録した実績の状態と種類でDE09とDE10を出す(
+                String name, MilestoneState state, MilestoneKind kind, String occurredAt, String expected) {
+            TrackingRecord before =
+                    switch (state) {
+                        case ADOPTED -> started();
+                        case UNDER_REVIEW -> arrived();
+                        default -> withBookingStatus(started(), TrackedBookingStatus.COMPLETED);
+                    };
+
+            MilestoneRegistration registration =
+                    before.registerMilestone(kind, tokyo(), at(occurredAt), source("F-2"), REGISTRANT, NOW);
+
+            assertThat(registration.milestone().state()).isEqualTo(state);
+            assertThat(eventOf(registration)).isEqualTo(expected);
+        }
+
+        @Test
+        void 行15_DE09は追跡番号と予約IDと実績番号と発生時刻と登録者と保存した後の版を持つ() {
+            TrackingRecord before = started();
+
+            MilestoneRegistration registration = before.registerMilestone(
+                    MilestoneKind.PICKUP, tokyo(), at("2026-11-01T02:30:00Z"), source("F-2"), REGISTRANT, NOW);
+
+            assertThat(registration.pickupAdopted())
+                    .contains(new PickupMilestoneAdopted(
+                            TRACKING_NUMBER.value(),
+                            BOOKING_ID,
+                            1,
+                            at("2026-11-01T02:30:00Z"),
+                            REGISTRANT.value(),
+                            before.aggregateVersion() + 1));
+        }
+
+        @Test
+        void 行15_DE10は追跡番号と予約IDと実績番号と発生時刻と登録者と保存した後の版を持つ() {
+            TrackingRecord before = arrived();
+
+            MilestoneRegistration registration = before.registerMilestone(
+                    MilestoneKind.DELIVERY, tokyo(), at("2026-11-01T02:30:00Z"), source("F-2"), REGISTRANT, NOW);
+
+            assertThat(registration.deliveryConfirmed())
+                    .contains(new DeliveryConfirmed(
+                            TRACKING_NUMBER.value(),
+                            BOOKING_ID,
+                            2,
+                            at("2026-11-01T02:30:00Z"),
+                            REGISTRANT.value(),
+                            before.aggregateVersion() + 1));
+            // 行 21（【前の決定の変更】(17)）。DE-10 を出しても追跡記録の予約状態の写しは完了にしない
+            assertThat(registration.trackingRecord().bookingStatus()).isEqualTo(TrackedBookingStatus.CONFIRMED);
+        }
+
+        /** 行 12（【業務の判断】(al)）。確認中の追跡でも、採用になった集荷・引渡しなら出す。DE-18 はすでに確認中なので出さない。 */
+        @ParameterizedTest(name = "{0}")
+        @CsvSource({
+            "時系列どおりの集荷はDE09, PICKUP, 2026-11-01T01:00:00Z, DE09",
+            "時系列どおりの引渡しはDE10, DELIVERY, 2026-11-02T01:00:00Z, DE10"
+        })
+        void 行12_確認中の追跡で採用になった集荷と引渡しは出す(String name, MilestoneKind kind, String occurredAt, String expected) {
+            TrackingRecord underReview = arrived()
+                    .registerMilestone(
+                            MilestoneKind.PICKUP, tokyo(), at("2026-11-01T02:30:00Z"), source("F-2"), REGISTRANT, NOW)
+                    .trackingRecord();
+            assertThat(underReview.currentStatus()).isEqualTo(TrackingStatus.UNDER_REVIEW);
+
+            MilestoneRegistration registration =
+                    underReview.registerMilestone(kind, tokyo(), at(occurredAt), source("F-3"), REGISTRANT, LATER);
+
+            assertThat(registration.milestone().state()).isEqualTo(MilestoneState.ADOPTED);
+            assertThat(eventOf(registration)).isEqualTo(expected);
+            assertThat(registration.trackingRecord().currentStatus()).isEqualTo(TrackingStatus.UNDER_REVIEW);
+        }
+
+        @Test
+        void 行13_同じ出典の二重送信では出さない() {
+            TrackingRecord picked = started()
+                    .registerMilestone(
+                            MilestoneKind.PICKUP, tokyo(), at("2026-11-01T02:30:00Z"), source("F-2"), REGISTRANT, NOW)
+                    .trackingRecord();
+
+            MilestoneRegistration again = picked.registerMilestone(
+                    MilestoneKind.PICKUP, tokyo(), at("2026-11-01T02:30:00Z"), source("F-2"), REGISTRANT, NOW);
+
+            assertThat(again.alreadyRegistered()).isTrue();
+            assertThat(eventOf(again)).isEqualTo("NONE");
+        }
+
+        @Test
+        void 行12_2つ目の採用の集荷でも出す() {
+            TrackingRecord picked = started()
+                    .registerMilestone(
+                            MilestoneKind.PICKUP, tokyo(), at("2026-11-01T02:30:00Z"), source("F-2"), REGISTRANT, NOW)
+                    .trackingRecord();
+
+            MilestoneRegistration second = picked.registerMilestone(
+                    MilestoneKind.PICKUP, tokyo(), at("2026-11-01T02:40:00Z"), source("F-3"), REGISTRANT, NOW);
+
+            assertThat(second.milestone().state()).isEqualTo(MilestoneState.ADOPTED);
+            assertThat(eventOf(second)).isEqualTo("DE09");
         }
     }
 

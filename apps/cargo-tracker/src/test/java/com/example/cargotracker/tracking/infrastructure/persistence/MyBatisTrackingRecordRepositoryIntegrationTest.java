@@ -926,6 +926,74 @@ class MyBatisTrackingRecordRepositoryIntegrationTest {
         }
     }
 
+    /** P-3（Bolt 39g2 の行 22。追加する実績の選び方）。クラスの @Transactional で戻す。 */
+    @Nested
+    class Bolt39g2_表の実績の中身の比べ {
+
+        /** 集荷を 1 件保存した追跡記録を読み直す（版 1）。 */
+        private TrackingRecord picked() {
+            TrackingRecord saved = started(UUID.randomUUID(), trackingNumber());
+            repository.save(saved);
+            repository.update(register(saved, MilestoneKind.PICKUP, "2026-11-01T02:30:00Z", "F-118"));
+            return repository.findByTrackingNumber(saved.trackingNumber()).orElseThrow();
+        }
+
+        @Test
+        void 行22a_表の実績が集約と同じなら書き換えず新しい実績だけを足す() {
+            TrackingRecord loaded = picked();
+
+            repository.update(register(loaded, MilestoneKind.DEPARTURE, "2026-11-01T02:40:00Z", "F-119"));
+
+            TrackingRecord reloaded =
+                    repository.findByTrackingNumber(loaded.trackingNumber()).orElseThrow();
+            assertThat(reloaded.milestones()).hasSize(2);
+            assertThat(reloaded.milestones().getFirst())
+                    .isEqualTo(loaded.milestones().getFirst());
+            assertThat(reloaded.aggregateVersion()).isEqualTo(2);
+        }
+
+        /** 行 22 (b)。読み込んだ後に版を通さずに表の実績の中身を書き換えると、保存は誤りとして止まる。 */
+        @ParameterizedTest(name = "{0}")
+        @ValueSource(
+                strings = {
+                    "kind = 'DEPARTURE'",
+                    "location_unlocode = 'KRPUS'",
+                    "occurred_at = occurred_at - INTERVAL '1 minute'",
+                    "source_kind = 'INTERNAL_CHECK'",
+                    "source_ref = 'F-999'",
+                    "acquired_at = acquired_at - INTERVAL '1 minute'",
+                    "registered_by = '00000000-0000-0000-0000-00000039a241'",
+                    "registered_at = registered_at - INTERVAL '1 minute'"
+                })
+        void 行22b_表の実績の中身が集約と違えば例外で止める(String assignment) {
+            TrackingRecord loaded = picked();
+            jdbc.update(
+                    "UPDATE tracking.milestone SET " + assignment + " WHERE tracking_number = ?",
+                    loaded.trackingNumber().value());
+            TrackingRecord next = register(loaded, MilestoneKind.DEPARTURE, "2026-11-01T02:40:00Z", "F-119");
+
+            assertThatThrownBy(() -> repository.update(next))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("中身");
+        }
+
+        @Test
+        void 行22c_表にあって集約にない実績があれば例外で止める() {
+            TrackingRecord loaded = picked();
+            jdbc.update(
+                    "INSERT INTO tracking.milestone (tracking_number, milestone_no, kind, location_unlocode, occurred_at,"
+                            + " source_kind, source_ref, acquired_at, state, registered_by, registered_at)"
+                            + " SELECT tracking_number, 2, 'DEPARTURE', location_unlocode, occurred_at, source_kind,"
+                            + " 'F-777', acquired_at, state, registered_by, registered_at"
+                            + " FROM tracking.milestone WHERE tracking_number = ? AND milestone_no = 1",
+                    loaded.trackingNumber().value());
+
+            assertThatThrownBy(() -> repository.update(loaded))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("追跡記録にない");
+        }
+    }
+
     private void assertMilestoneConstraint(String assignment) {
         TrackingRecord saved = started(UUID.randomUUID(), trackingNumber());
         repository.save(saved);

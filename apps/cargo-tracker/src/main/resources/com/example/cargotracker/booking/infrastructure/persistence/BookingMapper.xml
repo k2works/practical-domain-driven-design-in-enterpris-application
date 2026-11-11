@@ -113,6 +113,28 @@
          WHERE tracking_number = #{trackingNumber}
     </select>
 
+    <!-- 予約 ID の行を押さえる（集荷・引渡しの通知を直列にする。Bolt 39g2）。押さえる前に読んだ値をキャッシュから使わないよう flushCache を
+         付ける。待ちは 10 秒で打ち切る（前例 TrackingRecordMapper.lockByTrackingNumber） -->
+    <select id="lockBookingById" resultType="java.util.UUID" flushCache="true" timeout="10">
+        SELECT id FROM booking.booking WHERE id = #{id} FOR UPDATE
+    </select>
+
+    <select id="findBookingById" resultMap="bookingRow">
+        SELECT id, tracking_number, transport_request_number, quotation_no, quotation_id, shipper_company_id, status,
+               transport_phase, current_version_no, version, created_at, created_by, updated_at, updated_by
+          FROM booking.booking
+         WHERE id = #{id}
+    </select>
+
+    <!-- 集荷・引渡しの通知で状態と輸送段階を進める（Bolt 39g2）。期待版で更新して版を 1 進める。予約版（current_version_no）は書かない -->
+    <update id="updateBookingTransportPhase">
+        UPDATE booking.booking
+           SET status = #{status}, transport_phase = #{transportPhase}, version = version + 1,
+               updated_at = #{updatedAt}, updated_by = #{updatedBy}
+         WHERE id = #{id}
+           AND version = #{expectedVersion}
+    </update>
+
     <select id="findVersions" resultMap="bookingVersionRow">
         SELECT booking_id, booking_version_no, transport_request_id, transport_request_version_no, quotation_id,
                routing_case_number, route_version_no, consignee_company_id, cargo_category, cargo_summary,

@@ -23,6 +23,7 @@ import com.example.cargotracker.tracking.domain.model.valueobjects.UnderReviewRe
 import java.time.Clock;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -92,8 +93,9 @@ public class MyBatisTrackingRecordRepository implements TrackingRecordRepository
     }
 
     /**
-     * 主要実績の登録を保存する（Bolt 26b）。読み込んだときの版と同じときだけ現在状態と根拠の実績番号と確認中の理由（Bolt 39gc）を書いて版を 1 増やし、まだ表にない
-     * 主要実績を追加する（実績は削除・上書きしない。T-INV-01）。表で下書きの実績が集約で採用・確認中になっていれば、状態と採用者・採用時刻だけを書き換える（Bolt 39gb。確認中は Bolt 39gc）。
+     * 主要実績の登録を保存する（Bolt 26b）。読み込んだときの版と同じときだけ現在状態と根拠の実績番号と確認中の理由（Bolt 39gc）を書いて版を 1 増やし、表にない
+     * 実績番号の主要実績を追加する（実績は削除・上書きしない。T-INV-01）。表にある実績は中身が集約と同じでなければ、版を通さずに書いた経路の誤りとして
+     * {@link IllegalStateException} にする（P-3。Bolt 39g2）。表で下書きの実績が集約で採用・確認中になっていれば、状態と採用者・採用時刻だけを書き換える（Bolt 39gb。確認中は Bolt 39gc）。
      * 版が違えば、下書きの行がもう下書きでなければ、同じ出典の実績が同時に登録されて一意制約 {@code uk_milestone_source} に違反したら、または根拠の実績番号の実績が
      * 表になければ（遅延の外部キーの違反がコミットのときに 500 になるのを先に拾う。P-5）、セーブポイントに戻して {@link ConcurrentTrackingRecordUpdateException}
      * にする（PostgreSQL は制約違反でトランザクションを中断するため。貨物予約の保存と同じ）。ほかの一意制約の違反（実績番号の重なりなど）は版の条件の後には起きない
@@ -129,7 +131,12 @@ public class MyBatisTrackingRecordRepository implements TrackingRecordRepository
         }
     }
 
-    /** まだ表にない実績を追加し、表で下書きの実績が集約で採用になっていれば書き換える。表の状態が集約と違い、書き換えられなければ競合。 */
+    /**
+     * 表にない実績番号の実績を追加し、表で下書きの実績が集約で採用になっていれば書き換える。表の状態が集約と違い、書き換えられなければ競合。
+     * 表にある実績は集約の実績と中身（種類・場所・発生時刻・出典・登録者・登録時刻・外部の出どころ）が同じでなければならず、表にあって集約にない実績も
+     * あってはならない（P-3。Bolt 39g2）。版の条件を通った後にそれが崩れているのは、版を通さずに実績を書いた経路があるという誤りなので、黙って飛ばさずに
+     * {@link IllegalStateException} でトランザクションを戻す（P-6 と同じく例外のまま上げる）。比べには読み込んでいる表の行を使い、照会は増やさない。
+     */
     private void saveMilestones(TrackingRecord trackingRecord) {
         String trackingNumber = trackingRecord.trackingNumber().value();
         Map<Integer, MilestoneRow> savedRows = mapper.findMilestones(trackingNumber).stream()
@@ -139,11 +146,55 @@ public class MyBatisTrackingRecordRepository implements TrackingRecordRepository
             MilestoneRow saved = savedRows.get(milestone.milestoneNo());
             if (saved == null) {
                 mapper.insertMilestone(row);
-            } else if (!sameState(saved, row) && (!isAdoption(milestone) || mapper.updateMilestoneAdoption(row) == 0)) {
+                continue;
+            }
+            if (!sameContent(saved, row)) {
+                throw new IllegalStateException(
+                        "表の主要実績の中身が追跡記録と違う（版を通さずに書いた経路の誤り）: " + trackingNumber + " の実績 " + milestone.milestoneNo());
+            }
+            if (!sameState(saved, row) && (!isAdoption(milestone) || mapper.updateMilestoneAdoption(row) == 0)) {
                 // 表の状態が集約と違う。下書きの採用でなければ、または表の行がもう下書きでなければ（別の採用が先に書いた）、競合
                 throw conflict(trackingRecord);
             }
         }
+        // 集約の実績番号は 1 からの連番なので、実績の数より大きい実績番号の行は集約にない。追加の後に見るので、同じ出典の同時の登録は先に
+        // 一意制約の違反（競合）になる
+        if (savedRows.keySet().stream()
+                .anyMatch(
+                        milestoneNo -> milestoneNo > trackingRecord.milestones().size())) {
+            throw new IllegalStateException("表にあって追跡記録にない主要実績がある（版を通さずに書いた経路の誤り）: " + trackingNumber);
+        }
+    }
+
+    /** 表の行と集約の実績の中身が同じか（状態・採用者・採用時刻は {@link #sameState} が比べる。時刻は表の精度のマイクロ秒で比べる。P-3）。 */
+    private static boolean sameContent(MilestoneRow saved, MilestoneRow row) {
+        return saved.kind().equals(row.kind())
+                && saved.locationUnlocode().equals(row.locationUnlocode())
+                && sameInstant(saved.occurredAt(), row.occurredAt())
+                && sameSourceAndRegistration(saved, row)
+                && sameExternalOrigin(saved, row);
+    }
+
+    /** 出典（種類・参照・取得時刻）と登録者・登録時刻が同じか（P-3）。 */
+    private static boolean sameSourceAndRegistration(MilestoneRow saved, MilestoneRow row) {
+        return saved.sourceKind().equals(row.sourceKind())
+                && saved.sourceRef().equals(row.sourceRef())
+                && sameInstant(saved.acquiredAt(), row.acquiredAt())
+                && saved.registeredBy().equals(row.registeredBy())
+                && sameInstant(saved.registeredAt(), row.registeredAt());
+    }
+
+    /** 外部の出どころ（情報源 ID・外部 ID・公開した時刻）が同じか（P-3）。 */
+    private static boolean sameExternalOrigin(MilestoneRow saved, MilestoneRow row) {
+        return Objects.equals(saved.dataSourceId(), row.dataSourceId())
+                && Objects.equals(saved.externalId(), row.externalId())
+                && sameInstant(saved.publishedAt(), row.publishedAt());
+    }
+
+    private static boolean sameInstant(OffsetDateTime saved, OffsetDateTime row) {
+        return Objects.equals(
+                saved == null ? null : saved.toInstant().truncatedTo(ChronoUnit.MICROS),
+                row == null ? null : row.toInstant().truncatedTo(ChronoUnit.MICROS));
     }
 
     /** 表の行と集約の実績の状態・採用者・採用時刻が同じか（同じなら書き換えない。採用時刻は瞬間で比べる）。 */

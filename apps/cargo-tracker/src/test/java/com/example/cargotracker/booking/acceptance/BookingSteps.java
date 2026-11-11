@@ -8,10 +8,14 @@ import com.example.cargotracker.booking.application.internal.commandservices.Boo
 import com.example.cargotracker.booking.application.internal.outboundservices.acl.QuotationUnavailability;
 import com.example.cargotracker.booking.application.sagas.BookingSagaStatus;
 import com.example.cargotracker.booking.domain.events.BookingConfirmed;
+import com.example.cargotracker.booking.domain.model.BookingFixture;
 import com.example.cargotracker.booking.domain.model.aggregates.Booking;
 import com.example.cargotracker.booking.domain.model.entities.BookingVersion;
 import com.example.cargotracker.booking.domain.model.valueobjects.BookingCondition;
+import com.example.cargotracker.booking.domain.model.valueobjects.BookingId;
+import com.example.cargotracker.booking.domain.model.valueobjects.BookingStatus;
 import com.example.cargotracker.booking.domain.model.valueobjects.TrackingNumber;
+import com.example.cargotracker.booking.domain.model.valueobjects.TransportPhase;
 import com.example.cargotracker.shared.acceptance.DeferredEventDelivery;
 import com.example.cargotracker.shared.acceptance.ScenarioContext;
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
@@ -23,6 +27,7 @@ import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import io.cucumber.java.ja.ならば;
 import io.cucumber.java.ja.もし;
+import io.cucumber.java.ja.前提;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.List;
@@ -36,6 +41,12 @@ import java.util.UUID;
  * 同じく確定のたびに新しいコマンド ID を使う。名指しした ID（"cmd-001" など）は、名前から決まる UUID にする（Bolt 24）。
  */
 public class BookingSteps {
+
+    /**
+     * 追跡の受入シナリオの追跡記録の予約 ID と同じ値（追跡のステップ定義の値。ステップ定義はほかのコンテキストのステップに依存しないので写す。
+     * Bolt 39g2）。
+     */
+    private static final UUID TRACKED_BOOKING_ID = UUID.fromString("00000000-0000-0000-0000-000000026b02");
 
     private static final CompanyId A_COMPANY = new CompanyId(UUID.fromString("00000000-0000-0000-0000-00000000a000"));
     private static final AuthenticatedActor SALES = actor("00000000-0000-0000-0000-000000000201", Role.SALES, "佐藤");
@@ -180,6 +191,49 @@ public class BookingSteps {
     public void 予約は記録されていない() {
         assertThat(bookings.findAll()).isEmpty();
         assertThat(delivery.published()).noneMatch(BookingConfirmed.class::isInstance);
+    }
+
+    /**
+     * Bolt 39g2 の行 26。追跡の受入シナリオの追跡記録と同じ予約 ID・追跡番号の確定した予約を、予約の集約から直接作る（見積りからの確定の流れは
+     * {@code confirm_booking.feature} が確かめる）。
+     */
+    @前提("追跡番号 {string} の予約が確定している")
+    public void 予約が確定している(String trackingNumber) {
+        Booking booking = Booking.confirm(
+                        new BookingId(TRACKED_BOOKING_ID),
+                        BookingFixture.allConditions(),
+                        BookingFixture.terms(),
+                        new TrackingNumber(trackingNumber),
+                        SALES.userId().value(),
+                        new UtcInstant(Instant.parse("2026-10-31T00:00:00Z")))
+                .booking();
+        bookings.save(booking, SALES.userId().value(), BookingFixture.processedCommand(booking));
+    }
+
+    @ならば("追跡番号 {string} の予約の状態は {string}、輸送段階は {string} である")
+    public void 予約の状態と輸送段階(String trackingNumber, String status, String phase) {
+        Booking booking = bookings.findByTrackingNumber(new TrackingNumber(trackingNumber))
+                .orElseThrow();
+        assertThat(booking.status()).isEqualTo(bookingStatus(status));
+        assertThat(booking.transportPhase()).isEqualTo(transportPhase(phase));
+    }
+
+    private static BookingStatus bookingStatus(String name) {
+        return switch (name) {
+            case "確定" -> BookingStatus.CONFIRMED;
+            case "輸送中" -> BookingStatus.IN_TRANSIT;
+            case "完了" -> BookingStatus.COMPLETED;
+            default -> throw new IllegalArgumentException("知らない予約の状態: " + name);
+        };
+    }
+
+    private static TransportPhase transportPhase(String name) {
+        return switch (name) {
+            case "集荷前" -> TransportPhase.BEFORE_PICKUP;
+            case "集荷後" -> TransportPhase.AFTER_PICKUP;
+            case "完了" -> TransportPhase.COMPLETED;
+            default -> throw new IllegalArgumentException("知らない輸送段階: " + name);
+        };
     }
 
     private Booking confirmedBooking() {

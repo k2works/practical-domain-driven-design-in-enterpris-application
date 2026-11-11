@@ -41,6 +41,9 @@ public class MilestoneSteps {
     /** シナリオの追跡記録の荷主企業（追跡管理者はこの企業を担当する。Bolt 38g）。 */
     private static final CompanyId SHIPPER = new CompanyId(UUID.fromString("00000000-0000-0000-0000-000000026b03"));
 
+    /** シナリオの追跡記録の予約 ID（予約のステップ定義が同じ値を写して同じ予約 ID の予約を作る。Bolt 39g2）。 */
+    private static final UUID BOOKING_ID = UUID.fromString("00000000-0000-0000-0000-000000026b02");
+
     /** 受入シナリオの追跡管理者。 */
     private static final UserId TRACKING_MANAGER = new UserId(UUID.fromString("00000000-0000-0000-0000-000000026b01"));
 
@@ -93,7 +96,7 @@ public class MilestoneSteps {
     public void 追跡を開始した追跡記録がある(String trackingNumber) {
         trackingRecords.save(TrackingRecord.start(
                         new TrackingNumber(trackingNumber),
-                        UUID.fromString("00000000-0000-0000-0000-000000026b02"),
+                        BOOKING_ID,
                         SHIPPER,
                         new CompanyId(UUID.fromString("00000000-0000-0000-0000-000000026b04")),
                         TrackingFixture.schedule(),

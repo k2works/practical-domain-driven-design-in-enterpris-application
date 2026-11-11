@@ -3,6 +3,7 @@ package com.example.cargotracker.booking.acceptance;
 import com.example.cargotracker.booking.domain.model.aggregates.Booking;
 import com.example.cargotracker.booking.domain.model.aggregates.BookingRepository;
 import com.example.cargotracker.booking.domain.model.aggregates.DuplicateBookingException;
+import com.example.cargotracker.booking.domain.model.valueobjects.BookingId;
 import com.example.cargotracker.booking.domain.model.valueobjects.BookingSummary;
 import com.example.cargotracker.booking.domain.model.valueobjects.ProcessedCommand;
 import com.example.cargotracker.booking.domain.model.valueobjects.TrackingNumber;
@@ -16,6 +17,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import org.springframework.dao.OptimisticLockingFailureException;
 
 /**
  * メモリ上の貨物予約のリポジトリ（業務ルール層の受入シナリオ）。追跡番号・見積り ID・業務番号と見積り番号・コマンド ID の一意を表の
@@ -27,6 +29,7 @@ public class InMemoryBookingRepository implements BookingRepository {
 
     private final Map<String, Booking> byTrackingNumber = new LinkedHashMap<>();
     private final Map<CommandId, ProcessedCommand> processedCommands = new LinkedHashMap<>();
+    private final Map<BookingId, UUID> updatedBy = new LinkedHashMap<>();
 
     @Override
     public synchronized void save(Booking booking, UUID operator, ProcessedCommand processedCommand) {
@@ -68,6 +71,39 @@ public class InMemoryBookingRepository implements BookingRepository {
     @Override
     public synchronized Optional<Booking> findByTrackingNumber(TrackingNumber trackingNumber) {
         return Optional.ofNullable(byTrackingNumber.get(trackingNumber.value()));
+    }
+
+    /** 行のロックはない（受入シナリオと単体は 1 本のスレッドで動く）。予約 ID で引く。 */
+    @Override
+    public synchronized Optional<Booking> findByIdForUpdate(BookingId id) {
+        return byTrackingNumber.values().stream()
+                .filter(booking -> booking.id().equals(id))
+                .findFirst();
+    }
+
+    /** 期待版で保存して版を 1 進め、更新者を残す（MyBatis の実装と同じく、版が違えば競合の例外。Bolt 39g2）。 */
+    @Override
+    public synchronized void update(Booking booking, UUID operator) {
+        Booking saved = byTrackingNumber.get(booking.trackingNumber().value());
+        if (saved == null || saved.aggregateVersion() != booking.aggregateVersion()) {
+            throw new OptimisticLockingFailureException(
+                    "貨物予約の版が期待版と違う: " + booking.id().value());
+        }
+        byTrackingNumber.put(
+                booking.trackingNumber().value(),
+                Booking.reconstitute(
+                        booking.id(),
+                        booking.trackingNumber(),
+                        booking.status(),
+                        booking.transportPhase(),
+                        booking.versions(),
+                        booking.aggregateVersion() + 1));
+        updatedBy.put(booking.id(), operator);
+    }
+
+    /** 最後に {@link #update} した操作者（予約の更新者。Bolt 39g2 の行 4）。 */
+    public synchronized UUID updatedBy(BookingId id) {
+        return updatedBy.get(id);
     }
 
     @Override
@@ -119,5 +155,6 @@ public class InMemoryBookingRepository implements BookingRepository {
     public synchronized void clear() {
         byTrackingNumber.clear();
         processedCommands.clear();
+        updatedBy.clear();
     }
 }

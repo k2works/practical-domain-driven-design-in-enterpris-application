@@ -20,6 +20,8 @@ import com.example.cargotracker.shared.domain.UtcInstant;
 import com.example.cargotracker.tracking.acceptance.InMemoryTrackingRecordRepository;
 import com.example.cargotracker.tracking.application.internal.commands.RegisterMilestoneCommand;
 import com.example.cargotracker.tracking.application.internal.queryservices.TrackingRecordScope;
+import com.example.cargotracker.tracking.domain.events.DeliveryConfirmed;
+import com.example.cargotracker.tracking.domain.events.PickupMilestoneAdopted;
 import com.example.cargotracker.tracking.domain.events.TrackingPlacedUnderReview;
 import com.example.cargotracker.tracking.domain.model.aggregates.ConcurrentTrackingRecordUpdateException;
 import com.example.cargotracker.tracking.domain.model.aggregates.ExternalMilestoneReceipt;
@@ -368,7 +370,8 @@ class TrackingRecordCommandServiceTest {
             service.registerMilestone(command(3, MilestoneKind.DELIVERY, "F-4", "2026-11-01T03:00:01Z"), MANAGER);
             service.registerMilestone(command(3, MilestoneKind.DELIVERY, "F-5", "2026-11-01T02:50:00Z"), MANAGER);
 
-            assertThat(published).isEmpty();
+            // 時系列どおりの引渡しは DE-10 を出す（Bolt 39g2）。この行が縛るのは DE-18 だけ
+            assertThat(published).noneMatch(TrackingPlacedUnderReview.class::isInstance);
         }
 
         @Test
@@ -441,6 +444,88 @@ class TrackingRecordCommandServiceTest {
             assertThat(published)
                     .containsExactly(new TrackingPlacedUnderReview(
                             TRACKING_NUMBER.value(), BOOKING_ID, "OUT_OF_SEQUENCE", 2, new UtcInstant(NOW), 3));
+        }
+    }
+
+    /** Bolt 39g2 の行 16（DE-09・DE-10 は保存の後に同じトランザクションで発行し、保存が競合なら出ない）。 */
+    @org.junit.jupiter.api.Nested
+    class Bolt39g2_DE09とDE10の発行 {
+
+        @Test
+        void 行16_採用の集荷を登録すると保存の後にDE09を1件発行する() {
+            service.registerMilestone(command(0, MilestoneKind.PICKUP, "F-1", "2026-11-01T02:30:00Z"), MANAGER);
+
+            assertThat(repository
+                            .findByTrackingNumber(TRACKING_NUMBER)
+                            .orElseThrow()
+                            .aggregateVersion())
+                    .isEqualTo(1);
+            assertThat(published)
+                    .containsExactly(new PickupMilestoneAdopted(
+                            TRACKING_NUMBER.value(), BOOKING_ID, 1, at("2026-11-01T02:30:00Z"), REGISTRANT.value(), 1));
+        }
+
+        @Test
+        void 行16_採用の引渡しを登録すると保存の後にDE10を1件発行する() {
+            service.registerMilestone(command(0, MilestoneKind.DELIVERY, "F-1", "2026-11-01T02:30:00Z"), MANAGER);
+
+            assertThat(published)
+                    .containsExactly(new DeliveryConfirmed(
+                            TRACKING_NUMBER.value(), BOOKING_ID, 1, at("2026-11-01T02:30:00Z"), REGISTRANT.value(), 1));
+        }
+
+        @Test
+        void 行16_保存が版の不一致で競合ならDE09は出ない() {
+            assertThat(service.registerMilestone(
+                            command(5, MilestoneKind.PICKUP, "F-1", "2026-11-01T02:30:00Z"), MANAGER))
+                    .isEqualTo(new MilestoneRegistrationOutcome.Conflict());
+            assertThat(published).isEmpty();
+        }
+
+        @Test
+        void 行16_保存のときに楽観ロックの競合が起きたらDE10は出ない() {
+            InMemoryTrackingRecordRepository failing = new InMemoryTrackingRecordRepository() {
+                @Override
+                public void update(TrackingRecord trackingRecord) {
+                    throw new ConcurrentTrackingRecordUpdateException(
+                            trackingRecord.trackingNumber(), trackingRecord.aggregateVersion());
+                }
+            };
+            failing.save(TrackingRecord.start(TRACKING_NUMBER, BOOKING_ID, SHIPPER, CONSIGNEE, schedule(), STARTED_AT)
+                    .trackingRecord());
+            TrackingRecordCommandService failingService = new TrackingRecordCommandService(
+                    failing, Clock.fixed(NOW, ZoneOffset.UTC), new TrackingRecordScope(failing), published::add);
+
+            assertThat(failingService.registerMilestone(
+                            command(0, MilestoneKind.DELIVERY, "F-1", "2026-11-01T02:30:00Z"), MANAGER))
+                    .isEqualTo(new MilestoneRegistrationOutcome.Conflict());
+            assertThat(published).isEmpty();
+        }
+
+        @Test
+        void 行16_採用の経路の集荷も保存の後にDE09を発行し採用者を持つ() {
+            TrackingRecord current =
+                    repository.findByTrackingNumber(TRACKING_NUMBER).orElseThrow();
+            repository.update(((ExternalMilestoneReceipt.Received) current.receiveExternalMilestone(
+                            new ExternalMilestone(
+                                    TRACKING_NUMBER,
+                                    MilestoneKind.PICKUP,
+                                    new Location("JPTYO"),
+                                    at("2026-11-01T02:30:00Z"),
+                                    new Source(SourceKind.EXTERNAL_RECORD, "r-1", at("2026-11-01T02:40:00Z")),
+                                    new ExternalOrigin(
+                                            UUID.fromString("00000000-0000-0000-0000-00000039a2d1"),
+                                            "MS-0001",
+                                            at("2026-11-01T02:40:00Z")),
+                                    new UserId(UUID.fromString("00000000-0000-0000-0000-00000039a2d2"))),
+                            at("2026-11-01T02:40:00Z")))
+                    .trackingRecord());
+
+            service.adoptCandidate(TRACKING_NUMBER, 1, 1, MANAGER);
+
+            assertThat(published)
+                    .containsExactly(new PickupMilestoneAdopted(
+                            TRACKING_NUMBER.value(), BOOKING_ID, 1, at("2026-11-01T02:30:00Z"), REGISTRANT.value(), 2));
         }
     }
 

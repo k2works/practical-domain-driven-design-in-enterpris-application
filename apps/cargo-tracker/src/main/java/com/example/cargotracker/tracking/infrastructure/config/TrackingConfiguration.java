@@ -1,12 +1,15 @@
 package com.example.cargotracker.tracking.infrastructure.config;
 
 import com.example.cargotracker.booking.interfaces.api.TrackingStartNotification;
+import com.example.cargotracker.booking.interfaces.api.TransportPhaseNotification;
 import com.example.cargotracker.routing.interfaces.api.RouteVersionLegQuery;
 import com.example.cargotracker.tracking.application.internal.commandservices.TrackingRecordCommandService;
 import com.example.cargotracker.tracking.application.internal.eventhandlers.BookingTrackingStartNotificationEventHandler;
+import com.example.cargotracker.tracking.application.internal.eventhandlers.BookingTransportPhaseNotificationEventHandler;
 import com.example.cargotracker.tracking.application.internal.eventhandlers.ExternalMilestoneEventHandler;
 import com.example.cargotracker.tracking.application.internal.eventhandlers.TrackingStartEventHandler;
 import com.example.cargotracker.tracking.application.internal.outboundservices.acl.BookingTrackingStarts;
+import com.example.cargotracker.tracking.application.internal.outboundservices.acl.BookingTransportPhases;
 import com.example.cargotracker.tracking.application.internal.outboundservices.acl.RoutingScheduledLegs;
 import com.example.cargotracker.tracking.application.internal.queryservices.CustomerTrackingQueryService;
 import com.example.cargotracker.tracking.application.internal.queryservices.TrackingRecordQueryService;
@@ -52,6 +55,19 @@ public class TrackingConfiguration {
     BookingTrackingStartNotificationEventHandler bookingTrackingStartNotificationEventHandler(
             BookingTrackingStarts trackingStarts) {
         return new BookingTrackingStartNotificationEventHandler(trackingStarts);
+    }
+
+    /** 予約の公開 API（輸送段階の通知）を呼ぶ腐敗防止層（ADR-014。Bolt 39g2）。 */
+    @Bean
+    BookingTransportPhases bookingTransportPhases(TransportPhaseNotification transportPhaseNotification) {
+        return new BookingTransportPhases(transportPhaseNotification);
+    }
+
+    /** DE-09・DE-10 を受けて予約の状態と輸送段階を進める（追跡記録の保存とは別のトランザクションで動く。ADR-014。Bolt 39g2）。 */
+    @Bean
+    BookingTransportPhaseNotificationEventHandler bookingTransportPhaseNotificationEventHandler(
+            BookingTransportPhases transportPhases) {
+        return new BookingTransportPhaseNotificationEventHandler(transportPhases);
     }
 
     /** DE-13 を受けて追跡の実績か拒否の記録を書く（Spring Modulith のイベントの記録を経て、別のトランザクションで動く。Bolt 39g）。 */

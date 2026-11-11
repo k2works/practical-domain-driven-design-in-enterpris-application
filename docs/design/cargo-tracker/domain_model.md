@@ -175,6 +175,7 @@ quadrantChart
 | 輸送段階 | TransportPhase | 集荷前、集荷後、完了。変更・取消しの可否を決める（BR-04）。Bolt 39g2 で、集荷の通知（DE-09）で集荷後に、引渡しの通知（DE-10）で完了に進め、戻さない（下の Bolt 39g2 で決めたこと） | 予約 |
 | 輸送段階の通知 | TransportPhaseNotification | 追跡が集荷・引渡しを予約に伝える予約の公開 API（`booking.interfaces.api`。`notifyPickedUp`・`notifyDelivered`。受領は記録した・記録済み・記録しない（理由）。ADR-014。Bolt 39g2） | 予約 |
 | 輸送段階の変化 | TransportPhaseChange | 予約の集約の `recordPickup`・`recordDelivery` の結果。進めた（新しい予約）・記録済み（何もしない）・記録しない（理由 `TransportPhaseRefusal`: 取消済み `BOOKING_CANCELLED`、申請中 `BOOKING_UNDER_REQUEST`）のどれか（`booking.domain.model.aggregates`。Bolt 39g2） | 予約 |
+| 輸送段階を進めない理由 | TransportPhaseRefusal | 集荷・引渡しの通知で予約の状態と輸送段階を進めない理由。取消済み `BOOKING_CANCELLED`、変更・取消しの申請中 `BOOKING_UNDER_REQUEST`（申請中は US-05・W11 で決め直す。`booking.domain.model.valueobjects`、`@ValueObject`。Bolt 39g2） | 予約 |
 | 確定できる貨物の規則 | BookableCargoPolicy | 写した貨物種別が一般貨物のときだけ本予約を確定できるとする予約の規則（B-INV-04。Bolt 35）。見積りの受付の規則（MvpAcceptancePolicy）とは別に予約が持つ | 予約 |
 | 追跡記録 | TrackingRecord | 1 つの追跡番号の予定と主要実績、現在状態 | 追跡 |
 | 予定 | Schedule | 追跡が採用した確定した経路版（案件番号・経路版番号）と予定区間の列。実績とは混同しない（T-INV-08。Bolt 25） | 追跡 |

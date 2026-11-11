@@ -15,6 +15,7 @@ import com.example.cargotracker.shared.domain.Source;
 import com.example.cargotracker.shared.domain.SourceKind;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
+import com.example.cargotracker.tracking.domain.events.PickupMilestoneAdopted;
 import com.example.cargotracker.tracking.domain.events.TrackingPlacedUnderReview;
 import com.example.cargotracker.tracking.domain.model.entities.Milestone;
 import com.example.cargotracker.tracking.domain.model.valueobjects.AdoptionRejectionReason;
@@ -646,6 +647,112 @@ class TrackingRecordCandidateAdoptionTest {
                                 rejected -> assertThat(rejected.reason())
                                         .isEqualTo(AdoptionRejectionReason.CONFLICTS_WITH_ADOPTED));
             }
+        }
+    }
+
+    /** Bolt 39g2 の行 11・14・15（採用の経路の DE-09・DE-10。【業務の判断】(al)）。 */
+    @Nested
+    class Bolt39g2_採用のDE09とDE10 {
+
+        private TrackingRecord draftOf(TrackingRecord start, MilestoneKind kind, String occurredAt) {
+            ExternalMilestone external = new ExternalMilestone(
+                    TRACKING_NUMBER,
+                    kind,
+                    TOKYO,
+                    at(occurredAt),
+                    new Source(SourceKind.EXTERNAL_RECORD, "r-1", at("2026-11-19T01:00:00Z")),
+                    new ExternalOrigin(SOURCE_A, "MS-0001", at("2026-11-19T10:00:00Z")),
+                    STEWARD);
+            return ((ExternalMilestoneReceipt.Received)
+                            start.receiveExternalMilestone(external, at("2026-11-19T10:00:00Z")))
+                    .trackingRecord();
+        }
+
+        /** 到着（11-18）を手入力で採用した追跡記録。 */
+        private TrackingRecord arrived() {
+            return empty(TrackedBookingStatus.CONFIRMED, TrackingStatus.PICKUP_SCHEDULED)
+                    .registerMilestone(
+                            MilestoneKind.ARRIVAL,
+                            BUSAN,
+                            at("2026-11-18T00:00:00Z"),
+                            new Source(SourceKind.FIELD_RECORD, "F-1", at("2026-11-18T00:00:00Z")),
+                            MANAGER,
+                            at("2026-11-18T01:00:00Z"))
+                    .trackingRecord();
+        }
+
+        private static String eventOf(MilestoneAdoption.Adopted adopted) {
+            List<String> events = new ArrayList<>();
+            adopted.pickupAdopted().ifPresent(event -> events.add("DE09"));
+            adopted.deliveryConfirmed().ifPresent(event -> events.add("DE10"));
+            adopted.placedUnderReview().ifPresent(event -> events.add("DE18"));
+            // 行 14。採用と確認中は同じ実績で重ならない
+            assertThat(events).hasSizeLessThanOrEqualTo(1);
+            return events.isEmpty() ? "NONE" : events.getFirst();
+        }
+
+        /** 行 11。採用に移った集荷・引渡しは出し、確認中に移った（DE-18 だけ）・搬入・出発は出さない。 */
+        @ParameterizedTest(name = "{0}")
+        @CsvSource({
+            "採用に移った集荷はDE09, false, PICKUP, 2026-11-19T00:00:00Z, ADOPTED, DE09",
+            "採用に移った引渡しはDE10, false, DELIVERY, 2026-11-19T00:00:00Z, ADOPTED, DE10",
+            "採用に移った出発は出さない, false, DEPARTURE, 2026-11-19T00:00:00Z, ADOPTED, NONE",
+            "確認中に移った集荷はDE18だけ, true, PICKUP, 2026-11-19T00:00:00Z, UNDER_REVIEW, DE18",
+            "確認中に移った引渡しはDE18だけ, true, DELIVERY, 2026-11-17T00:00:00Z, UNDER_REVIEW, DE18",
+            "時系列どおりの引渡しは到着の後でもDE10, true, DELIVERY, 2026-11-19T00:00:00Z, ADOPTED, DE10"
+        })
+        void 行11_採用の経路でDE09とDE10を出す(
+                String name,
+                boolean afterArrival,
+                MilestoneKind kind,
+                String occurredAt,
+                MilestoneState state,
+                String expected) {
+            TrackingRecord start =
+                    afterArrival ? arrived() : empty(TrackedBookingStatus.CONFIRMED, TrackingStatus.PICKUP_SCHEDULED);
+            TrackingRecord draft = draftOf(start, kind, occurredAt);
+            int milestoneNo = draft.milestones().size();
+
+            MilestoneAdoption.Adopted adopted =
+                    (MilestoneAdoption.Adopted) draft.adoptCandidate(milestoneNo, MANAGER, ADOPTED_AT);
+
+            assertThat(adopted.milestone().state()).isEqualTo(state);
+            assertThat(eventOf(adopted)).isEqualTo(expected);
+        }
+
+        @Test
+        void 行15_採用のDE09は採用者と保存した後の版を持つ() {
+            TrackingRecord draft = draftOf(
+                    empty(TrackedBookingStatus.CONFIRMED, TrackingStatus.PICKUP_SCHEDULED),
+                    MilestoneKind.PICKUP,
+                    "2026-11-19T00:00:00Z");
+
+            MilestoneAdoption.Adopted adopted =
+                    (MilestoneAdoption.Adopted) draft.adoptCandidate(1, MANAGER, ADOPTED_AT);
+
+            assertThat(adopted.pickupAdopted())
+                    .contains(new PickupMilestoneAdopted(
+                            TRACKING_NUMBER.value(),
+                            BOOKING_ID,
+                            1,
+                            at("2026-11-19T00:00:00Z"),
+                            MANAGER.value(),
+                            draft.aggregateVersion() + 1));
+        }
+
+        @Test
+        void 行11_拒否と採用済みの再採用はイベントを持たない結果になる() {
+            TrackingRecord draft = draftOf(
+                    empty(TrackedBookingStatus.CONFIRMED, TrackingStatus.PICKUP_SCHEDULED),
+                    MilestoneKind.PICKUP,
+                    "2026-11-19T00:00:00Z");
+            TrackingRecord adopted =
+                    ((MilestoneAdoption.Adopted) draft.adoptCandidate(1, MANAGER, ADOPTED_AT)).trackingRecord();
+
+            // 未来の発生時刻の拒否と、採用済みの実績をもう一度採用する（候補でない）拒否。Rejected はイベントを持たない
+            assertThat(draft.adoptCandidate(1, MANAGER, at("2026-11-18T00:00:00Z")))
+                    .isInstanceOf(MilestoneAdoption.Rejected.class);
+            assertThat(adopted.adoptCandidate(1, MANAGER, ADOPTED_AT)).isInstanceOf(MilestoneAdoption.Rejected.class);
         }
     }
 

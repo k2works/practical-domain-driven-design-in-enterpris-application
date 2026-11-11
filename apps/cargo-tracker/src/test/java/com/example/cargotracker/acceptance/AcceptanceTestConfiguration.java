@@ -4,12 +4,14 @@ import com.example.cargotracker.booking.acceptance.InMemoryBookingRepository;
 import com.example.cargotracker.booking.acceptance.InMemoryBookingSagaRepository;
 import com.example.cargotracker.booking.application.internal.commandservices.BookingCommandService;
 import com.example.cargotracker.booking.application.internal.commandservices.BookingSagaCommandService;
+import com.example.cargotracker.booking.application.internal.commandservices.TransportPhaseCommandService;
 import com.example.cargotracker.booking.application.internal.eventhandlers.BookingConfirmedEventHandler;
 import com.example.cargotracker.booking.application.internal.outboundservices.acl.QuotationBookability;
 import com.example.cargotracker.booking.application.internal.outboundservices.acl.QuotationBookingNotifications;
 import com.example.cargotracker.booking.domain.events.BookingConfirmed;
 import com.example.cargotracker.booking.infrastructure.persistence.RandomTrackingNumberIssuer;
 import com.example.cargotracker.booking.interfaces.api.internal.TrackingStartNotificationAdapter;
+import com.example.cargotracker.booking.interfaces.api.internal.TransportPhaseNotificationAdapter;
 import com.example.cargotracker.externaldata.application.internal.commandservices.IngestionService;
 import com.example.cargotracker.externaldata.application.internal.queryservices.PilotReadinessQueryService;
 import com.example.cargotracker.externaldata.domain.events.MilestoneAdoptedValueAccepted;
@@ -87,12 +89,16 @@ import com.example.cargotracker.tracking.acceptance.InMemoryRejectedMilestoneRep
 import com.example.cargotracker.tracking.acceptance.InMemoryTrackingRecordRepository;
 import com.example.cargotracker.tracking.application.internal.commandservices.TrackingRecordCommandService;
 import com.example.cargotracker.tracking.application.internal.eventhandlers.BookingTrackingStartNotificationEventHandler;
+import com.example.cargotracker.tracking.application.internal.eventhandlers.BookingTransportPhaseNotificationEventHandler;
 import com.example.cargotracker.tracking.application.internal.eventhandlers.ExternalMilestoneEventHandler;
 import com.example.cargotracker.tracking.application.internal.eventhandlers.TrackingStartEventHandler;
 import com.example.cargotracker.tracking.application.internal.outboundservices.acl.BookingTrackingStarts;
+import com.example.cargotracker.tracking.application.internal.outboundservices.acl.BookingTransportPhases;
 import com.example.cargotracker.tracking.application.internal.outboundservices.acl.RoutingScheduledLegs;
 import com.example.cargotracker.tracking.application.internal.queryservices.CustomerTrackingQueryService;
 import com.example.cargotracker.tracking.application.internal.queryservices.TrackingRecordScope;
+import com.example.cargotracker.tracking.domain.events.DeliveryConfirmed;
+import com.example.cargotracker.tracking.domain.events.PickupMilestoneAdopted;
 import com.example.cargotracker.tracking.domain.events.TrackingStarted;
 import io.cucumber.spring.CucumberContextConfiguration;
 import java.time.Duration;
@@ -337,6 +343,14 @@ public class AcceptanceTestConfiguration {
                     new TrackingStartNotificationAdapter(new BookingSagaCommandService(bookingSagaRepository))));
         }
 
+        /** 追跡は DE-09・DE-10 を受けて予約の公開 API で集荷・引渡しを伝える（ADR-014。Bolt 39g2）。 */
+        @Bean
+        BookingTransportPhaseNotificationEventHandler bookingTransportPhaseNotificationEventHandler(
+                InMemoryBookingRepository bookingRepository) {
+            return new BookingTransportPhaseNotificationEventHandler(new BookingTransportPhases(
+                    new TransportPhaseNotificationAdapter(new TransportPhaseCommandService(bookingRepository))));
+        }
+
         /** テスト用の同期の配信。購読側は {@link EventSubscriptions} が登録する（発行する部品と購読する部品が互いに依存するため）。 */
         @Bean
         DeferredEventDelivery eventDelivery() {
@@ -421,7 +435,8 @@ public class AcceptanceTestConfiguration {
                 QuotationPresentedForReapprovalEventHandler quotationPresentedForReapprovalEventHandler,
                 BookingConfirmedEventHandler bookingConfirmedEventHandler,
                 TrackingStartEventHandler trackingStartEventHandler,
-                BookingTrackingStartNotificationEventHandler bookingTrackingStartNotificationEventHandler) {
+                BookingTrackingStartNotificationEventHandler bookingTrackingStartNotificationEventHandler,
+                BookingTransportPhaseNotificationEventHandler bookingTransportPhaseNotificationEventHandler) {
             delivery.subscribe(event -> {
                 switch (event) {
                     case TransportRequestSubmitted submitted -> kpiObservationEventHandler.on(submitted);
@@ -444,13 +459,31 @@ public class AcceptanceTestConfiguration {
                         bookingConfirmedEventHandler.on(confirmed);
                         trackingStartEventHandler.on(confirmed);
                     }
-                    case TrackingStarted started -> bookingTrackingStartNotificationEventHandler.on(started);
+                    case TrackingStarted _, PickupMilestoneAdopted _, DeliveryConfirmed _ ->
+                        deliverTrackingEvent(
+                                event,
+                                bookingTrackingStartNotificationEventHandler,
+                                bookingTransportPhaseNotificationEventHandler);
                     default -> {
                         // 購読者のないイベント
                     }
                 }
             });
             return new EventSubscriptions();
+        }
+
+        /** 追跡が予約に伝えるイベント（DE-22・DE-09・DE-10）を配る（購読の分岐の循環的複雑度を上限に収める。Bolt 39g2）。 */
+        private static void deliverTrackingEvent(
+                Object event,
+                BookingTrackingStartNotificationEventHandler trackingStart,
+                BookingTransportPhaseNotificationEventHandler transportPhase) {
+            if (event instanceof TrackingStarted started) {
+                trackingStart.on(started);
+            } else if (event instanceof PickupMilestoneAdopted adopted) {
+                transportPhase.on(adopted);
+            } else if (event instanceof DeliveryConfirmed confirmed) {
+                transportPhase.on(confirmed);
+            }
         }
 
         /** 経路設計が見積りに伝えるイベント（DE-05・DE-06）を配る（購読の分岐の循環的複雑度を上限に収める。Bolt 37e2）。 */

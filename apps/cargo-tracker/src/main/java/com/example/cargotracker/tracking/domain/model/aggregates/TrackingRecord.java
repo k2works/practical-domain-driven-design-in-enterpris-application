@@ -7,6 +7,8 @@ import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.Source;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
+import com.example.cargotracker.tracking.domain.events.DeliveryConfirmed;
+import com.example.cargotracker.tracking.domain.events.PickupMilestoneAdopted;
 import com.example.cargotracker.tracking.domain.events.TrackingPlacedUnderReview;
 import com.example.cargotracker.tracking.domain.events.TrackingStarted;
 import com.example.cargotracker.tracking.domain.model.entities.Milestone;
@@ -47,6 +49,9 @@ import java.util.UUID;
  *
  * <p>採用済みの実績と時系列に反する実績（{@link MilestoneSequenceRule}）は確認中で残し、現在状態を確認中にする（T-INV-03。Bolt 39gc）。確認中に入る
  * 登録・採用の結果に DE-18 を載せ、呼び手が保存と同じトランザクションで発行する。
+ *
+ * <p>状態が採用になった集荷・引渡しの実績では、登録・採用の結果に DE-09・DE-10 を載せる（Bolt 39g2。予約の状態と輸送段階は追跡の listener が予約の
+ * 公開 API で進める。ADR-014）。追跡記録の予約状態の写しは完了にしない（【前の決定の変更】(17)。完了後の判定は採用済みの実績から導いた状態で効く）。
  */
 @AggregateRoot
 @CoreConcept
@@ -233,7 +238,7 @@ public final class TrackingRecord {
             UtcInstant registeredAt) {
         Optional<Milestone> sameSource = milestoneOf(source);
         if (sameSource.isPresent()) {
-            return new MilestoneRegistration(this, sameSource.get(), true, Optional.empty());
+            return MilestoneRegistration.withoutEvent(this, sameSource.get(), true);
         }
         if (bookingStatus == TrackedBookingStatus.CANCELLED) {
             throw new MilestoneRegistrationRejected(
@@ -254,8 +259,8 @@ public final class TrackingRecord {
                     MilestoneState.RETAINED_ONLY,
                     registrant,
                     registeredAt);
-            return new MilestoneRegistration(
-                    withMilestones(milestonesPlus(retained), current()), retained, false, Optional.empty());
+            return MilestoneRegistration.withoutEvent(
+                    withMilestones(milestonesPlus(retained), current()), retained, false);
         }
         Milestone adopted = new Milestone(
                 milestoneNo, kind, location, occurredAt, source, MilestoneState.ADOPTED, registrant, registeredAt);
@@ -272,7 +277,12 @@ public final class TrackingRecord {
                 : adopted;
         TrackingRecord registered = derivedWith(milestonesPlus(milestone));
         return new MilestoneRegistration(
-                registered, milestone, false, placedUnderReview(registered, milestone, registeredAt));
+                registered,
+                milestone,
+                false,
+                placedUnderReview(registered, milestone, registeredAt),
+                pickupAdopted(milestone, registrant),
+                deliveryConfirmed(milestone, registrant));
     }
 
     /**
@@ -381,7 +391,11 @@ public final class TrackingRecord {
                 .map(milestone -> milestone.milestoneNo() == milestoneNo ? adoptedMilestone : milestone)
                 .toList());
         return new MilestoneAdoption.Adopted(
-                after, adoptedMilestone, placedUnderReview(after, adoptedMilestone, adoptedAt));
+                after,
+                adoptedMilestone,
+                placedUnderReview(after, adoptedMilestone, adoptedAt),
+                pickupAdopted(adoptedMilestone, adopter),
+                deliveryConfirmed(adoptedMilestone, adopter));
     }
 
     /**
@@ -410,6 +424,41 @@ public final class TrackingRecord {
                 milestone.milestoneNo(),
                 placedAt,
                 aggregateVersion + 1));
+    }
+
+    /**
+     * 状態が採用になった集荷の実績なら DE-09 を作る（追跡が確認中でも出す。確認中・保持のみ・下書きでは出さない。【業務の判断】(al)。Bolt 39g2）。集約の版は
+     * 保存した後の版（DE-18 と同じ読み方）。
+     */
+    private Optional<PickupMilestoneAdopted> pickupAdopted(Milestone milestone, UserId operator) {
+        if (!isAdopted(milestone, MilestoneKind.PICKUP)) {
+            return Optional.empty();
+        }
+        return Optional.of(new PickupMilestoneAdopted(
+                trackingNumber.value(),
+                bookingId,
+                milestone.milestoneNo(),
+                milestone.occurredAt(),
+                operator.value(),
+                aggregateVersion + 1));
+    }
+
+    /** 状態が採用になった引渡しの実績なら DE-10 を作る（DE-09 と同じ規則。Bolt 39g2）。 */
+    private Optional<DeliveryConfirmed> deliveryConfirmed(Milestone milestone, UserId operator) {
+        if (!isAdopted(milestone, MilestoneKind.DELIVERY)) {
+            return Optional.empty();
+        }
+        return Optional.of(new DeliveryConfirmed(
+                trackingNumber.value(),
+                bookingId,
+                milestone.milestoneNo(),
+                milestone.occurredAt(),
+                operator.value(),
+                aggregateVersion + 1));
+    }
+
+    private static boolean isAdopted(Milestone milestone, MilestoneKind kind) {
+        return milestone.state() == MilestoneState.ADOPTED && milestone.kind() == kind;
     }
 
     private DerivedStatus current() {

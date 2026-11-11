@@ -2,6 +2,7 @@ package com.example.cargotracker.booking.infrastructure.config;
 
 import com.example.cargotracker.booking.application.internal.commandservices.BookingCommandService;
 import com.example.cargotracker.booking.application.internal.commandservices.BookingSagaCommandService;
+import com.example.cargotracker.booking.application.internal.commandservices.TransportPhaseCommandService;
 import com.example.cargotracker.booking.application.internal.eventhandlers.BookingConfirmedEventHandler;
 import com.example.cargotracker.booking.application.internal.outboundservices.acl.QuotationBookability;
 import com.example.cargotracker.booking.application.internal.outboundservices.acl.QuotationBookingNotifications;
@@ -65,6 +66,12 @@ public class BookingConfiguration {
     @Bean
     BookingSagaCommandService bookingSagaCommandService(BookingSagaRepository sagaRepository) {
         return new BookingSagaCommandService(sagaRepository);
+    }
+
+    /** 集荷・引渡しの通知で予約の状態と輸送段階を進める入力ポート。予約の公開 API のインバウンドアダプターが委ねる（ADR-014。Bolt 39g2）。 */
+    @Bean
+    TransportPhaseCommandService transportPhaseCommandService(BookingRepository repository) {
+        return new TransportPhaseCommandService(repository);
     }
 
     @Bean

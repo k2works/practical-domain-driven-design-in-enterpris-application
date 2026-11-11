@@ -17,6 +17,8 @@ import com.example.cargotracker.shared.domain.Source;
 import com.example.cargotracker.shared.domain.SourceKind;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
+import com.example.cargotracker.tracking.domain.events.DeliveryConfirmed;
+import com.example.cargotracker.tracking.domain.events.PickupMilestoneAdopted;
 import com.example.cargotracker.tracking.domain.events.TrackingStarted;
 import java.time.Instant;
 import java.util.List;
@@ -364,5 +366,55 @@ class DomainEventSerializationContractTest {
     @Test
     void DE22のJSONの形が変わっていない() {
         assertThat(serializer.serialize(TRACKING_STARTED)).isEqualTo(TRACKING_STARTED_V1);
+    }
+
+    /** DE-09 集荷実績を採用した（Bolt 39g2）。追跡の listener が受け、予約の公開 API を呼ぶ。 */
+    private static final String PICKUP_MILESTONE_ADOPTED_V1 = """
+            {"trackingNumber":"CTABCDEFGH2345","bookingId":"22222222-2222-2222-2222-222222222222",\
+            "milestoneNo":1,"occurredAt":{"instant":"2026-11-01T02:30:00.123456Z"},\
+            "operator":"00000000-0000-0000-0000-000000000701","aggregateVersion":1}""";
+
+    private static final PickupMilestoneAdopted PICKUP_MILESTONE_ADOPTED = new PickupMilestoneAdopted(
+            "CTABCDEFGH2345",
+            UUID.fromString("22222222-2222-2222-2222-222222222222"),
+            1,
+            new UtcInstant(Instant.parse("2026-11-01T02:30:00.123456Z")),
+            UUID.fromString("00000000-0000-0000-0000-000000000701"),
+            1);
+
+    /** DE-10 引渡しを確認した（Bolt 39g2）。 */
+    private static final String DELIVERY_CONFIRMED_V1 = """
+            {"trackingNumber":"CTABCDEFGH2345","bookingId":"22222222-2222-2222-2222-222222222222",\
+            "milestoneNo":2,"occurredAt":{"instant":"2026-11-02T02:30:00Z"},\
+            "operator":"00000000-0000-0000-0000-000000000701","aggregateVersion":2}""";
+
+    private static final DeliveryConfirmed DELIVERY_CONFIRMED = new DeliveryConfirmed(
+            "CTABCDEFGH2345",
+            UUID.fromString("22222222-2222-2222-2222-222222222222"),
+            2,
+            new UtcInstant(Instant.parse("2026-11-02T02:30:00Z")),
+            UUID.fromString("00000000-0000-0000-0000-000000000701"),
+            2);
+
+    @Test
+    void 行20_保存済みのDE09のJSONから復元できる() {
+        assertThat(serializer.deserialize(PICKUP_MILESTONE_ADOPTED_V1, PickupMilestoneAdopted.class))
+                .isEqualTo(PICKUP_MILESTONE_ADOPTED);
+    }
+
+    @Test
+    void 行20_DE09のJSONの形が変わっていない() {
+        assertThat(serializer.serialize(PICKUP_MILESTONE_ADOPTED)).isEqualTo(PICKUP_MILESTONE_ADOPTED_V1);
+    }
+
+    @Test
+    void 行20_保存済みのDE10のJSONから復元できる() {
+        assertThat(serializer.deserialize(DELIVERY_CONFIRMED_V1, DeliveryConfirmed.class))
+                .isEqualTo(DELIVERY_CONFIRMED);
+    }
+
+    @Test
+    void 行20_DE10のJSONの形が変わっていない() {
+        assertThat(serializer.serialize(DELIVERY_CONFIRMED)).isEqualTo(DELIVERY_CONFIRMED_V1);
     }
 }

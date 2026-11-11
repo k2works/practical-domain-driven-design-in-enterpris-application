@@ -24,7 +24,8 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * 追跡記録の入力ポート（追跡管理者が使う。US-12）。トランザクションの境界になる。登録時刻は Clock から得る。
  * 登録・採用で追跡記録が確認中に入ったときだけ、保存の後に同じトランザクションで DE-18（{@link TrackingPlacedUnderReview}）を発行する（Bolt 39gc。前例は
- * DE-22 の TrackingStartEventHandler）。保存が競合したら発行しない。ほかのドメインイベントは発行しない（DE-09 集荷実績を採用した は 39g2）。
+ * DE-22 の TrackingStartEventHandler）。状態が採用になった集荷・引渡しでは、同じく保存の後に DE-09・DE-10 を発行する（Bolt 39g2。追跡の listener が
+ * 予約の公開 API で予約の状態と輸送段階を進める）。保存が競合したら発行しない。
  * 読み出しの直後に担当範囲を判定し（{@link TrackingRecordScope}。Bolt 38g。US-16 AC4）、範囲の外なら何も書かずに範囲外の結果を返す。判定は
  * 発生時刻の判定・登録済みの判定・版の照合より先（範囲の外の追跡記録の実績や版を示さない）。
  *
@@ -92,6 +93,8 @@ public class TrackingRecordCommandService {
             return new MilestoneRegistrationOutcome.Conflict();
         }
         registration.placedUnderReview().ifPresent(eventPublisher::publishEvent);
+        registration.pickupAdopted().ifPresent(eventPublisher::publishEvent);
+        registration.deliveryConfirmed().ifPresent(eventPublisher::publishEvent);
         return new MilestoneRegistrationOutcome.Registered(
                 registration.milestone().milestoneNo(),
                 registration.milestone().state(),
@@ -147,6 +150,8 @@ public class TrackingRecordCommandService {
             return new MilestoneAdoptionOutcome.Conflict();
         }
         adopted.placedUnderReview().ifPresent(eventPublisher::publishEvent);
+        adopted.pickupAdopted().ifPresent(eventPublisher::publishEvent);
+        adopted.deliveryConfirmed().ifPresent(eventPublisher::publishEvent);
         return new MilestoneAdoptionOutcome.Adopted(
                 adopted.milestone().milestoneNo(),
                 adopted.milestone().state(),

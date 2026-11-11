@@ -33,6 +33,22 @@ public interface BookingMapper {
 
     Optional<BookingRow> findBookingByTrackingNumber(@Param("trackingNumber") String trackingNumber);
 
+    /** 予約 ID の行を押さえる（{@code SELECT … FOR UPDATE}。待ちは 10 秒で打ち切る。Bolt 39g2）。行がなければ null。 */
+    UUID lockBookingById(@Param("id") UUID id);
+
+    Optional<BookingRow> findBookingById(@Param("id") UUID id);
+
+    /**
+     * 予約の状態と輸送段階を期待版で更新し、版を 1 進める（Bolt 39g2）。予約版の番号は書かない（B-INV-08）。更新した行の数（0 なら版の不一致）。
+     */
+    int updateBookingTransportPhase(
+            @Param("id") UUID id,
+            @Param("status") String status,
+            @Param("transportPhase") String transportPhase,
+            @Param("updatedAt") OffsetDateTime updatedAt,
+            @Param("updatedBy") UUID updatedBy,
+            @Param("expectedVersion") long expectedVersion);
+
     List<BookingVersionRow> findVersions(@Param("bookingId") UUID bookingId);
 
     boolean existsByTrackingNumber(@Param("trackingNumber") String trackingNumber);

@@ -23,6 +23,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -128,6 +129,35 @@ public class MyBatisBookingRepository implements BookingRepository {
     @Override
     public Optional<Booking> findByTrackingNumber(TrackingNumber trackingNumber) {
         return mapper.findBookingByTrackingNumber(trackingNumber.value()).map(this::toBooking);
+    }
+
+    /** 予約 ID の行を押さえてから組み立てる（押さえる前に読んだ値をキャッシュから使わない。Bolt 39g2。前例 MyBatisTrackingRecordRepository）。 */
+    @Override
+    @Transactional(propagation = Propagation.MANDATORY)
+    public Optional<Booking> findByIdForUpdate(BookingId id) {
+        if (mapper.lockBookingById(id.value()) == null) {
+            return Optional.empty();
+        }
+        return mapper.findBookingById(id.value()).map(this::toBooking);
+    }
+
+    /**
+     * 状態と輸送段階を期待版で書き、版を 1 進める（Bolt 39g2）。更新した行がなければ版の不一致で、行を押さえた後には起きないはずの誤りなので、技術の
+     * 失敗として例外を上げる（呼び手のトランザクションごと戻り、通知は発行の記録の再配信に任せる。ADR-014）。
+     */
+    @Override
+    public void update(Booking booking, UUID operator) {
+        int updated = mapper.updateBookingTransportPhase(
+                booking.id().value(),
+                booking.status().name(),
+                booking.transportPhase().name(),
+                OffsetDateTime.now(clock),
+                operator,
+                booking.aggregateVersion());
+        if (updated == 0) {
+            throw new OptimisticLockingFailureException(
+                    "貨物予約の版が期待版と違う: " + booking.id().value() + "、期待版 " + booking.aggregateVersion());
+        }
     }
 
     @Override

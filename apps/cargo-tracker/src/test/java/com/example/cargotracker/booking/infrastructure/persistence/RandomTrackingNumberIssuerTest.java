@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.example.cargotracker.booking.domain.model.aggregates.Booking;
 import com.example.cargotracker.booking.domain.model.aggregates.BookingRepository;
+import com.example.cargotracker.booking.domain.model.valueobjects.BookingId;
 import com.example.cargotracker.booking.domain.model.valueobjects.BookingSummary;
 import com.example.cargotracker.booking.domain.model.valueobjects.ProcessedCommand;
 import com.example.cargotracker.booking.domain.model.valueobjects.TrackingNumber;
@@ -93,6 +94,16 @@ class RandomTrackingNumberIssuerTest {
         @Override
         public Optional<TrackingNumber> findTrackingNumber(String transportRequestNumber, int quotationNo) {
             return Optional.empty();
+        }
+
+        @Override
+        public Optional<Booking> findByIdForUpdate(BookingId id) {
+            return Optional.empty();
+        }
+
+        @Override
+        public void update(Booking booking, UUID operator) {
+            throw new UnsupportedOperationException();
         }
     }
 }
