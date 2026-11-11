@@ -19,6 +19,7 @@ import com.example.cargotracker.tracking.domain.model.valueobjects.TrackedBookin
 import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingNumber;
 import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingRecordSummary;
 import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingStatus;
+import com.example.cargotracker.tracking.domain.model.valueobjects.UnderReviewReason;
 import java.time.Clock;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -70,6 +71,7 @@ public class MyBatisTrackingRecordRepository implements TrackingRecordRepository
                 schedule.routeVersionNo(),
                 trackingRecord.currentStatus().name(),
                 null,
+                null,
                 offset(trackingRecord.originalEta()),
                 offset(trackingRecord.latestEta()),
                 trackingRecord.aggregateVersion(),
@@ -90,8 +92,8 @@ public class MyBatisTrackingRecordRepository implements TrackingRecordRepository
     }
 
     /**
-     * 主要実績の登録を保存する（Bolt 26b）。読み込んだときの版と同じときだけ現在状態と根拠の実績番号を書いて版を 1 増やし、まだ表にない
-     * 主要実績を追加する（実績は削除・上書きしない。T-INV-01）。表で下書きの実績が集約で採用になっていれば、状態と採用者・採用時刻だけを書き換える（Bolt 39gb）。
+     * 主要実績の登録を保存する（Bolt 26b）。読み込んだときの版と同じときだけ現在状態と根拠の実績番号と確認中の理由（Bolt 39gc）を書いて版を 1 増やし、まだ表にない
+     * 主要実績を追加する（実績は削除・上書きしない。T-INV-01）。表で下書きの実績が集約で採用・確認中になっていれば、状態と採用者・採用時刻だけを書き換える（Bolt 39gb。確認中は Bolt 39gc）。
      * 版が違えば、下書きの行がもう下書きでなければ、同じ出典の実績が同時に登録されて一意制約 {@code uk_milestone_source} に違反したら、または根拠の実績番号の実績が
      * 表になければ（遅延の外部キーの違反がコミットのときに 500 になるのを先に拾う。P-5）、セーブポイントに戻して {@link ConcurrentTrackingRecordUpdateException}
      * にする（PostgreSQL は制約違反でトランザクションを中断するため。貨物予約の保存と同じ）。ほかの一意制約の違反（実績番号の重なりなど）は版の条件の後には起きない
@@ -109,6 +111,7 @@ public class MyBatisTrackingRecordRepository implements TrackingRecordRepository
                         trackingRecord.aggregateVersion(),
                         trackingRecord.currentStatus().name(),
                         statusBasisMilestoneNo,
+                        trackingRecord.underReviewReason().map(Enum::name).orElse(null),
                         OffsetDateTime.now(clock))
                 == 0) {
             throw conflict(trackingRecord);
@@ -152,9 +155,10 @@ public class MyBatisTrackingRecordRepository implements TrackingRecordRepository
                         row.adoptedAt() == null ? null : row.adoptedAt().toInstant());
     }
 
-    /** 下書きの採用で書き換える実績か（外部原本の採用済み。採用者を持つ）。 */
+    /** 下書きの採用で書き換える実績か（外部原本の採用済み・確認中。採用者を持つ。確認中は Bolt 39gc）。 */
     private static boolean isAdoption(Milestone milestone) {
-        return milestone.state() == MilestoneState.ADOPTED && milestone.adoptedBy() != null;
+        return (milestone.state() == MilestoneState.ADOPTED || milestone.state() == MilestoneState.UNDER_REVIEW)
+                && milestone.adoptedBy() != null;
     }
 
     private static ConcurrentTrackingRecordUpdateException conflict(TrackingRecord trackingRecord) {
@@ -232,6 +236,7 @@ public class MyBatisTrackingRecordRepository implements TrackingRecordRepository
                 row.statusBasisMilestoneNo() == null
                         ? OptionalInt.empty()
                         : OptionalInt.of(row.statusBasisMilestoneNo()),
+                Optional.ofNullable(row.underReviewReason()).map(UnderReviewReason::valueOf),
                 mapper.findMilestones(row.trackingNumber()).stream()
                         .map(MyBatisTrackingRecordRepository::toMilestone)
                         .toList(),

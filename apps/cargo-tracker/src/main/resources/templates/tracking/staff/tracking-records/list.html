@@ -9,7 +9,7 @@
 <body>
 <main>
     <h1>追跡一覧</h1>
-    <!--/* S-11 の最小の表示（Bolt 26）。絞り込み（確認中・鮮度超過・訂正承認待ち）は W7 以後 */-->
+    <!--/* S-11 の最小の表示（Bolt 26）。絞り込み（確認中・鮮度超過・訂正承認待ち）は絞り込みを作る Bolt で足す */-->
     <p class="alert alert-info" th:if="${noAssignedCompanies}">担当企業がまだないので、表示できる追跡記録はありません。システム管理者に担当企業の割り当てを頼んでください。</p>
     <p th:if="${#lists.isEmpty(trackingRecords) and !noAssignedCompanies}">追跡記録はまだありません。営業担当者が本予約を確定すると、追跡が始まった貨物がここに出ます。</p>
     <p th:if="${truncated}" th:text="|新しい ${limit} 件だけを示しています。|">新しい 50 件だけを示しています。</p>
@@ -29,7 +29,9 @@
             <tr th:each="trackingRecord : ${trackingRecords}">
                 <td><a th:href="@{/staff/tracking-records/{trackingNumber}(trackingNumber=${trackingRecord.trackingNumber()})}"
                        th:text="${trackingRecord.trackingNumber()}">CTABCDEFGH2345</a></td>
-                <td th:text="${trackingRecord.status()}">集荷予定</td>
+                <!--/* 確認中は状態バッジ（文字とアイコン。色だけで示さない。BR-13。Bolt 39gc）。絞り込みは足さない */-->
+                <td th:unless="${trackingRecord.underReview()}" th:text="${trackingRecord.status()}">集荷予定</td>
+                <td th:if="${trackingRecord.underReview()}"><span class="badge text-bg-warning"><span aria-hidden="true">⚠ </span><span th:text="${trackingRecord.status()}">確認中</span></span></td>
                 <td th:text="${trackingRecord.originalEta()}">2026-11-15 09:00 Asia/Tokyo（UTC+09:00）（UTC 2026-11-15 00:00）</td>
                 <td th:text="${trackingRecord.startedAt()}">2026-10-26 10:00 Asia/Tokyo（UTC+09:00）（UTC 2026-10-26 01:00）</td>
             </tr>

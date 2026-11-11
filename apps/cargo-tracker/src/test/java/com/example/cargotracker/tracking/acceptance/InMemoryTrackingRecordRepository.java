@@ -55,6 +55,7 @@ public class InMemoryTrackingRecordRepository implements TrackingRecordRepositor
                         trackingRecord.schedule(),
                         trackingRecord.currentStatus(),
                         trackingRecord.statusBasisMilestoneNo(),
+                        trackingRecord.underReviewReason(),
                         trackingRecord.milestones(),
                         trackingRecord.originalEta(),
                         trackingRecord.latestEta(),

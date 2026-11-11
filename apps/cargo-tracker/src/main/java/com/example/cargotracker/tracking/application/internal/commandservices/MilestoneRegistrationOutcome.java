@@ -1,6 +1,7 @@
 package com.example.cargotracker.tracking.application.internal.commandservices;
 
 import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneRejectionReason;
+import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneState;
 import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingStatus;
 import java.util.Objects;
 
@@ -10,14 +11,17 @@ import java.util.Objects;
 public sealed interface MilestoneRegistrationOutcome {
 
     /**
-     * 登録した。現在状態を導出し直した（AC1）。
+     * 登録した。現在状態を導出し直した（AC1）。時系列に反する実績は確認中、完了後の実績は保持のみで登録した（AC3・AC5。Bolt 39gc）。
      *
      * @param milestoneNo 登録した実績の実績番号
+     * @param state 登録した実績の状態（採用・確認中・保持のみ）
      * @param currentStatus 導出し直した現在状態
      */
-    record Registered(int milestoneNo, TrackingStatus currentStatus) implements MilestoneRegistrationOutcome {
+    record Registered(int milestoneNo, MilestoneState state, TrackingStatus currentStatus)
+            implements MilestoneRegistrationOutcome {
 
         public Registered {
+            Objects.requireNonNull(state, "state");
             Objects.requireNonNull(currentStatus, "currentStatus");
         }
     }

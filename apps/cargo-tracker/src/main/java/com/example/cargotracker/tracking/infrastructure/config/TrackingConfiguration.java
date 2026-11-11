@@ -64,8 +64,11 @@ public class TrackingConfiguration {
     /** 追跡管理者による主要実績の登録（US-12。Bolt 26b）。 */
     @Bean
     TrackingRecordCommandService trackingRecordCommandService(
-            TrackingRecordRepository repository, Clock clock, TrackingRecordScope trackingRecordScope) {
-        return new TrackingRecordCommandService(repository, clock, trackingRecordScope);
+            TrackingRecordRepository repository,
+            Clock clock,
+            TrackingRecordScope trackingRecordScope,
+            ApplicationEventPublisher eventPublisher) {
+        return new TrackingRecordCommandService(repository, clock, trackingRecordScope, eventPublisher);
     }
 
     /** 追跡記録の照会（S-11 追跡一覧、S-12 追跡の詳細。Bolt 26）。 */

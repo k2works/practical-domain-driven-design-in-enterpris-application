@@ -5,6 +5,7 @@ import com.example.cargotracker.shared.domain.UtcInstant;
 import com.example.cargotracker.tracking.application.internal.commands.RegisterMilestoneCommand;
 import com.example.cargotracker.tracking.application.internal.queryservices.TrackingRecordLookup;
 import com.example.cargotracker.tracking.application.internal.queryservices.TrackingRecordScope;
+import com.example.cargotracker.tracking.domain.events.TrackingPlacedUnderReview;
 import com.example.cargotracker.tracking.domain.model.aggregates.ConcurrentTrackingRecordUpdateException;
 import com.example.cargotracker.tracking.domain.model.aggregates.MilestoneAdoption;
 import com.example.cargotracker.tracking.domain.model.aggregates.MilestoneRegistration;
@@ -15,12 +16,15 @@ import com.example.cargotracker.tracking.domain.model.entities.Milestone;
 import com.example.cargotracker.tracking.domain.model.valueobjects.AdoptionRejectionReason;
 import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingNumber;
 import java.time.Clock;
+import java.util.Optional;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 追跡記録の入力ポート（追跡管理者が使う。US-12）。トランザクションの境界になる。登録時刻は Clock から得る。
- * ドメインイベントは発行しない（DE-09 集荷実績を採用した は 39g2。Bolt 26b の確認ポイント 10）。
+ * 登録・採用で追跡記録が確認中に入ったときだけ、保存の後に同じトランザクションで DE-18（{@link TrackingPlacedUnderReview}）を発行する（Bolt 39gc。前例は
+ * DE-22 の TrackingStartEventHandler）。保存が競合したら発行しない。ほかのドメインイベントは発行しない（DE-09 集荷実績を採用した は 39g2）。
  * 読み出しの直後に担当範囲を判定し（{@link TrackingRecordScope}。Bolt 38g。US-16 AC4）、範囲の外なら何も書かずに範囲外の結果を返す。判定は
  * 発生時刻の判定・登録済みの判定・版の照合より先（範囲の外の追跡記録の実績や版を示さない）。
  *
@@ -33,11 +37,17 @@ public class TrackingRecordCommandService {
     private final TrackingRecordRepository repository;
     private final Clock clock;
     private final TrackingRecordScope scope;
+    private final ApplicationEventPublisher eventPublisher;
 
-    public TrackingRecordCommandService(TrackingRecordRepository repository, Clock clock, TrackingRecordScope scope) {
+    public TrackingRecordCommandService(
+            TrackingRecordRepository repository,
+            Clock clock,
+            TrackingRecordScope scope,
+            ApplicationEventPublisher eventPublisher) {
         this.repository = repository;
         this.clock = clock;
         this.scope = scope;
+        this.eventPublisher = eventPublisher;
     }
 
     /**
@@ -81,8 +91,10 @@ public class TrackingRecordCommandService {
         } catch (ConcurrentTrackingRecordUpdateException _) {
             return new MilestoneRegistrationOutcome.Conflict();
         }
+        registration.placedUnderReview().ifPresent(eventPublisher::publishEvent);
         return new MilestoneRegistrationOutcome.Registered(
                 registration.milestone().milestoneNo(),
+                registration.milestone().state(),
                 registration.trackingRecord().currentStatus());
     }
 
@@ -123,8 +135,8 @@ public class TrackingRecordCommandService {
             case MilestoneAdoption.Adopted adopted -> save(adopted);
             case MilestoneAdoption.SameAsAdopted(Milestone adopted) ->
                 new MilestoneAdoptionOutcome.SameAsAdopted(adopted.milestoneNo());
-            case MilestoneAdoption.Rejected(AdoptionRejectionReason reason) ->
-                new MilestoneAdoptionOutcome.Rejected(reason);
+            case MilestoneAdoption.Rejected(AdoptionRejectionReason reason, Optional<Milestone> decided) ->
+                new MilestoneAdoptionOutcome.Rejected(reason, decided.map(Milestone::state));
         };
     }
 
@@ -134,7 +146,10 @@ public class TrackingRecordCommandService {
         } catch (ConcurrentTrackingRecordUpdateException _) {
             return new MilestoneAdoptionOutcome.Conflict();
         }
+        adopted.placedUnderReview().ifPresent(eventPublisher::publishEvent);
         return new MilestoneAdoptionOutcome.Adopted(
-                adopted.milestone().milestoneNo(), adopted.trackingRecord().currentStatus());
+                adopted.milestone().milestoneNo(),
+                adopted.milestone().state(),
+                adopted.trackingRecord().currentStatus());
     }
 }

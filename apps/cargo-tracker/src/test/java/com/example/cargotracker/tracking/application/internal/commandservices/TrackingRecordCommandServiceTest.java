@@ -20,6 +20,7 @@ import com.example.cargotracker.shared.domain.UtcInstant;
 import com.example.cargotracker.tracking.acceptance.InMemoryTrackingRecordRepository;
 import com.example.cargotracker.tracking.application.internal.commands.RegisterMilestoneCommand;
 import com.example.cargotracker.tracking.application.internal.queryservices.TrackingRecordScope;
+import com.example.cargotracker.tracking.domain.events.TrackingPlacedUnderReview;
 import com.example.cargotracker.tracking.domain.model.aggregates.ConcurrentTrackingRecordUpdateException;
 import com.example.cargotracker.tracking.domain.model.aggregates.ExternalMilestoneReceipt;
 import com.example.cargotracker.tracking.domain.model.aggregates.TrackingRecord;
@@ -34,6 +35,8 @@ import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingStatu
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -52,8 +55,11 @@ class TrackingRecordCommandServiceTest {
     private static final AuthenticatedActor OUTSIDER =
             AuthenticatedActorFixture.trackingManagerHandling(REGISTRANT, new CompanyId(UUID.randomUUID()));
 
+    /** 発行したイベント（DE-18。Bolt 39gc）。 */
+    private final List<Object> published = new ArrayList<>();
+
     private final TrackingRecordCommandService service = new TrackingRecordCommandService(
-            repository, Clock.fixed(NOW, ZoneOffset.UTC), new TrackingRecordScope(repository));
+            repository, Clock.fixed(NOW, ZoneOffset.UTC), new TrackingRecordScope(repository), published::add);
 
     @BeforeEach
     void 追跡を開始した追跡記録がある() {
@@ -66,7 +72,9 @@ class TrackingRecordCommandServiceTest {
         MilestoneRegistrationOutcome outcome =
                 service.registerMilestone(command(0, "F-118", "2026-11-01T02:30:00Z"), MANAGER);
 
-        assertThat(outcome).isEqualTo(new MilestoneRegistrationOutcome.Registered(1, TrackingStatus.PICKED_UP));
+        assertThat(outcome)
+                .isEqualTo(new MilestoneRegistrationOutcome.Registered(
+                        1, MilestoneState.ADOPTED, TrackingStatus.PICKED_UP));
         TrackingRecord saved = repository.findByTrackingNumber(TRACKING_NUMBER).orElseThrow();
         assertThat(saved.milestones()).hasSize(1);
         assertThat(saved.milestones().getFirst().registeredAt()).isEqualTo(new UtcInstant(NOW));
@@ -126,7 +134,7 @@ class TrackingRecordCommandServiceTest {
             }
         };
         TrackingRecordCommandService conflicting = new TrackingRecordCommandService(
-                failing, Clock.fixed(NOW, ZoneOffset.UTC), new TrackingRecordScope(failing));
+                failing, Clock.fixed(NOW, ZoneOffset.UTC), new TrackingRecordScope(failing), published::add);
 
         assertThat(conflicting.registerMilestone(command(0, "F-118", "2026-11-01T02:30:00Z"), MANAGER))
                 .isEqualTo(new MilestoneRegistrationOutcome.Conflict());
@@ -223,7 +231,9 @@ class TrackingRecordCommandServiceTest {
 
             MilestoneAdoptionOutcome outcome = service.adoptCandidate(TRACKING_NUMBER, 1, 1, MANAGER);
 
-            assertThat(outcome).isEqualTo(new MilestoneAdoptionOutcome.Adopted(1, TrackingStatus.IN_TRANSIT));
+            assertThat(outcome)
+                    .isEqualTo(
+                            new MilestoneAdoptionOutcome.Adopted(1, MilestoneState.ADOPTED, TrackingStatus.IN_TRANSIT));
             TrackingRecord saved =
                     repository.findByTrackingNumber(TRACKING_NUMBER).orElseThrow();
             assertThat(saved.milestones()).hasSize(1);
@@ -274,7 +284,7 @@ class TrackingRecordCommandServiceTest {
                             started.receiveExternalMilestone(external, at("2026-11-01T02:00:00Z")))
                     .trackingRecord());
             TrackingRecordCommandService failingService = new TrackingRecordCommandService(
-                    failing, Clock.fixed(NOW, ZoneOffset.UTC), new TrackingRecordScope(failing));
+                    failing, Clock.fixed(NOW, ZoneOffset.UTC), new TrackingRecordScope(failing), published::add);
 
             assertThat(failingService.adoptCandidate(TRACKING_NUMBER, 1, 0, MANAGER))
                     .isEqualTo(new MilestoneAdoptionOutcome.Conflict());
@@ -317,6 +327,133 @@ class TrackingRecordCommandServiceTest {
             assertThat(service.adoptCandidate(TRACKING_NUMBER, 1, 1, OUTSIDER))
                     .isEqualTo(new MilestoneAdoptionOutcome.OutOfScope());
         }
+    }
+
+    /** Bolt 39gc の行 5・6・16・17（確認中の登録・採用と DE-18 の発行）。 */
+    @org.junit.jupiter.api.Nested
+    class Bolt39gc_確認中とDE18 {
+
+        /** 到着（02:00）を採用した後（版 1）。 */
+        private void arrived() {
+            service.registerMilestone(command(0, MilestoneKind.ARRIVAL, "F-1", "2026-11-01T02:00:00Z"), MANAGER);
+        }
+
+        @Test
+        void 行5_時系列に反する登録は確認中で保存しDE18を1件発行する() {
+            arrived();
+
+            MilestoneRegistrationOutcome outcome =
+                    service.registerMilestone(command(1, MilestoneKind.PICKUP, "F-2", "2026-11-01T02:30:00Z"), MANAGER);
+
+            assertThat(outcome)
+                    .isEqualTo(new MilestoneRegistrationOutcome.Registered(
+                            2, MilestoneState.UNDER_REVIEW, TrackingStatus.UNDER_REVIEW));
+            TrackingRecord saved =
+                    repository.findByTrackingNumber(TRACKING_NUMBER).orElseThrow();
+            assertThat(saved.currentStatus()).isEqualTo(TrackingStatus.UNDER_REVIEW);
+            assertThat(saved.aggregateVersion()).isEqualTo(2);
+            assertThat(published)
+                    .containsExactly(new TrackingPlacedUnderReview(
+                            TRACKING_NUMBER.value(), BOOKING_ID, "OUT_OF_SEQUENCE", 2, new UtcInstant(NOW), 2));
+        }
+
+        @Test
+        void 行16_すでに確認中なら出さず時系列どおりと二重送信と拒否でも出さない() {
+            arrived();
+            service.registerMilestone(command(1, MilestoneKind.PICKUP, "F-2", "2026-11-01T02:30:00Z"), MANAGER);
+            published.clear();
+
+            service.registerMilestone(command(2, MilestoneKind.PICKUP, "F-3", "2026-11-01T02:40:00Z"), MANAGER);
+            service.registerMilestone(command(3, MilestoneKind.PICKUP, "F-3", "2026-11-01T02:40:00Z"), MANAGER);
+            service.registerMilestone(command(3, MilestoneKind.DELIVERY, "F-4", "2026-11-01T03:00:01Z"), MANAGER);
+            service.registerMilestone(command(3, MilestoneKind.DELIVERY, "F-5", "2026-11-01T02:50:00Z"), MANAGER);
+
+            assertThat(published).isEmpty();
+        }
+
+        @Test
+        void 行17_保存が版の不一致で競合ならDE18は出ない() {
+            arrived();
+
+            assertThat(service.registerMilestone(
+                            command(0, MilestoneKind.PICKUP, "F-2", "2026-11-01T02:30:00Z"), MANAGER))
+                    .isEqualTo(new MilestoneRegistrationOutcome.Conflict());
+            assertThat(published).isEmpty();
+        }
+
+        @Test
+        void 行17_保存のときに楽観ロックの競合が起きたらDE18は出ない() {
+            InMemoryTrackingRecordRepository failing = new InMemoryTrackingRecordRepository() {
+                @Override
+                public void update(TrackingRecord trackingRecord) {
+                    throw new ConcurrentTrackingRecordUpdateException(
+                            trackingRecord.trackingNumber(), trackingRecord.aggregateVersion());
+                }
+            };
+            failing.save(TrackingRecord.start(TRACKING_NUMBER, BOOKING_ID, SHIPPER, CONSIGNEE, schedule(), STARTED_AT)
+                    .trackingRecord()
+                    .registerMilestone(
+                            MilestoneKind.ARRIVAL,
+                            new Location("JPTYO"),
+                            at("2026-11-01T02:00:00Z"),
+                            new Source(SourceKind.FIELD_RECORD, "F-1", new UtcInstant(NOW)),
+                            REGISTRANT,
+                            new UtcInstant(NOW))
+                    .trackingRecord());
+            TrackingRecordCommandService failingService = new TrackingRecordCommandService(
+                    failing, Clock.fixed(NOW, ZoneOffset.UTC), new TrackingRecordScope(failing), published::add);
+
+            assertThat(failingService.registerMilestone(
+                            command(0, MilestoneKind.PICKUP, "F-2", "2026-11-01T02:30:00Z"), MANAGER))
+                    .isEqualTo(new MilestoneRegistrationOutcome.Conflict());
+            assertThat(published).isEmpty();
+        }
+
+        @Test
+        void 行6_時系列に反する候補の採用は確認中で保存しDE18を1件発行する() {
+            arrived();
+            TrackingRecord current =
+                    repository.findByTrackingNumber(TRACKING_NUMBER).orElseThrow();
+            repository.update(((ExternalMilestoneReceipt.Received) current.receiveExternalMilestone(
+                            new ExternalMilestone(
+                                    TRACKING_NUMBER,
+                                    MilestoneKind.DEPARTURE,
+                                    new Location("JPTYO"),
+                                    at("2026-11-01T02:30:00Z"),
+                                    new Source(SourceKind.EXTERNAL_RECORD, "r-1", at("2026-11-01T02:40:00Z")),
+                                    new ExternalOrigin(
+                                            UUID.fromString("00000000-0000-0000-0000-0000039c0d01"),
+                                            "MS-0001",
+                                            at("2026-11-01T02:40:00Z")),
+                                    REGISTRANT),
+                            at("2026-11-01T02:40:00Z")))
+                    .trackingRecord());
+
+            MilestoneAdoptionOutcome outcome = service.adoptCandidate(TRACKING_NUMBER, 2, 2, MANAGER);
+
+            assertThat(outcome)
+                    .isEqualTo(new MilestoneAdoptionOutcome.Adopted(
+                            2, MilestoneState.UNDER_REVIEW, TrackingStatus.UNDER_REVIEW));
+            TrackingRecord saved =
+                    repository.findByTrackingNumber(TRACKING_NUMBER).orElseThrow();
+            assertThat(saved.milestones().get(1).state()).isEqualTo(MilestoneState.UNDER_REVIEW);
+            assertThat(saved.milestones().get(1).adoptedBy()).isEqualTo(REGISTRANT);
+            assertThat(published)
+                    .containsExactly(new TrackingPlacedUnderReview(
+                            TRACKING_NUMBER.value(), BOOKING_ID, "OUT_OF_SEQUENCE", 2, new UtcInstant(NOW), 3));
+        }
+    }
+
+    private static RegisterMilestoneCommand command(
+            long expectedVersion, MilestoneKind kind, String reference, String occurredAt) {
+        return new RegisterMilestoneCommand(
+                TRACKING_NUMBER,
+                expectedVersion,
+                kind,
+                new Location("JPTYO"),
+                at(occurredAt),
+                new Source(SourceKind.FIELD_RECORD, reference, new UtcInstant(NOW)),
+                REGISTRANT);
     }
 
     private static RegisterMilestoneCommand command(long expectedVersion, String reference, String occurredAt) {

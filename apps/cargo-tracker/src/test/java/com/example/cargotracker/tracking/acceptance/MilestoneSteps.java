@@ -2,6 +2,7 @@ package com.example.cargotracker.tracking.acceptance;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.example.cargotracker.shared.acceptance.DeferredEventDelivery;
 import com.example.cargotracker.shared.domain.AuthenticatedActorFixture;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Location;
@@ -13,6 +14,7 @@ import com.example.cargotracker.tracking.application.internal.commands.RegisterM
 import com.example.cargotracker.tracking.application.internal.commandservices.MilestoneAdoptionOutcome;
 import com.example.cargotracker.tracking.application.internal.commandservices.MilestoneRegistrationOutcome;
 import com.example.cargotracker.tracking.application.internal.commandservices.TrackingRecordCommandService;
+import com.example.cargotracker.tracking.domain.events.TrackingPlacedUnderReview;
 import com.example.cargotracker.tracking.domain.model.TrackingFixture;
 import com.example.cargotracker.tracking.domain.model.aggregates.TrackingRecord;
 import com.example.cargotracker.tracking.domain.model.entities.Milestone;
@@ -30,6 +32,7 @@ import io.cucumber.java.ja.もし;
 import io.cucumber.java.ja.前提;
 import java.time.Clock;
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 /** 主要実績の登録の受入シナリオのステップ（US-12 AC1・AC2。Bolt 26b）。 */
@@ -45,6 +48,7 @@ public class MilestoneSteps {
     private final TrackingRecordCommandService commandService;
     private final InMemoryRejectedMilestoneRepository rejectedMilestones;
     private final ExternalMilestoneArrival externalMilestoneArrival;
+    private final DeferredEventDelivery eventDelivery;
     private final Clock clock;
     private MilestoneRegistrationOutcome outcome;
     private MilestoneAdoptionOutcome adoptionOutcome;
@@ -54,12 +58,35 @@ public class MilestoneSteps {
             TrackingRecordCommandService commandService,
             InMemoryRejectedMilestoneRepository rejectedMilestones,
             ExternalMilestoneArrival externalMilestoneArrival,
+            DeferredEventDelivery eventDelivery,
             Clock clock) {
         this.trackingRecords = trackingRecords;
         this.commandService = commandService;
         this.rejectedMilestones = rejectedMilestones;
         this.externalMilestoneArrival = externalMilestoneArrival;
+        this.eventDelivery = eventDelivery;
         this.clock = clock;
+    }
+
+    /** Bolt 39gc の行 29。DE-18 は保存と同じトランザクションで発行される（受け手は W9 なので、発行だけを確かめる）。 */
+    @ならば("追跡が確認中になったことが実績 {int} で {int} 度だけ知らされる")
+    public void 確認中になったことが知らされる(int milestoneNo, int count) {
+        List<TrackingPlacedUnderReview> placed = eventDelivery.history().stream()
+                .filter(TrackingPlacedUnderReview.class::isInstance)
+                .map(TrackingPlacedUnderReview.class::cast)
+                .toList();
+        assertThat(placed).hasSize(count);
+        assertThat(placed).allSatisfy(event -> {
+            assertThat(event.milestoneNo()).isEqualTo(milestoneNo);
+            assertThat(event.underReviewReason()).isEqualTo("OUT_OF_SEQUENCE");
+            assertThat(event.trackingNumber())
+                    .isEqualTo(onlyTrackingRecord().trackingNumber().value());
+        });
+    }
+
+    @ならば("登録は理由 {string} で拒否される")
+    public void 登録は拒否される(String reason) {
+        assertThat(outcome).isEqualTo(new MilestoneRegistrationOutcome.Rejected(reason(reason)));
     }
 
     @前提("追跡番号 {string} の追跡を開始した追跡記録がある")
@@ -281,6 +308,7 @@ public class MilestoneSteps {
             case "採用" -> MilestoneState.ADOPTED;
             case "下書き" -> MilestoneState.DRAFT;
             case "保持のみ" -> MilestoneState.RETAINED_ONLY;
+            case "確認中" -> MilestoneState.UNDER_REVIEW;
             default -> throw new IllegalArgumentException("未知の実績の状態: " + name);
         };
     }
@@ -290,6 +318,7 @@ public class MilestoneSteps {
             case "集荷済み" -> TrackingStatus.PICKED_UP;
             case "輸送中" -> TrackingStatus.IN_TRANSIT;
             case "引渡し済み" -> TrackingStatus.DELIVERED;
+            case "確認中" -> TrackingStatus.UNDER_REVIEW;
             default -> throw new IllegalArgumentException("未知の追跡状態: " + name);
         };
     }

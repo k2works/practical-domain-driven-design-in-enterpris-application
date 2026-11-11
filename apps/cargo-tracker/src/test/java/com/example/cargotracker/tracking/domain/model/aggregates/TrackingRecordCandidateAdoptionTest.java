@@ -15,8 +15,11 @@ import com.example.cargotracker.shared.domain.Source;
 import com.example.cargotracker.shared.domain.SourceKind;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
+import com.example.cargotracker.tracking.domain.events.TrackingPlacedUnderReview;
 import com.example.cargotracker.tracking.domain.model.entities.Milestone;
 import com.example.cargotracker.tracking.domain.model.valueobjects.AdoptionRejectionReason;
+import com.example.cargotracker.tracking.domain.model.valueobjects.CustomerMilestone;
+import com.example.cargotracker.tracking.domain.model.valueobjects.CustomerTrackingView;
 import com.example.cargotracker.tracking.domain.model.valueobjects.ExternalMilestone;
 import com.example.cargotracker.tracking.domain.model.valueobjects.ExternalOrigin;
 import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneGroup;
@@ -25,8 +28,10 @@ import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneStat
 import com.example.cargotracker.tracking.domain.model.valueobjects.TrackedBookingStatus;
 import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingNumber;
 import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingStatus;
+import com.example.cargotracker.tracking.domain.model.valueobjects.UnderReviewReason;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.UUID;
 import org.junit.jupiter.api.Nested;
@@ -296,8 +301,11 @@ class TrackingRecordCandidateAdoptionTest {
 
             assertThat(withNewer.groupsOf().getFirst().candidate().orElseThrow().milestoneNo())
                     .isEqualTo(2);
+            // 拒否は判断済みの実績を持つ（画面が判断済みの実績の状態で文を分ける。Bolt 39gc）
             assertThat(withNewer.adoptCandidate(2, MANAGER, ADOPTED_AT))
-                    .isEqualTo(new MilestoneAdoption.Rejected(AdoptionRejectionReason.CONFLICTS_WITH_ADOPTED));
+                    .isEqualTo(new MilestoneAdoption.Rejected(
+                            AdoptionRejectionReason.CONFLICTS_WITH_ADOPTED,
+                            Optional.of(withNewer.milestones().getFirst())));
         }
 
         @Test
@@ -325,10 +333,24 @@ class TrackingRecordCandidateAdoptionTest {
                 TrackedBookingStatus bookingStatus,
                 TrackingStatus status,
                 AdoptionRejectionReason reason) {
-            // 確定のときに受けた下書きの後に予約状態・現在状態が変わった追跡記録（変わる経路は 39g2・W11 なので組み立てで作る）
+            // 確定のときに受けた下書きの後に予約状態・現在状態が変わった追跡記録（変わる経路は 39g2・W11 なので組み立てで作る）。
+            // 引渡し済みは採用済みの引渡しの実績から導く（Bolt 39gc の【前の決定の変更】(14)。現在状態だけでは完了後にしない）
             Milestone draft = received(arrival(TOKYO, "2026-11-19T10:00:00Z", "r-1"))
                     .milestones()
                     .getFirst();
+            List<Milestone> milestones = status == TrackingStatus.DELIVERED
+                    ? List.of(
+                            draft,
+                            new Milestone(
+                                    2,
+                                    MilestoneKind.DELIVERY,
+                                    BUSAN,
+                                    at("2026-11-19T12:00:00Z"),
+                                    new Source(SourceKind.FIELD_RECORD, "F-2", at("2026-11-19T12:00:00Z")),
+                                    MilestoneState.ADOPTED,
+                                    MANAGER,
+                                    at("2026-11-19T12:00:00Z")))
+                    : List.of(draft);
             TrackingRecord trackingRecord = TrackingRecord.reconstitute(
                     TRACKING_NUMBER,
                     BOOKING_ID,
@@ -337,8 +359,8 @@ class TrackingRecordCandidateAdoptionTest {
                     bookingStatus,
                     schedule(),
                     status,
-                    OptionalInt.empty(),
-                    List.of(draft),
+                    status == TrackingStatus.DELIVERED ? OptionalInt.of(2) : OptionalInt.empty(),
+                    milestones,
                     at("2026-11-15T00:00:00Z"),
                     at("2026-11-15T00:00:00Z"),
                     STARTED_AT,
@@ -399,6 +421,231 @@ class TrackingRecordCandidateAdoptionTest {
                     .trackingRecord();
 
             assertThat(withV1.adoptCandidate(1, MANAGER, ADOPTED_AT)).isInstanceOf(MilestoneAdoption.Adopted.class);
+        }
+    }
+
+    /** Bolt 39gc の採用の分（行 6・7・11〜14・16。US-12 AC3、T-INV-03・05・06）。 */
+    @Nested
+    class Bolt39gc_採用の確認中 {
+
+        /** 到着を手入力で採用した後（11-18）に、それより後の発生時刻（11-19）の出発の下書きが届いた追跡記録。出発は到着より前の段なので時系列に反する。 */
+        private TrackingRecord arrivedThenDraft(Arrival... arrivals) {
+            TrackingRecord arrived = empty(TrackedBookingStatus.CONFIRMED, TrackingStatus.PICKUP_SCHEDULED)
+                    .registerMilestone(
+                            MilestoneKind.ARRIVAL,
+                            BUSAN,
+                            at("2026-11-18T00:00:00Z"),
+                            new Source(SourceKind.FIELD_RECORD, "F-1", at("2026-11-18T00:00:00Z")),
+                            MANAGER,
+                            at("2026-11-18T01:00:00Z"))
+                    .trackingRecord();
+            return received(arrived, arrivals);
+        }
+
+        private TrackingRecord underReview() {
+            return ((MilestoneAdoption.Adopted) arrivedThenDraft(
+                                    arrival(TOKYO, "2026-11-19T10:00:00Z", "r-1"),
+                                    arrival(BUSAN, "2026-11-19T11:00:00Z", "r-2"))
+                            .adoptCandidate(3, MANAGER, ADOPTED_AT))
+                    .trackingRecord();
+        }
+
+        @Test
+        void 行6_時系列に反する候補を採用すると確認中に移り採用者と採用時刻を持ち現在状態は確認中でDE18が1件() {
+            TrackingRecord before = arrivedThenDraft(arrival(TOKYO, "2026-11-19T10:00:00Z", "r-1"));
+
+            MilestoneAdoption.Adopted adopted =
+                    (MilestoneAdoption.Adopted) before.adoptCandidate(2, MANAGER, ADOPTED_AT);
+
+            Milestone milestone = adopted.milestone();
+            assertThat(milestone.state()).isEqualTo(MilestoneState.UNDER_REVIEW);
+            assertThat(milestone.adoptedBy()).isEqualTo(MANAGER);
+            assertThat(milestone.adoptedAt()).isEqualTo(ADOPTED_AT);
+            TrackingRecord after = adopted.trackingRecord();
+            assertThat(after.currentStatus()).isEqualTo(TrackingStatus.UNDER_REVIEW);
+            assertThat(after.statusBasisMilestoneNo()).hasValue(2);
+            assertThat(after.underReviewReason()).contains(UnderReviewReason.OUT_OF_SEQUENCE);
+            assertThat(adopted.placedUnderReview())
+                    .contains(new TrackingPlacedUnderReview(
+                            TRACKING_NUMBER.value(),
+                            BOOKING_ID,
+                            "OUT_OF_SEQUENCE",
+                            2,
+                            ADOPTED_AT,
+                            before.aggregateVersion() + 1));
+        }
+
+        @Test
+        void 行16_時系列どおりの採用ではDE18は出ない() {
+            TrackingRecord before = received(arrival(TOKYO, "2026-11-19T10:00:00Z", "r-1"));
+
+            MilestoneAdoption.Adopted adopted =
+                    (MilestoneAdoption.Adopted) before.adoptCandidate(1, MANAGER, ADOPTED_AT);
+
+            assertThat(adopted.milestone().state()).isEqualTo(MilestoneState.ADOPTED);
+            assertThat(adopted.placedUnderReview()).isEmpty();
+        }
+
+        @Test
+        void 行12_確認中の外部原本の実績が組で最も新しいとき候補はなく古い下書きは置き換えられたまま() {
+            TrackingRecord trackingRecord = underReview();
+
+            MilestoneGroup group = trackingRecord.groupsOf().getFirst();
+            assertThat(group.members()).extracting(Milestone::milestoneNo).containsExactly(2, 3);
+            assertThat(group.candidate()).isEmpty();
+            assertThat(group.adopted()).map(Milestone::milestoneNo).hasValue(3);
+            assertThat(trackingRecord.isSupersededDraft(
+                            trackingRecord.milestones().get(1)))
+                    .isTrue();
+            assertThat(trackingRecord.adoptCandidate(2, MANAGER, ADOPTED_AT))
+                    .isEqualTo(new MilestoneAdoption.Rejected(AdoptionRejectionReason.NOT_CANDIDATE));
+        }
+
+        @Test
+        void 行13_確認中の実績と値が違う新しい下書きは採用できない() {
+            TrackingRecord trackingRecord = received(underReview(), arrival(TOKYO, "2026-11-19T12:00:00Z", "r-3"));
+
+            assertThat(trackingRecord.adoptCandidate(4, MANAGER, ADOPTED_AT))
+                    .isEqualTo(new MilestoneAdoption.Rejected(
+                            AdoptionRejectionReason.CONFLICTS_WITH_ADOPTED,
+                            Optional.of(trackingRecord.milestones().get(2))));
+        }
+
+        @Test
+        void 行14_確認中の実績と同じ値の新しい下書きは採用は要らない() {
+            TrackingRecord trackingRecord = received(underReview(), arrival(BUSAN, "2026-11-19T12:00:00Z", "r-3"));
+
+            assertThat(trackingRecord.adoptCandidate(4, MANAGER, ADOPTED_AT))
+                    .isEqualTo(new MilestoneAdoption.SameAsAdopted(
+                            trackingRecord.milestones().get(2)));
+        }
+
+        @Test
+        void 行11_確認中の間に引渡しを採用した追跡では手入力は保持のみ_採用は完了後_DE13は保持のみ() {
+            TrackingRecord delivered = underReview()
+                    .registerMilestone(
+                            MilestoneKind.DELIVERY,
+                            BUSAN,
+                            at("2026-11-19T20:00:00Z"),
+                            new Source(SourceKind.FIELD_RECORD, "F-9", at("2026-11-19T20:00:00Z")),
+                            MANAGER,
+                            ADOPTED_AT)
+                    .trackingRecord();
+            assertThat(delivered.currentStatus()).isEqualTo(TrackingStatus.UNDER_REVIEW);
+            TrackingRecord withDraft = received(
+                    delivered,
+                    new Arrival(SOURCE_B, "MS-0009", TOKYO, "2026-11-19T21:00:00Z", "2026-11-19T01:00:00Z", "r-9"));
+
+            assertThat(withDraft.milestones().getLast().state()).isEqualTo(MilestoneState.RETAINED_ONLY);
+            assertThat(withDraft.currentStatus()).isEqualTo(TrackingStatus.UNDER_REVIEW);
+            assertThat(delivered
+                            .registerMilestone(
+                                    MilestoneKind.DEPARTURE,
+                                    TOKYO,
+                                    at("2026-11-19T21:00:00Z"),
+                                    new Source(SourceKind.FIELD_RECORD, "F-10", at("2026-11-19T21:00:00Z")),
+                                    MANAGER,
+                                    ADOPTED_AT)
+                            .milestone()
+                            .state())
+                    .isEqualTo(MilestoneState.RETAINED_ONLY);
+            // 完了の前に届いた下書き（組の候補）は採用できない
+            TrackingRecord draftBeforeDelivery = received(
+                            arrivedThenDraft(),
+                            new Arrival(
+                                    SOURCE_B, "MS-0008", TOKYO, "2026-11-19T09:00:00Z", "2026-11-19T01:00:00Z", "r-8"))
+                    .registerMilestone(
+                            MilestoneKind.PICKUP,
+                            TOKYO,
+                            at("2026-11-18T12:00:00Z"),
+                            new Source(SourceKind.FIELD_RECORD, "F-2", at("2026-11-18T12:00:00Z")),
+                            MANAGER,
+                            ADOPTED_AT)
+                    .trackingRecord()
+                    .registerMilestone(
+                            MilestoneKind.DELIVERY,
+                            BUSAN,
+                            at("2026-11-19T20:00:00Z"),
+                            new Source(SourceKind.FIELD_RECORD, "F-3", at("2026-11-19T20:00:00Z")),
+                            MANAGER,
+                            ADOPTED_AT)
+                    .trackingRecord();
+            assertThat(draftBeforeDelivery.currentStatus()).isEqualTo(TrackingStatus.UNDER_REVIEW);
+            assertThat(draftBeforeDelivery.adoptCandidate(2, MANAGER, ADOPTED_AT))
+                    .isEqualTo(new MilestoneAdoption.Rejected(AdoptionRejectionReason.TRACKING_COMPLETED));
+        }
+
+        @Test
+        void 行26_確認中の追跡にもDE13は下書きで届き現在状態は確認中のまま() {
+            TrackingRecord before = underReview();
+
+            TrackingRecord after = received(
+                    before,
+                    new Arrival(SOURCE_B, "MS-0007", TOKYO, "2026-11-19T21:00:00Z", "2026-11-19T01:00:00Z", "r-7"));
+
+            assertThat(after.milestones().getLast().state()).isEqualTo(MilestoneState.DRAFT);
+            assertThat(after.currentStatus()).isEqualTo(TrackingStatus.UNDER_REVIEW);
+            assertThat(after.statusBasisMilestoneNo()).isEqualTo(before.statusBasisMilestoneNo());
+            assertThat(after.underReviewReason()).contains(UnderReviewReason.OUT_OF_SEQUENCE);
+        }
+
+        @Test
+        void 行25_荷主の照会は現在状態の確認中を示し確認中の実績は示さない() {
+            CustomerTrackingView view = underReview().customerView();
+
+            assertThat(view.currentStatus()).isEqualTo(TrackingStatus.UNDER_REVIEW);
+            assertThat(view.milestones()).extracting(CustomerMilestone::kind).containsExactly(MilestoneKind.ARRIVAL);
+        }
+
+        /** 行 7。判定の順で、時系列に反する条件と別の条件が重なる組。 */
+        @Nested
+        class 行7_採用の判定の順 {
+
+            @Test
+            void 取消済みかつ時系列に反するは取消済み() {
+                TrackingRecord cancelled = TrackingRecordMilestoneTest.withBookingStatus(
+                        arrivedThenDraft(arrival(TOKYO, "2026-11-19T10:00:00Z", "r-1")),
+                        TrackedBookingStatus.CANCELLED);
+
+                assertThat(cancelled.adoptCandidate(2, MANAGER, ADOPTED_AT))
+                        .isEqualTo(new MilestoneAdoption.Rejected(AdoptionRejectionReason.BOOKING_CANCELLED));
+            }
+
+            @Test
+            void 完了後かつ時系列に反するは完了後() {
+                TrackingRecord completed = TrackingRecordMilestoneTest.withBookingStatus(
+                        arrivedThenDraft(arrival(TOKYO, "2026-11-19T10:00:00Z", "r-1")),
+                        TrackedBookingStatus.COMPLETED);
+
+                assertThat(completed.adoptCandidate(2, MANAGER, ADOPTED_AT))
+                        .isEqualTo(new MilestoneAdoption.Rejected(AdoptionRejectionReason.TRACKING_COMPLETED));
+            }
+
+            @Test
+            void 未来かつ時系列に反するは未来の発生時刻() {
+                TrackingRecord trackingRecord = arrivedThenDraft(arrival(TOKYO, "2026-11-19T10:00:00Z", "r-1"));
+
+                assertThat(trackingRecord.adoptCandidate(2, MANAGER, at("2026-11-18T23:59:59Z")))
+                        .isEqualTo(new MilestoneAdoption.Rejected(AdoptionRejectionReason.OCCURRED_IN_FUTURE));
+            }
+
+            @Test
+            void 判断済みと値が違うかつ時系列に反するは値が違う() {
+                TrackingRecord adoptedThenOther = received(
+                        TrackingRecordMilestoneTest.withBookingStatus(
+                                ((MilestoneAdoption.Adopted)
+                                                arrivedThenDraft(arrival(TOKYO, "2026-11-19T10:00:00Z", "r-1"))
+                                                        .adoptCandidate(2, MANAGER, ADOPTED_AT))
+                                        .trackingRecord(),
+                                TrackedBookingStatus.CONFIRMED),
+                        arrival(BUSAN, "2026-11-19T11:00:00Z", "r-2"));
+
+                assertThat(adoptedThenOther.adoptCandidate(3, MANAGER, ADOPTED_AT))
+                        .isInstanceOfSatisfying(
+                                MilestoneAdoption.Rejected.class,
+                                rejected -> assertThat(rejected.reason())
+                                        .isEqualTo(AdoptionRejectionReason.CONFLICTS_WITH_ADOPTED));
+            }
         }
     }
 

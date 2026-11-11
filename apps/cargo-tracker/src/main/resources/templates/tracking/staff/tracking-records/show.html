@@ -20,7 +20,12 @@
         <dt class="col-sm-3">追跡番号</dt>
         <dd class="col-sm-9" th:text="${trackingRecord.trackingNumber()}">CTABCDEFGH2345</dd>
         <dt class="col-sm-3">現在状態</dt>
-        <dd class="col-sm-9" th:text="${trackingRecord.status()}">集荷予定</dd>
+        <!--/* 確認中は状態バッジ（文字とアイコン。色だけで示さない。BR-13）にし、理由の文を添える（Bolt 39gc） */-->
+        <dd class="col-sm-9" th:unless="${trackingRecord.underReview()}" th:text="${trackingRecord.status()}">集荷予定</dd>
+        <dd class="col-sm-9" th:if="${trackingRecord.underReview()}">
+            <span class="badge text-bg-warning"><span aria-hidden="true">⚠ </span><span th:text="${trackingRecord.status()}">確認中</span></span>
+            <p class="mb-0 mt-1" th:text="${trackingRecord.underReviewNote()}">時系列に反する実績があります（実績 3）。採用済みの実績から導いた状態は 目的地到着 です。</p>
+        </dd>
         <dt class="col-sm-3">当初の到着予定</dt>
         <dd class="col-sm-9" th:text="${trackingRecord.originalEta()}">2026-11-15 09:00 Asia/Tokyo（UTC+09:00）（UTC 2026-11-15 00:00）</dd>
         <dt class="col-sm-3">最新の到着見込み</dt>

@@ -18,17 +18,18 @@ public interface TrackingRecordMapper {
 
     void insertScheduledLeg(ScheduledLegRow row);
 
-    /** 導出し直した現在状態と根拠の実績番号を書き、版を 1 増やす（Bolt 26b）。読み込んだときの版と違えば 0 件。 */
+    /** 導出し直した現在状態と根拠の実績番号と確認中の理由（Bolt 39gc）を書き、版を 1 増やす（Bolt 26b）。読み込んだときの版と違えば 0 件。 */
     int updateTrackingRecord(
             @Param("trackingNumber") String trackingNumber,
             @Param("expectedVersion") long expectedVersion,
             @Param("currentStatus") String currentStatus,
             @Param("statusBasisMilestoneNo") Integer statusBasisMilestoneNo,
+            @Param("underReviewReason") String underReviewReason,
             @Param("updatedAt") OffsetDateTime updatedAt);
 
     void insertMilestone(MilestoneRow row);
 
-    /** 下書きを採用に書き換える（Bolt 39gb）。下書きでなければ 0 件。 */
+    /** 下書きを採用か確認中に書き換える（Bolt 39gb。確認中は Bolt 39gc）。下書きでなければ 0 件。 */
     int updateMilestoneAdoption(MilestoneRow row);
 
     /** 実績番号の実績の件数（0 か 1。Bolt 39gb の P-5）。 */

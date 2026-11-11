@@ -111,8 +111,9 @@ final class TrackingRecordViews {
      * @param status 現在状態の表示名
      * @param originalEta 当初の到着予定
      * @param startedAt 追跡の開始時刻
+     * @param underReview 現在状態が確認中か（状態バッジで示す。Bolt 39gc）
      */
-    record Row(String trackingNumber, String status, String originalEta, String startedAt) {}
+    record Row(String trackingNumber, String status, String originalEta, String startedAt, boolean underReview) {}
 
     static List<Row> list(RecentTrackingRecords recent) {
         return recent.rows().stream()
@@ -120,7 +121,8 @@ final class TrackingRecordViews {
                         summary.trackingNumber().value(),
                         status(summary.currentStatus()),
                         staff(summary.originalEta()),
-                        staff(summary.startedAt())))
+                        staff(summary.startedAt()),
+                        summary.currentStatus() == TrackingStatus.UNDER_REVIEW))
                 .toList();
     }
 
@@ -135,7 +137,10 @@ final class TrackingRecordViews {
      * @param legs 予定区間（区間の順）
      * @param milestones 主要実績（発生時刻の順。同じ時刻は実績番号の順。Bolt 26c）
      * @param version 追跡記録の版（下書きの採用の隠し項目。競合の検出。Bolt 39gb）
+     * @param underReview 現在状態が確認中か（状態バッジで示す。Bolt 39gc）
+     * @param underReviewNote 確認中の理由の文（確認中でなければ {@code null}。Bolt 39gc）
      */
+    @SuppressWarnings("java:S107") // 画面の 1 つの表示の値をそのまま持つ
     record DetailView(
             String trackingNumber,
             String status,
@@ -144,7 +149,9 @@ final class TrackingRecordViews {
             String route,
             List<LegView> legs,
             List<MilestoneView> milestones,
-            long version) {}
+            long version,
+            boolean underReview,
+            String underReviewNote) {}
 
     /**
      * 予定区間の 1 項目。
@@ -183,6 +190,29 @@ final class TrackingRecordViews {
     /** 採用済みと同じ値の候補の文（Bolt 39gb の行 53）。 */
     static final String SAME_AS_ADOPTED = "採用済みの実績と同じ値です";
 
+    /** 確認中の実績と同じ値の候補の文（Bolt 39gc の行 14）。 */
+    static final String SAME_AS_UNDER_REVIEW = "確認中の実績と同じ値です";
+
+    /** 確認中の実績と値が違う候補の文（Bolt 39gc の行 13）。 */
+    static final String CONFLICTS_WITH_UNDER_REVIEW = "確認中の実績と値が違います";
+
+    /** 採用すると確認中になる候補の注記（Bolt 39gc の行 15。本計画 CP-7）。 */
+    static final String ADOPTION_PLACES_UNDER_REVIEW = "採用すると、時系列に反するため確認中になります";
+
+    /**
+     * 採用の拒否の理由の文（Bolt 39gb。画面の欄と POST の結果で同じ文を使う）。判断済みの実績が確認中なら、値の違いの文を確認中の文にする（Bolt 39gc）。
+     *
+     * @param reason 理由
+     * @param decidedState 値の違う判断済みの実績の状態（なければ空）
+     */
+    static String adoptionRejection(AdoptionRejectionReason reason, Optional<MilestoneState> decidedState) {
+        if (reason == AdoptionRejectionReason.CONFLICTS_WITH_ADOPTED
+                && decidedState.filter(MilestoneState.UNDER_REVIEW::equals).isPresent()) {
+            return CONFLICTS_WITH_UNDER_REVIEW;
+        }
+        return adoptionRejection(reason);
+    }
+
     /** 採用の拒否の理由の文（Bolt 39gb。画面の欄と POST の結果で同じ文を使う）。 */
     static String adoptionRejection(AdoptionRejectionReason reason) {
         return switch (reason) {
@@ -217,7 +247,21 @@ final class TrackingRecordViews {
                                 .thenComparingInt(Milestone::milestoneNo))
                         .map(milestone -> milestone(trackingRecord, milestone, viewer, now))
                         .toList(),
-                trackingRecord.aggregateVersion());
+                trackingRecord.aggregateVersion(),
+                trackingRecord.currentStatus() == TrackingStatus.UNDER_REVIEW,
+                underReviewNote(trackingRecord));
+    }
+
+    /**
+     * 確認中の理由の文（Bolt 39gc の行 23。決定 (8)）。何が分かっていて何が分かっていないかを分けて示す（ui_design の原則）: 時系列に反する実績の番号と、
+     * 採用済みの実績から導いた状態。確認中でなければ {@code null}。
+     */
+    private static String underReviewNote(TrackingRecord trackingRecord) {
+        if (trackingRecord.underReviewReason().isEmpty()) {
+            return null;
+        }
+        return "時系列に反する実績があります（実績 " + trackingRecord.statusBasisMilestoneNo().orElseThrow() + "）。採用済みの実績から導いた状態は "
+                + status(trackingRecord.statusFromAdopted()) + " です。";
     }
 
     /**
@@ -258,11 +302,20 @@ final class TrackingRecordViews {
             note = SUPERSEDED;
         } else if (milestone.state() == MilestoneState.DRAFT) {
             switch (trackingRecord.adoptCandidate(milestone.milestoneNo(), viewer, now)) {
-                case MilestoneAdoption.Adopted _ -> adoptable = true;
-                case MilestoneAdoption.SameAsAdopted _ -> note = SAME_AS_ADOPTED;
-                case MilestoneAdoption.Rejected(AdoptionRejectionReason reason) ->
+                case MilestoneAdoption.Adopted adopted -> {
+                    adoptable = true;
+                    // 採用すると確認中になる候補にもボタンを出し、注記を添える（判定は POST と同じ操作。Bolt 39gc の行 15）
+                    note = adopted.milestone().state() == MilestoneState.UNDER_REVIEW
+                            ? ADOPTION_PLACES_UNDER_REVIEW
+                            : null;
+                }
+                case MilestoneAdoption.SameAsAdopted(Milestone decided) ->
+                    note = decided.state() == MilestoneState.UNDER_REVIEW ? SAME_AS_UNDER_REVIEW : SAME_AS_ADOPTED;
+                case MilestoneAdoption.Rejected(AdoptionRejectionReason reason, Optional<Milestone> decided) ->
                     // 組に入らない下書きはない（下書きは外部原本だけが作る）ので、候補でない理由は出さない
-                    note = reason == AdoptionRejectionReason.NOT_CANDIDATE ? null : adoptionRejection(reason);
+                    note = reason == AdoptionRejectionReason.NOT_CANDIDATE
+                            ? null
+                            : adoptionRejection(reason, decided.map(Milestone::state));
             }
         }
         return new MilestoneView(

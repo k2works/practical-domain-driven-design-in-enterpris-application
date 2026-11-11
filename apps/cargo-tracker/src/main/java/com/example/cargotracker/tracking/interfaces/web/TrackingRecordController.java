@@ -12,6 +12,7 @@ import com.example.cargotracker.tracking.domain.model.aggregates.TrackingRecord;
 import com.example.cargotracker.tracking.domain.model.valueobjects.AdoptionRejectionReason;
 import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneKind;
 import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneRejectionReason;
+import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneState;
 import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingNumber;
 import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingStatus;
 import java.time.Clock;
@@ -117,15 +118,13 @@ public class TrackingRecordController {
                 TrackingRecordViews.parseTrackingNumber(trackingNumber).orElseThrow(this::notFound);
         rejectOutOfScope(number, actor);
         switch (commandService.adoptCandidate(number, milestoneNo, expectedVersion, actor)) {
-            case MilestoneAdoptionOutcome.Adopted(int adopted, TrackingStatus currentStatus) ->
-                redirectAttributes.addFlashAttribute(
-                        RESULT,
-                        "実績 " + adopted + " を採用しました。現在状態は「" + TrackingRecordViews.status(currentStatus) + "」です。");
+            case MilestoneAdoptionOutcome.Adopted(int adopted, MilestoneState state, TrackingStatus currentStatus) ->
+                redirectAttributes.addFlashAttribute(RESULT, adoptionResult(adopted, state, currentStatus));
             case MilestoneAdoptionOutcome.SameAsAdopted(int adoptedMilestoneNo) ->
                 redirectAttributes.addFlashAttribute(
                         RESULT, "実績 " + milestoneNo + " は採用済みの実績 " + adoptedMilestoneNo + " と同じ値です。採用は要りません。");
-            case MilestoneAdoptionOutcome.Rejected(AdoptionRejectionReason reason) ->
-                redirectAttributes.addFlashAttribute(PROBLEM, adoptionProblem(milestoneNo, reason));
+            case MilestoneAdoptionOutcome.Rejected(AdoptionRejectionReason reason, Optional<MilestoneState> decided) ->
+                redirectAttributes.addFlashAttribute(PROBLEM, adoptionProblem(milestoneNo, reason, decided));
             case MilestoneAdoptionOutcome.Conflict _ ->
                 redirectAttributes.addFlashAttribute(PROBLEM, ADOPTION_CONFLICT_MESSAGE);
             case MilestoneAdoptionOutcome.NotFound _ -> throw notFound();
@@ -134,11 +133,20 @@ public class TrackingRecordController {
         return "redirect:/staff/tracking-records/{trackingNumber}";
     }
 
-    private static String adoptionProblem(int milestoneNo, AdoptionRejectionReason reason) {
+    /** 採用の結果の文。時系列に反して確認中にしたときは、そのことを示す（Bolt 39gc の決定 (8)）。 */
+    private static String adoptionResult(int milestoneNo, MilestoneState state, TrackingStatus currentStatus) {
+        if (state == MilestoneState.UNDER_REVIEW) {
+            return "実績 " + milestoneNo + " を採用しました。時系列に反するため確認中にしました。";
+        }
+        return "実績 " + milestoneNo + " を採用しました。現在状態は「" + TrackingRecordViews.status(currentStatus) + "」です。";
+    }
+
+    private static String adoptionProblem(
+            int milestoneNo, AdoptionRejectionReason reason, Optional<MilestoneState> decidedState) {
         if (reason == AdoptionRejectionReason.NOT_CANDIDATE) {
             return "実績 " + milestoneNo + " は候補ではありません。最新の主要実績を確かめてください。";
         }
-        return "実績 " + milestoneNo + " は採用できません。" + TrackingRecordViews.adoptionRejection(reason) + "。";
+        return "実績 " + milestoneNo + " は採用できません。" + TrackingRecordViews.adoptionRejection(reason, decidedState) + "。";
     }
 
     /** 主要実績の登録（S-13）。画面を開いたときの追跡記録の版を隠し項目に入れる（競合の検出）。 */
@@ -173,11 +181,11 @@ public class TrackingRecordController {
         }
         RegisterMilestoneCommand command = converted.get();
         switch (commandService.registerMilestone(command, actor)) {
-            case MilestoneRegistrationOutcome.Registered(int milestoneNo, TrackingStatus currentStatus) ->
-                // 導出し直した現在状態も示す（AC1 の「現在状態が再評価される」を利用者に伝える）
-                redirectAttributes.addFlashAttribute(
-                        RESULT,
-                        "実績 " + milestoneNo + " を登録しました。現在状態は「" + TrackingRecordViews.status(currentStatus) + "」です。");
+            case MilestoneRegistrationOutcome.Registered(
+                    int milestoneNo,
+                    MilestoneState state,
+                    TrackingStatus currentStatus) ->
+                redirectAttributes.addFlashAttribute(RESULT, registrationResult(milestoneNo, state, currentStatus));
             case MilestoneRegistrationOutcome.AlreadyRegistered(int milestoneNo) -> {
                 String source = TrackingRecordViews.sourceLabel(
                         command.source().kind(), command.source().reference());
@@ -200,12 +208,26 @@ public class TrackingRecordController {
         return "redirect:/staff/tracking-records/{trackingNumber}";
     }
 
+    /**
+     * 登録の結果の文（Bolt 39gc の決定 (8)）。採用は導出し直した現在状態も示す（AC1 の「現在状態が再評価される」を利用者に伝える）。確認中・保持のみは、
+     * 現在状態にどう効いたかを示す。
+     */
+    private static String registrationResult(int milestoneNo, MilestoneState state, TrackingStatus currentStatus) {
+        return switch (state) {
+            case UNDER_REVIEW -> "実績 " + milestoneNo + " を登録しました。時系列に反するため確認中にしました。";
+            case RETAINED_ONLY -> "実績 " + milestoneNo + " を保持のみで登録しました。完了した追跡の現在状態は変わりません。";
+            case ADOPTED ->
+                "実績 " + milestoneNo + " を登録しました。現在状態は「" + TrackingRecordViews.status(currentStatus) + "」です。";
+            case DRAFT -> throw new IllegalStateException("画面の登録で作らない状態: " + state);
+        };
+    }
+
     private static String rejection(MilestoneRejectionReason reason) {
         return switch (reason) {
             case OCCURRED_IN_FUTURE -> "いまより前の日時を入力してください";
-            // S-13 の手入力の拒否の理由は 39gc まで未来の発生時刻だけ（DE-13 の拒否の記録の理由はここへ来ない）
-            case BOOKING_CANCELLED, UNKNOWN_TRACKING_NUMBER ->
-                throw new IllegalStateException("画面の登録で起きない理由: " + reason);
+            case BOOKING_CANCELLED -> "取消済みの予約には主要実績を登録できません。";
+            // 知らない追跡番号は DE-13 の拒否の記録の理由で、画面の登録では起きない（画面は先に 404 にする）
+            case UNKNOWN_TRACKING_NUMBER -> throw new IllegalStateException("画面の登録で起きない理由: " + reason);
         };
     }
 

@@ -103,6 +103,15 @@ public record Milestone(
 
     /** 下書きを採用する（Bolt 39gb。採用できるかの判定は追跡記録が行う）。 */
     public Milestone adopt(UserId adopter, UtcInstant at) {
+        return decide(MilestoneState.ADOPTED, adopter, at);
+    }
+
+    /** 時系列に反する下書きを採用して確認中に移す（採用者と採用時刻を残す。Bolt 39gc。判定は追跡記録が行う）。 */
+    public Milestone adoptUnderReview(UserId adopter, UtcInstant at) {
+        return decide(MilestoneState.UNDER_REVIEW, adopter, at);
+    }
+
+    private Milestone decide(MilestoneState decided, UserId adopter, UtcInstant at) {
         if (state != MilestoneState.DRAFT) {
             throw new IllegalStateException("下書きだけを採用できます: 実績 " + milestoneNo + "、状態 " + state);
         }
@@ -112,7 +121,7 @@ public record Milestone(
                 location,
                 occurredAt,
                 source,
-                MilestoneState.ADOPTED,
+                decided,
                 registeredBy,
                 registeredAt,
                 externalOrigin,

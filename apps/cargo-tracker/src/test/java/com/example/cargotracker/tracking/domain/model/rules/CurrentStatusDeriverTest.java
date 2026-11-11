@@ -2,6 +2,7 @@ package com.example.cargotracker.tracking.domain.model.rules;
 
 import static com.example.cargotracker.tracking.domain.model.TrackingFixture.at;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.Source;
@@ -12,9 +13,12 @@ import com.example.cargotracker.tracking.domain.model.valueobjects.DerivedStatus
 import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneKind;
 import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneState;
 import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingStatus;
+import com.example.cargotracker.tracking.domain.model.valueobjects.UnderReviewReason;
 import java.util.List;
+import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.UUID;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -76,16 +80,67 @@ class CurrentStatusDeriverTest {
                 .isEqualTo(new DerivedStatus(TrackingStatus.RECEIVED_AT_ORIGIN, OptionalInt.of(2)));
     }
 
+    /** 確認中の実績は現在状態を確認中にする（Bolt 39gc。下の Bolt39gc_確認中の導出）ので、ここでは下書きと保持のみだけを置く。 */
     @Test
-    void 採用済みでない実績は導出に入れない() {
+    void 下書きと保持のみの実績は導出に入れない() {
         List<Milestone> milestones = List.of(
                 milestone(1, MilestoneKind.PICKUP, "2026-11-01T05:00:00Z", MilestoneState.ADOPTED),
                 milestone(2, MilestoneKind.DEPARTURE, "2026-11-01T06:00:00Z", MilestoneState.DRAFT),
-                milestone(3, MilestoneKind.ARRIVAL, "2026-11-01T07:00:00Z", MilestoneState.UNDER_REVIEW),
-                milestone(4, MilestoneKind.DELIVERY, "2026-11-01T08:00:00Z", MilestoneState.RETAINED_ONLY));
+                milestone(3, MilestoneKind.DELIVERY, "2026-11-01T08:00:00Z", MilestoneState.RETAINED_ONLY));
 
         assertThat(deriver.derive(milestones))
                 .isEqualTo(new DerivedStatus(TrackingStatus.PICKED_UP, OptionalInt.of(1)));
+    }
+
+    /** Bolt 39gc の行 3（【業務の判断】(ah)）。 */
+    @Nested
+    class Bolt39gc_確認中の導出 {
+
+        @Test
+        void 確認中の実績があれば現在状態は確認中で根拠は実績番号の最も小さい確認中で理由は時系列に反する() {
+            List<Milestone> milestones = List.of(
+                    milestone(1, MilestoneKind.ARRIVAL, "2026-11-01T05:00:00Z", MilestoneState.ADOPTED),
+                    milestone(2, MilestoneKind.PICKUP, "2026-11-01T09:00:00Z", MilestoneState.UNDER_REVIEW),
+                    milestone(3, MilestoneKind.DELIVERY, "2026-11-01T10:00:00Z", MilestoneState.ADOPTED),
+                    milestone(4, MilestoneKind.PICKUP, "2026-11-01T06:00:00Z", MilestoneState.UNDER_REVIEW));
+
+            assertThat(deriver.derive(milestones))
+                    .isEqualTo(new DerivedStatus(
+                            TrackingStatus.UNDER_REVIEW,
+                            OptionalInt.of(2),
+                            Optional.of(UnderReviewReason.OUT_OF_SEQUENCE)));
+        }
+
+        @Test
+        void 確認中の実績がなければ理由はなく採用済みから導く() {
+            List<Milestone> milestones =
+                    List.of(milestone(1, MilestoneKind.ARRIVAL, "2026-11-01T05:00:00Z", MilestoneState.ADOPTED));
+
+            assertThat(deriver.derive(milestones).underReviewReason()).isEmpty();
+            assertThat(deriver.derive(milestones).status()).isEqualTo(TrackingStatus.ARRIVED_AT_DESTINATION);
+        }
+
+        @Test
+        void 採用済みから導いた状態は確認中の実績を見ない() {
+            List<Milestone> milestones = List.of(
+                    milestone(1, MilestoneKind.DELIVERY, "2026-11-01T05:00:00Z", MilestoneState.ADOPTED),
+                    milestone(2, MilestoneKind.PICKUP, "2026-11-01T09:00:00Z", MilestoneState.UNDER_REVIEW));
+
+            assertThat(deriver.deriveFromAdopted(milestones))
+                    .isEqualTo(new DerivedStatus(TrackingStatus.DELIVERED, OptionalInt.of(1)));
+        }
+
+        @Test
+        void 確認中の現在状態と理由はそろう() {
+            OptionalInt basis = OptionalInt.of(1);
+            Optional<UnderReviewReason> none = Optional.empty();
+            Optional<UnderReviewReason> reason = Optional.of(UnderReviewReason.OUT_OF_SEQUENCE);
+
+            assertThatThrownBy(() -> new DerivedStatus(TrackingStatus.UNDER_REVIEW, basis, none))
+                    .isInstanceOf(IllegalArgumentException.class);
+            assertThatThrownBy(() -> new DerivedStatus(TrackingStatus.PICKED_UP, basis, reason))
+                    .isInstanceOf(IllegalArgumentException.class);
+        }
     }
 
     private static Milestone milestone(int no, MilestoneKind kind, String occurredAt, MilestoneState state) {

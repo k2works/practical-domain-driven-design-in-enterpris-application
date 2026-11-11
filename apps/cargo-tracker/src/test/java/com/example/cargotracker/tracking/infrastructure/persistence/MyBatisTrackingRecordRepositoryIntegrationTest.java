@@ -22,9 +22,11 @@ import com.example.cargotracker.tracking.domain.model.valueobjects.ExternalMiles
 import com.example.cargotracker.tracking.domain.model.valueobjects.ExternalOrigin;
 import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneKind;
 import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneRejectionReason;
+import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneState;
 import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingNumber;
 import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingRecordSummary;
 import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingStatus;
+import com.example.cargotracker.tracking.domain.model.valueobjects.UnderReviewReason;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.List;
@@ -772,6 +774,155 @@ class MyBatisTrackingRecordRepositoryIntegrationTest {
                             saved.trackingNumber().value()))
                     .containsEntry("version", 0L)
                     .containsEntry("status_basis_milestone_no", null);
+        }
+    }
+
+    /** Bolt 39gc の行 18〜20（確認中の理由の列と CHECK、確認中・保持のみの往復、採用で確認中にする保存）。 */
+    @Nested
+    class Bolt39gc_確認中の保存 {
+
+        private static final UUID DATA_SOURCE = UUID.fromString("00000000-0000-0000-0000-0000039c0e01");
+        private static final UserId MANAGER = new UserId(UUID.fromString("00000000-0000-0000-0000-0000039c0e02"));
+        private static final UtcInstant ADOPTED_AT = new UtcInstant(Instant.parse("2026-11-20T00:00:00.123456Z"));
+
+        /** 到着を手入力で採用した後に、より後の発生時刻の出発の下書きが届いた追跡記録（保存済み）。 */
+        private TrackingRecord arrivedThenDraft() {
+            TrackingRecord saved = started(UUID.randomUUID(), trackingNumber());
+            repository.save(saved);
+            repository.update(register(saved, MilestoneKind.ARRIVAL, "2026-11-01T02:00:00Z", "F-1"));
+            TrackingRecord arrived =
+                    repository.findByTrackingNumber(saved.trackingNumber()).orElseThrow();
+            ExternalMilestone external = new ExternalMilestone(
+                    saved.trackingNumber(),
+                    MilestoneKind.DEPARTURE,
+                    new Location("JPTYO"),
+                    new UtcInstant(Instant.parse("2026-11-01T02:30:00Z")),
+                    new Source(SourceKind.EXTERNAL_RECORD, UUID.randomUUID().toString(), NOW),
+                    new ExternalOrigin(DATA_SOURCE, "MS-0001", NOW),
+                    MANAGER);
+            repository.update(((ExternalMilestoneReceipt.Received) arrived.receiveExternalMilestone(external, NOW))
+                    .trackingRecord());
+            return repository.findByTrackingNumber(saved.trackingNumber()).orElseThrow();
+        }
+
+        @Test
+        void 行19_手入力の確認中の現在状態と根拠と理由が往復する() {
+            TrackingRecord saved = started(UUID.randomUUID(), trackingNumber());
+            repository.save(saved);
+            repository.update(register(saved, MilestoneKind.ARRIVAL, "2026-11-01T02:00:00Z", "F-1"));
+            TrackingRecord arrived =
+                    repository.findByTrackingNumber(saved.trackingNumber()).orElseThrow();
+            TrackingRecord underReview = register(arrived, MilestoneKind.PICKUP, "2026-11-01T02:30:00Z", "F-2");
+
+            repository.update(underReview);
+
+            TrackingRecord found =
+                    repository.findByTrackingNumber(saved.trackingNumber()).orElseThrow();
+            assertThat(found.currentStatus()).isEqualTo(TrackingStatus.UNDER_REVIEW);
+            assertThat(found.statusBasisMilestoneNo()).isEqualTo(OptionalInt.of(2));
+            assertThat(found.underReviewReason()).contains(UnderReviewReason.OUT_OF_SEQUENCE);
+            assertThat(found.milestones().get(1).state()).isEqualTo(MilestoneState.UNDER_REVIEW);
+            assertThat(jdbc.queryForObject(
+                            "SELECT under_review_reason FROM tracking.tracking_record WHERE tracking_number = ?",
+                            String.class,
+                            saved.trackingNumber().value()))
+                    .isEqualTo("OUT_OF_SEQUENCE");
+        }
+
+        @Test
+        void 行19_完了後の手入力の保持のみが往復し現在状態は変わらない() {
+            TrackingRecord saved = started(UUID.randomUUID(), trackingNumber());
+            repository.save(saved);
+            repository.update(register(saved, MilestoneKind.DELIVERY, "2026-11-01T02:00:00Z", "F-1"));
+            TrackingRecord delivered =
+                    repository.findByTrackingNumber(saved.trackingNumber()).orElseThrow();
+
+            repository.update(register(delivered, MilestoneKind.PICKUP, "2026-11-01T01:00:00Z", "F-2"));
+
+            TrackingRecord found =
+                    repository.findByTrackingNumber(saved.trackingNumber()).orElseThrow();
+            assertThat(found.milestones().get(1).state()).isEqualTo(MilestoneState.RETAINED_ONLY);
+            assertThat(found.currentStatus()).isEqualTo(TrackingStatus.DELIVERED);
+            assertThat(found.underReviewReason()).isEmpty();
+        }
+
+        @Test
+        void 行20_採用で確認中にすると下書きの行を確認中と採用者と採用時刻に書き換え理由を書く() {
+            TrackingRecord draft = arrivedThenDraft();
+            MilestoneAdoption.Adopted adopted =
+                    (MilestoneAdoption.Adopted) draft.adoptCandidate(2, MANAGER, ADOPTED_AT);
+
+            repository.update(adopted.trackingRecord());
+
+            TrackingRecord found =
+                    repository.findByTrackingNumber(draft.trackingNumber()).orElseThrow();
+            assertThat(found.milestones().get(1)).isEqualTo(adopted.milestone());
+            assertThat(found.milestones().get(1).state()).isEqualTo(MilestoneState.UNDER_REVIEW);
+            assertThat(found.currentStatus()).isEqualTo(TrackingStatus.UNDER_REVIEW);
+            assertThat(found.statusBasisMilestoneNo()).isEqualTo(OptionalInt.of(2));
+            assertThat(found.underReviewReason()).contains(UnderReviewReason.OUT_OF_SEQUENCE);
+            assertThat(found.aggregateVersion()).isEqualTo(draft.aggregateVersion() + 1);
+        }
+
+        @Test
+        void 行20_下書きの行がもう下書きでなければ確認中への書き換えも競合にして戻す() {
+            TrackingRecord draft = arrivedThenDraft();
+            jdbc.update(
+                    "UPDATE tracking.milestone SET state = 'UNDER_REVIEW', adopted_by = ?, adopted_at = ?"
+                            + " WHERE tracking_number = ? AND milestone_no = 2",
+                    UUID.randomUUID(),
+                    Timestamp.from(NOW.instant()),
+                    draft.trackingNumber().value());
+            TrackingRecord adopted =
+                    ((MilestoneAdoption.Adopted) draft.adoptCandidate(2, MANAGER, ADOPTED_AT)).trackingRecord();
+
+            assertThatThrownBy(() -> repository.update(adopted))
+                    .isInstanceOf(ConcurrentTrackingRecordUpdateException.class);
+            assertThat(jdbc.queryForMap(
+                            "SELECT version, current_status, under_review_reason FROM tracking.tracking_record"
+                                    + " WHERE tracking_number = ?",
+                            draft.trackingNumber().value()))
+                    .containsEntry("version", draft.aggregateVersion())
+                    .containsEntry("current_status", "ARRIVED_AT_DESTINATION")
+                    .containsEntry("under_review_reason", null);
+        }
+
+        @ParameterizedTest(name = "{0}")
+        @CsvSource({
+            "確認中で理由がない, UNDER_REVIEW, , ck_tracking_record_under_review",
+            "確認中でない状態に理由がある, IN_TRANSIT, OUT_OF_SEQUENCE, ck_tracking_record_under_review",
+            "理由が決めた値でない, UNDER_REVIEW, CONFLICT, ck_tracking_record_under_review_reason"
+        })
+        void 行18_現在状態と確認中の理由がそろわない行と決めた値でない理由はCHECKで拒否する(
+                String description, String status, String reason, String constraint) {
+            TrackingRecord saved = started(UUID.randomUUID(), trackingNumber());
+            repository.save(saved);
+            String trackingNumber = saved.trackingNumber().value();
+
+            assertThatThrownBy(() -> jdbc.update(
+                            "UPDATE tracking.tracking_record SET current_status = ?, under_review_reason = ?"
+                                    + " WHERE tracking_number = ?",
+                            status,
+                            reason,
+                            trackingNumber))
+                    .as(description)
+                    .isInstanceOf(DataIntegrityViolationException.class)
+                    .hasMessageContaining(constraint);
+        }
+
+        @Test
+        void 行18_確認中の理由は30文字の区分値の列でコメントを持つ() {
+            assertThat(jdbc.queryForMap("SELECT data_type, character_maximum_length FROM information_schema.columns"
+                            + " WHERE table_schema = 'tracking' AND table_name = 'tracking_record'"
+                            + " AND column_name = 'under_review_reason'"))
+                    .containsEntry("data_type", "character varying")
+                    .containsEntry("character_maximum_length", 30);
+            assertThat(jdbc.queryForObject(
+                            "SELECT col_description('tracking.tracking_record'::regclass, a.attnum) FROM pg_attribute a"
+                                    + " WHERE a.attrelid = 'tracking.tracking_record'::regclass"
+                                    + " AND a.attname = 'under_review_reason'",
+                            String.class))
+                    .contains("確認中の理由（区分値");
         }
     }
 

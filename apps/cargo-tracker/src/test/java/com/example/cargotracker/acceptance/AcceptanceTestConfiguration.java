@@ -324,8 +324,9 @@ public class AcceptanceTestConfiguration {
         /** 追跡管理者が主要実績を登録する（US-12。Bolt 26b）。 */
         @Bean
         TrackingRecordCommandService trackingRecordCommandService(
-                InMemoryTrackingRecordRepository repository, MutableClock clock) {
-            return new TrackingRecordCommandService(repository, clock, new TrackingRecordScope(repository));
+                InMemoryTrackingRecordRepository repository, MutableClock clock, DeferredEventDelivery eventDelivery) {
+            return new TrackingRecordCommandService(
+                    repository, clock, new TrackingRecordScope(repository), eventDelivery);
         }
 
         /** 追跡は DE-22 を受けて予約の公開 API で予約サガを完了にする（ADR-014・015。Bolt 25）。 */

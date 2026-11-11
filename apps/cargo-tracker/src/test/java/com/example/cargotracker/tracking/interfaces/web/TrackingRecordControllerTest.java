@@ -29,9 +29,12 @@ import com.example.cargotracker.tracking.application.internal.commandservices.Tr
 import com.example.cargotracker.tracking.application.internal.queryservices.RecentTrackingRecords;
 import com.example.cargotracker.tracking.application.internal.queryservices.TrackingRecordQueryService;
 import com.example.cargotracker.tracking.domain.model.TrackingFixture;
+import com.example.cargotracker.tracking.domain.model.aggregates.ExternalMilestoneReceipt;
+import com.example.cargotracker.tracking.domain.model.aggregates.MilestoneAdoption;
 import com.example.cargotracker.tracking.domain.model.aggregates.TrackingRecord;
 import com.example.cargotracker.tracking.domain.model.entities.Milestone;
 import com.example.cargotracker.tracking.domain.model.valueobjects.AdoptionRejectionReason;
+import com.example.cargotracker.tracking.domain.model.valueobjects.ExternalMilestone;
 import com.example.cargotracker.tracking.domain.model.valueobjects.ExternalOrigin;
 import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneKind;
 import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneState;
@@ -172,9 +175,9 @@ class TrackingRecordControllerTest {
         "TRANSSHIPPING, 積替え中",
         "ARRIVED_AT_DESTINATION, 目的地到着",
         "READY_FOR_DELIVERY, 引渡し可能",
-        "DELIVERED, 引渡し済み",
-        "UNDER_REVIEW, 確認中"
+        "DELIVERED, 引渡し済み"
     })
+    // 確認中は状態バッジで示す（Bolt 39gc の行 22・23。下の Bolt39gc_確認中の表示）
     void 追跡状態は表示名で示す(TrackingStatus status, String displayName) throws Exception {
         given(queryService.recent(any()))
                 .willReturn(new RecentTrackingRecords(List.of(summary("CTABCDEFGH2345", status)), false, 50));
@@ -573,7 +576,8 @@ class TrackingRecordControllerTest {
         @Test
         void 行50_採用したら結果と導出し直した現在状態を示して追跡の詳細に戻る() throws Exception {
             given(commandService.adoptCandidate(eq(TrackingFixture.TRACKING_NUMBER), eq(2), eq(7L), any()))
-                    .willReturn(new MilestoneAdoptionOutcome.Adopted(2, TrackingStatus.IN_TRANSIT));
+                    .willReturn(
+                            new MilestoneAdoptionOutcome.Adopted(2, MilestoneState.ADOPTED, TrackingStatus.IN_TRANSIT));
 
             mockMvc.perform(post(ADOPT).param("expectedVersion", "7"))
                     .andExpect(status().is3xxRedirection())
@@ -657,6 +661,146 @@ class TrackingRecordControllerTest {
             mockMvc.perform(post(ADOPT).param("expectedVersion", "7")).andExpect(status().isNotFound());
 
             then(outOfScope).should().recordAndNotFound(any(), eq(TrackingFixture.TRACKING_NUMBER.value()));
+        }
+    }
+
+    /** Bolt 39gc の行 13〜15・22・23（S-11・S-12 の確認中の表示と採用の POST の文）。 */
+    @Nested
+    class Bolt39gc_確認中の表示 {
+
+        private static final String ADOPT = DETAIL + "/milestones/2/adopt";
+        private static final UUID SOURCE_ID = UUID.fromString("00000000-0000-0000-0000-0000039c0c01");
+        private static final String BADGE =
+                "<span class=\"badge text-bg-warning\"><span aria-hidden=\"true\">⚠ </span><span>確認中</span></span>";
+
+        private ExternalMilestone external(String location, String publishedAt) {
+            return new ExternalMilestone(
+                    TrackingFixture.TRACKING_NUMBER,
+                    MilestoneKind.DEPARTURE,
+                    new Location(location),
+                    TrackingFixture.at("2026-10-30T06:00:00Z"),
+                    new Source(SourceKind.EXTERNAL_RECORD, "r-" + publishedAt, TrackingFixture.at(publishedAt)),
+                    new ExternalOrigin(SOURCE_ID, "MS-0302", TrackingFixture.at(publishedAt)),
+                    TestActors.STAFF_USER);
+        }
+
+        private TrackingRecord receive(TrackingRecord trackingRecord, String location, String publishedAt) {
+            return ((ExternalMilestoneReceipt.Received) trackingRecord.receiveExternalMilestone(
+                            external(location, publishedAt), TrackingFixture.at(publishedAt)))
+                    .trackingRecord();
+        }
+
+        /** 到着を手入力で採用した（10-30T00:00）後に、より後の発生時刻の出発の下書き（実績 2）が届いた。採用すると時系列に反する。 */
+        private TrackingRecord arrivedThenDraft() {
+            TrackingRecord arrived = TrackingRecord.start(
+                            TrackingFixture.TRACKING_NUMBER,
+                            TrackingFixture.BOOKING_ID,
+                            TrackingFixture.SHIPPER,
+                            TrackingFixture.CONSIGNEE,
+                            TrackingFixture.schedule(),
+                            TrackingFixture.STARTED_AT)
+                    .trackingRecord()
+                    .registerMilestone(
+                            MilestoneKind.ARRIVAL,
+                            new Location("USLAX"),
+                            TrackingFixture.at("2026-10-30T00:00:00Z"),
+                            new Source(SourceKind.FIELD_RECORD, "F-1", TrackingFixture.at("2026-10-31T00:00:00Z")),
+                            TestActors.STAFF_USER,
+                            TrackingFixture.at("2026-10-31T00:00:00Z"))
+                    .trackingRecord();
+            return receive(arrived, "JPTYO", "2026-10-31T01:00:00Z");
+        }
+
+        private TrackingRecord underReview() {
+            return ((MilestoneAdoption.Adopted) arrivedThenDraft()
+                            .adoptCandidate(2, TestActors.STAFF_USER, TrackingFixture.at("2026-10-31T02:00:00Z")))
+                    .trackingRecord();
+        }
+
+        private String detailOf(TrackingRecord trackingRecord) throws Exception {
+            given(queryService.detail(eq(TrackingFixture.TRACKING_NUMBER), any()))
+                    .willReturn(Optional.of(trackingRecord));
+            return mockMvc.perform(get(DETAIL))
+                    .andExpect(status().isOk())
+                    .andReturn()
+                    .getResponse()
+                    .getContentAsString();
+        }
+
+        @Test
+        void 行15_採用すると確認中になる候補にも採用のボタンを出し注記を添える() throws Exception {
+            String body = detailOf(arrivedThenDraft());
+
+            org.assertj.core.api.Assertions.assertThat(body)
+                    .contains("実績 2 を採用する")
+                    .containsOnlyOnce("採用すると、時系列に反するため確認中になります");
+        }
+
+        @Test
+        void 行23_現在状態は確認中のバッジと理由の文と確認中の実績の状態を示す() throws Exception {
+            String body = detailOf(underReview());
+
+            org.assertj.core.api.Assertions.assertThat(body)
+                    .contains(BADGE)
+                    .contains("時系列に反する実績があります（実績 2）。採用済みの実績から導いた状態は 目的地到着 です。")
+                    .contains("状態 確認中")
+                    .doesNotContain("を採用する");
+        }
+
+        @Test
+        void 行13_確認中の実績と値が違う新しい下書きには採用を出さず理由を示す() throws Exception {
+            String body = detailOf(receive(underReview(), "KRPUS", "2026-10-31T03:00:00Z"));
+
+            org.assertj.core.api.Assertions.assertThat(body)
+                    .contains("確認中の実績と値が違います")
+                    .doesNotContain("採用済みの実績と値が違います")
+                    .doesNotContain("を採用する");
+        }
+
+        @Test
+        void 行14_確認中の実績と同じ値の新しい下書きには採用は要らないと示す() throws Exception {
+            String body = detailOf(receive(underReview(), "JPTYO", "2026-10-31T03:00:00Z"));
+
+            org.assertj.core.api.Assertions.assertThat(body)
+                    .contains("確認中の実績と同じ値です")
+                    .doesNotContain("を採用する");
+        }
+
+        @Test
+        void 行22_追跡一覧は確認中の追跡の現在状態をバッジで示し他は文字のまま() throws Exception {
+            given(queryService.recent(any()))
+                    .willReturn(new RecentTrackingRecords(
+                            List.of(
+                                    summary("CTABCDEFGH2345", TrackingStatus.UNDER_REVIEW),
+                                    summary("CTBBBBBBBBBBBB", TrackingStatus.IN_TRANSIT)),
+                            false,
+                            50));
+
+            mockMvc.perform(get(LIST))
+                    .andExpect(content().string(containsString("<td>" + BADGE + "</td>")))
+                    .andExpect(content().string(containsString("<td>輸送中</td>")));
+        }
+
+        @Test
+        void 行6_時系列に反して確認中にした採用の結果を示す() throws Exception {
+            given(commandService.adoptCandidate(eq(TrackingFixture.TRACKING_NUMBER), eq(2), eq(0L), any()))
+                    .willReturn(new MilestoneAdoptionOutcome.Adopted(
+                            2, MilestoneState.UNDER_REVIEW, TrackingStatus.UNDER_REVIEW));
+
+            mockMvc.perform(post(ADOPT).param("expectedVersion", "0"))
+                    .andExpect(redirectedUrl(DETAIL))
+                    .andExpect(flash().attribute("result", "実績 2 を採用しました。時系列に反するため確認中にしました。"));
+        }
+
+        @Test
+        void 行13_確認中の実績と値が違う採用の拒否を示す() throws Exception {
+            given(commandService.adoptCandidate(any(), eq(2), eq(0L), any()))
+                    .willReturn(new MilestoneAdoptionOutcome.Rejected(
+                            AdoptionRejectionReason.CONFLICTS_WITH_ADOPTED, Optional.of(MilestoneState.UNDER_REVIEW)));
+
+            mockMvc.perform(post(ADOPT).param("expectedVersion", "0"))
+                    .andExpect(redirectedUrl(DETAIL))
+                    .andExpect(flash().attribute("problem", "実績 2 は採用できません。確認中の実績と値が違います。"));
         }
     }
 

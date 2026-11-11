@@ -30,6 +30,7 @@ import com.example.cargotracker.tracking.domain.model.TrackingFixture;
 import com.example.cargotracker.tracking.domain.model.aggregates.TrackingRecord;
 import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneKind;
 import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneRejectionReason;
+import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneState;
 import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingStatus;
 import java.time.Clock;
 import java.time.Instant;
@@ -249,7 +250,8 @@ class MilestoneRegistrationControllerTest {
     @Test
     void 登録すると入力を整えたコマンドを渡し追跡の詳細へ戻って登録した実績を示す() throws Exception {
         given(commandService.registerMilestone(any(), any()))
-                .willReturn(new MilestoneRegistrationOutcome.Registered(1, TrackingStatus.PICKED_UP));
+                .willReturn(new MilestoneRegistrationOutcome.Registered(
+                        1, MilestoneState.ADOPTED, TrackingStatus.PICKED_UP));
 
         mockMvc.perform(validRegistration())
                 .andExpect(status().is3xxRedirection())
@@ -305,6 +307,34 @@ class MilestoneRegistrationControllerTest {
                 .andExpect(content().string(containsString("<title>入力内容に誤りがあります - 主要実績の登録 CTABCDEFGH2345")));
     }
 
+    /** Bolt 39gc の行 9・10・24（S-13 の結果の文と取消済みの拒否の文。決定 (8)）。 */
+    @ParameterizedTest(name = "{0}")
+    @CsvSource({
+        "確認中, UNDER_REVIEW, UNDER_REVIEW, 実績 1 を登録しました。時系列に反するため確認中にしました。",
+        "保持のみ, RETAINED_ONLY, DELIVERED, 実績 1 を保持のみで登録しました。完了した追跡の現在状態は変わりません。"
+    })
+    void 行24_確認中と保持のみの登録の結果を示す(String name, MilestoneState state, TrackingStatus currentStatus, String message)
+            throws Exception {
+        given(commandService.registerMilestone(any(), any()))
+                .willReturn(new MilestoneRegistrationOutcome.Registered(1, state, currentStatus));
+
+        mockMvc.perform(validRegistration())
+                .andExpect(redirectedUrl(DETAIL))
+                .andExpect(flash().attribute("result", message));
+    }
+
+    @Test
+    void 行9_取消済みの予約なら登録の画面に拒否の文を示し入力した値を残す() throws Exception {
+        given(commandService.registerMilestone(any(), any()))
+                .willReturn(new MilestoneRegistrationOutcome.Rejected(MilestoneRejectionReason.BOOKING_CANCELLED));
+
+        mockMvc.perform(validRegistration())
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("id=\"error-summary\"")))
+                .andExpect(content().string(containsString("発生時刻: 取消済みの予約には主要実績を登録できません。")))
+                .andExpect(content().string(containsString("value=\"2026-11-01 11:30\"")));
+    }
+
     @Test
     void 形式の誤った追跡番号への登録は404() throws Exception {
         mockMvc.perform(post("/staff/tracking-records/not-a-tracking-number/milestones"))
@@ -357,7 +387,8 @@ class MilestoneRegistrationControllerTest {
     @Test
     void 出典の参照は200文字まで受け付ける() throws Exception {
         given(commandService.registerMilestone(any(), any()))
-                .willReturn(new MilestoneRegistrationOutcome.Registered(1, TrackingStatus.PICKED_UP));
+                .willReturn(new MilestoneRegistrationOutcome.Registered(
+                        1, MilestoneState.ADOPTED, TrackingStatus.PICKED_UP));
 
         mockMvc.perform(registration("sourceReference", "a".repeat(200))).andExpect(redirectedUrl(DETAIL));
     }

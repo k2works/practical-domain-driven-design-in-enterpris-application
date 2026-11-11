@@ -7,9 +7,11 @@ import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.Source;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
+import com.example.cargotracker.tracking.domain.events.TrackingPlacedUnderReview;
 import com.example.cargotracker.tracking.domain.events.TrackingStarted;
 import com.example.cargotracker.tracking.domain.model.entities.Milestone;
 import com.example.cargotracker.tracking.domain.model.rules.CurrentStatusDeriver;
+import com.example.cargotracker.tracking.domain.model.rules.MilestoneSequenceRule;
 import com.example.cargotracker.tracking.domain.model.valueobjects.AdoptionRejectionReason;
 import com.example.cargotracker.tracking.domain.model.valueobjects.CustomerMilestone;
 import com.example.cargotracker.tracking.domain.model.valueobjects.CustomerTrackingView;
@@ -24,6 +26,7 @@ import com.example.cargotracker.tracking.domain.model.valueobjects.Schedule;
 import com.example.cargotracker.tracking.domain.model.valueobjects.TrackedBookingStatus;
 import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingNumber;
 import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingStatus;
+import com.example.cargotracker.tracking.domain.model.valueobjects.UnderReviewReason;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -41,6 +44,9 @@ import java.util.UUID;
  *
  * <p>主要実績を登録すると、現在状態を採用済みの実績から導出し直す（T-INV-08。{@link CurrentStatusDeriver}）。追跡記録は不変で、登録は
  * 新しい追跡記録を返す。版はリポジトリが保存のときに増やす（楽観ロック）。
+ *
+ * <p>採用済みの実績と時系列に反する実績（{@link MilestoneSequenceRule}）は確認中で残し、現在状態を確認中にする（T-INV-03。Bolt 39gc）。確認中に入る
+ * 登録・採用の結果に DE-18 を載せ、呼び手が保存と同じトランザクションで発行する。
  */
 @AggregateRoot
 @CoreConcept
@@ -48,6 +54,7 @@ public final class TrackingRecord {
 
     private static final long INITIAL_AGGREGATE_VERSION = 0;
     private static final CurrentStatusDeriver DERIVER = new CurrentStatusDeriver();
+    private static final MilestoneSequenceRule SEQUENCE = new MilestoneSequenceRule();
 
     private final TrackingNumber trackingNumber;
     private final UUID bookingId;
@@ -57,6 +64,7 @@ public final class TrackingRecord {
     private final Schedule schedule;
     private final TrackingStatus currentStatus;
     private final OptionalInt statusBasisMilestoneNo;
+    private final Optional<UnderReviewReason> underReviewReason;
     private final List<Milestone> milestones;
     private final UtcInstant originalEta;
     private final UtcInstant latestEta;
@@ -71,8 +79,7 @@ public final class TrackingRecord {
             CompanyId consigneeCompanyId,
             TrackedBookingStatus bookingStatus,
             Schedule schedule,
-            TrackingStatus currentStatus,
-            OptionalInt statusBasisMilestoneNo,
+            DerivedStatus current,
             List<Milestone> milestones,
             UtcInstant originalEta,
             UtcInstant latestEta,
@@ -84,8 +91,10 @@ public final class TrackingRecord {
         this.consigneeCompanyId = Objects.requireNonNull(consigneeCompanyId, "consigneeCompanyId");
         this.bookingStatus = Objects.requireNonNull(bookingStatus, "bookingStatus");
         this.schedule = Objects.requireNonNull(schedule, "schedule");
-        this.currentStatus = Objects.requireNonNull(currentStatus, "currentStatus");
-        this.statusBasisMilestoneNo = Objects.requireNonNull(statusBasisMilestoneNo, "statusBasisMilestoneNo");
+        // 現在状態と確認中の理由がそろうことは DerivedStatus が守る（表の CHECK ck_tracking_record_under_review と同じ規則。Bolt 39gc）
+        this.currentStatus = current.status();
+        this.statusBasisMilestoneNo = current.basisMilestoneNo();
+        this.underReviewReason = current.underReviewReason();
         this.milestones = List.copyOf(milestones);
         this.originalEta = Objects.requireNonNull(originalEta, "originalEta");
         this.latestEta = Objects.requireNonNull(latestEta, "latestEta");
@@ -124,8 +133,7 @@ public final class TrackingRecord {
                 consigneeCompanyId,
                 TrackedBookingStatus.CONFIRMED,
                 schedule,
-                TrackingStatus.PICKUP_SCHEDULED,
-                OptionalInt.empty(),
+                new DerivedStatus(TrackingStatus.PICKUP_SCHEDULED, OptionalInt.empty()),
                 List.of(),
                 schedule.finalArrival(),
                 schedule.finalArrival(),
@@ -136,7 +144,39 @@ public final class TrackingRecord {
                 new TrackingStarted(trackingNumber.value(), bookingId, startedAt, trackingRecord.aggregateVersion));
     }
 
-    /** 保存されている状態から組み立てる（リポジトリが使う）。 */
+    /** 保存されている状態から組み立てる（リポジトリが使う）。現在状態が確認中なら理由を持つ（Bolt 39gc）。 */
+    @SuppressWarnings("java:S107") // 保存されている状態から組み立てるため、集約の値をすべて受け取る
+    public static TrackingRecord reconstitute(
+            TrackingNumber trackingNumber,
+            UUID bookingId,
+            CompanyId shipperCompanyId,
+            CompanyId consigneeCompanyId,
+            TrackedBookingStatus bookingStatus,
+            Schedule schedule,
+            TrackingStatus currentStatus,
+            OptionalInt statusBasisMilestoneNo,
+            Optional<UnderReviewReason> underReviewReason,
+            List<Milestone> milestones,
+            UtcInstant originalEta,
+            UtcInstant latestEta,
+            UtcInstant startedAt,
+            long aggregateVersion) {
+        return new TrackingRecord(
+                trackingNumber,
+                bookingId,
+                shipperCompanyId,
+                consigneeCompanyId,
+                bookingStatus,
+                schedule,
+                new DerivedStatus(currentStatus, statusBasisMilestoneNo, underReviewReason),
+                milestones,
+                originalEta,
+                latestEta,
+                startedAt,
+                aggregateVersion);
+    }
+
+    /** 確認中でない保存されている状態から組み立てる（確認中の理由を持たない。Bolt 39gc の前の形）。 */
     @SuppressWarnings("java:S107") // 保存されている状態から組み立てるため、集約の値をすべて受け取る
     public static TrackingRecord reconstitute(
             TrackingNumber trackingNumber,
@@ -152,7 +192,7 @@ public final class TrackingRecord {
             UtcInstant latestEta,
             UtcInstant startedAt,
             long aggregateVersion) {
-        return new TrackingRecord(
+        return reconstitute(
                 trackingNumber,
                 bookingId,
                 shipperCompanyId,
@@ -161,6 +201,7 @@ public final class TrackingRecord {
                 schedule,
                 currentStatus,
                 statusBasisMilestoneNo,
+                Optional.empty(),
                 milestones,
                 originalEta,
                 latestEta,
@@ -169,8 +210,10 @@ public final class TrackingRecord {
     }
 
     /**
-     * 出典と発生時刻を伴う主要実績を登録する（US-12 AC1・AC2。Bolt 26b）。追跡管理者が登録した実績は採用で、現在状態を導出し直す
-     * （T-INV-08）。同じ出典識別子（出典の種類と参照）の実績があれば、新しい実績を作らず既存の実績を返す（T-INV-02）。
+     * 出典と発生時刻を伴う主要実績を登録する（US-12 AC1〜AC5。Bolt 26b・39gc）。同じ出典識別子（出典の種類と参照）の実績があれば、新しい実績を作らず
+     * 既存の実績を返す（T-INV-02）。判定の順は、同じ出典 → 取消済み（拒否。T-INV-04） → 未来の発生時刻（拒否。T-INV-13） → 完了後（保持のみ。現在状態を
+     * 変えない。T-INV-05） → 時系列に反する（確認中。T-INV-03） → 採用（W7 CP8。拒否を先に、状態の選び分けを後にする）。採用と確認中は現在状態を導出し直す
+     * （T-INV-08）。
      *
      * @param kind 種類
      * @param location 場所
@@ -179,7 +222,7 @@ public final class TrackingRecord {
      * @param registrant 登録者
      * @param registeredAt 登録時刻
      * @return 実績を足した追跡記録と登録した実績、または元の追跡記録と同じ出典の既存の実績
-     * @throws MilestoneRegistrationRejected 発生時刻が登録時刻より後
+     * @throws MilestoneRegistrationRejected 取消済みの予約、または発生時刻が登録時刻より後
      */
     public MilestoneRegistration registerMilestone(
             MilestoneKind kind,
@@ -190,25 +233,46 @@ public final class TrackingRecord {
             UtcInstant registeredAt) {
         Optional<Milestone> sameSource = milestoneOf(source);
         if (sameSource.isPresent()) {
-            return new MilestoneRegistration(this, sameSource.get(), true);
+            return new MilestoneRegistration(this, sameSource.get(), true, Optional.empty());
+        }
+        if (bookingStatus == TrackedBookingStatus.CANCELLED) {
+            throw new MilestoneRegistrationRejected(
+                    MilestoneRejectionReason.BOOKING_CANCELLED, "取消済みの予約には主要実績を登録できません: " + trackingNumber.value());
         }
         if (occurredAt.instant().isAfter(registeredAt.instant())) {
             throw new MilestoneRegistrationRejected(
                     MilestoneRejectionReason.OCCURRED_IN_FUTURE, "発生時刻が登録時刻より後の実績は登録できません: " + occurredAt.instant());
         }
-        Milestone milestone = new Milestone(
-                milestones.size() + 1,
-                kind,
-                location,
-                occurredAt,
-                source,
-                MilestoneState.ADOPTED,
-                registrant,
-                registeredAt);
-        List<Milestone> registered = milestonesPlus(milestone);
-        DerivedStatus derived = DERIVER.derive(registered);
+        int milestoneNo = milestones.size() + 1;
+        if (isCompleted()) {
+            Milestone retained = new Milestone(
+                    milestoneNo,
+                    kind,
+                    location,
+                    occurredAt,
+                    source,
+                    MilestoneState.RETAINED_ONLY,
+                    registrant,
+                    registeredAt);
+            return new MilestoneRegistration(
+                    withMilestones(milestonesPlus(retained), current()), retained, false, Optional.empty());
+        }
+        Milestone adopted = new Milestone(
+                milestoneNo, kind, location, occurredAt, source, MilestoneState.ADOPTED, registrant, registeredAt);
+        Milestone milestone = SEQUENCE.isOutOfSequence(adopted, milestones)
+                ? new Milestone(
+                        milestoneNo,
+                        kind,
+                        location,
+                        occurredAt,
+                        source,
+                        MilestoneState.UNDER_REVIEW,
+                        registrant,
+                        registeredAt)
+                : adopted;
+        TrackingRecord registered = derivedWith(milestonesPlus(milestone));
         return new MilestoneRegistration(
-                withMilestones(registered, derived.status(), derived.basisMilestoneNo()), milestone, false);
+                registered, milestone, false, placedUnderReview(registered, milestone, registeredAt));
     }
 
     /**
@@ -238,20 +302,18 @@ public final class TrackingRecord {
                 external.operator(),
                 receivedAt,
                 external.origin());
-        return new ExternalMilestoneReceipt.Received(
-                withMilestones(milestonesPlus(milestone), currentStatus, statusBasisMilestoneNo), milestone);
+        return new ExternalMilestoneReceipt.Received(withMilestones(milestonesPlus(milestone), current()), milestone);
     }
 
     /**
-     * 外部原本から受けた下書きと採用の実績を組に分ける（Bolt 39gb。【業務の判断】(aa)）。組は追跡番号の中で情報源 ID・外部 ID ごと。保持のみと手入力の実績は入れない。
-     * 組の並びは組の最初の実績番号の順。
+     * 外部原本から受けた下書きと判断済み（採用・確認中）の実績を組に分ける（Bolt 39gb。【業務の判断】(aa)。確認中は Bolt 39gc の【業務の判断】(ai)）。組は
+     * 追跡番号の中で情報源 ID・外部 ID ごと。保持のみと手入力の実績は入れない。組の並びは組の最初の実績番号の順。
      */
     public List<MilestoneGroup> groupsOf() {
         Map<List<Object>, List<Milestone>> grouped = new LinkedHashMap<>();
         for (Milestone milestone : milestones) {
             ExternalOrigin origin = milestone.externalOrigin();
-            if (origin != null
-                    && (milestone.state() == MilestoneState.DRAFT || milestone.state() == MilestoneState.ADOPTED)) {
+            if (origin != null && MilestoneGroup.isGroupState(milestone.state())) {
                 grouped.computeIfAbsent(List.of(origin.dataSourceId(), origin.externalId()), key -> new ArrayList<>())
                         .add(milestone);
             }
@@ -277,7 +339,8 @@ public final class TrackingRecord {
 
     /**
      * 追跡管理者が候補の下書きを採用する（US-12 AC1・AC2 の外部の分。Bolt 39gb）。採用すると現在状態と根拠の実績番号を導出し直す（T-INV-08）。実績は消えず増えない。
-     * 判定の順は、候補でない → 取消済み → 完了後 → 採用済みと同じ値（何もしない） → 採用済みと値が違う（T-INV-06 を素通りさせない） → 未来の発生時刻（T-INV-13 の採用の分）。
+     * 判定の順は、候補でない → 取消済み → 完了後 → 判断済み（採用・確認中）と同じ値（何もしない） → 判断済みと値が違う（T-INV-06 を素通りさせない） →
+     * 未来の発生時刻（T-INV-13 の採用の分） → 時系列に反する（確認中に移す。採用者と採用時刻は残す。T-INV-03。Bolt 39gc） → 採用。
      * 判定は純粋なので、画面は同じ操作を試して採用のボタンと理由を出し分ける。版はリポジトリが保存のときに増やす。
      *
      * @param milestoneNo 採用する実績の実績番号
@@ -306,23 +369,56 @@ public final class TrackingRecord {
         if (adopted.isPresent()) {
             return adopted.get().hasSameValueAs(candidate)
                     ? new MilestoneAdoption.SameAsAdopted(adopted.get())
-                    : new MilestoneAdoption.Rejected(AdoptionRejectionReason.CONFLICTS_WITH_ADOPTED);
+                    : new MilestoneAdoption.Rejected(AdoptionRejectionReason.CONFLICTS_WITH_ADOPTED, adopted);
         }
         if (candidate.occurredAt().instant().isAfter(adoptedAt.instant())) {
             return new MilestoneAdoption.Rejected(AdoptionRejectionReason.OCCURRED_IN_FUTURE);
         }
-        Milestone adoptedMilestone = candidate.adopt(adopter, adoptedAt);
-        List<Milestone> replaced = milestones.stream()
+        Milestone adoptedMilestone = SEQUENCE.isOutOfSequence(candidate, milestones)
+                ? candidate.adoptUnderReview(adopter, adoptedAt)
+                : candidate.adopt(adopter, adoptedAt);
+        TrackingRecord after = derivedWith(milestones.stream()
                 .map(milestone -> milestone.milestoneNo() == milestoneNo ? adoptedMilestone : milestone)
-                .toList();
-        DerivedStatus derived = DERIVER.derive(replaced);
+                .toList());
         return new MilestoneAdoption.Adopted(
-                withMilestones(replaced, derived.status(), derived.basisMilestoneNo()), adoptedMilestone);
+                after, adoptedMilestone, placedUnderReview(after, adoptedMilestone, adoptedAt));
     }
 
-    /** 完了後か（予約状態が完了か、現在状態が引渡し済み。【業務の判断】(ad)、T-INV-05）。 */
+    /**
+     * 完了後か（予約状態が完了か、採用済みの実績から導いた状態が引渡し済み。【業務の判断】(ad)、T-INV-05）。Bolt 39gc で現在状態から読み替えた
+     * （確認中は現在状態を確認中にするので、現在状態を見ると確認中の間に引渡しを採用した追跡が完了後にならない。【前の決定の変更】(14)）。
+     */
     private boolean isCompleted() {
-        return bookingStatus == TrackedBookingStatus.COMPLETED || currentStatus == TrackingStatus.DELIVERED;
+        return bookingStatus == TrackedBookingStatus.COMPLETED || statusFromAdopted() == TrackingStatus.DELIVERED;
+    }
+
+    /** 採用済みの実績だけから導いた状態（確認中の実績を見ない。完了後の判定と S-12 の確認中の理由の文。Bolt 39gc）。 */
+    public TrackingStatus statusFromAdopted() {
+        return DERIVER.deriveFromAdopted(milestones).status();
+    }
+
+    /** 確認中に入ったときだけ DE-18 を作る（すでに確認中なら空。集約の版は保存した後の版）。 */
+    private Optional<TrackingPlacedUnderReview> placedUnderReview(
+            TrackingRecord after, Milestone milestone, UtcInstant placedAt) {
+        if (currentStatus == TrackingStatus.UNDER_REVIEW || after.currentStatus != TrackingStatus.UNDER_REVIEW) {
+            return Optional.empty();
+        }
+        return Optional.of(new TrackingPlacedUnderReview(
+                trackingNumber.value(),
+                bookingId,
+                after.underReviewReason.orElseThrow().name(),
+                milestone.milestoneNo(),
+                placedAt,
+                aggregateVersion + 1));
+    }
+
+    private DerivedStatus current() {
+        return new DerivedStatus(currentStatus, statusBasisMilestoneNo, underReviewReason);
+    }
+
+    /** 実績を差し替え、現在状態を導出し直した追跡記録。 */
+    private TrackingRecord derivedWith(List<Milestone> newMilestones) {
+        return withMilestones(newMilestones, DERIVER.derive(newMilestones));
     }
 
     private List<Milestone> milestonesPlus(Milestone milestone) {
@@ -331,8 +427,7 @@ public final class TrackingRecord {
         return plus;
     }
 
-    private TrackingRecord withMilestones(
-            List<Milestone> newMilestones, TrackingStatus newCurrentStatus, OptionalInt newStatusBasisMilestoneNo) {
+    private TrackingRecord withMilestones(List<Milestone> newMilestones, DerivedStatus newCurrent) {
         return new TrackingRecord(
                 trackingNumber,
                 bookingId,
@@ -340,8 +435,7 @@ public final class TrackingRecord {
                 consigneeCompanyId,
                 bookingStatus,
                 schedule,
-                newCurrentStatus,
-                newStatusBasisMilestoneNo,
+                newCurrent,
                 newMilestones,
                 originalEta,
                 latestEta,
@@ -406,6 +500,11 @@ public final class TrackingRecord {
     /** 現在状態の根拠の実績番号（実績から導出していなければ空。Bolt 26b）。 */
     public OptionalInt statusBasisMilestoneNo() {
         return statusBasisMilestoneNo;
+    }
+
+    /** 確認中の理由（現在状態が確認中のときだけ。Bolt 39gc）。 */
+    public Optional<UnderReviewReason> underReviewReason() {
+        return underReviewReason;
     }
 
     /** 主要実績の列（実績番号の順。Bolt 26b）。 */

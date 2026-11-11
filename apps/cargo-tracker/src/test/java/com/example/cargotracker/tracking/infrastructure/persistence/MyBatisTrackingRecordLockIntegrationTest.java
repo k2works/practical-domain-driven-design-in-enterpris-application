@@ -479,7 +479,7 @@ class MyBatisTrackingRecordLockIntegrationTest {
         TrackingRecordRepository pausing = f.pausingAfterUpdate(written, release);
         TrackingRecordRepository registrationRepository = externalFirst ? f.repository() : pausing;
         TrackingRecordCommandService service = new TrackingRecordCommandService(
-                registrationRepository, f.clock(), new TrackingRecordScope(f.repository()));
+                registrationRepository, f.clock(), new TrackingRecordScope(f.repository()), published -> {});
         Callable<MilestoneRegistrationOutcome> register = () -> f.transaction()
                 .execute(status -> service.registerMilestone(
                         command, AuthenticatedActorFixture.trackingManagerHandling(manager, saved.shipperCompanyId())));
