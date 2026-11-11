@@ -1,6 +1,13 @@
 # Docs Update Log
 
 ## 2026-11-11
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5。Bolt 39gb ステップ 1）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5。Bolt 39gb ステップ 1）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5。Bolt 39gb ステップ 1）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5。Bolt 39gb ステップ 1）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5。Bolt 39gb ステップ 1）
+* **Update**: [004-external-data-ingestion](/adr/cargo-tracker/004-external-data-ingestion.md) を更新（anthropic/claude-opus-5-5。Bolt 39gb ステップ 1）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5。Bolt 39gb ステップ 1）
 * **Update**: [bolt_39gb_plan](/development/cargo-tracker/bolt_39gb_plan.md) を更新（anthropic/claude-sonnet-5-5）
 * **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-sonnet-5-5）
 
