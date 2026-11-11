@@ -155,6 +155,7 @@ Bolt がイテレーションに当たります。ふりかえりは各 Bolt の
 | 39f2 | [算出の後に古くなった候補を S-06 で示し、再算出を促す](bolt_39f2_plan.md) | [終了報告](bolt_39f2_report.md) | W7 | 完了 |
 | 39g | [採用した外部の主要実績を下書きとして受け、拒否を記録する](bolt_39g_plan.md) | [終了報告](bolt_39g_report.md)（[動画](../../assets/demo/bolt-39g/external-milestone-draft.webm){:target="_blank"}） | W7 | 完了 |
 | 39gb | [下書きの候補を判定して示し、追跡管理者が候補を採用する](bolt_39gb_plan.md) | [終了報告](bolt_39gb_report.md)（[動画](../../assets/demo/bolt-39gb/adopt-candidate.webm){:target="_blank"}） | W7 | 完了 |
+| 39gc | [時系列に反する実績を確認中にし、DE-18 を出し、手入力の取消済み・完了後を決める](bolt_39gc_plan.md) | — | W7 | 計画済み（承認待ち） |
 
 Bolt を始めるときに行を追加します。
 
@@ -316,3 +317,4 @@ Bolt を始めるときに行を追加します。
 * [Bolt 39g 計画 - 採用した主要実績を追跡の下書きとして受け、順の規則と取消済み・完了後を決める](./bolt_39g_plan.md)
 * [Bolt 39gb 計画 - 下書きの候補を判定して示し、追跡管理者が候補を採用する](./bolt_39gb_plan.md)
 * [Bolt 39gb 終了報告 - 下書きの候補を判定して示し、追跡管理者が候補を採用する](./bolt_39gb_report.md)
+* [Bolt 39gc 計画 - 時系列に反する実績を確認中にし、DE-18 を出し、手入力の取消済み・完了後を決める](./bolt_39gc_plan.md)

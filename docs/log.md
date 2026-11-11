@@ -1,6 +1,8 @@
 # Docs Update Log
 
 ## 2026-11-11
+* **Creation**: [bolt_39gc_plan](/development/cargo-tracker/bolt_39gc_plan.md) を作成（anthropic/claude-opus-5-5。承認待ち）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5。Bolt 39gc の開始準備）
 * **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
 * **Update**: [bolt_39gb_report](/development/cargo-tracker/bolt_39gb_report.md) を更新（anthropic/claude-opus-5-5）
 * **Verification**: [bolt_39gb_report](/development/cargo-tracker/bolt_39gb_report.md) を human:kakimomokuri が検証
