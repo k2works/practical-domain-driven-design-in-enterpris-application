@@ -153,8 +153,8 @@ Bolt がイテレーションに当たります。ふりかえりは各 Bolt の
 | 39e2 | [確定のときに情報版と区間の予定の組で照合し、見本の航海を分ける](bolt_39e2_plan.md) | [終了報告](bolt_39e2_report.md) | W7 | 完了 |
 | 39f | [航海の更新から確定した経路を評価する入口をつなぎ、2 度寄る航海の寄港の位置を持たせる](bolt_39f_plan.md) | [終了報告](bolt_39f_report.md) | W7 | 完了 |
 | 39f2 | [算出の後に古くなった候補を S-06 で示し、再算出を促す](bolt_39f2_plan.md) | [終了報告](bolt_39f2_report.md) | W7 | 完了 |
-| 39g | [採用した外部の主要実績を下書きとして受け、拒否を記録する](bolt_39g_plan.md) | [終了報告](bolt_39g_report.md) | W7 |
-| 39gb | [下書きの候補を判定して示し、追跡管理者が候補を採用する](bolt_39gb_plan.md) | - | W7 | 完了 |
+| 39g | [採用した外部の主要実績を下書きとして受け、拒否を記録する](bolt_39g_plan.md) | [終了報告](bolt_39g_report.md)（[動画](../../assets/demo/bolt-39g/external-milestone-draft.webm){:target="_blank"}） | W7 | 完了 |
+| 39gb | [下書きの候補を判定して示し、追跡管理者が候補を採用する](bolt_39gb_plan.md) | [終了報告](bolt_39gb_report.md)（[動画](../../assets/demo/bolt-39gb/adopt-candidate.webm){:target="_blank"}） | W7 | 終了報告の承認待ち |
 
 Bolt を始めるときに行を追加します。
 
@@ -315,3 +315,4 @@ Bolt を始めるときに行を追加します。
 * [Bolt 39f2 計画 - 算出の後に古くなった候補を S-06 で示し、再算出を促す](./bolt_39f2_plan.md)
 * [Bolt 39g 計画 - 採用した主要実績を追跡の下書きとして受け、順の規則と取消済み・完了後を決める](./bolt_39g_plan.md)
 * [Bolt 39gb 計画 - 下書きの候補を判定して示し、追跡管理者が候補を採用する](./bolt_39gb_plan.md)
+* [Bolt 39gb 終了報告 - 下書きの候補を判定して示し、追跡管理者が候補を採用する](./bolt_39gb_report.md)
