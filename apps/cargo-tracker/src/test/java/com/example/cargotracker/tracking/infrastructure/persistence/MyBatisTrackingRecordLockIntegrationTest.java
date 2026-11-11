@@ -8,6 +8,7 @@ import static org.awaitility.Awaitility.await;
 import com.example.cargotracker.TestcontainersConfiguration;
 import com.example.cargotracker.externaldata.domain.events.MilestoneAdoptedValueAccepted;
 import com.example.cargotracker.shared.OverlappingTransactions;
+import com.example.cargotracker.shared.domain.AuthenticatedActor;
 import com.example.cargotracker.shared.domain.AuthenticatedActorFixture;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Location;
@@ -16,6 +17,7 @@ import com.example.cargotracker.shared.domain.SourceKind;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import com.example.cargotracker.tracking.application.internal.commands.RegisterMilestoneCommand;
+import com.example.cargotracker.tracking.application.internal.commandservices.MilestoneAdoptionOutcome;
 import com.example.cargotracker.tracking.application.internal.commandservices.MilestoneRegistrationOutcome;
 import com.example.cargotracker.tracking.application.internal.commandservices.TrackingRecordCommandService;
 import com.example.cargotracker.tracking.application.internal.eventhandlers.ExternalMilestoneEventHandler;
@@ -29,6 +31,7 @@ import com.example.cargotracker.tracking.domain.model.entities.Milestone;
 import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneKind;
 import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneState;
 import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingNumber;
+import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingStatus;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -37,6 +40,7 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -222,6 +226,92 @@ class MyBatisTrackingRecordLockIntegrationTest {
     @FunctionalInterface
     interface Blocked {
         void await(JdbcTemplate jdbc, Thread firstThread) throws Exception;
+    }
+
+    /** Bolt 39gc の行 21（Bolt 39gb の行 57 の持ち越し。39gb 終了報告の既知の課題）。 */
+    @Nested
+    class Bolt39gc_同時の採用 {
+
+        private final Blocked blocked = (jdbc, firstThread) -> await("後の採用の接続が先の採用のロックを待っている")
+                .atMost(Duration.ofSeconds(30))
+                .pollInterval(Duration.ofMillis(50))
+                .until(() -> jdbc.queryForObject(
+                                "SELECT count(*) FROM pg_stat_activity WHERE wait_event_type = 'Lock'"
+                                        + " AND query LIKE '%tracking.%'",
+                                Integer.class)
+                        > 0);
+
+        @Test
+        void 行21_同じ候補の採用が2本重なると片方が確認中に採用しもう片方は競合でDE18は1件() throws Exception {
+            Fixture f = fixture();
+            TrackingRecord saved = f.started();
+            TrackingNumber number = saved.trackingNumber();
+            UserId manager = new UserId(UUID.randomUUID());
+            // 発生時刻は過去の固定の日時にする（実の時計より前。日付で振る舞いが変わらない）
+            UtcInstant arrivedAt = new UtcInstant(Instant.parse("2026-01-01T00:00:00Z"));
+            UtcInstant departedAt = new UtcInstant(Instant.parse("2026-01-02T00:00:00Z"));
+            f.transaction()
+                    .executeWithoutResult(status -> f.repository()
+                            .update(saved.registerMilestone(
+                                            MilestoneKind.ARRIVAL,
+                                            new Location("USLAX"),
+                                            arrivedAt,
+                                            new Source(SourceKind.FIELD_RECORD, "F-1", arrivedAt),
+                                            manager,
+                                            arrivedAt)
+                                    .trackingRecord()));
+            // 到着より後の発生時刻の出発（段が前）の下書き。採用すると時系列に反する
+            f.deliver(
+                    f.handler(),
+                    new MilestoneAdoptedValueAccepted(
+                            UUID.randomUUID(),
+                            UUID.randomUUID(),
+                            Fixture.DATA_SOURCE,
+                            new Source(
+                                    SourceKind.EXTERNAL_RECORD,
+                                    UUID.randomUUID().toString(),
+                                    departedAt),
+                            number.value(),
+                            "DEPARTURE",
+                            new Location("JPTYO"),
+                            departedAt,
+                            "MS-1",
+                            "1",
+                            Fixture.STEWARD,
+                            new CompanyId(UUID.randomUUID()),
+                            departedAt));
+            long version =
+                    f.repository().findByTrackingNumber(number).orElseThrow().aggregateVersion();
+            List<Object> published = new CopyOnWriteArrayList<>();
+            CountDownLatch written = new CountDownLatch(1);
+            CountDownLatch release = new CountDownLatch(1);
+            TrackingRecordCommandService paused = new TrackingRecordCommandService(
+                    f.pausingAfterUpdate(written, release),
+                    f.clock(),
+                    new TrackingRecordScope(f.repository()),
+                    published::add);
+            TrackingRecordCommandService other = new TrackingRecordCommandService(
+                    f.repository(), f.clock(), new TrackingRecordScope(f.repository()), published::add);
+            AuthenticatedActor actor =
+                    AuthenticatedActorFixture.trackingManagerHandling(manager, saved.shipperCompanyId());
+
+            overlap(
+                    f,
+                    blocked,
+                    written,
+                    release,
+                    () -> f.transaction().execute(status -> paused.adoptCandidate(number, 2, version, actor)),
+                    () -> f.transaction().execute(status -> other.adoptCandidate(number, 2, version, actor)),
+                    (first, second) -> {
+                        assertThat(first)
+                                .isEqualTo(new MilestoneAdoptionOutcome.Adopted(
+                                        2, MilestoneState.UNDER_REVIEW, TrackingStatus.UNDER_REVIEW));
+                        assertThat(second).isEqualTo(new MilestoneAdoptionOutcome.Conflict());
+                    });
+
+            assertThat(published).hasSize(1);
+            assertThat(f.milestones(number).get(1).state()).isEqualTo(MilestoneState.UNDER_REVIEW);
+        }
     }
 
     /** H2 と PostgreSQL で共有する部品（Bolt 39g）。 */
