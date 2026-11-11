@@ -23,6 +23,8 @@
          </column>
          <column autoUpdated="false" defaultValue="null" digits="0" id="12" name="external_id" nullable="true" remarks="外部 ID（出典が外部原本の実績だけが持つ。提供元の中でだけ一意）" size="200" type="varchar" typeCode="12"/>
          <column autoUpdated="false" defaultValue="null" digits="6" id="13" name="published_at" nullable="true" remarks="外部データが採用値を公開した時刻（出典が外部原本の実績だけが持つ。順の規則に使う）" size="35" type="timestamptz" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="14" name="adopted_by" nullable="true" remarks="採用者（外部原本の採用済み・確認中の実績だけが持つ。手入力の採用は登録者が兼ねる）" size="2147483647" type="uuid" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="15" name="adopted_at" nullable="true" remarks="採用時刻（外部原本の採用済み・確認中の実績だけが持つ。手入力の採用は登録時刻が兼ねる）" size="35" type="timestamptz" typeCode="93"/>
          <primaryKey column="tracking_number" sequenceNumberInPK="1"/>
          <primaryKey column="milestone_no" sequenceNumberInPK="2"/>
          <index name="pk_milestone" unique="true">
@@ -34,6 +36,7 @@
             <column ascending="true" name="source_kind"/>
             <column ascending="true" name="source_ref"/>
          </index>
+         <checkConstraint constraint="((((source_kind)::text = 'EXTERNAL_RECORD'::text) AND ((state)::text = ANY ((ARRAY['ADOPTED'::character varying, 'UNDER_REVIEW'::character varying])::text[])) AND (adopted_by IS NOT NULL) AND (adopted_at IS NOT NULL)) OR ((NOT (((source_kind)::text = 'EXTERNAL_RECORD'::text) AND ((state)::text = ANY ((ARRAY['ADOPTED'::character varying, 'UNDER_REVIEW'::character varying])::text[])))) AND (adopted_by IS NULL) AND (adopted_at IS NULL)))" name="ck_milestone_adoption"/>
          <checkConstraint constraint="((((source_kind)::text = 'EXTERNAL_RECORD'::text) AND (data_source_id IS NOT NULL) AND (external_id IS NOT NULL) AND (published_at IS NOT NULL)) OR (((source_kind)::text &lt;&gt; 'EXTERNAL_RECORD'::text) AND (data_source_id IS NULL) AND (external_id IS NULL) AND (published_at IS NULL)))" name="ck_milestone_external_origin"/>
          <checkConstraint constraint="((kind)::text = ANY ((ARRAY['PICKUP'::character varying, 'RECEIPT_AT_ORIGIN'::character varying, 'DEPARTURE'::character varying, 'TRANSSHIPMENT'::character varying, 'ARRIVAL'::character varying, 'DELIVERY'::character varying])::text[]))" name="ck_milestone_kind"/>
          <checkConstraint constraint="(milestone_no &gt;= 1)" name="ck_milestone_no"/>

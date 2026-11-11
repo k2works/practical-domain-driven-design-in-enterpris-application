@@ -307,6 +307,34 @@
         "comments": "<p>外部データが採用値を公開した時刻（出典が外部原本の実績だけが持つ。順の規則に使う）</p>"
     },
     {
+        "tableName": "milestone",
+        "tableFileName": "milestone",
+        "tableType": "Table",
+        "keyClass": "",
+        "keyTitle": "",
+        "name": "adopted_by",
+        "type": "uuid",
+        "length": 2147483647,
+        "nullable": "√",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>採用者（外部原本の採用済み・確認中の実績だけが持つ。手入力の採用は登録者が兼ねる）</p>"
+    },
+    {
+        "tableName": "milestone",
+        "tableFileName": "milestone",
+        "tableType": "Table",
+        "keyClass": "",
+        "keyTitle": "",
+        "name": "adopted_at",
+        "type": "timestamptz",
+        "length": 35,
+        "nullable": "√",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>採用時刻（外部原本の採用済み・確認中の実績だけが持つ。手入力の採用は登録時刻が兼ねる）</p>"
+    },
+    {
         "tableName": "rejected_milestone",
         "tableFileName": "rejected_milestone",
         "tableType": "Table",

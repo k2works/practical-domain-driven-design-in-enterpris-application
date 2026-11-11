@@ -10219,6 +10219,41 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_39gb_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 39gb 計画
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../development/cargo-tracker/bolt_39g_report/" class="md-nav__link">
         
   
@@ -10227,6 +10262,41 @@
     
   
     Bolt 39g 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_39gb_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 39gb 終了報告
   
 
     
@@ -15780,6 +15850,9 @@
 <li><strong>組と順</strong>: DE-13 ごとに実績を 1 行残し（主要実績は削除・上書きしない。T-INV-01）、順は書くときに比べず読むときに実績の組から決める。組は追跡番号・情報源 ID・外部 ID。候補は組の下書きのうち公開した時刻 → 取得時刻 → 受信記録 ID（文字列の順）で最も新しいもの（【業務の判断】(aa)、台帳 D-114。仮）。外部版は比べない。判定は Bolt 39gb で作る。Bolt 39d の決定 (13) の「新しい外部版」を、追跡の主要実績の分についても「最後に公開した採用値」に改める（【前の決定の変更】(12)）。D-97 の定めは変えない。書くときに比べて古いものを捨てる案（<code>Voyage</code> の形）は、届く順で結果が変わり原本の保持の AC に反するので取らない。</li>
 <li><strong>行のロック</strong>: 同じ追跡番号の DE-13 は、listener が追跡番号を <code>SELECT … FOR UPDATE</code> で押さえてから集約を読み直して直列にする（リスク台帳の PERF-06 の行）。実績番号は実績の数 + 1 で振るので、最大 8 本の並行で楽観ロックの読み直しに任せると、集中したときに勝てないイベントが発行記録に未完了のまま残る。待ちの列はスレッド数で頭打ちで、ファイルの行数では伸びない。読み直しの繰り返しは作らない。画面の登録にはロックをかけず、楽観ロックのままで DE-13 に負けたら競合にする。</li>
 <li><strong>拒否の記録</strong>: 取消済みの予約と知らない追跡番号の DE-13 は実績を作らず、追跡の追記専用の表 <code>tracking.rejected_milestone</code> に理由つきで残して WARN のログを出す（【業務の判断】(ac)、台帳 D-116。仮）。例外にせず、発行記録を完了させる（再配信しても直らないため）。W8 の有人例外案件がこの記録を受け、拒否の記録に気づく手段は W10 の OBS の項目に送る。</li>
+<li>2026-11-11（W7、Bolt 39gb）: 追跡が受けた下書きの採用を、次のように決めた（<a href="../../../development/cargo-tracker/bolt_39gb_plan/">Bolt 39gb 計画</a> の開始準備の決定 (2)〜(5)。推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）。決定は変えない（外部データは採用値を公開するだけで、追跡の採用は追跡管理者が追跡のコマンドで行う）。</li>
+<li><strong>候補の判定</strong>: 組（<code>MilestoneGroup</code>）と候補の規則（<code>MilestoneCandidateRule</code>）は追跡のドメイン層に置き、共有カーネルに上げない（経路設計の <code>Voyage</code> の順は private で、主要実績は削除・上書きしない別の性質）。読むときに組から決めるので、届いた順によらず同じ候補になる。</li>
+<li><strong>人の採用</strong>: 下書きは追跡管理者が候補を採用して初めて現在状態に効く。採用済みの実績と値が違う候補は採用を出さない（T-INV-06 を素通りさせない。値を直す道は US-13）。</li>
 </ul>
 <h2 id="_10">備考<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>
 <ul>

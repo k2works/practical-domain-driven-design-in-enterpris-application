@@ -10935,6 +10935,41 @@
   
   
     <li class="md-nav__item">
+      <a href="../bolt_39gb_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 39gb 計画
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../bolt_39g_report/" class="md-nav__link">
         
   
@@ -10943,6 +10978,41 @@
     
   
     Bolt 39g 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../bolt_39gb_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 39gb 終了報告
   
 
     
@@ -18776,10 +18846,10 @@
 </tr>
 <tr>
 <td style="text-align: left;">39gb</td>
-<td style="text-align: left;">候補の判定と表示、追跡管理者が下書きを採用する縦（Bolt 39g の開始準備で 39g から分けた。Bolt 39g の開始準備の決定 (1)、【前の決定の変更】(11)）: 同じ主要実績の組から順の規則で候補を決める、S-12 の置き換えられた下書きの文（「後から公開された原本に置き換えられました」）、下書きの採用の操作（候補だけが採用できる）、P-5（遅延の外部キーの違反が 500）・P-6（一意制約の違反を制約の名前で分ける）（#50）、マニュアル 9 章の採用の手順と置き換えの文、デモの動画（<a href="../bolt_39g_plan/">Bolt 39g 計画</a> の「39gb に写す行」の行 5〜12・15・43 と変異）。開始準備で決めるもの（Bolt 39g の申し送り）: 採用済みの実績と値の違う候補は採用を出さず「採用済みの実績と値が違います」を示す案（採用すると T-INV-06 を素通りする。US-13 は W12）、候補と同じ値を採用済みの組、元の追跡番号の下書きの採用の扱い（【業務の判断】(ab)）、完了後・取消後の下書きを採用できるか、未来の発生時刻の下書きの採用（【業務の判断】(ae)）、順の規則の置き場所（<code>Voyage.BY_FRESHNESS</code> と同じ順を <code>TrackingRecord</code> に書くか共有カーネルに上げるか）、採用した人と時刻の持ち方（スキーマ）。DE-09 と P-3（39g2）が採用の経路に掛かるので 39g2 の前に置く。約 2 時間 55 分（約 175 分）の見込み（参考。開始準備で引き直す）</td>
+<td style="text-align: left;"><a href="../bolt_39gb_plan/">Bolt 39gb 計画</a>（承認済み。2026-11-11）。候補の判定と表示、追跡管理者が下書きを採用する縦（Bolt 39g の開始準備で 39g から分けた。Bolt 39g の開始準備の決定 (1)、【前の決定の変更】(11)）: 同じ主要実績の組から順の規則で候補を決める、S-12 の置き換えられた下書きの文（「後から公開された原本に置き換えられました」）、下書きの採用の操作（候補だけが採用できる）、P-5（遅延の外部キーの違反が 500）・P-6（一意制約の違反を制約の名前で分ける）（#50）、マニュアル 9 章の採用の手順と置き換えの文、デモの動画（<a href="../bolt_39g_plan/">Bolt 39g 計画</a> の「39gb に写す行」の行 5〜12・15・43 と変異）。開始準備で決めるもの（Bolt 39g の申し送り）: 採用済みの実績と値の違う候補は採用を出さず「採用済みの実績と値が違います」を示す案（採用すると T-INV-06 を素通りする。US-13 は W12）、候補と同じ値を採用済みの組、元の追跡番号の下書きの採用の扱い（【業務の判断】(ab)）、完了後・取消後の下書きを採用できるか、未来の発生時刻の下書きの採用（【業務の判断】(ae)）、順の規則の置き場所（<code>Voyage.BY_FRESHNESS</code> と同じ順を <code>TrackingRecord</code> に書くか共有カーネルに上げるか）、採用した人と時刻の持ち方（スキーマ）。DE-09 と P-3（39g2）が採用の経路に掛かるので 39g2 の前に置く。約 2 時間 55 分（約 175 分）の見込み（参考。開始準備で引き直す）。開始準備で決めたこと（2026-11-11。推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）: 見積りは約 175 分のまま（超えそうなら行 57 の PostgreSQL の同時の確かめ、動画の順に 39gc へ送る）。組（<code>MilestoneGroup</code>）と候補の規則（<code>MilestoneCandidateRule</code>）は追跡のドメイン層に置き、共有カーネルは変えない。採用した人と時刻は <code>tracking.milestone</code> の <code>adopted_by</code>・<code>adopted_at</code> と CHECK <code>ck_milestone_adoption</code>（<code>V20261111100000</code>。スキーマ）。採用は <code>POST /staff/tracking-records/{追跡番号}/milestones/{実績番号}/adopt</code>（追跡管理者だけ。既存の matcher）。採用済みの実績と値の違う候補は採用を出さず、同じ値なら採用は要らない。取消済み・完了後の下書きは採用しない。未来の発生時刻の下書きは採用時刻より後なら採用しない（台帳 D-120〜D-122。仮）。元の追跡番号の下書きは元の追跡番号の S-12 で採用できる</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: left;">アウトサイドイン（状態の組み合わせの表を先に書く。T-182）</td>
-<td style="text-align: left;">計画と終了報告（スキーマの要否は開始準備で決める）</td>
+<td style="text-align: left;">計画と終了報告（スキーマ・認可は計画の承認に含める）</td>
 </tr>
 <tr>
 <td style="text-align: left;">39gc</td>
@@ -19455,6 +19525,33 @@
 <td style="text-align: left;"><a href="../bolt_39g_plan/">Bolt 39g 計画</a> の【業務の判断】(af)</td>
 <td style="text-align: left;">データ責任者に確かめる（Release 1.0 のパイロットの前）</td>
 <td style="text-align: left;">仮（2026-11-10、推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）。<a href="../bolt_39g_plan/">Bolt 39g 計画</a>で作る</td>
+</tr>
+<tr>
+<td style="text-align: left;">D-120</td>
+<td style="text-align: left;">外部版をまたいで追跡番号が変わったとき、元の追跡番号に残った下書きを採用できるか</td>
+<td style="text-align: left;">採用できる。組は追跡番号ごとで、元の追跡番号の S-12 で候補を決める。新しい追跡番号の組とは混ざらない。受け入れること: 誤って付けた追跡番号の下書きは候補のまま残る（採用しなければ現在状態に効かない）</td>
+<td style="text-align: left;">US-12、D-115</td>
+<td style="text-align: left;"><a href="../bolt_39gb_plan/">Bolt 39gb 計画</a> の業務の判断の記録 (ab)</td>
+<td style="text-align: left;">業務責任者に確かめる（Release 1.0 のパイロットの前）</td>
+<td style="text-align: left;">仮（2026-11-11、推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）。<a href="../bolt_39gb_plan/">Bolt 39gb 計画</a>で作る</td>
+</tr>
+<tr>
+<td style="text-align: left;">D-121</td>
+<td style="text-align: left;">完了後・取消済みの追跡の下書きを採用できるか</td>
+<td style="text-align: left;">採用しない（採用を出さず、POST も拒否する）。T-INV-05・BR-16。時系列の判定は 39gc</td>
+<td style="text-align: left;">US-12、T-INV-04・05、D-117</td>
+<td style="text-align: left;"><a href="../bolt_39gb_plan/">Bolt 39gb 計画</a> の業務の判断の記録</td>
+<td style="text-align: left;">業務責任者に確かめる（Release 1.0 のパイロットの前）</td>
+<td style="text-align: left;">仮（2026-11-11、推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）。<a href="../bolt_39gb_plan/">Bolt 39gb 計画</a>で作る</td>
+</tr>
+<tr>
+<td style="text-align: left;">D-122</td>
+<td style="text-align: left;">発生時刻が未来の下書きを採用できるか</td>
+<td style="text-align: left;">採用時刻より後なら採用しない。同時刻は採用できる。下書きとしては受けたまま（T-INV-13 は採用のときだけ掛ける）</td>
+<td style="text-align: left;">US-12、T-INV-13、D-118</td>
+<td style="text-align: left;"><a href="../bolt_39gb_plan/">Bolt 39gb 計画</a> の業務の判断の記録 (ae)</td>
+<td style="text-align: left;">業務責任者に確かめる（Release 1.0 のパイロットの前）</td>
+<td style="text-align: left;">仮（2026-11-11、推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）。<a href="../bolt_39gb_plan/">Bolt 39gb 計画</a>で作る</td>
 </tr>
 </tbody>
 </table>
@@ -21935,6 +22032,21 @@
 <tr>
 <td style="text-align: left;">2026-11-10</td>
 <td style="text-align: left;">Bolt 39g のステップ 1〜8 と<a href="../bolt_39g_report/">終了報告</a>を承認した（推奨のとおり。Recommend 承認の指示による）</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-11-11</td>
+<td style="text-align: left;">Bolt 39gb のステップ 1（設計の文書）: 39gb の行に開始準備で決めたこと（組と候補の規則の置き場所、採用した人と時刻の列、採用の POST、採用できない組）を足し、業務責任者に確かめる事項の台帳に D-120〜D-122（仮）を足した（推奨のとおり。Recommend 承認の指示による）</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-11-11</td>
+<td style="text-align: left;">Bolt 39gb のステップ 2〜9 を実施し、<a href="../bolt_39gb_report/">終了報告</a>を作った（承認待ち。CI は push していないので未実行）</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-11-11</td>
+<td style="text-align: left;">Bolt 39gb の終了報告を推奨のとおり承認として記録した（議題 1〜7。Recommend 承認の指示による。human:kakimomokuri）</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
 </tr>
 <tr>
