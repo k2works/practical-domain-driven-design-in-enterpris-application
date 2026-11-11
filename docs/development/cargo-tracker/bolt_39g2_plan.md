@@ -2,8 +2,10 @@
 type: Plan
 title: "Bolt 39g2 計画 - 集荷の採用と引渡しの確認を予約の公開 API で予約に返し、追加する実績の選び方を直す"
 tags: [plan]
-status: draft
+status: stable
 generated: { by: anthropic/claude-opus-5-5, at: 2026-11-11T08:04:02Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-11-11T09:25:39Z }
 ---
 
 # Bolt 39g2 計画 - 集荷の採用と引渡しの確認を予約の公開 API で予約に返し、追加する実績の選び方を直す
@@ -13,7 +15,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-11-11T08:04:02Z }
 | 項目 | 内容 |
 | :--- | :--- |
 | Bolt | 第 39g2 回（W7 の 30 本目。release_plan :978 の 39g2 の行） |
-| 状態 | 計画（承認待ち。2 つの整合性検証（`validating-iteration-plan`・`validating-design`）の指摘を反映した） |
+| 状態 | 計画（承認済み。2026-11-11。確認ポイント 1〜11 を推奨のとおり承認。human:kakimomokuri。2 つの整合性検証（`validating-iteration-plan`・`validating-design`）の指摘を反映した） |
 | 予定 | W7（2026-11-16 の週。前倒しで着手できる）。Bolt 39gc の終了報告の承認（2026-11-11）の後に着手する。約 3 時間 35 分（約 215 分）の見込み（下の「ステップ計画」）。`check`・`uiTest`・`manualScreenshots`・SonarQube・CI と承認の待ちを除く |
 | アプローチ | アウトサイドイン（release_plan :978。状態の組み合わせの表を先に書く。T-182）。既存の受入シナリオ（US-12 の AC1〜AC5、US-04 の確定）を守ったまま、受入シナリオ（集荷・引渡しで予約の状態が進む）を先に Red にし、内側（予約の集約 → 予約のコマンドサービスと保存 → 予約の公開 API → 追跡のイベント → 追跡の listener と腐敗防止層）に入る |
 | 対象 | (1) DE-09（集荷実績を採用した）・DE-10（引渡しを確認した）を追跡のイベントとして作る、(2) 追跡の listener が予約の公開 API を呼ぶ形（ADR-014）、(3) 予約の集約の「集荷実績の採用を記録する」「引渡しを記録する」と届く順の守り、(4) 予約の保存（状態・輸送段階）と同時の通知、(5) 予約状態 `COMPLETED` の書き手の見直し（Bolt 39g の行 18・39gc の決定 (6) の完了後の判定）、(6) P-3（追加する実績の選び方）、(7) S-24 の状態の表示とマニュアル 7 章・9 章 |
@@ -69,7 +71,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-11-11T08:04:02Z }
 - 追跡: `TrackingRecordMilestoneTest`、`TrackingRecordCandidateAdoptionTest`、`TrackingRecordExternalMilestoneTest`、`TrackingRecordCommandServiceTest`、`ExternalMilestoneEventHandlerTest`、`BookingTrackingStartNotificationEventHandlerTest`、`MyBatisTrackingRecordRepositoryIntegrationTest`、`MyBatisTrackingRecordRepositoryUniqueKeyTest`、`MyBatisTrackingRecordLockIntegrationTest`、`features/tracking/register_milestone.feature`（US-12 の AC1〜AC5）、`features/ui/register_milestone_ui.feature`、`features/ui/under_review_milestone_ui.feature`、`features/ui/adopted_milestone_reflected_ui.feature`
 - 横断: `ModularityTest`、`LayerArchitectureTest`、`PublicApiArchitectureTest`、`DomainEventSerializationContractTest`、`LivingGlossaryConsistencyTest`
 
-## 開始準備の決定（推奨を 1 つに決めて書いた。承認待ち）
+## 開始準備の決定（推奨を 1 つに決めて書いた。承認済み）
 
 (1) **範囲と見積り**（本計画 CP-1、【前の決定の変更】(15)）: release_plan :978 の 39g2 の行は、DE-09・DE-10、到着見込みと鮮度、P-3 の 3 つ（W7 CP19）。コードで確かめると DE-09・DE-10 は「直す」ではなく、まだどこにもない（追跡のイベントは DE-22 と DE-18 だけ、予約の集約に状態・輸送段階を変える操作も保存の UPDATE もない）。DE-09・DE-10 と P-3 で約 215 分（下のステップ計画）。到着見込み（`latest_eta` を何で動かすか）と鮮度（`last_acquired_at` の書き手と鮮度超過の判定）は、どちらも業務の規則がまだ決まっておらず（domain_model の `LatestEstimate`・`FreshnessPolicy` は名前だけ、許容範囲は NFR-FRESH-01）、足すと約 60 分以上増えて T-250 の目安（4 時間 05 分）を超える。そこで **到着見込みと鮮度を 39g3 に分け、39g2 の直後（39h の前）に置く**。分けても見えない状態の Bolt はできない（DE-09・DE-10 は予約の画面の状態で見え、到着見込みと鮮度は S-11・S-12・C-10 の表示で見える）。超えそうなときは 行 7（−8 分）、行 27 の動画（−5 分）の順に後へ送る（行 7 は W7 の締めの返済に）。マニュアルは後に送らない。
 - 比べた案: (i) **39g3 に分ける（推奨）**。(ii) W9 の US-09（C-10 の取得時刻・最新性を保証しない旨）に送る（W7 CP19 の決定から 2 週ずれ、S-11 の到着の列（Bolt 26 の U-3）も待つ）。(iii) 39g2 に入れる（目安を超えて半日を超える）
@@ -412,6 +414,7 @@ entity "tracking.tracking_record" {
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-11-11 | 確認ポイント 1〜11 を推奨のとおり承認として記録した（39g3 への分割、予約の公開 API とイベントの形、既存データの扱いを含む。human:kakimomokuri） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-11-11 | 初版作成。2 つの整合性検証の指摘（重大 1: domain_model の予約の状態遷移図に引渡しが集荷より先に届いたときの道がなく、非同期の listener で起きる。中 5: DE-09・DE-10 の属性に集約の版・実績番号・操作者がない（B-INV-12・updated_by）、B-INV-12 を予約がどう守るかが決まっていない、Bolt 39g の決定 (7) が DE-10 の作り直しで写しの完了を書く前提、architecture_backend :134 がイベントのみの関係のまま、development_strategy の W7 の行に 39g3 がない。軽 2: マニュアル 7 章 :128 の状態が確定済みだけ、test_strategy に DE-09・DE-10 の T-184 の行がない）を反映した | anthropic/claude-opus-5-5 |
 
 ## 関連ドキュメント
