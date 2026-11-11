@@ -262,6 +262,16 @@
                                         <td>ck_tracking_record_route_version</td>
                                         <td>(((routing_case_number IS NULL) AND (route_version_no IS NULL)) OR ((routing_case_number IS NOT NULL) AND (route_version_no &gt;&#61; 1)))</td>
                                     </tr>
+                                    <tr>
+                                        <td><a href='tables/tracking_record.html'>tracking_record</a></td>
+                                        <td>ck_tracking_record_under_review</td>
+                                        <td>((((current_status)::text &#61; &#39;UNDER_REVIEW&#39;::text) AND (under_review_reason IS NOT NULL)) OR (((current_status)::text &lt;&gt; &#39;UNDER_REVIEW&#39;::text) AND (under_review_reason IS NULL)))</td>
+                                    </tr>
+                                    <tr>
+                                        <td><a href='tables/tracking_record.html'>tracking_record</a></td>
+                                        <td>ck_tracking_record_under_review_reason</td>
+                                        <td>((under_review_reason)::text &#61; &#39;OUT_OF_SEQUENCE&#39;::text)</td>
+                                    </tr>
                                 </tbody>
                             </table>
                         </div>

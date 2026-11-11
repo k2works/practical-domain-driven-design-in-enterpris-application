@@ -10647,6 +10647,41 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_39gc_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 39gc 計画
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../development/cargo-tracker/bolt_39g_report/" class="md-nav__link">
         
   
@@ -10690,6 +10725,41 @@
     
   
     Bolt 39gb 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_39gc_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 39gc 終了報告
   
 
     
@@ -16439,7 +16509,7 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 <tr>
 <td style="text-align: left;">T-INV-01〜05（追記、重複、確認中、取消済み、完了後）</td>
 <td style="text-align: left;">○（Bolt 26b: 同じ出典の既存の実績を返す、未来の発生時刻の拒否（T-INV-13）、実績番号の連番）</td>
-<td style="text-align: left;">○（Bolt 26b: <code>@US-12-AC1</code>・<code>@US-12-AC2 @T-INV-02</code>。Bolt 26c: 画面の層の <code>@ui @US-12-AC1</code>・<code>@US-12-AC2</code>。Bolt 39g: 取り込みの分の取消済み・完了後は <code>@US-12-AC4</code>・<code>@US-12-AC5</code>。Bolt 39gb: 下書きの採用は <code>@US-12-AC1</code>（業務ルール層と画面の層の <code>adopted_milestone_reflected_ui.feature</code>）、採用済みと同じ値の候補は <code>@US-12-AC2</code>。確認中と手入力の分は Bolt 39gc）</td>
+<td style="text-align: left;">○（Bolt 26b: <code>@US-12-AC1</code>・<code>@US-12-AC2 @T-INV-02</code>。Bolt 26c: 画面の層の <code>@ui @US-12-AC1</code>・<code>@US-12-AC2</code>。Bolt 39g: 取り込みの分の取消済み・完了後は <code>@US-12-AC4</code>・<code>@US-12-AC5</code>。Bolt 39gb: 下書きの採用は <code>@US-12-AC1</code>（業務ルール層と画面の層の <code>adopted_milestone_reflected_ui.feature</code>）、採用済みと同じ値の候補は <code>@US-12-AC2</code>。Bolt 39gc: 確認中は <code>@US-12-AC3 @T-INV-03</code>（手入力と採用）、手入力の取消済み・完了後は <code>@US-12-AC4</code>・<code>@US-12-AC5</code>、画面の層は <code>under_review_milestone_ui.feature</code>。単体は <code>MilestoneSequenceRuleTest</code>・<code>CurrentStatusDeriverTest</code>・<code>TrackingRecordMilestoneTest</code>・<code>TrackingRecordCandidateAdoptionTest</code>（<code>Bolt39gc_…</code>））</td>
 <td style="text-align: left;">一意制約、DELETE の権限なし（Bolt 26b: <code>uk_milestone_source</code> の違反と版の不一致はセーブポイントに戻して競合、<code>[no-delete]</code>）</td>
 <td style="text-align: left;">—</td>
 </tr>
@@ -17674,6 +17744,24 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 <td style="text-align: left;">AC5 の取り込みの分（完了後の追跡に届いた DE-13 は保持のみで残り、現在状態は変わらない。完了後は予約状態が完了か現在状態が引渡し済み。手入力の分は 39gc）</td>
 <td style="text-align: left;">39g</td>
 <td style="text-align: left;"><code>@US-12-AC5</code>（<code>register_milestone.feature</code>）、<code>TrackingRecordExternalMilestoneTest</code>、<code>ExternalMilestoneDeliveryIntegrationTest</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">US-12</td>
+<td style="text-align: left;">AC3（時系列に反する実績は原本を保持し、現在状態に直ちに反映せず確認中にする。手入力の登録と候補の採用の両方。DE-18 を 1 度だけ出す。【業務の判断】(ag)・(ah)）</td>
+<td style="text-align: left;">39gc</td>
+<td style="text-align: left;"><code>@US-12-AC3</code>（<code>register_milestone.feature</code>、<code>under_review_milestone_ui.feature</code>）、<code>MilestoneSequenceRuleTest</code>、<code>CurrentStatusDeriverTest</code>、<code>TrackingRecordMilestoneTest</code>・<code>TrackingRecordCandidateAdoptionTest</code>（<code>Bolt39gc_…</code>）、<code>TrackingRecordCommandServiceTest</code>、<code>TrackingRecordControllerTest</code>、<code>MyBatisTrackingRecordRepositoryIntegrationTest</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">US-12</td>
+<td style="text-align: left;">AC4 の手入力の分（取消済みの予約への手入力は拒否し、S-13 に理由を示す。拒否の記録は書かない。【業務の判断】(aj)）</td>
+<td style="text-align: left;">39gc</td>
+<td style="text-align: left;"><code>@US-12-AC4</code>（<code>register_milestone.feature</code>）、<code>TrackingRecordMilestoneTest</code>・<code>TrackingRecordCandidateAdoptionTest</code>（<code>Bolt39gc_…</code>）、<code>MilestoneRegistrationControllerTest</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">US-12</td>
+<td style="text-align: left;">AC5 の手入力の分（完了した追跡への手入力は保持のみで、現在状態を変えない。完了後は予約状態が完了か、採用済みの実績から導いた状態が引渡し済み。【業務の判断】(ak)、【前の決定の変更】(14)）</td>
+<td style="text-align: left;">39gc</td>
+<td style="text-align: left;"><code>@US-12-AC5</code>（<code>register_milestone.feature</code>）、<code>TrackingRecordMilestoneTest</code>・<code>TrackingRecordCandidateAdoptionTest</code>（<code>Bolt39gc_…</code>）、<code>MilestoneRegistrationControllerTest</code></td>
 </tr>
 </tbody>
 </table>

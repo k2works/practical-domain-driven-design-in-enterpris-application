@@ -117,7 +117,7 @@
          <column autoUpdated="false" defaultValue="null" digits="0" id="8" name="status_basis_milestone_no" nullable="true" remarks="現在状態の根拠の実績番号" size="10" type="int4" typeCode="4">
             <parent column="milestone_no" foreignKey="fk_tracking_record_status_basis" implied="false" onDeleteCascade="false" schema="tracking" table="milestone"/>
          </column>
-         <column autoUpdated="false" defaultValue="null" digits="0" id="9" name="under_review_reason" nullable="true" remarks="確認中の理由" size="1000" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="9" name="under_review_reason" nullable="true" remarks="確認中の理由（区分値。現在状態が確認中のときだけ持つ）" size="30" type="varchar" typeCode="12"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="10" name="procedure_stage" nullable="true" remarks="手続き中の段階" size="30" type="varchar" typeCode="12"/>
          <column autoUpdated="false" defaultValue="null" digits="6" id="11" name="original_eta" nullable="false" remarks="当初の到着予定" size="35" type="timestamptz" typeCode="93"/>
          <column autoUpdated="false" defaultValue="null" digits="6" id="12" name="latest_eta" nullable="false" remarks="最新の到着見込み" size="35" type="timestamptz" typeCode="93"/>
@@ -139,6 +139,8 @@
          <checkConstraint constraint="((booking_status)::text = ANY ((ARRAY['CONFIRMED'::character varying, 'CANCELLED'::character varying, 'COMPLETED'::character varying])::text[]))" name="ck_tracking_record_booking_status"/>
          <checkConstraint constraint="((current_status)::text = ANY ((ARRAY['BOOKED'::character varying, 'PICKUP_SCHEDULED'::character varying, 'PICKED_UP'::character varying, 'RECEIVED_AT_ORIGIN'::character varying, 'IN_TRANSIT'::character varying, 'TRANSSHIPPING'::character varying, 'ARRIVED_AT_DESTINATION'::character varying, 'READY_FOR_DELIVERY'::character varying, 'DELIVERED'::character varying, 'UNDER_REVIEW'::character varying])::text[]))" name="ck_tracking_record_current_status"/>
          <checkConstraint constraint="(((routing_case_number IS NULL) AND (route_version_no IS NULL)) OR ((routing_case_number IS NOT NULL) AND (route_version_no &gt;= 1)))" name="ck_tracking_record_route_version"/>
+         <checkConstraint constraint="((((current_status)::text = 'UNDER_REVIEW'::text) AND (under_review_reason IS NOT NULL)) OR (((current_status)::text &lt;&gt; 'UNDER_REVIEW'::text) AND (under_review_reason IS NULL)))" name="ck_tracking_record_under_review"/>
+         <checkConstraint constraint="((under_review_reason)::text = 'OUT_OF_SEQUENCE'::text)" name="ck_tracking_record_under_review_reason"/>
       </table>
    </tables>
 </database>

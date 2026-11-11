@@ -10398,6 +10398,41 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_39gc_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 39gc 計画
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../development/cargo-tracker/bolt_39g_report/" class="md-nav__link">
         
   
@@ -10441,6 +10476,41 @@
     
   
     Bolt 39gb 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_39gc_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 39gc 終了報告
   
 
     
@@ -16382,6 +16452,13 @@
 <li>追跡管理者は S-12 で候補の下書きを採用し、現在状態に効かせる（AC1 の「現在状態が再評価される」）。候補は同じ主要実績の組で最後に公開した下書きで、古い下書きには「後から公開された原本に置き換えられました」と示す。採用した人と時刻が残る。</li>
 <li>採用済みの実績と値が違う候補は採用を出さず「採用済みの実績と値が違います」と示す（T-INV-06。値を直す道は US-13）。同じ値なら採用は要らない（AC2 の重複しない）。取消済み・完了後の追跡の下書きと、発生時刻が採用時刻より後の下書きは採用できない（T-INV-04・05・13）。</li>
 <li>元の追跡番号の下書きは、元の追跡番号の S-12 で採用できる（【業務の判断】(ab)）。</li>
+</ul>
+<p>Bolt 39gc の決定（2026-11-11、確認ポイント CP-1〜CP-9 を推奨のとおり承認。human:kakimomokuri。<a href="../../../development/cargo-tracker/bolt_39gc_plan/">Bolt 39gc 計画</a>）: AC3〜AC5 の手入力の分と、採用のときの確認中。#19 のクローズと 2 SP は終了報告の承認の後。</p>
+<ul>
+<li>AC3: 時系列に反するとは、実績の種類の段（集荷・搬入・出発と積替・到着・引渡し）と発生時刻の向きが採用済みの実績の 1 つと逆なこと（【業務の判断】(ag)）。手入力の登録でも候補の採用でも、実績は確認中で残り、現在状態は確認中になって S-12 に理由を示し、DE-18 を出す。確認中から出る道（補正の承認）は US-13（W12）で、それまで確認中のまま（【業務の判断】(ah)）。荷主の画面には確認中の実績は出ず、現在状態だけが確認中になる</li>
+<li>AC4（手入力の分）: 取消済みの予約への手入力は拒否し、S-13 に「取消済みの予約には主要実績を登録できません。」を示す。拒否の記録は書かない（追跡管理者が目の前で拒否を見るので、有人例外案件の起票は本人が行える。【業務の判断】(aj)）</li>
+<li>AC5（手入力の分）: 完了した追跡への手入力は保持のみで登録し、現在状態を変えない（【業務の判断】(ak)）。完了後は、予約状態が完了か、採用済みの実績から導いた状態が引渡し済み（【前の決定の変更】(14)）</li>
+<li>これらの【業務の判断】は仮で、Release 1.0 のパイロットの前に業務責任者に確かめる（台帳 D-123〜D-127）</li>
 </ul>
 <h3 id="us-13">US-13 主要実績を訂正する<a class="headerlink" href="#us-13" title="Permanent link">&para;</a></h3>
 <blockquote>

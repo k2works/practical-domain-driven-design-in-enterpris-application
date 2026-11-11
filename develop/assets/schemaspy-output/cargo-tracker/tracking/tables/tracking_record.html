@@ -317,7 +317,7 @@
                                 <tr>
                                     <td><span id="under_review_reason">under_review_reason</span></td>
                                     <td>varchar</td>
-                                    <td>1000</td>
+                                    <td>30</td>
                                     <td title='nullable'>√</td>
                                     <td title=''></td>
                                     <td>null</td>
@@ -329,7 +329,7 @@
                                         <table border='0' cellspacing='0' cellpadding='0'>
                                         </table>
                                     </td>
-                                    <td><p>確認中の理由</p></td>
+                                    <td><p>確認中の理由（区分値。現在状態が確認中のときだけ持つ）</p></td>
                                 </tr>
                                 <tr>
                                     <td><span id="procedure_stage">procedure_stage</span></td>
@@ -529,6 +529,14 @@
                                 <tr>
                                     <td>ck_tracking_record_booking_status</td>
                                     <td>((booking_status)::text &#61; ANY ((ARRAY[&#39;CONFIRMED&#39;::character varying, &#39;CANCELLED&#39;::character varying, &#39;COMPLETED&#39;::character varying])::text[]))</td>
+                                </tr>
+                                <tr>
+                                    <td>ck_tracking_record_under_review_reason</td>
+                                    <td>((under_review_reason)::text &#61; &#39;OUT_OF_SEQUENCE&#39;::text)</td>
+                                </tr>
+                                <tr>
+                                    <td>ck_tracking_record_under_review</td>
+                                    <td>((((current_status)::text &#61; &#39;UNDER_REVIEW&#39;::text) AND (under_review_reason IS NOT NULL)) OR (((current_status)::text &lt;&gt; &#39;UNDER_REVIEW&#39;::text) AND (under_review_reason IS NULL)))</td>
                                 </tr>
                                 <tr>
                                     <td>ck_tracking_record_current_status</td>

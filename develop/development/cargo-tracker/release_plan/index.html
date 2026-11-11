@@ -10970,6 +10970,41 @@
   
   
     <li class="md-nav__item">
+      <a href="../bolt_39gc_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 39gc 計画
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../bolt_39g_report/" class="md-nav__link">
         
   
@@ -11013,6 +11048,41 @@
     
   
     Bolt 39gb 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../bolt_39gc_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 39gc 終了報告
   
 
     
@@ -18547,12 +18617,12 @@
 <tr>
 <td style="text-align: left;">7</td>
 <td style="text-align: left;">順序の逆転を判定する場所（ADR-004 は規則を 2 か所に分ける案を却下している）</td>
-<td style="text-align: left;">外部データの差異（US-14 AC5、39h）は、同じ外部レコードの版の逆転と、既存の採用値との矛盾だけを判定する。追跡の確認中（US-12 AC3、39gc。Bolt 39g の【前の決定の変更】(11)で 39g から読み替えた）は、追跡の実績の時系列（出典をまたぐ）だけを判定する。境界を domain_model の外部データの節と追跡の節に書く。実行の順は 39gc の後に 39h</td>
+<td style="text-align: left;">外部データの差異（US-14 AC5、39h）は、同じ外部レコードの版の逆転と、既存の採用値との矛盾だけを判定する。追跡の確認中（US-12 AC3、39gc。Bolt 39g の【前の決定の変更】(11)で 39g から読み替えた）は、追跡の実績の時系列（出典をまたぐ）だけを判定する。境界を domain_model の外部データの節と追跡の節に書く。実行の順は 39gc の後に 39h（済み: Bolt 39gc のステップ 1 で domain_model の 2 つの節と ADR-004 に書いた。2026-11-11）</td>
 </tr>
 <tr>
 <td style="text-align: left;">8</td>
 <td style="text-align: left;">手入力の実績への確認中の規則【前の決定の変更】</td>
-<td style="text-align: left;">追跡管理者の手入力も、時系列に反すれば確認中にする（US-12 AC3。domain_model :1022 の「追跡管理者が登録した実績は採用」を変える）</td>
+<td style="text-align: left;">追跡管理者の手入力も、時系列に反すれば確認中にする（US-12 AC3。domain_model :1022 の「追跡管理者が登録した実績は採用」を変える）（済み: Bolt 39gc の決定 (5)。判定の順は同じ出典 → 取消済み → 未来の発生時刻 → 完了後 → 時系列 → 採用）</td>
 </tr>
 <tr>
 <td style="text-align: left;">9</td>
@@ -18562,7 +18632,7 @@
 <tr>
 <td style="text-align: left;">10</td>
 <td style="text-align: left;">DE-18（確認中になった）</td>
-<td style="text-align: left;">39gc で発行する（Bolt 39g の【前の決定の変更】(11)で 39g から読み替えた）。受け手（荷主への通知）は W9 なので、W7 の時点では listener がない。T-184（配信まで確かめる）は W9 で受け手を作るときに当てる</td>
+<td style="text-align: left;">39gc で発行する（Bolt 39g の【前の決定の変更】(11)で 39g から読み替えた）。受け手（荷主への通知）は W9 なので、W7 の時点では listener がない。T-184（配信まで確かめる）は W9 で受け手を作るときに当てる（済み: Bolt 39gc で <code>TrackingPlacedUnderReview</code> を発行する。属性に実績番号・確認中にした時刻・集約の版を足した）</td>
 </tr>
 <tr>
 <td style="text-align: left;">11</td>
@@ -18627,7 +18697,7 @@
 <tr>
 <td style="text-align: left;">23</td>
 <td style="text-align: left;">ユーザーマニュアル</td>
-<td style="text-align: left;">外部データの取込と隔離・差異の確認の章を新しく作る（新しいファイル。39c・39d。39c2 は取り込めない送信の説明、39c3 は隔離の理由の読み方、39c4 は要確認の読み方、39d は 12.2「隔離・差異の確認」の一覧の読み方、39d2 は却下、39d2b はまとめての却下、39d3 は判断の画面の航海の値、39d3c は主要実績の値、39d3b は航海の採用（誤って採用したときの案内と採用の欄が出ない隔離）、39d3b2 は主要実績の採用と採用できない隔離の理由、39d4 は直して送り直すときを足す）。主要実績が下書きで届くことと完了後の保持のみは 9 章（追跡管理）、取消済みと知らない追跡番号は 12 章に足す（39g）。下書きの採用は 39gb、確認中は 39gc で 9 章に足す（Bolt 39g の【前の決定の変更】(11)で読み替えた）。振る舞いが変わる Bolt はマニュアルの更新を完了条件に入れる</td>
+<td style="text-align: left;">外部データの取込と隔離・差異の確認の章を新しく作る（新しいファイル。39c・39d。39c2 は取り込めない送信の説明、39c3 は隔離の理由の読み方、39c4 は要確認の読み方、39d は 12.2「隔離・差異の確認」の一覧の読み方、39d2 は却下、39d2b はまとめての却下、39d3 は判断の画面の航海の値、39d3c は主要実績の値、39d3b は航海の採用（誤って採用したときの案内と採用の欄が出ない隔離）、39d3b2 は主要実績の採用と採用できない隔離の理由、39d4 は直して送り直すときを足す）。主要実績が下書きで届くことと完了後の保持のみは 9 章（追跡管理）、取消済みと知らない追跡番号は 12 章に足す（39g）。下書きの採用は 39gb、確認中は 39gc で 9 章に足す（Bolt 39g の【前の決定の変更】(11)で読み替えた。39gc は済み）。振る舞いが変わる Bolt はマニュアルの更新を完了条件に入れる</td>
 </tr>
 <tr>
 <td style="text-align: left;">24</td>
@@ -18853,7 +18923,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">39gc</td>
-<td style="text-align: left;">確認中と DE-18、手入力の規則の縦（Bolt 39g の開始準備で 39g から分けた。Bolt 39g の開始準備の決定 (1)、【前の決定の変更】(11)）: 時系列に反する実績を採用のときと手入力のときに確認中（<code>UNDER_REVIEW</code>、<code>under_review_reason</code>。AC3）にする、DE-18 の発行（受け手は W9。確認ポイント 10）、取消済みの手入力の拒否と完了後の手入力（AC4・AC5 の手入力の分）、確認中の S-11・S-12 の表示、マニュアル 9 章の確認中、デモの動画、<code>@US-12</code>。#19 をクローズして US-12 の 2 SP を数える（<a href="../bolt_39g_plan/">Bolt 39g 計画</a> の「39gb に写す行」の後の注）。DE-09・DE-10（39g2）が手入力と採用の両方の経路に掛かるので 39g2 の前に、39h は確認中との境界（確認ポイント 7）なので 39h の前に置く。約 2 時間 50 分（約 170 分）の見込み（参考。開始準備で引き直す）</td>
+<td style="text-align: left;"><a href="../bolt_39gc_plan/">Bolt 39gc 計画</a>、<a href="../bolt_39gc_report/">終了報告</a>（終了報告は承認済み。US-12 の AC1〜AC5 がすべて受入シナリオで通った。#19 のクローズと 2 SP は終了報告の承認の後。計画は承認済み。2026-11-11。本計画 CP-1〜CP-9 を推奨のとおり承認。human:kakimomokuri。2026-11-11 に開始準備。約 3 時間（約 180 分）に引き直した。推奨: 時系列に反するは実績の種類の段と発生時刻の向きが採用済みの実績と逆（【業務の判断】(ag)）、確認中のときは現在状態を確認中にし、出る道は US-13（W12）（(ah)）、<code>under_review_reason</code> を区分値にする CHECK（スキーマ）、確認中の外部原本は組の判断済み（(ai)）、取消済みへの手入力は拒否・完了後は保持のみ（(aj)・(ak)）、完了後の判定は採用済みから導いた状態で見る（【前の決定の変更】(14)）、DE-18 に実績番号・時刻・集約の版を足す。本計画 CP-1〜CP-10）。確認中と DE-18、手入力の規則の縦（Bolt 39g の開始準備で 39g から分けた。Bolt 39g の開始準備の決定 (1)、【前の決定の変更】(11)）: 時系列に反する実績を採用のときと手入力のときに確認中（<code>UNDER_REVIEW</code>、<code>under_review_reason</code>。AC3）にする、DE-18 の発行（受け手は W9。確認ポイント 10）、取消済みの手入力の拒否と完了後の手入力（AC4・AC5 の手入力の分）、確認中の S-11・S-12 の表示、マニュアル 9 章の確認中、デモの動画、<code>@US-12</code>。#19 をクローズして US-12 の 2 SP を数える（<a href="../bolt_39g_plan/">Bolt 39g 計画</a> の「39gb に写す行」の後の注）。DE-09・DE-10（39g2）が手入力と採用の両方の経路に掛かるので 39g2 の前に、39h は確認中との境界（確認ポイント 7）なので 39h の前に置く。約 2 時間 50 分（約 170 分）の見込み（参考。開始準備で引き直す）。開始準備で決めたこと（2026-11-11。推奨のとおり。human:kakimomokuri）: 見積りは約 180 分（超えそうなら行 21 の PostgreSQL の同時の採用、動画の順に送る）。時系列の規則 <code>MilestoneSequenceRule</code>（<code>rules</code>）と確認中の理由 <code>UnderReviewReason</code>（<code>OUT_OF_SEQUENCE</code>）をドメイン層に置く。<code>under_review_reason</code> は <code>VARCHAR(30)</code> の区分値と CHECK 2 つ（<code>V20261112100000</code>。スキーマ）。DE-18 は <code>TrackingPlacedUnderReview</code>（<code>tracking.domain.events</code>）。URL と認可は変えない（台帳 D-123〜D-127。仮）</td>
 <td style="text-align: right;">2</td>
 <td style="text-align: left;">アウトサイドイン（状態の組み合わせの表を先に書く。T-182）</td>
 <td style="text-align: left;">計画と終了報告（スキーマ）</td>
@@ -19502,7 +19572,7 @@
 <tr>
 <td style="text-align: left;">D-117</td>
 <td style="text-align: left;">T-INV-05 の「完了済み（引渡し済み）」を何で判定するか</td>
-<td style="text-align: left;">予約状態が完了か現在状態が引渡し済みのとき。取消済みの判定はそれより先。受け入れること: 引渡しの実績を手入力で登録した追跡は、DE-10（39g2）を待たずに完了後として扱う</td>
+<td style="text-align: left;">予約状態が完了か現在状態が引渡し済みのとき。取消済みの判定はそれより先。受け入れること: 引渡しの実績を手入力で登録した追跡は、DE-10（39g2）を待たずに完了後として扱う。注（Bolt 39gc の【前の決定の変更】(14)）: 「現在状態が引渡し済み」を「採用済みの実績から導いた状態が引渡し済み」に読み替えた（確認中に隠れて完了後にならないのを防ぐ）</td>
 <td style="text-align: left;">US-12 AC5、T-INV-05、BR-16、domain_model（Bolt 39g で決めたこと）</td>
 <td style="text-align: left;"><a href="../bolt_39g_plan/">Bolt 39g 計画</a> の開始準備の決定 (7)【業務の判断】(ad)</td>
 <td style="text-align: left;">業務責任者に確かめる（Release 1.0 のパイロットの前）</td>
@@ -19552,6 +19622,51 @@
 <td style="text-align: left;"><a href="../bolt_39gb_plan/">Bolt 39gb 計画</a> の業務の判断の記録 (ae)</td>
 <td style="text-align: left;">業務責任者に確かめる（Release 1.0 のパイロットの前）</td>
 <td style="text-align: left;">仮（2026-11-11、推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）。<a href="../bolt_39gb_plan/">Bolt 39gb 計画</a>で作る</td>
+</tr>
+<tr>
+<td style="text-align: left;">D-123</td>
+<td style="text-align: left;">時系列に反するとは何か</td>
+<td style="text-align: left;">実績の種類の段（集荷 1、搬入 2、出発と積替 3、到着 4、引渡し 5）と発生時刻の向きが、採用済みの実績の 1 つと逆。同じ時刻・同じ段は反しない。出典をまたいで採用済みだけと比べる</td>
+<td style="text-align: left;">US-12 AC3、T-INV-03、BR-06、UC-10 2b</td>
+<td style="text-align: left;"><a href="../bolt_39gc_plan/">Bolt 39gc 計画</a> の【業務の判断】(ag)</td>
+<td style="text-align: left;">業務責任者に確かめる（Release 1.0 のパイロットの前）</td>
+<td style="text-align: left;">仮（2026-11-11、推奨のとおり。human:kakimomokuri）。<a href="../bolt_39gc_plan/">Bolt 39gc 計画</a>で作る</td>
+</tr>
+<tr>
+<td style="text-align: left;">D-124</td>
+<td style="text-align: left;">確認中のときの現在状態と出る道</td>
+<td style="text-align: left;">現在状態を確認中にし、理由を S-12 に示す。出る道は US-13（W12）の補正の承認で、それまで確認中のまま。注: Release 1.0 のパイロットの前に出る道が要るかを W7 の締めで諮る</td>
+<td style="text-align: left;">US-12 AC3、US-13、T-INV-03</td>
+<td style="text-align: left;"><a href="../bolt_39gc_plan/">Bolt 39gc 計画</a> の【業務の判断】(ah)</td>
+<td style="text-align: left;">業務責任者に確かめる（Release 1.0 のパイロットの前）</td>
+<td style="text-align: left;">仮（2026-11-11、推奨のとおり。human:kakimomokuri）。<a href="../bolt_39gc_plan/">Bolt 39gc 計画</a>で作る</td>
+</tr>
+<tr>
+<td style="text-align: left;">D-125</td>
+<td style="text-align: left;">確認中の外部原本の実績を組でどう扱うか</td>
+<td style="text-align: left;">判断済みとして組に入れ、採用済みと同じに扱う。値の違う新しい下書きは採用しない（「確認中の実績と値が違います」）</td>
+<td style="text-align: left;">US-12、T-INV-06、D-121</td>
+<td style="text-align: left;"><a href="../bolt_39gc_plan/">Bolt 39gc 計画</a> の【業務の判断】(ai)</td>
+<td style="text-align: left;">業務責任者に確かめる（Release 1.0 のパイロットの前）</td>
+<td style="text-align: left;">仮（2026-11-11、推奨のとおり。human:kakimomokuri）。<a href="../bolt_39gc_plan/">Bolt 39gc 計画</a>で作る</td>
+</tr>
+<tr>
+<td style="text-align: left;">D-126</td>
+<td style="text-align: left;">取消済みの予約への手入力</td>
+<td style="text-align: left;">拒否して S-13 に文を示す。拒否の記録は書かない</td>
+<td style="text-align: left;">US-12 AC4、T-INV-04、BR-16</td>
+<td style="text-align: left;"><a href="../bolt_39gc_plan/">Bolt 39gc 計画</a> の【業務の判断】(aj)</td>
+<td style="text-align: left;">業務責任者に確かめる（Release 1.0 のパイロットの前）</td>
+<td style="text-align: left;">仮（2026-11-11、推奨のとおり。human:kakimomokuri）。<a href="../bolt_39gc_plan/">Bolt 39gc 計画</a>で作る</td>
+</tr>
+<tr>
+<td style="text-align: left;">D-127</td>
+<td style="text-align: left;">完了した追跡への手入力</td>
+<td style="text-align: left;">保持のみで登録する（拒否しない）。現在状態を変えない</td>
+<td style="text-align: left;">US-12 AC5、T-INV-05、D-117</td>
+<td style="text-align: left;"><a href="../bolt_39gc_plan/">Bolt 39gc 計画</a> の【業務の判断】(ak)</td>
+<td style="text-align: left;">業務責任者に確かめる（Release 1.0 のパイロットの前）</td>
+<td style="text-align: left;">仮（2026-11-11、推奨のとおり。human:kakimomokuri）。<a href="../bolt_39gc_plan/">Bolt 39gc 計画</a>で作る</td>
 </tr>
 </tbody>
 </table>
@@ -19832,7 +19947,7 @@
 <td style="text-align: right;">10</td>
 <td style="text-align: right;">-</td>
 <td style="text-align: right;">-</td>
-<td style="text-align: left;">計画済み（2026-11-02 に開始準備を承認した。Bolt 38h（W6 の返済）の後に Bolt 39〜39i）</td>
+<td style="text-align: left;">計画済み（2026-11-02 に開始準備を承認した。Bolt 38h（W6 の返済）の後に Bolt 39〜39i）。2026-11-11 に Bolt 39gc の終了報告を作った（US-12 の 2 SP は終了報告の承認の後に数える）</td>
 </tr>
 <tr>
 <td style="text-align: left;">W8</td>
@@ -22047,6 +22162,26 @@
 <tr>
 <td style="text-align: left;">2026-11-11</td>
 <td style="text-align: left;">Bolt 39gb の終了報告を推奨のとおり承認として記録した（議題 1〜7。Recommend 承認の指示による。human:kakimomokuri）</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-11-11</td>
+<td style="text-align: left;">Bolt 39gc の開始準備: 39gc の行に<a href="../bolt_39gc_plan/">計画</a>へのリンクと推奨（約 180 分、本計画 CP-1〜CP-10）を足した（承認待ち。台帳 D-123〜D-127 と W7 の確認ポイントの済みはステップ 1 で足す）</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-11-11</td>
+<td style="text-align: left;">Bolt 39gc のステップ 1（設計の文書）: 39gc の行に承認と開始準備で決めたこと、W7 の確認ポイント 7・8・10・23 の済み、台帳 D-123〜D-127（仮）と D-117 の注を足した</td>
+<td style="text-align: left;">anthropic/claude-sonnet-5-5</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-11-11</td>
+<td style="text-align: left;">Bolt 39gc のステップ 2〜11 を実施し、<a href="../bolt_39gc_report/">終了報告</a>を作った（承認待ち。CI は push していないので未実行）</td>
+<td style="text-align: left;">anthropic/claude-sonnet-5-5</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-11-11</td>
+<td style="text-align: left;">Bolt 39gc の終了報告を推奨のとおり承認として記録した（議題 1〜8。#19 をクローズ）。human:kakimomokuri</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5、承認 human:kakimomokuri</td>
 </tr>
 <tr>
