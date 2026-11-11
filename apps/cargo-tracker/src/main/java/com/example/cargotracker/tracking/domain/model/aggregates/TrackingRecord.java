@@ -10,10 +10,10 @@ import com.example.cargotracker.shared.domain.UtcInstant;
 import com.example.cargotracker.tracking.domain.events.TrackingStarted;
 import com.example.cargotracker.tracking.domain.model.entities.Milestone;
 import com.example.cargotracker.tracking.domain.model.rules.CurrentStatusDeriver;
+import com.example.cargotracker.tracking.domain.model.valueobjects.AdoptionRejectionReason;
 import com.example.cargotracker.tracking.domain.model.valueobjects.CustomerMilestone;
 import com.example.cargotracker.tracking.domain.model.valueobjects.CustomerTrackingView;
 import com.example.cargotracker.tracking.domain.model.valueobjects.DerivedStatus;
-import com.example.cargotracker.tracking.domain.model.valueobjects.AdoptionRejectionReason;
 import com.example.cargotracker.tracking.domain.model.valueobjects.ExternalMilestone;
 import com.example.cargotracker.tracking.domain.model.valueobjects.ExternalOrigin;
 import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneGroup;
@@ -291,7 +291,9 @@ public final class TrackingRecord {
                 .findFirst();
         Optional<MilestoneGroup> group = target.flatMap(this::groupOf);
         if (target.isEmpty()
-                || group.flatMap(MilestoneGroup::candidate).filter(target.get()::equals).isEmpty()) {
+                || group.flatMap(MilestoneGroup::candidate)
+                        .filter(target.get()::equals)
+                        .isEmpty()) {
             return new MilestoneAdoption.Rejected(AdoptionRejectionReason.NOT_CANDIDATE);
         }
         if (bookingStatus == TrackedBookingStatus.CANCELLED) {

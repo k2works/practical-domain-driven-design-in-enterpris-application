@@ -654,7 +654,8 @@ class MyBatisTrackingRecordRepositoryIntegrationTest {
 
             repository.update(adopted.trackingRecord());
 
-            TrackingRecord found = repository.findByTrackingNumber(draft.trackingNumber()).orElseThrow();
+            TrackingRecord found =
+                    repository.findByTrackingNumber(draft.trackingNumber()).orElseThrow();
             assertThat(found.milestones()).containsExactly(adopted.milestone());
             assertThat(found.currentStatus()).isEqualTo(TrackingStatus.IN_TRANSIT);
             assertThat(found.statusBasisMilestoneNo()).isEqualTo(OptionalInt.of(1));

@@ -111,23 +111,10 @@ public class MyBatisTrackingRecordRepository implements TrackingRecordRepository
                         statusBasisMilestoneNo,
                         OffsetDateTime.now(clock))
                 == 0) {
-            throw new ConcurrentTrackingRecordUpdateException(
-                    trackingRecord.trackingNumber(), trackingRecord.aggregateVersion());
+            throw conflict(trackingRecord);
         }
-        Map<Integer, MilestoneRow> savedRows = mapper.findMilestones(trackingNumber).stream()
-                .collect(Collectors.toMap(MilestoneRow::milestoneNo, row -> row));
         try {
-            for (Milestone milestone : trackingRecord.milestones()) {
-                MilestoneRow row = toRow(trackingNumber, milestone);
-                MilestoneRow saved = savedRows.get(milestone.milestoneNo());
-                if (saved == null) {
-                    mapper.insertMilestone(row);
-                } else if (!sameState(saved, row)
-                        && (!isAdoption(milestone) || mapper.updateMilestoneAdoption(row) == 0)) {
-                    // 表の状態が集約と違う。下書きの採用でなければ、または表の行がもう下書きでなければ（別の採用が先に書いた）、競合
-                    throw conflict(trackingRecord);
-                }
-            }
+            saveMilestones(trackingRecord);
         } catch (DuplicateKeyException e) {
             if (violates(e, SOURCE_UNIQUE_KEY)) {
                 throw conflict(trackingRecord);
@@ -136,6 +123,23 @@ public class MyBatisTrackingRecordRepository implements TrackingRecordRepository
         }
         if (statusBasisMilestoneNo != null && mapper.countMilestone(trackingNumber, statusBasisMilestoneNo) == 0) {
             throw conflict(trackingRecord);
+        }
+    }
+
+    /** まだ表にない実績を追加し、表で下書きの実績が集約で採用になっていれば書き換える。表の状態が集約と違い、書き換えられなければ競合。 */
+    private void saveMilestones(TrackingRecord trackingRecord) {
+        String trackingNumber = trackingRecord.trackingNumber().value();
+        Map<Integer, MilestoneRow> savedRows = mapper.findMilestones(trackingNumber).stream()
+                .collect(Collectors.toMap(MilestoneRow::milestoneNo, row -> row));
+        for (Milestone milestone : trackingRecord.milestones()) {
+            MilestoneRow row = toRow(trackingNumber, milestone);
+            MilestoneRow saved = savedRows.get(milestone.milestoneNo());
+            if (saved == null) {
+                mapper.insertMilestone(row);
+            } else if (!sameState(saved, row) && (!isAdoption(milestone) || mapper.updateMilestoneAdoption(row) == 0)) {
+                // 表の状態が集約と違う。下書きの採用でなければ、または表の行がもう下書きでなければ（別の採用が先に書いた）、競合
+                throw conflict(trackingRecord);
+            }
         }
     }
 

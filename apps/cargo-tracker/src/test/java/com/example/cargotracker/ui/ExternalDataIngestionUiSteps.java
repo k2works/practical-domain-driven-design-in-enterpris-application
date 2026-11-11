@@ -464,8 +464,8 @@ public class ExternalDataIngestionUiSteps {
             }
             page().waitForTimeout(250);
         }
-        throw new AssertionError("取り込んだ主要実績が追跡の実績に " + count + " 件反映されない（DE-13 の受け取りを待ちきれない）: "
-                + state.trackingNumber());
+        throw new AssertionError(
+                "取り込んだ主要実績が追跡の実績に " + count + " 件反映されない（DE-13 の受け取りを待ちきれない）: " + state.trackingNumber());
     }
 
     /** Bolt 39d3b2 の行 16。主要実績の 2 行（採用 1・内容の違う原本 1）。3 行目は形に合う別の追跡番号にした（T-230）。 */

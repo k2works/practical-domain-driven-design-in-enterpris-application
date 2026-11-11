@@ -15,8 +15,8 @@ import java.util.Optional;
 @DomainRule
 public class MilestoneCandidateRule {
 
-    private static final Comparator<Milestone> BY_FRESHNESS = Comparator.comparing(
-                    (Milestone milestone) -> milestone.externalOrigin().publishedAt().instant())
+    private static final Comparator<Milestone> BY_FRESHNESS = Comparator.comparing((Milestone milestone) ->
+                    milestone.externalOrigin().publishedAt().instant())
             .thenComparing(milestone -> milestone.source().acquiredAt().instant())
             .thenComparing(milestone -> milestone.source().reference());
 

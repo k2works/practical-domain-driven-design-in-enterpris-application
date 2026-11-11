@@ -55,8 +55,7 @@ public class TrackingRecordController {
     private static final String RESULT_LINK_LABEL = "resultLinkLabel";
     private static final String PROBLEM = "problem";
     private static final String CONFLICT_MESSAGE = "ほかの更新が先にこの追跡記録を変更しました。最新の主要実績を確かめ、必要なら、もう一度登録してください。";
-    private static final String ADOPTION_CONFLICT_MESSAGE =
-            "ほかの更新が先にこの追跡記録を変更しました。最新の主要実績を確かめ、必要なら、もう一度採用してください。";
+    private static final String ADOPTION_CONFLICT_MESSAGE = "ほかの更新が先にこの追跡記録を変更しました。最新の主要実績を確かめ、必要なら、もう一度採用してください。";
 
     /** エラー要約に出す項目の名前。文言は項目の名前で始めない（共通部品「エラー要約」）。 */
     private static final Map<String, String> FIELD_LABELS = Map.of(
@@ -124,8 +123,7 @@ public class TrackingRecordController {
                         "実績 " + adopted + " を採用しました。現在状態は「" + TrackingRecordViews.status(currentStatus) + "」です。");
             case MilestoneAdoptionOutcome.SameAsAdopted(int adoptedMilestoneNo) ->
                 redirectAttributes.addFlashAttribute(
-                        RESULT,
-                        "実績 " + milestoneNo + " は採用済みの実績 " + adoptedMilestoneNo + " と同じ値です。採用は要りません。");
+                        RESULT, "実績 " + milestoneNo + " は採用済みの実績 " + adoptedMilestoneNo + " と同じ値です。採用は要りません。");
             case MilestoneAdoptionOutcome.Rejected(AdoptionRejectionReason reason) ->
                 redirectAttributes.addFlashAttribute(PROBLEM, adoptionProblem(milestoneNo, reason));
             case MilestoneAdoptionOutcome.Conflict _ ->

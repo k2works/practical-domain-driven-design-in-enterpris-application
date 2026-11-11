@@ -21,8 +21,8 @@ import com.example.cargotracker.tracking.acceptance.InMemoryTrackingRecordReposi
 import com.example.cargotracker.tracking.application.internal.commands.RegisterMilestoneCommand;
 import com.example.cargotracker.tracking.application.internal.queryservices.TrackingRecordScope;
 import com.example.cargotracker.tracking.domain.model.aggregates.ConcurrentTrackingRecordUpdateException;
-import com.example.cargotracker.tracking.domain.model.aggregates.TrackingRecord;
 import com.example.cargotracker.tracking.domain.model.aggregates.ExternalMilestoneReceipt;
+import com.example.cargotracker.tracking.domain.model.aggregates.TrackingRecord;
 import com.example.cargotracker.tracking.domain.model.valueobjects.AdoptionRejectionReason;
 import com.example.cargotracker.tracking.domain.model.valueobjects.ExternalMilestone;
 import com.example.cargotracker.tracking.domain.model.valueobjects.ExternalOrigin;
@@ -202,7 +202,8 @@ class TrackingRecordCommandServiceTest {
 
         /** DE-13 の下書きを届ける（版が 1 上がる）。 */
         private void arrive(String reference, String location, String publishedAt) {
-            TrackingRecord current = repository.findByTrackingNumber(TRACKING_NUMBER).orElseThrow();
+            TrackingRecord current =
+                    repository.findByTrackingNumber(TRACKING_NUMBER).orElseThrow();
             ExternalMilestone external = new ExternalMilestone(
                     TRACKING_NUMBER,
                     MilestoneKind.DEPARTURE,
@@ -211,9 +212,9 @@ class TrackingRecordCommandServiceTest {
                     new Source(SourceKind.EXTERNAL_RECORD, reference, at("2026-11-01T01:30:00Z")),
                     new ExternalOrigin(SOURCE_ID, "MS-0001", at(publishedAt)),
                     REGISTRANT);
-            repository.update(((ExternalMilestoneReceipt.Received)
-                            current.receiveExternalMilestone(external, at(publishedAt)))
-                    .trackingRecord());
+            repository.update(
+                    ((ExternalMilestoneReceipt.Received) current.receiveExternalMilestone(external, at(publishedAt)))
+                            .trackingRecord());
         }
 
         @Test
@@ -223,7 +224,8 @@ class TrackingRecordCommandServiceTest {
             MilestoneAdoptionOutcome outcome = service.adoptCandidate(TRACKING_NUMBER, 1, 1, MANAGER);
 
             assertThat(outcome).isEqualTo(new MilestoneAdoptionOutcome.Adopted(1, TrackingStatus.IN_TRANSIT));
-            TrackingRecord saved = repository.findByTrackingNumber(TRACKING_NUMBER).orElseThrow();
+            TrackingRecord saved =
+                    repository.findByTrackingNumber(TRACKING_NUMBER).orElseThrow();
             assertThat(saved.milestones()).hasSize(1);
             assertThat(saved.milestones().getFirst().state()).isEqualTo(MilestoneState.ADOPTED);
             assertThat(saved.milestones().getFirst().adoptedBy()).isEqualTo(REGISTRANT);
@@ -241,7 +243,10 @@ class TrackingRecordCommandServiceTest {
                     .isEqualTo(new MilestoneAdoptionOutcome.Conflict());
             assertThat(service.adoptCandidate(TRACKING_NUMBER, 2, 1, MANAGER))
                     .isEqualTo(new MilestoneAdoptionOutcome.Conflict());
-            assertThat(repository.findByTrackingNumber(TRACKING_NUMBER).orElseThrow().milestones())
+            assertThat(repository
+                            .findByTrackingNumber(TRACKING_NUMBER)
+                            .orElseThrow()
+                            .milestones())
                     .allSatisfy(milestone -> assertThat(milestone.state()).isEqualTo(MilestoneState.DRAFT));
         }
 
@@ -282,7 +287,10 @@ class TrackingRecordCommandServiceTest {
 
             assertThat(service.adoptCandidate(TRACKING_NUMBER, 1, 2, MANAGER))
                     .isEqualTo(new MilestoneAdoptionOutcome.Rejected(AdoptionRejectionReason.NOT_CANDIDATE));
-            assertThat(repository.findByTrackingNumber(TRACKING_NUMBER).orElseThrow().aggregateVersion())
+            assertThat(repository
+                            .findByTrackingNumber(TRACKING_NUMBER)
+                            .orElseThrow()
+                            .aggregateVersion())
                     .isEqualTo(2);
         }
 
@@ -294,7 +302,10 @@ class TrackingRecordCommandServiceTest {
 
             assertThat(service.adoptCandidate(TRACKING_NUMBER, 2, 3, MANAGER))
                     .isEqualTo(new MilestoneAdoptionOutcome.SameAsAdopted(1));
-            assertThat(repository.findByTrackingNumber(TRACKING_NUMBER).orElseThrow().aggregateVersion())
+            assertThat(repository
+                            .findByTrackingNumber(TRACKING_NUMBER)
+                            .orElseThrow()
+                            .aggregateVersion())
                     .isEqualTo(3);
         }
 

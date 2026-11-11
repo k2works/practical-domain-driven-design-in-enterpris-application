@@ -26,14 +26,12 @@ import com.example.cargotracker.shared.domain.SourceKind;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import com.example.cargotracker.tracking.application.internal.commandservices.MilestoneAdoptionOutcome;
 import com.example.cargotracker.tracking.application.internal.commandservices.TrackingRecordCommandService;
-import com.example.cargotracker.tracking.domain.model.valueobjects.AdoptionRejectionReason;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.server.ResponseStatusException;
 import com.example.cargotracker.tracking.application.internal.queryservices.RecentTrackingRecords;
 import com.example.cargotracker.tracking.application.internal.queryservices.TrackingRecordQueryService;
 import com.example.cargotracker.tracking.domain.model.TrackingFixture;
 import com.example.cargotracker.tracking.domain.model.aggregates.TrackingRecord;
 import com.example.cargotracker.tracking.domain.model.entities.Milestone;
+import com.example.cargotracker.tracking.domain.model.valueobjects.AdoptionRejectionReason;
 import com.example.cargotracker.tracking.domain.model.valueobjects.ExternalOrigin;
 import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneKind;
 import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneState;
@@ -54,8 +52,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.HttpStatus;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.server.ResponseStatusException;
 
 /** S-11 追跡一覧と S-12 追跡の詳細（追跡管理者。Bolt 26。主要実績の一覧と登録の結果は Bolt 26c）。 */
 // 画面の単体テストはコントローラーの振る舞いだけを見る。認証・認可はセキュリティの統合テストで確かめる（Bolt 14）
@@ -391,7 +391,8 @@ class TrackingRecordControllerTest {
         private static final String ADOPT = DETAIL + "/milestones/2/adopt";
         private static final UUID SOURCE_ID = UUID.fromString("00000000-0000-0000-0000-0000039b0c01");
 
-        private Milestone external(int no, Location location, String occurredAt, String publishedAt, MilestoneState state) {
+        private Milestone external(
+                int no, Location location, String occurredAt, String publishedAt, MilestoneState state) {
             UtcInstant published = TrackingFixture.at(publishedAt);
             boolean adopted = state == MilestoneState.ADOPTED;
             return new Milestone(
@@ -440,8 +441,18 @@ class TrackingRecordControllerTest {
             String body = detailOf(withMilestones(
                     TrackedBookingStatus.CONFIRMED,
                     List.of(
-                            external(1, new Location("JPTYO"), "2026-10-30T00:00:00Z", "2026-10-31T00:00:00Z", MilestoneState.DRAFT),
-                            external(2, new Location("KRPUS"), "2026-10-30T01:00:00Z", "2026-10-31T01:00:00Z", MilestoneState.DRAFT))));
+                            external(
+                                    1,
+                                    new Location("JPTYO"),
+                                    "2026-10-30T00:00:00Z",
+                                    "2026-10-31T00:00:00Z",
+                                    MilestoneState.DRAFT),
+                            external(
+                                    2,
+                                    new Location("KRPUS"),
+                                    "2026-10-30T01:00:00Z",
+                                    "2026-10-31T01:00:00Z",
+                                    MilestoneState.DRAFT))));
 
             org.assertj.core.api.Assertions.assertThat(body)
                     .containsOnlyOnce("後から公開された原本に置き換えられました")
@@ -458,9 +469,24 @@ class TrackingRecordControllerTest {
             String body = detailOf(withMilestones(
                     TrackedBookingStatus.CONFIRMED,
                     List.of(
-                            external(1, new Location("JPTYO"), "2026-10-30T00:00:00Z", "2026-10-31T00:00:00Z", MilestoneState.DRAFT),
-                            external(2, new Location("KRPUS"), "2026-10-30T01:00:00Z", "2026-10-31T01:00:00Z", MilestoneState.DRAFT),
-                            external(3, new Location("JPTYO"), "2026-10-30T00:00:00Z", "2026-10-31T02:00:00Z", MilestoneState.DRAFT))));
+                            external(
+                                    1,
+                                    new Location("JPTYO"),
+                                    "2026-10-30T00:00:00Z",
+                                    "2026-10-31T00:00:00Z",
+                                    MilestoneState.DRAFT),
+                            external(
+                                    2,
+                                    new Location("KRPUS"),
+                                    "2026-10-30T01:00:00Z",
+                                    "2026-10-31T01:00:00Z",
+                                    MilestoneState.DRAFT),
+                            external(
+                                    3,
+                                    new Location("JPTYO"),
+                                    "2026-10-30T00:00:00Z",
+                                    "2026-10-31T02:00:00Z",
+                                    MilestoneState.DRAFT))));
 
             org.assertj.core.api.Assertions.assertThat(body)
                     .contains("実績 3 を採用する")
@@ -472,8 +498,18 @@ class TrackingRecordControllerTest {
             String body = detailOf(withMilestones(
                     TrackedBookingStatus.CONFIRMED,
                     List.of(
-                            external(1, new Location("JPTYO"), "2026-10-30T00:00:00Z", "2026-10-31T00:00:00Z", MilestoneState.ADOPTED),
-                            external(2, new Location("KRPUS"), "2026-10-30T01:00:00Z", "2026-10-31T01:00:00Z", MilestoneState.DRAFT))));
+                            external(
+                                    1,
+                                    new Location("JPTYO"),
+                                    "2026-10-30T00:00:00Z",
+                                    "2026-10-31T00:00:00Z",
+                                    MilestoneState.ADOPTED),
+                            external(
+                                    2,
+                                    new Location("KRPUS"),
+                                    "2026-10-30T01:00:00Z",
+                                    "2026-10-31T01:00:00Z",
+                                    MilestoneState.DRAFT))));
 
             org.assertj.core.api.Assertions.assertThat(body)
                     .contains("採用済みの実績と値が違います")
@@ -486,8 +522,18 @@ class TrackingRecordControllerTest {
             String body = detailOf(withMilestones(
                     TrackedBookingStatus.CONFIRMED,
                     List.of(
-                            external(1, new Location("JPTYO"), "2026-10-30T00:00:00Z", "2026-10-31T00:00:00Z", MilestoneState.ADOPTED),
-                            external(2, new Location("JPTYO"), "2026-10-30T00:00:00Z", "2026-10-31T01:00:00Z", MilestoneState.DRAFT))));
+                            external(
+                                    1,
+                                    new Location("JPTYO"),
+                                    "2026-10-30T00:00:00Z",
+                                    "2026-10-31T00:00:00Z",
+                                    MilestoneState.ADOPTED),
+                            external(
+                                    2,
+                                    new Location("JPTYO"),
+                                    "2026-10-30T00:00:00Z",
+                                    "2026-10-31T01:00:00Z",
+                                    MilestoneState.DRAFT))));
 
             org.assertj.core.api.Assertions.assertThat(body)
                     .contains("採用済みの実績と同じ値です")
@@ -504,7 +550,8 @@ class TrackingRecordControllerTest {
                 String name, TrackedBookingStatus bookingStatus, String occurredAt, String reason) throws Exception {
             String body = detailOf(withMilestones(
                     bookingStatus,
-                    List.of(external(1, new Location("JPTYO"), occurredAt, "2026-10-31T00:00:00Z", MilestoneState.DRAFT))));
+                    List.of(external(
+                            1, new Location("JPTYO"), occurredAt, "2026-10-31T00:00:00Z", MilestoneState.DRAFT))));
 
             org.assertj.core.api.Assertions.assertThat(body).contains(reason).doesNotContain("を採用する");
         }
@@ -513,7 +560,12 @@ class TrackingRecordControllerTest {
         void 行55_発生時刻がいまと同時刻の候補は採用できる() throws Exception {
             String body = detailOf(withMilestones(
                     TrackedBookingStatus.CONFIRMED,
-                    List.of(external(1, new Location("JPTYO"), "2026-11-01T03:00:00Z", "2026-10-31T00:00:00Z", MilestoneState.DRAFT))));
+                    List.of(external(
+                            1,
+                            new Location("JPTYO"),
+                            "2026-11-01T03:00:00Z",
+                            "2026-10-31T00:00:00Z",
+                            MilestoneState.DRAFT))));
 
             org.assertj.core.api.Assertions.assertThat(body).contains("実績 1 を採用する");
         }
@@ -563,10 +615,7 @@ class TrackingRecordControllerTest {
 
             mockMvc.perform(post(ADOPT).param("expectedVersion", "7"))
                     .andExpect(redirectedUrl(DETAIL))
-                    .andExpect(flash()
-                            .attribute(
-                                    "problem",
-                                    "ほかの更新が先にこの追跡記録を変更しました。最新の主要実績を確かめ、必要なら、もう一度採用してください。"));
+                    .andExpect(flash().attribute("problem", "ほかの更新が先にこの追跡記録を変更しました。最新の主要実績を確かめ、必要なら、もう一度採用してください。"));
         }
 
         @Test
@@ -588,7 +637,8 @@ class TrackingRecordControllerTest {
 
         @Test
         void 範囲の外の採用は記録して404でコマンドを呼ばない() throws Exception {
-            given(queryService.outOfScope(eq(TrackingFixture.TRACKING_NUMBER), any())).willReturn(true);
+            given(queryService.outOfScope(eq(TrackingFixture.TRACKING_NUMBER), any()))
+                    .willReturn(true);
             given(outOfScope.recordAndNotFound(any(), eq(TrackingFixture.TRACKING_NUMBER.value())))
                     .willReturn(new ResponseStatusException(HttpStatus.NOT_FOUND));
 

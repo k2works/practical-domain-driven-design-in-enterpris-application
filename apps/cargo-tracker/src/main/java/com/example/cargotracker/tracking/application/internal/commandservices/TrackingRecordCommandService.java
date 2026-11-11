@@ -7,11 +7,11 @@ import com.example.cargotracker.tracking.application.internal.queryservices.Trac
 import com.example.cargotracker.tracking.application.internal.queryservices.TrackingRecordScope;
 import com.example.cargotracker.tracking.domain.model.aggregates.ConcurrentTrackingRecordUpdateException;
 import com.example.cargotracker.tracking.domain.model.aggregates.MilestoneAdoption;
-import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingNumber;
 import com.example.cargotracker.tracking.domain.model.aggregates.MilestoneRegistration;
 import com.example.cargotracker.tracking.domain.model.aggregates.MilestoneRegistrationRejected;
 import com.example.cargotracker.tracking.domain.model.aggregates.TrackingRecord;
 import com.example.cargotracker.tracking.domain.model.aggregates.TrackingRecordRepository;
+import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingNumber;
 import java.time.Clock;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -108,8 +108,9 @@ public class TrackingRecordCommandService {
                 return new MilestoneAdoptionOutcome.OutOfScope();
             }
         }
-        TrackingRecord trackingRecord =
-                repository.findByTrackingNumberForExternalMilestone(trackingNumber).orElse(null);
+        TrackingRecord trackingRecord = repository
+                .findByTrackingNumberForExternalMilestone(trackingNumber)
+                .orElse(null);
         if (trackingRecord == null) {
             return new MilestoneAdoptionOutcome.NotFound();
         }

@@ -56,8 +56,7 @@ public record Milestone(
             throw new IllegalArgumentException("出典が外部原本の実績だけが外部の識別を持ちます: 出典の種類 " + source.kind());
         }
         // 表の CHECK（ck_milestone_adoption）と同じ規則（Bolt 39gb）
-        boolean adoptedExternal =
-                external && (state == MilestoneState.ADOPTED || state == MilestoneState.UNDER_REVIEW);
+        boolean adoptedExternal = external && (state == MilestoneState.ADOPTED || state == MilestoneState.UNDER_REVIEW);
         if ((adoptedBy != null) != adoptedExternal || (adoptedAt != null) != adoptedExternal) {
             throw new IllegalArgumentException(
                     "外部原本の採用済み・確認中の実績だけが採用者と採用時刻を持ちます: 状態 " + state + "、出典の種類 " + source.kind());
@@ -75,7 +74,18 @@ public record Milestone(
             UserId registeredBy,
             UtcInstant registeredAt,
             ExternalOrigin externalOrigin) {
-        this(milestoneNo, kind, location, occurredAt, source, state, registeredBy, registeredAt, externalOrigin, null, null);
+        this(
+                milestoneNo,
+                kind,
+                location,
+                occurredAt,
+                source,
+                state,
+                registeredBy,
+                registeredAt,
+                externalOrigin,
+                null,
+                null);
     }
 
     /** 外部の識別を持たない実績（出典が外部原本でない実績）を作る。 */

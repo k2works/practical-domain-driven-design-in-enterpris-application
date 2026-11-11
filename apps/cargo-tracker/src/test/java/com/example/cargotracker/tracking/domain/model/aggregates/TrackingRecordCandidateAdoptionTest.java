@@ -47,7 +47,8 @@ class TrackingRecordCandidateAdoptionTest {
     private static final UtcInstant ADOPTED_AT = at("2026-11-20T00:00:00Z");
 
     /** 外部原本の値（DE-13 の受け取りで実績を足す。届いた順のまま実績番号を振る）。 */
-    private record Arrival(UUID source, String externalId, Location location, String publishedAt, String acquiredAt, String ref) {}
+    private record Arrival(
+            UUID source, String externalId, Location location, String publishedAt, String acquiredAt, String ref) {}
 
     private static Arrival arrival(Location location, String publishedAt, String ref) {
         return new Arrival(SOURCE_A, "MS-0001", location, publishedAt, "2026-11-19T01:00:00Z", ref);
@@ -113,8 +114,10 @@ class TrackingRecordCandidateAdoptionTest {
             TrackingRecord olderFirst = received(older, newer);
 
             assertThat(newerFirst.milestones()).hasSize(2);
-            assertThat(newerFirst.milestones().get(candidateNo(newerFirst) - 1).location()).isEqualTo(BUSAN);
-            assertThat(olderFirst.milestones().get(candidateNo(olderFirst) - 1).location()).isEqualTo(BUSAN);
+            assertThat(newerFirst.milestones().get(candidateNo(newerFirst) - 1).location())
+                    .isEqualTo(BUSAN);
+            assertThat(olderFirst.milestones().get(candidateNo(olderFirst) - 1).location())
+                    .isEqualTo(BUSAN);
         }
 
         @Test
@@ -148,7 +151,10 @@ class TrackingRecordCandidateAdoptionTest {
             TrackingRecord trackingRecord = received(
                     arrival(BUSAN, "2026-11-19T10:00:00Z", "r-v2"), arrival(TOKYO, "2026-11-20T10:00:00Z", v1Ref));
 
-            assertThat(trackingRecord.milestones().get(candidateNo(trackingRecord) - 1).location())
+            assertThat(trackingRecord
+                            .milestones()
+                            .get(candidateNo(trackingRecord) - 1)
+                            .location())
                     .isEqualTo(TOKYO);
         }
 
@@ -160,9 +166,15 @@ class TrackingRecordCandidateAdoptionTest {
                     arrival(TOKYO, "2026-11-19T12:00:00Z", "r-3"));
 
             assertThat(candidateNo(trackingRecord)).isEqualTo(3);
-            assertThat(trackingRecord.isSupersededDraft(trackingRecord.milestones().get(0))).isTrue();
-            assertThat(trackingRecord.isSupersededDraft(trackingRecord.milestones().get(1))).isTrue();
-            assertThat(trackingRecord.isSupersededDraft(trackingRecord.milestones().get(2))).isFalse();
+            assertThat(trackingRecord.isSupersededDraft(
+                            trackingRecord.milestones().get(0)))
+                    .isTrue();
+            assertThat(trackingRecord.isSupersededDraft(
+                            trackingRecord.milestones().get(1)))
+                    .isTrue();
+            assertThat(trackingRecord.isSupersededDraft(
+                            trackingRecord.milestones().get(2)))
+                    .isFalse();
         }
 
         @Test
@@ -174,7 +186,9 @@ class TrackingRecordCandidateAdoptionTest {
             assertThat(trackingRecord.groupsOf()).hasSize(2);
             assertThat(trackingRecord.groupsOf())
                     .allSatisfy(group -> assertThat(group.candidate()).isPresent());
-            assertThat(trackingRecord.isSupersededDraft(trackingRecord.milestones().get(0))).isFalse();
+            assertThat(trackingRecord.isSupersededDraft(
+                            trackingRecord.milestones().get(0)))
+                    .isFalse();
         }
 
         @Test
@@ -204,7 +218,8 @@ class TrackingRecordCandidateAdoptionTest {
             assertThat(withManual.groupsOf()).isEmpty();
             assertThat(retained.milestones().getFirst().state()).isEqualTo(MilestoneState.RETAINED_ONLY);
             assertThat(retained.groupsOf()).isEmpty();
-            assertThat(retained.isSupersededDraft(retained.milestones().getFirst())).isFalse();
+            assertThat(retained.isSupersededDraft(retained.milestones().getFirst()))
+                    .isFalse();
         }
     }
 
@@ -249,8 +264,9 @@ class TrackingRecordCandidateAdoptionTest {
 
         @Test
         void 行51_採用済み_手入力_保持のみ_ない実績番号は候補でない() {
-            TrackingRecord adopted = ((MilestoneAdoption.Adopted) received(arrival(TOKYO, "2026-11-19T10:00:00Z", "r-1"))
-                            .adoptCandidate(1, MANAGER, ADOPTED_AT))
+            TrackingRecord adopted = ((MilestoneAdoption.Adopted)
+                            received(arrival(TOKYO, "2026-11-19T10:00:00Z", "r-1"))
+                                    .adoptCandidate(1, MANAGER, ADOPTED_AT))
                     .trackingRecord();
             TrackingRecord manual = empty(TrackedBookingStatus.CONFIRMED, TrackingStatus.PICKUP_SCHEDULED)
                     .registerMilestone(
@@ -272,8 +288,9 @@ class TrackingRecordCandidateAdoptionTest {
 
         @Test
         void 行52_採用済みの実績と値が違う候補は採用できない() {
-            TrackingRecord adopted = ((MilestoneAdoption.Adopted) received(arrival(TOKYO, "2026-11-19T10:00:00Z", "r-1"))
-                            .adoptCandidate(1, MANAGER, ADOPTED_AT))
+            TrackingRecord adopted = ((MilestoneAdoption.Adopted)
+                            received(arrival(TOKYO, "2026-11-19T10:00:00Z", "r-1"))
+                                    .adoptCandidate(1, MANAGER, ADOPTED_AT))
                     .trackingRecord();
             TrackingRecord withNewer = received(adopted, arrival(BUSAN, "2026-11-19T11:00:00Z", "r-2"));
 
@@ -285,13 +302,15 @@ class TrackingRecordCandidateAdoptionTest {
 
         @Test
         void 行53_候補と同じ値を採用済みなら採用は要らず既存を返す() {
-            TrackingRecord adopted = ((MilestoneAdoption.Adopted) received(arrival(TOKYO, "2026-11-19T10:00:00Z", "r-1"))
-                            .adoptCandidate(1, MANAGER, ADOPTED_AT))
+            TrackingRecord adopted = ((MilestoneAdoption.Adopted)
+                            received(arrival(TOKYO, "2026-11-19T10:00:00Z", "r-1"))
+                                    .adoptCandidate(1, MANAGER, ADOPTED_AT))
                     .trackingRecord();
             TrackingRecord withSame = received(adopted, arrival(TOKYO, "2026-11-19T11:00:00Z", "r-2"));
 
             assertThat(withSame.adoptCandidate(2, MANAGER, ADOPTED_AT))
-                    .isEqualTo(new MilestoneAdoption.SameAsAdopted(withSame.milestones().getFirst()));
+                    .isEqualTo(new MilestoneAdoption.SameAsAdopted(
+                            withSame.milestones().getFirst()));
         }
 
         @ParameterizedTest(name = "{0}")
@@ -302,9 +321,14 @@ class TrackingRecordCandidateAdoptionTest {
             "取消済みかつ引渡し済みは取消済みが先, CANCELLED, DELIVERED, BOOKING_CANCELLED"
         })
         void 行54_取消済み_完了後の追跡の下書きは採用できない(
-                String name, TrackedBookingStatus bookingStatus, TrackingStatus status, AdoptionRejectionReason reason) {
+                String name,
+                TrackedBookingStatus bookingStatus,
+                TrackingStatus status,
+                AdoptionRejectionReason reason) {
             // 確定のときに受けた下書きの後に予約状態・現在状態が変わった追跡記録（変わる経路は 39g2・W11 なので組み立てで作る）
-            Milestone draft = received(arrival(TOKYO, "2026-11-19T10:00:00Z", "r-1")).milestones().getFirst();
+            Milestone draft = received(arrival(TOKYO, "2026-11-19T10:00:00Z", "r-1"))
+                    .milestones()
+                    .getFirst();
             TrackingRecord trackingRecord = TrackingRecord.reconstitute(
                     TRACKING_NUMBER,
                     BOOKING_ID,
@@ -334,9 +358,9 @@ class TrackingRecordCandidateAdoptionTest {
                     new Source(SourceKind.EXTERNAL_RECORD, "r-f", at("2026-11-19T01:00:00Z")),
                     new ExternalOrigin(SOURCE_A, "MS-0001", at("2026-11-19T10:00:00Z")),
                     STEWARD);
-            TrackingRecord trackingRecord = ((ExternalMilestoneReceipt.Received) empty(
-                                    TrackedBookingStatus.CONFIRMED, TrackingStatus.PICKUP_SCHEDULED)
-                            .receiveExternalMilestone(future, at("2026-11-19T10:00:00Z")))
+            TrackingRecord trackingRecord = ((ExternalMilestoneReceipt.Received)
+                            empty(TrackedBookingStatus.CONFIRMED, TrackingStatus.PICKUP_SCHEDULED)
+                                    .receiveExternalMilestone(future, at("2026-11-19T10:00:00Z")))
                     .trackingRecord();
 
             assertThat(trackingRecord.adoptCandidate(1, MANAGER, at("2026-11-19T23:59:59.999Z")))
@@ -385,7 +409,8 @@ class TrackingRecordCandidateAdoptionTest {
         void 組の実績は同じ情報源と外部IDの下書きか採用だけ() {
             List<Milestone> drafts = new ArrayList<>(received(
                             arrival(TOKYO, "2026-11-19T10:00:00Z", "r-1"),
-                            new Arrival(SOURCE_B, "MS-0001", BUSAN, "2026-11-19T11:00:00Z", "2026-11-19T01:00:00Z", "r-2"))
+                            new Arrival(
+                                    SOURCE_B, "MS-0001", BUSAN, "2026-11-19T11:00:00Z", "2026-11-19T01:00:00Z", "r-2"))
                     .milestones());
 
             assertThatThrownBy(() -> new MilestoneGroup(SOURCE_A, "MS-0001", drafts))

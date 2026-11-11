@@ -114,9 +114,11 @@ class MilestoneTest {
             return Stream.of(
                     Arguments.of("外部原本の採用で採用者がない", SourceKind.EXTERNAL_RECORD, MilestoneState.ADOPTED, false, false),
                     Arguments.of("外部原本の採用で採用時刻だけがない", SourceKind.EXTERNAL_RECORD, MilestoneState.ADOPTED, true, false),
-                    Arguments.of("外部原本の確認中で採用者がない", SourceKind.EXTERNAL_RECORD, MilestoneState.UNDER_REVIEW, false, false),
+                    Arguments.of(
+                            "外部原本の確認中で採用者がない", SourceKind.EXTERNAL_RECORD, MilestoneState.UNDER_REVIEW, false, false),
                     Arguments.of("外部原本の下書きで採用者がある", SourceKind.EXTERNAL_RECORD, MilestoneState.DRAFT, true, true),
-                    Arguments.of("外部原本の保持のみで採用者がある", SourceKind.EXTERNAL_RECORD, MilestoneState.RETAINED_ONLY, true, true),
+                    Arguments.of(
+                            "外部原本の保持のみで採用者がある", SourceKind.EXTERNAL_RECORD, MilestoneState.RETAINED_ONLY, true, true),
                     Arguments.of("手入力の採用で採用者がある", SourceKind.FIELD_RECORD, MilestoneState.ADOPTED, true, true));
         }
 

@@ -59,8 +59,10 @@ class MilestoneCandidateRuleTest {
         Milestone first = draft(1, published1, acquired1, ref1);
         Milestone second = draft(2, published2, acquired2, ref2);
 
-        assertThat(rule.newest(List.of(first, second)).orElseThrow().milestoneNo()).isEqualTo(expectedNewest);
-        assertThat(rule.newest(List.of(second, first)).orElseThrow().milestoneNo()).isEqualTo(expectedNewest);
+        assertThat(rule.newest(List.of(first, second)).orElseThrow().milestoneNo())
+                .isEqualTo(expectedNewest);
+        assertThat(rule.newest(List.of(second, first)).orElseThrow().milestoneNo())
+                .isEqualTo(expectedNewest);
     }
 
     @org.junit.jupiter.api.Test

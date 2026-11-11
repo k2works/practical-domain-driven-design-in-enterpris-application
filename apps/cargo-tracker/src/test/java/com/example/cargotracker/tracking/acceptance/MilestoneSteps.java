@@ -12,11 +12,11 @@ import com.example.cargotracker.shared.domain.UtcInstant;
 import com.example.cargotracker.tracking.application.internal.commands.RegisterMilestoneCommand;
 import com.example.cargotracker.tracking.application.internal.commandservices.MilestoneAdoptionOutcome;
 import com.example.cargotracker.tracking.application.internal.commandservices.MilestoneRegistrationOutcome;
-import com.example.cargotracker.tracking.domain.model.valueobjects.AdoptionRejectionReason;
 import com.example.cargotracker.tracking.application.internal.commandservices.TrackingRecordCommandService;
 import com.example.cargotracker.tracking.domain.model.TrackingFixture;
 import com.example.cargotracker.tracking.domain.model.aggregates.TrackingRecord;
 import com.example.cargotracker.tracking.domain.model.entities.Milestone;
+import com.example.cargotracker.tracking.domain.model.valueobjects.AdoptionRejectionReason;
 import com.example.cargotracker.tracking.domain.model.valueobjects.ExternalMilestone;
 import com.example.cargotracker.tracking.domain.model.valueobjects.ExternalOrigin;
 import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneKind;
@@ -149,14 +149,16 @@ public class MilestoneSteps {
                 .isInstanceOfSatisfying(
                         MilestoneAdoptionOutcome.Adopted.class,
                         adopted -> assertThat(adopted.milestoneNo()).isEqualTo(milestoneNo));
-        assertThat(onlyTrackingRecord().milestones().get(milestoneNo - 1).adoptedBy()).isEqualTo(TRACKING_MANAGER);
+        assertThat(onlyTrackingRecord().milestones().get(milestoneNo - 1).adoptedBy())
+                .isEqualTo(TRACKING_MANAGER);
     }
 
     @ならば("実績 {int} は候補でないので採用されない")
     public void 候補でないので採用されない(int milestoneNo) {
         assertThat(adoptionOutcome)
                 .isEqualTo(new MilestoneAdoptionOutcome.Rejected(AdoptionRejectionReason.NOT_CANDIDATE));
-        assertThat(onlyTrackingRecord().milestones().get(milestoneNo - 1).state()).isEqualTo(MilestoneState.DRAFT);
+        assertThat(onlyTrackingRecord().milestones().get(milestoneNo - 1).state())
+                .isEqualTo(MilestoneState.DRAFT);
     }
 
     @ならば("採用済みの実績 {int} と同じ値なので採用は要らないと返される")

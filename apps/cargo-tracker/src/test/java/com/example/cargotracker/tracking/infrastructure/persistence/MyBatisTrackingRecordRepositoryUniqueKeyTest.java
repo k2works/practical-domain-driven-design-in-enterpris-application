@@ -39,11 +39,12 @@ import org.springframework.dao.DuplicateKeyException;
 class MyBatisTrackingRecordRepositoryUniqueKeyTest {
 
     private final TrackingRecordMapper mapper = mock(TrackingRecordMapper.class);
-    private final MyBatisTrackingRecordRepository repository =
-            new MyBatisTrackingRecordRepository(mapper, Clock.fixed(Instant.parse("2026-11-01T03:00:00Z"), ZoneOffset.UTC));
+    private final MyBatisTrackingRecordRepository repository = new MyBatisTrackingRecordRepository(
+            mapper, Clock.fixed(Instant.parse("2026-11-01T03:00:00Z"), ZoneOffset.UTC));
 
     private TrackingRecord registered() {
-        given(mapper.updateTrackingRecord(anyString(), anyLong(), anyString(), any(), any())).willReturn(1);
+        given(mapper.updateTrackingRecord(anyString(), anyLong(), anyString(), any(), any()))
+                .willReturn(1);
         given(mapper.findMilestones(anyString())).willReturn(List.of());
         given(mapper.countMilestone(anyString(), anyInt())).willReturn(1);
         return TrackingRecord.start(TRACKING_NUMBER, BOOKING_ID, SHIPPER, CONSIGNEE, schedule(), STARTED_AT)
