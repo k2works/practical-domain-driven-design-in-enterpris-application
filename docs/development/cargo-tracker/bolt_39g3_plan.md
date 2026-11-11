@@ -2,8 +2,10 @@
 type: Plan
 title: "Bolt 39g3 計画 - 採用した実績で最新の到着見込みを動かし、最終取得時刻を示す"
 tags: [plan]
-status: draft
+status: stable
 generated: { by: anthropic/claude-opus-5-5, at: 2026-11-11T11:46:02Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-11-11T11:47:12Z }
 ---
 
 # Bolt 39g3 計画 - 採用した実績で最新の到着見込みを動かし、最終取得時刻を示す
@@ -13,7 +15,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-11-11T11:46:02Z }
 | 項目 | 内容 |
 | :--- | :--- |
 | Bolt | 第 39g3 回（W7 の 31 本目。release_plan :979 の 39g3 の行） |
-| 状態 | 計画（承認待ち。2 つの整合性検証（`validating-iteration-plan`・`validating-design`）の指摘を反映した） |
+| 状態 | 計画（承認済み。2026-11-11。確認ポイントを推奨のとおり承認。human:kakimomokuri。2 つの整合性検証（`validating-iteration-plan`・`validating-design`）の指摘を反映した） |
 | 予定 | W7（2026-11-16 の週。前倒しで着手できる）。Bolt 39g2 の終了報告の承認（2026-11-11）の後に着手する。約 3 時間 15 分（約 195 分）の見込み（下の「ステップ計画」）。`check`・`uiTest`・`manualScreenshots`・SonarQube・CI と承認の待ちを除く |
 | アプローチ | アウトサイドイン（release_plan :979「既存の追跡記録を広げる」。development_strategy :350 の W7 の追跡の残りは中盤の例外でアウトサイドイン。状態の組み合わせの表を先に書く。T-182）。受入シナリオ（遅れた出発で見込みが動く）を先に Red にし、内側（見込みの規則 → 追跡記録の集約 → 保存と照会 → 画面）に入る |
 | 対象 | (1) 最新の到着見込み（`latest_eta`）を採用の実績から導く規則（`LatestEstimate`。T-INV-10）、(2) 最終取得時刻（`last_acquired_at`）の書き手、(3) 保存の UPDATE と一覧の照会、(4) S-11 の到着の列（Bolt 26 の U-3）と最終取得時刻、S-12・C-10 の最終取得時刻、(5) マニュアル 5 章・9 章・用語集 |
@@ -64,7 +66,7 @@ generated: { by: anthropic/claude-opus-5-5, at: 2026-11-11T11:46:02Z }
 - 追跡: `TrackingRecordTest`、`TrackingRecordMilestoneTest`、`TrackingRecordCandidateAdoptionTest`、`TrackingRecordExternalMilestoneTest`、`TrackingRecordCustomerViewTest`、`TrackingRecordCommandServiceTest`、`TrackingRecordQueryServiceTest`、`CustomerTrackingQueryServiceTest`、`TrackingRecordControllerTest`、`CustomerTrackingControllerTest`、`MilestoneRegistrationControllerTest`、`MyBatisTrackingRecordRepositoryIntegrationTest`、`MyBatisTrackingRecordRepositoryUniqueKeyTest`、`MyBatisTrackingRecordLockIntegrationTest`、`TrackingAssignedScopeSecurityIntegrationTest`、`features/tracking/register_milestone.feature`・`query_tracking.feature`、`features/ui/register_milestone_ui.feature`・`query_tracking_ui.feature`・`under_review_milestone_ui.feature`・`adopted_milestone_reflected_ui.feature`・`transport_phase_from_tracking_ui.feature`
 - 横断: `LayerArchitectureTest`、`LivingGlossaryConsistencyTest`
 
-## 開始準備の決定（推奨を 1 つに決めて書いた。承認待ち）
+## 開始準備の決定（推奨を 1 つに決めて書いた。承認済み）
 
 (1) **範囲と見積り**（本計画 CP-1、【前の決定の変更】(18)）: release_plan :979 の 39g3 の行は、`latest_eta` を何で動かすか、`last_acquired_at` の書き手と鮮度超過の判定（`FreshnessPolicy`、NFR-FRESH-01）、S-11 の到着の列の 3 つ。コードで確かめると、鮮度超過の判定（FRS-02）は次の 3 つが未決で、規則だけでなく置き場所も決まらない: (a) 「次の予定の実績」と「最後に取り込んだファイルの取得時刻」（外部データのコンテキストの取込の時刻。追跡は持たない）をどう読むか、(b) FRS-02 のとおり現在状態を確認中（理由 鮮度超過）に変えるか（時刻の経過で変わるので定期の処理が要る）、読むときの判定で示すだけにするか（前例 Bolt 39f2 の古くなった候補。【業務の判断】(w)）、(c) S-11 の一覧で示すなら、一覧の照会は集約を組み立てないので予定区間の時刻を一覧の行に持つ（スキーマ）か照会を増やす。加えて domain_model :209 の `LatestEstimate` は「実績と採用値から見込む」で、採用値（航海の DE-12）で見込みを動かすには追跡に DE-12 の listener と航海番号で追跡記録を引く照会（索引。スキーマ）が要る。全部を入れると目安（T-250 の 4 時間 05 分）を超え、スキーマと定期の処理の判断が入る。そこで **39g3 は採用の実績で動く見込みと最終取得時刻（スキーマを変えない）にし、鮮度超過の判定と航海の採用値で動く見込みを 39g4 に分け、39g3 の直後（39h の前）に置く**。分けても見えない状態の Bolt はできない（39g3 は S-11・S-12・C-10 の値で見え、39g4 は鮮度超過の印で見える）。39g3 は約 195 分。超えそうなときは 行 22 の動画（−5 分）、行 16 の C-10 の一覧の確かめ（−5 分）の順に後へ送る。マニュアルは後に送らない。
 - 比べた案: (i) **39g4 に分ける（推奨）**。(ii) 39g3 に全部入れる（目安を超え、スキーマと定期の処理の判断が開始準備に積まれる）。(iii) 鮮度超過を W9 の US-09 AC2・AC3（荷主への「最新性を保証しない旨」）に送る（S-11 で追跡管理者が鮮度超過を見つける運用（operation.md :74）が W9 まで待つ。W7 CP19 の決定から 2 週ずれる）
@@ -371,6 +373,7 @@ entity "tracking.scheduled_leg" {
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
+| 2026-11-11 | 確認ポイントを推奨のとおり承認として記録した（39g4 への分割、業務の判断 (an)〜(ap) を含む。以降は推奨で進める指示による。human:kakimomokuri） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-11-11 | 初版作成。2 つの整合性検証の指摘を反映した（下の「整合性検証の結果」） | anthropic/claude-opus-5-5 |
 
 ## 整合性検証の結果（開始準備のステップ 3・4）
