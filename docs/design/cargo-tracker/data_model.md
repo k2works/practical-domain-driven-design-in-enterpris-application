@@ -634,7 +634,7 @@ entity "tracking_record\n追跡記録" as trk {
   route_version_no : INTEGER
   * current_status : VARCHAR(30)
   status_basis_milestone_no : INTEGER
-  under_review_reason : VARCHAR(1000)
+  under_review_reason : VARCHAR(30)
   procedure_stage : VARCHAR(30)
   original_eta : TIMESTAMPTZ
   latest_eta : TIMESTAMPTZ
@@ -791,7 +791,7 @@ sc ||--o{ sca
 
 | 表 | 主な制約 | 対応する不変条件 |
 | :--- | :--- | :--- |
-| `tracking_record` | `current_status` は主要実績から導出した結果の保存（照会のため）。導出の正は集約のロジック。`original_eta`（確定した経路版の到着予定）と `latest_eta`（最新の見込み）を別に持つ。`procedure_stage` は通関等の手続き中の段階。UK（`booking_id`）`uk_tracking_record_booking`: 予約 1 件に追跡記録 1 件で、DE-07 の再配信の冪等の正（T-INV-11。Bolt 25）。`booking_status` IN（`CONFIRMED`、`CANCELLED`、`COMPLETED`）（`ck_tracking_record_booking_status`）。`current_status` IN（`BOOKED`、`PICKUP_SCHEDULED`、`PICKED_UP`、`RECEIVED_AT_ORIGIN`、`IN_TRANSIT`、`TRANSSHIPPING`、`ARRIVED_AT_DESTINATION`、`READY_FOR_DELIVERY`、`DELIVERED`、`UNDER_REVIEW`）（`ck_tracking_record_current_status`。ドメインモデルの追跡状態）。実績に関わる列（`status_basis_milestone_no`、`under_review_reason`、`procedure_stage`、`last_acquired_at`）と経路版・到着予定の 4 列は NULL 可で作る（Bolt 25 の追跡の開始では経路版と到着予定に必ず値を入れる）。監査用の列の `created_by`・`updated_by` は持たない（行はイベントの購読でシステムが作る。共通の規約の例外）。`created_at` は追跡の開始時刻で、S-11 追跡一覧はその新しい順（同じ時刻なら `tracking_number` の順）に引く（Bolt 26）。主要実績の登録（Bolt 26b）は `current_status`・`status_basis_milestone_no`・`version`・`updated_at` だけを UPDATE し（`WHERE version = 読み込んだ版`）、経路版・到着予定・`last_acquired_at` は書かない（到着見込みと鮮度は W7）。`status_basis_milestone_no` から `milestone` への外部キー `fk_tracking_record_status_basis`（`tracking_number`・`status_basis_milestone_no`）は、PostgreSQL だけに DEFERRABLE INITIALLY DEFERRED で張る（UPDATE を INSERT より先に行うため。見積りの `fk_quotation_replaced_by` と同じ決め方。H2 では集約の不変条件で守る。Bolt 26c）。経路版の 2 列と到着予定の 2 列は NOT NULL（追跡の開始で必ず入る。Bolt 26c で NULL 可から改めた） | T-INV-08、T-INV-10、T-INV-11 |
+| `tracking_record` | `current_status` は主要実績から導出した結果の保存（照会のため）。導出の正は集約のロジック。`original_eta`（確定した経路版の到着予定）と `latest_eta`（最新の見込み）を別に持つ。`procedure_stage` は通関等の手続き中の段階。UK（`booking_id`）`uk_tracking_record_booking`: 予約 1 件に追跡記録 1 件で、DE-07 の再配信の冪等の正（T-INV-11。Bolt 25）。`booking_status` IN（`CONFIRMED`、`CANCELLED`、`COMPLETED`）（`ck_tracking_record_booking_status`）。`current_status` IN（`BOOKED`、`PICKUP_SCHEDULED`、`PICKED_UP`、`RECEIVED_AT_ORIGIN`、`IN_TRANSIT`、`TRANSSHIPPING`、`ARRIVED_AT_DESTINATION`、`READY_FOR_DELIVERY`、`DELIVERED`、`UNDER_REVIEW`）（`ck_tracking_record_current_status`。ドメインモデルの追跡状態）。実績に関わる列（`status_basis_milestone_no`、`under_review_reason`、`procedure_stage`、`last_acquired_at`）と経路版・到着予定の 4 列は NULL 可で作る（Bolt 25 の追跡の開始では経路版と到着予定に必ず値を入れる）。監査用の列の `created_by`・`updated_by` は持たない（行はイベントの購読でシステムが作る。共通の規約の例外）。`created_at` は追跡の開始時刻で、S-11 追跡一覧はその新しい順（同じ時刻なら `tracking_number` の順）に引く（Bolt 26）。主要実績の登録（Bolt 26b）は `current_status`・`status_basis_milestone_no`・`version`・`updated_at` だけを UPDATE し（`WHERE version = 読み込んだ版`）、経路版・到着予定・`last_acquired_at` は書かない（到着見込みと鮮度は W7）。`status_basis_milestone_no` から `milestone` への外部キー `fk_tracking_record_status_basis`（`tracking_number`・`status_basis_milestone_no`）は、PostgreSQL だけに DEFERRABLE INITIALLY DEFERRED で張る（UPDATE を INSERT より先に行うため。見積りの `fk_quotation_replaced_by` と同じ決め方。H2 では集約の不変条件で守る。Bolt 26c）。経路版の 2 列と到着予定の 2 列は NOT NULL（追跡の開始で必ず入る。Bolt 26c で NULL 可から改めた）。`under_review_reason` は区分値 `VARCHAR(30)` で IN（`OUT_OF_SEQUENCE`）（`ck_tracking_record_under_review_reason`）、`current_status = 'UNDER_REVIEW'` のときだけ値を持ち、それ以外は NULL（`ck_tracking_record_under_review`）。主要実績の登録・採用は `under_review_reason` も UPDATE する（Bolt 39gc） | T-INV-03、T-INV-08、T-INV-10、T-INV-11 |
 | `scheduled_leg` | 主キー（`tracking_number`、`leg_no`）。`leg_no >= 1`（`ck_scheduled_leg_no`）、`arrival_at > departure_at`（`ck_scheduled_leg_arrival`。見積りの `assigned_route_leg` と同じ）。値は経路設計の公開 API が返す確定した経路版の区間（Bolt 25） | T-INV-12 |
 | `milestone` | UK（`tracking_number`、`source_kind`、`source_ref`）`uk_milestone_source`。`kind` IN（`PICKUP`、`RECEIPT_AT_ORIGIN`、`DEPARTURE`、`TRANSSHIPMENT`、`ARRIVAL`、`DELIVERY`）。`source_kind` は航海と同じ 4 値。`state` IN（`DRAFT`、`ADOPTED`、`UNDER_REVIEW`、`RETAINED_ONLY`）。DELETE の権限なし（表の印 `[no-delete]`）。Bolt 26b は使う列だけで作った（`revised_by`・`revised_at` は下書きの修正の W12（US-13）、`shown_to_customer` は顧客への表示の US-11・US-13 で足す）。実績は追跡記録の `update` で、まだ表にない実績番号だけを INSERT する。Bolt 39g で外部の識別の 3 列（`data_source_id`・`external_id`・`published_at`。NULL を許す）と CHECK `ck_milestone_external_origin`（`source_kind = 'EXTERNAL_RECORD'` なら 3 列とも値を持ち、それ以外は 3 列とも NULL）を足した。Bolt 39gb で採用した人と時刻の 2 列（`adopted_by`・`adopted_at`。NULL を許す）と CHECK `ck_milestone_adoption`（`source_kind = 'EXTERNAL_RECORD'` かつ `state IN ('ADOPTED', 'UNDER_REVIEW')` なら 2 列とも値を持ち、それ以外は 2 列とも NULL）を足した | T-INV-01〜03、T-INV-05 |
 | `rejected_milestone` | 主キー `id`。UK（`source_kind`、`source_ref`）`uk_rejected_milestone_source`。`reason` IN（`UNKNOWN_TRACKING_NUMBER`、`BOOKING_CANCELLED`）。`tracking_number` に外部キーはない（知らない追跡番号を残すため）。追記専用（表の印 `[append-only]`、UPDATE・DELETE の権限なし。Bolt 39g） | T-INV-04 |
@@ -808,12 +808,17 @@ Bolt 39g（US-12 の取り込みの分）で足す列と表（[Bolt 39g 計画](
 
 - `milestone.data_source_id`（UUID）・`external_id`（VARCHAR(200)。`external_data` の列と同じ）・`published_at`（TIMESTAMP WITH TIME ZONE）。どれも NULL を許し、CHECK `ck_milestone_external_origin` でそろえる。`EXTERNAL_RECORD` の行は今ない（画面で選べない）ので埋め直さない。ステージング・本番に `EXTERNAL_RECORD` の実績がないことは配備の前に確かめる（行があると CHECK の追加が失敗する）。情報版の列は持たない（順に使わず、受信記録 ID から外部データの原本にたどれる）。
 - `rejected_milestone`: 追跡が実績にしなかった DE-13 の追記専用の記録。冪等は読んでなければ書き、同時の負けは `NESTED` と `DuplicateKeyException` で既存とみなす。`reason` の値は `MilestoneRejectionReason` の値。
-- 下書きの採用で使う列は Bolt 39gb で足した（下）。`under_review_reason` は Bolt 39gc で決める。
+- 下書きの採用で使う列は Bolt 39gb で足した（下）。`under_review_reason` は Bolt 39gc で決めた（下）。
 
 Bolt 39gb（下書きの採用）で足す列（[Bolt 39gb 計画](../../development/cargo-tracker/bolt_39gb_plan.md) の開始準備の決定 (3)、確認ポイント 3）: 共通のマイグレーション `V20261111100000__add_tracking_milestone_adoption.sql` で次を足す。
 
 - `milestone.adopted_by`（UUID）・`adopted_at`（TIMESTAMP WITH TIME ZONE）。NULL を許し、CHECK `ck_milestone_adoption` でそろえる。外部原本の採用済み・確認中は両方に値を持つ（39gc が採用のときに確認中にしても人と時刻を残せる）。下書き・保持のみ・手入力の実績は両方 NULL（手入力の採用は登録者と登録時刻が採用者と採用時刻を兼ねる）。`EXTERNAL_RECORD` の採用済みの行は今ない（採用の操作がなかった）ので埋め直さない。
 - 採用の保存は `state`・`adopted_by`・`adopted_at` だけを書き換え、`WHERE state = 'DRAFT'` で下書きの行だけを対象にする。追跡記録の版の条件は同じトランザクションの追跡記録の UPDATE で掛ける（上の権限の表の「状態と下書き内容の UPDATE」の採用の分）。
+
+Bolt 39gc（確認中）で変える列（[Bolt 39gc 計画](../../development/cargo-tracker/bolt_39gc_plan.md) の開始準備の決定 (11)、確認ポイント CP-3）: 共通のマイグレーション `V20261112100000__change_tracking_record_under_review_reason.sql` で次を変える。
+
+- `tracking_record.under_review_reason` の型を `VARCHAR(1000)` から区分値の `VARCHAR(30)` に変え（H2 と PostgreSQL の共通の `ALTER COLUMN … SET DATA TYPE`。ADR-007）、CHECK `ck_tracking_record_under_review_reason`（値は `OUT_OF_SEQUENCE` だけ）と CHECK `ck_tracking_record_under_review`（`current_status = 'UNDER_REVIEW'` なら理由に値、そうでなければ NULL）を足し、列のコメントを「確認中の理由（区分値）」にする。`current_status = 'UNDER_REVIEW'` の行と理由に値のある行は、書く経路がなかったので今はない（ステージング・本番は配備の前に確かめる）。
+- 保存: 追跡記録の UPDATE が `under_review_reason` も書く。採用で確認中にする外部原本の実績は、下書きの採用と同じく `state = 'DRAFT'` の行だけを `UNDER_REVIEW` と採用者・採用時刻に書き換える。`milestone` の表は変えない（`state` の CHECK に `UNDER_REVIEW` があり、`ck_milestone_adoption` は確認中にも採用者・採用時刻を求める）。
 
 ### アクセス・監査（`identity`）
 
