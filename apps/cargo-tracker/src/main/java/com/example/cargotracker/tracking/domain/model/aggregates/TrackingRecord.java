@@ -13,7 +13,10 @@ import com.example.cargotracker.tracking.domain.model.rules.CurrentStatusDeriver
 import com.example.cargotracker.tracking.domain.model.valueobjects.CustomerMilestone;
 import com.example.cargotracker.tracking.domain.model.valueobjects.CustomerTrackingView;
 import com.example.cargotracker.tracking.domain.model.valueobjects.DerivedStatus;
+import com.example.cargotracker.tracking.domain.model.valueobjects.AdoptionRejectionReason;
 import com.example.cargotracker.tracking.domain.model.valueobjects.ExternalMilestone;
+import com.example.cargotracker.tracking.domain.model.valueobjects.ExternalOrigin;
+import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneGroup;
 import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneKind;
 import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneRejectionReason;
 import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneState;
@@ -23,7 +26,9 @@ import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingNumbe
 import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingStatus;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalInt;
@@ -235,6 +240,83 @@ public final class TrackingRecord {
                 external.origin());
         return new ExternalMilestoneReceipt.Received(
                 withMilestones(milestonesPlus(milestone), currentStatus, statusBasisMilestoneNo), milestone);
+    }
+
+    /**
+     * 外部原本から受けた下書きと採用の実績を組に分ける（Bolt 39gb。【業務の判断】(aa)）。組は追跡番号の中で情報源 ID・外部 ID ごと。保持のみと手入力の実績は入れない。
+     * 組の並びは組の最初の実績番号の順。
+     */
+    public List<MilestoneGroup> groupsOf() {
+        Map<List<Object>, List<Milestone>> grouped = new LinkedHashMap<>();
+        for (Milestone milestone : milestones) {
+            ExternalOrigin origin = milestone.externalOrigin();
+            if (origin != null
+                    && (milestone.state() == MilestoneState.DRAFT || milestone.state() == MilestoneState.ADOPTED)) {
+                grouped.computeIfAbsent(List.of(origin.dataSourceId(), origin.externalId()), key -> new ArrayList<>())
+                        .add(milestone);
+            }
+        }
+        return grouped.values().stream()
+                .map(members -> new MilestoneGroup(
+                        members.getFirst().externalOrigin().dataSourceId(),
+                        members.getFirst().externalOrigin().externalId(),
+                        members))
+                .toList();
+    }
+
+    /** 置き換えられた下書きか（組の下書きで候補でない。S-12 に「後から公開された原本に置き換えられました」と示す。Bolt 39gb の行 43）。 */
+    public boolean isSupersededDraft(Milestone milestone) {
+        return groupOf(milestone).map(group -> group.isSuperseded(milestone)).orElse(false);
+    }
+
+    private Optional<MilestoneGroup> groupOf(Milestone milestone) {
+        return groupsOf().stream()
+                .filter(group -> group.members().contains(milestone))
+                .findFirst();
+    }
+
+    /**
+     * 追跡管理者が候補の下書きを採用する（US-12 AC1・AC2 の外部の分。Bolt 39gb）。採用すると現在状態と根拠の実績番号を導出し直す（T-INV-08）。実績は消えず増えない。
+     * 判定の順は、候補でない → 取消済み → 完了後 → 採用済みと同じ値（何もしない） → 採用済みと値が違う（T-INV-06 を素通りさせない） → 未来の発生時刻（T-INV-13 の採用の分）。
+     * 判定は純粋なので、画面は同じ操作を試して採用のボタンと理由を出し分ける。版はリポジトリが保存のときに増やす。
+     *
+     * @param milestoneNo 採用する実績の実績番号
+     * @param adopter 採用者
+     * @param adoptedAt 採用時刻
+     * @return 採用の結果
+     */
+    public MilestoneAdoption adoptCandidate(int milestoneNo, UserId adopter, UtcInstant adoptedAt) {
+        Optional<Milestone> target = milestones.stream()
+                .filter(milestone -> milestone.milestoneNo() == milestoneNo)
+                .findFirst();
+        Optional<MilestoneGroup> group = target.flatMap(this::groupOf);
+        if (target.isEmpty()
+                || group.flatMap(MilestoneGroup::candidate).filter(target.get()::equals).isEmpty()) {
+            return new MilestoneAdoption.Rejected(AdoptionRejectionReason.NOT_CANDIDATE);
+        }
+        if (bookingStatus == TrackedBookingStatus.CANCELLED) {
+            return new MilestoneAdoption.Rejected(AdoptionRejectionReason.BOOKING_CANCELLED);
+        }
+        if (isCompleted()) {
+            return new MilestoneAdoption.Rejected(AdoptionRejectionReason.TRACKING_COMPLETED);
+        }
+        Milestone candidate = target.get();
+        Optional<Milestone> adopted = group.get().adopted();
+        if (adopted.isPresent()) {
+            return adopted.get().hasSameValueAs(candidate)
+                    ? new MilestoneAdoption.SameAsAdopted(adopted.get())
+                    : new MilestoneAdoption.Rejected(AdoptionRejectionReason.CONFLICTS_WITH_ADOPTED);
+        }
+        if (candidate.occurredAt().instant().isAfter(adoptedAt.instant())) {
+            return new MilestoneAdoption.Rejected(AdoptionRejectionReason.OCCURRED_IN_FUTURE);
+        }
+        Milestone adoptedMilestone = candidate.adopt(adopter, adoptedAt);
+        List<Milestone> replaced = milestones.stream()
+                .map(milestone -> milestone.milestoneNo() == milestoneNo ? adoptedMilestone : milestone)
+                .toList();
+        DerivedStatus derived = DERIVER.derive(replaced);
+        return new MilestoneAdoption.Adopted(
+                withMilestones(replaced, derived.status(), derived.basisMilestoneNo()), adoptedMilestone);
     }
 
     /** 完了後か（予約状態が完了か、現在状態が引渡し済み。【業務の判断】(ad)、T-INV-05）。 */
