@@ -10682,6 +10682,41 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_39g2_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 39g2 計画
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../development/cargo-tracker/bolt_39g_report/" class="md-nav__link">
         
   
@@ -10760,6 +10795,41 @@
     
   
     Bolt 39gc 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_39g2_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 39g2 終了報告
   
 
     
@@ -16802,6 +16872,10 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 <tr>
 <td style="text-align: left;">予約サガ</td>
 <td style="text-align: left;">本予約の確定から追跡の開始（DE-07 → 追跡記録 → DE-22 → 予約の公開 API）を経て予約サガが完了になる（PostgreSQL の統合テストでイベントの発行の記録の完了を待つ。完了は処理中のときだけ・期待版で更新。Bolt 25、ADR-015）。処理中のまま RTY-02 の時間を超えたものが有人確認要へ移る（境界の前後）。追跡の開始の技術の失敗はイベントの再配信が担い、予約サガは再試行を記録しない（ADR-015）。有人確認要の間、画面は処理中を成功と表示しない</td>
+</tr>
+<tr>
+<td style="text-align: left;">輸送段階の通知</td>
+<td style="text-align: left;">手入力で集荷・引渡しを登録すると、DE-09・DE-10 → 追跡の listener → 予約の公開 API を経て予約が輸送中・集荷後、完了・完了になり、発行の記録が完了になる（PostgreSQL の統合テストで待つ。T-184。Bolt 39g2、ADR-014）。集荷と引渡しの通知を重ねても予約の行のロックで両方とも例外なく終わる。届く順によらず段は戻らない。受入シナリオは <code>transport_phase_from_tracking.feature</code>・<code>transport_phase_from_tracking_ui.feature</code>（<code>@demo-bolt-39g2/transport-phase</code>）</td>
 </tr>
 <tr>
 <td style="text-align: left;">外部原本の取込</td>

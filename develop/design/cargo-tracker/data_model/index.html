@@ -10615,6 +10615,41 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_39g2_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 39g2 計画
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../development/cargo-tracker/bolt_39g_report/" class="md-nav__link">
         
   
@@ -10693,6 +10728,41 @@
     
   
     Bolt 39gc 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_39g2_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 39g2 終了報告
   
 
     
@@ -16280,7 +16350,7 @@
 <tbody>
 <tr>
 <td style="text-align: left;"><code>booking</code></td>
-<td style="text-align: left;"><code>tracking_number</code> は一意。UK（<code>quotation_id</code>）で、1 つの見積りから 2 件目の予約を作れない（別のコマンド ID による同時確定でも片方が一意制約で失敗する。予約版ではなく貨物予約に置くのは、変更の承認で予約版を足しても同じ見積りの写しを持てるようにするため。Bolt 23 レビュー）。<code>status</code> IN（<code>CONFIRMED</code>、<code>AMENDMENT_PENDING</code>、<code>CANCELLATION_PENDING</code>、<code>AMENDING</code>、<code>CANCELLED</code>、<code>IN_TRANSIT</code>、<code>COMPLETED</code>）。<code>transport_phase</code> IN（<code>BEFORE_PICKUP</code>、<code>AFTER_PICKUP</code>、<code>COMPLETED</code>）。UK（<code>transport_request_number</code>、<code>quotation_no</code>）: 見積り番号は見積りの写し（業務番号と同じ。R-31）で、見積りの公開 API に照会する前に同じ見積りの予約を引く（失効・置換の後は見積り ID が返らないため。Bolt 24）。B-INV-11 の正は見積り ID の UK で、業務番号と見積り番号の UK は同じ事実を業務の鍵で引くための索引を兼ねる（どちらに違反しても同じ見積りの予約として扱う）</td>
+<td style="text-align: left;"><code>tracking_number</code> は一意。UK（<code>quotation_id</code>）で、1 つの見積りから 2 件目の予約を作れない（別のコマンド ID による同時確定でも片方が一意制約で失敗する。予約版ではなく貨物予約に置くのは、変更の承認で予約版を足しても同じ見積りの写しを持てるようにするため。Bolt 23 レビュー）。<code>status</code> IN（<code>CONFIRMED</code>、<code>AMENDMENT_PENDING</code>、<code>CANCELLATION_PENDING</code>、<code>AMENDING</code>、<code>CANCELLED</code>、<code>IN_TRANSIT</code>、<code>COMPLETED</code>）。<code>transport_phase</code> IN（<code>BEFORE_PICKUP</code>、<code>AFTER_PICKUP</code>、<code>COMPLETED</code>）。UK（<code>transport_request_number</code>、<code>quotation_no</code>）: 見積り番号は見積りの写し（業務番号と同じ。R-31）で、見積りの公開 API に照会する前に同じ見積りの予約を引く（失効・置換の後は見積り ID が返らないため。Bolt 24）。B-INV-11 の正は見積り ID の UK で、業務番号と見積り番号の UK は同じ事実を業務の鍵で引くための索引を兼ねる（どちらに違反しても同じ見積りの予約として扱う）。Bolt 39g2 から、<code>status</code>・<code>transport_phase</code> は DE-09・DE-10 の通知（予約の公開 API）で <code>IN_TRANSIT</code>・<code>AFTER_PICKUP</code> と <code>COMPLETED</code>・<code>COMPLETED</code> に進む（期待版の UPDATE で <code>version</code> を 1 進め、<code>updated_at</code> と <code>updated_by</code>（通知の操作者＝集荷・引渡しを登録・採用した追跡管理者）を書く。<code>current_version_no</code> と予約版は書かない。B-INV-08）。スキーマは変えない。39g2 の前に採用した集荷・引渡しの予約は補正しない</td>
 <td style="text-align: left;">B-INV-06、B-INV-07、B-INV-11</td>
 </tr>
 <tr>

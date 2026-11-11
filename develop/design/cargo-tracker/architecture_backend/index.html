@@ -10566,6 +10566,41 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_39g2_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 39g2 計画
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../development/cargo-tracker/bolt_39g_report/" class="md-nav__link">
         
   
@@ -10644,6 +10679,41 @@
     
   
     Bolt 39gc 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_39g2_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 39g2 終了報告
   
 
     
@@ -16125,10 +16195,10 @@
 <td style="text-align: left;">業務の意味を持たない基本型だけに限る。例外は担当範囲の外の試行の記録のポート <code>OutOfScopeAttemptRecorder</code> 1 つ（ADR-019。Bolt 38f）</td>
 </tr>
 <tr>
-<td style="text-align: left;">追跡 → 予約（イベントのみ）</td>
+<td style="text-align: left;">追跡 → 予約（下流から上流への通知）</td>
 <td style="text-align: left;">T → B</td>
-<td style="text-align: left;">公表された言語（ドメインイベント）</td>
-<td style="text-align: left;">集荷実績の採用と引渡しの確認だけを通知する。予約は追跡の公開 API・内部に依存しない（<a href="../domain_model/">ドメインモデル</a> DE-09、DE-10。第 2 章で Booking が Cargo Handled を購読するのと同じ）。注: 予約が追跡のイベントを購読すると <code>booking → tracking :: events</code> が加わり、ADR-015 の依存の向き（<code>tracking → booking</code>・<code>routing</code>）と循環する。DE-09・DE-10 は ADR-014 の形（追跡の listener が予約の公開 API を呼ぶ）にそろえ、US-12 の残り（W7）の Bolt で直す</td>
+<td style="text-align: left;">下流の listener が上流の公開 API を呼ぶ（<a href="../../../adr/cargo-tracker/014-downstream-to-upstream-notification/">ADR-014</a>）</td>
+<td style="text-align: left;">集荷実績の採用（DE-09）と引渡しの確認（DE-10）を追跡の listener（<code>BookingTransportPhaseNotificationEventHandler</code>）が受け、予約の公開 API（<code>booking.interfaces.api.TransportPhaseNotification</code>）で予約の状態と輸送段階を進める。予約は追跡のイベント・公開 API・内部に依存しない（<a href="../domain_model/">ドメインモデル</a> DE-09、DE-10）。第 2 章の Booking が Cargo Handled を購読する形は、<code>booking → tracking :: events</code> が ADR-015 の依存の向きと循環するので採らず、Bolt 39g2 で ADR-014 の形にそろえた（<code>tracking</code> の <code>allowedDependencies</code> の <code>booking :: api</code> は Bolt 25 から）</td>
 </tr>
 <tr>
 <td style="text-align: left;">予約 → 見積り（下流から上流への通知）</td>
@@ -16165,7 +16235,7 @@
 <li>荷主の画面（C-02・C-04）は、輸送要求が荷主承認待ち・予約待ちのとき荷主に見える最新の見積りから状態と案内を選ぶ（<a href="../../../adr/cargo-tracker/018-requote-returns-transport-request-with-ordering-guard/">ADR-018</a> の、輸送要求はどの見積りのための状態かを持たないことの帰結。表示の対応は <code>TransportRequestLabels</code>。<a href="../ui_design/">UI 設計</a>の「見積依頼から本予約まで」の対応表。D-85。Bolt 35d）</li>
 <li>アクセス・監査が使う通知の公開 API（Bolt 33。<a href="../../../adr/cargo-tracker/017-notification-module-and-mail/">ADR-017</a>）: password の再設定のメールの送信（<code>notification.interfaces.api.PasswordResetMail</code>。依頼の ID・トークンの ID・宛先の利用者の ID・アドレス・再設定の URL・期限・言語を受け、送信の記録を残して送る。結果は <code>Sent</code>・<code>AlreadySent</code>（同じ依頼の ID と宛先で記録済み）・<code>Failed</code>）。呼ぶ側は <code>identity.application.internal.outboundservices.acl.NotificationPasswordResetMails</code> で、イベントのハンドラー <code>PasswordResetMailEventHandler</code>（<code>@ApplicationModuleListener</code>）から呼ぶ。アダプターは <code>notification.interfaces.api.internal</code> に置き、通知のアプリケーションサービス <code>PasswordResetMailService</code>（<code>notification.application.internal.commandservices</code>）に委ねる。</li>
 <li>アクセス・監査が使う通知の公開 API（Bolt 38b2b）: 利用者の招待のメールの送信（<code>notification.interfaces.api.UserInvitationMail</code>。登録の ID・招待のトークンの ID・宛先の利用者の ID・アドレス・初回の設定の URL・期限・言語を受け、結果は <code>Sent</code>・<code>AlreadySent</code>・<code>Failed</code>）。種類ごとの口で、一般の口と共有の部品を広げるかは Bolt 38d で決める。呼ぶのは identity の ACL <code>NotificationUserInvitationMails</code>（<code>identity.application.internal.outboundservices.acl</code>。Bolt 38b2c。DE-25 のハンドラー <code>UserInvitationMailEventHandler</code> から）</li>
-<li>追跡が使う公開 API（Bolt 25。ADR-015）: 経路設計の経路版の区間の照会（<code>routing.interfaces.api.RouteVersionLegQuery</code>。案件番号と経路版番号から、確定した経路版の区間を区間の順に返す。ない経路版は空）と、予約の追跡の開始の通知（<code>booking.interfaces.api.TrackingStartNotification</code>。予約 ID・追跡番号・開始時刻を受け、処理中の予約サガを完了にする。結果は <code>Completed</code>・<code>AlreadyCompleted</code>・<code>NotCompleted(reason)</code>）。</li>
+<li>追跡が使う公開 API（Bolt 25。ADR-015）: 経路設計の経路版の区間の照会（<code>routing.interfaces.api.RouteVersionLegQuery</code>。案件番号と経路版番号から、確定した経路版の区間を区間の順に返す。ない経路版は空）と、予約の追跡の開始の通知（<code>booking.interfaces.api.TrackingStartNotification</code>。予約 ID・追跡番号・開始時刻を受け、処理中の予約サガを完了にする。結果は <code>Completed</code>・<code>AlreadyCompleted</code>・<code>NotCompleted(reason)</code>）。Bolt 39g2 で、予約の輸送段階の通知（<code>booking.interfaces.api.TransportPhaseNotification</code>。<code>notifyPickedUp</code>・<code>notifyDelivered</code>。予約 ID・追跡番号・実績番号・発生時刻・操作者を受け、予約の状態と輸送段階を進める。段は戻さない。結果は <code>Recorded</code>・<code>AlreadyRecorded</code>・<code>NotRecorded(reason)</code>。理由は <code>BOOKING_NOT_FOUND</code>・<code>BOOKING_CANCELLED</code>・<code>BOOKING_UNDER_REQUEST</code>）を足した。呼ぶのは <code>tracking.application.internal.outboundservices.acl.BookingTransportPhases</code>、アダプターは <code>booking.interfaces.api.internal.TransportPhaseNotificationAdapter</code> で、予約の <code>TransportPhaseCommandService</code> に委ねる。</li>
 <li>担当範囲の判定の置き方の既定（Bolt 39。W6 横断レビュー M-1）: 担当範囲の判定は、下流が判定の材料（荷主企業）を自分の行に写して自分で判定するのを既定にする。上流の公開 API に主体を渡して判定させるのは、範囲の判定を上流のほかの理由とロックより先に置く必要があるときに限り、主体は認可にだけ使い写しに入れない（ADR-016 :34・:78）。主体を持たない読み出しと外部データは判定を通さない（<code>RoutingCaseScope.java:17</code> の注、W7 の確認ポイント 3）</li>
 </ul>
 <h3 id="_6">共有カーネル<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h3>
