@@ -2,8 +2,10 @@
 type: Plan
 title: "Bolt 39gc 終了報告 - 時系列に反する実績を確認中にし、DE-18 を出し、手入力の取消済み・完了後を決める"
 tags: [plan]
-status: draft
+status: stable
 generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-11T07:30:50Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-11-11T07:50:14Z }
 ---
 
 # Bolt 39gc 終了報告 - 時系列に反する実績を確認中にし、DE-18 を出し、手入力の取消済み・完了後を決める
@@ -32,7 +34,7 @@ generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-11T07:30:50Z }
 | 対象 | `MilestoneSequenceRule`・`UnderReviewReason`・`TrackingPlacedUnderReview`（新規）、`CurrentStatusDeriver`・`DerivedStatus`・`TrackingRecord`・`Milestone`・`MilestoneGroup`・結果の型、`TrackingRecordCommandService`、S-11・S-12・S-13、`tracking_record.under_review_reason`（`V20261112100000`）、マニュアル 9 章・用語集 |
 | GitHub | #19（US-12。クローズは終了報告の承認の後） |
 | SP | 2（US-12 の残り） |
-| ブランチ | develop（push していない） |
+| ブランチ | develop |
 | 計画 | [Bolt 39gc 計画](bolt_39gc_plan.md) |
 
 ## 成果
@@ -109,7 +111,8 @@ W7 の残り（39g2・39h など。release_plan の順序）。
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
-| 2026-11-11 | 初版作成（承認待ち） | anthropic/claude-sonnet-5-5 |
+| 2026-11-11 | 推奨のとおり承認として記録した（議題 1〜8。議題 5 は T-247 の議題に足し、議題 8 は W7 の締めで諮る。#19 をクローズした。human:kakimomokuri） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
+| 2026-11-11 | 初版作成 | anthropic/claude-sonnet-5-5 |
 
 ## 関連ドキュメント
 
