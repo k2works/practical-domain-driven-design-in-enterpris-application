@@ -175,17 +175,39 @@ S12 : 追跡の詳細（既存の画面。ナビの追加は要らない）
 
 ```plantuml
 @startuml
-package tracking.domain.model.aggregates { class TrackingRecord { adoptCandidate() ; groupsOf() } }
-package tracking.domain.model.entities { class Milestone }
-package tracking.domain.model.rules { class MilestoneCandidateRule <<DomainRule>> }
-package tracking.domain.model.valueobjects { class MilestoneGroup { candidate() } ; class AdoptionRejectionReason }
-package tracking.application.internal.commandservices { class TrackingRecordCommandService }
-package tracking.interfaces.web { class TrackingRecordController }
+title 依存（Bolt 39gb）
+
+package "tracking.interfaces.web" {
+  class TrackingRecordController
+}
+package "tracking.application.internal.commandservices" {
+  class TrackingRecordCommandService
+}
+package "tracking.domain.model.aggregates" {
+  class TrackingRecord {
+    adoptCandidate()
+    groupsOf()
+  }
+}
+package "tracking.domain.model.entities" {
+  class Milestone
+}
+package "tracking.domain.model.rules" {
+  class MilestoneCandidateRule <<DomainRule>>
+}
+package "tracking.domain.model.valueobjects" {
+  class MilestoneGroup {
+    candidate()
+  }
+  enum AdoptionRejectionReason
+}
+
 TrackingRecordController --> TrackingRecordCommandService
 TrackingRecordCommandService --> TrackingRecord
 TrackingRecord --> MilestoneGroup
 MilestoneGroup --> MilestoneCandidateRule
 MilestoneGroup --> Milestone
+TrackingRecord ..> AdoptionRejectionReason
 @enduml
 ```
 
