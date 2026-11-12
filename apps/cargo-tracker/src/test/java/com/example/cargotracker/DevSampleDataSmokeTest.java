@@ -55,9 +55,9 @@ import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseSum
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
 import com.example.cargotracker.shared.domain.CommandId;
 import com.example.cargotracker.shared.domain.CompanyId;
+import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.Role;
 import com.example.cargotracker.shared.domain.UserId;
-import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Duration;
 import java.time.Instant;
@@ -443,7 +443,8 @@ class DevSampleDataSmokeTest {
                         .toList())
                 .toList();
 
-        assertThat(thresholds.get(0)).containsExactly(new ExclusionThreshold.ConnectionRuleMissing(new Location("HKHKG")));
+        assertThat(thresholds.get(0))
+                .containsExactly(new ExclusionThreshold.ConnectionRuleMissing(new Location("HKHKG")));
         assertThat(thresholds.get(1))
                 .containsExactly(new ExclusionThreshold.MinimumConnection(new Location("SGSIN"), Duration.ofHours(8)));
         assertThat(thresholds.get(2)).hasSize(1).first().isInstanceOf(ExclusionThreshold.ArrivalDeadline.class);
