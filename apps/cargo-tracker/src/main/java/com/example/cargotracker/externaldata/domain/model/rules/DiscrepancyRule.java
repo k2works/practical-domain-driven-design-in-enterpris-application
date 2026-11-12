@@ -56,15 +56,52 @@ public final class DiscrepancyRule {
     public static Optional<Discrepancy> discrepancyOf(
             String targetKey, Instant acquiredAt, List<ExternalIdAdoptedValue> adopted) {
         Objects.requireNonNull(targetKey, "targetKey");
-        Objects.requireNonNull(acquiredAt, "acquiredAt");
-        Optional<ExternalIdAdoptedValue> lastAcquired = adopted.stream().max(ACQUIRED_ORDER);
-        if (lastAcquired.isPresent() && acquiredAt.isBefore(lastAcquired.get().acquiredAt())) {
-            return Optional.of(new Discrepancy(
-                    DiscrepancyReason.VERSION_REVERSED, lastAcquired.get().externalVersion()));
+        Optional<ExternalIdAdoptedValue> partner = partnerOf(acquiredAt, adopted);
+        if (isVersionReversed(acquiredAt, adopted)) {
+            return partner.map(last -> new Discrepancy(DiscrepancyReason.VERSION_REVERSED, last.externalVersion()));
         }
-        return adopted.stream()
-                .max(PUBLISHED_ORDER)
-                .filter(current -> !current.targetKey().equals(targetKey))
+        return partner.filter(current -> !current.targetKey().equals(targetKey))
                 .map(current -> new Discrepancy(DiscrepancyReason.TARGET_KEY_DIFFERS, current.externalVersion()));
+    }
+
+    /**
+     * 版の逆転か。今の取得時刻が、この外部 ID の最後に取得した採用値の取得時刻より厳密に前（D-142。同じ時刻は逆転でない。外部版は問わない）。
+     * 警告の判定と画面の領域が、差異の判定と同じ定義を共有する（Bolt 39h3 の開始準備の決定 (2)）。
+     *
+     * @param acquiredAt 今の取得時刻
+     * @param adopted この外部 ID の採用値の一覧（並びは問わない。空なら偽）
+     * @return 版の逆転か
+     */
+    public static boolean isVersionReversed(Instant acquiredAt, List<ExternalIdAdoptedValue> adopted) {
+        Objects.requireNonNull(acquiredAt, "acquiredAt");
+        return lastAcquiredOf(adopted)
+                .filter(last -> acquiredAt.isBefore(last.acquiredAt()))
+                .isPresent();
+    }
+
+    /**
+     * 今使っている採用値（矛盾の相手の選び方と同じ順。公開した時刻 → 取得時刻 → 受信記録 ID の文字列の最後。D-105）。
+     *
+     * @param adopted この外部 ID の採用値の一覧（並びは問わない）
+     * @return 今使っている採用値（一覧が空なら空）
+     */
+    public static Optional<ExternalIdAdoptedValue> inUseOf(List<ExternalIdAdoptedValue> adopted) {
+        return adopted.stream().max(PUBLISHED_ORDER);
+    }
+
+    /**
+     * 比べる相手。版の逆転ならこの外部 ID の最後に取得した採用値、そうでなければ今使っている採用値。差異の判定と判断の画面の「この外部 ID の
+     * 採用値」が同じ相手を指す。
+     *
+     * @param acquiredAt 今の取得時刻
+     * @param adopted この外部 ID の採用値の一覧（並びは問わない）
+     * @return 比べる相手（一覧が空なら空）
+     */
+    public static Optional<ExternalIdAdoptedValue> partnerOf(Instant acquiredAt, List<ExternalIdAdoptedValue> adopted) {
+        return isVersionReversed(acquiredAt, adopted) ? lastAcquiredOf(adopted) : inUseOf(adopted);
+    }
+
+    private static Optional<ExternalIdAdoptedValue> lastAcquiredOf(List<ExternalIdAdoptedValue> adopted) {
+        return adopted.stream().max(ACQUIRED_ORDER);
     }
 }
