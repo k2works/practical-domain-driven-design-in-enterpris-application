@@ -163,7 +163,7 @@ Bolt がイテレーションに当たります。ふりかえりは各 Bolt の
 | 39g4c | [最新の到着見込みの根拠を S-12 に 1 行で示す](bolt_39g4c_plan.md) | [終了報告](bolt_39g4c_report.md)（[動画](../../assets/demo/bolt-39g4c/latest-estimate-basis.webm){:target="_blank"}） | W7 | 完了 |
 | 39h | [版の逆転と既存の採用値との矛盾を取込で差異に分類する](bolt_39h_plan.md) | [終了報告](bolt_39h_report.md)（[動画](../../assets/demo/bolt-39h/discrepancy.webm){:target="_blank"}） | W7 | 完了 |
 | 39h2 | [S-17 で差異を一覧に出して却下する](bolt_39h2_plan.md) | [終了報告](bolt_39h2_report.md)（[動画](../../assets/demo/bolt-39h2/reject-discrepancy.webm){:target="_blank"}） | W7 | 完了 |
-| 39h3 | [判断の画面で外部版をまたいで比べ、古い外部版の隔離の採用を警告する](bolt_39h3_plan.md) | [終了報告](bolt_39h3_report.md)（[動画](../../assets/demo/bolt-39h3/old-version-warning.webm){:target="_blank"}） | W7 | 終了報告（承認待ち） |
+| 39h3 | [判断の画面で外部版をまたいで比べ、古い外部版の隔離の採用を警告する](bolt_39h3_plan.md) | [終了報告](bolt_39h3_report.md)（[動画](../../assets/demo/bolt-39h3/old-version-warning.webm){:target="_blank"}） | W7 | 完了 |
 
 Bolt を始めるときに行を追加します。
 
