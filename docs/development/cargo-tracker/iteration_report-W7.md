@@ -3,7 +3,7 @@ type: Report
 title: "W7 完了報告書 - cargo-tracker（外部原本の取込と追跡の完成）"
 description: "cargo-tracker の W7（Bolt 38h〜39i の 39 本）の完了報告書。10 SP（100%）、Release 1.0 は 31/54 SP。週全体のコードレビュー、品質ゲートの流し直し、PERF-06 の結果、ふりかえり（KPT）と W8 への引き継ぎ、人に諮る議題と推奨。"
 tags: [development,report]
-status: draft
+status: stable
 generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-13T09:00:00Z }
 ---
 
@@ -81,6 +81,7 @@ xychart-beta
 | `npx gulp okf:check`（2026-11-13、締めの作業の前） | ERROR 0、WARN 10（すべて `template/まずこれを読もうリスト.md` の既存のリンク切れ） |
 | CI（run 43313955973、develop の `239021856`） | `check` 成功（9 分）、`ui` 成功（24 分）、`deploy-demo` 成功（2 分）、`performance` は手動のジョブなので skipped |
 | PERF-06 の性能の手動ジョブ（run 43318310748、`239021856`、Linux の CI） | **failure（8 件中 1 件の失敗。PERF-06 の 1 万件の取込の判定は 5 件とも上限 300 秒の 1/8 以下で通った）**。失敗したのは `Bolt39d2b_行21_キーのない隔離1万件のまとめての却下は…`（`ExternalDataIngestionPerformanceTest.java:492`）の `assertThat(page.items()).isNotEmpty()`。却下のトランザクションの間に別の接続で取込の一覧を照会する確かめで、却下がコミットを終えた後の照会は空のページを返す競合（テスト側の欠陥と読める。製品コードの欠陥かは未確認）。下の「PERF-06 の測った値」 |
+| PERF-06 の性能の手動ジョブの再実行（run 43319494636、同じ `239021856`、Linux の CI） | **success（8 件すべて通った）**。キーのない隔離 1 万件のまとめての却下は 4.8 秒（上限 300 秒）、一覧の照会は最大 0.065 秒（上限 1 秒、8 回）。1 万件の取込は主要実績 16.3 秒、航海（寄港 5）26.5 秒、航海（寄港 60）27.7 秒、航海（寄港 5・外部版 5）23.9 秒で、いずれも上限 300 秒の 1/10 前後。1 回目の失敗は行 21 の競合（却下のコミット直後に一覧を照会して空になる、テスト側）で、再実行では出なかったため、W8 の最初の調査の Bolt で直す。#18 を開き直す条件（5 分超）には当たらない |
 
 #### PERF-06 の測った値（run 43318310748、Linux の CI、上限 300 秒）
 
@@ -314,6 +315,7 @@ GitHub の Release 1.0 のマイルストーンは open 11・closed 11（W6 の�
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
 | 2026-11-13 | 初版作成（承認待ち）。週全体のコードレビュー、品質ゲートの確認、ふりかえり、議題と推奨を含めた | anthropic/claude-sonnet-5-5 |
+| 2026-11-13 | PERF-06 の再実行（run 43319494636）が成功したので結果を足し、議題 1〜8 と M4・M5 の推奨を承認として記録した（以降は推奨で進める指示による。ただし議題 1 の `.claude/settings.json` のフックの追加は設定の変更なので、実際に入れる前にユーザー本人に確かめる）。human:kakimomokuri | anthropic/claude-sonnet-5-5、承認 human:kakimomokuri |
 
 ## 関連ドキュメント
 
