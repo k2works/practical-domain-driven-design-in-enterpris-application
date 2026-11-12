@@ -100,6 +100,12 @@ class ExternalDataIngestionPerformanceTest {
 
     private static final int ROWS = 10_000;
 
+    /** 行 7（Bolt 39h4）: 外部 ID の種類と、外部 ID ごとの外部版の数（採用になる外部版は 4、版の逆転の差異が 1）。 */
+    private static final int EXTERNAL_IDS = 2_000;
+
+    private static final int ADOPTED_VERSIONS = 4;
+    private static final int VERSIONS_PER_ID = ADOPTED_VERSIONS + 1;
+
     /** PERF-06 の判定（組み立てから取込のコミットまで）。 */
     private static final Duration LIMIT = Duration.ofMinutes(5);
 
@@ -209,6 +215,30 @@ class ExternalDataIngestionPerformanceTest {
                                 acquiredAt));
 
         measure("milestone", "MILESTONE", CsvFileKind.MILESTONE, csv);
+    }
+
+    /**
+     * Bolt 39h4 の行 7: 39h が取込の分類に足した外部 ID ごとの採用値の照会（{@code findByExternalId}）と差異の経路（DE-31 と監査）を、
+     * 外部版が複数ある組で測る。測る・判定するのは W7 の締めの CI（Linux の手動のジョブ {@code performance}）で、Windows では組み立てて
+     * 流れること（採用 8,000・差異 2,000）を確かめる。
+     */
+    @Test
+    void Bolt39h4_行7_外部ID2000種と外部版5の航海1万件は5分以内で採用8000件と差異2000件になり監査の配信が完了する() {
+        byte[] csv = reversedVoyageCsv(5, acquiredAt());
+        LOG.info(
+                "PERF-06 voyage(port-calls=5,versions-per-id={}) external-ids={} adopted-expected={} discrepancies-expected={}",
+                VERSIONS_PER_ID,
+                EXTERNAL_IDS,
+                EXTERNAL_IDS * ADOPTED_VERSIONS,
+                EXTERNAL_IDS);
+
+        measure(
+                "voyage(port-calls=5,versions-per-id=" + VERSIONS_PER_ID + ")",
+                "VOYAGE",
+                CsvFileKind.VOYAGE,
+                csv,
+                EXTERNAL_IDS * ADOPTED_VERSIONS,
+                EXTERNAL_IDS);
     }
 
     @Test
@@ -549,6 +579,12 @@ class ExternalDataIngestionPerformanceTest {
      * {@code finally} で（情報源を停止にする前に）行い、1 万件の非同期の配信を裏で走らせたまま次の計測に進まない。
      */
     private void measure(String label, String recordType, CsvFileKind kind, byte[] csv) {
+        measure(label, recordType, kind, csv, ROWS, 0);
+    }
+
+    /** 採用と差異の件数の決まったファイルを測る（差異は採用値を作らない。Bolt 39h4 の行 7）。 */
+    private void measure(
+            String label, String recordType, CsvFileKind kind, byte[] csv, int expectedAdopted, int expectedDiscrepancies) {
         UUID sourceId = insertApprovedSource(ExternalDataIngestionConnectionTest.newProvider(), recordType);
         Ingested result = null;
         try {
@@ -585,8 +621,9 @@ class ExternalDataIngestionPerformanceTest {
 
             assertThat(total).isLessThanOrEqualTo(LIMIT);
             assertThat(result.receivedCount()).isEqualTo(ROWS);
-            assertThat(result.countOf(Classification.ADOPTED)).isEqualTo(ROWS);
-            assertThat(adoptedValueCount(result.ingestionId())).isEqualTo(ROWS);
+            assertThat(result.countOf(Classification.ADOPTED)).isEqualTo(expectedAdopted);
+            assertThat(result.countOf(Classification.DISCREPANCY)).isEqualTo(expectedDiscrepancies);
+            assertThat(adoptedValueCount(result.ingestionId())).isEqualTo(expectedAdopted);
             assertThat(connectionUsage.peakConnections()).isEqualTo(2);
             assertThat(connectionUsage.commits()).isEqualTo(ROWS + 2);
             assertThat(countQueries).isLessThanOrEqualTo(COUNT_QUERIES_LIMIT);
@@ -661,9 +698,29 @@ class ExternalDataIngestionPerformanceTest {
     }
 
     /**
+     * 外部 ID 2,000 種 × 外部版 5 の航海のファイル（Bolt 39h4 の行 7）。外部版ごとにまとめて並べ（外部版 1 の 2,000 行、外部版 2 の…）、
+     * 外部版 1〜4 は取得時刻が昇順で採用になり、外部版 5 は外部版 1 より前の取得時刻にして版の逆転の差異にする。同じファイルの先の行の
+     * 採用値を後の行の分類が見る（{@code IngestionService} は 1 つのトランザクション）。
+     */
+    private static byte[] reversedVoyageCsv(int portCalls, Instant acquiredAt) {
+        IntFunction<String> line = row -> {
+            int version = row / EXTERNAL_IDS + 1;
+            Instant acquired = version <= ADOPTED_VERSIONS
+                    ? acquiredAt.minus(Duration.ofMinutes(ADOPTED_VERSIONS + 1L - version))
+                    : acquiredAt.minus(Duration.ofMinutes(ADOPTED_VERSIONS + 1L));
+            return voyageLine(portCalls, acquired, version).apply(row % EXTERNAL_IDS);
+        };
+        return ExternalDataIngestionConnectionTest.csv(VOYAGE_HEADER, ROWS, line);
+    }
+
+    private static IntFunction<String> voyageLine(int portCalls, Instant acquiredAt) {
+        return voyageLine(portCalls, acquiredAt, 1);
+    }
+
+    /**
      * 航海の行。寄港は港を違え、時刻を順に並べ（寄港ごとに 1 日、到着から出発まで 12 時間）、始港の到着と終港の出発を空にする（T-230）。
      */
-    private static IntFunction<String> voyageLine(int portCalls, Instant acquiredAt) {
+    private static IntFunction<String> voyageLine(int portCalls, Instant acquiredAt, int version) {
         return row -> {
             StringJoiner calls = new StringJoiner("|");
             Instant base = FIRST_CALL.plus(row, ChronoUnit.MINUTES);
@@ -673,7 +730,7 @@ class ExternalDataIngestionPerformanceTest {
                 calls.add(port(call) + ";" + (call == 0 ? "" : PORT_CALL_TIME.format(arrival)) + ";"
                         + (call == portCalls - 1 ? "" : PORT_CALL_TIME.format(departure)));
             }
-            return "V%05d,1,%s,%s".formatted(row, acquiredAt, calls);
+            return "V%05d,%d,%s,%s".formatted(row, version, acquiredAt, calls);
         };
     }
 
