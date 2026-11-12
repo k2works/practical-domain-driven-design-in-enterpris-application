@@ -11320,6 +11320,41 @@
   
   
     <li class="md-nav__item">
+      <a href="../bolt_39i_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 39i 計画
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../bolt_39g_report/" class="md-nav__link">
         
   
@@ -19623,7 +19658,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">39i</td>
-<td style="text-align: left;">経路設計の貨物種別の判定（<code>CARGO_NOT_SUPPORTED</code>）と貨物種別の ACL、除外理由の閾値の型と <code>threshold</code> の列、値の名前</td>
+<td style="text-align: left;">経路設計の貨物種別の判定（<code>CARGO_NOT_SUPPORTED</code>）と貨物種別の ACL、除外理由の閾値の型と <code>threshold</code> の列、値の名前。<a href="../bolt_39i_plan/">Bolt 39i 計画</a>（計画は承認済み（human:kakimomokuri）。2026-11-13 に開始準備し、2 つの整合性検証の指摘を反映した。約 3 時間 30 分（210 分）、本計画 CP-1〜CP-7。開始準備で推奨に決めたこと（仮。承認済み。human:kakimomokuri。業務責任者に確かめる）: 分けない（超えそうなら列の分割と移し替えを 39i2 へ）。【業務の判断】(bl) 一般貨物でない案件は全候補を貨物種別で除外する（知らない種別も。専門家承認で通す道は作らない。台帳 D-154（仮））、(bm) 不適合の時刻は最初の区間の出発予定、閾値は案件の貨物種別、参照情報版は最初の区間の航海の採用情報版、S-06 の文は 4 区分の全文と、全候補が貨物種別だけで除外のときの導入文の差し替え（台帳 D-155（仮））。貨物種別の型 <code>RouteCargoCategory</code> と ACL の翻訳（知らない名前は <code>UNRECOGNIZED</code>）、規則 <code>RoutableCargoPolicy</code>（算出のときだけ。確定と評価は変えない）、閾値の型 <code>ExclusionThreshold</code>（sealed。入れ子は <code>UnsupportedCargo</code>・<code>StaleVoyageInfo</code> ほか）。スキーマ: <code>exclusion_reason.threshold</code> を区分ごとの 6 列に分け CHECK を足して <code>threshold</code> を消す（1 つのマイグレーション。追加列は NULL 可。NULL・区切りのない既存の行は CHECK で止める）。<code>ConstraintEvaluation</code> は改名しない。【前の決定の変更】(32) Bolt 37b2 の閾値の 1 列、(33) Bolt 17 の確認ポイント 10（貨物種別は判定しない）、(34) 後方互換の規約（列の削除の 3 段）の例外（ステージング・本番が W10 まで）。画面の文だけで、キャプチャと動画はない）</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: left;">アウトサイドイン</td>
 <td style="text-align: left;">計画と終了報告（構造・スキーマ）</td>
