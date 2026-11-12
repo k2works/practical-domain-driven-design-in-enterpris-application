@@ -20,7 +20,7 @@ public interface TrackingRecordRepository {
     void save(TrackingRecord trackingRecord);
 
     /**
-     * 追跡記録を更新する。まだ保存していない主要実績を追加し、現在状態・根拠の実績番号・最新の到着見込み・最終取得時刻（Bolt 39g3。当初の到着予定は書かない）・次の予定の実績の予定時刻（Bolt 39g4）を書き直して版を 1 増やす（Bolt 26b）。
+     * 追跡記録を更新する。まだ保存していない主要実績を追加し、現在状態・根拠の実績番号・最新の到着見込み・最終取得時刻（Bolt 39g3。当初の到着予定は書かない）・次の予定の実績の予定時刻（Bolt 39g4）・航海の到着予定と順の鍵（Bolt 39g4b）を書き直して版を 1 増やす（Bolt 26b）。
      * 読み込んだ後に別の更新が先に保存されていた（版の不一致）か、同じ出典の実績が同時に登録されていた（一意制約の違反）なら
      * {@link ConcurrentTrackingRecordUpdateException}。表にある主要実績の中身が集約と違う、または表にあって集約にない実績があれば、版を通さずに書いた
      * 経路の誤りなので {@link IllegalStateException}（P-3。Bolt 39g2）。
@@ -40,6 +40,12 @@ public interface TrackingRecordRepository {
      * 待ちの上限は 10 秒で、超えると例外（発行記録を未完了に残す）。追跡記録がなければ押さえずに空を返す。呼び手のトランザクションの中で呼ぶ。
      */
     Optional<TrackingRecord> findByTrackingNumberForUpdate(TrackingNumber trackingNumber);
+
+    /**
+     * その航海が最後の区間（その追跡記録の最後の予定区間）の追跡番号を、追跡番号の順に取得する（DE-12 の受け取りの対象。Bolt 39g4b の決定 (6)）。並べるのは照会の
+     * 責任で、呼び手はこの順に行を押さえる（デッドロックを避ける）。同じ追跡で最初と最後の区間に出る航海も 1 回だけ返す。完了後・取消済みは除かない（追跡記録が決める）。
+     */
+    List<TrackingNumber> findTrackingNumbersByFinalLegVoyage(String voyageNumber);
 
     /**
      * 荷主企業の追跡記録を追跡番号で取得する（C-10。荷主企業で絞り、他社の追跡記録は存在しないのと同じく空。BR-07。Bolt 27）。荷主の

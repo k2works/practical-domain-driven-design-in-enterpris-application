@@ -221,6 +221,141 @@ class MyBatisTrackingRecordLockIntegrationTest {
         }
     }
 
+    /**
+     * Bolt 39g4b の行 15（決定 (7)）。同じ追跡記録に DE-12 と DE-13 の受け取りが重なると行のロックで直列になり、両方の結果が残る。画面の登録は DE-12 の
+     * 受け取りの前に読んだ版で保存すると今のとおり競合。最後の区間の航海はテストごとに作る（ほかのテストがコミットした追跡を押さえない）。
+     */
+    @Nested
+    class Bolt39g4b_DE12の直列 {
+
+        private final Blocked blocked = (jdbc, firstThread) -> await("後の受け取りの接続が先の受け取りのロックを待っている")
+                .atMost(Duration.ofSeconds(30))
+                .pollInterval(Duration.ofMillis(50))
+                .until(() -> jdbc.queryForObject(
+                                "SELECT count(*) FROM pg_stat_activity WHERE wait_event_type = 'Lock'"
+                                        + " AND query LIKE '%tracking.%'",
+                                Integer.class)
+                        > 0);
+
+        private TrackingRecord startedOn(Fixture f, String finalVoyage) {
+            TrackingRecord trackingRecord = TrackingRecord.start(
+                            f.randomNumber(),
+                            UUID.randomUUID(),
+                            new CompanyId(UUID.randomUUID()),
+                            new CompanyId(UUID.randomUUID()),
+                            new com.example.cargotracker.tracking.domain.model.valueobjects.Schedule(
+                                    "RC-2026-0001",
+                                    1,
+                                    List.of(
+                                            TrackingFixture.leg(
+                                                    "V100",
+                                                    "JPTYO",
+                                                    "KRPUS",
+                                                    "2026-11-01T00:00:00Z",
+                                                    "2026-11-03T00:00:00Z"),
+                                            TrackingFixture.leg(
+                                                    finalVoyage,
+                                                    "KRPUS",
+                                                    "USLAX",
+                                                    "2026-11-04T00:00:00Z",
+                                                    "2026-11-15T00:00:00Z"))),
+                            TrackingFixture.STARTED_AT)
+                    .trackingRecord();
+            f.transaction().executeWithoutResult(status -> f.repository().save(trackingRecord));
+            return trackingRecord;
+        }
+
+        private static com.example.cargotracker.externaldata.domain.events.VoyageAdoptedValueUpdated voyageEvent(
+                String voyage) {
+            UtcInstant now = new UtcInstant(Instant.parse("2026-11-06T00:00:00Z"));
+            return new com.example.cargotracker.externaldata.domain.events.VoyageAdoptedValueUpdated(
+                    UUID.randomUUID(),
+                    UUID.randomUUID(),
+                    UUID.randomUUID(),
+                    new Source(SourceKind.EXTERNAL_RECORD, UUID.randomUUID().toString(), now),
+                    voyage,
+                    List.of(
+                            new com.example.cargotracker.externaldata.domain.events.VoyageAdoptedValueUpdated
+                                    .AdoptedPortCall(new Location("KRPUS"), null, now),
+                            new com.example.cargotracker.externaldata.domain.events.VoyageAdoptedValueUpdated
+                                    .AdoptedPortCall(
+                                    new Location("USLAX"),
+                                    new UtcInstant(Instant.parse("2026-11-15T10:00:00Z")),
+                                    null)),
+                    "1",
+                    new UserId(UUID.randomUUID()),
+                    new CompanyId(UUID.randomUUID()),
+                    now);
+        }
+
+        @Test
+        void 行15_DE12とDE13の受け取りが重なると直列になり両方の結果が残る() throws Exception {
+            Fixture f = fixture();
+            String voyage = "V" + f.randomNumber().value().substring(2);
+            TrackingNumber number = startedOn(f, voyage).trackingNumber();
+            CountDownLatch updated = new CountDownLatch(1);
+            CountDownLatch release = new CountDownLatch(1);
+            com.example.cargotracker.tracking.application.internal.eventhandlers.VoyageArrivalEventHandler paused =
+                    new com.example.cargotracker.tracking.application.internal.eventhandlers.VoyageArrivalEventHandler(
+                            f.pausingAfterUpdate(updated, release));
+
+            overlap(
+                    f,
+                    blocked,
+                    updated,
+                    release,
+                    () -> {
+                        f.transaction().executeWithoutResult(status -> paused.on(voyageEvent(voyage)));
+                        return null;
+                    },
+                    () -> {
+                        f.deliver(
+                                f.handler(),
+                                Fixture.event(number, UUID.randomUUID().toString(), "MS-1"));
+                        return null;
+                    },
+                    (a, b) -> {});
+
+            TrackingRecord found = f.repository().findByTrackingNumber(number).orElseThrow();
+            assertThat(found.voyageArrival()).isPresent();
+            assertThat(found.latestEta()).isEqualTo(new UtcInstant(Instant.parse("2026-11-15T10:00:00Z")));
+            assertThat(found.milestones())
+                    .singleElement()
+                    .satisfies(milestone -> assertThat(milestone.state()).isEqualTo(MilestoneState.DRAFT));
+            assertThat(found.aggregateVersion()).isEqualTo(2L);
+        }
+
+        @Test
+        void 行15_DE12の受け取りの前に読んだ版の画面の登録は競合() {
+            Fixture f = fixture();
+            String voyage = "V" + f.randomNumber().value().substring(2);
+            TrackingRecord saved = startedOn(f, voyage);
+            UserId manager = new UserId(UUID.randomUUID());
+            UtcInstant at = new UtcInstant(Instant.parse("2026-01-01T00:00:00Z"));
+            TrackingRecordCommandService service = new TrackingRecordCommandService(
+                    f.repository(), f.clock(), new TrackingRecordScope(f.repository()), published -> {});
+
+            f.transaction()
+                    .executeWithoutResult(status ->
+                            new com.example.cargotracker.tracking.application.internal.eventhandlers
+                                            .VoyageArrivalEventHandler(f.repository())
+                                    .on(voyageEvent(voyage)));
+            MilestoneRegistrationOutcome outcome = f.transaction()
+                    .execute(status -> service.registerMilestone(
+                            new RegisterMilestoneCommand(
+                                    saved.trackingNumber(),
+                                    saved.aggregateVersion(),
+                                    MilestoneKind.PICKUP,
+                                    new Location("JPTYO"),
+                                    at,
+                                    new Source(SourceKind.FIELD_RECORD, "F-1", at),
+                                    manager),
+                            AuthenticatedActorFixture.trackingManagerHandling(manager, saved.shipperCompanyId())));
+
+            assertThat(outcome).isEqualTo(new MilestoneRegistrationOutcome.Conflict());
+        }
+    }
+
     /** 後の操作が先のロックを待っていることを確かめる（PostgreSQL は pg_stat_activity、H2 は一定時間の待ち）。 */
     @FunctionalInterface
     interface Blocked {

@@ -309,6 +309,42 @@ public class AcceptanceTestConfiguration {
                     milestone.origin().publishedAt()));
         }
 
+        /** DE-12 を受けて最後の区間の航海の到着予定を追跡記録に受けさせる（Bolt 39g4b）。 */
+        @Bean
+        com.example.cargotracker.tracking.application.internal.eventhandlers.VoyageArrivalEventHandler
+                voyageArrivalEventHandler(InMemoryTrackingRecordRepository repository) {
+            return new com.example.cargotracker.tracking.application.internal.eventhandlers.VoyageArrivalEventHandler(
+                    repository);
+        }
+
+        /** 航海の採用値が届くこと（DE-12 への組み立て。ステップ定義は他のコンテキストのイベントに依存しない。AT-05。Bolt 39g4b）。 */
+        @Bean
+        com.example.cargotracker.tracking.acceptance.VoyageAdoptionArrival voyageAdoptionArrival(
+                com.example.cargotracker.tracking.application.internal.eventhandlers.VoyageArrivalEventHandler
+                        handler) {
+            return (voyageNumber, portCalls, order) ->
+                    handler.on(new com.example.cargotracker.externaldata.domain.events.VoyageAdoptedValueUpdated(
+                            UUID.randomUUID(),
+                            UUID.randomUUID(),
+                            UUID.randomUUID(),
+                            new com.example.cargotracker.shared.domain.Source(
+                                    com.example.cargotracker.shared.domain.SourceKind.EXTERNAL_RECORD,
+                                    order.sourceReference(),
+                                    order.acquiredAt()),
+                            voyageNumber,
+                            portCalls.stream()
+                                    .map(call -> new com.example.cargotracker.externaldata.domain.events
+                                            .VoyageAdoptedValueUpdated.AdoptedPortCall(
+                                            call.port(),
+                                            call.arrivalAt().orElse(null),
+                                            call.departureAt().orElse(null)))
+                                    .toList(),
+                            "1",
+                            new com.example.cargotracker.shared.domain.UserId(UUID.randomUUID()),
+                            new CompanyId(UUID.randomUUID()),
+                            order.publishedAt()));
+        }
+
         /** 追跡は DE-07 を受け、経路設計の公開 API から確定した経路版の区間を引いて追跡を開始する（ADR-015。Bolt 25）。 */
         @Bean
         TrackingStartEventHandler trackingStartEventHandler(

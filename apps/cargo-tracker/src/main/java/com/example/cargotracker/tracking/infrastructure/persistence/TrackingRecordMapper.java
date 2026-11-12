@@ -18,7 +18,10 @@ public interface TrackingRecordMapper {
 
     void insertScheduledLeg(ScheduledLegRow row);
 
-    /** 導出し直した現在状態と根拠の実績番号と確認中の理由（Bolt 39gc）を書き、版を 1 増やす（Bolt 26b）。読み込んだときの版と違えば 0 件。 */
+    /**
+     * 導出し直した現在状態と根拠の実績番号と確認中の理由（Bolt 39gc）を書き、版を 1 増やす（Bolt 26b）。航海の到着予定と順の鍵の 4 列も書く（Bolt 39g4b）。読み込んだときの
+     * 版と違えば 0 件。
+     */
     @SuppressWarnings("java:S107") // UPDATE の SET と WHERE の値を名前付きの引数で渡す（MyBatis の @Param）
     int updateTrackingRecord(
             @Param("trackingNumber") String trackingNumber,
@@ -29,7 +32,22 @@ public interface TrackingRecordMapper {
             @Param("latestEta") OffsetDateTime latestEta,
             @Param("lastAcquiredAt") OffsetDateTime lastAcquiredAt,
             @Param("nextExpectedAt") OffsetDateTime nextExpectedAt,
+            @Param("voyageArrival") VoyageArrivalColumns voyageArrival,
             @Param("updatedAt") OffsetDateTime updatedAt);
+
+    /** その航海が最後の区間（その追跡番号の最大の区間番号）の追跡番号を追跡番号の順に（DE-12。Bolt 39g4b。索引 ix_scheduled_leg_voyage）。 */
+    List<String> findTrackingNumbersByFinalLegVoyage(@Param("voyageNumber") String voyageNumber);
+
+    /**
+     * 航海の到着予定と順の鍵の 4 列の値（UPDATE の引数をまとめる。Bolt 39g4b）。受けていなければ 4 つとも null。
+     *
+     * @param arrivalAt 航海の到着予定（結べなければ null）
+     * @param publishedAt 公開した時刻
+     * @param acquiredAt 取得時刻
+     * @param sourceRef 出典の参照（受信記録 ID）
+     */
+    record VoyageArrivalColumns(
+            OffsetDateTime arrivalAt, OffsetDateTime publishedAt, OffsetDateTime acquiredAt, String sourceRef) {}
 
     void insertMilestone(MilestoneRow row);
 

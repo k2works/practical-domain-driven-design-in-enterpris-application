@@ -37,7 +37,7 @@
                 <td th:if="${trackingRecord.underReview() and !trackingRecord.freshnessExceeded()}"><span class="badge text-bg-warning"><span aria-hidden="true">⚠ </span><span th:text="${trackingRecord.status()}">確認中</span></span></td>
                 <td th:if="${trackingRecord.freshnessExceeded()}"><span th:unless="${trackingRecord.underReview()}" th:text="${trackingRecord.status()}">輸送中</span><span th:if="${trackingRecord.underReview()}" class="badge text-bg-warning"><span aria-hidden="true">⚠ </span><span th:text="${trackingRecord.status()}">確認中</span></span> <span class="badge text-bg-warning"><span aria-hidden="true">⚠ </span><span>鮮度超過</span></span></td>
                 <td th:text="${trackingRecord.originalEta()}">2026-11-15 09:00 Asia/Tokyo（UTC+09:00）（UTC 2026-11-15 00:00）</td>
-                <!--/* 最新の到着見込みは採用の実績で動き、最終取得時刻は採用の実績の取得時刻の最大（なければ「なし」。Bolt 39g3。U-3） */-->
+                <!--/* 最新の到着見込みは採用の実績と最後の区間の航海の到着予定で動き、最終取得時刻は採用の実績と受けた航海の知らせの取得時刻の最大（なければ「なし」。Bolt 39g3・39g4b。U-3） */-->
                 <td th:text="${trackingRecord.latestEta()}">2026-11-15 15:00 Asia/Tokyo（UTC+09:00）（UTC 2026-11-15 06:00）</td>
                 <td th:text="${trackingRecord.lastAcquiredAt()}">2026-11-01 12:00 Asia/Tokyo（UTC+09:00）（UTC 2026-11-01 03:00）</td>
                 <td th:text="${trackingRecord.startedAt()}">2026-10-26 10:00 Asia/Tokyo（UTC+09:00）（UTC 2026-10-26 01:00）</td>

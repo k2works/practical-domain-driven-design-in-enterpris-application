@@ -338,6 +338,11 @@ class TrackingRecordQueryServiceTest {
         }
 
         @Override
+        public List<TrackingNumber> findTrackingNumbersByFinalLegVoyage(String voyageNumber) {
+            return delegate.findTrackingNumbersByFinalLegVoyage(voyageNumber);
+        }
+
+        @Override
         public Optional<TrackingRecord> findByTrackingNumber(
                 TrackingNumber trackingNumber, CompanyId shipperCompanyId) {
             detailQueries++;

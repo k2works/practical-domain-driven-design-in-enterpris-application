@@ -8,6 +8,7 @@ import com.example.cargotracker.tracking.application.internal.eventhandlers.Book
 import com.example.cargotracker.tracking.application.internal.eventhandlers.BookingTransportPhaseNotificationEventHandler;
 import com.example.cargotracker.tracking.application.internal.eventhandlers.ExternalMilestoneEventHandler;
 import com.example.cargotracker.tracking.application.internal.eventhandlers.TrackingStartEventHandler;
+import com.example.cargotracker.tracking.application.internal.eventhandlers.VoyageArrivalEventHandler;
 import com.example.cargotracker.tracking.application.internal.outboundservices.acl.BookingTrackingStarts;
 import com.example.cargotracker.tracking.application.internal.outboundservices.acl.BookingTransportPhases;
 import com.example.cargotracker.tracking.application.internal.outboundservices.acl.RoutingScheduledLegs;
@@ -78,6 +79,12 @@ public class TrackingConfiguration {
     ExternalMilestoneEventHandler externalMilestoneEventHandler(
             TrackingRecordRepository repository, RejectedMilestoneRepository rejectedMilestones, Clock clock) {
         return new ExternalMilestoneEventHandler(repository, rejectedMilestones, clock);
+    }
+
+    /** DE-12 を受けて最後の区間の航海の到着予定を追跡記録に受けさせる（Spring Modulith のイベントの記録を経て、別のトランザクションで動く。Bolt 39g4b）。 */
+    @Bean
+    VoyageArrivalEventHandler voyageArrivalEventHandler(TrackingRecordRepository repository) {
+        return new VoyageArrivalEventHandler(repository);
     }
 
     /** 追跡管理者による主要実績の登録（US-12。Bolt 26b）。 */

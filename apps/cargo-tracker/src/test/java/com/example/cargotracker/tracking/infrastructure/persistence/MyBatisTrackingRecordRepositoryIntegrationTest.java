@@ -1218,6 +1218,246 @@ class MyBatisTrackingRecordRepositoryIntegrationTest {
         }
     }
 
+    /**
+     * Bolt 39g4b の行 4・10・11・12（航海の到着予定の 4 列と CHECK、最後の区間の航海で引く照会、索引）。航海番号はほかのテストのコミットした行と
+     * 混ざらないよう、テストごとに作る。
+     */
+    @Nested
+    class Bolt39g4b_航海の到着予定の保存と照会 {
+
+        private static final UtcInstant ARRIVAL = new UtcInstant(Instant.parse("2026-11-15T10:00:00.123456Z"));
+        private static final com.example.cargotracker.tracking.domain.model.valueobjects.PublicationOrder ORDER =
+                new com.example.cargotracker.tracking.domain.model.valueobjects.PublicationOrder(
+                        new UtcInstant(Instant.parse("2026-11-06T00:00:00.654321Z")),
+                        new UtcInstant(Instant.parse("2026-11-06T01:00:00.111111Z")),
+                        "rr-1");
+
+        private String voyage() {
+            return "V" + trackingNumber().value().substring(2);
+        }
+
+        private TrackingRecord savedWith(TrackingNumber trackingNumber, String... voyages) {
+            List<com.example.cargotracker.tracking.domain.model.valueobjects.ScheduledLeg> legs =
+                    new java.util.ArrayList<>();
+            String[] ports = {"JPTYO", "KRPUS", "CNSHA", "USLAX"};
+            for (int i = 0; i < voyages.length; i++) {
+                legs.add(TrackingFixture.leg(
+                        voyages[i],
+                        ports[i],
+                        ports[i + 1],
+                        "2026-11-0" + (2 * i + 1) + "T00:00:00Z",
+                        "2026-11-0" + (2 * i + 2) + "T00:00:00Z"));
+            }
+            TrackingRecord trackingRecord = TrackingRecord.start(
+                            trackingNumber,
+                            UUID.randomUUID(),
+                            new CompanyId(UUID.randomUUID()),
+                            new CompanyId(UUID.randomUUID()),
+                            new com.example.cargotracker.tracking.domain.model.valueobjects.Schedule(
+                                    "RC-2026-0001", 1, legs),
+                            STARTED_AT)
+                    .trackingRecord();
+            repository.save(trackingRecord);
+            return trackingRecord;
+        }
+
+        private TrackingRecord receivedAndUpdated(TrackingRecord saved, String voyage) {
+            com.example.cargotracker.tracking.domain.model.valueobjects.ScheduledLeg last =
+                    saved.schedule().legs().getLast();
+            TrackingRecord received = saved.receiveVoyageArrival(
+                            voyage,
+                            List.of(
+                                    com.example.cargotracker.tracking.domain.model.valueobjects.VoyagePortCall.of(
+                                            last.load(), null, last.departureAt()),
+                                    com.example.cargotracker.tracking.domain.model.valueobjects.VoyagePortCall.of(
+                                            last.discharge(), ARRIVAL, null)),
+                            ORDER)
+                    .orElseThrow();
+            repository.update(received);
+            return received;
+        }
+
+        private List<TrackingNumber> finalLeg(String voyage) {
+            return repository.findTrackingNumbersByFinalLegVoyage(voyage);
+        }
+
+        @Test
+        void 行4ab_最後の区間の航海で引く() {
+            String v100 = voyage();
+            String v200 = voyage();
+            TrackingRecord oneLeg = savedWith(trackingNumber(), v100);
+            TrackingRecord twoLegs = savedWith(trackingNumber(), voyage(), v200);
+
+            assertThat(finalLeg(v100)).containsExactly(oneLeg.trackingNumber());
+            assertThat(finalLeg(v200)).containsExactly(twoLegs.trackingNumber());
+        }
+
+        @Test
+        void 行4c_最後の区間でない航海では引かない() {
+            String v100 = voyage();
+            savedWith(trackingNumber(), v100, voyage());
+
+            assertThat(finalLeg(v100)).isEmpty();
+        }
+
+        @Test
+        void 行4d_2件は追跡番号の順に返す() {
+            String v200 = voyage();
+            TrackingRecord later = savedWith(new TrackingNumber("CTZZZZZZZZ" + v200.substring(9)), voyage(), v200);
+            TrackingRecord earlier = savedWith(new TrackingNumber("CTAAAAAAAA" + v200.substring(9)), voyage(), v200);
+
+            assertThat(finalLeg(v200)).containsExactly(earlier.trackingNumber(), later.trackingNumber());
+        }
+
+        @Test
+        void 行4e_どの予定にもない航海は空() {
+            assertThat(finalLeg(voyage())).isEmpty();
+        }
+
+        @Test
+        void 行4f_中間の追跡は除き最後の区間の追跡だけ() {
+            String v200 = voyage();
+            savedWith(trackingNumber(), v200, voyage());
+            TrackingRecord last = savedWith(trackingNumber(), voyage(), v200);
+
+            assertThat(finalLeg(v200)).containsExactly(last.trackingNumber());
+        }
+
+        @Test
+        void 行4g_同じ追跡の区間1と最後の区間に出る航海は1回だけ() {
+            String v200 = voyage();
+            TrackingRecord looped = savedWith(trackingNumber(), v200, voyage(), v200);
+
+            assertThat(finalLeg(v200)).containsExactly(looped.trackingNumber());
+        }
+
+        @Test
+        void 行10_開始のINSERTは4列をNULLにしUPDATEは4列を書き版が違えば書かない() {
+            String v200 = voyage();
+            TrackingRecord saved = savedWith(trackingNumber(), voyage(), v200);
+            assertThat(columns(saved)).containsOnly(entry4(null, null, null, null));
+
+            TrackingRecord received = receivedAndUpdated(saved, v200);
+
+            Map<String, Object> row = columns(saved).getFirst();
+            assertThat(instant(row.get("voyage_arrival_at"))).isEqualTo(ARRIVAL.instant());
+            assertThat(instant(row.get("voyage_arrival_published_at")))
+                    .isEqualTo(ORDER.publishedAt().instant());
+            assertThat(instant(row.get("voyage_arrival_acquired_at")))
+                    .isEqualTo(ORDER.acquiredAt().instant());
+            assertThat(row.get("voyage_arrival_source_ref")).isEqualTo("rr-1");
+            assertThatThrownBy(() -> repository.update(received))
+                    .isInstanceOf(ConcurrentTrackingRecordUpdateException.class);
+        }
+
+        @Test
+        void 行11_読み直すと航海の到着予定が保存した値と同じでNULLは空() {
+            String v200 = voyage();
+            TrackingRecord saved = savedWith(trackingNumber(), voyage(), v200);
+            TrackingRecord none = savedWith(trackingNumber(), voyage(), voyage());
+            TrackingRecord received = receivedAndUpdated(saved, v200);
+
+            TrackingRecord found =
+                    repository.findByTrackingNumber(saved.trackingNumber()).orElseThrow();
+            assertThat(found.voyageArrival())
+                    .isEqualTo(received.voyageArrival())
+                    .isPresent();
+            assertThat(found.latestEta()).isEqualTo(ARRIVAL);
+            assertThat(found.lastAcquiredAt()).contains(ORDER.acquiredAt());
+            assertThat(repository
+                            .findByTrackingNumber(none.trackingNumber())
+                            .orElseThrow()
+                            .voyageArrival())
+                    .isEmpty();
+        }
+
+        @Test
+        void 行11_結べない知らせの空の到着予定と順の鍵が往復する() {
+            String v200 = voyage();
+            TrackingRecord saved = savedWith(trackingNumber(), voyage(), v200);
+            TrackingRecord received = saved.receiveVoyageArrival(
+                            v200,
+                            List.of(
+                                    com.example.cargotracker.tracking.domain.model.valueobjects.VoyagePortCall.of(
+                                            new Location("JPTYO"), null, NOW),
+                                    com.example.cargotracker.tracking.domain.model.valueobjects.VoyagePortCall.of(
+                                            new Location("KRPUS"), NOW, null)),
+                            ORDER)
+                    .orElseThrow();
+            repository.update(received);
+
+            assertThat(repository
+                            .findByTrackingNumber(saved.trackingNumber())
+                            .orElseThrow()
+                            .voyageArrival())
+                    .isEqualTo(received.voyageArrival())
+                    .hasValueSatisfying(
+                            arrival -> assertThat(arrival.arrivalAt()).isEmpty());
+        }
+
+        @ParameterizedTest(name = "{0}")
+        @CsvSource(
+                delimiter = '|',
+                value = {
+                    "順の鍵の一部だけ | voyage_arrival_published_at = CURRENT_TIMESTAMP",
+                    "順の鍵の 2 つだけ | voyage_arrival_published_at = CURRENT_TIMESTAMP, voyage_arrival_acquired_at = CURRENT_TIMESTAMP",
+                    "到着予定に値があり順の鍵が NULL | voyage_arrival_at = CURRENT_TIMESTAMP"
+                })
+        void 行12_順の鍵がそろわない行はCHECKで拒否する(String description, String assignment) {
+            TrackingRecord saved = savedWith(trackingNumber(), voyage());
+
+            assertThatThrownBy(() -> jdbc.update(
+                            "UPDATE tracking.tracking_record SET " + assignment + " WHERE tracking_number = ?",
+                            saved.trackingNumber().value()))
+                    .isInstanceOf(DataIntegrityViolationException.class);
+        }
+
+        @Test
+        void 行12_順の鍵がそろい到着予定がNULLの行は入る() {
+            TrackingRecord saved = savedWith(trackingNumber(), voyage());
+
+            assertThat(jdbc.update(
+                            "UPDATE tracking.tracking_record SET voyage_arrival_published_at = CURRENT_TIMESTAMP,"
+                                    + " voyage_arrival_acquired_at = CURRENT_TIMESTAMP, voyage_arrival_source_ref = 'rr-1'"
+                                    + " WHERE tracking_number = ?",
+                            saved.trackingNumber().value()))
+                    .isEqualTo(1);
+        }
+
+        @Test
+        void 行12_予定区間の航海番号の索引がある() {
+            assertThat(jdbc.queryForObject(
+                            "SELECT COUNT(*) FROM pg_indexes WHERE schemaname = 'tracking'"
+                                    + " AND tablename = 'scheduled_leg' AND indexname = 'ix_scheduled_leg_voyage'",
+                            Integer.class))
+                    .isEqualTo(1);
+        }
+
+        private List<Map<String, Object>> columns(TrackingRecord trackingRecord) {
+            return jdbc.queryForList(
+                    "SELECT voyage_arrival_at, voyage_arrival_published_at, voyage_arrival_acquired_at,"
+                            + " voyage_arrival_source_ref FROM tracking.tracking_record WHERE tracking_number = ?",
+                    trackingRecord.trackingNumber().value());
+        }
+
+        private static Map<String, Object> entry4(Object at, Object published, Object acquired, Object ref) {
+            Map<String, Object> map = new java.util.LinkedHashMap<>();
+            map.put("voyage_arrival_at", at);
+            map.put("voyage_arrival_published_at", published);
+            map.put("voyage_arrival_acquired_at", acquired);
+            map.put("voyage_arrival_source_ref", ref);
+            return map;
+        }
+
+        private static Instant instant(Object value) {
+            return switch (value) {
+                case Timestamp timestamp -> timestamp.toInstant();
+                case OffsetDateTime offset -> offset.toInstant();
+                default -> throw new IllegalArgumentException("日時の列の型が想定外: " + value);
+            };
+        }
+    }
+
     private static TrackingRecord register(
             TrackingRecord trackingRecord, MilestoneKind kind, String occurredAt, String reference) {
         return trackingRecord

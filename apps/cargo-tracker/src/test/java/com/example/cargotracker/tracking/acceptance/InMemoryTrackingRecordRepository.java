@@ -61,6 +61,7 @@ public class InMemoryTrackingRecordRepository implements TrackingRecordRepositor
                         trackingRecord.latestEta(),
                         trackingRecord.lastAcquiredAt(),
                         trackingRecord.nextExpectedAt(),
+                        trackingRecord.voyageArrival(),
                         trackingRecord.startedAt(),
                         trackingRecord.aggregateVersion() + 1));
     }
@@ -81,6 +82,17 @@ public class InMemoryTrackingRecordRepository implements TrackingRecordRepositor
     @Override
     public synchronized Optional<TrackingRecord> findByTrackingNumberForUpdate(TrackingNumber trackingNumber) {
         return findByTrackingNumber(trackingNumber);
+    }
+
+    /** PostgreSQL の照会と同じく、その航海が最後の区間の追跡番号を追跡番号の順に返す（Bolt 39g4b）。 */
+    @Override
+    public synchronized List<TrackingNumber> findTrackingNumbersByFinalLegVoyage(String voyageNumber) {
+        return byBookingId.values().stream()
+                .filter(saved ->
+                        saved.schedule().legs().getLast().voyageNumber().equals(voyageNumber))
+                .map(TrackingRecord::trackingNumber)
+                .sorted(Comparator.comparing(TrackingNumber::value))
+                .toList();
     }
 
     /** PostgreSQL の照会と同じく、荷主企業で絞る（他社は空。Bolt 27）。 */

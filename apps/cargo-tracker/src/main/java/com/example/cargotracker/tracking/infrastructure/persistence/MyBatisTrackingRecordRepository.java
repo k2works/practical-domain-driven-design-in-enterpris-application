@@ -13,6 +13,7 @@ import com.example.cargotracker.tracking.domain.model.entities.Milestone;
 import com.example.cargotracker.tracking.domain.model.valueobjects.ExternalOrigin;
 import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneKind;
 import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneState;
+import com.example.cargotracker.tracking.domain.model.valueobjects.PublicationOrder;
 import com.example.cargotracker.tracking.domain.model.valueobjects.Schedule;
 import com.example.cargotracker.tracking.domain.model.valueobjects.ScheduledLeg;
 import com.example.cargotracker.tracking.domain.model.valueobjects.TrackedBookingStatus;
@@ -20,6 +21,7 @@ import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingNumbe
 import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingRecordSummary;
 import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingStatus;
 import com.example.cargotracker.tracking.domain.model.valueobjects.UnderReviewReason;
+import com.example.cargotracker.tracking.domain.model.valueobjects.VoyageArrival;
 import java.time.Clock;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -62,6 +64,7 @@ public class MyBatisTrackingRecordRepository implements TrackingRecordRepository
         String trackingNumber = trackingRecord.trackingNumber().value();
         OffsetDateTime startedAt = offset(trackingRecord.startedAt());
         Schedule schedule = trackingRecord.schedule();
+        TrackingRecordMapper.VoyageArrivalColumns voyageArrivalColumns = voyageArrivalColumns(trackingRecord);
         mapper.insertTrackingRecord(new TrackingRecordRow(
                 trackingNumber,
                 trackingRecord.bookingId(),
@@ -80,6 +83,10 @@ public class MyBatisTrackingRecordRepository implements TrackingRecordRepository
                         .map(MyBatisTrackingRecordRepository::offset)
                         .orElse(null),
                 offsetOrNull(trackingRecord.nextExpectedAt()),
+                voyageArrivalColumns.arrivalAt(),
+                voyageArrivalColumns.publishedAt(),
+                voyageArrivalColumns.acquiredAt(),
+                voyageArrivalColumns.sourceRef(),
                 trackingRecord.aggregateVersion(),
                 startedAt,
                 startedAt));
@@ -99,7 +106,7 @@ public class MyBatisTrackingRecordRepository implements TrackingRecordRepository
 
     /**
      * 主要実績の登録を保存する（Bolt 26b）。読み込んだときの版と同じときだけ現在状態と根拠の実績番号と確認中の理由（Bolt 39gc）と最新の到着見込みと最終取得時刻
-     * （Bolt 39g3。当初の到着予定と経路版は書かない）と次の予定の実績の予定時刻（Bolt 39g4）を書いて版を 1 増やし、表にない
+     * （Bolt 39g3。当初の到着予定と経路版は書かない）と次の予定の実績の予定時刻（Bolt 39g4）と航海の到着予定と順の鍵の 4 列（Bolt 39g4b）を書いて版を 1 増やし、表にない
      * 実績番号の主要実績を追加する（実績は削除・上書きしない。T-INV-01）。表にある実績は中身が集約と同じでなければ、版を通さずに書いた経路の誤りとして
      * {@link IllegalStateException} にする（P-3。Bolt 39g2）。表で下書きの実績が集約で採用・確認中になっていれば、状態と採用者・採用時刻だけを書き換える（Bolt 39gb。確認中は Bolt 39gc）。
      * 版が違えば、下書きの行がもう下書きでなければ、同じ出典の実績が同時に登録されて一意制約 {@code uk_milestone_source} に違反したら、または根拠の実績番号の実績が
@@ -126,6 +133,7 @@ public class MyBatisTrackingRecordRepository implements TrackingRecordRepository
                                 .map(MyBatisTrackingRecordRepository::offset)
                                 .orElse(null),
                         offsetOrNull(trackingRecord.nextExpectedAt()),
+                        voyageArrivalColumns(trackingRecord),
                         OffsetDateTime.now(clock))
                 == 0) {
             throw conflict(trackingRecord);
@@ -307,8 +315,41 @@ public class MyBatisTrackingRecordRepository implements TrackingRecordRepository
                 utc(row.latestEta()),
                 Optional.ofNullable(row.lastAcquiredAt()).map(MyBatisTrackingRecordRepository::utc),
                 Optional.ofNullable(row.nextExpectedAt()).map(MyBatisTrackingRecordRepository::utc),
+                voyageArrivalOf(row),
                 utc(row.createdAt()),
                 row.version());
+    }
+
+    /** 航海の到着予定と順の鍵の 4 列の値（受けていなければ 4 つとも null。Bolt 39g4b）。 */
+    private static TrackingRecordMapper.VoyageArrivalColumns voyageArrivalColumns(TrackingRecord trackingRecord) {
+        return trackingRecord
+                .voyageArrival()
+                .map(arrival -> new TrackingRecordMapper.VoyageArrivalColumns(
+                        offsetOrNull(arrival.arrivalAt()),
+                        offset(arrival.order().publishedAt()),
+                        offset(arrival.order().acquiredAt()),
+                        arrival.order().sourceReference()))
+                .orElseGet(() -> new TrackingRecordMapper.VoyageArrivalColumns(null, null, null, null));
+    }
+
+    /** 4 列から航海の到着予定を組み立てる（順の鍵が NULL なら受けていない。順の鍵がそろうことは CHECK ck_tracking_record_voyage_arrival が守る）。 */
+    private static Optional<VoyageArrival> voyageArrivalOf(TrackingRecordRow row) {
+        if (row.voyageArrivalPublishedAt() == null) {
+            return Optional.empty();
+        }
+        return Optional.of(new VoyageArrival(
+                Optional.ofNullable(row.voyageArrivalAt()).map(MyBatisTrackingRecordRepository::utc),
+                new PublicationOrder(
+                        utc(row.voyageArrivalPublishedAt()),
+                        utc(row.voyageArrivalAcquiredAt()),
+                        row.voyageArrivalSourceRef())));
+    }
+
+    @Override
+    public List<TrackingNumber> findTrackingNumbersByFinalLegVoyage(String voyageNumber) {
+        return mapper.findTrackingNumbersByFinalLegVoyage(voyageNumber).stream()
+                .map(TrackingNumber::new)
+                .toList();
     }
 
     private static OffsetDateTime offset(UtcInstant instant) {

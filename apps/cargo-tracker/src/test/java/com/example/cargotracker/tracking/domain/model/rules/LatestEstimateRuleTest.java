@@ -172,6 +172,59 @@ class LatestEstimateRuleTest {
                 .isEqualTo(ORIGINAL);
     }
 
+    /**
+     * Bolt 39g4b の行 3。採用の実績と航海の到着予定の組（【業務の判断】(at)、D-136）。到着の実績があれば実績、なければ実績の遅れの見込みと航海の
+     * 到着予定の遅い方。当初の到着予定（A2 = 2026-11-15 00:00）より早めない。確認中は使わない。
+     */
+    @org.junit.jupiter.api.Nested
+    class Bolt39g4b_行3_航海の到着予定 {
+
+        @Test
+        void a_航海の到着予定がなければ39g3と同じ() {
+            List<Milestone> milestones = List.of(adopted(1, MilestoneKind.DEPARTURE, "JPTYO", "2026-11-01T06:00:00Z"));
+
+            assertThat(rule.estimate(schedule(), milestones, java.util.Optional.empty()))
+                    .isEqualTo(rule.estimate(schedule(), milestones))
+                    .isEqualTo(at("2026-11-15T06:00:00Z"));
+        }
+
+        @ParameterizedTest(name = "{0}")
+        @CsvSource({
+            "(b) 実績なし・航海 A2 + 10 時間, , , 2026-11-15T10:00:00Z, 2026-11-15T10:00:00Z",
+            "(c) 実績なし・航海 A2 − 5 時間（早着の知らせ）, , , 2026-11-14T19:00:00Z, 2026-11-15T00:00:00Z",
+            "(d) 区間 1 の出発 D1 + 6 時間・航海 A2 + 3 時間, DEPARTURE, 2026-11-01T06:00:00Z, 2026-11-15T03:00:00Z, 2026-11-15T06:00:00Z",
+            "(e) 区間 1 の出発 D1 + 6 時間・航海 A2 + 8 時間, DEPARTURE, 2026-11-01T06:00:00Z, 2026-11-15T08:00:00Z, 2026-11-15T08:00:00Z",
+            "(f) 到着・USLAX の実績 A2 + 1 時間・航海 A2 + 10 時間, ARRIVAL, 2026-11-15T01:00:00Z, 2026-11-15T10:00:00Z, 2026-11-15T01:00:00Z",
+            "(h) 区間 1 の出発 D1 + 6 時間・航海 A2 + 6 時間, DEPARTURE, 2026-11-01T06:00:00Z, 2026-11-15T06:00:00Z, 2026-11-15T06:00:00Z"
+        })
+        void 採用の実績と航海の到着予定の遅い方(
+                String row, MilestoneKind kind, String occurredAt, String voyageArrival, String expected) {
+            List<Milestone> milestones = kind == null
+                    ? List.of()
+                    : List.of(adopted(1, kind, kind == MilestoneKind.ARRIVAL ? "USLAX" : "JPTYO", occurredAt));
+
+            assertThat(rule.estimate(schedule(), milestones, java.util.Optional.of(at(voyageArrival))))
+                    .isEqualTo(at(expected));
+        }
+
+        @Test
+        void g_確認中の到着は使わず航海の到着予定() {
+            Milestone underReview = new Milestone(
+                    1,
+                    MilestoneKind.ARRIVAL,
+                    new Location("USLAX"),
+                    at("2026-11-15T01:00:00Z"),
+                    source("F-1"),
+                    MilestoneState.UNDER_REVIEW,
+                    REGISTRANT,
+                    at("2026-11-16T00:00:00Z"));
+
+            assertThat(rule.estimate(
+                            schedule(), List.of(underReview), java.util.Optional.of(at("2026-11-15T10:00:00Z"))))
+                    .isEqualTo(at("2026-11-15T10:00:00Z"));
+        }
+    }
+
     private static Milestone adopted(int no, MilestoneKind kind, String location, String occurredAt) {
         return new Milestone(
                 no,

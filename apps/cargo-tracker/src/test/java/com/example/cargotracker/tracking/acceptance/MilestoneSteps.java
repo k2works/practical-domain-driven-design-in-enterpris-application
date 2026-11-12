@@ -51,6 +51,8 @@ public class MilestoneSteps {
     private final TrackingRecordCommandService commandService;
     private final InMemoryRejectedMilestoneRepository rejectedMilestones;
     private final ExternalMilestoneArrival externalMilestoneArrival;
+    private final VoyageAdoptionArrival voyageAdoptionArrival;
+    private int voyageNotices;
     private final DeferredEventDelivery eventDelivery;
     private final Clock clock;
     private MilestoneRegistrationOutcome outcome;
@@ -61,12 +63,14 @@ public class MilestoneSteps {
             TrackingRecordCommandService commandService,
             InMemoryRejectedMilestoneRepository rejectedMilestones,
             ExternalMilestoneArrival externalMilestoneArrival,
+            VoyageAdoptionArrival voyageAdoptionArrival,
             DeferredEventDelivery eventDelivery,
             Clock clock) {
         this.trackingRecords = trackingRecords;
         this.commandService = commandService;
         this.rejectedMilestones = rejectedMilestones;
         this.externalMilestoneArrival = externalMilestoneArrival;
+        this.voyageAdoptionArrival = voyageAdoptionArrival;
         this.eventDelivery = eventDelivery;
         this.clock = clock;
     }
@@ -138,6 +142,25 @@ public class MilestoneSteps {
                 new Source(SourceKind.EXTERNAL_RECORD, "00000000-0000-0000-0000-000000026b06", now),
                 new ExternalOrigin(UUID.fromString("00000000-0000-0000-0000-000000026b05"), "MS-0001", now),
                 new UserId(UUID.fromString("00000000-0000-0000-0000-000000026b07"))));
+    }
+
+    /**
+     * Bolt 39g4b の行 16。航海の採用値（DE-12）が、積地 {@code load} を出発し揚地 {@code discharge} に到着する 2 つの寄港の並びで届く。届くたびに公開の順を
+     * 新しくする（公開した時刻を 1 分ずつ進める）。
+     */
+    @もし("航海 {string} の採用値が、{string} を出発し {string} に {string} に到着する寄港の並びで届く")
+    public void 航海の採用値が届く(String voyageNumber, String load, String discharge, String arrivalAt) {
+        voyageNotices++;
+        UtcInstant publishedAt = new UtcInstant(clock.instant().minusSeconds(3600L - 60L * voyageNotices));
+        voyageAdoptionArrival.arrive(
+                voyageNumber,
+                List.of(
+                        com.example.cargotracker.tracking.domain.model.valueobjects.VoyagePortCall.of(
+                                new Location(load), null, at("2026-11-01T00:00:00Z")),
+                        com.example.cargotracker.tracking.domain.model.valueobjects.VoyagePortCall.of(
+                                new Location(discharge), at(arrivalAt), null)),
+                new com.example.cargotracker.tracking.domain.model.valueobjects.PublicationOrder(
+                        publishedAt, publishedAt, "rr-39g4b-" + voyageNotices));
     }
 
     @ならば("拒否の記録が理由 {string} で {int} 件ある")

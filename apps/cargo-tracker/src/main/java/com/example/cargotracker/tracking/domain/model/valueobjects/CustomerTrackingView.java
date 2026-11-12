@@ -15,8 +15,9 @@ import java.util.Optional;
  * @param currentStatus 現在状態
  * @param originalEta 当初の到着予定
  * @param latestEta 最新の到着見込み
- * @param lastAcquiredAt 最終取得時刻（採用の実績の出典の取得時刻のうち最も新しいもの。荷主に見せている実績の取得時刻の最大なので開示の範囲は
- *     広がらない。なければ空。Bolt 39g3。T-INV-09）
+ * @param lastAcquiredAt 最終取得時刻（採用の実績の出典の取得時刻と、受けた最後の区間の航海の知らせの取得時刻のうち最も新しいもの。なければ空。Bolt 39g3、
+ *     航海の知らせは Bolt 39g4b。T-INV-09。荷主には予定区間（航海番号を含む）と航海の知らせで動いた最新の到着見込みをすでに示しているので、その情報の
+ *     新しさを示しても開示の範囲は広がらない。他社の貨物の情報と出典の参照は示さない。【前の決定の変更】(23)）
  * @param legs 予定区間（区間の順）
  * @param milestones 採用済みの主要実績（発生時刻の順）
  */

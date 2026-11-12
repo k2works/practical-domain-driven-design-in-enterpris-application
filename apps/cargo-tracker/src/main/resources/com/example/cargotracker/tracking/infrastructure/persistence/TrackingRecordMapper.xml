@@ -20,6 +20,10 @@
             <arg column="latest_eta" name="latestEta" javaType="java.time.OffsetDateTime"/>
             <arg column="last_acquired_at" name="lastAcquiredAt" javaType="java.time.OffsetDateTime"/>
             <arg column="next_expected_at" name="nextExpectedAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="voyage_arrival_at" name="voyageArrivalAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="voyage_arrival_published_at" name="voyageArrivalPublishedAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="voyage_arrival_acquired_at" name="voyageArrivalAcquiredAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="voyage_arrival_source_ref" name="voyageArrivalSourceRef" javaType="String"/>
             <arg column="version" name="version" javaType="_long"/>
             <arg column="created_at" name="createdAt" javaType="java.time.OffsetDateTime"/>
             <arg column="updated_at" name="updatedAt" javaType="java.time.OffsetDateTime"/>
@@ -75,22 +79,27 @@
     <sql id="trackingRecordColumns">
         tracking_number, booking_id, shipper_company_id, consignee_company_id, booking_status, routing_case_number,
         route_version_no, current_status, status_basis_milestone_no, under_review_reason, original_eta, latest_eta, last_acquired_at,
-        next_expected_at, version, created_at, updated_at
+        next_expected_at, voyage_arrival_at, voyage_arrival_published_at, voyage_arrival_acquired_at, voyage_arrival_source_ref,
+        version, created_at, updated_at
     </sql>
 
+    <!-- 追跡の開始（Bolt 25）。航海の到着予定と順の鍵の 4 列は行の値（開始では NULL。Bolt 39g4b）を書く -->
     <insert id="insertTrackingRecord">
         INSERT INTO tracking.tracking_record
             (tracking_number, booking_id, shipper_company_id, consignee_company_id, booking_status, routing_case_number,
              route_version_no, current_status, status_basis_milestone_no, under_review_reason, original_eta, latest_eta, last_acquired_at,
-             next_expected_at, version, created_at, updated_at)
+             next_expected_at, voyage_arrival_at, voyage_arrival_published_at, voyage_arrival_acquired_at, voyage_arrival_source_ref,
+             version, created_at, updated_at)
         VALUES
             (#{trackingNumber}, #{bookingId}, #{shipperCompanyId}, #{consigneeCompanyId}, #{bookingStatus},
              #{routingCaseNumber}, #{routeVersionNo}, #{currentStatus}, #{statusBasisMilestoneNo}, #{underReviewReason},
-             #{originalEta}, #{latestEta}, #{lastAcquiredAt}, #{nextExpectedAt}, #{version}, #{createdAt}, #{updatedAt})
+             #{originalEta}, #{latestEta}, #{lastAcquiredAt}, #{nextExpectedAt}, #{voyageArrivalAt}, #{voyageArrivalPublishedAt},
+             #{voyageArrivalAcquiredAt}, #{voyageArrivalSourceRef}, #{version}, #{createdAt}, #{updatedAt})
     </insert>
 
     <!-- 主要実績の登録（Bolt 26b）。読み込んだときの版と同じときだけ、導出し直した現在状態と根拠の実績番号と確認中の理由（Bolt 39gc）を書き、
-         版を 1 増やす（楽観ロック）。最新の到着見込みと最終取得時刻（Bolt 39g3）と次の予定の実績の予定時刻（Bolt 39g4）も書く。経路版・当初の到着予定の列は書かない（T-INV-10） -->
+         版を 1 増やす（楽観ロック）。最新の到着見込みと最終取得時刻（Bolt 39g3）と次の予定の実績の予定時刻（Bolt 39g4）と航海の到着予定と順の鍵の 4 列（Bolt 39g4b。
+         DE-12 の受け取りもこの UPDATE を使う）も書く。経路版・当初の到着予定の列は書かない（T-INV-10） -->
     <update id="updateTrackingRecord">
         UPDATE tracking.tracking_record
            SET current_status = #{currentStatus},
@@ -99,6 +108,10 @@
                latest_eta = #{latestEta},
                last_acquired_at = #{lastAcquiredAt},
                next_expected_at = #{nextExpectedAt},
+               voyage_arrival_at = #{voyageArrival.arrivalAt},
+               voyage_arrival_published_at = #{voyageArrival.publishedAt},
+               voyage_arrival_acquired_at = #{voyageArrival.acquiredAt},
+               voyage_arrival_source_ref = #{voyageArrival.sourceRef},
                version = version + 1,
                updated_at = #{updatedAt}
          WHERE tracking_number = #{trackingNumber}
@@ -191,6 +204,17 @@
           FROM tracking.milestone
          WHERE tracking_number = #{trackingNumber}
          ORDER BY milestone_no
+    </select>
+
+    <!-- DE-12 の受け取りの対象（Bolt 39g4b の決定 (6)）。その航海が最後の区間（その追跡番号の最大の区間番号）の追跡番号を、押さえる順のため追跡番号の順に返す。
+         同じ追跡で最初と最後の区間に出る航海も 1 回だけ。完了後・取消済みは除かず集約が決める。索引 ix_scheduled_leg_voyage -->
+    <select id="findTrackingNumbersByFinalLegVoyage" resultType="String">
+        SELECT leg.tracking_number
+          FROM tracking.scheduled_leg leg
+         WHERE leg.voyage_number = #{voyageNumber}
+           AND leg.leg_no = (SELECT MAX(last_leg.leg_no) FROM tracking.scheduled_leg last_leg
+                              WHERE last_leg.tracking_number = leg.tracking_number)
+         ORDER BY leg.tracking_number
     </select>
 
     <select id="findScheduledLegs" resultMap="scheduledLegRow">

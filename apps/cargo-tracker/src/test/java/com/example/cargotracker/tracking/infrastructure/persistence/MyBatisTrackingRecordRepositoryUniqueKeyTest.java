@@ -44,7 +44,7 @@ class MyBatisTrackingRecordRepositoryUniqueKeyTest {
 
     private TrackingRecord registered() {
         given(mapper.updateTrackingRecord(
-                        anyString(), anyLong(), anyString(), any(), any(), any(), any(), any(), any()))
+                        anyString(), anyLong(), anyString(), any(), any(), any(), any(), any(), any(), any()))
                 .willReturn(1);
         given(mapper.findMilestones(anyString())).willReturn(List.of());
         given(mapper.countMilestone(anyString(), anyInt())).willReturn(1);
