@@ -2,7 +2,7 @@
 type: Plan
 title: "Bolt 39i 終了報告 - 経路設計の貨物種別で候補を除外し、除外理由の閾値を区分ごとの型と列にする"
 tags: [plan]
-status: draft
+status: stable
 generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-13T07:00:00Z }
 ---
 
@@ -146,3 +146,4 @@ W7 の締め（週のレビュー・品質ゲートの流し直し・週の完�
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
 | 2026-11-13 | 初版作成（承認待ち） | anthropic/claude-sonnet-5-5 |
+| 2026-11-13 | 推奨のとおり承認として記録した（スキーマの変更と【前の決定の変更】(32)〜(34)、計画との違い、規律の違反の記録を含む。以降は推奨で進める指示による。W7 の締めで T-247 の手順化、CI での check・uiTest の確認、業務の判断 (bl)(bm) の確認をする。human:kakimomokuri） | anthropic/claude-sonnet-5-5、承認 human:kakimomokuri |
