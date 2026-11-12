@@ -164,6 +164,7 @@ Bolt がイテレーションに当たります。ふりかえりは各 Bolt の
 | 39h | [版の逆転と既存の採用値との矛盾を取込で差異に分類する](bolt_39h_plan.md) | [終了報告](bolt_39h_report.md)（[動画](../../assets/demo/bolt-39h/discrepancy.webm){:target="_blank"}） | W7 | 完了 |
 | 39h2 | [S-17 で差異を一覧に出して却下する](bolt_39h2_plan.md) | [終了報告](bolt_39h2_report.md)（[動画](../../assets/demo/bolt-39h2/reject-discrepancy.webm){:target="_blank"}） | W7 | 完了 |
 | 39h3 | [判断の画面で外部版をまたいで比べ、古い外部版の隔離の採用を警告する](bolt_39h3_plan.md) | [終了報告](bolt_39h3_report.md)（[動画](../../assets/demo/bolt-39h3/old-version-warning.webm){:target="_blank"}） | W7 | 完了 |
+| 39h4 | [US-14 を締める（G-06 の欠落・矛盾、受入条件の照合の表、W7 のデモの動画、#18 のクローズ）](bolt_39h4_plan.md) | — | W7 | 計画済み（承認待ち） |
 
 Bolt を始めるときに行を追加します。
 
@@ -343,3 +344,4 @@ Bolt を始めるときに行を追加します。
 * [Bolt 39h2 終了報告 - S-17 で差異を一覧に出して却下する](./bolt_39h2_report.md)
 * [Bolt 39h3 計画 - 判断の画面で外部版をまたいで比べ、古い外部版の隔離の採用を警告する](./bolt_39h3_plan.md)
 * [Bolt 39h3 終了報告 - 判断の画面で外部版をまたいで比べ、古い外部版の隔離の採用を警告する](./bolt_39h3_report.md)
+* [Bolt 39h4 計画 - US-14 を締める（G-06 の欠落・矛盾、受入条件の照合の表、W7 のデモの動画、#18 のクローズ）](./bolt_39h4_plan.md)

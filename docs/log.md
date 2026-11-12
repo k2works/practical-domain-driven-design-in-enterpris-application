@@ -1,6 +1,9 @@
 # Docs Update Log
 
 ## 2026-11-13
+* **Creation**: [bolt_39h4_plan](/development/cargo-tracker/bolt_39h4_plan.md) を作成（anthropic/claude-sonnet-5-5。承認待ち）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39h4 の開始準備。39h4 の行、台帳 D-153（仮。承認待ち））
+* **Update**: [index](/development/cargo-tracker/index.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39h4 の開始準備）
 * **Creation**: [bolt_39h3_report](/development/cargo-tracker/bolt_39h3_report.md) を作成（anthropic/claude-sonnet-5-5。承認待ち）
 * **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39h3 の終了報告）
 * **Update**: [index](/development/cargo-tracker/index.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39h3 の終了報告。39h2 を完了に）
@@ -11,6 +14,10 @@
 * **Update**: [index](/development/cargo-tracker/index.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39h3 の開始準備）
 
 ## 2026-11-12
+* **Update**: [bolt_39h4_plan](/development/cargo-tracker/bolt_39h4_plan.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [bolt_39h4_plan](/development/cargo-tracker/bolt_39h4_plan.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-sonnet-5-5）
 * **Creation**: [bolt_39h2_report](/development/cargo-tracker/bolt_39h2_report.md) を作成（anthropic/claude-sonnet-5-5。承認待ち）
 * **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39h2 の終了報告）
 * **Update**: [index](/development/cargo-tracker/index.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39h2 の終了報告）
