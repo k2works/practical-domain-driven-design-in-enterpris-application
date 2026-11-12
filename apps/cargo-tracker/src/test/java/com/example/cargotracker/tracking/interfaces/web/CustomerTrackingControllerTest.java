@@ -145,6 +145,47 @@ class CustomerTrackingControllerTest {
                 .andExpect(content().string(not(containsString("届いていません"))));
     }
 
+    /**
+     * Bolt 39g4c の行 7（T-INV-09。【業務の判断】(aw)）。見込みの根拠が最後の区間の航海の到着予定の追跡記録でも、荷主の照会の結果に見込みの根拠と
+     * 社内の航海番号の根拠の文を出さない。荷主の照会の値は追跡記録の荷主向けの表示から作る（根拠を持たない）。
+     */
+    @Test
+    void Bolt39g4c_行7_荷主の照会の結果に見込みの根拠を出さない() throws Exception {
+        com.example.cargotracker.tracking.domain.model.aggregates.TrackingRecord withVoyage =
+                com.example.cargotracker.tracking.domain.model.aggregates.TrackingRecord.start(
+                                TrackingFixture.TRACKING_NUMBER,
+                                TrackingFixture.BOOKING_ID,
+                                TrackingFixture.SHIPPER,
+                                TrackingFixture.CONSIGNEE,
+                                TrackingFixture.schedule(),
+                                TrackingFixture.STARTED_AT)
+                        .trackingRecord()
+                        .receiveVoyageArrival(
+                                "V200",
+                                List.of(
+                                        com.example.cargotracker.tracking.domain.model.valueobjects.VoyagePortCall.of(
+                                                new com.example.cargotracker.shared.domain.Location("KRPUS"),
+                                                null,
+                                                TrackingFixture.at("2026-11-04T00:00:00Z")),
+                                        com.example.cargotracker.tracking.domain.model.valueobjects.VoyagePortCall.of(
+                                                new com.example.cargotracker.shared.domain.Location("USLAX"),
+                                                TrackingFixture.at("2026-11-15T08:00:00Z"),
+                                                null)),
+                                new com.example.cargotracker.tracking.domain.model.valueobjects.PublicationOrder(
+                                        TrackingFixture.at("2026-11-06T02:00:00Z"),
+                                        TrackingFixture.at("2026-11-06T01:00:00Z"),
+                                        "rr-1"))
+                        .orElseThrow();
+        given(queryService.find(TrackingFixture.TRACKING_NUMBER, TestActors.SHIPPER_COMPANY))
+                .willReturn(Optional.of(withVoyage.customerView()));
+
+        mockMvc.perform(get(DETAIL))
+                .andExpect(status().isOk())
+                .andExpect(content().string(not(containsString("見込みの根拠"))))
+                .andExpect(content().string(not(containsString("航海 V200 の到着予定"))))
+                .andExpect(content().string(not(containsString("当初の到着予定どおり"))));
+    }
+
     private static CustomerMilestone pickup() {
         return new CustomerMilestone(
                 MilestoneKind.PICKUP,

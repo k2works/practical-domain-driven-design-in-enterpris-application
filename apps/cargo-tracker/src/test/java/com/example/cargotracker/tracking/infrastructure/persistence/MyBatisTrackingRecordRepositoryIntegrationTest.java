@@ -1458,6 +1458,184 @@ class MyBatisTrackingRecordRepositoryIntegrationTest {
         }
     }
 
+    /**
+     * Bolt 39g4c の行 8〜10（見込みの根拠の 2 列。計画 決定 (3)）。区間 1 の出発（JPTYO、出発予定 2026-11-01 00:00）を 2 時間遅れで登録すると根拠は
+     * その実績。追跡番号はテストごとに作る（共有の DB。Bolt 39g4b の学び）。
+     */
+    @Nested
+    class Bolt39g4c_見込みの根拠の保存 {
+
+        private static final String DEPARTED_LATE = "2026-11-01T02:00:00Z";
+
+        private Map<String, Object> basisColumns(TrackingRecord trackingRecord) {
+            return jdbc.queryForMap(
+                    "SELECT latest_eta_basis, latest_eta_basis_milestone_no FROM tracking.tracking_record"
+                            + " WHERE tracking_number = ?",
+                    trackingRecord.trackingNumber().value());
+        }
+
+        private TrackingRecord savedStart() {
+            TrackingRecord saved = started(UUID.randomUUID(), trackingNumber());
+            repository.save(saved);
+            return saved;
+        }
+
+        @Test
+        void 行8_開始のINSERTは当初の到着予定と実績番号NULLを書く() {
+            TrackingRecord saved = savedStart();
+
+            assertThat(basisColumns(saved))
+                    .containsEntry("latest_eta_basis", "ORIGINAL_ETA")
+                    .containsEntry("latest_eta_basis_milestone_no", null);
+        }
+
+        @Test
+        void 行8_主要実績のUPDATEは2列を書き版が違えば書かない() {
+            TrackingRecord saved = savedStart();
+            TrackingRecord registered = register(saved, MilestoneKind.DEPARTURE, DEPARTED_LATE, "F-39c4-1");
+
+            repository.update(registered);
+
+            assertThat(basisColumns(saved))
+                    .containsEntry("latest_eta_basis", "MILESTONE")
+                    .containsEntry("latest_eta_basis_milestone_no", 1);
+            assertThatThrownBy(() -> repository.update(registered))
+                    .isInstanceOf(ConcurrentTrackingRecordUpdateException.class);
+        }
+
+        @Test
+        void 行9_読み直すと根拠が保存した値と同じで要約は2列を読まない() {
+            TrackingRecord saved = savedStart();
+            TrackingRecord registered = register(saved, MilestoneKind.DEPARTURE, DEPARTED_LATE, "F-39c4-2");
+            repository.update(registered);
+
+            TrackingRecord found =
+                    repository.findByTrackingNumber(saved.trackingNumber()).orElseThrow();
+
+            assertThat(found.latestEstimateBasis())
+                    .isEqualTo(registered.latestEstimateBasis())
+                    .contains(com.example.cargotracker.tracking.domain.model.valueobjects.LatestEstimateBasis.milestone(
+                            1));
+            assertThat(found.latestEta()).isEqualTo(registered.latestEta());
+            assertThat(repository
+                            .findByTrackingNumber(savedStart().trackingNumber())
+                            .orElseThrow()
+                            .latestEstimateBasis())
+                    .contains(
+                            com.example.cargotracker.tracking.domain.model.valueobjects.LatestEstimateBasis
+                                    .originalEta());
+        }
+
+        @Test
+        void 行9_2列がNULLの行は根拠なしで組み立てる() {
+            TrackingRecord saved = savedStart();
+            jdbc.update(
+                    "UPDATE tracking.tracking_record SET latest_eta_basis = NULL WHERE tracking_number = ?",
+                    saved.trackingNumber().value());
+
+            assertThat(repository
+                            .findByTrackingNumber(saved.trackingNumber())
+                            .orElseThrow()
+                            .latestEstimateBasis())
+                    .isEmpty();
+        }
+
+        @Test
+        void 行9_航海の到着予定の根拠が往復する() {
+            TrackingRecord saved = savedStart();
+            TrackingRecord received = saved.receiveVoyageArrival(
+                            "V200",
+                            List.of(
+                                    com.example.cargotracker.tracking.domain.model.valueobjects.VoyagePortCall.of(
+                                            new Location("KRPUS"), null, NOW),
+                                    com.example.cargotracker.tracking.domain.model.valueobjects.VoyagePortCall.of(
+                                            new Location("USLAX"),
+                                            new UtcInstant(Instant.parse("2026-11-15T08:00:00.123456Z")),
+                                            null)),
+                            new com.example.cargotracker.tracking.domain.model.valueobjects.PublicationOrder(
+                                    NOW, NOW, "rr-39c4"))
+                    .orElseThrow();
+            repository.update(received);
+
+            assertThat(repository
+                            .findByTrackingNumber(saved.trackingNumber())
+                            .orElseThrow()
+                            .latestEstimateBasis())
+                    .contains(
+                            com.example.cargotracker.tracking.domain.model.valueobjects.LatestEstimateBasis
+                                    .voyageArrival());
+        }
+
+        @ParameterizedTest(name = "{0}")
+        @CsvSource(
+                delimiter = '|',
+                value = {
+                    "種類の値の外 | latest_eta_basis = 'OTHER'",
+                    "実績で実績番号が NULL | latest_eta_basis = 'MILESTONE'",
+                    "当初の到着予定で実績番号がある | latest_eta_basis_milestone_no = 1",
+                    "種類が NULL で実績番号がある | latest_eta_basis = NULL, latest_eta_basis_milestone_no = 1",
+                    "航海の到着予定で voyage_arrival_at が NULL | latest_eta_basis = 'VOYAGE_ARRIVAL'",
+                    "航海の到着予定で latest_eta と違う | latest_eta_basis = 'VOYAGE_ARRIVAL', voyage_arrival_at = latest_eta + INTERVAL '1' HOUR,"
+                            + " voyage_arrival_published_at = CURRENT_TIMESTAMP, voyage_arrival_acquired_at = CURRENT_TIMESTAMP,"
+                            + " voyage_arrival_source_ref = 'rr-1'",
+                    "当初の到着予定で latest_eta が original_eta と違う | latest_eta = latest_eta + INTERVAL '1' HOUR"
+                })
+        void 行10_見込みと根拠の食い違いはCHECKで拒否する(String description, String assignment) {
+            String trackingNumber = savedStart().trackingNumber().value();
+            String sql = "UPDATE tracking.tracking_record SET " + assignment + " WHERE tracking_number = ?";
+
+            assertThatThrownBy(() -> jdbc.update(sql, trackingNumber))
+                    .isInstanceOf(DataIntegrityViolationException.class)
+                    .hasMessageContaining("ck_tracking_record_latest_eta_basis");
+        }
+
+        @Test
+        void 行10_航海の到着予定が見込みと等しい行は入る() {
+            String trackingNumber = savedStart().trackingNumber().value();
+
+            assertThat(jdbc.update(
+                            "UPDATE tracking.tracking_record SET latest_eta_basis = 'VOYAGE_ARRIVAL', voyage_arrival_at = latest_eta,"
+                                    + " voyage_arrival_published_at = CURRENT_TIMESTAMP, voyage_arrival_acquired_at = CURRENT_TIMESTAMP,"
+                                    + " voyage_arrival_source_ref = 'rr-1' WHERE tracking_number = ?",
+                            trackingNumber))
+                    .isEqualTo(1);
+        }
+
+        @Test
+        void 行10_根拠の実績番号はない主要実績を指せない() {
+            String trackingNumber = savedStart().trackingNumber().value();
+            jdbc.update(
+                    "UPDATE tracking.tracking_record SET latest_eta_basis = 'MILESTONE', latest_eta_basis_milestone_no = 9"
+                            + " WHERE tracking_number = ?",
+                    trackingNumber);
+
+            assertThatThrownBy(() -> jdbc.execute("SET CONSTRAINTS ALL IMMEDIATE"))
+                    .isInstanceOf(DataIntegrityViolationException.class)
+                    .hasMessageContaining("fk_tracking_record_latest_eta_basis");
+        }
+
+        @Test
+        void 行10_2列は区分値と整数の列で用語集の名のコメントを持つ() {
+            assertThat(jdbc.queryForMap("SELECT data_type, character_maximum_length FROM information_schema.columns"
+                            + " WHERE table_schema = 'tracking' AND table_name = 'tracking_record'"
+                            + " AND column_name = 'latest_eta_basis'"))
+                    .containsEntry("data_type", "character varying")
+                    .containsEntry("character_maximum_length", 30);
+            assertThat(jdbc.queryForObject(
+                            "SELECT data_type FROM information_schema.columns"
+                                    + " WHERE table_schema = 'tracking' AND table_name = 'tracking_record'"
+                                    + " AND column_name = 'latest_eta_basis_milestone_no'",
+                            String.class))
+                    .isEqualTo("integer");
+            assertThat(jdbc.queryForList(
+                            "SELECT col_description('tracking.tracking_record'::regclass, a.attnum) FROM pg_attribute a"
+                                    + " WHERE a.attrelid = 'tracking.tracking_record'::regclass"
+                                    + " AND a.attname IN ('latest_eta_basis', 'latest_eta_basis_milestone_no') ORDER BY a.attname",
+                            String.class))
+                    .containsExactly("見込みの根拠", "見込みの根拠の実績番号");
+        }
+    }
+
     private static TrackingRecord register(
             TrackingRecord trackingRecord, MilestoneKind kind, String occurredAt, String reference) {
         return trackingRecord

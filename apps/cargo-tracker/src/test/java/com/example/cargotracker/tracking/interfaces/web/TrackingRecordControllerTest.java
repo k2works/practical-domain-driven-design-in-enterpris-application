@@ -943,7 +943,9 @@ class TrackingRecordControllerTest {
                             .string(matchesPattern(
                                     "(?s).*<dt class=\"col-sm-3\">最新の到着見込み</dt>\\s*<dd class=\"col-sm-9\">"
                                             + LATEST
-                                            + "</dd>\\s*<dt class=\"col-sm-3\">最終取得時刻</dt>\\s*<dd class=\"col-sm-9\">"
+                                            // Bolt 39g4c で最新の到着見込みと最終取得時刻の間に見込みの根拠の 1 行が入った
+                                            + "</dd>\\s*<dt class=\"col-sm-3\">見込みの根拠</dt>\\s*<dd class=\"col-sm-9\">[^<]*</dd>"
+                                            + "\\s*<dt class=\"col-sm-3\">最終取得時刻</dt>\\s*<dd class=\"col-sm-9\">"
                                             + ACQUIRED + "</dd>.*")));
         }
 
@@ -1107,6 +1109,126 @@ class TrackingRecordControllerTest {
                     .andExpect(status().isOk())
                     .andExpect(content().string(containsString("次の予定の実績が予定時刻から 48 時間を過ぎても届いていません。")))
                     .andExpect(content().string(not(containsString("36 時間"))));
+        }
+    }
+
+    /**
+     * Bolt 39g4c の行 6・7（S-12 の見込みの根拠の 1 行。【業務の判断】(aw)・(ax)、計画 決定 (5)）。追跡記録はドメインの操作で作る（根拠は規則の 1 回の
+     * 評価で決まる）。予定は 2 区間（D1 = 2026-11-01 00:00、A1 = 2026-11-03 00:00、D2 = 2026-11-04 00:00、A2 = 2026-11-15 00:00）。
+     */
+    @Nested
+    class Bolt39g4c_見込みの根拠 {
+
+        private static final UtcInstant REGISTERED_AT = TrackingFixture.at("2026-11-20T00:00:00Z");
+        private static final UtcInstant G1 = TrackingFixture.at("2026-11-06T01:00:00Z");
+
+        private static TrackingRecord started() {
+            return TrackingRecord.start(
+                            TrackingFixture.TRACKING_NUMBER,
+                            TrackingFixture.BOOKING_ID,
+                            TrackingFixture.SHIPPER,
+                            TrackingFixture.CONSIGNEE,
+                            TrackingFixture.schedule(),
+                            TrackingFixture.STARTED_AT)
+                    .trackingRecord();
+        }
+
+        /** 「種類:場所:発生時刻」を順に登録する（実績番号は登録の順）。 */
+        private static TrackingRecord registered(String... milestones) {
+            TrackingRecord trackingRecord = started();
+            for (String spec : milestones) {
+                String[] parts = spec.split(":", 3);
+                trackingRecord = trackingRecord
+                        .registerMilestone(
+                                MilestoneKind.valueOf(parts[0]),
+                                new Location(parts[1]),
+                                TrackingFixture.at(parts[2]),
+                                new Source(SourceKind.FIELD_RECORD, "F-" + spec, REGISTERED_AT),
+                                TestActors.STAFF_USER,
+                                REGISTERED_AT)
+                        .trackingRecord();
+            }
+            return trackingRecord;
+        }
+
+        private static final String PICKUP = "PICKUP:JPTYO:2026-10-31T00:00:00Z";
+        private static final String DEPARTED_ON_TIME = "DEPARTURE:JPTYO:2026-11-01T00:00:00Z";
+        private static final String TRANSSHIPPED_ON_TIME = "TRANSSHIPMENT:KRPUS:2026-11-03T00:00:00Z";
+
+        private static TrackingRecord byCase(String row) {
+            return switch (row) {
+                case "a" -> started();
+                case "b" -> registered(PICKUP, "DEPARTURE:JPTYO:2026-11-01T06:00:00Z");
+                case "c" -> registered(PICKUP, DEPARTED_ON_TIME, "TRANSSHIPMENT:KRPUS:2026-11-03T01:30:00Z");
+                case "d" ->
+                    registered(PICKUP, DEPARTED_ON_TIME, TRANSSHIPPED_ON_TIME, "DEPARTURE:KRPUS:2026-11-04T00:45:00Z");
+                case "e" -> registered(PICKUP, "DEPARTURE:JPTYO:2026-10-31T23:00:00Z");
+                case "f" -> registered(PICKUP, "DEPARTURE:JPTYO:2026-11-01T00:00:30Z");
+                case "g" ->
+                    registered(
+                            PICKUP,
+                            DEPARTED_ON_TIME,
+                            TRANSSHIPPED_ON_TIME,
+                            "DEPARTURE:KRPUS:2026-11-04T00:00:00Z",
+                            "ARRIVAL:USLAX:2026-11-15T01:00:00Z");
+                case "h" ->
+                    started()
+                            .receiveVoyageArrival(
+                                    "V200",
+                                    List.of(
+                                            com.example.cargotracker.tracking.domain.model.valueobjects.VoyagePortCall
+                                                    .of(
+                                                            new Location("KRPUS"),
+                                                            null,
+                                                            TrackingFixture.at("2026-11-04T00:00:00Z")),
+                                            com.example.cargotracker.tracking.domain.model.valueobjects.VoyagePortCall
+                                                    .of(
+                                                            new Location("USLAX"),
+                                                            TrackingFixture.at("2026-11-15T08:00:00Z"),
+                                                            null)),
+                                    new com.example.cargotracker.tracking.domain.model.valueobjects.PublicationOrder(
+                                            TrackingFixture.at("2026-11-06T02:00:00Z"), G1, "rr-1"))
+                            .orElseThrow();
+                case "i" -> trackingRecord(TrackingStatus.PICKUP_SCHEDULED);
+                default -> throw new IllegalArgumentException(row);
+            };
+        }
+
+        @ParameterizedTest(name = "行6 ({0}) {1}")
+        @CsvSource(
+                delimiter = '|',
+                value = {
+                    "a | 当初の到着予定",
+                    "b | 区間 1 の出発の実績（実績 2、JPTYO、当初より 6 時間遅れ）",
+                    "c | 区間 1 の積替の実績（実績 3、KRPUS、当初より 1 時間 30 分遅れ）",
+                    "d | 区間 2 の出発の実績（実績 4、KRPUS、当初より 45 分遅れ）",
+                    "e | 区間 1 の出発の実績（実績 2、JPTYO、当初の到着予定どおり）",
+                    "f | 区間 1 の出発の実績（実績 2、JPTYO、当初の到着予定どおり）",
+                    "g | 到着の実績（実績 5、USLAX）",
+                    "h | 航海 V200 の到着予定（取得 2026-11-06 10:00 Asia/Tokyo（UTC+09:00）（UTC 2026-11-06 01:00））",
+                    "i | 記録がありません"
+                })
+        void 行6_最新の到着見込みの次に見込みの根拠を示す(String row, String expected) throws Exception {
+            given(queryService.detail(eq(TrackingFixture.TRACKING_NUMBER), any()))
+                    .willReturn(Optional.of(byCase(row)));
+
+            mockMvc.perform(get(DETAIL))
+                    .andExpect(status().isOk())
+                    .andExpect(content()
+                            .string(matchesPattern("(?s).*<dt class=\"col-sm-3\">最新の到着見込み</dt>\\s*"
+                                    + "<dd class=\"col-sm-9\">[^<]*</dd>\\s*<dt class=\"col-sm-3\">見込みの根拠</dt>\\s*"
+                                    + "<dd class=\"col-sm-9\">" + Pattern.quote(expected) + "</dd>.*")));
+        }
+
+        @Test
+        void 行7_追跡一覧に見込みの根拠の列を出さない() throws Exception {
+            given(queryService.recent(any()))
+                    .willReturn(new RecentTrackingRecords(
+                            List.of(summary("CTABCDEFGH2345", TrackingStatus.IN_TRANSIT)), false, 50));
+
+            mockMvc.perform(get(LIST))
+                    .andExpect(status().isOk())
+                    .andExpect(content().string(not(containsString("見込みの根拠"))));
         }
     }
 }

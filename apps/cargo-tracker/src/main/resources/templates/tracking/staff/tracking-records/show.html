@@ -32,6 +32,9 @@
         <dd class="col-sm-9" th:text="${trackingRecord.originalEta()}">2026-11-15 09:00 Asia/Tokyo（UTC+09:00）（UTC 2026-11-15 00:00）</dd>
         <dt class="col-sm-3">最新の到着見込み</dt>
         <dd class="col-sm-9" th:text="${trackingRecord.latestEta()}">2026-11-15 09:00 Asia/Tokyo（UTC+09:00）（UTC 2026-11-15 00:00）</dd>
+        <!--/* 見込みの根拠（Bolt 39g4c。【業務の判断】(aw)・(ax)）。社内の S-12 だけに示し、S-11 の列と荷主の C-10 には出さない（T-INV-09） */-->
+        <dt class="col-sm-3">見込みの根拠</dt>
+        <dd class="col-sm-9" th:text="${trackingRecord.latestEstimateBasis()}">区間 1 の出発の実績（実績 2、JPTYO、当初より 6 時間遅れ）</dd>
         <dt class="col-sm-3">最終取得時刻</dt>
         <dd class="col-sm-9" th:text="${trackingRecord.lastAcquiredAt()}">2026-11-01 12:00 Asia/Tokyo（UTC+09:00）（UTC 2026-11-01 03:00）</dd>
         <!--/* 次の予定の実績の予定時刻（なければ「なし」。Bolt 39g4）。どの時点かは下の予定区間の時刻と並べて分かる */-->

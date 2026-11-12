@@ -68,6 +68,29 @@ public class TrackingSteps {
         assertThat(trackingRecord.originalEta()).isEqualTo(new UtcInstant(Instant.parse(originalEta)));
     }
 
+    /** Bolt 39g4c の行 11（T-INV-10。【業務の判断】(aw)）。保存した追跡記録を読み直して、見込みと一緒に保存した根拠を確かめる。 */
+    @ならば("追跡の見込みの根拠は当初の到着予定である")
+    public void 見込みの根拠は当初の到着予定() {
+        assertThat(onlyTrackingRecord().latestEstimateBasis())
+                .contains(
+                        com.example.cargotracker.tracking.domain.model.valueobjects.LatestEstimateBasis.originalEta());
+    }
+
+    @ならば("追跡の見込みの根拠は実績 {int} である")
+    public void 見込みの根拠は実績(int milestoneNo) {
+        assertThat(onlyTrackingRecord().latestEstimateBasis())
+                .contains(com.example.cargotracker.tracking.domain.model.valueobjects.LatestEstimateBasis.milestone(
+                        milestoneNo));
+    }
+
+    @ならば("追跡の見込みの根拠は航海の到着予定である")
+    public void 見込みの根拠は航海の到着予定() {
+        assertThat(onlyTrackingRecord().latestEstimateBasis())
+                .contains(
+                        com.example.cargotracker.tracking.domain.model.valueobjects.LatestEstimateBasis
+                                .voyageArrival());
+    }
+
     /** Bolt 39g3 の行 21（【業務の判断】(ap)）。手入力の出典の取得時刻は登録した時刻（現在時刻）。 */
     @ならば("追跡の最終取得時刻は現在時刻である")
     public void 最終取得時刻は現在時刻() {

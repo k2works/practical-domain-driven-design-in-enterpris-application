@@ -19,7 +19,8 @@ public interface TrackingRecordMapper {
     void insertScheduledLeg(ScheduledLegRow row);
 
     /**
-     * 導出し直した現在状態と根拠の実績番号と確認中の理由（Bolt 39gc）を書き、版を 1 増やす（Bolt 26b）。航海の到着予定と順の鍵の 4 列も書く（Bolt 39g4b）。読み込んだときの
+     * 導出し直した現在状態と根拠の実績番号と確認中の理由（Bolt 39gc）を書き、版を 1 増やす（Bolt 26b）。航海の到着予定と順の鍵の 4 列（Bolt 39g4b）と見込みの根拠の
+     * 2 列（Bolt 39g4c）も書く。読み込んだときの
      * 版と違えば 0 件。
      */
     @SuppressWarnings("java:S107") // UPDATE の SET と WHERE の値を名前付きの引数で渡す（MyBatis の @Param）
@@ -30,6 +31,8 @@ public interface TrackingRecordMapper {
             @Param("statusBasisMilestoneNo") Integer statusBasisMilestoneNo,
             @Param("underReviewReason") String underReviewReason,
             @Param("latestEta") OffsetDateTime latestEta,
+            @Param("latestEtaBasis") String latestEtaBasis,
+            @Param("latestEtaBasisMilestoneNo") Integer latestEtaBasisMilestoneNo,
             @Param("lastAcquiredAt") OffsetDateTime lastAcquiredAt,
             @Param("nextExpectedAt") OffsetDateTime nextExpectedAt,
             @Param("voyageArrival") VoyageArrivalColumns voyageArrival,

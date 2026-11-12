@@ -18,6 +18,8 @@
             <arg column="under_review_reason" name="underReviewReason" javaType="String"/>
             <arg column="original_eta" name="originalEta" javaType="java.time.OffsetDateTime"/>
             <arg column="latest_eta" name="latestEta" javaType="java.time.OffsetDateTime"/>
+            <arg column="latest_eta_basis" name="latestEtaBasis" javaType="String"/>
+            <arg column="latest_eta_basis_milestone_no" name="latestEtaBasisMilestoneNo" javaType="java.lang.Integer"/>
             <arg column="last_acquired_at" name="lastAcquiredAt" javaType="java.time.OffsetDateTime"/>
             <arg column="next_expected_at" name="nextExpectedAt" javaType="java.time.OffsetDateTime"/>
             <arg column="voyage_arrival_at" name="voyageArrivalAt" javaType="java.time.OffsetDateTime"/>
@@ -78,34 +80,40 @@
     <!-- 追跡記録の列（予約 ID と追跡番号の 2 つの select で使う。列を足すときに片方だけ直さないため。Bolt 26 レビュー P-5） -->
     <sql id="trackingRecordColumns">
         tracking_number, booking_id, shipper_company_id, consignee_company_id, booking_status, routing_case_number,
-        route_version_no, current_status, status_basis_milestone_no, under_review_reason, original_eta, latest_eta, last_acquired_at,
+        route_version_no, current_status, status_basis_milestone_no, under_review_reason, original_eta, latest_eta, latest_eta_basis,
+        latest_eta_basis_milestone_no, last_acquired_at,
         next_expected_at, voyage_arrival_at, voyage_arrival_published_at, voyage_arrival_acquired_at, voyage_arrival_source_ref,
         version, created_at, updated_at
     </sql>
 
-    <!-- 追跡の開始（Bolt 25）。航海の到着予定と順の鍵の 4 列は行の値（開始では NULL。Bolt 39g4b）を書く -->
+    <!-- 追跡の開始（Bolt 25）。航海の到着予定と順の鍵の 4 列は行の値（開始では NULL。Bolt 39g4b）を書く。見込みの根拠の 2 列も行の値
+         （開始では当初の到着予定と NULL。Bolt 39g4c）を書く -->
     <insert id="insertTrackingRecord">
         INSERT INTO tracking.tracking_record
             (tracking_number, booking_id, shipper_company_id, consignee_company_id, booking_status, routing_case_number,
-             route_version_no, current_status, status_basis_milestone_no, under_review_reason, original_eta, latest_eta, last_acquired_at,
+             route_version_no, current_status, status_basis_milestone_no, under_review_reason, original_eta, latest_eta,
+             latest_eta_basis, latest_eta_basis_milestone_no, last_acquired_at,
              next_expected_at, voyage_arrival_at, voyage_arrival_published_at, voyage_arrival_acquired_at, voyage_arrival_source_ref,
              version, created_at, updated_at)
         VALUES
             (#{trackingNumber}, #{bookingId}, #{shipperCompanyId}, #{consigneeCompanyId}, #{bookingStatus},
              #{routingCaseNumber}, #{routeVersionNo}, #{currentStatus}, #{statusBasisMilestoneNo}, #{underReviewReason},
-             #{originalEta}, #{latestEta}, #{lastAcquiredAt}, #{nextExpectedAt}, #{voyageArrivalAt}, #{voyageArrivalPublishedAt},
+             #{originalEta}, #{latestEta}, #{latestEtaBasis}, #{latestEtaBasisMilestoneNo}, #{lastAcquiredAt}, #{nextExpectedAt},
+             #{voyageArrivalAt}, #{voyageArrivalPublishedAt},
              #{voyageArrivalAcquiredAt}, #{voyageArrivalSourceRef}, #{version}, #{createdAt}, #{updatedAt})
     </insert>
 
     <!-- 主要実績の登録（Bolt 26b）。読み込んだときの版と同じときだけ、導出し直した現在状態と根拠の実績番号と確認中の理由（Bolt 39gc）を書き、
          版を 1 増やす（楽観ロック）。最新の到着見込みと最終取得時刻（Bolt 39g3）と次の予定の実績の予定時刻（Bolt 39g4）と航海の到着予定と順の鍵の 4 列（Bolt 39g4b。
-         DE-12 の受け取りもこの UPDATE を使う）も書く。経路版・当初の到着予定の列は書かない（T-INV-10） -->
+         DE-12 の受け取りもこの UPDATE を使う）と見込みの根拠の 2 列（Bolt 39g4c。見込みと同じ文で書く）も書く。経路版・当初の到着予定の列は書かない（T-INV-10） -->
     <update id="updateTrackingRecord">
         UPDATE tracking.tracking_record
            SET current_status = #{currentStatus},
                status_basis_milestone_no = #{statusBasisMilestoneNo},
                under_review_reason = #{underReviewReason},
                latest_eta = #{latestEta},
+               latest_eta_basis = #{latestEtaBasis},
+               latest_eta_basis_milestone_no = #{latestEtaBasisMilestoneNo},
                last_acquired_at = #{lastAcquiredAt},
                next_expected_at = #{nextExpectedAt},
                voyage_arrival_at = #{voyageArrival.arrivalAt},

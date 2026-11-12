@@ -23,6 +23,8 @@ import com.example.cargotracker.tracking.domain.model.valueobjects.CustomerTrack
 import com.example.cargotracker.tracking.domain.model.valueobjects.DerivedStatus;
 import com.example.cargotracker.tracking.domain.model.valueobjects.ExternalMilestone;
 import com.example.cargotracker.tracking.domain.model.valueobjects.ExternalOrigin;
+import com.example.cargotracker.tracking.domain.model.valueobjects.LatestEstimate;
+import com.example.cargotracker.tracking.domain.model.valueobjects.LatestEstimateBasis;
 import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneGroup;
 import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneKind;
 import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneRejectionReason;
@@ -36,6 +38,7 @@ import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingStatu
 import com.example.cargotracker.tracking.domain.model.valueobjects.UnderReviewReason;
 import com.example.cargotracker.tracking.domain.model.valueobjects.VoyageArrival;
 import com.example.cargotracker.tracking.domain.model.valueobjects.VoyagePortCall;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -64,13 +67,17 @@ import java.util.UUID;
  * （Bolt 39g3。{@link LatestEstimateRule}。最終取得時刻は採用の実績の出典の取得時刻のうち最も新しいもの。【業務の判断】(ap)）。当初の到着予定は変えない
  * （T-INV-10）。DE-13 の下書きと完了後の保持のみは採用の実績を変えないので導出し直さない。
  *
+ * <p>見込みの根拠（Bolt 39g4c。【業務の判断】(aw)）は見込みと同じ規則の 1 回の評価で決め、見込みと 1 つの値（{@link LatestEstimate}）で持って保存する
+ * （読むたびに導かない。正を 1 つにする）。見込みと根拠が合うこと（当初・航海の到着予定・到着の実績は見込みと等しく、出発・積替の実績は当初以上で予定の
+ * 時点に結ぶ採用の実績）はコンストラクターで確かめる。Bolt 39g4c の前に見込みを決めた追跡記録は、次に導き直すまで根拠が空。
+ *
  * <p>次の予定の実績の予定時刻も同じく、追跡を始めたときと採用の実績が変わったときに導いて持ち、保存した値を読む（Bolt 39g4。{@link NextExpectedMilestoneRule}。
  * 【業務の判断】(aq)）。完了後（予約状態が完了か、採用済みの実績から導いた状態が引渡し済み）は空にする。鮮度超過は持たず、読むときに照会サービスが
  * 鮮度の判定で決める（【業務の判断】(ar)）。
  *
  * <p>最後の区間の航海の採用値（DE-12）を受けると、自分の予定で航海の到着予定を結び（{@link VoyageArrivalRule}。【業務の判断】(au)）、保存した公開の順より
  * 厳密に新しい知らせだけを受ける（Bolt 39g4b）。受けたときは最新の到着見込み（実績の遅れの見込みとの遅い方。(at)、D-136）と最終取得時刻（受けた知らせの
- * 取得時刻を含める。(av)）だけを導き直し、現在状態と次の予定の実績は保存した値のまま持つ。実績が変わって導出し直すときも、保存した航海の到着予定を使う。
+ * 取得時刻を含める。(av)）と見込みの根拠（Bolt 39g4c）だけを導き直し、現在状態と次の予定の実績は保存した値のまま持つ。実績が変わって導出し直すときも、保存した航海の到着予定を使う。
  * 完了後・取消済み・最後の区間でない航海の知らせは受けない。
  */
 @AggregateRoot
@@ -95,7 +102,7 @@ public final class TrackingRecord {
     private final Optional<UnderReviewReason> underReviewReason;
     private final List<Milestone> milestones;
     private final UtcInstant originalEta;
-    private final UtcInstant latestEta;
+    private final LatestEstimate latestEstimate;
     private final Optional<UtcInstant> lastAcquiredAt;
     private final Optional<UtcInstant> nextExpectedAt;
     private final Optional<VoyageArrival> voyageArrival;
@@ -113,7 +120,7 @@ public final class TrackingRecord {
             DerivedStatus current,
             List<Milestone> milestones,
             UtcInstant originalEta,
-            UtcInstant latestEta,
+            LatestEstimate latestEstimate,
             Optional<UtcInstant> lastAcquiredAt,
             Optional<UtcInstant> nextExpectedAt,
             Optional<VoyageArrival> voyageArrival,
@@ -131,7 +138,7 @@ public final class TrackingRecord {
         this.underReviewReason = current.underReviewReason();
         this.milestones = List.copyOf(milestones);
         this.originalEta = Objects.requireNonNull(originalEta, "originalEta");
-        this.latestEta = Objects.requireNonNull(latestEta, "latestEta");
+        this.latestEstimate = Objects.requireNonNull(latestEstimate, "latestEstimate");
         this.lastAcquiredAt = Objects.requireNonNull(lastAcquiredAt, "lastAcquiredAt");
         this.nextExpectedAt = Objects.requireNonNull(nextExpectedAt, "nextExpectedAt");
         this.voyageArrival = Objects.requireNonNull(voyageArrival, "voyageArrival");
@@ -142,6 +149,41 @@ public final class TrackingRecord {
                 throw new IllegalArgumentException("主要実績の実績番号は 1 からの連番です: " + trackingNumber.value());
             }
         }
+        // 見込みと根拠の一致（Bolt 39g4c の行 5）。組み立て・開始・導出のすべての経路に効く。表の CHECK ck_tracking_record_latest_eta_basis と
+        // PostgreSQL の外部キーが同じ規則の一部を守る（実績の状態と予定の時点は集約だけの規則）
+        latestEstimate.basis().ifPresent(basis -> {
+            if (!isConsistent(basis)) {
+                throw new IllegalArgumentException("最新の到着見込みが見込みの根拠と合いません: " + trackingNumber.value() + "、" + basis);
+            }
+        });
+    }
+
+    /** 見込みが根拠と合うか（当初なら当初の到着予定、航海なら航海の到着予定、到着の実績なら発生時刻、出発・積替の実績なら当初以上で予定の時点に結ぶ）。 */
+    private boolean isConsistent(LatestEstimateBasis basis) {
+        UtcInstant at = latestEstimate.at();
+        return switch (basis.kind()) {
+            case ORIGINAL_ETA -> at.equals(originalEta);
+            case VOYAGE_ARRIVAL ->
+                voyageArrival
+                        .flatMap(VoyageArrival::arrivalAt)
+                        .filter(at::equals)
+                        .isPresent();
+            case MILESTONE ->
+                adoptedMilestone(basis.milestoneNo().getAsInt())
+                        .filter(milestone -> schedule.pointOf(milestone.kind(), milestone.location())
+                                .isPresent())
+                        .map(milestone -> milestone.kind() == MilestoneKind.ARRIVAL
+                                ? at.equals(milestone.occurredAt())
+                                : !at.instant().isBefore(originalEta.instant()))
+                        .orElse(false);
+        };
+    }
+
+    private Optional<Milestone> adoptedMilestone(int milestoneNo) {
+        return milestones.stream()
+                .filter(milestone ->
+                        milestone.milestoneNo() == milestoneNo && milestone.state() == MilestoneState.ADOPTED)
+                .findFirst();
     }
 
     /**
@@ -173,7 +215,8 @@ public final class TrackingRecord {
                 new DerivedStatus(TrackingStatus.PICKUP_SCHEDULED, OptionalInt.empty()),
                 List.of(),
                 schedule.finalArrival(),
-                schedule.finalArrival(),
+                // 実績も航海の到着予定もないので、見込みは当初の到着予定で根拠も当初の到着予定（規則の 1 回の評価。Bolt 39g4c）
+                estimateOf(schedule, List.of(), Optional.empty()),
                 Optional.empty(),
                 nextExpectedOf(schedule, List.of()),
                 Optional.empty(),
@@ -186,8 +229,47 @@ public final class TrackingRecord {
 
     /**
      * 保存されている状態から組み立てる（リポジトリが使う）。現在状態が確認中なら理由を持つ（Bolt 39gc）。最新の到着見込みと最終取得時刻（Bolt 39g3）と
-     * 次の予定の実績の予定時刻（Bolt 39g4）と航海の到着予定（Bolt 39g4b）は保存した値をそのまま持つ。
+     * 次の予定の実績の予定時刻（Bolt 39g4）と航海の到着予定（Bolt 39g4b）と見込みの根拠（Bolt 39g4c。見込みと合わなければ拒む）は保存した値をそのまま持つ。
      */
+    @SuppressWarnings("java:S107") // 保存されている状態から組み立てるため、集約の値をすべて受け取る
+    public static TrackingRecord reconstitute(
+            TrackingNumber trackingNumber,
+            UUID bookingId,
+            CompanyId shipperCompanyId,
+            CompanyId consigneeCompanyId,
+            TrackedBookingStatus bookingStatus,
+            Schedule schedule,
+            TrackingStatus currentStatus,
+            OptionalInt statusBasisMilestoneNo,
+            Optional<UnderReviewReason> underReviewReason,
+            List<Milestone> milestones,
+            UtcInstant originalEta,
+            UtcInstant latestEta,
+            Optional<LatestEstimateBasis> latestEstimateBasis,
+            Optional<UtcInstant> lastAcquiredAt,
+            Optional<UtcInstant> nextExpectedAt,
+            Optional<VoyageArrival> voyageArrival,
+            UtcInstant startedAt,
+            long aggregateVersion) {
+        return new TrackingRecord(
+                trackingNumber,
+                bookingId,
+                shipperCompanyId,
+                consigneeCompanyId,
+                bookingStatus,
+                schedule,
+                new DerivedStatus(currentStatus, statusBasisMilestoneNo, underReviewReason),
+                milestones,
+                originalEta,
+                new LatestEstimate(latestEta, latestEstimateBasis),
+                lastAcquiredAt,
+                nextExpectedAt,
+                voyageArrival,
+                startedAt,
+                aggregateVersion);
+    }
+
+    /** 見込みの根拠のない保存されている状態から組み立てる（Bolt 39g4c の前の形。見込みの根拠は空）。 */
     @SuppressWarnings("java:S107") // 保存されている状態から組み立てるため、集約の値をすべて受け取る
     public static TrackingRecord reconstitute(
             TrackingNumber trackingNumber,
@@ -207,17 +289,20 @@ public final class TrackingRecord {
             Optional<VoyageArrival> voyageArrival,
             UtcInstant startedAt,
             long aggregateVersion) {
-        return new TrackingRecord(
+        return reconstitute(
                 trackingNumber,
                 bookingId,
                 shipperCompanyId,
                 consigneeCompanyId,
                 bookingStatus,
                 schedule,
-                new DerivedStatus(currentStatus, statusBasisMilestoneNo, underReviewReason),
+                currentStatus,
+                statusBasisMilestoneNo,
+                underReviewReason,
                 milestones,
                 originalEta,
                 latestEta,
+                Optional.empty(),
                 lastAcquiredAt,
                 nextExpectedAt,
                 voyageArrival,
@@ -636,10 +721,10 @@ public final class TrackingRecord {
                 voyageArrival);
     }
 
-    /** 最新の到着見込み（採用の実績と航海の到着予定から。【業務の判断】(at)）。 */
-    private static UtcInstant estimateOf(
+    /** 最新の到着見込みと見込みの根拠（採用の実績と航海の到着予定から規則の 1 回の評価で。【業務の判断】(at)・(aw)）。 */
+    private static LatestEstimate estimateOf(
             Schedule schedule, List<Milestone> milestones, Optional<VoyageArrival> voyageArrival) {
-        return ESTIMATE.estimate(schedule, milestones, voyageArrival.flatMap(VoyageArrival::arrivalAt));
+        return ESTIMATE.estimateWithBasis(schedule, milestones, voyageArrival.flatMap(VoyageArrival::arrivalAt));
     }
 
     /** 次の予定の実績の予定時刻（最後の区間の到着を結んだら空。【業務の判断】(aq)）。 */
@@ -672,13 +757,13 @@ public final class TrackingRecord {
      * 下書きと保持のみ）。
      */
     private TrackingRecord withMilestones(List<Milestone> newMilestones, DerivedStatus newCurrent) {
-        return withMilestones(newMilestones, newCurrent, latestEta, lastAcquiredAt, nextExpectedAt, voyageArrival);
+        return withMilestones(newMilestones, newCurrent, latestEstimate, lastAcquiredAt, nextExpectedAt, voyageArrival);
     }
 
     private TrackingRecord withMilestones(
             List<Milestone> newMilestones,
             DerivedStatus newCurrent,
-            UtcInstant newLatestEta,
+            LatestEstimate newLatestEstimate,
             Optional<UtcInstant> newLastAcquiredAt,
             Optional<UtcInstant> newNextExpectedAt,
             Optional<VoyageArrival> newVoyageArrival) {
@@ -692,7 +777,7 @@ public final class TrackingRecord {
                 newCurrent,
                 newMilestones,
                 originalEta,
-                newLatestEta,
+                newLatestEstimate,
                 newLastAcquiredAt,
                 newNextExpectedAt,
                 newVoyageArrival,
@@ -715,7 +800,7 @@ public final class TrackingRecord {
                         milestone.kind(), milestone.location(), milestone.occurredAt(), milestone.source()))
                 .toList();
         return new CustomerTrackingView(
-                trackingNumber, currentStatus, originalEta, latestEta, lastAcquiredAt, schedule.legs(), adopted);
+                trackingNumber, currentStatus, originalEta, latestEta(), lastAcquiredAt, schedule.legs(), adopted);
     }
 
     /** 同じ出典識別子（出典の種類と参照）の実績（T-INV-02）。取得時刻は識別子に含めない。 */
@@ -776,7 +861,31 @@ public final class TrackingRecord {
 
     /** 最新の到着見込み（T-INV-10。Bolt 39g3 から採用の実績で動く）。 */
     public UtcInstant latestEta() {
-        return latestEta;
+        return latestEstimate.at();
+    }
+
+    /** 見込みの根拠（見込みと一緒に保存した値。Bolt 39g4c の前に見込みを決めて、まだ導き直していない追跡記録は空。【業務の判断】(aw)）。 */
+    public Optional<LatestEstimateBasis> latestEstimateBasis() {
+        return latestEstimate.basis();
+    }
+
+    /**
+     * 見込みの根拠の実績を結んだ予定の時点（根拠が実績のときだけ。規則と同じ {@link Schedule#pointOf}。S-12 の「区間 n の出発の実績」の区間。Bolt 39g4c）。
+     */
+    public Optional<SchedulePoint> latestEstimateBasisPoint() {
+        return latestEstimate
+                .basis()
+                .filter(basis -> basis.kind() == LatestEstimateBasis.Kind.MILESTONE)
+                .flatMap(basis -> adoptedMilestone(basis.milestoneNo().getAsInt()))
+                .flatMap(milestone -> schedule.pointOf(milestone.kind(), milestone.location()));
+    }
+
+    /**
+     * 当初からの見込みの遅れ（最新の到着見込み − 当初の到着予定。Bolt 39g4c）。根拠が当初の到着予定・航海の到着予定・出発と積替の実績なら不変条件で 0 以上。
+     * 到着の実績（早着）では負になりうる。画面は規則の加算の形を写さず、この値を書式にする（計画 決定 (5)）。
+     */
+    public Duration latestEstimateDelay() {
+        return Duration.between(originalEta.instant(), latestEstimate.at().instant());
     }
 
     /**

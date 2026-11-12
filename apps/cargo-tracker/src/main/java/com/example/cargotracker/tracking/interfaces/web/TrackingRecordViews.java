@@ -15,6 +15,7 @@ import com.example.cargotracker.tracking.domain.model.valueobjects.CustomerTrack
 import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneKind;
 import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneState;
 import com.example.cargotracker.tracking.domain.model.valueobjects.Schedule;
+import com.example.cargotracker.tracking.domain.model.valueobjects.SchedulePoint;
 import com.example.cargotracker.tracking.domain.model.valueobjects.ScheduledLeg;
 import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingNumber;
 import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingStatus;
@@ -167,6 +168,7 @@ final class TrackingRecordViews {
      * @param status 現在状態の表示名
      * @param originalEta 当初の到着予定
      * @param latestEta 最新の到着見込み
+     * @param latestEstimateBasis 見込みの根拠の文（根拠がなければ「記録がありません」。Bolt 39g4c）
      * @param lastAcquiredAt 最終取得時刻（なければ「まだありません」。Bolt 39g3）
      * @param nextExpectedAt 次の予定の実績の予定時刻（なければ「なし」。Bolt 39g4）
      * @param freshnessWarning 鮮度超過の警告の文（鮮度超過でなければ {@code null}。Bolt 39g4）
@@ -183,6 +185,7 @@ final class TrackingRecordViews {
             String status,
             String originalEta,
             String latestEta,
+            String latestEstimateBasis,
             String lastAcquiredAt,
             String nextExpectedAt,
             String freshnessWarning,
@@ -280,6 +283,7 @@ final class TrackingRecordViews {
                 status(trackingRecord.currentStatus()),
                 staff(trackingRecord.originalEta()),
                 staff(trackingRecord.latestEta()),
+                latestEstimateBasis(trackingRecord),
                 trackingRecord.lastAcquiredAt().map(TrackingRecordViews::staff).orElse(NO_LAST_ACQUIRED_YET),
                 trackingRecord.nextExpectedAt().map(TrackingRecordViews::staff).orElse(NO_NEXT_EXPECTED),
                 found.freshnessExceeded() ? freshnessWarning(found.freshnessTolerance()) : null,
@@ -294,6 +298,55 @@ final class TrackingRecordViews {
                 trackingRecord.aggregateVersion(),
                 trackingRecord.currentStatus() == TrackingStatus.UNDER_REVIEW,
                 underReviewNote(trackingRecord));
+    }
+
+    /** S-12 の見込みの根拠のない行（Bolt 39g4c の前に見込みを決めた追跡記録）の文（【業務の判断】(ax)、台帳 D-140）。 */
+    static final String NO_LATEST_ESTIMATE_BASIS = "記録がありません";
+
+    /**
+     * S-12 の見込みの根拠の文（Bolt 39g4c の行 6。【業務の判断】(aw)・(ax)、計画 決定 (5)）。区間は根拠の実績を結んだ予定の時点、時間は集約の見込みの遅れ
+     * （最新の到着見込み − 当初の到着予定）を書式にするだけで、規則の加算の形を写さない。航海の到着予定は最後の区間の航海番号と取得時刻。
+     */
+    private static String latestEstimateBasis(TrackingRecord trackingRecord) {
+        return trackingRecord
+                .latestEstimateBasis()
+                .map(basis -> switch (basis.kind()) {
+                    case ORIGINAL_ETA -> "当初の到着予定";
+                    case MILESTONE ->
+                        milestoneBasis(trackingRecord, basis.milestoneNo().getAsInt());
+                    case VOYAGE_ARRIVAL ->
+                        "航海 " + trackingRecord.schedule().legs().getLast().voyageNumber() + " の到着予定（取得 "
+                                + staff(trackingRecord
+                                        .voyageArrival()
+                                        .orElseThrow()
+                                        .order()
+                                        .acquiredAt())
+                                + "）";
+                })
+                .orElse(NO_LATEST_ESTIMATE_BASIS);
+    }
+
+    private static String milestoneBasis(TrackingRecord trackingRecord, int milestoneNo) {
+        Milestone milestone = trackingRecord.milestones().get(milestoneNo - 1);
+        String place = "実績 " + milestoneNo + "、" + milestone.location().unLocode();
+        if (milestone.kind() == MilestoneKind.ARRIVAL) {
+            return "到着の実績（" + place + "）";
+        }
+        SchedulePoint point = trackingRecord.latestEstimateBasisPoint().orElseThrow();
+        return "区間 " + (point.legIndex() + 1) + " の" + kind(milestone.kind()) + "の実績（" + place + "、"
+                + delayFromOriginal(trackingRecord.latestEstimateDelay()) + "）";
+    }
+
+    /** 当初からの見込みの遅れの書式（時間と分。分未満は切り捨て。0 分は「当初の到着予定どおり」）。 */
+    private static String delayFromOriginal(Duration delay) {
+        long minutes = delay.toMinutes();
+        if (minutes <= 0) {
+            return "当初の到着予定どおり";
+        }
+        long hours = minutes / 60;
+        long rest = minutes % 60;
+        String text = hours == 0 ? rest + " 分" : hours + " 時間" + (rest == 0 ? "" : " " + rest + " 分");
+        return "当初より " + text + "遅れ";
     }
 
     /**

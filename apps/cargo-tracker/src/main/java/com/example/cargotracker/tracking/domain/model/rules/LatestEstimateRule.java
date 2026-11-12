@@ -3,6 +3,8 @@ package com.example.cargotracker.tracking.domain.model.rules;
 import com.example.cargotracker.shared.annotation.ddd.DomainRule;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import com.example.cargotracker.tracking.domain.model.entities.Milestone;
+import com.example.cargotracker.tracking.domain.model.valueobjects.LatestEstimate;
+import com.example.cargotracker.tracking.domain.model.valueobjects.LatestEstimateBasis;
 import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneKind;
 import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneState;
 import com.example.cargotracker.tracking.domain.model.valueobjects.Schedule;
@@ -22,6 +24,9 @@ import java.util.Optional;
  *
  * <p>最後の区間の航海の到着予定（DE-12。Bolt 39g4b。【業務の判断】(at)、台帳 D-136）があれば、到着の実績がないときに、実績の遅れで送った見込み（当初の
  * 到着予定以上）と航海の到着予定の遅い方にする。航海の到着予定が早まっても当初の到着予定より早めない。到着の実績があれば実績のまま。
+ *
+ * <p>見込みの根拠（Bolt 39g4c。【業務の判断】(aw)、台帳 D-139）は見込みと同じ 1 回の評価で決める（{@link #estimateWithBasis}）。同じ時刻の航海の到着予定は
+ * 使わないので根拠は実績、遅れのない実績を使ったときも根拠はその実績（積替港で遅れを取り戻したことを示す）。
  */
 @DomainRule
 public class LatestEstimateRule {
@@ -38,7 +43,7 @@ public class LatestEstimateRule {
     }
 
     /**
-     * 最新の到着見込みを返す。
+     * 最新の到着見込みの時刻を返す（{@link #estimateWithBasis} に委ねる。Bolt 39g4c の後はテストが呼ぶ形）。
      *
      * @param schedule 予定（当初の到着予定は最後の区間の到着予定）
      * @param milestones 追跡記録の実績の列
@@ -47,6 +52,22 @@ public class LatestEstimateRule {
      */
     @SuppressWarnings("java:S3553") // 航海の到着予定は追跡記録が空で持つ値をそのまま渡す（集約の Optional の値）
     public UtcInstant estimate(
+            Schedule schedule, Collection<Milestone> milestones, Optional<UtcInstant> voyageArrival) {
+        return estimateWithBasis(schedule, milestones, voyageArrival).at();
+    }
+
+    /**
+     * 最新の到着見込みと見込みの根拠を 1 回の評価で返す（Bolt 39g4c。【業務の判断】(aw)、計画 決定 (4)）。根拠は分岐に 1 対 1 で対応する: 到着の実績で
+     * 返すときはその実績、実績の遅れで送った見込み（遅れが正でなくても）を使うときはその実績、結んだ実績がなく航海の到着予定を使わないときは当初の到着予定、
+     * 航海の到着予定が厳密に遅いときは航海の到着予定。
+     *
+     * @param schedule 予定（当初の到着予定は最後の区間の到着予定）
+     * @param milestones 追跡記録の実績の列
+     * @param voyageArrival 最後の区間の航海の到着予定（なければ空）
+     * @return 最新の到着見込み（根拠を必ず持つ）
+     */
+    @SuppressWarnings("java:S3553") // 航海の到着予定は追跡記録が空で持つ値をそのまま渡す（集約の Optional の値）
+    public LatestEstimate estimateWithBasis(
             Schedule schedule, Collection<Milestone> milestones, Optional<UtcInstant> voyageArrival) {
         UtcInstant original = schedule.finalArrival();
         Optional<Matched> latest = milestones.stream()
@@ -61,12 +82,16 @@ public class LatestEstimateRule {
                         .thenComparing(
                                 matched -> matched.milestone().occurredAt().instant()));
         if (latest.isPresent() && latest.get().milestone().kind() == MilestoneKind.ARRIVAL) {
-            return latest.get().milestone().occurredAt();
+            Milestone arrived = latest.get().milestone();
+            return LatestEstimate.of(arrived.occurredAt(), LatestEstimateBasis.milestone(arrived.milestoneNo()));
         }
-        UtcInstant byMilestones =
-                latest.map(matched -> estimateFrom(matched, original)).orElse(original);
+        LatestEstimate byMilestones = latest.map(matched -> LatestEstimate.of(
+                        estimateFrom(matched, original),
+                        LatestEstimateBasis.milestone(matched.milestone().milestoneNo())))
+                .orElseGet(() -> LatestEstimate.of(original, LatestEstimateBasis.originalEta()));
         return voyageArrival
-                .filter(arrival -> arrival.instant().isAfter(byMilestones.instant()))
+                .filter(arrival -> arrival.instant().isAfter(byMilestones.at().instant()))
+                .map(arrival -> LatestEstimate.of(arrival, LatestEstimateBasis.voyageArrival()))
                 .orElse(byMilestones);
     }
 

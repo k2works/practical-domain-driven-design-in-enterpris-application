@@ -59,6 +59,7 @@ public class InMemoryTrackingRecordRepository implements TrackingRecordRepositor
                         trackingRecord.milestones(),
                         trackingRecord.originalEta(),
                         trackingRecord.latestEta(),
+                        trackingRecord.latestEstimateBasis(),
                         trackingRecord.lastAcquiredAt(),
                         trackingRecord.nextExpectedAt(),
                         trackingRecord.voyageArrival(),

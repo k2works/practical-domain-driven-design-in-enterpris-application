@@ -11,6 +11,7 @@ import com.example.cargotracker.tracking.domain.model.aggregates.TrackingRecord;
 import com.example.cargotracker.tracking.domain.model.aggregates.TrackingRecordRepository;
 import com.example.cargotracker.tracking.domain.model.entities.Milestone;
 import com.example.cargotracker.tracking.domain.model.valueobjects.ExternalOrigin;
+import com.example.cargotracker.tracking.domain.model.valueobjects.LatestEstimateBasis;
 import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneKind;
 import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneState;
 import com.example.cargotracker.tracking.domain.model.valueobjects.PublicationOrder;
@@ -78,6 +79,8 @@ public class MyBatisTrackingRecordRepository implements TrackingRecordRepository
                 null,
                 offset(trackingRecord.originalEta()),
                 offset(trackingRecord.latestEta()),
+                basisKind(trackingRecord),
+                basisMilestoneNo(trackingRecord),
                 trackingRecord
                         .lastAcquiredAt()
                         .map(MyBatisTrackingRecordRepository::offset)
@@ -106,7 +109,8 @@ public class MyBatisTrackingRecordRepository implements TrackingRecordRepository
 
     /**
      * 主要実績の登録を保存する（Bolt 26b）。読み込んだときの版と同じときだけ現在状態と根拠の実績番号と確認中の理由（Bolt 39gc）と最新の到着見込みと最終取得時刻
-     * （Bolt 39g3。当初の到着予定と経路版は書かない）と次の予定の実績の予定時刻（Bolt 39g4）と航海の到着予定と順の鍵の 4 列（Bolt 39g4b）を書いて版を 1 増やし、表にない
+     * （Bolt 39g3。当初の到着予定と経路版は書かない）と次の予定の実績の予定時刻（Bolt 39g4）と航海の到着予定と順の鍵の 4 列（Bolt 39g4b）と見込みの根拠の 2 列
+     * （Bolt 39g4c。根拠の実績番号の実績も現在状態の根拠と同じく先に確かめる）を書いて版を 1 増やし、表にない
      * 実績番号の主要実績を追加する（実績は削除・上書きしない。T-INV-01）。表にある実績は中身が集約と同じでなければ、版を通さずに書いた経路の誤りとして
      * {@link IllegalStateException} にする（P-3。Bolt 39g2）。表で下書きの実績が集約で採用・確認中になっていれば、状態と採用者・採用時刻だけを書き換える（Bolt 39gb。確認中は Bolt 39gc）。
      * 版が違えば、下書きの行がもう下書きでなければ、同じ出典の実績が同時に登録されて一意制約 {@code uk_milestone_source} に違反したら、または根拠の実績番号の実績が
@@ -121,6 +125,7 @@ public class MyBatisTrackingRecordRepository implements TrackingRecordRepository
         Integer statusBasisMilestoneNo = trackingRecord.statusBasisMilestoneNo().isPresent()
                 ? trackingRecord.statusBasisMilestoneNo().getAsInt()
                 : null;
+        Integer latestEtaBasisMilestoneNo = basisMilestoneNo(trackingRecord);
         if (mapper.updateTrackingRecord(
                         trackingNumber,
                         trackingRecord.aggregateVersion(),
@@ -128,6 +133,8 @@ public class MyBatisTrackingRecordRepository implements TrackingRecordRepository
                         statusBasisMilestoneNo,
                         trackingRecord.underReviewReason().map(Enum::name).orElse(null),
                         offset(trackingRecord.latestEta()),
+                        basisKind(trackingRecord),
+                        latestEtaBasisMilestoneNo,
                         trackingRecord
                                 .lastAcquiredAt()
                                 .map(MyBatisTrackingRecordRepository::offset)
@@ -149,6 +156,38 @@ public class MyBatisTrackingRecordRepository implements TrackingRecordRepository
         if (statusBasisMilestoneNo != null && mapper.countMilestone(trackingNumber, statusBasisMilestoneNo) == 0) {
             throw conflict(trackingRecord);
         }
+        // 見込みの根拠の実績番号も同じく先に確かめる（遅延の外部キー fk_tracking_record_latest_eta_basis。Bolt 39g4c）
+        if (latestEtaBasisMilestoneNo != null
+                && mapper.countMilestone(trackingNumber, latestEtaBasisMilestoneNo) == 0) {
+            throw conflict(trackingRecord);
+        }
+    }
+
+    /** 見込みの根拠の種類（根拠がなければ NULL。Bolt 39g4c）。 */
+    private static String basisKind(TrackingRecord trackingRecord) {
+        return trackingRecord
+                .latestEstimateBasis()
+                .map(basis -> basis.kind().name())
+                .orElse(null);
+    }
+
+    /** 見込みの根拠の実績番号（根拠が実績でなければ NULL。Bolt 39g4c）。 */
+    private static Integer basisMilestoneNo(TrackingRecord trackingRecord) {
+        return trackingRecord
+                .latestEstimateBasis()
+                .filter(basis -> basis.milestoneNo().isPresent())
+                .map(basis -> basis.milestoneNo().getAsInt())
+                .orElse(null);
+    }
+
+    /** 2 列から見込みの根拠を組み立てる（種類が NULL なら Bolt 39g4c の前の行で根拠なし。2 列がそろうことは CHECK ck_tracking_record_latest_eta_basis が守る）。 */
+    private static Optional<LatestEstimateBasis> latestEstimateBasisOf(TrackingRecordRow row) {
+        return Optional.ofNullable(row.latestEtaBasis())
+                .map(kind -> new LatestEstimateBasis(
+                        LatestEstimateBasis.Kind.valueOf(kind),
+                        row.latestEtaBasisMilestoneNo() == null
+                                ? OptionalInt.empty()
+                                : OptionalInt.of(row.latestEtaBasisMilestoneNo())));
     }
 
     /**
@@ -313,6 +352,7 @@ public class MyBatisTrackingRecordRepository implements TrackingRecordRepository
                         .toList(),
                 utc(row.originalEta()),
                 utc(row.latestEta()),
+                latestEstimateBasisOf(row),
                 Optional.ofNullable(row.lastAcquiredAt()).map(MyBatisTrackingRecordRepository::utc),
                 Optional.ofNullable(row.nextExpectedAt()).map(MyBatisTrackingRecordRepository::utc),
                 voyageArrivalOf(row),

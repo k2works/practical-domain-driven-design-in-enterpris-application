@@ -8,6 +8,7 @@ import java.util.UUID;
  * 確認中の理由は Bolt 39gc から持つ（現在状態が確認中のときだけ値を持つ）。最終取得時刻は Bolt 39g3 から持つ（採用の実績がなければ NULL）。
  * 次の予定の実績の予定時刻は Bolt 39g4 から持つ（完了後と次の予定の実績がないときは NULL）。
  * 航海の到着予定と順の鍵（公開した時刻・取得時刻・出典の参照）は Bolt 39g4b から持つ（受けていなければ 4 列とも NULL、結べなければ到着予定だけ NULL）。
+ * 見込みの根拠の種類と実績番号は Bolt 39g4c から持つ（Bolt 39g4c の前の行は 2 列とも NULL、実績でなければ実績番号は NULL）。
  * 手続き中の段階は使う Bolt まで行に持たない（表では NULL）。
  */
 public record TrackingRecordRow(
@@ -23,6 +24,8 @@ public record TrackingRecordRow(
         String underReviewReason,
         OffsetDateTime originalEta,
         OffsetDateTime latestEta,
+        String latestEtaBasis,
+        Integer latestEtaBasisMilestoneNo,
         OffsetDateTime lastAcquiredAt,
         OffsetDateTime nextExpectedAt,
         OffsetDateTime voyageArrivalAt,

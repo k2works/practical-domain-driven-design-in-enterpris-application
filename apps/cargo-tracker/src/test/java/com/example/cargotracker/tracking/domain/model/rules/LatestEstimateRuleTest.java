@@ -225,6 +225,78 @@ class LatestEstimateRuleTest {
         }
     }
 
+    /**
+     * Bolt 39g4c の行 3。規則が見込みと根拠を 1 回の評価で返す（計画 決定 (4)・(5)）。見込みは 39g3・39g4b の同じ組と同じ値。実績は
+     * 「種類:場所:発生時刻:状態」を「;」でつなぎ、実績番号は並びの順に 1 から。根拠は種類と実績番号（なければ空）。
+     */
+    @org.junit.jupiter.api.Nested
+    class Bolt39g4c_行3_見込みの根拠 {
+
+        @ParameterizedTest(name = "{0}")
+        @CsvSource(
+                delimiter = '|',
+                value = {
+                    "(a) 実績なし・航海なし | | | 2026-11-15T00:00:00Z | ORIGINAL_ETA |",
+                    "(b) 区間 1 の出発 D1 + 6 時間 | DEPARTURE:JPTYO:2026-11-01T06:00:00Z:ADOPTED | | 2026-11-15T06:00:00Z | MILESTONE | 1",
+                    "(c) 区間 1 の早い出発 D1 − 1 時間 | DEPARTURE:JPTYO:2026-10-31T23:00:00Z:ADOPTED | | 2026-11-15T00:00:00Z | MILESTONE | 1",
+                    "(d) 到着・USLAX A2 + 1 時間 | ARRIVAL:USLAX:2026-11-15T01:00:00Z:ADOPTED | | 2026-11-15T01:00:00Z | MILESTONE | 1",
+                    "(e) 実績なし・航海 A2 + 10 時間 | | 2026-11-15T10:00:00Z | 2026-11-15T10:00:00Z | VOYAGE_ARRIVAL |",
+                    "(f) 実績なし・航海 A2 − 5 時間 | | 2026-11-14T19:00:00Z | 2026-11-15T00:00:00Z | ORIGINAL_ETA |",
+                    "(g) 出発 D1 + 6 時間・航海 A2 + 3 時間 | DEPARTURE:JPTYO:2026-11-01T06:00:00Z:ADOPTED | 2026-11-15T03:00:00Z | 2026-11-15T06:00:00Z | MILESTONE | 1",
+                    "(h) 出発 D1 + 6 時間・航海 A2 + 8 時間 | DEPARTURE:JPTYO:2026-11-01T06:00:00Z:ADOPTED | 2026-11-15T08:00:00Z | 2026-11-15T08:00:00Z | VOYAGE_ARRIVAL |",
+                    "(i) 出発 D1 + 6 時間・航海 A2 + 6 時間（同じ時刻） | DEPARTURE:JPTYO:2026-11-01T06:00:00Z:ADOPTED | 2026-11-15T06:00:00Z | 2026-11-15T06:00:00Z | MILESTONE | 1",
+                    "(j) 到着 A2 + 1 時間・航海 A2 + 10 時間 | ARRIVAL:USLAX:2026-11-15T01:00:00Z:ADOPTED | 2026-11-15T10:00:00Z | 2026-11-15T01:00:00Z | MILESTONE | 1",
+                    "(k) 確認中の出発だけ | DEPARTURE:JPTYO:2026-11-01T06:00:00Z:UNDER_REVIEW | | 2026-11-15T00:00:00Z | ORIGINAL_ETA |",
+                    "(l) 区間 1 の出発の遅れと区間 2 の定刻の出発 | DEPARTURE:JPTYO:2026-11-01T06:00:00Z:ADOPTED;DEPARTURE:KRPUS:2026-11-04T00:00:00Z:ADOPTED | | 2026-11-15T00:00:00Z | MILESTONE | 2",
+                    "(m) 区間 1 の積替 A1 + 3 時間 | TRANSSHIPMENT:KRPUS:2026-11-03T03:00:00Z:ADOPTED | | 2026-11-15T03:00:00Z | MILESTONE | 1",
+                    "(n) 集荷だけ | PICKUP:JPTYO:2026-10-31T00:00:00Z:ADOPTED | | 2026-11-15T00:00:00Z | ORIGINAL_ETA |",
+                    "(o) 実績なし・航海ちょうど A2 | | 2026-11-15T00:00:00Z | 2026-11-15T00:00:00Z | ORIGINAL_ETA |"
+                })
+        void 見込みと根拠(
+                String row,
+                String milestones,
+                String voyageArrival,
+                String expectedAt,
+                com.example.cargotracker.tracking.domain.model.valueobjects.LatestEstimateBasis.Kind expectedKind,
+                Integer expectedNo) {
+            java.util.Optional<UtcInstant> voyage =
+                    voyageArrival == null ? java.util.Optional.empty() : java.util.Optional.of(at(voyageArrival));
+            List<Milestone> parsed = parse(milestones);
+
+            com.example.cargotracker.tracking.domain.model.valueobjects.LatestEstimate estimate =
+                    rule.estimateWithBasis(schedule(), parsed, voyage);
+
+            assertThat(estimate.at()).isEqualTo(at(expectedAt)).isEqualTo(rule.estimate(schedule(), parsed, voyage));
+            assertThat(estimate.basis())
+                    .contains(new com.example.cargotracker.tracking.domain.model.valueobjects.LatestEstimateBasis(
+                            expectedKind,
+                            expectedNo == null ? java.util.OptionalInt.empty() : java.util.OptionalInt.of(expectedNo)));
+        }
+
+        private static List<Milestone> parse(String milestones) {
+            if (milestones == null) {
+                return List.of();
+            }
+            String[] specs = milestones.split(";");
+            List<Milestone> parsed = new java.util.ArrayList<>();
+            for (int i = 0; i < specs.length; i++) {
+                String[] parts = specs[i].split(":", 3);
+                String occurredAt = parts[2].substring(0, parts[2].lastIndexOf(':'));
+                MilestoneState state = MilestoneState.valueOf(parts[2].substring(parts[2].lastIndexOf(':') + 1));
+                parsed.add(new Milestone(
+                        i + 1,
+                        MilestoneKind.valueOf(parts[0]),
+                        new Location(parts[1]),
+                        at(occurredAt),
+                        source("F-" + (i + 1)),
+                        state,
+                        REGISTRANT,
+                        at("2026-11-16T00:00:00Z")));
+            }
+            return parsed;
+        }
+    }
+
     private static Milestone adopted(int no, MilestoneKind kind, String location, String occurredAt) {
         return new Milestone(
                 no,
