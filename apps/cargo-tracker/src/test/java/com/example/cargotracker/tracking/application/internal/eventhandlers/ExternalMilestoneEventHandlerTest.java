@@ -94,8 +94,7 @@ class ExternalMilestoneEventHandlerTest {
         private RuntimeException readFailure;
 
         @Override
-        public synchronized Optional<TrackingRecord> findByTrackingNumberForExternalMilestone(
-                TrackingNumber trackingNumber) {
+        public synchronized Optional<TrackingRecord> findByTrackingNumberForUpdate(TrackingNumber trackingNumber) {
             reads.add("forExternalMilestone");
             if (readFailure != null) {
                 throw readFailure;

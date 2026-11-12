@@ -105,7 +105,7 @@ class MyBatisTrackingRecordLockIntegrationTest {
             List<Long> versions = OverlappingTransactions.run(
                     transactionTemplate,
                     () -> repository
-                            .findByTrackingNumberForExternalMilestone(saved.trackingNumber())
+                            .findByTrackingNumberForUpdate(saved.trackingNumber())
                             .orElseThrow()
                             .aggregateVersion(),
                     () -> {
@@ -133,7 +133,7 @@ class MyBatisTrackingRecordLockIntegrationTest {
                         return loaded.aggregateVersion();
                     },
                     () -> repository
-                            .findByTrackingNumberForExternalMilestone(saved.trackingNumber())
+                            .findByTrackingNumberForUpdate(saved.trackingNumber())
                             .orElseThrow()
                             .aggregateVersion());
 
@@ -142,9 +142,8 @@ class MyBatisTrackingRecordLockIntegrationTest {
 
         @Test
         void 行28_ない追跡番号は押さえずに空を返す() {
-            Optional<TrackingRecord> found =
-                    transactionTemplate.execute(status -> repository.findByTrackingNumberForExternalMilestone(
-                            fixture().randomNumber()));
+            Optional<TrackingRecord> found = transactionTemplate.execute(
+                    status -> repository.findByTrackingNumberForUpdate(fixture().randomNumber()));
 
             assertThat(found).isEmpty();
         }
@@ -153,7 +152,7 @@ class MyBatisTrackingRecordLockIntegrationTest {
         void 行28_呼び手のトランザクションの外では押さえて読まずに例外にする() {
             TrackingNumber number = fixture().started().trackingNumber();
 
-            assertThatThrownBy(() -> repository.findByTrackingNumberForExternalMilestone(number))
+            assertThatThrownBy(() -> repository.findByTrackingNumberForUpdate(number))
                     .isInstanceOf(IllegalTransactionStateException.class);
         }
     }
@@ -203,7 +202,7 @@ class MyBatisTrackingRecordLockIntegrationTest {
             ExecutorService executor = Executors.newSingleThreadExecutor();
             try {
                 Future<?> holder = executor.submit(() -> f.transaction().executeWithoutResult(status -> {
-                    f.repository().findByTrackingNumberForExternalMilestone(held);
+                    f.repository().findByTrackingNumberForUpdate(held);
                     locked.countDown();
                     awaitQuietly(release);
                 }));

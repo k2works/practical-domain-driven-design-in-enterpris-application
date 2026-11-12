@@ -79,8 +79,7 @@ public class InMemoryTrackingRecordRepository implements TrackingRecordRepositor
 
     /** メモリの実装は押さえる行がないので読むだけ（全メソッドが同期する。Bolt 39g）。 */
     @Override
-    public synchronized Optional<TrackingRecord> findByTrackingNumberForExternalMilestone(
-            TrackingNumber trackingNumber) {
+    public synchronized Optional<TrackingRecord> findByTrackingNumberForUpdate(TrackingNumber trackingNumber) {
         return findByTrackingNumber(trackingNumber);
     }
 

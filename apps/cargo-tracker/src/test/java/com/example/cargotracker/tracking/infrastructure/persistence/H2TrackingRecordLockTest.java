@@ -111,7 +111,7 @@ class H2TrackingRecordLockTest {
             ExecutorService executor = Executors.newFixedThreadPool(2);
             try {
                 Future<?> holder = executor.submit(() -> f.transaction().executeWithoutResult(status -> {
-                    repository.findByTrackingNumberForExternalMilestone(number);
+                    repository.findByTrackingNumberForUpdate(number);
                     locked.countDown();
                     try {
                         release.await(60, TimeUnit.SECONDS);
@@ -125,8 +125,7 @@ class H2TrackingRecordLockTest {
                 Future<Throwable> waiter = executor.submit(() -> {
                     try {
                         f.transaction()
-                                .executeWithoutResult(
-                                        status -> repository.findByTrackingNumberForExternalMilestone(number));
+                                .executeWithoutResult(status -> repository.findByTrackingNumberForUpdate(number));
                         return null;
                     } catch (DataAccessException e) {
                         return e;

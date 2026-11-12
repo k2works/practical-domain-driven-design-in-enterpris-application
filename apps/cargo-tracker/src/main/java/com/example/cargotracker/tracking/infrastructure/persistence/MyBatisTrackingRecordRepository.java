@@ -332,7 +332,7 @@ public class MyBatisTrackingRecordRepository implements TrackingRecordRepository
     /** 追跡番号の行を押さえてから組み立てる（押さえる前に読んだ値をキャッシュから使わない。Bolt 39g の決定 (4)）。 */
     @Override
     @Transactional(propagation = Propagation.MANDATORY)
-    public Optional<TrackingRecord> findByTrackingNumberForExternalMilestone(TrackingNumber trackingNumber) {
+    public Optional<TrackingRecord> findByTrackingNumberForUpdate(TrackingNumber trackingNumber) {
         if (mapper.lockByTrackingNumber(trackingNumber.value()) == null) {
             return Optional.empty();
         }

@@ -125,9 +125,8 @@ public class TrackingRecordCommandService {
                 return new MilestoneAdoptionOutcome.OutOfScope();
             }
         }
-        TrackingRecord trackingRecord = repository
-                .findByTrackingNumberForExternalMilestone(trackingNumber)
-                .orElse(null);
+        TrackingRecord trackingRecord =
+                repository.findByTrackingNumberForUpdate(trackingNumber).orElse(null);
         if (trackingRecord == null) {
             return new MilestoneAdoptionOutcome.NotFound();
         }

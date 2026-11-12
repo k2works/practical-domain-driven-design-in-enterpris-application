@@ -35,10 +35,11 @@ public interface TrackingRecordRepository {
 
     /**
      * DE-13 の受け取りのために、追跡番号の行を呼び手のトランザクションが終わるまで押さえてから、追跡記録を読み直す（Bolt 39g の決定 (4)）。同じ追跡番号の DE-13 を直列にする。
-     * 追跡管理者の下書きの採用も、DE-13 の受け取りと直列にするためにこれで読み直す（Bolt 39gb の決定 (5a)）。
+     * 追跡管理者の下書きの採用も、DE-13 の受け取りと直列にするためにこれで読み直す（Bolt 39gb の決定 (5a)）。DE-12 の受け取りも同じく押さえて読み直す
+     * （Bolt 39g4b。3 つの目的に使うので {@code findByTrackingNumberForExternalMilestone} から名前を変えた）。
      * 待ちの上限は 10 秒で、超えると例外（発行記録を未完了に残す）。追跡記録がなければ押さえずに空を返す。呼び手のトランザクションの中で呼ぶ。
      */
-    Optional<TrackingRecord> findByTrackingNumberForExternalMilestone(TrackingNumber trackingNumber);
+    Optional<TrackingRecord> findByTrackingNumberForUpdate(TrackingNumber trackingNumber);
 
     /**
      * 荷主企業の追跡記録を追跡番号で取得する（C-10。荷主企業で絞り、他社の追跡記録は存在しないのと同じく空。BR-07。Bolt 27）。荷主の

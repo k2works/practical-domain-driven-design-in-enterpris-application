@@ -332,9 +332,9 @@ class TrackingRecordQueryServiceTest {
         }
 
         @Override
-        public Optional<TrackingRecord> findByTrackingNumberForExternalMilestone(TrackingNumber trackingNumber) {
+        public Optional<TrackingRecord> findByTrackingNumberForUpdate(TrackingNumber trackingNumber) {
             detailQueries++;
-            return delegate.findByTrackingNumberForExternalMilestone(trackingNumber);
+            return delegate.findByTrackingNumberForUpdate(trackingNumber);
         }
 
         @Override

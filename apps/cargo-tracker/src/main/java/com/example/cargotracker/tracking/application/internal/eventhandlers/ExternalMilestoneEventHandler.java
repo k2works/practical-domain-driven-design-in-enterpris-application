@@ -57,7 +57,7 @@ public class ExternalMilestoneEventHandler {
                     e.getMessage());
             return;
         }
-        Optional<TrackingRecord> found = repository.findByTrackingNumberForExternalMilestone(external.trackingNumber());
+        Optional<TrackingRecord> found = repository.findByTrackingNumberForUpdate(external.trackingNumber());
         if (rejectedMilestones.existsBySource(external.source())) {
             return;
         }
