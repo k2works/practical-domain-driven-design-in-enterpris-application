@@ -272,6 +272,11 @@
                                         <td>ck_tracking_record_under_review_reason</td>
                                         <td>((under_review_reason)::text &#61; &#39;OUT_OF_SEQUENCE&#39;::text)</td>
                                     </tr>
+                                    <tr>
+                                        <td><a href='tables/tracking_record.html'>tracking_record</a></td>
+                                        <td>ck_tracking_record_voyage_arrival</td>
+                                        <td>(((voyage_arrival_published_at IS NULL) AND (voyage_arrival_acquired_at IS NULL) AND (voyage_arrival_source_ref IS NULL) AND (voyage_arrival_at IS NULL)) OR ((voyage_arrival_published_at IS NOT NULL) AND (voyage_arrival_acquired_at IS NOT NULL) AND (voyage_arrival_source_ref IS NOT NULL)))</td>
+                                    </tr>
                                 </tbody>
                             </table>
                         </div>

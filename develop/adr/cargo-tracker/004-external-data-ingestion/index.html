@@ -10639,6 +10639,41 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_39g4b_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 39g4b 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../development/cargo-tracker/release_report-0_1/" class="md-nav__link">
         
   
@@ -16171,6 +16206,11 @@
 <li>2026-11-11（W7、Bolt 39gc）: 外部データの差異と追跡の確認中の境界を、次のように決めた（<a href="../../../development/cargo-tracker/bolt_39gc_plan/">Bolt 39gc 計画</a> の開始準備の決定 (2)、W7 CP7。推奨のとおり。human:kakimomokuri）。決定は変えない（外部データは採用値を公開するだけ）。</li>
 <li><strong>外部データの差異</strong>: 同じ外部レコードの版の逆転・採用値との矛盾（ED-INV-03）は外部データが受信記録の分類として判定する（Bolt 39h）。差異にした原本は採用値にならず DE-13 は出ない。</li>
 <li><strong>追跡の確認中</strong>: 追跡は追跡記録の中の採用済みの実績の時系列（手入力と外部原本の出典をまたぐ）だけを判定し、採用で時系列に反すれば実績と現在状態を確認中にする（T-INV-03）。外部データは追跡の実績を読まず、追跡は受信記録を読まない。</li>
+<li>2026-11-12（W7、Bolt 39g4b）: 追跡も DE-12 を受けることを、次のように決めた（<a href="../../../development/cargo-tracker/bolt_39g4b_plan/">Bolt 39g4b 計画</a> の開始準備の決定 (2)・(3)・(5)・(7)、【業務の判断】(au)、台帳 D-137。推奨のとおり。human:kakimomokuri）。決定は変えない（採用値だけを公開し、追跡は追跡記録集約を自分のコマンドで更新する。DE-12 の型と発行は変えない）。</li>
+<li><strong>受け手</strong>: 追跡の listener <code>VoyageArrivalEventHandler</code> が DE-12 を直接受ける（<code>tracking</code> の <code>allowedDependencies</code> の <code>externaldata :: events</code> で足り、依存は増えない）。DE-12 の購読は経路設計・監査・追跡の 3 つになる。経路設計の DE-30 と公開 API は使わない（新しい依存と DE-30 の契約の変更が要り、DE-30 は初めての航海では出ないので取りこぼす）。</li>
+<li><strong>写すもの</strong>: その航海を最後の区間に持つ追跡記録だけが、寄港の並びから最後の揚地への到着予定（航海の到着予定）を写す（中間の区間の航海は使わない。D-136）。航海の全体の写しは持たない。イベントの型は listener だけが読み、追跡の値（<code>VoyagePortCall</code>・<code>PublicationOrder</code>）に写す。</li>
+<li><strong>順</strong>: 上の Bolt 39e の項の順の規則（D-105）を追跡の値 <code>PublicationOrder</code> に写し、保存した順より厳密に新しい DE-12 だけを受ける（経路設計の <code>Voyage.apply</code> と同じ形。共有カーネルには上げず、2 か所にあることを技術的負債として記録する）。</li>
+<li><strong>直列</strong>: 対象の追跡記録を追跡番号の順に 1 つのトランザクションで行のロックで押さえてから読み直す（上の Bolt 39g の項の行のロックと同じ操作。名前を <code>findByTrackingNumberForUpdate</code> に変えた）。内容の欠けた DE-12 は ERROR のログを残して捨て、DB の失敗は発行記録に残して再配信に任せる。</li>
 </ul>
 <h2 id="_10">備考<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>
 <ul>

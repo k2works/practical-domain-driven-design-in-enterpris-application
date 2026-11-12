@@ -91,6 +91,9 @@
             <column ascending="true" name="tracking_number"/>
             <column ascending="true" name="leg_no"/>
          </index>
+         <index name="ix_scheduled_leg_voyage" unique="false">
+            <column ascending="true" name="voyage_number"/>
+         </index>
          <checkConstraint constraint="(arrival_at &gt; departure_at)" name="ck_scheduled_leg_arrival"/>
          <checkConstraint constraint="(leg_no &gt;= 1)" name="ck_scheduled_leg_no"/>
       </table>
@@ -126,6 +129,10 @@
          <column autoUpdated="false" defaultValue="null" digits="6" id="15" name="created_at" nullable="false" remarks="作成時刻" size="35" type="timestamptz" typeCode="93"/>
          <column autoUpdated="false" defaultValue="null" digits="6" id="16" name="updated_at" nullable="false" remarks="更新時刻" size="35" type="timestamptz" typeCode="93"/>
          <column autoUpdated="false" defaultValue="null" digits="6" id="17" name="next_expected_at" nullable="true" remarks="次の予定の実績の予定時刻" size="35" type="timestamptz" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="18" name="voyage_arrival_at" nullable="true" remarks="航海の到着予定" size="35" type="timestamptz" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="19" name="voyage_arrival_published_at" nullable="true" remarks="航海の到着予定の公開した時刻" size="35" type="timestamptz" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="20" name="voyage_arrival_acquired_at" nullable="true" remarks="航海の到着予定の取得時刻" size="35" type="timestamptz" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="21" name="voyage_arrival_source_ref" nullable="true" remarks="航海の到着予定の出典の参照" size="200" type="varchar" typeCode="12"/>
          <primaryKey column="tracking_number" sequenceNumberInPK="1"/>
          <index name="pk_tracking_record" unique="true">
             <column ascending="true" name="tracking_number"/>
@@ -142,6 +149,7 @@
          <checkConstraint constraint="(((routing_case_number IS NULL) AND (route_version_no IS NULL)) OR ((routing_case_number IS NOT NULL) AND (route_version_no &gt;= 1)))" name="ck_tracking_record_route_version"/>
          <checkConstraint constraint="((((current_status)::text = 'UNDER_REVIEW'::text) AND (under_review_reason IS NOT NULL)) OR (((current_status)::text &lt;&gt; 'UNDER_REVIEW'::text) AND (under_review_reason IS NULL)))" name="ck_tracking_record_under_review"/>
          <checkConstraint constraint="((under_review_reason)::text = 'OUT_OF_SEQUENCE'::text)" name="ck_tracking_record_under_review_reason"/>
+         <checkConstraint constraint="(((voyage_arrival_published_at IS NULL) AND (voyage_arrival_acquired_at IS NULL) AND (voyage_arrival_source_ref IS NULL) AND (voyage_arrival_at IS NULL)) OR ((voyage_arrival_published_at IS NOT NULL) AND (voyage_arrival_acquired_at IS NOT NULL) AND (voyage_arrival_source_ref IS NOT NULL)))" name="ck_tracking_record_voyage_arrival"/>
       </table>
    </tables>
 </database>
