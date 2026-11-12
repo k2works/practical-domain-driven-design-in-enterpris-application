@@ -752,6 +752,83 @@ class RoutingCaseControllerTest {
                 .andExpect(content().string(Matchers.not(Matchers.containsString("<script>alert(1)"))));
     }
 
+    /** 貨物種別で除外の候補の表示（Bolt 39i の行 30・32）。 */
+    @Nested
+    @Import(FixedClock.class)
+    class Bolt39i_貨物種別で除外の表示 {
+
+        private static final String LEAD_DEFAULT = "適合する候補がありません。除外の理由を確かめ、航海の情報や接続時間規則の確認をデータ責任者に依頼してください。";
+        private static final String LEAD_CARGO = "適合する候補がありません。この案件の貨物は MVP の対象外のため、手動の窓口で扱ってください。";
+        private static final String ENTRY = "この候補で確定へ";
+
+        private String shown(RoutingCase routingCase, StaleLeg... staleLegs) throws Exception {
+            when(queryService.findByNumber(eq(NUMBER), any())).thenReturn(Optional.of(routingCase));
+            when(queryService.staleLegsOf(any(), any())).thenReturn(List.of(staleLegs));
+            return mockMvc.perform(get(SHOW))
+                    .andExpect(status().isOk())
+                    .andReturn()
+                    .getResponse()
+                    .getContentAsString(StandardCharsets.UTF_8);
+        }
+
+        private static RouteCandidate candidate(int candidateNo, ExclusionReason... reasons) {
+            Leg leg = new Leg(
+                    "V-" + candidateNo,
+                    TOKYO,
+                    ROTTERDAM,
+                    at("2026-10-10T00:00:00Z"),
+                    at("2026-10-30T00:00:00Z"),
+                    "V-" + candidateNo + "@1",
+                    at("2026-10-07T01:00:00Z"));
+            return new RouteCandidate(
+                    candidateNo,
+                    List.of(leg),
+                    new ConstraintEvaluation(at("2026-10-30T00:00:00Z"), List.of(reasons), null),
+                    at("2026-10-07T03:00:00Z"));
+        }
+
+        private static ExclusionReason cargo(RouteCargoCategory category) {
+            return ExclusionReason.cargoNotSupported(category, at("2026-10-10T00:00:00Z"), "V-1@1");
+        }
+
+        private static RoutingCase presentedWith(RouteCandidate... candidates) {
+            return reconstitute(new RouteVersion(
+                    1, RouteVersionStatus.CANDIDATES_PRESENTED, List.of(candidates), at("2026-10-07T03:00:00Z")));
+        }
+
+        @Test
+        void 行30_すべて貨物種別で除外なら導入文は手動の窓口の案内で理由は候補ごとに出て確定の入口はない() throws Exception {
+            String html = shown(presentedWith(
+                    candidate(1, cargo(RouteCargoCategory.DANGEROUS)),
+                    candidate(2, cargo(RouteCargoCategory.DANGEROUS))));
+
+            assertThat(html)
+                    .contains(LEAD_CARGO)
+                    .doesNotContain(LEAD_DEFAULT, ENTRY)
+                    .contains("貨物種別に対応しない（危険物。MVP の対象は一般貨物だけで、手動の窓口で扱う）");
+            assertThat(html.split("貨物種別に対応しない（危険物", -1)).hasSize(3);
+        }
+
+        @Test
+        void 行30_貨物種別と別の区分が混ざる除外は今の導入文のまま() throws Exception {
+            ExclusionReason deadline = ExclusionReason.deadlineExceeded(at("2026-11-03T12:00:00Z"), DEADLINE, "V-X@1");
+            String html = shown(presentedWith(
+                    candidate(1, cargo(RouteCargoCategory.REEFER)),
+                    candidate(2, deadline, cargo(RouteCargoCategory.REEFER))));
+
+            assertThat(html).contains(LEAD_DEFAULT).doesNotContain(LEAD_CARGO);
+        }
+
+        @Test
+        void 行32_貨物種別で除外の候補も区間が今の航海と合わなければ古くなった候補と示す() throws Exception {
+            String html = shown(
+                    presentedWith(candidate(1, cargo(RouteCargoCategory.OTHER_SPECIAL))),
+                    new StaleLeg(1, 1, StaleLegReason.SCHEDULE_CHANGED));
+
+            assertThat(html).contains("古くなった候補").contains(LEAD_CARGO);
+        }
+    }
+
     @Nested
     @Import(FixedClock.class)
     class Bolt39f2_古くなった候補の表示 {

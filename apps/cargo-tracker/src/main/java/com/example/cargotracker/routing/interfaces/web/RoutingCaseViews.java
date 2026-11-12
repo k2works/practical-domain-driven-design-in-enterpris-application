@@ -6,6 +6,7 @@ import com.example.cargotracker.routing.domain.model.aggregates.RoutingCase;
 import com.example.cargotracker.routing.domain.model.entities.RouteCandidate;
 import com.example.cargotracker.routing.domain.model.entities.RouteVersion;
 import com.example.cargotracker.routing.domain.model.valueobjects.ExclusionReason;
+import com.example.cargotracker.routing.domain.model.valueobjects.ExclusionReasonCode;
 import com.example.cargotracker.routing.domain.model.valueobjects.ExclusionThreshold.ArrivalDeadline;
 import com.example.cargotracker.routing.domain.model.valueobjects.ExclusionThreshold.ConnectionRuleMissing;
 import com.example.cargotracker.routing.domain.model.valueobjects.ExclusionThreshold.MinimumConnection;
@@ -14,6 +15,7 @@ import com.example.cargotracker.routing.domain.model.valueobjects.ExclusionThres
 import com.example.cargotracker.routing.domain.model.valueobjects.Leg;
 import com.example.cargotracker.routing.domain.model.valueobjects.RedesignReasonCode;
 import com.example.cargotracker.routing.domain.model.valueobjects.RedesignRecord;
+import com.example.cargotracker.routing.domain.model.valueobjects.RouteCargoCategory;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteConfirmation;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteVersionStatus;
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseSummary;
@@ -73,6 +75,7 @@ final class RoutingCaseViews {
      * @param staleCandidates 古くなった候補の数（区間ではなく候補を数える。Bolt 39f2）
      * @param allConformingStale 適合の候補が 1 件以上あり、そのすべてが古い
      * @param infoInsufficientStale 取得から許容時間を過ぎた区間がある
+     * @param allExcludedForCargo 候補が 1 件以上あり、すべての候補の理由が貨物種別だけ（導入文を手動の窓口の案内に差し替える。Bolt 39i）
      */
     record CaseDetail(
             String number,
@@ -92,7 +95,8 @@ final class RoutingCaseViews {
             List<CandidateView> candidates,
             int staleCandidates,
             boolean allConformingStale,
-            boolean infoInsufficientStale) {
+            boolean infoInsufficientStale,
+            boolean allExcludedForCargo) {
 
         /** 再算出を促す上の文（再算出は案件に 1 つの操作なので候補ごとに繰り返さない。Bolt 39f2 の決定 (3)）。古くなった候補がなければ null。 */
         public String staleNotice() {
@@ -239,7 +243,19 @@ final class RoutingCaseViews {
                 candidates,
                 staleByCandidate.size(),
                 allConformingStale(candidates),
-                staleLegs.stream().anyMatch(staleLeg -> staleLeg.reason() == StaleLegReason.INFO_INSUFFICIENT));
+                staleLegs.stream().anyMatch(staleLeg -> staleLeg.reason() == StaleLegReason.INFO_INSUFFICIENT),
+                allExcludedForCargo(version.candidates()));
+    }
+
+    /** 候補が 1 件以上あり、すべての候補の理由が貨物種別だけか（貨物種別と別の区分が混ざるときは今の導入文のまま。Bolt 39i）。 */
+    private static boolean allExcludedForCargo(List<RouteCandidate> candidates) {
+        return !candidates.isEmpty()
+                && candidates.stream().allMatch(candidate -> {
+                    List<ExclusionReason> reasons = candidate.evaluation().reasons();
+                    return !reasons.isEmpty()
+                            && reasons.stream()
+                                    .allMatch(reason -> reason.code() == ExclusionReasonCode.CARGO_NOT_SUPPORTED);
+                });
     }
 
     /** 適合の候補が 1 件以上あり、そのすべてが古いか（適合が 0 件は「一部」の文。行 20b）。 */
@@ -419,11 +435,24 @@ final class RoutingCaseViews {
                 "接続を判定できない（" + threshold.port().unLocode() + " に次の出発の時刻で有効な接続時間規則がない。接続 "
                         + connection(reason, legs) + "）。次の出発 " + dateTime(reason.violatedAt())
                         + INFO_VERSION + reason.infoVersion();
-            case UnsupportedCargo threshold -> "貨物種別に対応しない" + INFO_VERSION + reason.infoVersion();
+            case UnsupportedCargo threshold ->
+                "貨物種別に対応しない（" + cargoName(threshold.category()) + "。MVP の対象は一般貨物だけで、手動の窓口で扱う）。最初の出発 "
+                        + dateTime(reason.violatedAt()) + INFO_VERSION + reason.infoVersion();
             case StaleVoyageInfo threshold ->
                 "情報不足（" + threshold.voyageNumber() + " の情報は取得から " + hours(threshold.tolerance())
                         + "を過ぎている）。取得 " + dateTime(reason.infoAcquiredAt().orElseThrow())
                         + INFO_VERSION + reason.infoVersion();
+        };
+    }
+
+    /** 画面の貨物種別の語（ui_design の語。業務の文の「冷凍貨物」ではなく画面の「冷凍」にそろえる。Bolt 39i）。 */
+    private static String cargoName(RouteCargoCategory category) {
+        return switch (category) {
+            case GENERAL -> "一般";
+            case DANGEROUS -> "危険物";
+            case REEFER -> "冷凍";
+            case OTHER_SPECIAL -> "その他特殊";
+            case UNRECOGNIZED -> "不明な貨物種別";
         };
     }
 

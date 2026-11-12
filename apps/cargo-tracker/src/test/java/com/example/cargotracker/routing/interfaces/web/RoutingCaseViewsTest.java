@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.example.cargotracker.routing.domain.model.valueobjects.ExclusionReason;
 import com.example.cargotracker.routing.domain.model.valueobjects.Leg;
 import com.example.cargotracker.routing.domain.model.valueobjects.RedesignReasonCode;
+import com.example.cargotracker.routing.domain.model.valueobjects.RouteCargoCategory;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteVersionStatus;
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseNumber;
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseSummary;
@@ -74,6 +75,23 @@ class RoutingCaseViewsTest {
                 "V-301@3");
 
         assertThat(RoutingCaseViews.reason(reason, List.of())).startsWith("情報不足（V-301 の情報は取得から 24 時間 30 分を過ぎている）");
+    }
+
+    @ParameterizedTest(name = "{0} の除外の文")
+    @CsvSource({
+        "DANGEROUS, 危険物",
+        "REEFER, 冷凍",
+        "OTHER_SPECIAL, その他特殊",
+        "UNRECOGNIZED, 不明な貨物種別",
+    })
+    void Bolt39i_貨物種別の除外の文は種別ごとの全文で最初の出発と参照情報版を添える(RouteCargoCategory category, String name) {
+        UtcInstant firstDeparture = new UtcInstant(Instant.parse("2026-11-03T12:00:00Z"));
+        ExclusionReason reason = ExclusionReason.cargoNotSupported(category, firstDeparture, "V-1@1");
+
+        assertThat(RoutingCaseViews.reason(reason, List.of()))
+                .isEqualTo("貨物種別に対応しない（" + name + "。MVP の対象は一般貨物だけで、手動の窓口で扱う）。最初の出発 "
+                        + RoutingCaseViews.dateTime(firstDeparture)
+                        + "。参照した航海情報の版 V-1@1");
     }
 
     static Leg leg(String voyage, String load, String discharge, String departure, String arrival) {
