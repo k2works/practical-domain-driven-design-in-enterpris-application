@@ -7,11 +7,15 @@ import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
 import io.cucumber.java.ja.ならば;
 import io.cucumber.java.ja.もし;
+import io.cucumber.java.ja.前提;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.util.regex.Pattern;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 /**
  * 追跡管理者の S-11 追跡一覧・S-12 追跡の詳細（Bolt 26）と S-13 主要実績の登録（US-12 AC1・AC2。Bolt 26c）の画面の層のステップ定義。追跡記録は、同じシナリオで営業担当者が
@@ -22,18 +26,94 @@ public class TrackingUiSteps {
 
     private static final String LIST_CAPTION = "追跡記録（追跡の開始時刻の新しい順）";
 
+    private static final ZoneId JAPAN = ZoneId.of("Asia/Tokyo");
+    private static final DateTimeFormatter FORM_DATE_TIME = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+
+    /** 社内の日時の表記（利用者のタイムゾーンと UTC の併記。Bolt 39g3 の最終取得時刻は実の時計の時刻なので形で確かめる）。 */
+    private static final Pattern STAFF_DATE_TIME = Pattern.compile(
+            "^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2} Asia/Tokyo（UTC\\+09:00）（UTC \\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}）$");
+
     private final BrowserSession browser;
     private final UiScenarioState state;
+    private final JdbcTemplate jdbc;
     private final String baseUrl;
+
+    /** シナリオでずらした最初の区間の出発予定（Bolt 39g3 の行 22。分の単位にそろえる）。 */
+    private ZonedDateTime firstDeparture;
 
     public TrackingUiSteps(
             BrowserSession browser,
             UiScenarioState state,
+            JdbcTemplate jdbc,
             @LocalServerPort int port,
             @Value("${ui.base-url:}") String configuredBaseUrl) {
         this.browser = browser;
         this.state = state;
+        this.jdbc = jdbc;
         this.baseUrl = configuredBaseUrl.isBlank() ? "http://localhost:" + port : configuredBaseUrl;
+    }
+
+    /**
+     * Bolt 39g3 の行 22。画面の層の航海は 2099 年に出発するので、予定より遅れた出発は今より後になり登録できない（T-INV-13）。追跡の予定の最初の区間の出発予定を
+     * 今の n 時間前（分の単位）にずらして、遅れた出発を今より前に登録できるようにする（到着予定と当初の到着予定は変えない。予定の規則の「到着は出発の後」は保つ）。
+     */
+    @前提("追跡の予定の最初の区間の出発予定が今の {int} 時間前になっている")
+    public void 最初の区間の出発予定をずらす(int hoursAgo) {
+        firstDeparture =
+                ZonedDateTime.now(JAPAN).truncatedTo(ChronoUnit.MINUTES).minusHours(hoursAgo);
+        int updated = jdbc.update(
+                "UPDATE tracking.scheduled_leg SET departure_at = ? WHERE tracking_number = ? AND leg_no = 1",
+                firstDeparture.toOffsetDateTime(),
+                state.trackingNumber());
+        org.assertj.core.api.Assertions.assertThat(updated).isEqualTo(1);
+    }
+
+    /** Bolt 39g3 の行 22。発生時刻はずらした最初の区間の出発予定の n 時間後（今より前）。 */
+    @もし("キー操作だけで実績 {string} を場所 {string}・発生時刻は最初の区間の出発予定の {int} 時間後・出典 {string} の参照 {string} で登録する")
+    public void 出発予定の後の発生時刻で実績を登録する(String kind, String location, int hoursLater, String sourceKind, String reference) {
+        実績を登録する(kind, location, firstDeparture.plusHours(hoursLater).format(FORM_DATE_TIME), sourceKind, reference);
+    }
+
+    /** Bolt 39g3 の行 22。行を追跡番号で引く（一覧の先頭を前提にしない。Bolt 39gc の学び）。 */
+    @もし("キー操作だけで追跡一覧から確定した予約の追跡の詳細を開く")
+    public void 追跡一覧から確定した予約の追跡の詳細を開く() {
+        page().locator("body").focus();
+        browser.tabUntilFocused(trackingList()
+                .getByRole(AriaRole.LINK, new Locator.GetByRoleOptions().setName(state.trackingNumber())));
+        page().keyboard().press("Enter");
+        page().waitForURL("**/staff/tracking-records/" + state.trackingNumber());
+        browser.checkAccessibility();
+    }
+
+    @ならば("追跡の詳細の最新の到着見込みは {string} で、最終取得時刻は {string} である")
+    public void 追跡の詳細の見込みと最終取得時刻(String latestEta, String lastAcquiredAt) {
+        assertThat(definition("最新の到着見込み")).hasText(latestEta);
+        assertThat(definition("最終取得時刻")).hasText(lastAcquiredAt);
+    }
+
+    @ならば("追跡の詳細の当初の到着予定は {string} のままである")
+    public void 追跡の詳細の当初の到着予定(String originalEta) {
+        assertThat(definition("当初の到着予定")).hasText(originalEta);
+    }
+
+    /** 最終取得時刻は登録した時刻（実の時計）なので、日時の表記の形で確かめる。 */
+    @ならば("追跡の詳細の最新の到着見込みは {string} で、最終取得時刻が示される")
+    public void 追跡の詳細の見込みと示された最終取得時刻(String latestEta) {
+        assertThat(definition("最新の到着見込み")).hasText(latestEta);
+        assertThat(definition("最終取得時刻")).hasText(STAFF_DATE_TIME);
+        browser.checkAccessibility();
+    }
+
+    @ならば("追跡一覧の確定した予約の行に最新の到着見込み {string} と最終取得時刻が示される")
+    public void 追跡一覧の行の見込みと最終取得時刻(String latestEta) {
+        Locator row = trackingList()
+                .locator("tbody tr")
+                .filter(new Locator.FilterOptions()
+                        .setHas(page().getByRole(
+                                        AriaRole.LINK, new Page.GetByRoleOptions().setName(state.trackingNumber()))));
+        assertThat(row.locator("td").nth(3)).hasText(latestEta);
+        assertThat(row.locator("td").nth(4)).hasText(STAFF_DATE_TIME);
+        browser.checkAccessibility();
     }
 
     private Page page() {
@@ -136,9 +216,7 @@ public class TrackingUiSteps {
      */
     @もし("キー操作だけで実績 {string} を場所 {string}・発生時刻は今の {int} 時間前・出典 {string} の参照 {string} で登録する")
     public void 今より前の発生時刻で実績を登録する(String kind, String location, int hoursAgo, String sourceKind, String reference) {
-        String occurredAt = ZonedDateTime.now(ZoneId.of("Asia/Tokyo"))
-                .minusHours(hoursAgo)
-                .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+        String occurredAt = ZonedDateTime.now(JAPAN).minusHours(hoursAgo).format(FORM_DATE_TIME);
         実績を登録する(kind, location, occurredAt, sourceKind, reference);
     }
 

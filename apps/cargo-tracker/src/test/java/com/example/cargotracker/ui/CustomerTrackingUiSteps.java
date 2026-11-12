@@ -76,6 +76,26 @@ public class CustomerTrackingUiSteps {
         page().waitForURL("**" + LIST_PATH + "/" + state.trackingNumber());
     }
 
+    /** Bolt 39g3 の行 22。一覧の行を追跡番号で引いて開く（一覧の先頭を前提にしない）。 */
+    @もし("荷主担当者が追跡の照会から確定した予約の照会の結果を開く")
+    public void 確定した予約の照会の結果を開く() {
+        荷主担当者が追跡の照会を開く();
+        page().locator("body").focus();
+        browser.tabUntilFocused(
+                list().getByRole(AriaRole.LINK, new Locator.GetByRoleOptions().setName(state.trackingNumber())));
+        page().keyboard().press("Enter");
+        page().waitForURL("**" + LIST_PATH + "/" + state.trackingNumber());
+    }
+
+    /** Bolt 39g3 の行 22。最終取得時刻は登録した時刻（実の時計）なので、荷主の日時表示の形で確かめる。 */
+    @ならば("照会の結果の最新の到着見込みは {string} で、最終取得時刻が示される")
+    public void 照会の結果の見込みと最終取得時刻(String latestEta) {
+        assertThat(definition("最新の到着見込み")).hasText(latestEta);
+        assertThat(definition("最終取得時刻"))
+                .hasText(Pattern.compile("^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2} Asia/Tokyo（UTC\\+09:00）$"));
+        browser.checkAccessibility();
+    }
+
     @ならば("照会の結果に現在状態 {string} と予定と主要実績 {string} と出典 {string} が示される")
     public void 照会の結果が示される(String status, String milestone, String source) {
         assertThat(page().getByRole(
