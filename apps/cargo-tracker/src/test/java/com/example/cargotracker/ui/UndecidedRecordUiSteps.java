@@ -59,6 +59,54 @@ public class UndecidedRecordUiSteps {
         browser.checkAccessibility();
     }
 
+    /** Bolt 39h3 の行 9。取込で絞らない一覧を開く（取込の結果の画面を経ずに、元の取込の結果に戻らない片付けの入口）。 */
+    @もし("判断を待つ隔離・差異の確認を絞らずに開く")
+    public void 絞らずに開く() {
+        browser.navigate(baseUrl + LIST_URL);
+        assertThat(heading()).isVisible();
+        browser.checkAccessibility();
+    }
+
+    /** Bolt 39h3 の行 9（決定 (5)）。この情報源の内容の違う原本の行に、取り込んだ日時と情報源を読み上げに足した「この取込で絞る」がある。 */
+    @ならば("絞らない一覧の {int} 行目の内容の違う原本の行にこの取込で絞るのリンクが示される")
+    public void 絞るリンクが示される(int line) {
+        Locator link = filterLink(line);
+        assertThat(link).isVisible();
+        assertThat(link)
+                .hasText(Pattern.compile(
+                        "^この取込で絞る（.+Asia/Tokyo.+、" + PlaywrightText.literal(ingestion.sourceLabel()) + "）$"));
+        browser.checkAccessibility();
+    }
+
+    /** Bolt 39h3 の行 9。行の「この取込で絞る」へ Tab で進めて押し、その取込で絞った一覧を開く。 */
+    @もし("キー操作だけで絞らない一覧の {int} 行目の内容の違う原本のこの取込で絞るを開く")
+    public void 絞るを開く(int line) {
+        Locator link = filterLink(line);
+        page().locator("body").focus();
+        browser.tabUntilFocused(link);
+        page().keyboard().press("Enter");
+        page().waitForURL(url -> url.contains(LIST_URL + "?ingestion="));
+        browser.checkAccessibility();
+    }
+
+    private Locator filterLink(int line) {
+        Locator row = rows().filter(new Locator.FilterOptions()
+                        .setHas(page().locator("td:nth-child(2):text-is('" + ingestion.sourceLabel() + "')")))
+                .filter(new Locator.FilterOptions()
+                        .setHas(page().locator("td:nth-child(" + (LINES + 1) + "):text-is('" + line + " 行目')")))
+                .filter(new Locator.FilterOptions()
+                        .setHas(page().locator("td:nth-child(" + (KIND + 1) + "):text-is('内容の違う原本')")));
+        assertThat(row).hasCount(1);
+        return row.getByRole(AriaRole.LINK, new Locator.GetByRoleOptions().setName(Pattern.compile("^この取込で絞る")));
+    }
+
+    /** Bolt 39h3 の行 9。取込で絞った一覧は行ごとの「この取込で絞る」を出さない。 */
+    @かつ("絞った一覧にこの取込で絞るのリンクは示されない")
+    public void 絞った一覧に絞るリンクは示されない() {
+        assertThat(page().getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName(Pattern.compile("^この取込で絞る"))))
+                .hasCount(0);
+    }
+
     /** Bolt 39d の行 11。隔離が 0 件の結果の画面は押しても行き先のないリンクを出さない。 */
     @かつ("取込の結果にこの取込の隔離・差異をすべて確認するリンクは示されない")
     public void この取込の隔離と差異をすべて確認するリンクは示されない() {

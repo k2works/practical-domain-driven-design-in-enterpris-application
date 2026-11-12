@@ -362,6 +362,15 @@ public class RoutingUiSteps {
                 "取り込んだ航海が経路設計の航海に反映されない（DE-12 の受け取りを待ちきれない）: " + adoptedVoyage());
     }
 
+    /** Bolt 39h3 の行 9。後の外部版（外部版 2。ロッテルダムの到着 2099-10-29）を取り込んだ DE-12 の受け取りを待つ（後の隔離の採用の DE-12 と前後しないため）。 */
+    @かつ("後の外部版の航海が経路設計の航海に反映される")
+    public void 後の外部版の航海が反映される() {
+        awaitVoyageCondition(
+                "SELECT COUNT(*) FROM routing.port_call WHERE voyage_number = ? AND call_no = 2"
+                        + " AND arrival_at = TIMESTAMP WITH TIME ZONE '2099-10-29 00:00:00+00'",
+                "後の外部版の航海が経路設計の航海に反映されない: " + adoptedVoyage());
+    }
+
     /** 採用の判断の DE-12 も非同期なので、揚地の到着予定が新しい値になるまで待つ（画面だけでは前の値と区別できない。Bolt 39e の決定 (12)）。 */
     @かつ("採用した航海の予定が経路設計の航海に反映される")
     public void 採用した航海の予定が反映される() {

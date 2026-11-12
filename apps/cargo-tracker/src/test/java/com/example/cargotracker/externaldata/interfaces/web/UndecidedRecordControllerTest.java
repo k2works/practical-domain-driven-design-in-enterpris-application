@@ -341,6 +341,27 @@ class UndecidedRecordControllerTest {
         }
 
         @Test
+        void 行4_d_採用できない隔離には警告の文を画面の値として渡さない() throws Exception {
+            UndecidedRecordPage.Item item = item(Classification.QUARANTINED, "VOYAGE");
+            given(decisions.refusalOf(RECORD_ID)).willReturn(Optional.empty());
+            given(decisions.adoptionRefusalOf(RECORD_ID))
+                    .willReturn(notAdoptable(NotAdoptableReason.SOURCE_NOT_APPROVED));
+            given(query.undecidedRecord(RECORD_ID)).willReturn(Optional.of(item));
+            given(query.undecidedRecordValues(item))
+                    .willReturn(Optional.of(values(
+                            voyage("2026-12-01T22:00:00Z"),
+                            null,
+                            partner(voyage("2026-12-01T23:00:00Z")),
+                            true,
+                            true)));
+
+            mockMvc.perform(get(DECISION_URL))
+                    .andExpect(status().isOk())
+                    .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.model()
+                            .attributeDoesNotExist("oldVersionWarning"));
+        }
+
+        @Test
         void 行4_e_差異は領域だけを示し警告も採用の欄も出さない() {
             String page = unchecked(() -> decisionPage(
                     item(Classification.DISCREPANCY, "VOYAGE"),

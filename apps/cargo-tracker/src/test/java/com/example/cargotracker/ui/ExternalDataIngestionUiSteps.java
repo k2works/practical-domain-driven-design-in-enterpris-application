@@ -352,6 +352,30 @@ public class ExternalDataIngestionUiSteps {
         ingestVersion("1", earlier, CHANGED_ROTTERDAM_PORT_CALLS);
     }
 
+    /** 内容の違う原本・後の外部版の値（Bolt 39h3。ロッテルダムの到着を 1 日早める。元の値は 10-30、内容の違う値は 10-31）。 */
+    private static final String LATER_ROTTERDAM_PORT_CALLS =
+            "JPTYO;2099-10-12T00:00:00Z;2099-10-12T12:00:00Z|NLRTM;2099-10-29T00:00:00Z;2099-10-29T12:00:00Z";
+
+    /**
+     * Bolt 39h3 の行 9。東京からロッテルダムへの航海を、外部版・値・取得時刻（今から何時間前か）を指定して 1 行で取り込む。値の名前は「元の値」
+     * （外部版 1 の原本）、「内容の違う値」（同じ外部版で到着の違う原本。隔離になる）、「後の値」（外部版 2 の原本）。
+     */
+    @かつ("キー操作だけで承認済みの航海の情報源を選び、東京からロッテルダムへの航海の外部版 {string} の {string} の 1 行のファイルを取得時刻が {int} 時間前として選んで取り込む")
+    public void 外部版と値と取得時刻を指定して取り込む(String version, String valueName, int hoursAgo) {
+        String portCalls =
+                switch (valueName) {
+                    case "元の値" -> ROTTERDAM_PORT_CALLS;
+                    case "内容の違う値" -> CHANGED_ROTTERDAM_PORT_CALLS;
+                    case "後の値" -> LATER_ROTTERDAM_PORT_CALLS;
+                    default -> throw new IllegalArgumentException("知らない値の名前: " + valueName);
+                };
+        String acquired = Instant.now()
+                .minus(hoursAgo, ChronoUnit.HOURS)
+                .truncatedTo(ChronoUnit.SECONDS)
+                .toString();
+        ingestVersion(version, acquired, portCalls);
+    }
+
     private void ingestVersion(String version, String acquiredAt, String portCalls) {
         state.markVoyagesWritten();
         browser.navigate(baseUrl + NEW_URL);
