@@ -160,7 +160,7 @@ Bolt がイテレーションに当たります。ふりかえりは各 Bolt の
 | 39g3 | [採用した実績で最新の到着見込みを動かし、最終取得時刻を示す](bolt_39g3_plan.md) | [終了報告](bolt_39g3_report.md)（[動画](../../assets/demo/bolt-39g3/latest-estimate.webm){:target="_blank"}） | W7 | 完了 |
 | 39g4 | [次の予定の実績が届かない追跡を鮮度超過として示す](bolt_39g4_plan.md) | [終了報告](bolt_39g4_report.md)（[動画](../../assets/demo/bolt-39g4/freshness-overdue.webm){:target="_blank"}） | W7 | 完了 |
 | 39g4b | [最後の区間の航海の到着予定で最新の到着見込みを動かす](bolt_39g4b_plan.md) | [終了報告](bolt_39g4b_report.md)（[動画](../../assets/demo/bolt-39g4b/voyage-arrival-estimate.webm){:target="_blank"}） | W7 | 完了 |
-| 39g4c | 見込みの根拠の表示（39g4b から分けた提案） | — | W7 | 未着手 |
+| 39g4c | [最新の到着見込みの根拠を S-12 に 1 行で示す](bolt_39g4c_plan.md) | — | W7 | 計画済み（承認済み） |
 
 Bolt を始めるときに行を追加します。
 
@@ -332,3 +332,4 @@ Bolt を始めるときに行を追加します。
 * [Bolt 39g4 終了報告 - 次の予定の実績が届かない追跡を鮮度超過として示す](./bolt_39g4_report.md)
 * [Bolt 39g4b 計画 - 最後の区間の航海の到着予定で最新の到着見込みを動かす](./bolt_39g4b_plan.md)
 * [Bolt 39g4b 終了報告 - 最後の区間の航海の到着予定で最新の到着見込みを動かす](./bolt_39g4b_report.md)
+* [Bolt 39g4c 計画 - 最新の到着見込みの根拠を S-12 に 1 行で示す](./bolt_39g4c_plan.md)
