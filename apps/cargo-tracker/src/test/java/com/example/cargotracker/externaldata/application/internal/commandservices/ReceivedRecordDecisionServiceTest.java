@@ -930,6 +930,64 @@ class ReceivedRecordDecisionServiceTest {
             assertThat(receivedRecords.undecidedRecord(received.id())).isEmpty();
         }
 
+        // --- Bolt 39h3 の行 5: 古い外部版の隔離の採用（警告は表示だけで、採用は止めない） ---
+
+        @Test
+        void Bolt39h3_行5_a_後に取得した外部版を採用した後の前に取得した外部版の隔離を採用でき採用値は公開した時刻が最も新しくなりDE12を1つ出す() {
+            ReceivedRecord received = adoptable();
+            // 外部版「3」を取得時刻 G1 に採用済み、外部版「4」を後の取得時刻に採用済み（V2 の取込の後の V1 の隔離。Bolt 39e の行 46）
+            currentAdoptedValue(
+                    received.externalRecordId(),
+                    AdoptedValue.TargetType.VOYAGE,
+                    "DEMO-201",
+                    voyage("2026-12-01T14:00:00Z").summary());
+            ExternalRecord laterVersion = new ExternalRecord(
+                    UUID.randomUUID(),
+                    new IdempotencyKey(PROVIDER, "VOYAGE", "DEMO-201", "4"),
+                    PayloadHash.of(new byte[] {9}),
+                    PayloadObjectKey.newRecordPayload(),
+                    Instant.parse("2026-11-15T09:30:00Z"));
+            externalRecords.add(laterVersion);
+            ReceivedRecord laterOriginal = new ReceivedRecord(
+                    UUID.randomUUID(),
+                    laterVersion.id(),
+                    ingestion.id(),
+                    PayloadHash.of(new byte[] {10}),
+                    PayloadObjectKey.newRecordPayload(),
+                    Instant.parse("2026-11-16T00:45:00Z"),
+                    Classification.ADOPTED,
+                    null,
+                    ingestion.ingestedAt(),
+                    new PhysicalLineRange(2, 2),
+                    ReceivedValue.of(voyage("2026-12-02T00:00:00Z")));
+            receivedRecords.add(laterOriginal);
+            adoptedValues.add(new AdoptedValue(
+                    UUID.randomUUID(),
+                    laterOriginal.id(),
+                    AdoptedValue.TargetType.VOYAGE,
+                    "DEMO-201",
+                    voyage("2026-12-02T00:00:00Z").summary(),
+                    "4",
+                    Instant.parse("2026-11-16T00:50:00Z")));
+            calls.clear();
+
+            DecisionOutcome outcome = adopt(steward, received.id(), REASON);
+
+            assertThat(outcome).isEqualTo(new DecisionOutcome.AdoptedQuarantine(received.id()));
+            // 採用値は判断の時刻（最も新しい公開した時刻）になり、経路設計の航海は前に取得した外部版の値に戻る
+            assertThat(com.example.cargotracker.externaldata.domain.model.rules.DiscrepancyRule.inUseOf(
+                            adoptedValues.findByExternalId(PROVIDER, "VOYAGE", "DEMO-201")))
+                    .hasValueSatisfying(inUse -> {
+                        assertThat(inUse.receivedRecordId()).isEqualTo(received.id());
+                        assertThat(inUse.publishedAt()).isEqualTo(DECIDED_AT);
+                    });
+            assertThat(published.stream().filter(VoyageAdoptedValueUpdated.class::isInstance))
+                    .singleElement()
+                    .satisfies(event -> assertThat(((VoyageAdoptedValueUpdated) event).portCalls())
+                            .extracting(VoyageAdoptedValueUpdated.AdoptedPortCall::arrivalAt)
+                            .contains(new UtcInstant(Instant.parse("2026-12-01T22:00:00Z"))));
+        }
+
         // --- 行 4: 採用を出さない隔離（GET と POST で 1 つの定め） ---
 
         /** 採用を出さない隔離の作り方と、取込・情報源・外部原本を引く数（T-244）。 */

@@ -13,15 +13,44 @@ import java.util.Objects;
  * @param receivedIllegible 受け取った値を読めないか（値の列がないときは偽。値の列がないことを先に判定する）
  * @param receivedAcquiredAt 受け取った値の取得時刻（隔離の受信記録の取得時刻）
  * @param adopted この外部版の採用値（ないときは {@code null}）
+ * @param partner この外部 ID の採用値（差異の規則が比べる相手。版の逆転ならこの外部 ID の最後に取得した採用値、そうでなければ今使っている
+ *     採用値。逆転でなく判断する受信記録と同じ外部版のとき、この外部 ID の採用値がないときは {@code null}。Bolt 39h3）
+ * @param versionReversed 版の逆転か（領域の説明の文を選ぶ。逆転なら {@code partner} がある）
+ * @param olderThanAdopted 古い外部版の隔離か（隔離で版の逆転のときだけ真。差異は偽。採用の欄の警告を出す根拠）
  */
 public record UndecidedRecordValues(
-        RecordValues received, boolean receivedIllegible, Instant receivedAcquiredAt, Adopted adopted) {
+        RecordValues received,
+        boolean receivedIllegible,
+        Instant receivedAcquiredAt,
+        Adopted adopted,
+        Adopted partner,
+        boolean versionReversed,
+        boolean olderThanAdopted) {
 
     public UndecidedRecordValues {
         Objects.requireNonNull(receivedAcquiredAt, "receivedAcquiredAt");
         if (receivedIllegible && received != null) {
             throw new IllegalArgumentException("読めない受け取った値は値を持ちません");
         }
+        if (versionReversed && partner == null) {
+            throw new IllegalArgumentException("版の逆転は比べる相手を持ちます");
+        }
+        if (olderThanAdopted && !versionReversed) {
+            throw new IllegalArgumentException("古い外部版の隔離は版の逆転です");
+        }
+    }
+
+    /**
+     * 比べる相手のない判断の画面の値（Bolt 39h3 より前の形）。
+     *
+     * @param received 受け取った値
+     * @param receivedIllegible 受け取った値を読めないか
+     * @param receivedAcquiredAt 受け取った値の取得時刻
+     * @param adopted この外部版の採用値（ないときは {@code null}）
+     */
+    public UndecidedRecordValues(
+            RecordValues received, boolean receivedIllegible, Instant receivedAcquiredAt, Adopted adopted) {
+        this(received, receivedIllegible, receivedAcquiredAt, adopted, null, false, false);
     }
 
     /**

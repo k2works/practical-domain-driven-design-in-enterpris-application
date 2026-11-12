@@ -416,15 +416,26 @@ public class UndecidedRecordController {
         model.addAttribute("actionUrl", LIST_URL + "/" + id + "/decision" + query(back, backPage));
         model.addAttribute("adoptionActionUrl", LIST_URL + "/" + id + "/adoption" + query(back, backPage));
         query.undecidedRecordValues(item)
-                .ifPresent(values -> addValues(values, item.classification() == Classification.DISCREPANCY, model));
+                .ifPresent(values -> addValues(
+                        values, item.classification() == Classification.DISCREPANCY, adoptionRefusal.isEmpty(), model));
         return DECISION_VIEW;
     }
 
     /**
      * 受け取った値とこの外部版の採用値の領域（Bolt 39d3。示し方は {@link UndecidedRecordValueViews}。Bolt 39d3c）。値が等しければ同じ値の文を示す。
      */
-    private static void addValues(UndecidedRecordValues values, boolean discrepancy, Model model) {
+    private static void addValues(UndecidedRecordValues values, boolean discrepancy, boolean adoptable, Model model) {
         model.addAttribute("receivedValues", UndecidedRecordValueViews.receivedOf(values));
+        // この外部 ID の採用値（差異の規則が比べる相手。隔離にも差異にも示す。Bolt 39h3 の決定 (4)）
+        UndecidedRecordValueViews.ValuesView partner = UndecidedRecordValueViews.partnerOf(values);
+        if (partner != null) {
+            model.addAttribute("partnerValues", partner);
+            model.addAttribute("partnerNote", UndecidedRecordValueViews.partnerNoteOf(values));
+        }
+        // 古い外部版の警告は採用できる隔離にだけ（採用の欄の中。採用を止めない表示だけ。差異と採用できない隔離には出さない。決定 (3)）
+        if (adoptable && values.olderThanAdopted()) {
+            model.addAttribute("oldVersionWarning", UndecidedRecordValueViews.oldVersionWarningOf(values.received()));
+        }
         if (discrepancy) {
             // 差異は「受け取った値」の領域だけ。この外部版の採用値は持たず、比べる相手がないのに「採用値はありません」と出さない（決定 (5)）
             return;

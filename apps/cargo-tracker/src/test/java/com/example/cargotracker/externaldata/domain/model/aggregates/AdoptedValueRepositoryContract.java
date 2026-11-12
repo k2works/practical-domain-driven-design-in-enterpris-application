@@ -270,6 +270,16 @@ public abstract class AdoptedValueRepositoryContract {
     }
 
     @Test
+    void Bolt39h3_行3_別の外部IDの採用値は含めない() {
+        ExternalIdAdoptedValue own =
+                givenAdopted(externalIdProvider, "MILESTONE", "MS-0001", "1", G1, Classification.ADOPTED, PUBLISHED_AT);
+        givenAdopted(externalIdProvider, "MILESTONE", "MS-0002", "1", G1, Classification.ADOPTED, PUBLISHED_AT);
+
+        assertThat(adoptedValues().findByExternalId(externalIdProvider, "MILESTONE", "MS-0001"))
+                .containsExactly(own);
+    }
+
+    @Test
     void Bolt39h_行7_e_f_g_別の提供元と別の原本種別の同じ外部IDと採用値のない受信記録は含めない() {
         ExternalIdAdoptedValue own =
                 givenAdopted(externalIdProvider, "MILESTONE", "MS-0001", "1", G1, Classification.ADOPTED, PUBLISHED_AT);

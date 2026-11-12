@@ -187,6 +187,252 @@ class UndecidedRecordControllerTest {
         }
     }
 
+    /**
+     * 判断の画面の「この外部 ID の採用値」の領域と古い外部版の隔離の採用の警告（Bolt 39h3 の行 4。開始準備の決定 (3)・(4)・(6)、台帳 D-150・D-151（仮））。
+     * 照会は mock にし、渡された値の示し方だけを見る（照会の判定は照会のテストで縛る）。警告は採用の欄の見出しの後・理由の欄の前の
+     * {@code role="note"} の段落で、固定の文。
+     */
+    @Nested
+    class Bolt39h3_この外部IDの採用値と古い外部版の警告 {
+
+        private static final UUID RECORD_ID = UUID.fromString("39f30000-0000-0000-0000-0000000000dd");
+        private static final String DECISION_URL = LIST_URL + "/" + RECORD_ID;
+        private static final Instant ACQUIRED_AT = Instant.parse("2026-11-10T09:00:00Z");
+        private static final Instant PARTNER_ACQUIRED_AT = Instant.parse("2026-11-11T08:00:00Z");
+        private static final Instant PARTNER_PUBLISHED_AT = Instant.parse("2026-11-12T02:00:00Z");
+        private static final String VOYAGE_WARNING =
+                "この外部 ID は、この隔離を受け取った時刻より後に取得した外部版を採用しています。この隔離を採用すると、経路設計の航海がこの古い値に置き換わります"
+                        + "（算出済みの候補の確定は拒否されることがあります）。「この外部 ID の採用値」と比べてから採用してください。";
+        private static final String MILESTONE_WARNING =
+                "この外部 ID は、この隔離を受け取った時刻より後に取得した外部版を採用しています。この隔離を採用すると、追跡のまだ採用していない下書きの候補がこの古い値に"
+                        + "置き換わります。「この外部 ID の採用値」と比べてから採用してください。";
+        private static final String WARNING_START = "<p id=\"old-version-warning\" role=\"note\">";
+        private static final String PARTNER_HEADING = "<h2 id=\"partner-values-heading\">この外部 ID の採用値</h2>";
+
+        private static VoyageValues voyage(String losAngelesArrival) {
+            return new VoyageValues(
+                    "DEMO-201",
+                    List.of(
+                            new PortCallValue(
+                                    new Location("JPTYO"), null, new UtcInstant(Instant.parse("2026-11-18T23:00:00Z"))),
+                            new PortCallValue(
+                                    new Location("USLAX"), new UtcInstant(Instant.parse(losAngelesArrival)), null)));
+        }
+
+        private static com.example.cargotracker.externaldata.domain.model.valueobjects.MilestoneValues milestone() {
+            return new com.example.cargotracker.externaldata.domain.model.valueobjects.MilestoneValues(
+                    new com.example.cargotracker.externaldata.domain.model.valueobjects.TrackingNumberValue(
+                            "CTABCDEFGH2345"),
+                    com.example.cargotracker.externaldata.domain.model.valueobjects.MilestoneKindValue.DEPARTURE,
+                    new Location("JPTYO"),
+                    new UtcInstant(Instant.parse("2026-11-19T00:00:00Z")));
+        }
+
+        private static UndecidedRecordPage.Item item(Classification classification, String recordType) {
+            return new UndecidedRecordPage.Item(
+                    RECORD_ID,
+                    INGESTION_ID,
+                    INGESTED_AT,
+                    "開発海運（架空）",
+                    recordType,
+                    new PhysicalLineRange(3, 3),
+                    classification,
+                    "DEMO-201",
+                    "1",
+                    "3 行目: 理由");
+        }
+
+        private static UndecidedRecordValues.Adopted partner(
+                com.example.cargotracker.externaldata.domain.model.valueobjects.RecordValues values) {
+            return new UndecidedRecordValues.Adopted(values, "2", PARTNER_PUBLISHED_AT, PARTNER_ACQUIRED_AT);
+        }
+
+        private static UndecidedRecordValues values(
+                com.example.cargotracker.externaldata.domain.model.valueobjects.RecordValues received,
+                UndecidedRecordValues.Adopted adopted,
+                UndecidedRecordValues.Adopted partner,
+                boolean versionReversed,
+                boolean olderThanAdopted) {
+            return new UndecidedRecordValues(
+                    received, false, ACQUIRED_AT, adopted, partner, versionReversed, olderThanAdopted);
+        }
+
+        private String decisionPage(
+                UndecidedRecordPage.Item item, UndecidedRecordValues values, Optional<DecisionOutcome> refusal)
+                throws Exception {
+            given(decisions.refusalOf(RECORD_ID)).willReturn(Optional.empty());
+            given(decisions.adoptionRefusalOf(RECORD_ID)).willReturn(refusal);
+            given(query.undecidedRecord(RECORD_ID)).willReturn(Optional.of(item));
+            given(query.undecidedRecordValues(item)).willReturn(Optional.of(values));
+            return mockMvc.perform(get(DECISION_URL))
+                    .andExpect(status().isOk())
+                    .andReturn()
+                    .getResponse()
+                    .getContentAsString(StandardCharsets.UTF_8);
+        }
+
+        private static Optional<DecisionOutcome> notAdoptable(NotAdoptableReason reason) {
+            return Optional.of(new DecisionOutcome.NotAdoptable(RECORD_ID, reason));
+        }
+
+        @Test
+        void 行4_a_古い外部版の航海の隔離は採用の見出しの後に固定の警告の文を示し理由の欄の前に置いて採用の欄は今のまま() {
+            String page = unchecked(() -> decisionPage(
+                    item(Classification.QUARANTINED, "VOYAGE"),
+                    values(
+                            voyage("2026-12-01T22:00:00Z"),
+                            new UndecidedRecordValues.Adopted(
+                                    voyage("2026-12-01T14:00:00Z"), "1", PARTNER_PUBLISHED_AT, ACQUIRED_AT),
+                            partner(voyage("2026-12-01T23:00:00Z")),
+                            true,
+                            true),
+                    Optional.empty()));
+
+            Assertions.assertThat(page).contains(WARNING_START + VOYAGE_WARNING + "</p>");
+            Assertions.assertThat(page.indexOf("<h2 id=\"adoption-heading\">採用する</h2>"))
+                    .isLessThan(page.indexOf(WARNING_START))
+                    .isPositive();
+            Assertions.assertThat(page.indexOf(WARNING_START)).isLessThan(page.indexOf("for=\"adoption-reason\""));
+            Assertions.assertThat(page)
+                    .contains(
+                            "<button type=\"submit\" class=\"btn btn-primary\" aria-describedby=\"adoption-irrevocable old-version-warning\">採用する</button>");
+            Assertions.assertThat(page).contains(PARTNER_HEADING);
+            Assertions.assertThat(page)
+                    .contains("取得した日時が最も新しい採用値です。")
+                    .contains("情報版 2・公開した日時 ")
+                    .contains("<dd>DEMO-201</dd>");
+        }
+
+        @Test
+        void 行4_b_古い外部版の主要実績の隔離は主要実績の警告の文を示す() {
+            String page = unchecked(() -> decisionPage(
+                    item(Classification.QUARANTINED, "MILESTONE"),
+                    values(milestone(), null, partner(milestone()), true, true),
+                    Optional.empty()));
+
+            Assertions.assertThat(page).contains(WARNING_START + MILESTONE_WARNING + "</p>");
+            Assertions.assertThat(page).doesNotContain("経路設計の航海がこの古い値");
+        }
+
+        @Test
+        void 行4_c_古くない隔離は警告を出さず領域は公開した日時が最も新しい採用値の文で示す() {
+            String page = unchecked(() -> decisionPage(
+                    item(Classification.QUARANTINED, "VOYAGE"),
+                    values(voyage("2026-12-01T22:00:00Z"), null, partner(voyage("2026-12-01T23:00:00Z")), false, false),
+                    Optional.empty()));
+
+            Assertions.assertThat(page).doesNotContain("old-version-warning").doesNotContain(WARNING_START);
+            Assertions.assertThat(page).contains(PARTNER_HEADING).contains("公開した日時が最も新しい採用値です。");
+            Assertions.assertThat(page)
+                    .contains(
+                            "<button type=\"submit\" class=\"btn btn-primary\" aria-describedby=\"adoption-irrevocable\">採用する</button>");
+        }
+
+        @Test
+        void 行4_d_採用できない隔離は古い外部版でも警告を出さず採用の欄もなく領域は出る() {
+            String page = unchecked(() -> decisionPage(
+                    item(Classification.QUARANTINED, "VOYAGE"),
+                    values(voyage("2026-12-01T22:00:00Z"), null, partner(voyage("2026-12-01T23:00:00Z")), true, true),
+                    notAdoptable(NotAdoptableReason.SOURCE_NOT_APPROVED)));
+
+            Assertions.assertThat(page).doesNotContain("old-version-warning");
+            Assertions.assertThat(page).doesNotContain("<h2 id=\"adoption-heading\">採用する</h2>");
+            Assertions.assertThat(page).contains(PARTNER_HEADING).contains("情報源が承認済みではないため採用できません。");
+        }
+
+        @Test
+        void 行4_e_差異は領域だけを示し警告も採用の欄も出さない() {
+            String page = unchecked(() -> decisionPage(
+                    item(Classification.DISCREPANCY, "VOYAGE"),
+                    values(voyage("2026-12-01T22:00:00Z"), null, partner(voyage("2026-12-01T23:00:00Z")), true, false),
+                    notAdoptable(NotAdoptableReason.DISCREPANCY)));
+
+            Assertions.assertThat(page).contains(PARTNER_HEADING).contains("取得した日時が最も新しい採用値です。");
+            Assertions.assertThat(page).doesNotContain("old-version-warning").doesNotContain("採用する</h2>");
+            Assertions.assertThat(page).doesNotContain("この外部版の採用値</h2>");
+        }
+
+        @Test
+        void 行4_f_今使っている採用値が同じ外部版なら領域も警告も出さない() {
+            String page = unchecked(() -> decisionPage(
+                    item(Classification.QUARANTINED, "VOYAGE"),
+                    values(
+                            voyage("2026-12-01T22:00:00Z"),
+                            new UndecidedRecordValues.Adopted(
+                                    voyage("2026-12-01T14:00:00Z"), "1", PARTNER_PUBLISHED_AT, ACQUIRED_AT),
+                            null,
+                            false,
+                            false),
+                    Optional.empty()));
+
+            Assertions.assertThat(page).doesNotContain("partner-values-heading").doesNotContain("old-version-warning");
+            Assertions.assertThat(page).contains("この外部版の採用値</h2>");
+        }
+
+        @Test
+        void 行4_g_隔離の今の判断の画面は受け取った値とこの外部版の採用値の2つの領域のまま() {
+            String page = unchecked(() -> decisionPage(
+                    item(Classification.QUARANTINED, "VOYAGE"),
+                    values(
+                            voyage("2026-12-01T22:00:00Z"),
+                            new UndecidedRecordValues.Adopted(
+                                    voyage("2026-12-01T14:00:00Z"), "1", PARTNER_PUBLISHED_AT, ACQUIRED_AT),
+                            null,
+                            false,
+                            false),
+                    Optional.empty()));
+
+            Assertions.assertThat(page)
+                    .contains("<h2 id=\"received-values-heading\">受け取った値</h2>")
+                    .contains("この外部版の採用値</h2>")
+                    .doesNotContain("この外部 ID の採用値</h2>");
+        }
+
+        @Test
+        void 行4_h_比べる相手の値を読めないときは領域に値を読めませんでしたと示し警告の文は固定のまま() {
+            String page = unchecked(() -> decisionPage(
+                    item(Classification.QUARANTINED, "VOYAGE"),
+                    values(
+                            voyage("2026-12-01T22:00:00Z"),
+                            null,
+                            new UndecidedRecordValues.Adopted(
+                                    null, true, "2", PARTNER_PUBLISHED_AT, PARTNER_ACQUIRED_AT),
+                            true,
+                            true),
+                    Optional.empty()));
+
+            Assertions.assertThat(page)
+                    .contains(PARTNER_HEADING)
+                    .contains("値を読めませんでした。")
+                    .contains(WARNING_START + VOYAGE_WARNING + "</p>");
+        }
+
+        @Test
+        void 行4_i_領域の値は取込ファイルから来た値でも文字として示す() {
+            VoyageValues hostile = new VoyageValues(
+                    "<b>DEMO-201</b>", voyage("2026-12-01T23:00:00Z").portCalls());
+            String page = unchecked(() -> decisionPage(
+                    item(Classification.QUARANTINED, "VOYAGE"),
+                    values(voyage("2026-12-01T22:00:00Z"), null, partner(hostile), true, true),
+                    Optional.empty()));
+
+            Assertions.assertThat(page).contains("&lt;b&gt;DEMO-201&lt;/b&gt;").doesNotContain("<b>DEMO-201</b>");
+        }
+
+        private static String unchecked(ThrowingSupplier supplier) {
+            try {
+                return supplier.get();
+            } catch (Exception e) {
+                throw new IllegalStateException(e);
+            }
+        }
+
+        @FunctionalInterface
+        private interface ThrowingSupplier {
+            String get() throws Exception;
+        }
+    }
+
     // --- 行 1・2: 項目の示し方 ---
 
     @Test

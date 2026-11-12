@@ -26,6 +26,7 @@ import com.example.cargotracker.externaldata.domain.model.aggregates.IngestionRe
 import com.example.cargotracker.externaldata.domain.model.aggregates.ReceivedRecord;
 import com.example.cargotracker.externaldata.domain.model.aggregates.ReceivedRecordRepository;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.Classification;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.ExternalIdAdoptedValue;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.IdempotencyKey;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PayloadHash;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PayloadObjectKey;
@@ -1171,7 +1172,9 @@ class UndecidedRecordQueryServiceTest {
                 assertThat(found.receivedAcquiredAt()).isEqualTo(ACQUIRED_AT);
                 assertThat(found.adopted()).isNull();
             });
-            then(adoptedValues).shouldHaveNoInteractions();
+            // 差異は「この外部版の採用値」を引かない。この外部 ID の採用値の一覧だけ引く（Bolt 39h3 の決定 (4)。期待が変わる既存の組）
+            then(adoptedValues).should(never()).currentOf(any());
+            then(adoptedValues).should(times(1)).findByExternalId(voyage.provider(), "VOYAGE", "DEMO-201");
         }
 
         @Test
@@ -1193,6 +1196,315 @@ class UndecidedRecordQueryServiceTest {
 
             assertThat(found.classification()).isEqualTo(Classification.DISCREPANCY);
             assertThat(found.keyless()).isFalse();
+        }
+    }
+
+    /**
+     * Bolt 39h3 の行 3（判断の画面の「この外部 ID の採用値」と古い外部版の隔離の警告の照会。開始準備の決定 (3)・(4)・(6)、台帳 D-150・D-151（仮））。
+     * 見本は外部 ID DEMO-201（提供元は航海の情報源）、外部版「1」「2」、取得時刻 G1 &lt; G1′ &lt; G2、公開した時刻 P1 &lt; P2 &lt; P3。メモリ実装で
+     * 実際の状態を作り、引く回数は Mockito の呼び出しの記録で縛る（変異 M5〜M7b・M13）。
+     */
+    @Nested
+    class Bolt39h3_この外部IDの採用値と古い外部版 {
+
+        private static final Instant G0 = Instant.parse("2026-11-09T08:00:00Z");
+        private static final Instant G1 = Instant.parse("2026-11-10T08:00:00Z");
+        private static final Instant G1_NEXT = Instant.parse("2026-11-10T09:00:00Z");
+        private static final Instant G2 = Instant.parse("2026-11-11T08:00:00Z");
+        private static final Instant G2_NEXT = Instant.parse("2026-11-11T09:00:00Z");
+        private static final Instant P1 = Instant.parse("2026-11-12T01:00:00Z");
+        private static final Instant P2 = Instant.parse("2026-11-12T02:00:00Z");
+        private static final Instant P3 = Instant.parse("2026-11-12T03:00:00Z");
+        private static final String ARRIVAL_1 = "2026-12-01T10:00:00Z";
+        private static final String ARRIVAL_2 = "2026-12-01T11:00:00Z";
+        private static final String ARRIVAL_1_DIFFERENT = "2026-12-01T12:00:00Z";
+        private static final String BROKEN = "BROKEN-SUMMARY-39H3";
+
+        private final InMemoryIngestionRepository memoryIngestions = new InMemoryIngestionRepository();
+        private final InMemoryExternalRecordRepository memoryExternalRecords = new InMemoryExternalRecordRepository();
+        private final InMemoryReceivedRecordRepository memoryReceivedRecords = new InMemoryReceivedRecordRepository(
+                memoryIngestions, memoryExternalRecords, new InMemoryReceivedRecordDecisionRepository());
+        private final InMemoryAdoptedValueRepository memoryAdoptedValues =
+                new InMemoryAdoptedValueRepository(memoryReceivedRecords);
+        private final UndecidedRecordQueryService memoryService = new UndecidedRecordQueryService(
+                memoryReceivedRecords, memoryIngestions, dataSources, memoryAdoptedValues);
+
+        private static VoyageValues voyageArriving(String losAngelesArrival) {
+            return new VoyageValues(
+                    "DEMO-201",
+                    List.of(
+                            new PortCallValue(
+                                    new Location("JPTYO"), null, new UtcInstant(Instant.parse("2026-11-18T23:00:00Z"))),
+                            new PortCallValue(
+                                    new Location("USLAX"), new UtcInstant(Instant.parse(losAngelesArrival)), null)));
+        }
+
+        /** 同じ冪等性キーの外部原本はあればそれを使う（同じ外部版の2つ目の受信記録は同じ外部原本に付く）。 */
+        private ExternalRecord externalRecord(String provider, String externalVersion) {
+            IdempotencyKey key = new IdempotencyKey(provider, "VOYAGE", "DEMO-201", externalVersion);
+            return memoryExternalRecords.findByKey(key).orElseGet(() -> {
+                ExternalRecord created = new ExternalRecord(
+                        UUID.randomUUID(),
+                        key,
+                        PayloadHash.of(new byte[] {1}),
+                        PayloadObjectKey.newRecordPayload(),
+                        P1);
+                memoryExternalRecords.add(created);
+                return created;
+            });
+        }
+
+        private ReceivedRecord stored(
+                ExternalRecord externalRecord, Classification classification, Instant acquiredAt, String arrival) {
+            ReceivedRecord received = new ReceivedRecord(
+                    UUID.randomUUID(),
+                    externalRecord.id(),
+                    ingestionId,
+                    PayloadHash.of(new byte[] {2}),
+                    PayloadObjectKey.newRecordPayload(),
+                    acquiredAt,
+                    classification,
+                    classification == Classification.ADOPTED ? null : "注記",
+                    INGESTED_AT,
+                    new PhysicalLineRange(3, 3),
+                    ReceivedValue.of(voyageArriving(arrival)));
+            memoryReceivedRecords.add(received);
+            return received;
+        }
+
+        /** 採用した外部原本（採用値と、取得時刻を持つ採用の受信記録）を作る。 */
+        private void adopt(String externalVersion, Instant acquiredAt, Instant publishedAt, String arrival) {
+            adopt(
+                    voyage.provider(),
+                    externalVersion,
+                    acquiredAt,
+                    publishedAt,
+                    voyageArriving(arrival).summary());
+        }
+
+        private void adopt(
+                String provider, String externalVersion, Instant acquiredAt, Instant publishedAt, String summary) {
+            ReceivedRecord adopted =
+                    stored(externalRecord(provider, externalVersion), Classification.ADOPTED, acquiredAt, ARRIVAL_1);
+            memoryAdoptedValues.add(new AdoptedValue(
+                    UUID.randomUUID(),
+                    adopted.id(),
+                    TargetType.VOYAGE,
+                    "DEMO-201",
+                    summary,
+                    externalVersion,
+                    publishedAt));
+        }
+
+        /** 判断を待つ受信記録（外部版の外部原本は採用済みの外部原本と同じ外部版なら同じものを使う）。 */
+        private UndecidedRecordPage.Item undecided(
+                String externalVersion, Classification classification, Instant acquiredAt, String arrival) {
+            ExternalRecord externalRecord = memoryExternalRecords
+                    .findByKey(new IdempotencyKey(voyage.provider(), "VOYAGE", "DEMO-201", externalVersion))
+                    .orElseGet(() -> externalRecord(voyage.provider(), externalVersion));
+            ReceivedRecord received = stored(externalRecord, classification, acquiredAt, arrival);
+            return new UndecidedRecordPage.Item(
+                    received.id(),
+                    ingestionId,
+                    INGESTED_AT,
+                    voyage.provider(),
+                    "VOYAGE",
+                    new PhysicalLineRange(3, 3),
+                    classification,
+                    "DEMO-201",
+                    externalVersion,
+                    "注記");
+        }
+
+        private static UndecidedRecordValues.Adopted adopted(
+                String arrival, String externalVersion, Instant publishedAt, Instant acquiredAt) {
+            return new UndecidedRecordValues.Adopted(voyageArriving(arrival), externalVersion, publishedAt, acquiredAt);
+        }
+
+        private UndecidedRecordValues valuesOf(UndecidedRecordPage.Item item) {
+            return memoryService.undecidedRecordValues(item).orElseThrow();
+        }
+
+        /** 見本の状況: 外部版「1」を G1 に採用（P1）、外部版「2」を G2 に採用（P2）。 */
+        private void givenV1AndV2Adopted() {
+            adopt("1", G1, P1, ARRIVAL_1);
+            adopt("2", G2, P2, ARRIVAL_2);
+        }
+
+        @Test
+        void 行3_a_V2の取込の後のV1の隔離はこの外部IDの採用値が最後に取得したV2で古い外部版の隔離は真() {
+            givenV1AndV2Adopted();
+
+            UndecidedRecordValues values =
+                    valuesOf(undecided("1", Classification.QUARANTINED, G1_NEXT, ARRIVAL_1_DIFFERENT));
+
+            assertThat(values.partner()).isEqualTo(adopted(ARRIVAL_2, "2", P2, G2));
+            assertThat(values.olderThanAdopted()).isTrue();
+            // この外部版の採用値（V1）は今のまま
+            assertThat(values.adopted()).isEqualTo(adopted(ARRIVAL_1, "1", P1, G1));
+        }
+
+        @Test
+        void 行3_b_隔離の取得時刻がV2より後なら比べる相手は公開した時刻が最も新しい採用値で古い外部版の隔離は偽() {
+            givenV1AndV2Adopted();
+
+            UndecidedRecordValues values =
+                    valuesOf(undecided("1", Classification.QUARANTINED, G2_NEXT, ARRIVAL_1_DIFFERENT));
+
+            assertThat(values.partner()).isEqualTo(adopted(ARRIVAL_2, "2", P2, G2));
+            assertThat(values.olderThanAdopted()).isFalse();
+        }
+
+        @Test
+        void 行3_c_今使っている採用値が同じ外部版で逆転でもなければ領域なしで偽() {
+            adopt("1", G1, P1, ARRIVAL_1);
+
+            UndecidedRecordValues values =
+                    valuesOf(undecided("1", Classification.QUARANTINED, G1_NEXT, ARRIVAL_1_DIFFERENT));
+
+            assertThat(values.partner()).isNull();
+            assertThat(values.olderThanAdopted()).isFalse();
+            assertThat(values.adopted()).isEqualTo(adopted(ARRIVAL_1, "1", P1, G1));
+        }
+
+        @Test
+        void 行3_d_この外部IDの採用値がなければ領域なしで偽() {
+            UndecidedRecordValues values =
+                    valuesOf(undecided("1", Classification.QUARANTINED, G1_NEXT, ARRIVAL_1_DIFFERENT));
+
+            assertThat(values.partner()).isNull();
+            assertThat(values.olderThanAdopted()).isFalse();
+        }
+
+        @Test
+        void 行3_e_差異の領域は逆転なので最後に取得した採用値で古い外部版の隔離は偽() {
+            givenV1AndV2Adopted();
+
+            UndecidedRecordValues values = valuesOf(undecided("0", Classification.DISCREPANCY, G0, ARRIVAL_1));
+
+            assertThat(values.partner()).isEqualTo(adopted(ARRIVAL_2, "2", P2, G2));
+            assertThat(values.olderThanAdopted()).isFalse();
+            assertThat(values.adopted()).isNull();
+        }
+
+        @Test
+        void 行3_g_比べる相手の値を読めなければ読めない印にして外部版と時刻は示し500にしない() {
+            adopt("1", G1, P1, ARRIVAL_1);
+            adopt(voyage.provider(), "2", G2, P2, BROKEN);
+
+            UndecidedRecordValues values =
+                    valuesOf(undecided("1", Classification.QUARANTINED, G1_NEXT, ARRIVAL_1_DIFFERENT));
+
+            assertThat(values.partner()).isEqualTo(new UndecidedRecordValues.Adopted(null, true, "2", P2, G2));
+            assertThat(values.olderThanAdopted()).isTrue();
+        }
+
+        @Test
+        void 行3_h_同じ外部IDの別の提供元の採用値は比べる相手にしない() {
+            adopt("1", G1, P1, ARRIVAL_1);
+            adopt("別の提供元", "2", G2, P2, voyageArriving(ARRIVAL_2).summary());
+
+            UndecidedRecordValues values =
+                    valuesOf(undecided("1", Classification.QUARANTINED, G1_NEXT, ARRIVAL_1_DIFFERENT));
+
+            assertThat(values.partner()).isNull();
+            assertThat(values.olderThanAdopted()).isFalse();
+        }
+
+        @Test
+        void 行3_i_V1の隔離を採用した後のV1の隔離は今使っている採用値が同じ外部版でも逆転なら警告ありで領域はV2() {
+            givenV1AndV2Adopted();
+            // V1′ を採用した（取得 G1′、公開 P3）。今使っている採用値は V1′（外部版「1」）、最後に取得したのは V2
+            adopt("1", G1_NEXT, P3, ARRIVAL_1_DIFFERENT);
+
+            UndecidedRecordValues values = valuesOf(undecided(
+                    "1", Classification.QUARANTINED, Instant.parse("2026-11-10T10:00:00Z"), "2026-12-01T13:00:00Z"));
+
+            assertThat(values.partner()).isEqualTo(adopted(ARRIVAL_2, "2", P2, G2));
+            assertThat(values.olderThanAdopted()).isTrue();
+        }
+
+        @Test
+        void 行3_j_同じ外部版で取得時刻が前なら逆転なので領域を出し警告も出す() {
+            adopt("1", G1, P1, ARRIVAL_1);
+
+            UndecidedRecordValues values =
+                    valuesOf(undecided("1", Classification.QUARANTINED, G0, ARRIVAL_1_DIFFERENT));
+
+            assertThat(values.partner()).isEqualTo(adopted(ARRIVAL_1, "1", P1, G1));
+            assertThat(values.olderThanAdopted()).isTrue();
+        }
+
+        @Test
+        void 行3_引く数はこの外部IDの採用値の一覧1回と比べる相手の採用値1回で受信記録は引き足さない() {
+            ReceivedRecord quarantine = new ReceivedRecord(
+                    UUID.randomUUID(),
+                    UUID.randomUUID(),
+                    ingestionId,
+                    PayloadHash.of(new byte[] {3}),
+                    PayloadObjectKey.newRecordPayload(),
+                    G1_NEXT,
+                    Classification.QUARANTINED,
+                    "注記",
+                    INGESTED_AT,
+                    new PhysicalLineRange(3, 3),
+                    ReceivedValue.of(voyageArriving(ARRIVAL_1_DIFFERENT)));
+            UndecidedRecordPage.Item item = new UndecidedRecordPage.Item(
+                    quarantine.id(),
+                    ingestionId,
+                    INGESTED_AT,
+                    voyage.provider(),
+                    "VOYAGE",
+                    new PhysicalLineRange(3, 3),
+                    Classification.QUARANTINED,
+                    "DEMO-201",
+                    "1",
+                    "注記");
+            ExternalIdAdoptedValue v2 = new ExternalIdAdoptedValue("2", "DEMO-201", G2, P2, UUID.randomUUID());
+            given(receivedRecords.findById(quarantine.id())).willReturn(Optional.of(quarantine));
+            given(adoptedValues.currentOf(quarantine.externalRecordId())).willReturn(Optional.empty());
+            given(adoptedValues.findByExternalId(voyage.provider(), "VOYAGE", "DEMO-201"))
+                    .willReturn(List.of(v2));
+            given(adoptedValues.findByReceivedRecordId(v2.receivedRecordId()))
+                    .willReturn(Optional.of(new AdoptedValue(
+                            UUID.randomUUID(),
+                            v2.receivedRecordId(),
+                            TargetType.VOYAGE,
+                            "DEMO-201",
+                            voyageArriving(ARRIVAL_2).summary(),
+                            "2",
+                            P2)));
+
+            UndecidedRecordValues values = service.undecidedRecordValues(item).orElseThrow();
+
+            assertThat(values.olderThanAdopted()).isTrue();
+            assertThat(values.partner()).isEqualTo(adopted(ARRIVAL_2, "2", P2, G2));
+            then(adoptedValues).should(times(1)).findByExternalId(voyage.provider(), "VOYAGE", "DEMO-201");
+            then(adoptedValues).should(times(1)).findByReceivedRecordId(v2.receivedRecordId());
+            then(adoptedValues).should(times(1)).currentOf(quarantine.externalRecordId());
+            then(receivedRecords).should(times(1)).findById(quarantine.id());
+            then(receivedRecords).shouldHaveNoMoreInteractions();
+        }
+
+        @Test
+        void 行3_f_キーのない隔離は空で一覧の照会もこの外部IDの採用値を引かない() {
+            givenUndecided(null, 3);
+
+            service.page(null, 1);
+            assertThat(service.undecidedRecordValues(new UndecidedRecordPage.Item(
+                            UUID.randomUUID(),
+                            ingestionId,
+                            INGESTED_AT,
+                            voyage.provider(),
+                            "VOYAGE",
+                            null,
+                            Classification.QUARANTINED,
+                            null,
+                            null,
+                            "ファイル: 注記")))
+                    .isEmpty();
+
+            then(adoptedValues).shouldHaveNoInteractions();
         }
     }
 

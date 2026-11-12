@@ -33,6 +33,20 @@ final class UndecidedRecordValueViews {
     /** 値が同じときの文（値も取得時刻も同じ、取得した日時だけが違う。取得時刻は原本のハッシュに入るが値に入らない）。 */
     private static final String SAME_VALUES = "受け取った値はこの外部版の採用値と同じです。同じ原本か、原本の書き方（引用符・空白など）だけが違います。";
 
+    /** この外部 ID の採用値の領域の説明（差異の規則が比べる相手。Bolt 39h3 の決定 (4)）。 */
+    private static final String PARTNER_BY_ACQUIRED = "取得した日時が最も新しい採用値です。";
+
+    private static final String PARTNER_BY_PUBLISHED = "公開した日時が最も新しい採用値です。";
+
+    /** 古い外部版の隔離の採用の警告（Bolt 39h3 の決定 (3)。航海と主要実績で採用の影響が違う）。 */
+    private static final String OLD_VERSION_VOYAGE =
+            "この外部 ID は、この隔離を受け取った時刻より後に取得した外部版を採用しています。この隔離を採用すると、経路設計の航海がこの古い値に置き換わります"
+                    + "（算出済みの候補の確定は拒否されることがあります）。「この外部 ID の採用値」と比べてから採用してください。";
+
+    private static final String OLD_VERSION_MILESTONE =
+            "この外部 ID は、この隔離を受け取った時刻より後に取得した外部版を採用しています。この隔離を採用すると、追跡のまだ採用していない下書きの候補がこの古い値に"
+                    + "置き換わります。「この外部 ID の採用値」と比べてから採用してください。";
+
     private static final String SAME_VALUES_BUT_ACQUIRED_AT = "受け取った値はこの外部版の採用値と同じで、取得した日時だけが違います。";
 
     /**
@@ -69,6 +83,39 @@ final class UndecidedRecordValueViews {
                 DateTimeDisplay.staff(adopted.publishedAt()),
                 DateTimeDisplay.staff(adopted.acquiredAt()));
         return adopted.illegible() ? illegible(meta) : valuesOf(meta, adopted.values());
+    }
+
+    /**
+     * この外部 ID の採用値の領域（比べる相手の情報版・公開した日時・取得した日時と値。値を読めなければ読めない文。比べる相手がなければ
+     * {@code null}。Bolt 39h3）。
+     */
+    static ValuesView partnerOf(UndecidedRecordValues values) {
+        UndecidedRecordValues.Adopted partner = values.partner();
+        if (partner == null) {
+            return null;
+        }
+        String meta = ADOPTED_META.formatted(
+                partner.infoVersion(),
+                DateTimeDisplay.staff(partner.publishedAt()),
+                DateTimeDisplay.staff(partner.acquiredAt()));
+        return partner.illegible() ? illegible(meta) : valuesOf(meta, partner.values());
+    }
+
+    /** この外部 ID の採用値の領域の見出しの後の 1 文（版の逆転なら取得した日時の順、そうでなければ公開した日時の順）。 */
+    static String partnerNoteOf(UndecidedRecordValues values) {
+        return values.versionReversed() ? PARTNER_BY_ACQUIRED : PARTNER_BY_PUBLISHED;
+    }
+
+    /**
+     * 古い外部版の隔離を採用するときの警告の文（値の型で選ぶ。固定の文で、取込ファイルから来た値を含まない。すべての型に文がある。T-240）。
+     *
+     * @param received 受け取った値（採用できる隔離は読める値を持つ）
+     */
+    static String oldVersionWarningOf(RecordValues received) {
+        return switch (received) {
+            case VoyageValues _ -> OLD_VERSION_VOYAGE;
+            case MilestoneValues _ -> OLD_VERSION_MILESTONE;
+        };
     }
 
     /** 同じ値の文（値が等しければ取得時刻が同じかで選ぶ。値が違う・ない・読めなければ {@code null}）。 */

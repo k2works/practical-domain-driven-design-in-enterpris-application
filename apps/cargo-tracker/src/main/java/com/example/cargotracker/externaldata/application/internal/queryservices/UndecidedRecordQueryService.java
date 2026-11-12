@@ -7,7 +7,9 @@ import com.example.cargotracker.externaldata.domain.model.aggregates.DataSourceR
 import com.example.cargotracker.externaldata.domain.model.aggregates.IngestionRepository;
 import com.example.cargotracker.externaldata.domain.model.aggregates.ReceivedRecord;
 import com.example.cargotracker.externaldata.domain.model.aggregates.ReceivedRecordRepository;
+import com.example.cargotracker.externaldata.domain.model.rules.DiscrepancyRule;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.Classification;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.ExternalIdAdoptedValue;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.ReceivedValue;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.RecordValues;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.UndecidedRecord;
@@ -77,10 +79,11 @@ public class UndecidedRecordQueryService {
                 .filter(received -> (received.classification() == Classification.QUARANTINED
                                 || received.classification() == Classification.DISCREPANCY)
                         && received.externalRecordId() != null)
-                .map(received -> valuesOf(received, quarantine.recordType()));
+                .map(received -> valuesOf(received, quarantine));
     }
 
-    private UndecidedRecordValues valuesOf(ReceivedRecord quarantine, String recordType) {
+    private UndecidedRecordValues valuesOf(ReceivedRecord quarantine, UndecidedRecordPage.Item item) {
+        String recordType = item.recordType();
         ReceivedValue value = quarantine.value();
         // 値の列がない（Bolt 39d3 より前の隔離）ときは入口を呼ばず、読めない印を立てない
         Optional<RecordValues> received = value == null
@@ -93,8 +96,40 @@ public class UndecidedRecordQueryService {
                         .currentOf(quarantine.externalRecordId())
                         .map(this::adoptedOf)
                         .orElse(null);
+        // この外部 ID の採用値（差異の規則が比べる相手。警告の判定と領域の選び方は差異の規則と同じ定義を使う。Bolt 39h3 の決定 (2)・(4)）
+        List<ExternalIdAdoptedValue> sameExternalId =
+                adoptedValues.findByExternalId(item.provider(), recordType, item.externalId());
+        boolean reversed = DiscrepancyRule.isVersionReversed(quarantine.acquiredAt(), sameExternalId);
+        UndecidedRecordValues.Adopted partner = DiscrepancyRule.partnerOf(quarantine.acquiredAt(), sameExternalId)
+                // 逆転でなく判断する受信記録と同じ外部版なら「この外部版の採用値」の領域が同じ値を示すので出さない
+                .filter(candidate -> reversed || !candidate.externalVersion().equals(item.externalVersion()))
+                .map(this::partnerOf)
+                .orElse(null);
         return new UndecidedRecordValues(
-                received.orElse(null), value != null && received.isEmpty(), quarantine.acquiredAt(), adopted);
+                received.orElse(null),
+                value != null && received.isEmpty(),
+                quarantine.acquiredAt(),
+                adopted,
+                partner,
+                reversed,
+                reversed && quarantine.classification() == Classification.QUARANTINED);
+    }
+
+    private UndecidedRecordValues.Adopted partnerOf(ExternalIdAdoptedValue partner) {
+        // 取得時刻・公開した時刻・外部版は一覧の値が持つので、値の要約だけを採用値の受信記録 ID で引く
+        AdoptedValue adopted =
+                adoptedValues.findByReceivedRecordId(partner.receivedRecordId()).orElseThrow();
+        Optional<RecordValues> values = readable(
+                adopted.targetType().name(),
+                adopted.targetKey(),
+                adopted.valueSummary(),
+                () -> "採用値 " + adopted.id() + "（受信記録 " + adopted.receivedRecordId() + "）");
+        return new UndecidedRecordValues.Adopted(
+                values.orElse(null),
+                values.isEmpty(),
+                partner.externalVersion(),
+                partner.publishedAt(),
+                partner.acquiredAt());
     }
 
     private UndecidedRecordValues.Adopted adoptedOf(AdoptedValue adopted) {

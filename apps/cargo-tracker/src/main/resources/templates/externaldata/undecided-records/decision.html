@@ -76,6 +76,13 @@
             <h2 id="adopted-values-heading" tabindex="-1">この外部版の採用値</h2>
             <th:block th:replace="~{externaldata/fragments/undecided-record-values :: values(${adoptedValues})}"></th:block>
         </section>
+        <!--/* この外部 ID の採用値（差異の規則が比べる相手。Bolt 39h3）。古い外部版の警告が指す相手を必ず示す。今使っている採用値が
+               この外部版の採用値と同じで逆転でないときは出さない */-->
+        <section th:if="${partnerValues}" aria-labelledby="partner-values-heading">
+            <h2 id="partner-values-heading">この外部 ID の採用値</h2>
+            <p th:text="${partnerNote}">公開した日時が最も新しい採用値です。</p>
+            <th:block th:replace="~{externaldata/fragments/undecided-record-values :: values(${partnerValues})}"></th:block>
+        </section>
     </th:block>
     <section aria-labelledby="rejection-heading">
         <h2 id="rejection-heading">却下する</h2>
@@ -94,6 +101,8 @@
     </section>
     <section th:if="${adoptable}" aria-labelledby="adoption-heading">
         <h2 id="adoption-heading">採用する</h2>
+        <!--/* 古い外部版の隔離の警告（Bolt 39h3 の決定 (3)）。固定の文で、採用を止めない。画面を開いたときの一度の判定 */-->
+        <p id="old-version-warning" role="note" th:if="${oldVersionWarning}" th:text="${oldVersionWarning}">この外部 ID は、この隔離を受け取った時刻より後に取得した外部版を採用しています。</p>
         <form th:action="${adoptionActionUrl}" th:object="${adoptionForm}" method="post" novalidate>
             <div>
                 <label for="adoption-reason">採用の理由</label>
@@ -103,7 +112,7 @@
                           th:attr="aria-invalid=${#fields.hasErrors('reason')} ? 'true' : null,aria-describedby=${#fields.hasErrors('reason')} ? 'adoption-reason-hint adoption-reason-error' : 'adoption-reason-hint'"></textarea>
             </div>
             <p id="adoption-irrevocable">採用すると取り消せません。誤って採用したときは、提供元に新しい外部版で正しい原本を送ってもらってください。</p>
-            <p><button type="submit" class="btn btn-primary" aria-describedby="adoption-irrevocable">採用する</button></p>
+            <p><button type="submit" class="btn btn-primary" th:attr="aria-describedby=${oldVersionWarning} ? 'adoption-irrevocable old-version-warning' : 'adoption-irrevocable'" aria-describedby="adoption-irrevocable">採用する</button></p>
         </form>
     </section>
     <!--/* tabindex="-1" はエラー要約のリンクの受け口（標準のフラグメント移動でフォーカスが移る） */-->
