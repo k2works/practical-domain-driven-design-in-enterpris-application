@@ -1,5 +1,10 @@
 # Docs Update Log
 
+## 2026-11-13
+* **Creation**: [bolt_39h3_plan](/development/cargo-tracker/bolt_39h3_plan.md) を作成（anthropic/claude-sonnet-5-5。承認待ち）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39h3 の開始準備。39h3 の行、台帳 D-150〜D-152（仮。承認待ち）と D-141・D-142・D-146〜D-148 の注）
+* **Update**: [index](/development/cargo-tracker/index.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39h3 の開始準備）
+
 ## 2026-11-12
 * **Creation**: [bolt_39h2_report](/development/cargo-tracker/bolt_39h2_report.md) を作成（anthropic/claude-sonnet-5-5。承認待ち）
 * **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39h2 の終了報告）
