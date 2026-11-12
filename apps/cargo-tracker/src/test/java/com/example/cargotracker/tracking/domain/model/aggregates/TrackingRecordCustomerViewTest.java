@@ -188,12 +188,23 @@ class TrackingRecordCustomerViewTest {
                                 REGISTRANT),
                         now))
                 .trackingRecord();
+        // 下書きと確認中の後に、取得時刻の古い採用の実績を登録して導出し直す（下書き・確認中の取得時刻が導出に入らないことを確かめる）
+        TrackingRecord received = withDraft
+                .registerMilestone(
+                        MilestoneKind.RECEIPT_AT_ORIGIN,
+                        tokyo(),
+                        at("2026-11-01T11:00:00Z"),
+                        new Source(SourceKind.FIELD_RECORD, "F-3", at("2026-11-01T10:30:00Z")),
+                        REGISTRANT,
+                        now)
+                .trackingRecord();
 
-        CustomerTrackingView view = withDraft.customerView();
+        CustomerTrackingView view = received.customerView();
 
+        assertThat(received.milestones().get(3).state()).isEqualTo(MilestoneState.ADOPTED);
         assertThat(view.lastAcquiredAt()).contains(at("2026-11-01T11:00:00Z"));
-        assertThat(view.latestEta()).isEqualTo(withDraft.latestEta());
-        assertThat(view.milestones()).hasSize(1);
+        assertThat(view.latestEta()).isEqualTo(received.latestEta());
+        assertThat(view.milestones()).hasSize(2);
     }
 
     private static TrackingRecord withMilestones(TrackingStatus status, List<Milestone> milestones) {

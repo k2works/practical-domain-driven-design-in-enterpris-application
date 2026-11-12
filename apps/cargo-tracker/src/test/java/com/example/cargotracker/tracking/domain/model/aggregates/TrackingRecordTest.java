@@ -143,6 +143,13 @@ class TrackingRecordTest {
 
             assertThat(withDraft.milestones().get(1).state()).isEqualTo(MilestoneState.DRAFT);
             assertThat(withDraft.lastAcquiredAt()).contains(at("2026-11-01T07:00:00Z"));
+
+            // 下書きの後に取得時刻の古い採用の実績を登録して導出し直しても、下書きの取得時刻は使わない
+            TrackingRecord registered = register(
+                    withDraft, MilestoneKind.PICKUP, "JPTYO", "2026-11-01T01:00:00Z", "F-2", "2026-11-01T05:00:00Z");
+
+            assertThat(registered.milestones().get(2).state()).isEqualTo(MilestoneState.ADOPTED);
+            assertThat(registered.lastAcquiredAt()).contains(at("2026-11-01T07:00:00Z"));
         }
 
         @Test
