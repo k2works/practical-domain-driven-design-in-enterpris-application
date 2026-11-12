@@ -10324,6 +10324,41 @@
   
   
     <li class="md-nav__item">
+      <a href="../../development/cargo-tracker/bolt_39g3_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 39g3 計画
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../development/cargo-tracker/bolt_39g_report/" class="md-nav__link">
         
   
@@ -10437,6 +10472,41 @@
     
   
     Bolt 39g2 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development/cargo-tracker/bolt_39g3_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 39g3 終了報告
   
 
     
@@ -11164,13 +11234,24 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#_12" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        最新の到着見込みと最終取得時刻
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#_12" class="md-nav__link">
+  <a href="#_13" class="md-nav__link">
     <span class="md-ellipsis">
       
         注意・補足
@@ -11198,7 +11279,7 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#_13" class="md-nav__link">
+  <a href="#_14" class="md-nav__link">
     <span class="md-ellipsis">
       
         この画面でできること
@@ -11209,7 +11290,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#_14" class="md-nav__link">
+  <a href="#_15" class="md-nav__link">
     <span class="md-ellipsis">
       
         画面の開き方
@@ -11220,7 +11301,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#_15" class="md-nav__link">
+  <a href="#_16" class="md-nav__link">
     <span class="md-ellipsis">
       
         画面の説明
@@ -11231,7 +11312,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#_16" class="md-nav__link">
+  <a href="#_17" class="md-nav__link">
     <span class="md-ellipsis">
       
         操作手順
@@ -11242,7 +11323,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#_17" class="md-nav__link">
+  <a href="#_18" class="md-nav__link">
     <span class="md-ellipsis">
       
         注意・補足
@@ -16017,10 +16098,20 @@
 <tr>
 <td style="text-align: left;">③</td>
 <td style="text-align: left;">当初の到着予定</td>
-<td style="text-align: left;">予約したときの到着予定</td>
+<td style="text-align: left;">予約したときの到着予定。実績を登録しても変わりません</td>
 </tr>
 <tr>
 <td style="text-align: left;">④</td>
+<td style="text-align: left;">最新の到着見込み</td>
+<td style="text-align: left;">採用した実績から見込んだ、いまの到着の見込み（<a href="#最新の到着見込みと最終取得時刻">9.2</a>）</td>
+</tr>
+<tr>
+<td style="text-align: left;">⑤</td>
+<td style="text-align: left;">最終取得時刻</td>
+<td style="text-align: left;">採用した実績の出典を取得した日時のうち最も新しいもの。採用した実績がなければ「なし」と示されます</td>
+</tr>
+<tr>
+<td style="text-align: left;">⑥</td>
 <td style="text-align: left;">追跡の開始時刻</td>
 <td style="text-align: left;">本予約の確定の後に追跡が始まった日時</td>
 </tr>
@@ -16063,8 +16154,8 @@
 </tr>
 <tr>
 <td style="text-align: left;">②</td>
-<td style="text-align: left;">追跡番号・現在状態・当初の到着予定・最新の到着見込み・経路</td>
-<td style="text-align: left;">経路は確定した経路の番号と版</td>
+<td style="text-align: left;">追跡番号・現在状態・当初の到着予定・最新の到着見込み・最終取得時刻・経路</td>
+<td style="text-align: left;">経路は確定した経路の番号と版。最新の到着見込みと最終取得時刻は下の「最新の到着見込みと最終取得時刻」。最終取得時刻は、採用した実績がなければ「まだありません」と示されます</td>
 </tr>
 <tr>
 <td style="text-align: left;">③</td>
@@ -16110,7 +16201,16 @@
 <li>主要実績の一覧で、状態「確認中」の実績と、採用済みの実績を見比べ、どちらが正しいかを確かめます</li>
 <li>確認中を解く操作（訂正の承認）は今後のリリースで提供します。それまで、追跡は確認中のまま残ります。後から時系列どおりの実績を登録しても、現在状態は確認中のままです</li>
 </ol>
-<h3 id="_12">注意・補足<a class="headerlink" href="#_12" title="Permanent link">&para;</a></h3>
+<h4 id="_12">最新の到着見込みと最終取得時刻<a class="headerlink" href="#_12" title="Permanent link">&para;</a></h4>
+<p>最新の到着見込みは、採用した出発・積替・到着の実績から決まります。当初の到着予定は変わりません。</p>
+<ul>
+<li>予定より遅れた出発・積替の実績を登録または採用すると、最新の到着見込みはその遅れの分だけ当初の到着予定より後ろに動きます。予定区間の順で最も後の実績の遅れを使うので、積替港で遅れを取り戻すと見込みも戻ります</li>
+<li>予定どおり、または予定より早い出発では、見込みは早まりません</li>
+<li>最後の区間の揚地での到着の実績を採用すると、見込みはその到着の時刻になります（予定より早い到着も、その時刻になります）</li>
+<li>確認中・下書き・保持のみの実績では、見込みも最終取得時刻も動きません</li>
+<li>最終取得時刻は、採用した実績の出典を取得した日時のうち最も新しいものです。荷主の照会の結果にも同じ日時が示されます</li>
+</ul>
+<h3 id="_13">注意・補足<a class="headerlink" href="#_13" title="Permanent link">&para;</a></h3>
 <ul>
 <li>主要実績がまだなければ「主要実績はまだありません。」と示されます</li>
 <li>担当企業の外の追跡記録を URL から開くと、存在しない画面と同じく「画面が見つかりません」と示されます</li>
@@ -16134,15 +16234,15 @@
 <li>追跡番号が見つからない実績と、取消済みの予約の実績は下書きにならず、追跡の詳細に示されません。データ責任者に下書きが届いているかを聞かれたら、この画面の主要実績を確かめて伝えてください（<a href="../12-%E5%A4%96%E9%83%A8%E3%83%87%E3%83%BC%E3%82%BF/">12 章</a>）</li>
 </ul>
 <h2 id="93">9.3 主要実績の登録<a class="headerlink" href="#93" title="Permanent link">&para;</a></h2>
-<h3 id="_13">この画面でできること<a class="headerlink" href="#_13" title="Permanent link">&para;</a></h3>
+<h3 id="_14">この画面でできること<a class="headerlink" href="#_14" title="Permanent link">&para;</a></h3>
 <ul>
 <li>集荷・搬入・出発・積替・到着・引渡しの実績を、場所・発生時刻・出典とともに登録します</li>
 </ul>
-<h3 id="_14">画面の開き方<a class="headerlink" href="#_14" title="Permanent link">&para;</a></h3>
+<h3 id="_15">画面の開き方<a class="headerlink" href="#_15" title="Permanent link">&para;</a></h3>
 <ul>
 <li>追跡の詳細の「実績を登録」（URL: <code>/staff/tracking-records/{追跡番号}/milestones/new</code>）</li>
 </ul>
-<h3 id="_15">画面の説明<a class="headerlink" href="#_15" title="Permanent link">&para;</a></h3>
+<h3 id="_16">画面の説明<a class="headerlink" href="#_16" title="Permanent link">&para;</a></h3>
 <p><img alt="主要実績の登録" src="../assets/09-milestone-new.png" /></p>
 <table>
 <thead>
@@ -16185,7 +16285,7 @@
 </tr>
 </tbody>
 </table>
-<h3 id="_16">操作手順<a class="headerlink" href="#_16" title="Permanent link">&para;</a></h3>
+<h3 id="_17">操作手順<a class="headerlink" href="#_17" title="Permanent link">&para;</a></h3>
 <ol>
 <li>種類を選び、場所と発生時刻を入れます</li>
 <li>出典の種類を選び、出典の参照を入れます</li>
@@ -16196,7 +16296,7 @@
 </ul>
 </li>
 </ol>
-<h3 id="_17">注意・補足<a class="headerlink" href="#_17" title="Permanent link">&para;</a></h3>
+<h3 id="_18">注意・補足<a class="headerlink" href="#_18" title="Permanent link">&para;</a></h3>
 <ul>
 <li>取消済みの予約の追跡には登録できません。「取消済みの予約には主要実績を登録できません。」と示され、入力した値は残ります</li>
 <li>
