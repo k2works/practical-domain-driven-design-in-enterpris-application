@@ -125,6 +125,7 @@
          <column autoUpdated="false" defaultValue="null" digits="0" id="14" name="version" nullable="false" remarks="版" size="19" type="int8" typeCode="-5"/>
          <column autoUpdated="false" defaultValue="null" digits="6" id="15" name="created_at" nullable="false" remarks="作成時刻" size="35" type="timestamptz" typeCode="93"/>
          <column autoUpdated="false" defaultValue="null" digits="6" id="16" name="updated_at" nullable="false" remarks="更新時刻" size="35" type="timestamptz" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="17" name="next_expected_at" nullable="true" remarks="次の予定の実績の予定時刻" size="35" type="timestamptz" typeCode="93"/>
          <primaryKey column="tracking_number" sequenceNumberInPK="1"/>
          <index name="pk_tracking_record" unique="true">
             <column ascending="true" name="tracking_number"/>

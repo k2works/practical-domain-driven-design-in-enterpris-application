@@ -10962,6 +10962,41 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_39g4_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 39g4 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../development/cargo-tracker/release_report-0_1/" class="md-nav__link">
         
   
@@ -17008,7 +17043,7 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 </tr>
 <tr>
 <td style="text-align: left;">時刻に依存する定期処理</td>
-<td style="text-align: left;">Clock を固定して、鮮度超過（FRS-01・02）、受領期限の超過と escalation（SVC-01〜05）、見積りの期限間近（DE-19）、再配信（RTY-01）の判定の境界を確かめる</td>
+<td style="text-align: left;">Clock を固定して、鮮度超過（FRS-01・02。FRS-02 は Bolt 39g4 から定期処理でなく読むときの判定）、受領期限の超過と escalation（SVC-01〜05）、見積りの期限間近（DE-19）、再配信（RTY-01）の判定の境界を確かめる</td>
 </tr>
 <tr>
 <td style="text-align: left;">通知</td>
@@ -17283,7 +17318,7 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 </tr>
 <tr>
 <td style="text-align: left;">FRS-01〜04（鮮度）</td>
-<td style="text-align: left;">統合テスト（Clock を固定した境界）</td>
+<td style="text-align: left;">統合テスト（Clock を固定した境界）。FRS-02 は Bolt 39g4 から鮮度の判定の単体の境界（直前・同時刻・直後）と照会サービスの Clock の固定、受入シナリオ（<code>@FRS-02</code>）</td>
 <td style="text-align: left;">CI で毎回</td>
 </tr>
 <tr>

@@ -10940,6 +10940,41 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_39g4_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 39g4 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../development/cargo-tracker/release_report-0_1/" class="md-nav__link">
         
   
@@ -16550,15 +16585,15 @@
 <tr>
 <td style="text-align: left;">FRS-02</td>
 <td style="text-align: left;">輸送中の追跡（次の予定の実績）</td>
-<td style="text-align: left;">予定時刻を過ぎ、かつ最後に取り込んだファイルの取得時刻が予定時刻から 36 時間以上たっても実績がない</td>
-<td style="text-align: left;">追跡を「確認中」（鮮度超過）にし、追跡管理者の一覧に出す</td>
+<td style="text-align: left;">判定の時刻（画面を開いた時刻）が、次の予定の実績の予定時刻 + 36 時間以上になっても、その実績が採用されていない（ちょうど 36 時間は超過。許容範囲は設定 <code>cargotracker.tracking.freshness-tolerance</code>。完了後は判定しない）</td>
+<td style="text-align: left;">現在状態は変えず（確認中にしない）、読むときの判定で S-11 の現在状態のセルに「鮮度超過」の印、S-12 に次の予定の実績の予定時刻と警告の文を示す（Bolt 39g4。元の文は「予定時刻を過ぎ、かつ最後に取り込んだファイルの取得時刻が予定時刻から 36 時間以上たっても実績がない」「追跡を「確認中」（鮮度超過）にし、追跡管理者の一覧に出す」。Bolt 39g4 の開始準備で読み替えた。台帳 D-133・D-134、【前の決定の変更】(20)・(21)）</td>
 <td style="text-align: left;">提案</td>
 <td style="text-align: left;">追跡責任者</td>
 </tr>
 <tr>
 <td style="text-align: left;">FRS-03</td>
 <td style="text-align: left;">顧客向けの表示</td>
-<td style="text-align: left;">最終取得時刻を常に表示する。FRS-02 を超えたら「最新性を保証しない」旨と次回更新日時・担当窓口を示す（照会の結果（S-12・C-10）と S-11 の最終取得時刻は Bolt 39g3。最終取得時刻は採用の実績の取得時刻のうち最も新しいもの。荷主の一覧と FRS-02 を超えたときの表示は Bolt 39g4・W9）</td>
+<td style="text-align: left;">最終取得時刻を常に表示する。FRS-02 を超えたら「最新性を保証しない」旨と次回更新日時・担当窓口を示す（照会の結果（S-12・C-10）と S-11 の最終取得時刻は Bolt 39g3。最終取得時刻は採用の実績の取得時刻のうち最も新しいもの。荷主の一覧と FRS-02 を超えたときの表示は W9。FRS-02 の判定は Bolt 39g4 の鮮度の判定を使う）</td>
 <td style="text-align: left;">—</td>
 <td style="text-align: left;">確定（US-09、US-10）</td>
 <td style="text-align: left;">—</td>
@@ -16573,7 +16608,7 @@
 </tr>
 </tbody>
 </table>
-<p>パイロットは手動取込（BR-18）のため、鮮度は 1 日単位になる。FRS-02 は取込の周期（1 日）に余裕を足した閾値にし、取込の待ちだけで確認中が乱発しないようにした（レビュー R-12）。KPI-03（状態反映時間）の基準値を測ったうえで、第 2 段階の自動連携で短くする。</p>
+<p>パイロットは手動取込（BR-18）のため、鮮度は 1 日単位になる。FRS-02 は取込の周期（1 日）に余裕を足した閾値にし、取込の待ちだけで確認中が乱発しないようにした（レビュー R-12）。Bolt 39g4 から判定の時刻を基準にし（取込の取得時刻は使わない）、鮮度超過は確認中にしない。取込が止まると次の予定の実績の予定時刻から 36 時間で鮮度超過になる（取込が止まったことは FRS-04 で別に知らせる。D-133）。KPI-03（状態反映時間）の基準値を測ったうえで、第 2 段階の自動連携で短くする。</p>
 <h2 id="br-09br-17">有人対応（BR-09、BR-17）<a class="headerlink" href="#br-09br-17" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -17177,7 +17212,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">OBS-07</td>
-<td style="text-align: left;">鮮度を超えた追跡（FRS-02）</td>
+<td style="text-align: left;">鮮度を超えた追跡（FRS-02。W10 で <code>tracking_record.next_expected_at</code> を基準の時刻と比べて数える。Bolt 39g4）</td>
 <td style="text-align: left;">1 件以上</td>
 <td style="text-align: left;">10 件以上</td>
 <td style="text-align: left;">提案</td>
