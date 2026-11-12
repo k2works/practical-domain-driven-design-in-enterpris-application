@@ -295,9 +295,8 @@ class UndecidedRecordControllerTest {
             Assertions.assertThat(page.indexOf(WARNING_START)).isLessThan(page.indexOf("for=\"adoption-reason\""));
             Assertions.assertThat(page)
                     .contains(
-                            "<button type=\"submit\" class=\"btn btn-primary\" aria-describedby=\"adoption-irrevocable old-version-warning\">採用する</button>");
-            Assertions.assertThat(page).contains(PARTNER_HEADING);
-            Assertions.assertThat(page)
+                            "<button type=\"submit\" class=\"btn btn-primary\" aria-describedby=\"adoption-irrevocable old-version-warning\">採用する</button>")
+                    .contains(PARTNER_HEADING)
                     .contains("取得した日時が最も新しい採用値です。")
                     .contains("情報版 2・公開した日時 ")
                     .contains("<dd>DEMO-201</dd>");
@@ -310,8 +309,9 @@ class UndecidedRecordControllerTest {
                     values(milestone(), null, partner(milestone()), true, true),
                     Optional.empty()));
 
-            Assertions.assertThat(page).contains(WARNING_START + MILESTONE_WARNING + "</p>");
-            Assertions.assertThat(page).doesNotContain("経路設計の航海がこの古い値");
+            Assertions.assertThat(page)
+                    .contains(WARNING_START + MILESTONE_WARNING + "</p>")
+                    .doesNotContain("経路設計の航海がこの古い値");
         }
 
         @Test
@@ -321,9 +321,11 @@ class UndecidedRecordControllerTest {
                     values(voyage("2026-12-01T22:00:00Z"), null, partner(voyage("2026-12-01T23:00:00Z")), false, false),
                     Optional.empty()));
 
-            Assertions.assertThat(page).doesNotContain("old-version-warning").doesNotContain(WARNING_START);
-            Assertions.assertThat(page).contains(PARTNER_HEADING).contains("公開した日時が最も新しい採用値です。");
             Assertions.assertThat(page)
+                    .doesNotContain("old-version-warning")
+                    .doesNotContain(WARNING_START)
+                    .contains(PARTNER_HEADING)
+                    .contains("公開した日時が最も新しい採用値です。")
                     .contains(
                             "<button type=\"submit\" class=\"btn btn-primary\" aria-describedby=\"adoption-irrevocable\">採用する</button>");
         }
@@ -335,9 +337,11 @@ class UndecidedRecordControllerTest {
                     values(voyage("2026-12-01T22:00:00Z"), null, partner(voyage("2026-12-01T23:00:00Z")), true, true),
                     notAdoptable(NotAdoptableReason.SOURCE_NOT_APPROVED)));
 
-            Assertions.assertThat(page).doesNotContain("old-version-warning");
-            Assertions.assertThat(page).doesNotContain("<h2 id=\"adoption-heading\">採用する</h2>");
-            Assertions.assertThat(page).contains(PARTNER_HEADING).contains("情報源が承認済みではないため採用できません。");
+            Assertions.assertThat(page)
+                    .doesNotContain("old-version-warning")
+                    .doesNotContain("<h2 id=\"adoption-heading\">採用する</h2>")
+                    .contains(PARTNER_HEADING)
+                    .contains("情報源が承認済みではないため採用できません。");
         }
 
         @Test
@@ -368,9 +372,12 @@ class UndecidedRecordControllerTest {
                     values(voyage("2026-12-01T22:00:00Z"), null, partner(voyage("2026-12-01T23:00:00Z")), true, false),
                     notAdoptable(NotAdoptableReason.DISCREPANCY)));
 
-            Assertions.assertThat(page).contains(PARTNER_HEADING).contains("取得した日時が最も新しい採用値です。");
-            Assertions.assertThat(page).doesNotContain("old-version-warning").doesNotContain("採用する</h2>");
-            Assertions.assertThat(page).doesNotContain("この外部版の採用値</h2>");
+            Assertions.assertThat(page)
+                    .contains(PARTNER_HEADING)
+                    .contains("取得した日時が最も新しい採用値です。")
+                    .doesNotContain("old-version-warning")
+                    .doesNotContain("採用する</h2>")
+                    .doesNotContain("この外部版の採用値</h2>");
         }
 
         @Test
@@ -386,8 +393,10 @@ class UndecidedRecordControllerTest {
                             false),
                     Optional.empty()));
 
-            Assertions.assertThat(page).doesNotContain("partner-values-heading").doesNotContain("old-version-warning");
-            Assertions.assertThat(page).contains("この外部版の採用値</h2>");
+            Assertions.assertThat(page)
+                    .doesNotContain("partner-values-heading")
+                    .doesNotContain("old-version-warning")
+                    .contains("この外部版の採用値</h2>");
         }
 
         @Test
