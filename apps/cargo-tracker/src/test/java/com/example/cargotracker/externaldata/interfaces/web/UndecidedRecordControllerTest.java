@@ -23,9 +23,9 @@ import com.example.cargotracker.externaldata.application.internal.commandservice
 import com.example.cargotracker.externaldata.application.internal.commandservices.KeylessRejectionOutcome;
 import com.example.cargotracker.externaldata.application.internal.commandservices.ReceivedRecordDecisionService;
 import com.example.cargotracker.externaldata.application.internal.queryservices.KeylessRejectionTarget;
-import com.example.cargotracker.externaldata.application.internal.queryservices.UndecidedRecordValues;
 import com.example.cargotracker.externaldata.application.internal.queryservices.UndecidedRecordPage;
 import com.example.cargotracker.externaldata.application.internal.queryservices.UndecidedRecordQueryService;
+import com.example.cargotracker.externaldata.application.internal.queryservices.UndecidedRecordValues;
 import com.example.cargotracker.externaldata.domain.model.aggregates.ConcurrentExternalRecordUpdateException;
 import com.example.cargotracker.externaldata.domain.model.aggregates.ReceivedRecordDecision;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.Classification;
@@ -1456,7 +1456,11 @@ class UndecidedRecordControllerTest {
         @ParameterizedTest(name = "{0}")
         @org.junit.jupiter.params.provider.MethodSource("illegibleCases")
         void 行23_読めない側は取得した日時の後に値を読めない文を示し読める側は値を示して却下の欄を残す(
-                String name, String recordType, UndecidedRecordValues values, String receivedPattern, String adoptedPattern)
+                String name,
+                String recordType,
+                UndecidedRecordValues values,
+                String receivedPattern,
+                String adoptedPattern)
                 throws Exception {
             String page = decisionPageWith(mismatch(recordType), values);
 
@@ -1604,7 +1608,9 @@ class UndecidedRecordControllerTest {
         }
 
         private void givenDecision(
-                UndecidedRecordPage.Item item, UndecidedRecordValues values, Optional<DecisionOutcome> adoptionRefusal) {
+                UndecidedRecordPage.Item item,
+                UndecidedRecordValues values,
+                Optional<DecisionOutcome> adoptionRefusal) {
             given(decisions.refusalOf(RECORD_ID)).willReturn(Optional.empty());
             given(decisions.adoptionRefusalOf(RECORD_ID)).willReturn(adoptionRefusal);
             given(query.undecidedRecord(RECORD_ID)).willReturn(Optional.of(item));
@@ -1686,7 +1692,8 @@ class UndecidedRecordControllerTest {
                     Arguments.of("受け取った値を読めない", new UndecidedRecordValues(null, true, ACQUIRED_AT, adopted)),
                     Arguments.of("値の列なし", new UndecidedRecordValues(null, ACQUIRED_AT, adopted)),
                     Arguments.of(
-                            "この外部版の採用値がない", new UndecidedRecordValues(voyage("2026-12-01T22:00:00Z"), ACQUIRED_AT, null)),
+                            "この外部版の採用値がない",
+                            new UndecidedRecordValues(voyage("2026-12-01T22:00:00Z"), ACQUIRED_AT, null)),
                     Arguments.of(
                             "採用値の側だけ読めない",
                             new UndecidedRecordValues(voyage("2026-12-01T22:00:00Z"), ACQUIRED_AT, illegibleAdopted)));
@@ -2157,7 +2164,8 @@ class UndecidedRecordControllerTest {
             return new UndecidedRecordValues(
                     received,
                     Instant.parse("2026-11-16T00:30:00Z"),
-                    new UndecidedRecordValues.Adopted(adopted, "3", INGESTED_AT, Instant.parse("2026-11-15T09:00:00Z")));
+                    new UndecidedRecordValues.Adopted(
+                            adopted, "3", INGESTED_AT, Instant.parse("2026-11-15T09:00:00Z")));
         }
 
         @Test

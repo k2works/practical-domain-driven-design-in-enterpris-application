@@ -678,7 +678,8 @@ class UndecidedRecordQueryServiceTest {
             given(receivedRecords.findById(adoptedRecord.id())).willReturn(Optional.of(adoptedRecord));
             given(adoptedValues.currentOf(externalRecordId)).willReturn(Optional.of(adopted));
 
-            Optional<UndecidedRecordValues> values = service.undecidedRecordValues(item(quarantine.id(), "VOYAGE", false));
+            Optional<UndecidedRecordValues> values =
+                    service.undecidedRecordValues(item(quarantine.id(), "VOYAGE", false));
 
             assertThat(values)
                     .contains(new UndecidedRecordValues(
@@ -700,7 +701,8 @@ class UndecidedRecordQueryServiceTest {
             given(receivedRecords.findById(quarantine.id())).willReturn(Optional.of(quarantine));
             given(adoptedValues.currentOf(externalRecordId)).willReturn(Optional.empty());
 
-            Optional<UndecidedRecordValues> values = service.undecidedRecordValues(item(quarantine.id(), "VOYAGE", false));
+            Optional<UndecidedRecordValues> values =
+                    service.undecidedRecordValues(item(quarantine.id(), "VOYAGE", false));
 
             assertThat(values)
                     .contains(new UndecidedRecordValues(voyage("2026-12-01T22:00:00Z"), RECEIVED_ACQUIRED_AT, null));
@@ -744,7 +746,8 @@ class UndecidedRecordQueryServiceTest {
 
             assertThat(service.undecidedRecordValues(item(duplicate.id(), "VOYAGE", false)))
                     .isEmpty();
-            assertThat(service.undecidedRecordValues(item(missing, "VOYAGE", false))).isEmpty();
+            assertThat(service.undecidedRecordValues(item(missing, "VOYAGE", false)))
+                    .isEmpty();
             then(adoptedValues).shouldHaveNoInteractions();
         }
 
@@ -1004,7 +1007,8 @@ class UndecidedRecordQueryServiceTest {
 
         @Test
         void 行23_受け取った値が読めず採用値がなければ受け取った値だけを読めない印にする() {
-            UndecidedRecordValues values = query("MILESTONE", new ReceivedValue(TRACKING_NUMBER, BROKEN), "MILESTONE", null);
+            UndecidedRecordValues values =
+                    query("MILESTONE", new ReceivedValue(TRACKING_NUMBER, BROKEN), "MILESTONE", null);
 
             assertThat(values).isEqualTo(new UndecidedRecordValues(null, true, RECEIVED_ACQUIRED_AT, null));
         }
@@ -1096,11 +1100,11 @@ class UndecidedRecordQueryServiceTest {
             com.example.cargotracker.externaldata.domain.model.valueobjects.RecordValues values =
                     valuesOf("MILESTONE", true);
 
-            org.assertj.core.api.Assertions.assertThatThrownBy(
-                            () -> new UndecidedRecordValues.Adopted(values, true, "2", PUBLISHED_AT, ADOPTED_ACQUIRED_AT))
+            org.assertj.core.api.Assertions.assertThatThrownBy(() ->
+                            new UndecidedRecordValues.Adopted(values, true, "2", PUBLISHED_AT, ADOPTED_ACQUIRED_AT))
                     .isInstanceOf(IllegalArgumentException.class);
-            org.assertj.core.api.Assertions.assertThatThrownBy(
-                            () -> new UndecidedRecordValues.Adopted(null, false, "2", PUBLISHED_AT, ADOPTED_ACQUIRED_AT))
+            org.assertj.core.api.Assertions.assertThatThrownBy(() ->
+                            new UndecidedRecordValues.Adopted(null, false, "2", PUBLISHED_AT, ADOPTED_ACQUIRED_AT))
                     .isInstanceOf(IllegalArgumentException.class);
             assertThat(new UndecidedRecordValues.Adopted(null, true, "2", PUBLISHED_AT, ADOPTED_ACQUIRED_AT).values())
                     .isNull();
