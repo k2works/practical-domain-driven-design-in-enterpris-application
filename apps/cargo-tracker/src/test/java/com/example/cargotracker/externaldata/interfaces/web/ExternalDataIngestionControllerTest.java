@@ -892,30 +892,33 @@ class ExternalDataIngestionControllerTest {
             String quarantineNote = "3 行目: 同じ外部 ID・外部版で内容の違う原本を受け取りました。";
             String page = resultPage(summaryWith(1, 1, List.of(REVERSED_NOTE, quarantineNote), 0));
 
-            assertThat(page).matches(tableWith(1, 0, 1, 1));
-            assertThat(page).contains("<h2 id=\"quarantine-notes-heading\">隔離・差異の理由</h2>");
             assertThat(page)
+                    .matches(tableWith(1, 0, 1, 1))
+                    .contains("<h2 id=\"quarantine-notes-heading\">隔離・差異の理由</h2>")
+                    .contains("この取込の隔離をすべて確認する")
                     .matches(Pattern.compile(
                             ".*<li>" + Pattern.quote(REVERSED_NOTE.replace("\"", "&quot;")) + "</li>\\s*<li>"
                                     + Pattern.quote(quarantineNote) + "</li>.*",
                             Pattern.DOTALL));
-            assertThat(page).contains("この取込の隔離をすべて確認する");
         }
 
         @Test
         void 行8_b_差異0件でも表に差異0の行が出て理由の領域は出ない() throws Exception {
             String page = resultPage(summaryWith(0, 0, List.of(), 0));
 
-            assertThat(page).matches(tableWith(1, 0, 0, 0));
-            assertThat(page).doesNotContain("隔離・差異の理由").doesNotContain("この取込の隔離をすべて確認する");
+            assertThat(page)
+                    .matches(tableWith(1, 0, 0, 0))
+                    .doesNotContain("隔離・差異の理由")
+                    .doesNotContain("この取込の隔離をすべて確認する");
         }
 
         @Test
         void 行8_c_差異だけなら理由は出てこの取込の隔離へのリンクは出ない() throws Exception {
             String page = resultPage(summaryWith(0, 1, List.of(REVERSED_NOTE), 0));
 
-            assertThat(page).contains("<h2 id=\"quarantine-notes-heading\">隔離・差異の理由</h2>");
-            assertThat(page).doesNotContain("この取込の隔離をすべて確認する");
+            assertThat(page)
+                    .contains("<h2 id=\"quarantine-notes-heading\">隔離・差異の理由</h2>")
+                    .doesNotContain("この取込の隔離をすべて確認する");
         }
 
         @Test

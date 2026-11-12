@@ -40,6 +40,9 @@ public class ExternalRecordAuditEventHandler {
     /** 要約の値がないときの印（キーのない隔離の外部 ID・外部版、ファイルの誤りの行）。 */
     private static final String NONE = "-";
 
+    /** 要約の外部 ID の部品の名前（隔離・差異・主要実績の採用で共通）。 */
+    private static final String EXTERNAL_ID_PART = ";externalId=";
+
     /** DE-29 の判断のうち、理由が任意の採用（イベントは判断を種類の名前の文字列で持つ）。 */
     private static final String ADOPTED = "ADOPTED";
 
@@ -83,7 +86,7 @@ public class ExternalRecordAuditEventHandler {
                         event.operatorCompanyId(),
                         receivedRecordId,
                         "recordType=MILESTONE;targetKey=" + part(event.trackingNumber(), "trackingNumber")
-                                + ";externalId=" + part(event.externalId(), "externalId")
+                                + EXTERNAL_ID_PART + part(event.externalId(), "externalId")
                                 + adoptedTail(
                                         event.infoVersion(),
                                         event.ingestionId(),
@@ -107,7 +110,7 @@ public class ExternalRecordAuditEventHandler {
                         event.reason(),
                         "provider=" + part(event.provider(), "provider")
                                 + ";recordType=" + part(event.recordType(), "recordType")
-                                + ";externalId=" + orNone(event.externalId())
+                                + EXTERNAL_ID_PART + orNone(event.externalId())
                                 + ";externalVersion=" + orNone(event.externalVersion())
                                 + ";lines=" + lines(event.firstLine(), event.lastLine())
                                 + origin(event.ingestionId(), event.dataSourceId()),
@@ -132,7 +135,7 @@ public class ExternalRecordAuditEventHandler {
                         event.reason(),
                         "provider=" + part(event.provider(), "provider")
                                 + ";recordType=" + part(event.recordType(), "recordType")
-                                + ";externalId=" + part(event.externalId(), "externalId")
+                                + EXTERNAL_ID_PART + part(event.externalId(), "externalId")
                                 + ";externalVersion=" + part(event.externalVersion(), "externalVersion")
                                 + ";comparedExternalVersion="
                                 + part(event.comparedExternalVersion(), "comparedExternalVersion")
