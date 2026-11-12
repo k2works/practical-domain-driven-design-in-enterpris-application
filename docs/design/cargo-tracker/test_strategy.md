@@ -198,7 +198,7 @@ US-04 の受入条件と BR-10 の境界を、日本語 Gherkin で書いた例�
 
 要件定義の Golden dataset（代表案件を複数の経路設計者とコンプライアンス担当者が承認したもの）は、`@golden` のシナリオアウトラインとして例の表で表す。期待候補・除外候補・除外理由を例の列にし、データの版を Feature の説明に書く。データそのものは業務責任者が決める（要件定義 H-9 の残作業、TST-02）。
 
-Golden dataset v0（Bolt 37f。仮の値で業務責任者の承認待ち）は、案件ごとのデータ（`src/test/resources/golden/v0/G-nn.json`。版・判断根拠・規制資料・承認者・適用期間・入力・期待結果）を、受入シナリオ（区分ごとの要約）と集約の単位のテスト（`RoutingCaseGoldenDatasetTest`。候補一覧の全体）で共有する。輸送条件は受入シナリオの背景の値にそろえ、必要最小接続時間の規則と航海は案件のデータだけから入れる。例の表の要約は、実際の候補と案件のデータの期待結果の両方と比べる（2 つを食い違わせない）。除外の要約は「番号:理由」で、理由は集約が付けた順に「・」でつなぎ、同じ理由は 1 つにする。下は抜粋（背景と区分の列を省く）。
+Golden dataset v0（Bolt 37f。仮の値で業務責任者の承認待ち）は、案件ごとのデータ（`src/test/resources/golden/v0/G-nn.json`。版・判断根拠・規制資料・承認者・適用期間・入力・期待結果。1 つの区分が複数の形を持つときは `G-nn[a-z].json` として案件を足す。G-06 は古さ・G-06b は欠落・G-06c は差異。【前の決定の変更】(31)、Bolt 39h4）を、受入シナリオ（区分ごとの要約）と集約の単位のテスト（`RoutingCaseGoldenDatasetTest`。候補一覧の全体）で共有する。輸送条件は受入シナリオの背景の値にそろえ、必要最小接続時間の規則と航海は案件のデータだけから入れる。例の表の要約は、実際の候補と案件のデータの期待結果の両方と比べる（2 つを食い違わせない）。除外の要約は「番号:理由」で、理由は集約が付けた順に「・」でつなぎ、同じ理由は 1 つにする。下は抜粋（背景と区分の列を省く）。
 
 ```gherkin
 # language: ja
@@ -218,7 +218,11 @@ Golden dataset v0（Bolt 37f。仮の値で業務責任者の承認待ち）は�
       | G-02 | 1,2 | 3:接続不足 |
       | G-03 | 1 | 2:期限超過 |
       | G-06 | 1 | 2:情報不足 |
+      | G-06b | なし | なし |
+      | G-06c | 1 | なし |
 ```
+
+案件のデータの一覧（`GoldenDatasetCase.V0_CASES`）・`golden/v0` のファイル・例の表の案件の列は一致させる。足し忘れが集約の単位のテストで黙って抜けないよう、`RoutingCaseGoldenDatasetTest` のガードのテストが 3 つの一致を縛る（Bolt 39h4）。
 
 | 区分 | v0 の扱い（W6 の確認ポイント 11） |
 | :--- | :--- |
@@ -227,7 +231,9 @@ Golden dataset v0（Bolt 37f。仮の値で業務責任者の承認待ち）は�
 | G-03 期限超過を含む | 到着が期限と同時刻（適合）と 1 分過ぎる（期限超過） |
 | G-04 特殊貨物（MVP 対象外） | 提出で拒まれ、経路設計の案件はできない（US-01 AC4。別の feature の業務ルール層のシナリオ）。経路設計の貨物種別の判定は W7 |
 | G-05 欠航・港湾閉鎖による再設計 | v0 に入れない（US-08、W13） |
-| G-06 外部データの欠落・古さ・矛盾 | 古さだけ。取得からちょうど許容時間（24 時間）の航海は足り、24 時間 1 分の航海を使う候補だけが情報不足。欠落・矛盾は W7（US-14。Bolt 39h の開始準備で 39h4 に分けた） |
+| G-06 外部データの古さ | 取得からちょうど許容時間（24 時間）の航海は足り、24 時間 1 分の航海を使う候補だけが情報不足 |
+| G-06b 外部データの欠落（Bolt 39h4。【業務の判断】(bk)） | 経路に使える航海の外部 ID に採用値がない（まだ取り込まれていない、または形式の誤りで隔離のまま）。経路設計に航海がないので候補は 0 件で、除外理由の「情報不足」にしない（情報不足は採用値があり取得から許容時間を過ぎた航海を使う候補。D-89）。UC-06 3a の理由の表示と専門判断への引き継ぎは未実装で、候補 0 件までを縛る（W8 の US-20） |
+| G-06c 外部データの差異（Bolt 39h4。見張り） | 同じ航海の後に取得した外部版を採用した後に前に取得した外部版が届いて差異になる（版の逆転）。経路設計から見える航海は採用中の外部版のままで、差異にした外部版は入力にない。最初から通る見張りで規則の回帰は縛らない（規則は 39h の `IngestionServiceTest`・`discrepancy_ui.feature` が縛る）。航海に既存の採用値との矛盾は起きない（D-143） |
 
 表の値は区分を示すための仮の値で、実際の案件と期待結果は業務責任者が決める（TST-02 が届いたら差し替えの Bolt を足す）。
 
@@ -534,7 +540,7 @@ Cucumber の実行結果（HTML・JSON）を CI の成果物として保存し�
 
 ### Release 0.1 の受入条件
 
-Release 0.1 の範囲（Release 0.1 のマイルストーンの Issue の題名の範囲）の受入条件と、それを確かめるシナリオのタグ。`AcceptanceCriteriaCoverageTest`（`documentationTest`）が、各行のタグに `@wip` でないシナリオがあることを照合する（Bolt 28。Bolt 2 レビュー R-17）。Release 1.0 では、Must の全受入条件の表を足して照合を広げる。
+Release 0.1 の範囲（Release 0.1 のマイルストーンの Issue の題名の範囲）の受入条件と、それを確かめるシナリオのタグ。`AcceptanceCriteriaCoverageTest`（`documentationTest`）が、各行のタグに `@wip` でないシナリオがあることを照合する（Bolt 28。Bolt 2 レビュー R-17）。Release 1.0 では、Must の全受入条件の表を段階的に足して照合を広げる（次の「Release 1.0 の受入条件の照合の表」。Bolt 39h4 は US-14・US-12 まで。すでに閉じたストーリー（US-06・US-07・US-16・US-18 ほか）の分の持ち主は「Release 1.0 の締め」（リリース完了報告書の前）。release_plan に登録した）。
 
 | ストーリー | 受入条件 | 確かめるもの |
 | :--- | :--- | :--- |
@@ -572,9 +578,26 @@ Release 0.1 の範囲（Release 0.1 のマイルストーンの Issue の題名�
 
 注: US-18 は Release 0.1 の #6 の AC2 だけを照合に入れる。Bolt 14 で Release 1.0 の #13 から前倒しした AC1 の password と session の部分・AC4・AC5 は、セキュリティの統合テストなどに移した（`AuthenticationSecurityIntegrationTest`・`SessionLifetimeFilterTest`・`UserTest`・`AuditRecordTest`）。Release 1.0 の表で扱う。主成功の流れ（`main_flow_ui.feature`、`@main-flow`）は流れの通しを確かめるシナリオで、受入条件のタグを付けない（照合の数に入れない）。照合は Cucumber の解析器で Feature を Pickle にし、機能・ルール・シナリオ・例のタグを継承した結果で数え、`@wip` の Pickle を除く。画面の層のシナリオは逐次に実行する（並行実行を有効にしない。「一覧の先頭」を確かめるシナリオがあるため）。
 
-### Release 1.0 の受入条件（照合の表の前の対応）
+### Release 1.0 の受入条件の照合の表
 
-Release 1.0 の受入条件の照合の表はまだ作っていない（上の注）。分けて作る受入条件は、どの Bolt のどのテストで確かめるかを先にここに書き、照合の表を作るときに移す。`AcceptanceCriteriaCoverageTest` はこの表を読まない。
+Release 1.0 の Must の受入条件のうち、閉じたストーリーから段階的に足す照合の表（Bolt 39h4。US-14 と US-12 の Release 1.0 の範囲）。`AcceptanceCriteriaCoverageTest`（`documentationTest`）が、見出しを完全一致で探して読み、各行のタグに `@wip` でないシナリオがあることを照合する（表が読めずに空振りしたら失敗する。Release 0.1 の表と同じ）。US-12 の AC1・AC2 は Release 0.1 の表にある。すでに閉じたストーリー（US-06・US-07・US-16・US-18 ほか）の分は、持ち主を「Release 1.0 の締め」（リリース完了報告書の前）に決めて足す。
+
+| ストーリー | 受入条件 | 確かめるもの |
+| :--- | :--- | :--- |
+| US-14 | AC1 | `@US-14-AC1` |
+| US-14 | AC2 | `@US-14-AC2` |
+| US-14 | AC3 | `@US-14-AC3` |
+| US-14 | AC4 | `@US-14-AC4` |
+| US-14 | AC5 | `@US-14-AC5` |
+| US-12 | AC3 | `@US-12-AC3` |
+| US-12 | AC4 | `@US-12-AC4` |
+| US-12 | AC5 | `@US-12-AC5` |
+
+注: 部分的に確かめる受入条件をタグの照合の数に「完全」と読ませない。US-12 AC4 の「有人例外案件へ引き継ぐ」は W8（US-20）で、取り込みの分（39g）と手入力の分（39gc）の「拒否」だけを AC4 のタグで照合する。US-14 AC5 の「差異としてデータ責任者へ示される」は、取込の分類（39h）と却下（39h2）だけを確かめる（採用は Release 1.0 では作らない。D-144）。US-14 AC4 の古い外部版の警告は 39h3（`adopt_old_version_quarantine_ui.feature`）で確かめる。
+
+### Release 1.0 の照合の表の前の対応
+
+Release 1.0 の受入条件のうち、上の照合の表にまだ入れていないものと、照合の表に入れたものの詳細（Bolt 列と確かめるテストの名前）。分けて作る受入条件は、どの Bolt のどのテストで確かめるかを先にここに書く。照合の表に足した後も、詳細の対応表として残す（移さない。【前の決定の変更】(31)、Bolt 39h4）。`AcceptanceCriteriaCoverageTest` はこの表を読まない（見出しは接頭辞を共有しない名前にして、完全一致で探す照合の表の見出しとぶつからないようにした）。
 
 | ストーリー | 受入条件 | Bolt | 確かめるもの |
 | :--- | :--- | :--- | :--- |
@@ -590,7 +613,7 @@ Release 1.0 の受入条件の照合の表はまだ作っていない（上の�
 | US-16 | AC4（業務担当者の担当範囲の外は拒否し試行を記録） | 38e〜38g・38f2（38f で見積りの側、38f2 で予約の側（`BookingAssignedScopeSecurityIntegrationTest`、`restrict_bookings_by_assigned_companies_ui.feature`）。動画は 38f2b、38g で経路設計・追跡の側（`RoutingAssignedScopeSecurityIntegrationTest`・`TrackingAssignedScopeSecurityIntegrationTest`、`restrict_routing_and_tracking_by_assigned_companies_ui.feature`）） | `@US-16-AC4`（restrict_staff_by_assigned_companies_ui のシナリオの行は 38f2b が足す。restrict_bookings_by_assigned_companies_ui、restrict_routing_and_tracking_by_assigned_companies_ui。動画 `@demo-bolt-38f2b/quotation-scope`・`booking-scope`）、範囲外の記録の統合テスト、判定の部品の単体（`RoutingCaseScopeTest`・`TrackingRecordScopeTest`）、ArchUnit の名前の規則と閉じる規則 |
 | US-16 | AC5（利用終了・権限取消しで次の request から拒否） | 34d・38c2・38g（38g で役割の取消しのシナリオ） | `@US-16-AC5`（manage_user_status_ui、manage_user_roles_ui の役割の取消し（2 つの役割から経路設計者を外すと、同じ session の次の request で経路設計の画面は A-04、追跡の画面は開け、ログインと役割の変更の監査の記録が残る。Bolt 38g）。manage_user_status_ui は38c2 で、停止中の詳細の停止の記録と再開の後に示さないことを足した）。停止の記録の照会は契約 `AuditRecordSuspensionContract`（H2 と PostgreSQL の子。最新の停止・操作と対象で絞る・停止した人の行がない）、索引 `ix_audit_record_target` は `MyBatisIdentityRepositoriesIntegrationTest`（`pg_indexes`） |
 | US-06 | AC4（最終取得から許容時間（24 時間。D-89）を過ぎた航海を使う候補は情報不足で除外され、航海・取得時刻・許容時間・参照した航海情報の版が示される。ちょうど許容時間は足りる） | 37b2 | `@US-06-AC4`（`route_candidates.feature`・`compare_route_candidates_ui.feature`）、`InfoFreshnessPolicyTest`・`RoutingCaseTest`、保存の往復の統合テスト、設定の結合のテスト |
-| US-06 | Golden dataset v0（#15 の補足。仮の値で業務責任者の承認待ち。G-01〜G-03・G-06 の制約適合判定、G-04 は提出の拒否） | 37f | `@golden`（`routing/golden/route_candidates_golden_v0.feature` のシナリオアウトライン 4 行、`special_cargo_golden_v0.feature` の 3 行）、`RoutingCaseGoldenDatasetTest`（案件のデータの候補一覧の全体） |
+| US-06 | Golden dataset v0（#15 の補足。仮の値で業務責任者の承認待ち。G-01〜G-03・G-06 の制約適合判定、G-04 は提出の拒否。G-06b 欠落・G-06c 差異は 39h4 で足した） | 37f・39h4 | `@golden`（`routing/golden/route_candidates_golden_v0.feature` のシナリオアウトライン 6 行（37f では 4 行）、`special_cargo_golden_v0.feature` の 3 行）、`RoutingCaseGoldenDatasetTest`（案件のデータの候補一覧の全体） |
 | US-06 | UC-06 4a（候補の根拠の航海が算出の後に変わるか取得から許容時間を過ぎると、S-06 で古くなった候補と示し、再算出を促し、「この候補で確定へ」を出さない。US-06 に 4a を直接書いた受入条件はないので、受入シナリオのタグは AC1 につなぐ。【業務の判断】(w)・(y)・(z)） | 39f2 | `@US-06-AC1`（`adopted_voyage_reflected_ui.feature`。`@demo-bolt-39f2/stale-candidate`）、`RoutingCaseStaleLegsTest`・`RoutingCaseQueryServiceTest`・`RoutingCaseControllerTest`（上の「古くなった候補」の行） |
 | US-07 | AC3（承認中に区間の航海の情報版が更新されているか、同じ情報版でも区間の予定が変わっていれば確定は拒否され、候補の比較に戻って再判断が求められる。確定の時刻に情報不足でも確定できない） | 37c、39e2（情報版と区間の予定の組の照合）、39f2（拒否されて戻った S-06 に、変わった区間の下の文が出る） | `@US-07-AC3`（`confirm_route.feature`・`confirm_route_ui.feature`・`adopted_voyage_reflected_ui.feature`）、`RoutingCaseConfirmationTest`（情報版と区間の予定の組の照合を含む）・`VoyageTest`（`matchesLeg`）・`InfoFreshnessPolicyTest`、`RoutingCaseControllerTest` |
 | US-07 | AC4（確定した経路版の区間の航海が更新され、期限・接続を満たさなくなるか航海を引き直せなくなると、評価で再設計要になり、候補・区間・確定の記録（旧情報版）が残り、DE-06 が理由と旧情報版を運んで 1 度だけ出る。満たし続けるときと情報版も区間の予定も変わらないときは確定のまま。予約を自動で取り消さないことの確かめは 37e） | 37d2、37e4c（予約は自動取消しされないことを本物の本予約の確定で）、39e2（同じ情報版で区間の予定が変わると評価する） | `@US-07-AC4`（`evaluate_confirmed_route.feature`）、`RoutingCaseEvaluationTest`（状態の組み合わせの表の行ごと）・`RouteCandidateFinderTest`（引き直し）・`RedesignReasonCodeTest`（理由の写し）・`ConfirmedRouteEvaluationTest`（入力ポート。見つからない・変わらない・再設計要・競合）、保存の統合テスト（評価で `updated_by` を変えない）、`RoutingCaseControllerTest`（S-06 の再設計要の表示）・`RoutingCaseViewsTest`（理由の画面の語）。37e4c: 本予約の確定が見積りの行を押さえている間に来た再設計要の印は確定のコミットを待って付き、予約は確定のまま 1 件残り、輸送要求は予約確定済みになり、予約の画面（S-24）の照会は予約を返す（`integration/BookingConfirmationWithRouteRedesignIntegrationTest`、PostgreSQL。`pg_blocking_pids` で待ちを確かめる） |
@@ -600,9 +623,10 @@ Release 1.0 の受入条件の照合の表はまだ作っていない（上の�
 | US-12 | AC3（時系列に反する実績は原本を保持し、現在状態に直ちに反映せず確認中にする。手入力の登録と候補の採用の両方。DE-18 を 1 度だけ出す。【業務の判断】(ag)・(ah)） | 39gc | `@US-12-AC3`（`register_milestone.feature`、`under_review_milestone_ui.feature`）、`MilestoneSequenceRuleTest`、`CurrentStatusDeriverTest`、`TrackingRecordMilestoneTest`・`TrackingRecordCandidateAdoptionTest`（`Bolt39gc_…`）、`TrackingRecordCommandServiceTest`、`TrackingRecordControllerTest`、`MyBatisTrackingRecordRepositoryIntegrationTest` |
 | US-12 | AC4 の手入力の分（取消済みの予約への手入力は拒否し、S-13 に理由を示す。拒否の記録は書かない。【業務の判断】(aj)） | 39gc | `@US-12-AC4`（`register_milestone.feature`）、`TrackingRecordMilestoneTest`・`TrackingRecordCandidateAdoptionTest`（`Bolt39gc_…`）、`MilestoneRegistrationControllerTest` |
 | US-12 | AC5 の手入力の分（完了した追跡への手入力は保持のみで、現在状態を変えない。完了後は予約状態が完了か、採用済みの実績から導いた状態が引渡し済み。【業務の判断】(ak)、【前の決定の変更】(14)） | 39gc | `@US-12-AC5`（`register_milestone.feature`）、`TrackingRecordMilestoneTest`・`TrackingRecordCandidateAdoptionTest`（`Bolt39gc_…`）、`MilestoneRegistrationControllerTest` |
-| US-14 | AC5 の取込の分（同じ外部 ID で後に取得した外部版を採用しているのに前に取得した外部版が届いたとき（版の逆転）と、主要実績の追跡番号が同じ外部 ID の採用中の値と違うとき（既存の採用値との矛盾）、自動で採用せず差異にし、S-16 に件数と理由を示す。差異は採用値も DE-12・DE-13・DE-14 も作らず DE-31 と監査を残す。【業務の判断】(ay)〜(bd)。S-17 で差異を却下するのは Bolt 39h2（下の行）、G-06 の欠落・矛盾と照合の表は 39h4） | 39h | `@US-14`（`features/external_data/classify_discrepancies.feature`）、規則 `DiscrepancyRuleTest`（パラメーター。比べる相手 2 つ、同じ取得時刻、外部版の文字列の順と取得時刻の順の逆、両方の理由）、分類 `ClassificationTest`（`Bolt39h_…`。3 つの入力の組）、照会の契約 `AdoptedValueRepositoryContract`（`findByExternalId`。メモリ・H2・PostgreSQL）、取込 `IngestionServiceTest`（`Bolt39h_…`。注記・DE-31・DE-12〜DE-14 を出さない）、監査 `ExternalRecordAuditEventHandlerTest`・`AuditRecordTest`・`ExternalRecordAuditDeliveryIntegrationTest`（配信まで。T-184）・`DomainEventSerializationContractTest`（DE-31）、画面 `ExternalDataIngestionControllerTest`・`IngestionSummaryQueryServiceTest` と `features/ui/discrepancy_ui.feature`（`@demo-bolt-39h/discrepancy`）、PERF-06 は `ExternalDataIngestionPerformanceTest`（Linux の CI の `performanceTest`） |
+| US-14 | AC5 の取込の分（同じ外部 ID で後に取得した外部版を採用しているのに前に取得した外部版が届いたとき（版の逆転）と、主要実績の追跡番号が同じ外部 ID の採用中の値と違うとき（既存の採用値との矛盾）、自動で採用せず差異にし、S-16 に件数と理由を示す。差異は採用値も DE-12・DE-13・DE-14 も作らず DE-31 と監査を残す。【業務の判断】(ay)〜(bd)。S-17 で差異を却下するのは Bolt 39h2（下の行）、G-06 の欠落（G-06b）・差異（G-06c）の案件と照合の表は 39h4） | 39h | `@US-14`（`features/external_data/classify_discrepancies.feature`）、規則 `DiscrepancyRuleTest`（パラメーター。比べる相手 2 つ、同じ取得時刻、外部版の文字列の順と取得時刻の順の逆、両方の理由）、分類 `ClassificationTest`（`Bolt39h_…`。3 つの入力の組）、照会の契約 `AdoptedValueRepositoryContract`（`findByExternalId`。メモリ・H2・PostgreSQL）、取込 `IngestionServiceTest`（`Bolt39h_…`。注記・DE-31・DE-12〜DE-14 を出さない）、監査 `ExternalRecordAuditEventHandlerTest`・`AuditRecordTest`・`ExternalRecordAuditDeliveryIntegrationTest`（配信まで。T-184）・`DomainEventSerializationContractTest`（DE-31）、画面 `ExternalDataIngestionControllerTest`・`IngestionSummaryQueryServiceTest` と `features/ui/discrepancy_ui.feature`（`@demo-bolt-39h/discrepancy`）、PERF-06 は `ExternalDataIngestionPerformanceTest`（Linux の CI の `performanceTest`） |
 | US-14 | AC5 の差異の確認（差異を S-17 の判断を待つ隔離・差異の一覧に隔離と混ぜて出し、差異の判断の画面で却下だけにする。採用は拒み、採用できない理由 `DISCREPANCY` を分類を最初に見て返す。S-16 のリンク「この取込の隔離・差異をすべて確認する」。却下した差異の原本の再送は再び差異。【業務の判断】(be)〜(bg)、台帳 D-144・D-145・D-147〜D-149。【前の決定の変更】(27)・(28)） | 39h2 | 判断の規則 `ReceivedRecordDecisionTest`（パラメーター。分類 4 つ × 却下・採用。差異の採用は拒む）、一覧の行 `UndecidedRecordTest`（不変条件）、判断のサービス `ReceivedRecordDecisionServiceTest`（`Bolt39h2_…`。採用できない理由の順、差異の却下・判断済み・同時の却下、結果の分類）、照会の契約 `ExternalDataRecordRepositoriesContract`（`Bolt39h2_…`。隔離と差異の並び・件数・1 件引く・却下後・再送の差異、キーのない隔離のまとめての却下の対象に差異が入らない。メモリ・H2・PostgreSQL）、照会 `UndecidedRecordQueryServiceTest`（差異の受け取った値。採用値は空）、画面 `UndecidedRecordControllerTest`（一覧の文・種類・差異の判断の画面・却下と判断済みの知らせ・採用の POST の行き先・GET の着地）・`ExternalDataIngestionControllerTest`（S-16 のリンクの文と条件）、監査 `ExternalRecordAuditDeliveryIntegrationTest`（差異の却下の `EXTERNAL_RECORD_DECIDED`。配信まで。T-184）、`features/ui/reject_discrepancy_ui.feature`（`@demo-bolt-39h2/reject-discrepancy`。axe・幅 320 px）。PERF-06 は照会の形が変わらないので流さない |
 | US-14 | AC4・AC5 の判断の画面での外部版をまたいだ比べ（判断の画面に「この外部 ID の採用値」の領域を隔離・差異の両方に示す。示すのは差異の規則が比べる相手 1 つで、版の逆転なら最後に取得した採用値、そうでなければ公開した日時が最も新しい採用値。古い外部版の隔離（取得時刻が最後に取得した採用値より厳密に前）の採用の欄に固定の警告の文を示す。警告は採用を止めず、差異と採用できない隔離には出さない。S-17 の絞らない一覧の各行に「この取込で絞る」。判断の画面の値の型を `UndecidedRecordValues` に改める。【業務の判断】(bh)〜(bj)、台帳 D-150〜D-152。【前の決定の変更】(29)・(30)） | 39h3 | 規則 `DiscrepancyRuleTest`（`Bolt39h3_…`。`isVersionReversed`・`inUseOf`・`partnerOf` の組。逆転の境（前・同じ・後）、最後に取得した採用値と比べること、公開した時刻 → 取得時刻 → 受信記録 ID の順。`discrepancyOf` の既存の組が緑のまま）、照会 `UndecidedRecordQueryServiceTest`（`Bolt39h3_…`。見本の組（V2 の取込の後の V1′ の隔離、今使っている採用値が同じ外部版、採用値なし、差異、キーのない隔離、比べる相手の値を読めない、別の提供元の採用値は拾わない）で `partner`・`olderThanAdopted` と引く回数を呼び出しの記録で縛る。一覧の照会は値も採用値も引かない。警告の判定と領域の出し方が独立していること）、一覧の行の型 `UndecidedRecordPageTest`（取込 ID の null を拒む）、契約 `AdoptedValueRepositoryContract`（別の外部 ID の採用値を拾わない。メモリ・H2・PostgreSQL）、判断のサービス `ReceivedRecordDecisionServiceTest`（`Bolt39h3_…`。古い外部版の隔離を採用でき、採用値の公開した時刻が最も新しくなり DE-12 を 1 つ出す。開いた後に古くなった隔離も採用できる）、画面 `UndecidedRecordControllerTest`（`Bolt39h3_…`。領域・警告の文（航海・主要実績）と位置、警告を出す条件（採用できない隔離・差異には出さない）、行の「この取込で絞る」のリンク（絞らない一覧だけ・2 頁目にも・行ごとの取込 ID・読み上げ）。照会は mock なので照会の変異は照会のテストで縛る）と画面の層の受入シナリオ `features/ui/adopt_old_version_quarantine_ui.feature`・`review_undecided_records_ui.feature`（`@demo-bolt-39h3/old-version-warning`。axe・幅 320 px）。層の規則は `LayerArchitectureTest`・`DddAnnotationArchitectureTest`・`LivingGlossaryConsistencyTest`・Modulith の検証（既存）。PERF-06 は取込の経路が変わらず、判断の画面の読みに照会が 2 回増えるだけなので流さない |
+| US-14 | 締め（AC1〜AC5 の照合の表、Golden dataset の G-06b 欠落・G-06c 差異、W7 のデモの動画、性能の複数の外部版の組。【業務の判断】(bk)、台帳 D-153。【前の決定の変更】(31)。#18 は終了報告の承認の後に閉じる） | 39h4 | `AcceptanceCriteriaCoverageTest`（Release 1.0 の照合の表 8 行。見出しを引数にした純粋なメソッドで書式の外れ・前方一致・2 つ目の表を縛る）、`RoutingCaseGoldenDatasetTest`（G-06b・G-06c とガードのテスト）、`route_candidates_golden_v0.feature`（`@golden` 6 行）、`adopted_voyage_reflected_ui.feature`（`@demo-bolt-39h4/confirm-rejected-same-info-version`）、`ExternalDataIngestionPerformanceTest`（`Bolt39h4_行7_…`。外部 ID 2,000 種 × 外部版 5。測るのは W7 の締めの CI） |
 
 ## 後続工程への引継ぎ
 
