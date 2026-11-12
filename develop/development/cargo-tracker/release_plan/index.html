@@ -11250,6 +11250,41 @@
   
   
     <li class="md-nav__item">
+      <a href="../bolt_39h3_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 39h3 計画
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../bolt_39g_report/" class="md-nav__link">
         
   
@@ -19469,7 +19504,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">39h3</td>
-<td style="text-align: left;">（Bolt 39h の開始準備で 39h から縦に分けた。Bolt 39h 計画の決定 (1)。2026-11-12 に Bolt 39h の CP-1 として承認。human:kakimomokuri）判断の画面で外部版をまたいで比べる縦: 隔離・差異の判断の画面に「この外部 ID の採用値」（外部版・取得時刻・値）を示し、古い外部版の隔離（V2 の取込の後の V1 の隔離。Bolt 39e の行 46）を採用すると経路設計の航海や追跡の候補が古い値に戻ることを警告する（39e の開発レビュー）、S-17 の絞らない一覧から取込で絞る入口（39d2b の終了報告の議題 2）。約 3 時間（参考）。<a href="../bolt_39h_plan/">Bolt 39h 計画</a> の決定 (1)・(6)</td>
+<td style="text-align: left;">（Bolt 39h の開始準備で 39h から縦に分けた。Bolt 39h 計画の決定 (1)。2026-11-12 に Bolt 39h の CP-1 として承認。human:kakimomokuri）判断の画面で外部版をまたいで比べる縦: 隔離・差異の判断の画面に「この外部 ID の採用値」（外部版・取得時刻・値）を示し、古い外部版の隔離（V2 の取込の後の V1 の隔離。Bolt 39e の行 46）を採用すると経路設計の航海や追跡の候補が古い値に戻ることを警告する（39e の開発レビュー）、S-17 の絞らない一覧から取込で絞る入口（39d2b の終了報告の議題 2）。約 3 時間（参考）。<a href="../bolt_39h_plan/">Bolt 39h 計画</a> の決定 (1)・(6)。<a href="../bolt_39h3_plan/">Bolt 39h3 計画</a>（計画は承認済み（human:kakimomokuri）。2026-11-13 に開始準備し、2 つの整合性検証の指摘を反映した。約 3 時間 30 分（約 210 分）、本計画 CP-1〜CP-8。開始準備で推奨に決めたこと（仮。承認待ち）: 分けない。名前の見直し（<code>QuarantineValues</code> → <code>UndecidedRecordValues</code> ほか。39h2 の決定 (2) が送った分）と、<code>DiscrepancyRule</code> から版の逆転の判定・今使っている採用値・比べる相手（<code>isVersionReversed</code>・<code>inUseOf</code>・<code>partnerOf</code>）を取り出す準備のリファクタリングを先にコミットする（【前の決定の変更】(29)）。判断の画面に「この外部 ID の採用値」（差異の規則が比べる相手。逆転なら最後に取得した採用値）を隔離・差異の両方に示す（D-150、【前の決定の変更】(30) D-146 の書き分けと D-148 の「受け取った値だけ」を改める）。古い外部版の隔離（取得時刻が最後に取得した採用値より厳密に前）の採用は止めず、採用の欄に固定の警告の文を足す（D-151）。絞らない一覧の各行に「この取込で絞る」を足し、分類で絞る操作は足さない（D-152）。スキーマ・認可は変えない。超えそうなら動画を 39h4 へ）</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: left;">アウトサイドイン（S-17 から）</td>
 <td style="text-align: left;">ステップごと（画面）</td>
@@ -20405,8 +20440,36 @@
 <td style="text-align: left;">業務責任者とデータ責任者に確かめる（Release 1.0 のパイロットの前）</td>
 <td style="text-align: left;">仮（2026-11-12 の開始準備の推奨を承認。human:kakimomokuri。業務責任者・データ責任者に確かめる）。<a href="../bolt_39h2_plan/">Bolt 39h2 計画</a>で作る</td>
 </tr>
+<tr>
+<td style="text-align: left;">D-150</td>
+<td style="text-align: left;">判断の画面の「この外部 ID の採用値」</td>
+<td style="text-align: left;">差異の規則が比べる相手 1 つを、外部版・取得した日時・公開した日時・値で示す（版の逆転なら最後に取得した採用値、そうでなければ公開した日時が最も新しい採用値）。隔離と差異の両方。逆転でなく判断する受信記録と同じ外部版のときだけ出さない</td>
+<td style="text-align: left;">US-14 AC4・AC5、D-105、D-141、D-142</td>
+<td style="text-align: left;"><a href="../bolt_39h3_plan/">Bolt 39h3 計画</a> の業務の判断の記録 (bh)</td>
+<td style="text-align: left;">業務責任者とデータ責任者に確かめる（Release 1.0 のパイロットの前）</td>
+<td style="text-align: left;">仮（2026-11-13 の開始準備の推奨を承認。human:kakimomokuri。業務責任者・データ責任者に確かめる）。<a href="../bolt_39h3_plan/">Bolt 39h3 計画</a>で作る</td>
+</tr>
+<tr>
+<td style="text-align: left;">D-151</td>
+<td style="text-align: left;">古い外部版の隔離の採用</td>
+<td style="text-align: left;">採用はできる。採用の欄に固定の警告の文（航海・主要実績）を足す。確認のチェックは足さない。判定は版の逆転と同じ定義（取得時刻が最後に取得した採用値より厳密に前）で、画面を開いたときの一度。差異・採用できない隔離には出さない。受け入れること: 開いた後に別の採用が入っても POST で読み直さない</td>
+<td style="text-align: left;">US-14 AC5、Bolt 39e の行 46、D-142</td>
+<td style="text-align: left;"><a href="../bolt_39h3_plan/">Bolt 39h3 計画</a> の業務の判断の記録 (bi)</td>
+<td style="text-align: left;">業務責任者とデータ責任者に確かめる（Release 1.0 のパイロットの前）</td>
+<td style="text-align: left;">仮（2026-11-13 の開始準備の推奨を承認。human:kakimomokuri。業務責任者・データ責任者に確かめる）。<a href="../bolt_39h3_plan/">Bolt 39h3 計画</a>で作る</td>
+</tr>
+<tr>
+<td style="text-align: left;">D-152</td>
+<td style="text-align: left;">S-17 の取込で絞る入口</td>
+<td style="text-align: left;">絞らない一覧の各行に「この取込で絞る」を足す。分類（隔離・差異）で絞る操作は足さない（D-149 のまとめての却下を作らない間は用途がない）</td>
+<td style="text-align: left;">US-14 AC4・AC5、D-147、D-149</td>
+<td style="text-align: left;"><a href="../bolt_39h3_plan/">Bolt 39h3 計画</a> の業務の判断の記録 (bj)</td>
+<td style="text-align: left;">業務責任者とデータ責任者に確かめる（Release 1.0 のパイロットの前）</td>
+<td style="text-align: left;">仮（2026-11-13 の開始準備の推奨を承認。human:kakimomokuri。業務責任者・データ責任者に確かめる）。<a href="../bolt_39h3_plan/">Bolt 39h3 計画</a>で作る</td>
+</tr>
 </tbody>
 </table>
+<p>D-141・D-142 の注（Bolt 39h3 の開始準備）: 版の逆転の判定（D-142）と比べる相手の選び方（D-141・D-105）は、差異の規則から <code>isVersionReversed</code>・<code>inUseOf</code>・<code>partnerOf</code> として取り出し、取込の差異の判定・古い外部版の警告・判断の画面の領域が共有する（定義は変えない）。D-146 の注（同）: 書き分けは注記と S-16 の文に限り、判断の画面は隔離にも「この外部 ID の採用値」を示す（【前の決定の変更】(30)）。D-147 の注（同）: 分類で絞る操作は足さないと決めた（D-152）。D-148 の注（同）: 判断の画面の値の領域に、受け取った値に加えて「この外部 ID の採用値」を示す（【前の決定の変更】(30)）。【前の決定の変更】(29): Bolt 39d3 の決定 (10) の判断の画面の値の型の名前を <code>UndecidedRecordValues</code> に改める。</p>
 <p>D-144 の注（Bolt 39h2 の開始準備）: 判断の画面に差異を出して却下するのは 39h2 で、判断できる受信記録を隔離と差異に広げ、採用のファクトリーは差異を拒み、採用できるかの定めは分類を最初に見て <code>DISCREPANCY</code> を返す（<a href="../bolt_39h2_plan/">Bolt 39h2 計画</a> の決定 (3)）。採用できない理由 <code>DISCREPANCY</code> の文は D-148。D-146 の注（同）: S-16 のリンクの文は 39h2 で「この取込の隔離・差異をすべて確認する」にし、隔離か差異が 1 件以上のときに出す（D-148）。</p>
 <hr />
 <h2 id="_26">リスク管理<a class="headerlink" href="#_26" title="Permanent link">&para;</a></h2>
@@ -23025,6 +23088,11 @@
 <tr>
 <td style="text-align: left;">2026-11-12</td>
 <td style="text-align: left;">Bolt 39h2 のステップ 2〜10 を実施し、<a href="../bolt_39h2_report/">終了報告</a>を作った（承認待ち。CI と PERF-06 は push していないので未実行）。W7 の週の表の Bolt 39h の終了報告を承認済みに直した</td>
+<td style="text-align: left;">anthropic/claude-sonnet-5-5</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-11-13</td>
+<td style="text-align: left;">Bolt 39h3 の開始準備: 39h3 の行に<a href="../bolt_39h3_plan/">計画</a>へのリンクと推奨（約 210 分、本計画 CP-1〜CP-8。分けない、名前の見直しと規則の取り出し、この外部 ID の採用値、古い外部版の隔離の採用の警告、取込で絞る入口、【前の決定の変更】(29)・(30)）を足し、台帳 D-150〜D-152（仮。承認待ち）と D-141・D-142・D-146〜D-148 の注を足した</td>
 <td style="text-align: left;">anthropic/claude-sonnet-5-5</td>
 </tr>
 <tr>
