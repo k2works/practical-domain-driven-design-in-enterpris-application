@@ -11775,6 +11775,41 @@
   
   
     <li class="md-nav__item">
+      <a href="../bolt_39i_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 39i 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../release_report-0_1/" class="md-nav__link">
         
   
@@ -18854,7 +18889,7 @@
 <li>US-16・US-18 AC9（38〜38g）: ui_design の S-20（:145・:180-183・:1120 以降）と A-06（:94・:186-187。招待に流用する分の語と期限）、domain_model の IA-INV-02（担当企業だけ）・IA-INV-03（管理者による解除）・IA-INV-12（招待 24 時間）・IA-INV-14（登録・解除・担当範囲の操作）・:1055（管理範囲の割り当て）・:1215（利用者の集約が担当範囲を持つと書いた記述を、実装の別のポート <code>UserAssignmentRepository.scopeOf</code> に合わせる）、data_model の <code>user_assignment</code>（:939。「<code>BOOKING</code> は W6」を担当企業だけに）・<code>audit_record</code> の action（:938）・<code>password_reset_token</code> の用途・<code>notification</code> の種類、non_functional の SEC-08（招待）・SEC-10（管理者の経路）・SEC-12（担当企業だけ）、requirements_definition の OQ-07 の残り（案件ごとの割り当て）、各コンテキストの <code>allowedDependencies</code> と共有カーネルの範囲外の試行の記録のポート（新しい ADR）、ADR-012（担当範囲と session の直列化） Bolt 38f: architecture_backend（共有カーネルの例外・監査の書き手）、ADR-001・ADR-011・ADR-012・ADR-014 の改訂と ADR-019、domain_model（用語・監査の操作・IA-INV-08）、data_model（<code>ASSIGNED_SCOPE_DENIED</code> の値）、non_functional（PERF-01・02 の注、SEC-12）、ui_design（S-02 の案内と 404）、test_strategy。</li>
 <li>承認の後に直す文書（W6 の開始準備の範囲）: release_plan の :101（U2 の対策）・:350-351 と引継ぎ ID の台帳（TST-02・DM-05 の期限を「v0 は仮の値で作り、届いたら差し替える。パイロット開始の条件として残す」に）、台帳の D-88 の注と D-89・D-90 の新設、W6 の行（:788。ゴールに利用者の管理を足し、管理範囲の割り当てを W10 へ）と W10 の行（:792）、ガントの W6 の名前（:253）、開発戦略の W6 のデモ項目（:185）と W6 の行（:346）</li>
 </ul>
-<p><strong>D-65 の残り</strong>（Bolt 17 の開発レビュー）: Golden dataset の集約の単位のテスト（37f）と規則を選ぶ時刻（37。確認ポイント 4。2026-10-21 に D-90 で接続の時刻に決めた）は W6。依頼の後の再提出で経路条件が得られないときの扱い（UC-07 5a）・航海の照会を時間の窓と港で絞ること（確定の読み直しは候補の区間の航海番号で引く。Bolt 37c の開発レビュー）・貨物種別の ACL・<code>Voyage</code> と <code>ConnectionRule</code> の class 化と、候補探索の量（港ごとの出発の索引、航海が数百本のときの時間と候補の数、港だけ違う候補。Bolt 37 の開発レビュー）は、外部情報の取込で航海の書き手と量が変わる W7（US-14）の開始準備で扱う（<code>Voyage</code> の class 化と時間の窓の照会は Bolt 39e で作り、<code>ConnectionRule</code> の class 化と港で絞る照会と候補探索の量は W10 に送った。確認ポイント 17）。UC-06 4a（情報の更新で候補を旧版にする）も W7。除外理由の閾値の型と <code>threshold</code> の列、制約適合判定の値の名前は、<code>CARGO_NOT_SUPPORTED</code> の判定を入れる Bolt（W7）の開始準備で決める（Bolt 37b2 の開発レビュー。Bolt 37c で送った）。#16 の「経路版の更新を版ごとの差分の保存に置き換える」は US-08（W13）</p>
+<p><strong>D-65 の残り</strong>（Bolt 17 の開発レビュー）: Golden dataset の集約の単位のテスト（37f）と規則を選ぶ時刻（37。確認ポイント 4。2026-10-21 に D-90 で接続の時刻に決めた）は W6。依頼の後の再提出で経路条件が得られないときの扱い（UC-07 5a）・航海の照会を時間の窓と港で絞ること（確定の読み直しは候補の区間の航海番号で引く。Bolt 37c の開発レビュー）・貨物種別の ACL（Bolt 39i で済み）・<code>Voyage</code> と <code>ConnectionRule</code> の class 化と、候補探索の量（港ごとの出発の索引、航海が数百本のときの時間と候補の数、港だけ違う候補。Bolt 37 の開発レビュー）は、外部情報の取込で航海の書き手と量が変わる W7（US-14）の開始準備で扱う（<code>Voyage</code> の class 化と時間の窓の照会は Bolt 39e で作り、<code>ConnectionRule</code> の class 化と港で絞る照会と候補探索の量は W10 に送った。確認ポイント 17）。UC-06 4a（情報の更新で候補を旧版にする）も W7。除外理由の閾値の型と <code>threshold</code> の列、制約適合判定の値の名前は、<code>CARGO_NOT_SUPPORTED</code> の判定を入れる Bolt（W7）の開始準備で決める（Bolt 37b2 の開発レビュー。Bolt 37c で送った）。#16 の「経路版の更新を版ごとの差分の保存に置き換える」は US-08（W13）</p>
 <p><strong>Bolt の分け方</strong>（2026-10-20 の初案。各 Bolt の開始準備で引き直す）:</p>
 <table>
 <thead>
@@ -19327,7 +19362,7 @@
 <tr>
 <td style="text-align: left;">16</td>
 <td style="text-align: left;">経路設計の貨物種別の判定（<code>CARGO_NOT_SUPPORTED</code>）と除外理由の閾値</td>
-<td style="text-align: left;">W7 の最後の Bolt（39i）で作る（W6 の確認ポイント 11 のとおり W7）。D-65 の貨物種別の ACL、除外理由の閾値の型と <code>threshold</code> の列を分けること（スキーマ）と値の名前（Bolt 37c 計画 :174）も同じ Bolt</td>
+<td style="text-align: left;"><strong>済み</strong>（Bolt 39i。2026-11-13 に<a href="../bolt_39i_report/">終了報告</a>。承認済み。human:kakimomokuri）。W7 の最後の Bolt（39i）で作る（W6 の確認ポイント 11 のとおり W7）。D-65 の貨物種別の ACL、除外理由の閾値の型と <code>threshold</code> の列を分けること（スキーマ）と値の名前（Bolt 37c 計画 :174）も同じ Bolt</td>
 </tr>
 <tr>
 <td style="text-align: left;">17</td>
@@ -19661,7 +19696,7 @@
 <td style="text-align: left;">経路設計の貨物種別の判定（<code>CARGO_NOT_SUPPORTED</code>）と貨物種別の ACL、除外理由の閾値の型と <code>threshold</code> の列、値の名前。<a href="../bolt_39i_plan/">Bolt 39i 計画</a>（計画は承認済み（human:kakimomokuri）。2026-11-13 に開始準備し、2 つの整合性検証の指摘を反映した。約 3 時間 30 分（210 分）、本計画 CP-1〜CP-7。開始準備で推奨に決めたこと（仮。承認済み。human:kakimomokuri。業務責任者に確かめる）: 分けない（超えそうなら列の分割と移し替えを 39i2 へ）。【業務の判断】(bl) 一般貨物でない案件は全候補を貨物種別で除外する（知らない種別も。専門家承認で通す道は作らない。台帳 D-154（仮））、(bm) 不適合の時刻は最初の区間の出発予定、閾値は案件の貨物種別、参照情報版は最初の区間の航海の採用情報版、S-06 の文は 4 区分の全文と、全候補が貨物種別だけで除外のときの導入文の差し替え（台帳 D-155（仮））。貨物種別の型 <code>RouteCargoCategory</code> と ACL の翻訳（知らない名前は <code>UNRECOGNIZED</code>）、規則 <code>RoutableCargoPolicy</code>（算出のときだけ。確定と評価は変えない）、閾値の型 <code>ExclusionThreshold</code>（sealed。入れ子は <code>UnsupportedCargo</code>・<code>StaleVoyageInfo</code> ほか）。スキーマ: <code>exclusion_reason.threshold</code> を区分ごとの 6 列に分け CHECK を足して <code>threshold</code> を消す（1 つのマイグレーション。追加列は NULL 可。NULL・区切りのない既存の行は CHECK で止める）。<code>ConstraintEvaluation</code> は改名しない。【前の決定の変更】(32) Bolt 37b2 の閾値の 1 列、(33) Bolt 17 の確認ポイント 10（貨物種別は判定しない）、(34) 後方互換の規約（列の削除の 3 段）の例外（ステージング・本番が W10 まで）。画面の文だけで、キャプチャと動画はない）</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: left;">アウトサイドイン</td>
-<td style="text-align: left;">計画と終了報告（構造・スキーマ）</td>
+<td style="text-align: left;">計画と終了報告（構造・スキーマ）。2026-11-13 に実施し、<a href="../bolt_39i_report/">終了報告</a>を作った（承認済み。<code>test</code> 6,005 件、変異 V1〜V19 を全部当てて落ちた。CI と配備は push していないので未実行）</td>
 </tr>
 </tbody>
 </table>
@@ -20616,6 +20651,24 @@
 <td style="text-align: left;"><a href="../bolt_39h4_plan/">Bolt 39h4 計画</a> の業務の判断の記録 (bk)</td>
 <td style="text-align: left;">業務責任者とデータ責任者に確かめる（Release 1.0 のパイロットの前）。TST-02 が届いたら差し替える</td>
 <td style="text-align: left;">仮（2026-11-13 の開始準備の推奨を承認。human:kakimomokuri。業務責任者・データ責任者に確かめる）。<a href="../bolt_39h4_plan/">Bolt 39h4 計画</a>で作る</td>
+</tr>
+<tr>
+<td style="text-align: left;">D-154</td>
+<td style="text-align: left;">経路設計の貨物種別の除外の範囲</td>
+<td style="text-align: left;">一般貨物でない案件は、すべての候補を「貨物種別に対応しない」（<code>CARGO_NOT_SUPPORTED</code>）で除外する。知らない種別（<code>UNRECOGNIZED</code>）も除外し、一般貨物として通さない。航海に貨物の対応の属性がないので候補ごとには見分けず、専門家の承認で通す道は作らない（BR-03 が後続段階の専門家承認条件の確定まで手動窓口へ案内するため。OQ-03）。算出のときだけ判定し、確定と評価は貨物種別を判定し直さない</td>
+<td style="text-align: left;">BR-02、BR-03、R-INV-02、US-06 AC2、US-01 AC4、W6 の確認ポイント 11</td>
+<td style="text-align: left;"><a href="../bolt_39i_plan/">Bolt 39i 計画</a> の業務の判断の記録 (bl)、<a href="../bolt_39i_report/">終了報告</a></td>
+<td style="text-align: left;">業務責任者に確かめる（Release 1.0 のパイロットの前）。専門家承認で通すかは OQ-03 の後続の決定</td>
+<td style="text-align: left;">仮（2026-11-13 の計画の承認で推奨のとおり。human:kakimomokuri。業務責任者の確認は未）</td>
+</tr>
+<tr>
+<td style="text-align: left;">D-155</td>
+<td style="text-align: left;">貨物種別の除外理由の時刻・閾値・参照情報版と S-06 の文</td>
+<td style="text-align: left;">不適合の時刻は最初の区間の出発予定、閾値は案件の貨物種別、参照情報版は最初の区間の航海の採用情報版。S-06 の文は「貨物種別に対応しない（危険物。MVP の対象は一般貨物だけで、手動の窓口で扱う）。最初の出発 …。参照した航海情報の版 …」（種別の語は一般・危険物・冷凍・その他特殊。不明は「不明な貨物種別」）。全候補が貨物種別だけで除外のときの導入文は「適合する候補がありません。この案件の貨物は MVP の対象外のため、手動の窓口で扱ってください。」</td>
+<td style="text-align: left;">R-INV-02、US-06 AC2、BR-03、US-01 AC4・US-04 AC5 の案内の語</td>
+<td style="text-align: left;"><a href="../bolt_39i_plan/">Bolt 39i 計画</a> の業務の判断の記録 (bm)、<a href="../bolt_39i_report/">終了報告</a></td>
+<td style="text-align: left;">業務責任者に確かめる（Release 1.0 のパイロットの前）</td>
+<td style="text-align: left;">仮（2026-11-13 の計画の承認で推奨のとおり。human:kakimomokuri。業務責任者の確認は未）</td>
 </tr>
 </tbody>
 </table>
@@ -23263,6 +23316,11 @@
 <tr>
 <td style="text-align: left;">2026-11-13</td>
 <td style="text-align: left;">Bolt 39h4 のステップ 2〜8 を実施し、<a href="../bolt_39h4_report/">終了報告</a>を作った（承認済み。CI と PERF-06 は push していないので未実行。#18 のクローズは承認の後）。<code>test</code> 5,913 件・<code>documentationTest</code> 11 件・<code>uiTest</code> 229 シナリオ緑、SonarQube PASS、変異 M1〜M8 すべて落ちた</td>
+<td style="text-align: left;">anthropic/claude-sonnet-5-5</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-11-13</td>
+<td style="text-align: left;">Bolt 39i を実施し、<a href="../bolt_39i_report/">終了報告</a>を作った（承認待ち）。貨物種別の判定（<code>RoutableCargoPolicy</code>）と ACL（<code>RouteCargoCategory</code>）、閾値の型（<code>ExclusionThreshold</code>）と列（V20261116100000）、S-06 の文、マニュアル 8 章。確認ポイント 16 と D-65 の残りを済みにし、台帳 D-154・D-155（仮）を足した。<code>test</code> 6,005 件、変異 V1〜V19 を全部落とした。CI と配備は未実行</td>
 <td style="text-align: left;">anthropic/claude-sonnet-5-5</td>
 </tr>
 <tr>

@@ -11542,6 +11542,41 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_39i_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 39i 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../development/cargo-tracker/release_report-0_1/" class="md-nav__link">
         
   
@@ -17208,6 +17243,18 @@
 <td style="text-align: left;">経路設計</td>
 </tr>
 <tr>
+<td style="text-align: left;">除外の閾値</td>
+<td style="text-align: left;">ExclusionThreshold</td>
+<td style="text-align: left;">除外理由の区分ごとの閾値の型（sealed interface。期限超過は希望到着期限、接続不足は規則の港と必要最小接続時間、接続できないは規則のなかった港、情報不足は古い航海の航海番号と許容時間、貨物種別は案件の貨物種別）。区分と閾値の不一致を型で作れなくする（Bolt 39i）</td>
+<td style="text-align: left;">経路設計</td>
+</tr>
+<tr>
+<td style="text-align: left;">貨物種別（経路設計）</td>
+<td style="text-align: left;">RouteCargoCategory</td>
+<td style="text-align: left;">経路条件の貨物種別（一般・危険物・冷凍・その他特殊・不明）。見積りの貨物種別の名前を腐敗防止層で翻訳した経路設計の型で、知らない名前は不明として一般貨物に通さない（D-65、Bolt 39i）</td>
+<td style="text-align: left;">経路設計</td>
+</tr>
+<tr>
 <td style="text-align: left;">判断根拠</td>
 <td style="text-align: left;">DecisionRationale</td>
 <td style="text-align: left;">経路設計者が経路を確定するときに記録する、その候補を選んだ理由。前後の空白を除いて 1〜4,000 文字（R-INV-04。Bolt 19）</td>
@@ -17234,7 +17281,7 @@
 <tr>
 <td style="text-align: left;">制約適合判定</td>
 <td style="text-align: left;">ConstraintEvaluation</td>
-<td style="text-align: left;">期限・接続時間・貨物種別による候補の適合・除外とその理由</td>
+<td style="text-align: left;">候補の算出のときの判定の結果（期限・接続・情報鮮度・貨物種別の理由）による候補の適合・除外とその理由。値の名前は改名しない（Bolt 39i の決定 (6)）</td>
 <td style="text-align: left;">経路設計</td>
 </tr>
 <tr>
@@ -19212,6 +19259,11 @@
 <td style="text-align: left;">経路条件、区間の列、接続時間規則から適合・除外と理由を返す純粋な関数。接続時間規則は接続ごとに次の区間の出発予定で選ぶ（D-90、Bolt 37）。Golden dataset で検証する</td>
 </tr>
 <tr>
+<td style="text-align: left;">経路設計できる貨物の規則</td>
+<td style="text-align: left;">RoutableCargoPolicy</td>
+<td style="text-align: left;">案件の貨物種別（<code>RouteCargoCategory</code>）が一般貨物でなければ、候補に「貨物種別に対応しない」の理由を 1 つ返す。知らない種別（<code>UNRECOGNIZED</code>）も除外する。不適合の時刻は最初の区間の出発予定、閾値は案件の貨物種別、参照情報版は最初の区間の航海の採用情報版。区間のない候補には理由を作らない。算出のときだけ判定し、確定と評価は判定し直さない（Bolt 39i。後続段階で特殊貨物を受け付けるときはこの規則を差し替える。OQ-03）</td>
+</tr>
+<tr>
 <td style="text-align: left;">情報鮮度の判定</td>
 <td style="text-align: left;">InfoFreshnessPolicy</td>
 <td style="text-align: left;">候補の区間の航海ごとに、判定時刻が取得時刻と許容時間（設定。D-89）の和より後なら情報不足の理由を返す（同時刻は足りる）。許容時間を持ち、時計とリポジトリを持たない。算出の集約が制約適合判定の理由の後ろに足す（Bolt 37b2）</td>
@@ -19229,7 +19281,7 @@
 <li>経路設計案件は DE-16 を受けて作り、経路条件は見積りの公開 API（<code>quotation.interfaces.api</code> の経路条件の照会）から ACL 越しに得て、経路条件（<code>RouteSpecification</code>）に変える。案件には案件番号を振り、経路版 1 を作成中で持つ。</li>
 <li>候補探索は、判定時刻より後に出発する区間で、出発地から目的地への直行と 1 回の積替え（Bolt 17 では区間 1〜2。Bolt 37 で積替え 2 回の区間 1〜3 に広げた。下の Bolt 37 で決めたこと）を列挙する。同じ航海を 2 回使う列は列挙しない。候補は到着予定の早い順に 20 件まで。</li>
 <li>接続時間は、前の区間の到着予定から、同じ港での次の区間の出発予定まで。積替えの港に、次の区間の出発予定の時刻で有効な接続時間規則がなければ、その候補を「接続できない」で除外する（失敗に倒す）。（Bolt 17 では判定時刻で選んだ。Bolt 37 で D-90 により変えた。Bolt 17 の確認ポイント 9 の変更）</li>
-<li>制約適合判定は、期限超過（不適合の時刻は到着予定、閾値は希望到着期限、参照情報版は最終区間の航海の採用情報版）と、接続不足（時刻は次の区間の出発予定、閾値は必要最小接続時間と規則の港、参照情報版は次の区間の航海の採用情報版）を返す。両方に当たれば理由を 2 つ持つ。貨物種別は R0.1 では判定しない。</li>
+<li>制約適合判定は、期限超過（不適合の時刻は到着予定、閾値は希望到着期限、参照情報版は最終区間の航海の採用情報版）と、接続不足（時刻は次の区間の出発予定、閾値は必要最小接続時間と規則の港、参照情報版は次の区間の航海の採用情報版）を返す。両方に当たれば理由を 2 つ持つ。貨物種別は制約適合判定では判定しない（確定と評価が同じ規則を通るため）。算出の集約が、情報鮮度の理由の後ろに貨物種別の規則 <code>RoutableCargoPolicy</code> の理由を足す（Bolt 39i。【前の決定の変更】(33)）。</li>
 <li>候補の接続余裕は、接続時間から必要最小接続時間を引いた値のうち最も小さいもの（直行は持たない）。情報鮮度は、候補に使った航海の取得時刻のうち最も古いもの。</li>
 <li>候補を算出すると経路版は作成中から候補提示済みになる。候補提示済みで再算出すると、候補を置き換え、判定時刻を更新する。</li>
 <li>依頼の後に輸送要求が再提出されて経路条件が得られないときは、案件を作らず警告のログを残す（確認ポイント 3。補償の扱いは Bolt 17 レビュー D-64 で後の Bolt に回した）。案件の作成と候補の算出は監査記録に書かない（確認ポイント 16。監査の対象は確定から）。</li>
@@ -19262,8 +19314,19 @@
 <li>確定のときに航海を読み直す（入力ポートが確定と同じトランザクションで読む。行はロックしない。W7 の確認ポイント 11 で決めた）。選んだ候補の区間のうち、今の航海と照合して変わった区間が 1 つでもあれば、情報版の更新（<code>INFO_VERSION_CHANGED</code>）で拒否する。照合は区間の写しの情報版（<code>candidate_leg.info_version</code>）と区間の予定（<code>departure_at</code>・<code>arrival_at</code>）の組で行う（区間ごとに航海番号で今の航海を引き、<code>Voyage.matchesLeg</code> で比べる。航海がない区間は変わったとみなす）。Bolt 37d の確定した経路版の評価でも同じ照合を使う。【前の決定の変更】(1)（Bolt 39e2）: Bolt 37c の決定は情報版だけの照合で、判定は候補（<code>RouteCandidate</code>）が返していたが、同じ情報版で値の違う DE-12 を見落とすので組の照合に改め、判定を <code>Voyage</code> に移した（下の Bolt 39e2 で決めたこと）。</li>
 <li>確定の時刻に、区間ごとに読み直した航海の取得時刻（区間の写しではない。同じ版で取り込み直されて新しくなった取得時刻を拾う）を情報鮮度の判定にかけ、情報不足なら <code>INFO_INSUFFICIENT</code> で拒否する。算出では除外、確定では拒否として、同じ判定を使う。確定のときの鮮度は確定の操作だけで見る（Bolt 37d の評価は鮮度を見ない）。</li>
 <li>確かめる順は、経路設計者 → 状態 → 候補 → 除外 → 情報版の更新 → 判断根拠 → 出発済み → 情報不足 → 規則の判定し直し。候補の比較（S-06）に戻す理由（状態・候補・除外・情報版の更新）を判断根拠より前に、確定の画面（S-07）にとどまる理由を後に確かめる。情報版を先に確かめるので、区間に写した出発予定で出発済みを判定できる。</li>
-<li>除外理由の閾値を区分ごとの型にすること、<code>threshold</code> の列を分けること（データベースの承認ゲート）、制約適合判定の値の改名は、37c では除外理由の判定を足さないので行わない。<code>CARGO_NOT_SUPPORTED</code>（区分はあるが判定していない）の判定を入れる Bolt（D-65 の残り、W7）の開始準備で決める。</li>
+<li>除外理由の閾値を区分ごとの型にすること、<code>threshold</code> の列を分けること（データベースの承認ゲート）、制約適合判定の値の改名は、37c では除外理由の判定を足さないので行わない。<code>CARGO_NOT_SUPPORTED</code>（区分はあるが判定していない）の判定を入れる Bolt（D-65 の残り、W7）の開始準備で決める。 → 済み。Bolt 39i で判定を入れ、閾値の型と列を分け、値の名前は改名しないと決めた（下の「Bolt 39i で決めたこと」）。</li>
 <li>判定の部品（規則・航海・制約適合判定・情報鮮度の判定）を 1 つの値にまとめるかは、3 つ目の使い手ができる Bolt 37d の開始準備で決める（確定の引数は 8 つ）。</li>
+</ul>
+<p>Bolt 39i で決めたこと（<a href="../../../development/cargo-tracker/bolt_39i_plan/">Bolt 39i 計画</a> の確認ポイント 1〜7。2026-11-13 に human:kakimomokuri が推奨のとおり承認）:</p>
+<ul>
+<li>【業務の判断】(bl)（台帳 D-154。仮）: 一般貨物でない案件は、すべての候補を「貨物種別に対応しない」（<code>CARGO_NOT_SUPPORTED</code>）で除外する。知らない種別も同じ。航海に貨物の対応の属性がないので候補ごとには見分けない。専門家の承認で通す道は作らない（BR-03。OQ-03 の後続の決定まで）。</li>
+<li>【業務の判断】(bm)（台帳 D-155。仮）: 貨物種別の除外理由は、不適合の時刻を最初の区間の出発予定、閾値を案件の貨物種別、参照情報版を最初の区間の航海の採用情報版とする。</li>
+<li>貨物種別の ACL: 見積りの貨物種別の名前は ACL（<code>QuotationRouteConditions</code>）で経路設計の型 <code>RouteCargoCategory</code> に翻訳する。知らない名前は <code>UNRECOGNIZED</code> にして WARN を出し、案件は作る（D-65）。保存は名前で、読むときは <code>valueOf</code>（種別にない文字列の行は例外）。</li>
+<li>除外の閾値: <code>ExclusionReason</code> は <code>(閾値, 不適合の時刻, 参照情報版)</code> で、区分は閾値の型（sealed interface <code>ExclusionThreshold</code>。<code>ArrivalDeadline</code>・<code>MinimumConnection</code>・<code>ConnectionRuleMissing</code>・<code>StaleVoyageInfo</code>・<code>UnsupportedCargo</code>）が決める。</li>
+<li>値の名前: <code>ConstraintEvaluation</code> は改名しない（説明だけ直した）。</li>
+<li>【前の決定の変更】(32): Bolt 37b2 の「<code>threshold</code> の 1 列に詰めて最後の空白で分ける」を、区分ごとの 6 列（<code>exclusion_reason.threshold_*</code>）に分ける形に改めた（データモデルの「Bolt 39i で足す列と消す列」）。</li>
+<li>【前の決定の変更】(33): Bolt 17 の確認ポイント 10（貨物種別による除外は判定しない）を、算出のときに判定する形に改めた。確定は保存した除外の理由で止まり貨物種別を判定し直さない。評価は貨物種別を見ない（変えない）。</li>
+<li>【前の決定の変更】(34): 列の削除は「追加 → 移行 → 削除」の 3 段という規約（data_model、architecture_infrastructure）を、この変更に限って 1 つのマイグレーションにする例外とした。根拠はステージング・本番が W10 までないこと。W10 の後は 3 段にする。</li>
 </ul>
 <p>Bolt 37d（US-07 AC4 の準備）で決めたこと（<a href="../../../development/cargo-tracker/bolt_37d_plan/">Bolt 37d 計画</a> の確認ポイント 1〜5。2026-10-22 に human:kakimomokuri が承認。評価の操作と DE-06 は Bolt 37d2）:</p>
 <ul>

@@ -3,7 +3,7 @@ routing_case
 route_candidate
 route_version
 port_call
-exclusion_reason
 candidate_leg
+exclusion_reason
 connection_rule
 routing_case_number_counter

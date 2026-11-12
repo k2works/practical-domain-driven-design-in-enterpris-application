@@ -11463,6 +11463,41 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_39i_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 39i 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../development/cargo-tracker/release_report-0_1/" class="md-nav__link">
         
   
@@ -17019,7 +17054,7 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 </tr>
 <tr>
 <td style="text-align: left;">G-04 特殊貨物（MVP 対象外）</td>
-<td style="text-align: left;">提出で拒まれ、経路設計の案件はできない（US-01 AC4。別の feature の業務ルール層のシナリオ）。経路設計の貨物種別の判定は W7</td>
+<td style="text-align: left;">提出で拒まれ、経路設計の案件はできない（US-01 AC4。別の feature の業務ルール層のシナリオ）。経路設計の貨物種別の判定は Bolt 39i（route_candidates.feature の <code>@US-06-AC2 @BR-02 @BR-03</code> のシナリオアウトラインで確かめる）</td>
 </tr>
 <tr>
 <td style="text-align: left;">G-05 欠航・港湾閉鎖による再設計</td>
@@ -17097,7 +17132,7 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 </tr>
 <tr>
 <td style="text-align: left;">R-INV-01〜02（制約適合、除外理由）</td>
-<td style="text-align: left;">○（境界値、複数の接続のうち 1 つだけ不足、規則の有効期間の境界、Golden dataset）</td>
+<td style="text-align: left;">○（貨物種別の除外は Bolt 39i の RoutableCargoPolicyTest・RoutingCaseTest、境界値、複数の接続のうち 1 つだけ不足、規則の有効期間の境界、Golden dataset）</td>
 <td style="text-align: left;">○（<code>@golden</code>）</td>
 <td style="text-align: left;">—</td>
 <td style="text-align: left;">—</td>
