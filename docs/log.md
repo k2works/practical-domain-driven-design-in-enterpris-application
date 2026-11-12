@@ -1,6 +1,8 @@
 # Docs Update Log
 
 ## 2026-11-13
+* **Update**: [bolt_39i_plan](/development/cargo-tracker/bolt_39i_plan.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39i の開始準備。39g〜39h4 の完了の後に引き直し、2 つの整合性検証の指摘を反映。承認待ち）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md)・[index](/development/cargo-tracker/index.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39i の開始準備。39i の行、台帳 D-154・D-155（仮。承認待ち））
 * **Creation**: [bolt_39h4_report](/development/cargo-tracker/bolt_39h4_report.md) を作成（anthropic/claude-sonnet-5-5。承認待ち）
 * **Update**: [release_plan](/development/cargo-tracker/release_plan.md)・[index](/development/cargo-tracker/index.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39h4 の終了報告）
 * **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md)・[user_story](/requirements/cargo-tracker/user_story.md)・[system_usecase](/requirements/cargo-tracker/system_usecase.md)・[development_strategy](/development/cargo-tracker/development_strategy.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39h4 のステップ 1。Release 1.0 の照合の表、G-06b・G-06c）
