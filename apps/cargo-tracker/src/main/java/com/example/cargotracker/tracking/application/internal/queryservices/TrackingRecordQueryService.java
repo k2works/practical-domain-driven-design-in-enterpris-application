@@ -64,7 +64,8 @@ public class TrackingRecordQueryService {
     @Transactional(readOnly = true)
     public Optional<TrackingRecordDetail> detailWithFreshness(TrackingNumber trackingNumber, AuthenticatedActor actor) {
         UtcInstant judgedAt = new UtcInstant(clock.instant());
-        return detail(trackingNumber, actor)
+        return scope.find(trackingNumber, actor)
+                .inScope()
                 .map(found -> new TrackingRecordDetail(
                         found, freshness.exceeded(found.nextExpectedAt(), judgedAt), freshness.tolerance()));
     }
