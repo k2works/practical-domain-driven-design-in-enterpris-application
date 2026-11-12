@@ -11102,6 +11102,41 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_39g4c_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 39g4c 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../development/cargo-tracker/release_report-0_1/" class="md-nav__link">
         
   
@@ -16837,10 +16872,10 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 </tr>
 <tr>
 <td style="text-align: left;">T-INV-08〜10（予定と実績の区別、開示範囲、当初の予定と最新の見込み）</td>
-<td style="text-align: left;">○（Bolt 26b: 現在状態の導出の規則。種類ごと、発生時刻の順、同じ時刻、採用済みだけ。Bolt 27: 荷主向けの照会結果は採用済みの実績だけで社内の識別子を持たない、荷主の照会のサービスは他社の追跡記録を返さない。Bolt 39g3: 最新の到着見込みの規則 <code>LatestEstimateRuleTest</code>（対応づけ・遅れ・到着・2 つ以上・状態・なし）、最終取得時刻は採用の実績の取得時刻の最大（<code>TrackingRecordTest</code>）、登録・採用・DE-13 の受け取りで採用のときだけ動き当初の到着予定は動かない。Bolt 39g4b: 公開の順 <code>PublicationOrderTest</code>、航海の到着予定の規則 <code>VoyageArrivalRuleTest</code>（積地・揚地の読み方、周回、結べない）、<code>LatestEstimateRuleTest</code> の航海の到着予定の組（遅い方、当初より早めない、到着の実績が勝つ）、集約の受け取り <code>TrackingRecordVoyageArrivalTest</code>（順・完了後・取消済み・中間の区間・最終取得時刻）、listener <code>VoyageArrivalEventHandlerTest</code>（押さえる順と読む順、内容の欠け））</td>
-<td style="text-align: left;">○（Bolt 27: <code>@US-09-AC1</code>、他社の照会 <code>@BR-07 @T-INV-09</code>、自社だけの一覧 <code>@BR-07</code>。画面の層の <code>@ui @US-09-AC1</code>。荷受人の立場は R1.1。Bolt 39g3: <code>latest_estimate.feature</code>（<code>@T-INV-10</code>）、画面の層の <code>latest_estimate_ui.feature</code>（<code>@demo-bolt-39g3/latest-estimate</code>）。Bolt 39g4b: <code>voyage_arrival_estimate.feature</code>（<code>@T-INV-10</code>）、画面の層の <code>voyage_arrival_estimate_ui.feature</code>（<code>@demo-bolt-39g4b/voyage-arrival-estimate</code>））</td>
-<td style="text-align: left;">○（Bolt 27: 荷主企業で絞る照会と索引。Bolt 39g3: 保存の UPDATE が <code>latest_eta</code>・<code>last_acquired_at</code> を書き、<code>original_eta</code> を書かない。読み直しの往復と一覧の要約。Bolt 39g4b: 航海の到着予定の 4 列の UPDATE・INSERT・往復、CHECK <code>ck_tracking_record_voyage_arrival</code>、照会 <code>findTrackingNumbersByFinalLegVoyage</code>（H2 と PostgreSQL）、配信の統合 <code>VoyageArrivalDeliveryIntegrationTest</code>（DE-12 の 3 つの購読）、DE-12 と DE-13 の受け取りの直列 <code>MyBatisTrackingRecordLockIntegrationTest</code>（PostgreSQL））</td>
-<td style="text-align: left;">○（顧客向け HTML の開示テスト。Bolt 27: 他社・存在しない・形式の誤りの追跡番号は同じ 404 で本文も同じ、経路版の案件番号・実績番号・UTC の併記が出ない。Bolt 27b: C-06 予約一覧は自社の予約だけ（照会のサービスの単体テストと PostgreSQL の統合テスト）、予約サガの状態の英語の値と UTC の併記が出ない、一覧の行の項目の見張り。荷受人の開示範囲は R1.1）</td>
+<td style="text-align: left;">○（Bolt 26b: 現在状態の導出の規則。種類ごと、発生時刻の順、同じ時刻、採用済みだけ。Bolt 27: 荷主向けの照会結果は採用済みの実績だけで社内の識別子を持たない、荷主の照会のサービスは他社の追跡記録を返さない。Bolt 39g3: 最新の到着見込みの規則 <code>LatestEstimateRuleTest</code>（対応づけ・遅れ・到着・2 つ以上・状態・なし）、最終取得時刻は採用の実績の取得時刻の最大（<code>TrackingRecordTest</code>）、登録・採用・DE-13 の受け取りで採用のときだけ動き当初の到着予定は動かない。Bolt 39g4b: 公開の順 <code>PublicationOrderTest</code>、航海の到着予定の規則 <code>VoyageArrivalRuleTest</code>（積地・揚地の読み方、周回、結べない）、<code>LatestEstimateRuleTest</code> の航海の到着予定の組（遅い方、当初より早めない、到着の実績が勝つ）、集約の受け取り <code>TrackingRecordVoyageArrivalTest</code>（順・完了後・取消済み・中間の区間・最終取得時刻）、listener <code>VoyageArrivalEventHandlerTest</code>（押さえる順と読む順、内容の欠け）。Bolt 39g4c: 見込みの根拠の値 <code>LatestEstimateBasisTest</code>（実績のときだけ実績番号）、<code>LatestEstimateRuleTest</code> の根拠の組（到着の実績・遅れのない実績も根拠・同じ時刻は実績・早まった航海の到着予定は当初の到着予定・確認中は使わない・予定の順で最も後の実績）、集約の書き手と不変条件 <code>TrackingRecordLatestEstimateBasisTest</code>（開始・採用・航海の到着予定の受け取り・導出し直さない経路は根拠を保存した値のまま、private のコンストラクターが見込みと根拠の食い違いを拒む）、S-12 の根拠の文（<code>TrackingRecordControllerTest</code>。当初の到着予定・区間 n の出発と積替の実績と見込みの遅れ・当初の到着予定どおり・到着の実績・航海の到着予定と取得時刻・記録がありません）、<code>VoyageArrivalTest</code>（公開した時刻・出典の欠け））</td>
+<td style="text-align: left;">○（Bolt 27: <code>@US-09-AC1</code>、他社の照会 <code>@BR-07 @T-INV-09</code>、自社だけの一覧 <code>@BR-07</code>。画面の層の <code>@ui @US-09-AC1</code>。荷受人の立場は R1.1。Bolt 39g3: <code>latest_estimate.feature</code>（<code>@T-INV-10</code>）、画面の層の <code>latest_estimate_ui.feature</code>（<code>@demo-bolt-39g3/latest-estimate</code>）。Bolt 39g4b: <code>voyage_arrival_estimate.feature</code>（<code>@T-INV-10</code>）、画面の層の <code>voyage_arrival_estimate_ui.feature</code>（<code>@demo-bolt-39g4b/voyage-arrival-estimate</code>）。Bolt 39g4c: <code>latest_estimate_basis.feature</code>（<code>@T-INV-10</code>）、画面の層の <code>latest_estimate_basis_ui.feature</code>（<code>@demo-bolt-39g4c/latest-estimate-basis</code>。S-12 の見込みの根拠が実績から航海の到着予定に変わり、C-10 に出ない））</td>
+<td style="text-align: left;">○（Bolt 27: 荷主企業で絞る照会と索引。Bolt 39g3: 保存の UPDATE が <code>latest_eta</code>・<code>last_acquired_at</code> を書き、<code>original_eta</code> を書かない。読み直しの往復と一覧の要約。Bolt 39g4b: 航海の到着予定の 4 列の UPDATE・INSERT・往復、CHECK <code>ck_tracking_record_voyage_arrival</code>、照会 <code>findTrackingNumbersByFinalLegVoyage</code>（H2 と PostgreSQL）、配信の統合 <code>VoyageArrivalDeliveryIntegrationTest</code>（DE-12 の 3 つの購読）、DE-12 と DE-13 の受け取りの直列 <code>MyBatisTrackingRecordLockIntegrationTest</code>（PostgreSQL）。Bolt 39g4c: 見込みの根拠の 2 列（<code>latest_eta_basis</code>・<code>latest_eta_basis_milestone_no</code>）の INSERT・UPDATE・往復、根拠の実績番号の先の確かめ（ない実績なら競合）、CHECK <code>ck_tracking_record_latest_eta_basis</code>（H2 と PostgreSQL）、外部キー <code>fk_tracking_record_latest_eta_basis</code>（PostgreSQL。コミットで拒む）、列のコメント <code>SchemaCommentIntegrationTest</code>）</td>
+<td style="text-align: left;">○（顧客向け HTML の開示テスト。Bolt 27: 他社・存在しない・形式の誤りの追跡番号は同じ 404 で本文も同じ、経路版の案件番号・実績番号・UTC の併記が出ない。Bolt 27b: C-06 予約一覧は自社の予約だけ（照会のサービスの単体テストと PostgreSQL の統合テスト）、予約サガの状態の英語の値と UTC の併記が出ない、一覧の行の項目の見張り。荷受人の開示範囲は R1.1。Bolt 39g4c: C-10 の本文に見込みの根拠と根拠の文が出ない（<code>CustomerTrackingControllerTest</code>）、S-11 の列は変わらない）</td>
 </tr>
 <tr>
 <td style="text-align: left;">T-INV-11（追跡記録は予約 1 件に 1 件）</td>

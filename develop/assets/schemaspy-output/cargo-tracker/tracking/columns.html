@@ -907,6 +907,34 @@
         "autoUpdated": "",
         "defaultValue": "null",
         "comments": "<p>航海の到着予定の出典の参照</p>"
+    },
+    {
+        "tableName": "tracking_record",
+        "tableFileName": "tracking_record",
+        "tableType": "Table",
+        "keyClass": "",
+        "keyTitle": "",
+        "name": "latest_eta_basis",
+        "type": "varchar",
+        "length": 30,
+        "nullable": "√",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>見込みの根拠</p>"
+    },
+    {
+        "tableName": "tracking_record",
+        "tableFileName": "tracking_record",
+        "tableType": "Table",
+        "keyClass": "foreignKey",
+        "keyTitle": "Foreign Key",
+        "name": "<i class='icon ion-key iconkey' style='padding-left: 5px;'></i>latest_eta_basis_milestone_no",
+        "type": "int4",
+        "length": 10,
+        "nullable": "√",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>見込みの根拠の実績番号</p>"
     }
 ];
                     var config = {

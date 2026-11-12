@@ -11425,6 +11425,41 @@
   
   
     <li class="md-nav__item">
+      <a href="../bolt_39g4c_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 39g4c 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../release_report-0_1/" class="md-nav__link">
         
   
@@ -19273,7 +19308,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">39g4c</td>
-<td style="text-align: left;">見込みの根拠の表示（Bolt 39g4b の開始準備で 39g4b から縦に分けた提案。Bolt 39g4b 計画の決定 (1)・(8)、【前の決定の変更】(22)。2026-11-12 に Bolt 39g4b の CP-1 として承認。human:kakimomokuri）: S-12 の定義リストの最新の到着見込みの次に「見込みの根拠」の 1 行（当初の到着予定・実績の遅れ・到着の実績・航海の到着予定のどれか。S-11・C-10 には出さない。【業務の判断】(aw)、台帳 D-139 の実装）。開始準備で決めること: 根拠の保存（根拠の種類と根拠の実績番号の列が第一候補。スキーマ）か読むたびに導くか、文の形、既存の行の扱い。S-12 の根拠の行で見える。39g4b の直後、39h の前に置く。約 2 時間（参考。開始準備で引き直す）。<a href="../bolt_39g4c_plan/">Bolt 39g4c 計画</a>（承認済み。2026-11-12 に開始準備し、確認ポイント CP-1〜CP-8 を推奨のとおり承認（human:kakimomokuri）。推奨: 約 3 時間 10 分（約 190 分）、本計画 CP-1〜CP-8。最初に Bolt 39g4b の議題 3 のテストを足し、<code>VoyageArrival.orderOf</code> の届かない 2 つの分岐をリファクタリングで消す（【前の決定の変更】(24)）。根拠は保存し、規則が見込みと根拠を 1 回の評価で <code>LatestEstimate</code> として返し、集約も 1 つの項目で持つ（<code>LatestEstimateBasis</code>: <code>ORIGINAL_ETA</code>・<code>MILESTONE</code>・<code>VOYAGE_ARRIVAL</code> と実績番号）。スキーマ: <code>tracking_record</code> に <code>latest_eta_basis</code>（<code>VARCHAR(30)</code>）・<code>latest_eta_basis_milestone_no</code>（<code>INTEGER</code>。どちらも NULL 可）と CHECK <code>ck_tracking_record_latest_eta_basis</code>、PostgreSQL だけに外部キー <code>fk_tracking_record_latest_eta_basis</code>（DEFERRABLE。マイグレーション <code>V20261115100000__add_tracking_record_latest_eta_basis.sql</code>・<code>V20261115100100__add_tracking_record_latest_eta_basis_fk.sql</code>（仮））。文の形は【業務の判断】(ax)、台帳 D-140（仮）。既存の行は補正せず「記録がありません」）</td>
+<td style="text-align: left;">見込みの根拠の表示（Bolt 39g4b の開始準備で 39g4b から縦に分けた提案。Bolt 39g4b 計画の決定 (1)・(8)、【前の決定の変更】(22)。2026-11-12 に Bolt 39g4b の CP-1 として承認。human:kakimomokuri）: S-12 の定義リストの最新の到着見込みの次に「見込みの根拠」の 1 行（当初の到着予定・実績の遅れ・到着の実績・航海の到着予定のどれか。S-11・C-10 には出さない。【業務の判断】(aw)、台帳 D-139 の実装）。開始準備で決めること: 根拠の保存（根拠の種類と根拠の実績番号の列が第一候補。スキーマ）か読むたびに導くか、文の形、既存の行の扱い。S-12 の根拠の行で見える。39g4b の直後、39h の前に置く。約 2 時間（参考。開始準備で引き直す）。<a href="../bolt_39g4c_plan/">Bolt 39g4c 計画</a>、<a href="../bolt_39g4c_report/">終了報告</a>（終了報告は承認済み。計画は承認済み。2026-11-12 に開始準備し、確認ポイント CP-1〜CP-8 を推奨のとおり承認（human:kakimomokuri）。約 3 時間 10 分（約 190 分）、本計画 CP-1〜CP-8。開始準備で決めたこと（2026-11-12。推奨のとおり。human:kakimomokuri）: 分けない（分けると根拠を保存するが画面に出ない Bolt ができる）。最初に Bolt 39g4b の議題 3 のテストを足し、<code>VoyageArrival.orderOf</code> の届かない 2 つの分岐（出典の参照が空・取得時刻が null。共有カーネルの <code>Source</code> が拒む）をリファクタリングで消す（Bolt 39g4b の終了報告の議題 3 の「本体は変えない」を変える【前の決定の変更】(24)）。根拠は保存し（読むたびに導くと保存した見込みと正が 2 つになる）、規則が見込みと根拠を 1 回の評価で <code>LatestEstimate</code> として返し（<code>estimateWithBasis</code>。<code>estimate</code> の 2 つの形は委ねて残す）、集約も 1 つの項目 <code>latestEstimate</code> で持つ（<code>LatestEstimateBasis</code>: <code>ORIGINAL_ETA</code>・<code>MILESTONE</code>・<code>VOYAGE_ARRIVAL</code> と実績番号。取り出し口は <code>latestEta()</code>・<code>latestEstimateBasis()</code>。見込みと根拠の一致を private のコンストラクターで確かめる）。スキーマ: <code>tracking_record</code> に <code>latest_eta_basis</code>（<code>VARCHAR(30)</code>）・<code>latest_eta_basis_milestone_no</code>（<code>INTEGER</code>。どちらも NULL 可）と CHECK <code>ck_tracking_record_latest_eta_basis</code>、PostgreSQL だけに外部キー <code>fk_tracking_record_latest_eta_basis</code>（DEFERRABLE INITIALLY DEFERRED。マイグレーション <code>V20261115100000__add_tracking_record_latest_eta_basis.sql</code>（common）・<code>V20261115100100__add_tracking_record_latest_eta_basis_fk.sql</code>（postgresql）。最後の版 <code>V20261114100000</code> より後であることを確かめた）。主要実績の UPDATE は根拠の実績番号の実績を先に確かめて、なければ競合にする（P-5 と同じ）。文の形は【業務の判断】(ax)、台帳 D-140（仮）。S-11 の列と C-10 には出さない（T-INV-09）。既存の行は補正せず「記録がありません」。<code>reconstitute</code> の形が 5 つになることは技術的負債として W7 の締めで諮る）</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: left;">アウトサイドイン（既存の追跡記録を広げる）</td>
 <td style="text-align: left;">計画と終了報告（スキーマ）</td>
@@ -20117,7 +20152,7 @@
 <td style="text-align: left;">T-INV-09・10、US-09、FRS-03、D-136、D-137</td>
 <td style="text-align: left;"><a href="../bolt_39g4b_plan/">Bolt 39g4b 計画</a> の【業務の判断】(aw)</td>
 <td style="text-align: left;">業務責任者と追跡責任者に確かめる（Release 1.0 のパイロットの前）</td>
-<td style="text-align: left;">仮（2026-11-12 の開始準備の推奨を承認。human:kakimomokuri。業務責任者・追跡責任者に確かめる）。Bolt 39g4c で作る。注（Bolt 39g4c の開始準備。承認待ち）: 文の形は D-140 で具体化する（示す場所と 4 つの種類は変えない）</td>
+<td style="text-align: left;">仮（2026-11-12 の開始準備の推奨を承認。human:kakimomokuri。業務責任者・追跡責任者に確かめる）。Bolt 39g4c で作る。注（Bolt 39g4c の開始準備。2026-11-12 承認）: 文の形は D-140 で具体化する（示す場所と 4 つの種類は変えない）</td>
 </tr>
 <tr>
 <td style="text-align: left;">D-140</td>
@@ -20407,7 +20442,7 @@
 <td style="text-align: right;">10</td>
 <td style="text-align: right;">-</td>
 <td style="text-align: right;">-</td>
-<td style="text-align: left;">計画済み（2026-11-02 に開始準備を承認した。Bolt 38h（W6 の返済）の後に Bolt 39〜39i）。2026-11-11 に Bolt 39gc の終了報告を作った（US-12 の 2 SP は終了報告の承認の後に数える）。2026-11-11 に Bolt 39g2 の終了報告を作った（SP 0。承認済み）。2026-11-12 に Bolt 39g3 の終了報告を作った（SP 0。承認済み）。2026-11-12 に Bolt 39g4 の終了報告を作った（SP 0。承認済み）。2026-11-12 に Bolt 39g4b の終了報告を作った（SP 0。承認待ち）</td>
+<td style="text-align: left;">計画済み（2026-11-02 に開始準備を承認した。Bolt 38h（W6 の返済）の後に Bolt 39〜39i）。2026-11-11 に Bolt 39gc の終了報告を作った（US-12 の 2 SP は終了報告の承認の後に数える）。2026-11-11 に Bolt 39g2 の終了報告を作った（SP 0。承認済み）。2026-11-12 に Bolt 39g3 の終了報告を作った（SP 0。承認済み）。2026-11-12 に Bolt 39g4 の終了報告を作った（SP 0。承認済み）。2026-11-12 に Bolt 39g4b の終了報告を作った（SP 0。承認済み）。2026-11-12 に Bolt 39g4c の終了報告を作った（SP 0。承認待ち）</td>
 </tr>
 <tr>
 <td style="text-align: left;">W8</td>
@@ -22707,6 +22742,16 @@
 <tr>
 <td style="text-align: left;">2026-11-12</td>
 <td style="text-align: left;">Bolt 39g4c の開始準備: 39g4c の行に<a href="../bolt_39g4c_plan/">計画</a>へのリンクと推奨（約 190 分、本計画 CP-1〜CP-8。根拠の保存とスキーマ、【前の決定の変更】(24)）、台帳 D-140（仮。承認待ち）、D-139 の注、デモ項目の動画の Bolt に 39g3〜39g4c を足した</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-11-12</td>
+<td style="text-align: left;">Bolt 39g4c のステップ 1（設計の文書）: 39g4c の行に開始準備で決めたこと（分けない、議題 3 の返済の形と【前の決定の変更】(24) の中身、根拠の保存、規則と集約の形、マイグレーションの版の確かめ、根拠の実績番号の先の確かめ、開示）を足し、D-139 の注の「承認待ち」を承認に直した（2026-11-12、Bolt 39g4c の CP-1〜CP-8）</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-11-12</td>
+<td style="text-align: left;">Bolt 39g4c のステップ 2〜10 を実施し、<a href="../bolt_39g4c_report/">終了報告</a>を作った（承認待ち。CI は push していないので未実行）。W7 の週の表の Bolt 39g4b の終了報告を承認済みに直した</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5</td>
 </tr>
 <tr>

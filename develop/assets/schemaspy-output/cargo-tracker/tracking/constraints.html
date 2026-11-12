@@ -80,7 +80,7 @@
                     <div class="box box-primary">
                         <div class="box-header with-border">
                             <i class="ion ion-key"></i>
-                            <h3 class="box-title">3 Foreign Key Constraints</h3>
+                            <h3 class="box-title">4 Foreign Key Constraints</h3>
                             <div class="box-tools pull-right">
                                 <button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i></button>
                                 <button type="button" class="btn btn-box-tool" data-widget="remove"><i class="fa fa-times"></i></button>
@@ -134,6 +134,30 @@
                                             <table border='0' cellspacing='0' cellpadding='0'>
                                                 <tr>
                                                     <td><a href='tables/tracking_record.html'>tracking_record</a><span>.tracking_number</span></td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                        <td><span title='Restrict delete:&#10;Parent cannot be deleted if children exist'>Restrict delete</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>fk_tracking_record_latest_eta_basis</td>
+                                        <td>
+                                            <table border='0' cellspacing='0' cellpadding='0'>
+                                                <tr>
+                                                    <td><a href='tables/tracking_record.html'>tracking_record</a><span>.tracking_number</span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><a href='tables/tracking_record.html'>tracking_record</a><span>.latest_eta_basis_milestone_no</span></td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                        <td>
+                                            <table border='0' cellspacing='0' cellpadding='0'>
+                                                <tr>
+                                                    <td><a href='tables/milestone.html'>milestone</a><span>.tracking_number</span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><a href='tables/milestone.html'>milestone</a><span>.milestone_no</span></td>
                                                 </tr>
                                             </table>
                                         </td>
@@ -256,6 +280,11 @@
                                         <td><a href='tables/tracking_record.html'>tracking_record</a></td>
                                         <td>ck_tracking_record_current_status</td>
                                         <td>((current_status)::text &#61; ANY ((ARRAY[&#39;BOOKED&#39;::character varying, &#39;PICKUP_SCHEDULED&#39;::character varying, &#39;PICKED_UP&#39;::character varying, &#39;RECEIVED_AT_ORIGIN&#39;::character varying, &#39;IN_TRANSIT&#39;::character varying, &#39;TRANSSHIPPING&#39;::character varying, &#39;ARRIVED_AT_DESTINATION&#39;::character varying, &#39;READY_FOR_DELIVERY&#39;::character varying, &#39;DELIVERED&#39;::character varying, &#39;UNDER_REVIEW&#39;::character varying])::text[]))</td>
+                                    </tr>
+                                    <tr>
+                                        <td><a href='tables/tracking_record.html'>tracking_record</a></td>
+                                        <td>ck_tracking_record_latest_eta_basis</td>
+                                        <td>(((latest_eta_basis IS NULL) AND (latest_eta_basis_milestone_no IS NULL)) OR ((latest_eta_basis IS NOT NULL) AND ((((latest_eta_basis)::text &#61; &#39;ORIGINAL_ETA&#39;::text) AND (latest_eta_basis_milestone_no IS NULL) AND (latest_eta &#61; original_eta)) OR (((latest_eta_basis)::text &#61; &#39;MILESTONE&#39;::text) AND (latest_eta_basis_milestone_no IS NOT NULL)) OR (((latest_eta_basis)::text &#61; &#39;VOYAGE_ARRIVAL&#39;::text) AND (latest_eta_basis_milestone_no IS NULL) AND (voyage_arrival_at IS NOT NULL) AND (voyage_arrival_at &#61; latest_eta)))))</td>
                                     </tr>
                                     <tr>
                                         <td><a href='tables/tracking_record.html'>tracking_record</a></td>
