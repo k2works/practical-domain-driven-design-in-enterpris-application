@@ -116,6 +116,55 @@ public class TrackingUiSteps {
         browser.checkAccessibility();
     }
 
+    /**
+     * Bolt 39g4 の行 21。画面の層の航海は 2099 年に出発するので、追跡の予定の最初の区間の出発予定と、保存した次の予定の実績の予定時刻（追跡の開始で
+     * 最初の区間の出発予定が入っている）を今の n 時間前（分の単位）にずらす（テストの準備だけ。予定だけずらすと判定が動かない）。
+     */
+    @前提("追跡の予定の最初の区間の出発予定と次の予定の実績の予定時刻が今の {int} 時間前になっている")
+    public void 出発予定と次の予定の実績の予定時刻をずらす(int hoursAgo) {
+        最初の区間の出発予定をずらす(hoursAgo);
+        int updated = jdbc.update(
+                "UPDATE tracking.tracking_record SET next_expected_at = ? WHERE tracking_number = ?",
+                firstDeparture.toOffsetDateTime(),
+                state.trackingNumber());
+        org.assertj.core.api.Assertions.assertThat(updated).isEqualTo(1);
+    }
+
+    /** Bolt 39g4 の行 21。現在状態のセルに鮮度超過の印（文字とアイコン。色だけで示さない）。行は追跡番号で引く。 */
+    @ならば("追跡一覧の確定した予約の行の現在状態に鮮度超過の印が示される")
+    public void 追跡一覧の行に鮮度超過の印が示される() {
+        assertThat(confirmedRow().locator("td").nth(1).locator(".badge")).hasText("⚠ 鮮度超過");
+        browser.checkAccessibility();
+    }
+
+    @ならば("追跡一覧の確定した予約の行の現在状態に鮮度超過の印が示されない")
+    public void 追跡一覧の行に鮮度超過の印が示されない() {
+        assertThat(confirmedRow().locator("td").nth(1)).not().containsText("鮮度超過");
+        browser.checkAccessibility();
+    }
+
+    /** Bolt 39g4 の行 21。警告の文は定義リストの上、次の予定の実績の予定時刻は最終取得時刻の次（日時は社内の表記）。 */
+    @ならば("追跡の詳細に警告 {string} と次の予定の実績の予定時刻が示される")
+    public void 追跡の詳細に鮮度超過の警告が示される(String warning) {
+        assertThat(page().getByRole(AriaRole.ALERT)).hasText(warning);
+        assertThat(definition("次の予定の実績の予定時刻")).hasText(STAFF_DATE_TIME);
+        browser.checkAccessibility();
+    }
+
+    @ならば("追跡の詳細に鮮度超過の警告が示されない")
+    public void 追跡の詳細に鮮度超過の警告が示されない() {
+        assertThat(page().getByRole(AriaRole.ALERT)).hasCount(0);
+        assertThat(page().locator("main")).not().containsText("届いていません");
+    }
+
+    private Locator confirmedRow() {
+        return trackingList()
+                .locator("tbody tr")
+                .filter(new Locator.FilterOptions()
+                        .setHas(page().getByRole(
+                                        AriaRole.LINK, new Page.GetByRoleOptions().setName(state.trackingNumber()))));
+    }
+
     private Page page() {
         return browser.page();
     }
