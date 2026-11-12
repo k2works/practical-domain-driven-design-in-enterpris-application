@@ -11172,6 +11172,41 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_39h_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 39h 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../development/cargo-tracker/release_report-0_1/" class="md-nav__link">
         
   
@@ -16733,7 +16768,7 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 </tr>
 <tr>
 <td style="text-align: left;">G-06 外部データの欠落・古さ・矛盾</td>
-<td style="text-align: left;">古さだけ。取得からちょうど許容時間（24 時間）の航海は足り、24 時間 1 分の航海を使う候補だけが情報不足。欠落・矛盾は W7（US-14）</td>
+<td style="text-align: left;">古さだけ。取得からちょうど許容時間（24 時間）の航海は足り、24 時間 1 分の航海を使う候補だけが情報不足。欠落・矛盾は W7（US-14。Bolt 39h の開始準備で 39h4 に分けた）</td>
 </tr>
 </tbody>
 </table>
@@ -17202,7 +17237,7 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 </tr>
 <tr>
 <td style="text-align: left;">外部原本の差異</td>
-<td style="text-align: left;">順序逆転・既存値との矛盾は自動で上書きされず差異になる（US-14 の 5 件目、ED-INV-03）</td>
+<td style="text-align: left;">順序逆転・既存値との矛盾は自動で上書きされず差異になる（US-14 の 5 件目、ED-INV-03）。Bolt 39h で、この外部 ID の採用値の一覧の照会を契約のテストでメモリ・H2・PostgreSQL に流し、差異の取込が DE-31 の監査を配信まで残すことを統合テストで確かめる</td>
 </tr>
 <tr>
 <td style="text-align: left;">権限のコールバック</td>
@@ -18151,6 +18186,12 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 <td style="text-align: left;">AC5 の手入力の分（完了した追跡への手入力は保持のみで、現在状態を変えない。完了後は予約状態が完了か、採用済みの実績から導いた状態が引渡し済み。【業務の判断】(ak)、【前の決定の変更】(14)）</td>
 <td style="text-align: left;">39gc</td>
 <td style="text-align: left;"><code>@US-12-AC5</code>（<code>register_milestone.feature</code>）、<code>TrackingRecordMilestoneTest</code>・<code>TrackingRecordCandidateAdoptionTest</code>（<code>Bolt39gc_…</code>）、<code>MilestoneRegistrationControllerTest</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">US-14</td>
+<td style="text-align: left;">AC5 の取込の分（同じ外部 ID で後に取得した外部版を採用しているのに前に取得した外部版が届いたとき（版の逆転）と、主要実績の追跡番号が同じ外部 ID の採用中の値と違うとき（既存の採用値との矛盾）、自動で採用せず差異にし、S-16 に件数と理由を示す。差異は採用値も DE-12・DE-13・DE-14 も作らず DE-31 と監査を残す。【業務の判断】(ay)〜(bd)。S-17 で差異を却下するのは 39h2、G-06 の欠落・矛盾と照合の表は 39h4）</td>
+<td style="text-align: left;">39h</td>
+<td style="text-align: left;"><code>@US-14</code>（<code>features/external_data/classify_discrepancies.feature</code>）、規則 <code>DiscrepancyRuleTest</code>（パラメーター。比べる相手 2 つ、同じ取得時刻、外部版の文字列の順と取得時刻の順の逆、両方の理由）、分類 <code>ClassificationTest</code>（<code>Bolt39h_…</code>。3 つの入力の組）、照会の契約 <code>AdoptedValueRepositoryContract</code>（<code>findByExternalId</code>。メモリ・H2・PostgreSQL）、取込 <code>IngestionServiceTest</code>（<code>Bolt39h_…</code>。注記・DE-31・DE-12〜DE-14 を出さない）、監査 <code>ExternalRecordAuditEventHandlerTest</code>・<code>AuditRecordTest</code>・<code>ExternalRecordAuditDeliveryIntegrationTest</code>（配信まで。T-184）・<code>DomainEventSerializationContractTest</code>（DE-31）、画面 <code>ExternalDataIngestionControllerTest</code>・<code>IngestionSummaryQueryServiceTest</code> と <code>features/ui/discrepancy_ui.feature</code>（<code>@demo-bolt-39h/discrepancy</code>）、PERF-06 は <code>ExternalDataIngestionPerformanceTest</code>（Linux の CI の <code>performanceTest</code>）</td>
 </tr>
 </tbody>
 </table>
