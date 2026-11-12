@@ -13,10 +13,17 @@ import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseNum
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.UtcInstant;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
@@ -26,6 +33,11 @@ import org.junit.jupiter.params.provider.MethodSource;
  * 期待結果と比べる。受入シナリオ（route_candidates_golden_v0.feature）は区分ごとの要約を確かめる。値は仮の値（業務責任者の承認待ち）。
  */
 class RoutingCaseGoldenDatasetTest {
+
+    private static final Path GOLDEN_DIR = Path.of("src/test/resources/golden/v0");
+    private static final Path EXAMPLES_FEATURE =
+            Path.of("src/test/resources/features/routing/golden/route_candidates_golden_v0.feature");
+    private static final Pattern EXAMPLE_ROW = Pattern.compile("^\\s*\\|\\s*(G-\\d+[a-z]?)\\s*\\|");
 
     private final RouteCandidateFinder finder = new RouteCandidateFinder();
     private final ConstraintEvaluator evaluator = new ConstraintEvaluator();
@@ -58,6 +70,33 @@ class RoutingCaseGoldenDatasetTest {
         assertThat(candidates)
                 .extracting(RouteCandidate::candidateNo)
                 .containsExactlyElementsOf(numbers(candidates.size()));
+    }
+
+    /**
+     * 案件の一覧・ファイル・例の表の案件を一致させる（Bolt 39h4。受入シナリオは {@code load(id)} で JSON を直接読み、{@code V0_CASES} を使うのは
+     * このクラスの集約のテストだけなので、足し忘れた案件は黙って抜ける）。
+     */
+    @Test
+    void 案件の一覧とgoldenのファイルと例の表の案件が一致する() throws IOException {
+        List<String> inFiles;
+        try (Stream<Path> files = Files.list(GOLDEN_DIR)) {
+            inFiles = files.map(path -> path.getFileName().toString())
+                    .filter(name -> name.endsWith(".json"))
+                    .map(name -> name.substring(0, name.length() - ".json".length()))
+                    .toList();
+        }
+        List<String> inExamples = exampleCases(Files.readAllLines(EXAMPLES_FEATURE));
+
+        assertThat(inFiles).as("golden/v0 のファイル").containsExactlyInAnyOrderElementsOf(GoldenDatasetCase.V0_CASES);
+        assertThat(inExamples).as("例の表の案件").containsExactlyInAnyOrderElementsOf(GoldenDatasetCase.V0_CASES);
+    }
+
+    private static List<String> exampleCases(List<String> featureLines) {
+        return featureLines.stream()
+                .map(EXAMPLE_ROW::matcher)
+                .filter(Matcher::find)
+                .map(row -> row.group(1))
+                .toList();
     }
 
     private static GoldenDatasetCase.ExpectedCandidate actualOf(RouteCandidate candidate) {

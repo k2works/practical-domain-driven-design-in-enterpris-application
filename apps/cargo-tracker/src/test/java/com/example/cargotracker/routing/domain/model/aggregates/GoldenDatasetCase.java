@@ -50,8 +50,11 @@ public record GoldenDatasetCase(
         List<Voyage> voyages,
         List<ExpectedCandidate> expected) {
 
-    /** v0 の区分（G-04 は提出の拒否の別の feature、G-05 は v0 に入れない）。 */
-    public static final List<String> V0_CASES = List.of("G-01", "G-02", "G-03", "G-06");
+    /**
+     * v0 の案件（G-04 は提出の拒否の別の feature、G-05 は v0 に入れない）。G-06 は外部データの古さ、G-06b は欠落（候補 0 件）、G-06c は差異
+     * （版の逆転の見張り）。1 つの区分が複数の形を持つので {@code G-nn[a-z]} とする（Bolt 39h4。【前の決定の変更】(31)）。
+     */
+    public static final List<String> V0_CASES = List.of("G-01", "G-02", "G-03", "G-06", "G-06b", "G-06c");
 
     private static final ObjectMapper JSON = new ObjectMapper();
 

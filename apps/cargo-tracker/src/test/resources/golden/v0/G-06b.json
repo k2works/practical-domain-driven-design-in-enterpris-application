@@ -1,0 +1,45 @@
+{
+  "id": "G-06b",
+  "title": "外部データの欠落（積替えの 2 本目の航海の外部 ID に採用値がなく、経路に使える航海がそろわない。候補は 0 件で、情報不足にはしない）",
+  "version": "v0",
+  "status": "仮の値。業務責任者の承認待ち（TST-02）",
+  "rationale": [
+    "【業務の判断】(bk)、台帳 D-153（欠落は採用値がない外部 ID。経路設計に航海がないので候補は作られず、除外理由の「情報不足」にしない）",
+    "D-89・R-INV-09・US-06 AC4（情報不足は採用値があり取得から許容時間を過ぎた航海を使う候補。値がないこととは別）",
+    "D-141・D-144（差異は比べる相手の採用値があるときにだけできる。欠落には入らない）",
+    "UC-06 3a・US-20（候補なしの理由の表示と有人例外案件への引き継ぎは未実装。この案件は候補 0 件までを縛る。W8）",
+    "SGSIN から NLRTM への航海 V-301 の外部 ID にはまだ採用値がない（取り込まれていない、または形式の誤りで隔離のまま）ので、入力の航海は V-401（JPTYO から SGSIN）だけ。取得は判定時刻の 2 時間前で、許容時間の内側に余裕がある"
+  ],
+  "regulatoryReferences": [],
+  "approvers": [],
+  "validity": {
+    "from": null,
+    "to": null
+  },
+  "routeSpecification": {
+    "origin": "JPTYO",
+    "destination": "NLRTM",
+    "arrivalDeadline": "2026-11-02T00:00:00Z",
+    "cargoCategory": "GENERAL"
+  },
+  "judgedAt": "2026-10-07T03:00:00Z",
+  "freshnessTolerance": "PT24H",
+  "connectionRules": [
+    {
+      "port": "SGSIN",
+      "minimumConnection": "PT8H",
+      "validFrom": "2026-01-01T00:00:00Z"
+    }
+  ],
+  "voyages": [
+    {
+      "number": "V-401",
+      "load": "JPTYO",
+      "departureAt": "2026-10-10T00:00:00Z",
+      "discharge": "SGSIN",
+      "arrivalAt": "2026-10-20T00:00:00Z",
+      "acquiredAt": "2026-10-07T01:00:00Z"
+    }
+  ],
+  "expected": []
+}

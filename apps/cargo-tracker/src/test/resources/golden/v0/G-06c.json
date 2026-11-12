@@ -1,0 +1,53 @@
+{
+  "id": "G-06c",
+  "title": "外部データの差異（版の逆転。見張り。後に取得した外部版を採用した後に前に取得した外部版が届いて差異になっても、候補は採用中の外部版の予定で算出される）",
+  "version": "v0",
+  "status": "仮の値。業務責任者の承認待ち（TST-02）",
+  "rationale": [
+    "ED-INV-03・US-14 AC5・D-142（差異は採用値を作らない。経路設計から見える航海は採用中の外部版のまま）",
+    "D-143（航海の差異は版の逆転だけ。航海に既存の採用値との矛盾は起きない。矛盾は主要実績の追跡番号の違いだけ）",
+    "【業務の判断】(bk)、台帳 D-153（差異にした外部版は経路設計に効かない）",
+    "見張り（T-83）: 経路設計の集約から見た入力は採用中の航海だけなので、この案件は最初から通り、規則の回帰は縛らない。取込側の規則（差異は採用値も DE-12 も作らず DE-31 を 1 つ出す）は IngestionServiceTest の「行5_a_版の逆転の差異は採用値もDE12からDE14も作らずDE31を1つ出す」が、外部データから経路設計の航海が変わらないことは features/ui/discrepancy_ui.feature が縛る",
+    "入力の航海 V-101 は採用中の外部版「2」の予定（取得は判定時刻の 2 時間前）。後から届いた前の取得の外部版「1」は差異で、入力にない。経路設計の採用情報版は「V-101@1」の既存の規則による（外部版の文字列は入らない）"
+  ],
+  "regulatoryReferences": [],
+  "approvers": [],
+  "validity": {
+    "from": null,
+    "to": null
+  },
+  "routeSpecification": {
+    "origin": "JPTYO",
+    "destination": "NLRTM",
+    "arrivalDeadline": "2026-11-02T00:00:00Z",
+    "cargoCategory": "GENERAL"
+  },
+  "judgedAt": "2026-10-07T03:00:00Z",
+  "freshnessTolerance": "PT24H",
+  "connectionRules": [
+    {
+      "port": "SGSIN",
+      "minimumConnection": "PT8H",
+      "validFrom": "2026-01-01T00:00:00Z"
+    }
+  ],
+  "voyages": [
+    {
+      "number": "V-101",
+      "load": "JPTYO",
+      "departureAt": "2026-10-12T00:00:00Z",
+      "discharge": "NLRTM",
+      "arrivalAt": "2026-10-30T09:00:00Z",
+      "acquiredAt": "2026-10-07T01:00:00Z"
+    }
+  ],
+  "expected": [
+    {
+      "voyages": "V-101",
+      "conforming": true,
+      "estimatedArrivalAt": "2026-10-30T09:00:00Z",
+      "connectionSlack": null,
+      "reasons": []
+    }
+  ]
+}
