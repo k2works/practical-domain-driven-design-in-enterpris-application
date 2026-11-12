@@ -7,7 +7,7 @@ import com.example.cargotracker.externaldata.domain.model.valueobjects.PayloadHa
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PayloadObjectKey;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PhysicalLineRange;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.ReceivedValue;
-import com.example.cargotracker.externaldata.domain.model.valueobjects.UndecidedQuarantine;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.UndecidedRecord;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -59,22 +59,22 @@ public class MyBatisReceivedRecordRepository implements ReceivedRecordRepository
     }
 
     @Override
-    public List<ReceivedRecord> quarantinedOf(UUID ingestionId, int limit) {
-        return mapper.quarantinedOf(ingestionId, limit).stream()
+    public List<ReceivedRecord> quarantinesAndDiscrepanciesOf(UUID ingestionId, int limit) {
+        return mapper.quarantinesAndDiscrepanciesOf(ingestionId, limit).stream()
                 .map(MyBatisReceivedRecordRepository::toDomain)
                 .toList();
     }
 
     @Override
-    public List<UndecidedQuarantine> undecidedQuarantines(UUID ingestionIdOrNull, int offset, int limit) {
-        return mapper.undecidedQuarantines(ingestionIdOrNull, offset, limit).stream()
+    public List<UndecidedRecord> undecidedRecords(UUID ingestionIdOrNull, int offset, int limit) {
+        return mapper.undecidedRecords(ingestionIdOrNull, offset, limit).stream()
                 .map(MyBatisReceivedRecordRepository::toDomain)
                 .toList();
     }
 
     @Override
-    public int countUndecidedQuarantines(UUID ingestionIdOrNull) {
-        return mapper.countUndecidedQuarantines(ingestionIdOrNull);
+    public int countUndecidedRecords(UUID ingestionIdOrNull) {
+        return mapper.countUndecidedRecords(ingestionIdOrNull);
     }
 
     @Override
@@ -83,8 +83,8 @@ public class MyBatisReceivedRecordRepository implements ReceivedRecordRepository
     }
 
     @Override
-    public Optional<UndecidedQuarantine> undecidedQuarantine(UUID receivedRecordId) {
-        return mapper.undecidedQuarantine(receivedRecordId, null).map(MyBatisReceivedRecordRepository::toDomain);
+    public Optional<UndecidedRecord> undecidedRecord(UUID receivedRecordId) {
+        return mapper.undecidedRecord(receivedRecordId, null).map(MyBatisReceivedRecordRepository::toDomain);
     }
 
     /** 取込 ID は必須（SQL の断片は取込 ID が NULL なら絞らないので、ここで拒む）。 */
@@ -100,8 +100,8 @@ public class MyBatisReceivedRecordRepository implements ReceivedRecordRepository
         return mapper.countUndecidedKeylessQuarantines(Objects.requireNonNull(ingestionId, "ingestionId"));
     }
 
-    private static UndecidedQuarantine toDomain(ReceivedRecordMapper.UndecidedQuarantineRow row) {
-        return new UndecidedQuarantine(
+    private static UndecidedRecord toDomain(ReceivedRecordMapper.UndecidedRecordRow row) {
+        return new UndecidedRecord(
                 row.id(),
                 row.ingestionId(),
                 row.ingestedAt().toInstant(),

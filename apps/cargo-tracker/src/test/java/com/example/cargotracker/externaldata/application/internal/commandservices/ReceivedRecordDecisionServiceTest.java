@@ -263,7 +263,7 @@ class ReceivedRecordDecisionServiceTest {
             assertThat(decision.decidedBy()).isEqualTo(steward.userId());
             assertThat(decision.reason()).isEqualTo("提供元に確かめ、誤って送った原本と分かった。");
         });
-        assertThat(receivedRecords.undecidedQuarantine(mismatch.id())).isEmpty();
+        assertThat(receivedRecords.undecidedRecord(mismatch.id())).isEmpty();
         assertThat(service.refusalOf(mismatch.id())).contains(new DecisionOutcome.AlreadyDecided());
     }
 
@@ -357,7 +357,7 @@ class ReceivedRecordDecisionServiceTest {
         assertThat(reject(actor(role), quarantined.id(), "理由")).isEqualTo(new DecisionOutcome.NotPermitted());
         assertThat(addCalls).isEmpty();
         assertThat(published).isEmpty();
-        assertThat(receivedRecords.undecidedQuarantine(quarantined.id())).isPresent();
+        assertThat(receivedRecords.undecidedRecord(quarantined.id())).isPresent();
     }
 
     @Test
@@ -388,7 +388,7 @@ class ReceivedRecordDecisionServiceTest {
                 .isInstanceOf(IllegalArgumentException.class);
         assertThat(addCalls).isEmpty();
         assertThat(published).isEmpty();
-        assertThat(receivedRecords.undecidedQuarantine(quarantined.id())).isPresent();
+        assertThat(receivedRecords.undecidedRecord(quarantined.id())).isPresent();
     }
 
     /**
@@ -503,9 +503,8 @@ class ReceivedRecordDecisionServiceTest {
                 assertThat(decision.decidedAt()).isEqualTo(Instant.parse("2026-11-16T01:05:00.123456Z"));
                 assertThat(decision.reason()).isEqualTo(REASON);
             });
-            assertThat(receivedRecords.undecidedQuarantine(contentMismatch.id()))
-                    .isPresent();
-            assertThat(receivedRecords.undecidedQuarantine(ofOther.id())).isPresent();
+            assertThat(receivedRecords.undecidedRecord(contentMismatch.id())).isPresent();
+            assertThat(receivedRecords.undecidedRecord(ofOther.id())).isPresent();
         }
 
         @Test
@@ -592,7 +591,7 @@ class ReceivedRecordDecisionServiceTest {
                     .isEqualTo(new KeylessRejectionOutcome.NotPermitted());
             assertThat(addCalls).isEmpty();
             assertThat(published).isEmpty();
-            assertThat(receivedRecords.undecidedQuarantine(rowError.id())).isPresent();
+            assertThat(receivedRecords.undecidedRecord(rowError.id())).isPresent();
         }
 
         @Test
@@ -811,7 +810,7 @@ class ReceivedRecordDecisionServiceTest {
                                     steward.userId(),
                                     steward.companyId(),
                                     new UtcInstant(DECIDED_AT)));
-            assertThat(receivedRecords.undecidedQuarantine(received.id())).isEmpty();
+            assertThat(receivedRecords.undecidedRecord(received.id())).isEmpty();
         }
 
         // --- 行 4: 採用を出さない隔離（GET と POST で 1 つの定め） ---
@@ -922,7 +921,7 @@ class ReceivedRecordDecisionServiceTest {
             assertThat(callsOf(DATA_SOURCE_FIND)).isEqualTo(notAdoptableCase.dataSourceFinds());
             assertThat(callsOf(EXTERNAL_RECORD_FIND)).isEqualTo(notAdoptableCase.externalRecordFinds());
             assertThat(service.adoptionRefusalOf(received.id())).contains(outcome);
-            assertThat(receivedRecords.undecidedQuarantine(received.id())).isPresent();
+            assertThat(receivedRecords.undecidedRecord(received.id())).isPresent();
         }
 
         @Test
@@ -1293,7 +1292,7 @@ class ReceivedRecordDecisionServiceTest {
                                     steward.userId(),
                                     steward.companyId(),
                                     new UtcInstant(DECIDED_AT)));
-            assertThat(receivedRecords.undecidedQuarantine(received.id())).isEmpty();
+            assertThat(receivedRecords.undecidedRecord(received.id())).isEmpty();
         }
 
         // --- 行 3: 採用値の側だけ読めない主要実績の隔離 ---
@@ -1337,7 +1336,7 @@ class ReceivedRecordDecisionServiceTest {
             assertThat(service.adoptionRefusalOf(received.id())).contains(expected);
 
             assertNothingWritten();
-            assertThat(receivedRecords.undecidedQuarantine(received.id())).isPresent();
+            assertThat(receivedRecords.undecidedRecord(received.id())).isPresent();
             // Bolt 39g の行 14（【業務の判断】(m)）。DE-13 がないので追跡の実績は増えない
             assertThat(published).noneMatch(MilestoneAdoptedValueAccepted.class::isInstance);
         }

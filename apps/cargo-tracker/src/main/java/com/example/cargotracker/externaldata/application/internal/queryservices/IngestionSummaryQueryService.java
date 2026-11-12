@@ -52,8 +52,9 @@ public class IngestionSummaryQueryService {
         int quarantinedCount = countOf(ingestion, Classification.QUARANTINED);
         int discrepancyCount = countOf(ingestion, Classification.DISCREPANCY);
         int reasonedCount = quarantinedCount + discrepancyCount;
-        List<ReceivedRecord> quarantined =
-                reasonedCount == 0 ? List.of() : receivedRecords.quarantinedOf(ingestion.id(), SHOWN_QUARANTINE_LIMIT);
+        List<ReceivedRecord> quarantined = reasonedCount == 0
+                ? List.of()
+                : receivedRecords.quarantinesAndDiscrepanciesOf(ingestion.id(), SHOWN_QUARANTINE_LIMIT);
         List<String> notes =
                 quarantined.stream().map(ReceivedRecord::classificationNote).toList();
         return new IngestionSummaryView(

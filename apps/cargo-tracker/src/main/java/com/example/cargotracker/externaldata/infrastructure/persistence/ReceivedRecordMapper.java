@@ -20,13 +20,14 @@ public interface ReceivedRecordMapper {
     int countByIngestionAndClassification(
             @Param("ingestionId") UUID ingestionId, @Param("classification") String classification);
 
-    List<ReceivedRecordRow> quarantinedOf(@Param("ingestionId") UUID ingestionId, @Param("limit") int limit);
+    List<ReceivedRecordRow> quarantinesAndDiscrepanciesOf(
+            @Param("ingestionId") UUID ingestionId, @Param("limit") int limit);
 
     /** 判断を待つ隔離（Bolt 39d）。{@code ingestionId} が {@code null} なら絞らない。 */
-    List<UndecidedQuarantineRow> undecidedQuarantines(
+    List<UndecidedRecordRow> undecidedRecords(
             @Param("ingestionId") UUID ingestionId, @Param("offset") int offset, @Param("limit") int limit);
 
-    int countUndecidedQuarantines(@Param("ingestionId") UUID ingestionId);
+    int countUndecidedRecords(@Param("ingestionId") UUID ingestionId);
 
     /** 取込で書いた受信記録を ID で引く（Bolt 39d2）。取込のない受信記録は返さない。 */
     Optional<ReceivedRecordRow> selectById(@Param("id") UUID id);
@@ -35,7 +36,7 @@ public interface ReceivedRecordMapper {
      * ID で絞った判断を待つ隔離（Bolt 39d2）。一覧と同じ SQL の断片を使うので、断片の取込の絞り込みの引数 {@code ingestionId} も受ける
      * （リポジトリは {@code null} を渡す）。
      */
-    Optional<UndecidedQuarantineRow> undecidedQuarantine(
+    Optional<UndecidedRecordRow> undecidedRecord(
             @Param("receivedRecordId") UUID receivedRecordId, @Param("ingestionId") UUID ingestionId);
 
     /** その取込の判断を待つキーのない隔離（Bolt 39d2b。まとめての却下の対象）。{@code ingestionId} は必須。 */
@@ -47,7 +48,7 @@ public interface ReceivedRecordMapper {
      * 判断を待つ隔離の照会の 1 行（受信記録に取込と外部原本を結んだ行。Bolt 39d）。外部原本のないキーのない隔離は外部 ID・外部版が
      * {@code null}、ファイルの誤りは行の範囲の 2 列が {@code null}。
      */
-    record UndecidedQuarantineRow(
+    record UndecidedRecordRow(
             UUID id,
             UUID ingestionId,
             OffsetDateTime ingestedAt,

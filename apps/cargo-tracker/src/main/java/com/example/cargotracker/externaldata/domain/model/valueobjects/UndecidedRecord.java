@@ -6,7 +6,7 @@ import java.util.Objects;
 import java.util.UUID;
 
 /**
- * 判断を待つ隔離。分類が隔離で、受信記録の判断の行がない受信記録を、S-17 の一覧（Bolt 39d）に示すために取込と外部原本を結んで読む照会専用の
+ * 判断を待つ隔離・差異。分類が隔離で、受信記録の判断の行がない受信記録を、S-17 の一覧（Bolt 39d）に示すために取込と外部原本を結んで読む照会専用の
  * record（前例 {@code RoutingCaseSummary}）。受信記録の record（{@code ReceivedRecord}）には外部 ID・外部版を足さない（Bolt 39d 計画の
  * 開始準備の決定 (4)）。外部原本を持たないキーのない隔離（形式の誤り・ファイルの誤り・取り込めなかった部分）は外部 ID・外部版を持たない。
  *
@@ -20,7 +20,7 @@ import java.util.UUID;
  * @param note 分類の注記（隔離の理由）
  */
 @ValueObject
-public record UndecidedQuarantine(
+public record UndecidedRecord(
         UUID receivedRecordId,
         UUID ingestionId,
         Instant ingestedAt,
@@ -30,7 +30,7 @@ public record UndecidedQuarantine(
         String externalVersion,
         String note) {
 
-    public UndecidedQuarantine {
+    public UndecidedRecord {
         Objects.requireNonNull(receivedRecordId, "receivedRecordId");
         Objects.requireNonNull(ingestionId, "ingestionId");
         Objects.requireNonNull(ingestedAt, "ingestedAt");

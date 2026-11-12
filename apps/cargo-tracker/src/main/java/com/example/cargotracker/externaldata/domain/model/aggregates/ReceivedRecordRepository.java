@@ -1,7 +1,7 @@
 package com.example.cargotracker.externaldata.domain.model.aggregates;
 
 import com.example.cargotracker.externaldata.domain.model.valueobjects.Classification;
-import com.example.cargotracker.externaldata.domain.model.valueobjects.UndecidedQuarantine;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.UndecidedRecord;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -21,9 +21,9 @@ public interface ReceivedRecordRepository {
 
     /**
      * その取込の隔離と差異の受信記録を、行の範囲の始まりの順（範囲のないファイルの誤りを先、同じなら受信記録 ID の順）に最大 {@code limit} 件
-     * （S-16 の結果の画面の隔離・差異の理由。Bolt 39c3。差異は Bolt 39h。名前の見直しは 39h2 の {@code UndecidedQuarantine} と一緒に決める）。
+     * （S-16 の結果の画面の隔離・差異の理由。Bolt 39c3。差異は Bolt 39h。名前は Bolt 39h2 で隔離だけでなく差異も返すことに合わせた）。
      */
-    List<ReceivedRecord> quarantinedOf(UUID ingestionId, int limit);
+    List<ReceivedRecord> quarantinesAndDiscrepanciesOf(UUID ingestionId, int limit);
 
     /**
      * 判断を待つ隔離（分類が隔離で、受信記録の判断の行がない、取込で書いた受信記録）を、取込の新しい順、同じ時刻の取込は取込 ID の順、同じ取込の
@@ -32,10 +32,10 @@ public interface ReceivedRecordRepository {
      *
      * @param ingestionIdOrNull 絞る取込 ID（{@code null} なら絞らない）
      */
-    List<UndecidedQuarantine> undecidedQuarantines(UUID ingestionIdOrNull, int offset, int limit);
+    List<UndecidedRecord> undecidedRecords(UUID ingestionIdOrNull, int offset, int limit);
 
-    /** 判断を待つ隔離の件数（{@link #undecidedQuarantines} と同じ絞り込み。Bolt 39d）。 */
-    int countUndecidedQuarantines(UUID ingestionIdOrNull);
+    /** 判断を待つ隔離の件数（{@link #undecidedRecords} と同じ絞り込み。Bolt 39d）。 */
+    int countUndecidedRecords(UUID ingestionIdOrNull);
 
     /**
      * ID で受信記録を引く（判断できる受信記録の確かめ。Bolt 39d2）。取込で書いた受信記録だけを返し、取込のない（{@code ingestion_id} が NULL の）
@@ -44,14 +44,14 @@ public interface ReceivedRecordRepository {
     Optional<ReceivedRecord> findById(UUID id);
 
     /**
-     * ID で絞った判断を待つ隔離（S-17 の判断の画面の中身。{@link #undecidedQuarantines} と同じ定め。Bolt 39d2）。隔離でない・判断のある・取込の
+     * ID で絞った判断を待つ隔離（S-17 の判断の画面の中身。{@link #undecidedRecords} と同じ定め。Bolt 39d2）。隔離でない・判断のある・取込の
      * ない受信記録とないときは空。
      */
-    Optional<UndecidedQuarantine> undecidedQuarantine(UUID receivedRecordId);
+    Optional<UndecidedRecord> undecidedRecord(UUID receivedRecordId);
 
     /**
      * その取込の判断を待つキーのない隔離（分類が隔離で、外部原本を持たず、受信記録の判断の行がない受信記録）を、行の範囲の始まりの順（範囲の
-     * ないファイルの誤りを先、同じなら受信記録 ID の順。{@link #quarantinedOf} と同じ並び）に、件数の上限なしで（まとめての却下の対象。
+     * ないファイルの誤りを先、同じなら受信記録 ID の順。{@link #quarantinesAndDiscrepanciesOf} と同じ並び）に、件数の上限なしで（まとめての却下の対象。
      * Bolt 39d2b）。1 つの取込のキーのない隔離はデータ行の上限 10,000 件と取り込めなかった部分・ファイルの誤りの数件に収まる。
      */
     List<ReceivedRecord> undecidedKeylessQuarantinesOf(UUID ingestionId);

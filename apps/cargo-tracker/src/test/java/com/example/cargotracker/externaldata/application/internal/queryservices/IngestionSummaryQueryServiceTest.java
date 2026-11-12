@@ -69,7 +69,8 @@ class IngestionSummaryQueryServiceTest {
     private void givenQuarantined(int count) {
         given(receivedRecords.countByIngestionAndClassification(ingestion.id(), Classification.QUARANTINED))
                 .willReturn(count);
-        given(receivedRecords.quarantinedOf(ingestion.id(), IngestionSummaryQueryService.SHOWN_QUARANTINE_LIMIT))
+        given(receivedRecords.quarantinesAndDiscrepanciesOf(
+                        ingestion.id(), IngestionSummaryQueryService.SHOWN_QUARANTINE_LIMIT))
                 .willReturn(
                         IntStream.rangeClosed(1, Math.min(count, IngestionSummaryQueryService.SHOWN_QUARANTINE_LIMIT))
                                 .mapToObj(this::quarantined)
@@ -107,7 +108,7 @@ class IngestionSummaryQueryServiceTest {
         assertThat(summary.remainingQuarantineCount()).isEqualTo(remaining);
         then(receivedRecords)
                 .should()
-                .quarantinedOf(ingestion.id(), IngestionSummaryQueryService.SHOWN_QUARANTINE_LIMIT);
+                .quarantinesAndDiscrepanciesOf(ingestion.id(), IngestionSummaryQueryService.SHOWN_QUARANTINE_LIMIT);
     }
 
     @Test
@@ -124,7 +125,7 @@ class IngestionSummaryQueryServiceTest {
 
         assertThat(summary.quarantineNotes()).isEmpty();
         assertThat(summary.remainingQuarantineCount()).isZero();
-        then(receivedRecords).should(never()).quarantinedOf(any(), anyInt());
+        then(receivedRecords).should(never()).quarantinesAndDiscrepanciesOf(any(), anyInt());
     }
 
     /**
@@ -140,7 +141,8 @@ class IngestionSummaryQueryServiceTest {
             given(receivedRecords.countByIngestionAndClassification(ingestion.id(), Classification.DISCREPANCY))
                     .willReturn(discrepancy);
             int listed = Math.min(quarantined + discrepancy, IngestionSummaryQueryService.SHOWN_QUARANTINE_LIMIT);
-            given(receivedRecords.quarantinedOf(ingestion.id(), IngestionSummaryQueryService.SHOWN_QUARANTINE_LIMIT))
+            given(receivedRecords.quarantinesAndDiscrepanciesOf(
+                            ingestion.id(), IngestionSummaryQueryService.SHOWN_QUARANTINE_LIMIT))
                     .willReturn(IntStream.rangeClosed(1, listed)
                             .mapToObj(IngestionSummaryQueryServiceTest.this::quarantined)
                             .toList());
@@ -158,7 +160,7 @@ class IngestionSummaryQueryServiceTest {
             assertThat(summary.quarantineNotes()).hasSize(shown);
             assertThat(summary.remainingQuarantineCount()).isEqualTo(remaining);
             if (quarantined + discrepancy == 0) {
-                then(receivedRecords).should(never()).quarantinedOf(any(), anyInt());
+                then(receivedRecords).should(never()).quarantinesAndDiscrepanciesOf(any(), anyInt());
             }
         }
     }
@@ -242,7 +244,8 @@ class IngestionSummaryQueryServiceTest {
                     fileKey ? List.of(fileDefect(target)) : List.of(ownPayload(target, 3, 3));
             given(receivedRecords.countByIngestionAndClassification(target.id(), Classification.QUARANTINED))
                     .willReturn(quarantined.size());
-            given(receivedRecords.quarantinedOf(target.id(), IngestionSummaryQueryService.SHOWN_QUARANTINE_LIMIT))
+            given(receivedRecords.quarantinesAndDiscrepanciesOf(
+                            target.id(), IngestionSummaryQueryService.SHOWN_QUARANTINE_LIMIT))
                     .willReturn(quarantined);
 
             IngestionSummaryView summary = service.summaryOf(target.id()).orElseThrow();
@@ -266,7 +269,7 @@ class IngestionSummaryQueryServiceTest {
 
             assertThat(summary.requiresReview()).isFalse();
             assertThat(summary.unreadable()).isNull();
-            then(receivedRecords).should(never()).quarantinedOf(any(), anyInt());
+            then(receivedRecords).should(never()).quarantinesAndDiscrepanciesOf(any(), anyInt());
         }
     }
 }

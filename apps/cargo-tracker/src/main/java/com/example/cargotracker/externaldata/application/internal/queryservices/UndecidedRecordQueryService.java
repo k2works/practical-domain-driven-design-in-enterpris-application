@@ -10,7 +10,7 @@ import com.example.cargotracker.externaldata.domain.model.aggregates.ReceivedRec
 import com.example.cargotracker.externaldata.domain.model.valueobjects.Classification;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.ReceivedValue;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.RecordValues;
-import com.example.cargotracker.externaldata.domain.model.valueobjects.UndecidedQuarantine;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.UndecidedRecord;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -65,7 +65,7 @@ public class UndecidedRecordQueryService {
      * 読めないことより先に判定する。引くのは受信記録の ID の照会 1 回、この外部版の採用値の照会 1 回、採用値があればその受信記録の ID の照会
      * 1 回（採用値の取得時刻）で、読めない値でも変わらない。
      *
-     * @param quarantine 判断の画面の中身（{@link #undecidedQuarantine} の値）
+     * @param quarantine 判断の画面の中身（{@link #undecidedRecord} の値）
      */
     @Transactional(readOnly = true)
     public Optional<QuarantineValues> quarantineValues(UndecidedRecordPage.Item quarantine) {
@@ -157,13 +157,13 @@ public class UndecidedRecordQueryService {
         boolean notFound = ingestionIdOrNull != null
                 && ingestions.findById(ingestionIdOrNull).isEmpty();
         UUID filter = notFound ? null : ingestionIdOrNull;
-        int total = receivedRecords.countUndecidedQuarantines(filter);
+        int total = receivedRecords.countUndecidedRecords(filter);
         int page = pageOf(total, requestedPage);
-        List<UndecidedQuarantine> quarantines = total == 0 ? List.of() : quarantinesOf(filter, page);
+        List<UndecidedRecord> quarantines = total == 0 ? List.of() : quarantinesOf(filter, page);
         if (quarantines.isEmpty() && total > 0) {
             // 件数を数えてからページを読むまでに、そのページの隔離がすべて判断された（まとめての却下で起きやすい）。数え直して最後の
             // ページに寄せ、1 回だけ読み直す。読み直しても空なら 0 件にする（「0〜0 件目」を示さない。Bolt 39d2b の開始準備の決定 (8)）
-            total = receivedRecords.countUndecidedQuarantines(filter);
+            total = receivedRecords.countUndecidedRecords(filter);
             page = pageOf(total, page);
             quarantines = total == 0 ? List.of() : quarantinesOf(filter, page);
         }
@@ -213,8 +213,8 @@ public class UndecidedRecordQueryService {
         return (total + PAGE_SIZE - 1) / PAGE_SIZE;
     }
 
-    private List<UndecidedQuarantine> quarantinesOf(UUID filter, int page) {
-        return receivedRecords.undecidedQuarantines(filter, (page - 1) * PAGE_SIZE, PAGE_SIZE);
+    private List<UndecidedRecord> quarantinesOf(UUID filter, int page) {
+        return receivedRecords.undecidedRecords(filter, (page - 1) * PAGE_SIZE, PAGE_SIZE);
     }
 
     /**
@@ -224,16 +224,16 @@ public class UndecidedRecordQueryService {
      * @param receivedRecordId 受信記録 ID
      */
     @Transactional(readOnly = true)
-    public Optional<UndecidedRecordPage.Item> undecidedQuarantine(UUID receivedRecordId) {
+    public Optional<UndecidedRecordPage.Item> undecidedRecord(UUID receivedRecordId) {
         return receivedRecords
-                .undecidedQuarantine(receivedRecordId)
+                .undecidedRecord(receivedRecordId)
                 .map(quarantine -> item(
                         quarantine,
                         // 取込は情報源への外部キーを持つので、情報源は必ずある
                         dataSources.findById(quarantine.dataSourceId()).orElseThrow()));
     }
 
-    private static UndecidedRecordPage.Item item(UndecidedQuarantine quarantine, DataSource source) {
+    private static UndecidedRecordPage.Item item(UndecidedRecord quarantine, DataSource source) {
         return new UndecidedRecordPage.Item(
                 quarantine.receivedRecordId(),
                 quarantine.ingestedAt(),

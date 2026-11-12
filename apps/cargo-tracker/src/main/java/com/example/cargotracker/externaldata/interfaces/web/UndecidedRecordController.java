@@ -377,7 +377,7 @@ public class UndecidedRecordController {
         if (refusal.isPresent()) {
             return respond(refusal.get(), back, backPage, redirectAttributes);
         }
-        Optional<UndecidedRecordPage.Item> found = query.undecidedQuarantine(id);
+        Optional<UndecidedRecordPage.Item> found = query.undecidedRecord(id);
         if (found.isEmpty()) {
             // 行き先を決めた後に判断された
             return respond(new DecisionOutcome.AlreadyDecided(), back, backPage, redirectAttributes);

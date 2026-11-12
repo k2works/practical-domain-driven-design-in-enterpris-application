@@ -1536,7 +1536,7 @@ class IngestionServiceTest {
         }
 
         private RecordValues comparedWith(RowResult quarantined) {
-            return query.quarantineValues(query.undecidedQuarantine(quarantined.receivedRecordId())
+            return query.quarantineValues(query.undecidedRecord(quarantined.receivedRecordId())
                             .orElseThrow())
                     .orElseThrow()
                     .adopted()
@@ -1637,7 +1637,7 @@ class IngestionServiceTest {
             assertThat(decisions.existsFor(again.receivedRecordId())).isFalse();
             assertThat(decisions.existsFor(rejected.receivedRecordId())).isTrue();
             assertThat(undecidedIds()).containsExactly(again.receivedRecordId());
-            assertThat(records.countUndecidedQuarantines(null)).isEqualTo(1);
+            assertThat(records.countUndecidedRecords(null)).isEqualTo(1);
         }
 
         @ParameterizedTest(name = "{0}")
@@ -2796,8 +2796,8 @@ class IngestionServiceTest {
         }
 
         @Override
-        public List<ReceivedRecord> quarantinedOf(UUID ingestionId, int limit) {
-            return receivedRecords.quarantinedOf(ingestionId, limit);
+        public List<ReceivedRecord> quarantinesAndDiscrepanciesOf(UUID ingestionId, int limit) {
+            return receivedRecords.quarantinesAndDiscrepanciesOf(ingestionId, limit);
         }
     }
 }

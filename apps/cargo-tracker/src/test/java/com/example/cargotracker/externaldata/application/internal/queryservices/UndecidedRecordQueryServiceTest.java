@@ -32,7 +32,7 @@ import com.example.cargotracker.externaldata.domain.model.valueobjects.PayloadOb
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PhysicalLineRange;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PortCallValue;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.ReceivedValue;
-import com.example.cargotracker.externaldata.domain.model.valueobjects.UndecidedQuarantine;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.UndecidedRecord;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.VoyageValues;
 import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.UserId;
@@ -80,8 +80,8 @@ class UndecidedRecordQueryServiceTest {
     }
 
     /** 物理行の (line) 行目のキーのない隔離（行の誤り）。 */
-    private UndecidedQuarantine keyless(DataSource source, int line) {
-        return new UndecidedQuarantine(
+    private UndecidedRecord keyless(DataSource source, int line) {
+        return new UndecidedRecord(
                 UUID.randomUUID(),
                 ingestionId,
                 INGESTED_AT,
@@ -93,8 +93,8 @@ class UndecidedRecordQueryServiceTest {
     }
 
     private void givenUndecided(UUID filter, int total) {
-        given(receivedRecords.countUndecidedQuarantines(filter)).willReturn(total);
-        given(receivedRecords.undecidedQuarantines(any(), anyInt(), anyInt())).willAnswer(invocation -> {
+        given(receivedRecords.countUndecidedRecords(filter)).willReturn(total);
+        given(receivedRecords.undecidedRecords(any(), anyInt(), anyInt())).willAnswer(invocation -> {
             int offset = invocation.getArgument(1);
             int limit = invocation.getArgument(2);
             return IntStream.range(offset, Math.min(total, offset + limit))
@@ -111,7 +111,7 @@ class UndecidedRecordQueryServiceTest {
             value = {"あり, DEMO-201, 3, false", "なし, NULL, NULL, true"})
     void 行1_行2_外部原本の有無で種類が決まり外部原本のある隔離だけが外部ID外部版を持つ(
             String externalRecord, String externalId, String externalVersion, boolean keyless) {
-        UndecidedQuarantine quarantine = new UndecidedQuarantine(
+        UndecidedRecord quarantine = new UndecidedRecord(
                 UUID.randomUUID(),
                 ingestionId,
                 INGESTED_AT,
@@ -120,8 +120,8 @@ class UndecidedRecordQueryServiceTest {
                 externalId,
                 externalVersion,
                 "140 行目から 141 行目まで: 注記");
-        given(receivedRecords.countUndecidedQuarantines(null)).willReturn(1);
-        given(receivedRecords.undecidedQuarantines(null, 0, UndecidedRecordQueryService.PAGE_SIZE))
+        given(receivedRecords.countUndecidedRecords(null)).willReturn(1);
+        given(receivedRecords.undecidedRecords(null, 0, UndecidedRecordQueryService.PAGE_SIZE))
                 .willReturn(List.of(quarantine));
 
         UndecidedRecordPage.Item item = service.page(null, 1).items().getFirst();
@@ -142,11 +142,11 @@ class UndecidedRecordQueryServiceTest {
     @Test
     void 行1_行2_期待の組は外部原本のある隔離とない隔離の両方を含む() {
         // 一覧に出る分類は隔離だけ（採用・重複は照会が返さない。契約のテストの行 3）。隔離の 2 つの種類をすべて縛る（T-240）
-        UndecidedQuarantine withKey = new UndecidedQuarantine(
-                UUID.randomUUID(), ingestionId, INGESTED_AT, voyage.id(), null, "V-1", "1", "注記");
-        UndecidedQuarantine withoutKey = keyless(voyage, 2);
-        given(receivedRecords.countUndecidedQuarantines(null)).willReturn(2);
-        given(receivedRecords.undecidedQuarantines(null, 0, UndecidedRecordQueryService.PAGE_SIZE))
+        UndecidedRecord withKey =
+                new UndecidedRecord(UUID.randomUUID(), ingestionId, INGESTED_AT, voyage.id(), null, "V-1", "1", "注記");
+        UndecidedRecord withoutKey = keyless(voyage, 2);
+        given(receivedRecords.countUndecidedRecords(null)).willReturn(2);
+        given(receivedRecords.undecidedRecords(null, 0, UndecidedRecordQueryService.PAGE_SIZE))
                 .willReturn(List.of(withKey, withoutKey));
 
         assertThat(service.page(null, 1).items())
@@ -193,7 +193,7 @@ class UndecidedRecordQueryServiceTest {
         if (total > 0) {
             assertThat(result.firstShown()).isEqualTo(firstShown);
             assertThat(result.lastShown()).isEqualTo(lastShown);
-            then(receivedRecords).should().undecidedQuarantines(null, offset, UndecidedRecordQueryService.PAGE_SIZE);
+            then(receivedRecords).should().undecidedRecords(null, offset, UndecidedRecordQueryService.PAGE_SIZE);
         }
     }
 
@@ -201,8 +201,8 @@ class UndecidedRecordQueryServiceTest {
 
     @Test
     void 行8_情報源はページの中の異なる情報源IDごとに1回だけ引き取込は引かない() {
-        given(receivedRecords.countUndecidedQuarantines(null)).willReturn(4);
-        given(receivedRecords.undecidedQuarantines(null, 0, UndecidedRecordQueryService.PAGE_SIZE))
+        given(receivedRecords.countUndecidedRecords(null)).willReturn(4);
+        given(receivedRecords.undecidedRecords(null, 0, UndecidedRecordQueryService.PAGE_SIZE))
                 .willReturn(
                         List.of(keyless(voyage, 2), keyless(milestone, 3), keyless(voyage, 4), keyless(milestone, 5)));
 
@@ -220,7 +220,7 @@ class UndecidedRecordQueryServiceTest {
 
     @Test
     void 行9_判断を待つ隔離が0件ならページの照会と取込と情報源を引かない() {
-        given(receivedRecords.countUndecidedQuarantines(null)).willReturn(0);
+        given(receivedRecords.countUndecidedRecords(null)).willReturn(0);
 
         UndecidedRecordPage result = service.page(null, 1);
 
@@ -228,7 +228,7 @@ class UndecidedRecordQueryServiceTest {
         assertThat(result.total()).isZero();
         assertThat(result.ingestionFilter()).isNull();
         assertThat(result.ingestionNotFound()).isFalse();
-        then(receivedRecords).should(never()).undecidedQuarantines(any(), anyInt(), anyInt());
+        then(receivedRecords).should(never()).undecidedRecords(any(), anyInt(), anyInt());
         then(ingestions).should(never()).findById(any());
         then(dataSources).should(never()).findById(any());
     }
@@ -245,7 +245,7 @@ class UndecidedRecordQueryServiceTest {
         assertThat(result.ingestionFilter()).isEqualTo(ingestionId);
         assertThat(result.ingestionNotFound()).isFalse();
         assertThat(result.total()).isEqualTo(2);
-        then(receivedRecords).should().undecidedQuarantines(ingestionId, 0, UndecidedRecordQueryService.PAGE_SIZE);
+        then(receivedRecords).should().undecidedRecords(ingestionId, 0, UndecidedRecordQueryService.PAGE_SIZE);
         then(ingestions).should(times(1)).findById(ingestionId);
     }
 
@@ -260,8 +260,8 @@ class UndecidedRecordQueryServiceTest {
         assertThat(result.ingestionFilter()).isNull();
         assertThat(result.ingestionNotFound()).isTrue();
         assertThat(result.total()).isEqualTo(3);
-        then(receivedRecords).should(never()).countUndecidedQuarantines(missing);
-        then(receivedRecords).should().undecidedQuarantines(null, 0, UndecidedRecordQueryService.PAGE_SIZE);
+        then(receivedRecords).should(never()).countUndecidedRecords(missing);
+        then(receivedRecords).should().undecidedRecords(null, 0, UndecidedRecordQueryService.PAGE_SIZE);
         then(ingestions).should(times(1)).findById(missing);
     }
 
@@ -271,7 +271,7 @@ class UndecidedRecordQueryServiceTest {
 
         @Test
         void 行18_IDで絞った判断を待つ隔離を一覧と同じ項目で返し情報源を1回引く() {
-            UndecidedQuarantine mismatch = new UndecidedQuarantine(
+            UndecidedRecord mismatch = new UndecidedRecord(
                     UUID.randomUUID(),
                     ingestionId,
                     INGESTED_AT,
@@ -280,10 +280,9 @@ class UndecidedRecordQueryServiceTest {
                     "DEMO-201",
                     "3",
                     "140 行目: 同じ外部 ID・外部版で内容の違う原本を受け取りました（最初の受信: 2026-11-15 09:00:00 UTC）。");
-            given(receivedRecords.undecidedQuarantine(mismatch.receivedRecordId()))
-                    .willReturn(Optional.of(mismatch));
+            given(receivedRecords.undecidedRecord(mismatch.receivedRecordId())).willReturn(Optional.of(mismatch));
 
-            assertThat(service.undecidedQuarantine(mismatch.receivedRecordId()))
+            assertThat(service.undecidedRecord(mismatch.receivedRecordId()))
                     .contains(new UndecidedRecordPage.Item(
                             mismatch.receivedRecordId(),
                             INGESTED_AT,
@@ -299,11 +298,10 @@ class UndecidedRecordQueryServiceTest {
 
         @Test
         void 行18_キーのない隔離は形式の誤りの印を持つ() {
-            UndecidedQuarantine keyless = keyless(milestone, 4);
-            given(receivedRecords.undecidedQuarantine(keyless.receivedRecordId()))
-                    .willReturn(Optional.of(keyless));
+            UndecidedRecord keyless = keyless(milestone, 4);
+            given(receivedRecords.undecidedRecord(keyless.receivedRecordId())).willReturn(Optional.of(keyless));
 
-            assertThat(service.undecidedQuarantine(keyless.receivedRecordId())).hasValueSatisfying(item -> {
+            assertThat(service.undecidedRecord(keyless.receivedRecordId())).hasValueSatisfying(item -> {
                 assertThat(item.keyless()).isTrue();
                 assertThat(item.recordType()).isEqualTo("MILESTONE");
             });
@@ -312,9 +310,9 @@ class UndecidedRecordQueryServiceTest {
         @Test
         void 行5_判断を待つ隔離でなければ空で情報源を引かない() {
             UUID decided = UUID.randomUUID();
-            given(receivedRecords.undecidedQuarantine(decided)).willReturn(Optional.empty());
+            given(receivedRecords.undecidedRecord(decided)).willReturn(Optional.empty());
 
-            assertThat(service.undecidedQuarantine(decided)).isEmpty();
+            assertThat(service.undecidedRecord(decided)).isEmpty();
             then(dataSources).should(never()).findById(any());
         }
     }
@@ -361,7 +359,7 @@ class UndecidedRecordQueryServiceTest {
         @Test
         void 行2_取込で絞って判断を待つ隔離が0件ならキーのない隔離を数えない() {
             given(ingestions.findById(ingestionId)).willReturn(Optional.of(ingestion(ingestionId)));
-            given(receivedRecords.countUndecidedQuarantines(ingestionId)).willReturn(0);
+            given(receivedRecords.countUndecidedRecords(ingestionId)).willReturn(0);
 
             assertThat(service.page(ingestionId, 1).keylessQuarantineCount()).isZero();
             then(receivedRecords).should(never()).countUndecidedKeylessQuarantines(any());
@@ -392,10 +390,10 @@ class UndecidedRecordQueryServiceTest {
 
         @Test
         void 行15_読んだページが空で件数が0より大きければ数え直して最後のページを1回だけ読み直す() {
-            given(receivedRecords.countUndecidedQuarantines(null)).willReturn(101, 100);
-            given(receivedRecords.undecidedQuarantines(null, 100, UndecidedRecordQueryService.PAGE_SIZE))
+            given(receivedRecords.countUndecidedRecords(null)).willReturn(101, 100);
+            given(receivedRecords.undecidedRecords(null, 100, UndecidedRecordQueryService.PAGE_SIZE))
                     .willReturn(List.of());
-            given(receivedRecords.undecidedQuarantines(null, 0, UndecidedRecordQueryService.PAGE_SIZE))
+            given(receivedRecords.undecidedRecords(null, 0, UndecidedRecordQueryService.PAGE_SIZE))
                     .willReturn(IntStream.range(0, 100)
                             .mapToObj(n -> keyless(voyage, n + 2))
                             .toList());
@@ -409,8 +407,8 @@ class UndecidedRecordQueryServiceTest {
             assertThat(result.firstShown()).isEqualTo(1);
             assertThat(result.lastShown()).isEqualTo(100);
             assertThat(result.hasNext()).isFalse();
-            then(receivedRecords).should(times(2)).countUndecidedQuarantines(null);
-            then(receivedRecords).should(times(2)).undecidedQuarantines(any(), anyInt(), anyInt());
+            then(receivedRecords).should(times(2)).countUndecidedRecords(null);
+            then(receivedRecords).should(times(2)).undecidedRecords(any(), anyInt(), anyInt());
         }
 
         @Test
@@ -419,16 +417,15 @@ class UndecidedRecordQueryServiceTest {
 
             service.page(null, 2);
 
-            then(receivedRecords).should(times(1)).countUndecidedQuarantines(null);
-            then(receivedRecords).should(times(1)).undecidedQuarantines(any(), anyInt(), anyInt());
+            then(receivedRecords).should(times(1)).countUndecidedRecords(null);
+            then(receivedRecords).should(times(1)).undecidedRecords(any(), anyInt(), anyInt());
         }
 
         @Test
         void 行16_数え直して0件なら読み直さず0件のページを返す() {
             given(ingestions.findById(ingestionId)).willReturn(Optional.of(ingestion(ingestionId)));
-            given(receivedRecords.countUndecidedQuarantines(ingestionId)).willReturn(1, 0);
-            given(receivedRecords.undecidedQuarantines(any(), anyInt(), anyInt()))
-                    .willReturn(List.of());
+            given(receivedRecords.countUndecidedRecords(ingestionId)).willReturn(1, 0);
+            given(receivedRecords.undecidedRecords(any(), anyInt(), anyInt())).willReturn(List.of());
 
             UndecidedRecordPage result = service.page(ingestionId, 1);
 
@@ -438,15 +435,14 @@ class UndecidedRecordQueryServiceTest {
             assertThat(result.pageCount()).isZero();
             assertThat(result.ingestionFilter()).isEqualTo(ingestionId);
             assertThat(result.keylessQuarantineCount()).isZero();
-            then(receivedRecords).should(times(1)).undecidedQuarantines(any(), anyInt(), anyInt());
+            then(receivedRecords).should(times(1)).undecidedRecords(any(), anyInt(), anyInt());
             then(receivedRecords).should(never()).countUndecidedKeylessQuarantines(any());
         }
 
         @Test
         void 行16_読み直しても空なら0件のページを返す() {
-            given(receivedRecords.countUndecidedQuarantines(null)).willReturn(201, 150);
-            given(receivedRecords.undecidedQuarantines(any(), anyInt(), anyInt()))
-                    .willReturn(List.of());
+            given(receivedRecords.countUndecidedRecords(null)).willReturn(201, 150);
+            given(receivedRecords.undecidedRecords(any(), anyInt(), anyInt())).willReturn(List.of());
 
             UndecidedRecordPage result = service.page(null, 3);
 
@@ -454,9 +450,9 @@ class UndecidedRecordQueryServiceTest {
             assertThat(result.items()).isEmpty();
             assertThat(result.firstShown()).isZero();
             assertThat(result.lastShown()).isZero();
-            then(receivedRecords).should().undecidedQuarantines(null, 200, UndecidedRecordQueryService.PAGE_SIZE);
-            then(receivedRecords).should().undecidedQuarantines(null, 100, UndecidedRecordQueryService.PAGE_SIZE);
-            then(receivedRecords).should(times(2)).countUndecidedQuarantines(null);
+            then(receivedRecords).should().undecidedRecords(null, 200, UndecidedRecordQueryService.PAGE_SIZE);
+            then(receivedRecords).should().undecidedRecords(null, 100, UndecidedRecordQueryService.PAGE_SIZE);
+            then(receivedRecords).should(times(2)).countUndecidedRecords(null);
         }
     }
 

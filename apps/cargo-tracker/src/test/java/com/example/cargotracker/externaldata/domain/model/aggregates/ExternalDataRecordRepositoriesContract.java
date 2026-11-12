@@ -10,7 +10,7 @@ import com.example.cargotracker.externaldata.domain.model.valueobjects.PayloadHa
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PayloadObjectKey;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PhysicalLineRange;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.ReceivedValue;
-import com.example.cargotracker.externaldata.domain.model.valueobjects.UndecidedQuarantine;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.UndecidedRecord;
 import com.example.cargotracker.shared.domain.UserId;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
@@ -420,12 +420,13 @@ public abstract class ExternalDataRecordRepositoriesContract {
         receivedRecords().add(fileError);
         receivedRecords().add(keyless(other, new PhysicalLineRange(2, 2)));
 
-        List<ReceivedRecord> first = receivedRecords().quarantinedOf(ingestion.id(), 100);
-        List<ReceivedRecord> again = receivedRecords().quarantinedOf(ingestion.id(), 100);
+        List<ReceivedRecord> first = receivedRecords().quarantinesAndDiscrepanciesOf(ingestion.id(), 100);
+        List<ReceivedRecord> again = receivedRecords().quarantinesAndDiscrepanciesOf(ingestion.id(), 100);
 
         assertThat(first).containsExactly(fileError, oneLine, twoLines, untilEnd);
         assertThat(again).isEqualTo(first);
-        assertThat(receivedRecords().quarantinedOf(ingestion.id(), 2)).containsExactly(fileError, oneLine);
+        assertThat(receivedRecords().quarantinesAndDiscrepanciesOf(ingestion.id(), 2))
+                .containsExactly(fileError, oneLine);
     }
 
     @Test
@@ -443,7 +444,8 @@ public abstract class ExternalDataRecordRepositoriesContract {
         receivedRecords().add(quarantined);
         receivedRecords().add(rowError);
 
-        assertThat(receivedRecords().quarantinedOf(ingestion.id(), 100)).containsExactly(quarantined, rowError);
+        assertThat(receivedRecords().quarantinesAndDiscrepanciesOf(ingestion.id(), 100))
+                .containsExactly(quarantined, rowError);
     }
 
     @Test
@@ -460,10 +462,11 @@ public abstract class ExternalDataRecordRepositoriesContract {
         receivedRecords().add(discrepancy);
         receivedRecords().add(adopted);
 
-        assertThat(receivedRecords().quarantinedOf(ingestion.id(), 100)).containsExactly(discrepancy, quarantined);
+        assertThat(receivedRecords().quarantinesAndDiscrepanciesOf(ingestion.id(), 100))
+                .containsExactly(discrepancy, quarantined);
         assertThat(receivedRecords().countByIngestionAndClassification(ingestion.id(), Classification.DISCREPANCY))
                 .isEqualTo(1);
-        assertThat(receivedRecords().countUndecidedQuarantines(ingestion.id())).isEqualTo(1);
+        assertThat(receivedRecords().countUndecidedRecords(ingestion.id())).isEqualTo(1);
     }
 
     // --- Bolt 39d の行 3・4・6・15（S-17 の判断を待つ隔離の一覧の照会。開始準備の決定 (3)・(4)）。名前の頭に Bolt39d_ を付ける。
@@ -496,8 +499,8 @@ public abstract class ExternalDataRecordRepositoriesContract {
     }
 
     /** 受信記録から期待する判断を待つ隔離（外部原本のないときは外部 ID・外部版が null）。 */
-    private UndecidedQuarantine undecided(ReceivedRecord received, Ingestion ingestion, ExternalRecord externalRecord) {
-        return new UndecidedQuarantine(
+    private UndecidedRecord undecided(ReceivedRecord received, Ingestion ingestion, ExternalRecord externalRecord) {
+        return new UndecidedRecord(
                 received.id(),
                 ingestion.id(),
                 ingestion.ingestedAt(),
@@ -521,10 +524,10 @@ public abstract class ExternalDataRecordRepositoriesContract {
         receivedRecords().add(quarantined);
         receivedRecords().add(rowError);
 
-        assertThat(receivedRecords().undecidedQuarantines(ingestion.id(), 0, 100))
+        assertThat(receivedRecords().undecidedRecords(ingestion.id(), 0, 100))
                 .containsExactly(
                         undecided(quarantined, ingestion, externalRecord), undecided(rowError, ingestion, null));
-        assertThat(receivedRecords().countUndecidedQuarantines(ingestion.id())).isEqualTo(2);
+        assertThat(receivedRecords().countUndecidedRecords(ingestion.id())).isEqualTo(2);
     }
 
     @Test
@@ -550,7 +553,7 @@ public abstract class ExternalDataRecordRepositoriesContract {
         receivedRecords().add(mismatch);
         receivedRecords().add(twoLines);
         receivedRecords().add(fileError);
-        List<UndecidedQuarantine> expected = List.of(
+        List<UndecidedRecord> expected = List.of(
                 undecided(fileError, sameTimeEarlier, null),
                 undecided(twoLines, sameTimeEarlier, null),
                 undecided(mismatch, sameTimeEarlier, externalRecord),
@@ -558,8 +561,8 @@ public abstract class ExternalDataRecordRepositoriesContract {
                 undecided(laterRow, sameTimeLater, null),
                 undecided(olderRow, older, null));
 
-        assertThat(receivedRecords().undecidedQuarantines(null, 0, 6)).isEqualTo(expected);
-        assertThat(receivedRecords().undecidedQuarantines(null, 2, 3)).isEqualTo(expected.subList(2, 5));
+        assertThat(receivedRecords().undecidedRecords(null, 0, 6)).isEqualTo(expected);
+        assertThat(receivedRecords().undecidedRecords(null, 2, 3)).isEqualTo(expected.subList(2, 5));
     }
 
     @Test
@@ -574,14 +577,13 @@ public abstract class ExternalDataRecordRepositoriesContract {
         receivedRecords().add(keyless(other, new PhysicalLineRange(2, 2)));
         receivedRecords().add(second);
 
-        assertThat(receivedRecords().undecidedQuarantines(ingestion.id(), 0, 100))
+        assertThat(receivedRecords().undecidedRecords(ingestion.id(), 0, 100))
                 .containsExactly(undecided(first, ingestion, null), undecided(second, ingestion, null));
-        assertThat(receivedRecords().undecidedQuarantines(ingestion.id(), 1, 100))
+        assertThat(receivedRecords().undecidedRecords(ingestion.id(), 1, 100))
                 .containsExactly(undecided(second, ingestion, null));
-        assertThat(receivedRecords().countUndecidedQuarantines(ingestion.id())).isEqualTo(2);
-        assertThat(receivedRecords().countUndecidedQuarantines(other.id())).isEqualTo(1);
-        assertThat(receivedRecords().countUndecidedQuarantines(UUID.randomUUID()))
-                .isZero();
+        assertThat(receivedRecords().countUndecidedRecords(ingestion.id())).isEqualTo(2);
+        assertThat(receivedRecords().countUndecidedRecords(other.id())).isEqualTo(1);
+        assertThat(receivedRecords().countUndecidedRecords(UUID.randomUUID())).isZero();
     }
 
     @Test
@@ -590,18 +592,18 @@ public abstract class ExternalDataRecordRepositoriesContract {
         ingestions().add(ingestion);
         ReceivedRecord existing = keyless(ingestion, new PhysicalLineRange(2, 2));
         receivedRecords().add(existing);
-        List<UndecidedQuarantine> before = receivedRecords().undecidedQuarantines(null, 0, 1);
-        int countBefore = receivedRecords().countUndecidedQuarantines(null);
+        List<UndecidedRecord> before = receivedRecords().undecidedRecords(null, 0, 1);
+        int countBefore = receivedRecords().countUndecidedRecords(null);
         Ingestion newer = ingestionAt(FUTURE.plusSeconds(60));
         ingestions().add(newer);
         ReceivedRecord added = keyless(newer, new PhysicalLineRange(2, 2));
         receivedRecords().add(added);
 
-        List<UndecidedQuarantine> after = receivedRecords().undecidedQuarantines(null, 0, 2);
+        List<UndecidedRecord> after = receivedRecords().undecidedRecords(null, 0, 2);
 
         assertThat(before).containsExactly(undecided(existing, ingestion, null));
         assertThat(after).containsExactly(undecided(added, newer, null), undecided(existing, ingestion, null));
-        assertThat(receivedRecords().countUndecidedQuarantines(null)).isEqualTo(countBefore + 1);
+        assertThat(receivedRecords().countUndecidedRecords(null)).isEqualTo(countBefore + 1);
     }
 
     @Test
@@ -653,7 +655,7 @@ public abstract class ExternalDataRecordRepositoriesContract {
         assertThat(receivedRecords().findById(adopted.id())).contains(adopted);
         assertThat(receivedRecords().findById(rowError.id())).contains(rowError);
         assertThat(receivedRecords().findById(UUID.randomUUID())).isEmpty();
-        assertThat(receivedRecords().undecidedQuarantine(UUID.randomUUID())).isEmpty();
+        assertThat(receivedRecords().undecidedRecord(UUID.randomUUID())).isEmpty();
     }
 
     @Test
@@ -669,11 +671,10 @@ public abstract class ExternalDataRecordRepositoriesContract {
         receivedRecords().add(mismatch);
         receivedRecords().add(fileError);
 
-        assertThat(receivedRecords().undecidedQuarantine(mismatch.id()))
+        assertThat(receivedRecords().undecidedRecord(mismatch.id()))
                 .contains(undecided(mismatch, ingestion, externalRecord));
-        assertThat(receivedRecords().undecidedQuarantine(fileError.id()))
-                .contains(undecided(fileError, ingestion, null));
-        assertThat(receivedRecords().undecidedQuarantine(duplicate.id())).isEmpty();
+        assertThat(receivedRecords().undecidedRecord(fileError.id())).contains(undecided(fileError, ingestion, null));
+        assertThat(receivedRecords().undecidedRecord(duplicate.id())).isEmpty();
     }
 
     @Test
@@ -684,19 +685,19 @@ public abstract class ExternalDataRecordRepositoriesContract {
         ReceivedRecord undecided = keyless(ingestion, new PhysicalLineRange(3, 3));
         receivedRecords().add(decided);
         receivedRecords().add(undecided);
-        assertThat(receivedRecords().undecidedQuarantine(decided.id())).isPresent();
+        assertThat(receivedRecords().undecidedRecord(decided.id())).isPresent();
         assertThat(receivedRecordDecisions().existsFor(decided.id())).isFalse();
 
         receivedRecordDecisions().add(ReceivedRecordDecision.reject(decided, "提供元に確かめた。", steward, DECIDED_AT));
 
         assertThat(receivedRecordDecisions().existsFor(decided.id())).isTrue();
         assertThat(receivedRecordDecisions().existsFor(undecided.id())).isFalse();
-        assertThat(receivedRecords().undecidedQuarantine(decided.id())).isEmpty();
-        assertThat(receivedRecords().undecidedQuarantine(undecided.id())).isPresent();
-        assertThat(receivedRecords().undecidedQuarantines(ingestion.id(), 0, 100))
-                .extracting(UndecidedQuarantine::receivedRecordId)
+        assertThat(receivedRecords().undecidedRecord(decided.id())).isEmpty();
+        assertThat(receivedRecords().undecidedRecord(undecided.id())).isPresent();
+        assertThat(receivedRecords().undecidedRecords(ingestion.id(), 0, 100))
+                .extracting(UndecidedRecord::receivedRecordId)
                 .containsExactly(undecided.id());
-        assertThat(receivedRecords().countUndecidedQuarantines(ingestion.id())).isEqualTo(1);
+        assertThat(receivedRecords().countUndecidedRecords(ingestion.id())).isEqualTo(1);
         // 判断の後も受信記録は追記専用のまま ID で引ける（判断できるかは分類と判断の有無で決める）
         assertThat(receivedRecords().findById(decided.id())).contains(decided);
     }
@@ -731,7 +732,7 @@ public abstract class ExternalDataRecordRepositoriesContract {
                 .isInstanceOf(DuplicateReceivedRecordDecisionException.class)
                 .hasMessageContaining(quarantined.id().toString());
         assertThat(storedDecision(quarantined.id())).contains(first);
-        assertThat(receivedRecords().undecidedQuarantine(quarantined.id())).isEmpty();
+        assertThat(receivedRecords().undecidedRecord(quarantined.id())).isEmpty();
     }
 
     @Test
@@ -757,7 +758,7 @@ public abstract class ExternalDataRecordRepositoriesContract {
         UUID withoutIngestion = receivedRecordWithoutIngestion();
 
         assertThat(receivedRecords().findById(withoutIngestion)).isEmpty();
-        assertThat(receivedRecords().undecidedQuarantine(withoutIngestion)).isEmpty();
+        assertThat(receivedRecords().undecidedRecord(withoutIngestion)).isEmpty();
     }
 
     // --- Bolt 39d4 の行 13・14（外部原本の基準の付け替え。開始準備の決定 (3)・(4)）。名前の頭に Bolt39d4_ を付ける ---
@@ -808,17 +809,17 @@ public abstract class ExternalDataRecordRepositoriesContract {
         ReceivedRecord undecided = keyless(ingestion, new PhysicalLineRange(3, 3));
         receivedRecords().add(decided);
         receivedRecords().add(undecided);
-        int allBefore = receivedRecords().countUndecidedQuarantines(null);
+        int allBefore = receivedRecords().countUndecidedRecords(null);
 
         receivedRecordDecisions().add(ReceivedRecordDecision.reject(decided, "提供元に確かめた。", steward, DECIDED_AT));
 
-        assertThat(receivedRecords().undecidedQuarantines(ingestion.id(), 0, 100))
-                .extracting(UndecidedQuarantine::receivedRecordId)
+        assertThat(receivedRecords().undecidedRecords(ingestion.id(), 0, 100))
+                .extracting(UndecidedRecord::receivedRecordId)
                 .containsExactly(undecided.id());
-        assertThat(receivedRecords().countUndecidedQuarantines(ingestion.id())).isEqualTo(1);
-        assertThat(receivedRecords().countUndecidedQuarantines(null)).isEqualTo(allBefore - 1);
-        assertThat(receivedRecords().undecidedQuarantines(null, 0, 2))
-                .extracting(UndecidedQuarantine::receivedRecordId)
+        assertThat(receivedRecords().countUndecidedRecords(ingestion.id())).isEqualTo(1);
+        assertThat(receivedRecords().countUndecidedRecords(null)).isEqualTo(allBefore - 1);
+        assertThat(receivedRecords().undecidedRecords(null, 0, 2))
+                .extracting(UndecidedRecord::receivedRecordId)
                 .contains(undecided.id())
                 .doesNotContain(decided.id());
     }
@@ -960,7 +961,7 @@ public abstract class ExternalDataRecordRepositoriesContract {
 
         assertThat(receivedRecords().findById(quarantined.id()))
                 .hasValueSatisfying(found -> assertThat(found.value()).isEqualTo(value));
-        assertThat(receivedRecords().quarantinedOf(ingestion.id(), 10))
+        assertThat(receivedRecords().quarantinesAndDiscrepanciesOf(ingestion.id(), 10))
                 .singleElement()
                 .satisfies(found -> assertThat(found.value()).isEqualTo(value));
     }
@@ -1012,7 +1013,8 @@ public abstract class ExternalDataRecordRepositoriesContract {
 
         assertThat(receivedRecords().findById(adopted.id())).contains(adopted);
         assertThat(receivedRecords().findById(quarantined.id())).contains(quarantined);
-        assertThat(receivedRecords().quarantinedOf(ingestion.id(), 10)).containsExactly(quarantined, keyless);
+        assertThat(receivedRecords().quarantinesAndDiscrepanciesOf(ingestion.id(), 10))
+                .containsExactly(quarantined, keyless);
         assertThat(receivedRecords().undecidedKeylessQuarantinesOf(ingestion.id()))
                 .singleElement()
                 .satisfies(found -> assertThat(found.value()).isNull());

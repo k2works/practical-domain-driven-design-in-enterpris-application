@@ -2,7 +2,7 @@ package com.example.cargotracker.externaldata.domain.model.aggregates;
 
 import com.example.cargotracker.externaldata.domain.model.valueobjects.Classification;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PhysicalLineRange;
-import com.example.cargotracker.externaldata.domain.model.valueobjects.UndecidedQuarantine;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.UndecidedRecord;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -65,7 +65,7 @@ public class InMemoryReceivedRecordRepository implements ReceivedRecordRepositor
             .thenComparing(receivedRecord -> receivedRecord.id().toString());
 
     @Override
-    public List<ReceivedRecord> quarantinedOf(UUID ingestionId, int limit) {
+    public List<ReceivedRecord> quarantinesAndDiscrepanciesOf(UUID ingestionId, int limit) {
         return records.stream()
                 .filter(receivedRecord -> receivedRecord.ingestionId().equals(ingestionId))
                 .filter(receivedRecord -> receivedRecord.classification() == Classification.QUARANTINED
@@ -81,13 +81,13 @@ public class InMemoryReceivedRecordRepository implements ReceivedRecordRepositor
      * 順で比べる）。メモリの判断のリポジトリに判断のある隔離は除く（Bolt 39d2）。
      */
     @Override
-    public List<UndecidedQuarantine> undecidedQuarantines(UUID ingestionIdOrNull, int offset, int limit) {
+    public List<UndecidedRecord> undecidedRecords(UUID ingestionIdOrNull, int offset, int limit) {
         return undecided(ingestionIdOrNull)
-                .sorted(Comparator.comparing(UndecidedQuarantine::ingestedAt)
+                .sorted(Comparator.comparing(UndecidedRecord::ingestedAt)
                         .reversed()
                         .thenComparing(quarantine -> quarantine.ingestionId().toString())
                         .thenComparing(
-                                UndecidedQuarantine::lineRange,
+                                UndecidedRecord::lineRange,
                                 Comparator.nullsFirst(Comparator.comparingInt(PhysicalLineRange::first)))
                         .thenComparing(
                                 quarantine -> quarantine.receivedRecordId().toString()))
@@ -97,7 +97,7 @@ public class InMemoryReceivedRecordRepository implements ReceivedRecordRepositor
     }
 
     @Override
-    public int countUndecidedQuarantines(UUID ingestionIdOrNull) {
+    public int countUndecidedRecords(UUID ingestionIdOrNull) {
         return (int) undecided(ingestionIdOrNull).count();
     }
 
@@ -110,7 +110,7 @@ public class InMemoryReceivedRecordRepository implements ReceivedRecordRepositor
     }
 
     @Override
-    public Optional<UndecidedQuarantine> undecidedQuarantine(UUID receivedRecordId) {
+    public Optional<UndecidedRecord> undecidedRecord(UUID receivedRecordId) {
         return undecided(null)
                 .filter(quarantine -> quarantine.receivedRecordId().equals(receivedRecordId))
                 .findFirst();
@@ -118,7 +118,7 @@ public class InMemoryReceivedRecordRepository implements ReceivedRecordRepositor
 
     /**
      * その取込の判断を待つキーのない隔離（Bolt 39d2b）。判断を待つ隔離と同じく取込のリポジトリと結び、外部原本を持たないものに絞って、
-     * {@link #quarantinedOf} と同じ順に並べる。
+     * {@link #quarantinesAndDiscrepanciesOf} と同じ順に並べる。
      */
     @Override
     public List<ReceivedRecord> undecidedKeylessQuarantinesOf(UUID ingestionId) {
@@ -138,7 +138,7 @@ public class InMemoryReceivedRecordRepository implements ReceivedRecordRepositor
         return undecidedKeylessQuarantinesOf(ingestionId).size();
     }
 
-    private Stream<UndecidedQuarantine> undecided(UUID ingestionIdOrNull) {
+    private Stream<UndecidedRecord> undecided(UUID ingestionIdOrNull) {
         return records.stream()
                 .filter(receivedRecord -> receivedRecord.classification() == Classification.QUARANTINED)
                 .filter(receivedRecord -> !decisions.existsFor(receivedRecord.id()))
@@ -148,13 +148,13 @@ public class InMemoryReceivedRecordRepository implements ReceivedRecordRepositor
                         .map(ingestion -> undecided(receivedRecord, ingestion)));
     }
 
-    private UndecidedQuarantine undecided(ReceivedRecord receivedRecord, Ingestion ingestion) {
+    private UndecidedRecord undecided(ReceivedRecord receivedRecord, Ingestion ingestion) {
         Optional<ExternalRecord> externalRecord = receivedRecord.externalRecordId() == null
                 ? Optional.empty()
                 : externalRecords.all().stream()
                         .filter(candidate -> candidate.id().equals(receivedRecord.externalRecordId()))
                         .findFirst();
-        return new UndecidedQuarantine(
+        return new UndecidedRecord(
                 receivedRecord.id(),
                 ingestion.id(),
                 ingestion.ingestedAt(),

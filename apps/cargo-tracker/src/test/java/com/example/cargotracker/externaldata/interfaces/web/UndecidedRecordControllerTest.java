@@ -400,7 +400,7 @@ class UndecidedRecordControllerTest {
 
         private void givenDecidable(UndecidedRecordPage.Item item) {
             given(decisions.refusalOf(RECORD_ID)).willReturn(java.util.Optional.empty());
-            given(query.undecidedQuarantine(RECORD_ID)).willReturn(java.util.Optional.of(item));
+            given(query.undecidedRecord(RECORD_ID)).willReturn(java.util.Optional.of(item));
             // キーのない隔離は採用できない（Bolt 39d3b で採用の欄を足した。【業務の判断】(a)）
             given(decisions.adoptionRefusalOf(RECORD_ID))
                     .willReturn(
@@ -547,7 +547,7 @@ class UndecidedRecordControllerTest {
                                     : new DecisionOutcome.NotDecidable()));
 
             mockMvc.perform(get(DECISION_URL)).andExpect(status().isNotFound());
-            then(query).should(org.mockito.Mockito.never()).undecidedQuarantine(any());
+            then(query).should(org.mockito.Mockito.never()).undecidedRecord(any());
         }
 
         @ParameterizedTest(name = "{0}")
@@ -574,7 +574,7 @@ class UndecidedRecordControllerTest {
         @Test
         void 行5_行き先を決めた後に判断されて中身が読めないときも判断済みと知らせる() throws Exception {
             given(decisions.refusalOf(RECORD_ID)).willReturn(java.util.Optional.empty());
-            given(query.undecidedQuarantine(RECORD_ID)).willReturn(java.util.Optional.empty());
+            given(query.undecidedRecord(RECORD_ID)).willReturn(java.util.Optional.empty());
 
             mockMvc.perform(get(DECISION_URL))
                     .andExpect(status().is3xxRedirection())
@@ -903,7 +903,7 @@ class UndecidedRecordControllerTest {
             postReason(KEYLESS_URL + parameter, "理由").andExpect(status().isNotFound());
             // keyless-rejection は判断の画面の /{受信記録 ID} より先に選ばれる（受信記録 ID として読まない）
             then(decisions).should(org.mockito.Mockito.never()).refusalOf(any());
-            then(query).should(org.mockito.Mockito.never()).undecidedQuarantine(any());
+            then(query).should(org.mockito.Mockito.never()).undecidedRecord(any());
         }
 
         // --- 行 1・4・9〜11: POST の結果ごとの行き先（T-240。結果のすべてに行き先がある） ---
@@ -1084,7 +1084,7 @@ class UndecidedRecordControllerTest {
 
         private String decisionPageWith(UndecidedRecordPage.Item item, QuarantineValues values) throws Exception {
             given(decisions.refusalOf(RECORD_ID)).willReturn(java.util.Optional.empty());
-            given(query.undecidedQuarantine(RECORD_ID)).willReturn(java.util.Optional.of(item));
+            given(query.undecidedRecord(RECORD_ID)).willReturn(java.util.Optional.of(item));
             given(query.quarantineValues(item)).willReturn(java.util.Optional.ofNullable(values));
             return mockMvc.perform(get(DECISION_URL))
                     .andExpect(status().isOk())
@@ -1345,7 +1345,7 @@ class UndecidedRecordControllerTest {
 
         private String decisionPageWith(UndecidedRecordPage.Item item, QuarantineValues values) throws Exception {
             given(decisions.refusalOf(RECORD_ID)).willReturn(java.util.Optional.empty());
-            given(query.undecidedQuarantine(RECORD_ID)).willReturn(java.util.Optional.of(item));
+            given(query.undecidedRecord(RECORD_ID)).willReturn(java.util.Optional.of(item));
             given(query.quarantineValues(item)).willReturn(java.util.Optional.ofNullable(values));
             return mockMvc.perform(get(DECISION_URL))
                     .andExpect(status().isOk())
@@ -1601,7 +1601,7 @@ class UndecidedRecordControllerTest {
                 UndecidedRecordPage.Item item, QuarantineValues values, Optional<DecisionOutcome> adoptionRefusal) {
             given(decisions.refusalOf(RECORD_ID)).willReturn(Optional.empty());
             given(decisions.adoptionRefusalOf(RECORD_ID)).willReturn(adoptionRefusal);
-            given(query.undecidedQuarantine(RECORD_ID)).willReturn(Optional.of(item));
+            given(query.undecidedRecord(RECORD_ID)).willReturn(Optional.of(item));
             given(query.quarantineValues(item)).willReturn(Optional.ofNullable(values));
         }
 
@@ -1872,7 +1872,7 @@ class UndecidedRecordControllerTest {
         private void givenDecision(Optional<DecisionOutcome> adoptionRefusal) {
             given(decisions.refusalOf(RECORD_ID)).willReturn(Optional.empty());
             given(decisions.adoptionRefusalOf(RECORD_ID)).willReturn(adoptionRefusal);
-            given(query.undecidedQuarantine(RECORD_ID)).willReturn(Optional.of(item()));
+            given(query.undecidedRecord(RECORD_ID)).willReturn(Optional.of(item()));
             given(query.quarantineValues(any())).willReturn(Optional.empty());
         }
 
@@ -2097,7 +2097,7 @@ class UndecidedRecordControllerTest {
         private void givenDecision(Optional<DecisionOutcome> adoptionRefusal, Optional<QuarantineValues> values) {
             given(decisions.refusalOf(RECORD_ID)).willReturn(Optional.empty());
             given(decisions.adoptionRefusalOf(RECORD_ID)).willReturn(adoptionRefusal);
-            given(query.undecidedQuarantine(RECORD_ID))
+            given(query.undecidedRecord(RECORD_ID))
                     .willReturn(Optional.of(new UndecidedRecordPage.Item(
                             RECORD_ID,
                             INGESTED_AT,
