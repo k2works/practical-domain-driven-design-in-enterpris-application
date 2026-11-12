@@ -281,6 +281,38 @@ public class ExternalDataIngestionUiSteps {
         submit();
     }
 
+    /**
+     * Bolt 39g4b の行 17。確定した経路の直行の航海（経路の比較の航海 DIRECT。ロッテルダムの到着予定 2099-10-30 09:00）を、到着を 1 日遅らせた 1 行で取り込む。
+     * 取得時刻は今（情報鮮度の内。T-230）。経路設計の航海も書き換わる（後片付けの印を付ける）。
+     */
+    @かつ("キー操作だけで承認済みの航海の情報源を選び、確定した経路の直行の航海の到着が 1 日遅れた 1 行のファイルを選んで取り込む")
+    public void 直行の航海の到着が遅れた1行を取り込む() {
+        state.markVoyagesWritten();
+        chooseSource();
+        chooseFile(voyageFile(state.voyageNumber("DIRECT") + ",1," + acquiredAt() + ","
+                + "JPTYO;2099-10-11T12:00:00Z;2099-10-12T00:00:00Z|NLRTM;2099-10-31T09:00:00Z;2099-10-31T21:00:00Z"));
+        submit();
+    }
+
+    /** DE-12 は取込のコミットの後に非同期で追跡に届くので、確定した経路の追跡記録が航海の到着予定を受けるまで待つ（Bolt 39g4b。画面だけでは前の値と区別できない）。 */
+    @かつ("取り込んだ航海の到着予定が追跡記録に届く")
+    public void 取り込んだ航海の到着予定が追跡記録に届く() {
+        String voyageNumber = state.voyageNumber("DIRECT");
+        for (int i = 0; i < 40; i++) {
+            Integer found = jdbc.queryForObject(
+                    "SELECT COUNT(*) FROM tracking.tracking_record r JOIN tracking.scheduled_leg l"
+                            + " ON l.tracking_number = r.tracking_number WHERE l.voyage_number = ?"
+                            + " AND r.voyage_arrival_at IS NOT NULL",
+                    Integer.class,
+                    voyageNumber);
+            if (found != null && found > 0) {
+                return;
+            }
+            browser.page().waitForTimeout(250);
+        }
+        throw new AssertionError("取り込んだ航海の到着予定が追跡記録に届かない（DE-12 の受け取りを待ちきれない）: " + voyageNumber);
+    }
+
     /** Bolt 39e の行 40。採用 1・内容の違う原本 1（3 行目はロッテルダムの到着を 1 日遅らせた）。 */
     @かつ("キー操作だけで承認済みの航海の情報源を選び、東京からロッテルダムへの同じ外部 ID・外部版で到着の違う 2 行のファイルを選んで取り込む")
     public void ロッテルダムへの到着の違う2行を取り込む() {
