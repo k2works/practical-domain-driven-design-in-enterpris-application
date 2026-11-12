@@ -1714,4 +1714,5 @@ xychart-beta
 | 2026-11-13 | Bolt 39h3 のステップ 1〜9 を実施し、[終了報告](bolt_39h3_report.md)を作った（承認済み。CI と PERF-06 は push していないので未実行）。W7 の週の表の Bolt 39h2 の終了報告を承認済みに直した | anthropic/claude-sonnet-5-5 |
 | 2026-11-13 | Bolt 39h4 の開始準備: 39h4 の行に[計画](bolt_39h4_plan.md)へのリンクと推奨（約 225 分、本計画 CP-1〜CP-8。分けない、G-06b 欠落（候補なし）・G-06c 差異（見張り）、【前の決定の変更】(31)、受入条件の照合の表（US-14・US-12）、W7 のデモの動画は 1 本だけ新しく撮る、性能の複数の外部版の組はテストだけ、#18 のクローズは終了報告の承認の後）、台帳 D-153（仮。承認済み。human:kakimomokuri）を足した | anthropic/claude-sonnet-5-5 |
 | 2026-11-13 | Bolt 39h4 のステップ 1（設計の文書）: test_strategy に Release 1.0 の受入条件の照合の表（US-14 AC1〜AC5・US-12 AC3〜AC5）の節を足し、「前の対応」の見出しを改名して残した。G-06b・G-06c を Golden dataset の区分の表と例の表に足した。user_story・system_usecase・development_strategy を直し、W7 のデモ項目の一覧・W8 の申し送り（UC-06 3a）・Release 1.0 の締めの持ち主（全 Must の照合の表）を登録した。【前の決定の変更】(31) | anthropic/claude-sonnet-5-5 |
+| 2026-11-13 | Bolt 39h4 のステップ 2〜8 を実施し、[終了報告](bolt_39h4_report.md)を作った（承認待ち。CI と PERF-06 は push していないので未実行。#18 のクローズは承認の後）。`test` 5,913 件・`documentationTest` 11 件・`uiTest` 229 シナリオ緑、SonarQube PASS、変異 M1〜M8 すべて落ちた | anthropic/claude-sonnet-5-5 |
 | 2026-10-28 | Bolt 38f2 のステップ 1 で、デモ項目の動画を撮る Bolt を 38f2b に直した | anthropic/claude-opus-5-5 |
