@@ -1,6 +1,11 @@
 # Docs Update Log
 
 ## 2026-11-12
+* **Creation**: [bolt_39g4b_report](/development/cargo-tracker/bolt_39g4b_report.md) を作成（anthropic/claude-opus-5-5。承認待ち）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5。Bolt 39g4b の終了報告）
+* **Update**: [index](/development/cargo-tracker/index.md) を更新（anthropic/claude-opus-5-5。Bolt 39g4b の終了報告）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md)・[data_model](/design/cargo-tracker/data_model.md)・[ui_design](/design/cargo-tracker/ui_design.md)・[non_functional](/design/cargo-tracker/non_functional.md)・[test_strategy](/design/cargo-tracker/test_strategy.md)・[ADR-004](/adr/cargo-tracker/004-external-data-ingestion.md)・[development_strategy](/development/cargo-tracker/development_strategy.md) を更新（anthropic/claude-opus-5-5。Bolt 39g4b のステップ 1）
+* **Update**: [09-追跡管理](/manual/09-追跡管理.md)・[05-予約一覧と追跡の照会](/manual/05-予約一覧と追跡の照会.md)・[12-外部データ](/manual/12-外部データ.md)・[用語集](/manual/用語集.md) を更新（anthropic/claude-opus-5-5。Bolt 39g4b）
 * **Verification**: [bolt_39g4b_plan](/development/cargo-tracker/bolt_39g4b_plan.md) を human:kakimomokuri が検証
 * **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5。Bolt 39g4b の開始準備。39g4b・39g4c の行、順序、台帳 D-137〜D-139（仮）と D-132・D-136 の注）
 * **Update**: [index](/development/cargo-tracker/index.md) を更新（anthropic/claude-opus-5-5。Bolt 39g4b の開始準備）
