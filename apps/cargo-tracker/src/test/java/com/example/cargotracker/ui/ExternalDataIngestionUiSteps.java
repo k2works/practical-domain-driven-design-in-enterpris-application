@@ -339,6 +339,46 @@ public class ExternalDataIngestionUiSteps {
         return state.voyageNumber(RoutingUiSteps.ADOPTED) + ",1," + acquiredAt() + "," + portCalls;
     }
 
+    /** Bolt 39h の行 12。東京からロッテルダムへの航海を、後に取得した外部版 2（取得時刻は 30 分前）の 1 行で取り込む。 */
+    @かつ("キー操作だけで承認済みの航海の情報源を選び、東京からロッテルダムへの航海の後に取得した外部版 \"2\" の 1 行のファイルを選んで取り込む")
+    public void 後に取得した外部版2を取り込む() {
+        ingestVersion("2", acquiredAt(), ROTTERDAM_PORT_CALLS);
+    }
+
+    /** Bolt 39h の行 12。同じ航海を、前に取得した外部版 1（取得時刻は外部版 2 の 1 時間前）で到着の違う 1 行で取り込む（版の逆転の差異になる）。 */
+    @かつ("キー操作だけで承認済みの航海の情報源を選び、同じ航海の前に取得した外部版 \"1\" で到着の違う 1 行のファイルを選んで取り込む")
+    public void 前に取得した外部版1を取り込む() {
+        String earlier = Instant.parse(acquiredAt()).minus(1, ChronoUnit.HOURS).toString();
+        ingestVersion("1", earlier, CHANGED_ROTTERDAM_PORT_CALLS);
+    }
+
+    private void ingestVersion(String version, String acquiredAt, String portCalls) {
+        state.markVoyagesWritten();
+        browser.navigate(baseUrl + NEW_URL);
+        chooseSource();
+        chooseFile(voyageFile(
+                state.voyageNumber(RoutingUiSteps.ADOPTED) + "," + version + "," + acquiredAt + "," + portCalls));
+        submit();
+        page().waitForURL(url -> url.matches(".*/staff/external-data/ingestions/[0-9a-f-]{36}$"));
+    }
+
+    /** Bolt 39h の行 12。差異は採用値を作らないので、経路設計の航海は外部版 2 の値のまま（ロッテルダムの到着 2099-10-30 00:00 UTC）。 */
+    @かつ("経路設計の航海は外部版 {string} の値のままである")
+    public void 経路設計の航海は外部版の値のまま(String version) {
+        String voyageNumber = state.voyageNumber(RoutingUiSteps.ADOPTED);
+        Assertions.assertThat(jdbc.queryForObject(
+                        "SELECT adopted_info_version FROM routing.voyage WHERE voyage_number = ?",
+                        String.class,
+                        voyageNumber))
+                .isEqualTo(version);
+        Assertions.assertThat(jdbc.queryForObject(
+                        "SELECT COUNT(*) FROM routing.port_call WHERE voyage_number = ? AND call_no = 2"
+                                + " AND arrival_at = TIMESTAMP WITH TIME ZONE '2099-10-30 00:00:00+00'",
+                        Integer.class,
+                        voyageNumber))
+                .isEqualTo(1);
+    }
+
     @もし("データ責任者が取込の結果を開き直す")
     public void データ責任者が取込の結果を開き直す() {
         browser.navigate(ingestionResultUrl);
@@ -720,12 +760,18 @@ public class ExternalDataIngestionUiSteps {
 
     @ならば("分類別の件数は採用 {int}・重複 {int}・隔離 {int} である")
     public void 分類別の件数(int adopted, int duplicate, int quarantined) {
+        分類別の件数(adopted, duplicate, quarantined, 0);
+    }
+
+    /** Bolt 39h の行 8・12。分類別の件数の表は採用・重複・隔離・差異の 4 行。 */
+    @ならば("分類別の件数は採用 {int}・重複 {int}・隔離 {int}・差異 {int} である")
+    public void 分類別の件数(int adopted, int duplicate, int quarantined, int discrepancy) {
         page().waitForURL(url -> url.matches(".*/staff/external-data/ingestions/[0-9a-f-]{36}$"));
         assertThat(count("採用")).hasText(String.valueOf(adopted));
         assertThat(count("重複")).hasText(String.valueOf(duplicate));
         assertThat(count("隔離")).hasText(String.valueOf(quarantined));
-        // 差異の行は差異を作る 39h で足す（Bolt 39c 計画の開始準備の決定 (6)）
-        assertThat(countsTable().locator("tbody tr")).hasCount(3);
+        assertThat(count("差異")).hasText(String.valueOf(discrepancy));
+        assertThat(countsTable().locator("tbody tr")).hasCount(4);
         browser.checkAccessibility();
     }
 
