@@ -911,6 +911,43 @@ class RoutingCaseConfirmationTest {
     }
 
     /** 候補 3 件（適合 2、除外 1）を算出した案件。 */
+    /** 貨物種別の除外と確定（Bolt 39i の行 10・11）。確定は貨物種別を判定しない（決定 (3)）。 */
+    @Nested
+    class Bolt39i_貨物種別と確定 {
+
+        @Test
+        void 貨物種別で除外の候補は確定できない() {
+            RoutingCase routingCase = RoutingCaseTest.open(RouteCargoCategory.DANGEROUS);
+            routingCase.calculateCandidates(VOYAGES, List.of(SINGAPORE_8H), JUDGED_AT, finder, evaluator, FRESHNESS);
+            assertThat(routingCase
+                            .routeVersion()
+                            .candidates()
+                            .getFirst()
+                            .evaluation()
+                            .conforming())
+                    .as("前提: 一般貨物なら適合の候補 1 も除外")
+                    .isFalse();
+
+            assertRejected(
+                    () -> routingCase.confirm(
+                            1, "根拠", ROUTE_DESIGNER, VOYAGES, List.of(SINGAPORE_8H), COMMIT_AT, evaluator, FRESHNESS),
+                    RouteConfirmationRejectionReason.CANDIDATE_EXCLUDED);
+        }
+
+        @Test
+        void 貨物種別の再判定なしで適合で算出済みの特殊貨物の候補は今のまま確定に進む() {
+            RoutingCase dangerous = RoutingCaseFixture.withRouteVersions(
+                    RoutingCaseTest.open(RouteCargoCategory.DANGEROUS),
+                    presented().routeVersions());
+
+            RouteConfirmed event = dangerous.confirm(
+                    2, "根拠", ROUTE_DESIGNER, VOYAGES, List.of(SINGAPORE_8H), COMMIT_AT, evaluator, FRESHNESS);
+
+            assertThat(dangerous.routeVersion().status()).isEqualTo(RouteVersionStatus.CONFIRMED);
+            assertThat(event.routeVersionNo()).isEqualTo(1);
+        }
+    }
+
     private RoutingCase presented() {
         RoutingCase routingCase = RoutingCaseTest.open();
         routingCase.calculateCandidates(VOYAGES, List.of(SINGAPORE_8H), JUDGED_AT, finder, evaluator, FRESHNESS);

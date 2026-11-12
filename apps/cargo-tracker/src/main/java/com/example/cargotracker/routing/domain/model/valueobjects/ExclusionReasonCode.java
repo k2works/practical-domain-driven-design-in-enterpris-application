@@ -2,7 +2,7 @@ package com.example.cargotracker.routing.domain.model.valueobjects;
 
 /**
  * 除外理由の区分。値の名前はデータモデルの `exclusion_reason.reason_code` と同じにする（R-INV-02）。
- * R0.1（Bolt 17）は期限超過・接続不足・接続できないを判定する。貨物種別は判定しない。情報不足は Bolt 37b2（US-06 AC4）から情報鮮度の判定で判定する。
+ * R0.1（Bolt 17）は期限超過・接続不足・接続できないを判定する。情報不足は Bolt 37b2（US-06 AC4）から情報鮮度の判定で、貨物種別は Bolt 39i から経路設計できる貨物の規則で判定する。
  */
 public enum ExclusionReasonCode {
     /** 期限超過（到着予定が希望到着期限より後）。 */

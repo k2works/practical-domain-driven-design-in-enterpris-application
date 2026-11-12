@@ -17,6 +17,8 @@ import com.example.cargotracker.routing.domain.model.valueobjects.ExclusionReaso
 import com.example.cargotracker.routing.domain.model.valueobjects.ExclusionThreshold;
 import com.example.cargotracker.routing.domain.model.valueobjects.Leg;
 import com.example.cargotracker.routing.domain.model.valueobjects.PortCall;
+import com.example.cargotracker.routing.domain.model.valueobjects.RouteCargoCategory;
+import com.example.cargotracker.routing.domain.model.valueobjects.RouteSpecification;
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseSummary;
 import com.example.cargotracker.shared.acceptance.MutableClock;
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
@@ -51,12 +53,14 @@ public class RoutingSteps {
             "期限超過", ExclusionReasonCode.DEADLINE_EXCEEDED,
             "接続不足", ExclusionReasonCode.CONNECTION_TOO_SHORT,
             "接続できない", ExclusionReasonCode.NOT_CONNECTABLE,
-            "情報不足", ExclusionReasonCode.INFO_INSUFFICIENT);
+            "情報不足", ExclusionReasonCode.INFO_INSUFFICIENT,
+            "貨物種別", ExclusionReasonCode.CARGO_NOT_SUPPORTED);
 
     private final RoutingCaseCommandService commandService;
     private final RoutingCaseQueryService queryService;
     private final InMemoryVoyageRepository voyages;
     private final InMemoryConnectionRuleRepository rules;
+    private final InMemoryRoutingCaseRepository caseRepository;
     private final MutableClock clock;
     private CandidateCalculationOutcome outcome;
     private GoldenDatasetCase goldenCase;
@@ -66,11 +70,13 @@ public class RoutingSteps {
             RoutingCaseQueryService queryService,
             InMemoryVoyageRepository voyages,
             InMemoryConnectionRuleRepository rules,
+            InMemoryRoutingCaseRepository caseRepository,
             MutableClock clock) {
         this.commandService = commandService;
         this.queryService = queryService;
         this.voyages = voyages;
         this.rules = rules;
+        this.caseRepository = caseRepository;
         this.clock = clock;
     }
 
@@ -223,6 +229,35 @@ public class RoutingSteps {
         assertThat(cases.getFirst().origin()).isEqualTo(new Location(origin));
         assertThat(cases.getFirst().destination()).isEqualTo(new Location(destination));
         assertThat(cases.getFirst().arrivalDeadline()).isEqualTo(at(deadline));
+    }
+
+    /**
+     * 案件の貨物種別を差し替える（Bolt 39i）。特殊貨物の輸送要求は提出で拒まれ案件に届かないので、通常の流れでは作れない。
+     * 二重の守りの判定（BR-02、BR-03）を確かめるために、できた案件の経路条件の貨物種別だけを書き換える。
+     */
+    @前提("案件の貨物種別は {string} である")
+    public void 案件の貨物種別は_である(String category) {
+        RoutingCase current = currentCase();
+        RouteSpecification specification = current.specification();
+        caseRepository.updateBySystem(RoutingCase.reconstitute(
+                current.id(),
+                current.number(),
+                current.transportRequestId(),
+                current.transportRequestNumber(),
+                current.transportRequestVersionNo(),
+                current.quotationId(),
+                current.routePolicyVia(),
+                new RouteSpecification(
+                        specification.origin(),
+                        specification.destination(),
+                        specification.arrivalDeadline(),
+                        RouteCargoCategory.valueOf(category)),
+                current.requestedAt(),
+                current.quotationExpiresAt().orElse(null),
+                current.requestedBy().orElse(null),
+                current.shipperCompanyId(),
+                current.routeVersions(),
+                current.aggregateVersion()));
     }
 
     @もし("経路設計者が案件の候補を算出する")

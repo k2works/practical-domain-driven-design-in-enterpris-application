@@ -25,6 +25,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 /**
  * 経路設計案件（R-INV-10、US-06 AC1。Bolt 17）。情報不足（US-06 AC4、R-INV-09。Bolt 37b2）。
@@ -314,7 +316,132 @@ class RoutingCaseTest {
         assertThat(routingCase.routeVersion().status()).isEqualTo(RouteVersionStatus.CANDIDATES_PRESENTED);
     }
 
+    /** 貨物種別で除外する（BR-02、BR-03、R-INV-02。Bolt 39i の行 5〜8）。 */
+    @org.junit.jupiter.api.Nested
+    class Bolt39i_貨物種別の除外 {
+
+        private static final Location HONG_KONG = new Location("HKHKG");
+        private final List<ConnectionRule> rules = List.of(
+                RULES.getFirst(),
+                new ConnectionRule(
+                        UUID.randomUUID(), HONG_KONG, Duration.ofHours(8), at("2026-01-01T00:00:00Z"), null));
+
+        /** 直行、積替え 1 回（V-A + V-S）、積替え 2 回（V-A + V-B + V-C）の 3 つの候補ができる航海。 */
+        private List<Voyage> threeCandidateVoyages() {
+            return List.of(
+                    direct("V-D", "2026-10-31T00:00:00Z"),
+                    voyage("V-A", TOKYO, "2026-10-08T00:00:00Z", SINGAPORE, "2026-10-09T00:00:00Z"),
+                    fromSingapore("V-S", "2026-10-09T10:00:00Z", "2026-10-30T00:00:00Z"),
+                    voyage("V-B", SINGAPORE, "2026-10-09T10:00:00Z", HONG_KONG, "2026-10-12T00:00:00Z"),
+                    voyage("V-C", HONG_KONG, "2026-10-12T10:00:00Z", ROTTERDAM, "2026-10-29T00:00:00Z"));
+        }
+
+        private Voyage voyage(String number, Location from, String departure, Location to, String arrival) {
+            return new Voyage(
+                    number,
+                    List.of(new PortCall(from, null, at(departure)), new PortCall(to, at(arrival), null)),
+                    number + "@1",
+                    at("2026-10-07T01:00:00Z"));
+        }
+
+        @ParameterizedTest(name = "{0} の案件は候補がすべて貨物種別で除外される")
+        @EnumSource(
+                value = RouteCargoCategory.class,
+                names = {"DANGEROUS", "REEFER", "OTHER_SPECIAL", "UNRECOGNIZED"})
+        void 特殊貨物の案件は三つの候補がすべて除外され数えは算出した件数のまま到着の早い順(RouteCargoCategory category) {
+            RoutingCase routingCase = open(category);
+
+            CandidateCalculation calculation = routingCase.calculateCandidates(
+                    threeCandidateVoyages(), rules, JUDGED_AT, finder, evaluator, freshness);
+
+            assertThat(calculation).isEqualTo(new CandidateCalculation(3, 3, 0, JUDGED_AT));
+            assertThat(routingCase.routeVersion().candidates())
+                    .allSatisfy(candidate -> assertThat(candidate.evaluation().reasons())
+                            .extracting(ExclusionReason::threshold)
+                            .containsExactly(new ExclusionThreshold.UnsupportedCargo(category)));
+            assertThat(routingCase.routeVersion().candidates())
+                    .extracting(candidate -> candidate.legs().stream()
+                            .map(leg -> leg.voyageNumber())
+                            .toList())
+                    .containsExactly(List.of("V-A", "V-B", "V-C"), List.of("V-A", "V-S"), List.of("V-D"));
+        }
+
+        @Test
+        void 理由の順は接続不足と期限超過と情報不足と貨物種別() {
+            RoutingCase routingCase = open(RouteCargoCategory.REEFER);
+            List<Voyage> voyages = List.of(
+                    // 取得が 30 時間前（情報不足）、シンガポールで 5 時間の接続（接続不足）、期限の後に着く（期限超過）
+                    new Voyage(
+                            "V-F",
+                            List.of(
+                                    new PortCall(TOKYO, null, at("2026-10-08T00:00:00Z")),
+                                    new PortCall(SINGAPORE, at("2026-10-09T00:00:00Z"), null)),
+                            "V-F@1",
+                            minusHours(JUDGED_AT, 30)),
+                    fromSingapore("V-L", "2026-10-09T05:00:00Z", "2026-11-03T12:00:00Z"));
+
+            routingCase.calculateCandidates(voyages, rules, JUDGED_AT, finder, evaluator, freshness);
+
+            assertThat(routingCase.routeVersion().candidates()).hasSize(1);
+            assertThat(routingCase
+                            .routeVersion()
+                            .candidates()
+                            .getFirst()
+                            .evaluation()
+                            .reasons())
+                    .extracting(ExclusionReason::code)
+                    .containsExactly(
+                            ExclusionReasonCode.CONNECTION_TOO_SHORT,
+                            ExclusionReasonCode.DEADLINE_EXCEEDED,
+                            ExclusionReasonCode.INFO_INSUFFICIENT,
+                            ExclusionReasonCode.CARGO_NOT_SUPPORTED);
+        }
+
+        @Test
+        void 候補が0件の算出は特殊貨物でも理由を作らない() {
+            RoutingCase routingCase = open(RouteCargoCategory.DANGEROUS);
+
+            CandidateCalculation calculation =
+                    routingCase.calculateCandidates(List.of(), rules, JUDGED_AT, finder, evaluator, freshness);
+
+            assertThat(calculation).isEqualTo(new CandidateCalculation(0, 0, 0, JUDGED_AT));
+            assertThat(routingCase.routeVersion().candidates()).isEmpty();
+        }
+
+        @Test
+        void 再算出は候補を入れ直し同じ理由になる() {
+            RoutingCase routingCase = open(RouteCargoCategory.DANGEROUS);
+            routingCase.calculateCandidates(
+                    List.of(direct("V-D", "2026-10-31T00:00:00Z")), rules, JUDGED_AT, finder, evaluator, freshness);
+
+            routingCase.calculateCandidates(
+                    List.of(direct("V-E", "2026-10-30T00:00:00Z")), rules, JUDGED_AT, finder, evaluator, freshness);
+
+            assertThat(routingCase.routeVersion().candidates()).hasSize(1);
+            assertThat(routingCase
+                            .routeVersion()
+                            .candidates()
+                            .getFirst()
+                            .legs()
+                            .getFirst()
+                            .voyageNumber())
+                    .isEqualTo("V-E");
+            assertThat(routingCase
+                            .routeVersion()
+                            .candidates()
+                            .getFirst()
+                            .evaluation()
+                            .reasons())
+                    .extracting(ExclusionReason::code)
+                    .containsExactly(ExclusionReasonCode.CARGO_NOT_SUPPORTED);
+        }
+    }
+
     static RoutingCase open() {
+        return open(RouteCargoCategory.GENERAL);
+    }
+
+    static RoutingCase open(RouteCargoCategory category) {
         return RoutingCase.open(
                 new RoutingCaseId(UUID.randomUUID()),
                 new RoutingCaseNumber(2026, 1),
@@ -323,7 +450,7 @@ class RoutingCaseTest {
                 1,
                 UUID.randomUUID(),
                 List.of(SINGAPORE),
-                new RouteSpecification(TOKYO, ROTTERDAM, DEADLINE, RouteCargoCategory.GENERAL),
+                new RouteSpecification(TOKYO, ROTTERDAM, DEADLINE, category),
                 at("2026-10-06T02:00:00Z"),
                 QUOTATION_EXPIRES_AT,
                 REQUESTED_BY,

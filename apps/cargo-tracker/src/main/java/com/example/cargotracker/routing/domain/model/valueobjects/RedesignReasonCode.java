@@ -22,7 +22,8 @@ public enum RedesignReasonCode {
      * 制約適合判定の理由の区分を写す（Bolt 37d2）。
      *
      * @throws IllegalStateException 貨物種別・情報不足（評価は貨物種別と鮮度を見ないので出ない。出たら評価の前提が崩れている。
-     *     制約適合判定が貨物種別を判定するようになったら、写しを見直す）
+     *     貨物種別は Bolt 39i から算出のときに判定するが、評価は {@code ConstraintEvaluator} だけを通り貨物種別を判定し直さないので、
+     *     見直して写しは変えない）
      */
     public static RedesignReasonCode from(ExclusionReasonCode code) {
         return switch (code) {

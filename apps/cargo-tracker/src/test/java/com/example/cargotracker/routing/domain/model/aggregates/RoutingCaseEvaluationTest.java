@@ -23,6 +23,7 @@ import com.example.cargotracker.routing.domain.model.valueobjects.Leg;
 import com.example.cargotracker.routing.domain.model.valueobjects.PortCall;
 import com.example.cargotracker.routing.domain.model.valueobjects.RedesignReasonCode;
 import com.example.cargotracker.routing.domain.model.valueobjects.RedesignRecord;
+import com.example.cargotracker.routing.domain.model.valueobjects.RouteCargoCategory;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteConfirmation;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteVersionStatus;
 import com.example.cargotracker.shared.domain.Location;
@@ -294,6 +295,25 @@ class RoutingCaseEvaluationTest {
                     List.of(SINGAPORE_8H));
 
             assertReasons(routingCase, RedesignReasonCode.DEADLINE_EXCEEDED);
+        }
+    }
+
+    /** 確定した経路の評価は貨物種別を見ない（Bolt 39i の行 12。domain_model の「鮮度と貨物種別は見ない」のまま）。 */
+    @Nested
+    class Bolt39i_評価は貨物種別を見ない {
+
+        @Test
+        void 特殊貨物の案件の確定した経路も例外にならず期限超過の理由だけで再設計要になる() {
+            RoutingCase dangerous = RoutingCaseFixture.withRouteVersions(
+                    RoutingCaseTest.open(RouteCargoCategory.DANGEROUS),
+                    confirmed(List.of(SINGAPORE_8H)).routeVersions());
+
+            evaluate(
+                    dangerous,
+                    replaced(VOYAGES, connection("V-CONN@1", "2026-10-09T10:00:00Z", "2026-11-03T00:00:00Z")),
+                    List.of(SINGAPORE_8H));
+
+            assertReasons(dangerous, RedesignReasonCode.DEADLINE_EXCEEDED);
         }
     }
 

@@ -6,6 +6,7 @@ import com.example.cargotracker.routing.domain.model.entities.RouteCandidate;
 import com.example.cargotracker.routing.domain.model.entities.RouteVersion;
 import com.example.cargotracker.routing.domain.model.rules.ConstraintEvaluator;
 import com.example.cargotracker.routing.domain.model.rules.InfoFreshnessPolicy;
+import com.example.cargotracker.routing.domain.model.rules.RoutableCargoPolicy;
 import com.example.cargotracker.routing.domain.model.rules.RouteCandidateFinder;
 import com.example.cargotracker.routing.domain.model.valueobjects.CandidateCalculation;
 import com.example.cargotracker.routing.domain.model.valueobjects.ConstraintEvaluation;
@@ -201,7 +202,8 @@ public final class RoutingCase {
                         legs,
                         evaluator
                                 .evaluate(specification, legs, rules)
-                                .withAddedReasons(freshness.evaluate(legs, judgedAt))))
+                                .withAddedReasons(freshness.evaluate(legs, judgedAt))
+                                .withAddedReasons(RoutableCargoPolicy.evaluate(specification.cargoCategory(), legs))))
                 .sorted(PRESENTATION_ORDER)
                 .toList();
         List<RouteCandidate> candidates = new ArrayList<>();
