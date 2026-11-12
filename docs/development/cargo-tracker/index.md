@@ -157,7 +157,7 @@ Bolt がイテレーションに当たります。ふりかえりは各 Bolt の
 | 39gb | [下書きの候補を判定して示し、追跡管理者が候補を採用する](bolt_39gb_plan.md) | [終了報告](bolt_39gb_report.md)（[動画](../../assets/demo/bolt-39gb/adopt-candidate.webm){:target="_blank"}） | W7 | 完了 |
 | 39gc | [時系列に反する実績を確認中にし、DE-18 を出し、手入力の取消済み・完了後を決める](bolt_39gc_plan.md) | [終了報告](bolt_39gc_report.md)（[動画](../../assets/demo/bolt-39gc/under-review.webm){:target="_blank"}） | W7 | 完了 |
 | 39g2 | [集荷の採用と引渡しの確認を予約の公開 API で予約に返し、追加する実績の選び方を直す](bolt_39g2_plan.md) | [終了報告](bolt_39g2_report.md)（[動画](../../assets/demo/bolt-39g2/transport-phase.webm){:target="_blank"}） | W7 | 完了 |
-| 39g3 | [採用した実績で最新の到着見込みを動かし、最終取得時刻を示す](bolt_39g3_plan.md) | — | W7 | 計画済み（承認済み） |
+| 39g3 | [採用した実績で最新の到着見込みを動かし、最終取得時刻を示す](bolt_39g3_plan.md) | [終了報告](bolt_39g3_report.md)（[動画](../../assets/demo/bolt-39g3/latest-estimate.webm){:target="_blank"}） | W7 | 完了 |
 
 Bolt を始めるときに行を追加します。
 

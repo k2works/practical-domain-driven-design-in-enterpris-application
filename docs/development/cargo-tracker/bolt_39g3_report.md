@@ -2,8 +2,10 @@
 type: Plan
 title: "Bolt 39g3 終了報告 - 採用した実績で最新の到着見込みを動かし、最終取得時刻を示す"
 tags: [plan]
-status: draft
+status: stable
 generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-12T02:28:57Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-11-12T02:30:49Z }
 ---
 
 # Bolt 39g3 終了報告 - 採用した実績で最新の到着見込みを動かし、最終取得時刻を示す
@@ -126,6 +128,7 @@ generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-12T02:28:57Z }
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
 | 2026-11-11 | 初版作成 | anthropic/claude-sonnet-5-5 |
+| 2026-11-12 | 推奨のとおり承認として記録した（議題 1〜7。以降は推奨で進める指示による。配備の前の件数の確認と T-247 の議題は W7 の締めへ。human:kakimomokuri） | anthropic/claude-sonnet-5-5、承認 human:kakimomokuri |
 
 ## 関連ドキュメント
 
