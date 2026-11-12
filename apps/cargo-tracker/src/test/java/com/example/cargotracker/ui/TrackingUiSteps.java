@@ -104,6 +104,24 @@ public class TrackingUiSteps {
         browser.checkAccessibility();
     }
 
+    /** Bolt 39g4c の行 12。見込みの根拠の 1 行は最新の到着見込みの次（定義リストを {@code dt} の名前で引く）。 */
+    @ならば("追跡の詳細の見込みの根拠は {string} である")
+    public void 追跡の詳細の見込みの根拠(String basis) {
+        assertThat(definition("見込みの根拠")).hasText(basis);
+        browser.checkAccessibility();
+    }
+
+    /** Bolt 39g4c の行 12。航海番号は撮るたびに変わり、取得時刻は取り込んだ時刻（実の時計）なので、航海番号はシナリオの状態から、時刻は形で確かめる。 */
+    @ならば("追跡の詳細の見込みの根拠は確定した経路の直行の航海の到着予定で、取得時刻が示される")
+    public void 追跡の詳細の見込みの根拠は航海の到着予定() {
+        String dateTime =
+                STAFF_DATE_TIME.pattern().substring(1, STAFF_DATE_TIME.pattern().length() - 1);
+        assertThat(definition("見込みの根拠"))
+                .hasText(Pattern.compile("^航海 " + PlaywrightText.literal(state.voyageNumber("DIRECT")) + " の到着予定（取得 "
+                        + dateTime + "）$"));
+        browser.checkAccessibility();
+    }
+
     @ならば("追跡一覧の確定した予約の行に最新の到着見込み {string} と最終取得時刻が示される")
     public void 追跡一覧の行の見込みと最終取得時刻(String latestEta) {
         Locator row = trackingList()

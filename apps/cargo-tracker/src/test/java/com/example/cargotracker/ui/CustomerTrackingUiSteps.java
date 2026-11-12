@@ -96,6 +96,13 @@ public class CustomerTrackingUiSteps {
         browser.checkAccessibility();
     }
 
+    /** Bolt 39g4c の行 12（T-INV-09。【業務の判断】(aw)）。荷主の照会の結果に見込みの根拠を出さない。 */
+    @ならば("照会の結果に見込みの根拠は示されない")
+    public void 照会の結果に見込みの根拠は示されない() {
+        assertThat(page().getByText("見込みの根拠")).hasCount(0);
+        browser.checkAccessibility();
+    }
+
     @ならば("照会の結果に現在状態 {string} と予定と主要実績 {string} と出典 {string} が示される")
     public void 照会の結果が示される(String status, String milestone, String source) {
         assertThat(page().getByRole(
