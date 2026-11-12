@@ -2,7 +2,7 @@
 type: Plan
 title: "Bolt 39h2 終了報告 - S-17 で差異を一覧に出して却下する"
 tags: [plan]
-status: draft
+status: stable
 generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-12T14:40:00Z }
 ---
 
@@ -128,3 +128,4 @@ S-17 の判断を待つ一覧と件数に差異を出し、判断の画面「差
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
 | 2026-11-12 | 初版作成 | anthropic/claude-sonnet-5-5 |
+| 2026-11-12 | 推奨のとおり承認として記録した（議題 1〜5。以降は推奨で進める指示による。T-247 の手順化・配備前の件数の確認は W7 の締めへ。human:kakimomokuri） | anthropic/claude-sonnet-5-5、承認 human:kakimomokuri |
