@@ -419,27 +419,26 @@ final class RoutingCaseViews {
     /** 除外の理由の文言。不適合となった時刻・閾値・参照情報版を示す（R-INV-02）。情報不足は古い航海・許容時間・取得時刻（Bolt 37b2）。 */
     static String reason(ExclusionReason reason, List<Leg> legs) {
         return switch (reason.threshold()) {
-            case ArrivalDeadline threshold ->
+            case ArrivalDeadline(UtcInstant limit) ->
                 "期限超過 "
                         + DurationDisplay.connection(Duration.between(
-                                threshold.deadline().instant(),
-                                reason.violatedAt().instant()))
-                        + "（到着予定 " + dateTime(reason.violatedAt()) + "、期限 " + dateTime(threshold.deadline()) + "）"
+                                limit.instant(), reason.violatedAt().instant()))
+                        + "（到着予定 " + dateTime(reason.violatedAt()) + "、期限 " + dateTime(limit) + "）"
                         + INFO_VERSION + reason.infoVersion();
-            case MinimumConnection threshold ->
-                "接続不足（" + threshold.port().unLocode() + " で接続 " + connection(reason, legs) + "、必要 "
-                        + DurationDisplay.connection(threshold.required()) + "、"
-                        + threshold.port().unLocode()
+            case MinimumConnection(Location rulePort, Duration required) ->
+                "接続不足（" + rulePort.unLocode() + " で接続 " + connection(reason, legs) + "、必要 "
+                        + DurationDisplay.connection(required) + "、"
+                        + rulePort.unLocode()
                         + " の規則）。次の出発 " + dateTime(reason.violatedAt()) + INFO_VERSION + reason.infoVersion();
-            case ConnectionRuleMissing threshold ->
-                "接続を判定できない（" + threshold.port().unLocode() + " に次の出発の時刻で有効な接続時間規則がない。接続 "
+            case ConnectionRuleMissing(Location missingPort) ->
+                "接続を判定できない（" + missingPort.unLocode() + " に次の出発の時刻で有効な接続時間規則がない。接続 "
                         + connection(reason, legs) + "）。次の出発 " + dateTime(reason.violatedAt())
                         + INFO_VERSION + reason.infoVersion();
-            case UnsupportedCargo threshold ->
-                "貨物種別に対応しない（" + cargoName(threshold.category()) + "。MVP の対象は一般貨物だけで、手動の窓口で扱う）。最初の出発 "
+            case UnsupportedCargo(RouteCargoCategory category) ->
+                "貨物種別に対応しない（" + cargoName(category) + "。MVP の対象は一般貨物だけで、手動の窓口で扱う）。最初の出発 "
                         + dateTime(reason.violatedAt()) + INFO_VERSION + reason.infoVersion();
-            case StaleVoyageInfo threshold ->
-                "情報不足（" + threshold.voyageNumber() + " の情報は取得から " + hours(threshold.tolerance())
+            case StaleVoyageInfo(String number, Duration tolerance) ->
+                "情報不足（" + number + " の情報は取得から " + hours(tolerance)
                         + "を過ぎている）。取得 " + dateTime(reason.infoAcquiredAt().orElseThrow())
                         + INFO_VERSION + reason.infoVersion();
         };

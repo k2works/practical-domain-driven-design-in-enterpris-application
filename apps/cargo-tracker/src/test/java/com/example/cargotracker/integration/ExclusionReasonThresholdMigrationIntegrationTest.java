@@ -190,7 +190,8 @@ class ExclusionReasonThresholdMigrationIntegrationTest {
         insertParents(jdbc);
         insertOldReason(jdbc, 1, "NOT_CONNECTABLE", null);
 
-        assertThatThrownBy(() -> database.flyway("latest").migrate()).isInstanceOf(FlywayException.class);
+        Flyway latest = database.flyway("latest");
+        assertThatThrownBy(latest::migrate).isInstanceOf(FlywayException.class);
         assertOldFormRemains(vendor, jdbc, 1);
     }
 
@@ -204,7 +205,8 @@ class ExclusionReasonThresholdMigrationIntegrationTest {
         insertOldReason(jdbc, 1, "CONNECTION_TOO_SHORT", "SGSINPT8H");
         insertOldReason(jdbc, 2, "INFO_INSUFFICIENT", "PT24H");
 
-        assertThatThrownBy(() -> database.flyway("latest").migrate()).isInstanceOf(FlywayException.class);
+        Flyway latest = database.flyway("latest");
+        assertThatThrownBy(latest::migrate).isInstanceOf(FlywayException.class);
         assertOldFormRemains(vendor, jdbc, 2);
     }
 

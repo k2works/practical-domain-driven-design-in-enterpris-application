@@ -338,18 +338,17 @@ public class MyBatisRoutingCaseRepository implements RoutingCaseRepository {
         String freshnessTolerance = null;
         String cargoCategory = null;
         switch (reason.threshold()) {
-            case ArrivalDeadline threshold -> deadline = toOffset(threshold.deadline());
-            case MinimumConnection threshold -> {
-                port = threshold.port().unLocode();
-                requiredConnection = threshold.required().toString();
+            case ArrivalDeadline(UtcInstant limit) -> deadline = toOffset(limit);
+            case MinimumConnection(Location rulePort, Duration required) -> {
+                port = rulePort.unLocode();
+                requiredConnection = required.toString();
             }
-            case ConnectionRuleMissing threshold -> port = threshold.port().unLocode();
-            case StaleVoyageInfo threshold -> {
-                voyageNumber = threshold.voyageNumber();
-                freshnessTolerance = threshold.tolerance().toString();
+            case ConnectionRuleMissing(Location missingPort) -> port = missingPort.unLocode();
+            case StaleVoyageInfo(String number, Duration tolerance) -> {
+                voyageNumber = number;
+                freshnessTolerance = tolerance.toString();
             }
-            case UnsupportedCargo threshold ->
-                cargoCategory = threshold.category().name();
+            case UnsupportedCargo(RouteCargoCategory category) -> cargoCategory = category.name();
         }
         return new ExclusionReasonRow(
                 routingCaseId,

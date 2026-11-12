@@ -1058,8 +1058,8 @@ class MyBatisRoutingRepositoriesIntegrationTest {
                     broken,
                     routingCase.id().value());
 
-            assertThatThrownBy(() -> repository.findByNumber(routingCase.number()))
-                    .isInstanceOf(IllegalArgumentException.class);
+            RoutingCaseNumber number = routingCase.number();
+            assertThatThrownBy(() -> repository.findByNumber(number)).isInstanceOf(IllegalArgumentException.class);
         }
 
         private RoutingCase openWith(RouteCargoCategory category) {
@@ -1182,8 +1182,8 @@ class MyBatisRoutingRepositoriesIntegrationTest {
                             + " WHERE routing_case_id = ? AND reason_code = 'CARGO_NOT_SUPPORTED'",
                     saved.id().value());
 
-            assertThatThrownBy(() -> repository.findByNumber(saved.number()))
-                    .isInstanceOf(IllegalArgumentException.class);
+            RoutingCaseNumber number = saved.number();
+            assertThatThrownBy(() -> repository.findByNumber(number)).isInstanceOf(IllegalArgumentException.class);
         }
 
         @Test
@@ -1194,8 +1194,8 @@ class MyBatisRoutingRepositoriesIntegrationTest {
                             + " WHERE routing_case_id = ? AND reason_code = 'INFO_INSUFFICIENT'",
                     saved.id().value());
 
-            assertThatThrownBy(() -> repository.findByNumber(saved.number()))
-                    .isInstanceOf(IllegalArgumentException.class);
+            RoutingCaseNumber number = saved.number();
+            assertThatThrownBy(() -> repository.findByNumber(number)).isInstanceOf(IllegalArgumentException.class);
         }
 
         static java.util.stream.Stream<org.junit.jupiter.params.provider.Arguments> wrongCombinations() {
@@ -1232,7 +1232,8 @@ class MyBatisRoutingRepositoriesIntegrationTest {
         void 区分と列の組が違う行はCHECKで拒否される(String description, String reasonCode, Set<String> set) {
             RoutingCase saved = savedCalculated(RouteCargoCategory.GENERAL);
 
-            assertThatThrownBy(() -> insertReason(reasonCode, saved.id().value(), 99, set))
+            UUID caseId = saved.id().value();
+            assertThatThrownBy(() -> insertReason(reasonCode, caseId, 99, set))
                     .as(description)
                     .isInstanceOf(DataIntegrityViolationException.class);
         }

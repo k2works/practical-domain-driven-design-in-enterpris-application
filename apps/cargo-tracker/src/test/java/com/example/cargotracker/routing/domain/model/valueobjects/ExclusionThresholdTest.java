@@ -112,8 +112,8 @@ class ExclusionThresholdTest {
 
         @Test
         void 航海番号が空白だけなら作れない() {
-            assertThatThrownBy(() -> new StaleVoyageInfo(" ", Duration.ofHours(24)))
-                    .isInstanceOf(IllegalArgumentException.class);
+            Duration tolerance = Duration.ofHours(24);
+            assertThatThrownBy(() -> new StaleVoyageInfo(" ", tolerance)).isInstanceOf(IllegalArgumentException.class);
         }
     }
 }

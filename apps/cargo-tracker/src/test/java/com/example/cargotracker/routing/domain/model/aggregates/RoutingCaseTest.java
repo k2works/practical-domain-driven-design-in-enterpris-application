@@ -10,6 +10,7 @@ import com.example.cargotracker.routing.domain.model.valueobjects.CandidateCalcu
 import com.example.cargotracker.routing.domain.model.valueobjects.ExclusionReason;
 import com.example.cargotracker.routing.domain.model.valueobjects.ExclusionReasonCode;
 import com.example.cargotracker.routing.domain.model.valueobjects.ExclusionThreshold;
+import com.example.cargotracker.routing.domain.model.valueobjects.Leg;
 import com.example.cargotracker.routing.domain.model.valueobjects.PortCall;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteCargoCategory;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteSpecification;
@@ -360,9 +361,8 @@ class RoutingCaseTest {
                             .extracting(ExclusionReason::threshold)
                             .containsExactly(new ExclusionThreshold.UnsupportedCargo(category)));
             assertThat(routingCase.routeVersion().candidates())
-                    .extracting(candidate -> candidate.legs().stream()
-                            .map(leg -> leg.voyageNumber())
-                            .toList())
+                    .extracting(candidate ->
+                            candidate.legs().stream().map(Leg::voyageNumber).toList())
                     .containsExactly(List.of("V-A", "V-B", "V-C"), List.of("V-A", "V-S"), List.of("V-D"));
         }
 
