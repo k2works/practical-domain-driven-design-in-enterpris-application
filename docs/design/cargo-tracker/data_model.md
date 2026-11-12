@@ -449,7 +449,12 @@ entity "exclusion_reason\n除外理由" as ex {
   --
   * reason_code : VARCHAR(30)
   violated_at : TIMESTAMPTZ
-  threshold : VARCHAR(100)
+  threshold_deadline : TIMESTAMPTZ
+  threshold_port_unlocode : CHAR(5)
+  threshold_required_connection : VARCHAR(30)
+  threshold_voyage_number : VARCHAR(30)
+  threshold_freshness_tolerance : VARCHAR(30)
+  threshold_cargo_category : VARCHAR(30)
   info_version : VARCHAR(100)
 }
 entity "referenced_info_version\n参照情報版" as riv {
@@ -516,7 +521,8 @@ Bolt 17（US-06 AC1〜AC3）で作る範囲（[Bolt 17 計画](../../development
 - `routing` スキーマに、`routing_case`・`route_version`・`route_candidate`・`candidate_leg`・`exclusion_reason`・`voyage`・`port_call`・`connection_rule` と、案件番号の採番の `routing_case_number_counter`（年ごとに 1 行。`quotation.transport_request_number_counter` と同じ形）を作る。`route_version` の判断・承認の列（`rationale`、`decided_by`、`approved_by`、`approved_at`、`selected_candidate_no`）、再設計の列（`previous_route_version_no`、`redesign_cause`）と `referenced_info_version` は、使う Bolt（US-07・US-08）で足す。
 - `routing_case.case_number` は案件番号（`RC-年-連番`。UK）。画面と URL には案件番号だけを出す（D-4）。
 - 実装で足した列（Bolt 17 のステップ 3）: `routing_case.transport_request_number`（業務番号の写し。S-05 で見積依頼を示す）、`routing_case.requested_at`（詳細経路設計の依頼時刻。S-05 の並びと案件番号の年）、`route_version.candidates_evaluated_at`（候補の判定時刻。候補が 0 件でも算出したことを残す）、`candidate_leg.info_version`・`info_acquired_at`（区間を取った航海の採用情報版と取得時刻。理由の参照情報版と情報鮮度に使う）。`routing_case` の `created_by`・`updated_by` は、操作者を残す Bolt（US-07 の確定）で足す。`route_candidate.candidate_no` は 1〜20（候補の上限）、`voyage.source_kind` は出典の種類の 4 値を CHECK で守る。
-- `route_candidate.min_connection_slack_minutes` は候補の接続余裕（接続時間 − 必要最小接続時間の最小。分）。直行は NULL。`info_insufficient` は候補の理由に情報不足があるか（Bolt 37b2。それまでは常に false）。`exclusion_reason.threshold` の形は区分ごとに、期限超過は希望到着期限（ISO 8601 の時刻）、接続不足は「港 空白 必要最小接続時間（ISO 8601 の期間）」、接続できないは港、情報不足は「航海番号 空白 許容時間（ISO 8601 の期間）」（航海番号は空白を含み得るので、最後の空白で分ける。区切りのない行は壊れた行として読まない。Bolt 37b2）。
+- `route_candidate.min_connection_slack_minutes` は候補の接続余裕（接続時間 − 必要最小接続時間の最小。分）。直行は NULL。`info_insufficient` は候補の理由に情報不足があるか（Bolt 37b2。それまでは常に false）。除外の閾値は Bolt 39i から区分ごとの 6 列（`threshold_deadline`・`threshold_port_unlocode`・`threshold_required_connection`・`threshold_voyage_number`・`threshold_freshness_tolerance`・`threshold_cargo_category`）に分けた。期限超過は希望到着期限、接続不足は港と必要最小接続時間（ISO 8601 の期間）、接続できないは港、情報不足は航海番号（空白を含み得る）と許容時間（ISO 8601 の期間）、貨物種別は案件の貨物種別の名前。区分が持つ列だけ値があり、ほかは NULL（CHECK `ck_exclusion_reason_threshold`。【前の決定の変更】(32)。Bolt 37b2 の「1 列に詰めて最後の空白で分ける」を改めた）。
+- **Bolt 39i で足す列と消す列**: `V20261116100000__split_routing_exclusion_reason_threshold.sql` が、`exclusion_reason` に上の 6 列（すべて NULL 可）を足し、既存の行を区分ごとに移し（期限は `CAST`、接続不足は港と接続時間、情報不足は最後の空白で分ける。区切りのない行は移さず NULL のままにして CHECK で止める）、CHECK `ck_exclusion_reason_threshold`（区分が持つ列は NOT NULL、持たない列は NULL）を足し、`threshold` を消す。理由の行は消さない（消すと除外の候補が適合に変わる）。`violated_at`・`info_version` は NULL 可のまま変えない。`threshold_cargo_category` に値の CHECK は足さない（`routing_case.cargo_category` に CHECK がない前例。読み戻しで種別にない文字列を拒む）。時間は ISO 8601 の文字列のまま。**後方互換の規約への例外**（【前の決定の変更】(34)）: ステージング・本番が W10 までなく旧版と並走する現場がないため、足して移して消すを 1 つにした。W10 の後に同じ変更をするときは 3 段にする。戻すときは逆のマイグレーションを書く（前進のみ）。
 - 候補を再算出したら、経路版の候補・区間・除外理由を消して入れ直す（候補は追記専用ではない）。確定した経路版の候補は書き換えない（Bolt 19）。
 - Bolt 19（US-07 AC1・AC2）で足す列: `route_version` の `candidates_found`（見つけた候補の数。上限で示さなかった候補の数を常に示す。Bolt 17 レビュー D-64。既存の行は示した候補の数で埋める）、`selected_candidate_no`・`rationale`（VARCHAR(4000)）・`approved_by`・`approved_at`。4 列はそろって NULL かそろって値を持ち、確定では値を持ち、作成中・候補提示済み・要専門家判断では持たない（再設計要・旧版は確定の後の状態なので持てる）（CHECK `ck_route_version_confirmed`）。確定すると `routing_case.confirmed_route_version_no` に経路版番号を入れる（Bolt 37d まで。Bolt 37d でこの列と外部キーを消した）。`routing_case` の `quotation_expires_at`（DE-16 の見積有効期限。S-05 の並び）・`created_by`（行を作った操作者ではなく、DE-16 の依頼者の荷主担当者。行はイベントの購読が作る）・`updated_by`（最後に算出・確定した経路設計者）。Bolt 17 で作った行のために NULL を許す（デモ環境のサンプルの案件は `db/dev-data` で依頼元の見積りから写す）。S-05 は最新の経路版の状態を示し、見積有効期限の近い順（NULL は後ろ）、同じなら依頼の古い順に並べる。確定した経路版の行は、`updateRouteVersion` の条件（作成中・候補提示済みだけ）で書き直さない。参照情報版は `candidate_leg.info_version` から読み、写しの列は作らない。開発レビューの後に外部キーを 2 本足した（`V20261007140000`）。`routing_case`（`id`、`confirmed_route_version_no`）→ `route_version`、`route_version`（`routing_case_id`、`route_version_no`、`selected_candidate_no`）→ `route_candidate`（確定した候補を消せない）。「確定は案件に 1 つ」は H2 で部分一意インデックスを作れないため `confirmed_route_version_no` と集約の検証で守る。`decided_by`（専門判断）と再設計の列は使う Bolt で足す。
 - Bolt 37d（US-07 AC4 の準備）で足す列と消す列: `route_version` の `redesign_required_at`（再設計要にした時刻）と `redesign_reasons`（不適合の理由の区分の名前を空白で区切る。`DEADLINE_EXCEEDED`・`CONNECTION_TOO_SHORT`・`NOT_CONNECTABLE`・`VOYAGE_UNAVAILABLE`）。2 列はそろって NULL かそろって値を持ち、値を持てるのは再設計要と旧版だけ、再設計要は必ず持つ（CHECK `ck_route_version_redesign`）。再設計要は確定の記録も持つ（CHECK `ck_route_version_redesign_confirmed`）。設計の `redesign_cause`（US-08 の再設計の変更根拠）とは別の列。`routing_case.confirmed_route_version_no` と外部キーを消した。
@@ -1265,7 +1271,7 @@ src/main/resources/db/
 | 1 つの Flyway | `common` と `{vendor}` の場所を 1 つの Flyway の実行で適用し、履歴表は 1 つにする |
 | 共通部分 | 業務の表の DDL は H2 と PostgreSQL の両方で実行する（ADR-007）。CI で両方に適用して確かめる |
 | 権限 | 権限の付与と剥奪は PostgreSQL 用の `afterMigrate` のコールバックで行い、表の作成と同じ配備で反映する。新しい表を足したら、同じ変更でコールバックも更新する |
-| 後方互換 | ローリングデプロイのため、列の削除・名前の変更は「追加 → 移行 → 削除」に分ける（インフラ設計） |
+| 後方互換 | ローリングデプロイのため、列の削除・名前の変更は「追加 → 移行 → 削除」に分ける（インフラ設計）。例外: Bolt 39i の `exclusion_reason.threshold`（ステージング・本番が W10 までないため 1 つにした。W10 の後は 3 段） |
 | 日本語名のコメント | 業務の表と列には、作るマイグレーションで日本語名のコメント（`COMMENT ON TABLE`・`COMMENT ON COLUMN`）を付ける。表の日本語名は本書の ER 図、列の日本語名はドメインモデルの用語集に合わせる。ER 図（SchemaSpy）に日本語名が出る。付け忘れは PostgreSQL の統合テスト（`SchemaCommentIntegrationTest`）が検出する（2026-10-03、human:kakimomokuri）。検出する業務のスキーマの一覧（`BUSINESS_SCHEMAS`）は手で保つので、新しいスキーマを作るときに足す（`tracking` は Bolt 33c で足した） |
 | 追記専用の印 | 追記専用の表には、作るマイグレーションで表のコメントの日本語名の後ろに印を付ける（`COMMENT ON TABLE ... IS '<日本語名> [append-only]'`。2026-10-03 に `'append-only'` だけの形から変えた）。PostgreSQL の `afterMigrate` のコールバックは、コメントが ` [append-only]` で終わる表からアプリケーション利用者の UPDATE・DELETE を外す（名指しにしないので、書き忘れで保護が黙って外れない）。印の付け忘れは、権限の統合テストが設計の一覧との一致で検出する（Bolt 3 レビュー R-02）。状態などを UPDATE するが行を消してはならない表（`tracking.milestone`）は、印 ` [no-delete]` を付け、`afterMigrate` が DELETE だけを外す（Bolt 26b。権限の統合テストの `NO_DELETE_TABLES`） |
 | スキーマの自動初期化 | 使わない。スキーマと表は Flyway だけが作る（Spring Modulith の `spring.modulith.events.jdbc.schema-initialization.enabled=false`。将来の Spring Session なども同じ）。既定権限（`ALTER DEFAULT PRIVILEGES`）も使わない。Flyway 以外で作られた表に UPDATE・DELETE が付くのを防ぐ。連番（SEQUENCE、IDENTITY）を使う表を足したら、コールバックに `USAGE ON ALL SEQUENCES` の付与を足す（Bolt 3 レビュー R-25） |

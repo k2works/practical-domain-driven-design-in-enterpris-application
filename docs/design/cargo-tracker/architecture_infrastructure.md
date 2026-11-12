@@ -145,7 +145,7 @@ stop
 ```
 
 - CI/CD は GitHub Actions で構築する（AGENTS.md）。
-- DB のマイグレーションはマイグレーションツールで版管理する（第 3 章 Database Migration）。前のバージョンのアプリと互換のある変更（追加 → 移行 → 削除の段階分け）にし、ローリングデプロイ中も動くようにする。
+- DB のマイグレーションはマイグレーションツールで版管理する（第 3 章 Database Migration）。前のバージョンのアプリと互換のある変更（追加 → 移行 → 削除の段階分け）にし、ローリングデプロイ中も動くようにする。 例外: Bolt 39i の `exclusion_reason.threshold` は、ステージング・本番が W10 までなく旧版と並走する現場がないため、1 つのマイグレーションで足して移して消した（W10 の後は 3 段）。
 - 本番へのデプロイは人の承認を必須にする（開発ガイド AI-DLC 版「本番環境に関わる操作はすべて確認必須」）。
 - デモ環境（Heroku、ADR-013）は、develop の cargo-tracker CI の check・ui が緑になった後に、`deploy-demo` ジョブが自動で配備する（Bolt 16）。人の承認は要らない（ステージング・本番ではなく、非機能要件の対象にしない）。Heroku の API キーは GitHub の Environment `demo`（develop だけ）に置く。
 - W10 のステージング・本番の配備では、配備をワークフローの取り消しから切り離した専用のワークフロー（または reusable workflow）にし、イメージ（`runtime` のステージ）を 1 回だけビルドして digest をステージング・本番へ昇格させる。環境ごとに `environment`（本番は必須のレビュアー）と、ジョブに限った `id-token: write`（OIDC）を置く（Bolt 16 レビュー R-11）。
