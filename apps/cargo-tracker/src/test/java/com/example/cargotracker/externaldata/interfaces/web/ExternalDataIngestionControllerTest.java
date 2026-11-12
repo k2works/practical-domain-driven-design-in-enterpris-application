@@ -551,6 +551,7 @@ class ExternalDataIngestionControllerTest {
                 118,
                 4,
                 3,
+                0,
                 List.of(
                         "3 行目: 値が空です（external_id）。提供元に確かめてください。",
                         "5 行目: 値が空です（external_id）。提供元に確かめてください。",
@@ -560,7 +561,7 @@ class ExternalDataIngestionControllerTest {
     }
 
     @Test
-    void 行6_結果の画面に情報源と取り込んだ日時と受け取った件数と分類別の件数の3行と続けて取り込むを示す() throws Exception {
+    void 行6_結果の画面に情報源と取り込んだ日時と受け取った件数と分類別の件数の4行と続けて取り込むを示す() throws Exception {
         given(summaries.summaryOf(INGESTION_ID)).willReturn(Optional.of(summary()));
 
         mockMvc.perform(get(INGEST_URL + "/" + INGESTION_ID))
@@ -579,8 +580,8 @@ class ExternalDataIngestionControllerTest {
                 .andExpect(content().string(containsString("<td>4</td>")))
                 .andExpect(content().string(containsString("<th scope=\"row\">隔離</th>")))
                 .andExpect(content().string(containsString("<td>3</td>")))
-                // 差異の行は 39h。ナビの「隔離・差異の確認」（Bolt 39d）と区別するため、表の行の見出しで見る
-                .andExpect(content().string(not(containsString("<th scope=\"row\">差異</th>"))))
+                // 差異の行（Bolt 39h の行 8）。ナビの「隔離・差異の確認」（Bolt 39d）と区別するため、表の行の見出しで見る
+                .andExpect(content().string(containsString("<th scope=\"row\">差異</th>")))
                 .andExpect(content().string(containsString("href=\"/staff/external-data/ingestions/new\">続けて取り込む</a>")))
                 .andExpect(content().string(not(containsString("role=\"status\""))));
     }
@@ -623,7 +624,7 @@ class ExternalDataIngestionControllerTest {
     @Nested
     class Bolt39c3_隔離の理由 {
 
-        private static final String NOTES_HEADING = "<h2 id=\"quarantine-notes-heading\">隔離の理由</h2>";
+        private static final String NOTES_HEADING = "<h2 id=\"quarantine-notes-heading\">隔離・差異の理由</h2>";
         private static final String UNDECODABLE = "ファイル: 文字コードが UTF-8 ではありません。UTF-8 で保存し直したファイルを取り込んでください。";
         private static final String UNREADABLE_HEADER = "ファイル: ヘッダーを読めません。ヘッダーの引用符を確かめてください。";
 
@@ -637,6 +638,7 @@ class ExternalDataIngestionControllerTest {
                     0,
                     0,
                     quarantinedCount,
+                    0,
                     notes,
                     remaining,
                     null);
@@ -670,13 +672,13 @@ class ExternalDataIngestionControllerTest {
             resultOf(summaryWith(limit + remaining, List.of(UNDECODABLE), remaining))
                     .andExpect(content()
                             .string(containsString(
-                                    "<p>ほかに " + shownRemaining + " 件の隔離があります（最初の " + limit + " 件だけを示しています）。</p>")));
+                                    "<p>ほかに " + shownRemaining + " 件の隔離・差異があります（最初の " + limit + " 件だけを示しています）。</p>")));
         }
 
         @Test
         void 行17_隔離が0件なら隔離の理由の領域を出さない() throws Exception {
             resultOf(summaryWith(0, List.of(), 0))
-                    .andExpect(content().string(not(containsString("隔離の理由"))))
+                    .andExpect(content().string(not(containsString("隔離・差異の理由"))))
                     .andExpect(content().string(not(containsString("ファイルの行の順に示します。"))));
         }
 
@@ -704,7 +706,7 @@ class ExternalDataIngestionControllerTest {
 
         private static final String REVIEW_HEADING = "<h2 id=\"review-heading\">要確認</h2>";
         private static final String REVIEW_GUIDE =
-                "<p>取り込めなかった部分があります。取り込めなかった部分の行は分類されていません。" + "下の「隔離の理由」で理由とどうすればよいかを確かめてください。</p>";
+                "<p>取り込めなかった部分があります。取り込めなかった部分の行は分類されていません。" + "下の「隔離・差異の理由」で理由とどうすればよいかを確かめてください。</p>";
 
         private IngestionSummaryView summaryWith(IngestionSummaryView.UnreadableRegion unreadable) {
             return new IngestionSummaryView(
@@ -716,6 +718,7 @@ class ExternalDataIngestionControllerTest {
                     2,
                     0,
                     1,
+                    0,
                     List.of("12 行目からファイルの終わりまで: 引用符が閉じていません。29 行を取り込めませんでした。ファイルを確かめてください。"),
                     0,
                     unreadable);
@@ -840,6 +843,90 @@ class ExternalDataIngestionControllerTest {
     }
 
     /**
+     * Bolt 39h の行 8（S-16 の差異の行と理由。開始準備の決定 (7)）。分類別の件数の表は採用・重複・隔離・差異の 4 行で、差異が 0 件でも行を出す。
+     * 隔離か差異が 1 件以上なら「隔離・差異の理由」を出し、この取込の隔離へのリンクは隔離が 1 件以上のときだけ（S-17 に差異を出すのは 39h2）。
+     */
+    @Nested
+    class Bolt39h_差異 {
+
+        private static final String REVERSED_NOTE =
+                "2 行目: 同じ外部 ID で後に取得した外部版 \"2\" を採用しているので、前に取得したこの外部版は採用していません（版の逆転）。";
+
+        private IngestionSummaryView summaryWith(int quarantined, int discrepancy, List<String> notes, int remaining) {
+            return new IngestionSummaryView(
+                    INGESTION_ID,
+                    "開発海運（架空）",
+                    "VOYAGE",
+                    Instant.parse("2026-11-16T01:05:00Z"),
+                    3,
+                    1,
+                    0,
+                    quarantined,
+                    discrepancy,
+                    notes,
+                    remaining,
+                    null);
+        }
+
+        private String resultPage(IngestionSummaryView summary) throws Exception {
+            given(summaries.summaryOf(INGESTION_ID)).willReturn(Optional.of(summary));
+            return mockMvc.perform(get(INGEST_URL + "/" + INGESTION_ID))
+                    .andExpect(status().isOk())
+                    .andReturn()
+                    .getResponse()
+                    .getContentAsString(StandardCharsets.UTF_8);
+        }
+
+        private static Pattern tableWith(int adopted, int duplicate, int quarantined, int discrepancy) {
+            return Pattern.compile(
+                    ".*<tbody>\\s*<tr>\\s*<th scope=\"row\">採用</th>\\s*<td>" + adopted + "</td>\\s*</tr>"
+                            + "\\s*<tr>\\s*<th scope=\"row\">重複</th>\\s*<td>" + duplicate + "</td>\\s*</tr>"
+                            + "\\s*<tr>\\s*<th scope=\"row\">隔離</th>\\s*<td>" + quarantined + "</td>\\s*</tr>"
+                            + "\\s*<tr>\\s*<th scope=\"row\">差異</th>\\s*<td>" + discrepancy
+                            + "</td>\\s*</tr>\\s*</tbody>.*",
+                    Pattern.DOTALL);
+        }
+
+        @Test
+        void 行8_a_差異1件と隔離1件なら表に差異の行が出て隔離と差異の注記が行の順に並びリンクは出る() throws Exception {
+            String quarantineNote = "3 行目: 同じ外部 ID・外部版で内容の違う原本を受け取りました。";
+            String page = resultPage(summaryWith(1, 1, List.of(REVERSED_NOTE, quarantineNote), 0));
+
+            assertThat(page).matches(tableWith(1, 0, 1, 1));
+            assertThat(page).contains("<h2 id=\"quarantine-notes-heading\">隔離・差異の理由</h2>");
+            assertThat(page)
+                    .matches(Pattern.compile(
+                            ".*<li>" + Pattern.quote(REVERSED_NOTE.replace("\"", "&quot;")) + "</li>\\s*<li>"
+                                    + Pattern.quote(quarantineNote) + "</li>.*",
+                            Pattern.DOTALL));
+            assertThat(page).contains("この取込の隔離をすべて確認する");
+        }
+
+        @Test
+        void 行8_b_差異0件でも表に差異0の行が出て理由の領域は出ない() throws Exception {
+            String page = resultPage(summaryWith(0, 0, List.of(), 0));
+
+            assertThat(page).matches(tableWith(1, 0, 0, 0));
+            assertThat(page).doesNotContain("隔離・差異の理由").doesNotContain("この取込の隔離をすべて確認する");
+        }
+
+        @Test
+        void 行8_c_差異だけなら理由は出てこの取込の隔離へのリンクは出ない() throws Exception {
+            String page = resultPage(summaryWith(0, 1, List.of(REVERSED_NOTE), 0));
+
+            assertThat(page).contains("<h2 id=\"quarantine-notes-heading\">隔離・差異の理由</h2>");
+            assertThat(page).doesNotContain("この取込の隔離をすべて確認する");
+        }
+
+        @Test
+        void 行8_d_示さなかった隔離と差異があれば残りの件数を隔離と差異の文で示す() throws Exception {
+            String page = resultPage(summaryWith(1, 100, List.of(REVERSED_NOTE), 1));
+
+            assertThat(page).contains("<p>ほかに 1 件の隔離・差異があります（最初の 100 件だけを示しています）。</p>");
+        }
+    }
+
+    /**
      * Bolt 39d の行 11・12（S-17 への入口。開始準備の決定 (2)）。結果の画面の隔離の理由の領域の最後（「続けて取り込む」の前）に、隔離が 1 件以上の
      * ときだけ「この取込の隔離をすべて確認する」（その取込で絞る）を出し、ナビに「隔離・差異の確認」を出す。39c〜39c4 の同じ番号の行と名前が
      * 衝突しないよう入れ子にする。
@@ -860,6 +947,7 @@ class ExternalDataIngestionControllerTest {
                     2 - quarantinedCount,
                     0,
                     quarantinedCount,
+                    0,
                     notes,
                     0,
                     null);
@@ -880,7 +968,7 @@ class ExternalDataIngestionControllerTest {
 
             assertThat(page).contains(ENTRY_LINK);
             assertThat(page.indexOf(ENTRY_LINK))
-                    .isGreaterThan(page.indexOf("<h2 id=\"quarantine-notes-heading\">隔離の理由</h2>"))
+                    .isGreaterThan(page.indexOf("<h2 id=\"quarantine-notes-heading\">隔離・差異の理由</h2>"))
                     .isGreaterThan(page.indexOf("3 行目: 値が空です"))
                     .isLessThan(page.indexOf("</section>", page.indexOf("quarantine-notes-heading")))
                     .isLessThan(page.indexOf(">続けて取り込む</a>"));

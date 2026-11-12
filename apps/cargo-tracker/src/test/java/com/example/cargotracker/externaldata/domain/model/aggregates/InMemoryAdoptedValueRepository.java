@@ -1,5 +1,6 @@
 package com.example.cargotracker.externaldata.domain.model.aggregates;
 
+import com.example.cargotracker.externaldata.domain.model.valueobjects.ExternalIdAdoptedValue;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -51,6 +52,30 @@ public class InMemoryAdoptedValueRepository implements AdoptedValueRepository {
                         .isPresent())
                 .max(Comparator.comparing(AdoptedValue::publishedAt)
                         .thenComparing(value -> value.id().toString()));
+    }
+
+    /**
+     * この外部 ID の採用値（Bolt 39h）。メモリの受信記録のリポジトリと、それが結ぶ外部原本のリポジトリから、採用値の受信記録の外部原本の冪等性キーが
+     * 提供元・原本種別・外部 ID に一致するものを返す。並びは追記の順（ポートは並びを決めない）。
+     */
+    @Override
+    public List<ExternalIdAdoptedValue> findByExternalId(String provider, String recordType, String externalId) {
+        return values.stream()
+                .flatMap(value -> receivedRecords.findById(value.receivedRecordId()).stream()
+                        .filter(received -> receivedRecords
+                                .externalRecordOf(received)
+                                .map(ExternalRecord::key)
+                                .filter(key -> key.provider().equals(provider)
+                                        && key.recordType().equals(recordType)
+                                        && key.externalId().equals(externalId))
+                                .isPresent())
+                        .map(received -> new ExternalIdAdoptedValue(
+                                value.infoVersion(),
+                                value.targetKey(),
+                                received.acquiredAt(),
+                                value.publishedAt(),
+                                received.id())))
+                .toList();
     }
 
     /** シナリオの開始時に消す（受入シナリオ）。 */

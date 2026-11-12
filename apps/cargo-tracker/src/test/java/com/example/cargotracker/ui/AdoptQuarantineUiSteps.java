@@ -26,7 +26,7 @@ public class AdoptQuarantineUiSteps {
     private static final String IRREVOCABLE = "採用すると取り消せません。誤って採用したときは、提供元に新しい外部版で正しい原本を送ってもらってください。";
     private static final String KEYLESS_GUIDE = "形式の誤りは採用できません。直したファイルを取り込み直してください。";
     private static final String TRACKING_NUMBER_DIFFERS_GUIDE =
-            "追跡番号がこの外部版の採用値と違うので採用できません。正しい原本を使うときは、提供元に新しい外部版で送り直してもらってください。";
+            "追跡番号がこの外部版の採用値と違うので採用できません。追跡番号を直した実績は、追跡管理者に正しい追跡記録へ手入力してもらってください（新しい外部版で送り直しても差異になります）。";
     private static final String SOURCE_NOT_APPROVED_GUIDE =
             "情報源が承認済みではないため採用できません。受け取った値を使うときは、運用の手順で情報源を承認し直してから、この隔離を開き直してください。";
     private static final String REFUSED_TITLE = "採用できませんでした - 隔離の判断 - cargo-tracker";

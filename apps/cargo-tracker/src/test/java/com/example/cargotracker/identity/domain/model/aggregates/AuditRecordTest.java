@@ -400,6 +400,38 @@ class AuditRecordTest {
                 .isInstanceOf(AuditRecord.MissingEventValueException.class);
     }
 
+    /** Bolt 39h の行 6（DE-31 の監査。開始準備の決定 (8)）。 */
+    @org.junit.jupiter.api.Nested
+    class Bolt39h_外部原本の差異 {
+
+        @Test
+        void 行6_外部原本の差異は成功として差異の理由を記録し版と変更前を持たない() {
+            String receivedRecordId = UUID.randomUUID().toString();
+            String summary = "provider=P;recordType=MILESTONE;externalId=MS-0001;externalVersion=1";
+
+            AuditRecord auditRecord = AuditRecord.externalRecordDiscrepancyFound(
+                    USER, COMPANY, receivedRecordId, "VERSION_REVERSED", summary, AT);
+
+            assertThat(auditRecord.action()).isEqualTo(AuditAction.EXTERNAL_RECORD_DISCREPANCY_FOUND);
+            assertThat(auditRecord.result()).isEqualTo(AuditResult.SUCCESS);
+            assertThat(auditRecord.reason()).isEqualTo("VERSION_REVERSED");
+            assertThat(auditRecord.occurredAt()).isEqualTo(AT);
+            assertThat(auditRecord.target())
+                    .isEqualTo(new AuditTarget("RECEIVED_RECORD", receivedRecordId, null, null, summary));
+        }
+
+        @Test
+        void 行6_外部原本の差異の記録は理由と操作者を欠かせない() {
+            String id = UUID.randomUUID().toString();
+
+            assertThatThrownBy(() -> AuditRecord.externalRecordDiscrepancyFound(USER, COMPANY, id, null, "s", AT))
+                    .isInstanceOf(AuditRecord.MissingEventValueException.class);
+            assertThatThrownBy(() ->
+                            AuditRecord.externalRecordDiscrepancyFound(null, COMPANY, id, "VERSION_REVERSED", "s", AT))
+                    .isInstanceOf(AuditRecord.MissingEventValueException.class);
+        }
+    }
+
     /** Bolt 39d2 の行 11（受信記録の判断の監査。開始準備の決定 (6)）。39b3b の同じ番号の行と名前が衝突しないよう入れ子にする。 */
     @org.junit.jupiter.api.Nested
     class Bolt39d2_受信記録の判断 {

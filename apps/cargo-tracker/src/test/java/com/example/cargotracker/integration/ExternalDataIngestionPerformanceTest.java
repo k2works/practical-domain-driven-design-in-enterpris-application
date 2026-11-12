@@ -342,7 +342,7 @@ class ExternalDataIngestionPerformanceTest {
             assertThat(result.countOf(Classification.QUARANTINED)).isEqualTo(ROWS);
             assertThat(shownNotes(page)).isEqualTo(IngestionSummaryQueryService.SHOWN_QUARANTINE_LIMIT);
             assertThat(page)
-                    .contains("ほかに 9,900 件の隔離があります（最初の 100 件だけを示しています）。")
+                    .contains("ほかに 9,900 件の隔離・差異があります（最初の 100 件だけを示しています）。")
                     .doesNotContain("要確認");
         } finally {
             finish("notes", result, sourceId);
@@ -641,7 +641,10 @@ class ExternalDataIngestionPerformanceTest {
 
     /** 自分の取込の監査の発行記録がすべて完了になるまで待つ（待つ条件は自分の取込 ID と監査の受け手。T-184）。 */
     private void awaitCompletedAuditPublications(Ingested result) {
-        int expected = result.countOf(Classification.ADOPTED) + result.countOf(Classification.QUARANTINED);
+        // 監査の受け手は採用（DE-12・DE-13）・隔離（DE-14）・差異（DE-31。Bolt 39h）を受け、重複には何も出さない
+        int expected = result.countOf(Classification.ADOPTED)
+                + result.countOf(Classification.QUARANTINED)
+                + result.countOf(Classification.DISCREPANCY);
         await().atMost(DELIVERY_TIMEOUT)
                 .pollInterval(Duration.ofSeconds(2))
                 .until(() -> count(

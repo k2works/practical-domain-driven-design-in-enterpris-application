@@ -478,6 +478,27 @@ public final class AuditRecord {
     }
 
     /**
+     * 外部原本の差異を記録する（DE-31 の監査。Bolt 39h、AUD-01、IA-INV-15）。理由は差異の理由の区分（{@code VERSION_REVERSED} か
+     * {@code TARGET_KEY_DIFFERS}）。対象・変更後・必須の値は {@link #externalRecordQuarantined} と同じ。結果は成功。
+     */
+    public static AuditRecord externalRecordDiscrepancyFound(
+            UserId actor,
+            CompanyId actorCompany,
+            String receivedRecordId,
+            String reason,
+            String summary,
+            UtcInstant at) {
+        return receivedRecordAudit(
+                actor,
+                actorCompany,
+                AuditAction.EXTERNAL_RECORD_DISCREPANCY_FOUND,
+                requiredText(reason, REASON_ARGUMENT),
+                receivedRecordId,
+                summary,
+                at);
+    }
+
+    /**
      * データ責任者の受信記録の判断を記録する（DE-29 の監査。Bolt 39d2・39d3b、AUD-01、IA-INV-15）。理由は判断（{@code REJECTED} か {@code ADOPTED}）で、
      * 判断の理由の文があれば変更後の要約の最後に置き（理由の列は 100 文字まで）、理由のない採用は {@code reason} の部品を省く。対象・変更後・必須の値は
      * {@link #externalRecordAdopted} と同じ。結果は成功。

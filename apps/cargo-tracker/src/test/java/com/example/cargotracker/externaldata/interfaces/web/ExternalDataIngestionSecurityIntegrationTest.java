@@ -257,7 +257,7 @@ class ExternalDataIngestionSecurityIntegrationTest {
     }
 
     @Test
-    void 行7_内容の違う原本を含むファイルの分類別の件数は採用と重複と隔離の3行で取込の結果と一致する() throws Exception {
+    void 行7_内容の違う原本を含むファイルの分類別の件数は採用と重複と隔離と差異の4行で取込の結果と一致する() throws Exception {
         Cookie session = login(user(Set.of(Role.DATA_STEWARD)));
         byte[] content = file(row("V-1", PORT_CALLS), row("V-1", CHANGED_PORT_CALLS));
 
@@ -265,8 +265,8 @@ class ExternalDataIngestionSecurityIntegrationTest {
         String second = body(session, ingested(session, content));
 
         assertThat(counts(second)).containsExactly(0, 1, 1);
-        // 差異の行は 39h。ナビの「隔離・差異の確認」（Bolt 39d）と区別するため、表の行の見出しで見る
-        assertThat(second).doesNotContain("<th scope=\"row\">差異</th>");
+        // Bolt 39h の行 8 (b)。差異が 0 件でも差異の行を出す（ナビの「隔離・差異の確認」と区別するため、表の行の見出しで見る）
+        assertThat(countOf(second, "差異")).isZero();
     }
 
     // --- 行 15: 画面の POST から監査の配信まで ---

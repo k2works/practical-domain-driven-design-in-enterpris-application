@@ -7,6 +7,7 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
+import com.example.cargotracker.externaldata.domain.events.ExternalRecordDiscrepancyFound;
 import com.example.cargotracker.externaldata.domain.events.ExternalRecordQuarantined;
 import com.example.cargotracker.externaldata.domain.events.MilestoneAdoptedValueAccepted;
 import com.example.cargotracker.externaldata.domain.events.ReceivedRecordDecided;
@@ -486,6 +487,65 @@ class ExternalRecordAuditEventHandlerTest {
                 assertThat(log.getLevel()).isEqualTo(Level.ERROR);
                 assertThat(log.getFormattedMessage()).contains("EXTERNAL_RECORD_DECIDED", "reason");
             });
+        }
+    }
+
+    /** Bolt 39h の行 6（DE-31 の監査。開始準備の決定 (8)）。対象と変更後は DE-14 と同じ形で、理由は差異の理由、要約に比べた外部版を入れる。 */
+    @Nested
+    class Bolt39h_差異の監査 {
+
+        private ExternalRecordDiscrepancyFound found(UUID receivedRecordId, String reason) {
+            return new ExternalRecordDiscrepancyFound(
+                    receivedRecordId,
+                    INGESTION,
+                    DATA_SOURCE,
+                    "P-1",
+                    "MILESTONE",
+                    "MS-0001",
+                    "1",
+                    reason,
+                    "2",
+                    2,
+                    2,
+                    OPERATOR,
+                    OPERATOR_COMPANY,
+                    PUBLISHED_AT);
+        }
+
+        @Test
+        void 行6_a_DE31を受けると差異の理由を理由にした差異の監査記録を1つ書き再配信で重ねない() {
+            UUID receivedRecordId = UUID.randomUUID();
+            ExternalRecordDiscrepancyFound event = found(receivedRecordId, "VERSION_REVERSED");
+
+            handler.on(event);
+            handler.on(event);
+
+            assertThat(auditRecords.appended).singleElement().satisfies(written -> {
+                assertThat(written.action()).isEqualTo(AuditAction.EXTERNAL_RECORD_DISCREPANCY_FOUND);
+                assertThat(written.result()).isEqualTo(AuditResult.SUCCESS);
+                assertThat(written.reason()).isEqualTo("VERSION_REVERSED");
+                assertThat(written.actorUserId()).isEqualTo(OPERATOR);
+                assertThat(written.occurredAt()).isEqualTo(PUBLISHED_AT);
+                assertThat(written.target())
+                        .isEqualTo(new AuditTarget(
+                                RECEIVED_RECORD,
+                                receivedRecordId.toString(),
+                                null,
+                                null,
+                                "provider=P-1;recordType=MILESTONE;externalId=MS-0001;externalVersion=1"
+                                        + ";comparedExternalVersion=2;lines=2-2;ingestionId=" + INGESTION
+                                        + ";dataSourceId=" + DATA_SOURCE));
+            });
+        }
+
+        @Test
+        void 行6_理由のないDE31は書かずにERRORのログを残す() {
+            handler.on(found(UUID.randomUUID(), null));
+
+            assertThat(auditRecords.appended).isEmpty();
+            assertThat(logs.list)
+                    .singleElement()
+                    .satisfies(log -> assertThat(log.getLevel()).isEqualTo(Level.ERROR));
         }
     }
 

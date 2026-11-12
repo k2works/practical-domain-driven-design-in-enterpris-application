@@ -20,8 +20,8 @@ public interface ReceivedRecordRepository {
     int countByIngestionAndClassification(UUID ingestionId, Classification classification);
 
     /**
-     * その取込の隔離の受信記録を、行の範囲の始まりの順（範囲のないファイルの誤りを先、同じなら受信記録 ID の順）に最大 {@code limit} 件
-     * （S-16 の結果の画面の隔離の理由。Bolt 39c3）。
+     * その取込の隔離と差異の受信記録を、行の範囲の始まりの順（範囲のないファイルの誤りを先、同じなら受信記録 ID の順）に最大 {@code limit} 件
+     * （S-16 の結果の画面の隔離・差異の理由。Bolt 39c3。差異は Bolt 39h。名前の見直しは 39h2 の {@code UndecidedQuarantine} と一緒に決める）。
      */
     List<ReceivedRecord> quarantinedOf(UUID ingestionId, int limit);
 

@@ -19,8 +19,9 @@ import java.util.UUID;
  * @param adoptedCount 採用の受信記録の数
  * @param duplicateCount 重複の受信記録の数
  * @param quarantinedCount 隔離の受信記録の数（キーのない隔離を含む）
- * @param quarantineNotes 示す隔離の注記（ファイルの行の順。範囲のないファイルの誤りが先）
- * @param remainingQuarantineCount 示さなかった隔離の数（隔離の件数 − 示した数）
+ * @param discrepancyCount 差異の受信記録の数（Bolt 39h）
+ * @param quarantineNotes 示す隔離と差異の注記（ファイルの行の順。範囲のないファイルの誤りが先。差異は Bolt 39h）
+ * @param remainingQuarantineCount 示さなかった隔離と差異の数（隔離と差異の件数の和 − 示した数）
  * @param unreadable 取り込めなかった部分（要確認でなければ {@code null}。Bolt 39c4）
  */
 public record IngestionSummaryView(
@@ -32,6 +33,7 @@ public record IngestionSummaryView(
         int adoptedCount,
         int duplicateCount,
         int quarantinedCount,
+        int discrepancyCount,
         List<String> quarantineNotes,
         int remainingQuarantineCount,
         UnreadableRegion unreadable) {

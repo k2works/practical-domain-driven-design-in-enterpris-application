@@ -5,6 +5,8 @@ import com.example.cargotracker.externaldata.domain.model.aggregates.AdoptedValu
 import com.example.cargotracker.externaldata.domain.model.aggregates.ExternalRecordRepository;
 import com.example.cargotracker.externaldata.domain.model.aggregates.IngestionRepository;
 import com.example.cargotracker.externaldata.domain.model.aggregates.ReceivedRecordRepository;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.Classification;
+import java.time.Instant;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -60,5 +62,18 @@ class H2AdoptedValueRepositoryTest extends AdoptedValueRepositoryContract {
     protected UUID givenReceivedRecordOf(UUID externalRecordId) {
         return MyBatisAdoptedValueRepositoryIntegrationTest.insertAdoptedReceivedRecordOf(
                 jdbc, ingestions, receivedRecords, externalRecordId);
+    }
+
+    @Override
+    protected UUID givenExternalRecordOf(
+            String provider, String recordType, String externalId, String externalVersion) {
+        return MyBatisAdoptedValueRepositoryIntegrationTest.insertExternalRecord(
+                externalRecords, provider, recordType, externalId, externalVersion);
+    }
+
+    @Override
+    protected UUID givenReceivedRecordOf(UUID externalRecordId, Instant acquiredAt, Classification classification) {
+        return MyBatisAdoptedValueRepositoryIntegrationTest.insertReceivedRecordOf(
+                jdbc, ingestions, receivedRecords, externalRecordId, acquiredAt, classification);
     }
 }

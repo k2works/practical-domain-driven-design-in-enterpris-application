@@ -79,6 +79,17 @@ class MyBatisAdoptedValueRepositoryIntegrationTest extends AdoptedValueRepositor
         return insertAdoptedReceivedRecordOf(jdbc, ingestions, receivedRecords, externalRecordId);
     }
 
+    @Override
+    protected UUID givenExternalRecordOf(
+            String provider, String recordType, String externalId, String externalVersion) {
+        return insertExternalRecord(externalRecords, provider, recordType, externalId, externalVersion);
+    }
+
+    @Override
+    protected UUID givenReceivedRecordOf(UUID externalRecordId, Instant acquiredAt, Classification classification) {
+        return insertReceivedRecordOf(jdbc, ingestions, receivedRecords, externalRecordId, acquiredAt, classification);
+    }
+
     /** 情報源・取込・外部原本・採用の受信記録を書き、受信記録 ID を返す（H2 の契約のテストも使う）。 */
     static UUID insertAdoptedReceivedRecord(
             JdbcTemplate jdbc,
@@ -92,9 +103,19 @@ class MyBatisAdoptedValueRepositoryIntegrationTest extends AdoptedValueRepositor
     /** 航海の外部原本を書き、外部原本 ID を返す（H2 の契約のテストも使う。Bolt 39d3）。 */
     static UUID insertExternalRecord(
             ExternalRecordRepository externalRecords, String provider, String externalId, String externalVersion) {
+        return insertExternalRecord(externalRecords, provider, "VOYAGE", externalId, externalVersion);
+    }
+
+    /** 原本種別を決めた外部原本を書き、外部原本 ID を返す（H2 の契約のテストも使う。Bolt 39h）。 */
+    static UUID insertExternalRecord(
+            ExternalRecordRepository externalRecords,
+            String provider,
+            String recordType,
+            String externalId,
+            String externalVersion) {
         ExternalRecord externalRecord = new ExternalRecord(
                 UUID.randomUUID(),
-                new IdempotencyKey(provider, "VOYAGE", externalId, externalVersion),
+                new IdempotencyKey(provider, recordType, externalId, externalVersion),
                 PayloadHash.of(new byte[] {1}),
                 PayloadObjectKey.newRecordPayload(),
                 NOW);
@@ -108,6 +129,18 @@ class MyBatisAdoptedValueRepositoryIntegrationTest extends AdoptedValueRepositor
             IngestionRepository ingestions,
             ReceivedRecordRepository receivedRecords,
             UUID externalRecordId) {
+        return insertReceivedRecordOf(
+                jdbc, ingestions, receivedRecords, externalRecordId, NOW.minusSeconds(60), Classification.ADOPTED);
+    }
+
+    /** 情報源・取込と、その外部原本を指す取得時刻と分類の決まった受信記録を書き、受信記録 ID を返す（H2 の契約のテストも使う。Bolt 39h）。 */
+    static UUID insertReceivedRecordOf(
+            JdbcTemplate jdbc,
+            IngestionRepository ingestions,
+            ReceivedRecordRepository receivedRecords,
+            UUID externalRecordId,
+            Instant acquiredAt,
+            Classification classification) {
         DataSource source =
                 new DataSource(UUID.randomUUID(), "採用値の提供元-" + UUID.randomUUID(), "VOYAGE", ApprovalStatus.APPROVED);
         MyBatisExternalDataRecordRepositoriesIntegrationTest.insertDataSource(jdbc, source);
@@ -129,9 +162,9 @@ class MyBatisAdoptedValueRepositoryIntegrationTest extends AdoptedValueRepositor
                 ingestion.id(),
                 hash,
                 PayloadObjectKey.newRecordPayload(),
-                NOW.minusSeconds(60),
-                Classification.ADOPTED,
-                null,
+                acquiredAt,
+                classification,
+                classification == Classification.ADOPTED ? null : "注記",
                 NOW,
                 null,
                 null);

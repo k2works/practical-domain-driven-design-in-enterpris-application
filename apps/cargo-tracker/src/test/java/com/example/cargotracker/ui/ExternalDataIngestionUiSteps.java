@@ -32,14 +32,14 @@ public class ExternalDataIngestionUiSteps {
     private static final String FILE_LABEL = "取込ファイル（CSV、UTF-8）";
     private static final String COUNTS_CAPTION = "分類別の件数（受信記録の数）";
     /** 結果の画面の隔離の理由の見出しと説明（Bolt 39c3）。 */
-    private static final String NOTES_HEADING = "隔離の理由";
+    private static final String NOTES_HEADING = "隔離・差異の理由";
 
     private static final String NOTES_ORDER = "ファイルの行の順に示します。";
     /** 結果の画面の要確認の見出しと案内の文（Bolt 39c4 の開始準備の決定 (4)）。 */
     private static final String REVIEW_HEADING = "要確認";
 
     private static final String REVIEW_GUIDE =
-            "取り込めなかった部分があります。取り込めなかった部分の行は分類されていません。" + "下の「隔離の理由」で理由とどうすればよいかを確かめてください。";
+            "取り込めなかった部分があります。取り込めなかった部分の行は分類されていません。" + "下の「隔離・差異の理由」で理由とどうすればよいかを確かめてください。";
     private static final String VOYAGE_HEADER = "external_id,external_version,acquired_at,port_calls";
     private static final String MILESTONE_HEADER =
             "external_id,external_version,acquired_at,tracking_number,kind,location_unlocode,occurred_at";

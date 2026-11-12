@@ -7,6 +7,7 @@ import com.example.cargotracker.externaldata.application.internal.commands.Inges
 import com.example.cargotracker.externaldata.application.internal.commandservices.IngestionOutcome.Ingested;
 import com.example.cargotracker.externaldata.application.internal.commandservices.IngestionOutcome.RowResult;
 import com.example.cargotracker.externaldata.application.internal.commandservices.IngestionOutcome.Unreadable;
+import com.example.cargotracker.externaldata.domain.events.ExternalRecordDiscrepancyFound;
 import com.example.cargotracker.externaldata.domain.events.ExternalRecordQuarantined;
 import com.example.cargotracker.externaldata.domain.model.aggregates.AdoptedValueRepository;
 import com.example.cargotracker.externaldata.domain.model.aggregates.DataSource;
@@ -19,8 +20,11 @@ import com.example.cargotracker.externaldata.domain.model.aggregates.Ingestion;
 import com.example.cargotracker.externaldata.domain.model.aggregates.IngestionRepository;
 import com.example.cargotracker.externaldata.domain.model.aggregates.ReceivedRecord;
 import com.example.cargotracker.externaldata.domain.model.aggregates.ReceivedRecordRepository;
+import com.example.cargotracker.externaldata.domain.model.rules.DiscrepancyRule;
+import com.example.cargotracker.externaldata.domain.model.rules.DiscrepancyRule.Discrepancy;
 import com.example.cargotracker.externaldata.domain.model.rules.IngestionFileLimit;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.Classification;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.ExternalIdAdoptedValue;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.IdempotencyKey;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PayloadHash;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PayloadObjectKey;
@@ -58,6 +62,10 @@ import org.springframework.transaction.annotation.Transactional;
  * 受信記録には DE-14 と同じ物理行の範囲を入れ、ファイルの誤りは範囲を持たない（隔離の理由を行の順に読むため。Bolt 39c3）。
  * 形式の正しい行の受信記録（採用・重複・内容の違う原本の隔離。どれも外部原本を持つ）には取込の値の対象のキーと要約を受信記録の値として書き、
  * キーのない隔離には書かない（判断の画面で受け取った値を示し、採用の判断が同じ規則で採用値を作り直すため。Bolt 39d3・39d3b）。
+ *
+ * <p>形式の正しい行は、この外部 ID の採用値の一覧を行ごとに 1 本の照会で引き、差異の規則で版の逆転と既存の採用値との矛盾を見て、分類に渡す
+ * （US-14 AC5、ED-INV-03。Bolt 39h）。差異は外部原本（なければ作り、基準はその原本）と受信記録を書き、注記に理由と比べた外部版を書くが、採用値も
+ * DE-12・DE-13・DE-14 も作らず DE-31 だけを出す。同じ外部 ID の別の外部版を並行する取込どうしは互いの採用値を見ない（ロックしない。決定 (2)）。
  */
 @Service // JIG がユースケースとして読む印（組み立ては ExternalDataConfiguration）
 public class IngestionService {
@@ -72,6 +80,13 @@ public class IngestionService {
      * 時刻は判断の画面で読む（Bolt 39d4 の【前の決定の変更】(2)）。
      */
     private static final String QUARANTINED_NOTE = "%s: 同じ外部 ID・外部版で内容の違う原本を受け取りました。";
+
+    /** 版の逆転の差異の注記（Bolt 39h の決定 (7)）。比べた外部版はこの外部 ID の最後に取得した採用値の外部版。 */
+    private static final String VERSION_REVERSED_NOTE =
+            "%s: 同じ外部 ID で後に取得した外部版 \"%s\" を採用しているので、前に取得したこの外部版は採用していません（版の逆転）。";
+
+    /** 既存の採用値との矛盾の差異の注記（Bolt 39h の決定 (7)）。比べた外部版はこの外部 ID の採用値の外部版。 */
+    private static final String TARGET_KEY_DIFFERS_NOTE = "%s: 同じ外部 ID の採用中の外部版 \"%s\" と追跡番号が違うので採用していません（既存の採用値との矛盾）。";
 
     private final DataSourceRepository dataSources;
     private final IngestionRepository ingestions;
@@ -188,7 +203,14 @@ public class IngestionService {
         IdempotencyKey key =
                 new IdempotencyKey(source.provider(), source.recordType(), row.externalId(), row.externalVersion());
         Optional<ExternalRecord> existing = externalRecords.findByKey(key);
-        Classification classification = Classification.classify(existing.map(ExternalRecord::payloadHash), hash);
+        List<ExternalIdAdoptedValue> adoptedOfExternalId =
+                adoptedValues.findByExternalId(key.provider(), key.recordType(), key.externalId());
+        boolean versionAdopted = adoptedOfExternalId.stream()
+                .anyMatch(adopted -> adopted.externalVersion().equals(key.externalVersion()));
+        Optional<Discrepancy> discrepancy =
+                DiscrepancyRule.discrepancyOf(row.values().targetKey(), row.acquiredAt(), adoptedOfExternalId);
+        Classification classification = Classification.classify(
+                existing.map(ExternalRecord::payloadHash), versionAdopted, hash, discrepancy.map(Discrepancy::reason));
         ExternalRecord externalRecord = existing.orElseGet(() -> {
             ExternalRecord adopted = new ExternalRecord(UUID.randomUUID(), key, hash, payloadKey, now);
             externalRecords.add(adopted);
@@ -202,7 +224,7 @@ public class IngestionService {
                 payloadKey,
                 row.acquiredAt(),
                 classification,
-                noteOf(classification, row),
+                noteOf(classification, row, discrepancy),
                 now,
                 row.range(),
                 ReceivedValue.of(row.values()));
@@ -218,6 +240,9 @@ public class IngestionService {
                                 ExternalRecordQuarantined.CONTENT_MISMATCH,
                                 row.lineNumber(),
                                 row.lastLineNumber()));
+                    // 差異は採用値を作らず、DE-31 だけを出す（Bolt 39h の決定 (5)・(8)）
+                    case DISCREPANCY ->
+                        Optional.of(discrepancyEventOf(run, received, key, discrepancy.orElseThrow(), row));
                     // 重複は採用値に影響しないので、採用値もイベントもない
                     case DUPLICATE -> Optional.empty();
                 };
@@ -254,6 +279,26 @@ public class IngestionService {
                 reason,
                 firstLine,
                 lastLine,
+                run.operator().userId(),
+                run.operator().companyId(),
+                new UtcInstant(run.now()));
+    }
+
+    /** 外部原本の差異を見つけた（DE-31。Bolt 39h）。理由は差異の理由の名前、比べた外部版はこの外部 ID の採用値の外部版。 */
+    private static ExternalRecordDiscrepancyFound discrepancyEventOf(
+            Run run, ReceivedRecord received, IdempotencyKey key, Discrepancy discrepancy, IngestedRow row) {
+        return new ExternalRecordDiscrepancyFound(
+                received.id(),
+                run.ingestion().id(),
+                run.source().id(),
+                run.source().provider(),
+                run.source().recordType(),
+                key.externalId(),
+                key.externalVersion(),
+                discrepancy.reason().name(),
+                discrepancy.comparedExternalVersion(),
+                row.lineNumber(),
+                row.lastLineNumber(),
                 run.operator().userId(),
                 run.operator().companyId(),
                 new UtcInstant(run.now()));
@@ -331,12 +376,23 @@ public class IngestionService {
         return received;
     }
 
-    private static String noteOf(Classification classification, IngestedRow row) {
+    private static String noteOf(Classification classification, IngestedRow row, Optional<Discrepancy> discrepancy) {
         return switch (classification) {
             case ADOPTED -> null;
             case DUPLICATE -> DUPLICATE_NOTE.formatted(row.range().wording());
             case QUARANTINED -> QUARANTINED_NOTE.formatted(row.range().wording());
+            case DISCREPANCY -> discrepancyNoteOf(row, discrepancy.orElseThrow());
         };
+    }
+
+    /** 差異の注記（Bolt 39h の決定 (7)）。外部版は 100 文字までなので、注記は上限に収まる。 */
+    private static String discrepancyNoteOf(IngestedRow row, Discrepancy discrepancy) {
+        String format =
+                switch (discrepancy.reason()) {
+                    case VERSION_REVERSED -> VERSION_REVERSED_NOTE;
+                    case TARGET_KEY_DIFFERS -> TARGET_KEY_DIFFERS_NOTE;
+                };
+        return format.formatted(row.range().wording(), discrepancy.comparedExternalVersion());
     }
 
     /** 注記が上限の文字数（コードポイント）を超えたら、末尾を「…」で切る。 */

@@ -10,6 +10,7 @@ import com.example.cargotracker.externaldata.application.internal.commandservice
 import com.example.cargotracker.externaldata.application.internal.commandservices.IngestionService;
 import com.example.cargotracker.externaldata.application.internal.queryservices.PilotReadiness;
 import com.example.cargotracker.externaldata.application.internal.queryservices.PilotReadinessQueryService;
+import com.example.cargotracker.externaldata.domain.events.ExternalRecordDiscrepancyFound;
 import com.example.cargotracker.externaldata.domain.model.aggregates.AdoptedValue;
 import com.example.cargotracker.externaldata.domain.model.aggregates.AdoptedValue.TargetType;
 import com.example.cargotracker.externaldata.domain.model.aggregates.DataSource;
@@ -25,7 +26,10 @@ import com.example.cargotracker.externaldata.domain.model.aggregates.ReceivedRec
 import com.example.cargotracker.externaldata.domain.model.valueobjects.Classification;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.MilestoneKindValue;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.MilestoneValues;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.PortCallValue;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.TrackingNumberValue;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.VoyageValues;
+import com.example.cargotracker.shared.acceptance.DeferredEventDelivery;
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Location;
@@ -54,6 +58,7 @@ public class ExternalRecordIngestionSteps {
 
     private static final String MILESTONE_HEADER =
             "external_id,external_version,acquired_at,tracking_number,kind,location_unlocode,occurred_at";
+    private static final String VOYAGE_HEADER = "external_id,external_version,acquired_at,port_calls";
 
     /** 受入シナリオのデータ責任者。 */
     private static final AuthenticatedActor DATA_STEWARD = new AuthenticatedActor(
@@ -72,11 +77,14 @@ public class ExternalRecordIngestionSteps {
     private final IngestionService ingestionService;
     private final PilotReadinessQueryService pilotReadinessQueryService;
     private final Clock clock;
+    private final DeferredEventDelivery eventDelivery;
 
     private final Map<String, DataSource> sourcesByProvider = new HashMap<>();
     private final List<IngestionOutcome> outcomes = new ArrayList<>();
     private ExternalRecord firstExternalRecord;
     private PilotReadiness readiness;
+    /** 最後の取込の前に発行の記録にあったイベントの数（最後の取込が出したイベントを切り出す。Bolt 39h）。 */
+    private int eventsBeforeLastIngestion;
 
     @SuppressWarnings("java:S107") // シナリオで確かめるメモリの実装と入力ポートをそのまま受け取る
     public ExternalRecordIngestionSteps(
@@ -88,7 +96,9 @@ public class ExternalRecordIngestionSteps {
             InMemoryExternalPayloadStorage payloadStorage,
             IngestionService ingestionService,
             PilotReadinessQueryService pilotReadinessQueryService,
-            Clock clock) {
+            Clock clock,
+            DeferredEventDelivery eventDelivery) {
+        this.eventDelivery = eventDelivery;
         this.dataSources = dataSources;
         this.ingestions = ingestions;
         this.externalRecords = externalRecords;
@@ -143,12 +153,55 @@ public class ExternalRecordIngestionSteps {
         IngestedRow row =
                 new IngestedRow(2, 2, externalId, version, acquiredAt, values, line.getBytes(StandardCharsets.UTF_8));
         byte[] file = (MILESTONE_HEADER + "\n" + line).getBytes(StandardCharsets.UTF_8);
+        ingest(provider, row, file);
+    }
+
+    /** 航海の行（寄港は東京の出発とロサンゼルスの到着の 2 つ。Bolt 39h）。外部 ID は航海番号。 */
+    @もし("データ責任者が提供元 {string} の情報源から航海 {string}・外部版 {string}・取得時刻 {string} の航海の行を取り込む")
+    public void 航海の行を取り込む(String provider, String voyageNumber, String version, String acquired) {
+        Instant acquiredAt = Instant.parse(acquired);
+        assertThat(acquiredAt).isBefore(clock.instant());
+        VoyageValues values = new VoyageValues(
+                voyageNumber,
+                List.of(
+                        new PortCallValue(
+                                new Location("JPTYO"), null, new UtcInstant(Instant.parse("2026-11-20T00:00:00Z"))),
+                        new PortCallValue(
+                                new Location("USLAX"), new UtcInstant(Instant.parse("2026-12-01T00:00:00Z")), null)));
+        String line = voyageNumber + "," + version + "," + acquiredAt + "," + values.summary();
+        IngestedRow row =
+                new IngestedRow(2, 2, voyageNumber, version, acquiredAt, values, line.getBytes(StandardCharsets.UTF_8));
+        byte[] file = (VOYAGE_HEADER + "\n" + line).getBytes(StandardCharsets.UTF_8);
+        ingest(provider, row, file);
+    }
+
+    private void ingest(String provider, IngestedRow row, byte[] file) {
+        eventsBeforeLastIngestion = eventDelivery.history().size();
         outcomes.add(ingestionService.ingest(
                 DATA_STEWARD,
                 new IngestFileCommand(sourcesByProvider.get(provider).id(), file, 1, List.of(row), List.of(), null)));
         if (firstExternalRecord == null && !externalRecords.all().isEmpty()) {
             firstExternalRecord = externalRecords.all().getFirst();
         }
+    }
+
+    @ならば("その受信記録に採用値はない")
+    public void 採用値はない() {
+        assertThat(adoptedValues.findByReceivedRecordId(lastRow().receivedRecordId()))
+                .isEmpty();
+    }
+
+    /** 最後の取込が出したイベント（DeferredEventDelivery の発行の記録。T-236）。 */
+    @ならば("最後の取込は理由 {string} と比べた外部版 {string} の外部原本の差異を見つけた（DE-31）だけを出す")
+    public void 差異のイベントだけを出す(String reason, String comparedVersion) {
+        List<Object> history = eventDelivery.history();
+        assertThat(history.subList(eventsBeforeLastIngestion, history.size()))
+                .singleElement()
+                .isInstanceOfSatisfying(ExternalRecordDiscrepancyFound.class, event -> {
+                    assertThat(event.receivedRecordId()).isEqualTo(lastRow().receivedRecordId());
+                    assertThat(event.reason()).isEqualTo(reason);
+                    assertThat(event.comparedExternalVersion()).isEqualTo(comparedVersion);
+                });
     }
 
     @ならば("取込は情報源が承認されていないとして拒否される")
@@ -266,6 +319,7 @@ public class ExternalRecordIngestionSteps {
             case "採用" -> Classification.ADOPTED;
             case "重複" -> Classification.DUPLICATE;
             case "隔離" -> Classification.QUARANTINED;
+            case "差異" -> Classification.DISCREPANCY;
             default -> throw new IllegalArgumentException("未知の分類: " + name);
         };
     }

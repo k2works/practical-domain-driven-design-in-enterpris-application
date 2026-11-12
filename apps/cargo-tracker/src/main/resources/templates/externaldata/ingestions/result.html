@@ -12,8 +12,9 @@
     <!--/* S-16 の結果の画面（Bolt 39c、US-14 AC1）。取込の POST の PRG の行き先で、DB から読み直す（読み込み直しても取り込み直さない）。
            知らせは PRG の直後だけ。受け取った件数は物理データ行で、分類別の件数（受信記録の数）と単位が違うので表の外に置く。
            隔離の理由（注記）は隔離が 1 件以上のときだけ、照会の順（ファイルの行の順）に最初の 100 件と示さなかった数を示す（Bolt 39c3）。
-           注記には取込ファイルから来た値が入るので th:text で示す。差異の行は 39h。隔離の理由の領域の最後に、この取込で絞った S-17 へのリンクを置く（Bolt 39d。
-           隔離のある領域の中なので、押しても行き先のないリンクを出さない）。
+           注記には取込ファイルから来た値が入るので th:text で示す。差異の行と、差異の注記を隔離と同じ領域（隔離・差異の理由）に行の順で示すのは
+           Bolt 39h。理由の領域の最後に、この取込で絞った S-17 へのリンクを隔離が 1 件以上のときだけ置く（Bolt 39d。S-17 に差異はまだ出ないので、
+           差異だけの取込で行き先のないリンクを出さない。リンクの文は 39h2 で直す）。
            要確認（取り込めなかった部分）は要確認のときだけ、件数を読む前に分かるよう受け取った件数の後・分類別の件数の表の前に示す。PRG の後の
            静的な画面なので role="alert" は使わない。「どこ」の文は controller が組み立てる（Bolt 39c4） */-->
     <p role="status" th:if="${result}" th:text="${result}">取り込みました。</p>
@@ -27,7 +28,7 @@
     </dl>
     <section th:if="${summary.requiresReview()}" aria-labelledby="review-heading">
         <h2 id="review-heading">要確認</h2>
-        <p>取り込めなかった部分があります。取り込めなかった部分の行は分類されていません。下の「隔離の理由」で理由とどうすればよいかを確かめてください。</p>
+        <p>取り込めなかった部分があります。取り込めなかった部分の行は分類されていません。下の「隔離・差異の理由」で理由とどうすればよいかを確かめてください。</p>
         <p th:text="|取り込めなかった部分: ${unreadableRegion}|">取り込めなかった部分: 12 行目からファイルの終わりまで（29 行）</p>
     </section>
     <table class="table">
@@ -51,16 +52,20 @@
             <th scope="row">隔離</th>
             <td th:text="${summary.quarantinedCount()}">3</td>
         </tr>
+        <tr>
+            <th scope="row">差異</th>
+            <td th:text="${summary.discrepancyCount()}">1</td>
+        </tr>
         </tbody>
     </table>
-    <section th:if="${summary.quarantinedCount() > 0}" aria-labelledby="quarantine-notes-heading">
-        <h2 id="quarantine-notes-heading">隔離の理由</h2>
+    <section th:if="${summary.quarantinedCount() + summary.discrepancyCount() > 0}" aria-labelledby="quarantine-notes-heading">
+        <h2 id="quarantine-notes-heading">隔離・差異の理由</h2>
         <p>ファイルの行の順に示します。</p>
         <ul aria-labelledby="quarantine-notes-heading">
             <li th:each="note : ${summary.quarantineNotes()}" th:text="${note}">4 行目: 列の数がヘッダーと違います（ヘッダー 4 列、この行 5 列）。提供元に確かめてください。</li>
         </ul>
-        <p th:if="${remainingQuarantine}" th:text="${remainingQuarantine}">ほかに 9,900 件の隔離があります（最初の 100 件だけを示しています）。</p>
-        <p><a th:href="@{/staff/external-data/undecided-records(ingestion=${summary.ingestionId()})}">この取込の隔離をすべて確認する</a></p>
+        <p th:if="${remainingQuarantine}" th:text="${remainingQuarantine}">ほかに 9,900 件の隔離・差異があります（最初の 100 件だけを示しています）。</p>
+        <p th:if="${summary.quarantinedCount() > 0}"><a th:href="@{/staff/external-data/undecided-records(ingestion=${summary.ingestionId()})}">この取込の隔離をすべて確認する</a></p>
     </section>
     <p><a th:href="@{/staff/external-data/ingestions/new}">続けて取り込む</a></p>
 </main>

@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.example.cargotracker.externaldata.domain.model.aggregates.AdoptedValue.TargetType;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.Classification;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.ExternalIdAdoptedValue;
 import java.lang.reflect.Method;
 import java.time.Instant;
 import java.util.Arrays;
@@ -36,6 +38,16 @@ public abstract class AdoptedValueRepositoryContract {
 
     /** その外部原本を指す採用の受信記録を用意し、その ID を返す（ポートの外。Bolt 39d3）。 */
     protected abstract UUID givenReceivedRecordOf(UUID externalRecordId);
+
+    /**
+     * 提供元・原本種別・外部 ID・外部版の外部原本を用意し、その ID を返す（ポートの外。この外部 ID の採用値の照会の絞り込み。Bolt 39h の行 7）。
+     */
+    protected abstract UUID givenExternalRecordOf(
+            String provider, String recordType, String externalId, String externalVersion);
+
+    /** その外部原本を指す、取得時刻と分類の決まった受信記録を用意し、その ID を返す（ポートの外。Bolt 39h の行 7）。 */
+    protected abstract UUID givenReceivedRecordOf(
+            UUID externalRecordId, Instant acquiredAt, Classification classification);
 
     /** 航海の値の要約（寄港ごとに「港;到着;出発」を「|」でつなぐ。{@code VoyageValues#summary()} の形。T-230）。 */
     private static final String VOYAGE_SUMMARY =
@@ -90,7 +102,7 @@ public abstract class AdoptedValueRepositoryContract {
     void 行15_採用値のリポジトリは追記と受信記録IDでの照会とこの外部版の採用値の照会だけを持ち更新と削除を持たない() {
         assertThat(Arrays.stream(AdoptedValueRepository.class.getDeclaredMethods())
                         .map(Method::getName))
-                .containsExactlyInAnyOrder("add", "findByReceivedRecordId", "currentOf");
+                .containsExactlyInAnyOrder("add", "findByReceivedRecordId", "currentOf", "findByExternalId");
     }
 
     // --- Bolt 39d3 の行 8（この外部版の採用値。開始準備の決定 (5)、【業務の判断】(j)、T-245）。並びは書く順を逆にしたデータで確かめる ---
@@ -168,5 +180,107 @@ public abstract class AdoptedValueRepositoryContract {
 
         assertThat(adoptedValues().currentOf(externalRecordId)).isEmpty();
         assertThat(adoptedValues().currentOf(UUID.randomUUID())).isEmpty();
+    }
+
+    // --- Bolt 39h の行 7（この外部 ID の採用値の一覧。開始準備の決定 (3)）。並びは決めないので順を問わずに比べる ---
+
+    private static final Instant G1 = Instant.parse("2026-11-03T00:10:00.000001Z");
+    private static final Instant G2 = Instant.parse("2026-11-03T00:20:00.000002Z");
+
+    /** 提供元はテストごとに作る（共有の DB を使う統合テストの照会の鍵。Bolt 39g4b の学び）。 */
+    private final String externalIdProvider = "差異の照会の提供元-" + UUID.randomUUID();
+
+    private AdoptedValue milestoneValue(
+            UUID receivedRecordId, String trackingNumber, String version, Instant publishedAt) {
+        return new AdoptedValue(
+                UUID.randomUUID(),
+                receivedRecordId,
+                TargetType.MILESTONE,
+                trackingNumber,
+                MILESTONE_SUMMARY,
+                version,
+                publishedAt);
+    }
+
+    /** 外部原本と受信記録と採用値を用意し、照会が返す値を返す。 */
+    private ExternalIdAdoptedValue givenAdopted(
+            String provider,
+            String recordType,
+            String externalId,
+            String version,
+            Instant acquiredAt,
+            Classification classification,
+            Instant publishedAt) {
+        UUID externalRecordId = givenExternalRecordOf(provider, recordType, externalId, version);
+        UUID receivedRecordId = givenReceivedRecordOf(externalRecordId, acquiredAt, classification);
+        adoptedValues().add(milestoneValue(receivedRecordId, "CTABCDEFGH2345", version, publishedAt));
+        return new ExternalIdAdoptedValue(version, "CTABCDEFGH2345", acquiredAt, publishedAt, receivedRecordId);
+    }
+
+    @Test
+    void Bolt39h_行7_a_採用値のない外部IDの一覧は空() {
+        givenReceivedRecordOf(
+                givenExternalRecordOf(externalIdProvider, "MILESTONE", "MS-0001", "1"), G1, Classification.ADOPTED);
+
+        assertThat(adoptedValues().findByExternalId(externalIdProvider, "MILESTONE", "MS-0001"))
+                .isEmpty();
+        assertThat(adoptedValues().findByExternalId(externalIdProvider, "MILESTONE", "MS-9999"))
+                .isEmpty();
+    }
+
+    @Test
+    void Bolt39h_行7_b_取込で採用した外部版の採用値を外部版と対象のキーと取得時刻と公開した時刻と受信記録IDで返す() {
+        ExternalIdAdoptedValue v1 =
+                givenAdopted(externalIdProvider, "MILESTONE", "MS-0001", "1", G1, Classification.ADOPTED, PUBLISHED_AT);
+
+        assertThat(adoptedValues().findByExternalId(externalIdProvider, "MILESTONE", "MS-0001"))
+                .containsExactly(v1);
+    }
+
+    @Test
+    void Bolt39h_行7_c_外部版をまたぐ採用値をどちらも返す() {
+        ExternalIdAdoptedValue v1 =
+                givenAdopted(externalIdProvider, "MILESTONE", "MS-0001", "1", G2, Classification.ADOPTED, PUBLISHED_AT);
+        ExternalIdAdoptedValue v2 = givenAdopted(
+                externalIdProvider,
+                "MILESTONE",
+                "MS-0001",
+                "2",
+                G1,
+                Classification.ADOPTED,
+                PUBLISHED_AT.plusSeconds(3600));
+
+        assertThat(adoptedValues().findByExternalId(externalIdProvider, "MILESTONE", "MS-0001"))
+                .containsExactlyInAnyOrder(v1, v2);
+    }
+
+    @Test
+    void Bolt39h_行7_d_採用の判断の採用値も含める() {
+        ExternalIdAdoptedValue adoptedByDecision = givenAdopted(
+                externalIdProvider,
+                "MILESTONE",
+                "MS-0001",
+                "1",
+                G1,
+                Classification.QUARANTINED,
+                PUBLISHED_AT.plusSeconds(7200));
+
+        assertThat(adoptedValues().findByExternalId(externalIdProvider, "MILESTONE", "MS-0001"))
+                .containsExactly(adoptedByDecision);
+    }
+
+    @Test
+    void Bolt39h_行7_e_f_g_別の提供元と別の原本種別の同じ外部IDと採用値のない受信記録は含めない() {
+        ExternalIdAdoptedValue own =
+                givenAdopted(externalIdProvider, "MILESTONE", "MS-0001", "1", G1, Classification.ADOPTED, PUBLISHED_AT);
+        givenAdopted(externalIdProvider + "-別", "MILESTONE", "MS-0001", "1", G1, Classification.ADOPTED, PUBLISHED_AT);
+        givenAdopted(externalIdProvider, "VOYAGE", "MS-0001", "1", G1, Classification.ADOPTED, PUBLISHED_AT);
+        UUID ownRecord = givenExternalRecordOf(externalIdProvider, "MILESTONE", "MS-0001", "2");
+        givenReceivedRecordOf(ownRecord, G2, Classification.DUPLICATE);
+        givenReceivedRecordOf(ownRecord, G2, Classification.QUARANTINED);
+        givenReceivedRecordOf(ownRecord, G2, Classification.DISCREPANCY);
+
+        assertThat(adoptedValues().findByExternalId(externalIdProvider, "MILESTONE", "MS-0001"))
+                .containsExactly(own);
     }
 }

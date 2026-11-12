@@ -393,11 +393,15 @@ class LayerArchitectureTest {
 
     /**
      * 外部原本の採否の監査記録を作る呼び出し（{@code AuditRecord.externalRecordAdopted}・{@code externalRecordQuarantined}、受信記録の判断の
-     * {@code externalRecordDecided}。判断は Bolt 39d2 の行 13 で足した。書き手は同じ listener で増やさない）。
+     * {@code externalRecordDecided}、外部原本の差異の {@code externalRecordDiscrepancyFound}。判断は Bolt 39d2 の行 13、差異は Bolt 39h の行 14
+     * で足した。書き手は同じ listener で増やさない）。
      */
     private static final DescribedPredicate<JavaCall<?>> EXTERNAL_RECORD_AUDIT = target(
                     owner(equivalentTo(AuditRecord.class)))
-            .and(target(nameMatching("externalRecordAdopted|externalRecordQuarantined|externalRecordDecided")));
+            .and(
+                    target(
+                            nameMatching(
+                                    "externalRecordAdopted|externalRecordQuarantined|externalRecordDecided|externalRecordDiscrepancyFound")));
 
     /** 書き手のほかに例外がない行の印。 */
     private static final DescribedPredicate<JavaClass> NO_OTHER_EXCEPTION =
@@ -648,7 +652,8 @@ class LayerArchitectureTest {
         assertThat(result.hasViolation()).isTrue();
         assertThat(result.getFailureReport().toString())
                 .contains("externalRecordAdopted")
-                .contains("externalRecordQuarantined");
+                .contains("externalRecordQuarantined")
+                .contains("externalRecordDiscrepancyFound");
     }
 
     /**
@@ -677,6 +682,10 @@ class LayerArchitectureTest {
 
         static Object quarantine() {
             return AuditRecord.externalRecordQuarantined(null, null, null, null, null, null);
+        }
+
+        static Object discrepancy() {
+            return AuditRecord.externalRecordDiscrepancyFound(null, null, null, null, null, null);
         }
     }
 }

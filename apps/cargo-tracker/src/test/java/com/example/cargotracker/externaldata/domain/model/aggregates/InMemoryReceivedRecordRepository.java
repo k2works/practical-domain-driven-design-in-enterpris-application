@@ -38,6 +38,11 @@ public class InMemoryReceivedRecordRepository implements ReceivedRecordRepositor
         this.decisions = Objects.requireNonNull(decisions, "decisions");
     }
 
+    /** 受信記録の外部原本（ポートの外。メモリの採用値のリポジトリがこの外部 ID の採用値を絞る。Bolt 39h）。キーのない隔離は空。 */
+    public Optional<ExternalRecord> externalRecordOf(ReceivedRecord receivedRecord) {
+        return Optional.ofNullable(receivedRecord.externalRecordId()).flatMap(externalRecords::findById);
+    }
+
     @Override
     public void add(ReceivedRecord receivedRecord) {
         records.add(Objects.requireNonNull(receivedRecord, "receivedRecord"));
@@ -63,7 +68,8 @@ public class InMemoryReceivedRecordRepository implements ReceivedRecordRepositor
     public List<ReceivedRecord> quarantinedOf(UUID ingestionId, int limit) {
         return records.stream()
                 .filter(receivedRecord -> receivedRecord.ingestionId().equals(ingestionId))
-                .filter(receivedRecord -> receivedRecord.classification() == Classification.QUARANTINED)
+                .filter(receivedRecord -> receivedRecord.classification() == Classification.QUARANTINED
+                        || receivedRecord.classification() == Classification.DISCREPANCY)
                 .sorted(LINE_ORDER)
                 .limit(limit)
                 .toList();

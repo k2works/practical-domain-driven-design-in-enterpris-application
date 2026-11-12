@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.example.cargotracker.TestcontainersConfiguration;
 import com.example.cargotracker.booking.domain.events.BookingConfirmed;
+import com.example.cargotracker.externaldata.domain.events.ExternalRecordDiscrepancyFound;
 import com.example.cargotracker.externaldata.domain.events.ExternalRecordQuarantined;
 import com.example.cargotracker.externaldata.domain.events.MilestoneAdoptedValueAccepted;
 import com.example.cargotracker.externaldata.domain.events.ReceivedRecordDecided;
@@ -257,8 +258,48 @@ class DomainEventSerializationContractTest {
             DATA_STEWARD_COMPANY,
             new UtcInstant(Instant.parse("2026-11-16T01:05:00.123456Z")));
 
+    /** DE-31 外部原本の差異を見つけた（Bolt 39h の行 6）。理由は差異の理由の名前の文字列で持つ（イベントはドメインの型を持たない）。 */
+    private static final String EXTERNAL_RECORD_DISCREPANCY_FOUND_V1 = """
+            {"receivedRecordId":"99999999-9999-9999-9999-999999999999",\
+            "ingestionId":"77777777-7777-7777-7777-777777777777",\
+            "dataSourceId":"88888888-8888-8888-8888-888888888888",\
+            "provider":"運送会社A","recordType":"MILESTONE","externalId":"MS-0001","externalVersion":"1",\
+            "reason":"VERSION_REVERSED","comparedExternalVersion":"2","firstLine":2,"lastLine":2,\
+            "operatorUserId":{"value":"00000000-0000-0000-0000-000000000501"},\
+            "operatorCompanyId":{"value":"00000000-0000-0000-0000-000000000001"},\
+            "foundAt":{"instant":"2026-11-03T09:00:00.123456Z"}}""";
+
+    private static final ExternalRecordDiscrepancyFound EXTERNAL_RECORD_DISCREPANCY_FOUND =
+            new ExternalRecordDiscrepancyFound(
+                    UUID.fromString("99999999-9999-9999-9999-999999999999"),
+                    UUID.fromString("77777777-7777-7777-7777-777777777777"),
+                    UUID.fromString("88888888-8888-8888-8888-888888888888"),
+                    "運送会社A",
+                    "MILESTONE",
+                    "MS-0001",
+                    "1",
+                    "VERSION_REVERSED",
+                    "2",
+                    2,
+                    2,
+                    DATA_STEWARD,
+                    DATA_STEWARD_COMPANY,
+                    new UtcInstant(Instant.parse("2026-11-03T09:00:00.123456Z")));
+
     @Autowired
     EventSerializer serializer;
+
+    @Test
+    void Bolt39h_行6_保存済みのDE31のJSONから復元できる() {
+        assertThat(serializer.deserialize(EXTERNAL_RECORD_DISCREPANCY_FOUND_V1, ExternalRecordDiscrepancyFound.class))
+                .isEqualTo(EXTERNAL_RECORD_DISCREPANCY_FOUND);
+    }
+
+    @Test
+    void Bolt39h_行6_DE31のJSONの形が変わっていない() {
+        assertThat(serializer.serialize(EXTERNAL_RECORD_DISCREPANCY_FOUND))
+                .isEqualTo(EXTERNAL_RECORD_DISCREPANCY_FOUND_V1);
+    }
 
     @Test
     void Bolt39d2_行10_保存済みのDE29のJSONから復元できる() {

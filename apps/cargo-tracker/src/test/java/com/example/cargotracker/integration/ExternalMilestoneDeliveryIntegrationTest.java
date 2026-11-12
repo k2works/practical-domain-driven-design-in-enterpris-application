@@ -324,22 +324,27 @@ class ExternalMilestoneDeliveryIntegrationTest {
 
         @Test
         void 行13_外部版をまたいで追跡番号が変わると元の下書きは変わらず新しい番号に下書きができる() {
+            // Bolt 39h の行 11（【前の決定の変更】(26)）。取込は追跡番号の違う後の外部版を差異にして DE-13 を出さないので、追跡の側の守り
+            // （D-115）は DE-13 を直接出して確かめる
             TrackingNumber original = startedNumber();
             TrackingNumber corrected = startedNumber();
-            UUID first = ingestAdopted(row(2, "MS-1", "1", original, occurred()));
-            awaitListener(first, 1);
+            MilestoneAdoptedValueAccepted first = event(original, "MS-1", "1");
+            publish(first);
+            awaitPublished(first, 1);
 
-            UUID second = ingestAdopted(row(2, "MS-1", "2", corrected, occurred()));
+            MilestoneAdoptedValueAccepted second = event(corrected, "MS-1", "2");
+            publish(second);
 
-            awaitListener(second, 1);
+            awaitPublished(second, 1);
             assertThat(milestones(original))
                     .singleElement()
                     .satisfies(row -> assertThat(row)
                             .containsEntry("state", "DRAFT")
-                            .containsEntry("source_ref", first.toString()));
+                            .containsEntry("source_ref", first.source().reference()));
             assertThat(milestones(corrected))
                     .singleElement()
-                    .satisfies(row -> assertThat(row).containsEntry("source_ref", second.toString()));
+                    .satisfies(row -> assertThat(row)
+                            .containsEntry("source_ref", second.source().reference()));
         }
 
         @Test
@@ -471,6 +476,10 @@ class ExternalMilestoneDeliveryIntegrationTest {
     }
 
     private MilestoneAdoptedValueAccepted event(TrackingNumber number, String externalId) {
+        return event(number, externalId, "1");
+    }
+
+    private MilestoneAdoptedValueAccepted event(TrackingNumber number, String externalId, String infoVersion) {
         UtcInstant at = new UtcInstant(acquiredAt());
         return new MilestoneAdoptedValueAccepted(
                 UUID.randomUUID(),
@@ -482,7 +491,7 @@ class ExternalMilestoneDeliveryIntegrationTest {
                 TOKYO,
                 new UtcInstant(occurred()),
                 externalId,
-                "1",
+                infoVersion,
                 steward.userId(),
                 steward.companyId(),
                 at);

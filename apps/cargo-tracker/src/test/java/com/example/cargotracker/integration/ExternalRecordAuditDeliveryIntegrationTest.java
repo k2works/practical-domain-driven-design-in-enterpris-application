@@ -17,6 +17,7 @@ import com.example.cargotracker.externaldata.application.internal.commandservice
 import com.example.cargotracker.externaldata.application.internal.commandservices.IngestionService;
 import com.example.cargotracker.externaldata.application.internal.commandservices.KeylessRejectionOutcome;
 import com.example.cargotracker.externaldata.application.internal.commandservices.ReceivedRecordDecisionService;
+import com.example.cargotracker.externaldata.domain.events.ExternalRecordDiscrepancyFound;
 import com.example.cargotracker.externaldata.domain.events.ExternalRecordQuarantined;
 import com.example.cargotracker.externaldata.domain.events.MilestoneAdoptedValueAccepted;
 import com.example.cargotracker.externaldata.domain.events.ReceivedRecordDecided;
@@ -720,16 +721,80 @@ class ExternalRecordAuditDeliveryIntegrationTest {
                         > 0;
     }
 
+    /**
+     * Bolt 39h の行 6（DE-31 の監査の配信。T-184）。取込のコミットの後に監査の listener が DE-31 を受け、差異の監査記録を 1 つ書く。巻き戻った
+     * 取込では発行記録も監査記録もない。1 つのファイルに外部版 1（追跡番号 CTA）と外部版 2（CTB。同じ取得時刻）を置き、2 つ目を矛盾の差異にする。
+     */
+    @Nested
+    class Bolt39h_差異の監査の配信 {
+
+        private IngestFileCommand conflictingFile(UUID sourceId) {
+            return milestoneFile(
+                    sourceId,
+                    milestone(2, "MS-0001", "1", "CTABCDEFGH2345"),
+                    milestone(3, "MS-0001", "2", "CTABCDEFGH2346"));
+        }
+
+        @Test
+        void 行6_a_差異を含む取込のコミットの後に差異の監査記録を1つ書き発行記録が完了になる() {
+            UUID sourceId = insertApprovedSource("運送会社-" + UUID.randomUUID(), "MILESTONE");
+            try {
+                Ingested result = ingested(ingestionService.ingest(steward, conflictingFile(sourceId)));
+                assertThat(result.rows())
+                        .extracting(RowResult::classification)
+                        .containsExactly(Classification.ADOPTED, Classification.DISCREPANCY);
+                UUID discrepancy = result.rows().get(1).receivedRecordId();
+
+                awaitCompletedAuditPublication(ExternalRecordDiscrepancyFound.class, discrepancy);
+
+                assertThat(auditRecordOf(AuditAction.EXTERNAL_RECORD_DISCREPANCY_FOUND, discrepancy))
+                        .containsEntry("result", "SUCCESS")
+                        .containsEntry("actor_user_id", steward.userId().value())
+                        .containsEntry("reason", "TARGET_KEY_DIFFERS")
+                        .containsEntry("occurred_at", ingestedAt(result.ingestionId()));
+            } finally {
+                removeSource(sourceId);
+            }
+        }
+
+        @Test
+        void 行6_b_巻き戻った取込では差異の発行記録も監査記録もない() {
+            List<UUID> discrepancies = new ArrayList<>();
+            transactionTemplate.executeWithoutResult(status -> {
+                UUID sourceId = insertApprovedSource("運送会社-" + UUID.randomUUID(), "MILESTONE");
+                Ingested result = ingested(ingestionService.ingest(steward, conflictingFile(sourceId)));
+                discrepancies.add(result.rows().get(1).receivedRecordId());
+                status.setRollbackOnly();
+            });
+            UUID discrepancy = discrepancies.getFirst();
+
+            assertThat(count(
+                            "SELECT COUNT(*) FROM platform.event_publication WHERE serialized_event LIKE ?",
+                            "%" + discrepancy + "%"))
+                    .isZero();
+            assertThat(count(
+                            "SELECT COUNT(*) FROM identity.audit_record WHERE target_type = 'RECEIVED_RECORD'"
+                                    + " AND target_id = ?",
+                            discrepancy.toString()))
+                    .isZero();
+        }
+    }
+
     private IngestedRow milestone(int lineNumber, String externalId, String trackingNumber) {
+        return milestone(lineNumber, externalId, "1", trackingNumber);
+    }
+
+    private IngestedRow milestone(int lineNumber, String externalId, String version, String trackingNumber) {
         Instant acquiredAt = acquiredAt();
-        String line = externalId + ",1," + acquiredAt + "," + trackingNumber + ",DEPARTURE,JPTYO," + acquiredAt;
+        String line =
+                externalId + "," + version + "," + acquiredAt + "," + trackingNumber + ",DEPARTURE,JPTYO," + acquiredAt;
         MilestoneValues values = new MilestoneValues(
                 new TrackingNumberValue(trackingNumber),
                 MilestoneKindValue.DEPARTURE,
                 new Location("JPTYO"),
                 new UtcInstant(acquiredAt));
         return new IngestedRow(
-                lineNumber, lineNumber, externalId, "1", acquiredAt, values, line.getBytes(StandardCharsets.UTF_8));
+                lineNumber, lineNumber, externalId, version, acquiredAt, values, line.getBytes(StandardCharsets.UTF_8));
     }
 
     private static IngestFileCommand milestoneFile(UUID sourceId, IngestedRow... rows) {

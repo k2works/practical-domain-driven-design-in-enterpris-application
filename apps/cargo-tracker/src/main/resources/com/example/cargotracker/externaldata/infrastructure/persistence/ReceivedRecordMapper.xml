@@ -41,12 +41,13 @@
          WHERE ingestion_id = #{ingestionId} AND classification = #{classification}
     </select>
 
-    <!-- 範囲のないファイルの誤りを先に、行の範囲の始まりの順。同じ始まりはない（1 つの取込の範囲は重ならない）が、決まった順にするため ID で並べ直す -->
+    <!-- 取込の隔離と差異（S-16 の「隔離・差異の理由」。差異は Bolt 39h）。範囲のないファイルの誤りを先に、行の範囲の始まりの順。同じ始まりはない
+         （1 つの取込の範囲は重ならない）が、決まった順にするため ID で並べ直す -->
     <select id="quarantinedOf" resultMap="receivedRecordRow">
         SELECT id, external_record_id, ingestion_id, payload_hash, payload_object_key, acquired_at, classification,
                classification_note, classified_at, first_line_number, last_line_number, target_key, value_summary
           FROM external_data.received_record
-         WHERE ingestion_id = #{ingestionId} AND classification = 'QUARANTINED'
+         WHERE ingestion_id = #{ingestionId} AND classification IN ('QUARANTINED', 'DISCREPANCY')
          ORDER BY first_line_number NULLS FIRST, id
          LIMIT #{limit}
     </select>

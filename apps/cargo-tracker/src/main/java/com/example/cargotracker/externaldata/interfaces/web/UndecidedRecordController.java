@@ -106,7 +106,7 @@ public class UndecidedRecordController {
     private static final String SOURCE_NOT_APPROVED_REFUSAL =
             "情報源が承認済みではないため採用できません。受け取った値を使うときは、運用の手順で情報源を承認し直してから、この隔離を開き直してください。";
     private static final String TRACKING_NUMBER_DIFFERS_REFUSAL =
-            "追跡番号がこの外部版の採用値と違うので採用できません。正しい原本を使うときは、提供元に新しい外部版で送り直してもらってください。";
+            "追跡番号がこの外部版の採用値と違うので採用できません。追跡番号を直した実績は、追跡管理者に正しい追跡記録へ手入力してもらってください（新しい外部版で送り直しても差異になります）。";
     private static final String PAYLOAD_ALREADY_ADOPTED_REFUSAL = "同じ原本がすでに採用されているので採用できません。却下で片付けてください。";
 
     /** 1 つの取込の形式の誤りのまとめての却下（Bolt 39d2b の開始準備の決定 (3)）。件数は 3 桁の区切り。 */

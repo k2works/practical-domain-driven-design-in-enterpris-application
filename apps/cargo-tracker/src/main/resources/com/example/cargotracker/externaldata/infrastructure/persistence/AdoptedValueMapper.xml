@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<!-- 採用値（Bolt 39b3）。追記専用なので INSERT と受信記録 ID での SELECT と、この外部版の採用値の SELECT（Bolt 39d3）だけを持つ。受信記録ごとに 1 つ（uk_adopted_value_received_record）。
+<!-- 採用値（Bolt 39b3）。追記専用なので INSERT と受信記録 ID での SELECT と、この外部版の採用値の SELECT（Bolt 39d3）と、この外部 ID の採用値の SELECT（Bolt 39h）だけを持つ。受信記録ごとに 1 つ（uk_adopted_value_received_record）。
      受信記録より後に書く。H2 と PostgreSQL の共通の構文で書く（ADR-007）。 -->
 <mapper namespace="com.example.cargotracker.externaldata.infrastructure.persistence.AdoptedValueMapper">
 
@@ -31,6 +31,27 @@
          WHERE r.external_record_id = #{externalRecordId}
          ORDER BY a.published_at DESC, a.id DESC
          LIMIT 1
+    </select>
+
+    <!-- この外部 ID の採用値（Bolt 39h の開始準備の決定 (3)）。外部原本は uk_external_record_idempotency_key の先頭 3 列で引き、受信記録は
+         ix_received_record_external_record、採用値は uk_adopted_value_received_record で結ぶ。並びは決めない（比べる相手は差異の規則が選ぶ） -->
+    <resultMap id="externalIdAdoptedValueRow"
+               type="com.example.cargotracker.externaldata.infrastructure.persistence.AdoptedValueMapper$ExternalIdAdoptedValueRow">
+        <constructor>
+            <arg column="info_version" name="infoVersion" javaType="String"/>
+            <arg column="target_key" name="targetKey" javaType="String"/>
+            <arg column="acquired_at" name="acquiredAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="published_at" name="publishedAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="received_record_id" name="receivedRecordId" javaType="java.util.UUID"/>
+        </constructor>
+    </resultMap>
+
+    <select id="selectByExternalId" resultMap="externalIdAdoptedValueRow">
+        SELECT a.info_version, a.target_key, r.acquired_at, a.published_at, a.received_record_id
+          FROM external_data.external_record e
+          JOIN external_data.received_record r ON r.external_record_id = e.id
+          JOIN external_data.adopted_value a ON a.received_record_id = r.id
+         WHERE e.provider = #{provider} AND e.record_type = #{recordType} AND e.external_id = #{externalId}
     </select>
 
     <insert id="insert">

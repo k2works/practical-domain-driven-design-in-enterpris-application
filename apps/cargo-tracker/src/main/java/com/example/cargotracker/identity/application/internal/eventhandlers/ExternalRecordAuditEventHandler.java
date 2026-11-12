@@ -1,5 +1,6 @@
 package com.example.cargotracker.identity.application.internal.eventhandlers;
 
+import com.example.cargotracker.externaldata.domain.events.ExternalRecordDiscrepancyFound;
 import com.example.cargotracker.externaldata.domain.events.ExternalRecordQuarantined;
 import com.example.cargotracker.externaldata.domain.events.MilestoneAdoptedValueAccepted;
 import com.example.cargotracker.externaldata.domain.events.ReceivedRecordDecided;
@@ -17,7 +18,7 @@ import org.springframework.modulith.events.ApplicationModuleListener;
 import org.springframework.stereotype.Service;
 
 /**
- * 外部原本の採否の監査のイベントハンドラー。外部データの DE-12・DE-13・DE-14 を取込のコミットの後（DE-12・DE-13 は採用の判断のコミットの後にも。
+ * 外部原本の採否の監査のイベントハンドラー。外部データの DE-12・DE-13・DE-14・DE-31（Bolt 39h）を取込のコミットの後（DE-12・DE-13 は採用の判断のコミットの後にも。
  * Bolt 39d3b）に別のトランザクションで受け、受信記録ごとに外部原本の採否の監査記録を 1 つ書く（Bolt 39b3b。AUD-01・AUD-02、IA-INV-15、ADR-003・
  * ADR-004）。DE-29（データ責任者の受信記録の判断）も判断のコミットの後に受け、（操作、受信記録）ごとに 1 つ書く（Bolt 39d2）。操作者と発生時刻は
  * イベントのもの。
@@ -111,6 +112,33 @@ public class ExternalRecordAuditEventHandler {
                                 + ";lines=" + lines(event.firstLine(), event.lastLine())
                                 + origin(event.ingestionId(), event.dataSourceId()),
                         event.quarantinedAt()));
+    }
+
+    /**
+     * DE-31 外部原本の差異を見つけた を受けて、差異を監査する（Bolt 39h）。理由は差異の理由の区分。要約は DE-14 と同じ形に、外部版の後に比べた外部版を
+     * 入れる。
+     */
+    @ApplicationModuleListener
+    public void on(ExternalRecordDiscrepancyFound event) {
+        String receivedRecordId = Objects.toString(event.receivedRecordId(), null);
+        appendOnce(
+                AuditAction.EXTERNAL_RECORD_DISCREPANCY_FOUND,
+                receivedRecordId,
+                event.ingestionId(),
+                () -> AuditRecord.externalRecordDiscrepancyFound(
+                        event.operatorUserId(),
+                        event.operatorCompanyId(),
+                        receivedRecordId,
+                        event.reason(),
+                        "provider=" + part(event.provider(), "provider")
+                                + ";recordType=" + part(event.recordType(), "recordType")
+                                + ";externalId=" + part(event.externalId(), "externalId")
+                                + ";externalVersion=" + part(event.externalVersion(), "externalVersion")
+                                + ";comparedExternalVersion="
+                                + part(event.comparedExternalVersion(), "comparedExternalVersion")
+                                + ";lines=" + lines(event.firstLine(), event.lastLine())
+                                + origin(event.ingestionId(), event.dataSourceId()),
+                        event.foundAt()));
     }
 
     /**

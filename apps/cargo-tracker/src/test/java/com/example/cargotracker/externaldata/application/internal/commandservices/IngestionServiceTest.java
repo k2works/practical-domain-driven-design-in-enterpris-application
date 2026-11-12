@@ -19,6 +19,7 @@ import com.example.cargotracker.externaldata.application.internal.commandservice
 import com.example.cargotracker.externaldata.application.internal.commandservices.IngestionOutcome.Unreadable;
 import com.example.cargotracker.externaldata.application.internal.queryservices.UndecidedRecordPage;
 import com.example.cargotracker.externaldata.application.internal.queryservices.UndecidedRecordQueryService;
+import com.example.cargotracker.externaldata.domain.events.ExternalRecordDiscrepancyFound;
 import com.example.cargotracker.externaldata.domain.events.ExternalRecordQuarantined;
 import com.example.cargotracker.externaldata.domain.events.MilestoneAdoptedValueAccepted;
 import com.example.cargotracker.externaldata.domain.events.ReceivedRecordDecided;
@@ -41,6 +42,7 @@ import com.example.cargotracker.externaldata.domain.model.aggregates.InMemoryRec
 import com.example.cargotracker.externaldata.domain.model.aggregates.Ingestion;
 import com.example.cargotracker.externaldata.domain.model.aggregates.ReceivedRecord;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.Classification;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.ExternalIdAdoptedValue;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.FormatDefect;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.IdempotencyKey;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.MilestoneKindValue;
@@ -1742,7 +1744,8 @@ class IngestionServiceTest {
 
         @ParameterizedTest(name = "{0}")
         @EnumSource(RecordKind.class)
-        void 行5_d_外部版をまたいで採用中の値と矛盾する行は今は採用で39hで差異になる(RecordKind kind) {
+        void 行5_d_外部版をまたいで同じ追跡番号で値を直した同じ取得時刻の行は採用(RecordKind kind) {
+            // Bolt 39h の決定 (4)。種類・場所・時刻・寄港の違いは新しい外部版の正当な直しとして採用する（差異は版の逆転と追跡番号の違いだけ）
             send(kind, P1);
 
             assertThat(send(kind, "2", P3).classification()).isEqualTo(Classification.ADOPTED);
@@ -2409,6 +2412,321 @@ class IngestionServiceTest {
         }
     }
 
+    /**
+     * Bolt 39h の行 3〜5・9（US-14 AC5、ED-INV-03。開始準備の決定 (3)〜(8)）。取込で版の逆転と既存の採用値との矛盾を差異に分類し、差異は採用値も
+     * DE-12・DE-13・DE-14 も作らず DE-31 を 1 つ出す。外部 ID は主要実績 MS-0001・航海 V100、取得時刻は G1 &lt; G2 &lt; G3（どれも取込時刻より前。
+     * T-230）。
+     */
+    @Nested
+    class Bolt39h_差異 {
+
+        private static final Instant G1 = Instant.parse("2026-11-03T08:00:00Z");
+        private static final Instant G2 = Instant.parse("2026-11-03T08:30:00Z");
+        private static final Instant G3 = Instant.parse("2026-11-03T08:45:00Z");
+        private static final String CTA = "CTABCDEFGH2345";
+        private static final String CTB = "CTABCDEFGH2346";
+        private static final String MILESTONE_ID = "MS-0001";
+        private static final String VOYAGE_ID = "V100";
+
+        private final DataSource voyageSource = approvedSource("開発海運-" + UUID.randomUUID(), "VOYAGE");
+
+        private static String reversedNote(int line, String version) {
+            return line + " 行目: 同じ外部 ID で後に取得した外部版 \"" + version + "\" を採用しているので、前に取得したこの外部版は採用していません（版の逆転）。";
+        }
+
+        private static String differsNote(int line, String version) {
+            return line + " 行目: 同じ外部 ID の採用中の外部版 \"" + version + "\" と追跡番号が違うので採用していません（既存の採用値との矛盾）。";
+        }
+
+        /** 主要実績の行（content で発生時刻を変え、内容の違う原本を作る）。 */
+        private static IngestedRow milestoneRow(
+                int line, String version, Instant acquiredAt, String trackingNumber, int content) {
+            Instant occurredAt = OCCURRED.plusSeconds(60L * content);
+            MilestoneValues values = new MilestoneValues(
+                    new TrackingNumberValue(trackingNumber),
+                    MilestoneKindValue.DEPARTURE,
+                    new Location("JPTYO"),
+                    new UtcInstant(occurredAt));
+            String payload = MILESTONE_ID + "," + version + "," + acquiredAt + "," + trackingNumber
+                    + ",DEPARTURE,JPTYO," + occurredAt;
+            return new IngestedRow(
+                    line, line, MILESTONE_ID, version, acquiredAt, values, payload.getBytes(StandardCharsets.UTF_8));
+        }
+
+        private static IngestedRow milestoneRow(int line, String version, Instant acquiredAt, String trackingNumber) {
+            return milestoneRow(line, version, acquiredAt, trackingNumber, 0);
+        }
+
+        private static IngestedRow voyageRow(int line, String version, Instant acquiredAt) {
+            VoyageValues values = new VoyageValues(
+                    VOYAGE_ID,
+                    List.of(
+                            new PortCallValue(
+                                    new Location("JPTYO"), null, new UtcInstant(Instant.parse("2026-11-20T00:00:00Z"))),
+                            new PortCallValue(
+                                    new Location("USLAX"),
+                                    new UtcInstant(Instant.parse("2026-12-01T00:00:00Z")),
+                                    null)));
+            String payload = VOYAGE_ID + "," + version + "," + acquiredAt + "," + values.summary();
+            return new IngestedRow(
+                    line, line, VOYAGE_ID, version, acquiredAt, values, payload.getBytes(StandardCharsets.UTF_8));
+        }
+
+        private Ingested send(DataSource source, IngestedRow... rows) {
+            return ingested(service().ingest(steward, file(source, rows)));
+        }
+
+        private RowResult sendOne(DataSource source, IngestedRow row) {
+            return send(source, row).rows().getFirst();
+        }
+
+        private RowResult sendMilestone(String version, Instant acquiredAt, String trackingNumber) {
+            return sendOne(milestoneSource, milestoneRow(2, version, acquiredAt, trackingNumber));
+        }
+
+        private ReceivedRecord receivedOf(RowResult row) {
+            return receivedRecords.findById(row.receivedRecordId()).orElseThrow();
+        }
+
+        private List<Object> discrepancyEvents() {
+            return published.stream()
+                    .filter(ExternalRecordDiscrepancyFound.class::isInstance)
+                    .toList();
+        }
+
+        // --- 行 3: 取込の分類 ---
+
+        @Test
+        void 行3_a_前に取得した外部版の後に後に取得した外部版を取り込むと採用() {
+            sendMilestone("1", G1, CTA);
+
+            assertThat(sendMilestone("2", G2, CTA).classification()).isEqualTo(Classification.ADOPTED);
+        }
+
+        @Test
+        void 行3_b_後に取得した外部版の後に前に取得した外部版は差異で外部原本はできるが採用値はない() {
+            sendMilestone("2", G2, CTA);
+            IngestedRow older = milestoneRow(2, "1", G1, CTA);
+
+            RowResult row = sendOne(milestoneSource, older);
+
+            assertThat(row.classification()).isEqualTo(Classification.DISCREPANCY);
+            ExternalRecord created = externalRecords
+                    .findByKey(keyOf(milestoneSource, MILESTONE_ID, "1"))
+                    .orElseThrow();
+            assertThat(row.externalRecordId()).isEqualTo(created.id());
+            assertThat(created.payloadHash()).isEqualTo(PayloadHash.of(older.payload()));
+            assertThat(adoptedValues.findByReceivedRecordId(row.receivedRecordId()))
+                    .isEmpty();
+            assertThat(receivedOf(row).classificationNote()).isEqualTo(reversedNote(2, "2"));
+        }
+
+        @Test
+        void 行3_c_1つのファイルに後の取得の行と前の取得の行の順なら2つ目は差異() {
+            Ingested result = send(milestoneSource, milestoneRow(2, "2", G2, CTA), milestoneRow(3, "1", G1, CTA));
+
+            assertThat(result.rows())
+                    .extracting(RowResult::classification)
+                    .containsExactly(Classification.ADOPTED, Classification.DISCREPANCY);
+            assertThat(receivedOf(result.rows().get(1)).classificationNote()).isEqualTo(reversedNote(3, "2"));
+            assertThat(result.countOf(Classification.DISCREPANCY)).isEqualTo(1);
+        }
+
+        @Test
+        void 行3_d_1つのファイルに前の取得の行と後の取得の行の順ならどちらも採用() {
+            Ingested result = send(milestoneSource, milestoneRow(2, "1", G1, CTA), milestoneRow(3, "2", G2, CTA));
+
+            assertThat(result.rows())
+                    .extracting(RowResult::classification)
+                    .containsExactly(Classification.ADOPTED, Classification.ADOPTED);
+        }
+
+        @Test
+        void 行3_e_追跡番号が採用中の外部版と違う後の外部版は既存の採用値との矛盾で差異() {
+            sendMilestone("1", G1, CTA);
+
+            RowResult row = sendMilestone("2", G2, CTB);
+
+            assertThat(row.classification()).isEqualTo(Classification.DISCREPANCY);
+            assertThat(receivedOf(row).classificationNote()).isEqualTo(differsNote(2, "1"));
+            assertThat(adoptedValues.findByReceivedRecordId(row.receivedRecordId()))
+                    .isEmpty();
+        }
+
+        @Test
+        void 行3_f_同じ取得時刻の別の外部版は逆転でなく採用() {
+            sendMilestone("1", G2, CTA);
+
+            assertThat(sendMilestone("2", G2, CTA).classification()).isEqualTo(Classification.ADOPTED);
+        }
+
+        @Test
+        void 行3_g_採用した外部版の再送は重複() {
+            sendMilestone("1", G1, CTA);
+            sendMilestone("2", G2, CTA);
+
+            assertThat(sendMilestone("2", G2, CTA).classification()).isEqualTo(Classification.DUPLICATE);
+        }
+
+        @Test
+        void 行3_h_採用した外部版に前の取得時刻で内容の違う原本は差異でなく隔離() {
+            sendMilestone("2", G2, CTA);
+
+            RowResult row = sendOne(milestoneSource, milestoneRow(2, "2", G1, CTA, 1));
+
+            assertThat(row.classification()).isEqualTo(Classification.QUARANTINED);
+            assertThat(receivedOf(row).classificationNote()).isEqualTo("2 行目: 同じ外部 ID・外部版で内容の違う原本を受け取りました。");
+        }
+
+        @ParameterizedTest(name = "内容 {0}")
+        @CsvSource({"0", "1"})
+        void 行3_i_j_差異の原本を同じ内容でも内容を変えても送り直すと再び差異で受信記録が1つ増える(int content) {
+            sendMilestone("2", G2, CTA);
+            RowResult first = sendMilestone("1", G1, CTA);
+            int before = receivedRecords.all().size();
+
+            RowResult again = sendOne(milestoneSource, milestoneRow(2, "1", G1, CTA, content));
+
+            assertThat(first.classification()).isEqualTo(Classification.DISCREPANCY);
+            assertThat(again.classification()).isEqualTo(Classification.DISCREPANCY);
+            assertThat(again.receivedRecordId()).isNotEqualTo(first.receivedRecordId());
+            assertThat(again.externalRecordId()).isEqualTo(first.externalRecordId());
+            assertThat(receivedRecords.all()).hasSize(before + 1);
+        }
+
+        @Test
+        void 行3_k_人の採用で採用値が前の外部版に戻った後でも最後に取得した外部版より前の取得は差異() {
+            sendMilestone("1", G1, CTA);
+            sendMilestone("3", G3, CTA);
+            RowResult v1Quarantine = sendOne(milestoneSource, milestoneRow(2, "1", G1, CTA, 1));
+            assertThat(v1Quarantine.classification()).isEqualTo(Classification.QUARANTINED);
+            // V1 の隔離の採用で、この外部 ID の採用値が V1 に戻った（公開した時刻の順で最も新しい）ところを直接置く（T-182 の前書き）
+            adoptedValues.add(new AdoptedValue(
+                    UUID.randomUUID(),
+                    v1Quarantine.receivedRecordId(),
+                    TargetType.MILESTONE,
+                    CTA,
+                    "DEPARTURE;JPTYO;2026-11-03T08:00:00.000000Z",
+                    "1",
+                    NOW.plusSeconds(3600)));
+
+            RowResult row = sendMilestone("2", G2, CTA);
+
+            assertThat(row.classification()).isEqualTo(Classification.DISCREPANCY);
+            assertThat(receivedOf(row).classificationNote()).isEqualTo(reversedNote(2, "3"));
+        }
+
+        @Test
+        void 行3_l_航海も後に取得した外部版の後の前に取得した外部版は差異() {
+            sendOne(voyageSource, voyageRow(2, "2", G2));
+
+            RowResult row = sendOne(voyageSource, voyageRow(2, "1", G1));
+
+            assertThat(row.classification()).isEqualTo(Classification.DISCREPANCY);
+            assertThat(receivedOf(row).classificationNote()).isEqualTo(reversedNote(2, "2"));
+        }
+
+        @Test
+        void 行3_m_形式の誤りを直した行も後に取得した外部版を採用していれば差異() {
+            ingested(service()
+                    .ingest(
+                            steward,
+                            new IngestFileCommand(
+                                    milestoneSource.id(),
+                                    "ヘッダー\nMS-0001,1".getBytes(StandardCharsets.UTF_8),
+                                    1,
+                                    List.of(),
+                                    List.of(new RejectedRow(
+                                            2,
+                                            2,
+                                            FormatDefect.COLUMN_COUNT_MISMATCH,
+                                            List.of(),
+                                            "MS-0001,1".getBytes(StandardCharsets.UTF_8))),
+                                    null)));
+            sendMilestone("2", G2, CTA);
+
+            assertThat(sendMilestone("1", G1, CTA).classification()).isEqualTo(Classification.DISCREPANCY);
+        }
+
+        // --- 行 5: 差異はほかのコンテキストに届かない ---
+
+        @Test
+        void 行5_a_版の逆転の差異は採用値もDE12からDE14も作らずDE31を1つ出す() {
+            sendMilestone("2", G2, CTA);
+            published.clear();
+            calls.clear();
+
+            RowResult row = sendMilestone("1", G1, CTA);
+
+            assertThat(calls).noneMatch(call -> call.startsWith("adopted:"));
+            assertThat(published).singleElement().isInstanceOf(ExternalRecordDiscrepancyFound.class);
+            ExternalRecordDiscrepancyFound event = (ExternalRecordDiscrepancyFound) published.getFirst();
+            Ingestion ingestion = ingestions.all().getLast();
+            assertThat(event)
+                    .isEqualTo(new ExternalRecordDiscrepancyFound(
+                            row.receivedRecordId(),
+                            ingestion.id(),
+                            milestoneSource.id(),
+                            milestoneSource.provider(),
+                            "MILESTONE",
+                            MILESTONE_ID,
+                            "1",
+                            "VERSION_REVERSED",
+                            "2",
+                            2,
+                            2,
+                            steward.userId(),
+                            steward.companyId(),
+                            new UtcInstant(NOW)));
+        }
+
+        @Test
+        void 行5_b_矛盾の差異も採用値を作らずDE31だけを出し理由は追跡番号の違い() {
+            sendMilestone("1", G1, CTA);
+            published.clear();
+            calls.clear();
+
+            sendMilestone("2", G2, CTB);
+
+            assertThat(calls).noneMatch(call -> call.startsWith("adopted:"));
+            assertThat(published).singleElement().isInstanceOf(ExternalRecordDiscrepancyFound.class);
+            assertThat(discrepancyEvents())
+                    .singleElement()
+                    .extracting("reason", "comparedExternalVersion", "externalVersion")
+                    .containsExactly("TARGET_KEY_DIFFERS", "1", "2");
+        }
+
+        // --- 行 9: 誤った入力と出口 ---
+
+        @Test
+        void 行9_b_差異の後の再送が形式の誤りならキーのない隔離で差異の規則に届かない() {
+            sendMilestone("2", G2, CTA);
+            sendMilestone("1", G1, CTA);
+
+            Ingested result = ingested(service()
+                    .ingest(
+                            steward,
+                            new IngestFileCommand(
+                                    milestoneSource.id(),
+                                    "ヘッダー\nMS-0001,1".getBytes(StandardCharsets.UTF_8),
+                                    1,
+                                    List.of(),
+                                    List.of(new RejectedRow(
+                                            2,
+                                            2,
+                                            FormatDefect.COLUMN_COUNT_MISMATCH,
+                                            List.of(),
+                                            "MS-0001,1".getBytes(StandardCharsets.UTF_8))),
+                                    null)));
+
+            assertThat(result.rows()).singleElement().satisfies(row -> {
+                assertThat(row.classification()).isEqualTo(Classification.QUARANTINED);
+                assertThat(row.externalRecordId()).isNull();
+            });
+            assertThat(result.countOf(Classification.DISCREPANCY)).isZero();
+        }
+    }
+
     /** 保存の呼び出しを記録する（保存 → 受信記録の順を確かめる）。 */
     private class RecordingStorage implements ExternalPayloadStorage {
 
@@ -2451,6 +2769,11 @@ class IngestionServiceTest {
         @Override
         public Optional<AdoptedValue> currentOf(UUID externalRecordId) {
             return adoptedValues.currentOf(externalRecordId);
+        }
+
+        @Override
+        public List<ExternalIdAdoptedValue> findByExternalId(String provider, String recordType, String externalId) {
+            return adoptedValues.findByExternalId(provider, recordType, externalId);
         }
     }
 

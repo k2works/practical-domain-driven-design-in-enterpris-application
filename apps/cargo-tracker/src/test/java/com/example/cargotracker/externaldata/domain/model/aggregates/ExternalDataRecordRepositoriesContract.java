@@ -446,6 +446,26 @@ public abstract class ExternalDataRecordRepositoriesContract {
         assertThat(receivedRecords().quarantinedOf(ingestion.id(), 100)).containsExactly(quarantined, rowError);
     }
 
+    @Test
+    void Bolt39h_行8_取込の隔離の照会は差異も行の順に返し判断を待つ隔離の一覧には差異を出さない() {
+        // S-16 の「隔離・差異の理由」（開始準備の決定 (7)）。S-17 に差異を出すのは 39h2 なので、判断を待つ一覧と件数は隔離だけのまま
+        Ingestion ingestion = ingestion(4);
+        ingestions().add(ingestion);
+        ExternalRecord externalRecord = externalRecord(key("MILESTONE", "MS-39H"));
+        externalRecords().add(externalRecord);
+        ReceivedRecord quarantined = keyed(externalRecord, ingestion, Classification.QUARANTINED, 4);
+        ReceivedRecord discrepancy = keyed(externalRecord, ingestion, Classification.DISCREPANCY, 3);
+        ReceivedRecord adopted = keyed(externalRecord, ingestion, Classification.ADOPTED, 2);
+        receivedRecords().add(quarantined);
+        receivedRecords().add(discrepancy);
+        receivedRecords().add(adopted);
+
+        assertThat(receivedRecords().quarantinedOf(ingestion.id(), 100)).containsExactly(discrepancy, quarantined);
+        assertThat(receivedRecords().countByIngestionAndClassification(ingestion.id(), Classification.DISCREPANCY))
+                .isEqualTo(1);
+        assertThat(receivedRecords().countUndecidedQuarantines(ingestion.id())).isEqualTo(1);
+    }
+
     // --- Bolt 39d の行 3・4・6・15（S-17 の判断を待つ隔離の一覧の照会。開始準備の決定 (3)・(4)）。名前の頭に Bolt39d_ を付ける。
     // 絞らない照会は共有の DB のほかの隔離も返すので、自分の取込の時刻をほかより新しい未来に置き、先頭の行で確かめる。行 7（判断の表に行のある
     // 隔離）は Bolt 39d4 の行 22（判断のポートで書く）に上げた ---

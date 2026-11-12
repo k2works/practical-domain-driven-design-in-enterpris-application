@@ -81,9 +81,9 @@ public class ExternalDataIngestionController {
 
     private static final String SOURCE_NOT_FOUND = "選んだ情報源が見つかりません。示された情報源から選び直してください。";
 
-    /** 示さなかった隔離の数の文（数は 3 桁の区切り。上限は照会の定数。Bolt 39c3 の開始準備の決定 (4)）。 */
+    /** 示さなかった隔離と差異の数の文（数は 3 桁の区切り。上限は照会の定数。Bolt 39c3 の開始準備の決定 (4)。差異は Bolt 39h の決定 (7)）。 */
     private static final String REMAINING_QUARANTINE =
-            "ほかに %s 件の隔離があります（最初の " + IngestionSummaryQueryService.SHOWN_QUARANTINE_LIMIT + " 件だけを示しています）。";
+            "ほかに %s 件の隔離・差異があります（最初の " + IngestionSummaryQueryService.SHOWN_QUARANTINE_LIMIT + " 件だけを示しています）。";
 
     /**
      * 取り込めなかった部分（要確認の「どこ」）の 3 つの形（数は 3 桁の区切り。Bolt 39c4 の開始準備の決定 (4)）。ファイルの終わりまで（閉じ忘れ

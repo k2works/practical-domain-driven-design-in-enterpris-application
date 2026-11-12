@@ -128,6 +128,42 @@ class IngestionSummaryQueryServiceTest {
     }
 
     /**
+     * Bolt 39h の行 8（S-16 の差異の件数と理由。開始準備の決定 (7)）。差異の件数を数え、隔離・差異の注記は照会の順に最初の 100 件、残りは隔離と
+     * 差異の件数の和から示した数を引く。隔離も差異も 0 件なら照会を呼ばない。
+     */
+    @Nested
+    class Bolt39h_差異 {
+
+        private void givenCounts(int quarantined, int discrepancy) {
+            given(receivedRecords.countByIngestionAndClassification(ingestion.id(), Classification.QUARANTINED))
+                    .willReturn(quarantined);
+            given(receivedRecords.countByIngestionAndClassification(ingestion.id(), Classification.DISCREPANCY))
+                    .willReturn(discrepancy);
+            int listed = Math.min(quarantined + discrepancy, IngestionSummaryQueryService.SHOWN_QUARANTINE_LIMIT);
+            given(receivedRecords.quarantinedOf(ingestion.id(), IngestionSummaryQueryService.SHOWN_QUARANTINE_LIMIT))
+                    .willReturn(IntStream.rangeClosed(1, listed)
+                            .mapToObj(IngestionSummaryQueryServiceTest.this::quarantined)
+                            .toList());
+        }
+
+        @ParameterizedTest(name = "隔離 {0}・差異 {1} は {2} 件を示し残り {3} 件")
+        @CsvSource({"1, 1, 2, 0", "0, 1, 1, 0", "1, 100, 100, 1", "0, 0, 0, 0"})
+        void 行8_差異の件数を数え隔離と差異の注記を最初の100件だけ示し残りは隔離と差異の和から引く(int quarantined, int discrepancy, int shown, int remaining) {
+            givenCounts(quarantined, discrepancy);
+
+            IngestionSummaryView summary = service.summaryOf(ingestion.id()).orElseThrow();
+
+            assertThat(summary.quarantinedCount()).isEqualTo(quarantined);
+            assertThat(summary.discrepancyCount()).isEqualTo(discrepancy);
+            assertThat(summary.quarantineNotes()).hasSize(shown);
+            assertThat(summary.remainingQuarantineCount()).isEqualTo(remaining);
+            if (quarantined + discrepancy == 0) {
+                then(receivedRecords).should(never()).quarantinedOf(any(), anyInt());
+            }
+        }
+    }
+
+    /**
      * Bolt 39c4 の行 6・7（要確認の復元。開始準備の決定 (2)・(3)）。取込の取り込めなかった行（始まり・数）と、読んだ隔離の受信記録にファイル
      * 全体の原本のキーを持つものがあるかの組から、取り込めなかった部分の値を組み立てる。39c3 の同じ番号の行と名前が衝突しないよう入れ子にする。
      */

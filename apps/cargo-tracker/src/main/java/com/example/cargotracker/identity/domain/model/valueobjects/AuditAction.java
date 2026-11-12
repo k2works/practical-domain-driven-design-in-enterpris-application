@@ -97,6 +97,12 @@ public enum AuditAction {
      */
     EXTERNAL_RECORD_QUARANTINED,
     /**
+     * 外部原本の差異を見つけた（DE-31 を監査する。Bolt 39h、AUD-01、IA-INV-15）。成功だけを記録し、理由は差異の理由の区分
+     * （{@code VERSION_REVERSED} か {@code TARGET_KEY_DIFFERS}）。隔離と別の操作にし、差異を隔離として数えない。対象と変更後は
+     * {@link #EXTERNAL_RECORD_QUARANTINED} と同じ形で、変更後の要約に比べた外部版を入れる。
+     */
+    EXTERNAL_RECORD_DISCREPANCY_FOUND,
+    /**
      * データ責任者が受信記録を判断した（DE-29 を監査する。Bolt 39d2、AUD-01、IA-INV-15）。人の判断として成功だけを記録し、理由は判断
      * （{@code REJECTED} か {@code ADOPTED}。採用は Bolt 39d3b）。判断の理由の文は 100 文字の理由の列に収まらないので、あれば変更後の要約の最後に置き、理由のない採用は要約の {@code reason} の部品を省く。対象は
      * {@link #EXTERNAL_RECORD_ADOPTED} と同じ形。
