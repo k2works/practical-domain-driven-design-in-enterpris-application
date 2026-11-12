@@ -68,7 +68,7 @@ public class UndecidedRecordQueryService {
      * @param quarantine 判断の画面の中身（{@link #undecidedRecord} の値）
      */
     @Transactional(readOnly = true)
-    public Optional<QuarantineValues> quarantineValues(UndecidedRecordPage.Item quarantine) {
+    public Optional<UndecidedRecordValues> undecidedRecordValues(UndecidedRecordPage.Item quarantine) {
         if (quarantine.keyless()) {
             return Optional.empty();
         }
@@ -80,24 +80,24 @@ public class UndecidedRecordQueryService {
                 .map(received -> valuesOf(received, quarantine.recordType()));
     }
 
-    private QuarantineValues valuesOf(ReceivedRecord quarantine, String recordType) {
+    private UndecidedRecordValues valuesOf(ReceivedRecord quarantine, String recordType) {
         ReceivedValue value = quarantine.value();
         // 値の列がない（Bolt 39d3 より前の隔離）ときは入口を呼ばず、読めない印を立てない
         Optional<RecordValues> received = value == null
                 ? Optional.empty()
                 : readable(recordType, value.targetKey(), value.summary(), () -> "受信記録 " + quarantine.id());
         // 差異の外部原本（その外部版）は採用値を持たないので、この外部版の採用値は引かない（Bolt 39h2 の決定 (5)）
-        QuarantineValues.Adopted adopted = quarantine.classification() == Classification.DISCREPANCY
+        UndecidedRecordValues.Adopted adopted = quarantine.classification() == Classification.DISCREPANCY
                 ? null
                 : adoptedValues
                         .currentOf(quarantine.externalRecordId())
                         .map(this::adoptedOf)
                         .orElse(null);
-        return new QuarantineValues(
+        return new UndecidedRecordValues(
                 received.orElse(null), value != null && received.isEmpty(), quarantine.acquiredAt(), adopted);
     }
 
-    private QuarantineValues.Adopted adoptedOf(AdoptedValue adopted) {
+    private UndecidedRecordValues.Adopted adoptedOf(AdoptedValue adopted) {
         // 採用値は受信記録への外部キーを持ち、採用の受信記録は外部原本と取得時刻を持つ
         ReceivedRecord adoptedRecord =
                 receivedRecords.findById(adopted.receivedRecordId()).orElseThrow();
@@ -106,7 +106,7 @@ public class UndecidedRecordQueryService {
                 adopted.targetKey(),
                 adopted.valueSummary(),
                 () -> "採用値 " + adopted.id() + "（受信記録 " + adopted.receivedRecordId() + "）");
-        return new QuarantineValues.Adopted(
+        return new UndecidedRecordValues.Adopted(
                 values.orElse(null),
                 values.isEmpty(),
                 adopted.infoVersion(),

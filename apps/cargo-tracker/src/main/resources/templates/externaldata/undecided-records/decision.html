@@ -64,17 +64,17 @@
         <dd th:text="${note}">140 行目: 同じ外部 ID・外部版で内容の違う原本を受け取りました。</dd>
     </dl>
     <!--/* 内容の違う原本の受け取った値とこの外部版の採用値（航海は Bolt 39d3、主要実績と読めない値は Bolt 39d3c、【業務の判断】(i)・(j)・(k)）。
-           見出しで名前の付いた 2 つの領域に、それぞれの取得した日時と値を示す（中身は externaldata/fragments/quarantine-values）。値が同じなら
+           見出しで名前の付いた 2 つの領域に、それぞれの取得した日時と値を示す（中身は externaldata/fragments/undecided-record-values）。値が同じなら
            2 つの領域の前に文を 1 つ示す。キーのない隔離には出さない */-->
     <th:block th:if="${receivedValues}">
         <p th:if="${sameValuesText}" th:text="${sameValuesText}">受け取った値はこの外部版の採用値と同じです。同じ原本か、原本の書き方（引用符・空白など）だけが違います。</p>
         <section aria-labelledby="received-values-heading">
             <h2 id="received-values-heading">受け取った値</h2>
-            <th:block th:replace="~{externaldata/fragments/quarantine-values :: values(${receivedValues})}"></th:block>
+            <th:block th:replace="~{externaldata/fragments/undecided-record-values :: values(${receivedValues})}"></th:block>
         </section>
         <section th:if="${adoptedValues}" aria-labelledby="adopted-values-heading">
             <h2 id="adopted-values-heading" tabindex="-1">この外部版の採用値</h2>
-            <th:block th:replace="~{externaldata/fragments/quarantine-values :: values(${adoptedValues})}"></th:block>
+            <th:block th:replace="~{externaldata/fragments/undecided-record-values :: values(${adoptedValues})}"></th:block>
         </section>
     </th:block>
     <section aria-labelledby="rejection-heading">

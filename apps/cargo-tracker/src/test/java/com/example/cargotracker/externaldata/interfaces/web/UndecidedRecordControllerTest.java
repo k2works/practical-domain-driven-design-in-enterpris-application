@@ -23,7 +23,7 @@ import com.example.cargotracker.externaldata.application.internal.commandservice
 import com.example.cargotracker.externaldata.application.internal.commandservices.KeylessRejectionOutcome;
 import com.example.cargotracker.externaldata.application.internal.commandservices.ReceivedRecordDecisionService;
 import com.example.cargotracker.externaldata.application.internal.queryservices.KeylessRejectionTarget;
-import com.example.cargotracker.externaldata.application.internal.queryservices.QuarantineValues;
+import com.example.cargotracker.externaldata.application.internal.queryservices.UndecidedRecordValues;
 import com.example.cargotracker.externaldata.application.internal.queryservices.UndecidedRecordPage;
 import com.example.cargotracker.externaldata.application.internal.queryservices.UndecidedRecordQueryService;
 import com.example.cargotracker.externaldata.domain.model.aggregates.ConcurrentExternalRecordUpdateException;
@@ -1084,14 +1084,14 @@ class UndecidedRecordControllerTest {
                                     new Location("USLAX"), new UtcInstant(Instant.parse(losAngelesArrival)), null)));
         }
 
-        private static QuarantineValues.Adopted adopted(VoyageValues values, Instant acquiredAt) {
-            return new QuarantineValues.Adopted(values, "3", PUBLISHED_AT, acquiredAt);
+        private static UndecidedRecordValues.Adopted adopted(VoyageValues values, Instant acquiredAt) {
+            return new UndecidedRecordValues.Adopted(values, "3", PUBLISHED_AT, acquiredAt);
         }
 
-        private String decisionPageWith(UndecidedRecordPage.Item item, QuarantineValues values) throws Exception {
+        private String decisionPageWith(UndecidedRecordPage.Item item, UndecidedRecordValues values) throws Exception {
             given(decisions.refusalOf(RECORD_ID)).willReturn(java.util.Optional.empty());
             given(query.undecidedRecord(RECORD_ID)).willReturn(java.util.Optional.of(item));
-            given(query.quarantineValues(item)).willReturn(java.util.Optional.ofNullable(values));
+            given(query.undecidedRecordValues(item)).willReturn(java.util.Optional.ofNullable(values));
             return mockMvc.perform(get(DECISION_URL))
                     .andExpect(status().isOk())
                     .andReturn()
@@ -1111,7 +1111,7 @@ class UndecidedRecordControllerTest {
         void 行9_隔離の理由の後に受け取った値とこの外部版の採用値をそれぞれの取得した日時と航海番号と寄港の番号付きの並びで示し却下の欄が続く() throws Exception {
             String page = decisionPageWith(
                     mismatch("VOYAGE"),
-                    new QuarantineValues(
+                    new UndecidedRecordValues(
                             voyage("DEMO-201", "2026-12-01T22:00:00Z"),
                             RECEIVED_ACQUIRED_AT,
                             adopted(voyage("DEMO-201", "2026-12-01T14:00:00Z"), ADOPTED_ACQUIRED_AT)));
@@ -1151,7 +1151,7 @@ class UndecidedRecordControllerTest {
 
             String page = decisionPageWith(
                     mismatch("VOYAGE"),
-                    new QuarantineValues(
+                    new UndecidedRecordValues(
                             voyage(voyageNumber, "2026-12-01T22:00:00Z"),
                             RECEIVED_ACQUIRED_AT,
                             adopted(voyage("DEMO-201", "2026-12-01T14:00:00Z"), ADOPTED_ACQUIRED_AT)));
@@ -1167,7 +1167,7 @@ class UndecidedRecordControllerTest {
         void 行10_値を記録する前に取り込んだ隔離は受け取った値の領域にその旨を示しこの外部版の採用値は示す() throws Exception {
             String page = decisionPageWith(
                     mismatch("VOYAGE"),
-                    new QuarantineValues(
+                    new UndecidedRecordValues(
                             null,
                             RECEIVED_ACQUIRED_AT,
                             adopted(voyage("DEMO-201", "2026-12-01T14:00:00Z"), ADOPTED_ACQUIRED_AT)));
@@ -1185,7 +1185,7 @@ class UndecidedRecordControllerTest {
         void 行11_この外部版の採用値がない隔離はその領域にないことを示し同じ値の文を出さない() throws Exception {
             String page = decisionPageWith(
                     mismatch("VOYAGE"),
-                    new QuarantineValues(voyage("DEMO-201", "2026-12-01T22:00:00Z"), RECEIVED_ACQUIRED_AT, null));
+                    new UndecidedRecordValues(voyage("DEMO-201", "2026-12-01T22:00:00Z"), RECEIVED_ACQUIRED_AT, null));
 
             org.assertj.core.api.Assertions.assertThat(page)
                     .containsPattern(RECEIVED_SECTION + "\\s*<p>取得した日時 2026-11-16 09:30 ")
@@ -1232,7 +1232,7 @@ class UndecidedRecordControllerTest {
 
             mockMvc.perform(get(DECISION_URL)).andExpect(status().isNotFound());
 
-            then(query).should(org.mockito.Mockito.never()).quarantineValues(any());
+            then(query).should(org.mockito.Mockito.never()).undecidedRecordValues(any());
         }
 
         // --- 行 21・22: 同じ値の 2 つの文（V7・V8。T-244） ---
@@ -1256,7 +1256,7 @@ class UndecidedRecordControllerTest {
                 throws Exception {
             String page = decisionPageWith(
                     mismatch("VOYAGE"),
-                    new QuarantineValues(
+                    new UndecidedRecordValues(
                             voyage("DEMO-201", "2026-12-01T22:00:00Z"),
                             RECEIVED_ACQUIRED_AT,
                             adopted(voyage("DEMO-201", adoptedLosAngelesArrival), adoptedAcquiredAt)));
@@ -1339,20 +1339,20 @@ class UndecidedRecordControllerTest {
             return "MILESTONE".equals(recordType) ? milestone("2026-11-19T00:00:00Z") : voyage("2026-12-01T14:00:00Z");
         }
 
-        private static QuarantineValues.Adopted adopted(
+        private static UndecidedRecordValues.Adopted adopted(
                 com.example.cargotracker.externaldata.domain.model.valueobjects.RecordValues values,
                 Instant acquiredAt) {
-            return new QuarantineValues.Adopted(values, "2", PUBLISHED_AT, acquiredAt);
+            return new UndecidedRecordValues.Adopted(values, "2", PUBLISHED_AT, acquiredAt);
         }
 
-        private static QuarantineValues.Adopted illegibleAdopted() {
-            return new QuarantineValues.Adopted(null, true, "2", PUBLISHED_AT, ADOPTED_ACQUIRED_AT);
+        private static UndecidedRecordValues.Adopted illegibleAdopted() {
+            return new UndecidedRecordValues.Adopted(null, true, "2", PUBLISHED_AT, ADOPTED_ACQUIRED_AT);
         }
 
-        private String decisionPageWith(UndecidedRecordPage.Item item, QuarantineValues values) throws Exception {
+        private String decisionPageWith(UndecidedRecordPage.Item item, UndecidedRecordValues values) throws Exception {
             given(decisions.refusalOf(RECORD_ID)).willReturn(java.util.Optional.empty());
             given(query.undecidedRecord(RECORD_ID)).willReturn(java.util.Optional.of(item));
-            given(query.quarantineValues(item)).willReturn(java.util.Optional.ofNullable(values));
+            given(query.undecidedRecordValues(item)).willReturn(java.util.Optional.ofNullable(values));
             return mockMvc.perform(get(DECISION_URL))
                     .andExpect(status().isOk())
                     .andReturn()
@@ -1375,7 +1375,7 @@ class UndecidedRecordControllerTest {
         void 行14_主要実績は追跡番号と実績の種類と場所と発生時刻を取得した日時の後に示し寄港の並びを出さない() throws Exception {
             String page = decisionPageWith(
                     mismatch("MILESTONE"),
-                    new QuarantineValues(
+                    new UndecidedRecordValues(
                             milestone("2026-11-19T01:00:00Z"),
                             RECEIVED_ACQUIRED_AT,
                             adopted(milestone("2026-11-19T00:00:00Z"), ADOPTED_ACQUIRED_AT)));
@@ -1407,47 +1407,47 @@ class UndecidedRecordControllerTest {
                 cases.add(org.junit.jupiter.params.provider.Arguments.of(
                         type + " (a) 受け取った値が読めない",
                         type,
-                        new QuarantineValues(
+                        new UndecidedRecordValues(
                                 null, true, RECEIVED_ACQUIRED_AT, adopted(valuesOf(type), ADOPTED_ACQUIRED_AT)),
                         receivedIllegible,
                         adoptedShown));
                 cases.add(org.junit.jupiter.params.provider.Arguments.of(
                         type + " (b) 採用値が読めない",
                         type,
-                        new QuarantineValues(valuesOf(type), false, RECEIVED_ACQUIRED_AT, illegibleAdopted()),
+                        new UndecidedRecordValues(valuesOf(type), false, RECEIVED_ACQUIRED_AT, illegibleAdopted()),
                         receivedShown,
                         adoptedIllegible));
                 cases.add(org.junit.jupiter.params.provider.Arguments.of(
                         type + " (a)・(b) 両側が読めない",
                         type,
-                        new QuarantineValues(null, true, RECEIVED_ACQUIRED_AT, illegibleAdopted()),
+                        new UndecidedRecordValues(null, true, RECEIVED_ACQUIRED_AT, illegibleAdopted()),
                         receivedIllegible,
                         adoptedIllegible));
             }
             cases.add(org.junit.jupiter.params.provider.Arguments.of(
                     "(c) 知らない原本種別",
                     "CONTAINER",
-                    new QuarantineValues(
+                    new UndecidedRecordValues(
                             null, true, RECEIVED_ACQUIRED_AT, adopted(valuesOf("VOYAGE"), ADOPTED_ACQUIRED_AT)),
                     receivedIllegible,
                     adoptedShown));
             cases.add(org.junit.jupiter.params.provider.Arguments.of(
                     "値の列がない × 知らない原本種別",
                     "CONTAINER",
-                    new QuarantineValues(
+                    new UndecidedRecordValues(
                             null, false, RECEIVED_ACQUIRED_AT, adopted(valuesOf("VOYAGE"), ADOPTED_ACQUIRED_AT)),
                     receivedNotRecorded,
                     adoptedShown));
             cases.add(org.junit.jupiter.params.provider.Arguments.of(
                     "値の列がない × 採用値が読めない",
                     "MILESTONE",
-                    new QuarantineValues(null, false, RECEIVED_ACQUIRED_AT, illegibleAdopted()),
+                    new UndecidedRecordValues(null, false, RECEIVED_ACQUIRED_AT, illegibleAdopted()),
                     receivedNotRecorded,
                     adoptedIllegible));
             cases.add(org.junit.jupiter.params.provider.Arguments.of(
                     "受け取った値が読めない × 採用値がない",
                     "MILESTONE",
-                    new QuarantineValues(null, true, RECEIVED_ACQUIRED_AT, null),
+                    new UndecidedRecordValues(null, true, RECEIVED_ACQUIRED_AT, null),
                     receivedIllegible,
                     adoptedNone));
             return cases.stream();
@@ -1456,7 +1456,7 @@ class UndecidedRecordControllerTest {
         @ParameterizedTest(name = "{0}")
         @org.junit.jupiter.params.provider.MethodSource("illegibleCases")
         void 行23_読めない側は取得した日時の後に値を読めない文を示し読める側は値を示して却下の欄を残す(
-                String name, String recordType, QuarantineValues values, String receivedPattern, String adoptedPattern)
+                String name, String recordType, UndecidedRecordValues values, String receivedPattern, String adoptedPattern)
                 throws Exception {
             String page = decisionPageWith(mismatch(recordType), values);
 
@@ -1487,7 +1487,7 @@ class UndecidedRecordControllerTest {
                 String name, String adoptedOccurredAt, Instant adoptedAcquiredAt, String expected) throws Exception {
             String page = decisionPageWith(
                     mismatch("MILESTONE"),
-                    new QuarantineValues(
+                    new UndecidedRecordValues(
                             milestone("2026-11-19T01:00:00Z"),
                             RECEIVED_ACQUIRED_AT,
                             adopted(milestone(adoptedOccurredAt), adoptedAcquiredAt)));
@@ -1505,7 +1505,7 @@ class UndecidedRecordControllerTest {
     }
 
     /**
-     * Bolt 39d3c の行 18（種類の表示名の写し。開始準備の決定 (5)、T-240・T-244）。画面の層の {@code QuarantineValueViews} の単体（新しいテストの
+     * Bolt 39d3c の行 18（種類の表示名の写し。開始準備の決定 (5)、T-240・T-244）。画面の層の {@code UndecidedRecordValueViews} の単体（新しいテストの
      * クラスを作らず、同じパッケージのこのクラスに置く）。名前は用語集の実績の種類の名前（docs/manual/用語集.md）を書き並べ、追跡の表示名を
      * 参照しない。
      */
@@ -1523,7 +1523,7 @@ class UndecidedRecordControllerTest {
         })
         void 行18_実績の種類の表示名は用語集の名前(
                 com.example.cargotracker.externaldata.domain.model.valueobjects.MilestoneKindValue kind, String name) {
-            org.assertj.core.api.Assertions.assertThat(QuarantineValueViews.kindName(kind))
+            org.assertj.core.api.Assertions.assertThat(UndecidedRecordValueViews.kindName(kind))
                     .isEqualTo(name);
         }
 
@@ -1596,19 +1596,19 @@ class UndecidedRecordControllerTest {
                                     new Location("USLAX"), new UtcInstant(Instant.parse(losAngelesArrival)), null)));
         }
 
-        private static QuarantineValues readable() {
-            return new QuarantineValues(
+        private static UndecidedRecordValues readable() {
+            return new UndecidedRecordValues(
                     voyage("2026-12-01T22:00:00Z"),
                     ACQUIRED_AT,
-                    new QuarantineValues.Adopted(voyage("2026-12-01T14:00:00Z"), "3", PUBLISHED_AT, ACQUIRED_AT));
+                    new UndecidedRecordValues.Adopted(voyage("2026-12-01T14:00:00Z"), "3", PUBLISHED_AT, ACQUIRED_AT));
         }
 
         private void givenDecision(
-                UndecidedRecordPage.Item item, QuarantineValues values, Optional<DecisionOutcome> adoptionRefusal) {
+                UndecidedRecordPage.Item item, UndecidedRecordValues values, Optional<DecisionOutcome> adoptionRefusal) {
             given(decisions.refusalOf(RECORD_ID)).willReturn(Optional.empty());
             given(decisions.adoptionRefusalOf(RECORD_ID)).willReturn(adoptionRefusal);
             given(query.undecidedRecord(RECORD_ID)).willReturn(Optional.of(item));
-            given(query.quarantineValues(item)).willReturn(Optional.ofNullable(values));
+            given(query.undecidedRecordValues(item)).willReturn(Optional.ofNullable(values));
         }
 
         private String body(ResultActions result) throws Exception {
@@ -1677,19 +1677,19 @@ class UndecidedRecordControllerTest {
         }
 
         static Stream<Arguments> valueStates() {
-            QuarantineValues.Adopted adopted =
-                    new QuarantineValues.Adopted(voyage("2026-12-01T14:00:00Z"), "3", PUBLISHED_AT, ACQUIRED_AT);
-            QuarantineValues.Adopted illegibleAdopted =
-                    new QuarantineValues.Adopted(null, true, "3", PUBLISHED_AT, ACQUIRED_AT);
+            UndecidedRecordValues.Adopted adopted =
+                    new UndecidedRecordValues.Adopted(voyage("2026-12-01T14:00:00Z"), "3", PUBLISHED_AT, ACQUIRED_AT);
+            UndecidedRecordValues.Adopted illegibleAdopted =
+                    new UndecidedRecordValues.Adopted(null, true, "3", PUBLISHED_AT, ACQUIRED_AT);
             List<Arguments> states = List.of(
                     Arguments.of("受け取った値を読めた", readable()),
-                    Arguments.of("受け取った値を読めない", new QuarantineValues(null, true, ACQUIRED_AT, adopted)),
-                    Arguments.of("値の列なし", new QuarantineValues(null, ACQUIRED_AT, adopted)),
+                    Arguments.of("受け取った値を読めない", new UndecidedRecordValues(null, true, ACQUIRED_AT, adopted)),
+                    Arguments.of("値の列なし", new UndecidedRecordValues(null, ACQUIRED_AT, adopted)),
                     Arguments.of(
-                            "この外部版の採用値がない", new QuarantineValues(voyage("2026-12-01T22:00:00Z"), ACQUIRED_AT, null)),
+                            "この外部版の採用値がない", new UndecidedRecordValues(voyage("2026-12-01T22:00:00Z"), ACQUIRED_AT, null)),
                     Arguments.of(
                             "採用値の側だけ読めない",
-                            new QuarantineValues(voyage("2026-12-01T22:00:00Z"), ACQUIRED_AT, illegibleAdopted)));
+                            new UndecidedRecordValues(voyage("2026-12-01T22:00:00Z"), ACQUIRED_AT, illegibleAdopted)));
             return states.stream()
                     .flatMap(state -> Stream.of(true, false)
                             .map(adoptable -> Arguments.of(state.get()[0], state.get()[1], adoptable)));
@@ -1697,7 +1697,7 @@ class UndecidedRecordControllerTest {
 
         @ParameterizedTest(name = "{0}・採用できる {2}")
         @MethodSource("valueStates")
-        void 行12_採用の欄の有無は採用できるかの照会の結果だけで決まり照会の値によらない(String name, QuarantineValues values, boolean adoptable)
+        void 行12_採用の欄の有無は採用できるかの照会の結果だけで決まり照会の値によらない(String name, UndecidedRecordValues values, boolean adoptable)
                 throws Exception {
             givenDecision(item(false), values, adoptable ? Optional.empty() : Optional.of(valueNotRecorded()));
 
@@ -1879,7 +1879,7 @@ class UndecidedRecordControllerTest {
             given(decisions.refusalOf(RECORD_ID)).willReturn(Optional.empty());
             given(decisions.adoptionRefusalOf(RECORD_ID)).willReturn(adoptionRefusal);
             given(query.undecidedRecord(RECORD_ID)).willReturn(Optional.of(item()));
-            given(query.quarantineValues(any())).willReturn(Optional.empty());
+            given(query.undecidedRecordValues(any())).willReturn(Optional.empty());
         }
 
         private static String body(ResultActions result) throws Exception {
@@ -2118,7 +2118,7 @@ class UndecidedRecordControllerTest {
         private static final String SAME_PAYLOAD_TEXT = "同じ原本がすでに採用されているので採用できません。却下で片付けてください。";
         private static final String ADOPTION_HEADING = "<h2 id=\"adoption-heading\">採用する</h2>";
 
-        private void givenDecision(Optional<DecisionOutcome> adoptionRefusal, Optional<QuarantineValues> values) {
+        private void givenDecision(Optional<DecisionOutcome> adoptionRefusal, Optional<UndecidedRecordValues> values) {
             given(decisions.refusalOf(RECORD_ID)).willReturn(Optional.empty());
             given(decisions.adoptionRefusalOf(RECORD_ID)).willReturn(adoptionRefusal);
             given(query.undecidedRecord(RECORD_ID))
@@ -2132,10 +2132,10 @@ class UndecidedRecordControllerTest {
                             "DEMO-201",
                             "3",
                             "3 行目: 理由")));
-            given(query.quarantineValues(any())).willReturn(values);
+            given(query.undecidedRecordValues(any())).willReturn(values);
         }
 
-        private static QuarantineValues adoptedDiffers() {
+        private static UndecidedRecordValues adoptedDiffers() {
             VoyageValues received = new VoyageValues(
                     "DEMO-201",
                     List.of(
@@ -2154,10 +2154,10 @@ class UndecidedRecordControllerTest {
                                     new Location("USLAX"),
                                     new UtcInstant(Instant.parse("2026-12-01T23:00:00Z")),
                                     null)));
-            return new QuarantineValues(
+            return new UndecidedRecordValues(
                     received,
                     Instant.parse("2026-11-16T00:30:00Z"),
-                    new QuarantineValues.Adopted(adopted, "3", INGESTED_AT, Instant.parse("2026-11-15T09:00:00Z")));
+                    new UndecidedRecordValues.Adopted(adopted, "3", INGESTED_AT, Instant.parse("2026-11-15T09:00:00Z")));
         }
 
         @Test
@@ -2270,7 +2270,7 @@ class UndecidedRecordControllerTest {
                     "4 行目: 同じ外部 ID・外部版で内容の違う原本を受け取りました。");
         }
 
-        private static QuarantineValues receivedOnly() {
+        private static UndecidedRecordValues receivedOnly() {
             VoyageValues voyage = new VoyageValues(
                     "DEMO-201",
                     List.of(
@@ -2280,16 +2280,16 @@ class UndecidedRecordControllerTest {
                                     new Location("USLAX"),
                                     new UtcInstant(Instant.parse("2026-12-01T22:00:00Z")),
                                     null)));
-            return new QuarantineValues(voyage, Instant.parse("2026-11-16T00:30:00Z"), null);
+            return new UndecidedRecordValues(voyage, Instant.parse("2026-11-16T00:30:00Z"), null);
         }
 
-        private void givenDiscrepancy(QuarantineValues values) {
+        private void givenDiscrepancy(UndecidedRecordValues values) {
             given(decisions.refusalOf(RECORD_ID)).willReturn(Optional.empty());
             given(query.undecidedRecord(RECORD_ID)).willReturn(Optional.of(discrepancy()));
             given(decisions.adoptionRefusalOf(RECORD_ID))
                     .willReturn(Optional.of(new DecisionOutcome.NotAdoptable(
                             RECORD_ID, DecisionOutcome.NotAdoptableReason.DISCREPANCY)));
-            given(query.quarantineValues(any())).willReturn(Optional.ofNullable(values));
+            given(query.undecidedRecordValues(any())).willReturn(Optional.ofNullable(values));
         }
 
         private String decisionPage() throws Exception {
@@ -2367,7 +2367,7 @@ class UndecidedRecordControllerTest {
 
         @Test
         void 行8_c_受け取った値を読めない差異は値を読めませんでしたと示し500にしない() throws Exception {
-            givenDiscrepancy(new QuarantineValues(null, true, Instant.parse("2026-11-16T00:30:00Z"), null));
+            givenDiscrepancy(new UndecidedRecordValues(null, true, Instant.parse("2026-11-16T00:30:00Z"), null));
 
             Assertions.assertThat(decisionPage())
                     .contains("<h2 id=\"received-values-heading\">受け取った値</h2>")
@@ -2390,8 +2390,8 @@ class UndecidedRecordControllerTest {
             given(decisions.refusalOf(RECORD_ID)).willReturn(Optional.empty());
             given(query.undecidedRecord(RECORD_ID)).willReturn(Optional.of(quarantine));
             given(decisions.adoptionRefusalOf(RECORD_ID)).willReturn(Optional.empty());
-            given(query.quarantineValues(any()))
-                    .willReturn(Optional.of(new QuarantineValues(
+            given(query.undecidedRecordValues(any()))
+                    .willReturn(Optional.of(new UndecidedRecordValues(
                             receivedOnly().received(), Instant.parse("2026-11-16T00:30:00Z"), null)));
 
             Assertions.assertThat(decisionPage())

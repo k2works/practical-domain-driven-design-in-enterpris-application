@@ -7,7 +7,7 @@ import com.example.cargotracker.externaldata.application.internal.commandservice
 import com.example.cargotracker.externaldata.application.internal.commandservices.KeylessRejectionOutcome;
 import com.example.cargotracker.externaldata.application.internal.commandservices.ReceivedRecordDecisionService;
 import com.example.cargotracker.externaldata.application.internal.queryservices.KeylessRejectionTarget;
-import com.example.cargotracker.externaldata.application.internal.queryservices.QuarantineValues;
+import com.example.cargotracker.externaldata.application.internal.queryservices.UndecidedRecordValues;
 import com.example.cargotracker.externaldata.application.internal.queryservices.UndecidedRecordPage;
 import com.example.cargotracker.externaldata.application.internal.queryservices.UndecidedRecordQueryService;
 import com.example.cargotracker.externaldata.domain.model.aggregates.ConcurrentExternalRecordUpdateException;
@@ -415,22 +415,22 @@ public class UndecidedRecordController {
         model.addAttribute("backUrl", pageUrl(back, backPage));
         model.addAttribute("actionUrl", LIST_URL + "/" + id + "/decision" + query(back, backPage));
         model.addAttribute("adoptionActionUrl", LIST_URL + "/" + id + "/adoption" + query(back, backPage));
-        query.quarantineValues(item)
+        query.undecidedRecordValues(item)
                 .ifPresent(values -> addValues(values, item.classification() == Classification.DISCREPANCY, model));
         return DECISION_VIEW;
     }
 
     /**
-     * 受け取った値とこの外部版の採用値の領域（Bolt 39d3。示し方は {@link QuarantineValueViews}。Bolt 39d3c）。値が等しければ同じ値の文を示す。
+     * 受け取った値とこの外部版の採用値の領域（Bolt 39d3。示し方は {@link UndecidedRecordValueViews}。Bolt 39d3c）。値が等しければ同じ値の文を示す。
      */
-    private static void addValues(QuarantineValues values, boolean discrepancy, Model model) {
-        model.addAttribute("receivedValues", QuarantineValueViews.receivedOf(values));
+    private static void addValues(UndecidedRecordValues values, boolean discrepancy, Model model) {
+        model.addAttribute("receivedValues", UndecidedRecordValueViews.receivedOf(values));
         if (discrepancy) {
             // 差異は「受け取った値」の領域だけ。この外部版の採用値は持たず、比べる相手がないのに「採用値はありません」と出さない（決定 (5)）
             return;
         }
-        model.addAttribute("adoptedValues", QuarantineValueViews.adoptedOf(values));
-        String sameValuesText = QuarantineValueViews.sameValuesTextOf(values);
+        model.addAttribute("adoptedValues", UndecidedRecordValueViews.adoptedOf(values));
+        String sameValuesText = UndecidedRecordValueViews.sameValuesTextOf(values);
         if (sameValuesText != null) {
             model.addAttribute("sameValuesText", sameValuesText);
         }

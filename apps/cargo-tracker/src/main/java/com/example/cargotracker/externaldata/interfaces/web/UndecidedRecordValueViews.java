@@ -1,6 +1,6 @@
 package com.example.cargotracker.externaldata.interfaces.web;
 
-import com.example.cargotracker.externaldata.application.internal.queryservices.QuarantineValues;
+import com.example.cargotracker.externaldata.application.internal.queryservices.UndecidedRecordValues;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.MilestoneKindValue;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.MilestoneValues;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.RecordValues;
@@ -17,7 +17,7 @@ import java.util.Map;
  * 外部版の採用値は情報版・公開した日時・取得した日時）の後に示す。日時は社内の画面の形（UTC を併記）。値には取込ファイルから来た値が入るので、
  * テンプレートは {@code th:text} で示す。
  */
-final class QuarantineValueViews {
+final class UndecidedRecordValueViews {
 
     private static final String RECEIVED_META = "取得した日時 %s";
 
@@ -47,10 +47,10 @@ final class QuarantineValueViews {
             MilestoneKindValue.ARRIVAL, "到着",
             MilestoneKindValue.DELIVERY, "引渡し"));
 
-    private QuarantineValueViews() {}
+    private UndecidedRecordValueViews() {}
 
     /** 受け取った値の領域（値の列がなければその旨、読めなければ取得した日時と読めない文）。 */
-    static ValuesView receivedOf(QuarantineValues values) {
+    static ValuesView receivedOf(UndecidedRecordValues values) {
         String meta = RECEIVED_META.formatted(DateTimeDisplay.staff(values.receivedAcquiredAt()));
         if (values.receivedIllegible()) {
             return illegible(meta);
@@ -59,8 +59,8 @@ final class QuarantineValueViews {
     }
 
     /** この外部版の採用値の領域（なければその旨、読めなければ情報版・公開した日時・取得した日時と読めない文）。 */
-    static ValuesView adoptedOf(QuarantineValues values) {
-        QuarantineValues.Adopted adopted = values.adopted();
+    static ValuesView adoptedOf(UndecidedRecordValues values) {
+        UndecidedRecordValues.Adopted adopted = values.adopted();
         if (adopted == null) {
             return none(NO_ADOPTED);
         }
@@ -72,7 +72,7 @@ final class QuarantineValueViews {
     }
 
     /** 同じ値の文（値が等しければ取得時刻が同じかで選ぶ。値が違う・ない・読めなければ {@code null}）。 */
-    static String sameValuesTextOf(QuarantineValues values) {
+    static String sameValuesTextOf(UndecidedRecordValues values) {
         if (!values.sameValues()) {
             return null;
         }

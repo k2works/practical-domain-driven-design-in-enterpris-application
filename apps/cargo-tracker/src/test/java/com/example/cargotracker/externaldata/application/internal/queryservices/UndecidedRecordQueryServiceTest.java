@@ -575,10 +575,10 @@ class UndecidedRecordQueryServiceTest {
                 memoryAdoptedValues.add(adopted);
             }
 
-            assertThat(memoryService.quarantineValues(item(second, "3")))
+            assertThat(memoryService.undecidedRecordValues(item(second, "3")))
                     .get()
-                    .extracting(QuarantineValues::adopted)
-                    .isEqualTo(new QuarantineValues.Adopted(
+                    .extracting(UndecidedRecordValues::adopted)
+                    .isEqualTo(new UndecidedRecordValues.Adopted(
                             voyageArriving(ADOPTED_ARRIVAL), "3", DECIDED_AT, FIRST_ACQUIRED_AT));
         }
 
@@ -595,10 +595,10 @@ class UndecidedRecordQueryServiceTest {
             ReceivedRecord otherQuarantine =
                     stored(otherVersion, Classification.QUARANTINED, FIRST_ACQUIRED_AT, OTHER_ARRIVAL);
 
-            assertThat(memoryService.quarantineValues(item(otherQuarantine, "4")))
+            assertThat(memoryService.undecidedRecordValues(item(otherQuarantine, "4")))
                     .get()
-                    .extracting(QuarantineValues::adopted)
-                    .isEqualTo(new QuarantineValues.Adopted(
+                    .extracting(UndecidedRecordValues::adopted)
+                    .isEqualTo(new UndecidedRecordValues.Adopted(
                             voyageArriving(DEFAULT_ARRIVAL), "4", ORIGINAL_PUBLISHED_AT, ORIGINAL_ACQUIRED_AT));
         }
     }
@@ -678,13 +678,13 @@ class UndecidedRecordQueryServiceTest {
             given(receivedRecords.findById(adoptedRecord.id())).willReturn(Optional.of(adoptedRecord));
             given(adoptedValues.currentOf(externalRecordId)).willReturn(Optional.of(adopted));
 
-            Optional<QuarantineValues> values = service.quarantineValues(item(quarantine.id(), "VOYAGE", false));
+            Optional<UndecidedRecordValues> values = service.undecidedRecordValues(item(quarantine.id(), "VOYAGE", false));
 
             assertThat(values)
-                    .contains(new QuarantineValues(
+                    .contains(new UndecidedRecordValues(
                             voyage("2026-12-01T22:00:00Z"),
                             RECEIVED_ACQUIRED_AT,
-                            new QuarantineValues.Adopted(
+                            new UndecidedRecordValues.Adopted(
                                     voyage("2026-12-01T14:00:00Z"), "3", PUBLISHED_AT, ADOPTED_ACQUIRED_AT)));
             then(receivedRecords).should(times(1)).findById(quarantine.id());
             then(adoptedValues).should(times(1)).currentOf(externalRecordId);
@@ -700,10 +700,10 @@ class UndecidedRecordQueryServiceTest {
             given(receivedRecords.findById(quarantine.id())).willReturn(Optional.of(quarantine));
             given(adoptedValues.currentOf(externalRecordId)).willReturn(Optional.empty());
 
-            Optional<QuarantineValues> values = service.quarantineValues(item(quarantine.id(), "VOYAGE", false));
+            Optional<UndecidedRecordValues> values = service.undecidedRecordValues(item(quarantine.id(), "VOYAGE", false));
 
             assertThat(values)
-                    .contains(new QuarantineValues(voyage("2026-12-01T22:00:00Z"), RECEIVED_ACQUIRED_AT, null));
+                    .contains(new UndecidedRecordValues(voyage("2026-12-01T22:00:00Z"), RECEIVED_ACQUIRED_AT, null));
             then(receivedRecords).should(times(1)).findById(any());
             then(adoptedValues).should(times(1)).currentOf(externalRecordId);
         }
@@ -716,7 +716,7 @@ class UndecidedRecordQueryServiceTest {
             given(receivedRecords.findById(adoptedRecord.id())).willReturn(Optional.of(adoptedRecord));
             given(adoptedValues.currentOf(externalRecordId)).willReturn(Optional.of(adoptedValue(adoptedRecord.id())));
 
-            QuarantineValues values = service.quarantineValues(item(quarantine.id(), "VOYAGE", false))
+            UndecidedRecordValues values = service.undecidedRecordValues(item(quarantine.id(), "VOYAGE", false))
                     .orElseThrow();
 
             assertThat(values.received()).isNull();
@@ -727,7 +727,7 @@ class UndecidedRecordQueryServiceTest {
         @ParameterizedTest(name = "{0}")
         @CsvSource({"キーのない隔離（形式の誤り）, VOYAGE, true"})
         void 行12_キーのない隔離は受信記録も採用値も引かず空(String name, String recordType, boolean keyless) {
-            assertThat(service.quarantineValues(item(UUID.randomUUID(), recordType, keyless)))
+            assertThat(service.undecidedRecordValues(item(UUID.randomUUID(), recordType, keyless)))
                     .isEmpty();
             then(receivedRecords).shouldHaveNoInteractions();
             then(adoptedValues).shouldHaveNoInteractions();
@@ -742,9 +742,9 @@ class UndecidedRecordQueryServiceTest {
             given(receivedRecords.findById(duplicate.id())).willReturn(Optional.of(duplicate));
             given(receivedRecords.findById(missing)).willReturn(Optional.empty());
 
-            assertThat(service.quarantineValues(item(duplicate.id(), "VOYAGE", false)))
+            assertThat(service.undecidedRecordValues(item(duplicate.id(), "VOYAGE", false)))
                     .isEmpty();
-            assertThat(service.quarantineValues(item(missing, "VOYAGE", false))).isEmpty();
+            assertThat(service.undecidedRecordValues(item(missing, "VOYAGE", false))).isEmpty();
             then(adoptedValues).shouldHaveNoInteractions();
         }
 
@@ -850,7 +850,7 @@ class UndecidedRecordQueryServiceTest {
         }
 
         /** 隔離と採用の受信記録と採用値を用意して照会する（採用値の要約が null なら採用値はない）。 */
-        private QuarantineValues query(
+        private UndecidedRecordValues query(
                 String itemRecordType, ReceivedValue receivedValue, String adoptedTargetType, String adoptedSummary) {
             ReceivedRecord quarantine = received(Classification.QUARANTINED, RECEIVED_ACQUIRED_AT, receivedValue);
             given(receivedRecords.findById(quarantine.id())).willReturn(Optional.of(quarantine));
@@ -862,7 +862,7 @@ class UndecidedRecordQueryServiceTest {
                 given(adoptedValues.currentOf(externalRecordId))
                         .willReturn(Optional.of(adoptedValue(adoptedRecord.id(), adoptedTargetType, adoptedSummary)));
             }
-            return service.quarantineValues(item(quarantine.id(), itemRecordType))
+            return service.undecidedRecordValues(item(quarantine.id(), itemRecordType))
                     .orElseThrow();
         }
 
@@ -881,13 +881,13 @@ class UndecidedRecordQueryServiceTest {
                     .willReturn(
                             Optional.of(adoptedValue(adoptedRecord.id(), "MILESTONE", summaryOf("MILESTONE", true))));
 
-            Optional<QuarantineValues> values = service.quarantineValues(item(quarantine.id(), "MILESTONE"));
+            Optional<UndecidedRecordValues> values = service.undecidedRecordValues(item(quarantine.id(), "MILESTONE"));
 
             assertThat(values)
-                    .contains(new QuarantineValues(
+                    .contains(new UndecidedRecordValues(
                             valuesOf("MILESTONE", false),
                             RECEIVED_ACQUIRED_AT,
-                            new QuarantineValues.Adopted(
+                            new UndecidedRecordValues.Adopted(
                                     valuesOf("MILESTONE", true), "2", PUBLISHED_AT, ADOPTED_ACQUIRED_AT)));
             then(receivedRecords).should(times(1)).findById(quarantine.id());
             then(adoptedValues).should(times(1)).currentOf(externalRecordId);
@@ -909,7 +909,7 @@ class UndecidedRecordQueryServiceTest {
             given(adoptedValues.currentOf(externalRecordId))
                     .willReturn(Optional.of(adoptedValue(adoptedRecord.id(), recordType, BROKEN)));
 
-            service.quarantineValues(item(quarantine.id(), recordType));
+            service.undecidedRecordValues(item(quarantine.id(), recordType));
 
             then(receivedRecords).should(times(1)).findById(quarantine.id());
             then(adoptedValues).should(times(1)).currentOf(externalRecordId);
@@ -924,15 +924,15 @@ class UndecidedRecordQueryServiceTest {
         @ParameterizedTest(name = "{0} の受け取った値の要約が壊れている")
         @CsvSource({"VOYAGE", "MILESTONE"})
         void 行23a_受け取った値が読めなければ受け取った値だけを読めない印にして採用値は示す(String recordType) {
-            QuarantineValues values = query(
+            UndecidedRecordValues values = query(
                     recordType, new ReceivedValue(keyOf(recordType), BROKEN), recordType, summaryOf(recordType, true));
 
             assertThat(values)
-                    .isEqualTo(new QuarantineValues(
+                    .isEqualTo(new UndecidedRecordValues(
                             null,
                             true,
                             RECEIVED_ACQUIRED_AT,
-                            new QuarantineValues.Adopted(
+                            new UndecidedRecordValues.Adopted(
                                     valuesOf(recordType, true), "2", PUBLISHED_AT, ADOPTED_ACQUIRED_AT)));
             assertThat(values.sameValues()).isFalse();
         }
@@ -940,37 +940,37 @@ class UndecidedRecordQueryServiceTest {
         @ParameterizedTest(name = "{0} の採用値の要約が壊れている")
         @CsvSource({"VOYAGE", "MILESTONE"})
         void 行23b_採用値が読めなければ採用値だけを読めない印にして情報版と公開した時刻と取得時刻は示す(String recordType) {
-            QuarantineValues values = query(
+            UndecidedRecordValues values = query(
                     recordType, new ReceivedValue(keyOf(recordType), summaryOf(recordType, false)), recordType, BROKEN);
 
             assertThat(values)
-                    .isEqualTo(new QuarantineValues(
+                    .isEqualTo(new UndecidedRecordValues(
                             valuesOf(recordType, false),
                             false,
                             RECEIVED_ACQUIRED_AT,
-                            new QuarantineValues.Adopted(null, true, "2", PUBLISHED_AT, ADOPTED_ACQUIRED_AT)));
+                            new UndecidedRecordValues.Adopted(null, true, "2", PUBLISHED_AT, ADOPTED_ACQUIRED_AT)));
             assertThat(values.sameValues()).isFalse();
         }
 
         @ParameterizedTest(name = "{0} の両側の要約が壊れている")
         @CsvSource({"VOYAGE", "MILESTONE"})
         void 行23ab_両側が読めなければ両側を読めない印にする(String recordType) {
-            QuarantineValues values =
+            UndecidedRecordValues values =
                     query(recordType, new ReceivedValue(keyOf(recordType), BROKEN), recordType, BROKEN);
 
             assertThat(values)
-                    .isEqualTo(new QuarantineValues(
+                    .isEqualTo(new UndecidedRecordValues(
                             null,
                             true,
                             RECEIVED_ACQUIRED_AT,
-                            new QuarantineValues.Adopted(null, true, "2", PUBLISHED_AT, ADOPTED_ACQUIRED_AT)));
+                            new UndecidedRecordValues.Adopted(null, true, "2", PUBLISHED_AT, ADOPTED_ACQUIRED_AT)));
             assertThat(logs.list).hasSize(2);
         }
 
         @ParameterizedTest(name = "採用値の対象は {0}")
         @CsvSource({"VOYAGE", "MILESTONE"})
         void 行23c_知らない原本種別は受け取った値だけが読めず採用値は対象の種類で読む(String adoptedTargetType) {
-            QuarantineValues values = query(
+            UndecidedRecordValues values = query(
                     "CONTAINER",
                     new ReceivedValue(keyOf(adoptedTargetType), summaryOf(adoptedTargetType, false)),
                     adoptedTargetType,
@@ -984,7 +984,7 @@ class UndecidedRecordQueryServiceTest {
 
         @Test
         void 行23_値の列がないことを知らない原本種別より先に判定し読めない印を立てない() {
-            QuarantineValues values = query("CONTAINER", null, "VOYAGE", summaryOf("VOYAGE", true));
+            UndecidedRecordValues values = query("CONTAINER", null, "VOYAGE", summaryOf("VOYAGE", true));
 
             assertThat(values.received()).isNull();
             assertThat(values.receivedIllegible()).isFalse();
@@ -994,7 +994,7 @@ class UndecidedRecordQueryServiceTest {
 
         @Test
         void 行23_値の列がなく採用値が読めなければ受け取った値は値の列のない形で採用値だけが読めない() {
-            QuarantineValues values = query("MILESTONE", null, "MILESTONE", BROKEN);
+            UndecidedRecordValues values = query("MILESTONE", null, "MILESTONE", BROKEN);
 
             assertThat(values.received()).isNull();
             assertThat(values.receivedIllegible()).isFalse();
@@ -1004,9 +1004,9 @@ class UndecidedRecordQueryServiceTest {
 
         @Test
         void 行23_受け取った値が読めず採用値がなければ受け取った値だけを読めない印にする() {
-            QuarantineValues values = query("MILESTONE", new ReceivedValue(TRACKING_NUMBER, BROKEN), "MILESTONE", null);
+            UndecidedRecordValues values = query("MILESTONE", new ReceivedValue(TRACKING_NUMBER, BROKEN), "MILESTONE", null);
 
-            assertThat(values).isEqualTo(new QuarantineValues(null, true, RECEIVED_ACQUIRED_AT, null));
+            assertThat(values).isEqualTo(new UndecidedRecordValues(null, true, RECEIVED_ACQUIRED_AT, null));
         }
 
         // --- 行 23: WARN のログ（ID・原本種別・例外の型だけ。要約の中身と例外の文は書かない） ---
@@ -1026,7 +1026,7 @@ class UndecidedRecordQueryServiceTest {
             given(receivedRecords.findById(adoptedRecord.id())).willReturn(Optional.of(adoptedRecord));
             given(adoptedValues.currentOf(externalRecordId)).willReturn(Optional.of(adopted));
 
-            service.quarantineValues(item(quarantine.id(), recordType));
+            service.undecidedRecordValues(item(quarantine.id(), recordType));
 
             assertThat(logs.list).hasSize(2).allSatisfy(event -> {
                 assertThat(event.getLevel()).isEqualTo(ch.qos.logback.classic.Level.WARN);
@@ -1070,12 +1070,12 @@ class UndecidedRecordQueryServiceTest {
             given(receivedRecords.findById(id)).willThrow(new IllegalArgumentException("リポジトリの誤り"));
             UndecidedRecordPage.Item quarantine = item(id, "MILESTONE");
 
-            org.assertj.core.api.Assertions.assertThatThrownBy(() -> service.quarantineValues(quarantine))
+            org.assertj.core.api.Assertions.assertThatThrownBy(() -> service.undecidedRecordValues(quarantine))
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessage("リポジトリの誤り");
         }
 
-        // --- 行 23: QuarantineValues の不変条件（T-244） ---
+        // --- 行 23: UndecidedRecordValues の不変条件（T-244） ---
 
         @Test
         void 行23_読めない印と値の両方を持つ受け取った値は作れない() {
@@ -1083,11 +1083,11 @@ class UndecidedRecordQueryServiceTest {
                     valuesOf("MILESTONE", false);
 
             org.assertj.core.api.Assertions.assertThatThrownBy(
-                            () -> new QuarantineValues(values, true, RECEIVED_ACQUIRED_AT, null))
+                            () -> new UndecidedRecordValues(values, true, RECEIVED_ACQUIRED_AT, null))
                     .isInstanceOf(IllegalArgumentException.class);
-            assertThat(new QuarantineValues(null, true, RECEIVED_ACQUIRED_AT, null).receivedIllegible())
+            assertThat(new UndecidedRecordValues(null, true, RECEIVED_ACQUIRED_AT, null).receivedIllegible())
                     .isTrue();
-            assertThat(new QuarantineValues(null, false, RECEIVED_ACQUIRED_AT, null).receivedIllegible())
+            assertThat(new UndecidedRecordValues(null, false, RECEIVED_ACQUIRED_AT, null).receivedIllegible())
                     .isFalse();
         }
 
@@ -1097,14 +1097,14 @@ class UndecidedRecordQueryServiceTest {
                     valuesOf("MILESTONE", true);
 
             org.assertj.core.api.Assertions.assertThatThrownBy(
-                            () -> new QuarantineValues.Adopted(values, true, "2", PUBLISHED_AT, ADOPTED_ACQUIRED_AT))
+                            () -> new UndecidedRecordValues.Adopted(values, true, "2", PUBLISHED_AT, ADOPTED_ACQUIRED_AT))
                     .isInstanceOf(IllegalArgumentException.class);
             org.assertj.core.api.Assertions.assertThatThrownBy(
-                            () -> new QuarantineValues.Adopted(null, false, "2", PUBLISHED_AT, ADOPTED_ACQUIRED_AT))
+                            () -> new UndecidedRecordValues.Adopted(null, false, "2", PUBLISHED_AT, ADOPTED_ACQUIRED_AT))
                     .isInstanceOf(IllegalArgumentException.class);
-            assertThat(new QuarantineValues.Adopted(null, true, "2", PUBLISHED_AT, ADOPTED_ACQUIRED_AT).values())
+            assertThat(new UndecidedRecordValues.Adopted(null, true, "2", PUBLISHED_AT, ADOPTED_ACQUIRED_AT).values())
                     .isNull();
-            assertThat(new QuarantineValues.Adopted(values, "2", PUBLISHED_AT, ADOPTED_ACQUIRED_AT).illegible())
+            assertThat(new UndecidedRecordValues.Adopted(values, "2", PUBLISHED_AT, ADOPTED_ACQUIRED_AT).illegible())
                     .isFalse();
         }
     }
@@ -1154,7 +1154,7 @@ class UndecidedRecordQueryServiceTest {
             ReceivedRecord discrepancy = discrepancy();
             given(receivedRecords.findById(discrepancy.id())).willReturn(Optional.of(discrepancy));
 
-            Optional<QuarantineValues> values = service.quarantineValues(item(discrepancy.id()));
+            Optional<UndecidedRecordValues> values = service.undecidedRecordValues(item(discrepancy.id()));
 
             assertThat(values).hasValueSatisfying(found -> {
                 assertThat(found.received()).isNotNull();

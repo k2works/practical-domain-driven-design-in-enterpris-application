@@ -1537,7 +1537,7 @@ class IngestionServiceTest {
         }
 
         private RecordValues comparedWith(RowResult quarantined) {
-            return query.quarantineValues(query.undecidedRecord(quarantined.receivedRecordId())
+            return query.undecidedRecordValues(query.undecidedRecord(quarantined.receivedRecordId())
                             .orElseThrow())
                     .orElseThrow()
                     .adopted()

@@ -5,7 +5,7 @@ import java.time.Instant;
 import java.util.Objects;
 
 /**
- * 内容の違う原本の判断の画面の値（S-17。Bolt 39d3 の開始準備の決定 (6)、【業務の判断】(i)・(j)）。判断を待つ隔離の照会の値。受け取った値と
+ * 判断を待つ隔離・差異の判断の画面の値（S-17。Bolt 39d3 の開始準備の決定 (6)、【業務の判断】(i)・(j)。名前は Bolt 39h3 で見直した）。受け取った値と
  * その取得時刻、この外部版の採用値とその情報版・公開した時刻・取得時刻を並べる。値は航海か主要実績で、値を読めない側は読めない印を持つ（Bolt
  * 39d3c の開始準備の決定 (4)、【業務の判断】(k)）。読めない印と値の両方は持たない。
  *
@@ -14,10 +14,10 @@ import java.util.Objects;
  * @param receivedAcquiredAt 受け取った値の取得時刻（隔離の受信記録の取得時刻）
  * @param adopted この外部版の採用値（ないときは {@code null}）
  */
-public record QuarantineValues(
+public record UndecidedRecordValues(
         RecordValues received, boolean receivedIllegible, Instant receivedAcquiredAt, Adopted adopted) {
 
-    public QuarantineValues {
+    public UndecidedRecordValues {
         Objects.requireNonNull(receivedAcquiredAt, "receivedAcquiredAt");
         if (receivedIllegible && received != null) {
             throw new IllegalArgumentException("読めない受け取った値は値を持ちません");
@@ -31,7 +31,7 @@ public record QuarantineValues(
      * @param receivedAcquiredAt 受け取った値の取得時刻
      * @param adopted この外部版の採用値（ないときは {@code null}）
      */
-    public QuarantineValues(RecordValues received, Instant receivedAcquiredAt, Adopted adopted) {
+    public UndecidedRecordValues(RecordValues received, Instant receivedAcquiredAt, Adopted adopted) {
         this(received, false, receivedAcquiredAt, adopted);
     }
 
