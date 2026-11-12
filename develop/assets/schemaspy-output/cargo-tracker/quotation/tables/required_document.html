@@ -349,16 +349,16 @@
                                 </thead>
                                 <tbody>
                                 <tr>
+                                    <td>ck_required_document_size</td>
+                                    <td>((size_bytes &gt;&#61; 1) AND (size_bytes &lt;&#61; 10485760))</td>
+                                </tr>
+                                <tr>
                                     <td>ck_required_document_media_type</td>
                                     <td>((media_type)::text &#61; ANY ((ARRAY[&#39;PDF&#39;::character varying, &#39;PNG&#39;::character varying, &#39;JPEG&#39;::character varying])::text[]))</td>
                                 </tr>
                                 <tr>
                                     <td>ck_required_document_type</td>
                                     <td>((document_type)::text &#61; ANY ((ARRAY[&#39;COMMERCIAL_INVOICE&#39;::character varying, &#39;PACKING_LIST&#39;::character varying, &#39;OTHER&#39;::character varying])::text[]))</td>
-                                </tr>
-                                <tr>
-                                    <td>ck_required_document_size</td>
-                                    <td>((size_bytes &gt;&#61; 1) AND (size_bytes &lt;&#61; 10485760))</td>
                                 </tr>
                                 </tbody>
                             </table>
