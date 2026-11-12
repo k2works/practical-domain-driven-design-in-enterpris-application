@@ -10,7 +10,6 @@ import com.example.cargotracker.routing.domain.model.valueobjects.ConstraintEval
 import com.example.cargotracker.routing.domain.model.valueobjects.DecisionRationale;
 import com.example.cargotracker.routing.domain.model.valueobjects.ExclusionReason;
 import com.example.cargotracker.routing.domain.model.valueobjects.ExclusionReasonCode;
-import com.example.cargotracker.routing.domain.model.valueobjects.ExclusionThreshold;
 import com.example.cargotracker.routing.domain.model.valueobjects.ExclusionThreshold.ArrivalDeadline;
 import com.example.cargotracker.routing.domain.model.valueobjects.ExclusionThreshold.ConnectionRuleMissing;
 import com.example.cargotracker.routing.domain.model.valueobjects.ExclusionThreshold.MinimumConnection;
@@ -31,7 +30,6 @@ import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Clock;
 import java.time.Duration;
-import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.Arrays;
@@ -59,7 +57,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class MyBatisRoutingCaseRepository implements RoutingCaseRepository {
 
     private static final String VIA_SEPARATOR = ",";
-    private static final String THRESHOLD_SEPARATOR = " ";
+    private static final String REDESIGN_REASON_SEPARATOR = " ";
 
     private final RoutingCaseMapper mapper;
     private final Clock clock;
@@ -216,15 +214,8 @@ public class MyBatisRoutingCaseRepository implements RoutingCaseRepository {
             }
             for (int i = 0; i < evaluation.reasons().size(); i++) {
                 ExclusionReason reason = evaluation.reasons().get(i);
-                mapper.insertExclusionReason(new ExclusionReasonRow(
-                        routingCaseId,
-                        versionNo,
-                        candidate.candidateNo(),
-                        i + 1,
-                        reason.code().name(),
-                        toOffset(reason.violatedAt()),
-                        threshold(reason.threshold()),
-                        reason.infoVersion()));
+                mapper.insertExclusionReason(
+                        exclusionReasonRow(routingCaseId, versionNo, candidate.candidateNo(), i + 1, reason));
             }
         }
     }
@@ -305,7 +296,7 @@ public class MyBatisRoutingCaseRepository implements RoutingCaseRepository {
         }
         return new RedesignRecord(
                 toUtc(row.redesignRequiredAt()),
-                Arrays.stream(row.redesignReasons().split(THRESHOLD_SEPARATOR))
+                Arrays.stream(row.redesignReasons().split(REDESIGN_REASON_SEPARATOR))
                         .map(RedesignReasonCode::valueOf)
                         .toList());
     }
@@ -337,47 +328,72 @@ public class MyBatisRoutingCaseRepository implements RoutingCaseRepository {
                 toUtc(row.evaluatedAt()));
     }
 
-    private static String threshold(ExclusionThreshold threshold) {
-        return switch (threshold) {
-            case ArrivalDeadline deadline -> deadline.deadline().instant().toString();
-            case MinimumConnection connection ->
-                connection.port().unLocode() + THRESHOLD_SEPARATOR + connection.required();
-            case ConnectionRuleMissing missing -> missing.port().unLocode();
-            case StaleVoyageInfo stale -> stale.voyageNumber() + THRESHOLD_SEPARATOR + stale.tolerance();
-            case UnsupportedCargo cargo -> cargo.category().name();
-        };
+    /** 閾値の型を区分ごとの列に書く（持たない列は null。CHECK `ck_exclusion_reason_threshold` が組を守る。Bolt 39i）。 */
+    private static ExclusionReasonRow exclusionReasonRow(
+            UUID routingCaseId, int versionNo, int candidateNo, int reasonNo, ExclusionReason reason) {
+        OffsetDateTime deadline = null;
+        String port = null;
+        String requiredConnection = null;
+        String voyageNumber = null;
+        String freshnessTolerance = null;
+        String cargoCategory = null;
+        switch (reason.threshold()) {
+            case ArrivalDeadline threshold -> deadline = toOffset(threshold.deadline());
+            case MinimumConnection threshold -> {
+                port = threshold.port().unLocode();
+                requiredConnection = threshold.required().toString();
+            }
+            case ConnectionRuleMissing threshold -> port = threshold.port().unLocode();
+            case StaleVoyageInfo threshold -> {
+                voyageNumber = threshold.voyageNumber();
+                freshnessTolerance = threshold.tolerance().toString();
+            }
+            case UnsupportedCargo threshold ->
+                cargoCategory = threshold.category().name();
+        }
+        return new ExclusionReasonRow(
+                routingCaseId,
+                versionNo,
+                candidateNo,
+                reasonNo,
+                reason.code().name(),
+                toOffset(reason.violatedAt()),
+                deadline,
+                port,
+                requiredConnection,
+                voyageNumber,
+                freshnessTolerance,
+                cargoCategory,
+                reason.infoVersion());
     }
 
+    /** 区分ごとの列から閾値の型を作る。壊れた行（区分にない文字列、値の型を作れない列）は例外にして、既定の値で受けない。 */
     private static ExclusionReason toReason(ExclusionReasonRow row) {
         ExclusionReasonCode code = ExclusionReasonCode.valueOf(row.reasonCode());
         UtcInstant violatedAt = toUtc(row.violatedAt());
         return switch (code) {
             case DEADLINE_EXCEEDED ->
-                ExclusionReason.deadlineExceeded(
-                        violatedAt, new UtcInstant(Instant.parse(row.threshold())), row.infoVersion());
-            case CONNECTION_TOO_SHORT -> {
-                String[] parts = row.threshold().split(THRESHOLD_SEPARATOR);
-                yield ExclusionReason.connectionTooShort(
-                        violatedAt, new Location(parts[0]), Duration.parse(parts[1]), row.infoVersion());
-            }
+                ExclusionReason.deadlineExceeded(violatedAt, toUtc(row.thresholdDeadline()), row.infoVersion());
+            case CONNECTION_TOO_SHORT ->
+                ExclusionReason.connectionTooShort(
+                        violatedAt,
+                        new Location(row.thresholdPortUnlocode()),
+                        Duration.parse(row.thresholdRequiredConnection()),
+                        row.infoVersion());
             case NOT_CONNECTABLE ->
-                ExclusionReason.notConnectable(violatedAt, new Location(row.threshold()), row.infoVersion());
+                ExclusionReason.notConnectable(
+                        violatedAt, new Location(row.thresholdPortUnlocode()), row.infoVersion());
             case INFO_INSUFFICIENT -> {
-                // 航海番号は空白を含み得るので、最後の空白で分ける（Bolt 37b2）
-                int separator = row.threshold().lastIndexOf(THRESHOLD_SEPARATOR);
-                if (separator < 0) {
-                    throw new IllegalStateException("情報不足の閾値に区切りがありません: " + row.threshold());
-                }
-                Duration tolerance = Duration.parse(row.threshold().substring(separator + 1));
+                Duration tolerance = Duration.parse(row.thresholdFreshnessTolerance());
                 yield ExclusionReason.infoInsufficient(
-                        row.threshold().substring(0, separator),
+                        row.thresholdVoyageNumber(),
                         new UtcInstant(violatedAt.instant().minus(tolerance)),
                         tolerance,
                         row.infoVersion());
             }
             case CARGO_NOT_SUPPORTED ->
                 ExclusionReason.cargoNotSupported(
-                        RouteCargoCategory.valueOf(row.threshold()), violatedAt, row.infoVersion());
+                        RouteCargoCategory.valueOf(row.thresholdCargoCategory()), violatedAt, row.infoVersion());
         };
     }
 
@@ -432,7 +448,7 @@ public class MyBatisRoutingCaseRepository implements RoutingCaseRepository {
                 version.redesign()
                         .map(redesign -> redesign.reasons().stream()
                                 .map(Enum::name)
-                                .collect(Collectors.joining(THRESHOLD_SEPARATOR)))
+                                .collect(Collectors.joining(REDESIGN_REASON_SEPARATOR)))
                         .orElse(null),
                 createdAt);
     }

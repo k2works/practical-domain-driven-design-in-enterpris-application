@@ -22,6 +22,7 @@ import com.example.cargotracker.routing.domain.model.rules.RouteCandidateFinder;
 import com.example.cargotracker.routing.domain.model.valueobjects.DecisionRationale;
 import com.example.cargotracker.routing.domain.model.valueobjects.ExclusionReason;
 import com.example.cargotracker.routing.domain.model.valueobjects.ExclusionReasonCode;
+import com.example.cargotracker.routing.domain.model.valueobjects.ExclusionThreshold;
 import com.example.cargotracker.routing.domain.model.valueobjects.PortCall;
 import com.example.cargotracker.routing.domain.model.valueobjects.RedesignReasonCode;
 import com.example.cargotracker.routing.domain.model.valueobjects.RedesignRecord;
@@ -192,11 +193,13 @@ class MyBatisRoutingRepositoriesIntegrationTest {
                         Boolean.class,
                         routingCase.id().value()))
                 .containsExactly(false, true, false);
-        assertThat(jdbc.queryForObject(
-                        "SELECT threshold FROM routing.exclusion_reason WHERE routing_case_id = ? AND candidate_no = 2",
-                        String.class,
+        // 航海番号は空白を含んだまま 2 つの列に分かれて保存される（最後の空白で分ける処理はない。Bolt 39i の行 24）
+        assertThat(jdbc.queryForMap(
+                        "SELECT threshold_voyage_number, threshold_freshness_tolerance FROM routing.exclusion_reason"
+                                + " WHERE routing_case_id = ? AND candidate_no = 2",
                         routingCase.id().value()))
-                .isEqualTo("IT STALE 1 PT24H");
+                .containsEntry("threshold_voyage_number", "IT STALE 1")
+                .containsEntry("threshold_freshness_tolerance", "PT24H");
     }
 
     @Test
@@ -1073,6 +1076,189 @@ class MyBatisRoutingRepositoriesIntegrationTest {
                     at(EXPIRES_AT),
                     UUID.randomUUID(),
                     SHIPPER);
+        }
+    }
+
+    /** 除外理由の閾値の列（Bolt 39i の行 19・23・25・26）。 */
+    @Nested
+    class Bolt39i_閾値の列 {
+
+        private RoutingCase savedCalculated(RouteCargoCategory category) {
+            RoutingCase routingCase = RoutingCase.open(
+                    new RoutingCaseId(UUID.randomUUID()),
+                    numberIssuer.next(2083),
+                    UUID.randomUUID(),
+                    "TR-2083-0001",
+                    1,
+                    UUID.randomUUID(),
+                    List.of(SINGAPORE),
+                    new RouteSpecification(TOKYO, ROTTERDAM, DEADLINE, category),
+                    at("2083-10-06T02:00:00Z"),
+                    at(EXPIRES_AT),
+                    UUID.randomUUID(),
+                    SHIPPER);
+            repository.save(routingCase);
+            RoutingCase loaded = repository.findByNumber(routingCase.number()).orElseThrow();
+            Voyage stale = new Voyage(
+                    "IT STALE 1",
+                    List.of(call(TOKYO, null, "2083-10-09T00:00:00Z"), call(ROTTERDAM, "2083-10-31T00:00:00Z", null)),
+                    "IT STALE 1@4",
+                    at("2083-10-05T00:00:00Z"));
+            List<Voyage> all = new java.util.ArrayList<>(voyages());
+            all.add(stale);
+            loaded.calculateCandidates(
+                    all,
+                    rules(),
+                    JUDGED_AT,
+                    new RouteCandidateFinder(),
+                    new ConstraintEvaluator(),
+                    new InfoFreshnessPolicy(Duration.ofHours(24)));
+            repository.update(loaded, OPERATOR);
+            return loaded;
+        }
+
+        @ParameterizedTest(name = "{0} の案件の貨物種別の除外を書いて読み直して同じ")
+        @EnumSource(
+                value = RouteCargoCategory.class,
+                names = {"DANGEROUS", "REEFER", "OTHER_SPECIAL", "UNRECOGNIZED"})
+        void 貨物種別の除外理由を書いて読み直すと同じ(RouteCargoCategory category) {
+            RoutingCase saved = savedCalculated(category);
+
+            RoutingCase found = repository.findByNumber(saved.number()).orElseThrow();
+
+            assertThat(found.routeVersion()).isEqualTo(saved.routeVersion());
+            assertThat(found.routeVersion().candidates())
+                    .allSatisfy(candidate -> assertThat(candidate.evaluation().reasons())
+                            .extracting(ExclusionReason::threshold)
+                            .contains(new ExclusionThreshold.UnsupportedCargo(category)));
+            assertThat(jdbc.queryForList(
+                            "SELECT DISTINCT threshold_cargo_category FROM routing.exclusion_reason"
+                                    + " WHERE routing_case_id = ? AND reason_code = 'CARGO_NOT_SUPPORTED'",
+                            String.class,
+                            saved.id().value()))
+                    .containsExactly(category.name());
+        }
+
+        @Test
+        void 五つの区分の値はそれぞれ自分の列に入りほかの列は空() {
+            RoutingCase saved = savedCalculated(RouteCargoCategory.REEFER);
+
+            assertThat(jdbc
+                            .queryForList(
+                                    "SELECT DISTINCT reason_code,"
+                                            + " (threshold_deadline IS NOT NULL) AS d, (threshold_port_unlocode IS NOT NULL) AS p,"
+                                            + " (threshold_required_connection IS NOT NULL) AS r,"
+                                            + " (threshold_voyage_number IS NOT NULL) AS v,"
+                                            + " (threshold_freshness_tolerance IS NOT NULL) AS f,"
+                                            + " (threshold_cargo_category IS NOT NULL) AS c"
+                                            + " FROM routing.exclusion_reason WHERE routing_case_id = ?",
+                                    saved.id().value())
+                            .stream()
+                            .map(row -> row.get("reason_code") + ":" + flags(row))
+                            .toList())
+                    .containsExactlyInAnyOrder(
+                            "DEADLINE_EXCEEDED:d",
+                            "CONNECTION_TOO_SHORT:pr",
+                            "NOT_CONNECTABLE:p",
+                            "INFO_INSUFFICIENT:vf",
+                            "CARGO_NOT_SUPPORTED:c");
+        }
+
+        private static String flags(java.util.Map<String, Object> row) {
+            StringBuilder flags = new StringBuilder();
+            for (String key : List.of("d", "p", "r", "v", "f", "c")) {
+                if (Boolean.TRUE.equals(row.get(key))) {
+                    flags.append(key);
+                }
+            }
+            return flags.toString();
+        }
+
+        @Test
+        void 貨物種別の閾値の列が種別にない文字列の行は例外で既定の値で受けない() {
+            RoutingCase saved = savedCalculated(RouteCargoCategory.DANGEROUS);
+            jdbc.update(
+                    "UPDATE routing.exclusion_reason SET threshold_cargo_category = 'NO_SUCH'"
+                            + " WHERE routing_case_id = ? AND reason_code = 'CARGO_NOT_SUPPORTED'",
+                    saved.id().value());
+
+            assertThatThrownBy(() -> repository.findByNumber(saved.number()))
+                    .isInstanceOf(IllegalArgumentException.class);
+        }
+
+        @Test
+        void 空の航海番号と壊れた期間の行は値の型が拒む() {
+            RoutingCase saved = savedCalculated(RouteCargoCategory.GENERAL);
+            jdbc.update(
+                    "UPDATE routing.exclusion_reason SET threshold_voyage_number = ' '"
+                            + " WHERE routing_case_id = ? AND reason_code = 'INFO_INSUFFICIENT'",
+                    saved.id().value());
+
+            assertThatThrownBy(() -> repository.findByNumber(saved.number()))
+                    .isInstanceOf(IllegalArgumentException.class);
+        }
+
+        static java.util.stream.Stream<org.junit.jupiter.params.provider.Arguments> wrongCombinations() {
+            return java.util.stream.Stream.of(
+                    org.junit.jupiter.params.provider.Arguments.of("期限超過に港がある", "DEADLINE_EXCEEDED", Set.of("d", "p")),
+                    org.junit.jupiter.params.provider.Arguments.of("接続不足に接続時間がない", "CONNECTION_TOO_SHORT", Set.of("p")),
+                    org.junit.jupiter.params.provider.Arguments.of("接続できないに港がない", "NOT_CONNECTABLE", Set.of()),
+                    org.junit.jupiter.params.provider.Arguments.of("情報不足に航海番号がない", "INFO_INSUFFICIENT", Set.of("f")),
+                    org.junit.jupiter.params.provider.Arguments.of("貨物種別に種別がない", "CARGO_NOT_SUPPORTED", Set.of()),
+                    org.junit.jupiter.params.provider.Arguments.of("すべて NULL", "DEADLINE_EXCEEDED", Set.of()));
+        }
+
+        private int insertReason(String reasonCode, UUID caseId, int reasonNo, Set<String> set) {
+            return jdbc.update(
+                    "INSERT INTO routing.exclusion_reason (routing_case_id, route_version_no, candidate_no, reason_no,"
+                            + " reason_code, violated_at, threshold_deadline, threshold_port_unlocode,"
+                            + " threshold_required_connection, threshold_voyage_number, threshold_freshness_tolerance,"
+                            + " threshold_cargo_category, info_version)"
+                            + " VALUES (?, 1, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'V@1')",
+                    caseId,
+                    reasonNo,
+                    reasonCode,
+                    java.sql.Timestamp.from(Instant.parse("2083-10-20T00:00:00Z")),
+                    set.contains("d") ? java.sql.Timestamp.from(Instant.parse("2083-11-02T00:00:00Z")) : null,
+                    set.contains("p") ? "SGSIN" : null,
+                    set.contains("r") ? "PT8H" : null,
+                    set.contains("v") ? "V-1" : null,
+                    set.contains("f") ? "PT24H" : null,
+                    set.contains("c") ? "GENERAL" : null);
+        }
+
+        @ParameterizedTest(name = "{0} の行は CHECK で拒否")
+        @org.junit.jupiter.params.provider.MethodSource("wrongCombinations")
+        void 区分と列の組が違う行はCHECKで拒否される(String description, String reasonCode, Set<String> set) {
+            RoutingCase saved = savedCalculated(RouteCargoCategory.GENERAL);
+
+            assertThatThrownBy(() -> insertReason(reasonCode, saved.id().value(), 99, set))
+                    .as(description)
+                    .isInstanceOf(DataIntegrityViolationException.class);
+        }
+
+        @Test
+        void 正しい組の行は入る() {
+            RoutingCase saved = savedCalculated(RouteCargoCategory.GENERAL);
+
+            assertThat(insertReason("CONNECTION_TOO_SHORT", saved.id().value(), 99, Set.of("p", "r")))
+                    .isEqualTo(1);
+        }
+
+        @Test
+        void thresholdの列はなく六つの列がある() {
+            assertThat(jdbc.queryForList(
+                            "SELECT LOWER(column_name) FROM information_schema.columns"
+                                    + " WHERE LOWER(table_schema) = 'routing' AND LOWER(table_name) = 'exclusion_reason'"
+                                    + " AND LOWER(column_name) LIKE 'threshold%'",
+                            String.class))
+                    .containsExactlyInAnyOrder(
+                            "threshold_deadline",
+                            "threshold_port_unlocode",
+                            "threshold_required_connection",
+                            "threshold_voyage_number",
+                            "threshold_freshness_tolerance",
+                            "threshold_cargo_category");
         }
     }
 

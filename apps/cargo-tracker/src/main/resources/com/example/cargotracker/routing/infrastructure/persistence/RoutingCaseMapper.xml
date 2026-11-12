@@ -85,7 +85,12 @@
             <idArg column="reason_no" name="reasonNo" javaType="_int"/>
             <arg column="reason_code" name="reasonCode" javaType="String"/>
             <arg column="violated_at" name="violatedAt" javaType="java.time.OffsetDateTime"/>
-            <arg column="threshold" name="threshold" javaType="String"/>
+            <arg column="threshold_deadline" name="thresholdDeadline" javaType="java.time.OffsetDateTime"/>
+            <arg column="threshold_port_unlocode" name="thresholdPortUnlocode" javaType="String"/>
+            <arg column="threshold_required_connection" name="thresholdRequiredConnection" javaType="String"/>
+            <arg column="threshold_voyage_number" name="thresholdVoyageNumber" javaType="String"/>
+            <arg column="threshold_freshness_tolerance" name="thresholdFreshnessTolerance" javaType="String"/>
+            <arg column="threshold_cargo_category" name="thresholdCargoCategory" javaType="String"/>
             <arg column="info_version" name="infoVersion" javaType="String"/>
         </constructor>
     </resultMap>
@@ -147,9 +152,13 @@
 
     <insert id="insertExclusionReason">
         INSERT INTO routing.exclusion_reason
-            (routing_case_id, route_version_no, candidate_no, reason_no, reason_code, violated_at, threshold, info_version)
+            (routing_case_id, route_version_no, candidate_no, reason_no, reason_code, violated_at,
+             threshold_deadline, threshold_port_unlocode, threshold_required_connection, threshold_voyage_number,
+             threshold_freshness_tolerance, threshold_cargo_category, info_version)
         VALUES (#{routingCaseId}, #{routeVersionNo}, #{candidateNo}, #{reasonNo}, #{reasonCode}, #{violatedAt},
-                #{threshold}, #{infoVersion})
+                #{thresholdDeadline,jdbcType=TIMESTAMP_WITH_TIMEZONE}, #{thresholdPortUnlocode,jdbcType=CHAR},
+                #{thresholdRequiredConnection,jdbcType=VARCHAR}, #{thresholdVoyageNumber,jdbcType=VARCHAR},
+                #{thresholdFreshnessTolerance,jdbcType=VARCHAR}, #{thresholdCargoCategory,jdbcType=VARCHAR}, #{infoVersion})
     </insert>
 
     <!-- 楽観ロック（データモデル、ARCH-HO-01）。読み込んだときの版でなければ 0 件になる -->
@@ -246,7 +255,9 @@
     </select>
 
     <select id="selectExclusionReasons" resultMap="exclusionReasonRow">
-        SELECT routing_case_id, route_version_no, candidate_no, reason_no, reason_code, violated_at, threshold,
+        SELECT routing_case_id, route_version_no, candidate_no, reason_no, reason_code, violated_at,
+               threshold_deadline, threshold_port_unlocode, threshold_required_connection, threshold_voyage_number,
+               threshold_freshness_tolerance, threshold_cargo_category,
                info_version
           FROM routing.exclusion_reason WHERE routing_case_id = #{routingCaseId}
          ORDER BY route_version_no, candidate_no, reason_no
