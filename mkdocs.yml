@@ -386,6 +386,7 @@ nav:
           - Bolt 39i 終了報告: development/cargo-tracker/bolt_39i_report.md
           - Release 0.1 リリース完了報告書: development/cargo-tracker/release_report-0_1.md
           - W6 完了報告書: development/cargo-tracker/iteration_report-W6.md
+          - W7 完了報告書: development/cargo-tracker/iteration_report-W7.md
   - ユーザーマニュアル:
       - 概要: manual/index.md
       - はじめに: manual/00-はじめに.md

@@ -1,6 +1,8 @@
 # Docs Update Log
 
 ## 2026-11-13
+* **Creation**: [iteration_report-W7](/development/cargo-tracker/iteration_report-W7.md) を作成（anthropic/claude-sonnet-5-5。W7 の締め。週全体のコードレビュー、品質ゲートの確認、PERF-06 の結果、ふりかえり、議題と推奨。承認待ち）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md)・[index](/development/cargo-tracker/index.md)・[development/index](/development/index.md)・mkdocs.yml を更新（anthropic/claude-sonnet-5-5。W7 の締め。進捗状況の W7 を 10/10 SP に、実績スケジュール、W7 の節の結果・ふりかえり・締めの見直し）
 * **Creation**: [bolt_39i_report](/development/cargo-tracker/bolt_39i_report.md) を作成（anthropic/claude-sonnet-5-5。承認待ち）
 * **Update**: [release_plan](/development/cargo-tracker/release_plan.md)・[index](/development/cargo-tracker/index.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39i の終了報告。39i の行、確認ポイント 16・D-65 の済み、台帳 D-154・D-155、更新履歴）
 * **Update**: [domain_model](/design/cargo-tracker/domain_model.md)・[data_model](/design/cargo-tracker/data_model.md)・[ui_design](/design/cargo-tracker/ui_design.md)・[test_strategy](/design/cargo-tracker/test_strategy.md)・[architecture_backend](/design/cargo-tracker/architecture_backend.md)・[architecture_infrastructure](/design/cargo-tracker/architecture_infrastructure.md)・[user_story](/requirements/cargo-tracker/user_story.md)・[system_usecase](/requirements/cargo-tracker/system_usecase.md)・[08-経路設計](/manual/08-経路設計.md)・[用語集](/manual/用語集.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39i の実装に合わせた）
