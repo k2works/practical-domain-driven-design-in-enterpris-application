@@ -19,6 +19,7 @@
             <arg column="original_eta" name="originalEta" javaType="java.time.OffsetDateTime"/>
             <arg column="latest_eta" name="latestEta" javaType="java.time.OffsetDateTime"/>
             <arg column="last_acquired_at" name="lastAcquiredAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="next_expected_at" name="nextExpectedAt" javaType="java.time.OffsetDateTime"/>
             <arg column="version" name="version" javaType="_long"/>
             <arg column="created_at" name="createdAt" javaType="java.time.OffsetDateTime"/>
             <arg column="updated_at" name="updatedAt" javaType="java.time.OffsetDateTime"/>
@@ -65,6 +66,7 @@
             <arg column="original_eta" name="originalEta" javaType="java.time.OffsetDateTime"/>
             <arg column="latest_eta" name="latestEta" javaType="java.time.OffsetDateTime"/>
             <arg column="last_acquired_at" name="lastAcquiredAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="next_expected_at" name="nextExpectedAt" javaType="java.time.OffsetDateTime"/>
             <arg column="created_at" name="createdAt" javaType="java.time.OffsetDateTime"/>
         </constructor>
     </resultMap>
@@ -73,22 +75,22 @@
     <sql id="trackingRecordColumns">
         tracking_number, booking_id, shipper_company_id, consignee_company_id, booking_status, routing_case_number,
         route_version_no, current_status, status_basis_milestone_no, under_review_reason, original_eta, latest_eta, last_acquired_at,
-        version, created_at, updated_at
+        next_expected_at, version, created_at, updated_at
     </sql>
 
     <insert id="insertTrackingRecord">
         INSERT INTO tracking.tracking_record
             (tracking_number, booking_id, shipper_company_id, consignee_company_id, booking_status, routing_case_number,
              route_version_no, current_status, status_basis_milestone_no, under_review_reason, original_eta, latest_eta, last_acquired_at,
-             version, created_at, updated_at)
+             next_expected_at, version, created_at, updated_at)
         VALUES
             (#{trackingNumber}, #{bookingId}, #{shipperCompanyId}, #{consigneeCompanyId}, #{bookingStatus},
              #{routingCaseNumber}, #{routeVersionNo}, #{currentStatus}, #{statusBasisMilestoneNo}, #{underReviewReason},
-             #{originalEta}, #{latestEta}, #{lastAcquiredAt}, #{version}, #{createdAt}, #{updatedAt})
+             #{originalEta}, #{latestEta}, #{lastAcquiredAt}, #{nextExpectedAt}, #{version}, #{createdAt}, #{updatedAt})
     </insert>
 
     <!-- 主要実績の登録（Bolt 26b）。読み込んだときの版と同じときだけ、導出し直した現在状態と根拠の実績番号と確認中の理由（Bolt 39gc）を書き、
-         版を 1 増やす（楽観ロック）。最新の到着見込みと最終取得時刻（Bolt 39g3）も書く。経路版・当初の到着予定の列は書かない（T-INV-10） -->
+         版を 1 増やす（楽観ロック）。最新の到着見込みと最終取得時刻（Bolt 39g3）と次の予定の実績の予定時刻（Bolt 39g4）も書く。経路版・当初の到着予定の列は書かない（T-INV-10） -->
     <update id="updateTrackingRecord">
         UPDATE tracking.tracking_record
            SET current_status = #{currentStatus},
@@ -96,6 +98,7 @@
                under_review_reason = #{underReviewReason},
                latest_eta = #{latestEta},
                last_acquired_at = #{lastAcquiredAt},
+               next_expected_at = #{nextExpectedAt},
                version = version + 1,
                updated_at = #{updatedAt}
          WHERE tracking_number = #{trackingNumber}
@@ -165,7 +168,7 @@
     <!-- S-11 追跡一覧（Bolt 26）。追跡の開始時刻は作成時刻。同じ時刻は追跡番号の順で、追跡番号は英大文字と数字だけなので、DB の照合順序でも
          メモリの実装（String.compareTo の文字コード順）と同じ並びになる（予約一覧と同じ） -->
     <select id="findRecentSummaries" resultMap="trackingRecordSummaryRow">
-        SELECT tracking_number, current_status, original_eta, latest_eta, last_acquired_at, created_at
+        SELECT tracking_number, current_status, original_eta, latest_eta, last_acquired_at, next_expected_at, created_at
           FROM tracking.tracking_record
          WHERE shipper_company_id IN <include refid="shipperCompanyIn"/>
          ORDER BY created_at DESC, tracking_number
@@ -174,7 +177,7 @@
 
     <!-- C-10 追跡の照会の一覧（Bolt 27）。荷主企業で絞る（BR-07）。並びと上限は S-11 と同じ。索引 ix_tracking_record_shipper -->
     <select id="findRecentSummariesByShipper" resultMap="trackingRecordSummaryRow">
-        SELECT tracking_number, current_status, original_eta, latest_eta, last_acquired_at, created_at
+        SELECT tracking_number, current_status, original_eta, latest_eta, last_acquired_at, next_expected_at, created_at
           FROM tracking.tracking_record
          WHERE shipper_company_id = #{shipperCompanyId}
          ORDER BY created_at DESC, tracking_number

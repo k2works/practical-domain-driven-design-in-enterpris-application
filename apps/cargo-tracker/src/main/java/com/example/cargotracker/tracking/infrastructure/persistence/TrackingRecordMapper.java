@@ -28,6 +28,7 @@ public interface TrackingRecordMapper {
             @Param("underReviewReason") String underReviewReason,
             @Param("latestEta") OffsetDateTime latestEta,
             @Param("lastAcquiredAt") OffsetDateTime lastAcquiredAt,
+            @Param("nextExpectedAt") OffsetDateTime nextExpectedAt,
             @Param("updatedAt") OffsetDateTime updatedAt);
 
     void insertMilestone(MilestoneRow row);

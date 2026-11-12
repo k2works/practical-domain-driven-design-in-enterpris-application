@@ -1,10 +1,13 @@
 package com.example.cargotracker.tracking.application.internal.queryservices;
 
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
+import com.example.cargotracker.shared.domain.UtcInstant;
 import com.example.cargotracker.tracking.domain.model.aggregates.TrackingRecord;
 import com.example.cargotracker.tracking.domain.model.aggregates.TrackingRecordRepository;
+import com.example.cargotracker.tracking.domain.model.rules.FreshnessPolicy;
 import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingNumber;
 import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingRecordSummary;
+import java.time.Clock;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.stereotype.Service;
@@ -24,27 +27,46 @@ public class TrackingRecordQueryService {
 
     private final TrackingRecordRepository repository;
     private final TrackingRecordScope scope;
+    private final Clock clock;
+    private final FreshnessPolicy freshness;
 
-    public TrackingRecordQueryService(TrackingRecordRepository repository, TrackingRecordScope scope) {
+    public TrackingRecordQueryService(
+            TrackingRecordRepository repository, TrackingRecordScope scope, Clock clock, FreshnessPolicy freshness) {
         this.repository = repository;
         this.scope = scope;
+        this.clock = clock;
+        this.freshness = freshness;
     }
 
     /**
      * 追跡一覧（S-11 の最小の表示）。追跡の開始時刻の新しい順に上限まで返し、上限を超えたかを示す。上限より 1 件多く引いて超えたかを
-     * 判定し、要約は 1 回の照会で引く（行ごとに照会しない）。
+     * 判定し、要約は 1 回の照会で引く（行ごとに照会しない）。行ごとに、保存した次の予定の実績の予定時刻と時計から得た判定の時刻で鮮度超過かを
+     * 判定する（FRS-02。Bolt 39g4。判定は保存しない）。
      */
     @Transactional(readOnly = true)
     public RecentTrackingRecords recent(AuthenticatedActor actor) {
         List<TrackingRecordSummary> found =
                 scope.listWithin(actor, companies -> repository.findRecentSummaries(companies, RECENT_LIMIT + 1));
-        return RecentTrackingRecords.of(found, RECENT_LIMIT);
+        UtcInstant judgedAt = new UtcInstant(clock.instant());
+        return RecentTrackingRecords.of(
+                found, RECENT_LIMIT, summary -> freshness.exceeded(summary.nextExpectedAt(), judgedAt));
     }
 
     /** 追跡の詳細（S-12・S-13）。担当範囲の中の追跡記録を予定区間とあわせて返す。ない・範囲の外は空（どちらも 404。記録しない）。 */
     @Transactional(readOnly = true)
     public Optional<TrackingRecord> detail(TrackingNumber trackingNumber, AuthenticatedActor actor) {
         return scope.find(trackingNumber, actor).inScope();
+    }
+
+    /**
+     * 追跡の詳細（S-12）と鮮度の判定（FRS-02。Bolt 39g4）。判定の時刻は時計から得る。ない・範囲の外は空（{@link #detail} と同じ）。
+     */
+    @Transactional(readOnly = true)
+    public Optional<TrackingRecordDetail> detailWithFreshness(TrackingNumber trackingNumber, AuthenticatedActor actor) {
+        UtcInstant judgedAt = new UtcInstant(clock.instant());
+        return detail(trackingNumber, actor)
+                .map(found -> new TrackingRecordDetail(
+                        found, freshness.exceeded(found.nextExpectedAt(), judgedAt), freshness.tolerance()));
     }
 
     /**

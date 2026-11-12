@@ -13,6 +13,7 @@ import java.util.Optional;
  * @param originalEta 当初の到着予定（確定した経路版。T-INV-10）
  * @param latestEta 最新の到着見込み（T-INV-10。荷主の一覧 C-10 に示す。Bolt 27。S-11 にも示す。Bolt 39g3）
  * @param lastAcquiredAt 最終取得時刻（S-11 に示す。なければ空。Bolt 39g3）
+ * @param nextExpectedAt 次の予定の実績の予定時刻（S-11 の鮮度超過の判定に使う。なければ空。Bolt 39g4）
  * @param startedAt 追跡の開始時刻
  */
 public record TrackingRecordSummary(
@@ -21,6 +22,7 @@ public record TrackingRecordSummary(
         UtcInstant originalEta,
         UtcInstant latestEta,
         Optional<UtcInstant> lastAcquiredAt,
+        Optional<UtcInstant> nextExpectedAt,
         UtcInstant startedAt) {
 
     public TrackingRecordSummary {
@@ -29,6 +31,7 @@ public record TrackingRecordSummary(
         Objects.requireNonNull(originalEta, "originalEta");
         Objects.requireNonNull(latestEta, "latestEta");
         Objects.requireNonNull(lastAcquiredAt, "lastAcquiredAt");
+        Objects.requireNonNull(nextExpectedAt, "nextExpectedAt");
         Objects.requireNonNull(startedAt, "startedAt");
     }
 }

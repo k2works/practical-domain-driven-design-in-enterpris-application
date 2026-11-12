@@ -9,6 +9,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.BDDMockito.willReturn;
 import static org.mockito.Mockito.never;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -27,6 +28,7 @@ import com.example.cargotracker.shared.domain.UtcInstant;
 import com.example.cargotracker.tracking.application.internal.commandservices.MilestoneAdoptionOutcome;
 import com.example.cargotracker.tracking.application.internal.commandservices.TrackingRecordCommandService;
 import com.example.cargotracker.tracking.application.internal.queryservices.RecentTrackingRecords;
+import com.example.cargotracker.tracking.application.internal.queryservices.TrackingRecordDetail;
 import com.example.cargotracker.tracking.application.internal.queryservices.TrackingRecordQueryService;
 import com.example.cargotracker.tracking.domain.model.TrackingFixture;
 import com.example.cargotracker.tracking.domain.model.aggregates.ExternalMilestoneReceipt;
@@ -42,11 +44,14 @@ import com.example.cargotracker.tracking.domain.model.valueobjects.TrackedBookin
 import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingNumber;
 import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingRecordSummary;
 import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingStatus;
+import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalInt;
+import java.util.Set;
 import java.util.UUID;
 import java.util.regex.Pattern;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -84,12 +89,25 @@ class TrackingRecordControllerTest {
     @MockitoBean
     TrackingOutOfScopeResponder outOfScope;
 
+    /**
+     * S-12 は詳細と鮮度の判定の組を受ける（Bolt 39g4）。既存のテストは追跡記録を {@code detail} で与えるので、組は既定で {@code detail} の追跡記録と
+     * 鮮度超過でない判定にする（鮮度超過を確かめるテストは組を直接与える）。
+     */
+    @BeforeEach
+    void 詳細の組は既定で鮮度超過でない() {
+        given(queryService.detailWithFreshness(any(), any()))
+                .willAnswer(invocation -> queryService
+                        .detail(invocation.getArgument(0), invocation.getArgument(1))
+                        .map(found -> new TrackingRecordDetail(found, false, Duration.ofHours(36))));
+    }
+
     private static TrackingRecordSummary summary(String trackingNumber, TrackingStatus status) {
         return new TrackingRecordSummary(
                 new TrackingNumber(trackingNumber),
                 status,
                 TrackingFixture.at("2026-11-15T00:00:00Z"),
                 TrackingFixture.at("2026-11-16T03:00:00Z"),
+                Optional.empty(),
                 Optional.empty(),
                 TrackingFixture.at("2026-10-26T01:00:00Z"));
     }
@@ -860,6 +878,7 @@ class TrackingRecordControllerTest {
                     TrackingFixture.at("2026-11-15T00:00:00Z"),
                     TrackingFixture.at("2026-11-16T03:00:00Z"),
                     lastAcquiredAt,
+                    Optional.empty(),
                     TrackingFixture.at("2026-10-26T01:00:00Z"));
         }
 
@@ -938,6 +957,156 @@ class TrackingRecordControllerTest {
                     .andExpect(content()
                             .string(matchesPattern("(?s).*<dt class=\"col-sm-3\">最終取得時刻</dt>\\s*"
                                     + "<dd class=\"col-sm-9\">まだありません</dd>.*")));
+        }
+    }
+
+    /**
+     * Bolt 39g4 の行 17・18（鮮度超過の示し方。【業務の判断】(as)）。判定は照会サービスの結果を受け取るだけで、コントローラーは判定しない。印は文字と
+     * アイコンで示す（色だけで示さない）。
+     */
+    @Nested
+    class Bolt39g4_鮮度超過の表示 {
+
+        private static final String OVERDUE_BADGE =
+                "<span class=\"badge text-bg-warning\"><span aria-hidden=\"true\">⚠ </span><span>鮮度超過</span></span>";
+        private static final String UNDER_REVIEW_BADGE =
+                "<span class=\"badge text-bg-warning\"><span aria-hidden=\"true\">⚠ </span><span>確認中</span></span>";
+        private static final String WARNING = "次の予定の実績が予定時刻から 36 時間を過ぎても届いていません。";
+        private static final String NEXT_EXPECTED =
+                Pattern.quote("2026-11-01 09:00 Asia/Tokyo（UTC+09:00）（UTC 2026-11-01 00:00）");
+
+        private static TrackingRecordSummary summary(String trackingNumber, TrackingStatus status) {
+            return new TrackingRecordSummary(
+                    new TrackingNumber(trackingNumber),
+                    status,
+                    TrackingFixture.at("2026-11-15T00:00:00Z"),
+                    TrackingFixture.at("2026-11-15T00:00:00Z"),
+                    Optional.empty(),
+                    Optional.of(TrackingFixture.at("2026-11-01T00:00:00Z")),
+                    TrackingFixture.at("2026-10-26T01:00:00Z"));
+        }
+
+        private static TrackingRecord withNextExpectedAt(Optional<UtcInstant> nextExpectedAt) {
+            return TrackingRecord.reconstitute(
+                    TrackingFixture.TRACKING_NUMBER,
+                    TrackingFixture.BOOKING_ID,
+                    TrackingFixture.SHIPPER,
+                    TrackingFixture.CONSIGNEE,
+                    TrackedBookingStatus.CONFIRMED,
+                    TrackingFixture.schedule(),
+                    TrackingStatus.PICKUP_SCHEDULED,
+                    OptionalInt.empty(),
+                    Optional.empty(),
+                    List.of(),
+                    TrackingFixture.at("2026-11-15T00:00:00Z"),
+                    TrackingFixture.at("2026-11-15T00:00:00Z"),
+                    Optional.empty(),
+                    nextExpectedAt,
+                    TrackingFixture.STARTED_AT,
+                    0);
+        }
+
+        /** 既定の組（{@code detail} に任せる応答）を呼ばずに差し替える（{@code given(…)} の形だと既定の応答が {@code detail} を呼び、スタブの先がずれる）。 */
+        private void givenDetail(TrackingRecord trackingRecord, boolean exceeded, Duration tolerance) {
+            willReturn(Optional.of(new TrackingRecordDetail(trackingRecord, exceeded, tolerance)))
+                    .given(queryService)
+                    .detailWithFreshness(eq(TrackingFixture.TRACKING_NUMBER), any());
+        }
+
+        @Test
+        void 行17a_鮮度超過の追跡は現在状態のセルに鮮度超過の印を並べ他は文字のまま() throws Exception {
+            TrackingRecordSummary overdue = summary("CTABCDEFGH2345", TrackingStatus.IN_TRANSIT);
+            TrackingRecordSummary fresh = summary("CTBBBBBBBBBBBB", TrackingStatus.PICKUP_SCHEDULED);
+            given(queryService.recent(any()))
+                    .willReturn(new RecentTrackingRecords(
+                            List.of(overdue, fresh), false, 50, Set.of(overdue.trackingNumber())));
+
+            mockMvc.perform(get(LIST))
+                    .andExpect(status().isOk())
+                    .andExpect(content().string(containsString("<td><span>輸送中</span> " + OVERDUE_BADGE + "</td>")))
+                    .andExpect(content().string(containsString("<td>集荷予定</td>")));
+        }
+
+        @Test
+        void 行17bc_鮮度超過でなければ印を出さない() throws Exception {
+            given(queryService.recent(any()))
+                    .willReturn(new RecentTrackingRecords(
+                            List.of(summary("CTABCDEFGH2345", TrackingStatus.IN_TRANSIT)), false, 50));
+
+            mockMvc.perform(get(LIST))
+                    .andExpect(status().isOk())
+                    .andExpect(content().string(containsString("<td>輸送中</td>")))
+                    .andExpect(content().string(not(containsString("鮮度超過"))));
+        }
+
+        @Test
+        void 行17d_確認中で鮮度超過なら確認中の印と鮮度超過の印の両方() throws Exception {
+            TrackingRecordSummary overdue = summary("CTABCDEFGH2345", TrackingStatus.UNDER_REVIEW);
+            given(queryService.recent(any()))
+                    .willReturn(
+                            new RecentTrackingRecords(List.of(overdue), false, 50, Set.of(overdue.trackingNumber())));
+
+            mockMvc.perform(get(LIST))
+                    .andExpect(status().isOk())
+                    .andExpect(content()
+                            .string(containsString("<td>" + UNDER_REVIEW_BADGE + " " + OVERDUE_BADGE + "</td>")));
+        }
+
+        @Test
+        void 行18_鮮度超過なら警告の文と最終取得時刻の次に次の予定の実績の予定時刻() throws Exception {
+            givenDetail(
+                    withNextExpectedAt(Optional.of(TrackingFixture.at("2026-11-01T00:00:00Z"))),
+                    true,
+                    Duration.ofHours(36));
+
+            mockMvc.perform(get(DETAIL))
+                    .andExpect(status().isOk())
+                    .andExpect(content()
+                            .string(containsString(
+                                    "<div class=\"alert alert-warning\" role=\"alert\">" + WARNING + "</div>")))
+                    .andExpect(content()
+                            .string(matchesPattern("(?s).*<dt class=\"col-sm-3\">最終取得時刻</dt>\\s*<dd class=\"col-sm-9\">"
+                                    + "まだありません</dd>\\s*<dt class=\"col-sm-3\">次の予定の実績の予定時刻</dt>\\s*"
+                                    + "<dd class=\"col-sm-9\">" + NEXT_EXPECTED + "</dd>.*")));
+        }
+
+        @Test
+        void 行18_鮮度超過でなければ警告の文を出さない() throws Exception {
+            givenDetail(
+                    withNextExpectedAt(Optional.of(TrackingFixture.at("2026-11-01T00:00:00Z"))),
+                    false,
+                    Duration.ofHours(36));
+
+            mockMvc.perform(get(DETAIL))
+                    .andExpect(status().isOk())
+                    .andExpect(content().string(not(containsString("届いていません"))))
+                    .andExpect(content()
+                            .string(matchesPattern("(?s).*<dt class=\"col-sm-3\">次の予定の実績の予定時刻</dt>\\s*"
+                                    + "<dd class=\"col-sm-9\">" + NEXT_EXPECTED + "</dd>.*")));
+        }
+
+        @Test
+        void 行18_次の予定の実績がなければなしと示す() throws Exception {
+            givenDetail(withNextExpectedAt(Optional.empty()), false, Duration.ofHours(36));
+
+            mockMvc.perform(get(DETAIL))
+                    .andExpect(status().isOk())
+                    .andExpect(content()
+                            .string(matchesPattern("(?s).*<dt class=\"col-sm-3\">次の予定の実績の予定時刻</dt>\\s*"
+                                    + "<dd class=\"col-sm-9\">なし</dd>.*")));
+        }
+
+        @Test
+        void 行18_文の時間は判定の許容範囲から作る() throws Exception {
+            givenDetail(
+                    withNextExpectedAt(Optional.of(TrackingFixture.at("2026-11-01T00:00:00Z"))),
+                    true,
+                    Duration.ofHours(48));
+
+            mockMvc.perform(get(DETAIL))
+                    .andExpect(status().isOk())
+                    .andExpect(content().string(containsString("次の予定の実績が予定時刻から 48 時間を過ぎても届いていません。")))
+                    .andExpect(content().string(not(containsString("36 時間"))));
         }
     }
 }

@@ -697,6 +697,108 @@ class TrackingRecordMilestoneTest {
         }
     }
 
+    /** Bolt 39g4 の行 10・13（次の予定の実績。【業務の判断】(aq)）。採用だけが次の予定の実績を進める。 */
+    @Nested
+    class Bolt39g4_手入力の次の予定の実績 {
+
+        private static final UtcInstant LATER = at("2026-11-05T00:00:00Z");
+        private static final UtcInstant D1 = at("2026-11-01T00:00:00Z");
+        private static final UtcInstant A1 = at("2026-11-03T00:00:00Z");
+
+        private static MilestoneRegistration register(
+                TrackingRecord trackingRecord,
+                MilestoneKind kind,
+                String location,
+                String occurredAt,
+                String reference) {
+            return trackingRecord.registerMilestone(
+                    kind,
+                    new Location(location),
+                    at(occurredAt),
+                    new Source(SourceKind.FIELD_RECORD, reference, LATER),
+                    REGISTRANT,
+                    LATER);
+        }
+
+        @Test
+        void 行10_採用の区間1の出発で次の予定の実績は区間1の積替() {
+            TrackingRecord after = register(started(), MilestoneKind.DEPARTURE, "JPTYO", "2026-11-01T06:00:00Z", "F-1")
+                    .trackingRecord();
+
+            assertThat(after.milestones().getFirst().state()).isEqualTo(MilestoneState.ADOPTED);
+            assertThat(after.nextExpectedAt()).contains(A1);
+        }
+
+        @Test
+        void 行10_確認中になる登録は次の予定の実績を進めない() {
+            TrackingRecord before = register(started(), MilestoneKind.PICKUP, "JPTYO", "2026-11-01T10:00:00Z", "F-1")
+                    .trackingRecord();
+
+            TrackingRecord after = register(before, MilestoneKind.DEPARTURE, "JPTYO", "2026-11-01T06:00:00Z", "F-2")
+                    .trackingRecord();
+
+            assertThat(after.milestones().get(1).state()).isEqualTo(MilestoneState.UNDER_REVIEW);
+            assertThat(after.nextExpectedAt()).contains(D1);
+        }
+
+        @Test
+        void 行10_完了後の保持のみは次の予定の実績を変えない() {
+            TrackingRecord before = register(started(), MilestoneKind.DELIVERY, "USLAX", "2026-11-01T06:00:00Z", "F-1")
+                    .trackingRecord();
+
+            TrackingRecord after = register(before, MilestoneKind.DEPARTURE, "JPTYO", "2026-11-01T09:00:00Z", "F-2")
+                    .trackingRecord();
+
+            assertThat(after.milestones().get(1).state()).isEqualTo(MilestoneState.RETAINED_ONLY);
+            assertThat(after.nextExpectedAt())
+                    .isEqualTo(before.nextExpectedAt())
+                    .isEmpty();
+        }
+
+        @Test
+        void 行10_拒否は次の予定の実績を変えない() {
+            TrackingRecord before = started();
+            Location location = tokyo();
+            UtcInstant future = at("2026-11-06T00:00:00Z");
+            Source source = new Source(SourceKind.FIELD_RECORD, "F-1", LATER);
+
+            assertThatThrownBy(() -> before.registerMilestone(
+                            MilestoneKind.DEPARTURE, location, future, source, REGISTRANT, LATER))
+                    .isInstanceOf(MilestoneRegistrationRejected.class);
+            assertThat(before.nextExpectedAt()).contains(D1);
+        }
+
+        @Test
+        void 行10_同じ出典の再登録は次の予定の実績を変えない() {
+            TrackingRecord before = register(started(), MilestoneKind.DEPARTURE, "JPTYO", "2026-11-01T06:00:00Z", "F-1")
+                    .trackingRecord();
+
+            MilestoneRegistration again =
+                    register(before, MilestoneKind.ARRIVAL, "USLAX", "2026-11-04T09:00:00Z", "F-1");
+
+            assertThat(again.alreadyRegistered()).isTrue();
+            assertThat(again.trackingRecord().nextExpectedAt()).contains(A1);
+        }
+
+        @Test
+        void 行13_確認中の追跡に時系列どおりの区間1の出発を採用すると次の予定の実績は進み現在状態は確認中のまま() {
+            TrackingRecord pickedUp = register(started(), MilestoneKind.PICKUP, "JPTYO", "2026-11-01T10:00:00Z", "F-1")
+                    .trackingRecord();
+            TrackingRecord underReview = register(
+                            pickedUp, MilestoneKind.RECEIPT_AT_ORIGIN, "JPTYO", "2026-11-01T09:00:00Z", "F-2")
+                    .trackingRecord();
+            assertThat(underReview.currentStatus()).isEqualTo(TrackingStatus.UNDER_REVIEW);
+
+            TrackingRecord after = register(
+                            underReview, MilestoneKind.DEPARTURE, "JPTYO", "2026-11-01T11:00:00Z", "F-3")
+                    .trackingRecord();
+
+            assertThat(after.milestones().get(2).state()).isEqualTo(MilestoneState.ADOPTED);
+            assertThat(after.currentStatus()).isEqualTo(TrackingStatus.UNDER_REVIEW);
+            assertThat(after.nextExpectedAt()).contains(A1);
+        }
+    }
+
     /** 予約状態だけを変えた追跡記録（予約状態の書き手は W11・39g2 なので組み立てで作る）。 */
     static TrackingRecord withBookingStatus(TrackingRecord from, TrackedBookingStatus bookingStatus) {
         return TrackingRecord.reconstitute(

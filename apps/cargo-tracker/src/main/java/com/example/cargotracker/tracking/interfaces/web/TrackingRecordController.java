@@ -7,6 +7,7 @@ import com.example.cargotracker.tracking.application.internal.commandservices.Mi
 import com.example.cargotracker.tracking.application.internal.commandservices.MilestoneRegistrationOutcome;
 import com.example.cargotracker.tracking.application.internal.commandservices.TrackingRecordCommandService;
 import com.example.cargotracker.tracking.application.internal.queryservices.RecentTrackingRecords;
+import com.example.cargotracker.tracking.application.internal.queryservices.TrackingRecordDetail;
 import com.example.cargotracker.tracking.application.internal.queryservices.TrackingRecordQueryService;
 import com.example.cargotracker.tracking.domain.model.aggregates.TrackingRecord;
 import com.example.cargotracker.tracking.domain.model.valueobjects.AdoptionRejectionReason;
@@ -93,13 +94,16 @@ public class TrackingRecordController {
         return LIST_VIEW;
     }
 
-    /** 追跡の詳細（S-12）。形式の誤った追跡番号は、ない追跡番号と同じく 404 にする。 */
+    /**
+     * 追跡の詳細（S-12）。形式の誤った追跡番号は、ない追跡番号と同じく 404 にする。鮮度の判定は照会サービスの結果を示すだけにする（Bolt 39g4）。
+     */
     @GetMapping("/{trackingNumber}")
     public String detail(@PathVariable String trackingNumber, AuthenticatedActor actor, Model model) {
+        TrackingRecordDetail found = TrackingRecordViews.parseTrackingNumber(trackingNumber)
+                .flatMap(number -> queryService.detailWithFreshness(number, actor))
+                .orElseThrow(this::notFound);
         model.addAttribute(
-                "trackingRecord",
-                TrackingRecordViews.detail(
-                        found(trackingNumber, actor), actor.userId(), new UtcInstant(clock.instant())));
+                "trackingRecord", TrackingRecordViews.detail(found, actor.userId(), new UtcInstant(clock.instant())));
         return DETAIL_VIEW;
     }
 

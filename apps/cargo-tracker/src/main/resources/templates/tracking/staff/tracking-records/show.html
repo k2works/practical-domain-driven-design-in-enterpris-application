@@ -14,6 +14,8 @@
     <p role="status" th:if="${result}" th:text="${result}">実績 1 を登録しました。</p>
     <p th:if="${resultLinkHref}"><a th:href="${resultLinkHref}" th:text="${resultLinkLabel}">実績 1 を一覧で見る</a></p>
     <div class="alert alert-warning" role="alert" th:if="${problem}" th:text="${problem}">ほかの更新が先にこの追跡記録を変更しました。最新の主要実績を確かめ、必要なら、もう一度登録してください。</div>
+    <!--/* 鮮度超過の警告（FRS-02。Bolt 39g4、D-135）。時間は判定の許容範囲から作る。判定は照会サービスが行う */-->
+    <div class="alert alert-warning" role="alert" th:if="${trackingRecord.freshnessWarning()}" th:text="${trackingRecord.freshnessWarning()}">次の予定の実績が予定時刻から 36 時間を過ぎても届いていません。</div>
     <!--/* S-12（Bolt 26・26c）。訂正履歴・顧客への表示・有人案件のタブは後の Bolt。
            予定と実績を混同しない（T-INV-08）ので、予定区間と主要実績は別の見出しに分ける */-->
     <dl class="row">
@@ -32,6 +34,9 @@
         <dd class="col-sm-9" th:text="${trackingRecord.latestEta()}">2026-11-15 09:00 Asia/Tokyo（UTC+09:00）（UTC 2026-11-15 00:00）</dd>
         <dt class="col-sm-3">最終取得時刻</dt>
         <dd class="col-sm-9" th:text="${trackingRecord.lastAcquiredAt()}">2026-11-01 12:00 Asia/Tokyo（UTC+09:00）（UTC 2026-11-01 03:00）</dd>
+        <!--/* 次の予定の実績の予定時刻（なければ「なし」。Bolt 39g4）。どの時点かは下の予定区間の時刻と並べて分かる */-->
+        <dt class="col-sm-3">次の予定の実績の予定時刻</dt>
+        <dd class="col-sm-9" th:text="${trackingRecord.nextExpectedAt()}">2026-11-03 09:00 Asia/Tokyo（UTC+09:00）（UTC 2026-11-03 00:00）</dd>
         <dt class="col-sm-3">経路</dt>
         <dd class="col-sm-9" th:text="${trackingRecord.route()}">RC-2026-0001 版 1</dd>
     </dl>

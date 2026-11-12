@@ -2,24 +2,62 @@ package com.example.cargotracker.tracking.acceptance;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.example.cargotracker.shared.domain.AuthenticatedActorFixture;
+import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
+import com.example.cargotracker.tracking.application.internal.queryservices.RecentTrackingRecords;
+import com.example.cargotracker.tracking.application.internal.queryservices.TrackingRecordQueryService;
 import com.example.cargotracker.tracking.domain.model.aggregates.TrackingRecord;
 import com.example.cargotracker.tracking.domain.model.valueobjects.ScheduledLeg;
+import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingNumber;
+import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingRecordSummary;
 import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingStatus;
 import io.cucumber.java.ja.ならば;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.Arrays;
+import java.util.UUID;
 
 /** 追跡の開始の受入シナリオのステップ（ADR-015、T-INV-10〜12。Bolt 25）。 */
 public class TrackingSteps {
 
     private final InMemoryTrackingRecordRepository trackingRecords;
     private final Clock clock;
+    private final TrackingRecordQueryService queryService;
 
-    public TrackingSteps(InMemoryTrackingRecordRepository trackingRecords, Clock clock) {
+    public TrackingSteps(
+            InMemoryTrackingRecordRepository trackingRecords, Clock clock, TrackingRecordQueryService queryService) {
         this.trackingRecords = trackingRecords;
         this.clock = clock;
+        this.queryService = queryService;
+    }
+
+    /** Bolt 39g4 の行 20。保存した追跡記録を読み直して確かめる。 */
+    @ならば("追跡の次の予定の実績の予定時刻は {string} である")
+    public void 次の予定の実績の予定時刻(String nextExpectedAt) {
+        assertThat(onlyTrackingRecord().nextExpectedAt()).contains(new UtcInstant(Instant.parse(nextExpectedAt)));
+    }
+
+    /** Bolt 39g4 の行 20（FRS-02）。追跡記録の荷主企業を担当する追跡管理者が、現在時刻に追跡一覧（S-11）を開く。 */
+    @ならば("追跡一覧で追跡番号 {string} は鮮度超過である")
+    public void 鮮度超過である(String trackingNumber) {
+        assertThat(overdueIn(trackingNumber)).isTrue();
+    }
+
+    @ならば("追跡一覧で追跡番号 {string} は鮮度超過でない")
+    public void 鮮度超過でない(String trackingNumber) {
+        assertThat(overdueIn(trackingNumber)).isFalse();
+    }
+
+    private boolean overdueIn(String trackingNumber) {
+        TrackingRecord trackingRecord = onlyTrackingRecord();
+        RecentTrackingRecords recent = queryService.recent(AuthenticatedActorFixture.trackingManagerHandling(
+                new UserId(UUID.randomUUID()), trackingRecord.shipperCompanyId()));
+        TrackingRecordSummary row = recent.rows().stream()
+                .filter(summary -> summary.trackingNumber().equals(new TrackingNumber(trackingNumber)))
+                .findFirst()
+                .orElseThrow();
+        return recent.freshnessExceeded(row);
     }
 
     /** Bolt 39g3 の行 21（T-INV-10）。保存した追跡記録を読み直して確かめる。 */

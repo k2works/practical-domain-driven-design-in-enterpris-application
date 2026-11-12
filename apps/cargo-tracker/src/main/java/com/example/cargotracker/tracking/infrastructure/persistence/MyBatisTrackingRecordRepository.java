@@ -79,6 +79,7 @@ public class MyBatisTrackingRecordRepository implements TrackingRecordRepository
                         .lastAcquiredAt()
                         .map(MyBatisTrackingRecordRepository::offset)
                         .orElse(null),
+                offsetOrNull(trackingRecord.nextExpectedAt()),
                 trackingRecord.aggregateVersion(),
                 startedAt,
                 startedAt));
@@ -98,7 +99,7 @@ public class MyBatisTrackingRecordRepository implements TrackingRecordRepository
 
     /**
      * 主要実績の登録を保存する（Bolt 26b）。読み込んだときの版と同じときだけ現在状態と根拠の実績番号と確認中の理由（Bolt 39gc）と最新の到着見込みと最終取得時刻
-     * （Bolt 39g3。当初の到着予定と経路版は書かない）を書いて版を 1 増やし、表にない
+     * （Bolt 39g3。当初の到着予定と経路版は書かない）と次の予定の実績の予定時刻（Bolt 39g4）を書いて版を 1 増やし、表にない
      * 実績番号の主要実績を追加する（実績は削除・上書きしない。T-INV-01）。表にある実績は中身が集約と同じでなければ、版を通さずに書いた経路の誤りとして
      * {@link IllegalStateException} にする（P-3。Bolt 39g2）。表で下書きの実績が集約で採用・確認中になっていれば、状態と採用者・採用時刻だけを書き換える（Bolt 39gb。確認中は Bolt 39gc）。
      * 版が違えば、下書きの行がもう下書きでなければ、同じ出典の実績が同時に登録されて一意制約 {@code uk_milestone_source} に違反したら、または根拠の実績番号の実績が
@@ -124,6 +125,7 @@ public class MyBatisTrackingRecordRepository implements TrackingRecordRepository
                                 .lastAcquiredAt()
                                 .map(MyBatisTrackingRecordRepository::offset)
                                 .orElse(null),
+                        offsetOrNull(trackingRecord.nextExpectedAt()),
                         OffsetDateTime.now(clock))
                 == 0) {
             throw conflict(trackingRecord);
@@ -304,12 +306,18 @@ public class MyBatisTrackingRecordRepository implements TrackingRecordRepository
                 utc(row.originalEta()),
                 utc(row.latestEta()),
                 Optional.ofNullable(row.lastAcquiredAt()).map(MyBatisTrackingRecordRepository::utc),
+                Optional.ofNullable(row.nextExpectedAt()).map(MyBatisTrackingRecordRepository::utc),
                 utc(row.createdAt()),
                 row.version());
     }
 
     private static OffsetDateTime offset(UtcInstant instant) {
         return instant.instant().atOffset(ZoneOffset.UTC);
+    }
+
+    /** 空なら NULL（NULL 可の日時の列。Bolt 39g4）。 */
+    private static OffsetDateTime offsetOrNull(Optional<UtcInstant> instant) {
+        return instant.map(MyBatisTrackingRecordRepository::offset).orElse(null);
     }
 
     private static UtcInstant utc(OffsetDateTime value) {
@@ -363,6 +371,7 @@ public class MyBatisTrackingRecordRepository implements TrackingRecordRepository
                 utc(row.originalEta()),
                 utc(row.latestEta()),
                 Optional.ofNullable(row.lastAcquiredAt()).map(MyBatisTrackingRecordRepository::utc),
+                Optional.ofNullable(row.nextExpectedAt()).map(MyBatisTrackingRecordRepository::utc),
                 utc(row.createdAt()));
     }
 }

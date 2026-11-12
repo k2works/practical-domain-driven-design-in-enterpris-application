@@ -33,6 +33,7 @@ import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingStatu
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -62,6 +63,7 @@ class CustomerTrackingControllerTest {
                 status,
                 TrackingFixture.at("2026-11-15T00:00:00Z"),
                 TrackingFixture.at("2026-11-16T03:00:00Z"),
+                Optional.empty(),
                 Optional.empty(),
                 TrackingFixture.at("2026-10-26T01:00:00Z"));
     }
@@ -119,6 +121,28 @@ class CustomerTrackingControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().string(not(containsString("最終取得時刻"))))
                 .andExpect(content().string(containsString("2026-11-16 12:00 Asia/Tokyo（UTC+09:00）")));
+    }
+
+    /**
+     * Bolt 39g4 の行 19（T-INV-09。C-10 は変えない）。照会の結果が鮮度超過の追跡番号を持っていても、荷主の一覧と照会の結果に鮮度超過の印と次の予定の
+     * 実績を出さない（荷主への「最新性を保証しない旨」は W9）。
+     */
+    @Test
+    void Bolt39g4_行19_荷主の一覧と照会の結果に鮮度超過と次の予定の実績を出さない() throws Exception {
+        TrackingRecordSummary overdue = summary("CTABCDEFGH2345", TrackingStatus.IN_TRANSIT);
+        given(queryService.recent(TestActors.SHIPPER_COMPANY))
+                .willReturn(new RecentTrackingRecords(List.of(overdue), false, 50, Set.of(overdue.trackingNumber())));
+        given(queryService.find(TrackingFixture.TRACKING_NUMBER, TestActors.SHIPPER_COMPANY))
+                .willReturn(Optional.of(view(List.of(pickup()))));
+
+        mockMvc.perform(get(LIST))
+                .andExpect(status().isOk())
+                .andExpect(content().string(not(containsString("鮮度超過"))));
+        mockMvc.perform(get(DETAIL))
+                .andExpect(status().isOk())
+                .andExpect(content().string(not(containsString("鮮度超過"))))
+                .andExpect(content().string(not(containsString("次の予定の実績"))))
+                .andExpect(content().string(not(containsString("届いていません"))));
     }
 
     private static CustomerMilestone pickup() {

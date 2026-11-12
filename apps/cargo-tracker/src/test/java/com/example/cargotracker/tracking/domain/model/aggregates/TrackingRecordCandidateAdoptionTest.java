@@ -829,4 +829,56 @@ class TrackingRecordCandidateAdoptionTest {
             assertThat(sameValue.lastAcquiredAt()).isEqualTo(adopted.lastAcquiredAt());
         }
     }
+
+    /** Bolt 39g4 の行 11（下書きの採用で次の予定の実績が進むのは採用に移ったときだけ。【業務の判断】(aq)）。外部原本の下書きは区間 1 の出発・JPTYO。 */
+    @Nested
+    class Bolt39g4_採用の次の予定の実績 {
+
+        @Test
+        void 行11_採用に移ると次の予定の実績は区間1の積替() {
+            // 組み立ての追跡記録は次の予定の実績を持たない（39g4 の前の行と同じ形）。下書きの受け取りでは導出し直さない
+            TrackingRecord draft = received(arrival(TOKYO, "2026-11-19T10:00:00Z", "r-1"));
+            assertThat(draft.nextExpectedAt()).isEmpty();
+
+            TrackingRecord adopted =
+                    ((MilestoneAdoption.Adopted) draft.adoptCandidate(1, MANAGER, ADOPTED_AT)).trackingRecord();
+
+            assertThat(adopted.nextExpectedAt()).contains(at("2026-11-03T00:00:00Z"));
+        }
+
+        @Test
+        void 行11_確認中に移ると次の予定の実績は進まない() {
+            TrackingRecord pickedUp = empty(TrackedBookingStatus.CONFIRMED, TrackingStatus.PICKUP_SCHEDULED)
+                    .registerMilestone(
+                            MilestoneKind.PICKUP,
+                            new Location("JPTYO"),
+                            at("2026-11-19T12:00:00Z"),
+                            new Source(SourceKind.FIELD_RECORD, "F-1", at("2026-11-19T12:30:00Z")),
+                            MANAGER,
+                            ADOPTED_AT)
+                    .trackingRecord();
+            TrackingRecord draft = received(pickedUp, arrival(TOKYO, "2026-11-19T10:00:00Z", "r-1"));
+
+            MilestoneAdoption.Adopted adoption =
+                    (MilestoneAdoption.Adopted) draft.adoptCandidate(2, MANAGER, ADOPTED_AT);
+
+            assertThat(adoption.milestone().state()).isEqualTo(MilestoneState.UNDER_REVIEW);
+            assertThat(adoption.trackingRecord().nextExpectedAt()).isEqualTo(draft.nextExpectedAt());
+            assertThat(draft.nextExpectedAt()).contains(at("2026-11-01T00:00:00Z"));
+        }
+
+        @Test
+        void 行11_拒否と判断済みと同じ値は追跡記録を返さない() {
+            TrackingRecord draft = received(arrival(TOKYO, "2026-11-19T10:00:00Z", "r-1"));
+            TrackingRecord adopted =
+                    ((MilestoneAdoption.Adopted) draft.adoptCandidate(1, MANAGER, ADOPTED_AT)).trackingRecord();
+            TrackingRecord sameValue = received(adopted, arrival(TOKYO, "2026-11-19T11:00:00Z", "r-2"));
+
+            assertThat(draft.adoptCandidate(1, MANAGER, at("2026-11-18T00:00:00Z")))
+                    .isInstanceOf(MilestoneAdoption.Rejected.class);
+            assertThat(sameValue.adoptCandidate(2, MANAGER, ADOPTED_AT))
+                    .isInstanceOf(MilestoneAdoption.SameAsAdopted.class);
+            assertThat(sameValue.nextExpectedAt()).isEqualTo(adopted.nextExpectedAt());
+        }
+    }
 }

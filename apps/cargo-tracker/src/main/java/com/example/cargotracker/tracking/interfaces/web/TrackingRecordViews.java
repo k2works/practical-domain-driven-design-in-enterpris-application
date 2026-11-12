@@ -5,6 +5,7 @@ import com.example.cargotracker.shared.domain.SourceKind;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import com.example.cargotracker.tracking.application.internal.queryservices.RecentTrackingRecords;
+import com.example.cargotracker.tracking.application.internal.queryservices.TrackingRecordDetail;
 import com.example.cargotracker.tracking.domain.model.aggregates.MilestoneAdoption;
 import com.example.cargotracker.tracking.domain.model.aggregates.TrackingRecord;
 import com.example.cargotracker.tracking.domain.model.entities.Milestone;
@@ -17,6 +18,7 @@ import com.example.cargotracker.tracking.domain.model.valueobjects.Schedule;
 import com.example.cargotracker.tracking.domain.model.valueobjects.ScheduledLeg;
 import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingNumber;
 import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingStatus;
+import java.time.Duration;
 import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.List;
@@ -114,6 +116,7 @@ final class TrackingRecordViews {
      * @param lastAcquiredAt 最終取得時刻（なければ「なし」。Bolt 39g3）
      * @param startedAt 追跡の開始時刻
      * @param underReview 現在状態が確認中か（状態バッジで示す。Bolt 39gc）
+     * @param freshnessExceeded 照会したときに鮮度超過か（現在状態のセルに鮮度超過の印を並べる。Bolt 39g4）
      */
     record Row(
             String trackingNumber,
@@ -122,7 +125,8 @@ final class TrackingRecordViews {
             String latestEta,
             String lastAcquiredAt,
             String startedAt,
-            boolean underReview) {}
+            boolean underReview,
+            boolean freshnessExceeded) {}
 
     /** S-11 の最終取得時刻のないセルの文（本計画 CP-5。Bolt 39g3）。 */
     static final String NO_LAST_ACQUIRED_IN_LIST = "なし";
@@ -139,8 +143,21 @@ final class TrackingRecordViews {
                         staff(summary.latestEta()),
                         summary.lastAcquiredAt().map(TrackingRecordViews::staff).orElse(NO_LAST_ACQUIRED_IN_LIST),
                         staff(summary.startedAt()),
-                        summary.currentStatus() == TrackingStatus.UNDER_REVIEW))
+                        summary.currentStatus() == TrackingStatus.UNDER_REVIEW,
+                        recent.freshnessExceeded(summary)))
                 .toList();
+    }
+
+    /** S-12 の次の予定の実績がないときの文（本計画 CP-4。Bolt 39g4）。 */
+    static final String NO_NEXT_EXPECTED = "なし";
+
+    /**
+     * S-12 の鮮度超過の警告の文（本計画 CP-4、D-135。Bolt 39g4）。時間は判定の許容範囲から作る（直書きしない。前例 Bolt 33c のロックの方針の値）。
+     *
+     * @param tolerance 鮮度の判定の許容範囲
+     */
+    static String freshnessWarning(Duration tolerance) {
+        return "次の予定の実績が予定時刻から " + tolerance.toHours() + " 時間を過ぎても届いていません。";
     }
 
     /**
@@ -151,6 +168,8 @@ final class TrackingRecordViews {
      * @param originalEta 当初の到着予定
      * @param latestEta 最新の到着見込み
      * @param lastAcquiredAt 最終取得時刻（なければ「まだありません」。Bolt 39g3）
+     * @param nextExpectedAt 次の予定の実績の予定時刻（なければ「なし」。Bolt 39g4）
+     * @param freshnessWarning 鮮度超過の警告の文（鮮度超過でなければ {@code null}。Bolt 39g4）
      * @param route 予定の経路版（案件番号と経路版）
      * @param legs 予定区間（区間の順）
      * @param milestones 主要実績（発生時刻の順。同じ時刻は実績番号の順。Bolt 26c）
@@ -165,6 +184,8 @@ final class TrackingRecordViews {
             String originalEta,
             String latestEta,
             String lastAcquiredAt,
+            String nextExpectedAt,
+            String freshnessWarning,
             String route,
             List<LegView> legs,
             List<MilestoneView> milestones,
@@ -247,11 +268,12 @@ final class TrackingRecordViews {
      * S-12 の表示。下書きの採用の欄は、閲覧者が今採用したらどうなるかを同じドメインの操作（{@link TrackingRecord#adoptCandidate}。純粋）で試して決める
      * （ボタンと POST の判定をずらさない。Bolt 39gb）。
      *
-     * @param trackingRecord 追跡記録
+     * @param found 追跡記録と照会したときの鮮度の判定（Bolt 39g4。判定は照会サービスが行い、ここでは示すだけ）
      * @param viewer 閲覧者（採用者になる追跡管理者）
      * @param now 今の時刻（未来の発生時刻の判定）
      */
-    static DetailView detail(TrackingRecord trackingRecord, UserId viewer, UtcInstant now) {
+    static DetailView detail(TrackingRecordDetail found, UserId viewer, UtcInstant now) {
+        TrackingRecord trackingRecord = found.trackingRecord();
         Schedule schedule = trackingRecord.schedule();
         return new DetailView(
                 trackingRecord.trackingNumber().value(),
@@ -259,6 +281,8 @@ final class TrackingRecordViews {
                 staff(trackingRecord.originalEta()),
                 staff(trackingRecord.latestEta()),
                 trackingRecord.lastAcquiredAt().map(TrackingRecordViews::staff).orElse(NO_LAST_ACQUIRED_YET),
+                trackingRecord.nextExpectedAt().map(TrackingRecordViews::staff).orElse(NO_NEXT_EXPECTED),
+                found.freshnessExceeded() ? freshnessWarning(found.freshnessTolerance()) : null,
                 schedule.routingCaseNumber() + " 版 " + schedule.routeVersionNo(),
                 legs(schedule.legs(), TrackingRecordViews::staff, TrackingRecordViews::legSummary),
                 trackingRecord.milestones().stream()

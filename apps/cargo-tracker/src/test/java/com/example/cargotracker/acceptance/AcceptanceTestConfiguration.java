@@ -96,10 +96,12 @@ import com.example.cargotracker.tracking.application.internal.outboundservices.a
 import com.example.cargotracker.tracking.application.internal.outboundservices.acl.BookingTransportPhases;
 import com.example.cargotracker.tracking.application.internal.outboundservices.acl.RoutingScheduledLegs;
 import com.example.cargotracker.tracking.application.internal.queryservices.CustomerTrackingQueryService;
+import com.example.cargotracker.tracking.application.internal.queryservices.TrackingRecordQueryService;
 import com.example.cargotracker.tracking.application.internal.queryservices.TrackingRecordScope;
 import com.example.cargotracker.tracking.domain.events.DeliveryConfirmed;
 import com.example.cargotracker.tracking.domain.events.PickupMilestoneAdopted;
 import com.example.cargotracker.tracking.domain.events.TrackingStarted;
+import com.example.cargotracker.tracking.domain.model.rules.FreshnessPolicy;
 import io.cucumber.spring.CucumberContextConfiguration;
 import java.time.Duration;
 import java.util.Random;
@@ -325,6 +327,14 @@ public class AcceptanceTestConfiguration {
         @Bean
         CustomerTrackingQueryService customerTrackingQueryService(InMemoryTrackingRecordRepository repository) {
             return new CustomerTrackingQueryService(repository);
+        }
+
+        /** 追跡記録の照会（S-11・S-12）。鮮度の判定の許容範囲は設定の既定と同じ 36 時間（FRS-02。Bolt 39g4）。 */
+        @Bean
+        TrackingRecordQueryService trackingRecordQueryService(
+                InMemoryTrackingRecordRepository repository, MutableClock clock) {
+            return new TrackingRecordQueryService(
+                    repository, new TrackingRecordScope(repository), clock, new FreshnessPolicy(Duration.ofHours(36)));
         }
 
         /** 追跡管理者が主要実績を登録する（US-12。Bolt 26b）。 */

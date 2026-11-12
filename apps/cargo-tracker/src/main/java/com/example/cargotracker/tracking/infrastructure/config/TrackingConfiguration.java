@@ -16,7 +16,10 @@ import com.example.cargotracker.tracking.application.internal.queryservices.Trac
 import com.example.cargotracker.tracking.application.internal.queryservices.TrackingRecordScope;
 import com.example.cargotracker.tracking.domain.model.aggregates.RejectedMilestoneRepository;
 import com.example.cargotracker.tracking.domain.model.aggregates.TrackingRecordRepository;
+import com.example.cargotracker.tracking.domain.model.rules.FreshnessPolicy;
 import java.time.Clock;
+import java.time.Duration;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -87,11 +90,20 @@ public class TrackingConfiguration {
         return new TrackingRecordCommandService(repository, clock, trackingRecordScope, eventPublisher);
     }
 
-    /** 追跡記録の照会（S-11 追跡一覧、S-12 追跡の詳細。Bolt 26）。 */
+    /** 追跡記録の照会（S-11 追跡一覧、S-12 追跡の詳細。Bolt 26）。鮮度の判定の判定の時刻は時計から得る（Bolt 39g4）。 */
     @Bean
     TrackingRecordQueryService trackingRecordQueryService(
-            TrackingRecordRepository repository, TrackingRecordScope trackingRecordScope) {
-        return new TrackingRecordQueryService(repository, trackingRecordScope);
+            TrackingRecordRepository repository,
+            TrackingRecordScope trackingRecordScope,
+            Clock clock,
+            FreshnessPolicy freshnessPolicy) {
+        return new TrackingRecordQueryService(repository, trackingRecordScope, clock, freshnessPolicy);
+    }
+
+    /** 鮮度の判定（FRS-02。許容範囲は設定の値。0 以下は組み立てで拒む。Bolt 39g4）。 */
+    @Bean
+    FreshnessPolicy freshnessPolicy(@Value("${cargotracker.tracking.freshness-tolerance}") Duration tolerance) {
+        return new FreshnessPolicy(tolerance);
     }
 
     /** 社内の追跡記録の担当範囲の判定（照会とコマンドのサービスが使う。Bolt 38g）。 */

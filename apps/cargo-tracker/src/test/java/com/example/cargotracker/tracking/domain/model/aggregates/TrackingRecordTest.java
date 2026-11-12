@@ -204,4 +204,60 @@ class TrackingRecordTest {
                     .trackingRecord();
         }
     }
+
+    /** Bolt 39g4 の行 6・9（次の予定の実績。【業務の判断】(aq)）。完了後を除くのは集約が導出するとき（保存する値を空にする）。 */
+    @Nested
+    class Bolt39g4_次の予定の実績 {
+
+        private static final UserId REGISTRANT = new UserId(UUID.fromString("00000000-0000-0000-0000-000000039402"));
+        private static final UtcInstant NOW = at("2026-11-02T00:00:00Z");
+
+        @Test
+        void 行9_追跡を始めると次の予定の実績は区間1の出発() {
+            assertThat(start().trackingRecord().nextExpectedAt()).contains(at("2026-11-01T00:00:00Z"));
+        }
+
+        @Test
+        void 行6a_引渡しを採用すると到着がなくても次の予定の実績はない() {
+            TrackingRecord delivered =
+                    register(start().trackingRecord(), MilestoneKind.DELIVERY, "USLAX", "2026-11-01T06:00:00Z", "F-1");
+
+            assertThat(delivered.milestones().getFirst().state()).isEqualTo(MilestoneState.ADOPTED);
+            assertThat(delivered.nextExpectedAt()).isEmpty();
+        }
+
+        @Test
+        void 行6b_確認中の間に引渡しを採用すると次の予定の実績はない() {
+            TrackingRecord pickedUp =
+                    register(start().trackingRecord(), MilestoneKind.PICKUP, "JPTYO", "2026-11-01T10:00:00Z", "F-1");
+            TrackingRecord underReview =
+                    register(pickedUp, MilestoneKind.DEPARTURE, "JPTYO", "2026-11-01T06:00:00Z", "F-2");
+            assertThat(underReview.currentStatus()).isEqualTo(TrackingStatus.UNDER_REVIEW);
+            assertThat(underReview.nextExpectedAt()).contains(at("2026-11-01T00:00:00Z"));
+
+            TrackingRecord delivered =
+                    register(underReview, MilestoneKind.DELIVERY, "USLAX", "2026-11-01T11:00:00Z", "F-3");
+
+            assertThat(delivered.milestones().get(2).state()).isEqualTo(MilestoneState.ADOPTED);
+            assertThat(delivered.statusFromAdopted()).isEqualTo(TrackingStatus.DELIVERED);
+            assertThat(delivered.nextExpectedAt()).isEmpty();
+        }
+
+        private static TrackingRecord register(
+                TrackingRecord trackingRecord,
+                MilestoneKind kind,
+                String location,
+                String occurredAt,
+                String reference) {
+            return trackingRecord
+                    .registerMilestone(
+                            kind,
+                            new Location(location),
+                            at(occurredAt),
+                            new Source(SourceKind.FIELD_RECORD, reference, NOW),
+                            REGISTRANT,
+                            NOW)
+                    .trackingRecord();
+        }
+    }
 }

@@ -15,6 +15,7 @@ import com.example.cargotracker.tracking.domain.model.entities.Milestone;
 import com.example.cargotracker.tracking.domain.model.rules.CurrentStatusDeriver;
 import com.example.cargotracker.tracking.domain.model.rules.LatestEstimateRule;
 import com.example.cargotracker.tracking.domain.model.rules.MilestoneSequenceRule;
+import com.example.cargotracker.tracking.domain.model.rules.NextExpectedMilestoneRule;
 import com.example.cargotracker.tracking.domain.model.valueobjects.AdoptionRejectionReason;
 import com.example.cargotracker.tracking.domain.model.valueobjects.CustomerMilestone;
 import com.example.cargotracker.tracking.domain.model.valueobjects.CustomerTrackingView;
@@ -26,6 +27,7 @@ import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneKind
 import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneRejectionReason;
 import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneState;
 import com.example.cargotracker.tracking.domain.model.valueobjects.Schedule;
+import com.example.cargotracker.tracking.domain.model.valueobjects.SchedulePoint;
 import com.example.cargotracker.tracking.domain.model.valueobjects.TrackedBookingStatus;
 import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingNumber;
 import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingStatus;
@@ -57,6 +59,10 @@ import java.util.UUID;
  * <p>最新の到着見込みと最終取得時刻は、現在状態と同じく実績が変わったとき（現在状態を導出し直すとき）に採用の実績から導いて持ち、保存した値を読む
  * （Bolt 39g3。{@link LatestEstimateRule}。最終取得時刻は採用の実績の出典の取得時刻のうち最も新しいもの。【業務の判断】(ap)）。当初の到着予定は変えない
  * （T-INV-10）。DE-13 の下書きと完了後の保持のみは採用の実績を変えないので導出し直さない。
+ *
+ * <p>次の予定の実績の予定時刻も同じく、追跡を始めたときと採用の実績が変わったときに導いて持ち、保存した値を読む（Bolt 39g4。{@link NextExpectedMilestoneRule}。
+ * 【業務の判断】(aq)）。完了後（予約状態が完了か、採用済みの実績から導いた状態が引渡し済み）は空にする。鮮度超過は持たず、読むときに照会サービスが
+ * 鮮度の判定で決める（【業務の判断】(ar)）。
  */
 @AggregateRoot
 @CoreConcept
@@ -66,6 +72,7 @@ public final class TrackingRecord {
     private static final CurrentStatusDeriver DERIVER = new CurrentStatusDeriver();
     private static final MilestoneSequenceRule SEQUENCE = new MilestoneSequenceRule();
     private static final LatestEstimateRule ESTIMATE = new LatestEstimateRule();
+    private static final NextExpectedMilestoneRule NEXT_EXPECTED = new NextExpectedMilestoneRule();
 
     private final TrackingNumber trackingNumber;
     private final UUID bookingId;
@@ -80,6 +87,7 @@ public final class TrackingRecord {
     private final UtcInstant originalEta;
     private final UtcInstant latestEta;
     private final Optional<UtcInstant> lastAcquiredAt;
+    private final Optional<UtcInstant> nextExpectedAt;
     private final UtcInstant startedAt;
     private final long aggregateVersion;
 
@@ -96,6 +104,7 @@ public final class TrackingRecord {
             UtcInstant originalEta,
             UtcInstant latestEta,
             Optional<UtcInstant> lastAcquiredAt,
+            Optional<UtcInstant> nextExpectedAt,
             UtcInstant startedAt,
             long aggregateVersion) {
         this.trackingNumber = Objects.requireNonNull(trackingNumber, "trackingNumber");
@@ -112,6 +121,7 @@ public final class TrackingRecord {
         this.originalEta = Objects.requireNonNull(originalEta, "originalEta");
         this.latestEta = Objects.requireNonNull(latestEta, "latestEta");
         this.lastAcquiredAt = Objects.requireNonNull(lastAcquiredAt, "lastAcquiredAt");
+        this.nextExpectedAt = Objects.requireNonNull(nextExpectedAt, "nextExpectedAt");
         this.startedAt = Objects.requireNonNull(startedAt, "startedAt");
         this.aggregateVersion = aggregateVersion;
         for (int i = 0; i < this.milestones.size(); i++) {
@@ -152,6 +162,7 @@ public final class TrackingRecord {
                 schedule.finalArrival(),
                 schedule.finalArrival(),
                 Optional.empty(),
+                nextExpectedOf(schedule, List.of()),
                 startedAt,
                 INITIAL_AGGREGATE_VERSION);
         return new TrackingStart(
@@ -160,9 +171,45 @@ public final class TrackingRecord {
     }
 
     /**
-     * 保存されている状態から組み立てる（リポジトリが使う）。現在状態が確認中なら理由を持つ（Bolt 39gc）。最新の到着見込みと最終取得時刻は保存した値を
-     * そのまま持つ（Bolt 39g3）。
+     * 保存されている状態から組み立てる（リポジトリが使う）。現在状態が確認中なら理由を持つ（Bolt 39gc）。最新の到着見込みと最終取得時刻（Bolt 39g3）と
+     * 次の予定の実績の予定時刻（Bolt 39g4）は保存した値をそのまま持つ。
      */
+    @SuppressWarnings("java:S107") // 保存されている状態から組み立てるため、集約の値をすべて受け取る
+    public static TrackingRecord reconstitute(
+            TrackingNumber trackingNumber,
+            UUID bookingId,
+            CompanyId shipperCompanyId,
+            CompanyId consigneeCompanyId,
+            TrackedBookingStatus bookingStatus,
+            Schedule schedule,
+            TrackingStatus currentStatus,
+            OptionalInt statusBasisMilestoneNo,
+            Optional<UnderReviewReason> underReviewReason,
+            List<Milestone> milestones,
+            UtcInstant originalEta,
+            UtcInstant latestEta,
+            Optional<UtcInstant> lastAcquiredAt,
+            Optional<UtcInstant> nextExpectedAt,
+            UtcInstant startedAt,
+            long aggregateVersion) {
+        return new TrackingRecord(
+                trackingNumber,
+                bookingId,
+                shipperCompanyId,
+                consigneeCompanyId,
+                bookingStatus,
+                schedule,
+                new DerivedStatus(currentStatus, statusBasisMilestoneNo, underReviewReason),
+                milestones,
+                originalEta,
+                latestEta,
+                lastAcquiredAt,
+                nextExpectedAt,
+                startedAt,
+                aggregateVersion);
+    }
+
+    /** 次の予定の実績の予定時刻のない保存されている状態から組み立てる（Bolt 39g4 の前の形。次の予定の実績の予定時刻は空）。 */
     @SuppressWarnings("java:S107") // 保存されている状態から組み立てるため、集約の値をすべて受け取る
     public static TrackingRecord reconstitute(
             TrackingNumber trackingNumber,
@@ -180,18 +227,21 @@ public final class TrackingRecord {
             Optional<UtcInstant> lastAcquiredAt,
             UtcInstant startedAt,
             long aggregateVersion) {
-        return new TrackingRecord(
+        return reconstitute(
                 trackingNumber,
                 bookingId,
                 shipperCompanyId,
                 consigneeCompanyId,
                 bookingStatus,
                 schedule,
-                new DerivedStatus(currentStatus, statusBasisMilestoneNo, underReviewReason),
+                currentStatus,
+                statusBasisMilestoneNo,
+                underReviewReason,
                 milestones,
                 originalEta,
                 latestEta,
                 lastAcquiredAt,
+                Optional.empty(),
                 startedAt,
                 aggregateVersion);
     }
@@ -419,7 +469,13 @@ public final class TrackingRecord {
      * （確認中は現在状態を確認中にするので、現在状態を見ると確認中の間に引渡しを採用した追跡が完了後にならない。【前の決定の変更】(14)）。
      */
     private boolean isCompleted() {
-        return bookingStatus == TrackedBookingStatus.COMPLETED || statusFromAdopted() == TrackingStatus.DELIVERED;
+        return isCompleted(bookingStatus, milestones);
+    }
+
+    /** 完了後か（{@link #isCompleted()} と同じ規則を、差し替える実績の列で判定する。次の予定の実績の導出が使う。Bolt 39g4）。 */
+    private static boolean isCompleted(TrackedBookingStatus bookingStatus, List<Milestone> milestones) {
+        return bookingStatus == TrackedBookingStatus.COMPLETED
+                || DERIVER.deriveFromAdopted(milestones).status() == TrackingStatus.DELIVERED;
     }
 
     /** 採用済みの実績だけから導いた状態（確認中の実績を見ない。完了後の判定と S-12 の確認中の理由の文。Bolt 39gc）。 */
@@ -481,13 +537,19 @@ public final class TrackingRecord {
         return new DerivedStatus(currentStatus, statusBasisMilestoneNo, underReviewReason);
     }
 
-    /** 実績を差し替え、現在状態と最新の到着見込みと最終取得時刻を導出し直した追跡記録（Bolt 39g3）。 */
+    /** 実績を差し替え、現在状態と最新の到着見込みと最終取得時刻（Bolt 39g3）と次の予定の実績の予定時刻（Bolt 39g4）を導出し直した追跡記録。 */
     private TrackingRecord derivedWith(List<Milestone> newMilestones) {
         return withMilestones(
                 newMilestones,
                 DERIVER.derive(newMilestones),
                 ESTIMATE.estimate(schedule, newMilestones),
-                lastAcquiredOf(newMilestones));
+                lastAcquiredOf(newMilestones),
+                isCompleted(bookingStatus, newMilestones) ? Optional.empty() : nextExpectedOf(schedule, newMilestones));
+    }
+
+    /** 次の予定の実績の予定時刻（最後の区間の到着を結んだら空。【業務の判断】(aq)）。 */
+    private static Optional<UtcInstant> nextExpectedOf(Schedule schedule, List<Milestone> milestones) {
+        return NEXT_EXPECTED.next(schedule, milestones).map(SchedulePoint::scheduledAt);
     }
 
     /** 採用の実績の出典の取得時刻のうち最も新しいもの（発生時刻の順と独立。下書き・確認中・保持のみは使わない。【業務の判断】(ap)）。 */
@@ -504,16 +566,20 @@ public final class TrackingRecord {
         return plus;
     }
 
-    /** 実績を差し替え、現在状態と最新の到着見込みと最終取得時刻を保存した値のまま持つ追跡記録（採用の実績が変わらない DE-13 の下書きと保持のみ）。 */
+    /**
+     * 実績を差し替え、現在状態と最新の到着見込みと最終取得時刻と次の予定の実績の予定時刻を保存した値のまま持つ追跡記録（採用の実績が変わらない DE-13 の
+     * 下書きと保持のみ）。
+     */
     private TrackingRecord withMilestones(List<Milestone> newMilestones, DerivedStatus newCurrent) {
-        return withMilestones(newMilestones, newCurrent, latestEta, lastAcquiredAt);
+        return withMilestones(newMilestones, newCurrent, latestEta, lastAcquiredAt, nextExpectedAt);
     }
 
     private TrackingRecord withMilestones(
             List<Milestone> newMilestones,
             DerivedStatus newCurrent,
             UtcInstant newLatestEta,
-            Optional<UtcInstant> newLastAcquiredAt) {
+            Optional<UtcInstant> newLastAcquiredAt,
+            Optional<UtcInstant> newNextExpectedAt) {
         return new TrackingRecord(
                 trackingNumber,
                 bookingId,
@@ -526,6 +592,7 @@ public final class TrackingRecord {
                 originalEta,
                 newLatestEta,
                 newLastAcquiredAt,
+                newNextExpectedAt,
                 startedAt,
                 aggregateVersion);
     }
@@ -612,6 +679,11 @@ public final class TrackingRecord {
     /** 最終取得時刻（採用の実績の出典の取得時刻のうち最も新しいもの。採用の実績がなければ空。Bolt 39g3）。 */
     public Optional<UtcInstant> lastAcquiredAt() {
         return lastAcquiredAt;
+    }
+
+    /** 次の予定の実績の予定時刻（最後の区間の到着を採用したとき、完了後、Bolt 39g4 の前に始めて採用の実績が変わっていないときは空。Bolt 39g4）。 */
+    public Optional<UtcInstant> nextExpectedAt() {
+        return nextExpectedAt;
     }
 
     /** 追跡を開始した時刻（追跡記録の作成時刻）。 */

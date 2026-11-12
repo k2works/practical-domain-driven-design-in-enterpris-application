@@ -2,23 +2,31 @@ package com.example.cargotracker.tracking.application.internal.queryservices;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.example.cargotracker.shared.acceptance.MutableClock;
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
 import com.example.cargotracker.shared.domain.AuthenticatedActorFixture;
 import com.example.cargotracker.shared.domain.CompanyId;
+import com.example.cargotracker.shared.domain.Location;
+import com.example.cargotracker.shared.domain.Source;
+import com.example.cargotracker.shared.domain.SourceKind;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import com.example.cargotracker.tracking.acceptance.InMemoryTrackingRecordRepository;
 import com.example.cargotracker.tracking.domain.model.TrackingFixture;
 import com.example.cargotracker.tracking.domain.model.aggregates.TrackingRecord;
 import com.example.cargotracker.tracking.domain.model.aggregates.TrackingRecordRepository;
+import com.example.cargotracker.tracking.domain.model.rules.FreshnessPolicy;
+import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneKind;
 import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingNumber;
 import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingRecordSummary;
 import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingStatus;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 /** 追跡記録の照会（S-11 追跡一覧、S-12 追跡の詳細。Bolt 26）。 */
@@ -29,8 +37,11 @@ class TrackingRecordQueryServiceTest {
 
     private final InMemoryTrackingRecordRepository repository = new InMemoryTrackingRecordRepository();
     private final CountingRepository counting = new CountingRepository(repository);
-    private final TrackingRecordQueryService service =
-            new TrackingRecordQueryService(counting, new TrackingRecordScope(counting));
+    /** 判定の時刻（鮮度の判定。Bolt 39g4）。既定は追跡の開始の前で、どの追跡も鮮度超過にならない。 */
+    private final MutableClock clock = new MutableClock();
+
+    private final TrackingRecordQueryService service = new TrackingRecordQueryService(
+            counting, new TrackingRecordScope(counting), clock, new FreshnessPolicy(Duration.ofHours(36)));
     /** 追跡記録の荷主企業を担当する追跡管理者（Bolt 38g）。 */
     private final AuthenticatedActor manager =
             AuthenticatedActorFixture.trackingManagerHandling(new UserId(UUID.randomUUID()), TrackingFixture.SHIPPER);
@@ -53,7 +64,138 @@ class TrackingRecordQueryServiceTest {
                         TrackingFixture.at("2026-11-15T00:00:00Z"),
                         TrackingFixture.at("2026-11-15T00:00:00Z"),
                         Optional.empty(),
+                        Optional.of(TrackingFixture.at("2026-11-01T00:00:00Z")),
                         TrackingFixture.at("2026-10-26T02:00:00Z")));
+    }
+
+    /**
+     * Bolt 39g4 の行 17（S-11 の鮮度超過の判定。FRS-02）。照会サービスが時計から判定の時刻を得て、行ごとに保存した次の予定の実績の予定時刻で
+     * 判定する。次の予定の実績は区間 1 の出発予定 2026-11-01 00:00、許容範囲は 36 時間。
+     */
+    @Nested
+    class Bolt39g4_追跡一覧の鮮度超過 {
+
+        @Test
+        void 行17a_予定時刻から37時間で次の予定の実績が届かなければ鮮度超過() {
+            TrackingRecord saved = started(1, "2026-10-26T01:00:00Z");
+            clock.setInstant(Instant.parse("2026-11-02T13:00:00Z"));
+
+            RecentTrackingRecords recent = service.recent(manager);
+
+            assertThat(recent.freshnessExceeded(recent.rows().getFirst())).isTrue();
+            assertThat(recent.rows().getFirst().trackingNumber()).isEqualTo(saved.trackingNumber());
+        }
+
+        @Test
+        void 行17b_予定時刻から1時間なら鮮度超過でない() {
+            started(1, "2026-10-26T01:00:00Z");
+            clock.setInstant(Instant.parse("2026-11-01T01:00:00Z"));
+
+            RecentTrackingRecords recent = service.recent(manager);
+
+            assertThat(recent.freshnessExceeded(recent.rows().getFirst())).isFalse();
+        }
+
+        @Test
+        void 行17c_次の予定の実績がなければ鮮度超過でない() {
+            TrackingRecord saved = started(1, "2026-10-26T01:00:00Z");
+            repository.update(saved.registerMilestone(
+                            MilestoneKind.ARRIVAL,
+                            new Location("USLAX"),
+                            TrackingFixture.at("2026-11-15T01:00:00Z"),
+                            new Source(SourceKind.FIELD_RECORD, "F-1", TrackingFixture.at("2026-11-15T02:00:00Z")),
+                            new UserId(UUID.randomUUID()),
+                            TrackingFixture.at("2026-11-15T02:00:00Z"))
+                    .trackingRecord());
+            clock.setInstant(Instant.parse("2026-12-31T00:00:00Z"));
+
+            RecentTrackingRecords recent = service.recent(manager);
+
+            assertThat(recent.rows().getFirst().nextExpectedAt()).isEmpty();
+            assertThat(recent.freshnessExceeded(recent.rows().getFirst())).isFalse();
+        }
+
+        @Test
+        void 行17d_確認中でも次の予定の実績が届かなければ鮮度超過() {
+            TrackingRecord saved = started(1, "2026-10-26T01:00:00Z");
+            TrackingRecord pickedUp = register(saved, MilestoneKind.PICKUP, "2026-11-01T10:00:00Z", "F-1");
+            repository.update(pickedUp);
+            TrackingRecord underReview = register(
+                    repository.findByTrackingNumber(saved.trackingNumber()).orElseThrow(),
+                    MilestoneKind.RECEIPT_AT_ORIGIN,
+                    "2026-11-01T09:00:00Z",
+                    "F-2");
+            repository.update(underReview);
+            clock.setInstant(Instant.parse("2026-11-02T13:00:00Z"));
+
+            RecentTrackingRecords recent = service.recent(manager);
+
+            assertThat(recent.rows().getFirst().currentStatus()).isEqualTo(TrackingStatus.UNDER_REVIEW);
+            assertThat(recent.freshnessExceeded(recent.rows().getFirst())).isTrue();
+        }
+
+        private static TrackingRecord register(
+                TrackingRecord trackingRecord, MilestoneKind kind, String occurredAt, String reference) {
+            return trackingRecord
+                    .registerMilestone(
+                            kind,
+                            new Location("JPTYO"),
+                            TrackingFixture.at(occurredAt),
+                            new Source(SourceKind.FIELD_RECORD, reference, TrackingFixture.at("2026-11-02T00:00:00Z")),
+                            new UserId(UUID.randomUUID()),
+                            TrackingFixture.at("2026-11-02T00:00:00Z"))
+                    .trackingRecord();
+        }
+    }
+
+    /**
+     * Bolt 39g4 の行 18（S-12 の鮮度超過の判定）。照会サービスが詳細と判定と許容範囲の組を返す（文の時間は許容範囲から作る）。許容範囲を 48 時間に
+     * した照会サービスでは予定時刻 + 40 時間は鮮度超過でない（判定と文が設定の値に従う）。
+     */
+    @Nested
+    class Bolt39g4_追跡の詳細の鮮度超過 {
+
+        @Test
+        void 行18_予定時刻から37時間で鮮度超過と許容範囲を返す() {
+            TrackingRecord saved = started(1, "2026-10-26T01:00:00Z");
+            clock.setInstant(Instant.parse("2026-11-02T13:00:00Z"));
+
+            assertThat(service.detailWithFreshness(saved.trackingNumber(), manager))
+                    .contains(new TrackingRecordDetail(saved, true, Duration.ofHours(36)));
+        }
+
+        @Test
+        void 行18_予定時刻から1時間なら鮮度超過でない() {
+            TrackingRecord saved = started(1, "2026-10-26T01:00:00Z");
+            clock.setInstant(Instant.parse("2026-11-01T01:00:00Z"));
+
+            assertThat(service.detailWithFreshness(saved.trackingNumber(), manager))
+                    .contains(new TrackingRecordDetail(saved, false, Duration.ofHours(36)));
+        }
+
+        @Test
+        void 行18_許容範囲を48時間にすると予定時刻から40時間は鮮度超過でない() {
+            TrackingRecord saved = started(1, "2026-10-26T01:00:00Z");
+            clock.setInstant(Instant.parse("2026-11-02T16:00:00Z"));
+            TrackingRecordQueryService relaxed = new TrackingRecordQueryService(
+                    counting, new TrackingRecordScope(counting), clock, new FreshnessPolicy(Duration.ofHours(48)));
+
+            assertThat(relaxed.detailWithFreshness(saved.trackingNumber(), manager))
+                    .contains(new TrackingRecordDetail(saved, false, Duration.ofHours(48)));
+            assertThat(service.detailWithFreshness(saved.trackingNumber(), manager))
+                    .contains(new TrackingRecordDetail(saved, true, Duration.ofHours(36)));
+        }
+
+        @Test
+        void 行18_範囲の外とない追跡番号は空() {
+            TrackingRecord saved = started(1, "2026-10-26T01:00:00Z");
+            AuthenticatedActor outsider = AuthenticatedActorFixture.trackingManagerHandling(
+                    new UserId(UUID.randomUUID()), new CompanyId(UUID.randomUUID()));
+
+            assertThat(service.detailWithFreshness(saved.trackingNumber(), outsider))
+                    .isEmpty();
+            assertThat(service.detailWithFreshness(trackingNumber(2), manager)).isEmpty();
+        }
     }
 
     /** 仮説 H1: 追跡記録が 3 件でも要約の照会は 1 回（行ごとに照会しない）。 */

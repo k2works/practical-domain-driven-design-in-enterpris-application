@@ -31,9 +31,11 @@
             <tr th:each="trackingRecord : ${trackingRecords}">
                 <td><a th:href="@{/staff/tracking-records/{trackingNumber}(trackingNumber=${trackingRecord.trackingNumber()})}"
                        th:text="${trackingRecord.trackingNumber()}">CTABCDEFGH2345</a></td>
-                <!--/* 確認中は状態バッジ（文字とアイコン。色だけで示さない。BR-13。Bolt 39gc）。絞り込みは足さない */-->
-                <td th:unless="${trackingRecord.underReview()}" th:text="${trackingRecord.status()}">集荷予定</td>
-                <td th:if="${trackingRecord.underReview()}"><span class="badge text-bg-warning"><span aria-hidden="true">⚠ </span><span th:text="${trackingRecord.status()}">確認中</span></span></td>
+                <!--/* 確認中は状態バッジ（文字とアイコン。色だけで示さない。BR-13。Bolt 39gc）。絞り込みは足さない。
+                       鮮度超過は同じ形の印を現在状態の後ろに並べる（読むときの判定で、現在状態は変えない。Bolt 39g4、D-135） */-->
+                <td th:if="${!trackingRecord.underReview() and !trackingRecord.freshnessExceeded()}" th:text="${trackingRecord.status()}">集荷予定</td>
+                <td th:if="${trackingRecord.underReview() and !trackingRecord.freshnessExceeded()}"><span class="badge text-bg-warning"><span aria-hidden="true">⚠ </span><span th:text="${trackingRecord.status()}">確認中</span></span></td>
+                <td th:if="${trackingRecord.freshnessExceeded()}"><span th:unless="${trackingRecord.underReview()}" th:text="${trackingRecord.status()}">輸送中</span><span th:if="${trackingRecord.underReview()}" class="badge text-bg-warning"><span aria-hidden="true">⚠ </span><span th:text="${trackingRecord.status()}">確認中</span></span> <span class="badge text-bg-warning"><span aria-hidden="true">⚠ </span><span>鮮度超過</span></span></td>
                 <td th:text="${trackingRecord.originalEta()}">2026-11-15 09:00 Asia/Tokyo（UTC+09:00）（UTC 2026-11-15 00:00）</td>
                 <!--/* 最新の到着見込みは採用の実績で動き、最終取得時刻は採用の実績の取得時刻の最大（なければ「なし」。Bolt 39g3。U-3） */-->
                 <td th:text="${trackingRecord.latestEta()}">2026-11-15 15:00 Asia/Tokyo（UTC+09:00）（UTC 2026-11-15 06:00）</td>

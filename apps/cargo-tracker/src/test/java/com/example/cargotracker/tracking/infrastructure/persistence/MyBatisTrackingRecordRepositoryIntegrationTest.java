@@ -197,6 +197,7 @@ class MyBatisTrackingRecordRepositoryIntegrationTest {
                         sameTimeDigit.originalEta(),
                         sameTimeDigit.latestEta(),
                         sameTimeDigit.lastAcquiredAt(),
+                        sameTimeDigit.nextExpectedAt(),
                         sameTimeDigit.startedAt()));
     }
 
@@ -1117,6 +1118,103 @@ class MyBatisTrackingRecordRepositoryIntegrationTest {
                 case OffsetDateTime offset -> offset.toInstant();
                 default -> throw new IllegalArgumentException("日時の列の型が想定外: " + value);
             };
+        }
+    }
+
+    /**
+     * Bolt 39g4 の行 14〜16（本計画 CP-6）。追跡の開始の INSERT と主要実績の UPDATE が {@code next_expected_at} を書き（なければ NULL）、組み立てと
+     * 2 つの要約の照会が読む。予定は区間 1 の出発予定 2026-11-01 00:00、積替予定 2026-11-03 00:00。出発・JPTYO の採用で次は区間 1 の積替。
+     */
+    @Nested
+    class Bolt39g4_次の予定の実績の保存 {
+
+        private static final Instant D1 = Instant.parse("2026-11-01T00:00:00Z");
+        private static final Instant A1 = Instant.parse("2026-11-03T00:00:00Z");
+
+        private Instant nextExpectedAtColumn(TrackingRecord trackingRecord) {
+            OffsetDateTime value = jdbc.queryForObject(
+                    "SELECT next_expected_at FROM tracking.tracking_record WHERE tracking_number = ?",
+                    OffsetDateTime.class,
+                    trackingRecord.trackingNumber().value());
+            return value == null ? null : value.toInstant();
+        }
+
+        private TrackingRecord savedThenDeparted() {
+            TrackingRecord saved = started(UUID.randomUUID(), trackingNumber());
+            repository.save(saved);
+            repository.update(register(saved, MilestoneKind.DEPARTURE, "2026-11-01T02:30:00Z", "F-1"));
+            return saved;
+        }
+
+        @Test
+        void 行14_追跡の開始は次の予定の実績の予定時刻を書く() {
+            TrackingRecord saved = started(UUID.randomUUID(), trackingNumber());
+            repository.save(saved);
+
+            assertThat(nextExpectedAtColumn(saved)).isEqualTo(D1);
+        }
+
+        @Test
+        void 行14_主要実績の保存は次の予定の実績の予定時刻を書き版が違えば書かない() {
+            TrackingRecord saved = savedThenDeparted();
+            assertThat(nextExpectedAtColumn(saved)).isEqualTo(A1);
+
+            TrackingRecord stale = register(saved, MilestoneKind.ARRIVAL, "2026-11-01T02:50:00Z", "F-2");
+
+            assertThatThrownBy(() -> repository.update(stale))
+                    .isInstanceOf(ConcurrentTrackingRecordUpdateException.class);
+            assertThat(nextExpectedAtColumn(saved)).isEqualTo(A1);
+        }
+
+        @Test
+        void 行14_次の予定の実績がなくなればNULLを書く() {
+            TrackingRecord saved = started(UUID.randomUUID(), trackingNumber());
+            repository.save(saved);
+
+            repository.update(register(saved, MilestoneKind.DELIVERY, "2026-11-01T02:30:00Z", "F-1"));
+
+            assertThat(nextExpectedAtColumn(saved)).isNull();
+        }
+
+        @Test
+        void 行15_読み直すと次の予定の実績の予定時刻が保存した値と同じでNULLは空() {
+            TrackingRecord saved = savedThenDeparted();
+            TrackingRecord delivered = started(UUID.randomUUID(), trackingNumber());
+            repository.save(delivered);
+            repository.update(register(delivered, MilestoneKind.DELIVERY, "2026-11-01T02:30:00Z", "F-1"));
+
+            assertThat(repository
+                            .findByTrackingNumber(saved.trackingNumber())
+                            .orElseThrow()
+                            .nextExpectedAt())
+                    .contains(new UtcInstant(A1));
+            assertThat(repository
+                            .findByBookingId(saved.bookingId())
+                            .orElseThrow()
+                            .nextExpectedAt())
+                    .contains(new UtcInstant(A1));
+            assertThat(repository
+                            .findByTrackingNumber(delivered.trackingNumber())
+                            .orElseThrow()
+                            .nextExpectedAt())
+                    .isEmpty();
+        }
+
+        @Test
+        void 行15_二つの要約は次の予定の実績の予定時刻を持つ() {
+            TrackingRecord saved = savedThenDeparted();
+
+            TrackingRecordSummary summary =
+                    repository.findRecentSummaries(Set.of(saved.shipperCompanyId()), 10).stream()
+                            .filter(row -> row.trackingNumber().equals(saved.trackingNumber()))
+                            .findFirst()
+                            .orElseThrow();
+            assertThat(summary.nextExpectedAt()).contains(new UtcInstant(A1));
+            assertThat(repository
+                            .findRecentSummariesByShipper(saved.shipperCompanyId(), 10)
+                            .getFirst()
+                            .nextExpectedAt())
+                    .contains(new UtcInstant(A1));
         }
     }
 

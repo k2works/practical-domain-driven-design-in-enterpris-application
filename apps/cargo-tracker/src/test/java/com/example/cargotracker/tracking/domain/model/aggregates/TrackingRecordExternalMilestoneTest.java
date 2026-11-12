@@ -22,6 +22,7 @@ import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneStat
 import com.example.cargotracker.tracking.domain.model.valueobjects.TrackedBookingStatus;
 import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingStatus;
 import java.util.List;
+import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.UUID;
 import java.util.stream.Stream;
@@ -314,6 +315,79 @@ class TrackingRecordExternalMilestoneTest {
         @Test
         void 行11_取消済みは実績を作らない() {
             assertThat(trackingRecord(TrackedBookingStatus.CANCELLED, TrackingStatus.PICKUP_SCHEDULED)
+                            .receiveExternalMilestone(external(RECEIVED_RECORD), RECEIVED_AT))
+                    .isInstanceOf(ExternalMilestoneReceipt.BookingCancelled.class);
+        }
+    }
+
+    /**
+     * Bolt 39g4 の行 12（DE-13 の受け取りは採用の実績を変えないので、次の予定の実績の予定時刻を保存した値のまま持つ。39g3 の議題 1 の形）。組み立ての値は
+     * 導出と違う値（区間 2 の到着予定 2026-11-15 00:00）にして、受け取りで導出し直していないことを確かめ、その後の採用で導出し直すことも確かめる
+     * （導出しない経路の後に導出が走る手順を組に入れる。39g3 の M6 の学び）。
+     */
+    @Nested
+    class Bolt39g4_受け取りの次の予定の実績 {
+
+        private static final UtcInstant SAVED = at("2026-11-15T00:00:00Z");
+
+        private static TrackingRecord withSavedNextExpected(TrackedBookingStatus bookingStatus, TrackingStatus status) {
+            return TrackingRecord.reconstitute(
+                    TRACKING_NUMBER,
+                    BOOKING_ID,
+                    SHIPPER,
+                    CONSIGNEE,
+                    bookingStatus,
+                    schedule(),
+                    status,
+                    OptionalInt.empty(),
+                    Optional.empty(),
+                    List.of(),
+                    at("2026-11-15T00:00:00Z"),
+                    at("2026-11-15T00:00:00Z"),
+                    Optional.empty(),
+                    Optional.of(SAVED),
+                    STARTED_AT,
+                    3);
+        }
+
+        @Test
+        void 行12_下書きを足しても保存した値のままで後の採用で導出し直す() {
+            TrackingRecord withDraft = received(
+                            withSavedNextExpected(TrackedBookingStatus.CONFIRMED, TrackingStatus.PICKUP_SCHEDULED)
+                                    .receiveExternalMilestone(external(RECEIVED_RECORD), RECEIVED_AT))
+                    .trackingRecord();
+
+            assertThat(withDraft.milestones().getFirst().state()).isEqualTo(MilestoneState.DRAFT);
+            assertThat(withDraft.nextExpectedAt()).contains(SAVED);
+
+            TrackingRecord pickedUp = withDraft
+                    .registerMilestone(
+                            MilestoneKind.PICKUP,
+                            TOKYO,
+                            at("2026-10-31T01:00:00Z"),
+                            new Source(SourceKind.FIELD_RECORD, "F-1", RECEIVED_AT),
+                            MANAGER,
+                            RECEIVED_AT)
+                    .trackingRecord();
+
+            assertThat(pickedUp.milestones().get(1).state()).isEqualTo(MilestoneState.ADOPTED);
+            assertThat(pickedUp.nextExpectedAt()).contains(at("2026-11-01T00:00:00Z"));
+        }
+
+        @Test
+        void 行12_完了後の保持のみを足しても保存した値のまま() {
+            TrackingRecord after = received(
+                            withSavedNextExpected(TrackedBookingStatus.COMPLETED, TrackingStatus.DELIVERED)
+                                    .receiveExternalMilestone(external(RECEIVED_RECORD), RECEIVED_AT))
+                    .trackingRecord();
+
+            assertThat(after.milestones().getFirst().state()).isEqualTo(MilestoneState.RETAINED_ONLY);
+            assertThat(after.nextExpectedAt()).contains(SAVED);
+        }
+
+        @Test
+        void 行12_取消済みは実績を作らない() {
+            assertThat(withSavedNextExpected(TrackedBookingStatus.CANCELLED, TrackingStatus.PICKUP_SCHEDULED)
                             .receiveExternalMilestone(external(RECEIVED_RECORD), RECEIVED_AT))
                     .isInstanceOf(ExternalMilestoneReceipt.BookingCancelled.class);
         }
