@@ -73,8 +73,8 @@ class AcceptanceCriteriaCoverageTest {
     @Test
     void 見出しがないか行が0件の表は空振りで通さずに失敗する() {
         List<String> noHeading = List.of("### 別の節", "", "| US-01 | AC1 | `@US-01-AC1` |");
-        List<String> noRows = List.of(
-                RELEASE_10_HEADING, "", "| ストーリー | 受入条件 | 確かめるもの |", "| :--- | :--- | :--- |", "", "### 次の節");
+        List<String> noRows =
+                List.of(RELEASE_10_HEADING, "", "| ストーリー | 受入条件 | 確かめるもの |", "| :--- | :--- | :--- |", "", "### 次の節");
 
         assertThatThrownBy(() -> requiredTags(noHeading, RELEASE_10_HEADING)).hasMessageContaining(RELEASE_10_HEADING);
         assertThatThrownBy(() -> requiredTags(noRows, RELEASE_10_HEADING)).hasMessageContaining(RELEASE_10_HEADING);

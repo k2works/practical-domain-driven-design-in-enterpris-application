@@ -584,7 +584,12 @@ class ExternalDataIngestionPerformanceTest {
 
     /** 採用と差異の件数の決まったファイルを測る（差異は採用値を作らない。Bolt 39h4 の行 7）。 */
     private void measure(
-            String label, String recordType, CsvFileKind kind, byte[] csv, int expectedAdopted, int expectedDiscrepancies) {
+            String label,
+            String recordType,
+            CsvFileKind kind,
+            byte[] csv,
+            int expectedAdopted,
+            int expectedDiscrepancies) {
         UUID sourceId = insertApprovedSource(ExternalDataIngestionConnectionTest.newProvider(), recordType);
         Ingested result = null;
         try {
