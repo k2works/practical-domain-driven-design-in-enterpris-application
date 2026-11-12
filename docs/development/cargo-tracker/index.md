@@ -165,7 +165,7 @@ Bolt がイテレーションに当たります。ふりかえりは各 Bolt の
 | 39h2 | [S-17 で差異を一覧に出して却下する](bolt_39h2_plan.md) | [終了報告](bolt_39h2_report.md)（[動画](../../assets/demo/bolt-39h2/reject-discrepancy.webm){:target="_blank"}） | W7 | 完了 |
 | 39h3 | [判断の画面で外部版をまたいで比べ、古い外部版の隔離の採用を警告する](bolt_39h3_plan.md) | [終了報告](bolt_39h3_report.md)（[動画](../../assets/demo/bolt-39h3/old-version-warning.webm){:target="_blank"}） | W7 | 完了 |
 | 39h4 | [US-14 を締める（G-06 の欠落・矛盾、受入条件の照合の表、W7 のデモの動画、#18 のクローズ）](bolt_39h4_plan.md) | [終了報告](bolt_39h4_report.md)（[動画](../../assets/demo/bolt-39h4/confirm-rejected-same-info-version.webm){:target="_blank"}） | W7 | 完了 |
-| 39i | [経路設計の貨物種別で候補を除外し、除外理由の閾値を区分ごとの型と列にする](bolt_39i_plan.md) | | W7 | 計画（承認待ち） |
+| 39i | [経路設計の貨物種別で候補を除外し、除外理由の閾値を区分ごとの型と列にする](bolt_39i_plan.md) | | W7 | 計画済み（承認済み） |
 
 Bolt を始めるときに行を追加します。
 
