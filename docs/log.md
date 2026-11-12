@@ -1,6 +1,10 @@
 # Docs Update Log
 
 ## 2026-11-12
+* **Verification**: [bolt_39g4_plan](/development/cargo-tracker/bolt_39g4_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5。Bolt 39g4 の開始準備。39g4・39g4b の行、順序、台帳 D-133〜D-136（仮））
+* **Update**: [index](/development/cargo-tracker/index.md) を更新（anthropic/claude-opus-5-5。Bolt 39g4 の開始準備）
+* **Creation**: [bolt_39g4_plan](/development/cargo-tracker/bolt_39g4_plan.md) を作成（anthropic/claude-opus-5-5。承認待ち）
 * **Verification**: [bolt_39g3_report](/development/cargo-tracker/bolt_39g3_report.md) を human:kakimomokuri が検証
 * **Creation**: [bolt_39g3_report](/development/cargo-tracker/bolt_39g3_report.md) を作成（anthropic/claude-sonnet-5-5。承認待ち）
 * **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39g3 の終了報告）
