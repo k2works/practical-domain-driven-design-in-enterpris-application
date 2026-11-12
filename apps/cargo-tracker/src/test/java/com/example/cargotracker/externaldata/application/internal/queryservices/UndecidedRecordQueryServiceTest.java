@@ -131,6 +131,7 @@ class UndecidedRecordQueryServiceTest {
         assertThat(item)
                 .isEqualTo(new UndecidedRecordPage.Item(
                         quarantine.receivedRecordId(),
+                        ingestionId,
                         INGESTED_AT,
                         voyage.provider(),
                         "VOYAGE",
@@ -296,6 +297,7 @@ class UndecidedRecordQueryServiceTest {
             assertThat(service.undecidedRecord(mismatch.receivedRecordId()))
                     .contains(new UndecidedRecordPage.Item(
                             mismatch.receivedRecordId(),
+                            ingestionId,
                             INGESTED_AT,
                             voyage.provider(),
                             "VOYAGE",
@@ -548,6 +550,7 @@ class UndecidedRecordQueryServiceTest {
         private UndecidedRecordPage.Item item(ReceivedRecord received, String externalVersion) {
             return new UndecidedRecordPage.Item(
                     received.id(),
+                    ingestionId,
                     INGESTED_AT,
                     voyage.provider(),
                     "VOYAGE",
@@ -623,6 +626,7 @@ class UndecidedRecordQueryServiceTest {
         private UndecidedRecordPage.Item item(UUID receivedRecordId, String recordType, boolean keyless) {
             return new UndecidedRecordPage.Item(
                     receivedRecordId,
+                    ingestionId,
                     INGESTED_AT,
                     voyage.provider(),
                     recordType,
@@ -798,6 +802,7 @@ class UndecidedRecordQueryServiceTest {
         private UndecidedRecordPage.Item item(UUID receivedRecordId, String recordType) {
             return new UndecidedRecordPage.Item(
                     receivedRecordId,
+                    ingestionId,
                     INGESTED_AT,
                     milestone.provider(),
                     recordType,
@@ -1143,6 +1148,7 @@ class UndecidedRecordQueryServiceTest {
         private UndecidedRecordPage.Item item(UUID receivedRecordId) {
             return new UndecidedRecordPage.Item(
                     receivedRecordId,
+                    ingestionId,
                     INGESTED_AT,
                     voyage.provider(),
                     "VOYAGE",

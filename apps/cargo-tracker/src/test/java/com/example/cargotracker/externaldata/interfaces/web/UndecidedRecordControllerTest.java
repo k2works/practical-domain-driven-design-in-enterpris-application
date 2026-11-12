@@ -91,6 +91,7 @@ class UndecidedRecordControllerTest {
     private static UndecidedRecordPage.Item keyless(int line) {
         return new UndecidedRecordPage.Item(
                 UUID.randomUUID(),
+                INGESTION_ID,
                 INGESTED_AT,
                 "開発海運（架空）",
                 "VOYAGE",
@@ -115,12 +116,84 @@ class UndecidedRecordControllerTest {
         return mockMvc.perform(get(LIST_URL + query)).andExpect(status().isOk());
     }
 
+    /** 絞らない一覧の各行の「この取込で絞る」（Bolt 39h3 の行 6。開始準備の決定 (5)、【業務の判断】(bj)）。 */
+    @Nested
+    class Bolt39h3_取込で絞る入口 {
+
+        private static final UUID OTHER_INGESTION_ID = UUID.fromString("39d00000-0000-0000-0000-0000000000bb");
+        private static final String ENTRY = "この取込で絞る";
+
+        private UndecidedRecordPage.Item itemOf(UUID ingestionId, int line) {
+            return new UndecidedRecordPage.Item(
+                    UUID.randomUUID(),
+                    ingestionId,
+                    INGESTED_AT,
+                    "開発海運（架空）",
+                    "VOYAGE",
+                    new PhysicalLineRange(line, line),
+                    Classification.QUARANTINED,
+                    null,
+                    null,
+                    line + " 行目: 注記");
+        }
+
+        @Test
+        void 行6_a_絞らない一覧の各行に自分の取込IDで絞るリンクがあり読み上げに取り込んだ日時と情報源を足す() throws Exception {
+            given(query.page(null, 1))
+                    .willReturn(new UndecidedRecordPage(
+                            List.of(itemOf(INGESTION_ID, 2), itemOf(OTHER_INGESTION_ID, 3)), 2, 1, 1, null, false, 0));
+
+            String hidden =
+                    "<span class=\"visually-hidden\">（2026-11-16 10:05 Asia/Tokyo（UTC+09:00）（UTC 2026-11-16 01:05）、開発海運（架空）（航海））</span>";
+            list("").andExpect(content()
+                            .string(containsString("<a href=\"" + LIST_URL + "?ingestion=" + INGESTION_ID
+                                    + "&amp;page=1\">" + ENTRY + hidden + "</a>")))
+                    .andExpect(content()
+                            .string(containsString("<a href=\"" + LIST_URL + "?ingestion=" + OTHER_INGESTION_ID
+                                    + "&amp;page=1\">" + ENTRY + hidden + "</a>")));
+        }
+
+        @Test
+        void 行6_b_取込で絞った一覧は行のリンクを出さずすべての取込を見るリンクは今のまま() throws Exception {
+            given(query.page(INGESTION_ID, 1))
+                    .willReturn(
+                            new UndecidedRecordPage(List.of(itemOf(INGESTION_ID, 2)), 1, 1, 1, INGESTION_ID, false, 0));
+
+            list("?ingestion=" + INGESTION_ID)
+                    .andExpect(content().string(not(containsString(ENTRY))))
+                    .andExpect(content().string(containsString("すべての取込の隔離・差異を見る")));
+        }
+
+        @Test
+        void 行6_c_0件の一覧には絞るリンクがない() throws Exception {
+            given(query.page(null, 1)).willReturn(new UndecidedRecordPage(List.of(), 0, 1, 0, null, false, 0));
+            given(query.page(INGESTION_ID, 1))
+                    .willReturn(new UndecidedRecordPage(List.of(), 0, 1, 0, INGESTION_ID, false, 0));
+
+            list("").andExpect(content().string(not(containsString(ENTRY))));
+            list("?ingestion=" + INGESTION_ID).andExpect(content().string(not(containsString(ENTRY))));
+        }
+
+        @Test
+        void 行6_d_絞らない一覧の2頁目の行にも絞るリンクが出てリンク先の頁は1() throws Exception {
+            given(query.page(null, 2))
+                    .willReturn(
+                            new UndecidedRecordPage(List.of(itemOf(OTHER_INGESTION_ID, 2)), 101, 2, 2, null, false, 0));
+
+            list("?page=2")
+                    .andExpect(content()
+                            .string(containsString("<a href=\"" + LIST_URL + "?ingestion=" + OTHER_INGESTION_ID
+                                    + "&amp;page=1\">" + ENTRY)));
+        }
+    }
+
     // --- 行 1・2: 項目の示し方 ---
 
     @Test
     void 行1_行2_取り込んだ日時と情報源と行と種類と外部ID外部版と隔離の理由を示す() throws Exception {
         UndecidedRecordPage.Item mismatch = new UndecidedRecordPage.Item(
                 UUID.randomUUID(),
+                INGESTION_ID,
                 INGESTED_AT,
                 "開発海運（架空）",
                 "VOYAGE",
@@ -131,6 +204,7 @@ class UndecidedRecordControllerTest {
                 "140 行目: 同じ外部 ID・外部版で内容の違う原本を受け取りました（最初の受信: 2026-11-15 09:00:00 UTC）。");
         UndecidedRecordPage.Item fileError = new UndecidedRecordPage.Item(
                 UUID.randomUUID(),
+                INGESTION_ID,
                 INGESTED_AT,
                 "開発海運（架空）",
                 "MILESTONE",
@@ -157,7 +231,7 @@ class UndecidedRecordControllerTest {
                                         matchesPattern(
                                                 Pattern.compile(
                                                         "(?s).*<tr>\\s*"
-                                                                + "<td>2026-11-16 10:05 Asia/Tokyo（UTC\\+09:00）（UTC 2026-11-16 01:05）</td>\\s*"
+                                                                + "<td><span>2026-11-16 10:05 Asia/Tokyo（UTC\\+09:00）（UTC 2026-11-16 01:05）</span>\\s*<a [^>]*>この取込で絞る.*?</a></td>\\s*"
                                                                 + "<td>開発海運（架空）（主要実績）</td>\\s*"
                                                                 // 行を持たないファイルの誤りの「—」は読み上げで「ファイル全体」と読む（Bolt 39d の開発レビュー）
                                                                 + "<td><span aria-hidden=\"true\">—</span><span class=\"visually-hidden\">ファイル全体</span></td>\\s*"
@@ -165,7 +239,7 @@ class UndecidedRecordControllerTest {
                                                                 + "<td><span aria-hidden=\"true\">—</span><span class=\"visually-hidden\">なし</span></td>\\s*"
                                                                 + "<td>ファイル: 必要な列がありません（port_calls）。</td>\\s*<td><a [^>]*>判断する.*?</a></td>\\s*"
                                                                 + "</tr>\\s*<tr>\\s*"
-                                                                + "<td>2026-11-16 10:05 Asia/Tokyo（UTC\\+09:00）（UTC 2026-11-16 01:05）</td>\\s*"
+                                                                + "<td><span>2026-11-16 10:05 Asia/Tokyo（UTC\\+09:00）（UTC 2026-11-16 01:05）</span>\\s*<a [^>]*>この取込で絞る.*?</a></td>\\s*"
                                                                 + "<td>開発海運（架空）（航海）</td>\\s*<td>140〜141 行目</td>\\s*<td>内容の違う原本</td>\\s*"
                                                                 + "<td>DEMO-201・3</td>\\s*<td>140 行目: .*?</td>\\s*<td><a [^>]*>判断する.*?</a></td>\\s*</tr>.*"))));
     }
@@ -336,6 +410,7 @@ class UndecidedRecordControllerTest {
     void 行17_取込ファイルから来た文字を含む注記は文字として示す() throws Exception {
         UndecidedRecordPage.Item item = new UndecidedRecordPage.Item(
                 UUID.randomUUID(),
+                INGESTION_ID,
                 INGESTED_AT,
                 "開発海運（架空）",
                 "VOYAGE",
@@ -376,6 +451,7 @@ class UndecidedRecordControllerTest {
         private UndecidedRecordPage.Item mismatch() {
             return new UndecidedRecordPage.Item(
                     RECORD_ID,
+                    INGESTION_ID,
                     INGESTED_AT,
                     "開発海運（架空）",
                     "VOYAGE",
@@ -389,6 +465,7 @@ class UndecidedRecordControllerTest {
         private UndecidedRecordPage.Item keylessItem() {
             return new UndecidedRecordPage.Item(
                     RECORD_ID,
+                    INGESTION_ID,
                     INGESTED_AT,
                     "開発海運（架空）",
                     "VOYAGE",
@@ -1063,6 +1140,7 @@ class UndecidedRecordControllerTest {
         private UndecidedRecordPage.Item mismatch(String recordType) {
             return new UndecidedRecordPage.Item(
                     RECORD_ID,
+                    INGESTION_ID,
                     INGESTED_AT,
                     "開発海運（架空）",
                     recordType,
@@ -1202,6 +1280,7 @@ class UndecidedRecordControllerTest {
         void 行12_値の照会が空なら値の領域を出さず判断の画面と却下の欄は今のまま(String name, String recordType, boolean keyless) throws Exception {
             UndecidedRecordPage.Item item = new UndecidedRecordPage.Item(
                     RECORD_ID,
+                    INGESTION_ID,
                     INGESTED_AT,
                     "開発海運（架空）",
                     recordType,
@@ -1303,6 +1382,7 @@ class UndecidedRecordControllerTest {
         private UndecidedRecordPage.Item mismatch(String recordType) {
             return new UndecidedRecordPage.Item(
                     RECORD_ID,
+                    INGESTION_ID,
                     INGESTED_AT,
                     "開発港運（架空）",
                     recordType,
@@ -1576,6 +1656,7 @@ class UndecidedRecordControllerTest {
         private static UndecidedRecordPage.Item item(boolean keyless) {
             return new UndecidedRecordPage.Item(
                     RECORD_ID,
+                    INGESTION_ID,
                     INGESTED_AT,
                     "開発海運（架空）",
                     "VOYAGE",
@@ -1868,6 +1949,7 @@ class UndecidedRecordControllerTest {
         private static UndecidedRecordPage.Item item() {
             return new UndecidedRecordPage.Item(
                     RECORD_ID,
+                    INGESTION_ID,
                     INGESTED_AT,
                     "開発港運（架空）",
                     "MILESTONE",
@@ -2131,6 +2213,7 @@ class UndecidedRecordControllerTest {
             given(query.undecidedRecord(RECORD_ID))
                     .willReturn(Optional.of(new UndecidedRecordPage.Item(
                             RECORD_ID,
+                            INGESTION_ID,
                             INGESTED_AT,
                             "開発海運（架空）",
                             "VOYAGE",
@@ -2255,6 +2338,7 @@ class UndecidedRecordControllerTest {
         private UndecidedRecordPage.Item discrepancy() {
             return new UndecidedRecordPage.Item(
                     RECORD_ID,
+                    INGESTION_ID,
                     INGESTED_AT,
                     "開発海運（架空）",
                     "VOYAGE",
@@ -2268,6 +2352,7 @@ class UndecidedRecordControllerTest {
         private UndecidedRecordPage.Item quarantine() {
             return new UndecidedRecordPage.Item(
                     UUID.randomUUID(),
+                    INGESTION_ID,
                     INGESTED_AT,
                     "開発海運（架空）",
                     "VOYAGE",
@@ -2387,6 +2472,7 @@ class UndecidedRecordControllerTest {
         void 行8_d_隔離の判断の画面は隔離の判断と隔離の理由と2つの値の領域のまま() throws Exception {
             UndecidedRecordPage.Item quarantine = new UndecidedRecordPage.Item(
                     RECORD_ID,
+                    INGESTION_ID,
                     INGESTED_AT,
                     "開発海運（架空）",
                     "VOYAGE",

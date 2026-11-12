@@ -57,6 +57,7 @@ public record UndecidedRecordPage(
      * 判断を待つ隔離・差異の 1 件。
      *
      * @param receivedRecordId 受信記録 ID
+     * @param ingestionId 取込 ID（一覧の「この取込で絞る」の行き先。一覧の行はいつも取込を持つ。Bolt 39h3）
      * @param ingestedAt 取り込んだ日時（取込の取込時刻）
      * @param provider 情報源の提供元
      * @param recordType 情報源の原本種別（取込ファイルの種別の名前）
@@ -68,6 +69,7 @@ public record UndecidedRecordPage(
      */
     public record Item(
             UUID receivedRecordId,
+            UUID ingestionId,
             Instant ingestedAt,
             String provider,
             String recordType,
@@ -76,6 +78,10 @@ public record UndecidedRecordPage(
             String externalId,
             String externalVersion,
             String note) {
+
+        public Item {
+            Objects.requireNonNull(ingestionId, "ingestionId");
+        }
 
         /** キーのない隔離（形式の誤り）か（外部原本を持たない）。 */
         public boolean keyless() {

@@ -240,6 +240,7 @@ public class UndecidedRecordQueryService {
     private static UndecidedRecordPage.Item item(UndecidedRecord quarantine, DataSource source) {
         return new UndecidedRecordPage.Item(
                 quarantine.receivedRecordId(),
+                quarantine.ingestionId(),
                 quarantine.ingestedAt(),
                 source.provider(),
                 source.recordType(),

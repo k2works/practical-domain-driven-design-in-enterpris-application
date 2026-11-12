@@ -495,15 +495,21 @@ public class UndecidedRecordController {
     private static Row row(UndecidedRecordPage.Item item, UUID ingestionFilter, int page) {
         String lines = lines(item.lineRange());
         String externalKey = externalKey(item);
+        String ingestedAt = DateTimeDisplay.staff(item.ingestedAt());
+        String source = ExternalDataIngestionController.sourceLabel(item.provider(), item.recordType());
+        // 絞った一覧の全行は同じ取込なので、「この取込で絞る」は絞らない一覧だけに出す（Bolt 39h3 の決定 (5)）
+        boolean filterable = ingestionFilter == null;
         return new Row(
-                DateTimeDisplay.staff(item.ingestedAt()),
-                ExternalDataIngestionController.sourceLabel(item.provider(), item.recordType()),
+                ingestedAt,
+                source,
                 lines,
                 kindOf(item),
                 externalKey,
                 item.note(),
                 LIST_URL + "/" + item.receivedRecordId() + query(ingestionFilter, page),
-                (lines == null ? WHOLE_FILE : lines) + "、" + (externalKey == null ? NO_EXTERNAL_ID : externalKey));
+                (lines == null ? WHOLE_FILE : lines) + "、" + (externalKey == null ? NO_EXTERNAL_ID : externalKey),
+                filterable ? pageUrl(item.ingestionId(), 1) : null,
+                filterable ? ingestedAt + "、" + source : null);
     }
 
     /** 種類（差異・形式の誤り・内容の違う原本。分類のすべてと外部原本の有無で決まる）。 */
@@ -574,6 +580,8 @@ public class UndecidedRecordController {
      * @param note 隔離の理由
      * @param decisionUrl 判断の画面の URL（元の取込とページを持つ。Bolt 39d2）
      * @param decisionLabel 「判断する」の読み上げに足す行の範囲と外部 ID・外部版（Bolt 39d2）
+     * @param filterUrl 「この取込で絞る」の URL（その行の取込 ID で絞った 1 頁目。絞った一覧では {@code null}。Bolt 39h3）
+     * @param filterLabel 「この取込で絞る」の読み上げに足す取り込んだ日時と情報源（絞った一覧では {@code null}）
      */
     record Row(
             String ingestedAt,
@@ -583,5 +591,7 @@ public class UndecidedRecordController {
             String externalKey,
             String note,
             String decisionUrl,
-            String decisionLabel) {}
+            String decisionLabel,
+            String filterUrl,
+            String filterLabel) {}
 }
