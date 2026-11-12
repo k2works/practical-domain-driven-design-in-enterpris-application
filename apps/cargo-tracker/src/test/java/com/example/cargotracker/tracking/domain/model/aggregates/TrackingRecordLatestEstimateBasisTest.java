@@ -184,6 +184,15 @@ class TrackingRecordLatestEstimateBasisTest {
             assertThat(after.latestEta()).isEqualTo(A2_PLUS_6);
         }
 
+        /** 行 4 (b) の対。見込みの遅れは実績の遅れでなく見込み − 当初の到着予定なので、早い出発でも負にならない（変異 M16）。 */
+        @Test
+        void b_早い出発を登録すると根拠はその実績で見込みの遅れは0() {
+            TrackingRecord after = register(started(), MilestoneKind.DEPARTURE, "JPTYO", "2026-10-31T23:00:00Z");
+
+            assertThat(after.latestEstimateBasis()).contains(LatestEstimateBasis.milestone(1));
+            assertThat(after.latestEstimateDelay()).isEqualTo(Duration.ZERO);
+        }
+
         @Test
         void c_下書きを採用すると根拠は採用した実績() {
             TrackingRecord withDraft = ((ExternalMilestoneReceipt.Received) started()
