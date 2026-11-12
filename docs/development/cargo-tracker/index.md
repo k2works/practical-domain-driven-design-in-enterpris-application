@@ -158,7 +158,7 @@ Bolt がイテレーションに当たります。ふりかえりは各 Bolt の
 | 39gc | [時系列に反する実績を確認中にし、DE-18 を出し、手入力の取消済み・完了後を決める](bolt_39gc_plan.md) | [終了報告](bolt_39gc_report.md)（[動画](../../assets/demo/bolt-39gc/under-review.webm){:target="_blank"}） | W7 | 完了 |
 | 39g2 | [集荷の採用と引渡しの確認を予約の公開 API で予約に返し、追加する実績の選び方を直す](bolt_39g2_plan.md) | [終了報告](bolt_39g2_report.md)（[動画](../../assets/demo/bolt-39g2/transport-phase.webm){:target="_blank"}） | W7 | 完了 |
 | 39g3 | [採用した実績で最新の到着見込みを動かし、最終取得時刻を示す](bolt_39g3_plan.md) | [終了報告](bolt_39g3_report.md)（[動画](../../assets/demo/bolt-39g3/latest-estimate.webm){:target="_blank"}） | W7 | 完了 |
-| 39g4 | [次の予定の実績が届かない追跡を鮮度超過として示す](bolt_39g4_plan.md) | [終了報告](bolt_39g4_report.md)（[動画](../../assets/demo/bolt-39g4/freshness-overdue.webm){:target="_blank"}） | W7 | 終了報告（承認待ち） |
+| 39g4 | [次の予定の実績が届かない追跡を鮮度超過として示す](bolt_39g4_plan.md) | [終了報告](bolt_39g4_report.md)（[動画](../../assets/demo/bolt-39g4/freshness-overdue.webm){:target="_blank"}） | W7 | 完了 |
 | 39g4b | 航海の採用値で動く見込みと見込みの根拠の表示（39g4 から分けた提案） | — | W7 | 未着手 |
 
 Bolt を始めるときに行を追加します。
