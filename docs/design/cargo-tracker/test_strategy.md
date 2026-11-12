@@ -227,7 +227,7 @@ Golden dataset v0（Bolt 37f。仮の値で業務責任者の承認待ち）は�
 | G-03 期限超過を含む | 到着が期限と同時刻（適合）と 1 分過ぎる（期限超過） |
 | G-04 特殊貨物（MVP 対象外） | 提出で拒まれ、経路設計の案件はできない（US-01 AC4。別の feature の業務ルール層のシナリオ）。経路設計の貨物種別の判定は W7 |
 | G-05 欠航・港湾閉鎖による再設計 | v0 に入れない（US-08、W13） |
-| G-06 外部データの欠落・古さ・矛盾 | 古さだけ。取得からちょうど許容時間（24 時間）の航海は足り、24 時間 1 分の航海を使う候補だけが情報不足。欠落・矛盾は W7（US-14） |
+| G-06 外部データの欠落・古さ・矛盾 | 古さだけ。取得からちょうど許容時間（24 時間）の航海は足り、24 時間 1 分の航海を使う候補だけが情報不足。欠落・矛盾は W7（US-14。Bolt 39h の開始準備で 39h4 に分けた） |
 
 表の値は区分を示すための仮の値で、実際の案件と期待結果は業務責任者が決める（TST-02 が届いたら差し替えの Bolt を足す）。
 
@@ -325,7 +325,7 @@ CI で毎回実行する。
 | 輸送段階の通知 | 手入力で集荷・引渡しを登録すると、DE-09・DE-10 → 追跡の listener → 予約の公開 API を経て予約が輸送中・集荷後、完了・完了になり、発行の記録が完了になる（PostgreSQL の統合テストで待つ。T-184。Bolt 39g2、ADR-014）。集荷と引渡しの通知を重ねても予約の行のロックで両方とも例外なく終わる。届く順によらず段は戻らない。受入シナリオは `transport_phase_from_tracking.feature`・`transport_phase_from_tracking_ui.feature`（`@demo-bolt-39g2/transport-phase`） |
 | 外部原本の取込 | 同じファイルの再取込で件数と採用値が変わらない。同じキーで内容の違う原本は隔離される。照合の件数が一致する（ADR-004） |
 | ファイルの保存 | S3 アダプター（統合テストは S3 互換のコンテナ）で原本を保存・取得できる |
-| 外部原本の差異 | 順序逆転・既存値との矛盾は自動で上書きされず差異になる（US-14 の 5 件目、ED-INV-03） |
+| 外部原本の差異 | 順序逆転・既存値との矛盾は自動で上書きされず差異になる（US-14 の 5 件目、ED-INV-03）。Bolt 39h で、この外部 ID の採用値の一覧の照会を契約のテストでメモリ・H2・PostgreSQL に流し、差異の取込が DE-31 の監査を配信まで残すことを統合テストで確かめる |
 | 権限のコールバック | Testcontainers で Flyway の `afterMigrate` コールバックを含めて適用し、所有者ではないアプリケーションの DB 利用者で全マッパーのテストを動かす（ADR-007） |
 | セキュリティ | SpringBootTest と PostgreSQL で、session の無操作 30 分・発行後 8 時間の失効、利用停止・権限取消し・参照許可の取消しの次の request からの反映、認証の失敗と権限外のアクセス試行の監査記録への同期の記録を確かめる（IA-INV-03〜08） |
 | 監査記録の欠落の照合 | 業務の状態変更と監査記録の件数の照合が、欠落を異常として検出する（AUD-04） |
@@ -600,6 +600,7 @@ Release 1.0 の受入条件の照合の表はまだ作っていない（上の�
 | US-12 | AC3（時系列に反する実績は原本を保持し、現在状態に直ちに反映せず確認中にする。手入力の登録と候補の採用の両方。DE-18 を 1 度だけ出す。【業務の判断】(ag)・(ah)） | 39gc | `@US-12-AC3`（`register_milestone.feature`、`under_review_milestone_ui.feature`）、`MilestoneSequenceRuleTest`、`CurrentStatusDeriverTest`、`TrackingRecordMilestoneTest`・`TrackingRecordCandidateAdoptionTest`（`Bolt39gc_…`）、`TrackingRecordCommandServiceTest`、`TrackingRecordControllerTest`、`MyBatisTrackingRecordRepositoryIntegrationTest` |
 | US-12 | AC4 の手入力の分（取消済みの予約への手入力は拒否し、S-13 に理由を示す。拒否の記録は書かない。【業務の判断】(aj)） | 39gc | `@US-12-AC4`（`register_milestone.feature`）、`TrackingRecordMilestoneTest`・`TrackingRecordCandidateAdoptionTest`（`Bolt39gc_…`）、`MilestoneRegistrationControllerTest` |
 | US-12 | AC5 の手入力の分（完了した追跡への手入力は保持のみで、現在状態を変えない。完了後は予約状態が完了か、採用済みの実績から導いた状態が引渡し済み。【業務の判断】(ak)、【前の決定の変更】(14)） | 39gc | `@US-12-AC5`（`register_milestone.feature`）、`TrackingRecordMilestoneTest`・`TrackingRecordCandidateAdoptionTest`（`Bolt39gc_…`）、`MilestoneRegistrationControllerTest` |
+| US-14 | AC5 の取込の分（同じ外部 ID で後に取得した外部版を採用しているのに前に取得した外部版が届いたとき（版の逆転）と、主要実績の追跡番号が同じ外部 ID の採用中の値と違うとき（既存の採用値との矛盾）、自動で採用せず差異にし、S-16 に件数と理由を示す。差異は採用値も DE-12・DE-13・DE-14 も作らず DE-31 と監査を残す。【業務の判断】(ay)〜(bd)。S-17 で差異を却下するのは 39h2、G-06 の欠落・矛盾と照合の表は 39h4） | 39h | `@US-14`（`features/external_data/classify_discrepancies.feature`）、規則 `DiscrepancyRuleTest`（パラメーター。比べる相手 2 つ、同じ取得時刻、外部版の文字列の順と取得時刻の順の逆、両方の理由）、分類 `ClassificationTest`（`Bolt39h_…`。3 つの入力の組）、照会の契約 `AdoptedValueRepositoryContract`（`findByExternalId`。メモリ・H2・PostgreSQL）、取込 `IngestionServiceTest`（`Bolt39h_…`。注記・DE-31・DE-12〜DE-14 を出さない）、監査 `ExternalRecordAuditEventHandlerTest`・`AuditRecordTest`・`ExternalRecordAuditDeliveryIntegrationTest`（配信まで。T-184）・`DomainEventSerializationContractTest`（DE-31）、画面 `ExternalDataIngestionControllerTest`・`IngestionSummaryQueryServiceTest` と `features/ui/discrepancy_ui.feature`（`@demo-bolt-39h/discrepancy`）、PERF-06 は `ExternalDataIngestionPerformanceTest`（Linux の CI の `performanceTest`） |
 
 ## 後続工程への引継ぎ
 
