@@ -13,7 +13,8 @@ import java.util.Optional;
  * 最新の到着見込みと最終取得時刻に使う（【業務の判断】(at)・(av)）。
  *
  * <p>DE-12 の内容の欠けは、listener がこの値の側の作り方（{@link #voyageNumberOf}・{@link #portCallsOf}・{@link #orderOf}・
- * {@link VoyagePortCall#of}）で {@link InvalidEventValueException} にする（前例 {@code ExternalMilestone}）。追跡のドメインは DE-12 の型を持たない。
+ * {@link VoyagePortCall#of}）で {@link InvalidEventValueException} にする（前例 {@code ExternalMilestone}）。出典の参照の空と取得時刻の null は
+ * 共有カーネルの {@link Source} が拒むので、ここでは見ない（Bolt 39g4c）。追跡のドメインは DE-12 の型を持たない。
  *
  * @param arrivalAt 最後の揚地への到着予定（結べなければ空）
  * @param order 知らせの公開の順
@@ -45,19 +46,16 @@ public record VoyageArrival(Optional<UtcInstant> arrivalAt, PublicationOrder ord
         return List.copyOf(portCalls);
     }
 
-    /** 届いた公開した時刻と出典から公開の順を作る（欠けていれば内容の欠け。参照は受信記録 ID）。 */
+    /**
+     * 届いた公開した時刻と出典から公開の順を作る（欠けていれば内容の欠け。参照は受信記録 ID）。出典の参照と取得時刻は共有カーネルの {@link Source} の作り方が
+     * 必ず持たせるので、ここでは確かめない（Bolt 39g4c で届かない分岐を消した）。
+     */
     public static PublicationOrder orderOf(UtcInstant publishedAt, Source source) {
         if (publishedAt == null) {
             throw new InvalidEventValueException("publishedAt");
         }
         if (source == null) {
             throw new InvalidEventValueException("source");
-        }
-        if (source.reference() == null || source.reference().isBlank()) {
-            throw new InvalidEventValueException("source.reference");
-        }
-        if (source.acquiredAt() == null) {
-            throw new InvalidEventValueException("source.acquiredAt");
         }
         return new PublicationOrder(publishedAt, source.acquiredAt(), source.reference());
     }

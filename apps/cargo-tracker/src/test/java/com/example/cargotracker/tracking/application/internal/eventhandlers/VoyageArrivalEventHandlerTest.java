@@ -151,7 +151,8 @@ class VoyageArrivalEventHandlerTest {
                                 List.of(portCalls().getFirst(), new AdoptedPortCall(null, ARRIVAL, null)),
                                 SOURCE,
                                 PUBLISHED_AT)),
-                // 出典の参照が空・取得時刻が null の出典と、寄港の並びが null の DE-12 は作れない（共有カーネルの Source と DE-12 の型が拒む）ので、値の側の作り方で確かめる
+                // 出典の参照が空・取得時刻が null の出典と、寄港の並びが null の DE-12 は作れない（共有カーネルの Source と DE-12 の型が拒む）。寄港の並びの null は
+                // 値の側の作り方で確かめ、出典の 2 つは SourceTest が縛る（Bolt 39g4c で値の側の届かない分岐を消した）
                 Arguments.of("出典が null", event("V200", portCalls(), null, PUBLISHED_AT)),
                 Arguments.of("公開した時刻が null", event("V200", portCalls(), SOURCE, null)));
     }
@@ -186,6 +187,46 @@ class VoyageArrivalEventHandlerTest {
         assertThatThrownBy(() -> handler.on(event())).isSameAs(repository.lockFailure);
         assertThat(repository.findByTrackingNumber(FIRST).orElseThrow().voyageArrival())
                 .isEmpty();
+    }
+
+    /**
+     * Bolt 39g4c の行 1 (d)。メモリの実装の照会を直接呼び、最後の区間の航海で絞ることを戻り値で確かめる（Bolt 39g4b の終了報告の議題 3。listener を
+     * 通すと集約が最後の区間でない知らせを受けないので、すべての区間で引く変異が隠れる）。追跡 X は V200 が区間 1、追跡 Y は V200 が最後の区間。
+     */
+    @org.junit.jupiter.api.Nested
+    class Bolt39g4c_行1d_メモリの実装の照会 {
+
+        private static final TrackingNumber X = new TrackingNumber("CTXXXXXXXXXXXX");
+        private static final TrackingNumber Y = new TrackingNumber("CTYYYYYYYYYYYY");
+
+        private final InMemoryTrackingRecordRepository memory = new InMemoryTrackingRecordRepository();
+
+        @BeforeEach
+        void startTwo() {
+            com.example.cargotracker.tracking.domain.model.valueobjects.Schedule v200First =
+                    new com.example.cargotracker.tracking.domain.model.valueobjects.Schedule(
+                            "RC-2026-0002",
+                            1,
+                            List.of(
+                                    com.example.cargotracker.tracking.domain.model.TrackingFixture.leg(
+                                            "V200", "KRPUS", "CNSHA", "2026-11-04T00:00:00Z", "2026-11-06T00:00:00Z"),
+                                    com.example.cargotracker.tracking.domain.model.TrackingFixture.leg(
+                                            "V300", "CNSHA", "USLAX", "2026-11-07T00:00:00Z", "2026-11-15T00:00:00Z")));
+            memory.save(TrackingRecord.start(X, UUID.randomUUID(), SHIPPER, CONSIGNEE, v200First, STARTED_AT)
+                    .trackingRecord());
+            memory.save(TrackingRecord.start(Y, UUID.randomUUID(), SHIPPER, CONSIGNEE, schedule(), STARTED_AT)
+                    .trackingRecord());
+        }
+
+        @Test
+        void 中間の区間の航海では引かない() {
+            assertThat(memory.findTrackingNumbersByFinalLegVoyage("V100")).isEmpty();
+        }
+
+        @Test
+        void 最後の区間の航海の追跡だけを引く() {
+            assertThat(memory.findTrackingNumbersByFinalLegVoyage("V200")).containsExactly(Y);
+        }
     }
 
     /** 呼び出しの順を記録するメモリの実装（押さえる前に読んだ値を使わないことを、押さえる操作だけで読むことで確かめる）。 */

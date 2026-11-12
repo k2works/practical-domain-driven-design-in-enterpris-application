@@ -288,6 +288,44 @@ class TrackingRecordVoyageArrivalTest {
         }
     }
 
+    /**
+     * Bolt 39g4c の行 1 (e)。行 7 (f) の補強（Bolt 39g4b の終了報告の議題 3）。DE-13 の下書き（取得時刻 G5）を受けた後に、最終取得時刻を導き直す経路
+     * （航海の知らせの受け取り・採用の実績の登録）を通す。下書きの取得時刻は導き直しても使わない。
+     */
+    @Nested
+    class Bolt39g4c_行1e_下書きの後に導き直す {
+
+        private static final UtcInstant G5 = at("2026-11-06T05:00:00Z");
+
+        private TrackingRecord withDraft() {
+            com.example.cargotracker.tracking.domain.model.valueobjects.ExternalMilestone draft =
+                    new com.example.cargotracker.tracking.domain.model.valueobjects.ExternalMilestone(
+                            TRACKING_NUMBER,
+                            MilestoneKind.DEPARTURE,
+                            new Location("JPTYO"),
+                            at("2026-11-01T03:00:00Z"),
+                            new Source(SourceKind.EXTERNAL_RECORD, "rr-draft-g5", G5),
+                            new com.example.cargotracker.tracking.domain.model.valueobjects.ExternalOrigin(
+                                    UUID.fromString("00000000-0000-0000-0000-0000039c4c01"), "MS-G5", G5),
+                            REGISTRANT);
+            return ((ExternalMilestoneReceipt.Received) started().receiveExternalMilestone(draft, REGISTERED_AT))
+                    .trackingRecord();
+        }
+
+        @Test
+        void 下書きの後に航海の知らせを受けるとその取得時刻() {
+            assertThat(received(withDraft(), arrivingAt(A2_PLUS_10), FIRST).lastAcquiredAt())
+                    .contains(G1);
+        }
+
+        @Test
+        void 下書きの後に採用の実績を登録するとその取得時刻() {
+            TrackingRecord after = register(withDraft(), MilestoneKind.DEPARTURE, "JPTYO", "2026-11-01T06:00:00Z", G2);
+
+            assertThat(after.lastAcquiredAt()).contains(G2);
+        }
+    }
+
     /** 行 6。航海の到着予定 A2 + 10 時間を受けた後に実績が変わる。 */
     @Nested
     class Bolt39g4b_行6_保存した航海の到着予定を使う {
