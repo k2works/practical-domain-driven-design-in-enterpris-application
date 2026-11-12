@@ -10919,6 +10919,41 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_39h3_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 39h3 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../development/cargo-tracker/release_report-0_1/" class="md-nav__link">
         
   
@@ -16460,13 +16495,19 @@
 <li><strong>2 つの比べる相手</strong>: 取込は行ごとに採用値のポートの <code>findByExternalId(provider, recordType, externalId)</code> で、同じ提供元・原本種別・外部 ID の採用値（外部版を問わない）の一覧を 1 本だけ引き、並びを決めずに規則（<code>DiscrepancyRule</code>）に渡す。版の逆転の相手は「この外部 ID の最後に取得した採用値」（取得時刻の最も遅いもの。提供元の時計どうしで比べる）、矛盾の相手は「この外部 ID の採用値」（公開した時刻 → 取得時刻 → 受信記録 ID の順で最も新しいもの。上の Bolt 39e の項の順の規則と同じ）。</li>
 <li><strong>2 つの理由</strong>: 版の逆転（<code>VERSION_REVERSED</code>。今の外部版の取得時刻が比べる相手より厳密に前。同じ時刻は逆転でない。外部版の文字列は比べない）と既存の採用値との矛盾（<code>TARGET_KEY_DIFFERS</code>。主要実績の追跡番号の違いだけ。種類・場所・発生時刻の違いは直しとして採用する）。両方なら逆転を理由にする。理由は受信記録の注記に業務の言葉で書き、区分の列は足さない（スキーマは変えない。分類の CHECK は Bolt 39a3 から差異を受ける）。</li>
 <li><strong>却下だけ</strong>: 差異にした原本は外部原本と受信記録を残すが、採用値も DE-12・DE-13・DE-14 も作らず、新しいイベント DE-31（<code>ExternalRecordDiscrepancyFound</code>）を出して、アクセス・監査が <code>EXTERNAL_RECORD_DISCREPANCY_FOUND</code> を書く（経路設計と追跡は購読しない）。Release 1.0 の判断は却下だけ（Bolt 39h2 で作った。【前の決定の変更】(27)。下の Bolt 39h2 の項）。正しい値なら、提供元に後の取得時刻の新しい外部版で送り直してもらうか、追跡管理者が手入力する。</li>
-<li><strong>差異の再送</strong>: その外部版に採用値のない外部原本（差異で作った外部原本）は、差異の理由があればハッシュによらず差異にする（再び差異。US-14 AC4 の例外）。その外部版に採用値があれば今の重複・隔離の規則のまま。V2 の取込の後に V1 の隔離を採用した組は差異にしない（39h3 で警告する）。</li>
+<li><strong>差異の再送</strong>: その外部版に採用値のない外部原本（差異で作った外部原本）は、差異の理由があればハッシュによらず差異にする（再び差異。US-14 AC4 の例外）。その外部版に採用値があれば今の重複・隔離の規則のまま。V2 の取込の後に V1 の隔離を採用した組は差異にしない（Bolt 39h3 で判断の画面に警告するようにした。下の Bolt 39h3 の項）。</li>
 <li><strong>同時の取込</strong>: ロックを足さない。同じ外部 ID の別の外部版を 2 つの取込が並行して扱うと互いの採用値が見えず両方が採用されうることを受け入れる（取込と採用の判断の「ロックしない」決まり（<a href="../../../development/cargo-tracker/bolt_39d4_plan/">Bolt 39d4 計画</a> の開始準備の決定 (3)）を変えない。取込はデータ責任者が情報源ごとに手で行い、並行は稀）。</li>
 <li>2026-11-12（W7、Bolt 39h2）: 差異を S-17 で確認して却下するにあたり、判断を待つ受信記録の照会と判断の規則を、次のように決めた（<a href="../../../development/cargo-tracker/bolt_39h2_plan/">Bolt 39h2 計画</a> の開始準備の決定 (2)〜(8)、【業務の判断】(be)〜(bg)、台帳 D-144・D-147〜D-149。仮。【前の決定の変更】(28)。推奨のとおり。human:kakimomokuri）。決定は変えない（差異は上書きせず、採用値だけを公開する）。</li>
 <li><strong>判断を待つ隔離・差異の照会</strong>: 判断を待つ一覧は、分類が隔離か差異で、受信記録の判断の表に行のない取込の受信記録と定める。隔離と差異を混ぜて今の並びで読み、件数も同じ定めで数える（SQL の分類の条件を <code>IN ('QUARANTINED', 'DISCREPANCY')</code> にし、行に分類の列を足す）。意味が広がったので、照会専用の値を <code>UndecidedQuarantine</code> から <code>UndecidedRecord</code> に、ポートの読み出しを <code>undecidedRecords</code>・<code>countUndecidedRecords</code>・<code>undecidedRecord</code> に、取込の隔離と差異を読む照会を <code>quarantinedOf</code> から <code>quarantinesAndDiscrepanciesOf</code> に改めた（Bolt 39d の名前を改めた。「Review」を使わない決まりは変えない）。キーのない隔離の照会は名前を変えず、SQL で分類を隔離に絞る。スキーマと索引は変えない（分類の 1 列の索引 <code>ix_received_record_classification</code> で引ける）。</li>
 <li><strong>差異は判断できるが採用できない</strong>: 判断できる受信記録を分類が隔離か差異に広げ、却下のファクトリーは差異を受け、採用のファクトリーは分類が隔離でなければ拒む（差異は採用しない規則をドメインに置く）。採用できるかの定めは分類を最初に見て、差異なら <code>NotAdoptable(DISCREPANCY)</code> を返す（最初の差異は外部原本の基準と同じハッシュなので、今の順では同じ原本がすでに採用されたと読み違える）。判断の表は分類を持たず、判断と分類の整合は表の制約で守らない（スキーマは変えない）。</li>
 <li><strong>判断のイベントと監査は変えない</strong>: 差異の却下も DE-29（<code>ReceivedRecordDecided</code>。v1 の形のまま）と監査記録 <code>EXTERNAL_RECORD_DECIDED</code> を 1 つずつ作る。差異の却下かは、同じ受信記録の DE-31 の監査 <code>EXTERNAL_RECORD_DISCREPANCY_FOUND</code> で読む。画面の知らせの文を選ぶため、判断のサービスの結果（<code>Rejected</code>・<code>AlreadyDecided</code>）に受信記録の分類を持たせる。</li>
 <li><strong>差異のまとめての却下は作らない</strong>: 古いファイルを丸ごと送り直されたときの頻度を Release 1.0 のパイロットの前に確かめ、要るなら後の Bolt で足す（【業務の判断】(bg)、台帳 D-149。仮）。</li>
+<li>2026-11-13（W7、Bolt 39h3）: S-17 の判断の画面で外部版をまたいで比べ、古い外部版の隔離の採用を警告するにあたり、画面の読みの持ち方を、次のように決めた（<a href="../../../development/cargo-tracker/bolt_39h3_plan/">Bolt 39h3 計画</a> の開始準備の決定 (2)〜(8)、【業務の判断】(bh)〜(bj)、台帳 D-150〜D-152。仮。【前の決定の変更】(29)・(30)。推奨のとおり。human:kakimomokuri）。決定は変えない（採用値だけを公開し、採用の判断・採用できる隔離の定めは変えない。スキーマも新しいイベントも足さない）。</li>
+<li><strong>判断の画面の値の名前</strong>: 判断を待つ隔離・差異の判断の画面の値を <code>QuarantineValues</code> から <code>UndecidedRecordValues</code>、画面の変換を <code>QuarantineValueViews</code> から <code>UndecidedRecordValueViews</code>、照会のメソッドを <code>quarantineValues</code> から <code>undecidedRecordValues</code>、フラグメントを <code>quarantine-values</code> から <code>undecided-record-values</code> に改めた（Bolt 39h2 が送った名前の見直し。一覧の読みの型の語にそろえる。「Review」を使わない決まりは変えない）。</li>
+<li><strong>版の逆転の判定と比べる相手を規則から取り出す</strong>: 差異の規則（<code>DiscrepancyRule</code>）に <code>isVersionReversed</code>・<code>inUseOf</code>・<code>partnerOf</code> を公開し、取込の差異の判定が使う（振る舞いは変えない）。警告の判定と判断の画面の領域の選び方は同じ定義（D-142・D-105）を共有し、取得時刻の比べ方と公開した時刻の順の 3 つ目の写しを作らない。クエリサービスが <code>externaldata.domain.model.rules</code> を読むことに規則の例外は要らない（他のコンテキストにも前例がある）。</li>
+<li><strong>この外部 ID の採用値の領域</strong>: 判断の画面は、差異の規則が比べる相手 1 つ（版の逆転なら最後に取得した採用値、そうでなければ公開した時刻が最も新しい採用値）を、隔離にも差異にも示す。引くのは <code>findByExternalId</code> 1 回と、比べる相手の採用値の <code>findByReceivedRecordId</code> 1 回で、一覧の照会は引かない。【前の決定の変更】(30): D-146 の書き分け（隔離は「この外部版の採用値」、差異は「この外部 ID の採用値」）を注記と S-16 の文に限り、D-148 の「値の領域は『受け取った値』だけ」に外部 ID の採用値を足した。</li>
+<li><strong>古い外部版の隔離の採用は警告するが止めない</strong>: 採用できる隔離が版の逆転と同じ定義で古いとき、採用の欄に固定の警告の文を示す。採用の判断・採用の POST・採用の監査は変えない（V2 が誤りで V1′ が正しい場面がある。確認のチェックは足さない）。判定は画面を開いたときの一度で、POST では読み直さない。</li>
+<li><strong>取込で絞る入口</strong>: 絞らない一覧の各行に「この取込で絞る」を足す（一覧の行 <code>UndecidedRecordPage.Item</code> に取込 ID を足す。受信記録の既存の列を読むだけで、スキーマは変えない）。分類で絞る操作は足さない。</li>
 </ul>
 <h2 id="_10">備考<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>
 <ul>
