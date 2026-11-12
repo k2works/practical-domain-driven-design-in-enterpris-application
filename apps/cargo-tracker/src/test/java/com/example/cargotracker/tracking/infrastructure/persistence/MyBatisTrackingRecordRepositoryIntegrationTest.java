@@ -1345,7 +1345,7 @@ class MyBatisTrackingRecordRepositoryIntegrationTest {
                     .isEqualTo(ORDER.publishedAt().instant());
             assertThat(instant(row.get("voyage_arrival_acquired_at")))
                     .isEqualTo(ORDER.acquiredAt().instant());
-            assertThat(row.get("voyage_arrival_source_ref")).isEqualTo("rr-1");
+            assertThat(row).containsEntry("voyage_arrival_source_ref", "rr-1");
             assertThatThrownBy(() -> repository.update(received))
                     .isInstanceOf(ConcurrentTrackingRecordUpdateException.class);
         }
@@ -1404,11 +1404,11 @@ class MyBatisTrackingRecordRepositoryIntegrationTest {
                     "到着予定に値があり順の鍵が NULL | voyage_arrival_at = CURRENT_TIMESTAMP"
                 })
         void 行12_順の鍵がそろわない行はCHECKで拒否する(String description, String assignment) {
-            TrackingRecord saved = savedWith(trackingNumber(), voyage());
+            String trackingNumber =
+                    savedWith(trackingNumber(), voyage()).trackingNumber().value();
+            String sql = "UPDATE tracking.tracking_record SET " + assignment + " WHERE tracking_number = ?";
 
-            assertThatThrownBy(() -> jdbc.update(
-                            "UPDATE tracking.tracking_record SET " + assignment + " WHERE tracking_number = ?",
-                            saved.trackingNumber().value()))
+            assertThatThrownBy(() -> jdbc.update(sql, trackingNumber))
                     .isInstanceOf(DataIntegrityViolationException.class);
         }
 
