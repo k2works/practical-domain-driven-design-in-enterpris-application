@@ -1,6 +1,11 @@
 # Docs Update Log
 
 ## 2026-11-12
+* **Creation**: [bolt_39g4c_report](/development/cargo-tracker/bolt_39g4c_report.md) を作成（anthropic/claude-opus-5-5。承認待ち）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5。Bolt 39g4c の終了報告）
+* **Update**: [index](/development/cargo-tracker/index.md) を更新（anthropic/claude-opus-5-5。Bolt 39g4c の終了報告）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md)・[data_model](/design/cargo-tracker/data_model.md)・[ui_design](/design/cargo-tracker/ui_design.md)・[test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5。Bolt 39g4c のステップ 1）
+* **Update**: [09-追跡管理](/manual/09-追跡管理.md)・[用語集](/manual/用語集.md) を更新（anthropic/claude-opus-5-5。Bolt 39g4c）
 * **Verification**: [bolt_39g4c_plan](/development/cargo-tracker/bolt_39g4c_plan.md) を human:kakimomokuri が検証
 * **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5。Bolt 39g4c の開始準備。39g4c の行、台帳 D-140（仮）と D-139 の注、デモ項目の動画の Bolt）
 * **Update**: [index](/development/cargo-tracker/index.md) を更新（anthropic/claude-opus-5-5。Bolt 39g4c の開始準備）
