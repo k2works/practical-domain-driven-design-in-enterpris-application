@@ -140,7 +140,8 @@ public class InMemoryReceivedRecordRepository implements ReceivedRecordRepositor
 
     private Stream<UndecidedRecord> undecided(UUID ingestionIdOrNull) {
         return records.stream()
-                .filter(receivedRecord -> receivedRecord.classification() == Classification.QUARANTINED)
+                .filter(receivedRecord -> receivedRecord.classification() == Classification.QUARANTINED
+                        || receivedRecord.classification() == Classification.DISCREPANCY)
                 .filter(receivedRecord -> !decisions.existsFor(receivedRecord.id()))
                 .filter(receivedRecord -> ingestionIdOrNull == null
                         || receivedRecord.ingestionId().equals(ingestionIdOrNull))
@@ -156,6 +157,7 @@ public class InMemoryReceivedRecordRepository implements ReceivedRecordRepositor
                         .findFirst();
         return new UndecidedRecord(
                 receivedRecord.id(),
+                receivedRecord.classification(),
                 ingestion.id(),
                 ingestion.ingestedAt(),
                 ingestion.dataSourceId(),

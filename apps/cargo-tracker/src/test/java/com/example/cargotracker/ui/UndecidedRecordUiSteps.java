@@ -21,8 +21,8 @@ public class UndecidedRecordUiSteps {
 
     private static final String LIST_URL = "/staff/external-data/undecided-records";
     private static final String HEADING = "隔離・差異の確認";
-    private static final String TABLE_CAPTION = "判断を待つ隔離";
-    private static final String ENTRY_LINK = "この取込の隔離をすべて確認する";
+    private static final String TABLE_CAPTION = "判断を待つ隔離・差異";
+    private static final String ENTRY_LINK = "この取込の隔離・差異をすべて確認する";
     private static final Pattern RESULT_URL = Pattern.compile(".*/staff/external-data/ingestions/([0-9a-f-]{36})$");
 
     private static final int SOURCE = 1;
@@ -50,8 +50,8 @@ public class UndecidedRecordUiSteps {
     }
 
     /** Bolt 39d の行 11。S-16 の結果の画面の隔離の理由の領域の最後のリンクへ Tab で進めて押す。 */
-    @もし("キー操作だけで取込の結果からこの取込の隔離をすべて確認するを開く")
-    public void この取込の隔離をすべて確認するを開く() {
+    @もし("キー操作だけで取込の結果からこの取込の隔離・差異をすべて確認するを開く")
+    public void この取込の隔離と差異をすべて確認するを開く() {
         page().locator("body").focus();
         browser.tabUntilFocused(entryLink());
         page().keyboard().press("Enter");
@@ -60,8 +60,8 @@ public class UndecidedRecordUiSteps {
     }
 
     /** Bolt 39d の行 11。隔離が 0 件の結果の画面は押しても行き先のないリンクを出さない。 */
-    @かつ("取込の結果にこの取込の隔離をすべて確認するリンクは示されない")
-    public void この取込の隔離をすべて確認するリンクは示されない() {
+    @かつ("取込の結果にこの取込の隔離・差異をすべて確認するリンクは示されない")
+    public void この取込の隔離と差異をすべて確認するリンクは示されない() {
         assertThat(entryLink()).hasCount(0);
     }
 
@@ -139,7 +139,7 @@ public class UndecidedRecordUiSteps {
 
     /**
      * Bolt 39d の行 5、Bolt 39d2b の行 18。ページ送りのリンクへ先頭から Tab で進めて押す。ページ送りは表の前（件数の文・まとめての却下の
-     * リンク・「すべての取込の隔離を見る」の後）にあるので、1 ページ 100 個の「判断する」を越えずに届く（Bolt 39d2 で Shift+Tab で画面の
+     * リンク・「すべての取込の隔離・差異を見る」の後）にあるので、1 ページ 100 個の「判断する」を越えずに届く（Bolt 39d2 で Shift+Tab で画面の
      * 終わりから戻る書き方にしたのを戻した）。
      */
     @もし("キー操作だけで判断を待つ隔離の {string} を開く")

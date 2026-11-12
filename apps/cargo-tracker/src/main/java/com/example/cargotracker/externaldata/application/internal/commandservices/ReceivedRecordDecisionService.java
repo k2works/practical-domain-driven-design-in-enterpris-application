@@ -16,6 +16,7 @@ import com.example.cargotracker.externaldata.domain.model.aggregates.ReceivedRec
 import com.example.cargotracker.externaldata.domain.model.aggregates.ReceivedRecordDecision;
 import com.example.cargotracker.externaldata.domain.model.aggregates.ReceivedRecordDecisionRepository;
 import com.example.cargotracker.externaldata.domain.model.aggregates.ReceivedRecordRepository;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.Classification;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.IdempotencyKey;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.MilestoneValues;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.ReceivedValue;
@@ -127,7 +128,7 @@ public class ReceivedRecordDecisionService {
         ReceivedRecordDecision decision =
                 ReceivedRecordDecision.adopt(receivedRecord, command.reason(), actor.userId(), clock.instant());
         if (!added(decision)) {
-            return new DecisionOutcome.AlreadyDecided();
+            return new DecisionOutcome.AlreadyDecided(receivedRecord.classification());
         }
         ExternalRecord externalRecord = parts.externalRecord();
         AdoptionFactory.Adoption adoption = AdoptionFactory.adopt(
@@ -155,6 +156,10 @@ public class ReceivedRecordDecisionService {
      * （知らない原本種別は読めない）。読めない値の WARN は判断の画面の照会のサービスが書く。
      */
     private AdoptionCheck adoptionCheckOf(ReceivedRecord receivedRecord) {
+        if (receivedRecord.classification() == Classification.DISCREPANCY) {
+            // 差異はどの状態でも採用できない。最初の差異は外部原本の基準と同じハッシュなので、分類を最初に確かめる（Bolt 39h2 の決定 (3)）
+            return AdoptionCheck.refused(DecisionOutcome.NotAdoptableReason.DISCREPANCY);
+        }
         ReceivedValue value = receivedRecord.value();
         if (receivedRecord.externalRecordId() == null) {
             return AdoptionCheck.refused(DecisionOutcome.NotAdoptableReason.KEYLESS);
@@ -239,12 +244,12 @@ public class ReceivedRecordDecisionService {
         ReceivedRecordDecision decision =
                 ReceivedRecordDecision.reject(receivedRecord, command.reason(), actor.userId(), clock.instant());
         if (!added(decision)) {
-            return new DecisionOutcome.AlreadyDecided();
+            return new DecisionOutcome.AlreadyDecided(receivedRecord.classification());
         }
         // 受信記録は取込への外部キーを持ち、findById は取込で書いた受信記録だけを返すので、取込は必ずある
         Ingestion ingestion = ingestions.findById(receivedRecord.ingestionId()).orElseThrow();
         publishDecided(decision, ingestion, actor);
-        return new DecisionOutcome.Rejected(receivedRecord.id());
+        return new DecisionOutcome.Rejected(receivedRecord.id(), receivedRecord.classification());
     }
 
     /**
@@ -316,7 +321,7 @@ public class ReceivedRecordDecisionService {
             return Optional.of(new DecisionOutcome.NotDecidable());
         }
         if (decisions.existsFor(receivedRecord.id())) {
-            return Optional.of(new DecisionOutcome.AlreadyDecided());
+            return Optional.of(new DecisionOutcome.AlreadyDecided(receivedRecord.classification()));
         }
         return Optional.empty();
     }

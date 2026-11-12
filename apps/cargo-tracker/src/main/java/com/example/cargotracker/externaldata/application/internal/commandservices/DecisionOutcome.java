@@ -1,23 +1,26 @@
 package com.example.cargotracker.externaldata.application.internal.commandservices;
 
+import com.example.cargotracker.externaldata.domain.model.valueobjects.Classification;
 import java.util.Objects;
 import java.util.UUID;
 
 /**
  * 受信記録の判断の結果（{@link ReceivedRecordDecisionService}。Bolt 39d2）。断るときは判断を追記せず、イベントも出さない（例外にせず種類で返す）。
- * 判断できる受信記録は「取込で書いた受信記録で、分類が隔離で、判断がない」で、判断の画面（GET）と却下・採用（POST）で同じ定めを使う。
+ * 判断できる受信記録は「取込で書いた受信記録で、分類が隔離か差異で、判断がない」で、判断の画面（GET）と却下・採用（POST）で同じ定めを使う。
  */
 public sealed interface DecisionOutcome {
 
     /**
-     * 却下した。
+     * 却下した（隔離か差異。画面の層が分類で文を選ぶ。Bolt 39h2）。
      *
      * @param receivedRecordId 受信記録 ID
+     * @param classification 却下した受信記録の分類（隔離か差異）
      */
-    record Rejected(UUID receivedRecordId) implements DecisionOutcome {
+    record Rejected(UUID receivedRecordId, Classification classification) implements DecisionOutcome {
 
         public Rejected {
             requireReceivedRecordId(receivedRecordId);
+            Objects.requireNonNull(classification, "classification");
         }
     }
 
@@ -54,6 +57,8 @@ public sealed interface DecisionOutcome {
 
     /** 採用できない理由（Bolt 39d3b2。業務の見分けで、画面の文は持たない）。判断のサービスがこの順に確かめる。 */
     enum NotAdoptableReason {
+        /** 差異（差異は採用しない。分類を最初に確かめる。Bolt 39h2 の決定 (3)）。 */
+        DISCREPANCY,
         /** 外部原本がない隔離（形式の誤り。【業務の判断】(a)）。 */
         KEYLESS,
         /** 受け取った値の列がない隔離（Bolt 39d の決定 (8)）。 */
@@ -74,9 +79,14 @@ public sealed interface DecisionOutcome {
     /** 受信記録がない、または取込で書いた受信記録でない。 */
     record NotFound() implements DecisionOutcome {}
 
-    /** 受信記録が隔離でない（採用・重複。差異は 39h で判断できるようにする）。 */
+    /** 受信記録が隔離でも差異でもない（採用・重複）。 */
     record NotDecidable() implements DecisionOutcome {}
 
-    /** 判断済み（2 人のデータ責任者・二重の送信。同時の判断の一意制約の違反を含む）。 */
-    record AlreadyDecided() implements DecisionOutcome {}
+    /** 判断済み（2 人のデータ責任者・二重の送信。同時の判断の一意制約の違反を含む）。分類は画面の層が文を選ぶのに使う（Bolt 39h2）。 */
+    record AlreadyDecided(Classification classification) implements DecisionOutcome {
+
+        public AlreadyDecided {
+            Objects.requireNonNull(classification, "classification");
+        }
+    }
 }

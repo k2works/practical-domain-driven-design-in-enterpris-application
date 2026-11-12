@@ -20,12 +20,15 @@ public class RejectQuarantineUiSteps {
     private static final Pattern LIST_URL = Pattern.compile(".*/staff/external-data/undecided-records\\?.*");
     private static final Pattern DECISION_URL =
             Pattern.compile(".*/staff/external-data/undecided-records/[0-9a-f-]{36}(\\?.*)?$");
-    private static final String TABLE_CAPTION = "判断を待つ隔離";
+    private static final String TABLE_CAPTION = "判断を待つ隔離・差異";
     private static final String DECISION_HEADING = "隔離の判断";
     private static final String LIST_HEADING = "隔離・差異の確認";
     private static final String REASON_LABEL = "却下の理由";
     private static final String IRREVOCABLE = "却下すると取り消せません。誤って却下したときは、提供元に同じ原本を送り直してもらってください。";
     private static final String KEYLESS_GUIDE = "形式の誤りは採用できません。直したファイルを取り込み直してください。";
+
+    private static final String DISCREPANCY_REFUSAL =
+            "差異は採用できません。正しい値を使うときは、提供元に後で取得した新しい外部版で送り直してもらってください" + "（追跡番号の違う実績は、追跡管理者に正しい追跡記録へ手入力してもらってください）。";
 
     private static final int LINES = 2;
     private static final int KIND = 3;
@@ -51,6 +54,31 @@ public class RejectQuarantineUiSteps {
     @かつ("キー操作だけで判断を待つ隔離の {int} 行目の形式の誤りの判断するを開く")
     public void 形式の誤りの判断するを開く(int line) {
         openDecision(line, "形式の誤り");
+    }
+
+    /** Bolt 39h2 の行 13。種類が差異の行の「判断する」を開く。 */
+    @もし("キー操作だけで判断を待つ隔離・差異の {int} 行目の差異の判断するを開く")
+    public void 差異の判断するを開く(int line) {
+        openDecision(line, "差異");
+    }
+
+    /** Bolt 39h2 の行 13（決定 (5)）。差異の判断の画面は採用の欄を出さず、採用できない理由の文と、受け取った値の領域だけを示す。 */
+    @ならば("差異の判断の画面に {int} 行目の差異の中身と差異の理由の全文と採用できない理由が示され採用の欄は示されない")
+    public void 差異の中身が示される(int line) {
+        assertThat(heading("差異の判断")).isVisible();
+        assertThat(definition("種類")).hasText("差異");
+        assertThat(definition("外部 ID・外部版")).hasText(Pattern.compile("^.+・1$"));
+        assertThat(definition("差異の理由"))
+                .hasText(line + " 行目: 同じ外部 ID で後に取得した外部版 \"2\" を採用しているので、前に取得したこの外部版は採用していません（版の逆転）。");
+        assertThat(page().getByText(DISCREPANCY_REFUSAL, new Page.GetByTextOptions().setExact(true)))
+                .isVisible();
+        assertThat(heading("採用する")).hasCount(0);
+        assertThat(heading("受け取った値")).isVisible();
+        assertThat(heading("この外部版の採用値")).hasCount(0);
+        assertThat(page().getByText(IRREVOCABLE, new Page.GetByTextOptions().setExact(true)))
+                .isVisible();
+        assertThat(button()).isVisible();
+        browser.checkAccessibility();
     }
 
     private void openDecision(int line, String kind) {

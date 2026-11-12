@@ -449,8 +449,8 @@ public abstract class ExternalDataRecordRepositoriesContract {
     }
 
     @Test
-    void Bolt39h_行8_取込の隔離の照会は差異も行の順に返し判断を待つ隔離の一覧には差異を出さない() {
-        // S-16 の「隔離・差異の理由」（開始準備の決定 (7)）。S-17 に差異を出すのは 39h2 なので、判断を待つ一覧と件数は隔離だけのまま
+    void Bolt39h_行8_取込の隔離の照会は差異も行の順に返す() {
+        // S-16 の「隔離・差異の理由」（開始準備の決定 (7)）。判断を待つ一覧と件数に差異が入るのは Bolt 39h2 の行 4 の組
         Ingestion ingestion = ingestion(4);
         ingestions().add(ingestion);
         ExternalRecord externalRecord = externalRecord(key("MILESTONE", "MS-39H"));
@@ -466,7 +466,6 @@ public abstract class ExternalDataRecordRepositoriesContract {
                 .containsExactly(discrepancy, quarantined);
         assertThat(receivedRecords().countByIngestionAndClassification(ingestion.id(), Classification.DISCREPANCY))
                 .isEqualTo(1);
-        assertThat(receivedRecords().countUndecidedRecords(ingestion.id())).isEqualTo(1);
     }
 
     // --- Bolt 39d の行 3・4・6・15（S-17 の判断を待つ隔離の一覧の照会。開始準備の決定 (3)・(4)）。名前の頭に Bolt39d_ を付ける。
@@ -502,6 +501,7 @@ public abstract class ExternalDataRecordRepositoriesContract {
     private UndecidedRecord undecided(ReceivedRecord received, Ingestion ingestion, ExternalRecord externalRecord) {
         return new UndecidedRecord(
                 received.id(),
+                received.classification(),
                 ingestion.id(),
                 ingestion.ingestedAt(),
                 ingestion.dataSourceId(),
@@ -874,6 +874,103 @@ public abstract class ExternalDataRecordRepositoriesContract {
                 .isEmpty();
         assertThat(receivedRecords().countUndecidedKeylessQuarantines(UUID.randomUUID()))
                 .isZero();
+    }
+
+    // --- Bolt 39h2 の行 4・5（判断を待つ隔離・差異の一覧の照会。開始準備の決定 (4)）---
+
+    @Test
+    void Bolt39h2_行4_判断を待つ一覧と件数は隔離と差異を行の順に混ぜて返し分類を持つ() {
+        Ingestion ingestion = ingestionAt(FUTURE);
+        ingestions().add(ingestion);
+        ExternalRecord externalRecord = externalRecord(key("MILESTONE", "MS-39H2-4A"));
+        externalRecords().add(externalRecord);
+        // 期待の順と逆に書く（T-245）
+        ReceivedRecord discrepancy = keyed(externalRecord, ingestion, Classification.DISCREPANCY, 6);
+        ReceivedRecord quarantined = keyed(externalRecord, ingestion, Classification.QUARANTINED, 4);
+        receivedRecords().add(keyed(externalRecord, ingestion, Classification.DUPLICATE, 5));
+        receivedRecords().add(discrepancy);
+        receivedRecords().add(keyed(externalRecord, ingestion, Classification.ADOPTED, 2));
+        receivedRecords().add(quarantined);
+
+        assertThat(receivedRecords().undecidedRecords(ingestion.id(), 0, 100))
+                .containsExactly(
+                        undecided(quarantined, ingestion, externalRecord),
+                        undecided(discrepancy, ingestion, externalRecord));
+        assertThat(receivedRecords().undecidedRecords(ingestion.id(), 0, 100))
+                .extracting(UndecidedRecord::classification)
+                .containsExactly(Classification.QUARANTINED, Classification.DISCREPANCY);
+        assertThat(receivedRecords().countUndecidedRecords(ingestion.id())).isEqualTo(2);
+    }
+
+    @Test
+    void Bolt39h2_行4_却下した差異は一覧から消え同じ原本を送り直した差異だけが出る() {
+        Ingestion ingestion = ingestionAt(FUTURE);
+        ingestions().add(ingestion);
+        ExternalRecord externalRecord = externalRecord(key("VOYAGE", "V-39H2-4B"));
+        externalRecords().add(externalRecord);
+        ReceivedRecord first = keyed(externalRecord, ingestion, Classification.DISCREPANCY, 2);
+        ReceivedRecord resent = keyed(externalRecord, ingestion, Classification.DISCREPANCY, 3);
+        receivedRecords().add(first);
+
+        receivedRecordDecisions().add(ReceivedRecordDecision.reject(first, "古い外部版と分かった。", steward, DECIDED_AT));
+        receivedRecords().add(resent);
+
+        assertThat(receivedRecords().undecidedRecord(first.id())).isEmpty();
+        assertThat(receivedRecords().undecidedRecords(ingestion.id(), 0, 100))
+                .containsExactly(undecided(resent, ingestion, externalRecord));
+        assertThat(receivedRecords().countUndecidedRecords(ingestion.id())).isEqualTo(1);
+    }
+
+    @Test
+    void Bolt39h2_行4_受信記録IDで引くと差異は分類つきで返し採用と重複は空() {
+        Ingestion ingestion = ingestionAt(FUTURE);
+        ingestions().add(ingestion);
+        ExternalRecord externalRecord = externalRecord(key("VOYAGE", "V-39H2-4E"));
+        externalRecords().add(externalRecord);
+        ReceivedRecord discrepancy = keyed(externalRecord, ingestion, Classification.DISCREPANCY, 2);
+        ReceivedRecord adopted = keyed(externalRecord, ingestion, Classification.ADOPTED, 3);
+        receivedRecords().add(discrepancy);
+        receivedRecords().add(adopted);
+
+        assertThat(receivedRecords().undecidedRecord(discrepancy.id()))
+                .contains(undecided(discrepancy, ingestion, externalRecord));
+        assertThat(receivedRecords().undecidedRecord(adopted.id())).isEmpty();
+    }
+
+    @Test
+    void Bolt39h2_行4_取込で絞る絞らないは今のまま差異も同じ定めで絞る() {
+        Ingestion ingestion = ingestionAt(FUTURE);
+        Ingestion other = ingestionAt(FUTURE);
+        ingestions().add(ingestion);
+        ingestions().add(other);
+        ExternalRecord externalRecord = externalRecord(key("VOYAGE", "V-39H2-4D"));
+        externalRecords().add(externalRecord);
+        receivedRecords().add(keyed(externalRecord, ingestion, Classification.DISCREPANCY, 2));
+        receivedRecords().add(keyed(externalRecord, other, Classification.DISCREPANCY, 2));
+        int all = receivedRecords().countUndecidedRecords(null);
+
+        assertThat(receivedRecords().countUndecidedRecords(ingestion.id())).isEqualTo(1);
+        assertThat(receivedRecords().countUndecidedRecords(other.id())).isEqualTo(1);
+        assertThat(all).isGreaterThanOrEqualTo(2);
+    }
+
+    @Test
+    void Bolt39h2_行5_キーのない隔離の対象に差異は入らない() {
+        Ingestion ingestion = ingestionAt(FUTURE);
+        ingestions().add(ingestion);
+        ExternalRecord externalRecord = externalRecord(key("VOYAGE", "V-39H2-5"));
+        externalRecords().add(externalRecord);
+        ReceivedRecord rowError1 = keyless(ingestion, new PhysicalLineRange(3, 3));
+        ReceivedRecord rowError2 = keyless(ingestion, new PhysicalLineRange(7, 7));
+        receivedRecords().add(rowError1);
+        receivedRecords().add(keyed(externalRecord, ingestion, Classification.QUARANTINED, 4));
+        receivedRecords().add(keyed(externalRecord, ingestion, Classification.DISCREPANCY, 5));
+        receivedRecords().add(rowError2);
+
+        assertThat(receivedRecords().undecidedKeylessQuarantinesOf(ingestion.id()))
+                .containsExactly(rowError1, rowError2);
+        assertThat(receivedRecords().countUndecidedKeylessQuarantines(ingestion.id()))
+                .isEqualTo(2);
     }
 
     /** 分類のすべてと外部原本の有無の組（受信記録の不変条件が外部原本のない受信記録を隔離だけに絞るので、作れる組だけ。T-240）。 */

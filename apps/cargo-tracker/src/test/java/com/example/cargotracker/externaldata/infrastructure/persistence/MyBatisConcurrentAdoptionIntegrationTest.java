@@ -199,7 +199,7 @@ class MyBatisConcurrentAdoptionIntegrationTest {
         // コミットした隔離を判断を待つ一覧に残さない（ほかのテストの一覧と件数を邪魔しない）
         outer.executeWithoutResult(status -> assertThat(
                         winner.reject(scenario.steward(), new RejectReceivedRecordCommand(loserRecord.id(), "片付ける。")))
-                .isEqualTo(new DecisionOutcome.Rejected(loserRecord.id())));
+                .isEqualTo(new DecisionOutcome.Rejected(loserRecord.id(), Classification.QUARANTINED)));
     }
 
     /**

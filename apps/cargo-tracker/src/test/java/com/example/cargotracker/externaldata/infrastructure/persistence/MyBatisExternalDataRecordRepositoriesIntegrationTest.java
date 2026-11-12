@@ -296,7 +296,7 @@ class MyBatisExternalDataRecordRepositoriesIntegrationTest extends ExternalDataR
 
         DecisionOutcome outcome = service.adopt(steward, new AdoptReceivedRecordCommand(quarantine.id(), "負ける採用の理由"));
 
-        assertThat(outcome).isEqualTo(new DecisionOutcome.AlreadyDecided());
+        assertThat(outcome).isEqualTo(new DecisionOutcome.AlreadyDecided(Classification.QUARANTINED));
         assertThat(published).isEmpty();
         // セーブポイントに戻っていなければ、PostgreSQL はこの照会をトランザクションの中断の誤りにする
         assertThat(repositories.adoptedValues().findByReceivedRecordId(quarantine.id()))

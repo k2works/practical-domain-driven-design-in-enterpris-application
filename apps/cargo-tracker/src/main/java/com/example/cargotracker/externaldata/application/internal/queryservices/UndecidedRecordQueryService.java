@@ -23,7 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * 判断を待つ隔離の照会。S-17 の一覧に、判断を待つ隔離を取込の新しい順・ファイルの行の順に {@link #PAGE_SIZE} 件ずつ返す（Bolt 39d。開始準備の
+ * 判断を待つ隔離・差異の照会。S-17 の一覧に、判断を待つ隔離と差異を取込の新しい順・ファイルの行の順に {@link #PAGE_SIZE} 件ずつ返す（Bolt 39d。開始準備の
  * 決定 (3)・(4)）。取込の時刻と外部 ID・外部版は受信記録の照会が結んで読み、情報源だけをページの中の異なる情報源 ID ごとに 1 回引く。
  * 絞った取込があるかは取込を 1 回引いて確かめ、なければ絞らない一覧を返して見つからないことを示す。判断を待つ隔離が 0 件ならページの照会と
  * 情報源を引かない。求めた頁が 1 より前なら 1 頁目、最後より後なら最後の頁を返す。件数を数えてから頁を読むまでに件数が減って読んだ頁が
@@ -57,8 +57,8 @@ public class UndecidedRecordQueryService {
     }
 
     /**
-     * 内容の違う原本の判断の画面の値（Bolt 39d3 の開始準備の決定 (5)・(6)、航海と主要実績は Bolt 39d3c の開始準備の決定 (4)）。値を返すのは、分類が
-     * 隔離で外部原本を持つ受信記録。キーのない隔離は受信記録も採用値も引かずに空、ない受信記録・隔離でない受信記録は採用値を引かずに空。
+     * 隔離・差異の判断の画面の値（Bolt 39d3 の開始準備の決定 (5)・(6)、航海と主要実績は Bolt 39d3c の開始準備の決定 (4)、差異は Bolt 39h2 の決定 (5)で受け取った値だけ）。値を返すのは、分類が
+     * 隔離か差異で外部原本を持つ受信記録（差異はこの外部版の採用値を引かない）。キーのない隔離は受信記録も採用値も引かずに空、ない受信記録・隔離でない受信記録は採用値を引かずに空。
      * 受け取った値は判断の画面の中身の原本種別で、採用値は採用値の対象の種類で型で分ける入口を呼ぶ（原本種別は判断の画面の中身から受け、取込と
      * 情報源を読み直さない）。入口が要約か原本種別を読めない（{@link IllegalArgumentException}）ときは、その側を読めない印にして WARN のログに
      * ID・原本種別・例外の型だけを残す（【業務の判断】(k)。要約の中身と例外の文は取込ファイルから来た値を含むので書かない）。値の列がないことを
@@ -74,8 +74,9 @@ public class UndecidedRecordQueryService {
         }
         return receivedRecords
                 .findById(quarantine.receivedRecordId())
-                .filter(received ->
-                        received.classification() == Classification.QUARANTINED && received.externalRecordId() != null)
+                .filter(received -> (received.classification() == Classification.QUARANTINED
+                                || received.classification() == Classification.DISCREPANCY)
+                        && received.externalRecordId() != null)
                 .map(received -> valuesOf(received, quarantine.recordType()));
     }
 
@@ -85,10 +86,13 @@ public class UndecidedRecordQueryService {
         Optional<RecordValues> received = value == null
                 ? Optional.empty()
                 : readable(recordType, value.targetKey(), value.summary(), () -> "受信記録 " + quarantine.id());
-        QuarantineValues.Adopted adopted = adoptedValues
-                .currentOf(quarantine.externalRecordId())
-                .map(this::adoptedOf)
-                .orElse(null);
+        // 差異の外部原本（その外部版）は採用値を持たないので、この外部版の採用値は引かない（Bolt 39h2 の決定 (5)）
+        QuarantineValues.Adopted adopted = quarantine.classification() == Classification.DISCREPANCY
+                ? null
+                : adoptedValues
+                        .currentOf(quarantine.externalRecordId())
+                        .map(this::adoptedOf)
+                        .orElse(null);
         return new QuarantineValues(
                 received.orElse(null), value != null && received.isEmpty(), quarantine.acquiredAt(), adopted);
     }
@@ -240,7 +244,7 @@ public class UndecidedRecordQueryService {
                 source.provider(),
                 source.recordType(),
                 quarantine.lineRange(),
-                !quarantine.hasExternalRecord(),
+                quarantine.classification(),
                 quarantine.externalId(),
                 quarantine.externalVersion(),
                 quarantine.note());

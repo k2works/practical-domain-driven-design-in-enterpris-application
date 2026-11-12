@@ -28,6 +28,7 @@ import com.example.cargotracker.externaldata.application.internal.queryservices.
 import com.example.cargotracker.externaldata.application.internal.queryservices.UndecidedRecordQueryService;
 import com.example.cargotracker.externaldata.domain.model.aggregates.ConcurrentExternalRecordUpdateException;
 import com.example.cargotracker.externaldata.domain.model.aggregates.ReceivedRecordDecision;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.Classification;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PhysicalLineRange;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PortCallValue;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.VoyageValues;
@@ -75,7 +76,7 @@ class UndecidedRecordControllerTest {
     private static final String LIST_URL = "/staff/external-data/undecided-records";
     private static final UUID INGESTION_ID = UUID.fromString("39d00000-0000-0000-0000-0000000000aa");
     private static final Instant INGESTED_AT = Instant.parse("2026-11-16T01:05:00Z");
-    private static final String TABLE = "<caption>判断を待つ隔離</caption>";
+    private static final String TABLE = "<caption>判断を待つ隔離・差異</caption>";
 
     @Autowired
     MockMvc mockMvc;
@@ -94,7 +95,7 @@ class UndecidedRecordControllerTest {
                 "開発海運（架空）",
                 "VOYAGE",
                 new PhysicalLineRange(line, line),
-                true,
+                Classification.QUARANTINED,
                 null,
                 null,
                 line + " 行目: 寄港の列の値が正しくありません。提供元に確かめてください。");
@@ -124,7 +125,7 @@ class UndecidedRecordControllerTest {
                 "開発海運（架空）",
                 "VOYAGE",
                 new PhysicalLineRange(140, 141),
-                false,
+                Classification.QUARANTINED,
                 "DEMO-201",
                 "3",
                 "140 行目: 同じ外部 ID・外部版で内容の違う原本を受け取りました（最初の受信: 2026-11-15 09:00:00 UTC）。");
@@ -134,7 +135,7 @@ class UndecidedRecordControllerTest {
                 "開発海運（架空）",
                 "MILESTONE",
                 null,
-                true,
+                Classification.QUARANTINED,
                 null,
                 null,
                 "ファイル: 必要な列がありません（port_calls）。");
@@ -147,7 +148,7 @@ class UndecidedRecordControllerTest {
                         .string(matchesPattern(
                                 Pattern.compile("(?s).*<th scope=\"col\">取り込んだ日時</th>\\s*<th scope=\"col\">情報源</th>\\s*"
                                         + "<th scope=\"col\">行</th>\\s*<th scope=\"col\">種類</th>\\s*"
-                                        + "<th scope=\"col\">外部 ID・外部版</th>\\s*<th scope=\"col\">隔離の理由</th>\\s*"
+                                        + "<th scope=\"col\">外部 ID・外部版</th>\\s*<th scope=\"col\">隔離・差異の理由</th>\\s*"
                                         // 判断の列は Bolt 39d2 で足した
                                         + "<th scope=\"col\">判断</th>.*"))))
                 .andExpect(
@@ -182,11 +183,11 @@ class UndecidedRecordControllerTest {
     @CsvSource(
             delimiter = '|',
             value = {
-                "100   | 1   | 判断を待つ隔離 100 件（1〜100 件目を示しています）          | false | false",
-                "101   | 1   | 判断を待つ隔離 101 件（1〜100 件目を示しています）          | false | true",
-                "101   | 2   | 判断を待つ隔離 101 件（101〜101 件目を示しています）        | true  | false",
-                "10000 | 50  | 判断を待つ隔離 10,000 件（4,901〜5,000 件目を示しています）  | true  | true",
-                "10000 | 100 | 判断を待つ隔離 10,000 件（9,901〜10,000 件目を示しています） | true  | false"
+                "100   | 1   | 判断を待つ隔離・差異 100 件（1〜100 件目を示しています）          | false | false",
+                "101   | 1   | 判断を待つ隔離・差異 101 件（1〜100 件目を示しています）          | false | true",
+                "101   | 2   | 判断を待つ隔離・差異 101 件（101〜101 件目を示しています）        | true  | false",
+                "10000 | 50  | 判断を待つ隔離・差異 10,000 件（4,901〜5,000 件目を示しています）  | true  | true",
+                "10000 | 100 | 判断を待つ隔離・差異 10,000 件（9,901〜10,000 件目を示しています） | true  | false"
             })
     void 行5_件数と示す範囲を3桁の区切りで示し前後のページがあればリンクを出す(
             int total, int pageNumber, String countText, boolean previous, boolean next) throws Exception {
@@ -212,7 +213,7 @@ class UndecidedRecordControllerTest {
             org.assertj.core.api.Assertions.assertThat(body).doesNotContain("次の 100 件");
         }
         if (!previous && !next) {
-            org.assertj.core.api.Assertions.assertThat(body).doesNotContain("aria-label=\"判断を待つ隔離のページ\"");
+            org.assertj.core.api.Assertions.assertThat(body).doesNotContain("aria-label=\"判断を待つ隔離・差異のページ\"");
         }
     }
 
@@ -235,32 +236,32 @@ class UndecidedRecordControllerTest {
     void 行9_判断を待つ隔離が全体で0件なら表を出さず0件の文と外部データの取込へのリンクを示す() throws Exception {
         given(query.page(null, 1)).willReturn(page(0, 1, null));
 
-        list("").andExpect(content().string(containsString("<p>判断を待つ隔離はありません。</p>")))
+        list("").andExpect(content().string(containsString("<p>判断を待つ隔離・差異はありません。</p>")))
                 .andExpect(content().string(not(containsString("<table"))))
                 .andExpect(content().string(not(containsString("件目を示しています"))))
-                .andExpect(content().string(not(containsString("すべての取込の隔離を見る"))))
+                .andExpect(content().string(not(containsString("すべての取込の隔離・差異を見る"))))
                 .andExpect(content()
                         .string(containsString("<a href=\"/staff/external-data/ingestions/new\">外部データの取込へ</a>")));
     }
 
     @Test
-    void 行10_取込で絞って0件ならこの取込に判断を待つ隔離はないと示しすべての取込の隔離を見るリンクを出す() throws Exception {
+    void 行10_取込で絞って0件ならこの取込に判断を待つ隔離はないと示しすべての取込の隔離と差異を見るリンクを出す() throws Exception {
         given(query.page(INGESTION_ID, 1)).willReturn(page(0, 1, INGESTION_ID));
 
         list("?ingestion=" + INGESTION_ID)
-                .andExpect(content().string(containsString("<p>この取込に判断を待つ隔離はありません。</p>")))
-                .andExpect(content().string(not(containsString("<p>判断を待つ隔離はありません。</p>"))))
+                .andExpect(content().string(containsString("<p>この取込に判断を待つ隔離・差異はありません。</p>")))
+                .andExpect(content().string(not(containsString("<p>判断を待つ隔離・差異はありません。</p>"))))
                 .andExpect(content().string(not(containsString("<table"))))
-                .andExpect(content().string(containsString("<a href=\"" + LIST_URL + "\">すべての取込の隔離を見る</a>")));
+                .andExpect(content().string(containsString("<a href=\"" + LIST_URL + "\">すべての取込の隔離・差異を見る</a>")));
     }
 
     @Test
-    void 行10_取込で絞っているときは件数の文をこの取込のにしすべての取込の隔離を見るリンクを出す() throws Exception {
+    void 行10_取込で絞っているときは件数の文をこの取込のにしすべての取込の隔離と差異を見るリンクを出す() throws Exception {
         given(query.page(INGESTION_ID, 1)).willReturn(page(2, 1, INGESTION_ID));
 
         list("?ingestion=" + INGESTION_ID)
-                .andExpect(content().string(containsString("<p>この取込の判断を待つ隔離 2 件（1〜2 件目を示しています）</p>")))
-                .andExpect(content().string(containsString("<a href=\"" + LIST_URL + "\">すべての取込の隔離を見る</a>")))
+                .andExpect(content().string(containsString("<p>この取込の判断を待つ隔離・差異 2 件（1〜2 件目を示しています）</p>")))
+                .andExpect(content().string(containsString("<a href=\"" + LIST_URL + "\">すべての取込の隔離・差異を見る</a>")))
                 .andExpect(content().string(not(containsString("外部データの取込へ"))));
     }
 
@@ -286,8 +287,8 @@ class UndecidedRecordControllerTest {
 
         list("?ingestion=not-a-uuid")
                 .andExpect(content().string(containsString("<p>指定された取込が見つかりません。</p>")))
-                .andExpect(content().string(containsString("<p>判断を待つ隔離 2 件（1〜2 件目を示しています）</p>")))
-                .andExpect(content().string(not(containsString("すべての取込の隔離を見る"))));
+                .andExpect(content().string(containsString("<p>判断を待つ隔離・差異 2 件（1〜2 件目を示しています）</p>")))
+                .andExpect(content().string(not(containsString("すべての取込の隔離・差異を見る"))));
         then(query).should().page(null, 1);
     }
 
@@ -298,7 +299,7 @@ class UndecidedRecordControllerTest {
 
         list("?ingestion=" + missing)
                 .andExpect(content().string(containsString("<p>指定された取込が見つかりません。</p>")))
-                .andExpect(content().string(containsString("<p>判断を待つ隔離 2 件（1〜2 件目を示しています）</p>")));
+                .andExpect(content().string(containsString("<p>判断を待つ隔離・差異 2 件（1〜2 件目を示しています）</p>")));
     }
 
     @Test
@@ -316,7 +317,7 @@ class UndecidedRecordControllerTest {
         given(query.page(any(), anyInt())).willReturn(page(101, 1, null));
 
         list("?page=" + pageParameter)
-                .andExpect(content().string(containsString("<p>判断を待つ隔離 101 件（1〜100 件目を示しています）</p>")));
+                .andExpect(content().string(containsString("<p>判断を待つ隔離・差異 101 件（1〜100 件目を示しています）</p>")));
         then(query).should().page(null, 1);
     }
 
@@ -325,7 +326,7 @@ class UndecidedRecordControllerTest {
         given(query.page(null, 999)).willReturn(page(10000, 100, null));
 
         list("?page=999")
-                .andExpect(content().string(containsString("<p>判断を待つ隔離 10,000 件（9,901〜10,000 件目を示しています）</p>")))
+                .andExpect(content().string(containsString("<p>判断を待つ隔離・差異 10,000 件（9,901〜10,000 件目を示しています）</p>")))
                 .andExpect(content().string(not(containsString("次の 100 件"))));
     }
 
@@ -339,7 +340,7 @@ class UndecidedRecordControllerTest {
                 "開発海運（架空）",
                 "VOYAGE",
                 null,
-                true,
+                Classification.QUARANTINED,
                 null,
                 null,
                 "ファイル: 同じ名前の列があります（<b>id</b>、<script>alert(1)</script>、&amp;）。提供元に確かめてください。");
@@ -379,7 +380,7 @@ class UndecidedRecordControllerTest {
                     "開発海運（架空）",
                     "VOYAGE",
                     new PhysicalLineRange(140, 141),
-                    false,
+                    Classification.QUARANTINED,
                     "DEMO-201",
                     "3",
                     "140 行目: 同じ外部 ID・外部版で内容の違う原本を受け取りました（<b>最初の受信</b>: 2026-11-15 09:00:00 UTC）。");
@@ -392,7 +393,7 @@ class UndecidedRecordControllerTest {
                     "開発海運（架空）",
                     "VOYAGE",
                     new PhysicalLineRange(4, 4),
-                    true,
+                    Classification.QUARANTINED,
                     null,
                     null,
                     "4 行目: 列の数がヘッダーと違います（ヘッダー 4 列、この行 5 列）。提供元に確かめてください。");
@@ -463,7 +464,8 @@ class UndecidedRecordControllerTest {
         @Test
         void 行17_読めない取込とページの戻り先は捨てて既定の一覧にする() throws Exception {
             givenDecidable(mismatch());
-            given(decisions.reject(any(), any())).willReturn(new DecisionOutcome.Rejected(RECORD_ID));
+            given(decisions.reject(any(), any()))
+                    .willReturn(new DecisionOutcome.Rejected(RECORD_ID, Classification.QUARANTINED));
 
             String page = decisionPage(DECISION_URL + "?ingestion=%3Cscript%3E&page=abc");
 
@@ -561,7 +563,7 @@ class UndecidedRecordControllerTest {
         @Test
         void 行5_判断済みの隔離の判断の画面は元の一覧に戻って判断済みと知らせる() throws Exception {
             given(decisions.refusalOf(RECORD_ID))
-                    .willReturn(java.util.Optional.of(new DecisionOutcome.AlreadyDecided()));
+                    .willReturn(java.util.Optional.of(new DecisionOutcome.AlreadyDecided(Classification.QUARANTINED)));
 
             mockMvc.perform(get(DECISION_URL + "?ingestion=" + INGESTION_ID + "&page=2"))
                     .andExpect(status().is3xxRedirection())
@@ -573,7 +575,10 @@ class UndecidedRecordControllerTest {
 
         @Test
         void 行5_行き先を決めた後に判断されて中身が読めないときも判断済みと知らせる() throws Exception {
-            given(decisions.refusalOf(RECORD_ID)).willReturn(java.util.Optional.empty());
+            // 中身を読めなかったときは判断のサービスの定めを読み直し、分類つきの判断済みで戻る（Bolt 39h2 の決定 (6)）
+            given(decisions.refusalOf(RECORD_ID))
+                    .willReturn(java.util.Optional.empty())
+                    .willReturn(java.util.Optional.of(new DecisionOutcome.AlreadyDecided(Classification.QUARANTINED)));
             given(query.undecidedRecord(RECORD_ID)).willReturn(java.util.Optional.empty());
 
             mockMvc.perform(get(DECISION_URL))
@@ -595,9 +600,9 @@ class UndecidedRecordControllerTest {
         static java.util.stream.Stream<org.junit.jupiter.params.provider.Arguments> outcomes() {
             return java.util.stream.Stream.of(
                     org.junit.jupiter.params.provider.Arguments.of(
-                            new DecisionOutcome.Rejected(RECORD_ID), 302, REJECTED),
+                            new DecisionOutcome.Rejected(RECORD_ID, Classification.QUARANTINED), 302, REJECTED),
                     org.junit.jupiter.params.provider.Arguments.of(
-                            new DecisionOutcome.AlreadyDecided(), 302, ALREADY_DECIDED),
+                            new DecisionOutcome.AlreadyDecided(Classification.QUARANTINED), 302, ALREADY_DECIDED),
                     org.junit.jupiter.params.provider.Arguments.of(new DecisionOutcome.NotFound(), 404, null),
                     org.junit.jupiter.params.provider.Arguments.of(new DecisionOutcome.NotDecidable(), 404, null),
                     org.junit.jupiter.params.provider.Arguments.of(new DecisionOutcome.NotPermitted(), 403, null));
@@ -658,7 +663,8 @@ class UndecidedRecordControllerTest {
         @Test
         void 行8_補助文字を含む1000文字の理由はそのままサービスに渡す() throws Exception {
             String thousand = SUPPLEMENTARY.repeat(500) + "あ".repeat(500);
-            given(decisions.reject(any(), any())).willReturn(new DecisionOutcome.Rejected(RECORD_ID));
+            given(decisions.reject(any(), any()))
+                    .willReturn(new DecisionOutcome.Rejected(RECORD_ID, Classification.QUARANTINED));
 
             postReason(POST_URL, thousand).andExpect(status().is3xxRedirection());
 
@@ -688,7 +694,7 @@ class UndecidedRecordControllerTest {
         @Test
         void 行7_欄の誤りのあとに判断済みになっていれば一覧に戻って知らせる() throws Exception {
             given(decisions.refusalOf(RECORD_ID))
-                    .willReturn(java.util.Optional.of(new DecisionOutcome.AlreadyDecided()));
+                    .willReturn(java.util.Optional.of(new DecisionOutcome.AlreadyDecided(Classification.QUARANTINED)));
 
             postReason(POST_URL, " ")
                     .andExpect(status().is3xxRedirection())
@@ -721,7 +727,7 @@ class UndecidedRecordControllerTest {
         private static final String NOTHING_TO_REJECT = "この取込にまとめて却下できる形式の誤りはありません。";
         private static final String REASON_REQUIRED = "却下の理由を書いてください。";
         private static final String REASON_TOO_LONG = "却下の理由は 1000 文字までで書いてください。";
-        private static final String EXCLUDES_MISMATCH = "内容の違う原本は含みません。一覧で 1 件ずつ判断してください。";
+        private static final String EXCLUDES_MISMATCH = "内容の違う原本と差異は含みません。一覧で 1 件ずつ判断してください。";
         private static final String KEYLESS_GUIDE = "形式の誤りは採用できません。直したファイルを取り込み直してください。";
         private static final String IRREVOCABLE = "却下すると取り消せません。誤って却下したときは、提供元に同じ原本を送り直してもらってください。";
         /** 補助文字（U+20BB7。UTF-16 で 2 単位）。 */
@@ -763,7 +769,7 @@ class UndecidedRecordControllerTest {
             String page = body(get(LIST_URL + "?ingestion=" + INGESTION_ID));
 
             org.assertj.core.api.Assertions.assertThat(page).contains(linkOf("2"));
-            org.assertj.core.api.Assertions.assertThat(page.indexOf("この取込の判断を待つ隔離 3 件"))
+            org.assertj.core.api.Assertions.assertThat(page.indexOf("この取込の判断を待つ隔離・差異 3 件"))
                     .isLessThan(page.indexOf(linkOf("2")));
         }
 
@@ -811,22 +817,22 @@ class UndecidedRecordControllerTest {
         }
 
         @Test
-        void 行18_ページ送りは件数の文とまとめての却下のリンクとすべての取込の隔離を見るの後で表の前に1つだけある() throws Exception {
+        void 行18_ページ送りは件数の文とまとめての却下のリンクとすべての取込の隔離と差異を見るの後で表の前に1つだけある() throws Exception {
             UndecidedRecordPage second = new UndecidedRecordPage(items(100), 10001, 2, 101, INGESTION_ID, false, 10000);
             given(query.page(INGESTION_ID, 2)).willReturn(second);
 
             String page = body(get(LIST_URL + "?ingestion=" + INGESTION_ID + "&page=2"));
 
-            int count = page.indexOf("この取込の判断を待つ隔離 10,001 件");
+            int count = page.indexOf("この取込の判断を待つ隔離・差異 10,001 件");
             int link = page.indexOf(linkOf("10,000"));
-            int all = page.indexOf(">すべての取込の隔離を見る</a>");
-            String navTag = "<nav aria-label=\"判断を待つ隔離のページ\">";
+            int all = page.indexOf(">すべての取込の隔離・差異を見る</a>");
+            String navTag = "<nav aria-label=\"判断を待つ隔離・差異のページ\">";
             int nav = page.indexOf(navTag);
             int table = page.indexOf(TABLE);
             org.assertj.core.api.Assertions.assertThat(List.of(count, link, all, nav, table))
                     .doesNotContain(-1)
                     .isSorted();
-            org.assertj.core.api.Assertions.assertThat(page.indexOf("判断を待つ隔離のページ", nav + navTag.length()))
+            org.assertj.core.api.Assertions.assertThat(page.indexOf("判断を待つ隔離・差異のページ", nav + navTag.length()))
                     .isEqualTo(-1);
         }
 
@@ -838,7 +844,7 @@ class UndecidedRecordControllerTest {
                     .willReturn(new UndecidedRecordPage(List.of(), 0, 1, 0, INGESTION_ID, false, 0));
 
             list("?ingestion=" + INGESTION_ID + "&page=3")
-                    .andExpect(content().string(containsString("<p>この取込に判断を待つ隔離はありません。</p>")))
+                    .andExpect(content().string(containsString("<p>この取込に判断を待つ隔離・差異はありません。</p>")))
                     .andExpect(content().string(not(containsString("0〜0 件目"))))
                     .andExpect(content().string(not(containsString("<table"))));
         }
@@ -1061,7 +1067,7 @@ class UndecidedRecordControllerTest {
                     "開発海運（架空）",
                     recordType,
                     new PhysicalLineRange(140, 140),
-                    false,
+                    Classification.QUARANTINED,
                     "DEMO-201",
                     "3",
                     "140 行目: 同じ外部 ID・外部版で内容の違う原本を受け取りました（最初の受信: 2026-11-15 09:00:00 UTC）。");
@@ -1200,7 +1206,7 @@ class UndecidedRecordControllerTest {
                     "開発海運（架空）",
                     recordType,
                     new PhysicalLineRange(4, 4),
-                    keyless,
+                    Classification.QUARANTINED,
                     keyless ? null : "MS-0001",
                     keyless ? null : "1",
                     "4 行目: 注記");
@@ -1301,7 +1307,7 @@ class UndecidedRecordControllerTest {
                     "開発港運（架空）",
                     recordType,
                     new PhysicalLineRange(3, 3),
-                    false,
+                    Classification.QUARANTINED,
                     "MS-0201",
                     "2",
                     "3 行目: 同じ外部 ID・外部版で内容の違う原本を受け取りました（最初の受信: 2026-11-15 09:00:00 UTC）。");
@@ -1570,7 +1576,7 @@ class UndecidedRecordControllerTest {
                     "開発海運（架空）",
                     "VOYAGE",
                     new PhysicalLineRange(140, 140),
-                    keyless,
+                    Classification.QUARANTINED,
                     keyless ? null : "DEMO-201",
                     keyless ? null : "3",
                     "140 行目: 理由");
@@ -1859,7 +1865,7 @@ class UndecidedRecordControllerTest {
                     "開発港運（架空）",
                     "MILESTONE",
                     new PhysicalLineRange(3, 3),
-                    false,
+                    Classification.QUARANTINED,
                     "MS-0201",
                     "2",
                     "3 行目: 理由");
@@ -1895,6 +1901,10 @@ class UndecidedRecordControllerTest {
 
         static Stream<Arguments> reasonTexts() {
             return Stream.of(
+                    Arguments.of(
+                            NotAdoptableReason.DISCREPANCY,
+                            "差異は採用できません。正しい値を使うときは、提供元に後で取得した新しい外部版で送り直してもらってください"
+                                    + "（追跡番号の違う実績は、追跡管理者に正しい追跡記録へ手入力してもらってください）。"),
                     Arguments.of(NotAdoptableReason.KEYLESS, KEYLESS_TEXT),
                     Arguments.of(NotAdoptableReason.VALUE_NOT_RECORDED, VALUE_NOT_RECORDED_TEXT),
                     Arguments.of(NotAdoptableReason.VALUE_UNREADABLE, VALUE_UNREADABLE_TEXT),
@@ -1944,7 +1954,10 @@ class UndecidedRecordControllerTest {
         static Stream<Arguments> noRefusalText() {
             return Stream.of(
                     Arguments.of("採用できる", Optional.empty(), true),
-                    Arguments.of("行き先を決めた後に判断された", Optional.of(new DecisionOutcome.AlreadyDecided()), false),
+                    Arguments.of(
+                            "行き先を決めた後に判断された",
+                            Optional.of(new DecisionOutcome.AlreadyDecided(Classification.QUARANTINED)),
+                            false),
                     Arguments.of("読み直すとない", Optional.of(new DecisionOutcome.NotFound()), false),
                     Arguments.of("読み直すと隔離でない", Optional.of(new DecisionOutcome.NotDecidable()), false));
         }
@@ -2030,7 +2043,8 @@ class UndecidedRecordControllerTest {
 
         @Test
         void 行13_戻った画面の前にほかの人が判断すると一覧に戻って判断済みと知らせる() throws Exception {
-            given(decisions.refusalOf(RECORD_ID)).willReturn(Optional.of(new DecisionOutcome.AlreadyDecided()));
+            given(decisions.refusalOf(RECORD_ID))
+                    .willReturn(Optional.of(new DecisionOutcome.AlreadyDecided(Classification.QUARANTINED)));
 
             mockMvc.perform(get(DECISION_URL + "?ingestion=" + INGESTION_ID + "&page=2")
                             .flashAttr(FLASH, true))
@@ -2046,8 +2060,18 @@ class UndecidedRecordControllerTest {
             String decision = DECISION_URL + "?ingestion=" + INGESTION_ID + "&page=2";
             return Stream.of(
                     Arguments.of(new DecisionOutcome.AdoptedQuarantine(RECORD_ID), 302, list, "result", "隔離を採用しました。"),
-                    Arguments.of(new DecisionOutcome.Rejected(RECORD_ID), 302, list, "result", "隔離を却下しました。"),
-                    Arguments.of(new DecisionOutcome.AlreadyDecided(), 302, list, "result", "この隔離は判断済みです。"),
+                    Arguments.of(
+                            new DecisionOutcome.Rejected(RECORD_ID, Classification.QUARANTINED),
+                            302,
+                            list,
+                            "result",
+                            "隔離を却下しました。"),
+                    Arguments.of(
+                            new DecisionOutcome.AlreadyDecided(Classification.QUARANTINED),
+                            302,
+                            list,
+                            "result",
+                            "この隔離は判断済みです。"),
                     Arguments.of(refused(NotAdoptableReason.TRACKING_NUMBER_DIFFERS), 302, decision, FLASH, true),
                     Arguments.of(new DecisionOutcome.NotFound(), 404, null, null, null),
                     Arguments.of(new DecisionOutcome.NotDecidable(), 404, null, null, null),
@@ -2104,7 +2128,7 @@ class UndecidedRecordControllerTest {
                             "開発海運（架空）",
                             "VOYAGE",
                             new PhysicalLineRange(3, 3),
-                            false,
+                            Classification.QUARANTINED,
                             "DEMO-201",
                             "3",
                             "3 行目: 理由")));
@@ -2203,6 +2227,247 @@ class UndecidedRecordControllerTest {
                     .contains("<p id=\"adoption-refusal\" tabindex=\"-1\">" + SAME_PAYLOAD_TEXT + "</p>")
                     .doesNotContain(ADOPTION_HEADING);
             Assertions.assertThat(page.split("id=\"error-summary\"", -1)).hasSize(2);
+        }
+    }
+
+    /**
+     * Bolt 39h2 の行 7〜9（差異の一覧と判断の画面と却下・採用の POST。決定 (4)・(5)・(6)）。判断のサービスと照会は mock にする。差異の判断の画面は
+     * 見出し「差異の判断」・{@code dt}「差異の理由」・採用の欄なし・採用できない理由の文・「受け取った値」の領域だけを示す。
+     */
+    @Nested
+    class Bolt39h2_差異の一覧と判断 {
+
+        private static final UUID RECORD_ID = UUID.fromString("39f20000-0000-0000-0000-0000000000dd");
+        private static final String DECISION_URL = LIST_URL + "/" + RECORD_ID;
+        private static final String REFUSAL_TEXT =
+                "差異は採用できません。正しい値を使うときは、提供元に後で取得した新しい外部版で送り直してもらってください" + "（追跡番号の違う実績は、追跡管理者に正しい追跡記録へ手入力してもらってください）。";
+        private static final String REVERSED_NOTE =
+                "6 行目: 同じ外部 ID で後に取得した外部版 \"2\" を採用しているので、前に取得したこの外部版は採用していません（版の逆転）。";
+
+        private UndecidedRecordPage.Item discrepancy() {
+            return new UndecidedRecordPage.Item(
+                    RECORD_ID,
+                    INGESTED_AT,
+                    "開発海運（架空）",
+                    "VOYAGE",
+                    new PhysicalLineRange(6, 6),
+                    Classification.DISCREPANCY,
+                    "DEMO-201",
+                    "1",
+                    REVERSED_NOTE);
+        }
+
+        private UndecidedRecordPage.Item quarantine() {
+            return new UndecidedRecordPage.Item(
+                    UUID.randomUUID(),
+                    INGESTED_AT,
+                    "開発海運（架空）",
+                    "VOYAGE",
+                    new PhysicalLineRange(4, 4),
+                    Classification.QUARANTINED,
+                    "DEMO-202",
+                    "1",
+                    "4 行目: 同じ外部 ID・外部版で内容の違う原本を受け取りました。");
+        }
+
+        private static QuarantineValues receivedOnly() {
+            VoyageValues voyage = new VoyageValues(
+                    "DEMO-201",
+                    List.of(
+                            new PortCallValue(
+                                    new Location("JPTYO"), null, new UtcInstant(Instant.parse("2026-11-18T23:00:00Z"))),
+                            new PortCallValue(
+                                    new Location("USLAX"),
+                                    new UtcInstant(Instant.parse("2026-12-01T22:00:00Z")),
+                                    null)));
+            return new QuarantineValues(voyage, Instant.parse("2026-11-16T00:30:00Z"), null);
+        }
+
+        private void givenDiscrepancy(QuarantineValues values) {
+            given(decisions.refusalOf(RECORD_ID)).willReturn(Optional.empty());
+            given(query.undecidedRecord(RECORD_ID)).willReturn(Optional.of(discrepancy()));
+            given(decisions.adoptionRefusalOf(RECORD_ID))
+                    .willReturn(Optional.of(new DecisionOutcome.NotAdoptable(
+                            RECORD_ID, DecisionOutcome.NotAdoptableReason.DISCREPANCY)));
+            given(query.quarantineValues(any())).willReturn(Optional.ofNullable(values));
+        }
+
+        private String decisionPage() throws Exception {
+            return mockMvc.perform(get(DECISION_URL))
+                    .andExpect(status().isOk())
+                    .andReturn()
+                    .getResponse()
+                    .getContentAsString(StandardCharsets.UTF_8);
+        }
+
+        @Test
+        void 行7_a_隔離と差異が1件ずつの一覧は件数の文と種類と読み上げを隔離と差異の語で示す() throws Exception {
+            UndecidedRecordPage.Item quarantine = quarantine();
+            given(query.page(null, 1))
+                    .willReturn(new UndecidedRecordPage(List.of(quarantine, discrepancy()), 2, 1, 1, null, false, 0));
+
+            String page = mockMvc.perform(get(LIST_URL))
+                    .andExpect(status().isOk())
+                    .andReturn()
+                    .getResponse()
+                    .getContentAsString(StandardCharsets.UTF_8);
+
+            Assertions.assertThat(page)
+                    .contains("<p>判断を待つ隔離・差異 2 件（1〜2 件目を示しています）</p>")
+                    .contains("<caption>判断を待つ隔離・差異</caption>")
+                    .contains("aria-label=\"判断を待つ隔離・差異\"")
+                    .contains("<th scope=\"col\">隔離・差異の理由</th>")
+                    .contains("<td>内容の違う原本</td>")
+                    .contains("<td>差異</td>")
+                    .contains("<td>DEMO-201・1</td>")
+                    .contains("（6 行目、DEMO-201・1）")
+                    // 注記には取込ファイルから来た値が入るので文字として示す
+                    .contains("<td>6 行目: 同じ外部 ID で後に取得した外部版 &quot;2&quot; を採用しているので");
+        }
+
+        @Test
+        void 行7_b_c_取込で絞った一覧と0件の文は隔離と差異の語でページ送りの名前も同じ() throws Exception {
+            given(query.page(INGESTION_ID, 1)).willReturn(page(101, 1, INGESTION_ID));
+            given(query.page(null, 1)).willReturn(page(0, 1, null));
+
+            Assertions.assertThat(mockMvc.perform(get(LIST_URL + "?ingestion=" + INGESTION_ID))
+                            .andReturn()
+                            .getResponse()
+                            .getContentAsString(StandardCharsets.UTF_8))
+                    .contains("<p>この取込の判断を待つ隔離・差異 101 件（1〜100 件目を示しています）</p>")
+                    .contains("<a href=\"" + LIST_URL + "\">すべての取込の隔離・差異を見る</a>")
+                    .contains("aria-label=\"判断を待つ隔離・差異のページ\"");
+            Assertions.assertThat(mockMvc.perform(get(LIST_URL))
+                            .andReturn()
+                            .getResponse()
+                            .getContentAsString(StandardCharsets.UTF_8))
+                    .contains("<p>判断を待つ隔離・差異はありません。</p>");
+        }
+
+        @Test
+        void 行8_a_差異の判断の画面は差異の判断と差異の理由と採用できない理由を示し採用の欄を出さない() throws Exception {
+            givenDiscrepancy(receivedOnly());
+
+            String page = decisionPage();
+
+            Assertions.assertThat(page)
+                    .contains("<title>差異の判断 - cargo-tracker</title>")
+                    .contains("<h1>差異の判断</h1>")
+                    .containsPattern("<dt>種類</dt>\\s*<dd>差異</dd>")
+                    .containsPattern("<dt>差異の理由</dt>\\s*<dd>" + Pattern.quote(REVERSED_NOTE.replace("\"", "&quot;")))
+                    .doesNotContain("<dt>隔離の理由</dt>")
+                    .contains("<p id=\"adoption-refusal\" tabindex=\"-1\">" + REFUSAL_TEXT + "</p>")
+                    .doesNotContain("<h2 id=\"adoption-heading\">")
+                    .contains("<label for=\"reason\">却下の理由</label>")
+                    .contains(">却下する</button>")
+                    .contains("<h2 id=\"received-values-heading\">受け取った値</h2>")
+                    .doesNotContain("この外部版の採用値")
+                    .doesNotContain("この外部版の採用値はありません。");
+        }
+
+        @Test
+        void 行8_c_受け取った値を読めない差異は値を読めませんでしたと示し500にしない() throws Exception {
+            givenDiscrepancy(new QuarantineValues(null, true, Instant.parse("2026-11-16T00:30:00Z"), null));
+
+            Assertions.assertThat(decisionPage())
+                    .contains("<h2 id=\"received-values-heading\">受け取った値</h2>")
+                    .contains("値を読めませんでした。")
+                    .doesNotContain("この外部版の採用値");
+        }
+
+        @Test
+        void 行8_d_隔離の判断の画面は隔離の判断と隔離の理由と2つの値の領域のまま() throws Exception {
+            UndecidedRecordPage.Item quarantine = new UndecidedRecordPage.Item(
+                    RECORD_ID,
+                    INGESTED_AT,
+                    "開発海運（架空）",
+                    "VOYAGE",
+                    new PhysicalLineRange(4, 4),
+                    Classification.QUARANTINED,
+                    "DEMO-202",
+                    "1",
+                    "4 行目: 同じ外部 ID・外部版で内容の違う原本を受け取りました。");
+            given(decisions.refusalOf(RECORD_ID)).willReturn(Optional.empty());
+            given(query.undecidedRecord(RECORD_ID)).willReturn(Optional.of(quarantine));
+            given(decisions.adoptionRefusalOf(RECORD_ID)).willReturn(Optional.empty());
+            given(query.quarantineValues(any()))
+                    .willReturn(Optional.of(new QuarantineValues(
+                            receivedOnly().received(), Instant.parse("2026-11-16T00:30:00Z"), null)));
+
+            Assertions.assertThat(decisionPage())
+                    .contains("<h1>隔離の判断</h1>")
+                    .containsPattern("<dt>隔離の理由</dt>")
+                    .contains("<h2 id=\"received-values-heading\">受け取った値</h2>")
+                    .contains("<h2 id=\"adopted-values-heading\"")
+                    .contains("<h2 id=\"adoption-heading\">採用する</h2>");
+        }
+
+        @Test
+        void 行9_a_b_差異の却下と判断済みは差異の文で一覧に戻って知らせる() throws Exception {
+            given(decisions.reject(any(), any()))
+                    .willReturn(
+                            new DecisionOutcome.Rejected(RECORD_ID, Classification.DISCREPANCY),
+                            new DecisionOutcome.AlreadyDecided(Classification.DISCREPANCY));
+
+            mockMvc.perform(post(DECISION_URL + "/decision").param("reason", "古い外部版と分かった。"))
+                    .andExpect(status().is3xxRedirection())
+                    .andExpect(flash().attribute("result", "差異を却下しました。"));
+            mockMvc.perform(post(DECISION_URL + "/decision").param("reason", "古い外部版と分かった。"))
+                    .andExpect(status().is3xxRedirection())
+                    .andExpect(flash().attribute("result", "この差異は判断済みです。"));
+        }
+
+        @Test
+        void 行9_c_差異に採用をPOSTすると採用せず判断の画面に戻る() throws Exception {
+            given(decisions.adopt(any(), any()))
+                    .willReturn(new DecisionOutcome.NotAdoptable(
+                            RECORD_ID, DecisionOutcome.NotAdoptableReason.DISCREPANCY));
+
+            mockMvc.perform(post(DECISION_URL + "/adoption").param("reason", "採用したい。"))
+                    .andExpect(status().is3xxRedirection())
+                    .andExpect(redirectedUrl(DECISION_URL + "?page=1"))
+                    .andExpect(flash().attribute("adoptionRefused", true));
+        }
+
+        @Test
+        void 行9_c_採用できなかった後の差異の判断の画面はエラー要約に差異の文を示しタイトルは差異の判断() throws Exception {
+            givenDiscrepancy(receivedOnly());
+
+            String page = mockMvc.perform(get(DECISION_URL).flashAttr("adoptionRefused", true))
+                    .andExpect(status().isOk())
+                    .andReturn()
+                    .getResponse()
+                    .getContentAsString(StandardCharsets.UTF_8);
+
+            Assertions.assertThat(page)
+                    .contains("<title>採用できませんでした - 差異の判断 - cargo-tracker</title>")
+                    .contains("<a href=\"#adoption-refusal\">" + REFUSAL_TEXT + "</a>");
+        }
+
+        @Test
+        void 行9_d_1000文字を超える採用の理由は採用せず判断の画面に戻って差異の文を示す() throws Exception {
+            given(decisions.adoptionRefusalOf(RECORD_ID))
+                    .willReturn(Optional.of(new DecisionOutcome.NotAdoptable(
+                            RECORD_ID, DecisionOutcome.NotAdoptableReason.DISCREPANCY)));
+
+            mockMvc.perform(post(DECISION_URL + "/adoption").param("reason", "あ".repeat(1001)))
+                    .andExpect(status().is3xxRedirection())
+                    .andExpect(redirectedUrl(DECISION_URL + "?page=1"))
+                    .andExpect(flash().attribute("adoptionRefused", true));
+            then(decisions).should(Mockito.never()).adopt(any(), any());
+        }
+
+        @Test
+        void 行9_f_判断の画面を開いた後にほかの人が差異を却下したら判断済みの差異の文で一覧に戻る() throws Exception {
+            // 行き先を決めた時は空、中身を読む時には判断済み。GET の着地は判断のサービスの定めを読み直して分類つきの判断済みで戻る
+            given(decisions.refusalOf(RECORD_ID))
+                    .willReturn(Optional.empty())
+                    .willReturn(Optional.of(new DecisionOutcome.AlreadyDecided(Classification.DISCREPANCY)));
+            given(query.undecidedRecord(RECORD_ID)).willReturn(Optional.empty());
+
+            mockMvc.perform(get(DECISION_URL))
+                    .andExpect(status().is3xxRedirection())
+                    .andExpect(flash().attribute("result", "この差異は判断済みです。"));
         }
     }
 }

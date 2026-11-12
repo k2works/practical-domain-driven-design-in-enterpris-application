@@ -1,5 +1,6 @@
 package com.example.cargotracker.externaldata.application.internal.queryservices;
 
+import com.example.cargotracker.externaldata.domain.model.valueobjects.Classification;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PhysicalLineRange;
 import java.time.Instant;
 import java.util.List;
@@ -7,7 +8,7 @@ import java.util.Objects;
 import java.util.UUID;
 
 /**
- * 判断を待つ隔離の 1 ページ。判断を待つ隔離の照会の値（S-17 の一覧。Bolt 39d）。1 ページは
+ * 判断を待つ隔離・差異の 1 ページ。判断を待つ隔離・差異の照会の値（S-17 の一覧。Bolt 39d）。1 ページは
  * {@link UndecidedRecordQueryService#PAGE_SIZE} 件で、示す頁は 1 から頁の数まで（件数が 0 なら 1 で、頁の数は 0）。
  *
  * @param items 示す判断を待つ隔離（取込の新しい順・ファイルの行の順。並びは受信記録の照会が決める）
@@ -53,14 +54,14 @@ public record UndecidedRecordPage(
     }
 
     /**
-     * 判断を待つ隔離の 1 件。
+     * 判断を待つ隔離・差異の 1 件。
      *
      * @param receivedRecordId 受信記録 ID
      * @param ingestedAt 取り込んだ日時（取込の取込時刻）
      * @param provider 情報源の提供元
      * @param recordType 情報源の原本種別（取込ファイルの種別の名前）
      * @param lineRange 行の範囲（ファイルの誤りは {@code null}）
-     * @param keyless キーのない隔離（形式の誤り）か。外部原本を持てば内容の違う原本
+     * @param classification 分類（隔離か差異。Bolt 39h2）。外部原本を持たない隔離がキーのない隔離（形式の誤り）で、持てば内容の違う原本か差異
      * @param externalId 外部 ID（キーのない隔離は {@code null}）
      * @param externalVersion 外部版（キーのない隔離は {@code null}）
      * @param note 隔離の理由（分類の注記）
@@ -71,8 +72,14 @@ public record UndecidedRecordPage(
             String provider,
             String recordType,
             PhysicalLineRange lineRange,
-            boolean keyless,
+            Classification classification,
             String externalId,
             String externalVersion,
-            String note) {}
+            String note) {
+
+        /** キーのない隔離（形式の誤り）か（外部原本を持たない）。 */
+        public boolean keyless() {
+            return externalId == null;
+        }
+    }
 }

@@ -50,6 +50,7 @@ public interface ReceivedRecordMapper {
      */
     record UndecidedRecordRow(
             UUID id,
+            String classification,
             UUID ingestionId,
             OffsetDateTime ingestedAt,
             UUID dataSourceId,

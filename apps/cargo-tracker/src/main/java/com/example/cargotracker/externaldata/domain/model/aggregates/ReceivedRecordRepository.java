@@ -26,7 +26,7 @@ public interface ReceivedRecordRepository {
     List<ReceivedRecord> quarantinesAndDiscrepanciesOf(UUID ingestionId, int limit);
 
     /**
-     * 判断を待つ隔離（分類が隔離で、受信記録の判断の行がない、取込で書いた受信記録）を、取込の新しい順、同じ時刻の取込は取込 ID の順、同じ取込の
+     * 判断を待つ隔離・差異（分類が隔離か差異で、受信記録の判断の行がない、取込で書いた受信記録。差異は Bolt 39h2）を、取込の新しい順、同じ時刻の取込は取込 ID の順、同じ取込の
      * 中は範囲のないファイルの誤りを先に行の範囲の始まりの順、受信記録 ID の順に、{@code offset} 件を飛ばして最大 {@code limit} 件（S-17 の
      * 一覧。Bolt 39d）。取込の時刻・情報源 ID と外部原本の外部 ID・外部版を結んで読む。
      *
@@ -34,7 +34,7 @@ public interface ReceivedRecordRepository {
      */
     List<UndecidedRecord> undecidedRecords(UUID ingestionIdOrNull, int offset, int limit);
 
-    /** 判断を待つ隔離の件数（{@link #undecidedRecords} と同じ絞り込み。Bolt 39d）。 */
+    /** 判断を待つ隔離・差異の件数（{@link #undecidedRecords} と同じ絞り込み。Bolt 39d）。 */
     int countUndecidedRecords(UUID ingestionIdOrNull);
 
     /**

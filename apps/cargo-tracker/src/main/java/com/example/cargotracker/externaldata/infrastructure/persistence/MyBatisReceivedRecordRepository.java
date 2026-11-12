@@ -103,6 +103,7 @@ public class MyBatisReceivedRecordRepository implements ReceivedRecordRepository
     private static UndecidedRecord toDomain(ReceivedRecordMapper.UndecidedRecordRow row) {
         return new UndecidedRecord(
                 row.id(),
+                Classification.valueOf(row.classification()),
                 row.ingestionId(),
                 row.ingestedAt().toInstant(),
                 row.dataSourceId(),

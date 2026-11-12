@@ -83,6 +83,7 @@ class UndecidedRecordQueryServiceTest {
     private UndecidedRecord keyless(DataSource source, int line) {
         return new UndecidedRecord(
                 UUID.randomUUID(),
+                Classification.QUARANTINED,
                 ingestionId,
                 INGESTED_AT,
                 source.id(),
@@ -113,6 +114,7 @@ class UndecidedRecordQueryServiceTest {
             String externalRecord, String externalId, String externalVersion, boolean keyless) {
         UndecidedRecord quarantine = new UndecidedRecord(
                 UUID.randomUUID(),
+                Classification.QUARANTINED,
                 ingestionId,
                 INGESTED_AT,
                 voyage.id(),
@@ -133,7 +135,7 @@ class UndecidedRecordQueryServiceTest {
                         voyage.provider(),
                         "VOYAGE",
                         new PhysicalLineRange(140, 141),
-                        keyless,
+                        Classification.QUARANTINED,
                         externalId,
                         externalVersion,
                         "140 行目から 141 行目まで: 注記"));
@@ -142,8 +144,16 @@ class UndecidedRecordQueryServiceTest {
     @Test
     void 行1_行2_期待の組は外部原本のある隔離とない隔離の両方を含む() {
         // 一覧に出る分類は隔離だけ（採用・重複は照会が返さない。契約のテストの行 3）。隔離の 2 つの種類をすべて縛る（T-240）
-        UndecidedRecord withKey =
-                new UndecidedRecord(UUID.randomUUID(), ingestionId, INGESTED_AT, voyage.id(), null, "V-1", "1", "注記");
+        UndecidedRecord withKey = new UndecidedRecord(
+                UUID.randomUUID(),
+                Classification.QUARANTINED,
+                ingestionId,
+                INGESTED_AT,
+                voyage.id(),
+                null,
+                "V-1",
+                "1",
+                "注記");
         UndecidedRecord withoutKey = keyless(voyage, 2);
         given(receivedRecords.countUndecidedRecords(null)).willReturn(2);
         given(receivedRecords.undecidedRecords(null, 0, UndecidedRecordQueryService.PAGE_SIZE))
@@ -273,6 +283,7 @@ class UndecidedRecordQueryServiceTest {
         void 行18_IDで絞った判断を待つ隔離を一覧と同じ項目で返し情報源を1回引く() {
             UndecidedRecord mismatch = new UndecidedRecord(
                     UUID.randomUUID(),
+                    Classification.QUARANTINED,
                     ingestionId,
                     INGESTED_AT,
                     voyage.id(),
@@ -289,7 +300,7 @@ class UndecidedRecordQueryServiceTest {
                             voyage.provider(),
                             "VOYAGE",
                             new PhysicalLineRange(140, 141),
-                            false,
+                            Classification.QUARANTINED,
                             "DEMO-201",
                             "3",
                             mismatch.note()));
@@ -541,7 +552,7 @@ class UndecidedRecordQueryServiceTest {
                     voyage.provider(),
                     "VOYAGE",
                     new PhysicalLineRange(3, 3),
-                    false,
+                    Classification.QUARANTINED,
                     "DEMO-201",
                     externalVersion,
                     "注記");
@@ -616,7 +627,7 @@ class UndecidedRecordQueryServiceTest {
                     voyage.provider(),
                     recordType,
                     new PhysicalLineRange(3, 3),
-                    keyless,
+                    Classification.QUARANTINED,
                     keyless ? null : "DEMO-201",
                     keyless ? null : "3",
                     "3 行目: 注記");
@@ -788,7 +799,7 @@ class UndecidedRecordQueryServiceTest {
                     milestone.provider(),
                     recordType,
                     new PhysicalLineRange(3, 3),
-                    false,
+                    Classification.QUARANTINED,
                     "MS-0201",
                     "2",
                     "3 行目: 注記");
@@ -1095,6 +1106,83 @@ class UndecidedRecordQueryServiceTest {
                     .isNull();
             assertThat(new QuarantineValues.Adopted(values, "2", PUBLISHED_AT, ADOPTED_ACQUIRED_AT).illegible())
                     .isFalse();
+        }
+    }
+
+    /**
+     * Bolt 39h2 の行 8・4（差異の判断の画面の中身。決定 (5)）。差異は受け取った値だけを返し、この外部版の採用値は引かずに空にする（差異の外部原本は採用値を
+     * 持たない。比べる相手がないのに「この外部版の採用値はありません。」と出さない）。一覧の行は分類を持つ。
+     */
+    @Nested
+    class Bolt39h2_差異の受け取った値 {
+
+        private static final Instant ACQUIRED_AT = Instant.parse("2026-11-16T00:30:00Z");
+        private static final String SUMMARY = "JPTYO;;2026-11-18T23:00:00.000000Z|USLAX;2026-12-01T22:00:00.000000Z;";
+
+        private final UUID externalRecordId = UUID.randomUUID();
+
+        private ReceivedRecord discrepancy() {
+            return new ReceivedRecord(
+                    UUID.randomUUID(),
+                    externalRecordId,
+                    ingestionId,
+                    PayloadHash.of(new byte[] {3}),
+                    PayloadObjectKey.newRecordPayload(),
+                    ACQUIRED_AT,
+                    Classification.DISCREPANCY,
+                    "3 行目: 版の逆転",
+                    INGESTED_AT,
+                    new PhysicalLineRange(3, 3),
+                    new ReceivedValue("DEMO-201", SUMMARY));
+        }
+
+        private UndecidedRecordPage.Item item(UUID receivedRecordId) {
+            return new UndecidedRecordPage.Item(
+                    receivedRecordId,
+                    INGESTED_AT,
+                    voyage.provider(),
+                    "VOYAGE",
+                    new PhysicalLineRange(3, 3),
+                    Classification.DISCREPANCY,
+                    "DEMO-201",
+                    "3",
+                    "3 行目: 版の逆転");
+        }
+
+        @Test
+        void 行8_差異は受け取った値と取得時刻を返しこの外部版の採用値は引かずに空() {
+            ReceivedRecord discrepancy = discrepancy();
+            given(receivedRecords.findById(discrepancy.id())).willReturn(Optional.of(discrepancy));
+
+            Optional<QuarantineValues> values = service.quarantineValues(item(discrepancy.id()));
+
+            assertThat(values).hasValueSatisfying(found -> {
+                assertThat(found.received()).isNotNull();
+                assertThat(found.receivedAcquiredAt()).isEqualTo(ACQUIRED_AT);
+                assertThat(found.adopted()).isNull();
+            });
+            then(adoptedValues).shouldHaveNoInteractions();
+        }
+
+        @Test
+        void 行4_差異の項目は分類を持ち外部原本を持つのでキーのない隔離ではない() {
+            UndecidedRecord record = new UndecidedRecord(
+                    UUID.randomUUID(),
+                    Classification.DISCREPANCY,
+                    ingestionId,
+                    INGESTED_AT,
+                    voyage.id(),
+                    new PhysicalLineRange(3, 3),
+                    "DEMO-201",
+                    "3",
+                    "3 行目: 版の逆転");
+            given(receivedRecords.undecidedRecord(record.receivedRecordId())).willReturn(Optional.of(record));
+
+            UndecidedRecordPage.Item found =
+                    service.undecidedRecord(record.receivedRecordId()).orElseThrow();
+
+            assertThat(found.classification()).isEqualTo(Classification.DISCREPANCY);
+            assertThat(found.keyless()).isFalse();
         }
     }
 

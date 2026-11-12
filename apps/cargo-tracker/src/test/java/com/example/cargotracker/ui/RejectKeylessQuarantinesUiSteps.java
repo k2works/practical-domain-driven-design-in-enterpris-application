@@ -28,7 +28,7 @@ public class RejectKeylessQuarantinesUiSteps {
     /** 一覧のまとめての却下のリンクの名前（件数は 3 桁の区切り）。 */
     private static final Pattern LINK_NAME = Pattern.compile("^この取込の形式の誤りをまとめて却下する（[0-9,]+ 件）$");
 
-    private static final String EXCLUDES_MISMATCH = "内容の違う原本は含みません。一覧で 1 件ずつ判断してください。";
+    private static final String EXCLUDES_MISMATCH = "内容の違う原本と差異は含みません。一覧で 1 件ずつ判断してください。";
     private static final String KEYLESS_GUIDE = "形式の誤りは採用できません。直したファイルを取り込み直してください。";
     private static final String IRREVOCABLE = "却下すると取り消せません。誤って却下したときは、提供元に同じ原本を送り直してもらってください。";
 

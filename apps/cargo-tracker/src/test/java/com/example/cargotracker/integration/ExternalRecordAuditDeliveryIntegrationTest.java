@@ -328,7 +328,8 @@ class ExternalRecordAuditDeliveryIntegrationTest {
                 DecisionOutcome outcome = decisionService.reject(
                         steward, new RejectReceivedRecordCommand(receivedRecordId, "提供元に確かめた; 誤送信"));
 
-                assertThat(outcome).isEqualTo(new DecisionOutcome.Rejected(receivedRecordId));
+                assertThat(outcome)
+                        .isEqualTo(new DecisionOutcome.Rejected(receivedRecordId, Classification.QUARANTINED));
                 awaitCompletedAuditPublication(ReceivedRecordDecided.class, receivedRecordId);
                 assertThat(auditRecordOf(AuditAction.EXTERNAL_RECORD_DECIDED, receivedRecordId))
                         .containsEntry("result", "SUCCESS")
@@ -756,6 +757,37 @@ class ExternalRecordAuditDeliveryIntegrationTest {
                 removeSource(sourceId);
             }
         }
+
+        @Test
+        void Bolt39h2_行11_差異の却下のコミットの後に判断の監査記録を1つ書き差異の発見の監査で差異と読める() {
+            UUID sourceId = insertApprovedSource("運送会社-" + UUID.randomUUID(), "MILESTONE");
+            try {
+                Ingested result = ingested(ingestionService.ingest(steward, conflictingFile(sourceId)));
+                UUID discrepancy = result.rows().get(1).receivedRecordId();
+
+                DecisionOutcome outcome = decisionService.reject(
+                        steward, new RejectReceivedRecordCommand(discrepancy, "提供元に確かめた; 古い外部版"));
+
+                assertThat(outcome).isEqualTo(new DecisionOutcome.Rejected(discrepancy, Classification.DISCREPANCY));
+                awaitCompletedAuditPublication(ReceivedRecordDecided.class, discrepancy);
+                assertThat(auditRecordOf(AuditAction.EXTERNAL_RECORD_DECIDED, discrepancy))
+                        .containsEntry("result", "SUCCESS")
+                        .containsEntry("reason", "REJECTED");
+                awaitCompletedAuditPublication(ExternalRecordDiscrepancyFound.class, discrepancy);
+                assertThat(count(
+                                "SELECT COUNT(*) FROM identity.audit_record WHERE action = 'EXTERNAL_RECORD_DECIDED'"
+                                        + " AND target_type = 'RECEIVED_RECORD' AND target_id = ?",
+                                discrepancy.toString()))
+                        .isEqualTo(1);
+                assertThat(auditRecordOf(AuditAction.EXTERNAL_RECORD_DISCREPANCY_FOUND, discrepancy))
+                        .containsEntry("result", "SUCCESS");
+            } finally {
+                removeSource(sourceId);
+            }
+        }
+
+        @Autowired
+        ReceivedRecordDecisionService decisionService;
 
         @Test
         void 行6_b_巻き戻った取込では差異の発行記録も監査記録もない() {

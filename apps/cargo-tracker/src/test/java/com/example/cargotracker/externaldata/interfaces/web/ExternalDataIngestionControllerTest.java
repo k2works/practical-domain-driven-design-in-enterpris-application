@@ -895,7 +895,7 @@ class ExternalDataIngestionControllerTest {
             assertThat(page)
                     .matches(tableWith(1, 0, 1, 1))
                     .contains("<h2 id=\"quarantine-notes-heading\">隔離・差異の理由</h2>")
-                    .contains("この取込の隔離をすべて確認する")
+                    .contains("この取込の隔離・差異をすべて確認する")
                     .matches(Pattern.compile(
                             ".*<li>" + Pattern.quote(REVERSED_NOTE.replace("\"", "&quot;")) + "</li>\\s*<li>"
                                     + Pattern.quote(quarantineNote) + "</li>.*",
@@ -909,16 +909,16 @@ class ExternalDataIngestionControllerTest {
             assertThat(page)
                     .matches(tableWith(1, 0, 0, 0))
                     .doesNotContain("隔離・差異の理由")
-                    .doesNotContain("この取込の隔離をすべて確認する");
+                    .doesNotContain("この取込の隔離・差異をすべて確認する");
         }
 
         @Test
-        void 行8_c_差異だけなら理由は出てこの取込の隔離へのリンクは出ない() throws Exception {
+        void 行8_c_差異だけなら理由が出てこの取込の隔離と差異へのリンクも出る() throws Exception {
             String page = resultPage(summaryWith(0, 1, List.of(REVERSED_NOTE), 0));
 
             assertThat(page)
                     .contains("<h2 id=\"quarantine-notes-heading\">隔離・差異の理由</h2>")
-                    .doesNotContain("この取込の隔離をすべて確認する");
+                    .contains("この取込の隔離・差異をすべて確認する");
         }
 
         @Test
@@ -931,14 +931,14 @@ class ExternalDataIngestionControllerTest {
 
     /**
      * Bolt 39d の行 11・12（S-17 への入口。開始準備の決定 (2)）。結果の画面の隔離の理由の領域の最後（「続けて取り込む」の前）に、隔離が 1 件以上の
-     * ときだけ「この取込の隔離をすべて確認する」（その取込で絞る）を出し、ナビに「隔離・差異の確認」を出す。39c〜39c4 の同じ番号の行と名前が
+     * ときだけ「この取込の隔離・差異をすべて確認する」（その取込で絞る）を出し、ナビに「隔離・差異の確認」を出す。39c〜39c4 の同じ番号の行と名前が
      * 衝突しないよう入れ子にする。
      */
     @Nested
     class Bolt39d_入口 {
 
-        private static final String ENTRY_LINK =
-                "<a href=\"/staff/external-data/undecided-records?ingestion=" + INGESTION_ID + "\">この取込の隔離をすべて確認する</a>";
+        private static final String ENTRY_LINK = "<a href=\"/staff/external-data/undecided-records?ingestion="
+                + INGESTION_ID + "\">この取込の隔離・差異をすべて確認する</a>";
 
         private IngestionSummaryView summaryWith(int quarantinedCount, List<String> notes) {
             return new IngestionSummaryView(
@@ -966,7 +966,7 @@ class ExternalDataIngestionControllerTest {
         }
 
         @Test
-        void 行11_隔離があれば隔離の理由の領域の最後で続けて取り込むの前にこの取込の隔離をすべて確認するリンクを出す() throws Exception {
+        void 行11_隔離があれば隔離の理由の領域の最後で続けて取り込むの前にこの取込の隔離と差異をすべて確認するリンクを出す() throws Exception {
             String page = resultPage(summaryWith(1, List.of("3 行目: 値が空です（external_id）。提供元に確かめてください。")));
 
             assertThat(page).contains(ENTRY_LINK);
@@ -978,10 +978,31 @@ class ExternalDataIngestionControllerTest {
         }
 
         @Test
-        void 行11_隔離が0件ならこの取込の隔離をすべて確認するリンクを出さない() throws Exception {
+        void Bolt39h2_行10_b_差異だけの取込でもこの取込の隔離と差異をすべて確認するリンクを出す() throws Exception {
+            IngestionSummaryView discrepancyOnly = new IngestionSummaryView(
+                    INGESTION_ID,
+                    "開発海運（架空）",
+                    "VOYAGE",
+                    Instant.parse("2026-11-16T01:05:00Z"),
+                    2,
+                    1,
+                    0,
+                    0,
+                    1,
+                    List.of("3 行目: 同じ外部 ID で後に取得した外部版を採用しているので、前に取得したこの外部版は採用していません（版の逆転）。"),
+                    0,
+                    null);
+
+            String page = resultPage(discrepancyOnly);
+
+            assertThat(page).contains(ENTRY_LINK);
+        }
+
+        @Test
+        void 行11_隔離が0件ならこの取込の隔離と差異をすべて確認するリンクを出さない() throws Exception {
             String page = resultPage(summaryWith(0, List.of()));
 
-            assertThat(page).doesNotContain("この取込の隔離をすべて確認する").doesNotContain("undecided-records?ingestion=");
+            assertThat(page).doesNotContain("この取込の隔離・差異をすべて確認する").doesNotContain("undecided-records?ingestion=");
         }
 
         @Test

@@ -12,6 +12,7 @@ import com.example.cargotracker.externaldata.application.internal.queryservices.
 import com.example.cargotracker.externaldata.application.internal.queryservices.UndecidedRecordQueryService;
 import com.example.cargotracker.externaldata.domain.model.aggregates.ConcurrentExternalRecordUpdateException;
 import com.example.cargotracker.externaldata.domain.model.aggregates.ReceivedRecordDecision;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.Classification;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PhysicalLineRange;
 import com.example.cargotracker.platform.web.DateTimeDisplay;
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
@@ -32,7 +33,7 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 /**
- * S-17 隔離・差異の確認（データ責任者。US-14 AC4。Bolt 39d）。判断を待つ隔離を取込の新しい順・ファイルの行の順に 100 件ずつ示す。取込で絞れ
+ * S-17 隔離・差異の確認（データ責任者。US-14 AC4。Bolt 39d。差異は Bolt 39h2）。判断を待つ隔離と差異を取込の新しい順・ファイルの行の順に 100 件ずつ示す。取込で絞れ
  * （{@code ?ingestion=<取込 ID>}。S-16 の結果の画面の入口）、前後のページへ移れる（{@code ?page=<1 から>}）。トランザクションを持たず、照会の値を
  * 文言と項目に変えるだけで、並びとページの境（最後より後は最後のページ）を決めない。各行の「判断する」から判断の画面を開き、理由を書いて
  * 却下すると PRG で元の一覧に戻る（Bolt 39d2）。取込で絞った一覧に形式の誤りがあれば、まとめての却下の画面へのリンクを出し、その取込の
@@ -55,17 +56,18 @@ public class UndecidedRecordController {
     private static final String VIEW = "externaldata/undecided-records/index";
 
     /** 件数と示す範囲の文（数は 3 桁の区切り。Bolt 39d 計画の開始準備の決定 (3)）。 */
-    private static final String COUNT = "判断を待つ隔離 %s 件（%s〜%s 件目を示しています）";
+    private static final String COUNT = "判断を待つ隔離・差異 %s 件（%s〜%s 件目を示しています）";
 
     private static final String FILTERED_COUNT = "この取込の" + COUNT;
-    private static final String NONE = "判断を待つ隔離はありません。";
-    private static final String FILTERED_NONE = "この取込に判断を待つ隔離はありません。";
+    private static final String NONE = "判断を待つ隔離・差異はありません。";
+    private static final String FILTERED_NONE = "この取込に判断を待つ隔離・差異はありません。";
     private static final String INGESTION_NOT_FOUND = "指定された取込が見つかりません。";
 
     /** 種類の表示名（外部原本を持つ隔離と、外部原本も冪等性キーも持たないキーのない隔離）。 */
     private static final String CONTENT_MISMATCH = "内容の違う原本";
 
     private static final String FORMAT_ERROR = "形式の誤り";
+    private static final String DISCREPANCY_KIND = "差異";
 
     private static final String DECISION_VIEW = "externaldata/undecided-records/decision";
     private static final String FORM = "rejectionForm";
@@ -78,6 +80,8 @@ public class UndecidedRecordController {
 
     private static final String ADOPTED = "隔離を採用しました。";
     private static final String ALREADY_DECIDED = "この隔離は判断済みです。";
+    private static final String DISCREPANCY_REJECTED = "差異を却下しました。";
+    private static final String DISCREPANCY_ALREADY_DECIDED = "この差異は判断済みです。";
 
     /** 理由の欄の誤り（【業務の判断】(d)。必須、1000 文字まで）。 */
     private static final String REASON_REQUIRED = "却下の理由を書いてください。";
@@ -107,6 +111,9 @@ public class UndecidedRecordController {
             "情報源が承認済みではないため採用できません。受け取った値を使うときは、運用の手順で情報源を承認し直してから、この隔離を開き直してください。";
     private static final String TRACKING_NUMBER_DIFFERS_REFUSAL =
             "追跡番号がこの外部版の採用値と違うので採用できません。追跡番号を直した実績は、追跡管理者に正しい追跡記録へ手入力してもらってください（新しい外部版で送り直しても差異になります）。";
+    private static final String DISCREPANCY_REFUSAL =
+            "差異は採用できません。正しい値を使うときは、提供元に後で取得した新しい外部版で送り直してもらってください" + "（追跡番号の違う実績は、追跡管理者に正しい追跡記録へ手入力してもらってください）。";
+
     private static final String PAYLOAD_ALREADY_ADOPTED_REFUSAL = "同じ原本がすでに採用されているので採用できません。却下で片付けてください。";
 
     /** 1 つの取込の形式の誤りのまとめての却下（Bolt 39d2b の開始準備の決定 (3)）。件数は 3 桁の区切り。 */
@@ -379,8 +386,8 @@ public class UndecidedRecordController {
         }
         Optional<UndecidedRecordPage.Item> found = query.undecidedRecord(id);
         if (found.isEmpty()) {
-            // 行き先を決めた後に判断された
-            return respond(new DecisionOutcome.AlreadyDecided(), back, backPage, redirectAttributes);
+            // 行き先を決めた後に判断された。判断のサービスの定めを読み直し、その結果（分類つきの判断済み）で戻る（届かない分岐を作らない）
+            return respond(decisions.refusalOf(id).orElseThrow(), back, backPage, redirectAttributes);
         }
         UndecidedRecordPage.Item item = found.get();
         if (!model.containsAttribute(FORM)) {
@@ -400,22 +407,28 @@ public class UndecidedRecordController {
         model.addAttribute("ingestedAt", DateTimeDisplay.staff(item.ingestedAt()));
         model.addAttribute("source", ExternalDataIngestionController.sourceLabel(item.provider(), item.recordType()));
         model.addAttribute("lines", lines == null ? WHOLE_FILE : lines);
-        model.addAttribute("kind", item.keyless() ? FORMAT_ERROR : CONTENT_MISMATCH);
+        model.addAttribute("kind", kindOf(item));
+        model.addAttribute("discrepancy", item.classification() == Classification.DISCREPANCY);
         model.addAttribute("externalKey", externalKey == null ? NO_EXTERNAL_KEY : externalKey);
         model.addAttribute("note", item.note());
         model.addAttribute("reasonLimit", ReceivedRecordDecision.REASON_LIMIT);
         model.addAttribute("backUrl", pageUrl(back, backPage));
         model.addAttribute("actionUrl", LIST_URL + "/" + id + "/decision" + query(back, backPage));
         model.addAttribute("adoptionActionUrl", LIST_URL + "/" + id + "/adoption" + query(back, backPage));
-        query.quarantineValues(item).ifPresent(values -> addValues(values, model));
+        query.quarantineValues(item)
+                .ifPresent(values -> addValues(values, item.classification() == Classification.DISCREPANCY, model));
         return DECISION_VIEW;
     }
 
     /**
      * 受け取った値とこの外部版の採用値の領域（Bolt 39d3。示し方は {@link QuarantineValueViews}。Bolt 39d3c）。値が等しければ同じ値の文を示す。
      */
-    private static void addValues(QuarantineValues values, Model model) {
+    private static void addValues(QuarantineValues values, boolean discrepancy, Model model) {
         model.addAttribute("receivedValues", QuarantineValueViews.receivedOf(values));
+        if (discrepancy) {
+            // 差異は「受け取った値」の領域だけ。この外部版の採用値は持たず、比べる相手がないのに「採用値はありません」と出さない（決定 (5)）
+            return;
+        }
         model.addAttribute("adoptedValues", QuarantineValueViews.adoptedOf(values));
         String sameValuesText = QuarantineValueViews.sameValuesTextOf(values);
         if (sameValuesText != null) {
@@ -426,6 +439,7 @@ public class UndecidedRecordController {
     /** 採用できない理由の文（理由のすべてに文がある。{@code default} を置かない。T-240）。 */
     private static String refusalTextOf(DecisionOutcome.NotAdoptableReason reason) {
         return switch (reason) {
+            case DISCREPANCY -> DISCREPANCY_REFUSAL;
             case KEYLESS -> KEYLESS_REFUSAL;
             case VALUE_NOT_RECORDED -> VALUE_NOT_RECORDED_REFUSAL;
             case VALUE_UNREADABLE -> VALUE_UNREADABLE_REFUSAL;
@@ -435,16 +449,32 @@ public class UndecidedRecordController {
         };
     }
 
+    /** 却下の知らせ（分類のすべてに文がある。{@code default} を置かない。T-240）。 */
+    private static String rejectedNoticeOf(Classification classification) {
+        return switch (classification) {
+            case DISCREPANCY -> DISCREPANCY_REJECTED;
+            case QUARANTINED, ADOPTED, DUPLICATE -> REJECTED;
+        };
+    }
+
+    /** 判断済みの知らせ（分類のすべてに文がある。{@code default} を置かない。T-240）。 */
+    private static String alreadyDecidedNoticeOf(Classification classification) {
+        return switch (classification) {
+            case DISCREPANCY -> DISCREPANCY_ALREADY_DECIDED;
+            case QUARANTINED, ADOPTED, DUPLICATE -> ALREADY_DECIDED;
+        };
+    }
+
     /** 判断の結果を行き先に変える（結果のすべてに行き先がある。T-240）。 */
     private static String respond(
             DecisionOutcome outcome, UUID back, int backPage, RedirectAttributes redirectAttributes) {
         return switch (outcome) {
-            case DecisionOutcome.Rejected _ -> {
-                redirectAttributes.addFlashAttribute(RESULT, REJECTED);
+            case DecisionOutcome.Rejected rejected -> {
+                redirectAttributes.addFlashAttribute(RESULT, rejectedNoticeOf(rejected.classification()));
                 yield "redirect:" + pageUrl(back, backPage);
             }
-            case DecisionOutcome.AlreadyDecided _ -> {
-                redirectAttributes.addFlashAttribute(RESULT, ALREADY_DECIDED);
+            case DecisionOutcome.AlreadyDecided decided -> {
+                redirectAttributes.addFlashAttribute(RESULT, alreadyDecidedNoticeOf(decided.classification()));
                 yield "redirect:" + pageUrl(back, backPage);
             }
             case DecisionOutcome.AdoptedQuarantine _ -> {
@@ -469,11 +499,19 @@ public class UndecidedRecordController {
                 DateTimeDisplay.staff(item.ingestedAt()),
                 ExternalDataIngestionController.sourceLabel(item.provider(), item.recordType()),
                 lines,
-                item.keyless() ? FORMAT_ERROR : CONTENT_MISMATCH,
+                kindOf(item),
                 externalKey,
                 item.note(),
                 LIST_URL + "/" + item.receivedRecordId() + query(ingestionFilter, page),
                 (lines == null ? WHOLE_FILE : lines) + "、" + (externalKey == null ? NO_EXTERNAL_ID : externalKey));
+    }
+
+    /** 種類（差異・形式の誤り・内容の違う原本。分類のすべてと外部原本の有無で決まる）。 */
+    private static String kindOf(UndecidedRecordPage.Item item) {
+        if (item.classification() == Classification.DISCREPANCY) {
+            return DISCREPANCY_KIND;
+        }
+        return item.keyless() ? FORMAT_ERROR : CONTENT_MISMATCH;
     }
 
     /** 外部 ID・外部版（キーのない隔離は {@code null}）。 */

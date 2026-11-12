@@ -1507,7 +1507,8 @@ class IngestionServiceTest {
         private void reject(RowResult quarantined) {
             assertThat(decision.reject(
                             steward, new RejectReceivedRecordCommand(quarantined.receivedRecordId(), REASON)))
-                    .isEqualTo(new DecisionOutcome.Rejected(quarantined.receivedRecordId()));
+                    .isEqualTo(
+                            new DecisionOutcome.Rejected(quarantined.receivedRecordId(), Classification.QUARANTINED));
         }
 
         /** P1 を受け取り、P2 の隔離を採用する（基準は P2 になる）。 */

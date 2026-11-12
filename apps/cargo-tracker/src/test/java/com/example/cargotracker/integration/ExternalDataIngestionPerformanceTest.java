@@ -389,7 +389,7 @@ class ExternalDataIngestionPerformanceTest {
             String firstPage =
                     measureUndecidedPage("unfiltered-first-page", list, session, queryStarted, queryFinished);
 
-            assertThat(lastPage).contains("この取込の判断を待つ隔離 10,000 件（9,901〜10,000 件目を示しています）");
+            assertThat(lastPage).contains("この取込の判断を待つ隔離・差異 10,000 件（9,901〜10,000 件目を示しています）");
             assertThat(firstPage).contains("1〜100 件目を示しています");
         } finally {
             finish("undecided", result, sourceId);

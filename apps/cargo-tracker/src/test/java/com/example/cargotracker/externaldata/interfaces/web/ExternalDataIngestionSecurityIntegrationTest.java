@@ -686,7 +686,9 @@ class ExternalDataIngestionSecurityIntegrationTest {
 
             String page = body(session, entry);
 
-            assertThat(page).contains("<p>この取込の判断を待つ隔離 2 件（1〜2 件目を示しています）</p>").doesNotContain("V-9");
+            assertThat(page)
+                    .contains("<p>この取込の判断を待つ隔離・差異 2 件（1〜2 件目を示しています）</p>")
+                    .doesNotContain("V-9");
             assertThat(rows(page))
                     .containsExactly(
                             List.of(
@@ -794,7 +796,7 @@ class ExternalDataIngestionSecurityIntegrationTest {
 
             assertThat(rejected.getResponse().getRedirectedUrl()).isEqualTo(entry);
             assertThat((java.util.Map<String, Object>) rejected.getFlashMap()).containsEntry("result", "隔離を却下しました。");
-            assertThat(body(session, entry)).contains("<p>この取込に判断を待つ隔離はありません。</p>");
+            assertThat(body(session, entry)).contains("<p>この取込に判断を待つ隔離・差異はありません。</p>");
             assertThat(jdbc.queryForMap(
                             "SELECT decision, reason FROM external_data.received_record_decision"
                                     + " WHERE received_record_id = ?",
@@ -1113,7 +1115,7 @@ class ExternalDataIngestionSecurityIntegrationTest {
             assertThat((java.util.Map<String, Object>) rejected.getFlashMap())
                     .containsEntry("result", "形式の誤り 2 件を却下しました。");
             assertThat(body(session, entry))
-                    .contains("<p>この取込の判断を待つ隔離 1 件（1〜1 件目を示しています）</p>")
+                    .contains("<p>この取込の判断を待つ隔離・差異 1 件（1〜1 件目を示しています）</p>")
                     .doesNotContain("まとめて却下する");
             List<java.util.Map<String, Object>> decisions = jdbc.queryForList(
                     "SELECT d.decision, d.reason, d.decided_by, d.decided_at FROM external_data.received_record_decision d"

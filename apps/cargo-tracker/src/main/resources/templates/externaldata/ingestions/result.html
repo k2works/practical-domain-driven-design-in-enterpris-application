@@ -13,8 +13,8 @@
            知らせは PRG の直後だけ。受け取った件数は物理データ行で、分類別の件数（受信記録の数）と単位が違うので表の外に置く。
            隔離の理由（注記）は隔離が 1 件以上のときだけ、照会の順（ファイルの行の順）に最初の 100 件と示さなかった数を示す（Bolt 39c3）。
            注記には取込ファイルから来た値が入るので th:text で示す。差異の行と、差異の注記を隔離と同じ領域（隔離・差異の理由）に行の順で示すのは
-           Bolt 39h。理由の領域の最後に、この取込で絞った S-17 へのリンクを隔離が 1 件以上のときだけ置く（Bolt 39d。S-17 に差異はまだ出ないので、
-           差異だけの取込で行き先のないリンクを出さない。リンクの文は 39h2 で直す）。
+           Bolt 39h。理由の領域（隔離か差異が 1 件以上のときだけ出る）の最後に、この取込で絞った S-17 へのリンクを置く（Bolt 39d。差異も S-17 に出るので、
+           差異だけの取込にも出す。リンクの文は Bolt 39h2 で「隔離・差異」にした）。
            要確認（取り込めなかった部分）は要確認のときだけ、件数を読む前に分かるよう受け取った件数の後・分類別の件数の表の前に示す。PRG の後の
            静的な画面なので role="alert" は使わない。「どこ」の文は controller が組み立てる（Bolt 39c4） */-->
     <p role="status" th:if="${result}" th:text="${result}">取り込みました。</p>
@@ -65,7 +65,7 @@
             <li th:each="note : ${summary.quarantineNotes()}" th:text="${note}">4 行目: 列の数がヘッダーと違います（ヘッダー 4 列、この行 5 列）。提供元に確かめてください。</li>
         </ul>
         <p th:if="${remainingQuarantine}" th:text="${remainingQuarantine}">ほかに 9,900 件の隔離・差異があります（最初の 100 件だけを示しています）。</p>
-        <p th:if="${summary.quarantinedCount() > 0}"><a th:href="@{/staff/external-data/undecided-records(ingestion=${summary.ingestionId()})}">この取込の隔離をすべて確認する</a></p>
+        <p><a th:href="@{/staff/external-data/undecided-records(ingestion=${summary.ingestionId()})}">この取込の隔離・差異をすべて確認する</a></p>
     </section>
     <p><a th:href="@{/staff/external-data/ingestions/new}">続けて取り込む</a></p>
 </main>

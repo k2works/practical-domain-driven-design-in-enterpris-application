@@ -256,7 +256,7 @@ class ReceivedRecordDecisionServiceTest {
 
         DecisionOutcome outcome = reject(steward, mismatch.id(), "提供元に確かめ、誤って送った原本と分かった。");
 
-        assertThat(outcome).isEqualTo(new DecisionOutcome.Rejected(mismatch.id()));
+        assertThat(outcome).isEqualTo(new DecisionOutcome.Rejected(mismatch.id(), Classification.QUARANTINED));
         assertThat(decisions.all()).singleElement().satisfies(decision -> {
             assertThat(decision.receivedRecordId()).isEqualTo(mismatch.id());
             assertThat(decision.decision()).isEqualTo(DecisionKind.REJECTED);
@@ -264,7 +264,8 @@ class ReceivedRecordDecisionServiceTest {
             assertThat(decision.reason()).isEqualTo("提供元に確かめ、誤って送った原本と分かった。");
         });
         assertThat(receivedRecords.undecidedRecord(mismatch.id())).isEmpty();
-        assertThat(service.refusalOf(mismatch.id())).contains(new DecisionOutcome.AlreadyDecided());
+        assertThat(service.refusalOf(mismatch.id()))
+                .contains(new DecisionOutcome.AlreadyDecided(Classification.QUARANTINED));
     }
 
     @Test
@@ -287,7 +288,8 @@ class ReceivedRecordDecisionServiceTest {
     @EnumSource(Classification.class)
     void 行3_隔離でない受信記録は判断を作らず判断できない結果を返し画面のGETも同じ(Classification classification) {
         ReceivedRecord received = stored(classification, false);
-        boolean decidable = EnumSet.of(Classification.QUARANTINED).contains(classification);
+        boolean decidable = EnumSet.of(Classification.QUARANTINED, Classification.DISCREPANCY)
+                .contains(classification);
 
         DecisionOutcome outcome = reject(steward, received.id(), "理由");
 
@@ -321,7 +323,7 @@ class ReceivedRecordDecisionServiceTest {
 
         DecisionOutcome outcome = reject(actor(Role.DATA_STEWARD), quarantined.id(), "後の判断。");
 
-        assertThat(outcome).isEqualTo(new DecisionOutcome.AlreadyDecided());
+        assertThat(outcome).isEqualTo(new DecisionOutcome.AlreadyDecided(Classification.QUARANTINED));
         assertThat(addCalls).isEmpty();
         assertThat(published).isEmpty();
         assertThat(decisions.all())
@@ -344,7 +346,7 @@ class ReceivedRecordDecisionServiceTest {
 
         DecisionOutcome outcome = reject(steward, quarantined.id(), "理由");
 
-        assertThat(outcome).isEqualTo(new DecisionOutcome.AlreadyDecided());
+        assertThat(outcome).isEqualTo(new DecisionOutcome.AlreadyDecided(Classification.QUARANTINED));
         assertThat(addCalls).hasSize(1);
         assertThat(published).isEmpty();
     }
@@ -389,6 +391,121 @@ class ReceivedRecordDecisionServiceTest {
         assertThat(addCalls).isEmpty();
         assertThat(published).isEmpty();
         assertThat(receivedRecords.undecidedRecord(quarantined.id())).isPresent();
+    }
+
+    /**
+     * Bolt 39h2 の行 2・3（差異の判断。決定 (3)・(6)）。差異は却下できるが採用できない。採用できない理由は分類を最初に見て {@code DISCREPANCY} を返し、
+     * 最初の差異（外部原本の基準と同じハッシュ）を {@code PAYLOAD_ALREADY_ADOPTED}、情報源が停止された差異を {@code SOURCE_NOT_APPROVED} にしない。
+     */
+    @Nested
+    class Bolt39h2_差異の判断 {
+
+        private static final String PROVIDER = "開発海運（架空）";
+        private static final PayloadHash BASE_HASH = PayloadHash.of(new byte[] {6});
+        private static final PayloadHash RESENT_HASH = PayloadHash.of(new byte[] {7});
+        private static final ReceivedValue VALUE =
+                new ReceivedValue("DEMO-201", "JPTYO;;2026-11-18T23:00:00.000000Z|USLAX;2026-12-01T22:00:00.000000Z;");
+
+        private ReceivedRecord discrepancy(PayloadHash hash, DataSource.ApprovalStatus status) {
+            dataSources.add(new DataSource(dataSourceId, PROVIDER, "VOYAGE", status));
+            ingestions.add(ingestion);
+            ExternalRecord externalRecord = new ExternalRecord(
+                    UUID.randomUUID(),
+                    new IdempotencyKey(PROVIDER, "VOYAGE", "DEMO-201", "3"),
+                    BASE_HASH,
+                    PayloadObjectKey.newRecordPayload(),
+                    Instant.parse("2026-11-15T09:00:00Z"));
+            externalRecords.add(externalRecord);
+            ReceivedRecord received = new ReceivedRecord(
+                    UUID.randomUUID(),
+                    externalRecord.id(),
+                    ingestion.id(),
+                    hash,
+                    PayloadObjectKey.newRecordPayload(),
+                    Instant.parse("2026-11-16T00:30:00Z"),
+                    Classification.DISCREPANCY,
+                    "3 行目: 版の逆転",
+                    ingestion.ingestedAt(),
+                    new PhysicalLineRange(3, 3),
+                    VALUE);
+            receivedRecords.add(received);
+            calls.clear();
+            return received;
+        }
+
+        static Stream<Arguments> discrepancies() {
+            return Stream.of(
+                    Arguments.of("最初の差異（基準と同じハッシュ）", BASE_HASH, DataSource.ApprovalStatus.APPROVED),
+                    Arguments.of("差異の再送（基準と違うハッシュ）", RESENT_HASH, DataSource.ApprovalStatus.APPROVED),
+                    Arguments.of("情報源が停止された差異", BASE_HASH, DataSource.ApprovalStatus.SUSPENDED));
+        }
+
+        @ParameterizedTest(name = "{0}")
+        @MethodSource("discrepancies")
+        void 行2_差異はどの状態でも分類を最初に見て採用できない理由がDISCREPANCYで何も書かない(
+                String name, PayloadHash hash, DataSource.ApprovalStatus status) {
+            ReceivedRecord received = discrepancy(hash, status);
+            DecisionOutcome expected = new DecisionOutcome.NotAdoptable(received.id(), NotAdoptableReason.DISCREPANCY);
+
+            assertThat(service.adoptionRefusalOf(received.id())).contains(expected);
+            assertThat(service.adopt(steward, new AdoptReceivedRecordCommand(received.id(), "理由")))
+                    .isEqualTo(expected);
+
+            assertThat(addCalls).isEmpty();
+            assertThat(published).isEmpty();
+            assertThat(calls).doesNotContain(ADOPTED_VALUE_ADD, EXTERNAL_RECORD_CHANGE);
+        }
+
+        @Test
+        void 行3_a_判断を待つ差異を却下すると判断REJECTEDを1つとDE29を1つ追記して分類つきの却下を返す() {
+            ReceivedRecord received = discrepancy(BASE_HASH, DataSource.ApprovalStatus.APPROVED);
+
+            DecisionOutcome outcome = reject(steward, received.id(), "古い外部版と分かった。");
+
+            assertThat(outcome).isEqualTo(new DecisionOutcome.Rejected(received.id(), Classification.DISCREPANCY));
+            assertThat(decisions.all()).singleElement().satisfies(decision -> {
+                assertThat(decision.receivedRecordId()).isEqualTo(received.id());
+                assertThat(decision.decision()).isEqualTo(DecisionKind.REJECTED);
+            });
+            assertThat(published).singleElement().satisfies(event -> {
+                assertThat(((ReceivedRecordDecided) event).decision()).isEqualTo("REJECTED");
+                assertThat(((ReceivedRecordDecided) event).receivedRecordId()).isEqualTo(received.id());
+            });
+            assertThat(service.refusalOf(received.id()))
+                    .contains(new DecisionOutcome.AlreadyDecided(Classification.DISCREPANCY));
+        }
+
+        @Test
+        void 行3_b_判断済みの差異の却下は分類つきの判断済みで判断を追記しない() {
+            ReceivedRecord received = discrepancy(BASE_HASH, DataSource.ApprovalStatus.APPROVED);
+            reject(steward, received.id(), "先の判断。");
+            addCalls.clear();
+            published.clear();
+
+            assertThat(reject(actor(Role.DATA_STEWARD), received.id(), "後の判断。"))
+                    .isEqualTo(new DecisionOutcome.AlreadyDecided(Classification.DISCREPANCY));
+
+            assertThat(addCalls).isEmpty();
+            assertThat(published).isEmpty();
+        }
+
+        @Test
+        void 行3_d_同時の却下に負けた差異は分類つきの判断済みでイベントを出さない() {
+            ReceivedRecord received = discrepancy(BASE_HASH, DataSource.ApprovalStatus.APPROVED);
+            duplicateOnAdd = true;
+
+            assertThat(reject(steward, received.id(), "理由"))
+                    .isEqualTo(new DecisionOutcome.AlreadyDecided(Classification.DISCREPANCY));
+
+            assertThat(published).isEmpty();
+        }
+
+        @Test
+        void 行3_判断を待つ差異は画面のGETで断らない() {
+            ReceivedRecord received = discrepancy(BASE_HASH, DataSource.ApprovalStatus.APPROVED);
+
+            assertThat(service.refusalOf(received.id())).isEmpty();
+        }
     }
 
     /**
@@ -990,7 +1107,7 @@ class ReceivedRecordDecisionServiceTest {
             return Stream.of(
                     Arguments.of("ない受信記録", new DecisionOutcome.NotFound()),
                     Arguments.of("隔離でない受信記録", new DecisionOutcome.NotDecidable()),
-                    Arguments.of("判断済み", new DecisionOutcome.AlreadyDecided()));
+                    Arguments.of("判断済み", new DecisionOutcome.AlreadyDecided(Classification.QUARANTINED)));
         }
 
         @ParameterizedTest(name = "{0}")
@@ -1044,7 +1161,8 @@ class ReceivedRecordDecisionServiceTest {
             duplicateOnAdd = true;
             calls.clear();
 
-            assertThat(adopt(steward, received.id(), REASON)).isEqualTo(new DecisionOutcome.AlreadyDecided());
+            assertThat(adopt(steward, received.id(), REASON))
+                    .isEqualTo(new DecisionOutcome.AlreadyDecided(Classification.QUARANTINED));
 
             assertThat(callsOf(DECISION_ADD)).isEqualTo(1);
             assertThat(callsOf(ADOPTED_VALUE_ADD)).isZero();
@@ -1677,6 +1795,23 @@ class ReceivedRecordDecisionServiceTest {
         /** 理由ごとの採用を出さない隔離（理由のすべてに作り方がある。{@code default} を置かない。T-240）。 */
         private ReceivedRecord refusedBy(NotAdoptableReason reason) {
             return switch (reason) {
+                case DISCREPANCY -> {
+                    source(VOYAGE, DataSource.ApprovalStatus.APPROVED);
+                    ReceivedRecord discrepancy = new ReceivedRecord(
+                            UUID.randomUUID(),
+                            externalRecord(VOYAGE).id(),
+                            ingestion.id(),
+                            BASE_HASH,
+                            PayloadObjectKey.newRecordPayload(),
+                            ACQUIRED_AT,
+                            Classification.DISCREPANCY,
+                            "3 行目: 版の逆転",
+                            ingestion.ingestedAt(),
+                            new PhysicalLineRange(3, 3),
+                            ReceivedValue.of(VOYAGE_VALUES));
+                    receivedRecords.add(discrepancy);
+                    yield discrepancy;
+                }
                 case KEYLESS -> keyless();
                 case VALUE_NOT_RECORDED -> approvedQuarantine(null, QUARANTINE_HASH);
                 case SOURCE_NOT_APPROVED -> {
@@ -1868,7 +2003,7 @@ class ReceivedRecordDecisionServiceTest {
 
             assertNothingWrittenAndNotChanged();
             assertThat(service.reject(steward, new RejectReceivedRecordCommand(received.id(), REASON)))
-                    .isEqualTo(new DecisionOutcome.Rejected(received.id()));
+                    .isEqualTo(new DecisionOutcome.Rejected(received.id(), Classification.QUARANTINED));
         }
 
         /** 基準と同じハッシュの隔離の、先の理由との順（T-240）と外部原本・この外部版の採用値を引く数。 */

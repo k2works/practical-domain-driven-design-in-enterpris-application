@@ -4,13 +4,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title th:text="${#fields.hasErrors('${rejectionForm.*}')} ? '却下できませんでした - 隔離の判断 - cargo-tracker' : (${#fields.hasErrors('${adoptionForm.*}') or adoptionConflictText != null or (adoptionRefused != null and adoptionRefusalText != null)} ? '採用できませんでした - 隔離の判断 - cargo-tracker' : '隔離の判断 - cargo-tracker')">隔離の判断 - cargo-tracker</title>
+    <title th:text="${#fields.hasErrors('${rejectionForm.*}')} ? ('却下できませんでした - ' + (${discrepancy} ? '差異の判断' : '隔離の判断') + ' - cargo-tracker') : (${#fields.hasErrors('${adoptionForm.*}') or adoptionConflictText != null or (adoptionRefused != null and adoptionRefusalText != null)} ? ('採用できませんでした - ' + (${discrepancy} ? '差異の判断' : '隔離の判断') + ' - cargo-tracker') : (${discrepancy} ? '差異の判断' : '隔離の判断') + ' - cargo-tracker')">隔離の判断 - cargo-tracker</title>
     <!--/* 送信の失敗のときにエラー要約へフォーカスを移す（S-16 と同じ） */-->
     <script th:src="@{/js/transport-request-form.js}" defer></script>
 </head>
 <body>
 <main>
-    <h1>隔離の判断</h1>
+    <h1 th:text="${discrepancy} ? '差異の判断' : '隔離の判断'">隔離の判断</h1>
     <!--/* S-17 の判断の画面（Bolt 39d2、US-14 AC4、UC-15 3b）。一覧と同じ項目と隔離の理由の全文を読んでから、却下の理由を書いて却下する。
            注記には取込ファイルから来た値が入るので th:text で示す。却下と採用は取り消せない（【業務の判断】(e)）。採用の欄は判断のサービスの定めで採用できる隔離に
            だけ示し（航海は Bolt 39d3b、主要実績は Bolt 39d3b2）、採用できない隔離には却下の欄の後に理由と次の道の文を示す（Bolt 39d3b2）。送り先と戻り先の URL は
@@ -60,7 +60,7 @@
         <dd th:text="${kind}">内容の違う原本</dd>
         <dt>外部 ID・外部版</dt>
         <dd th:text="${externalKey}">DEMO-201・3</dd>
-        <dt>隔離の理由</dt>
+        <dt th:text="${discrepancy} ? '差異の理由' : '隔離の理由'">隔離の理由</dt>
         <dd th:text="${note}">140 行目: 同じ外部 ID・外部版で内容の違う原本を受け取りました。</dd>
     </dl>
     <!--/* 内容の違う原本の受け取った値とこの外部版の採用値（航海は Bolt 39d3、主要実績と読めない値は Bolt 39d3c、【業務の判断】(i)・(j)・(k)）。
@@ -72,7 +72,7 @@
             <h2 id="received-values-heading">受け取った値</h2>
             <th:block th:replace="~{externaldata/fragments/quarantine-values :: values(${receivedValues})}"></th:block>
         </section>
-        <section aria-labelledby="adopted-values-heading">
+        <section th:if="${adoptedValues}" aria-labelledby="adopted-values-heading">
             <h2 id="adopted-values-heading" tabindex="-1">この外部版の採用値</h2>
             <th:block th:replace="~{externaldata/fragments/quarantine-values :: values(${adoptedValues})}"></th:block>
         </section>

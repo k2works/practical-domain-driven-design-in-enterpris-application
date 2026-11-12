@@ -73,9 +73,10 @@ class ReceivedRecordDecisionTest {
 
     @ParameterizedTest(name = "{0}")
     @EnumSource(Classification.class)
-    void 行3_判断できるのは分類が隔離の受信記録だけで分類のすべてで決まる(Classification classification) {
-        // 差異（DISCREPANCY）は 39h で分類に足し、そのとき判断できるようにする（T-240。分類のすべての行を縛る）
-        boolean expected = EnumSet.of(Classification.QUARANTINED).contains(classification);
+    void 行3_判断できるのは分類が隔離か差異の受信記録だけで分類のすべてで決まる(Classification classification) {
+        // 差異（DISCREPANCY）は Bolt 39h2 で判断できる側に移った（T-240。分類のすべての行を縛る）
+        boolean expected = EnumSet.of(Classification.QUARANTINED, Classification.DISCREPANCY)
+                .contains(classification);
         ReceivedRecord received = received(classification, false);
 
         assertThat(ReceivedRecordDecision.decidable(received)).isEqualTo(expected);
@@ -165,12 +166,38 @@ class ReceivedRecordDecisionTest {
 
         @ParameterizedTest(name = "{0}")
         @EnumSource(value = Classification.class, names = "QUARANTINED", mode = EnumSource.Mode.EXCLUDE)
-        void 行1_隔離でない受信記録は採用の判断を作らない(Classification classification) {
+        void 行1_隔離でない受信記録は差異も含めて採用の判断を作らない(Classification classification) {
+            // 差異は却下だけ。採用のファクトリーが拒む（Bolt 39h2 の行 1 (d)。判断のサービスの定めを通らずに呼ばれても採用値を作らない）
             ReceivedRecord received = received(classification, false);
 
             assertThatThrownBy(() -> ReceivedRecordDecision.adopt(received, "理由", STEWARD, DECIDED_AT))
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessageContaining(classification.name());
+        }
+    }
+
+    /** Bolt 39h2 の行 1（差異の判断。却下はできて、採用はできない）。 */
+    @Nested
+    class Bolt39h2_差異の判断 {
+
+        @Test
+        void 行1_d_差異は却下できる() {
+            ReceivedRecord discrepancy = received(Classification.DISCREPANCY, false);
+
+            ReceivedRecordDecision decision =
+                    ReceivedRecordDecision.reject(discrepancy, "古い外部版と分かった。", STEWARD, DECIDED_AT);
+
+            assertThat(decision.receivedRecordId()).isEqualTo(discrepancy.id());
+            assertThat(decision.decision()).isEqualTo(DecisionKind.REJECTED);
+        }
+
+        @Test
+        void 行1_d_差異の採用は拒む() {
+            ReceivedRecord discrepancy = received(Classification.DISCREPANCY, false);
+
+            assertThatThrownBy(() -> ReceivedRecordDecision.adopt(discrepancy, null, STEWARD, DECIDED_AT))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("DISCREPANCY");
         }
     }
 
