@@ -345,8 +345,11 @@ final class TrackingRecordViews {
         }
         long hours = minutes / 60;
         long rest = minutes % 60;
-        String text = hours == 0 ? rest + " 分" : hours + " 時間" + (rest == 0 ? "" : " " + rest + " 分");
-        return "当初より " + text + "遅れ";
+        if (hours == 0) {
+            return "当初より " + rest + " 分遅れ";
+        }
+        String minutesPart = rest == 0 ? "" : " " + rest + " 分";
+        return "当初より " + hours + " 時間" + minutesPart + "遅れ";
     }
 
     /**
