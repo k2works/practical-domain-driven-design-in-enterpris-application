@@ -11215,6 +11215,41 @@
   
   
     <li class="md-nav__item">
+      <a href="../bolt_39h2_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 39h2 計画
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../bolt_39g_report/" class="md-nav__link">
         
   
@@ -19392,7 +19427,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">39h2</td>
-<td style="text-align: left;">（Bolt 39h の開始準備で 39h から縦に分けた。Bolt 39h 計画の決定 (1)。2026-11-12 に Bolt 39h の CP-1 として承認。human:kakimomokuri）S-17 で差異を一覧に出して却下する縦: 判断を待つ一覧と件数に差異を足し、一覧の record・行の型・照会に分類を通す、<code>UndecidedQuarantine</code> の名前を「判断を待つ隔離・差異」に合わせて見直す（範囲は開始準備で決める）、判断の画面の見出し「差異の判断」・採用できない理由 <code>DISCREPANCY</code>・却下の完了と判断済みの文、受け取った値の示し方、S-16 のリンク「この取込の隔離・差異をすべて確認する」、マニュアル 12.2。約 3 時間 30 分（参考。開始準備で引き直す）。<a href="../bolt_39h_plan/">Bolt 39h 計画</a> の決定 (1)・(5)</td>
+<td style="text-align: left;">（Bolt 39h の開始準備で 39h から縦に分けた。Bolt 39h 計画の決定 (1)。2026-11-12 に Bolt 39h の CP-1 として承認。human:kakimomokuri）S-17 で差異を一覧に出して却下する縦: 判断を待つ一覧と件数に差異を足し、一覧の record・行の型・照会に分類を通す、<code>UndecidedQuarantine</code> の名前を「判断を待つ隔離・差異」に合わせて見直す（範囲は開始準備で決める）、判断の画面の見出し「差異の判断」・採用できない理由 <code>DISCREPANCY</code>・却下の完了と判断済みの文、受け取った値の示し方、S-16 のリンク「この取込の隔離・差異をすべて確認する」、マニュアル 12.2。<a href="../bolt_39h_plan/">Bolt 39h 計画</a> の決定 (1)・(5)。<a href="../bolt_39h2_plan/">Bolt 39h2 計画</a>（計画は承認済み（human:kakimomokuri）。2026-11-12 に開始準備し、2 つの整合性検証の指摘を反映した。約 4 時間 05 分（約 245 分）、本計画 CP-1〜CP-9。参考の 3 時間 30 分から、名前の見直しの範囲とリンク・件数の文を見る既存のテストの直しを数えて引き直した。開始準備で推奨に決めたこと（仮）: 分けない（名前の見直しは振る舞いを変えない準備のリファクタリングとして先にコミットする。超えそうなら動画を 39h3 へ）。名前の見直しは一覧の読みの型と照会だけ（<code>UndecidedQuarantine</code> → <code>UndecidedRecord</code>、<code>undecidedQuarantines</code> → <code>undecidedRecords</code>、<code>quarantinedOf</code> → <code>quarantinesAndDiscrepanciesOf</code>）で、判断の画面の値の型 <code>QuarantineValues</code> ほかは 39h3。差異は判断できるが採用できない（採用のファクトリーは差異を拒み、採用できる隔離の定めは分類を最初に見て <code>DISCREPANCY</code>）。一覧は隔離と差異を混ぜて今の並びで出し、種類「差異」。差異の判断の画面は見出し「差異の判断」・採用の欄なし・値は受け取った値だけ。結果の型 <code>Rejected</code>・<code>AlreadyDecided</code> に分類を持たせて文を選び、DE-29 は変えない。スキーマは変えない（データベースの承認ゲートに当たらない）。差異のまとめての却下は作らない（パイロットの前に頻度を確かめる）。【前の決定の変更】(28) 照会専用の record の名前を <code>UndecidedQuarantine</code> から <code>UndecidedRecord</code> に改める（Bolt 39d の決定 (4)・(5)。「Review」を使わない決まりは残す）。【業務の判断】(be)〜(bg)、台帳 D-147〜D-149。仮）</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: left;">アウトサイドイン（S-17 から）</td>
 <td style="text-align: left;">ステップごと（画面）</td>
@@ -20308,8 +20343,36 @@
 <td style="text-align: left;">業務責任者とデータ責任者に確かめる（Release 1.0 のパイロットの前）</td>
 <td style="text-align: left;">仮（2026-11-12 の開始準備の推奨を承認。human:kakimomokuri。業務責任者・データ責任者に確かめる）。<a href="../bolt_39h_plan/">Bolt 39h 計画</a>で作る</td>
 </tr>
+<tr>
+<td style="text-align: left;">D-147</td>
+<td style="text-align: left;">判断を待つ隔離・差異の一覧の並びと絞り込み</td>
+<td style="text-align: left;">隔離と差異を混ぜて今の並び（取込の新しい順・ファイルの行の順）に出し、同じ定めで数える。種類は「差異」、理由は「隔離・差異の理由」の注記。分類で絞る操作は足さない（39h3 の取込で絞る入口と合わせて要るかを確かめる）。キーのない隔離の照会は SQL で分類を隔離に絞る</td>
+<td style="text-align: left;">US-14 AC5、S-16・S-17</td>
+<td style="text-align: left;"><a href="../bolt_39h2_plan/">Bolt 39h2 計画</a> の業務の判断の記録 (be)</td>
+<td style="text-align: left;">業務責任者とデータ責任者に確かめる（Release 1.0 のパイロットの前）</td>
+<td style="text-align: left;">仮（2026-11-12 の開始準備の推奨を承認。human:kakimomokuri。業務責任者・追跡責任者に確かめる）。<a href="../bolt_39h2_plan/">Bolt 39h2 計画</a>で作る</td>
+</tr>
+<tr>
+<td style="text-align: left;">D-148</td>
+<td style="text-align: left;">差異の判断の画面の文と受け取った値の示し方</td>
+<td style="text-align: left;">見出し「差異の判断」・<code>dt</code>「差異の理由」・採用の欄なし・採用できない理由 <code>DISCREPANCY</code> の 1 つの文（正しい値なら提供元に新しい外部版で送り直してもらう。追跡番号の違う実績は追跡管理者が手入力）・値の領域は「受け取った値」だけ。却下「差異を却下しました。」、判断済み「この差異は判断済みです。」。S-16 のリンクは「この取込の隔離・差異をすべて確認する」で、隔離か差異が 1 件以上のとき。この外部 ID の採用値を値で並べるのは 39h3</td>
+<td style="text-align: left;">US-14 AC5、UC-15 5、S-16・S-17、D-144・D-146</td>
+<td style="text-align: left;"><a href="../bolt_39h2_plan/">Bolt 39h2 計画</a> の業務の判断の記録 (bf)</td>
+<td style="text-align: left;">業務責任者とデータ責任者に確かめる（Release 1.0 のパイロットの前）</td>
+<td style="text-align: left;">仮（2026-11-12 の開始準備の推奨を承認。human:kakimomokuri。業務責任者・追跡責任者に確かめる）。<a href="../bolt_39h2_plan/">Bolt 39h2 計画</a>で作る</td>
+</tr>
+<tr>
+<td style="text-align: left;">D-149</td>
+<td style="text-align: left;">差異のまとめての却下</td>
+<td style="text-align: left;">Release 1.0 の 39h2 では作らない（1 件ずつの却下だけ）。古いファイルを丸ごと送り直されたときに差異が 1 つの取込で数千件になりうるので、頻度をパイロットの前に確かめ、要るなら W7 の締めか Release 1.1 で足す。受け入れること: 差異は業務で使う値を変えないので、一覧の件数が増えるだけで経路設計と追跡は誤らない</td>
+<td style="text-align: left;">US-14 AC5、D-145</td>
+<td style="text-align: left;"><a href="../bolt_39h2_plan/">Bolt 39h2 計画</a> の業務の判断の記録 (bg)</td>
+<td style="text-align: left;">業務責任者とデータ責任者に確かめる（Release 1.0 のパイロットの前）</td>
+<td style="text-align: left;">仮（2026-11-12 の開始準備の推奨を承認。human:kakimomokuri。業務責任者・追跡責任者に確かめる）。<a href="../bolt_39h2_plan/">Bolt 39h2 計画</a>で作る</td>
+</tr>
 </tbody>
 </table>
+<p>D-144 の注（Bolt 39h2 の開始準備）: 判断の画面に差異を出して却下するのは 39h2 で、採用できない理由 <code>DISCREPANCY</code> の文は D-148。D-146 の注（同）: S-16 のリンクの文は 39h2 で「この取込の隔離・差異をすべて確認する」にし、隔離か差異が 1 件以上のときに出す（D-148）。</p>
 <hr />
 <h2 id="_26">リスク管理<a class="headerlink" href="#_26" title="Permanent link">&para;</a></h2>
 <h3 id="_27">技術リスク<a class="headerlink" href="#_27" title="Permanent link">&para;</a></h3>
@@ -22912,6 +22975,11 @@
 <tr>
 <td style="text-align: left;">2026-11-12</td>
 <td style="text-align: left;">Bolt 39h のステップ 2〜11 を実施し、<a href="../bolt_39h_report/">終了報告</a>を作った（承認待ち。CI と PERF-06 は push していないので未実行）。W7 の週の表の Bolt 39g4c の終了報告を承認済みに直した</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-11-12</td>
+<td style="text-align: left;">Bolt 39h2 の開始準備: 39h2 の行に<a href="../bolt_39h2_plan/">計画</a>へのリンクと推奨（約 245 分、本計画 CP-1〜CP-9。分けない、名前の見直しの範囲、差異は判断できるが採用できない、一覧の並び、文と受け取った値、結果の型、スキーマを変えない、まとめての却下は作らない、【前の決定の変更】(28)）を足し、台帳 D-147〜D-149（仮。承認待ち）と D-144・D-146 の注を足した</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5</td>
 </tr>
 <tr>
