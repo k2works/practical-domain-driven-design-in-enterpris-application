@@ -14,6 +14,7 @@ import com.example.cargotracker.routing.domain.model.entities.RouteCandidate;
 import com.example.cargotracker.routing.domain.model.valueobjects.CandidateCalculation;
 import com.example.cargotracker.routing.domain.model.valueobjects.ExclusionReason;
 import com.example.cargotracker.routing.domain.model.valueobjects.ExclusionReasonCode;
+import com.example.cargotracker.routing.domain.model.valueobjects.ExclusionThreshold;
 import com.example.cargotracker.routing.domain.model.valueobjects.Leg;
 import com.example.cargotracker.routing.domain.model.valueobjects.PortCall;
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseSummary;
@@ -368,11 +369,15 @@ public class RoutingSteps {
 
     /** 閾値の表記（期限超過は期限の時刻、接続不足は港と必要最小接続時間、接続できないは港、情報不足は航海番号と許容時間）。 */
     private static String threshold(ExclusionReason reason) {
-        return switch (reason.code()) {
-            case DEADLINE_EXCEEDED -> reason.deadline().instant().toString();
-            case CONNECTION_TOO_SHORT -> reason.port().unLocode() + " " + reason.requiredConnection();
-            case INFO_INSUFFICIENT -> reason.voyageNumber() + " " + reason.freshnessTolerance();
-            default -> reason.port().unLocode();
+        return switch (reason.threshold()) {
+            case ExclusionThreshold.ArrivalDeadline deadline ->
+                deadline.deadline().instant().toString();
+            case ExclusionThreshold.MinimumConnection connection ->
+                connection.port().unLocode() + " " + connection.required();
+            case ExclusionThreshold.StaleVoyageInfo stale -> stale.voyageNumber() + " " + stale.tolerance();
+            case ExclusionThreshold.ConnectionRuleMissing missing ->
+                missing.port().unLocode();
+            case ExclusionThreshold.UnsupportedCargo cargo -> cargo.category().name();
         };
     }
 

@@ -9,7 +9,9 @@ import com.example.cargotracker.routing.domain.model.rules.RouteCandidateFinder;
 import com.example.cargotracker.routing.domain.model.valueobjects.CandidateCalculation;
 import com.example.cargotracker.routing.domain.model.valueobjects.ExclusionReason;
 import com.example.cargotracker.routing.domain.model.valueobjects.ExclusionReasonCode;
+import com.example.cargotracker.routing.domain.model.valueobjects.ExclusionThreshold;
 import com.example.cargotracker.routing.domain.model.valueobjects.PortCall;
+import com.example.cargotracker.routing.domain.model.valueobjects.RouteCargoCategory;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteSpecification;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteVersionStatus;
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseId;
@@ -58,7 +60,8 @@ class RoutingCaseTest {
     @Test
     void 荷主企業のない案件は作れない() {
         // 行 6c（荷主企業は担当範囲の判定に使うので null を許さない。Bolt 38g）
-        RouteSpecification specification = new RouteSpecification(TOKYO, ROTTERDAM, DEADLINE, "GENERAL");
+        RouteSpecification specification =
+                new RouteSpecification(TOKYO, ROTTERDAM, DEADLINE, RouteCargoCategory.GENERAL);
         UtcInstant requestedAt = at("2026-10-06T02:00:00Z");
         RoutingCaseId id = new RoutingCaseId(UUID.randomUUID());
         RoutingCaseNumber number = new RoutingCaseNumber(2026, 1);
@@ -198,7 +201,7 @@ class RoutingCaseTest {
                 1,
                 UUID.randomUUID(),
                 List.of(),
-                new RouteSpecification(TOKYO, ROTTERDAM, DEADLINE, "GENERAL"),
+                new RouteSpecification(TOKYO, ROTTERDAM, DEADLINE, RouteCargoCategory.GENERAL),
                 at("2026-10-06T02:00:00Z"),
                 null,
                 null,
@@ -295,7 +298,7 @@ class RoutingCaseTest {
         RouteCandidate candidate = routingCase.routeVersion().candidates().getFirst();
         assertThat(candidate.oldestInfoAcquiredAt()).isEqualTo(stale);
         assertThat(candidate.evaluation().reasons())
-                .extracting(ExclusionReason::voyageNumber)
+                .extracting(reason -> ((ExclusionThreshold.StaleVoyageInfo) reason.threshold()).voyageNumber())
                 .containsExactly("V-F");
         assertThat(candidate.evaluation().connectionSlack()).contains(Duration.ofHours(4));
     }
@@ -320,7 +323,7 @@ class RoutingCaseTest {
                 1,
                 UUID.randomUUID(),
                 List.of(SINGAPORE),
-                new RouteSpecification(TOKYO, ROTTERDAM, DEADLINE, "GENERAL"),
+                new RouteSpecification(TOKYO, ROTTERDAM, DEADLINE, RouteCargoCategory.GENERAL),
                 at("2026-10-06T02:00:00Z"),
                 QUOTATION_EXPIRES_AT,
                 REQUESTED_BY,

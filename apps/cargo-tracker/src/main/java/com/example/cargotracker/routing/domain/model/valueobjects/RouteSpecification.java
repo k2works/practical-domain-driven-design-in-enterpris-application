@@ -11,11 +11,11 @@ import java.util.Objects;
  * @param origin 出発地
  * @param destination 目的地
  * @param arrivalDeadline 希望到着期限
- * @param cargoCategory 貨物種別（見積りの貨物種別の名前。R0.1 は一般貨物だけで、判定には使わない）
+ * @param cargoCategory 貨物種別（見積りの名前を腐敗防止層で翻訳した経路設計の型。一般貨物でなければ候補はすべて除外する。Bolt 39i）
  */
 @ValueObject
 public record RouteSpecification(
-        Location origin, Location destination, UtcInstant arrivalDeadline, String cargoCategory) {
+        Location origin, Location destination, UtcInstant arrivalDeadline, RouteCargoCategory cargoCategory) {
 
     public RouteSpecification {
         Objects.requireNonNull(origin, "origin");

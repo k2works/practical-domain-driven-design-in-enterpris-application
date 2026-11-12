@@ -2,6 +2,7 @@ package com.example.cargotracker.routing.domain.model.aggregates;
 
 import com.example.cargotracker.routing.domain.model.valueobjects.ExclusionReasonCode;
 import com.example.cargotracker.routing.domain.model.valueobjects.PortCall;
+import com.example.cargotracker.routing.domain.model.valueobjects.RouteCargoCategory;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteSpecification;
 import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.UtcInstant;
@@ -109,7 +110,7 @@ public record GoldenDatasetCase(
                         new Location(text(spec, "origin")),
                         new Location(text(spec, "destination")),
                         at(spec, "arrivalDeadline"),
-                        text(spec, "cargoCategory")),
+                        RouteCargoCategory.valueOf(text(spec, "cargoCategory"))),
                 at(node, "judgedAt"),
                 Duration.parse(text(node, "freshnessTolerance")),
                 list(node.required("connectionRules"), GoldenDatasetCase::rule),

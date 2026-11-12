@@ -38,6 +38,7 @@ import com.example.cargotracker.routing.domain.model.valueobjects.PortCall;
 import com.example.cargotracker.routing.domain.model.valueobjects.RedesignReasonCode;
 import com.example.cargotracker.routing.domain.model.valueobjects.RedesignRecord;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteApprover;
+import com.example.cargotracker.routing.domain.model.valueobjects.RouteCargoCategory;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteConfirmationRejectionReason;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteSpecification;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteVersionStatus;
@@ -1139,7 +1140,7 @@ class RoutingCaseControllerTest {
                 1,
                 UUID.randomUUID(),
                 List.of(SINGAPORE),
-                new RouteSpecification(TOKYO, ROTTERDAM, DEADLINE, "GENERAL"),
+                new RouteSpecification(TOKYO, ROTTERDAM, DEADLINE, RouteCargoCategory.GENERAL),
                 at("2026-10-06T02:00:00Z"),
                 at("2026-10-08T09:00:00Z"),
                 UUID.randomUUID(),

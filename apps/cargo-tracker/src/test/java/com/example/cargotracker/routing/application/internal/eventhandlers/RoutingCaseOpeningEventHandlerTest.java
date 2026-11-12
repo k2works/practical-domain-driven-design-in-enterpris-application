@@ -8,6 +8,7 @@ import com.example.cargotracker.routing.acceptance.InMemoryRoutingCaseNumberIssu
 import com.example.cargotracker.routing.acceptance.InMemoryRoutingCaseRepository;
 import com.example.cargotracker.routing.application.internal.outboundservices.acl.QuotationRouteConditions;
 import com.example.cargotracker.routing.domain.model.aggregates.RoutingCase;
+import com.example.cargotracker.routing.domain.model.valueobjects.RouteCargoCategory;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteSpecification;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteVersionStatus;
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseNumber;
@@ -51,12 +52,29 @@ class RoutingCaseOpeningEventHandlerTest {
         assertThat(created.quotationId()).isEqualTo(QUOTATION_ID);
         assertThat(created.routePolicyVia()).containsExactly(new Location("SGSIN"));
         assertThat(created.specification())
-                .isEqualTo(new RouteSpecification(new Location("JPTYO"), new Location("NLRTM"), DEADLINE, "GENERAL"));
+                .isEqualTo(new RouteSpecification(
+                        new Location("JPTYO"), new Location("NLRTM"), DEADLINE, RouteCargoCategory.GENERAL));
         assertThat(created.requestedAt()).isEqualTo(REQUESTED_AT);
         assertThat(created.quotationExpiresAt()).contains(new UtcInstant(Instant.parse("2026-10-08T09:00:00Z")));
         assertThat(created.requestedBy()).contains(REQUESTER);
         assertThat(created.shipperCompanyId()).isEqualTo(SHIPPER);
         assertThat(created.routeVersion().status()).isEqualTo(RouteVersionStatus.DRAFT);
+    }
+
+    @Test
+    void Bolt39i_特殊貨物の依頼でも案件を作り貨物種別が経路設計の型に写る() {
+        RouteConditionView dangerous = new RouteConditionView(
+                "TR-2026-0001", new Location("JPTYO"), new Location("NLRTM"), DEADLINE, "DANGEROUS", SHIPPER);
+        RoutingCaseOpeningEventHandler specialHandler = new RoutingCaseOpeningEventHandler(
+                repository,
+                new InMemoryRoutingCaseNumberIssuer(),
+                new QuotationRouteConditions((id, versionNo) -> Optional.of(dangerous)));
+
+        specialHandler.on(event(1));
+
+        RoutingCase created =
+                repository.findByNumber(new RoutingCaseNumber(2026, 1)).orElseThrow();
+        assertThat(created.specification().cargoCategory()).isEqualTo(RouteCargoCategory.DANGEROUS);
     }
 
     @Test

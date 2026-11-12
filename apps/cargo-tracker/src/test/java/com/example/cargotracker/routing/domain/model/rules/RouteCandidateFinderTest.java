@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.example.cargotracker.routing.domain.model.aggregates.Voyage;
 import com.example.cargotracker.routing.domain.model.valueobjects.Leg;
 import com.example.cargotracker.routing.domain.model.valueobjects.PortCall;
+import com.example.cargotracker.routing.domain.model.valueobjects.RouteCargoCategory;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteSpecification;
 import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.UtcInstant;
@@ -31,7 +32,7 @@ class RouteCandidateFinderTest {
     static final Location COLOMBO = new Location("LKCMB");
     static final UtcInstant JUDGED_AT = at("2026-10-07T03:00:00Z");
     static final RouteSpecification SPEC =
-            new RouteSpecification(TOKYO, ROTTERDAM, at("2026-11-02T00:00:00Z"), "GENERAL");
+            new RouteSpecification(TOKYO, ROTTERDAM, at("2026-11-02T00:00:00Z"), RouteCargoCategory.GENERAL);
 
     private final RouteCandidateFinder finder = new RouteCandidateFinder();
 
@@ -211,7 +212,7 @@ class RouteCandidateFinderTest {
         List<Voyage> voyages = List.of(first, second, third, fourth);
         // 航海がつながることを、出発地を香港にした 3 区間で先に確かめる（T-106）
         RouteSpecification fromHongKong =
-                new RouteSpecification(HONG_KONG, ROTTERDAM, at("2026-11-02T00:00:00Z"), "GENERAL");
+                new RouteSpecification(HONG_KONG, ROTTERDAM, at("2026-11-02T00:00:00Z"), RouteCargoCategory.GENERAL);
         assertThat(finder.find(fromHongKong, voyages, JUDGED_AT)).hasSize(1);
 
         assertThat(finder.find(SPEC, voyages, JUDGED_AT)).isEmpty();

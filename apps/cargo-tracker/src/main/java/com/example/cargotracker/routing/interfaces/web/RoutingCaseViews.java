@@ -6,6 +6,11 @@ import com.example.cargotracker.routing.domain.model.aggregates.RoutingCase;
 import com.example.cargotracker.routing.domain.model.entities.RouteCandidate;
 import com.example.cargotracker.routing.domain.model.entities.RouteVersion;
 import com.example.cargotracker.routing.domain.model.valueobjects.ExclusionReason;
+import com.example.cargotracker.routing.domain.model.valueobjects.ExclusionThreshold.ArrivalDeadline;
+import com.example.cargotracker.routing.domain.model.valueobjects.ExclusionThreshold.ConnectionRuleMissing;
+import com.example.cargotracker.routing.domain.model.valueobjects.ExclusionThreshold.MinimumConnection;
+import com.example.cargotracker.routing.domain.model.valueobjects.ExclusionThreshold.StaleVoyageInfo;
+import com.example.cargotracker.routing.domain.model.valueobjects.ExclusionThreshold.UnsupportedCargo;
 import com.example.cargotracker.routing.domain.model.valueobjects.Leg;
 import com.example.cargotracker.routing.domain.model.valueobjects.RedesignReasonCode;
 import com.example.cargotracker.routing.domain.model.valueobjects.RedesignRecord;
@@ -397,25 +402,26 @@ final class RoutingCaseViews {
 
     /** 除外の理由の文言。不適合となった時刻・閾値・参照情報版を示す（R-INV-02）。情報不足は古い航海・許容時間・取得時刻（Bolt 37b2）。 */
     static String reason(ExclusionReason reason, List<Leg> legs) {
-        return switch (reason.code()) {
-            case DEADLINE_EXCEEDED ->
+        return switch (reason.threshold()) {
+            case ArrivalDeadline threshold ->
                 "期限超過 "
                         + DurationDisplay.connection(Duration.between(
-                                reason.deadline().instant(), reason.violatedAt().instant()))
-                        + "（到着予定 " + dateTime(reason.violatedAt()) + "、期限 " + dateTime(reason.deadline()) + "）"
+                                threshold.deadline().instant(),
+                                reason.violatedAt().instant()))
+                        + "（到着予定 " + dateTime(reason.violatedAt()) + "、期限 " + dateTime(threshold.deadline()) + "）"
                         + INFO_VERSION + reason.infoVersion();
-            case CONNECTION_TOO_SHORT ->
-                "接続不足（" + reason.port().unLocode() + " で接続 " + connection(reason, legs) + "、必要 "
-                        + DurationDisplay.connection(reason.requiredConnection()) + "、"
-                        + reason.port().unLocode()
+            case MinimumConnection threshold ->
+                "接続不足（" + threshold.port().unLocode() + " で接続 " + connection(reason, legs) + "、必要 "
+                        + DurationDisplay.connection(threshold.required()) + "、"
+                        + threshold.port().unLocode()
                         + " の規則）。次の出発 " + dateTime(reason.violatedAt()) + INFO_VERSION + reason.infoVersion();
-            case NOT_CONNECTABLE ->
-                "接続を判定できない（" + reason.port().unLocode() + " に次の出発の時刻で有効な接続時間規則がない。接続 "
+            case ConnectionRuleMissing threshold ->
+                "接続を判定できない（" + threshold.port().unLocode() + " に次の出発の時刻で有効な接続時間規則がない。接続 "
                         + connection(reason, legs) + "）。次の出発 " + dateTime(reason.violatedAt())
                         + INFO_VERSION + reason.infoVersion();
-            case CARGO_NOT_SUPPORTED -> "貨物種別に対応しない" + INFO_VERSION + reason.infoVersion();
-            case INFO_INSUFFICIENT ->
-                "情報不足（" + reason.voyageNumber() + " の情報は取得から " + hours(reason.freshnessTolerance())
+            case UnsupportedCargo threshold -> "貨物種別に対応しない" + INFO_VERSION + reason.infoVersion();
+            case StaleVoyageInfo threshold ->
+                "情報不足（" + threshold.voyageNumber() + " の情報は取得から " + hours(threshold.tolerance())
                         + "を過ぎている）。取得 " + dateTime(reason.infoAcquiredAt().orElseThrow())
                         + INFO_VERSION + reason.infoVersion();
         };

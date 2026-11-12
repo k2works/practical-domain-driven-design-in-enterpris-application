@@ -7,6 +7,7 @@ import com.example.cargotracker.routing.domain.model.valueobjects.ConstraintEval
 import com.example.cargotracker.routing.domain.model.valueobjects.ExclusionReason;
 import com.example.cargotracker.routing.domain.model.valueobjects.ExclusionReasonCode;
 import com.example.cargotracker.routing.domain.model.valueobjects.Leg;
+import com.example.cargotracker.routing.domain.model.valueobjects.RouteCargoCategory;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteSpecification;
 import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.UtcInstant;
@@ -35,7 +36,7 @@ class ConstraintEvaluatorTest {
     static final Instant DEADLINE = Instant.parse("2026-11-02T00:00:00Z");
 
     static final RouteSpecification SPEC =
-            new RouteSpecification(TOKYO, ROTTERDAM, new UtcInstant(DEADLINE), "GENERAL");
+            new RouteSpecification(TOKYO, ROTTERDAM, new UtcInstant(DEADLINE), RouteCargoCategory.GENERAL);
 
     private final ConstraintEvaluator evaluator = new ConstraintEvaluator();
 

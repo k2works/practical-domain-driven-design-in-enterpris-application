@@ -24,6 +24,7 @@ import com.example.cargotracker.identity.infrastructure.crypto.AesGcmSecretCiphe
 import com.example.cargotracker.routing.domain.model.aggregates.RoutingCase;
 import com.example.cargotracker.routing.domain.model.aggregates.RoutingCaseNumberIssuer;
 import com.example.cargotracker.routing.domain.model.aggregates.RoutingCaseRepository;
+import com.example.cargotracker.routing.domain.model.valueobjects.RouteCargoCategory;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteSpecification;
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseId;
 import com.example.cargotracker.shared.acceptance.MutableClock;
@@ -345,7 +346,10 @@ class RoutingAssignedScopeSecurityIntegrationTest {
                 UUID.randomUUID(),
                 List.of(),
                 new RouteSpecification(
-                        new Location("JPTYO"), new Location("NLRTM"), at("2099-10-31T00:00:00Z"), "GENERAL"),
+                        new Location("JPTYO"),
+                        new Location("NLRTM"),
+                        at("2099-10-31T00:00:00Z"),
+                        RouteCargoCategory.GENERAL),
                 at("2026-11-08T00:00:00Z"),
                 at("2099-11-30T00:00:00Z"),
                 UUID.randomUUID(),

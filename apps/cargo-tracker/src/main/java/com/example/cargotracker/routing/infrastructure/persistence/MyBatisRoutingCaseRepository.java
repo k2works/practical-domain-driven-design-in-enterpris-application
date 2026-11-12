@@ -10,9 +10,16 @@ import com.example.cargotracker.routing.domain.model.valueobjects.ConstraintEval
 import com.example.cargotracker.routing.domain.model.valueobjects.DecisionRationale;
 import com.example.cargotracker.routing.domain.model.valueobjects.ExclusionReason;
 import com.example.cargotracker.routing.domain.model.valueobjects.ExclusionReasonCode;
+import com.example.cargotracker.routing.domain.model.valueobjects.ExclusionThreshold;
+import com.example.cargotracker.routing.domain.model.valueobjects.ExclusionThreshold.ArrivalDeadline;
+import com.example.cargotracker.routing.domain.model.valueobjects.ExclusionThreshold.ConnectionRuleMissing;
+import com.example.cargotracker.routing.domain.model.valueobjects.ExclusionThreshold.MinimumConnection;
+import com.example.cargotracker.routing.domain.model.valueobjects.ExclusionThreshold.StaleVoyageInfo;
+import com.example.cargotracker.routing.domain.model.valueobjects.ExclusionThreshold.UnsupportedCargo;
 import com.example.cargotracker.routing.domain.model.valueobjects.Leg;
 import com.example.cargotracker.routing.domain.model.valueobjects.RedesignReasonCode;
 import com.example.cargotracker.routing.domain.model.valueobjects.RedesignRecord;
+import com.example.cargotracker.routing.domain.model.valueobjects.RouteCargoCategory;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteConfirmation;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteSpecification;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteVersionStatus;
@@ -216,7 +223,7 @@ public class MyBatisRoutingCaseRepository implements RoutingCaseRepository {
                         i + 1,
                         reason.code().name(),
                         toOffset(reason.violatedAt()),
-                        threshold(reason),
+                        threshold(reason.threshold()),
                         reason.infoVersion()));
             }
         }
@@ -246,7 +253,7 @@ public class MyBatisRoutingCaseRepository implements RoutingCaseRepository {
                         new Location(row.originUnlocode()),
                         new Location(row.destinationUnlocode()),
                         toUtc(row.arrivalDeadline()),
-                        row.cargoCategory()),
+                        RouteCargoCategory.valueOf(row.cargoCategory())),
                 toUtc(row.requestedAt()),
                 row.quotationExpiresAt() == null ? null : toUtc(row.quotationExpiresAt()),
                 row.createdBy(),
@@ -330,13 +337,14 @@ public class MyBatisRoutingCaseRepository implements RoutingCaseRepository {
                 toUtc(row.evaluatedAt()));
     }
 
-    private static String threshold(ExclusionReason reason) {
-        return switch (reason.code()) {
-            case DEADLINE_EXCEEDED -> reason.deadline().instant().toString();
-            case CONNECTION_TOO_SHORT -> reason.port().unLocode() + THRESHOLD_SEPARATOR + reason.requiredConnection();
-            case NOT_CONNECTABLE -> reason.port().unLocode();
-            case INFO_INSUFFICIENT -> reason.voyageNumber() + THRESHOLD_SEPARATOR + reason.freshnessTolerance();
-            case CARGO_NOT_SUPPORTED -> throw new IllegalStateException("判定しない除外理由です: " + reason.code());
+    private static String threshold(ExclusionThreshold threshold) {
+        return switch (threshold) {
+            case ArrivalDeadline deadline -> deadline.deadline().instant().toString();
+            case MinimumConnection connection ->
+                connection.port().unLocode() + THRESHOLD_SEPARATOR + connection.required();
+            case ConnectionRuleMissing missing -> missing.port().unLocode();
+            case StaleVoyageInfo stale -> stale.voyageNumber() + THRESHOLD_SEPARATOR + stale.tolerance();
+            case UnsupportedCargo cargo -> cargo.category().name();
         };
     }
 
@@ -367,7 +375,9 @@ public class MyBatisRoutingCaseRepository implements RoutingCaseRepository {
                         tolerance,
                         row.infoVersion());
             }
-            case CARGO_NOT_SUPPORTED -> throw new IllegalStateException("判定しない除外理由です: " + code);
+            case CARGO_NOT_SUPPORTED ->
+                ExclusionReason.cargoNotSupported(
+                        RouteCargoCategory.valueOf(row.threshold()), violatedAt, row.infoVersion());
         };
     }
 
@@ -386,7 +396,7 @@ public class MyBatisRoutingCaseRepository implements RoutingCaseRepository {
                 specification.origin().unLocode(),
                 specification.destination().unLocode(),
                 toOffset(specification.arrivalDeadline()),
-                specification.cargoCategory(),
+                specification.cargoCategory().name(),
                 toOffset(routingCase.requestedAt()),
                 routingCase
                         .quotationExpiresAt()

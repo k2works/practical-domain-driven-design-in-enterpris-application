@@ -21,6 +21,7 @@ import com.example.cargotracker.routing.domain.model.valueobjects.PortCall;
 import com.example.cargotracker.routing.domain.model.valueobjects.RedesignReasonCode;
 import com.example.cargotracker.routing.domain.model.valueobjects.RedesignRecord;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteApprover;
+import com.example.cargotracker.routing.domain.model.valueobjects.RouteCargoCategory;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteConfirmation;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteConfirmationRejectionReason;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteSpecification;
@@ -328,7 +329,7 @@ class RoutingCaseConfirmationTest {
                 1,
                 UUID.randomUUID(),
                 List.of(),
-                new RouteSpecification(TOKYO, ROTTERDAM, RoutingCaseTest.DEADLINE, "GENERAL"),
+                new RouteSpecification(TOKYO, ROTTERDAM, RoutingCaseTest.DEADLINE, RouteCargoCategory.GENERAL),
                 at("2026-10-06T02:00:00Z"),
                 null,
                 null,
@@ -368,7 +369,7 @@ class RoutingCaseConfirmationTest {
         UUID transportRequestId = UUID.randomUUID();
         UUID quotationId = UUID.randomUUID();
         RouteSpecification specification =
-                new RouteSpecification(TOKYO, ROTTERDAM, RoutingCaseTest.DEADLINE, "GENERAL");
+                new RouteSpecification(TOKYO, ROTTERDAM, RoutingCaseTest.DEADLINE, RouteCargoCategory.GENERAL);
         UtcInstant requestedAt = at("2026-10-06T02:00:00Z");
         List<RouteVersion> twoConfirmed = List.of(confirmedV1, withNo(confirmedV1, 2));
         List<Location> noVia = List.of();

@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.example.cargotracker.TestcontainersConfiguration;
 import com.example.cargotracker.routing.domain.model.aggregates.RoutingCase;
 import com.example.cargotracker.routing.domain.model.aggregates.RoutingCaseRepository;
+import com.example.cargotracker.routing.domain.model.valueobjects.RouteCargoCategory;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteSpecification;
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseId;
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseNumber;
@@ -114,7 +115,10 @@ class MyBatisRoutingCaseLockIntegrationTest {
                 UUID.randomUUID(),
                 List.of(),
                 new RouteSpecification(
-                        new Location("JPTYO"), new Location("NLRTM"), at("2095-11-02T00:00:00Z"), "GENERAL"),
+                        new Location("JPTYO"),
+                        new Location("NLRTM"),
+                        at("2095-11-02T00:00:00Z"),
+                        RouteCargoCategory.GENERAL),
                 at("2095-10-06T02:00:00Z"),
                 at("2095-10-08T09:00:00Z"),
                 UUID.randomUUID(),

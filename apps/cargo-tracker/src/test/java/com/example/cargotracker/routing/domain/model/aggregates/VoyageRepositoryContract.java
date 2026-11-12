@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.example.cargotracker.routing.domain.model.rules.RouteCandidateFinder;
 import com.example.cargotracker.routing.domain.model.valueobjects.Leg;
 import com.example.cargotracker.routing.domain.model.valueobjects.PortCall;
+import com.example.cargotracker.routing.domain.model.valueobjects.RouteCargoCategory;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteSpecification;
 import com.example.cargotracker.routing.domain.model.valueobjects.VoyageAdoption;
 import com.example.cargotracker.shared.domain.Location;
@@ -264,8 +265,8 @@ public abstract class VoyageRepositoryContract {
     @MethodSource("routes")
     void Bolt39e_行32_区間の航海が窓の一覧に入り途中の寄港から乗る航海の判定時刻より前の寄港も落とさない(String description, List<String> names) {
         names.forEach(this::savedRoute);
-        RouteSpecification specification =
-                new RouteSpecification(TOKYO, ROTTERDAM, at(Instant.parse("2199-01-01T00:00:00Z")), "GENERAL");
+        RouteSpecification specification = new RouteSpecification(
+                TOKYO, ROTTERDAM, at(Instant.parse("2199-01-01T00:00:00Z")), RouteCargoCategory.GENERAL);
 
         List<Voyage> found = candidateVoyages(at(JUDGED_AT));
 

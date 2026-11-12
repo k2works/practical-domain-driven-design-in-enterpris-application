@@ -1,102 +1,55 @@
 package com.example.cargotracker.routing.domain.model.valueobjects;
 
+import com.example.cargotracker.routing.domain.model.valueobjects.ExclusionThreshold.ArrivalDeadline;
+import com.example.cargotracker.routing.domain.model.valueobjects.ExclusionThreshold.ConnectionRuleMissing;
+import com.example.cargotracker.routing.domain.model.valueobjects.ExclusionThreshold.MinimumConnection;
+import com.example.cargotracker.routing.domain.model.valueobjects.ExclusionThreshold.StaleVoyageInfo;
+import com.example.cargotracker.routing.domain.model.valueobjects.ExclusionThreshold.UnsupportedCargo;
 import com.example.cargotracker.shared.annotation.ddd.ValueObject;
 import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Duration;
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Stream;
 
 /**
  * 除外理由。候補を除外した理由の区分と、不適合となった時刻・閾値・参照情報版（R-INV-02）。
- * 閾値は区分で決まる。期限超過は希望到着期限、接続不足は規則の港と必要最小接続時間、接続できないは規則のなかった港、
- * 情報不足は古い航海の航海番号と許容時間（Bolt 37b2）。
+ * 区分は閾値の型で決まる（{@link ExclusionThreshold}。区分と閾値の不一致は作れない。Bolt 39i）。
  *
- * @param code 区分
- * @param violatedAt 不適合となった時刻（期限超過は到着予定、接続不足・接続できないは次の区間の出発予定、情報不足は取得時刻 + 許容時間）
- * @param deadline 期限超過の閾値の希望到着期限（ほかの区分は null）
- * @param port 接続の閾値の港（期限超過は null）
- * @param requiredConnection 接続不足の閾値の必要最小接続時間（ほかの区分は null）
+ * @param threshold 閾値（期限超過は希望到着期限、接続不足は規則の港と必要最小接続時間、接続できないは規則のなかった港、
+ *     情報不足は古い航海の航海番号と許容時間、貨物種別は案件の貨物種別）
+ * @param violatedAt 不適合となった時刻（期限超過は到着予定、接続不足・接続できないは次の区間の出発予定、情報不足は取得時刻 + 許容時間、
+ *     貨物種別は最初の区間の出発予定）
  * @param infoVersion 参照情報版（不適合の時刻を取った航海の採用情報版）
- * @param voyageNumber 情報不足の閾値の航海番号（ほかの区分は null）
- * @param freshnessTolerance 情報不足の閾値の許容時間（ほかの区分は null）
  */
 @ValueObject
-public record ExclusionReason(
-        ExclusionReasonCode code,
-        UtcInstant violatedAt,
-        UtcInstant deadline,
-        Location port,
-        Duration requiredConnection,
-        String infoVersion,
-        String voyageNumber,
-        Duration freshnessTolerance) {
+public record ExclusionReason(ExclusionThreshold threshold, UtcInstant violatedAt, String infoVersion) {
 
     public ExclusionReason {
-        Objects.requireNonNull(code, "code");
+        Objects.requireNonNull(threshold, "threshold");
         Objects.requireNonNull(violatedAt, "violatedAt");
         Objects.requireNonNull(infoVersion, "infoVersion");
-        // 区分ごとの閾値の項目だけを持つ（ファクトリーを経ない組み立てでも崩さない。Bolt 37b2 の開発レビュー）。
-        // 並びは期限・港・必要最小接続時間・航海番号・許容時間
-        List<Boolean> present = Stream.of(deadline, port, requiredConnection, voyageNumber, freshnessTolerance)
-                .map(Objects::nonNull)
-                .toList();
-        if (!present.equals(thresholdFields(code))) {
-            throw new IllegalArgumentException("除外理由の区分と閾値の項目が合いません: " + code);
-        }
     }
 
-    /** 区分が持つ閾値の項目（期限・港・必要最小接続時間・航海番号・許容時間の順に、持つなら true）。 */
-    private static List<Boolean> thresholdFields(ExclusionReasonCode code) {
-        return switch (code) {
-            case DEADLINE_EXCEEDED -> List.of(true, false, false, false, false);
-            case CONNECTION_TOO_SHORT -> List.of(false, true, true, false, false);
-            case NOT_CONNECTABLE -> List.of(false, true, false, false, false);
-            case INFO_INSUFFICIENT -> List.of(false, false, false, true, true);
-            case CARGO_NOT_SUPPORTED -> List.of(false, false, false, false, false);
-        };
+    /** 区分（閾値の型で決まる）。 */
+    public ExclusionReasonCode code() {
+        return threshold.code();
     }
 
     /** 期限超過。不適合の時刻は到着予定、閾値は希望到着期限。 */
     public static ExclusionReason deadlineExceeded(UtcInstant arrivalAt, UtcInstant deadline, String infoVersion) {
-        return new ExclusionReason(
-                ExclusionReasonCode.DEADLINE_EXCEEDED,
-                arrivalAt,
-                Objects.requireNonNull(deadline, "deadline"),
-                null,
-                null,
-                infoVersion,
-                null,
-                null);
+        return new ExclusionReason(new ArrivalDeadline(deadline), arrivalAt, infoVersion);
     }
 
     /** 接続不足。不適合の時刻は次の区間の出発予定、閾値は規則の港と必要最小接続時間。 */
     public static ExclusionReason connectionTooShort(
             UtcInstant nextDepartureAt, Location port, Duration requiredConnection, String infoVersion) {
-        return new ExclusionReason(
-                ExclusionReasonCode.CONNECTION_TOO_SHORT,
-                nextDepartureAt,
-                null,
-                Objects.requireNonNull(port, "port"),
-                Objects.requireNonNull(requiredConnection, "requiredConnection"),
-                infoVersion,
-                null,
-                null);
+        return new ExclusionReason(new MinimumConnection(port, requiredConnection), nextDepartureAt, infoVersion);
     }
 
     /** 接続できない。積替えの港に、次の区間の出発予定の時刻で有効な接続時間規則がない（D-90）。不適合の時刻は次の区間の出発予定。 */
     public static ExclusionReason notConnectable(UtcInstant nextDepartureAt, Location port, String infoVersion) {
-        return new ExclusionReason(
-                ExclusionReasonCode.NOT_CONNECTABLE,
-                nextDepartureAt,
-                null,
-                Objects.requireNonNull(port, "port"),
-                null,
-                infoVersion,
-                null,
-                null);
+        return new ExclusionReason(new ConnectionRuleMissing(port), nextDepartureAt, infoVersion);
     }
 
     /**
@@ -108,34 +61,25 @@ public record ExclusionReason(
         Objects.requireNonNull(acquiredAt, "acquiredAt");
         Objects.requireNonNull(tolerance, "tolerance");
         return new ExclusionReason(
-                ExclusionReasonCode.INFO_INSUFFICIENT,
+                new StaleVoyageInfo(voyageNumber, tolerance),
                 new UtcInstant(acquiredAt.instant().plus(tolerance)),
-                null,
-                null,
-                null,
-                infoVersion,
-                Objects.requireNonNull(voyageNumber, "voyageNumber"),
-                tolerance);
+                infoVersion);
+    }
+
+    /**
+     * 貨物種別に対応しない（BR-02、BR-03、Bolt 39i）。不適合の時刻は最初の区間の出発予定、閾値は案件の貨物種別、
+     * 参照情報版は最初の区間の航海の採用情報版。
+     */
+    public static ExclusionReason cargoNotSupported(
+            RouteCargoCategory category, UtcInstant firstDepartureAt, String infoVersion) {
+        return new ExclusionReason(new UnsupportedCargo(category), firstDepartureAt, infoVersion);
     }
 
     /** 情報不足の航海の取得時刻（不適合の時刻から許容時間を引く。ほかの区分は空）。 */
     public Optional<UtcInstant> infoAcquiredAt() {
-        return Optional.ofNullable(freshnessTolerance)
-                .map(tolerance -> new UtcInstant(violatedAt.instant().minus(tolerance)));
-    }
-
-    /** 期限超過の閾値の希望到着期限。 */
-    public Optional<UtcInstant> deadlineThreshold() {
-        return Optional.ofNullable(deadline);
-    }
-
-    /** 接続の閾値の港。 */
-    public Optional<Location> portThreshold() {
-        return Optional.ofNullable(port);
-    }
-
-    /** 接続不足の閾値の必要最小接続時間。 */
-    public Optional<Duration> requiredConnectionThreshold() {
-        return Optional.ofNullable(requiredConnection);
+        if (threshold instanceof StaleVoyageInfo stale) {
+            return Optional.of(new UtcInstant(violatedAt.instant().minus(stale.tolerance())));
+        }
+        return Optional.empty();
     }
 }

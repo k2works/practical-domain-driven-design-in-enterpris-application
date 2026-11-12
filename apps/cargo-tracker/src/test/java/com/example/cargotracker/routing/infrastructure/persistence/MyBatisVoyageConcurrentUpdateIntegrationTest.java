@@ -22,6 +22,7 @@ import com.example.cargotracker.routing.domain.model.rules.InfoFreshnessPolicy;
 import com.example.cargotracker.routing.domain.model.rules.RouteCandidateFinder;
 import com.example.cargotracker.routing.domain.model.valueobjects.PortCall;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteApprover;
+import com.example.cargotracker.routing.domain.model.valueobjects.RouteCargoCategory;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteSpecification;
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseId;
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseNumber;
@@ -218,7 +219,10 @@ class MyBatisVoyageConcurrentUpdateIntegrationTest {
                 UUID.randomUUID(),
                 List.of(),
                 new RouteSpecification(
-                        origin, destination, new UtcInstant(Instant.parse("2098-01-01T00:00:00Z")), "GENERAL"),
+                        origin,
+                        destination,
+                        new UtcInstant(Instant.parse("2098-01-01T00:00:00Z")),
+                        RouteCargoCategory.GENERAL),
                 new UtcInstant(ACQUIRED),
                 new UtcInstant(Instant.parse("2097-11-01T00:00:00Z")),
                 UUID.randomUUID(),

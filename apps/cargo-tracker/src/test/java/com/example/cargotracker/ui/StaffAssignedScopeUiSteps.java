@@ -17,6 +17,7 @@ import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTerm
 import com.example.cargotracker.routing.domain.model.aggregates.RoutingCase;
 import com.example.cargotracker.routing.domain.model.aggregates.RoutingCaseNumberIssuer;
 import com.example.cargotracker.routing.domain.model.aggregates.RoutingCaseRepository;
+import com.example.cargotracker.routing.domain.model.valueobjects.RouteCargoCategory;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteSpecification;
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseId;
 import com.example.cargotracker.shared.domain.CompanyId;
@@ -264,7 +265,7 @@ public class StaffAssignedScopeUiSteps {
                         new Location("JPTYO"),
                         new Location("NLRTM"),
                         new UtcInstant(Instant.parse("2099-10-31T00:00:00Z")),
-                        "GENERAL"),
+                        RouteCargoCategory.GENERAL),
                 new UtcInstant(Instant.now()),
                 new UtcInstant(Instant.parse("2099-11-30T00:00:00Z")),
                 UUID.randomUUID(),

@@ -26,6 +26,7 @@ import com.example.cargotracker.routing.domain.model.valueobjects.PortCall;
 import com.example.cargotracker.routing.domain.model.valueobjects.RedesignReasonCode;
 import com.example.cargotracker.routing.domain.model.valueobjects.RedesignRecord;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteApprover;
+import com.example.cargotracker.routing.domain.model.valueobjects.RouteCargoCategory;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteConfirmation;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteSpecification;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteVersionStatus;
@@ -45,6 +46,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -1023,6 +1025,57 @@ class MyBatisRoutingRepositoriesIntegrationTest {
         return loaded;
     }
 
+    /** 貨物種別の保存（Bolt 39i の行 18・19）。列は VARCHAR(30) のまま CHECK を足さず、読み戻しで知らない文字列を拒む。 */
+    @Nested
+    class Bolt39i_貨物種別の保存 {
+
+        @ParameterizedTest(name = "{0} を書いて読み直して同じ")
+        @EnumSource(RouteCargoCategory.class)
+        void 貨物種別の五つの値を書いて読み直すと同じ(RouteCargoCategory category) {
+            RoutingCase routingCase = openWith(category);
+
+            repository.save(routingCase);
+
+            RoutingCase found = repository.findByNumber(routingCase.number()).orElseThrow();
+            assertThat(found.specification().cargoCategory()).isEqualTo(category);
+            assertThat(jdbc.queryForObject(
+                            "SELECT cargo_category FROM routing.routing_case WHERE id = ?",
+                            String.class,
+                            routingCase.id().value()))
+                    .isEqualTo(category.name());
+        }
+
+        @ParameterizedTest(name = "貨物種別の列が \"{0}\" の行は壊れた行として例外")
+        @ValueSource(strings = {"NO_SUCH", "general", ""})
+        void 貨物種別の列が種別にない行は既定の値で受けず例外(String broken) {
+            RoutingCase routingCase = openWith(RouteCargoCategory.GENERAL);
+            repository.save(routingCase);
+            jdbc.update(
+                    "UPDATE routing.routing_case SET cargo_category = ? WHERE id = ?",
+                    broken,
+                    routingCase.id().value());
+
+            assertThatThrownBy(() -> repository.findByNumber(routingCase.number()))
+                    .isInstanceOf(IllegalArgumentException.class);
+        }
+
+        private RoutingCase openWith(RouteCargoCategory category) {
+            return RoutingCase.open(
+                    new RoutingCaseId(UUID.randomUUID()),
+                    numberIssuer.next(2083),
+                    UUID.randomUUID(),
+                    "TR-2083-0001",
+                    1,
+                    UUID.randomUUID(),
+                    List.of(SINGAPORE),
+                    new RouteSpecification(TOKYO, ROTTERDAM, DEADLINE, category),
+                    at("2083-10-06T02:00:00Z"),
+                    at(EXPIRES_AT),
+                    UUID.randomUUID(),
+                    SHIPPER);
+        }
+    }
+
     private RoutingCase open(UUID transportRequestId, String requestedAt) {
         return open(transportRequestId, requestedAt, EXPIRES_AT);
     }
@@ -1040,7 +1093,7 @@ class MyBatisRoutingRepositoriesIntegrationTest {
                 1,
                 UUID.randomUUID(),
                 List.of(SINGAPORE),
-                new RouteSpecification(TOKYO, ROTTERDAM, DEADLINE, "GENERAL"),
+                new RouteSpecification(TOKYO, ROTTERDAM, DEADLINE, RouteCargoCategory.GENERAL),
                 at(requestedAt),
                 at(expiresAt),
                 UUID.randomUUID(),

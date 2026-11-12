@@ -43,6 +43,7 @@ import com.example.cargotracker.routing.domain.model.rules.ConstraintEvaluator;
 import com.example.cargotracker.routing.domain.model.rules.InfoFreshnessPolicy;
 import com.example.cargotracker.routing.domain.model.rules.RouteCandidateFinder;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteApprover;
+import com.example.cargotracker.routing.domain.model.valueobjects.RouteCargoCategory;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteSpecification;
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseId;
 import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseNumber;
@@ -495,7 +496,7 @@ class ConfirmedRouteEvaluationDeliveryIntegrationTest {
                 1,
                 quotationId.value(),
                 List.of(),
-                new RouteSpecification(TOKYO, LOS_ANGELES, new UtcInstant(DEADLINE), "GENERAL"),
+                new RouteSpecification(TOKYO, LOS_ANGELES, new UtcInstant(DEADLINE), RouteCargoCategory.GENERAL),
                 new UtcInstant(clock.instant()),
                 new UtcInstant(Instant.parse("2097-11-01T00:00:00Z")),
                 UUID.randomUUID(),
