@@ -11565,6 +11565,41 @@
   
   
     <li class="md-nav__item">
+      <a href="../bolt_39h2_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 39h2 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../release_report-0_1/" class="md-nav__link">
         
   
@@ -19427,7 +19462,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">39h2</td>
-<td style="text-align: left;">（Bolt 39h の開始準備で 39h から縦に分けた。Bolt 39h 計画の決定 (1)。2026-11-12 に Bolt 39h の CP-1 として承認。human:kakimomokuri）S-17 で差異を一覧に出して却下する縦: 判断を待つ一覧と件数に差異を足し、一覧の record・行の型・照会に分類を通す、<code>UndecidedQuarantine</code> の名前を「判断を待つ隔離・差異」に合わせて見直す（範囲は開始準備で決める）、判断の画面の見出し「差異の判断」・採用できない理由 <code>DISCREPANCY</code>・却下の完了と判断済みの文、受け取った値の示し方、S-16 のリンク「この取込の隔離・差異をすべて確認する」、マニュアル 12.2。<a href="../bolt_39h_plan/">Bolt 39h 計画</a> の決定 (1)・(5)。<a href="../bolt_39h2_plan/">Bolt 39h2 計画</a>（計画は承認済み（human:kakimomokuri）。2026-11-12 に開始準備し、2 つの整合性検証の指摘を反映した。約 4 時間 05 分（約 245 分）、本計画 CP-1〜CP-9。参考の 3 時間 30 分から、名前の見直しの範囲とリンク・件数の文を見る既存のテストの直しを数えて引き直した。開始準備で推奨に決めたこと（仮）: 分けない（名前の見直しは振る舞いを変えない準備のリファクタリングとして先にコミットする。超えそうなら動画を 39h3 へ）。名前の見直しは一覧の読みの型と照会だけ（<code>UndecidedQuarantine</code> → <code>UndecidedRecord</code>、<code>undecidedQuarantines</code> → <code>undecidedRecords</code>、<code>quarantinedOf</code> → <code>quarantinesAndDiscrepanciesOf</code>）で、判断の画面の値の型 <code>QuarantineValues</code> ほかは 39h3。差異は判断できるが採用できない（採用のファクトリーは差異を拒み、採用できる隔離の定めは分類を最初に見て <code>DISCREPANCY</code>）。一覧は隔離と差異を混ぜて今の並びで出し、種類「差異」。差異の判断の画面は見出し「差異の判断」・採用の欄なし・値は受け取った値だけ。結果の型 <code>Rejected</code>・<code>AlreadyDecided</code> に分類を持たせて文を選び、DE-29 は変えない。スキーマは変えない（データベースの承認ゲートに当たらない）。差異のまとめての却下は作らない（パイロットの前に頻度を確かめる）。【前の決定の変更】(28) 照会専用の record の名前を <code>UndecidedQuarantine</code> から <code>UndecidedRecord</code> に改める（Bolt 39d の決定 (4)・(5)。「Review」を使わない決まりは残す）。【業務の判断】(be)〜(bg)、台帳 D-147〜D-149。仮）</td>
+<td style="text-align: left;">（Bolt 39h の開始準備で 39h から縦に分けた。Bolt 39h 計画の決定 (1)。2026-11-12 に Bolt 39h の CP-1 として承認。human:kakimomokuri）S-17 で差異を一覧に出して却下する縦: 判断を待つ一覧と件数に差異を足し、一覧の record・行の型・照会に分類を通す、<code>UndecidedQuarantine</code> の名前を「判断を待つ隔離・差異」に合わせて見直す（範囲は開始準備で決めた。下の決めたこと）、判断の画面の見出し「差異の判断」・採用できない理由 <code>DISCREPANCY</code>・却下の完了と判断済みの文、受け取った値の示し方、S-16 のリンク「この取込の隔離・差異をすべて確認する」、マニュアル 12.2。<a href="../bolt_39h_plan/">Bolt 39h 計画</a> の決定 (1)・(5)。<a href="../bolt_39h2_plan/">Bolt 39h2 計画</a>、<a href="../bolt_39h2_report/">終了報告</a>（終了報告は承認済み。計画は承認済み（human:kakimomokuri）。2026-11-12 に開始準備し、2 つの整合性検証の指摘を反映した。約 4 時間 05 分（約 245 分）、本計画 CP-1〜CP-9。参考の 3 時間 30 分から、名前の見直しの範囲とリンク・件数の文を見る既存のテストの直しを数えて引き直した。開始準備で決めたこと（2026-11-12 に CP-1〜CP-9 を推奨のとおり承認。human:kakimomokuri。業務の判断は仮）: 分けない（名前の見直しは振る舞いを変えない準備のリファクタリングとして先にコミットする。超えそうなら動画を 39h3 へ）。名前の見直しは一覧の読みの型と照会だけ（<code>UndecidedQuarantine</code> → <code>UndecidedRecord</code>、<code>undecidedQuarantines</code> → <code>undecidedRecords</code>、<code>quarantinedOf</code> → <code>quarantinesAndDiscrepanciesOf</code>）で、判断の画面の値の型 <code>QuarantineValues</code> ほかは 39h3。差異は判断できるが採用できない（採用のファクトリーは差異を拒み、採用できる隔離の定めは分類を最初に見て <code>DISCREPANCY</code>）。一覧は隔離と差異を混ぜて今の並びで出し、種類「差異」。差異の判断の画面は見出し「差異の判断」・採用の欄なし・値は受け取った値だけ。一覧・判断の画面・S-16 のリンクの文は計画の決定 (5)（台帳 D-148）。結果の型 <code>Rejected</code>・<code>AlreadyDecided</code> に分類を持たせて文を選び、DE-29 は変えない。スキーマは変えない（データベースの承認ゲートに当たらない）。差異のまとめての却下は作らない（パイロットの前に頻度を確かめる）。【前の決定の変更】(28) 照会専用の record の名前を <code>UndecidedQuarantine</code> から <code>UndecidedRecord</code> に改める（Bolt 39d の決定 (4)・(5)。「Review」を使わない決まりは残す）。【業務の判断】(be)〜(bg)、台帳 D-147〜D-149。仮）</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: left;">アウトサイドイン（S-17 から）</td>
 <td style="text-align: left;">ステップごと（画面）</td>
@@ -20350,7 +20385,7 @@
 <td style="text-align: left;">US-14 AC5、S-16・S-17</td>
 <td style="text-align: left;"><a href="../bolt_39h2_plan/">Bolt 39h2 計画</a> の業務の判断の記録 (be)</td>
 <td style="text-align: left;">業務責任者とデータ責任者に確かめる（Release 1.0 のパイロットの前）</td>
-<td style="text-align: left;">仮（2026-11-12 の開始準備の推奨を承認。human:kakimomokuri。業務責任者・追跡責任者に確かめる）。<a href="../bolt_39h2_plan/">Bolt 39h2 計画</a>で作る</td>
+<td style="text-align: left;">仮（2026-11-12 の開始準備の推奨を承認。human:kakimomokuri。業務責任者・データ責任者に確かめる）。<a href="../bolt_39h2_plan/">Bolt 39h2 計画</a>で作る</td>
 </tr>
 <tr>
 <td style="text-align: left;">D-148</td>
@@ -20359,7 +20394,7 @@
 <td style="text-align: left;">US-14 AC5、UC-15 5、S-16・S-17、D-144・D-146</td>
 <td style="text-align: left;"><a href="../bolt_39h2_plan/">Bolt 39h2 計画</a> の業務の判断の記録 (bf)</td>
 <td style="text-align: left;">業務責任者とデータ責任者に確かめる（Release 1.0 のパイロットの前）</td>
-<td style="text-align: left;">仮（2026-11-12 の開始準備の推奨を承認。human:kakimomokuri。業務責任者・追跡責任者に確かめる）。<a href="../bolt_39h2_plan/">Bolt 39h2 計画</a>で作る</td>
+<td style="text-align: left;">仮（2026-11-12 の開始準備の推奨を承認。human:kakimomokuri。業務責任者・データ責任者に確かめる）。<a href="../bolt_39h2_plan/">Bolt 39h2 計画</a>で作る</td>
 </tr>
 <tr>
 <td style="text-align: left;">D-149</td>
@@ -20368,11 +20403,11 @@
 <td style="text-align: left;">US-14 AC5、D-145</td>
 <td style="text-align: left;"><a href="../bolt_39h2_plan/">Bolt 39h2 計画</a> の業務の判断の記録 (bg)</td>
 <td style="text-align: left;">業務責任者とデータ責任者に確かめる（Release 1.0 のパイロットの前）</td>
-<td style="text-align: left;">仮（2026-11-12 の開始準備の推奨を承認。human:kakimomokuri。業務責任者・追跡責任者に確かめる）。<a href="../bolt_39h2_plan/">Bolt 39h2 計画</a>で作る</td>
+<td style="text-align: left;">仮（2026-11-12 の開始準備の推奨を承認。human:kakimomokuri。業務責任者・データ責任者に確かめる）。<a href="../bolt_39h2_plan/">Bolt 39h2 計画</a>で作る</td>
 </tr>
 </tbody>
 </table>
-<p>D-144 の注（Bolt 39h2 の開始準備）: 判断の画面に差異を出して却下するのは 39h2 で、採用できない理由 <code>DISCREPANCY</code> の文は D-148。D-146 の注（同）: S-16 のリンクの文は 39h2 で「この取込の隔離・差異をすべて確認する」にし、隔離か差異が 1 件以上のときに出す（D-148）。</p>
+<p>D-144 の注（Bolt 39h2 の開始準備）: 判断の画面に差異を出して却下するのは 39h2 で、判断できる受信記録を隔離と差異に広げ、採用のファクトリーは差異を拒み、採用できるかの定めは分類を最初に見て <code>DISCREPANCY</code> を返す（<a href="../bolt_39h2_plan/">Bolt 39h2 計画</a> の決定 (3)）。採用できない理由 <code>DISCREPANCY</code> の文は D-148。D-146 の注（同）: S-16 のリンクの文は 39h2 で「この取込の隔離・差異をすべて確認する」にし、隔離か差異が 1 件以上のときに出す（D-148）。</p>
 <hr />
 <h2 id="_26">リスク管理<a class="headerlink" href="#_26" title="Permanent link">&para;</a></h2>
 <h3 id="_27">技術リスク<a class="headerlink" href="#_27" title="Permanent link">&para;</a></h3>
@@ -20650,7 +20685,7 @@
 <td style="text-align: right;">10</td>
 <td style="text-align: right;">-</td>
 <td style="text-align: right;">-</td>
-<td style="text-align: left;">計画済み（2026-11-02 に開始準備を承認した。Bolt 38h（W6 の返済）の後に Bolt 39〜39i）。2026-11-11 に Bolt 39gc の終了報告を作った（US-12 の 2 SP は終了報告の承認の後に数える）。2026-11-11 に Bolt 39g2 の終了報告を作った（SP 0。承認済み）。2026-11-12 に Bolt 39g3 の終了報告を作った（SP 0。承認済み）。2026-11-12 に Bolt 39g4 の終了報告を作った（SP 0。承認済み）。2026-11-12 に Bolt 39g4b の終了報告を作った（SP 0。承認済み）。2026-11-12 に Bolt 39g4c の終了報告を作った（SP 0。承認済み）。2026-11-12 に Bolt 39h の終了報告を作った（SP 0。承認待ち）</td>
+<td style="text-align: left;">計画済み（2026-11-02 に開始準備を承認した。Bolt 38h（W6 の返済）の後に Bolt 39〜39i）。2026-11-11 に Bolt 39gc の終了報告を作った（US-12 の 2 SP は終了報告の承認の後に数える）。2026-11-11 に Bolt 39g2 の終了報告を作った（SP 0。承認済み）。2026-11-12 に Bolt 39g3 の終了報告を作った（SP 0。承認済み）。2026-11-12 に Bolt 39g4 の終了報告を作った（SP 0。承認済み）。2026-11-12 に Bolt 39g4b の終了報告を作った（SP 0。承認済み）。2026-11-12 に Bolt 39g4c の終了報告を作った（SP 0。承認済み）。2026-11-12 に Bolt 39h の終了報告を作った（SP 0。承認済み）。2026-11-12 に Bolt 39h2 の終了報告を作った（SP 0。承認待ち）</td>
 </tr>
 <tr>
 <td style="text-align: left;">W8</td>
@@ -22981,6 +23016,16 @@
 <td style="text-align: left;">2026-11-12</td>
 <td style="text-align: left;">Bolt 39h2 の開始準備: 39h2 の行に<a href="../bolt_39h2_plan/">計画</a>へのリンクと推奨（約 245 分、本計画 CP-1〜CP-9。分けない、名前の見直しの範囲、差異は判断できるが採用できない、一覧の並び、文と受け取った値、結果の型、スキーマを変えない、まとめての却下は作らない、【前の決定の変更】(28)）を足し、台帳 D-147〜D-149（仮。承認待ち）と D-144・D-146 の注を足した</td>
 <td style="text-align: left;">anthropic/claude-opus-5-5</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-11-12</td>
+<td style="text-align: left;">Bolt 39h2 のステップ 1（設計の文書）: 39h2 の行の「開始準備で推奨に決めたこと（仮）」を CP-1〜CP-9 の承認に直し、名前の見直しの範囲を「決めた」に、一覧・判断の画面・S-16 のリンクの文の出典（決定 (5)、D-148）を足した。D-144 の注に判断できる受信記録と採用の規則（決定 (3)）を足した。台帳 D-147〜D-149 の状態の確かめる相手を期限の列に合わせて「データ責任者」に直した</td>
+<td style="text-align: left;">anthropic/claude-opus-5-5</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-11-12</td>
+<td style="text-align: left;">Bolt 39h2 のステップ 2〜10 を実施し、<a href="../bolt_39h2_report/">終了報告</a>を作った（承認待ち。CI と PERF-06 は push していないので未実行）。W7 の週の表の Bolt 39h の終了報告を承認済みに直した</td>
+<td style="text-align: left;">anthropic/claude-sonnet-5-5</td>
 </tr>
 <tr>
 <td style="text-align: left;">2026-10-28</td>

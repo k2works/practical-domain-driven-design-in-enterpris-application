@@ -11242,6 +11242,41 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_39h2_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 39h2 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../development/cargo-tracker/release_report-0_1/" class="md-nav__link">
         
   
@@ -18224,9 +18259,15 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 </tr>
 <tr>
 <td style="text-align: left;">US-14</td>
-<td style="text-align: left;">AC5 の取込の分（同じ外部 ID で後に取得した外部版を採用しているのに前に取得した外部版が届いたとき（版の逆転）と、主要実績の追跡番号が同じ外部 ID の採用中の値と違うとき（既存の採用値との矛盾）、自動で採用せず差異にし、S-16 に件数と理由を示す。差異は採用値も DE-12・DE-13・DE-14 も作らず DE-31 と監査を残す。【業務の判断】(ay)〜(bd)。S-17 で差異を却下するのは 39h2、G-06 の欠落・矛盾と照合の表は 39h4）</td>
+<td style="text-align: left;">AC5 の取込の分（同じ外部 ID で後に取得した外部版を採用しているのに前に取得した外部版が届いたとき（版の逆転）と、主要実績の追跡番号が同じ外部 ID の採用中の値と違うとき（既存の採用値との矛盾）、自動で採用せず差異にし、S-16 に件数と理由を示す。差異は採用値も DE-12・DE-13・DE-14 も作らず DE-31 と監査を残す。【業務の判断】(ay)〜(bd)。S-17 で差異を却下するのは Bolt 39h2（下の行）、G-06 の欠落・矛盾と照合の表は 39h4）</td>
 <td style="text-align: left;">39h</td>
 <td style="text-align: left;"><code>@US-14</code>（<code>features/external_data/classify_discrepancies.feature</code>）、規則 <code>DiscrepancyRuleTest</code>（パラメーター。比べる相手 2 つ、同じ取得時刻、外部版の文字列の順と取得時刻の順の逆、両方の理由）、分類 <code>ClassificationTest</code>（<code>Bolt39h_…</code>。3 つの入力の組）、照会の契約 <code>AdoptedValueRepositoryContract</code>（<code>findByExternalId</code>。メモリ・H2・PostgreSQL）、取込 <code>IngestionServiceTest</code>（<code>Bolt39h_…</code>。注記・DE-31・DE-12〜DE-14 を出さない）、監査 <code>ExternalRecordAuditEventHandlerTest</code>・<code>AuditRecordTest</code>・<code>ExternalRecordAuditDeliveryIntegrationTest</code>（配信まで。T-184）・<code>DomainEventSerializationContractTest</code>（DE-31）、画面 <code>ExternalDataIngestionControllerTest</code>・<code>IngestionSummaryQueryServiceTest</code> と <code>features/ui/discrepancy_ui.feature</code>（<code>@demo-bolt-39h/discrepancy</code>）、PERF-06 は <code>ExternalDataIngestionPerformanceTest</code>（Linux の CI の <code>performanceTest</code>）</td>
+</tr>
+<tr>
+<td style="text-align: left;">US-14</td>
+<td style="text-align: left;">AC5 の差異の確認（差異を S-17 の判断を待つ隔離・差異の一覧に隔離と混ぜて出し、差異の判断の画面で却下だけにする。採用は拒み、採用できない理由 <code>DISCREPANCY</code> を分類を最初に見て返す。S-16 のリンク「この取込の隔離・差異をすべて確認する」。却下した差異の原本の再送は再び差異。【業務の判断】(be)〜(bg)、台帳 D-144・D-145・D-147〜D-149。【前の決定の変更】(27)・(28)）</td>
+<td style="text-align: left;">39h2</td>
+<td style="text-align: left;">判断の規則 <code>ReceivedRecordDecisionTest</code>（パラメーター。分類 4 つ × 却下・採用。差異の採用は拒む）、一覧の行 <code>UndecidedRecordTest</code>（不変条件）、判断のサービス <code>ReceivedRecordDecisionServiceTest</code>（<code>Bolt39h2_…</code>。採用できない理由の順、差異の却下・判断済み・同時の却下、結果の分類）、照会の契約 <code>ExternalDataRecordRepositoriesContract</code>（<code>Bolt39h2_…</code>。隔離と差異の並び・件数・1 件引く・却下後・再送の差異、キーのない隔離のまとめての却下の対象に差異が入らない。メモリ・H2・PostgreSQL）、照会 <code>UndecidedRecordQueryServiceTest</code>（差異の受け取った値。採用値は空）、画面 <code>UndecidedRecordControllerTest</code>（一覧の文・種類・差異の判断の画面・却下と判断済みの知らせ・採用の POST の行き先・GET の着地）・<code>ExternalDataIngestionControllerTest</code>（S-16 のリンクの文と条件）、監査 <code>ExternalRecordAuditDeliveryIntegrationTest</code>（差異の却下の <code>EXTERNAL_RECORD_DECIDED</code>。配信まで。T-184）、<code>features/ui/reject_discrepancy_ui.feature</code>（<code>@demo-bolt-39h2/reject-discrepancy</code>。axe・幅 320 px）。PERF-06 は照会の形が変わらないので流さない</td>
 </tr>
 </tbody>
 </table>
