@@ -45,6 +45,8 @@ import com.example.cargotracker.routing.domain.model.entities.RouteVersion;
 import com.example.cargotracker.routing.domain.model.rules.ConstraintEvaluator;
 import com.example.cargotracker.routing.domain.model.rules.InfoFreshnessPolicy;
 import com.example.cargotracker.routing.domain.model.rules.RouteCandidateFinder;
+import com.example.cargotracker.routing.domain.model.valueobjects.ExclusionReason;
+import com.example.cargotracker.routing.domain.model.valueobjects.ExclusionThreshold;
 import com.example.cargotracker.routing.domain.model.valueobjects.Leg;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteConfirmationRejectionReason;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteVersionStatus;
@@ -55,6 +57,7 @@ import com.example.cargotracker.shared.domain.CommandId;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Role;
 import com.example.cargotracker.shared.domain.UserId;
+import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Duration;
 import java.time.Instant;
@@ -425,6 +428,31 @@ class DevSampleDataSmokeTest {
                 .filteredOn(candidate -> candidate.evaluation().conforming())
                 .hasSize(2);
         assertThat(seeded.specification().arrivalDeadline().instant()).isAfter(Instant.now());
+    }
+
+    @Test
+    void Bolt39i_見本の除外理由は閾値の列に移し替えた後も区分と閾値を保つ() {
+        // 見本の閾値は V20261007120900 が threshold の 1 列に入れ、V20261116100000 が区分ごとの列に移す（H2 の CAST を流す場所）。
+        // 案件 RC-2026-0902 の候補 3 は規則なし、候補 4 は接続不足、候補 5 は期限超過
+        RoutingCase seeded =
+                routingCases.findByNumber(new RoutingCaseNumber(2026, 902)).orElseThrow();
+
+        List<List<ExclusionThreshold>> thresholds = seeded.routeVersion().candidates().subList(2, 5).stream()
+                .map(candidate -> candidate.evaluation().reasons().stream()
+                        .map(ExclusionReason::threshold)
+                        .toList())
+                .toList();
+
+        assertThat(thresholds.get(0)).containsExactly(new ExclusionThreshold.ConnectionRuleMissing(new Location("HKHKG")));
+        assertThat(thresholds.get(1))
+                .containsExactly(new ExclusionThreshold.MinimumConnection(new Location("SGSIN"), Duration.ofHours(8)));
+        assertThat(thresholds.get(2)).hasSize(1).first().isInstanceOf(ExclusionThreshold.ArrivalDeadline.class);
+        assertThat(((ExclusionThreshold.ArrivalDeadline) thresholds.get(2).getFirst()).deadline())
+                .isEqualTo(seeded.specification().arrivalDeadline());
+        assertThat(seeded.routeVersion().candidates().subList(2, 5))
+                .allSatisfy(candidate -> assertThat(candidate.evaluation().conforming())
+                        .as("理由が消えて除外の候補が適合に変わらない")
+                        .isFalse());
     }
 
     @Test
