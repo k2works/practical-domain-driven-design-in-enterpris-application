@@ -1,0 +1,1 @@
+- [入力の控えの a11y 論点](project_session_input_a11y.md) — Bolt 32f の live region の時機・reset 後のイベント・文言と事実の一致

@@ -1166,7 +1166,7 @@ class UndecidedRecordQueryServiceTest {
 
         @Test
         void 行4_差異の項目は分類を持ち外部原本を持つのでキーのない隔離ではない() {
-            UndecidedRecord record = new UndecidedRecord(
+            UndecidedRecord waiting = new UndecidedRecord(
                     UUID.randomUUID(),
                     Classification.DISCREPANCY,
                     ingestionId,
@@ -1176,10 +1176,10 @@ class UndecidedRecordQueryServiceTest {
                     "DEMO-201",
                     "3",
                     "3 行目: 版の逆転");
-            given(receivedRecords.undecidedRecord(record.receivedRecordId())).willReturn(Optional.of(record));
+            given(receivedRecords.undecidedRecord(waiting.receivedRecordId())).willReturn(Optional.of(waiting));
 
             UndecidedRecordPage.Item found =
-                    service.undecidedRecord(record.receivedRecordId()).orElseThrow();
+                    service.undecidedRecord(waiting.receivedRecordId()).orElseThrow();
 
             assertThat(found.classification()).isEqualTo(Classification.DISCREPANCY);
             assertThat(found.keyless()).isFalse();
