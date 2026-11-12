@@ -1036,9 +1036,9 @@ class MyBatisTrackingRecordRepositoryIntegrationTest {
                     .isEqualTo(saved.originalEta().instant());
             assertThat(instant(row.get("latest_eta"))).isEqualTo(DELAYED_ETA.instant());
             assertThat(instant(row.get("last_acquired_at"))).isEqualTo(NOW.instant());
-            assertThat(row.get("routing_case_number"))
-                    .isEqualTo(saved.schedule().routingCaseNumber());
-            assertThat(row.get("route_version_no")).isEqualTo(saved.schedule().routeVersionNo());
+            assertThat(row)
+                    .containsEntry("routing_case_number", saved.schedule().routingCaseNumber())
+                    .containsEntry("route_version_no", saved.schedule().routeVersionNo());
             assertThat(((Number) row.get("version")).longValue()).isEqualTo(saved.aggregateVersion() + 1);
             assertThat(jdbc.queryForObject(
                                     "SELECT departure_at FROM tracking.scheduled_leg WHERE tracking_number = ? AND leg_no = 1",
@@ -1064,8 +1064,9 @@ class MyBatisTrackingRecordRepositoryIntegrationTest {
         void 行14_版が違えば競合にして最新の到着見込みを書かない() {
             TrackingRecord saved = savedThenDeparted();
 
-            assertThatThrownBy(() ->
-                            repository.update(register(saved, MilestoneKind.DEPARTURE, "2026-11-01T02:50:00Z", "F-2")))
+            TrackingRecord stale = register(saved, MilestoneKind.DEPARTURE, "2026-11-01T02:50:00Z", "F-2");
+
+            assertThatThrownBy(() -> repository.update(stale))
                     .isInstanceOf(ConcurrentTrackingRecordUpdateException.class);
             assertThat(repository
                             .findByTrackingNumber(saved.trackingNumber())

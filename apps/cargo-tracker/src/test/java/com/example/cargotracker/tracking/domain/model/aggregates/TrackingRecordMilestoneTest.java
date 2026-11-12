@@ -651,14 +651,12 @@ class TrackingRecordMilestoneTest {
         @Test
         void 行9_拒否は見込みを変えない() {
             TrackingRecord before = started();
+            Location location = tokyo();
+            UtcInstant future = at("2026-11-06T00:00:00Z");
+            Source source = laterSource("F-1");
 
             assertThatThrownBy(() -> before.registerMilestone(
-                            MilestoneKind.DEPARTURE,
-                            tokyo(),
-                            at("2026-11-06T00:00:00Z"),
-                            laterSource("F-1"),
-                            REGISTRANT,
-                            LATER))
+                            MilestoneKind.DEPARTURE, location, future, source, REGISTRANT, LATER))
                     .isInstanceOf(MilestoneRegistrationRejected.class);
             assertThat(before.latestEta()).isEqualTo(before.originalEta());
             assertThat(before.lastAcquiredAt()).isEmpty();
