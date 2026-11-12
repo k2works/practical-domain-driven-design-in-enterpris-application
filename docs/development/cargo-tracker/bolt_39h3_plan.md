@@ -2,7 +2,7 @@
 type: Plan
 title: "Bolt 39h3 計画 - 判断の画面で外部版をまたいで比べ、古い外部版の隔離の採用を警告する"
 tags: [plan]
-status: draft
+status: stable
 generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-13T01:00:00Z }
 ---
 
@@ -13,7 +13,7 @@ generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-13T01:00:00Z }
 | 項目 | 内容 |
 | :--- | :--- |
 | Bolt | 第 39h3 回（W7 の 37 本目。release_plan :985 の 39h3 の行。行の内容を正とする） |
-| 状態 | 計画（**承認待ち**。2026-11-13 に開始準備。確認ポイント CP-1〜CP-8 は推奨を 1 つに決めて書いた。2 つの整合性検証（`validating-iteration-plan`・`validating-design`）は別のエージェントとして流し、指摘を反映した。下の「整合性検証の結果」） |
+| 状態 | 計画（**承認済み**。2026-11-13 に確認ポイント CP-1〜CP-8 を推奨のとおり承認（【前の決定の変更】(29)(30) を含む）。human:kakimomokuri。2026-11-13 に開始準備。確認ポイント CP-1〜CP-8 は推奨を 1 つに決めて書いた。2 つの整合性検証（`validating-iteration-plan`・`validating-design`）は別のエージェントとして流し、指摘を反映した。下の「整合性検証の結果」） |
 | 予定 | W7（2026-11-16 の週。前倒しで着手できる）。Bolt 39h2 の終了報告の承認（2026-11-12）の後に着手する。約 3 時間 30 分（約 210 分。目安の上限 T-250 の内）の見込み（下の「ステップ計画」）。release_plan :985 の参考の約 3 時間から、判断の画面の値の型の名前の見直し（39h2 から送られた分）と、一覧の行の型の変更に伴う既存のテストの直しを数えて引き直した。`check`・`uiTest`・`manualScreenshots`・SonarQube・CI と承認の待ちを除く |
 | アプローチ | **アウトサイドイン（S-17 から）**（release_plan :985・:893、development_strategy :350。前例 Bolt 39h2）。状態の組み合わせの表を先に書く（T-182）。名前の見直しと規則の取り出しは振る舞いを変えない準備のリファクタリングとして Red の前に済ませ、コミットを分ける（帽子をかぶり分ける）。その後、画面の層のシナリオ → S-17 の一覧の入口 → 判断の画面と照会 → 規則の順に内へ広げる |
 | 対象 | (1) 判断の画面に「この外部 ID の採用値」の領域を足す（隔離・差異の両方。外部版・取得時刻・公開した時刻・値）、(2) 古い外部版の隔離を採用すると経路設計の航海や追跡の候補が古い値に戻ることを採用の欄で警告する（警告は採用を止めない）、(3) 絞らない一覧の各行に「この取込で絞る」を足す（分類で絞る操作は足さない）、(4) 判断の画面の値の型の名前の見直し（`QuarantineValues` ほか。39h2 の決定 (2) から送られた分）、(5) 版の逆転の判定と今使っている採用値の選び方を差異の規則から取り出して共有する、(6) マニュアル 12 章・用語集とキャプチャ |
@@ -51,7 +51,7 @@ generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-13T01:00:00Z }
 - 横断: `LayerArchitectureTest`、`DddAnnotationArchitectureTest`、`LivingGlossaryConsistencyTest`、`MapperSchemaArchitectureTest`、Modulith の検証
 - **期待が変わる既存のテスト**（ステップ 2 で数えて記録する。行の期待として直し、「計画から変えたこと」にしない）: `UndecidedRecordPage.Item` のコンストラクターに取込 ID を足すので、`Item` を作るテスト（`UndecidedRecordControllerTest`・`UndecidedRecordQueryServiceTest`・画面の層のステップ。39h2 で `classification` を足したときは 24 か所だった。コンパイルで落ちる）、`QuarantineValues`・`QuarantineValueViews`・`quarantineValues`・フラグメント `quarantine-values` の名前を参照するテスト（`UndecidedRecordQueryServiceTest`・`UndecidedRecordControllerTest`・`IngestionServiceTest`・`AdoptQuarantineUiSteps`・`CompareQuarantineValuesUiSteps`。名前を直すだけで文の期待は変わらない）。判断の画面の既存の組は、領域が増えても今の 2 つの領域の文を縛るだけなので期待は変わらない
 
-## 開始準備の決定（推奨を 1 つに決めて書いた。承認待ち）
+## 開始準備の決定（推奨を 1 つに決めて書いた。承認済み）
 
 (1) **範囲と見積り**（本計画 CP-1）: release_plan :985 の 39h3 の行（判断の画面に「この外部 ID の採用値」、古い外部版の隔離の採用の警告、S-17 の絞らない一覧から取込で絞る入口）に、39h2 から送られた名前の見直し（判断の画面の値の型）と、差異の規則から版の逆転の判定を取り出す準備のリファクタリングを足し、すべて入れ、分けない。約 210 分（3 時間 30 分。目安の上限 T-250 の内）。
 - 分けない理由: 警告は「この外部 ID の採用値」の領域と同じ照会（この外部 ID の採用値の一覧）から導くので、領域だけの Bolt は警告の根拠を画面に出すだけで、警告の Bolt は領域を使う（縦に分けると同じ画面を 2 度組み直す）。取込で絞る入口は一覧の独立した小さな縦で約 15 分
@@ -424,6 +424,7 @@ end note
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
 | 2026-11-13 | 初版作成（承認待ち） | anthropic/claude-sonnet-5-5 |
+| 2026-11-13 | CP-1〜CP-8 を推奨のとおり承認として記録した（【前の決定の変更】(29)(30) を含む。以降は推奨で進める指示による。human:kakimomokuri） | anthropic/claude-sonnet-5-5、承認 human:kakimomokuri |
 
 ## 整合性検証の結果（開始準備のステップ 3・4）
 
