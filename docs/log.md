@@ -1,6 +1,11 @@
 # Docs Update Log
 
 ## 2026-11-12
+* **Creation**: [bolt_39h2_report](/development/cargo-tracker/bolt_39h2_report.md) を作成（anthropic/claude-sonnet-5-5。承認待ち）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39h2 の終了報告）
+* **Update**: [index](/development/cargo-tracker/index.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39h2 の終了報告）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md)・[data_model](/design/cargo-tracker/data_model.md)・[ui_design](/design/cargo-tracker/ui_design.md)・[test_strategy](/design/cargo-tracker/test_strategy.md)・[ADR-004](/adr/cargo-tracker/004-external-data-ingestion.md) ほかを更新（anthropic/claude-sonnet-5-5。Bolt 39h2 のステップ 1）
+* **Update**: [12-外部データ](/manual/12-外部データ.md)・[付録B-トラブルシューティング](/manual/付録B-トラブルシューティング.md)・[用語集](/manual/用語集.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39h2）
 * **Verification**: [bolt_39h2_plan](/development/cargo-tracker/bolt_39h2_plan.md) を human:kakimomokuri が検証
 * **Creation**: [bolt_39h2_plan](/development/cargo-tracker/bolt_39h2_plan.md) を作成（anthropic/claude-opus-5-5。承認待ち）
 * **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5。Bolt 39h2 の開始準備。39h2 の行、台帳 D-147〜D-149（仮。承認待ち）と D-144・D-146 の注）

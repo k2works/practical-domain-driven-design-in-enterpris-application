@@ -162,7 +162,7 @@ Bolt がイテレーションに当たります。ふりかえりは各 Bolt の
 | 39g4b | [最後の区間の航海の到着予定で最新の到着見込みを動かす](bolt_39g4b_plan.md) | [終了報告](bolt_39g4b_report.md)（[動画](../../assets/demo/bolt-39g4b/voyage-arrival-estimate.webm){:target="_blank"}） | W7 | 完了 |
 | 39g4c | [最新の到着見込みの根拠を S-12 に 1 行で示す](bolt_39g4c_plan.md) | [終了報告](bolt_39g4c_report.md)（[動画](../../assets/demo/bolt-39g4c/latest-estimate-basis.webm){:target="_blank"}） | W7 | 完了 |
 | 39h | [版の逆転と既存の採用値との矛盾を取込で差異に分類する](bolt_39h_plan.md) | [終了報告](bolt_39h_report.md)（[動画](../../assets/demo/bolt-39h/discrepancy.webm){:target="_blank"}） | W7 | 完了 |
-| 39h2 | [S-17 で差異を一覧に出して却下する](bolt_39h2_plan.md) | — | W7 | 計画済み（承認済み） |
+| 39h2 | [S-17 で差異を一覧に出して却下する](bolt_39h2_plan.md) | [終了報告](bolt_39h2_report.md)（[動画](../../assets/demo/bolt-39h2/reject-discrepancy.webm){:target="_blank"}） | W7 | 終了報告（承認待ち） |
 
 Bolt を始めるときに行を追加します。
 
@@ -339,3 +339,4 @@ Bolt を始めるときに行を追加します。
 * [Bolt 39h 計画 - 版の逆転と既存の採用値との矛盾を取込で差異に分類する](./bolt_39h_plan.md)
 * [Bolt 39h 終了報告 - 版の逆転と既存の採用値との矛盾を取込で差異に分類する](./bolt_39h_report.md)
 * [Bolt 39h2 計画 - S-17 で差異を一覧に出して却下する](./bolt_39h2_plan.md)
+* [Bolt 39h2 終了報告 - S-17 で差異を一覧に出して却下する](./bolt_39h2_report.md)
