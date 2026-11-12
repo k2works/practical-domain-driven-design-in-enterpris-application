@@ -20,6 +20,8 @@ import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 /**
  * 受入条件とシナリオの照合（テスト戦略「CI で受入条件の数と照合して確かめる（ADR-009 のコンプライアンス）」。Bolt 2 レビュー R-17 の
@@ -36,32 +38,98 @@ class AcceptanceCriteriaCoverageTest {
     private static final Path FEATURES =
             Path.of(System.getProperty("cargotracker.features", "src/test/resources/features"));
     private static final String RELEASE_01_HEADING = "### Release 0.1 の受入条件";
+    private static final String RELEASE_10_HEADING = "### Release 1.0 の受入条件の照合の表";
     // 列の前後の空白は [^|]+ に含める（\s* と [^|]+? の両方が空白に当たるとバックトラックが増える。SonarQube の指摘。
     // 2 列目は使わず、3 列目はタグを TAG で探すので、空白が残っても結果は変わらない。Bolt 29b）
     private static final Pattern TABLE_ROW = Pattern.compile("^\\|\\s*(US-\\d+)\\s*\\|([^|]+)\\|([^|]+)\\|$");
     private static final Pattern TAG = Pattern.compile("`(@[A-Za-z0-9-]+)`");
     private static final String WIP = "@wip";
 
-    @Test
-    void Release01の受入条件ごとにwipでないシナリオがある() throws IOException {
-        List<String> required = requiredTags(Files.readAllLines(TEST_STRATEGY));
-        // 表が読めずに空振りしないこと（T-85）
-        assertThat(required).as("Release 0.1 の受入条件の表の行").isNotEmpty();
+    @ParameterizedTest(name = "{0}")
+    @ValueSource(strings = {RELEASE_01_HEADING, RELEASE_10_HEADING})
+    void 照合の表の受入条件ごとにwipでないシナリオがある(String heading) throws IOException {
+        // 表が読めずに空振りすると requiredTags が失敗する（T-85）
+        List<String> required = requiredTags(Files.readAllLines(TEST_STRATEGY), heading);
 
         assertThat(missing(required, coveredTags())).as("@wip でないシナリオのない受入条件").isEmpty();
     }
 
-    @Test
-    void 表の行が書式から外れると黙って落とさずに失敗する() {
+    @ParameterizedTest(name = "{0}")
+    @ValueSource(strings = {RELEASE_01_HEADING, RELEASE_10_HEADING})
+    void 表の行が書式から外れると黙って落とさずに失敗する(String heading) {
         List<String> lines = List.of(
-                RELEASE_01_HEADING,
+                heading,
                 "",
                 "| ストーリー | 受入条件 | 確かめるもの |",
                 "| :--- | :--- | :--- |",
                 "| US-01 | AC1 | `@US-01-AC1` |",
                 "| US-01 | AC2 |");
 
-        assertThatThrownBy(() -> requiredTags(lines)).hasMessageContaining("| US-01 | AC2 |");
+        assertThatThrownBy(() -> requiredTags(lines, heading))
+                .hasMessageContaining(heading + " の表の行を読めない")
+                .hasMessageContaining("| US-01 | AC2 |");
+    }
+
+    @Test
+    void 見出しがないか行が0件の表は空振りで通さずに失敗する() {
+        List<String> noHeading = List.of("### 別の節", "", "| US-01 | AC1 | `@US-01-AC1` |");
+        List<String> noRows = List.of(
+                RELEASE_10_HEADING, "", "| ストーリー | 受入条件 | 確かめるもの |", "| :--- | :--- | :--- |", "", "### 次の節");
+
+        assertThatThrownBy(() -> requiredTags(noHeading, RELEASE_10_HEADING)).hasMessageContaining(RELEASE_10_HEADING);
+        assertThatThrownBy(() -> requiredTags(noRows, RELEASE_10_HEADING)).hasMessageContaining(RELEASE_10_HEADING);
+    }
+
+    @Test
+    void 行のタグが取れるのは見出しの節の表だけで次の見出しで止まる() {
+        List<String> lines = List.of(
+                "### 前の節",
+                "| US-77 | AC1 | `@US-77-AC1` |",
+                RELEASE_10_HEADING,
+                "",
+                "| ストーリー | 受入条件 | 確かめるもの |",
+                "| :--- | :--- | :--- |",
+                "| US-14 | AC1 | `@US-14-AC1` |",
+                "| US-12 | AC3 | `@US-12-AC3` `@US-12-AC3b` |",
+                "",
+                "### 次の節",
+                "| US-78 | AC1 | `@US-78-AC1` |");
+
+        assertThat(requiredTags(lines, RELEASE_10_HEADING)).containsExactly("@US-14-AC1", "@US-12-AC3", "@US-12-AC3b");
+    }
+
+    @Test
+    void 見出しは完全一致で探し前方一致する別の見出しの表を混ぜない() {
+        List<String> lines = List.of(
+                RELEASE_01_HEADING,
+                "",
+                "| ストーリー | 受入条件 | 確かめるもの |",
+                "| :--- | :--- | :--- |",
+                "| US-01 | AC1 | `@US-01-AC1` |",
+                "",
+                RELEASE_01_HEADING + "の前の対応",
+                "",
+                "| ストーリー | 受入条件 | Bolt | 確かめるもの |",
+                "| :--- | :--- | :--- | :--- |",
+                "| US-18 | AC8 | 33 | `@US-18-AC8` |");
+
+        assertThat(requiredTags(lines, RELEASE_01_HEADING)).containsExactly("@US-01-AC1");
+    }
+
+    @Test
+    void 同じ見出しの節の2つ目の表は黙って読まずに失敗する() {
+        List<String> lines = List.of(
+                RELEASE_10_HEADING,
+                "",
+                "| ストーリー | 受入条件 | 確かめるもの |",
+                "| :--- | :--- | :--- |",
+                "| US-14 | AC1 | `@US-14-AC1` |",
+                "",
+                "| ストーリー | 受入条件 | Bolt | 確かめるもの |",
+                "| :--- | :--- | :--- | :--- |");
+
+        assertThatThrownBy(() -> requiredTags(lines, RELEASE_10_HEADING))
+                .hasMessageContaining("| ストーリー | 受入条件 | Bolt | 確かめるもの |");
     }
 
     @Test
@@ -102,28 +170,32 @@ class AcceptanceCriteriaCoverageTest {
                 .doesNotContain("@US-99-AC4", "@US-99-AC5", WIP);
     }
 
-    /** テスト戦略の「Release 0.1 の受入条件」の表の「確かめるもの」のタグ。表のデータの行は 1 行も読み落とさない。 */
-    static List<String> requiredTags(List<String> lines) {
+    /** テスト戦略の見出しの節の表の「確かめるもの」のタグ。表のデータの行は 1 行も読み落とさない。 */
+    static List<String> requiredTags(List<String> lines, String heading) {
         List<String> tags = new ArrayList<>();
         boolean inSection = false;
         int tableLine = 0;
         for (String line : lines) {
-            if (line.startsWith(RELEASE_01_HEADING)) {
+            if (line.strip().equals(heading)) {
                 inSection = true;
             } else if (inSection && line.startsWith("#")) {
                 break;
             } else if (inSection && line.startsWith("|") && ++tableLine > 2) {
                 // 見出しと区切りの 2 行の後はすべてデータの行
-                tags.addAll(tagsOf(line));
+                tags.addAll(tagsOf(line, heading));
             }
+        }
+        if (tags.isEmpty()) {
+            // 表が読めずに空振りしない（T-85）。見出しがない、または表の行が 0 件
+            throw new IllegalStateException(heading + " の表の行が 1 つもない（見出しがないか、表が読めない）");
         }
         return tags;
     }
 
-    private static List<String> tagsOf(String line) {
+    private static List<String> tagsOf(String line, String heading) {
         Matcher row = TABLE_ROW.matcher(line.strip());
         if (!row.matches()) {
-            throw new IllegalStateException("Release 0.1 の受入条件の表の行を読めない: " + line);
+            throw new IllegalStateException(heading + " の表の行を読めない: " + line);
         }
         List<String> tags = new ArrayList<>();
         Matcher tag = TAG.matcher(row.group(3));
