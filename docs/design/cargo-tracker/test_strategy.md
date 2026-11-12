@@ -329,7 +329,7 @@ CI で毎回実行する。
 | 権限のコールバック | Testcontainers で Flyway の `afterMigrate` コールバックを含めて適用し、所有者ではないアプリケーションの DB 利用者で全マッパーのテストを動かす（ADR-007） |
 | セキュリティ | SpringBootTest と PostgreSQL で、session の無操作 30 分・発行後 8 時間の失効、利用停止・権限取消し・参照許可の取消しの次の request からの反映、認証の失敗と権限外のアクセス試行の監査記録への同期の記録を確かめる（IA-INV-03〜08） |
 | 監査記録の欠落の照合 | 業務の状態変更と監査記録の件数の照合が、欠落を異常として検出する（AUD-04） |
-| 時刻に依存する定期処理 | Clock を固定して、鮮度超過（FRS-01・02）、受領期限の超過と escalation（SVC-01〜05）、見積りの期限間近（DE-19）、再配信（RTY-01）の判定の境界を確かめる |
+| 時刻に依存する定期処理 | Clock を固定して、鮮度超過（FRS-01・02。FRS-02 は Bolt 39g4 から定期処理でなく読むときの判定）、受領期限の超過と escalation（SVC-01〜05）、見積りの期限間近（DE-19）、再配信（RTY-01）の判定の境界を確かめる |
 | 通知 | メールを受けるだけのコンテナ（Testcontainers の Mailpit。Bolt 33、ADR-017）で、通知の宛先・件名・本文（料金などを含まない）と、送信失敗の記録を確かめる。Bolt 33 は password の再設定のメールの分、Bolt 38b2b は利用者の招待のメールの分（公開 API から Mailpit まで、同じ登録の 2 回目は送らない）、Bolt 38b2c は登録から招待のメールまで（登録のコミットの後に届く、拒否と重複では DE-25 が出ない、再配信で 2 通送らない、登録の後に止められた利用者には送らない、発行記録とログに平文とアドレスがない）: SMTP の送信アダプターで件名・本文・宛先が届く、送信のサービスが PENDING から SENT・FAILED にする、同じ `event_id` と宛先で 2 通送らない。dev のログに出す送信（`LoggingMailSender`）はログの取り込みを送信の間だけにして確かめ（T-111）、dev と staging・prod の併用と、staging・prod で SMTP の設定がないときに起動を止めることを確かめる |
 | password の再設定の依頼 | Bolt 33（US-18 AC8 の前半）。`/password-reset` が未認証で開ける、`/password-reset/{トークン}` は 33a まで仮の A-06（準備中）を返し、トークンを読まず session に覚えず `Referrer-Policy: no-referrer` を付ける（`/password-reset/x/y` は公開しない）、CSRF のトークンがない送信は 403、送信の後は `/login?reset-requested` に戻り、登録の有無・止められた利用者・所属企業の無効で応答（リダイレクト先・本文）が同じ、応答がハンドラーを待たない（送信アダプターを遅くする）、ログイン済み・password の段の session で開いた場合（T-102）。発行と送信を依頼のトランザクションの中に戻す違反で、応答が送信を待つテストが落ちることを確かめる（T-112） |
 | password の再設定の完了 | Bolt 33a（US-18 AC8 の後半）。リンクを開くと `/password-reset/new` に移り、移った先の URL と session の表にトークンがない（session があることを先に確かめる。T-107）、`Referrer-Policy: no-referrer`、無効なトークンは同じ案内、session にトークンの ID がなければ A-06 は案内、CSRF。完了の後に、ほかの端末の session で業務の画面を開くと A-03 になり、新しい password と TOTP でログインでき、古い password ではログインできない。消えるのはその利用者の session だけで、ほかの利用者と主体のない session は残る。ログイン中・password の段・別の利用者のブラウザでリンクを開いて設定しても完了の知らせが出る（T-102）。失効した Cookie でリンクを開いた場合も session の表にトークンがない。全 URL の見張り（`AUTHENTICATION_SCREENS`）に `/password-reset/new` と `/password-reset/{token}` を足す。`/password-reset/x/y` は公開しない |
@@ -415,7 +415,7 @@ identity の統合テストは、時計を差し替えるなら合成注釈 `@Id
 | :--- | :--- | :--- |
 | PERF-01〜09（応答時間、候補算出、取込、通知） | 負荷テスト（ツールはリリース計画の最初の性能テストの Bolt で選ぶ、TS-05）。ステージングで本番相当のデータ量（SCL-04）に対して実行する。PERF-06 は同じ追跡番号への実績の集中による版の競合を必ず含める。PERF-06 は Bolt 39b4 から統合テスト（`performanceTest`。`@Tag("performance")`・`@Tag("NFR-PERF-06")`。`check` と push の CI に入れない）でも測る。PERF-06 の判定は Linux の CI の手動のジョブ `performance`（`gh workflow run cargo-tracker-ci.yml --ref develop -f job=performance`）で行う。Windows の Docker Desktop の上では、ポート転送が 8 KB を超える文ごとに約 41 ms の人工の遅れを足し（寄港 60 の航海の DE-12 は直列化で 8,043 文字）、寄港 60 の航海 1 万件が 5 分を超えるので、手元の値で判定しない | パイロット開始前、大きな変更のたび |
 | RTY-01〜03（再配信、予約サガの滞留の判定） | 統合テスト（Clock を固定した境界） | CI で毎回 |
-| FRS-01〜04（鮮度） | 統合テスト（Clock を固定した境界） | CI で毎回 |
+| FRS-01〜04（鮮度） | 統合テスト（Clock を固定した境界）。FRS-02 は Bolt 39g4 から鮮度の判定の単体の境界（直前・同時刻・直後）と照会サービスの Clock の固定、受入シナリオ（`@FRS-02`） | CI で毎回 |
 | SVC-01〜07（受領・回答期限、営業日カレンダー） | ユニットテスト（デシジョンテーブル）と統合テスト | CI で毎回 |
 | SEC-01〜11（認証） | セキュリティの統合テスト、E2E | CI で毎回 |
 | SEC-15〜20（通信・保存・脆弱性） | CI の脆弱性スキャン、IaC の検査、外部の侵入テスト | CI で毎回、パイロット開始前 |
