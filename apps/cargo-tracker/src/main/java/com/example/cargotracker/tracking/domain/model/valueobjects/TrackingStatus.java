@@ -23,6 +23,6 @@ public enum TrackingStatus {
     READY_FOR_DELIVERY,
     /** 引渡し済み。 */
     DELIVERED,
-    /** 確認中（順序逆転・矛盾・鮮度超過。T-INV-03）。 */
+    /** 確認中（順序逆転・矛盾。T-INV-03。鮮度超過は確認中にしない。Bolt 39g4）。 */
     UNDER_REVIEW
 }

@@ -121,6 +121,26 @@ class LatestEstimateRuleTest {
         assertThat(rule.estimate(schedule(), milestones)).isEqualTo(at("2026-11-15T06:00:00Z"));
     }
 
+    /**
+     * Bolt 39g4 の行 2。積替予定（区間 1 の到着予定）と区間 2 の出発予定が同じ時刻の予定で、積替・KRPUS（6 時間遅れ）と区間 2 の出発・KRPUS
+     * （2 時間遅れ）を採用した組。比べ方は予定時刻の値で、同じなら発生時刻の遅い方（積替。当初 + 6 時間）。予定の時点の列の位置で比べると区間 2 の
+     * 出発（当初 + 2 時間）になるので、リファクタリングが比べ方を変えていないことを縛る（変異 M15）。
+     */
+    @Test
+    void Bolt39g4_行2_同じ予定時刻の積替と次の区間の出発は発生時刻の遅い方を使う() {
+        Schedule sameTime = new Schedule(
+                "RC-2026-0001",
+                1,
+                List.of(
+                        leg("V100", "JPTYO", "KRPUS", "2026-11-01T00:00:00Z", "2026-11-03T00:00:00Z"),
+                        leg("V200", "KRPUS", "USLAX", "2026-11-03T00:00:00Z", "2026-11-15T00:00:00Z")));
+        List<Milestone> milestones = List.of(
+                adopted(1, MilestoneKind.TRANSSHIPMENT, "KRPUS", "2026-11-03T06:00:00Z"),
+                adopted(2, MilestoneKind.DEPARTURE, "KRPUS", "2026-11-03T02:00:00Z"));
+
+        assertThat(rule.estimate(sameTime, milestones)).isEqualTo(at("2026-11-15T06:00:00Z"));
+    }
+
     /** 行 5。採用だけが見込みを動かす（T-INV-08 と同じく現在状態に効く実績だけ）。 */
     @ParameterizedTest(name = "行5 {0}")
     @EnumSource(MilestoneState.class)

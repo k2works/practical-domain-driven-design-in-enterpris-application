@@ -8,7 +8,11 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 /** 予定と予定区間（T-INV-10・T-INV-12。Bolt 25）。 */
 class ScheduleTest {
@@ -74,5 +78,59 @@ class ScheduleTest {
         legs.clear();
 
         assertThat(schedule.legs()).hasSize(2);
+    }
+
+    /**
+     * Bolt 39g4 の行 1。予定の時点の列（入力と期待の組まで縛る。T-244）。時点は「種類 場所 予定時刻 区間の位置」の表記で比べる。(d) は積替予定と
+     * 次の区間の出発予定が同じ時刻（予定は「次の出発が前の到着より前でない」だけを守るので作れる）で、同じ時刻でも積替が先。
+     */
+    @ParameterizedTest(name = "行1 {0}")
+    @MethodSource("pointRows")
+    void Bolt39g4_行1_予定の時点の列は区間ごとの出発と積替で最後が到着(String row, List<ScheduledLeg> legs, List<String> expected) {
+        Schedule schedule = new Schedule("RC-2026-0001", 1, legs);
+
+        assertThat(schedule.points())
+                .extracting(point -> point.kind() + " " + point.location().unLocode() + " "
+                        + point.scheduledAt().instant() + " " + point.legIndex())
+                .containsExactlyElementsOf(expected);
+    }
+
+    static Stream<Arguments> pointRows() {
+        return Stream.of(
+                Arguments.of(
+                        "(a) 2 区間",
+                        twoLegs(),
+                        List.of(
+                                "DEPARTURE JPTYO 2026-11-01T00:00:00Z 0",
+                                "TRANSSHIPMENT KRPUS 2026-11-03T00:00:00Z 0",
+                                "DEPARTURE KRPUS 2026-11-04T00:00:00Z 1",
+                                "ARRIVAL USLAX 2026-11-15T00:00:00Z 1")),
+                Arguments.of(
+                        "(b) 1 区間",
+                        List.of(leg("V100", "JPTYO", "USLAX", "2026-11-01T00:00:00Z", "2026-11-15T00:00:00Z")),
+                        List.of("DEPARTURE JPTYO 2026-11-01T00:00:00Z 0", "ARRIVAL USLAX 2026-11-15T00:00:00Z 0")),
+                Arguments.of(
+                        "(c) 3 区間",
+                        List.of(
+                                leg("V100", "JPTYO", "KRPUS", "2026-11-01T00:00:00Z", "2026-11-03T00:00:00Z"),
+                                leg("V200", "KRPUS", "SGSIN", "2026-11-04T00:00:00Z", "2026-11-08T00:00:00Z"),
+                                leg("V300", "SGSIN", "USLAX", "2026-11-09T00:00:00Z", "2026-11-20T00:00:00Z")),
+                        List.of(
+                                "DEPARTURE JPTYO 2026-11-01T00:00:00Z 0",
+                                "TRANSSHIPMENT KRPUS 2026-11-03T00:00:00Z 0",
+                                "DEPARTURE KRPUS 2026-11-04T00:00:00Z 1",
+                                "TRANSSHIPMENT SGSIN 2026-11-08T00:00:00Z 1",
+                                "DEPARTURE SGSIN 2026-11-09T00:00:00Z 2",
+                                "ARRIVAL USLAX 2026-11-20T00:00:00Z 2")),
+                Arguments.of(
+                        "(d) 積替予定と次の区間の出発予定が同じ時刻",
+                        List.of(
+                                leg("V100", "JPTYO", "KRPUS", "2026-11-01T00:00:00Z", "2026-11-03T00:00:00Z"),
+                                leg("V200", "KRPUS", "USLAX", "2026-11-03T00:00:00Z", "2026-11-15T00:00:00Z")),
+                        List.of(
+                                "DEPARTURE JPTYO 2026-11-01T00:00:00Z 0",
+                                "TRANSSHIPMENT KRPUS 2026-11-03T00:00:00Z 0",
+                                "DEPARTURE KRPUS 2026-11-03T00:00:00Z 1",
+                                "ARRIVAL USLAX 2026-11-15T00:00:00Z 1")));
     }
 }

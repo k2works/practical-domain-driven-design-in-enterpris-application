@@ -4,7 +4,8 @@ import com.example.cargotracker.shared.annotation.ddd.ValueObject;
 
 /**
  * 確認中の理由。追跡の現在状態が確認中になった理由（T-INV-03。Bolt 39gc）。表の {@code tracking_record.under_review_reason} に区分値で残す。
- * 矛盾・鮮度超過による確認中は、判定を作る Bolt で値を足す（W7 CP7 の境界）。
+ * 矛盾による確認中は、判定を作る Bolt で値を足す（W7 CP7 の境界）。鮮度超過は確認中にせず読むときの判定で示すので、値を足さない（Bolt 39g4。
+ * 【業務の判断】(ar)）。
  */
 @ValueObject
 public enum UnderReviewReason {
