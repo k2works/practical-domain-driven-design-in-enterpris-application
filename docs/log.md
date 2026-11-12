@@ -1,6 +1,10 @@
 # Docs Update Log
 
 ## 2026-11-12
+* **Verification**: [bolt_39h2_plan](/development/cargo-tracker/bolt_39h2_plan.md) を human:kakimomokuri が検証
+* **Creation**: [bolt_39h2_plan](/development/cargo-tracker/bolt_39h2_plan.md) を作成（anthropic/claude-opus-5-5。承認待ち）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5。Bolt 39h2 の開始準備。39h2 の行、台帳 D-147〜D-149（仮。承認待ち）と D-144・D-146 の注）
+* **Update**: [index](/development/cargo-tracker/index.md) を更新（anthropic/claude-opus-5-5。Bolt 39h2 の開始準備）
 * **Verification**: [bolt_39h_report](/development/cargo-tracker/bolt_39h_report.md) を human:kakimomokuri が検証
 * **Creation**: [bolt_39h_report](/development/cargo-tracker/bolt_39h_report.md) を作成（anthropic/claude-opus-5-5。承認待ち）
 * **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5。Bolt 39h の終了報告）
