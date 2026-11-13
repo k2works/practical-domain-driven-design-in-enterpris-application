@@ -76,6 +76,14 @@ public class MyBatisServiceCaseRepository implements ServiceCaseRepository {
     }
 
     @Override
+    public Optional<CaseNumber> findUnclosedDuplicate(
+            Optional<CompanyId> shipperCompanyId, Optional<java.util.UUID> bookingId, String cause) {
+        return mapper.selectUnclosedDuplicate(
+                        shipperCompanyId.map(CompanyId::value).orElse(null), bookingId.orElse(null), cause)
+                .map(CaseNumber::new);
+    }
+
+    @Override
     public Optional<ServiceCase> findByNumber(CaseNumber number) {
         return mapper.selectCase(number.value()).map(row -> toAggregate(row, number));
     }

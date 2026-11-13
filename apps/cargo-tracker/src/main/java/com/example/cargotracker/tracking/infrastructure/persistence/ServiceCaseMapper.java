@@ -45,4 +45,10 @@ public interface ServiceCaseMapper {
     int countProgress(@Param("caseNumber") String caseNumber);
 
     int countAnswers(@Param("caseNumber") String caseNumber);
+
+    /** 同じ荷主企業・予約（なければ「ない」案件）・内容で未終結の案件の受付番号（古い順の先頭）。 */
+    Optional<String> selectUnclosedDuplicate(
+            @Param("shipperCompanyId") java.util.UUID shipperCompanyId,
+            @Param("bookingId") java.util.UUID bookingId,
+            @Param("cause") String cause);
 }

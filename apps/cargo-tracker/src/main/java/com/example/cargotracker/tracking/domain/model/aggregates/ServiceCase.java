@@ -104,7 +104,7 @@ public final class ServiceCase {
         Objects.requireNonNull(number, "number");
         Objects.requireNonNull(deadlines, "deadlines");
         Objects.requireNonNull(openedAt, "openedAt");
-        Set<MissingItem> missing = missingOf(draft);
+        Set<MissingItem> missing = missingItems(draft);
         if (!missing.isEmpty()) {
             return new ServiceCaseOpening.Incomplete(missing);
         }
@@ -143,7 +143,8 @@ public final class ServiceCase {
         return new ServiceCaseOpening.Opened(serviceCase);
     }
 
-    private static Set<MissingItem> missingOf(ServiceCaseDraft draft) {
+    /** 起票の入力に足りない必須項目（種類ごと。空ならそろっている）。起票の前に呼び手が確かめ、足りなければ受付番号を使わない。 */
+    public static Set<MissingItem> missingItems(ServiceCaseDraft draft) {
         Set<MissingItem> missing = EnumSet.noneOf(MissingItem.class);
         addIf(missing, isBlank(draft.cause()), MissingItem.CAUSE);
         addIf(missing, isBlank(draft.department()), MissingItem.DEPARTMENT);

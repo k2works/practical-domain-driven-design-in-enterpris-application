@@ -3,6 +3,7 @@ package com.example.cargotracker.tracking.infrastructure.config;
 import com.example.cargotracker.booking.interfaces.api.TrackingStartNotification;
 import com.example.cargotracker.booking.interfaces.api.TransportPhaseNotification;
 import com.example.cargotracker.routing.interfaces.api.RouteVersionLegQuery;
+import com.example.cargotracker.tracking.application.internal.commandservices.ServiceCaseCommandService;
 import com.example.cargotracker.tracking.application.internal.commandservices.TrackingRecordCommandService;
 import com.example.cargotracker.tracking.application.internal.eventhandlers.BookingTrackingStartNotificationEventHandler;
 import com.example.cargotracker.tracking.application.internal.eventhandlers.BookingTransportPhaseNotificationEventHandler;
@@ -15,7 +16,10 @@ import com.example.cargotracker.tracking.application.internal.outboundservices.a
 import com.example.cargotracker.tracking.application.internal.queryservices.CustomerTrackingQueryService;
 import com.example.cargotracker.tracking.application.internal.queryservices.TrackingRecordQueryService;
 import com.example.cargotracker.tracking.application.internal.queryservices.TrackingRecordScope;
+import com.example.cargotracker.tracking.domain.model.aggregates.BusinessCalendarRepository;
 import com.example.cargotracker.tracking.domain.model.aggregates.RejectedMilestoneRepository;
+import com.example.cargotracker.tracking.domain.model.aggregates.ServiceCaseNumberIssuer;
+import com.example.cargotracker.tracking.domain.model.aggregates.ServiceCaseRepository;
 import com.example.cargotracker.tracking.domain.model.aggregates.TrackingRecordRepository;
 import com.example.cargotracker.tracking.domain.model.rules.FreshnessPolicy;
 import java.time.Clock;
@@ -85,6 +89,16 @@ public class TrackingConfiguration {
     @Bean
     VoyageArrivalEventHandler voyageArrivalEventHandler(TrackingRecordRepository repository) {
         return new VoyageArrivalEventHandler(repository);
+    }
+
+    /** 有人案件の起票と受領（US-20。認可の仮の定めは台帳 D-159。Bolt 40-7）。 */
+    @Bean
+    ServiceCaseCommandService serviceCaseCommandService(
+            ServiceCaseRepository repository,
+            ServiceCaseNumberIssuer numberIssuer,
+            BusinessCalendarRepository calendars,
+            Clock clock) {
+        return new ServiceCaseCommandService(repository, numberIssuer, calendars, clock);
     }
 
     /** 追跡管理者による主要実績の登録（US-12。Bolt 26b）。 */

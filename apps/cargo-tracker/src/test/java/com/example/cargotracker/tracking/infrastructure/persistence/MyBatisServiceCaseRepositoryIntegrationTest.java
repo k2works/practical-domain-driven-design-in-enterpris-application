@@ -24,6 +24,7 @@ import com.example.cargotracker.tracking.domain.model.valueobjects.ServicePriori
 import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingNumber;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -302,6 +303,44 @@ class MyBatisServiceCaseRepositoryIntegrationTest {
                         number,
                         staff))
                 .isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    // --- 重複の検索（Bolt 40-7） ---
+
+    @Test
+    void 重複_同じ荷主企業と予約と内容の未終結の案件の受付番号を返す() {
+        ServiceCase opened = open(ServiceCaseKind.CUSTOMER_INQUIRY);
+        repository.save(opened, ACTOR);
+
+        assertThat(repository.findUnclosedDuplicate(Optional.of(SHIPPER), Optional.empty(), "荷主の照会"))
+                .contains(opened.number());
+    }
+
+    @Test
+    void 重複_荷主企業か予約か内容が違えば返さない() {
+        ServiceCase opened = open(ServiceCaseKind.AMENDMENT);
+        repository.save(opened, ACTOR);
+
+        // 予約が同じ・荷主企業が空の案件
+        assertThat(repository.findUnclosedDuplicate(Optional.empty(), Optional.of(BOOKING), "変更の要求"))
+                .contains(opened.number());
+        // 荷主企業を指すと、荷主企業のない案件とは別
+        assertThat(repository.findUnclosedDuplicate(Optional.of(SHIPPER), Optional.of(BOOKING), "変更の要求"))
+                .isEmpty();
+        assertThat(repository.findUnclosedDuplicate(Optional.empty(), Optional.of(UUID.randomUUID()), "変更の要求"))
+                .isEmpty();
+        assertThat(repository.findUnclosedDuplicate(Optional.empty(), Optional.of(BOOKING), "別の内容"))
+                .isEmpty();
+    }
+
+    @Test
+    void 重複_終結した案件と重複終了した案件は返さない() {
+        ServiceCase opened = open(ServiceCaseKind.CUSTOMER_INQUIRY);
+        repository.save(opened, ACTOR);
+        repository.update(opened.markDuplicate(), ACTOR);
+
+        assertThat(repository.findUnclosedDuplicate(Optional.of(SHIPPER), Optional.empty(), "荷主の照会"))
+                .isEmpty();
     }
 
     // --- 行 6: ない受付番号 ---

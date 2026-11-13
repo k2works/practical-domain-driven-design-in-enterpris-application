@@ -153,4 +153,20 @@
     <select id="countAnswers" resultType="int">
         SELECT COUNT(*) FROM tracking.service_case_answer WHERE case_number = #{caseNumber}
     </select>
+    <!-- 未終結（終結・重複終了でない）で、荷主企業・予約・内容が同じ案件。荷主企業・予約が空の入力は、空の案件と比べる（Bolt 40-7） -->
+    <select id="selectUnclosedDuplicate" resultType="string">
+        SELECT case_number FROM tracking.service_case
+         WHERE status NOT IN ('CLOSED', 'DUPLICATE_CLOSED')
+           AND cause = #{cause}
+        <choose>
+            <when test="shipperCompanyId != null">AND shipper_company_id = #{shipperCompanyId}</when>
+            <otherwise>AND shipper_company_id IS NULL</otherwise>
+        </choose>
+        <choose>
+            <when test="bookingId != null">AND booking_id = #{bookingId}</when>
+            <otherwise>AND booking_id IS NULL</otherwise>
+        </choose>
+         ORDER BY created_at, case_number
+         FETCH FIRST 1 ROWS ONLY
+    </select>
 </mapper>
