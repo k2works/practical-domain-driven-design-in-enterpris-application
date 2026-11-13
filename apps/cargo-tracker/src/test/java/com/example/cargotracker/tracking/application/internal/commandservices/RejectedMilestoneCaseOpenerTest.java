@@ -127,18 +127,18 @@ class RejectedMilestoneCaseOpenerTest {
 
     @Test
     void 行2_取消済みの予約は追跡記録の荷主企業と予約を案件に残す() {
-        TrackingRecord record = cancelledRecord();
+        TrackingRecord cancelled = cancelledRecord();
 
         opener().open(
                         rejected(
                                 MilestoneRejectionReason.BOOKING_CANCELLED,
-                                record.trackingNumber().value()),
-                        Optional.of(record),
+                                cancelled.trackingNumber().value()),
+                        Optional.of(cancelled),
                         STEWARD);
 
         ServiceCase serviceCase = repository.cases.values().iterator().next();
-        assertThat(serviceCase.shipperCompanyId()).contains(record.shipperCompanyId());
-        assertThat(serviceCase.bookingId()).contains(record.bookingId());
+        assertThat(serviceCase.shipperCompanyId()).contains(cancelled.shipperCompanyId());
+        assertThat(serviceCase.bookingId()).contains(cancelled.bookingId());
         assertThat(serviceCase.cause()).contains("BOOKING_CANCELLED");
     }
 
@@ -163,8 +163,9 @@ class RejectedMilestoneCaseOpenerTest {
                 Clock.fixed(NOW, ZoneOffset.UTC)));
 
         RejectedMilestone rejected = rejected(MilestoneRejectionReason.UNKNOWN_TRACKING_NUMBER, "CTZZZZZZZZZZZZ");
+        Optional<TrackingRecord> noRecord = Optional.empty();
 
-        assertThatThrownBy(() -> opener.open(rejected, Optional.empty(), STEWARD))
+        assertThatThrownBy(() -> opener.open(rejected, noRecord, STEWARD))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("営業カレンダー");
         assertThat(repository.cases).isEmpty();
