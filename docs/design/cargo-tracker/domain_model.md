@@ -231,6 +231,7 @@ quadrantChart
 | 起票の入力 | ServiceCaseDraft | 有人案件の起票の入力（必須項目が足りなくても作れ、不足は `MissingItem` で返す） | 追跡 |
 | 進捗 | CaseProgress | 有人案件の進捗の更新の記録（進捗番号、内容、次回更新日時、更新者、更新時刻。追記専用） | 追跡 |
 | 回答 | CaseAnswer | 有人案件への回答と顧客の回答の記録（回答番号。内容は書き換えず、再開のとき顧客の回答を足す） | 追跡 |
+| 依頼元への表示 | RequesterNotice | 有人案件の依頼元に示す内容（担当未確定か、次回更新日時。US-20 AC3） | 追跡 |
 | 企業 | Company | 荷主・荷受人・A 社などの利用者の所属組織 | アクセス・監査 |
 | 利用者 | User | 事前登録され、固定役割を持つ人（BR-14、BR-15）。Bolt 34 から版（`app_user.version`）を持ち、役割の変更を判定して役割を変えた新しい利用者を返す。Bolt 34d から、利用状態の変更も判定して変えた新しい利用者を返す。Bolt 34e から、判定（`decideRoleChange(操作者, 企業, 変更後の役割)`・`decideStatusChange(操作者, 変更後の状態, 理由)`）が承認の値か拒否を返し、変更（`changeRoles(RoleChangeApproval)`・`changeStatus(StatusChangeApproval)`）は承認の値だけを受ける（判定を通さずに変えられない。2026-10-17、human:kakimomokuri）。Bolt 38b から、登録の判定（`decideRegistration(企業, 役割)`。static。役割なし → 監督の役割 → 企業の種類 → 職務分離の順）が承認の値か拒否を返し、生成（`register(UserRegistrationApproval, 利用者 ID, メールアドレス, 表示名, password のハッシュ)`）は承認の値だけを受けて版 0・利用中の利用者を作る。役割 0 件はコンストラクターの 1 か所で拒む（例外の文に利用者 ID。データの不整合もここで捕まえる。2026-10-25、human:kakimomokuri） | アクセス・監査 |
 | 利用状態 | UserStatus | 利用者の利用状態（`app_user.status`）。利用中 `ACTIVE`、利用停止 `SUSPENDED`（認証できない。IA-INV-09）。S-20 の詳細で、システム管理者が停止と再開を行う（`identity.domain.model.valueobjects`。Bolt 34d） | アクセス・監査 |
