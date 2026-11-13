@@ -2,7 +2,7 @@
 type: Plan
 title: "Bolt 40 終了報告 - H2TrackingRecordLockTest のばらつきと PERF-06 の行 21 の競合を調べて直す"
 tags: [plan]
-status: draft
+status: stable
 generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-13T02:15:00Z }
 ---
 
@@ -84,3 +84,4 @@ M3 を捕まえるのは定数の確かめだけで、待ちの長さそのも�
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
 | 2026-11-13 | 初版作成（承認待ち） | anthropic/claude-sonnet-5-5 |
+| 2026-11-13 | 議題をすべて推奨のとおり承認として記録した（human:kakimomokuri） | anthropic/claude-sonnet-5-5、承認 human:kakimomokuri |

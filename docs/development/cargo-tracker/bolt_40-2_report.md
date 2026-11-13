@@ -2,7 +2,7 @@
 type: Plan
 title: "Bolt 40-2 終了報告 - 版の逆転の隔離の採用を DE-29 と監査の要約に残す（M5）"
 tags: [plan]
-status: draft
+status: stable
 generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-13T04:30:00Z }
 ---
 
@@ -64,3 +64,4 @@ generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-13T04:30:00Z }
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
 | 2026-11-13 | 初版作成（承認待ち） | anthropic/claude-sonnet-5-5 |
+| 2026-11-13 | 議題をすべて推奨のとおり承認として記録した（human:kakimomokuri） | anthropic/claude-sonnet-5-5、承認 human:kakimomokuri |

@@ -166,11 +166,11 @@ Bolt がイテレーションに当たります。ふりかえりは各 Bolt の
 | 39h3 | [判断の画面で外部版をまたいで比べ、古い外部版の隔離の採用を警告する](bolt_39h3_plan.md) | [終了報告](bolt_39h3_report.md)（[動画](../../assets/demo/bolt-39h3/old-version-warning.webm){:target="_blank"}） | W7 | 完了 |
 | 39h4 | [US-14 を締める（G-06 の欠落・矛盾、受入条件の照合の表、W7 のデモの動画、#18 のクローズ）](bolt_39h4_plan.md) | [終了報告](bolt_39h4_report.md)（[動画](../../assets/demo/bolt-39h4/confirm-rejected-same-info-version.webm){:target="_blank"}） | W7 | 完了 |
 | 39i | [経路設計の貨物種別で候補を除外し、除外理由の閾値を区分ごとの型と列にする](bolt_39i_plan.md) | [終了報告](bolt_39i_report.md) | W7 | 完了 |
-| 40 | [H2TrackingRecordLockTest のばらつきと PERF-06 の行 21 の競合を調べて直す](bolt_40_plan.md)（[W8 計画](iteration_plan-W8.md)） | [終了報告](bolt_40_report.md) | W8 | 完了（承認待ち） |
-| 40-1 | [W7 週全体レビューの返済（M1・M3・M6・M7）](bolt_40-1_plan.md)（[W8 計画](iteration_plan-W8.md)） | [終了報告](bolt_40-1_report.md) | W8 | 完了（承認待ち） |
-| 40-2 | [版の逆転の隔離の採用を DE-29 と監査の要約に残す（M5）](bolt_40-2_plan.md)（[W8 計画](iteration_plan-W8.md)） | [終了報告](bolt_40-2_report.md) | W8 | 完了（承認待ち） |
-| 40-4 | [営業日カレンダーと受領・回答期限の計算（SC-INV-04）](bolt_40-4_plan.md)（[W8 計画](iteration_plan-W8.md)。40-3 は確認の場の回答待ちで飛ばした） | [終了報告](bolt_40-4_report.md) | W8 | 完了（承認待ち） |
-| 40-5 | [有人案件の集約（ドメインだけ）](bolt_40-5_plan.md)（[W8 計画](iteration_plan-W8.md)） | [終了報告](bolt_40-5_report.md) | W8 | 完了（承認待ち） |
+| 40 | [H2TrackingRecordLockTest のばらつきと PERF-06 の行 21 の競合を調べて直す](bolt_40_plan.md)（[W8 計画](iteration_plan-W8.md)） | [終了報告](bolt_40_report.md) | W8 | 完了（承認済み） |
+| 40-1 | [W7 週全体レビューの返済（M1・M3・M6・M7）](bolt_40-1_plan.md)（[W8 計画](iteration_plan-W8.md)） | [終了報告](bolt_40-1_report.md) | W8 | 完了（承認済み） |
+| 40-2 | [版の逆転の隔離の採用を DE-29 と監査の要約に残す（M5）](bolt_40-2_plan.md)（[W8 計画](iteration_plan-W8.md)） | [終了報告](bolt_40-2_report.md) | W8 | 完了（承認済み） |
+| 40-4 | [営業日カレンダーと受領・回答期限の計算（SC-INV-04）](bolt_40-4_plan.md)（[W8 計画](iteration_plan-W8.md)。40-3 は確認の場の回答待ちで飛ばした） | [終了報告](bolt_40-4_report.md) | W8 | 完了（承認済み） |
+| 40-5 | [有人案件の集約（ドメインだけ）](bolt_40-5_plan.md)（[W8 計画](iteration_plan-W8.md)） | [終了報告](bolt_40-5_report.md) | W8 | 完了（承認済み） |
 
 Bolt を始めるときに行を追加します。
 

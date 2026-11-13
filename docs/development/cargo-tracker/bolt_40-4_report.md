@@ -2,7 +2,7 @@
 type: Plan
 title: "Bolt 40-4 終了報告 - 営業日カレンダーと受領・回答期限の計算（SC-INV-04）"
 tags: [plan]
-status: draft
+status: stable
 generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-13T05:30:00Z }
 ---
 
@@ -67,3 +67,4 @@ MyBatis の `resultMap` で、コンストラクターの引数は boolean を `
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
 | 2026-11-13 | 初版作成（承認待ち） | anthropic/claude-sonnet-5-5 |
+| 2026-11-13 | 議題をすべて推奨のとおり承認として記録した（human:kakimomokuri） | anthropic/claude-sonnet-5-5、承認 human:kakimomokuri |
