@@ -261,7 +261,7 @@ Bolt を始めるときに行を追加します。
 | :--- | :--- | :--- |
 | W6 | [W6 完了報告書](iteration_report-W6.md)（[W6 横断レビュー](../../review/cargo-tracker/w6_review_20261102.md)） | 作成済み・承認済み（2026-11-02） |
 | W7 | [W7 完了報告書](iteration_report-W7.md)（週全体のコードレビューを含む） | 作成済み・承認済み（2026-11-13） |
-| W8 | [W8 完了報告書](iteration_report-W8.md)（[W8 週全体レビュー](../../review/cargo-tracker/w8_review_20261114.md)、[確認の場の依頼の一覧](confirmation_requests-W8.md)） | 作成済み（人に諮る議題あり。承認待ち） |
+| W8 | [W8 完了報告書](iteration_report-W8.md)（[W8 週全体レビュー](../../review/cargo-tracker/w8_review_20261114.md)、[確認の場の依頼の一覧](confirmation_requests-W8.md)） | 作成済み・推奨のとおり承認として記録（2026-11-14。確認の場の開催と Issue #20・#21 のクローズは未） |
 
 ## 補足
 
