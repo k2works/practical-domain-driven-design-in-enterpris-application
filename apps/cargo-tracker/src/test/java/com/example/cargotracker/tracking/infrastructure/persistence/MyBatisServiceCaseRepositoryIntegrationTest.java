@@ -354,19 +354,28 @@ class MyBatisServiceCaseRepositoryIntegrationTest {
         repository.save(received, ACTOR);
         repository.update(received.receive(STAFF, at("2083-11-16T02:00:00Z")), STAFF);
 
+        // 共有の DB には、ほかのテストが残した案件（拒否した主要実績の起票など。Bolt 40-13）があるので、このテストの案件だけを比べる
         // 期限ちょうどは返さない
-        assertThat(repository.findReceiptOverdue(at("2083-11-16T05:00:00Z"), 10))
+        assertThat(mine(repository.findReceiptOverdue(at("2083-11-16T05:00:00Z"), 100_000), late, received))
                 .isEmpty();
         // 期限を過ぎた受付済みだけ返す（受領した案件は返さない）
-        assertThat(repository.findReceiptOverdue(at("2083-11-16T05:00:01Z"), 10))
-                .extracting(ServiceCase::number)
+        assertThat(mine(repository.findReceiptOverdue(at("2083-11-16T05:00:01Z"), 100_000), late, received))
                 .containsExactly(late.number());
         // 上位対応中は期限の前後を問わず返す
         repository.update(late.escalate(at("2083-11-16T06:00:00Z")).orElseThrow(), ACTOR);
-        assertThat(repository.findReceiptOverdue(at("2083-11-16T04:00:00Z"), 10))
-                .extracting(ServiceCase::number)
+        assertThat(mine(repository.findReceiptOverdue(at("2083-11-16T04:00:00Z"), 100_000), late, received))
                 .containsExactly(late.number());
         assertThat(repository.findReceiptOverdue(at("2083-11-20T00:00:00Z"), 0)).isEmpty();
+    }
+
+    /** 結果のうち、このテストで作った案件の受付番号だけを返す（共有の DB のほかの案件に影響されない）。 */
+    private static List<com.example.cargotracker.tracking.domain.model.valueobjects.CaseNumber> mine(
+            List<ServiceCase> found, ServiceCase... own) {
+        return found.stream()
+                .map(ServiceCase::number)
+                .filter(number ->
+                        java.util.Arrays.stream(own).anyMatch(c -> c.number().equals(number)))
+                .toList();
     }
 
     // --- 状態の集合で引く（Bolt 40-11。S-14 の未終結・未受領・対応中） ---
@@ -379,13 +388,19 @@ class MyBatisServiceCaseRepositoryIntegrationTest {
         repository.save(received, ACTOR);
         repository.update(received.receive(STAFF, at("2083-11-16T02:00:00Z")), STAFF);
 
-        assertThat(repository.findByStatuses(Set.of(ServiceCaseStatus.RECEIVED), 10))
-                .extracting(ServiceCase::number)
+        // 共有の DB のほかの案件に影響されないよう、このテストの案件だけを比べる
+        assertThat(mine(repository.findByStatuses(Set.of(ServiceCaseStatus.RECEIVED), 100_000), unreceived, received))
                 .containsExactly(unreceived.number());
-        assertThat(repository.findByStatuses(Set.of(ServiceCaseStatus.IN_PROGRESS), 10))
-                .extracting(ServiceCase::number)
+        assertThat(mine(
+                        repository.findByStatuses(Set.of(ServiceCaseStatus.IN_PROGRESS), 100_000),
+                        unreceived,
+                        received))
                 .containsExactly(received.number());
-        assertThat(repository.findByStatuses(Set.of(ServiceCaseStatus.RECEIVED, ServiceCaseStatus.IN_PROGRESS), 10))
+        assertThat(mine(
+                        repository.findByStatuses(
+                                Set.of(ServiceCaseStatus.RECEIVED, ServiceCaseStatus.IN_PROGRESS), 100_000),
+                        unreceived,
+                        received))
                 .hasSize(2);
         assertThat(repository.findByStatuses(Set.of(ServiceCaseStatus.RECEIVED, ServiceCaseStatus.IN_PROGRESS), 1))
                 .hasSize(1);
