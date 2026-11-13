@@ -62,13 +62,14 @@ class MyBatisInquiryRecordRepositoryIntegrationTest {
         repository.save(inquiryOf(id, InquiryChannel.PHONE, Optional.empty()));
 
         Map<String, Object> row = jdbc.queryForMap("SELECT * FROM tracking.inquiry_record WHERE id = ?", id);
-        assertThat(row).containsEntry("channel", "PHONE");
-        assertThat(row).containsEntry("shipper_company_id", SHIPPER.value());
-        assertThat(row).containsEntry("tracking_number", "CTABCDEFGH2345");
-        assertThat(row).containsEntry("inquirer_kind", "CONSIGNEE");
-        assertThat(row).containsEntry("escalated", false);
-        assertThat(row).containsEntry("case_number", null);
-        assertThat(row).containsEntry("recorded_by", SUPPORT.value());
+        assertThat(row)
+                .containsEntry("channel", "PHONE")
+                .containsEntry("shipper_company_id", SHIPPER.value())
+                .containsEntry("tracking_number", "CTABCDEFGH2345")
+                .containsEntry("inquirer_kind", "CONSIGNEE")
+                .containsEntry("escalated", false)
+                .containsEntry("case_number", null)
+                .containsEntry("recorded_by", SUPPORT.value());
     }
 
     @Test
