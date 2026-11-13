@@ -1,6 +1,7 @@
 # Docs Update Log
 
 ## 2026-11-13
+* **Creation**: [bolt_40-1_report](/development/cargo-tracker/bolt_40-1_report.md) を作成（anthropic/claude-sonnet-5-5。承認待ち）
 * **Creation**: [bolt_40-1_plan](/development/cargo-tracker/bolt_40-1_plan.md) を作成（anthropic/claude-sonnet-5-5。推奨のとおり承認として記録。human:kakimomokuri）
 * **Creation**: [bolt_40_report](/development/cargo-tracker/bolt_40_report.md) を作成（anthropic/claude-sonnet-5-5。承認待ち）
 * **Update**: [iteration_plan-W8](/development/cargo-tracker/iteration_plan-W8.md) を更新（xp-architect）
