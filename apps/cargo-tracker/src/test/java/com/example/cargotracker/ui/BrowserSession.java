@@ -100,24 +100,33 @@ public class BrowserSession implements DisposableBean {
      * （Bolt 34）、外部データの取込（{@code /staff/external-data}）はデータ責任者（Bolt 39c）、ほかの社内の画面（{@code /staff/}）は営業担当者でログインしてから開く（Bolt 14）。いまの利用者の役割が違えば、Cookie を消して A-01 からログインし直す。
      */
     public void navigate(String url) {
-        Role role = url.contains("/customer/")
-                ? Role.SHIPPER
-                : url.contains("/staff/routing-cases")
-                        ? Role.ROUTE_DESIGNER
-                        : url.contains("/staff/tracking-records")
-                                ? Role.TRACKING_MANAGER
-                                : url.contains("/staff/users")
-                                        ? Role.SYSTEM_ADMIN
-                                        : url.contains("/staff/external-data")
-                                                ? Role.DATA_STEWARD
-                                                : url.contains("/staff/service-cases")
-                                                                || url.contains("/staff/inquiries")
-                                                        ? Role.CUSTOMER_SUPPORT
-                                                        : url.contains("/staff/") ? Role.SALES : null;
+        Role role = roleFor(url);
         if (role != null && role != signedIn) {
             signInAs(role, URI.create(url).resolve("/login").toString());
         }
         page.navigate(url);
+    }
+
+    /**
+     * URL の一部と、その画面を開くときにログインする役割（上から順に最初に合うもの）。有人案件（{@code /staff/service-cases}）と照会の記録
+     * （{@code /staff/inquiries}）はカスタマーサポート（Bolt 40-11・40-15）。最後の {@code /staff/} はほかの社内の画面（営業担当者）。
+     */
+    private static final java.util.List<java.util.Map.Entry<String, Role>> ROLE_BY_URL = java.util.List.of(
+            java.util.Map.entry("/customer/", Role.SHIPPER),
+            java.util.Map.entry("/staff/routing-cases", Role.ROUTE_DESIGNER),
+            java.util.Map.entry("/staff/tracking-records", Role.TRACKING_MANAGER),
+            java.util.Map.entry("/staff/users", Role.SYSTEM_ADMIN),
+            java.util.Map.entry("/staff/external-data", Role.DATA_STEWARD),
+            java.util.Map.entry("/staff/service-cases", Role.CUSTOMER_SUPPORT),
+            java.util.Map.entry("/staff/inquiries", Role.CUSTOMER_SUPPORT),
+            java.util.Map.entry("/staff/", Role.SALES));
+
+    private static Role roleFor(String url) {
+        return ROLE_BY_URL.stream()
+                .filter(entry -> url.contains(entry.getKey()))
+                .map(java.util.Map.Entry::getValue)
+                .findFirst()
+                .orElse(null);
     }
 
     /** A-01 からその役割の利用者でログインし、A-02 で TOTP のコードを入れる（Cookie を消してから。Bolt 31 で 2 段階にした）。 */
