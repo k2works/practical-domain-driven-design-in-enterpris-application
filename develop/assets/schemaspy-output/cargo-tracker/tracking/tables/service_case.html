@@ -676,24 +676,24 @@
                                 </thead>
                                 <tbody>
                                 <tr>
-                                    <td>ck_service_case_priority</td>
-                                    <td>((priority)::text &#61; ANY ((ARRAY[&#39;HIGH&#39;::character varying, &#39;NORMAL&#39;::character varying])::text[]))</td>
-                                </tr>
-                                <tr>
-                                    <td>ck_service_case_status</td>
-                                    <td>((status)::text &#61; ANY ((ARRAY[&#39;RECEIVED&#39;::character varying, &#39;ESCALATED&#39;::character varying, &#39;IN_PROGRESS&#39;::character varying, &#39;ANSWERED&#39;::character varying, &#39;CLOSED&#39;::character varying, &#39;DUPLICATE_CLOSED&#39;::character varying])::text[]))</td>
-                                </tr>
-                                <tr>
                                     <td>ck_service_case_reconciliation</td>
                                     <td>(((reconciliation_id IS NULL) OR (reconciliation_required &#61; true)) AND (NOT (((status)::text &#61; &#39;CLOSED&#39;::text) AND (reconciliation_required &#61; true) AND (reconciliation_id IS NULL))))</td>
+                                </tr>
+                                <tr>
+                                    <td>ck_service_case_kind</td>
+                                    <td>((kind)::text &#61; ANY ((ARRAY[&#39;CUSTOMER_INQUIRY&#39;::character varying, &#39;QUOTATION_CONSULTATION&#39;::character varying, &#39;AMENDMENT&#39;::character varying, &#39;REDESIGN&#39;::character varying, &#39;EXTERNAL_OUTAGE&#39;::character varying, &#39;REJECTED_MILESTONE&#39;::character varying, &#39;SAGA_FAILURE&#39;::character varying])::text[]))</td>
                                 </tr>
                                 <tr>
                                     <td>ck_service_case_assignee</td>
                                     <td>(((status)::text &lt;&gt; ALL ((ARRAY[&#39;IN_PROGRESS&#39;::character varying, &#39;ANSWERED&#39;::character varying, &#39;CLOSED&#39;::character varying])::text[])) OR ((assignee_id IS NOT NULL) AND (received_at IS NOT NULL)))</td>
                                 </tr>
                                 <tr>
-                                    <td>ck_service_case_kind</td>
-                                    <td>((kind)::text &#61; ANY ((ARRAY[&#39;CUSTOMER_INQUIRY&#39;::character varying, &#39;QUOTATION_CONSULTATION&#39;::character varying, &#39;AMENDMENT&#39;::character varying, &#39;REDESIGN&#39;::character varying, &#39;EXTERNAL_OUTAGE&#39;::character varying, &#39;REJECTED_MILESTONE&#39;::character varying, &#39;SAGA_FAILURE&#39;::character varying])::text[]))</td>
+                                    <td>ck_service_case_priority</td>
+                                    <td>((priority)::text &#61; ANY ((ARRAY[&#39;HIGH&#39;::character varying, &#39;NORMAL&#39;::character varying])::text[]))</td>
+                                </tr>
+                                <tr>
+                                    <td>ck_service_case_status</td>
+                                    <td>((status)::text &#61; ANY ((ARRAY[&#39;RECEIVED&#39;::character varying, &#39;ESCALATED&#39;::character varying, &#39;IN_PROGRESS&#39;::character varying, &#39;ANSWERED&#39;::character varying, &#39;CLOSED&#39;::character varying, &#39;DUPLICATE_CLOSED&#39;::character varying])::text[]))</td>
                                 </tr>
                                 </tbody>
                             </table>
