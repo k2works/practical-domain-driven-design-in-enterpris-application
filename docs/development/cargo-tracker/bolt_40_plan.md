@@ -3,7 +3,7 @@ type: Plan
 title: "Bolt 40 計画 - H2TrackingRecordLockTest のばらつきと PERF-06 の行 21 の競合を調べて直す"
 description: "W8 の最初の Bolt（技術、SP 0、150 分）。H2TrackingRecordLockTest のばらつきを実測で切り分け、PERF-06 の Bolt39d2b_行21 の競合（却下のコミット直後の一覧が空になる）をテスト側で直す。"
 tags: [plan]
-status: draft
+status: stable
 generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-13T00:25:50Z }
 ---
 
@@ -14,7 +14,7 @@ generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-13T00:25:50Z }
 | 項目 | 内容 |
 | :--- | :--- |
 | Bolt | 第 40 回（W8 の 1 本目。[W8 計画](iteration_plan-W8.md)の最初の Bolt） |
-| 状態 | 計画（**承認待ち**。確認ポイントは下の CP-1〜CP-4。承認は取っていない） |
+| 状態 | 計画（**承認済み**。2026-11-13 に W8 計画の確認ポイントとあわせて推奨のとおり承認。human:kakimomokuri） |
 | 種別・SP | 技術・SP 0 |
 | 見積り | **150 分**（作業のみ。`check`・Sonar・CI と承認の待ちを除く。壁時計は +60 分で 210 分）。W8 計画の A-1〜A-3 の仮定による推測。類推元はない |
 | アプローチ | 調査が先、直しは後。**原因を実測する前に消さない**（`@Disabled` や再試行を足さない。W7 の議題 4） |
@@ -126,6 +126,7 @@ M2 は現状の挙動（元に戻す変異）。変異は 1 つずつ流し、�
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
 | 2026-11-13 | 初版作成（承認待ち）。W8 計画の最初の Bolt として、仮説と切り分けの手順を書いた | anthropic/claude-sonnet-5-5 |
+| 2026-11-13 | 推奨のとおり承認として記録した（human:kakimomokuri） | anthropic/claude-sonnet-5-5、承認 human:kakimomokuri |
 
 ## 関連ドキュメント
 

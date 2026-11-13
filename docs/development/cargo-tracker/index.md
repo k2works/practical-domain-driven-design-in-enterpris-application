@@ -166,7 +166,7 @@ Bolt がイテレーションに当たります。ふりかえりは各 Bolt の
 | 39h3 | [判断の画面で外部版をまたいで比べ、古い外部版の隔離の採用を警告する](bolt_39h3_plan.md) | [終了報告](bolt_39h3_report.md)（[動画](../../assets/demo/bolt-39h3/old-version-warning.webm){:target="_blank"}） | W7 | 完了 |
 | 39h4 | [US-14 を締める（G-06 の欠落・矛盾、受入条件の照合の表、W7 のデモの動画、#18 のクローズ）](bolt_39h4_plan.md) | [終了報告](bolt_39h4_report.md)（[動画](../../assets/demo/bolt-39h4/confirm-rejected-same-info-version.webm){:target="_blank"}） | W7 | 完了 |
 | 39i | [経路設計の貨物種別で候補を除外し、除外理由の閾値を区分ごとの型と列にする](bolt_39i_plan.md) | [終了報告](bolt_39i_report.md) | W7 | 完了 |
-| 40 | [H2TrackingRecordLockTest のばらつきと PERF-06 の行 21 の競合を調べて直す](bolt_40_plan.md)（[W8 計画](iteration_plan-W8.md)） | — | W8 | 計画（承認待ち） |
+| 40 | [H2TrackingRecordLockTest のばらつきと PERF-06 の行 21 の競合を調べて直す](bolt_40_plan.md)（[W8 計画](iteration_plan-W8.md)） | — | W8 | 計画済み（承認済み） |
 
 Bolt を始めるときに行を追加します。
 
@@ -237,7 +237,7 @@ Bolt を始めるときに行を追加します。
 
 | 週 | 計画 | 状態 |
 | :--- | :--- | :--- |
-| W8 | [W8 計画](iteration_plan-W8.md)（技術 Bolt にも分単位の見積りを付けた 17 本。稼働 4 日との比較） | 作成済み・承認待ち（2026-11-13） |
+| W8 | [W8 計画](iteration_plan-W8.md)（技術 Bolt にも分単位の見積りを付けた 17 本。稼働 4 日との比較） | 承認済み（2026-11-13） |
 
 ### 週の完了報告書
 
