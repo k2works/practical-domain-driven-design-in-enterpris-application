@@ -217,6 +217,11 @@
                                 </thead>
                                 <tbody>
                                     <tr>
+                                        <td><a href='tables/business_calendar.html'>business_calendar</a></td>
+                                        <td>ck_business_calendar_hours</td>
+                                        <td>(((business_day &#61; true) AND (open_time IS NOT NULL) AND (close_time IS NOT NULL) AND (open_time &lt; close_time)) OR ((business_day &#61; false) AND (open_time IS NULL) AND (close_time IS NULL)))</td>
+                                    </tr>
+                                    <tr>
                                         <td><a href='tables/rejected_milestone.html'>rejected_milestone</a></td>
                                         <td>ck_rejected_milestone_kind</td>
                                         <td>((kind)::text &#61; ANY ((ARRAY[&#39;PICKUP&#39;::character varying, &#39;RECEIPT_AT_ORIGIN&#39;::character varying, &#39;DEPARTURE&#39;::character varying, &#39;TRANSSHIPMENT&#39;::character varying, &#39;ARRIVAL&#39;::character varying, &#39;DELIVERY&#39;::character varying])::text[]))</td>

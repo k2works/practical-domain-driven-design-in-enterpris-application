@@ -11425,6 +11425,321 @@
   
   
     <li class="md-nav__item">
+      <a href="../bolt_40_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 40 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../bolt_40-1_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 40-1 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../bolt_40-2_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 40-2 計画
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../bolt_40-2_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 40-2 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../bolt_40-4_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 40-4 計画
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../bolt_40-4_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 40-4 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../bolt_40-5_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 40-5 計画
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../bolt_40-5_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 40-5 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../bolt_40-1_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 40-1 計画
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../bolt_39g_report/" class="md-nav__link">
         
   
@@ -20787,6 +21102,33 @@
 <td style="text-align: left;">業務責任者に確かめる（Release 1.0 のパイロットの前）</td>
 <td style="text-align: left;">仮（2026-11-13 の計画の承認で推奨のとおり。human:kakimomokuri。業務責任者の確認は未）</td>
 </tr>
+<tr>
+<td style="text-align: left;">D-156</td>
+<td style="text-align: left;">有人案件の受領・回答期限の値と数え方（SVC-01・02・03・05。OQ-06）</td>
+<td style="text-align: left;">優先度高: 受領 1 営業時間・回答は営業日の終了（当日中）、通常: 受領 4 営業時間・回答は同じ時刻の 2 営業日後。営業時間は開始以上、終了未満（18:00 ちょうどは時間外）。時間外の受付は次に開く時刻から数える。次回更新日時は受領期限。値は <code>ServiceDeadlinePolicy.provisional()</code> の 1 か所</td>
+<td style="text-align: left;">domain_model（SC-INV-04）、non_functional（SVC-01〜05）、US-20</td>
+<td style="text-align: left;"><a href="../bolt_40-4_plan/">Bolt 40-4 計画</a>の決定 (2)・(5)</td>
+<td style="text-align: left;">OQ-06 の運用測定（パイロット中）</td>
+<td style="text-align: left;">仮（2026-11-13 の計画の承認で推奨のとおり。human:kakimomokuri。業務責任者の確認は未）</td>
+</tr>
+<tr>
+<td style="text-align: left;">D-157</td>
+<td style="text-align: left;">営業日カレンダーの見本（2026・2027 年の祝日）</td>
+<td style="text-align: left;">日本の祝日（内閣府の定め）と 12-29〜1-03 の休業、土日を休業日にした見本を <code>V20261117100000</code> に入れた。外部ライブラリは入れない（CP-6）。翌年以降は W10 の運用タスク <code>calendar:register</code></td>
+<td style="text-align: left;">data_model（business_calendar）、operation.md、SVC-07</td>
+<td style="text-align: left;"><a href="../bolt_40-4_plan/">Bolt 40-4 計画</a>の決定 (4)</td>
+<td style="text-align: left;">業務責任者に確かめる（Release 1.0 のパイロットの前。祝日の見本の確認）</td>
+<td style="text-align: left;">仮（2026-11-13 の計画の承認で推奨のとおり。human:kakimomokuri。業務責任者の確認は未）</td>
+</tr>
+<tr>
+<td style="text-align: left;">D-158</td>
+<td style="text-align: left;">有人案件の種類ごとの必須項目（SC-INV-01、US-20 AC1）</td>
+<td style="text-align: left;">全種類は原因・担当部門。照会・見積り相談は荷主企業、変更・再設計は予約か追跡番号と旧版・新版、外部停止は手動入力の出典（復旧照合は種類で必須）、登録拒否は追跡番号と出典 1 つ以上、予約サガの失敗は予約。顧客連絡は表に列がなく 40-7 の入力で扱う</td>
+<td style="text-align: left;">domain_model（SC-INV-01）、US-20</td>
+<td style="text-align: left;"><a href="../bolt_40-5_plan/">Bolt 40-5 計画</a>の決定 (3)</td>
+<td style="text-align: left;">業務責任者に確かめる（Release 1.0 のパイロットの前）</td>
+<td style="text-align: left;">仮（2026-11-13 の計画の承認で推奨のとおり。human:kakimomokuri。業務責任者の確認は未）</td>
+</tr>
 </tbody>
 </table>
 <p>D-141・D-142 の注（Bolt 39h3 の開始準備）: 版の逆転の判定（D-142）と比べる相手の選び方（D-141・D-105）は、差異の規則から <code>isVersionReversed</code>・<code>inUseOf</code>・<code>partnerOf</code> として取り出し、取込の差異の判定・古い外部版の警告・判断の画面の領域が共有する（定義は変えない）。D-146 の注（同）: 書き分けは注記と S-16 の文に限り、判断の画面は隔離にも「この外部 ID の採用値」を示す（【前の決定の変更】(30)）。D-147 の注（同）: 分類で絞る操作は足さないと決めた（D-152）。D-148 の注（同）: 判断の画面の値の領域に、受け取った値に加えて「この外部 ID の採用値」を示す（【前の決定の変更】(30)）。【前の決定の変更】(29): Bolt 39d3 の決定 (10) の判断の画面の値の型の名前を <code>UndecidedRecordValues</code> に改める。</p>
@@ -21075,7 +21417,7 @@
 <td style="text-align: right;">8</td>
 <td style="text-align: right;">-</td>
 <td style="text-align: right;">-</td>
-<td style="text-align: left;">計画済み（2026-11-13。<a href="../iteration_plan-W8/">W8 計画</a>は承認済み。17 本・3,970 分。着手前）</td>
+<td style="text-align: left;">進行中（Bolt 40 を終えた。<a href="../bolt_40_report/">終了報告</a>）。計画済み（2026-11-13。<a href="../iteration_plan-W8/">W8 計画</a>は承認済み。17 本・3,970 分。着手前）</td>
 </tr>
 <tr>
 <td style="text-align: left;">W9</td>

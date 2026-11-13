@@ -2,3 +2,4 @@ milestone
 tracking_record
 rejected_milestone
 scheduled_leg
+business_calendar

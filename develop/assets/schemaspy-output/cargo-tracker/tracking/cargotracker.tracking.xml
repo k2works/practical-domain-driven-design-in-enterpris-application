@@ -1,6 +1,19 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <database name="cargotracker" schema="tracking" type="PostgreSQL - 18.6 (Debian 18.6-1.pgdg13+2)">
    <tables>
+      <table name="business_calendar" numRows="730" remarks="営業日カレンダー（日ごとの営業日・営業時間。年次で翌年分を登録する）" schema="tracking" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="calendar_date" nullable="false" remarks="日付（現地）" size="13" type="date" typeCode="91"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="business_day" nullable="false" remarks="営業日か" size="1" type="bool" typeCode="-7"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="2" name="open_time" nullable="true" remarks="開始（営業日だけ。営業時間は開始以上、終了未満）" size="15" type="time" typeCode="92"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="3" name="close_time" nullable="true" remarks="終了（営業日だけ）" size="15" type="time" typeCode="92"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="time_zone" nullable="false" remarks="時間帯（IANA）" size="50" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="5" name="note" nullable="true" remarks="備考（祝日の名前など）" size="200" type="varchar" typeCode="12"/>
+         <primaryKey column="calendar_date" sequenceNumberInPK="1"/>
+         <index name="pk_business_calendar" unique="true">
+            <column ascending="true" name="calendar_date"/>
+         </index>
+         <checkConstraint constraint="(((business_day = true) AND (open_time IS NOT NULL) AND (close_time IS NOT NULL) AND (open_time &lt; close_time)) OR ((business_day = false) AND (open_time IS NULL) AND (close_time IS NULL)))" name="ck_business_calendar_hours"/>
+      </table>
       <table name="milestone" remarks="主要実績 [no-delete]" schema="tracking" type="TABLE">
          <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="tracking_number" nullable="false" remarks="追跡番号" size="20" type="varchar" typeCode="12">
             <child column="tracking_number" foreignKey="fk_tracking_record_status_basis" implied="false" onDeleteCascade="false" schema="tracking" table="tracking_record"/>
