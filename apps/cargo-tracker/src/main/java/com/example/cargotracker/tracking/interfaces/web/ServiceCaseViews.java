@@ -136,10 +136,7 @@ final class ServiceCaseViews {
         if (!c.reconciliationRequired()) {
             return Optional.empty();
         }
-        return Optional.of(
-                c.reconciliationId().isPresent()
-                        ? "完了（照合 " + c.reconciliationId().get() + "）"
-                        : "未完了");
+        return Optional.of(c.reconciliationId().map(id -> "完了（照合 " + id + "）").orElse("未完了"));
     }
 
     /** 担当者・更新者の表示。利用者の表示名を引く公開 API がまだないので、本人は「あなた」、ほかは利用者 ID で示す。 */

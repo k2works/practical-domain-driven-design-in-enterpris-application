@@ -35,7 +35,6 @@ import org.springframework.boot.test.web.server.LocalServerPort;
  */
 public class ServiceCaseUiSteps {
 
-    private static final String LIST_CAPTION = "有人案件（受領期限の古い順）";
     private static final ZoneId JAPAN = ZoneId.of("Asia/Tokyo");
 
     private final BrowserSession browser;

@@ -8,6 +8,7 @@ import com.example.cargotracker.tracking.application.internal.queryservices.Serv
 import com.example.cargotracker.tracking.application.internal.queryservices.ServiceCaseListFilter;
 import com.example.cargotracker.tracking.application.internal.queryservices.ServiceCaseQueryService;
 import com.example.cargotracker.tracking.domain.model.valueobjects.CaseNumber;
+import com.example.cargotracker.tracking.domain.model.valueobjects.ServiceCaseStatus;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -80,13 +81,11 @@ public class ServiceCaseController {
     public String receive(@PathVariable String caseNumber, AuthenticatedActor actor, RedirectAttributes redirect) {
         CaseNumber number = ServiceCaseViews.parseNumber(caseNumber).orElseThrow(ServiceCaseController::notFound);
         switch (commandService.receive(actor, new ReceiveServiceCaseCommand(number))) {
-            case ReceiveServiceCaseOutcome.Received received ->
-                redirect.addFlashAttribute(RESULT, received.number().value() + " を受領しました。対応中にしました。");
-            case ReceiveServiceCaseOutcome.NotReceivable notReceivable ->
+            case ReceiveServiceCaseOutcome.Received(CaseNumber received) ->
+                redirect.addFlashAttribute(RESULT, received.value() + " を受領しました。対応中にしました。");
+            case ReceiveServiceCaseOutcome.NotReceivable(ServiceCaseStatus current) ->
                 redirect.addFlashAttribute(
-                        PROBLEM,
-                        "この案件は受領できる状態ではありません（今の状態: " + ServiceCaseViews.status(notReceivable.status())
-                                + "）。最新の状態を確かめてください。");
+                        PROBLEM, "この案件は受領できる状態ではありません（今の状態: " + ServiceCaseViews.status(current) + "）。最新の状態を確かめてください。");
             case ReceiveServiceCaseOutcome.Conflict _ -> redirect.addFlashAttribute(PROBLEM, CONFLICT_MESSAGE);
             case ReceiveServiceCaseOutcome.NotFound _ -> throw notFound();
             case ReceiveServiceCaseOutcome.NotPermitted _ -> throw new ResponseStatusException(HttpStatus.FORBIDDEN);
