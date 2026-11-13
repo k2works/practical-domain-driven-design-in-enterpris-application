@@ -12329,6 +12329,76 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_40-14_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 40-14 計画
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_40-14_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 40-14 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../development/cargo-tracker/bolt_40-1_plan/" class="md-nav__link">
         
   
@@ -19826,6 +19896,10 @@
 <tr>
 <td style="text-align: left;">再算出</td>
 <td style="text-align: left;">候補の表だけを部分更新し、更新が終わったときに 1 回だけライブリージョンで通知する</td>
+</tr>
+<tr>
+<td style="text-align: left;">専門判断への引き継ぎ（Bolt 40-14。UC-06 3a）</td>
+<td style="text-align: left;">候補の算出で適合する候補がない（経路に使える航海がない、または候補がすべて除外。貨物種別だけが理由の案件は除く）とき、候補の見出しの下に「専門判断のため、有人案件（外部停止／見積り相談）として引き継ぎました。受付番号は「有人案件」の一覧で確かめてください。」を示す（<code>RoutingCase.candidatesNotFoundReason</code> から決める読み取りの表示）。起票は DE-32 を受けた追跡が行うので、受付番号は S-06 に出さず S-14 で確かめる（経路設計は追跡に依存しない）</td>
 </tr>
 <tr>
 <td style="text-align: left;">古くなった候補（Bolt 39f2）</td>

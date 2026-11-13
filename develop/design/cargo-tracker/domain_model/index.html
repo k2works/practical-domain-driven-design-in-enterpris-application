@@ -12032,6 +12032,76 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_40-14_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 40-14 計画
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_40-14_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 40-14 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../development/cargo-tracker/bolt_40-1_plan/" class="md-nav__link">
         
   
@@ -21564,6 +21634,14 @@
 <td style="text-align: left;">受信記録 ID、取込 ID、情報源 ID、提供元、原本種別、外部 ID、外部版、差異の理由（文字列。<code>VERSION_REVERSED</code>・<code>TARGET_KEY_DIFFERS</code>。<code>DiscrepancyReason</code> の名前）、比べた外部版（比べた相手の採用値の外部版）、物理行の範囲の始まりと終わり、操作者、差異にした時刻（取込の時刻）（<code>externaldata.domain.events</code>。Java 標準の型と文字列。DE-14・DE-29 と同じ）。取込で受信記録を差異にした行ごとに、取込と同じトランザクションで発行する。差異は隔離と別の事実なので DE-14 の理由の区分に足さない。差異にした原本は採用値を作らないので、DE-12・DE-13・DE-14 は出さない</td>
 <td style="text-align: left;">監査（<code>ExternalRecordAuditEventHandler</code> が <code>EXTERNAL_RECORD_DISCREPANCY_FOUND</code> を書く。コミットの後、別のトランザクション。対象と変更後は DE-14 の監査と同じ形で、理由は差異の理由。IA-INV-15）。経路設計と追跡は購読しない</td>
 <td style="text-align: left;">—</td>
+</tr>
+<tr>
+<td style="text-align: left;">DE-32</td>
+<td style="text-align: left;">適合する経路候補が見つからなかった（<code>RouteCandidatesNotFound</code>。Bolt 40-14。UC-06 3a）</td>
+<td style="text-align: left;">経路設計</td>
+<td style="text-align: left;">経路設計案件 ID・案件番号、見積り ID、輸送要求 ID・版番号、荷主企業、理由の名前（<code>EXTERNAL_DATA_MISSING</code> 経路に使える航海がない、<code>NO_CONFORMING_CANDIDATE</code> 候補はあるがすべて除外）、見つけた候補の数、時刻、算出した経路設計者（<code>routing.domain.events</code>。<code>RoutingCase.candidatesNotFound</code> が作り、候補の算出を保存した後に発行する。すべて貨物種別だけで除外された案件は発行しない（手動の窓口。Bolt 39i）。再算出のたびに発行されるが、有人案件の重複の判定が二重の起票を防ぐ）</td>
+<td style="text-align: left;">追跡: <code>RouteCandidatesNotFoundEventHandler</code> が有人案件を起票する（理由が候補なしなら種類 見積り相談・優先度 通常、航海なしなら 外部停止・優先度 高。担当部門 経路設計部。台帳 D-161）。経路設計は追跡に依存しない（ADR-014）</td>
+<td style="text-align: left;"></td>
 </tr>
 <tr>
 <td style="text-align: left;">DE-15</td>
