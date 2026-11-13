@@ -811,7 +811,7 @@ sc ||--o{ sca
 | `correction` | `status` IN（`PENDING_APPROVAL`、`APPLIED`、`REJECTED`）。`approved_by` は `registered_by` と異なる（`CHECK`） | T-INV-06 |
 | `service_case` | `kind` IN（`CUSTOMER_INQUIRY`、`QUOTATION_CONSULTATION`、`AMENDMENT`、`REDESIGN`、`EXTERNAL_OUTAGE`、`REJECTED_MILESTONE`、`SAGA_FAILURE`）。`status` IN（`RECEIVED`、`ESCALATED`、`IN_PROGRESS`、`ANSWERED`、`CLOSED`、`DUPLICATE_CLOSED`）。`shipper_company_id` で荷主の照会範囲を限る。`acknowledged_at` は営業時間外の優先度高の自動受付の時刻 | SC-INV-01〜05 |
 | `inquiry_record` | `channel` IN（`WEB_SELF`、`WEB_INQUIRY`、`PHONE`、`EMAIL`）。`inquirer_kind` IN（`SHIPPER`、`CONSIGNEE`）。`escalated` は有人対応へ移ったか | IR-INV-01〜02、KPI-02 |
-| `business_calendar` | 日ごとの営業日・営業時間。年次で翌年分を登録する | SC-INV-04 |
+| `business_calendar` | 日ごとの営業日・営業時間。年次で翌年分を登録する | SC-INV-04 | **Bolt 40-4 で作った**（`V20261117100000`。`business_day` が真なら `open_time < close_time`、偽なら時刻なしの CHECK `ck_business_calendar_hours`。2026・2027 年の全日の見本を入れた。日本の祝日は内閣府の定めから作った見本で業務責任者の確認を要する。台帳 D-157）。
 
 `tracking_record.current_status` は導出結果を保存した非正規化である。照会（US-09）のたびに全実績から導出し直すのを避けるためで、集約を保存するときに必ず導出し直して書く。
 
