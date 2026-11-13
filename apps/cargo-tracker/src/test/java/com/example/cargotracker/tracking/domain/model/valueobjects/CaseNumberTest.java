@@ -23,6 +23,8 @@ class CaseNumberTest {
     @Test
     void 空か長すぎる受付番号は拒む() {
         assertThatThrownBy(() -> new CaseNumber(" ")).isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> new CaseNumber("x".repeat(21))).isInstanceOf(IllegalArgumentException.class);
+        String tooLong = "x".repeat(21);
+
+        assertThatThrownBy(() -> new CaseNumber(tooLong)).isInstanceOf(IllegalArgumentException.class);
     }
 }

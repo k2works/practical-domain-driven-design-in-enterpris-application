@@ -273,14 +273,18 @@ class MyBatisServiceCaseRepositoryIntegrationTest {
 
     @Test
     void 行5_復旧照合が必要で照合のない終結は拒む() {
-        assertThatThrownBy(() -> insertCase("SC-X-5", "EXTERNAL_OUTAGE", "CLOSED", "HIGH", STAFF.value(), null, true))
+        UUID staff = STAFF.value();
+
+        assertThatThrownBy(() -> insertCase("SC-X-5", "EXTERNAL_OUTAGE", "CLOSED", "HIGH", staff, null, true))
                 .isInstanceOf(DataIntegrityViolationException.class);
     }
 
     @Test
     void 行5_復旧照合が要らないのに照合IDがある行は拒む() {
+        UUID reconciliation = UUID.randomUUID();
+
         assertThatThrownBy(() ->
-                        insertCase("SC-X-6", "CUSTOMER_INQUIRY", "RECEIVED", "NORMAL", null, UUID.randomUUID(), false))
+                        insertCase("SC-X-6", "CUSTOMER_INQUIRY", "RECEIVED", "NORMAL", null, reconciliation, false))
                 .isInstanceOf(DataIntegrityViolationException.class);
     }
 
@@ -289,11 +293,14 @@ class MyBatisServiceCaseRepositoryIntegrationTest {
         ServiceCase opened = open(ServiceCaseKind.CUSTOMER_INQUIRY);
         repository.save(opened, ACTOR);
 
+        String number = opened.number().value();
+        UUID staff = STAFF.value();
+
         assertThatThrownBy(() -> jdbc.update(
                         "INSERT INTO tracking.service_case_answer (case_number, answer_no, content, answered_by,"
                                 + " answered_at, customer_response) VALUES (?, 1, 'a', ?, now(), 'r')",
-                        opened.number().value(),
-                        STAFF.value()))
+                        number,
+                        staff))
                 .isInstanceOf(DataIntegrityViolationException.class);
     }
 
