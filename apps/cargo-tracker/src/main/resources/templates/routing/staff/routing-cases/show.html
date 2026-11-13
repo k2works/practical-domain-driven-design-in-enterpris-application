@@ -75,6 +75,8 @@
         <p th:if="${#lists.isEmpty(routingCase.candidates())}">条件に合う航海が見つかりませんでした。航海の情報の確認をデータ責任者に依頼し、届いたら再算出してください。</p>
         <p th:if="${!#lists.isEmpty(routingCase.candidates()) and !routingCase.candidates()[0].conforming() and !routingCase.allExcludedForCargo()}">適合する候補がありません。除外の理由を確かめ、航海の情報や接続時間規則の確認をデータ責任者に依頼してください。</p>
         <p th:if="${!#lists.isEmpty(routingCase.candidates()) and !routingCase.candidates()[0].conforming() and routingCase.allExcludedForCargo()}">適合する候補がありません。この案件の貨物は MVP の対象外のため、手動の窓口で扱ってください。</p>
+        <!--/* 適合する候補がなく専門判断へ引き継いだ旨（UC-06 3a。DE-32 を受けて追跡が有人案件を起票する。Bolt 40-14） */-->
+        <p class="alert alert-info" th:if="${routingCase.handoffNote() != null}" th:text="${routingCase.handoffNote()}">専門判断のため、有人案件（見積り相談）として引き継ぎました。</p>
         <article class="route-candidate card mb-3" th:each="candidate : ${routingCase.candidates()}"
                  th:attr="aria-labelledby=|candidate-${candidate.candidateNo()}|">
             <div class="card-body">

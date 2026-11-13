@@ -1,5 +1,6 @@
 package com.example.cargotracker.routing.domain.model.aggregates;
 
+import com.example.cargotracker.routing.domain.events.RouteCandidatesNotFound;
 import com.example.cargotracker.routing.domain.events.RouteConfirmed;
 import com.example.cargotracker.routing.domain.events.RouteRedesignRequired;
 import com.example.cargotracker.routing.domain.model.entities.RouteCandidate;
@@ -9,8 +10,10 @@ import com.example.cargotracker.routing.domain.model.rules.InfoFreshnessPolicy;
 import com.example.cargotracker.routing.domain.model.rules.RoutableCargoPolicy;
 import com.example.cargotracker.routing.domain.model.rules.RouteCandidateFinder;
 import com.example.cargotracker.routing.domain.model.valueobjects.CandidateCalculation;
+import com.example.cargotracker.routing.domain.model.valueobjects.CandidatesNotFoundReason;
 import com.example.cargotracker.routing.domain.model.valueobjects.ConstraintEvaluation;
 import com.example.cargotracker.routing.domain.model.valueobjects.DecisionRationale;
+import com.example.cargotracker.routing.domain.model.valueobjects.ExclusionReasonCode;
 import com.example.cargotracker.routing.domain.model.valueobjects.Leg;
 import com.example.cargotracker.routing.domain.model.valueobjects.RedesignReasonCode;
 import com.example.cargotracker.routing.domain.model.valueobjects.RedesignRecord;
@@ -26,6 +29,7 @@ import com.example.cargotracker.routing.domain.model.valueobjects.StaleLegReason
 import com.example.cargotracker.shared.annotation.ddd.AggregateRoot;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Location;
+import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -352,6 +356,45 @@ public final class RoutingCase {
                 evaluatedAt,
                 reasons.stream().map(RedesignReasonCode::name).toList(),
                 candidate.legs().stream().map(Leg::infoVersion).toList()));
+    }
+
+    /**
+     * 適合する候補が見つからなかった理由（UC-06 3a。Bolt 40-14）。候補を算出済みで、候補がない（経路に使える航海がない）か、すべて除外のとき。
+     * 適合の候補が 1 件でもあれば空。すべて貨物種別だけで除外された案件は、手動の窓口の案内（Bolt 39i）で扱うので引き継がない。
+     */
+    public Optional<CandidatesNotFoundReason> candidatesNotFoundReason() {
+        RouteVersion version = routeVersion();
+        if (version.status() != RouteVersionStatus.CANDIDATES_PRESENTED) {
+            return Optional.empty();
+        }
+        List<RouteCandidate> candidates = version.candidates();
+        if (candidates.isEmpty()) {
+            return Optional.of(CandidatesNotFoundReason.EXTERNAL_DATA_MISSING);
+        }
+        if (candidates.stream().anyMatch(candidate -> candidate.evaluation().conforming())) {
+            return Optional.empty();
+        }
+        boolean cargoOnly = candidates.stream()
+                .allMatch(candidate -> !candidate.evaluation().reasons().isEmpty()
+                        && candidate.evaluation().reasons().stream()
+                                .allMatch(reason -> reason.code() == ExclusionReasonCode.CARGO_NOT_SUPPORTED));
+        return cargoOnly ? Optional.empty() : Optional.of(CandidatesNotFoundReason.NO_CONFORMING_CANDIDATE);
+    }
+
+    /** 適合する候補が見つからなかったことを DE-32 にする（引き継ぐ理由がなければ空。算出を保存した後に発行する）。 */
+    public Optional<RouteCandidatesNotFound> candidatesNotFound(UserId operator, UtcInstant notFoundAt) {
+        return candidatesNotFoundReason()
+                .map(reason -> new RouteCandidatesNotFound(
+                        id.value(),
+                        number.text(),
+                        quotationId,
+                        transportRequestId,
+                        transportRequestVersionNo,
+                        shipperCompanyId,
+                        reason.name(),
+                        routeVersion().candidatesFound(),
+                        notFoundAt,
+                        operator));
     }
 
     /** 区間を今の航海で引き直して判定し直した不適合の理由（適合なら空）。 */

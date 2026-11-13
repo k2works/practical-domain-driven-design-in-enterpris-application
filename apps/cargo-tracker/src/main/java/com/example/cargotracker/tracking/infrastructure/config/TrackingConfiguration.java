@@ -11,6 +11,7 @@ import com.example.cargotracker.tracking.application.internal.commandservices.Tr
 import com.example.cargotracker.tracking.application.internal.eventhandlers.BookingTrackingStartNotificationEventHandler;
 import com.example.cargotracker.tracking.application.internal.eventhandlers.BookingTransportPhaseNotificationEventHandler;
 import com.example.cargotracker.tracking.application.internal.eventhandlers.ExternalMilestoneEventHandler;
+import com.example.cargotracker.tracking.application.internal.eventhandlers.RouteCandidatesNotFoundEventHandler;
 import com.example.cargotracker.tracking.application.internal.eventhandlers.TrackingStartEventHandler;
 import com.example.cargotracker.tracking.application.internal.eventhandlers.VoyageArrivalEventHandler;
 import com.example.cargotracker.tracking.application.internal.outboundservices.acl.BookingTrackingStarts;
@@ -81,6 +82,13 @@ public class TrackingConfiguration {
     BookingTransportPhaseNotificationEventHandler bookingTransportPhaseNotificationEventHandler(
             BookingTransportPhases transportPhases) {
         return new BookingTransportPhaseNotificationEventHandler(transportPhases);
+    }
+
+    /** DE-32 を受けて、適合する経路候補がなかった経路設計案件の有人案件を起票する（UC-06 3a。別のトランザクションで動く。Bolt 40-14）。 */
+    @Bean
+    RouteCandidatesNotFoundEventHandler routeCandidatesNotFoundEventHandler(
+            ServiceCaseCommandService serviceCaseCommandService) {
+        return new RouteCandidatesNotFoundEventHandler(serviceCaseCommandService);
     }
 
     /** DE-13 を受けて追跡の実績か拒否の記録を書く（Spring Modulith のイベントの記録を経て、別のトランザクションで動く。Bolt 39g）。 */

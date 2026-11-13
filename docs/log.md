@@ -1,6 +1,8 @@
 # Docs Update Log
 
 ## 2026-11-14
+* **Creation**: [bolt_40-14_plan](/development/cargo-tracker/bolt_40-14_plan.md)・[bolt_40-14_report](/development/cargo-tracker/bolt_40-14_report.md) を作成（anthropic/claude-sonnet-5-5。推奨のとおり承認として記録。human:kakimomokuri）。台帳 D-161、DE-32 を追加
+* **Update**: bolt_40-13 の終了報告を推奨のとおり承認として記録した（human:kakimomokuri）
 * **Creation**: [bolt_40-13_plan](/development/cargo-tracker/bolt_40-13_plan.md)・[bolt_40-13_report](/development/cargo-tracker/bolt_40-13_report.md) を作成（anthropic/claude-sonnet-5-5。推奨のとおり承認として記録。human:kakimomokuri）。台帳 D-160 を追加
 * **Update**: bolt_40-12 の終了報告を推奨のとおり承認として記録した（human:kakimomokuri）
 

@@ -98,6 +98,8 @@ public class RoutingCaseCommandService {
         } catch (ConcurrentRoutingCaseUpdateException _) {
             return new CandidateCalculationOutcome.Conflict();
         }
+        // 適合する候補がなければ専門判断へ引き継ぐ（DE-32。追跡の listener が有人案件を起票する。UC-06 3a。Bolt 40-14）
+        routingCase.candidatesNotFound(command.operator(), judgedAt).ifPresent(eventPublisher::publishEvent);
         return new CandidateCalculationOutcome.Calculated(routingCase.number(), calculation);
     }
 

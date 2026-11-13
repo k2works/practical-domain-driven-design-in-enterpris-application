@@ -5,6 +5,7 @@ import com.example.cargotracker.platform.web.DurationDisplay;
 import com.example.cargotracker.routing.domain.model.aggregates.RoutingCase;
 import com.example.cargotracker.routing.domain.model.entities.RouteCandidate;
 import com.example.cargotracker.routing.domain.model.entities.RouteVersion;
+import com.example.cargotracker.routing.domain.model.valueobjects.CandidatesNotFoundReason;
 import com.example.cargotracker.routing.domain.model.valueobjects.ExclusionReason;
 import com.example.cargotracker.routing.domain.model.valueobjects.ExclusionReasonCode;
 import com.example.cargotracker.routing.domain.model.valueobjects.ExclusionThreshold.ArrivalDeadline;
@@ -76,6 +77,7 @@ final class RoutingCaseViews {
      * @param allConformingStale 適合の候補が 1 件以上あり、そのすべてが古い
      * @param infoInsufficientStale 取得から許容時間を過ぎた区間がある
      * @param allExcludedForCargo 候補が 1 件以上あり、すべての候補の理由が貨物種別だけ（導入文を手動の窓口の案内に差し替える。Bolt 39i）
+     * @param handoffNote 適合する候補がなく専門判断へ引き継いだときの文（なければ null。UC-06 3a。Bolt 40-14）
      */
     record CaseDetail(
             String number,
@@ -96,7 +98,8 @@ final class RoutingCaseViews {
             int staleCandidates,
             boolean allConformingStale,
             boolean infoInsufficientStale,
-            boolean allExcludedForCargo) {
+            boolean allExcludedForCargo,
+            String handoffNote) {
 
         /** 再算出を促す上の文（再算出は案件に 1 つの操作なので候補ごとに繰り返さない。Bolt 39f2 の決定 (3)）。古くなった候補がなければ null。 */
         public String staleNotice() {
@@ -244,7 +247,21 @@ final class RoutingCaseViews {
                 staleByCandidate.size(),
                 allConformingStale(candidates),
                 staleLegs.stream().anyMatch(staleLeg -> staleLeg.reason() == StaleLegReason.INFO_INSUFFICIENT),
-                allExcludedForCargo(version.candidates()));
+                allExcludedForCargo(version.candidates()),
+                routingCase
+                        .candidatesNotFoundReason()
+                        .map(RoutingCaseViews::handoffNote)
+                        .orElse(null));
+    }
+
+    /** 適合する候補がないときの専門判断への引き継ぎの文（UC-06 3a。引き継ぐ有人案件の種類を示す。Bolt 40-14）。 */
+    private static String handoffNote(CandidatesNotFoundReason reason) {
+        String kind =
+                switch (reason) {
+                    case EXTERNAL_DATA_MISSING -> "外部停止";
+                    case NO_CONFORMING_CANDIDATE -> "見積り相談";
+                };
+        return "専門判断のため、有人案件（" + kind + "）として引き継ぎました。受付番号は「有人案件」の一覧で確かめてください。";
     }
 
     /** 候補が 1 件以上あり、すべての候補の理由が貨物種別だけか（貨物種別と別の区分が混ざるときは今の導入文のまま。Bolt 39i）。 */
