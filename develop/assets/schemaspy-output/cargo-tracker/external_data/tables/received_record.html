@@ -450,8 +450,8 @@
                                 </thead>
                                 <tbody>
                                 <tr>
-                                    <td>ck_received_record_value</td>
-                                    <td>(((target_key IS NULL) &#61; (value_summary IS NULL)) AND ((external_record_id IS NOT NULL) OR (target_key IS NULL)))</td>
+                                    <td>ck_received_record_keyless_quarantine</td>
+                                    <td>(((external_record_id IS NULL) &#61; (acquired_at IS NULL)) AND (((classification)::text &#61; &#39;QUARANTINED&#39;::text) OR (external_record_id IS NOT NULL)))</td>
                                 </tr>
                                 <tr>
                                     <td>ck_received_record_classification</td>
@@ -462,8 +462,8 @@
                                     <td>(((first_line_number IS NULL) &#61; (last_line_number IS NULL)) AND ((first_line_number IS NULL) OR ((first_line_number &gt;&#61; 1) AND (first_line_number &lt;&#61; last_line_number))))</td>
                                 </tr>
                                 <tr>
-                                    <td>ck_received_record_keyless_quarantine</td>
-                                    <td>(((external_record_id IS NULL) &#61; (acquired_at IS NULL)) AND (((classification)::text &#61; &#39;QUARANTINED&#39;::text) OR (external_record_id IS NOT NULL)))</td>
+                                    <td>ck_received_record_value</td>
+                                    <td>(((target_key IS NULL) &#61; (value_summary IS NULL)) AND ((external_record_id IS NOT NULL) OR (target_key IS NULL)))</td>
                                 </tr>
                                 </tbody>
                             </table>
