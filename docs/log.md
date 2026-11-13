@@ -1,6 +1,11 @@
 # Docs Update Log
 
 ## 2026-11-13
+* **Update**: [iteration_plan-W8](/development/cargo-tracker/iteration_plan-W8.md) を更新（xp-architect）
+* **Update**: [bolt_40_plan](/development/cargo-tracker/bolt_40_plan.md) を更新（xp-architect）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（xp-architect）
+* **Creation**: [iteration_plan-W8](/development/cargo-tracker/iteration_plan-W8.md)・[bolt_40_plan](/development/cargo-tracker/bolt_40_plan.md) を作成（anthropic/claude-sonnet-5-5。W8 の開始準備。技術 Bolt にも分単位の見積りを付けた 17 本の計画と最初の Bolt の詳細計画。承認待ち）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md)・[index](/development/cargo-tracker/index.md)・mkdocs.yml を更新（anthropic/claude-sonnet-5-5。W8 の開始準備。W8 の行・進捗状況・AUD-UI-01 の行・Bolt 40 の行）
 * **Creation**: [iteration_report-W7](/development/cargo-tracker/iteration_report-W7.md) を作成（anthropic/claude-sonnet-5-5。W7 の締め。週全体のコードレビュー、品質ゲートの確認、PERF-06 の結果、ふりかえり、議題と推奨。承認待ち）
 * **Update**: [release_plan](/development/cargo-tracker/release_plan.md)・[index](/development/cargo-tracker/index.md)・[development/index](/development/index.md)・mkdocs.yml を更新（anthropic/claude-sonnet-5-5。W7 の締め。進捗状況の W7 を 10/10 SP に、実績スケジュール、W7 の節の結果・ふりかえり・締めの見直し）
 * **Creation**: [bolt_39i_report](/development/cargo-tracker/bolt_39i_report.md) を作成（anthropic/claude-sonnet-5-5。承認待ち）
