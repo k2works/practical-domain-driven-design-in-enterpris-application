@@ -261,6 +261,30 @@ public final class ServiceCase {
     }
 
     /**
+     * 回答期限を後ろへ変更する（対応中。UC-20 の回答期限を超える場合。Bolt 40-8）。理由は必須で、新しい期限は今の期限より後。理由と新しい期限を進捗として
+     * 追記する（後から「なぜ延びたか」を追える）。
+     *
+     * @param reason 理由
+     * @param newDue 新しい回答期限
+     * @throws IllegalStateException 対応中でない
+     * @throws IllegalArgumentException 理由が空、または新しい期限が今の期限より後でない
+     */
+    public ServiceCase reviseAnswerDue(String reason, UtcInstant newDue, UserId revisedBy, UtcInstant at) {
+        requireInProgress("回答期限を変更できる");
+        Objects.requireNonNull(newDue, "newDue");
+        if (reason == null || reason.isBlank()) {
+            throw new IllegalArgumentException("回答期限の変更には理由が要る: " + number.value());
+        }
+        if (!newDue.instant().isAfter(answerDueAt.instant())) {
+            throw new IllegalArgumentException("新しい回答期限は今の期限より後: " + number.value());
+        }
+        ServiceCase next =
+                updateProgress("回答期限を " + newDue.instant() + " に変更した。理由: " + reason.strip(), null, revisedBy, at);
+        next.answerDueAt = newDue;
+        return next;
+    }
+
+    /**
      * 回答を記録する（対応中 → 回答済み）。回答番号を採番して追記する。
      *
      * @throws IllegalStateException 対応中でない

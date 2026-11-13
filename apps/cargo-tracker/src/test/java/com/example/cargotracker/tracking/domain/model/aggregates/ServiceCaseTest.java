@@ -395,6 +395,46 @@ class ServiceCaseTest {
         assertThatThrownBy(() -> received.reopen("未解決", now)).isInstanceOf(IllegalStateException.class);
     }
 
+    // --- 行 13: 回答期限の変更（Bolt 40-8。UC-20 の期限を超える場合） ---
+
+    @Test
+    void 行13_回答期限を後ろへ変更すると理由つきで進捗に記録して期限を更新する() {
+        UtcInstant newDue = at("2026-11-20T01:00:00Z");
+
+        ServiceCase revised = inProgress().reviseAnswerDue("部品の手配に時間がかかる", newDue, STAFF, at("2026-11-17T02:00:00Z"));
+
+        assertThat(revised.answerDueAt()).isEqualTo(newDue);
+        assertThat(revised.progress()).singleElement().satisfies(progress -> {
+            assertThat(progress.progressNo()).isEqualTo(1);
+            assertThat(progress.content()).contains("部品の手配に時間がかかる");
+            assertThat(progress.updatedBy()).isEqualTo(STAFF);
+        });
+        assertThat(revised.status()).isEqualTo(ServiceCaseStatus.IN_PROGRESS);
+    }
+
+    @Test
+    void 行13_理由が空か期限が後でないと拒む() {
+        ServiceCase received = inProgress();
+        UtcInstant later = at("2026-11-20T01:00:00Z");
+        UtcInstant same = new UtcInstant(DEADLINES.responseDue());
+        UtcInstant now = at("2026-11-17T02:00:00Z");
+
+        assertThatThrownBy(() -> received.reviseAnswerDue(" ", later, STAFF, now))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> received.reviseAnswerDue("理由", same, STAFF, now))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void 行13_対応中以外は回答期限を変更できない() {
+        ServiceCase received = opened(ServiceCaseKind.CUSTOMER_INQUIRY);
+        UtcInstant later = at("2026-11-20T01:00:00Z");
+        UtcInstant now = at("2026-11-17T02:00:00Z");
+
+        assertThatThrownBy(() -> received.reviseAnswerDue("理由", later, STAFF, now))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
     // --- 行 12: 重複終了 ---
 
     @Test

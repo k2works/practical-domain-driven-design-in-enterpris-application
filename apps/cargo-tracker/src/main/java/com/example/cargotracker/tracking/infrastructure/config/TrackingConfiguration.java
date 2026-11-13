@@ -3,6 +3,7 @@ package com.example.cargotracker.tracking.infrastructure.config;
 import com.example.cargotracker.booking.interfaces.api.TrackingStartNotification;
 import com.example.cargotracker.booking.interfaces.api.TransportPhaseNotification;
 import com.example.cargotracker.routing.interfaces.api.RouteVersionLegQuery;
+import com.example.cargotracker.tracking.application.internal.commandservices.ServiceCaseActionService;
 import com.example.cargotracker.tracking.application.internal.commandservices.ServiceCaseCommandService;
 import com.example.cargotracker.tracking.application.internal.commandservices.TrackingRecordCommandService;
 import com.example.cargotracker.tracking.application.internal.eventhandlers.BookingTrackingStartNotificationEventHandler;
@@ -99,6 +100,12 @@ public class TrackingConfiguration {
             BusinessCalendarRepository calendars,
             Clock clock) {
         return new ServiceCaseCommandService(repository, numberIssuer, calendars, clock);
+    }
+
+    /** 有人案件の進捗・回答・終結・再開・回答期限の変更（US-20 AC4〜AC7。Bolt 40-8）。 */
+    @Bean
+    ServiceCaseActionService serviceCaseActionService(ServiceCaseRepository repository, Clock clock) {
+        return new ServiceCaseActionService(repository, clock);
     }
 
     /** 追跡管理者による主要実績の登録（US-12。Bolt 26b）。 */

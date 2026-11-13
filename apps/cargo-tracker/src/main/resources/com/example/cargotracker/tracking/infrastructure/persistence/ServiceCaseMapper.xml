@@ -86,6 +86,7 @@
            SET assignee_id = #{assigneeId},
                received_at = #{receivedAt},
                next_update_at = #{nextUpdateAt},
+               answer_due_at = #{answerDueAt},
                reconciliation_id = #{reconciliationId},
                status = #{status},
                version = version + 1,
