@@ -166,6 +166,7 @@
          <column autoUpdated="false" defaultValue="null" digits="0" id="22" name="created_by" nullable="false" remarks="起票者" size="2147483647" type="uuid" typeCode="1111"/>
          <column autoUpdated="false" defaultValue="null" digits="6" id="23" name="updated_at" nullable="false" remarks="最終更新時刻" size="35" type="timestamptz" typeCode="93"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="24" name="updated_by" nullable="false" remarks="最終更新者" size="2147483647" type="uuid" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="25" name="origin_ref" nullable="true" remarks="起票元キー（システム起票の冪等。DE-13 の拒否した出典、DE-32 の経路設計案件と理由と時刻。利用者の起票は空）" size="200" type="varchar" typeCode="12"/>
          <primaryKey column="case_number" sequenceNumberInPK="1"/>
          <index name="pk_service_case" unique="true">
             <column ascending="true" name="case_number"/>
@@ -176,6 +177,9 @@
          <index name="ix_service_case_status_receive_due" unique="false">
             <column ascending="true" name="status"/>
             <column ascending="true" name="receive_due_at"/>
+         </index>
+         <index name="ux_service_case_origin_ref" unique="true">
+            <column ascending="true" name="origin_ref"/>
          </index>
          <checkConstraint constraint="(((status)::text &lt;&gt; ALL ((ARRAY['IN_PROGRESS'::character varying, 'ANSWERED'::character varying, 'CLOSED'::character varying])::text[])) OR ((assignee_id IS NOT NULL) AND (received_at IS NOT NULL)))" name="ck_service_case_assignee"/>
          <checkConstraint constraint="((kind)::text = ANY ((ARRAY['CUSTOMER_INQUIRY'::character varying, 'QUOTATION_CONSULTATION'::character varying, 'AMENDMENT'::character varying, 'REDESIGN'::character varying, 'EXTERNAL_OUTAGE'::character varying, 'REJECTED_MILESTONE'::character varying, 'SAGA_FAILURE'::character varying])::text[]))" name="ck_service_case_kind"/>

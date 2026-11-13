@@ -11864,6 +11864,62 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_40-17_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 40-17 計画
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_40-17_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 40-17 終了報告
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../development/cargo-tracker/bolt_40-1_plan/" class="md-nav__link">
         
   
@@ -17895,25 +17951,25 @@
 <td style="text-align: left;">A</td>
 <td style="text-align: left;">設計 1（高）</td>
 <td style="text-align: left;">システム起票（DE-13 の拒否・DE-32）の冪等が「未終結の案件で内容の文字列と荷主・予約が一致するか」だけ。一意制約も起票元の列もない。並行した配信で 2 件できる、終結の後の再配信で新しい案件ができる、内容の文言を変えると見分けられなくなる</td>
-<td style="text-align: left;"><strong>W9 の最初の補正 Bolt</strong>: <code>service_case</code> に起票元キー（例: <code>origin_ref</code>）を足し、システム起票の分に UNIQUE。一意制約の違反は Duplicate として扱う。<strong>スキーマの変更なので計画で承認を取る</strong></td>
+<td style="text-align: left;"><strong>実施済み（Bolt 40-17。2026-11-14 に人が「W8 でやる」と選んだ）</strong>: 起票元キー <code>origin_ref</code> と UNIQUE。台帳 D-163</td>
 </tr>
 <tr>
 <td style="text-align: left;">B</td>
 <td style="text-align: left;">設計 2（中）</td>
 <td style="text-align: left;">営業カレンダーが未登録だと、DE-13・DE-32 は例外で拒否の記録ごと戻り、毒メッセージになる（Bolt 21 の指摘と同じ型）。カレンダーの登録は W10 の運用タスク</td>
-<td style="text-align: left;"><strong>W10 の運用タスクの前に決める</strong>: 期限を既定値で仮置きして起票するか、拒否の記録だけ確定して起票待ちを残し再試行するか。ADR で決める。それまでは、開発・テストのカレンダーの種（D-157）が入っている環境だけで動かす</td>
+<td style="text-align: left;"><strong>実施済み（Bolt 40-17。人が「W8 で既定値で仮置きして起票」と選んだ）</strong>: カレンダー未登録でも既定のカレンダーで起票。台帳 D-163</td>
 </tr>
 <tr>
 <td style="text-align: left;">C</td>
 <td style="text-align: left;">設計 5（中）</td>
 <td style="text-align: left;"><code>RejectionCaseOpener</code> を外部の技術のポートとしてドメイン層（aggregates）に置いたが、実際は同じコンテキストのアプリケーションサービスを呼ぶ協力者で、再配信の方針（例外で記録ごと戻す）まで契約に持つ。ADR-017 の例外にあたる（CLAUDE.md: 層の規則の例外は設計の判断として人に諮る）</td>
-<td style="text-align: left;"><strong>人に諮る</strong>: アプリケーション層に置き直すか、ADR-017 に例外として追記する。Bolt 40-13 で人に諮らず置いた（承認議題 5 で「他のコンテキストへの依存はない」とだけ示した）ことを、規律の違反として記録する</td>
+<td style="text-align: left;"><strong>実施済み（Bolt 40-17。人が「アプリケーション層に置き直す」と選んだ）</strong>: <code>commandservices</code> へ移した</td>
 </tr>
 <tr>
 <td style="text-align: left;">D</td>
 <td style="text-align: left;">設計 3・4・6（中・低）</td>
 <td style="text-align: left;">認可の集合が <code>SecurityConfiguration</code>（URL）と <code>ServiceCaseAuthorization</code>（サービス）と <code>InquiryRecordingService</code>（カスタマーサポートの直書き）に分かれ、同じ集合かはコメントでしか言っていない。詳細の照会は荷主企業まで照合しない。<code>openBySystem</code> は認可を通らない公開メソッド</td>
-<td style="text-align: left;"><strong>W9（荷主に C-14・C-15 を開く US-23）の前に</strong>: 2 つの集合が等しいことの構成テストを足し、詳細も <code>canAccess</code> を通し、システム起票を別のクラスに分けて ArchUnit で interfaces からの呼び出しを禁じる</td>
+<td style="text-align: left;"><strong>一部実施（Bolt 40-17）</strong>: URL の規則とサービスの認可の集合がすべての役割で一致する統合テストを足した。詳細の <code>canAccess</code> の統一とシステム起票の分離は W9（US-23 の前）に残す</td>
 </tr>
 </tbody>
 </table>

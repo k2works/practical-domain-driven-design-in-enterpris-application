@@ -38,7 +38,7 @@
 <g id="node2" class="node">
 <title>service_case</title>
 <g id="a_node2"><a xlink:href="../../tables/service_case.html" xlink:title="service_case" target="_top">
-<polygon fill="#ffffff" stroke="transparent" points="8,-147.7 8,-318.7 198,-318.7 198,-147.7 8,-147.7"/>
+<polygon fill="#ffffff" stroke="transparent" points="8,-125.7 8,-318.7 198,-318.7 198,-125.7 8,-125.7"/>
 <polygon fill="#f5f5f5" stroke="transparent" points="8,-295.2 8,-318.2 198,-318.2 198,-295.2 8,-295.2"/>
 <polygon fill="none" stroke="#000000" points="8,-295.2 8,-318.2 198,-318.2 198,-295.2 8,-295.2"/>
 <text text-anchor="start" x="13" y="-303.8" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00" fill="#000000">service_case</text>
@@ -58,18 +58,21 @@
 <polygon fill="#ffffff" stroke="transparent" points="8,-185.2 8,-207.2 198,-207.2 198,-185.2 8,-185.2"/>
 <polygon fill="none" stroke="#000000" points="8,-185.2 8,-207.2 198,-207.2 198,-185.2 8,-185.2"/>
 <text text-anchor="start" x="28" y="-192.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">status</text>
-<polygon fill="none" stroke="#000000" points="8,-166.2 8,-185.2 198,-185.2 198,-166.2 8,-166.2"/>
-<text text-anchor="start" x="11" y="-172.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">...</text>
-<polygon fill="#ffffff" stroke="transparent" points="8,-147.2 8,-166.2 198,-166.2 198,-147.2 8,-147.2"/>
-<polygon fill="none" stroke="#000000" points="8,-147.2 8,-166.2 198,-166.2 198,-147.2 8,-147.2"/>
-<polygon fill="#ffffff" stroke="transparent" points="9,-148.2 9,-165.2 69,-165.2 69,-148.2 9,-148.2"/>
-<text text-anchor="start" x="11" y="-153.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000"> &#160;</text>
-<polygon fill="#ffffff" stroke="transparent" points="69,-148.2 69,-165.2 129,-165.2 129,-148.2 69,-148.2"/>
-<text text-anchor="start" x="95.9431" y="-153.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000"> &#160;</text>
-<polygon fill="#ffffff" stroke="transparent" points="129,-148.2 129,-165.2 197,-165.2 197,-148.2 129,-148.2"/>
-<text text-anchor="start" x="179.4053" y="-153.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">4 &gt;</text>
-<polygon fill="#000000" stroke="#000000" points="69,-148.2 69,-165.2 69,-165.2 69,-148.2 69,-148.2"/>
-<polygon fill="#000000" stroke="#000000" points="129,-148.2 129,-165.2 129,-165.2 129,-148.2 129,-148.2"/>
+<polygon fill="#ffffff" stroke="transparent" points="8,-163.2 8,-185.2 198,-185.2 198,-163.2 8,-163.2"/>
+<polygon fill="none" stroke="#000000" points="8,-163.2 8,-185.2 198,-185.2 198,-163.2 8,-163.2"/>
+<text text-anchor="start" x="28" y="-170.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">origin_ref</text>
+<polygon fill="none" stroke="#000000" points="8,-144.2 8,-163.2 198,-163.2 198,-144.2 8,-144.2"/>
+<text text-anchor="start" x="11" y="-150.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">...</text>
+<polygon fill="#ffffff" stroke="transparent" points="8,-125.2 8,-144.2 198,-144.2 198,-125.2 8,-125.2"/>
+<polygon fill="none" stroke="#000000" points="8,-125.2 8,-144.2 198,-144.2 198,-125.2 8,-125.2"/>
+<polygon fill="#ffffff" stroke="transparent" points="9,-126.2 9,-143.2 69,-143.2 69,-126.2 9,-126.2"/>
+<text text-anchor="start" x="11" y="-131.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000"> &#160;</text>
+<polygon fill="#ffffff" stroke="transparent" points="69,-126.2 69,-143.2 129,-143.2 129,-126.2 69,-126.2"/>
+<text text-anchor="start" x="95.9431" y="-131.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000"> &#160;</text>
+<polygon fill="#ffffff" stroke="transparent" points="129,-126.2 129,-143.2 197,-143.2 197,-126.2 129,-126.2"/>
+<text text-anchor="start" x="179.4053" y="-131.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">4 &gt;</text>
+<polygon fill="#000000" stroke="#000000" points="69,-126.2 69,-143.2 69,-143.2 69,-126.2 69,-126.2"/>
+<polygon fill="#000000" stroke="#000000" points="129,-126.2 129,-143.2 129,-143.2 129,-126.2 129,-126.2"/>
 </a>
 </g>
 </g>
