@@ -169,7 +169,7 @@ Bolt がイテレーションに当たります。ふりかえりは各 Bolt の
 | 40 | [H2TrackingRecordLockTest のばらつきと PERF-06 の行 21 の競合を調べて直す](bolt_40_plan.md)（[W8 計画](iteration_plan-W8.md)） | [終了報告](bolt_40_report.md) | W8 | 完了（承認済み） |
 | 40-1 | [W7 週全体レビューの返済（M1・M3・M6・M7）](bolt_40-1_plan.md)（[W8 計画](iteration_plan-W8.md)） | [終了報告](bolt_40-1_report.md) | W8 | 完了（承認済み） |
 | 40-2 | [版の逆転の隔離の採用を DE-29 と監査の要約に残す（M5）](bolt_40-2_plan.md)（[W8 計画](iteration_plan-W8.md)） | [終了報告](bolt_40-2_report.md) | W8 | 完了（承認済み） |
-| 40-3 | [確認の場の結果の反映（回答待ちの件を未回答のまま台帳に残す）](bolt_40-3_plan.md)（[W8 計画](iteration_plan-W8.md)。[確認の場の依頼の一覧](confirmation_requests-W8.md)） | [終了報告](bolt_40-3_report.md) | W8 | 完了（承認済み。確認の場は未開催・回答なし） |
+| 40-3 | [確認の場の結果の反映（回答待ちの件を未回答のまま台帳に残す）](bolt_40-3_plan.md)（[W8 計画](iteration_plan-W8.md)。[確認の場の依頼の一覧](confirmation_requests-W8.md)） | [終了報告](bolt_40-3_report.md) | W8 | 完了（承認済み。確認の場は未開催で、未回答のまま完了とすることを人が決めた 2026-11-14） |
 | 40-4 | [営業日カレンダーと受領・回答期限の計算（SC-INV-04）](bolt_40-4_plan.md)（[W8 計画](iteration_plan-W8.md)。40-3 は確認の場の回答待ちで飛ばした） | [終了報告](bolt_40-4_report.md) | W8 | 完了（承認済み） |
 | 40-5 | [有人案件の集約（ドメインだけ）](bolt_40-5_plan.md)（[W8 計画](iteration_plan-W8.md)） | [終了報告](bolt_40-5_report.md) | W8 | 完了（承認済み） |
 | 40-6 | [有人案件の保存（4 表・受付番号の採番・リポジトリ）](bolt_40-6_plan.md)（[W8 計画](iteration_plan-W8.md)） | [終了報告](bolt_40-6_report.md) | W8 | 完了（承認済み） |
