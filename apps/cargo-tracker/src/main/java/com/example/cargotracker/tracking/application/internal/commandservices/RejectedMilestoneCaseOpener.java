@@ -2,7 +2,6 @@ package com.example.cargotracker.tracking.application.internal.commandservices;
 
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.tracking.domain.model.aggregates.RejectedMilestone;
-import com.example.cargotracker.tracking.domain.model.aggregates.RejectionCaseOpener;
 import com.example.cargotracker.tracking.domain.model.aggregates.TrackingRecord;
 import com.example.cargotracker.tracking.domain.model.valueobjects.ServiceCaseDraft;
 import com.example.cargotracker.tracking.domain.model.valueobjects.ServiceCaseKind;
@@ -27,6 +26,12 @@ public class RejectedMilestoneCaseOpener implements RejectionCaseOpener {
         this.commands = commands;
     }
 
+    /** 起票元キー。拒否した出典（種類と参照。拒否の記録は出典ごとに 1 件）で一意。 */
+    private static String originRef(RejectedMilestone rejected) {
+        return "REJECTED_MILESTONE:" + rejected.source().kind() + ":"
+                + rejected.source().reference();
+    }
+
     @Override
     public void open(RejectedMilestone rejected, Optional<TrackingRecord> trackingRecord, UserId operator) {
         ServiceCaseDraft draft = ServiceCaseDraft.of(
@@ -42,7 +47,7 @@ public class RejectedMilestoneCaseOpener implements RejectionCaseOpener {
             draft = draft.withShipper(trackingRecord.get().shipperCompanyId())
                     .withBooking(trackingRecord.get().bookingId());
         }
-        switch (commands.openBySystem(draft, operator)) {
+        switch (commands.openBySystem(draft, operator, originRef(rejected))) {
             case OpenServiceCaseOutcome.Opened _, OpenServiceCaseOutcome.Duplicate _ -> {
                 // 起票した、または同じ拒否で起票済み
             }

@@ -1,7 +1,6 @@
 package com.example.cargotracker.tracking.application.internal.commandservices;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.Source;
@@ -153,7 +152,7 @@ class RejectedMilestoneCaseOpenerTest {
     }
 
     @Test
-    void 行4_営業カレンダーが未登録なら例外を上げる() {
+    void 行4_営業カレンダーが未登録でも既定のカレンダーで期限を計算して起票する_毒メッセージにしない() {
         RejectedMilestoneCaseOpener opener = new RejectedMilestoneCaseOpener(new ServiceCaseCommandService(
                 repository,
                 issuer,
@@ -165,9 +164,21 @@ class RejectedMilestoneCaseOpenerTest {
         RejectedMilestone rejected = rejected(MilestoneRejectionReason.UNKNOWN_TRACKING_NUMBER, "CTZZZZZZZZZZZZ");
         Optional<TrackingRecord> noRecord = Optional.empty();
 
-        assertThatThrownBy(() -> opener.open(rejected, noRecord, STEWARD))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("営業カレンダー");
-        assertThat(repository.cases).isEmpty();
+        opener.open(rejected, noRecord, STEWARD);
+
+        assertThat(repository.cases).hasSize(1);
+    }
+
+    @Test
+    void 行5_案件を終結した後に同じ拒否が再配信されても新しく起票しない() {
+        RejectedMilestone rejected = rejected(MilestoneRejectionReason.UNKNOWN_TRACKING_NUMBER, "CTZZZZZZZZZZZZ");
+        Optional<TrackingRecord> noRecord = Optional.empty();
+        opener().open(rejected, noRecord, STEWARD);
+        repository.markDuplicateClosed(
+                repository.cases.values().iterator().next().number());
+
+        opener().open(rejected, noRecord, STEWARD);
+
+        assertThat(repository.cases).hasSize(1);
     }
 }

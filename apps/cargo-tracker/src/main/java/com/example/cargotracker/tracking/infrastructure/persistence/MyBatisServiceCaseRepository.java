@@ -102,6 +102,16 @@ public class MyBatisServiceCaseRepository implements ServiceCaseRepository {
     }
 
     @Override
+    public Optional<CaseNumber> findByOriginRef(String originRef) {
+        return mapper.selectByOriginRef(originRef).map(CaseNumber::new);
+    }
+
+    @Override
+    public void recordOrigin(CaseNumber number, String originRef) {
+        mapper.updateOriginRef(number.value(), originRef);
+    }
+
+    @Override
     public Optional<ServiceCase> findByNumber(CaseNumber number) {
         return mapper.selectCase(number.value()).map(row -> toAggregate(row, number));
     }

@@ -52,6 +52,12 @@ public interface ServiceCaseMapper {
     /** 指定した状態の案件の受付番号を受領期限の古い順に（Bolt 40-11）。 */
     List<String> selectByStatuses(@Param("statuses") List<String> statuses, @Param("limit") int limit);
 
+    /** 起票元キーで起票済みの案件の受付番号（Bolt 40-17）。 */
+    Optional<String> selectByOriginRef(@Param("originRef") String originRef);
+
+    /** 起票元キーを記録する（一意。Bolt 40-17）。 */
+    int updateOriginRef(@Param("caseNumber") String caseNumber, @Param("originRef") String originRef);
+
     /** 同じ荷主企業・予約（なければ「ない」案件）・内容で未終結の案件の受付番号（古い順の先頭）。 */
     Optional<String> selectUnclosedDuplicate(
             @Param("shipperCompanyId") java.util.UUID shipperCompanyId,

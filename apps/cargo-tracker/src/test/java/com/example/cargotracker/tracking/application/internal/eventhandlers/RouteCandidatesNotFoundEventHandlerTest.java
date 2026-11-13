@@ -58,6 +58,11 @@ class RouteCandidatesNotFoundEventHandlerTest {
     }
 
     private static RouteCandidatesNotFound event(String reason) {
+        return eventAt(reason, NOW);
+    }
+
+    /** 算出した時刻を指定した DE-32（再算出は時刻が違う）。 */
+    private static RouteCandidatesNotFound eventAt(String reason, Instant notFoundAt) {
         return new RouteCandidatesNotFound(
                 UUID.fromString("00000000-0000-0000-0000-0000040e1404"),
                 "RC-2026-0042",
@@ -67,7 +72,7 @@ class RouteCandidatesNotFoundEventHandlerTest {
                 SHIPPER,
                 reason,
                 reason.equals("EXTERNAL_DATA_MISSING") ? 0 : 3,
-                new UtcInstant(NOW),
+                new UtcInstant(notFoundAt),
                 DESIGNER);
     }
 
@@ -107,7 +112,7 @@ class RouteCandidatesNotFoundEventHandlerTest {
     }
 
     @Test
-    void 行4_営業カレンダーが未登録なら例外を上げて再配信に任せる() {
+    void 行4_営業カレンダーが未登録でも既定のカレンダーで期限を計算して起票する() {
         RouteCandidatesNotFoundEventHandler handler =
                 new RouteCandidatesNotFoundEventHandler(new ServiceCaseCommandService(
                         repository,
@@ -118,10 +123,23 @@ class RouteCandidatesNotFoundEventHandlerTest {
                         Clock.fixed(NOW, ZoneOffset.UTC)));
         RouteCandidatesNotFound event = event("NO_CONFORMING_CANDIDATE");
 
-        assertThatThrownBy(() -> handler.on(event))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("営業カレンダー");
-        assertThat(repository.cases).isEmpty();
+        handler.on(event);
+
+        assertThat(repository.cases).hasSize(1);
+    }
+
+    @Test
+    void 行4b_同じ算出の再配信は案件を終結した後でも増やさず_再算出は終結後なら新しい案件になる() {
+        RouteCandidatesNotFoundEventHandler handler = handler();
+        handler.on(event("NO_CONFORMING_CANDIDATE"));
+        repository.markDuplicateClosed(
+                repository.cases.values().iterator().next().number());
+
+        handler.on(event("NO_CONFORMING_CANDIDATE"));
+        assertThat(repository.cases).hasSize(1);
+
+        handler.on(eventAt("NO_CONFORMING_CANDIDATE", Instant.parse("2026-11-16T02:00:00Z")));
+        assertThat(repository.cases).hasSize(2);
     }
 
     @Test

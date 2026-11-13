@@ -181,6 +181,7 @@ Bolt がイテレーションに当たります。ふりかえりは各 Bolt の
 | 40-12 | [有人案件の進捗・回答・終結・再開の操作（S-15）と上位対応中の表示](bolt_40-12_plan.md)（[W8 計画](iteration_plan-W8.md)） | [終了報告](bolt_40-12_report.md) | W8 | 完了（承認済み） |
 | 40-13 | [拒否した主要実績から有人例外案件を起票（T-INV-04）](bolt_40-13_plan.md)（[W8 計画](iteration_plan-W8.md)） | [終了報告](bolt_40-13_report.md) | W8 | 完了（承認済み） |
 | 40-14 | [候補なし・外部データの欠落の理由の表示と有人案件への引き継ぎ（UC-06 3a）](bolt_40-14_plan.md)（[W8 計画](iteration_plan-W8.md)） | [終了報告](bolt_40-14_report.md) | W8 | 完了（承認済み） |
+| 40-17 | [W8 の週全体レビューの指摘 A・B・C・D を直す（起票元キー、カレンダー未登録、置き場所、認可の一致）](bolt_40-17_plan.md)（[W8 計画](iteration_plan-W8.md)。[W8 週全体レビュー](../../review/cargo-tracker/w8_review_20261114.md)） | [終了報告](bolt_40-17_report.md) | W8 | 完了（承認済み） |
 | 40-16 | [W8 の受入条件の照合とマニュアル・動画の総点検（US-11・US-20 を締める）](bolt_40-16_plan.md)（[W8 計画](iteration_plan-W8.md)） | [終了報告](bolt_40-16_report.md) | W8 | 完了（承認済み） |
 | 40-15 | [照会の記録（S-23）と有人案件への引き継ぎ（US-11 AC2）](bolt_40-15_plan.md)（[W8 計画](iteration_plan-W8.md)） | [終了報告](bolt_40-15_report.md)（[動画](../../assets/demo/bolt-40-15/inquiry-handoff.webm){:target="_blank"}） | W8 | 完了（承認済み） |
 
@@ -407,3 +408,5 @@ Bolt を始めるときに行を追加します。
 * [Bolt 40-15 終了報告 - 照会の記録（S-23）と有人案件への引き継ぎ（US-11 AC2）](./bolt_40-15_report.md)
 * [Bolt 40-16 計画 - W8 の受入条件の照合とマニュアル・動画の総点検（US-11・US-20 を締める）](./bolt_40-16_plan.md)
 * [Bolt 40-16 終了報告 - W8 の受入条件の照合とマニュアル・動画の総点検（US-11・US-20 を締める）](./bolt_40-16_report.md)
+* [Bolt 40-17 計画 - W8 の週全体レビューの指摘 A・B・C・D を直す](./bolt_40-17_plan.md)
+* [Bolt 40-17 終了報告 - W8 の週全体レビューの指摘 A・B・C・D を直す](./bolt_40-17_report.md)

@@ -22,10 +22,12 @@ import com.example.cargotracker.identity.domain.model.valueobjects.EmailAddress;
 import com.example.cargotracker.identity.domain.model.valueobjects.UserStatus;
 import com.example.cargotracker.identity.infrastructure.crypto.AesGcmSecretCipher;
 import com.example.cargotracker.shared.acceptance.MutableClock;
+import com.example.cargotracker.shared.domain.AuthenticatedActor;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Role;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
+import com.example.cargotracker.tracking.application.internal.commandservices.ServiceCaseAuthorization;
 import com.example.cargotracker.tracking.domain.model.TrackingFixture;
 import com.example.cargotracker.tracking.domain.model.aggregates.TrackingRecord;
 import com.example.cargotracker.tracking.domain.model.aggregates.TrackingRecordRepository;
@@ -153,6 +155,23 @@ class TrackingAssignedScopeSecurityIntegrationTest {
     }
 
     // --- Bolt 40-11: 有人案件の一覧（S-14）・詳細と受領（S-15）は社内の運用役割だけ（台帳 D-159） ---
+
+    /**
+     * 有人案件の URL の規則（{@code SecurityConfiguration}）と、サービスの認可の集合（{@code ServiceCaseAuthorization.canOperate}）が、すべての役割で
+     * 一致する（週全体レビュー D。2 か所に同じ集合を書いているので、片方だけに役割を足すとここで落ちる）。
+     */
+    @Test
+    void 有人案件のURLの規則とサービスの認可の集合はすべての役割で一致する() throws Exception {
+        for (Role role : Role.values()) {
+            Cookie session = login(staffWith(role, shipperA));
+            AuthenticatedActor actor = new AuthenticatedActor(
+                    new UserId(UUID.randomUUID()), operator.id(), Set.of(role), "確認", "A 社", Set.of());
+            boolean permitted = ServiceCaseAuthorization.canOperate(actor);
+
+            mvc.perform(get(SERVICE_CASES_URL).cookie(session))
+                    .andExpect(permitted ? status().isOk() : status().isForbidden());
+        }
+    }
 
     @Test
     void 社内の運用役割は有人案件の一覧を開ける() throws Exception {

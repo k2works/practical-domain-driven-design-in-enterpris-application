@@ -60,6 +60,21 @@ public final class InMemoryServiceCaseRepository implements ServiceCaseRepositor
                 .toList();
     }
 
+    /** 起票元キーと受付番号（一意）。 */
+    public final Map<String, CaseNumber> origins = new HashMap<>();
+
+    @Override
+    public Optional<CaseNumber> findByOriginRef(String originRef) {
+        return Optional.ofNullable(origins.get(originRef));
+    }
+
+    @Override
+    public void recordOrigin(CaseNumber number, String originRef) {
+        if (origins.putIfAbsent(originRef, number) != null) {
+            throw new IllegalStateException("起票元キーの一意制約に違反: " + originRef);
+        }
+    }
+
     @Override
     public Optional<ServiceCase> findByNumber(CaseNumber number) {
         return Optional.ofNullable(cases.get(number.value()));

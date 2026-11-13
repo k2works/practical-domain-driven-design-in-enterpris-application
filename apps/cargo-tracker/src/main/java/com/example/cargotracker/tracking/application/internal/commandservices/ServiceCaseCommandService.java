@@ -14,15 +14,20 @@ import com.example.cargotracker.tracking.domain.model.aggregates.ServiceCaseRepo
 import com.example.cargotracker.tracking.domain.model.rules.ServiceDeadlinePolicy;
 import com.example.cargotracker.tracking.domain.model.valueobjects.BusinessCalendar;
 import com.example.cargotracker.tracking.domain.model.valueobjects.BusinessCalendarNotRegisteredException;
+import com.example.cargotracker.tracking.domain.model.valueobjects.BusinessDay;
 import com.example.cargotracker.tracking.domain.model.valueobjects.CaseNumber;
 import com.example.cargotracker.tracking.domain.model.valueobjects.MissingItem;
 import com.example.cargotracker.tracking.domain.model.valueobjects.ServiceCaseDraft;
 import com.example.cargotracker.tracking.domain.model.valueobjects.ServiceCaseStatus;
 import com.example.cargotracker.tracking.domain.model.valueobjects.ServiceDeadlines;
 import java.time.Clock;
+import java.time.DayOfWeek;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import org.springframework.stereotype.Service;
@@ -68,21 +73,33 @@ public class ServiceCaseCommandService {
         if (!ServiceCaseAuthorization.canOpen(actor, command.draft())) {
             return new OpenServiceCaseOutcome.NotPermitted();
         }
-        return openUnchecked(command.draft(), actor.userId());
+        return openUnchecked(command.draft(), actor.userId(), Optional.empty());
     }
 
     /**
-     * システムが有人案件を起票する（利用者の操作でない内部の経路。拒否した主要実績の起票など。Bolt 40-13）。役割の判定をしない以外は
-     * {@link #open} と同じ（必須項目・重複・期限の計算・採番）。
+     * システムが有人案件を起票する（利用者の操作でない内部の経路。拒否した主要実績・経路候補なしの起票。Bolt 40-13・40-17）。役割の判定をしない
+     * 以外は {@link #open} と同じ（必須項目・重複・期限の計算・採番）。次の 2 点が違う。
+     *
+     * <ul>
+     *   <li>起票元キーが同じなら、案件を終結した後でも新しく起票せず、起票済みの受付番号を返す（イベントの再配信の冪等。一意制約が並行の配信も
+     *       守る。W8 の週全体レビュー A）。
+     *   <li>営業カレンダーが未登録なら、既定のカレンダー（平日 9:00〜18:00、土日休み、祝日なし）で期限を計算して起票する（イベントが毒
+     *       メッセージにならない。W8 の週全体レビュー B。台帳 D-163。仮）。
+     * </ul>
      *
      * @param requestedBy 起票者として記録する利用者（起こした操作の主）
+     * @param originRef 起票元キー（同じ起票元で一意）
      */
     @Transactional
-    public OpenServiceCaseOutcome openBySystem(ServiceCaseDraft draft, UserId requestedBy) {
-        return openUnchecked(draft, requestedBy);
+    public OpenServiceCaseOutcome openBySystem(ServiceCaseDraft draft, UserId requestedBy, String originRef) {
+        Optional<CaseNumber> existing = repository.findByOriginRef(originRef);
+        if (existing.isPresent()) {
+            return new OpenServiceCaseOutcome.Duplicate(existing.get());
+        }
+        return openUnchecked(draft, requestedBy, Optional.of(originRef));
     }
 
-    private OpenServiceCaseOutcome openUnchecked(ServiceCaseDraft draft, UserId createdBy) {
+    private OpenServiceCaseOutcome openUnchecked(ServiceCaseDraft draft, UserId createdBy, Optional<String> originRef) {
         Set<MissingItem> missing = ServiceCase.missingItems(draft);
         if (!missing.isEmpty()) {
             return new OpenServiceCaseOutcome.Incomplete(missing);
@@ -97,7 +114,9 @@ public class ServiceCaseCommandService {
         ServiceDeadlines deadlines;
         try {
             LocalDate today = now.atZone(CALENDAR_ZONE).toLocalDate();
-            calendar = calendars.load(today.minusDays(1), today.plusDays(CALENDAR_WINDOW_DAYS));
+            LocalDate from = today.minusDays(1);
+            LocalDate to = today.plusDays(CALENDAR_WINDOW_DAYS);
+            calendar = loadCalendar(from, to, originRef.isPresent());
             deadlines = deadlinePolicy.deadlinesFor(draft.priority(), now, calendar);
         } catch (BusinessCalendarNotRegisteredException _) {
             return new OpenServiceCaseOutcome.CalendarNotRegistered();
@@ -107,12 +126,41 @@ public class ServiceCaseCommandService {
         ServiceCase serviceCase =
                 ((ServiceCaseOpening.Opened) ServiceCase.open(draft, number, deadlines, openedAt)).serviceCase();
         repository.save(serviceCase, createdBy);
+        originRef.ifPresent(ref -> repository.recordOrigin(number, ref));
         return new OpenServiceCaseOutcome.Opened(
                 number,
                 serviceCase.receiveDueAt(),
                 serviceCase.answerDueAt(),
                 serviceCase.nextUpdateAt(),
                 serviceCase.acknowledgedAt());
+    }
+
+    /**
+     * 営業日カレンダーを読む。未登録のとき、システム起票なら既定のカレンダー（{@link #defaultCalendar}）で続け、利用者の起票なら例外のままにして
+     * 呼び手が「営業カレンダーが未登録」と示す。
+     */
+    private BusinessCalendar loadCalendar(LocalDate from, LocalDate to, boolean system) {
+        try {
+            return calendars.load(from, to);
+        } catch (BusinessCalendarNotRegisteredException e) {
+            if (!system) {
+                throw e;
+            }
+            return defaultCalendar(from, to);
+        }
+    }
+
+    /** 既定のカレンダー（平日 9:00〜18:00 の日本時間、土日休み、祝日なし）。営業日カレンダーが未登録のときのシステム起票だけが使う。 */
+    private static BusinessCalendar defaultCalendar(LocalDate from, LocalDate to) {
+        List<BusinessDay> days = new ArrayList<>();
+        for (LocalDate date = from; !date.isAfter(to); date = date.plusDays(1)) {
+            boolean weekend = date.getDayOfWeek() == DayOfWeek.SATURDAY || date.getDayOfWeek() == DayOfWeek.SUNDAY;
+            days.add(
+                    weekend
+                            ? BusinessDay.closed(date, CALENDAR_ZONE, null)
+                            : BusinessDay.open(date, LocalTime.of(9, 0), LocalTime.of(18, 0), CALENDAR_ZONE, null));
+        }
+        return BusinessCalendar.of(days);
     }
 
     /** 有人案件を受領する（US-20 AC2）。担当者は操作者、受領時刻は時計から得る。 */

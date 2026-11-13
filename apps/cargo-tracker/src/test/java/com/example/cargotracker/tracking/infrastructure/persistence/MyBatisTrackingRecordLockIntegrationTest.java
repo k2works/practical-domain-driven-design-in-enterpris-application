@@ -71,8 +71,8 @@ import org.springframework.transaction.support.TransactionTemplate;
 class MyBatisTrackingRecordLockIntegrationTest {
 
     /** ロックの確かめには有人例外案件の起票は要らない（起票は RejectedMilestoneCaseOpenerTest。Bolt 40-13）。 */
-    private static final com.example.cargotracker.tracking.domain.model.aggregates.RejectionCaseOpener NO_CASE =
-            (rejected, trackingRecord, operator) -> {};
+    private static final com.example.cargotracker.tracking.application.internal.commandservices.RejectionCaseOpener
+            NO_CASE = (rejected, trackingRecord, operator) -> {};
 
     @Autowired
     TrackingRecordRepository repository;

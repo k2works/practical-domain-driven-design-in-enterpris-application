@@ -47,6 +47,15 @@ public interface ServiceCaseRepository {
      */
     List<ServiceCase> findByStatuses(Set<ServiceCaseStatus> statuses, int limit);
 
+    /**
+     * 起票元キーで起票済みの案件の受付番号を引く（システム起票の冪等。Bolt 40-17。DE-13 の拒否・DE-32 の再配信で、終結した後も同じ起票元から
+     * 二重に起票しない）。
+     */
+    Optional<CaseNumber> findByOriginRef(String originRef);
+
+    /** 保存した案件に起票元キーを記録する（一意。同じキーが先に記録されていれば一意制約の違反）。 */
+    void recordOrigin(CaseNumber number, String originRef);
+
     /** 受付番号で案件を読む。 */
     Optional<ServiceCase> findByNumber(CaseNumber number);
 }

@@ -2,10 +2,10 @@ package com.example.cargotracker.tracking.application.internal.eventhandlers;
 
 import com.example.cargotracker.externaldata.domain.events.MilestoneAdoptedValueAccepted;
 import com.example.cargotracker.shared.domain.UtcInstant;
+import com.example.cargotracker.tracking.application.internal.commandservices.RejectionCaseOpener;
 import com.example.cargotracker.tracking.domain.model.aggregates.ExternalMilestoneReceipt;
 import com.example.cargotracker.tracking.domain.model.aggregates.RejectedMilestone;
 import com.example.cargotracker.tracking.domain.model.aggregates.RejectedMilestoneRepository;
-import com.example.cargotracker.tracking.domain.model.aggregates.RejectionCaseOpener;
 import com.example.cargotracker.tracking.domain.model.aggregates.TrackingRecord;
 import com.example.cargotracker.tracking.domain.model.aggregates.TrackingRecordRepository;
 import com.example.cargotracker.tracking.domain.model.valueobjects.ExternalMilestone;

@@ -377,6 +377,33 @@ class MyBatisServiceCaseRepositoryIntegrationTest {
                 .toList();
     }
 
+    // --- 起票元キー（Bolt 40-17。システム起票の冪等。週全体レビュー A） ---
+
+    @Test
+    void 起票元キー_記録して引け_同じキーを別の案件に記録すると一意制約で拒む() {
+        ServiceCase first = open(ServiceCaseKind.CUSTOMER_INQUIRY);
+        repository.save(first, ACTOR);
+        ServiceCase second = open(ServiceCaseKind.SAGA_FAILURE);
+        repository.save(second, ACTOR);
+        String originRef = "ORIGIN-" + UUID.randomUUID();
+
+        repository.recordOrigin(first.number(), originRef);
+
+        assertThat(repository.findByOriginRef(originRef)).contains(first.number());
+        assertThat(repository.findByOriginRef("ORIGIN-" + UUID.randomUUID())).isEmpty();
+        CaseNumber secondNumber = second.number();
+        assertThatThrownBy(() -> repository.recordOrigin(secondNumber, originRef))
+                .isInstanceOf(org.springframework.dao.DuplicateKeyException.class);
+    }
+
+    @Test
+    void 起票元キー_利用者の起票は起票元キーが空で何件あっても重ならない() {
+        repository.save(open(ServiceCaseKind.CUSTOMER_INQUIRY), ACTOR);
+        repository.save(open(ServiceCaseKind.SAGA_FAILURE), ACTOR);
+
+        assertThat(repository.findByOriginRef("存在しないキー")).isEmpty();
+    }
+
     // --- 状態の集合で引く（Bolt 40-11。S-14 の未終結・未受領・対応中） ---
 
     @Test

@@ -33,7 +33,7 @@ public class RouteCandidatesNotFoundEventHandler {
 
     @ApplicationModuleListener
     public void on(RouteCandidatesNotFound event) {
-        switch (commands.openBySystem(draft(event), event.operatorUserId())) {
+        switch (commands.openBySystem(draft(event), event.operatorUserId(), originRef(event))) {
             case OpenServiceCaseOutcome.Opened _, OpenServiceCaseOutcome.Duplicate _ -> {
                 // 起票した、または未終結の同じ案件がある
             }
@@ -43,6 +43,15 @@ public class RouteCandidatesNotFoundEventHandler {
                 throw new IllegalStateException("経路候補なしの有人案件の必須項目が足りない: " + incomplete.missing());
             case OpenServiceCaseOutcome.NotPermitted _ -> throw new IllegalStateException("システムの起票が権限で拒まれた（起こり得ない）");
         }
+    }
+
+    /**
+     * 起票元キー。DE-32 の再配信（同じ経路設計案件・理由・算出の時刻）で一意。再算出（算出の時刻が違う）は別のキーなので、未終結の同じ内容の案件が
+     * あれば重複の判定が止め、終結していれば新しい案件になる。
+     */
+    private static String originRef(RouteCandidatesNotFound event) {
+        return "ROUTE_CANDIDATES_NOT_FOUND:" + event.routingCaseId() + ":" + event.reason() + ":"
+                + event.notFoundAt().instant().toEpochMilli();
     }
 
     private static ServiceCaseDraft draft(RouteCandidatesNotFound event) {

@@ -154,6 +154,13 @@
     <select id="countAnswers" resultType="int">
         SELECT COUNT(*) FROM tracking.service_case_answer WHERE case_number = #{caseNumber}
     </select>
+    <!-- 起票元キーで起票済みの案件の受付番号と、起票元キーの記録（システム起票の冪等。Bolt 40-17） -->
+    <select id="selectByOriginRef" resultType="string">
+        SELECT case_number FROM tracking.service_case WHERE origin_ref = #{originRef}
+    </select>
+    <update id="updateOriginRef">
+        UPDATE tracking.service_case SET origin_ref = #{originRef} WHERE case_number = #{caseNumber}
+    </update>
     <!-- 指定した状態の案件の受付番号。受領期限の古い順（Bolt 40-11。S-14） -->
     <select id="selectByStatuses" resultType="string">
         SELECT case_number FROM tracking.service_case
