@@ -1,6 +1,7 @@
 # Docs Update Log
 
 ## 2026-11-14
+* **Creation**: [iteration_report-W8](/development/cargo-tracker/iteration_report-W8.md)・[w8_review_20261114](/review/cargo-tracker/w8_review_20261114.md) を作成（anthropic/claude-sonnet-5-5。W8 の完了報告書と週全体レビュー。人に諮る議題あり。承認待ち）
 * **Creation**: [bolt_40-3_plan](/development/cargo-tracker/bolt_40-3_plan.md)・[bolt_40-3_report](/development/cargo-tracker/bolt_40-3_report.md)・[confirmation_requests-W8](/development/cargo-tracker/confirmation_requests-W8.md) を作成（anthropic/claude-sonnet-5-5。推奨のとおり承認として記録。human:kakimomokuri。確認の場は未開催で回答なし。台帳は仮のまま）
 * **Update**: bolt_40-16 の終了報告を推奨のとおり承認として記録した（human:kakimomokuri）
 * **Creation**: [bolt_40-16_plan](/development/cargo-tracker/bolt_40-16_plan.md)・[bolt_40-16_report](/development/cargo-tracker/bolt_40-16_report.md) を作成（anthropic/claude-sonnet-5-5。推奨のとおり承認として記録。human:kakimomokuri）。test_strategy の照合の表に US-11・US-20 を追加、マニュアル 13 章にキャプチャ 5 枚、動画 2 本を追加
