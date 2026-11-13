@@ -5,7 +5,7 @@ import java.time.Instant;
 import java.util.Objects;
 
 /**
- * 有人案件の受領・回答の期限（Bolt 40-4。SC-INV-04）。数え始めは、営業時間内ならその時刻、営業時間外なら次に開く時刻（SVC-03）。
+ * 受領・回答期限。有人案件の受領期限と回答期限（Bolt 40-4。SC-INV-04）で、数え始めは、営業時間内ならその時刻、営業時間外なら次に開く時刻（SVC-03）。
  *
  * @param countedFrom 数え始め
  * @param receiptDue 受領期限

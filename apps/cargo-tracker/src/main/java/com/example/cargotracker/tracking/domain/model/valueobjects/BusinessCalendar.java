@@ -13,7 +13,7 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
- * 営業日カレンダー（Bolt 40-4。SC-INV-04）。日ごとの営業日・営業時間を持ち、受領・回答期限を数えるための営業時間の計算を提供する。登録のない日にかかる計算は
+ * 営業日カレンダー。Bolt 40-4（SC-INV-04）で作った。日ごとの営業日・営業時間を持ち、受領・回答期限を数えるための営業時間の計算を提供する。登録のない日にかかる計算は
  * {@link BusinessCalendarNotRegisteredException} で失敗する（SVC-07）。すべての日は同じ時間帯を持つ。営業時間は開始以上、終了未満。
  *
  * @param days 日ごとの営業日・営業時間

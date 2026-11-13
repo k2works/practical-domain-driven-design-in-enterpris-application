@@ -24,7 +24,9 @@ class BusinessDayTest {
 
     @Test
     void 営業日の開始が終了以降だと拒む() {
-        assertThatThrownBy(() -> BusinessDay.open(DATE, LocalTime.of(18, 0), LocalTime.of(18, 0), JST, null))
+        LocalTime eighteen = LocalTime.of(18, 0);
+
+        assertThatThrownBy(() -> BusinessDay.open(DATE, eighteen, eighteen, JST, null))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
@@ -45,7 +47,10 @@ class BusinessDayTest {
 
     @Test
     void 休業日に営業時間があると拒む() {
-        assertThatThrownBy(() -> new BusinessDay(DATE, false, LocalTime.of(9, 0), LocalTime.of(18, 0), JST, null))
+        LocalTime nine = LocalTime.of(9, 0);
+        LocalTime eighteen = LocalTime.of(18, 0);
+
+        assertThatThrownBy(() -> new BusinessDay(DATE, false, nine, eighteen, JST, null))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
@@ -53,7 +58,8 @@ class BusinessDayTest {
     void 同じ日が二重に登録されたカレンダーは拒む() {
         BusinessDay day = BusinessDay.open(DATE, LocalTime.of(9, 0), LocalTime.of(18, 0), JST, null);
 
-        assertThatThrownBy(() -> BusinessCalendar.of(java.util.List.of(day, day)))
-                .isInstanceOf(IllegalArgumentException.class);
+        java.util.List<BusinessDay> twice = java.util.List.of(day, day);
+
+        assertThatThrownBy(() -> BusinessCalendar.of(twice)).isInstanceOf(IllegalArgumentException.class);
     }
 }

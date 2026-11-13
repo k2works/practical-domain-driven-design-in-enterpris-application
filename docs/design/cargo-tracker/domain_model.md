@@ -224,6 +224,8 @@ quadrantChart
 | 航海の到着予定のイベントハンドラー | VoyageArrivalEventHandler | `VoyageAdoptedValueUpdated`（DE-12）を取込と採用の判断のコミットの後に別のトランザクションで受けるハンドラー（`tracking.application.internal.eventhandlers`、`@ApplicationModuleListener`。Bolt 39g4b）。その航海を最後の区間に持つ追跡番号を追跡番号の順に引き、1 つのトランザクションで 1 件ずつ行のロックで押さえて追跡記録を読み直し、航海の到着予定を受けさせる（`TrackingRecord.receiveVoyageArrival`）。内容の欠けた DE-12 は ERROR のログを残して捨てる | 追跡 |
 | 照会記録 | InquiryRecord | 荷主・荷受人からの照会 1 件の経路（顧客 Web・電話・メール）と、Web で完結したか有人対応へ移ったかの記録。KPI-02 の計測に使う | 追跡 |
 | 営業日カレンダー | BusinessCalendar | 有人案件の受領・回答期限を数えるための営業日と営業時間（日本の祝日・年末年始） | 追跡 |
+| 営業日 | BusinessDay | 営業日カレンダーの 1 日（営業日か休業日か、営業日なら営業時間の開始と終了） | 追跡 |
+| 受領・回答期限 | ServiceDeadlines | 有人案件の受領期限と回答期限（営業日カレンダーで数える。次回更新日時は受領期限） | 追跡 |
 | 有人案件 | ServiceCase | 受付番号を持ち、担当・期限・回答・復旧照合を追跡する顧客照会または業務例外（BR-09、BR-17） | 追跡 |
 | 受付番号 | CaseNumber | 有人案件の一意な識別子 | 追跡 |
 | 企業 | Company | 荷主・荷受人・A 社などの利用者の所属組織 | アクセス・監査 |

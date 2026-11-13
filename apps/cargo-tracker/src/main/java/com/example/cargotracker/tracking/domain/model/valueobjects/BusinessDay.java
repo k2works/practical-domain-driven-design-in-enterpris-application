@@ -7,7 +7,7 @@ import java.time.ZoneId;
 import java.util.Objects;
 
 /**
- * 営業日カレンダーの 1 日（表 {@code tracking.business_calendar} の 1 行。Bolt 40-4）。営業日は開始と終了を持ち（開始 &lt; 終了）、休業日は持たない。
+ * 営業日。営業日カレンダーの 1 日（表 {@code tracking.business_calendar} の 1 行。Bolt 40-4）で、営業日は開始と終了を持ち（開始 &lt; 終了）、休業日は持たない。
  * 営業時間は開始以上、終了未満（終了ちょうどは営業時間外）。
  *
  * @param date 日付（現地）
