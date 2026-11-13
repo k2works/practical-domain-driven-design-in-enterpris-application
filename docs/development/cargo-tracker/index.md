@@ -174,6 +174,7 @@ Bolt がイテレーションに当たります。ふりかえりは各 Bolt の
 | 40-6 | [有人案件の保存（4 表・受付番号の採番・リポジトリ）](bolt_40-6_plan.md)（[W8 計画](iteration_plan-W8.md)） | [終了報告](bolt_40-6_report.md) | W8 | 完了（承認済み） |
 | 40-7 | [有人案件の起票と受領のコマンド（認可）](bolt_40-7_plan.md)（[W8 計画](iteration_plan-W8.md)） | [終了報告](bolt_40-7_report.md) | W8 | 完了（承認済み） |
 | 40-8 | [有人案件の進捗・回答・終結・再開のコマンド（認可）](bolt_40-8_plan.md)（[W8 計画](iteration_plan-W8.md)） | [終了報告](bolt_40-8_report.md) | W8 | 完了（承認済み） |
+| 40-9 | [受領期限の超過の判定と依頼元への表示（escalation）](bolt_40-9_plan.md)（[W8 計画](iteration_plan-W8.md)） | [終了報告](bolt_40-9_report.md) | W8 | 完了（承認済み） |
 
 Bolt を始めるときに行を追加します。
 
@@ -378,3 +379,5 @@ Bolt を始めるときに行を追加します。
 * [Bolt 40-7 終了報告 - 有人案件の起票と受領のコマンド（認可）](./bolt_40-7_report.md)
 * [Bolt 40-8 計画 - 有人案件の進捗・回答・終結・再開のコマンド（認可）](./bolt_40-8_plan.md)
 * [Bolt 40-8 終了報告 - 有人案件の進捗・回答・終結・再開のコマンド（認可）](./bolt_40-8_report.md)
+* [Bolt 40-9 計画 - 受領期限の超過の判定と依頼元への表示（escalation）](./bolt_40-9_plan.md)
+* [Bolt 40-9 終了報告 - 受領期限の超過の判定と依頼元への表示（escalation）](./bolt_40-9_report.md)
