@@ -51,8 +51,7 @@ public class RouteCandidatesNotFoundEventHandler {
                 ServiceCaseDraft.of(
                                 ServiceCaseKind.QUOTATION_CONSULTATION,
                                 ServicePriority.NORMAL,
-                                "経路候補なし: 経路設計案件 " + event.caseNumber() + " の候補の算出で、基本制約を満たす候補がない（見つけた候補 "
-                                        + event.candidatesFound() + " 件）。専門判断を要する",
+                                "経路候補なし: 経路設計案件 " + event.caseNumber() + " の候補の算出で、基本制約を満たす候補がない。専門判断を要する",
                                 DEPARTMENT)
                         .withShipper(event.shipperCompanyId());
             case "EXTERNAL_DATA_MISSING" ->

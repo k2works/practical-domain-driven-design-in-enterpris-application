@@ -80,7 +80,7 @@ public class ServiceCaseController {
     /** 有人案件の詳細（S-15）。受領のボタンは受付済み・上位対応中のときだけ。 */
     @GetMapping("/{caseNumber}")
     public String detail(@PathVariable String caseNumber, AuthenticatedActor actor, Model model) {
-        CaseNumber number = ServiceCaseViews.parseNumber(caseNumber).orElseThrow(ServiceCaseController::notFound);
+        CaseNumber number = parse(caseNumber);
         model.addAttribute(
                 "serviceCase",
                 queryService
@@ -93,7 +93,7 @@ public class ServiceCaseController {
     /** 受領する（US-20 AC2）。担当者と受領時刻はサービスが記録する。PRG で S-15 に戻って結果を示す。 */
     @PostMapping("/{caseNumber}/receive")
     public String receive(@PathVariable String caseNumber, AuthenticatedActor actor, RedirectAttributes redirect) {
-        CaseNumber number = ServiceCaseViews.parseNumber(caseNumber).orElseThrow(ServiceCaseController::notFound);
+        CaseNumber number = parse(caseNumber);
         switch (commandService.receive(actor, new ReceiveServiceCaseCommand(number))) {
             case ReceiveServiceCaseOutcome.Received(CaseNumber received) ->
                 redirect.addFlashAttribute(RESULT, received.value() + " を受領しました。対応中にしました。");

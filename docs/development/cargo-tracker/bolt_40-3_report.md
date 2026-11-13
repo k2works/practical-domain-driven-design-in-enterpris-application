@@ -34,7 +34,7 @@ generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-14T21:00:00Z }
 
 | ゲート | 結果 |
 | :--- | :--- |
-| `documentationTest`（文書の検査） | 下の更新履歴に記録 |
+| `documentationTest`（文書の検査） | BUILD SUCCESSFUL |
 
 ## 完了条件
 

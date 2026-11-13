@@ -44,6 +44,13 @@ import java.util.UUID;
 public class ServiceCaseSteps {
 
     private static final ZoneId JST = ZoneId.of("Asia/Tokyo");
+    /** シナリオに書く状態の表示名と、有人案件の状態。 */
+    private static final java.util.Map<String, ServiceCaseStatus> STATUS_BY_NAME = java.util.Map.of(
+            "受付済み", ServiceCaseStatus.RECEIVED,
+            "対応中", ServiceCaseStatus.IN_PROGRESS,
+            "回答済み", ServiceCaseStatus.ANSWERED,
+            "終結", ServiceCaseStatus.CLOSED);
+
     private static final CompanyId COMPANY = new CompanyId(UUID.fromString("00000000-0000-0000-0000-0000040e1601"));
 
     private final MutableClock clock = new MutableClock();
@@ -130,15 +137,16 @@ public class ServiceCaseSteps {
     @ならば("終結は復旧照合が未完了で拒まれ、案件の状態は {string} のままである")
     public void 終結は拒まれる(String status) {
         assertThat(closeOutcome).isInstanceOf(ServiceCaseActionOutcome.ReconciliationIncomplete.class);
-        assertThat(repository.cases.get(outageNumber.value()).status()).isEqualTo(ServiceCaseStatus.ANSWERED);
-        assertThat(status).isEqualTo("回答済み");
+        // 画面の表示名から状態へ対応づけて、ドメインの状態と比べる（表示名と状態のずれを見逃さない）
+        assertThat(repository.cases.get(outageNumber.value()).status()).isEqualTo(STATUS_BY_NAME.get(status));
     }
 
-    @ならば("起票の結果に受付番号と次回更新日時があり、営業時間外のため起票の時刻に返している")
-    public void 営業時間外の即時の返答() {
+    @ならば("起票の結果の次回更新日時は {string} で、営業時間外のため受付番号を起票の時刻に返している")
+    public void 営業時間外の即時の返答(String nextUpdateAt) {
         OpenServiceCaseOutcome.Opened result = opened.getLast();
         assertThat(result.number().value()).startsWith("SC-");
-        assertThat(result.nextUpdateAt().instant()).isAfter(clock.instant());
+        // 営業時間外の優先度高は、翌営業日の 10:00（日本時間）を次回更新日時にする（SVC-05）。土曜 22:00 の起票は月曜 10:00
+        assertThat(result.nextUpdateAt().instant()).isEqualTo(Instant.parse(nextUpdateAt));
         assertThat(result.acknowledgedAt())
                 .hasValueSatisfying(at -> assertThat(at.instant()).isEqualTo(clock.instant()));
     }

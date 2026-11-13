@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.time.format.ResolverStyle;
 import java.util.Optional;
 
 /**
@@ -14,7 +15,8 @@ import java.util.Optional;
 final class ServiceCaseFormConverter {
 
     private static final ZoneId JAPAN = ZoneId.of("Asia/Tokyo");
-    private static final DateTimeFormatter NEXT_UPDATE_FORMAT = DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm");
+    private static final DateTimeFormatter NEXT_UPDATE_FORMAT =
+            DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm").withResolverStyle(ResolverStyle.STRICT);
 
     private ServiceCaseFormConverter() {}
 

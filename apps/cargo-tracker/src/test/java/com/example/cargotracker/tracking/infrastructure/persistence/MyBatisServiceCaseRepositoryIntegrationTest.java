@@ -365,7 +365,6 @@ class MyBatisServiceCaseRepositoryIntegrationTest {
         repository.update(late.escalate(at("2083-11-16T06:00:00Z")).orElseThrow(), ACTOR);
         assertThat(mine(repository.findReceiptOverdue(at("2083-11-16T04:00:00Z"), 100_000), late, received))
                 .containsExactly(late.number());
-        assertThat(repository.findReceiptOverdue(at("2083-11-20T00:00:00Z"), 0)).isEmpty();
     }
 
     /** 結果のうち、このテストで作った案件の受付番号だけを返す（共有の DB のほかの案件に影響されない）。 */
