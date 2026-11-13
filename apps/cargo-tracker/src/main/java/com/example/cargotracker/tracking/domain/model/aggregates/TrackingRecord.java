@@ -149,6 +149,15 @@ public final class TrackingRecord {
                 throw new IllegalArgumentException("主要実績の実績番号は 1 からの連番です: " + trackingNumber.value());
             }
         }
+        // 当初の到着予定は予定の最後の到着と同じ、現在状態の根拠の実績番号は実績にある（Bolt 40-1 の M1。H2 の表には外部キーがない）
+        if (!originalEta.equals(schedule.finalArrival())) {
+            throw new IllegalArgumentException("当初の到着予定が予定の最後の到着と合いません: " + trackingNumber.value());
+        }
+        if (this.statusBasisMilestoneNo.isPresent()
+                && this.milestones.stream()
+                        .noneMatch(milestone -> milestone.milestoneNo() == this.statusBasisMilestoneNo.getAsInt())) {
+            throw new IllegalArgumentException("現在状態の根拠の実績番号が実績にありません: " + trackingNumber.value());
+        }
         // 見込みと根拠の一致（Bolt 39g4c の行 5）。組み立て・開始・導出のすべての経路に効く。表の CHECK ck_tracking_record_latest_eta_basis と
         // PostgreSQL の外部キーが同じ規則の一部を守る（実績の状態と予定の時点は集約だけの規則）
         latestEstimate.basis().ifPresent(basis -> {

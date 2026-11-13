@@ -118,7 +118,7 @@ class TrackingRecordLatestEstimateBasisTest {
                 bookingStatus,
                 schedule(),
                 TrackingStatus.IN_TRANSIT,
-                OptionalInt.of(milestones.size()),
+                milestones.isEmpty() ? OptionalInt.empty() : OptionalInt.of(milestones.size()),
                 Optional.empty(),
                 milestones,
                 A2,

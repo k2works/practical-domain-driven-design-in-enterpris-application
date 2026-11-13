@@ -751,27 +751,26 @@ class MyBatisTrackingRecordRepositoryIntegrationTest {
         }
 
         @Test
-        void 行60_根拠の実績番号の実績がなければ500にせず競合にする() {
+        void 行60_根拠の実績番号の実績がない追跡記録は集約が組み立てを拒み表は変わらない() {
             TrackingRecord saved = started(UUID.randomUUID(), trackingNumber());
             repository.save(saved);
-            // 集約の不変条件が破れた追跡記録（根拠の実績番号の実績がない）
-            TrackingRecord broken = TrackingRecord.reconstitute(
-                    saved.trackingNumber(),
-                    saved.bookingId(),
-                    saved.shipperCompanyId(),
-                    saved.consigneeCompanyId(),
-                    saved.bookingStatus(),
-                    saved.schedule(),
-                    TrackingStatus.PICKED_UP,
-                    OptionalInt.of(5),
-                    List.of(),
-                    saved.originalEta(),
-                    saved.latestEta(),
-                    saved.startedAt(),
-                    saved.aggregateVersion());
-
-            assertThatThrownBy(() -> repository.update(broken))
-                    .isInstanceOf(ConcurrentTrackingRecordUpdateException.class);
+            // Bolt 40-1 の M1 から、根拠の実績番号の実績がない追跡記録は集約が先に拒む（表の外部キーまで届かない）
+            assertThatThrownBy(() -> TrackingRecord.reconstitute(
+                            saved.trackingNumber(),
+                            saved.bookingId(),
+                            saved.shipperCompanyId(),
+                            saved.consigneeCompanyId(),
+                            saved.bookingStatus(),
+                            saved.schedule(),
+                            TrackingStatus.PICKED_UP,
+                            OptionalInt.of(5),
+                            List.of(),
+                            saved.originalEta(),
+                            saved.latestEta(),
+                            saved.startedAt(),
+                            saved.aggregateVersion()))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("根拠の実績番号");
             assertThat(jdbc.queryForMap(
                             "SELECT version, status_basis_milestone_no FROM tracking.tracking_record"
                                     + " WHERE tracking_number = ?",
