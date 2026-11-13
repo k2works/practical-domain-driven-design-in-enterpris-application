@@ -172,7 +172,7 @@ public class ExternalRecordAuditEventHandler {
      * 後から「戻した」ことを追えるようにする。逆転でなければ部品を省く（今までの形のまま）。逆転なのに比べた外部版がなければ内容の欠け。
      */
     private static String versionReversedPart(ReceivedRecordDecided event) {
-        if (!event.versionReversed()) {
+        if (!Boolean.TRUE.equals(event.versionReversed())) {
             return "";
         }
         return ";versionReversed=true;comparedExternalVersion="
