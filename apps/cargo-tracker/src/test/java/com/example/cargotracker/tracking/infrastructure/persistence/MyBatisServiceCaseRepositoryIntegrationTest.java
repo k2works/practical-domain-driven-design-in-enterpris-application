@@ -25,6 +25,7 @@ import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingNumbe
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -366,6 +367,29 @@ class MyBatisServiceCaseRepositoryIntegrationTest {
                 .extracting(ServiceCase::number)
                 .containsExactly(late.number());
         assertThat(repository.findReceiptOverdue(at("2083-11-20T00:00:00Z"), 0)).isEmpty();
+    }
+
+    // --- 状態の集合で引く（Bolt 40-11。S-14 の未終結・未受領・対応中） ---
+
+    @Test
+    void 状態の集合_指定した状態の案件だけを受領期限の古い順に上限まで返す() {
+        ServiceCase unreceived = open(ServiceCaseKind.CUSTOMER_INQUIRY);
+        repository.save(unreceived, ACTOR);
+        ServiceCase received = open(ServiceCaseKind.SAGA_FAILURE);
+        repository.save(received, ACTOR);
+        repository.update(received.receive(STAFF, at("2083-11-16T02:00:00Z")), STAFF);
+
+        assertThat(repository.findByStatuses(Set.of(ServiceCaseStatus.RECEIVED), 10))
+                .extracting(ServiceCase::number)
+                .containsExactly(unreceived.number());
+        assertThat(repository.findByStatuses(Set.of(ServiceCaseStatus.IN_PROGRESS), 10))
+                .extracting(ServiceCase::number)
+                .containsExactly(received.number());
+        assertThat(repository.findByStatuses(Set.of(ServiceCaseStatus.RECEIVED, ServiceCaseStatus.IN_PROGRESS), 10))
+                .hasSize(2);
+        assertThat(repository.findByStatuses(Set.of(ServiceCaseStatus.RECEIVED, ServiceCaseStatus.IN_PROGRESS), 1))
+                .hasSize(1);
+        assertThat(repository.findByStatuses(Set.of(), 10)).isEmpty();
     }
 
     // --- 行 6: ない受付番号 ---

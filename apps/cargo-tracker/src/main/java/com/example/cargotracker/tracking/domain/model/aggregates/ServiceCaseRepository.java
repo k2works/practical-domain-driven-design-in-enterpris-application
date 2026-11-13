@@ -4,8 +4,10 @@ import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import com.example.cargotracker.tracking.domain.model.valueobjects.CaseNumber;
+import com.example.cargotracker.tracking.domain.model.valueobjects.ServiceCaseStatus;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -36,6 +38,14 @@ public interface ServiceCaseRepository {
      * @param limit 返す最大の件数
      */
     List<ServiceCase> findReceiptOverdue(UtcInstant now, int limit);
+
+    /**
+     * 指定した状態の案件を、受領期限の古い順（同じなら受付番号順）に返す（Bolt 40-11。S-14 の未終結・未受領・対応中）。
+     *
+     * @param statuses 状態の集合（空なら何も返さない）
+     * @param limit 返す最大の件数
+     */
+    List<ServiceCase> findByStatuses(Set<ServiceCaseStatus> statuses, int limit);
 
     /** 受付番号で案件を読む。 */
     Optional<ServiceCase> findByNumber(CaseNumber number);

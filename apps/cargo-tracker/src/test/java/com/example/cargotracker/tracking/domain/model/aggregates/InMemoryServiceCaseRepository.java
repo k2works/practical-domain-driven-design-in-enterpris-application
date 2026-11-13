@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 /** 有人案件の保存を覚えるだけのテスト用の代役（コマンドと照会のサービスのテストが共有する。Bolt 40-7〜40-9）。 */
@@ -45,6 +46,16 @@ public final class InMemoryServiceCaseRepository implements ServiceCaseRepositor
         return cases.values().stream()
                 .filter(c -> c.isReceiptOverdue(now))
                 .sorted(Comparator.comparing(c -> c.receiveDueAt().instant()))
+                .limit(limit)
+                .toList();
+    }
+
+    @Override
+    public List<ServiceCase> findByStatuses(Set<ServiceCaseStatus> statuses, int limit) {
+        return cases.values().stream()
+                .filter(c -> statuses.contains(c.status()))
+                .sorted(Comparator.comparing((ServiceCase c) -> c.receiveDueAt().instant())
+                        .thenComparing(c -> c.number().value()))
                 .limit(limit)
                 .toList();
     }

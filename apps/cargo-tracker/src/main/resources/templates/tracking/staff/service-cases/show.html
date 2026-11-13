@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/staff :: layout(~{::title}, ~{::main}, ~{}, 'service-cases')}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="|有人案件 ${serviceCase.number()} - cargo-tracker|">有人案件 SC-2026-0057 - cargo-tracker</title>
+</head>
+<body>
+<main>
+    <h1 th:text="|有人案件 ${serviceCase.number()}|">有人案件 SC-2026-0057</h1>
+    <!--/* 受領の結果（Bolt 40-11）。受領できない状態と競合は警告 */-->
+    <p role="status" th:if="${result}" th:text="${result}">SC-2026-0057 を受領しました。対応中にしました。</p>
+    <div class="alert alert-warning" role="alert" th:if="${problem}" th:text="${problem}">ほかの更新が先にこの案件を変更しました。</div>
+    <!--/* S-15（Bolt 40-11）。進捗の更新・回答・終結・再開の操作は Bolt 40-12 */-->
+    <dl class="row">
+        <dt class="col-sm-3">種類</dt>
+        <dd class="col-sm-9" th:text="${serviceCase.kind()}">顧客照会</dd>
+        <dt class="col-sm-3">優先度</dt>
+        <dd class="col-sm-9" th:text="${serviceCase.priority()}">通常</dd>
+        <dt class="col-sm-3">担当部門</dt>
+        <dd class="col-sm-9" th:text="${serviceCase.department()}">CS</dd>
+        <dt class="col-sm-3">内容</dt>
+        <dd class="col-sm-9" th:text="${serviceCase.cause()}">貨物の所在</dd>
+        <dt class="col-sm-3">状態</dt>
+        <dd class="col-sm-9">
+            <span th:text="${serviceCase.status()}">受付済み</span>
+            <span th:if="${serviceCase.receiptOverdue()}" class="badge text-bg-warning"><span aria-hidden="true">⚠ </span><span>期限超過</span></span>
+        </dd>
+        <dt class="col-sm-3">担当</dt>
+        <dd class="col-sm-9" th:text="${serviceCase.assignee()}">まだ受領されていません</dd>
+        <dt class="col-sm-3">受領時刻</dt>
+        <dd class="col-sm-9" th:text="${serviceCase.receivedAt()}">なし</dd>
+        <dt class="col-sm-3">受領期限</dt>
+        <dd class="col-sm-9" th:text="${serviceCase.receiveDueAt()}">2026-11-16 14:00 Asia/Tokyo（UTC+09:00）（UTC 2026-11-16 05:00）</dd>
+        <dt class="col-sm-3">回答期限</dt>
+        <dd class="col-sm-9" th:text="${serviceCase.answerDueAt()}">2026-11-17 14:00 Asia/Tokyo（UTC+09:00）（UTC 2026-11-17 05:00）</dd>
+        <dt class="col-sm-3">次回更新</dt>
+        <dd class="col-sm-9" th:text="${serviceCase.nextUpdateAt()}">2026-11-16 14:00 Asia/Tokyo（UTC+09:00）（UTC 2026-11-16 05:00）</dd>
+        <th:block th:if="${serviceCase.reconciliation().isPresent()}">
+            <dt class="col-sm-3">復旧照合</dt>
+            <dd class="col-sm-9" th:text="${serviceCase.reconciliation().get()}">未完了</dd>
+        </th:block>
+    </dl>
+    <!--/* 受領できるのは受付済み・上位対応中だけ。ボタンの名前に受付番号を入れ、どの案件か分かるようにする（WCAG 2.4.6） */-->
+    <form th:if="${serviceCase.receivable()}" method="post"
+          th:action="@{/staff/service-cases/{caseNumber}/receive(caseNumber=${serviceCase.number()})}">
+        <button type="submit" class="btn btn-primary" th:text="|${serviceCase.number()} を受領する|">SC-2026-0057 を受領する</button>
+    </form>
+    <h2 class="h4" id="progress-heading">進捗</h2>
+    <p th:if="${#lists.isEmpty(serviceCase.progress())}">進捗はまだありません。</p>
+    <ul th:unless="${#lists.isEmpty(serviceCase.progress())}" aria-labelledby="progress-heading">
+        <li th:each="progress : ${serviceCase.progress()}" class="mb-2">
+            <span th:text="${progress.content()}">港湾に再送を依頼</span><br>
+            <span th:text="|更新 ${progress.updatedAt()}（${progress.updatedBy()}）|">更新 2026-11-16 11:20 Asia/Tokyo（あなた）</span><br>
+            <span th:text="|次回更新 ${progress.nextUpdateAt()}|">次回更新 変更なし</span>
+        </li>
+    </ul>
+    <h2 class="h4" id="answers-heading">回答</h2>
+    <p th:if="${#lists.isEmpty(serviceCase.answers())}">回答はまだありません。</p>
+    <ul th:unless="${#lists.isEmpty(serviceCase.answers())}" aria-labelledby="answers-heading">
+        <li th:each="answer : ${serviceCase.answers()}" class="mb-2">
+            <span th:text="${answer.content()}">再送を確認しました</span><br>
+            <span th:text="|回答 ${answer.answeredAt()}（${answer.answeredBy()}）|">回答 2026-11-16 12:00 Asia/Tokyo（あなた）</span>
+            <th:block th:if="${answer.customerResponse() != ''}"><br><span th:text="|顧客の回答 ${answer.customerResponse()}|">顧客の回答 未解決</span></th:block>
+        </li>
+    </ul>
+    <p><a th:href="@{/staff/service-cases}">有人案件の一覧</a></p>
+</main>
+</body>
+</html>

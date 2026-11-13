@@ -64,6 +64,13 @@
                        th:attr="aria-current=${active == 'tracking-records'} ? 'page' : null"
                        th:href="@{/staff/tracking-records}">追跡</a>
                 </li>
+                <!--/* 有人案件（S-14・S-15）は社内の運用役割（カスタマーサポート・営業担当者・経路設計者・追跡管理者・データ責任者）。台帳 D-159（Bolt 40-11） */-->
+                <li class="nav-item"
+                    th:if="${currentActor != null and (currentActor.hasRole(T(com.example.cargotracker.shared.domain.Role).CUSTOMER_SUPPORT) or currentActor.hasRole(T(com.example.cargotracker.shared.domain.Role).SALES) or currentActor.hasRole(T(com.example.cargotracker.shared.domain.Role).ROUTE_DESIGNER) or currentActor.hasRole(T(com.example.cargotracker.shared.domain.Role).TRACKING_MANAGER) or currentActor.hasRole(T(com.example.cargotracker.shared.domain.Role).DATA_STEWARD))}">
+                    <a class="nav-link" th:classappend="${active == 'service-cases'} ? 'fw-bold'"
+                       th:attr="aria-current=${active == 'service-cases'} ? 'page' : null"
+                       th:href="@{/staff/service-cases}">有人案件</a>
+                </li>
                 <!--/* 外部データの取込（S-16）はデータ責任者を持つ利用者だけ（Bolt 39c） */-->
                 <li class="nav-item"
                     th:if="${currentActor != null and currentActor.hasRole(T(com.example.cargotracker.shared.domain.Role).DATA_STEWARD)}">

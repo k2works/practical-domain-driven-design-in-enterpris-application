@@ -49,6 +49,9 @@ public interface ServiceCaseMapper {
     /** 受領期限を過ぎた案件（受付済みで期限を厳密に過ぎたものと、上位対応中）の受付番号を期限の古い順に。 */
     List<String> selectReceiptOverdue(@Param("now") OffsetDateTime now, @Param("limit") int limit);
 
+    /** 指定した状態の案件の受付番号を受領期限の古い順に（Bolt 40-11）。 */
+    List<String> selectByStatuses(@Param("statuses") List<String> statuses, @Param("limit") int limit);
+
     /** 同じ荷主企業・予約（なければ「ない」案件）・内容で未終結の案件の受付番号（古い順の先頭）。 */
     Optional<String> selectUnclosedDuplicate(
             @Param("shipperCompanyId") java.util.UUID shipperCompanyId,

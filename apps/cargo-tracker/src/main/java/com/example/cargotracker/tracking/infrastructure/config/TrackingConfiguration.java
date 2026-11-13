@@ -17,6 +17,7 @@ import com.example.cargotracker.tracking.application.internal.outboundservices.a
 import com.example.cargotracker.tracking.application.internal.outboundservices.acl.RoutingScheduledLegs;
 import com.example.cargotracker.tracking.application.internal.queryservices.CustomerTrackingQueryService;
 import com.example.cargotracker.tracking.application.internal.queryservices.ServiceCaseOverdueQueryService;
+import com.example.cargotracker.tracking.application.internal.queryservices.ServiceCaseQueryService;
 import com.example.cargotracker.tracking.application.internal.queryservices.TrackingRecordQueryService;
 import com.example.cargotracker.tracking.application.internal.queryservices.TrackingRecordScope;
 import com.example.cargotracker.tracking.domain.model.aggregates.BusinessCalendarRepository;
@@ -114,6 +115,12 @@ public class TrackingConfiguration {
     @Bean
     ServiceCaseOverdueQueryService serviceCaseOverdueQueryService(ServiceCaseRepository repository, Clock clock) {
         return new ServiceCaseOverdueQueryService(repository, clock, ServiceCaseAuthorization::canOperate);
+    }
+
+    /** 有人案件の一覧（S-14）と詳細（S-15）の照会（US-20。読むときの判定。Bolt 40-11）。 */
+    @Bean
+    ServiceCaseQueryService serviceCaseQueryService(ServiceCaseRepository repository, Clock clock) {
+        return new ServiceCaseQueryService(repository, clock, ServiceCaseAuthorization::canOperate);
     }
 
     /** 追跡管理者による主要実績の登録（US-12。Bolt 26b）。 */

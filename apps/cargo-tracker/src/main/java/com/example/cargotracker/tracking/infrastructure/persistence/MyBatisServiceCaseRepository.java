@@ -23,6 +23,7 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import org.springframework.stereotype.Repository;
 
 /**
@@ -86,6 +87,16 @@ public class MyBatisServiceCaseRepository implements ServiceCaseRepository {
     @Override
     public List<ServiceCase> findReceiptOverdue(UtcInstant now, int limit) {
         return mapper.selectReceiptOverdue(offset(now), limit).stream()
+                .map(number -> findByNumber(new CaseNumber(number)).orElseThrow())
+                .toList();
+    }
+
+    @Override
+    public List<ServiceCase> findByStatuses(Set<ServiceCaseStatus> statuses, int limit) {
+        if (statuses.isEmpty()) {
+            return List.of();
+        }
+        return mapper.selectByStatuses(statuses.stream().map(Enum::name).toList(), limit).stream()
                 .map(number -> findByNumber(new CaseNumber(number)).orElseThrow())
                 .toList();
     }

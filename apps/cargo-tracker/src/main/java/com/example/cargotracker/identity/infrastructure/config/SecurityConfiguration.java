@@ -220,6 +220,15 @@ public class SecurityConfiguration {
                         .hasAnyRole(Role.TRACKING_MANAGER.name(), Role.CUSTOMER_SUPPORT.name())
                         .requestMatchers("/staff/tracking-records/**")
                         .hasRole(Role.TRACKING_MANAGER.name())
+                        // 有人案件の一覧（S-14）・詳細と受領（S-15）は社内の運用役割だけ（Bolt 40-11。台帳 D-159。
+                        // 役割の集合は ServiceCaseAuthorization の OPERATING_ROLES と同じ。/staff/** より先に書く）
+                        .requestMatchers("/staff/service-cases", "/staff/service-cases/**")
+                        .hasAnyRole(
+                                Role.CUSTOMER_SUPPORT.name(),
+                                Role.SALES.name(),
+                                Role.ROUTE_DESIGNER.name(),
+                                Role.TRACKING_MANAGER.name(),
+                                Role.DATA_STEWARD.name())
                         // 利用者の管理（S-20）はシステム管理者だけ（Bolt 34。/staff/** より先に書く）
                         .requestMatchers("/staff/users/**")
                         .hasRole(Role.SYSTEM_ADMIN.name())

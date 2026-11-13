@@ -34,6 +34,7 @@ import jakarta.servlet.http.Cookie;
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
@@ -61,6 +62,7 @@ class TrackingAssignedScopeSecurityIntegrationTest {
 
     private static final byte[] TOTP_SECRET = "12345678901234567890".getBytes(StandardCharsets.US_ASCII);
     private static final String RECORDS_URL = "/staff/tracking-records";
+    private static final String SERVICE_CASES_URL = "/staff/service-cases";
     private static final String NO_ASSIGNED_COMPANIES = "担当企業がまだないので、表示できる追跡記録はありません。システム管理者に担当企業の割り当てを頼んでください。";
     private static final String ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
     private static final Random RANDOM = new Random();
@@ -148,6 +150,42 @@ class TrackingAssignedScopeSecurityIntegrationTest {
                         .with(csrf())
                         .cookie(session))
                 .andExpect(status().isForbidden());
+    }
+
+    // --- Bolt 40-11: 有人案件の一覧（S-14）・詳細と受領（S-15）は社内の運用役割だけ（台帳 D-159） ---
+
+    @Test
+    void 社内の運用役割は有人案件の一覧を開ける() throws Exception {
+        for (Role role : List.of(
+                Role.CUSTOMER_SUPPORT, Role.SALES, Role.ROUTE_DESIGNER, Role.TRACKING_MANAGER, Role.DATA_STEWARD)) {
+            Cookie session = login(staffWith(role, shipperA));
+
+            assertThat(body(session, SERVICE_CASES_URL)).as(role.name()).contains("有人案件");
+        }
+    }
+
+    @Test
+    void 運用役割でない社内の役割と荷主担当者は有人案件の一覧と詳細と受領が403() throws Exception {
+        for (Role role : List.of(Role.SYSTEM_ADMIN, Role.AUDITOR, Role.SHIPPER)) {
+            Cookie session = login(staffWith(role, shipperA));
+
+            mvc.perform(get(SERVICE_CASES_URL).cookie(session)).andExpect(status().isForbidden());
+            mvc.perform(get(SERVICE_CASES_URL + "/SC-2026-0001").cookie(session))
+                    .andExpect(status().isForbidden());
+            mvc.perform(post(SERVICE_CASES_URL + "/SC-2026-0001/receive")
+                            .with(csrf())
+                            .cookie(session))
+                    .andExpect(status().isForbidden());
+        }
+    }
+
+    @Test
+    void ない案件の詳細と知らない絞り込みは404() throws Exception {
+        Cookie session = login(staffWith(Role.CUSTOMER_SUPPORT, shipperA));
+
+        mvc.perform(get(SERVICE_CASES_URL + "/SC-2026-9999").cookie(session)).andExpect(status().isNotFound());
+        mvc.perform(get(SERVICE_CASES_URL).param("filter", "unknown").cookie(session))
+                .andExpect(status().isNotFound());
     }
 
     @Test

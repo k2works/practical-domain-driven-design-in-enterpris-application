@@ -1,0 +1,78 @@
+package com.example.cargotracker.tracking.application.internal.queryservices;
+
+import com.example.cargotracker.shared.domain.AuthenticatedActor;
+import com.example.cargotracker.shared.domain.UtcInstant;
+import com.example.cargotracker.tracking.domain.model.aggregates.ServiceCase;
+import com.example.cargotracker.tracking.domain.model.aggregates.ServiceCaseRepository;
+import com.example.cargotracker.tracking.domain.model.valueobjects.CaseNumber;
+import java.time.Clock;
+import java.util.List;
+import java.util.Optional;
+import java.util.function.Predicate;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+/**
+ * 有人案件の一覧（S-14）と詳細（S-15）の照会（US-20。Bolt 40-11）。期限超過は読むときに判定する（Bolt 40-9 と同じ方針）。社内の運用役割だけが読める
+ * （認可の定めは台帳 D-159。権限がなければ空の結果で、見つからないのと区別しない）。
+ *
+ * <p>{@code @Service} は JIG がユースケースとして読むための印で、部品探索の対象にはしない（CargoTrackerApplication）。
+ * 組み立ては {@code TrackingConfiguration} が担う。
+ */
+@Service
+public class ServiceCaseQueryService {
+
+    /** 一覧の件数の上限。 */
+    static final int LIMIT = 200;
+
+    private final ServiceCaseRepository repository;
+    private final Clock clock;
+    private final Predicate<AuthenticatedActor> permitted;
+
+    public ServiceCaseQueryService(
+            ServiceCaseRepository repository, Clock clock, Predicate<AuthenticatedActor> permitted) {
+        this.repository = repository;
+        this.clock = clock;
+        this.permitted = permitted;
+    }
+
+    /**
+     * 絞り込みに合う案件を、受領期限の古い順に上限まで返す。
+     *
+     * @return 権限があれば一覧（空もあり得る）、権限がなければ空の {@link Optional}
+     */
+    @Transactional(readOnly = true)
+    public Optional<ServiceCaseList> list(AuthenticatedActor actor, ServiceCaseListFilter filter) {
+        if (!permitted.test(actor)) {
+            return Optional.empty();
+        }
+        UtcInstant now = new UtcInstant(clock.instant());
+        // 打ち切りかどうかを知るため、上限より 1 件多く読む
+        List<ServiceCase> found = filter == ServiceCaseListFilter.OVERDUE
+                ? repository.findReceiptOverdue(now, LIMIT + 1)
+                : repository.findByStatuses(filter.statuses(), LIMIT + 1);
+        boolean truncated = found.size() > LIMIT;
+        List<ServiceCaseListItem> items = found.stream()
+                .limit(LIMIT)
+                .map(serviceCase -> new ServiceCaseListItem(
+                        serviceCase.number(),
+                        serviceCase.kind(),
+                        serviceCase.priority(),
+                        serviceCase.department(),
+                        serviceCase.status(),
+                        serviceCase.receiveDueAt(),
+                        serviceCase.isReceiptOverdue(now)))
+                .toList();
+        return Optional.of(new ServiceCaseList(items, truncated, LIMIT));
+    }
+
+    /** 受付番号の案件の詳細。ない案件と権限のない役割は、ともに空（存在を明かさない）。 */
+    @Transactional(readOnly = true)
+    public Optional<ServiceCaseDetail> detail(AuthenticatedActor actor, CaseNumber number) {
+        if (!permitted.test(actor)) {
+            return Optional.empty();
+        }
+        UtcInstant now = new UtcInstant(clock.instant());
+        return repository.findByNumber(number).map(c -> new ServiceCaseDetail(c, c.isReceiptOverdue(now)));
+    }
+}

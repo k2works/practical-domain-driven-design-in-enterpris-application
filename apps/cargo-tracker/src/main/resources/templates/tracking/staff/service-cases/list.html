@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/staff :: layout(~{::title}, ~{::main}, ~{}, 'service-cases')}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>有人案件 - cargo-tracker</title>
+</head>
+<body>
+<main>
+    <h1>有人案件</h1>
+    <!--/* S-14（Bolt 40-11）。絞り込みは未終結（既定）・未受領・期限超過・対応中。期限超過は読むときの判定（Bolt 40-9）で、状態の変更と通知は W10 */-->
+    <nav aria-label="絞り込み">
+        <ul class="nav nav-pills mb-3">
+            <li class="nav-item" th:each="filter : ${filters}">
+                <a class="nav-link" th:classappend="${filter.current()} ? 'active'"
+                   th:attr="aria-current=${filter.current()} ? 'page' : null"
+                   th:href="@{/staff/service-cases(filter=${filter.parameter()})}" th:text="${filter.label()}">未終結</a>
+            </li>
+        </ul>
+    </nav>
+    <p th:if="${#lists.isEmpty(serviceCases)}" th:text="${emptyMessage}">未終結の有人案件はありません。</p>
+    <p th:if="${truncated}" th:text="|受領期限の古い ${limit} 件だけを示しています。|">受領期限の古い 200 件だけを示しています。</p>
+    <div th:unless="${#lists.isEmpty(serviceCases)}" class="table-scroll" tabindex="0" role="region"
+         aria-labelledby="service-cases-caption">
+        <table class="table">
+            <caption id="service-cases-caption">有人案件（受領期限の古い順）</caption>
+            <thead>
+            <tr>
+                <th scope="col">受付番号</th>
+                <th scope="col">種類</th>
+                <th scope="col">優先度</th>
+                <th scope="col">担当部門</th>
+                <th scope="col">状態</th>
+                <th scope="col">受領期限</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="serviceCase : ${serviceCases}">
+                <td><a th:href="@{/staff/service-cases/{caseNumber}(caseNumber=${serviceCase.number()})}"
+                       th:text="${serviceCase.number()}">SC-2026-0057</a></td>
+                <td th:text="${serviceCase.kind()}">顧客照会</td>
+                <td th:text="${serviceCase.priority()}">通常</td>
+                <td th:text="${serviceCase.department()}">CS</td>
+                <!--/* 状態と期限超過は文字とアイコンで示す（色だけにしない。ACC） */-->
+                <td>
+                    <span th:text="${serviceCase.status()}">受付済み</span>
+                    <span th:if="${serviceCase.receiptOverdue()}" class="badge text-bg-warning"><span aria-hidden="true">⚠ </span><span>期限超過</span></span>
+                </td>
+                <td th:text="${serviceCase.receiveDueAt()}">2026-11-16 14:00 Asia/Tokyo（UTC+09:00）（UTC 2026-11-16 05:00）</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</main>
+</body>
+</html>
