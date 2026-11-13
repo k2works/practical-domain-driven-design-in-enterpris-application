@@ -1,10 +1,11 @@
 service_case_number_counter
 business_calendar
+inquiry_record
 service_case_source
 service_case_progress
 service_case_answer
 scheduled_leg
-service_case
 rejected_milestone
+service_case
 tracking_record
 milestone

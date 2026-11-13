@@ -11945,6 +11945,76 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_40-15_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 40-15 計画
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_40-15_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 40-15 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../development/cargo-tracker/bolt_40-1_plan/" class="md-nav__link">
         
   
@@ -18130,7 +18200,7 @@
 </tr>
 <tr>
 <td style="text-align: left;"><code>inquiry_record</code></td>
-<td style="text-align: left;"><code>channel</code> IN（<code>WEB_SELF</code>、<code>WEB_INQUIRY</code>、<code>PHONE</code>、<code>EMAIL</code>）。<code>inquirer_kind</code> IN（<code>SHIPPER</code>、<code>CONSIGNEE</code>）。<code>escalated</code> は有人対応へ移ったか</td>
+<td style="text-align: left;"><code>channel</code> IN（<code>WEB_SELF</code>、<code>WEB_INQUIRY</code>、<code>PHONE</code>、<code>EMAIL</code>）。<code>inquirer_kind</code> IN（<code>SHIPPER</code>、<code>CONSIGNEE</code>）。<code>escalated</code> は有人対応へ移ったか（Bolt 40-15 で作った。CHECK: 真なら <code>case_number</code> がある。<code>case_number</code> は <code>service_case</code> への外部キー。荷主企業・追跡番号・利用者は他のコンテキストの参照なので外部キーなし。<strong>data_model との差: <code>created_at</code>（NOT NULL。記録した時刻）を足した</strong>。追記専用の印は付けない（W9 の IR-INV-01 が <code>escalated</code> を更新するため）。索引 <code>(shipper_company_id, received_at)</code>。2026-11-14 に推奨のとおり承認。S-23 は <code>PHONE</code>・<code>EMAIL</code> だけを書く）</td>
 <td style="text-align: left;">IR-INV-01〜02、KPI-02</td>
 </tr>
 <tr>
