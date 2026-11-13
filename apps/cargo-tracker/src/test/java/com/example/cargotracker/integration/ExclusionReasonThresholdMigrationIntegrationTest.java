@@ -210,13 +210,26 @@ class ExclusionReasonThresholdMigrationIntegrationTest {
         assertOldFormRemains(vendor, jdbc, 2);
     }
 
-    /** PostgreSQL は DDL もトランザクションなので巻き戻り、移し替えの前の列と行が残る。H2 は戻せないので失敗することだけを確かめる。 */
+    /**
+     * 失敗した移し替えの後の形（Bolt 40-1 の M7）。どちらの DB でも Flyway の履歴に分割の成功行がない。PostgreSQL は DDL もトランザクションなので巻き戻り、
+     * 移し替えの前の列と行が残り、新しい列が 1 つもない。H2 は DDL を戻せないので、半端な形が残ることは確かめず、履歴に成功行がないことだけを確かめる。
+     */
     private static void assertOldFormRemains(String vendor, JdbcTemplate jdbc, int rowCount) {
+        assertThat(jdbc.queryForObject(
+                        "SELECT COUNT(*) FROM flyway_schema_history WHERE version = '20261116100000' AND success",
+                        Integer.class))
+                .isZero();
         if ("postgresql".equals(vendor)) {
             assertThat(jdbc.queryForObject(
                             "SELECT COUNT(*) FROM routing.exclusion_reason WHERE threshold IS NOT NULL OR reason_code = 'NOT_CONNECTABLE'",
                             Integer.class))
                     .isEqualTo(rowCount);
+            assertThat(jdbc.queryForList(
+                            "SELECT column_name FROM information_schema.columns"
+                                    + " WHERE table_schema = 'routing' AND table_name = 'exclusion_reason'"
+                                    + " AND column_name LIKE 'threshold%' ORDER BY column_name",
+                            String.class))
+                    .containsExactly("threshold");
         }
     }
 }
