@@ -38,7 +38,7 @@ generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-14T05:30:00Z }
 | ゲート | 結果 |
 | :--- | :--- |
 | `check documentationTest uiTest` | BUILD SUCCESSFUL（約 28 分） |
-| SonarQube | 初回は新しい違反 1 件（重複した文字列）で FAILED → 直して再実行（結果は下の更新履歴） |
+| SonarQube | 初回は新しい違反 1 件（重複した文字列）で FAILED → 直して再実行し **PASS**（新しい違反 0） |
 
 ## 完了条件
 
