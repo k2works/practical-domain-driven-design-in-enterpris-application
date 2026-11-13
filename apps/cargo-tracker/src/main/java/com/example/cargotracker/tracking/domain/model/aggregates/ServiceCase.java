@@ -382,7 +382,7 @@ public final class ServiceCase {
     }
 
     public List<Source> sources() {
-        return sources;
+        return List.copyOf(sources);
     }
 
     public Optional<String> oldVersionRef() {
