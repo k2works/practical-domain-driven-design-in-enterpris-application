@@ -20,6 +20,9 @@ import java.util.UUID;
  * @param decidedBy 判断者（データ責任者）の利用者 ID
  * @param decidedByCompanyId 判断者の所属企業 ID
  * @param decidedAt 判断の時刻
+ * @param versionReversed 版の逆転の隔離を採用して、この外部 ID の最後に取得した採用値より前に取得した値で上書きしたか（却下と、逆転でない採用は偽。
+ *     Bolt 40-2。W7 週全体レビュー M5。ED-INV-03 を人が上書きしたことを監査に残す）
+ * @param comparedExternalVersion 比べた採用値（最後に取得した採用値）の外部版（逆転のときだけ。ほかは {@code null}）
  */
 @DomainEvent
 public record ReceivedRecordDecided(
@@ -30,4 +33,40 @@ public record ReceivedRecordDecided(
         String reason,
         UserId decidedBy,
         CompanyId decidedByCompanyId,
-        UtcInstant decidedAt) {}
+        UtcInstant decidedAt,
+        Boolean versionReversed,
+        String comparedExternalVersion) {
+
+    /**
+     * 保存済みの古い JSON（Bolt 40-2 より前。{@code versionReversed} がない）から復元できるよう、欠けた {@code versionReversed} は偽にする
+     * （Jackson はプリミティブの欠けを拒むので {@link Boolean} で受ける。発行記録に未完了のまま残った DE-29 の再配信を守る）。
+     */
+    public ReceivedRecordDecided {
+        if (versionReversed == null) {
+            versionReversed = Boolean.FALSE;
+        }
+    }
+
+    /** 版の逆転でない判断（却下と、逆転でない採用）。 */
+    public ReceivedRecordDecided(
+            UUID receivedRecordId,
+            UUID ingestionId,
+            UUID dataSourceId,
+            String decision,
+            String reason,
+            UserId decidedBy,
+            CompanyId decidedByCompanyId,
+            UtcInstant decidedAt) {
+        this(
+                receivedRecordId,
+                ingestionId,
+                dataSourceId,
+                decision,
+                reason,
+                decidedBy,
+                decidedByCompanyId,
+                decidedAt,
+                false,
+                null);
+    }
+}

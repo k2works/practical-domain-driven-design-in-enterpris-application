@@ -986,6 +986,15 @@ class ReceivedRecordDecisionServiceTest {
                     .satisfies(event -> assertThat(((VoyageAdoptedValueUpdated) event).portCalls())
                             .extracting(VoyageAdoptedValueUpdated.AdoptedPortCall::arrivalAt)
                             .contains(new UtcInstant(Instant.parse("2026-12-01T22:00:00Z"))));
+            // Bolt 40-2（M5）: DE-29 は上書きしたことと、比べた採用値（最後に取得した外部版「4」）を運ぶ
+            assertThat(published.stream().filter(ReceivedRecordDecided.class::isInstance))
+                    .singleElement()
+                    .satisfies(event -> {
+                        assertThat(((ReceivedRecordDecided) event).versionReversed())
+                                .isTrue();
+                        assertThat(((ReceivedRecordDecided) event).comparedExternalVersion())
+                                .isEqualTo("4");
+                    });
         }
 
         // --- 行 4: 採用を出さない隔離（GET と POST で 1 つの定め） ---

@@ -307,9 +307,41 @@ class DomainEventSerializationContractTest {
                 .isEqualTo(RECEIVED_RECORD_DECIDED);
     }
 
+    /** Bolt 40-2（M5）で足した 2 項目を含む現在の形。V1 の保存済みの JSON は {@code versionReversed} を欠くが、偽として復元できる（上の復元の確かめ）。 */
+    private static final String RECEIVED_RECORD_DECIDED_V2 =
+            RECEIVED_RECORD_DECIDED_V1.substring(0, RECEIVED_RECORD_DECIDED_V1.length() - 1)
+                    + ",\"versionReversed\":false,\"comparedExternalVersion\":null}";
+
+    private static final ReceivedRecordDecided RECEIVED_RECORD_DECIDED_REVERSED = new ReceivedRecordDecided(
+            UUID.fromString("99999999-9999-9999-9999-999999999999"),
+            UUID.fromString("77777777-7777-7777-7777-777777777777"),
+            UUID.fromString("88888888-8888-8888-8888-888888888888"),
+            "ADOPTED",
+            null,
+            DATA_STEWARD,
+            DATA_STEWARD_COMPANY,
+            new UtcInstant(Instant.parse("2026-11-16T01:05:00.123456Z")),
+            true,
+            "4");
+
     @Test
     void Bolt39d2_行10_DE29のJSONの形が変わっていない() {
-        assertThat(serializer.serialize(RECEIVED_RECORD_DECIDED)).isEqualTo(RECEIVED_RECORD_DECIDED_V1);
+        assertThat(serializer.serialize(RECEIVED_RECORD_DECIDED)).isEqualTo(RECEIVED_RECORD_DECIDED_V2);
+    }
+
+    @Test
+    void Bolt40_2_行1_DE29の現在の形のJSONから復元できる() {
+        assertThat(serializer.deserialize(RECEIVED_RECORD_DECIDED_V2, ReceivedRecordDecided.class))
+                .isEqualTo(RECEIVED_RECORD_DECIDED);
+    }
+
+    @Test
+    void Bolt40_2_行2_版の逆転のDE29は書いて読み直して同じ() {
+        String json = (String) serializer.serialize(RECEIVED_RECORD_DECIDED_REVERSED);
+
+        assertThat(json).contains("\"versionReversed\":true", "\"comparedExternalVersion\":\"4\"");
+        assertThat(serializer.deserialize(json, ReceivedRecordDecided.class))
+                .isEqualTo(RECEIVED_RECORD_DECIDED_REVERSED);
     }
 
     @Test

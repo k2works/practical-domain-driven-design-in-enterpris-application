@@ -16,7 +16,9 @@ import com.example.cargotracker.externaldata.domain.model.aggregates.ReceivedRec
 import com.example.cargotracker.externaldata.domain.model.aggregates.ReceivedRecordDecision;
 import com.example.cargotracker.externaldata.domain.model.aggregates.ReceivedRecordDecisionRepository;
 import com.example.cargotracker.externaldata.domain.model.aggregates.ReceivedRecordRepository;
+import com.example.cargotracker.externaldata.domain.model.rules.DiscrepancyRule;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.Classification;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.ExternalIdAdoptedValue;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.IdempotencyKey;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.MilestoneValues;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.ReceivedValue;
@@ -125,6 +127,9 @@ public class ReceivedRecordDecisionService {
             return new DecisionOutcome.NotAdoptable(receivedRecord.id(), check.refusal());
         }
         AdoptionParts parts = check.parts();
+        // 版の逆転は、採用値を足す前に判定する（足した後は、この採用値が最後に取得した採用値になる。Bolt 40-2）
+        VersionReversal reversal =
+                reversalOf(receivedRecord, parts.externalRecord().key());
         ReceivedRecordDecision decision =
                 ReceivedRecordDecision.adopt(receivedRecord, command.reason(), actor.userId(), clock.instant());
         if (!added(decision)) {
@@ -144,7 +149,7 @@ public class ReceivedRecordDecisionService {
                 externalRecord.payloadHash(),
                 receivedRecord.payloadHash(),
                 receivedRecord.payloadObjectKey());
-        publishDecided(decision, parts.ingestion(), actor);
+        publishDecided(decision, parts.ingestion(), actor, reversal);
         eventPublisher.publishEvent(adoption.event());
         return new DecisionOutcome.AdoptedQuarantine(receivedRecord.id());
     }
@@ -300,8 +305,13 @@ public class ReceivedRecordDecisionService {
         }
     }
 
-    /** 判断 1 つに DE-29 を 1 つ出す（1 件ずつの却下とまとめての却下で同じ形。情報源 ID は取込から読む）。 */
+    /** 判断 1 つに DE-29 を 1 つ出す（1 件ずつの却下とまとめての却下で同じ形。情報源 ID は取込から読む）。却下は版の逆転でない。 */
     private void publishDecided(ReceivedRecordDecision decision, Ingestion ingestion, AuthenticatedActor actor) {
+        publishDecided(decision, ingestion, actor, VersionReversal.NONE);
+    }
+
+    private void publishDecided(
+            ReceivedRecordDecision decision, Ingestion ingestion, AuthenticatedActor actor, VersionReversal reversal) {
         eventPublisher.publishEvent(new ReceivedRecordDecided(
                 decision.receivedRecordId(),
                 ingestion.id(),
@@ -310,7 +320,31 @@ public class ReceivedRecordDecisionService {
                 decision.reason(),
                 actor.userId(),
                 actor.companyId(),
-                new UtcInstant(decision.decidedAt())));
+                new UtcInstant(decision.decidedAt()),
+                reversal.reversed(),
+                reversal.comparedExternalVersion()));
+    }
+
+    /**
+     * 採用する隔離が版の逆転か（この外部 ID の最後に取得した採用値より前に取得した値か。差異の規則と同じ定義。D-142）。逆転なら比べた採用値の外部版を持つ。
+     * 採用は止めず、DE-29 に残すだけ（ED-INV-03 を人が上書きしたことを監査に残す。Bolt 40-2）。
+     */
+    private VersionReversal reversalOf(ReceivedRecord receivedRecord, IdempotencyKey key) {
+        java.util.List<ExternalIdAdoptedValue> sameExternalId =
+                adoptedValues.findByExternalId(key.provider(), key.recordType(), key.externalId());
+        if (!DiscrepancyRule.isVersionReversed(receivedRecord.acquiredAt(), sameExternalId)) {
+            return VersionReversal.NONE;
+        }
+        return new VersionReversal(
+                true,
+                DiscrepancyRule.partnerOf(receivedRecord.acquiredAt(), sameExternalId)
+                        .map(ExternalIdAdoptedValue::externalVersion)
+                        .orElseThrow());
+    }
+
+    /** 採用が版の逆転か、逆転なら比べた採用値の外部版。 */
+    private record VersionReversal(boolean reversed, String comparedExternalVersion) {
+        private static final VersionReversal NONE = new VersionReversal(false, null);
     }
 
     /**

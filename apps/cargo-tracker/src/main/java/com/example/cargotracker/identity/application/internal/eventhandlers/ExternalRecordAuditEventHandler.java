@@ -162,8 +162,21 @@ public class ExternalRecordAuditEventHandler {
                         event.decision(),
                         "decision=" + part(event.decision(), "decision")
                                 + origin(event.ingestionId(), event.dataSourceId())
+                                + versionReversedPart(event)
                                 + reasonPart(event),
                         event.decidedAt()));
+    }
+
+    /**
+     * 要約の版の逆転の部品（Bolt 40-2。W7 週全体レビュー M5）。版の逆転の隔離を採用したときだけ、上書きしたことと比べた採用値の外部版を残し、
+     * 後から「戻した」ことを追えるようにする。逆転でなければ部品を省く（今までの形のまま）。逆転なのに比べた外部版がなければ内容の欠け。
+     */
+    private static String versionReversedPart(ReceivedRecordDecided event) {
+        if (!event.versionReversed()) {
+            return "";
+        }
+        return ";versionReversed=true;comparedExternalVersion="
+                + part(event.comparedExternalVersion(), "comparedExternalVersion");
     }
 
     /**

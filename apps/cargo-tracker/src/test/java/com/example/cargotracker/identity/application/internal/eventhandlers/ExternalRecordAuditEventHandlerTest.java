@@ -475,6 +475,67 @@ class ExternalRecordAuditEventHandlerTest {
             assertThat(logs.list).isEmpty();
         }
 
+        /** Bolt 40-2（M5）: 版の逆転になる隔離の採用は、上書きしたことと比べた採用値の外部版を要約に残す。理由の部品の前に置く。 */
+        static Stream<Arguments> reversedSummaries() {
+            return Stream.of(
+                    Arguments.of("理由のない逆転の採用", null, ";versionReversed=true;comparedExternalVersion=V9"),
+                    Arguments.of(
+                            "理由のある逆転の採用",
+                            "提供元に確かめた",
+                            ";versionReversed=true;comparedExternalVersion=V9;reason=提供元に確かめた"));
+        }
+
+        @ParameterizedTest(name = "{0}")
+        @MethodSource("reversedSummaries")
+        void 行10b_版の逆転の採用は上書きと比べた外部版を要約に残し理由は最後に置く(String name, String reason, String tail) {
+            UUID receivedRecordId = UUID.randomUUID();
+
+            handler.on(new ReceivedRecordDecided(
+                    receivedRecordId,
+                    INGESTION,
+                    DATA_SOURCE,
+                    "ADOPTED",
+                    reason,
+                    OPERATOR,
+                    OPERATOR_COMPANY,
+                    DECIDED_AT,
+                    true,
+                    "V9"));
+
+            assertThat(auditRecords.appended)
+                    .singleElement()
+                    .satisfies(written -> assertThat(written.target())
+                            .isEqualTo(new AuditTarget(
+                                    RECEIVED_RECORD,
+                                    receivedRecordId.toString(),
+                                    null,
+                                    null,
+                                    "decision=ADOPTED;ingestionId=" + INGESTION + ";dataSourceId=" + DATA_SOURCE
+                                            + tail)));
+            assertThat(logs.list).isEmpty();
+        }
+
+        @Test
+        void 行10b_逆転なのに比べた外部版がないDE29は書かずにERRORのログを残す() {
+            handler.on(new ReceivedRecordDecided(
+                    UUID.randomUUID(),
+                    INGESTION,
+                    DATA_SOURCE,
+                    "ADOPTED",
+                    null,
+                    OPERATOR,
+                    OPERATOR_COMPANY,
+                    DECIDED_AT,
+                    true,
+                    null));
+
+            assertThat(auditRecords.appendCalls).isZero();
+            assertThat(logs.list).singleElement().satisfies(log -> {
+                assertThat(log.getLevel()).isEqualTo(Level.ERROR);
+                assertThat(log.getFormattedMessage()).contains("EXTERNAL_RECORD_DECIDED", "comparedExternalVersion");
+            });
+        }
+
         @ParameterizedTest(name = "[{0}]")
         @NullAndEmptySource
         @ValueSource(strings = " ")
