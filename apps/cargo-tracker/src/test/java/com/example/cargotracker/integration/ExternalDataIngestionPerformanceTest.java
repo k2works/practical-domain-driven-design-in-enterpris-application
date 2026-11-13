@@ -489,7 +489,12 @@ class ExternalDataIngestionPerformanceTest {
                     long started = System.nanoTime();
                     UndecidedRecordPage page = undecidedRecords.page(ingestionId, 1);
                     listQueries.add(System.nanoTime() - started);
-                    assertThat(page.items()).isNotEmpty();
+                    // 空のときは、照会の前に却下がコミットを終えた競合かを、却下の完了を待って見分ける（Bolt 40）
+                    KeylessRejectionListCheck.assertListedDuringRejection(
+                            page.items().isEmpty(),
+                            () -> rejecting.get(
+                                    KeylessRejectionListCheck.COMPLETION_WAIT_SECONDS,
+                                    java.util.concurrent.TimeUnit.SECONDS));
                 }
             }
             long listMax = listQueries.stream().mapToLong(Long::longValue).max().orElse(0);
