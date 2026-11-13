@@ -218,6 +218,7 @@ W8 で足したもの: 有人案件の集約・営業日カレンダー・期限
 | 2026-11-14 | GitHub の Issue #20（US-11）・#21（US-20）を、人（human:kakimomokuri）の許可を得てクローズした。残りは確認の場の開催（D-124・D-130〜D-162 は未回答の仮。人の仕事）だけ | anthropic/claude-sonnet-5-5、許可 human:kakimomokuri |
 | 2026-11-14 | 確認の場の扱いを人（human:kakimomokuri）が決めた: **未回答のまま W8 を完了とする**（W8 計画の定め。確認の場は Release 1.0 のパイロットの前に人が開く予定として残す。台帳 D-124・D-130〜D-162 は「未回答の仮」のまま） | anthropic/claude-sonnet-5-5、決定 human:kakimomokuri |
 | 2026-11-14 | 人に諮る指摘 A・B・C を、人（human:kakimomokuri）が選んだ決定のとおり Bolt 40-17 で実施した（A=起票元キーと一意制約、B=カレンダー未登録でも既定のカレンダーで起票、C=アプリケーション層へ置き直し）。D は一致の統合テストだけ実施 | anthropic/claude-sonnet-5-5、決定 human:kakimomokuri |
+| 2026-11-14 | **W8 完了報告書を人が承認した**（human:kakimomokuri。AskUserQuestion の回答「承認する」。これまでの AI による推奨のとおりの記録とは別の、人自身の承認）。確認の場の開催（D-124・D-130〜D-163 は未回答の仮）と、週全体レビュー D の残り（詳細の `canAccess` の統一、システム起票の分離）は、未完了のまま W9 前の人の予定・W9 に残る | 承認 human:kakimomokuri |
 
 ## 関連ドキュメント
 
