@@ -95,7 +95,7 @@ final class ServiceCaseViews {
                 item.department(),
                 status(item.status()),
                 item.status() == ServiceCaseStatus.ESCALATED,
-                staff(item.receiveDueAt()),
+                time(item.receiveDueAt()),
                 item.receiptOverdue());
     }
 
@@ -116,21 +116,21 @@ final class ServiceCaseViews {
                 c.status() == ServiceCaseStatus.ANSWERED,
                 c.status() == ServiceCaseStatus.CLOSED,
                 c.assignee().map(id -> assignee(id, actor)).orElse("まだ受領されていません"),
-                c.receivedAt().map(ServiceCaseViews::staff).orElse("なし"),
-                staff(c.receiveDueAt()),
-                staff(c.answerDueAt()),
-                staff(c.nextUpdateAt()),
+                c.receivedAt().map(ServiceCaseViews::time).orElse("なし"),
+                time(c.receiveDueAt()),
+                time(c.answerDueAt()),
+                time(c.nextUpdateAt()),
                 reconciliation(c),
                 c.progress().stream()
                         .map(p -> new ProgressView(
-                                staff(p.updatedAt()),
+                                time(p.updatedAt()),
                                 p.content(),
-                                p.nextUpdateAt().map(ServiceCaseViews::staff).orElse("変更なし"),
+                                p.nextUpdateAt().map(ServiceCaseViews::time).orElse("変更なし"),
                                 assignee(p.updatedBy(), actor)))
                         .toList(),
                 c.answers().stream()
                         .map(a -> new AnswerView(
-                                staff(a.answeredAt()),
+                                time(a.answeredAt()),
                                 a.content(),
                                 assignee(a.answeredBy(), actor),
                                 a.customerResponse().orElse("")))
@@ -188,7 +188,7 @@ final class ServiceCaseViews {
         };
     }
 
-    private static String staff(UtcInstant instant) {
+    static String time(UtcInstant instant) {
         return DateTimeDisplay.staff(instant.instant());
     }
 }

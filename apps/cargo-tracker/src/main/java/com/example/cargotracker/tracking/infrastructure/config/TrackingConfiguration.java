@@ -3,6 +3,7 @@ package com.example.cargotracker.tracking.infrastructure.config;
 import com.example.cargotracker.booking.interfaces.api.TrackingStartNotification;
 import com.example.cargotracker.booking.interfaces.api.TransportPhaseNotification;
 import com.example.cargotracker.routing.interfaces.api.RouteVersionLegQuery;
+import com.example.cargotracker.tracking.application.internal.commandservices.InquiryRecordingService;
 import com.example.cargotracker.tracking.application.internal.commandservices.RejectedMilestoneCaseOpener;
 import com.example.cargotracker.tracking.application.internal.commandservices.ServiceCaseActionService;
 import com.example.cargotracker.tracking.application.internal.commandservices.ServiceCaseAuthorization;
@@ -23,6 +24,7 @@ import com.example.cargotracker.tracking.application.internal.queryservices.Serv
 import com.example.cargotracker.tracking.application.internal.queryservices.TrackingRecordQueryService;
 import com.example.cargotracker.tracking.application.internal.queryservices.TrackingRecordScope;
 import com.example.cargotracker.tracking.domain.model.aggregates.BusinessCalendarRepository;
+import com.example.cargotracker.tracking.domain.model.aggregates.InquiryRecordRepository;
 import com.example.cargotracker.tracking.domain.model.aggregates.RejectedMilestoneRepository;
 import com.example.cargotracker.tracking.domain.model.aggregates.ServiceCaseNumberIssuer;
 import com.example.cargotracker.tracking.domain.model.aggregates.ServiceCaseRepository;
@@ -129,6 +131,17 @@ public class TrackingConfiguration {
     @Bean
     ServiceCaseOverdueQueryService serviceCaseOverdueQueryService(ServiceCaseRepository repository, Clock clock) {
         return new ServiceCaseOverdueQueryService(repository, clock, ServiceCaseAuthorization::canOperate);
+    }
+
+    /** 電話・メールの照会の記録と有人案件への引き継ぎ（US-11 AC2、IR-INV-02。Bolt 40-15）。 */
+    @Bean
+    InquiryRecordingService inquiryRecordingService(
+            TrackingRecordScope trackingRecordScope,
+            InquiryRecordRepository inquiryRecordRepository,
+            ServiceCaseCommandService serviceCaseCommandService,
+            Clock clock) {
+        return new InquiryRecordingService(
+                trackingRecordScope, inquiryRecordRepository, serviceCaseCommandService, clock);
     }
 
     /** 有人案件の一覧（S-14）と詳細（S-15）の照会（US-20。読むときの判定。Bolt 40-11）。 */

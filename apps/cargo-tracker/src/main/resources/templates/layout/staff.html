@@ -71,6 +71,13 @@
                        th:attr="aria-current=${active == 'service-cases'} ? 'page' : null"
                        th:href="@{/staff/service-cases}">有人案件</a>
                 </li>
+                <!--/* 照会の記録（S-23）はカスタマーサポートだけ（Bolt 40-15） */-->
+                <li class="nav-item"
+                    th:if="${currentActor != null and currentActor.hasRole(T(com.example.cargotracker.shared.domain.Role).CUSTOMER_SUPPORT)}">
+                    <a class="nav-link" th:classappend="${active == 'inquiries'} ? 'fw-bold'"
+                       th:attr="aria-current=${active == 'inquiries'} ? 'page' : null"
+                       th:href="@{/staff/inquiries/new}">照会の記録</a>
+                </li>
                 <!--/* 外部データの取込（S-16）はデータ責任者を持つ利用者だけ（Bolt 39c） */-->
                 <li class="nav-item"
                     th:if="${currentActor != null and currentActor.hasRole(T(com.example.cargotracker.shared.domain.Role).DATA_STEWARD)}">

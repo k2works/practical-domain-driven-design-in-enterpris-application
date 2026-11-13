@@ -111,6 +111,7 @@ public class BrowserSession implements DisposableBean {
                                         : url.contains("/staff/external-data")
                                                 ? Role.DATA_STEWARD
                                                 : url.contains("/staff/service-cases")
+                                                                || url.contains("/staff/inquiries")
                                                         ? Role.CUSTOMER_SUPPORT
                                                         : url.contains("/staff/") ? Role.SALES : null;
         if (role != null && role != signedIn) {

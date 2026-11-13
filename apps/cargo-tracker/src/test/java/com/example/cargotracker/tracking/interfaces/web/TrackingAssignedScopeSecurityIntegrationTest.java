@@ -180,6 +180,21 @@ class TrackingAssignedScopeSecurityIntegrationTest {
     }
 
     @Test
+    void 照会の記録_S23_はカスタマーサポートだけ() throws Exception {
+        // Bolt 40-15
+        Cookie support = login(staffWith(Role.CUSTOMER_SUPPORT, shipperA));
+
+        assertThat(body(support, "/staff/inquiries/new")).contains("照会の記録");
+        for (Role role :
+                List.of(Role.SALES, Role.ROUTE_DESIGNER, Role.TRACKING_MANAGER, Role.DATA_STEWARD, Role.SYSTEM_ADMIN)) {
+            Cookie other = login(staffWith(role, shipperA));
+
+            mvc.perform(get("/staff/inquiries/new").cookie(other)).andExpect(status().isForbidden());
+            mvc.perform(post("/staff/inquiries").with(csrf()).cookie(other)).andExpect(status().isForbidden());
+        }
+    }
+
+    @Test
     void ない案件の詳細と知らない絞り込みは404() throws Exception {
         Cookie session = login(staffWith(Role.CUSTOMER_SUPPORT, shipperA));
 
