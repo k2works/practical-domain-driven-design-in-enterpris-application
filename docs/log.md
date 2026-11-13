@@ -1,6 +1,7 @@
 # Docs Update Log
 
 ## 2026-11-13
+* **Update**: bolt_40-6 の終了報告を推奨のとおり承認として記録した（human:kakimomokuri）
 * **Creation**: [bolt_40-6_plan](/development/cargo-tracker/bolt_40-6_plan.md)・[bolt_40-6_report](/development/cargo-tracker/bolt_40-6_report.md) を作成（anthropic/claude-sonnet-5-5。計画はスキーマの内容を人に示して承認、報告は承認待ち）
 * **Update**: bolt_40・40-1・40-2・40-4・40-5 の終了報告を推奨のとおり承認として記録した（human:kakimomokuri）
 * **Creation**: [bolt_40-5_plan](/development/cargo-tracker/bolt_40-5_plan.md)・[bolt_40-5_report](/development/cargo-tracker/bolt_40-5_report.md) を作成（anthropic/claude-sonnet-5-5。計画は推奨のとおり承認として記録、報告は承認待ち）

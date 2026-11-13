@@ -171,7 +171,7 @@ Bolt がイテレーションに当たります。ふりかえりは各 Bolt の
 | 40-2 | [版の逆転の隔離の採用を DE-29 と監査の要約に残す（M5）](bolt_40-2_plan.md)（[W8 計画](iteration_plan-W8.md)） | [終了報告](bolt_40-2_report.md) | W8 | 完了（承認済み） |
 | 40-4 | [営業日カレンダーと受領・回答期限の計算（SC-INV-04）](bolt_40-4_plan.md)（[W8 計画](iteration_plan-W8.md)。40-3 は確認の場の回答待ちで飛ばした） | [終了報告](bolt_40-4_report.md) | W8 | 完了（承認済み） |
 | 40-5 | [有人案件の集約（ドメインだけ）](bolt_40-5_plan.md)（[W8 計画](iteration_plan-W8.md)） | [終了報告](bolt_40-5_report.md) | W8 | 完了（承認済み） |
-| 40-6 | [有人案件の保存（4 表・受付番号の採番・リポジトリ）](bolt_40-6_plan.md)（[W8 計画](iteration_plan-W8.md)） | [終了報告](bolt_40-6_report.md) | W8 | 完了（承認待ち） |
+| 40-6 | [有人案件の保存（4 表・受付番号の採番・リポジトリ）](bolt_40-6_plan.md)（[W8 計画](iteration_plan-W8.md)） | [終了報告](bolt_40-6_report.md) | W8 | 完了（承認済み） |
 
 Bolt を始めるときに行を追加します。
 

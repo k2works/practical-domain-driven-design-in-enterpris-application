@@ -2,7 +2,7 @@
 type: Plan
 title: "Bolt 40-6 終了報告 - 有人案件の保存（4 表・受付番号の採番・リポジトリ）"
 tags: [plan]
-status: draft
+status: stable
 generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-13T08:30:00Z }
 ---
 
@@ -58,3 +58,4 @@ generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-13T08:30:00Z }
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
 | 2026-11-13 | 初版作成（承認待ち） | anthropic/claude-sonnet-5-5 |
+| 2026-11-13 | 議題をすべて推奨のとおり承認として記録した（human:kakimomokuri） | anthropic/claude-sonnet-5-5、承認 human:kakimomokuri |
