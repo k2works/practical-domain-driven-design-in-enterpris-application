@@ -159,11 +159,8 @@ class VoyageArrivalEventHandlerTest {
 
     @Test
     void 行13c_値の側は寄港の並びのnullを内容の欠けにする() {
-        org.assertj.core.api.Assertions.assertThatThrownBy(() ->
-                        com.example.cargotracker.tracking.domain.model.valueobjects.VoyageArrival.portCallsOf(null))
-                .isInstanceOf(
-                        com.example.cargotracker.tracking.domain.model.valueobjects.VoyageArrival
-                                .InvalidEventValueException.class);
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> VoyageArrivalInput.portCallsOf(null))
+                .isInstanceOf(VoyageArrivalInput.InvalidEventValueException.class);
     }
 
     @ParameterizedTest(name = "{0}")

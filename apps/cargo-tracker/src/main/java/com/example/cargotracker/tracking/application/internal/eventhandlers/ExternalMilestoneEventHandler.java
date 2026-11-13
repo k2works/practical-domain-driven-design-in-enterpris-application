@@ -88,12 +88,12 @@ public class ExternalMilestoneEventHandler {
 
     private static ExternalMilestone toExternalMilestone(MilestoneAdoptedValueAccepted event) {
         return new ExternalMilestone(
-                ExternalMilestone.parseTrackingNumber(event.trackingNumber()),
-                ExternalMilestone.parseKind(event.kind()),
+                ExternalMilestoneInput.parseTrackingNumber(event.trackingNumber()),
+                ExternalMilestoneInput.parseKind(event.kind()),
                 event.location(),
                 event.occurredAt(),
                 event.source(),
-                ExternalMilestone.externalOrigin(event.dataSourceId(), event.externalId(), event.publishedAt()),
+                ExternalMilestoneInput.externalOrigin(event.dataSourceId(), event.externalId(), event.publishedAt()),
                 event.operatorUserId());
     }
 }

@@ -4,7 +4,6 @@ import com.example.cargotracker.externaldata.domain.events.VoyageAdoptedValueUpd
 import com.example.cargotracker.tracking.domain.model.aggregates.TrackingRecordRepository;
 import com.example.cargotracker.tracking.domain.model.valueobjects.PublicationOrder;
 import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingNumber;
-import com.example.cargotracker.tracking.domain.model.valueobjects.VoyageArrival;
 import com.example.cargotracker.tracking.domain.model.valueobjects.VoyagePortCall;
 import java.util.List;
 import org.slf4j.Logger;
@@ -43,12 +42,12 @@ public class VoyageArrivalEventHandler {
         List<VoyagePortCall> portCalls;
         PublicationOrder order;
         try {
-            voyageNumber = VoyageArrival.voyageNumberOf(event.voyageNumber());
-            portCalls = VoyageArrival.portCallsOf(event.portCalls().stream()
-                    .map(call -> VoyagePortCall.of(call.port(), call.arrivalAt(), call.departureAt()))
+            voyageNumber = VoyageArrivalInput.voyageNumberOf(event.voyageNumber());
+            portCalls = VoyageArrivalInput.portCallsOf(event.portCalls().stream()
+                    .map(call -> VoyageArrivalInput.portCallOf(call.port(), call.arrivalAt(), call.departureAt()))
                     .toList());
-            order = VoyageArrival.orderOf(event.publishedAt(), event.source());
-        } catch (VoyageArrival.InvalidEventValueException e) {
+            order = VoyageArrivalInput.orderOf(event.publishedAt(), event.source());
+        } catch (VoyageArrivalInput.InvalidEventValueException e) {
             LOG.error(
                     "DE-12 を追跡に受けずに捨てた（イベントの内容が欠けている。再配信しても直らない。調査が要る）: 航海 {}、採用値 {}、欠け {}",
                     event.voyageNumber(),

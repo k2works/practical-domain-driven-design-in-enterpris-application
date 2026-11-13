@@ -6,7 +6,6 @@ import com.example.cargotracker.shared.domain.Source;
 import com.example.cargotracker.shared.domain.SourceKind;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
-import java.util.UUID;
 
 /**
  * 採用した主要実績の値。DE-13 が運ぶ主要実績の採用値を追跡の言葉にした写し（Bolt 39g）。listener が DE-13 から作り、追跡記録が受け取る。追跡は外部データの型を持たない。
@@ -41,36 +40,6 @@ public record ExternalMilestone(
         if (source.kind() != SourceKind.EXTERNAL_RECORD) {
             throw new InvalidEventValueException("source.kind: " + source.kind());
         }
-    }
-
-    /** 届いた追跡番号の文字列から追跡番号を作る（形が違えば内容の欠けとして扱う）。 */
-    public static TrackingNumber parseTrackingNumber(String value) {
-        required(value, "trackingNumber");
-        try {
-            return new TrackingNumber(value);
-        } catch (IllegalArgumentException e) {
-            throw new InvalidEventValueException("trackingNumber: " + e.getMessage());
-        }
-    }
-
-    /** 届いた種類の名前から種類を作る（知らない種類は内容の欠けとして扱う）。 */
-    public static MilestoneKind parseKind(String name) {
-        required(name, "kind");
-        try {
-            return MilestoneKind.valueOf(name);
-        } catch (IllegalArgumentException _) {
-            throw new InvalidEventValueException("kind: " + name);
-        }
-    }
-
-    /** 届いた値から実績の外部の識別を作る（欠けていれば内容の欠けとして扱う）。 */
-    public static ExternalOrigin externalOrigin(UUID dataSourceId, String externalId, UtcInstant publishedAt) {
-        required(dataSourceId, "dataSourceId");
-        required(publishedAt, "publishedAt");
-        if (externalId == null || externalId.isBlank()) {
-            throw new InvalidEventValueException("externalId");
-        }
-        return new ExternalOrigin(dataSourceId, externalId, publishedAt);
     }
 
     private static void required(Object value, String name) {

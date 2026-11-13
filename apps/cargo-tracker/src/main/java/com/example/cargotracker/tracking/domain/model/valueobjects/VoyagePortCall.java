@@ -24,17 +24,13 @@ public record VoyagePortCall(Location port, Optional<UtcInstant> arrivalAt, Opti
     }
 
     /**
-     * 届いた寄港の値から作る（港が欠けていれば内容の欠けとして扱う）。
+     * 到着・出発が null かもしれない値から作る（null は空にする）。港の欠けの検査は腐敗防止の側（{@code VoyageArrivalInput}）が先に行う。
      *
      * @param port 港
      * @param arrivalAt 到着（なければ null）
      * @param departureAt 出発（なければ null）
-     * @throws VoyageArrival.InvalidEventValueException 港が null
      */
     public static VoyagePortCall of(Location port, UtcInstant arrivalAt, UtcInstant departureAt) {
-        if (port == null) {
-            throw new VoyageArrival.InvalidEventValueException("portCalls.port");
-        }
         return new VoyagePortCall(port, Optional.ofNullable(arrivalAt), Optional.ofNullable(departureAt));
     }
 }
