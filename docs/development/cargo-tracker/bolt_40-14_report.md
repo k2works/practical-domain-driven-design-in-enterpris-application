@@ -37,13 +37,13 @@ generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-14T11:00:00Z }
 
 | ゲート | 結果 |
 | :--- | :--- |
-| `check documentationTest uiTest` | （結果は更新履歴） |
-| SonarQube | （結果は更新履歴） |
+| `check documentationTest uiTest` | BUILD SUCCESSFUL（約 28 分） |
+| SonarQube | **PASS**（新しい違反 0） |
 
 ## 完了条件
 
 - [x] 上のテストが緑
-- [ ] `check documentationTest uiTest` と SonarQube が緑
+- [x] `check documentationTest uiTest` と SonarQube が緑
 - [x] 設計文書とマニュアルを同じ Bolt で更新した
 - [x] 見積り／実績／差を書いた
 
