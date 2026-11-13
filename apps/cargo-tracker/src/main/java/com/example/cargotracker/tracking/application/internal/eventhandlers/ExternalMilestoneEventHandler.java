@@ -5,6 +5,7 @@ import com.example.cargotracker.shared.domain.UtcInstant;
 import com.example.cargotracker.tracking.domain.model.aggregates.ExternalMilestoneReceipt;
 import com.example.cargotracker.tracking.domain.model.aggregates.RejectedMilestone;
 import com.example.cargotracker.tracking.domain.model.aggregates.RejectedMilestoneRepository;
+import com.example.cargotracker.tracking.domain.model.aggregates.RejectionCaseOpener;
 import com.example.cargotracker.tracking.domain.model.aggregates.TrackingRecord;
 import com.example.cargotracker.tracking.domain.model.aggregates.TrackingRecordRepository;
 import com.example.cargotracker.tracking.domain.model.valueobjects.ExternalMilestone;
@@ -36,12 +37,17 @@ public class ExternalMilestoneEventHandler {
     private final TrackingRecordRepository repository;
     private final RejectedMilestoneRepository rejectedMilestones;
     private final Clock clock;
+    private final RejectionCaseOpener caseOpener;
 
     public ExternalMilestoneEventHandler(
-            TrackingRecordRepository repository, RejectedMilestoneRepository rejectedMilestones, Clock clock) {
+            TrackingRecordRepository repository,
+            RejectedMilestoneRepository rejectedMilestones,
+            Clock clock,
+            RejectionCaseOpener caseOpener) {
         this.repository = repository;
         this.rejectedMilestones = rejectedMilestones;
         this.clock = clock;
+        this.caseOpener = caseOpener;
     }
 
     @ApplicationModuleListener
@@ -62,7 +68,7 @@ public class ExternalMilestoneEventHandler {
             return;
         }
         if (found.isEmpty()) {
-            reject(external, MilestoneRejectionReason.UNKNOWN_TRACKING_NUMBER);
+            reject(external, MilestoneRejectionReason.UNKNOWN_TRACKING_NUMBER, Optional.empty());
             return;
         }
         UtcInstant receivedAt = new UtcInstant(clock.instant());
@@ -72,13 +78,17 @@ public class ExternalMilestoneEventHandler {
                 // 同じ出典の実績がある（再配信。T-INV-02）
             }
             case ExternalMilestoneReceipt.BookingCancelled _ ->
-                reject(external, MilestoneRejectionReason.BOOKING_CANCELLED);
+                reject(external, MilestoneRejectionReason.BOOKING_CANCELLED, found);
         }
     }
 
-    private void reject(ExternalMilestone external, MilestoneRejectionReason reason) {
-        rejectedMilestones.saveIfAbsent(
-                RejectedMilestone.of(UUID.randomUUID(), external, reason, new UtcInstant(clock.instant())));
+    /** 拒否の記録に残し、有人例外案件を起票する（Bolt 40-13。同じトランザクション。起票の失敗は例外のまま上げ、記録ごと戻す）。 */
+    private void reject(
+            ExternalMilestone external, MilestoneRejectionReason reason, Optional<TrackingRecord> trackingRecord) {
+        RejectedMilestone rejected =
+                RejectedMilestone.of(UUID.randomUUID(), external, reason, new UtcInstant(clock.instant()));
+        rejectedMilestones.saveIfAbsent(rejected);
+        caseOpener.open(rejected, trackingRecord, external.operator());
         LOG.warn(
                 "DE-13 を実績にせず拒否の記録に残した: 追跡番号 {}、理由 {}、受信記録 {}",
                 external.trackingNumber().value(),

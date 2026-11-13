@@ -71,8 +71,18 @@ class ExternalMilestoneEventHandlerTest {
 
     private final RecordingRepository repository = new RecordingRepository();
     private final InMemoryRejectedMilestoneRepository rejected = new InMemoryRejectedMilestoneRepository();
-    private final ExternalMilestoneEventHandler handler =
-            new ExternalMilestoneEventHandler(repository, rejected, Clock.fixed(NOW, ZoneOffset.UTC));
+    /** 有人例外案件の起票の呼び出し（Bolt 40-13）。「理由/追跡記録あり/操作者」で記録する。 */
+    private final List<String> opened = new ArrayList<>();
+
+    private RuntimeException openFailure;
+
+    private final ExternalMilestoneEventHandler handler = new ExternalMilestoneEventHandler(
+            repository, rejected, Clock.fixed(NOW, ZoneOffset.UTC), (rejectedMilestone, record, operator) -> {
+                if (openFailure != null) {
+                    throw openFailure;
+                }
+                opened.add(rejectedMilestone.reason() + "/" + record.isPresent() + "/" + operator.value());
+            });
     private final ListAppender<ILoggingEvent> logs = new ListAppender<>();
     private final Logger logger = (Logger) LoggerFactory.getLogger(ExternalMilestoneEventHandler.class);
 
@@ -293,6 +303,47 @@ class ExternalMilestoneEventHandlerTest {
             handler.on(event(UNKNOWN_NUMBER));
 
             assertThat(rejected.all()).hasSize(1);
+        }
+
+        // --- Bolt 40-13: 拒否した主要実績から有人例外案件を起票する（T-INV-04） ---
+
+        @Test
+        void 行40_13a_知らない追跡番号は拒否の記録と同時に追跡記録なしで起票を頼み操作者を渡す() {
+            handler.on(event(UNKNOWN_NUMBER));
+
+            assertThat(opened)
+                    .containsExactly(MilestoneRejectionReason.UNKNOWN_TRACKING_NUMBER + "/false/" + STEWARD.value());
+        }
+
+        @Test
+        void 行40_13b_取消済みの予約は追跡記録ありで起票を頼む() {
+            save(TrackedBookingStatus.CANCELLED, TrackingStatus.PICKUP_SCHEDULED);
+
+            handler.on(event(TRACKING_NUMBER.value()));
+
+            assertThat(opened).containsExactly(MilestoneRejectionReason.BOOKING_CANCELLED + "/true/" + STEWARD.value());
+        }
+
+        @Test
+        void 行40_13c_再配信と通常の受け取りでは起票を頼まない() {
+            handler.on(event(UNKNOWN_NUMBER));
+            handler.on(event(UNKNOWN_NUMBER));
+            assertThat(opened).hasSize(1);
+
+            opened.clear();
+            save(TrackedBookingStatus.CONFIRMED, TrackingStatus.PICKUP_SCHEDULED);
+            handler.on(event(TRACKING_NUMBER.value()));
+
+            assertThat(opened).isEmpty();
+        }
+
+        @Test
+        void 行40_13d_起票の失敗は例外のまま上げる_トランザクションに任せる() {
+            openFailure = new IllegalStateException("営業カレンダーが未登録");
+
+            assertThatThrownBy(() -> handler.on(event(UNKNOWN_NUMBER)))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("営業カレンダー");
         }
     }
 

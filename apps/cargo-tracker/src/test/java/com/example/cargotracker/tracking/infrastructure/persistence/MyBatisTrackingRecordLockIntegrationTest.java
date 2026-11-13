@@ -70,6 +70,10 @@ import org.springframework.transaction.support.TransactionTemplate;
 @Import(TestcontainersConfiguration.class)
 class MyBatisTrackingRecordLockIntegrationTest {
 
+    /** ロックの確かめには有人例外案件の起票は要らない（起票は RejectedMilestoneCaseOpenerTest。Bolt 40-13）。 */
+    private static final com.example.cargotracker.tracking.domain.model.aggregates.RejectionCaseOpener NO_CASE =
+            (rejected, trackingRecord, operator) -> {};
+
     @Autowired
     TrackingRecordRepository repository;
 
@@ -506,7 +510,7 @@ class MyBatisTrackingRecordLockIntegrationTest {
         }
 
         ExternalMilestoneEventHandler handler() {
-            return new ExternalMilestoneEventHandler(repository, rejected, clock);
+            return new ExternalMilestoneEventHandler(repository, rejected, clock, NO_CASE);
         }
 
         void deliver(ExternalMilestoneEventHandler target, MilestoneAdoptedValueAccepted event) {
@@ -603,8 +607,8 @@ class MyBatisTrackingRecordLockIntegrationTest {
         TrackingNumber number = f.started().trackingNumber();
         CountDownLatch updated = new CountDownLatch(1);
         CountDownLatch release = new CountDownLatch(1);
-        ExternalMilestoneEventHandler paused =
-                new ExternalMilestoneEventHandler(f.pausingAfterUpdate(updated, release), f.rejected(), f.clock());
+        ExternalMilestoneEventHandler paused = new ExternalMilestoneEventHandler(
+                f.pausingAfterUpdate(updated, release), f.rejected(), f.clock(), NO_CASE);
 
         overlap(
                 f,
@@ -635,8 +639,10 @@ class MyBatisTrackingRecordLockIntegrationTest {
         CountDownLatch written = new CountDownLatch(1);
         CountDownLatch release = new CountDownLatch(1);
         ExternalMilestoneEventHandler paused = recordExists
-                ? new ExternalMilestoneEventHandler(f.pausingAfterUpdate(written, release), f.rejected(), f.clock())
-                : new ExternalMilestoneEventHandler(f.repository(), f.pausingAfterReject(written, release), f.clock());
+                ? new ExternalMilestoneEventHandler(
+                        f.pausingAfterUpdate(written, release), f.rejected(), f.clock(), NO_CASE)
+                : new ExternalMilestoneEventHandler(
+                        f.repository(), f.pausingAfterReject(written, release), f.clock(), NO_CASE);
 
         overlap(
                 f,
@@ -707,8 +713,9 @@ class MyBatisTrackingRecordLockIntegrationTest {
         Callable<MilestoneRegistrationOutcome> register = () -> f.transaction()
                 .execute(status -> service.registerMilestone(
                         command, AuthenticatedActorFixture.trackingManagerHandling(manager, saved.shipperCompanyId())));
-        ExternalMilestoneEventHandler handler =
-                externalFirst ? new ExternalMilestoneEventHandler(pausing, f.rejected(), f.clock()) : f.handler();
+        ExternalMilestoneEventHandler handler = externalFirst
+                ? new ExternalMilestoneEventHandler(pausing, f.rejected(), f.clock(), NO_CASE)
+                : f.handler();
         Callable<MilestoneRegistrationOutcome> deliver = () -> {
             f.deliver(handler, event);
             return null;

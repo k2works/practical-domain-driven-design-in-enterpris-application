@@ -1,6 +1,7 @@
 package com.example.cargotracker.tracking.application.internal.commandservices;
 
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
+import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import com.example.cargotracker.tracking.application.internal.commands.OpenServiceCaseCommand;
 import com.example.cargotracker.tracking.application.internal.commands.ReceiveServiceCaseCommand;
@@ -15,6 +16,7 @@ import com.example.cargotracker.tracking.domain.model.valueobjects.BusinessCalen
 import com.example.cargotracker.tracking.domain.model.valueobjects.BusinessCalendarNotRegisteredException;
 import com.example.cargotracker.tracking.domain.model.valueobjects.CaseNumber;
 import com.example.cargotracker.tracking.domain.model.valueobjects.MissingItem;
+import com.example.cargotracker.tracking.domain.model.valueobjects.ServiceCaseDraft;
 import com.example.cargotracker.tracking.domain.model.valueobjects.ServiceCaseStatus;
 import com.example.cargotracker.tracking.domain.model.valueobjects.ServiceDeadlines;
 import java.time.Clock;
@@ -66,14 +68,27 @@ public class ServiceCaseCommandService {
         if (!ServiceCaseAuthorization.canOpen(actor, command.draft())) {
             return new OpenServiceCaseOutcome.NotPermitted();
         }
-        Set<MissingItem> missing = ServiceCase.missingItems(command.draft());
+        return openUnchecked(command.draft(), actor.userId());
+    }
+
+    /**
+     * システムが有人案件を起票する（利用者の操作でない内部の経路。拒否した主要実績の起票など。Bolt 40-13）。役割の判定をしない以外は
+     * {@link #open} と同じ（必須項目・重複・期限の計算・採番）。
+     *
+     * @param requestedBy 起票者として記録する利用者（起こした操作の主）
+     */
+    @Transactional
+    public OpenServiceCaseOutcome openBySystem(ServiceCaseDraft draft, UserId requestedBy) {
+        return openUnchecked(draft, requestedBy);
+    }
+
+    private OpenServiceCaseOutcome openUnchecked(ServiceCaseDraft draft, UserId createdBy) {
+        Set<MissingItem> missing = ServiceCase.missingItems(draft);
         if (!missing.isEmpty()) {
             return new OpenServiceCaseOutcome.Incomplete(missing);
         }
         Optional<CaseNumber> duplicate = repository.findUnclosedDuplicate(
-                command.draft().shipperCompanyId(),
-                command.draft().bookingId(),
-                command.draft().cause().strip());
+                draft.shipperCompanyId(), draft.bookingId(), draft.cause().strip());
         if (duplicate.isPresent()) {
             return new OpenServiceCaseOutcome.Duplicate(duplicate.get());
         }
@@ -83,16 +98,15 @@ public class ServiceCaseCommandService {
         try {
             LocalDate today = now.atZone(CALENDAR_ZONE).toLocalDate();
             calendar = calendars.load(today.minusDays(1), today.plusDays(CALENDAR_WINDOW_DAYS));
-            deadlines = deadlinePolicy.deadlinesFor(command.draft().priority(), now, calendar);
+            deadlines = deadlinePolicy.deadlinesFor(draft.priority(), now, calendar);
         } catch (BusinessCalendarNotRegisteredException _) {
             return new OpenServiceCaseOutcome.CalendarNotRegistered();
         }
         UtcInstant openedAt = new UtcInstant(now);
         CaseNumber number = numberIssuer.next(now.atZone(calendar.zone()).getYear());
-        ServiceCase serviceCase = ((ServiceCaseOpening.Opened)
-                        ServiceCase.open(command.draft(), number, deadlines, openedAt))
-                .serviceCase();
-        repository.save(serviceCase, actor.userId());
+        ServiceCase serviceCase =
+                ((ServiceCaseOpening.Opened) ServiceCase.open(draft, number, deadlines, openedAt)).serviceCase();
+        repository.save(serviceCase, createdBy);
         return new OpenServiceCaseOutcome.Opened(
                 number,
                 serviceCase.receiveDueAt(),

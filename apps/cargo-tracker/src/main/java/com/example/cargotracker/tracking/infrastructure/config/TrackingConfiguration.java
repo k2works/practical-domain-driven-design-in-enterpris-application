@@ -3,6 +3,7 @@ package com.example.cargotracker.tracking.infrastructure.config;
 import com.example.cargotracker.booking.interfaces.api.TrackingStartNotification;
 import com.example.cargotracker.booking.interfaces.api.TransportPhaseNotification;
 import com.example.cargotracker.routing.interfaces.api.RouteVersionLegQuery;
+import com.example.cargotracker.tracking.application.internal.commandservices.RejectedMilestoneCaseOpener;
 import com.example.cargotracker.tracking.application.internal.commandservices.ServiceCaseActionService;
 import com.example.cargotracker.tracking.application.internal.commandservices.ServiceCaseAuthorization;
 import com.example.cargotracker.tracking.application.internal.commandservices.ServiceCaseCommandService;
@@ -85,8 +86,13 @@ public class TrackingConfiguration {
     /** DE-13 を受けて追跡の実績か拒否の記録を書く（Spring Modulith のイベントの記録を経て、別のトランザクションで動く。Bolt 39g）。 */
     @Bean
     ExternalMilestoneEventHandler externalMilestoneEventHandler(
-            TrackingRecordRepository repository, RejectedMilestoneRepository rejectedMilestones, Clock clock) {
-        return new ExternalMilestoneEventHandler(repository, rejectedMilestones, clock);
+            TrackingRecordRepository repository,
+            RejectedMilestoneRepository rejectedMilestones,
+            Clock clock,
+            ServiceCaseCommandService serviceCaseCommandService) {
+        // 拒否した主要実績は同じトランザクションの中で有人例外案件にする（T-INV-04。Bolt 40-13）
+        return new ExternalMilestoneEventHandler(
+                repository, rejectedMilestones, clock, new RejectedMilestoneCaseOpener(serviceCaseCommandService));
     }
 
     /** DE-12 を受けて最後の区間の航海の到着予定を追跡記録に受けさせる（Spring Modulith のイベントの記録を経て、別のトランザクションで動く。Bolt 39g4b）。 */
