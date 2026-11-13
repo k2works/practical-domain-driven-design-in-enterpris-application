@@ -78,7 +78,7 @@
                         <div class="col-md-12">
                             <div class="callout callout-info">
                                 <h4>SchemaSpy Analysis of cargotracker.tracking</h4>
-                                <p>Generated on Fri Nov 13 06:33 UTC 2026</p>
+                                <p>Generated on Fri Nov 13 07:18 UTC 2026</p>
                             </div>
                         </div>
                     </div>
@@ -94,7 +94,7 @@
                                 <span class="info-box-icon bg-aqua"><i class="fa fa-table"></i></span>
                                 <div class="info-box-content">
                                     <span class="info-box-text">TABLES</span>
-                                    <span class="info-box-number">5</span>
+                                    <span class="info-box-number">10</span>
                                 </div>
                                 <!-- /.info-box-content -->
                             </div>
@@ -118,7 +118,7 @@
                                 <span class="info-box-icon bg-green"><span class="glyphicon glyphicon-list-alt" aria-hidden="true"></span></span>
                                 <div class="info-box-content">
                                     <span class="info-box-text">COLUMNS</span>
-                                    <span class="info-box-number">65</span>
+                                    <span class="info-box-number">110</span>
                                 </div>
                                 <!-- /.info-box-content -->
                             </div>
@@ -130,7 +130,7 @@
                                 <span class="info-box-icon bg-yellow"><i class="ion ion-key"></i></span>
                                 <div class="info-box-content">
                                     <span class="info-box-text">Constraints</span>
-                                    <span class="info-box-number">4</span>
+                                    <span class="info-box-number">7</span>
                                 </div>
                                 <!-- /.info-box-content -->
                             </div>
@@ -142,7 +142,7 @@
                                 <span class="info-box-icon bg-red-active"><i class="fa fa-question" aria-hidden="true"></i></span>
                                 <div class="info-box-content">
                                     <span class="info-box-text">Anomalies</span>
-                                    <span class="info-box-number">5</span>
+                                    <span class="info-box-number">11</span>
                                 </div>
                                 <!-- /.info-box-content -->
                             </div>
@@ -197,6 +197,24 @@
                                 </thead>
                                 <tbody>
                                     <tr class="tbl even" valign="top">
+                                        <td class="detail"><a href="tables/service_case_answer.html">service_case_answer</a></td>
+                                        <td class="detail" align="right">0</td>
+                                        <td class="detail" align="right">1</td>
+                                        <td class="detail" align="right">7</td>
+                                        <td class="detail" align="right">-1</td>
+                                        <td class="detail" align="right">Table</td>
+                                        <td class="comment detail" style="display: table-cell;"><p>有人案件の回答（再開しても過去の分を保持する） [no-delete]</p></td>
+                                    </tr>
+                                    <tr class="tbl even" valign="top">
+                                        <td class="detail"><a href="tables/service_case_progress.html">service_case_progress</a></td>
+                                        <td class="detail" align="right">0</td>
+                                        <td class="detail" align="right">1</td>
+                                        <td class="detail" align="right">6</td>
+                                        <td class="detail" align="right">-1</td>
+                                        <td class="detail" align="right">Table</td>
+                                        <td class="comment detail" style="display: table-cell;"><p>有人案件の進捗 [append-only]</p></td>
+                                    </tr>
+                                    <tr class="tbl even" valign="top">
                                         <td class="detail"><a href="tables/business_calendar.html">business_calendar</a></td>
                                         <td class="detail" align="right">0</td>
                                         <td class="detail" align="right">0</td>
@@ -207,7 +225,7 @@
                                     </tr>
                                     <tr class="tbl even" valign="top">
                                         <td class="detail"><a href="tables/rejected_milestone.html">rejected_milestone</a></td>
-                                        <td class="detail" align="right">4</td>
+                                        <td class="detail" align="right">8</td>
                                         <td class="detail" align="right">1</td>
                                         <td class="detail" align="right">12</td>
                                         <td class="detail" align="right">-1</td>
@@ -224,6 +242,33 @@
                                         <td class="comment detail" style="display: table-cell;"><p>予定区間</p></td>
                                     </tr>
                                     <tr class="tbl even" valign="top">
+                                        <td class="detail"><a href="tables/service_case_number_counter.html">service_case_number_counter</a></td>
+                                        <td class="detail" align="right">0</td>
+                                        <td class="detail" align="right">0</td>
+                                        <td class="detail" align="right">2</td>
+                                        <td class="detail" align="right">-1</td>
+                                        <td class="detail" align="right">Table</td>
+                                        <td class="comment detail" style="display: table-cell;"><p>有人案件の受付番号の採番（年ごとの連番）</p></td>
+                                    </tr>
+                                    <tr class="tbl even" valign="top">
+                                        <td class="detail"><a href="tables/service_case_source.html">service_case_source</a></td>
+                                        <td class="detail" align="right">0</td>
+                                        <td class="detail" align="right">1</td>
+                                        <td class="detail" align="right">5</td>
+                                        <td class="detail" align="right">-1</td>
+                                        <td class="detail" align="right">Table</td>
+                                        <td class="comment detail" style="display: table-cell;"><p>有人案件が参照した出典 [append-only]</p></td>
+                                    </tr>
+                                    <tr class="tbl even" valign="top">
+                                        <td class="detail"><a href="tables/service_case.html">service_case</a></td>
+                                        <td class="detail" align="right">4</td>
+                                        <td class="detail" align="right">5</td>
+                                        <td class="detail" align="right">25</td>
+                                        <td class="detail" align="right">-1</td>
+                                        <td class="detail" align="right">Table</td>
+                                        <td class="comment detail" style="display: table-cell;"><p>有人案件（顧客照会・業務例外）</p></td>
+                                    </tr>
+                                    <tr class="tbl even" valign="top">
                                         <td class="detail"><a href="tables/milestone.html">milestone</a></td>
                                         <td class="detail" align="right">4</td>
                                         <td class="detail" align="right">2</td>
@@ -234,8 +279,8 @@
                                     </tr>
                                     <tr class="tbl even" valign="top">
                                         <td class="detail"><a href="tables/tracking_record.html">tracking_record</a></td>
-                                        <td class="detail" align="right">3</td>
-                                        <td class="detail" align="right">7</td>
+                                        <td class="detail" align="right">4</td>
+                                        <td class="detail" align="right">8</td>
                                         <td class="detail" align="right">24</td>
                                         <td class="detail" align="right">-1</td>
                                         <td class="detail" align="right">Table</td>

@@ -132,7 +132,7 @@
 <polygon fill="#ffffff" stroke="transparent" points="376.6217,-227.2 376.6217,-244.2 429.6217,-244.2 429.6217,-227.2 376.6217,-227.2"/>
 <text text-anchor="start" x="400.0648" y="-232.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000"> &#160;</text>
 <polygon fill="#ffffff" stroke="transparent" points="429.6217,-227.2 429.6217,-244.2 490.6217,-244.2 490.6217,-227.2 429.6217,-227.2"/>
-<text text-anchor="start" x="473.027" y="-232.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">4 &gt;</text>
+<text text-anchor="start" x="473.027" y="-232.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">8 &gt;</text>
 <polygon fill="#000000" stroke="#000000" points="376.6217,-227.2 376.6217,-244.2 376.6217,-244.2 376.6217,-227.2 376.6217,-227.2"/>
 <polygon fill="#000000" stroke="#000000" points="429.6217,-227.2 429.6217,-244.2 429.6217,-244.2 429.6217,-227.2 429.6217,-227.2"/>
 </a>
@@ -149,7 +149,7 @@
 <g id="node3" class="node">
 <title>tracking_record</title>
 <g id="a_node3"><a xlink:href="../../tables/tracking_record.html" xlink:title="tracking_record" target="_top">
-<polygon fill="#ffffff" stroke="transparent" points="23.6217,-193.7 23.6217,-408.7 264.6217,-408.7 264.6217,-193.7 23.6217,-193.7"/>
+<polygon fill="#ffffff" stroke="transparent" points="23.6217,-171.7 23.6217,-408.7 264.6217,-408.7 264.6217,-171.7 23.6217,-171.7"/>
 <polygon fill="#f5f5f5" stroke="transparent" points="24.1217,-385.2 24.1217,-408.2 265.1217,-408.2 265.1217,-385.2 24.1217,-385.2"/>
 <polygon fill="none" stroke="#000000" points="24.1217,-385.2 24.1217,-408.2 265.1217,-408.2 265.1217,-385.2 24.1217,-385.2"/>
 <text text-anchor="start" x="29.1217" y="-393.8" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00" fill="#000000">tracking_record</text>
@@ -170,25 +170,28 @@
 <text text-anchor="start" x="44.1217" y="-304.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">consignee_company_id</text>
 <polygon fill="none" stroke="#000000" points="24.1217,-275.2 24.1217,-297.2 265.1217,-297.2 265.1217,-275.2 24.1217,-275.2"/>
 <image xlink:href="../../images/foreignKeys.png" width="11px" height="12px" preserveAspectRatio="xMinYMin meet" x="29.1217" y="-292.2"/>
-<text text-anchor="start" x="44.1217" y="-282.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">status_basis_milestone_no</text>
-<polygon fill="#ffffff" stroke="transparent" points="24.1217,-253.2 24.1217,-275.2 265.1217,-275.2 265.1217,-253.2 24.1217,-253.2"/>
+<text text-anchor="start" x="44.1217" y="-282.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">routing_case_number</text>
 <polygon fill="none" stroke="#000000" points="24.1217,-253.2 24.1217,-275.2 265.1217,-275.2 265.1217,-253.2 24.1217,-253.2"/>
-<text text-anchor="start" x="44.1217" y="-260.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">created_at</text>
+<image xlink:href="../../images/foreignKeys.png" width="11px" height="12px" preserveAspectRatio="xMinYMin meet" x="29.1217" y="-270.2"/>
+<text text-anchor="start" x="44.1217" y="-260.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">status_basis_milestone_no</text>
+<polygon fill="#ffffff" stroke="transparent" points="24.1217,-231.2 24.1217,-253.2 265.1217,-253.2 265.1217,-231.2 24.1217,-231.2"/>
 <polygon fill="none" stroke="#000000" points="24.1217,-231.2 24.1217,-253.2 265.1217,-253.2 265.1217,-231.2 24.1217,-231.2"/>
-<image xlink:href="../../images/foreignKeys.png" width="11px" height="12px" preserveAspectRatio="xMinYMin meet" x="29.1217" y="-248.2"/>
-<text text-anchor="start" x="44.1217" y="-238.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">latest_eta_basis_milestone_no</text>
-<polygon fill="none" stroke="#000000" points="24.1217,-212.2 24.1217,-231.2 265.1217,-231.2 265.1217,-212.2 24.1217,-212.2"/>
-<text text-anchor="start" x="27.1217" y="-218.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">...</text>
-<polygon fill="#ffffff" stroke="transparent" points="24.1217,-193.2 24.1217,-212.2 265.1217,-212.2 265.1217,-193.2 24.1217,-193.2"/>
-<polygon fill="none" stroke="#000000" points="24.1217,-193.2 24.1217,-212.2 265.1217,-212.2 265.1217,-193.2 24.1217,-193.2"/>
-<polygon fill="#ffffff" stroke="transparent" points="25.1217,-194.2 25.1217,-211.2 108.1217,-211.2 108.1217,-194.2 25.1217,-194.2"/>
-<text text-anchor="start" x="27.1217" y="-199.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">&lt; 6</text>
-<polygon fill="#ffffff" stroke="transparent" points="108.1217,-194.2 108.1217,-211.2 182.1217,-211.2 182.1217,-194.2 108.1217,-194.2"/>
-<text text-anchor="start" x="142.0648" y="-199.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000"> &#160;</text>
-<polygon fill="#ffffff" stroke="transparent" points="182.1217,-194.2 182.1217,-211.2 264.1217,-211.2 264.1217,-194.2 182.1217,-194.2"/>
-<text text-anchor="start" x="246.527" y="-199.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">3 &gt;</text>
-<polygon fill="#000000" stroke="#000000" points="108.1217,-194.2 108.1217,-211.2 108.1217,-211.2 108.1217,-194.2 108.1217,-194.2"/>
-<polygon fill="#000000" stroke="#000000" points="182.1217,-194.2 182.1217,-211.2 182.1217,-211.2 182.1217,-194.2 182.1217,-194.2"/>
+<text text-anchor="start" x="44.1217" y="-238.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">created_at</text>
+<polygon fill="none" stroke="#000000" points="24.1217,-209.2 24.1217,-231.2 265.1217,-231.2 265.1217,-209.2 24.1217,-209.2"/>
+<image xlink:href="../../images/foreignKeys.png" width="11px" height="12px" preserveAspectRatio="xMinYMin meet" x="29.1217" y="-226.2"/>
+<text text-anchor="start" x="44.1217" y="-216.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">latest_eta_basis_milestone_no</text>
+<polygon fill="none" stroke="#000000" points="24.1217,-190.2 24.1217,-209.2 265.1217,-209.2 265.1217,-190.2 24.1217,-190.2"/>
+<text text-anchor="start" x="27.1217" y="-196.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">...</text>
+<polygon fill="#ffffff" stroke="transparent" points="24.1217,-171.2 24.1217,-190.2 265.1217,-190.2 265.1217,-171.2 24.1217,-171.2"/>
+<polygon fill="none" stroke="#000000" points="24.1217,-171.2 24.1217,-190.2 265.1217,-190.2 265.1217,-171.2 24.1217,-171.2"/>
+<polygon fill="#ffffff" stroke="transparent" points="25.1217,-172.2 25.1217,-189.2 108.1217,-189.2 108.1217,-172.2 25.1217,-172.2"/>
+<text text-anchor="start" x="27.1217" y="-177.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">&lt; 7</text>
+<polygon fill="#ffffff" stroke="transparent" points="108.1217,-172.2 108.1217,-189.2 182.1217,-189.2 182.1217,-172.2 108.1217,-172.2"/>
+<text text-anchor="start" x="142.0648" y="-177.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000"> &#160;</text>
+<polygon fill="#ffffff" stroke="transparent" points="182.1217,-172.2 182.1217,-189.2 264.1217,-189.2 264.1217,-172.2 182.1217,-172.2"/>
+<text text-anchor="start" x="246.527" y="-177.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">4 &gt;</text>
+<polygon fill="#000000" stroke="#000000" points="108.1217,-172.2 108.1217,-189.2 108.1217,-189.2 108.1217,-172.2 108.1217,-172.2"/>
+<polygon fill="#000000" stroke="#000000" points="182.1217,-172.2 182.1217,-189.2 182.1217,-189.2 182.1217,-172.2 182.1217,-172.2"/>
 </a>
 </g>
 </g>
@@ -209,16 +212,16 @@
 <!-- tracking_record&#45;&gt;milestone -->
 <g id="edge6" class="edge">
 <title>tracking_record:w&#45;&gt;milestone:e</title>
-<path fill="none" stroke="#000000" d="M11.3286,-235.2596C5.2485,-223.9701 12.1341,-201.6877 24.1217,-189.7 24.9002,-188.9216 482.0847,-186.9393 499.6217,-192.2 499.6217,-192.2 788.6217,-378.2 788.6217,-378.2"/>
-<polygon fill="#000000" stroke="#000000" points="17.0899,-238.3851 22.405,-245.3643 20.6058,-240.2926 24.1217,-242.2 24.1217,-242.2 24.1217,-242.2 20.6058,-240.2926 25.8384,-239.0357 17.0899,-238.3851 17.0899,-238.3851"/>
-<ellipse fill="none" stroke="#000000" cx="14.2772" cy="-236.8591" rx="3.2" ry="3.2"/>
+<path fill="none" stroke="#000000" d="M11.3286,-213.2596C5.2485,-201.9701 12.1341,-179.6877 24.1217,-167.7 173.7552,-18.0665 300.0999,-121.6919 499.6217,-192.2 499.6217,-192.2 788.6217,-378.2 788.6217,-378.2"/>
+<polygon fill="#000000" stroke="#000000" points="17.0899,-216.3851 22.405,-223.3643 20.6058,-218.2926 24.1217,-220.2 24.1217,-220.2 24.1217,-220.2 20.6058,-218.2926 25.8384,-217.0357 17.0899,-216.3851 17.0899,-216.3851"/>
+<ellipse fill="none" stroke="#000000" cx="14.2772" cy="-214.8591" rx="3.2" ry="3.2"/>
 </g>
 <!-- tracking_record&#45;&gt;milestone -->
 <g id="edge8" class="edge">
 <title>tracking_record:w&#45;&gt;milestone:e</title>
-<path fill="none" stroke="#000000" d="M13.8317,-276.0678C5.8502,-253.7818 12.2752,-201.5465 24.1217,-189.7 102.2178,-111.604 162.3637,-183.286 272.6217,-189.7 323.323,-192.6494 451.311,-200.5348 499.6217,-216.2 499.6217,-216.2 788.6217,-378.2 788.6217,-378.2"/>
-<polygon fill="#000000" stroke="#000000" points="18.4213,-280.587 21.5959,-288.7652 21.2715,-283.3935 24.1217,-286.2 24.1217,-286.2 24.1217,-286.2 21.2715,-283.3935 26.6476,-283.6348 18.4213,-280.587 18.4213,-280.587"/>
-<ellipse fill="none" stroke="#000000" cx="16.1411" cy="-278.3418" rx="3.2" ry="3.2"/>
+<path fill="none" stroke="#000000" d="M13.8317,-254.0678C5.8502,-231.7818 12.2752,-179.5465 24.1217,-167.7 102.2178,-89.604 162.7884,-156.0976 272.6217,-167.7 375.2168,-178.5377 403.0946,-179.7897 499.6217,-216.2 499.6217,-216.2 788.6217,-378.2 788.6217,-378.2"/>
+<polygon fill="#000000" stroke="#000000" points="18.4213,-258.587 21.5959,-266.7652 21.2715,-261.3935 24.1217,-264.2 24.1217,-264.2 24.1217,-264.2 21.2715,-261.3935 26.6476,-261.6348 18.4213,-258.587 18.4213,-258.587"/>
+<ellipse fill="none" stroke="#000000" cx="16.1411" cy="-256.3418" rx="3.2" ry="3.2"/>
 </g>
 <!-- tracking_record&#45;&gt;milestone -->
 <g id="edge9" class="edge">

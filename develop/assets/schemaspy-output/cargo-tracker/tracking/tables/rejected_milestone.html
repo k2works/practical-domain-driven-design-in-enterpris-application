@@ -136,6 +136,26 @@
                                                 <td class="constraint detail"><span title='Restrict delete:&#10;Parent cannot be deleted if children exist'>R</span></td>
                                             </tr>
                                             <tr>
+                                                <td title="service_case.assignee_id&#39;s name implies that it&#39;s a child of rejected_milestone.id, but it doesn&#39;t reference that column."><a href='service_case.html'>service_case</a><span class='relatedKey'>.assignee_id</span></td>
+                                                <td class="constraint detail">Implied Constraint</td>
+                                                <td class="constraint detail"><span title='Restrict delete:&#10;Parent cannot be deleted if children exist'>R</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td title="service_case.booking_id&#39;s name implies that it&#39;s a child of rejected_milestone.id, but it doesn&#39;t reference that column."><a href='service_case.html'>service_case</a><span class='relatedKey'>.booking_id</span></td>
+                                                <td class="constraint detail">Implied Constraint</td>
+                                                <td class="constraint detail"><span title='Restrict delete:&#10;Parent cannot be deleted if children exist'>R</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td title="service_case.reconciliation_id&#39;s name implies that it&#39;s a child of rejected_milestone.id, but it doesn&#39;t reference that column."><a href='service_case.html'>service_case</a><span class='relatedKey'>.reconciliation_id</span></td>
+                                                <td class="constraint detail">Implied Constraint</td>
+                                                <td class="constraint detail"><span title='Restrict delete:&#10;Parent cannot be deleted if children exist'>R</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td title="service_case.shipper_company_id&#39;s name implies that it&#39;s a child of rejected_milestone.id, but it doesn&#39;t reference that column."><a href='service_case.html'>service_case</a><span class='relatedKey'>.shipper_company_id</span></td>
+                                                <td class="constraint detail">Implied Constraint</td>
+                                                <td class="constraint detail"><span title='Restrict delete:&#10;Parent cannot be deleted if children exist'>R</span></td>
+                                            </tr>
+                                            <tr>
                                                 <td title="tracking_record.booking_id&#39;s name implies that it&#39;s a child of rejected_milestone.id, but it doesn&#39;t reference that column."><a href='tracking_record.html'>tracking_record</a><span class='relatedKey'>.booking_id</span></td>
                                                 <td class="constraint detail">Implied Constraint</td>
                                                 <td class="constraint detail"><span title='Restrict delete:&#10;Parent cannot be deleted if children exist'>R</span></td>
@@ -421,16 +441,16 @@
                                 </thead>
                                 <tbody>
                                 <tr>
-                                    <td>ck_rejected_milestone_kind</td>
-                                    <td>((kind)::text &#61; ANY ((ARRAY[&#39;PICKUP&#39;::character varying, &#39;RECEIPT_AT_ORIGIN&#39;::character varying, &#39;DEPARTURE&#39;::character varying, &#39;TRANSSHIPMENT&#39;::character varying, &#39;ARRIVAL&#39;::character varying, &#39;DELIVERY&#39;::character varying])::text[]))</td>
-                                </tr>
-                                <tr>
                                     <td>ck_rejected_milestone_reason</td>
                                     <td>((reason)::text &#61; ANY ((ARRAY[&#39;UNKNOWN_TRACKING_NUMBER&#39;::character varying, &#39;BOOKING_CANCELLED&#39;::character varying])::text[]))</td>
                                 </tr>
                                 <tr>
                                     <td>ck_rejected_milestone_source_kind</td>
                                     <td>((source_kind)::text &#61; ANY ((ARRAY[&#39;EXTERNAL_RECORD&#39;::character varying, &#39;FIELD_RECORD&#39;::character varying, &#39;INTERNAL_CHECK&#39;::character varying, &#39;MANUAL_ENTRY&#39;::character varying])::text[]))</td>
+                                </tr>
+                                <tr>
+                                    <td>ck_rejected_milestone_kind</td>
+                                    <td>((kind)::text &#61; ANY ((ARRAY[&#39;PICKUP&#39;::character varying, &#39;RECEIPT_AT_ORIGIN&#39;::character varying, &#39;DEPARTURE&#39;::character varying, &#39;TRANSSHIPMENT&#39;::character varying, &#39;ARRIVAL&#39;::character varying, &#39;DELIVERY&#39;::character varying])::text[]))</td>
                                 </tr>
                                 </tbody>
                             </table>

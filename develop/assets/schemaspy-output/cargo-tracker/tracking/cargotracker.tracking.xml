@@ -60,6 +60,10 @@
       <table name="rejected_milestone" remarks="拒否した主要実績 [append-only]" schema="tracking" type="TABLE">
          <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="id" nullable="false" remarks="拒否の記録 ID" size="2147483647" type="uuid" typeCode="1111">
             <child column="data_source_id" foreignKey="Implied Constraint" implied="true" onDeleteCascade="false" schema="tracking" table="milestone"/>
+            <child column="assignee_id" foreignKey="Implied Constraint" implied="true" onDeleteCascade="false" schema="tracking" table="service_case"/>
+            <child column="booking_id" foreignKey="Implied Constraint" implied="true" onDeleteCascade="false" schema="tracking" table="service_case"/>
+            <child column="reconciliation_id" foreignKey="Implied Constraint" implied="true" onDeleteCascade="false" schema="tracking" table="service_case"/>
+            <child column="shipper_company_id" foreignKey="Implied Constraint" implied="true" onDeleteCascade="false" schema="tracking" table="service_case"/>
             <child column="booking_id" foreignKey="Implied Constraint" implied="true" onDeleteCascade="false" schema="tracking" table="tracking_record"/>
             <child column="consignee_company_id" foreignKey="Implied Constraint" implied="true" onDeleteCascade="false" schema="tracking" table="tracking_record"/>
             <child column="shipper_company_id" foreignKey="Implied Constraint" implied="true" onDeleteCascade="false" schema="tracking" table="tracking_record"/>
@@ -111,11 +115,131 @@
          <checkConstraint constraint="(arrival_at &gt; departure_at)" name="ck_scheduled_leg_arrival"/>
          <checkConstraint constraint="(leg_no &gt;= 1)" name="ck_scheduled_leg_no"/>
       </table>
+      <table name="service_case" remarks="有人案件（顧客照会・業務例外）" schema="tracking" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="case_number" nullable="false" remarks="受付番号（SC-YYYY-NNNN）" size="20" type="varchar" typeCode="12">
+            <child column="case_number" foreignKey="fk_service_case_answer_case" implied="false" onDeleteCascade="false" schema="tracking" table="service_case_answer"/>
+            <child column="case_number" foreignKey="fk_service_case_progress_case" implied="false" onDeleteCascade="false" schema="tracking" table="service_case_progress"/>
+            <child column="case_number" foreignKey="fk_service_case_source_case" implied="false" onDeleteCascade="false" schema="tracking" table="service_case_source"/>
+            <child column="routing_case_number" foreignKey="Implied Constraint" implied="true" onDeleteCascade="false" schema="tracking" table="tracking_record"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="kind" nullable="false" remarks="種類" size="30" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="shipper_company_id" nullable="true" remarks="荷主企業 ID（照会の範囲を限る）" size="2147483647" type="uuid" typeCode="1111">
+            <parent column="id" foreignKey="Implied Constraint" implied="true" onDeleteCascade="false" schema="tracking" table="rejected_milestone"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="booking_id" nullable="true" remarks="予約 ID（参照）" size="2147483647" type="uuid" typeCode="1111">
+            <parent column="id" foreignKey="Implied Constraint" implied="true" onDeleteCascade="false" schema="tracking" table="rejected_milestone"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="tracking_number" nullable="true" remarks="追跡番号（参照。知らない追跡番号も持ち得る）" size="20" type="varchar" typeCode="12">
+            <parent column="tracking_number" foreignKey="Implied Constraint" implied="true" onDeleteCascade="false" schema="tracking" table="tracking_record"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="5" name="cause" nullable="false" remarks="原因・照会内容" size="4000" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="6" name="priority" nullable="false" remarks="優先度（HIGH、NORMAL）" size="30" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="7" name="department" nullable="false" remarks="担当部門" size="50" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="8" name="assignee_id" nullable="true" remarks="担当者（受領した利用者）" size="2147483647" type="uuid" typeCode="1111">
+            <parent column="id" foreignKey="Implied Constraint" implied="true" onDeleteCascade="false" schema="tracking" table="rejected_milestone"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="9" name="received_at" nullable="true" remarks="受領時刻" size="35" type="timestamptz" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="10" name="receive_due_at" nullable="false" remarks="受領期限（営業日カレンダーで数える）" size="35" type="timestamptz" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="11" name="answer_due_at" nullable="true" remarks="回答期限" size="35" type="timestamptz" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="12" name="next_update_at" nullable="true" remarks="次回更新日時" size="35" type="timestamptz" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="13" name="old_version_ref" nullable="true" remarks="旧版の参照" size="200" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="14" name="new_version_ref" nullable="true" remarks="新版の参照" size="200" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="15" name="manual_source_ref" nullable="true" remarks="手動入力の出典の参照" size="200" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="16" name="reconciliation_required" nullable="false" remarks="復旧照合が必要か" size="1" type="bool" typeCode="-7"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="17" name="reconciliation_id" nullable="true" remarks="復旧照合の完了の ID（外部データ。完了するまで空）" size="2147483647" type="uuid" typeCode="1111">
+            <parent column="id" foreignKey="Implied Constraint" implied="true" onDeleteCascade="false" schema="tracking" table="rejected_milestone"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="18" name="acknowledged_at" nullable="true" remarks="営業時間外の起票に受付番号と次回更新日時を直ちに返した時刻" size="35" type="timestamptz" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="19" name="status" nullable="false" remarks="状態" size="30" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="20" name="version" nullable="false" remarks="楽観ロックの版" size="19" type="int8" typeCode="-5"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="21" name="created_at" nullable="false" remarks="起票時刻" size="35" type="timestamptz" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="22" name="created_by" nullable="false" remarks="起票者" size="2147483647" type="uuid" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="23" name="updated_at" nullable="false" remarks="最終更新時刻" size="35" type="timestamptz" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="24" name="updated_by" nullable="false" remarks="最終更新者" size="2147483647" type="uuid" typeCode="1111"/>
+         <primaryKey column="case_number" sequenceNumberInPK="1"/>
+         <index name="pk_service_case" unique="true">
+            <column ascending="true" name="case_number"/>
+         </index>
+         <index name="ix_service_case_shipper" unique="false">
+            <column ascending="true" name="shipper_company_id"/>
+         </index>
+         <index name="ix_service_case_status_receive_due" unique="false">
+            <column ascending="true" name="status"/>
+            <column ascending="true" name="receive_due_at"/>
+         </index>
+         <checkConstraint constraint="(((status)::text &lt;&gt; ALL ((ARRAY['IN_PROGRESS'::character varying, 'ANSWERED'::character varying, 'CLOSED'::character varying])::text[])) OR ((assignee_id IS NOT NULL) AND (received_at IS NOT NULL)))" name="ck_service_case_assignee"/>
+         <checkConstraint constraint="((kind)::text = ANY ((ARRAY['CUSTOMER_INQUIRY'::character varying, 'QUOTATION_CONSULTATION'::character varying, 'AMENDMENT'::character varying, 'REDESIGN'::character varying, 'EXTERNAL_OUTAGE'::character varying, 'REJECTED_MILESTONE'::character varying, 'SAGA_FAILURE'::character varying])::text[]))" name="ck_service_case_kind"/>
+         <checkConstraint constraint="((priority)::text = ANY ((ARRAY['HIGH'::character varying, 'NORMAL'::character varying])::text[]))" name="ck_service_case_priority"/>
+         <checkConstraint constraint="(((reconciliation_id IS NULL) OR (reconciliation_required = true)) AND (NOT (((status)::text = 'CLOSED'::text) AND (reconciliation_required = true) AND (reconciliation_id IS NULL))))" name="ck_service_case_reconciliation"/>
+         <checkConstraint constraint="((status)::text = ANY ((ARRAY['RECEIVED'::character varying, 'ESCALATED'::character varying, 'IN_PROGRESS'::character varying, 'ANSWERED'::character varying, 'CLOSED'::character varying, 'DUPLICATE_CLOSED'::character varying])::text[]))" name="ck_service_case_status"/>
+      </table>
+      <table name="service_case_answer" remarks="有人案件の回答（再開しても過去の分を保持する） [no-delete]" schema="tracking" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="case_number" nullable="false" remarks="受付番号" size="20" type="varchar" typeCode="12">
+            <parent column="case_number" foreignKey="fk_service_case_answer_case" implied="false" onDeleteCascade="false" schema="tracking" table="service_case"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="answer_no" nullable="false" remarks="回答番号（案件の中で 1 から）" size="10" type="int4" typeCode="4"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="content" nullable="false" remarks="回答の内容" size="4000" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="answered_by" nullable="false" remarks="回答者" size="2147483647" type="uuid" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="4" name="answered_at" nullable="false" remarks="回答時刻" size="35" type="timestamptz" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="5" name="customer_response" nullable="true" remarks="顧客の回答（未解決など）" size="4000" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="6" name="customer_responded_at" nullable="true" remarks="顧客が回答した時刻" size="35" type="timestamptz" typeCode="93"/>
+         <primaryKey column="case_number" sequenceNumberInPK="1"/>
+         <primaryKey column="answer_no" sequenceNumberInPK="2"/>
+         <index name="pk_service_case_answer" unique="true">
+            <column ascending="true" name="case_number"/>
+            <column ascending="true" name="answer_no"/>
+         </index>
+         <checkConstraint constraint="(((customer_response IS NULL) AND (customer_responded_at IS NULL)) OR ((customer_response IS NOT NULL) AND (customer_responded_at IS NOT NULL)))" name="ck_service_case_answer_customer"/>
+         <checkConstraint constraint="(answer_no &gt;= 1)" name="ck_service_case_answer_no"/>
+      </table>
+      <table name="service_case_number_counter" remarks="有人案件の受付番号の採番（年ごとの連番）" schema="tracking" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="number_year" nullable="false" remarks="年" size="10" type="int4" typeCode="4"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="last_no" nullable="false" remarks="その年に振った最後の連番" size="10" type="int4" typeCode="4"/>
+         <primaryKey column="number_year" sequenceNumberInPK="1"/>
+         <index name="pk_service_case_number_counter" unique="true">
+            <column ascending="true" name="number_year"/>
+         </index>
+         <checkConstraint constraint="(last_no &gt;= 0)" name="ck_service_case_number_counter_last_no"/>
+      </table>
+      <table name="service_case_progress" remarks="有人案件の進捗 [append-only]" schema="tracking" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="case_number" nullable="false" remarks="受付番号" size="20" type="varchar" typeCode="12">
+            <parent column="case_number" foreignKey="fk_service_case_progress_case" implied="false" onDeleteCascade="false" schema="tracking" table="service_case"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="progress_no" nullable="false" remarks="進捗番号（案件の中で 1 から）" size="10" type="int4" typeCode="4"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="content" nullable="false" remarks="進捗の内容" size="4000" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="3" name="next_update_at" nullable="true" remarks="次回更新日時（指定した場合）" size="35" type="timestamptz" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="updated_by" nullable="false" remarks="更新者" size="2147483647" type="uuid" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="5" name="updated_at" nullable="false" remarks="更新時刻" size="35" type="timestamptz" typeCode="93"/>
+         <primaryKey column="case_number" sequenceNumberInPK="1"/>
+         <primaryKey column="progress_no" sequenceNumberInPK="2"/>
+         <index name="pk_service_case_progress" unique="true">
+            <column ascending="true" name="case_number"/>
+            <column ascending="true" name="progress_no"/>
+         </index>
+         <checkConstraint constraint="(progress_no &gt;= 1)" name="ck_service_case_progress_no"/>
+      </table>
+      <table name="service_case_source" remarks="有人案件が参照した出典 [append-only]" schema="tracking" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="case_number" nullable="false" remarks="受付番号" size="20" type="varchar" typeCode="12">
+            <parent column="case_number" foreignKey="fk_service_case_source_case" implied="false" onDeleteCascade="false" schema="tracking" table="service_case"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="source_no" nullable="false" remarks="出典の番号（案件の中で 1 から）" size="10" type="int4" typeCode="4"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="source_kind" nullable="false" remarks="出典の種類" size="30" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="source_ref" nullable="false" remarks="出典の参照" size="200" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="4" name="acquired_at" nullable="false" remarks="出典の取得時刻" size="35" type="timestamptz" typeCode="93"/>
+         <primaryKey column="case_number" sequenceNumberInPK="1"/>
+         <primaryKey column="source_no" sequenceNumberInPK="2"/>
+         <index name="pk_service_case_source" unique="true">
+            <column ascending="true" name="case_number"/>
+            <column ascending="true" name="source_no"/>
+         </index>
+         <checkConstraint constraint="(source_no &gt;= 1)" name="ck_service_case_source_no"/>
+      </table>
       <table name="tracking_record" remarks="追跡記録" schema="tracking" type="TABLE">
          <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="tracking_number" nullable="false" remarks="追跡番号" size="20" type="varchar" typeCode="12">
             <child column="tracking_number" foreignKey="fk_milestone_tracking_record" implied="false" onDeleteCascade="false" schema="tracking" table="milestone"/>
             <child column="tracking_number" foreignKey="Implied Constraint" implied="true" onDeleteCascade="false" schema="tracking" table="rejected_milestone"/>
             <child column="tracking_number" foreignKey="fk_scheduled_leg_tracking_record" implied="false" onDeleteCascade="false" schema="tracking" table="scheduled_leg"/>
+            <child column="tracking_number" foreignKey="Implied Constraint" implied="true" onDeleteCascade="false" schema="tracking" table="service_case"/>
             <parent column="tracking_number" foreignKey="fk_tracking_record_status_basis" implied="false" onDeleteCascade="false" schema="tracking" table="milestone"/>
          </column>
          <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="booking_id" nullable="false" remarks="予約 ID（写し）" size="2147483647" type="uuid" typeCode="1111">
@@ -128,7 +252,9 @@
             <parent column="id" foreignKey="Implied Constraint" implied="true" onDeleteCascade="false" schema="tracking" table="rejected_milestone"/>
          </column>
          <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="booking_status" nullable="false" remarks="予約の状態（写し）" size="30" type="varchar" typeCode="12"/>
-         <column autoUpdated="false" defaultValue="null" digits="0" id="5" name="routing_case_number" nullable="false" remarks="予定の経路版の案件番号" size="20" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="5" name="routing_case_number" nullable="false" remarks="予定の経路版の案件番号" size="20" type="varchar" typeCode="12">
+            <parent column="case_number" foreignKey="Implied Constraint" implied="true" onDeleteCascade="false" schema="tracking" table="service_case"/>
+         </column>
          <column autoUpdated="false" defaultValue="null" digits="0" id="6" name="route_version_no" nullable="false" remarks="予定の経路版番号" size="10" type="int4" typeCode="4"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="7" name="current_status" nullable="false" remarks="現在状態（導出の結果の保存）" size="30" type="varchar" typeCode="12"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="8" name="status_basis_milestone_no" nullable="true" remarks="現在状態の根拠の実績番号" size="10" type="int4" typeCode="4">

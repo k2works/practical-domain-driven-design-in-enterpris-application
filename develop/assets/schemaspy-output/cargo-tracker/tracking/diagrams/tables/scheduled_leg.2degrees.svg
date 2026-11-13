@@ -38,25 +38,28 @@
 <g id="node2" class="node">
 <title>tracking_record</title>
 <g id="a_node2"><a xlink:href="../../tables/tracking_record.html" xlink:title="tracking_record" target="_top">
-<polygon fill="#ffffff" stroke="transparent" points="8,-38.2 8,-253.2 249,-253.2 249,-38.2 8,-38.2"/>
-<polygon fill="#f5f5f5" stroke="transparent" points="8.5,-229.7 8.5,-252.7 249.5,-252.7 249.5,-229.7 8.5,-229.7"/>
-<polygon fill="none" stroke="#000000" points="8.5,-229.7 8.5,-252.7 249.5,-252.7 249.5,-229.7 8.5,-229.7"/>
-<text text-anchor="start" x="13.5" y="-238.3" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00" fill="#000000">tracking_record</text>
-<text text-anchor="start" x="214.5437" y="-237.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">[table]</text>
+<polygon fill="#ffffff" stroke="transparent" points="8,-38.2 8,-275.2 249,-275.2 249,-38.2 8,-38.2"/>
+<polygon fill="#f5f5f5" stroke="transparent" points="8.5,-251.7 8.5,-274.7 249.5,-274.7 249.5,-251.7 8.5,-251.7"/>
+<polygon fill="none" stroke="#000000" points="8.5,-251.7 8.5,-274.7 249.5,-274.7 249.5,-251.7 8.5,-251.7"/>
+<text text-anchor="start" x="13.5" y="-260.3" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00" fill="#000000">tracking_record</text>
+<text text-anchor="start" x="214.5437" y="-259.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">[table]</text>
+<polygon fill="none" stroke="#000000" points="8.5,-229.7 8.5,-251.7 249.5,-251.7 249.5,-229.7 8.5,-229.7"/>
+<image xlink:href="../../images/primaryKeys.png" width="11px" height="12px" preserveAspectRatio="xMinYMin meet" x="13.5" y="-246.7"/>
+<text text-anchor="start" x="28.5" y="-236.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">tracking_number</text>
+<polygon fill="#ffffff" stroke="transparent" points="8.5,-207.7 8.5,-229.7 249.5,-229.7 249.5,-207.7 8.5,-207.7"/>
 <polygon fill="none" stroke="#000000" points="8.5,-207.7 8.5,-229.7 249.5,-229.7 249.5,-207.7 8.5,-207.7"/>
-<image xlink:href="../../images/primaryKeys.png" width="11px" height="12px" preserveAspectRatio="xMinYMin meet" x="13.5" y="-224.7"/>
-<text text-anchor="start" x="28.5" y="-214.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">tracking_number</text>
+<image xlink:href="../../images/foreignKeys.png" width="11px" height="12px" preserveAspectRatio="xMinYMin meet" x="13.5" y="-224.7"/>
+<text text-anchor="start" x="28.5" y="-214.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">booking_id</text>
 <polygon fill="#ffffff" stroke="transparent" points="8.5,-185.7 8.5,-207.7 249.5,-207.7 249.5,-185.7 8.5,-185.7"/>
 <polygon fill="none" stroke="#000000" points="8.5,-185.7 8.5,-207.7 249.5,-207.7 249.5,-185.7 8.5,-185.7"/>
 <image xlink:href="../../images/foreignKeys.png" width="11px" height="12px" preserveAspectRatio="xMinYMin meet" x="13.5" y="-202.7"/>
-<text text-anchor="start" x="28.5" y="-192.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">booking_id</text>
-<polygon fill="#ffffff" stroke="transparent" points="8.5,-163.7 8.5,-185.7 249.5,-185.7 249.5,-163.7 8.5,-163.7"/>
+<text text-anchor="start" x="28.5" y="-192.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">shipper_company_id</text>
 <polygon fill="none" stroke="#000000" points="8.5,-163.7 8.5,-185.7 249.5,-185.7 249.5,-163.7 8.5,-163.7"/>
 <image xlink:href="../../images/foreignKeys.png" width="11px" height="12px" preserveAspectRatio="xMinYMin meet" x="13.5" y="-180.7"/>
-<text text-anchor="start" x="28.5" y="-170.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">shipper_company_id</text>
+<text text-anchor="start" x="28.5" y="-170.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">consignee_company_id</text>
 <polygon fill="none" stroke="#000000" points="8.5,-141.7 8.5,-163.7 249.5,-163.7 249.5,-141.7 8.5,-141.7"/>
 <image xlink:href="../../images/foreignKeys.png" width="11px" height="12px" preserveAspectRatio="xMinYMin meet" x="13.5" y="-158.7"/>
-<text text-anchor="start" x="28.5" y="-148.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">consignee_company_id</text>
+<text text-anchor="start" x="28.5" y="-148.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">routing_case_number</text>
 <polygon fill="none" stroke="#000000" points="8.5,-119.7 8.5,-141.7 249.5,-141.7 249.5,-119.7 8.5,-119.7"/>
 <image xlink:href="../../images/foreignKeys.png" width="11px" height="12px" preserveAspectRatio="xMinYMin meet" x="13.5" y="-136.7"/>
 <text text-anchor="start" x="28.5" y="-126.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">status_basis_milestone_no</text>
@@ -84,9 +87,9 @@
 <!-- milestone&#45;&gt;tracking_record -->
 <g id="edge1" class="edge">
 <title>milestone:w&#45;&gt;tracking_record:e</title>
-<path fill="none" stroke="#000000" d="M358.7764,-131.6356C328.8804,-135.7879 319.1272,-153.3353 290,-175.7 269.1769,-191.6886 275.7533,-218.7 249.5,-218.7"/>
-<polygon fill="#000000" stroke="#000000" points="365.5161,-131.2074 373.7283,-134.2928 369.5081,-130.9537 373.5,-130.7 373.5,-130.7 373.5,-130.7 369.5081,-130.9537 373.2717,-127.1072 365.5161,-131.2074 365.5161,-131.2074"/>
-<ellipse fill="none" stroke="#000000" cx="362.3225" cy="-131.4103" rx="3.2" ry="3.2"/>
+<path fill="none" stroke="#000000" d="M359.0689,-131.45C328.3758,-134.9343 316.891,-150.4498 290,-175.7 265.1866,-198.9994 283.5377,-240.7 249.5,-240.7"/>
+<polygon fill="#000000" stroke="#000000" points="365.5108,-131.1153 373.6869,-134.2951 369.5054,-130.9076 373.5,-130.7 373.5,-130.7 373.5,-130.7 369.5054,-130.9076 373.3131,-127.1049 365.5108,-131.1153 365.5108,-131.1153"/>
+<ellipse fill="none" stroke="#000000" cx="362.3151" cy="-131.2814" rx="3.2" ry="3.2"/>
 </g>
 <!-- tracking_record&#45;&gt;milestone -->
 <g id="edge3" class="edge">
@@ -105,10 +108,10 @@
 <!-- tracking_record&#45;&gt;milestone -->
 <g id="edge5" class="edge">
 <title>tracking_record:w&#45;&gt;milestone:e</title>
-<path fill="none" stroke="#000000" d="M18.8614,-220.3053C65.8919,-227.5917 257,-257.2 257,-257.2 289.4062,-235.3596 268.5801,-208.3856 290,-175.7 316.0983,-135.8755 321.101,-117.6387 365,-99.2 365,-99.2 484.5,-130.7 484.5,-130.7"/>
-<polygon fill="#000000" stroke="#000000" points="8.6781,-222.7753 9.903,-214.8696 11.4841,-215.1146 10.2593,-223.0203 8.6781,-222.7753"/>
-<polyline fill="none" stroke="#000000" points="8.5,-218.7 12.4528,-219.3124 "/>
-<ellipse fill="none" stroke="#000000" cx="15.6151" cy="-219.8024" rx="3.2" ry="3.2"/>
+<path fill="none" stroke="#000000" d="M18.8614,-242.3053C65.8919,-249.5917 257,-279.2 257,-279.2 295.9823,-250.7133 265.0909,-217.06 290,-175.7 314.5648,-134.9118 321.101,-117.6387 365,-99.2 365,-99.2 484.5,-130.7 484.5,-130.7"/>
+<polygon fill="#000000" stroke="#000000" points="8.6781,-244.7753 9.903,-236.8696 11.4841,-237.1146 10.2593,-245.0203 8.6781,-244.7753"/>
+<polyline fill="none" stroke="#000000" points="8.5,-240.7 12.4528,-241.3124 "/>
+<ellipse fill="none" stroke="#000000" cx="15.6151" cy="-241.8024" rx="3.2" ry="3.2"/>
 </g>
 <!-- scheduled_leg -->
 <g id="node3" class="node">
@@ -167,9 +170,9 @@
 <!-- scheduled_leg&#45;&gt;tracking_record -->
 <g id="edge2" class="edge">
 <title>scheduled_leg:w&#45;&gt;tracking_record:e</title>
-<path fill="none" stroke="#000000" d="M286.3004,-346.4618C250.6891,-326.2889 306.1214,-218.7 249.5,-218.7"/>
-<polygon fill="#000000" stroke="#000000" points="292.7002,-347.9212 299.6995,-353.2099 296.6001,-348.8106 300.5,-349.7 300.5,-349.7 300.5,-349.7 296.6001,-348.8106 301.3005,-346.1901 292.7002,-347.9212 292.7002,-347.9212"/>
-<ellipse fill="none" stroke="#000000" cx="289.5803" cy="-347.2097" rx="3.2" ry="3.2"/>
+<path fill="none" stroke="#000000" d="M286.219,-345.8206C258.2911,-326.4034 296.9261,-240.7 249.5,-240.7"/>
+<polygon fill="#000000" stroke="#000000" points="292.7798,-347.6028 299.5563,-353.1741 296.6399,-348.6514 300.5,-349.7 300.5,-349.7 300.5,-349.7 296.6399,-348.6514 301.4437,-346.2259 292.7798,-347.6028 292.7798,-347.6028"/>
+<ellipse fill="none" stroke="#000000" cx="289.6917" cy="-346.7639" rx="3.2" ry="3.2"/>
 </g>
 </g>
 </svg>

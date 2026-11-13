@@ -1,5 +1,10 @@
 milestone
 tracking_record
 rejected_milestone
+service_case
 scheduled_leg
+service_case_answer
+service_case_progress
+service_case_source
 business_calendar
+service_case_number_counter
