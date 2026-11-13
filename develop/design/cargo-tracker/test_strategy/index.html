@@ -12093,6 +12093,76 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_40-16_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 40-16 計画
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_40-16_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 40-16 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../development/cargo-tracker/bolt_40-1_plan/" class="md-nav__link">
         
   
@@ -19551,6 +19621,61 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 <td style="text-align: left;">AC5</td>
 <td style="text-align: left;"><code>@US-12-AC5</code></td>
 </tr>
+<tr>
+<td style="text-align: left;">US-11</td>
+<td style="text-align: left;">AC1</td>
+<td style="text-align: left;"><code>@US-11-AC1</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">US-11</td>
+<td style="text-align: left;">AC2</td>
+<td style="text-align: left;"><code>@US-11-AC2</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">US-11</td>
+<td style="text-align: left;">AC3</td>
+<td style="text-align: left;"><code>@US-11-AC3</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">US-20</td>
+<td style="text-align: left;">AC1</td>
+<td style="text-align: left;"><code>@US-20-AC1</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">US-20</td>
+<td style="text-align: left;">AC2</td>
+<td style="text-align: left;"><code>@US-20-AC2</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">US-20</td>
+<td style="text-align: left;">AC3</td>
+<td style="text-align: left;"><code>@US-20-AC3</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">US-20</td>
+<td style="text-align: left;">AC4</td>
+<td style="text-align: left;"><code>@US-20-AC4</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">US-20</td>
+<td style="text-align: left;">AC5</td>
+<td style="text-align: left;"><code>@US-20-AC5</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">US-20</td>
+<td style="text-align: left;">AC6</td>
+<td style="text-align: left;"><code>@US-20-AC6</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">US-20</td>
+<td style="text-align: left;">AC7</td>
+<td style="text-align: left;"><code>@US-20-AC7</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">US-20</td>
+<td style="text-align: left;">AC8</td>
+<td style="text-align: left;"><code>@US-20-AC8</code></td>
+</tr>
 </tbody>
 </table>
 <p>注: 部分的に確かめる受入条件をタグの照合の数に「完全」と読ませない。US-12 AC4 の「有人例外案件へ引き継ぐ」は W8（US-20）で、取り込みの分（39g）と手入力の分（39gc）の「拒否」だけを AC4 のタグで照合する。US-14 AC5 の「差異としてデータ責任者へ示される」は、取込の分類（39h）と却下（39h2）だけを確かめる（採用は Release 1.0 では作らない。D-144）。US-14 AC4 の古い外部版の警告は 39h3（<code>adopt_old_version_quarantine_ui.feature</code>）で確かめる。</p>
@@ -19715,6 +19840,60 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 <td style="text-align: left;">AC4・AC5 の判断の画面での外部版をまたいだ比べ（判断の画面に「この外部 ID の採用値」の領域を隔離・差異の両方に示す。示すのは差異の規則が比べる相手 1 つで、版の逆転なら最後に取得した採用値、そうでなければ公開した日時が最も新しい採用値。古い外部版の隔離（取得時刻が最後に取得した採用値より厳密に前）の採用の欄に固定の警告の文を示す。警告は採用を止めず、差異と採用できない隔離には出さない。S-17 の絞らない一覧の各行に「この取込で絞る」。判断の画面の値の型を <code>UndecidedRecordValues</code> に改める。【業務の判断】(bh)〜(bj)、台帳 D-150〜D-152。【前の決定の変更】(29)・(30)）</td>
 <td style="text-align: left;">39h3</td>
 <td style="text-align: left;">規則 <code>DiscrepancyRuleTest</code>（<code>Bolt39h3_…</code>。<code>isVersionReversed</code>・<code>inUseOf</code>・<code>partnerOf</code> の組。逆転の境（前・同じ・後）、最後に取得した採用値と比べること、公開した時刻 → 取得時刻 → 受信記録 ID の順。<code>discrepancyOf</code> の既存の組が緑のまま）、照会 <code>UndecidedRecordQueryServiceTest</code>（<code>Bolt39h3_…</code>。見本の組（V2 の取込の後の V1′ の隔離、今使っている採用値が同じ外部版、採用値なし、差異、キーのない隔離、比べる相手の値を読めない、別の提供元の採用値は拾わない）で <code>partner</code>・<code>olderThanAdopted</code> と引く回数を呼び出しの記録で縛る。一覧の照会は値も採用値も引かない。警告の判定と領域の出し方が独立していること）、一覧の行の型 <code>UndecidedRecordPageTest</code>（取込 ID の null を拒む）、契約 <code>AdoptedValueRepositoryContract</code>（別の外部 ID の採用値を拾わない。メモリ・H2・PostgreSQL）、判断のサービス <code>ReceivedRecordDecisionServiceTest</code>（<code>Bolt39h3_…</code>。古い外部版の隔離を採用でき、採用値の公開した時刻が最も新しくなり DE-12 を 1 つ出す。開いた後に古くなった隔離も採用できる）、画面 <code>UndecidedRecordControllerTest</code>（<code>Bolt39h3_…</code>。領域・警告の文（航海・主要実績）と位置、警告を出す条件（採用できない隔離・差異には出さない）、行の「この取込で絞る」のリンク（絞らない一覧だけ・2 頁目にも・行ごとの取込 ID・読み上げ）。照会は mock なので照会の変異は照会のテストで縛る）と画面の層の受入シナリオ <code>features/ui/adopt_old_version_quarantine_ui.feature</code>・<code>review_undecided_records_ui.feature</code>（<code>@demo-bolt-39h3/old-version-warning</code>。axe・幅 320 px）。層の規則は <code>LayerArchitectureTest</code>・<code>DddAnnotationArchitectureTest</code>・<code>LivingGlossaryConsistencyTest</code>・Modulith の検証（既存）。PERF-06 は取込の経路が変わらず、判断の画面の読みに照会が 2 回増えるだけなので流さない</td>
+</tr>
+<tr>
+<td style="text-align: left;">US-11</td>
+<td style="text-align: left;">AC1（顧客に開示できる情報と社内の確認状態の区別。S-12 の各実績の「顧客への表示」。採用済みは表示する、下書き・確認中は表示しない（社内の確認状態）。<code>shown_to_customer</code> の列は足さない）</td>
+<td style="text-align: left;">40-10・40-16</td>
+<td style="text-align: left;"><code>@US-11-AC1</code>（<code>customer_support_tracking_ui.feature</code>）、<code>TrackingRecordControllerTest</code>（Bolt 40-10 の行 1〜3）</td>
+</tr>
+<tr>
+<td style="text-align: left;">US-11</td>
+<td style="text-align: left;">AC2（照会を記録し、担当部門へ引き継ぐと、対象・照会内容・参照した出典・優先度・担当部門・回答期限・次回更新日時を持つ受付番号が発行される）</td>
+<td style="text-align: left;">40-7・40-15</td>
+<td style="text-align: left;"><code>@US-11-AC2</code>（<code>inquiry_record_ui.feature</code>。<code>@demo-bolt-40-15/inquiry-handoff</code>。実 PostgreSQL で外部キーまで）、<code>InquiryRecordingServiceTest</code>・<code>InquiryRecordControllerTest</code>・<code>MyBatisInquiryRecordRepositoryIntegrationTest</code>、起票は <code>ServiceCaseCommandServiceTest</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">US-11</td>
+<td style="text-align: left;">AC3（予約の代理確定・変更は許可されない。追跡の画面に予約の操作がなく、カスタマーサポートは実績の登録・採用もできない）</td>
+<td style="text-align: left;">40-10・40-16</td>
+<td style="text-align: left;"><code>@US-11-AC3</code>（<code>customer_support_tracking_ui.feature</code>。登録の画面を直接開くと 403）、<code>TrackingAssignedScopeSecurityIntegrationTest</code>（カスタマーサポートの 2 件）</td>
+</tr>
+<tr>
+<td style="text-align: left;">US-20</td>
+<td style="text-align: left;">AC1（起票するごとに一意な受付番号）</td>
+<td style="text-align: left;">40-5〜40-7・40-16</td>
+<td style="text-align: left;"><code>@US-20-AC1</code>（<code>features/tracking/service_case.feature</code>）、<code>MyBatisServiceCaseRepositoryIntegrationTest</code>（採番）、<code>ServiceCaseCommandServiceTest</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">US-20</td>
+<td style="text-align: left;">AC2（受領で担当者と時刻を記録し対応中）</td>
+<td style="text-align: left;">40-7・40-11</td>
+<td style="text-align: left;"><code>@US-20-AC2</code>（<code>service_case_receive_ui.feature</code>。<code>@demo-bolt-40-11/receive-service-case</code>）、<code>ServiceCaseControllerTest</code>・<code>ServiceCaseCommandServiceTest</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">US-20</td>
+<td style="text-align: left;">AC3（受領期限超過の escalation と担当未確定の表示。状態への書き込みと上位への通知は W10）</td>
+<td style="text-align: left;">40-9・40-12・40-14</td>
+<td style="text-align: left;"><code>@US-20-AC3</code>（<code>service_case_receive_ui.feature</code>。期限超過の印と絞り込み）、<code>ServiceCaseOverdueQueryServiceTest</code>・<code>ServiceCaseQueryServiceTest</code>・<code>ServiceCaseActionsControllerTest</code>（上位対応中の文）</td>
+</tr>
+<tr>
+<td style="text-align: left;">US-20</td>
+<td style="text-align: left;">AC4・AC5・AC6（進捗の更新、回答と終結、再開で受付番号と履歴を保持）</td>
+<td style="text-align: left;">40-8・40-12</td>
+<td style="text-align: left;"><code>@US-20-AC4</code>・<code>@US-20-AC5</code>・<code>@US-20-AC6</code>（<code>service_case_receive_ui.feature</code>）、<code>ServiceCaseActionServiceTest</code>・<code>ServiceCaseActionsControllerTest</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">US-20</td>
+<td style="text-align: left;">AC7（復旧照合が未完了の終結の拒否）</td>
+<td style="text-align: left;">40-5・40-8</td>
+<td style="text-align: left;"><code>@US-20-AC7</code>（<code>features/tracking/service_case.feature</code>）、<code>ServiceCaseTest</code>・<code>ServiceCaseActionServiceTest</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">US-20</td>
+<td style="text-align: left;">AC8（営業時間外の優先度高は起票の時刻に受付番号と次回更新日時を返す。営業日カレンダー）</td>
+<td style="text-align: left;">40-4・40-7</td>
+<td style="text-align: left;"><code>@US-20-AC8</code>（<code>features/tracking/service_case.feature</code>）、<code>ServiceDeadlinePolicyTest</code>・営業日カレンダーの単体と統合のテスト</td>
 </tr>
 <tr>
 <td style="text-align: left;">US-14</td>
