@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.cargotracker.tracking.infrastructure.persistence.ServiceCaseMapper">
+
+    <!-- H2 と PostgreSQL の共通の構文で書く（ADR-007）。Bolt 40-6 -->
+
+    <resultMap id="serviceCaseRow" type="com.example.cargotracker.tracking.infrastructure.persistence.ServiceCaseRow">
+        <constructor>
+            <arg column="case_number" name="caseNumber" javaType="string"/>
+            <arg column="kind" name="kind" javaType="string"/>
+            <arg column="shipper_company_id" name="shipperCompanyId" javaType="java.util.UUID"/>
+            <arg column="booking_id" name="bookingId" javaType="java.util.UUID"/>
+            <arg column="tracking_number" name="trackingNumber" javaType="string"/>
+            <arg column="cause" name="cause" javaType="string"/>
+            <arg column="priority" name="priority" javaType="string"/>
+            <arg column="department" name="department" javaType="string"/>
+            <arg column="assignee_id" name="assigneeId" javaType="java.util.UUID"/>
+            <arg column="received_at" name="receivedAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="receive_due_at" name="receiveDueAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="answer_due_at" name="answerDueAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="next_update_at" name="nextUpdateAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="old_version_ref" name="oldVersionRef" javaType="string"/>
+            <arg column="new_version_ref" name="newVersionRef" javaType="string"/>
+            <arg column="manual_source_ref" name="manualSourceRef" javaType="string"/>
+            <arg column="reconciliation_required" name="reconciliationRequired" javaType="_boolean"/>
+            <arg column="reconciliation_id" name="reconciliationId" javaType="java.util.UUID"/>
+            <arg column="acknowledged_at" name="acknowledgedAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="status" name="status" javaType="string"/>
+            <arg column="version" name="version" javaType="_long"/>
+            <arg column="created_at" name="createdAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="created_by" name="createdBy" javaType="java.util.UUID"/>
+            <arg column="updated_at" name="updatedAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="updated_by" name="updatedBy" javaType="java.util.UUID"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="sourceRow" type="com.example.cargotracker.tracking.infrastructure.persistence.ServiceCaseChildRows$SourceRow">
+        <constructor>
+            <arg column="case_number" name="caseNumber" javaType="string"/>
+            <arg column="source_no" name="sourceNo" javaType="_int"/>
+            <arg column="source_kind" name="sourceKind" javaType="string"/>
+            <arg column="source_ref" name="sourceRef" javaType="string"/>
+            <arg column="acquired_at" name="acquiredAt" javaType="java.time.OffsetDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="progressRow" type="com.example.cargotracker.tracking.infrastructure.persistence.ServiceCaseChildRows$ProgressRow">
+        <constructor>
+            <arg column="case_number" name="caseNumber" javaType="string"/>
+            <arg column="progress_no" name="progressNo" javaType="_int"/>
+            <arg column="content" name="content" javaType="string"/>
+            <arg column="next_update_at" name="nextUpdateAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="updated_by" name="updatedBy" javaType="java.util.UUID"/>
+            <arg column="updated_at" name="updatedAt" javaType="java.time.OffsetDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="answerRow" type="com.example.cargotracker.tracking.infrastructure.persistence.ServiceCaseChildRows$AnswerRow">
+        <constructor>
+            <arg column="case_number" name="caseNumber" javaType="string"/>
+            <arg column="answer_no" name="answerNo" javaType="_int"/>
+            <arg column="content" name="content" javaType="string"/>
+            <arg column="answered_by" name="answeredBy" javaType="java.util.UUID"/>
+            <arg column="answered_at" name="answeredAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="customer_response" name="customerResponse" javaType="string"/>
+            <arg column="customer_responded_at" name="customerRespondedAt" javaType="java.time.OffsetDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <insert id="insertCase">
+        INSERT INTO tracking.service_case
+            (case_number, kind, shipper_company_id, booking_id, tracking_number, cause, priority, department,
+             assignee_id, received_at, receive_due_at, answer_due_at, next_update_at, old_version_ref, new_version_ref,
+             manual_source_ref, reconciliation_required, reconciliation_id, acknowledged_at, status, version,
+             created_at, created_by, updated_at, updated_by)
+        VALUES
+            (#{caseNumber}, #{kind}, #{shipperCompanyId}, #{bookingId}, #{trackingNumber}, #{cause}, #{priority},
+             #{department}, #{assigneeId}, #{receivedAt}, #{receiveDueAt}, #{answerDueAt}, #{nextUpdateAt},
+             #{oldVersionRef}, #{newVersionRef}, #{manualSourceRef}, #{reconciliationRequired}, #{reconciliationId},
+             #{acknowledgedAt}, #{status}, #{version}, #{createdAt}, #{createdBy}, #{updatedAt}, #{updatedBy})
+    </insert>
+
+    <!-- 版が一致する行だけ。変わる列だけを更新する（種類・参照・期限・起票の入力は変えない） -->
+    <update id="updateCase">
+        UPDATE tracking.service_case
+           SET assignee_id = #{assigneeId},
+               received_at = #{receivedAt},
+               next_update_at = #{nextUpdateAt},
+               reconciliation_id = #{reconciliationId},
+               status = #{status},
+               version = version + 1,
+               updated_at = #{updatedAt},
+               updated_by = #{updatedBy}
+         WHERE case_number = #{caseNumber}
+           AND version = #{version}
+    </update>
+
+    <select id="selectCase" resultMap="serviceCaseRow">
+        SELECT case_number, kind, shipper_company_id, booking_id, tracking_number, cause, priority, department,
+               assignee_id, received_at, receive_due_at, answer_due_at, next_update_at, old_version_ref,
+               new_version_ref, manual_source_ref, reconciliation_required, reconciliation_id, acknowledged_at,
+               status, version, created_at, created_by, updated_at, updated_by
+          FROM tracking.service_case
+         WHERE case_number = #{caseNumber}
+    </select>
+
+    <insert id="insertSource">
+        INSERT INTO tracking.service_case_source (case_number, source_no, source_kind, source_ref, acquired_at)
+        VALUES (#{caseNumber}, #{sourceNo}, #{sourceKind}, #{sourceRef}, #{acquiredAt})
+    </insert>
+
+    <insert id="insertProgress">
+        INSERT INTO tracking.service_case_progress
+            (case_number, progress_no, content, next_update_at, updated_by, updated_at)
+        VALUES (#{caseNumber}, #{progressNo}, #{content}, #{nextUpdateAt}, #{updatedBy}, #{updatedAt})
+    </insert>
+
+    <insert id="insertAnswer">
+        INSERT INTO tracking.service_case_answer
+            (case_number, answer_no, content, answered_by, answered_at, customer_response, customer_responded_at)
+        VALUES (#{caseNumber}, #{answerNo}, #{content}, #{answeredBy}, #{answeredAt}, #{customerResponse},
+                #{customerRespondedAt})
+    </insert>
+
+    <update id="updateCustomerResponse">
+        UPDATE tracking.service_case_answer
+           SET customer_response = #{customerResponse},
+               customer_responded_at = #{customerRespondedAt}
+         WHERE case_number = #{caseNumber}
+           AND answer_no = #{answerNo}
+           AND customer_response IS NULL
+    </update>
+
+    <select id="selectSources" resultMap="sourceRow">
+        SELECT case_number, source_no, source_kind, source_ref, acquired_at
+          FROM tracking.service_case_source WHERE case_number = #{caseNumber} ORDER BY source_no
+    </select>
+
+    <select id="selectProgress" resultMap="progressRow">
+        SELECT case_number, progress_no, content, next_update_at, updated_by, updated_at
+          FROM tracking.service_case_progress WHERE case_number = #{caseNumber} ORDER BY progress_no
+    </select>
+
+    <select id="selectAnswers" resultMap="answerRow">
+        SELECT case_number, answer_no, content, answered_by, answered_at, customer_response, customer_responded_at
+          FROM tracking.service_case_answer WHERE case_number = #{caseNumber} ORDER BY answer_no
+    </select>
+
+    <select id="countProgress" resultType="int">
+        SELECT COUNT(*) FROM tracking.service_case_progress WHERE case_number = #{caseNumber}
+    </select>
+
+    <select id="countAnswers" resultType="int">
+        SELECT COUNT(*) FROM tracking.service_case_answer WHERE case_number = #{caseNumber}
+    </select>
+</mapper>

@@ -58,6 +58,7 @@ public final class ServiceCase {
     private List<CaseProgress> progress;
     private List<CaseAnswer> answers;
     private UtcInstant openedAt;
+    private long aggregateVersion;
 
     private ServiceCase() {}
 
@@ -86,6 +87,7 @@ public final class ServiceCase {
         this.progress = other.progress;
         this.answers = other.answers;
         this.openedAt = other.openedAt;
+        this.aggregateVersion = other.aggregateVersion;
     }
 
     /**
@@ -137,6 +139,7 @@ public final class ServiceCase {
         serviceCase.progress = List.of();
         serviceCase.answers = List.of();
         serviceCase.openedAt = openedAt;
+        serviceCase.aggregateVersion = 0;
         return new ServiceCaseOpening.Opened(serviceCase);
     }
 
@@ -444,5 +447,69 @@ public final class ServiceCase {
 
     public UtcInstant openedAt() {
         return openedAt;
+    }
+
+    /** 楽観ロックの版（保存された版。起票した案件は 0。更新のたびにリポジトリが 1 増やす）。 */
+    public long aggregateVersion() {
+        return aggregateVersion;
+    }
+
+    /**
+     * 保存されている状態から組み立てる（リポジトリが使う。Bolt 40-6）。起票の入力の確かめは通さず、保存した値をそのまま持つ。
+     */
+    @SuppressWarnings("java:S107") // 保存されている状態から組み立てるため、集約の値をすべて受け取る
+    public static ServiceCase reconstitute(
+            CaseNumber number,
+            ServiceCaseKind kind,
+            ServicePriority priority,
+            String cause,
+            String department,
+            Optional<CompanyId> shipperCompanyId,
+            Optional<UUID> bookingId,
+            Optional<TrackingNumber> trackingNumber,
+            List<Source> sources,
+            Optional<String> oldVersionRef,
+            Optional<String> newVersionRef,
+            Optional<String> manualSourceRef,
+            boolean reconciliationRequired,
+            Optional<UUID> reconciliationId,
+            Optional<UserId> assignee,
+            Optional<UtcInstant> receivedAt,
+            Optional<UtcInstant> acknowledgedAt,
+            UtcInstant receiveDueAt,
+            UtcInstant answerDueAt,
+            UtcInstant nextUpdateAt,
+            ServiceCaseStatus status,
+            List<CaseProgress> progress,
+            List<CaseAnswer> answers,
+            UtcInstant openedAt,
+            long aggregateVersion) {
+        ServiceCase serviceCase = new ServiceCase();
+        serviceCase.number = Objects.requireNonNull(number, "number");
+        serviceCase.kind = Objects.requireNonNull(kind, "kind");
+        serviceCase.priority = Objects.requireNonNull(priority, "priority");
+        serviceCase.cause = Objects.requireNonNull(cause, "cause");
+        serviceCase.department = Objects.requireNonNull(department, "department");
+        serviceCase.shipperCompanyId = Objects.requireNonNull(shipperCompanyId, "shipperCompanyId");
+        serviceCase.bookingId = Objects.requireNonNull(bookingId, "bookingId");
+        serviceCase.trackingNumber = Objects.requireNonNull(trackingNumber, "trackingNumber");
+        serviceCase.sources = List.copyOf(sources);
+        serviceCase.oldVersionRef = Objects.requireNonNull(oldVersionRef, "oldVersionRef");
+        serviceCase.newVersionRef = Objects.requireNonNull(newVersionRef, "newVersionRef");
+        serviceCase.manualSourceRef = Objects.requireNonNull(manualSourceRef, "manualSourceRef");
+        serviceCase.reconciliationRequired = reconciliationRequired;
+        serviceCase.reconciliationId = Objects.requireNonNull(reconciliationId, "reconciliationId");
+        serviceCase.assignee = Objects.requireNonNull(assignee, "assignee");
+        serviceCase.receivedAt = Objects.requireNonNull(receivedAt, "receivedAt");
+        serviceCase.acknowledgedAt = Objects.requireNonNull(acknowledgedAt, "acknowledgedAt");
+        serviceCase.receiveDueAt = Objects.requireNonNull(receiveDueAt, "receiveDueAt");
+        serviceCase.answerDueAt = Objects.requireNonNull(answerDueAt, "answerDueAt");
+        serviceCase.nextUpdateAt = Objects.requireNonNull(nextUpdateAt, "nextUpdateAt");
+        serviceCase.status = Objects.requireNonNull(status, "status");
+        serviceCase.progress = List.copyOf(progress);
+        serviceCase.answers = List.copyOf(answers);
+        serviceCase.openedAt = Objects.requireNonNull(openedAt, "openedAt");
+        serviceCase.aggregateVersion = aggregateVersion;
+        return serviceCase;
     }
 }

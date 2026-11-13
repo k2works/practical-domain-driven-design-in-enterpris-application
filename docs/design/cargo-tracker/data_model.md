@@ -750,6 +750,7 @@ entity "service_case_source\n参照した出典" as scs {
   --
   * source_kind : VARCHAR(30)
   * source_ref : VARCHAR(200)
+  * acquired_at : TIMESTAMPTZ
 }
 entity "service_case_progress\n進捗" as scp {
   * case_number : VARCHAR(20) <<PK,FK>>
@@ -809,7 +810,7 @@ sc ||--o{ sca
 | `milestone` | UK（`tracking_number`、`source_kind`、`source_ref`）`uk_milestone_source`。`kind` IN（`PICKUP`、`RECEIPT_AT_ORIGIN`、`DEPARTURE`、`TRANSSHIPMENT`、`ARRIVAL`、`DELIVERY`）。`source_kind` は航海と同じ 4 値。`state` IN（`DRAFT`、`ADOPTED`、`UNDER_REVIEW`、`RETAINED_ONLY`）。DELETE の権限なし（表の印 `[no-delete]`）。Bolt 26b は使う列だけで作った（`revised_by`・`revised_at` は下書きの修正の W12（US-13）、`shown_to_customer` は顧客への表示の US-11・US-13 で足す）。実績は追跡記録の `update` で、まだ表にない実績番号だけを INSERT する。Bolt 39g で外部の識別の 3 列（`data_source_id`・`external_id`・`published_at`。NULL を許す）と CHECK `ck_milestone_external_origin`（`source_kind = 'EXTERNAL_RECORD'` なら 3 列とも値を持ち、それ以外は 3 列とも NULL）を足した。Bolt 39gb で採用した人と時刻の 2 列（`adopted_by`・`adopted_at`。NULL を許す）と CHECK `ck_milestone_adoption`（`source_kind = 'EXTERNAL_RECORD'` かつ `state IN ('ADOPTED', 'UNDER_REVIEW')` なら 2 列とも値を持ち、それ以外は 2 列とも NULL）を足した | T-INV-01〜03、T-INV-05 |
 | `rejected_milestone` | 主キー `id`。UK（`source_kind`、`source_ref`）`uk_rejected_milestone_source`。`reason` IN（`UNKNOWN_TRACKING_NUMBER`、`BOOKING_CANCELLED`）。`tracking_number` に外部キーはない（知らない追跡番号を残すため）。追記専用（表の印 `[append-only]`、UPDATE・DELETE の権限なし。Bolt 39g） | T-INV-04 |
 | `correction` | `status` IN（`PENDING_APPROVAL`、`APPLIED`、`REJECTED`）。`approved_by` は `registered_by` と異なる（`CHECK`） | T-INV-06 |
-| `service_case` | `kind` IN（`CUSTOMER_INQUIRY`、`QUOTATION_CONSULTATION`、`AMENDMENT`、`REDESIGN`、`EXTERNAL_OUTAGE`、`REJECTED_MILESTONE`、`SAGA_FAILURE`）。`status` IN（`RECEIVED`、`ESCALATED`、`IN_PROGRESS`、`ANSWERED`、`CLOSED`、`DUPLICATE_CLOSED`）。`shipper_company_id` で荷主の照会範囲を限る。`acknowledged_at` は営業時間外の優先度高の自動受付の時刻 | SC-INV-01〜05 |
+| `service_case` | `kind` IN（`CUSTOMER_INQUIRY`、`QUOTATION_CONSULTATION`、`AMENDMENT`、`REDESIGN`、`EXTERNAL_OUTAGE`、`REJECTED_MILESTONE`、`SAGA_FAILURE`）。`status` IN（`RECEIVED`、`ESCALATED`、`IN_PROGRESS`、`ANSWERED`、`CLOSED`、`DUPLICATE_CLOSED`）。`shipper_company_id` で荷主の照会範囲を限る。`acknowledged_at` は営業時間外の優先度高の自動受付の時刻 | SC-INV-01〜05 | **Bolt 40-6 で作った**（`V20261118100000`。`kind`・`status`・`priority` の CHECK、対応中・回答済み・終結は担当者と受領時刻、終結かつ復旧照合が必要なら照合 ID（SC-INV-02）、照合 ID があれば復旧照合が必要の CHECK。他のコンテキストの参照は外部キーを持たない）。子の `service_case_source` は共有カーネルの `Source` が取得時刻を必須にするため `acquired_at`（NOT NULL）を足した（2026-11-13 に人が承認）。進捗と回答は追記専用。受付番号は `service_case_number_counter`（年ごとの連番。`SC-YYYY-NNNN`）で採番する。
 | `inquiry_record` | `channel` IN（`WEB_SELF`、`WEB_INQUIRY`、`PHONE`、`EMAIL`）。`inquirer_kind` IN（`SHIPPER`、`CONSIGNEE`）。`escalated` は有人対応へ移ったか | IR-INV-01〜02、KPI-02 |
 | `business_calendar` | 日ごとの営業日・営業時間。年次で翌年分を登録する | SC-INV-04 | **Bolt 40-4 で作った**（`V20261117100000`。`business_day` が真なら `open_time < close_time`、偽なら時刻なしの CHECK `ck_business_calendar_hours`。2026・2027 年の全日の見本を入れた。日本の祝日は内閣府の定めから作った見本で業務責任者の確認を要する。台帳 D-157）。
 

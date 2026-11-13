@@ -20,4 +20,12 @@ public record CaseNumber(String value) {
             throw new IllegalArgumentException("受付番号は空でなく " + MAX_LENGTH + " 文字まで: " + value);
         }
     }
+
+    /** 年と連番から受付番号を作る（{@code SC-YYYY-NNNN}。連番は 4 桁に満たなければ 0 で埋める）。 */
+    public static CaseNumber of(int year, int serial) {
+        if (year < 1 || serial < 1) {
+            throw new IllegalArgumentException("年と連番は 1 以上: " + year + ", " + serial);
+        }
+        return new CaseNumber(String.format("SC-%04d-%04d", year, serial));
+    }
 }
