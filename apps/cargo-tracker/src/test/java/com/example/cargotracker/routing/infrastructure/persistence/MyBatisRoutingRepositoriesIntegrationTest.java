@@ -1198,14 +1198,46 @@ class MyBatisRoutingRepositoriesIntegrationTest {
             assertThatThrownBy(() -> repository.findByNumber(number)).isInstanceOf(IllegalArgumentException.class);
         }
 
+        /** 区分ごとに持つ列（Bolt 40-1 の M6。列の記号: d 期限、p 港、r 必要接続時間、v 航海番号、f 鮮度の許容時間、c 貨物種別）。 */
+        private static final java.util.Map<String, Set<String>> REQUIRED_COLUMNS = java.util.Map.of(
+                "DEADLINE_EXCEEDED", Set.of("d"),
+                "CONNECTION_TOO_SHORT", Set.of("p", "r"),
+                "NOT_CONNECTABLE", Set.of("p"),
+                "INFO_INSUFFICIENT", Set.of("v", "f"),
+                "CARGO_NOT_SUPPORTED", Set.of("c"));
+
+        private static final Set<String> ALL_COLUMNS = Set.of("d", "p", "r", "v", "f", "c");
+
+        /**
+         * 区分 × 持ってはいけない列（正しい組にその列を 1 つ足す）と、区分 × 必須の列の NULL（正しい組からその列を 1 つ抜く）の全組。CHECK の
+         * {@code IS NULL} の項と {@code IS NOT NULL} の項を 1 つずつ固定する。
+         */
         static java.util.stream.Stream<org.junit.jupiter.params.provider.Arguments> wrongCombinations() {
-            return java.util.stream.Stream.of(
-                    org.junit.jupiter.params.provider.Arguments.of("期限超過に港がある", "DEADLINE_EXCEEDED", Set.of("d", "p")),
-                    org.junit.jupiter.params.provider.Arguments.of("接続不足に接続時間がない", "CONNECTION_TOO_SHORT", Set.of("p")),
-                    org.junit.jupiter.params.provider.Arguments.of("接続できないに港がない", "NOT_CONNECTABLE", Set.of()),
-                    org.junit.jupiter.params.provider.Arguments.of("情報不足に航海番号がない", "INFO_INSUFFICIENT", Set.of("f")),
-                    org.junit.jupiter.params.provider.Arguments.of("貨物種別に種別がない", "CARGO_NOT_SUPPORTED", Set.of()),
-                    org.junit.jupiter.params.provider.Arguments.of("すべて NULL", "DEADLINE_EXCEEDED", Set.of()));
+            return REQUIRED_COLUMNS.entrySet().stream().flatMap(entry -> {
+                String code = entry.getKey();
+                Set<String> required = entry.getValue();
+                java.util.stream.Stream<org.junit.jupiter.params.provider.Arguments> extra = ALL_COLUMNS.stream()
+                        .filter(column -> !required.contains(column))
+                        .map(column -> {
+                            Set<String> set = new java.util.HashSet<>(required);
+                            set.add(column);
+                            return org.junit.jupiter.params.provider.Arguments.of(
+                                    code + " に持ってはいけない列 " + column + " がある", code, Set.copyOf(set));
+                        });
+                java.util.stream.Stream<org.junit.jupiter.params.provider.Arguments> missing = required.stream()
+                        .map(column -> {
+                            Set<String> set = new java.util.HashSet<>(required);
+                            set.remove(column);
+                            return org.junit.jupiter.params.provider.Arguments.of(
+                                    code + " の必須の列 " + column + " が NULL", code, Set.copyOf(set));
+                        });
+                return java.util.stream.Stream.concat(extra, missing);
+            });
+        }
+
+        static java.util.stream.Stream<org.junit.jupiter.params.provider.Arguments> rightCombinations() {
+            return REQUIRED_COLUMNS.entrySet().stream()
+                    .map(entry -> org.junit.jupiter.params.provider.Arguments.of(entry.getKey(), entry.getValue()));
         }
 
         private int insertReason(String reasonCode, UUID caseId, int reasonNo, Set<String> set) {
@@ -1238,12 +1270,12 @@ class MyBatisRoutingRepositoriesIntegrationTest {
                     .isInstanceOf(DataIntegrityViolationException.class);
         }
 
-        @Test
-        void 正しい組の行は入る() {
+        @ParameterizedTest(name = "{0} の正しい組の行は入る")
+        @org.junit.jupiter.params.provider.MethodSource("rightCombinations")
+        void 正しい組の行は入る(String reasonCode, Set<String> set) {
             RoutingCase saved = savedCalculated(RouteCargoCategory.GENERAL);
 
-            assertThat(insertReason("CONNECTION_TOO_SHORT", saved.id().value(), 99, Set.of("p", "r")))
-                    .isEqualTo(1);
+            assertThat(insertReason(reasonCode, saved.id().value(), 99, set)).isEqualTo(1);
         }
 
         @Test
