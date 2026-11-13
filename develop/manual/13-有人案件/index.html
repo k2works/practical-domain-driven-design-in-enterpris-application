@@ -11409,6 +11409,76 @@
   
   
     <li class="md-nav__item">
+      <a href="../../development/cargo-tracker/bolt_40-12_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 40-12 計画
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development/cargo-tracker/bolt_40-12_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 40-12 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../development/cargo-tracker/bolt_40-1_plan/" class="md-nav__link">
         
   
@@ -12749,10 +12819,27 @@
     </span>
   </a>
   
-</li>
+    <nav class="md-nav" aria-label="操作手順">
+      <ul class="md-nav__list">
         
           <li class="md-nav__item">
   <a href="#_10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        受領した後の操作
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_11" class="md-nav__link">
     <span class="md-ellipsis">
       
         注意・補足
@@ -17359,7 +17446,7 @@
 
 
 <h1 id="13">13 章 有人案件<a class="headerlink" href="#13" title="Permanent link">&para;</a></h1>
-<p>顧客からの照会や、自動の処理では扱えない例外を、担当者が受け付けて対応する案件を「有人案件」と呼びます。本章は、有人案件を一覧で確かめ、詳細を開いて受領する画面を説明します。進捗の更新・回答の記録・終結・再開の操作は、これから追加します。</p>
+<p>顧客からの照会や、自動の処理では扱えない例外を、担当者が受け付けて対応する案件を「有人案件」と呼びます。本章は、有人案件を一覧で確かめ、詳細を開いて受領し、進捗の更新・回答の記録・終結・再開まで進める画面を説明します。</p>
 <p>画面の開き方: ナビゲーションの「有人案件」（URL: <code>/staff/service-cases</code>）。カスタマーサポート・営業担当者・経路設計者・追跡管理者・データ責任者が使えます。システム管理者・監査担当者・荷主担当者には開けません（権限がない画面と同じ表示になります）。</p>
 <table>
 <thead>
@@ -17515,7 +17602,45 @@
 <li>「SC-… を受領する」をクリックします</li>
 <li>「SC-… を受領しました。対応中にしました。」と示され、担当があなたになります</li>
 </ol>
-<h3 id="_10">注意・補足<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h3>
+<h4 id="_10">受領した後の操作<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h4>
+<p>案件の状態によって、詳細に出る操作が変わります。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">状態</th>
+<th style="text-align: left;">出る操作</th>
+<th style="text-align: left;">結果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">対応中</td>
+<td style="text-align: left;">「進捗を更新する」（進捗の内容。次回更新日時は日本時間で <code>2026-11-16 18:00</code> の形。空なら変えません）</td>
+<td style="text-align: left;">「進捗を更新しました。」。進捗の履歴に追記され、次回更新日時を入れたときは「次回更新」が変わります</td>
+</tr>
+<tr>
+<td style="text-align: left;">対応中</td>
+<td style="text-align: left;">「回答を記録する」（回答の内容）</td>
+<td style="text-align: left;">「回答を記録しました。回答済みにしました。」。状態が回答済みになります</td>
+</tr>
+<tr>
+<td style="text-align: left;">回答済み</td>
+<td style="text-align: left;">「SC-… を終結する」</td>
+<td style="text-align: left;">「終結しました。」。状態が終結になります</td>
+</tr>
+<tr>
+<td style="text-align: left;">終結</td>
+<td style="text-align: left;">「SC-… を再開する」（顧客の回答。未解決の内容）</td>
+<td style="text-align: left;">「再開しました。対応中にしました。」。受付番号・進捗・過去の回答はそのままで、顧客の回答が最後の回答に記録されます</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>外部停止などの復旧照合が必要な案件は、照合が完了するまで終結できません。「復旧照合が完了していないため、終結できません。」と示されます</li>
+<li>内容が空のとき、できない状態のとき（ほかの人が先に操作したときなど）、競合したときは、警告が示されます。最新の状態を確かめてから、もう一度操作してください</li>
+<li>状態が「上位対応中」の案件には、「受領期限を過ぎたため、上位の運用責任者へ回しています。」と示されます。受領すると対応中になります</li>
+</ul>
+<h3 id="_11">注意・補足<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h3>
 <ul>
 <li>受領できるのは、受付済みと上位対応中の案件だけです。ほかの人が先に受領していたときは、「この案件は受領できる状態ではありません（今の状態: 対応中）。最新の状態を確かめてください。」と示されます</li>
 <li>ほかの人の更新が先に保存されたときは、「ほかの更新が先にこの案件を変更しました。最新の状態を確かめ、必要なら、もう一度受領してください。」と示されます。画面を開き直して確かめてから、もう一度操作してください</li>
