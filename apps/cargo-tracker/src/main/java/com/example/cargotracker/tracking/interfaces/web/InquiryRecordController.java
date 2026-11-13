@@ -67,7 +67,7 @@ public class InquiryRecordController {
      * （存在を明かさない）。権限のない役割は 403。
      */
     @PostMapping
-    public String record(
+    public String recordInquiry(
             @ModelAttribute("inquiryForm") InquiryForm form,
             BindingResult bindingResult,
             AuthenticatedActor actor,
@@ -98,7 +98,7 @@ public class InquiryRecordController {
             redirect.addFlashAttribute(RESULT, "照会を記録しました。");
             return;
         }
-        CaseNumber number = recorded.caseNumber().get();
+        CaseNumber number = recorded.caseNumber().orElseThrow();
         if (recorded.existingCase()) {
             redirect.addFlashAttribute(RESULT, "照会を記録しました。未終結の同じ内容の有人案件 " + number.value() + " があるため、その案件に引き継ぎました。");
         } else {

@@ -124,14 +124,14 @@ class InquiryRecordingServiceTest {
 
         assertThat(outcome).isInstanceOf(RecordInquiryOutcome.Recorded.class);
         assertThat(((RecordInquiryOutcome.Recorded) outcome).caseNumber()).isEmpty();
-        assertThat(saved).singleElement().satisfies(record -> {
-            assertThat(record.channel()).isEqualTo(InquiryChannel.PHONE);
-            assertThat(record.shipperCompanyId()).isEqualTo(TrackingFixture.SHIPPER);
-            assertThat(record.trackingNumber()).contains(TRACKING);
-            assertThat(record.inquirerKind()).isEqualTo(InquirerKind.SHIPPER);
-            assertThat(record.receivedAt()).isEqualTo(new UtcInstant(NOW));
-            assertThat(record.escalated()).isFalse();
-            assertThat(record.recordedBy()).contains(SUPPORT);
+        assertThat(saved).singleElement().satisfies(inquiry -> {
+            assertThat(inquiry.channel()).isEqualTo(InquiryChannel.PHONE);
+            assertThat(inquiry.shipperCompanyId()).isEqualTo(TrackingFixture.SHIPPER);
+            assertThat(inquiry.trackingNumber()).contains(TRACKING);
+            assertThat(inquiry.inquirerKind()).isEqualTo(InquirerKind.SHIPPER);
+            assertThat(inquiry.receivedAt()).isEqualTo(new UtcInstant(NOW));
+            assertThat(inquiry.escalated()).isFalse();
+            assertThat(inquiry.recordedBy()).contains(SUPPORT);
         });
         assertThat(cases.cases).isEmpty();
     }
@@ -167,11 +167,11 @@ class InquiryRecordingServiceTest {
                     .singleElement()
                     .satisfies(source -> assertThat(source.reference()).isEqualTo("現場記録 F-118"));
         });
-        assertThat(saved).singleElement().satisfies(record -> {
-            assertThat(record.escalated()).isTrue();
-            assertThat(record.caseNumber()).contains(recorded.caseNumber().orElseThrow());
-            assertThat(record.inquirerKind()).isEqualTo(InquirerKind.CONSIGNEE);
-            assertThat(record.receivedAt()).isEqualTo(new UtcInstant(Instant.parse("2026-11-16T00:30:00Z")));
+        assertThat(saved).singleElement().satisfies(inquiry -> {
+            assertThat(inquiry.escalated()).isTrue();
+            assertThat(inquiry.caseNumber()).contains(recorded.caseNumber().orElseThrow());
+            assertThat(inquiry.inquirerKind()).isEqualTo(InquirerKind.CONSIGNEE);
+            assertThat(inquiry.receivedAt()).isEqualTo(new UtcInstant(Instant.parse("2026-11-16T00:30:00Z")));
         });
     }
 
@@ -189,7 +189,7 @@ class InquiryRecordingServiceTest {
         assertThat(second.existingCase()).isTrue();
         assertThat(saved)
                 .hasSize(2)
-                .allSatisfy(record -> assertThat(record.escalated()).isTrue());
+                .allSatisfy(inquiry -> assertThat(inquiry.escalated()).isTrue());
     }
 
     @Test
