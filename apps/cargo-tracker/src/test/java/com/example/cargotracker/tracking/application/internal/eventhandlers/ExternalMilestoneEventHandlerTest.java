@@ -77,11 +77,11 @@ class ExternalMilestoneEventHandlerTest {
     private RuntimeException openFailure;
 
     private final ExternalMilestoneEventHandler handler = new ExternalMilestoneEventHandler(
-            repository, rejected, Clock.fixed(NOW, ZoneOffset.UTC), (rejectedMilestone, record, operator) -> {
+            repository, rejected, Clock.fixed(NOW, ZoneOffset.UTC), (rejectedMilestone, found, operator) -> {
                 if (openFailure != null) {
                     throw openFailure;
                 }
-                opened.add(rejectedMilestone.reason() + "/" + record.isPresent() + "/" + operator.value());
+                opened.add(rejectedMilestone.reason() + "/" + found.isPresent() + "/" + operator.value());
             });
     private final ListAppender<ILoggingEvent> logs = new ListAppender<>();
     private final Logger logger = (Logger) LoggerFactory.getLogger(ExternalMilestoneEventHandler.class);
@@ -341,7 +341,9 @@ class ExternalMilestoneEventHandlerTest {
         void 行40_13d_起票の失敗は例外のまま上げる_トランザクションに任せる() {
             openFailure = new IllegalStateException("営業カレンダーが未登録");
 
-            assertThatThrownBy(() -> handler.on(event(UNKNOWN_NUMBER)))
+            MilestoneAdoptedValueAccepted unknown = event(UNKNOWN_NUMBER);
+
+            assertThatThrownBy(() -> handler.on(unknown))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("営業カレンダー");
         }

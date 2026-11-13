@@ -288,8 +288,7 @@ public class AcceptanceTestConfiguration {
                 InMemoryRejectedMilestoneRepository rejectedMilestones,
                 MutableClock clock) {
             // 有人例外案件の起票は RejectedMilestoneCaseOpenerTest と統合の層で確かめる（Bolt 40-13）。業務ルール層のシナリオは拒否の記録まで
-            return new ExternalMilestoneEventHandler(
-                    repository, rejectedMilestones, clock, (r, record, operator) -> {});
+            return new ExternalMilestoneEventHandler(repository, rejectedMilestones, clock, (r, found, operator) -> {});
         }
 
         /** 外部原本の主要実績が届くこと（DE-13 への組み立て。ステップ定義は他のコンテキストのイベントに依存しない。AT-05）。 */

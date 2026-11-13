@@ -162,10 +162,9 @@ class RejectedMilestoneCaseOpenerTest {
                 },
                 Clock.fixed(NOW, ZoneOffset.UTC)));
 
-        assertThatThrownBy(() -> opener.open(
-                        rejected(MilestoneRejectionReason.UNKNOWN_TRACKING_NUMBER, "CTZZZZZZZZZZZZ"),
-                        Optional.empty(),
-                        STEWARD))
+        RejectedMilestone rejected = rejected(MilestoneRejectionReason.UNKNOWN_TRACKING_NUMBER, "CTZZZZZZZZZZZZ");
+
+        assertThatThrownBy(() -> opener.open(rejected, Optional.empty(), STEWARD))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("営業カレンダー");
         assertThat(repository.cases).isEmpty();
