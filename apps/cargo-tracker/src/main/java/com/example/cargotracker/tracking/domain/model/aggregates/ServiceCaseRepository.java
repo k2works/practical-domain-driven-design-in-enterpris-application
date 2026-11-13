@@ -2,7 +2,9 @@ package com.example.cargotracker.tracking.domain.model.aggregates;
 
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.UserId;
+import com.example.cargotracker.shared.domain.UtcInstant;
 import com.example.cargotracker.tracking.domain.model.valueobjects.CaseNumber;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -26,6 +28,14 @@ public interface ServiceCaseRepository {
      */
     Optional<CaseNumber> findUnclosedDuplicate(
             Optional<CompanyId> shipperCompanyId, Optional<UUID> bookingId, String cause);
+
+    /**
+     * 受領期限を過ぎた案件（受付済みで期限を厳密に過ぎたものと、上位対応中）を、期限の古い順に返す（Bolt 40-9。S-14 の期限超過と、W10 の通知が使う）。
+     *
+     * @param now 判定の時刻
+     * @param limit 返す最大の件数
+     */
+    List<ServiceCase> findReceiptOverdue(UtcInstant now, int limit);
 
     /** 受付番号で案件を読む。 */
     Optional<ServiceCase> findByNumber(CaseNumber number);

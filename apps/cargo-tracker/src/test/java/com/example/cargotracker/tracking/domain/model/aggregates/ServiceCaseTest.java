@@ -395,6 +395,40 @@ class ServiceCaseTest {
         assertThatThrownBy(() -> received.reopen("未解決", now)).isInstanceOf(IllegalStateException.class);
     }
 
+    // --- 行 14〜15: 受領期限の超過の判定と依頼元に示す内容（Bolt 40-9。読むときの判定） ---
+
+    @Test
+    void 行14_受領期限を厳密に過ぎた受付済みと上位対応中は期限超過() {
+        ServiceCase received = opened(ServiceCaseKind.CUSTOMER_INQUIRY);
+
+        assertThat(received.isReceiptOverdue(at("2026-11-16T05:00:00Z"))).isFalse();
+        assertThat(received.isReceiptOverdue(at("2026-11-16T05:00:01Z"))).isTrue();
+        assertThat(received.escalate(at("2026-11-16T06:00:00Z"))
+                        .orElseThrow()
+                        .isReceiptOverdue(at("2026-11-16T06:00:00Z")))
+                .isTrue();
+    }
+
+    @Test
+    void 行14_受領した案件は期限を過ぎても期限超過にしない() {
+        assertThat(inProgress().isReceiptOverdue(at("2026-12-01T00:00:00Z"))).isFalse();
+    }
+
+    @Test
+    void 行15_担当が決まっていない案件は依頼元に担当未確定と次回更新日時を示す() {
+        ServiceCase received = opened(ServiceCaseKind.CUSTOMER_INQUIRY);
+        ServiceCase escalated = received.escalate(at("2026-11-16T06:00:00Z")).orElseThrow();
+
+        assertThat(received.requesterNotice().assigneePending()).isTrue();
+        assertThat(escalated.requesterNotice().assigneePending()).isTrue();
+        assertThat(received.requesterNotice().nextUpdateAt()).isEqualTo(received.nextUpdateAt());
+    }
+
+    @Test
+    void 行15_受領した案件は担当未確定でない() {
+        assertThat(inProgress().requesterNotice().assigneePending()).isFalse();
+    }
+
     // --- 行 13: 回答期限の変更（Bolt 40-8。UC-20 の期限を超える場合） ---
 
     @Test

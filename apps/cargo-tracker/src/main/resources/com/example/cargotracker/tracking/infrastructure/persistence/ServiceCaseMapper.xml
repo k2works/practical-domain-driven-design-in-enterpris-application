@@ -170,4 +170,12 @@
          ORDER BY created_at, case_number
          FETCH FIRST 1 ROWS ONLY
     </select>
+    <!-- 受領期限を過ぎた案件（受付済みで期限を厳密に過ぎたものと、上位対応中）の受付番号。期限の古い順（Bolt 40-9） -->
+    <select id="selectReceiptOverdue" resultType="string">
+        SELECT case_number FROM tracking.service_case
+         WHERE status = 'ESCALATED'
+            OR (status = 'RECEIVED' AND receive_due_at &lt; #{now})
+         ORDER BY receive_due_at, case_number
+         FETCH FIRST #{limit} ROWS ONLY
+    </select>
 </mapper>

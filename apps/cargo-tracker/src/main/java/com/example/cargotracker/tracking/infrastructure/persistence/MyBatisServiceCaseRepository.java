@@ -84,6 +84,13 @@ public class MyBatisServiceCaseRepository implements ServiceCaseRepository {
     }
 
     @Override
+    public List<ServiceCase> findReceiptOverdue(UtcInstant now, int limit) {
+        return mapper.selectReceiptOverdue(offset(now), limit).stream()
+                .map(number -> findByNumber(new CaseNumber(number)).orElseThrow())
+                .toList();
+    }
+
+    @Override
     public Optional<ServiceCase> findByNumber(CaseNumber number) {
         return mapper.selectCase(number.value()).map(row -> toAggregate(row, number));
     }

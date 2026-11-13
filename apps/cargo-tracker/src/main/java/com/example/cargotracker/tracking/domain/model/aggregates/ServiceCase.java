@@ -9,6 +9,7 @@ import com.example.cargotracker.tracking.domain.model.entities.CaseAnswer;
 import com.example.cargotracker.tracking.domain.model.entities.CaseProgress;
 import com.example.cargotracker.tracking.domain.model.valueobjects.CaseNumber;
 import com.example.cargotracker.tracking.domain.model.valueobjects.MissingItem;
+import com.example.cargotracker.tracking.domain.model.valueobjects.RequesterNotice;
 import com.example.cargotracker.tracking.domain.model.valueobjects.ServiceCaseDraft;
 import com.example.cargotracker.tracking.domain.model.valueobjects.ServiceCaseKind;
 import com.example.cargotracker.tracking.domain.model.valueobjects.ServiceCaseStatus;
@@ -258,6 +259,24 @@ public final class ServiceCase {
             next.nextUpdateAt = nextUpdate;
         }
         return next;
+    }
+
+    /**
+     * 受領期限を超過しているか（読むときの判定。Bolt 40-9。Bolt 39g4 の鮮度超過と同じ方針）。受付済みで期限を厳密に過ぎたものと、すでに上位対応中のもの。
+     * 受領した案件は期限を過ぎても超過にしない。
+     *
+     * @param now 判定の時刻
+     */
+    public boolean isReceiptOverdue(UtcInstant now) {
+        Objects.requireNonNull(now, "now");
+        return status == ServiceCaseStatus.ESCALATED
+                || (status == ServiceCaseStatus.RECEIVED && now.instant().isAfter(receiveDueAt.instant()));
+    }
+
+    /** 依頼元に示す内容（担当未確定か、次回更新日時）。担当未確定は受領する前（受付済み・上位対応中）。 */
+    public RequesterNotice requesterNotice() {
+        boolean pending = status == ServiceCaseStatus.RECEIVED || status == ServiceCaseStatus.ESCALATED;
+        return new RequesterNotice(pending, nextUpdateAt);
     }
 
     /**

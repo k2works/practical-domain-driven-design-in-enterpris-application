@@ -4,6 +4,7 @@ import com.example.cargotracker.booking.interfaces.api.TrackingStartNotification
 import com.example.cargotracker.booking.interfaces.api.TransportPhaseNotification;
 import com.example.cargotracker.routing.interfaces.api.RouteVersionLegQuery;
 import com.example.cargotracker.tracking.application.internal.commandservices.ServiceCaseActionService;
+import com.example.cargotracker.tracking.application.internal.commandservices.ServiceCaseAuthorization;
 import com.example.cargotracker.tracking.application.internal.commandservices.ServiceCaseCommandService;
 import com.example.cargotracker.tracking.application.internal.commandservices.TrackingRecordCommandService;
 import com.example.cargotracker.tracking.application.internal.eventhandlers.BookingTrackingStartNotificationEventHandler;
@@ -15,6 +16,7 @@ import com.example.cargotracker.tracking.application.internal.outboundservices.a
 import com.example.cargotracker.tracking.application.internal.outboundservices.acl.BookingTransportPhases;
 import com.example.cargotracker.tracking.application.internal.outboundservices.acl.RoutingScheduledLegs;
 import com.example.cargotracker.tracking.application.internal.queryservices.CustomerTrackingQueryService;
+import com.example.cargotracker.tracking.application.internal.queryservices.ServiceCaseOverdueQueryService;
 import com.example.cargotracker.tracking.application.internal.queryservices.TrackingRecordQueryService;
 import com.example.cargotracker.tracking.application.internal.queryservices.TrackingRecordScope;
 import com.example.cargotracker.tracking.domain.model.aggregates.BusinessCalendarRepository;
@@ -106,6 +108,12 @@ public class TrackingConfiguration {
     @Bean
     ServiceCaseActionService serviceCaseActionService(ServiceCaseRepository repository, Clock clock) {
         return new ServiceCaseActionService(repository, clock);
+    }
+
+    /** 受領期限を過ぎた有人案件の照会（US-20 AC3、SVC-04。読むときの判定。Bolt 40-9）。 */
+    @Bean
+    ServiceCaseOverdueQueryService serviceCaseOverdueQueryService(ServiceCaseRepository repository, Clock clock) {
+        return new ServiceCaseOverdueQueryService(repository, clock, ServiceCaseAuthorization::canOperate);
     }
 
     /** 追跡管理者による主要実績の登録（US-12。Bolt 26b）。 */

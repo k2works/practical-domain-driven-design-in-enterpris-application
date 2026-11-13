@@ -9,10 +9,9 @@ import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import com.example.cargotracker.tracking.application.internal.commands.OpenServiceCaseCommand;
 import com.example.cargotracker.tracking.application.internal.commands.ReceiveServiceCaseCommand;
-import com.example.cargotracker.tracking.domain.model.aggregates.ConcurrentServiceCaseUpdateException;
+import com.example.cargotracker.tracking.domain.model.aggregates.CountingServiceCaseNumberIssuer;
+import com.example.cargotracker.tracking.domain.model.aggregates.InMemoryServiceCaseRepository;
 import com.example.cargotracker.tracking.domain.model.aggregates.ServiceCase;
-import com.example.cargotracker.tracking.domain.model.aggregates.ServiceCaseNumberIssuer;
-import com.example.cargotracker.tracking.domain.model.aggregates.ServiceCaseRepository;
 import com.example.cargotracker.tracking.domain.model.valueobjects.BusinessCalendar;
 import com.example.cargotracker.tracking.domain.model.valueobjects.BusinessDay;
 import com.example.cargotracker.tracking.domain.model.valueobjects.CaseNumber;
@@ -29,10 +28,7 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Stream;
@@ -55,8 +51,8 @@ class ServiceCaseCommandServiceTest {
     /** 月 2026-11-16 19:00 JST（営業時間外）。 */
     private static final Instant MONDAY_19 = Instant.parse("2026-11-16T10:00:00Z");
 
-    private final InMemoryRepository repository = new InMemoryRepository();
-    private final CountingIssuer issuer = new CountingIssuer();
+    private final InMemoryServiceCaseRepository repository = new InMemoryServiceCaseRepository();
+    private final CountingServiceCaseNumberIssuer issuer = new CountingServiceCaseNumberIssuer();
 
     private static AuthenticatedActor staff(Role role) {
         return new AuthenticatedActor(
@@ -310,58 +306,5 @@ class ServiceCaseCommandServiceTest {
                 service(MONDAY_10).receive(staff(Role.CUSTOMER_SUPPORT), new ReceiveServiceCaseCommand(number));
 
         assertThat(outcome).isEqualTo(new ReceiveServiceCaseOutcome.Conflict());
-    }
-
-    /** 保存を覚えるだけの代役。 */
-    static final class InMemoryRepository implements ServiceCaseRepository {
-        final Map<String, ServiceCase> cases = new HashMap<>();
-        boolean failNextUpdate;
-
-        void markDuplicateClosed(CaseNumber number) {
-            cases.put(number.value(), cases.get(number.value()).markDuplicate());
-        }
-
-        @Override
-        public void save(ServiceCase serviceCase, UserId actor) {
-            cases.put(serviceCase.number().value(), serviceCase);
-        }
-
-        @Override
-        public void update(ServiceCase serviceCase, UserId actor) {
-            if (failNextUpdate) {
-                failNextUpdate = false;
-                throw new ConcurrentServiceCaseUpdateException(serviceCase.number(), serviceCase.aggregateVersion());
-            }
-            cases.put(serviceCase.number().value(), serviceCase);
-        }
-
-        @Override
-        public Optional<ServiceCase> findByNumber(CaseNumber number) {
-            return Optional.ofNullable(cases.get(number.value()));
-        }
-
-        @Override
-        public Optional<CaseNumber> findUnclosedDuplicate(
-                Optional<CompanyId> shipperCompanyId, Optional<UUID> bookingId, String cause) {
-            return cases.values().stream()
-                    .filter(c ->
-                            c.status() != ServiceCaseStatus.CLOSED && c.status() != ServiceCaseStatus.DUPLICATE_CLOSED)
-                    .filter(c -> c.shipperCompanyId().equals(shipperCompanyId))
-                    .filter(c -> c.bookingId().equals(bookingId))
-                    .filter(c -> c.cause().equals(cause))
-                    .map(ServiceCase::number)
-                    .findFirst();
-        }
-    }
-
-    /** 年ごとの連番を数える代役。 */
-    static final class CountingIssuer implements ServiceCaseNumberIssuer {
-        int issued;
-
-        @Override
-        public CaseNumber next(int year) {
-            issued++;
-            return CaseNumber.of(year, issued);
-        }
     }
 }

@@ -12,8 +12,8 @@ import com.example.cargotracker.tracking.application.internal.commands.RecordSer
 import com.example.cargotracker.tracking.application.internal.commands.ReopenServiceCaseCommand;
 import com.example.cargotracker.tracking.application.internal.commands.ReviseServiceCaseAnswerDueCommand;
 import com.example.cargotracker.tracking.application.internal.commands.UpdateServiceCaseProgressCommand;
-import com.example.cargotracker.tracking.application.internal.commandservices.ServiceCaseCommandServiceTest.CountingIssuer;
-import com.example.cargotracker.tracking.application.internal.commandservices.ServiceCaseCommandServiceTest.InMemoryRepository;
+import com.example.cargotracker.tracking.domain.model.aggregates.CountingServiceCaseNumberIssuer;
+import com.example.cargotracker.tracking.domain.model.aggregates.InMemoryServiceCaseRepository;
 import com.example.cargotracker.tracking.domain.model.aggregates.ServiceCase;
 import com.example.cargotracker.tracking.domain.model.valueobjects.BusinessCalendar;
 import com.example.cargotracker.tracking.domain.model.valueobjects.BusinessDay;
@@ -48,8 +48,8 @@ class ServiceCaseActionServiceTest {
     private static final CompanyId SHIPPER_B = new CompanyId(UUID.fromString("00000000-0000-0000-0000-0000040c8003"));
     private static final Instant MONDAY_10 = Instant.parse("2026-11-16T01:00:00Z");
 
-    private final InMemoryRepository repository = new InMemoryRepository();
-    private final CountingIssuer issuer = new CountingIssuer();
+    private final InMemoryServiceCaseRepository repository = new InMemoryServiceCaseRepository();
+    private final CountingServiceCaseNumberIssuer issuer = new CountingServiceCaseNumberIssuer();
     private final ServiceCaseActionService actions =
             new ServiceCaseActionService(repository, Clock.fixed(MONDAY_10, ZoneOffset.UTC));
 

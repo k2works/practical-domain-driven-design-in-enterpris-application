@@ -343,6 +343,31 @@ class MyBatisServiceCaseRepositoryIntegrationTest {
                 .isEmpty();
     }
 
+    // --- 受領期限を過ぎた案件（Bolt 40-9） ---
+
+    @Test
+    void 期限超過_受付済みで期限を厳密に過ぎたものと上位対応中を期限の古い順に返す() {
+        ServiceCase late = open(ServiceCaseKind.CUSTOMER_INQUIRY); // 受領期限 2083-11-16T05:00Z
+        repository.save(late, ACTOR);
+        ServiceCase received = open(ServiceCaseKind.SAGA_FAILURE);
+        repository.save(received, ACTOR);
+        repository.update(received.receive(STAFF, at("2083-11-16T02:00:00Z")), STAFF);
+
+        // 期限ちょうどは返さない
+        assertThat(repository.findReceiptOverdue(at("2083-11-16T05:00:00Z"), 10))
+                .isEmpty();
+        // 期限を過ぎた受付済みだけ返す（受領した案件は返さない）
+        assertThat(repository.findReceiptOverdue(at("2083-11-16T05:00:01Z"), 10))
+                .extracting(ServiceCase::number)
+                .containsExactly(late.number());
+        // 上位対応中は期限の前後を問わず返す
+        repository.update(late.escalate(at("2083-11-16T06:00:00Z")).orElseThrow(), ACTOR);
+        assertThat(repository.findReceiptOverdue(at("2083-11-16T04:00:00Z"), 10))
+                .extracting(ServiceCase::number)
+                .containsExactly(late.number());
+        assertThat(repository.findReceiptOverdue(at("2083-11-20T00:00:00Z"), 0)).isEmpty();
+    }
+
     // --- 行 6: ない受付番号 ---
 
     @Test

@@ -14,7 +14,7 @@ import java.util.Set;
  * <p>起票: 社内の運用役割はどの種類も起票できる。荷主担当者は自社の顧客照会・見積り相談だけ（対象の荷主企業が自分の企業）。システム管理者と
  * 監査担当者は起票できない。受領: 社内の運用役割だけ（S-14・S-15 の利用者）。
  */
-final class ServiceCaseAuthorization {
+public final class ServiceCaseAuthorization {
 
     /** 社内の運用役割（有人案件の起票・受領ができる）。 */
     static final Set<Role> OPERATING_ROLES = Set.copyOf(EnumSet.of(
@@ -37,7 +37,7 @@ final class ServiceCaseAuthorization {
     }
 
     /** 進捗の更新・回答の記録・終結・回答期限の変更ができるか（社内の運用役割。担当者だけには限らない。Bolt 40-8。台帳 D-159）。 */
-    static boolean canOperate(AuthenticatedActor actor) {
+    public static boolean canOperate(AuthenticatedActor actor) {
         return isOperating(actor);
     }
 
