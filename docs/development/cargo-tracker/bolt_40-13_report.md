@@ -37,13 +37,13 @@ generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-14T09:00:00Z }
 
 | ゲート | 結果 |
 | :--- | :--- |
-| `check documentationTest` | （結果は更新履歴） |
-| SonarQube | （結果は更新履歴） |
+| `check documentationTest`（画面の変更がないので `uiTest` は流していない） | BUILD SUCCESSFUL |
+| SonarQube | 初回は新しい違反 4 件（テストの予約語の変数名・ラムダ）と、共有 DB のほかの案件に影響される統合テストの失敗 2 件（拒否の起票が実際の期限の案件を残すため。自分の案件だけを比べる形に直した）で FAILED → 直して再実行し **PASS**（新しい違反 0） |
 
 ## 完了条件
 
 - [x] 上のテストが緑
-- [ ] `check documentationTest` と SonarQube が緑
+- [x] `check documentationTest` と SonarQube が緑
 - [x] 設計文書を同じ Bolt で更新した
 - [x] 見積り／実績／差を書いた
 
