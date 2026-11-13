@@ -92,6 +92,14 @@ public class ServiceCaseUiSteps {
         browser.checkAccessibility();
     }
 
+    /** マニュアルの撮影用。準備した案件の詳細（S-15）を、カスタマーサポートでログインして開く。 */
+    @もし("準備した有人案件の詳細を開く")
+    public void 準備した案件の詳細を開く() {
+        browser.navigate(baseUrl + "/staff/service-cases/" + caseNumber);
+        assertThat(page().getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName("有人案件 " + caseNumber)))
+                .isVisible();
+    }
+
     @ならば("有人案件の一覧に準備した案件が状態 {string} で示される")
     public void 一覧に案件が示される(String status) {
         if (row().count() == 0) {

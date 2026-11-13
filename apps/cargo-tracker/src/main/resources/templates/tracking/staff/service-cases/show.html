@@ -90,7 +90,7 @@
             <button type="submit" class="btn btn-primary" th:text="|${serviceCase.number()} を再開する|">SC-2026-0057 を再開する</button>
         </form>
     </th:block>
-    <h2 class="h4" id="progress-heading">進捗</h2>
+    <h2 class="h4 mt-4" id="progress-heading">進捗</h2>
     <p th:if="${#lists.isEmpty(serviceCase.progress())}">進捗はまだありません。</p>
     <ul th:unless="${#lists.isEmpty(serviceCase.progress())}" aria-labelledby="progress-heading">
         <li th:each="progress : ${serviceCase.progress()}" class="mb-2">
@@ -99,7 +99,7 @@
             <span th:text="|次回更新 ${progress.nextUpdateAt()}|">次回更新 変更なし</span>
         </li>
     </ul>
-    <h2 class="h4" id="answers-heading">回答</h2>
+    <h2 class="h4 mt-4" id="answers-heading">回答</h2>
     <p th:if="${#lists.isEmpty(serviceCase.answers())}">回答はまだありません。</p>
     <ul th:unless="${#lists.isEmpty(serviceCase.answers())}" aria-labelledby="answers-heading">
         <li th:each="answer : ${serviceCase.answers()}" class="mb-2">

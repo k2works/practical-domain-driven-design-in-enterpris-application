@@ -176,11 +176,12 @@ Bolt がイテレーションに当たります。ふりかえりは各 Bolt の
 | 40-8 | [有人案件の進捗・回答・終結・再開のコマンド（認可）](bolt_40-8_plan.md)（[W8 計画](iteration_plan-W8.md)） | [終了報告](bolt_40-8_report.md) | W8 | 完了（承認済み） |
 | 40-9 | [受領期限の超過の判定と依頼元への表示（escalation）](bolt_40-9_plan.md)（[W8 計画](iteration_plan-W8.md)） | [終了報告](bolt_40-9_report.md) | W8 | 完了（承認済み） |
 | 40-10 | [カスタマーサポートの照会（S-11・S-12 の照会のみ）と「同じ値」の結果の文](bolt_40-10_plan.md)（[W8 計画](iteration_plan-W8.md)） | [終了報告](bolt_40-10_report.md) | W8 | 完了（承認済み） |
-| 40-11 | [有人案件の一覧（S-14）と詳細・受領（S-15）](bolt_40-11_plan.md)（[W8 計画](iteration_plan-W8.md)） | [終了報告](bolt_40-11_report.md) | W8 | 完了（承認済み） |
+| 40-11 | [有人案件の一覧（S-14）と詳細・受領（S-15）](bolt_40-11_plan.md)（[W8 計画](iteration_plan-W8.md)） | [終了報告](bolt_40-11_report.md)（[動画](../../assets/demo/bolt-40-11/receive-service-case.webm){:target="_blank"}） | W8 | 完了（承認済み） |
 | 40-12 | [有人案件の進捗・回答・終結・再開の操作（S-15）と上位対応中の表示](bolt_40-12_plan.md)（[W8 計画](iteration_plan-W8.md)） | [終了報告](bolt_40-12_report.md) | W8 | 完了（承認済み） |
 | 40-13 | [拒否した主要実績から有人例外案件を起票（T-INV-04）](bolt_40-13_plan.md)（[W8 計画](iteration_plan-W8.md)） | [終了報告](bolt_40-13_report.md) | W8 | 完了（承認済み） |
 | 40-14 | [候補なし・外部データの欠落の理由の表示と有人案件への引き継ぎ（UC-06 3a）](bolt_40-14_plan.md)（[W8 計画](iteration_plan-W8.md)） | [終了報告](bolt_40-14_report.md) | W8 | 完了（承認済み） |
-| 40-15 | [照会の記録（S-23）と有人案件への引き継ぎ（US-11 AC2）](bolt_40-15_plan.md)（[W8 計画](iteration_plan-W8.md)） | [終了報告](bolt_40-15_report.md) | W8 | 完了（承認済み） |
+| 40-16 | [W8 の受入条件の照合とマニュアル・動画の総点検（US-11・US-20 を締める）](bolt_40-16_plan.md)（[W8 計画](iteration_plan-W8.md)） | [終了報告](bolt_40-16_report.md) | W8 | 完了（承認済み） |
+| 40-15 | [照会の記録（S-23）と有人案件への引き継ぎ（US-11 AC2）](bolt_40-15_plan.md)（[W8 計画](iteration_plan-W8.md)） | [終了報告](bolt_40-15_report.md)（[動画](../../assets/demo/bolt-40-15/inquiry-handoff.webm){:target="_blank"}） | W8 | 完了（承認済み） |
 
 Bolt を始めるときに行を追加します。
 
@@ -399,3 +400,5 @@ Bolt を始めるときに行を追加します。
 * [Bolt 40-14 終了報告 - 候補なし・外部データの欠落の理由の表示と有人案件への引き継ぎ（UC-06 3a）](./bolt_40-14_report.md)
 * [Bolt 40-15 計画 - 照会の記録（S-23）と有人案件への引き継ぎ（US-11 AC2）](./bolt_40-15_plan.md)
 * [Bolt 40-15 終了報告 - 照会の記録（S-23）と有人案件への引き継ぎ（US-11 AC2）](./bolt_40-15_report.md)
+* [Bolt 40-16 計画 - W8 の受入条件の照合とマニュアル・動画の総点検（US-11・US-20 を締める）](./bolt_40-16_plan.md)
+* [Bolt 40-16 終了報告 - W8 の受入条件の照合とマニュアル・動画の総点検（US-11・US-20 を締める）](./bolt_40-16_report.md)
