@@ -142,49 +142,59 @@ public final class ServiceCase {
 
     private static Set<MissingItem> missingOf(ServiceCaseDraft draft) {
         Set<MissingItem> missing = EnumSet.noneOf(MissingItem.class);
-        if (isBlank(draft.cause())) {
-            missing.add(MissingItem.CAUSE);
-        }
-        if (isBlank(draft.department())) {
-            missing.add(MissingItem.DEPARTMENT);
-        }
-        switch (draft.kind()) {
-            case CUSTOMER_INQUIRY, QUOTATION_CONSULTATION -> {
-                if (draft.shipperCompanyId().isEmpty()) {
-                    missing.add(MissingItem.SHIPPER_COMPANY);
-                }
-            }
-            case AMENDMENT, REDESIGN -> {
-                if (draft.bookingId().isEmpty() && draft.trackingNumber().isEmpty()) {
-                    missing.add(MissingItem.BOOKING_OR_TRACKING);
-                }
-                if (isBlank(draft.oldVersionRef().orElse(null))) {
-                    missing.add(MissingItem.OLD_VERSION);
-                }
-                if (isBlank(draft.newVersionRef().orElse(null))) {
-                    missing.add(MissingItem.NEW_VERSION);
-                }
-            }
-            case EXTERNAL_OUTAGE -> {
-                if (isBlank(draft.manualSourceRef().orElse(null))) {
-                    missing.add(MissingItem.MANUAL_SOURCE);
-                }
-            }
-            case REJECTED_MILESTONE -> {
-                if (draft.trackingNumber().isEmpty()) {
-                    missing.add(MissingItem.TRACKING_NUMBER);
-                }
-                if (draft.sources().isEmpty()) {
-                    missing.add(MissingItem.SOURCES);
-                }
-            }
-            case SAGA_FAILURE -> {
-                if (draft.bookingId().isEmpty()) {
-                    missing.add(MissingItem.BOOKING);
-                }
-            }
-        }
+        addIf(missing, isBlank(draft.cause()), MissingItem.CAUSE);
+        addIf(missing, isBlank(draft.department()), MissingItem.DEPARTMENT);
+        missing.addAll(
+                switch (draft.kind()) {
+                    case CUSTOMER_INQUIRY, QUOTATION_CONSULTATION -> missingForInquiry(draft);
+                    case AMENDMENT, REDESIGN -> missingForChange(draft);
+                    case EXTERNAL_OUTAGE -> missingForOutage(draft);
+                    case REJECTED_MILESTONE -> missingForRejectedMilestone(draft);
+                    case SAGA_FAILURE -> missingForSagaFailure(draft);
+                });
         return missing;
+    }
+
+    private static Set<MissingItem> missingForInquiry(ServiceCaseDraft draft) {
+        Set<MissingItem> missing = EnumSet.noneOf(MissingItem.class);
+        addIf(missing, draft.shipperCompanyId().isEmpty(), MissingItem.SHIPPER_COMPANY);
+        return missing;
+    }
+
+    private static Set<MissingItem> missingForChange(ServiceCaseDraft draft) {
+        Set<MissingItem> missing = EnumSet.noneOf(MissingItem.class);
+        addIf(
+                missing,
+                draft.bookingId().isEmpty() && draft.trackingNumber().isEmpty(),
+                MissingItem.BOOKING_OR_TRACKING);
+        addIf(missing, isBlank(draft.oldVersionRef().orElse(null)), MissingItem.OLD_VERSION);
+        addIf(missing, isBlank(draft.newVersionRef().orElse(null)), MissingItem.NEW_VERSION);
+        return missing;
+    }
+
+    private static Set<MissingItem> missingForOutage(ServiceCaseDraft draft) {
+        Set<MissingItem> missing = EnumSet.noneOf(MissingItem.class);
+        addIf(missing, isBlank(draft.manualSourceRef().orElse(null)), MissingItem.MANUAL_SOURCE);
+        return missing;
+    }
+
+    private static Set<MissingItem> missingForRejectedMilestone(ServiceCaseDraft draft) {
+        Set<MissingItem> missing = EnumSet.noneOf(MissingItem.class);
+        addIf(missing, draft.trackingNumber().isEmpty(), MissingItem.TRACKING_NUMBER);
+        addIf(missing, draft.sources().isEmpty(), MissingItem.SOURCES);
+        return missing;
+    }
+
+    private static Set<MissingItem> missingForSagaFailure(ServiceCaseDraft draft) {
+        Set<MissingItem> missing = EnumSet.noneOf(MissingItem.class);
+        addIf(missing, draft.bookingId().isEmpty(), MissingItem.BOOKING);
+        return missing;
+    }
+
+    private static void addIf(Set<MissingItem> missing, boolean condition, MissingItem item) {
+        if (condition) {
+            missing.add(item);
+        }
     }
 
     private static boolean isBlank(String text) {
