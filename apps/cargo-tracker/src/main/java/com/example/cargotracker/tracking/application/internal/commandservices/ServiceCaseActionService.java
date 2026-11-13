@@ -66,9 +66,9 @@ public class ServiceCaseActionService {
                 command.number(),
                 () -> ServiceCaseAuthorization.canOperate(actor),
                 serviceCase -> switch (serviceCase.close()) {
-                    case ServiceCaseClosing.Closed closed -> new Step.Next(closed.serviceCase());
-                    case ServiceCaseClosing.ReconciliationIncomplete incomplete ->
-                        new Step.Stop(new ServiceCaseActionOutcome.ReconciliationIncomplete(incomplete.missing()));
+                    case ServiceCaseClosing.Closed(ServiceCase closed) -> new Step.Next(closed);
+                    case ServiceCaseClosing.ReconciliationIncomplete(var missing) ->
+                        new Step.Stop(new ServiceCaseActionOutcome.ReconciliationIncomplete(missing));
                 });
     }
 
@@ -112,8 +112,8 @@ public class ServiceCaseActionService {
         } catch (IllegalArgumentException e) {
             return new ServiceCaseActionOutcome.InvalidInput(e.getMessage());
         }
-        if (result instanceof Step.Stop stop) {
-            return stop.outcome();
+        if (result instanceof Step.Stop(ServiceCaseActionOutcome stopped)) {
+            return stopped;
         }
         ServiceCase next = ((Step.Next) result).serviceCase();
         try {
