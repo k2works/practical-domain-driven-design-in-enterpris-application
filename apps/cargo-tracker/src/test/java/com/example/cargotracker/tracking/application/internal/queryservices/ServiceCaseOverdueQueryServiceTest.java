@@ -30,7 +30,6 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -142,8 +141,8 @@ class ServiceCaseOverdueQueryServiceTest {
                 new AuthenticatedActor(new UserId(UUID.randomUUID()), COMPANY, Set.of(Role.SHIPPER), "荷主", "荷主社");
 
         assertThat(service(Instant.parse("2026-11-20T00:00:00Z")).overdue(shipper))
-                .isEqualTo(Optional.empty());
+                .isEmpty();
         assertThat(service(Instant.parse("2026-11-20T00:00:00Z")).overdue(staff(Role.AUDITOR)))
-                .isEqualTo(Optional.empty());
+                .isEmpty();
     }
 }
