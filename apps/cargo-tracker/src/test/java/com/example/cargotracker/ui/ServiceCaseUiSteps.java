@@ -160,6 +160,73 @@ public class ServiceCaseUiSteps {
         assertThat(page().getByRole(AriaRole.STATUS)).containsText(caseNumber + " " + text.strip());
     }
 
+    @もし("キー操作だけで進捗 {string} を次回更新日時 {string} で更新する")
+    public void 進捗を更新する(String content, String nextUpdateAt) {
+        type("進捗の内容", content);
+        type("次回更新日時（日本時間。変えないときは空）", nextUpdateAt);
+        submit("進捗を更新する");
+    }
+
+    @もし("キー操作だけで回答 {string} を記録する")
+    public void 回答を記録する(String content) {
+        type("回答の内容", content);
+        submit("回答を記録する");
+    }
+
+    @もし("キー操作だけで準備した案件を終結する")
+    public void 終結する() {
+        submit(caseNumber + " を終結する");
+    }
+
+    @もし("キー操作だけで顧客の回答 {string} で準備した案件を再開する")
+    public void 再開する(String customerResponse) {
+        type("顧客の回答（未解決の内容）", customerResponse);
+        submit(caseNumber + " を再開する");
+    }
+
+    @ならば("有人案件の詳細に結果 {string} だけが示される")
+    public void 詳細に結果だけが示される(String text) {
+        assertThat(page().getByRole(AriaRole.STATUS)).hasText(text);
+        browser.checkAccessibility();
+    }
+
+    @ならば("有人案件の詳細の進捗に {string} が示される")
+    public void 詳細の進捗(String content) {
+        assertThat(page().locator("#progress-heading + ul")).containsText(content);
+    }
+
+    @ならば("有人案件の詳細の次回更新に {string} が示される")
+    public void 詳細の次回更新(String text) {
+        assertThat(definition("次回更新")).containsText(text);
+    }
+
+    @ならば("有人案件の詳細の回答に顧客の回答 {string} が示される")
+    public void 詳細の顧客の回答(String text) {
+        assertThat(page().locator("#answers-heading + ul")).containsText("顧客の回答 " + text);
+    }
+
+    /** ラベルで引いた入力欄へキー操作で移り、文字を打つ。 */
+    private void type(String label, String text) {
+        Locator field = page().getByLabel(label, new Page.GetByLabelOptions().setExact(true));
+        browser.tabUntilFocused(field);
+        page().keyboard().type(text);
+    }
+
+    /** 名前のボタンへキー操作で移って押し、結果の文が出るまで待つ（PRG）。 */
+    private void submit(String buttonName) {
+        Locator button = page().getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(buttonName));
+        Locator status = page().getByRole(AriaRole.STATUS);
+        // 前の操作の結果の文が残っていても、PRG で画面が替わったことを待てるよう、押す前の文を覚える
+        String before = status.count() == 0 ? "" : status.first().innerText();
+        browser.tabUntilFocused(button);
+        page().keyboard().press("Enter");
+        if (before.isEmpty()) {
+            assertThat(status).isVisible();
+        } else {
+            assertThat(status).not().hasText(before);
+        }
+    }
+
     @ならば("有人案件の詳細に受領のボタンは示されない")
     public void 受領のボタンは示されない() {
         assertThat(page().getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(Pattern.compile("を受領する"))))

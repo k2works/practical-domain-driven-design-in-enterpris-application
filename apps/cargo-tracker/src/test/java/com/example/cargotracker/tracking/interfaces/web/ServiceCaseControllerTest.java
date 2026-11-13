@@ -66,6 +66,9 @@ class ServiceCaseControllerTest {
     @MockitoBean
     ServiceCaseCommandService commandService;
 
+    @MockitoBean
+    com.example.cargotracker.tracking.application.internal.commandservices.ServiceCaseActionService actionService;
+
     private static ServiceCase received() {
         ServiceCaseDraft draft = ServiceCaseDraft.of(
                         ServiceCaseKind.CUSTOMER_INQUIRY, ServicePriority.NORMAL, "貨物の所在", "CS")

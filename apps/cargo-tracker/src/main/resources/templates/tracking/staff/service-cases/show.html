@@ -26,6 +26,8 @@
         <dd class="col-sm-9">
             <span th:text="${serviceCase.status()}">受付済み</span>
             <span th:if="${serviceCase.receiptOverdue()}" class="badge text-bg-warning"><span aria-hidden="true">⚠ </span><span>期限超過</span></span>
+            <!--/* 上位対応中の表示（US-20 AC3。Bolt 40-12）。自動の遷移と通知は W10 */-->
+            <p class="mb-0 mt-1" th:if="${serviceCase.escalated()}">受領期限を過ぎたため、上位の運用責任者へ回しています。</p>
         </dd>
         <dt class="col-sm-3">担当</dt>
         <dd class="col-sm-9" th:text="${serviceCase.assignee()}">まだ受領されていません</dd>
@@ -47,6 +49,47 @@
           th:action="@{/staff/service-cases/{caseNumber}/receive(caseNumber=${serviceCase.number()})}">
         <button type="submit" class="btn btn-primary" th:text="|${serviceCase.number()} を受領する|">SC-2026-0057 を受領する</button>
     </form>
+    <!--/* 状態ごとの操作（US-20 AC4〜AC7。Bolt 40-12）。業務の判定はサービスが行い、ここは状態から出し分けるだけ */-->
+    <th:block th:if="${serviceCase.workable()}">
+        <h2 class="h4" id="progress-form-heading">進捗を更新する</h2>
+        <form method="post" aria-labelledby="progress-form-heading"
+              th:action="@{/staff/service-cases/{caseNumber}/progress(caseNumber=${serviceCase.number()})}">
+            <div class="mb-2">
+                <label for="progress-content" class="form-label">進捗の内容</label>
+                <textarea id="progress-content" name="content" class="form-control" rows="3" maxlength="4000" required></textarea>
+            </div>
+            <div class="mb-2">
+                <label for="progress-next" class="form-label">次回更新日時（日本時間。変えないときは空）</label>
+                <input id="progress-next" name="nextUpdateAt" class="form-control" placeholder="2026-11-16 18:00" aria-describedby="progress-next-hint">
+                <div id="progress-next-hint" class="form-text">例: 2026-11-16 18:00</div>
+            </div>
+            <button type="submit" class="btn btn-primary">進捗を更新する</button>
+        </form>
+        <h2 class="h4 mt-3" id="answer-form-heading">回答を記録する</h2>
+        <form method="post" aria-labelledby="answer-form-heading"
+              th:action="@{/staff/service-cases/{caseNumber}/answer(caseNumber=${serviceCase.number()})}">
+            <div class="mb-2">
+                <label for="answer-content" class="form-label">回答の内容</label>
+                <textarea id="answer-content" name="content" class="form-control" rows="3" maxlength="4000" required></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">回答を記録する</button>
+        </form>
+    </th:block>
+    <form th:if="${serviceCase.closable()}" method="post" class="mt-3"
+          th:action="@{/staff/service-cases/{caseNumber}/close(caseNumber=${serviceCase.number()})}">
+        <button type="submit" class="btn btn-primary" th:text="|${serviceCase.number()} を終結する|">SC-2026-0057 を終結する</button>
+    </form>
+    <th:block th:if="${serviceCase.reopenable()}">
+        <h2 class="h4 mt-3" id="reopen-form-heading">再開する</h2>
+        <form method="post" aria-labelledby="reopen-form-heading"
+              th:action="@{/staff/service-cases/{caseNumber}/reopen(caseNumber=${serviceCase.number()})}">
+            <div class="mb-2">
+                <label for="reopen-response" class="form-label">顧客の回答（未解決の内容）</label>
+                <textarea id="reopen-response" name="customerResponse" class="form-control" rows="3" maxlength="4000" required></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary" th:text="|${serviceCase.number()} を再開する|">SC-2026-0057 を再開する</button>
+        </form>
+    </th:block>
     <h2 class="h4" id="progress-heading">進捗</h2>
     <p th:if="${#lists.isEmpty(serviceCase.progress())}">進捗はまだありません。</p>
     <ul th:unless="${#lists.isEmpty(serviceCase.progress())}" aria-labelledby="progress-heading">
