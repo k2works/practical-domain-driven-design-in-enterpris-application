@@ -407,6 +407,86 @@ class TrackingRecordControllerTest {
         }
     }
 
+    /** Bolt 40-10（US-11 AC1・AC3）。顧客に開示できる情報と社内の確認状態を区別して示し、カスタマーサポートには照会だけを示す。 */
+    @Nested
+    class Bolt40_10_顧客への表示とカスタマーサポート {
+
+        private TrackingRecord withAdoptedAndDraft() {
+            UtcInstant published = TrackingFixture.at("2026-11-19T15:00:00Z");
+            Milestone adopted = new Milestone(
+                    1,
+                    MilestoneKind.DEPARTURE,
+                    new Location("JPTYO"),
+                    TrackingFixture.at("2026-11-19T10:00:00Z"),
+                    new Source(SourceKind.FIELD_RECORD, "F-1", TrackingFixture.at("2026-11-19T10:30:00Z")),
+                    MilestoneState.ADOPTED,
+                    TestActors.STAFF_USER,
+                    published);
+            Milestone draft = new Milestone(
+                    2,
+                    MilestoneKind.ARRIVAL,
+                    new Location("KRPUS"),
+                    TrackingFixture.at("2026-11-19T14:00:00Z"),
+                    new Source(
+                            SourceKind.EXTERNAL_RECORD,
+                            "9f1c0000-0000-0000-0000-000000000002",
+                            TrackingFixture.at("2026-11-19T14:30:00Z")),
+                    MilestoneState.DRAFT,
+                    TestActors.STAFF_USER,
+                    published,
+                    new ExternalOrigin(UUID.randomUUID(), "MS-0302", published));
+            return TrackingRecord.reconstitute(
+                    TrackingFixture.TRACKING_NUMBER,
+                    TrackingFixture.BOOKING_ID,
+                    TrackingFixture.SHIPPER,
+                    TrackingFixture.CONSIGNEE,
+                    TrackedBookingStatus.CONFIRMED,
+                    TrackingFixture.schedule(),
+                    TrackingStatus.IN_TRANSIT,
+                    OptionalInt.of(1),
+                    List.of(adopted, draft),
+                    TrackingFixture.at("2026-11-15T00:00:00Z"),
+                    TrackingFixture.at("2026-11-16T03:00:00Z"),
+                    TrackingFixture.STARTED_AT,
+                    2);
+        }
+
+        @Test
+        void 行1_採用済みは顧客に表示し下書きは表示しないと各実績に示す() throws Exception {
+            given(queryService.detail(eq(TrackingFixture.TRACKING_NUMBER), any()))
+                    .willReturn(Optional.of(withAdoptedAndDraft()));
+
+            mockMvc.perform(get(DETAIL))
+                    .andExpect(status().isOk())
+                    .andExpect(content().string(containsString("顧客への表示 表示する")))
+                    .andExpect(content().string(containsString("顧客への表示 表示しない（社内の確認状態）")));
+        }
+
+        @Test
+        void 行2_追跡管理者には実績の登録と採用の操作を示す() throws Exception {
+            given(queryService.detail(eq(TrackingFixture.TRACKING_NUMBER), any()))
+                    .willReturn(Optional.of(withAdoptedAndDraft()));
+
+            mockMvc.perform(get(DETAIL))
+                    .andExpect(content().string(containsString(">実績を登録</a>")))
+                    .andExpect(content().string(not(containsString("照会のみ"))));
+        }
+
+        @Test
+        @WithAuthenticatedActor(Role.CUSTOMER_SUPPORT)
+        void 行3_カスタマーサポートには照会のみと示し実績の登録と採用の操作を出さない() throws Exception {
+            given(queryService.detail(eq(TrackingFixture.TRACKING_NUMBER), any()))
+                    .willReturn(Optional.of(withAdoptedAndDraft()));
+
+            mockMvc.perform(get(DETAIL))
+                    .andExpect(status().isOk())
+                    .andExpect(content().string(containsString("この画面は照会のみです。")))
+                    .andExpect(content().string(not(containsString(">実績を登録</a>"))))
+                    .andExpect(content().string(not(containsString("を採用する</button>"))))
+                    .andExpect(content().string(containsString("顧客への表示 表示しない（社内の確認状態）")));
+        }
+    }
+
     /** Bolt 39gb の行 43・51〜55・50・57（S-12 の候補の表示と採用の POST）。 */
     @Nested
     class Bolt39gb_下書きの候補と採用 {
@@ -613,6 +693,16 @@ class TrackingRecordControllerTest {
             mockMvc.perform(post(ADOPT).param("expectedVersion", "7"))
                     .andExpect(redirectedUrl(DETAIL))
                     .andExpect(flash().attribute("result", "実績 2 は採用済みの実績 1 と同じ値です。採用は要りません。"));
+        }
+
+        @Test
+        void 行53b_確認中の実績と同じ値なら採用済みでなく確認中と結果に示す() throws Exception {
+            given(commandService.adoptCandidate(any(), eq(2), eq(7L), any()))
+                    .willReturn(new MilestoneAdoptionOutcome.SameAsUnderReview(1));
+
+            mockMvc.perform(post(ADOPT).param("expectedVersion", "7"))
+                    .andExpect(redirectedUrl(DETAIL))
+                    .andExpect(flash().attribute("result", "実績 2 は確認中の実績 1 と同じ値です。採用は要りません。"));
         }
 
         @ParameterizedTest(name = "{0}")

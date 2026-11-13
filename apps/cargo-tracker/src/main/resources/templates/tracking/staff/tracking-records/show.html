@@ -62,18 +62,21 @@
             <span th:text="${milestone.summary()}">実績 1、集荷、JPTYO</span><br>
             <span th:text="|発生 ${milestone.occurredAt()}|">発生 2026-11-01 11:30 Asia/Tokyo（UTC+09:00）（UTC 2026-11-01 02:30）</span><br>
             <span th:text="|出典 ${milestone.source()}|">出典 現場記録 F-118（取得 2026-11-01 12:00 Asia/Tokyo（UTC+09:00）（UTC 2026-11-01 03:00））</span><br>
-            <span th:text="|状態 ${milestone.state()}|">状態 採用</span>
+            <span th:text="|状態 ${milestone.state()}|">状態 採用</span><br>
+            <span th:text="|顧客への表示 ${milestone.customerDisplay()}|">顧客への表示 表示する</span>
             <!--/* 外部原本の下書きの採用の欄（Bolt 39gb）。候補で採用できる下書きにボタン、置き換えられた下書きと採用できない候補に文を出す。
                    ボタンの名前に実績番号を入れ、どの実績を採用するか分かるようにする（WCAG 2.4.6） */-->
             <th:block th:if="${milestone.adoptionNote()}"><br><span th:text="${milestone.adoptionNote()}">後から公開された原本に置き換えられました</span></th:block>
-            <form th:if="${milestone.adoptable()}" method="post" class="mt-1"
+            <form th:if="${canOperate && milestone.adoptable()}" method="post" class="mt-1"
                   th:action="@{/staff/tracking-records/{trackingNumber}/milestones/{milestoneNo}/adopt(trackingNumber=${trackingRecord.trackingNumber()},milestoneNo=${milestone.milestoneNo()})}">
                 <input type="hidden" name="expectedVersion" th:value="${trackingRecord.version()}">
                 <button type="submit" class="btn btn-primary btn-sm" th:text="|実績 ${milestone.milestoneNo()} を採用する|">実績 2 を採用する</button>
             </form>
         </li>
     </ul>
-    <p><a th:href="@{/staff/tracking-records/{trackingNumber}/milestones/new(trackingNumber=${trackingRecord.trackingNumber()})}">実績を登録</a></p>
+    <p th:if="${canOperate}"><a th:href="@{/staff/tracking-records/{trackingNumber}/milestones/new(trackingNumber=${trackingRecord.trackingNumber()})}">実績を登録</a></p>
+    <!--/* カスタマーサポートは照会のみ（US-11 AC3。予約の代理確定・変更や実績の登録・採用はできない。Bolt 40-10） */-->
+    <p th:unless="${canOperate}" role="note">この画面は照会のみです。実績の登録と採用は追跡管理者が行います。</p>
     <p><a th:href="@{/staff/tracking-records}">追跡一覧</a></p>
 </main>
 </body>

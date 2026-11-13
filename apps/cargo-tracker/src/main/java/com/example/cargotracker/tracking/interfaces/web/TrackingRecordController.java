@@ -1,6 +1,7 @@
 package com.example.cargotracker.tracking.interfaces.web;
 
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
+import com.example.cargotracker.shared.domain.Role;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import com.example.cargotracker.tracking.application.internal.commands.RegisterMilestoneCommand;
 import com.example.cargotracker.tracking.application.internal.commandservices.MilestoneAdoptionOutcome;
@@ -104,6 +105,8 @@ public class TrackingRecordController {
                 .orElseThrow(this::notFound);
         model.addAttribute(
                 "trackingRecord", TrackingRecordViews.detail(found, actor.userId(), new UtcInstant(clock.instant())));
+        // 実績の登録と採用の操作は追跡管理者だけ。カスタマーサポートは照会のみ（US-11 AC3。操作の URL は認可でも拒む）
+        model.addAttribute("canOperate", actor.hasRole(Role.TRACKING_MANAGER));
         return DETAIL_VIEW;
     }
 
@@ -127,6 +130,9 @@ public class TrackingRecordController {
             case MilestoneAdoptionOutcome.SameAsAdopted(int adoptedMilestoneNo) ->
                 redirectAttributes.addFlashAttribute(
                         RESULT, "実績 " + milestoneNo + " は採用済みの実績 " + adoptedMilestoneNo + " と同じ値です。採用は要りません。");
+            case MilestoneAdoptionOutcome.SameAsUnderReview(int underReviewMilestoneNo) ->
+                redirectAttributes.addFlashAttribute(
+                        RESULT, "実績 " + milestoneNo + " は確認中の実績 " + underReviewMilestoneNo + " と同じ値です。採用は要りません。");
             case MilestoneAdoptionOutcome.Rejected(AdoptionRejectionReason reason, Optional<MilestoneState> decided) ->
                 redirectAttributes.addFlashAttribute(PROBLEM, adoptionProblem(milestoneNo, reason, decided));
             case MilestoneAdoptionOutcome.Conflict _ ->

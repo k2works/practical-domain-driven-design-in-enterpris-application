@@ -214,7 +214,10 @@ public class SecurityConfiguration {
                         // 経路設計の画面は経路設計者だけ。ほかの社内の画面より先に書く（Bolt 17 計画の確認ポイント 11）
                         .requestMatchers("/staff/routing-cases/**")
                         .hasRole(Role.ROUTE_DESIGNER.name())
-                        // 追跡の画面は追跡管理者だけ（Bolt 26 計画の確認ポイント 4。カスタマーサポートの照会は W8）
+                        // 追跡の一覧（S-11）と詳細（S-12）の閲覧は追跡管理者とカスタマーサポート（照会のみ。Bolt 40-10。US-11 AC3）。
+                        // 実績の登録の画面・登録・採用などそれ以外は追跡管理者だけ（Bolt 26 計画の確認ポイント 4）。次の matcher より先に書く
+                        .requestMatchers(HttpMethod.GET, "/staff/tracking-records", "/staff/tracking-records/*")
+                        .hasAnyRole(Role.TRACKING_MANAGER.name(), Role.CUSTOMER_SUPPORT.name())
                         .requestMatchers("/staff/tracking-records/**")
                         .hasRole(Role.TRACKING_MANAGER.name())
                         // 利用者の管理（S-20）はシステム管理者だけ（Bolt 34。/staff/** より先に書く）

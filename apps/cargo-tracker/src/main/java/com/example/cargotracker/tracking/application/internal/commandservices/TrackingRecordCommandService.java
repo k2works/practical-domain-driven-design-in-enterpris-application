@@ -14,6 +14,7 @@ import com.example.cargotracker.tracking.domain.model.aggregates.TrackingRecord;
 import com.example.cargotracker.tracking.domain.model.aggregates.TrackingRecordRepository;
 import com.example.cargotracker.tracking.domain.model.entities.Milestone;
 import com.example.cargotracker.tracking.domain.model.valueobjects.AdoptionRejectionReason;
+import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneState;
 import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingNumber;
 import java.time.Clock;
 import java.util.Optional;
@@ -135,8 +136,10 @@ public class TrackingRecordCommandService {
         }
         return switch (trackingRecord.adoptCandidate(milestoneNo, operator.userId(), new UtcInstant(clock.instant()))) {
             case MilestoneAdoption.Adopted adopted -> save(adopted);
-            case MilestoneAdoption.SameAsAdopted(Milestone adopted) ->
-                new MilestoneAdoptionOutcome.SameAsAdopted(adopted.milestoneNo());
+            case MilestoneAdoption.SameAsAdopted(Milestone decided) ->
+                decided.state() == MilestoneState.UNDER_REVIEW
+                        ? new MilestoneAdoptionOutcome.SameAsUnderReview(decided.milestoneNo())
+                        : new MilestoneAdoptionOutcome.SameAsAdopted(decided.milestoneNo());
             case MilestoneAdoption.Rejected(AdoptionRejectionReason reason, Optional<Milestone> decided) ->
                 new MilestoneAdoptionOutcome.Rejected(reason, decided.map(Milestone::state));
         };

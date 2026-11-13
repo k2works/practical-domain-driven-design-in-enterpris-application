@@ -33,6 +33,13 @@ public sealed interface MilestoneAdoptionOutcome {
     record SameAsAdopted(int adoptedMilestoneNo) implements MilestoneAdoptionOutcome {}
 
     /**
+     * 候補と同じ値の実績が確認中で、何もしなかった（Bolt 40-10。Bolt 39gc の議題 3）。確認中の実績は採用済みではないので、結果の文を分ける。
+     *
+     * @param underReviewMilestoneNo 確認中の実績の実績番号
+     */
+    record SameAsUnderReview(int underReviewMilestoneNo) implements MilestoneAdoptionOutcome {}
+
+    /**
      * 採用を拒否した。
      *
      * @param reason 理由

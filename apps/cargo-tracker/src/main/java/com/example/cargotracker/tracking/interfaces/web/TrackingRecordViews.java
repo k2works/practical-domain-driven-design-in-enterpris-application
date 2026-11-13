@@ -225,7 +225,14 @@ final class TrackingRecordViews {
             String state,
             int milestoneNo,
             boolean adoptable,
-            String adoptionNote) {}
+            String adoptionNote,
+            String customerDisplay) {}
+
+    /** 顧客に表示する実績の文（採用済みの実績だけが顧客の C-10 に出る。Bolt 40-10。US-11 AC1）。 */
+    static final String SHOWN_TO_CUSTOMER = "表示する";
+
+    /** 顧客に表示しない実績の文（下書き・確認中は社内の確認状態。Bolt 40-10）。 */
+    static final String NOT_SHOWN_TO_CUSTOMER = "表示しない（社内の確認状態）";
 
     /** 置き換えられた下書きの文（Bolt 39gb の行 43。行 10・11 で「新しい原本」は偽になるのでこの文にする）。 */
     static final String SUPERSEDED = "後から公開された原本に置き換えられました";
@@ -427,7 +434,8 @@ final class TrackingRecordViews {
                 milestoneState(milestone.state()),
                 milestone.milestoneNo(),
                 adoptable,
-                note);
+                note,
+                milestone.state() == MilestoneState.ADOPTED ? SHOWN_TO_CUSTOMER : NOT_SHOWN_TO_CUSTOMER);
     }
 
     /** 出典の表記（「現場記録 F-118（取得 …）」）。結果の文言にも使う。 */

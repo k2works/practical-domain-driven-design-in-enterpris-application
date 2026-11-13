@@ -122,6 +122,34 @@ class TrackingAssignedScopeSecurityIntegrationTest {
         assertThat(body(session, RECORDS_URL)).contains(inScope).doesNotContain(outOfScope);
     }
 
+    // --- Bolt 40-10: カスタマーサポートの照会のみ（US-11 AC1・AC3。台帳 D-159 の拡張ではなく S-11・S-12 の閲覧） ---
+
+    @Test
+    void カスタマーサポートは担当企業の追跡一覧と詳細を見られ範囲の外は404() throws Exception {
+        String inScope = started(shipperA);
+        String outOfScope = started(shipperB);
+        Cookie session = login(staffWith(Role.CUSTOMER_SUPPORT, shipperA));
+
+        assertThat(body(session, RECORDS_URL)).contains(inScope).doesNotContain(outOfScope);
+        assertThat(body(session, RECORDS_URL + "/" + inScope)).contains("この画面は照会のみです。");
+        mvc.perform(get(RECORDS_URL + "/" + outOfScope).cookie(session)).andExpect(status().isNotFound());
+    }
+
+    @Test
+    void カスタマーサポートは実績の登録の画面と登録と採用ができない() throws Exception {
+        String inScope = started(shipperA);
+        Cookie session = login(staffWith(Role.CUSTOMER_SUPPORT, shipperA));
+
+        mvc.perform(get(RECORDS_URL + "/" + inScope + "/milestones/new").cookie(session))
+                .andExpect(status().isForbidden());
+        mvc.perform(register(inScope, Map.of()).cookie(session)).andExpect(status().isForbidden());
+        mvc.perform(post(RECORDS_URL + "/" + inScope + "/milestones/1/adopt")
+                        .param("expectedVersion", "0")
+                        .with(csrf())
+                        .cookie(session))
+                .andExpect(status().isForbidden());
+    }
+
     @Test
     void 範囲の外の追跡記録だけなら追跡一覧に出ない() throws Exception {
         // 行 1d
@@ -240,6 +268,10 @@ class TrackingAssignedScopeSecurityIntegrationTest {
     }
 
     private String manager(CompanyId... assigned) {
+        return staffWith(Role.TRACKING_MANAGER, assigned);
+    }
+
+    private String staffWith(Role role, CompanyId... assigned) {
         String email = "tracking-scope-test-" + UUID.randomUUID() + "@example.com";
         UserId userId = new UserId(UUID.randomUUID());
         lastManager = userId;
@@ -250,7 +282,7 @@ class TrackingAssignedScopeSecurityIntegrationTest {
                 "追跡 管理",
                 passwordEncoder.encode(PASSWORD),
                 UserStatus.ACTIVE,
-                Set.of(Role.TRACKING_MANAGER)));
+                Set.of(role)));
         totpCredentials.add(TotpCredential.enroll(
                 userId, cipher.encrypt(TOTP_SECRET.clone(), userId), new UtcInstant(clock.instant())));
         for (CompanyId company : assigned) {

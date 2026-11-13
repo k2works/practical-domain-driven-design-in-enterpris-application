@@ -413,6 +413,46 @@ class TrackingRecordCommandServiceTest {
         }
 
         @Test
+        void 行53c_確認中の実績と同じ値の候補は何もせず確認中の実績番号を返す() {
+            arrived();
+            receiveDeparture("r-1", "MS-0001", "2026-11-01T02:40:00Z");
+            service.adoptCandidate(TRACKING_NUMBER, 2, currentVersion(), MANAGER); // 時系列に反して確認中になる
+            receiveDeparture("r-2", "MS-0001", "2026-11-01T02:50:00Z"); // 同じ外部 ID の新しい版で、確認中の実績と同じ値の下書き
+            long version = currentVersion();
+
+            MilestoneAdoptionOutcome outcome = service.adoptCandidate(TRACKING_NUMBER, 3, version, MANAGER);
+
+            assertThat(outcome).isEqualTo(new MilestoneAdoptionOutcome.SameAsUnderReview(2));
+            assertThat(currentVersion()).isEqualTo(version);
+        }
+
+        private long currentVersion() {
+            return repository
+                    .findByTrackingNumber(TRACKING_NUMBER)
+                    .orElseThrow()
+                    .aggregateVersion();
+        }
+
+        private void receiveDeparture(String reference, String externalId, String publishedAt) {
+            TrackingRecord current =
+                    repository.findByTrackingNumber(TRACKING_NUMBER).orElseThrow();
+            repository.update(((ExternalMilestoneReceipt.Received) current.receiveExternalMilestone(
+                            new ExternalMilestone(
+                                    TRACKING_NUMBER,
+                                    MilestoneKind.DEPARTURE,
+                                    new Location("JPTYO"),
+                                    at("2026-11-01T02:30:00Z"),
+                                    new Source(SourceKind.EXTERNAL_RECORD, reference, at(publishedAt)),
+                                    new ExternalOrigin(
+                                            UUID.fromString("00000000-0000-0000-0000-0000039c0d01"),
+                                            externalId,
+                                            at(publishedAt)),
+                                    REGISTRANT),
+                            at(publishedAt)))
+                    .trackingRecord());
+        }
+
+        @Test
         void 行6_時系列に反する候補の採用は確認中で保存しDE18を1件発行する() {
             arrived();
             TrackingRecord current =
