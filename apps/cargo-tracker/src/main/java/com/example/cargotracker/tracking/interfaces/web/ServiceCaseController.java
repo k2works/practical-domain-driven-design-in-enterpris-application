@@ -104,7 +104,7 @@ public class ServiceCaseController {
             case ReceiveServiceCaseOutcome.NotFound _ -> throw notFound();
             case ReceiveServiceCaseOutcome.NotPermitted _ -> throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
-        return "redirect:/staff/service-cases/{caseNumber}";
+        return REDIRECT_DETAIL;
     }
 
     /** 進捗を更新する（US-20 AC4）。次回更新日時は日本時間の {@code yyyy-MM-dd HH:mm}（空なら変えない）。 */
