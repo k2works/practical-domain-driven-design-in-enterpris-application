@@ -750,25 +750,29 @@ class MyBatisTrackingRecordRepositoryIntegrationTest {
                     .isEqualTo(1);
         }
 
+        private static TrackingRecord reconstituteWithMissingBasis(TrackingRecord saved) {
+            return TrackingRecord.reconstitute(
+                    saved.trackingNumber(),
+                    saved.bookingId(),
+                    saved.shipperCompanyId(),
+                    saved.consigneeCompanyId(),
+                    saved.bookingStatus(),
+                    saved.schedule(),
+                    TrackingStatus.PICKED_UP,
+                    OptionalInt.of(5),
+                    List.of(),
+                    saved.originalEta(),
+                    saved.latestEta(),
+                    saved.startedAt(),
+                    saved.aggregateVersion());
+        }
+
         @Test
         void 行60_根拠の実績番号の実績がない追跡記録は集約が組み立てを拒み表は変わらない() {
             TrackingRecord saved = started(UUID.randomUUID(), trackingNumber());
             repository.save(saved);
             // Bolt 40-1 の M1 から、根拠の実績番号の実績がない追跡記録は集約が先に拒む（表の外部キーまで届かない）
-            assertThatThrownBy(() -> TrackingRecord.reconstitute(
-                            saved.trackingNumber(),
-                            saved.bookingId(),
-                            saved.shipperCompanyId(),
-                            saved.consigneeCompanyId(),
-                            saved.bookingStatus(),
-                            saved.schedule(),
-                            TrackingStatus.PICKED_UP,
-                            OptionalInt.of(5),
-                            List.of(),
-                            saved.originalEta(),
-                            saved.latestEta(),
-                            saved.startedAt(),
-                            saved.aggregateVersion()))
+            assertThatThrownBy(() -> reconstituteWithMissingBasis(saved))
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessageContaining("根拠の実績番号");
             assertThat(jdbc.queryForMap(

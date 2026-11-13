@@ -80,7 +80,10 @@ class TrackingRecordOriginInvariantTest {
     void 当初の到着予定が予定の最後の到着と違うと拒む() {
         UtcInstant other = at("2026-11-16T00:00:00Z");
 
-        assertThatThrownBy(() -> reconstitute(other, other, OptionalInt.empty(), List.of()))
+        OptionalInt noBasis = OptionalInt.empty();
+        List<Milestone> none = List.of();
+
+        assertThatThrownBy(() -> reconstitute(other, other, noBasis, none))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("当初の到着予定");
     }
@@ -93,7 +96,10 @@ class TrackingRecordOriginInvariantTest {
 
     @Test
     void 現在状態の根拠の実績番号が実績にないと拒む() {
-        assertThatThrownBy(() -> reconstitute(A2, A2, OptionalInt.of(2), List.of(departure(1))))
+        OptionalInt missingBasis = OptionalInt.of(2);
+        List<Milestone> milestones = List.of(departure(1));
+
+        assertThatThrownBy(() -> reconstitute(A2, A2, missingBasis, milestones))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("根拠の実績番号");
     }
