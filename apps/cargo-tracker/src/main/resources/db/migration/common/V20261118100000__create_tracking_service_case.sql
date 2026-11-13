@@ -96,7 +96,8 @@ CREATE TABLE tracking.service_case_source (
     CONSTRAINT ck_service_case_source_no CHECK (source_no >= 1)
 );
 
-COMMENT ON TABLE tracking.service_case_source IS '有人案件が参照した出典';
+COMMENT ON TABLE tracking.service_case_source IS '有人案件が参照した出典 [append-only]';
+COMMENT ON COLUMN tracking.service_case_source.case_number IS '受付番号';
 COMMENT ON COLUMN tracking.service_case_source.source_no IS '出典の番号（案件の中で 1 から）';
 COMMENT ON COLUMN tracking.service_case_source.source_kind IS '出典の種類';
 COMMENT ON COLUMN tracking.service_case_source.source_ref IS '出典の参照';
@@ -115,6 +116,7 @@ CREATE TABLE tracking.service_case_progress (
 );
 
 COMMENT ON TABLE tracking.service_case_progress IS '有人案件の進捗 [append-only]';
+COMMENT ON COLUMN tracking.service_case_progress.case_number IS '受付番号';
 COMMENT ON COLUMN tracking.service_case_progress.progress_no IS '進捗番号（案件の中で 1 から）';
 COMMENT ON COLUMN tracking.service_case_progress.content IS '進捗の内容';
 COMMENT ON COLUMN tracking.service_case_progress.next_update_at IS '次回更新日時（指定した場合）';
@@ -137,7 +139,8 @@ CREATE TABLE tracking.service_case_answer (
         OR (customer_response IS NOT NULL AND customer_responded_at IS NOT NULL))
 );
 
-COMMENT ON TABLE tracking.service_case_answer IS '有人案件の回答（再開しても過去の分を保持する）';
+COMMENT ON TABLE tracking.service_case_answer IS '有人案件の回答（再開しても過去の分を保持する） [no-delete]';
+COMMENT ON COLUMN tracking.service_case_answer.case_number IS '受付番号';
 COMMENT ON COLUMN tracking.service_case_answer.answer_no IS '回答番号（案件の中で 1 から）';
 COMMENT ON COLUMN tracking.service_case_answer.content IS '回答の内容';
 COMMENT ON COLUMN tracking.service_case_answer.answered_by IS '回答者';

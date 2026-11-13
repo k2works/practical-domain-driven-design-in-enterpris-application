@@ -45,13 +45,15 @@ class AppendOnlyGrantIntegrationTest {
             "external_data.received_record",
             "external_data.received_record_decision",
             "external_data.adopted_value",
-            "tracking.rejected_milestone");
+            "tracking.rejected_milestone",
+            "tracking.service_case_source",
+            "tracking.service_case_progress");
 
     /**
      * データモデルの「追記専用」の表のうち、状態などを UPDATE するので DELETE だけを外す表（印は {@code [no-delete]}。Bolt 26b）。
      * 表を足したらここにも足す。
      */
-    static final Set<String> NO_DELETE_TABLES = Set.of("tracking.milestone");
+    static final Set<String> NO_DELETE_TABLES = Set.of("tracking.milestone", "tracking.service_case_answer");
 
     /** PostgreSQL のシステムのスキーマと、Flyway の履歴を置く public を除いたスキーマ（業務のスキーマと platform）。 */
     private static final String APPLICATION_SCHEMAS =
