@@ -78,7 +78,9 @@ W8 の締めに、最後のコミットの状態で `check documentationTest uiT
 | `documentationTest` | 11 件、失敗 0 |
 | `uiTest`（画面の層の受入シナリオ） | 237 シナリオ、失敗 0（JUnit の XML では 474 件、うち 237 件は外枠で skipped。W7 の 229 から +8） |
 | SonarQube（W8 の締め） | Quality Gate PASS（下の「SonarQube Quality Gate」） |
-| CI（Linux） | （下の「CI」） |
+| CI（run 43489660598、develop の `b3e27f4546`） | `check` 成功、`ui` 成功、`deploy-demo` 成功、`performance` は手動のジョブなので skipped |
+| 手動の性能ジョブ（PERF-06。run 43489703398、同じ `b3e27f4546`、Linux の CI） | **success**（`performanceTest` BUILD SUCCESSFUL、6 分 58 秒。W7 の再実行と同じ 8 件の判定がすべて通った。個々の測った値は CI のログの `performanceTest` の出力にある） |
+| CI の失敗と再実行 | Bolt 40-15 の push で `check` が `checkstyleTest` の複雑度（BrowserSession）で失敗 → 直して成功。続く push の `ui` は「Playwright の Chromium と OS の依存を入れる」の導入手順で失敗（環境の一過性。コードの失敗ではない）→ 次の push で成功 |
 
 ### テストの増分
 
@@ -121,7 +123,7 @@ W8 で足したもの: 有人案件の集約・営業日カレンダー・期限
 
 | タスク | SP | 内容 |
 | :--- | ---: | :--- |
-| W8 の締めの追加 | — | 週全体のコードレビュー（3 観点）、品質ゲートの流し直し、CI の `ui` ジョブの導入手順の失敗の再実行、PERF-06 の再確認 |
+| W8 の締めの追加 | — | 週全体のコードレビュー（3 観点）、品質ゲートの流し直し、CI の `ui` ジョブの導入手順の失敗の確認、PERF-06 の再確認（success） |
 | CI の `checkstyleTest` の失敗の修正 | — | `BrowserSession.navigate` の循環的複雑度 11 を、URL と役割の表にして直した（Bolt 40-15 の push で CI が失敗。ローカルの `check` では見えなかった） |
 
 ## W8 週全体レビューの結果
@@ -210,7 +212,8 @@ W8 で足したもの: 有人案件の集約・営業日カレンダー・期限
 
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
-| 2026-11-14 | 初版作成。議題を推奨のとおり承認として記録せず「人に諮る」に残した（人にしか決められないもの）。CI・PERF-06・Sonar の流し直しの結果は下の行で足す | anthropic/claude-sonnet-5-5 |
+| 2026-11-14 | 初版作成。議題を推奨のとおり承認として記録せず「人に諮る」に残した（人にしか決められないもの） | anthropic/claude-sonnet-5-5 |
+| 2026-11-14 | CI（run 43489660598）と PERF-06 の性能ジョブ（run 43489703398）の結果、Sonar の流し直しの結果を足した | anthropic/claude-sonnet-5-5 |
 
 ## 関連ドキュメント
 
