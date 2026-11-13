@@ -8,6 +8,8 @@ import com.example.cargotracker.shared.domain.Source;
 import com.example.cargotracker.shared.domain.SourceKind;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
+import com.example.cargotracker.tracking.domain.model.entities.CaseAnswer;
+import com.example.cargotracker.tracking.domain.model.entities.CaseProgress;
 import com.example.cargotracker.tracking.domain.model.valueobjects.CaseNumber;
 import com.example.cargotracker.tracking.domain.model.valueobjects.MissingItem;
 import com.example.cargotracker.tracking.domain.model.valueobjects.ServiceCaseDraft;
@@ -259,9 +261,7 @@ class ServiceCaseTest {
             assertThat(progress.updatedBy()).isEqualTo(STAFF);
         });
         assertThat(updated.nextUpdateAt()).isEqualTo(next);
-        assertThat(updatedAgain.progress())
-                .extracting(progress -> progress.progressNo())
-                .containsExactly(1, 2);
+        assertThat(updatedAgain.progress()).extracting(CaseProgress::progressNo).containsExactly(1, 2);
         // 次回更新日時を指定しなければ今のまま
         assertThat(updatedAgain.nextUpdateAt()).isEqualTo(next);
     }
@@ -384,7 +384,7 @@ class ServiceCaseTest {
         ServiceCase second =
                 closed.reopen("未解決", at("2026-11-17T00:00:00Z")).recordAnswer("再回答", STAFF, at("2026-11-17T01:00:00Z"));
 
-        assertThat(second.answers()).extracting(answer -> answer.answerNo()).containsExactly(1, 2);
+        assertThat(second.answers()).extracting(CaseAnswer::answerNo).containsExactly(1, 2);
     }
 
     @Test
