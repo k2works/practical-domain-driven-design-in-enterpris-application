@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>13 章 有人案件 | cargo-tracker ユーザーマニュアル</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="manual-header">
+    <a class="manual-home" href="index.html">cargo-tracker ユーザーマニュアル</a>
+  </header>
+  <div class="manual-layout">
+    <nav class="manual-sidenav" aria-label="マニュアルの目次">
+      <details open>
+        <summary>目次</summary>
+        <ul>
+        <li><a href="index.html">概要</a></li>
+        <li><a href="00-%E3%81%AF%E3%81%98%E3%82%81%E3%81%AB.html">はじめに</a></li>
+        <li><a href="01-%E6%A5%AD%E5%8B%99%E3%83%95%E3%83%AD%E3%83%BC.html">1 章 業務フロー</a></li>
+        <li><a href="02-%E3%83%AD%E3%82%B0%E3%82%A4%E3%83%B3%E3%81%A8%E5%85%B1%E9%80%9A%E3%81%AE%E7%94%BB%E9%9D%A2.html">2 章 ログインと共通の画面</a></li>
+        <li><a href="03-%E8%A6%8B%E7%A9%8D%E4%BE%9D%E9%A0%BC.html">3 章 見積依頼</a></li>
+        <li><a href="04-%E8%A6%8B%E7%A9%8D%E3%82%8A%E3%81%B8%E3%81%AE%E5%9B%9E%E7%AD%94%E3%81%A8%E6%89%BF%E8%AA%8D.html">4 章 見積りへの回答と承認</a></li>
+        <li><a href="05-%E4%BA%88%E7%B4%84%E4%B8%80%E8%A6%A7%E3%81%A8%E8%BF%BD%E8%B7%A1%E3%81%AE%E7%85%A7%E4%BC%9A.html">5 章 予約一覧と追跡の照会</a></li>
+        <li><a href="06-%E5%8F%97%E4%BB%98%E4%B8%80%E8%A6%A7%E3%81%A8%E5%AF%A9%E6%9F%BB%E3%81%A8%E8%A6%8B%E7%A9%8D%E3%82%8A.html">6 章 受付一覧と審査と見積り</a></li>
+        <li><a href="07-%E6%9C%AC%E4%BA%88%E7%B4%84%E3%81%AE%E7%A2%BA%E5%AE%9A%E3%81%A8%E4%BA%88%E7%B4%84%E4%B8%80%E8%A6%A7.html">7 章 本予約の確定と予約一覧</a></li>
+        <li><a href="08-%E7%B5%8C%E8%B7%AF%E8%A8%AD%E8%A8%88.html">8 章 経路設計</a></li>
+        <li><a href="09-%E8%BF%BD%E8%B7%A1%E7%AE%A1%E7%90%86.html">9 章 追跡管理</a></li>
+        <li><a href="10-KPI%E8%A8%88%E6%B8%AC%E8%A8%98%E9%8C%B2.html">10 章 KPI 計測記録</a></li>
+        <li><a href="11-%E5%88%A9%E7%94%A8%E8%80%85%E3%81%AE%E7%AE%A1%E7%90%86.html">11 章 利用者の管理</a></li>
+        <li><a href="12-%E5%A4%96%E9%83%A8%E3%83%87%E3%83%BC%E3%82%BF.html">12 章 外部データ</a></li>
+        <li><a href="13-%E6%9C%89%E4%BA%BA%E6%A1%88%E4%BB%B6.html" aria-current="page">13 章 有人案件</a><ul class="manual-sidenav-sections"><li><a href="#131-%E6%9C%89%E4%BA%BA%E6%A1%88%E4%BB%B6%E3%81%AE%E4%B8%80%E8%A6%A7">13.1 有人案件の一覧</a></li><li><a href="#132-%E6%9C%89%E4%BA%BA%E6%A1%88%E4%BB%B6%E3%81%AE%E8%A9%B3%E7%B4%B0%E3%81%A8%E5%8F%97%E9%A0%98">13.2 有人案件の詳細と受領</a></li></ul></li>
+        <li><a href="%E7%94%A8%E8%AA%9E%E9%9B%86.html">付録 A 用語集</a></li>
+        <li><a href="%E4%BB%98%E9%8C%B2B-%E3%83%88%E3%83%A9%E3%83%96%E3%83%AB%E3%82%B7%E3%83%A5%E3%83%BC%E3%83%86%E3%82%A3%E3%83%B3%E3%82%B0.html">付録 B トラブルシューティング</a></li>
+        </ul>
+      </details>
+    </nav>
+    <main class="manual-content">
+      <a class="manual-nav-link" href="index.html">← マニュアル目次</a>
+      <h1 id="13-章-有人案件">13 章 有人案件</h1>
+<p>顧客からの照会や、自動の処理では扱えない例外を、担当者が受け付けて対応する案件を「有人案件」と呼びます。本章は、有人案件を一覧で確かめ、詳細を開いて受領する画面を説明します。進捗の更新・回答の記録・終結・再開の操作は、これから追加します。</p>
+<p>画面の開き方: ナビゲーションの「有人案件」（URL: <code>/staff/service-cases</code>）。カスタマーサポート・営業担当者・経路設計者・追跡管理者・データ責任者が使えます。システム管理者・監査担当者・荷主担当者には開けません（権限がない画面と同じ表示になります）。</p>
+<table>
+<thead>
+<tr>
+<th align="left">画面</th>
+<th align="left">役割</th>
+<th align="left">節</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">有人案件の一覧</td>
+<td align="left">未終結・未受領・期限超過・対応中の案件を、受領期限の古い順に確かめる</td>
+<td align="left"><a href="#131-%E6%9C%89%E4%BA%BA%E6%A1%88%E4%BB%B6%E3%81%AE%E4%B8%80%E8%A6%A7">13.1</a></td>
+</tr>
+<tr>
+<td align="left">有人案件の詳細</td>
+<td align="left">受付から対応の状況までを確かめ、受領する</td>
+<td align="left"><a href="#132-%E6%9C%89%E4%BA%BA%E6%A1%88%E4%BB%B6%E3%81%AE%E8%A9%B3%E7%B4%B0%E3%81%A8%E5%8F%97%E9%A0%98">13.2</a></td>
+</tr>
+</tbody></table>
+<h2 id="131-有人案件の一覧">13.1 有人案件の一覧</h2>
+<h3 id="この画面でできること">この画面でできること</h3>
+<ul>
+<li>有人案件を、受領期限の古い順に確かめます。受領期限の近い案件から対応できます</li>
+<li>「未終結」「未受領」「期限超過」「対応中」で絞り込みます</li>
+<li>受付番号をクリックして、詳細を開きます</li>
+</ul>
+<h3 id="画面の開き方">画面の開き方</h3>
+<ul>
+<li>ナビゲーションの「有人案件」（URL: <code>/staff/service-cases</code>）</li>
+</ul>
+<h3 id="画面の説明">画面の説明</h3>
+<table>
+<thead>
+<tr>
+<th align="left">#</th>
+<th align="left">項目</th>
+<th align="left">説明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">①</td>
+<td align="left">絞り込み</td>
+<td align="left">「未終結」（初めに開いたとき。受付済み・上位対応中・対応中・回答済み）、「未受領」（受付済み・上位対応中）、「期限超過」（受領期限を過ぎた案件）、「対応中」。選んでいる絞り込みは強調されます</td>
+</tr>
+<tr>
+<td align="left">②</td>
+<td align="left">受付番号</td>
+<td align="left">例: SC-2026-0057。クリックすると詳細が開きます</td>
+</tr>
+<tr>
+<td align="left">③</td>
+<td align="left">種類</td>
+<td align="left">顧客照会、見積り相談、変更・取消し、経路の再設計、外部停止、拒否した実績、予約サガの失敗</td>
+</tr>
+<tr>
+<td align="left">④</td>
+<td align="left">優先度</td>
+<td align="left">高または通常</td>
+</tr>
+<tr>
+<td align="left">⑤</td>
+<td align="left">担当部門</td>
+<td align="left">案件を扱う部門</td>
+</tr>
+<tr>
+<td align="left">⑥</td>
+<td align="left">状態</td>
+<td align="left">受付済み、上位対応中、対応中、回答済み。受領期限を過ぎた受付済みには、印（⚠）の付いた「期限超過」が並びます</td>
+</tr>
+<tr>
+<td align="left">⑦</td>
+<td align="left">受領期限</td>
+<td align="left">日本時間と UTC を併記します</td>
+</tr>
+</tbody></table>
+<h3 id="操作手順">操作手順</h3>
+<ol>
+<li>見たい絞り込みをクリックします</li>
+<li>対応する案件の受付番号をクリックします</li>
+</ol>
+<h3 id="注意補足">注意・補足</h3>
+<ul>
+<li>「期限超過」は、画面を開いたときの時刻で判定します。受領期限を過ぎた受付済みの案件が対象で、状態そのものは変わりません（状態を自動で上位対応中にする処理と、上位の運用責任者への通知は、これから追加します）</li>
+<li>一覧は受領期限の古い 200 件までです。超えるときは「受領期限の古い 200 件だけを示しています。」と示されます</li>
+<li>案件がないときは、絞り込みごとに「未終結の有人案件はありません。」「期限超過の案件はありません。」などと示されます</li>
+</ul>
+<h2 id="132-有人案件の詳細と受領">13.2 有人案件の詳細と受領</h2>
+<h3 id="この画面でできること">この画面でできること</h3>
+<ul>
+<li>案件の種類・状態・担当・受領期限・回答期限・次回更新を確かめます</li>
+<li>進捗と回答の履歴を確かめます</li>
+<li>受付済みまたは上位対応中の案件を受領します（担当者になり、案件は対応中になります）</li>
+</ul>
+<h3 id="画面の開き方">画面の開き方</h3>
+<ul>
+<li>有人案件の一覧で受付番号をクリックします</li>
+</ul>
+<h3 id="画面の説明">画面の説明</h3>
+<table>
+<thead>
+<tr>
+<th align="left">#</th>
+<th align="left">項目</th>
+<th align="left">説明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">①</td>
+<td align="left">種類・優先度・担当部門・内容</td>
+<td align="left">受け付けた案件の内容</td>
+</tr>
+<tr>
+<td align="left">②</td>
+<td align="left">状態</td>
+<td align="left">受付済み、上位対応中、対応中、回答済み、終結、重複終了。受領期限を過ぎた受付済みには「期限超過」が並びます</td>
+</tr>
+<tr>
+<td align="left">③</td>
+<td align="left">担当・受領時刻</td>
+<td align="left">受領する前は「まだ受領されていません」と「なし」。受領すると、受領した人（自分なら「あなた」）と時刻が示されます</td>
+</tr>
+<tr>
+<td align="left">④</td>
+<td align="left">受領期限・回答期限・次回更新</td>
+<td align="left">日本時間と UTC を併記します</td>
+</tr>
+<tr>
+<td align="left">⑤</td>
+<td align="left">復旧照合</td>
+<td align="left">外部停止の案件だけに示されます。「未完了」または「完了」</td>
+</tr>
+<tr>
+<td align="left">⑥</td>
+<td align="left">「SC-… を受領する」</td>
+<td align="left">受付済みまたは上位対応中の案件だけに示されます</td>
+</tr>
+<tr>
+<td align="left">⑦</td>
+<td align="left">進捗・回答</td>
+<td align="left">記録された順に示されます。まだなければ「進捗はまだありません。」「回答はまだありません。」</td>
+</tr>
+</tbody></table>
+<h3 id="操作手順">操作手順</h3>
+<ol>
+<li>一覧で対応する案件の受付番号をクリックして、詳細を開きます</li>
+<li>「SC-… を受領する」をクリックします</li>
+<li>「SC-… を受領しました。対応中にしました。」と示され、担当があなたになります</li>
+</ol>
+<h3 id="注意補足">注意・補足</h3>
+<ul>
+<li>受領できるのは、受付済みと上位対応中の案件だけです。ほかの人が先に受領していたときは、「この案件は受領できる状態ではありません（今の状態: 対応中）。最新の状態を確かめてください。」と示されます</li>
+<li>ほかの人の更新が先に保存されたときは、「ほかの更新が先にこの案件を変更しました。最新の状態を確かめ、必要なら、もう一度受領してください。」と示されます。画面を開き直して確かめてから、もう一度操作してください</li>
+<li>担当者の表示名は、今のところ自分以外は利用者 ID で示されます</li>
+<li>存在しない受付番号を開くと、ページが見つからない画面（404）になります</li>
+</ul>
+
+      <a class="manual-nav-link" href="index.html">← マニュアル目次</a>
+    </main>
+  </div>
+  <footer class="manual-footer">cargo-tracker ユーザーマニュアル</footer>
+  <script>
+    // 画面の幅が狭いときは、目次を閉じた状態で始める（本文を先に見せる。「目次」で開ける）
+    if (window.matchMedia('(max-width: 900px)').matches) {
+      document.querySelectorAll('.manual-sidenav details').forEach((d) => d.removeAttribute('open'));
+    }
+  </script>
+</body>
+</html>
