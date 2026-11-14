@@ -36,7 +36,7 @@ generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-14T12:00:00Z }
 | ゲート | 結果 |
 | :--- | :--- |
 | `spotlessCheck check documentationTest uiTest` | 1 回目は `RouteConfirmedAssignmentIntegrationTest` で失敗（発行記録は listener ごとに 1 件なので、DE-21 に identity の通知の listener が加わって完了の件数が 3 から 4 になった。期待を直した）。流し直して BUILD SUCCESSFUL（31 分 7 秒） |
-| SonarQube | 実行結果を追記する |
+| SonarQube | **PASS**（新しい違反 0、カバレッジ 95.9%。1 回目は 1 件を指摘され、直して流し直した） |
 
 ## 申し送り
 
