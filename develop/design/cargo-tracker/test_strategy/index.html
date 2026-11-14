@@ -11743,6 +11743,146 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_45_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 45 計画
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_45_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 45 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_45-1_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 45-1 計画
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_45-1_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 45-1 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../development/cargo-tracker/bolt_40_plan/" class="md-nav__link">
         
   
@@ -20446,8 +20586,18 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 </tr>
 <tr>
 <td style="text-align: left;">US-01</td>
+<td style="text-align: left;">AC3</td>
+<td style="text-align: left;"><code>@US-01-AC3</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">US-01</td>
 <td style="text-align: left;">AC4</td>
 <td style="text-align: left;"><code>@US-01-AC4</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">US-01</td>
+<td style="text-align: left;">AC5</td>
+<td style="text-align: left;"><code>@US-01-AC5</code></td>
 </tr>
 <tr>
 <td style="text-align: left;">US-02</td>
@@ -20980,6 +21130,18 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 <td style="text-align: left;">AC4（受付時間を利用者のタイムゾーンで示す）</td>
 <td style="text-align: left;">42-2</td>
 <td style="text-align: left;"><code>@US-23-AC4</code>（同上）、<code>CustomerServiceCaseControllerTest</code> 行 4</td>
+</tr>
+<tr>
+<td style="text-align: left;">US-01</td>
+<td style="text-align: left;">AC3（別企業の荷主情報では提出・出し直しを受け付けず、確定済みのデータは変更されない。荷主企業は利用者の所属から決め、他社の輸送要求は見つからない）</td>
+<td style="text-align: left;">45</td>
+<td style="text-align: left;"><code>@US-01-AC3</code>（<code>features/quotation/resubmit_transport_request.feature</code>。他社の見積依頼を出し直そうとしても見つからず、社内の読みで版・状態が変わっていない。Q-INV-08）、<code>TransportRequestControllerTest</code>・<code>TransportRequestCommandServiceTest</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">US-01</td>
+<td style="text-align: left;">AC5（自社の過去の見積依頼を複製すると、輸送条件を引き継いだ新しい下書きが作られ、希望到着期限と必要書類は再入力を求める。他社の見積依頼は見つからない）</td>
+<td style="text-align: left;">45-1</td>
+<td style="text-align: left;"><code>@US-01-AC5</code>（<code>features/ui/submit_transport_request_ui.feature</code>）、<code>TransportRequestControllerTest</code>（Bolt 45-1 の 3 行。他社は 404）</td>
 </tr>
 <tr>
 <td style="text-align: left;">US-22</td>

@@ -12130,6 +12130,146 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_45_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 45 計画
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_45_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 45 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_45-1_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 45-1 計画
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_45-1_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 45-1 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../development/cargo-tracker/bolt_40_plan/" class="md-nav__link">
         
   
@@ -19970,7 +20110,7 @@
 <tr>
 <td style="text-align: left;">C-03 見積依頼の作成・編集</td>
 <td style="text-align: left;"><code>GET /customer/transport-requests/new</code>、<code>POST /customer/transport-requests</code></td>
-<td style="text-align: left;">必須条件（荷受人・出発地・目的地・希望到着期限・貨物）とエラー要約、特殊貨物の案内を持つ。共通レイアウト（顧客 Web）の中で、輸送条件・貨物・書類・確認の 4 段階の段階入力にする（Bolt 8。下の「段階入力」）。荷受人は企業マスターができるまで設定の仮の一覧から選ぶ（US-16 で置き換える）。必要書類の入力は種類ごとの欄（<code>multipart/form-data</code>）で、1 つの版に 5 件まで（商業送り状 1 件、梱包明細 1 件、その他 3 件まで。Q-INV-16）。書類は任意（D-20）。形式・容量・件数の誤りはエラー要約で示し、ブラウザはファイルの選択を残せないため、エラー要約と書類の段階で選び直しを求める（Bolt 6〜8 レビュー R-02・R-20）。失効の後に入力の控えを戻すと段階 1 から開き、ファイルは段階 3 で選び直す（Bolt 32f。下の「段階入力」の表の「失効の後の入力の戻し」）</td>
+<td style="text-align: left;">必須条件（荷受人・出発地・目的地・希望到着期限・貨物）とエラー要約、特殊貨物の案内を持つ。共通レイアウト（顧客 Web）の中で、輸送条件・貨物・書類・確認の 4 段階の段階入力にする（Bolt 8。下の「段階入力」）。荷受人は企業マスターができるまで設定の仮の一覧から選ぶ（US-16 で置き換える）。必要書類の入力は種類ごとの欄（<code>multipart/form-data</code>）で、1 つの版に 5 件まで（商業送り状 1 件、梱包明細 1 件、その他 3 件まで。Q-INV-16）。書類は任意（D-20）。形式・容量・件数の誤りはエラー要約で示し、ブラウザはファイルの選択を残せないため、エラー要約と書類の段階で選び直しを求める（Bolt 6〜8 レビュー R-02・R-20）。失効の後に入力の控えを戻すと段階 1 から開き、ファイルは段階 3 で選び直す（Bolt 32f。下の「段階入力」の表の「失効の後の入力の戻し」） （Bolt 45-1: 末尾に複製の記述を足した。US-01 AC5。<code>?copyFrom=&lt;業務番号&gt;</code> を付けると、自社の過去の見積依頼の現在の版の輸送条件を引き継いだ新しい見積依頼として開く。希望到着期限は空、必要書類は引き継がず、案内「&lt;業務番号&gt; の輸送条件を引き継ぎました。希望到着期限と必要書類は再入力してください。」を示す。他社・ない・形式の誤りは 404。C-04 の詳細に「この見積依頼を複製して新しく作る」を出す）</td>
 </tr>
 <tr>
 <td style="text-align: left;">C-02 見積依頼の一覧</td>
