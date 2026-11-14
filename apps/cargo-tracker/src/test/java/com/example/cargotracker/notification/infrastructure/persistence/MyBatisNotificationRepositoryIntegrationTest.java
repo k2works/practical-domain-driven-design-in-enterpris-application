@@ -8,11 +8,15 @@ import com.example.cargotracker.notification.domain.model.valueobjects.Notificat
 import com.example.cargotracker.notification.domain.model.valueobjects.NotificationStatus;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Instant;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
 
 /** 通知のリポジトリと notification スキーマ（PostgreSQL。N-INV-02。Bolt 33）。 */
@@ -26,6 +30,9 @@ class MyBatisNotificationRepositoryIntegrationTest {
 
     @Autowired
     MyBatisNotificationRepository repository;
+
+    @Autowired
+    JdbcTemplate jdbc;
 
     private static Notification pending(UUID eventId, UUID recipient) {
         return Notification.pending(
@@ -141,5 +148,49 @@ class MyBatisNotificationRepositoryIntegrationTest {
                         .orElseThrow()
                         .failureReason())
                 .contains("MailSendException: 接続できない");
+    }
+
+    // --- Bolt 43-3: 宛先の利用者の通知の一覧 ---
+
+    private static Notification of(UUID recipient, NotificationKind kind, String ref, String createdAt) {
+        return Notification.pending(
+                UUID.randomUUID(),
+                recipient,
+                "shipper@example.com",
+                kind,
+                ref,
+                "ja",
+                new UtcInstant(Instant.parse(createdAt)));
+    }
+
+    @Test
+    void 宛先の利用者の通知を新しい順に種類で絞って上限まで返す() {
+        UUID recipient = UUID.randomUUID();
+        Notification older =
+                of(recipient, NotificationKind.QUOTATION_PRESENTED, "TR-2026-0001", "2026-11-16T01:00:00Z");
+        Notification newer = of(recipient, NotificationKind.BOOKING_CONFIRMED, "TR-2026-0002", "2026-11-16T02:00:00Z");
+        Notification reset = of(recipient, NotificationKind.PASSWORD_RESET, "token", "2026-11-16T03:00:00Z");
+        Notification other =
+                of(UUID.randomUUID(), NotificationKind.BOOKING_CONFIRMED, "TR-2026-0003", "2026-11-16T04:00:00Z");
+        List.of(older, newer, reset, other).forEach(repository::addIfAbsent);
+        Set<NotificationKind> business =
+                EnumSet.of(NotificationKind.QUOTATION_PRESENTED, NotificationKind.BOOKING_CONFIRMED);
+
+        assertThat(repository.findRecentByRecipient(recipient, business, 10))
+                .extracting(Notification::id)
+                .containsExactly(newer.id(), older.id());
+        assertThat(repository.findRecentByRecipient(recipient, business, 1))
+                .extracting(Notification::id)
+                .containsExactly(newer.id());
+        assertThat(repository.findRecentByRecipient(recipient, Set.of(), 10)).isEmpty();
+    }
+
+    @Test
+    void 宛先の索引がある() {
+        Integer count = jdbc.queryForObject(
+                "SELECT COUNT(*) FROM pg_indexes WHERE schemaname = 'notification' AND indexname = 'ix_notification_recipient'",
+                Integer.class);
+
+        assertThat(count).isEqualTo(1);
     }
 }

@@ -62,6 +62,17 @@ final class NotificationTestDoubles {
         }
 
         @Override
+        public java.util.List<Notification> findRecentByRecipient(
+                UUID recipientUserId,
+                java.util.Set<com.example.cargotracker.notification.domain.model.valueobjects.NotificationKind> kinds,
+                int limit) {
+            return rows.values().stream()
+                    .filter(n -> n.recipientUserId().equals(recipientUserId) && kinds.contains(n.kind()))
+                    .limit(limit)
+                    .toList();
+        }
+
+        @Override
         public Optional<Notification> findByEventIdAndRecipient(UUID eventId, UUID recipientUserId) {
             return Optional.ofNullable(rows.get(key(eventId, recipientUserId)));
         }

@@ -40,6 +40,18 @@
            AND status = 'PENDING'
     </update>
 
+    <!-- 宛先の利用者の通知。新しい順（作成の時刻、同じなら ID）に上限まで。種類で絞る（荷主の通知一覧 C-16。Bolt 43-3） -->
+    <select id="selectRecentByRecipient" resultMap="notificationRow">
+        SELECT id, event_id, recipient_user_id, email, kind, target_ref, locale, status, sent_at, failure_reason,
+               created_at
+          FROM notification.notification
+         WHERE recipient_user_id = #{recipientUserId}
+           AND kind IN
+        <foreach collection="kinds" item="kind" open="(" separator="," close=")">#{kind}</foreach>
+         ORDER BY created_at DESC, id DESC
+         FETCH FIRST #{limit} ROWS ONLY
+    </select>
+
     <select id="selectByEventIdAndRecipient" resultMap="notificationRow">
         SELECT id, event_id, recipient_user_id, email, kind, target_ref, locale, status, sent_at, failure_reason,
                created_at

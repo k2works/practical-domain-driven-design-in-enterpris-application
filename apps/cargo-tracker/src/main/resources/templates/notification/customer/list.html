@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/customer :: layout(~{::title}, ~{::main}, ~{}, 'notifications')}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>通知 - cargo-tracker</title>
+</head>
+<body>
+<main>
+    <h1>通知</h1>
+    <!--/* C-16（Bolt 43-3、US-22 AC4）。本人に宛てた通知（メールと同じ内容）と送信の結果。本文は記録していないので種類と対象から示す（N-INV-01） */-->
+    <p th:if="${#lists.isEmpty(notifications)}">通知はまだありません。</p>
+    <div th:unless="${#lists.isEmpty(notifications)}" class="table-scroll" tabindex="0" role="region"
+         aria-labelledby="notifications-caption">
+        <table class="table">
+            <caption id="notifications-caption">送られた通知（新しい順）</caption>
+            <thead>
+            <tr>
+                <th scope="col">通知</th>
+                <th scope="col">対象</th>
+                <th scope="col">送信の結果</th>
+                <th scope="col">日時</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="notification : ${notifications}">
+                <td th:text="${notification.title()}">見積りが提示されました</td>
+                <td><a th:href="${notification.link()}" th:text="${notification.targetRef()}">TR-2026-0001</a></td>
+                <!--/* 失敗は文字とアイコンで示す（色だけにしない。ACC）。失敗の宛先を示す（AC4） */-->
+                <td>
+                    <span th:text="${notification.result()}">送信済み</span>
+                    <span th:if="${notification.failed()}" class="badge text-bg-warning"><span aria-hidden="true">⚠ </span><span th:text="|宛先: ${notification.recipient()}|">宛先: a@example.com</span></span>
+                </td>
+                <td th:text="${notification.at()}">2026-11-16 10:00 Asia/Tokyo（UTC+09:00）</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</main>
+</body>
+</html>

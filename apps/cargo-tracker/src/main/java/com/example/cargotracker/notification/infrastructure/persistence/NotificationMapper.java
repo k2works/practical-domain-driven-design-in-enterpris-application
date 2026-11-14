@@ -15,6 +15,12 @@ public interface NotificationMapper {
 
     int updateOutcomeIfPending(NotificationRow row);
 
+    /** 宛先の利用者の通知を、新しい順に上限まで（種類で絞る。Bolt 43-3）。 */
+    java.util.List<NotificationRow> selectRecentByRecipient(
+            @Param("recipientUserId") UUID recipientUserId,
+            @Param("kinds") java.util.List<String> kinds,
+            @Param("limit") int limit);
+
     Optional<NotificationRow> selectByEventIdAndRecipient(
             @Param("eventId") UUID eventId, @Param("recipientUserId") UUID recipientUserId);
 }

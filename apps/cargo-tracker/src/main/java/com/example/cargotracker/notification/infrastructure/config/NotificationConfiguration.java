@@ -5,6 +5,7 @@ import com.example.cargotracker.notification.application.internal.commandservice
 import com.example.cargotracker.notification.application.internal.commandservices.TotpEnrollmentMailService;
 import com.example.cargotracker.notification.application.internal.commandservices.TotpResetMailService;
 import com.example.cargotracker.notification.application.internal.commandservices.UserInvitationMailService;
+import com.example.cargotracker.notification.application.internal.queryservices.NotificationQueryService;
 import com.example.cargotracker.notification.domain.model.aggregates.MailSender;
 import com.example.cargotracker.notification.domain.model.aggregates.NotificationRepository;
 import com.example.cargotracker.notification.domain.model.aggregates.PasswordResetMailTemplate;
@@ -89,6 +90,12 @@ public class NotificationConfiguration {
             TransactionTemplate transactionTemplate) {
         return new TotpEnrollmentMailService(
                 notifications, notificationMailSender, totpEnrollmentMailTemplate, clock, transactionTemplate);
+    }
+
+    /** 荷主の通知一覧の照会（C-16。US-22 AC4。Bolt 43-3）。 */
+    @Bean
+    NotificationQueryService notificationQueryService(NotificationRepository notifications) {
+        return new NotificationQueryService(notifications);
     }
 
     @Bean

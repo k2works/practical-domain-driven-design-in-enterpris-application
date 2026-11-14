@@ -37,6 +37,20 @@ public class MyBatisNotificationRepository implements NotificationRepository {
     }
 
     @Override
+    public java.util.List<Notification> findRecentByRecipient(
+            UUID recipientUserId, java.util.Set<NotificationKind> kinds, int limit) {
+        if (kinds.isEmpty()) {
+            return java.util.List.of();
+        }
+        return mapper
+                .selectRecentByRecipient(
+                        recipientUserId, kinds.stream().map(Enum::name).toList(), limit)
+                .stream()
+                .map(MyBatisNotificationRepository::toDomain)
+                .toList();
+    }
+
+    @Override
     public Optional<Notification> findByEventIdAndRecipient(UUID eventId, UUID recipientUserId) {
         return mapper.selectByEventIdAndRecipient(eventId, recipientUserId)
                 .map(MyBatisNotificationRepository::toDomain);
