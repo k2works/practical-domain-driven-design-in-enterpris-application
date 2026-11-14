@@ -1,6 +1,7 @@
 package com.example.cargotracker.tracking.application.internal.commandservices;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
 import com.example.cargotracker.shared.domain.CompanyId;
@@ -306,5 +307,42 @@ class ServiceCaseActionServiceTest {
 
         assertThat(actions.recordAnswer(staff(Role.CUSTOMER_SUPPORT), new RecordServiceCaseAnswerCommand(number, "回答")))
                 .isEqualTo(new ServiceCaseActionOutcome.Conflict());
+    }
+
+    // --- 業務上の拒否とバグの区別（Bolt 41） ---
+
+    @Test
+    void 行15_業務上の拒否ではない例外はそのまま失敗させ状態の違いに見せかけない() {
+        CaseNumber number = inProgressInquiry(SHIPPER_A);
+        Clock broken = new Clock() {
+            @Override
+            public ZoneId getZone() {
+                return ZoneOffset.UTC;
+            }
+
+            @Override
+            public Clock withZone(ZoneId zone) {
+                return this;
+            }
+
+            @Override
+            public Instant instant() {
+                throw new IllegalStateException("時計の故障");
+            }
+        };
+        ServiceCaseActionService brokenClock = new ServiceCaseActionService(repository, broken);
+
+        assertThatThrownBy(() -> brokenClock.recordAnswer(
+                        staff(Role.CUSTOMER_SUPPORT), new RecordServiceCaseAnswerCommand(number, "回答")))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("時計の故障");
+    }
+
+    @Test
+    void 行16_回答の内容が空なら入力の誤りとして返す() {
+        CaseNumber number = inProgressInquiry(SHIPPER_A);
+
+        assertThat(actions.recordAnswer(staff(Role.CUSTOMER_SUPPORT), new RecordServiceCaseAnswerCommand(number, " ")))
+                .isInstanceOf(ServiceCaseActionOutcome.InvalidInput.class);
     }
 }

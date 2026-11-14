@@ -12,6 +12,8 @@ import com.example.cargotracker.tracking.domain.model.aggregates.ServiceCase;
 import com.example.cargotracker.tracking.domain.model.aggregates.ServiceCaseClosing;
 import com.example.cargotracker.tracking.domain.model.aggregates.ServiceCaseRepository;
 import com.example.cargotracker.tracking.domain.model.valueobjects.CaseNumber;
+import com.example.cargotracker.tracking.domain.model.valueobjects.ServiceCaseInputException;
+import com.example.cargotracker.tracking.domain.model.valueobjects.ServiceCaseStateException;
 import java.time.Clock;
 import java.util.Optional;
 import java.util.function.BooleanSupplier;
@@ -107,9 +109,9 @@ public class ServiceCaseActionService {
         Step result;
         try {
             result = step.apply(current);
-        } catch (IllegalStateException _) {
+        } catch (ServiceCaseStateException _) {
             return new ServiceCaseActionOutcome.InvalidState(current.status());
-        } catch (IllegalArgumentException e) {
+        } catch (ServiceCaseInputException e) {
             return new ServiceCaseActionOutcome.InvalidInput(e.getMessage());
         }
         if (result instanceof Step.Stop(ServiceCaseActionOutcome stopped)) {

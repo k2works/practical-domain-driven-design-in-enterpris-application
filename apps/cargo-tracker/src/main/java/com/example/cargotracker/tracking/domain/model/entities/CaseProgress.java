@@ -3,6 +3,7 @@ package com.example.cargotracker.tracking.domain.model.entities;
 import com.example.cargotracker.shared.annotation.ddd.Entity;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
+import com.example.cargotracker.tracking.domain.model.valueobjects.ServiceCaseInputException;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -27,7 +28,7 @@ public record CaseProgress(
             throw new IllegalArgumentException("進捗番号は 1 から: " + progressNo);
         }
         if (content == null || content.isBlank() || content.length() > CONTENT_LIMIT) {
-            throw new IllegalArgumentException("進捗の内容は空でなく " + CONTENT_LIMIT + " 文字まで");
+            throw new ServiceCaseInputException("進捗の内容は空でなく " + CONTENT_LIMIT + " 文字まで");
         }
         Objects.requireNonNull(nextUpdateAt, "nextUpdateAt");
         Objects.requireNonNull(updatedBy, "updatedBy");

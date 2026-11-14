@@ -11,7 +11,9 @@ import com.example.cargotracker.tracking.domain.model.valueobjects.CaseNumber;
 import com.example.cargotracker.tracking.domain.model.valueobjects.MissingItem;
 import com.example.cargotracker.tracking.domain.model.valueobjects.RequesterNotice;
 import com.example.cargotracker.tracking.domain.model.valueobjects.ServiceCaseDraft;
+import com.example.cargotracker.tracking.domain.model.valueobjects.ServiceCaseInputException;
 import com.example.cargotracker.tracking.domain.model.valueobjects.ServiceCaseKind;
+import com.example.cargotracker.tracking.domain.model.valueobjects.ServiceCaseStateException;
 import com.example.cargotracker.tracking.domain.model.valueobjects.ServiceCaseStatus;
 import com.example.cargotracker.tracking.domain.model.valueobjects.ServiceDeadlines;
 import com.example.cargotracker.tracking.domain.model.valueobjects.ServicePriority;
@@ -215,7 +217,7 @@ public final class ServiceCase {
         Objects.requireNonNull(assigneeId, "assigneeId");
         Objects.requireNonNull(at, "at");
         if (status != ServiceCaseStatus.RECEIVED && status != ServiceCaseStatus.ESCALATED) {
-            throw new IllegalStateException("受領できるのは受付済み・上位対応中だけ: " + status);
+            throw new ServiceCaseStateException("受領できるのは受付済み・上位対応中だけ: " + status);
         }
         ServiceCase next = new ServiceCase(this);
         next.assignee = Optional.of(assigneeId);
@@ -292,10 +294,10 @@ public final class ServiceCase {
         requireInProgress("回答期限を変更できる");
         Objects.requireNonNull(newDue, "newDue");
         if (reason == null || reason.isBlank()) {
-            throw new IllegalArgumentException("回答期限の変更には理由が要る: " + number.value());
+            throw new ServiceCaseInputException("回答期限の変更には理由が要る: " + number.value());
         }
         if (!newDue.instant().isAfter(answerDueAt.instant())) {
-            throw new IllegalArgumentException("新しい回答期限は今の期限より後: " + number.value());
+            throw new ServiceCaseInputException("新しい回答期限は今の期限より後: " + number.value());
         }
         ServiceCase next =
                 updateProgress("回答期限を " + newDue.instant() + " に変更した。理由: " + reason.strip(), null, revisedBy, at);
@@ -329,10 +331,10 @@ public final class ServiceCase {
     public ServiceCase completeReconciliation(UUID id) {
         Objects.requireNonNull(id, "id");
         if (!reconciliationRequired) {
-            throw new IllegalStateException("復旧照合が要る案件ではない: " + number.value());
+            throw new ServiceCaseStateException("復旧照合が要る案件ではない: " + number.value());
         }
         if (status == ServiceCaseStatus.CLOSED || status == ServiceCaseStatus.DUPLICATE_CLOSED) {
-            throw new IllegalStateException("終結した案件には記録できない: " + status);
+            throw new ServiceCaseStateException("終結した案件には記録できない: " + status);
         }
         ServiceCase next = new ServiceCase(this);
         next.reconciliationId = Optional.of(id);
@@ -346,7 +348,7 @@ public final class ServiceCase {
      */
     public ServiceCaseClosing close() {
         if (status != ServiceCaseStatus.ANSWERED) {
-            throw new IllegalStateException("終結できるのは回答済みだけ: " + status);
+            throw new ServiceCaseStateException("終結できるのは回答済みだけ: " + status);
         }
         if (reconciliationRequired && reconciliationId.isEmpty()) {
             return new ServiceCaseClosing.ReconciliationIncomplete(Set.of(MissingItem.RECONCILIATION_RESULT));
@@ -365,7 +367,7 @@ public final class ServiceCase {
     public ServiceCase reopen(String customerResponse, UtcInstant at) {
         Objects.requireNonNull(at, "at");
         if (status != ServiceCaseStatus.CLOSED) {
-            throw new IllegalStateException("再開できるのは終結だけ: " + status);
+            throw new ServiceCaseStateException("再開できるのは終結だけ: " + status);
         }
         List<CaseAnswer> updated = new ArrayList<>(answers);
         int last = updated.size() - 1;
@@ -383,7 +385,7 @@ public final class ServiceCase {
      */
     public ServiceCase markDuplicate() {
         if (status != ServiceCaseStatus.RECEIVED) {
-            throw new IllegalStateException("重複終了にできるのは受付済みだけ: " + status);
+            throw new ServiceCaseStateException("重複終了にできるのは受付済みだけ: " + status);
         }
         ServiceCase next = new ServiceCase(this);
         next.status = ServiceCaseStatus.DUPLICATE_CLOSED;
@@ -392,7 +394,7 @@ public final class ServiceCase {
 
     private void requireInProgress(String operation) {
         if (status != ServiceCaseStatus.IN_PROGRESS) {
-            throw new IllegalStateException("対応中のときだけ" + operation + ": " + status);
+            throw new ServiceCaseStateException("対応中のときだけ" + operation + ": " + status);
         }
     }
 
