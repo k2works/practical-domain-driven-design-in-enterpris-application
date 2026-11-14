@@ -37,7 +37,7 @@ C-16（`ShipperNotificationController` と `notification/customer/list.html`）�
 | ゲート | 結果 |
 | :--- | :--- |
 | `spotlessCheck check documentationTest uiTest` | 1 回目は `uiTest` の 1 シナリオ（`login_ui.feature` の「まだ作っていない画面をナビから開くと準備中と示される」。荷主のナビの画面が全部できて、準備中の例がなくなった）で失敗（31 分 22 秒。ほかは通った）。そのシナリオを外した（準備中の仕組みの `PlaceholderController` は使われなくなった。削除は技術的負債として W9 の締め（Bolt 48）に送る）。流し直しは `spotlessCheck documentationTest` だけで、`uiTest` の全件は流し直していない（外したのはシナリオ 1 件の削除だけ） |
-| SonarQube | 実行結果を追記する |
+| SonarQube | **PASS**（新しい違反 0、カバレッジ 95.9%。1 回目は 1 件を指摘され、直して流し直した） |
 
 ## 申し送り
 
