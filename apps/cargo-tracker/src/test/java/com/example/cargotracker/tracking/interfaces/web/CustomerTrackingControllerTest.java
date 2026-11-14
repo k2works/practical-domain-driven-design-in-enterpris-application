@@ -21,6 +21,7 @@ import com.example.cargotracker.shared.domain.Role;
 import com.example.cargotracker.shared.domain.Source;
 import com.example.cargotracker.shared.domain.SourceKind;
 import com.example.cargotracker.shared.domain.UtcInstant;
+import com.example.cargotracker.tracking.application.internal.commandservices.WebInquiryRecorder;
 import com.example.cargotracker.tracking.application.internal.queryservices.CustomerTrackingQueryService;
 import com.example.cargotracker.tracking.application.internal.queryservices.RecentTrackingRecords;
 import com.example.cargotracker.tracking.domain.model.TrackingFixture;
@@ -56,6 +57,9 @@ class CustomerTrackingControllerTest {
 
     @MockitoBean
     CustomerTrackingQueryService queryService;
+
+    @MockitoBean
+    WebInquiryRecorder webInquiryRecorder;
 
     private static TrackingRecordSummary summary(String trackingNumber, TrackingStatus status) {
         return new TrackingRecordSummary(
@@ -326,6 +330,25 @@ class CustomerTrackingControllerTest {
                 .willReturn(Optional.of(view(List.of())));
 
         mockMvc.perform(get(DETAIL)).andExpect(content().string(containsString("主要実績はまだありません。")));
+    }
+
+    @Test
+    void Bolt42_1_照会の結果を開くと顧客Webの自己照会として記録し見つからないときは記録しない() throws Exception {
+        given(queryService.find(TrackingFixture.TRACKING_NUMBER, TestActors.SHIPPER_COMPANY))
+                .willReturn(Optional.of(view(List.of(pickup()))));
+
+        mockMvc.perform(get(DETAIL)).andExpect(status().isOk());
+
+        then(webInquiryRecorder)
+                .should()
+                .recordSelfLookup(TestActors.SHIPPER_USER, TestActors.SHIPPER_COMPANY, TrackingFixture.TRACKING_NUMBER);
+
+        given(queryService.find(any(), any())).willReturn(Optional.empty());
+        org.mockito.Mockito.clearInvocations(webInquiryRecorder);
+
+        mockMvc.perform(get(DETAIL)).andExpect(status().isNotFound());
+
+        then(webInquiryRecorder).shouldHaveNoInteractions();
     }
 
     @Test

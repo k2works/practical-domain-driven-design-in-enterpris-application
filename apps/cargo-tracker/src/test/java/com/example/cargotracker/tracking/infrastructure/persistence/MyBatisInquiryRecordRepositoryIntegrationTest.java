@@ -101,4 +101,62 @@ class MyBatisInquiryRecordRepositoryIntegrationTest {
         assertThatThrownBy(() -> insertRaw("PHONE", "OTHER", false))
                 .isInstanceOf(DataIntegrityViolationException.class);
     }
+
+    // --- Bolt 42-1: 顧客 Web の自己照会のまとめの判定 ---
+
+    private static final UserId SHIPPER_USER = new UserId(UUID.fromString("00000000-0000-0000-0000-0000042a2001"));
+    private static final TrackingNumber WEB_TRACKING = new TrackingNumber("CTABCDEFGH2346");
+    private static final UtcInstant WEB_AT = new UtcInstant(Instant.parse("2026-11-16T01:00:00Z"));
+
+    private InquiryRecord webSelf(UserId user, InquiryChannel channel) {
+        return new InquiryRecord(
+                UUID.randomUUID(),
+                channel,
+                SHIPPER,
+                Optional.of(WEB_TRACKING),
+                InquirerKind.SHIPPER,
+                Optional.of(user),
+                WEB_AT,
+                Optional.empty(),
+                Optional.empty());
+    }
+
+    @Test
+    void 顧客Webの自己照会は指定の時刻より後のものだけを数える_ちょうどの時刻は含まない() {
+        repository.save(webSelf(SHIPPER_USER, InquiryChannel.WEB_SELF));
+
+        assertThat(repository.existsWebSelfAfter(
+                        SHIPPER_USER,
+                        WEB_TRACKING,
+                        new UtcInstant(WEB_AT.instant().minusSeconds(1))))
+                .isTrue();
+        assertThat(repository.existsWebSelfAfter(SHIPPER_USER, WEB_TRACKING, WEB_AT))
+                .isFalse();
+    }
+
+    @Test
+    void 顧客Webの自己照会のまとめの判定は利用者と追跡番号と経路が同じものだけ() {
+        repository.save(webSelf(SHIPPER_USER, InquiryChannel.WEB_SELF));
+        UtcInstant before = new UtcInstant(WEB_AT.instant().minusSeconds(60));
+
+        assertThat(repository.existsWebSelfAfter(
+                        new UserId(UUID.fromString("00000000-0000-0000-0000-0000042a2002")), WEB_TRACKING, before))
+                .isFalse();
+        assertThat(repository.existsWebSelfAfter(SHIPPER_USER, new TrackingNumber("CTABCDEFGH2347"), before))
+                .isFalse();
+        repository.save(webSelf(
+                new UserId(UUID.fromString("00000000-0000-0000-0000-0000042a2003")), InquiryChannel.WEB_INQUIRY));
+        assertThat(repository.existsWebSelfAfter(
+                        new UserId(UUID.fromString("00000000-0000-0000-0000-0000042a2003")), WEB_TRACKING, before))
+                .isFalse();
+    }
+
+    @Test
+    void 受付番号の索引がある() {
+        Integer count = jdbc.queryForObject(
+                "SELECT COUNT(*) FROM pg_indexes WHERE schemaname = 'tracking' AND indexname = 'ix_inquiry_record_case_number'",
+                Integer.class);
+
+        assertThat(count).isEqualTo(1);
+    }
 }

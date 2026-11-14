@@ -10,6 +10,7 @@ import com.example.cargotracker.tracking.application.internal.commandservices.Se
 import com.example.cargotracker.tracking.application.internal.commandservices.ServiceCaseCommandService;
 import com.example.cargotracker.tracking.application.internal.commandservices.SystemServiceCaseOpener;
 import com.example.cargotracker.tracking.application.internal.commandservices.TrackingRecordCommandService;
+import com.example.cargotracker.tracking.application.internal.commandservices.WebInquiryRecorder;
 import com.example.cargotracker.tracking.application.internal.eventhandlers.BookingTrackingStartNotificationEventHandler;
 import com.example.cargotracker.tracking.application.internal.eventhandlers.BookingTransportPhaseNotificationEventHandler;
 import com.example.cargotracker.tracking.application.internal.eventhandlers.ExternalMilestoneEventHandler;
@@ -153,6 +154,12 @@ public class TrackingConfiguration {
             Clock clock) {
         return new InquiryRecordingService(
                 trackingRecordScope, inquiryRecordRepository, serviceCaseCommandService, clock);
+    }
+
+    /** 顧客 Web の追跡照会の自動記録（IR-INV-01。Bolt 42-1）。 */
+    @Bean
+    WebInquiryRecorder webInquiryRecorder(InquiryRecordRepository inquiryRecordRepository, Clock clock) {
+        return new WebInquiryRecorder(inquiryRecordRepository, clock);
     }
 
     /** 有人案件の一覧（S-14）と詳細（S-15）の照会（US-20。読むときの判定。Bolt 40-11）。 */

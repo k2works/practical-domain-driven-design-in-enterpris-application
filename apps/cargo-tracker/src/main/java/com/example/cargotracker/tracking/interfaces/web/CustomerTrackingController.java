@@ -1,6 +1,7 @@
 package com.example.cargotracker.tracking.interfaces.web;
 
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
+import com.example.cargotracker.tracking.application.internal.commandservices.WebInquiryRecorder;
 import com.example.cargotracker.tracking.application.internal.queryservices.CustomerTrackingQueryService;
 import com.example.cargotracker.tracking.application.internal.queryservices.RecentTrackingRecords;
 import com.example.cargotracker.tracking.domain.model.valueobjects.CustomerTrackingView;
@@ -40,8 +41,11 @@ public class CustomerTrackingController {
 
     private final CustomerTrackingQueryService queryService;
 
-    public CustomerTrackingController(CustomerTrackingQueryService queryService) {
+    private final WebInquiryRecorder inquiryRecorder;
+
+    public CustomerTrackingController(CustomerTrackingQueryService queryService, WebInquiryRecorder inquiryRecorder) {
         this.queryService = queryService;
+        this.inquiryRecorder = inquiryRecorder;
     }
 
     /**
@@ -85,12 +89,14 @@ public class CustomerTrackingController {
     @GetMapping("/{trackingNumber}")
     public String detail(
             @PathVariable String trackingNumber, AuthenticatedActor actor, Model model, HttpServletResponse response) {
-        Optional<CustomerTrackingView> found = TrackingRecordViews.parseTrackingNumber(trackingNumber)
-                .flatMap(number -> queryService.find(number, actor.companyId()));
+        Optional<TrackingNumber> parsed = TrackingRecordViews.parseTrackingNumber(trackingNumber);
+        Optional<CustomerTrackingView> found = parsed.flatMap(number -> queryService.find(number, actor.companyId()));
         if (found.isEmpty()) {
             response.setStatus(HttpStatus.NOT_FOUND.value());
             return NOT_FOUND_VIEW;
         }
+        // 自社の追跡記録を開いたら、顧客 Web の自己照会として記録する（IR-INV-01。KPI-02。30 分以内の再表示はまとめる。Bolt 42-1）
+        inquiryRecorder.recordSelfLookup(actor.userId(), actor.companyId(), parsed.get());
         model.addAttribute("trackingRecord", TrackingRecordViews.customerDetail(found.get()));
         return DETAIL_VIEW;
     }

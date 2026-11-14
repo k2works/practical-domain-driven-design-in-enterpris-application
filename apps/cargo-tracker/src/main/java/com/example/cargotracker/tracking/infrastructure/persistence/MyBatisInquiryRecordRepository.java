@@ -1,6 +1,7 @@
 package com.example.cargotracker.tracking.infrastructure.persistence;
 
 import com.example.cargotracker.shared.domain.UserId;
+import com.example.cargotracker.shared.domain.UtcInstant;
 import com.example.cargotracker.tracking.domain.model.aggregates.InquiryRecord;
 import com.example.cargotracker.tracking.domain.model.aggregates.InquiryRecordRepository;
 import com.example.cargotracker.tracking.domain.model.valueobjects.CaseNumber;
@@ -38,5 +39,14 @@ public class MyBatisInquiryRecordRepository implements InquiryRecordRepository {
                 inquiryRecord.caseNumber().map(CaseNumber::value).orElse(null),
                 inquiryRecord.recordedBy().map(UserId::value).orElse(null),
                 OffsetDateTime.now(clock)));
+    }
+
+    @Override
+    public boolean existsWebSelfAfter(UserId inquirerUserId, TrackingNumber trackingNumber, UtcInstant after) {
+        return mapper.countWebSelfAfter(
+                        inquirerUserId.value(),
+                        trackingNumber.value(),
+                        after.instant().atOffset(ZoneOffset.UTC))
+                > 0;
     }
 }

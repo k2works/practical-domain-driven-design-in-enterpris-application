@@ -54,7 +54,17 @@ class InquiryRecordingServiceTest {
     private final InMemoryTrackingRecordRepository trackingRecords = new InMemoryTrackingRecordRepository();
     private final InMemoryServiceCaseRepository cases = new InMemoryServiceCaseRepository();
     private final List<InquiryRecord> saved = new ArrayList<>();
-    private final InquiryRecordRepository inquiries = saved::add;
+    private final InquiryRecordRepository inquiries = new InquiryRecordRepository() {
+        @Override
+        public void save(InquiryRecord inquiryRecord) {
+            saved.add(inquiryRecord);
+        }
+
+        @Override
+        public boolean existsWebSelfAfter(UserId user, TrackingNumber trackingNumber, UtcInstant after) {
+            return false;
+        }
+    };
 
     private static BusinessCalendar calendar() {
         List<BusinessDay> days = new ArrayList<>();
