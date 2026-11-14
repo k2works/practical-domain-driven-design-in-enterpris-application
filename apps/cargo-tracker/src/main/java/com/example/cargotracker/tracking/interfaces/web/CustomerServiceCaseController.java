@@ -63,8 +63,13 @@ public class CustomerServiceCaseController {
         model.addAttribute("truncated", list.truncated());
         model.addAttribute("limit", list.limit());
         // 問い合わせの窓口の受付時間（既定の営業カレンダー。平日 9:00〜18:00。台帳 D-164。仮）を、荷主の日時表示と同じ時間帯で示す（AC4）
-        model.addAttribute("receptionHours", "平日 09:00〜18:00 " + DateTimeDisplay.customerZoneLabel(Instant.now()));
+        model.addAttribute("receptionHours", receptionHours());
         return LIST_VIEW;
+    }
+
+    /** 問い合わせの窓口の受付時間の文（荷主の日時表示と同じ時間帯。追跡の照会の担当窓口も使う。台帳 D-164。仮）。 */
+    static String receptionHours() {
+        return "平日 09:00〜18:00 " + DateTimeDisplay.customerZoneLabel(Instant.now());
     }
 
     /** 問い合わせの詳細（進捗と回答の履歴）。回答済みなら再開の依頼の欄を示す。 */

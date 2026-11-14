@@ -202,7 +202,8 @@ public class TrackingConfiguration {
 
     /** 荷主の追跡の照会（C-10。社内の照会と分ける。Bolt 27）。 */
     @Bean
-    CustomerTrackingQueryService customerTrackingQueryService(TrackingRecordRepository repository) {
-        return new CustomerTrackingQueryService(repository);
+    CustomerTrackingQueryService customerTrackingQueryService(
+            TrackingRecordRepository repository, Clock clock, FreshnessPolicy freshnessPolicy) {
+        return new CustomerTrackingQueryService(repository, clock, freshnessPolicy);
     }
 }

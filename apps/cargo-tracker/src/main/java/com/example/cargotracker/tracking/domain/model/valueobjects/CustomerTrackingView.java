@@ -20,6 +20,9 @@ import java.util.Optional;
  *     新しさを示しても開示の範囲は広がらない。他社の貨物の情報と出典の参照は示さない。【前の決定の変更】(23)）
  * @param legs 予定区間（区間の順）
  * @param milestones 採用済みの主要実績（発生時刻の順）
+ * @param nextExpectedAt 次の予定の実績の予定時刻（荷主に示す「次回の更新」の目安。なければ空。US-09 AC2・AC3。W9 の Bolt 47）
+ * @param freshnessExceeded 鮮度超過か（次の予定の実績の予定時刻に許容範囲を足した時刻以後。外部情報源が止まって更新が届かないときの荷主への
+ *     「最新性を保証しない旨」の出し分け。読むときの判定で、集約は持たない。照会のサービスが入れる。US-09 AC3、FRS-02・03）
  */
 @ValueObject
 public record CustomerTrackingView(
@@ -29,7 +32,9 @@ public record CustomerTrackingView(
         UtcInstant latestEta,
         Optional<UtcInstant> lastAcquiredAt,
         List<ScheduledLeg> legs,
-        List<CustomerMilestone> milestones) {
+        List<CustomerMilestone> milestones,
+        Optional<UtcInstant> nextExpectedAt,
+        boolean freshnessExceeded) {
 
     public CustomerTrackingView {
         Objects.requireNonNull(trackingNumber, "trackingNumber");
@@ -37,7 +42,43 @@ public record CustomerTrackingView(
         Objects.requireNonNull(originalEta, "originalEta");
         Objects.requireNonNull(latestEta, "latestEta");
         Objects.requireNonNull(lastAcquiredAt, "lastAcquiredAt");
+        Objects.requireNonNull(nextExpectedAt, "nextExpectedAt");
         legs = List.copyOf(legs);
         milestones = List.copyOf(milestones);
+    }
+
+    /** 次の予定の実績の予定時刻と鮮度の判定を持たない形（それ以前の呼び出し）。 */
+    public CustomerTrackingView(
+            TrackingNumber trackingNumber,
+            TrackingStatus currentStatus,
+            UtcInstant originalEta,
+            UtcInstant latestEta,
+            Optional<UtcInstant> lastAcquiredAt,
+            List<ScheduledLeg> legs,
+            List<CustomerMilestone> milestones) {
+        this(
+                trackingNumber,
+                currentStatus,
+                originalEta,
+                latestEta,
+                lastAcquiredAt,
+                legs,
+                milestones,
+                Optional.empty(),
+                false);
+    }
+
+    /** 鮮度超過の判定を入れた同じ照会結果（照会のサービスが時計から判定する。集約は持たない）。 */
+    public CustomerTrackingView withFreshnessExceeded(boolean exceeded) {
+        return new CustomerTrackingView(
+                trackingNumber,
+                currentStatus,
+                originalEta,
+                latestEta,
+                lastAcquiredAt,
+                legs,
+                milestones,
+                nextExpectedAt,
+                exceeded);
     }
 }

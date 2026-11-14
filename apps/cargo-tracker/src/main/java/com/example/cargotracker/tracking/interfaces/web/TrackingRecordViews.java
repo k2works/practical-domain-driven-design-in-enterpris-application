@@ -486,7 +486,11 @@ final class TrackingRecordViews {
             String latestEta,
             String lastAcquiredAt,
             List<LegView> legs,
-            List<CustomerMilestoneView> milestones) {}
+            List<CustomerMilestoneView> milestones,
+            boolean underReview,
+            boolean freshnessExceeded,
+            String lastAdoptedText,
+            String nextUpdate) {}
 
     /**
      * C-10 の主要実績の 1 項目。
@@ -508,7 +512,28 @@ final class TrackingRecordViews {
                 legs(view.legs(), TrackingRecordViews::customer, (legNo, leg) -> customerLegSummary(leg)),
                 view.milestones().stream()
                         .map(TrackingRecordViews::customerMilestone)
-                        .toList());
+                        .toList(),
+                // 確認中と鮮度超過のお知らせ（US-09 AC2・AC3。W9 の Bolt 47）。確認中の実績の中身は荷主に出さない（開示の範囲）
+                view.currentStatus() == TrackingStatus.UNDER_REVIEW,
+                view.freshnessExceeded(),
+                lastAdoptedText(view),
+                view.nextExpectedAt().map(TrackingRecordViews::customer).orElse(NEXT_UPDATE_UNDECIDED));
+    }
+
+    /** 次回の更新の目安がないときの文。 */
+    static final String NEXT_UPDATE_UNDECIDED = "未定";
+
+    /**
+     * 鮮度超過のお知らせの「最後に採用した状態」の語。確認中のときは現在の状態が採用した状態でないので、最後に採用した実績の種類で示す（なければ
+     * 「まだありません」）。
+     */
+    private static String lastAdoptedText(CustomerTrackingView view) {
+        if (view.currentStatus() != TrackingStatus.UNDER_REVIEW) {
+            return status(view.currentStatus());
+        }
+        return view.milestones().isEmpty()
+                ? NO_LAST_ACQUIRED_YET
+                : kind(view.milestones().getLast().kind());
     }
 
     private static CustomerMilestoneView customerMilestone(CustomerMilestone milestone) {

@@ -362,8 +362,9 @@ public class AcceptanceTestConfiguration {
 
         /** 荷主の追跡の照会（US-09。Bolt 27）。 */
         @Bean
-        CustomerTrackingQueryService customerTrackingQueryService(InMemoryTrackingRecordRepository repository) {
-            return new CustomerTrackingQueryService(repository);
+        CustomerTrackingQueryService customerTrackingQueryService(
+                InMemoryTrackingRecordRepository repository, MutableClock clock) {
+            return new CustomerTrackingQueryService(repository, clock, new FreshnessPolicy(Duration.ofHours(36)));
         }
 
         /** 追跡記録の照会（S-11・S-12）。鮮度の判定の許容範囲は設定の既定と同じ 36 時間（FRS-02。Bolt 39g4）。 */

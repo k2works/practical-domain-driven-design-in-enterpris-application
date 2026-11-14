@@ -1,11 +1,14 @@
 package com.example.cargotracker.tracking.application.internal.queryservices;
 
 import com.example.cargotracker.shared.domain.CompanyId;
+import com.example.cargotracker.shared.domain.UtcInstant;
 import com.example.cargotracker.tracking.domain.model.aggregates.TrackingRecord;
 import com.example.cargotracker.tracking.domain.model.aggregates.TrackingRecordRepository;
+import com.example.cargotracker.tracking.domain.model.rules.FreshnessPolicy;
 import com.example.cargotracker.tracking.domain.model.valueobjects.CustomerTrackingView;
 import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingNumber;
 import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingRecordSummary;
+import java.time.Clock;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.stereotype.Service;
@@ -26,9 +29,13 @@ public class CustomerTrackingQueryService {
     private static final int RECENT_LIMIT = 50;
 
     private final TrackingRecordRepository repository;
+    private final Clock clock;
+    private final FreshnessPolicy freshness;
 
-    public CustomerTrackingQueryService(TrackingRecordRepository repository) {
+    public CustomerTrackingQueryService(TrackingRecordRepository repository, Clock clock, FreshnessPolicy freshness) {
         this.repository = repository;
+        this.clock = clock;
+        this.freshness = freshness;
     }
 
     /** 自社の追跡記録の一覧。追跡の開始時刻の新しい順に上限まで返し、上限を超えたかを示す（上限より 1 件多く引いて判定する）。 */
@@ -41,6 +48,11 @@ public class CustomerTrackingQueryService {
     /** 追跡番号で照会する。自社の追跡記録でなければ、存在しない追跡番号と同じく空を返す。 */
     @Transactional(readOnly = true)
     public Optional<CustomerTrackingView> find(TrackingNumber trackingNumber, CompanyId shipperCompanyId) {
-        return repository.findByTrackingNumber(trackingNumber, shipperCompanyId).map(TrackingRecord::customerView);
+        // 鮮度超過は読むときの判定（FRS-02）。判定の時刻は時計から得る（社内の照会と同じ。US-09 AC3。W9 の Bolt 47）
+        UtcInstant judgedAt = new UtcInstant(clock.instant());
+        return repository
+                .findByTrackingNumber(trackingNumber, shipperCompanyId)
+                .map(found -> found.customerView()
+                        .withFreshnessExceeded(freshness.exceeded(found.nextExpectedAt(), judgedAt)));
     }
 }

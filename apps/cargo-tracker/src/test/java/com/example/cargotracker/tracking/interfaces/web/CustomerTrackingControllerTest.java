@@ -87,6 +87,79 @@ class CustomerTrackingControllerTest {
                 milestones);
     }
 
+    private static CustomerTrackingView notified(
+            TrackingStatus status, boolean freshnessExceeded, Optional<UtcInstant> nextExpectedAt) {
+        return new CustomerTrackingView(
+                TrackingFixture.TRACKING_NUMBER,
+                status,
+                TrackingFixture.at("2026-11-15T00:00:00Z"),
+                TrackingFixture.at("2026-11-16T03:00:00Z"),
+                Optional.of(TrackingFixture.at("2026-11-01T03:00:00Z")),
+                TrackingFixture.schedule().legs(),
+                List.of(pickup()),
+                nextExpectedAt,
+                freshnessExceeded);
+    }
+
+    @Test
+    void Bolt47_確認中の照会は判明していることと未確定のことと次の行動と次回の更新と担当窓口を示す_US09_AC2() throws Exception {
+        given(queryService.find(TrackingFixture.TRACKING_NUMBER, TestActors.SHIPPER_COMPANY))
+                .willReturn(Optional.of(notified(
+                        TrackingStatus.UNDER_REVIEW, false, Optional.of(TrackingFixture.at("2026-11-17T01:00:00Z")))));
+
+        mockMvc.perform(get(DETAIL))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("確認中のお知らせ")))
+                .andExpect(content().string(containsString("判明していること")))
+                .andExpect(content().string(containsString("予定と、採用済みの実績は上に示したとおりです。")))
+                .andExpect(content().string(containsString("未確定のこと")))
+                .andExpect(content().string(containsString("確認中の実績があります。")))
+                .andExpect(content().string(containsString("次の行動")))
+                .andExpect(content().string(containsString("次回の更新")))
+                .andExpect(content().string(containsString("2026-11-17 10:00 Asia/Tokyo（UTC+09:00）")))
+                .andExpect(content().string(containsString("担当窓口")))
+                .andExpect(content().string(containsString("平日 09:00〜18:00 Asia/Tokyo（UTC+09:00）")))
+                .andExpect(content().string(containsString("href=\"/customer/inquiries\"")))
+                // 確認中の実績の中身は荷主に出さない（開示の範囲）
+                .andExpect(content().string(not(containsString("OUT_OF_SEQUENCE"))))
+                .andExpect(content().string(not(containsString("最新性を保証できません"))));
+    }
+
+    @Test
+    void Bolt47_鮮度超過の照会は最終の採用値と取得時刻と最新性を保証しない旨と次の行動と担当窓口を示す_US09_AC3() throws Exception {
+        given(queryService.find(TrackingFixture.TRACKING_NUMBER, TestActors.SHIPPER_COMPANY))
+                .willReturn(Optional.of(notified(
+                        TrackingStatus.PICKED_UP, true, Optional.of(TrackingFixture.at("2026-11-10T01:00:00Z")))));
+
+        mockMvc.perform(get(DETAIL))
+                .andExpect(content().string(containsString("最新性についてのお知らせ")))
+                .andExpect(content().string(containsString("最新性を保証できません")))
+                .andExpect(content().string(containsString("最後に採用した状態は「集荷済み」です")))
+                .andExpect(content().string(containsString("最終取得 2026-11-01 12:00 Asia/Tokyo（UTC+09:00）")))
+                .andExpect(content().string(containsString("次の行動")))
+                .andExpect(content().string(containsString("次回の更新")))
+                .andExpect(content().string(containsString("担当窓口")))
+                .andExpect(content().string(not(containsString("確認中のお知らせ"))));
+    }
+
+    @Test
+    void Bolt47_次回の更新の目安がなければ未定と示す() throws Exception {
+        given(queryService.find(TrackingFixture.TRACKING_NUMBER, TestActors.SHIPPER_COMPANY))
+                .willReturn(Optional.of(notified(TrackingStatus.UNDER_REVIEW, false, Optional.empty())));
+
+        mockMvc.perform(get(DETAIL)).andExpect(content().string(containsString("未定")));
+    }
+
+    @Test
+    void Bolt47_確認中でも鮮度超過でもなければお知らせを出さない() throws Exception {
+        given(queryService.find(TrackingFixture.TRACKING_NUMBER, TestActors.SHIPPER_COMPANY))
+                .willReturn(Optional.of(view(List.of(pickup()))));
+
+        mockMvc.perform(get(DETAIL))
+                .andExpect(content().string(not(containsString("確認中のお知らせ"))))
+                .andExpect(content().string(not(containsString("最新性についてのお知らせ"))));
+    }
+
     /** Bolt 39g3 の行 19（本計画 CP-5）。照会の結果は最新の到着見込みの次に最終取得時刻（荷主の日時表示）。一覧の列は変えない。 */
     @Test
     void Bolt39g3_行19_照会の結果は最新の到着見込みの次に最終取得時刻を示す() throws Exception {

@@ -613,6 +613,8 @@ Release 1.0 の Must の受入条件のうち、閉じたストーリーから�
 | US-22 | AC2 | `@US-22-AC2` |
 | US-22 | AC3 | `@US-22-AC3` |
 | US-22 | AC4 | `@US-22-AC4` |
+| US-09 | AC2 | `@US-09-AC2` |
+| US-09 | AC3 | `@US-09-AC3` |
 
 注: 部分的に確かめる受入条件をタグの照合の数に「完全」と読ませない。US-12 AC4 の「有人例外案件へ引き継ぐ」は W8（US-20）で、取り込みの分（39g）と手入力の分（39gc）の「拒否」だけを AC4 のタグで照合する。US-14 AC5 の「差異としてデータ責任者へ示される」は、取込の分類（39h）と却下（39h2）だけを確かめる（採用は Release 1.0 では作らない。D-144）。US-14 AC4 の古い外部版の警告は 39h3（`adopt_old_version_quarantine_ui.feature`）で確かめる。
 
@@ -666,6 +668,8 @@ Release 1.0 の受入条件のうち、上の照合の表にまだ入れてい�
 | US-22 | AC2（承認待ちの見積りの有効期限の 24 時間前にメールが送られる） | 43-2 | `@US-22-AC2`（同上）、`QuotationExpiryNotificationServiceTest`・`QuotationExpirySchedulerTest`・`MyBatisQuotationIntegrationTest` の窓の境界 |
 | US-22 | AC3（メールは料金・契約条件・書類・他の予約の情報を含まない） | 43 | `@US-22-AC3`（同上）、`ShipperNotificationMailIntegrationTest`（本文に料金等を含まない。N-INV-01） |
 | US-22 | AC4（送信に失敗したら失敗と宛先が記録され、通知一覧からも同じ内容を確認できる） | 43・43-3 | `@US-22-AC4`（同上）、`ShipperNotificationControllerTest`・`NotificationQueryServiceTest`・`MyBatisNotificationRepositoryIntegrationTest`（失敗の記録は `MailDeliveryTest` 系） |
+| US-09 | AC2（確認中の実績があるとき、判明していること・未確定のこと・次の行動・次回の更新・担当窓口を示す。確認中の実績の中身は出さない） | 47 | `@US-09-AC2`（`features/ui/customer_tracking_notice_ui.feature`）、`CustomerTrackingControllerTest`（Bolt 47 の行）、`CustomerTrackingQueryServiceTest` |
+| US-09 | AC3（更新が許容を過ぎて届かないとき、最新性を保証できないことと最後の採用値・次回の更新・次の行動を示す。台帳 D-167） | 47 | `@US-09-AC3`（同上）、`CustomerTrackingQueryServiceTest`（36 時間の境界）、`CustomerTrackingControllerTest` |
 | US-14 | 締め（AC1〜AC5 の照合の表、Golden dataset の G-06b 欠落・G-06c 差異、W7 のデモの動画、性能の複数の外部版の組。【業務の判断】(bk)、台帳 D-153。【前の決定の変更】(31)。#18 は終了報告の承認の後に閉じる） | 39h4 | `AcceptanceCriteriaCoverageTest`（Release 1.0 の照合の表 8 行。見出しを引数にした純粋なメソッドで書式の外れ・前方一致・2 つ目の表を縛る）、`RoutingCaseGoldenDatasetTest`（G-06b・G-06c とガードのテスト）、`route_candidates_golden_v0.feature`（`@golden` 6 行）、`adopted_voyage_reflected_ui.feature`（`@demo-bolt-39h4/confirm-rejected-same-info-version`）、`ExternalDataIngestionPerformanceTest`（`Bolt39h4_行7_…`。外部 ID 2,000 種 × 外部版 5。測るのは W7 の締めの CI） |
 
 ## 後続工程への引継ぎ

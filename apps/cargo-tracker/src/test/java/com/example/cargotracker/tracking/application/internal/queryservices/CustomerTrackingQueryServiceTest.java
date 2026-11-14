@@ -5,6 +5,7 @@ import static com.example.cargotracker.tracking.domain.model.TrackingFixture.sch
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.example.cargotracker.shared.domain.CompanyId;
+import com.example.cargotracker.shared.domain.UtcInstant;
 import com.example.cargotracker.tracking.acceptance.InMemoryTrackingRecordRepository;
 import com.example.cargotracker.tracking.domain.model.aggregates.TrackingRecord;
 import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingNumber;
@@ -21,7 +22,12 @@ class CustomerTrackingQueryServiceTest {
     private static final String ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
 
     private final InMemoryTrackingRecordRepository repository = new InMemoryTrackingRecordRepository();
-    private final CustomerTrackingQueryService service = new CustomerTrackingQueryService(repository);
+    private final com.example.cargotracker.shared.acceptance.MutableClock clock =
+            new com.example.cargotracker.shared.acceptance.MutableClock();
+    private final CustomerTrackingQueryService service = new CustomerTrackingQueryService(
+            repository,
+            clock,
+            new com.example.cargotracker.tracking.domain.model.rules.FreshnessPolicy(java.time.Duration.ofHours(36)));
 
     @Test
     void 自社の追跡番号は荷主向けの照会結果を返す() {
@@ -29,6 +35,27 @@ class CustomerTrackingQueryServiceTest {
 
         assertThat(service.find(number(1), SHIPPER))
                 .hasValueSatisfying(view -> assertThat(view.trackingNumber()).isEqualTo(number(1)));
+    }
+
+    @Test
+    void Bolt47_次の予定の実績の予定時刻に許容範囲の36時間を足した時刻以後は鮮度超過で_その1秒前は超過でない() {
+        TrackingNumber number = number(1);
+        save(number, SHIPPER, "2026-10-26T01:00:00Z");
+        UtcInstant expected = repository
+                .findByTrackingNumber(number, SHIPPER)
+                .orElseThrow()
+                .nextExpectedAt()
+                .orElseThrow();
+
+        clock.setInstant(expected.instant().plus(java.time.Duration.ofHours(36)).minusSeconds(1));
+        assertThat(service.find(number, SHIPPER)).hasValueSatisfying(view -> {
+            assertThat(view.freshnessExceeded()).isFalse();
+            assertThat(view.nextExpectedAt()).contains(expected);
+        });
+
+        clock.setInstant(expected.instant().plus(java.time.Duration.ofHours(36)));
+        assertThat(service.find(number, SHIPPER))
+                .hasValueSatisfying(view -> assertThat(view.freshnessExceeded()).isTrue());
     }
 
     @Test

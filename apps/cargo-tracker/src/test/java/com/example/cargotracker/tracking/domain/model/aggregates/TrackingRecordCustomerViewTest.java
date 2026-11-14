@@ -143,7 +143,10 @@ class TrackingRecordCustomerViewTest {
                         "latestEta",
                         "lastAcquiredAt",
                         "legs",
-                        "milestones");
+                        "milestones",
+                        // Bolt 47（US-09 AC2・AC3）。次の予定の実績の予定時刻は予定の一部、鮮度超過は表示の印で、どちらも開示してよい（台帳 D-167）
+                        "nextExpectedAt",
+                        "freshnessExceeded");
         assertThat(Arrays.stream(CustomerMilestone.class.getRecordComponents()).map(RecordComponent::getName))
                 .containsExactly("kind", "location", "occurredAt", "source");
     }

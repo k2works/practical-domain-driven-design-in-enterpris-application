@@ -98,6 +98,8 @@ public class CustomerTrackingController {
         // 自社の追跡記録を開いたら、顧客 Web の自己照会として記録する（IR-INV-01。KPI-02。30 分以内の再表示はまとめる。Bolt 42-1）
         parsed.ifPresent(number -> inquiryRecorder.recordSelfLookup(actor.userId(), actor.companyId(), number));
         model.addAttribute("trackingRecord", TrackingRecordViews.customerDetail(found.get()));
+        // 担当窓口（確認中・鮮度超過のお知らせ。問い合わせの受付時間と同じ。台帳 D-164）
+        model.addAttribute("contactHours", "担当営業、またはカスタマーサポート（" + CustomerServiceCaseController.receptionHours() + "）");
         return DETAIL_VIEW;
     }
 }

@@ -810,7 +810,15 @@ public final class TrackingRecord {
                         milestone.kind(), milestone.location(), milestone.occurredAt(), milestone.source()))
                 .toList();
         return new CustomerTrackingView(
-                trackingNumber, currentStatus, originalEta, latestEta(), lastAcquiredAt, schedule.legs(), adopted);
+                trackingNumber,
+                currentStatus,
+                originalEta,
+                latestEta(),
+                lastAcquiredAt,
+                schedule.legs(),
+                adopted,
+                nextExpectedAt,
+                false);
     }
 
     /** 同じ出典識別子（出典の種類と参照）の実績（T-INV-02）。取得時刻は識別子に含めない。 */

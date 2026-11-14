@@ -42,6 +42,42 @@
             <span th:text="|取得 ${milestone.acquiredAt()}|">取得 2026-11-01 12:00 Asia/Tokyo（UTC+09:00）</span>
         </li>
     </ul>
+    <!--/* 確認中と鮮度超過のお知らせ（US-09 AC2・AC3。W9 の Bolt 47）。確認中の実績の中身は出さない（開示の範囲）。次回の更新は次の予定の実績の予定時刻（台帳 D-167。仮）。
+         担当窓口は問い合わせの受付時間と同じ（台帳 D-164） */-->
+    <section th:if="${trackingRecord.underReview()}" aria-labelledby="under-review-heading" class="alert alert-info" role="region">
+        <h2 class="h4" id="under-review-heading">確認中のお知らせ</h2>
+        <dl class="row mb-0">
+            <dt class="col-sm-3">判明していること</dt>
+            <dd class="col-sm-9">予定と、採用済みの実績は上に示したとおりです。<span th:if="${#lists.isEmpty(trackingRecord.milestones())}">採用済みの実績はまだありません。</span></dd>
+            <dt class="col-sm-3">未確定のこと</dt>
+            <dd class="col-sm-9">確認中の実績があります。内容が確定するまで、現在の状態には反映せず「確認中」と示します。</dd>
+            <dt class="col-sm-3">次の行動</dt>
+            <dd class="col-sm-9">担当営業またはカスタマーサポートが確認します。お急ぎのときは<a class="alert-link" th:href="@{/customer/inquiries}">問い合わせ</a>てください。</dd>
+            <dt class="col-sm-3">次回の更新</dt>
+            <dd class="col-sm-9" th:text="${trackingRecord.nextUpdate()}">2026-11-17 10:00 Asia/Tokyo（UTC+09:00）</dd>
+            <dt class="col-sm-3">担当窓口</dt>
+            <dd class="col-sm-9" th:text="${contactHours}">担当営業、またはカスタマーサポート（平日 09:00〜18:00 Asia/Tokyo（UTC+09:00））</dd>
+        </dl>
+    </section>
+    <section th:if="${trackingRecord.freshnessExceeded()}" aria-labelledby="stale-heading" class="alert alert-warning" role="region">
+        <h2 class="h4" id="stale-heading">最新性についてのお知らせ</h2>
+        <dl class="row mb-0">
+            <dt class="col-sm-3">いまの扱い</dt>
+            <dd class="col-sm-9">情報源からの更新がしばらく届いていません。この画面の内容は最新とは限らず、最新性を保証できません。</dd>
+            <dt class="col-sm-3">最後の採用値</dt>
+            <dd class="col-sm-9">
+                <span th:unless="${trackingRecord.underReview()}" th:text="|最後に採用した状態は「${trackingRecord.lastAdoptedText()}」です|">最後に採用した状態は「集荷済み」です</span>
+                <span th:if="${trackingRecord.underReview()}" th:text="|最後に採用した実績は「${trackingRecord.lastAdoptedText()}」です|">最後に採用した実績は「集荷」です</span>
+                <span th:text="|（最終取得 ${trackingRecord.lastAcquiredAt()}）|">（最終取得 2026-11-01 12:00 Asia/Tokyo（UTC+09:00））</span>
+            </dd>
+            <dt class="col-sm-3">次の行動</dt>
+            <dd class="col-sm-9">担当者が情報源を確認します。お急ぎのときは<a class="alert-link" th:href="@{/customer/inquiries}">問い合わせ</a>てください。</dd>
+            <dt class="col-sm-3">次回の更新</dt>
+            <dd class="col-sm-9" th:text="${trackingRecord.nextUpdate()}">2026-11-10 10:00 Asia/Tokyo（UTC+09:00）</dd>
+            <dt class="col-sm-3">担当窓口</dt>
+            <dd class="col-sm-9" th:text="${contactHours}">担当営業、またはカスタマーサポート（平日 09:00〜18:00 Asia/Tokyo（UTC+09:00））</dd>
+        </dl>
+    </section>
     <p><a th:href="@{/customer/tracking-records}">追跡の照会へ戻る</a></p>
 </main>
 </body>
