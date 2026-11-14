@@ -203,6 +203,25 @@ class ServiceCaseQueryServiceTest {
     }
 
     @Test
+    void 行8b_詳細は案件ごとの認可を通す_自社の荷主は見え他社の荷主は空_役割の述語だけを広げても他社の案件は見えない() {
+        CaseNumber number = open(NORMAL);
+        AuthenticatedActor own =
+                new AuthenticatedActor(new UserId(UUID.randomUUID()), COMPANY, Set.of(Role.SHIPPER), "自社の荷主", "A 社");
+        AuthenticatedActor other = new AuthenticatedActor(
+                new UserId(UUID.randomUUID()),
+                new CompanyId(UUID.fromString("00000000-0000-0000-0000-0000040b1188")),
+                Set.of(Role.SHIPPER),
+                "他社の荷主",
+                "B 社");
+        // 役割の述語を広げて、荷主担当者もはじめの関門を通るようにした照会（荷主に詳細を開く W9 の想定）
+        ServiceCaseQueryService widened =
+                new ServiceCaseQueryService(repository, Clock.fixed(OPENED_AT, ZoneOffset.UTC), actor -> true);
+
+        assertThat(widened.detail(own, number)).isPresent();
+        assertThat(widened.detail(other, number)).isEmpty();
+    }
+
+    @Test
     void 行9_件数の上限を超えるときは打ち切りを示す() {
         for (int i = 0; i < ServiceCaseQueryService.LIMIT + 1; i++) {
             open(NORMAL);

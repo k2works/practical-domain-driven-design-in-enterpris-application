@@ -8,6 +8,7 @@ import com.example.cargotracker.tracking.application.internal.commandservices.Re
 import com.example.cargotracker.tracking.application.internal.commandservices.ServiceCaseActionService;
 import com.example.cargotracker.tracking.application.internal.commandservices.ServiceCaseAuthorization;
 import com.example.cargotracker.tracking.application.internal.commandservices.ServiceCaseCommandService;
+import com.example.cargotracker.tracking.application.internal.commandservices.SystemServiceCaseOpener;
 import com.example.cargotracker.tracking.application.internal.commandservices.TrackingRecordCommandService;
 import com.example.cargotracker.tracking.application.internal.eventhandlers.BookingTrackingStartNotificationEventHandler;
 import com.example.cargotracker.tracking.application.internal.eventhandlers.BookingTransportPhaseNotificationEventHandler;
@@ -89,8 +90,8 @@ public class TrackingConfiguration {
     /** DE-32 を受けて、適合する経路候補がなかった経路設計案件の有人案件を起票する（UC-06 3a。別のトランザクションで動く。Bolt 40-14）。 */
     @Bean
     RouteCandidatesNotFoundEventHandler routeCandidatesNotFoundEventHandler(
-            ServiceCaseCommandService serviceCaseCommandService) {
-        return new RouteCandidatesNotFoundEventHandler(serviceCaseCommandService);
+            SystemServiceCaseOpener systemServiceCaseOpener) {
+        return new RouteCandidatesNotFoundEventHandler(systemServiceCaseOpener);
     }
 
     /** DE-13 を受けて追跡の実績か拒否の記録を書く（Spring Modulith のイベントの記録を経て、別のトランザクションで動く。Bolt 39g）。 */
@@ -99,10 +100,10 @@ public class TrackingConfiguration {
             TrackingRecordRepository repository,
             RejectedMilestoneRepository rejectedMilestones,
             Clock clock,
-            ServiceCaseCommandService serviceCaseCommandService) {
+            SystemServiceCaseOpener systemServiceCaseOpener) {
         // 拒否した主要実績は同じトランザクションの中で有人例外案件にする（T-INV-04。Bolt 40-13）
         return new ExternalMilestoneEventHandler(
-                repository, rejectedMilestones, clock, new RejectedMilestoneCaseOpener(serviceCaseCommandService));
+                repository, rejectedMilestones, clock, new RejectedMilestoneCaseOpener(systemServiceCaseOpener));
     }
 
     /** DE-12 を受けて最後の区間の航海の到着予定を追跡記録に受けさせる（Spring Modulith のイベントの記録を経て、別のトランザクションで動く。Bolt 39g4b）。 */
@@ -119,6 +120,16 @@ public class TrackingConfiguration {
             BusinessCalendarRepository calendars,
             Clock clock) {
         return new ServiceCaseCommandService(repository, numberIssuer, calendars, clock);
+    }
+
+    /** システムの有人案件の起票（拒否した主要実績・経路候補なし。認可を通らない内部の経路。Bolt 40-13・40-17・40-18）。 */
+    @Bean
+    SystemServiceCaseOpener systemServiceCaseOpener(
+            ServiceCaseRepository repository,
+            ServiceCaseNumberIssuer numberIssuer,
+            BusinessCalendarRepository calendars,
+            Clock clock) {
+        return new SystemServiceCaseOpener(repository, numberIssuer, calendars, clock);
     }
 
     /** 有人案件の進捗・回答・終結・再開・回答期限の変更（US-20 AC4〜AC7。Bolt 40-8）。 */

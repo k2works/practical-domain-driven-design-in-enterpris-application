@@ -69,7 +69,7 @@ class RejectedMilestoneCaseOpenerTest {
     }
 
     private RejectedMilestoneCaseOpener opener() {
-        return new RejectedMilestoneCaseOpener(new ServiceCaseCommandService(
+        return new RejectedMilestoneCaseOpener(new SystemServiceCaseOpener(
                 repository, issuer, (from, to) -> calendar(), Clock.fixed(NOW, ZoneOffset.UTC)));
     }
 
@@ -153,7 +153,7 @@ class RejectedMilestoneCaseOpenerTest {
 
     @Test
     void 行4_営業カレンダーが未登録でも既定のカレンダーで期限を計算して起票する_毒メッセージにしない() {
-        RejectedMilestoneCaseOpener opener = new RejectedMilestoneCaseOpener(new ServiceCaseCommandService(
+        RejectedMilestoneCaseOpener opener = new RejectedMilestoneCaseOpener(new SystemServiceCaseOpener(
                 repository,
                 issuer,
                 (from, to) -> {

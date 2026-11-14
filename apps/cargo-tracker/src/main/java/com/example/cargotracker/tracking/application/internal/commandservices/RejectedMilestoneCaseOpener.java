@@ -20,9 +20,9 @@ public class RejectedMilestoneCaseOpener implements RejectionCaseOpener {
 
     private static final String DEPARTMENT = "追跡管理部";
 
-    private final ServiceCaseCommandService commands;
+    private final SystemServiceCaseOpener commands;
 
-    public RejectedMilestoneCaseOpener(ServiceCaseCommandService commands) {
+    public RejectedMilestoneCaseOpener(SystemServiceCaseOpener commands) {
         this.commands = commands;
     }
 
@@ -47,7 +47,7 @@ public class RejectedMilestoneCaseOpener implements RejectionCaseOpener {
             draft = draft.withShipper(trackingRecord.get().shipperCompanyId())
                     .withBooking(trackingRecord.get().bookingId());
         }
-        switch (commands.openBySystem(draft, operator, originRef(rejected))) {
+        switch (commands.open(draft, operator, originRef(rejected))) {
             case OpenServiceCaseOutcome.Opened _, OpenServiceCaseOutcome.Duplicate _ -> {
                 // 起票した、または同じ拒否で起票済み
             }

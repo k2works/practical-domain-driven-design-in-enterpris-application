@@ -7,7 +7,7 @@ import com.example.cargotracker.routing.domain.events.RouteCandidatesNotFound;
 import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
-import com.example.cargotracker.tracking.application.internal.commandservices.ServiceCaseCommandService;
+import com.example.cargotracker.tracking.application.internal.commandservices.SystemServiceCaseOpener;
 import com.example.cargotracker.tracking.domain.model.aggregates.CountingServiceCaseNumberIssuer;
 import com.example.cargotracker.tracking.domain.model.aggregates.InMemoryServiceCaseRepository;
 import com.example.cargotracker.tracking.domain.model.valueobjects.BusinessCalendar;
@@ -53,7 +53,7 @@ class RouteCandidatesNotFoundEventHandlerTest {
     }
 
     private RouteCandidatesNotFoundEventHandler handler() {
-        return new RouteCandidatesNotFoundEventHandler(new ServiceCaseCommandService(
+        return new RouteCandidatesNotFoundEventHandler(new SystemServiceCaseOpener(
                 repository, issuer, (from, to) -> calendar(), Clock.fixed(NOW, ZoneOffset.UTC)));
     }
 
@@ -114,7 +114,7 @@ class RouteCandidatesNotFoundEventHandlerTest {
     @Test
     void 行4_営業カレンダーが未登録でも既定のカレンダーで期限を計算して起票する() {
         RouteCandidatesNotFoundEventHandler handler =
-                new RouteCandidatesNotFoundEventHandler(new ServiceCaseCommandService(
+                new RouteCandidatesNotFoundEventHandler(new SystemServiceCaseOpener(
                         repository,
                         issuer,
                         (from, to) -> {

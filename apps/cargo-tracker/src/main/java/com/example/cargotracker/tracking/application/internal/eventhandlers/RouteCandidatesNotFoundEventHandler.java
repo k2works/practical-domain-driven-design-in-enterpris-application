@@ -2,7 +2,7 @@ package com.example.cargotracker.tracking.application.internal.eventhandlers;
 
 import com.example.cargotracker.routing.domain.events.RouteCandidatesNotFound;
 import com.example.cargotracker.tracking.application.internal.commandservices.OpenServiceCaseOutcome;
-import com.example.cargotracker.tracking.application.internal.commandservices.ServiceCaseCommandService;
+import com.example.cargotracker.tracking.application.internal.commandservices.SystemServiceCaseOpener;
 import com.example.cargotracker.tracking.domain.model.valueobjects.ServiceCaseDraft;
 import com.example.cargotracker.tracking.domain.model.valueobjects.ServiceCaseKind;
 import com.example.cargotracker.tracking.domain.model.valueobjects.ServicePriority;
@@ -25,15 +25,15 @@ public class RouteCandidatesNotFoundEventHandler {
 
     private static final String DEPARTMENT = "経路設計部";
 
-    private final ServiceCaseCommandService commands;
+    private final SystemServiceCaseOpener commands;
 
-    public RouteCandidatesNotFoundEventHandler(ServiceCaseCommandService commands) {
+    public RouteCandidatesNotFoundEventHandler(SystemServiceCaseOpener commands) {
         this.commands = commands;
     }
 
     @ApplicationModuleListener
     public void on(RouteCandidatesNotFound event) {
-        switch (commands.openBySystem(draft(event), event.operatorUserId(), originRef(event))) {
+        switch (commands.open(draft(event), event.operatorUserId(), originRef(event))) {
             case OpenServiceCaseOutcome.Opened _, OpenServiceCaseOutcome.Duplicate _ -> {
                 // 起票した、または未終結の同じ案件がある
             }

@@ -2,6 +2,7 @@ package com.example.cargotracker.tracking.application.internal.queryservices;
 
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
 import com.example.cargotracker.shared.domain.UtcInstant;
+import com.example.cargotracker.tracking.application.internal.commandservices.ServiceCaseAuthorization;
 import com.example.cargotracker.tracking.domain.model.aggregates.ServiceCase;
 import com.example.cargotracker.tracking.domain.model.aggregates.ServiceCaseRepository;
 import com.example.cargotracker.tracking.domain.model.valueobjects.CaseNumber;
@@ -66,13 +67,17 @@ public class ServiceCaseQueryService {
         return Optional.of(new ServiceCaseList(items, truncated, LIMIT));
     }
 
-    /** 受付番号の案件の詳細。ない案件と権限のない役割は、ともに空（存在を明かさない）。 */
+    /**
+     * 受付番号の案件の詳細。ない案件と、その案件を扱えない役割は、ともに空（存在を明かさない）。案件ごとの認可は操作のサービスと同じ
+     * {@link ServiceCaseAuthorization#canAccess}（社内の運用役割はどの案件も、荷主担当者は自社の案件だけ。W8 の週全体レビュー D。荷主に詳細を開く
+     * W9 で、役割の述語だけを広げて他社の案件が見えることを防ぐ）。
+     */
     @Transactional(readOnly = true)
     public Optional<ServiceCaseDetail> detail(AuthenticatedActor actor, CaseNumber number) {
-        if (!permitted.test(actor)) {
-            return Optional.empty();
-        }
         UtcInstant now = new UtcInstant(clock.instant());
-        return repository.findByNumber(number).map(c -> new ServiceCaseDetail(c, c.isReceiptOverdue(now)));
+        return repository
+                .findByNumber(number)
+                .filter(c -> ServiceCaseAuthorization.canAccess(actor, c))
+                .map(c -> new ServiceCaseDetail(c, c.isReceiptOverdue(now)));
     }
 }

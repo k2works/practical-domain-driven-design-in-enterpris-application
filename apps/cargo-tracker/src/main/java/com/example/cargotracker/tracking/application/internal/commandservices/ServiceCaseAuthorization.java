@@ -47,7 +47,7 @@ public final class ServiceCaseAuthorization {
     }
 
     /** その案件を扱えるか。社内の運用役割はどの案件も、荷主担当者は自社の案件だけ（他社の案件は存在を明かさない）。 */
-    static boolean canAccess(AuthenticatedActor actor, ServiceCase serviceCase) {
+    public static boolean canAccess(AuthenticatedActor actor, ServiceCase serviceCase) {
         return isOperating(actor)
                 || (actor.hasRole(Role.SHIPPER)
                         && serviceCase
