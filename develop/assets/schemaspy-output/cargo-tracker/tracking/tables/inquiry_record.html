@@ -389,16 +389,16 @@
                                 </thead>
                                 <tbody>
                                 <tr>
-                                    <td>ck_inquiry_record_channel</td>
-                                    <td>((channel)::text &#61; ANY ((ARRAY[&#39;WEB_SELF&#39;::character varying, &#39;WEB_INQUIRY&#39;::character varying, &#39;PHONE&#39;::character varying, &#39;EMAIL&#39;::character varying])::text[]))</td>
-                                </tr>
-                                <tr>
                                     <td>ck_inquiry_record_inquirer_kind</td>
                                     <td>((inquirer_kind)::text &#61; ANY ((ARRAY[&#39;SHIPPER&#39;::character varying, &#39;CONSIGNEE&#39;::character varying])::text[]))</td>
                                 </tr>
                                 <tr>
                                     <td>ck_inquiry_record_escalated</td>
                                     <td>((escalated &#61; false) OR (case_number IS NOT NULL))</td>
+                                </tr>
+                                <tr>
+                                    <td>ck_inquiry_record_channel</td>
+                                    <td>((channel)::text &#61; ANY ((ARRAY[&#39;WEB_SELF&#39;::character varying, &#39;WEB_INQUIRY&#39;::character varying, &#39;PHONE&#39;::character varying, &#39;EMAIL&#39;::character varying])::text[]))</td>
                                 </tr>
                                 </tbody>
                             </table>
