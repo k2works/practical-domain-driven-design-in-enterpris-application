@@ -1,6 +1,7 @@
 # Docs Update Log
 
 ## 2026-11-14
+* **Creation**: [bolt_45_plan](/development/cargo-tracker/bolt_45_plan.md)・[bolt_45_report](/development/cargo-tracker/bolt_45_report.md) を作成（anthropic/claude-sonnet-5-5。W9。US-01 AC3 の受入条件の照合。実装の変更なし）
 * **Creation**: [bolt_43-3_plan](/development/cargo-tracker/bolt_43-3_plan.md)・[bolt_43-3_report](/development/cargo-tracker/bolt_43-3_report.md) を作成（anthropic/claude-sonnet-5-5。W9。荷主の通知一覧 C-16。US-22 を締める）。マニュアル [15 章 通知](/manual/15-通知.md) を新規に追加、ui_design の C-16、test_strategy の US-22 を更新
 * **Creation**: [bolt_43-2_plan](/development/cargo-tracker/bolt_43-2_plan.md)・[bolt_43-2_report](/development/cargo-tracker/bolt_43-2_report.md) を作成（anthropic/claude-sonnet-5-5。W9。見積りの有効期限の 24 時間前の通知。アプリで最初の定期実行）
 * **Creation**: [bolt_43-1_plan](/development/cargo-tracker/bolt_43-1_plan.md)・[bolt_43-1_report](/development/cargo-tracker/bolt_43-1_report.md) を作成（anthropic/claude-sonnet-5-5。W9。4 つの契機の通知。DE-03・DE-21・DE-18 に荷主企業の ID を追加、tracking のイベントを公表、identity の依存を追加）

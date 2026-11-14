@@ -183,6 +183,16 @@ public class ShipperTransportRequestSteps {
         });
     }
 
+    /** 他社の見積依頼が、荷主の操作の前後で変わっていないこと（US-01 AC3。確定済みのデータは変更されない）。社内の担当範囲の読み出しで確かめる。 */
+    @ならば("営業担当者が読む {string} は版 {int} のままで変わっていない")
+    public void 版のまま変わっていない(String number, int versionNo) {
+        var lookup = staffQueryService.findByNumber(TransportRequestNumber.parse(number), OPERATOR);
+        assertThat(lookup.inScope()).hasValueSatisfying(request -> {
+            assertThat(request.currentVersion().versionNo()).isEqualTo(versionNo);
+            assertThat(request.status()).isEqualTo(TransportRequestStatus.DRAFT);
+        });
+    }
+
     private Optional<TransportRequestSummary> rowOf(String number) {
         return shipperList.stream()
                 .filter(row -> row.number().text().equals(number))
