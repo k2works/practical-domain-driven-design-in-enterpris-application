@@ -44,7 +44,8 @@ class NotificationQueryServiceTest {
                 .should()
                 .findRecentByRecipient(
                         shipper.userId().value(), NotificationQueryService.KINDS, NotificationQueryService.LIMIT);
-        assertThat(NotificationQueryService.KINDS)
+        Set<NotificationKind> shown = NotificationQueryService.KINDS;
+        assertThat(shown)
                 .containsExactlyInAnyOrderElementsOf(EnumSet.of(
                         NotificationKind.QUOTATION_PRESENTED,
                         NotificationKind.ROUTE_APPROVED,
