@@ -459,10 +459,8 @@ class MyBatisServiceCaseRepositoryIntegrationTest {
                         ServiceCaseKind.CUSTOMER_INQUIRY, ServicePriority.NORMAL, cause, "CS")
                 .withShipper(company);
         CaseNumber number = issuer.next(2083);
-        ServiceCase opened =
-                ((ServiceCaseOpening.Opened) ServiceCase.open(draft, number, DEADLINES, at(openedAt))).serviceCase();
         // 保存するのは呼び手（他社の分は保存しない）
-        return opened;
+        return ((ServiceCaseOpening.Opened) ServiceCase.open(draft, number, DEADLINES, at(openedAt))).serviceCase();
     }
 
     // --- 行 6: ない受付番号 ---

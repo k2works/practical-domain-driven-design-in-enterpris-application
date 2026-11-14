@@ -5,6 +5,7 @@ import com.example.cargotracker.shared.domain.AuthenticatedActor;
 import com.example.cargotracker.tracking.application.internal.queryservices.CustomerServiceCaseItem;
 import com.example.cargotracker.tracking.application.internal.queryservices.CustomerServiceCaseList;
 import com.example.cargotracker.tracking.application.internal.queryservices.ServiceCaseQueryService;
+import com.example.cargotracker.tracking.domain.model.entities.CaseAnswer;
 import java.time.Instant;
 import java.util.List;
 import org.springframework.stereotype.Controller;
@@ -50,7 +51,7 @@ public class CustomerServiceCaseController {
                         item.number().value(),
                         ServiceCaseViews.status(item.status()),
                         DateTimeDisplay.customer(item.nextUpdateAt().instant()),
-                        item.latestAnswer().map(answer -> answer.content()).orElse("回答はまだありません。")))
+                        item.latestAnswer().map(CaseAnswer::content).orElse("回答はまだありません。")))
                 .toList();
     }
 }
