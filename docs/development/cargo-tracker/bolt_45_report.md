@@ -35,7 +35,7 @@ generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-14T15:00:00Z }
 | :--- | :--- |
 | `spotlessCheck check documentationTest uiTest` | **全件のゲートは 45-1 でまとめて流して通った**（BUILD SUCCESSFUL。下の記述は着手時の判断）
 | （着手時の判断）| **この Bolt では全件のゲートを流さなかった**（本番のコードも画面も変えず、シナリオ 1 件とステップ 1 つと文書だけのため）。`spotlessCheck documentationTest checkstyleTest` と `RunCucumberTest`（ビジネスルールの層）は通した。`check uiTest` と SonarQube は 45-1 のゲートでまとめて流す（議題として承認を） |
-| SonarQube | 45-1 のゲートでまとめて流す |
+| SonarQube | **PASS**（45-1 のゲートでまとめて流した。新しい違反 0） |
 
 ## 申し送り
 

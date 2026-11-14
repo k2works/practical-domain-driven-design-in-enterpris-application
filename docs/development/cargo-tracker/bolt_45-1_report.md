@@ -35,7 +35,7 @@ generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-14T16:00:00Z }
 | ゲート | 結果 |
 | :--- | :--- |
 | `spotlessCheck check documentationTest uiTest` | 1 回目は `ReturnAfterExpirySecurityIntegrationTest` で失敗（既存のテストが、実在しないクエリ引数として `copyFrom=TR-1` を使っていて、複製の機能を足したことで「ない業務番号」の 404 になった。複製とは無関係の `stage=2` に直した。同じ形の `RecoveryCodeLoginSecurityIntegrationTest` も直した）。流し直して BUILD SUCCESSFUL（31 分 25 秒。Bolt 45 の分もここでまとめて流した） |
-| SonarQube | 実行結果を追記する |
+| SonarQube | **PASS**（新しい違反 0、カバレッジ 95.9%。Bolt 45 の分とまとめて流した） |
 
 ## 申し送り
 
