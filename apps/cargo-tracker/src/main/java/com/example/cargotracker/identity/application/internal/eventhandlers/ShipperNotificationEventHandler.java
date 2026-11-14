@@ -46,7 +46,7 @@ public class ShipperNotificationEventHandler {
                         ShipperNotificationKind.QUOTATION_PRESENTED,
                         event.quotationId().toString()),
                 event.transportRequestNumber(),
-                path("/customer/transport-requests/", event.transportRequestNumber()));
+                requestPath(event.transportRequestNumber()));
     }
 
     /** 見積りの有効期限の 24 時間前の検出（Bolt 43-2）を受けて、期限が近いと通知する。契機の ID は見積りと有効期限の組から決める。 */
@@ -59,7 +59,7 @@ public class ShipperNotificationEventHandler {
                         ShipperNotificationKind.QUOTATION_EXPIRING,
                         event.quotationId() + ":" + event.expiresAt().instant()),
                 event.transportRequestNumber(),
-                path("/customer/transport-requests/", event.transportRequestNumber()));
+                requestPath(event.transportRequestNumber()));
     }
 
     /** DE-21 を受けて、経路が承認され荷主の承認が必要になったと通知する。 */
@@ -72,7 +72,7 @@ public class ShipperNotificationEventHandler {
                         ShipperNotificationKind.ROUTE_APPROVED,
                         event.quotationId() + ":" + event.routingCaseNumber() + ":" + event.routeVersionNo()),
                 event.transportRequestNumber(),
-                path("/customer/transport-requests/", event.transportRequestNumber()));
+                requestPath(event.transportRequestNumber()));
     }
 
     /** 本予約の確定を受けて、予約が確定したと通知する。 */
@@ -108,6 +108,11 @@ public class ShipperNotificationEventHandler {
             return;
         }
         notifications.notifyCompany(new CompanyId(company), kind, eventId, targetRef, path);
+    }
+
+    /** 見積依頼の詳細への導線（見積りの提示・経路の承認・期限が近い）。 */
+    private static String requestPath(String transportRequestNumber) {
+        return path("/customer/transport-requests/", transportRequestNumber);
     }
 
     private static String path(String prefix, String ref) {
