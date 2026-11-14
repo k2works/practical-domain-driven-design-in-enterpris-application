@@ -11883,6 +11883,76 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_47_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 47 計画
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_47_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 47 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../development/cargo-tracker/bolt_40_plan/" class="md-nav__link">
         
   
@@ -20888,6 +20958,16 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 <td style="text-align: left;">AC4</td>
 <td style="text-align: left;"><code>@US-22-AC4</code></td>
 </tr>
+<tr>
+<td style="text-align: left;">US-09</td>
+<td style="text-align: left;">AC2</td>
+<td style="text-align: left;"><code>@US-09-AC2</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">US-09</td>
+<td style="text-align: left;">AC3</td>
+<td style="text-align: left;"><code>@US-09-AC3</code></td>
+</tr>
 </tbody>
 </table>
 <p>注: 部分的に確かめる受入条件をタグの照合の数に「完全」と読ませない。US-12 AC4 の「有人例外案件へ引き継ぐ」は W8（US-20）で、取り込みの分（39g）と手入力の分（39gc）の「拒否」だけを AC4 のタグで照合する。US-14 AC5 の「差異としてデータ責任者へ示される」は、取込の分類（39h）と却下（39h2）だけを確かめる（採用は Release 1.0 では作らない。D-144）。US-14 AC4 の古い外部版の警告は 39h3（<code>adopt_old_version_quarantine_ui.feature</code>）で確かめる。</p>
@@ -21166,6 +21246,18 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 <td style="text-align: left;">AC4（送信に失敗したら失敗と宛先が記録され、通知一覧からも同じ内容を確認できる）</td>
 <td style="text-align: left;">43・43-3</td>
 <td style="text-align: left;"><code>@US-22-AC4</code>（同上）、<code>ShipperNotificationControllerTest</code>・<code>NotificationQueryServiceTest</code>・<code>MyBatisNotificationRepositoryIntegrationTest</code>（失敗の記録は <code>MailDeliveryTest</code> 系）</td>
+</tr>
+<tr>
+<td style="text-align: left;">US-09</td>
+<td style="text-align: left;">AC2（確認中の実績があるとき、判明していること・未確定のこと・次の行動・次回の更新・担当窓口を示す。確認中の実績の中身は出さない）</td>
+<td style="text-align: left;">47</td>
+<td style="text-align: left;"><code>@US-09-AC2</code>（<code>features/ui/customer_tracking_notice_ui.feature</code>）、<code>CustomerTrackingControllerTest</code>（Bolt 47 の行）、<code>CustomerTrackingQueryServiceTest</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">US-09</td>
+<td style="text-align: left;">AC3（更新が許容を過ぎて届かないとき、最新性を保証できないことと最後の採用値・次回の更新・次の行動を示す。台帳 D-167）</td>
+<td style="text-align: left;">47</td>
+<td style="text-align: left;"><code>@US-09-AC3</code>（同上）、<code>CustomerTrackingQueryServiceTest</code>（36 時間の境界）、<code>CustomerTrackingControllerTest</code></td>
 </tr>
 <tr>
 <td style="text-align: left;">US-14</td>
