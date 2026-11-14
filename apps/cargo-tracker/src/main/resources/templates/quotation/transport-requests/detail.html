@@ -118,6 +118,8 @@
     </dl>
     <p><a th:href="@{/customer/transport-requests}">見積依頼の一覧へ戻る</a></p>
     <p><a th:href="@{/customer/transport-requests/new}">見積依頼を作成する</a></p>
+    <!--/* 複製（US-01 AC5。Bolt 45-1）。この見積依頼の輸送条件を引き継いだ新しい見積依頼を作る。希望到着期限と必要書類は再入力 */-->
+    <p><a th:href="@{/customer/transport-requests/new(copyFrom=${number})}">この見積依頼を複製して新しく作る</a></p>
 </main>
 </body>
 </html>

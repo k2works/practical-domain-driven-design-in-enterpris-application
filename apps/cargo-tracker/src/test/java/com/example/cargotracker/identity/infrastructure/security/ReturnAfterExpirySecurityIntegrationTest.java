@@ -120,11 +120,11 @@ class ReturnAfterExpirySecurityIntegrationTest {
         Cookie session = login(email, null);
         sessions().idle(session, Duration.ofMinutes(31));
 
-        Cookie expired = expiredTo(get(PAGE_URL).queryParam("copyFrom", "TR-1").cookie(session));
+        Cookie expired = expiredTo(get(PAGE_URL).queryParam("stage", "2").cookie(session));
         MvcResult back = loginAgainResult(email, expired);
 
         String target = back.getResponse().getRedirectedUrl();
-        assertThat(target).isEqualTo("http://localhost" + PAGE_URL + "?copyFrom=TR-1&continue");
+        assertThat(target).isEqualTo("http://localhost" + PAGE_URL + "?stage=2&continue");
         Cookie loggedIn = sessionOr(back, expired);
         mvc.perform(get(target.substring("http://localhost".length())).cookie(loggedIn))
                 .andExpect(status().isOk());

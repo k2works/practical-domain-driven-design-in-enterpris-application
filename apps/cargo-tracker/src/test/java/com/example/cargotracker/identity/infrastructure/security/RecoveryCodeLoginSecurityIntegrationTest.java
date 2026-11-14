@@ -787,7 +787,7 @@ class RecoveryCodeLoginSecurityIntegrationTest {
     @Test
     void ログインの前に開いたqueryの付いた画面に後で登録するでも続けるでも戻る() throws Exception {
         String email = enrolledUserWithRecoveryCodes();
-        String target = BUSINESS_URL + "?copyFrom=TR-1";
+        String target = BUSINESS_URL + "?stage=2";
 
         Cookie later = recoveredAfterOpening(email, target, RECOVERY_CODE);
         String laterTo = mvc.perform(

@@ -548,6 +548,7 @@ Release 0.1 の範囲（Release 0.1 のマイルストーンの Issue の題名�
 | US-01 | AC2 | `@US-01-AC2` |
 | US-01 | AC3 | `@US-01-AC3` |
 | US-01 | AC4 | `@US-01-AC4` |
+| US-01 | AC5 | `@US-01-AC5` |
 | US-02 | AC1 | `@US-02-AC1` |
 | US-02 | AC2 | `@US-02-AC2` |
 | US-02 | AC3 | `@US-02-AC3` |
@@ -660,6 +661,7 @@ Release 1.0 の受入条件のうち、上の照合の表にまだ入れてい�
 | US-23 | AC3（他社の問い合わせは内容を開示せず、試行を記録する） | 42・42-3 | `@US-23-AC3`（同上。画面の層は見つからないのと同じ画面）、`TrackingOutOfScopeResponderTest`・`ServiceCaseQueryServiceTest` 行 8c・`CustomerServiceCaseDetailControllerTest` 行 4・7 |
 | US-23 | AC4（受付時間を利用者のタイムゾーンで示す） | 42-2 | `@US-23-AC4`（同上）、`CustomerServiceCaseControllerTest` 行 4 |
 | US-01 | AC3（別企業の荷主情報では提出・出し直しを受け付けず、確定済みのデータは変更されない。荷主企業は利用者の所属から決め、他社の輸送要求は見つからない） | 45 | `@US-01-AC3`（`features/quotation/resubmit_transport_request.feature`。他社の見積依頼を出し直そうとしても見つからず、社内の読みで版・状態が変わっていない。Q-INV-08）、`TransportRequestControllerTest`・`TransportRequestCommandServiceTest` |
+| US-01 | AC5（自社の過去の見積依頼を複製すると、輸送条件を引き継いだ新しい下書きが作られ、希望到着期限と必要書類は再入力を求める。他社の見積依頼は見つからない） | 45-1 | `@US-01-AC5`（`features/ui/submit_transport_request_ui.feature`）、`TransportRequestControllerTest`（Bolt 45-1 の 3 行。他社は 404） |
 | US-22 | AC1（見積りの提示・経路の承認・本予約の確定・追跡が確認中のとき、対象の荷主担当者へ件名と導線だけのメールが送られる） | 43・43-1 | `@US-22-AC1`（`features/ui/shipper_notification_ui.feature`）、`ShipperNotificationEventHandlerTest`・`ShipperNotificationIntegrationTest`（PostgreSQL と Mailpit）・`ShipperNotificationMailIntegrationTest` |
 | US-22 | AC2（承認待ちの見積りの有効期限の 24 時間前にメールが送られる） | 43-2 | `@US-22-AC2`（同上）、`QuotationExpiryNotificationServiceTest`・`QuotationExpirySchedulerTest`・`MyBatisQuotationIntegrationTest` の窓の境界 |
 | US-22 | AC3（メールは料金・契約条件・書類・他の予約の情報を含まない） | 43 | `@US-22-AC3`（同上）、`ShipperNotificationMailIntegrationTest`（本文に料金等を含まない。N-INV-01） |

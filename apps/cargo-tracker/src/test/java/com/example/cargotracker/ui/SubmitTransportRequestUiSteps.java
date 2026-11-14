@@ -166,6 +166,44 @@ public class SubmitTransportRequestUiSteps {
         browser.checkAccessibility();
     }
 
+    /** 複製（US-01 AC5。Bolt 45-1）。提出した見積依頼の詳細から「複製して新しく作る」を開く。 */
+    @もし("提出した見積依頼の詳細から複製して新しく作る")
+    public void 複製して新しく作る() {
+        open("/customer/transport-requests/" + state.transportRequestNumber());
+        page().getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("この見積依頼を複製して新しく作る"))
+                .click();
+        page().waitForURL("**/customer/transport-requests/new?copyFrom=" + state.transportRequestNumber());
+        browser.checkAccessibility();
+    }
+
+    @ならば("作成画面に提出した見積依頼の輸送条件が引き継がれ希望到着期限は空で再入力の案内が示される")
+    public void 複製の初期値が示される() {
+        assertThat(field(ORIGIN)).hasValue("JPTYO");
+        assertThat(field(DESTINATION)).hasValue("NLRTM");
+        assertThat(field(ARRIVAL_DEADLINE_LABEL)).hasValue("");
+        assertThat(page().locator("#version-notice"))
+                .hasText(state.transportRequestNumber() + " の輸送条件を引き継ぎました。希望到着期限と必要書類は再入力してください。");
+    }
+
+    @もし("複製した見積依頼に希望到着期限を入れて提出する")
+    public void 複製した見積依頼を提出する() {
+        field(ARRIVAL_DEADLINE_LABEL).fill(ARRIVAL_DEADLINE);
+        next();
+        next();
+        submit();
+        page().waitForURL(DETAIL_URL);
+    }
+
+    @ならば("複製した見積依頼は元と違う新しい業務番号で版 1 の審査中になる")
+    public void 複製が新しい業務番号になる() {
+        String number = page().locator("dt:text-is('業務番号（版）') + dd")
+                .textContent()
+                .strip()
+                .split(" ")[0];
+        Assertions.assertThat(number).matches(TRANSPORT_REQUEST_NUMBER).isNotEqualTo(state.transportRequestNumber());
+        assertThat(page().locator("dt:text-is('業務番号（版）') + dd")).containsText("版 1");
+    }
+
     @もし("必須条件を入力し、目的地を {string} に、希望到着期限を空にして提出する")
     public void 誤りのある入力で提出する(String destination) {
         fillTerms();

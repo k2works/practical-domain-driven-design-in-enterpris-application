@@ -33,6 +33,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -98,8 +99,27 @@ public class TransportRequestController {
         return LIST_VIEW;
     }
 
+    /**
+     * C-03 の作成。{@code copyFrom} に自社の過去の見積依頼の業務番号を付けると、その現在の版の輸送条件を引き継いだ新しい下書きにする（US-01 AC5。
+     * 希望到着期限と必要書類は引き継がず、再入力を求める。Q-INV-11。Bolt 45-1）。他社・ない・形式の誤りの業務番号は、ほかの照会と同じく見つからない
+     * （404。US-01 AC3、Q-INV-08）。
+     */
     @GetMapping("/new")
-    public String newForm(@ModelAttribute TransportRequestForm transportRequestForm, Model model) {
+    public String newForm(
+            @ModelAttribute TransportRequestForm transportRequestForm,
+            @RequestParam(name = "copyFrom", required = false) String copyFrom,
+            AuthenticatedActor actor,
+            Model model) {
+        if (copyFrom == null || copyFrom.isBlank()) {
+            return showCreateForm(model);
+        }
+        TransportRequest source = find(copyFrom, actor);
+        TransportRequestForm copied =
+                TransportRequestFormConverter.toForm(source.currentVersion().terms());
+        // 希望到着期限は引き継がない（提出の日に合わせて入れ直す）。必要書類はファイルなので、そもそも引き継げない
+        copied.setArrivalDeadline("");
+        model.addAttribute("transportRequestForm", copied);
+        model.addAttribute("versionNotice", source.number().text() + " の輸送条件を引き継ぎました。希望到着期限と必要書類は再入力してください。");
         return showCreateForm(model);
     }
 

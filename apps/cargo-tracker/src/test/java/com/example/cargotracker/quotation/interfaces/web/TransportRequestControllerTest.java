@@ -1109,6 +1109,49 @@ class TransportRequestControllerTest {
     }
 
     @Test
+    void Bolt45_1_自社の過去の見積依頼から複製すると輸送条件を引き継ぎ希望到着期限は空で再入力を求める() throws Exception {
+        given(queryService.findByNumber(NUMBER, SHIPPER)).willReturn(Optional.of(underReview()));
+
+        mockMvc.perform(get("/customer/transport-requests/new").param("copyFrom", "TR-2026-0001"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("quotation/transport-requests/new"))
+                .andExpect(model().attribute(
+                                "transportRequestForm",
+                                org.hamcrest.Matchers.allOf(
+                                        org.hamcrest.Matchers.hasProperty(
+                                                "destination", org.hamcrest.Matchers.is("NLRTM")),
+                                        org.hamcrest.Matchers.hasProperty(
+                                                "packageType", org.hamcrest.Matchers.is("PALLET")),
+                                        org.hamcrest.Matchers.hasProperty(
+                                                "arrivalDeadline", org.hamcrest.Matchers.is("")))))
+                .andExpect(content().string(containsString("見積依頼の作成")))
+                .andExpect(content().string(containsString("TR-2026-0001 の輸送条件を引き継ぎました。希望到着期限と必要書類は再入力してください")))
+                // 複製は新しい見積依頼の作成なので、送り先は作成のまま（出し直しの版ではない）
+                .andExpect(content().string(containsString("action=\"/customer/transport-requests\"")));
+    }
+
+    @Test
+    void Bolt45_1_他社や存在しない見積依頼の複製は見つからない_US01_AC3() throws Exception {
+        given(queryService.findByNumber(NUMBER, SHIPPER)).willReturn(Optional.empty());
+
+        mockMvc.perform(get("/customer/transport-requests/new").param("copyFrom", "TR-2026-0001"))
+                .andExpect(status().isNotFound());
+        mockMvc.perform(get("/customer/transport-requests/new").param("copyFrom", "not-a-number"))
+                .andExpect(status().isNotFound());
+
+        then(queryService).should(times(1)).findByNumber(NUMBER, SHIPPER);
+    }
+
+    @Test
+    void Bolt45_1_複製の指定がなければ通常の作成画面で引き継ぎの案内は出ない() throws Exception {
+        mockMvc.perform(get("/customer/transport-requests/new"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(not(containsString("輸送条件を引き継ぎました"))));
+
+        then(queryService).should(never()).findByNumber(any(), any());
+    }
+
+    @Test
     void 下書きでない見積依頼の編集画面は詳細に戻して理由を示す() throws Exception {
         given(queryService.findByNumber(NUMBER, SHIPPER)).willReturn(Optional.of(underReview()));
 
