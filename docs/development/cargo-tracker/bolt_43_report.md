@@ -38,7 +38,7 @@ generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-14T11:00:00Z }
 | ゲート | 結果 |
 | :--- | :--- |
 | `spotlessCheck check documentationTest uiTest` | BUILD SUCCESSFUL（31 分 8 秒） |
-| SonarQube | 実行結果を追記する |
+| SonarQube | **PASS**（新しい違反 0、カバレッジ 95.9%） |
 
 ## 申し送り
 
