@@ -1,6 +1,7 @@
 # Docs Update Log
 
 ## 2026-11-14
+* **Update**: iteration_plan-W9 を人（human:kakimomokuri）が承認した（status を stable に）
 * **Creation**: [iteration_plan-W9](/development/cargo-tracker/iteration_plan-W9.md) を作成（anthropic/claude-sonnet-5-5。草稿・承認待ち。Bolt の番号は人の指示で単位ごとに整数、枝番、枝番に枝番）
 * **Update**: bolt_40-18 の終了報告を人（human:kakimomokuri）が承認した
 * **Creation**: [bolt_40-18_plan](/development/cargo-tracker/bolt_40-18_plan.md)・[bolt_40-18_report](/development/cargo-tracker/bolt_40-18_report.md) を作成（anthropic/claude-sonnet-5-5。W8 週全体レビュー D の残り。詳細の認可の統一、システム起票の分離。人の指示を受けずに着手したため承認を待つ）
