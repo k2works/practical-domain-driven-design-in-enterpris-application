@@ -332,8 +332,10 @@ class ServiceCaseActionServiceTest {
         };
         ServiceCaseActionService brokenClock = new ServiceCaseActionService(repository, broken);
 
-        assertThatThrownBy(() -> brokenClock.recordAnswer(
-                        staff(Role.CUSTOMER_SUPPORT), new RecordServiceCaseAnswerCommand(number, "回答")))
+        AuthenticatedActor actor = staff(Role.CUSTOMER_SUPPORT);
+        RecordServiceCaseAnswerCommand command = new RecordServiceCaseAnswerCommand(number, "回答");
+
+        assertThatThrownBy(() -> brokenClock.recordAnswer(actor, command))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessage("時計の故障");
     }
