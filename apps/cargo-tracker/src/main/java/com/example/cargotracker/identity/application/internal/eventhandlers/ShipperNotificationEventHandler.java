@@ -29,8 +29,6 @@ public class ShipperNotificationEventHandler {
 
     private static final Logger LOG = LoggerFactory.getLogger(ShipperNotificationEventHandler.class);
 
-    private static final String REQUEST_PATH = "/customer/transport-requests/";
-
     private final ShipperNotifications notifications;
 
     public ShipperNotificationEventHandler(ShipperNotifications notifications) {
@@ -47,7 +45,7 @@ public class ShipperNotificationEventHandler {
                         ShipperNotificationKind.QUOTATION_PRESENTED,
                         event.quotationId().toString()),
                 event.transportRequestNumber(),
-                path(REQUEST_PATH, event.transportRequestNumber()));
+                path("/customer/transport-requests/", event.transportRequestNumber()));
     }
 
     /** DE-21 を受けて、経路が承認され荷主の承認が必要になったと通知する。 */
@@ -60,7 +58,7 @@ public class ShipperNotificationEventHandler {
                         ShipperNotificationKind.ROUTE_APPROVED,
                         event.quotationId() + ":" + event.routingCaseNumber() + ":" + event.routeVersionNo()),
                 event.transportRequestNumber(),
-                path(REQUEST_PATH, event.transportRequestNumber()));
+                path("/customer/transport-requests/", event.transportRequestNumber()));
     }
 
     /** 本予約の確定を受けて、予約が確定したと通知する。 */
