@@ -17,6 +17,8 @@ public final class DateTimeDisplay {
 
     private static final DateTimeFormatter DATE_TIME = DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm VV（'UTC'xxx）");
 
+    private static final DateTimeFormatter ZONE_LABEL = DateTimeFormatter.ofPattern("VV（'UTC'xxx）");
+
     private static final DateTimeFormatter UTC_TIME = DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm");
 
     private DateTimeDisplay() {}
@@ -24,6 +26,11 @@ public final class DateTimeDisplay {
     /** 荷主の画面の日時（例: 2026-10-05 10:00 Asia/Tokyo（UTC+09:00））。 */
     public static String customer(Instant instant) {
         return DATE_TIME.format(ZonedDateTime.ofInstant(instant, ZONE));
+    }
+
+    /** 荷主の画面のタイムゾーンの表示（例: Asia/Tokyo（UTC+09:00））。時刻の後ろに付けて、時間帯とずれを示す（問い合わせの受付時間。Bolt 42-2）。 */
+    public static String customerZoneLabel(Instant at) {
+        return ZONE_LABEL.format(ZonedDateTime.ofInstant(at, ZONE));
     }
 
     /** 社内の画面の日時（例: 2026-10-05 10:00 Asia/Tokyo（UTC+09:00）（UTC 2026-10-05 01:00））。 */

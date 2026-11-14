@@ -6,6 +6,7 @@ import com.example.cargotracker.tracking.infrastructure.persistence.ServiceCaseC
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -48,6 +49,9 @@ public interface ServiceCaseMapper {
 
     /** 受領期限を過ぎた案件（受付済みで期限を厳密に過ぎたものと、上位対応中）の受付番号を期限の古い順に。 */
     List<String> selectReceiptOverdue(@Param("now") OffsetDateTime now, @Param("limit") int limit);
+
+    /** 荷主企業の案件の受付番号を、起票の新しい順に（Bolt 42-2）。 */
+    List<String> selectByShipper(@Param("shipperCompanyId") UUID shipperCompanyId, @Param("limit") int limit);
 
     /** 指定した状態の案件の受付番号を受領期限の古い順に（Bolt 40-11）。 */
     List<String> selectByStatuses(@Param("statuses") List<String> statuses, @Param("limit") int limit);

@@ -53,6 +53,13 @@ public interface ServiceCaseRepository {
      */
     Optional<CaseNumber> findByOriginRef(String originRef);
 
+    /**
+     * 荷主企業の問い合わせ（有人案件）を、起票の新しい順（同じなら受付番号の新しい順）に返す（Bolt 42-2。C-14）。
+     *
+     * @param limit 返す最大の件数
+     */
+    List<ServiceCase> findByShipper(CompanyId shipperCompanyId, int limit);
+
     /** 保存した案件に起票元キーを記録する（一意。同じキーが先に記録されていれば一意制約の違反）。 */
     void recordOrigin(CaseNumber number, String originRef);
 

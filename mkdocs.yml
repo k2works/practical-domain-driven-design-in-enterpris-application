@@ -379,6 +379,8 @@ nav:
           - Bolt 42 終了報告: development/cargo-tracker/bolt_42_report.md
           - Bolt 42-1 計画: development/cargo-tracker/bolt_42-1_plan.md
           - Bolt 42-1 終了報告: development/cargo-tracker/bolt_42-1_report.md
+          - Bolt 42-2 計画: development/cargo-tracker/bolt_42-2_plan.md
+          - Bolt 42-2 終了報告: development/cargo-tracker/bolt_42-2_report.md
           - Bolt 40 計画: development/cargo-tracker/bolt_40_plan.md
           - Bolt 40 終了報告: development/cargo-tracker/bolt_40_report.md
           - Bolt 40-1 終了報告: development/cargo-tracker/bolt_40-1_report.md
@@ -451,6 +453,7 @@ nav:
       - 11 章 利用者の管理: manual/11-利用者の管理.md
       - 12 章 外部データ: manual/12-外部データ.md
       - 13 章 有人案件: manual/13-有人案件.md
+      - 14 章 問い合わせの追跡: manual/14-問い合わせの追跡.md
       - 付録 A 用語集: manual/用語集.md
       - 付録 B トラブルシューティング: manual/付録B-トラブルシューティング.md
       - HTML 版: assets/manual-output/cargo-tracker/index.html

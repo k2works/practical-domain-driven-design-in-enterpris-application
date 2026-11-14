@@ -169,6 +169,13 @@
          ORDER BY receive_due_at, case_number
          FETCH FIRST #{limit} ROWS ONLY
     </select>
+    <!-- 荷主企業の案件の受付番号。起票の新しい順（Bolt 42-2。C-14） -->
+    <select id="selectByShipper" resultType="string">
+        SELECT case_number FROM tracking.service_case
+         WHERE shipper_company_id = #{shipperCompanyId}
+         ORDER BY received_at DESC, case_number DESC
+         FETCH FIRST #{limit} ROWS ONLY
+    </select>
     <!-- 未終結（終結・重複終了でない）で、荷主企業・予約・内容が同じ案件。荷主企業・予約が空の入力は、空の案件と比べる（Bolt 40-7） -->
     <select id="selectUnclosedDuplicate" resultType="string">
         SELECT case_number FROM tracking.service_case

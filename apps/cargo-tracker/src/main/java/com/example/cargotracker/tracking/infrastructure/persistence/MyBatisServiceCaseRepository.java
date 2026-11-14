@@ -102,6 +102,13 @@ public class MyBatisServiceCaseRepository implements ServiceCaseRepository {
     }
 
     @Override
+    public List<ServiceCase> findByShipper(CompanyId shipperCompanyId, int limit) {
+        return mapper.selectByShipper(shipperCompanyId.value(), limit).stream()
+                .map(number -> findByNumber(new CaseNumber(number)).orElseThrow())
+                .toList();
+    }
+
+    @Override
     public Optional<CaseNumber> findByOriginRef(String originRef) {
         return mapper.selectByOriginRef(originRef).map(CaseNumber::new);
     }

@@ -60,6 +60,18 @@ public final class InMemoryServiceCaseRepository implements ServiceCaseRepositor
                 .toList();
     }
 
+    @Override
+    public List<ServiceCase> findByShipper(CompanyId shipperCompanyId, int limit) {
+        return cases.values().stream()
+                .filter(c ->
+                        c.shipperCompanyId().filter(shipperCompanyId::equals).isPresent())
+                .sorted(Comparator.comparing((ServiceCase c) -> c.openedAt().instant())
+                        .thenComparing(c -> c.number().value())
+                        .reversed())
+                .limit(limit)
+                .toList();
+    }
+
     /** 起票元キーと受付番号（一意）。 */
     public final Map<String, CaseNumber> origins = new HashMap<>();
 

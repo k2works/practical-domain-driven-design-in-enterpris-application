@@ -8,7 +8,9 @@ import com.example.cargotracker.shared.domain.Role;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.tracking.application.internal.commands.OpenServiceCaseCommand;
 import com.example.cargotracker.tracking.application.internal.commands.ReceiveServiceCaseCommand;
+import com.example.cargotracker.tracking.application.internal.commands.RecordServiceCaseAnswerCommand;
 import com.example.cargotracker.tracking.application.internal.commandservices.OpenServiceCaseOutcome;
+import com.example.cargotracker.tracking.application.internal.commandservices.ServiceCaseActionService;
 import com.example.cargotracker.tracking.application.internal.commandservices.ServiceCaseAuthorization;
 import com.example.cargotracker.tracking.application.internal.commandservices.ServiceCaseCommandService;
 import com.example.cargotracker.tracking.domain.model.aggregates.CountingServiceCaseNumberIssuer;
@@ -246,6 +248,39 @@ class ServiceCaseQueryServiceTest {
 
         assertThat(service(OPENED_AT).customerDetail(staff(Role.TRACKING_MANAGER), number))
                 .isInstanceOf(CustomerServiceCaseLookup.NotFound.class);
+    }
+
+    @Test
+    void 行8e_荷主の一覧は自社の問い合わせだけを新しい順に返し最新の回答と次回更新を示す() {
+        CaseNumber first = open(NORMAL);
+        CaseNumber second = open(NORMAL);
+        // 他社の問い合わせ
+        ServiceCaseDraft otherDraft = ServiceCaseDraft.of(
+                        ServiceCaseKind.CUSTOMER_INQUIRY, ServicePriority.NORMAL, "他社", "CS")
+                .withShipper(new CompanyId(UUID.fromString("00000000-0000-0000-0000-0000040b1188")));
+        commands().open(staff(Role.CUSTOMER_SUPPORT), new OpenServiceCaseCommand(otherDraft));
+        receive(first);
+        new ServiceCaseActionService(repository, Clock.fixed(OPENED_AT, ZoneOffset.UTC))
+                .recordAnswer(staff(Role.CUSTOMER_SUPPORT), new RecordServiceCaseAnswerCommand(first, "調べて回答します"));
+        AuthenticatedActor own =
+                new AuthenticatedActor(new UserId(UUID.randomUUID()), COMPANY, Set.of(Role.SHIPPER), "自社の荷主", "A 社");
+
+        CustomerServiceCaseList list = service(OPENED_AT).customerList(own);
+
+        assertThat(list.items()).extracting(CustomerServiceCaseItem::number).containsExactly(second, first);
+        assertThat(list.items().get(1).status()).isEqualTo(ServiceCaseStatus.ANSWERED);
+        assertThat(list.items().get(1).latestAnswer().orElseThrow().content()).isEqualTo("調べて回答します");
+        assertThat(list.items().get(0).latestAnswer()).isEmpty();
+        assertThat(list.items().get(0).nextUpdateAt()).isNotNull();
+        assertThat(list.truncated()).isFalse();
+    }
+
+    @Test
+    void 行8f_荷主の一覧は荷主担当者でなければ空() {
+        open(NORMAL);
+
+        assertThat(service(OPENED_AT).customerList(staff(Role.TRACKING_MANAGER)).items())
+                .isEmpty();
     }
 
     @Test

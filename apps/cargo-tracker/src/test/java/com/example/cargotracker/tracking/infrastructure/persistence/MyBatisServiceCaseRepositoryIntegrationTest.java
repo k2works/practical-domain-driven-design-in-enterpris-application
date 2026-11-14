@@ -433,6 +433,38 @@ class MyBatisServiceCaseRepositoryIntegrationTest {
         assertThat(repository.findByStatuses(Set.of(), 10)).isEmpty();
     }
 
+    // --- Bolt 42-2: 荷主企業の問い合わせ ---
+
+    @Test
+    void 行7_荷主企業の案件だけを起票の新しい順に返し上限で打ち切る() {
+        CompanyId company = new CompanyId(UUID.randomUUID());
+        ServiceCase older = openFor(company, "古い照会", "2083-11-16T01:00:00Z");
+        ServiceCase newer = openFor(company, "新しい照会", "2083-11-16T02:00:00Z");
+        openFor(new CompanyId(UUID.randomUUID()), "他社の照会", "2083-11-16T03:00:00Z");
+        repository.save(older, ACTOR);
+        repository.save(newer, ACTOR);
+
+        assertThat(repository.findByShipper(company, 10))
+                .extracting(ServiceCase::number)
+                .containsExactly(newer.number(), older.number());
+        assertThat(repository.findByShipper(company, 1))
+                .extracting(ServiceCase::number)
+                .containsExactly(newer.number());
+        assertThat(repository.findByShipper(new CompanyId(UUID.randomUUID()), 10))
+                .isEmpty();
+    }
+
+    private ServiceCase openFor(CompanyId company, String cause, String openedAt) {
+        ServiceCaseDraft draft = ServiceCaseDraft.of(
+                        ServiceCaseKind.CUSTOMER_INQUIRY, ServicePriority.NORMAL, cause, "CS")
+                .withShipper(company);
+        CaseNumber number = issuer.next(2083);
+        ServiceCase opened =
+                ((ServiceCaseOpening.Opened) ServiceCase.open(draft, number, DEADLINES, at(openedAt))).serviceCase();
+        // 保存するのは呼び手（他社の分は保存しない）
+        return opened;
+    }
+
     // --- 行 6: ない受付番号 ---
 
     @Test

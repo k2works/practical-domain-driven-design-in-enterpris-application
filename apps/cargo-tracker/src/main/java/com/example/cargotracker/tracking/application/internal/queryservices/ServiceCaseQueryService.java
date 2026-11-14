@@ -83,6 +83,30 @@ public class ServiceCaseQueryService {
     }
 
     /**
+     * 荷主担当者が自社の問い合わせの一覧を開く（C-14。US-23 AC1。Bolt 42-2）。起票の新しい順で、上限を超えるときは打ち切りを示す。荷主担当者でない
+     * 利用者には空の一覧を返す（URL の規則が先に止めるので、通常は届かない）。
+     */
+    @Transactional(readOnly = true)
+    public CustomerServiceCaseList customerList(AuthenticatedActor actor) {
+        if (!actor.hasRole(Role.SHIPPER)) {
+            return new CustomerServiceCaseList(List.of(), false, LIMIT);
+        }
+        // 打ち切りかどうかを知るため、上限より 1 件多く読む
+        List<ServiceCase> found = repository.findByShipper(actor.companyId(), LIMIT + 1);
+        List<CustomerServiceCaseItem> items = found.stream()
+                .limit(LIMIT)
+                .map(c -> new CustomerServiceCaseItem(
+                        c.number(),
+                        c.status(),
+                        c.nextUpdateAt(),
+                        c.answers().isEmpty()
+                                ? Optional.empty()
+                                : Optional.of(c.answers().getLast())))
+                .toList();
+        return new CustomerServiceCaseList(items, found.size() > LIMIT, LIMIT);
+    }
+
+    /**
      * 荷主担当者が問い合わせの詳細を開く（C-15。US-23。Bolt 42）。自社の案件なら詳細、他社の案件なら範囲外（呼び手が試行を記録して 404）、
      * ない案件・荷主担当者でない利用者は見つからない。
      */
