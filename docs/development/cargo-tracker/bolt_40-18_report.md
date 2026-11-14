@@ -37,7 +37,7 @@ generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-14T25:30:00Z }
 | :--- | :--- |
 | 関連テスト（ユニット・ArchUnit） | 緑 |
 | `spotlessCheck check documentationTest uiTest` | BUILD SUCCESSFUL（25 分 47 秒） |
-| SonarQube | 実行結果を追記する |
+| SonarQube | **PASS**（新しい違反 0、新しいコードのカバレッジ 96.0%、重複 0.04%） |
 
 ## 申し送り
 
