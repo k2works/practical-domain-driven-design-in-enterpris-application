@@ -34,6 +34,9 @@
          <index name="pk_inquiry_record" unique="true">
             <column ascending="true" name="id"/>
          </index>
+         <index name="ix_inquiry_record_case_number" unique="false">
+            <column ascending="true" name="case_number"/>
+         </index>
          <index name="ix_inquiry_record_shipper_received" unique="false">
             <column ascending="true" name="shipper_company_id"/>
             <column ascending="true" name="received_at"/>
