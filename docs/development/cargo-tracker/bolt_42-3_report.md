@@ -36,7 +36,7 @@ C-15（詳細と再開の依頼）、ドメインの再開の入口の拡張、C
 | ゲート | 結果 |
 | :--- | :--- |
 | `spotlessCheck check documentationTest uiTest` | BUILD SUCCESSFUL（31 分 11 秒） |
-| SonarQube | 実行結果を追記する |
+| SonarQube | **PASS**（新しい違反 0、カバレッジ 96.0%） |
 
 ## 申し送り
 
