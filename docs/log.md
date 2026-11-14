@@ -1,6 +1,7 @@
 # Docs Update Log
 
 ## 2026-11-14
+* **Update**: bolt_40-18 の終了報告を人（human:kakimomokuri）が承認した
 * **Creation**: [bolt_40-18_plan](/development/cargo-tracker/bolt_40-18_plan.md)・[bolt_40-18_report](/development/cargo-tracker/bolt_40-18_report.md) を作成（anthropic/claude-sonnet-5-5。W8 週全体レビュー D の残り。詳細の認可の統一、システム起票の分離。人の指示を受けずに着手したため承認を待つ）
 * **Creation**: [iteration_report-W8](/development/cargo-tracker/iteration_report-W8.md)・[w8_review_20261114](/review/cargo-tracker/w8_review_20261114.md) を作成（anthropic/claude-sonnet-5-5。W8 の完了報告書と週全体レビュー。推奨のとおり承認として記録（human:kakimomokuri）。Issue #20・#21 はクローズ済み。確認の場の開催は未）
 * **Update**: iteration_report-W8 を人（human:kakimomokuri）が承認した（2026-11-14）。確認の場の開催は未回答のまま、D の残りは W9
