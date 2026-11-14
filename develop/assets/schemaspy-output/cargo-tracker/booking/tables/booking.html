@@ -464,8 +464,8 @@
                                 </thead>
                                 <tbody>
                                 <tr>
-                                    <td>ck_booking_transport_phase</td>
-                                    <td>((transport_phase)::text &#61; ANY ((ARRAY[&#39;BEFORE_PICKUP&#39;::character varying, &#39;AFTER_PICKUP&#39;::character varying, &#39;COMPLETED&#39;::character varying])::text[]))</td>
+                                    <td>ck_booking_current_version_no</td>
+                                    <td>(current_version_no &gt;&#61; 1)</td>
                                 </tr>
                                 <tr>
                                     <td>ck_booking_status</td>
@@ -476,8 +476,8 @@
                                     <td>(quotation_no &gt;&#61; 1)</td>
                                 </tr>
                                 <tr>
-                                    <td>ck_booking_current_version_no</td>
-                                    <td>(current_version_no &gt;&#61; 1)</td>
+                                    <td>ck_booking_transport_phase</td>
+                                    <td>((transport_phase)::text &#61; ANY ((ARRAY[&#39;BEFORE_PICKUP&#39;::character varying, &#39;AFTER_PICKUP&#39;::character varying, &#39;COMPLETED&#39;::character varying])::text[]))</td>
                                 </tr>
                                 </tbody>
                             </table>
