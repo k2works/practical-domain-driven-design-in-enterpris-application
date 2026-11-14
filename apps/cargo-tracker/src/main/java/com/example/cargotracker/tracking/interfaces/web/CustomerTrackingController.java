@@ -96,7 +96,7 @@ public class CustomerTrackingController {
             return NOT_FOUND_VIEW;
         }
         // 自社の追跡記録を開いたら、顧客 Web の自己照会として記録する（IR-INV-01。KPI-02。30 分以内の再表示はまとめる。Bolt 42-1）
-        inquiryRecorder.recordSelfLookup(actor.userId(), actor.companyId(), parsed.get());
+        parsed.ifPresent(number -> inquiryRecorder.recordSelfLookup(actor.userId(), actor.companyId(), number));
         model.addAttribute("trackingRecord", TrackingRecordViews.customerDetail(found.get()));
         return DETAIL_VIEW;
     }

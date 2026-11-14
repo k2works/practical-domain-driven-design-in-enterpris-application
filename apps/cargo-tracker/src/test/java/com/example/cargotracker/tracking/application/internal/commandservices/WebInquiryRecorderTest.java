@@ -59,15 +59,15 @@ class WebInquiryRecorderTest {
         recorderAt(NOW).recordSelfLookup(USER, COMPANY, TRACKING);
 
         assertThat(repository.saved).hasSize(1);
-        InquiryRecord record = repository.saved.getFirst();
-        assertThat(record.channel()).isEqualTo(InquiryChannel.WEB_SELF);
-        assertThat(record.inquirerKind()).isEqualTo(InquirerKind.SHIPPER);
-        assertThat(record.shipperCompanyId()).isEqualTo(COMPANY);
-        assertThat(record.trackingNumber()).contains(TRACKING);
-        assertThat(record.inquirerUserId()).contains(USER);
-        assertThat(record.receivedAt()).isEqualTo(new UtcInstant(NOW));
-        assertThat(record.recordedBy()).isEmpty();
-        assertThat(record.escalated()).isFalse();
+        InquiryRecord inquiry = repository.saved.getFirst();
+        assertThat(inquiry.channel()).isEqualTo(InquiryChannel.WEB_SELF);
+        assertThat(inquiry.inquirerKind()).isEqualTo(InquirerKind.SHIPPER);
+        assertThat(inquiry.shipperCompanyId()).isEqualTo(COMPANY);
+        assertThat(inquiry.trackingNumber()).contains(TRACKING);
+        assertThat(inquiry.inquirerUserId()).contains(USER);
+        assertThat(inquiry.receivedAt()).isEqualTo(new UtcInstant(NOW));
+        assertThat(inquiry.recordedBy()).isEmpty();
+        assertThat(inquiry.escalated()).isFalse();
     }
 
     @Test
