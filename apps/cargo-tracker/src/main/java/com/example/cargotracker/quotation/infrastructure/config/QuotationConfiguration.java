@@ -156,8 +156,11 @@ public class QuotationConfiguration {
     /** 経路の割当ての入力ポート（見積りの公開 API のアダプターが委ねる。経路設計が DE-05 を受けて使う。ADR-014。Bolt 20）。 */
     @Bean
     RouteAssignmentService routeAssignmentService(
-            QuotationRepository quotationRepository, ApplicationEventPublisher eventPublisher, Clock clock) {
-        return new RouteAssignmentService(quotationRepository, eventPublisher, clock);
+            QuotationRepository quotationRepository,
+            TransportRequestRepository transportRequestRepository,
+            ApplicationEventPublisher eventPublisher,
+            Clock clock) {
+        return new RouteAssignmentService(quotationRepository, transportRequestRepository, eventPublisher, clock);
     }
 
     /** 再設計要の伝達の入力ポート（見積りの公開 API のアダプターが委ねる。経路設計が DE-06 を受けて使う。ADR-014。Bolt 37e）。 */

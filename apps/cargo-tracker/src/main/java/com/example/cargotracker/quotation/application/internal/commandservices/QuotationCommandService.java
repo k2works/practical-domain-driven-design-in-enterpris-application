@@ -116,6 +116,8 @@ public class QuotationCommandService {
             return new PresentationOutcome.NotFound();
         }
         Quotation quotation = found.get();
+        // 荷主への通知の宛先（荷主企業と業務番号）を、DE-03 に載せるために渡す（Bolt 43-1）
+        quotation.notifying(request.shipperCompanyId(), request.number().text());
         Optional<QuotationRejection> rejection =
                 quotation.presentInternally(command.approver(), new UtcInstant(clock.instant()));
         if (rejection.isPresent()) {

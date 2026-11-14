@@ -82,6 +82,22 @@ class QuotationShipperApprovalTest {
     }
 
     @Test
+    void 通知の宛先を渡して割り当てるとDE21に荷主企業と業務番号が載る_Bolt43_1() {
+        UUID company = UUID.randomUUID();
+        Quotation quotation = routingRequested();
+        quotation.notifying(new com.example.cargotracker.shared.domain.CompanyId(company), "TR-2026-0001");
+
+        quotation.assignRoute(route, now);
+
+        assertThat(quotation.domainEvents())
+                .singleElement()
+                .isInstanceOfSatisfying(QuotationRouteAssigned.class, event -> {
+                    assertThat(event.shipperCompanyId()).isEqualTo(company);
+                    assertThat(event.transportRequestNumber()).isEqualTo("TR-2026-0001");
+                });
+    }
+
+    @Test
     void 同じ経路版の割当ては何もしない() {
         Quotation quotation = routingRequested();
         quotation.assignRoute(route, now);

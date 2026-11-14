@@ -14,6 +14,7 @@ import java.util.UUID;
  * @param milestoneNo 確認中にした実績の実績番号
  * @param placedAt 確認中にした時刻（登録時刻か採用時刻）
  * @param aggregateVersion 発行元の集約の版（保存した後の版。B-INV-12）
+ * @param shipperCompanyId 荷主企業 ID（荷主への通知の宛先を identity が引くため。W9 の Bolt 43-1 から。それ以前に発行したものは null）
  */
 @DomainEvent
 public record TrackingPlacedUnderReview(
@@ -22,4 +23,17 @@ public record TrackingPlacedUnderReview(
         String underReviewReason,
         int milestoneNo,
         UtcInstant placedAt,
-        long aggregateVersion) {}
+        long aggregateVersion,
+        UUID shipperCompanyId) {
+
+    /** 荷主企業を持たない形（それ以前に発行したものと、通知を使わない呼び出し）。 */
+    public TrackingPlacedUnderReview(
+            String trackingNumber,
+            UUID bookingId,
+            String underReviewReason,
+            int milestoneNo,
+            UtcInstant placedAt,
+            long aggregateVersion) {
+        this(trackingNumber, bookingId, underReviewReason, milestoneNo, placedAt, aggregateVersion, null);
+    }
+}

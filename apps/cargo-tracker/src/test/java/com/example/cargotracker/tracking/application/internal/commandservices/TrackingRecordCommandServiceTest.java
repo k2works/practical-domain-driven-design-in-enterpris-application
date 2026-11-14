@@ -356,7 +356,13 @@ class TrackingRecordCommandServiceTest {
             assertThat(saved.aggregateVersion()).isEqualTo(2);
             assertThat(published)
                     .containsExactly(new TrackingPlacedUnderReview(
-                            TRACKING_NUMBER.value(), BOOKING_ID, "OUT_OF_SEQUENCE", 2, new UtcInstant(NOW), 2));
+                            TRACKING_NUMBER.value(),
+                            BOOKING_ID,
+                            "OUT_OF_SEQUENCE",
+                            2,
+                            new UtcInstant(NOW),
+                            2,
+                            SHIPPER.value()));
         }
 
         @Test
@@ -483,7 +489,13 @@ class TrackingRecordCommandServiceTest {
             assertThat(saved.milestones().get(1).adoptedBy()).isEqualTo(REGISTRANT);
             assertThat(published)
                     .containsExactly(new TrackingPlacedUnderReview(
-                            TRACKING_NUMBER.value(), BOOKING_ID, "OUT_OF_SEQUENCE", 2, new UtcInstant(NOW), 3));
+                            TRACKING_NUMBER.value(),
+                            BOOKING_ID,
+                            "OUT_OF_SEQUENCE",
+                            2,
+                            new UtcInstant(NOW),
+                            3,
+                            SHIPPER.value()));
         }
     }
 

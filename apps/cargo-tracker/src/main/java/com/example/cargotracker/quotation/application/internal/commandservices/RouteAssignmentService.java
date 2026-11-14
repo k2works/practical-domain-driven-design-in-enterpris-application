@@ -2,6 +2,7 @@ package com.example.cargotracker.quotation.application.internal.commandservices;
 
 import com.example.cargotracker.quotation.domain.model.aggregates.Quotation;
 import com.example.cargotracker.quotation.domain.model.aggregates.QuotationRepository;
+import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequestRepository;
 import com.example.cargotracker.quotation.domain.model.valueobjects.AssignedRoute;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationId;
 import com.example.cargotracker.quotation.domain.model.valueobjects.RouteAssignmentResult;
@@ -27,12 +28,17 @@ import org.springframework.transaction.annotation.Transactional;
 public class RouteAssignmentService {
 
     private final QuotationRepository quotationRepository;
+    private final TransportRequestRepository transportRequests;
     private final ApplicationEventPublisher eventPublisher;
     private final Clock clock;
 
     public RouteAssignmentService(
-            QuotationRepository quotationRepository, ApplicationEventPublisher eventPublisher, Clock clock) {
+            QuotationRepository quotationRepository,
+            TransportRequestRepository transportRequests,
+            ApplicationEventPublisher eventPublisher,
+            Clock clock) {
         this.quotationRepository = quotationRepository;
+        this.transportRequests = transportRequests;
         this.eventPublisher = eventPublisher;
         this.clock = clock;
     }
@@ -51,6 +57,11 @@ public class RouteAssignmentService {
             return Optional.empty();
         }
         Quotation quotation = found.get();
+        // 荷主への通知の宛先（荷主企業と業務番号）を、DE-21 に載せるために渡す。輸送要求が読めなければ載せない（Bolt 43-1）
+        transportRequests
+                .findById(quotation.transportRequestId())
+                .ifPresent(request -> quotation.notifying(
+                        request.shipperCompanyId(), request.number().text()));
         RouteAssignmentResult result = quotation.assignRoute(route, new UtcInstant(clock.instant()));
         if (result == RouteAssignmentResult.ASSIGNED) {
             // 競合（ConcurrentQuotationUpdateException）は listener のトランザクションごと戻し、DE-05 の再配信でやり直す

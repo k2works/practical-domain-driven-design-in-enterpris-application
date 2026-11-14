@@ -19,6 +19,7 @@ import com.example.cargotracker.quotation.domain.model.valueobjects.RouteRedesig
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipperApproval;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestId;
 import com.example.cargotracker.shared.annotation.ddd.AggregateRoot;
+import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
@@ -51,6 +52,11 @@ public final class Quotation {
     private final int transportRequestVersionNo;
     private final long aggregateVersion;
     private final List<Object> domainEvents = new ArrayList<>();
+
+    /** 通知の宛先（荷主企業と業務番号）。保存しない。提示・経路の割当てのイベントに載せる（荷主への通知。W9 の Bolt 43-1）。渡さなければイベントは持たない。 */
+    private CompanyId notifyCompany;
+
+    private String notifyRequestNumber;
     private QuotationStatus status;
     private PricingBasis pricingBasis;
     private QuotationExpiry expiry;
@@ -190,6 +196,18 @@ public final class Quotation {
     }
 
     /**
+     * 荷主への通知の宛先を渡す（保存しない。提示と経路の割当てのイベントに荷主企業の ID と業務番号を載せる。Bolt 43-1）。呼び出しは、輸送要求を読んだ
+     * アプリケーションサービスが、提示や割当ての前に行う。
+     *
+     * @return この見積り（続けて呼べる）
+     */
+    public Quotation notifying(CompanyId shipperCompanyId, String transportRequestNumber) {
+        this.notifyCompany = Objects.requireNonNull(shipperCompanyId, "shipperCompanyId");
+        this.notifyRequestNumber = Objects.requireNonNull(transportRequestNumber, "transportRequestNumber");
+        return this;
+    }
+
+    /**
      * 社内承認して提示する（承認待ち → 提示済み）。承認者と提示時刻を記録し（KPI-01）、DE-03 を生成する。
      * 承認者はログインした営業担当者（Bolt 14 まで仮の営業担当者。2026-10-05 の決定）。
      * 置換済み・失効の見積りと、提示の時刻に有効期限を過ぎた承認待ちの見積りは提示できない（Q-INV-07。Bolt 11）。
@@ -215,7 +233,9 @@ public final class Quotation {
                 routePolicy.via().stream().map(Location::unLocode).toList(),
                 routePolicy.departureAt(),
                 routePolicy.arrivalAt(),
-                at));
+                at,
+                notifyCompany == null ? null : notifyCompany.value(),
+                notifyRequestNumber));
         if (status == QuotationStatus.AWAITING_SHIPPER_APPROVAL) {
             // 輸送要求を予約待ちから荷主承認待ちへ戻す（D-85。Bolt 35b2。ADR-018）
             domainEvents.add(new QuotationPresentedForReapproval(
@@ -390,7 +410,9 @@ public final class Quotation {
                 transportRequestVersionNo,
                 route.routingCaseNumber(),
                 route.routeVersionNo(),
-                at));
+                at,
+                notifyCompany == null ? null : notifyCompany.value(),
+                notifyRequestNumber));
         return result;
     }
 

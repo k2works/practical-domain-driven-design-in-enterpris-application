@@ -184,7 +184,8 @@ class RouteConfirmedAssignmentIntegrationTest {
                 .isEqualTo(new ShipperApprovalOutcome.Approved(number, 1));
 
         awaitTransportRequestStatus(number, TransportRequestStatus.READY_TO_BOOK);
-        // DE-05（経路設計の listener）・DE-21・DE-04 の配信は、どれも完了する
+        // DE-05（経路設計の listener）・DE-21・DE-04 の配信は、どれも完了する。発行記録は listener ごとに 1 件なので、DE-21 は見積りの listener と identity の
+        // 荷主への通知の listener（Bolt 43-1）の 2 件で、合わせて 4 件
         await().atMost(TIMEOUT)
                 .untilAsserted(() -> assertThat(completedEventPublications.findAll())
                         .filteredOn(publication -> switch (publication.getEvent()) {
@@ -200,7 +201,7 @@ class RouteConfirmedAssignmentIntegrationTest {
                                         .equals(submitted.transportRequestId().value());
                             default -> false;
                         })
-                        .hasSize(3));
+                        .hasSize(4));
 
         confirmBookingAndAwaitBooked(number, submitted.transportRequestId().value(), voyageNumber);
     }

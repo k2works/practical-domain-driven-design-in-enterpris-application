@@ -18,6 +18,8 @@ import java.util.UUID;
  * @param departureAt 経路方針の概算の出発日時
  * @param arrivalAt 経路方針の概算の到着日時
  * @param presentedAt 提示時刻
+ * @param shipperCompanyId 荷主企業 ID（荷主への通知の宛先を identity が引くため。W9 の Bolt 43-1 から。それ以前に発行したものは null）
+ * @param transportRequestNumber 業務番号の表記（通知の対象と導線。同上）
  */
 @DomainEvent
 public record QuotationPresented(
@@ -29,7 +31,34 @@ public record QuotationPresented(
         List<String> routeVia,
         UtcInstant departureAt,
         UtcInstant arrivalAt,
-        UtcInstant presentedAt) {
+        UtcInstant presentedAt,
+        UUID shipperCompanyId,
+        String transportRequestNumber) {
+
+    /** 荷主企業と業務番号を持たない形（それ以前に発行したものと、通知を使わない呼び出し）。 */
+    public QuotationPresented(
+            UUID quotationId,
+            int quotationNo,
+            UUID transportRequestId,
+            int transportRequestVersionNo,
+            UtcInstant expiresAt,
+            List<String> routeVia,
+            UtcInstant departureAt,
+            UtcInstant arrivalAt,
+            UtcInstant presentedAt) {
+        this(
+                quotationId,
+                quotationNo,
+                transportRequestId,
+                transportRequestVersionNo,
+                expiresAt,
+                routeVia,
+                departureAt,
+                arrivalAt,
+                presentedAt,
+                null,
+                null);
+    }
 
     public QuotationPresented {
         routeVia = List.copyOf(routeVia);

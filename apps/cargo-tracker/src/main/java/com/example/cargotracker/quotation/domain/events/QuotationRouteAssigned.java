@@ -15,6 +15,8 @@ import java.util.UUID;
  * @param routingCaseNumber 案件番号の表記
  * @param routeVersionNo 経路版番号
  * @param assignedAt 割当て時刻
+ * @param shipperCompanyId 荷主企業 ID（荷主への通知の宛先を identity が引くため。W9 の Bolt 43-1 から。それ以前に発行したものは null）
+ * @param transportRequestNumber 業務番号の表記（通知の対象と導線。同上）
  */
 @DomainEvent
 public record QuotationRouteAssigned(
@@ -24,4 +26,28 @@ public record QuotationRouteAssigned(
         int transportRequestVersionNo,
         String routingCaseNumber,
         int routeVersionNo,
-        UtcInstant assignedAt) {}
+        UtcInstant assignedAt,
+        UUID shipperCompanyId,
+        String transportRequestNumber) {
+
+    /** 荷主企業と業務番号を持たない形（それ以前に発行したものと、通知を使わない呼び出し）。 */
+    public QuotationRouteAssigned(
+            UUID quotationId,
+            int quotationNo,
+            UUID transportRequestId,
+            int transportRequestVersionNo,
+            String routingCaseNumber,
+            int routeVersionNo,
+            UtcInstant assignedAt) {
+        this(
+                quotationId,
+                quotationNo,
+                transportRequestId,
+                transportRequestVersionNo,
+                routingCaseNumber,
+                routeVersionNo,
+                assignedAt,
+                null,
+                null);
+    }
+}

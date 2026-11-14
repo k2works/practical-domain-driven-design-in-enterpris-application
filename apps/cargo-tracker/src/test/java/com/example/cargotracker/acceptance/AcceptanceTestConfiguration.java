@@ -408,9 +408,10 @@ public class AcceptanceTestConfiguration {
         @Bean
         RouteAssignmentService routeAssignment(
                 InMemoryQuotationRepository quotationRepository,
+                InMemoryTransportRequestRepository transportRequestRepository,
                 DeferredEventDelivery eventDelivery,
                 MutableClock clock) {
-            return new RouteAssignmentService(quotationRepository, eventDelivery, clock);
+            return new RouteAssignmentService(quotationRepository, transportRequestRepository, eventDelivery, clock);
         }
 
         /** 再設計要の伝達（見積りの公開 API。ADR-014。Bolt 37e）。経路設計の DE-06 の listener が呼ぶ（Bolt 37e2）。 */

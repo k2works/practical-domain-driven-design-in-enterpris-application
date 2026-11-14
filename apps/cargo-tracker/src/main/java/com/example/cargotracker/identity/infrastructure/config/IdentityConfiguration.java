@@ -19,6 +19,7 @@ import com.example.cargotracker.identity.application.internal.commandservices.Us
 import com.example.cargotracker.identity.application.internal.eventhandlers.ExternalRecordAuditEventHandler;
 import com.example.cargotracker.identity.application.internal.eventhandlers.KpiObservationEventHandler;
 import com.example.cargotracker.identity.application.internal.eventhandlers.PasswordResetMailEventHandler;
+import com.example.cargotracker.identity.application.internal.eventhandlers.ShipperNotificationEventHandler;
 import com.example.cargotracker.identity.application.internal.eventhandlers.TotpEnrollmentMailEventHandler;
 import com.example.cargotracker.identity.application.internal.eventhandlers.TotpResetMailEventHandler;
 import com.example.cargotracker.identity.application.internal.eventhandlers.UserInvitationMailEventHandler;
@@ -472,6 +473,12 @@ public class IdentityConfiguration {
     @Bean
     NotificationTotpEnrollmentMails notificationTotpEnrollmentMails(TotpEnrollmentMail totpEnrollmentMail) {
         return new NotificationTotpEnrollmentMails(totpEnrollmentMail);
+    }
+
+    /** 業務のイベントを受けて荷主へ通知する（US-22 AC1。Bolt 43-1。ADR-017 の補足）。 */
+    @Bean
+    ShipperNotificationEventHandler shipperNotificationEventHandler(ShipperNotifications shipperNotifications) {
+        return new ShipperNotificationEventHandler(shipperNotifications);
     }
 
     /** 通知の公開 API（荷主への業務の通知）を呼ぶ腐敗防止層（ADR-017。US-22。Bolt 43）。 */

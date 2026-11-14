@@ -79,6 +79,28 @@ class QuotationTest {
     }
 
     @Test
+    void 通知の宛先を渡して提示するとDE03に荷主企業と業務番号が載る_渡さなければ載らない_Bolt43_1() {
+        UUID company = UUID.randomUUID();
+        Quotation notified = created();
+        notified.calculate(QuotationFixture.completeInput(), now);
+        notified.notifying(new com.example.cargotracker.shared.domain.CompanyId(company), "TR-2026-0001");
+        Quotation plain = created();
+        plain.calculate(QuotationFixture.completeInput(), now);
+
+        notified.presentInternally(approver, approvedAt);
+        plain.presentInternally(approver, approvedAt);
+
+        assertThat(notified.domainEvents()).singleElement().isInstanceOfSatisfying(QuotationPresented.class, event -> {
+            assertThat(event.shipperCompanyId()).isEqualTo(company);
+            assertThat(event.transportRequestNumber()).isEqualTo("TR-2026-0001");
+        });
+        assertThat(plain.domainEvents()).singleElement().isInstanceOfSatisfying(QuotationPresented.class, event -> {
+            assertThat(event.shipperCompanyId()).isNull();
+            assertThat(event.transportRequestNumber()).isNull();
+        });
+    }
+
+    @Test
     void 社内承認して提示すると提示済みになり承認者と提示時刻を残しDE03を生成する() {
         Quotation quotation = created();
         quotation.calculate(QuotationFixture.completeInput(), now);

@@ -473,7 +473,8 @@ class TrackingRecordCandidateAdoptionTest {
                             "OUT_OF_SEQUENCE",
                             2,
                             ADOPTED_AT,
-                            before.aggregateVersion() + 1));
+                            before.aggregateVersion() + 1,
+                            SHIPPER.value()));
         }
 
         @Test

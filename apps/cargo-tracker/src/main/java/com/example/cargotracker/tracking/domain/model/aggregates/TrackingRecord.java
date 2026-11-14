@@ -674,7 +674,8 @@ public final class TrackingRecord {
                 after.underReviewReason.orElseThrow().name(),
                 milestone.milestoneNo(),
                 placedAt,
-                aggregateVersion + 1));
+                aggregateVersion + 1,
+                shipperCompanyId.value()));
     }
 
     /**

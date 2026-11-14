@@ -32,8 +32,11 @@ class RouteAssignmentAdapterTest {
 
     private final InMemoryQuotationRepository quotations = new InMemoryQuotationRepository();
     private final List<Object> published = new ArrayList<>();
-    private final RouteAssignmentAdapter service = new RouteAssignmentAdapter(
-            new RouteAssignmentService(quotations, published::add, Clock.fixed(NOW, ZoneOffset.UTC)));
+    private final RouteAssignmentAdapter service = new RouteAssignmentAdapter(new RouteAssignmentService(
+            quotations,
+            new com.example.cargotracker.quotation.acceptance.InMemoryTransportRequestRepository(),
+            published::add,
+            Clock.fixed(NOW, ZoneOffset.UTC)));
 
     private Quotation presented() {
         Quotation quotation =
