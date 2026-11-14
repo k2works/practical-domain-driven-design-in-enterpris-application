@@ -359,15 +359,16 @@ public final class ServiceCase {
     }
 
     /**
-     * 再開する（終結 → 対応中）。受付番号・進捗・過去の回答を保持し、顧客の回答（未解決）を最後の回答に記録する（SC-INV-03、US-20 AC6）。
+     * 再開する（終結・回答済み → 対応中）。受付番号・進捗・過去の回答を保持し、顧客の回答（未解決）を最後の回答に記録する（SC-INV-03、US-20 AC6、
+     * US-23 AC2）。回答済みのままでも、顧客が未解決と答えれば再開できる（US-23 の受入条件は「回答済みの問い合わせ」。Bolt 42-3。台帳 D-165。仮）。
      *
      * @param customerResponse 顧客の回答
-     * @throws IllegalStateException 終結でない
+     * @throws IllegalStateException 終結でも回答済みでもない
      */
     public ServiceCase reopen(String customerResponse, UtcInstant at) {
         Objects.requireNonNull(at, "at");
-        if (status != ServiceCaseStatus.CLOSED) {
-            throw new ServiceCaseStateException("再開できるのは終結だけ: " + status);
+        if (status != ServiceCaseStatus.CLOSED && status != ServiceCaseStatus.ANSWERED) {
+            throw new ServiceCaseStateException("再開できるのは終結と回答済みだけ: " + status);
         }
         List<CaseAnswer> updated = new ArrayList<>(answers);
         int last = updated.size() - 1;

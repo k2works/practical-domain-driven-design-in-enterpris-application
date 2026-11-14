@@ -187,6 +187,7 @@ Bolt がイテレーションに当たります。ふりかえりは各 Bolt の
 | 42 | [荷主向けの問い合わせの認可（他社の閲覧の試行の記録。US-23 AC3）](bolt_42_plan.md)（[W9 計画](iteration_plan-W9.md)） | [終了報告](bolt_42_report.md) | W9 | 完了（承認待ち） |
 | 42-1 | [顧客 Web の追跡照会の自動記録（IR-INV-01）と case_number の索引](bolt_42-1_plan.md)（[W9 計画](iteration_plan-W9.md)） | [終了報告](bolt_42-1_report.md) | W9 | 完了（承認待ち） |
 | 42-2 | [荷主の問い合わせ一覧（C-14。US-23 AC1・AC4）](bolt_42-2_plan.md)（[W9 計画](iteration_plan-W9.md)） | [終了報告](bolt_42-2_report.md) | W9 | 完了（承認待ち） |
+| 42-3 | [荷主の問い合わせの詳細と再開の依頼（C-15。US-23 を締める）](bolt_42-3_plan.md)（[W9 計画](iteration_plan-W9.md)） | [終了報告](bolt_42-3_report.md) | W9 | 完了（承認待ち） |
 | 40-16 | [W8 の受入条件の照合とマニュアル・動画の総点検（US-11・US-20 を締める）](bolt_40-16_plan.md)（[W8 計画](iteration_plan-W8.md)） | [終了報告](bolt_40-16_report.md) | W8 | 完了（承認済み） |
 | 40-15 | [照会の記録（S-23）と有人案件への引き継ぎ（US-11 AC2）](bolt_40-15_plan.md)（[W8 計画](iteration_plan-W8.md)） | [終了報告](bolt_40-15_report.md)（[動画](../../assets/demo/bolt-40-15/inquiry-handoff.webm){:target="_blank"}） | W8 | 完了（承認済み） |
 
@@ -426,3 +427,5 @@ Bolt を始めるときに行を追加します。
 * [Bolt 42-1 終了報告 - 顧客 Web の追跡照会の自動記録（IR-INV-01）と case_number の索引](./bolt_42-1_report.md)
 * [Bolt 42-2 計画 - 荷主の問い合わせ一覧（C-14）](./bolt_42-2_plan.md)
 * [Bolt 42-2 終了報告 - 荷主の問い合わせ一覧（C-14）](./bolt_42-2_report.md)
+* [Bolt 42-3 計画 - 荷主の問い合わせの詳細と再開の依頼（C-15。US-23 を締める）](./bolt_42-3_plan.md)
+* [Bolt 42-3 終了報告 - 荷主の問い合わせの詳細と再開の依頼（C-15。US-23 を締める）](./bolt_42-3_report.md)

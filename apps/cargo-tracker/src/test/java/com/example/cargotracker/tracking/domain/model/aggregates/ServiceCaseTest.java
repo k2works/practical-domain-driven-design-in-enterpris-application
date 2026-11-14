@@ -388,7 +388,22 @@ class ServiceCaseTest {
     }
 
     @Test
-    void 行11_終結以外は再開できない() {
+    void 行11_回答済みのままでも未解決と答えれば再開でき回答と進捗を保持する_Bolt42_3() {
+        ServiceCase answered = answered();
+
+        ServiceCase reopened = answered.reopen("まだ解決していません", at("2026-11-17T00:00:00Z"));
+
+        assertThat(reopened.status()).isEqualTo(ServiceCaseStatus.IN_PROGRESS);
+        assertThat(reopened.number()).isEqualTo(answered.number());
+        assertThat(reopened.progress()).isEqualTo(answered.progress());
+        assertThat(reopened.answers()).singleElement().satisfies(answer -> {
+            assertThat(answer.content()).isEqualTo("回答します");
+            assertThat(answer.customerResponse()).contains("まだ解決していません");
+        });
+    }
+
+    @Test
+    void 行11_回答済みと終結以外は再開できない() {
         ServiceCase received = inProgress();
         UtcInstant now = at("2026-11-17T00:00:00Z");
 

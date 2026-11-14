@@ -1,6 +1,7 @@
 # Docs Update Log
 
 ## 2026-11-14
+* **Creation**: [bolt_42-3_plan](/development/cargo-tracker/bolt_42-3_plan.md)・[bolt_42-3_report](/development/cargo-tracker/bolt_42-3_report.md) を作成（anthropic/claude-sonnet-5-5。W9。荷主の問い合わせの詳細と再開の依頼 C-15。US-23 を締める）。マニュアル [14 章](/manual/14-問い合わせの追跡.md) に 14.2 とキャプチャ 3 枚、台帳 D-165（仮。【前の決定の変更】）、ui_design の C-15、test_strategy の US-23 を更新
 * **Creation**: [bolt_42-2_plan](/development/cargo-tracker/bolt_42-2_plan.md)・[bolt_42-2_report](/development/cargo-tracker/bolt_42-2_report.md) を作成（anthropic/claude-sonnet-5-5。W9。荷主の問い合わせ一覧 C-14）。マニュアル [14 章 問い合わせの追跡](/manual/14-問い合わせの追跡.md) を新規に追加、台帳 D-164（仮）、ui_design の C-14 を更新
 * **Creation**: [bolt_42-1_plan](/development/cargo-tracker/bolt_42-1_plan.md)・[bolt_42-1_report](/development/cargo-tracker/bolt_42-1_report.md) を作成（anthropic/claude-sonnet-5-5。W9。顧客 Web の追跡照会の自動記録と case_number の索引。スキーマは人が事前に承認）。data_model・domain_model（IR-INV-01）を更新
 * **Creation**: [bolt_42_plan](/development/cargo-tracker/bolt_42_plan.md)・[bolt_42_report](/development/cargo-tracker/bolt_42_report.md) を作成（anthropic/claude-sonnet-5-5。W9。荷主向けの問い合わせの認可。他社の閲覧の試行の記録）

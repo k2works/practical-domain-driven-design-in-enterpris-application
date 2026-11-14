@@ -27,7 +27,8 @@
             </thead>
             <tbody>
             <tr th:each="serviceCase : ${serviceCases}">
-                <td th:text="${serviceCase.number()}">SC-2026-0057</td>
+                <td><a th:href="@{/customer/inquiries/{caseNumber}(caseNumber=${serviceCase.number()})}"
+                       th:text="${serviceCase.number()}">SC-2026-0057</a></td>
                 <td th:text="${serviceCase.status()}">受付済み</td>
                 <td th:text="${serviceCase.nextUpdateAt()}">2026-11-17 14:00 Asia/Tokyo（UTC+09:00）</td>
                 <td th:text="${serviceCase.latestAnswer()}">回答はまだありません。</td>

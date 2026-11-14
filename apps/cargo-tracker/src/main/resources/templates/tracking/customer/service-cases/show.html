@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/customer :: layout(~{::title}, ~{::main}, ~{}, 'inquiries')}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="|問い合わせ ${inquiry.number()} - cargo-tracker|">問い合わせ SC-2026-0057 - cargo-tracker</title>
+</head>
+<body>
+<main>
+    <h1 th:text="|問い合わせ ${inquiry.number()}|">問い合わせ SC-2026-0057</h1>
+    <!--/* C-15（Bolt 42-3、US-23 AC2・AC3）。進捗と回答の履歴を示し、回答済みなら未解決の再開を依頼できる。担当者の利用者 ID は荷主に出さない */-->
+    <p role="status" th:if="${result}" th:text="${result}">再開を依頼しました。担当者が対応します。</p>
+    <div class="alert alert-warning" role="alert" th:if="${problem}" th:text="${problem}">いまは再開を依頼できません。</div>
+    <dl class="row">
+        <dt class="col-sm-3">状態</dt>
+        <dd class="col-sm-9" th:text="${inquiry.status()}">回答済み</dd>
+        <dt class="col-sm-3">次回更新日時</dt>
+        <dd class="col-sm-9" th:text="${inquiry.nextUpdateAt()}">2026-11-17 14:00 Asia/Tokyo（UTC+09:00）</dd>
+    </dl>
+    <th:block th:if="${inquiry.reopenable()}">
+        <h2 class="h4 mt-3" id="reopen-form-heading">解決していないとき</h2>
+        <form method="post" aria-labelledby="reopen-form-heading"
+              th:action="@{/customer/inquiries/{caseNumber}/reopen(caseNumber=${inquiry.number()})}">
+            <div class="mb-2">
+                <label for="reopen-response" class="form-label">まだ解決していない内容</label>
+                <textarea id="reopen-response" name="customerResponse" class="form-control" rows="3" maxlength="4000" required
+                          placeholder="例: まだ解決していません。どの点が残っているかを書いてください"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">未解決として再開を依頼する</button>
+        </form>
+    </th:block>
+    <h2 class="h4 mt-4" id="progress-heading">進捗</h2>
+    <p th:if="${#lists.isEmpty(inquiry.progress())}">進捗はまだありません。</p>
+    <ul th:unless="${#lists.isEmpty(inquiry.progress())}" aria-labelledby="progress-heading">
+        <li th:each="progress : ${inquiry.progress()}" class="mb-2">
+            <span th:text="${progress.content()}">港湾に再送を依頼</span><br>
+            <span th:text="|更新 ${progress.at()}|">更新 2026-11-16 11:20 Asia/Tokyo（UTC+09:00）</span>
+        </li>
+    </ul>
+    <h2 class="h4 mt-4" id="answers-heading">回答</h2>
+    <p th:if="${#lists.isEmpty(inquiry.answers())}">回答はまだありません。</p>
+    <ul th:unless="${#lists.isEmpty(inquiry.answers())}" aria-labelledby="answers-heading">
+        <li th:each="answer : ${inquiry.answers()}" class="mb-2">
+            <span th:text="${answer.content()}">港湾から再送されました</span><br>
+            <span th:text="|回答 ${answer.at()}|">回答 2026-11-16 12:00 Asia/Tokyo（UTC+09:00）</span>
+            <th:block th:if="${!#strings.isEmpty(answer.customerResponse())}">
+                <br><span th:text="|お客様の回答: ${answer.customerResponse()}|">お客様の回答: まだ解決していません</span>
+            </th:block>
+        </li>
+    </ul>
+    <p><a th:href="@{/customer/inquiries}">問い合わせの一覧へ戻る</a></p>
+</main>
+</body>
+</html>

@@ -603,6 +603,10 @@ Release 1.0 の Must の受入条件のうち、閉じたストーリーから�
 | US-20 | AC6 | `@US-20-AC6` |
 | US-20 | AC7 | `@US-20-AC7` |
 | US-20 | AC8 | `@US-20-AC8` |
+| US-23 | AC1 | `@US-23-AC1` |
+| US-23 | AC2 | `@US-23-AC2` |
+| US-23 | AC3 | `@US-23-AC3` |
+| US-23 | AC4 | `@US-23-AC4` |
 
 注: 部分的に確かめる受入条件をタグの照合の数に「完全」と読ませない。US-12 AC4 の「有人例外案件へ引き継ぐ」は W8（US-20）で、取り込みの分（39g）と手入力の分（39gc）の「拒否」だけを AC4 のタグで照合する。US-14 AC5 の「差異としてデータ責任者へ示される」は、取込の分類（39h）と却下（39h2）だけを確かめる（採用は Release 1.0 では作らない。D-144）。US-14 AC4 の古い外部版の警告は 39h3（`adopt_old_version_quarantine_ui.feature`）で確かめる。
 
@@ -646,6 +650,10 @@ Release 1.0 の受入条件のうち、上の照合の表にまだ入れてい�
 | US-20 | AC4・AC5・AC6（進捗の更新、回答と終結、再開で受付番号と履歴を保持） | 40-8・40-12 | `@US-20-AC4`・`@US-20-AC5`・`@US-20-AC6`（`service_case_receive_ui.feature`）、`ServiceCaseActionServiceTest`・`ServiceCaseActionsControllerTest` |
 | US-20 | AC7（復旧照合が未完了の終結の拒否） | 40-5・40-8 | `@US-20-AC7`（`features/tracking/service_case.feature`）、`ServiceCaseTest`・`ServiceCaseActionServiceTest` |
 | US-20 | AC8（営業時間外の優先度高は起票の時刻に受付番号と次回更新日時を返す。営業日カレンダー） | 40-4・40-7 | `@US-20-AC8`（`features/tracking/service_case.feature`）、`ServiceDeadlinePolicyTest`・営業日カレンダーの単体と統合のテスト |
+| US-23 | AC1（問い合わせ一覧に自社の問い合わせの受付番号・状態・次回更新日時・最新の回答を新しい順で示す。他社は出さない） | 42-2 | `@US-23-AC1`（`features/ui/customer_service_case_ui.feature`）、`ServiceCaseQueryServiceTest` 行 8e・`CustomerServiceCaseControllerTest`・`MyBatisServiceCaseRepositoryIntegrationTest` 行 7 |
+| US-23 | AC2（回答済みの問い合わせを未解決と答えると同じ受付番号で再開を依頼でき、過去の回答の履歴が残る） | 42-3 | `@US-23-AC2`（同上）、`ServiceCaseTest` 行 11・`CustomerServiceCaseDetailControllerTest` |
+| US-23 | AC3（他社の問い合わせは内容を開示せず、試行を記録する） | 42・42-3 | `@US-23-AC3`（同上。画面の層は見つからないのと同じ画面）、`TrackingOutOfScopeResponderTest`・`ServiceCaseQueryServiceTest` 行 8c・`CustomerServiceCaseDetailControllerTest` 行 4・7 |
+| US-23 | AC4（受付時間を利用者のタイムゾーンで示す） | 42-2 | `@US-23-AC4`（同上）、`CustomerServiceCaseControllerTest` 行 4 |
 | US-14 | 締め（AC1〜AC5 の照合の表、Golden dataset の G-06b 欠落・G-06c 差異、W7 のデモの動画、性能の複数の外部版の組。【業務の判断】(bk)、台帳 D-153。【前の決定の変更】(31)。#18 は終了報告の承認の後に閉じる） | 39h4 | `AcceptanceCriteriaCoverageTest`（Release 1.0 の照合の表 8 行。見出しを引数にした純粋なメソッドで書式の外れ・前方一致・2 つ目の表を縛る）、`RoutingCaseGoldenDatasetTest`（G-06b・G-06c とガードのテスト）、`route_candidates_golden_v0.feature`（`@golden` 6 行）、`adopted_voyage_reflected_ui.feature`（`@demo-bolt-39h4/confirm-rejected-same-info-version`）、`ExternalDataIngestionPerformanceTest`（`Bolt39h4_行7_…`。外部 ID 2,000 種 × 外部版 5。測るのは W7 の締めの CI） |
 
 ## 後続工程への引継ぎ

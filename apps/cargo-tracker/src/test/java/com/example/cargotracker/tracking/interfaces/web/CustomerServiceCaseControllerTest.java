@@ -41,6 +41,12 @@ class CustomerServiceCaseControllerTest {
     @MockitoBean
     ServiceCaseQueryService queryService;
 
+    @MockitoBean
+    com.example.cargotracker.tracking.application.internal.commandservices.ServiceCaseActionService actionService;
+
+    @MockitoBean
+    TrackingOutOfScopeResponder outOfScopeResponder;
+
     private static CustomerServiceCaseItem item(String number, ServiceCaseStatus status, Optional<CaseAnswer> answer) {
         return new CustomerServiceCaseItem(
                 new CaseNumber(number), status, new UtcInstant(Instant.parse("2026-11-17T05:00:00Z")), answer);
