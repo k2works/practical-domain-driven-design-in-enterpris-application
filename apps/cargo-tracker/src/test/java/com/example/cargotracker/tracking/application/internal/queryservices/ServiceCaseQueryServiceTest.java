@@ -222,6 +222,33 @@ class ServiceCaseQueryServiceTest {
     }
 
     @Test
+    void 行8c_荷主の詳細は自社の案件なら見え他社の案件は範囲外_ない案件は見つからない() {
+        CaseNumber number = open(NORMAL);
+        AuthenticatedActor own =
+                new AuthenticatedActor(new UserId(UUID.randomUUID()), COMPANY, Set.of(Role.SHIPPER), "自社の荷主", "A 社");
+        AuthenticatedActor other = new AuthenticatedActor(
+                new UserId(UUID.randomUUID()),
+                new CompanyId(UUID.fromString("00000000-0000-0000-0000-0000040b1188")),
+                Set.of(Role.SHIPPER),
+                "他社の荷主",
+                "B 社");
+
+        assertThat(service(OPENED_AT).customerDetail(own, number)).isInstanceOf(CustomerServiceCaseLookup.Found.class);
+        assertThat(service(OPENED_AT).customerDetail(other, number))
+                .isInstanceOf(CustomerServiceCaseLookup.OutOfScope.class);
+        assertThat(service(OPENED_AT).customerDetail(own, new CaseNumber("SC-2026-9999")))
+                .isInstanceOf(CustomerServiceCaseLookup.NotFound.class);
+    }
+
+    @Test
+    void 行8d_荷主の詳細は荷主担当者でなければ社内の役割でも見つからない扱い() {
+        CaseNumber number = open(NORMAL);
+
+        assertThat(service(OPENED_AT).customerDetail(staff(Role.TRACKING_MANAGER), number))
+                .isInstanceOf(CustomerServiceCaseLookup.NotFound.class);
+    }
+
+    @Test
     void 行9_件数の上限を超えるときは打ち切りを示す() {
         for (int i = 0; i < ServiceCaseQueryService.LIMIT + 1; i++) {
             open(NORMAL);

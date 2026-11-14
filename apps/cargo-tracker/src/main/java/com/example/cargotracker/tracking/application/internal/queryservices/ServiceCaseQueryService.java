@@ -1,6 +1,7 @@
 package com.example.cargotracker.tracking.application.internal.queryservices;
 
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
+import com.example.cargotracker.shared.domain.Role;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import com.example.cargotracker.tracking.application.internal.commandservices.ServiceCaseAuthorization;
 import com.example.cargotracker.tracking.domain.model.aggregates.ServiceCase;
@@ -79,5 +80,23 @@ public class ServiceCaseQueryService {
                 .findByNumber(number)
                 .filter(c -> ServiceCaseAuthorization.canAccess(actor, c))
                 .map(c -> new ServiceCaseDetail(c, c.isReceiptOverdue(now)));
+    }
+
+    /**
+     * 荷主担当者が問い合わせの詳細を開く（C-15。US-23。Bolt 42）。自社の案件なら詳細、他社の案件なら範囲外（呼び手が試行を記録して 404）、
+     * ない案件・荷主担当者でない利用者は見つからない。
+     */
+    @Transactional(readOnly = true)
+    public CustomerServiceCaseLookup customerDetail(AuthenticatedActor actor, CaseNumber number) {
+        if (!actor.hasRole(Role.SHIPPER)) {
+            return new CustomerServiceCaseLookup.NotFound();
+        }
+        UtcInstant now = new UtcInstant(clock.instant());
+        return repository
+                .findByNumber(number)
+                .<CustomerServiceCaseLookup>map(c -> ServiceCaseAuthorization.canAccess(actor, c)
+                        ? new CustomerServiceCaseLookup.Found(new ServiceCaseDetail(c, c.isReceiptOverdue(now)))
+                        : new CustomerServiceCaseLookup.OutOfScope())
+                .orElseGet(CustomerServiceCaseLookup.NotFound::new);
     }
 }

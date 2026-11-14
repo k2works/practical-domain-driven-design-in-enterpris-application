@@ -12,5 +12,7 @@ public enum ScopedResourceKind {
     /** 経路設計案件（ID は案件番号。例 {@code RC-2026-0001}。Bolt 38g）。 */
     ROUTING_CASE,
     /** 追跡記録（ID は追跡番号。Bolt 38g）。 */
-    TRACKING_RECORD
+    TRACKING_RECORD,
+    /** 有人案件（問い合わせ。ID は受付番号。例 {@code SC-2026-0001}。Bolt 42、US-23 AC3）。 */
+    SERVICE_CASE
 }

@@ -32,4 +32,17 @@ class TrackingOutOfScopeResponderTest {
         then(recorder).shouldHaveNoMoreInteractions();
         assertThat(exception.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }
+
+    @Test
+    void 他社の問い合わせの閲覧の試行を有人案件の種類で1回記録して404を返す() {
+        OutOfScopeAttemptRecorder recorder = mock(OutOfScopeAttemptRecorder.class);
+        AuthenticatedActor actor = AuthenticatedActorFixture.trackingManagerHandling(new UserId(UUID.randomUUID()));
+
+        ResponseStatusException exception =
+                new TrackingOutOfScopeResponder(recorder).recordServiceCaseAndNotFound(actor, "SC-2026-0001");
+
+        then(recorder).should().recordOutOfScope(actor, ScopedResourceKind.SERVICE_CASE, "SC-2026-0001");
+        then(recorder).shouldHaveNoMoreInteractions();
+        assertThat(exception.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+    }
 }

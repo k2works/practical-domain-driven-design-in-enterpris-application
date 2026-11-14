@@ -31,4 +31,14 @@ public class TrackingOutOfScopeResponder {
         recorder.recordOutOfScope(actor, ScopedResourceKind.TRACKING_RECORD, resourceId);
         return new ResponseStatusException(HttpStatus.NOT_FOUND);
     }
+
+    /**
+     * 他社の問い合わせ（有人案件）を開こうとした試行を記録し、404 を返す（US-23 AC3。Bolt 42）。種類はこの部品の中で SERVICE_CASE に固める。
+     *
+     * @param caseNumber 受付番号（形式を確かめた値）
+     */
+    public ResponseStatusException recordServiceCaseAndNotFound(AuthenticatedActor actor, String caseNumber) {
+        recorder.recordOutOfScope(actor, ScopedResourceKind.SERVICE_CASE, caseNumber);
+        return new ResponseStatusException(HttpStatus.NOT_FOUND);
+    }
 }
