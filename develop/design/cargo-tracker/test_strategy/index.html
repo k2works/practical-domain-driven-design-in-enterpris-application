@@ -11393,6 +11393,76 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_42-3_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 42-3 計画
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_42-3_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 42-3 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../development/cargo-tracker/bolt_40_plan/" class="md-nav__link">
         
   
@@ -20313,6 +20383,26 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 <td style="text-align: left;">AC8</td>
 <td style="text-align: left;"><code>@US-20-AC8</code></td>
 </tr>
+<tr>
+<td style="text-align: left;">US-23</td>
+<td style="text-align: left;">AC1</td>
+<td style="text-align: left;"><code>@US-23-AC1</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">US-23</td>
+<td style="text-align: left;">AC2</td>
+<td style="text-align: left;"><code>@US-23-AC2</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">US-23</td>
+<td style="text-align: left;">AC3</td>
+<td style="text-align: left;"><code>@US-23-AC3</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">US-23</td>
+<td style="text-align: left;">AC4</td>
+<td style="text-align: left;"><code>@US-23-AC4</code></td>
+</tr>
 </tbody>
 </table>
 <p>注: 部分的に確かめる受入条件をタグの照合の数に「完全」と読ませない。US-12 AC4 の「有人例外案件へ引き継ぐ」は W8（US-20）で、取り込みの分（39g）と手入力の分（39gc）の「拒否」だけを AC4 のタグで照合する。US-14 AC5 の「差異としてデータ責任者へ示される」は、取込の分類（39h）と却下（39h2）だけを確かめる（採用は Release 1.0 では作らない。D-144）。US-14 AC4 の古い外部版の警告は 39h3（<code>adopt_old_version_quarantine_ui.feature</code>）で確かめる。</p>
@@ -20531,6 +20621,30 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 <td style="text-align: left;">AC8（営業時間外の優先度高は起票の時刻に受付番号と次回更新日時を返す。営業日カレンダー）</td>
 <td style="text-align: left;">40-4・40-7</td>
 <td style="text-align: left;"><code>@US-20-AC8</code>（<code>features/tracking/service_case.feature</code>）、<code>ServiceDeadlinePolicyTest</code>・営業日カレンダーの単体と統合のテスト</td>
+</tr>
+<tr>
+<td style="text-align: left;">US-23</td>
+<td style="text-align: left;">AC1（問い合わせ一覧に自社の問い合わせの受付番号・状態・次回更新日時・最新の回答を新しい順で示す。他社は出さない）</td>
+<td style="text-align: left;">42-2</td>
+<td style="text-align: left;"><code>@US-23-AC1</code>（<code>features/ui/customer_service_case_ui.feature</code>）、<code>ServiceCaseQueryServiceTest</code> 行 8e・<code>CustomerServiceCaseControllerTest</code>・<code>MyBatisServiceCaseRepositoryIntegrationTest</code> 行 7</td>
+</tr>
+<tr>
+<td style="text-align: left;">US-23</td>
+<td style="text-align: left;">AC2（回答済みの問い合わせを未解決と答えると同じ受付番号で再開を依頼でき、過去の回答の履歴が残る）</td>
+<td style="text-align: left;">42-3</td>
+<td style="text-align: left;"><code>@US-23-AC2</code>（同上）、<code>ServiceCaseTest</code> 行 11・<code>CustomerServiceCaseDetailControllerTest</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">US-23</td>
+<td style="text-align: left;">AC3（他社の問い合わせは内容を開示せず、試行を記録する）</td>
+<td style="text-align: left;">42・42-3</td>
+<td style="text-align: left;"><code>@US-23-AC3</code>（同上。画面の層は見つからないのと同じ画面）、<code>TrackingOutOfScopeResponderTest</code>・<code>ServiceCaseQueryServiceTest</code> 行 8c・<code>CustomerServiceCaseDetailControllerTest</code> 行 4・7</td>
+</tr>
+<tr>
+<td style="text-align: left;">US-23</td>
+<td style="text-align: left;">AC4（受付時間を利用者のタイムゾーンで示す）</td>
+<td style="text-align: left;">42-2</td>
+<td style="text-align: left;"><code>@US-23-AC4</code>（同上）、<code>CustomerServiceCaseControllerTest</code> 行 4</td>
 </tr>
 <tr>
 <td style="text-align: left;">US-14</td>

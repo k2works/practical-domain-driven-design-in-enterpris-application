@@ -11780,6 +11780,76 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_42-3_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 42-3 計画
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_42-3_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 42-3 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../development/cargo-tracker/bolt_40_plan/" class="md-nav__link">
         
   
@@ -19620,7 +19690,12 @@
 <tr>
 <td style="text-align: left;">C-14 問い合わせ一覧</td>
 <td style="text-align: left;"><code>GET /customer/inquiries</code></td>
-<td style="text-align: left;">Bolt 42-2（US-23 AC1・AC4）。荷主担当者だけ（<code>/customer/**</code>）。自社の問い合わせ（有人案件）を起票の新しい順に、受付番号・状態・次回更新日時・最新の回答で示す。受付時間（平日 09:00〜18:00 Asia/Tokyo（UTC+09:00）。台帳 D-164。仮）を見出しの下に示す。回答がなければ「回答はまだありません。」、問い合わせがなければ「問い合わせはまだありません。」、上限（200 件）を超えたら「新しい 200 件だけを示しています。」。詳細（C-15）と再開は Bolt 42-3</td>
+<td style="text-align: left;">Bolt 42-2（US-23 AC1・AC4）。荷主担当者だけ（<code>/customer/**</code>）。自社の問い合わせ（有人案件）を起票の新しい順に、受付番号・状態・次回更新日時・最新の回答で示す。受付時間（平日 09:00〜18:00 Asia/Tokyo（UTC+09:00）。台帳 D-164。仮）を見出しの下に示す。回答がなければ「回答はまだありません。」、問い合わせがなければ「問い合わせはまだありません。」、上限（200 件）を超えたら「新しい 200 件だけを示しています。」。詳細（C-15）は Bolt 42-3。受付番号は C-15 へのリンク</td>
+</tr>
+<tr>
+<td style="text-align: left;">C-15 問い合わせの詳細と再開の依頼</td>
+<td style="text-align: left;"><code>GET /customer/inquiries/{受付番号}</code>、<code>POST /customer/inquiries/{受付番号}/reopen</code>（<code>customerResponse</code>）</td>
+<td style="text-align: left;">Bolt 42-3（US-23 AC2・AC3）。荷主担当者だけ（<code>/customer/**</code>）。状態と次回更新日時、進捗と回答の履歴（担当者の利用者 ID は出さない）、再開した内容は回答の下に「お客様の回答」で示す。状態が回答済み・終結のときだけ「解決していないとき」の欄（未解決の内容と「未解決として再開を依頼する」）を出す（台帳 D-165。仮）。再開の依頼は PRG（結果「再開を依頼しました。担当者が対応します。」、状態は対応中）。他社の受付番号・ない・形式の誤りは 404 の「画面が見つかりません」で内容を出さず、他社の分は試行を監査記録に残す（SEC-12、ADR-019）。受付番号は C-14 の一覧からリンクする</td>
 </tr>
 <tr>
 <td style="text-align: left;">C-10 追跡の照会</td>

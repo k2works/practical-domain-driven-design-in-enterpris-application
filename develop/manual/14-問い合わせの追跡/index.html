@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="荷主担当者が、自社が出した問い合わせの受付番号・状態・次回更新日時・最新の回答を確かめる画面です。">
+        <meta name="description" content="荷主担当者が、自社が出した問い合わせの受付番号・状態・次回更新日時・最新の回答を確かめ、進捗と回答の履歴を読み、解決していなければ再開を依頼する画面です。">
       
       
         <meta name="author" content="k2works">
@@ -10989,6 +10989,76 @@
   
   
     <li class="md-nav__item">
+      <a href="../../development/cargo-tracker/bolt_42-3_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 42-3 計画
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development/cargo-tracker/bolt_42-3_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 42-3 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../development/cargo-tracker/bolt_40_plan/" class="md-nav__link">
         
   
@@ -13633,6 +13703,78 @@
         
           <li class="md-nav__item">
   <a href="#_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        注意・補足
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#142" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        14.2 問い合わせの詳細と再開の依頼
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="14.2 問い合わせの詳細と再開の依頼">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        この画面でできること
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        画面の開き方
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        画面の説明
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_9" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        操作手順
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_10" class="md-nav__link">
     <span class="md-ellipsis">
       
         注意・補足
@@ -18274,7 +18416,7 @@
 
 
 <h1 id="14">14 章 問い合わせの追跡<a class="headerlink" href="#14" title="Permanent link">&para;</a></h1>
-<p>荷主担当者が、自社が出した問い合わせの受付番号・状態・次回更新日時・最新の回答を確かめる画面です。電話で聞き直さずに、問い合わせの進み具合を画面で確かめられます。</p>
+<p>荷主担当者が、自社が出した問い合わせの受付番号・状態・次回更新日時・最新の回答を確かめ、進捗と回答の履歴を読み、解決していなければ再開を依頼する画面です。電話で聞き直さずに、問い合わせの進み具合を画面で確かめられます。</p>
 <p>画面の開き方: ナビゲーションの「問い合わせ」（URL: <code>/customer/inquiries</code>）。</p>
 <table>
 <thead>
@@ -18290,9 +18432,13 @@
 <td style="text-align: left;">自社の問い合わせの受付番号・状態・次回更新日時・最新の回答を確かめる</td>
 <td style="text-align: left;"><a href="#141-問い合わせ一覧">14.1</a></td>
 </tr>
+<tr>
+<td style="text-align: left;">問い合わせの詳細</td>
+<td style="text-align: left;">進捗と回答の履歴を読む。解決していなければ再開を依頼する</td>
+<td style="text-align: left;"><a href="#142-問い合わせの詳細と再開の依頼">14.2</a></td>
+</tr>
 </tbody>
 </table>
-<p>問い合わせの詳細（進捗と回答の履歴）と、未解決のときの再開の依頼は、このあとの更新で加わります。</p>
 <h2 id="141">14.1 問い合わせ一覧<a class="headerlink" href="#141" title="Permanent link">&para;</a></h2>
 <h3 id="_1">この画面でできること<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h3>
 <ul>
@@ -18304,6 +18450,7 @@
 <li>ナビゲーションの「問い合わせ」（URL: <code>/customer/inquiries</code>）</li>
 </ul>
 <h3 id="_3">画面の説明<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h3>
+<p><img alt="問い合わせ一覧" src="../assets/14-inquiry-list.png" /></p>
 <table>
 <thead>
 <tr>
@@ -18321,7 +18468,7 @@
 <tr>
 <td style="text-align: left;">②</td>
 <td style="text-align: left;">受付番号</td>
-<td style="text-align: left;">問い合わせごとの番号（SC-年-連番）。電話やメールで問い合わせるときにお伝えください</td>
+<td style="text-align: left;">問い合わせごとの番号（SC-年-連番）。クリックすると詳細が開きます。電話やメールで問い合わせるときにお伝えください</td>
 </tr>
 <tr>
 <td style="text-align: left;">③</td>
@@ -18344,12 +18491,69 @@
 <ol>
 <li>ナビゲーションの「問い合わせ」を押します</li>
 <li>確かめたい問い合わせの受付番号と状態、次回更新日時、最新の回答を読みます</li>
+<li>詳しく読むときは、受付番号を押します（<a href="#142-問い合わせの詳細と再開の依頼">14.2</a>）</li>
 </ol>
 <h3 id="_5">注意・補足<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h3>
 <ul>
 <li>一覧に出るのは自社の問い合わせだけです。他社の問い合わせは出ません</li>
 <li>新しい 200 件まで示します。それより前の問い合わせは担当者にご連絡ください</li>
 <li>受付時間は標準の時間です。祝日・年末年始の扱いは担当者にご確認ください</li>
+</ul>
+<h2 id="142">14.2 問い合わせの詳細と再開の依頼<a class="headerlink" href="#142" title="Permanent link">&para;</a></h2>
+<h3 id="_6">この画面でできること<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h3>
+<ul>
+<li>問い合わせの進捗と、担当者の回答の履歴を読みます</li>
+<li>回答を読んでもまだ解決していないときは、未解決の内容を書いて再開を依頼します。同じ受付番号で再開し、過去の回答の履歴は残ります</li>
+</ul>
+<h3 id="_7">画面の開き方<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h3>
+<ul>
+<li>問い合わせ一覧の受付番号を押します（URL: <code>/customer/inquiries/{受付番号}</code>）</li>
+</ul>
+<h3 id="_8">画面の説明<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h3>
+<p><img alt="問い合わせの詳細" src="../assets/14-inquiry-detail.png" /></p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">#</th>
+<th style="text-align: left;">項目</th>
+<th style="text-align: left;">説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">①</td>
+<td style="text-align: left;">状態・次回更新日時</td>
+<td style="text-align: left;">いまの状態と、次に状況をお知らせする予定の日時</td>
+</tr>
+<tr>
+<td style="text-align: left;">②</td>
+<td style="text-align: left;">解決していないとき</td>
+<td style="text-align: left;">状態が「回答済み」か「終結」のときだけ出る、再開の依頼の欄</td>
+</tr>
+<tr>
+<td style="text-align: left;">③</td>
+<td style="text-align: left;">進捗</td>
+<td style="text-align: left;">担当者が書いた進捗の履歴（新しいものが下）</td>
+</tr>
+<tr>
+<td style="text-align: left;">④</td>
+<td style="text-align: left;">回答</td>
+<td style="text-align: left;">担当者の回答の履歴。再開を依頼した内容は「お客様の回答」として回答の下に残ります</td>
+</tr>
+</tbody>
+</table>
+<h3 id="_9">操作手順<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h3>
+<ol>
+<li>回答を読みます</li>
+<li>まだ解決していなければ、「まだ解決していない内容」の欄に残っている点を書き、「未解決として再開を依頼する」を押します</li>
+<li>詳細に戻り、「再開を依頼しました。担当者が対応します。」と示されます。状態は「対応中」になります</li>
+</ol>
+<p><img alt="再開を依頼した後の詳細" src="../assets/14-inquiry-reopened.png" /></p>
+<h3 id="_10">注意・補足<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h3>
+<ul>
+<li>再開の依頼は、状態が「回答済み」か「終結」のときだけできます。受付済み・対応中のときは、担当者が対応中です</li>
+<li>他社の問い合わせの受付番号を入れても「画面が見つかりません」と示され、内容は出ません。存在しない受付番号と同じ画面です</li>
+<li>再開しても受付番号は変わりません。過去の回答と進捗は消えません</li>
 </ul>
 
 
