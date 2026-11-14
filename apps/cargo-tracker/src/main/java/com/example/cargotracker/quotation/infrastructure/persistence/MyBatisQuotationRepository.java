@@ -190,6 +190,17 @@ public class MyBatisQuotationRepository implements QuotationRepository {
     }
 
     @Override
+    public List<Quotation> findAwaitingResponseExpiringBetween(UtcInstant after, UtcInstant upTo) {
+        return mapper
+                .selectIdsAwaitingResponseExpiringBetween(
+                        after.instant().atOffset(java.time.ZoneOffset.UTC),
+                        upTo.instant().atOffset(java.time.ZoneOffset.UTC))
+                .stream()
+                .map(id -> findById(new QuotationId(id)).orElseThrow())
+                .toList();
+    }
+
+    @Override
     public Optional<Quotation> findById(QuotationId id) {
         return Optional.ofNullable(mapper.selectById(id.value()))
                 .flatMap(row -> findByTransportRequestId(new TransportRequestId(row.transportRequestId())).stream()

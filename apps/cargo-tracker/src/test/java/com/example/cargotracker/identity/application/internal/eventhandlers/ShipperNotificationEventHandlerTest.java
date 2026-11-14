@@ -52,6 +52,25 @@ class ShipperNotificationEventHandlerTest {
     }
 
     @Test
+    void 行1b_有効期限の24時間前の検出を受けて見積依頼の詳細への導線つきで通知する_Bolt43_2() {
+        com.example.cargotracker.quotation.domain.events.QuotationExpiring event =
+                new com.example.cargotracker.quotation.domain.events.QuotationExpiring(
+                        UUID.randomUUID(), 1, UUID.randomUUID(), AT, COMPANY, "TR-2026-0001");
+
+        handler.on(event);
+        handler.on(event);
+
+        then(notifications)
+                .should(org.mockito.Mockito.times(2))
+                .notifyCompany(
+                        eq(new CompanyId(COMPANY)),
+                        eq(ShipperNotificationKind.QUOTATION_EXPIRING),
+                        any(),
+                        eq("TR-2026-0001"),
+                        eq("/customer/transport-requests/TR-2026-0001"));
+    }
+
+    @Test
     void 行2_経路の割当てを受けて荷主の承認が必要と通知する() {
         QuotationRouteAssigned event = new QuotationRouteAssigned(
                 UUID.randomUUID(), 1, UUID.randomUUID(), 1, "RC-2026-0001", 1, AT, COMPANY, "TR-2026-0001");

@@ -2,6 +2,7 @@ package com.example.cargotracker.identity.application.internal.eventhandlers;
 
 import com.example.cargotracker.booking.domain.events.BookingConfirmed;
 import com.example.cargotracker.identity.application.internal.commandservices.ShipperNotifications;
+import com.example.cargotracker.quotation.domain.events.QuotationExpiring;
 import com.example.cargotracker.quotation.domain.events.QuotationPresented;
 import com.example.cargotracker.quotation.domain.events.QuotationRouteAssigned;
 import com.example.cargotracker.shared.domain.CompanyId;
@@ -44,6 +45,19 @@ public class ShipperNotificationEventHandler {
                 eventId(
                         ShipperNotificationKind.QUOTATION_PRESENTED,
                         event.quotationId().toString()),
+                event.transportRequestNumber(),
+                path("/customer/transport-requests/", event.transportRequestNumber()));
+    }
+
+    /** 見積りの有効期限の 24 時間前の検出（Bolt 43-2）を受けて、期限が近いと通知する。契機の ID は見積りと有効期限の組から決める。 */
+    @ApplicationModuleListener
+    public void on(QuotationExpiring event) {
+        notifyCompany(
+                event.shipperCompanyId(),
+                ShipperNotificationKind.QUOTATION_EXPIRING,
+                eventId(
+                        ShipperNotificationKind.QUOTATION_EXPIRING,
+                        event.quotationId() + ":" + event.expiresAt().instant()),
                 event.transportRequestNumber(),
                 path("/customer/transport-requests/", event.transportRequestNumber()));
     }

@@ -35,6 +35,10 @@ public interface QuotationMapper {
     List<UUID> selectIdsByAssignedRoute(
             @Param("routingCaseNumber") String routingCaseNumber, @Param("routeVersionNo") int routeVersionNo);
 
+    /** 荷主の回答か承認を待つ見積りのうち、有効期限が窓にあるものの ID（Bolt 43-2）。 */
+    List<UUID> selectIdsAwaitingResponseExpiringBetween(
+            @Param("after") java.time.OffsetDateTime after, @Param("upTo") java.time.OffsetDateTime upTo);
+
     void insertAssignedRouteLeg(AssignedRouteLegRow row);
 
     /** 見積りの割り当てた区間の数（区間は割当ての後に変えないため、まだないときだけ書く。Bolt 20）。 */

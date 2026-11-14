@@ -1152,6 +1152,31 @@ class MyBatisQuotationIntegrationTest {
     }
 
     @Test
+    void 荷主の回答を待つ見積りのうち有効期限が窓にあるものだけを引く_窓の始まりは含まず終わりは含む_Bolt43_2() {
+        Quotation awaitingResponse = presented(transportRequest(52), 1);
+        Quotation drafted = calculated(transportRequest(53), 1);
+        repository.save(awaitingResponse);
+        repository.save(drafted);
+        java.time.Instant expiry = QuotationFixture.EXPIRES_AT.instant();
+        UtcInstant hourBefore = new UtcInstant(expiry.minusSeconds(3600));
+        UtcInstant atExpiry = new UtcInstant(expiry);
+
+        // 共有の DB のほかの見積りに影響されないよう、このテストの見積りだけを比べる
+        assertThat(repository.findAwaitingResponseExpiringBetween(hourBefore, atExpiry))
+                .extracting(Quotation::id)
+                .contains(awaitingResponse.id())
+                .doesNotContain(drafted.id());
+        // 窓の始まり（含まない）が有効期限と同じなら当たらない
+        assertThat(repository.findAwaitingResponseExpiringBetween(atExpiry, new UtcInstant(expiry.plusSeconds(3600))))
+                .extracting(Quotation::id)
+                .doesNotContain(awaitingResponse.id());
+        // 窓の終わり（含む）の 1 秒前なら当たらない
+        assertThat(repository.findAwaitingResponseExpiringBetween(hourBefore, new UtcInstant(expiry.minusSeconds(1))))
+                .extracting(Quotation::id)
+                .doesNotContain(awaitingResponse.id());
+    }
+
+    @Test
     void 印のある見積りを再見積りすると新しい見積りは印を持って保存される() {
         // 届く順 A。新しい見積りは INSERT で保存されるので、挿入の列も確かめる（Bolt 37e レビュー H-1）
         TransportRequestId transportRequestId = transportRequest(51);

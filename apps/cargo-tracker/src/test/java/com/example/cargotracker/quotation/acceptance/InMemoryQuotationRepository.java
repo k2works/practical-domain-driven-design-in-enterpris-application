@@ -6,11 +6,13 @@ import com.example.cargotracker.quotation.domain.model.aggregates.Quotation;
 import com.example.cargotracker.quotation.domain.model.aggregates.QuotationRepository;
 import com.example.cargotracker.quotation.domain.model.valueobjects.AwaitingBookingSummary;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationId;
+import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationStatus;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotedRequestSummary;
 import com.example.cargotracker.quotation.domain.model.valueobjects.RoutingRequestedSummary;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipperLatestQuotationSummary;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestId;
 import com.example.cargotracker.shared.domain.CompanyId;
+import com.example.cargotracker.shared.domain.UtcInstant;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -69,6 +71,20 @@ public class InMemoryQuotationRepository implements QuotationRepository {
     @Override
     public Optional<Quotation> findById(QuotationId id) {
         return Optional.ofNullable(store.get(id)).map(quotation -> snapshot(quotation, quotation.aggregateVersion()));
+    }
+
+    @Override
+    public synchronized List<Quotation> findAwaitingResponseExpiringBetween(UtcInstant after, UtcInstant upTo) {
+        return store.values().stream()
+                .filter(quotation -> quotation.status() == QuotationStatus.PRESENTED
+                        || quotation.status() == QuotationStatus.AWAITING_SHIPPER_APPROVAL)
+                .filter(quotation -> quotation
+                        .expiry()
+                        .filter(expiry -> expiry.expiresAt().instant().isAfter(after.instant())
+                                && !expiry.expiresAt().instant().isAfter(upTo.instant()))
+                        .isPresent())
+                .map(quotation -> snapshot(quotation, quotation.aggregateVersion()))
+                .toList();
     }
 
     @Override

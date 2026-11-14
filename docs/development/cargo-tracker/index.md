@@ -190,6 +190,7 @@ Bolt がイテレーションに当たります。ふりかえりは各 Bolt の
 | 42-3 | [荷主の問い合わせの詳細と再開の依頼（C-15。US-23 を締める）](bolt_42-3_plan.md)（[W9 計画](iteration_plan-W9.md)） | [終了報告](bolt_42-3_report.md) | W9 | 完了（承認待ち） |
 | 43 | [荷主への業務の通知の基盤（US-22。通知の公開 API・宛先の解決・本文）](bolt_43_plan.md)（[W9 計画](iteration_plan-W9.md)） | [終了報告](bolt_43_report.md) | W9 | 完了（承認待ち） |
 | 43-1 | [4 つの契機の通知（US-22 AC1。見積りの提示・経路の承認・本予約の確定・追跡が確認中）](bolt_43-1_plan.md)（[W9 計画](iteration_plan-W9.md)） | [終了報告](bolt_43-1_report.md) | W9 | 完了（承認待ち） |
+| 43-2 | [見積りの有効期限の 24 時間前の通知（US-22 AC2。毎時の検出）](bolt_43-2_plan.md)（[W9 計画](iteration_plan-W9.md)） | [終了報告](bolt_43-2_report.md) | W9 | 完了（承認待ち） |
 | 40-16 | [W8 の受入条件の照合とマニュアル・動画の総点検（US-11・US-20 を締める）](bolt_40-16_plan.md)（[W8 計画](iteration_plan-W8.md)） | [終了報告](bolt_40-16_report.md) | W8 | 完了（承認済み） |
 | 40-15 | [照会の記録（S-23）と有人案件への引き継ぎ（US-11 AC2）](bolt_40-15_plan.md)（[W8 計画](iteration_plan-W8.md)） | [終了報告](bolt_40-15_report.md)（[動画](../../assets/demo/bolt-40-15/inquiry-handoff.webm){:target="_blank"}） | W8 | 完了（承認済み） |
 
@@ -435,3 +436,5 @@ Bolt を始めるときに行を追加します。
 * [Bolt 43 終了報告 - 荷主への業務の通知の基盤（US-22）](./bolt_43_report.md)
 * [Bolt 43-1 計画 - 4 つの契機の通知（US-22 AC1）](./bolt_43-1_plan.md)
 * [Bolt 43-1 終了報告 - 4 つの契機の通知（US-22 AC1）](./bolt_43-1_report.md)
+* [Bolt 43-2 計画 - 見積りの有効期限の 24 時間前の通知（US-22 AC2）](./bolt_43-2_plan.md)
+* [Bolt 43-2 終了報告 - 見積りの有効期限の 24 時間前の通知（US-22 AC2）](./bolt_43-2_report.md)

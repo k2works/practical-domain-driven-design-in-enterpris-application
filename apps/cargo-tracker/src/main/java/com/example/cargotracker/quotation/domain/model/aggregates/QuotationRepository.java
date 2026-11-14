@@ -7,6 +7,7 @@ import com.example.cargotracker.quotation.domain.model.valueobjects.RoutingReque
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipperLatestQuotationSummary;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestId;
 import com.example.cargotracker.shared.domain.CompanyId;
+import com.example.cargotracker.shared.domain.UtcInstant;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -64,6 +65,15 @@ public interface QuotationRepository {
      * 選び方。どの輸送要求の状態で使うかは画面が決める。D-85。Bolt 35d）。荷主企業で必ず絞る（Q-INV-08）。
      */
     List<ShipperLatestQuotationSummary> findLatestVisibleForShipper(CompanyId shipperCompanyId);
+
+    /**
+     * 荷主の回答か承認を待つ見積り（提示済み・荷主承認待ち）のうち、有効期限が指定の時刻より後で、もう一方の時刻以前のものを返す（有効期限の 24 時間前の
+     * 通知の検出。US-22 AC2。W9 の Bolt 43-2）。
+     *
+     * @param after この時刻より後（含まない）
+     * @param upTo この時刻以前（含む）
+     */
+    List<Quotation> findAwaitingResponseExpiringBetween(UtcInstant after, UtcInstant upTo);
 
     /** 見積りを ID で探す（経路の割当て。経路設計は依頼元の見積り ID を持つ。Bolt 20）。 */
     Optional<Quotation> findById(QuotationId id);

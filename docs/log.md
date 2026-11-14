@@ -1,6 +1,7 @@
 # Docs Update Log
 
 ## 2026-11-14
+* **Creation**: [bolt_43-2_plan](/development/cargo-tracker/bolt_43-2_plan.md)・[bolt_43-2_report](/development/cargo-tracker/bolt_43-2_report.md) を作成（anthropic/claude-sonnet-5-5。W9。見積りの有効期限の 24 時間前の通知。アプリで最初の定期実行）
 * **Creation**: [bolt_43-1_plan](/development/cargo-tracker/bolt_43-1_plan.md)・[bolt_43-1_report](/development/cargo-tracker/bolt_43-1_report.md) を作成（anthropic/claude-sonnet-5-5。W9。4 つの契機の通知。DE-03・DE-21・DE-18 に荷主企業の ID を追加、tracking のイベントを公表、identity の依存を追加）
 * **Creation**: [bolt_43_plan](/development/cargo-tracker/bolt_43_plan.md)・[bolt_43_report](/development/cargo-tracker/bolt_43_report.md) を作成（anthropic/claude-sonnet-5-5。W9。荷主への業務の通知の基盤。宛先の解決は identity が担う方式を人が決めた）。ADR-017 に補足、台帳 D-166（仮）を追加
 * **Creation**: [bolt_42-3_plan](/development/cargo-tracker/bolt_42-3_plan.md)・[bolt_42-3_report](/development/cargo-tracker/bolt_42-3_report.md) を作成（anthropic/claude-sonnet-5-5。W9。荷主の問い合わせの詳細と再開の依頼 C-15。US-23 を締める）。マニュアル [14 章](/manual/14-問い合わせの追跡.md) に 14.2 とキャプチャ 3 枚、台帳 D-165（仮。【前の決定の変更】）、ui_design の C-15、test_strategy の US-23 を更新

@@ -2,6 +2,7 @@ package com.example.cargotracker.quotation.infrastructure.config;
 
 import com.example.cargotracker.quotation.application.internal.commandservices.BookingNotificationService;
 import com.example.cargotracker.quotation.application.internal.commandservices.QuotationCommandService;
+import com.example.cargotracker.quotation.application.internal.commandservices.QuotationExpiryNotificationService;
 import com.example.cargotracker.quotation.application.internal.commandservices.QuotationResponseService;
 import com.example.cargotracker.quotation.application.internal.commandservices.RouteAssignmentService;
 import com.example.cargotracker.quotation.application.internal.commandservices.RouteRedesignService;
@@ -41,6 +42,7 @@ import org.springframework.context.annotation.Configuration;
  * 見積りコンテキストの組み立て。アプリケーションサービスに送信アダプターをつなぐ。
  */
 @Configuration(proxyBeanMethods = false)
+@org.springframework.scheduling.annotation.EnableScheduling
 @EnableConfigurationProperties(DocumentStorageProperties.class)
 public class QuotationConfiguration {
 
@@ -151,6 +153,17 @@ public class QuotationConfiguration {
             TransportRequestRepository transportRequestRepository,
             StaffTransportRequestScope scope) {
         return new BookableQuotationQueryService(quotationRepository, transportRequestRepository, scope);
+    }
+
+    /** 見積りの有効期限の 24 時間前の通知の検出（US-22 AC2。1 時間ごとの起動は {@code QuotationExpiryScheduler}。Bolt 43-2）。 */
+    @Bean
+    QuotationExpiryNotificationService quotationExpiryNotificationService(
+            QuotationRepository quotationRepository,
+            TransportRequestRepository transportRequestRepository,
+            ApplicationEventPublisher eventPublisher,
+            Clock clock) {
+        return new QuotationExpiryNotificationService(
+                quotationRepository, transportRequestRepository, eventPublisher, clock);
     }
 
     /** 経路の割当ての入力ポート（見積りの公開 API のアダプターが委ねる。経路設計が DE-05 を受けて使う。ADR-014。Bolt 20）。 */
