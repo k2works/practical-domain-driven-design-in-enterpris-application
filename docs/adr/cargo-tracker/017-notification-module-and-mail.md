@@ -141,6 +141,7 @@ Bolt 38d の開始準備で、種類ごとの公開 API は種類ごとのまま
 - 2026-10-26: Bolt 38b4 で、決定 4 の利用者の招待に、遅れて配られた DE-25（登録から 24 時間を過ぎた、登録の後に本人の再設定の発行がある）では発行しないことを足した（Bolt 38b4 の開始準備の決定 (1)。human:kakimomokuri が決定）。
 
 - 2026-10-27: Bolt 38d で、3・4 つ目の公開 API `TotpResetMail`・`TotpEnrollmentMail`（種類 `TOTP_RESET_BY_ADMIN`・`TOTP_ENROLLED`・`TOTP_RE_ENROLLED`。リンクのないお知らせ）、identity の DE-26・DE-27・DE-28 とハンドラーと ACL を足し、共有の部品を `MailDelivery` に改めてリンクのないメールに広げた。一般の口にまとめるかの見直しは「種類ごとのまま」と決めた（決定 1・3・5、既知の課題。Bolt 38d の開始準備の決定 (3)・(4)・(5)。human:kakimomokuri が決定）。
+- 2026-11-14: Bolt 43（W9）で、5 つ目の公開 API `ShipperNotificationMail`（荷主への業務の通知。種類 `QUOTATION_PRESENTED`・`ROUTE_APPROVED`・`QUOTATION_EXPIRING`・`BOOKING_CONFIRMED`・`TRACKING_UNDER_REVIEW`。本文は件名と画面への導線だけ）を足し、決定 2 の「荷主への通知（US-22）で宛先をどう渡すかは W9 の開始準備で決める」を決めた: **宛先の解決は identity が担う**（identity が業務のイベントを購読し、その企業の利用中の荷主担当者を自分で引いて公開 API を呼ぶ。ACL `NotificationShipperMails`、`ShipperNotifications`）。共有カーネルにポートを足さない（ADR-019 の例外を広げない）。種類の enum `ShipperNotificationKind` は、公開 API が interface か record だけという規則のため共有カーネルに置いた（値だけの型）。人が決めた（human:kakimomokuri。AskUserQuestion の回答。2026-11-14）。宛先は「その企業の利用中の荷主担当者全員」（台帳 D-166。仮）
 
 ## 関連ドキュメント
 

@@ -1,12 +1,14 @@
 package com.example.cargotracker.notification.infrastructure.config;
 
 import com.example.cargotracker.notification.application.internal.commandservices.PasswordResetMailService;
+import com.example.cargotracker.notification.application.internal.commandservices.ShipperNotificationMailService;
 import com.example.cargotracker.notification.application.internal.commandservices.TotpEnrollmentMailService;
 import com.example.cargotracker.notification.application.internal.commandservices.TotpResetMailService;
 import com.example.cargotracker.notification.application.internal.commandservices.UserInvitationMailService;
 import com.example.cargotracker.notification.domain.model.aggregates.MailSender;
 import com.example.cargotracker.notification.domain.model.aggregates.NotificationRepository;
 import com.example.cargotracker.notification.domain.model.aggregates.PasswordResetMailTemplate;
+import com.example.cargotracker.notification.domain.model.aggregates.ShipperNotificationMailTemplate;
 import com.example.cargotracker.notification.domain.model.aggregates.TotpEnrollmentMailTemplate;
 import com.example.cargotracker.notification.domain.model.aggregates.TotpResetMailTemplate;
 import com.example.cargotracker.notification.domain.model.aggregates.UserInvitationMailTemplate;
@@ -14,6 +16,7 @@ import com.example.cargotracker.notification.infrastructure.mail.LoggingMailSend
 import com.example.cargotracker.notification.infrastructure.mail.NotificationMailGuard;
 import com.example.cargotracker.notification.infrastructure.mail.SmtpMailSender;
 import com.example.cargotracker.notification.infrastructure.mail.ThymeleafPasswordResetMailTemplate;
+import com.example.cargotracker.notification.infrastructure.mail.ThymeleafShipperNotificationMailTemplate;
 import com.example.cargotracker.notification.infrastructure.mail.ThymeleafTotpEnrollmentMailTemplate;
 import com.example.cargotracker.notification.infrastructure.mail.ThymeleafTotpResetMailTemplate;
 import com.example.cargotracker.notification.infrastructure.mail.ThymeleafUserInvitationMailTemplate;
@@ -86,6 +89,23 @@ public class NotificationConfiguration {
             TransactionTemplate transactionTemplate) {
         return new TotpEnrollmentMailService(
                 notifications, notificationMailSender, totpEnrollmentMailTemplate, clock, transactionTemplate);
+    }
+
+    @Bean
+    ShipperNotificationMailTemplate shipperNotificationMailTemplate() {
+        return new ThymeleafShipperNotificationMailTemplate();
+    }
+
+    /** 荷主への業務の通知（US-22。Bolt 43）。 */
+    @Bean
+    ShipperNotificationMailService shipperNotificationMailService(
+            NotificationRepository notifications,
+            MailSender notificationMailSender,
+            ShipperNotificationMailTemplate shipperNotificationMailTemplate,
+            Clock clock,
+            TransactionTemplate transactionTemplate) {
+        return new ShipperNotificationMailService(
+                notifications, notificationMailSender, shipperNotificationMailTemplate, clock, transactionTemplate);
     }
 
     @Bean

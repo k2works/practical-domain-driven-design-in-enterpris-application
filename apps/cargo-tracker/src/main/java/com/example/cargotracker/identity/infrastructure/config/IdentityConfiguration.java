@@ -7,6 +7,7 @@ import com.example.cargotracker.identity.application.internal.commandservices.Pa
 import com.example.cargotracker.identity.application.internal.commandservices.PasswordResetRequestService;
 import com.example.cargotracker.identity.application.internal.commandservices.RecoveryCodeVerificationService;
 import com.example.cargotracker.identity.application.internal.commandservices.SessionRevalidationService;
+import com.example.cargotracker.identity.application.internal.commandservices.ShipperNotifications;
 import com.example.cargotracker.identity.application.internal.commandservices.TotpEnrollmentService;
 import com.example.cargotracker.identity.application.internal.commandservices.TotpReEnrollmentService;
 import com.example.cargotracker.identity.application.internal.commandservices.TotpVerificationService;
@@ -22,6 +23,7 @@ import com.example.cargotracker.identity.application.internal.eventhandlers.Totp
 import com.example.cargotracker.identity.application.internal.eventhandlers.TotpResetMailEventHandler;
 import com.example.cargotracker.identity.application.internal.eventhandlers.UserInvitationMailEventHandler;
 import com.example.cargotracker.identity.application.internal.outboundservices.acl.NotificationPasswordResetMails;
+import com.example.cargotracker.identity.application.internal.outboundservices.acl.NotificationShipperMails;
 import com.example.cargotracker.identity.application.internal.outboundservices.acl.NotificationTotpEnrollmentMails;
 import com.example.cargotracker.identity.application.internal.outboundservices.acl.NotificationTotpResetMails;
 import com.example.cargotracker.identity.application.internal.outboundservices.acl.NotificationUserInvitationMails;
@@ -53,6 +55,7 @@ import com.example.cargotracker.identity.domain.model.rules.LockPolicy;
 import com.example.cargotracker.identity.domain.model.rules.PasswordPolicy;
 import com.example.cargotracker.identity.infrastructure.crypto.AesGcmSecretCipher;
 import com.example.cargotracker.notification.interfaces.api.PasswordResetMail;
+import com.example.cargotracker.notification.interfaces.api.ShipperNotificationMail;
 import com.example.cargotracker.notification.interfaces.api.TotpEnrollmentMail;
 import com.example.cargotracker.notification.interfaces.api.TotpResetMail;
 import com.example.cargotracker.notification.interfaces.api.UserInvitationMail;
@@ -469,6 +472,19 @@ public class IdentityConfiguration {
     @Bean
     NotificationTotpEnrollmentMails notificationTotpEnrollmentMails(TotpEnrollmentMail totpEnrollmentMail) {
         return new NotificationTotpEnrollmentMails(totpEnrollmentMail);
+    }
+
+    /** 通知の公開 API（荷主への業務の通知）を呼ぶ腐敗防止層（ADR-017。US-22。Bolt 43）。 */
+    @Bean
+    NotificationShipperMails notificationShipperMails(ShipperNotificationMail shipperNotificationMail) {
+        return new NotificationShipperMails(shipperNotificationMail);
+    }
+
+    /** 荷主への業務の通知の宛先の解決と送信（US-22。Bolt 43。台帳 D-166）。リンクは公開の base URL から組み立てる。 */
+    @Bean
+    ShipperNotifications shipperNotifications(
+            UserRepository users, NotificationShipperMails notificationShipperMails, Environment environment) {
+        return new ShipperNotifications(users, notificationShipperMails, publicBaseUrl(environment));
     }
 
     /** 通知の公開 API（管理者による TOTP の登録の解除のお知らせ）を呼ぶ腐敗防止層（ADR-017。Bolt 38d）。 */

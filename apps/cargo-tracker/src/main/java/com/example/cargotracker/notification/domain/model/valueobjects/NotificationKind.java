@@ -18,5 +18,15 @@ public enum NotificationKind {
     /** 認証アプリの登録（A-07）のお知らせ（SEC-10。Bolt 38d）。対象は監査記録の ID で、本文は監査から再現できる。 */
     TOTP_ENROLLED,
     /** 回復コードの経路での認証アプリの再登録（A-08）のお知らせ（SEC-10。Bolt 38d）。対象は監査記録の ID で、本文は監査から再現できる。 */
-    TOTP_RE_ENROLLED
+    TOTP_RE_ENROLLED,
+    /** 見積りの提示（荷主への業務の通知。US-22 AC1。Bolt 43）。対象は業務番号で、本文は件名と画面への導線だけ（N-INV-01）。 */
+    QUOTATION_PRESENTED,
+    /** 経路の承認（荷主の承認が必要になった。US-22 AC1。Bolt 43）。 */
+    ROUTE_APPROVED,
+    /** 見積りの有効期限が近い（24 時間前。US-22 AC2。Bolt 43）。 */
+    QUOTATION_EXPIRING,
+    /** 本予約の確定（US-22 AC1。Bolt 43）。 */
+    BOOKING_CONFIRMED,
+    /** 追跡が確認中になった（US-22 AC1。DE-18。Bolt 43）。 */
+    TRACKING_UNDER_REVIEW
 }
