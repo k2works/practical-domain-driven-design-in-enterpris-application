@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>15 章 通知 | cargo-tracker ユーザーマニュアル</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="manual-header">
+    <a class="manual-home" href="index.html">cargo-tracker ユーザーマニュアル</a>
+  </header>
+  <div class="manual-layout">
+    <nav class="manual-sidenav" aria-label="マニュアルの目次">
+      <details open>
+        <summary>目次</summary>
+        <ul>
+        <li><a href="index.html">概要</a></li>
+        <li><a href="00-%E3%81%AF%E3%81%98%E3%82%81%E3%81%AB.html">はじめに</a></li>
+        <li><a href="01-%E6%A5%AD%E5%8B%99%E3%83%95%E3%83%AD%E3%83%BC.html">1 章 業務フロー</a></li>
+        <li><a href="02-%E3%83%AD%E3%82%B0%E3%82%A4%E3%83%B3%E3%81%A8%E5%85%B1%E9%80%9A%E3%81%AE%E7%94%BB%E9%9D%A2.html">2 章 ログインと共通の画面</a></li>
+        <li><a href="03-%E8%A6%8B%E7%A9%8D%E4%BE%9D%E9%A0%BC.html">3 章 見積依頼</a></li>
+        <li><a href="04-%E8%A6%8B%E7%A9%8D%E3%82%8A%E3%81%B8%E3%81%AE%E5%9B%9E%E7%AD%94%E3%81%A8%E6%89%BF%E8%AA%8D.html">4 章 見積りへの回答と承認</a></li>
+        <li><a href="05-%E4%BA%88%E7%B4%84%E4%B8%80%E8%A6%A7%E3%81%A8%E8%BF%BD%E8%B7%A1%E3%81%AE%E7%85%A7%E4%BC%9A.html">5 章 予約一覧と追跡の照会</a></li>
+        <li><a href="06-%E5%8F%97%E4%BB%98%E4%B8%80%E8%A6%A7%E3%81%A8%E5%AF%A9%E6%9F%BB%E3%81%A8%E8%A6%8B%E7%A9%8D%E3%82%8A.html">6 章 受付一覧と審査と見積り</a></li>
+        <li><a href="07-%E6%9C%AC%E4%BA%88%E7%B4%84%E3%81%AE%E7%A2%BA%E5%AE%9A%E3%81%A8%E4%BA%88%E7%B4%84%E4%B8%80%E8%A6%A7.html">7 章 本予約の確定と予約一覧</a></li>
+        <li><a href="08-%E7%B5%8C%E8%B7%AF%E8%A8%AD%E8%A8%88.html">8 章 経路設計</a></li>
+        <li><a href="09-%E8%BF%BD%E8%B7%A1%E7%AE%A1%E7%90%86.html">9 章 追跡管理</a></li>
+        <li><a href="10-KPI%E8%A8%88%E6%B8%AC%E8%A8%98%E9%8C%B2.html">10 章 KPI 計測記録</a></li>
+        <li><a href="11-%E5%88%A9%E7%94%A8%E8%80%85%E3%81%AE%E7%AE%A1%E7%90%86.html">11 章 利用者の管理</a></li>
+        <li><a href="12-%E5%A4%96%E9%83%A8%E3%83%87%E3%83%BC%E3%82%BF.html">12 章 外部データ</a></li>
+        <li><a href="13-%E6%9C%89%E4%BA%BA%E6%A1%88%E4%BB%B6.html">13 章 有人案件</a></li>
+        <li><a href="14-%E5%95%8F%E3%81%84%E5%90%88%E3%82%8F%E3%81%9B%E3%81%AE%E8%BF%BD%E8%B7%A1.html">14 章 問い合わせの追跡</a></li>
+        <li><a href="15-%E9%80%9A%E7%9F%A5.html" aria-current="page">15 章 通知</a><ul class="manual-sidenav-sections"><li><a href="#150-%E3%81%A9%E3%82%93%E3%81%AA%E3%81%A8%E3%81%8D%E3%81%AB%E3%83%A1%E3%83%BC%E3%83%AB%E3%81%8C%E5%B1%8A%E3%81%8F%E3%81%8B">15.0 どんなときにメールが届くか</a></li><li><a href="#151-%E9%80%9A%E7%9F%A5%E4%B8%80%E8%A6%A7">15.1 通知一覧</a></li></ul></li>
+        <li><a href="%E7%94%A8%E8%AA%9E%E9%9B%86.html">付録 A 用語集</a></li>
+        <li><a href="%E4%BB%98%E9%8C%B2B-%E3%83%88%E3%83%A9%E3%83%96%E3%83%AB%E3%82%B7%E3%83%A5%E3%83%BC%E3%83%86%E3%82%A3%E3%83%B3%E3%82%B0.html">付録 B トラブルシューティング</a></li>
+        </ul>
+      </details>
+    </nav>
+    <main class="manual-content">
+      <a class="manual-nav-link" href="index.html">← マニュアル目次</a>
+      <h1 id="15-章-通知">15 章 通知</h1>
+<p>荷主担当者が、見積りの提示・経路の承認・本予約の確定・追跡の確認中・見積りの有効期限が近いことをメールで知り、通知一覧で同じ内容と送信の結果を確かめる画面です。毎日画面を見に行かなくても、対応の遅れを防げます。</p>
+<p>画面の開き方: ナビゲーションの「通知」（URL: <code>/customer/notifications</code>）。</p>
+<table>
+<thead>
+<tr>
+<th align="left">画面</th>
+<th align="left">役割</th>
+<th align="left">節</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">通知一覧</td>
+<td align="left">送られた通知と送信の結果を確かめる</td>
+<td align="left"><a href="#151-%E9%80%9A%E7%9F%A5%E4%B8%80%E8%A6%A7">15.1</a></td>
+</tr>
+</tbody></table>
+<h2 id="150-どんなときにメールが届くか">15.0 どんなときにメールが届くか</h2>
+<p>自社の荷主担当者のうち、利用中の方全員に、次のときメールが届きます。</p>
+<table>
+<thead>
+<tr>
+<th align="left">契機</th>
+<th align="left">件名</th>
+<th align="left">メールの内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">見積りが提示された</td>
+<td align="left">【cargo-tracker】見積りが提示されました</td>
+<td align="left">業務番号と、見積依頼の詳細への導線</td>
+</tr>
+<tr>
+<td align="left">経路が承認され、荷主の承認が必要になった</td>
+<td align="left">【cargo-tracker】経路が承認されました。ご承認をお願いします</td>
+<td align="left">業務番号と、見積依頼の詳細への導線</td>
+</tr>
+<tr>
+<td align="left">見積りの有効期限が近い（24 時間前）</td>
+<td align="left">【cargo-tracker】見積りの有効期限が近づいています</td>
+<td align="left">業務番号と、見積依頼の詳細への導線</td>
+</tr>
+<tr>
+<td align="left">本予約が確定した</td>
+<td align="left">【cargo-tracker】本予約が確定しました</td>
+<td align="left">業務番号と、予約一覧への導線</td>
+</tr>
+<tr>
+<td align="left">追跡が確認中になった</td>
+<td align="left">【cargo-tracker】貨物の追跡を確認しています</td>
+<td align="left">追跡番号と、追跡の照会の結果への導線</td>
+</tr>
+</tbody></table>
+<p>メールには、料金・契約条件・書類・ほかの予約の情報は書きません。件名と、画面への導線だけです。内容は導線の先の画面で確かめてください。</p>
+<h2 id="151-通知一覧">15.1 通知一覧</h2>
+<h3 id="この画面でできること">この画面でできること</h3>
+<ul>
+<li>自分に送られた通知を、新しい順に確かめます</li>
+<li>送信に失敗した通知と、その宛先を確かめます</li>
+<li>通知の対象（業務番号・追跡番号）を押して、対象の画面へ移ります</li>
+</ul>
+<h3 id="画面の開き方">画面の開き方</h3>
+<ul>
+<li>ナビゲーションの「通知」（URL: <code>/customer/notifications</code>）</li>
+</ul>
+<h3 id="画面の説明">画面の説明</h3>
+<p><img src="assets/15-notifications.png" alt="通知一覧"></p>
+<table>
+<thead>
+<tr>
+<th align="left">#</th>
+<th align="left">項目</th>
+<th align="left">説明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">①</td>
+<td align="left">通知</td>
+<td align="left">通知の種類（見積りが提示されました、本予約が確定しました など）</td>
+</tr>
+<tr>
+<td align="left">②</td>
+<td align="left">対象</td>
+<td align="left">業務番号か追跡番号。押すと、メールの導線と同じ画面が開きます</td>
+</tr>
+<tr>
+<td align="left">③</td>
+<td align="left">送信の結果</td>
+<td align="left">「送信済み」「送信に失敗しました」「送信待ち」。失敗したときは、送った宛先のメールアドレスも示します</td>
+</tr>
+<tr>
+<td align="left">④</td>
+<td align="left">日時</td>
+<td align="left">送った日時（送信済み以外は記録した日時）。日本時間とUTCのずれで示します</td>
+</tr>
+</tbody></table>
+<h3 id="操作手順">操作手順</h3>
+<ol>
+<li>ナビゲーションの「通知」を押します</li>
+<li>メールが届かないときは、通知一覧で「送信済み」か「送信に失敗しました」かを確かめます</li>
+<li>失敗していたら、宛先のメールアドレスが正しいか確かめ、担当営業にご連絡ください</li>
+</ol>
+<h3 id="注意補足">注意・補足</h3>
+<ul>
+<li>一覧に出るのは自分に宛てた通知だけです。自社のほかの荷主担当者の通知は出ません</li>
+<li>新しい 100 件まで示します</li>
+<li>通知の配信設定（受け取る種類の選択、静穏時間）はまだありません。自社の荷主担当者全員に届きます</li>
+</ul>
+
+      <a class="manual-nav-link" href="index.html">← マニュアル目次</a>
+    </main>
+  </div>
+  <footer class="manual-footer">cargo-tracker ユーザーマニュアル</footer>
+  <script>
+    // 画面の幅が狭いときは、目次を閉じた状態で始める（本文を先に見せる。「目次」で開ける）
+    if (window.matchMedia('(max-width: 900px)').matches) {
+      document.querySelectorAll('.manual-sidenav details').forEach((d) => d.removeAttribute('open'));
+    }
+  </script>
+</body>
+</html>

@@ -17,6 +17,10 @@
          <index name="pk_notification" unique="true">
             <column ascending="true" name="id"/>
          </index>
+         <index name="ix_notification_recipient" unique="false">
+            <column ascending="true" name="recipient_user_id"/>
+            <column ascending="true" name="created_at"/>
+         </index>
          <index name="uk_notification_event_recipient" unique="true">
             <column ascending="true" name="event_id"/>
             <column ascending="true" name="recipient_user_id"/>

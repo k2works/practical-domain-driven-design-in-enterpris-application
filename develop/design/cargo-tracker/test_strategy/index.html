@@ -11673,6 +11673,76 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_43-3_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 43-3 計画
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_43-3_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 43-3 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../development/cargo-tracker/bolt_40_plan/" class="md-nav__link">
         
   
@@ -14189,6 +14259,41 @@
     
   
     14 章 問い合わせの追跡
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../manual/15-%E9%80%9A%E7%9F%A5/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    15 章 通知
   
 
     
@@ -20613,6 +20718,26 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 <td style="text-align: left;">AC4</td>
 <td style="text-align: left;"><code>@US-23-AC4</code></td>
 </tr>
+<tr>
+<td style="text-align: left;">US-22</td>
+<td style="text-align: left;">AC1</td>
+<td style="text-align: left;"><code>@US-22-AC1</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">US-22</td>
+<td style="text-align: left;">AC2</td>
+<td style="text-align: left;"><code>@US-22-AC2</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">US-22</td>
+<td style="text-align: left;">AC3</td>
+<td style="text-align: left;"><code>@US-22-AC3</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">US-22</td>
+<td style="text-align: left;">AC4</td>
+<td style="text-align: left;"><code>@US-22-AC4</code></td>
+</tr>
 </tbody>
 </table>
 <p>注: 部分的に確かめる受入条件をタグの照合の数に「完全」と読ませない。US-12 AC4 の「有人例外案件へ引き継ぐ」は W8（US-20）で、取り込みの分（39g）と手入力の分（39gc）の「拒否」だけを AC4 のタグで照合する。US-14 AC5 の「差異としてデータ責任者へ示される」は、取込の分類（39h）と却下（39h2）だけを確かめる（採用は Release 1.0 では作らない。D-144）。US-14 AC4 の古い外部版の警告は 39h3（<code>adopt_old_version_quarantine_ui.feature</code>）で確かめる。</p>
@@ -20855,6 +20980,30 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 <td style="text-align: left;">AC4（受付時間を利用者のタイムゾーンで示す）</td>
 <td style="text-align: left;">42-2</td>
 <td style="text-align: left;"><code>@US-23-AC4</code>（同上）、<code>CustomerServiceCaseControllerTest</code> 行 4</td>
+</tr>
+<tr>
+<td style="text-align: left;">US-22</td>
+<td style="text-align: left;">AC1（見積りの提示・経路の承認・本予約の確定・追跡が確認中のとき、対象の荷主担当者へ件名と導線だけのメールが送られる）</td>
+<td style="text-align: left;">43・43-1</td>
+<td style="text-align: left;"><code>@US-22-AC1</code>（<code>features/ui/shipper_notification_ui.feature</code>）、<code>ShipperNotificationEventHandlerTest</code>・<code>ShipperNotificationIntegrationTest</code>（PostgreSQL と Mailpit）・<code>ShipperNotificationMailIntegrationTest</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">US-22</td>
+<td style="text-align: left;">AC2（承認待ちの見積りの有効期限の 24 時間前にメールが送られる）</td>
+<td style="text-align: left;">43-2</td>
+<td style="text-align: left;"><code>@US-22-AC2</code>（同上）、<code>QuotationExpiryNotificationServiceTest</code>・<code>QuotationExpirySchedulerTest</code>・<code>MyBatisQuotationIntegrationTest</code> の窓の境界</td>
+</tr>
+<tr>
+<td style="text-align: left;">US-22</td>
+<td style="text-align: left;">AC3（メールは料金・契約条件・書類・他の予約の情報を含まない）</td>
+<td style="text-align: left;">43</td>
+<td style="text-align: left;"><code>@US-22-AC3</code>（同上）、<code>ShipperNotificationMailIntegrationTest</code>（本文に料金等を含まない。N-INV-01）</td>
+</tr>
+<tr>
+<td style="text-align: left;">US-22</td>
+<td style="text-align: left;">AC4（送信に失敗したら失敗と宛先が記録され、通知一覧からも同じ内容を確認できる）</td>
+<td style="text-align: left;">43・43-3</td>
+<td style="text-align: left;"><code>@US-22-AC4</code>（同上）、<code>ShipperNotificationControllerTest</code>・<code>NotificationQueryServiceTest</code>・<code>MyBatisNotificationRepositoryIntegrationTest</code>（失敗の記録は <code>MailDeliveryTest</code> 系）</td>
 </tr>
 <tr>
 <td style="text-align: left;">US-14</td>
