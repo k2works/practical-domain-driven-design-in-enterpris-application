@@ -41,7 +41,8 @@ generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-14T25:30:00Z }
 
 ## 申し送り
 
-W9 に残す: AC1 の同時採番の統合テスト、`inquiry_record.case_number` の索引。
+- AC1 の同時採番の統合テストは `694cdfadbf` で足した（`MyBatisServiceCaseNumberIssuerConcurrencyIntegrationTest`）。
+- `inquiry_record.case_number` の索引は、人の決定（2026-11-14。human:kakimomokuri「W9 のスキーマ確認とまとめる」）で、W9 の IR-INV-01 のスキーマ確認（確認必須のゲート）とあわせて足す。W8 では足さない。
 
 ## 更新履歴
 
