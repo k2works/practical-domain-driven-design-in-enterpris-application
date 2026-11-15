@@ -12373,6 +12373,76 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_48-1_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 48-1 計画
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_48-1_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 48-1 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../development/cargo-tracker/bolt_40_plan/" class="md-nav__link">
         
   
@@ -21795,7 +21865,7 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 <td style="text-align: left;">US-24</td>
 <td style="text-align: left;">AC2（提示済みの見積りを理由を付けて辞退すると、見積りは失効として記録され、辞退の理由と回答者と辞退時刻が残り営業担当者に示される。再見積りできない。輸送要求の状態は変えない）</td>
 <td style="text-align: left;">46</td>
-<td style="text-align: left;"><code>@US-24-AC2</code>（<code>features/quotation/decline_quotation.feature</code>、画面の層は <code>features/ui/request_route_design_ui.feature</code>）、<code>QuotationTest</code>（辞退の行）、<code>QuotationResponseServiceTest</code>、<code>MyBatisQuotationIntegrationTest</code>（辞退の往復と CHECK <code>ck_quotation_declined</code>）、<code>QuotationResponseControllerTest</code>・<code>StaffQuotationControllerTest</code>・<code>TransportRequestControllerTest</code></td>
+<td style="text-align: left;"><code>@US-24-AC2</code>（<code>features/quotation/decline_quotation.feature</code>、画面の層は <code>features/ui/request_route_design_ui.feature</code>）、<code>QuotationTest</code>（辞退の行。DE-17 を出す）、<code>TransportRequestWithdrawnTest</code>・<code>QuotationDeclinedEventHandlerTest</code>（輸送要求を辞退で終了にする。冪等）、<code>QuotationResponseServiceTest</code>、<code>MyBatisQuotationIntegrationTest</code>（辞退の往復と CHECK <code>ck_quotation_declined</code>）、<code>QuotationResponseControllerTest</code>・<code>StaffQuotationControllerTest</code>・<code>TransportRequestControllerTest</code></td>
 </tr>
 <tr>
 <td style="text-align: left;">US-24</td>

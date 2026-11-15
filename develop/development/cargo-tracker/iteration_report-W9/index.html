@@ -11976,6 +11976,76 @@
   
   
     <li class="md-nav__item">
+      <a href="../bolt_48-1_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 48-1 計画
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../bolt_48-1_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 48-1 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../bolt_40_plan/" class="md-nav__link">
         
   
@@ -19657,7 +19727,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">Bolt の本数</td>
-<td style="text-align: left;">18（41、42、42-1〜42-3、43、43-1〜43-3、44、44-1、44-2、45、45-1、46、46-1、47、48。計画の 19 本のうち 41-1（条件付き）は作らず、47-1 は 47 に統合した）</td>
+<td style="text-align: left;">19（41、42、42-1〜42-3、43、43-1〜43-3、44、44-1、44-2、45、45-1、46、46-1、47、48、48-1。計画の 19 本のうち 41-1（条件付き）は作らず、47-1 は 47 に統合した）</td>
 </tr>
 <tr>
 <td style="text-align: left;">人の変更依頼</td>
@@ -19682,7 +19752,7 @@
     line [9.9, 9.9, 9.9, 9.9, 9.9, 9.9, 9.9, 9.9, 9.9]</code></pre>
 <p>平均 9.9 SP（89 SP / 9 週）。</p>
 <h2 id="_8">テスト結果<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h2>
-<p>W9 の締めに、最後のコード（<code>b45cda2676</code>）の状態で <code>--continue spotlessCheck check documentationTest uiTest</code> を流し直した（Bolt ごとの実績に加えて）。</p>
+<p>W9 の締めに、<code>--continue spotlessCheck check documentationTest uiTest</code> を流し直した（Bolt ごとの実績に加えて）。辞退で終了にする Bolt 48-1 のあとの最後のコードで、<code>uiTest</code> までを 1 回、直した <code>checkstyleTest</code>（購読の分岐の循環的複雑度 11）を含む <code>check</code>・<code>documentationTest</code> をもう 1 回流した。</p>
 <table>
 <thead>
 <tr>
@@ -19693,11 +19763,11 @@
 <tbody>
 <tr>
 <td style="text-align: left;"><code>spotlessCheck</code>・<code>check</code>・<code>documentationTest</code>・<code>uiTest</code></td>
-<td style="text-align: left;">BUILD SUCCESSFUL（32 分 9 秒）</td>
+<td style="text-align: left;">1 回目は <code>checkstyleTest</code> だけが失敗（<code>AcceptanceTestConfiguration</code> の購読の分岐の複雑度 11。ほかのタスクは成功）。直して <code>check</code>・<code>documentationTest</code> を流し直し、BUILD SUCCESSFUL（10 分）</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>test</code>（単体・統合・アーキテクチャ・業務ルール層の受入シナリオ・Web）</td>
-<td style="text-align: left;">6,477 件、失敗 0（W8 の締めから +187）</td>
+<td style="text-align: left;">6,485 件、失敗 0（W8 の締めから +195）</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>documentationTest</code></td>
@@ -19712,8 +19782,8 @@
 <td style="text-align: left;">Quality Gate PASS（下の「SonarQube Quality Gate」）</td>
 </tr>
 <tr>
-<td style="text-align: left;">CI（develop の <code>b45cda2676</code>）</td>
-<td style="text-align: left;"><code>check</code> 成功（27 分 51 秒）、MkDocs の配備 成功</td>
+<td style="text-align: left;">CI（develop。<code>b45cda2676</code>・<code>69149c8f93</code>）</td>
+<td style="text-align: left;"><code>check</code> 成功、MkDocs の配備 成功（Bolt 48-1 の push の結果は下の「CI」に追記する）</td>
 </tr>
 <tr>
 <td style="text-align: left;">CI の失敗</td>
@@ -19736,7 +19806,7 @@
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;">cargo-tracker-modular-monolith（W9 の締め）</td>
+<td style="text-align: left;">cargo-tracker-modular-monolith（W9 の締め。Bolt 48-1 のあと）</td>
 <td style="text-align: right;">95.7%</td>
 <td style="text-align: right;">0.1%</td>
 <td style="text-align: right;">0（Bug 0・Vulnerability 0・Code Smell 0）</td>
@@ -19797,6 +19867,10 @@
 <td style="text-align: left;">48</td>
 <td style="text-align: left;">W9 の締め（週全体レビュー、辞退の確認の追加、マニュアル・動画、ゲート）</td>
 </tr>
+<tr>
+<td style="text-align: left;">48-1</td>
+<td style="text-align: left;">辞退した見積りの輸送要求を辞退で終了にする（週全体レビューの高 H-2。人が選んだ。DE-17 を発行し、輸送要求の状態 <code>WITHDRAWN</code>・listener を足した）</td>
+</tr>
 </tbody>
 </table>
 <h3 id="_13">構造・スキーマ・認可の変更（人の承認を得たもの）<a class="headerlink" href="#_13" title="Permanent link">&para;</a></h3>
@@ -19840,7 +19914,7 @@
 <tr>
 <td style="text-align: left;">高</td>
 <td style="text-align: right;">2</td>
-<td style="text-align: left;">1 件を<strong>直した</strong>（辞退の確認）、1 件は<strong>人に諮る</strong>（辞退後の輸送要求の行き先）</td>
+<td style="text-align: left;"><strong>2 件とも直した</strong>（辞退の確認、辞退後の輸送要求の行き先。後者は人が選び、Bolt 48-1 で実装した）</td>
 </tr>
 <tr>
 <td style="text-align: left;">中</td>
@@ -19954,13 +20028,13 @@
 <tbody>
 <tr>
 <td style="text-align: left;">1</td>
-<td style="text-align: left;">辞退後の輸送要求の行き先（辞退で終了にするか、再見積り待ちで営業の対応待ちに載せるか。週全体レビューの高 H-2。台帳 D-168）</td>
-<td style="text-align: left;">業務責任者に確かめる。W10 の最初に決める</td>
+<td style="text-align: left;">辞退後の輸送要求の行き先（週全体レビューの高 H-2。台帳 D-168）</td>
+<td style="text-align: left;"><strong>決定済み（2026-11-15、human:kakimomokuri）: 「辞退で終了」にする。Bolt 48-1 で実装した（台帳 D-173）。</strong> 業務責任者への確認は未</td>
 </tr>
 <tr>
 <td style="text-align: left;">2</td>
 <td style="text-align: left;">GitHub の Issue #22〜#27 のクローズ</td>
-<td style="text-align: left;">クローズする（人の許可が要る）</td>
+<td style="text-align: left;"><strong>実施済み</strong>（2026-11-15。人の許可を得て、完了コメント付きで 6 件をクローズ）</td>
 </tr>
 <tr>
 <td style="text-align: left;">3</td>
@@ -19990,7 +20064,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">C-1〜C-8</td>
-<td style="text-align: left;">辞退後の輸送要求の行き先、辞退済みへの回答・相談の文言、通知の失敗の再送、通知の購読の置き場所、確認の場、重複の返済、テストの待ち方、死んだ <code>PlaceholderController</code> の削除・時間ごとのジョブの ShedLock と監視・PV-01 の除外の記録</td>
+<td style="text-align: left;">詳細経路設計の依頼の後の営業の手順（C-1。辞退後の行き先は直した）、辞退済みへの回答・相談の文言、通知の失敗の再送、通知の購読の置き場所、確認の場、重複の返済、テストの待ち方、死んだ <code>PlaceholderController</code> の削除・時間ごとのジョブの ShedLock と監視・PV-01 の除外の記録</td>
 </tr>
 </tbody>
 </table>

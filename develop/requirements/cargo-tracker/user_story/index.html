@@ -12113,6 +12113,76 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_48-1_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 48-1 計画
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_48-1_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 48-1 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../development/cargo-tracker/bolt_40_plan/" class="md-nav__link">
         
   
@@ -19560,7 +19630,7 @@
 <p>決定（2026-11-15、W9 の Bolt 46。D-86・ADR-018 の見直し。human:kakimomokuri が選択肢「失効として記録し再見積りしない」を選んだ）:</p>
 <ul>
 <li>
-<p>AC2 の辞退は、見積りを<strong>失効（EXPIRED）として記録</strong>し、辞退者・辞退時刻（回答者・回答時刻の列）と理由（1〜500 文字。必須）を残す。経路設計の依頼（DE-16）は出さず、輸送要求の状態は変えない。辞退した見積りは<strong>再見積りできない</strong>（担当営業が荷主と相談して新しい見積依頼で出し直す）。ADR-018 の戻し（DE-24）の前提は変わらない。D-86（再見積りした見積りがまた失効したとき）は「再見積りできない・担当者で相談する」を R1.0 の恒久の扱いとして決着する。</p>
+<p>AC2 の辞退は、見積りを<strong>失効（EXPIRED）として記録</strong>し、辞退者・辞退時刻（回答者・回答時刻の列）と理由（1〜500 文字。必須）を残す。経路設計の依頼（DE-16）は出さず、輸送要求の状態は変えない。辞退した見積りは<strong>再見積りできない</strong>（担当営業が荷主と相談して新しい見積依頼で出し直す）。辞退を受けた輸送要求は<strong>辞退で終了</strong>にする（W9 の Bolt 48-1。人が選んだ。台帳 D-173）。ADR-018 の戻し（DE-24）の前提は変わらない。D-86（再見積りした見積りがまた失効したとき）は「再見積りできない・担当者で相談する」を R1.0 の恒久の扱いとして決着する。</p>
 </li>
 <li>
 <p>AC3 の相談は、見積りの状態を変えずに相談のイベント（DE-33）を発行し、追跡のコンテキストが購読して相談内容を伴う有人案件（種類: 見積り相談）を起票する（台帳 D-169。仮）。荷主は問い合わせ一覧（US-23）で進捗と回答を追える。</p>
