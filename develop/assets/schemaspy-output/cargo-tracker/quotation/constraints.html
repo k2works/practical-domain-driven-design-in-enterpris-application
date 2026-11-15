@@ -318,6 +318,11 @@
                                     </tr>
                                     <tr>
                                         <td><a href='tables/quotation.html'>quotation</a></td>
+                                        <td>ck_quotation_declined</td>
+                                        <td>((((shipper_response)::text &#61; &#39;DECLINED&#39;::text) AND (decline_reason IS NOT NULL) AND ((status)::text &#61; &#39;EXPIRED&#39;::text)) OR (((COALESCE(shipper_response, &#39;NONE&#39;::character varying))::text &lt;&gt; &#39;DECLINED&#39;::text) AND (decline_reason IS NULL)))</td>
+                                    </tr>
+                                    <tr>
+                                        <td><a href='tables/quotation.html'>quotation</a></td>
                                         <td>ck_quotation_no</td>
                                         <td>(quotation_no &gt;&#61; 1)</td>
                                     </tr>
@@ -359,7 +364,7 @@
                                     <tr>
                                         <td><a href='tables/quotation.html'>quotation</a></td>
                                         <td>ck_quotation_shipper_response</td>
-                                        <td>((shipper_response)::text &#61; &#39;PROCEED&#39;::text)</td>
+                                        <td>((shipper_response)::text &#61; ANY ((ARRAY[&#39;PROCEED&#39;::character varying, &#39;DECLINED&#39;::character varying])::text[]))</td>
                                     </tr>
                                     <tr>
                                         <td><a href='tables/quotation.html'>quotation</a></td>

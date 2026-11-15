@@ -11549,6 +11549,146 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_46_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 46 計画
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_46_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 46 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_46-1_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 46-1 計画
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_46-1_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 46-1 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../development/cargo-tracker/bolt_40_plan/" class="md-nav__link">
         
   
@@ -19060,7 +19200,12 @@
 </ul>
 <h2 id="_10">改訂の経緯<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>
 <ul>
-<li>2026-10-23: Bolt 37e2 で、代替案「DE-24 の listener が見積りの行を <code>SELECT ... FOR UPDATE</code> で読む」の採らない理由と、コンテキストの方言差の記述を直した。<code>SELECT ... FOR UPDATE</code> は identity の前例で H2 と PostgreSQL の両方で流れ、押さえるのは見積りの 1 行で書くのは別の集約 1 つなので、「方言」と「2 つの集約」は理由にならないため。Bolt 37e2 で本予約の確定用の照会に <code>FOR UPDATE</code> を使う（ADR-016）。決定（DE-24 の listener はロックしない）は変えない（<a href="../../../development/cargo-tracker/bolt_37e2_plan/">Bolt 37e2 計画</a> の確認ポイント 5。human:kakimomokuri が承認）</li>
+<li>
+<p>2026-10-23: Bolt 37e2 で、代替案「DE-24 の listener が見積りの行を <code>SELECT ... FOR UPDATE</code> で読む」の採らない理由と、コンテキストの方言差の記述を直した。<code>SELECT ... FOR UPDATE</code> は identity の前例で H2 と PostgreSQL の両方で流れ、押さえるのは見積りの 1 行で書くのは別の集約 1 つなので、「方言」と「2 つの集約」は理由にならないため。Bolt 37e2 で本予約の確定用の照会に <code>FOR UPDATE</code> を使う（ADR-016）。決定（DE-24 の listener はロックしない）は変えない（<a href="../../../development/cargo-tracker/bolt_37e2_plan/">Bolt 37e2 計画</a> の確認ポイント 5。human:kakimomokuri が承認）</p>
+</li>
+<li>
+<p>2026-11-15: W9 の Bolt 46 で、荷主の辞退（US-24 AC2）の扱いを見直した（人が選んだ。human:kakimomokuri）。辞退は見積りを失効として記録するだけで輸送要求の状態を変えず、再見積りもしない（辞退した見積りは再見積りの対象外）。したがって、この ADR の戻し（DE-24）と「先へだけ進め戻さない」の例外の範囲は広がらない。D-86 は「再見積りできない・担当者で相談する」で決着した（<a href="../../../development/cargo-tracker/release_plan/">台帳</a>）。</p>
+</li>
 </ul>
 <h2 id="_11">関連ドキュメント<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h2>
 <ul>

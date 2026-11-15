@@ -66,7 +66,7 @@
          <column autoUpdated="false" defaultValue="null" digits="0" id="15" name="replaced_by_quotation_id" nullable="true" remarks="置換先の見積り ID（置換済みのとき）" size="2147483647" type="uuid" typeCode="1111">
             <parent column="id" foreignKey="fk_quotation_replaced_by" implied="false" onDeleteCascade="false" schema="quotation" table="quotation"/>
          </column>
-         <column autoUpdated="false" defaultValue="null" digits="0" id="16" name="shipper_response" nullable="true" remarks="荷主の回答（PROCEED: 詳細経路設計へ進む）" size="30" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="16" name="shipper_response" nullable="true" remarks="荷主の回答（PROCEED: 詳細経路設計へ進む、DECLINED: 辞退。辞退は状態を失効にして記録する）" size="30" type="varchar" typeCode="12"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="17" name="responded_by" nullable="true" remarks="回答者" size="2147483647" type="uuid" typeCode="1111"/>
          <column autoUpdated="false" defaultValue="null" digits="6" id="18" name="responded_at" nullable="true" remarks="回答時刻（詳細経路設計の依頼時刻）" size="35" type="timestamptz" typeCode="93"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="19" name="routing_case_number" nullable="true" remarks="割り当てた経路の案件番号" size="20" type="varchar" typeCode="12"/>
@@ -75,6 +75,7 @@
          <column autoUpdated="false" defaultValue="null" digits="0" id="22" name="shipper_approved_by" nullable="true" remarks="荷主承認の承認者" size="2147483647" type="uuid" typeCode="1111"/>
          <column autoUpdated="false" defaultValue="null" digits="6" id="23" name="shipper_approved_at" nullable="true" remarks="荷主承認の承認時刻" size="35" type="timestamptz" typeCode="93"/>
          <column autoUpdated="false" defaultValue="null" digits="6" id="24" name="route_redesign_required_at" nullable="true" remarks="割り当てた経路版を経路設計が再設計要にした時刻（再設計要の印。経路の割当てがあるときだけ）" size="35" type="timestamptz" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="25" name="decline_reason" nullable="true" remarks="辞退の理由（荷主が辞退したときだけ。1〜500 文字）" size="500" type="varchar" typeCode="12"/>
          <primaryKey column="id" sequenceNumberInPK="1"/>
          <index name="pk_quotation" unique="true">
             <column ascending="true" name="id"/>
@@ -96,6 +97,7 @@
          </index>
          <checkConstraint constraint="(((status)::text = 'DRAFT'::text) OR ((expires_at IS NOT NULL) AND (total_amount IS NOT NULL) AND (currency IS NOT NULL) AND (route_policy_via IS NOT NULL) AND (route_policy_departure_at IS NOT NULL) AND (route_policy_arrival_at IS NOT NULL)))" name="ck_quotation_calculated"/>
          <checkConstraint constraint="(currency = ANY (ARRAY['USD'::bpchar, 'EUR'::bpchar, 'JPY'::bpchar]))" name="ck_quotation_currency"/>
+         <checkConstraint constraint="((((shipper_response)::text = 'DECLINED'::text) AND (decline_reason IS NOT NULL) AND ((status)::text = 'EXPIRED'::text)) OR (((COALESCE(shipper_response, 'NONE'::character varying))::text &lt;&gt; 'DECLINED'::text) AND (decline_reason IS NULL)))" name="ck_quotation_declined"/>
          <checkConstraint constraint="(quotation_no &gt;= 1)" name="ck_quotation_no"/>
          <checkConstraint constraint="(((status)::text &lt;&gt; 'PRESENTED'::text) OR ((presented_at IS NOT NULL) AND (internal_approved_by IS NOT NULL) AND (internal_approved_at IS NOT NULL)))" name="ck_quotation_presented"/>
          <checkConstraint constraint="((((status)::text = 'REPLACED'::text) AND (replaced_by_quotation_id IS NOT NULL)) OR (((status)::text &lt;&gt; 'REPLACED'::text) AND (replaced_by_quotation_id IS NULL)))" name="ck_quotation_replaced"/>
@@ -104,7 +106,7 @@
          <checkConstraint constraint="(route_policy_arrival_at &gt; route_policy_departure_at)" name="ck_quotation_route_policy_dates"/>
          <checkConstraint constraint="((route_redesign_required_at IS NULL) OR (routing_case_number IS NOT NULL))" name="ck_quotation_route_redesign"/>
          <checkConstraint constraint="((((shipper_approved_by IS NULL) AND (shipper_approved_at IS NULL)) OR ((shipper_approved_by IS NOT NULL) AND (shipper_approved_at IS NOT NULL) AND (routing_case_number IS NOT NULL))) AND (((status)::text &lt;&gt; 'APPROVED'::text) OR (shipper_approved_by IS NOT NULL)))" name="ck_quotation_shipper_approved"/>
-         <checkConstraint constraint="((shipper_response)::text = 'PROCEED'::text)" name="ck_quotation_shipper_response"/>
+         <checkConstraint constraint="((shipper_response)::text = ANY ((ARRAY['PROCEED'::character varying, 'DECLINED'::character varying])::text[]))" name="ck_quotation_shipper_response"/>
          <checkConstraint constraint="((status)::text = ANY ((ARRAY['DRAFT'::character varying, 'PENDING_APPROVAL'::character varying, 'PRESENTED'::character varying, 'ROUTING_REQUESTED'::character varying, 'AWAITING_SHIPPER_APPROVAL'::character varying, 'APPROVED'::character varying, 'EXPIRED'::character varying, 'REPLACED'::character varying])::text[]))" name="ck_quotation_status"/>
          <checkConstraint constraint="(total_amount &gt; (0)::numeric)" name="ck_quotation_total_amount"/>
       </table>

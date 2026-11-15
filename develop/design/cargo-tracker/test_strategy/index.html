@@ -11953,6 +11953,146 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_46_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 46 計画
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_46_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 46 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_46-1_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 46-1 計画
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_46-1_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 46-1 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../development/cargo-tracker/bolt_40_plan/" class="md-nav__link">
         
   
@@ -20959,6 +21099,16 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 <td style="text-align: left;"><code>@US-22-AC4</code></td>
 </tr>
 <tr>
+<td style="text-align: left;">US-24</td>
+<td style="text-align: left;">AC2</td>
+<td style="text-align: left;"><code>@US-24-AC2</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">US-24</td>
+<td style="text-align: left;">AC3</td>
+<td style="text-align: left;"><code>@US-24-AC3</code></td>
+</tr>
+<tr>
 <td style="text-align: left;">US-09</td>
 <td style="text-align: left;">AC2</td>
 <td style="text-align: left;"><code>@US-09-AC2</code></td>
@@ -21246,6 +21396,18 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 <td style="text-align: left;">AC4（送信に失敗したら失敗と宛先が記録され、通知一覧からも同じ内容を確認できる）</td>
 <td style="text-align: left;">43・43-3</td>
 <td style="text-align: left;"><code>@US-22-AC4</code>（同上）、<code>ShipperNotificationControllerTest</code>・<code>NotificationQueryServiceTest</code>・<code>MyBatisNotificationRepositoryIntegrationTest</code>（失敗の記録は <code>MailDeliveryTest</code> 系）</td>
+</tr>
+<tr>
+<td style="text-align: left;">US-24</td>
+<td style="text-align: left;">AC2（提示済みの見積りを理由を付けて辞退すると、見積りは失効として記録され、辞退の理由と回答者と辞退時刻が残り営業担当者に示される。再見積りできない。輸送要求の状態は変えない）</td>
+<td style="text-align: left;">46</td>
+<td style="text-align: left;"><code>@US-24-AC2</code>（<code>features/quotation/decline_quotation.feature</code>、画面の層は <code>features/ui/request_route_design_ui.feature</code>）、<code>QuotationTest</code>（辞退の行）、<code>QuotationResponseServiceTest</code>、<code>MyBatisQuotationIntegrationTest</code>（辞退の往復と CHECK <code>ck_quotation_declined</code>）、<code>QuotationResponseControllerTest</code>・<code>StaffQuotationControllerTest</code>・<code>TransportRequestControllerTest</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">US-24</td>
+<td style="text-align: left;">AC3（提示済みの見積りの条件を相談すると、相談内容を伴う有人案件（見積り相談）が起票され、見積りの状態は変わらない）</td>
+<td style="text-align: left;">46-1</td>
+<td style="text-align: left;"><code>@US-24-AC3</code>（<code>features/quotation/consult_quotation.feature</code>、画面の層は <code>features/ui/request_route_design_ui.feature</code>）、<code>QuotationTest</code>（相談の行）、<code>QuotationResponseServiceTest</code>、<code>QuotationConsultationRequestedEventHandlerTest</code>（起票・再配信で二重に起票しない）、<code>QuotationResponseControllerTest</code></td>
 </tr>
 <tr>
 <td style="text-align: left;">US-09</td>
