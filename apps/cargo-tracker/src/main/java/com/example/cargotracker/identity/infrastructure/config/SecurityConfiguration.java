@@ -238,6 +238,9 @@ public class SecurityConfiguration {
                         // 外部データの取込（S-16）はデータ責任者だけ（Bolt 39c。W7 の確認ポイント 3。/staff/** より先に書く）
                         .requestMatchers("/staff/external-data/**")
                         .hasRole(Role.DATA_STEWARD.name())
+                        // KPI の照会（S-22）と基準値の登録は監査担当者だけ（US-21。W9 の Bolt 44-1。人が選んだ。台帳 D-171。/staff/** より先に書く）
+                        .requestMatchers("/staff/kpi-observations", "/staff/kpi-observations/**")
+                        .hasRole(Role.AUDITOR.name())
                         .requestMatchers("/staff/**")
                         .hasRole(Role.SALES.name())
                         .anyRequest()

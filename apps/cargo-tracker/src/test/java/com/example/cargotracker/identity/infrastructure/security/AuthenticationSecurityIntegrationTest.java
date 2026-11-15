@@ -633,14 +633,14 @@ class AuthenticationSecurityIntegrationTest {
     }
 
     @Test
-    void 画面のまだない役割の利用者はログインできてもホームは権限なしになり行き先が循環しない() throws Exception {
-        // 経路設計者は Bolt 17、追跡管理者は Bolt 26、データ責任者は Bolt 39c でホームを持った。画面のまだない役割の例を監査担当者にした
-        Cookie session = logins().login(user(staffCompany(), Role.AUDITOR, UserStatus.ACTIVE));
+    void ホームのまだない役割の利用者はログインできてもホームは権限なしになり行き先が循環しない() throws Exception {
+        // 経路設計者は Bolt 17、追跡管理者は Bolt 26、データ責任者は Bolt 39c、監査担当者は W9 の Bolt 44-1 でホームを持った。ホームのまだない役割の例をカスタマーサポートにした
+        Cookie session = logins().login(user(staffCompany(), Role.CUSTOMER_SUPPORT, UserStatus.ACTIVE));
 
         mvc.perform(get("/").cookie(session)).andExpect(status().isForbidden());
         mvc.perform(get("/staff/transport-requests").cookie(session)).andExpect(status().isForbidden());
         mvc.perform(get("/staff/routing-cases").cookie(session)).andExpect(status().isForbidden());
-        mvc.perform(get("/staff/tracking-records").cookie(session)).andExpect(status().isForbidden());
+        // カスタマーサポートは追跡一覧を照会できる（Bolt 40-10）ので、追跡の画面は確かめない
     }
 
     @Test
@@ -676,6 +676,27 @@ class AuthenticationSecurityIntegrationTest {
     }
 
     @Test
+    void 監査担当者はログインすると_KPI_の画面へ移りほかの業務の画面は開けない() throws Exception {
+        Cookie session = logins().login(user(staffCompany(), Role.AUDITOR, UserStatus.ACTIVE));
+
+        mvc.perform(get("/").cookie(session)).andExpect(redirectedUrl("/staff/kpi-observations"));
+        mvc.perform(get("/staff/kpi-observations").cookie(session)).andExpect(status().isOk());
+        mvc.perform(get("/staff/transport-requests").cookie(session)).andExpect(status().isForbidden());
+        mvc.perform(get("/staff/bookings").cookie(session)).andExpect(status().isForbidden());
+        mvc.perform(get("/staff/tracking-records").cookie(session)).andExpect(status().isForbidden());
+        mvc.perform(get("/customer/transport-requests").cookie(session)).andExpect(status().isForbidden());
+    }
+
+    @Test
+    void KPI_の画面は監査担当者だけが開け_営業担当者を含むほかの役割は開けない() throws Exception {
+        for (Role role : List.of(Role.SALES, Role.ROUTE_DESIGNER, Role.TRACKING_MANAGER, Role.DATA_STEWARD)) {
+            Cookie session = logins().login(user(staffCompany(), role, UserStatus.ACTIVE));
+
+            mvc.perform(get("/staff/kpi-observations").cookie(session)).andExpect(status().isForbidden());
+        }
+    }
+
+    @Test
     void 荷主担当者と営業担当者と経路設計者は追跡の画面を開けない() throws Exception {
         for (Role role : List.of(Role.SHIPPER, Role.SALES, Role.ROUTE_DESIGNER)) {
             Cookie session = logins().login(
@@ -708,7 +729,8 @@ class AuthenticationSecurityIntegrationTest {
         Map<Role, String> homes = Map.of(
                 Role.SALES, "/staff/transport-requests",
                 Role.ROUTE_DESIGNER, "/staff/routing-cases",
-                Role.TRACKING_MANAGER, "/staff/tracking-records");
+                Role.TRACKING_MANAGER, "/staff/tracking-records",
+                Role.AUDITOR, "/staff/kpi-observations");
         Map<String, String> items = Map.of(
                 "/staff/transport-requests", "見積依頼",
                 "/staff/bookings", "予約",
@@ -716,9 +738,10 @@ class AuthenticationSecurityIntegrationTest {
                 "/staff/routing-cases", "経路設計",
                 "/staff/tracking-records", "追跡");
         Map<Role, Set<String>> shown = Map.of(
-                Role.SALES, Set.of("/staff/transport-requests", "/staff/bookings", "/staff/kpi-observations"),
+                Role.SALES, Set.of("/staff/transport-requests", "/staff/bookings"),
                 Role.ROUTE_DESIGNER, Set.of("/staff/routing-cases"),
-                Role.TRACKING_MANAGER, Set.of("/staff/tracking-records"));
+                Role.TRACKING_MANAGER, Set.of("/staff/tracking-records"),
+                Role.AUDITOR, Set.of("/staff/kpi-observations"));
         for (Map.Entry<Role, String> home : homes.entrySet()) {
             Cookie session = logins().login(user(staffCompany(), home.getKey(), UserStatus.ACTIVE));
             String page = mvc.perform(get(home.getValue()).cookie(session))
@@ -754,7 +777,7 @@ class AuthenticationSecurityIntegrationTest {
     @Test
     void ログインの前に開いた画面があればログインの後にそこへ戻る() throws Exception {
         String email = user(staffCompany(), Role.SALES, UserStatus.ACTIVE);
-        MvcResult first = mvc.perform(get("/staff/kpi-observations")).andReturn();
+        MvcResult first = mvc.perform(get("/staff/bookings")).andReturn();
 
         MvcResult password = mvc.perform(post("/login")
                         .cookie(sessionOf(first))
@@ -768,7 +791,7 @@ class AuthenticationSecurityIntegrationTest {
                         .param("code", logins().currentCode(email))
                         .with(csrf()))
                 // Spring Security は保存した request へ戻すとき、目印の continue を付ける。TOTP の段の後に戻す
-                .andExpect(redirectedUrl("http://localhost/staff/kpi-observations?continue"));
+                .andExpect(redirectedUrl("http://localhost/staff/bookings?continue"));
     }
 
     @Test

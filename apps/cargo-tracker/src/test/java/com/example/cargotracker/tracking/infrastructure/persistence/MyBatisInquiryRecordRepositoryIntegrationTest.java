@@ -9,8 +9,17 @@ import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import com.example.cargotracker.tracking.domain.model.aggregates.InquiryRecord;
 import com.example.cargotracker.tracking.domain.model.aggregates.InquiryRecordRepository;
+import com.example.cargotracker.tracking.domain.model.aggregates.ServiceCase;
+import com.example.cargotracker.tracking.domain.model.aggregates.ServiceCaseNumberIssuer;
+import com.example.cargotracker.tracking.domain.model.aggregates.ServiceCaseOpening;
+import com.example.cargotracker.tracking.domain.model.aggregates.ServiceCaseRepository;
 import com.example.cargotracker.tracking.domain.model.valueobjects.InquirerKind;
 import com.example.cargotracker.tracking.domain.model.valueobjects.InquiryChannel;
+import com.example.cargotracker.tracking.domain.model.valueobjects.InquiryCountSummary;
+import com.example.cargotracker.tracking.domain.model.valueobjects.ServiceCaseDraft;
+import com.example.cargotracker.tracking.domain.model.valueobjects.ServiceCaseKind;
+import com.example.cargotracker.tracking.domain.model.valueobjects.ServiceDeadlines;
+import com.example.cargotracker.tracking.domain.model.valueobjects.ServicePriority;
 import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingNumber;
 import java.time.Instant;
 import java.util.Map;
@@ -149,6 +158,92 @@ class MyBatisInquiryRecordRepositoryIntegrationTest {
         assertThat(repository.existsWebSelfAfter(
                         new UserId(UUID.fromString("00000000-0000-0000-0000-0000042a2003")), WEB_TRACKING, before))
                 .isFalse();
+    }
+
+    // --- W9 の Bolt 44: 24 時間の規則（有人対応へ移ったかの更新） ---
+
+    @Autowired
+    ServiceCaseRepository serviceCases;
+
+    @Autowired
+    ServiceCaseNumberIssuer numberIssuer;
+
+    private com.example.cargotracker.tracking.domain.model.valueobjects.CaseNumber openCase() {
+        Instant opened = Instant.parse("2026-11-16T09:00:00Z");
+        com.example.cargotracker.tracking.domain.model.valueobjects.CaseNumber number = numberIssuer.next(2026);
+        ServiceCase serviceCase = ((ServiceCaseOpening.Opened) ServiceCase.open(
+                        ServiceCaseDraft.of(
+                                        ServiceCaseKind.CUSTOMER_INQUIRY,
+                                        ServicePriority.NORMAL,
+                                        "更新の確かめ " + UUID.randomUUID(),
+                                        "CS")
+                                .withShipper(SHIPPER),
+                        number,
+                        new ServiceDeadlines(opened, opened.plusSeconds(14400), opened.plusSeconds(86400)),
+                        new UtcInstant(opened)))
+                .serviceCase();
+        serviceCases.save(serviceCase, SUPPORT);
+        return number;
+    }
+
+    @Test
+    void 有人対応へ移っていない自己照会を範囲で探し_移った印と受付番号を付けると探索から外れる() {
+        InquiryRecord inside = webSelf(SHIPPER_USER, InquiryChannel.WEB_SELF);
+        repository.save(inside);
+        repository.save(webSelf(SHIPPER_USER, InquiryChannel.WEB_INQUIRY));
+        UtcInstant from = new UtcInstant(WEB_AT.instant().minusSeconds(60));
+        UtcInstant to = new UtcInstant(WEB_AT.instant().plusSeconds(60));
+
+        assertThat(repository.findUnescalatedWebSelf(SHIPPER, WEB_TRACKING, from, to))
+                .singleElement()
+                .satisfies(found -> assertThat(found.id()).isEqualTo(inside.id()));
+        // 範囲は両端を含む。ちょうどの時刻は含み、1 秒外れると含まない
+        assertThat(repository.findUnescalatedWebSelf(SHIPPER, WEB_TRACKING, WEB_AT, WEB_AT))
+                .hasSize(1);
+        assertThat(repository.findUnescalatedWebSelf(
+                        SHIPPER, WEB_TRACKING, new UtcInstant(WEB_AT.instant().plusSeconds(1)), to))
+                .isEmpty();
+
+        var number = openCase();
+        repository.escalate(inside.id(), number);
+
+        assertThat(repository.findUnescalatedWebSelf(SHIPPER, WEB_TRACKING, from, to))
+                .isEmpty();
+        Map<String, Object> row = jdbc.queryForMap("SELECT * FROM tracking.inquiry_record WHERE id = ?", inside.id());
+        assertThat(row).containsEntry("escalated", true).containsEntry("case_number", number.value());
+    }
+
+    @Test
+    void 期間の照会の件数は始まりを含み終わりを含まず_Webで完結した数は自己照会で移っていないものだけ() {
+        UtcInstant start = new UtcInstant(WEB_AT.instant().minusSeconds(3600));
+        UtcInstant end = new UtcInstant(WEB_AT.instant().plusSeconds(3600));
+        InquiryRecord selfServed = webSelf(SHIPPER_USER, InquiryChannel.WEB_SELF);
+        InquiryRecord moved = webSelf(SHIPPER_USER, InquiryChannel.WEB_SELF);
+        repository.save(selfServed);
+        repository.save(moved);
+        repository.save(inquiryOf(UUID.randomUUID(), InquiryChannel.PHONE, Optional.empty()));
+        repository.escalate(moved.id(), openCase());
+
+        InquiryCountSummary summary = repository.countBetween(start, end);
+
+        assertThat(summary.total()).isGreaterThanOrEqualTo(3);
+        long before = repository.countBetween(start, end).selfServed();
+        // 範囲は始まりを含み終わりを含まない
+        assertThat(repository.countBetween(WEB_AT, WEB_AT).total()).isZero();
+        assertThat(repository
+                        .countBetween(WEB_AT, new UtcInstant(WEB_AT.instant().plusSeconds(1)))
+                        .total())
+                .isGreaterThanOrEqualTo(2);
+        assertThat(before).isGreaterThanOrEqualTo(1);
+    }
+
+    @Test
+    void 追跡番号と受付時刻の索引がある() {
+        Integer count = jdbc.queryForObject(
+                "SELECT COUNT(*) FROM pg_indexes WHERE schemaname = 'tracking' AND indexname = 'ix_inquiry_record_tracking_received'",
+                Integer.class);
+
+        assertThat(count).isEqualTo(1);
     }
 
     @Test

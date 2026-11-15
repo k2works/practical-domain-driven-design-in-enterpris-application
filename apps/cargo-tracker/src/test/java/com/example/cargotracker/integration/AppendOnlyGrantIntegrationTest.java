@@ -38,6 +38,7 @@ class AppendOnlyGrantIntegrationTest {
             "quotation.review_record",
             "quotation.required_document",
             "identity.audit_record",
+            "identity.kpi_baseline",
             "booking.booking_version",
             "booking.processed_command",
             "external_data.stored_payload",

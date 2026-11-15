@@ -7,6 +7,7 @@ import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import com.example.cargotracker.tracking.domain.model.aggregates.InquiryRecord;
 import com.example.cargotracker.tracking.domain.model.aggregates.InquiryRecordRepository;
+import com.example.cargotracker.tracking.domain.model.valueobjects.CaseNumber;
 import com.example.cargotracker.tracking.domain.model.valueobjects.InquirerKind;
 import com.example.cargotracker.tracking.domain.model.valueobjects.InquiryChannel;
 import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingNumber;
@@ -16,6 +17,7 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
@@ -45,6 +47,28 @@ class WebInquiryRecorderTest {
                             && r.inquirerUserId().filter(user::equals).isPresent()
                             && r.trackingNumber().filter(trackingNumber::equals).isPresent()
                             && r.receivedAt().instant().isAfter(after.instant()));
+        }
+
+        @Override
+        public java.util.List<InquiryRecord> findUnescalatedWebSelf(
+                com.example.cargotracker.shared.domain.CompanyId company,
+                TrackingNumber trackingNumber,
+                UtcInstant from,
+                UtcInstant to) {
+            return java.util.List.of();
+        }
+
+        @Override
+        public com.example.cargotracker.tracking.domain.model.valueobjects.InquiryCountSummary countBetween(
+                UtcInstant from, UtcInstant to) {
+            return new com.example.cargotracker.tracking.domain.model.valueobjects.InquiryCountSummary(0, 0);
+        }
+
+        @Override
+        public void escalate(
+                java.util.UUID inquiryRecordId,
+                com.example.cargotracker.tracking.domain.model.valueobjects.CaseNumber caseNumber) {
+            // このテストでは使わない
         }
     }
 
@@ -86,6 +110,36 @@ class WebInquiryRecorderTest {
         recorderAt(NOW.plus(Duration.ofMinutes(30))).recordSelfLookup(USER, COMPANY, TRACKING);
 
         assertThat(repository.saved).hasSize(2);
+    }
+
+    // W9 の Bolt 44: 荷主が Web で再開を依頼したら、Web の問い合わせとして記録し、有人対応へ移ったとする（KPI-02）
+
+    @Test
+    void 行5_荷主が再開を依頼したら顧客_Web_の問い合わせとして有人案件の受付番号つきで記録する() {
+        CaseNumber caseNumber = CaseNumber.of(2026, 57);
+
+        recorderAt(NOW).recordReopen(USER, COMPANY, caseNumber, Optional.of(TRACKING));
+
+        assertThat(repository.saved).singleElement().satisfies(inquiry -> {
+            assertThat(inquiry.channel()).isEqualTo(InquiryChannel.WEB_INQUIRY);
+            assertThat(inquiry.inquirerKind()).isEqualTo(InquirerKind.SHIPPER);
+            assertThat(inquiry.shipperCompanyId()).isEqualTo(COMPANY);
+            assertThat(inquiry.trackingNumber()).contains(TRACKING);
+            assertThat(inquiry.inquirerUserId()).contains(USER);
+            assertThat(inquiry.receivedAt()).isEqualTo(new UtcInstant(NOW));
+            assertThat(inquiry.caseNumber()).contains(caseNumber);
+            assertThat(inquiry.escalated()).isTrue();
+        });
+    }
+
+    @Test
+    void 行6_追跡番号の分からない案件の再開も照会として記録する() {
+        recorderAt(NOW).recordReopen(USER, COMPANY, CaseNumber.of(2026, 58), Optional.empty());
+
+        assertThat(repository.saved).singleElement().satisfies(inquiry -> {
+            assertThat(inquiry.trackingNumber()).isEmpty();
+            assertThat(inquiry.escalated()).isTrue();
+        });
     }
 
     @Test

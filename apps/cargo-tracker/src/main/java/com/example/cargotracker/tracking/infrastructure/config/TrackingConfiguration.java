@@ -10,6 +10,7 @@ import com.example.cargotracker.tracking.application.internal.commandservices.Se
 import com.example.cargotracker.tracking.application.internal.commandservices.ServiceCaseCommandService;
 import com.example.cargotracker.tracking.application.internal.commandservices.SystemServiceCaseOpener;
 import com.example.cargotracker.tracking.application.internal.commandservices.TrackingRecordCommandService;
+import com.example.cargotracker.tracking.application.internal.commandservices.WebInquiryEscalator;
 import com.example.cargotracker.tracking.application.internal.commandservices.WebInquiryRecorder;
 import com.example.cargotracker.tracking.application.internal.eventhandlers.BookingTrackingStartNotificationEventHandler;
 import com.example.cargotracker.tracking.application.internal.eventhandlers.BookingTransportPhaseNotificationEventHandler;
@@ -22,6 +23,7 @@ import com.example.cargotracker.tracking.application.internal.outboundservices.a
 import com.example.cargotracker.tracking.application.internal.outboundservices.acl.BookingTransportPhases;
 import com.example.cargotracker.tracking.application.internal.outboundservices.acl.RoutingScheduledLegs;
 import com.example.cargotracker.tracking.application.internal.queryservices.CustomerTrackingQueryService;
+import com.example.cargotracker.tracking.application.internal.queryservices.InquiryStatisticsQueryService;
 import com.example.cargotracker.tracking.application.internal.queryservices.ServiceCaseOverdueQueryService;
 import com.example.cargotracker.tracking.application.internal.queryservices.ServiceCaseQueryService;
 import com.example.cargotracker.tracking.application.internal.queryservices.TrackingRecordQueryService;
@@ -127,8 +129,16 @@ public class TrackingConfiguration {
             ServiceCaseRepository repository,
             ServiceCaseNumberIssuer numberIssuer,
             BusinessCalendarRepository calendars,
-            Clock clock) {
-        return new ServiceCaseCommandService(repository, numberIssuer, calendars, clock);
+            Clock clock,
+            WebInquiryEscalator webInquiryEscalator) {
+        return new ServiceCaseCommandService(repository, numberIssuer, calendars, clock, webInquiryEscalator);
+    }
+
+    /** 有人案件を起票したら、その前の顧客 Web の照会を有人対応へ移ったと更新する（IR-INV-01。KPI-02。W9 の Bolt 44）。 */
+    @Bean
+    WebInquiryEscalator webInquiryEscalator(
+            InquiryRecordRepository inquiryRecordRepository, TrackingRecordRepository trackingRecordRepository) {
+        return new WebInquiryEscalator(inquiryRecordRepository, trackingRecordRepository);
     }
 
     /** システムの有人案件の起票（拒否した主要実績・経路候補なし。認可を通らない内部の経路。Bolt 40-13・40-17・40-18）。 */
@@ -137,8 +147,9 @@ public class TrackingConfiguration {
             ServiceCaseRepository repository,
             ServiceCaseNumberIssuer numberIssuer,
             BusinessCalendarRepository calendars,
-            Clock clock) {
-        return new SystemServiceCaseOpener(repository, numberIssuer, calendars, clock);
+            Clock clock,
+            WebInquiryEscalator webInquiryEscalator) {
+        return new SystemServiceCaseOpener(repository, numberIssuer, calendars, clock, webInquiryEscalator);
     }
 
     /** 有人案件の進捗・回答・終結・再開・回答期限の変更（US-20 AC4〜AC7。Bolt 40-8）。 */
@@ -168,6 +179,12 @@ public class TrackingConfiguration {
     @Bean
     WebInquiryRecorder webInquiryRecorder(InquiryRecordRepository inquiryRecordRepository, Clock clock) {
         return new WebInquiryRecorder(inquiryRecordRepository, clock);
+    }
+
+    /** 期間の照会の件数（KPI-02 の材料。公開 API のアダプターが使う。W9 の Bolt 44-1）。 */
+    @Bean
+    InquiryStatisticsQueryService inquiryStatisticsQueryService(InquiryRecordRepository inquiryRecordRepository) {
+        return new InquiryStatisticsQueryService(inquiryRecordRepository);
     }
 
     /** 有人案件の一覧（S-14）と詳細（S-15）の照会（US-20。読むときの判定。Bolt 40-11）。 */

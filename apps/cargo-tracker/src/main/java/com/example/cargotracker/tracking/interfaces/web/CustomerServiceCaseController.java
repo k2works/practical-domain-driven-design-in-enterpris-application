@@ -5,6 +5,7 @@ import com.example.cargotracker.shared.domain.AuthenticatedActor;
 import com.example.cargotracker.tracking.application.internal.commands.ReopenServiceCaseCommand;
 import com.example.cargotracker.tracking.application.internal.commandservices.ServiceCaseActionOutcome;
 import com.example.cargotracker.tracking.application.internal.commandservices.ServiceCaseActionService;
+import com.example.cargotracker.tracking.application.internal.commandservices.WebInquiryRecorder;
 import com.example.cargotracker.tracking.application.internal.queryservices.CustomerServiceCaseItem;
 import com.example.cargotracker.tracking.application.internal.queryservices.CustomerServiceCaseList;
 import com.example.cargotracker.tracking.application.internal.queryservices.CustomerServiceCaseLookup;
@@ -46,14 +47,17 @@ public class CustomerServiceCaseController {
     private final ServiceCaseQueryService queryService;
     private final ServiceCaseActionService actionService;
     private final TrackingOutOfScopeResponder outOfScopeResponder;
+    private final WebInquiryRecorder inquiryRecorder;
 
     public CustomerServiceCaseController(
             ServiceCaseQueryService queryService,
             ServiceCaseActionService actionService,
-            TrackingOutOfScopeResponder outOfScopeResponder) {
+            TrackingOutOfScopeResponder outOfScopeResponder,
+            WebInquiryRecorder inquiryRecorder) {
         this.queryService = queryService;
         this.actionService = actionService;
         this.outOfScopeResponder = outOfScopeResponder;
+        this.inquiryRecorder = inquiryRecorder;
     }
 
     @GetMapping
@@ -88,10 +92,14 @@ public class CustomerServiceCaseController {
             AuthenticatedActor actor,
             RedirectAttributes redirect) {
         // 他社の案件の再開の依頼も、試行として記録して 404 にする（サービスは他社とない案件を区別しないので、先に確かめる）
-        open(caseNumber, actor);
+        ServiceCase serviceCase = open(caseNumber, actor);
         CaseNumber number = ServiceCaseViews.parseNumber(caseNumber).orElseThrow();
         switch (actionService.reopen(actor, new ReopenServiceCaseCommand(number, customerResponse))) {
-            case ServiceCaseActionOutcome.Done _ -> redirect.addFlashAttribute(RESULT, "再開を依頼しました。担当者が対応します。");
+            case ServiceCaseActionOutcome.Done _ -> {
+                // 荷主が Web で再開を依頼したことを、顧客 Web の問い合わせとして照会記録に残す（KPI-02。W9 の Bolt 44）
+                inquiryRecorder.recordReopen(actor.userId(), actor.companyId(), number, serviceCase.trackingNumber());
+                redirect.addFlashAttribute(RESULT, "再開を依頼しました。担当者が対応します。");
+            }
             case ServiceCaseActionOutcome.InvalidState _ ->
                 redirect.addFlashAttribute(PROBLEM, "いまは再開を依頼できません。最新の状態を確かめてください。");
             case ServiceCaseActionOutcome.InvalidInput(String message) -> redirect.addFlashAttribute(PROBLEM, message);

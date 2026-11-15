@@ -46,17 +46,20 @@ final class ServiceCaseIntake {
     private final BusinessCalendarRepository calendars;
     private final Clock clock;
     private final ServiceDeadlinePolicy deadlinePolicy;
+    private final InquiryEscalation escalation;
 
     ServiceCaseIntake(
             ServiceCaseRepository repository,
             ServiceCaseNumberIssuer numberIssuer,
             BusinessCalendarRepository calendars,
-            Clock clock) {
+            Clock clock,
+            InquiryEscalation escalation) {
         this.repository = repository;
         this.numberIssuer = numberIssuer;
         this.calendars = calendars;
         this.clock = clock;
         this.deadlinePolicy = ServiceDeadlinePolicy.provisional();
+        this.escalation = escalation;
     }
 
     /**
@@ -93,6 +96,8 @@ final class ServiceCaseIntake {
                 ((ServiceCaseOpening.Opened) ServiceCase.open(draft, number, deadlines, openedAt)).serviceCase();
         repository.save(serviceCase, createdBy);
         originRef.ifPresent(ref -> repository.recordOrigin(number, ref));
+        // 起票の前の顧客 Web の照会を有人対応へ移ったと更新する（IR-INV-01。KPI-02。W9 の Bolt 44）
+        escalation.onCaseOpened(draft, number, openedAt);
         return new OpenServiceCaseOutcome.Opened(
                 number,
                 serviceCase.receiveDueAt(),

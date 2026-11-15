@@ -119,6 +119,7 @@ public class BrowserSession implements DisposableBean {
             java.util.Map.entry("/staff/external-data", Role.DATA_STEWARD),
             java.util.Map.entry("/staff/service-cases", Role.CUSTOMER_SUPPORT),
             java.util.Map.entry("/staff/inquiries", Role.CUSTOMER_SUPPORT),
+            java.util.Map.entry("/staff/kpi-observations", Role.AUDITOR),
             java.util.Map.entry("/staff/", Role.SALES));
 
     private static Role roleFor(String url) {

@@ -33,8 +33,17 @@ public class SystemServiceCaseOpener {
             ServiceCaseNumberIssuer numberIssuer,
             BusinessCalendarRepository calendars,
             Clock clock) {
+        this(repository, numberIssuer, calendars, clock, InquiryEscalation.NONE);
+    }
+
+    public SystemServiceCaseOpener(
+            ServiceCaseRepository repository,
+            ServiceCaseNumberIssuer numberIssuer,
+            BusinessCalendarRepository calendars,
+            Clock clock,
+            InquiryEscalation escalation) {
         this.repository = repository;
-        this.intake = new ServiceCaseIntake(repository, numberIssuer, calendars, clock);
+        this.intake = new ServiceCaseIntake(repository, numberIssuer, calendars, clock, escalation);
     }
 
     /**

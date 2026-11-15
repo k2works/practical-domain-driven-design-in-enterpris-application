@@ -46,12 +46,13 @@
                        th:attr="aria-current=${active == 'bookings'} ? 'page' : null"
                        th:href="@{/staff/bookings}">予約</a>
                 </li>
-                <li class="nav-item">
+                </th:block>
+                <li class="nav-item"
+                    th:if="${currentActor != null and currentActor.hasRole(T(com.example.cargotracker.shared.domain.Role).AUDITOR)}">
                     <a class="nav-link" th:classappend="${active == 'kpi-observations'} ? 'fw-bold'"
                        th:attr="aria-current=${active == 'kpi-observations'} ? 'page' : null"
                        th:href="@{/staff/kpi-observations}">KPI 計測記録</a>
                 </li>
-                </th:block>
                 <li class="nav-item"
                     th:if="${currentActor != null and currentActor.hasRole(T(com.example.cargotracker.shared.domain.Role).ROUTE_DESIGNER)}">
                     <a class="nav-link" th:classappend="${active == 'routing-cases'} ? 'fw-bold'"

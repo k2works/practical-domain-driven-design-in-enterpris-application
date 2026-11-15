@@ -64,6 +64,28 @@ class InquiryRecordingServiceTest {
         public boolean existsWebSelfAfter(UserId user, TrackingNumber trackingNumber, UtcInstant after) {
             return false;
         }
+
+        @Override
+        public java.util.List<InquiryRecord> findUnescalatedWebSelf(
+                com.example.cargotracker.shared.domain.CompanyId company,
+                TrackingNumber trackingNumber,
+                UtcInstant from,
+                UtcInstant to) {
+            return java.util.List.of();
+        }
+
+        @Override
+        public com.example.cargotracker.tracking.domain.model.valueobjects.InquiryCountSummary countBetween(
+                UtcInstant from, UtcInstant to) {
+            return new com.example.cargotracker.tracking.domain.model.valueobjects.InquiryCountSummary(0, 0);
+        }
+
+        @Override
+        public void escalate(
+                java.util.UUID inquiryRecordId,
+                com.example.cargotracker.tracking.domain.model.valueobjects.CaseNumber caseNumber) {
+            // このテストでは使わない
+        }
     };
 
     private static BusinessCalendar calendar() {

@@ -401,6 +401,12 @@ nav:
           - Bolt 46 終了報告: development/cargo-tracker/bolt_46_report.md
           - Bolt 46-1 計画: development/cargo-tracker/bolt_46-1_plan.md
           - Bolt 46-1 終了報告: development/cargo-tracker/bolt_46-1_report.md
+          - Bolt 44 計画: development/cargo-tracker/bolt_44_plan.md
+          - Bolt 44 終了報告: development/cargo-tracker/bolt_44_report.md
+          - Bolt 44-1 計画: development/cargo-tracker/bolt_44-1_plan.md
+          - Bolt 44-1 終了報告: development/cargo-tracker/bolt_44-1_report.md
+          - Bolt 44-2 計画: development/cargo-tracker/bolt_44-2_plan.md
+          - Bolt 44-2 終了報告: development/cargo-tracker/bolt_44-2_report.md
           - Bolt 40 計画: development/cargo-tracker/bolt_40_plan.md
           - Bolt 40 終了報告: development/cargo-tracker/bolt_40_report.md
           - Bolt 40-1 終了報告: development/cargo-tracker/bolt_40-1_report.md
@@ -469,7 +475,7 @@ nav:
       - 7 章 本予約の確定と予約一覧: manual/07-本予約の確定と予約一覧.md
       - 8 章 経路設計: manual/08-経路設計.md
       - 9 章 追跡管理: manual/09-追跡管理.md
-      - 10 章 KPI 計測記録: manual/10-KPI計測記録.md
+      - 10 章 KPI の照会: manual/10-KPI計測記録.md
       - 11 章 利用者の管理: manual/11-利用者の管理.md
       - 12 章 外部データ: manual/12-外部データ.md
       - 13 章 有人案件: manual/13-有人案件.md

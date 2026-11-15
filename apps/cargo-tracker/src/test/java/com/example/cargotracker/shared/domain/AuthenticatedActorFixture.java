@@ -22,6 +22,11 @@ public final class AuthenticatedActorFixture {
                 userId, new CompanyId(UUID.randomUUID()), Set.of(Role.SALES), "営業 一郎", "A 社", Set.of(shippers));
     }
 
+    /** 監査担当者（担当企業を持たない。KPI の基準値の登録。W9 の Bolt 44-2）。 */
+    public static AuthenticatedActor auditor(UserId userId, CompanyId company) {
+        return new AuthenticatedActor(userId, company, Set.of(Role.AUDITOR), "監査 花子", "A 社", Set.of());
+    }
+
     /** 担当企業に {@code shippers} を持つ追跡管理者（Bolt 38g）。 */
     public static AuthenticatedActor trackingManagerHandling(UserId userId, CompanyId... shippers) {
         return new AuthenticatedActor(

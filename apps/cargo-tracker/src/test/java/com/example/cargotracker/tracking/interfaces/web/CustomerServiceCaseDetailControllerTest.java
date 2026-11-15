@@ -22,6 +22,7 @@ import com.example.cargotracker.shared.domain.UtcInstant;
 import com.example.cargotracker.tracking.application.internal.commands.ReopenServiceCaseCommand;
 import com.example.cargotracker.tracking.application.internal.commandservices.ServiceCaseActionOutcome;
 import com.example.cargotracker.tracking.application.internal.commandservices.ServiceCaseActionService;
+import com.example.cargotracker.tracking.application.internal.commandservices.WebInquiryRecorder;
 import com.example.cargotracker.tracking.application.internal.queryservices.CustomerServiceCaseLookup;
 import com.example.cargotracker.tracking.application.internal.queryservices.ServiceCaseDetail;
 import com.example.cargotracker.tracking.application.internal.queryservices.ServiceCaseQueryService;
@@ -57,6 +58,9 @@ class CustomerServiceCaseDetailControllerTest {
 
     @Autowired
     MockMvc mockMvc;
+
+    @MockitoBean
+    WebInquiryRecorder inquiryRecorder;
 
     @MockitoBean
     ServiceCaseQueryService queryService;
@@ -159,6 +163,8 @@ class CustomerServiceCaseDetailControllerTest {
                 .andExpect(flash().attribute("result", "再開を依頼しました。担当者が対応します。"));
 
         then(actionService).should().reopen(any(), eq(new ReopenServiceCaseCommand(NUMBER, "まだ解決していません")));
+        // 荷主が Web で再開を依頼したことを、顧客 Web の問い合わせとして照会記録に残す（W9 の Bolt 44。KPI-02）
+        then(inquiryRecorder).should().recordReopen(any(), any(), eq(NUMBER), any());
     }
 
     @Test
@@ -183,5 +189,7 @@ class CustomerServiceCaseDetailControllerTest {
         mockMvc.perform(post(DETAIL + "/reopen").param("customerResponse", "未解決"))
                 .andExpect(redirectedUrl(DETAIL))
                 .andExpect(flash().attributeExists("problem"));
+
+        then(inquiryRecorder).should(never()).recordReopen(any(), any(), any(), any());
     }
 }

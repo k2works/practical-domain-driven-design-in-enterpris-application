@@ -50,6 +50,20 @@ public record InquiryRecord(
         Objects.requireNonNull(recordedBy, "recordedBy");
     }
 
+    /** 同じ記録を、引き継いだ有人案件の受付番号つきにした写し（顧客 Web の照会が有人対応へ移った。IR-INV-01。W9 の Bolt 44）。 */
+    public InquiryRecord escalatedTo(CaseNumber number) {
+        return new InquiryRecord(
+                id,
+                channel,
+                shipperCompanyId,
+                trackingNumber,
+                inquirerKind,
+                inquirerUserId,
+                receivedAt,
+                Optional.of(Objects.requireNonNull(number, "number")),
+                recordedBy);
+    }
+
     /** 有人対応へ移ったか（引き継いだ有人案件の受付番号があるか）。 */
     public boolean escalated() {
         return caseNumber.isPresent();

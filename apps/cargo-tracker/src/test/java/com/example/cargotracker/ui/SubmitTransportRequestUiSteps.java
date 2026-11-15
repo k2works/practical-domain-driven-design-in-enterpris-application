@@ -481,7 +481,12 @@ public class SubmitTransportRequestUiSteps {
     public void 横スクロールが出ない() {
         Object overflow =
                 page().evaluate("() => document.documentElement.scrollWidth > document.documentElement.clientWidth");
-        Assertions.assertThat(overflow).isEqualTo(false);
+        // はみ出した場合は、原因の要素を失敗の文に載せる（どの部品が幅を広げたかをすぐ分かるようにする）
+        Object wide = overflow.equals(true)
+                ? page().evaluate(
+                                "() => [...document.querySelectorAll(\"body *\")].filter(e => !(e.parentElement && e.parentElement.closest(\".table-scroll\")) && e.getBoundingClientRect().right > document.documentElement.clientWidth).slice(0, 5).map(e => e.tagName + \".\" + e.className + \":\" + Math.round(e.getBoundingClientRect().right)).join(\" | \")")
+                : "";
+        Assertions.assertThat(overflow).as("はみ出した要素: %s", wide).isEqualTo(false);
     }
 
     private Locator errorSummary() {

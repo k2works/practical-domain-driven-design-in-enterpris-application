@@ -12,6 +12,7 @@ import com.example.cargotracker.tracking.domain.model.aggregates.ServiceCaseRepo
 import com.example.cargotracker.tracking.domain.model.valueobjects.ServiceCaseStatus;
 import java.time.Clock;
 import java.util.Optional;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,9 +36,19 @@ public class ServiceCaseCommandService {
             ServiceCaseNumberIssuer numberIssuer,
             BusinessCalendarRepository calendars,
             Clock clock) {
+        this(repository, numberIssuer, calendars, clock, InquiryEscalation.NONE);
+    }
+
+    @Autowired
+    public ServiceCaseCommandService(
+            ServiceCaseRepository repository,
+            ServiceCaseNumberIssuer numberIssuer,
+            BusinessCalendarRepository calendars,
+            Clock clock,
+            InquiryEscalation escalation) {
         this.repository = repository;
         this.clock = clock;
-        this.intake = new ServiceCaseIntake(repository, numberIssuer, calendars, clock);
+        this.intake = new ServiceCaseIntake(repository, numberIssuer, calendars, clock, escalation);
     }
 
     /** 有人案件を起票する（US-20 AC1・AC8）。 */

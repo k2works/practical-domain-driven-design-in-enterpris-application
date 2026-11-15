@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.cargotracker.identity.infrastructure.persistence.KpiBaselineMapper">
+
+    <resultMap id="kpiBaselineRow" type="com.example.cargotracker.identity.infrastructure.persistence.KpiBaselineRow">
+        <constructor>
+            <idArg column="id" name="id" javaType="java.util.UUID"/>
+            <arg column="kpi" name="kpi" javaType="String"/>
+            <arg column="period_from" name="periodFrom" javaType="java.time.LocalDate"/>
+            <arg column="period_to" name="periodTo" javaType="java.time.LocalDate"/>
+            <arg column="value_p50" name="valueP50" javaType="java.math.BigDecimal"/>
+            <arg column="value_p90" name="valueP90" javaType="java.math.BigDecimal"/>
+            <arg column="method" name="method" javaType="String"/>
+            <arg column="registered_by" name="registeredBy" javaType="java.util.UUID"/>
+            <arg column="registered_at" name="registeredAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="supersedes_id" name="supersedesId" javaType="java.util.UUID"/>
+        </constructor>
+    </resultMap>
+
+    <!-- 追記専用（W9 の Bolt 44-2、KPI-INV-02）。H2 と PostgreSQL の共通の構文で書く（ADR-007） -->
+    <insert id="insert">
+        INSERT INTO identity.kpi_baseline
+            (id, kpi, period_from, period_to, value_p50, value_p90, method, registered_by, registered_at, supersedes_id)
+        VALUES
+            (#{id}, #{kpi}, #{periodFrom}, #{periodTo}, #{valueP50}, #{valueP90}, #{method}, #{registeredBy},
+             #{registeredAt}, #{supersedesId})
+    </insert>
+
+    <!-- 最新の基準値: ほかの記録に訂正されていない（supersedes_id に指されていない）もの。複数あれば登録の新しい順 -->
+    <select id="selectLatest" resultMap="kpiBaselineRow">
+        SELECT b.id, b.kpi, b.period_from, b.period_to, b.value_p50, b.value_p90, b.method, b.registered_by,
+               b.registered_at, b.supersedes_id
+        FROM identity.kpi_baseline b
+        WHERE b.kpi = #{kpi}
+          AND NOT EXISTS (SELECT 1 FROM identity.kpi_baseline n WHERE n.supersedes_id = b.id)
+        ORDER BY b.registered_at DESC
+        LIMIT 1
+    </select>
+</mapper>

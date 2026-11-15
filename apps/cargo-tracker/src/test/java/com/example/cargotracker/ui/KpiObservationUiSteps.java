@@ -49,7 +49,7 @@ public class KpiObservationUiSteps {
         return browser.page();
     }
 
-    @もし("営業担当者が KPI 計測記録を開く")
+    @もし("監査担当者が KPI 計測記録を開く")
     public void KPI計測記録を開く() {
         browser.navigate(baseUrl + "/staff/kpi-observations");
         browser.checkAccessibility();

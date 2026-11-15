@@ -25,7 +25,8 @@ public class HomeController {
             Map.entry(Role.ROUTE_DESIGNER, "/staff/routing-cases"),
             Map.entry(Role.TRACKING_MANAGER, "/staff/tracking-records"),
             Map.entry(Role.SYSTEM_ADMIN, "/staff/users"),
-            Map.entry(Role.DATA_STEWARD, "/staff/external-data/ingestions/new"));
+            Map.entry(Role.DATA_STEWARD, "/staff/external-data/ingestions/new"),
+            Map.entry(Role.AUDITOR, "/staff/kpi-observations"));
 
     @GetMapping("/")
     public String home(AuthenticatedActor actor) {

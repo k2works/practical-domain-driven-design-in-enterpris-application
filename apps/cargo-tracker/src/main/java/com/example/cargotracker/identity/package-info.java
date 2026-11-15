@@ -14,6 +14,7 @@
             "notification :: api",
             "externaldata :: events",
             "booking :: events",
-            "tracking :: events"
+            "tracking :: events",
+            "tracking :: api"
         })
 package com.example.cargotracker.identity;

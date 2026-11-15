@@ -2,6 +2,7 @@ package com.example.cargotracker.identity.infrastructure.config;
 
 import com.example.cargotracker.identity.application.internal.commandservices.AdministrationScopeDenialService;
 import com.example.cargotracker.identity.application.internal.commandservices.AssignedScopeDenialService;
+import com.example.cargotracker.identity.application.internal.commandservices.KpiBaselineCommandService;
 import com.example.cargotracker.identity.application.internal.commandservices.LoginAttemptService;
 import com.example.cargotracker.identity.application.internal.commandservices.PasswordResetCompletionService;
 import com.example.cargotracker.identity.application.internal.commandservices.PasswordResetRequestService;
@@ -28,13 +29,18 @@ import com.example.cargotracker.identity.application.internal.outboundservices.a
 import com.example.cargotracker.identity.application.internal.outboundservices.acl.NotificationTotpEnrollmentMails;
 import com.example.cargotracker.identity.application.internal.outboundservices.acl.NotificationTotpResetMails;
 import com.example.cargotracker.identity.application.internal.outboundservices.acl.NotificationUserInvitationMails;
+import com.example.cargotracker.identity.application.internal.outboundservices.acl.TrackingInquiryStatistics;
+import com.example.cargotracker.identity.application.internal.queryservices.KpiComparisonQueryService;
 import com.example.cargotracker.identity.application.internal.queryservices.KpiObservationQueryService;
+import com.example.cargotracker.identity.application.internal.queryservices.KpiWeeklyQueryService;
 import com.example.cargotracker.identity.application.internal.queryservices.TotpEnrollmentQueryService;
 import com.example.cargotracker.identity.application.internal.queryservices.UserAdministrationQueryService;
 import com.example.cargotracker.identity.application.internal.session.SessionPaths;
 import com.example.cargotracker.identity.domain.model.aggregates.AuditRecordRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.CommonPasswordList;
 import com.example.cargotracker.identity.domain.model.aggregates.CompanyRepository;
+import com.example.cargotracker.identity.domain.model.aggregates.IncompleteEventPublicationCounter;
+import com.example.cargotracker.identity.domain.model.aggregates.KpiBaselineRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.KpiObservationRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.LoginFailureRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.PasswordHasher;
@@ -48,6 +54,7 @@ import com.example.cargotracker.identity.domain.model.aggregates.TotpCodeGenerat
 import com.example.cargotracker.identity.domain.model.aggregates.TotpCredentialRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.TotpSecretIssuer;
 import com.example.cargotracker.identity.domain.model.aggregates.UnusablePasswordHashIssuer;
+import com.example.cargotracker.identity.domain.model.aggregates.User;
 import com.example.cargotracker.identity.domain.model.aggregates.UserAssignmentRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.UserRepository;
 import com.example.cargotracker.identity.domain.model.aggregates.UserSessionRevoker;
@@ -60,6 +67,7 @@ import com.example.cargotracker.notification.interfaces.api.ShipperNotificationM
 import com.example.cargotracker.notification.interfaces.api.TotpEnrollmentMail;
 import com.example.cargotracker.notification.interfaces.api.TotpResetMail;
 import com.example.cargotracker.notification.interfaces.api.UserInvitationMail;
+import com.example.cargotracker.tracking.interfaces.api.InquiryStatistics;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.Clock;
@@ -510,6 +518,38 @@ public class IdentityConfiguration {
     @Bean
     NotificationPasswordResetMails notificationPasswordResetMails(PasswordResetMail passwordResetMail) {
         return new NotificationPasswordResetMails(passwordResetMail);
+    }
+
+    /** KPI の基準値の登録（US-21 AC5。監査担当者だけ。W9 の Bolt 44-2）。 */
+    @Bean
+    KpiBaselineCommandService kpiBaselineCommandService(KpiBaselineRepository repository, Clock clock) {
+        return new KpiBaselineCommandService(repository, clock);
+    }
+
+    /** 基準値とパイロット中の値を並べる照会（W9 の Bolt 44-2）。 */
+    @Bean
+    KpiComparisonQueryService kpiComparisonQueryService(
+            KpiWeeklyQueryService weeklyQueryService,
+            KpiBaselineRepository baselines,
+            IncompleteEventPublicationCounter publicationCounter,
+            UserRepository userRepository) {
+        return new KpiComparisonQueryService(
+                weeklyQueryService,
+                baselines,
+                publicationCounter,
+                id -> userRepository.findById(id).map(User::displayName).orElse("（利用者が見つかりません）"));
+    }
+
+    @Bean
+    KpiWeeklyQueryService kpiWeeklyQueryService(
+            KpiObservationRepository repository, TrackingInquiryStatistics trackingInquiryStatistics) {
+        return new KpiWeeklyQueryService(repository, trackingInquiryStatistics);
+    }
+
+    /** 追跡の期間の照会の件数（公開 API を通す腐敗防止層。US-21 AC4。W9 の Bolt 44-1）。 */
+    @Bean
+    TrackingInquiryStatistics trackingInquiryStatistics(InquiryStatistics inquiryStatistics) {
+        return new TrackingInquiryStatistics(inquiryStatistics);
     }
 
     @Bean

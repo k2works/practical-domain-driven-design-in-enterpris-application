@@ -37,7 +37,9 @@ html {
 
 /* 狭い画面では表だけを横にスクロールさせ、ページ全体を横にスクロールさせない（WCAG 1.4.10 の表の例外）。
    囲みはフォーカスでき、名前を持つ（キー操作でもスクロールできる） */
+/* position: relative は、表の中の visually-hidden（絶対配置）が囲みの外へ出てページ全体の幅を広げないために要る（W9 の Bolt 44-1） */
 .table-scroll {
+    position: relative;
     overflow-x: auto;
 }
 
