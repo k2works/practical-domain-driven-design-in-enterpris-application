@@ -7,4 +7,5 @@ recovery_code
 password_reset_token
 login_failure
 app_user
+kpi_baseline
 company

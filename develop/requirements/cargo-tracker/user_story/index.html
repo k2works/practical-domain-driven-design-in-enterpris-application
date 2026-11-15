@@ -11833,6 +11833,216 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_44_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 44 計画
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_44_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 44 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_44-1_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 44-1 計画
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_44-1_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 44-1 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_44-2_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 44-2 計画
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_44-2_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 44-2 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../development/cargo-tracker/bolt_40_plan/" class="md-nav__link">
         
   
@@ -14208,7 +14418,7 @@
   <span class="md-ellipsis">
     
   
-    10 章 KPI 計測記録
+    10 章 KPI の照会
   
 
     
@@ -20115,6 +20325,12 @@
 </ul>
 <p>決定（2026-10-02 の D-3）: KPI-01 の開始時刻は、輸送要求の版 1 を最初に提出した時刻とする。差戻し・再提出・新しい版で戻さない。</p>
 <p>決定（2026-10-08、Bolt 21。D-11。human:kakimomokuri が Bolt 21 終了報告の承認で決めた）: KPI-01 の終点は、その輸送要求で最初に提示した見積りの提示時刻とする。荷主の条件変更・再見積りで出し直しても変えない。リードタイムは暦の経過時間とし、営業時間に換算しない。誤りで取り消した見積りを数えない規則は、見積りの取消しを作るときに足す。</p>
+<p>決定（2026-11-15、W9 の Bolt 44〜44-2。human:kakimomokuri が計画を承認し、S-22 を監査担当者だけが使うと選んだ。台帳 D-170〜D-172。ほかは推奨のとおり。仮）:</p>
+<ul>
+<li>AC2 の照会記録: 顧客 Web の照会（WEB_SELF）の後 24 時間以内（ちょうどを含む）に、同じ荷主企業・同じ追跡番号（予約）の有人案件が起票されたら、その照会は有人対応へ移ったとする（IR-INV-01。受付番号を残す）。荷主が Web で問い合わせの再開を依頼したら、Web の問い合わせ（WEB_INQUIRY。有人対応へ移った照会）として記録する。電話・メールは引継ぎが不要でも総数に入る（AC3。Bolt 40-15）。</li>
+<li>AC4 の週次: 週は UTC の月曜 00:00 始まり。KPI-01 は、その週に最初の見積りを提示した見積依頼のリードタイムの中央値（偶数件は真ん中の 2 つの平均）と P90（最近順位法）、KPI-02 は、その週に受け付けた照会の総数に対する、顧客 Web で完結した照会（自己照会で有人対応へ移っていない）の割合。PV-01 の除外（訓練データ・顧客都合の取消し）の記録の仕組みはまだ無いので、全件を母集団にする（除外の記録は W10 以降）。S-22 は監査担当者だけが使う（営業担当者は使えない）。</li>
+<li>AC5 の基準値: 期間はパイロット開始前の 4 週間（28 日）、値は KPI-01 が分、KPI-02 が割合（パーセント）。登録後は変えず、同じ KPI を登録し直すと前の記録を指す新しい記録になる。パイロット中の値（直近 12 週をまとめた値）と並べて示す。合否の判定は示さない。未完了のイベントの発行の件数も S-22 に示す。</li>
+</ul>
 <p>AI の仮定: KPI の照会者は BR-15 の固定役割のうち監査担当者とした。プロダクト責任者が利用者となる場合の役割は OQ-07 の残項目で扱う。</p>
 <h2 id="ai">ストーリー横断の AI の仮定<a class="headerlink" href="#ai" title="Permanent link">&para;</a></h2>
 <ul>

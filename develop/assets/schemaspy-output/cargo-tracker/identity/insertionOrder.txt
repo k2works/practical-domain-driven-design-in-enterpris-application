@@ -1,4 +1,5 @@
 company
+kpi_baseline
 app_user
 login_failure
 password_reset_token

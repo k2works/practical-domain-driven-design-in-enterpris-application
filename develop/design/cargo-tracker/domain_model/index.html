@@ -12172,6 +12172,216 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_44_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 44 計画
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_44_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 44 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_44-1_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 44-1 計画
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_44-1_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 44-1 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_44-2_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 44-2 計画
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_44-2_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 44-2 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../development/cargo-tracker/bolt_40_plan/" class="md-nav__link">
         
   
@@ -14547,7 +14757,7 @@
   <span class="md-ellipsis">
     
   
-    10 章 KPI 計測記録
+    10 章 KPI の照会
   
 
     
@@ -20272,6 +20482,12 @@
 <td style="text-align: left;">追跡</td>
 </tr>
 <tr>
+<td style="text-align: left;">期間の照会の件数</td>
+<td style="text-align: left;">InquiryCountSummary</td>
+<td style="text-align: left;">期間の照会の総数と、顧客 Web で完結した数（KPI-02 の算式の材料。W9 の Bolt 44-1）</td>
+<td style="text-align: left;">追跡</td>
+</tr>
+<tr>
 <td style="text-align: left;">照会記録</td>
 <td style="text-align: left;">InquiryRecord</td>
 <td style="text-align: left;">荷主・荷受人からの照会 1 件の経路（顧客 Web・電話・メール）と、Web で完結したか有人対応へ移ったかの記録。KPI-02 の計測に使う</td>
@@ -20983,6 +21199,12 @@
 <td style="text-align: left;">参照許可</td>
 <td style="text-align: left;">AccessGrant</td>
 <td style="text-align: left;">荷主担当者が予約単位で荷受人に与える照会の許可（BR-07）</td>
+<td style="text-align: left;">アクセス・監査</td>
+</tr>
+<tr>
+<td style="text-align: left;">KPI の基準値</td>
+<td style="text-align: left;">KpiBaseline</td>
+<td style="text-align: left;">パイロット開始前 4 週間の KPI-01・KPI-02 の値を、算出方法と登録者とともに残す追記専用の記録。訂正は前の記録を指す新しい記録（KPI-INV-02。W9 の Bolt 44-2）</td>
 <td style="text-align: left;">アクセス・監査</td>
 </tr>
 <tr>
@@ -22447,7 +22669,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">IR-INV-01</td>
-<td style="text-align: left;">顧客 Web の追跡照会は自動で照会記録にする（Bolt 42-1: <code>WebInquiryRecorder</code>。C-10 の照会の結果を開いたときに WEB_SELF を記録する。30 分ちょうどは別の照会）。同じ利用者・同じ追跡番号の 30 分以内の再表示は 1 件にまとめる。照会の後 24 時間以内に同じ追跡番号の問い合わせが起票されたら、有人対応へ移ったと記録する（この 24 時間の規則は Bolt 44 で作る。KPI-02 の算式の解釈で、プロダクト責任者の確認が要る）</td>
+<td style="text-align: left;">顧客 Web の追跡照会は自動で照会記録にする（Bolt 42-1: <code>WebInquiryRecorder</code>。C-10 の照会の結果を開いたときに WEB_SELF を記録する。30 分ちょうどは別の照会）。同じ利用者・同じ追跡番号の 30 分以内の再表示は 1 件にまとめる。照会の後 24 時間以内（ちょうどを含む）に同じ荷主企業・同じ追跡番号（予約）の有人案件が起票されたら、その照会を有人対応へ移ったと記録する（W9 の Bolt 44: <code>WebInquiryEscalator</code>。起票の共通の手順が保存の後に呼ぶ。KPI-02 の算式の解釈で、台帳 D-170 の仮の決定。プロダクト責任者の確認が要る）。荷主が Web で問い合わせの再開を依頼したら WEB_INQUIRY を、受付番号つきで記録する（<code>WebInquiryRecorder.recordReopen</code>）</td>
 <td style="text-align: left;">KPI-02、US-21</td>
 </tr>
 <tr>
@@ -22707,8 +22929,13 @@
 </tr>
 <tr>
 <td style="text-align: left;">KPI-INV-02</td>
-<td style="text-align: left;">パイロット開始前の基準値は、算出方法と登録者とともに記録し、登録後は変更せず訂正は新しい記録で行う</td>
+<td style="text-align: left;">パイロット開始前の基準値は、算出方法と登録者とともに記録し、登録後は変更せず訂正は新しい記録で行う（W9 の Bolt 44-2: <code>KpiBaseline</code>。期間は 28 日、値は KPI-01 が分・KPI-02 がパーセント、KPI-02 は 90 パーセンタイルを持たない。同じ KPI を登録し直すと前の最新の記録を指す。監査担当者だけが登録する。台帳 D-172）</td>
 <td style="text-align: left;">US-21、PV-01</td>
+</tr>
+<tr>
+<td style="text-align: left;">KPI-INV-04</td>
+<td style="text-align: left;">週次の KPI の週は UTC の月曜 00:00 始まり。KPI-01 の中央値は件数が偶数なら真ん中の 2 つの平均、P90 は最近順位法（昇順の ceil(0.9 × 件数) 番目）。KPI-02 は照会総数に対する顧客 Web で完結した数の割合で、総数が 0 の週は値を持たない（0 とみなさない）（W9 の Bolt 44-1: <code>KpiStatistics</code>。台帳 D-171）</td>
+<td style="text-align: left;">US-21 AC4、PV-01</td>
 </tr>
 <tr>
 <td style="text-align: left;">KPI-INV-03</td>

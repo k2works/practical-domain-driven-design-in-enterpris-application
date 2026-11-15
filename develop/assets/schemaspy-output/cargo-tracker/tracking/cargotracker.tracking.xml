@@ -41,6 +41,10 @@
             <column ascending="true" name="shipper_company_id"/>
             <column ascending="true" name="received_at"/>
          </index>
+         <index name="ix_inquiry_record_tracking_received" unique="false">
+            <column ascending="true" name="tracking_number"/>
+            <column ascending="true" name="received_at"/>
+         </index>
          <checkConstraint constraint="((channel)::text = ANY ((ARRAY['WEB_SELF'::character varying, 'WEB_INQUIRY'::character varying, 'PHONE'::character varying, 'EMAIL'::character varying])::text[]))" name="ck_inquiry_record_channel"/>
          <checkConstraint constraint="((escalated = false) OR (case_number IS NOT NULL))" name="ck_inquiry_record_escalated"/>
          <checkConstraint constraint="((inquirer_kind)::text = ANY ((ARRAY['SHIPPER'::character varying, 'CONSIGNEE'::character varying])::text[]))" name="ck_inquiry_record_inquirer_kind"/>

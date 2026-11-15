@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>10 章 KPI 計測記録 | cargo-tracker ユーザーマニュアル</title>
+  <title>10 章 KPI の照会 | cargo-tracker ユーザーマニュアル</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -26,7 +26,7 @@
         <li><a href="07-%E6%9C%AC%E4%BA%88%E7%B4%84%E3%81%AE%E7%A2%BA%E5%AE%9A%E3%81%A8%E4%BA%88%E7%B4%84%E4%B8%80%E8%A6%A7.html">7 章 本予約の確定と予約一覧</a></li>
         <li><a href="08-%E7%B5%8C%E8%B7%AF%E8%A8%AD%E8%A8%88.html">8 章 経路設計</a></li>
         <li><a href="09-%E8%BF%BD%E8%B7%A1%E7%AE%A1%E7%90%86.html">9 章 追跡管理</a></li>
-        <li><a href="10-KPI%E8%A8%88%E6%B8%AC%E8%A8%98%E9%8C%B2.html" aria-current="page">10 章 KPI 計測記録</a><ul class="manual-sidenav-sections"><li><a href="#101-kpi-%E8%A8%88%E6%B8%AC%E8%A8%98%E9%8C%B2">10.1 KPI 計測記録</a></li></ul></li>
+        <li><a href="10-KPI%E8%A8%88%E6%B8%AC%E8%A8%98%E9%8C%B2.html" aria-current="page">10 章 KPI の照会</a><ul class="manual-sidenav-sections"><li><a href="#101-kpi-%E3%81%AE%E7%85%A7%E4%BC%9A">10.1 KPI の照会</a></li></ul></li>
         <li><a href="11-%E5%88%A9%E7%94%A8%E8%80%85%E3%81%AE%E7%AE%A1%E7%90%86.html">11 章 利用者の管理</a></li>
         <li><a href="12-%E5%A4%96%E9%83%A8%E3%83%87%E3%83%BC%E3%82%BF.html">12 章 外部データ</a></li>
         <li><a href="13-%E6%9C%89%E4%BA%BA%E6%A1%88%E4%BB%B6.html">13 章 有人案件</a></li>
@@ -39,9 +39,9 @@
     </nav>
     <main class="manual-content">
       <a class="manual-nav-link" href="index.html">← マニュアル目次</a>
-      <h1 id="10-章-kpi-計測記録">10 章 KPI 計測記録</h1>
-<p>パイロットの効果を測る KPI-01（経路提示リードタイム: 見積依頼の提出から最初の見積りの提示まで）の時刻を、見積依頼ごとに確かめる画面です。本章は <a href="01-%E6%A5%AD%E5%8B%99%E3%83%95%E3%83%AD%E3%83%BC.html#wf-1-%E8%A6%8B%E7%A9%8D%E4%BE%9D%E9%A0%BC%E3%81%8B%E3%82%89%E8%BF%BD%E8%B7%A1%E3%81%AE%E7%85%A7%E4%BC%9A%E3%81%BE%E3%81%A7">WF-1</a> の工程 1・2（提出と提示）で記録された時刻を確かめるためのものです。</p>
-<p>画面の開き方: ナビゲーションの「KPI 計測記録」（URL: <code>/staff/kpi-observations</code>）。</p>
+      <h1 id="10-章-kpi-の照会">10 章 KPI の照会</h1>
+<p>パイロットの効果を測る KPI-01（経路提示リードタイム: 見積依頼の提出から最初の見積りの提示まで）と KPI-02（自己照会率: 追跡の照会のうち、顧客 Web で完結した割合）を、週ごとに確かめる画面です。パイロット開始前 4 週間の基準値を登録して、パイロット中の値と並べて見られます。この画面は <strong>監査担当者だけ</strong> が使えます（営業担当者など、ほかの役割は開けません）。</p>
+<p>画面の開き方: 監査担当者でログインすると最初に開きます。ナビゲーションの「KPI 計測記録」（URL: <code>/staff/kpi-observations</code>）からも開けます。</p>
 <table>
 <thead>
 <tr>
@@ -51,22 +51,22 @@
 </tr>
 </thead>
 <tbody><tr>
-<td align="left">KPI 計測記録</td>
-<td align="left">見積依頼ごとの提出時刻・最初の提示時刻・KPI-01 リードタイムを確かめる</td>
-<td align="left"><a href="#101-kpi-%E8%A8%88%E6%B8%AC%E8%A8%98%E9%8C%B2">10.1</a></td>
+<td align="left">KPI の照会</td>
+<td align="left">週次の KPI、基準値との比較、基準値の登録、見積依頼ごとの KPI-01 を確かめる</td>
+<td align="left"><a href="#101-kpi-%E3%81%AE%E7%85%A7%E4%BC%9A">10.1</a></td>
 </tr>
 </tbody></table>
-<h2 id="101-kpi-計測記録">10.1 KPI 計測記録</h2>
+<h2 id="101-kpi-の照会">10.1 KPI の照会</h2>
 <h3 id="この画面でできること">この画面でできること</h3>
 <ul>
-<li>見積依頼ごとに、提出時刻・最初の提示時刻・KPI-01 リードタイムを確かめます</li>
-</ul>
-<h3 id="画面の開き方">画面の開き方</h3>
-<ul>
-<li>ナビゲーションの「KPI 計測記録」（URL: <code>/staff/kpi-observations</code>）</li>
+<li>週ごとの KPI-01（中央値と 90 パーセンタイル）と KPI-02（自己照会率）を確かめます</li>
+<li>パイロット開始前 4 週間の基準値と、直近 12 週の値を並べて確かめます</li>
+<li>基準値を登録します（算出方法と登録者が残ります）</li>
+<li>未完了のイベントの発行の件数を確かめます</li>
+<li>見積依頼ごとの提出時刻・最初の提示時刻・KPI-01 リードタイムを確かめます</li>
 </ul>
 <h3 id="画面の説明">画面の説明</h3>
-<p><img src="assets/10-kpi-observations.png" alt="KPI 計測記録"></p>
+<p><img src="assets/10-kpi-observations.png" alt="KPI の照会"></p>
 <table>
 <thead>
 <tr>
@@ -77,34 +77,50 @@
 </thead>
 <tbody><tr>
 <td align="left">①</td>
-<td align="left">業務番号</td>
-<td align="left">見積依頼の番号</td>
+<td align="left">週次の KPI</td>
+<td align="left">直近 12 週を新しい週から並べます。週は UTC の月曜から日曜です。KPI-01 は、その週に最初の見積りを提示した見積依頼の、提出から最初の提示までの時間の中央値と 90 パーセンタイルです。KPI-02 は、その週に受け付けた照会の総数と、そのうち顧客 Web で完結した数と、その割合です。対象がない週は「—」と示され、0 とは扱いません</td>
 </tr>
 <tr>
 <td align="left">②</td>
-<td align="left">提出時刻</td>
-<td align="left">荷主が版 1 を最初に提出した日時</td>
+<td align="left">基準値との比較</td>
+<td align="left">基準値と、直近 12 週をまとめた値と、差を並べます。差は判断の材料で、パイロットを続けるかどうかの判定そのものではありません。基準値の下に、期間・算出方法・登録者・登録時刻が示されます</td>
 </tr>
 <tr>
 <td align="left">③</td>
-<td align="left">最初の提示時刻</td>
-<td align="left">営業担当者が最初に見積りを提示した日時</td>
+<td align="left">未完了のイベントの発行</td>
+<td align="left">リスナーが処理を終えていないイベントの件数です。処理中のものも含むので、一時的に 0 でないことがあります。続けて 0 にならないときは、運用の担当者に再配信を確かめてもらいます</td>
 </tr>
 <tr>
 <td align="left">④</td>
-<td align="left">KPI-01 リードタイム</td>
-<td align="left">提出時刻から最初の提示時刻までの時間</td>
+<td align="left">基準値を登録する</td>
+<td align="left">KPI・期間・値・算出方法を入れて登録します</td>
+</tr>
+<tr>
+<td align="left">⑤</td>
+<td align="left">見積依頼ごとの KPI-01</td>
+<td align="left">業務番号・提出時刻・最初の提示時刻・KPI-01 リードタイムです</td>
 </tr>
 </tbody></table>
 <h3 id="操作手順">操作手順</h3>
 <ol>
-<li>見積依頼ごとの時刻とリードタイムを確かめます</li>
+<li>週次の KPI で、直近の週の値を確かめます</li>
+<li>基準値との比較で、基準値と直近 12 週の値の差を確かめます</li>
+<li>基準値がまだなければ、「基準値を登録する」で登録します<ol>
+<li>KPI を選びます（KPI-01 経路提示リードタイム、KPI-02 自己照会率）</li>
+<li>期間の開始日と終了日を入れます。期間はパイロット開始前の 4 週間（28 日）で、終了日は開始日から 28 日めです</li>
+<li>中央値を入れます。KPI-01 は分、KPI-02 は自己照会率のパーセントです。KPI-01 は 90 パーセンタイル（分）も入れられます（KPI-02 では入れません）</li>
+<li>算出方法（現行業務の記録からどう算出したか）を入れます</li>
+<li>「基準値を登録する」を押します。「KPI-02 の基準値を登録しました」と示されます</li>
+</ol>
+</li>
 </ol>
 <h3 id="注意補足">注意・補足</h3>
 <ul>
-<li>まだ見積りを提示していない見積依頼は「—」と示され、リードタイムは算出しません</li>
-<li>リードタイムは暦の経過時間（夜間・休日を含む）です</li>
-<li>この画面は、監査担当者が使う KPI の照会の画面（後のリリースで作ります）の前身の仮の画面です。Release 0.1 では営業担当者が開けます</li>
+<li>登録した基準値は変えられません。訂正するときは、同じ KPI をもう一度登録します（前の記録を指す新しい記録になり、画面には最新が示されます）</li>
+<li>入力に誤りがあると、理由が示されて入力が残ります（期間が 28 日でない、値が範囲外、算出方法が空、など）</li>
+<li>リードタイムは暦の経過時間（夜間・休日を含む）です。90 パーセンタイルは、昇順に並べた 90% の位置の値です</li>
+<li>いまは、訓練データや顧客都合の取消しの除外は行わず、すべてを対象にしています</li>
+<li>まだ見積りを提示していない見積依頼は、見積依頼ごとの一覧で「未提示」と示され、リードタイムは算出しません</li>
 </ul>
 
       <a class="manual-nav-link" href="index.html">← マニュアル目次</a>

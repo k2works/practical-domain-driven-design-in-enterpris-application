@@ -12093,6 +12093,216 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_44_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 44 計画
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_44_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 44 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_44-1_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 44-1 計画
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_44-1_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 44-1 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_44-2_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 44-2 計画
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_44-2_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 44-2 終了報告
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../development/cargo-tracker/bolt_40_plan/" class="md-nav__link">
         
   
@@ -14468,7 +14678,7 @@
   <span class="md-ellipsis">
     
   
-    10 章 KPI 計測記録
+    10 章 KPI の照会
   
 
     
@@ -21104,6 +21314,26 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 <td style="text-align: left;"><code>@US-24-AC2</code></td>
 </tr>
 <tr>
+<td style="text-align: left;">US-21</td>
+<td style="text-align: left;">AC2</td>
+<td style="text-align: left;"><code>@US-21-AC2</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">US-21</td>
+<td style="text-align: left;">AC3</td>
+<td style="text-align: left;"><code>@US-21-AC3</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">US-21</td>
+<td style="text-align: left;">AC4</td>
+<td style="text-align: left;"><code>@US-21-AC4</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">US-21</td>
+<td style="text-align: left;">AC5</td>
+<td style="text-align: left;"><code>@US-21-AC5</code></td>
+</tr>
+<tr>
 <td style="text-align: left;">US-24</td>
 <td style="text-align: left;">AC3</td>
 <td style="text-align: left;"><code>@US-24-AC3</code></td>
@@ -21396,6 +21626,30 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 <td style="text-align: left;">AC4（送信に失敗したら失敗と宛先が記録され、通知一覧からも同じ内容を確認できる）</td>
 <td style="text-align: left;">43・43-3</td>
 <td style="text-align: left;"><code>@US-22-AC4</code>（同上）、<code>ShipperNotificationControllerTest</code>・<code>NotificationQueryServiceTest</code>・<code>MyBatisNotificationRepositoryIntegrationTest</code>（失敗の記録は <code>MailDeliveryTest</code> 系）</td>
+</tr>
+<tr>
+<td style="text-align: left;">US-21</td>
+<td style="text-align: left;">AC2（顧客 Web の照会と有人窓口の照会の経路と、Web で完結したか有人に移ったかを記録し、KPI-02 の自己照会率を求める）</td>
+<td style="text-align: left;">44・44-1</td>
+<td style="text-align: left;"><code>@US-21-AC2</code>（<code>features/ui/kpi_weekly_ui.feature</code>）、<code>WebInquiryEscalatorTest</code>（24 時間の規則。24 時間ちょうどを含む）、<code>ServiceCaseOpenEscalationTest</code>、<code>WebInquiryRecorderTest</code>（再開の依頼）、<code>MyBatisInquiryRecordRepositoryIntegrationTest</code>、<code>KpiStatisticsTest</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">US-21</td>
+<td style="text-align: left;">AC3（電話・メールの照会は引継ぎが不要でも照会総数に入る）</td>
+<td style="text-align: left;">44（Bolt 40-15 から）</td>
+<td style="text-align: left;"><code>@US-21-AC3</code>（同上。電話の照会が総数に入る）、<code>InquiryRecordingServiceTest</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">US-21</td>
+<td style="text-align: left;">AC4（週次で KPI-01 の中央値・P90 と KPI-02 を示す。除外は未実装で全件）</td>
+<td style="text-align: left;">44-1</td>
+<td style="text-align: left;"><code>@US-21-AC4</code>（同上）、<code>KpiWeeklyQueryServiceTest</code>、<code>KpiObservationControllerTest</code>、<code>AuthenticationSecurityIntegrationTest</code>（監査担当者だけが開ける）</td>
+</tr>
+<tr>
+<td style="text-align: left;">US-21</td>
+<td style="text-align: left;">AC5（基準値・算出方法・登録者を記録し、パイロット中の値と並べて示す）</td>
+<td style="text-align: left;">44-2</td>
+<td style="text-align: left;"><code>@US-21-AC5</code>（同上）、<code>KpiBaselineTest</code>、<code>KpiBaselineCommandServiceTest</code>、<code>KpiComparisonQueryServiceTest</code>、<code>MyBatisKpiBaselineRepositoryIntegrationTest</code>、<code>AppendOnlyGrantIntegrationTest</code></td>
 </tr>
 <tr>
 <td style="text-align: left;">US-24</td>

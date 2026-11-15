@@ -81,6 +81,34 @@
          </index>
          <checkConstraint constraint="((kind)::text = ANY ((ARRAY['SHIPPER'::character varying, 'CONSIGNEE'::character varying, 'OPERATOR'::character varying])::text[]))" name="ck_company_kind"/>
       </table>
+      <table name="kpi_baseline" remarks="KPI 基準値（パイロット開始前 4 週間の値） [append-only]" schema="identity" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="id" nullable="false" remarks="基準値 ID" size="2147483647" type="uuid" typeCode="1111">
+            <child column="supersedes_id" foreignKey="fk_kpi_baseline_supersedes" implied="false" onDeleteCascade="false" schema="identity" table="kpi_baseline"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="kpi" nullable="false" remarks="KPI の種類（KPI-01 経路提示リードタイム、KPI-02 自己照会率）" size="30" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="period_from" nullable="false" remarks="基準値の期間の開始日（両端を含む。28 日）" size="13" type="date" typeCode="91"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="period_to" nullable="false" remarks="基準値の期間の終了日" size="13" type="date" typeCode="91"/>
+         <column autoUpdated="false" defaultValue="null" digits="2" id="4" name="value_p50" nullable="false" remarks="中央値（KPI-01 は分、KPI-02 は自己照会率のパーセント）" size="12" type="numeric" typeCode="2"/>
+         <column autoUpdated="false" defaultValue="null" digits="2" id="5" name="value_p90" nullable="true" remarks="90 パーセンタイル（KPI-01 の分。KPI-02 は持たない）" size="12" type="numeric" typeCode="2"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="6" name="method" nullable="false" remarks="算出方法（現行業務の記録からどう算出したか）" size="4000" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="7" name="registered_by" nullable="false" remarks="登録者の利用者 ID" size="2147483647" type="uuid" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="8" name="registered_at" nullable="false" remarks="登録時刻" size="35" type="timestamptz" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="9" name="supersedes_id" nullable="true" remarks="訂正した前の基準値 ID（初めての登録なら NULL）" size="2147483647" type="uuid" typeCode="1111">
+            <parent column="id" foreignKey="fk_kpi_baseline_supersedes" implied="false" onDeleteCascade="false" schema="identity" table="kpi_baseline"/>
+         </column>
+         <primaryKey column="id" sequenceNumberInPK="1"/>
+         <index name="pk_kpi_baseline" unique="true">
+            <column ascending="true" name="id"/>
+         </index>
+         <index name="ix_kpi_baseline_kpi_registered" unique="false">
+            <column ascending="true" name="kpi"/>
+            <column ascending="true" name="registered_at"/>
+         </index>
+         <checkConstraint constraint="((kpi)::text = ANY ((ARRAY['KPI-01'::character varying, 'KPI-02'::character varying])::text[]))" name="ck_kpi_baseline_kpi"/>
+         <checkConstraint constraint="(period_to &gt;= period_from)" name="ck_kpi_baseline_period"/>
+         <checkConstraint constraint="(value_p50 &gt;= (0)::numeric)" name="ck_kpi_baseline_value_p50"/>
+         <checkConstraint constraint="((value_p90 IS NULL) OR (((kpi)::text = 'KPI-01'::text) AND (value_p90 &gt;= value_p50)))" name="ck_kpi_baseline_value_p90"/>
+      </table>
       <table name="kpi_observation" remarks="KPI 計測記録" schema="identity" type="TABLE">
          <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="transport_request_id" nullable="false" remarks="輸送要求 ID" size="2147483647" type="uuid" typeCode="1111"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="shipper_company_id" nullable="false" remarks="荷主企業 ID" size="2147483647" type="uuid" typeCode="1111"/>
