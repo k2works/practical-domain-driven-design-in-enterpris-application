@@ -77,7 +77,7 @@ public class QuotationResponseService {
 
     /**
      * 提示済みの見積りを理由を付けて辞退する（提示済み → 失効。US-24 AC2。W9 の Bolt 46）。辞退時刻は Clock から得る。
-     * 失効として記録するだけで、イベントは発行せず輸送要求の状態は変えない。理由の入力の誤り（空・長すぎる）は何も保存せずに返す。
+     * 見積りを失効として記録し、辞退した事実（DE-17）を保存と同じトランザクションで発行する（輸送要求を辞退で終了にするのは listener）。理由の入力の誤り（空・長すぎる）は何も保存せずに返す。
      * 荷主企業で絞った照会を通し、他社の見積りと荷主に提示していない見積りは見つからない扱いにする（Q-INV-08）。
      */
     @Transactional
@@ -108,6 +108,8 @@ public class QuotationResponseService {
         } catch (ConcurrentQuotationUpdateException _) {
             return new DeclineOutcome.Conflict();
         }
+        quotation.domainEvents().forEach(eventPublisher::publishEvent);
+        quotation.clearDomainEvents();
         return new DeclineOutcome.Declined(command.number(), command.quotationNo());
     }
 

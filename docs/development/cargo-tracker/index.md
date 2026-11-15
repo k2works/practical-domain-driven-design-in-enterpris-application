@@ -201,6 +201,7 @@ Bolt がイテレーションに当たります。ふりかえりは各 Bolt の
 | 44-1 | [週次の KPI の照会（US-21 AC4）](bolt_44-1_plan.md)（[W9 計画](iteration_plan-W9.md)） | [終了報告](bolt_44-1_report.md) （[動画](../../assets/demo/bolt-44-1/kpi-weekly.webm){:target="_blank"}） | W9 | 完了（承認待ち） |
 | 44-2 | [基準値の登録と比較（US-21 AC5。US-21 を締める）](bolt_44-2_plan.md)（[W9 計画](iteration_plan-W9.md)） | [終了報告](bolt_44-2_report.md) （[動画](../../assets/demo/bolt-44-2/kpi-baseline.webm){:target="_blank"}） | W9 | 完了（承認待ち） |
 | 48 | [W9 の締め（週全体レビュー・マニュアル・動画・ゲート）](bolt_48_plan.md)（[W9 計画](iteration_plan-W9.md)） | [終了報告](bolt_48_report.md) | W9 | 完了（承認待ち） |
+| 48-1 | [辞退した見積りの輸送要求を辞退で終了にする（週全体レビューの高 H-2）](bolt_48-1_plan.md)（[W9 計画](iteration_plan-W9.md)） | [終了報告](bolt_48-1_report.md) | W9 | 完了（承認待ち） |
 | 40-16 | [W8 の受入条件の照合とマニュアル・動画の総点検（US-11・US-20 を締める）](bolt_40-16_plan.md)（[W8 計画](iteration_plan-W8.md)） | [終了報告](bolt_40-16_report.md) | W8 | 完了（承認済み） |
 | 40-15 | [照会の記録（S-23）と有人案件への引き継ぎ（US-11 AC2）](bolt_40-15_plan.md)（[W8 計画](iteration_plan-W8.md)） | [終了報告](bolt_40-15_report.md)（[動画](../../assets/demo/bolt-40-15/inquiry-handoff.webm){:target="_blank"}） | W8 | 完了（承認済み） |
 
@@ -468,4 +469,6 @@ Bolt を始めるときに行を追加します。
 * [Bolt 44-2 終了報告 - 基準値の登録と比較（US-21 AC5。US-21 を締める）](./bolt_44-2_report.md)
 * [Bolt 48 計画 - W9 の締め](./bolt_48_plan.md)
 * [Bolt 48 終了報告 - W9 の締め](./bolt_48_report.md)
+* [Bolt 48-1 計画 - 辞退した見積りの輸送要求を辞退で終了にする](./bolt_48-1_plan.md)
+* [Bolt 48-1 終了報告 - 辞退した見積りの輸送要求を辞退で終了にする](./bolt_48-1_report.md)
 * [W9 完了報告書](./iteration_report-W9.md)

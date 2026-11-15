@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.example.cargotracker.quotation.domain.events.QuotationConsultationRequested;
+import com.example.cargotracker.quotation.domain.events.QuotationDeclined;
 import com.example.cargotracker.quotation.domain.events.QuotationPresented;
 import com.example.cargotracker.quotation.domain.events.RouteDesignRequested;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationFixture;
@@ -328,8 +329,16 @@ class QuotationTest {
         assertThat(quotation.declineReason()).contains("他社の見積りで進めるため");
         assertThat(quotation.respondedBy()).contains(respondent);
         assertThat(quotation.respondedAt()).contains(declinedAt);
-        // 経路設計の依頼（DE-16）は出さない。輸送要求の状態は変えない
-        assertThat(quotation.domainEvents()).isEmpty();
+        // 経路設計の依頼（DE-16）は出さず、辞退した事実（DE-17）を出す。輸送要求を辞退で終了にするのは、これを受ける listener
+        assertThat(quotation.domainEvents()).singleElement().isInstanceOfSatisfying(QuotationDeclined.class, event -> {
+            assertThat(event.quotationId()).isEqualTo(id.value());
+            assertThat(event.quotationNo()).isEqualTo(1);
+            assertThat(event.transportRequestId()).isEqualTo(transportRequestId.value());
+            assertThat(event.transportRequestVersionNo()).isEqualTo(1);
+            assertThat(event.declinedBy()).isEqualTo(respondent.value());
+            assertThat(event.reason()).isEqualTo("他社の見積りで進めるため");
+            assertThat(event.declinedAt()).isEqualTo(declinedAt);
+        });
     }
 
     @ParameterizedTest
@@ -423,6 +432,7 @@ class QuotationTest {
         routing.clearDomainEvents();
         Quotation declined = presented();
         declined.decline(respondent, "理由", now);
+        declined.clearDomainEvents();
         Quotation expired = presented();
 
         assertThat(pending.requestConsultation(respondent, "相談", shipper, "TR-2026-0001", now))

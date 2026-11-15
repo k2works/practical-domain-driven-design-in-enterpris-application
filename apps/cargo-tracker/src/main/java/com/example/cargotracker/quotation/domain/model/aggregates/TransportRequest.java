@@ -175,6 +175,29 @@ public final class TransportRequest {
     }
 
     /**
+     * 荷主が見積りを辞退したことを受けて、辞退で終了にする（DE-17 の受け取り。US-24 AC2。W9 の Bolt 48-1。台帳 D-173）。見積り作成中・
+     * 見積提示済みで、辞退した見積りの対象の版が現在の版のときだけ変える（DE-03 より先に DE-17 が届いても見積り作成中から終了にし、遅れて
+     * 届いた DE-03 では戻らない。{@link #markQuotationPresented} は見積り作成中だけを変える）。経路設計中以降（詳細経路設計を依頼した後は
+     * 辞退できない）・審査中・下書きは変えない。
+     *
+     * @param quotedVersionNo 辞退した見積りの対象の版番号
+     * @return 状態を変えたら true
+     */
+    public boolean markWithdrawn(int quotedVersionNo) {
+        if (quotedVersionNo != currentVersion.versionNo()
+                || (status != TransportRequestStatus.QUOTING && status != TransportRequestStatus.QUOTED)) {
+            return false;
+        }
+        status = TransportRequestStatus.WITHDRAWN;
+        return true;
+    }
+
+    /** 現在の版が {@code versionNo} で、辞退で終了にしているか（DE-17 の再配信の判定。W9 の Bolt 48-1）。 */
+    public boolean isWithdrawn(int versionNo) {
+        return versionNo == currentVersion.versionNo() && status == TransportRequestStatus.WITHDRAWN;
+    }
+
+    /**
      * 荷主が詳細経路設計を依頼したことを受けて、経路設計中にする（DE-16 の受け取り。US-24 AC1。Bolt 12）。
      * 見積り作成中・見積提示済みで、依頼した見積りの対象の版が現在の版のときだけ変える。DE-03 より先に DE-16 が届いても
      * 経路設計中にし、遅れて届いた DE-03 では戻らない（{@link #markQuotationPresented} は見積り作成中だけを変える）。

@@ -10,6 +10,7 @@ import com.example.cargotracker.quotation.application.internal.commands.DeclineQ
 import com.example.cargotracker.quotation.application.internal.commands.RequestRouteDesignCommand;
 import com.example.cargotracker.quotation.domain.events.QuotationApprovedByShipper;
 import com.example.cargotracker.quotation.domain.events.QuotationConsultationRequested;
+import com.example.cargotracker.quotation.domain.events.QuotationDeclined;
 import com.example.cargotracker.quotation.domain.events.RouteDesignRequested;
 import com.example.cargotracker.quotation.domain.model.aggregates.ConcurrentQuotationUpdateException;
 import com.example.cargotracker.quotation.domain.model.aggregates.Quotation;
@@ -169,7 +170,8 @@ class QuotationResponseServiceTest {
             assertThat(quotation.respondedBy()).contains(RESPONDENT);
             assertThat(quotation.respondedAt()).contains(new UtcInstant(NOW));
         });
-        assertThat(published).isEmpty();
+        // 辞退した事実（DE-17）を発行する。輸送要求を辞退で終了にするのは、これを受ける listener
+        assertThat(published).singleElement().isInstanceOf(QuotationDeclined.class);
     }
 
     @Test

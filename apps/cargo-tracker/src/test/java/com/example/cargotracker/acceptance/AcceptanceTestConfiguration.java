@@ -37,6 +37,7 @@ import com.example.cargotracker.quotation.application.internal.commandservices.R
 import com.example.cargotracker.quotation.application.internal.commandservices.TransportRequestCommandService;
 import com.example.cargotracker.quotation.application.internal.commandservices.TransportRequestReviewService;
 import com.example.cargotracker.quotation.application.internal.eventhandlers.QuotationApprovedByShipperEventHandler;
+import com.example.cargotracker.quotation.application.internal.eventhandlers.QuotationDeclinedEventHandler;
 import com.example.cargotracker.quotation.application.internal.eventhandlers.QuotationPresentedEventHandler;
 import com.example.cargotracker.quotation.application.internal.eventhandlers.QuotationPresentedForReapprovalEventHandler;
 import com.example.cargotracker.quotation.application.internal.eventhandlers.QuotationRouteAssignedEventHandler;
@@ -49,6 +50,7 @@ import com.example.cargotracker.quotation.application.internal.queryservices.Sta
 import com.example.cargotracker.quotation.application.internal.queryservices.StaffTransportRequestScope;
 import com.example.cargotracker.quotation.application.internal.queryservices.TransportRequestQueryService;
 import com.example.cargotracker.quotation.domain.events.QuotationApprovedByShipper;
+import com.example.cargotracker.quotation.domain.events.QuotationDeclined;
 import com.example.cargotracker.quotation.domain.events.QuotationPresented;
 import com.example.cargotracker.quotation.domain.events.QuotationPresentedForReapproval;
 import com.example.cargotracker.quotation.domain.events.QuotationRouteAssigned;
@@ -164,6 +166,11 @@ public class AcceptanceTestConfiguration {
         @Bean
         QuotationPresentedEventHandler quotationPresentedEventHandler(InMemoryTransportRequestRepository repository) {
             return new QuotationPresentedEventHandler(repository);
+        }
+
+        @Bean
+        QuotationDeclinedEventHandler quotationDeclinedEventHandler(InMemoryTransportRequestRepository repository) {
+            return new QuotationDeclinedEventHandler(repository);
         }
 
         @Bean
@@ -476,6 +483,7 @@ public class AcceptanceTestConfiguration {
                 KpiObservationEventHandler kpiObservationEventHandler,
                 QuotationPresentedEventHandler quotationPresentedEventHandler,
                 RouteDesignRequestedEventHandler routeDesignRequestedEventHandler,
+                QuotationDeclinedEventHandler quotationDeclinedEventHandler,
                 RoutingCaseOpeningEventHandler routingCaseOpeningEventHandler,
                 QuotationRouteAssignmentEventHandler quotationRouteAssignmentEventHandler,
                 QuotationRouteRedesignEventHandler quotationRouteRedesignEventHandler,
@@ -493,6 +501,7 @@ public class AcceptanceTestConfiguration {
                         quotationPresentedEventHandler.on(presented);
                         kpiObservationEventHandler.on(presented);
                     }
+                    case QuotationDeclined declined -> quotationDeclinedEventHandler.on(declined);
                     case RouteDesignRequested requested -> {
                         routeDesignRequestedEventHandler.on(requested);
                         routingCaseOpeningEventHandler.on(requested);
@@ -501,9 +510,11 @@ public class AcceptanceTestConfiguration {
                         deliverRouteEvent(
                                 event, quotationRouteAssignmentEventHandler, quotationRouteRedesignEventHandler);
                     case QuotationRouteAssigned assigned -> quotationRouteAssignedEventHandler.on(assigned);
-                    case QuotationApprovedByShipper approved -> quotationApprovedByShipperEventHandler.on(approved);
-                    case QuotationPresentedForReapproval reapproval ->
-                        quotationPresentedForReapprovalEventHandler.on(reapproval);
+                    case QuotationApprovedByShipper _, QuotationPresentedForReapproval _ ->
+                        deliverApprovalEvent(
+                                event,
+                                quotationApprovedByShipperEventHandler,
+                                quotationPresentedForReapprovalEventHandler);
                     case BookingConfirmed confirmed -> {
                         bookingConfirmedEventHandler.on(confirmed);
                         trackingStartEventHandler.on(confirmed);
@@ -532,6 +543,18 @@ public class AcceptanceTestConfiguration {
                 transportPhase.on(adopted);
             } else if (event instanceof DeliveryConfirmed confirmed) {
                 transportPhase.on(confirmed);
+            }
+        }
+
+        /** 荷主の承認と再承認のイベント（DE-04・DE-24）を配る（購読の分岐の循環的複雑度を上限に収める。W9 の Bolt 48-1）。 */
+        private static void deliverApprovalEvent(
+                Object event,
+                QuotationApprovedByShipperEventHandler approval,
+                QuotationPresentedForReapprovalEventHandler reapproval) {
+            if (event instanceof QuotationApprovedByShipper approved) {
+                approval.on(approved);
+            } else if (event instanceof QuotationPresentedForReapproval presented) {
+                reapproval.on(presented);
             }
         }
 

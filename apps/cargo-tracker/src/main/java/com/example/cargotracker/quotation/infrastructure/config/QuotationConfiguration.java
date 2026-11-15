@@ -9,6 +9,7 @@ import com.example.cargotracker.quotation.application.internal.commandservices.R
 import com.example.cargotracker.quotation.application.internal.commandservices.TransportRequestCommandService;
 import com.example.cargotracker.quotation.application.internal.commandservices.TransportRequestReviewService;
 import com.example.cargotracker.quotation.application.internal.eventhandlers.QuotationApprovedByShipperEventHandler;
+import com.example.cargotracker.quotation.application.internal.eventhandlers.QuotationDeclinedEventHandler;
 import com.example.cargotracker.quotation.application.internal.eventhandlers.QuotationPresentedEventHandler;
 import com.example.cargotracker.quotation.application.internal.eventhandlers.QuotationPresentedForReapprovalEventHandler;
 import com.example.cargotracker.quotation.application.internal.eventhandlers.QuotationRouteAssignedEventHandler;
@@ -126,6 +127,12 @@ public class QuotationConfiguration {
     @Bean
     RouteDesignRequestedEventHandler routeDesignRequestedEventHandler(TransportRequestRepository repository) {
         return new RouteDesignRequestedEventHandler(repository);
+    }
+
+    /** DE-17 を受けて輸送要求を辞退で終了にする（Spring Modulith のイベントの記録を経て、別のトランザクションで動く。W9 の Bolt 48-1）。 */
+    @Bean
+    QuotationDeclinedEventHandler quotationDeclinedEventHandler(TransportRequestRepository repository) {
+        return new QuotationDeclinedEventHandler(repository);
     }
 
     /** DE-03 を受けて輸送要求を見積提示済みにする（Spring Modulith のイベントの記録を経て、別のトランザクションで動く）。 */

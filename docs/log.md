@@ -1,6 +1,29 @@
 # Docs Update Log
 
 ## 2026-11-15
+* **Update**: [bolt_48-1_report](/development/cargo-tracker/bolt_48-1_report.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [bolt_48-1_plan](/development/cargo-tracker/bolt_48-1_plan.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [w9_review_20261115](/review/cargo-tracker/w9_review_20261115.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [06-受付一覧と審査と見積り](/manual/06-受付一覧と審査と見積り.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [04-見積りへの回答と承認](/manual/04-見積りへの回答と承認.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [iteration_report-W9](/development/cargo-tracker/iteration_report-W9.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [bolt_48-1_report](/development/cargo-tracker/bolt_48-1_report.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [bolt_48-1_plan](/development/cargo-tracker/bolt_48-1_plan.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [w9_review_20261115](/review/cargo-tracker/w9_review_20261115.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [06-受付一覧と審査と見積り](/manual/06-受付一覧と審査と見積り.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [04-見積りへの回答と承認](/manual/04-見積りへの回答と承認.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [iteration_report-W9](/development/cargo-tracker/iteration_report-W9.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-sonnet-5-5）
+* **Creation**: [bolt_48-1_plan](/development/cargo-tracker/bolt_48-1_plan.md)・[bolt_48-1_report](/development/cargo-tracker/bolt_48-1_report.md) を作成（anthropic/claude-sonnet-5-5。W9。辞退した見積りの輸送要求を辞退で終了にする。週全体レビューの高 H-2。人が選んだ）。domain_model・ui_design・user_story・test_strategy・マニュアル 4・6 章・台帳 D-168・D-173、W9 の完了報告書・レビューを更新
 * **Update**: [iteration_report-W9](/development/cargo-tracker/iteration_report-W9.md) を更新（anthropic/claude-sonnet-5-5）
 * **Update**: [bolt_48_report](/development/cargo-tracker/bolt_48_report.md) を更新（anthropic/claude-sonnet-5-5）
 * **Update**: [bolt_48_plan](/development/cargo-tracker/bolt_48_plan.md) を更新（anthropic/claude-sonnet-5-5）

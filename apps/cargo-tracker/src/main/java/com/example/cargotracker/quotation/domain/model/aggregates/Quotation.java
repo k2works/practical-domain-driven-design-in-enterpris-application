@@ -2,6 +2,7 @@ package com.example.cargotracker.quotation.domain.model.aggregates;
 
 import com.example.cargotracker.quotation.domain.events.QuotationApprovedByShipper;
 import com.example.cargotracker.quotation.domain.events.QuotationConsultationRequested;
+import com.example.cargotracker.quotation.domain.events.QuotationDeclined;
 import com.example.cargotracker.quotation.domain.events.QuotationPresented;
 import com.example.cargotracker.quotation.domain.events.QuotationPresentedForReapproval;
 import com.example.cargotracker.quotation.domain.events.QuotationRouteAssigned;
@@ -410,7 +411,7 @@ public final class Quotation {
 
     /**
      * 荷主が理由を付けて辞退する（提示済み → 失効。US-24 AC2。W9 の Bolt 46。D-86・ADR-018 の見直し）。見積りは失効として記録し、
-     * 辞退者・辞退時刻（回答者・回答時刻と同じ列）と理由を残す。DE-16（経路設計の依頼）は出さず、輸送要求の状態は変えない。
+     * 辞退者・辞退時刻（回答者・回答時刻と同じ列）と理由を残す。DE-16（経路設計の依頼）は出さず、辞退した事実 DE-17 を出す（輸送要求を辞退で終了にするのは listener）。
      * 失効として記録するので、再見積りできない（{@link #requoteRejectionAt}）。担当営業が荷主と相談して新しい見積依頼で出し直す。
      *
      * @param respondent 辞退した荷主担当者
@@ -434,6 +435,15 @@ public final class Quotation {
         respondedAt = at;
         declineReason = trimmed;
         status = QuotationStatus.EXPIRED;
+        // 辞退した事実（DE-17）。輸送要求を辞退で終了にするのは、これを受ける listener（W9 の Bolt 48-1。台帳 D-173）
+        domainEvents.add(new QuotationDeclined(
+                id.value(),
+                quotationNo,
+                transportRequestId.value(),
+                transportRequestVersionNo,
+                respondent.value(),
+                trimmed,
+                at));
         return Optional.empty();
     }
 

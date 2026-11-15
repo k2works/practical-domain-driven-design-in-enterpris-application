@@ -140,6 +140,18 @@ public class RouteDesignUiSteps {
         assertThat(link(RESPOND)).hasCount(0);
     }
 
+    /** 辞退で終了への変更は DE-17 を受けた輸送要求の更新（非同期）を待つため、状態が変わるまで開き直す（W9 の Bolt 48-1。台帳 D-173）。 */
+    @ならば("見積依頼の詳細の状態が {string} に変わり、新しい見積りの案内が示される")
+    public void 辞退で終了に変わる(String status) {
+        for (int i = 0; i < 20 && !status.equals(definition("状態").textContent()); i++) {
+            page().waitForTimeout(500);
+            page().reload();
+        }
+        assertThat(definition("状態")).hasText(status);
+        assertThat(page().locator("main")).containsText("この見積依頼を複製して新しく作ってください");
+        browser.checkAccessibility();
+    }
+
     /** 経路設計中への変更は DE-16 を受けた輸送要求の更新（非同期）を待つため、状態が変わるまで開き直す。 */
     @ならば("見積依頼の詳細の状態が {string} になる")
     public void 状態が変わる(String status) {

@@ -4,7 +4,7 @@ title: "cargo-tracker テスト戦略"
 description: "cargo-tracker のテスト形状、テストレベルと責務、BDD（Cucumber）のシナリオ階層とタグ規約、不変条件・ユーザーストーリーとテストの対応、カバレッジ目標、CI での実行。"
 tags: [design, test-strategy, bdd]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-09T21:08:50Z }
+generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-15T06:38:28Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T08:12:04Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:38Z }
@@ -678,7 +678,7 @@ Release 1.0 の受入条件のうち、上の照合の表にまだ入れてい�
 | US-21 | AC3（電話・メールの照会は引継ぎが不要でも照会総数に入る） | 44（Bolt 40-15 から） | `@US-21-AC3`（同上。電話の照会が総数に入る）、`InquiryRecordingServiceTest` |
 | US-21 | AC4（週次で KPI-01 の中央値・P90 と KPI-02 を示す。除外は未実装で全件） | 44-1 | `@US-21-AC4`（同上）、`KpiWeeklyQueryServiceTest`、`KpiObservationControllerTest`、`AuthenticationSecurityIntegrationTest`（監査担当者だけが開ける） |
 | US-21 | AC5（基準値・算出方法・登録者を記録し、パイロット中の値と並べて示す） | 44-2 | `@US-21-AC5`（同上）、`KpiBaselineTest`、`KpiBaselineCommandServiceTest`、`KpiComparisonQueryServiceTest`、`MyBatisKpiBaselineRepositoryIntegrationTest`、`AppendOnlyGrantIntegrationTest` |
-| US-24 | AC2（提示済みの見積りを理由を付けて辞退すると、見積りは失効として記録され、辞退の理由と回答者と辞退時刻が残り営業担当者に示される。再見積りできない。輸送要求の状態は変えない） | 46 | `@US-24-AC2`（`features/quotation/decline_quotation.feature`、画面の層は `features/ui/request_route_design_ui.feature`）、`QuotationTest`（辞退の行）、`QuotationResponseServiceTest`、`MyBatisQuotationIntegrationTest`（辞退の往復と CHECK `ck_quotation_declined`）、`QuotationResponseControllerTest`・`StaffQuotationControllerTest`・`TransportRequestControllerTest` |
+| US-24 | AC2（提示済みの見積りを理由を付けて辞退すると、見積りは失効として記録され、辞退の理由と回答者と辞退時刻が残り営業担当者に示される。再見積りできない。輸送要求の状態は変えない） | 46 | `@US-24-AC2`（`features/quotation/decline_quotation.feature`、画面の層は `features/ui/request_route_design_ui.feature`）、`QuotationTest`（辞退の行。DE-17 を出す）、`TransportRequestWithdrawnTest`・`QuotationDeclinedEventHandlerTest`（輸送要求を辞退で終了にする。冪等）、`QuotationResponseServiceTest`、`MyBatisQuotationIntegrationTest`（辞退の往復と CHECK `ck_quotation_declined`）、`QuotationResponseControllerTest`・`StaffQuotationControllerTest`・`TransportRequestControllerTest` |
 | US-24 | AC3（提示済みの見積りの条件を相談すると、相談内容を伴う有人案件（見積り相談）が起票され、見積りの状態は変わらない） | 46-1 | `@US-24-AC3`（`features/quotation/consult_quotation.feature`、画面の層は `features/ui/request_route_design_ui.feature`）、`QuotationTest`（相談の行）、`QuotationResponseServiceTest`、`QuotationConsultationRequestedEventHandlerTest`（起票・再配信で二重に起票しない）、`QuotationResponseControllerTest` |
 | US-09 | AC2（確認中の実績があるとき、判明していること・未確定のこと・次の行動・次回の更新・担当窓口を示す。確認中の実績の中身は出さない） | 47 | `@US-09-AC2`（`features/ui/customer_tracking_notice_ui.feature`）、`CustomerTrackingControllerTest`（Bolt 47 の行）、`CustomerTrackingQueryServiceTest` |
 | US-09 | AC3（更新が許容を過ぎて届かないとき、最新性を保証できないことと最後の採用値・次回の更新・次の行動を示す。台帳 D-167） | 47 | `@US-09-AC3`（同上）、`CustomerTrackingQueryServiceTest`（36 時間の境界）、`CustomerTrackingControllerTest` |
