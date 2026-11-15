@@ -15,7 +15,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.example.cargotracker.identity.infrastructure.security.TestActors;
 import com.example.cargotracker.identity.infrastructure.security.WithAuthenticatedActor;
+import com.example.cargotracker.quotation.application.internal.commands.ConsultQuotationCommand;
+import com.example.cargotracker.quotation.application.internal.commands.DeclineQuotationCommand;
 import com.example.cargotracker.quotation.application.internal.commands.RequestRouteDesignCommand;
+import com.example.cargotracker.quotation.application.internal.commandservices.ConsultOutcome;
+import com.example.cargotracker.quotation.application.internal.commandservices.DeclineOutcome;
 import com.example.cargotracker.quotation.application.internal.commandservices.QuotationResponseService;
 import com.example.cargotracker.quotation.application.internal.commandservices.RouteDesignRequestOutcome;
 import com.example.cargotracker.quotation.application.internal.queryservices.QuotationQueryService;
@@ -106,7 +110,10 @@ class QuotationResponseControllerTest {
                 .andExpect(content().string(containsString("2099-10-08 18:00 Asia/Tokyo（UTC+09:00）")))
                 .andExpect(content().string(containsString("詳細な経路は、経路設計者の承認後に確定します。")))
                 .andExpect(content().string(containsString("この条件で詳細経路設計へ進む</button>")))
-                .andExpect(content().string(containsString("辞退や条件の相談は担当営業にご連絡ください。")))
+                .andExpect(content().string(containsString("条件を相談する</button>")))
+                .andExpect(content().string(not(containsString("条件の相談は担当営業にご連絡ください。"))))
+                .andExpect(content().string(containsString("理由を付けて辞退する</button>")))
+                .andExpect(content().string(containsString("辞退すると、この見積りは使えなくなります")))
                 .andExpect(content().string(containsString("この回答は予約の確定ではありません。経路が決まったら、あらためて見積りと経路を確かめて承認していただきます。")))
                 .andExpect(content().string(containsString("回答を取り消したい場合は、業務番号を添えて担当営業にご連絡ください。")))
                 .andExpect(content().string(not(containsString("<!-- C-05"))));
@@ -154,6 +161,108 @@ class QuotationResponseControllerTest {
         mockMvc.perform(post(RESPONSE)).andExpect(flash().attribute("result", "TR-2026-0001 見積 1 ですでに詳細経路設計を依頼しています"));
         mockMvc.perform(post(RESPONSE)).andExpect(flash().attribute("problem", "見積りが更新されました。最新の見積りを確かめてから回答してください"));
         mockMvc.perform(post(RESPONSE)).andExpect(status().isNotFound());
+    }
+
+    // 辞退（US-24 AC2。W9 の Bolt 46）
+
+    private static final String DECLINE = RESPONSE + "/decline";
+
+    @Test
+    void 理由を付けて辞退すると詳細へリダイレクトして結果を示す() throws Exception {
+        given(responseService.decline(new DeclineQuotationCommand(NUMBER, 1, SHIPPER, USER, "他社で進めるため")))
+                .willReturn(new DeclineOutcome.Declined(NUMBER, 1));
+
+        mockMvc.perform(post(DECLINE).param("reason", "他社で進めるため"))
+                .andExpect(redirectedUrl(DETAIL))
+                .andExpect(flash().attribute("result", "TR-2026-0001 見積 1 を辞退しました。理由は担当営業に伝わります"));
+    }
+
+    @Test
+    void 理由の誤りの辞退は回答の画面に戻して入力した理由を残す() throws Exception {
+        given(quotationQueryService.findVisible(NUMBER, SHIPPER)).willReturn(List.of(presented()));
+        given(responseService.decline(any())).willReturn(new DeclineOutcome.InvalidReason("辞退の理由を入力してください"));
+
+        mockMvc.perform(post(DECLINE).param("reason", " "))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("辞退の理由を入力してください")))
+                .andExpect(content().string(containsString("理由を付けて辞退する</button>")));
+    }
+
+    @Test
+    void 辞退を受け付けないときと競合したときは詳細に戻して理由を示しない番号は見つからない() throws Exception {
+        given(responseService.decline(any()))
+                .willReturn(
+                        new DeclineOutcome.Rejected(QuotationRejection.EXPIRED),
+                        new DeclineOutcome.Rejected(QuotationRejection.ROUTING_REQUESTED),
+                        new DeclineOutcome.Conflict(),
+                        new DeclineOutcome.NotFound());
+
+        mockMvc.perform(post(DECLINE).param("reason", "理由"))
+                .andExpect(redirectedUrl(DETAIL))
+                .andExpect(flash().attribute("problem", "TR-2026-0001 見積 1 は有効期限を過ぎて失効しています。新しい見積りは担当営業にご依頼ください"));
+        mockMvc.perform(post(DECLINE).param("reason", "理由"))
+                .andExpect(flash().attribute("problem", "TR-2026-0001 見積 1 はすでに詳細経路設計を依頼しているため辞退できません。担当営業にご連絡ください"));
+        mockMvc.perform(post(DECLINE).param("reason", "理由"))
+                .andExpect(flash().attribute("problem", "見積りが更新されました。最新の見積りを確かめてから回答してください"));
+        mockMvc.perform(post(DECLINE).param("reason", "理由")).andExpect(status().isNotFound());
+    }
+
+    @Test
+    void 業務番号の形でない番号の辞退は受け付けない() throws Exception {
+        mockMvc.perform(post("/customer/transport-requests/XX/quotations/1/response/decline")
+                        .param("reason", "理由"))
+                .andExpect(status().isNotFound());
+        verify(responseService, never()).decline(any());
+    }
+
+    // 相談（US-24 AC3。W9 の Bolt 46-1）
+
+    private static final String CONSULT = RESPONSE + "/consult";
+
+    @Test
+    void 相談すると詳細へリダイレクトして受け付けたことと問い合わせでの確かめ方を示す() throws Exception {
+        given(responseService.consult(new ConsultQuotationCommand(NUMBER, 1, SHIPPER, USER, "納期を早められるか")))
+                .willReturn(new ConsultOutcome.Requested(NUMBER, 1));
+
+        mockMvc.perform(post(CONSULT).param("content", "納期を早められるか"))
+                .andExpect(redirectedUrl(DETAIL))
+                .andExpect(
+                        flash().attribute("result", "TR-2026-0001 見積 1 の条件の相談を受け付けました。担当者が確認します。進捗は「問い合わせ」で確かめられます"));
+    }
+
+    @Test
+    void 内容の誤りの相談は回答の画面に戻して入力した内容を残す() throws Exception {
+        given(quotationQueryService.findVisible(NUMBER, SHIPPER)).willReturn(List.of(presented()));
+        given(responseService.consult(any())).willReturn(new ConsultOutcome.InvalidContent("相談内容を入力してください"));
+
+        mockMvc.perform(post(CONSULT).param("content", " "))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("相談内容を入力してください")))
+                .andExpect(content().string(containsString("条件を相談する</button>")));
+    }
+
+    @Test
+    void 相談を受け付けないときは詳細に戻して理由を示しない番号は見つからない() throws Exception {
+        given(responseService.consult(any()))
+                .willReturn(
+                        new ConsultOutcome.Rejected(QuotationRejection.EXPIRED),
+                        new ConsultOutcome.Rejected(QuotationRejection.ROUTING_REQUESTED),
+                        new ConsultOutcome.NotFound());
+
+        mockMvc.perform(post(CONSULT).param("content", "相談"))
+                .andExpect(redirectedUrl(DETAIL))
+                .andExpect(flash().attribute("problem", "TR-2026-0001 見積 1 は有効期限を過ぎて失効しています。新しい見積りは担当営業にご依頼ください"));
+        mockMvc.perform(post(CONSULT).param("content", "相談"))
+                .andExpect(flash().attribute("problem", "TR-2026-0001 見積 1 はすでに詳細経路設計を依頼しているため相談できません。担当営業にご連絡ください"));
+        mockMvc.perform(post(CONSULT).param("content", "相談")).andExpect(status().isNotFound());
+    }
+
+    @Test
+    void 業務番号の形でない番号の相談は受け付けない() throws Exception {
+        mockMvc.perform(post("/customer/transport-requests/XX/quotations/1/response/consult")
+                        .param("content", "相談"))
+                .andExpect(status().isNotFound());
+        verify(responseService, never()).consult(any());
     }
 
     @Test

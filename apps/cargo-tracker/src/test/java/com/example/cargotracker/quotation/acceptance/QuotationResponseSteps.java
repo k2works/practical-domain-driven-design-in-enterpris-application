@@ -2,10 +2,15 @@ package com.example.cargotracker.quotation.acceptance;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.example.cargotracker.quotation.application.internal.commands.ConsultQuotationCommand;
+import com.example.cargotracker.quotation.application.internal.commands.DeclineQuotationCommand;
 import com.example.cargotracker.quotation.application.internal.commands.RequestRouteDesignCommand;
+import com.example.cargotracker.quotation.application.internal.commandservices.ConsultOutcome;
+import com.example.cargotracker.quotation.application.internal.commandservices.DeclineOutcome;
 import com.example.cargotracker.quotation.application.internal.commandservices.QuotationResponseService;
 import com.example.cargotracker.quotation.application.internal.commandservices.RouteDesignRequestOutcome;
 import com.example.cargotracker.quotation.application.internal.queryservices.StaffQuotationQueryService;
+import com.example.cargotracker.quotation.domain.events.QuotationConsultationRequested;
 import com.example.cargotracker.quotation.domain.events.RouteDesignRequested;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequest;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationRejection;
@@ -68,6 +73,8 @@ public class QuotationResponseSteps {
     private final InMemoryTransportRequestRepository transportRequests;
     private final ScenarioContext context;
     private RouteDesignRequestOutcome lastOutcome;
+    private DeclineOutcome lastDecline;
+    private ConsultOutcome lastConsult;
     private long rememberedVersion;
 
     public QuotationResponseSteps(
@@ -94,6 +101,88 @@ public class QuotationResponseSteps {
     public void 他社が詳細経路設計へ進むと回答する(int quotationNo) {
         lastOutcome = responseService.requestRouteDesign(
                 new RequestRouteDesignCommand(number(), quotationNo, OTHER_SHIPPER, RESPONDENT));
+    }
+
+    /** 荷主の条件の相談（US-24 AC3。W9 の Bolt 46-1）。 */
+    @もし("荷主担当者が見積り {int} の条件を内容 {string} で相談する")
+    public void 相談する(int quotationNo, String content) {
+        lastConsult = responseService.consult(
+                new ConsultQuotationCommand(number(), quotationNo, SHIPPER, RESPONDENT, content));
+    }
+
+    @ならば("相談の結果は {string} である")
+    public void 相談の結果(String result) {
+        switch (result) {
+            case "相談した" -> assertThat(lastConsult).isInstanceOf(ConsultOutcome.Requested.class);
+            case "見つからない" -> assertThat(lastConsult).isInstanceOf(ConsultOutcome.NotFound.class);
+            case "内容の誤り" -> assertThat(lastConsult).isInstanceOf(ConsultOutcome.InvalidContent.class);
+            default -> assertThat(lastConsult).isEqualTo(new ConsultOutcome.Rejected(named(REJECTIONS, result)));
+        }
+    }
+
+    @ならば("見積り {int} の条件の相談のイベントが内容 {string} で発行される")
+    public void 相談のイベントが発行される(int quotationNo, String content) {
+        assertThat(delivery.published())
+                .filteredOn(QuotationConsultationRequested.class::isInstance)
+                .map(QuotationConsultationRequested.class::cast)
+                .singleElement()
+                .satisfies(event -> {
+                    assertThat(event.quotationNo()).isEqualTo(quotationNo);
+                    assertThat(event.transportRequestId()).isEqualTo(context.transportRequestId());
+                    assertThat(event.shipperCompanyId()).isEqualTo(SHIPPER.value());
+                    assertThat(event.requestedBy()).isEqualTo(RESPONDENT.value());
+                    assertThat(event.content()).isEqualTo(content);
+                });
+    }
+
+    @ならば("見積り {int} は {string} のまま回答者も辞退も記録されていない")
+    public void 状態のまま回答も辞退もない(int quotationNo, String status) {
+        assertThat(staffQueryService.find(number(), quotationNo, OPERATOR)).hasValueSatisfying(quotation -> {
+            assertThat(quotation.status()).isEqualTo(named(STATUSES, status));
+            assertThat(quotation.respondedBy()).isEmpty();
+            assertThat(quotation.isDeclined()).isFalse();
+        });
+    }
+
+    /** 荷主の辞退（US-24 AC2。W9 の Bolt 46）。 */
+    @もし("荷主担当者が見積り {int} を理由 {string} で辞退する")
+    public void 辞退する(int quotationNo, String reason) {
+        lastDecline = responseService.decline(
+                new DeclineQuotationCommand(number(), quotationNo, SHIPPER, RESPONDENT, reason));
+    }
+
+    @もし("他社の荷主担当者が見積り {int} を理由 {string} で辞退する")
+    public void 他社が辞退する(int quotationNo, String reason) {
+        lastDecline = responseService.decline(
+                new DeclineQuotationCommand(number(), quotationNo, OTHER_SHIPPER, RESPONDENT, reason));
+    }
+
+    @ならば("辞退の結果は {string} である")
+    public void 辞退の結果(String result) {
+        switch (result) {
+            case "辞退した" -> assertThat(lastDecline).isInstanceOf(DeclineOutcome.Declined.class);
+            case "見つからない" -> assertThat(lastDecline).isInstanceOf(DeclineOutcome.NotFound.class);
+            case "理由の誤り" -> assertThat(lastDecline).isInstanceOf(DeclineOutcome.InvalidReason.class);
+            default -> assertThat(lastDecline).isEqualTo(new DeclineOutcome.Rejected(named(REJECTIONS, result)));
+        }
+    }
+
+    @ならば("見積り {int} は失効として記録され、辞退の理由 {string} と回答者と辞退時刻 {string} が残る")
+    public void 辞退が記録される(int quotationNo, String reason, String declinedAt) {
+        assertThat(staffQueryService.find(number(), quotationNo, OPERATOR)).hasValueSatisfying(quotation -> {
+            assertThat(quotation.status()).isEqualTo(QuotationStatus.EXPIRED);
+            assertThat(quotation.isDeclined()).isTrue();
+            assertThat(quotation.declineReason()).contains(reason);
+            assertThat(quotation.respondedBy()).contains(RESPONDENT);
+            assertThat(quotation.respondedAt()).contains(new UtcInstant(Instant.parse(declinedAt)));
+        });
+    }
+
+    @ならば("見積り {int} は辞退として記録されていない")
+    public void 辞退として記録されていない(int quotationNo) {
+        assertThat(staffQueryService.find(number(), quotationNo, OPERATOR))
+                .hasValueSatisfying(
+                        quotation -> assertThat(quotation.isDeclined()).isFalse());
     }
 
     @ならば("回答の結果は {string} である")

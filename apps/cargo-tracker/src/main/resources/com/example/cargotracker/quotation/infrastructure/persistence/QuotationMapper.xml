@@ -31,6 +31,7 @@
             <arg column="route_redesign_required_at" name="routeRedesignRequiredAt" javaType="java.time.OffsetDateTime"/>
             <arg column="shipper_approved_by" name="shipperApprovedBy" javaType="java.util.UUID"/>
             <arg column="shipper_approved_at" name="shipperApprovedAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="decline_reason" name="declineReason" javaType="String"/>
             <arg column="version" name="version" javaType="_long"/>
         </constructor>
     </resultMap>
@@ -52,12 +53,12 @@
              currency, route_policy_via, route_policy_departure_at, route_policy_arrival_at, internal_approved_by,
              internal_approved_at, presented_at, replaced_by_quotation_id, shipper_response, responded_by, responded_at,
              routing_case_number, route_version_no, route_confirmed_at, route_redesign_required_at, shipper_approved_by,
-             shipper_approved_at, version)
+             shipper_approved_at, decline_reason, version)
         VALUES (#{id}, #{transportRequestId}, #{quotationNo}, #{transportRequestVersionNo}, #{status}, #{expiresAt},
                 #{totalAmount}, #{currency}, #{routePolicyVia}, #{routePolicyDepartureAt}, #{routePolicyArrivalAt},
                 #{internalApprovedBy}, #{internalApprovedAt}, #{presentedAt}, #{replacedByQuotationId},
                 #{shipperResponse}, #{respondedBy}, #{respondedAt}, #{routingCaseNumber}, #{routeVersionNo},
-                #{routeConfirmedAt}, #{routeRedesignRequiredAt}, #{shipperApprovedBy}, #{shipperApprovedAt}, #{version})
+                #{routeConfirmedAt}, #{routeRedesignRequiredAt}, #{shipperApprovedBy}, #{shipperApprovedAt}, #{declineReason}, #{version})
     </insert>
 
     <insert id="insertPricingLine">
@@ -80,7 +81,7 @@
                route_version_no = #{row.routeVersionNo}, route_confirmed_at = #{row.routeConfirmedAt},
                route_redesign_required_at = #{row.routeRedesignRequiredAt},
                shipper_approved_by = #{row.shipperApprovedBy}, shipper_approved_at = #{row.shipperApprovedAt},
-               version = version + 1
+               decline_reason = #{row.declineReason}, version = version + 1
          WHERE id = #{row.id} AND version = #{expectedVersion}
     </update>
 
@@ -89,7 +90,7 @@
                currency, route_policy_via, route_policy_departure_at, route_policy_arrival_at, internal_approved_by,
                internal_approved_at, presented_at, replaced_by_quotation_id, shipper_response, responded_by,
                responded_at, routing_case_number, route_version_no, route_confirmed_at, route_redesign_required_at,
-               shipper_approved_by, shipper_approved_at, version
+               shipper_approved_by, shipper_approved_at, decline_reason, version
           FROM quotation.quotation
          WHERE transport_request_id = #{transportRequestId}
          ORDER BY quotation_no
@@ -100,7 +101,7 @@
                currency, route_policy_via, route_policy_departure_at, route_policy_arrival_at, internal_approved_by,
                internal_approved_at, presented_at, replaced_by_quotation_id, shipper_response, responded_by,
                responded_at, routing_case_number, route_version_no, route_confirmed_at, route_redesign_required_at,
-               shipper_approved_by, shipper_approved_at, version
+               shipper_approved_by, shipper_approved_at, decline_reason, version
           FROM quotation.quotation
          WHERE id = #{id}
     </select>

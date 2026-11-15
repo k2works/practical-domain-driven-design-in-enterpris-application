@@ -195,6 +195,8 @@ Bolt がイテレーションに当たります。ふりかえりは各 Bolt の
 | 45 | [別企業の荷主情報での提出の拒否（US-01 AC3。受入条件の照合）](bolt_45_plan.md)（[W9 計画](iteration_plan-W9.md)） | [終了報告](bolt_45_report.md) | W9 | 完了（承認待ち。全件のゲートは 45-1 でまとめる） |
 | 45-1 | [過去の見積依頼の複製（US-01 AC5。US-01 を締める）](bolt_45-1_plan.md)（[W9 計画](iteration_plan-W9.md)） | [終了報告](bolt_45-1_report.md) | W9 | 完了（承認待ち） |
 | 47 | [追跡の照会の確認中・鮮度超過のお知らせ（US-09 AC2・AC3）](bolt_47_plan.md)（[W9 計画](iteration_plan-W9.md)） | [終了報告](bolt_47_report.md) | W9 | 完了（承認待ち） |
+| 46 | [荷主の見積りの辞退（US-24 AC2。D-86・ADR-018 の見直し）](bolt_46_plan.md)（[W9 計画](iteration_plan-W9.md)） | [終了報告](bolt_46_report.md) | W9 | 完了（承認待ち） |
+| 46-1 | [見積りの条件の相談（US-24 AC3。US-24 を締める）](bolt_46-1_plan.md)（[W9 計画](iteration_plan-W9.md)） | [終了報告](bolt_46-1_report.md) | W9 | 完了（承認待ち） |
 | 40-16 | [W8 の受入条件の照合とマニュアル・動画の総点検（US-11・US-20 を締める）](bolt_40-16_plan.md)（[W8 計画](iteration_plan-W8.md)） | [終了報告](bolt_40-16_report.md) | W8 | 完了（承認済み） |
 | 40-15 | [照会の記録（S-23）と有人案件への引き継ぎ（US-11 AC2）](bolt_40-15_plan.md)（[W8 計画](iteration_plan-W8.md)） | [終了報告](bolt_40-15_report.md)（[動画](../../assets/demo/bolt-40-15/inquiry-handoff.webm){:target="_blank"}） | W8 | 完了（承認済み） |
 
@@ -450,3 +452,7 @@ Bolt を始めるときに行を追加します。
 * [Bolt 45-1 終了報告 - 過去の見積依頼の複製（US-01 AC5。US-01 を締める）](./bolt_45-1_report.md)
 * [Bolt 47 計画 - 追跡の照会の確認中・鮮度超過のお知らせ（US-09 AC2・AC3）](./bolt_47_plan.md)
 * [Bolt 47 終了報告 - 追跡の照会の確認中・鮮度超過のお知らせ（US-09 AC2・AC3）](./bolt_47_report.md)
+* [Bolt 46 計画 - 荷主の見積りの辞退（US-24 AC2。D-86・ADR-018 の見直し）](./bolt_46_plan.md)
+* [Bolt 46 終了報告 - 荷主の見積りの辞退（US-24 AC2。D-86・ADR-018 の見直し）](./bolt_46_report.md)
+* [Bolt 46-1 計画 - 見積りの条件の相談（US-24 AC3。US-24 を締める）](./bolt_46-1_plan.md)
+* [Bolt 46-1 終了報告 - 見積りの条件の相談（US-24 AC3。US-24 を締める）](./bolt_46-1_report.md)

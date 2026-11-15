@@ -86,6 +86,8 @@ verified:
 
 - 2026-10-23: Bolt 37e2 で、代替案「DE-24 の listener が見積りの行を `SELECT ... FOR UPDATE` で読む」の採らない理由と、コンテキストの方言差の記述を直した。`SELECT ... FOR UPDATE` は identity の前例で H2 と PostgreSQL の両方で流れ、押さえるのは見積りの 1 行で書くのは別の集約 1 つなので、「方言」と「2 つの集約」は理由にならないため。Bolt 37e2 で本予約の確定用の照会に `FOR UPDATE` を使う（ADR-016）。決定（DE-24 の listener はロックしない）は変えない（[Bolt 37e2 計画](../../development/cargo-tracker/bolt_37e2_plan.md) の確認ポイント 5。human:kakimomokuri が承認）
 
+- 2026-11-15: W9 の Bolt 46 で、荷主の辞退（US-24 AC2）の扱いを見直した（人が選んだ。human:kakimomokuri）。辞退は見積りを失効として記録するだけで輸送要求の状態を変えず、再見積りもしない（辞退した見積りは再見積りの対象外）。したがって、この ADR の戻し（DE-24）と「先へだけ進め戻さない」の例外の範囲は広がらない。D-86 は「再見積りできない・担当者で相談する」で決着した（[台帳](../../development/cargo-tracker/release_plan.md)）。
+
 ## 関連ドキュメント
 
 - [ADR-007](./007-postgresql-mybatis-flyway.md)

@@ -66,12 +66,67 @@ public class RouteDesignUiSteps {
         assertThat(page().getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setLevel(1)))
                 .hasText("見積りへの回答 " + number() + " 見積 1");
         assertThat(page().locator("main")).containsText("詳細な経路は、経路設計者の承認後に確定します");
-        assertThat(page().locator("main")).containsText("辞退や条件の相談は担当営業にご連絡ください");
+        assertThat(page().locator("main")).containsText("条件を相談する");
         page().locator("body").focus();
         browser.tabUntilFocused(button(PROCEED));
         page().keyboard().press("Enter");
         page().waitForURL("**/customer/transport-requests/" + number());
         browser.checkAccessibility();
+    }
+
+    /** 辞退（US-24 AC2。W9 の Bolt 46）。回答の画面の辞退の欄に理由を入れて、キー操作だけで辞退する。 */
+    @もし("キー操作だけで見積りへの回答を開き、理由 {string} で辞退する")
+    public void キー操作だけで辞退する(String reason) {
+        page().locator("body").focus();
+        browser.tabUntilFocused(link(RESPOND));
+        page().keyboard().press("Enter");
+        page().waitForURL("**/customer/transport-requests/" + number() + "/quotations/1/response");
+        browser.checkAccessibility();
+        assertThat(page().locator("main")).containsText("辞退すると、この見積りは使えなくなります");
+        Locator field = page().getByLabel("辞退の理由（必須。500 文字まで）", new Page.GetByLabelOptions().setExact(true));
+        browser.tabUntilFocused(field);
+        page().keyboard().type(reason);
+        browser.tabUntilFocused(button("理由を付けて辞退する"));
+        page().keyboard().press("Enter");
+        page().waitForURL("**/customer/transport-requests/" + number());
+        browser.checkAccessibility();
+    }
+
+    @もし("キー操作だけで見積りへの回答を開き、理由を入れずに辞退する")
+    public void 理由を入れずに辞退する() {
+        page().locator("body").focus();
+        browser.tabUntilFocused(link(RESPOND));
+        page().keyboard().press("Enter");
+        page().waitForURL("**/customer/transport-requests/" + number() + "/quotations/1/response");
+        // 必須の入力は画面の検証が先に止めるので、空白だけを入れてサーバー側の検証まで通す
+        Locator field = page().getByLabel("辞退の理由（必須。500 文字まで）", new Page.GetByLabelOptions().setExact(true));
+        browser.tabUntilFocused(field);
+        page().keyboard().type("   ");
+        browser.tabUntilFocused(button("理由を付けて辞退する"));
+        page().keyboard().press("Enter");
+    }
+
+    @ならば("回答の画面に {string} と示され、辞退の欄が残る")
+    public void 辞退の誤りが示される(String message) {
+        assertThat(page().getByRole(AriaRole.ALERT).first()).containsText(message);
+        assertThat(button("理由を付けて辞退する")).isVisible();
+        browser.checkAccessibility();
+    }
+
+    @ならば("見積依頼の詳細に見積り {int} を理由 {string} で辞退したことが表示され、回答の入口はない")
+    public void 辞退したことが表示される(int quotationNo, String reason) {
+        assertThat(page().getByRole(AriaRole.STATUS)).containsText(number() + " 見積 " + quotationNo + " を辞退しました");
+        assertThat(page().locator("main")).containsText("にこの見積りを辞退しました（理由: " + reason + "）");
+        assertThat(link(RESPOND)).hasCount(0);
+        browser.checkAccessibility();
+    }
+
+    @ならば("見積り {int} は辞退した理由 {string} が示され、再見積りの操作はない")
+    public void 辞退が営業に示される(int quotationNo, String reason) {
+        assertThat(page().locator("main")).containsText("に辞退しました（理由: " + reason + "）");
+        assertThat(page().locator("main")).containsText("再見積りはできません");
+        assertThat(button("社内承認して提示する")).hasCount(0);
+        assertThat(link("再見積りする")).hasCount(0);
     }
 
     @ならば("見積依頼の詳細に見積り {int} で詳細経路設計を依頼したことが表示され、回答の入口はない")

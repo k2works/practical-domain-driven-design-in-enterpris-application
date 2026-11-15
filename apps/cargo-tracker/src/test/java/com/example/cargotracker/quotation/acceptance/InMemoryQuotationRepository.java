@@ -154,6 +154,7 @@ public class InMemoryQuotationRepository implements QuotationRepository {
                 quotation.respondedAt().orElse(null),
                 quotation.assignedRoute().orElse(null),
                 quotation.shipperApproval().orElse(null),
+                quotation.declineReason().orElse(null),
                 aggregateVersion);
     }
 }

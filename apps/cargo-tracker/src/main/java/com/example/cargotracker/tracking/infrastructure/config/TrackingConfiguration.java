@@ -14,6 +14,7 @@ import com.example.cargotracker.tracking.application.internal.commandservices.We
 import com.example.cargotracker.tracking.application.internal.eventhandlers.BookingTrackingStartNotificationEventHandler;
 import com.example.cargotracker.tracking.application.internal.eventhandlers.BookingTransportPhaseNotificationEventHandler;
 import com.example.cargotracker.tracking.application.internal.eventhandlers.ExternalMilestoneEventHandler;
+import com.example.cargotracker.tracking.application.internal.eventhandlers.QuotationConsultationRequestedEventHandler;
 import com.example.cargotracker.tracking.application.internal.eventhandlers.RouteCandidatesNotFoundEventHandler;
 import com.example.cargotracker.tracking.application.internal.eventhandlers.TrackingStartEventHandler;
 import com.example.cargotracker.tracking.application.internal.eventhandlers.VoyageArrivalEventHandler;
@@ -93,6 +94,13 @@ public class TrackingConfiguration {
     RouteCandidatesNotFoundEventHandler routeCandidatesNotFoundEventHandler(
             SystemServiceCaseOpener systemServiceCaseOpener) {
         return new RouteCandidatesNotFoundEventHandler(systemServiceCaseOpener);
+    }
+
+    /** 荷主が見積りの条件を相談した を受けて、見積り相談の有人案件を起票する（US-24 AC3。別のトランザクションで動く。W9 の Bolt 46-1）。 */
+    @Bean
+    QuotationConsultationRequestedEventHandler quotationConsultationRequestedEventHandler(
+            SystemServiceCaseOpener systemServiceCaseOpener) {
+        return new QuotationConsultationRequestedEventHandler(systemServiceCaseOpener);
     }
 
     /** DE-13 を受けて追跡の実績か拒否の記録を書く（Spring Modulith のイベントの記録を経て、別のトランザクションで動く。Bolt 39g）。 */

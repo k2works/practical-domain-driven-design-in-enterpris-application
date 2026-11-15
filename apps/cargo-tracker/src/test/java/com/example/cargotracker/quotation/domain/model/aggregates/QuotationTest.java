@@ -3,6 +3,7 @@ package com.example.cargotracker.quotation.domain.model.aggregates;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.example.cargotracker.quotation.domain.events.QuotationConsultationRequested;
 import com.example.cargotracker.quotation.domain.events.QuotationPresented;
 import com.example.cargotracker.quotation.domain.events.RouteDesignRequested;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationFixture;
@@ -11,6 +12,7 @@ import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationInp
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationRejection;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationStatus;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestId;
+import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.Location;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
@@ -21,6 +23,7 @@ import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 /** 見積りの集約（作成中 → 承認待ち → 提示済み。Q-INV-05・17。Bolt 10）。 */
 class QuotationTest {
@@ -308,6 +311,154 @@ class QuotationTest {
                     assertThat(event.requestedBy()).isEqualTo(respondent.value());
                     assertThat(event.requestedAt()).isEqualTo(respondedAt);
                 });
+    }
+
+    // 荷主の辞退（US-24 AC2。W9 の Bolt 46。D-86・ADR-018 の見直し: 辞退は失効として記録し、再見積りしない）
+
+    @Test
+    void 提示済みの見積りを理由を付けて辞退すると失効になり理由と回答者と回答時刻を残す() {
+        Quotation quotation = presented();
+        UtcInstant declinedAt = at("2026-10-06T02:00:00Z");
+
+        assertThat(quotation.decline(respondent, "  他社の見積りで進めるため  ", declinedAt))
+                .isEmpty();
+
+        assertThat(quotation.status()).isEqualTo(QuotationStatus.EXPIRED);
+        assertThat(quotation.isDeclined()).isTrue();
+        assertThat(quotation.declineReason()).contains("他社の見積りで進めるため");
+        assertThat(quotation.respondedBy()).contains(respondent);
+        assertThat(quotation.respondedAt()).contains(declinedAt);
+        // 経路設計の依頼（DE-16）は出さない。輸送要求の状態は変えない
+        assertThat(quotation.domainEvents()).isEmpty();
+    }
+
+    @ParameterizedTest
+    @CsvSource({"2099-10-08T08:59:59Z, true", "2099-10-08T09:00:00Z, false"})
+    void 辞退も有効期限の前だけで同時刻からは失効として拒否する(String declinedAt, boolean accepted) {
+        Quotation quotation = presented();
+
+        assertThat(quotation.decline(respondent, "理由", at(declinedAt)))
+                .isEqualTo(accepted ? Optional.empty() : Optional.of(QuotationRejection.EXPIRED));
+        assertThat(quotation.isDeclined()).isEqualTo(accepted);
+    }
+
+    @Test
+    void 提示済みでない見積りと回答済み辞退済みの見積りは辞退できない() {
+        Quotation pending = pendingApproval();
+        Quotation routing = presented();
+        routing.requestRouteDesign(respondent, now);
+        Quotation declined = presented();
+        declined.decline(respondent, "理由", now);
+
+        assertThat(pending.decline(respondent, "理由", now)).contains(QuotationRejection.NOT_PRESENTED);
+        assertThat(routing.decline(respondent, "理由", now)).contains(QuotationRejection.ROUTING_REQUESTED);
+        assertThat(declined.decline(respondent, "理由", now)).contains(QuotationRejection.EXPIRED);
+        assertThat(routing.isDeclined()).isFalse();
+    }
+
+    @Test
+    void 辞退した見積りは再見積りも回答もできない() {
+        Quotation declined = presented();
+        declined.decline(respondent, "理由", now);
+
+        assertThat(declined.requoteRejectionAt(now)).contains(QuotationRejection.EXPIRED);
+        assertThat(declined.responseRejectionAt(now)).contains(QuotationRejection.EXPIRED);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"", "   "})
+    void 辞退の理由が空なら辞退できない(String reason) {
+        Quotation quotation = presented();
+
+        assertThatThrownBy(() -> quotation.decline(respondent, reason, now))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThat(quotation.status()).isEqualTo(QuotationStatus.PRESENTED);
+    }
+
+    @Test
+    void 辞退の理由は500文字までで超えると辞退できない() {
+        Quotation accepted = presented();
+        Quotation rejected = presented();
+
+        assertThat(accepted.decline(respondent, "あ".repeat(500), now)).isEmpty();
+        String tooLong = "あ".repeat(501);
+        assertThatThrownBy(() -> rejected.decline(respondent, tooLong, now))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    // 荷主の相談（US-24 AC3。W9 の Bolt 46-1）。見積りの状態は変えず、相談のイベントだけを出す
+
+    @Test
+    void 提示済みの見積りの条件の相談は状態を変えず相談のイベントを生成する() {
+        Quotation quotation = presented();
+        UtcInstant requestedAt = at("2026-10-06T02:00:00Z");
+        CompanyId shipper = new CompanyId(UUID.randomUUID());
+
+        assertThat(quotation.requestConsultation(respondent, "  納期を 3 日早められるか  ", shipper, "TR-2026-0001", requestedAt))
+                .isEmpty();
+
+        assertThat(quotation.status()).isEqualTo(QuotationStatus.PRESENTED);
+        assertThat(quotation.respondedBy()).isEmpty();
+        assertThat(quotation.isDeclined()).isFalse();
+        assertThat(quotation.domainEvents())
+                .singleElement()
+                .isInstanceOfSatisfying(QuotationConsultationRequested.class, event -> {
+                    assertThat(event.quotationId()).isEqualTo(id.value());
+                    assertThat(event.quotationNo()).isEqualTo(1);
+                    assertThat(event.transportRequestId()).isEqualTo(transportRequestId.value());
+                    assertThat(event.transportRequestNumber()).isEqualTo("TR-2026-0001");
+                    assertThat(event.shipperCompanyId()).isEqualTo(shipper.value());
+                    assertThat(event.requestedBy()).isEqualTo(respondent.value());
+                    assertThat(event.content()).isEqualTo("納期を 3 日早められるか");
+                    assertThat(event.requestedAt()).isEqualTo(requestedAt);
+                });
+    }
+
+    @Test
+    void 回答できない見積りの相談は拒否しイベントを出さない() {
+        CompanyId shipper = new CompanyId(UUID.randomUUID());
+        Quotation pending = pendingApproval();
+        Quotation routing = presented();
+        routing.requestRouteDesign(respondent, now);
+        routing.clearDomainEvents();
+        Quotation declined = presented();
+        declined.decline(respondent, "理由", now);
+        Quotation expired = presented();
+
+        assertThat(pending.requestConsultation(respondent, "相談", shipper, "TR-2026-0001", now))
+                .contains(QuotationRejection.NOT_PRESENTED);
+        assertThat(routing.requestConsultation(respondent, "相談", shipper, "TR-2026-0001", now))
+                .contains(QuotationRejection.ROUTING_REQUESTED);
+        assertThat(declined.requestConsultation(respondent, "相談", shipper, "TR-2026-0001", now))
+                .contains(QuotationRejection.EXPIRED);
+        assertThat(expired.requestConsultation(respondent, "相談", shipper, "TR-2026-0001", at("2099-10-08T09:00:00Z")))
+                .contains(QuotationRejection.EXPIRED);
+        assertThat(routing.domainEvents()).isEmpty();
+        assertThat(declined.domainEvents()).isEmpty();
+        assertThat(expired.domainEvents()).isEmpty();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"", "   "})
+    void 相談の内容が空なら相談できない(String content) {
+        Quotation quotation = presented();
+        CompanyId shipper = new CompanyId(UUID.randomUUID());
+
+        assertThatThrownBy(() -> quotation.requestConsultation(respondent, content, shipper, "TR-2026-0001", now))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void 相談の内容は500文字までで超えると相談できない() {
+        Quotation accepted = presented();
+        Quotation rejected = presented();
+        CompanyId shipper = new CompanyId(UUID.randomUUID());
+
+        String tooLong = "あ".repeat(501);
+        assertThat(accepted.requestConsultation(respondent, "あ".repeat(500), shipper, "TR-2026-0001", now))
+                .isEmpty();
+        assertThatThrownBy(() -> rejected.requestConsultation(respondent, tooLong, shipper, "TR-2026-0001", now))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
     @ParameterizedTest

@@ -113,7 +113,9 @@ final class QuotationViews {
                         .orElse(null),
                 quotation.isPresentedForReapproval(),
                 quotation.isRouteRedesignRequired(),
-                quotation.isRouteDepartedAt(now));
+                quotation.isRouteDepartedAt(now),
+                quotation.isDeclined(),
+                quotation.declineReason().orElse(null));
     }
 
     /** 割り当てた経路の表示（Bolt 20）。 */
@@ -190,6 +192,8 @@ final class QuotationViews {
      * @param reapproval 再承認の見積りか（荷主の承認の後に失効した見積りから経路を引き継いだ再見積りを提示した。D-85。Bolt 35d）
      * @param routeRedesignRequired 割り当てた経路が再設計要か（承認済みでも本予約を確定する旨を出さない。US-07 AC5。Bolt 37e3）
      * @param routeDeparted 割り当てた経路の最初の区間が表示する時刻に出発済みか（同上。D-88。Bolt 37e4）
+     * @param declined 荷主が辞退した見積りか（失効として記録した辞退。US-24 AC2。W9 の Bolt 46）
+     * @param declineReason 辞退の理由（辞退していなければ null）
      */
     record View(
             int quotationNo,
@@ -215,7 +219,9 @@ final class QuotationViews {
             String approvedAt,
             boolean reapproval,
             boolean routeRedesignRequired,
-            boolean routeDeparted) {}
+            boolean routeDeparted,
+            boolean declined,
+            String declineReason) {}
 
     /**
      * 割り当てた経路の表示（Bolt 20）。

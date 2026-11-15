@@ -1,10 +1,13 @@
 package com.example.cargotracker.quotation.application.internal.commandservices;
 
 import com.example.cargotracker.quotation.application.internal.commands.ApproveQuotationCommand;
+import com.example.cargotracker.quotation.application.internal.commands.ConsultQuotationCommand;
+import com.example.cargotracker.quotation.application.internal.commands.DeclineQuotationCommand;
 import com.example.cargotracker.quotation.application.internal.commands.RequestRouteDesignCommand;
 import com.example.cargotracker.quotation.domain.model.aggregates.ConcurrentQuotationUpdateException;
 import com.example.cargotracker.quotation.domain.model.aggregates.Quotation;
 import com.example.cargotracker.quotation.domain.model.aggregates.QuotationRepository;
+import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequest;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequestRepository;
 import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationRejection;
 import com.example.cargotracker.shared.domain.UtcInstant;
@@ -70,6 +73,79 @@ public class QuotationResponseService {
         quotation.domainEvents().forEach(eventPublisher::publishEvent);
         quotation.clearDomainEvents();
         return new RouteDesignRequestOutcome.Requested(command.number(), command.quotationNo());
+    }
+
+    /**
+     * 提示済みの見積りを理由を付けて辞退する（提示済み → 失効。US-24 AC2。W9 の Bolt 46）。辞退時刻は Clock から得る。
+     * 失効として記録するだけで、イベントは発行せず輸送要求の状態は変えない。理由の入力の誤り（空・長すぎる）は何も保存せずに返す。
+     * 荷主企業で絞った照会を通し、他社の見積りと荷主に提示していない見積りは見つからない扱いにする（Q-INV-08）。
+     */
+    @Transactional
+    public DeclineOutcome decline(DeclineQuotationCommand command) {
+        String reason = command.reason().strip();
+        if (reason.isEmpty()) {
+            return new DeclineOutcome.InvalidReason("辞退の理由を入力してください");
+        }
+        if (reason.length() > Quotation.DECLINE_REASON_MAX_LENGTH) {
+            return new DeclineOutcome.InvalidReason("辞退の理由は " + Quotation.DECLINE_REASON_MAX_LENGTH + " 文字以内で入力してください");
+        }
+        Optional<Quotation> found = transportRequestRepository
+                .findByNumber(command.number(), command.shipperCompanyId())
+                .flatMap(request ->
+                        quotationRepository.findByTransportRequestIdAndNo(request.id(), command.quotationNo()))
+                .filter(Quotation::isVisibleToShipper);
+        if (found.isEmpty()) {
+            return new DeclineOutcome.NotFound();
+        }
+        Quotation quotation = found.get();
+        Optional<QuotationRejection> rejection =
+                quotation.decline(command.respondent(), reason, new UtcInstant(clock.instant()));
+        if (rejection.isPresent()) {
+            return new DeclineOutcome.Rejected(rejection.get());
+        }
+        try {
+            quotationRepository.update(quotation);
+        } catch (ConcurrentQuotationUpdateException _) {
+            return new DeclineOutcome.Conflict();
+        }
+        return new DeclineOutcome.Declined(command.number(), command.quotationNo());
+    }
+
+    /**
+     * 提示済みの見積りの条件を相談する（US-24 AC3。W9 の Bolt 46-1）。見積りの状態は変えず、保存もしない。相談のイベントを発行するだけで、
+     * 相談内容を伴う有人案件の起票は追跡のコンテキストが購読して別のトランザクションで行う。荷主企業で絞った照会を通し、他社の見積りと
+     * 荷主に提示していない見積りは見つからない扱いにする（Q-INV-08）。
+     */
+    @Transactional
+    public ConsultOutcome consult(ConsultQuotationCommand command) {
+        String content = command.content().strip();
+        if (content.isEmpty()) {
+            return new ConsultOutcome.InvalidContent("相談内容を入力してください");
+        }
+        if (content.length() > Quotation.CONSULTATION_MAX_LENGTH) {
+            return new ConsultOutcome.InvalidContent("相談内容は " + Quotation.CONSULTATION_MAX_LENGTH + " 文字以内で入力してください");
+        }
+        Optional<TransportRequest> request =
+                transportRequestRepository.findByNumber(command.number(), command.shipperCompanyId());
+        Optional<Quotation> found = request.flatMap(
+                        value -> quotationRepository.findByTransportRequestIdAndNo(value.id(), command.quotationNo()))
+                .filter(Quotation::isVisibleToShipper);
+        if (found.isEmpty()) {
+            return new ConsultOutcome.NotFound();
+        }
+        Quotation quotation = found.get();
+        Optional<QuotationRejection> rejection = quotation.requestConsultation(
+                command.requester(),
+                content,
+                command.shipperCompanyId(),
+                command.number().text(),
+                new UtcInstant(clock.instant()));
+        if (rejection.isPresent()) {
+            return new ConsultOutcome.Rejected(rejection.get());
+        }
+        quotation.domainEvents().forEach(eventPublisher::publishEvent);
+        quotation.clearDomainEvents();
+        return new ConsultOutcome.Requested(command.number(), command.quotationNo());
     }
 
     /**

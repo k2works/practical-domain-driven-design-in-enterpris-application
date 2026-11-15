@@ -1,5 +1,8 @@
 # Docs Update Log
 
+## 2026-11-15
+* **Creation**: [bolt_46_plan](/development/cargo-tracker/bolt_46_plan.md)・[bolt_46_report](/development/cargo-tracker/bolt_46_report.md)・[bolt_46-1_plan](/development/cargo-tracker/bolt_46-1_plan.md)・[bolt_46-1_report](/development/cargo-tracker/bolt_46-1_report.md) を作成（anthropic/claude-sonnet-5-5。W9。荷主の見積りの辞退と条件の相談。US-24 を締める）。user_story の US-24、ADR-018 の改訂の経緯、ui_design の C-05、domain_model の DE-33、data_model の `decline_reason`、test_strategy、マニュアル [4 章](/manual/04-見積りへの回答と承認.md)、台帳 D-86・D-168・D-169 を更新
+
 ## 2026-11-14
 * **Creation**: [bolt_47_plan](/development/cargo-tracker/bolt_47_plan.md)・[bolt_47_report](/development/cargo-tracker/bolt_47_report.md) を作成（anthropic/claude-sonnet-5-5。W9。追跡の照会の確認中・鮮度超過のお知らせ。US-09 を締める）。マニュアル [5 章](/manual/05-予約一覧と追跡の照会.md)、ui_design の C-10、test_strategy の US-09 AC2・AC3、台帳 D-167 を更新
 * **Creation**: [bolt_45-1_plan](/development/cargo-tracker/bolt_45-1_plan.md)・[bolt_45-1_report](/development/cargo-tracker/bolt_45-1_report.md) を作成（anthropic/claude-sonnet-5-5。W9。過去の見積依頼の複製。US-01 を締める）。マニュアル [3 章](/manual/03-見積依頼.md)、ui_design の C-03、test_strategy の US-01 AC5 を更新

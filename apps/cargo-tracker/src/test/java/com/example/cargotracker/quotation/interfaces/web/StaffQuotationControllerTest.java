@@ -497,6 +497,24 @@ class StaffQuotationControllerTest {
     }
 
     @Test
+    void 荷主が辞退した見積りは辞退の日時と理由と再見積りできない旨を示し期限の文と再見積りの操作を出さない() throws Exception {
+        transportRequestExists();
+        Quotation quotation = presented();
+        quotation.decline(
+                new UserId(UUID.randomUUID()), "他社で進めるため", new UtcInstant(Instant.parse("2026-10-06T00:30:00Z")));
+        given(queryService.find(eq(NUMBER), eq(1), any())).willReturn(Optional.of(quotation));
+        given(queryService.findAll(eq(NUMBER), any())).willReturn(List.of(quotation));
+
+        mockMvc.perform(get("/staff/transport-requests/TR-2026-0001/quotations/1"))
+                .andExpect(content()
+                        .string(containsString(
+                                "荷主が 2026-10-06 09:30 Asia/Tokyo（UTC+09:00）（UTC 2026-10-06 00:30）に辞退しました（理由: 他社で進めるため）。"
+                                        + "この見積りは読み取り専用で、再見積りはできません。")))
+                .andExpect(content().string(not(containsString("を過ぎて失効しました"))))
+                .andExpect(content().string(not(containsString("/requotation"))));
+    }
+
+    @Test
     void 詳細設計依頼済みの見積りは読み取り専用と依頼の日時を示し提示と再見積りの操作を出さない() throws Exception {
         transportRequestExists();
         Quotation quotation = presented();

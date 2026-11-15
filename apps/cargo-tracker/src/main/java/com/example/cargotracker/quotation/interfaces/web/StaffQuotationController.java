@@ -162,6 +162,7 @@ public class StaffQuotationController {
                 "expiredNotice",
                 expiredNotice(quotation, now, QuotationViews.label(request.number(), quotationNo), requoteRejection));
         model.addAttribute("routingRequestedNotice", routingRequestedNotice(quotation, now));
+        model.addAttribute("declinedNotice", declinedNotice(quotation));
         List<Quotation> all =
                 quotation.status() == QuotationStatus.REPLACED || quotation.status() == QuotationStatus.EXPIRED
                         ? queryService.findAll(request.number(), actor)
@@ -469,9 +470,25 @@ public class StaffQuotationController {
      * 表示する時刻で失効した承認待ちは提示できず、提示済みは使えない。荷主の承認の後に失効した見積りは、再見積りできれば経路を引き継ぐ
      * 再見積りを案内し、できなければその理由を示す（D-85。Bolt 35c）。失効していなければ null。
      */
+    /**
+     * 荷主が辞退した見積りの案内（US-24 AC2。W9 の Bolt 46。D-86・ADR-018 の見直し）。辞退した時刻と理由を示し、再見積りできないので、
+     * 荷主と相談して新しい見積依頼で出し直すと案内する。依頼者の名前は、利用者の管理の画面まで出さない（回答の案内と同じ）。
+     */
+    private static String declinedNotice(Quotation quotation) {
+        if (!quotation.isDeclined()) {
+            return null;
+        }
+        return "荷主が "
+                + TransportRequestLabels.staffDateTime(quotation.respondedAt().orElseThrow())
+                + "に辞退しました（理由: "
+                + quotation.declineReason().orElseThrow()
+                + "）。この見積りは読み取り専用で、再見積りはできません。荷主と相談して、新しい見積依頼で出し直してください。";
+    }
+
     private static String expiredNotice(
             Quotation quotation, UtcInstant now, String label, Optional<QuotationRejection> requoteRejection) {
-        if (!quotation.isExpiredAt(now)) {
+        // 荷主の辞退は失効として記録するが、期限を過ぎたわけではないので、期限の文は出さない（辞退の文は declinedNotice）
+        if (quotation.isDeclined() || !quotation.isExpiredAt(now)) {
             return null;
         }
         String expiresAt = "有効期限（"

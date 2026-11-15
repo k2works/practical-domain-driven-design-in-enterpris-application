@@ -1,6 +1,10 @@
 package com.example.cargotracker.quotation.interfaces.web;
 
+import com.example.cargotracker.quotation.application.internal.commands.ConsultQuotationCommand;
+import com.example.cargotracker.quotation.application.internal.commands.DeclineQuotationCommand;
 import com.example.cargotracker.quotation.application.internal.commands.RequestRouteDesignCommand;
+import com.example.cargotracker.quotation.application.internal.commandservices.ConsultOutcome;
+import com.example.cargotracker.quotation.application.internal.commandservices.DeclineOutcome;
 import com.example.cargotracker.quotation.application.internal.commandservices.QuotationResponseService;
 import com.example.cargotracker.quotation.application.internal.commandservices.RouteDesignRequestOutcome;
 import com.example.cargotracker.quotation.application.internal.queryservices.QuotationQueryService;
@@ -18,12 +22,13 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 /**
- * C-05 見積りへの回答（US-24 AC1。Bolt 12）。荷主担当者が見積りと経路方針を確かめ、詳細経路設計へ進む。辞退・相談（AC2・AC3）は
- * 後の Bolt で、それまでは担当営業への連絡を案内する。確認の領域は挟まない（C-05 自体が確かめる画面。2026-10-06 の決定）。
+ * C-05 見積りへの回答（US-24 AC1・AC2。Bolt 12・W9 の Bolt 46）。荷主担当者が見積りと経路方針を確かめ、詳細経路設計へ進むか、理由を付けて
+ * 辞退する。相談（AC3）は後の Bolt で、それまでは担当営業への連絡を案内する。確認の領域は挟まない（C-05 自体が確かめる画面。2026-10-06 の決定）。
  * 荷主企業と回答者は、ログインした荷主担当者（認証の主体 {@link AuthenticatedActor}。ADR-012）のもの。
  */
 @Controller
@@ -33,6 +38,7 @@ public class QuotationResponseController {
     private static final String BASE_PATH = "/customer/transport-requests";
     private static final String RESPONSE_VIEW = "quotation/transport-requests/response";
     private static final String PROBLEM = "problem";
+    private static final String RESULT = "result";
 
     private final QuotationResponseService responseService;
     private final QuotationQueryService quotationQueryService;
@@ -66,6 +72,11 @@ public class QuotationResponseController {
         if (rejection.isPresent()) {
             return rejected(parsed, quotationNo, rejection.get(), redirectAttributes);
         }
+        return responseView(parsed, quotationNo, quotation, now, model);
+    }
+
+    private static String responseView(
+            TransportRequestNumber parsed, int quotationNo, Quotation quotation, UtcInstant now, Model model) {
         model.addAttribute("number", parsed.text());
         model.addAttribute("quotationLabel", QuotationViews.label(parsed, quotationNo));
         model.addAttribute(
@@ -73,6 +84,101 @@ public class QuotationResponseController {
                 QuotationViews.view(
                         quotation, TransportRequestLabels::customerDateTime, now, QuotationViews.Audience.CUSTOMER));
         return RESPONSE_VIEW;
+    }
+
+    /**
+     * 理由を付けて辞退する（US-24 AC2。W9 の Bolt 46）。辞退したら見積依頼の詳細へリダイレクトして結果を示す（PRG）。理由の誤り（空・長すぎる）は
+     * 回答の画面をそのまま描き直して、入力した理由を残す。
+     */
+    @PostMapping("/decline")
+    public String decline(
+            @PathVariable String number,
+            @PathVariable int quotationNo,
+            @RequestParam(name = "reason", defaultValue = "") String reason,
+            AuthenticatedActor actor,
+            Model model,
+            RedirectAttributes redirectAttributes) {
+        TransportRequestNumber parsed = parse(number);
+        DeclineOutcome outcome = responseService.decline(
+                new DeclineQuotationCommand(parsed, quotationNo, actor.companyId(), actor.userId(), reason));
+        return switch (outcome) {
+            case DeclineOutcome.Declined(TransportRequestNumber declinedNumber, int declinedNo) ->
+                redirectToDetail(
+                        parsed,
+                        RESULT,
+                        QuotationViews.label(declinedNumber, declinedNo) + " を辞退しました。理由は担当営業に伝わります",
+                        redirectAttributes);
+            case DeclineOutcome.InvalidReason(String message) -> {
+                Quotation quotation = quotationQueryService.findVisible(parsed, actor.companyId()).stream()
+                        .filter(candidate -> candidate.quotationNo() == quotationNo)
+                        .findFirst()
+                        .orElseThrow(QuotationResponseController::notFound);
+                model.addAttribute("declineProblem", message);
+                model.addAttribute("declineReason", reason);
+                yield responseView(parsed, quotationNo, quotation, new UtcInstant(clock.instant()), model);
+            }
+            case DeclineOutcome.Rejected(QuotationRejection declinedReason) ->
+                redirectToDetail(
+                        parsed, PROBLEM, declineRejection(parsed, quotationNo, declinedReason), redirectAttributes);
+            case DeclineOutcome.Conflict _ ->
+                redirectToDetail(parsed, PROBLEM, "見積りが更新されました。最新の見積りを確かめてから回答してください", redirectAttributes);
+            case DeclineOutcome.NotFound _ -> throw notFound();
+        };
+    }
+
+    /**
+     * 見積りの条件を相談する（US-24 AC3。W9 の Bolt 46-1）。相談すると見積りの状態は変えず、有人案件（見積り相談）を起票する（追跡が購読して
+     * 別のトランザクションで起票する）。見積依頼の詳細へリダイレクトして結果を示す（PRG）。内容の誤りは回答の画面を描き直して、入力を残す。
+     */
+    @PostMapping("/consult")
+    public String consult(
+            @PathVariable String number,
+            @PathVariable int quotationNo,
+            @RequestParam(name = "content", defaultValue = "") String content,
+            AuthenticatedActor actor,
+            Model model,
+            RedirectAttributes redirectAttributes) {
+        TransportRequestNumber parsed = parse(number);
+        ConsultOutcome outcome = responseService.consult(
+                new ConsultQuotationCommand(parsed, quotationNo, actor.companyId(), actor.userId(), content));
+        return switch (outcome) {
+            case ConsultOutcome.Requested(TransportRequestNumber requestedNumber, int requestedNo) ->
+                redirectToDetail(
+                        parsed,
+                        RESULT,
+                        QuotationViews.label(requestedNumber, requestedNo)
+                                + " の条件の相談を受け付けました。担当者が確認します。進捗は「問い合わせ」で確かめられます",
+                        redirectAttributes);
+            case ConsultOutcome.InvalidContent(String message) -> {
+                Quotation quotation = quotationQueryService.findVisible(parsed, actor.companyId()).stream()
+                        .filter(candidate -> candidate.quotationNo() == quotationNo)
+                        .findFirst()
+                        .orElseThrow(QuotationResponseController::notFound);
+                model.addAttribute("consultProblem", message);
+                model.addAttribute("consultContent", content);
+                yield responseView(parsed, quotationNo, quotation, new UtcInstant(clock.instant()), model);
+            }
+            case ConsultOutcome.Rejected(QuotationRejection consultReason) ->
+                redirectToDetail(
+                        parsed, PROBLEM, consultRejection(parsed, quotationNo, consultReason), redirectAttributes);
+            case ConsultOutcome.NotFound _ -> throw notFound();
+        };
+    }
+
+    /** 相談を受け付けなかった理由の、荷主向けの文言。回答済みは相談できない旨を示し、ほかは回答と同じ文言にする。 */
+    private static String consultRejection(TransportRequestNumber number, int quotationNo, QuotationRejection reason) {
+        if (reason == QuotationRejection.ROUTING_REQUESTED) {
+            return QuotationViews.label(number, quotationNo) + " はすでに詳細経路設計を依頼しているため相談できません。担当営業にご連絡ください";
+        }
+        return rejection(number, quotationNo, reason);
+    }
+
+    /** 辞退を受け付けなかった理由の、荷主向けの文言。回答済みは辞退できない旨を示し、ほかは回答と同じ文言にする。 */
+    private static String declineRejection(TransportRequestNumber number, int quotationNo, QuotationRejection reason) {
+        if (reason == QuotationRejection.ROUTING_REQUESTED) {
+            return QuotationViews.label(number, quotationNo) + " はすでに詳細経路設計を依頼しているため辞退できません。担当営業にご連絡ください";
+        }
+        return rejection(number, quotationNo, reason);
     }
 
     /** 詳細経路設計へ進む。依頼したら見積依頼の詳細へリダイレクトし、結果を示す（PRG）。 */
@@ -89,7 +195,7 @@ public class QuotationResponseController {
             case RouteDesignRequestOutcome.Requested(TransportRequestNumber requestedNumber, int requestedNo) ->
                 redirectToDetail(
                         parsed,
-                        "result",
+                        RESULT,
                         QuotationViews.label(requestedNumber, requestedNo) + " で詳細経路設計を依頼しました",
                         redirectAttributes);
             case RouteDesignRequestOutcome.Rejected(QuotationRejection reason) ->
@@ -112,7 +218,7 @@ public class QuotationResponseController {
         if (reason == QuotationRejection.ROUTING_REQUESTED) {
             return redirectToDetail(
                     number,
-                    "result",
+                    RESULT,
                     QuotationViews.label(number, quotationNo) + " ですでに詳細経路設計を依頼しています",
                     redirectAttributes);
         }

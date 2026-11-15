@@ -48,6 +48,7 @@ public class MyBatisQuotationRepository implements QuotationRepository {
 
     private static final String VIA_SEPARATOR = ",";
     private static final String PROCEED = "PROCEED";
+    private static final String DECLINED = "DECLINED";
 
     private final QuotationMapper mapper;
 
@@ -247,8 +248,11 @@ public class MyBatisQuotationRepository implements QuotationRepository {
                         .map(MyBatisQuotationRepository::toOffset)
                         .orElse(null),
                 quotation.replacedBy().map(QuotationId::value).orElse(null),
-                // 荷主の回答は、Bolt 12 では詳細経路設計へ進む（PROCEED）だけ。辞退（DECLINED）は US-24 AC2 で足す
-                quotation.respondedBy().map(_ -> PROCEED).orElse(null),
+                // 荷主の回答は、詳細経路設計へ進む（PROCEED）か辞退（DECLINED。US-24 AC2。W9 の Bolt 46）
+                quotation
+                        .respondedBy()
+                        .map(_ -> quotation.isDeclined() ? DECLINED : PROCEED)
+                        .orElse(null),
                 quotation.respondedBy().map(UserId::value).orElse(null),
                 quotation
                         .respondedAt()
@@ -273,6 +277,7 @@ public class MyBatisQuotationRepository implements QuotationRepository {
                         .shipperApproval()
                         .map(approval -> toOffset(approval.approvedAt()))
                         .orElse(null),
+                quotation.declineReason().orElse(null),
                 version);
     }
 
@@ -309,6 +314,7 @@ public class MyBatisQuotationRepository implements QuotationRepository {
                 row.shipperApprovedBy() == null
                         ? null
                         : new ShipperApproval(new UserId(row.shipperApprovedBy()), toUtc(row.shipperApprovedAt())),
+                row.declineReason(),
                 row.version());
     }
 

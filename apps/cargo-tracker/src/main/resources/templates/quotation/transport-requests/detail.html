@@ -53,8 +53,11 @@
         <p th:if="${quotation.expired() and quotation.awaitingApproval()}" class="alert alert-warning"
            th:text="|有効期限（${quotation.expiresAt()}）を過ぎたため承認できません。新しい見積りは担当営業にご依頼ください。|">有効期限（2026-10-05 21:00 Asia/Tokyo（UTC+09:00））を過ぎたため承認できません。新しい見積りは担当営業にご依頼ください。</p>
         <!--/* 荷主が承認した後に失効した見積りは、下の承認の後の失効の 1 文だけを示す（D-85。Bolt 35d） */-->
-        <p th:if="${quotation.expired() and !quotation.routingStarted() and quotation.approvedAt() == null}" class="alert alert-warning"
+        <p th:if="${quotation.expired() and !quotation.routingStarted() and quotation.approvedAt() == null and !quotation.declined()}" class="alert alert-warning"
            th:text="|有効期限（${quotation.expiresAt()}）を過ぎたため、この見積りは使えません（読み取り専用）。新しい見積りは担当営業にご依頼ください。|">有効期限（2026-10-05 21:00 Asia/Tokyo（UTC+09:00））を過ぎたため、この見積りは使えません（読み取り専用）。新しい見積りは担当営業にご依頼ください。</p>
+        <!--/* 荷主が辞退した見積り（US-24 AC2。W9 の Bolt 46）。失効として記録され、読み取り専用。理由を示す */-->
+        <p th:if="${quotation.declined()}" class="alert alert-secondary"
+           th:text="|${quotation.respondedAt()}にこの見積りを辞退しました（理由: ${quotation.declineReason()}）。読み取り専用です。新しい見積りが必要なときは担当営業にご相談ください。|">2026-10-06 09:30 Asia/Tokyo（UTC+09:00）にこの見積りを辞退しました（理由: 他社で進めるため）。読み取り専用です。新しい見積りが必要なときは担当営業にご相談ください。</p>
         <div th:replace="~{quotation/fragments/quotation :: details(${quotation})}"></div>
         <!--/* 回答（C-05、US-24 AC1。Bolt 12）。提示済みで有効なときだけ入口を出し、詳細設計依頼済みなら依頼した日時を示す */-->
         <p th:if="${quotation.respondable()}"><a th:href="@{/customer/transport-requests/{number}/quotations/{no}/response(number=${number},no=${quotation.quotationNo()})}">見積りに回答する</a></p>

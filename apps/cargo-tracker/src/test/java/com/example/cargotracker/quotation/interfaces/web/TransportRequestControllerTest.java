@@ -455,6 +455,25 @@ class TransportRequestControllerTest {
     }
 
     @Test
+    void 辞退した見積りは辞退の日時と理由を示し期限切れの文と回答の入口を出さない() throws Exception {
+        TransportRequest request = underReviewWithInvoice();
+        given(queryService.findByNumber(NUMBER, SHIPPER)).willReturn(Optional.of(request));
+        Quotation quotation = Quotation.create(new QuotationId(UUID.randomUUID()), request.id(), 1, 1);
+        UtcInstant at = new UtcInstant(Instant.parse("2026-10-05T04:00:00Z"));
+        quotation.calculate(QuotationFixture.completeInput(), at);
+        quotation.presentInternally(new UserId(UUID.randomUUID()), at);
+        quotation.decline(USER, "他社で進めるため", new UtcInstant(Instant.parse("2026-10-06T00:30:00Z")));
+        given(quotationQueryService.findVisible(NUMBER, SHIPPER)).willReturn(List.of(quotation));
+
+        mockMvc.perform(get("/customer/transport-requests/TR-2026-0001"))
+                .andExpect(content()
+                        .string(containsString(
+                                "2026-10-06 09:30 Asia/Tokyo（UTC+09:00）にこの見積りを辞退しました（理由: 他社で進めるため）。読み取り専用です。")))
+                .andExpect(content().string(not(containsString("を過ぎたため、この見積りは使えません"))))
+                .andExpect(content().string(not(containsString("/response"))));
+    }
+
+    @Test
     void 詳細経路設計を依頼した見積りは依頼済みと回答の日時を示し回答の入口を出さない() throws Exception {
         TransportRequest request = underReviewWithInvoice();
         given(queryService.findByNumber(NUMBER, SHIPPER)).willReturn(Optional.of(request));

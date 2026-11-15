@@ -32,4 +32,5 @@ public record QuotationRow(
         OffsetDateTime routeRedesignRequiredAt,
         UUID shipperApprovedBy,
         OffsetDateTime shipperApprovedAt,
+        String declineReason,
         long version) {}

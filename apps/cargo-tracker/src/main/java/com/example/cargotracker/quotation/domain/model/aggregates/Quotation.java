@@ -1,6 +1,7 @@
 package com.example.cargotracker.quotation.domain.model.aggregates;
 
 import com.example.cargotracker.quotation.domain.events.QuotationApprovedByShipper;
+import com.example.cargotracker.quotation.domain.events.QuotationConsultationRequested;
 import com.example.cargotracker.quotation.domain.events.QuotationPresented;
 import com.example.cargotracker.quotation.domain.events.QuotationPresentedForReapproval;
 import com.example.cargotracker.quotation.domain.events.QuotationRouteAssigned;
@@ -69,6 +70,9 @@ public final class Quotation {
     private AssignedRoute assignedRoute;
     private ShipperApproval shipperApproval;
 
+    /** 荷主の辞退の理由（辞退していなければ null。辞退は失効として記録する。US-24 AC2。W9 の Bolt 46）。 */
+    private String declineReason;
+
     @SuppressWarnings("java:S107") // 保存されている状態から組み立てるため、集約の値をすべて受け取る
     private Quotation(
             QuotationId id,
@@ -135,6 +139,14 @@ public final class Quotation {
                 INITIAL_AGGREGATE_VERSION);
     }
 
+    /** 辞退の理由の最大の文字数（US-24 AC2。W9 の Bolt 46）。 */
+    public static final int DECLINE_REASON_MAX_LENGTH = 500;
+
+    private static final String RESPONDENT = "respondent";
+
+    /** 相談内容の最大の文字数（US-24 AC3。W9 の Bolt 46-1）。 */
+    public static final int CONSULTATION_MAX_LENGTH = 500;
+
     /** 保存されている状態から見積りを組み立てる（リポジトリが使う）。イベントは生成しない。値のない項目は null。 */
     @SuppressWarnings("java:S107") // 保存されている状態から組み立てるため、集約の値をすべて受け取る
     public static Quotation reconstitute(
@@ -171,6 +183,47 @@ public final class Quotation {
                 assignedRoute,
                 shipperApproval,
                 aggregateVersion);
+    }
+
+    /** 辞退の理由を持つ保存されている状態から見積りを組み立てる（リポジトリが使う。W9 の Bolt 46）。辞退していなければ理由は null。 */
+    @SuppressWarnings("java:S107") // 保存されている状態から組み立てるため、集約の値をすべて受け取る
+    public static Quotation reconstitute(
+            QuotationId id,
+            TransportRequestId transportRequestId,
+            int quotationNo,
+            int transportRequestVersionNo,
+            QuotationStatus status,
+            PricingBasis pricingBasis,
+            QuotationExpiry expiry,
+            RoutePolicy routePolicy,
+            UserId approvedBy,
+            UtcInstant presentedAt,
+            QuotationId replacedBy,
+            UserId respondedBy,
+            UtcInstant respondedAt,
+            AssignedRoute assignedRoute,
+            ShipperApproval shipperApproval,
+            String declineReason,
+            long aggregateVersion) {
+        Quotation quotation = reconstitute(
+                id,
+                transportRequestId,
+                quotationNo,
+                transportRequestVersionNo,
+                status,
+                pricingBasis,
+                expiry,
+                routePolicy,
+                approvedBy,
+                presentedAt,
+                replacedBy,
+                respondedBy,
+                respondedAt,
+                assignedRoute,
+                shipperApproval,
+                aggregateVersion);
+        quotation.declineReason = declineReason;
+        return quotation;
     }
 
     /**
@@ -333,7 +386,7 @@ public final class Quotation {
      * @return 受け付けなかった理由（受け付けたら空）
      */
     public Optional<QuotationRejection> requestRouteDesign(UserId respondent, UtcInstant at) {
-        Objects.requireNonNull(respondent, "respondent");
+        Objects.requireNonNull(respondent, RESPONDENT);
         Optional<QuotationRejection> rejection = responseRejectionAt(at);
         if (rejection.isPresent()) {
             return rejection;
@@ -351,6 +404,77 @@ public final class Quotation {
                 routePolicy.arrivalAt(),
                 expiry.expiresAt(),
                 respondent.value(),
+                at));
+        return Optional.empty();
+    }
+
+    /**
+     * 荷主が理由を付けて辞退する（提示済み → 失効。US-24 AC2。W9 の Bolt 46。D-86・ADR-018 の見直し）。見積りは失効として記録し、
+     * 辞退者・辞退時刻（回答者・回答時刻と同じ列）と理由を残す。DE-16（経路設計の依頼）は出さず、輸送要求の状態は変えない。
+     * 失効として記録するので、再見積りできない（{@link #requoteRejectionAt}）。担当営業が荷主と相談して新しい見積依頼で出し直す。
+     *
+     * @param respondent 辞退した荷主担当者
+     * @param reason 辞退の理由（前後の空白を除き 1〜500 文字）
+     * @param at 辞退時刻（判定時刻）
+     * @return 受け付けなかった理由（受け付けたら空）
+     * @throws IllegalArgumentException 理由が空または長すぎる
+     */
+    public Optional<QuotationRejection> decline(UserId respondent, String reason, UtcInstant at) {
+        Objects.requireNonNull(respondent, RESPONDENT);
+        Objects.requireNonNull(reason, "reason");
+        String trimmed = reason.strip();
+        if (trimmed.isEmpty() || trimmed.length() > DECLINE_REASON_MAX_LENGTH) {
+            throw new IllegalArgumentException("辞退の理由は 1〜" + DECLINE_REASON_MAX_LENGTH + " 文字です");
+        }
+        Optional<QuotationRejection> rejection = responseRejectionAt(at);
+        if (rejection.isPresent()) {
+            return rejection;
+        }
+        respondedBy = respondent;
+        respondedAt = at;
+        declineReason = trimmed;
+        status = QuotationStatus.EXPIRED;
+        return Optional.empty();
+    }
+
+    /**
+     * 荷主が提示済みの見積りの条件を相談する（US-24 AC3。W9 の Bolt 46-1）。見積りの状態は変えず、相談のイベントを生成するだけ。
+     * 追跡のコンテキストが購読して有人案件（種類: 見積り相談）を起票する。回答できる見積り（提示済みで期限前）だけに行える。
+     *
+     * @param respondent 相談した荷主担当者
+     * @param content 相談内容（前後の空白を除き 1〜500 文字）
+     * @param shipperCompanyId 荷主企業（イベントに載せる。有人案件の荷主）
+     * @param transportRequestNumber 業務番号の表記（イベントに載せる）
+     * @param at 相談の時刻（判定時刻）
+     * @return 受け付けなかった理由（受け付けたら空）
+     * @throws IllegalArgumentException 内容が空または長すぎる
+     */
+    public Optional<QuotationRejection> requestConsultation(
+            UserId respondent,
+            String content,
+            CompanyId shipperCompanyId,
+            String transportRequestNumber,
+            UtcInstant at) {
+        Objects.requireNonNull(respondent, RESPONDENT);
+        Objects.requireNonNull(content, "content");
+        Objects.requireNonNull(shipperCompanyId, "shipperCompanyId");
+        Objects.requireNonNull(transportRequestNumber, "transportRequestNumber");
+        String trimmed = content.strip();
+        if (trimmed.isEmpty() || trimmed.length() > CONSULTATION_MAX_LENGTH) {
+            throw new IllegalArgumentException("相談内容は 1〜" + CONSULTATION_MAX_LENGTH + " 文字です");
+        }
+        Optional<QuotationRejection> rejection = responseRejectionAt(at);
+        if (rejection.isPresent()) {
+            return rejection;
+        }
+        domainEvents.add(new QuotationConsultationRequested(
+                id.value(),
+                quotationNo,
+                transportRequestId.value(),
+                transportRequestNumber,
+                shipperCompanyId.value(),
+                respondent.value(),
+                trimmed,
                 at));
         return Optional.empty();
     }
@@ -713,6 +837,16 @@ public final class Quotation {
     /** 回答者（荷主が回答したとき）。 */
     public Optional<UserId> respondedBy() {
         return Optional.ofNullable(respondedBy);
+    }
+
+    /** 荷主が辞退したか（失効として記録した辞退。US-24 AC2。W9 の Bolt 46）。 */
+    public boolean isDeclined() {
+        return declineReason != null;
+    }
+
+    /** 辞退の理由（荷主が辞退したとき）。 */
+    public Optional<String> declineReason() {
+        return Optional.ofNullable(declineReason);
     }
 
     /** 回答時刻（荷主が回答したとき）。 */

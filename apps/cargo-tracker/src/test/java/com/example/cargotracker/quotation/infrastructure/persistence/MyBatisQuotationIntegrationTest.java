@@ -470,12 +470,48 @@ class MyBatisQuotationIntegrationTest {
         assertThatThrownBy(() -> repository.save(second)).isInstanceOf(DuplicateQuotationException.class);
     }
 
+    @Test
+    void 辞退した見積りは失効として理由と辞退者と辞退時刻とともに保存し読み出せる() {
+        TransportRequestId transportRequestId = transportRequest(31);
+        repository.save(presented(transportRequestId, 1));
+        Quotation quotation =
+                repository.findByTransportRequestIdAndNo(transportRequestId, 1).orElseThrow();
+        quotation.decline(RESPONDENT, "他社の見積りで進めるため", APPROVED_AT);
+        repository.update(quotation);
+
+        assertThat(repository.findByTransportRequestIdAndNo(transportRequestId, 1))
+                .hasValueSatisfying(found -> {
+                    assertThat(found.status()).isEqualTo(QuotationStatus.EXPIRED);
+                    assertThat(found.isDeclined()).isTrue();
+                    assertThat(found.declineReason()).contains("他社の見積りで進めるため");
+                    assertThat(found.respondedBy()).contains(RESPONDENT);
+                    assertThat(found.respondedAt()).contains(APPROVED_AT);
+                });
+        assertThat(jdbc.queryForObject(
+                        "SELECT shipper_response FROM quotation.quotation WHERE transport_request_id = ?",
+                        String.class,
+                        transportRequestId.value()))
+                .isEqualTo("DECLINED");
+    }
+
+    @Test
+    void 辞退していない見積りは辞退の理由を持たない() {
+        TransportRequestId transportRequestId = transportRequest(32);
+        routingRequested(transportRequestId);
+
+        assertThat(repository.findByTransportRequestIdAndNo(transportRequestId, 1))
+                .hasValueSatisfying(found -> {
+                    assertThat(found.isDeclined()).isFalse();
+                    assertThat(found.declineReason()).isEmpty();
+                });
+    }
+
     /** PostgreSQL は制約違反でトランザクションを中断するため、違反ごとに別のテストにする。 */
     @ParameterizedTest
     @CsvSource({
         "ROUTING_REQUESTED, , ck_quotation_responded", // 詳細設計依頼済みなのに回答がない
         "PRESENTED, PROCEED_ONLY, ck_quotation_responded", // 回答の列がそろっていない
-        "ROUTING_REQUESTED, DECLINED, ck_quotation_shipper_response" // 回答の値は進むだけ（辞退は AC2）
+        "ROUTING_REQUESTED, DECLINED, ck_quotation_declined" // 辞退は理由を持ち状態は失効（US-24 AC2。Bolt 46）
     })
     void 回答の列はそろって値を持ち詳細設計依頼済みなら必須で回答の値をCHECK制約で守る(String status, String response, String constraint) {
         TransportRequestId transportRequestId = transportRequest(19);

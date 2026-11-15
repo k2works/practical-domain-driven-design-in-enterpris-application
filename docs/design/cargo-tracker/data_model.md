@@ -310,7 +310,7 @@ entity "quotation\n見積り" as q {
   shipper_response : VARCHAR(30)
   responded_by : UUID
   responded_at : TIMESTAMPTZ
-  decline_reason : VARCHAR(4000)
+  decline_reason : VARCHAR(500)
   routing_case_number : VARCHAR(20) <<REF routing>>
   route_version_no : INTEGER
   route_confirmed_at : TIMESTAMPTZ

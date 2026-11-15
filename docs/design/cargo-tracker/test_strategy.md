@@ -613,6 +613,8 @@ Release 1.0 の Must の受入条件のうち、閉じたストーリーから�
 | US-22 | AC2 | `@US-22-AC2` |
 | US-22 | AC3 | `@US-22-AC3` |
 | US-22 | AC4 | `@US-22-AC4` |
+| US-24 | AC2 | `@US-24-AC2` |
+| US-24 | AC3 | `@US-24-AC3` |
 | US-09 | AC2 | `@US-09-AC2` |
 | US-09 | AC3 | `@US-09-AC3` |
 
@@ -668,6 +670,8 @@ Release 1.0 の受入条件のうち、上の照合の表にまだ入れてい�
 | US-22 | AC2（承認待ちの見積りの有効期限の 24 時間前にメールが送られる） | 43-2 | `@US-22-AC2`（同上）、`QuotationExpiryNotificationServiceTest`・`QuotationExpirySchedulerTest`・`MyBatisQuotationIntegrationTest` の窓の境界 |
 | US-22 | AC3（メールは料金・契約条件・書類・他の予約の情報を含まない） | 43 | `@US-22-AC3`（同上）、`ShipperNotificationMailIntegrationTest`（本文に料金等を含まない。N-INV-01） |
 | US-22 | AC4（送信に失敗したら失敗と宛先が記録され、通知一覧からも同じ内容を確認できる） | 43・43-3 | `@US-22-AC4`（同上）、`ShipperNotificationControllerTest`・`NotificationQueryServiceTest`・`MyBatisNotificationRepositoryIntegrationTest`（失敗の記録は `MailDeliveryTest` 系） |
+| US-24 | AC2（提示済みの見積りを理由を付けて辞退すると、見積りは失効として記録され、辞退の理由と回答者と辞退時刻が残り営業担当者に示される。再見積りできない。輸送要求の状態は変えない） | 46 | `@US-24-AC2`（`features/quotation/decline_quotation.feature`、画面の層は `features/ui/request_route_design_ui.feature`）、`QuotationTest`（辞退の行）、`QuotationResponseServiceTest`、`MyBatisQuotationIntegrationTest`（辞退の往復と CHECK `ck_quotation_declined`）、`QuotationResponseControllerTest`・`StaffQuotationControllerTest`・`TransportRequestControllerTest` |
+| US-24 | AC3（提示済みの見積りの条件を相談すると、相談内容を伴う有人案件（見積り相談）が起票され、見積りの状態は変わらない） | 46-1 | `@US-24-AC3`（`features/quotation/consult_quotation.feature`、画面の層は `features/ui/request_route_design_ui.feature`）、`QuotationTest`（相談の行）、`QuotationResponseServiceTest`、`QuotationConsultationRequestedEventHandlerTest`（起票・再配信で二重に起票しない）、`QuotationResponseControllerTest` |
 | US-09 | AC2（確認中の実績があるとき、判明していること・未確定のこと・次の行動・次回の更新・担当窓口を示す。確認中の実績の中身は出さない） | 47 | `@US-09-AC2`（`features/ui/customer_tracking_notice_ui.feature`）、`CustomerTrackingControllerTest`（Bolt 47 の行）、`CustomerTrackingQueryServiceTest` |
 | US-09 | AC3（更新が許容を過ぎて届かないとき、最新性を保証できないことと最後の採用値・次回の更新・次の行動を示す。台帳 D-167） | 47 | `@US-09-AC3`（同上）、`CustomerTrackingQueryServiceTest`（36 時間の境界）、`CustomerTrackingControllerTest` |
 | US-14 | 締め（AC1〜AC5 の照合の表、Golden dataset の G-06b 欠落・G-06c 差異、W7 のデモの動画、性能の複数の外部版の組。【業務の判断】(bk)、台帳 D-153。【前の決定の変更】(31)。#18 は終了報告の承認の後に閉じる） | 39h4 | `AcceptanceCriteriaCoverageTest`（Release 1.0 の照合の表 8 行。見出しを引数にした純粋なメソッドで書式の外れ・前方一致・2 つ目の表を縛る）、`RoutingCaseGoldenDatasetTest`（G-06b・G-06c とガードのテスト）、`route_candidates_golden_v0.feature`（`@golden` 6 行）、`adopted_voyage_reflected_ui.feature`（`@demo-bolt-39h4/confirm-rejected-same-info-version`）、`ExternalDataIngestionPerformanceTest`（`Bolt39h4_行7_…`。外部 ID 2,000 種 × 外部版 5。測るのは W7 の締めの CI） |
