@@ -407,6 +407,8 @@ nav:
           - Bolt 44-1 終了報告: development/cargo-tracker/bolt_44-1_report.md
           - Bolt 44-2 計画: development/cargo-tracker/bolt_44-2_plan.md
           - Bolt 44-2 終了報告: development/cargo-tracker/bolt_44-2_report.md
+          - Bolt 48 計画: development/cargo-tracker/bolt_48_plan.md
+          - Bolt 48 終了報告: development/cargo-tracker/bolt_48_report.md
           - Bolt 40 計画: development/cargo-tracker/bolt_40_plan.md
           - Bolt 40 終了報告: development/cargo-tracker/bolt_40_report.md
           - Bolt 40-1 終了報告: development/cargo-tracker/bolt_40-1_report.md
@@ -463,6 +465,7 @@ nav:
           - W6 完了報告書: development/cargo-tracker/iteration_report-W6.md
           - W7 完了報告書: development/cargo-tracker/iteration_report-W7.md
           - W8 完了報告書: development/cargo-tracker/iteration_report-W8.md
+          - W9 完了報告書: development/cargo-tracker/iteration_report-W9.md
   - ユーザーマニュアル:
       - 概要: manual/index.md
       - はじめに: manual/00-はじめに.md

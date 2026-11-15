@@ -1,6 +1,12 @@
 # Docs Update Log
 
 ## 2026-11-15
+* **Update**: [iteration_report-W9](/development/cargo-tracker/iteration_report-W9.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [bolt_48_report](/development/cargo-tracker/bolt_48_report.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [bolt_48_plan](/development/cargo-tracker/bolt_48_plan.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [iteration_plan-W9](/development/cargo-tracker/iteration_plan-W9.md) を更新（anthropic/claude-sonnet-5-5）
+* **Creation**: [iteration_report-W9](/development/cargo-tracker/iteration_report-W9.md)・[bolt_48_plan](/development/cargo-tracker/bolt_48_plan.md)・[bolt_48_report](/development/cargo-tracker/bolt_48_report.md)・[w9_review_20261115](/review/cargo-tracker/w9_review_20261115.md) を作成（anthropic/claude-sonnet-5-5。W9 の締め。週全体の 5 視点のレビュー、品質ゲートの流し直し、完了報告書）。release_plan の進捗表・W9 の計画の状態、マニュアル 4・6・7 章と用語集、データモデルを更新
 * **Creation**: [bolt_44_plan](/development/cargo-tracker/bolt_44_plan.md)・[bolt_44_report](/development/cargo-tracker/bolt_44_report.md)・[bolt_44-1_plan](/development/cargo-tracker/bolt_44-1_plan.md)・[bolt_44-1_report](/development/cargo-tracker/bolt_44-1_report.md)・[bolt_44-2_plan](/development/cargo-tracker/bolt_44-2_plan.md)・[bolt_44-2_report](/development/cargo-tracker/bolt_44-2_report.md) を作成（anthropic/claude-sonnet-5-5。W9。パイロットの KPI。US-21 を締める）。user_story の US-21、domain_model の IR-INV-01・KPI-INV-02・KPI-INV-04、data_model の `kpi_baseline`、ui_design の S-22、test_strategy、マニュアル [10 章](/manual/10-KPI計測記録.md)・[0 章](/manual/00-はじめに.md)・[2 章](/manual/02-ログインと共通の画面.md)、台帳 D-170〜D-172 を更新
 * **Creation**: [bolt_46_plan](/development/cargo-tracker/bolt_46_plan.md)・[bolt_46_report](/development/cargo-tracker/bolt_46_report.md)・[bolt_46-1_plan](/development/cargo-tracker/bolt_46-1_plan.md)・[bolt_46-1_report](/development/cargo-tracker/bolt_46-1_report.md) を作成（anthropic/claude-sonnet-5-5。W9。荷主の見積りの辞退と条件の相談。US-24 を締める）。user_story の US-24、ADR-018 の改訂の経緯、ui_design の C-05、domain_model の DE-33、data_model の `decline_reason`、test_strategy、マニュアル [4 章](/manual/04-見積りへの回答と承認.md)、台帳 D-86・D-168・D-169 を更新
 

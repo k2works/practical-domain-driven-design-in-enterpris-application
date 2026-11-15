@@ -4,7 +4,7 @@ title: "W9 計画 - 問い合わせの追跡・通知・KPI と残りの受入�
 description: "cargo-tracker の W9（2026-11-30〜12-04）の Bolt 計画。US-23・US-22・US-21 残り・US-01 残り・US-24 残り・US-09 残りの 15 SP を、機能・技術の単位で番号を採番した 19 本（条件付き 1 本）に分け、分単位の見積りを付けて稼働と比べる。"
 tags: [plan]
 status: stable
-generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-14T03:00:00Z }
+generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-15T04:13:23Z }
 ---
 
 # W9 計画 - 問い合わせの追跡・通知・KPI と残りの受入条件
@@ -14,7 +14,7 @@ generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-14T03:00:00Z }
 | 項目 | 内容 |
 | :--- | :--- |
 | 週 | W9（Release 1.0 パイロット準備完了の 5 週目）。計画期間は 2026-11-30〜12-04（稼働 5 日） |
-| 状態 | 計画（**承認済み**。2026-11-14 に人が確認ポイント CP-1〜CP-6 を推奨のとおり承認した。human:kakimomokuri。CP-4・CP-5 は開始準備で決める） |
+| 状態 | 完了（2026-11-15 に締めた。実績は [W9 完了報告書](iteration_report-W9.md)）。計画は 2026-11-14 に人が承認した（human:kakimomokuri。CP-1〜CP-6 は推奨のとおり。CP-4 の辞退は人が選択肢から選んだ） |
 | ゴール | 荷主担当者が自分の問い合わせを追跡・再開でき（US-23）、重要な変化をメールで知り（US-22）、KPI-02 と基準値を含めて週次の KPI を監査担当者が確認でき（US-21）、US-01・US-24・US-09 の残りの受入条件が通る |
 | ストーリー | US-23（3 SP）、US-22（3 SP）、US-21 残り（3 SP）、US-01 残り（2 SP）、US-24 残り（2 SP）、US-09 残り（2 SP）。合計 **15 SP**（release_plan の W9 の行と一致） |
 | 局面とアプローチ | 終盤。**アウトサイドイン**（画面と受入シナリオから。development_strategy の局面別の定め）。通知と KPI は受け手・記録のドメインを先に最小で作る |
