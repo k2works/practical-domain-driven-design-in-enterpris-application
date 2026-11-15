@@ -38,6 +38,7 @@ public class QuotationResponseController {
     private static final String BASE_PATH = "/customer/transport-requests";
     private static final String RESPONSE_VIEW = "quotation/transport-requests/response";
     private static final String PROBLEM = "problem";
+    private static final String CONFIRMED = "yes";
     private static final String RESULT = "result";
 
     private final QuotationResponseService responseService;
@@ -95,10 +96,17 @@ public class QuotationResponseController {
             @PathVariable String number,
             @PathVariable int quotationNo,
             @RequestParam(name = "reason", defaultValue = "") String reason,
+            @RequestParam(name = "confirm", defaultValue = "") String confirm,
             AuthenticatedActor actor,
             Model model,
             RedirectAttributes redirectAttributes) {
         TransportRequestNumber parsed = parse(number);
+        // 辞退は取り消せないので、確認のチェックがなければ受け付けず、入力した理由を残して画面を描き直す（W9 の週全体のレビュー。ユーザー代表）
+        if (!CONFIRMED.equals(confirm)) {
+            model.addAttribute("declineProblem", "取り消せないことを確かめて、チェックを入れてください");
+            model.addAttribute("declineReason", reason);
+            return redisplay(parsed, quotationNo, actor, model);
+        }
         DeclineOutcome outcome = responseService.decline(
                 new DeclineQuotationCommand(parsed, quotationNo, actor.companyId(), actor.userId(), reason));
         return switch (outcome) {
@@ -109,17 +117,23 @@ public class QuotationResponseController {
                         QuotationViews.label(declinedNumber, declinedNo) + " を辞退しました。理由は担当営業に伝わります",
                         redirectAttributes);
             case DeclineOutcome.InvalidReason(String message) -> {
-                Quotation quotation = quotationQueryService.findVisible(parsed, actor.companyId()).stream()
-                        .filter(candidate -> candidate.quotationNo() == quotationNo)
-                        .findFirst()
-                        .orElseThrow(QuotationResponseController::notFound);
                 model.addAttribute("declineProblem", message);
                 model.addAttribute("declineReason", reason);
-                yield responseView(parsed, quotationNo, quotation, new UtcInstant(clock.instant()), model);
+                yield redisplay(parsed, quotationNo, actor, model);
             }
             case DeclineOutcome.Rejected(QuotationRejection declinedReason) ->
-                redirectToDetail(
-                        parsed, PROBLEM, declineRejection(parsed, quotationNo, declinedReason), redirectAttributes);
+                isAlreadyDeclined(parsed, quotationNo, actor)
+                        // 辞退の二重送信は失効（期限切れ）でなく、辞退済みという結果として示す
+                        ? redirectToDetail(
+                                parsed,
+                                RESULT,
+                                QuotationViews.label(parsed, quotationNo) + " はすでに辞退しています",
+                                redirectAttributes)
+                        : redirectToDetail(
+                                parsed,
+                                PROBLEM,
+                                declineRejection(parsed, quotationNo, declinedReason),
+                                redirectAttributes);
             case DeclineOutcome.Conflict _ ->
                 redirectToDetail(parsed, PROBLEM, "見積りが更新されました。最新の見積りを確かめてから回答してください", redirectAttributes);
             case DeclineOutcome.NotFound _ -> throw notFound();
@@ -150,13 +164,9 @@ public class QuotationResponseController {
                                 + " の条件の相談を受け付けました。担当者が確認します。進捗は「問い合わせ」で確かめられます",
                         redirectAttributes);
             case ConsultOutcome.InvalidContent(String message) -> {
-                Quotation quotation = quotationQueryService.findVisible(parsed, actor.companyId()).stream()
-                        .filter(candidate -> candidate.quotationNo() == quotationNo)
-                        .findFirst()
-                        .orElseThrow(QuotationResponseController::notFound);
                 model.addAttribute("consultProblem", message);
                 model.addAttribute("consultContent", content);
-                yield responseView(parsed, quotationNo, quotation, new UtcInstant(clock.instant()), model);
+                yield redisplay(parsed, quotationNo, actor, model);
             }
             case ConsultOutcome.Rejected(QuotationRejection consultReason) ->
                 redirectToDetail(
@@ -171,6 +181,24 @@ public class QuotationResponseController {
             return QuotationViews.label(number, quotationNo) + " はすでに詳細経路設計を依頼しているため相談できません。担当営業にご連絡ください";
         }
         return rejection(number, quotationNo, reason);
+    }
+
+    /** 回答の画面を、荷主に提示した見積りで描き直す（入力の誤りを示すとき）。 */
+    private String redisplay(TransportRequestNumber parsed, int quotationNo, AuthenticatedActor actor, Model model) {
+        Quotation quotation = findVisible(parsed, quotationNo, actor);
+        return responseView(parsed, quotationNo, quotation, new UtcInstant(clock.instant()), model);
+    }
+
+    private Quotation findVisible(TransportRequestNumber parsed, int quotationNo, AuthenticatedActor actor) {
+        return quotationQueryService.findVisible(parsed, actor.companyId()).stream()
+                .filter(candidate -> candidate.quotationNo() == quotationNo)
+                .findFirst()
+                .orElseThrow(QuotationResponseController::notFound);
+    }
+
+    private boolean isAlreadyDeclined(TransportRequestNumber parsed, int quotationNo, AuthenticatedActor actor) {
+        return quotationQueryService.findVisible(parsed, actor.companyId()).stream()
+                .anyMatch(candidate -> candidate.quotationNo() == quotationNo && candidate.isDeclined());
     }
 
     /** 辞退を受け付けなかった理由の、荷主向けの文言。回答済みは辞退できない旨を示し、ほかは回答と同じ文言にする。 */

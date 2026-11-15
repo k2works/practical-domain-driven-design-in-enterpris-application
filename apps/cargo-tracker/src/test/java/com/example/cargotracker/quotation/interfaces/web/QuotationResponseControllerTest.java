@@ -114,6 +114,7 @@ class QuotationResponseControllerTest {
                 .andExpect(content().string(not(containsString("条件の相談は担当営業にご連絡ください。"))))
                 .andExpect(content().string(containsString("理由を付けて辞退する</button>")))
                 .andExpect(content().string(containsString("辞退すると、この見積りは使えなくなります")))
+                .andExpect(content().string(containsString("辞退すると取り消せないことを確かめました")))
                 .andExpect(content().string(containsString("この回答は予約の確定ではありません。経路が決まったら、あらためて見積りと経路を確かめて承認していただきます。")))
                 .andExpect(content().string(containsString("回答を取り消したい場合は、業務番号を添えて担当営業にご連絡ください。")))
                 .andExpect(content().string(not(containsString("<!-- C-05"))));
@@ -172,7 +173,7 @@ class QuotationResponseControllerTest {
         given(responseService.decline(new DeclineQuotationCommand(NUMBER, 1, SHIPPER, USER, "他社で進めるため")))
                 .willReturn(new DeclineOutcome.Declined(NUMBER, 1));
 
-        mockMvc.perform(post(DECLINE).param("reason", "他社で進めるため"))
+        mockMvc.perform(post(DECLINE).param("reason", "他社で進めるため").param("confirm", "yes"))
                 .andExpect(redirectedUrl(DETAIL))
                 .andExpect(flash().attribute("result", "TR-2026-0001 見積 1 を辞退しました。理由は担当営業に伝わります"));
     }
@@ -182,7 +183,7 @@ class QuotationResponseControllerTest {
         given(quotationQueryService.findVisible(NUMBER, SHIPPER)).willReturn(List.of(presented()));
         given(responseService.decline(any())).willReturn(new DeclineOutcome.InvalidReason("辞退の理由を入力してください"));
 
-        mockMvc.perform(post(DECLINE).param("reason", " "))
+        mockMvc.perform(post(DECLINE).param("reason", " ").param("confirm", "yes"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("辞退の理由を入力してください")))
                 .andExpect(content().string(containsString("理由を付けて辞退する</button>")));
@@ -197,14 +198,38 @@ class QuotationResponseControllerTest {
                         new DeclineOutcome.Conflict(),
                         new DeclineOutcome.NotFound());
 
-        mockMvc.perform(post(DECLINE).param("reason", "理由"))
+        mockMvc.perform(post(DECLINE).param("reason", "理由").param("confirm", "yes"))
                 .andExpect(redirectedUrl(DETAIL))
                 .andExpect(flash().attribute("problem", "TR-2026-0001 見積 1 は有効期限を過ぎて失効しています。新しい見積りは担当営業にご依頼ください"));
-        mockMvc.perform(post(DECLINE).param("reason", "理由"))
+        mockMvc.perform(post(DECLINE).param("reason", "理由").param("confirm", "yes"))
                 .andExpect(flash().attribute("problem", "TR-2026-0001 見積 1 はすでに詳細経路設計を依頼しているため辞退できません。担当営業にご連絡ください"));
-        mockMvc.perform(post(DECLINE).param("reason", "理由"))
+        mockMvc.perform(post(DECLINE).param("reason", "理由").param("confirm", "yes"))
                 .andExpect(flash().attribute("problem", "見積りが更新されました。最新の見積りを確かめてから回答してください"));
-        mockMvc.perform(post(DECLINE).param("reason", "理由")).andExpect(status().isNotFound());
+        mockMvc.perform(post(DECLINE).param("reason", "理由").param("confirm", "yes"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void 取り消せないことの確認のチェックがない辞退は受け付けず入力した理由を残して画面を描き直す() throws Exception {
+        given(quotationQueryService.findVisible(NUMBER, SHIPPER)).willReturn(List.of(presented()));
+
+        mockMvc.perform(post(DECLINE).param("reason", "他社で進めるため"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("取り消せないことを確かめて、チェックを入れてください")))
+                .andExpect(content().string(containsString("他社で進めるため")));
+        verify(responseService, never()).decline(any());
+    }
+
+    @Test
+    void すでに辞退した見積りの二重送信は失効でなく辞退済みとして結果を示す() throws Exception {
+        Quotation declined = presented();
+        declined.decline(USER, "他社で進めるため", new UtcInstant(Instant.parse("2026-10-06T00:00:00Z")));
+        given(quotationQueryService.findVisible(NUMBER, SHIPPER)).willReturn(List.of(declined));
+        given(responseService.decline(any())).willReturn(new DeclineOutcome.Rejected(QuotationRejection.EXPIRED));
+
+        mockMvc.perform(post(DECLINE).param("reason", "理由").param("confirm", "yes"))
+                .andExpect(redirectedUrl(DETAIL))
+                .andExpect(flash().attribute("result", "TR-2026-0001 見積 1 はすでに辞退しています"));
     }
 
     @Test

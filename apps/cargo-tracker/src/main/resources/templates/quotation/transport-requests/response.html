@@ -9,7 +9,7 @@
 <body>
 <main>
     <h1 th:text="|見積りへの回答 ${quotationLabel}|">見積りへの回答 TR-2026-0001 見積 1</h1>
-    <!--/* C-05（Bolt 12、US-24 AC1）。料金根拠・有効期限・経路方針を確かめ、詳細経路設計へ進む。辞退・相談（AC2・AC3）は後の Bolt。
+    <!--/* C-05（Bolt 12、US-24 AC1）。料金根拠・有効期限・経路方針を確かめ、詳細経路設計へ進む。辞退・相談（AC2・AC3。W9 の Bolt 46・46-1）。
          確認の領域は挟まない（この画面自体が確かめる画面。2026-10-06 の決定）。社内承認者は見せない。
          開発の注記は荷主のブラウザに届かないパーサーレベルのコメントにする（Bolt 12 レビュー R-18） */-->
     <dl>
@@ -46,6 +46,10 @@
             <label for="decline-reason" class="form-label">辞退の理由（必須。500 文字まで）</label>
             <textarea id="decline-reason" name="reason" class="form-control" rows="3" maxlength="500" required
                       th:text="${declineReason}"></textarea>
+        </div>
+        <div class="form-check mb-3">
+            <input class="form-check-input" type="checkbox" id="decline-confirm" name="confirm" value="yes" required>
+            <label class="form-check-label" for="decline-confirm">辞退すると取り消せないことを確かめました</label>
         </div>
         <button type="submit" class="btn btn-outline-danger">理由を付けて辞退する</button>
     </form>

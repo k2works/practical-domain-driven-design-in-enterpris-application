@@ -86,6 +86,8 @@ public class RouteDesignUiSteps {
         Locator field = page().getByLabel("辞退の理由（必須。500 文字まで）", new Page.GetByLabelOptions().setExact(true));
         browser.tabUntilFocused(field);
         page().keyboard().type(reason);
+        browser.tabUntilFocused(page().getByLabel("辞退すると取り消せないことを確かめました"));
+        page().keyboard().press("Space");
         browser.tabUntilFocused(button("理由を付けて辞退する"));
         page().keyboard().press("Enter");
         page().waitForURL("**/customer/transport-requests/" + number());
@@ -102,6 +104,8 @@ public class RouteDesignUiSteps {
         Locator field = page().getByLabel("辞退の理由（必須。500 文字まで）", new Page.GetByLabelOptions().setExact(true));
         browser.tabUntilFocused(field);
         page().keyboard().type("   ");
+        browser.tabUntilFocused(page().getByLabel("辞退すると取り消せないことを確かめました"));
+        page().keyboard().press("Space");
         browser.tabUntilFocused(button("理由を付けて辞退する"));
         page().keyboard().press("Enter");
     }
