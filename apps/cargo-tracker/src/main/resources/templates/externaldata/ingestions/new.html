@@ -11,6 +11,12 @@
 <body>
 <main>
     <h1>外部データの取込</h1>
+    <!--/* OBS-06（W10）。24 時間以上判断を待つ隔離・差異があるときの警告。データ責任者のホームなので、取込の前に目に入る位置に置く。
+           件数は取込によらない全体。判断は隔離・差異の確認（S-17）で行う */-->
+    <div class="alert alert-warning" role="status" th:if="${staleUndecidedCount != null and staleUndecidedCount > 0}">
+        判断を待つ隔離・差異が <span th:text="${staleUndecidedCount}">3</span> 件、24 時間以上たっています。
+        <a th:href="@{/staff/external-data/undecided-records}">隔離・差異の確認</a>で判断してください。
+    </div>
     <!--/* S-16 の選ぶ画面（Bolt 39c、US-14 AC1・AC2）。承認済みの情報源を 1 つ選び、ファイルの種別は情報源の原本種別から決める。
            承認済みの情報源がないときは、取り込めない理由と次の行動だけを示し、ファイルの欄とボタンを出さない（US-14 AC2。全文は画面の層の定数）。
            拒否は理由と次の行動を欄の誤りで示す（Bolt 39c2）。エラー要約はフォームの外に置き、画面を開いた後の停止で承認済みの情報源が

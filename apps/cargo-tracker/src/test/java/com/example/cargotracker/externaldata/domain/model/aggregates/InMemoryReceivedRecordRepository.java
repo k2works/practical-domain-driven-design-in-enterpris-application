@@ -101,6 +101,21 @@ public class InMemoryReceivedRecordRepository implements ReceivedRecordRepositor
         return (int) undecided(ingestionIdOrNull).count();
     }
 
+    @Override
+    public int countUndecidedRecordsClassifiedAtOrBefore(java.time.Instant threshold) {
+        return (int) undecided(null)
+                .filter(undecided -> !undecidedClassifiedAt(undecided).isAfter(threshold))
+                .count();
+    }
+
+    private java.time.Instant undecidedClassifiedAt(UndecidedRecord undecided) {
+        return records.stream()
+                .filter(receivedRecord -> receivedRecord.id().equals(undecided.receivedRecordId()))
+                .findFirst()
+                .orElseThrow()
+                .classifiedAt();
+    }
+
     /** メモリの受信記録はどれも取込 ID を持つ（取込のない受信記録を持てない）。 */
     @Override
     public Optional<ReceivedRecord> findById(UUID id) {

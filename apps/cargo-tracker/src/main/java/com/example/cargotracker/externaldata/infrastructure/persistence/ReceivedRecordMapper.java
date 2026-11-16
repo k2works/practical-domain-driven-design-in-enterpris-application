@@ -29,6 +29,10 @@ public interface ReceivedRecordMapper {
 
     int countUndecidedRecords(@Param("ingestionId") UUID ingestionId);
 
+    /** 判断を待つ隔離・差異のうち、分類の時刻が基準以前のものの件数（W10 の OBS-06）。 */
+    int countUndecidedClassifiedAtOrBefore(
+            @Param("ingestionId") UUID ingestionId, @Param("threshold") java.time.OffsetDateTime threshold);
+
     /** 取込で書いた受信記録を ID で引く（Bolt 39d2）。取込のない受信記録は返さない。 */
     Optional<ReceivedRecordRow> selectById(@Param("id") UUID id);
 

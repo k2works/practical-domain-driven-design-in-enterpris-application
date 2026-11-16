@@ -96,6 +96,13 @@
         <include refid="undecidedRecordSource"/>
     </select>
 
+    <!-- 判断を待つ隔離・差異のうち、分類の時刻が基準以前のもの（W10 の OBS-06。24 時間以上判断を待つ隔離の警告）。undecidedRecordSource の絞り込みに分類の時刻を足す -->
+    <select id="countUndecidedClassifiedAtOrBefore" resultType="int">
+        SELECT COUNT(*)
+        <include refid="undecidedRecordSource"/>
+           AND r.classified_at &lt;= #{threshold}
+    </select>
+
     <!-- 取込で書いた受信記録を ID で引く（Bolt 39d2。判断できる受信記録の確かめ）。取込のない受信記録（ingestion_id が NULL）は返さない -->
     <select id="selectById" resultMap="receivedRecordRow">
         SELECT id, external_record_id, ingestion_id, payload_hash, payload_object_key, acquired_at, classification,

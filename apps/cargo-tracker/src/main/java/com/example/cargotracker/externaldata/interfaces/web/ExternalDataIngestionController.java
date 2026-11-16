@@ -7,6 +7,7 @@ import com.example.cargotracker.externaldata.application.internal.queryservices.
 import com.example.cargotracker.externaldata.application.internal.queryservices.IngestionSummaryQueryService;
 import com.example.cargotracker.externaldata.application.internal.queryservices.IngestionSummaryView;
 import com.example.cargotracker.externaldata.application.internal.queryservices.PilotReadiness;
+import com.example.cargotracker.externaldata.application.internal.queryservices.UndecidedRecordQueryService;
 import com.example.cargotracker.externaldata.domain.model.rules.IngestionFileLimit;
 import com.example.cargotracker.externaldata.interfaces.file.CsvFileKind;
 import com.example.cargotracker.externaldata.interfaces.file.IngestFileCommandAssembler;
@@ -101,14 +102,20 @@ public class ExternalDataIngestionController {
     private final IngestionService ingestionService;
     private final IngestibleDataSourceQueryService dataSources;
     private final IngestionSummaryQueryService summaries;
+    private final UndecidedRecordQueryService undecidedRecords;
+    private final java.time.Clock clock;
 
     public ExternalDataIngestionController(
             IngestionService ingestionService,
             IngestibleDataSourceQueryService dataSources,
-            IngestionSummaryQueryService summaries) {
+            IngestionSummaryQueryService summaries,
+            UndecidedRecordQueryService undecidedRecords,
+            java.time.Clock clock) {
         this.ingestionService = ingestionService;
         this.dataSources = dataSources;
         this.summaries = summaries;
+        this.undecidedRecords = undecidedRecords;
+        this.clock = clock;
     }
 
     /** 選ぶ画面。承認済みの情報源がなければ、取り込めない理由と次の行動だけを示す（US-14 AC2）。 */
@@ -214,6 +221,8 @@ public class ExternalDataIngestionController {
         model.addAttribute("fieldLabels", FIELD_LABELS);
         model.addAttribute("noIngestibleSource", NO_INGESTIBLE_SOURCE);
         model.addAttribute("fileHint", FILE_HINT);
+        // OBS-06: 24 時間以上判断を待つ隔離・差異の警告（データ責任者のホームであるこの画面に出す。W10）
+        model.addAttribute("staleUndecidedCount", undecidedRecords.staleUndecidedCount(clock.instant()));
         return NEW_VIEW;
     }
 

@@ -22,6 +22,7 @@ import com.example.cargotracker.externaldata.application.internal.queryservices.
 import com.example.cargotracker.externaldata.application.internal.queryservices.IngestibleDataSourceQueryService;
 import com.example.cargotracker.externaldata.application.internal.queryservices.IngestionSummaryQueryService;
 import com.example.cargotracker.externaldata.application.internal.queryservices.IngestionSummaryView;
+import com.example.cargotracker.externaldata.application.internal.queryservices.UndecidedRecordQueryService;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.MilestoneValues;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.VoyageValues;
 import com.example.cargotracker.identity.infrastructure.security.TestActors;
@@ -100,6 +101,12 @@ class ExternalDataIngestionControllerTest {
     @MockitoBean
     IngestionSummaryQueryService summaries;
 
+    @MockitoBean
+    UndecidedRecordQueryService undecidedRecords;
+
+    @MockitoBean
+    java.time.Clock clock;
+
     @BeforeEach
     void 承認済みの情報源が2つある() {
         given(dataSources.ingestibleSources())
@@ -121,6 +128,32 @@ class ExternalDataIngestionControllerTest {
 
     private static IngestionOutcome.Ingested ingested() {
         return new IngestionOutcome.Ingested(INGESTION_ID, 1, Map.of(), List.of(), null);
+    }
+
+    // 24 時間以上判断を待つ隔離の警告（OBS-06。W10。データ責任者のホームである選ぶ画面に出す）
+
+    @Test
+    void OBS06_24時間以上判断を待つ隔離があるときは警告と一覧への案内を選ぶ画面に示す() throws Exception {
+        given(clock.instant()).willReturn(java.time.Instant.parse("2026-11-16T12:00:00Z"));
+        given(undecidedRecords.staleUndecidedCount(java.time.Instant.parse("2026-11-16T12:00:00Z")))
+                .willReturn(3);
+
+        mockMvc.perform(get(NEW_URL))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("判断を待つ隔離・差異が")))
+                .andExpect(content().string(containsString(">3</span> 件、24 時間以上たっています")))
+                .andExpect(content().string(containsString("href=\"/staff/external-data/undecided-records\"")));
+    }
+
+    @Test
+    void OBS06_24時間以上判断を待つ隔離がないときは警告を示さない() throws Exception {
+        given(clock.instant()).willReturn(java.time.Instant.parse("2026-11-16T12:00:00Z"));
+        given(undecidedRecords.staleUndecidedCount(java.time.Instant.parse("2026-11-16T12:00:00Z")))
+                .willReturn(0);
+
+        mockMvc.perform(get(NEW_URL))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.not(containsString("24 時間以上たっています"))));
     }
 
     // 選ぶ画面（GET）

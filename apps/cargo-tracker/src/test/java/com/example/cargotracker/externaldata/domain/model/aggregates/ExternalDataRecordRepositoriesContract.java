@@ -531,6 +531,25 @@ public abstract class ExternalDataRecordRepositoriesContract {
     }
 
     @Test
+    void W10_OBS06_判断を待つ隔離の古さの件数は分類の時刻が基準以前のものだけを数える() {
+        Ingestion ingestion = ingestionAt(FUTURE);
+        ingestions().add(ingestion);
+        ExternalRecord externalRecord = externalRecord(key("VOYAGE", "V-OBS06"));
+        externalRecords().add(externalRecord);
+        ReceivedRecord adopted = keyed(externalRecord, ingestion, Classification.ADOPTED, 2);
+        ReceivedRecord quarantined = keyed(externalRecord, ingestion, Classification.QUARANTINED, 3);
+        receivedRecords().add(adopted);
+        receivedRecords().add(quarantined);
+        Instant classifiedAt = quarantined.classifiedAt();
+
+        // 共有の DB にほかの行があっても比べられるよう、基準を動かしたときの増分で見る。
+        // 基準が分類の時刻と同じなら含める（「24 時間以上」）。採用は未判断でないので数えない
+        int before = receivedRecords().countUndecidedRecordsClassifiedAtOrBefore(classifiedAt.minusSeconds(1));
+        int at = receivedRecords().countUndecidedRecordsClassifiedAtOrBefore(classifiedAt);
+        assertThat(at - before).as("基準が分類の時刻に届いたとき、この隔離 1 件だけが増える").isEqualTo(1);
+    }
+
+    @Test
     void Bolt39d_行4_判断を待つ隔離は取込の新しい順で同じ時刻は取込IDの順で同じ取込はファイルの誤りを先に行の範囲の順() {
         // 書く順を期待の順と逆にする（T-245）: 古い取込から書き、同じ取込の受信記録は行の範囲の逆の順に書く
         Ingestion older = ingestionAt(FUTURE.minusSeconds(60));

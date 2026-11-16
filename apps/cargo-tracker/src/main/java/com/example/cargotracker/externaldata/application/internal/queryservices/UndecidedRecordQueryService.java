@@ -13,6 +13,7 @@ import com.example.cargotracker.externaldata.domain.model.valueobjects.ExternalI
 import com.example.cargotracker.externaldata.domain.model.valueobjects.ReceivedValue;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.RecordValues;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.UndecidedRecord;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -183,6 +184,20 @@ public class UndecidedRecordQueryService {
                 || type == Character.FORMAT
                 || type == Character.LINE_SEPARATOR
                 || type == Character.PARAGRAPH_SEPARATOR;
+    }
+
+    /** 判断を待つ隔離を警告する古さ（OBS-06。24 時間。非機能要件の OBS-06 の閾値。2026-11-16 に人が承認）。 */
+    public static final java.time.Duration STALE_AFTER = java.time.Duration.ofHours(24);
+
+    /**
+     * 24 時間以上判断を待っている隔離・差異の件数（OBS-06。W10。データ責任者のホームの警告）。分類から {@link #STALE_AFTER} 以上
+     * たったもの（ちょうど 24 時間を含む）を、取込によらず数える。
+     *
+     * @param now 現在の時刻
+     */
+    @Transactional(readOnly = true)
+    public int staleUndecidedCount(Instant now) {
+        return receivedRecords.countUndecidedRecordsClassifiedAtOrBefore(now.minus(STALE_AFTER));
     }
 
     /**

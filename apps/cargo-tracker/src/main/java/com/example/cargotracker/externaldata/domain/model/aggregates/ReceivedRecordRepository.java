@@ -38,6 +38,12 @@ public interface ReceivedRecordRepository {
     int countUndecidedRecords(UUID ingestionIdOrNull);
 
     /**
+     * 判断を待つ隔離・差異のうち、分類の時刻が基準以前のもの（基準と同じ時刻を含める）の件数。取込では絞らない（W10 の OBS-06。
+     * 24 時間以上判断を待っている隔離の警告。{@link #countUndecidedRecords} と同じ「判断がまだない隔離・差異」の数え方）。
+     */
+    int countUndecidedRecordsClassifiedAtOrBefore(java.time.Instant threshold);
+
+    /**
      * ID で受信記録を引く（判断できる受信記録の確かめ。Bolt 39d2）。取込で書いた受信記録だけを返し、取込のない（{@code ingestion_id} が NULL の）
      * 受信記録とないときは空（受信記録の record は取込 ID を必ず持つ）。分類では絞らない。
      */

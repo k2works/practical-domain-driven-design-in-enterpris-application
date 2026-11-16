@@ -74,6 +74,15 @@ class UndecidedRecordQueryServiceTest {
             new DataSource(UUID.randomUUID(), "照会の提供元-" + UUID.randomUUID(), "MILESTONE", ApprovalStatus.APPROVED);
     private final UUID ingestionId = UUID.randomUUID();
 
+    @Test
+    void W10_OBS06_24時間以上判断を待つ隔離の件数は基準を現在の24時間前にして数える() {
+        Instant now = Instant.parse("2026-11-16T12:00:00Z");
+        given(receivedRecords.countUndecidedRecordsClassifiedAtOrBefore(Instant.parse("2026-11-15T12:00:00Z")))
+                .willReturn(3);
+
+        assertThat(service.staleUndecidedCount(now)).isEqualTo(3);
+    }
+
     @BeforeEach
     void 情報源がある() {
         given(dataSources.findById(voyage.id())).willReturn(Optional.of(voyage));

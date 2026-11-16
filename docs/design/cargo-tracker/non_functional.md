@@ -4,7 +4,7 @@ title: "cargo-tracker 非機能要件"
 description: "cargo-tracker の性能・可用性・復旧・データ鮮度・セキュリティ・プライバシー・保持・アクセシビリティ・保守性・拡張性の測定可能な目標値、根拠、決定者、検証方法。"
 tags: [design, non-functional]
 status: stable
-generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-16T05:55:41Z }
+generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-16T06:13:08Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T08:22:09Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:38Z }
@@ -263,7 +263,7 @@ password の再設定のトークン（`identity.password_reset_token`）と送�
 | OBS-03 | 未完了のイベント配信（発行から 5 分以上） | 1 件以上 | 10 件以上または 30 分以上 | 提案 |
 | OBS-04 | 予約サガの有人確認要（RTY-02 の滞留の上限に達した） | 1 件以上 | — | 提案（処理中の間は鳴らさない。原因の手がかりは追跡の側のイベントの発行の記録の未完了の件数。ADR-015） |
 | OBS-05 | 有人確認要の件数 | 新規 1 件ごとに通知 | 受領期限の超過 | 提案 |
-| OBS-06 | 隔離中の外部原本 | 1 件以上 | 24 時間以上未判断 | 提案 |
+| OBS-06 | 隔離中の外部原本 | 1 件以上 | 24 時間以上未判断 | 提案（警告は W10 の Bolt 53 で実装: データ責任者のホーム＝外部データの取込の画面に出す。閾値 24 時間は 2026-11-16 に人が承認。通知の宛先は未決） |
 | OBS-07 | 鮮度を超えた追跡（FRS-02。W10 で `tracking_record.next_expected_at` を基準の時刻と比べて数える。Bolt 39g4） | 1 件以上 | 10 件以上 | 提案 |
 | OBS-08 | 監査記録の欠落（AUD-04） | — | 1 件以上 | 提案 |
 | OBS-09 | 認証の失敗とロック（監査記録の `ACCOUNT_LOCKED` と `LOGIN_FAILED` で数える。Bolt 32） | 1 時間に同じ利用者で 3 回ロック | 1 時間に 50 回以上の失敗 | 提案 |

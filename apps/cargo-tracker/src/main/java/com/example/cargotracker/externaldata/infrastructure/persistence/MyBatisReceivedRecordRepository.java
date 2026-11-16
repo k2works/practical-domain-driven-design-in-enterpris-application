@@ -78,6 +78,13 @@ public class MyBatisReceivedRecordRepository implements ReceivedRecordRepository
     }
 
     @Override
+    public int countUndecidedRecordsClassifiedAtOrBefore(java.time.Instant threshold) {
+        // 取込では絞らない（ingestionId は null。undecidedRecordSource の絞り込みの条件が参照する）
+        return mapper.countUndecidedClassifiedAtOrBefore(
+                null, java.time.OffsetDateTime.ofInstant(threshold, java.time.ZoneOffset.UTC));
+    }
+
+    @Override
     public Optional<ReceivedRecord> findById(UUID id) {
         return mapper.selectById(id).map(MyBatisReceivedRecordRepository::toDomain);
     }
