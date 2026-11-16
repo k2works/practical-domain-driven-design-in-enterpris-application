@@ -1,0 +1,181 @@
+name: cargo-tracker deploy
+
+# ステージング・本番への配備（W10 の Bolt 52。ADR-008・ADR-020。architecture_infrastructure.md の CI/CD）。
+# 配備はワークフローの取り消しから切り離した専用のワークフローにする（cargo-tracker CI の cancel-in-progress の外）。
+# イメージ（Dockerfile の runtime ステージ）は 1 回だけビルドし、digest をステージングから本番へ昇格させる。
+# 本番は GitHub の Environment `production` の必須レビュアーの承認を得てから動く（確認必須）。
+#
+# 前提（人が用意する。ADR-020 の未決）: AWS アカウントと OIDC の IAM ロール、リポジトリの変数と Environment。
+# 用意するまでこのワークフローは動かない（workflow_dispatch のみ。push では動かない）。
+#   リポジトリの変数: AWS_REGION、AWS_DEPLOY_ROLE_ARN_STAGING、AWS_DEPLOY_ROLE_ARN_PRODUCTION
+#   Environment: staging、production（production は必須のレビュアーを付ける）
+# アクションはコミットの SHA で固定する（末尾のコメントは版）。長期のアクセスキーは使わない（OIDC）。
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: '配備する develop か main の ref（ビルドするコミット）'
+        type: string
+        default: develop
+      promote_to_production:
+        description: 'ステージングの配備が成功したら、同じイメージを本番へ昇格する（本番の承認が要る）'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  id-token: write
+
+# 配備は取り消さない。同じ環境の配備は順番に行う
+concurrency:
+  group: cargo-tracker-deploy
+  cancel-in-progress: false
+
+env:
+  APP_NAME: cargo-tracker
+  AWS_REGION: ${{ vars.AWS_REGION }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: staging
+    outputs:
+      image_digest: ${{ steps.push.outputs.digest }}
+      image_tag: ${{ steps.meta.outputs.tag }}
+    steps:
+      - name: リポジトリを取得する
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.ref }}
+
+      - name: イメージのタグを決める（コミットの SHA。不変）
+        id: meta
+        run: echo "tag=${GITHUB_SHA::12}" >> "$GITHUB_OUTPUT"
+
+      - name: AWS に OIDC で認証する（ステージング）
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN_STAGING }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: ECR にログインする
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@03f1aad4c6c7ffd436567f42f9384779290529bd # v2.1.7
+
+      - name: runtime のステージをビルドして ECR へ push する
+        id: push
+        working-directory: apps/cargo-tracker
+        env:
+          REGISTRY: ${{ steps.ecr.outputs.registry }}
+          TAG: ${{ steps.meta.outputs.tag }}
+        run: |
+          IMAGE="${REGISTRY}/${APP_NAME}-staging:${TAG}"
+          docker build --target runtime --tag "${IMAGE}" .
+          docker push "${IMAGE}"
+          DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' "${IMAGE}" | cut -d@ -f2)
+          echo "digest=${DIGEST}" >> "$GITHUB_OUTPUT"
+
+  deploy-staging:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: staging
+    steps:
+      - name: AWS に OIDC で認証する（ステージング）
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN_STAGING }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: ECR にログインする
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@03f1aad4c6c7ffd436567f42f9384779290529bd # v2.1.7
+
+      - name: 現在のタスク定義を取得する
+        run: |
+          aws ecs describe-task-definition --task-definition "${APP_NAME}-staging" \
+            --query taskDefinition > task-definition.json
+
+      - name: タスク定義のイメージを差し替える（digest で固定）
+        id: render
+        uses: aws-actions/amazon-ecs-render-task-definition@8d79160660ad39c402a16e5fc7cd2a32e8f7d6b7 # v1.9.1
+        with:
+          task-definition: task-definition.json
+          container-name: cargo-tracker
+          image: ${{ steps.ecr.outputs.registry }}/${{ env.APP_NAME }}-staging@${{ needs.build.outputs.image_digest }}
+
+      - name: ECS に配備する（サーキットブレーカーで失敗したら自動で戻る）
+        uses: aws-actions/amazon-ecs-deploy-task-definition@a00d4d57ac0de1a99b39fe469f3d898d38717c2b # v2.6.4
+        with:
+          task-definition: ${{ steps.render.outputs.task-definition }}
+          service: ${{ env.APP_NAME }}-staging
+          cluster: ${{ env.APP_NAME }}-staging
+          wait-for-service-stability: true
+
+  promote-production:
+    if: inputs.promote_to_production
+    needs: [build, deploy-staging]
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    # 必須のレビュアーの承認を得るまで始まらない（Environment の設定は人が行う）
+    environment: production
+    steps:
+      - name: AWS に OIDC で認証する（ステージング。イメージの取得）
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN_STAGING }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: ステージングの ECR からイメージを取得する
+        id: pull
+        uses: aws-actions/amazon-ecr-login@03f1aad4c6c7ffd436567f42f9384779290529bd # v2.1.7
+
+      - name: digest でイメージを取得する
+        env:
+          STAGING_REGISTRY: ${{ steps.pull.outputs.registry }}
+          DIGEST: ${{ needs.build.outputs.image_digest }}
+        run: docker pull "${STAGING_REGISTRY}/${APP_NAME}-staging@${DIGEST}"
+
+      - name: AWS に OIDC で認証する（本番）
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN_PRODUCTION }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: 本番の ECR にログインする
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@03f1aad4c6c7ffd436567f42f9384779290529bd # v2.1.7
+
+      - name: 同じイメージを本番の ECR へ昇格する（再ビルドしない）
+        env:
+          STAGING_REGISTRY: ${{ steps.pull.outputs.registry }}
+          PRODUCTION_REGISTRY: ${{ steps.ecr.outputs.registry }}
+          DIGEST: ${{ needs.build.outputs.image_digest }}
+          TAG: ${{ needs.build.outputs.image_tag }}
+        run: |
+          SOURCE="${STAGING_REGISTRY}/${APP_NAME}-staging@${DIGEST}"
+          TARGET="${PRODUCTION_REGISTRY}/${APP_NAME}-production:${TAG}"
+          docker tag "${SOURCE}" "${TARGET}"
+          docker push "${TARGET}"
+
+      - name: 現在のタスク定義を取得する
+        run: |
+          aws ecs describe-task-definition --task-definition "${APP_NAME}-production" \
+            --query taskDefinition > task-definition.json
+
+      - name: タスク定義のイメージを差し替える
+        id: render
+        uses: aws-actions/amazon-ecs-render-task-definition@8d79160660ad39c402a16e5fc7cd2a32e8f7d6b7 # v1.9.1
+        with:
+          task-definition: task-definition.json
+          container-name: cargo-tracker
+          image: ${{ steps.ecr.outputs.registry }}/${{ env.APP_NAME }}-production:${{ needs.build.outputs.image_tag }}
+
+      - name: ECS に配備する（ローリング。サーキットブレーカーで失敗したら自動で戻る）
+        uses: aws-actions/amazon-ecs-deploy-task-definition@a00d4d57ac0de1a99b39fe469f3d898d38717c2b # v2.6.4
+        with:
+          task-definition: ${{ steps.render.outputs.task-definition }}
+          service: ${{ env.APP_NAME }}-production
+          cluster: ${{ env.APP_NAME }}-production
+          wait-for-service-stability: true
