@@ -4,7 +4,7 @@ title: "cargo-tracker テスト戦略"
 description: "cargo-tracker のテスト形状、テストレベルと責務、BDD（Cucumber）のシナリオ階層とタグ規約、不変条件・ユーザーストーリーとテストの対応、カバレッジ目標、CI での実行。"
 tags: [design, test-strategy, bdd]
 status: stable
-generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-15T06:38:28Z }
+generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-16T02:25:31Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T08:12:04Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:38Z }
@@ -147,6 +147,8 @@ src/test/java/.../ui/                     画面の層のステップ定義（@u
 
 画面の層のステップ定義は、Tab でフォーカスを進める部品（`tabUntilFocused`・`tabUntilGroup`）を `BrowserSession` から使い、クラスごとに写しを作らない（Bolt 29、#45。待ち方と上限を直す場所を 1 つにする）。1 回だけ Tab を押してフォーカスの順序を確かめる部品（`tabTo`）は、確かめる順序が画面ごとに違うので各クラスに置く。
 
+画面の層のステップ定義は、**固定の時間の待ち（`page().waitForTimeout`）を使わない**（W9 レビュー M-10、Bolt 49）。画面の状態（要素の表示・テキスト・URL）を Playwright の locator の待ち（`waitFor`・`assertThat(locator)`）で待つ。固定の待ちを許すのは、動画の最後の一枚を残す `BrowserSession` の 1 か所だけである。
+
 時間の経過を画面の層の受入シナリオで確かめるとき（session の警告。Bolt 32b）は、Playwright の `BrowserContext.clock()` でブラウザの時計を進める。時計は `signInAs` の前に入れる（`install`）。同じコンテキストのページは同じ時計を使うので、タブの間の同期も確かめられる。画面の層のテストのアプリは本物の時計（`Clock.systemUTC()`）で動き、`MutableClock` も共通の時計のステップも使わないので、サーバーの時計は進められない。Spring Session の無操作の期限はサーバーの実時間で数えるので、画面の層のシナリオではサーバーの session を実際に失効させない（サーバーの失効と延長による最終アクセスの更新は、セキュリティの統合テストで確かめる）。8 時間の警告は、テストの部品（`BrowserSession`）が session の属性 `cargotracker.session.authenticatedAt` を上限の近い時刻（7 時間 56 分前）に書き換えてから画面を開いて確かめる。
 
 ステップ定義は自分のコンテキストの入力ポートだけを呼ぶ。前提の準備で他のコンテキストのデータが必要なときは、そのコンテキストの公開 API を使う（ADR-001 の境界をテストでも守る）。
@@ -271,7 +273,8 @@ Golden dataset v0（Bolt 37f。仮の値で業務責任者の承認待ち）は�
 | SC-INV-01〜03（有人案件） | ○ | ○ | — | — |
 | SC-INV-04（営業日カレンダーと受領期限） | ○（デシジョンテーブル: 営業時間内・外、休業日、優先度、年末年始） | ○ | — | — |
 | SC-INV-05（荷主は自社の問い合わせだけ） | — | ○ | — | ○ |
-| IR-INV-01〜02（照会記録） | ○（30 分のまとめ、24 時間の有人対応への移行の境界） | ○ | — | — |
+| IR-INV-01〜02（照会記録） | ○（30 分のまとめ、24 時間の有人対応への移行の境界。境界は `WebInquiryEscalatorTest` の「ちょうど」「1 秒古い」で押さえる） | ○ | — | — |
+| 通知の同じ契機の 2 回受信（US-22。D-166） | ○（`MailDeliveryTest`） | ○（`MyBatisNotificationRepositoryIntegrationTest`、`ShipperNotificationMailIntegrationTest`） | — | — |
 | KPI-INV-01〜02（KPI の算出、基準値） | ○（中央値・90 パーセンタイル、除外の適用） | ○ | 基準値の表の INSERT のみ | — |
 | N-INV-01〜03（通知の本文、重複なし、失敗の記録） | ○（Bolt 33: 通知の状態の遷移、失敗の理由の長さ、同じ `event_id` と宛先は `AlreadySent`） | ○ | ○（イベントの再配信で 1 通。Bolt 33: `status = 'PENDING'` を条件にした更新、UK（`event_id`、`recipient_user_id`）、Mailpit で件名・本文・宛先） | メールの本文の開示テスト |
 | IA-INV-01〜02（固定役割、担当範囲） | ○ | ○ | — | ○（URL ごとの認可） |

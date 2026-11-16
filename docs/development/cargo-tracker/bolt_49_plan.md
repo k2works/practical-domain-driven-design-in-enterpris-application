@@ -4,7 +4,7 @@ title: "Bolt 49 計画 - W9 の持ち越しの返済 1（同時実行テスト�
 description: "W10 の最初の Bolt。W9 の持ち越し C-9（H2TrackingRecordLockTest の一過性の失敗）、C-7（UI の固定の待ちとテストの所在）、C-8（死んだ PlaceholderController の削除と文書の追記）を返す。"
 tags: [plan]
 status: stable
-generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-16T01:44:46Z }
+generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-16T02:25:31Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-11-16T01:44:46Z }
 ---
@@ -44,12 +44,12 @@ verified:
 
 ## 計画（TDD の三原則は変えない）
 
-- [ ] (1) C-9 の原因の調査: 失敗のログを読み、同じテストを CPU に負荷をかけて繰り返し流して再現する（再現しなければ「再現できなかった」と記録し、仮説 (a)(b) のどちらを支持する証拠もないと書く）。結果をこの計画に書き、P-2 を人に諮る
-- [ ] (2) C-9 の修正: Red（再現するテスト、または失敗を捕まえる観測）→ 最小の修正 → Green。守る既存のテストを先に流す
-- [ ] (3) C-7 の固定の待ち: `BrowserSession` の動画の待ち以外の 14 か所を、画面の状態を待つ形に置き換える。1 か所ごとに該当のシナリオを名前の絞り込みで流す
-- [ ] (4) C-7 の所在: 通知の冪等性・KPI の 24 時間の境界・`KpiWeeklyQueryServiceTest` のスタブの比べ方（引数の完全一致）を調べ、直すものは直す。残りは所在の一覧に書く
-- [ ] (5) C-8: 2 つの URL が本物のコントローラーに届くことの確認 → `PlaceholderController` とテンプレートの削除（P-1 の承認後）→ 文書の追記
-- [ ] (6) 品質ゲート: `--continue spotlessCheck check documentationTest uiTest`、push の前に `checkstyleMain checkstyleTest spotbugsMain`、Sonar、`okf:check`
+- [x] (1) C-9 の原因の調査: 失敗のログを読み、同じテストを CPU に負荷をかけて繰り返し流して再現する（再現しなければ「再現できなかった」と記録し、仮説 (a)(b) のどちらを支持する証拠もないと書く）。結果をこの計画に書き、P-2 を人に諮る
+- [x] (2) C-9 の修正: Red（再現するテスト、または失敗を捕まえる観測）→ 最小の修正 → Green。守る既存のテストを先に流す
+- [x] (3) C-7 の固定の待ち: `BrowserSession` の動画の待ち以外の 14 か所を、画面の状態を待つ形に置き換える。1 か所ごとに該当のシナリオを名前の絞り込みで流す
+- [x] (4) C-7 の所在: 通知の冪等性・KPI の 24 時間の境界・`KpiWeeklyQueryServiceTest` のスタブの比べ方（引数の完全一致）を調べ、直すものは直す。残りは所在の一覧に書く
+- [x] (5) C-8: 2 つの URL が本物のコントローラーに届くことの確認 → `PlaceholderController` とテンプレートの削除（P-1 の承認後）→ 文書の追記
+- [x] (6) 品質ゲート: `--continue spotlessCheck check documentationTest uiTest`、push の前に `checkstyleMain checkstyleTest spotbugsMain`、Sonar、`okf:check`
 
 見積り（分）: (1) 40、(2) 30、(3) 40、(4) 20、(5) 20 = 150。事務の 60 を足して 210。(1) の再現が長引くと (2) を超える（仮定。実測の根拠なし）。
 
