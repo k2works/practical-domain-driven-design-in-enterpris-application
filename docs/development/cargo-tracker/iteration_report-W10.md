@@ -4,7 +4,7 @@ title: "W10 完了報告書 - cargo-tracker（運用準備。コードと検証�
 description: "cargo-tracker の W10（運用準備。SP 0 の技術の週）の完了報告書。AWS の Terraform・配備のワークフロー・ヘルスチェック・ShedLock・運用タスクを、コードと検証まで作った。apply は未実施。運用タスクの一部・OBS の残り・負荷テスト・時点復旧の手順は持ち越す。"
 tags: [development,report]
 status: stable
-generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-16T06:13:08Z }
+generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-16T07:04:28Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-11-16T05:22:02Z }
 ---
@@ -41,13 +41,13 @@ verified:
 | :--- | :--- |
 | 計画 SP | 0（技術の週） |
 | Bolt | 計画 17 本。実績は下の表 |
-| `test`（単体・統合・アーキテクチャ・業務ルール層のシナリオ・Web） | 6,498 件、失敗 0（W9 の締めから +13） |
+| `test`（単体・統合・アーキテクチャ・業務ルール層のシナリオ・Web） | **6,525 件、失敗 0**（W9 の締めから +40。H-1〜H-4 の後の最終のゲート。`check documentationTest uiTest` が成功） |
 | `uiTest` | 252 シナリオ、失敗 0（JUnit の XML では 504 件、うち 252 件は外枠で skipped） |
 | `documentationTest`・`spotlessCheck`・`checkstyle`・`spotbugs` | 成功 |
 | `terraform fmt`・`init -backend=false`・`validate`（staging・production） | 成功。`plan`・`apply` は未実施 |
 | `actionlint`（配備のワークフロー） | 指摘なし |
 | `node --test ops/scripts/operation.test.js` | 8 件成功 |
-| SonarQube（`sonar-local:check`） | 途中の 1 回目は FAIL（S4502。`csrf.disable()`）、直して PASS。**ShedLock・運用タスクのあとの最終の判定も PASS**（カバレッジ 95.8%、重複 0.1%、Bug 0、Vulnerability 0、Code Smell 0、Hotspot 0） |
+| SonarQube（`sonar-local:check`） | 途中の 1 回目は FAIL（S4502）、直して PASS。**H-1〜H-4 の後の最終の判定**は 1 回目が Code Smell 2 件（未使用の例外変数、ラムダの中の複数の呼び出し）で FAIL、直して **PASS**（カバレッジ 95.8%、重複 0.1%、Bug・Vulnerability・Code Smell・Hotspot はすべて 0） |
 | 最終のゲートの経緯 | `check documentationTest uiTest` の最終の流しで、`test` が Gradle の内部ファイルの欠落（`in-progress-results-generic.bin`）で異常終了した。テストの失敗ではない。`test` を流し直して成功 |
 
 ## Bolt の結果

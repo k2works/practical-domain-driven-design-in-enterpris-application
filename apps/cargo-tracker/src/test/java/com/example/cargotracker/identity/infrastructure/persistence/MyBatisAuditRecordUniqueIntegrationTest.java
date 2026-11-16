@@ -56,9 +56,9 @@ class MyBatisAuditRecordUniqueIntegrationTest {
     void 同じ操作と受信記録の外部原本の監査記録は2つ書けない() {
         String receivedRecordId = UUID.randomUUID().toString();
         auditRecords.append(adopted(receivedRecordId));
+        AuditRecord second = adopted(receivedRecordId);
 
-        assertThatThrownBy(() -> auditRecords.append(adopted(receivedRecordId)))
-                .isInstanceOf(DuplicateKeyException.class);
+        assertThatThrownBy(() -> auditRecords.append(second)).isInstanceOf(DuplicateKeyException.class);
     }
 
     @Test

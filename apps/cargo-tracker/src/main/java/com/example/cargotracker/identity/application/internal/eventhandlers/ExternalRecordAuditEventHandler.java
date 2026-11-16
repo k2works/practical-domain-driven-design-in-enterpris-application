@@ -215,7 +215,7 @@ public class ExternalRecordAuditEventHandler {
         }
         try {
             auditRecords.append(auditRecord);
-        } catch (DuplicateKeyException e) {
+        } catch (DuplicateKeyException _) {
             // 照会と追記の間に、別のインスタンスが同じ操作・対象の記録を書いた（一意制約。W10 の Bolt 53-1）。記録済みなので何もしない
             LOG.info("外部原本の採否の監査記録はすでにある（同時の配信）: 操作 {}、受信記録 {}", action, receivedRecordId);
         }

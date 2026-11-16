@@ -1,6 +1,7 @@
 # Docs Update Log
 
 ## 2026-11-16
+* **Update**: [iteration_report-W10](/development/cargo-tracker/iteration_report-W10.md) を更新（anthropic/claude-sonnet-5-5）
 * **Update**: [12-外部データ](/manual/12-外部データ.md) を更新（anthropic/claude-sonnet-5-5）
 * **Update**: [iteration_report-W10](/development/cargo-tracker/iteration_report-W10.md) を更新（anthropic/claude-sonnet-5-5）
 * **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-sonnet-5-5）
