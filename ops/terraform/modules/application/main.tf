@@ -273,6 +273,8 @@ resource "aws_ecs_task_definition" "this" {
 
     environment = [
       { name = "SPRING_PROFILES_ACTIVE", value = var.spring_profile },
+      # アプリの起動時の検査（DevProfileGuard）が、この環境で dev プロファイルを拒否するために読む（#48 K-03）
+      { name = "CARGOTRACKER_DEPLOYMENT_ENVIRONMENT", value = var.deployment_environment },
       { name = "SPRING_DATASOURCE_URL", value = "jdbc:postgresql://${var.database_endpoint}:${var.database_port}/${var.database_name}" },
     ]
 

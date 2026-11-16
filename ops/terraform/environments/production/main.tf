@@ -36,6 +36,7 @@ module "stack" {
   certificate_arn                = var.certificate_arn
   image_tag                      = var.image_tag
   spring_profile                 = var.spring_profile
+  deployment_environment         = "production"
   application_db_secret_arn      = var.application_db_secret_arn
   desired_count                  = 2
   database_multi_az              = var.database_multi_az

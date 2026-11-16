@@ -57,6 +57,7 @@ module "application" {
   image_repository_url      = module.ecr.repository_url
   image_tag                 = var.image_tag
   spring_profile            = var.spring_profile
+  deployment_environment    = var.deployment_environment
   database_endpoint         = module.database.endpoint
   database_name             = module.database.database_name
   application_db_secret_arn = var.application_db_secret_arn

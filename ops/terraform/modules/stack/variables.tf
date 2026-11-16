@@ -32,6 +32,11 @@ variable "spring_profile" {
   type        = string
 }
 
+variable "deployment_environment" {
+  description = "環境の名前（staging か production）"
+  type        = string
+}
+
 variable "application_db_secret_arn" {
   description = "アプリケーションの DB 利用者の認証情報の Secrets Manager の ARN（db:init の後に作る）"
   type        = string

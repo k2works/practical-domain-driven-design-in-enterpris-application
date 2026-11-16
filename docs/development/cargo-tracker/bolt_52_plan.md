@@ -3,7 +3,7 @@ type: Plan
 title: "Bolt 52 計画と中間報告 - CI/CD（ステージング・本番の配備のワークフロー）"
 tags: [plan]
 status: draft
-generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-16T02:38:52Z }
+generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-16T03:28:58Z }
 ---
 
 # Bolt 52 計画と中間報告 - CI/CD（ステージング・本番の配備のワークフロー）
@@ -32,7 +32,8 @@ generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-16T02:38:52Z }
 
 - [x] (1) 配備のワークフローを書く
 - [ ] (2) 構文の検査（actionlint）— 上の議題 1
-- [ ] (3) 52-1: ロールバックと `maintenance:on/off` の運用タスク（Gulp）、アプリの起動時の dev プロファイルの拒否（TDD）
+- [ ] (3) 52-1: ロールバックと `maintenance:on/off` の運用タスク（Gulp）。**未着手**（運用タスクの設計が要る）
+- [x] (3a) 52-1: アプリの起動時の dev プロファイルの拒否 `DevProfileGuard`（TDD。ルートのパッケージ。`platform` は ArchUnit の規則で Spring に依存できないため、規則は変えず `ClockConfiguration` と同じ場所に置いた。置き場所は人に諮る議題）。Terraform が `CARGOTRACKER_DEPLOYMENT_ENVIRONMENT` を渡す。単体のテスト・アーキテクチャのテスト・静的検査は成功。全体のゲートは未再実行
 - [ ] (4) Terraform の PR 検査のワークフロー
 
 ## 更新履歴

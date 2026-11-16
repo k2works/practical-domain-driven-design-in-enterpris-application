@@ -45,6 +45,16 @@ variable "spring_profile" {
   }
 }
 
+variable "deployment_environment" {
+  description = "環境の名前（staging か production）。アプリの DevProfileGuard が dev を拒否する判断に使う"
+  type        = string
+
+  validation {
+    condition     = contains(["staging", "production"], var.deployment_environment)
+    error_message = "staging か production を指定する。"
+  }
+}
+
 variable "database_endpoint" {
   type = string
 }
