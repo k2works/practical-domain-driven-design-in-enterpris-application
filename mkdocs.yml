@@ -559,6 +559,8 @@ nav:
           - ADR-018 再見積りの戻しと順序の守り: adr/cargo-tracker/018-requote-returns-transport-request-with-ordering-guard.md
           - ADR-020 AWS は東京に 2 環境: adr/cargo-tracker/020-aws-account-region-environments.md
           - ADR-021 通知の再送と購読の置き場所（提案）: adr/cargo-tracker/021-shipper-notification-retry-and-subscription-home.md
+          - ADR-022 必要書類のウイルスの検査: adr/cargo-tracker/022-required-document-virus-scan.md
+          - ADR-023 運用の通知の宛先・業務ホーム・メンテナンス表示: adr/cargo-tracker/023-operations-notification-and-home.md
   - 記事:
       - 概要: article/index.md
       - 第 1 章 ドメイン駆動設計: article/01-ddd-fundamentals.md

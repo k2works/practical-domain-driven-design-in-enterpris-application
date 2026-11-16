@@ -4,7 +4,7 @@ title: "W10 完了報告書 - cargo-tracker（運用準備。コードと検証�
 description: "cargo-tracker の W10（運用準備。SP 0 の技術の週）の完了報告書。AWS の Terraform・配備のワークフロー・ヘルスチェック・ShedLock・運用タスクを、コードと検証まで作った。apply は未実施。運用タスクの一部・OBS の残り・負荷テスト・時点復旧の手順は持ち越す。"
 tags: [development,report]
 status: stable
-generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-16T07:04:28Z }
+generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-16T07:14:13Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-11-16T05:22:02Z }
 ---
@@ -81,7 +81,16 @@ verified:
 | H-8 | C-1・C-2・C-5（営業の手順、辞退済みへの回答の文言、確認の場 D-164〜D-172）、#49（password 再設定の残りのリスク）、#50 の仕分け | 人に諮る議題と、アプリの変更を伴う |
 | H-9 | `apply`（アカウント・予算・Multi-AZ・保持期間・Object Lock などが未決）、Terraform の PR 検査と `plan` の表示、静的検査の道具（tflint・tfsec）の導入、**大阪リージョンへの複製（DB の自動バックアップ・S3。設計にあるが Terraform にない）**、運用用の IAM ロールの定義、アプリの外向き通信の絞り込み | ADR-020 の未決。外部ツール |
 | H-10 | 週全体の 5 視点のレビュー | **実施した**（承認の後。[W10 週全体レビュー](../../review/cargo-tracker/w10_review_20261116.md)。高・中の多くを W10 の中で直した。人に諮る議題 3 つ） |
-| H-11 | 必要書類のウイルスの検査の方式（release_plan の開始条件。W10 で方式を決める予定だった） | 方式が決まるまで、パイロットで書類の添付を使わない（既存の条件のとおり） |
+| H-11 | **方式を決めた（2026-11-16、推奨で採用）**: S3 のマネージドの非同期の検査（[ADR-022](../../adr/cargo-tracker/022-required-document-virus-scan.md)）。実装は Release 1.1 の頭。それまで書類の添付をパイロットで使わない（開始条件のとおり）。AWS の機能の仕様と費用を実装の前に確かめる | 実装（Release 1.1） |
+
+## 決定が出た持ち越し（Release 1.1 の頭に載せる実装。2026-11-16、「推奨で進めて」）
+
+| 実装 | 決定 | 内容 |
+| :--- | :--- | :--- |
+| 通知の再送の定期ジョブ、購読の notification への反転（H-7） | [ADR-021](../../adr/cargo-tracker/021-shipper-notification-retry-and-subscription-home.md) | 再送は `FAILED` を定期ジョブで上限 3 回。購読は notification が持ち、宛先だけ identity の公開 API で引く（反転の計画で再度承認） |
+| 必要書類のウイルスの検査（H-11） | [ADR-022](../../adr/cargo-tracker/022-required-document-virus-scan.md) | S3 のマネージドの非同期の検査。書類に「検査中・検査済み・拒否」。AWS の機能の仕様と費用を実装の前に確かめる |
+| 運用の警告の宛先、S-01 の役割別の一覧、メンテナンス表示（H-3・H-6） | [ADR-023](../../adr/cargo-tracker/023-operations-notification-and-home.md) | メールを既定（SNS）、チャットは後から足す。S-01 は役割ごとに 1 Bolt ずつ。メンテナンスは 503 のフィルターと環境変数、`maintenance:on/off` は配備の経路 |
+| FRS-04・DE-12/30/13 の検知・毒入りイベントの通知（H-3・H-4） | ADR-023 の宛先 | 宛先が決まったので、同じ SNS とメールの経路で実装できる |
 
 ## 人に諮る議題と推奨
 

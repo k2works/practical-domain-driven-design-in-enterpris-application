@@ -27,6 +27,8 @@ cargo-tracker プロジェクトの ADR ドキュメントです。
 | [ADR-019](./019-out-of-scope-attempt-recorder.md) | 担当範囲の外の試行の記録のポートを共有カーネルに置き、identity が実装する | 採用（2026-10-28、Bolt 38f） |
 | [ADR-020](./020-aws-account-region-environments.md) | AWS は東京リージョンにステージングと本番の 2 環境を置く（アカウントと予算は未決） | 採用（2026-11-16、Bolt 50） |
 | [ADR-021](./021-shipper-notification-retry-and-subscription-home.md) | 荷主への通知の再送の手段と購読の置き場所（再送は定期ジョブ、購読は notification） | 採用（2026-11-16、Bolt 49-2。実装は Release 1.1 の頭） |
+| [ADR-022](./022-required-document-virus-scan.md) | 必要書類のウイルスの検査は S3 の非同期の検査（マネージド）で行う（実装は Release 1.1 の頭） | 採用（2026-11-16） |
+| [ADR-023](./023-operations-notification-and-home.md) | 運用の警告の宛先（メール既定）・業務ホームの一覧・メンテナンス表示（実装は Release 1.1 の頭） | 採用（2026-11-16） |
 
 ## 補足
 
