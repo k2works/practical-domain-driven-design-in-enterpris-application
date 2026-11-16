@@ -335,9 +335,14 @@ class SessionRevalidationSecurityIntegrationTest extends IdentitySpyIntegrationT
     @Test
     void 確かめのフィルターは期限のフィルターの直後で認証のフィルターより前にある() {
         // addFilterAfter は順序の値が UsernamePasswordAuthenticationFilter と同じになり、登録の順で前に来る。その順を見張る（開発レビュー）
-        List<Class<?>> order = filterChainProxy.getFilterChains().getFirst().getFilters().stream()
-                .<Class<?>>map(Object::getClass)
-                .toList();
+        // 連鎖は業務の連鎖のほかにヘルスチェック用（/actuator/**。Bolt 53）がある。業務の連鎖は期限のフィルターを持つほう
+        List<Class<?>> order = filterChainProxy.getFilterChains().stream()
+                .map(chain -> chain.getFilters().stream()
+                        .<Class<?>>map(Object::getClass)
+                        .toList())
+                .filter(classes -> classes.contains(SessionLifetimeFilter.class))
+                .findFirst()
+                .orElseThrow();
 
         assertThat(order)
                 .containsSubsequence(

@@ -206,6 +206,7 @@ Bolt がイテレーションに当たります。ふりかえりは各 Bolt の
 | 49-1 | [W9 の持ち越しの返済 2（見積りの回答の画面の重複）](bolt_49-1_plan.md)（[W10 計画](iteration_plan-W10.md)） | - | W10 | 完了（承認待ち。範囲は重複 2 つに絞った） |
 | 51 | [Terraform（AWS の構成。コードと検証まで）](bolt_51_plan.md)（[W10 計画](iteration_plan-W10.md)） | [終了報告](bolt_51_report.md) | W10 | 完了（承認待ち。apply は未実施） |
 | 52 | [CI/CD（配備のワークフロー。52-1 は未着手）](bolt_52_plan.md)（[W10 計画](iteration_plan-W10.md)） | 中間報告は計画に含む | W10 | 一部完了（構文の検査は未実施） |
+| 53 | [監視 1（ヘルスチェック OBS-10。Actuator の導入。残りの OBS は未着手）](bolt_53_plan.md)（[W10 計画](iteration_plan-W10.md)） | 中間報告は計画に含む | W10 | 一部完了（認可の追加は承認待ち） |
 | 40-16 | [W8 の受入条件の照合とマニュアル・動画の総点検（US-11・US-20 を締める）](bolt_40-16_plan.md)（[W8 計画](iteration_plan-W8.md)） | [終了報告](bolt_40-16_report.md) | W8 | 完了（承認済み） |
 | 40-15 | [照会の記録（S-23）と有人案件への引き継ぎ（US-11 AC2）](bolt_40-15_plan.md)（[W8 計画](iteration_plan-W8.md)） | [終了報告](bolt_40-15_report.md)（[動画](../../assets/demo/bolt-40-15/inquiry-handoff.webm){:target="_blank"}） | W8 | 完了（承認済み） |
 

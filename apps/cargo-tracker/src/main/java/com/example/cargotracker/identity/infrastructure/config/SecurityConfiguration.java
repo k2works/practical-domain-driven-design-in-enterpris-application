@@ -29,6 +29,7 @@ import java.util.Map;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AccountStatusUserDetailsChecker;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -192,6 +193,24 @@ public class SecurityConfiguration {
                 AuthenticationFailureServiceExceptionEvent.class));
         manager.setAuthenticationEventPublisher(events);
         return manager;
+    }
+
+    /**
+     * ヘルスチェック（OBS-10。W10 の Bolt 53）。ALB が認証なしで読む管理用のポート（management.server.port）の
+     * {@code /actuator/health} だけを通し、ほかの {@code /actuator/**} は拒否する。業務のポートでは Actuator を出さない
+     * （management.endpoints.web.exposure.include=health と別のポート）ので、この設定は業務の画面に触れない。
+     * 業務の連鎖より先に評価する。
+     */
+    @Bean
+    @Order(1)
+    SecurityFilterChain actuatorFilterChain(HttpSecurity http) {
+        return http.securityMatcher("/actuator/**")
+                .authorizeHttpRequests(requests -> requests.requestMatchers("/actuator/health", "/actuator/health/**")
+                        .permitAll()
+                        .anyRequest()
+                        .denyAll())
+                .csrf(csrf -> csrf.disable())
+                .build();
     }
 
     @Bean

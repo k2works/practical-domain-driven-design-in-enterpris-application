@@ -42,6 +42,8 @@ dependencies {
 	implementation 'org.springframework.modulith:spring-modulith-starter-jdbc'
 	// 認証と session（US-18、ADR-012）。form login・役割による認可・CSRF と、DB に置く session（Bolt 14）
 	implementation 'org.springframework.boot:spring-boot-starter-security'
+	// ヘルスチェックとメトリクス（OBS-10。W10 の Bolt 53。導入は 2026-11-16 に人が承認）。版は Spring Boot の BOM で決まる
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 	implementation 'org.springframework.boot:spring-boot-starter-session-jdbc'
 	// メールの送信（通知。password の再設定のメール。ADR-017、Bolt 33）。統合テストは Mailpit のコンテナで受ける
 	implementation 'org.springframework.boot:spring-boot-starter-mail'

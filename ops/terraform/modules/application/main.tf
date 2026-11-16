@@ -4,6 +4,8 @@
 locals {
   container_name = "cargo-tracker"
   container_port = 8080
+  # ヘルスチェック用の管理用のポート（application.properties の management.server.port。OBS-10。Bolt 53）
+  management_port = 8081
 }
 
 resource "aws_cloudwatch_log_group" "this" {
@@ -53,6 +55,15 @@ resource "aws_vpc_security_group_egress_rule" "alb_to_app" {
   to_port                      = local.container_port
 }
 
+resource "aws_vpc_security_group_egress_rule" "alb_to_app_health" {
+  security_group_id            = aws_security_group.alb.id
+  referenced_security_group_id = aws_security_group.application.id
+  ip_protocol                  = "tcp"
+  from_port                    = local.management_port
+  to_port                      = local.management_port
+  description                  = "ヘルスチェック（管理用のポート）"
+}
+
 resource "aws_security_group" "application" {
   name        = "${var.name}-app"
   description = "ECS のタスク。ALB からだけ受ける"
@@ -65,6 +76,15 @@ resource "aws_vpc_security_group_ingress_rule" "app_from_alb" {
   ip_protocol                  = "tcp"
   from_port                    = local.container_port
   to_port                      = local.container_port
+}
+
+resource "aws_vpc_security_group_ingress_rule" "app_health_from_alb" {
+  security_group_id            = aws_security_group.application.id
+  referenced_security_group_id = aws_security_group.alb.id
+  ip_protocol                  = "tcp"
+  from_port                    = local.management_port
+  to_port                      = local.management_port
+  description                  = "ALB のヘルスチェック（管理用のポート。ヘルスだけを返す）"
 }
 
 resource "aws_vpc_security_group_egress_rule" "app_out" {
@@ -94,6 +114,7 @@ resource "aws_lb_target_group" "this" {
   vpc_id      = var.vpc_id
 
   health_check {
+    port                = tostring(local.management_port)
     path                = var.health_check_path
     matcher             = "200"
     interval            = 15
@@ -245,7 +266,10 @@ resource "aws_ecs_task_definition" "this" {
     image     = "${var.image_repository_url}:${var.image_tag}"
     essential = true
 
-    portMappings = [{ containerPort = local.container_port, protocol = "tcp" }]
+    portMappings = [
+      { containerPort = local.container_port, protocol = "tcp" },
+      { containerPort = local.management_port, protocol = "tcp" },
+    ]
 
     environment = [
       { name = "SPRING_PROFILES_ACTIVE", value = var.spring_profile },
