@@ -285,6 +285,7 @@ Bolt を始めるときに行を追加します。
 | W8 | [W8 計画](iteration_plan-W8.md)（技術 Bolt にも分単位の見積りを付けた 17 本。稼働 4 日との比較） | 承認済み（2026-11-13） |
 | W9 | [W9 計画](iteration_plan-W9.md)（19 本。Bolt の番号は単位ごとに 41〜48。稼働 5 日の 114%）、[W9 完了報告書](iteration_report-W9.md)（[W9 週全体レビュー](../../review/cargo-tracker/w9_review_20261115.md)） | 完了（2026-11-15 に締めた。承認待ち） |
 | W10 | [W10 計画](iteration_plan-W10.md)（17 本。Bolt の番号は単位ごとに 49〜56。SP 0 の運用準備。AWS はコードと検証まで）、[W10 完了報告書](iteration_report-W10.md) | 一部完了（報告書は承認待ち。残りは Release 1.1 の頭へ） |
+| W11 | [W11 計画](iteration_plan-W11.md)（13 本。Bolt の番号は 57〜69。US-05・US-17 の 11 SP と、Release 1.1 の頭の返済 5 本。稼働 5 日の 87%） | 計画済み（承認待ち） |
 
 ### 週の完了報告書
 

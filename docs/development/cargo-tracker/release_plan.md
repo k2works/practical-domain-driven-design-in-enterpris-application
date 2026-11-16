@@ -4,7 +4,7 @@ title: "リリース計画 - cargo-tracker（A 社国際貨物輸送管理シス
 description: "cargo-tracker MVP のリリース計画。1 人 + AI、時間単位の Bolt（= イテレーション）と週次の見直しで、最初の縦の流れ（R0.1）、パイロット準備完了（R1.0）、本格展開前（R1.1）の 3 段階、Unit のエントロピー評価、SP、バッファ、パイロット開始の条件、引継ぎ ID の台帳、業務責任者に確かめる事項の台帳。"
 tags: [development,release-plan]
 status: stable
-generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-16T05:39:43Z }
+generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-16T07:26:38Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T09:29:53Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:38:26Z }
@@ -1257,7 +1257,7 @@ D-144 の注（Bolt 39h2 の開始準備）: 判断の画面に差異を出し�
 | W8 | 8 | 8 | 100% | 完了（2026-11-13〜11-14 に Bolt 40〜40-17 の 18 本を終えた。[完了報告書](iteration_report-W8.md)） |
 | W9 | 15 | 15 | 100% | 完了（2026-11-14〜11-15 に Bolt 41〜48 の 18 本を終え、2026-11-15 に締めた。US-23・US-22・US-21・US-01・US-24・US-09 を閉じ、Release 1.0 は 54/54 SP。[完了報告書](iteration_report-W9.md)。人の承認待ち） |
 | W10 | 0 | - | - | 一部完了（2026-11-16。[W10 完了報告書](iteration_report-W10.md)。人の承認待ち。残りは Release 1.1 の頭へ持ち越し） |
-| W11 | 11 | - | - | 未着手 |
+| W11 | 11 | - | - | 計画済み（[W11 計画](iteration_plan-W11.md)。13 本、Bolt 57〜69。承認待ち） |
 | W12 | 10 | - | - | 未着手 |
 | W13 | 8 | - | - | 未着手 |
 | W14 | 8 | - | - | 未着手 |
