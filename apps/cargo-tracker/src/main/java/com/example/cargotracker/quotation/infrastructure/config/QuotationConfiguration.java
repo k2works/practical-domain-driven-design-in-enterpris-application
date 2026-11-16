@@ -44,8 +44,22 @@ import org.springframework.context.annotation.Configuration;
  */
 @Configuration(proxyBeanMethods = false)
 @org.springframework.scheduling.annotation.EnableScheduling
+// 定期処理の排他（ShedLock。W10 の Bolt 53-1）。複数のインスタンスで動かしても、同じ名前の定期処理は同時に 1 つだけ動く。
+// 上限（defaultLockAtMostFor）は、動いたインスタンスが落ちても次のインスタンスが取れるまでの最長の時間
+@net.javacrumbs.shedlock.spring.annotation.EnableSchedulerLock(defaultLockAtMostFor = "PT10M")
 @EnableConfigurationProperties(DocumentStorageProperties.class)
 public class QuotationConfiguration {
+
+    /** 定期処理のロックの表は platform.shedlock（Flyway が作る）。時刻はデータベースの時刻で数え、インスタンスの時計のずれに左右されない。 */
+    @Bean
+    net.javacrumbs.shedlock.core.LockProvider lockProvider(javax.sql.DataSource dataSource) {
+        return new net.javacrumbs.shedlock.provider.jdbctemplate.JdbcTemplateLockProvider(
+                net.javacrumbs.shedlock.provider.jdbctemplate.JdbcTemplateLockProvider.Configuration.builder()
+                        .withJdbcTemplate(new org.springframework.jdbc.core.JdbcTemplate(dataSource))
+                        .withTableName("platform.shedlock")
+                        .usingDbTime()
+                        .build());
+    }
 
     @Bean
     TransportRequestCommandService transportRequestCommandService(

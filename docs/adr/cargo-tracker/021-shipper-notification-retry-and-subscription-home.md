@@ -1,19 +1,19 @@
 ---
 type: ADR
-title: "ADR-021: 荷主への通知の再送の手段と購読の置き場所（提案）"
+title: "ADR-021: 荷主への通知の再送の手段と購読の置き場所"
 description: "W9 の持ち越し C-3（通知の失敗の再送）と C-4（通知の購読の置き場所）の選択肢と推奨。人が選ぶまで実装しない。"
 tags: [adr, notification]
 status: draft
-generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-16T02:29:51Z }
+generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-16T04:23:12Z }
 ---
 
-# ADR-021: 荷主への通知の再送の手段と購読の置き場所（提案）
+# ADR-021: 荷主への通知の再送の手段と購読の置き場所
 
 日付: 2026-11-16
 
 ## ステータス
 
-**提案（人の判断待ち）。** W10 の Bolt 49-2。選ぶまで実装の Bolt は作らない（W10 計画のリスク R-4）。
+**採用（2026-11-16、human:kakimomokuri が「推奨で一括承認」。C-3 は案 A、C-4 は案 B）。** 実装は W10 の稼働に入らないので、Release 1.1 の頭の返済に載せる（W10 の Bolt 49-2）。C-4 の反転はモジュールの依存の変更なので、実装の Bolt の計画でもう一度人が承認する。
 
 ## コンテキスト（確かめた事実）
 
@@ -51,5 +51,5 @@ generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-16T02:29:51Z }
 
 ## 備考
 
-- 著者: anthropic/claude-sonnet-5-5（AI の提案。**人は未選択**）
+- 著者: anthropic/claude-sonnet-5-5（AI の提案。2026-11-16 に human:kakimomokuri が推奨のとおり採用）
 - 関連文書: [W9 週全体レビュー](../../review/cargo-tracker/w9_review_20261115.md)（M-4、M-5）、ADR-017

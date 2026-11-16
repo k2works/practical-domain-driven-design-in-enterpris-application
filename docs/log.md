@@ -1,6 +1,10 @@
 # Docs Update Log
 
 ## 2026-11-16
+* **Update**: [bolt_53-1_plan](/development/cargo-tracker/bolt_53-1_plan.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [bolt_54_plan](/development/cargo-tracker/bolt_54_plan.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [021-shipper-notification-retry-and-subscription-home](/adr/cargo-tracker/021-shipper-notification-retry-and-subscription-home.md) を更新（anthropic/claude-sonnet-5-5）
 * **Update**: [iteration_plan-W10](/development/cargo-tracker/iteration_plan-W10.md) を更新（anthropic/claude-sonnet-5-5）
 * **Update**: [bolt_53_plan](/development/cargo-tracker/bolt_53_plan.md) を更新（anthropic/claude-sonnet-5-5）
 * **Update**: [bolt_49_report](/development/cargo-tracker/bolt_49_report.md) を更新（anthropic/claude-sonnet-5-5）

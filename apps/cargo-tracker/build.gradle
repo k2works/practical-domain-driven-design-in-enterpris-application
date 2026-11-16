@@ -29,6 +29,7 @@ ext {
 	set('springModulithVersion', '2.1.1')
 	set('cucumberVersion', '8.0.3')
 	set('mybatisVersion', '4.1.0')
+	set('shedlockVersion', '7.11.0')
 	set('archunitVersion', '1.5.1')
 }
 
@@ -44,6 +45,9 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	// ヘルスチェックとメトリクス（OBS-10。W10 の Bolt 53。導入は 2026-11-16 に人が承認）。版は Spring Boot の BOM で決まる
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+	// 定期処理の排他（W10 の Bolt 53-1。導入とスキーマ変更は 2026-11-16 に人が承認）。ロックの表は platform.shedlock（Flyway）
+	implementation "net.javacrumbs.shedlock:shedlock-spring:${shedlockVersion}"
+	implementation "net.javacrumbs.shedlock:shedlock-provider-jdbc-template:${shedlockVersion}"
 	implementation 'org.springframework.boot:spring-boot-starter-session-jdbc'
 	// メールの送信（通知。password の再設定のメール。ADR-017、Bolt 33）。統合テストは Mailpit のコンテナで受ける
 	implementation 'org.springframework.boot:spring-boot-starter-mail'

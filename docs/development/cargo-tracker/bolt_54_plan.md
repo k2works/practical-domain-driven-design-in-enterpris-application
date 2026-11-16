@@ -3,14 +3,14 @@ type: Plan
 title: "Bolt 54・54-1 計画 - 運用タスクとランブックの設計（実行の経路・実行者・タスクの一覧）"
 tags: [plan]
 status: draft
-generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-16T03:50:11Z }
+generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-16T04:23:12Z }
 ---
 
 # Bolt 54・54-1 計画 - 運用タスクとランブックの設計
 
 [W10 計画](iteration_plan-W10.md)の Bolt 54・54-1（技術、SP 0、見積り 200 + 180 分）の**設計**。人が「`operating-script` の手順で設計する（推奨）」を選んだ（2026-11-16）。**セキュリティ（DB の操作・認証情報・管理者の作成）にあたるので、この設計を人が承認するまで実装しない**。
 
-**状態**: 設計の draft（人の承認待ち）。`validating-design`: A 終盤の技術 Bolt（テストの入口は手順の机上訓練・Gulp タスクのドライラン）、B `operation.md`「運用タスクの一覧」「DB 利用者と権限の初期化」「アカウントの運用」と CLAUDE.md「環境操作は運用手順書に従う」に従う、C Bolt 51（Terraform）の環境・変数と整合。
+**状態**: 設計は承認済み（2026-11-16、human:kakimomokuri が D-1〜D-5 を「推奨で一括承認」。D-3 は招待リンクの方式で、最初の 1 行は起動時の一度きりの初期化コードで作る）。実装はこれから。`validating-design`: A 終盤の技術 Bolt（テストの入口は手順の机上訓練・Gulp タスクのドライラン）、B `operation.md`「運用タスクの一覧」「DB 利用者と権限の初期化」「アカウントの運用」と CLAUDE.md「環境操作は運用手順書に従う」に従う、C Bolt 51（Terraform）の環境・変数と整合。
 
 ## 前提（確かめた事実）
 

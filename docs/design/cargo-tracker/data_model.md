@@ -4,7 +4,7 @@ title: "cargo-tracker データモデル"
 description: "cargo-tracker の概念データモデル、スキーマ分割、命名と型の規約（H2 と PostgreSQL の共通部分）、コンテキストごとの論理データモデルと ER 図、版・追記専用・冪等性・イベント配信の表現。"
 tags: [design, data-model]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-09T21:08:50Z }
+generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-16T04:23:12Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:48:17Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:37Z }
@@ -1247,7 +1247,7 @@ ds ||--o{ ff
 | :--- | :--- | :--- |
 | `event_publication`（と完了済みの保管表） | Spring Modulith（JDBC） | イベント発行記録。発行と同じトランザクションで記録し、購読の完了を記録する。未完了のものを再配信する（ADR-003） |
 | `spring_session`、`spring_session_attributes` | Spring Session JDBC | 複数インスタンス間で共有する session |
-| `shedlock` | ShedLock | 定期処理（再配信、予約サガの滞留の判定、日次の処理）を 1 インスタンスに限るためのロック |
+| `shedlock` | ShedLock | 定期処理（再配信、予約サガの滞留の判定、日次の処理）を 1 インスタンスに限るためのロック。W10 の Bolt 53-1 で作った（`V20261125100000__create_platform_shedlock.sql`。列は name・lock_until・locked_at・locked_by。ロックの名前は定期処理ごと。いまは見積りの有効期限の通知 `quotation-expiry-notification` だけ） |
 
 `spring_session` と `spring_session_attributes` は Bolt 14 で作る（`principal_name` はログインのメールアドレスを入れるため 320 文字に広げた。Spring Session JDBC の DDL を `platform` スキーマに置く。無操作 30 分の期限は session の `MAX_INACTIVE_INTERVAL`（`spring.session.timeout`）、発行から 8 時間の上限は session の属性に置いた認証時刻で判定する）。Bolt 33a から、password の再設定の完了のコミットの後に、その利用者の session を `principal_name`（ログインのメールアドレス。`CargoUserDetails.getUsername()`）の索引で探して消す。消すのは Spring Session の `FindByIndexNameSessionRepository`（Spring Session JDBC は自分のトランザクション（`REQUIRES_NEW`）で動く）で、マッパーから `platform.spring_session` を直接消さない（AT-04）。完了の要求の新しい session は主体を持たないので消えない（主体のない session とほかの利用者の session が残ることを統合テストで確かめる）。表は変えない。表の定義はフレームワークの提供する DDL に従う。DDL は DB ごとに違うため、Flyway の `db/migration/{vendor}/` に H2 用と PostgreSQL 用を分けて置く（ADR-007）。完了したイベント発行記録は 30 日（RET-05）で削除する。注（Bolt 39b3b）: H2 の `event_publication.serialized_event` は Spring Modulith の H2 の定義では `VARCHAR(4000)` で、寄港 60 の DE-12（約 6,700 文字）が入らない。H2 だけのマイグレーション（`db/migration/h2/`）で `VARCHAR(1000000)`（寄港 60 の DE-12 が入る幅。H2 の上限は 1,000,000,000）（2026-11-04 訂正: はじめ「H2 の VARCHAR の上限」と書いたが誤り。H2 2.4.240 の `MAX_STRING_LENGTH` は 1,000,000,000 で、1,000,000 は広げた値。マイグレーションは変えない。Bolt 39b4）に広げ、ローカル起動とデモ環境でも寄港の多い航海を取り込めるようにする。PostgreSQL は `TEXT` のままで変えない（2026-11-03、human:kakimomokuri が決めた。ADR-007 の改訂の経緯）。
 

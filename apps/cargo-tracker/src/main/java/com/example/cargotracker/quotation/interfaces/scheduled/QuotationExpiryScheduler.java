@@ -1,6 +1,7 @@
 package com.example.cargotracker.quotation.interfaces.scheduled;
 
 import com.example.cargotracker.quotation.application.internal.commandservices.QuotationExpiryNotificationService;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -30,6 +31,7 @@ public class QuotationExpiryScheduler {
 
     /** 毎時 0 分に、有効期限が 24 時間前の窓にある見積りを検出する。 */
     @Scheduled(cron = "0 0 * * * *")
+    @SchedulerLock(name = "quotation-expiry-notification", lockAtMostFor = "PT30M", lockAtLeastFor = "PT1M")
     public void run() {
         try {
             int published = service.detect();
