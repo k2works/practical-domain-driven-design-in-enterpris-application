@@ -3,7 +3,7 @@ type: Plan
 title: "Bolt 53 計画と中間報告 - 監視 1（ヘルスチェック OBS-10。Actuator の導入）"
 tags: [plan]
 status: draft
-generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-16T02:54:12Z }
+generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-16T03:25:16Z }
 ---
 
 # Bolt 53 計画と中間報告 - 監視 1（ヘルスチェック OBS-10。Actuator の導入）
@@ -26,7 +26,7 @@ generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-16T02:54:12Z }
 | # | 議題 | 推奨 |
 | :--- | :--- | :--- |
 | 1 | 認可の設定の追加（`actuatorFilterChain`）。管理用のポートは VPC 内（ALB とタスクの間）だけに届き、インターネットには出さない前提。ヘルスは認証なし | 承認。本番の前に、管理用のポートが ALB 以外から届かないこと（セキュリティグループ）を `plan` で確かめる |
-| 2 | 全体のゲートは、最初の流しで 1 件失敗（上の決定 3）。直したあとは該当の 2 クラスだけ流し直し、**全体は流し直していない** | W10 の締め（Bolt 56）の全体のゲートで流す |
+| 2 | 全体のゲートは、最初の流しで 1 件失敗（上の決定 3）。直したあとは `spotlessCheck check documentationTest uiTest` を全体で流し直して**成功**した（2026-11-16、30 分）。Sonar は未実施 | Sonar は W10 の締め（Bolt 56）で流す |
 | 3 | 残りの OBS は未着手（FRS-04・OBS-06・DE-12/30/13 の検知・拒否の件数） | 次の Bolt（53 の続き）で、運用の通知の宛先（チャット・メール）の決定が要る（運用設計「要確認」） |
 
 ## 計画

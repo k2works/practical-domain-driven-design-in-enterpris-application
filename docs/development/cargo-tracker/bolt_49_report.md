@@ -3,7 +3,7 @@ type: Plan
 title: "Bolt 49 終了報告 - W9 の持ち越しの返済 1（同時実行テストの診断・待ち方の共通化・死んだコードの削除）"
 tags: [plan]
 status: draft
-generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-16T02:25:31Z }
+generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-16T03:25:16Z }
 ---
 
 # Bolt 49 終了報告 - W9 の持ち越しの返済 1
@@ -36,7 +36,7 @@ generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-16T02:25:31Z }
 | ゲート | 結果 |
 | :--- | :--- |
 | `spotlessCheck check documentationTest` | BUILD SUCCESSFUL（8 分） |
-| `uiTest`（全シナリオ） | 1 回目は 1 件失敗（`予約の状態が進むまで開き直す` の置き換えで最初の `browser.navigate(url)` を落とした。私の誤り）。直して、そのシナリオを流し直して成功。直したあとの全体の `uiTest` は流し直していない |
+| `uiTest`（全シナリオ） | 1 回目は 1 件失敗（`予約の状態が進むまで開き直す` の置き換えで最初の `browser.navigate(url)` を落とした。私の誤り）。直して、そのシナリオを流し直して成功。直したあとの全体の `uiTest` は、Bolt 53 のあとの全体のゲート（2026-11-16、`spotlessCheck check documentationTest uiTest`、30 分）で成功した |
 | `checkstyleMain checkstyleTest spotbugsMain` | 成功 |
 | SonarQube | 未実施 |
 
