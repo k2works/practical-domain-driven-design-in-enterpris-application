@@ -35,14 +35,25 @@ module "required_documents" {
 module "database" {
   source = "../database"
 
-  name                      = var.name
-  vpc_id                    = module.network.vpc_id
-  private_subnet_ids        = module.network.private_subnet_ids
-  allowed_security_group_id = module.application.security_group_id
-  multi_az                  = var.database_multi_az
-  backup_retention_days     = var.database_backup_retention_days
-  instance_class            = var.database_instance_class
-  deletion_protection       = var.deletion_protection
+  name                                  = var.name
+  vpc_id                                = module.network.vpc_id
+  private_subnet_ids                    = module.network.private_subnet_ids
+  allowed_security_group_id             = module.application.security_group_id
+  additional_allowed_security_group_ids = [module.bastion.security_group_id]
+  multi_az                              = var.database_multi_az
+  backup_retention_days                 = var.database_backup_retention_days
+  instance_class                        = var.database_instance_class
+  deletion_protection                   = var.deletion_protection
+}
+
+# 運用の踏み台（SSM のポートフォワード。bolt_54_plan.md の D-1）
+module "bastion" {
+  source = "../bastion"
+
+  name                       = var.name
+  vpc_id                     = module.network.vpc_id
+  private_subnet_id          = module.network.private_subnet_ids[0]
+  database_security_group_id = module.database.security_group_id
 }
 
 module "application" {

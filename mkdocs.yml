@@ -505,6 +505,7 @@ nav:
           - 概要: operation/cargo-tracker/index.md
           - アプリケーション開発環境セットアップ手順書: operation/cargo-tracker/application_development_setup.md
           - Heroku デモ環境セットアップ手順書: operation/cargo-tracker/heroku_demo_setup.md
+          - 運用タスク手順書（ステージング・本番）: operation/cargo-tracker/operation_tasks.md
   - レビュー:
       - 概要: review/index.md
       - 戦略成果物レビュー（2026-09-29）: review/戦略成果物_review_20260929.md

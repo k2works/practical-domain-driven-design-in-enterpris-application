@@ -16,6 +16,7 @@ import okfTasks from './ops/scripts/okf.js';
 import designDocsTasks from './ops/scripts/design_docs.js';
 import deployDemoTasks from './ops/scripts/deploy_demo.js';
 import issueDemoTasks from './ops/scripts/issue_demo.js';
+import operationTasks from './ops/scripts/operation.js';
 
 // Load gulp tasks from script modules
 mkdocsTasks(gulp);
@@ -28,6 +29,7 @@ okfTasks(gulp);
 designDocsTasks(gulp);
 deployDemoTasks(gulp);
 issueDemoTasks(gulp);
+operationTasks(gulp);
 
 export const spec = gulp.series('mkdocs:serve', 'mkdocs:open');
 

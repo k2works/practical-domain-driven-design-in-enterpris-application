@@ -14,6 +14,11 @@ output "service_name" {
   value = module.application.service_name
 }
 
+output "bastion_instance_id" {
+  description = "運用タスクの SSM の --target（.env の OPS_<ENV>_BASTION_ID）"
+  value       = module.bastion.instance_id
+}
+
 output "database_endpoint" {
   value = module.database.endpoint
 }

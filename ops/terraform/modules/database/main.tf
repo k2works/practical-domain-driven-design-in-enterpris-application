@@ -24,6 +24,16 @@ resource "aws_vpc_security_group_ingress_rule" "from_application" {
   description                  = "アプリケーション（ECS）から PostgreSQL"
 }
 
+resource "aws_vpc_security_group_ingress_rule" "from_additional" {
+  count                        = length(var.additional_allowed_security_group_ids)
+  security_group_id            = aws_security_group.database.id
+  referenced_security_group_id = var.additional_allowed_security_group_ids[count.index]
+  ip_protocol                  = "tcp"
+  from_port                    = 5432
+  to_port                      = 5432
+  description                  = "運用の踏み台（SSM のポートフォワードの先）"
+}
+
 resource "aws_db_instance" "this" {
   identifier = "${var.name}-db"
 

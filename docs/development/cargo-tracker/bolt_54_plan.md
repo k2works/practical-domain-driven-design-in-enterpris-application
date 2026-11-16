@@ -3,7 +3,7 @@ type: Plan
 title: "Bolt 54・54-1 計画 - 運用タスクとランブックの設計（実行の経路・実行者・タスクの一覧）"
 tags: [plan]
 status: draft
-generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-16T04:23:12Z }
+generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-16T04:27:12Z }
 ---
 
 # Bolt 54・54-1 計画 - 運用タスクとランブックの設計
@@ -50,10 +50,10 @@ D-1〜D-5 の選択。特に D-3 の最初の 1 行の作り方（アプリの�
 
 ## 計画
 
-- [ ] (1) 人が D-1〜D-5 を選ぶ
-- [ ] (2) 選んだ経路で Terraform に踏み台を足す（Bolt 51 の続き）
-- [ ] (3) タスクを `operating-script` の構造で作り、ドライラン（`--dry-run`）で確かめる。運用手順書（`docs/operation/cargo-tracker/`）に載せる
-- [ ] (4) 配備前の確認表と実行記録の様式を書く
+- [x] (1) 人が D-1〜D-5 を選んだ（2026-11-16、「推奨で一括承認」）
+- [x] (2) Terraform に踏み台を足した（`modules/bastion`。`validate` 済み）
+- [~] (3) 一部: `db:init`・`db:grants:verify`・`deploy:preflight`・`deploy:release`・`deploy:rollback` を作った（`--dry-run` と本番の確認の規則はテストと実行で確かめた。実環境では未実行）。`admin:bootstrap`・`external-source:resume`・`audit:export:verify`・`maintenance:on/off` は未作成（理由は運用手順書）。元の項目: タスクを `operating-script` の構造で作り、ドライラン（`--dry-run`）で確かめる。運用手順書（`docs/operation/cargo-tracker/`）に載せる
+- [x] (4) 配備前の確認表を書いた（[運用タスク手順書](../../operation/cargo-tracker/operation_tasks.md)）。実行記録の様式は未作成
 
 ## 更新履歴
 

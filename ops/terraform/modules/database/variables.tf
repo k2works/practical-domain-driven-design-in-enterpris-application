@@ -17,6 +17,12 @@ variable "allowed_security_group_id" {
   type        = string
 }
 
+variable "additional_allowed_security_group_ids" {
+  description = "アプリケーションのほかに接続を許すセキュリティグループ（運用の踏み台）"
+  type        = list(string)
+  default     = []
+}
+
 variable "engine_version" {
   description = "PostgreSQL の版（ADR-008: 18）"
   type        = string
