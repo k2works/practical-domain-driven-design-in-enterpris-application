@@ -4,7 +4,7 @@ title: "W10 完了報告書 - cargo-tracker（運用準備。コードと検証�
 description: "cargo-tracker の W10（運用準備。SP 0 の技術の週）の完了報告書。AWS の Terraform・配備のワークフロー・ヘルスチェック・ShedLock・運用タスクを、コードと検証まで作った。apply は未実施。運用タスクの一部・OBS の残り・負荷テスト・時点復旧の手順は持ち越す。"
 tags: [development,report]
 status: stable
-generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-16T05:21:49Z }
+generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-16T05:22:52Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-11-16T05:22:02Z }
 ---
@@ -71,7 +71,7 @@ verified:
 | :--- | :--- | :--- |
 | H-1 | `admin:bootstrap`（最初のシステム管理者。D-3 は招待リンクの方式で承認済み） | 作る側の操作者がいない場合の、作成者・監査の記録の扱いを設計する必要がある（認証の中核） |
 | H-2 | `external-source:resume`（情報源の `SUSPENDED` → `APPROVED`） | 状態を変えるときの監査の記録の経路がない。アプリの操作として設計する |
-| H-3 | OBS-06（隔離の未判断の警告。閾値 24 時間は承認済み）・FRS-04・DE-12/30/13 の検知・拒否の件数 | S-01 への表示の変更と通知の宛先（運用チャンネル）の決定が要る |
+| H-3 | OBS-06（隔離の未判断の警告。閾値 24 時間は承認済み）・FRS-04・DE-12/30/13 の検知・拒否の件数 | **業務ホーム（S-01）はまだ一覧を持たない**（`HomeController` は役割ごとの画面へ移すだけ）。OBS の「業務ホームに出す」は、S-01 の一覧の設計（何をどの役割に出すか。UI 設計の S-01 の行は「役割ごとの未処理を一覧する」）から始める。通知の宛先（運用チャンネル）の決定も要る |
 | H-4 | 監査の二重の防ぎ（一意制約）、毒入りのイベントの通知先と AUD-04 の照合、DB の文の timeout | 既存データの確認と通知の宛先が要る |
 | H-5 | 負荷テスト（k6。同じ追跡番号に 1 万行が集中する負荷、接続のプールの大きさ）、`ConnectionRule` の class 化と港で絞る照会 | 環境ができてから測る意味が大きい |
 | H-6 | 時点復旧の手順と訓練（`db:restore:pitr`・`recovery:reconcile`・`db:failover:drill`）、`maintenance:on/off`、`audit:export:verify` | 環境ができてから。メンテナンス表示と書き出しの仕様が未設計 |
