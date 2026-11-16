@@ -72,7 +72,8 @@ npx gulp issue:attach-demo:all                                              # �
 | ドキュメント | 概要 | 状況 |
 | :--- | :--- | :--- |
 | [インフラストラクチャアーキテクチャ](../../design/cargo-tracker/architecture_infrastructure.md) | デプロイ形態・環境構成・データ保護・可観測性・CI/CD の設計 | 承認済み（設計） |
-| IaC（Terraform）・ランブック | AWS 環境、監視、運用タスクとランブック | 未作成（運用準備 W10、#28） |
+| IaC（Terraform） | `ops/terraform/`（モジュールとステージング・本番の環境）。ADR-020: 東京、2 環境。`terraform fmt`・`init -backend=false`・`validate` まで検証済み。**`apply` は未実施**（アカウント・予算・保持期間などが未決。[Bolt 51 計画](../../development/cargo-tracker/bolt_51_plan.md)） | W10 Bolt 51（コードと検証まで） |
+| ランブック・運用タスク | 監視、運用タスクとランブック | 未作成（運用準備 W10、#28） |
 
 ## 補足
 

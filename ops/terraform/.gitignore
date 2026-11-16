@@ -1,0 +1,7 @@
+# Terraform の作業ディレクトリと状態。状態は S3 に置くので、ローカルの状態も秘密を含みうる変数の値も入れない
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+crash.log
+# ロックファイル（.terraform.lock.hcl）は入れる
