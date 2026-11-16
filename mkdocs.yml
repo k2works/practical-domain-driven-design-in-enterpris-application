@@ -547,6 +547,7 @@ nav:
           - ADR-016 予約から見積りの確定可否: adr/cargo-tracker/016-booking-checks-quotation-at-commit-time.md
           - ADR-017 通知モジュールとメール送信: adr/cargo-tracker/017-notification-module-and-mail.md
           - ADR-018 再見積りの戻しと順序の守り: adr/cargo-tracker/018-requote-returns-transport-request-with-ordering-guard.md
+          - ADR-020 AWS は東京に 2 環境: adr/cargo-tracker/020-aws-account-region-environments.md
   - 記事:
       - 概要: article/index.md
       - 第 1 章 ドメイン駆動設計: article/01-ddd-fundamentals.md

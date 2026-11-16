@@ -25,6 +25,7 @@ cargo-tracker プロジェクトの ADR ドキュメントです。
 | [ADR-017](./017-notification-module-and-mail.md) | 通知モジュールを新設し、メールは公開 API で受けて SMTP で送る | 採用（2026-10-15、Bolt 33） |
 | [ADR-018](./018-requote-returns-transport-request-with-ordering-guard.md) | 再見積りの提示で輸送要求を荷主承認待ちへ戻し、届く順の入れ替わりは楽観ロックでぶつけて守る | 採用（2026-10-19、Bolt 35b2） |
 | [ADR-019](./019-out-of-scope-attempt-recorder.md) | 担当範囲の外の試行の記録のポートを共有カーネルに置き、identity が実装する | 採用（2026-10-28、Bolt 38f） |
+| [ADR-020](./020-aws-account-region-environments.md) | AWS は東京リージョンにステージングと本番の 2 環境を置く（アカウントと予算は未決） | 採用（2026-11-16、Bolt 50） |
 
 ## 補足
 

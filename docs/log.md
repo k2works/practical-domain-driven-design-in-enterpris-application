@@ -1,6 +1,7 @@
 # Docs Update Log
 
 ## 2026-11-16
+* **Update**: [020-aws-account-region-environments](/adr/cargo-tracker/020-aws-account-region-environments.md) を更新（anthropic/claude-sonnet-5-5）
 * **Update**: [bolt_49_report](/development/cargo-tracker/bolt_49_report.md) を更新（anthropic/claude-sonnet-5-5）
 * **Update**: [bolt_49_plan](/development/cargo-tracker/bolt_49_plan.md) を更新（anthropic/claude-sonnet-5-5）
 * **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-sonnet-5-5）
