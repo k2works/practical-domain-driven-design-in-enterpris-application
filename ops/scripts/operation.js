@@ -122,6 +122,9 @@ END $$;`;
   return [
     create(APP_ROLE, appPassword),
     create(MIGRATOR_ROLE, migratorPassword),
+    // DB の 1 文は 5 秒（非機能要件の timeout の節。取込は行ごとの小さな文で、60 秒の一括の文はない）。アプリケーション利用者だけに掛け、
+    // マイグレーション用（Flyway の長い DDL）には掛けない
+    `ALTER ROLE ${APP_ROLE} SET statement_timeout = '5s';`,
     `GRANT CONNECT ON DATABASE ${dbName} TO ${APP_ROLE}, ${MIGRATOR_ROLE};`,
     `GRANT CREATE ON DATABASE ${dbName} TO ${MIGRATOR_ROLE};`,
   ].join('\n');

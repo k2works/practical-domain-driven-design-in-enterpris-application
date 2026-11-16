@@ -4,7 +4,7 @@ title: "運用タスク手順書 - cargo-tracker のステージング・本番�
 description: "ステージング・本番の DB 利用者の作成、権限の確認、配備前の確認、配備、戻しの運用タスク（Gulp）の使い方。未実行のコードであること、まだ作っていない運用タスクと、その理由を明記する。"
 tags: [operation, runbook]
 status: draft
-generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-16T05:48:13Z }
+generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-16T05:55:41Z }
 ---
 
 # 運用タスク手順書 - cargo-tracker のステージング・本番
@@ -39,7 +39,7 @@ DB への経路は、SSM Session Manager の踏み台のポートフォワード
 
 | タスク | 内容 | 変更するか |
 | :--- | :--- | :--- |
-| `npx gulp db:init --env staging` | DB 利用者 `cargo_tracker_app`・`cargo_tracker_migrator` を作り、パスワードを生成して Secrets Manager（`cargo-tracker-<env>/db/app`・`/db/migrator`）に置く。すでにあれば作らない。権限の付与は Flyway の afterMigrate のコールバックが行う（DA-02） | する（利用者の作成、Secrets Manager への登録） |
+| `npx gulp db:init --env staging` | DB 利用者 `cargo_tracker_app`・`cargo_tracker_migrator` を作り、アプリケーション利用者に **DB の 1 文の timeout（`statement_timeout = 5s`）**を設定し、パスワードを生成して Secrets Manager（`cargo-tracker-<env>/db/app`・`/db/migrator`）に置く。すでにあれば作らない。権限の付与は Flyway の afterMigrate のコールバックが行う（DA-02） | する（利用者の作成、Secrets Manager への登録） |
 | `npx gulp admin:bootstrap --env staging --email <メール> --name <表示名> [--company-name "A 社"]` | **最初のシステム管理者**を作る（H-1）。企業（なければ OPERATOR）・利用者（使えないハッシュ）・役割 SYSTEM_ADMIN・管理範囲（自社）・監査記録（reason `INITIAL_ADMINISTRATOR`）を 1 つのトランザクションで作る（`ops/sql/admin_bootstrap.sql`。PostgreSQL で確かめた）。すでにシステム管理者がいると何もせず失敗する。**作った後、本人にログイン画面の「password を忘れた場合」から password を設定してもらい、初回のログインで TOTP を登録してもらう**（平文もハッシュも手順に出ない） | する（企業・利用者・役割・管理範囲・監査記録の作成） |
 | `npx gulp external-source:resume --env staging --source-id <情報源 ID> --reason "<理由>"` | 停止中の情報源を承認済みに戻す（H-2、D-102）。状態（APPROVED・版 +1）と監査記録（`DATA_SOURCE_RESUMED`）を 1 つのトランザクションで書く（`ops/sql/external_source_resume.sql`。PostgreSQL で確かめた）。停止中でなければ失敗する。**前後に、その情報源の判断を待つ隔離の件数を S-17 で確かめる**（SQL も前の件数を表示する）。停止中に取り込んだ隔離は自動では変わらない（データ責任者が S-17 で判断する） | する（情報源の状態・監査記録） |
 | `npx gulp db:grants:verify --env staging` | 追記専用の表（印 `[append-only]`）に、アプリケーション利用者の UPDATE・DELETE が付いていないかを確かめる。1 件でもあれば失敗 | しない |

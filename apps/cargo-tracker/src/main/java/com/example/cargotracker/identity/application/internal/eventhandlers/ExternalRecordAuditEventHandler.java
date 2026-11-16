@@ -14,6 +14,7 @@ import java.util.UUID;
 import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.modulith.events.ApplicationModuleListener;
 import org.springframework.stereotype.Service;
 
@@ -212,7 +213,12 @@ public class ExternalRecordAuditEventHandler {
         if (auditRecords.existsByActionAndTarget(action, RECEIVED_RECORD, receivedRecordId)) {
             return;
         }
-        auditRecords.append(auditRecord);
+        try {
+            auditRecords.append(auditRecord);
+        } catch (DuplicateKeyException e) {
+            // 照会と追記の間に、別のインスタンスが同じ操作・対象の記録を書いた（一意制約。W10 の Bolt 53-1）。記録済みなので何もしない
+            LOG.info("外部原本の採否の監査記録はすでにある（同時の配信）: 操作 {}、受信記録 {}", action, receivedRecordId);
+        }
     }
 
     private static String reference(Source source) {

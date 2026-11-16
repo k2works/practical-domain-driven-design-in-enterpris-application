@@ -3,7 +3,7 @@ type: Plan
 title: "Bolt 53-1 計画と報告 - 定期処理の排他（ShedLock）"
 tags: [plan]
 status: stable
-generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-16T04:23:12Z }
+generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-16T05:55:41Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-11-16T05:22:02Z }
 ---
@@ -24,9 +24,9 @@ verified:
 
 | 項目 | 扱い |
 | :--- | :--- |
-| 監査の二重の防ぎ（監査の表の一意制約 `event_id`） | 監査の表への制約の追加は、既存データの確認を伴う。別の Bolt（Release 1.1 の頭） |
+| 監査の二重の防ぎ（監査の表の一意制約） | **W10 の後半で完了**: PostgreSQL の部分一意索引（`V20261125110000__unique_external_record_audit.sql`）。ハンドラーは制約違反を記録済みとして扱う |
 | 毒入りのイベントを捨てた ERROR のログの通知先と AUD-04 の照合 | 通知の宛先（運用チャンネル）が未決のため送る |
-| DB の文の timeout | 非機能要件の値の確認が要るため送る |
+| DB の文の timeout | **W10 の後半で完了**: `db:init` でアプリケーション利用者に `statement_timeout = 5s`（実環境では未実行） |
 
 ## 品質ゲート
 

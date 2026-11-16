@@ -4,7 +4,7 @@ title: "cargo-tracker 非機能要件"
 description: "cargo-tracker の性能・可用性・復旧・データ鮮度・セキュリティ・プライバシー・保持・アクセシビリティ・保守性・拡張性の測定可能な目標値、根拠、決定者、検証方法。"
 tags: [design, non-functional]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-10T04:10:08Z }
+generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-16T05:55:41Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T08:22:09Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:38Z }
@@ -78,7 +78,7 @@ PERF-01・02 の注記（Bolt 32c）: 認証済みの request ごとに、利用
 | 対象 | 値 | 状態 |
 | :--- | :--- | :--- |
 | 画面の request 全体 | 30 秒 | 提案 |
-| DB の 1 文 | 5 秒（取込・照合の一括処理は 60 秒。取込は行ごとの小さな文で、60 秒の一括の文はない。timeout の設定は W10。Bolt 39b4） | 提案 |
+| DB の 1 文 | 5 秒（取込・照合の一括処理は 60 秒。取込は行ごとの小さな文で、60 秒の一括の文はない。**W10 の Bolt 53-1 で、アプリケーション利用者のロールに `statement_timeout = 5s` を設定する（運用タスク `db:init`）**。Bolt 39b4） | 提案 |
 | DB の接続取得 | 3 秒 | 提案 |
 
 ## 可用性と復旧（NFR-AVAIL-01、NFR-RECOVERY-01）

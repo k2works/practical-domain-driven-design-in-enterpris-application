@@ -1,6 +1,7 @@
 package com.example.cargotracker.identity.application.internal.eventhandlers;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import ch.qos.logback.classic.Level;
@@ -257,6 +258,17 @@ class ExternalRecordAuditEventHandlerTest {
                         "EXTERNAL_RECORD_ADOPTED|RECEIVED_RECORD|" + receivedRecordId,
                         "EXTERNAL_RECORD_QUARANTINED|RECEIVED_RECORD|" + quarantinedRecordId,
                         "EXTERNAL_RECORD_QUARANTINED|RECEIVED_RECORD|" + quarantinedRecordId);
+    }
+
+    @Test
+    void 行6b_同時の配信で一意制約に負けたら_記録済みとして例外にしない() {
+        // 照会（existsBy…）と追記の間に、別のインスタンスが同じ記録を書いた（W10 の Bolt 53-1。PostgreSQL の一意制約）
+        auditRecords.duplicateOnAppend = true;
+
+        VoyageAdoptedValueUpdated event = voyage(UUID.randomUUID().toString(), OPERATOR);
+
+        assertThatCode(() -> handler.on(event)).doesNotThrowAnyException();
+        assertThat(auditRecords.appendCalls).isEqualTo(1);
     }
 
     @Test
@@ -617,12 +629,16 @@ class ExternalRecordAuditEventHandlerTest {
         private final List<String> existsQueries = new ArrayList<>();
         private int appendCalls;
         private boolean failing;
+        private boolean duplicateOnAppend;
 
         @Override
         public void append(AuditRecord auditRecord) {
             appendCalls++;
             if (failing) {
                 throw new DataAccessResourceFailureException("監査記録を書けない");
+            }
+            if (duplicateOnAppend) {
+                throw new org.springframework.dao.DuplicateKeyException("同じ操作と対象の監査記録がある");
             }
             appended.add(auditRecord);
         }

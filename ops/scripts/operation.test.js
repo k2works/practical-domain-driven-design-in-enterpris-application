@@ -70,6 +70,12 @@ test('initRolesSql は秘密を正とし、利用者がなければ作り、あ�
   assert.match(sql, /ALTER ROLE cargo_tracker_migrator PASSWORD 'bb'/);
 });
 
+test('initRolesSql はアプリケーション利用者だけに DB の 1 文の timeout（5 秒）を設定する', () => {
+  const sql = initRolesSql('aa', 'bb', 'cargotracker');
+  assert.match(sql, /ALTER ROLE cargo_tracker_app SET statement_timeout = '5s'/);
+  assert.doesNotMatch(sql, /ALTER ROLE cargo_tracker_migrator SET statement_timeout/);
+});
+
 test('parseOptions は --dry-run のような真偽値の旗の後ろの引数を値として読まない', () => {
   assert.deepEqual(parseOptions(['--dry-run', 'staging', '--env', 'staging']), { 'dry-run': true, env: 'staging' });
 });
