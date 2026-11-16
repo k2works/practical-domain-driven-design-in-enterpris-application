@@ -549,6 +549,7 @@ nav:
           - ADR-017 通知モジュールとメール送信: adr/cargo-tracker/017-notification-module-and-mail.md
           - ADR-018 再見積りの戻しと順序の守り: adr/cargo-tracker/018-requote-returns-transport-request-with-ordering-guard.md
           - ADR-020 AWS は東京に 2 環境: adr/cargo-tracker/020-aws-account-region-environments.md
+          - ADR-021 通知の再送と購読の置き場所（提案）: adr/cargo-tracker/021-shipper-notification-retry-and-subscription-home.md
   - 記事:
       - 概要: article/index.md
       - 第 1 章 ドメイン駆動設計: article/01-ddd-fundamentals.md

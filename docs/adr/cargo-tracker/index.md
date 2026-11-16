@@ -26,6 +26,7 @@ cargo-tracker プロジェクトの ADR ドキュメントです。
 | [ADR-018](./018-requote-returns-transport-request-with-ordering-guard.md) | 再見積りの提示で輸送要求を荷主承認待ちへ戻し、届く順の入れ替わりは楽観ロックでぶつけて守る | 採用（2026-10-19、Bolt 35b2） |
 | [ADR-019](./019-out-of-scope-attempt-recorder.md) | 担当範囲の外の試行の記録のポートを共有カーネルに置き、identity が実装する | 採用（2026-10-28、Bolt 38f） |
 | [ADR-020](./020-aws-account-region-environments.md) | AWS は東京リージョンにステージングと本番の 2 環境を置く（アカウントと予算は未決） | 採用（2026-11-16、Bolt 50） |
+| [ADR-021](./021-shipper-notification-retry-and-subscription-home.md) | 荷主への通知の再送の手段と購読の置き場所（人の判断待ち） | 提案（2026-11-16、Bolt 49-2） |
 
 ## 補足
 
