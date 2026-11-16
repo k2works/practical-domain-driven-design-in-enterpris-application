@@ -533,6 +533,16 @@ class MyBatisTrackingRecordLockIntegrationTest {
                     Integer.class, "%" + reference + "%");
         }
 
+        /** 失敗の診断用。配信の記録の行（リスナー、公開の日時、完了の日時）をそのまま返す。 */
+        String publicationStates(String reference) {
+            return jdbc.queryForList(
+                            "SELECT listener_id, publication_date, completion_date FROM platform.event_publication"
+                                    + " WHERE listener_id LIKE '%ExternalMilestoneEventHandler%'"
+                                    + " AND serialized_event LIKE ?",
+                            "%" + reference + "%")
+                    .toString();
+        }
+
         /** update の後でコミットの前に止まるリポジトリ（先の操作の行ロックを保ったまま、後の操作を待たせる）。 */
         TrackingRecordRepository pausingAfterUpdate(CountDownLatch updated, CountDownLatch release) {
             TrackingRecordRepository spy =
@@ -678,7 +688,9 @@ class MyBatisTrackingRecordLockIntegrationTest {
         });
 
         await().atMost(Duration.ofSeconds(20))
-                .untilAsserted(() -> assertThat(f.completedPublications(first)).isEqualTo(2));
+                .untilAsserted(() -> assertThat(f.completedPublications(first))
+                        .as(() -> "完了した発行記録が 2 件にならない（W9 の C-9。CI で 1 回失敗した原因の手がかり）: " + f.publicationStates(first))
+                        .isEqualTo(2));
         if (recordExists) {
             assertThat(f.milestones(number)).hasSize(1);
         } else {

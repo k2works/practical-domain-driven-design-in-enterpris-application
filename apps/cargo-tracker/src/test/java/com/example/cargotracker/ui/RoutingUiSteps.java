@@ -133,16 +133,11 @@ public class RoutingUiSteps {
     public void 経路設計者が案件を開く() {
         Locator row = page().getByRole(AriaRole.ROW)
                 .filter(new Locator.FilterOptions().setHasText(state.transportRequestNumber()));
-        for (int i = 0; i < 20; i++) {
-            browser.navigate(baseUrl + "/staff/routing-cases");
-            if (row.count() > 0) {
-                break;
-            }
-            page().waitForTimeout(500);
-        }
-        if (row.count() == 0) {
-            throw new AssertionError("案件一覧に " + state.transportRequestNumber() + " の案件が出ない（DE-16 の受け取りを待ちきれない）");
-        }
+        BrowserSession.awaitEventually(
+                "案件一覧に " + state.transportRequestNumber() + " の案件が出ない（DE-16 の受け取りを待ちきれない）", 500, () -> {
+                    browser.navigate(baseUrl + "/staff/routing-cases");
+                    return row.count() > 0;
+                });
         browser.checkAccessibility();
         row.getByRole(AriaRole.LINK).first().click();
         page().waitForURL("**/staff/routing-cases/RC-*");
@@ -414,14 +409,10 @@ public class RoutingUiSteps {
     }
 
     private void awaitVoyageCondition(String countSql, String message) {
-        for (int i = 0; i < 40; i++) {
+        BrowserSession.awaitEventually(message, 250, () -> {
             Integer found = jdbc.queryForObject(countSql, Integer.class, adoptedVoyage());
-            if (found != null && found > 0) {
-                return;
-            }
-            page().waitForTimeout(250);
-        }
-        throw new AssertionError(message);
+            return found != null && found > 0;
+        });
     }
 
     @ならば("取り込んだ航海の候補は {string} と示され、参照した航海情報の版に取り込んだ外部版 {string} が示される")

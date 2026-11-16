@@ -143,10 +143,10 @@ public class RouteDesignUiSteps {
     /** 辞退で終了への変更は DE-17 を受けた輸送要求の更新（非同期）を待つため、状態が変わるまで開き直す（W9 の Bolt 48-1。台帳 D-173）。 */
     @ならば("見積依頼の詳細の状態が {string} に変わり、新しい見積りの案内が示される")
     public void 辞退で終了に変わる(String status) {
-        for (int i = 0; i < 20 && !status.equals(definition("状態").textContent()); i++) {
-            page().waitForTimeout(500);
+        BrowserSession.awaitEventually("見積依頼の詳細の状態が " + status + " にならない（DE-17 を待ちきれない）", 500, () -> {
             page().reload();
-        }
+            return status.equals(definition("状態").textContent());
+        });
         assertThat(definition("状態")).hasText(status);
         assertThat(page().locator("main")).containsText("この見積依頼を複製して新しく作ってください");
         browser.checkAccessibility();
@@ -155,10 +155,10 @@ public class RouteDesignUiSteps {
     /** 経路設計中への変更は DE-16 を受けた輸送要求の更新（非同期）を待つため、状態が変わるまで開き直す。 */
     @ならば("見積依頼の詳細の状態が {string} になる")
     public void 状態が変わる(String status) {
-        for (int i = 0; i < 20 && !status.equals(definition("状態").textContent()); i++) {
-            page().waitForTimeout(500);
+        BrowserSession.awaitEventually("見積依頼の詳細の状態が " + status + " にならない（DE-16 を待ちきれない）", 500, () -> {
             page().reload();
-        }
+            return status.equals(definition("状態").textContent());
+        });
         assertThat(definition("状態")).hasText(status);
         assertThat(page().locator("main")).containsText("経路設計者が詳細な経路を設計しています");
         browser.checkAccessibility();
@@ -170,16 +170,11 @@ public class RouteDesignUiSteps {
         Locator row = page().getByRole(
                         AriaRole.REGION, new Page.GetByRoleOptions().setName("経路設計中・荷主承認待ちの見積依頼（依頼時刻の古い順）"))
                 .getByRole(AriaRole.LINK, new Locator.GetByRoleOptions().setName(number() + " 見積 " + quotationNo));
-        for (int i = 0; i < 20; i++) {
-            browser.navigate(baseUrl + "/staff/transport-requests");
-            if (row.count() > 0) {
-                break;
-            }
-            page().waitForTimeout(500);
-        }
-        if (row.count() == 0) {
-            throw new AssertionError("受付一覧の経路設計中に " + number() + " 見積 " + quotationNo + " が出ない（DE-16 の受け取りを待ちきれない）");
-        }
+        BrowserSession.awaitEventually(
+                "受付一覧の経路設計中に " + number() + " 見積 " + quotationNo + " が出ない（DE-16 の受け取りを待ちきれない）", 500, () -> {
+                    browser.navigate(baseUrl + "/staff/transport-requests");
+                    return row.count() > 0;
+                });
         browser.checkAccessibility();
         row.click();
         page().waitForURL("**/staff/transport-requests/" + number() + "/quotations/" + quotationNo);

@@ -212,13 +212,10 @@ public class QuotationUiSteps {
         Locator row = page().getByRole(
                         AriaRole.REGION, new Page.GetByRoleOptions().setName("見積提示済みの見積依頼（最新の見積りの有効期限の近い順）"))
                 .getByRole(AriaRole.LINK, new Locator.GetByRoleOptions().setName(number() + " 見積 " + quotationNo));
-        for (int i = 0; i < 20; i++) {
+        BrowserSession.awaitEventually("見積提示済みの表に見積り " + quotationNo + " の行が出ない（非同期の更新を待ちきれない）", 500, () -> {
             browser.navigate(baseUrl + "/staff/transport-requests");
-            if (row.count() > 0) {
-                break;
-            }
-            page().waitForTimeout(500);
-        }
+            return row.count() > 0;
+        });
         row.click();
         page().waitForURL("**" + quotationsPath() + "/" + quotationNo);
         browser.checkAccessibility();

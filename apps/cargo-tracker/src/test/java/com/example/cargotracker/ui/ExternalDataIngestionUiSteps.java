@@ -298,19 +298,15 @@ public class ExternalDataIngestionUiSteps {
     @かつ("取り込んだ航海の到着予定が追跡記録に届く")
     public void 取り込んだ航海の到着予定が追跡記録に届く() {
         String voyageNumber = state.voyageNumber("DIRECT");
-        for (int i = 0; i < 40; i++) {
+        BrowserSession.awaitEventually("取り込んだ航海の到着予定が追跡記録に届かない（DE-12 の受け取りを待ちきれない）: " + voyageNumber, 250, () -> {
             Integer found = jdbc.queryForObject(
                     "SELECT COUNT(*) FROM tracking.tracking_record r JOIN tracking.scheduled_leg l"
                             + " ON l.tracking_number = r.tracking_number WHERE l.voyage_number = ?"
                             + " AND r.voyage_arrival_at IS NOT NULL",
                     Integer.class,
                     voyageNumber);
-            if (found != null && found > 0) {
-                return;
-            }
-            browser.page().waitForTimeout(250);
-        }
-        throw new AssertionError("取り込んだ航海の到着予定が追跡記録に届かない（DE-12 の受け取りを待ちきれない）: " + voyageNumber);
+            return found != null && found > 0;
+        });
     }
 
     /** Bolt 39e の行 40。採用 1・内容の違う原本 1（3 行目はロッテルダムの到着を 1 日遅らせた）。 */
@@ -550,18 +546,15 @@ public class ExternalDataIngestionUiSteps {
     }
 
     private void awaitExternalMilestones(int count) {
-        for (int i = 0; i < 40; i++) {
-            Integer found = jdbc.queryForObject(
-                    "SELECT COUNT(*) FROM tracking.milestone WHERE tracking_number = ? AND source_kind = 'EXTERNAL_RECORD'",
-                    Integer.class,
-                    state.trackingNumber());
-            if (found != null && found >= count) {
-                return;
-            }
-            page().waitForTimeout(250);
-        }
-        throw new AssertionError(
-                "取り込んだ主要実績が追跡の実績に " + count + " 件反映されない（DE-13 の受け取りを待ちきれない）: " + state.trackingNumber());
+        BrowserSession.awaitEventually(
+                "取り込んだ主要実績が追跡の実績に " + count + " 件反映されない（DE-13 の受け取りを待ちきれない）: " + state.trackingNumber(), 250, () -> {
+                    Integer found = jdbc.queryForObject(
+                            "SELECT COUNT(*) FROM tracking.milestone WHERE tracking_number = ?"
+                                    + " AND source_kind = 'EXTERNAL_RECORD'",
+                            Integer.class,
+                            state.trackingNumber());
+                    return found != null && found >= count;
+                });
     }
 
     /** Bolt 39d3b2 の行 16。主要実績の 2 行（採用 1・内容の違う原本 1）。3 行目は形に合う別の追跡番号にした（T-230）。 */

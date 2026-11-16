@@ -11,7 +11,7 @@ import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
 import io.cucumber.java.ja.ならば;
 import io.cucumber.java.ja.もし;
-import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.web.server.LocalServerPort;
 
@@ -24,7 +24,6 @@ public class QuotationConsultationUiSteps {
 
     private static final String RESPOND = "見積りに回答する";
     private static final String CONSULT = "条件を相談する";
-    private static final int WAIT_ATTEMPTS = 40;
 
     private final BrowserSession browser;
     private final UiScenarioState state;
@@ -88,18 +87,17 @@ public class QuotationConsultationUiSteps {
 
     @ならば("見積り相談の有人案件が起票され、荷主の問い合わせの一覧で確かめられる")
     public void 有人案件が問い合わせの一覧に載る() {
-        Optional<ServiceCase> opened = Optional.empty();
-        for (int i = 0; i < WAIT_ATTEMPTS && opened.isEmpty(); i++) {
-            opened = serviceCases.findByShipper(users.companyOf(Role.SHIPPER), 50).stream()
-                    .filter(serviceCase -> serviceCase.kind() == ServiceCaseKind.QUOTATION_CONSULTATION)
-                    .filter(serviceCase -> serviceCase.cause().contains(state.transportRequestNumber()))
-                    .findFirst();
-            if (opened.isEmpty()) {
-                page().waitForTimeout(500);
-            }
-        }
-        ServiceCase serviceCase = opened.orElseThrow(
-                () -> new AssertionError("見積り相談の有人案件が起票されない（追跡の購読を待ちきれない）: " + state.transportRequestNumber()));
+        AtomicReference<ServiceCase> opened = new AtomicReference<>();
+        BrowserSession.awaitEventually(
+                "見積り相談の有人案件が起票されない（追跡の購読を待ちきれない）: " + state.transportRequestNumber(), 500, () -> {
+                    serviceCases.findByShipper(users.companyOf(Role.SHIPPER), 50).stream()
+                            .filter(serviceCase -> serviceCase.kind() == ServiceCaseKind.QUOTATION_CONSULTATION)
+                            .filter(serviceCase -> serviceCase.cause().contains(state.transportRequestNumber()))
+                            .findFirst()
+                            .ifPresent(opened::set);
+                    return opened.get() != null;
+                });
+        ServiceCase serviceCase = opened.get();
         browser.navigate(baseUrl + "/customer/inquiries");
         assertThat(page().getByRole(
                                 AriaRole.LINK,

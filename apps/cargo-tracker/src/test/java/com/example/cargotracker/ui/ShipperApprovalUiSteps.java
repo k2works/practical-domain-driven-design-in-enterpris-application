@@ -55,10 +55,13 @@ public class ShipperApprovalUiSteps {
     @もし("荷主が見積依頼の詳細で確定した経路が届くのを待つ")
     public void 確定した経路が届くのを待つ() {
         browser.navigate(detailUrl());
-        for (int i = 0; i < 20 && link(TO_APPROVAL).count() == 0; i++) {
-            page().waitForTimeout(500);
+        BrowserSession.awaitEventually("確定した経路の承認の入口が出ない（DE-05 を待ちきれない）", 500, () -> {
+            if (link(TO_APPROVAL).count() > 0) {
+                return true;
+            }
             page().reload();
-        }
+            return false;
+        });
         assertThat(link(TO_APPROVAL)).hasCount(1);
         assertThat(page().locator("main")).containsText("確定した経路（RC-");
         browser.checkAccessibility();

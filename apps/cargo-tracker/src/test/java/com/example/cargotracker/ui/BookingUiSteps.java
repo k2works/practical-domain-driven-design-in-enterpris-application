@@ -163,13 +163,10 @@ public class BookingUiSteps {
     public void 追跡の開始の完了を待つ() {
         String url = page().url();
         state.trackingNumber(definition("追跡番号").textContent().strip());
-        for (int i = 0; i < 20; i++) {
-            if ("完了".equals(definition("追跡の開始").textContent().strip())) {
-                break;
-            }
-            page().waitForTimeout(500);
+        BrowserSession.awaitEventually("予約の詳細の追跡の開始が完了にならない（DE-07・DE-22 を待ちきれない）", 500, () -> {
             browser.navigate(url);
-        }
+            return "完了".equals(definition("追跡の開始").textContent().strip());
+        });
     }
 
     /**
@@ -180,15 +177,16 @@ public class BookingUiSteps {
     public void 予約の状態が進むまで開き直す(String expected) {
         String url = baseUrl + "/staff/bookings/" + state.trackingNumber();
         browser.navigate(url);
-        for (int i = 0;
-                i < 20 && !expected.equals(definition("状態").textContent().strip());
-                i++) {
-            page().waitForTimeout(500);
+        BrowserSession.awaitEventually("予約の詳細の状態が " + expected + " にならない（DE-09・DE-10 を待ちきれない）", 500, () -> {
+            if (expected.equals(definition("状態").textContent().strip())) {
+                return true;
+            }
             page().waitForResponse(
                             response -> response.url().endsWith("/staff/bookings/" + state.trackingNumber())
                                     && "GET".equals(response.request().method()),
                             () -> page().navigate(url));
-        }
+            return false;
+        });
     }
 
     @ならば("予約の詳細の状態は {string} である")
@@ -208,13 +206,10 @@ public class BookingUiSteps {
     /** 予約の確定待ちの表から行がなくなるのは DE-07 を受けた輸送要求の更新（非同期）の後なので、行がなくなるまで開き直す。 */
     @ならば("受付一覧の予約の確定待ちから提出した見積依頼の見積り {int} がなくなる")
     public void 予約の確定待ちからなくなる(int quotationNo) {
-        for (int i = 0; i < 20; i++) {
+        BrowserSession.awaitEventually("予約の確定待ちから見積り " + quotationNo + " の行がなくならない（DE-07 を待ちきれない）", 500, () -> {
             browser.navigate(baseUrl + "/staff/transport-requests");
-            if (awaitingRow(quotationNo).count() == 0) {
-                break;
-            }
-            page().waitForTimeout(500);
-        }
+            return awaitingRow(quotationNo).count() == 0;
+        });
         assertThat(awaitingRow(quotationNo)).hasCount(0);
         browser.checkAccessibility();
     }
@@ -271,13 +266,10 @@ public class BookingUiSteps {
         Locator row = page().getByRole(
                         AriaRole.REGION, new Page.GetByRoleOptions().setName("経路設計中・荷主承認待ちの見積依頼（依頼時刻の古い順）"))
                 .locator("tr", new Locator.LocatorOptions().setHasText(subject(quotationNo)));
-        for (int i = 0; i < 20; i++) {
+        BrowserSession.awaitEventually("経路設計中の表に見積り " + quotationNo + " の行が出ない（DE-24 を待ちきれない）", 500, () -> {
             browser.navigate(baseUrl + "/staff/transport-requests");
-            if (row.count() > 0) {
-                break;
-            }
-            page().waitForTimeout(500);
-        }
+            return row.count() > 0;
+        });
         assertThat(row).containsText(status);
         assertThat(awaitingRow(quotationNo)).hasCount(0);
         browser.checkAccessibility();

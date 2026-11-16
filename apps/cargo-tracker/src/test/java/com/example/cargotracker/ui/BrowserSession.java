@@ -1,6 +1,7 @@
 package com.example.cargotracker.ui;
 
 import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 import com.deque.html.axecore.playwright.AxeBuilder;
 import com.deque.html.axecore.results.Rule;
@@ -20,6 +21,8 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.BooleanSupplier;
+import org.awaitility.core.ConditionTimeoutException;
 import org.springframework.beans.factory.DisposableBean;
 
 /**
@@ -45,6 +48,8 @@ public class BrowserSession implements DisposableBean {
 
     /** 録画を閉じる前に最後の画面を写す時間。 */
     private static final double LAST_FRAME_MILLIS = 1000;
+
+    private static final Duration EVENTUAL_TIMEOUT = Duration.ofSeconds(10);
 
     /** 録画の画面の大きさ（16:9）。 */
     private static final int VIDEO_WIDTH = 1280;
@@ -88,6 +93,24 @@ public class BrowserSession implements DisposableBean {
         context.close();
         targets.forEach(video::saveAs);
         video.delete();
+    }
+
+    /**
+     * 非同期の listener（DE-xx を受けた更新）の反映を待つ共通の部品（W9 レビュー M-10。待ち方と上限を直す場所を 1 つにする）。
+     * {@code condition} を {@code intervalMillis}（ミリ秒）ごとに評価し、成り立つまで待つ。画面を開き直す操作は {@code condition} の中に書く。
+     * Playwright は別のスレッドから触れないので、評価は呼び出したスレッドで行う。上限は 10 秒で、超えたら {@code failure} の
+     * {@link AssertionError} にする。
+     */
+    public static void awaitEventually(String failure, long intervalMillis, BooleanSupplier condition) {
+        try {
+            await().alias(failure)
+                    .atMost(EVENTUAL_TIMEOUT)
+                    .pollInterval(Duration.ofMillis(intervalMillis))
+                    .pollInSameThread()
+                    .until(condition::getAsBoolean);
+        } catch (ConditionTimeoutException e) {
+            throw new AssertionError(failure, e);
+        }
     }
 
     public Page page() {
