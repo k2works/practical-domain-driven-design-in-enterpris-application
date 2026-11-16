@@ -63,6 +63,11 @@
             <column ascending="true" name="target_id"/>
             <column ascending="true" name="occurred_at"/>
          </index>
+         <index name="ux_audit_record_external_once" unique="true">
+            <column ascending="true" name="action"/>
+            <column ascending="true" name="target_type"/>
+            <column ascending="true" name="target_id"/>
+         </index>
          <checkConstraint constraint="((result)::text = ANY ((ARRAY['SUCCESS'::character varying, 'FAILURE'::character varying])::text[]))" name="ck_audit_record_result"/>
       </table>
       <table name="company" remarks="企業" schema="identity" type="TABLE">

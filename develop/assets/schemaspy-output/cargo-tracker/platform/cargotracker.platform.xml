@@ -22,6 +22,16 @@
             <column ascending="true" name="serialized_event"/>
          </index>
       </table>
+      <table name="shedlock" remarks="定期処理のロック（ShedLock）。1 つの名前を同時に 1 インスタンスだけが持つ" schema="platform" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="name" nullable="false" remarks="ロックの名前（定期処理ごと）" size="64" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="1" name="lock_until" nullable="false" remarks="このロックを持てる期限（超えたら別のインスタンスが取れる）" size="35" type="timestamptz" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="2" name="locked_at" nullable="false" remarks="ロックを取った時刻" size="35" type="timestamptz" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="locked_by" nullable="false" remarks="ロックを取ったインスタンス（ホスト名）" size="255" type="varchar" typeCode="12"/>
+         <primaryKey column="name" sequenceNumberInPK="1"/>
+         <index name="pk_shedlock" unique="true">
+            <column ascending="true" name="name"/>
+         </index>
+      </table>
       <table name="spring_session" remarks="" schema="platform" type="TABLE">
          <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="primary_id" nullable="false" remarks="" size="36" type="bpchar" typeCode="1">
             <child column="session_primary_id" foreignKey="spring_session_attributes_fk" implied="false" onDeleteCascade="true" schema="platform" table="spring_session_attributes"/>
