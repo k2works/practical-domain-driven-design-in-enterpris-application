@@ -4,7 +4,7 @@ title: "開発戦略 - cargo-tracker（A 社国際貨物輸送管理システム
 description: "リリース計画の W1〜W14 を序盤・中盤・終盤の局面に分け、各局面の TDD のアプローチ、週ごとのデモ項目を受入シナリオにする方針、Living Documentation の採用を定める開発戦略。"
 tags: [development,development-strategy]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-11-09T21:08:50Z }
+generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-16T01:46:04Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T10:25:23Z }
   - { by: human:kakimomokuri, at: 2026-10-01T13:06:21Z }
@@ -432,10 +432,20 @@ Bolt 計画は局所の計画、`docs/design/cargo-tracker/` は全体の正で�
 
 | 時点 | 確認すること |
 | :--- | :--- |
-| Bolt 計画の作成時 | Bolt の入力に設計書のパスを明記し、計画が設計書と食い違っていないかを確かめる（`validating-design`） |
+| Bolt 計画の作成時 | Bolt の入力に設計書のパスを明記し、計画が設計書と食い違っていないかを**必ず** `validating-design` で確かめる。下の「Bolt 計画の検証（必須）」に従う |
 | Bolt の実行中 | 実装で設計の判断が変わったら、その場で `docs/design/` の該当箇所（意図と判断）と ADR を直す。Bolt 計画だけに書いて放置しない |
 | Bolt の終了時 | Bolt 終了報告に、直した設計書と ADR を書く。構造の変更はアーキテクチャテストとフルテストで裏付ける |
 | 週次の見直し | jig-erd の ER 図とデータモデル、JIG の用語集とドメインモデルの用語集を見比べる |
+
+### Bolt 計画の検証（必須）
+
+Bolt 計画を作るときは、**すべての Bolt で** `validating-design`（開発戦略・設計文書・過去計画との 3 軸）を実施する。技術の Bolt も、設計図 4 図を省く Bolt も省かない。
+
+- **いつ**: 計画を書いた直後で、人の承認を求める**前**に行う。「検証をしますか」と人に尋ねない（毎回行う）。
+- **何を**: 3 軸（A: 開発戦略、B: 設計文書、C: 過去計画）の結果を、不整合の件数と直し方とともに人に示す。不整合は計画側を直す（設計文書・開発戦略が正）。
+- **記録**: 検証した日と結果を、Bolt 計画の「状態」に書く（例: 検証済み（validating-design。2026-11-16））。書いていない計画は承認しない。
+- **`validating-iteration-plan`**: ストーリーを持つ Bolt では、あわせて実施する。技術の Bolt は突合する設計要素がないので、引用した事実（件数・ファイル・ID）の確認で代えてよい。代えたときは、その旨を計画に書く。
+- **承認ゲート**: 承認の議題に検証の結果を含める。`/goal` や「以降 Recommended で」の指示のもとでも、検証は省かない。
 
 ## 局面移行時の一貫性維持
 
@@ -488,3 +498,4 @@ Bolt 計画は局所の計画、`docs/design/cargo-tracker/` は全体の正で�
 | 2026-11-12 | Bolt 39g4 のステップ 1: W7 の行の 39g4 を鮮度超過の判定と示し方にし、39g4b（航海の採用値で動く見込みと根拠の表示。39g4 から縦に分けた）を足した（Bolt 39g4 計画の決定 (1)。承認済み） | anthropic/claude-sonnet-5-5、承認 human:kakimomokuri |
 | 2026-11-12 | Bolt 39g4b のステップ 1: W7 の行のアウトサイドインの列挙に 39g4・39g4b・39g4c を足し、39g4b を航海の採用値で動く見込みにし、39g4c（見込みの根拠の表示。39g4b から縦に分けた）を足した（Bolt 39g4b 計画の決定 (1)。承認済み） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
 | 2026-11-12 | Bolt 39h のステップ 1: W7 の行のインサイドアウトの列挙の 39h の内側を差異の規則と分類から入る縦と書き、外部データの画面のアウトサイドイン（S-17 から）に 39h2・39h3、受入シナリオからのアウトサイドインに 39h4 を足した（Bolt 39h 計画の決定 (1)。承認済み） | anthropic/claude-opus-5-5、承認 human:kakimomokuri |
+| 2026-11-16 | Bolt 計画の作成時に `validating-design` を必ず実施することを「Bolt ごとの設計ドキュメント整合」に明記した（W10 の Bolt 49 の計画で、検証を実施するか人に尋ねてしまったため。人の指示） | anthropic/claude-sonnet-5-5（指示 human:kakimomokuri） |

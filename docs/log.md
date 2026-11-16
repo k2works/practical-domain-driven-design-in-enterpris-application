@@ -1,6 +1,7 @@
 # Docs Update Log
 
 ## 2026-11-16
+* **Update**: [development_strategy](/development/cargo-tracker/development_strategy.md) を更新（anthropic/claude-sonnet-5-5）
 * **Verification**: [bolt_49_plan](/development/cargo-tracker/bolt_49_plan.md) を human:kakimomokuri が検証
 * **Update**: [bolt_49_plan](/development/cargo-tracker/bolt_49_plan.md) を更新（anthropic/claude-sonnet-5-5）
 * **Update**: [bolt_49_plan](/development/cargo-tracker/bolt_49_plan.md) を更新（anthropic/claude-sonnet-5-5）
