@@ -232,6 +232,22 @@ export function bootstrapVariables(options) {
   return { admin_email: email, admin_name: name, company_name: company };
 }
 
+/**
+ * 情報源の再開の変数（external-source:resume）。情報源 ID の形（UUID）と理由（1〜500 文字）を検査する。
+ * @param {Record<string, string | boolean>} options
+ */
+export function resumeVariables(options) {
+  const sourceId = typeof options['source-id'] === 'string' ? options['source-id'].trim() : '';
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(sourceId)) {
+    throw new Error('--source-id に情報源の ID（UUID）を指定してください');
+  }
+  const reason = typeof options.reason === 'string' ? options.reason.trim() : '';
+  if (reason.length < 1 || reason.length > 500) {
+    throw new Error('--reason に再開する理由（1〜500 文字）を指定してください');
+  }
+  return { source_id: sourceId, reason };
+}
+
 /** psql の `-v name=value` の並び。 */
 export function psqlVariableArgs(variables) {
   return Object.entries(variables).flatMap(([name, value]) => ['-v', `${name}=${value}`]);
@@ -344,6 +360,23 @@ export default function (gulp) {
     const sql = readFileSync(path.join('ops', 'sql', 'admin_bootstrap.sql'), 'utf8');
     await psql(target, sql, variables);
     console.log('作成した。本人に、ログイン画面の「password を忘れた場合」から password を設定してもらう');
+  });
+
+  // 停止中の情報源を承認済みに戻す（H-2。ops/sql/external_source_resume.sql）。状態の変更と監査記録（DATA_SOURCE_RESUMED）を 1 つのトランザクションで行う
+  gulp.task('external-source:resume', async () => {
+    const options = parseOptions(process.argv.slice(2));
+    const target = resolveTarget(options);
+    const variables = resumeVariables(options);
+    console.log(`external-source:resume ${target.env}: 情報源 ${variables.source_id} を停止から承認済みに戻す（理由: ${variables.reason}）`);
+    if (target.dryRun) {
+      describe('実行の前に、この情報源の判断を待つ隔離の件数を S-17 で確かめる（SQL も前の件数を表示する）');
+      describe('情報源が停止中でなければ失敗する。状態を APPROVED・版 +1 にし、監査記録 DATA_SOURCE_RESUMED を同じトランザクションで書く');
+      describe('実行の後に、S-17 で判断を待つ隔離を確かめる（停止中の隔離は自動では変わらない）');
+      return;
+    }
+    const sql = readFileSync(path.join('ops', 'sql', 'external_source_resume.sql'), 'utf8');
+    console.log((await psql(target, sql, variables)).trim());
+    console.log('再開した。S-17 で、この情報源の判断を待つ隔離を確かめる');
   });
 
   // 追記専用の表の権限を確認する（読み取りだけ）

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import net from 'node:net';
 import { test } from 'node:test';
 import {
+  resumeVariables,
   bootstrapVariables,
   psqlVariableArgs,
   grantsVerifySql,
@@ -99,6 +100,16 @@ test('bootstrapVariables は --email・--name を検査し、会社の名前の�
   assert.throws(() => bootstrapVariables({ email: 'not-an-email', name: 'x' }), /--email/);
   assert.throws(() => bootstrapVariables({ email: 'a@b.co' }), /--name/);
   assert.throws(() => bootstrapVariables({ email: 'a@b.co', name: '   ' }), /--name/);
+});
+
+test('resumeVariables は --source-id（UUID）と --reason（1〜500 文字）を検査する', () => {
+  const id = '3f2b8c1e-5d4a-4b7e-9a10-1c2d3e4f5a6b';
+  assert.deepEqual(resumeVariables({ 'source-id': id, reason: '復旧した' }), { source_id: id, reason: '復旧した' });
+  assert.throws(() => resumeVariables({ reason: 'x' }), /--source-id/);
+  assert.throws(() => resumeVariables({ 'source-id': 'not-a-uuid', reason: 'x' }), /--source-id/);
+  assert.throws(() => resumeVariables({ 'source-id': id }), /--reason/);
+  assert.throws(() => resumeVariables({ 'source-id': id, reason: '  ' }), /--reason/);
+  assert.throws(() => resumeVariables({ 'source-id': id, reason: 'あ'.repeat(501) }), /--reason/);
 });
 
 test('psqlVariableArgs は -v name=value の並びにする', () => {

@@ -2,6 +2,12 @@
 
 ## 2026-11-16
 * **Update**: [operation_tasks](/operation/cargo-tracker/operation_tasks.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [12-外部データ](/manual/12-外部データ.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [iteration_report-W10](/development/cargo-tracker/iteration_report-W10.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [operation_tasks](/operation/cargo-tracker/operation_tasks.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [12-外部データ](/manual/12-外部データ.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [iteration_report-W10](/development/cargo-tracker/iteration_report-W10.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [operation_tasks](/operation/cargo-tracker/operation_tasks.md) を更新（anthropic/claude-sonnet-5-5）
 * **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-sonnet-5-5）
 * **Update**: [iteration_report-W10](/development/cargo-tracker/iteration_report-W10.md) を更新（anthropic/claude-sonnet-5-5）
 * **Update**: [w10_review_20261116](/review/cargo-tracker/w10_review_20261116.md) を更新（anthropic/claude-sonnet-5-5）

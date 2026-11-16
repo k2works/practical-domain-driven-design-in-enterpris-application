@@ -4,7 +4,7 @@ title: "W10 完了報告書 - cargo-tracker（運用準備。コードと検証�
 description: "cargo-tracker の W10（運用準備。SP 0 の技術の週）の完了報告書。AWS の Terraform・配備のワークフロー・ヘルスチェック・ShedLock・運用タスクを、コードと検証まで作った。apply は未実施。運用タスクの一部・OBS の残り・負荷テスト・時点復旧の手順は持ち越す。"
 tags: [development,report]
 status: stable
-generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-16T05:39:43Z }
+generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-16T05:48:13Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-11-16T05:22:02Z }
 ---
@@ -72,7 +72,7 @@ verified:
 | # | 内容 | 理由 |
 | :--- | :--- | :--- |
 | H-1 | **完了（2026-11-16）**: `admin:bootstrap`（最初のシステム管理者）。監督の役割は画面の登録では付けられない決まり（Bolt 38e）なので、運用の SQL（`ops/sql/admin_bootstrap.sql`）で作る。使えないハッシュで作り、本人は「password を忘れた場合」で設定する。PostgreSQL でテストした（実環境では未実行） | — |
-| H-2 | `external-source:resume`（情報源の `SUSPENDED` → `APPROVED`） | 状態を変えるときの監査の記録の経路がない。アプリの操作として設計する |
+| H-2 | **完了（2026-11-16）**: `external-source:resume`（情報源の再開）。状態と監査記録（新しい `AuditAction.DATA_SOURCE_RESUMED`）を 1 つのトランザクションで書く運用の SQL（`ops/sql/external_source_resume.sql`）。PostgreSQL でテストした（実環境では未実行）。マニュアル 12 章に案内を足した | — |
 | H-3 | OBS-06（隔離の未判断の警告。閾値 24 時間は承認済み）・FRS-04・DE-12/30/13 の検知・拒否の件数 | **業務ホーム（S-01）はまだ一覧を持たない**（`HomeController` は役割ごとの画面へ移すだけ）。OBS の「業務ホームに出す」は、S-01 の一覧の設計（何をどの役割に出すか。UI 設計の S-01 の行は「役割ごとの未処理を一覧する」）から始める。通知の宛先（運用チャンネル）の決定も要る |
 | H-4 | 監査の二重の防ぎ（一意制約）、毒入りのイベントの通知先と AUD-04 の照合、DB の文の timeout | 既存データの確認と通知の宛先が要る |
 | H-5 | 負荷テスト（k6。同じ追跡番号に 1 万行が集中する負荷、接続のプールの大きさ）、`ConnectionRule` の class 化と港で絞る照会 | 環境ができてから測る意味が大きい |

@@ -107,5 +107,11 @@ public enum AuditAction {
      * （{@code REJECTED} か {@code ADOPTED}。採用は Bolt 39d3b）。判断の理由の文は 100 文字の理由の列に収まらないので、あれば変更後の要約の最後に置き、理由のない採用は要約の {@code reason} の部品を省く。対象は
      * {@link #EXTERNAL_RECORD_ADOPTED} と同じ形。
      */
-    EXTERNAL_RECORD_DECIDED
+    EXTERNAL_RECORD_DECIDED,
+    /**
+     * 停止中の情報源を承認済みに戻した（運用の手順 {@code external-source:resume}。W10 の持ち越し H-2、台帳 D-102）。操作者は持たず
+     * （運用の SQL）、理由は {@code OPERATIONS_PROCEDURE}、対象は情報源（{@code DATA_SOURCE}、情報源 ID、更新した後の版）、変更前は
+     * {@code SUSPENDED}、変更後は {@code APPROVED: <再開の理由>}。状態を変える運用が監査記録を残さない変更にならないようにする。
+     */
+    DATA_SOURCE_RESUMED
 }
