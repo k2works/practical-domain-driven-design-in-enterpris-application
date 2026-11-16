@@ -24412,22 +24412,134 @@
 <td style="text-align: left;">業務責任者に確かめる（Release 1.0 のパイロットの前） <strong>Bolt 40-8 で拡張</strong>: 進捗の更新・回答の記録・終結・回答期限の変更は社内の運用役割 5 つ（担当者だけには限らない）。再開は社内の運用役割 5 つがどの案件も、荷主担当者は自社の案件だけ（他社・ない受付番号は「見つからない」）。システム管理者・監査担当者は不可</td>
 <td style="text-align: left;">仮（2026-11-13 に人が承認。human:kakimomokuri。業務責任者の確認は未）</td>
 </tr>
+<tr>
+<td style="text-align: left;">D-160</td>
+<td style="text-align: left;">拒否した主要実績の有人例外案件（T-INV-04、BR-16）</td>
+<td style="text-align: left;">追跡が DE-13 を実績にせず拒否の記録に残したとき（知らない追跡番号、取消済みの予約）、同じトランザクションで有人案件を起票する。種類は拒否した実績、優先度は通常、担当部門は追跡管理部、内容は理由と出典で一意（同じ拒否の二重の起票は重複の判定で防ぐ）、追跡番号と出典を必須で持ち、追跡記録があれば荷主企業と予約を残す。起票者は DE-13 の操作者。起票できないとき（営業カレンダーが未登録など）は例外を上げ、拒否の記録ごと戻して再配信に任せる</td>
+<td style="text-align: left;">domain_model（T-INV-04）、ui_design（S-14・S-15 にそのまま出る）</td>
+<td style="text-align: left;"><a href="../bolt_40-13_plan/">Bolt 40-13 計画</a></td>
+<td style="text-align: left;">業務責任者に確かめる（Release 1.0 のパイロットの前。優先度と担当部門）</td>
+<td style="text-align: left;">仮（2026-11-14 に推奨のとおり承認。human:kakimomokuri。業務責任者の確認は未）</td>
+</tr>
+<tr>
+<td style="text-align: left;">D-161</td>
+<td style="text-align: left;">候補なし・外部データの欠落の有人案件への引き継ぎ（UC-06 3a。W8 CP-7）</td>
+<td style="text-align: left;">経路設計が適合する候補がないとき DE-32 を発行し、追跡が購読して有人案件を起票する（経路設計は追跡に依存しない。ADR-014）。理由が基本制約を満たす候補なし（候補はあるがすべて除外）なら種類は見積り相談・優先度 通常、外部データの欠落（経路に使える航海がない）なら外部停止・優先度 高（復旧照合が要る案件になり、手動の情報源には経路設計案件を残す）。担当部門は経路設計部。貨物種別だけが理由の除外は手動の窓口（Bolt 39i）のままで引き継がない。<strong><code>kind</code> の CHECK は変えない</strong>（新しい値を足さない）。追跡の依存に <code>routing :: events</code> を足した（モジュールの構造の変更。承認済み）</td>
+<td style="text-align: left;">domain_model（DE-32）、system_usecase（UC-06 3a）、ui_design（S-06）、マニュアル 8 章</td>
+<td style="text-align: left;"><a href="../bolt_40-14_plan/">Bolt 40-14 計画</a>、W8 CP-7</td>
+<td style="text-align: left;">業務責任者に確かめる（Release 1.0 のパイロットの前。種類の割り当て・優先度・担当部門）</td>
+<td style="text-align: left;">仮（2026-11-14 に推奨のとおり承認。human:kakimomokuri。業務責任者の確認は未）</td>
+</tr>
+<tr>
+<td style="text-align: left;">D-162</td>
+<td style="text-align: left;">電話・メールの照会の記録と有人案件への引き継ぎ（US-11 AC2、IR-INV-02）</td>
+<td style="text-align: left;">S-23 はカスタマーサポートだけ。追跡番号を必須にし、荷主企業は追跡記録から決めて担当企業の範囲で確かめる（範囲の外とない追跡番号は同じ結果）。引き継ぐときは同じトランザクションで有人案件（種類 顧客照会、優先度 通常、担当部門は入力（既定 CS）、参照した出典は任意）を起票し、照会記録に受付番号を残す。未終結の同じ内容の案件があればその受付番号に引き継ぐ。引き継がなくても照会記録を書く。表 <code>tracking.inquiry_record</code> を足した（data_model どおり。<code>created_at</code> を足し、<code>escalated</code> の CHECK を付けた）</td>
+<td style="text-align: left;">data_model、domain_model（IR-INV-02）、ui_design（S-23）、マニュアル 13 章</td>
+<td style="text-align: left;"><a href="../bolt_40-15_plan/">Bolt 40-15 計画</a></td>
+<td style="text-align: left;">業務責任者に確かめる（Release 1.0 のパイロットの前。優先度 通常の固定、カスタマーサポートだけが記録できること）</td>
+<td style="text-align: left;">仮（2026-11-14 に推奨のとおり承認。human:kakimomokuri。業務責任者の確認は未）</td>
+</tr>
+<tr>
+<td style="text-align: left;">D-163</td>
+<td style="text-align: left;">システム起票（拒否した主要実績・経路候補なし）の冪等と、営業カレンダー未登録のときの扱い（W8 の週全体レビュー A・B・C。D-160・D-161 の【前の決定の変更】）</td>
+<td style="text-align: left;">(1) システム起票は起票元キー（<code>service_case.origin_ref</code>。UNIQUE）で冪等にする。拒否は <code>REJECTED_MILESTONE:&lt;出典の種類&gt;:&lt;参照&gt;</code>、DE-32 は <code>ROUTE_CANDIDATES_NOT_FOUND:&lt;経路設計案件 ID&gt;:&lt;理由&gt;:&lt;算出の時刻&gt;</code>。同じキーなら案件を終結した後の再配信でも新しく起票せず、起票済みの受付番号を返す。再算出（算出の時刻が違う）は別のキーで、未終結の同じ内容の案件は従来の重複の判定が止める。(2) <strong>営業カレンダーが未登録でも、システム起票は既定のカレンダー（平日 9:00〜18:00 の日本時間、土日休み、祝日なし）で期限を計算して起票する</strong>（イベントを毒メッセージにしない。D-160・D-161 の「起票できないときは例外を上げて戻す」を変更）。利用者の起票は従来どおり「営業カレンダーが未登録」と示して起票しない。(3) <code>RejectionCaseOpener</code> はアプリケーション層（<code>commandservices</code>）の協力者に置き直した（外部の技術のポートではないので、ADR-017 の例外を作らない）。(4) 認可の URL の規則と <code>ServiceCaseAuthorization.canOperate</code> の集合が、すべての役割で一致することの統合テストを足した。(5) Bolt 40-18 で、詳細の照会に案件ごとの認可（<code>canAccess</code>）を通し、システム起票を <code>SystemServiceCaseOpener</code> に分けた（<code>interfaces</code> からの呼び出しは ArchUnit が禁じる）</td>
+<td style="text-align: left;">data_model（<code>origin_ref</code>）、domain_model（T-INV-04・DE-32）</td>
+<td style="text-align: left;"><a href="../bolt_40-17_plan/">Bolt 40-17 計画</a>、<a href="../../../review/cargo-tracker/w8_review_20261114/">W8 週全体レビュー</a></td>
+<td style="text-align: left;">業務責任者に確かめる（Release 1.0 のパイロットの前。既定のカレンダーで期限を計算してよいか。祝日の分は期限が実際より短くなる）</td>
+<td style="text-align: left;">仮（2026-11-14 に人が選んだ。human:kakimomokuri。業務責任者の確認は未）</td>
+</tr>
+<tr>
+<td style="text-align: left;">D-164</td>
+<td style="text-align: left;">荷主の問い合わせ一覧（C-14。W9 の Bolt 42-2）に示す「問い合わせの窓口の受付時間」（US-23 AC4）</td>
+<td style="text-align: left;">既定の営業カレンダーと同じ「平日 09:00〜18:00」を、荷主の日時表示と同じ時間帯（Asia/Tokyo（UTC+09:00））で示す。祝日・年末年始は示さない（営業カレンダーの登録は W10）</td>
+<td style="text-align: left;">domain_model（SVC-07）、ui_design（C-14）</td>
+<td style="text-align: left;"><a href="../bolt_42-2_plan/">Bolt 42-2 計画</a></td>
+<td style="text-align: left;">業務責任者に確かめる（Release 1.0 のパイロットの前。受付時間の実際と、祝日の扱い）</td>
+<td style="text-align: left;">仮（2026-11-14。推奨のとおり。human:kakimomokuri の「以降、推奨で自律実行」による。業務責任者の確認は未）</td>
+</tr>
+<tr>
+<td style="text-align: left;">D-165</td>
+<td style="text-align: left;">荷主が回答済みの問い合わせを未解決と答えて再開を依頼できる状態（US-23 AC2。W9 の Bolt 42-3）。【前の決定の変更】Bolt 40-5・40-8 の「再開できるのは終結だけ」</td>
+<td style="text-align: left;">再開できるのは<strong>終結と回答済み</strong>。回答済みのまま顧客が未解決と答えれば、受付番号・進捗・過去の回答を保持して対応中に戻し、顧客の回答を最後の回答に記録する（SC-INV-03）。社内の画面（S-15）の再開の欄は、これまでどおり終結のときだけ出す（社内は終結してから再開する運用のまま）。荷主の画面（C-15）は回答済み・終結のときに出す</td>
+<td style="text-align: left;">domain_model（SC-INV-03）、ui_design（C-15）</td>
+<td style="text-align: left;"><a href="../bolt_42-3_plan/">Bolt 42-3 計画</a></td>
+<td style="text-align: left;">業務責任者に確かめる（Release 1.0 のパイロットの前。回答済みのままの再開を認めてよいか。認めないなら、荷主の再開は終結の後だけにして、回答済みの間は「担当者の終結を待つ」と示す）</td>
+<td style="text-align: left;">仮（2026-11-14。推奨のとおり。US-23 AC2 の文言「回答済みの問い合わせ」に合わせた。human:kakimomokuri の「以降、推奨で自律実行」による。業務責任者の確認は未）</td>
+</tr>
+<tr>
+<td style="text-align: left;">D-166</td>
+<td style="text-align: left;">荷主への業務の通知（US-22。W9 の Bolt 43）の宛先</td>
+<td style="text-align: left;"><strong>その企業の利用中の荷主担当者全員</strong>へ送る（停止中の利用者・荷主担当者でない利用者には送らない）。個人の配信設定・静穏時間・代替チャネルは第 2 段階（UC-13）。宛先の解決は identity が担う（identity が業務のイベントを購読し、通知の公開 API を呼ぶ。人が決めた。ADR-017 の補足）</td>
+<td style="text-align: left;">domain_model（N-INV-01・02）、ADR-017</td>
+<td style="text-align: left;"><a href="../bolt_43_plan/">Bolt 43 計画</a></td>
+<td style="text-align: left;">業務責任者に確かめる（Release 1.0 のパイロットの前。宛先は全員でよいか、起票者や担当者に絞るか）</td>
+<td style="text-align: left;">仮（2026-11-14。宛先の範囲は推奨のとおり、解決の方式は人が決めた。human:kakimomokuri。業務責任者の確認は未）</td>
+</tr>
+<tr>
+<td style="text-align: left;">D-167</td>
+<td style="text-align: left;">荷主の追跡の照会（C-10。W9 の Bolt 47）の確認中・鮮度超過のお知らせ（US-09 AC2・AC3）。【前の決定の変更】Bolt 39g4 の「荷主向けの鮮度超過の表示は後送り」</td>
+<td style="text-align: left;">「次回の更新」は<strong>次の予定の実績の予定時刻</strong>（なければ「未定」）。AC3 の「停止中」は、社内と同じ<strong>鮮度超過</strong>（次の予定の実績の予定時刻から 36 時間。FRS-02）に当てる。確認中は実績の中身を出さず、判明していること（予定と採用済みの実績）・未確定のこと・次の行動（担当者の確認と問い合わせの導線）・次回の更新・担当窓口（D-164 の受付時間）を示す。鮮度超過は「最新性を保証できません」・最後の採用値と最終取得・次の行動・次回の更新・担当窓口を示す</td>
+<td style="text-align: left;">ui_design（C-10）、test_strategy</td>
+<td style="text-align: left;"><a href="../bolt_47_plan/">Bolt 47 計画</a></td>
+<td style="text-align: left;">業務責任者に確かめる（Release 1.0 のパイロットの前。次回の更新の定義、停止中を鮮度超過とみなしてよいか、36 時間の許容）</td>
+<td style="text-align: left;">仮（2026-11-14。推奨のとおり。human:kakimomokuri の「以降、推奨で自律実行」による。業務責任者の確認は未）</td>
+</tr>
+<tr>
+<td style="text-align: left;">D-168</td>
+<td style="text-align: left;">荷主が提示済みの見積りを理由を付けて辞退したとき（US-24 AC2。W9 の Bolt 46）の見積りと再見積りの扱い。D-86・ADR-018 の見直し</td>
+<td style="text-align: left;">見積りを<strong>失効（EXPIRED）として記録</strong>し、辞退者・辞退時刻は回答者・回答時刻の列、回答の値は DECLINED、理由は新しい列 <code>decline_reason</code>（1〜500 文字。必須）に残す。経路設計の依頼（DE-16）は出さず、輸送要求の状態は変えない。辞退した見積りは<strong>再見積りできない</strong>（失効の記録として扱う。担当営業が荷主と相談して新しい見積依頼で出し直す）。営業には S-04 に示す。DE-17 は R1.0 では発行しない（購読者がいない）。理由の最大を 500 文字にした（データモデルの 4000 から改めた）</td>
+<td style="text-align: left;">user_story（US-24）、domain_model（DE-17）、data_model（<code>decline_reason</code>）、ADR-018（改訂の経緯）、ui_design（C-05）</td>
+<td style="text-align: left;"><a href="../bolt_46_plan/">Bolt 46 計画</a></td>
+<td style="text-align: left;">業務責任者に確かめる（Release 1.0 のパイロットの前。辞退後の出し直しの手順、営業への通知の要否）</td>
+<td style="text-align: left;">人が決めた（2026-11-15。human:kakimomokuri。選択肢の提示と選択。業務責任者の確認は未） ；<strong>出口（2026-11-15）</strong>: 辞退した見積りの輸送要求は辞退で終了にする（D-173）。DE-17 は発行する（上の「R1.0 では発行しない」は D-173 で改めた）。</td>
+</tr>
+<tr>
+<td style="text-align: left;">D-169</td>
+<td style="text-align: left;">荷主が提示済みの見積りの条件を相談したとき（US-24 AC3。W9 の Bolt 46-1）の有人案件の起票</td>
+<td style="text-align: left;">見積りは<strong>相談のイベント（DE-33）</strong>を発行するだけで状態を変えない。追跡のコンテキストが購読して<strong>有人案件（種類: 見積り相談、優先度: 通常、担当部門: 営業部）</strong>を起票する（DE-32 の購読と同じ形。ADR-014 の方向）。追跡の許可する依存に <code>quotation :: events</code> を足した。起票元キーは見積り ID と相談の時刻で、再配信で二重に起票しない。起票した案件は荷主の問い合わせ一覧（C-14）に載る。相談内容は 1〜500 文字（必須）。回答済み・辞退済み・失効の見積りは相談できない</td>
+<td style="text-align: left;">user_story（US-24）、domain_model（DE-33）、ui_design（C-05）、追跡の package-info</td>
+<td style="text-align: left;"><a href="../bolt_46-1_plan/">Bolt 46-1 計画</a></td>
+<td style="text-align: left;">業務責任者に確かめる（Release 1.0 のパイロットの前。担当部門・優先度・受付の期限の既定でよいか）</td>
+<td style="text-align: left;">仮（2026-11-15。推奨のとおり。human:kakimomokuri の「以降、推奨で自律実行」による。モジュールの依存の追加は ADR-014 の方向どおりで、業務責任者の確認は未）</td>
+</tr>
+<tr>
+<td style="text-align: left;">D-170</td>
+<td style="text-align: left;">顧客 Web の照会が有人対応へ移ったとみなす規則（IR-INV-01。KPI-02。W9 の Bolt 44。US-21 AC2）</td>
+<td style="text-align: left;">顧客 Web の自己照会（WEB_SELF）の後 <strong>24 時間以内（ちょうどを含む）</strong>に、同じ荷主企業・同じ追跡番号（予約）の有人案件が起票されたら、その照会を有人対応へ移ったとする（受付番号を残す）。起票の共通の手順が保存の後に更新する。荷主が Web で再開を依頼したら WEB_INQUIRY を受付番号つきで記録する。追跡番号の分からない案件は更新しない。<strong>照会が案件の起票より後に来た場合は対象外</strong>（「照会の後」の順序の前提。W9 の週全体のレビューで確かめた）。起票のトランザクションの中で照会記録（別の集約）を更新する（同じ追跡コンテキストの中。1 トランザクション 1 集約の例外として許容）</td>
+<td style="text-align: left;">domain_model（IR-INV-01）、user_story（US-21）</td>
+<td style="text-align: left;"><a href="../bolt_44_plan/">Bolt 44 計画</a></td>
+<td style="text-align: left;">業務責任者（プロダクト責任者）に確かめる（Release 1.0 のパイロットの前。24 時間・同じ予約という解釈で KPI-02 の算式に合うか。複数の照会を 1 つの案件へ移してよいか）</td>
+<td style="text-align: left;">仮（2026-11-15。推奨のとおり。human:kakimomokuri の「以降、推奨で自律実行」による。業務責任者の確認は未）</td>
+</tr>
+<tr>
+<td style="text-align: left;">D-171</td>
+<td style="text-align: left;">週次の KPI の定義と S-22 の利用者（US-21 AC4。W9 の Bolt 44-1）</td>
+<td style="text-align: left;">週は <strong>UTC の月曜 00:00 始まり</strong>。KPI-01 は、その週に最初の見積りを提示した見積依頼のリードタイムの<strong>中央値</strong>（偶数件は真ん中の 2 つの平均）と <strong>P90</strong>（最近順位法）。KPI-02 は、その週に受け付けた照会の総数に対する顧客 Web で完結した数の割合（総数 0 の週は値なし）。<strong>PV-01 の除外（訓練データ・顧客都合の取消し）の記録の仕組みは未実装なので全件を母集団にする</strong>（除外の記録は W10 以降）。S-22 は<strong>監査担当者だけ</strong>が使う（人が選んだ。営業担当者の前身の画面の閲覧をやめた）。identity が追跡の公開 API（照会の件数）を呼ぶ</td>
+<td style="text-align: left;">user_story（US-21）、domain_model（KPI-INV-04）、ui_design（S-22）、ADR-017</td>
+<td style="text-align: left;"><a href="../bolt_44-1_plan/">Bolt 44-1 計画</a></td>
+<td style="text-align: left;">業務責任者に確かめる（Release 1.0 のパイロットの前。週の区切り、母集団の除外の扱い、営業担当者に KPI を見せるか）</td>
+<td style="text-align: left;">S-22 の利用者は人が決めた（2026-11-15。human:kakimomokuri）。ほかは仮（推奨のとおり。業務責任者の確認は未）</td>
+</tr>
+<tr>
+<td style="text-align: left;">D-172</td>
+<td style="text-align: left;">KPI 基準値の登録と比較（US-21 AC5。W9 の Bolt 44-2）</td>
+<td style="text-align: left;">期間は<strong>パイロット開始前の 4 週間（28 日。両端を含む）</strong>。値は KPI-01 が<strong>分</strong>（中央値と、省略できる 90 パーセンタイル）、KPI-02 が<strong>自己照会率のパーセント</strong>（90 パーセンタイルは持たない）。算出方法（必須・4000 文字まで）と登録者・登録時刻を記録し、<strong>追記専用</strong>（同じ KPI を登録し直すと前の最新の記録を指す新しい記録）。登録できるのは監査担当者。パイロット中の値は<strong>直近 12 週をまとめた値</strong>で、差は KPI-01 が短縮・延長の割合、KPI-02 がポイント。合否は示さない。未完了のイベントの発行の件数を S-22 に示す（リスナーが処理中のものも含む）。スキーマ: <code>identity.kpi_baseline</code>（登録者の外部キーなし）、<code>inquiry_record</code> の追跡番号の索引</td>
+<td style="text-align: left;">user_story、domain_model（KPI-INV-02）、data_model、ui_design（S-22）</td>
+<td style="text-align: left;"><a href="../bolt_44-2_plan/">Bolt 44-2 計画</a></td>
+<td style="text-align: left;">業務責任者に確かめる（Release 1.0 のパイロットの前。基準値の期間・単位、パイロット中の値の期間、差の見せ方）</td>
+<td style="text-align: left;">仮（2026-11-15。計画の承認と推奨のとおり。human:kakimomokuri。業務責任者の確認は未）</td>
+</tr>
+<tr>
+<td style="text-align: left;">D-173</td>
+<td style="text-align: left;">辞退した見積りの輸送要求の行き先（D-168 の出口。W9 の週全体レビューの高 H-2。W9 の Bolt 48-1）</td>
+<td style="text-align: left;">辞退を受けたら、輸送要求を<strong>辞退で終了</strong>（値 <code>WITHDRAWN</code>。DB の CHECK に初めからある値）にする。辞退した事実（DE-17）を見積りが発行し、見積りの listener が別のトランザクションで変える（見積り作成中・見積提示済みで同じ版のときだけ。冪等。DE-03 が遅れて届いても戻らない）。営業の受付一覧の見積提示済みの表から外れ、再見積りも予約もしない。荷主の詳細は「辞退で終了」と複製の案内を示す。スキーマの変更はない</td>
+<td style="text-align: left;">domain_model（輸送要求の状態遷移・DE-17）、ui_design、user_story</td>
+<td style="text-align: left;"><a href="../bolt_48-1_plan/">Bolt 48-1 計画</a></td>
+<td style="text-align: left;">業務責任者に確かめる（Release 1.0 のパイロットの前。辞退で終了でよいか。値引きの交渉で同じ条件の出し直しを営業の現場で認めるか）</td>
+<td style="text-align: left;">人が決めた（2026-11-15。human:kakimomokuri。選択肢「辞退で終了にする」「再見積り待ちにする」から選んだ。業務責任者の確認は未）</td>
+</tr>
 </tbody>
 </table>
-<p>| D-160 | 拒否した主要実績の有人例外案件（T-INV-04、BR-16） | 追跡が DE-13 を実績にせず拒否の記録に残したとき（知らない追跡番号、取消済みの予約）、同じトランザクションで有人案件を起票する。種類は拒否した実績、優先度は通常、担当部門は追跡管理部、内容は理由と出典で一意（同じ拒否の二重の起票は重複の判定で防ぐ）、追跡番号と出典を必須で持ち、追跡記録があれば荷主企業と予約を残す。起票者は DE-13 の操作者。起票できないとき（営業カレンダーが未登録など）は例外を上げ、拒否の記録ごと戻して再配信に任せる | domain_model（T-INV-04）、ui_design（S-14・S-15 にそのまま出る） | <a href="../bolt_40-13_plan/">Bolt 40-13 計画</a> | 業務責任者に確かめる（Release 1.0 のパイロットの前。優先度と担当部門） | 仮（2026-11-14 に推奨のとおり承認。human:kakimomokuri。業務責任者の確認は未） |</p>
-<p>| D-161 | 候補なし・外部データの欠落の有人案件への引き継ぎ（UC-06 3a。W8 CP-7） | 経路設計が適合する候補がないとき DE-32 を発行し、追跡が購読して有人案件を起票する（経路設計は追跡に依存しない。ADR-014）。理由が基本制約を満たす候補なし（候補はあるがすべて除外）なら種類は見積り相談・優先度 通常、外部データの欠落（経路に使える航海がない）なら外部停止・優先度 高（復旧照合が要る案件になり、手動の情報源には経路設計案件を残す）。担当部門は経路設計部。貨物種別だけが理由の除外は手動の窓口（Bolt 39i）のままで引き継がない。<strong><code>kind</code> の CHECK は変えない</strong>（新しい値を足さない）。追跡の依存に <code>routing :: events</code> を足した（モジュールの構造の変更。承認済み） | domain_model（DE-32）、system_usecase（UC-06 3a）、ui_design（S-06）、マニュアル 8 章 | <a href="../bolt_40-14_plan/">Bolt 40-14 計画</a>、W8 CP-7 | 業務責任者に確かめる（Release 1.0 のパイロットの前。種類の割り当て・優先度・担当部門） | 仮（2026-11-14 に推奨のとおり承認。human:kakimomokuri。業務責任者の確認は未） |</p>
-<p>| D-162 | 電話・メールの照会の記録と有人案件への引き継ぎ（US-11 AC2、IR-INV-02） | S-23 はカスタマーサポートだけ。追跡番号を必須にし、荷主企業は追跡記録から決めて担当企業の範囲で確かめる（範囲の外とない追跡番号は同じ結果）。引き継ぐときは同じトランザクションで有人案件（種類 顧客照会、優先度 通常、担当部門は入力（既定 CS）、参照した出典は任意）を起票し、照会記録に受付番号を残す。未終結の同じ内容の案件があればその受付番号に引き継ぐ。引き継がなくても照会記録を書く。表 <code>tracking.inquiry_record</code> を足した（data_model どおり。<code>created_at</code> を足し、<code>escalated</code> の CHECK を付けた） | data_model、domain_model（IR-INV-02）、ui_design（S-23）、マニュアル 13 章 | <a href="../bolt_40-15_plan/">Bolt 40-15 計画</a> | 業務責任者に確かめる（Release 1.0 のパイロットの前。優先度 通常の固定、カスタマーサポートだけが記録できること） | 仮（2026-11-14 に推奨のとおり承認。human:kakimomokuri。業務責任者の確認は未） |</p>
-<p>| D-163 | システム起票（拒否した主要実績・経路候補なし）の冪等と、営業カレンダー未登録のときの扱い（W8 の週全体レビュー A・B・C。D-160・D-161 の【前の決定の変更】） | (1) システム起票は起票元キー（<code>service_case.origin_ref</code>。UNIQUE）で冪等にする。拒否は <code>REJECTED_MILESTONE:&lt;出典の種類&gt;:&lt;参照&gt;</code>、DE-32 は <code>ROUTE_CANDIDATES_NOT_FOUND:&lt;経路設計案件 ID&gt;:&lt;理由&gt;:&lt;算出の時刻&gt;</code>。同じキーなら案件を終結した後の再配信でも新しく起票せず、起票済みの受付番号を返す。再算出（算出の時刻が違う）は別のキーで、未終結の同じ内容の案件は従来の重複の判定が止める。(2) <strong>営業カレンダーが未登録でも、システム起票は既定のカレンダー（平日 9:00〜18:00 の日本時間、土日休み、祝日なし）で期限を計算して起票する</strong>（イベントを毒メッセージにしない。D-160・D-161 の「起票できないときは例外を上げて戻す」を変更）。利用者の起票は従来どおり「営業カレンダーが未登録」と示して起票しない。(3) <code>RejectionCaseOpener</code> はアプリケーション層（<code>commandservices</code>）の協力者に置き直した（外部の技術のポートではないので、ADR-017 の例外を作らない）。(4) 認可の URL の規則と <code>ServiceCaseAuthorization.canOperate</code> の集合が、すべての役割で一致することの統合テストを足した。(5) Bolt 40-18 で、詳細の照会に案件ごとの認可（<code>canAccess</code>）を通し、システム起票を <code>SystemServiceCaseOpener</code> に分けた（<code>interfaces</code> からの呼び出しは ArchUnit が禁じる） | data_model（<code>origin_ref</code>）、domain_model（T-INV-04・DE-32） | <a href="../bolt_40-17_plan/">Bolt 40-17 計画</a>、<a href="../../../review/cargo-tracker/w8_review_20261114/">W8 週全体レビュー</a> | 業務責任者に確かめる（Release 1.0 のパイロットの前。既定のカレンダーで期限を計算してよいか。祝日の分は期限が実際より短くなる） | 仮（2026-11-14 に人が選んだ。human:kakimomokuri。業務責任者の確認は未） |
-| D-164 | 荷主の問い合わせ一覧（C-14。W9 の Bolt 42-2）に示す「問い合わせの窓口の受付時間」（US-23 AC4） | 既定の営業カレンダーと同じ「平日 09:00〜18:00」を、荷主の日時表示と同じ時間帯（Asia/Tokyo（UTC+09:00））で示す。祝日・年末年始は示さない（営業カレンダーの登録は W10） | domain_model（SVC-07）、ui_design（C-14） | <a href="../bolt_42-2_plan/">Bolt 42-2 計画</a> | 業務責任者に確かめる（Release 1.0 のパイロットの前。受付時間の実際と、祝日の扱い） | 仮（2026-11-14。推奨のとおり。human:kakimomokuri の「以降、推奨で自律実行」による。業務責任者の確認は未） |
-| D-165 | 荷主が回答済みの問い合わせを未解決と答えて再開を依頼できる状態（US-23 AC2。W9 の Bolt 42-3）。【前の決定の変更】Bolt 40-5・40-8 の「再開できるのは終結だけ」 | 再開できるのは<strong>終結と回答済み</strong>。回答済みのまま顧客が未解決と答えれば、受付番号・進捗・過去の回答を保持して対応中に戻し、顧客の回答を最後の回答に記録する（SC-INV-03）。社内の画面（S-15）の再開の欄は、これまでどおり終結のときだけ出す（社内は終結してから再開する運用のまま）。荷主の画面（C-15）は回答済み・終結のときに出す | domain_model（SC-INV-03）、ui_design（C-15） | <a href="../bolt_42-3_plan/">Bolt 42-3 計画</a> | 業務責任者に確かめる（Release 1.0 のパイロットの前。回答済みのままの再開を認めてよいか。認めないなら、荷主の再開は終結の後だけにして、回答済みの間は「担当者の終結を待つ」と示す） | 仮（2026-11-14。推奨のとおり。US-23 AC2 の文言「回答済みの問い合わせ」に合わせた。human:kakimomokuri の「以降、推奨で自律実行」による。業務責任者の確認は未） |
-| D-166 | 荷主への業務の通知（US-22。W9 の Bolt 43）の宛先 | <strong>その企業の利用中の荷主担当者全員</strong>へ送る（停止中の利用者・荷主担当者でない利用者には送らない）。個人の配信設定・静穏時間・代替チャネルは第 2 段階（UC-13）。宛先の解決は identity が担う（identity が業務のイベントを購読し、通知の公開 API を呼ぶ。人が決めた。ADR-017 の補足） | domain_model（N-INV-01・02）、ADR-017 | <a href="../bolt_43_plan/">Bolt 43 計画</a> | 業務責任者に確かめる（Release 1.0 のパイロットの前。宛先は全員でよいか、起票者や担当者に絞るか） | 仮（2026-11-14。宛先の範囲は推奨のとおり、解決の方式は人が決めた。human:kakimomokuri。業務責任者の確認は未） |
-| D-167 | 荷主の追跡の照会（C-10。W9 の Bolt 47）の確認中・鮮度超過のお知らせ（US-09 AC2・AC3）。【前の決定の変更】Bolt 39g4 の「荷主向けの鮮度超過の表示は後送り」 | 「次回の更新」は<strong>次の予定の実績の予定時刻</strong>（なければ「未定」）。AC3 の「停止中」は、社内と同じ<strong>鮮度超過</strong>（次の予定の実績の予定時刻から 36 時間。FRS-02）に当てる。確認中は実績の中身を出さず、判明していること（予定と採用済みの実績）・未確定のこと・次の行動（担当者の確認と問い合わせの導線）・次回の更新・担当窓口（D-164 の受付時間）を示す。鮮度超過は「最新性を保証できません」・最後の採用値と最終取得・次の行動・次回の更新・担当窓口を示す | ui_design（C-10）、test_strategy | <a href="../bolt_47_plan/">Bolt 47 計画</a> | 業務責任者に確かめる（Release 1.0 のパイロットの前。次回の更新の定義、停止中を鮮度超過とみなしてよいか、36 時間の許容） | 仮（2026-11-14。推奨のとおり。human:kakimomokuri の「以降、推奨で自律実行」による。業務責任者の確認は未） |
-| D-168 | 荷主が提示済みの見積りを理由を付けて辞退したとき（US-24 AC2。W9 の Bolt 46）の見積りと再見積りの扱い。D-86・ADR-018 の見直し | 見積りを<strong>失効（EXPIRED）として記録</strong>し、辞退者・辞退時刻は回答者・回答時刻の列、回答の値は DECLINED、理由は新しい列 <code>decline_reason</code>（1〜500 文字。必須）に残す。経路設計の依頼（DE-16）は出さず、輸送要求の状態は変えない。辞退した見積りは<strong>再見積りできない</strong>（失効の記録として扱う。担当営業が荷主と相談して新しい見積依頼で出し直す）。営業には S-04 に示す。DE-17 は R1.0 では発行しない（購読者がいない）。理由の最大を 500 文字にした（データモデルの 4000 から改めた） | user_story（US-24）、domain_model（DE-17）、data_model（<code>decline_reason</code>）、ADR-018（改訂の経緯）、ui_design（C-05） | <a href="../bolt_46_plan/">Bolt 46 計画</a> | 業務責任者に確かめる（Release 1.0 のパイロットの前。辞退後の出し直しの手順、営業への通知の要否） | 人が決めた（2026-11-15。human:kakimomokuri。選択肢の提示と選択。業務責任者の確認は未） ；<strong>出口（2026-11-15）</strong>: 辞退した見積りの輸送要求は辞退で終了にする（D-173）。DE-17 は発行する（上の「R1.0 では発行しない」は D-173 で改めた）。 |
-| D-169 | 荷主が提示済みの見積りの条件を相談したとき（US-24 AC3。W9 の Bolt 46-1）の有人案件の起票 | 見積りは<strong>相談のイベント（DE-33）</strong>を発行するだけで状態を変えない。追跡のコンテキストが購読して<strong>有人案件（種類: 見積り相談、優先度: 通常、担当部門: 営業部）</strong>を起票する（DE-32 の購読と同じ形。ADR-014 の方向）。追跡の許可する依存に <code>quotation :: events</code> を足した。起票元キーは見積り ID と相談の時刻で、再配信で二重に起票しない。起票した案件は荷主の問い合わせ一覧（C-14）に載る。相談内容は 1〜500 文字（必須）。回答済み・辞退済み・失効の見積りは相談できない | user_story（US-24）、domain_model（DE-33）、ui_design（C-05）、追跡の package-info | <a href="../bolt_46-1_plan/">Bolt 46-1 計画</a> | 業務責任者に確かめる（Release 1.0 のパイロットの前。担当部門・優先度・受付の期限の既定でよいか） | 仮（2026-11-15。推奨のとおり。human:kakimomokuri の「以降、推奨で自律実行」による。モジュールの依存の追加は ADR-014 の方向どおりで、業務責任者の確認は未） |
-| D-170 | 顧客 Web の照会が有人対応へ移ったとみなす規則（IR-INV-01。KPI-02。W9 の Bolt 44。US-21 AC2） | 顧客 Web の自己照会（WEB_SELF）の後 <strong>24 時間以内（ちょうどを含む）</strong>に、同じ荷主企業・同じ追跡番号（予約）の有人案件が起票されたら、その照会を有人対応へ移ったとする（受付番号を残す）。起票の共通の手順が保存の後に更新する。荷主が Web で再開を依頼したら WEB_INQUIRY を受付番号つきで記録する。追跡番号の分からない案件は更新しない。<strong>照会が案件の起票より後に来た場合は対象外</strong>（「照会の後」の順序の前提。W9 の週全体のレビューで確かめた）。起票のトランザクションの中で照会記録（別の集約）を更新する（同じ追跡コンテキストの中。1 トランザクション 1 集約の例外として許容） | domain_model（IR-INV-01）、user_story（US-21） | <a href="../bolt_44_plan/">Bolt 44 計画</a> | 業務責任者（プロダクト責任者）に確かめる（Release 1.0 のパイロットの前。24 時間・同じ予約という解釈で KPI-02 の算式に合うか。複数の照会を 1 つの案件へ移してよいか） | 仮（2026-11-15。推奨のとおり。human:kakimomokuri の「以降、推奨で自律実行」による。業務責任者の確認は未） |
-| D-171 | 週次の KPI の定義と S-22 の利用者（US-21 AC4。W9 の Bolt 44-1） | 週は <strong>UTC の月曜 00:00 始まり</strong>。KPI-01 は、その週に最初の見積りを提示した見積依頼のリードタイムの<strong>中央値</strong>（偶数件は真ん中の 2 つの平均）と <strong>P90</strong>（最近順位法）。KPI-02 は、その週に受け付けた照会の総数に対する顧客 Web で完結した数の割合（総数 0 の週は値なし）。<strong>PV-01 の除外（訓練データ・顧客都合の取消し）の記録の仕組みは未実装なので全件を母集団にする</strong>（除外の記録は W10 以降）。S-22 は<strong>監査担当者だけ</strong>が使う（人が選んだ。営業担当者の前身の画面の閲覧をやめた）。identity が追跡の公開 API（照会の件数）を呼ぶ | user_story（US-21）、domain_model（KPI-INV-04）、ui_design（S-22）、ADR-017 | <a href="../bolt_44-1_plan/">Bolt 44-1 計画</a> | 業務責任者に確かめる（Release 1.0 のパイロットの前。週の区切り、母集団の除外の扱い、営業担当者に KPI を見せるか） | S-22 の利用者は人が決めた（2026-11-15。human:kakimomokuri）。ほかは仮（推奨のとおり。業務責任者の確認は未） |
-| D-172 | KPI 基準値の登録と比較（US-21 AC5。W9 の Bolt 44-2） | 期間は<strong>パイロット開始前の 4 週間（28 日。両端を含む）</strong>。値は KPI-01 が<strong>分</strong>（中央値と、省略できる 90 パーセンタイル）、KPI-02 が<strong>自己照会率のパーセント</strong>（90 パーセンタイルは持たない）。算出方法（必須・4000 文字まで）と登録者・登録時刻を記録し、<strong>追記専用</strong>（同じ KPI を登録し直すと前の最新の記録を指す新しい記録）。登録できるのは監査担当者。パイロット中の値は<strong>直近 12 週をまとめた値</strong>で、差は KPI-01 が短縮・延長の割合、KPI-02 がポイント。合否は示さない。未完了のイベントの発行の件数を S-22 に示す（リスナーが処理中のものも含む）。スキーマ: <code>identity.kpi_baseline</code>（登録者の外部キーなし）、<code>inquiry_record</code> の追跡番号の索引 | user_story、domain_model（KPI-INV-02）、data_model、ui_design（S-22） | <a href="../bolt_44-2_plan/">Bolt 44-2 計画</a> | 業務責任者に確かめる（Release 1.0 のパイロットの前。基準値の期間・単位、パイロット中の値の期間、差の見せ方） | 仮（2026-11-15。計画の承認と推奨のとおり。human:kakimomokuri。業務責任者の確認は未） |
-| D-173 | 辞退した見積りの輸送要求の行き先（D-168 の出口。W9 の週全体レビューの高 H-2。W9 の Bolt 48-1） | 辞退を受けたら、輸送要求を<strong>辞退で終了</strong>（値 <code>WITHDRAWN</code>。DB の CHECK に初めからある値）にする。辞退した事実（DE-17）を見積りが発行し、見積りの listener が別のトランザクションで変える（見積り作成中・見積提示済みで同じ版のときだけ。冪等。DE-03 が遅れて届いても戻らない）。営業の受付一覧の見積提示済みの表から外れ、再見積りも予約もしない。荷主の詳細は「辞退で終了」と複製の案内を示す。スキーマの変更はない | domain_model（輸送要求の状態遷移・DE-17）、ui_design、user_story | <a href="../bolt_48-1_plan/">Bolt 48-1 計画</a> | 業務責任者に確かめる（Release 1.0 のパイロットの前。辞退で終了でよいか。値引きの交渉で同じ条件の出し直しを営業の現場で認めるか） | 人が決めた（2026-11-15。human:kakimomokuri。選択肢「辞退で終了にする」「再見積り待ちにする」から選んだ。業務責任者の確認は未） |</p>
 <p>D-141・D-142 の注（Bolt 39h3 の開始準備）: 版の逆転の判定（D-142）と比べる相手の選び方（D-141・D-105）は、差異の規則から <code>isVersionReversed</code>・<code>inUseOf</code>・<code>partnerOf</code> として取り出し、取込の差異の判定・古い外部版の警告・判断の画面の領域が共有する（定義は変えない）。D-146 の注（同）: 書き分けは注記と S-16 の文に限り、判断の画面は隔離にも「この外部 ID の採用値」を示す（【前の決定の変更】(30)）。D-147 の注（同）: 分類で絞る操作は足さないと決めた（D-152）。D-148 の注（同）: 判断の画面の値の領域に、受け取った値に加えて「この外部 ID の採用値」を示す（【前の決定の変更】(30)）。【前の決定の変更】(29): Bolt 39d3 の決定 (10) の判断の画面の値の型の名前を <code>UndecidedRecordValues</code> に改める。</p>
 <p>D-144 の注（Bolt 39h2 の開始準備）: 判断の画面に差異を出して却下するのは 39h2 で、判断できる受信記録を隔離と差異に広げ、採用のファクトリーは差異を拒み、採用できるかの定めは分類を最初に見て <code>DISCREPANCY</code> を返す（<a href="../bolt_39h2_plan/">Bolt 39h2 計画</a> の決定 (3)）。採用できない理由 <code>DISCREPANCY</code> の文は D-148。D-146 の注（同）: S-16 のリンクの文は 39h2 で「この取込の隔離・差異をすべて確認する」にし、隔離か差異が 1 件以上のときに出す（D-148）。</p>
 <hr />
