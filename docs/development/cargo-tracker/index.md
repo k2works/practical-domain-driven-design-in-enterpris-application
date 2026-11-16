@@ -203,6 +203,7 @@ Bolt がイテレーションに当たります。ふりかえりは各 Bolt の
 | 48 | [W9 の締め（週全体レビュー・マニュアル・動画・ゲート）](bolt_48_plan.md)（[W9 計画](iteration_plan-W9.md)） | [終了報告](bolt_48_report.md) | W9 | 完了（承認待ち） |
 | 48-1 | [辞退した見積りの輸送要求を辞退で終了にする（週全体レビューの高 H-2）](bolt_48-1_plan.md)（[W9 計画](iteration_plan-W9.md)） | [終了報告](bolt_48-1_report.md) | W9 | 完了（承認待ち） |
 | 49 | [W9 の持ち越しの返済 1（同時実行テストの安定化・UI の固定の待ち・死んだ PlaceholderController の削除）](bolt_49_plan.md)（[W10 計画](iteration_plan-W10.md)） | [終了報告](bolt_49_report.md) | W10 | 完了（承認待ち） |
+| 49-1 | [W9 の持ち越しの返済 2（見積りの回答の画面の重複）](bolt_49-1_plan.md)（[W10 計画](iteration_plan-W10.md)） | - | W10 | 完了（承認待ち。範囲は重複 2 つに絞った） |
 | 40-16 | [W8 の受入条件の照合とマニュアル・動画の総点検（US-11・US-20 を締める）](bolt_40-16_plan.md)（[W8 計画](iteration_plan-W8.md)） | [終了報告](bolt_40-16_report.md) | W8 | 完了（承認済み） |
 | 40-15 | [照会の記録（S-23）と有人案件への引き継ぎ（US-11 AC2）](bolt_40-15_plan.md)（[W8 計画](iteration_plan-W8.md)） | [終了報告](bolt_40-15_report.md)（[動画](../../assets/demo/bolt-40-15/inquiry-handoff.webm){:target="_blank"}） | W8 | 完了（承認済み） |
 

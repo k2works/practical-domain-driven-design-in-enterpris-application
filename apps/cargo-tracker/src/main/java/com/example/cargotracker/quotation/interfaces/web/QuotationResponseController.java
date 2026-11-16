@@ -177,10 +177,7 @@ public class QuotationResponseController {
 
     /** 相談を受け付けなかった理由の、荷主向けの文言。回答済みは相談できない旨を示し、ほかは回答と同じ文言にする。 */
     private static String consultRejection(TransportRequestNumber number, int quotationNo, QuotationRejection reason) {
-        if (reason == QuotationRejection.ROUTING_REQUESTED) {
-            return QuotationViews.label(number, quotationNo) + " はすでに詳細経路設計を依頼しているため相談できません。担当営業にご連絡ください";
-        }
-        return rejection(number, quotationNo, reason);
+        return rejectionAfterRouting(number, quotationNo, reason, "相談");
     }
 
     /** 回答の画面を、荷主に提示した見積りで描き直す（入力の誤りを示すとき）。 */
@@ -190,21 +187,32 @@ public class QuotationResponseController {
     }
 
     private Quotation findVisible(TransportRequestNumber parsed, int quotationNo, AuthenticatedActor actor) {
-        return quotationQueryService.findVisible(parsed, actor.companyId()).stream()
-                .filter(candidate -> candidate.quotationNo() == quotationNo)
-                .findFirst()
-                .orElseThrow(QuotationResponseController::notFound);
+        return findVisibleOptional(parsed, quotationNo, actor).orElseThrow(QuotationResponseController::notFound);
     }
 
     private boolean isAlreadyDeclined(TransportRequestNumber parsed, int quotationNo, AuthenticatedActor actor) {
+        return findVisibleOptional(parsed, quotationNo, actor)
+                .filter(Quotation::isDeclined)
+                .isPresent();
+    }
+
+    private Optional<Quotation> findVisibleOptional(
+            TransportRequestNumber parsed, int quotationNo, AuthenticatedActor actor) {
         return quotationQueryService.findVisible(parsed, actor.companyId()).stream()
-                .anyMatch(candidate -> candidate.quotationNo() == quotationNo && candidate.isDeclined());
+                .filter(candidate -> candidate.quotationNo() == quotationNo)
+                .findFirst();
     }
 
     /** 辞退を受け付けなかった理由の、荷主向けの文言。回答済みは辞退できない旨を示し、ほかは回答と同じ文言にする。 */
     private static String declineRejection(TransportRequestNumber number, int quotationNo, QuotationRejection reason) {
+        return rejectionAfterRouting(number, quotationNo, reason, "辞退");
+    }
+
+    /** 詳細経路設計を依頼した後の相談・辞退の拒否の文言（{@code action} は「相談」「辞退」）。ほかの理由は回答と同じ文言にする。 */
+    private static String rejectionAfterRouting(
+            TransportRequestNumber number, int quotationNo, QuotationRejection reason, String action) {
         if (reason == QuotationRejection.ROUTING_REQUESTED) {
-            return QuotationViews.label(number, quotationNo) + " はすでに詳細経路設計を依頼しているため辞退できません。担当営業にご連絡ください";
+            return QuotationViews.label(number, quotationNo) + " はすでに詳細経路設計を依頼しているため" + action + "できません。担当営業にご連絡ください";
         }
         return rejection(number, quotationNo, reason);
     }
