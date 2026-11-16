@@ -4,7 +4,7 @@ title: "W10 計画 - 運用準備（AWS の IaC・CI/CD・監視・ランブッ�
 description: "cargo-tracker の W10（2026-12-07〜12-11）の Bolt 計画。SP 0 の技術の週。W9 の持ち越しの返済に続き、AWS の IaC・CI/CD・監視・運用タスクとランブック・性能テストを、コードと検証まで作る。17 本、分単位の見積りを付けて稼働と比べる。"
 tags: [plan]
 status: stable
-generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-16T01:35:25Z }
+generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-16T04:16:03Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-11-16T01:36:08Z }
 ---
@@ -92,6 +92,26 @@ W9 のふりかえりの Try と持ち越しを、次のように計画に入れ
 ## 設計 4 図
 
 技術タスクで、ドメインモデル・状態遷移・ER・画面遷移は変えない（Bolt 49 系の返済と 53-1 の一意制約を除く）。変えるときは、その Bolt の計画で差分を示す。ユーザーマニュアルは**画面を伴わないので更新を省く**。ただし 54 の運用手順がマニュアル 12 章の「運用の手順」にリンクされるので、そのリンクだけ足す。運用手順書は `docs/operation/cargo-tracker/` に足す。
+
+## 進捗（2026-11-16 の途中。`/goal W10` で進めた分）
+
+W10 は**完了していない**。計画の 17 本のうち、実装・文書まで終えたものと、人の判断待ちのものを分けて記録する。
+
+| Bolt | 状態 | 次に要るもの |
+| :--- | :--- | :--- |
+| 49 | 完了（[終了報告](bolt_49_report.md)は人の承認待ち。C-9 の原因は未確定で、診断だけ足した） | 終了報告の承認 |
+| 49-1 | 完了（範囲を重複 2 つに絞った。[計画](bolt_49-1_plan.md)） | — |
+| 49-2 | ADR-021 に選択肢と推奨を書いた（[ADR-021](../../adr/cargo-tracker/021-shipper-notification-retry-and-subscription-home.md)）。**人は未選択** | 人の選択（C-3・C-4） |
+| 50 | 完了（[ADR-020](../../adr/cargo-tracker/020-aws-account-region-environments.md)。東京、2 環境。人が選んだ。アカウントと予算は未決） | アカウント・予算 |
+| 51 | Terraform を書き、`fmt`・`validate` まで。コードは人が承認（[計画](bolt_51_plan.md)）。`apply` は未実施 | アカウント・保持期間などの未決の値 |
+| 52 | 配備のワークフローを書き、`actionlint` は指摘なし。コードは人が承認（[計画](bolt_52_plan.md)）。52-1 の `DevProfileGuard` は完了、運用タスク（ロールバック・maintenance）は未着手 | 運用タスクの設計の承認（Bolt 54 の D-5） |
+| 53 | OBS-10（ヘルスチェック）だけ完了。コードと認可の追加は人が承認（[計画](bolt_53_plan.md)）。残りの OBS は未着手 | 通知の宛先（運用チャンネル） |
+| 53-1 | 未着手 | ShedLock のスキーマ変更の承認 |
+| 54・54-1 | 設計の draft（[計画](bolt_54_plan.md)）。実装は未着手 | D-1〜D-5 の選択 |
+| 55・55-1 | 未着手 | 負荷テストのツールの選定 |
+| 56 | 未着手。Sonar と全体のゲート（`check documentationTest uiTest`）は途中で 1 回ずつ成功した | 週全体のレビューと完了報告書は、残りの Bolt のあとに行う |
+
+品質ゲートの途中の結果（2026-11-16）: `spotlessCheck check documentationTest uiTest` 成功、`sonar-local:check` 2 回目で PASS（1 回目は S4502 で FAIL。直した）。
 
 ## 設計への注（横断整合性検証で足した）
 
