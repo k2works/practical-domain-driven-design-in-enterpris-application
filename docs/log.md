@@ -1,6 +1,7 @@
 # Docs Update Log
 
 ## 2026-11-16
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-sonnet-5-5）
 * **Update**: [iteration_plan-W11](/development/cargo-tracker/iteration_plan-W11.md) を更新（anthropic/claude-sonnet-5-5）
 * **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-sonnet-5-5）
 * **Verification**: [release_report-1_0](/development/cargo-tracker/release_report-1_0.md) を human:kakimomokuri が検証
