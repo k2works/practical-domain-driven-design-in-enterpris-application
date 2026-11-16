@@ -1,6 +1,7 @@
 # Docs Update Log
 
 ## 2026-11-16
+* **Update**: [release_report-1_0](/development/cargo-tracker/release_report-1_0.md) を更新（anthropic/claude-sonnet-5-5）
 * **Update**: [023-operations-notification-and-home](/adr/cargo-tracker/023-operations-notification-and-home.md) を更新（anthropic/claude-sonnet-5-5）
 * **Update**: [022-required-document-virus-scan](/adr/cargo-tracker/022-required-document-virus-scan.md) を更新（anthropic/claude-sonnet-5-5）
 * **Update**: [iteration_report-W10](/development/cargo-tracker/iteration_report-W10.md) を更新（anthropic/claude-sonnet-5-5）
