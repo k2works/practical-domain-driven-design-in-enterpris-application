@@ -2,15 +2,17 @@
 type: Plan
 title: "Bolt 53 計画と中間報告 - 監視 1（ヘルスチェック OBS-10。Actuator の導入）"
 tags: [plan]
-status: draft
-generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-16T03:25:16Z }
+status: stable
+generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-16T03:49:24Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-11-16T03:49:25Z }
 ---
 
 # Bolt 53 計画と中間報告 - 監視 1（ヘルスチェック OBS-10。Actuator の導入）
 
 [W10 計画](iteration_plan-W10.md)の Bolt 53（技術、SP 0、見積り 200 分）のうち、**OBS-10 のヘルスチェックだけ**を終えた。ほかの OBS（取込がない日の通知 FRS-04、隔離の未判断の警告 OBS-06、DE-12・DE-30・DE-13 の未完了の検知、拒否の件数）は未着手。
 
-**状態**: Actuator の導入は 2026-11-16 に人が承認した（推奨のとおり）。**認可の設定の変更**（`SecurityConfiguration.actuatorFilterChain`）は人の承認を得る前に書いた。業務の連鎖は変えていないが、承認の議題にする。検証済み: `validating-design`（A 終盤の技術 Bolt で TDD。B `operation.md` の OBS-10 と ALB のヘルスチェックの定め。C Bolt 51 の Terraform のヘルスチェックのパスと一致させた）。
+**状態**: 承認済み（2026-11-16、human:kakimomokuri。Actuator の導入と、認可の設定の変更 `SecurityConfiguration.actuatorFilterChain` を含むコードの承認）。業務の連鎖は変えていない。検証済み: `validating-design`（A 終盤の技術 Bolt で TDD。B `operation.md` の OBS-10 と ALB のヘルスチェックの定め。C Bolt 51 の Terraform のヘルスチェックのパスと一致させた）。
 
 ## 決定
 

@@ -2,15 +2,17 @@
 type: Plan
 title: "Bolt 51 計画 - Terraform（AWS の構成。コードと検証まで）"
 tags: [plan]
-status: draft
-generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-16T02:36:11Z }
+status: stable
+generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-16T03:49:24Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-11-16T03:49:25Z }
 ---
 
 # Bolt 51 計画 - Terraform（AWS の構成。コードと検証まで）
 
 [W10 計画](iteration_plan-W10.md)の Bolt 51・51-1・51-2・51-3 をまとめた計画（技術、SP 0。見積り 200 + 180 + 180 + 220 = 780 分）。ADR-008・ADR-020 の構成を Terraform で書く。**`apply` はしない**（W10 計画 CP-1、ADR-020）。
 
-**状態**: 置き場所（`ops/terraform/`）は 2026-11-16 に人が承認した（推奨のとおり）。外部連携・DB・セキュリティ・本番にあたる内容なので、**この計画を人が承認するまで main へ統合しない（develop にはコミットする）**（コードは書くが、承認の議題に出す）。検証済み（`validating-design`: A 終盤の技術 Bolt。テストの入口は IaC の検査、B `architecture_infrastructure.md`・ADR-008・ADR-020・`operation.md` と構成が一致、C W9 までの運用の規律に反しない。`validating-iteration-plan` は事実の確認で代えた）。
+**状態**: 承認済み（2026-11-16、human:kakimomokuri。置き場所とコードの承認。`apply` は行わない）。外部連携・DB・セキュリティ・本番にあたる内容で、`apply` と main への統合は別に人が判断する（コードは書くが、承認の議題に出す）。検証済み（`validating-design`: A 終盤の技術 Bolt。テストの入口は IaC の検査、B `architecture_infrastructure.md`・ADR-008・ADR-020・`operation.md` と構成が一致、C W9 までの運用の規律に反しない。`validating-iteration-plan` は事実の確認で代えた）。
 
 ## 範囲
 
