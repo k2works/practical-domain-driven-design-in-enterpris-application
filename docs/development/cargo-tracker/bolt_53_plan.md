@@ -3,7 +3,7 @@ type: Plan
 title: "Bolt 53 計画と中間報告 - 監視 1（ヘルスチェック OBS-10。Actuator の導入）"
 tags: [plan]
 status: stable
-generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-16T03:49:24Z }
+generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-16T04:15:21Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-11-16T03:49:25Z }
 ---
@@ -36,7 +36,7 @@ verified:
 - [x] (1) 管理用のポートのヘルス（Red → Green）
 - [x] (2) Terraform の ALB のヘルスチェックを合わせる
 - [ ] (3) FRS-04・OBS-06・DE-12/30/13 の検知（通知の宛先が未決）
-- [ ] (4) 全体のゲート・Sonar
+- [x] (4) 全体のゲート・Sonar（全体のゲートは成功。Sonar は 1 回目が FAIL: `actuatorFilterChain` の `csrf.disable()`（S4502）。外して PASS。`csrf` を無効にしない連鎖でもテストは緑）
 
 ## 更新履歴
 

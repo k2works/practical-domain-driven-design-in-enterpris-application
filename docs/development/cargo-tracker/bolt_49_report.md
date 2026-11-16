@@ -3,7 +3,7 @@ type: Plan
 title: "Bolt 49 終了報告 - W9 の持ち越しの返済 1（同時実行テストの診断・待ち方の共通化・死んだコードの削除）"
 tags: [plan]
 status: draft
-generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-16T03:25:16Z }
+generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-16T04:15:21Z }
 ---
 
 # Bolt 49 終了報告 - W9 の持ち越しの返済 1
@@ -16,7 +16,7 @@ generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-16T03:25:16Z }
 | :--- | :--- | :--- |
 | 1 | **C-9 の原因は確かめられなかった。** 負荷なしで 3 回続けて流して再現せず（`/goal` で止めずに進めた）。失敗の診断（配信の記録の行）を足しただけで、待ち時間もロックの待ちの上限も変えていない。次に CI で失敗したら診断から (a)・(b) を決める。計画の P-2 は未決のまま残す | このまま閉じ、CI で再発したら再調査する（C-9 は「再現待ち」に更新） |
 | 2 | 計画の前提を直した。固定の待ち 15 か所は固定の sleep ではなく、非同期の listener（DE-xx）の反映を待つ**開き直しの繰り返し**だった。画面の状態を待つ locator の待ちに置き換えられないので、共通の部品 `BrowserSession.awaitEventually`（Awaitility。10 秒の上限、呼び出したスレッドで評価）に集めた。動画の 1 か所は残した | 承認 |
-| 3 | Sonar（`operating-qt`）は流していない | 次の Bolt の前に流す。人の判断が要る |
+| 3 | Sonar は W10 の途中で流した（上の品質ゲートの表のとおり）。PASS | 解消 |
 
 ## 基本情報
 
@@ -38,7 +38,7 @@ generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-16T03:25:16Z }
 | `spotlessCheck check documentationTest` | BUILD SUCCESSFUL（8 分） |
 | `uiTest`（全シナリオ） | 1 回目は 1 件失敗（`予約の状態が進むまで開き直す` の置き換えで最初の `browser.navigate(url)` を落とした。私の誤り）。直して、そのシナリオを流し直して成功。直したあとの全体の `uiTest` は、Bolt 53 のあとの全体のゲート（2026-11-16、`spotlessCheck check documentationTest uiTest`、30 分）で成功した |
 | `checkstyleMain checkstyleTest spotbugsMain` | 成功 |
-| SonarQube | 未実施 |
+| SonarQube（`sonar-local:check`、2026-11-16 の W10 の途中） | 1 回目は FAIL（新しいセキュリティホットスポット 1 件。Bolt 53 の `actuatorFilterChain` の `csrf.disable()`（S4502））。CSRF の無効化を外して（GET のヘルスだけを通す連鎖なので不要）流し直し、PASS（カバレッジ 95.8%、重複 0.1%、違反 0） |
 
 ## 申し送り
 

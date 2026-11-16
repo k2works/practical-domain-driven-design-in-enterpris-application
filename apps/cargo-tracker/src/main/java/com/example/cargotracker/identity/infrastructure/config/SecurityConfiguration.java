@@ -209,7 +209,6 @@ public class SecurityConfiguration {
                         .permitAll()
                         .anyRequest()
                         .denyAll())
-                .csrf(csrf -> csrf.disable())
                 .build();
     }
 
