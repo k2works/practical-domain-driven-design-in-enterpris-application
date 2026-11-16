@@ -4,7 +4,7 @@ title: "W10 完了報告書 - cargo-tracker（運用準備。コードと検証�
 description: "cargo-tracker の W10（運用準備。SP 0 の技術の週）の完了報告書。AWS の Terraform・配備のワークフロー・ヘルスチェック・ShedLock・運用タスクを、コードと検証まで作った。apply は未実施。運用タスクの一部・OBS の残り・負荷テスト・時点復旧の手順は持ち越す。"
 tags: [development,report]
 status: stable
-generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-16T05:55:41Z }
+generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-16T05:59:53Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-11-16T05:22:02Z }
 ---
@@ -75,7 +75,7 @@ verified:
 | H-2 | **完了（2026-11-16）**: `external-source:resume`（情報源の再開）。状態と監査記録（新しい `AuditAction.DATA_SOURCE_RESUMED`）を 1 つのトランザクションで書く運用の SQL（`ops/sql/external_source_resume.sql`）。PostgreSQL でテストした（実環境では未実行）。マニュアル 12 章に案内を足した | — |
 | H-3 | OBS-06（隔離の未判断の警告。閾値 24 時間は承認済み）・FRS-04・DE-12/30/13 の検知・拒否の件数 | **業務ホーム（S-01）はまだ一覧を持たない**（`HomeController` は役割ごとの画面へ移すだけ）。OBS の「業務ホームに出す」は、S-01 の一覧の設計（何をどの役割に出すか。UI 設計の S-01 の行は「役割ごとの未処理を一覧する」）から始める。通知の宛先（運用チャンネル）の決定も要る |
 | H-4 | **一部完了（2026-11-16）**: 監査の二重の防ぎ（PostgreSQL の部分一意索引 `ux_audit_record_external_once`。ハンドラーは制約違反を記録済みとして扱う）と、DB の 1 文の timeout（`db:init` がアプリケーション利用者に `statement_timeout = 5s`）。**未**: 毒入りのイベントを捨てた ERROR のログの通知先と AUD-04 の照合（通知の宛先が未決。H-3 と同時に） | 通知の宛先 |
-| H-5 | 負荷テスト（k6。同じ追跡番号に 1 万行が集中する負荷、接続のプールの大きさ）、`ConnectionRule` の class 化と港で絞る照会 | 環境ができてから測る意味が大きい |
+| H-5 | **一部準備（2026-11-16）**: 画面の負荷テストのスクリプト `ops/loadtest/screens.js`（k6。PERF-01・PERF-08）と手順を書いた。**未実行**（k6 もステージングもない）。未: 同じ追跡番号に 1 万行が集中する取込、接続のプールの大きさ、`ConnectionRule` の class 化と航海の照会を港で絞ること、PERF-03 の経路候補 | 環境ができてから |
 | H-6 | 時点復旧の訓練とタスク（`db:restore:pitr`・`recovery:reconcile`・`db:failover:drill`）、`maintenance:on/off`、`audit:export:verify` | 環境ができてから。**手動の手順の草案は書いた**（[運用タスク手順書](../../operation/cargo-tracker/operation_tasks.md)の「時点復旧（RB-02）の手順」。未訓練・未検証）。メンテナンス表示、書き出しの仕様、復旧後の照合の設計は未設計 |
 | H-7 | ADR-021 の実装（通知の再送の定期ジョブ、購読の notification への反転） | W10 の稼働に入らない |
 | H-8 | C-1・C-2・C-5（営業の手順、辞退済みへの回答の文言、確認の場 D-164〜D-172）、#49（password 再設定の残りのリスク）、#50 の仕分け | 人に諮る議題と、アプリの変更を伴う |
