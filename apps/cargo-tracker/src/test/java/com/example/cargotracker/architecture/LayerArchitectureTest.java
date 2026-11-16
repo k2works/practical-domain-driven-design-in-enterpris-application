@@ -62,6 +62,8 @@ class LayerArchitectureTest {
     /** 時刻の取り決めの {@code @Configuration}（合成ルートの外に置く唯一の例外。AT-11）。 */
     private static final String CLOCK_CONFIGURATION = "com.example.cargotracker.ClockConfiguration";
 
+    private static final String SCHEDULING_CONFIGURATION = "com.example.cargotracker.SchedulingConfiguration";
+
     /** Spring Security の認証の入口（D-5 の認証の例外。Bolt 31）。 */
     private static final String IDENTITY_AUTHENTICATION_ENTRY =
             "com.example.cargotracker.identity.infrastructure.security..";
@@ -224,7 +226,9 @@ class LayerArchitectureTest {
      * 逆向き（AT-11。Bolt 34c）: 本体の {@code @Configuration} は合成ルート（infrastructure.config）に置く。直接の注釈だけを見る
      * （{@code @SpringBootApplication} とテストの {@code @TestConfiguration} はメタ注釈として持つので対象にしない）。ルートの
      * {@code ClockConfiguration} は、どのコンテキストにも属さない時刻の横断の取り決め（BR-10・ADR-007）なので例外にする
-     * （2026-10-17、human:kakimomokuri）。
+     * （2026-10-17、human:kakimomokuri）。同じく {@code SchedulingConfiguration} は、定期処理の排他（ShedLock）と有効化の横断の
+     * 取り決めなので例外にする（2026-11-16、human:kakimomokuri が「推奨で進めて」で承認。W10 の週全体レビューの議題 1。2 つ目の
+     * 文脈が定期処理を持つ前に、見積りの合成ルートから動かした）。
      */
     @ArchTest
     static final ArchRule 本体のConfigurationは合成ルートに置く = classes()
@@ -233,7 +237,9 @@ class LayerArchitectureTest {
             .should()
             .resideInAPackage("..infrastructure.config..")
             .orShould()
-            .haveFullyQualifiedName(CLOCK_CONFIGURATION);
+            .haveFullyQualifiedName(CLOCK_CONFIGURATION)
+            .orShould()
+            .haveFullyQualifiedName(SCHEDULING_CONFIGURATION);
 
     /**
      * 上の例外の名前が実在し続けること（T-135）: ルートのパッケージの直接の {@code @Configuration} は {@code ClockConfiguration} だけで、
@@ -241,13 +247,15 @@ class LayerArchitectureTest {
      * 別の {@code @Configuration} を足す）は、上の規則が完全な名前 1 つしか許さないことで止める（Bolt 34c の開発レビュー）。
      */
     @ArchTest
-    static final ArchRule ルートのConfigurationは時刻の取り決めだけ = classes()
+    static final ArchRule ルートのConfigurationは時刻と定期処理の取り決めだけ = classes()
             .that()
             .areAnnotatedWith(Configuration.class)
             .and()
             .resideInAPackage("com.example.cargotracker")
             .should()
             .haveFullyQualifiedName(CLOCK_CONFIGURATION)
+            .orShould()
+            .haveFullyQualifiedName(SCHEDULING_CONFIGURATION)
             .allowEmptyShould(false);
 
     /** interfaces はドメインの型を読んでよいが、送信ポート（リポジトリ）を直接使って application を迂回しない。 */
