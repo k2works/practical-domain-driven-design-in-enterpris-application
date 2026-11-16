@@ -2,8 +2,10 @@
 type: Plan
 title: "Bolt 53-1 計画と報告 - 定期処理の排他（ShedLock）"
 tags: [plan]
-status: draft
+status: stable
 generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-16T04:23:12Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-11-16T05:22:02Z }
 ---
 
 # Bolt 53-1 計画と報告 - 定期処理の排他（ShedLock）

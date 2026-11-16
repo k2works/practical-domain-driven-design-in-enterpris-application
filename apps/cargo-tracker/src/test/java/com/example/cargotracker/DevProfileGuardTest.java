@@ -61,6 +61,28 @@ class DevProfileGuardTest {
         assertThat(DevProfileGuard.ENVIRONMENTS_ALLOWING_DEV).containsExactlyInAnyOrder("local", "demo");
     }
 
+    @Test
+    void 環境の名前が空白だけのときは_ないものとして通す() {
+        DevProfileGuard guard = new DevProfileGuard(environment("  ", "dev"));
+
+        assertThatCode(guard::afterPropertiesSet).doesNotThrowAnyException();
+    }
+
+    @ParameterizedTest(name = "環境名 [{0}] は完全一致でないので dev を拒否する（安全側）")
+    @ValueSource(strings = {"Staging", " demo ", "PRODUCTION", "local "})
+    void 環境の名前の揺れは_dev_を拒否する側に倒す(String deployment) {
+        DevProfileGuard guard = new DevProfileGuard(environment(deployment, "dev"));
+
+        assertThatThrownBy(guard::afterPropertiesSet).isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void devを含む複数のプロファイルでも_ステージングでは拒否する() {
+        DevProfileGuard guard = new DevProfileGuard(environment("staging", "postgres", "dev"));
+
+        assertThatThrownBy(guard::afterPropertiesSet).isInstanceOf(IllegalStateException.class);
+    }
+
     @ParameterizedTest(name = "{0} では dev を通す")
     @ValueSource(strings = {"local", "demo"})
     void ローカルとデモではdevを通す(String deployment) {

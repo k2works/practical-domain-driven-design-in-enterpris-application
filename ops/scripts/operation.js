@@ -13,7 +13,10 @@
 
 import { execFileSync, spawn } from 'child_process';
 import crypto from 'crypto';
+import { mkdtempSync, rmSync, writeFileSync } from 'fs';
 import net from 'net';
+import os from 'os';
+import path from 'path';
 
 // ============================================
 // 設定
@@ -26,6 +29,8 @@ const LOCAL_TUNNEL_PORT = 15432;
 const DEFAULT_REGION = 'ap-northeast-1';
 const APP_ROLE = 'cargo_tracker_app';
 const MIGRATOR_ROLE = 'cargo_tracker_migrator';
+/** 値を取らない旗。 */
+const BOOLEAN_FLAGS = new Set(['dry-run']);
 
 // ============================================
 // 引数と設定の解決（テストできる純粋な関数）
@@ -45,6 +50,9 @@ export function parseOptions(argv) {
     const eq = body.indexOf('=');
     if (eq >= 0) {
       options[body.slice(0, eq)] = body.slice(eq + 1);
+    } else if (BOOLEAN_FLAGS.has(body)) {
+      // 真偽値の旗は値を取らない（`--dry-run staging` で後ろの引数を値として読み、ドライランが効かなくなるのを防ぐ）
+      options[body] = true;
     } else if (argv[i + 1] !== undefined && !argv[i + 1].startsWith('--')) {
       options[body] = argv[++i];
     } else {
@@ -99,11 +107,16 @@ export function grantsVerifySql(appRole = APP_ROLE) {
  ORDER BY 1;`;
 }
 
-/** 利用者の作成の SQL（db:init）。すでにあれば作らない（パスワードは変えない）。パスワードは 16 進の文字だけ。 */
+/**
+ * 利用者の作成の SQL（db:init）。**Secrets Manager の値を正**とする: 利用者がなければ作り、あればパスワードを秘密に合わせる。
+ * 途中で止まって再実行しても、秘密と DB のパスワードが食い違わない。パスワードは 16 進の文字だけ。
+ */
 export function initRolesSql(appPassword, migratorPassword, dbName) {
   const create = (role, password) => `DO $$ BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = '${role}') THEN
     CREATE ROLE ${role} LOGIN PASSWORD '${password}';
+  ELSE
+    ALTER ROLE ${role} PASSWORD '${password}';
   END IF;
 END $$;`;
   return [
@@ -129,14 +142,66 @@ function aws(target, args) {
   return execFileSync('aws', [...args, '--region', target.region], { encoding: 'utf8' }).trim();
 }
 
+/**
+ * 秘密のパスワードを返す。あればそれを使い、なければ作る。作るときは、パスワードをプロセスの引数に出さないよう、
+ * 一時ファイル（file://。作った利用者だけが読める）で渡し、すぐ消す。
+ */
+function getOrCreateSecretPassword(target, secretName, role, generatedPassword) {
+  try {
+    const existing = JSON.parse(
+      aws(target, ['secretsmanager', 'get-secret-value', '--secret-id', secretName, '--query', 'SecretString', '--output', 'text']),
+    );
+    console.log(`  秘密 ${secretName} はあります。そのパスワードを使います`);
+    return existing.password;
+  } catch (error) {
+    if (!/ResourceNotFoundException/.test(String(error.stderr ?? error.message))) throw error;
+  }
+  const directory = mkdtempSync(path.join(os.tmpdir(), 'ops-secret-'));
+  const file = path.join(directory, 'secret.json');
+  try {
+    writeFileSync(file, JSON.stringify({ username: role, password: generatedPassword }), { mode: 0o600 });
+    aws(target, ['secretsmanager', 'create-secret', '--name', secretName, '--secret-string', `file://${file.replaceAll('\\', '/')}`]);
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+  console.log(`  秘密 ${secretName} を作りました`);
+  return generatedPassword;
+}
+
 function describe(step) {
   console.log(`  [dry-run] ${step}`);
 }
 
-function waitForPort(port, timeoutMs = 30000) {
+/** そのポートで何かが待ち受けているか。前回のトンネルの残りを、別の環境の DB への接続に使わないために、開く前に調べる。 */
+export function isPortInUse(port) {
+  return new Promise((resolve) => {
+    const socket = net.connect(port, '127.0.0.1');
+    socket.once('connect', () => {
+      socket.destroy();
+      resolve(true);
+    });
+    socket.once('error', () => {
+      socket.destroy();
+      resolve(false);
+    });
+  });
+}
+
+/**
+ * ポートがつながるまで待つ。トンネルのプロセスが失敗したら、上限を待たずにその理由で失敗する。
+ * @param {number} port
+ * @param {number} [timeoutMs]
+ * @param {() => Error | undefined} [failure] トンネルの失敗（なければ undefined）を返す
+ */
+export function waitForPort(port, timeoutMs = 30000, failure = () => undefined) {
   const startedAt = Date.now();
   return new Promise((resolve, reject) => {
     const attempt = () => {
+      const failed = failure();
+      if (failed) {
+        reject(failed);
+        return;
+      }
       const socket = net.connect(port, '127.0.0.1');
       socket.once('connect', () => {
         socket.destroy();
@@ -145,11 +210,30 @@ function waitForPort(port, timeoutMs = 30000) {
       socket.once('error', () => {
         socket.destroy();
         if (Date.now() - startedAt > timeoutMs) reject(new Error('踏み台のポートフォワードがつながりません'));
-        else setTimeout(attempt, 500);
+        else setTimeout(attempt, 300);
       });
     };
     attempt();
   });
+}
+
+/** GitHub Actions の実行の一覧（新しい順）の、最新の実行が成功か。古い成功を最新の失敗の代わりにしない。 */
+export function latestSuccess(runs) {
+  return runs.length > 0 && runs[0].conclusion === 'success';
+}
+
+/** トンネルを、aws が起こした session-manager-plugin の子ごと止める（Windows は kill が子を止めない）。 */
+function stopTunnel(tunnel) {
+  if (tunnel.pid === undefined) return;
+  try {
+    if (process.platform === 'win32') {
+      execFileSync('taskkill', ['/pid', String(tunnel.pid), '/T', '/F'], { stdio: 'ignore' });
+    } else {
+      process.kill(-tunnel.pid);
+    }
+  } catch {
+    tunnel.kill();
+  }
 }
 
 /**
@@ -162,6 +246,13 @@ async function psql(target, sql) {
   const secret = JSON.parse(
     aws(target, ['secretsmanager', 'get-secret-value', '--secret-id', target.masterSecretArn, '--query', 'SecretString', '--output', 'text']),
   );
+  if (await isPortInUse(LOCAL_TUNNEL_PORT)) {
+    throw new Error(
+      `ローカルのポート ${LOCAL_TUNNEL_PORT} がすでに使われています（前回のトンネルの残りの恐れ。別の環境の DB につながるのを防ぐため止めます）。` +
+        'session-manager-plugin のプロセスを確かめて止めてください',
+    );
+  }
+  let tunnelFailure;
   const tunnel = spawn(
     'aws',
     [
@@ -170,17 +261,23 @@ async function psql(target, sql) {
       '--parameters', `host=${target.dbHost},portNumber=5432,localPortNumber=${LOCAL_TUNNEL_PORT}`,
       '--region', target.region,
     ],
-    { stdio: 'ignore' },
+    { stdio: 'ignore', detached: process.platform !== 'win32' },
   );
+  tunnel.once('error', (error) => {
+    tunnelFailure = new Error(`トンネルを開けません（aws コマンドがあるか確かめる）: ${error.message}`);
+  });
+  tunnel.once('exit', (code) => {
+    tunnelFailure ??= new Error(`トンネルが終了しました（終了コード ${code}）。認証（aws sso login など）と IAM の権限を確かめる`);
+  });
   try {
-    await waitForPort(LOCAL_TUNNEL_PORT);
+    await waitForPort(LOCAL_TUNNEL_PORT, 30000, () => tunnelFailure);
     return execFileSync(
       'psql',
       ['-h', '127.0.0.1', '-p', String(LOCAL_TUNNEL_PORT), '-U', secret.username, '-d', target.dbName, '-X', '-q', '-t', '-A', '-v', 'ON_ERROR_STOP=1'],
       { input: sql, encoding: 'utf8', env: { ...process.env, PGPASSWORD: secret.password } },
     );
   } finally {
-    tunnel.kill();
+    stopTunnel(tunnel);
   }
 }
 
@@ -200,13 +297,15 @@ export default function (gulp) {
       describe('SSM のポートフォワードを開き、psql で利用者を作り、権限を与える');
       return;
     }
-    for (const [secretName, role, password] of [
+    // 秘密を正とする。すでにある秘密はそのパスワードを使い、なければ作る。途中で止まって再実行しても食い違わない
+    const passwords = {};
+    for (const [secretName, role, generated] of [
       [`${target.name}/db/app`, APP_ROLE, appPassword],
       [`${target.name}/db/migrator`, MIGRATOR_ROLE, migratorPassword],
     ]) {
-      aws(target, ['secretsmanager', 'create-secret', '--name', secretName, '--secret-string', JSON.stringify({ username: role, password })]);
+      passwords[role] = getOrCreateSecretPassword(target, secretName, role, generated);
     }
-    await psql(target, initRolesSql(appPassword, migratorPassword, target.dbName));
+    await psql(target, initRolesSql(passwords[APP_ROLE], passwords[MIGRATOR_ROLE], target.dbName));
     console.log('完了。application_db_secret_arn（Terraform の変数）に、作った app の Secrets Manager の ARN を渡す');
   });
 
@@ -233,10 +332,23 @@ export default function (gulp) {
       describe(`aws ecs describe-services で ${target.name} の running と desired が同じか`);
       return;
     }
-    const dirty = execFileSync('git', ['status', '--porcelain'], { encoding: 'utf8' }).trim();
+    const git = (...args) => execFileSync('git', args, { encoding: 'utf8' }).trim();
+    const dirty = git('status', '--porcelain');
     if (dirty) throw new Error(`作業ツリーに未コミットの変更があります:\n${dirty}`);
-    const ci = execFileSync('gh', ['run', 'list', '--commit', execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(), '--json', 'conclusion,name'], { encoding: 'utf8' });
-    if (!JSON.parse(ci).some((run) => run.conclusion === 'success')) throw new Error('HEAD の CI が成功していません');
+    const head = git('rev-parse', 'HEAD');
+    let upstream;
+    try {
+      upstream = git('rev-parse', '@{u}');
+    } catch {
+      throw new Error('HEAD の上流のブランチがありません（push されていません）');
+    }
+    if (head !== upstream) throw new Error('HEAD が push されていません（上流と違います）');
+    const ci = execFileSync(
+      'gh',
+      ['run', 'list', '--workflow', 'cargo-tracker-ci.yml', '--commit', head, '--json', 'conclusion', '--limit', '5'],
+      { encoding: 'utf8' },
+    );
+    if (!latestSuccess(JSON.parse(ci))) throw new Error('HEAD の cargo-tracker CI の最新の実行が成功していません');
     const service = JSON.parse(aws(target, ['ecs', 'describe-services', '--cluster', target.name, '--services', target.name, '--query', 'services[0]']));
     if (service.runningCount !== service.desiredCount) throw new Error(`ECS が安定していません（running ${service.runningCount} / desired ${service.desiredCount}）`);
     console.log('確認 OK（D-124〜D-172 の確認待ちの件数は人が台帳で確かめる）');

@@ -2,15 +2,17 @@
 type: Plan
 title: "Bolt 54・54-1 計画 - 運用タスクとランブックの設計（実行の経路・実行者・タスクの一覧）"
 tags: [plan]
-status: draft
-generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-16T04:27:12Z }
+status: stable
+generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-16T05:21:49Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-11-16T05:22:02Z }
 ---
 
 # Bolt 54・54-1 計画 - 運用タスクとランブックの設計
 
 [W10 計画](iteration_plan-W10.md)の Bolt 54・54-1（技術、SP 0、見積り 200 + 180 分）の**設計**。人が「`operating-script` の手順で設計する（推奨）」を選んだ（2026-11-16）。**セキュリティ（DB の操作・認証情報・管理者の作成）にあたるので、この設計を人が承認するまで実装しない**。
 
-**状態**: 設計は承認済み（2026-11-16、human:kakimomokuri が D-1〜D-5 を「推奨で一括承認」。D-3 は招待リンクの方式で、最初の 1 行は起動時の一度きりの初期化コードで作る）。実装はこれから。`validating-design`: A 終盤の技術 Bolt（テストの入口は手順の机上訓練・Gulp タスクのドライラン）、B `operation.md`「運用タスクの一覧」「DB 利用者と権限の初期化」「アカウントの運用」と CLAUDE.md「環境操作は運用手順書に従う」に従う、C Bolt 51（Terraform）の環境・変数と整合。
+**状態**: 設計は承認済み（2026-11-16、human:kakimomokuri が D-1〜D-5 を「推奨で一括承認」。D-3 は招待リンクの方式で、最初の 1 行は起動時の一度きりの初期化コードで作る）。実装は一部完了（`db:init`・`db:grants:verify`・`deploy:preflight`・`deploy:release`・`deploy:rollback`、SSM の踏み台、運用手順書。実環境では未実行）。`admin:bootstrap`・`external-source:resume`・`audit:export:verify`・`maintenance:on/off` は未作成（理由は運用手順書。持ち越し H-1・H-2・H-6）。`validating-design`: A 終盤の技術 Bolt（テストの入口は手順の机上訓練・Gulp タスクのドライラン）、B `operation.md`「運用タスクの一覧」「DB 利用者と権限の初期化」「アカウントの運用」と CLAUDE.md「環境操作は運用手順書に従う」に従う、C Bolt 51（Terraform）の環境・変数と整合。
 
 ## 前提（確かめた事実）
 

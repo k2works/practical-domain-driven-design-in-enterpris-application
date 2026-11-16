@@ -202,7 +202,7 @@ Bolt がイテレーションに当たります。ふりかえりは各 Bolt の
 | 44-2 | [基準値の登録と比較（US-21 AC5。US-21 を締める）](bolt_44-2_plan.md)（[W9 計画](iteration_plan-W9.md)） | [終了報告](bolt_44-2_report.md) （[動画](../../assets/demo/bolt-44-2/kpi-baseline.webm){:target="_blank"}） | W9 | 完了（承認待ち） |
 | 48 | [W9 の締め（週全体レビュー・マニュアル・動画・ゲート）](bolt_48_plan.md)（[W9 計画](iteration_plan-W9.md)） | [終了報告](bolt_48_report.md) | W9 | 完了（承認待ち） |
 | 48-1 | [辞退した見積りの輸送要求を辞退で終了にする（週全体レビューの高 H-2）](bolt_48-1_plan.md)（[W9 計画](iteration_plan-W9.md)） | [終了報告](bolt_48-1_report.md) | W9 | 完了（承認待ち） |
-| 49 | [W9 の持ち越しの返済 1（同時実行テストの安定化・UI の固定の待ち・死んだ PlaceholderController の削除）](bolt_49_plan.md)（[W10 計画](iteration_plan-W10.md)） | [終了報告](bolt_49_report.md) | W10 | 完了（承認待ち） |
+| 49 | [W9 の持ち越しの返済 1（同時実行テストの安定化・UI の固定の待ち・死んだ PlaceholderController の削除）](bolt_49_plan.md)（[W10 計画](iteration_plan-W10.md)） | [終了報告](bolt_49_report.md) | W10 | 完了（承認済み） |
 | 49-1 | [W9 の持ち越しの返済 2（見積りの回答の画面の重複）](bolt_49-1_plan.md)（[W10 計画](iteration_plan-W10.md)） | - | W10 | 完了（承認待ち。範囲は重複 2 つに絞った） |
 | 51 | [Terraform（AWS の構成。コードと検証まで）](bolt_51_plan.md)（[W10 計画](iteration_plan-W10.md)） | [終了報告](bolt_51_report.md) | W10 | 完了（承認待ち。apply は未実施） |
 | 52 | [CI/CD（配備のワークフロー。52-1 は未着手）](bolt_52_plan.md)（[W10 計画](iteration_plan-W10.md)） | 中間報告は計画に含む | W10 | 一部完了（構文の検査は未実施） |
@@ -292,7 +292,7 @@ Bolt を始めるときに行を追加します。
 | W6 | [W6 完了報告書](iteration_report-W6.md)（[W6 横断レビュー](../../review/cargo-tracker/w6_review_20261102.md)） | 作成済み・承認済み（2026-11-02） |
 | W7 | [W7 完了報告書](iteration_report-W7.md)（週全体のコードレビューを含む） | 作成済み・承認済み（2026-11-13） |
 | W8 | [W8 完了報告書](iteration_report-W8.md)（[W8 週全体レビュー](../../review/cargo-tracker/w8_review_20261114.md)、[確認の場の依頼の一覧](confirmation_requests-W8.md)） | 作成済み・**人が承認**（2026-11-14）。Issue #20・#21 はクローズ済み。確認の場の開催は未（人の予定。未回答のまま完了とすることを人が決めた） |
-| W10 | [W10 完了報告書](iteration_report-W10.md)（一部完了。持ち越し H-1〜H-10。週全体のレビューは未実施） | 作成済み（承認待ち） |
+| W10 | [W10 完了報告書](iteration_report-W10.md)（一部完了。持ち越し H-1〜H-10。週全体のレビューは未実施） | 作成済み（承認済み） |
 
 ## 補足
 

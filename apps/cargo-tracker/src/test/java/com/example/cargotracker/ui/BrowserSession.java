@@ -105,6 +105,7 @@ public class BrowserSession implements DisposableBean {
         try {
             await().alias(failure)
                     .atMost(EVENTUAL_TIMEOUT)
+                    .pollDelay(Duration.ZERO)
                     .pollInterval(Duration.ofMillis(intervalMillis))
                     .pollInSameThread()
                     .until(condition::getAsBoolean);

@@ -131,12 +131,6 @@ jobs:
         id: pull
         uses: aws-actions/amazon-ecr-login@03f1aad4c6c7ffd436567f42f9384779290529bd # v2.1.7
 
-      - name: digest でイメージを取得する
-        env:
-          STAGING_REGISTRY: ${{ steps.pull.outputs.registry }}
-          DIGEST: ${{ needs.build.outputs.image_digest }}
-        run: docker pull "${STAGING_REGISTRY}/${APP_NAME}-staging@${DIGEST}"
-
       - name: AWS に OIDC で認証する（本番）
         uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
         with:
@@ -147,7 +141,7 @@ jobs:
         id: ecr
         uses: aws-actions/amazon-ecr-login@03f1aad4c6c7ffd436567f42f9384779290529bd # v2.1.7
 
-      - name: 同じイメージを本番の ECR へ昇格する（再ビルドしない）
+      - name: 同じイメージを本番の ECR へ昇格する（manifest ごと写す。再ビルドも再 push もしない）
         env:
           STAGING_REGISTRY: ${{ steps.pull.outputs.registry }}
           PRODUCTION_REGISTRY: ${{ steps.ecr.outputs.registry }}
@@ -156,8 +150,14 @@ jobs:
         run: |
           SOURCE="${STAGING_REGISTRY}/${APP_NAME}-staging@${DIGEST}"
           TARGET="${PRODUCTION_REGISTRY}/${APP_NAME}-production:${TAG}"
-          docker tag "${SOURCE}" "${TARGET}"
-          docker push "${TARGET}"
+          # pull と push の組み合わせは、マルチプラットフォームの index では片方の manifest だけを写して digest が変わる。
+          # imagetools create は manifest とレイヤーをそのまま写し、digest を保つ。保たれたことを確かめてから配備する
+          docker buildx imagetools create --tag "${TARGET}" "${SOURCE}"
+          PROMOTED=$(docker buildx imagetools inspect "${TARGET}" --format '{{.Manifest.Digest}}')
+          if [ "${PROMOTED}" != "${DIGEST}" ]; then
+            echo "昇格したイメージの digest が違う: ${PROMOTED} != ${DIGEST}" >&2
+            exit 1
+          fi
 
       - name: 現在のタスク定義を取得する
         run: |
@@ -170,7 +170,7 @@ jobs:
         with:
           task-definition: task-definition.json
           container-name: cargo-tracker
-          image: ${{ steps.ecr.outputs.registry }}/${{ env.APP_NAME }}-production:${{ needs.build.outputs.image_tag }}
+          image: ${{ steps.ecr.outputs.registry }}/${{ env.APP_NAME }}-production@${{ needs.build.outputs.image_digest }}
 
       - name: ECS に配備する（ローリング。サーキットブレーカーで失敗したら自動で戻る）
         uses: aws-actions/amazon-ecs-deploy-task-definition@a00d4d57ac0de1a99b39fe469f3d898d38717c2b # v2.6.4

@@ -68,6 +68,11 @@ resource "aws_instance" "this" {
     http_tokens = "required"
   }
 
+  # 最新の AMI が出るたびに踏み台が置き換わらないようにする。AMI の更新は運用の判断で行う（-replace で入れ替える）
+  lifecycle {
+    ignore_changes = [ami]
+  }
+
   root_block_device {
     encrypted = true
   }

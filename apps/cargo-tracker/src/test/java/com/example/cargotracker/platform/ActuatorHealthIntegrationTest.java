@@ -8,6 +8,8 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalManagementPort;
 import org.springframework.boot.test.web.server.LocalServerPort;
@@ -51,6 +53,41 @@ class ActuatorHealthIntegrationTest {
         // 出していないエンドポイントは拒否（403）か見つからない（404）。200 にならなければよい
         assertThat(get(managementPort, "/actuator/env").statusCode()).isIn(403, 404);
         assertThat(get(managementPort, "/actuator/beans").statusCode()).isIn(403, 404);
+    }
+
+    @Test
+    void ヘルス以外は連鎖が拒否する_出していないので404ではなく403で固定する() throws Exception {
+        // denyAll を permitAll に変えると 404（エンドポイントがない）に変わるので、連鎖の拒否が効いていることを 403 で押さえる
+        assertThat(get(managementPort, "/actuator/env").statusCode()).isEqualTo(403);
+        assertThat(get(managementPort, "/actuator/beans").statusCode()).isEqualTo(403);
+    }
+
+    @ParameterizedTest(name = "{0} はヘルス以外の中身を返さない")
+    @ValueSource(
+            strings = {
+                "/actuator/health/../env",
+                "/actuator/health/%2e%2e/env",
+                "/actuator/env;x=1",
+                "/actuator/%65nv",
+                "/actuator//env",
+            })
+    void パスの変形でヘルス以外を読ませない(String path) throws Exception {
+        HttpResponse<String> response = get(managementPort, path);
+
+        assertThat(response.statusCode()).isNotEqualTo(200);
+        assertThat(response.body()).doesNotContain("activeProfiles").doesNotContain("propertySources");
+    }
+
+    @Test
+    void GET以外ではヘルスも読めない_シャットダウンも出さない() throws Exception {
+        HttpClient client = HttpClient.newHttpClient();
+        HttpResponse<String> post = client.send(
+                HttpRequest.newBuilder(URI.create("http://localhost:" + managementPort + "/actuator/shutdown"))
+                        .POST(HttpRequest.BodyPublishers.noBody())
+                        .build(),
+                HttpResponse.BodyHandlers.ofString());
+
+        assertThat(post.statusCode()).isNotEqualTo(200);
     }
 
     @Test
