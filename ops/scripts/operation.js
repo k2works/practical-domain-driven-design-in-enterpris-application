@@ -13,7 +13,7 @@
 
 import { execFileSync, spawn } from 'child_process';
 import crypto from 'crypto';
-import { mkdtempSync, rmSync, writeFileSync } from 'fs';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'fs';
 import net from 'net';
 import os from 'os';
 import path from 'path';
@@ -217,6 +217,26 @@ export function waitForPort(port, timeoutMs = 30000, failure = () => undefined) 
   });
 }
 
+/**
+ * 最初のシステム管理者の変数（admin:bootstrap）。メールアドレスの形と表示名の空を検査する。会社の名前の既定は「A 社」。
+ * @param {Record<string, string | boolean>} options
+ */
+export function bootstrapVariables(options) {
+  const email = typeof options.email === 'string' ? options.email.trim() : '';
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    throw new Error('--email に最初の管理者のメールアドレスを指定してください');
+  }
+  const name = typeof options.name === 'string' ? options.name.trim() : '';
+  if (!name) throw new Error('--name に最初の管理者の表示名を指定してください');
+  const company = typeof options['company-name'] === 'string' && options['company-name'].trim() ? options['company-name'].trim() : 'A 社';
+  return { admin_email: email, admin_name: name, company_name: company };
+}
+
+/** psql の `-v name=value` の並び。 */
+export function psqlVariableArgs(variables) {
+  return Object.entries(variables).flatMap(([name, value]) => ['-v', `${name}=${value}`]);
+}
+
 /** GitHub Actions の実行の一覧（新しい順）の、最新の実行が成功か。古い成功を最新の失敗の代わりにしない。 */
 export function latestSuccess(runs) {
   return runs.length > 0 && runs[0].conclusion === 'success';
@@ -240,7 +260,7 @@ function stopTunnel(tunnel) {
  * SSM のポートフォワードを開き、psql で SQL を流す。パスワードは画面とログに出さない（環境変数 PGPASSWORD で渡す）。
  * @returns {Promise<string>} psql の標準出力
  */
-async function psql(target, sql) {
+async function psql(target, sql, variables = {}) {
   const missing = missingSettings(target, ['bastionId', 'dbHost', 'masterSecretArn']);
   if (missing.length > 0) throw new Error(`.env に次を設定してください: ${missing.join('、')}`);
   const secret = JSON.parse(
@@ -273,7 +293,7 @@ async function psql(target, sql) {
     await waitForPort(LOCAL_TUNNEL_PORT, 30000, () => tunnelFailure);
     return execFileSync(
       'psql',
-      ['-h', '127.0.0.1', '-p', String(LOCAL_TUNNEL_PORT), '-U', secret.username, '-d', target.dbName, '-X', '-q', '-t', '-A', '-v', 'ON_ERROR_STOP=1'],
+      ['-h', '127.0.0.1', '-p', String(LOCAL_TUNNEL_PORT), '-U', secret.username, '-d', target.dbName, '-X', '-q', '-t', '-A', '-v', 'ON_ERROR_STOP=1', ...psqlVariableArgs(variables)],
       { input: sql, encoding: 'utf8', env: { ...process.env, PGPASSWORD: secret.password } },
     );
   } finally {
@@ -307,6 +327,23 @@ export default function (gulp) {
     }
     await psql(target, initRolesSql(passwords[APP_ROLE], passwords[MIGRATOR_ROLE], target.dbName));
     console.log('完了。application_db_secret_arn（Terraform の変数）に、作った app の Secrets Manager の ARN を渡す');
+  });
+
+  // 最初のシステム管理者を作る（H-1。ops/sql/admin_bootstrap.sql）。すでに管理者がいると失敗する。本人の password は「password の再設定」で設定する
+  gulp.task('admin:bootstrap', async () => {
+    const options = parseOptions(process.argv.slice(2));
+    const target = resolveTarget(options);
+    const variables = bootstrapVariables(options);
+    console.log(`admin:bootstrap ${target.env}: 最初のシステム管理者 ${variables.admin_email}（${variables.admin_name}）を、企業「${variables.company_name}」に作る`);
+    if (target.dryRun) {
+      describe('すでにシステム管理者がいれば何もせず失敗する');
+      describe('企業（なければ）・利用者（使えないハッシュ）・役割 SYSTEM_ADMIN・管理範囲（自社）・監査記録を 1 つのトランザクションで作る');
+      describe('作った後、本人がログイン画面の「password を忘れた場合」から password を設定し、TOTP を登録する');
+      return;
+    }
+    const sql = readFileSync(path.join('ops', 'sql', 'admin_bootstrap.sql'), 'utf8');
+    await psql(target, sql, variables);
+    console.log('作成した。本人に、ログイン画面の「password を忘れた場合」から password を設定してもらう');
   });
 
   // 追記専用の表の権限を確認する（読み取りだけ）

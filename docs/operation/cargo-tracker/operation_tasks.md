@@ -4,7 +4,7 @@ title: "運用タスク手順書 - cargo-tracker のステージング・本番�
 description: "ステージング・本番の DB 利用者の作成、権限の確認、配備前の確認、配備、戻しの運用タスク（Gulp）の使い方。未実行のコードであること、まだ作っていない運用タスクと、その理由を明記する。"
 tags: [operation, runbook]
 status: draft
-generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-16T05:23:45Z }
+generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-16T05:39:43Z }
 ---
 
 # 運用タスク手順書 - cargo-tracker のステージング・本番
@@ -40,6 +40,7 @@ DB への経路は、SSM Session Manager の踏み台のポートフォワード
 | タスク | 内容 | 変更するか |
 | :--- | :--- | :--- |
 | `npx gulp db:init --env staging` | DB 利用者 `cargo_tracker_app`・`cargo_tracker_migrator` を作り、パスワードを生成して Secrets Manager（`cargo-tracker-<env>/db/app`・`/db/migrator`）に置く。すでにあれば作らない。権限の付与は Flyway の afterMigrate のコールバックが行う（DA-02） | する（利用者の作成、Secrets Manager への登録） |
+| `npx gulp admin:bootstrap --env staging --email <メール> --name <表示名> [--company-name "A 社"]` | **最初のシステム管理者**を作る（H-1）。企業（なければ OPERATOR）・利用者（使えないハッシュ）・役割 SYSTEM_ADMIN・管理範囲（自社）・監査記録（reason `INITIAL_ADMINISTRATOR`）を 1 つのトランザクションで作る（`ops/sql/admin_bootstrap.sql`。PostgreSQL で確かめた）。すでにシステム管理者がいると何もせず失敗する。**作った後、本人にログイン画面の「password を忘れた場合」から password を設定してもらい、初回のログインで TOTP を登録してもらう**（平文もハッシュも手順に出ない） | する（企業・利用者・役割・管理範囲・監査記録の作成） |
 | `npx gulp db:grants:verify --env staging` | 追記専用の表（印 `[append-only]`）に、アプリケーション利用者の UPDATE・DELETE が付いていないかを確かめる。1 件でもあれば失敗 | しない |
 | `npx gulp deploy:preflight --env staging` | 作業ツリーが clean、HEAD の CI が成功、ECS の running と desired が同じ、を確かめる | しない |
 | `npx gulp deploy:release --env staging --ref develop` | 配備のワークフロー `cargo-tracker-deploy.yml` を起動する。本番（`--env production --confirm production`）は本番への昇格を含み、GitHub の Environment `production` の必須レビュアーの承認が先に要る | する（配備） |
@@ -87,7 +88,6 @@ DB の論理障害・誤操作で、障害の直前の時点へ戻すときの�
 
 | タスク（operation.md） | 理由 |
 | :--- | :--- |
-| `admin:bootstrap`（最初のシステム管理者） | 作成する側の「操作者」がいない場合の、作成者・監査の記録の扱いを決める必要がある（認証の中核）。単独の Bolt で設計から行う（人は D-3 で招待リンクの方式を選んだ） |
 | `external-source:resume`（情報源の `SUSPENDED` → `APPROVED`） | 状態を変えるときに監査の記録（`audit_record`）を残す経路がない。SQL で状態だけを変えると、監査のない変更が残る。アプリの操作として設計する。手順に入れる確認「停止の前後に、その情報源の判断を待つ隔離を S-17 で確かめる」は、そのときに書く |
 | `audit:export:verify`（AUD-03、AUD-UI-01） | 書き出しの形式とハッシュの仕様が、まだ設計に書かれていない |
 | `maintenance:on`・`maintenance:off` | メンテナンス表示の仕組みがアプリにない |

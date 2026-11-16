@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import net from 'node:net';
 import { test } from 'node:test';
 import {
+  bootstrapVariables,
+  psqlVariableArgs,
   grantsVerifySql,
   initRolesSql,
   isPortInUse,
@@ -84,6 +86,25 @@ test('waitForPort はトンネルの失敗を報告して、待ちきらずに�
   const started = Date.now();
   await assert.rejects(() => waitForPort(1, 30000, () => new Error('aws が見つからない')), /aws が見つからない/);
   assert.ok(Date.now() - started < 5000, '失敗は待ち時間の上限を待たずに返る');
+});
+
+test('bootstrapVariables は --email・--name を検査し、会社の名前の既定は A 社', () => {
+  assert.deepEqual(bootstrapVariables({ email: 'admin@example.com', name: '管理者' }), {
+    admin_email: 'admin@example.com',
+    admin_name: '管理者',
+    company_name: 'A 社',
+  });
+  assert.equal(bootstrapVariables({ email: 'a@b.co', name: 'x', 'company-name': '本社' }).company_name, '本社');
+  assert.throws(() => bootstrapVariables({ name: 'x' }), /--email/);
+  assert.throws(() => bootstrapVariables({ email: 'not-an-email', name: 'x' }), /--email/);
+  assert.throws(() => bootstrapVariables({ email: 'a@b.co' }), /--name/);
+  assert.throws(() => bootstrapVariables({ email: 'a@b.co', name: '   ' }), /--name/);
+});
+
+test('psqlVariableArgs は -v name=value の並びにする', () => {
+  assert.deepEqual(psqlVariableArgs({ admin_email: 'a@b.co', admin_name: '管理者' }), [
+    '-v', 'admin_email=a@b.co', '-v', 'admin_name=管理者',
+  ]);
 });
 
 test('latestSuccess は先頭（最新）の実行が成功のときだけ true', () => {

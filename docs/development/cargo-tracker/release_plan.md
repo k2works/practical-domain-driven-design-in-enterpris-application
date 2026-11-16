@@ -4,7 +4,7 @@ title: "リリース計画 - cargo-tracker（A 社国際貨物輸送管理シス
 description: "cargo-tracker MVP のリリース計画。1 人 + AI、時間単位の Bolt（= イテレーション）と週次の見直しで、最初の縦の流れ（R0.1）、パイロット準備完了（R1.0）、本格展開前（R1.1）の 3 段階、Unit のエントロピー評価、SP、バッファ、パイロット開始の条件、引継ぎ ID の台帳、業務責任者に確かめる事項の台帳。"
 tags: [development,release-plan]
 status: stable
-generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-16T05:21:49Z }
+generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-16T05:39:43Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T09:29:53Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:38:26Z }
@@ -393,7 +393,7 @@ Release 1.0 はソフトウェアの準備である。パイロットの開始�
 | 書類の添付を使う画面に認証（US-18）が入っていること。認証の前は、社内の画面（`/staff`）の書類の実ファイルをステージングに置かない（置くなら `/staff` を網で制限する） | Bolt 6〜8 レビュー D-27・D-31（2026-10-05 に human:kakimomokuri が決定） | IT 責任者 | パイロット開始の前（ステージングは W10） |
 | チャットツール・当番の体制 | OP-05 | 運用責任者 | 2026-12-04（W10 の前） |
 | 業務担当者の教育 | インセプションデッキ | 運用責任者 | パイロット開始の前 |
-| 最初のシステム管理者の作成の手順（運用タスク `admin:bootstrap`）と、情報源を停止から承認に戻す手順（`external-source:resume`）。管理者がいないとログインできず、情報源を戻せないと「承認済みの情報源 1 件以上」を保てない | W10 完了報告書の持ち越し H-1・H-2 | 運用責任者（案。人が決める） | パイロット開始の前 |
+| 最初のシステム管理者の作成の手順（運用タスク `admin:bootstrap`。**作った**。ステージングでの実行が未）と、情報源を停止から承認に戻す手順（`external-source:resume`）。管理者がいないとログインできず、情報源を戻せないと「承認済みの情報源 1 件以上」を保てない | W10 完了報告書の持ち越し H-1・H-2 | 運用責任者（案。人が決める） | パイロット開始の前 |
 | 運用タスク（`db:init`・`db:grants:verify`・`deploy:*`）をステージングで一度ずつ実行し、結果を残すこと（W10 では実環境で未実行） | W10 完了報告書、[運用タスク手順書](../../operation/cargo-tracker/operation_tasks.md) | IT 責任者（案。人が決める） | パイロット開始の前 |
 
 ---
