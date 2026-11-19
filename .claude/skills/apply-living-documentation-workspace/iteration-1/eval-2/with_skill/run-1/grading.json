@@ -1,0 +1,35 @@
+{
+ "expectations": [
+  {
+   "text": "ガイドツアー（タグ・アノテーションから生成）を提案する",
+   "passed": true,
+   "evidence": "pattern: ガイドツアー|GuidedTour"
+  },
+  {
+   "text": "rankを10刻みで付ける",
+   "passed": true,
+   "evidence": "pattern: 10 ?刻み|10, ?20"
+  },
+  {
+   "text": "まずIDE検索で始め、後で生成・CIへ進む",
+   "passed": true,
+   "evidence": "pattern: IDE"
+  },
+  {
+   "text": "ステップ数を数個（4〜7等）に絞る",
+   "passed": true,
+   "evidence": "pattern: 4〜6|5〜7|数ステップ|数個|6〜7"
+  },
+  {
+   "text": "選択基準にクラス名・URL名指しを避ける（安定した基準）",
+   "passed": true,
+   "evidence": "pattern: 安定した基準|名指し|直接(指定|参照)"
+  }
+ ],
+ "summary": {
+  "passed": 5,
+  "failed": 0,
+  "total": 5,
+  "pass_rate": 1.0
+ }
+}

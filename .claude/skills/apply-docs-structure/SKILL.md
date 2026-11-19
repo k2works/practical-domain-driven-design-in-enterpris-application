@@ -28,11 +28,13 @@ description: ドキュメント構成ガイド（単一企業・統合戦略・�
 | **add-project** | 新しいプロジェクトを始める | `apps/<project>/` とプロジェクト別 7 カテゴリの `<project>/index.md` を一括作成し、各カテゴリ索引に登録 |
 | **check** | 上記の後、コミット前 | 構成がガイドに適合しているか検証し ERROR 0 を確認 |
 
+add-project はカテゴリごとのテンプレート `templates/<category>.md`（`{project}` を識別子に置換）から `<project>/index.md` を作り、カテゴリ索引の「プロジェクト一覧」表に行（概要は `--description`、状況は「未着手」）を追加する。あわせて `mkdocs.yml` の nav で各カテゴリの下に `<project>:` グループ（概要: `<category>/<project>/index.md`）を追加し、サイトのナビゲーションをプロジェクト単位で折りたためるようにする（`--mkdocs` で対象ファイルを指定、`--skip mkdocs` で更新しない）。実ドキュメントを追加したら、そのグループの下に nav 項目を足す。プロジェクト索引の初期構成を変えたいときはテンプレートを編集する。
+
 add-project と check は同梱スクリプトで行う。手で 7 カテゴリを掘らない（作成漏れ・識別子の揺れ・索引の登録漏れを起こしやすい）。
 
 ```bash
 S=.claude/skills/apply-docs-structure/scripts/docs_structure.py
-python $S add-project inventory-service                # docs/ と apps/ に一式作成
+python $S add-project inventory-service --description "在庫管理システム"  # docs/ と apps/ に一式作成
 python $S add-project sales-portal --skip apps         # apps を別管理している場合
 python $S check                                        # 検証（ERROR/WARN を列挙）
 python $S check --check                                # ERROR があれば exit 1（CI・コミット前）

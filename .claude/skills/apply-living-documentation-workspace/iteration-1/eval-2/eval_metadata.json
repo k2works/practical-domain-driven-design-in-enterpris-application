@@ -1,0 +1,12 @@
+{
+ "eval_id": 1,
+ "eval_name": "onboarding-guided-tour",
+ "prompt": "see evals/evals.json",
+ "assertions": [
+  "ガイドツアー（タグ・アノテーションから生成）を提案する",
+  "rankを10刻みで付ける",
+  "まずIDE検索で始め、後で生成・CIへ進む",
+  "ステップ数を数個（4〜7等）に絞る",
+  "選択基準にクラス名・URL名指しを避ける（安定した基準）"
+ ]
+}
