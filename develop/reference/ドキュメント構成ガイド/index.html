@@ -20241,7 +20241,7 @@ apps/
 </table>
 <h3 id="_6">ディレクトリ構造の規約<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code>docs/&lt;category&gt;/
-├── index.md              # カテゴリ索引：プロジェクト一覧へのリンク
+├── index.md              # カテゴリ索引：プロジェクト一覧の表
 ├── project-a/
 │   ├── index.md          # プロジェクト A のカテゴリ内の入口
 │   └── *.md              # 実ドキュメント
@@ -20304,8 +20304,9 @@ apps/
 <ol>
 <li>プロジェクト識別子を決めます（命名規約に従う）。</li>
 <li><code>apps/&lt;project&gt;/</code> を作成し、アプリケーションの雛形を配置します。</li>
-<li>プロジェクト別 7 カテゴリに <code>&lt;project&gt;/index.md</code> を作成します（最初は空の索引で構いません。<code>journal/</code>・<code>review/</code> は最初のドキュメント作成時でも可）。</li>
-<li>各カテゴリ直下の <code>index.md</code> にプロジェクトのエントリを追加します。</li>
+<li>プロジェクト別 7 カテゴリに <code>&lt;project&gt;/index.md</code> を作成します。<code>apply-docs-structure</code> スキルの add-project を使うと、カテゴリごとのテンプレート（<code>.claude/skills/apply-docs-structure/templates/&lt;category&gt;.md</code>）から、ドキュメント一覧の表（未作成の行）を備えた索引が作られます。</li>
+<li>各カテゴリ直下の <code>index.md</code> の「プロジェクト一覧」表にプロジェクトの行（プロジェクト・概要・状況）を追加します。add-project は <code>--description</code> の概要と状況「未着手」で行を追加します。</li>
+<li>MkDocs のナビゲーション（<code>mkdocs.yml</code> の nav）は、各カテゴリの下にプロジェクトのグループを置き、プロジェクト単位で折りたためるようにします。add-project がグループと概要の項目を追加するので、実ドキュメントはそのグループの下に追加します。</li>
 <li><code>apply-okf</code> スキルでフロントマター付与・<code>docs/log.md</code> への記録・適合性検証を行います。</li>
 </ol>
 <h2 id="_9">補足<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h2>

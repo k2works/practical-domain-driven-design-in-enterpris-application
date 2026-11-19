@@ -20822,12 +20822,11 @@ sudo<span class="w"> </span>sysctl<span class="w"> </span>--system
 </tr>
 <tr>
 <td style="text-align: left;"><code>gradle</code></td>
-<td style="text-align: left;"><code>./gradlew test jacocoTestReport sonar</code> で実行（Gradle Wrapper がなければ <code>gradle</code>）。<code>-Dsonar.qualitygate.wait=true</code> で解析の反映を待ち、品質ゲートが不合格ならスキャンが失敗する。トークンは環境変数 <code>SONAR_TOKEN</code> で渡す</td>
-<td style="text-align: left;">Java / Kotlin（Gradle。jacoco プラグインでカバレッジを連携する）</td>
+<td style="text-align: left;"><code>gradle sonar</code> で実行</td>
+<td style="text-align: left;">Java / Kotlin（Gradle）</td>
 </tr>
 </tbody>
 </table>
-<p><code>sonar-local:gate</code> は Quality Gate が OK 以外（ERROR・NONE など）のとき失敗で終わる。そのため <code>sonar-local:check</code> の成否で品質ゲートの合否を判定できる。判定するのは <code>SONAR_PROJECT_KEY</code> か、<code>sonarqube.config.json</code> の先頭のプロジェクトだけである。</p>
 <hr />
 <h3 id="3">3. ディレクトリの作成<a class="headerlink" href="#3" title="Permanent link">&para;</a></h3>
 <p>プロジェクトルートの <code>ops/docker/sonarqube-local/</code> に Docker Compose ファイルを配置します。データは Docker の名前付きボリュームで管理します。</p>
@@ -21070,16 +21069,14 @@ sbt<span class="w"> </span>sonarScan<span class="w"> </span><span class="se">\</
 <h4 id="gradlejava-kotlin">Gradle（Java / Kotlin）<a class="headerlink" href="#gradlejava-kotlin" title="Permanent link">&para;</a></h4>
 <p><code>build.gradle</code> にプラグインを追加します。</p>
 <div class="highlight"><pre><span></span><code><span class="n">plugins</span><span class="w"> </span><span class="o">{</span>
-<span class="w">  </span><span class="n">id</span><span class="w"> </span><span class="s2">"jacoco"</span>
-<span class="w">  </span><span class="n">id</span><span class="w"> </span><span class="s2">"org.sonarqube"</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="s2">"7.5.0.8588"</span>
+<span class="w">  </span><span class="n">id</span><span class="w"> </span><span class="s2">"org.sonarqube"</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="s2">"5.1.0.4882"</span>
 <span class="o">}</span>
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><span class="nv">SONAR_TOKEN</span><span class="o">=</span>&lt;YOUR_TOKEN&gt;<span class="w"> </span>./gradlew<span class="w"> </span><span class="nb">test</span><span class="w"> </span>jacocoTestReport<span class="w"> </span>sonar<span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code>gradle<span class="w"> </span>sonar<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>-Dsonar.projectKey<span class="o">=</span>&lt;YOUR_PROJECT_KEY&gt;<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>-Dsonar.host.url<span class="o">=</span>http://localhost:9000<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>-Dsonar.qualitygate.wait<span class="o">=</span><span class="nb">true</span>
+<span class="w">  </span>-Dsonar.token<span class="o">=</span>&lt;YOUR_TOKEN&gt;
 </code></pre></div>
-<p>jacoco プラグインの XML のレポートは自動で連携されるため、<code>sonar.coverage.jacoco.xmlReportPaths</code> の設定は要らない。cargo-tracker の設定例は <code>sonarqube.config.json</code> と <code>apps/cargo-tracker/build.gradle</code> を参照する。</p>
 <hr />
 <h2 id="_9">典型的な利用フロー<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h2>
 <h3 id="gulp">Gulp タスクを使用する場合<a class="headerlink" href="#gulp" title="Permanent link">&para;</a></h3>
