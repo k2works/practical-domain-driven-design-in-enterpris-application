@@ -1,0 +1,11 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Cucumber 画面の層 (開いている feature)" type="Application" factoryName="Application">
+    <option name="MAIN_CLASS_NAME" value="io.cucumber.core.cli.Main" />
+    <module name="cargo-tracker.test" />
+    <option name="PROGRAM_PARAMETERS" value="--glue com.example.cargotracker.ui --plugin pretty $FilePath$" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/apps/cargo-tracker" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>
