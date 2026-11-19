@@ -4,7 +4,7 @@ title: "SonarQube ローカル開発環境セットアップ手順書"
 description: "ローカル開発 PC 上に SonarQube（Community Build）を Docker ベースで構築し、プロジェクトの静的コード解析環境を提供するための手順を説明します。"
 tags: [reference]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-01T22:42:35Z }
+generated: { by: human:kakimomokuri, at: 2026-03-27T04:43:33Z }
 stale_after: 2027-02-23T00:00:00Z
 ---
 
@@ -152,9 +152,7 @@ sudo sysctl --system
 | `sonar-scanner` | `npx sonarqube-scanner` で実行 | TypeScript / JavaScript / 汎用 |
 | `sbt` | `sbt sonarScan` で実行 | Scala（sbt-sonar プラグイン） |
 | `maven` | `mvn sonar:sonar` で実行 | Java / Kotlin（Maven） |
-| `gradle` | `./gradlew test jacocoTestReport sonar` で実行（Gradle Wrapper がなければ `gradle`）。`-Dsonar.qualitygate.wait=true` で解析の反映を待ち、品質ゲートが不合格ならスキャンが失敗する。トークンは環境変数 `SONAR_TOKEN` で渡す | Java / Kotlin（Gradle。jacoco プラグインでカバレッジを連携する） |
-
-`sonar-local:gate` は Quality Gate が OK 以外（ERROR・NONE など）のとき失敗で終わる。そのため `sonar-local:check` の成否で品質ゲートの合否を判定できる。判定するのは `SONAR_PROJECT_KEY` か、`sonarqube.config.json` の先頭のプロジェクトだけである。
+| `gradle` | `gradle sonar` で実行 | Java / Kotlin（Gradle） |
 
 ---
 
@@ -325,6 +323,7 @@ SONAR_TOKEN=<YOUR_TOKEN>
 1. SonarQube でプロジェクトを作成してください。Project Key が `sonarqube.config.json` の `projectKey` と一致しているか確認してください。
 2. 次のどちらかで権限を付与してください。
 
+
    - 付与方法 A: 管理者でログイン > Administration > Security > Users で対象ユーザーに `Execute Analysis` を付与
    - 付与方法 B: プロジェクト画面 > Project Settings > Permissions で `Execute Analysis` を付与
 
@@ -407,19 +406,16 @@ mvn sonar:sonar \
 
 ```groovy
 plugins {
-  id "jacoco"
-  id "org.sonarqube" version "7.5.0.8588"
+  id "org.sonarqube" version "5.1.0.4882"
 }
 ```
 
 ```bash
-SONAR_TOKEN=<YOUR_TOKEN> ./gradlew test jacocoTestReport sonar \
+gradle sonar \
   -Dsonar.projectKey=<YOUR_PROJECT_KEY> \
   -Dsonar.host.url=http://localhost:9000 \
-  -Dsonar.qualitygate.wait=true
+  -Dsonar.token=<YOUR_TOKEN>
 ```
-
-jacoco プラグインの XML のレポートは自動で連携されるため、`sonar.coverage.jacoco.xmlReportPaths` の設定は要らない。cargo-tracker の設定例は `sonarqube.config.json` と `apps/cargo-tracker/build.gradle` を参照する。
 
 ---
 
