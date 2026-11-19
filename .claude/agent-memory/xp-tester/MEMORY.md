@@ -7,3 +7,25 @@
 - [Bolt 15 Heroku デモ環境の運用レビュー](project_bolt15_heroku_demo_review.md) — ガードが build だけ・ブランチ未確認、イメージの自動検証なし、ロールバックなし、ADR の旧タスク名（2026-10-06）
 - [Bolt 20 割当て・荷主承認テストのレビュー](project_bolt20_shipper_approval_tests.md) — 新 listener 3 つの単体テストなし、DE-03・16 の偽警告、承認済みの失効表示、コミットする統合テストの航海の残り（2026-10-08）
 - [Bolt 21 KPI 最初の提示時刻テストのレビュー](project_bolt21_kpi_first_presentation_tests.md) — メモリのリポジトリのエイリアスで保存呼び出し未検証、同時刻の再配信は無判別、DB 境界ちょうど、毒メッセージ（2026-10-08）
+- [Bolt 31b TOTP の登録テストのレビュー](project_bolt31b_totp_enrollment_tests.md) — session 平文の確かめが空でも通る、切り替えの時刻の消去が未検証、匿名の A-07、重ねの待ちが非決定（2026-10-13）
+- [Bolt 31c 回復コードのログインテストのレビュー](project_bolt31c_recovery_code_login_tests.md) — toString の空振り、負けた枝の監査未検証、provider の単体テストなし、TOTP だけの行、全角（2026-10-13）
+- [Bolt 32c request ごとの確かめのテストのレビュー](project_bolt32c_session_revalidation_tests.md) — 公開 URL でも読む、並行 request の重複取消し、役割 0 件のログ、ナビの事前確認、A-07 未検証（2026-10-14）
+- [Bolt 32d テストの共通化のレビュー](project_bolt32d_shared_context_tests.md) — Base32 の長さの変異が生存、埋め草の重ね受理、コンテキスト共有で DB も共有（2026-10-14）
+- [Bolt 32b session の警告と延長のテストのレビュー](project_bolt32b_session_warning_tests.md) — 延長の失敗・302 の分岐が未検証、staff のレイアウトなし、Esc・閉じる・切り替え、FACTOR_TOTP の判定の空振り（2026-10-14）
+- [Bolt 32e 失効の後に戻すテストのレビュー](project_bolt32e_return_after_expiry_tests.md) — 取消しの負例が Cookie を捨てて空振り、案内の href 固定の既存ステップ、/staff/・/documents/ の負例なし（2026-10-14）
+- [Bolt 33a password の再設定の完了テストのレビュー](project_bolt33a_password_reset_completion_tests.md) — コミット後失効が未固定、/x/y の負例消失、A-02 の別端末、誤りの文言 2 種（2026-10-15）
+- [Bolt 33c SessionKeys への移動のテストのレビュー](project_bolt33c_session_keys_refactor_tests.md) — SAVED_REQUEST が文字列だけ、tracking の空振り、RecoveryLoginTest の同語反復、期間の文言の直書き（2026-10-15）
+- [Bolt 34 役割の変更のテストのレビュー](project_bolt34_user_role_change_tests.md) — 一覧の束ねのリポジトリテストなし、400/404 未検証、外すだけ、職務分離の知識の重複（2026-10-16）
+- [Bolt 34d 利用停止と再開のテストのレビュー](project_bolt34d_user_status_change_tests.md) — updated_at の空振り、過去の行の件数比較、OutOfScope 枝、拒否の文言未検証（2026-10-17）
+- [Bolt 34c 認証・監査の見張りのテストのレビュー](project_bolt34c_auth_audit_watch_tests.md) — 特性テストの 3xx が段を区別しない、回数の戻し未固定、AT-11 の 2 本目の変異なし（2026-10-17）
+- [Bolt 34b 管理範囲のテストのレビュー](project_bolt34b_admin_scope_tests.md) — 404 の区別不能が空振り、controller の OutOfScope 枝未検証、陽性の対照なし、暗黙の割り当て（2026-10-16）
+- [Bolt 34e 利用者の管理のリファクタリングのテストのレビュー](project_bolt34e_user_admin_refactor_tests.md) — 状態の承認の別の版なし、reason の死んだ値、防御の複製の変異、login の否定形の確かめ（2026-10-17）
+- [Bolt 35 特殊貨物の確定の拒否のテストのレビュー](project_bolt35_booking_special_cargo_tests.md) — POST の枝が照会し直しに頼る、S-09 のフォーカスなし、dev-data で作れる、写しの食い違い（2026-10-19）
+- [Bolt 34f S-20 の controller の分割のテストのレビュー](project_bolt34f_s20_controller_split_tests.md) — Rejected の版・理由が無判別、役割の Stale の見出し、役割の文言の単体テストなし（2026-10-18）
+- [Bolt 37b2 情報不足のテストのレビュー](project_bolt37b2_info_insufficient_tests.md) — info_insufficient を除外に置換する変異が生存、hours() の分の枝、lambda の new、24h の直書き（2026-10-22）
+- [Bolt 39b2 形式の誤りの品質ゲート](project_bolt39b2_format_error_quality_gate.md) — 変異 10 個すべて落ちた、Sonar の new_violations 10 で FAIL（2026-11-03）
+- [Bolt 39b 取込の品質ゲート](project_bolt39b_ingestion_quality_gate.md) — 変異は全部落ちた、spotbugs の EI_EXPOSE_REP2、Sonar の `record` の変数名（2026-11-03）
+- [Bolt 39b3b 外部原本の採否の監査の品質ゲート](project_bolt39b3b_external_audit_quality_gate.md) — V1〜V9 全部落ちた、書き手の表の先頭行の読み落としは生存（2026-11-04）
+- [Bolt 39b4 取込の規模の品質ゲート](project_bolt39b4_ingestion_scale_quality_gate.md) — V1〜V8 全部落ちた、`行1*` は行 12 も拾う（2026-11-04）
+- [Bolt 39c2 取り込めない送信の品質ゲート](project_bolt39c2_rejection_quality_gate.md) — V1〜V6 全部落ちた、行 8 は欄の取り違えを拾わない、V5 は 39c の UI が拾う（2026-11-04）
+- [Bolt 37f3 「区間」の語のそろえのテストのレビュー](project_bolt37f3_leg_term_tests.md) — C-04・C-17 の区間の不在が未検証、行 2・4 は注で名乗る、C-17 の salt の語（2026-10-24）
