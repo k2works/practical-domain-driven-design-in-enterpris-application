@@ -184,6 +184,7 @@ class ModularityTest {
                 .resideOutsideOfPackages(
                         "com.example.cargotracker.externaldata.infrastructure..",
                         "com.example.cargotracker.externaldata.interfaces.web..",
+                        "com.example.cargotracker.externaldata.interfaces.scheduled..",
                         "com.example.cargotracker.externaldata.application..")
                 .should()
                 .onlyDependOnClassesThat()
@@ -192,6 +193,28 @@ class ModularityTest {
                         "com.example.cargotracker.externaldata..",
                         "com.example.cargotracker.shared..",
                         "org.springframework..")
+                .check(PRODUCTION_CLASSES);
+    }
+
+    /**
+     * 定期処理の入口（{@code interfaces.scheduled}）は、上の許可リストに加えて {@code org.slf4j}（警告のログ）と ShedLock（排他）に
+     * 依存してよい。Bolt 58 の【前の決定の変更】: 当日の取込がないことの検知（FRS-04）の定期処理を足すための例外（2026-11-27、
+     * human:kakimomokuri が承認）。例外はこのパッケージに限る。
+     */
+    @Test
+    void Bolt58_外部データの定期処理の入口は上の許可リストとSLF4JとShedLockにだけ依存する() {
+        classes()
+                .that()
+                .resideInAPackage("com.example.cargotracker.externaldata.interfaces.scheduled..")
+                .should()
+                .onlyDependOnClassesThat()
+                .resideInAnyPackage(
+                        "java..",
+                        "com.example.cargotracker.externaldata..",
+                        "com.example.cargotracker.shared..",
+                        "org.springframework..",
+                        "org.slf4j..",
+                        "net.javacrumbs.shedlock..")
                 .check(PRODUCTION_CLASSES);
     }
 

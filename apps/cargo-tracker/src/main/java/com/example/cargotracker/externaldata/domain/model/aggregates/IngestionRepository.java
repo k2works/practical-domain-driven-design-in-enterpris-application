@@ -1,5 +1,6 @@
 package com.example.cargotracker.externaldata.domain.model.aggregates;
 
+import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -15,4 +16,7 @@ public interface IngestionRepository {
 
     /** ID で取込を引く（S-16 の結果の画面。Bolt 39c）。ないときは空。 */
     Optional<Ingestion> findById(UUID id);
+
+    /** 指定の時刻以後（その時刻を含む）の取込があるか（FRS-04。W10-1 の Bolt 58）。情報源は問わない。 */
+    boolean existsSince(Instant from);
 }

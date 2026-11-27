@@ -23,6 +23,11 @@
           FROM external_data.ingestion WHERE id = #{id}
     </select>
 
+    <!-- 当日の取込があるか（FRS-04。W10-1 の Bolt 58） -->
+    <select id="existsSince" resultType="_boolean">
+        SELECT COUNT(*) &gt; 0 FROM external_data.ingestion WHERE ingested_at &gt;= #{from}
+    </select>
+
     <insert id="insert">
         INSERT INTO external_data.ingestion
             (id, data_source_id, file_object_key, file_hash, ingested_by, ingested_at, received_count,

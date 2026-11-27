@@ -1,5 +1,6 @@
 package com.example.cargotracker.externaldata.infrastructure.persistence;
 
+import java.time.OffsetDateTime;
 import java.util.Optional;
 import java.util.UUID;
 import org.apache.ibatis.annotations.Mapper;
@@ -14,4 +15,6 @@ public interface IngestionMapper {
     void insert(IngestionRow row);
 
     Optional<IngestionRow> selectById(UUID id);
+
+    boolean existsSince(OffsetDateTime from);
 }

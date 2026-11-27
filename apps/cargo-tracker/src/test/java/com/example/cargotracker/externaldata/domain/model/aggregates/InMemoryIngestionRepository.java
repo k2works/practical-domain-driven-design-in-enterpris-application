@@ -1,5 +1,6 @@
 package com.example.cargotracker.externaldata.domain.model.aggregates;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -21,6 +22,11 @@ public class InMemoryIngestionRepository implements IngestionRepository {
         return ingestions.stream()
                 .filter(ingestion -> ingestion.id().equals(id))
                 .findFirst();
+    }
+
+    @Override
+    public boolean existsSince(Instant from) {
+        return ingestions.stream().anyMatch(ingestion -> !ingestion.ingestedAt().isBefore(from));
     }
 
     /** シナリオの開始時に消す（受入シナリオ。Bolt 39b）。 */

@@ -4,6 +4,7 @@ import com.example.cargotracker.externaldata.application.internal.commandservice
 import com.example.cargotracker.externaldata.application.internal.commandservices.ReceivedRecordDecisionService;
 import com.example.cargotracker.externaldata.application.internal.queryservices.IngestibleDataSourceQueryService;
 import com.example.cargotracker.externaldata.application.internal.queryservices.IngestionSummaryQueryService;
+import com.example.cargotracker.externaldata.application.internal.queryservices.MissingIngestionQueryService;
 import com.example.cargotracker.externaldata.application.internal.queryservices.PilotReadinessQueryService;
 import com.example.cargotracker.externaldata.application.internal.queryservices.UndecidedRecordQueryService;
 import com.example.cargotracker.externaldata.domain.model.aggregates.AdoptedValueRepository;
@@ -28,6 +29,13 @@ public class ExternalDataConfiguration {
     @Bean
     PilotReadinessQueryService pilotReadinessQueryService(DataSourceRepository dataSources) {
         return new PilotReadinessQueryService(dataSources);
+    }
+
+    /** 当日の取込の不足の照会（FRS-04。Bolt 58）。 */
+    @Bean
+    MissingIngestionQueryService missingIngestionQueryService(
+            DataSourceRepository dataSources, IngestionRepository ingestions, Clock clock) {
+        return new MissingIngestionQueryService(dataSources, ingestions, clock);
     }
 
     /** S-16 の選ぶ画面の照会（Bolt 39c）。 */

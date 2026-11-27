@@ -5,6 +5,7 @@ import com.example.cargotracker.externaldata.domain.model.aggregates.IngestionRe
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PayloadHash;
 import com.example.cargotracker.externaldata.domain.model.valueobjects.PayloadObjectKey;
 import com.example.cargotracker.shared.domain.UserId;
+import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.Optional;
 import java.util.UUID;
@@ -37,6 +38,11 @@ public class MyBatisIngestionRepository implements IngestionRepository {
     @Override
     public Optional<Ingestion> findById(UUID id) {
         return mapper.selectById(id).map(MyBatisIngestionRepository::toDomain);
+    }
+
+    @Override
+    public boolean existsSince(Instant from) {
+        return mapper.existsSince(from.atOffset(ZoneOffset.UTC));
     }
 
     private static Ingestion toDomain(IngestionRow row) {

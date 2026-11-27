@@ -127,6 +127,28 @@ public abstract class ExternalDataRecordRepositoriesContract {
     }
 
     @Test
+    void Bolt58_指定の時刻以後の取込があるかを境界の時刻を含めて返す() {
+        // 共有の DB のほかの行と重ならないよう、遠い未来の時刻で確かめる
+        Instant future = Instant.parse("2999-01-01T00:00:00Z");
+        assertThat(ingestions().existsSince(future)).isFalse();
+
+        ingestions()
+                .add(new Ingestion(
+                        UUID.randomUUID(),
+                        source.id(),
+                        PayloadObjectKey.newIngestionFile(),
+                        hash("ファイル"),
+                        new UserId(UUID.randomUUID()),
+                        future,
+                        0,
+                        null,
+                        0));
+
+        assertThat(ingestions().existsSince(future)).isTrue();
+        assertThat(ingestions().existsSince(future.plusNanos(1000))).isFalse();
+    }
+
+    @Test
     void 行12_件数0の取込を書いて読める() {
         Ingestion empty = ingestion(0);
 
