@@ -42,6 +42,7 @@ class ModularityTest {
                         "tracking",
                         "notification",
                         "externaldata",
+                        "operations",
                         "shared");
     }
 

@@ -41,6 +41,9 @@ dependencies {
 	implementation 'org.flywaydb:flyway-database-postgresql'
 	implementation "org.mybatis.spring.boot:mybatis-spring-boot-starter:${mybatisVersion}"
 	implementation 'org.springframework.modulith:spring-modulith-starter-jdbc'
+	// 未完了の発行の監視（OBS-03。W10-1 の Bolt 57-2）で EventPublicationRepository を使う。実行時には starter-jdbc 経由で
+	// 含まれている。イベントの直列化の契約テストも EventSerializer を使う（2026-11-27、human:kakimomokuri が承認）
+	implementation 'org.springframework.modulith:spring-modulith-events-core'
 	// 認証と session（US-18、ADR-012）。form login・役割による認可・CSRF と、DB に置く session（Bolt 14）
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	// ヘルスチェックとメトリクス（OBS-10。W10 の Bolt 53。導入は 2026-11-16 に人が承認）。版は Spring Boot の BOM で決まる
@@ -77,8 +80,6 @@ dependencies {
 	testImplementation 'org.testcontainers:testcontainers-junit-jupiter'
 	testImplementation 'org.testcontainers:testcontainers-postgresql'
 	testImplementation 'org.springframework.modulith:spring-modulith-starter-test'
-	// イベントの直列化の契約テストで、Spring Modulith の EventSerializer を直接使う
-	testImplementation 'org.springframework.modulith:spring-modulith-events-core'
 	testImplementation "com.tngtech.archunit:archunit-junit5:${archunitVersion}"
 	testImplementation 'io.cucumber:cucumber-java'
 	testImplementation 'io.cucumber:cucumber-spring'
