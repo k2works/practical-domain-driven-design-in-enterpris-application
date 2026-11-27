@@ -13,7 +13,7 @@
       
       
       
-        <link rel="prev" href="../iteration_plan-W10/">
+        <link rel="prev" href="../iteration_plan-W10-1/">
       
       
         <link rel="next" href="../bolt_49_plan/">
@@ -12078,6 +12078,41 @@
                 
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../iteration_plan-W10-1/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    W10-1 計画
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
     
   
   
@@ -20229,6 +20264,9 @@
 
 
 <h1 id="w11-release-11">W11 計画 - 予約の変更・取消しと監査照会（Release 1.1 の頭の返済を含む）<a class="headerlink" href="#w11-release-11" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p><strong>範囲の変更（2026-11-27）。</strong> Bolt 57・58・59・61 は <a href="../iteration_plan-W10-1/">W10-1 計画</a>に移した（その計画の CP-1。human:kakimomokuri が承認）。本数は 9 本（60、62〜69）、見積りは作業 1,940 分、壁時計 2,480 分（稼働 4,050 分の 61%）になる。本文で 57〜59・61 に触れる箇所（前の週の反映、各表の前提、CP-1・CP-4）は、この注を正とする。</p>
+</blockquote>
 <h2 id="_1">基本情報<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -20260,15 +20298,15 @@
 </tr>
 <tr>
 <td style="text-align: left;">Bolt の本数</td>
-<td style="text-align: left;">13 本（番号 57〜69）。返済 5 本（技術）、US-05 6 本、US-17 1 本、締め 1 本</td>
+<td style="text-align: left;">9 本（番号 60、62〜69）。返済 1 本（技術）、US-05 6 本、US-17 1 本、締め 1 本</td>
 </tr>
 <tr>
 <td style="text-align: left;">見積りの合計</td>
-<td style="text-align: left;">作業 2,740 分（約 46 時間）。ゲート・報告・承認待ちの 60 分 × 13 本 = 780 分を足した壁時計で <strong>3,520 分（約 59 時間）</strong></td>
+<td style="text-align: left;">作業 1,940 分。ゲート・報告・承認待ちの 60 分 × 9 本 = 540 分を足した壁時計で <strong>2,480 分（約 41 時間）</strong></td>
 </tr>
 <tr>
 <td style="text-align: left;">稼働との比較</td>
-<td style="text-align: left;">稼働 5 日・1 日 13.5 時間（W8〜W10 と同じ保守的な置き方）で 4,050 分。<strong>87%</strong>（仮定 A-1・A-2。見積りは W9・W10 の 1 本あたりの平均を類推元にした仮定で、実測の根拠はない）</td>
+<td style="text-align: left;">稼働 5 日・1 日 13.5 時間で 4,050 分の <strong>61%</strong>（仮定 A-1・A-2。見積りに実測の根拠はない）</td>
 </tr>
 <tr>
 <td style="text-align: left;">前の週</td>
@@ -20287,24 +20325,8 @@
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;">57</td>
-<td style="text-align: left;">技術: 運用の警告の宛先（SNS）と主要な警報（ADR-023）</td>
-</tr>
-<tr>
-<td style="text-align: left;">58</td>
-<td style="text-align: left;">技術: 取込がない日の通知（FRS-04）（ADR-023）</td>
-</tr>
-<tr>
-<td style="text-align: left;">59</td>
-<td style="text-align: left;">技術: メンテナンス表示（ADR-023）</td>
-</tr>
-<tr>
 <td style="text-align: left;">60</td>
 <td style="text-align: left;">技術: ウイルス検査（ADR-022）の仕様確認と最初の実装</td>
-</tr>
-<tr>
-<td style="text-align: left;">61</td>
-<td style="text-align: left;">技術: 通知の失敗の再送（ADR-021 の C-3）</td>
 </tr>
 <tr>
 <td style="text-align: left;">62〜64</td>
@@ -20430,36 +20452,6 @@
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;">57</td>
-<td style="text-align: left;">運用の警告の宛先: SNS のトピックと購読（メールの配布先は変数）、主要な警報（OBS-01・02・10）を Terraform に。人が用意するもの: 配布先のメールアドレス</td>
-<td style="text-align: left;">技術</td>
-<td style="text-align: right;">200</td>
-<td style="text-align: right;">0</td>
-<td style="text-align: right;">260</td>
-<td style="text-align: left;">なし</td>
-<td style="text-align: left;"><strong>外部連携</strong></td>
-</tr>
-<tr>
-<td style="text-align: left;">58</td>
-<td style="text-align: left;">取込がない日の通知（FRS-04。11:00 JST、当日の取込がなければ追跡・データ責任者へ。ShedLock の定期処理。通知はメールの経路）</td>
-<td style="text-align: left;">技術</td>
-<td style="text-align: right;">220</td>
-<td style="text-align: right;">0</td>
-<td style="text-align: right;">280</td>
-<td style="text-align: left;">57</td>
-<td style="text-align: left;">計画・終了報告</td>
-</tr>
-<tr>
-<td style="text-align: left;">59</td>
-<td style="text-align: left;">メンテナンス表示: 環境変数で 503 と案内を返すフィルター、<code>maintenance:on/off</code> の運用タスク</td>
-<td style="text-align: left;">技術</td>
-<td style="text-align: right;">180</td>
-<td style="text-align: right;">0</td>
-<td style="text-align: right;">240</td>
-<td style="text-align: left;">なし</td>
-<td style="text-align: left;"><strong>構造</strong>・計画</td>
-</tr>
-<tr>
 <td style="text-align: left;">60</td>
 <td style="text-align: left;">ウイルス検査: AWS の機能の仕様・費用・リージョンの確認（確認の結果を ADR-022 に追記）、書類の状態（検査中・検査済み・拒否）の最初の実装</td>
 <td style="text-align: left;">技術</td>
@@ -20468,16 +20460,6 @@
 <td style="text-align: right;">300</td>
 <td style="text-align: left;">なし</td>
 <td style="text-align: left;"><strong>外部連携</strong>・<strong>スキーマ</strong></td>
-</tr>
-<tr>
-<td style="text-align: left;">61</td>
-<td style="text-align: left;">通知の失敗の再送（ADR-021 の案 A。<code>FAILED</code> を定期処理で上限 3 回再送。一時・恒久の分類）</td>
-<td style="text-align: left;">技術</td>
-<td style="text-align: right;">200</td>
-<td style="text-align: right;">0</td>
-<td style="text-align: right;">260</td>
-<td style="text-align: left;">なし</td>
-<td style="text-align: left;">計画・終了報告</td>
 </tr>
 <tr>
 <td style="text-align: left;">62</td>
@@ -20561,7 +20543,7 @@
 </tr>
 </tbody>
 </table>
-<p><strong>合計</strong> 作業 2,740 分（返済 1,040、US-05 1,260、US-17 280、締め 160）、壁時計 3,520 分（上の基本情報）。</p>
+<p><strong>合計</strong> 作業 1,940 分（返済 240、US-05 1,260、US-17 280、締め 160）、壁時計 2,480 分。</p>
 <h3 id="bolt_1">各 Bolt で確認した前提<a class="headerlink" href="#bolt_1" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
@@ -20572,21 +20554,6 @@
 </tr>
 </thead>
 <tbody>
-<tr>
-<td style="text-align: left;">57</td>
-<td style="text-align: left;">Terraform（W10 の Bolt 51）、CloudWatch の警報の枠</td>
-<td style="text-align: left;"><code>ops/terraform/</code> に SNS・警報はまだない（W10 の確認）</td>
-</tr>
-<tr>
-<td style="text-align: left;">58</td>
-<td style="text-align: left;">ShedLock（<code>SchedulingConfiguration</code>）、メールの送信の経路（<code>notification</code> の公開 API）、取込の履歴</td>
-<td style="text-align: left;">ShedLock は W10 で入れた。宛先の解決は <code>identity</code> の公開 API</td>
-</tr>
-<tr>
-<td style="text-align: left;">59</td>
-<td style="text-align: left;">管理用のポート 8081 のヘルスチェック（W10 の Bolt 53）</td>
-<td style="text-align: left;">メンテナンスの間もヘルスチェックは通す（ADR-023）</td>
-</tr>
 <tr>
 <td style="text-align: left;">60</td>
 <td style="text-align: left;">必要書類のバケット（W10 の Bolt 51）、書類の保存（Bolt 7）</td>
@@ -20756,6 +20723,11 @@
 <tr>
 <td style="text-align: left;">2026-11-16</td>
 <td style="text-align: left;">初版（draft）</td>
+<td style="text-align: left;">anthropic/claude-sonnet-5-5</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-11-27</td>
+<td style="text-align: left;">Bolt 57・58・59・61 を W10-1 計画に移し、本数と見積りを直した</td>
 <td style="text-align: left;">anthropic/claude-sonnet-5-5</td>
 </tr>
 </tbody>

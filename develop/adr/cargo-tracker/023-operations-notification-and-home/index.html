@@ -12074,6 +12074,41 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/iteration_plan-W10-1/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    W10-1 計画
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../development/cargo-tracker/iteration_plan-W11/" class="md-nav__link">
         
   
@@ -17543,6 +17578,17 @@
   <a href="#_5" class="md-nav__link">
     <span class="md-ellipsis">
       
+        改訂の経緯
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
         備考
       
     </span>
@@ -20142,15 +20188,17 @@
 <h3 id="3">3. メンテナンス表示: アプリのフィルターと環境変数<a class="headerlink" href="#3" title="Permanent link">&para;</a></h3>
 <ul>
 <li>環境変数（<code>cargotracker.maintenance.enabled</code>）が真のとき、ヘルスチェック（管理用のポート）以外のすべての要求に <strong>503 とメンテナンスの案内（Retry-After 付き）</strong> を返すフィルターをアプリに足す。</li>
-<li>切り替えは、運用タスク <code>maintenance:on/off</code> が ECS のタスク定義の環境変数を更新して配備する（<code>deploy:release</code> と同じ経路。<code>desiredCount</code> を 0 にして止める方法より、利用者に案内を示せる）。</li>
-<li>時点復旧（RB-02）の最初の手順は、この表示への切り替えにする（手順書の「当面は desiredCount を 0 にする」を差し替える）。</li>
+<li>切り替えは、運用タスク <code>maintenance:on/off</code> が、今のタスク定義の環境変数だけを変えた版を AWS CLI で登録してサービスを入れ替える（<code>deploy:rollback</code> と同じ経路。配備のワークフローはイメージを作り直すので使わない。<code>desiredCount</code> を 0 にして止める方法より、利用者に案内を示せる）。（2026-11-28 に改訂。下の「改訂の経緯」）</li>
+<li>時点復旧（RB-02）の最初の手順は、<strong>ECS の <code>desiredCount</code> を 0 にしてアプリを止める</strong>ことのままにする。この表示が止めるのは画面の要求だけで、定期処理とイベントの配り直しは DB に書き続けるため、「書き込みを止める」を満たさない。表示は計画停止に使う。（2026-11-28 に改訂。下の「改訂の経緯」）</li>
 </ul>
 <h2 id="_4">影響<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h2>
 <ul>
 <li>どれも W10 では実装しない。Release 1.1 の頭の返済として、小さな Bolt に分けて行う（宛先の変数と SNS、S-01 の最初の役割、メンテナンスのフィルター）。</li>
 <li>通知の宛先が決まったので、FRS-04（取込がない日の 11:00 JST の通知）・DE-12/30/13 の検知・毒入りイベントの通知を、同じ SNS とメールの経路で実装できる。</li>
 </ul>
-<h2 id="_5">備考<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h2>
+<h2 id="_5">改訂の経緯<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h2>
+<p>2026-11-28、human:kakimomokuri が W10-1 の締めの報告の議題 4 の承認で、決定 3 の 2 点を改めた。もとの決定は、(1) 切り替えは「<code>deploy:release</code> と同じ経路」で配備する、(2) 時点復旧の最初の手順をこの表示への切り替えにする（手順書の「当面は desiredCount を 0 にする」を差し替える）、だった。実装（<a href="../../../development/cargo-tracker/bolt_59_plan/">Bolt 59 の報告</a>）で分かった理由による。</p>
+<h2 id="_6">備考<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h2>
 <ul>
 <li>著者: anthropic/claude-sonnet-5-5（AI の提案。human:kakimomokuri が推奨のとおり採用）</li>
 <li>関連: operation.md、ADR-021、W10 完了報告書の H-3・H-4・H-6</li>

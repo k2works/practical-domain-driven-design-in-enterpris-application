@@ -263,6 +263,48 @@
         "autoUpdated": "",
         "defaultValue": "null",
         "comments": "<p>記録した時刻</p>"
+    },
+    {
+        "tableName": "notification",
+        "tableFileName": "notification",
+        "tableType": "Table",
+        "keyClass": "",
+        "keyTitle": "",
+        "name": "link",
+        "type": "varchar",
+        "length": 500,
+        "nullable": "√",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>画面への導線の URL（再送する種類だけ）</p>"
+    },
+    {
+        "tableName": "notification",
+        "tableFileName": "notification",
+        "tableType": "Table",
+        "keyClass": "",
+        "keyTitle": "",
+        "name": "retry_count",
+        "type": "int4",
+        "length": 10,
+        "nullable": "",
+        "autoUpdated": "",
+        "defaultValue": "0",
+        "comments": "<p>再送の回数</p>"
+    },
+    {
+        "tableName": "notification",
+        "tableFileName": "notification",
+        "tableType": "Table",
+        "keyClass": "",
+        "keyTitle": "",
+        "name": "retryable",
+        "type": "bool",
+        "length": 1,
+        "nullable": "√",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>再送できる失敗か（失敗の行だけ）</p>"
     }
 ];
                     var config = {

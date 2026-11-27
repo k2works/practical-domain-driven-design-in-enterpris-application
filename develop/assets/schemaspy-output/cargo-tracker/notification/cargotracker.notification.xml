@@ -13,6 +13,9 @@
          <column autoUpdated="false" defaultValue="null" digits="6" id="8" name="sent_at" nullable="true" remarks="送信時刻" size="35" type="timestamptz" typeCode="93"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="9" name="failure_reason" nullable="true" remarks="失敗の理由（リンクを含まない）" size="1000" type="varchar" typeCode="12"/>
          <column autoUpdated="false" defaultValue="null" digits="6" id="10" name="created_at" nullable="false" remarks="記録した時刻" size="35" type="timestamptz" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="11" name="link" nullable="true" remarks="画面への導線の URL（再送する種類だけ）" size="500" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="0" digits="0" id="12" name="retry_count" nullable="false" remarks="再送の回数" size="10" type="int4" typeCode="4"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="13" name="retryable" nullable="true" remarks="再送できる失敗か（失敗の行だけ）" size="1" type="bool" typeCode="-7"/>
          <primaryKey column="id" sequenceNumberInPK="1"/>
          <index name="pk_notification" unique="true">
             <column ascending="true" name="id"/>
@@ -27,6 +30,9 @@
          </index>
          <checkConstraint constraint="(((status)::text = 'FAILED'::text) = (failure_reason IS NOT NULL))" name="ck_notification_failure_reason"/>
          <checkConstraint constraint="((kind)::text = ANY ((ARRAY['QUOTATION_PRESENTED'::character varying, 'ROUTE_APPROVED'::character varying, 'QUOTATION_EXPIRING'::character varying, 'BOOKING_CONFIRMED'::character varying, 'TRACKING_UNDER_REVIEW'::character varying, 'CONSIGNEE_INVITATION'::character varying, 'PASSWORD_RESET'::character varying, 'USER_INVITATION'::character varying, 'TOTP_RESET_BY_ADMIN'::character varying, 'TOTP_ENROLLED'::character varying, 'TOTP_RE_ENROLLED'::character varying])::text[]))" name="ck_notification_kind"/>
+         <checkConstraint constraint="((link IS NULL) OR ((kind)::text = ANY ((ARRAY['QUOTATION_PRESENTED'::character varying, 'ROUTE_APPROVED'::character varying, 'QUOTATION_EXPIRING'::character varying, 'BOOKING_CONFIRMED'::character varying, 'TRACKING_UNDER_REVIEW'::character varying])::text[])))" name="ck_notification_link_kind"/>
+         <checkConstraint constraint="((retry_count &gt;= 0) AND (retry_count &lt;= 3))" name="ck_notification_retry_count"/>
+         <checkConstraint constraint="((retryable IS NULL) OR (((status)::text = 'FAILED'::text) AND ((retryable = false) OR (link IS NOT NULL))))" name="ck_notification_retryable"/>
          <checkConstraint constraint="(((status)::text = 'SENT'::text) = (sent_at IS NOT NULL))" name="ck_notification_sent_at"/>
          <checkConstraint constraint="((status)::text = ANY ((ARRAY['PENDING'::character varying, 'SENT'::character varying, 'FAILED'::character varying])::text[]))" name="ck_notification_status"/>
       </table>

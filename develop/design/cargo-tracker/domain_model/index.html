@@ -12557,6 +12557,41 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/iteration_plan-W10-1/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    W10-1 計画
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../development/cargo-tracker/iteration_plan-W11/" class="md-nav__link">
         
   
@@ -22610,6 +22645,12 @@
 <td style="text-align: left;">ログインした利用者の利用者 ID・企業 ID・役割・表示名・企業名。ほかのコンテキストが操作者と所属企業を知るための値（Bolt 14）。2 つの要素（password と TOTP または回復コード）がそろった主体だけを表す（Bolt 31c。password の段だけの主体は <code>PasswordVerifiedUser</code>）</td>
 <td style="text-align: left;">共有カーネル</td>
 </tr>
+<tr>
+<td style="text-align: left;">未完了のイベント配信の滞留</td>
+<td style="text-align: left;">EventBacklog</td>
+<td style="text-align: left;">発行から 5 分以上たっても完了していないイベントの配信の件数と、最も古いものの経過と、重要度（OBS-03。1 件以上で警告、10 件以上か 30 分以上で重大）。業務のコンテキストではない運用の部品が判定する（W10-1 の Bolt 57-2）</td>
+<td style="text-align: left;">運用</td>
+</tr>
 </tbody>
 </table>
 <h2 id="_6">共有カーネル<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h2>
@@ -23955,8 +23996,8 @@
 </tr>
 <tr>
 <td style="text-align: left;">N-INV-02</td>
-<td style="text-align: left;">同じイベントからの通知は宛先ごとに 1 通だけ送る（イベントの再配信で重複しない）</td>
-<td style="text-align: left;">ARCH-HO-01</td>
+<td style="text-align: left;">同じイベントからの通知は宛先ごとに 1 通だけ送る（イベントの再配信で重複しない）。失敗した通知の再送は同じ記録を使い、2 通目に数えない</td>
+<td style="text-align: left;">ARCH-HO-01、ADR-021</td>
 </tr>
 <tr>
 <td style="text-align: left;">N-INV-03</td>
@@ -24026,6 +24067,7 @@
 </tr>
 </tbody>
 </table>
+<p><strong>失敗した通知の再送（Bolt 61。ADR-021 の C-3）。</strong> 荷主への業務の通知（見積りの提示・経路の承認・見積りの期限間近・本予約の確定・確認中への遷移）が、接続や通信の失敗で送れなかったら、10 分ごとの定期処理が同じ宛先へ最大 3 回、記録の作成から 24 時間以内に送り直す。宛先の不備・認証や設定の失敗など、一時の失敗と分類できないものは送り直さない（SMTP の 4xx の応答も分類できないものに含む）。そのために、この 5 種類だけはリンクを記録する（リンクにトークンを含まない）。送り直しが一時の失敗で終わったら、送り先の不調とみなしてその回は打ち切り、残りは次の回に回す（残りは再送の回数を使わない）。送り直すときに利用者の今の状態は確かめない（通知はアクセス・監査に依存しない）ので、失敗の後に利用停止になった人へ届くことがある。応答の時間切れでは、届いていたメールをもう一度送ることがある（どちらも受け入れる。2026-11-27、human:kakimomokuri）。</p>
 <p>password の再設定のメールは、本文にリンクとその期限・使い方だけを書き、料金などの業務の情報を書かない（N-INV-01）。リンクを含むため本文を保存せず、テンプレートと <code>target_ref</code> からも再現しない（リンクのある種類の例外。利用者の招待のメールも同じ。データモデルの通知の表）。TOTP の解除・登録・再登録のお知らせ（Bolt 38d）はリンクを持たないので例外に入れず、本文は保存しないが、テンプレートと <code>target_ref</code>（監査記録の ID。日時は監査の時刻）から再現できる。</p>
 <p><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2ZXJzaW9uPSIxLjEiIGRhdGEtZGlhZ3JhbS10eXBlPSJTVEFURSIgc3R5bGU9IndpZHRoOjI1MnB4O2hlaWdodDozMzFweDtiYWNrZ3JvdW5kOiNGRkZGRkY7IiB3aWR0aD0iMjUycHgiIGhlaWdodD0iMzMxcHgiIHZpZXdCb3g9IjAgMCAyNTIgMzMxIiB6b29tQW5kUGFuPSJtYWduaWZ5IiBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSJub25lIiBjb250ZW50U3R5bGVUeXBlPSJ0ZXh0L2NzcyI+PD9wbGFudHVtbCAxLjIwMjYuMTA/PjxkZWZzLz48ZyBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgbGVuZ3RoQWRqdXN0PSJzcGFjaW5nIj48ZyBjbGFzcz0idGl0bGUiIGRhdGEtc291cmNlLWxpbmU9IjEiPjx0ZXh0IHg9IjEwOC44MDUiIHk9IjIyLjk5NSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMjgiIGZvbnQtd2VpZ2h0PSI3MDAiPumAmuefpTwvdGV4dD48L2c+PGcgY2xhc3M9InN0YXJ0X2VudGl0eSIgZGF0YS1xdWFsaWZpZWQtbmFtZT0iLnN0YXJ0LiIgaWQ9ImVudDAwMDEiIGRhdGEtc291cmNlLWxpbmU9IjIiPjxlbGxpcHNlIGN4PSI4OC4zOCIgY3k9IjUzLjI5NyIgcng9IjEwIiByeT0iMTAiIGZpbGw9IiMyMjIiIHN0eWxlPSJzdHJva2U6IzIyMjtzdHJva2Utd2lkdGg6MTsiLz48L2c+PGcgY2xhc3M9ImVudGl0eSIgZGF0YS1xdWFsaWZpZWQtbmFtZT0iUEVORElORyIgaWQ9ImVudDAwMDIiIGRhdGEtc291cmNlLWxpbmU9IjIiPjxyZWN0IHg9IjQ2LjM4IiB5PSIxNDAuMjk3IiB3aWR0aD0iODMuOTkxIiBoZWlnaHQ9IjUwIiBmaWxsPSIjRjFGMUYxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiIHJ4PSIxMi41IiByeT0iMTIuNSIvPjxsaW5lIHgxPSI0Ni4zOCIgeTE9IjE2Ni41OTQiIHgyPSIxMzAuMzcxIiB5Mj0iMTY2LjU5NCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7Ii8+PHRleHQgeD0iNTYuMzgiIHk9IjE1OC4yOTIiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjYzLjk5MSI+UEVORElORzwvdGV4dD48L2c+PGcgY2xhc3M9ImVudGl0eSIgZGF0YS1xdWFsaWZpZWQtbmFtZT0iU0VOVCIgaWQ9ImVudDAwMDQiIGRhdGEtc291cmNlLWxpbmU9IjMiPjxyZWN0IHg9IjciIHk9IjI2Ny4yOTciIHdpZHRoPSI1Ni43NTciIGhlaWdodD0iNTAiIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIgcng9IjEyLjUiIHJ5PSIxMi41Ii8+PGxpbmUgeDE9IjciIHkxPSIyOTMuNTk0IiB4Mj0iNjMuNzU3IiB5Mj0iMjkzLjU5NCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7Ii8+PHRleHQgeD0iMTciIHk9IjI4NS4yOTIiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjM2Ljc1NyI+U0VOVDwvdGV4dD48L2c+PGcgY2xhc3M9ImVudGl0eSIgZGF0YS1xdWFsaWZpZWQtbmFtZT0iRkFJTEVEIiBpZD0iZW50MDAwNiIgZGF0YS1zb3VyY2UtbGluZT0iNCI+PHJlY3QgeD0iMTA3Ljc5IiB5PSIyNjcuMjk3IiB3aWR0aD0iNjkuMTg1IiBoZWlnaHQ9IjUwIiBmaWxsPSIjRjFGMUYxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiIHJ4PSIxMi41IiByeT0iMTIuNSIvPjxsaW5lIHgxPSIxMDcuNzkiIHkxPSIyOTMuNTk0IiB4Mj0iMTc2Ljk3NSIgeTI9IjI5My41OTQiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIvPjx0ZXh0IHg9IjExNy43OSIgeT0iMjg1LjI5MiIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iNDkuMTg1Ij5GQUlMRUQ8L3RleHQ+PC9nPjwhLS1saW5rICpzdGFydCogdG8gUEVORElORy0tPjxnIGNsYXNzPSJsaW5rIiBkYXRhLWVudGl0eS0xPSJlbnQwMDAxIiBkYXRhLWVudGl0eS0yPSJlbnQwMDAyIiBpZD0ibG5rMyIgZGF0YS1zb3VyY2UtbGluZT0iMiIgZGF0YS1saW5rLXR5cGU9ImRlcGVuZGVuY3kiPjxwYXRoIGQ9Ik04OC4zOCw2My42NzcgQzg4LjM4LDgwLjQwNyA4OC4zOCwxMTAuODg3IDg4LjM4LDEzNC45MjciIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiIGZpbGw9Im5vbmUiIGlkPSIqc3RhcnQqLXRvLVBFTkRJTkciLz48cG9seWdvbiBwb2ludHM9Ijg4LjM4LDEzOS45MjcsOTIuMzgsMTMwLjkyNyw4OC4zOCwxMzQuOTI3LDg0LjM4LDEzMC45MjcsODguMzgsMTM5LjkyNyIgZmlsbD0iIzE4MTgxOCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxO3N0cm9rZS1saW5lam9pbjptaXRlcjtzdHJva2UtbWl0ZXJsaW1pdDoxMDsiLz48dGV4dCB4PSI4OS4zOCIgeT0iMTA2LjM2NCIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMyIgdGV4dExlbmd0aD0iNTIiPuiomOmMsuOBmeOCizwvdGV4dD48L2c+PCEtLWxpbmsgUEVORElORyB0byBTRU5ULS0+PGcgY2xhc3M9ImxpbmsiIGRhdGEtZW50aXR5LTE9ImVudDAwMDIiIGRhdGEtZW50aXR5LTI9ImVudDAwMDQiIGlkPSJsbms1IiBkYXRhLXNvdXJjZS1saW5lPSIzIiBkYXRhLWxpbmstdHlwZT0iZGVwZW5kZW5jeSI+PHBhdGggZD0iTTU0LjU3LDE5MC41NzcgQzQ1LjY1LDE5OC44OTcgMzcuMTgsMjA4Ljk4NyAzMi4zOCwyMjAuMjk3IEMyNi4xNSwyMzQuOTQ3IDI2LjE0NSwyNDcuOTI0IDI4LjQ4NSwyNjIuMDk0IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7IiBmaWxsPSJub25lIiBpZD0iUEVORElORy10by1TRU5UIi8+PHBvbHlnb24gcG9pbnRzPSIyOS4zLDI2Ny4wMjcsMzEuNzgsMjU3LjQ5NSwyOC40ODUsMjYyLjA5NCwyMy44ODcsMjU4Ljc5OSwyOS4zLDI2Ny4wMjciIGZpbGw9IiMxODE4MTgiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTtzdHJva2UtbGluZWpvaW46bWl0ZXI7c3Ryb2tlLW1pdGVybGltaXQ6MTA7Ii8+PHRleHQgeD0iMzMuMzgiIHk9IjIzMy4zNjQiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTMiIHRleHRMZW5ndGg9IjY1Ij7pgIHkv6HjgavmiJDlip88L3RleHQ+PC9nPjwhLS1saW5rIFBFTkRJTkcgdG8gRkFJTEVELS0+PGcgY2xhc3M9ImxpbmsiIGRhdGEtZW50aXR5LTE9ImVudDAwMDIiIGRhdGEtZW50aXR5LTI9ImVudDAwMDYiIGlkPSJsbms3IiBkYXRhLXNvdXJjZS1saW5lPSI0IiBkYXRhLWxpbmstdHlwZT0iZGVwZW5kZW5jeSI+PHBhdGggZD0iTTk4LjkyLDE5MC42OTcgQzEwOC40MywyMTIuNzE3IDEyMC4zNzYsMjQwLjM2NyAxMjkuODg2LDI2Mi4zNjciIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiIGZpbGw9Im5vbmUiIGlkPSJQRU5ESU5HLXRvLUZBSUxFRCIvPjxwb2x5Z29uIHBvaW50cz0iMTMxLjg3LDI2Ni45NTcsMTMxLjk3MSwyNTcuMTA5LDEyOS44ODYsMjYyLjM2NywxMjQuNjI3LDI2MC4yODMsMTMxLjg3LDI2Ni45NTciIGZpbGw9IiMxODE4MTgiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTtzdHJva2UtbGluZWpvaW46bWl0ZXI7c3Ryb2tlLW1pdGVybGltaXQ6MTA7Ii8+PHRleHQgeD0iMTE5LjYxIiB5PSIyMzMuMzY0IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEzIiB0ZXh0TGVuZ3RoPSIxMTciPumAgeS/oeOBq+WkseaVl++8iOeQhueUse+8iTwvdGV4dD48L2c+PD9wbGFudHVtbC1zcmMgQXlhaW9LYkxVRGFtd19keWZMcEhNaDRBa2hmczJXNmtWWXdVVmt1QUxXZWxMaW51c1JGZlNVRkNucXRUTjMxWGE5OVdMeHlHZUZwQlhpT2QtblMtUmJwemg2RjJxd3h2QTRoUzczcnpONXNHNUpyVGlsN1ByRWRsenRHeWR6M3NWQ2g2enRpdzBHMDA/PjwvZz48L3N2Zz4=" class="uml" alt="uml diagram" title="" /></p>
 <h3 id="_21">外部データの開始判定<a class="headerlink" href="#_21" title="Permanent link">&para;</a></h3>
