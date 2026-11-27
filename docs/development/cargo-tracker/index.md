@@ -494,3 +494,5 @@ Bolt を始めるときに行を追加します。
 * [Bolt 57-2 計画と報告 - 未完了のイベント配信の検知（OBS-03）](./bolt_57-2_plan.md) - W10-1 計画の Bolt 57-2（技術、SP 0）。
 * [Bolt 59 計画と報告 - メンテナンス表示](./bolt_59_plan.md) - W10-1 計画の Bolt 59（技術、SP 0）。
 * [Bolt 58 計画と報告 - 取込がない日の検知（FRS-04）](./bolt_58_plan.md) - W10-1 計画の Bolt 58（技術、SP 0）。
+* [Bolt 61 計画と報告 - 失敗した荷主への通知の再送](./bolt_61_plan.md) - W10-1 計画の Bolt 61（技術、SP 0。
+* [Bolt 52-2 計画と報告 - Terraform の PR 検査](./bolt_52-2_plan.md) - W10-1 計画の Bolt 52-2（技術、SP 0）。
