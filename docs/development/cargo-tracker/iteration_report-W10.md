@@ -4,7 +4,7 @@ title: "W10 完了報告書 - cargo-tracker（運用準備。コードと検証�
 description: "cargo-tracker の W10（運用準備。SP 0 の技術の週）の完了報告書。AWS の Terraform・配備のワークフロー・ヘルスチェック・ShedLock・運用タスクを、コードと検証まで作った。apply は未実施。運用タスクの一部・OBS の残り・負荷テスト・時点復旧の手順は持ち越す。"
 tags: [development,report]
 status: stable
-generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-16T07:14:13Z }
+generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-27T09:47:19Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-11-16T05:22:02Z }
 ---
@@ -23,7 +23,7 @@ verified:
 | 計画期間 | 2026-12-07 〜 2026-12-11（稼働 5 日） |
 | 実績期間 | 2026-11-16（計画期間の前に前倒し。W7〜W9 と同じ。1 日の連続した作業） |
 | ゴール | 本番の配備の前に要るものを、コードと検証まで揃える（AWS の IaC、CI/CD、監視、運用タスクと手順書、性能テストの道具）。W9 の持ち越しを返す |
-| 結果 | **ゴールの一部だけ達成した。** 計画の 17 本のうち、完了 9 本、一部完了 4 本、未着手 4 本（下の表）。残りは Release 1.1 の頭へ持ち越す |
+| 結果 | **ゴールの一部だけ達成した。** 計画の 17 本のうち、完了 8 本、一部完了 9 本、未着手 0 本（下の表）。残りは Release 1.1 の頭へ持ち越す |
 
 > **AWS は準備だけでよい**（2026-11-16、human:kakimomokuri）。W10 の AWS 関連（Terraform、配備のワークフロー、運用タスク、運用手順書）は、コードと検証までを完了とする。`apply`・実環境での運用タスクの実行・時点復旧の訓練は W10 の範囲外（アカウントの用意の後）。持ち越し H-9 の `apply` と H-6 の訓練は、この決定により W10 の未達ではなくなった。
 
@@ -52,6 +52,8 @@ verified:
 
 ## Bolt の結果
 
+持ち越し H-1〜H-5 の着手後の状態です。本数は計画の 17 本で数えます。表の「51」の行は 51・51-1・51-2・51-3 の 4 本、「52」の行は 52・52-1 の 2 本、「55・55-1」の行は 2 本です。完了は 8 本（49、49-1、49-2、50、51〜51-3）、一部完了は 9 本（52、52-1、53、53-1、54、54-1、55、55-1、56）です。51-2 の必要書類のウイルスの検査はバケットと権限の枠までで、実装は H-11 です。
+
 | Bolt | 結果 | 備考 |
 | :--- | :--- | :--- |
 | 49 | 完了 | C-9 の原因は未確定（再現せず）。診断だけ足した。UI の固定の待ち 14 か所を `awaitEventually` に集約。`PlaceholderController` を削除 |
@@ -60,12 +62,12 @@ verified:
 | 50 | 完了 | ADR-020: 東京、ステージングと本番の 2 環境。アカウントと予算は未決 |
 | 51 | 完了（コードと検証まで） | `ops/terraform/`。`apply` は未実施 |
 | 52 | 一部完了 | 配備のワークフロー（手動起動のみ、`actionlint` 指摘なし）と `DevProfileGuard`。ロールバック・maintenance の運用タスクのうち `deploy:rollback` は作った。`maintenance:on/off` は未作成 |
-| 53 | 一部完了 | OBS-10（ヘルスチェック）だけ。OBS-06・FRS-04・DE-12/30/13 の検知は未着手 |
-| 53-1 | 一部完了 | ShedLock だけ（`platform.shedlock`、見積りの有効期限の通知）。監査の二重の防ぎ・DB の文の timeout は未着手 |
-| 54 | 一部完了 | 運用タスク `db:init`・`db:grants:verify`・`deploy:preflight`・`deploy:release`・`deploy:rollback`、SSM の踏み台、運用手順書。**実環境では未実行**。`admin:bootstrap`・`external-source:resume`・`audit:export:verify` は未作成（理由は運用手順書） |
+| 53 | 一部完了 | OBS-10（ヘルスチェック）と、OBS-06 の取込の画面の警告（H-3）。FRS-04・DE-12/30/13 の検知は未着手 |
+| 53-1 | 一部完了 | ShedLock（`platform.shedlock`、見積りの有効期限の通知）、監査の二重の防ぎと DB の文の timeout（H-4）。毒入りのイベントの通知と AUD-04 の照合は未着手 |
+| 54 | 一部完了 | 運用タスク `db:init`・`db:grants:verify`・`deploy:preflight`・`deploy:release`・`deploy:rollback`、SSM の踏み台、運用手順書。`admin:bootstrap`（H-1）と `external-source:resume`（H-2）も作った。**実環境では未実行**。`audit:export:verify` は未作成（理由は運用手順書） |
 | 54-1 | 一部完了 | 配備前の確認表は運用手順書に書いた。監査記録の抽出・#49 は未着手 |
-| 55・55-1 | 未着手 | 負荷テスト（k6）と時点復旧の手順。`ConnectionRule` の class 化と港で絞る照会も送る |
-| 56 | この報告書 | 週全体の 5 視点のレビューは**実施していない** |
+| 55・55-1 | 一部完了 | 画面の負荷テストのスクリプト（k6。未実行。H-5）と時点復旧の手動の手順の草案（未訓練。H-6）。`ConnectionRule` の class 化と港で絞る照会は送る |
+| 56 | 一部完了 | この報告書と週全体の 5 視点のレビュー（承認の後に実施。H-10）。#50 の仕分けは未実施（H-8） |
 
 ## 持ち越し（Release 1.1 の頭の返済として載せる）
 
@@ -116,3 +118,4 @@ verified:
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
 | 2026-11-16 | 初版（draft。人の承認待ち） | anthropic/claude-sonnet-5-5 |
+| 2026-11-27 | 承認の後の訂正。Bolt の内訳を、持ち越しの着手後の状態に直した（完了 9・一部完了 4・未着手 4 → 8・9・0）。表の 53・53-1・54・55・55-1・56 の行を直した | anthropic/claude-sonnet-5-5 |

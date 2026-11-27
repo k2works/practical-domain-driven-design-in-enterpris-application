@@ -4,7 +4,7 @@ title: "リリース計画 - cargo-tracker（A 社国際貨物輸送管理シス
 description: "cargo-tracker MVP のリリース計画。1 人 + AI、時間単位の Bolt（= イテレーション）と週次の見直しで、最初の縦の流れ（R0.1）、パイロット準備完了（R1.0）、本格展開前（R1.1）の 3 段階、Unit のエントロピー評価、SP、バッファ、パイロット開始の条件、引継ぎ ID の台帳、業務責任者に確かめる事項の台帳。"
 tags: [development,release-plan]
 status: stable
-generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-16T07:37:55Z }
+generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-27T09:47:19Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T09:29:53Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:38:26Z }
@@ -1252,7 +1252,7 @@ D-144 の注（Bolt 39h2 の開始準備）: 判断の画面に差異を出し�
 | W7 | 10 | 10 | 100% | 完了（2026-11-02〜11-13 に Bolt 38h と 39〜39i の 39 本を終え、2026-11-13 に締めの作業を終えた。完了報告書は承認済み。US-14 の 8 SP（#18。Bolt 39h4 の終了報告の承認の後に数えた）と US-12 の残りの 2 SP（#19。Bolt 39gc の承認の後に数えた）を完了し、#18・#19 をクローズした。週全体のコードレビューと品質ゲートの確認を行った。[W7 完了報告書](iteration_report-W7.md)） |
 | W8 | 8 | 8 | 100% | 完了（2026-11-13〜11-14 に Bolt 40〜40-17 の 18 本を終えた。[完了報告書](iteration_report-W8.md)） |
 | W9 | 15 | 15 | 100% | 完了（2026-11-14〜11-15 に Bolt 41〜48 の 18 本を終え、2026-11-15 に締めた。US-23・US-22・US-21・US-01・US-24・US-09 を閉じ、Release 1.0 は 54/54 SP。[完了報告書](iteration_report-W9.md)。人の承認待ち） |
-| W10 | 0 | - | - | 一部完了（2026-11-16。[W10 完了報告書](iteration_report-W10.md)。人の承認待ち。残りは Release 1.1 の頭へ持ち越し） |
+| W10 | 0 | - | - | 一部完了（2026-11-16。[W10 完了報告書](iteration_report-W10.md)。承認済み。残りは Release 1.1 の頭へ持ち越し） |
 | W11 | 11 | - | - | 計画済み（[W11 計画](iteration_plan-W11.md)。13 本、Bolt 57〜69。承認待ち） |
 | W12 | 10 | - | - | 未着手 |
 | W13 | 8 | - | - | 未着手 |
@@ -1277,8 +1277,8 @@ xychart-beta
 | 項目 | 内容 |
 | :--- | :--- |
 | Project | [CargoTracker practical-ddd/take-1（#42）](https://github.com/users/k2works/projects/42)。フィールド: Status、リリース、優先度、Unit、SP、週（W1〜W15） |
-| Milestone | Release 0.1 最初の縦の流れ（13 件）、Release 1.0 パイロット準備完了（16 件）、Release 1.1 本格展開前（7 件） |
-| Issue | #1〜#47（#38 以降は Bolt と週の締め・開始準備で起票した技術タスクと分けたストーリー）。Release 0.1 と 1.0 にまたがる 9 ストーリーは受入条件の範囲ごとに 2 件に分けた。技術タスクは #1（開発基盤とウォーキングスケルトン、2026-10-02 にクローズ）、#36（UI の骨格と見積依頼の段階入力のプロトタイプ、#1 から分けた）、#28（運用準備）、#37（Bolt 6〜8 レビューの返済、W2） |
+| Milestone | Release 0.1 最初の縦の流れ（18 件）、Release 1.0 パイロット準備完了（23 件）、Release 1.1 本格展開前（8 件）（open と closed の合計。2026-11-27 に GitHub で確認） |
+| Issue | #1〜#52（#40 はマイルストーンなし。#38 以降は Bolt と週の締め・開始準備で起票した技術タスクと分けたストーリー）。Release 0.1 と 1.0 にまたがる 9 ストーリーは受入条件の範囲ごとに 2 件に分けた。技術タスクは #1（開発基盤とウォーキングスケルトン、2026-10-02 にクローズ）、#36（UI の骨格と見積依頼の段階入力のプロトタイプ、#1 から分けた）、#28（運用準備）、#37（Bolt 6〜8 レビューの返済、W2） |
 | Label | `user-story`、`technical` |
 
 週のフィールドは 1 つの値しか持てないため、US-24 の R0.1 分（#5）は W2、US-16（#14）は W5 に置いた（計画では次の週にまたがる）。#5 は 2026-10-07 に W3 に移し、2026-10-08 に Bolt 20 でクローズした。
@@ -1753,3 +1753,4 @@ xychart-beta
 | 2026-11-13 | W7 の締めの作業を行い、[W7 完了報告書](iteration_report-W7.md)を作り、推奨のとおり承認として記録した（human:kakimomokuri）。進捗状況の W7 を 10/10 SP（100%）に、実績スケジュールと W7 の節の状態・結果・ふりかえり・締めの見直し・タスクの印を直した。Release 1.0 は 31/54 SP。週全体のコードレビュー、`okf:check`（ERROR 0）、CI の確認を行った | anthropic/claude-sonnet-5-5 |
 | 2026-11-13 | W8 の開始準備: [W8 計画](iteration_plan-W8.md)と [Bolt 40 計画](bolt_40_plan.md)を作り（承認待ち）、W8 の行と進捗状況、AUD-UI-01 の行を直した。技術 Bolt（SP 0）にも分単位の見積りを付けた 17 本（作業 2,950 分、壁時計 3,970 分）を稼働 4 日と比べ、保守的な置き方で 123% と示した | anthropic/claude-sonnet-5-5 |
 | 2026-11-13 | W8 計画と Bolt 40 計画の確認ポイント CP-1〜CP-9 を推奨のとおり承認として記録した（W8 は基準 B で 6〜7 日を見込む。Bolt の採番は 40・40-1・40-2、詳細化は 40-1-1。human:kakimomokuri） | anthropic/claude-sonnet-5-5 |
+| 2026-11-27 | 文書の不整合を直した。進捗状況の W10 を「承認済み」にし（W10 完了報告書の承認に合わせる）、「GitHub との同期」の Milestone の件数と Issue の番号の範囲を GitHub の実際に合わせた | anthropic/claude-sonnet-5-5 |
