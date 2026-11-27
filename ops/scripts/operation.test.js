@@ -8,6 +8,7 @@ import {
   psqlVariableArgs,
   grantsVerifySql,
   initRolesSql,
+  maintenanceTaskDefinition,
   isPortInUse,
   latestSuccess,
   missingSettings,
@@ -136,4 +137,52 @@ test('previousTaskDefinition は降順の次の版を返し、なければ null'
   assert.equal(previousTaskDefinition('td:5', all), 'td:4');
   assert.equal(previousTaskDefinition('td:3', all), null);
   assert.equal(previousTaskDefinition('td:9', all), null);
+});
+
+const currentTaskDefinition = () => ({
+  taskDefinitionArn: 'arn:aws:ecs:ap-northeast-1:1:task-definition/cargo-tracker-staging:3',
+  revision: 3,
+  status: 'ACTIVE',
+  requiresAttributes: [],
+  compatibilities: ['FARGATE'],
+  registeredAt: '2026-11-27T00:00:00Z',
+  registeredBy: 'someone',
+  family: 'cargo-tracker-staging',
+  cpu: '1024',
+  containerDefinitions: [
+    {
+      name: 'cargo-tracker',
+      image: 'repo@sha256:abc',
+      environment: [{ name: 'SPRING_PROFILES_ACTIVE', value: 'staging' }],
+    },
+    { name: 'sidecar', image: 'other' },
+  ],
+});
+
+test('maintenanceTaskDefinition は環境変数だけを足し、イメージと他の設定を保ち、登録できない項目を落とす', () => {
+  const current = currentTaskDefinition();
+
+  const next = maintenanceTaskDefinition(current, true);
+
+  assert.deepEqual(Object.keys(next).sort(), ['containerDefinitions', 'cpu', 'family']);
+  assert.equal(next.containerDefinitions[0].image, 'repo@sha256:abc');
+  assert.deepEqual(next.containerDefinitions[0].environment, [
+    { name: 'SPRING_PROFILES_ACTIVE', value: 'staging' },
+    { name: 'CARGOTRACKER_MAINTENANCE_ENABLED', value: 'true' },
+  ]);
+  assert.deepEqual(next.containerDefinitions[1], { name: 'sidecar', image: 'other' });
+  assert.deepEqual(current, currentTaskDefinition(), '入力は変えない');
+});
+
+test('maintenanceTaskDefinition は off で既存の値を false に置き換え、重ねない', () => {
+  const next = maintenanceTaskDefinition(maintenanceTaskDefinition(currentTaskDefinition(), true), false);
+
+  assert.deepEqual(
+    next.containerDefinitions[0].environment.filter((e) => e.name === 'CARGOTRACKER_MAINTENANCE_ENABLED'),
+    [{ name: 'CARGOTRACKER_MAINTENANCE_ENABLED', value: 'false' }],
+  );
+});
+
+test('maintenanceTaskDefinition はアプリのコンテナがなければ失敗する', () => {
+  assert.throws(() => maintenanceTaskDefinition({ family: 'x', containerDefinitions: [{ name: 'other' }] }, true), /cargo-tracker/);
 });

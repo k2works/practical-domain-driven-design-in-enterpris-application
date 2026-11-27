@@ -130,6 +130,42 @@ END $$;`;
   ].join('\n');
 }
 
+/** `describe-task-definition` が返すが `register-task-definition` に渡せない項目。 */
+const UNREGISTRABLE_KEYS = [
+  'taskDefinitionArn',
+  'revision',
+  'status',
+  'requiresAttributes',
+  'compatibilities',
+  'registeredAt',
+  'registeredBy',
+];
+const APP_CONTAINER = 'cargo-tracker';
+const MAINTENANCE_ENV = 'CARGOTRACKER_MAINTENANCE_ENABLED';
+
+/**
+ * メンテナンス表示を切り替えた、登録できる形のタスク定義を作る（maintenance:on/off。ADR-023）。
+ * アプリのコンテナの環境変数だけを変え、イメージとほかの設定は保つ。入力は変えない。
+ */
+export function maintenanceTaskDefinition(current, enabled) {
+  if (!current.containerDefinitions.some((c) => c.name === APP_CONTAINER)) {
+    throw new Error(`タスク定義にコンテナ ${APP_CONTAINER} がありません`);
+  }
+  const next = Object.fromEntries(Object.entries(current).filter(([key]) => !UNREGISTRABLE_KEYS.includes(key)));
+  next.containerDefinitions = current.containerDefinitions.map((container) =>
+    container.name === APP_CONTAINER
+      ? {
+          ...container,
+          environment: [
+            ...(container.environment || []).filter((e) => e.name !== MAINTENANCE_ENV),
+            { name: MAINTENANCE_ENV, value: String(enabled) },
+          ],
+        }
+      : container,
+  );
+  return next;
+}
+
 /** 戻す先のタスク定義を選ぶ。現在より 1 つ前の版（list の降順の次）。ないときは null。 */
 export function previousTaskDefinition(currentArn, descendingArns) {
   const index = descendingArns.indexOf(currentArn);
@@ -459,4 +495,34 @@ export default function (gulp) {
     aws(target, ['ecs', 'wait', 'services-stable', '--cluster', target.name, '--services', target.name]);
     console.log('戻しを完了した');
   });
+
+  // メンテナンス表示の切り替え（ADR-023）。今のイメージのまま環境変数だけを変えた版を登録して入れ替える
+  for (const enabled of [true, false]) {
+    const taskName = enabled ? 'maintenance:on' : 'maintenance:off';
+    gulp.task(taskName, async () => {
+      const target = resolveTarget(parseOptions(process.argv.slice(2)));
+      console.log(`${taskName} ${target.env}: ${target.name} のメンテナンス表示を ${enabled ? '有効' : '無効'}にする`);
+      console.log('注意: 止まるのは画面の要求だけです。定期処理とイベントの配信は止まらず、DB への書き込みは続くことがあります');
+      if (target.dryRun) {
+        describe(`aws ecs describe-services と describe-task-definition で ${target.name} の現在のタスク定義を読む`);
+        describe(`${MAINTENANCE_ENV}=${enabled} にした版を register-task-definition し、update-service して services-stable を待つ`);
+        return;
+      }
+      const currentArn = aws(target, ['ecs', 'describe-services', '--cluster', target.name, '--services', target.name, '--query', 'services[0].taskDefinition', '--output', 'text']);
+      const current = JSON.parse(aws(target, ['ecs', 'describe-task-definition', '--task-definition', currentArn, '--query', 'taskDefinition']));
+      const dir = mkdtempSync(path.join(os.tmpdir(), 'cargo-tracker-maintenance-'));
+      let registered;
+      try {
+        const file = path.join(dir, 'task-definition.json');
+        writeFileSync(file, JSON.stringify(maintenanceTaskDefinition(current, enabled)), { mode: 0o600 });
+        registered = aws(target, ['ecs', 'register-task-definition', '--cli-input-json', `file://${file}`, '--query', 'taskDefinition.taskDefinitionArn', '--output', 'text']);
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+      console.log(`現在 ${currentArn} → ${registered}`);
+      aws(target, ['ecs', 'update-service', '--cluster', target.name, '--service', target.name, '--task-definition', registered]);
+      aws(target, ['ecs', 'wait', 'services-stable', '--cluster', target.name, '--services', target.name]);
+      console.log(`${taskName} を完了した`);
+    });
+  }
 }

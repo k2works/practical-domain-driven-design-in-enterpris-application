@@ -4,7 +4,7 @@ title: "運用タスク手順書 - cargo-tracker のステージング・本番�
 description: "ステージング・本番の DB 利用者の作成、権限の確認、配備前の確認、配備、戻しの運用タスク（Gulp）の使い方。未実行のコードであること、まだ作っていない運用タスクと、その理由を明記する。"
 tags: [operation, runbook]
 status: draft
-generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-27T10:24:58Z }
+generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-27T10:45:07Z }
 ---
 
 # 運用タスク手順書 - cargo-tracker のステージング・本番
@@ -46,6 +46,7 @@ DB への経路は、SSM Session Manager の踏み台のポートフォワード
 | `npx gulp deploy:preflight --env staging` | 作業ツリーが clean、HEAD の CI が成功、ECS の running と desired が同じ、を確かめる | しない |
 | `npx gulp deploy:release --env staging --ref develop` | 配備のワークフロー `cargo-tracker-deploy.yml` を起動する。本番（`--env production --confirm production`）は本番への昇格を含み、GitHub の Environment `production` の必須レビュアーの承認が先に要る | する（配備） |
 | `npx gulp deploy:rollback --env staging` | ECS のサービスを、直前のタスク定義へ戻し、安定するまで待つ。ECS のサーキットブレーカーの自動の戻しとは別の、人が判断する戻し | する（配備の戻し） |
+| `npx gulp maintenance:on --env staging`・`maintenance:off` | メンテナンス表示の切り替え（ADR-023。計画停止）。今のタスク定義の環境変数 `CARGOTRACKER_MAINTENANCE_ENABLED` だけを変えた版を登録して入れ替え、安定するまで待つ（イメージは変えない）。有効の間、画面の要求はすべて 503 と案内になる。ヘルスチェックは通る。**定期処理とイベントの配信は止まらず、DB への書き込みは続くことがある**。有効の間は OBS-02（5xx の割合）の警報が鳴る。有効の間に `deploy:rollback` をすると表示が切り替わることがある。`terraform apply` はこの環境変数を持たない版に戻す。**実環境では未実行** | する（配備） |
 
 ### 失敗したとき
 
@@ -73,7 +74,7 @@ DB への経路は、SSM Session Manager の踏み台のポートフォワード
 
 DB の論理障害・誤操作で、障害の直前の時点へ戻すときの手順。設計は [運用要件](../../design/cargo-tracker/operation.md) の RB-02、RCV-04（RTO 2 時間）、RCV-07（復旧後の照合）。**この手順の AWS CLI の記述は仕様から書いたもので、実際に実行して確かめていない。** タスク（`db:restore:pitr`・`recovery:reconcile`）はまだ作っていない（持ち越し H-6）。環境ができたら、ステージングで訓練して直す（RCV-08: 本番開始前に 1 回、その後は半年に 1 回）。
 
-1. **書き込みを止める**: メンテナンス表示に切り替える（`maintenance:on` はまだない。当面は ECS の `desiredCount` を 0 にして、アプリを止める）。止めた時刻を記録する。
+1. **書き込みを止める**: ECS の `desiredCount` を 0 にして、アプリを止める。止めた時刻を記録する。**`maintenance:on` はこの手順の代わりにしない。** 止まるのは画面の要求だけで、定期処理と、起動のときのイベントの配り直しは DB に書き続ける（W10-1 の Bolt 59）。利用者には案内を別の手段で知らせる。
 2. **戻す時点を決める**: 障害の直前の UTC の時刻を、監査記録とログで特定する。人が決め、運用責任者の承認を得る。
 3. **別のインスタンスへ復旧する**（元のインスタンスは消さずに残す）:
    `aws rds restore-db-instance-to-point-in-time --source-db-instance-identifier cargo-tracker-<env>-db --target-db-instance-identifier cargo-tracker-<env>-db-restored --restore-time <UTC の時刻> --db-subnet-group-name cargo-tracker-<env>-db --vpc-security-group-ids <RDS のセキュリティグループ> --no-publicly-accessible`
@@ -81,7 +82,7 @@ DB の論理障害・誤操作で、障害の直前の時点へ戻すときの�
 4. **中身を確かめる**: 踏み台のポートフォワードで復旧したインスタンスに入り、障害の前後の行（問題の記録が戻っているか、直前の主要な記録が残っているか）を確かめる。
 5. **切り替える**: アプリのタスク定義の接続先（`SPRING_DATASOURCE_URL`）を復旧したインスタンスのエンドポイントにして配備する。**Terraform の管理から外れる**ので、切り替えの後に Terraform の状態と構成を人が揃える（`terraform import` か、元の識別子への入れ替え）。この揃え方は訓練で決める。
 6. **復旧後の照合（RCV-07）**: 戻した時点より後に起きたことを、DB の外の記録（外部原本の S3、監査記録の書き出し、メールの送信の記録）と照合して再処理する。外部原本の取込は、取込の履歴にない原本を再取込する。照合の手順（`recovery:reconcile`）は設計がまだない。
-7. **確認と再開**: ヘルスチェックと受入シナリオの主要フローを確かめ、メンテナンス表示を外す（`desiredCount` を戻す）。
+7. **確認と再開**: `desiredCount` を戻し、ヘルスチェックと受入シナリオの主要フローを確かめる。利用者に再開を知らせる。
 8. **記録**: 復旧した時点、所要時間（RTO と比べる）、照合の結果を残し、5 営業日以内に事後分析を行う。
 
 **設計との差（Terraform）**: 設計は DB の自動バックアップと外部原本・監査記録の書き出しを大阪リージョンへ複製するとあるが、`ops/terraform/` にはまだ複製の設定がない（持ち越し H-9）。時点復旧の訓練の前に足す。
@@ -102,7 +103,6 @@ DB の論理障害・誤操作で、障害の直前の時点へ戻すときの�
 | タスク（operation.md） | 理由 |
 | :--- | :--- |
 | `audit:export:verify`（AUD-03、AUD-UI-01） | 書き出しの形式とハッシュの仕様が、まだ設計に書かれていない |
-| `maintenance:on`・`maintenance:off` | メンテナンス表示の仕組みがアプリにない |
 | `db:restore:pitr`・`recovery:reconcile`・`db:failover:drill` | 時点復旧の手順は、Release 1.1 の頭で計画する（Bolt 55-1 は W10 では未着手）。環境ができてから訓練する |
 | `kpi:baseline:register` | 画面（S-22）にある。タスクは不要 |
 
