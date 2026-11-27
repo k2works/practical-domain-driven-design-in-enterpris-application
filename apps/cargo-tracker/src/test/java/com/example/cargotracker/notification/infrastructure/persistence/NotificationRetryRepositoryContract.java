@@ -103,12 +103,26 @@ abstract class NotificationRetryRepositoryContract {
     }
 
     @Test
+    void 再送できない失敗の行は引き取れない() {
+        Notification pending = resendable();
+        repository.addIfAbsent(pending);
+        assertThat(repository.recordOutcome(pending.failed("宛先の不備", false))).isTrue();
+        Notification forced = pending.failed("接続できない", true)
+                .retry(new UtcInstant(CREATED_AT.instant().plus(Duration.ofMinutes(10))))
+                .orElseThrow();
+
+        assertThat(repository.claimRetry(forced)).isFalse();
+        assertThat(stored(pending).status()).isEqualTo(NotificationStatus.FAILED);
+    }
+
+    @Test
     void リンクは再送しない種類の行には書けない() {
         Notification pending = resendable();
         repository.addIfAbsent(pending);
+        UUID id = pending.id();
 
-        assertThatThrownBy(() -> jdbc.update(
-                        "UPDATE notification.notification SET kind = 'PASSWORD_RESET' WHERE id = ?", pending.id()))
+        assertThatThrownBy(() ->
+                        jdbc.update("UPDATE notification.notification SET kind = 'PASSWORD_RESET' WHERE id = ?", id))
                 .isInstanceOf(DataIntegrityViolationException.class);
     }
 }

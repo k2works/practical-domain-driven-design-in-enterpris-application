@@ -133,6 +133,27 @@ class ShipperNotificationRetryServiceTest {
     }
 
     @Test
+    void 一時の失敗が起きたらその回は打ち切り残りは引き取らず回数を使わない() {
+        Notification first = firstSendFails(true);
+        Notification second = firstSendFails(true);
+
+        int attempted = retryServiceAt(NOW.plus(Duration.ofMinutes(10))).retryDue();
+
+        assertThat(attempted).isEqualTo(1);
+        assertThat(List.of(reload(first).retryCount(), reload(second).retryCount()))
+                .containsExactlyInAnyOrder(1, 0);
+    }
+
+    @Test
+    void 一時でない失敗はその通知だけの問題なので残りを続けて送る() {
+        firstSendFails(true);
+        firstSendFails(true);
+        sender.transientFailure = false;
+
+        assertThat(retryServiceAt(NOW.plus(Duration.ofMinutes(10))).retryDue()).isEqualTo(2);
+    }
+
+    @Test
     void ほかの実行が先に引き取った通知は送らない() {
         firstSendFails(true);
         sender.failure = null;

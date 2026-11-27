@@ -67,6 +67,7 @@
                retry_count = #{retryCount}
          WHERE id = #{id}
            AND status = 'FAILED'
+           AND retryable = TRUE
            AND retry_count = #{retryCount} - 1
     </update>
 

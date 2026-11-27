@@ -29,7 +29,6 @@ public interface NotificationRepository {
      */
     List<Notification> findRecentByRecipient(UUID recipientUserId, Set<NotificationKind> kinds, int limit);
 
-    /** 契機と宛先で通知を探す。 */
     /** 再送できる失敗のうち、指定の時刻より後に作られたものを古い順に上限まで返す（Bolt 61）。 */
     List<Notification> findRetryCandidates(UtcInstant createdAfter, int limit);
 
@@ -39,5 +38,6 @@ public interface NotificationRepository {
      */
     boolean claimRetry(Notification retrying);
 
+    /** 契機と宛先で通知を探す。 */
     Optional<Notification> findByEventIdAndRecipient(UUID eventId, UUID recipientUserId);
 }

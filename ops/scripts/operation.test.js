@@ -9,12 +9,13 @@ import {
   grantsVerifySql,
   initRolesSql,
   maintenanceTaskDefinition,
+  maintenanceEnabled,
+  rollbackTaskDefinition,
   isPortInUse,
   latestSuccess,
   missingSettings,
   waitForPort,
   parseOptions,
-  previousTaskDefinition,
   resolveTarget,
 } from './operation.js';
 
@@ -132,13 +133,6 @@ test('latestSuccess は先頭（最新）の実行が成功のときだけ true'
   assert.equal(latestSuccess([]), false);
 });
 
-test('previousTaskDefinition は降順の次の版を返し、なければ null', () => {
-  const all = ['td:5', 'td:4', 'td:3'];
-  assert.equal(previousTaskDefinition('td:5', all), 'td:4');
-  assert.equal(previousTaskDefinition('td:3', all), null);
-  assert.equal(previousTaskDefinition('td:9', all), null);
-});
-
 const currentTaskDefinition = () => ({
   taskDefinitionArn: 'arn:aws:ecs:ap-northeast-1:1:task-definition/cargo-tracker-staging:3',
   revision: 3,
@@ -186,3 +180,49 @@ test('maintenanceTaskDefinition は off で既存の値を false に置き換え
 test('maintenanceTaskDefinition はアプリのコンテナがなければ失敗する', () => {
   assert.throws(() => maintenanceTaskDefinition({ family: 'x', containerDefinitions: [{ name: 'other' }] }, true), /cargo-tracker/);
 });
+
+const revision = (arn, image, maintenance) => ({
+  taskDefinitionArn: arn,
+  family: 'cargo-tracker-staging',
+  containerDefinitions: [
+    {
+      name: 'cargo-tracker',
+      image,
+      environment: maintenance === undefined ? [] : [{ name: 'CARGOTRACKER_MAINTENANCE_ENABLED', value: String(maintenance) }],
+    },
+  ],
+});
+
+test('maintenanceEnabled は環境変数が true のときだけ true', () => {
+  assert.equal(maintenanceEnabled(revision('a', 'img', true)), true);
+  assert.equal(maintenanceEnabled(revision('a', 'img', false)), false);
+  assert.equal(maintenanceEnabled(revision('a', 'img')), false);
+});
+
+test('rollbackTaskDefinition は maintenance:off の直後でも表示だけの版に戻らず、イメージの違う直前の版を選ぶ', () => {
+  const current = revision('td:4', 'new', false);
+  const older = [revision('td:3', 'new', true), revision('td:2', 'new'), revision('td:1', 'old')];
+
+  assert.equal(rollbackTaskDefinition(current, older).source.taskDefinitionArn, 'td:1');
+});
+
+test('rollbackTaskDefinition は戻し先の表示が今と同じなら版をそのまま使う', () => {
+  const result = rollbackTaskDefinition(revision('td:2', 'new', false), [revision('td:1', 'old')]);
+
+  assert.equal(result.register, null);
+});
+
+test('rollbackTaskDefinition は戻し先の表示が今と違えば、今の表示に合わせた版を登録する', () => {
+  const offAgain = rollbackTaskDefinition(revision('td:2', 'new', false), [revision('td:1', 'old', true)]);
+  const keepOn = rollbackTaskDefinition(revision('td:2', 'new', true), [revision('td:1', 'old', false)]);
+
+  assert.equal(maintenanceEnabled(offAgain.register), false);
+  assert.equal(offAgain.register.containerDefinitions[0].image, 'old');
+  assert.equal(offAgain.register.taskDefinitionArn, undefined);
+  assert.equal(maintenanceEnabled(keepOn.register), true);
+});
+
+test('rollbackTaskDefinition はイメージの違う版がなければ null', () => {
+  assert.equal(rollbackTaskDefinition(revision('td:2', 'same'), [revision('td:1', 'same', true)]), null);
+});
+

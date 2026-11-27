@@ -23,6 +23,8 @@ public class KpiObservationEventHandler {
 
     private static final Logger LOG = LoggerFactory.getLogger(KpiObservationEventHandler.class);
 
+    private static final String POISON_EVENT_MARKER = OperationsAlert.POISON_EVENT.marker();
+
     private final KpiObservationRepository repository;
 
     public KpiObservationEventHandler(KpiObservationRepository repository) {
@@ -56,7 +58,7 @@ public class KpiObservationEventHandler {
             LOG.error(
                     "{} " + "DE-03 の提示時刻が提出時刻より前のため KPI 計測記録に記録せずに捨てた（再配信しても直らない。調査が要る）:"
                             + " 輸送要求 {}、見積り {}、提出時刻 {}、提示時刻 {}",
-                    OperationsAlert.POISON_EVENT.marker(),
+                    POISON_EVENT_MARKER,
                     event.transportRequestId(),
                     event.quotationId(),
                     observation.submittedAt().instant(),

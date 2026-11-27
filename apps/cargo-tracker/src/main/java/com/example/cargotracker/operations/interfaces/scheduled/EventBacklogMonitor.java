@@ -1,6 +1,7 @@
 package com.example.cargotracker.operations.interfaces.scheduled;
 
 import com.example.cargotracker.operations.application.internal.queryservices.EventBacklogQueryService;
+import com.example.cargotracker.operations.domain.model.valueobjects.BacklogSeverity;
 import com.example.cargotracker.operations.domain.model.valueobjects.EventBacklog;
 import com.example.cargotracker.shared.domain.OperationsAlert;
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
@@ -24,6 +25,12 @@ public class EventBacklogMonitor {
 
     private static final Logger LOG = LoggerFactory.getLogger(EventBacklogMonitor.class);
 
+    private static final String MESSAGE = "{} 未完了のイベント配信が滞留している: {} 件、最も古い発行から {} 分";
+
+    private static final String WARNING_MARKER = OperationsAlert.EVENT_BACKLOG_WARNING.marker();
+
+    private static final String CRITICAL_MARKER = OperationsAlert.EVENT_BACKLOG_CRITICAL.marker();
+
     private final EventBacklogQueryService service;
 
     public EventBacklogMonitor(EventBacklogQueryService service) {
@@ -41,23 +48,16 @@ public class EventBacklogMonitor {
     }
 
     private static void report(EventBacklog backlog) {
+        BacklogSeverity severity = backlog.severity();
+        if (severity == BacklogSeverity.NONE) {
+            return;
+        }
+        int staleCount = backlog.staleCount();
         long oldestMinutes = backlog.oldestAge().toMinutes();
-        switch (backlog.severity()) {
-            default -> {
-                // 滞留はない
-            }
-            case WARNING ->
-                LOG.warn(
-                        "{} 未完了のイベント配信が滞留している: {} 件、最も古い発行から {} 分",
-                        OperationsAlert.EVENT_BACKLOG_WARNING.marker(),
-                        backlog.staleCount(),
-                        oldestMinutes);
-            case CRITICAL ->
-                LOG.error(
-                        "{} 未完了のイベント配信が滞留している: {} 件、最も古い発行から {} 分",
-                        OperationsAlert.EVENT_BACKLOG_CRITICAL.marker(),
-                        backlog.staleCount(),
-                        oldestMinutes);
+        if (severity == BacklogSeverity.CRITICAL) {
+            LOG.error(MESSAGE, CRITICAL_MARKER, staleCount, oldestMinutes);
+        } else {
+            LOG.warn(MESSAGE, WARNING_MARKER, staleCount, oldestMinutes);
         }
     }
 }

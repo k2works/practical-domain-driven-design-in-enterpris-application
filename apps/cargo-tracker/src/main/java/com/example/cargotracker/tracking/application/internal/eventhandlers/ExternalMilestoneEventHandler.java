@@ -35,6 +35,8 @@ public class ExternalMilestoneEventHandler {
 
     private static final Logger LOG = LoggerFactory.getLogger(ExternalMilestoneEventHandler.class);
 
+    private static final String MILESTONE_REJECTED_MARKER = OperationsAlert.MILESTONE_REJECTED.marker();
+
     private final TrackingRecordRepository repository;
     private final RejectedMilestoneRepository rejectedMilestones;
     private final Clock clock;
@@ -93,7 +95,7 @@ public class ExternalMilestoneEventHandler {
         caseOpener.open(rejected, trackingRecord, external.operator());
         LOG.warn(
                 "{} " + "DE-13 を実績にせず拒否の記録に残した: 追跡番号 {}、理由 {}、受信記録 {}",
-                OperationsAlert.MILESTONE_REJECTED.marker(),
+                MILESTONE_REJECTED_MARKER,
                 external.trackingNumber().value(),
                 reason,
                 external.source().reference());

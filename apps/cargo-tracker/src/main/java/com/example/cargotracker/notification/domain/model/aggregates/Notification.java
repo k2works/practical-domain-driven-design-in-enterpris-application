@@ -24,6 +24,9 @@ public final class Notification {
     /** 再送の回数の上限（ADR-021）。 */
     public static final int MAX_RETRIES = 3;
 
+    /** 保存できるリンクの長さの上限（表の列の長さ）。 */
+    public static final int LINK_MAX_LENGTH = 500;
+
     /** 作成からこの時間がたった通知は再送しない（失敗の後に利用停止になった人へ届き続けないための上限。CP-5）。 */
     public static final Duration RETRY_WINDOW = Duration.ofHours(24);
 
@@ -138,7 +141,7 @@ public final class Notification {
                 null,
                 null,
                 createdAt,
-                new RetryState(requireText(link, "link"), 0, false));
+                new RetryState(storableLink(link), 0, false));
     }
 
     /** 保存した再送の状態を戻す（{@link #reconstitute} の後に使う）。 */
@@ -264,6 +267,12 @@ public final class Notification {
         if (status != NotificationStatus.PENDING) {
             throw new IllegalStateException("送信待ちの通知だけが送信の結果を持てる: " + status);
         }
+    }
+
+    /** 列に収まらないリンクは保存しない（その通知は再送しないが、送信は続ける）。 */
+    private static String storableLink(String value) {
+        String text = requireText(value, "link");
+        return text.codePointCount(0, text.length()) > LINK_MAX_LENGTH ? null : text;
     }
 
     private static String requireText(String value, String name) {

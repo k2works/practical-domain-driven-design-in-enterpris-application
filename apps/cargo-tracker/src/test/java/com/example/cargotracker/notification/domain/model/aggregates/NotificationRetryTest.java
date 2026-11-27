@@ -53,9 +53,11 @@ class NotificationRetryTest {
             names = {"PASSWORD_RESET", "USER_INVITATION", "TOTP_RESET_BY_ADMIN", "TOTP_ENROLLED", "TOTP_RE_ENROLLED"})
     void 再送しない種類はリンクを持てない(NotificationKind kind) {
         UtcInstant at = new UtcInstant(CREATED);
+        UUID eventId = UUID.randomUUID();
+        UUID recipient = UUID.randomUUID();
 
         assertThatThrownBy(() -> Notification.pendingResendable(
-                        UUID.randomUUID(), UUID.randomUUID(), "a@example.com", kind, "ref", LINK, "ja", at))
+                        eventId, recipient, "a@example.com", kind, "ref", LINK, "ja", at))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
@@ -117,6 +119,24 @@ class NotificationRetryTest {
 
         assertThat(failed.retry(after(Duration.ofHours(24).minusSeconds(1)))).isPresent();
         assertThat(failed.retry(after(Duration.ofHours(24)))).isEmpty();
+    }
+
+    @Test
+    void 保存できる長さを超えるリンクは持たず再送しない通知にして送信は続けられる() {
+        String tooLong = "https://example.com/" + "a".repeat(Notification.LINK_MAX_LENGTH);
+
+        Notification pending = Notification.pendingResendable(
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                "shipper@example.com",
+                NotificationKind.BOOKING_CONFIRMED,
+                "BK-1",
+                tooLong,
+                "ja",
+                new UtcInstant(CREATED));
+
+        assertThat(pending.link()).isEmpty();
+        assertThat(pending.failed("接続できない", true).retryable()).isFalse();
     }
 
     @Test

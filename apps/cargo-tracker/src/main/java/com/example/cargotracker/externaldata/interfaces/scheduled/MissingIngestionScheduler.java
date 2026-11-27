@@ -24,6 +24,8 @@ public class MissingIngestionScheduler {
 
     private static final Logger LOG = LoggerFactory.getLogger(MissingIngestionScheduler.class);
 
+    private static final String INGESTION_MISSING_MARKER = OperationsAlert.INGESTION_MISSING.marker();
+
     private final MissingIngestionQueryService service;
 
     public MissingIngestionScheduler(MissingIngestionQueryService service) {
@@ -35,7 +37,7 @@ public class MissingIngestionScheduler {
     public void run() {
         try {
             if (service.isTodayMissing()) {
-                LOG.warn("{} 当日の外部原本の取込がない", OperationsAlert.INGESTION_MISSING.marker());
+                LOG.warn("{} 当日の外部原本の取込がない", INGESTION_MISSING_MARKER);
             }
         } catch (RuntimeException e) {
             LOG.error("当日の取込の確認に失敗した", e);

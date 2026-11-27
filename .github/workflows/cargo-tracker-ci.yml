@@ -13,12 +13,16 @@ on:
       - 'apps/cargo-tracker/**'
       # 用語集の整合テストが読む設計文書
       - 'docs/design/cargo-tracker/**'
+      # 運用の警告の印と Terraform のキーの一致のテストが読む
+      - 'ops/terraform/modules/alerts/**'
       - '.github/workflows/cargo-tracker-ci.yml'
   pull_request:
     paths:
       - 'apps/cargo-tracker/**'
       # 用語集の整合テストが読む設計文書
       - 'docs/design/cargo-tracker/**'
+      # 運用の警告の印と Terraform のキーの一致のテストが読む
+      - 'ops/terraform/modules/alerts/**'
       - '.github/workflows/cargo-tracker-ci.yml'
   # develop で手で配備し直すとき（deploy-demo は develop でだけ動く）。job に performance を選ぶと、性能の計測（performance ジョブ）だけを
   # 動かし、check・ui・deploy-demo は動かさない（Bolt 39b4。PERF-06 の判定は Linux のランナーで行う）

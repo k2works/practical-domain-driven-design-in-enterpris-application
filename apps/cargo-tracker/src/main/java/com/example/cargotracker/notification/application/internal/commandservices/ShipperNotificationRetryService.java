@@ -52,8 +52,10 @@ public class ShipperNotificationRetryService {
         for (Notification candidate : candidates) {
             Optional<Notification> retrying = candidate.retry(now).filter(this::claim);
             if (retrying.isPresent()) {
-                send(retrying.get());
                 attempted++;
+                if (!send(retrying.get())) {
+                    break;
+                }
             }
         }
         return attempted;
@@ -63,9 +65,12 @@ public class ShipperNotificationRetryService {
         return Boolean.TRUE.equals(transactionTemplate.execute(status -> notifications.claimRetry(retrying)));
     }
 
-    private void send(Notification retrying) {
+    /**
+     * @return 次の通知も続けて送ってよいか。一時の失敗は送り先の不調とみなして打ち切る（残りは引き取らず、再送の回数を使わない）
+     */
+    private boolean send(Notification retrying) {
         String link = retrying.link().orElseThrow();
-        delivery.attempt(
+        return !delivery.attemptEndedInTransientFailure(
                 retrying,
                 () -> template.compose(
                         retrying.email(), retrying.kind(), retrying.targetRef(), link, retrying.locale()),

@@ -14,7 +14,7 @@ locals {
     }
   ]...)
 
-  # キーはアプリの OperationsAlert の code と一致させる（OperationsAlertTerraformTest が確かめる）。
+  # キーはアプリの OperationsAlert の code と一致させる（アプリの OperationsAlertTest が確かめる）。
   log_alerts = {
     "event-backlog-warning"  = { topics = ["operations"], description = "OBS-03 警告: 発行から 5 分以上の未完了のイベント配信がある（RB-04）" }
     "event-backlog-critical" = { topics = ["operations"], description = "OBS-03 重大: 未完了のイベント配信が 10 件以上か 30 分以上（RB-04）" }
@@ -104,10 +104,11 @@ resource "aws_cloudwatch_metric_alarm" "server_errors" {
   treat_missing_data  = "notBreaching"
   alarm_actions       = [aws_sns_topic.this["operations"].arn]
 
-  # アプリの 5xx と、ALB 自身が返す 5xx（タスクが応答できないとき）の両方を数える
+  # アプリの 5xx と、ALB 自身が返す 5xx（タスクが応答できないとき）の両方を数える。RequestCount は転送先を選べた要求だけを
+  # 数える（と理解している。実環境では未確認）ので、分母に ALB の 5xx を足し、転送先がないときも割合が出て 100% を超えないようにする
   metric_query {
     id          = "rate"
-    expression  = "IF(requests > 0, 100 * (FILL(target_errors, 0) + FILL(elb_errors, 0)) / requests, 0)"
+    expression  = "IF(FILL(requests, 0) + FILL(elb_errors, 0) > 0, 100 * (FILL(target_errors, 0) + FILL(elb_errors, 0)) / (FILL(requests, 0) + FILL(elb_errors, 0)), 0)"
     return_data = true
   }
 

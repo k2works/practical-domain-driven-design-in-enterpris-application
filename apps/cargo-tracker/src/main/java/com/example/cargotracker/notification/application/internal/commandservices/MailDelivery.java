@@ -95,17 +95,19 @@ final class MailDelivery {
         if (!Boolean.TRUE.equals(added)) {
             return new MailDeliveryOutcome.AlreadySent();
         }
-        return attempt(pending, mail, masks);
+        return attempt(pending, mail, masks, new boolean[1]);
     }
 
-    /** 送信待ちとして記録済み（または再送のために引き取り済み）の通知を送り、結果を書く。 */
-    MailDeliveryOutcome attempt(Notification pending, Supplier<OutgoingMail> mail, List<Mask> masks) {
+    /** 送信待ちとして記録済みの通知を送り、結果を書く。 */
+    private MailDeliveryOutcome attempt(
+            Notification pending, Supplier<OutgoingMail> mail, List<Mask> masks, boolean[] transientFailure) {
         try {
             sender.send(mail.get());
         } catch (RuntimeException e) {
             String reason = reasonOf(e, masks);
             LOG.warn("{} のメールを送れなかった: 契機 {}、通知 {}、理由 {}", pending.kind(), pending.eventId(), pending.id(), reason);
-            saveOutcome(pending.failed(reason, sender.isTransientFailure(e)));
+            transientFailure[0] = sender.isTransientFailure(e);
+            saveOutcome(pending.failed(reason, transientFailure[0]));
             return new MailDeliveryOutcome.Failed(reason);
         }
         saveOutcome(pending.sent(now()));
@@ -113,6 +115,13 @@ final class MailDelivery {
     }
 
     /** 今の時刻（各サービスが送信待ちの通知を作るときにも使う）。 */
+    /** 引き取った通知を送り、一時の失敗で終わったかを返す（再送の打ち切りの判断に使う。Bolt 61）。 */
+    boolean attemptEndedInTransientFailure(Notification pending, Supplier<OutgoingMail> mail, List<Mask> masks) {
+        boolean[] transientFailure = {false};
+        attempt(pending, mail, masks, transientFailure);
+        return transientFailure[0];
+    }
+
     UtcInstant now() {
         return new UtcInstant(clock.instant());
     }

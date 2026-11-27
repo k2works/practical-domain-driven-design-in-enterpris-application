@@ -166,11 +166,32 @@ export function maintenanceTaskDefinition(current, enabled) {
   return next;
 }
 
-/** 戻す先のタスク定義を選ぶ。現在より 1 つ前の版（list の降順の次）。ないときは null。 */
-export function previousTaskDefinition(currentArn, descendingArns) {
-  const index = descendingArns.indexOf(currentArn);
-  if (index < 0 || index + 1 >= descendingArns.length) return null;
-  return descendingArns[index + 1];
+const appContainer = (definition) => definition.containerDefinitions.find((c) => c.name === APP_CONTAINER);
+
+/** タスク定義でメンテナンス表示が有効か。 */
+export function maintenanceEnabled(definition) {
+  const entry = (appContainer(definition)?.environment || []).find((e) => e.name === MAINTENANCE_ENV);
+  return entry?.value === 'true';
+}
+
+/**
+ * deploy:rollback の戻し先を選ぶ。版が 1 つ前でも、maintenance:on・off が作った版はイメージが同じなので飛ばし、
+ * **イメージの違う直前の版**を選ぶ。メンテナンス表示は今の状態を保つ（戻し先の値が違えば、今の値に合わせた版を登録する）。
+ *
+ * @param current 今のタスク定義
+ * @param olderDescending 今より前のタスク定義（新しい順。遅延して読めるように反復可能でよい）
+ * @returns {{source: object, register: object | null} | null} 戻し先がなければ null。register があれば登録してから使う
+ */
+export function rollbackTaskDefinition(current, olderDescending) {
+  for (const source of olderDescending) {
+    if (appContainer(source)?.image === appContainer(current).image) continue;
+    const enabled = maintenanceEnabled(current);
+    return {
+      source,
+      register: maintenanceEnabled(source) === enabled ? null : maintenanceTaskDefinition(source, enabled),
+    };
+  }
+  return null;
 }
 
 // ============================================
@@ -360,6 +381,38 @@ async function psql(target, sql, variables = {}) {
 // タスク
 // ============================================
 
+function currentTaskDefinitionArn(target) {
+  return aws(target, ['ecs', 'describe-services', '--cluster', target.name, '--services', target.name, '--query', 'services[0].taskDefinition', '--output', 'text']);
+}
+
+function describeTaskDefinition(target, arn) {
+  return JSON.parse(aws(target, ['ecs', 'describe-task-definition', '--task-definition', arn, '--query', 'taskDefinition']));
+}
+
+/** タスク定義を登録して ARN を返す。内容は一時ファイル（所有者だけが読める）で渡し、すぐ消す。 */
+function registerTaskDefinition(target, definition) {
+  const registrable = Object.fromEntries(Object.entries(definition).filter(([key]) => !UNREGISTRABLE_KEYS.includes(key)));
+  const dir = mkdtempSync(path.join(os.tmpdir(), 'cargo-tracker-taskdef-'));
+  try {
+    const file = path.join(dir, 'task-definition.json');
+    writeFileSync(file, JSON.stringify(registrable), { mode: 0o600 });
+    return aws(target, ['ecs', 'register-task-definition', '--cli-input-json', `file://${file}`, '--query', 'taskDefinition.taskDefinitionArn', '--output', 'text']);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+/** サービスのタスク定義を入れ替えて、安定するまで待つ。 */
+function replaceTaskDefinition(target, arn) {
+  aws(target, ['ecs', 'update-service', '--cluster', target.name, '--service', target.name, '--task-definition', arn]);
+  try {
+    aws(target, ['ecs', 'wait', 'services-stable', '--cluster', target.name, '--services', target.name]);
+  } catch (error) {
+    console.error('入れ替えの依頼は受け付けられています。同じタスクを再実行せず、ECS のサービスの状態を確かめてください（deploy:preflight）');
+    throw error;
+  }
+}
+
 export default function (gulp) {
   // DB 利用者（マイグレーション用・アプリケーション用）の作成（DA-02）。パスワードを生成して Secrets Manager に置く。権限の付与は Flyway のコールバックが行う
   gulp.task('db:init', async () => {
@@ -481,18 +534,24 @@ export default function (gulp) {
   // 直前のタスク定義へ戻す（ECS のサーキットブレーカーの自動の戻しとは別の、人が判断する戻し）
   gulp.task('deploy:rollback', async () => {
     const target = resolveTarget(parseOptions(process.argv.slice(2)));
-    console.log(`deploy:rollback ${target.env}: ${target.name} を直前のタスク定義に戻す`);
+    console.log(`deploy:rollback ${target.env}: ${target.name} を、イメージの違う直前の版に戻す（メンテナンス表示は今の状態を保つ）`);
     if (target.dryRun) {
-      describe(`aws ecs describe-services で現在のタスク定義を読み、list-task-definitions（降順）の次の版へ update-service し、services-stable を待つ`);
+      describe(`aws ecs describe-services で現在のタスク定義を読み、list-task-definitions（降順）の前の版からイメージの違うものを探して update-service し、services-stable を待つ`);
       return;
     }
-    const current = aws(target, ['ecs', 'describe-services', '--cluster', target.name, '--services', target.name, '--query', 'services[0].taskDefinition', '--output', 'text']);
+    const currentArn = currentTaskDefinitionArn(target);
     const all = JSON.parse(aws(target, ['ecs', 'list-task-definitions', '--family-prefix', target.name, '--sort', 'DESC', '--query', 'taskDefinitionArns']));
-    const previous = previousTaskDefinition(current, all);
-    if (!previous) throw new Error('戻せる直前のタスク定義がありません');
-    console.log(`現在 ${current} → 戻し先 ${previous}`);
-    aws(target, ['ecs', 'update-service', '--cluster', target.name, '--service', target.name, '--task-definition', previous]);
-    aws(target, ['ecs', 'wait', 'services-stable', '--cluster', target.name, '--services', target.name]);
+    const olderArns = all.slice(all.indexOf(currentArn) + 1);
+    if (all.indexOf(currentArn) < 0) throw new Error(`現在のタスク定義が一覧にありません: ${currentArn}`);
+    // 版は新しい順に必要な分だけ読む
+    function* older() {
+      for (const arn of olderArns) yield describeTaskDefinition(target, arn);
+    }
+    const found = rollbackTaskDefinition(describeTaskDefinition(target, currentArn), older());
+    if (!found) throw new Error('戻せる、イメージの違う前のタスク定義がありません');
+    const next = found.register ? registerTaskDefinition(target, found.register) : found.source.taskDefinitionArn;
+    console.log(`現在 ${currentArn} → 戻し先 ${next}`);
+    replaceTaskDefinition(target, next);
     console.log('戻しを完了した');
   });
 
@@ -508,20 +567,10 @@ export default function (gulp) {
         describe(`${MAINTENANCE_ENV}=${enabled} にした版を register-task-definition し、update-service して services-stable を待つ`);
         return;
       }
-      const currentArn = aws(target, ['ecs', 'describe-services', '--cluster', target.name, '--services', target.name, '--query', 'services[0].taskDefinition', '--output', 'text']);
-      const current = JSON.parse(aws(target, ['ecs', 'describe-task-definition', '--task-definition', currentArn, '--query', 'taskDefinition']));
-      const dir = mkdtempSync(path.join(os.tmpdir(), 'cargo-tracker-maintenance-'));
-      let registered;
-      try {
-        const file = path.join(dir, 'task-definition.json');
-        writeFileSync(file, JSON.stringify(maintenanceTaskDefinition(current, enabled)), { mode: 0o600 });
-        registered = aws(target, ['ecs', 'register-task-definition', '--cli-input-json', `file://${file}`, '--query', 'taskDefinition.taskDefinitionArn', '--output', 'text']);
-      } finally {
-        rmSync(dir, { recursive: true, force: true });
-      }
-      console.log(`現在 ${currentArn} → ${registered}`);
-      aws(target, ['ecs', 'update-service', '--cluster', target.name, '--service', target.name, '--task-definition', registered]);
-      aws(target, ['ecs', 'wait', 'services-stable', '--cluster', target.name, '--services', target.name]);
+      const currentArn = currentTaskDefinitionArn(target);
+      const next = registerTaskDefinition(target, maintenanceTaskDefinition(describeTaskDefinition(target, currentArn), enabled));
+      console.log(`現在 ${currentArn} → ${next}`);
+      replaceTaskDefinition(target, next);
       console.log(`${taskName} を完了した`);
     });
   }
