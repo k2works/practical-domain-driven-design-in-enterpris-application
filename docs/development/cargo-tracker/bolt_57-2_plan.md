@@ -3,8 +3,10 @@ type: Plan
 title: "Bolt 57-2 計画と報告 - 未完了のイベント配信の検知（OBS-03）"
 description: "W10-1 計画の Bolt 57-2（技術、SP 0）。"
 tags: [plan]
-status: draft
+status: stable
 generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-27T10:41:36Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-11-27T20:59:05Z }
 ---
 
 # Bolt 57-2 計画と報告 - 未完了のイベント配信の検知（OBS-03）

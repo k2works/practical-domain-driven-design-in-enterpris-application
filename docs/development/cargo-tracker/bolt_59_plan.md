@@ -3,8 +3,10 @@ type: Plan
 title: "Bolt 59 計画と報告 - メンテナンス表示"
 description: "W10-1 計画の Bolt 59（技術、SP 0）。"
 tags: [plan]
-status: draft
+status: stable
 generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-27T10:45:07Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-11-27T20:59:05Z }
 ---
 
 # Bolt 59 計画と報告 - メンテナンス表示

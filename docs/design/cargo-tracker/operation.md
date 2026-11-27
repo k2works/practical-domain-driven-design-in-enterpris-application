@@ -4,7 +4,7 @@ title: "cargo-tracker 運用要件"
 description: "cargo-tracker の運用体制、定常運用、監視と通知、バックアップと復旧、障害対応の手順（ランブック）、変更管理、DB 利用者と権限の初期化、アカウント運用、運用タスクの一覧。"
 tags: [design, operation]
 status: stable
-generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-27T10:53:52Z }
+generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-27T20:59:05Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T08:30:35Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:38Z }
@@ -211,7 +211,7 @@ stop
 | RB-08 | 監査記録の欠落 | OBS-08 | 欠落した対象と期間を特定する | 原因を直す。欠落は補わず、異常として記録する（改ざんと区別するため） | 欠落の範囲と原因を記録し、監査担当者へ報告する |
 | RB-09 | 認証への攻撃・アカウントの乗っ取りの疑い | OBS-09、利用者の報告 | 該当アカウントを利用停止にする。攻撃元を WAF で遮断する | 本人確認のうえ password の再設定と TOTP の再登録（SEC-10） | 不審な操作の有無を監査記録で確認する |
 
-RB-02 の注（W10-1 の Bolt 59）: メンテナンス表示（`maintenance:on`）が止めるのは画面の要求だけで、定期処理とイベントの配信は DB に書き続ける。時点復旧で「書き込みを止める」ときは、アプリを止める（[運用タスク手順書](../../operation/cargo-tracker/operation_tasks.md)）。ADR-023 はこの最初の手順をメンテナンス表示にするとしていて、扱いは人に諮る議題（Bolt 59 の報告）。
+RB-02 の注（W10-1 の Bolt 59）: メンテナンス表示（`maintenance:on`）が止めるのは画面の要求だけで、定期処理とイベントの配信は DB に書き続ける。時点復旧で「書き込みを止める」ときは、アプリを止める（[運用タスク手順書](../../operation/cargo-tracker/operation_tasks.md)）。ADR-023 の決定 3 も、そのように改めた（2026-11-28）。
 
 ### 事後分析
 

@@ -3,11 +3,15 @@ type: Plan
 title: "Bolt 56-1 計画と報告 - W10-1 の締め"
 description: "W10-1 計画の最後の Bolt（技術、SP 0）。"
 tags: [plan]
-status: draft
-generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-27T12:53:54Z }
+status: stable
+generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-27T20:59:05Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-11-27T20:59:05Z }
 ---
 
 # Bolt 56-1 計画と報告 - W10-1 の締め
+
+> **承認済み（2026-11-28、human:kakimomokuri。「承認して push」）。** 承認の議題 1〜7 は推奨のとおり。議題 1（Terraform の構成の変更）と議題 6（Spring Boot の更新）の実施、議題 5 の #50 の issue の操作は、この承認に含めず、別に指示を受ける。
 
 [W10-1 計画](iteration_plan-W10-1.md)の最後の Bolt（技術、SP 0）。**この報告で、Bolt 57〜61・52-2 と 56-1 をまとめて承認を受ける**（計画の CP-7）。
 
@@ -88,7 +92,7 @@ generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-27T12:53:54Z }
 | :--- | :--- | :--- |
 | 1 | ECS のサービスのタスク定義の版を Terraform の管理から外すか（`ignore_changes`）。外すと、Terraform でのタスク定義の変更は配備まで反映されない | 外す。`apply` を初めて行う前に、別の Bolt で。それまでは手順書の注意で守る |
 | 2 | SMTP の 4xx（SES の送信の制限など）も再送するか。応答の番号を読むには Angus Mail をコンパイルの依存に足す必要がある | 実環境で失敗の形を確かめてから決める |
-| 3 | 警報の回復の通知（`ok_actions`）と、配布先が空のときに失敗させる検査を足すか | 運用責任者が決める |
+| 3 | 警報の回復の通知（`ok_actions`）と、配布先が空のときに失敗させる検査を足すか | 運用責任者が後で決める（未決のまま） |
 | 4 | ADR-023 の 2 点の差（時点復旧の最初の手順はアプリの停止のまま。切り替えは配備のワークフローではなく AWS CLI） | このまま承認し、ADR-023 を直す（Bolt 59 の報告の議題） |
 | 5 | #50 の仕分けの案 | このとおり分ける。承認の後に issue を操作する |
 | 6 | Spring Boot の追従 | 上の「追従」のとおり |
@@ -113,3 +117,4 @@ generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-27T12:53:54Z }
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
 | 2026-11-27 | 初版 | anthropic/claude-sonnet-5-5 |
+| 2026-11-28 | 人の承認を記録した（human:kakimomokuri） | anthropic/claude-sonnet-5-5 |

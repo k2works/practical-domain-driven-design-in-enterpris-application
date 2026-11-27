@@ -3,8 +3,10 @@ type: Plan
 title: "Bolt 52-2 計画と報告 - Terraform の PR 検査"
 description: "W10-1 計画の Bolt 52-2（技術、SP 0）。"
 tags: [plan]
-status: draft
+status: stable
 generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-27T11:14:30Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-11-27T20:59:05Z }
 ---
 
 # Bolt 52-2 計画と報告 - Terraform の PR 検査

@@ -3,8 +3,10 @@ type: Plan
 title: "Bolt 57・57-1 計画と報告 - 運用の警告の宛先とログの印"
 description: "W10-1 計画の Bolt 57・57-1（技術、SP 0）。"
 tags: [plan]
-status: draft
+status: stable
 generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-27T10:24:58Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-11-27T20:59:05Z }
 ---
 
 # Bolt 57・57-1 計画と報告 - 運用の警告の宛先とログの印

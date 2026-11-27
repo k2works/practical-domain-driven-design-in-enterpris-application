@@ -4,7 +4,7 @@ title: "W10-1 計画 - W10 の持ち越しのうち、実環境なしで進め�
 description: "W10 の持ち越しのうち、AWS の実環境なしで進められるコードの返済（運用の警告、未完了の配信と取込がない日の検知、メンテナンス表示、通知の再送、Terraform の PR 検査、締め）の 8 本の Bolt 計画。"
 tags: [plan]
 status: stable
-generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-27T12:53:54Z }
+generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-27T20:59:05Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-11-27T10:19:33Z }
 ---
@@ -177,7 +177,7 @@ entity "notification.notification" as n {
 
 ## 実施の結果（2026-11-27）
 
-8 本を実施した（実環境では何も実行していない。push はしていない）。実装の中で、本体の依存の追加（57-2）とアーキテクチャの規則の例外（58）を、そのつど人に諮って承認を得た。結果と承認の議題は [Bolt 56-1 の報告](bolt_56-1_plan.md)にまとめた（**承認待ち**）。
+8 本を実施した（実環境では何も実行していない。push はしていない）。実装の中で、本体の依存の追加（57-2）とアーキテクチャの規則の例外（58）を、そのつど人に諮って承認を得た。結果と承認の議題は [Bolt 56-1 の報告](bolt_56-1_plan.md)にまとめ、2026-11-28 に human:kakimomokuri が承認した。
 
 ## 承認の記録
 
