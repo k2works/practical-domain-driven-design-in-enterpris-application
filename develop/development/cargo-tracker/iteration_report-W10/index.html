@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.2">
     
     
       
@@ -20171,7 +20171,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">結果</td>
-<td style="text-align: left;"><strong>ゴールの一部だけ達成した。</strong> 計画の 17 本のうち、完了 9 本、一部完了 4 本、未着手 4 本（下の表）。残りは Release 1.1 の頭へ持ち越す</td>
+<td style="text-align: left;"><strong>ゴールの一部だけ達成した。</strong> 計画の 17 本のうち、完了 8 本、一部完了 9 本、未着手 0 本（下の表）。残りは Release 1.1 の頭へ持ち越す</td>
 </tr>
 </tbody>
 </table>
@@ -20248,6 +20248,7 @@
 </tbody>
 </table>
 <h2 id="bolt">Bolt の結果<a class="headerlink" href="#bolt" title="Permanent link">&para;</a></h2>
+<p>持ち越し H-1〜H-5 の着手後の状態です。本数は計画の 17 本で数えます。表の「51」の行は 51・51-1・51-2・51-3 の 4 本、「52」の行は 52・52-1 の 2 本、「55・55-1」の行は 2 本です。完了は 8 本（49、49-1、49-2、50、51〜51-3）、一部完了は 9 本（52、52-1、53、53-1、54、54-1、55、55-1、56）です。51-2 の必要書類のウイルスの検査はバケットと権限の枠までで、実装は H-11 です。</p>
 <table>
 <thead>
 <tr>
@@ -20290,17 +20291,17 @@
 <tr>
 <td style="text-align: left;">53</td>
 <td style="text-align: left;">一部完了</td>
-<td style="text-align: left;">OBS-10（ヘルスチェック）だけ。OBS-06・FRS-04・DE-12/30/13 の検知は未着手</td>
+<td style="text-align: left;">OBS-10（ヘルスチェック）と、OBS-06 の取込の画面の警告（H-3）。FRS-04・DE-12/30/13 の検知は未着手</td>
 </tr>
 <tr>
 <td style="text-align: left;">53-1</td>
 <td style="text-align: left;">一部完了</td>
-<td style="text-align: left;">ShedLock だけ（<code>platform.shedlock</code>、見積りの有効期限の通知）。監査の二重の防ぎ・DB の文の timeout は未着手</td>
+<td style="text-align: left;">ShedLock（<code>platform.shedlock</code>、見積りの有効期限の通知）、監査の二重の防ぎと DB の文の timeout（H-4）。毒入りのイベントの通知と AUD-04 の照合は未着手</td>
 </tr>
 <tr>
 <td style="text-align: left;">54</td>
 <td style="text-align: left;">一部完了</td>
-<td style="text-align: left;">運用タスク <code>db:init</code>・<code>db:grants:verify</code>・<code>deploy:preflight</code>・<code>deploy:release</code>・<code>deploy:rollback</code>、SSM の踏み台、運用手順書。<strong>実環境では未実行</strong>。<code>admin:bootstrap</code>・<code>external-source:resume</code>・<code>audit:export:verify</code> は未作成（理由は運用手順書）</td>
+<td style="text-align: left;">運用タスク <code>db:init</code>・<code>db:grants:verify</code>・<code>deploy:preflight</code>・<code>deploy:release</code>・<code>deploy:rollback</code>、SSM の踏み台、運用手順書。<code>admin:bootstrap</code>（H-1）と <code>external-source:resume</code>（H-2）も作った。<strong>実環境では未実行</strong>。<code>audit:export:verify</code> は未作成（理由は運用手順書）</td>
 </tr>
 <tr>
 <td style="text-align: left;">54-1</td>
@@ -20309,13 +20310,13 @@
 </tr>
 <tr>
 <td style="text-align: left;">55・55-1</td>
-<td style="text-align: left;">未着手</td>
-<td style="text-align: left;">負荷テスト（k6）と時点復旧の手順。<code>ConnectionRule</code> の class 化と港で絞る照会も送る</td>
+<td style="text-align: left;">一部完了</td>
+<td style="text-align: left;">画面の負荷テストのスクリプト（k6。未実行。H-5）と時点復旧の手動の手順の草案（未訓練。H-6）。<code>ConnectionRule</code> の class 化と港で絞る照会は送る</td>
 </tr>
 <tr>
 <td style="text-align: left;">56</td>
-<td style="text-align: left;">この報告書</td>
-<td style="text-align: left;">週全体の 5 視点のレビューは<strong>実施していない</strong></td>
+<td style="text-align: left;">一部完了</td>
+<td style="text-align: left;">この報告書と週全体の 5 視点のレビュー（承認の後に実施。H-10）。#50 の仕分けは未実施（H-8）</td>
 </tr>
 </tbody>
 </table>
@@ -20494,6 +20495,11 @@
 <tr>
 <td style="text-align: left;">2026-11-16</td>
 <td style="text-align: left;">初版（draft。人の承認待ち）</td>
+<td style="text-align: left;">anthropic/claude-sonnet-5-5</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-11-27</td>
+<td style="text-align: left;">承認の後の訂正。Bolt の内訳を、持ち越しの着手後の状態に直した（完了 9・一部完了 4・未着手 4 → 8・9・0）。表の 53・53-1・54・55・55-1・56 の行を直した</td>
 <td style="text-align: left;">anthropic/claude-sonnet-5-5</td>
 </tr>
 </tbody>

@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.2">
     
     
       
@@ -21453,35 +21453,35 @@
 <td style="text-align: left;"><a href="bolt_51_plan/">Terraform（AWS の構成。コードと検証まで）</a>（<a href="iteration_plan-W10/">W10 計画</a>）</td>
 <td style="text-align: left;"><a href="bolt_51_report/">終了報告</a></td>
 <td style="text-align: left;">W10</td>
-<td style="text-align: left;">完了（承認待ち。apply は未実施）</td>
+<td style="text-align: left;">完了（コードは承認済み。終了報告は承認待ち。apply は未実施）</td>
 </tr>
 <tr>
 <td style="text-align: left;">52</td>
-<td style="text-align: left;"><a href="bolt_52_plan/">CI/CD（配備のワークフロー。52-1 は未着手）</a>（<a href="iteration_plan-W10/">W10 計画</a>）</td>
+<td style="text-align: left;"><a href="bolt_52_plan/">CI/CD（配備のワークフロー。52-1 を含む）</a>（<a href="iteration_plan-W10/">W10 計画</a>）</td>
 <td style="text-align: left;">中間報告は計画に含む</td>
 <td style="text-align: left;">W10</td>
-<td style="text-align: left;">一部完了（構文の検査は未実施）</td>
+<td style="text-align: left;">一部完了（コードは承認済み。<code>actionlint</code> は指摘なし。<code>DevProfileGuard</code>・<code>deploy:rollback</code> は作成済み。Terraform の PR 検査と <code>maintenance:on/off</code> は未作成）</td>
 </tr>
 <tr>
 <td style="text-align: left;">53</td>
-<td style="text-align: left;"><a href="bolt_53_plan/">監視 1（ヘルスチェック OBS-10。Actuator の導入。残りの OBS は未着手）</a>（<a href="iteration_plan-W10/">W10 計画</a>）</td>
+<td style="text-align: left;"><a href="bolt_53_plan/">監視 1（ヘルスチェック OBS-10。Actuator の導入）</a>（<a href="iteration_plan-W10/">W10 計画</a>）</td>
 <td style="text-align: left;">中間報告は計画に含む</td>
 <td style="text-align: left;">W10</td>
-<td style="text-align: left;">一部完了（認可の追加は承認待ち）</td>
+<td style="text-align: left;">一部完了（コードと認可の追加は承認済み。OBS-10 と、OBS-06 の取込の画面の警告まで）</td>
 </tr>
 <tr>
 <td style="text-align: left;">53-1</td>
 <td style="text-align: left;"><a href="bolt_53-1_plan/">定期処理の排他（ShedLock）</a>（<a href="iteration_plan-W10/">W10 計画</a>）</td>
 <td style="text-align: left;">計画に報告を含む</td>
 <td style="text-align: left;">W10</td>
-<td style="text-align: left;">一部完了（ShedLock のみ）</td>
+<td style="text-align: left;">一部完了（ShedLock、監査の二重の防ぎ、DB の文の timeout まで）</td>
 </tr>
 <tr>
 <td style="text-align: left;">54・54-1</td>
-<td style="text-align: left;"><a href="bolt_54_plan/">運用タスクとランブックの設計（実装は承認後）</a>（<a href="iteration_plan-W10/">W10 計画</a>）</td>
+<td style="text-align: left;"><a href="bolt_54_plan/">運用タスクとランブックの設計</a>（<a href="iteration_plan-W10/">W10 計画</a>）</td>
 <td style="text-align: left;">-</td>
 <td style="text-align: left;">W10</td>
-<td style="text-align: left;">設計の draft（承認待ち）</td>
+<td style="text-align: left;">一部完了（設計は承認済み。運用タスクは実環境で未実行。<code>audit:export:verify</code>・<code>maintenance:on/off</code> などは未作成）</td>
 </tr>
 <tr>
 <td style="text-align: left;">40-16</td>
@@ -21742,10 +21742,34 @@
 <td style="text-align: right;">100%</td>
 </tr>
 <tr>
+<td style="text-align: left;">W7</td>
+<td style="text-align: right;">10</td>
+<td style="text-align: right;">10</td>
+<td style="text-align: right;">100%</td>
+</tr>
+<tr>
+<td style="text-align: left;">W8</td>
+<td style="text-align: right;">8</td>
+<td style="text-align: right;">8</td>
+<td style="text-align: right;">100%</td>
+</tr>
+<tr>
+<td style="text-align: left;">W9</td>
+<td style="text-align: right;">15</td>
+<td style="text-align: right;">15</td>
+<td style="text-align: right;">100%</td>
+</tr>
+<tr>
+<td style="text-align: left;">W10</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">—</td>
+</tr>
+<tr>
 <td style="text-align: left;"><strong>累計</strong></td>
-<td style="text-align: right;"><strong>58</strong></td>
-<td style="text-align: right;"><strong>56</strong></td>
-<td style="text-align: right;"><strong>97%</strong></td>
+<td style="text-align: right;"><strong>91</strong></td>
+<td style="text-align: right;"><strong>89</strong></td>
+<td style="text-align: right;"><strong>98%</strong></td>
 </tr>
 </tbody>
 </table>
@@ -21772,8 +21796,8 @@
 <td style="text-align: left;">Release 1.0</td>
 <td style="text-align: left;">パイロット準備完了（W5〜W10）</td>
 <td style="text-align: right;">54</td>
-<td style="text-align: right;">21</td>
-<td style="text-align: left;">進行中（W5・W6 を完了。次は W7）</td>
+<td style="text-align: right;">54</td>
+<td style="text-align: left;">機能は完了（W5〜W10。W10 は一部完了。リリース条件の一部は未達で、タグは未）</td>
 </tr>
 <tr>
 <td style="text-align: left;">Release 1.1</td>
@@ -21829,7 +21853,7 @@
 <tr>
 <td style="text-align: left;">W10</td>
 <td style="text-align: left;"><a href="iteration_plan-W10/">W10 計画</a>（17 本。Bolt の番号は単位ごとに 49〜56。SP 0 の運用準備。AWS はコードと検証まで）、<a href="iteration_report-W10/">W10 完了報告書</a></td>
-<td style="text-align: left;">一部完了（報告書は承認待ち。残りは Release 1.1 の頭へ）</td>
+<td style="text-align: left;">一部完了（報告書は承認済み 2026-11-16。残りは Release 1.1 の頭へ）</td>
 </tr>
 <tr>
 <td style="text-align: left;">W11</td>
@@ -21864,9 +21888,14 @@
 <td style="text-align: left;">作成済み・<strong>人が承認</strong>（2026-11-14）。Issue #20・#21 はクローズ済み。確認の場の開催は未（人の予定。未回答のまま完了とすることを人が決めた）</td>
 </tr>
 <tr>
+<td style="text-align: left;">W9</td>
+<td style="text-align: left;"><a href="iteration_report-W9/">W9 完了報告書</a>（<a href="../../review/cargo-tracker/w9_review_20261115/">W9 週全体レビュー</a>）</td>
+<td style="text-align: left;">作成済み（承認の記録なし）</td>
+</tr>
+<tr>
 <td style="text-align: left;">W10</td>
-<td style="text-align: left;"><a href="iteration_report-W10/">W10 完了報告書</a>（一部完了。持ち越し H-1〜H-10。週全体のレビューは未実施）</td>
-<td style="text-align: left;">作成済み（承認済み）</td>
+<td style="text-align: left;"><a href="iteration_report-W10/">W10 完了報告書</a>（一部完了。持ち越し H-1〜H-11。<a href="../../review/cargo-tracker/w10_review_20261116/">W10 週全体レビュー</a>は承認の後に実施）</td>
+<td style="text-align: left;">作成済み（承認済み 2026-11-16）</td>
 </tr>
 </tbody>
 </table>
