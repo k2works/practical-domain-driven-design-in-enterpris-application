@@ -4,6 +4,8 @@ title: "Bolt 44-1 計画 - 週次の KPI の照会（US-21 AC4。認可の変更
 tags: [plan]
 status: stable
 generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-15T09:00:00Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-11-27T10:08:31Z }
 ---
 
 # Bolt 44-1 計画 - 週次の KPI の照会（US-21 AC4）

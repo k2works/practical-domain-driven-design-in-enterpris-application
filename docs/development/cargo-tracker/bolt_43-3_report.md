@@ -4,6 +4,8 @@ title: "Bolt 43-3 終了報告 - 荷主の通知一覧（C-16。US-22 を締め�
 tags: [plan]
 status: stable
 generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-14T14:00:00Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-11-27T10:08:31Z }
 ---
 
 # Bolt 43-3 終了報告 - 荷主の通知一覧（C-16。US-22 を締める）

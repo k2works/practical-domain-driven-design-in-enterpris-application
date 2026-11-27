@@ -4,6 +4,8 @@ title: "Bolt 48-1 計画 - 辞退した見積りの輸送要求を辞退で終�
 tags: [plan]
 status: stable
 generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-15T06:38:28Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-11-27T10:08:31Z }
 ---
 
 # Bolt 48-1 計画 - 辞退した見積りの輸送要求を辞退で終了にする

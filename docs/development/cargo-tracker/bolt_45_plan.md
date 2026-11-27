@@ -4,6 +4,8 @@ title: "Bolt 45 計画 - 別企業の荷主情報での提出の拒否（US-01 A
 tags: [plan]
 status: stable
 generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-14T15:00:00Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-11-27T10:08:31Z }
 ---
 
 # Bolt 45 計画 - 別企業の荷主情報での提出の拒否（US-01 AC3）

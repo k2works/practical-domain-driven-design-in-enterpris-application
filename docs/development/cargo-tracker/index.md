@@ -183,25 +183,25 @@ Bolt がイテレーションに当たります。ふりかえりは各 Bolt の
 | 40-14 | [候補なし・外部データの欠落の理由の表示と有人案件への引き継ぎ（UC-06 3a）](bolt_40-14_plan.md)（[W8 計画](iteration_plan-W8.md)） | [終了報告](bolt_40-14_report.md) | W8 | 完了（承認済み） |
 | 40-17 | [W8 の週全体レビューの指摘 A・B・C・D を直す（起票元キー、カレンダー未登録、置き場所、認可の一致）](bolt_40-17_plan.md)（[W8 計画](iteration_plan-W8.md)。[W8 週全体レビュー](../../review/cargo-tracker/w8_review_20261114.md)） | [終了報告](bolt_40-17_report.md) | W8 | 完了（承認済み） |
 | 40-18 | [詳細の認可の統一とシステム起票の分離（W8 週全体レビュー D の残り）](bolt_40-18_plan.md) | [終了報告](bolt_40-18_report.md) | W8 | 完了（承認済み） |
-| 41 | [有人案件の操作の拒否をドメインの専用の例外で区別する（W8 の持ち越しの返済）](bolt_41_plan.md)（[W9 計画](iteration_plan-W9.md)） | [終了報告](bolt_41_report.md) | W9 | 完了（承認待ち） |
-| 42 | [荷主向けの問い合わせの認可（他社の閲覧の試行の記録。US-23 AC3）](bolt_42_plan.md)（[W9 計画](iteration_plan-W9.md)） | [終了報告](bolt_42_report.md) | W9 | 完了（承認待ち） |
-| 42-1 | [顧客 Web の追跡照会の自動記録（IR-INV-01）と case_number の索引](bolt_42-1_plan.md)（[W9 計画](iteration_plan-W9.md)） | [終了報告](bolt_42-1_report.md) | W9 | 完了（承認待ち） |
-| 42-2 | [荷主の問い合わせ一覧（C-14。US-23 AC1・AC4）](bolt_42-2_plan.md)（[W9 計画](iteration_plan-W9.md)） | [終了報告](bolt_42-2_report.md) | W9 | 完了（承認待ち） |
-| 42-3 | [荷主の問い合わせの詳細と再開の依頼（C-15。US-23 を締める）](bolt_42-3_plan.md)（[W9 計画](iteration_plan-W9.md)） | [終了報告](bolt_42-3_report.md) （[動画](../../assets/demo/bolt-42-3/reopen-inquiry.webm){:target="_blank"}） | W9 | 完了（承認待ち） |
-| 43 | [荷主への業務の通知の基盤（US-22。通知の公開 API・宛先の解決・本文）](bolt_43_plan.md)（[W9 計画](iteration_plan-W9.md)） | [終了報告](bolt_43_report.md) | W9 | 完了（承認待ち） |
-| 43-1 | [4 つの契機の通知（US-22 AC1。見積りの提示・経路の承認・本予約の確定・追跡が確認中）](bolt_43-1_plan.md)（[W9 計画](iteration_plan-W9.md)） | [終了報告](bolt_43-1_report.md) | W9 | 完了（承認待ち） |
-| 43-2 | [見積りの有効期限の 24 時間前の通知（US-22 AC2。毎時の検出）](bolt_43-2_plan.md)（[W9 計画](iteration_plan-W9.md)） | [終了報告](bolt_43-2_report.md) （[動画](../../assets/demo/bolt-43-2/expiring-notice.webm){:target="_blank"}） | W9 | 完了（承認待ち） |
-| 43-3 | [荷主の通知一覧（C-16。US-22 AC4。US-22 を締める）](bolt_43-3_plan.md)（[W9 計画](iteration_plan-W9.md)） | [終了報告](bolt_43-3_report.md) （[動画](../../assets/demo/bolt-43-3/notification-list.webm){:target="_blank"}） | W9 | 完了（承認待ち） |
-| 45 | [別企業の荷主情報での提出の拒否（US-01 AC3。受入条件の照合）](bolt_45_plan.md)（[W9 計画](iteration_plan-W9.md)） | [終了報告](bolt_45_report.md) | W9 | 完了（承認待ち。全件のゲートは 45-1 でまとめる） |
-| 45-1 | [過去の見積依頼の複製（US-01 AC5。US-01 を締める）](bolt_45-1_plan.md)（[W9 計画](iteration_plan-W9.md)） | [終了報告](bolt_45-1_report.md) （[動画](../../assets/demo/bolt-45-1/copy-request.webm){:target="_blank"}） | W9 | 完了（承認待ち） |
-| 47 | [追跡の照会の確認中・鮮度超過のお知らせ（US-09 AC2・AC3）](bolt_47_plan.md)（[W9 計画](iteration_plan-W9.md)） | [終了報告](bolt_47_report.md) （[動画](../../assets/demo/bolt-47/under-review-notice.webm){:target="_blank"}） | W9 | 完了（承認待ち） |
-| 46 | [荷主の見積りの辞退（US-24 AC2。D-86・ADR-018 の見直し）](bolt_46_plan.md)（[W9 計画](iteration_plan-W9.md)） | [終了報告](bolt_46_report.md) （[動画](../../assets/demo/bolt-46/decline-quotation.webm){:target="_blank"}） | W9 | 完了（承認待ち） |
-| 46-1 | [見積りの条件の相談（US-24 AC3。US-24 を締める）](bolt_46-1_plan.md)（[W9 計画](iteration_plan-W9.md)） | [終了報告](bolt_46-1_report.md) （[動画](../../assets/demo/bolt-46/consult-quotation.webm){:target="_blank"}） | W9 | 完了（承認待ち） |
-| 44 | [KPI-02 の記録（US-21 AC2・AC3）](bolt_44_plan.md)（[W9 計画](iteration_plan-W9.md)） | [終了報告](bolt_44_report.md) | W9 | 完了（承認待ち） |
-| 44-1 | [週次の KPI の照会（US-21 AC4）](bolt_44-1_plan.md)（[W9 計画](iteration_plan-W9.md)） | [終了報告](bolt_44-1_report.md) （[動画](../../assets/demo/bolt-44-1/kpi-weekly.webm){:target="_blank"}） | W9 | 完了（承認待ち） |
-| 44-2 | [基準値の登録と比較（US-21 AC5。US-21 を締める）](bolt_44-2_plan.md)（[W9 計画](iteration_plan-W9.md)） | [終了報告](bolt_44-2_report.md) （[動画](../../assets/demo/bolt-44-2/kpi-baseline.webm){:target="_blank"}） | W9 | 完了（承認待ち） |
-| 48 | [W9 の締め（週全体レビュー・マニュアル・動画・ゲート）](bolt_48_plan.md)（[W9 計画](iteration_plan-W9.md)） | [終了報告](bolt_48_report.md) | W9 | 完了（承認待ち） |
-| 48-1 | [辞退した見積りの輸送要求を辞退で終了にする（週全体レビューの高 H-2）](bolt_48-1_plan.md)（[W9 計画](iteration_plan-W9.md)） | [終了報告](bolt_48-1_report.md) | W9 | 完了（承認待ち） |
+| 41 | [有人案件の操作の拒否をドメインの専用の例外で区別する（W8 の持ち越しの返済）](bolt_41_plan.md)（[W9 計画](iteration_plan-W9.md)） | [終了報告](bolt_41_report.md) | W9 | 完了（承認済み 2026-11-27） |
+| 42 | [荷主向けの問い合わせの認可（他社の閲覧の試行の記録。US-23 AC3）](bolt_42_plan.md)（[W9 計画](iteration_plan-W9.md)） | [終了報告](bolt_42_report.md) | W9 | 完了（承認済み 2026-11-27） |
+| 42-1 | [顧客 Web の追跡照会の自動記録（IR-INV-01）と case_number の索引](bolt_42-1_plan.md)（[W9 計画](iteration_plan-W9.md)） | [終了報告](bolt_42-1_report.md) | W9 | 完了（承認済み 2026-11-27） |
+| 42-2 | [荷主の問い合わせ一覧（C-14。US-23 AC1・AC4）](bolt_42-2_plan.md)（[W9 計画](iteration_plan-W9.md)） | [終了報告](bolt_42-2_report.md) | W9 | 完了（承認済み 2026-11-27） |
+| 42-3 | [荷主の問い合わせの詳細と再開の依頼（C-15。US-23 を締める）](bolt_42-3_plan.md)（[W9 計画](iteration_plan-W9.md)） | [終了報告](bolt_42-3_report.md) （[動画](../../assets/demo/bolt-42-3/reopen-inquiry.webm){:target="_blank"}） | W9 | 完了（承認済み 2026-11-27） |
+| 43 | [荷主への業務の通知の基盤（US-22。通知の公開 API・宛先の解決・本文）](bolt_43_plan.md)（[W9 計画](iteration_plan-W9.md)） | [終了報告](bolt_43_report.md) | W9 | 完了（承認済み 2026-11-27） |
+| 43-1 | [4 つの契機の通知（US-22 AC1。見積りの提示・経路の承認・本予約の確定・追跡が確認中）](bolt_43-1_plan.md)（[W9 計画](iteration_plan-W9.md)） | [終了報告](bolt_43-1_report.md) | W9 | 完了（承認済み 2026-11-27） |
+| 43-2 | [見積りの有効期限の 24 時間前の通知（US-22 AC2。毎時の検出）](bolt_43-2_plan.md)（[W9 計画](iteration_plan-W9.md)） | [終了報告](bolt_43-2_report.md) （[動画](../../assets/demo/bolt-43-2/expiring-notice.webm){:target="_blank"}） | W9 | 完了（承認済み 2026-11-27） |
+| 43-3 | [荷主の通知一覧（C-16。US-22 AC4。US-22 を締める）](bolt_43-3_plan.md)（[W9 計画](iteration_plan-W9.md)） | [終了報告](bolt_43-3_report.md) （[動画](../../assets/demo/bolt-43-3/notification-list.webm){:target="_blank"}） | W9 | 完了（承認済み 2026-11-27） |
+| 45 | [別企業の荷主情報での提出の拒否（US-01 AC3。受入条件の照合）](bolt_45_plan.md)（[W9 計画](iteration_plan-W9.md)） | [終了報告](bolt_45_report.md) | W9 | 完了（承認済み 2026-11-27。全件のゲートは 45-1 でまとめる） |
+| 45-1 | [過去の見積依頼の複製（US-01 AC5。US-01 を締める）](bolt_45-1_plan.md)（[W9 計画](iteration_plan-W9.md)） | [終了報告](bolt_45-1_report.md) （[動画](../../assets/demo/bolt-45-1/copy-request.webm){:target="_blank"}） | W9 | 完了（承認済み 2026-11-27） |
+| 47 | [追跡の照会の確認中・鮮度超過のお知らせ（US-09 AC2・AC3）](bolt_47_plan.md)（[W9 計画](iteration_plan-W9.md)） | [終了報告](bolt_47_report.md) （[動画](../../assets/demo/bolt-47/under-review-notice.webm){:target="_blank"}） | W9 | 完了（承認済み 2026-11-27） |
+| 46 | [荷主の見積りの辞退（US-24 AC2。D-86・ADR-018 の見直し）](bolt_46_plan.md)（[W9 計画](iteration_plan-W9.md)） | [終了報告](bolt_46_report.md) （[動画](../../assets/demo/bolt-46/decline-quotation.webm){:target="_blank"}） | W9 | 完了（承認済み 2026-11-27） |
+| 46-1 | [見積りの条件の相談（US-24 AC3。US-24 を締める）](bolt_46-1_plan.md)（[W9 計画](iteration_plan-W9.md)） | [終了報告](bolt_46-1_report.md) （[動画](../../assets/demo/bolt-46/consult-quotation.webm){:target="_blank"}） | W9 | 完了（承認済み 2026-11-27） |
+| 44 | [KPI-02 の記録（US-21 AC2・AC3）](bolt_44_plan.md)（[W9 計画](iteration_plan-W9.md)） | [終了報告](bolt_44_report.md) | W9 | 完了（承認済み 2026-11-27） |
+| 44-1 | [週次の KPI の照会（US-21 AC4）](bolt_44-1_plan.md)（[W9 計画](iteration_plan-W9.md)） | [終了報告](bolt_44-1_report.md) （[動画](../../assets/demo/bolt-44-1/kpi-weekly.webm){:target="_blank"}） | W9 | 完了（承認済み 2026-11-27） |
+| 44-2 | [基準値の登録と比較（US-21 AC5。US-21 を締める）](bolt_44-2_plan.md)（[W9 計画](iteration_plan-W9.md)） | [終了報告](bolt_44-2_report.md) （[動画](../../assets/demo/bolt-44-2/kpi-baseline.webm){:target="_blank"}） | W9 | 完了（承認済み 2026-11-27） |
+| 48 | [W9 の締め（週全体レビュー・マニュアル・動画・ゲート）](bolt_48_plan.md)（[W9 計画](iteration_plan-W9.md)） | [終了報告](bolt_48_report.md) | W9 | 完了（承認済み 2026-11-27） |
+| 48-1 | [辞退した見積りの輸送要求を辞退で終了にする（週全体レビューの高 H-2）](bolt_48-1_plan.md)（[W9 計画](iteration_plan-W9.md)） | [終了報告](bolt_48-1_report.md) | W9 | 完了（承認済み 2026-11-27） |
 | 49 | [W9 の持ち越しの返済 1（同時実行テストの安定化・UI の固定の待ち・死んだ PlaceholderController の削除）](bolt_49_plan.md)（[W10 計画](iteration_plan-W10.md)） | [終了報告](bolt_49_report.md) | W10 | 完了（承認済み） |
 | 49-1 | [W9 の持ち越しの返済 2（見積りの回答の画面の重複）](bolt_49-1_plan.md)（[W10 計画](iteration_plan-W10.md)） | - | W10 | 完了（承認待ち。範囲は重複 2 つに絞った） |
 | 51 | [Terraform（AWS の構成。コードと検証まで）](bolt_51_plan.md)（[W10 計画](iteration_plan-W10.md)） | [終了報告](bolt_51_report.md) | W10 | 完了（コードは承認済み。終了報告は承認待ち。apply は未実施） |

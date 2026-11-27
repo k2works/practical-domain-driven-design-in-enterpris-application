@@ -4,6 +4,8 @@ title: "Bolt 42-3 終了報告 - 荷主の問い合わせの詳細と再開の�
 tags: [plan]
 status: stable
 generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-14T10:00:00Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-11-27T10:08:31Z }
 ---
 
 # Bolt 42-3 終了報告 - 荷主の問い合わせの詳細と再開の依頼（C-15）

@@ -4,6 +4,8 @@ title: "Bolt 42-1 終了報告 - 顧客 Web の追跡照会の自動記録（IR-
 tags: [plan]
 status: stable
 generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-14T08:00:00Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-11-27T10:08:31Z }
 ---
 
 # Bolt 42-1 終了報告 - 顧客 Web の追跡照会の自動記録（IR-INV-01）と case_number の索引

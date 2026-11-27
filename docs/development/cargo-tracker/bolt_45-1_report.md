@@ -4,6 +4,8 @@ title: "Bolt 45-1 終了報告 - 過去の見積依頼の複製（US-01 AC5。US
 tags: [plan]
 status: stable
 generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-14T16:00:00Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-11-27T10:08:31Z }
 ---
 
 # Bolt 45-1 終了報告 - 過去の見積依頼の複製（US-01 AC5。US-01 を締める）

@@ -4,6 +4,8 @@ title: "Bolt 43-1 計画 - 4 つの契機の通知（US-22 AC1）"
 tags: [plan]
 status: stable
 generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-14T12:00:00Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-11-27T10:08:31Z }
 ---
 
 # Bolt 43-1 計画 - 4 つの契機の通知（US-22 AC1）

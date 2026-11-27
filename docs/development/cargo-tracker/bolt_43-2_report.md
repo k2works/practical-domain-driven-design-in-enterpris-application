@@ -4,6 +4,8 @@ title: "Bolt 43-2 終了報告 - 見積りの有効期限の 24 時間前の通�
 tags: [plan]
 status: stable
 generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-14T13:00:00Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-11-27T10:08:31Z }
 ---
 
 # Bolt 43-2 終了報告 - 見積りの有効期限の 24 時間前の通知（US-22 AC2）

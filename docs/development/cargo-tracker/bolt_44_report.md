@@ -4,6 +4,8 @@ title: "Bolt 44 終了報告 - KPI-02 の記録（US-21 AC2・AC3）"
 tags: [plan]
 status: stable
 generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-15T09:00:00Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-11-27T10:08:31Z }
 ---
 
 # Bolt 44 終了報告 - KPI-02 の記録（US-21 AC2・AC3）

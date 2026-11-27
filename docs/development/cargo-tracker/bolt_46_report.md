@@ -4,6 +4,8 @@ title: "Bolt 46 終了報告 - 荷主の見積りの辞退（US-24 AC2。D-86・
 tags: [plan]
 status: stable
 generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-15T03:00:00Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-11-27T10:08:31Z }
 ---
 
 # Bolt 46 終了報告 - 荷主の見積りの辞退（US-24 AC2）

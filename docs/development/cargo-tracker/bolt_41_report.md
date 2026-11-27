@@ -4,6 +4,8 @@ title: "Bolt 41 終了報告 - 有人案件の操作の拒否をドメインの�
 tags: [plan]
 status: stable
 generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-14T04:30:00Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-11-27T10:08:31Z }
 ---
 
 # Bolt 41 終了報告 - 有人案件の操作の拒否をドメインの専用の例外で区別する
