@@ -4,7 +4,7 @@ title: "W10 計画 - 運用準備（AWS の IaC・CI/CD・監視・ランブッ�
 description: "cargo-tracker の W10（2026-12-07〜12-11）の Bolt 計画。SP 0 の技術の週。W9 の持ち越しの返済に続き、AWS の IaC・CI/CD・監視・運用タスクとランブック・性能テストを、コードと検証まで作る。17 本、分単位の見積りを付けて稼働と比べる。"
 tags: [plan]
 status: stable
-generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-16T04:16:03Z }
+generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-27T10:04:57Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-11-16T01:36:08Z }
 ---
@@ -23,7 +23,7 @@ verified:
 | Bolt の本数 | 17 本（技術 17） |
 | 見積りの合計 | 作業 2,990 分（約 50 時間）。ゲート・報告・承認待ちの 60 分 × 17 本 = 1,020 分を足した壁時計で **4,010 分（約 67 時間）** |
 | 稼働との比較 | 稼働 5 日・1 日 13.5 時間（W8・W9 と同じ保守的な置き方）で 4,050 分。**99%**（仮定 A-1・A-2。見積りは W9 の 1 本あたりの平均を類推元にした仮定で、実測の根拠はない） |
-| 前の週 | [W9 完了報告書](iteration_report-W9.md)（人の承認待ち）。Bolt 48-1 まで終えた |
+| 前の週 | [W9 完了報告書](iteration_report-W9.md)（承認済み 2026-11-27。この計画の作成の時点では承認待ち）。Bolt 48-1 まで終えた |
 
 ### Bolt の番号
 

@@ -287,7 +287,7 @@ Bolt を始めるときに行を追加します。
 | 週 | 計画 | 状態 |
 | :--- | :--- | :--- |
 | W8 | [W8 計画](iteration_plan-W8.md)（技術 Bolt にも分単位の見積りを付けた 17 本。稼働 4 日との比較） | 承認済み（2026-11-13） |
-| W9 | [W9 計画](iteration_plan-W9.md)（19 本。Bolt の番号は単位ごとに 41〜48。稼働 5 日の 114%）、[W9 完了報告書](iteration_report-W9.md)（[W9 週全体レビュー](../../review/cargo-tracker/w9_review_20261115.md)） | 完了（2026-11-15 に締めた。承認待ち） |
+| W9 | [W9 計画](iteration_plan-W9.md)（19 本。Bolt の番号は単位ごとに 41〜48。稼働 5 日の 114%）、[W9 完了報告書](iteration_report-W9.md)（[W9 週全体レビュー](../../review/cargo-tracker/w9_review_20261115.md)） | 完了（2026-11-15 に締めた。完了報告書は承認済み 2026-11-27） |
 | W10 | [W10 計画](iteration_plan-W10.md)（17 本。Bolt の番号は単位ごとに 49〜56。SP 0 の運用準備。AWS はコードと検証まで）、[W10 完了報告書](iteration_report-W10.md) | 一部完了（報告書は承認済み 2026-11-16。残りは Release 1.1 の頭へ） |
 | W11 | [W11 計画](iteration_plan-W11.md)（13 本。Bolt の番号は 57〜69。US-05・US-17 の 11 SP と、Release 1.1 の頭の返済 5 本。稼働 5 日の 87%） | 計画済み（承認待ち） |
 
@@ -298,7 +298,7 @@ Bolt を始めるときに行を追加します。
 | W6 | [W6 完了報告書](iteration_report-W6.md)（[W6 横断レビュー](../../review/cargo-tracker/w6_review_20261102.md)） | 作成済み・承認済み（2026-11-02） |
 | W7 | [W7 完了報告書](iteration_report-W7.md)（週全体のコードレビューを含む） | 作成済み・承認済み（2026-11-13） |
 | W8 | [W8 完了報告書](iteration_report-W8.md)（[W8 週全体レビュー](../../review/cargo-tracker/w8_review_20261114.md)、[確認の場の依頼の一覧](confirmation_requests-W8.md)） | 作成済み・**人が承認**（2026-11-14）。Issue #20・#21 はクローズ済み。確認の場の開催は未（人の予定。未回答のまま完了とすることを人が決めた） |
-| W9 | [W9 完了報告書](iteration_report-W9.md)（[W9 週全体レビュー](../../review/cargo-tracker/w9_review_20261115.md)） | 作成済み（承認の記録なし） |
+| W9 | [W9 完了報告書](iteration_report-W9.md)（[W9 週全体レビュー](../../review/cargo-tracker/w9_review_20261115.md)） | 作成済み（承認済み 2026-11-27） |
 | W10 | [W10 完了報告書](iteration_report-W10.md)（一部完了。持ち越し H-1〜H-11。[W10 週全体レビュー](../../review/cargo-tracker/w10_review_20261116.md)は承認の後に実施） | 作成済み（承認済み 2026-11-16） |
 
 ## 補足

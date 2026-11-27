@@ -4,7 +4,7 @@ title: "リリース計画 - cargo-tracker（A 社国際貨物輸送管理シス
 description: "cargo-tracker MVP のリリース計画。1 人 + AI、時間単位の Bolt（= イテレーション）と週次の見直しで、最初の縦の流れ（R0.1）、パイロット準備完了（R1.0）、本格展開前（R1.1）の 3 段階、Unit のエントロピー評価、SP、バッファ、パイロット開始の条件、引継ぎ ID の台帳、業務責任者に確かめる事項の台帳。"
 tags: [development,release-plan]
 status: stable
-generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-27T09:47:19Z }
+generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-27T10:04:57Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T09:29:53Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:38:26Z }
@@ -1251,7 +1251,7 @@ D-144 の注（Bolt 39h2 の開始準備）: 判断の画面に差異を出し�
 | W6 | 12 | 12 | 100% | 完了（2026-10-20〜10-29 に Bolt 36〜38g の 34 本を終え、2026-11-02 に締め、承認された（W5 の締めで目標を 10 から 12 にした）。US-16 の 5 SP（W5 の Bolt 34 の 2 を含む）を完了し #14 を、US-06 の残りの 5 SP を完了し #15 を、US-07 の残りの 2 SP を完了し #16 をクローズした。#47 を閉じた。人の変更依頼 1。締めの追加で W6 横断レビュー（高 5 は Bolt 38h）と品質ゲートの流し直しを行った。[W6 完了報告書](iteration_report-W6.md)） |
 | W7 | 10 | 10 | 100% | 完了（2026-11-02〜11-13 に Bolt 38h と 39〜39i の 39 本を終え、2026-11-13 に締めの作業を終えた。完了報告書は承認済み。US-14 の 8 SP（#18。Bolt 39h4 の終了報告の承認の後に数えた）と US-12 の残りの 2 SP（#19。Bolt 39gc の承認の後に数えた）を完了し、#18・#19 をクローズした。週全体のコードレビューと品質ゲートの確認を行った。[W7 完了報告書](iteration_report-W7.md)） |
 | W8 | 8 | 8 | 100% | 完了（2026-11-13〜11-14 に Bolt 40〜40-17 の 18 本を終えた。[完了報告書](iteration_report-W8.md)） |
-| W9 | 15 | 15 | 100% | 完了（2026-11-14〜11-15 に Bolt 41〜48 の 18 本を終え、2026-11-15 に締めた。US-23・US-22・US-21・US-01・US-24・US-09 を閉じ、Release 1.0 は 54/54 SP。[完了報告書](iteration_report-W9.md)。人の承認待ち） |
+| W9 | 15 | 15 | 100% | 完了（2026-11-14〜11-15 に Bolt 41〜48 の 18 本を終え、2026-11-15 に締めた。US-23・US-22・US-21・US-01・US-24・US-09 を閉じ、Release 1.0 は 54/54 SP。[完了報告書](iteration_report-W9.md)。承認済み） |
 | W10 | 0 | - | - | 一部完了（2026-11-16。[W10 完了報告書](iteration_report-W10.md)。承認済み。残りは Release 1.1 の頭へ持ち越し） |
 | W11 | 11 | - | - | 計画済み（[W11 計画](iteration_plan-W11.md)。13 本、Bolt 57〜69。承認待ち） |
 | W12 | 10 | - | - | 未着手 |
@@ -1754,3 +1754,4 @@ xychart-beta
 | 2026-11-13 | W8 の開始準備: [W8 計画](iteration_plan-W8.md)と [Bolt 40 計画](bolt_40_plan.md)を作り（承認待ち）、W8 の行と進捗状況、AUD-UI-01 の行を直した。技術 Bolt（SP 0）にも分単位の見積りを付けた 17 本（作業 2,950 分、壁時計 3,970 分）を稼働 4 日と比べ、保守的な置き方で 123% と示した | anthropic/claude-sonnet-5-5 |
 | 2026-11-13 | W8 計画と Bolt 40 計画の確認ポイント CP-1〜CP-9 を推奨のとおり承認として記録した（W8 は基準 B で 6〜7 日を見込む。Bolt の採番は 40・40-1・40-2、詳細化は 40-1-1。human:kakimomokuri） | anthropic/claude-sonnet-5-5 |
 | 2026-11-27 | 文書の不整合を直した。進捗状況の W10 を「承認済み」にし（W10 完了報告書の承認に合わせる）、「GitHub との同期」の Milestone の件数と Issue の番号の範囲を GitHub の実際に合わせた | anthropic/claude-sonnet-5-5 |
+| 2026-11-27 | W9 完了報告書の承認（human:kakimomokuri）を受けて、進捗状況の W9 を「承認済み」にした | anthropic/claude-sonnet-5-5 |
