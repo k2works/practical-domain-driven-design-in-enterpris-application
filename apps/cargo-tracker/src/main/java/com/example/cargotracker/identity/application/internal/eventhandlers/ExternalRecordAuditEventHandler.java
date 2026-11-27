@@ -8,6 +8,7 @@ import com.example.cargotracker.externaldata.domain.events.VoyageAdoptedValueUpd
 import com.example.cargotracker.identity.domain.model.aggregates.AuditRecord;
 import com.example.cargotracker.identity.domain.model.aggregates.AuditRecordRepository;
 import com.example.cargotracker.identity.domain.model.valueobjects.AuditAction;
+import com.example.cargotracker.shared.domain.OperationsAlert;
 import com.example.cargotracker.shared.domain.Source;
 import java.util.Objects;
 import java.util.UUID;
@@ -203,7 +204,8 @@ public class ExternalRecordAuditEventHandler {
             auditRecord = create.get();
         } catch (AuditRecord.MissingEventValueException e) {
             LOG.error(
-                    "外部原本の採否の監査記録を書かずに捨てた（イベントの内容が欠けている。再配信しても直らない。調査が要る）:" + " 操作 {}、受信記録 {}、取込 {}、欠け {}",
+                    "{} " + "外部原本の採否の監査記録を書かずに捨てた（イベントの内容が欠けている。再配信しても直らない。調査が要る）:" + " 操作 {}、受信記録 {}、取込 {}、欠け {}",
+                    OperationsAlert.POISON_EVENT.marker(),
                     action,
                     receivedRecordId,
                     ingestionId,

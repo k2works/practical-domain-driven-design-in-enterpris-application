@@ -6,6 +6,7 @@ import com.example.cargotracker.routing.domain.model.aggregates.DuplicateVoyageE
 import com.example.cargotracker.routing.domain.model.aggregates.Voyage;
 import com.example.cargotracker.routing.domain.model.aggregates.VoyageRepository;
 import com.example.cargotracker.routing.domain.model.valueobjects.VoyageAdoption;
+import com.example.cargotracker.shared.domain.OperationsAlert;
 import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,7 +51,8 @@ public class VoyageUpdateEventHandler {
             adoption = toAdoption(event);
         } catch (VoyageAdoption.InvalidEventValueException e) {
             LOG.error(
-                    "DE-12 を航海に書かずに捨てた（イベントの内容が欠けている。再配信しても直らない。調査が要る）: 航海 {}、採用値 {}、欠け {}",
+                    "{} " + "DE-12 を航海に書かずに捨てた（イベントの内容が欠けている。再配信しても直らない。調査が要る）: 航海 {}、採用値 {}、欠け {}",
+                    OperationsAlert.POISON_EVENT.marker(),
                     event.voyageNumber(),
                     event.adoptedValueId(),
                     e.getMessage());

@@ -119,7 +119,8 @@ class KpiObservationEventHandlerTest {
             assertThat(log.getLevel()).isEqualTo(Level.ERROR);
             assertThat(log.getFormattedMessage())
                     .contains(transportRequestId.toString())
-                    .contains("提出時刻より前");
+                    .contains("提出時刻より前")
+                    .contains("[ALERT:poison-event]");
         });
     }
 

@@ -290,7 +290,7 @@ class ExternalRecordAuditEventHandlerTest {
         assertThat(logs.list).singleElement().satisfies(log -> {
             assertThat(log.getLevel()).isEqualTo(Level.ERROR);
             assertThat(log.getFormattedMessage())
-                    .contains(receivedRecordId, INGESTION.toString(), "EXTERNAL_RECORD_ADOPTED")
+                    .contains(receivedRecordId, INGESTION.toString(), "EXTERNAL_RECORD_ADOPTED", "[ALERT:poison-event]")
                     .doesNotContain("V001");
         });
     }
@@ -305,7 +305,7 @@ class ExternalRecordAuditEventHandlerTest {
         assertThat(logs.list).singleElement().satisfies(log -> {
             assertThat(log.getLevel()).isEqualTo(Level.ERROR);
             assertThat(log.getFormattedMessage())
-                    .contains(INGESTION.toString(), "EXTERNAL_RECORD_QUARANTINED")
+                    .contains(INGESTION.toString(), "EXTERNAL_RECORD_QUARANTINED", "[ALERT:poison-event]")
                     .doesNotContain("V001");
         });
     }
@@ -337,7 +337,7 @@ class ExternalRecordAuditEventHandlerTest {
         assertThat(auditRecords.existsQueries).isEmpty();
         assertThat(logs.list).singleElement().satisfies(log -> {
             assertThat(log.getLevel()).isEqualTo(Level.ERROR);
-            assertThat(log.getFormattedMessage()).contains("EXTERNAL_RECORD_ADOPTED", missing);
+            assertThat(log.getFormattedMessage()).contains("EXTERNAL_RECORD_ADOPTED", missing, "[ALERT:poison-event]");
         });
     }
 

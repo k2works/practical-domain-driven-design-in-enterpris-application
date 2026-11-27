@@ -4,6 +4,7 @@ import com.example.cargotracker.identity.domain.model.aggregates.KpiObservation;
 import com.example.cargotracker.identity.domain.model.aggregates.KpiObservationRepository;
 import com.example.cargotracker.quotation.domain.events.QuotationPresented;
 import com.example.cargotracker.quotation.domain.events.TransportRequestSubmitted;
+import com.example.cargotracker.shared.domain.OperationsAlert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.modulith.events.ApplicationModuleListener;
@@ -53,7 +54,9 @@ public class KpiObservationEventHandler {
                 .orElseThrow(() -> notYetSubmitted(event));
         if (observation.precedesSubmission(event.presentedAt())) {
             LOG.error(
-                    "DE-03 の提示時刻が提出時刻より前のため KPI 計測記録に記録せずに捨てた（再配信しても直らない。調査が要る）:" + " 輸送要求 {}、見積り {}、提出時刻 {}、提示時刻 {}",
+                    "{} " + "DE-03 の提示時刻が提出時刻より前のため KPI 計測記録に記録せずに捨てた（再配信しても直らない。調査が要る）:"
+                            + " 輸送要求 {}、見積り {}、提出時刻 {}、提示時刻 {}",
+                    OperationsAlert.POISON_EVENT.marker(),
                     event.transportRequestId(),
                     event.quotationId(),
                     observation.submittedAt().instant(),

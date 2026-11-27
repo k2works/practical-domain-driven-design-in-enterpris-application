@@ -1,6 +1,7 @@
 package com.example.cargotracker.tracking.application.internal.eventhandlers;
 
 import com.example.cargotracker.externaldata.domain.events.MilestoneAdoptedValueAccepted;
+import com.example.cargotracker.shared.domain.OperationsAlert;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import com.example.cargotracker.tracking.application.internal.commandservices.RejectionCaseOpener;
 import com.example.cargotracker.tracking.domain.model.aggregates.ExternalMilestoneReceipt;
@@ -57,7 +58,8 @@ public class ExternalMilestoneEventHandler {
             external = toExternalMilestone(event);
         } catch (ExternalMilestone.InvalidEventValueException e) {
             LOG.error(
-                    "DE-13 を追跡に書かずに捨てた（イベントの内容が欠けている。再配信しても直らない。調査が要る）: 追跡番号 {}、採用値 {}、欠け {}",
+                    "{} " + "DE-13 を追跡に書かずに捨てた（イベントの内容が欠けている。再配信しても直らない。調査が要る）: 追跡番号 {}、採用値 {}、欠け {}",
+                    OperationsAlert.POISON_EVENT.marker(),
                     event.trackingNumber(),
                     event.adoptedValueId(),
                     e.getMessage());
@@ -90,7 +92,8 @@ public class ExternalMilestoneEventHandler {
         rejectedMilestones.saveIfAbsent(rejected);
         caseOpener.open(rejected, trackingRecord, external.operator());
         LOG.warn(
-                "DE-13 を実績にせず拒否の記録に残した: 追跡番号 {}、理由 {}、受信記録 {}",
+                "{} " + "DE-13 を実績にせず拒否の記録に残した: 追跡番号 {}、理由 {}、受信記録 {}",
+                OperationsAlert.MILESTONE_REJECTED.marker(),
                 external.trackingNumber().value(),
                 reason,
                 external.source().reference());

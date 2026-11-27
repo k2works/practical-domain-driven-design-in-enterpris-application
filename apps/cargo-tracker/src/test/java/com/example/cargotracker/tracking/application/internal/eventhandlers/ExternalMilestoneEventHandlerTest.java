@@ -250,7 +250,9 @@ class ExternalMilestoneEventHandlerTest {
                 assertThat(rejectedRecord.externalId()).isEqualTo("MS-0001");
                 assertThat(rejectedRecord.recordedAt()).isEqualTo(new UtcInstant(NOW));
             });
-            assertThat(logsAt(Level.WARN)).hasSize(1);
+            assertThat(logsAt(Level.WARN))
+                    .singleElement()
+                    .satisfies(log -> assertThat(log.getFormattedMessage()).contains("[ALERT:milestone-rejected]"));
         }
 
         @Test
@@ -473,10 +475,10 @@ class ExternalMilestoneEventHandlerTest {
 
             assertThatCode(() -> handler.on(event)).as(description).doesNotThrowAnyException();
 
-            assertThat(logs.list)
-                    .as(description)
-                    .singleElement()
-                    .satisfies(log -> assertThat(log.getLevel()).isEqualTo(Level.ERROR));
+            assertThat(logs.list).as(description).singleElement().satisfies(log -> {
+                assertThat(log.getLevel()).isEqualTo(Level.ERROR);
+                assertThat(log.getFormattedMessage()).contains("[ALERT:poison-event]");
+            });
             assertThat(repository.updated).as(description).isEmpty();
             assertThat(rejected.all()).as(description).isEmpty();
             assertThat(repository.reads).as(description).isEmpty();

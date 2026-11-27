@@ -1,6 +1,7 @@
 package com.example.cargotracker.tracking.application.internal.eventhandlers;
 
 import com.example.cargotracker.externaldata.domain.events.VoyageAdoptedValueUpdated;
+import com.example.cargotracker.shared.domain.OperationsAlert;
 import com.example.cargotracker.tracking.domain.model.aggregates.TrackingRecordRepository;
 import com.example.cargotracker.tracking.domain.model.valueobjects.PublicationOrder;
 import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingNumber;
@@ -49,7 +50,8 @@ public class VoyageArrivalEventHandler {
             order = VoyageArrivalInput.orderOf(event.publishedAt(), event.source());
         } catch (VoyageArrivalInput.InvalidEventValueException e) {
             LOG.error(
-                    "DE-12 を追跡に受けずに捨てた（イベントの内容が欠けている。再配信しても直らない。調査が要る）: 航海 {}、採用値 {}、欠け {}",
+                    "{} " + "DE-12 を追跡に受けずに捨てた（イベントの内容が欠けている。再配信しても直らない。調査が要る）: 航海 {}、採用値 {}、欠け {}",
+                    OperationsAlert.POISON_EVENT.marker(),
                     event.voyageNumber(),
                     event.adoptedValueId(),
                     e.getMessage());

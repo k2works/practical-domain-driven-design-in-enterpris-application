@@ -388,10 +388,10 @@ class VoyageUpdateEventHandlerTest {
         void 行13_ERRORのログを残して捨て例外を上げず書かない(String description, VoyageAdoptedValueUpdated event) {
             assertThatCode(() -> handler.on(event)).as(description).doesNotThrowAnyException();
 
-            assertThat(logs.list)
-                    .as(description)
-                    .singleElement()
-                    .satisfies(log -> assertThat(log.getLevel()).isEqualTo(Level.ERROR));
+            assertThat(logs.list).as(description).singleElement().satisfies(log -> {
+                assertThat(log.getLevel()).isEqualTo(Level.ERROR);
+                assertThat(log.getFormattedMessage()).contains("[ALERT:poison-event]");
+            });
             assertThat(repository.saved).as(description).isEmpty();
             assertThat(repository.updated).as(description).isEmpty();
         }

@@ -171,9 +171,10 @@ class VoyageArrivalEventHandlerTest {
         handler.on(event);
 
         assertThat(repository.calls).isEmpty();
-        assertThat(logs.list)
-                .singleElement()
-                .satisfies(log -> assertThat(log.getLevel()).isEqualTo(Level.ERROR));
+        assertThat(logs.list).singleElement().satisfies(log -> {
+            assertThat(log.getLevel()).isEqualTo(Level.ERROR);
+            assertThat(log.getFormattedMessage()).contains("[ALERT:poison-event]");
+        });
     }
 
     @Test
