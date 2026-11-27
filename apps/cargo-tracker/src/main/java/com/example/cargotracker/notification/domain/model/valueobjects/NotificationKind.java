@@ -28,5 +28,17 @@ public enum NotificationKind {
     /** 本予約の確定（US-22 AC1。Bolt 43）。 */
     BOOKING_CONFIRMED,
     /** 追跡が確認中になった（US-22 AC1。DE-18。Bolt 43）。 */
-    TRACKING_UNDER_REVIEW
+    TRACKING_UNDER_REVIEW;
+
+    /**
+     * 失敗を自動で再送する種類か（ADR-021 の C-3。W10-1 計画 CP-5）。リンクにトークンを含まない荷主への業務の通知だけで、これだけが
+     * リンクを保存できる。招待や password の再設定のリンクは保存しない。
+     */
+    public boolean isResendable() {
+        return switch (this) {
+            case QUOTATION_PRESENTED, ROUTE_APPROVED, QUOTATION_EXPIRING, BOOKING_CONFIRMED, TRACKING_UNDER_REVIEW ->
+                true;
+            case PASSWORD_RESET, USER_INVITATION, TOTP_RESET_BY_ADMIN, TOTP_ENROLLED, TOTP_RE_ENROLLED -> false;
+        };
+    }
 }

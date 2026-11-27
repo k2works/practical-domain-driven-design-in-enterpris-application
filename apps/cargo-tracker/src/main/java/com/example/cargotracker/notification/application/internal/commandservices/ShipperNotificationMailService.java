@@ -34,12 +34,14 @@ public class ShipperNotificationMailService {
 
     /** 通知を送り、結果を記録する。 */
     public MailDeliveryOutcome send(SendShipperNotificationMailCommand command) {
-        Notification pending = Notification.pending(
+        // 失敗したら再送するので、リンクも記録する（荷主への業務の通知のリンクはトークンを含まない。Bolt 61）
+        Notification pending = Notification.pendingResendable(
                 command.eventId(),
                 command.recipientUserId(),
                 command.email(),
                 command.kind(),
                 command.targetRef(),
+                command.link(),
                 command.locale(),
                 delivery.now());
         return delivery.deliver(

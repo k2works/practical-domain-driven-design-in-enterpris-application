@@ -4,7 +4,7 @@ title: "cargo-tracker データモデル"
 description: "cargo-tracker の概念データモデル、スキーマ分割、命名と型の規約（H2 と PostgreSQL の共通部分）、コンテキストごとの論理データモデルと ER 図、版・追記専用・冪等性・イベント配信の表現。"
 tags: [design, data-model]
 status: stable
-generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-16T04:23:12Z }
+generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-27T11:14:30Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:48:17Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:37Z }
@@ -1059,6 +1059,9 @@ entity "notification\n通知" as n {
   sent_at : TIMESTAMPTZ
   failure_reason : VARCHAR(1000)
   * created_at : TIMESTAMPTZ
+  link : VARCHAR(500)
+  * retry_count : INTEGER
+  retryable : BOOLEAN
   .. UK (event_id, recipient_user_id) ..
 }
 @enduml
@@ -1066,7 +1069,7 @@ entity "notification\n通知" as n {
 
 | 表 | 主な制約 | 対応する不変条件 |
 | :--- | :--- | :--- |
-| `notification` | UK（`event_id`、`recipient_user_id`）で、イベントの再配信でも同じ宛先へ 2 通送らない。`kind` IN（`QUOTATION_PRESENTED`、`ROUTE_APPROVED`、`QUOTATION_EXPIRING`、`BOOKING_CONFIRMED`、`TRACKING_UNDER_REVIEW`、`CONSIGNEE_INVITATION`、`PASSWORD_RESET`、`USER_INVITATION`（Bolt 38b2b）、`TOTP_RESET_BY_ADMIN`、`TOTP_ENROLLED`、`TOTP_RE_ENROLLED`（Bolt 38d））。`status` IN（`PENDING`、`SENT`、`FAILED`）。`recipient_user_id` はコンテキストをまたぐので外部キーにしない。PENDING で追加してから送り、送信の結果は `UPDATE ... SET status = ..., sent_at = ..., failure_reason = ... WHERE id = :id AND status = 'PENDING'` の更新件数で書く（`version` を持たない例外）。`email`（宛先のメールアドレス。個人情報）の保持の期間は、トークンの表と同じく非機能要件（W10）で決める（Bolt 33） | N-INV-02、N-INV-03 |
+| `notification` | UK（`event_id`、`recipient_user_id`）で、イベントの再配信でも同じ宛先へ 2 通送らない。`kind` IN（`QUOTATION_PRESENTED`、`ROUTE_APPROVED`、`QUOTATION_EXPIRING`、`BOOKING_CONFIRMED`、`TRACKING_UNDER_REVIEW`、`CONSIGNEE_INVITATION`、`PASSWORD_RESET`、`USER_INVITATION`（Bolt 38b2b）、`TOTP_RESET_BY_ADMIN`、`TOTP_ENROLLED`、`TOTP_RE_ENROLLED`（Bolt 38d））。`status` IN（`PENDING`、`SENT`、`FAILED`）。`recipient_user_id` はコンテキストをまたぐので外部キーにしない。PENDING で追加してから送り、送信の結果は `UPDATE ... SET status = ..., sent_at = ..., failure_reason = ... WHERE id = :id AND status = 'PENDING'` の更新件数で書く（`version` を持たない例外）。`email`（宛先のメールアドレス。個人情報）の保持の期間は、トークンの表と同じく非機能要件（W10）で決める（Bolt 33）。**再送の列（Bolt 61。ADR-021）**: `link` は再送する荷主への業務の通知の 5 種類だけが持つ（CHECK。招待・password の再設定のリンクは書けない）。`retry_count` は 0〜3。`retryable` は失敗した行だけが持ち（再送の可否。追加の前に失敗した行は NULL で再送しない）、`TRUE` の行はリンクを持つ。再送は同じ行を `status = 'FAILED' AND retry_count = :前の回数` の条件で `PENDING` に戻して引き取ってから送る | N-INV-02、N-INV-03 |
 
 Bolt 33 でこの表を作る（[Bolt 33 計画](../../development/cargo-tracker/bolt_33_plan.md) の確認ポイント 4、[ADR-017](../../adr/cargo-tracker/017-notification-module-and-mail.md)）。`kind` の CHECK には上の 11 値を置く。Bolt 33 は `PASSWORD_RESET` を、Bolt 38b2b は `USER_INVITATION` を、Bolt 38d は TOTP の 3 値を使い、残りの 6 値は業務の通知（W9）で使う。`USER_INVITATION` は Bolt 38b2b で足した（`V20261026100000`。CHECK を DROP して ADD し、`event_id`・`target_ref` の注を直した）。TOTP の 3 値は Bolt 38d で同じ形で足した（`V20261027110000`。Bolt 38c2 の `V20261027100000` の後）。新しいスキーマなので、`afterMigrate__grant_app_user.sql` の `GRANT USAGE ON SCHEMA`、`MapperSchemaArchitectureTest.SCHEMAS`、`SchemaCommentIntegrationTest.BUSINESS_SCHEMAS`、ER 図の対象（`ops/scripts/design_docs.js` の `schemas`）の 4 か所に `notification` を足す（ER 図の対象の漏れは Bolt 33 で MkDocs の配備を止め、後から足した）。なお、`SchemaCommentIntegrationTest.BUSINESS_SCHEMAS` には `tracking` も漏れていた（Bolt 33a の既知の課題）。`tracking` の表と列にはコメントがそろっていて、マイグレーションは要らないので、Bolt 33c でテストの一覧に足す。
 

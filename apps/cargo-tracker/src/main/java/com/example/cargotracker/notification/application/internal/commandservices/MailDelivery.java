@@ -95,12 +95,17 @@ final class MailDelivery {
         if (!Boolean.TRUE.equals(added)) {
             return new MailDeliveryOutcome.AlreadySent();
         }
+        return attempt(pending, mail, masks);
+    }
+
+    /** 送信待ちとして記録済み（または再送のために引き取り済み）の通知を送り、結果を書く。 */
+    MailDeliveryOutcome attempt(Notification pending, Supplier<OutgoingMail> mail, List<Mask> masks) {
         try {
             sender.send(mail.get());
         } catch (RuntimeException e) {
             String reason = reasonOf(e, masks);
             LOG.warn("{} のメールを送れなかった: 契機 {}、通知 {}、理由 {}", pending.kind(), pending.eventId(), pending.id(), reason);
-            saveOutcome(pending.failed(reason));
+            saveOutcome(pending.failed(reason, sender.isTransientFailure(e)));
             return new MailDeliveryOutcome.Failed(reason);
         }
         saveOutcome(pending.sent(now()));

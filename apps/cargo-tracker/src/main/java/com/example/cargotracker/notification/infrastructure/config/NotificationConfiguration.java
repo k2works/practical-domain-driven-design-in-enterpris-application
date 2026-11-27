@@ -2,6 +2,7 @@ package com.example.cargotracker.notification.infrastructure.config;
 
 import com.example.cargotracker.notification.application.internal.commandservices.PasswordResetMailService;
 import com.example.cargotracker.notification.application.internal.commandservices.ShipperNotificationMailService;
+import com.example.cargotracker.notification.application.internal.commandservices.ShipperNotificationRetryService;
 import com.example.cargotracker.notification.application.internal.commandservices.TotpEnrollmentMailService;
 import com.example.cargotracker.notification.application.internal.commandservices.TotpResetMailService;
 import com.example.cargotracker.notification.application.internal.commandservices.UserInvitationMailService;
@@ -112,6 +113,17 @@ public class NotificationConfiguration {
             Clock clock,
             TransactionTemplate transactionTemplate) {
         return new ShipperNotificationMailService(
+                notifications, notificationMailSender, shipperNotificationMailTemplate, clock, transactionTemplate);
+    }
+
+    @Bean
+    ShipperNotificationRetryService shipperNotificationRetryService(
+            NotificationRepository notifications,
+            MailSender notificationMailSender,
+            ShipperNotificationMailTemplate shipperNotificationMailTemplate,
+            Clock clock,
+            TransactionTemplate transactionTemplate) {
+        return new ShipperNotificationRetryService(
                 notifications, notificationMailSender, shipperNotificationMailTemplate, clock, transactionTemplate);
     }
 

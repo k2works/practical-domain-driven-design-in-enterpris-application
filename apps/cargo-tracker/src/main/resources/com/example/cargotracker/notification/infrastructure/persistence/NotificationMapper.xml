@@ -17,15 +17,20 @@
             <arg column="sent_at" name="sentAt" javaType="java.time.OffsetDateTime"/>
             <arg column="failure_reason" name="failureReason" javaType="String"/>
             <arg column="created_at" name="createdAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="link" name="link" javaType="String"/>
+            <arg column="retry_count" name="retryCount" javaType="_int"/>
+            <arg column="retryable" name="retryable" javaType="Boolean"/>
         </constructor>
     </resultMap>
 
     <!-- N-INV-02。同じ契機と宛先の行がなければ入れる。同時の 2 つは一意制約で後が失敗する -->
     <insert id="insertNotificationIfAbsent">
         INSERT INTO notification.notification
-            (id, event_id, recipient_user_id, email, kind, target_ref, locale, status, sent_at, failure_reason, created_at)
+            (id, event_id, recipient_user_id, email, kind, target_ref, locale, status, sent_at, failure_reason, created_at,
+             link, retry_count, retryable)
         SELECT #{id}, #{eventId}, #{recipientUserId}, #{email}, #{kind}, #{targetRef}, #{locale}, #{status},
-               #{sentAt}, #{failureReason}, #{createdAt}
+               #{sentAt}, #{failureReason}, #{createdAt}, #{link,jdbcType=VARCHAR}, #{retryCount},
+               #{retryable,jdbcType=BOOLEAN}
          WHERE NOT EXISTS (
             SELECT 1 FROM notification.notification
              WHERE event_id = #{eventId} AND recipient_user_id = #{recipientUserId})
@@ -35,15 +40,40 @@
         UPDATE notification.notification
            SET status = #{status},
                sent_at = #{sentAt},
-               failure_reason = #{failureReason}
+               failure_reason = #{failureReason},
+               retryable = #{retryable,jdbcType=BOOLEAN}
          WHERE id = #{id}
            AND status = 'PENDING'
+    </update>
+
+    <!-- 再送できる失敗。古い順（Bolt 61） -->
+    <select id="selectRetryCandidates" resultMap="notificationRow">
+        SELECT id, event_id, recipient_user_id, email, kind, target_ref, locale, status, sent_at, failure_reason,
+               created_at, link, retry_count, retryable
+          FROM notification.notification
+         WHERE status = 'FAILED'
+           AND retryable = TRUE
+           AND created_at &gt; #{createdAfter}
+         ORDER BY created_at, id
+         FETCH FIRST #{limit} ROWS ONLY
+    </select>
+
+    <!-- 再送の引き取り。失敗のままで回数が 1 つ前の行だけを送信待ちに戻す -->
+    <update id="updateToPendingForRetry">
+        UPDATE notification.notification
+           SET status = 'PENDING',
+               failure_reason = NULL,
+               retryable = NULL,
+               retry_count = #{retryCount}
+         WHERE id = #{id}
+           AND status = 'FAILED'
+           AND retry_count = #{retryCount} - 1
     </update>
 
     <!-- 宛先の利用者の通知。新しい順（作成の時刻、同じなら ID）に上限まで。種類で絞る（荷主の通知一覧 C-16。Bolt 43-3） -->
     <select id="selectRecentByRecipient" resultMap="notificationRow">
         SELECT id, event_id, recipient_user_id, email, kind, target_ref, locale, status, sent_at, failure_reason,
-               created_at
+               created_at, link, retry_count, retryable
           FROM notification.notification
          WHERE recipient_user_id = #{recipientUserId}
            AND kind IN
@@ -54,7 +84,7 @@
 
     <select id="selectByEventIdAndRecipient" resultMap="notificationRow">
         SELECT id, event_id, recipient_user_id, email, kind, target_ref, locale, status, sent_at, failure_reason,
-               created_at
+               created_at, link, retry_count, retryable
           FROM notification.notification
          WHERE event_id = #{eventId}
            AND recipient_user_id = #{recipientUserId}

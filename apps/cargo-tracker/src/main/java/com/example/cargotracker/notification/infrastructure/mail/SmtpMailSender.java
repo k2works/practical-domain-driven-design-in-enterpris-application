@@ -2,8 +2,11 @@ package com.example.cargotracker.notification.infrastructure.mail;
 
 import com.example.cargotracker.notification.domain.model.aggregates.MailSender;
 import com.example.cargotracker.notification.domain.model.aggregates.OutgoingMail;
+import java.io.IOException;
+import java.util.Arrays;
 import java.util.Objects;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.mail.MailSendException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 
@@ -33,5 +36,24 @@ public final class SmtpMailSender implements MailSender {
         message.setSubject(mail.subject());
         message.setText(mail.body());
         sender.send(message);
+    }
+
+    /** 接続と通信の失敗（原因に入出力の例外がある）だけを一時の失敗にする。宛先の不備・認証・設定の失敗は含めない。 */
+    @Override
+    public boolean isTransientFailure(RuntimeException failure) {
+        if (hasIoCause(failure)) {
+            return true;
+        }
+        return failure instanceof MailSendException send
+                && Arrays.stream(send.getMessageExceptions()).anyMatch(SmtpMailSender::hasIoCause);
+    }
+
+    private static boolean hasIoCause(Throwable failure) {
+        for (Throwable cause = failure; cause != null; cause = cause.getCause()) {
+            if (cause instanceof IOException) {
+                return true;
+            }
+        }
+        return false;
     }
 }

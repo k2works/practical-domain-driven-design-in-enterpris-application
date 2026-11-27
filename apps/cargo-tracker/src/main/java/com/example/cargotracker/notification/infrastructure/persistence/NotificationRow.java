@@ -15,4 +15,7 @@ public record NotificationRow(
         String status,
         OffsetDateTime sentAt,
         String failureReason,
-        OffsetDateTime createdAt) {}
+        OffsetDateTime createdAt,
+        String link,
+        int retryCount,
+        Boolean retryable) {}

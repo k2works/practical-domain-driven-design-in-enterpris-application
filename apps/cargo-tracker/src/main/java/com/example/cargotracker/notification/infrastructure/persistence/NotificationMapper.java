@@ -1,5 +1,7 @@
 package com.example.cargotracker.notification.infrastructure.persistence;
 
+import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.apache.ibatis.annotations.Mapper;
@@ -23,4 +25,9 @@ public interface NotificationMapper {
 
     Optional<NotificationRow> selectByEventIdAndRecipient(
             @Param("eventId") UUID eventId, @Param("recipientUserId") UUID recipientUserId);
+
+    List<NotificationRow> selectRetryCandidates(
+            @Param("createdAfter") OffsetDateTime createdAfter, @Param("limit") int limit);
+
+    int updateToPendingForRetry(NotificationRow row);
 }

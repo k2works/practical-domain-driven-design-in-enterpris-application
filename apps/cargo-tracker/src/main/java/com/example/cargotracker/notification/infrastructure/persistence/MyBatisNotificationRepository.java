@@ -56,6 +56,18 @@ public class MyBatisNotificationRepository implements NotificationRepository {
                 .map(MyBatisNotificationRepository::toDomain);
     }
 
+    @Override
+    public java.util.List<Notification> findRetryCandidates(UtcInstant createdAfter, int limit) {
+        return mapper.selectRetryCandidates(toOffset(createdAfter), limit).stream()
+                .map(MyBatisNotificationRepository::toDomain)
+                .toList();
+    }
+
+    @Override
+    public boolean claimRetry(Notification retrying) {
+        return mapper.updateToPendingForRetry(toRow(retrying)) == 1;
+    }
+
     private static NotificationRow toRow(Notification notification) {
         return new NotificationRow(
                 notification.id(),
@@ -71,11 +83,15 @@ public class MyBatisNotificationRepository implements NotificationRepository {
                         .map(MyBatisNotificationRepository::toOffset)
                         .orElse(null),
                 notification.failureReason().orElse(null),
-                toOffset(notification.createdAt()));
+                toOffset(notification.createdAt()),
+                notification.link().orElse(null),
+                notification.retryCount(),
+                // 再送の可否は失敗した行だけが持つ（表の CHECK）
+                notification.status() == NotificationStatus.FAILED ? notification.retryable() : null);
     }
 
     private static Notification toDomain(NotificationRow row) {
-        return Notification.reconstitute(
+        Notification notification = Notification.reconstitute(
                 row.id(),
                 row.eventId(),
                 row.recipientUserId(),
@@ -87,6 +103,7 @@ public class MyBatisNotificationRepository implements NotificationRepository {
                 row.sentAt() == null ? null : new UtcInstant(row.sentAt().toInstant()),
                 row.failureReason(),
                 new UtcInstant(row.createdAt().toInstant()));
+        return notification.withRetryState(row.link(), row.retryCount(), Boolean.TRUE.equals(row.retryable()));
     }
 
     private static OffsetDateTime toOffset(UtcInstant instant) {

@@ -1,6 +1,7 @@
 package com.example.cargotracker.notification.domain.model.aggregates;
 
 import com.example.cargotracker.notification.domain.model.valueobjects.NotificationKind;
+import com.example.cargotracker.shared.domain.UtcInstant;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -29,5 +30,14 @@ public interface NotificationRepository {
     List<Notification> findRecentByRecipient(UUID recipientUserId, Set<NotificationKind> kinds, int limit);
 
     /** 契機と宛先で通知を探す。 */
+    /** 再送できる失敗のうち、指定の時刻より後に作られたものを古い順に上限まで返す（Bolt 61）。 */
+    List<Notification> findRetryCandidates(UtcInstant createdAfter, int limit);
+
+    /**
+     * 再送のために送信待ちに戻した通知を書いて引き取る。行が失敗のままで、再送の回数が 1 つ前のときだけ成功する
+     * （同時の実行で二重に送らない）。
+     */
+    boolean claimRetry(Notification retrying);
+
     Optional<Notification> findByEventIdAndRecipient(UUID eventId, UUID recipientUserId);
 }

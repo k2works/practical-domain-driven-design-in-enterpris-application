@@ -36,6 +36,7 @@ final class NotificationTestDoubles {
     static final class InMemoryNotifications implements NotificationRepository {
         private final Map<String, Notification> rows = new HashMap<>();
         boolean rejectOutcome;
+        boolean rejectClaim;
 
         private static String key(UUID eventId, UUID recipient) {
             return eventId + "/" + recipient;
@@ -70,6 +71,29 @@ final class NotificationTestDoubles {
                     .filter(n -> n.recipientUserId().equals(recipientUserId) && kinds.contains(n.kind()))
                     .limit(limit)
                     .toList();
+        }
+
+        @Override
+        public java.util.List<Notification> findRetryCandidates(
+                com.example.cargotracker.shared.domain.UtcInstant createdAfter, int limit) {
+            return rows.values().stream()
+                    .filter(n -> n.retryable() && n.createdAt().instant().isAfter(createdAfter.instant()))
+                    .limit(limit)
+                    .toList();
+        }
+
+        @Override
+        public boolean claimRetry(Notification retrying) {
+            String key = key(retrying.eventId(), retrying.recipientUserId());
+            Notification current = rows.get(key);
+            if (rejectClaim
+                    || current == null
+                    || current.status() != NotificationStatus.FAILED
+                    || current.retryCount() != retrying.retryCount() - 1) {
+                return false;
+            }
+            rows.put(key, retrying);
+            return true;
         }
 
         @Override
