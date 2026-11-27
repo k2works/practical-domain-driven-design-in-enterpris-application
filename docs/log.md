@@ -1,6 +1,11 @@
 # Docs Update Log
 
 ## 2026-11-27
+* **Verification**: [iteration_plan-W10-1](/development/cargo-tracker/iteration_plan-W10-1.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [iteration_plan-W11](/development/cargo-tracker/iteration_plan-W11.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [iteration_plan-W10-1](/development/cargo-tracker/iteration_plan-W10-1.md) を更新（anthropic/claude-sonnet-5-5）
+* **Creation**: [iteration_plan-W10-1](/development/cargo-tracker/iteration_plan-W10-1.md) を作成（anthropic/claude-sonnet-5-5）
 * **Verification**: W9 の Bolt 41〜48-1 の計画と終了報告（38 文書）を human:kakimomokuri が検証
 * **Verification**: [iteration_report-W9](/development/cargo-tracker/iteration_report-W9.md) を human:kakimomokuri が検証
 * **Update**: [iteration_plan-W10](/development/cargo-tracker/iteration_plan-W10.md) を更新（anthropic/claude-sonnet-5-5）
