@@ -4,7 +4,7 @@ title: "リリース計画 - cargo-tracker（A 社国際貨物輸送管理シス
 description: "cargo-tracker MVP のリリース計画。1 人 + AI、時間単位の Bolt（= イテレーション）と週次の見直しで、最初の縦の流れ（R0.1）、パイロット準備完了（R1.0）、本格展開前（R1.1）の 3 段階、Unit のエントロピー評価、SP、バッファ、パイロット開始の条件、引継ぎ ID の台帳、業務責任者に確かめる事項の台帳。"
 tags: [development,release-plan]
 status: stable
-generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-27T10:19:32Z }
+generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-27T12:53:54Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T09:29:53Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:38:26Z }
@@ -1252,7 +1252,7 @@ D-144 の注（Bolt 39h2 の開始準備）: 判断の画面に差異を出し�
 | W7 | 10 | 10 | 100% | 完了（2026-11-02〜11-13 に Bolt 38h と 39〜39i の 39 本を終え、2026-11-13 に締めの作業を終えた。完了報告書は承認済み。US-14 の 8 SP（#18。Bolt 39h4 の終了報告の承認の後に数えた）と US-12 の残りの 2 SP（#19。Bolt 39gc の承認の後に数えた）を完了し、#18・#19 をクローズした。週全体のコードレビューと品質ゲートの確認を行った。[W7 完了報告書](iteration_report-W7.md)） |
 | W8 | 8 | 8 | 100% | 完了（2026-11-13〜11-14 に Bolt 40〜40-17 の 18 本を終えた。[完了報告書](iteration_report-W8.md)） |
 | W9 | 15 | 15 | 100% | 完了（2026-11-14〜11-15 に Bolt 41〜48 の 18 本を終え、2026-11-15 に締めた。US-23・US-22・US-21・US-01・US-24・US-09 を閉じ、Release 1.0 は 54/54 SP。[完了報告書](iteration_report-W9.md)。承認済み） |
-| W10 | 0 | - | - | 一部完了（2026-11-16。[W10 完了報告書](iteration_report-W10.md)。承認済み。残りは Release 1.1 の頭へ持ち越し） |
+| W10 | 0 | - | - | 一部完了（2026-11-16。[W10 完了報告書](iteration_report-W10.md)。承認済み。残りは Release 1.1 の頭へ持ち越し。そのうち実環境なしで進められる分は [W10-1](iteration_plan-W10-1.md) で実施した。[締めの報告](bolt_56-1_plan.md)は承認待ち） |
 | W11 | 11 | - | - | 計画済み（[W11 計画](iteration_plan-W11.md)。9 本、Bolt 60・62〜69。承認待ち。57〜59・61 は [W10-1 計画](iteration_plan-W10-1.md)へ移した） |
 | W12 | 10 | - | - | 未着手 |
 | W13 | 8 | - | - | 未着手 |
@@ -1755,3 +1755,4 @@ xychart-beta
 | 2026-11-13 | W8 計画と Bolt 40 計画の確認ポイント CP-1〜CP-9 を推奨のとおり承認として記録した（W8 は基準 B で 6〜7 日を見込む。Bolt の採番は 40・40-1・40-2、詳細化は 40-1-1。human:kakimomokuri） | anthropic/claude-sonnet-5-5 |
 | 2026-11-27 | 文書の不整合を直した。進捗状況の W10 を「承認済み」にし（W10 完了報告書の承認に合わせる）、「GitHub との同期」の Milestone の件数と Issue の番号の範囲を GitHub の実際に合わせた | anthropic/claude-sonnet-5-5 |
 | 2026-11-27 | W9 完了報告書の承認（human:kakimomokuri）を受けて、進捗状況の W9 を「承認済み」にした | anthropic/claude-sonnet-5-5 |
+| 2026-11-27 | W10-1（持ち越しのうち実環境なしで進められる 8 本）を実施し、進捗状況の W10 に記した | anthropic/claude-sonnet-5-5 |
