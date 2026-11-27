@@ -88,3 +88,16 @@ resource "aws_budgets_budget" "monthly" {
   limit_unit   = "USD"
   time_unit    = "MONTHLY"
 }
+
+# 運用の警告（ADR-023。W10-1 の Bolt 57）
+module "alerts" {
+  source = "../alerts"
+
+  name                     = var.name
+  log_group_name           = module.application.log_group_name
+  load_balancer_arn_suffix = module.application.load_balancer_arn_suffix
+  target_group_arn_suffix  = module.application.target_group_arn_suffix
+  operations_alert_emails  = var.operations_alert_emails
+  data_alert_emails        = var.data_alert_emails
+  tracking_alert_emails    = var.tracking_alert_emails
+}

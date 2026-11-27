@@ -29,6 +29,10 @@ provider "aws" {
 module "stack" {
   source = "../../modules/stack"
 
+  operations_alert_emails = var.operations_alert_emails
+  data_alert_emails       = var.data_alert_emails
+  tracking_alert_emails   = var.tracking_alert_emails
+
   name                           = "cargo-tracker-staging"
   region                         = var.region
   availability_zones             = var.availability_zones

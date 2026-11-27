@@ -4,7 +4,7 @@ title: "運用タスク手順書 - cargo-tracker のステージング・本番�
 description: "ステージング・本番の DB 利用者の作成、権限の確認、配備前の確認、配備、戻しの運用タスク（Gulp）の使い方。未実行のコードであること、まだ作っていない運用タスクと、その理由を明記する。"
 tags: [operation, runbook]
 status: draft
-generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-16T05:59:53Z }
+generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-27T10:24:58Z }
 ---
 
 # 運用タスク手順書 - cargo-tracker のステージング・本番
@@ -58,6 +58,7 @@ DB への経路は、SSM Session Manager の踏み台のポートフォワード
 | `deploy:rollback` | 戻し先がないとき（タスク定義が 1 つしかない）は失敗する。その場合は、人が AWS コンソールで状況を確かめる |
 
 ## 配備前の確認表（W7 の議題 3）
+**警告の配布先（W10-1 の Bolt 57）。** `terraform apply` の前に、変数 `operations_alert_emails`・`data_alert_emails`・`tracking_alert_emails` を指定する（既定値はない。値は運用責任者が決める）。SNS のメールの購読は、届いた確認のメールを承認するまで有効にならない。`apply` の後に、3 つのトピックの購読が「確認済み」であることを確かめる。
 
 配備（`deploy:release`）の前に、人が次を確かめる。
 

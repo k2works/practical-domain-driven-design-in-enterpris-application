@@ -87,3 +87,18 @@ variable "monthly_budget_usd" {
   type        = number
   default     = null
 }
+
+variable "operations_alert_emails" {
+  description = "運用の警告のメールの配布先（未決。運用責任者が決める。ADR-023）"
+  type        = list(string)
+}
+
+variable "data_alert_emails" {
+  description = "データ責任者への警告のメールの配布先（未決）"
+  type        = list(string)
+}
+
+variable "tracking_alert_emails" {
+  description = "追跡管理者への警告のメールの配布先（未決）"
+  type        = list(string)
+}

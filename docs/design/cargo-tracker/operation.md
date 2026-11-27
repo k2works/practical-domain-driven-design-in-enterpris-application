@@ -4,7 +4,7 @@ title: "cargo-tracker 運用要件"
 description: "cargo-tracker の運用体制、定常運用、監視と通知、バックアップと復旧、障害対応の手順（ランブック）、変更管理、DB 利用者と権限の初期化、アカウント運用、運用タスクの一覧。"
 tags: [design, operation]
 status: stable
-generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-16T07:14:13Z }
+generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-27T10:24:58Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T08:30:35Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:38Z }
@@ -152,6 +152,7 @@ app --> home : 業務上の未処理\n（有人確認要、隔離、鮮度超過
 | OBS-11 通知メールの失敗・バウンス | 運用チャンネル | 運用チャンネル、メール | 週次の通知の失敗の確認、SES の送信状態の確認 |
 
 運用チャンネルに使うチャットツールは、A 社の標準に合わせて決める（要確認）。**パイロットの規模では、警告の宛先はメールを既定にし、チャットは SNS の購読を足して連携する（[ADR-023](../../adr/cargo-tracker/023-operations-notification-and-home.md)。2026-11-16）。**
+**アプリが出す警告の仕組み（W10-1 の Bolt 57・57-1。実環境では未確認）。** アプリは宛先を持たず、ログの行に決まった印 `[ALERT:<code>]` を入れる（共有カーネルの `OperationsAlert`）。CloudWatch のメトリクスフィルターが印を数え、警報が SNS のトピック（運用・データ・追跡の 3 つ）のメールへ送る（`ops/terraform/modules/alerts`）。OBS-01・02・10 は ALB のメトリクスの警報で同じトピックへ送る。印と Terraform のキーの一致は `OperationsAlertTest` が確かめる。印を入れる行に個人情報とトークンを書かない。
 
 ### エスカレーション
 
