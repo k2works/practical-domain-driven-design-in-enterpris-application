@@ -12144,6 +12144,41 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_71_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 71 計画
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../development/cargo-tracker/bolt_49_plan/" class="md-nav__link">
         
   
@@ -15597,6 +15632,17 @@
     <span class="md-ellipsis">
       
         配備前の確認表（W7 の議題 3）
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#changelog" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        リリース（版・CHANGELOG・タグ）
       
     </span>
   </a>
@@ -20295,6 +20341,79 @@
 <li><code>/actuator/health</code>（管理用のポート 8081）が UP を返す。ALB のヘルスチェックが healthy になっている。</li>
 <li>本番は、ステージングで確かめたイメージの digest をそのまま昇格する（再ビルドしない）。</li>
 </ol>
+<h2 id="changelog">リリース（版・CHANGELOG・タグ）<a class="headerlink" href="#changelog" title="Permanent link">&para;</a></h2>
+<p>cargo-tracker の版を上げ、CHANGELOG とタグを作る（<a href="../../../development/cargo-tracker/bolt_71_plan/">Bolt 71</a>。実装は <code>ops/scripts/release.js</code>）。<strong>配備も push もしない</strong>（配備は上の <code>deploy:release</code>）。AWS の接続と <code>.env</code> の <code>OPS_*</code> は要らない。</p>
+<blockquote>
+<p><strong>注意: <code>release:patch</code>・<code>minor</code>・<code>major</code> は、このリポジトリではまだ一度も実行していない。</strong> コミットとタグの部分は一時の Git リポジトリのテストで、<code>release:dry-run</code> は実際のリポジトリで確かめた。</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">タスク</th>
+<th style="text-align: left;">内容</th>
+<th style="text-align: left;">変更するか</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>npx gulp release:dry-run</code></td>
+<td style="text-align: left;">今の版、上げた後の版とタグ、CHANGELOG に足す内容を表示する</td>
+<td style="text-align: left;">しない</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>npx gulp release:preflight</code></td>
+<td style="text-align: left;">品質ゲート（約 30 分。Docker が要る）。作業ツリーが clean、<code>develop</code> で <code>origin/develop</code> と一致（<code>git fetch</code> する）、運用スクリプトのテスト、<code>./gradlew check documentationTest uiTest bootJar</code>、最後にもう一度 clean と一致を確かめる</td>
+<td style="text-align: left;">しない（ビルドの出力を除く）</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>npx gulp release:patch</code>・<code>release:minor</code>・<code>release:major</code></td>
+<td style="text-align: left;"><code>release:preflight</code> の後に、版を書き換え、CHANGELOG に足し、その 2 ファイルだけをコミット（<code>chore(release): cargo-tracker vX.Y.Z</code>）して注釈付きのタグ <code>cargo-tracker-vX.Y.Z</code> を打つ</td>
+<td style="text-align: left;">する（手元のコミットとタグ）</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><strong>版</strong>: 正本は <code>apps/cargo-tracker/build.gradle</code> の <code>version</code>。数字の部分から上げ、<code>-SNAPSHOT</code> を付けずに書き戻す（<code>0.0.1-SNAPSHOT</code> からの minor は 0.1.0、major は 1.0.0）。リリースの後に次の <code>-SNAPSHOT</code> へは進めない。<a href="../../../development/cargo-tracker/release_plan/">リリース計画</a>の Release 0.1・1.0・1.1 は、版の 0.1.0・1.0.0・1.1.0 に当てる。</li>
+<li><strong>CHANGELOG</strong>: <code>apps/cargo-tracker/CHANGELOG.md</code>（最初のリリースで作る）。直前の <code>cargo-tracker-v*</code> のタグからの（タグがなければ全履歴の）、<code>apps/cargo-tracker</code>・<code>ops/terraform</code>・<code>ops/scripts/operation*.js</code>・<code>.github/workflows/cargo-tracker-*.yml</code> を変えたコミットのうち、<code>feat</code>・<code>fix</code>・<code>perf</code>・<code>build</code> と <code>!</code> 付き。</li>
+</ul>
+<p><strong>実行の前に人が確かめること（タスクは検査しない）。</strong></p>
+<ol>
+<li>上げる版に対応する、リリース計画の<strong>リリース条件</strong>がすべて満たされている。未達があるときは実行しない。</li>
+<li><code>release:dry-run</code> の版・タグ・CHANGELOG が、意図したとおりである。</li>
+<li>SonarQube の Quality Gate が PASS（<code>npx gulp sonar-local:check</code>。品質ゲートに含まれない）。</li>
+</ol>
+<p><strong>実行の後。</strong> コミットとタグを確かめてから、<code>git push origin develop cargo-tracker-vX.Y.Z</code> で送る（push は人の指示で行う）。リリースのコミットは <code>apps/cargo-tracker</code> を変えるので、push すると CI と <code>deploy-demo</code> が動く。</p>
+<p><strong>失敗したとき。</strong></p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">状態</th>
+<th style="text-align: left;">対応</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>release:preflight</code> が失敗した</td>
+<td style="text-align: left;">何も変わっていない。表示された理由を直してから実行し直す</td>
+</tr>
+<tr>
+<td style="text-align: left;">版や CHANGELOG を書き換えた後、コミットの前に失敗した</td>
+<td style="text-align: left;"><code>git status</code> で確かめ、<code>apps/cargo-tracker/build.gradle</code> と <code>CHANGELOG.md</code> の変更を戻してから実行し直す</td>
+</tr>
+<tr>
+<td style="text-align: left;">コミットはできたが、タグがない</td>
+<td style="text-align: left;">内容を確かめて <code>git tag -a cargo-tracker-vX.Y.Z -m cargo-tracker-vX.Y.Z</code> を打つ</td>
+</tr>
+<tr>
+<td style="text-align: left;">push の前に取りやめる</td>
+<td style="text-align: left;"><code>git tag -d cargo-tracker-vX.Y.Z</code> でタグを消し、<code>git revert</code> でリリースのコミットを打ち消す</td>
+</tr>
+<tr>
+<td style="text-align: left;">push の後に取りやめる</td>
+<td style="text-align: left;">タグを消すかどうかは人が決める。版を戻さず、直した版を次のリリースとして出す</td>
+</tr>
+</tbody>
+</table>
 <h2 id="rb-02">時点復旧（RB-02）の手順（手動。草案。未訓練・未検証）<a class="headerlink" href="#rb-02" title="Permanent link">&para;</a></h2>
 <p>DB の論理障害・誤操作で、障害の直前の時点へ戻すときの手順。設計は <a href="../../../design/cargo-tracker/operation/">運用要件</a> の RB-02、RCV-04（RTO 2 時間）、RCV-07（復旧後の照合）。<strong>この手順の AWS CLI の記述は仕様から書いたもので、実際に実行して確かめていない。</strong> タスク（<code>db:restore:pitr</code>・<code>recovery:reconcile</code>）はまだ作っていない（持ち越し H-6）。環境ができたら、ステージングで訓練して直す（RCV-08: 本番開始前に 1 回、その後は半年に 1 回）。</p>
 <ol>
@@ -20355,6 +20474,11 @@
 <tr>
 <td style="text-align: left;">2026-11-16</td>
 <td style="text-align: left;">初版（draft。未実行のコード）</td>
+<td style="text-align: left;">anthropic/claude-sonnet-5-5</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-11-28</td>
+<td style="text-align: left;">「リリース」の節を足した（Bolt 71）</td>
 <td style="text-align: left;">anthropic/claude-sonnet-5-5</td>
 </tr>
 </tbody>
