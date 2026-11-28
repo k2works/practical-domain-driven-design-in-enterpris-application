@@ -177,6 +177,8 @@ export function maintenanceEnabled(definition) {
 /**
  * deploy:rollback の戻し先を選ぶ。版が 1 つ前でも、maintenance:on・off が作った版はイメージが同じなので飛ばし、
  * **イメージの違う直前の版**を選ぶ。メンテナンス表示は今の状態を保つ（戻し先の値が違えば、今の値に合わせた版を登録する）。
+ * 戻し先は、イメージを digest（`@sha256:`）で固定した版に限る。配備のワークフローが作る版はこの形で、タグで指定した版は
+ * Terraform が登録しただけで配備していないことがある（サービスのタスク定義は Terraform の管理の外。Bolt 51-4）。
  *
  * @param current 今のタスク定義
  * @param olderDescending 今より前のタスク定義（新しい順。遅延して読めるように反復可能でよい）
@@ -184,7 +186,8 @@ export function maintenanceEnabled(definition) {
  */
 export function rollbackTaskDefinition(current, olderDescending) {
   for (const source of olderDescending) {
-    if (appContainer(source)?.image === appContainer(current).image) continue;
+    const image = appContainer(source)?.image;
+    if (!image?.includes('@sha256:') || image === appContainer(current).image) continue;
     const enabled = maintenanceEnabled(current);
     return {
       source,

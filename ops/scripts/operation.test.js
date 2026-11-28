@@ -181,7 +181,8 @@ test('maintenanceTaskDefinition はアプリのコンテナがなければ失敗
   assert.throws(() => maintenanceTaskDefinition({ family: 'x', containerDefinitions: [{ name: 'other' }] }, true), /cargo-tracker/);
 });
 
-const revision = (arn, image, maintenance) => ({
+const deployed = (name) => `repo/cargo-tracker@sha256:${name}`;
+const revision = (arn, name, maintenance, image = deployed(name)) => ({
   taskDefinitionArn: arn,
   family: 'cargo-tracker-staging',
   containerDefinitions: [
@@ -217,12 +218,20 @@ test('rollbackTaskDefinition は戻し先の表示が今と違えば、今の表
   const keepOn = rollbackTaskDefinition(revision('td:2', 'new', true), [revision('td:1', 'old', false)]);
 
   assert.equal(maintenanceEnabled(offAgain.register), false);
-  assert.equal(offAgain.register.containerDefinitions[0].image, 'old');
+  assert.equal(offAgain.register.containerDefinitions[0].image, deployed('old'));
   assert.equal(offAgain.register.taskDefinitionArn, undefined);
   assert.equal(maintenanceEnabled(keepOn.register), true);
 });
 
 test('rollbackTaskDefinition はイメージの違う版がなければ null', () => {
   assert.equal(rollbackTaskDefinition(revision('td:2', 'same'), [revision('td:1', 'same', true)]), null);
+});
+
+test('rollbackTaskDefinition は Terraform が登録したタグ指定の版（配備していない版）を戻し先にしない', () => {
+  const current = revision('td:3', 'new');
+  const fromTerraform = revision('td:2', null, undefined, 'repo/cargo-tracker:v1');
+
+  assert.equal(rollbackTaskDefinition(current, [fromTerraform, revision('td:1', 'old')]).source.taskDefinitionArn, 'td:1');
+  assert.equal(rollbackTaskDefinition(current, [fromTerraform]), null);
 });
 

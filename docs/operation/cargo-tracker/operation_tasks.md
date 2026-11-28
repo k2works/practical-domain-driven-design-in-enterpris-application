@@ -4,7 +4,7 @@ title: "運用タスク手順書 - cargo-tracker のステージング・本番�
 description: "ステージング・本番の DB 利用者の作成、権限の確認、配備前の確認、配備、戻しの運用タスク（Gulp）の使い方。未実行のコードであること、まだ作っていない運用タスクと、その理由を明記する。"
 tags: [operation, runbook]
 status: draft
-generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-27T12:53:54Z }
+generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-27T22:45:06Z }
 ---
 
 # 運用タスク手順書 - cargo-tracker のステージング・本番
@@ -45,7 +45,7 @@ DB への経路は、SSM Session Manager の踏み台のポートフォワード
 | `npx gulp db:grants:verify --env staging` | 追記専用の表（印 `[append-only]`）に、アプリケーション利用者の UPDATE・DELETE が付いていないかを確かめる。1 件でもあれば失敗 | しない |
 | `npx gulp deploy:preflight --env staging` | 作業ツリーが clean、HEAD の CI が成功、ECS の running と desired が同じ、を確かめる | しない |
 | `npx gulp deploy:release --env staging --ref develop` | 配備のワークフロー `cargo-tracker-deploy.yml` を起動する。本番（`--env production --confirm production`）は本番への昇格を含み、GitHub の Environment `production` の必須レビュアーの承認が先に要る | する（配備） |
-| `npx gulp deploy:rollback --env staging` | ECS のサービスを、**イメージの違う直前の版**へ戻し、安定するまで待つ（`maintenance:on`・`off` が作った版はイメージが同じなので飛ばす）。メンテナンス表示は今の状態を保つ。ECS のサーキットブレーカーの自動の戻しとは別の、人が判断する戻し。**実環境では未実行** | する（配備の戻し） |
+| `npx gulp deploy:rollback --env staging` | ECS のサービスを、**イメージの違う直前の版**へ戻し、安定するまで待つ（`maintenance:on`・`off` が作った版はイメージが同じなので飛ばす。戻し先はイメージを digest で固定した版に限り、Terraform が登録しただけの版は選ばない）。メンテナンス表示は今の状態を保つ。ECS のサーキットブレーカーの自動の戻しとは別の、人が判断する戻し。**実環境では未実行** | する（配備の戻し） |
 | `npx gulp maintenance:on --env staging`・`maintenance:off` | メンテナンス表示の切り替え（ADR-023。計画停止）。今のタスク定義の環境変数 `CARGOTRACKER_MAINTENANCE_ENABLED` だけを変えた版を登録して入れ替え、安定するまで待つ（イメージは変えない）。有効の間、画面の要求はすべて 503 と案内になる。ヘルスチェックは通る。**定期処理とイベントの配信は止まらず、DB への書き込みは続くことがある**。有効の間は OBS-02（5xx の割合）の警告と重大の警報が鳴る（想定どおり）。**有効の間に配備した版も表示を引き継ぐ**ので、終わったら必ず `maintenance:off` する。待ちが時間切れになっても入れ替えの依頼は受け付けられているので、再実行せずに状態を確かめる。**実環境では未実行** | する（配備） |
 
 ### 失敗したとき
@@ -59,7 +59,7 @@ DB への経路は、SSM Session Manager の踏み台のポートフォワード
 | `deploy:rollback` | 戻し先がないとき（タスク定義が 1 つしかない）は失敗する。その場合は、人が AWS コンソールで状況を確かめる |
 
 ## 配備前の確認表（W7 の議題 3）
-**`terraform apply` の前の注意。** 配備や `maintenance:on`・`off` でタスク定義の版が進んだ後に `apply` すると、**ECS のサービスは Terraform の版に戻る。イメージも変数 `image_tag` のものに戻り、メンテナンス表示の環境変数は消える。** `apply` の前に `plan` を読み、`aws_ecs_service` と `aws_ecs_task_definition` に意図しない差分がないことを確かめる。`image_tag` には今動いているイメージのタグを指定する。警報だけを足すときは `-target=module.stack.module.alerts` を使う。サービスの版を Terraform の管理から外すかは未決。
+**`terraform apply` とタスク定義の版（Bolt 51-4）。** ECS のサービスが動かすタスク定義の版は Terraform の管理の外で、`apply` はサービスの版を変えない（`ignore_changes`）。`apply` がタスク定義を変えると新しい版が登録されるだけで、**サービスには次の配備（`deploy:release`）まで反映されない。** タスク定義を変える `apply` の後は、`maintenance:on`・`off` や `deploy:rollback` より先に配備する（これらは今動いている版を元に新しい版を登録することがあり、それが family の最新になると、次の配備に Terraform の変更が入らない）。`apply` の前に `plan` を読むことは変わらない。**実環境では未確認。**
 
 **警告の配布先（W10-1 の Bolt 57）。** `terraform apply` の前に、変数 `operations_alert_emails`・`data_alert_emails`・`tracking_alert_emails` を指定する（既定値はない。値は運用責任者が決める）。SNS のメールの購読は、届いた確認のメールを承認するまで有効にならない（承認されない購読は数日で消える）。宛先を変えたときは、SNS の画面で古い購読が残っていないかを確かめる。空の一覧を指定すると、購読のないトピックができる。`apply` の後に、3 つのトピックの購読が「確認済み」であることを確かめる。
 

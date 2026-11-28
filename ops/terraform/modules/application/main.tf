@@ -322,4 +322,11 @@ resource "aws_ecs_service" "this" {
   }
 
   depends_on = [aws_lb_listener.https]
+
+  # サービスが動かすタスク定義の版は、配備のワークフローと運用タスク（deploy:rollback、maintenance:on・off）が入れ替える。
+  # Terraform が自分の版（変数 image_tag の古いイメージ）へ戻さないよう、版の差分を無視する（Bolt 51-4）。
+  # Terraform でタスク定義を変えた内容は、次の配備（ワークフローは family の最新の版を元にする）で反映される。
+  lifecycle {
+    ignore_changes = [task_definition]
+  }
 }
