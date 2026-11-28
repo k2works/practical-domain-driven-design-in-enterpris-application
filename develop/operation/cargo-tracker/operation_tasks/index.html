@@ -20383,6 +20383,7 @@
 <li>SonarQube の Quality Gate が PASS（<code>npx gulp sonar-local:check</code>。品質ゲートに含まれない）。</li>
 </ol>
 <p><strong>実行の後。</strong> コミットとタグを確かめてから、<code>git push origin develop cargo-tracker-vX.Y.Z</code> で送る（push は人の指示で行う）。リリースのコミットは <code>apps/cargo-tracker</code> を変えるので、push すると CI と <code>deploy-demo</code> が動く。</p>
+<p><strong>タグの push で動くワークフロー。</strong> <code>docker-publish.yml</code> はタグの push で、ルートの <code>Dockerfile</code>（開発用ツールのイメージ。アプリではない）をビルドして GitHub Container Registry に送る。<code>cargo-tracker-v*</code> のタグは対象から除いた（除外はテスト <code>release.test.js</code> で確かめる）。GitHub は、<strong>タグを付けたコミットにあるワークフロー</strong>を使う。除外を足す前のコミット（Release 0.1 の時点など）にタグを付けて push すると、除外は効かずに動く。さかのぼってタグを付けるときは、push の前に扱い（ワークフローを一時的に無効にするなど）を人が決める。<strong>実際のタグの push では、まだ確かめていない。</strong></p>
 <p><strong>失敗したとき。</strong></p>
 <table>
 <thead>

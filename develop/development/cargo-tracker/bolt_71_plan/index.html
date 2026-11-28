@@ -12341,6 +12341,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#2026-11-28humankakimomokuri" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        承認の後の修正（2026-11-28、human:kakimomokuri の指示）
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#_9" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -20520,6 +20531,13 @@
 </tr>
 </tbody>
 </table>
+<h2 id="2026-11-28humankakimomokuri">承認の後の修正（2026-11-28、human:kakimomokuri の指示）<a class="headerlink" href="#2026-11-28humankakimomokuri" title="Permanent link">&para;</a></h2>
+<p><code>docker-publish.yml</code> がどのタグの push でも動くことを、この計画では確かめていませんでした（Pull Request の作成の前の確認で分かりました）。そのままリリースのタグを push すると、ルートの開発用ツールのイメージが、そのタグ名と <code>latest</code> で GitHub Container Registry に送られます。タグはまだ 1 つもないので、起きていません。</p>
+<ul>
+<li>対象から <code>cargo-tracker-v*</code> を除きました。タグの push で動くワークフローがこの除外を持つことを確かめるテストを先に書き、失敗を確かめてから直しました。運用スクリプトのテストは 40 件成功です。</li>
+<li>除外を足す前のコミットにタグを付けて push すると、除外は効きません（CP-7 のさかのぼりのタグが当たります）。運用タスク手順書に書きました。</li>
+<li>実際のタグの push では確かめていません。</li>
+</ul>
 <h2 id="_9">リスクと未確認<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -20585,6 +20603,11 @@
 <tr>
 <td style="text-align: left;">2026-11-28</td>
 <td style="text-align: left;">報告の承認を記録した（議題 1・2 は推奨のとおり）</td>
+<td style="text-align: left;">anthropic/claude-sonnet-5-5</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-11-28</td>
+<td style="text-align: left;">承認の後の修正（<code>docker-publish.yml</code> の対象からリリースのタグを除いた）を足した</td>
 <td style="text-align: left;">anthropic/claude-sonnet-5-5</td>
 </tr>
 </tbody>
