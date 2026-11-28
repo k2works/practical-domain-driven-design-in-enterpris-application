@@ -248,6 +248,11 @@ tasks.register('copyDemoLibs', Sync) {
 	into layout.buildDirectory.dir('demo-lib')
 }
 
+tasks.named('bootJar') {
+	// 成果物の名前を版に依らない名前にする。Dockerfile がこの名前を写すので、リリースで版を変えてもビルドが壊れない（Bolt 71）
+	archiveFileName = 'app.jar'
+}
+
 tasks.named('bootRun') {
 	// ローカル起動は H2 の dev プロファイルで動かす（開発体験を優先する。ADR-007）
 	systemProperty 'spring.profiles.active', 'dev'

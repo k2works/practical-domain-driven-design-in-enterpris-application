@@ -13,7 +13,7 @@ COPY config config
 COPY src src
 # bootJar を app.jar と lib/ に展開する（起動を速くし、demo で H2 をクラスパスに足せるようにする）
 RUN ./gradlew --no-daemon bootJar copyDemoLibs \
-    && cp build/libs/cargo-tracker-*-SNAPSHOT.jar app.jar \
+    && cp build/libs/app.jar app.jar \
     && java -Djarmode=tools -jar app.jar extract --destination extracted
 
 FROM eclipse-temurin:25-jre AS runtime
