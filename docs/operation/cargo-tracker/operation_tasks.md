@@ -4,7 +4,7 @@ title: "運用タスク手順書 - cargo-tracker のステージング・本番�
 description: "ステージング・本番の DB 利用者の作成、権限の確認、配備前の確認、配備、戻しの運用タスク（Gulp）の使い方。未実行のコードであること、まだ作っていない運用タスクと、その理由を明記する。"
 tags: [operation, runbook]
 status: draft
-generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-28T01:57:53Z }
+generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-28T04:36:52Z }
 ---
 
 # 運用タスク手順書 - cargo-tracker のステージング・本番
@@ -94,6 +94,8 @@ cargo-tracker の版を上げ、CHANGELOG とタグを作る（[Bolt 71](../../d
 3. SonarQube の Quality Gate が PASS（`npx gulp sonar-local:check`。品質ゲートに含まれない）。
 
 **実行の後。** コミットとタグを確かめてから、`git push origin develop cargo-tracker-vX.Y.Z` で送る（push は人の指示で行う）。リリースのコミットは `apps/cargo-tracker` を変えるので、push すると CI と `deploy-demo` が動く。
+
+**タグの push で動くワークフロー。** `docker-publish.yml` はタグの push で、ルートの `Dockerfile`（開発用ツールのイメージ。アプリではない）をビルドして GitHub Container Registry に送る。`cargo-tracker-v*` のタグは対象から除いた（除外はテスト `release.test.js` で確かめる）。GitHub は、**タグを付けたコミットにあるワークフロー**を使う。除外を足す前のコミット（Release 0.1 の時点など）にタグを付けて push すると、除外は効かずに動く。さかのぼってタグを付けるときは、push の前に扱い（ワークフローを一時的に無効にするなど）を人が決める。**実際のタグの push では、まだ確かめていない。**
 
 **失敗したとき。**
 

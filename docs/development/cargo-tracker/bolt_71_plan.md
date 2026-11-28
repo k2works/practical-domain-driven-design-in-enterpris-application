@@ -4,7 +4,7 @@ title: "Bolt 71 計画 - リリースの仕組みを cargo-tracker で動くよ�
 description: "release.js を直し、release のタスクが cargo-tracker の品質ゲート・版・CHANGELOG・タグで動くようにする技術 Bolt（SP 0）の計画。"
 tags: [plan]
 status: stable
-generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-28T02:29:36Z }
+generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-28T04:36:52Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-11-28T01:18:44Z }
   - { by: human:kakimomokuri, at: 2026-11-28T02:29:37Z }
@@ -123,6 +123,14 @@ CP-4 の「`develop` からリリースする」は、[リリースガイド](..
 | 1 | 計画と違った点 1・2 を含めて、この報告を承認するか | 承認する |
 | 2 | 運用スクリプトのテストを CI で流すか（F-10） | 次の運用スクリプトの変更までに、小さな Bolt かこの後の技術の返済で足す |
 
+## 承認の後の修正（2026-11-28、human:kakimomokuri の指示）
+
+`docker-publish.yml` がどのタグの push でも動くことを、この計画では確かめていませんでした（Pull Request の作成の前の確認で分かりました）。そのままリリースのタグを push すると、ルートの開発用ツールのイメージが、そのタグ名と `latest` で GitHub Container Registry に送られます。タグはまだ 1 つもないので、起きていません。
+
+- 対象から `cargo-tracker-v*` を除きました。タグの push で動くワークフローがこの除外を持つことを確かめるテストを先に書き、失敗を確かめてから直しました。運用スクリプトのテストは 40 件成功です。
+- 除外を足す前のコミットにタグを付けて push すると、除外は効きません（CP-7 のさかのぼりのタグが当たります）。運用タスク手順書に書きました。
+- 実際のタグの push では確かめていません。
+
 ## リスクと未確認
 
 | # | 内容 | 扱い |
@@ -145,3 +153,4 @@ CP-4 の「`develop` からリリースする」は、[リリースガイド](..
 | 2026-11-28 | 人の承認を記録した（CP-1〜CP-7 は推奨のとおり） | anthropic/claude-sonnet-5-5 |
 | 2026-11-28 | 実装し、結果を書いた（承認待ち） | anthropic/claude-sonnet-5-5 |
 | 2026-11-28 | 報告の承認を記録した（議題 1・2 は推奨のとおり） | anthropic/claude-sonnet-5-5 |
+| 2026-11-28 | 承認の後の修正（`docker-publish.yml` の対象からリリースのタグを除いた）を足した | anthropic/claude-sonnet-5-5 |

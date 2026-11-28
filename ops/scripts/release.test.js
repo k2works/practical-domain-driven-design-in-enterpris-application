@@ -197,6 +197,22 @@ test('gradleGate は cargo-tracker で全部のゲートと bootJar を流す', 
   assert.deepEqual(gradleGate(root, 'linux'), { command: `./gradlew ${tasks}`, cwd: path.join(root, 'apps', 'cargo-tracker') });
 });
 
+test('タグの push で動くワークフローは、cargo-tracker のリリースのタグを除く', () => {
+  const directory = new URL('../../.github/workflows/', import.meta.url);
+  const tagTriggered = [];
+  for (const name of fs.readdirSync(directory)) {
+    const text = fs.readFileSync(new URL(name, directory), 'utf8').replaceAll('\r\n', '\n');
+    const found = /^ {2}push:\n(?: {4}.*\n)*? {4}tags:\n((?: {6}.*\n)+)/m.exec(text);
+    if (!found) continue;
+    tagTriggered.push(name);
+    const patterns = [...found[1].matchAll(/^ {6}- '([^']+)'/gm)].map((match) => match[1]);
+    // 除外は、当たる指定より後に書かないと効かない
+    assert.equal(patterns.at(-1), '!cargo-tracker-v*', `${name}: ${patterns.join(', ')}`);
+  }
+  // 読み取りが壊れて、何も確かめないまま成功しないようにする
+  assert.ok(tagTriggered.includes('docker-publish.yml'));
+});
+
 test('gulpfile は release のタスクを登録し、ほかのタスクも残る', async () => {
   const { default: gulp } = await import('../../gulpfile.js');
   const names = gulp.tree().nodes;
