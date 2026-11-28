@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="cargo-tracker の W11（2026-12-14〜12-18）の Bolt 計画。Release 1.1 の頭の返済（運用の通知・取込がない日の通知・メンテナンス表示・ウイルス検査・通知の再送）に続き、US-05（8 SP）と US-17（3 SP）の 11 SP を、番号 57〜69 の Bolt に分け、分単位の見積りを付けて稼働と比べる。">
+        <meta name="description" content="cargo-tracker の W11（2026-12-14〜12-18）の Bolt 計画。US-05（8 SP）と US-17（3 SP）の 11 SP を、番号 62〜69 の 8 本の Bolt に分け、分単位の見積りを付けて稼働と比べる。ウイルス検査（Bolt 60）は W12 へ移した。">
       
       
         <meta name="author" content="k2works">
@@ -27,7 +27,7 @@
     
     
       
-        <title>W11 計画 - 予約の変更・取消しと監査照会（Release 1.1 の頭の返済を含む） - 実践ドメイン駆動設計 in エンタープライズアプリケーション</title>
+        <title>W11 計画 - 予約の変更・取消しと監査照会 - 実践ドメイン駆動設計 in エンタープライズアプリケーション</title>
       
     
     
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#w11-release-11" class="md-skip">
+        <a href="#w11-" class="md-skip">
           Skip to content
         </a>
       
@@ -112,7 +112,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              W11 計画 - 予約の変更・取消しと監査照会（Release 1.1 の頭の返済を含む）
+              W11 計画 - 予約の変更・取消しと監査照会
             
           </span>
         </div>
@@ -12142,7 +12142,7 @@
     
   
   
-    <span class="md-status md-status--draft"></span>
+    <span class="md-status md-status--stable"></span>
   
 
   
@@ -12167,7 +12167,7 @@
     
   
   
-    <span class="md-status md-status--draft"></span>
+    <span class="md-status md-status--stable"></span>
   
 
   
@@ -12369,6 +12369,23 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="検証の結果（2026-11-16）">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#2026-11-28" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2026-11-28 の再検証（改訂した範囲）
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -20298,9 +20315,9 @@
   
 
 
-<h1 id="w11-release-11">W11 計画 - 予約の変更・取消しと監査照会（Release 1.1 の頭の返済を含む）<a class="headerlink" href="#w11-release-11" title="Permanent link">&para;</a></h1>
+<h1 id="w11-">W11 計画 - 予約の変更・取消しと監査照会<a class="headerlink" href="#w11-" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p><strong>範囲の変更（2026-11-27）。</strong> Bolt 57・58・59・61 は <a href="../iteration_plan-W10-1/">W10-1 計画</a>に移した（その計画の CP-1。human:kakimomokuri が承認）。本数は 9 本（60、62〜69）、見積りは作業 1,940 分、壁時計 2,480 分（稼働 4,050 分の 61%）になる。本文で 57〜59・61 に触れる箇所（前の週の反映、各表の前提、CP-1・CP-4）は、この注を正とする。</p>
+<p><strong>改訂（2026-11-28）。</strong> Bolt 57・58・59・61 を <a href="../iteration_plan-W10-1/">W10-1 計画</a>で終えたこと（2026-11-27 に移し、2026-11-28 に締めの報告を承認）と、<a href="../bolt_56-1_plan/">Bolt 56-1</a> の議題の #50 の仕分けを終えたことに合わせて、本文を直した。同日、CP-1 を変えて、ウイルス検査の Bolt 60 を W12 へ移した（human:kakimomokuri の指示）。初版からの差は更新履歴にある。</p>
 </blockquote>
 <h2 id="_1">基本情報<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
 <table>
@@ -20317,11 +20334,11 @@
 </tr>
 <tr>
 <td style="text-align: left;">状態</td>
-<td style="text-align: left;"><strong>draft（人の承認待ち）</strong>。承認が要る判断は下の CP-1〜CP-5（推奨を添える）</td>
+<td style="text-align: left;"><strong>承認済み（2026-11-28、human:kakimomokuri。「推奨のまま承認」）</strong>。CP-1 は指示で変えた内容、CP-2〜CP-7 は推奨のとおり。CP-5 のフックの設定は、入れる前にもう一度人に確かめる</td>
 </tr>
 <tr>
 <td style="text-align: left;">ゴール</td>
-<td style="text-align: left;">荷主が本予約の前後で変更・取消しでき（US-05）、監査担当者が重要操作を時系列で照会できる（US-17）。あわせて、パイロット開始の条件に関わる返済（ADR-021・022・023 の実装の最初の部分）を行う</td>
+<td style="text-align: left;">荷主が本予約の前後で変更・取消しでき（US-05）、監査担当者が重要操作を時系列で照会できる（US-17）</td>
 </tr>
 <tr>
 <td style="text-align: left;">ストーリー</td>
@@ -20333,24 +20350,24 @@
 </tr>
 <tr>
 <td style="text-align: left;">Bolt の本数</td>
-<td style="text-align: left;">9 本（番号 60、62〜69）。返済 1 本（技術）、US-05 6 本、US-17 1 本、締め 1 本</td>
+<td style="text-align: left;">8 本（番号 62〜69）。US-05 6 本、US-17 1 本、締め 1 本。返済の Bolt はない</td>
 </tr>
 <tr>
 <td style="text-align: left;">見積りの合計</td>
-<td style="text-align: left;">作業 1,940 分。ゲート・報告・承認待ちの 60 分 × 9 本 = 540 分を足した壁時計で <strong>2,480 分（約 41 時間）</strong></td>
+<td style="text-align: left;">作業 1,700 分。ゲート・報告・承認待ちの 60 分 × 8 本 = 480 分を足した壁時計で <strong>2,180 分（約 36 時間）</strong></td>
 </tr>
 <tr>
 <td style="text-align: left;">稼働との比較</td>
-<td style="text-align: left;">稼働 5 日・1 日 13.5 時間で 4,050 分の <strong>61%</strong>（仮定 A-1・A-2。見積りに実測の根拠はない）</td>
+<td style="text-align: left;">稼働 5 日・1 日 13.5 時間で 4,050 分の <strong>54%</strong>（仮定 A-1・A-2。見積りに実測の根拠はない）</td>
 </tr>
 <tr>
 <td style="text-align: left;">前の週</td>
-<td style="text-align: left;"><a href="../iteration_report-W10/">W10 完了報告書</a>（承認済み。一部完了）、<a href="../release_report-1_0/">Release 1.0 リリース完了報告書</a>（承認済み）</td>
+<td style="text-align: left;"><a href="../iteration_report-W10/">W10 完了報告書</a>（承認済み。一部完了）、<a href="../release_report-1_0/">Release 1.0 リリース完了報告書</a>（承認済み）、<a href="../bolt_56-1_plan/">W10-1 の締めの報告</a>（承認済み）</td>
 </tr>
 </tbody>
 </table>
 <h3 id="bolt">Bolt の番号<a class="headerlink" href="#bolt" title="Permanent link">&para;</a></h3>
-<p>機能・技術の単位ごとに整数を採番し、関連は枝番（N-1）、追加は枝番の枝番（N-1-1）。W10 は 49〜54 を使ったので、W11 は 57 から（55・56 は W10 の未着手の欠番）。</p>
+<p>機能・技術の単位ごとに整数を採番し、関連は枝番（N-1）、追加は枝番の枝番（N-1-1）。W11 の番号は初版で 57〜69 を取った。そのうち 57〜59・61 は W10-1 で使ったので、残りは 60・62〜69。そのうち 60 は W12 へ移すので、W11 は 62〜69。週の外の技術 Bolt が 70・<a href="../bolt_71_plan/">71</a> を使った。</p>
 <table>
 <thead>
 <tr>
@@ -20359,10 +20376,6 @@
 </tr>
 </thead>
 <tbody>
-<tr>
-<td style="text-align: left;">60</td>
-<td style="text-align: left;">技術: ウイルス検査（ADR-022）の仕様確認と最初の実装</td>
-</tr>
 <tr>
 <td style="text-align: left;">62〜64</td>
 <td style="text-align: left;">機能: US-05 本予約前の変更・取下げ、本予約後の申請</td>
@@ -20382,7 +20395,7 @@
 </tbody>
 </table>
 <h2 id="1">前の週の反映（ステップ 1）<a class="headerlink" href="#1" title="Permanent link">&para;</a></h2>
-<p>W10 の Try と持ち越しを、次のように計画に入れた。</p>
+<p>W10 の Try と持ち越し、その後の W10-1 と週の外の Bolt の結果を、次のように計画に入れた。</p>
 <table>
 <thead>
 <tr>
@@ -20393,7 +20406,7 @@
 <tbody>
 <tr>
 <td style="text-align: left;">Try: 運用準備の Bolt は、開始の前に人が用意するものの表を付ける</td>
-<td style="text-align: left;">Bolt 57・60 の「人が用意するもの」の欄（SNS の購読先のメールの配布先、AWS の機能の確認の結果）</td>
+<td style="text-align: left;">W11 に運用準備の Bolt はない。W12 で Bolt 60 を立てるときに付ける（AWS の機能の確認の結果）</td>
 </tr>
 <tr>
 <td style="text-align: left;">Try: 計画に「関わる ArchUnit の規則」と「前提とする既存の画面・機能の実在」の確認の欄を足す</td>
@@ -20405,19 +20418,19 @@
 </tr>
 <tr>
 <td style="text-align: left;">持ち越し H-7（ADR-021 の実装）</td>
-<td style="text-align: left;">Bolt 61（再送。C-3 の案 A）。購読の反転（C-4 の案 B）は W11 に入れず、W12 以降で計画（モジュールの依存の変更のため）</td>
+<td style="text-align: left;">再送は W10-1 の Bolt 61 で終えた。購読の反転（C-4 の案 B）は W11 に入れず、W12 以降で計画（モジュールの依存の変更のため）</td>
 </tr>
 <tr>
 <td style="text-align: left;">持ち越し H-3・H-4（運用の通知、FRS-04）</td>
-<td style="text-align: left;">Bolt 57・58</td>
+<td style="text-align: left;">警告の仕組みと FRS-04 は W10-1 の Bolt 57・58 で作った（実環境では未確認）。残り（業務ホーム S-01 の一覧、メールが届くことの確認、AUD-04 の照合）は W11 に入れない。AUD-04 の照合は US-17 の後</td>
 </tr>
 <tr>
 <td style="text-align: left;">持ち越し H-6（メンテナンス、時点復旧）</td>
-<td style="text-align: left;">Bolt 59（メンテナンス）。時点復旧の訓練は実環境ができてから</td>
+<td style="text-align: left;">メンテナンス表示は W10-1 の Bolt 59 で終えた。時点復旧の訓練とタスク、<code>audit:export:verify</code> は W11 に入れない（訓練は実環境ができてから）</td>
 </tr>
 <tr>
 <td style="text-align: left;">持ち越し H-11（ウイルス検査）</td>
-<td style="text-align: left;">Bolt 60（仕様確認と最初の実装）</td>
+<td style="text-align: left;">Bolt 60（仕様確認と最初の実装。見積り 240 分）は W12 へ移す（CP-1）</td>
 </tr>
 <tr>
 <td style="text-align: left;">持ち越し H-5・H-9（負荷・apply など）</td>
@@ -20425,7 +20438,19 @@
 </tr>
 <tr>
 <td style="text-align: left;">持ち越し H-8（C-1・C-2・C-5、#49、#50）</td>
-<td style="text-align: left;">#50 の仕分けは Bolt 69。C-1・C-2・C-5 は人に諮る議題</td>
+<td style="text-align: left;">#50 は 2026-11-28 に仕分けて閉じた（#53・#54 と、#29・#33 のコメント）。C-1・C-2・C-5 は人に諮る議題。パイロットの前に要る #53 は CP-7</td>
+</tr>
+<tr>
+<td style="text-align: left;">#29 のコメントの返済（US-05 で触る予約・見積りの 8 件。コードは未確認）</td>
+<td style="text-align: left;">US-05 の Bolt（62〜67）の開始準備で読み、触る箇所のものを一緒に直す（CP-6）</td>
+</tr>
+<tr>
+<td style="text-align: left;">W10-1 の後の技術の返済（運用スクリプトのテストを CI で流す。<a href="../bolt_71_plan/">Bolt 71</a> の議題 2）</td>
+<td style="text-align: left;">W11 の Bolt に入れない。次の運用スクリプトの変更までに、週の外の小さな Bolt で足す</td>
+</tr>
+<tr>
+<td style="text-align: left;">Spring Boot 4.2 への追従（<a href="../bolt_70_plan/">Bolt 70</a> の調査）</td>
+<td style="text-align: left;">W11 に入れない。MyBatis の 4.2 対応を確かめてから、Release 1.1 の中で Bolt を立てる</td>
 </tr>
 </tbody>
 </table>
@@ -20486,16 +20511,6 @@
 </tr>
 </thead>
 <tbody>
-<tr>
-<td style="text-align: left;">60</td>
-<td style="text-align: left;">ウイルス検査: AWS の機能の仕様・費用・リージョンの確認（確認の結果を ADR-022 に追記）、書類の状態（検査中・検査済み・拒否）の最初の実装</td>
-<td style="text-align: left;">技術</td>
-<td style="text-align: right;">240</td>
-<td style="text-align: right;">0</td>
-<td style="text-align: right;">300</td>
-<td style="text-align: left;">なし</td>
-<td style="text-align: left;"><strong>外部連携</strong>・<strong>スキーマ</strong></td>
-</tr>
 <tr>
 <td style="text-align: left;">62</td>
 <td style="text-align: left;">US-05 AC1: 本予約前の輸送要求の変更（承認不要で旧版を保持した新版）</td>
@@ -20568,7 +20583,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">69</td>
-<td style="text-align: left;">W11 の締め: 週全体のレビュー、最終のゲート、マニュアル・動画、#50 の仕分け、完了報告書</td>
+<td style="text-align: left;">W11 の締め: 週全体のレビュー、最終のゲート、マニュアル・動画、完了報告書</td>
 <td style="text-align: left;">技術</td>
 <td style="text-align: right;">160</td>
 <td style="text-align: right;">0</td>
@@ -20578,7 +20593,7 @@
 </tr>
 </tbody>
 </table>
-<p><strong>合計</strong> 作業 1,940 分（返済 240、US-05 1,260、US-17 280、締め 160）、壁時計 2,480 分。</p>
+<p><strong>合計</strong> 作業 1,700 分（US-05 1,260、US-17 280、締め 160）、壁時計 2,180 分。</p>
 <h3 id="bolt_1">各 Bolt で確認した前提<a class="headerlink" href="#bolt_1" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
@@ -20589,11 +20604,6 @@
 </tr>
 </thead>
 <tbody>
-<tr>
-<td style="text-align: left;">60</td>
-<td style="text-align: left;">必要書類のバケット（W10 の Bolt 51）、書類の保存（Bolt 7）</td>
-<td style="text-align: left;">書類の「検査中・検査済み・拒否」の状態はまだない</td>
-</tr>
 <tr>
 <td style="text-align: left;">62〜67</td>
 <td style="text-align: left;">輸送要求の版（<code>quotation.transport_request_version</code>）、予約の版（<code>booking.booking_version</code>）、<code>AmendmentRequest</code>（設計のみ）、<code>BookingStatus</code> の状態の enum</td>
@@ -20620,7 +20630,7 @@
 <p><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2ZXJzaW9uPSIxLjEiIGRhdGEtZGlhZ3JhbS10eXBlPSJTVEFURSIgc3R5bGU9IndpZHRoOjEzMDZweDtoZWlnaHQ6MjM1cHg7YmFja2dyb3VuZDojRkZGRkZGOyIgd2lkdGg9IjEzMDZweCIgaGVpZ2h0PSIyMzVweCIgdmlld0JveD0iMCAwIDEzMDYgMjM1IiB6b29tQW5kUGFuPSJtYWduaWZ5IiBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSJub25lIiBjb250ZW50U3R5bGVUeXBlPSJ0ZXh0L2NzcyI+PD9wbGFudHVtbCAxLjIwMjYuMTA/PjxkZWZzLz48ZyBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgbGVuZ3RoQWRqdXN0PSJzcGFjaW5nIj48ZyBjbGFzcz0idGl0bGUiIGRhdGEtc291cmNlLWxpbmU9IjEiPjx0ZXh0IHg9IjU5NC45MjYiIHk9IjIyLjk5NSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMTA5Ljc5OSIgZm9udC13ZWlnaHQ9IjcwMCI+VzExIOOBrueUu+mdoumBt+enuzwvdGV4dD48L2c+PGcgY2xhc3M9ImVudGl0eSIgZGF0YS1xdWFsaWZpZWQtbmFtZT0iQzAyIiBpZD0iZW50MDAwMSIgZGF0YS1zb3VyY2UtbGluZT0iMiI+PHJlY3QgeD0iNyIgeT0iNDQuMjk3IiB3aWR0aD0iMjExLjA5MSIgaGVpZ2h0PSI1MCIgZmlsbD0iI0YxRjFGMSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7IiByeD0iMTIuNSIgcnk9IjEyLjUiLz48bGluZSB4MT0iNyIgeTE9IjcwLjU5NCIgeDI9IjIxOC4wOTEiIHkyPSI3MC41OTQiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIvPjx0ZXh0IHg9IjE3IiB5PSI2Mi4yOTIiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjE5MS4wOTEiPkMtMDIg6KaL56mN5L6d6aC844Gu5LiA6Kan77yI6I235Li777yJPC90ZXh0PjwvZz48ZyBjbGFzcz0iZW50aXR5IiBkYXRhLXF1YWxpZmllZC1uYW1lPSJDMDMiIGlkPSJlbnQwMDAyIiBkYXRhLXNvdXJjZS1saW5lPSIzIj48cmVjdCB4PSI3IiB5PSIxNzEuMjk3IiB3aWR0aD0iMjExLjA5MSIgaGVpZ2h0PSI1MCIgZmlsbD0iI0YxRjFGMSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7IiByeD0iMTIuNSIgcnk9IjEyLjUiLz48bGluZSB4MT0iNyIgeTE9IjE5Ny41OTQiIHgyPSIyMTguMDkxIiB5Mj0iMTk3LjU5NCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7Ii8+PHRleHQgeD0iMTciIHk9IjE4OS4yOTIiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjE5MS4wOTEiPkMtMDMg6KaL56mN5L6d6aC844Gu57eo6ZuG77yI5aSJ5pu077yJPC90ZXh0PjwvZz48ZyBjbGFzcz0iZW50aXR5IiBkYXRhLXF1YWxpZmllZC1uYW1lPSJDMDciIGlkPSJlbnQwMDAzIiBkYXRhLXNvdXJjZS1saW5lPSI0Ij48cmVjdCB4PSI0NjciIHk9IjQ0LjI5NyIgd2lkdGg9IjE4My4wOTEiIGhlaWdodD0iNTAiIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIgcng9IjEyLjUiIHJ5PSIxMi41Ii8+PGxpbmUgeDE9IjQ2NyIgeTE9IjcwLjU5NCIgeDI9IjY1MC4wOTEiIHkyPSI3MC41OTQiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIvPjx0ZXh0IHg9IjQ3NyIgeT0iNjIuMjkyIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIxNjMuMDkxIj5DLTA3IOS6iOe0hOOBruips+e0sO+8iOiNt+S4u++8iTwvdGV4dD48L2c+PGcgY2xhc3M9ImVudGl0eSIgZGF0YS1xdWFsaWZpZWQtbmFtZT0iQzA3YSIgaWQ9ImVudDAwMDQiIGRhdGEtc291cmNlLWxpbmU9IjUiPjxyZWN0IHg9IjQ2NiIgeT0iMTcxLjI5NyIgd2lkdGg9IjE4My4wOTEiIGhlaWdodD0iNTAiIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIgcng9IjEyLjUiIHJ5PSIxMi41Ii8+PGxpbmUgeDE9IjQ2NiIgeTE9IjE5Ny41OTQiIHgyPSI2NDkuMDkxIiB5Mj0iMTk3LjU5NCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7Ii8+PHRleHQgeD0iNDc2IiB5PSIxODkuMjkyIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIxNjMuMDkxIj5DLTA3IOWkieabtOODu+WPlua2iOOBl+OBrueUs+irizwvdGV4dD48L2c+PGcgY2xhc3M9ImVudGl0eSIgZGF0YS1xdWFsaWZpZWQtbmFtZT0iUzI0IiBpZD0iZW50MDAwNSIgZGF0YS1zb3VyY2UtbGluZT0iNiI+PHJlY3QgeD0iNzYyLjIxIiB5PSI0NC4yOTciIHdpZHRoPSIxNzYuNjcyIiBoZWlnaHQ9IjUwIiBmaWxsPSIjRjFGMUYxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiIHJ4PSIxMi41IiByeT0iMTIuNSIvPjxsaW5lIHgxPSI3NjIuMjEiIHkxPSI3MC41OTQiIHgyPSI5MzguODgyIiB5Mj0iNzAuNTk0IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiLz48dGV4dCB4PSI3NzIuMjEiIHk9IjYyLjI5MiIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMTU2LjY3MiI+Uy0xMC9TLTI0IOS6iOe0hO+8iOekvuWGhe+8iTwvdGV4dD48L2c+PGcgY2xhc3M9ImVudGl0eSIgZGF0YS1xdWFsaWZpZWQtbmFtZT0iUzI0YSIgaWQ9ImVudDAwMDYiIGRhdGEtc291cmNlLWxpbmU9IjciPjxyZWN0IHg9Ijc2NS40NCIgeT0iMTcxLjI5NyIgd2lkdGg9IjE2OC4yMDMiIGhlaWdodD0iNTAiIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIgcng9IjEyLjUiIHJ5PSIxMi41Ii8+PGxpbmUgeDE9Ijc2NS40NCIgeTE9IjE5Ny41OTQiIHgyPSI5MzMuNjQzIiB5Mj0iMTk3LjU5NCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7Ii8+PHRleHQgeD0iNzc1LjQ0IiB5PSIxODkuMjkyIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIxNDguMjAzIj5TLTI0IOeUs+iri+OBruaJv+iqjeODu+WNtOS4izwvdGV4dD48L2c+PGcgY2xhc3M9ImVudGl0eSIgZGF0YS1xdWFsaWZpZWQtbmFtZT0iUzIxIiBpZD0iZW50MDAwNyIgZGF0YS1zb3VyY2UtbGluZT0iOCI+PHJlY3QgeD0iOTczLjQ0IiB5PSI0NC4yOTciIHdpZHRoPSIxNTQuMjAzIiBoZWlnaHQ9IjUwIiBmaWxsPSIjRjFGMUYxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiIHJ4PSIxMi41IiByeT0iMTIuNSIvPjxsaW5lIHgxPSI5NzMuNDQiIHkxPSI3MC41OTQiIHgyPSIxMTI3LjY0MyIgeTI9IjcwLjU5NCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7Ii8+PHRleHQgeD0iOTgzLjQ0IiB5PSI2Mi4yOTIiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjEzNC4yMDMiPlMtMjEg55uj5p+76Ki86Leh44Gu54Wn5LyaPC90ZXh0PjwvZz48IS0tbGluayBDMDIgdG8gQzAzLS0+PGcgY2xhc3M9ImxpbmsiIGRhdGEtZW50aXR5LTE9ImVudDAwMDEiIGRhdGEtZW50aXR5LTI9ImVudDAwMDIiIGlkPSJsbms4IiBkYXRhLXNvdXJjZS1saW5lPSI5IiBkYXRhLWxpbmstdHlwZT0iZGVwZW5kZW5jeSI+PHBhdGggZD0iTTExMi41NSw5NC42OTcgQzExMi41NSwxMTYuNzE3IDExMi41NSwxNDMuOTU3IDExMi41NSwxNjUuOTU3IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7IiBmaWxsPSJub25lIiBpZD0iQzAyLXRvLUMwMyIvPjxwb2x5Z29uIHBvaW50cz0iMTEyLjU1LDE3MC45NTcsMTE2LjU1LDE2MS45NTcsMTEyLjU1LDE2NS45NTcsMTA4LjU1LDE2MS45NTcsMTEyLjU1LDE3MC45NTciIGZpbGw9IiMxODE4MTgiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTtzdHJva2UtbGluZWpvaW46bWl0ZXI7c3Ryb2tlLW1pdGVybGltaXQ6MTA7Ii8+PHRleHQgeD0iMTEzLjU1IiB5PSIxMzcuMzY0IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEzIiB0ZXh0TGVuZ3RoPSIxOTcuMzY4Ij7mnKzkuojntITliY3jga7lpInmm7TvvIhQT1NUIOKGkiBQUkfvvIk8L3RleHQ+PC9nPjwhLS1saW5rIEMwMiB0byBDMDItLT48ZyBjbGFzcz0ibGluayIgZGF0YS1lbnRpdHktMT0iZW50MDAwMSIgZGF0YS1lbnRpdHktMj0iZW50MDAwMSIgaWQ9ImxuazkiIGRhdGEtc291cmNlLWxpbmU9IjEwIiBkYXRhLWxpbmstdHlwZT0iZGVwZW5kZW5jeSI+PHBhdGggZD0iTTIxOC41OCw1Ny45NTcgQzIzOC43OSw1OS4zMTcgMjUzLjA5LDYzLjA5NyAyNTMuMDksNjkuMjk3IEMyNTMuMDksNzUuNDk3IDI0My43NzksNzguOTQxIDIyMy41NjksODAuMzAxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7IiBmaWxsPSJub25lIiBpZD0iQzAyLXRvLUMwMiIvPjxwb2x5Z29uIHBvaW50cz0iMjE4LjU4LDgwLjYzNywyMjcuODI4LDg0LjAyNCwyMjMuNTY5LDgwLjMwMSwyMjcuMjkxLDc2LjA0MiwyMTguNTgsODAuNjM3IiBmaWxsPSIjMTgxODE4IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7c3Ryb2tlLWxpbmVqb2luOm1pdGVyO3N0cm9rZS1taXRlcmxpbWl0OjEwOyIvPjx0ZXh0IHg9IjI1OS4wOSIgeT0iNzMuODY0IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEzIiB0ZXh0TGVuZ3RoPSIxODQuMzY4Ij7lj5bkuIvjgZLvvIjnkIbnlLHjgIJQT1NUIOKGkiBQUkfvvIk8L3RleHQ+PC9nPjwhLS1saW5rIEMwNyB0byBDMDdhLS0+PGcgY2xhc3M9ImxpbmsiIGRhdGEtZW50aXR5LTE9ImVudDAwMDMiIGRhdGEtZW50aXR5LTI9ImVudDAwMDQiIGlkPSJsbmsxMCIgZGF0YS1zb3VyY2UtbGluZT0iMTEiIGRhdGEtbGluay10eXBlPSJkZXBlbmRlbmN5Ij48cGF0aCBkPSJNNTE0LjI4LDk0LjcxNyBDNTAzLjk1LDEwMi43MDcgNDk0LjMsMTEyLjU4NyA0ODguNTUsMTI0LjI5NyBDNDc5Ljc1LDE0Mi4xODcgNDg5LjAzNSwxNTUuNTIyIDUwNi4yNjUsMTY3Ljk1MiIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxOyIgZmlsbD0ibm9uZSIgaWQ9IkMwNy10by1DMDdhIi8+PHBvbHlnb24gcG9pbnRzPSI1MTAuMzIsMTcwLjg3Nyw1MDUuMzYxLDE2Mi4zNjcsNTA2LjI2NSwxNjcuOTUyLDUwMC42ODEsMTY4Ljg1NSw1MTAuMzIsMTcwLjg3NyIgZmlsbD0iIzE4MTgxOCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxO3N0cm9rZS1saW5lam9pbjptaXRlcjtzdHJva2UtbWl0ZXJsaW1pdDoxMDsiLz48dGV4dCB4PSI0ODkuNTUiIHk9IjEzNy4zNjQiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTMiIHRleHRMZW5ndGg9IjkxIj7nlLPoq4vvvIjpm4bojbfliY3vvIk8L3RleHQ+PC9nPjwhLS1saW5rIEMwN2EgdG8gQzA3LS0+PGcgY2xhc3M9ImxpbmsiIGRhdGEtZW50aXR5LTE9ImVudDAwMDQiIGRhdGEtZW50aXR5LTI9ImVudDAwMDMiIGlkPSJsbmsxMSIgZGF0YS1zb3VyY2UtbGluZT0iMTIiIGRhdGEtbGluay10eXBlPSJkZXBlbmRlbmN5Ij48cGF0aCBkPSJNNTczLjI4LDE3MS4wMDcgQzU3OC4yMiwxNjIuMDM3IDU4My4wNCwxNTEuNTU3IDU4NS41NSwxNDEuMjk3IEM1ODkuNDIsMTI1LjQwNyA1ODUuNjI3LDExMi42MzQgNTc4LjE4Nyw5OS4xNjQiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiIGZpbGw9Im5vbmUiIGlkPSJDMDdhLXRvLUMwNyIvPjxwb2x5Z29uIHBvaW50cz0iNTc1Ljc3LDk0Ljc4Nyw1NzYuNjIsMTA0LjU5OSw1NzguMTg3LDk5LjE2NCw1ODMuNjIzLDEwMC43MzEsNTc1Ljc3LDk0Ljc4NyIgZmlsbD0iIzE4MTgxOCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxO3N0cm9rZS1saW5lam9pbjptaXRlcjtzdHJva2UtbWl0ZXJsaW1pdDoxMDsiLz48dGV4dCB4PSI1ODcuNzMiIHk9IjEzNy4zNjQiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTMiIHRleHRMZW5ndGg9IjEzMC45NDYiPlBSR++8iOWWtualreaJv+iqjeW+heOBoe+8iTwvdGV4dD48L2c+PCEtLWxpbmsgUzI0IHRvIFMyNGEtLT48ZyBjbGFzcz0ibGluayIgZGF0YS1lbnRpdHktMT0iZW50MDAwNSIgZGF0YS1lbnRpdHktMj0iZW50MDAwNiIgaWQ9ImxuazEyIiBkYXRhLXNvdXJjZS1saW5lPSIxMyIgZGF0YS1saW5rLXR5cGU9ImRlcGVuZGVuY3kiPjxwYXRoIGQ9Ik04MTUuODQsOTQuNzQ3IEM4MDYuODgsMTAzLjAwNyA3OTguMzksMTEzLjAyNyA3OTMuNTUsMTI0LjI5NyBDNzg2LjE2LDE0MS40NTcgNzk0LDE1NC42OTkgODA4LjUxLDE2Ny40OTkiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiIGZpbGw9Im5vbmUiIGlkPSJTMjQtdG8tUzI0YSIvPjxwb2x5Z29uIHBvaW50cz0iODEyLjI2LDE3MC44MDcsODA4LjE1NywxNjEuODUzLDgwOC41MSwxNjcuNDk5LDgwMi44NjUsMTY3Ljg1Myw4MTIuMjYsMTcwLjgwNyIgZmlsbD0iIzE4MTgxOCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxO3N0cm9rZS1saW5lam9pbjptaXRlcjtzdHJva2UtbWl0ZXJsaW1pdDoxMDsiLz48dGV4dCB4PSI3OTQuNTUiIHk9IjEzNy4zNjQiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTMiIHRleHRMZW5ndGg9IjY1Ij7nlLPoq4vjgpLplovjgY88L3RleHQ+PC9nPjwhLS1saW5rIFMyNGEgdG8gUzI0LS0+PGcgY2xhc3M9ImxpbmsiIGRhdGEtZW50aXR5LTE9ImVudDAwMDYiIGRhdGEtZW50aXR5LTI9ImVudDAwMDUiIGlkPSJsbmsxMyIgZGF0YS1zb3VyY2UtbGluZT0iMTQiIGRhdGEtbGluay10eXBlPSJkZXBlbmRlbmN5Ij48cGF0aCBkPSJNODU3Ljg0LDE3MC44NTcgQzg2MC41NSwxNjEuNjk3IDg2My4yMSwxNTEuMTI3IDg2NC41NSwxNDEuMjk3IEM4NjYuNjgsMTI1LjYwNyA4NjQuNzI0LDExMi45NjggODYwLjc1NCw5OS4yOTgiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiIGZpbGw9Im5vbmUiIGlkPSJTMjRhLXRvLVMyNCIvPjxwb2x5Z29uIHBvaW50cz0iODU5LjM2LDk0LjQ5Nyw4NTguMDI5LDEwNC4yNTUsODYwLjc1NCw5OS4yOTgsODY1LjcxMSwxMDIuMDI0LDg1OS4zNiw5NC40OTciIGZpbGw9IiMxODE4MTgiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTtzdHJva2UtbGluZWpvaW46bWl0ZXI7c3Ryb2tlLW1pdGVybGltaXQ6MTA7Ii8+PHRleHQgeD0iODY2LjIxIiB5PSIxMzcuMzY0IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEzIiB0ZXh0TGVuZ3RoPSIxMTcuOTQ2Ij7mib/oqo3jg7vljbTkuIvvvIhQUkfvvIk8L3RleHQ+PC9nPjwhLS1saW5rIFMyMSB0byBTMjEtLT48ZyBjbGFzcz0ibGluayIgZGF0YS1lbnRpdHktMT0iZW50MDAwNyIgZGF0YS1lbnRpdHktMj0iZW50MDAwNyIgaWQ9ImxuazE0IiBkYXRhLXNvdXJjZS1saW5lPSIxNSIgZGF0YS1saW5rLXR5cGU9ImRlcGVuZGVuY3kiPjxwYXRoIGQ9Ik0xMTI4LjA5LDU3LjUzNyBDMTE0Ny44Myw1OC4zMDcgMTE2Mi42NSw2Mi4yMjcgMTE2Mi42NSw2OS4yOTcgQzExNjIuNjUsNzYuMzY3IDExNTIuODI2LDgwLjA5MiAxMTMzLjA4Niw4MC44NjIiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiIGZpbGw9Im5vbmUiIGlkPSJTMjEtdG8tUzIxIi8+PHBvbHlnb24gcG9pbnRzPSIxMTI4LjA5LDgxLjA1NywxMTM3LjIzOSw4NC43MDMsMTEzMy4wODYsODAuODYyLDExMzYuOTI3LDc2LjcwOSwxMTI4LjA5LDgxLjA1NyIgZmlsbD0iIzE4MTgxOCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxO3N0cm9rZS1saW5lam9pbjptaXRlcjtzdHJva2UtbWl0ZXJsaW1pdDoxMDsiLz48dGV4dCB4PSIxMTY4LjY1IiB5PSI3My44NjQiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTMiIHRleHRMZW5ndGg9IjExNyI+54Wn5Lya77yI5a++6LGh44O75pyf6ZaT77yJPC90ZXh0PjwvZz48P3BsYW50dW1sLXNyYyBSUDNCSmk5MDY4TnRGQ000VklDajk0clNrNjdYS2M5RE43VjFtaUdURjAxNVFUZ0cxZUVhOWU5MTVCYnU5cEgwUjVGVm5MdmNrazhMX0FTTkFVZnN2WmxkX0VUS0p3Z2RQTkpDaWlZSE5kNzczNnhrMGNjOW5zUWNLWE1oUFBHakNaYUVhTDRKSnBOTmxXYmtCVTNTTE9zQ25jakI4VGhJTlBiaEl5cVlpT0FBRUl3Ym9sek11VUthd0NnV3llUWd0cEtzZ2RuQW5JRnRHeTc2RVYxYUVpVjYtcHlmXzFPVmtKYmRmalZJX09OWUk1VFhhcGJ2UVlReWMwVzRYaXRqMjBuTlk1RjA3MHpqSnN1YXZXOU5zQjIwSEp2V3dBa1Z2NTZaQVBoWGhmZTlkN0JjTThJeHp0eFY5MUVCQjBWcVlDUk9qUXZaYkN0MEY4WFh6Y1hYajhseXRkRHFXd1RnbTJRUkFBSzN1R1h6b01yS0VqbzdncjhnM2JKRzRUOFRnS3FsbHYxblAtUkt3ZHliVjJwWEhUMTQ3SzAwd3lFS2ExVDNPYTgxNTRlTEpyX3Uzb3pITHl6a0VEQTBlajBwOTZkVjdwLWR0V3Zxa0FJTDJQX1pWcmZpVW9iUUFKZUJEZVduYmhnNHV6M0NEdmxDMWkzeGxOd1dObUJ2M0cwMD8+PC9nPjwvc3ZnPg==" class="uml" alt="uml diagram" title="" /></p>
 <p>注（設計への反映）: S-21 の URL・入力欄・権限（監査担当者だけ）は <code>ui_design.md</code> に URL がない。Bolt 68 の開始準備で決めて足す。ナビゲーションに S-21 を監査担当者の表示で足す（ナビ整合性）。</p>
 <h2 id="_3">マニュアルの更新（画面を伴う週）<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
-<p>3 章（見積依頼: 変更・取下げ）、7 章（予約: 変更・取消しの申請、営業の承認）、監査担当者の章（S-21。10 章の KPI の隣に新しい節）、用語集（変更・取消申請、集荷前）。キャプチャは <code>manualScreenshots</code> で撮り直す。見積りは Bolt 67・68 に各 40 分を含めた（上の見積りに入れてある）。</p>
+<p>3 章（見積依頼: 変更・取下げ）、5 章（荷主の予約: 変更・取消しの申請）、7 章（社内の予約: 営業の承認）、監査担当者の章（S-21。10 章の KPI の隣に新しい節）、用語集（変更・取消申請、集荷前）。キャプチャは <code>manualScreenshots</code> で撮り直す。見積りは Bolt 67・68 に各 40 分を含めた（上の見積りに入れてある）。</p>
 <h2 id="dod">完了条件（DoD）<a class="headerlink" href="#dod" title="Permanent link">&para;</a></h2>
 <ul>
 <li>各 Bolt で <code>--continue</code> 付きのゲートを通す。コードを変える Bolt は <code>checkstyleMain checkstyleTest spotbugsMain</code> を push の前に流す</li>
@@ -20642,8 +20652,8 @@
 <tbody>
 <tr>
 <td style="text-align: left;">R-1</td>
-<td style="text-align: left;">見積りが仮定（A-3）で、稼働に対して 87% と余裕が少ない</td>
-<td style="text-align: left;">前倒しを使う。削る順は CP-4</td>
+<td style="text-align: left;">見積りが仮定（A-3）で、稼働に対する 54% は実測の根拠がない</td>
+<td style="text-align: left;">前倒しを使う。遅れたときの繰り越しの順は CP-4</td>
 </tr>
 <tr>
 <td style="text-align: left;">R-2</td>
@@ -20657,8 +20667,8 @@
 </tr>
 <tr>
 <td style="text-align: left;">R-4</td>
-<td style="text-align: left;">ウイルス検査の AWS の機能の仕様・費用が ADR-022 の理解と合わない</td>
-<td style="text-align: left;">Bolt 60 の最初の仕事として公式の資料で確かめる。合わなければ ADR-022 の案 A（サイドカー）に切り替える（人に諮る）</td>
+<td style="text-align: left;">ウイルス検査（パイロット開始の条件）が W12 より後になる。W12 は US-13・US-15 の 10 SP の週で、Bolt 60 の 240 分が足される</td>
+<td style="text-align: left;">W12 の計画で稼働と比べる。収まらないときは人に諮る。AWS の機能の仕様・費用の確認（ADR-022 の理解と合わなければ案 A のサイドカー。人に諮る）は、Bolt 60 の最初の仕事のままにする</td>
 </tr>
 <tr>
 <td style="text-align: left;">R-5</td>
@@ -20667,8 +20677,13 @@
 </tr>
 <tr>
 <td style="text-align: left;">R-6</td>
-<td style="text-align: left;">承認待ちが多い週になる（認可・スキーマ・外部連携が 6 本）</td>
+<td style="text-align: left;">認可・スキーマのゲートがある Bolt が 3 本（64・65・68）あり、承認待ちが続く</td>
 <td style="text-align: left;">計画の承認の場で、一括の推奨の承認を取る（「推奨で一括承認」。W10 の方式）。決められない判断だけ聞く</td>
+</tr>
+<tr>
+<td style="text-align: left;">R-7</td>
+<td style="text-align: left;">デモ環境（Heroku）が 503 で、<code>apps/cargo-tracker</code> を変える push の <code>deploy-demo</code> が失敗する（2026-11-28 の時点。画面は稼働時間の枠の表示）</td>
+<td style="text-align: left;">Heroku のアカウントの所有者が枠を確かめる。W11 の完了条件はデモ環境に依らない（受入シナリオと動画は手元で確かめる）。直るまで CI 全体は失敗の表示になるので、<code>check</code>・<code>ui</code> のジョブの結果を読む</td>
 </tr>
 </tbody>
 </table>
@@ -20708,6 +20723,37 @@
 </tr>
 </tbody>
 </table>
+<h3 id="2026-11-28">2026-11-28 の再検証（改訂した範囲）<a class="headerlink" href="#2026-11-28" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">観点</th>
+<th style="text-align: left;">結果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">事実の確認</td>
+<td style="text-align: left;"><code>AmendmentRequest</code> と申請の操作はまだない。<code>BookingStatus</code> の状態は変わらない。<code>TransportRequest</code> の公開の操作は <code>resubmit</code> と <code>markWithdrawn</code> で、AC1・AC2 の操作はない。<code>data_model.md</code> に <code>amendment_request</code> があり、<code>ui_design.md</code> に S-21 の画面がある。<code>PreToolUse</code> フックは入っていない。Bolt 60 を移した後の合計は、作業 1,700 分、壁時計 2,180 分（62〜69 の各行の和と一致）。Bolt 69 は #50 の仕分けがなくなったが、見積りの根拠がないので 160 分のままにする</td>
+</tr>
+<tr>
+<td style="text-align: left;">軸 A（開発戦略）</td>
+<td style="text-align: left;">終盤・アウトサイドインと、US-05・US-17 は変えていない</td>
+</tr>
+<tr>
+<td style="text-align: left;">軸 B（設計トピック）</td>
+<td style="text-align: left;">W10-1 の設計の変更（運用の警告、<code>operations</code> モジュール、通知の再送）は、予約の集約と S-21 の設計の注を変えない。監査記録の種類と、新しい <code>operations</code> モジュールの依存の規則は、Bolt 68・各 Bolt の開始準備で読む</td>
+</tr>
+<tr>
+<td style="text-align: left;">軸 C（過去計画）</td>
+<td style="text-align: left;">W10-1 の番号と重ならない。#50 の仕分けで #29 に移した項目は、#29 が US-05 の完了（Bolt 67）で閉じると見えなくなるので、CP-6 に扱いを書いた</td>
+</tr>
+<tr>
+<td style="text-align: left;">直した箇所</td>
+<td style="text-align: left;">先頭の注で本文を読み替える形をやめて本文を直した。CP-4 を、終えた Bolt 61・58 と W12 へ移した Bolt 60 のない形に改めた。R-1 の稼働比と、R-6 のゲートのある本数を直した。R-4 を Bolt 60 を移すリスクに替えた。Bolt 69 から #50 の仕分けを外した。マニュアルの 5 章（荷主の予約）を足した</td>
+</tr>
+</tbody>
+</table>
 <h2 id="_5">人に諮る議題と推奨<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -20720,8 +20766,8 @@
 <tbody>
 <tr>
 <td style="text-align: left;">CP-1</td>
-<td style="text-align: left;">W11 の範囲（返済 5 本を US-05・US-17 の前に置く）</td>
-<td style="text-align: left;">推奨: このとおり。返済はパイロット開始の条件（ウイルス検査、運用の通知）に関わる。ただし US-05 の 6 本が時間の足りなさで後ろにずれる場合は CP-4 の順で削る</td>
+<td style="text-align: left;">W11 の範囲（<strong>決定済み</strong>）</td>
+<td style="text-align: left;"><strong>US-05・US-17 と締めの 8 本にする。ウイルス検査の Bolt 60 は W12 へ移す</strong>（2026-11-28、human:kakimomokuri が「Bolt 60 を W12 へ」を選んだ。初版の推奨は同じ週に置く案）</td>
 </tr>
 <tr>
 <td style="text-align: left;">CP-2</td>
@@ -20735,13 +20781,23 @@
 </tr>
 <tr>
 <td style="text-align: left;">CP-4</td>
-<td style="text-align: left;">範囲を削るときの順（後ろから）</td>
-<td style="text-align: left;">推奨: ① Bolt 61（再送）を W12 へ ② Bolt 60 の最初の実装を仕様確認だけに ③ Bolt 58（FRS-04）を W12 へ。<strong>US-05・US-17 の受入条件に直結する 62〜68 は削らない</strong></td>
+<td style="text-align: left;">遅れたときに W12 へ繰り越す順（改訂。削るのではなく繰り越す。Release 1.1 の条件は Should の全受入条件）</td>
+<td style="text-align: left;">推奨: ① Bolt 68（US-17。ほかの Bolt に依存しない） ② US-05 の 67 から後ろ向きに 66・65（SP は US-05 を締めた週に数えるので、1 本でも繰り越すと W11 の実績は 8 SP 減る）。締め（69）は繰り越さない</td>
 </tr>
 <tr>
 <td style="text-align: left;">CP-5</td>
 <td style="text-align: left;"><code>PreToolUse</code> フックで標準入力の形のコマンドを機械的に拒む設定の追加</td>
-<td style="text-align: left;">推奨: 入れる（W7 の締めの Try の継続）。<strong>設定の追加は、実際に入れる前に人に確かめる</strong>（W7 の決定のとおり）。W11 の開始の前に人が判断する</td>
+<td style="text-align: left;">推奨: 入れる（W7 の締めの Try の継続。W10-1 でも同じ違反が起きた）。<strong>設定の追加は、実際に入れる前に人に確かめる</strong>（W7 の決定のとおり）。W11 の開始の前に人が判断する</td>
+</tr>
+<tr>
+<td style="text-align: left;">CP-6</td>
+<td style="text-align: left;">#29 のコメントの返済 8 件の扱い</td>
+<td style="text-align: left;">推奨: US-05 の Bolt で触る箇所のものだけを一緒に直し、見積りと完了条件は増やさない。Bolt 67 で #29 を閉じる前に、残りを #54（内部の返済）へ移す。8 件を W11 の完了条件にする案は、コードを確かめておらず見積れないので推奨しない</td>
+</tr>
+<tr>
+<td style="text-align: left;">CP-7</td>
+<td style="text-align: left;">パイロットの前に要る #53（スクリーンリーダーでの確認、監査記録の DB の権限、利用者の行が読めないときの 500）を W11 に入れるか</td>
+<td style="text-align: left;">推奨: W11 の Bolt に入れない。先に担当と期限を決め、W11 の締めで状況を確かめる。監査記録の DB の権限は US-17 と同じ監査記録を扱うが、受入条件には含まれないので、Bolt 68 に混ぜない</td>
 </tr>
 </tbody>
 </table>
@@ -20763,6 +20819,21 @@
 <tr>
 <td style="text-align: left;">2026-11-27</td>
 <td style="text-align: left;">Bolt 57・58・59・61 を W10-1 計画に移し、本数と見積りを直した</td>
+<td style="text-align: left;">anthropic/claude-sonnet-5-5</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-11-28</td>
+<td style="text-align: left;">W10-1 と #50 の仕分けの後の状態に合わせて本文を直し、再検証した。CP-4 を改め、CP-6・CP-7 を足した</td>
+<td style="text-align: left;">anthropic/claude-sonnet-5-5</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-11-28</td>
+<td style="text-align: left;">CP-1 を人の指示で変え、Bolt 60（ウイルス検査）を W12 へ移した。本数・見積り・リスク・CP-4 を直した</td>
+<td style="text-align: left;">anthropic/claude-sonnet-5-5</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-11-28</td>
+<td style="text-align: left;">人の承認を記録した（CP-1 は変更後の内容、CP-2〜CP-7 は推奨のとおり）</td>
 <td style="text-align: left;">anthropic/claude-sonnet-5-5</td>
 </tr>
 </tbody>
