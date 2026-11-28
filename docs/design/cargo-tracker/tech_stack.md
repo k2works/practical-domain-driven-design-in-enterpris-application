@@ -4,7 +4,7 @@ title: "cargo-tracker 技術スタック"
 description: "cargo-tracker のバックエンド・画面・データベース・テスト・ビルド・インフラの技術、バージョン、サポート期限、選定理由、アップグレード計画。"
 tags: [design, tech-stack]
 status: stable
-generated: { by: anthropic/claude-opus-5-5, at: 2026-10-15T01:13:15Z }
+generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-27T22:45:06Z }
 stale_after: 2027-04-01T00:00:00Z
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:29:04Z }
@@ -46,7 +46,7 @@ verified:
 | カテゴリ | 技術 | バージョン | 用途 | サポート期限 | 選定理由 |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | 言語 | Java（Amazon Corretto） | 25 LTS | アプリケーション実装 | 2032-10-31（Corretto 25） | LTS。第 3 章と同じ。AWS 上で動かすため AWS が保守する配布版を使う |
-| フレームワーク | Spring Boot | 4.1.x（2026-10 時点 4.1.1） | アプリケーション基盤、自動構成、Actuator | 2027-07-31（OSS サポート） | 第 3 章と同じ。4.2 が出たら追従する（アップグレード計画） |
+| フレームワーク | Spring Boot | 4.1.x（2026-11-28 時点 4.1.3。4.2.0 への追従は [Bolt 70](../../development/cargo-tracker/bolt_70_plan.md) の調査） | アプリケーション基盤、自動構成、Actuator | 2027-07-31（OSS サポート） | 第 3 章と同じ。4.2 が出たら追従する（アップグレード計画） |
 | フレームワーク | Spring Framework（MVC・トランザクション・イベント） | 7.x（Boot 管理） | 受信、宣言的トランザクション、アプリケーションイベント | Boot に従う | 第 3 章のとおり、アプリケーションサービスをトランザクション境界にし、BC 間通知にアプリケーションイベントを使う |
 | モジュール境界・イベント | Spring Modulith | 2.1.x（2026-10 時点 2.1.1） | モジュール構造の検証、イベント発行記録（JDBC）、未完了イベントの再配信 | Boot 4.1 に従う | ADR-003 の「永続化したドメインイベント」を自作せずに実現する。第 3 章のプラットフォーム要求（Domain Events）にも挙がっている |
 | 認証・認可 | Spring Security | 7.x（Boot 管理） | フォームログイン、役割による認可、CSRF、session 管理、ロック | Boot に従う | BR-14・BR-15 の固定役割・ロック・session 失効を標準機能で実現する。Bolt 14 で導入（form login、役割による認可、CSRF、session の固定化の防止。[ADR-012](../../adr/cargo-tracker/012-authentication-principal-and-session.md)、提案） |
