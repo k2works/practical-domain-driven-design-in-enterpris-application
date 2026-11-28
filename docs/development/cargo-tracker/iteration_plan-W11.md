@@ -4,7 +4,7 @@ title: "W11 計画 - 予約の変更・取消しと監査照会"
 description: "cargo-tracker の W11（2026-12-14〜12-18）の Bolt 計画。US-05（8 SP）と US-17（3 SP）の 11 SP を、番号 62〜69 の 8 本の Bolt に分け、分単位の見積りを付けて稼働と比べる。ウイルス検査（Bolt 60）は W12 へ移した。"
 tags: [plan]
 status: stable
-generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-28T06:19:26Z }
+generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-28T09:40:12Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-11-28T06:19:26Z }
 ---
@@ -259,3 +259,4 @@ S21 --> S21 : 照会（対象・期間）
 | 2026-11-28 | W10-1 と #50 の仕分けの後の状態に合わせて本文を直し、再検証した。CP-4 を改め、CP-6・CP-7 を足した | anthropic/claude-sonnet-5-5 |
 | 2026-11-28 | CP-1 を人の指示で変え、Bolt 60（ウイルス検査）を W12 へ移した。本数・見積り・リスク・CP-4 を直した | anthropic/claude-sonnet-5-5 |
 | 2026-11-28 | 人の承認を記録した（CP-1 は変更後の内容、CP-2〜CP-7 は推奨のとおり） | anthropic/claude-sonnet-5-5 |
+| 2026-11-28 | CP-5 のフックを入れた（human:kakimomokuri が内容を確認して承認。`.claude/hooks/deny-stdin.mjs` とそのテスト、`.claude/settings.json` の `PreToolUse`（Bash））。拒むのは標準入力からプログラムを読む形（`python -`・`node -`・引数も入力の向け先もない起動）。**ファイル名が空になった `grep` などと、PowerShell のツールは防げない。** ファイルがあることを確かめてから読み、標準入力を `/dev/null` につなぐ運用で補う | anthropic/claude-sonnet-5-5 |

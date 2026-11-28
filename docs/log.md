@@ -1,6 +1,12 @@
 # Docs Update Log
 
 ## 2026-11-28
+* **Verification**: [bolt_63_plan](/development/cargo-tracker/bolt_63_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [bolt_63_plan](/development/cargo-tracker/bolt_63_plan.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-sonnet-5-5）
+* **Creation**: [bolt_63_plan](/development/cargo-tracker/bolt_63_plan.md) を作成（anthropic/claude-sonnet-5-5）
+* **Update**: [iteration_plan-W11](/development/cargo-tracker/iteration_plan-W11.md) を更新（anthropic/claude-sonnet-5-5）
 * **Verification**: [bolt_62_plan](/development/cargo-tracker/bolt_62_plan.md) を human:kakimomokuri が検証
 * **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-sonnet-5-5）
 * **Update**: [bolt_62_plan](/development/cargo-tracker/bolt_62_plan.md) を更新（anthropic/claude-sonnet-5-5）
