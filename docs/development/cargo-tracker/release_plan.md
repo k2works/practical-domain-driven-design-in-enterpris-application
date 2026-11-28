@@ -4,7 +4,7 @@ title: "リリース計画 - cargo-tracker（A 社国際貨物輸送管理シス
 description: "cargo-tracker MVP のリリース計画。1 人 + AI、時間単位の Bolt（= イテレーション）と週次の見直しで、最初の縦の流れ（R0.1）、パイロット準備完了（R1.0）、本格展開前（R1.1）の 3 段階、Unit のエントロピー評価、SP、バッファ、パイロット開始の条件、引継ぎ ID の台帳、業務責任者に確かめる事項の台帳。"
 tags: [development,release-plan]
 status: stable
-generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-28T06:19:26Z }
+generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-28T07:14:32Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T09:29:53Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:38:26Z }
@@ -1761,3 +1761,4 @@ xychart-beta
 | 2026-11-28 | 週の外の技術 Bolt として [Bolt 71 計画](bolt_71_plan.md)（リリースの仕組みの修正。SP 0。2026-11-28 に計画を承認）を足した | anthropic/claude-sonnet-5-5 |
 | 2026-11-28 | W11 計画の CP-1 を人の指示で変え、Bolt 60（ウイルス検査）を W11 から W12 へ移した | anthropic/claude-sonnet-5-5 |
 | 2026-11-28 | W11 計画の承認（human:kakimomokuri）を記録した | anthropic/claude-sonnet-5-5 |
+| 2026-11-28 | W11 の [Bolt 62 計画](bolt_62_plan.md)を作り、2026-11-28 に承認を受けた | anthropic/claude-sonnet-5-5 |
