@@ -107,7 +107,7 @@
          <checkConstraint constraint="((route_redesign_required_at IS NULL) OR (routing_case_number IS NOT NULL))" name="ck_quotation_route_redesign"/>
          <checkConstraint constraint="((((shipper_approved_by IS NULL) AND (shipper_approved_at IS NULL)) OR ((shipper_approved_by IS NOT NULL) AND (shipper_approved_at IS NOT NULL) AND (routing_case_number IS NOT NULL))) AND (((status)::text &lt;&gt; 'APPROVED'::text) OR (shipper_approved_by IS NOT NULL)))" name="ck_quotation_shipper_approved"/>
          <checkConstraint constraint="((shipper_response)::text = ANY ((ARRAY['PROCEED'::character varying, 'DECLINED'::character varying])::text[]))" name="ck_quotation_shipper_response"/>
-         <checkConstraint constraint="((status)::text = ANY ((ARRAY['DRAFT'::character varying, 'PENDING_APPROVAL'::character varying, 'PRESENTED'::character varying, 'ROUTING_REQUESTED'::character varying, 'AWAITING_SHIPPER_APPROVAL'::character varying, 'APPROVED'::character varying, 'EXPIRED'::character varying, 'REPLACED'::character varying])::text[]))" name="ck_quotation_status"/>
+         <checkConstraint constraint="((status)::text = ANY ((ARRAY['DRAFT'::character varying, 'PENDING_APPROVAL'::character varying, 'PRESENTED'::character varying, 'ROUTING_REQUESTED'::character varying, 'AWAITING_SHIPPER_APPROVAL'::character varying, 'APPROVED'::character varying, 'EXPIRED'::character varying, 'REPLACED'::character varying, 'VOIDED'::character varying])::text[]))" name="ck_quotation_status"/>
          <checkConstraint constraint="(total_amount &gt; (0)::numeric)" name="ck_quotation_total_amount"/>
       </table>
       <table name="required_document" remarks="必要書類 [append-only]" schema="quotation" type="TABLE">

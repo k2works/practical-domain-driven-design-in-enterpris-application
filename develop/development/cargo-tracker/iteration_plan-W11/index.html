@@ -12462,6 +12462,76 @@
   
   
     <li class="md-nav__item">
+      <a href="../bolt_62_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 62 計画
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../bolt_63_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 63 計画
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../bolt_49_plan/" class="md-nav__link">
         
   
@@ -20834,6 +20904,11 @@
 <tr>
 <td style="text-align: left;">2026-11-28</td>
 <td style="text-align: left;">人の承認を記録した（CP-1 は変更後の内容、CP-2〜CP-7 は推奨のとおり）</td>
+<td style="text-align: left;">anthropic/claude-sonnet-5-5</td>
+</tr>
+<tr>
+<td style="text-align: left;">2026-11-28</td>
+<td style="text-align: left;">CP-5 のフックを入れた（human:kakimomokuri が内容を確認して承認。<code>.claude/hooks/deny-stdin.mjs</code> とそのテスト、<code>.claude/settings.json</code> の <code>PreToolUse</code>（Bash））。拒むのは標準入力からプログラムを読む形（<code>python -</code>・<code>node -</code>・引数も入力の向け先もない起動）。<strong>ファイル名が空になった <code>grep</code> などと、PowerShell のツールは防げない。</strong> ファイルがあることを確かめてから読み、標準入力を <code>/dev/null</code> につなぐ運用で補う</td>
 <td style="text-align: left;">anthropic/claude-sonnet-5-5</td>
 </tr>
 </tbody>

@@ -372,20 +372,20 @@
                                 </thead>
                                 <tbody>
                                 <tr>
-                                    <td>ck_kpi_baseline_value_p50</td>
-                                    <td>(value_p50 &gt;&#61; (0)::numeric)</td>
-                                </tr>
-                                <tr>
-                                    <td>ck_kpi_baseline_kpi</td>
-                                    <td>((kpi)::text &#61; ANY ((ARRAY[&#39;KPI-01&#39;::character varying, &#39;KPI-02&#39;::character varying])::text[]))</td>
-                                </tr>
-                                <tr>
                                     <td>ck_kpi_baseline_period</td>
                                     <td>(period_to &gt;&#61; period_from)</td>
                                 </tr>
                                 <tr>
                                     <td>ck_kpi_baseline_value_p90</td>
                                     <td>((value_p90 IS NULL) OR (((kpi)::text &#61; &#39;KPI-01&#39;::text) AND (value_p90 &gt;&#61; value_p50)))</td>
+                                </tr>
+                                <tr>
+                                    <td>ck_kpi_baseline_kpi</td>
+                                    <td>((kpi)::text &#61; ANY ((ARRAY[&#39;KPI-01&#39;::character varying, &#39;KPI-02&#39;::character varying])::text[]))</td>
+                                </tr>
+                                <tr>
+                                    <td>ck_kpi_baseline_value_p50</td>
+                                    <td>(value_p50 &gt;&#61; (0)::numeric)</td>
                                 </tr>
                                 </tbody>
                             </table>

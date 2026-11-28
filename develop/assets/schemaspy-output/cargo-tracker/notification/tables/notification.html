@@ -436,6 +436,18 @@
                                 </thead>
                                 <tbody>
                                 <tr>
+                                    <td>ck_notification_retry_count</td>
+                                    <td>((retry_count &gt;&#61; 0) AND (retry_count &lt;&#61; 3))</td>
+                                </tr>
+                                <tr>
+                                    <td>ck_notification_failure_reason</td>
+                                    <td>(((status)::text &#61; &#39;FAILED&#39;::text) &#61; (failure_reason IS NOT NULL))</td>
+                                </tr>
+                                <tr>
+                                    <td>ck_notification_status</td>
+                                    <td>((status)::text &#61; ANY ((ARRAY[&#39;PENDING&#39;::character varying, &#39;SENT&#39;::character varying, &#39;FAILED&#39;::character varying])::text[]))</td>
+                                </tr>
+                                <tr>
                                     <td>ck_notification_link_kind</td>
                                     <td>((link IS NULL) OR ((kind)::text &#61; ANY ((ARRAY[&#39;QUOTATION_PRESENTED&#39;::character varying, &#39;ROUTE_APPROVED&#39;::character varying, &#39;QUOTATION_EXPIRING&#39;::character varying, &#39;BOOKING_CONFIRMED&#39;::character varying, &#39;TRACKING_UNDER_REVIEW&#39;::character varying])::text[])))</td>
                                 </tr>
@@ -450,18 +462,6 @@
                                 <tr>
                                     <td>ck_notification_retryable</td>
                                     <td>((retryable IS NULL) OR (((status)::text &#61; &#39;FAILED&#39;::text) AND ((retryable &#61; false) OR (link IS NOT NULL))))</td>
-                                </tr>
-                                <tr>
-                                    <td>ck_notification_failure_reason</td>
-                                    <td>(((status)::text &#61; &#39;FAILED&#39;::text) &#61; (failure_reason IS NOT NULL))</td>
-                                </tr>
-                                <tr>
-                                    <td>ck_notification_retry_count</td>
-                                    <td>((retry_count &gt;&#61; 0) AND (retry_count &lt;&#61; 3))</td>
-                                </tr>
-                                <tr>
-                                    <td>ck_notification_status</td>
-                                    <td>((status)::text &#61; ANY ((ARRAY[&#39;PENDING&#39;::character varying, &#39;SENT&#39;::character varying, &#39;FAILED&#39;::character varying])::text[]))</td>
                                 </tr>
                                 </tbody>
                             </table>

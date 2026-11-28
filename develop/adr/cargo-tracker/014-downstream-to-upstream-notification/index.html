@@ -12179,6 +12179,76 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_62_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 62 計画
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/cargo-tracker/bolt_63_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 63 計画
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../development/cargo-tracker/bolt_49_plan/" class="md-nav__link">
         
   
@@ -17288,6 +17358,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#2026-11-28bolt-62humankakimomokuri" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        例外: 本予約の確定（2026-11-28。Bolt 62。human:kakimomokuri が承認）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#_4" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -20284,6 +20365,38 @@
 </tr>
 </tbody>
 </table>
+<h3 id="2026-11-28bolt-62humankakimomokuri">例外: 本予約の確定（2026-11-28。Bolt 62。human:kakimomokuri が承認）<a class="headerlink" href="#2026-11-28bolt-62humankakimomokuri" title="Permanent link">&para;</a></h3>
+<p><strong>本予約の確定は、同じトランザクションの中で見積りの公開 API（予約確定済みの通知）を呼び、輸送要求を予約確定済みにする。</strong> 受け付けられなければ、本予約の確定ごと失敗させる。DE-07 の listener の同じ呼び出しは、冪等な備えとして残す。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">要素</th>
+<th style="text-align: left;">内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">理由</td>
+<td style="text-align: left;">非同期の通知だけだと、届くまでの間、輸送要求は予約待ちのままで、荷主が本予約の前の条件の変更（US-05 AC1）をできる。本予約があるのに輸送要求は新しい版の審査中になり、予約に使った見積りは無効になる。順に実行した場合と、確定のコミットの前に変更を始めた場合の両方を、PostgreSQL の結合テストで再現した（<code>TransportRequestRevisionIntegrationTest</code>）</td>
+</tr>
+<tr>
+<td style="text-align: left;">守り方</td>
+<td style="text-align: left;">確定は見積りの行を確定用の照会で押さえる（ADR-016）。条件の変更は同じ行を先に書くので直列になり、後から走る変更は輸送要求の楽観ロックで失敗するか、予約確定済みで断られる</td>
+</tr>
+<tr>
+<td style="text-align: left;">下の代替案との関係</td>
+<td style="text-align: left;">「下流が同じトランザクションで上流の公開 API を呼ぶ」を退けた理由のうち、「上流の失敗で下流の確定が戻る」は、この場面では望む振る舞いである（上流の状態が確定の前提）。1 つのトランザクションで 2 つのコンテキストの集約を更新することは受け入れる。依存の向き（下流 → 上流）は変えない</td>
+</tr>
+<tr>
+<td style="text-align: left;">範囲</td>
+<td style="text-align: left;">この 1 か所だけ。ほかの下流から上流への通知は、上の決定のまま</td>
+</tr>
+<tr>
+<td style="text-align: left;">採らなかった案</td>
+<td style="text-align: left;">見積りに「予約に使った」印の列を足して変更の側で確かめる（スキーマの変更が増え、2 つのコンテキストの書き込みは残る）。防がずに有人の例外対応へ回す（本予約と変更の両方が成立する）</td>
+</tr>
+</tbody>
+</table>
 <h3 id="_4">イベントの発行の仕方の基準<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h3>
 <p>Bolt 19 レビュー D-71 で、集約の操作がイベントを「ためる」（見積り・輸送要求の <code>domainEvents</code>）か「戻り値で返す」（経路設計案件の <code>confirm</code> が DE-05 を返す）かがそろっていないと指摘された。次のようにそろえる。</p>
 <ul>
@@ -20346,6 +20459,7 @@
 <li>2026-10-08: 初版（Bolt 19・Bolt 20）</li>
 <li>2026-10-29: Bolt 38g で経路条件の照会の結果に荷主企業を足した（経路設計の案件を担当企業で絞るため。主体ではなく値で、照会は主体を持たない）</li>
 <li>2026-11-11: Bolt 39g2 で DE-09・DE-10（追跡 → 予約）に適用した。B-INV-12 の代わりに段を戻さないことで古い通知を無視する（<a href="../../../development/cargo-tracker/bolt_39g2_plan/">Bolt 39g2 計画</a> の決定 (5)）</li>
+<li>2026-11-28: Bolt 62 で本予約の確定の例外を足した（<a href="../../../development/cargo-tracker/bolt_62_plan/">Bolt 62 計画</a>の CP-62-5）</li>
 </ul>
 <h2 id="_11">関連ドキュメント<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h2>
 <ul>

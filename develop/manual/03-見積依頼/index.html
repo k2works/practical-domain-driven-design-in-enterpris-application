@@ -12179,6 +12179,76 @@
   
   
     <li class="md-nav__item">
+      <a href="../../development/cargo-tracker/bolt_62_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 62 計画
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development/cargo-tracker/bolt_63_plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bolt 63 計画
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--stable"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../development/cargo-tracker/bolt_49_plan/" class="md-nav__link">
         
   
@@ -15002,6 +15072,78 @@
         
           <li class="md-nav__item">
   <a href="#_15" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        注意・補足
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#34" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.4 本予約の前に条件を変更する
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3.4 本予約の前に条件を変更する">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_16" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        この画面でできること
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_17" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        画面の開き方
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_18" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        画面の説明
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_19" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        操作手順
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_20" class="md-nav__link">
     <span class="md-ellipsis">
       
         注意・補足
@@ -20334,6 +20476,11 @@
 <td style="text-align: left;">状態・輸送条件・見積り・書類を確かめる</td>
 <td style="text-align: left;"><a href="#33-見積依頼の詳細">3.3</a></td>
 </tr>
+<tr>
+<td style="text-align: left;">見積依頼の条件の変更</td>
+<td style="text-align: left;">本予約の前に輸送条件を変える</td>
+<td style="text-align: left;"><a href="#34-本予約の前に条件を変更する">3.4</a></td>
+</tr>
 </tbody>
 </table>
 <p>見積りへの回答と承認は <a href="../04-%E8%A6%8B%E7%A9%8D%E3%82%8A%E3%81%B8%E3%81%AE%E5%9B%9E%E7%AD%94%E3%81%A8%E6%89%BF%E8%AA%8D/">4 章</a> で説明します。</p>
@@ -20570,6 +20717,37 @@
 <li>「この見積依頼を複製して新しく作る」から、この見積依頼の輸送条件を引き継いだ新しい見積依頼を作れます（希望到着期限と必要書類は入れ直します。<a href="#32-見積依頼の作成">3.2</a>）</li>
 <li>営業担当者が見積依頼を差し戻したときは、状態が「差戻し（お客様の対応待ち）」になり、「差戻し」の節に差戻しの理由と不足事項が示されます。「編集して出し直す」から直して出し直すと、版が 1 つ増えます</li>
 <li>お問い合わせの際は、業務番号をお伝えください</li>
+<li>本予約を確定する前は、「条件を変更する」から輸送条件を変えられます（<a href="#34-本予約の前に条件を変更する">3.4</a>）</li>
+</ul>
+<h2 id="34">3.4 本予約の前に条件を変更する<a class="headerlink" href="#34" title="Permanent link">&para;</a></h2>
+<h3 id="_16">この画面でできること<a class="headerlink" href="#_16" title="Permanent link">&para;</a></h3>
+<ul>
+<li>本予約を確定する前の見積依頼の輸送条件を変えます。担当者の承認は要りません。前の版は残ります</li>
+</ul>
+<h3 id="_17">画面の開き方<a class="headerlink" href="#_17" title="Permanent link">&para;</a></h3>
+<ul>
+<li>見積依頼の詳細の「条件を変更する」（URL: <code>/customer/transport-requests/{業務番号}/edit</code>）</li>
+<li>状態が審査中・見積り作成中・見積提示済み・経路設計中・荷主承認待ち・予約待ちのときに出ます。差し戻されたとき（<a href="#33-見積依頼の詳細">3.3</a>）は「編集して出し直す」を使います</li>
+</ul>
+<h3 id="_18">画面の説明<a class="headerlink" href="#_18" title="Permanent link">&para;</a></h3>
+<p><img alt="見積依頼の条件の変更" src="../assets/03-request-change.png" /></p>
+<p>画面の上に、送るとどうなるかが示されます。入力の段と項目は見積依頼の作成（<a href="#32-見積依頼の作成">3.2</a>）と同じで、今の版の内容が入っています。最後の段のボタンは「条件を変更して送る」です。</p>
+<h3 id="_19">操作手順<a class="headerlink" href="#_19" title="Permanent link">&para;</a></h3>
+<ol>
+<li>見積依頼の詳細の「条件を変更する」をクリックします</li>
+<li>画面の上の案内（送ると新しい版になり、担当者の審査からやり直すこと、これまでの見積りと経路の承認が使えなくなること）を確かめます</li>
+<li>変える項目を直し、「次へ」で確認の段まで進みます</li>
+<li>「条件を変更して送る」をクリックします</li>
+<li>見積依頼の詳細が開き、「TR-… 版 N の条件を変更しました」と示されます。状態は「審査中（A 社の対応待ち）」です</li>
+</ol>
+<h3 id="_20">注意・補足<a class="headerlink" href="#_20" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>変更すると、これまでの見積りは使えなくなります。</strong> 回答の前でも、経路と見積りを承認した後でも同じです。詳細の見積りは「条件の変更で無効」になり、「輸送条件を変更したため、この見積りは使えません（読み取り専用）。」と示されます。新しい見積りは、担当営業が審査の後に用意します</li>
+<li>変更の理由を入れる欄はありません</li>
+<li>添付した書類は引き継がれます。ファイルを選んだ種類は差し替わります</li>
+<li>変更の画面を開いた後に、ほかの人が先に変更していると、上書きせず「TR-… は版 N に変わっています。内容を確かめてから条件を変更してください」と示されます</li>
+<li>本予約を確定した後は、この画面では変更できません。担当営業にご相談ください</li>
+<li>見積依頼の取下げは、この画面ではできません</li>
 </ul>
 
 
