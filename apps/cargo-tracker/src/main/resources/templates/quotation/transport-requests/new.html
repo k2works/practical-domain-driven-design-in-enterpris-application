@@ -15,6 +15,8 @@
          段階の一覧と「次へ」は JavaScript が表示し、JavaScript がないときは全段階を 1 画面で示す。下書き保存は R1.0 -->
     <p id="version-notice" th:if="${versionNotice}" th:text="${versionNotice}">TR-2026-0001 を直して出し直します。出し直すと版 2 になります。業務番号は変わりません。</p>
     <form th:action="@{${formAction}}" th:object="${transportRequestForm}" method="post" enctype="multipart/form-data" novalidate data-stepwise>
+        <!--/* 条件の変更の画面だけが、荷主が見ていた版番号を持つ（US-05 AC1。Bolt 62-1） */-->
+        <input type="hidden" name="baseVersionNo" th:if="${baseVersionNo}" th:value="${baseVersionNo}">
         <!-- エラー要約: 送信に失敗したら画面上部に出し、要約へフォーカスを移す。各項目の誤りへのリンクを持つ（UI 設計 C-03） -->
         <div id="error-summary" th:if="${#fields.hasErrors('*')}" tabindex="-1" role="alert"
              aria-labelledby="error-summary-title">

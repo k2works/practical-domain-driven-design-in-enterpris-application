@@ -105,6 +105,7 @@ public class RoutingConfiguration {
 
     @Bean
     RoutingCaseCommandService routingCaseCommandService(
+            QuotationRouteConditions routeConditions,
             RoutingCaseRepository repository,
             VoyageRepository voyageRepository,
             ConnectionRuleRepository connectionRuleRepository,
@@ -113,6 +114,7 @@ public class RoutingConfiguration {
             InfoFreshnessPolicy infoFreshnessPolicy,
             RoutingCaseScope routingCaseScope) {
         return new RoutingCaseCommandService(
+                routeConditions,
                 repository,
                 voyageRepository,
                 connectionRuleRepository,

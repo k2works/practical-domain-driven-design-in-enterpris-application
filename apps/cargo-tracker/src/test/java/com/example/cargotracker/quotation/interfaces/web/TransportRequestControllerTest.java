@@ -25,13 +25,16 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.example.cargotracker.identity.infrastructure.security.TestActors;
 import com.example.cargotracker.identity.infrastructure.security.WithAuthenticatedActor;
 import com.example.cargotracker.quotation.application.internal.commands.ResubmitTransportRequestCommand;
+import com.example.cargotracker.quotation.application.internal.commands.ReviseTransportRequestCommand;
 import com.example.cargotracker.quotation.application.internal.commands.SubmitTransportRequestCommand;
 import com.example.cargotracker.quotation.application.internal.commandservices.ResubmissionOutcome;
+import com.example.cargotracker.quotation.application.internal.commandservices.RevisionOutcome;
 import com.example.cargotracker.quotation.application.internal.commandservices.SubmissionOutcome;
 import com.example.cargotracker.quotation.application.internal.commandservices.TransportRequestCommandService;
 import com.example.cargotracker.quotation.application.internal.queryservices.DocumentFile;
 import com.example.cargotracker.quotation.application.internal.queryservices.QuotationQueryService;
 import com.example.cargotracker.quotation.application.internal.queryservices.TransportRequestQueryService;
+import com.example.cargotracker.quotation.domain.model.aggregates.ConcurrentTransportRequestUpdateException;
 import com.example.cargotracker.quotation.domain.model.aggregates.Quotation;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequest;
 import com.example.cargotracker.quotation.domain.model.valueobjects.AssignedRoute;
@@ -47,6 +50,7 @@ import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationSta
 import com.example.cargotracker.quotation.domain.model.valueobjects.RequiredDocument;
 import com.example.cargotracker.quotation.domain.model.valueobjects.RequiredDocumentAttachment;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ResubmissionRejection;
+import com.example.cargotracker.quotation.domain.model.valueobjects.RevisionRejection;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTermsFixture;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTermsInput;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipperLatestQuotationSummary;
@@ -1171,12 +1175,12 @@ class TransportRequestControllerTest {
     }
 
     @Test
-    void 下書きでない見積依頼の編集画面は詳細に戻して理由を示す() throws Exception {
-        given(queryService.findByNumber(NUMBER, SHIPPER)).willReturn(Optional.of(underReview()));
+    void 下書きでも本予約の前でもない見積依頼の編集画面は詳細に戻して理由を示す() throws Exception {
+        given(queryService.findByNumber(NUMBER, SHIPPER)).willReturn(Optional.of(booked()));
 
         mockMvc.perform(get("/customer/transport-requests/TR-2026-0001/edit"))
                 .andExpect(redirectedUrl("/customer/transport-requests/TR-2026-0001"))
-                .andExpect(flash().attribute("problem", "TR-2026-0001 版 1 は審査中のため出し直せません"))
+                .andExpect(flash().attribute("problem", "TR-2026-0001 版 1 は予約確定済みのため条件を変更できません"))
                 .andExpect(flash().attribute("result", nullValue()));
     }
 
@@ -1240,6 +1244,115 @@ class TransportRequestControllerTest {
         mockMvc.perform(resubmitForm())
                 .andExpect(redirectedUrl("/customer/transport-requests/TR-2026-0001"))
                 .andExpect(flash().attribute("problem", "他の利用者が先に更新しました。内容を確かめてから出し直してください"));
+    }
+
+    @Test
+    void Bolt62_本予約の前の詳細は条件を変更する入口を示し予約確定済みと差戻しには出さない_US05_AC1() throws Exception {
+        given(queryService.findByNumber(NUMBER, SHIPPER)).willReturn(Optional.of(underReview()));
+        mockMvc.perform(get("/customer/transport-requests/TR-2026-0001"))
+                .andExpect(content().string(containsString("条件を変更する")))
+                .andExpect(content().string(containsString("href=\"/customer/transport-requests/TR-2026-0001/edit\"")));
+
+        for (TransportRequest request : List.of(booked(), sentBack())) {
+            given(queryService.findByNumber(NUMBER, SHIPPER)).willReturn(Optional.of(request));
+            mockMvc.perform(get("/customer/transport-requests/TR-2026-0001"))
+                    .andExpect(content().string(not(containsString("条件を変更する"))));
+        }
+    }
+
+    @Test
+    void Bolt62_変更の画面は送ると見積りが使えなくなることを送る前に示し見ていた版を持つ_US05_AC1() throws Exception {
+        given(queryService.findByNumber(NUMBER, SHIPPER)).willReturn(Optional.of(readyToBook()));
+
+        mockMvc.perform(get("/customer/transport-requests/TR-2026-0001/edit"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("見積依頼の条件の変更")))
+                .andExpect(content()
+                        .string(containsString("TR-2026-0001 の条件を変更します。送ると版 2 になり、担当者の審査からやり直します。"
+                                + "これまでの見積りと経路の承認は使えなくなります。業務番号は変わりません。")))
+                .andExpect(content().string(containsString("条件を変更して送る")))
+                .andExpect(content().string(containsString("name=\"baseVersionNo\" value=\"1\"")));
+    }
+
+    @Test
+    void Bolt62_差戻しの出し直しの画面は見ていた版を持たない() throws Exception {
+        given(queryService.findByNumber(NUMBER, SHIPPER)).willReturn(Optional.of(sentBack()));
+
+        mockMvc.perform(get("/customer/transport-requests/TR-2026-0001/edit"))
+                .andExpect(content().string(not(containsString("name=\"baseVersionNo\""))));
+    }
+
+    @Test
+    void Bolt62_変更を送ると荷主の企業と見ていた版で変更し詳細で新しい版を示す_US05_AC1() throws Exception {
+        ReviseTransportRequestCommand expected =
+                new ReviseTransportRequestCommand(NUMBER, SHIPPER, USER, 1, COMPLETE_INPUT, List.of());
+        given(commandService.revise(expected)).willReturn(new RevisionOutcome.Revised(NUMBER, 2));
+
+        mockMvc.perform(resubmitForm("baseVersionNo", "1"))
+                .andExpect(redirectedUrl("/customer/transport-requests/TR-2026-0001"))
+                .andExpect(flash().attribute("result", "TR-2026-0001 版 2 の条件を変更しました"));
+
+        then(commandService).should().revise(expected);
+        then(commandService).should(never()).resubmit(any());
+    }
+
+    @Test
+    void Bolt62_変更の不足は変更の画面にエラー要約で示し見ていた版を残す() throws Exception {
+        given(queryService.findByNumber(NUMBER, SHIPPER)).willReturn(Optional.of(underReview()));
+        given(commandService.revise(any()))
+                .willReturn(new RevisionOutcome.Invalid(
+                        new SubmissionViolations(List.of(new Violation(Item.DESTINATION, Reason.SAME_AS_ORIGIN)))));
+
+        mockMvc.perform(resubmitForm("baseVersionNo", "1", "destination", "JPTYO"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("error-summary")))
+                .andExpect(content().string(containsString("条件を変更して送る")))
+                .andExpect(content().string(containsString("name=\"baseVersionNo\" value=\"1\"")));
+    }
+
+    @Test
+    void Bolt62_古い版からの変更と変更できない状態は詳細に戻して理由を示す() throws Exception {
+        given(queryService.findByNumber(NUMBER, SHIPPER)).willReturn(Optional.of(underReview()));
+        given(commandService.revise(any())).willReturn(new RevisionOutcome.Rejected(RevisionRejection.STALE_VERSION));
+        mockMvc.perform(resubmitForm("baseVersionNo", "1"))
+                .andExpect(flash().attribute("problem", "TR-2026-0001 は版 1 に変わっています。内容を確かめてから条件を変更してください"));
+
+        given(queryService.findByNumber(NUMBER, SHIPPER)).willReturn(Optional.of(booked()));
+        given(commandService.revise(any())).willReturn(new RevisionOutcome.Rejected(RevisionRejection.NOT_REVISABLE));
+        mockMvc.perform(resubmitForm("baseVersionNo", "1"))
+                .andExpect(flash().attribute("problem", "TR-2026-0001 版 1 は予約確定済みのため条件を変更できません"));
+    }
+
+    @Test
+    void Bolt62_同時の更新で変更できなかったら詳細に戻して先に更新されたことを示す() throws Exception {
+        String problem = "他の利用者が先に更新しました。内容を確かめてから条件を変更してください";
+        given(commandService.revise(any())).willReturn(new RevisionOutcome.Conflict());
+        mockMvc.perform(resubmitForm("baseVersionNo", "1")).andExpect(flash().attribute("problem", problem));
+
+        // 見積りを書いた後の輸送要求の競合は、例外のままロールバックされて届く
+        org.mockito.BDDMockito.willThrow(new ConcurrentTransportRequestUpdateException(ID, 0L))
+                .given(commandService)
+                .revise(any());
+        mockMvc.perform(resubmitForm("baseVersionNo", "1"))
+                .andExpect(redirectedUrl("/customer/transport-requests/TR-2026-0001"))
+                .andExpect(flash().attribute("problem", problem));
+    }
+
+    @Test
+    void Bolt62_条件の変更で無効の見積りは使えないと示し承認の約束と操作の入口を出さない_US05_AC1() throws Exception {
+        TransportRequest request = underReviewWithInvoice();
+        Quotation voided = awaitingApproval(request.id());
+        voided.approveByShipper(new UserId(UUID.randomUUID()), new UtcInstant(Instant.parse("2026-10-07T06:00:00Z")));
+        voided.voidByTermsRevision();
+        given(queryService.findByNumber(NUMBER, SHIPPER)).willReturn(Optional.of(request));
+        given(quotationQueryService.findVisible(NUMBER, SHIPPER)).willReturn(List.of(voided));
+
+        mockMvc.perform(get("/customer/transport-requests/TR-2026-0001"))
+                .andExpect(content().string(containsString("条件の変更で無効")))
+                .andExpect(content().string(containsString("輸送条件を変更したため、この見積りは使えません（読み取り専用）。新しい見積りは担当営業が審査の後に用意します。")))
+                .andExpect(content().string(not(containsString("担当営業が本予約を確定します"))))
+                .andExpect(content().string(not(containsString("見積りに回答する"))))
+                .andExpect(content().string(not(containsString("承認へ"))));
     }
 
     @Test

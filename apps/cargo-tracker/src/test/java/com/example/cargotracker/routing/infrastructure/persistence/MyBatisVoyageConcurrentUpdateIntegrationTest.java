@@ -6,6 +6,7 @@ import static org.awaitility.Awaitility.await;
 import com.example.cargotracker.TestcontainersConfiguration;
 import com.example.cargotracker.externaldata.domain.events.VoyageAdoptedValueUpdated;
 import com.example.cargotracker.externaldata.domain.events.VoyageAdoptedValueUpdated.AdoptedPortCall;
+import com.example.cargotracker.routing.application.internal.commandservices.CurrentRouteConditions;
 import com.example.cargotracker.routing.application.internal.commandservices.RoutingCaseCommandService;
 import com.example.cargotracker.routing.application.internal.eventhandlers.ConfirmedRouteEvaluationEventHandler;
 import com.example.cargotracker.routing.application.internal.eventhandlers.VoyageUpdateEventHandler;
@@ -444,6 +445,7 @@ class MyBatisVoyageConcurrentUpdateIntegrationTest {
     private static RoutingCaseCommandService commandService(
             Evaluations evaluations, RoutingCaseRepository cases, List<Object> published) {
         return new RoutingCaseCommandService(
+                CurrentRouteConditions.always(),
                 cases,
                 evaluations.repositories().voyages(),
                 evaluations.rules(),

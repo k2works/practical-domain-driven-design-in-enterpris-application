@@ -11,6 +11,7 @@ import com.example.cargotracker.booking.acceptance.InMemoryBookingRepository;
 import com.example.cargotracker.booking.acceptance.InMemoryBookingSagaRepository;
 import com.example.cargotracker.booking.application.internal.commands.ConfirmBookingCommand;
 import com.example.cargotracker.booking.application.internal.outboundservices.acl.QuotationBookability;
+import com.example.cargotracker.booking.application.internal.outboundservices.acl.QuotationBookingNotifications;
 import com.example.cargotracker.booking.application.internal.outboundservices.acl.QuotationUnavailability;
 import com.example.cargotracker.booking.application.internal.outboundservices.acl.RecordingBookableQuotationQuery;
 import com.example.cargotracker.booking.application.sagas.BookingSagaStatus;
@@ -20,10 +21,13 @@ import com.example.cargotracker.booking.domain.model.aggregates.Booking;
 import com.example.cargotracker.booking.domain.model.aggregates.DuplicateBookingException;
 import com.example.cargotracker.booking.domain.model.valueobjects.BookingCondition;
 import com.example.cargotracker.booking.domain.model.valueobjects.BookingId;
+import com.example.cargotracker.booking.domain.model.valueobjects.BookingTerms;
 import com.example.cargotracker.booking.domain.model.valueobjects.ProcessedCommand;
 import com.example.cargotracker.booking.domain.model.valueobjects.TrackingNumber;
 import com.example.cargotracker.quotation.interfaces.api.BookableQuotationRequest;
 import com.example.cargotracker.quotation.interfaces.api.BookableQuotationResult;
+import com.example.cargotracker.quotation.interfaces.api.BookingNotificationReceipt;
+import com.example.cargotracker.quotation.interfaces.api.BookingNotificationRequest;
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
 import com.example.cargotracker.shared.domain.CommandId;
 import com.example.cargotracker.shared.domain.CompanyId;
@@ -61,6 +65,8 @@ class BookingCommandServiceTest {
     private final RecordingBookableQuotationQuery quotationQuery =
             new RecordingBookableQuotationQuery(request -> this.quotation);
     private final List<Object> published = new ArrayList<>();
+    private final List<BookingNotificationRequest> notified = new ArrayList<>();
+    private BookingNotificationReceipt receipt = new BookingNotificationReceipt.Booked();
     private BookableQuotationResult quotation = bookable(BookingFixture.terms().cargoSummary());
     private final Logger logger = (Logger) LoggerFactory.getLogger(BookingCommandService.class);
     private final ListAppender<ILoggingEvent> logs = new ListAppender<>();
@@ -87,6 +93,10 @@ class BookingCommandServiceTest {
                     return BookingFixture.TRACKING_NUMBER;
                 },
                 new QuotationBookability(quotationQuery),
+                new QuotationBookingNotifications(request -> {
+                    notified.add(request);
+                    return receipt;
+                }),
                 published::add,
                 Clock.fixed(NOW, ZoneOffset.UTC));
     }
@@ -105,6 +115,40 @@ class BookingCommandServiceTest {
         assertThat(sagaRepository.findByBookingId(booking.id()).orElseThrow().status())
                 .isEqualTo(BookingSagaStatus.IN_PROGRESS);
         assertThat(published).singleElement().isInstanceOf(BookingConfirmed.class);
+    }
+
+    @Test
+    void 確定と同じ処理で見積りに予約確定済みを知らせる_Bolt62() {
+        service.confirm(command(Role.SALES, true));
+
+        Booking booking = repository.findAll().getFirst();
+        BookingTerms terms = BookingFixture.terms();
+        assertThat(notified)
+                .containsExactly(new BookingNotificationRequest(
+                        terms.transportRequestId(),
+                        terms.transportRequestVersionNo(),
+                        terms.quotationId(),
+                        booking.id().value()));
+    }
+
+    @Test
+    void 見積りが予約確定済みを受け付けなければ確定を失敗させDE07を発行しない_Bolt62() {
+        receipt = new BookingNotificationReceipt.NotBooked(BookingNotificationReceipt.NotBooked.NOT_READY_TO_BOOK);
+
+        assertThatThrownBy(() -> service.confirm(command(Role.SALES, true)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("NOT_READY_TO_BOOK");
+
+        assertThat(published).isEmpty();
+    }
+
+    @Test
+    void 見積りの照会で確定できないときは知らせない_Bolt62() {
+        quotation = new BookableQuotationResult.NotBookable(BookableQuotationResult.NotBookable.VOIDED);
+
+        assertThat(service.confirm(command(Role.SALES, true)))
+                .isEqualTo(new BookingConfirmationOutcome.QuotationUnavailable(QuotationUnavailability.VOIDED));
+        assertThat(notified).isEmpty();
     }
 
     @Test

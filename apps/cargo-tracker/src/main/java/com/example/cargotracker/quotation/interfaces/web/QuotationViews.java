@@ -61,6 +61,7 @@ final class QuotationViews {
             case APPROVED -> "荷主承認済み（予約待ち）";
             case EXPIRED -> "失効";
             case REPLACED -> "置換済み";
+            case VOIDED -> "条件の変更で無効";
         };
     }
 
@@ -97,7 +98,7 @@ final class QuotationViews {
                 dateTime.apply(policy.departureAt()),
                 dateTime.apply(policy.arrivalAt()),
                 quotation.presentRejectionAt(now).isEmpty(),
-                replaced || expired,
+                replaced || expired || quotation.status() == QuotationStatus.VOIDED,
                 replaced,
                 expired,
                 quotation.responseRejectionAt(now).isEmpty(),
@@ -115,7 +116,8 @@ final class QuotationViews {
                 quotation.isRouteRedesignRequired(),
                 quotation.isRouteDepartedAt(now),
                 quotation.isDeclined(),
-                quotation.declineReason().orElse(null));
+                quotation.declineReason().orElse(null),
+                quotation.status() == QuotationStatus.VOIDED);
     }
 
     /** 割り当てた経路の表示（Bolt 20）。 */
@@ -194,6 +196,7 @@ final class QuotationViews {
      * @param routeDeparted 割り当てた経路の最初の区間が表示する時刻に出発済みか（同上。D-88。Bolt 37e4）
      * @param declined 荷主が辞退した見積りか（失効として記録した辞退。US-24 AC2。W9 の Bolt 46）
      * @param declineReason 辞退の理由（辞退していなければ null）
+     * @param voided 荷主が条件を変更して無効になった見積りか（US-05 AC1。Bolt 62-1）
      */
     record View(
             int quotationNo,
@@ -221,7 +224,8 @@ final class QuotationViews {
             boolean routeRedesignRequired,
             boolean routeDeparted,
             boolean declined,
-            String declineReason) {}
+            String declineReason,
+            boolean voided) {}
 
     /**
      * 割り当てた経路の表示（Bolt 20）。

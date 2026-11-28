@@ -16,6 +16,8 @@ public enum QuotationRejection {
     EXPIRED,
     /** 見積りが置換済み（Q-INV-07。置換先の見積りを使う）。 */
     REPLACED,
+    /** 見積りが条件の変更で無効（荷主が輸送条件を変更した。新しい版の見積りを使う。US-05 AC1。Bolt 62）。 */
+    VOIDED,
     /** 見積りの対象の版が、輸送要求の現在の版でない（古い版に対する見積りは再見積りできない。Bolt 11 レビュー R-06）。 */
     OUTDATED_VERSION,
     /** 荷主に提示していない見積りに回答しようとした（Q-INV-09。Bolt 12）。 */

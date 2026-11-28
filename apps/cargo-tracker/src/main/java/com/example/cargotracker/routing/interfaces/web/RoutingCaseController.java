@@ -145,7 +145,9 @@ public class RoutingCaseController {
             Model model,
             RedirectAttributes redirectAttributes) {
         RoutingCase routingCase = find(parse(number), actor);
-        Optional<RouteConfirmationRejectionReason> rejection = routingCase.confirmationRejection();
+        Optional<RouteConfirmationRejectionReason> rejection = commandService.conditionsChanged(routingCase)
+                ? Optional.of(RouteConfirmationRejectionReason.CONDITIONS_CHANGED)
+                : routingCase.confirmationRejection();
         if (rejection.isPresent()) {
             redirectAttributes.addFlashAttribute(PROBLEM, message(rejection.get()));
             return REDIRECT + routingCase.number().text();
@@ -228,6 +230,7 @@ public class RoutingCaseController {
         messages.put(RouteConfirmationRejectionReason.NOT_CONFIRMABLE_STATE, "この案件の経路はすでに確定しているか、候補をまだ算出していません。");
         messages.put(RouteConfirmationRejectionReason.CANDIDATE_NOT_FOUND, "選んだ候補がありません。経路候補の比較で最新の候補を確かめてください。");
         messages.put(RouteConfirmationRejectionReason.CANDIDATE_EXCLUDED, "除外の候補は確定できません。");
+        messages.put(RouteConfirmationRejectionReason.CONDITIONS_CHANGED, "荷主が輸送条件を変更したため、この案件の経路は確定できません。");
         messages.put(
                 RouteConfirmationRejectionReason.INFO_VERSION_CHANGED,
                 "候補を算出した後に航海の情報が更新されたため確定できません。入力した判断根拠は保存していません。" + "候補を再算出して判断し直してください。");

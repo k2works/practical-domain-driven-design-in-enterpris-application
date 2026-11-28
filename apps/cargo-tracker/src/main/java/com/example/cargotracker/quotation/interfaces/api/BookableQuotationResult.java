@@ -77,6 +77,9 @@ public sealed interface BookableQuotationResult {
         /** 置換済み（新しい見積りを使う）。 */
         public static final String REPLACED = "REPLACED";
 
+        /** 荷主が輸送条件を変更して無効になった（新しい版の見積りを待つ。US-05 AC1。Bolt 62）。 */
+        public static final String VOIDED = "VOIDED";
+
         /** 荷主の承認済みでない。 */
         public static final String NOT_APPROVED = "NOT_APPROVED";
 

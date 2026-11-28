@@ -2,6 +2,7 @@ package com.example.cargotracker.quotation.application.internal.commandservices;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.example.cargotracker.quotation.acceptance.InMemoryQuotationRepository;
 import com.example.cargotracker.quotation.acceptance.InMemoryRequiredDocumentStorage;
 import com.example.cargotracker.quotation.acceptance.InMemoryTransportRequestNumberIssuer;
 import com.example.cargotracker.quotation.acceptance.InMemoryTransportRequestRepository;
@@ -42,6 +43,7 @@ class TransportRequestCommandServiceTest {
     private final InMemoryRequiredDocumentStorage storage = new InMemoryRequiredDocumentStorage();
     private final TransportRequestCommandService service = new TransportRequestCommandService(
             repository,
+            new InMemoryQuotationRepository(),
             issuer,
             new MvpAcceptancePolicy(),
             new RequiredDocumentPolicy(),

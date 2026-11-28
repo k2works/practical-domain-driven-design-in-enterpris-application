@@ -34,6 +34,7 @@ class RoutingCaseCommandServiceHandoffTest {
     private final InMemoryRoutingCaseRepository repository = new InMemoryRoutingCaseRepository();
     private final InMemoryVoyageRepository voyages = new InMemoryVoyageRepository();
     private final RoutingCaseCommandService service = new RoutingCaseCommandService(
+            CurrentRouteConditions.always(),
             repository,
             voyages,
             new InMemoryConnectionRuleRepository(),

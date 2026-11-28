@@ -3,10 +3,12 @@ package com.example.cargotracker.quotation.acceptance;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.example.cargotracker.quotation.application.internal.commands.ResubmitTransportRequestCommand;
+import com.example.cargotracker.quotation.application.internal.commands.ReviseTransportRequestCommand;
 import com.example.cargotracker.quotation.application.internal.commands.SendBackTransportRequestCommand;
 import com.example.cargotracker.quotation.application.internal.commands.SubmitTransportRequestCommand;
 import com.example.cargotracker.quotation.application.internal.commandservices.ResubmissionOutcome;
 import com.example.cargotracker.quotation.application.internal.commandservices.ReviewOutcome;
+import com.example.cargotracker.quotation.application.internal.commandservices.RevisionOutcome;
 import com.example.cargotracker.quotation.application.internal.commandservices.SubmissionOutcome;
 import com.example.cargotracker.quotation.application.internal.commandservices.TransportRequestCommandService;
 import com.example.cargotracker.quotation.application.internal.commandservices.TransportRequestReviewService;
@@ -14,6 +16,7 @@ import com.example.cargotracker.quotation.application.internal.queryservices.Sta
 import com.example.cargotracker.quotation.application.internal.queryservices.TransportRequestQueryService;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequest;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ResubmissionRejection;
+import com.example.cargotracker.quotation.domain.model.valueobjects.RevisionRejection;
 import com.example.cargotracker.quotation.domain.model.valueobjects.SendBackNotice;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTerms;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTermsFixture;
@@ -69,12 +72,17 @@ public class ShipperTransportRequestSteps {
             "見つからない", ResubmissionOutcome.NotFound.class,
             "下書きでない", ResubmissionOutcome.Rejected.class);
 
+    private static final Map<String, Class<? extends RevisionOutcome>> REVISION_FAILURES = Map.of(
+            "見つからない", RevisionOutcome.NotFound.class,
+            "古い版", RevisionOutcome.Rejected.class);
+
     private final TransportRequestCommandService commandService;
     private final TransportRequestReviewService reviewService;
     private final TransportRequestQueryService queryService;
     private final StaffTransportRequestQueryService staffQueryService;
     private List<TransportRequestSummary> shipperList = List.of();
     private ResubmissionOutcome lastResubmission;
+    private RevisionOutcome lastRevision;
 
     public ShipperTransportRequestSteps(
             TransportRequestCommandService commandService,
@@ -142,10 +150,46 @@ public class ShipperTransportRequestSteps {
         assertThat(shipperView(number)).isEmpty();
     }
 
-    @もし("荷主が {string} の目的地を {string} に直して出し直す")
-    public void 目的地を直して出し直す(String number, String destination) {
+    @もし("荷主が {string} の版 {int} を見て目的地を {string} に変更する")
+    public void 目的地を変更する(String number, int baseVersionNo, String destination) {
+        lastRevision = revise(SHIPPER, SUBMITTER, number, baseVersionNo, destination);
+    }
+
+    @もし("他社の荷主が {string} の版 {int} を見て目的地を {string} に変更する")
+    public void 他社の荷主が変更する(String number, int baseVersionNo, String destination) {
+        lastRevision = revise(OTHER_SHIPPER, OTHER_SUBMITTER, number, baseVersionNo, destination);
+    }
+
+    @ならば("変更は受け付けられ、業務番号 {string} の版 {int} になる")
+    public void 変更は受け付けられる(String number, int versionNo) {
+        assertThat(lastRevision).isInstanceOfSatisfying(RevisionOutcome.Revised.class, revised -> {
+            assertThat(revised.number().text()).isEqualTo(number);
+            assertThat(revised.versionNo()).isEqualTo(versionNo);
+        });
+    }
+
+    @ならば("変更は {string} として受け付けられない")
+    public void 変更は受け付けられない(String failure) {
+        assertThat(lastRevision).isInstanceOf(REVISION_FAILURES.get(failure));
+        if (lastRevision instanceof RevisionOutcome.Rejected rejected) {
+            assertThat(rejected.reason()).isEqualTo(RevisionRejection.STALE_VERSION);
+        }
+    }
+
+    private RevisionOutcome revise(
+            CompanyId shipper, UserId submitter, String number, int baseVersionNo, String destination) {
+        return commandService.revise(new ReviseTransportRequestCommand(
+                TransportRequestNumber.parse(number),
+                shipper,
+                submitter,
+                baseVersionNo,
+                termsTo(destination),
+                List.of()));
+    }
+
+    private static ShipmentTermsInput termsTo(String destination) {
         ShipmentTerms terms = ShipmentTermsFixture.generalCargo();
-        ShipmentTermsInput input = new ShipmentTermsInput(
+        return new ShipmentTermsInput(
                 terms.consigneeCompanyId(),
                 terms.origin(),
                 new Location(destination),
@@ -155,8 +199,12 @@ public class ShipperTransportRequestSteps {
                 terms.cargo().packageCount(),
                 terms.cargo().grossWeightKg(),
                 terms.cargo().volumeM3());
-        lastResubmission = commandService.resubmit(
-                new ResubmitTransportRequestCommand(TransportRequestNumber.parse(number), SHIPPER, SUBMITTER, input));
+    }
+
+    @もし("荷主が {string} の目的地を {string} に直して出し直す")
+    public void 目的地を直して出し直す(String number, String destination) {
+        lastResubmission = commandService.resubmit(new ResubmitTransportRequestCommand(
+                TransportRequestNumber.parse(number), SHIPPER, SUBMITTER, termsTo(destination)));
     }
 
     @ならば("出し直しは受け付けられ、業務番号 {string} の版 {int} になる")

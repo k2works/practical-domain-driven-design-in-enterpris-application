@@ -362,6 +362,21 @@ public final class Quotation {
         return Optional.empty();
     }
 
+    /**
+     * 荷主が本予約の前に輸送条件を変更したので、旧版の見積りを無効にする（US-05 AC1。Bolt 62）。1 つの輸送要求に 1 つだけの見積りに
+     * 数える状態（作成中から承認済みまで。判定時刻で失効していても状態が残るものを含む）だけを変える。残すと旧版を承認でき、新しい版の
+     * 見積りを作れない（Q-INV-18）。経路・回答・承認の記録は残す。
+     *
+     * @return 状態を変えたら true
+     */
+    public boolean voidByTermsRevision() {
+        if (!status.countsAsActive()) {
+            return false;
+        }
+        status = QuotationStatus.VOIDED;
+        return true;
+    }
+
     private void requireSaved() {
         if (status == QuotationStatus.DRAFT) {
             throw new IllegalStateException("作成中の見積りは置換できません: " + id);
@@ -508,7 +523,7 @@ public final class Quotation {
             case PRESENTED -> Optional.empty();
             case ROUTING_REQUESTED, AWAITING_SHIPPER_APPROVAL, APPROVED ->
                 Optional.of(QuotationRejection.ROUTING_REQUESTED);
-            case DRAFT, PENDING_APPROVAL, EXPIRED, REPLACED -> Optional.of(QuotationRejection.NOT_PRESENTED);
+            case DRAFT, PENDING_APPROVAL, EXPIRED, REPLACED, VOIDED -> Optional.of(QuotationRejection.NOT_PRESENTED);
         };
     }
 
@@ -529,7 +544,7 @@ public final class Quotation {
                         assignedRoute.isSameVersionAs(route)
                                 ? RouteAssignmentResult.ALREADY_ASSIGNED
                                 : RouteAssignmentResult.ANOTHER_ROUTE_VERSION_ASSIGNED;
-                    case EXPIRED, REPLACED -> RouteAssignmentResult.RETIRED;
+                    case EXPIRED, REPLACED, VOIDED -> RouteAssignmentResult.RETIRED;
                     case DRAFT, PENDING_APPROVAL, PRESENTED -> RouteAssignmentResult.NOT_ROUTING_REQUESTED;
                 };
         if (result != RouteAssignmentResult.ASSIGNED) {
@@ -736,6 +751,7 @@ public final class Quotation {
         return switch (status) {
             case EXPIRED -> Optional.of(QuotationRejection.EXPIRED);
             case REPLACED -> Optional.of(QuotationRejection.REPLACED);
+            case VOIDED -> Optional.of(QuotationRejection.VOIDED);
             case DRAFT, PENDING_APPROVAL, PRESENTED, ROUTING_REQUESTED, AWAITING_SHIPPER_APPROVAL, APPROVED ->
                 Optional.empty();
         };

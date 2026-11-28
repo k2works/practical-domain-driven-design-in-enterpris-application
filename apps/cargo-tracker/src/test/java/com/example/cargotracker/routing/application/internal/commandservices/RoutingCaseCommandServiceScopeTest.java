@@ -41,6 +41,7 @@ class RoutingCaseCommandServiceScopeTest {
     private final List<Object> published = new ArrayList<>();
     private final InMemoryRoutingCaseRepository repository = new InMemoryRoutingCaseRepository();
     private final RoutingCaseCommandService service = new RoutingCaseCommandService(
+            CurrentRouteConditions.always(),
             repository,
             new InMemoryVoyageRepository(),
             new InMemoryConnectionRuleRepository(),
@@ -106,6 +107,7 @@ class RoutingCaseCommandServiceScopeTest {
 
         private final InMemoryVoyageRepository recordingVoyages = Mockito.spy(new InMemoryVoyageRepository());
         private final RoutingCaseCommandService recordingService = new RoutingCaseCommandService(
+                CurrentRouteConditions.always(),
                 repository,
                 recordingVoyages,
                 new InMemoryConnectionRuleRepository(),

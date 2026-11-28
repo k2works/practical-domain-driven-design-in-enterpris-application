@@ -52,6 +52,7 @@ public class ShipperApprovalSteps {
     private static final Map<String, QuotationRejection> REJECTIONS = Map.of(
             "失効している", QuotationRejection.EXPIRED,
             "置換済み", QuotationRejection.REPLACED,
+            "条件の変更で無効", QuotationRejection.VOIDED,
             "承認済み", QuotationRejection.ALREADY_APPROVED,
             "まだ承認できない", QuotationRejection.NOT_AWAITING_SHIPPER_APPROVAL,
             "経路が再設計要", QuotationRejection.ROUTE_REDESIGN_REQUIRED);

@@ -19,6 +19,8 @@
     <p class="alert alert-info" th:if="${routingRequestedNotice}" th:text="${routingRequestedNotice}">荷主が 2026-10-06 09:30 Asia/Tokyo（UTC+09:00）（UTC 2026-10-06 00:30）に詳細経路設計を依頼しました。この見積りは読み取り専用です。</p>
     <!-- 荷主が辞退した見積りは失効として記録され、再見積りできない（US-24 AC2。W9 の Bolt 46。D-86） -->
     <p class="alert alert-info" th:if="${declinedNotice}" th:text="${declinedNotice}">荷主が 2026-10-06 09:30 Asia/Tokyo（UTC+09:00）に辞退しました（理由: 他社で進めるため）。この見積りは読み取り専用で、再見積りはできません。荷主と相談して、新しい見積依頼で出し直してください。</p>
+    <!--/* 荷主が本予約の前に輸送条件を変更した旧版の見積り（US-05 AC1。Bolt 62-1） */-->
+    <p class="alert alert-info" th:if="${voidedNotice}" th:text="${voidedNotice}">荷主が輸送条件を変更したため、この見積りは無効です（読み取り専用）。</p>
     <p th:if="${replacement}">
         <span th:text="|見積 ${replacement.quotationNo()} に置き換えました。この見積りは読み取り専用です。|">見積 2 に置き換えました。この見積りは読み取り専用です。</span>
         <a th:href="@{${replacement.path()}}" th:text="${replacement.label()}">TR-2026-0001 見積 2</a>

@@ -8,6 +8,8 @@ public enum RouteConfirmationRejectionReason {
     NOT_ROUTE_DESIGNER,
     /** 確定できない経路版の状態（作成中、確定済み）。 */
     NOT_CONFIRMABLE_STATE,
+    /** 荷主が輸送条件を変更し、案件の輸送要求版が現在の版でなくなった（確定しても旧版の見積りは無効で割り当てられない。US-05 AC1。Bolt 62）。 */
+    CONDITIONS_CHANGED,
     /** 経路版にない候補番号。 */
     CANDIDATE_NOT_FOUND,
     /** 除外の候補。 */

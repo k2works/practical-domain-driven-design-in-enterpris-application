@@ -94,6 +94,8 @@ public sealed interface BookableQuotation {
         EXPIRED,
         /** 置換済み。 */
         REPLACED,
+        /** 条件の変更で無効（US-05 AC1。Bolt 62）。 */
+        VOIDED,
         /** 荷主の承認済みでない。 */
         NOT_APPROVED,
         /** 割り当てた経路版が再設計要（B-INV-05。Bolt 37e）。 */

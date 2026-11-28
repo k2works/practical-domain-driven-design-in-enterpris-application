@@ -52,6 +52,7 @@ public class BookingConfiguration {
 
     @Bean
     BookingCommandService bookingCommandService(
+            QuotationBookingNotifications quotationBookingNotifications,
             BookingRepository repository,
             BookingSagaRepository sagaRepository,
             TrackingNumberIssuer trackingNumberIssuer,
@@ -59,7 +60,13 @@ public class BookingConfiguration {
             ApplicationEventPublisher eventPublisher,
             Clock clock) {
         return new BookingCommandService(
-                repository, sagaRepository, trackingNumberIssuer, quotationBookability, eventPublisher, clock);
+                repository,
+                sagaRepository,
+                trackingNumberIssuer,
+                quotationBookability,
+                quotationBookingNotifications,
+                eventPublisher,
+                clock);
     }
 
     /** 追跡の開始の結果で予約サガを完了にする入力ポート。予約の公開 API のインバウンドアダプターが委ねる（ADR-015。Bolt 25）。 */

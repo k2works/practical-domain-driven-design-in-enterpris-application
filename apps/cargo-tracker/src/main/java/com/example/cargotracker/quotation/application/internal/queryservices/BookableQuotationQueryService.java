@@ -166,6 +166,7 @@ public class BookableQuotationQueryService {
         return switch (rejection) {
             case EXPIRED -> BookableQuotation.Reason.EXPIRED;
             case REPLACED -> BookableQuotation.Reason.REPLACED;
+            case VOIDED -> BookableQuotation.Reason.VOIDED;
             case ROUTE_REDESIGN_REQUIRED -> BookableQuotation.Reason.ROUTE_REDESIGN_REQUIRED;
             case NOT_APPROVED -> BookableQuotation.Reason.NOT_APPROVED;
             case ROUTE_ALREADY_DEPARTED -> BookableQuotation.Reason.ROUTE_ALREADY_DEPARTED;

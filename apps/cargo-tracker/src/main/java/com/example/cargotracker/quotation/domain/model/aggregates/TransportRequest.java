@@ -8,6 +8,7 @@ import com.example.cargotracker.quotation.domain.model.valueobjects.RequiredDocu
 import com.example.cargotracker.quotation.domain.model.valueobjects.ResubmissionRejection;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ReviewDecision;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ReviewRejection;
+import com.example.cargotracker.quotation.domain.model.valueobjects.RevisionRejection;
 import com.example.cargotracker.quotation.domain.model.valueobjects.SendBackNotice;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTerms;
 import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestId;
@@ -18,9 +19,11 @@ import com.example.cargotracker.shared.domain.CompanyId;
 import com.example.cargotracker.shared.domain.UserId;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -38,6 +41,15 @@ public final class TransportRequest {
             TransportRequestStatus.AWAITING_APPROVAL,
             TransportRequestStatus.READY_TO_BOOK,
             TransportRequestStatus.BOOKED);
+
+    /** 本予約の前で、荷主が条件を変更できる状態（US-05 AC1。下書きは出し直し {@link #resubmit} を使う）。 */
+    private static final Set<TransportRequestStatus> REVISABLE = EnumSet.of(
+            TransportRequestStatus.UNDER_REVIEW,
+            TransportRequestStatus.QUOTING,
+            TransportRequestStatus.QUOTED,
+            TransportRequestStatus.ROUTING,
+            TransportRequestStatus.AWAITING_APPROVAL,
+            TransportRequestStatus.READY_TO_BOOK);
 
     private static final int FIRST_VERSION_NO = 1;
 
@@ -150,13 +162,44 @@ public final class TransportRequest {
         if (rejection.isPresent()) {
             return rejection;
         }
+        addVersion(terms, submittedBy, submittedAt);
+        return Optional.empty();
+    }
+
+    /**
+     * 本予約の前に輸送条件を変更する（US-05 AC1。Bolt 62）。承認を要さず、旧版を残して版番号を 1 増やした新しい版を作り、審査中にして
+     * DE-01 を生成する。旧版の見積りは、呼び出し側が同じトランザクションで無効にする（{@link Quotation#voidByTermsRevision}）。
+     *
+     * @param baseVersionNo 荷主が見ていた版番号。現在の版でなければ上書きしない
+     * @return 受け付けなかった理由（受け付けたら空）
+     */
+    public Optional<RevisionRejection> revise(
+            int baseVersionNo, ShipmentTerms terms, UserId submittedBy, UtcInstant submittedAt) {
+        Optional<RevisionRejection> rejection = checkRevisable(baseVersionNo);
+        if (rejection.isPresent()) {
+            return rejection;
+        }
+        addVersion(terms, submittedBy, submittedAt);
+        return Optional.empty();
+    }
+
+    /** 条件を変更できるかを確かめる。書類の中身を保存する前に確かめ、受け付けない変更でファイルを残さないために使う。 */
+    public Optional<RevisionRejection> checkRevisable(int baseVersionNo) {
+        if (!REVISABLE.contains(status)) {
+            return Optional.of(RevisionRejection.NOT_REVISABLE);
+        }
+        return baseVersionNo == currentVersion.versionNo()
+                ? Optional.empty()
+                : Optional.of(RevisionRejection.STALE_VERSION);
+    }
+
+    private void addVersion(ShipmentTerms terms, UserId submittedBy, UtcInstant submittedAt) {
         int versionNo = currentVersion.versionNo() + 1;
         currentVersion = new TransportRequestVersion(versionNo, terms, submittedBy, submittedAt);
         versionAddedAfterLoad = true;
         status = TransportRequestStatus.UNDER_REVIEW;
         domainEvents.add(
                 new TransportRequestSubmitted(id.value(), versionNo, shipperCompanyId, submittedAt, number.text()));
-        return Optional.empty();
     }
 
     /**

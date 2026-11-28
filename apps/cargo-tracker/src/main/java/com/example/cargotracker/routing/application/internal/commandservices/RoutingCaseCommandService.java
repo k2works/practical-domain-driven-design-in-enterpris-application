@@ -3,6 +3,7 @@ package com.example.cargotracker.routing.application.internal.commandservices;
 import com.example.cargotracker.routing.application.internal.commands.CalculateCandidatesCommand;
 import com.example.cargotracker.routing.application.internal.commands.ConfirmRouteCommand;
 import com.example.cargotracker.routing.application.internal.commands.EvaluateConfirmedRouteCommand;
+import com.example.cargotracker.routing.application.internal.outboundservices.acl.QuotationRouteConditions;
 import com.example.cargotracker.routing.application.internal.queryservices.RoutingCaseLookup;
 import com.example.cargotracker.routing.application.internal.queryservices.RoutingCaseScope;
 import com.example.cargotracker.routing.domain.events.RouteConfirmed;
@@ -18,6 +19,7 @@ import com.example.cargotracker.routing.domain.model.rules.InfoFreshnessPolicy;
 import com.example.cargotracker.routing.domain.model.rules.RouteCandidateFinder;
 import com.example.cargotracker.routing.domain.model.valueobjects.CandidateCalculation;
 import com.example.cargotracker.routing.domain.model.valueobjects.RouteApprover;
+import com.example.cargotracker.routing.domain.model.valueobjects.RouteConfirmationRejectionReason;
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
 import com.example.cargotracker.shared.domain.UtcInstant;
 import java.time.Clock;
@@ -50,8 +52,11 @@ public class RoutingCaseCommandService {
     private final InfoFreshnessPolicy freshness;
     private final RoutingCaseScope scope;
 
+    private final QuotationRouteConditions routeConditions;
+
     @SuppressWarnings("java:S107") // リポジトリ・時計・判定の部品をすべて組み立てから受け取る
     public RoutingCaseCommandService(
+            QuotationRouteConditions routeConditions,
             RoutingCaseRepository repository,
             VoyageRepository voyageRepository,
             ConnectionRuleRepository connectionRuleRepository,
@@ -59,6 +64,7 @@ public class RoutingCaseCommandService {
             Clock clock,
             InfoFreshnessPolicy freshness,
             RoutingCaseScope scope) {
+        this.routeConditions = routeConditions;
         this.repository = repository;
         this.voyageRepository = voyageRepository;
         this.connectionRuleRepository = connectionRuleRepository;
@@ -122,6 +128,9 @@ public class RoutingCaseCommandService {
         if (routingCase.aggregateVersion() != command.expectedVersion()) {
             return new RouteConfirmationOutcome.Conflict();
         }
+        if (conditionsChanged(routingCase)) {
+            return new RouteConfirmationOutcome.Rejected(RouteConfirmationRejectionReason.CONDITIONS_CHANGED);
+        }
         RouteConfirmed confirmed;
         try {
             confirmed = routingCase.confirm(
@@ -144,6 +153,17 @@ public class RoutingCaseCommandService {
         eventPublisher.publishEvent(confirmed);
         return new RouteConfirmationOutcome.Confirmed(
                 routingCase.number(), confirmed.routeVersionNo(), command.candidateNo());
+    }
+
+    /**
+     * 荷主が輸送条件を変更し、案件の輸送要求版が現在の版でなくなったか（US-05 AC1。Bolt 62）。見積りの公開 API（経路条件の照会）は
+     * 現在の版にだけ答える。この確かめの後の変更は、見積りが無効の見積りに割り当てないことで守る。
+     */
+    @Transactional(readOnly = true)
+    public boolean conditionsChanged(RoutingCase routingCase) {
+        return routeConditions
+                .find(routingCase.transportRequestId(), routingCase.transportRequestVersionNo())
+                .isEmpty();
     }
 
     /**

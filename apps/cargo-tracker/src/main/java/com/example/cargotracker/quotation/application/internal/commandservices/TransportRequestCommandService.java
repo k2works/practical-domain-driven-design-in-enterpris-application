@@ -1,8 +1,12 @@
 package com.example.cargotracker.quotation.application.internal.commandservices;
 
 import com.example.cargotracker.quotation.application.internal.commands.ResubmitTransportRequestCommand;
+import com.example.cargotracker.quotation.application.internal.commands.ReviseTransportRequestCommand;
 import com.example.cargotracker.quotation.application.internal.commands.SubmitTransportRequestCommand;
+import com.example.cargotracker.quotation.domain.model.aggregates.ConcurrentQuotationUpdateException;
 import com.example.cargotracker.quotation.domain.model.aggregates.ConcurrentTransportRequestUpdateException;
+import com.example.cargotracker.quotation.domain.model.aggregates.Quotation;
+import com.example.cargotracker.quotation.domain.model.aggregates.QuotationRepository;
 import com.example.cargotracker.quotation.domain.model.aggregates.RequiredDocumentStorage;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequest;
 import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequestNumberIssuer;
@@ -13,6 +17,7 @@ import com.example.cargotracker.quotation.domain.model.rules.RequiredDocumentPol
 import com.example.cargotracker.quotation.domain.model.rules.RequiredDocumentPolicy.DocumentCheck;
 import com.example.cargotracker.quotation.domain.model.valueobjects.RequiredDocument;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ResubmissionRejection;
+import com.example.cargotracker.quotation.domain.model.valueobjects.RevisionRejection;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTerms;
 import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTermsInput;
 import com.example.cargotracker.quotation.domain.model.valueobjects.SubmissionViolations;
@@ -38,6 +43,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class TransportRequestCommandService {
 
     private final TransportRequestRepository repository;
+    private final QuotationRepository quotationRepository;
     private final TransportRequestNumberIssuer numberIssuer;
     private final MvpAcceptancePolicy acceptancePolicy;
     private final RequiredDocumentPolicy documentPolicy;
@@ -47,6 +53,7 @@ public class TransportRequestCommandService {
 
     public TransportRequestCommandService(
             TransportRequestRepository repository,
+            QuotationRepository quotationRepository,
             TransportRequestNumberIssuer numberIssuer,
             MvpAcceptancePolicy acceptancePolicy,
             RequiredDocumentPolicy documentPolicy,
@@ -54,6 +61,7 @@ public class TransportRequestCommandService {
             ApplicationEventPublisher eventPublisher,
             Clock clock) {
         this.repository = repository;
+        this.quotationRepository = quotationRepository;
         this.numberIssuer = numberIssuer;
         this.acceptancePolicy = acceptancePolicy;
         this.documentPolicy = documentPolicy;
@@ -103,6 +111,65 @@ public class TransportRequestCommandService {
                 resubmitValid(
                         request, terms.withDocuments(storeDocuments(request.id(), documents)), command, submittedAt);
         };
+    }
+
+    /**
+     * 本予約の前に、自社の輸送要求の条件を変更する（US-05 AC1）。承認を要さず、旧版を残した新しい版を審査中にして DE-01 を発行し、
+     * 旧版の有効な見積りを同じトランザクションで無効にする。検証と書類の扱いは再提出と同じ。変更できない状態と古い版は、書類を保存する前に
+     * 拒否する。
+     *
+     * <p>書き込みは見積り（有効な見積りは 1 件まで。Q-INV-18）が先。そこで競合したら何も書かずに結果で返す。その後の輸送要求の更新で
+     * 競合したら {@link ConcurrentTransportRequestUpdateException} をそのまま投げ、見積りの無効化ごとロールバックする。
+     */
+    @Transactional
+    public RevisionOutcome revise(ReviseTransportRequestCommand command) {
+        Optional<TransportRequest> found = repository.findByNumber(command.number(), command.shipperCompanyId());
+        if (found.isEmpty()) {
+            return new RevisionOutcome.NotFound();
+        }
+        TransportRequest request = found.get();
+        Optional<RevisionRejection> rejection = request.checkRevisable(command.baseVersionNo());
+        if (rejection.isPresent()) {
+            return new RevisionOutcome.Rejected(rejection.get());
+        }
+        UtcInstant submittedAt = new UtcInstant(clock.instant());
+        DocumentCheck documents =
+                documentPolicy.check(request.currentVersion().terms().documents(), command.attachments());
+        return switch (command.terms().validate(submittedAt, acceptancePolicy).and(documents.violations())) {
+            case ShipmentTermsInput.Invalid(SubmissionViolations violations) -> new RevisionOutcome.Invalid(violations);
+            case ShipmentTermsInput.Valid(ShipmentTerms terms) ->
+                reviseValid(
+                        request, terms.withDocuments(storeDocuments(request.id(), documents)), command, submittedAt);
+        };
+    }
+
+    private RevisionOutcome reviseValid(
+            TransportRequest request,
+            ShipmentTerms terms,
+            ReviseTransportRequestCommand command,
+            UtcInstant submittedAt) {
+        Optional<RevisionRejection> rejection =
+                request.revise(command.baseVersionNo(), terms, command.submittedBy(), submittedAt);
+        if (rejection.isPresent()) {
+            return new RevisionOutcome.Rejected(rejection.get());
+        }
+        try {
+            voidActiveQuotations(request.id());
+        } catch (ConcurrentQuotationUpdateException _) {
+            return new RevisionOutcome.Conflict();
+        }
+        repository.update(request);
+        publishEvents(request);
+        return new RevisionOutcome.Revised(
+                request.number(), request.currentVersion().versionNo());
+    }
+
+    private void voidActiveQuotations(TransportRequestId id) {
+        for (Quotation quotation : quotationRepository.findByTransportRequestId(id)) {
+            if (quotation.voidByTermsRevision()) {
+                quotationRepository.update(quotation);
+            }
+        }
     }
 
     /**

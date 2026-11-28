@@ -515,6 +515,23 @@ class StaffQuotationControllerTest {
     }
 
     @Test
+    void Bolt62_条件の変更で無効の見積りは読み取り専用と理由を示し提示と再見積りの操作を出さない_US05_AC1() throws Exception {
+        transportRequestExists();
+        Quotation quotation = presented();
+        quotation.voidByTermsRevision();
+        given(queryService.find(eq(NUMBER), eq(1), any())).willReturn(Optional.of(quotation));
+        given(queryService.findAll(eq(NUMBER), any())).willReturn(List.of(quotation));
+
+        mockMvc.perform(get("/staff/transport-requests/TR-2026-0001/quotations/1"))
+                .andExpect(content().string(containsString("<dd>条件の変更で無効</dd>")))
+                .andExpect(
+                        content().string(containsString("荷主が輸送条件を変更したため、この見積りは無効です（読み取り専用）。新しい版を審査してから見積りを作ってください。")))
+                .andExpect(content().string(not(containsString("を過ぎて失効しました"))))
+                .andExpect(content().string(not(containsString("/requotation"))))
+                .andExpect(content().string(not(containsString("/presentation"))));
+    }
+
+    @Test
     void 詳細設計依頼済みの見積りは読み取り専用と依頼の日時を示し提示と再見積りの操作を出さない() throws Exception {
         transportRequestExists();
         Quotation quotation = presented();

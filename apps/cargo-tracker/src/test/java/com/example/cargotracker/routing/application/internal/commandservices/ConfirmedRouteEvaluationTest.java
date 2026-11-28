@@ -147,6 +147,7 @@ class ConfirmedRouteEvaluationTest {
             InMemoryVoyageRepository recordingVoyages = Mockito.spy(voyages);
 
             new RoutingCaseCommandService(
+                            CurrentRouteConditions.always(),
                             repository,
                             recordingVoyages,
                             rules,
@@ -164,6 +165,7 @@ class ConfirmedRouteEvaluationTest {
 
     private RoutingCaseCommandService service(InMemoryRoutingCaseRepository repository) {
         return new RoutingCaseCommandService(
+                CurrentRouteConditions.always(),
                 repository,
                 voyages,
                 rules,

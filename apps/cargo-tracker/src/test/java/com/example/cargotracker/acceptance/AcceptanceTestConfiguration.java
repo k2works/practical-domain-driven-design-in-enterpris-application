@@ -214,12 +214,15 @@ public class AcceptanceTestConfiguration {
 
         @Bean
         RoutingCaseCommandService routingCaseCommandService(
+                InMemoryTransportRequestRepository transportRequestRepository,
                 InMemoryRoutingCaseRepository repository,
                 InMemoryVoyageRepository voyageRepository,
                 InMemoryConnectionRuleRepository connectionRuleRepository,
                 DeferredEventDelivery eventDelivery,
                 MutableClock clock) {
             return new RoutingCaseCommandService(
+                    new QuotationRouteConditions(
+                            new RouteConditionQueryAdapter(new RouteConditionQueryService(transportRequestRepository))),
                     repository,
                     voyageRepository,
                     connectionRuleRepository,
@@ -267,6 +270,8 @@ public class AcceptanceTestConfiguration {
                             quotationRepository,
                             transportRequestRepository,
                             new StaffTransportRequestScope(transportRequestRepository)))),
+                    new QuotationBookingNotifications(
+                            new BookingNotificationAdapter(new BookingNotificationService(transportRequestRepository))),
                     eventDelivery,
                     clock);
         }
@@ -675,12 +680,14 @@ public class AcceptanceTestConfiguration {
         @Bean
         TransportRequestCommandService transportRequestCommandService(
                 InMemoryTransportRequestRepository repository,
+                InMemoryQuotationRepository quotationRepository,
                 InMemoryTransportRequestNumberIssuer numberIssuer,
                 InMemoryRequiredDocumentStorage documentStorage,
                 DeferredEventDelivery eventDelivery,
                 MutableClock clock) {
             return new TransportRequestCommandService(
                     repository,
+                    quotationRepository,
                     numberIssuer,
                     new MvpAcceptancePolicy(),
                     new RequiredDocumentPolicy(),

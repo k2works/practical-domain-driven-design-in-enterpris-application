@@ -514,6 +514,17 @@ class RoutingCaseControllerTest {
     }
 
     @Test
+    void 輸送条件が変更された案件の確定の画面は開かず比較の画面で理由を示す_Bolt62() throws Exception {
+        when(queryService.findByNumber(eq(NUMBER), any())).thenReturn(Optional.of(calculated()));
+        when(commandService.conditionsChanged(any())).thenReturn(true);
+
+        mockMvc.perform(get(SHOW + "/confirmation").param("candidate", "1"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl(SHOW))
+                .andExpect(flash().attribute("problem", "荷主が輸送条件を変更したため、この案件の経路は確定できません。"));
+    }
+
+    @Test
     void 除外の候補の確定の画面は開かず比較の画面で理由を示す() throws Exception {
         when(queryService.findByNumber(eq(NUMBER), any())).thenReturn(Optional.of(calculated()));
 

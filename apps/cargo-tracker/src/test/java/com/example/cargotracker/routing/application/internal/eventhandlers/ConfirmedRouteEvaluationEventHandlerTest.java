@@ -18,6 +18,7 @@ import com.example.cargotracker.routing.acceptance.InMemoryRoutingCaseRepository
 import com.example.cargotracker.routing.acceptance.InMemoryVoyageRepository;
 import com.example.cargotracker.routing.application.internal.commands.EvaluateConfirmedRouteCommand;
 import com.example.cargotracker.routing.application.internal.commandservices.ConfirmedRouteEvaluationOutcome;
+import com.example.cargotracker.routing.application.internal.commandservices.CurrentRouteConditions;
 import com.example.cargotracker.routing.application.internal.commandservices.RoutingCaseCommandService;
 import com.example.cargotracker.routing.application.internal.queryservices.RoutingCaseScope;
 import com.example.cargotracker.routing.domain.events.RouteRedesignRequired;
@@ -171,6 +172,7 @@ class ConfirmedRouteEvaluationEventHandlerTest {
 
         private RoutingCaseCommandService serviceOn(InMemoryRoutingCaseRepository repository) {
             return new RoutingCaseCommandService(
+                    CurrentRouteConditions.always(),
                     repository,
                     voyages,
                     rules,

@@ -7,11 +7,13 @@ import com.example.cargotracker.booking.application.internal.commands.ConfirmBoo
 import com.example.cargotracker.booking.application.internal.commandservices.BookingCommandService;
 import com.example.cargotracker.booking.application.internal.commandservices.BookingConfirmationOutcome;
 import com.example.cargotracker.booking.application.internal.outboundservices.acl.QuotationBookability;
+import com.example.cargotracker.booking.application.internal.outboundservices.acl.QuotationBookingNotifications;
 import com.example.cargotracker.booking.application.internal.outboundservices.acl.RecordingBookableQuotationQuery;
 import com.example.cargotracker.booking.domain.model.BookingFixture;
 import com.example.cargotracker.booking.domain.model.valueobjects.BookingTerms;
 import com.example.cargotracker.booking.domain.model.valueobjects.TrackingNumber;
 import com.example.cargotracker.quotation.interfaces.api.BookableQuotationResult;
+import com.example.cargotracker.quotation.interfaces.api.BookingNotificationReceipt;
 import com.example.cargotracker.shared.domain.AuthenticatedActor;
 import com.example.cargotracker.shared.domain.CommandId;
 import com.example.cargotracker.shared.domain.CompanyId;
@@ -142,6 +144,7 @@ class BookingConfirmationConcurrentIntegrationTest {
                     awaitQuietly(bothChecked);
                     return bookable(termsByNumber.get(request.transportRequestNumber()));
                 })),
+                new QuotationBookingNotifications(request -> new BookingNotificationReceipt.Booked()),
                 event -> {},
                 Clock.fixed(NOW, ZoneOffset.UTC));
         ExecutorService executor = Executors.newFixedThreadPool(commands.size());

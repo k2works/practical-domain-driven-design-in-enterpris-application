@@ -39,6 +39,7 @@ public class RouteConfirmationSteps {
             new UserId(UUID.fromString("00000000-0000-0000-0000-000000000502"));
     private static final UserId SALES = new UserId(UUID.fromString("00000000-0000-0000-0000-000000000301"));
     private static final Map<String, RouteConfirmationRejectionReason> REASONS = Map.of(
+            "輸送条件の変更", RouteConfirmationRejectionReason.CONDITIONS_CHANGED,
             "情報版の更新", RouteConfirmationRejectionReason.INFO_VERSION_CHANGED,
             "情報不足", RouteConfirmationRejectionReason.INFO_INSUFFICIENT,
             "判断根拠の不足", RouteConfirmationRejectionReason.RATIONALE_MISSING,

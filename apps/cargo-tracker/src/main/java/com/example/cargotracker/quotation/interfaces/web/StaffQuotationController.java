@@ -163,6 +163,11 @@ public class StaffQuotationController {
                 expiredNotice(quotation, now, QuotationViews.label(request.number(), quotationNo), requoteRejection));
         model.addAttribute("routingRequestedNotice", routingRequestedNotice(quotation, now));
         model.addAttribute("declinedNotice", declinedNotice(quotation));
+        model.addAttribute(
+                "voidedNotice",
+                quotation.status() == QuotationStatus.VOIDED
+                        ? "荷主が輸送条件を変更したため、この見積りは無効です（読み取り専用）。新しい版を審査してから見積りを作ってください。"
+                        : null);
         List<Quotation> all =
                 quotation.status() == QuotationStatus.REPLACED || quotation.status() == QuotationStatus.EXPIRED
                         ? queryService.findAll(request.number(), actor)
@@ -409,8 +414,7 @@ public class StaffQuotationController {
             case TRANSPORT_REQUEST_NOT_QUOTING, TRANSPORT_REQUEST_BOOKED -> transportRequestRejection(subject, reason);
             case ALREADY_QUOTED -> subject + " にはすでに見積りがあります";
             case NOT_PENDING_APPROVAL -> subject + " は承認待ちでないため提示できません";
-            case EXPIRED -> subject + " は有効期限を過ぎて失効しています。再見積りしてください";
-            case REPLACED -> subject + " は置換済みです。新しい見積りを使ってください";
+            case EXPIRED, REPLACED, VOIDED -> retiredRejection(subject, reason);
             case OUTDATED_VERSION -> subject + " は輸送要求の古い版に対する見積りのため、再見積りできません";
             case NOT_PRESENTED -> subject + " は荷主に提示していません";
             case ROUTING_REQUESTED -> subject + " は荷主が詳細経路設計を依頼済みのため、再見積りできません";
@@ -431,6 +435,17 @@ public class StaffQuotationController {
             return subject + " は本予約を確定済みのため、再見積りできません";
         }
         return subject + " は見積り作成中でないため、見積りを作れません";
+    }
+
+    /** 退いた見積り（失効・置換済み・条件の変更で無効）の操作を受け付けなかった理由の文言。 */
+    private static String retiredRejection(String subject, QuotationRejection reason) {
+        if (reason == QuotationRejection.EXPIRED) {
+            return subject + " は有効期限を過ぎて失効しています。再見積りしてください";
+        }
+        if (reason == QuotationRejection.REPLACED) {
+            return subject + " は置換済みです。新しい見積りを使ってください";
+        }
+        return subject + " は荷主が輸送条件を変更したため無効です。新しい版を審査して見積りを作ってください";
     }
 
     /** 荷主の承認の段階にある見積りの操作を受け付けなかった理由の文言。 */

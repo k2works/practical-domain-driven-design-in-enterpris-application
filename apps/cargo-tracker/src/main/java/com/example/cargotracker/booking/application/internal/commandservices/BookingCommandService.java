@@ -2,6 +2,7 @@ package com.example.cargotracker.booking.application.internal.commandservices;
 
 import com.example.cargotracker.booking.application.internal.commands.ConfirmBookingCommand;
 import com.example.cargotracker.booking.application.internal.outboundservices.acl.QuotationBookability;
+import com.example.cargotracker.booking.application.internal.outboundservices.acl.QuotationBookingNotifications;
 import com.example.cargotracker.booking.application.internal.outboundservices.acl.QuotationUnavailability;
 import com.example.cargotracker.booking.application.sagas.BookingSaga;
 import com.example.cargotracker.booking.application.sagas.BookingSagaRepository;
@@ -32,7 +33,9 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * 本予約の確定の入力ポート（営業担当者が使う。US-04 AC1〜AC5。Bolt 23・24・35）。トランザクションの境界になる。
  * commit 時刻は、このトランザクションの中で保存の前に Clock から取り、同じ値で見積りの公開 API に照会し、予約版に記録する（ADR-016）。
- * 確定したら予約サガを処理中で始め、DE-07 を発行する（追跡の開始は追跡が購読する。ADR-015）。
+ * 確定したら予約サガを処理中で始め、同じトランザクションで見積りの公開 API を呼んで輸送要求を予約確定済みにし、DE-07 を発行する
+ * （追跡の開始は追跡が購読する。ADR-015）。輸送要求の更新を後の DE-07 の配信に任せると、届くまで荷主が条件を変更でき、本予約と新しい版が
+ * 両立する（Bolt 62 で再現した。ADR-014 の例外）。受け付けられなければ確定ごと失敗させる。DE-07 の listener は冪等な備えとして残る。
  *
  * <p>判定の順序は、役割 → 処理済みコマンド（B-INV-03）→ 同じ見積りの予約（B-INV-11）→ 見積りの照会 → 特殊貨物（B-INV-04。Bolt 35）
  * → 確定条件。確定済みの判定を
@@ -51,6 +54,7 @@ public class BookingCommandService {
     private final BookingSagaRepository sagaRepository;
     private final TrackingNumberIssuer trackingNumberIssuer;
     private final QuotationBookability quotations;
+    private final QuotationBookingNotifications bookingNotifications;
     private final ApplicationEventPublisher eventPublisher;
     private final Clock clock;
 
@@ -59,12 +63,14 @@ public class BookingCommandService {
             BookingSagaRepository sagaRepository,
             TrackingNumberIssuer trackingNumberIssuer,
             QuotationBookability quotations,
+            QuotationBookingNotifications bookingNotifications,
             ApplicationEventPublisher eventPublisher,
             Clock clock) {
         this.repository = repository;
         this.sagaRepository = sagaRepository;
         this.trackingNumberIssuer = trackingNumberIssuer;
         this.quotations = quotations;
+        this.bookingNotifications = bookingNotifications;
         this.eventPublisher = eventPublisher;
         this.clock = clock;
     }
@@ -132,8 +138,22 @@ public class BookingCommandService {
                             e));
         }
         sagaRepository.save(BookingSaga.start(confirmation.booking().id(), trackingNumber, committedAt));
+        markTransportRequestBooked(terms, bookingId);
         eventPublisher.publishEvent(confirmation.event());
         return new BookingConfirmationOutcome.Confirmed(trackingNumber);
+    }
+
+    /**
+     * 輸送要求を予約確定済みにする。見積りの行を確定用の照会で押さえた後に呼ぶ（条件の変更は同じ行を先に書くので直列になる）。使える見積り
+     * だと判定した直後なので、受け付けられないのは壊れた前提として例外にし、予約ごとロールバックする。
+     */
+    private void markTransportRequestBooked(BookingTerms terms, BookingId bookingId) {
+        String rejected = bookingNotifications.notifyBooked(
+                terms.transportRequestId(), terms.transportRequestVersionNo(), terms.quotationId(), bookingId.value());
+        if (!rejected.isEmpty()) {
+            throw new IllegalStateException("本予約に使う見積りの輸送要求を予約確定済みにできない: " + terms.transportRequestNumber() + " 見積 "
+                    + terms.quotationNo() + "、理由 " + rejected);
+        }
     }
 
     /** 見積りの照会が確定に使えないと返したときの結果（範囲の外は Bolt 38f2）。 */

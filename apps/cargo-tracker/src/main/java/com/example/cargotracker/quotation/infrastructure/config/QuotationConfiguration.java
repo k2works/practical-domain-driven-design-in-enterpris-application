@@ -49,12 +49,14 @@ public class QuotationConfiguration {
     @Bean
     TransportRequestCommandService transportRequestCommandService(
             TransportRequestRepository repository,
+            QuotationRepository quotationRepository,
             TransportRequestNumberIssuer numberIssuer,
             RequiredDocumentStorage documentStorage,
             ApplicationEventPublisher eventPublisher,
             Clock clock) {
         return new TransportRequestCommandService(
                 repository,
+                quotationRepository,
                 numberIssuer,
                 new MvpAcceptancePolicy(),
                 new RequiredDocumentPolicy(),

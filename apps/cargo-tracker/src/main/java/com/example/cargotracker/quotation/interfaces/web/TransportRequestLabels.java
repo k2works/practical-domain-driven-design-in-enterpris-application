@@ -126,7 +126,7 @@ final class TransportRequestLabels {
             case APPROVED -> stageOf(TransportRequestStatus.READY_TO_BOOK);
             case AWAITING_SHIPPER_APPROVAL -> awaitingApprovalStage(quotation);
             // 見積りの状態を足したら（D-86、荷主の辞退）ここで扱いを決める（ADR-018）
-            case DRAFT, PENDING_APPROVAL, PRESENTED, ROUTING_REQUESTED, EXPIRED, REPLACED -> stageOf(status);
+            case DRAFT, PENDING_APPROVAL, PRESENTED, ROUTING_REQUESTED, EXPIRED, REPLACED, VOIDED -> stageOf(status);
         };
     }
 
@@ -143,7 +143,8 @@ final class TransportRequestLabels {
             case APPROVED -> new CustomerStage(customerStatus(TransportRequestStatus.READY_TO_BOOK), afterApproval);
             case AWAITING_SHIPPER_APPROVAL ->
                 new CustomerStage(customerStatus(TransportRequestStatus.AWAITING_APPROVAL), beforeApproval);
-            case DRAFT, PENDING_APPROVAL, PRESENTED, ROUTING_REQUESTED, EXPIRED, REPLACED -> stageOf(requestStatus);
+            case DRAFT, PENDING_APPROVAL, PRESENTED, ROUTING_REQUESTED, EXPIRED, REPLACED, VOIDED ->
+                stageOf(requestStatus);
         };
     }
 

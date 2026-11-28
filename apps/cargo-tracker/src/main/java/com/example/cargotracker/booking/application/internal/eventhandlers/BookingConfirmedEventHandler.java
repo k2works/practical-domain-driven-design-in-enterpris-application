@@ -15,6 +15,8 @@ import org.springframework.stereotype.Service;
  *
  * <p>{@code @Service} は JIG がユースケースとして読むための印で、部品探索の対象にはしない（CargoTrackerApplication）。
  * 組み立ては {@code BookingConfiguration} が担う。
+ *
+ * <p>Bolt 62 から、本予約の確定が同じトランザクションで先に同じ通知をする（ADR-014 の例外）。この listener は冪等な備えで、通常は何も変えない。
  */
 @Service
 public class BookingConfirmedEventHandler {

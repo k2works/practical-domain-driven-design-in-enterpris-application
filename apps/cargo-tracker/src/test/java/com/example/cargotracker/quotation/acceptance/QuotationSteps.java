@@ -68,6 +68,7 @@ public class QuotationSteps {
             "提示済み", QuotationStatus.PRESENTED,
             "失効", QuotationStatus.EXPIRED,
             "置換済み", QuotationStatus.REPLACED,
+            "条件の変更で無効", QuotationStatus.VOIDED,
             "詳細設計依頼済み", QuotationStatus.ROUTING_REQUESTED,
             "荷主承認待ち", QuotationStatus.AWAITING_SHIPPER_APPROVAL,
             "承認済み", QuotationStatus.APPROVED);

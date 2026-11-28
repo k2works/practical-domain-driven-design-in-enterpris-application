@@ -46,7 +46,7 @@ public interface QuotationGate {
                 .map(quotation -> switch (quotation.status()) {
                     case AWAITING_SHIPPER_APPROVAL -> Verdict.PROCEED;
                     case APPROVED -> Verdict.SETTLED;
-                    case EXPIRED, REPLACED -> Verdict.RETIRED;
+                    case EXPIRED, REPLACED, VOIDED -> Verdict.RETIRED;
                     case DRAFT, PENDING_APPROVAL, PRESENTED, ROUTING_REQUESTED -> Verdict.NOT_AWAITING;
                 })
                 .orElse(Verdict.NOT_FOUND);
@@ -62,8 +62,8 @@ public interface QuotationGate {
         PROCEED("進めてよい"),
         /** すでに決着している（何もせず、ログも残さない）。 */
         SETTLED("承認済み"),
-        /** 置換済み・失効の記録がある（警告のログ）。 */
-        RETIRED("置換済み・失効"),
+        /** 置換済み・失効の記録がある・条件の変更で無効（警告のログ）。 */
+        RETIRED("置換済み・失効・条件の変更で無効"),
         /** 見つからない（警告のログ）。 */
         NOT_FOUND("見つからない"),
         /** 荷主承認待ちでない（警告のログ）。 */
