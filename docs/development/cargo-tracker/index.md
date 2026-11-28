@@ -219,7 +219,7 @@ Bolt がイテレーションに当たります。ふりかえりは各 Bolt の
 | 51-4 | [ECS のタスク定義の版を Terraform の管理から外す](bolt_51-4_plan.md) | 計画に報告を含む | W10-1 の後 | 完了（承認済み 2026-11-28。実環境では未実行） |
 | 70 | [Spring Boot 4.1.3 への更新と 4.2 の調査](bolt_70_plan.md) | 計画に報告を含む | W10-1 の後 | 完了（承認済み 2026-11-28。デモ用のイメージは未確認） |
 | 71 | [リリースの仕組みを cargo-tracker で動くようにする](bolt_71_plan.md) | 計画に報告を含む | W10-1 の後 | 完了（承認済み 2026-11-28。実際のリリースは未実行） |
-| 62 | [本予約前の輸送要求の条件の変更（US-05 AC1）](bolt_62_plan.md)（[W11 計画](iteration_plan-W11.md)） | 計画に報告を含む | W11 | 実施中（計画は承認済み 2026-11-28） |
+| 62 | [本予約前の輸送要求の条件の変更（US-05 AC1）](bolt_62_plan.md)（[W11 計画](iteration_plan-W11.md)） | 計画に報告を含む | W11 | 完了（62・62-1。承認済み 2026-11-28） |
 | 40-16 | [W8 の受入条件の照合とマニュアル・動画の総点検（US-11・US-20 を締める）](bolt_40-16_plan.md)（[W8 計画](iteration_plan-W8.md)） | [終了報告](bolt_40-16_report.md) | W8 | 完了（承認済み） |
 | 40-15 | [照会の記録（S-23）と有人案件への引き継ぎ（US-11 AC2）](bolt_40-15_plan.md)（[W8 計画](iteration_plan-W8.md)） | [終了報告](bolt_40-15_report.md)（[動画](../../assets/demo/bolt-40-15/inquiry-handoff.webm){:target="_blank"}） | W8 | 完了（承認済み） |
 
@@ -261,6 +261,7 @@ Bolt を始めるときに行を追加します。
 |  |  | 営業担当者がログインし、社内のナビとヘッダーを確かめ、荷主の画面の URL を直接開くと権限なしになる | [staff-login.webm](../../assets/demo/bolt-14/staff-login.webm){:target="_blank"} |
 |  |  | 誤った password でログインしようとすると、どれが誤りかを示さない文言が出て、メールアドレスだけが残る | [wrong-password.webm](../../assets/demo/bolt-14/wrong-password.webm){:target="_blank"} |
 | 15 | dev プロファイルによる Heroku のデモ環境（技術タスク） | 公開の URL で荷主担当者がログインして見積依頼を提出し、営業担当者が受付一覧から開いて審査を確定し、荷主の画面は権限なしになる（`demoVideo` ではなく、公開の URL を Playwright で録画した。`demoVideo` が消さないよう `docs/assets/heroku-demo` に置く） | [submit-review-on-heroku.webm](../../assets/heroku-demo/bolt-15/submit-review-on-heroku.webm){:target="_blank"} |
+| 62 | 本予約の前の輸送要求の条件の変更 | 見積りの提示の後にキー操作だけで目的地を変更すると、版 2 が審査中になり見積り 1 は無効と示される | [change-quoted-request.webm](../../assets/demo/bolt-62/change-quoted-request.webm){:target="_blank"} |
 
 ### 進捗サマリー
 

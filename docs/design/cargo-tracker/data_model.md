@@ -4,7 +4,7 @@ title: "cargo-tracker データモデル"
 description: "cargo-tracker の概念データモデル、スキーマ分割、命名と型の規約（H2 と PostgreSQL の共通部分）、コンテキストごとの論理データモデルと ER 図、版・追記専用・冪等性・イベント配信の表現。"
 tags: [design, data-model]
 status: stable
-generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-27T11:14:30Z }
+generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-28T08:38:13Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T07:48:17Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:01:37Z }
@@ -365,6 +365,8 @@ q |o--o| q : 置換
 | `pricing_line` | 主キー（`quotation_id`、`line_no`）。`line_no` は 1〜10。`amount` は 0 より大きい（NUMERIC(15,2)）。`currency` は見積りの `currency` と同じ値（アプリケーションで守る）。見積りを算出し直すときは明細を入れ替える（Bolt 10 は算出し直しを入れない） | Q-INV-17、US-03 |
 
 見積りの「失効」は、有効期限を過ぎたときに状態を書き換えるのではなく、判定時刻と `expires_at` の比較で決める（Q-INV-06）。`status` の `EXPIRED` は、期限切れを確かめた結果として残す。Bolt 11 では、再見積りのときに有効期限を過ぎていた旧版にだけ記録する（定期処理での記録は入れない。2026-10-05 の決定）。予約確定の判定は常に `expires_at` で行う。
+
+`quotation.status` の `VOIDED`（条件の変更で無効）は、荷主が本予約の前に輸送条件を変更し、旧版の見積りになったことを表す（Q-INV-19。Bolt 62。移行 `V20261128100000` は `ck_quotation_status` に値を足すだけで、列は足さない）。経路・荷主の回答・承認の列は残す。置換先を持たないので `REPLACED` とは分ける。有効な見積りを 1 件に限る部分一意インデックスは `VOIDED` を数えない。
 
 ### 経路設計（`routing`）
 

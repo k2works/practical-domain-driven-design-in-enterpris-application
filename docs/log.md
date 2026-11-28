@@ -4,6 +4,21 @@
 * **Verification**: [bolt_62_plan](/development/cargo-tracker/bolt_62_plan.md) を human:kakimomokuri が検証
 * **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-sonnet-5-5）
 * **Update**: [bolt_62_plan](/development/cargo-tracker/bolt_62_plan.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [用語集](/manual/用語集.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [付録B-トラブルシューティング](/manual/付録B-トラブルシューティング.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [08-経路設計](/manual/08-経路設計.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [07-本予約の確定と予約一覧](/manual/07-本予約の確定と予約一覧.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [06-受付一覧と審査と見積り](/manual/06-受付一覧と審査と見積り.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [03-見積依頼](/manual/03-見積依頼.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [bolt_62_plan](/development/cargo-tracker/bolt_62_plan.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [014-downstream-to-upstream-notification](/adr/cargo-tracker/014-downstream-to-upstream-notification.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [bolt_62_plan](/development/cargo-tracker/bolt_62_plan.md) を更新（anthropic/claude-sonnet-5-5）
+* **Verification**: [bolt_62_plan](/development/cargo-tracker/bolt_62_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [bolt_62_plan](/development/cargo-tracker/bolt_62_plan.md) を更新（anthropic/claude-sonnet-5-5）
 * **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-sonnet-5-5）
 * **Creation**: [bolt_62_plan](/development/cargo-tracker/bolt_62_plan.md) を作成（anthropic/claude-sonnet-5-5）
 * **Verification**: [iteration_plan-W11](/development/cargo-tracker/iteration_plan-W11.md) を human:kakimomokuri が検証
