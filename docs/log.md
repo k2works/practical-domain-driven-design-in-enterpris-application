@@ -1,6 +1,17 @@
 # Docs Update Log
 
+## 2026-11-28
+* **Verification**: [bolt_70_plan](/development/cargo-tracker/bolt_70_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_51-4_plan](/development/cargo-tracker/bolt_51-4_plan.md) を human:kakimomokuri が検証
+* **Update**: [bolt_70_plan](/development/cargo-tracker/bolt_70_plan.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [bolt_51-4_plan](/development/cargo-tracker/bolt_51-4_plan.md) を更新（anthropic/claude-sonnet-5-5）
+
 ## 2026-11-27
+* **Update**: [operation_tasks](/operation/cargo-tracker/operation_tasks.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [tech_stack](/design/cargo-tracker/tech_stack.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-sonnet-5-5）
+* **Creation**: [bolt_70_plan](/development/cargo-tracker/bolt_70_plan.md) を作成（anthropic/claude-sonnet-5-5）
+* **Creation**: [bolt_51-4_plan](/development/cargo-tracker/bolt_51-4_plan.md) を作成（anthropic/claude-sonnet-5-5）
 * **Verification**: [bolt_52-2_plan](/development/cargo-tracker/bolt_52-2_plan.md) を human:kakimomokuri が検証
 * **Verification**: [bolt_61_plan](/development/cargo-tracker/bolt_61_plan.md) を human:kakimomokuri が検証
 * **Verification**: [bolt_58_plan](/development/cargo-tracker/bolt_58_plan.md) を human:kakimomokuri が検証

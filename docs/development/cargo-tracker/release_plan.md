@@ -4,7 +4,7 @@ title: "リリース計画 - cargo-tracker（A 社国際貨物輸送管理シス
 description: "cargo-tracker MVP のリリース計画。1 人 + AI、時間単位の Bolt（= イテレーション）と週次の見直しで、最初の縦の流れ（R0.1）、パイロット準備完了（R1.0）、本格展開前（R1.1）の 3 段階、Unit のエントロピー評価、SP、バッファ、パイロット開始の条件、引継ぎ ID の台帳、業務責任者に確かめる事項の台帳。"
 tags: [development,release-plan]
 status: stable
-generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-27T20:59:05Z }
+generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-27T22:45:06Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T09:29:53Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:38:26Z }
@@ -1277,8 +1277,8 @@ xychart-beta
 | 項目 | 内容 |
 | :--- | :--- |
 | Project | [CargoTracker practical-ddd/take-1（#42）](https://github.com/users/k2works/projects/42)。フィールド: Status、リリース、優先度、Unit、SP、週（W1〜W15） |
-| Milestone | Release 0.1 最初の縦の流れ（18 件）、Release 1.0 パイロット準備完了（23 件）、Release 1.1 本格展開前（8 件）（open と closed の合計。2026-11-27 に GitHub で確認） |
-| Issue | #1〜#52（#40 はマイルストーンなし。#38 以降は Bolt と週の締め・開始準備で起票した技術タスクと分けたストーリー）。Release 0.1 と 1.0 にまたがる 9 ストーリーは受入条件の範囲ごとに 2 件に分けた。技術タスクは #1（開発基盤とウォーキングスケルトン、2026-10-02 にクローズ）、#36（UI の骨格と見積依頼の段階入力のプロトタイプ、#1 から分けた）、#28（運用準備）、#37（Bolt 6〜8 レビューの返済、W2） |
+| Milestone | Release 0.1 最初の縦の流れ（18 件）、Release 1.0 パイロット準備完了（24 件）、Release 1.1 本格展開前（9 件）（open と closed の合計。2026-11-28 に GitHub で確認） |
+| Issue | #1〜#54（#40 はマイルストーンなし。#50 は 2026-11-28 に仕分けて閉じ、#53（パイロットの前に要るもの。担当と期限は未定）と #54（内部の返済）に分け、一部は #29・#33 のコメントに移した。#53・#54 は Project に追加していない。#38 以降は Bolt と週の締め・開始準備で起票した技術タスクと分けたストーリー）。Release 0.1 と 1.0 にまたがる 9 ストーリーは受入条件の範囲ごとに 2 件に分けた。技術タスクは #1（開発基盤とウォーキングスケルトン、2026-10-02 にクローズ）、#36（UI の骨格と見積依頼の段階入力のプロトタイプ、#1 から分けた）、#28（運用準備）、#37（Bolt 6〜8 レビューの返済、W2） |
 | Label | `user-story`、`technical` |
 
 週のフィールドは 1 つの値しか持てないため、US-24 の R0.1 分（#5）は W2、US-16（#14）は W5 に置いた（計画では次の週にまたがる）。#5 は 2026-10-07 に W3 に移し、2026-10-08 に Bolt 20 でクローズした。
@@ -1757,3 +1757,4 @@ xychart-beta
 | 2026-11-27 | W9 完了報告書の承認（human:kakimomokuri）を受けて、進捗状況の W9 を「承認済み」にした | anthropic/claude-sonnet-5-5 |
 | 2026-11-27 | W10-1（持ち越しのうち実環境なしで進められる 8 本）を実施し、進捗状況の W10 に記した | anthropic/claude-sonnet-5-5 |
 | 2026-11-28 | W10-1 の締めの報告の承認（human:kakimomokuri）を受けて、進捗状況の W10 を直した | anthropic/claude-sonnet-5-5 |
+| 2026-11-28 | #50 を仕分けて閉じ（#53・#54 を作り、#29・#33 に追記。human:kakimomokuri の承認と指示）、「GitHub との同期」を直した | anthropic/claude-sonnet-5-5 |
