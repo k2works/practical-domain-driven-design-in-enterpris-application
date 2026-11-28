@@ -4,7 +4,7 @@ title: "リリース計画 - cargo-tracker（A 社国際貨物輸送管理シス
 description: "cargo-tracker MVP のリリース計画。1 人 + AI、時間単位の Bolt（= イテレーション）と週次の見直しで、最初の縦の流れ（R0.1）、パイロット準備完了（R1.0）、本格展開前（R1.1）の 3 段階、Unit のエントロピー評価、SP、バッファ、パイロット開始の条件、引継ぎ ID の台帳、業務責任者に確かめる事項の台帳。"
 tags: [development,release-plan]
 status: stable
-generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-28T01:18:44Z }
+generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-28T06:19:26Z }
 verified:
   - { by: human:kakimomokuri, at: 2026-10-01T09:29:53Z }
   - { by: human:kakimomokuri, at: 2026-10-01T09:38:26Z }
@@ -1253,8 +1253,8 @@ D-144 の注（Bolt 39h2 の開始準備）: 判断の画面に差異を出し�
 | W8 | 8 | 8 | 100% | 完了（2026-11-13〜11-14 に Bolt 40〜40-17 の 18 本を終えた。[完了報告書](iteration_report-W8.md)） |
 | W9 | 15 | 15 | 100% | 完了（2026-11-14〜11-15 に Bolt 41〜48 の 18 本を終え、2026-11-15 に締めた。US-23・US-22・US-21・US-01・US-24・US-09 を閉じ、Release 1.0 は 54/54 SP。[完了報告書](iteration_report-W9.md)。承認済み） |
 | W10 | 0 | - | - | 一部完了（2026-11-16。[W10 完了報告書](iteration_report-W10.md)。承認済み。残りは Release 1.1 の頭へ持ち越し。そのうち実環境なしで進められる分は [W10-1](iteration_plan-W10-1.md) で実施した。[締めの報告](bolt_56-1_plan.md)は承認済み 2026-11-28） |
-| W11 | 11 | - | - | 計画済み（[W11 計画](iteration_plan-W11.md)。9 本、Bolt 60・62〜69。承認待ち。57〜59・61 は [W10-1 計画](iteration_plan-W10-1.md)へ移した） |
-| W12 | 10 | - | - | 未着手 |
+| W11 | 11 | - | - | 計画済み（[W11 計画](iteration_plan-W11.md)。8 本、Bolt 62〜69。承認済み 2026-11-28。57〜59・61 は [W10-1 計画](iteration_plan-W10-1.md)で終え、60 は W12 へ移した） |
+| W12 | 10 | - | - | 未着手（US-13・US-15 のほかに、W11 から Bolt 60（ウイルス検査。技術、SP 0、見積り 240 分）を移した） |
 | W13 | 8 | - | - | 未着手 |
 | W14 | 8 | - | - | 未着手 |
 
@@ -1759,3 +1759,5 @@ xychart-beta
 | 2026-11-28 | W10-1 の締めの報告の承認（human:kakimomokuri）を受けて、進捗状況の W10 を直した | anthropic/claude-sonnet-5-5 |
 | 2026-11-28 | #50 を仕分けて閉じ（#53・#54 を作り、#29・#33 に追記。human:kakimomokuri の承認と指示）、「GitHub との同期」を直した | anthropic/claude-sonnet-5-5 |
 | 2026-11-28 | 週の外の技術 Bolt として [Bolt 71 計画](bolt_71_plan.md)（リリースの仕組みの修正。SP 0。2026-11-28 に計画を承認）を足した | anthropic/claude-sonnet-5-5 |
+| 2026-11-28 | W11 計画の CP-1 を人の指示で変え、Bolt 60（ウイルス検査）を W11 から W12 へ移した | anthropic/claude-sonnet-5-5 |
+| 2026-11-28 | W11 計画の承認（human:kakimomokuri）を記録した | anthropic/claude-sonnet-5-5 |
