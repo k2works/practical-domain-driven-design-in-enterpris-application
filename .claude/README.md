@@ -107,6 +107,11 @@ Claude Code をより効率的に使うための基本設定テンプレート�
 | `creating-article` | 動くサンプルコードを伴う技術記事・連載シリーズの執筆。計画・骨子・実行環境・章ごとの執筆と実装の同期・横断解説・CI までを一貫支援。 |
 | `creating-release-report` | リリース完了報告書を作成。release_plan・iteration_report・git log・CHANGELOG からデータ収集。 |
 | `creating-iteration-report` | イテレーション完了報告書を作成。iteration_plan・release_plan・テスト結果からデータ収集。 |
+| `migrating-okf` | プロジェクトドキュメントを OKF 知識バンドルへ移行。仕様バージョンアップと適合性検証にも対応。 |
+| `migrating-ai-dlc` | XP ベースの既存プロジェクトを AI-DLC の運用へ移行し、適合性を検証。 |
+| `apply-okf` | 文書の作成・更新・レビュー・廃止時に OKF 規約（フロントマター・verified・index/log）を適用。 |
+| `apply-docs-structure` | ドキュメント構成ガイドに基づく配置判断、新プロジェクトのディレクトリ一式作成、構成検証。 |
+| `apply-living-documentation` | Living Documentation の原則に基づく文書化判断、根拠の補足、キュレーション、用語集・図の自動生成。 |
 
 #### 学習系
 
@@ -228,6 +233,11 @@ Claude Code をより効率的に使うための基本設定テンプレート�
 │   ├── creating-slides/SKILL.md
 │   ├── creating-release-report/SKILL.md
 │   ├── creating-iteration-report/SKILL.md
+│   ├── migrating-okf/SKILL.md
+│   ├── migrating-ai-dlc/SKILL.md
+│   ├── apply-okf/SKILL.md
+│   ├── apply-docs-structure/SKILL.md
+│   ├── apply-living-documentation/SKILL.md
 │   ├── orchestrating-analysis/SKILL.md
 │   ├── orchestrating-development/SKILL.md
 │   ├── orchestrating-operation/SKILL.md

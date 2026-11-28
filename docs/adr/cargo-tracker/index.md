@@ -1,11 +1,36 @@
 # cargo-tracker — ADR
 
-cargo-tracker プロジェクトのADRドキュメントです。
+cargo-tracker プロジェクトの ADR ドキュメントです。
 
 ## ドキュメント一覧
 
-（未作成）
+| ADR | 決定内容 | ステータス |
+| :--- | :--- | :--- |
+| [ADR-001](./001-modular-monolith.md) | モジュラーモノリスを採用する | 承認済み |
+| [ADR-002](./002-domain-logic-pattern-per-context.md) | ドメインロジックのパターンを境界づけられたコンテキストごとに選ぶ | 承認済み |
+| [ADR-003](./003-inter-context-integration.md) | コンテキスト間は冪等コマンド・永続化したドメインイベント・オーケストレーション型のサガで連携する | 承認済み（決定 3 は ADR-015 で改訂） |
+| [ADR-004](./004-external-data-ingestion.md) | 外部原本は Inbox・隔離・照合の 3 段で取り込む | 承認済み（決定 1〜3 は 2026-11-02 に Bolt 39 で改訂） |
+| [ADR-005](./005-server-side-rendering.md) | 画面はサーバーサイドレンダリングとハイパーメディアで提供する | 承認済み |
+| [ADR-006](./006-java-spring-boot-platform.md) | Java 25 LTS・Spring Boot 4.1・Spring Modulith でアプリケーションを構築する | 承認済み |
+| [ADR-007](./007-postgresql-mybatis-flyway.md) | 開発環境は H2、本番は PostgreSQL 18 を使い、永続化は MyBatis、スキーマは Flyway で管理する | 承認済み |
+| [ADR-008](./008-aws-container-platform.md) | AWS の ECS Fargate・RDS・S3 で実行する | 承認済み |
+| [ADR-009](./009-bdd-cucumber.md) | BDD を採用し、受入条件を Cucumber で実行可能な仕様にする | 承認済み |
+| [ADR-010](./010-required-document-storage-transaction.md) | 必要書類のファイルは DB のトランザクションの外で保存し、失敗したときは補償で消す | 承認済み（実装は W10） |
+| [ADR-011](./011-mfa-totp.md) | 多要素認証は Spring Security 7 の要素の権限で組み、TOTP は java-otp で作る | 承認（2026-10-11、Bolt 30） |
+| [ADR-012](./012-authentication-principal-and-session.md) | 認証の主体は共有カーネルの型にし、password の段を Spring Security の form login と Spring Session JDBC で作る | 承認済み |
+| [ADR-013](./013-heroku-demo-environment.md) | 関係者が触って確かめるデモ環境は、dev プロファイルのまま Heroku の Eco dyno で動かす | 承認済み |
+| [ADR-014](./014-downstream-to-upstream-notification.md) | 下流から上流への通知は、下流の listener が上流の公開 API を呼んで行う | 承認済み |
+| [ADR-015](./015-booking-saga-starts-tracking-by-event.md) | 予約サガは状態を予約に持ち、追跡の開始は追跡が DE-07 を購読して行う（ADR-003 を改訂） | 承認済み（文面は Bolt 23 の終了報告で確かめる） |
+| [ADR-016](./016-booking-checks-quotation-at-commit-time.md) | 予約は commit 時刻を渡して見積りの公開 API で確定に使えるかを確かめる | 承認済み（文面は Bolt 23 の終了報告で確かめる） |
+| [ADR-017](./017-notification-module-and-mail.md) | 通知モジュールを新設し、メールは公開 API で受けて SMTP で送る | 採用（2026-10-15、Bolt 33） |
+| [ADR-018](./018-requote-returns-transport-request-with-ordering-guard.md) | 再見積りの提示で輸送要求を荷主承認待ちへ戻し、届く順の入れ替わりは楽観ロックでぶつけて守る | 採用（2026-10-19、Bolt 35b2） |
+| [ADR-019](./019-out-of-scope-attempt-recorder.md) | 担当範囲の外の試行の記録のポートを共有カーネルに置き、identity が実装する | 採用（2026-10-28、Bolt 38f） |
+| [ADR-020](./020-aws-account-region-environments.md) | AWS は東京リージョンにステージングと本番の 2 環境を置く（アカウントと予算は未決） | 採用（2026-11-16、Bolt 50） |
+| [ADR-021](./021-shipper-notification-retry-and-subscription-home.md) | 荷主への通知の再送の手段と購読の置き場所（再送は定期ジョブ、購読は notification） | 採用（2026-11-16、Bolt 49-2。実装は Release 1.1 の頭） |
+| [ADR-022](./022-required-document-virus-scan.md) | 必要書類のウイルスの検査は S3 の非同期の検査（マネージド）で行う（実装は Release 1.1 の頭） | 採用（2026-11-16） |
+| [ADR-023](./023-operations-notification-and-home.md) | 運用の警告の宛先（メール既定）・業務ホームの一覧・メンテナンス表示（実装は Release 1.1 の頭） | 採用（2026-11-16） |
 
 ## 補足
 
 - 実ドキュメントを追加したら、この一覧を更新します。
+- ADR-008 は「他のクラウド・PaaS」を却下していますが、これはステージング・本番の話です。関係者が触るデモ環境（Heroku）は ADR-013 で、ステージング・本番の範囲の外に置きます。

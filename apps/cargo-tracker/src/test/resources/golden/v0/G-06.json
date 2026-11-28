@@ -1,0 +1,76 @@
+{
+  "id": "G-06",
+  "title": "外部データの古さ（取得からちょうど 24 時間の航海は足り、24 時間 1 分の航海を使う候補は情報不足。古い航海を使う候補だけを除く）",
+  "version": "v0",
+  "status": "仮の値。業務責任者の承認待ち（TST-02）",
+  "rationale": [
+    "US-06 AC4・R-INV-09（情報鮮度）",
+    "D-89（許容時間 24 時間。ちょうどは足りる）"
+  ],
+  "regulatoryReferences": [],
+  "approvers": [],
+  "validity": {
+    "from": null,
+    "to": null
+  },
+  "routeSpecification": {
+    "origin": "JPTYO",
+    "destination": "NLRTM",
+    "arrivalDeadline": "2026-11-02T00:00:00Z",
+    "cargoCategory": "GENERAL"
+  },
+  "judgedAt": "2026-10-07T03:00:00Z",
+  "freshnessTolerance": "PT24H",
+  "connectionRules": [
+    {
+      "port": "SGSIN",
+      "minimumConnection": "PT8H",
+      "validFrom": "2026-01-01T00:00:00Z"
+    }
+  ],
+  "voyages": [
+    {
+      "number": "V-101",
+      "load": "JPTYO",
+      "departureAt": "2026-10-12T00:00:00Z",
+      "discharge": "NLRTM",
+      "arrivalAt": "2026-10-30T09:00:00Z",
+      "acquiredAt": "2026-10-06T03:00:00Z"
+    },
+    {
+      "number": "V-201",
+      "load": "JPTYO",
+      "departureAt": "2026-10-10T00:00:00Z",
+      "discharge": "SGSIN",
+      "arrivalAt": "2026-10-20T00:00:00Z",
+      "acquiredAt": "2026-10-06T02:59:00Z"
+    },
+    {
+      "number": "V-301",
+      "load": "SGSIN",
+      "departureAt": "2026-10-20T12:00:00Z",
+      "discharge": "NLRTM",
+      "arrivalAt": "2026-10-31T00:00:00Z",
+      "acquiredAt": "2026-10-06T02:59:00Z"
+    }
+  ],
+  "expected": [
+    {
+      "voyages": "V-101",
+      "conforming": true,
+      "estimatedArrivalAt": "2026-10-30T09:00:00Z",
+      "connectionSlack": null,
+      "reasons": []
+    },
+    {
+      "voyages": "V-201,V-301",
+      "conforming": false,
+      "estimatedArrivalAt": "2026-10-31T00:00:00Z",
+      "connectionSlack": "PT4H",
+      "reasons": [
+        "INFO_INSUFFICIENT",
+        "INFO_INSUFFICIENT"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,151 @@
+package com.example.cargotracker.notification.infrastructure.config;
+
+import com.example.cargotracker.notification.application.internal.commandservices.PasswordResetMailService;
+import com.example.cargotracker.notification.application.internal.commandservices.ShipperNotificationMailService;
+import com.example.cargotracker.notification.application.internal.commandservices.ShipperNotificationRetryService;
+import com.example.cargotracker.notification.application.internal.commandservices.TotpEnrollmentMailService;
+import com.example.cargotracker.notification.application.internal.commandservices.TotpResetMailService;
+import com.example.cargotracker.notification.application.internal.commandservices.UserInvitationMailService;
+import com.example.cargotracker.notification.application.internal.queryservices.NotificationQueryService;
+import com.example.cargotracker.notification.domain.model.aggregates.MailSender;
+import com.example.cargotracker.notification.domain.model.aggregates.NotificationRepository;
+import com.example.cargotracker.notification.domain.model.aggregates.PasswordResetMailTemplate;
+import com.example.cargotracker.notification.domain.model.aggregates.ShipperNotificationMailTemplate;
+import com.example.cargotracker.notification.domain.model.aggregates.TotpEnrollmentMailTemplate;
+import com.example.cargotracker.notification.domain.model.aggregates.TotpResetMailTemplate;
+import com.example.cargotracker.notification.domain.model.aggregates.UserInvitationMailTemplate;
+import com.example.cargotracker.notification.infrastructure.mail.LoggingMailSender;
+import com.example.cargotracker.notification.infrastructure.mail.NotificationMailGuard;
+import com.example.cargotracker.notification.infrastructure.mail.SmtpMailSender;
+import com.example.cargotracker.notification.infrastructure.mail.ThymeleafPasswordResetMailTemplate;
+import com.example.cargotracker.notification.infrastructure.mail.ThymeleafShipperNotificationMailTemplate;
+import com.example.cargotracker.notification.infrastructure.mail.ThymeleafTotpEnrollmentMailTemplate;
+import com.example.cargotracker.notification.infrastructure.mail.ThymeleafTotpResetMailTemplate;
+import com.example.cargotracker.notification.infrastructure.mail.ThymeleafUserInvitationMailTemplate;
+import java.time.Clock;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.transaction.support.TransactionTemplate;
+
+/**
+ * 通知コンテキストの組み立て（ADR-017。Bolt 33）。送信のサービスに、リポジトリとメールの送信と文面のテンプレートをつなぐ。メールの送信は、
+ * dev ならログに出す送信、それ以外は SMTP（守りは {@link NotificationMailGuard}）。
+ */
+@Configuration(proxyBeanMethods = false)
+public class NotificationConfiguration {
+
+    /** 送信元のメールアドレスの設定の名前。 */
+    static final String MAIL_FROM = "cargotracker.mail.from";
+
+    @Bean
+    MailSender notificationMailSender(Environment environment, ObjectProvider<JavaMailSender> javaMailSender) {
+        NotificationMailGuard.check(environment);
+        if (NotificationMailGuard.logsMail(environment)) {
+            return new LoggingMailSender();
+        }
+        return new SmtpMailSender(javaMailSender, environment.getRequiredProperty(MAIL_FROM));
+    }
+
+    @Bean
+    PasswordResetMailTemplate passwordResetMailTemplate() {
+        return new ThymeleafPasswordResetMailTemplate();
+    }
+
+    @Bean
+    UserInvitationMailTemplate userInvitationMailTemplate() {
+        return new ThymeleafUserInvitationMailTemplate();
+    }
+
+    @Bean
+    TotpResetMailTemplate totpResetMailTemplate() {
+        return new ThymeleafTotpResetMailTemplate();
+    }
+
+    /** 管理者による TOTP の登録の解除のお知らせ（Bolt 38d）。 */
+    @Bean
+    TotpResetMailService totpResetMailService(
+            NotificationRepository notifications,
+            MailSender notificationMailSender,
+            TotpResetMailTemplate totpResetMailTemplate,
+            Clock clock,
+            TransactionTemplate transactionTemplate) {
+        return new TotpResetMailService(
+                notifications, notificationMailSender, totpResetMailTemplate, clock, transactionTemplate);
+    }
+
+    @Bean
+    TotpEnrollmentMailTemplate totpEnrollmentMailTemplate() {
+        return new ThymeleafTotpEnrollmentMailTemplate();
+    }
+
+    /** 認証アプリの登録と再登録のお知らせ（Bolt 38d）。 */
+    @Bean
+    TotpEnrollmentMailService totpEnrollmentMailService(
+            NotificationRepository notifications,
+            MailSender notificationMailSender,
+            TotpEnrollmentMailTemplate totpEnrollmentMailTemplate,
+            Clock clock,
+            TransactionTemplate transactionTemplate) {
+        return new TotpEnrollmentMailService(
+                notifications, notificationMailSender, totpEnrollmentMailTemplate, clock, transactionTemplate);
+    }
+
+    /** 荷主の通知一覧の照会（C-16。US-22 AC4。Bolt 43-3）。 */
+    @Bean
+    NotificationQueryService notificationQueryService(NotificationRepository notifications) {
+        return new NotificationQueryService(notifications);
+    }
+
+    @Bean
+    ShipperNotificationMailTemplate shipperNotificationMailTemplate() {
+        return new ThymeleafShipperNotificationMailTemplate();
+    }
+
+    /** 荷主への業務の通知（US-22。Bolt 43）。 */
+    @Bean
+    ShipperNotificationMailService shipperNotificationMailService(
+            NotificationRepository notifications,
+            MailSender notificationMailSender,
+            ShipperNotificationMailTemplate shipperNotificationMailTemplate,
+            Clock clock,
+            TransactionTemplate transactionTemplate) {
+        return new ShipperNotificationMailService(
+                notifications, notificationMailSender, shipperNotificationMailTemplate, clock, transactionTemplate);
+    }
+
+    @Bean
+    ShipperNotificationRetryService shipperNotificationRetryService(
+            NotificationRepository notifications,
+            MailSender notificationMailSender,
+            ShipperNotificationMailTemplate shipperNotificationMailTemplate,
+            Clock clock,
+            TransactionTemplate transactionTemplate) {
+        return new ShipperNotificationRetryService(
+                notifications, notificationMailSender, shipperNotificationMailTemplate, clock, transactionTemplate);
+    }
+
+    @Bean
+    UserInvitationMailService userInvitationMailService(
+            NotificationRepository notifications,
+            MailSender notificationMailSender,
+            UserInvitationMailTemplate userInvitationMailTemplate,
+            Clock clock,
+            TransactionTemplate transactionTemplate) {
+        return new UserInvitationMailService(
+                notifications, notificationMailSender, userInvitationMailTemplate, clock, transactionTemplate);
+    }
+
+    @Bean
+    PasswordResetMailService passwordResetMailService(
+            NotificationRepository notifications,
+            MailSender notificationMailSender,
+            PasswordResetMailTemplate passwordResetMailTemplate,
+            Clock clock,
+            TransactionTemplate transactionTemplate) {
+        return new PasswordResetMailService(
+                notifications, notificationMailSender, passwordResetMailTemplate, clock, transactionTemplate);
+    }
+}

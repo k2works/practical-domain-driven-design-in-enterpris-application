@@ -1,431 +1,260 @@
 'use strict';
 
+/**
+ * cargo-tracker のリリースタスク（Bolt 71）。
+ *
+ * - 版の正本は apps/cargo-tracker/build.gradle の version。版は数字の部分から計算し、-SNAPSHOT を付けずに書き戻す
+ * - タグは cargo-tracker-vX.Y.Z。CHANGELOG は直前のこのタグからの、cargo-tracker のパスの feat・fix・perf・build と ! 付きのコミット
+ * - 配備はしない（配備は cargo-tracker-deploy ワークフロー）。push もしない
+ */
+
 import fs from 'fs';
 import path from 'path';
-import { execSync } from 'child_process';
+import { execFileSync, execSync } from 'child_process';
 
-// ============================================
-// 設定
-// ============================================
+const APP_DIR = 'apps/cargo-tracker';
+const TAG_PREFIX = 'cargo-tracker-v';
+const RELEASE_BRANCH = 'develop';
+const GRADLE_TASKS = 'check documentationTest uiTest bootJar';
 
-/**
- * リリース対象のパッケージディレクトリ一覧を返す。
- * モノレポの場合は apps/packages 配下を追加する。
- * @param {string} rootDir - プロジェクトルート
- * @returns {string[]} パッケージディレクトリの絶対パス配列
- */
-function discoverPackageDirs(rootDir) {
-  const dirs = [rootDir];
-  const candidates = ['apps', 'packages'];
+export const VERSION_PATH = `${APP_DIR}/build.gradle`;
+export const CHANGELOG_PATH = `${APP_DIR}/CHANGELOG.md`;
 
-  for (const candidate of candidates) {
-    const dir = path.join(rootDir, candidate);
-    if (!fs.existsSync(dir)) continue;
-    const entries = fs.readdirSync(dir, { withFileTypes: true });
-    for (const entry of entries) {
-      if (!entry.isDirectory()) continue;
-      const pkgJson = path.join(dir, entry.name, 'package.json');
-      if (fs.existsSync(pkgJson)) {
-        dirs.push(path.join(dir, entry.name));
-      }
-    }
-  }
+const CHANGELOG_SOURCES = [APP_DIR, 'ops/terraform', ':(glob)ops/scripts/operation*.js', ':(glob).github/workflows/cargo-tracker-*.yml'];
+const BREAKING = 'Breaking Changes';
+const SECTIONS = new Map([
+  ['feat', 'Features'],
+  ['fix', 'Bug Fixes'],
+  ['perf', 'Performance'],
+  ['build', 'Build'],
+]);
 
-  return dirs;
+// プラグインの `id '…' version '…'` と区別するため、行の先頭の version だけを読む
+const VERSION_LINE = /^(version\s*=\s*)(['"])([^'"\r\n]+)\2/gm;
+
+function git(rootDir, ...args) {
+  // 失敗は握りつぶさない。履歴の全体を読むので、出力の上限を広げる
+  return execFileSync('git', args, { cwd: rootDir, encoding: 'utf8', stdio: 'pipe', maxBuffer: 64 * 1024 * 1024 }).trim();
 }
 
 // ============================================
-// ヘルパー関数
+// 版
 // ============================================
 
-/**
- * root の package.json からバージョンを読み取る
- * @param {string} rootDir - プロジェクトルート
- * @returns {string} 現在のバージョン (例: "0.1.0")
- */
-function getCurrentVersion(rootDir) {
-  const pkg = JSON.parse(fs.readFileSync(path.join(rootDir, 'package.json'), 'utf8'));
-  return pkg.version;
+export function parseVersion(buildGradle) {
+  const found = [...buildGradle.matchAll(VERSION_LINE)];
+  if (found.length !== 1) {
+    throw new Error(`${VERSION_PATH} の version の行が ${found.length} 個あります（1 個のはずです）`);
+  }
+  return found[0][3];
 }
 
-/**
- * ドライラン用の簡易 semver 計算
- * @param {string} version - 現在のバージョン (例: "0.1.0")
- * @param {string} type - バンプの種類 ("patch" | "minor" | "major")
- * @returns {string} 新しいバージョン
- */
-function semverBump(version, type) {
-  const [major, minor, patch] = version.split('.').map(Number);
-  switch (type) {
-    case 'major':
-      return `${major + 1}.0.0`;
-    case 'minor':
-      return `${major}.${minor + 1}.0`;
-    case 'patch':
-      return `${major}.${minor}.${patch + 1}`;
-    default:
-      throw new Error(`Unknown bump type: ${type}`);
-  }
+export function replaceVersion(buildGradle, version) {
+  parseVersion(buildGradle);
+  return buildGradle.replace(VERSION_LINE, `$1$2${version}$2`);
 }
 
-/**
- * 対象パッケージのバージョンを同期更新
- * @param {string} rootDir - プロジェクトルート
- * @param {string} type - バンプの種類 ("patch" | "minor" | "major")
- * @returns {string} 新しいバージョン
- */
-function bumpVersions(rootDir, type) {
-  const dirs = discoverPackageDirs(rootDir);
-
-  for (const dir of dirs) {
-    execSync(`npm version ${type} --no-git-tag-version`, {
-      cwd: dir,
-      stdio: 'pipe',
-    });
+export function bumpVersion(version, type) {
+  const found = /^(\d+)\.(\d+)\.(\d+)(-SNAPSHOT)?$/.exec(version);
+  if (!found) {
+    throw new Error(`版の形式が X.Y.Z か X.Y.Z-SNAPSHOT ではありません: ${version}`);
   }
-
-  return getCurrentVersion(rootDir);
+  const [major, minor, patch] = found.slice(1, 4).map(Number);
+  const next = {
+    major: `${major + 1}.0.0`,
+    minor: `${major}.${minor + 1}.0`,
+    patch: `${major}.${minor}.${patch + 1}`,
+  }[type];
+  if (!next) {
+    throw new Error(`版の上げ方が分かりません: ${type}`);
+  }
+  return next;
 }
 
-/**
- * 直近タグから HEAD までの git log を Conventional Commits で分類し Markdown を生成
- * @param {string} rootDir - プロジェクトルート
- * @param {string} version - リリースバージョン
- * @returns {string} CHANGELOG エントリ（Markdown）
- */
-function generateChangelog(rootDir, version) {
-  let lastTag;
-  try {
-    lastTag = execSync('git describe --tags --abbrev=0', {
-      cwd: rootDir,
-      stdio: 'pipe',
-      encoding: 'utf8',
-    }).trim();
-  } catch {
-    lastTag = null;
-  }
+function currentVersion(rootDir) {
+  return parseVersion(fs.readFileSync(path.join(rootDir, VERSION_PATH), 'utf8'));
+}
 
+// ============================================
+// CHANGELOG
+// ============================================
+
+function releaseCommits(rootDir) {
+  const lastTag = git(rootDir, 'tag', '--list', `${TAG_PREFIX}*`, '--merged', 'HEAD', '--sort=-v:refname').split('\n')[0];
   const range = lastTag ? `${lastTag}..HEAD` : 'HEAD';
-  let logOutput;
-  try {
-    logOutput = execSync(`git log ${range} --pretty=format:"%h|||%s"`, {
-      cwd: rootDir,
-      stdio: 'pipe',
-      encoding: 'utf8',
-    }).trim();
-  } catch {
-    logOutput = '';
-  }
-
-  if (!logOutput) {
-    return buildChangelogEntry(version, {});
-  }
-
-  const categories = {
-    feat: { title: 'Features', commits: [] },
-    fix: { title: 'Bug Fixes', commits: [] },
-    docs: { title: 'Documentation', commits: [] },
-    refactor: { title: 'Refactoring', commits: [] },
-    test: { title: 'Tests', commits: [] },
-    chore: { title: 'Chores', commits: [] },
-    perf: { title: 'Performance', commits: [] },
-    ci: { title: 'CI', commits: [] },
-    style: { title: 'Styles', commits: [] },
-    build: { title: 'Build', commits: [] },
-    other: { title: 'Other', commits: [] },
-  };
-
-  for (const line of logOutput.split('\n')) {
-    if (!line.trim()) continue;
-    const [hash, ...rest] = line.split('|||');
-    const subject = rest.join('|||');
-    const match = subject.match(/^(\w+)(?:\(.+?\))?:\s*(.+)$/);
-    if (match) {
-      const type = match[1].toLowerCase();
-      const message = match[2];
-      if (categories[type]) {
-        categories[type].commits.push({ hash: hash.trim(), message });
-      } else {
-        categories.other.commits.push({ hash: hash.trim(), message: subject });
-      }
-    } else {
-      categories.other.commits.push({ hash: hash.trim(), message: subject });
-    }
-  }
-
-  return buildChangelogEntry(version, categories);
+  const log = git(rootDir, 'log', range, '--pretty=format:%h%x1f%s', '--', ...CHANGELOG_SOURCES);
+  return log ? log.split('\n').map((line) => line.split('\x1f')) : [];
 }
 
-/**
- * CHANGELOG エントリを Markdown で構築
- * @param {string} version
- * @param {Object} categories
- * @returns {string}
- */
-function buildChangelogEntry(version, categories) {
-  const date = new Date().toISOString().slice(0, 10);
-  const lines = [`## [${version}] - ${date}`, ''];
-
-  let hasContent = false;
-  for (const [, cat] of Object.entries(categories)) {
-    if (cat.commits && cat.commits.length > 0) {
-      hasContent = true;
-      lines.push(`### ${cat.title}`, '');
-      for (const c of cat.commits) {
-        lines.push(`- ${c.message} (${c.hash})`);
-      }
-      lines.push('');
-    }
+export function generateChangelog(rootDir, version, date) {
+  const grouped = new Map([BREAKING, ...SECTIONS.values()].map((title) => [title, []]));
+  for (const [hash, subject] of releaseCommits(rootDir)) {
+    const found = /^(\w+)(?:\([^)]*\))?(!)?:\s*(.+)$/.exec(subject);
+    if (!found) continue;
+    const [, type, breaking, message] = found;
+    const title = breaking ? BREAKING : SECTIONS.get(type);
+    if (title) grouped.get(title).push(`- ${message} (${hash})`);
   }
 
-  if (!hasContent) {
-    lines.push('- No notable changes', '');
-  }
-
-  return lines.join('\n');
+  const sections = [...grouped]
+    .filter(([, lines]) => lines.length > 0)
+    .map(([title, lines]) => `### ${title}\n\n${lines.join('\n')}\n`);
+  const body = sections.length > 0 ? sections.join('\n') : '- 対象の変更はありません\n';
+  return `## [${version}] - ${date}\n\n${body}`;
 }
 
-/**
- * CHANGELOG.md の先頭にエントリを追加（なければ新規作成）
- * @param {string} rootDir - プロジェクトルート
- * @param {string} entry - 追加する CHANGELOG エントリ
- */
-function updateChangelog(rootDir, entry) {
-  const changelogPath = path.join(rootDir, 'CHANGELOG.md');
-  const header = '# Changelog\n\n';
-
-  if (fs.existsSync(changelogPath)) {
-    const existing = fs.readFileSync(changelogPath, 'utf8');
-    const withoutHeader = existing.replace(/^# Changelog\s*\n*/, '');
-    fs.writeFileSync(changelogPath, header + entry + '\n' + withoutHeader);
-  } else {
-    fs.writeFileSync(changelogPath, header + entry);
-  }
-}
-
-/**
- * 変更ファイルをステージング → commit → tag
- * @param {string} rootDir - プロジェクトルート
- * @param {string} version - リリースバージョン
- */
-function createGitCommitAndTag(rootDir, version) {
-  const filesToStage = collectFilesToStage(rootDir);
-
-  for (const file of filesToStage) {
-    execSync(`git add "${file}"`, { cwd: rootDir, stdio: 'pipe' });
-  }
-
-  execSync(`git commit -m "release: v${version}"`, {
-    cwd: rootDir,
-    stdio: 'pipe',
-    env: { ...process.env, USER_APPROVED_COMMIT: '1' },
-  });
-
-  execSync(`git tag -a "v${version}" -m "v${version}"`, {
-    cwd: rootDir,
-    stdio: 'pipe',
-  });
-}
-
-/**
- * ステージング対象のファイルパスを収集
- * @param {string} rootDir - プロジェクトルート
- * @returns {string[]} 相対パスの配列
- */
-function collectFilesToStage(rootDir) {
-  const files = ['package.json', 'CHANGELOG.md'];
-  const dirs = discoverPackageDirs(rootDir);
-
-  for (const dir of dirs) {
-    if (dir === rootDir) continue;
-    const relative = path.relative(rootDir, dir);
-    files.push(path.join(relative, 'package.json'));
-  }
-
-  return files;
-}
-
-/**
- * リリース結果のサマリーを表示
- * @param {string} oldVersion - 旧バージョン
- * @param {string} newVersion - 新バージョン
- */
-function printSummary(oldVersion, newVersion) {
-  console.log('');
-  console.log('=== Release Summary ===');
-  console.log(`  Version: ${oldVersion} -> ${newVersion}`);
-  console.log(`  Tag:     v${newVersion}`);
-  console.log(`  Commit:  release: v${newVersion}`);
-  console.log('');
-  console.log('Next steps:');
-  console.log('  git push && git push --tags');
-  console.log('');
+export function prependChangelog(existing, entry) {
+  const previous = (existing ?? '').replace(/^# Changelog\s*/, '');
+  return `# Changelog\n\n${entry}${previous ? `\n${previous}` : ''}`;
 }
 
 // ============================================
-// コマンド実行ヘルパー
+// リリースの実行
 // ============================================
 
-/**
- * シェルコマンドを実行し、失敗時に done コールバックへエラーを渡す
- * @param {string} command - 実行するコマンド
- * @param {string} rootDir - 実行ディレクトリ
- * @param {Function} done - コールバック
- */
-function runCommandInDir(command, rootDir, done) {
-  try {
-    execSync(command, { cwd: rootDir, stdio: 'inherit' });
-    done();
-  } catch (error) {
-    done(error);
+export function executeRelease(rootDir, type, date) {
+  const oldVersion = currentVersion(rootDir);
+  const newVersion = bumpVersion(oldVersion, type);
+  const tag = `${TAG_PREFIX}${newVersion}`;
+
+  // 何かを書き換える前に、失敗する条件を確かめる
+  if (git(rootDir, 'tag', '--list', tag)) {
+    throw new Error(`タグ ${tag} はもうあります`);
   }
+  if (git(rootDir, 'status', '--porcelain', '--', VERSION_PATH, CHANGELOG_PATH)) {
+    throw new Error(`${VERSION_PATH} か ${CHANGELOG_PATH} に未コミットの変更があります`);
+  }
+
+  const entry = generateChangelog(rootDir, newVersion, date);
+  const versionFile = path.join(rootDir, VERSION_PATH);
+  const changelogFile = path.join(rootDir, CHANGELOG_PATH);
+  const changelog = fs.existsSync(changelogFile) ? fs.readFileSync(changelogFile, 'utf8') : null;
+  fs.writeFileSync(versionFile, replaceVersion(fs.readFileSync(versionFile, 'utf8'), newVersion));
+  fs.writeFileSync(changelogFile, prependChangelog(changelog, entry));
+
+  const message = `chore(release): cargo-tracker v${newVersion}`;
+  git(rootDir, 'add', '--', VERSION_PATH, CHANGELOG_PATH);
+  // パスを指定して、ほかにステージされた変更を混ぜない
+  git(rootDir, 'commit', '-m', message, '--', VERSION_PATH, CHANGELOG_PATH);
+  git(rootDir, 'tag', '-a', tag, '-m', tag);
+
+  return { oldVersion, newVersion, tag };
+}
+
+// ============================================
+// 品質ゲート
+// ============================================
+
+export function branchProblem({ branch, ahead, behind }) {
+  if (branch !== RELEASE_BRANCH) {
+    return `リリースは ${RELEASE_BRANCH} で行います（今は ${branch}）`;
+  }
+  if (ahead !== 0 || behind !== 0) {
+    return `origin/${RELEASE_BRANCH} と一致していません（ahead ${ahead}、behind ${behind}）`;
+  }
+  return null;
+}
+
+export function gradleGate(rootDir, platform) {
+  // Windows の cmd.exe は ./gradlew を実行できないため gradlew.bat を使う
+  const wrapper = platform === 'win32' ? '.\\gradlew.bat' : './gradlew';
+  return { command: `${wrapper} ${GRADLE_TASKS}`, cwd: path.join(rootDir, APP_DIR) };
+}
+
+function checkClean(rootDir) {
+  const status = git(rootDir, 'status', '--porcelain');
+  if (status) {
+    throw new Error(`作業ツリーが clean ではありません。コミットか退避をしてから実行してください。\n${status}`);
+  }
+}
+
+function checkBranch(rootDir) {
+  git(rootDir, 'fetch', '--quiet', 'origin', RELEASE_BRANCH);
+  const [behind, ahead] = git(rootDir, 'rev-list', '--left-right', '--count', `origin/${RELEASE_BRANCH}...HEAD`)
+    .split(/\s+/)
+    .map(Number);
+  const problem = branchProblem({ branch: git(rootDir, 'rev-parse', '--abbrev-ref', 'HEAD'), ahead, behind });
+  if (problem) throw new Error(problem);
+}
+
+function runOpsTests(rootDir) {
+  const files = fs
+    .readdirSync(path.join(rootDir, 'ops/scripts'))
+    .filter((name) => name.endsWith('.test.js'))
+    .map((name) => `ops/scripts/${name}`);
+  execFileSync(process.execPath, ['--test', ...files], { cwd: rootDir, stdio: 'inherit' });
+}
+
+function runGradleGate(rootDir) {
+  const { command, cwd } = gradleGate(rootDir, process.platform);
+  execSync(command, { cwd, stdio: 'inherit' });
 }
 
 // ============================================
 // タスク登録
 // ============================================
 
-/**
- * 指定されたタイプのリリースタスクを生成
- * @param {string} rootDir - プロジェクトルート
- * @param {string} type - "patch" | "minor" | "major"
- * @returns {Function} gulp タスク関数
- */
-function createReleaseTask(rootDir, type) {
-  const task = (done) => {
-    try {
-      const oldVersion = getCurrentVersion(rootDir);
-      console.log(`[1/4] バージョンを更新 (${type})...`);
-      const newVersion = bumpVersions(rootDir, type);
-
-      console.log('[2/4] CHANGELOG を生成...');
-      const entry = generateChangelog(rootDir, newVersion);
-      updateChangelog(rootDir, entry);
-
-      console.log('[3/4] git commit + tag...');
-      createGitCommitAndTag(rootDir, newVersion);
-
-      console.log('[4/4] サマリー表示');
-      printSummary(oldVersion, newVersion);
-
-      done();
-    } catch (error) {
-      done(error);
-    }
-  };
-  task.displayName = `release:${type}:execute`;
-  return task;
+function today() {
+  const now = new Date();
+  const pad = (value) => String(value).padStart(2, '0');
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
 }
 
 /**
  * リリースタスクを gulp に登録する
  * @param {import('gulp').Gulp} gulp - Gulp インスタンス
  * @param {{ rootDir?: string }} [options] - オプション
- * @param {string} [options.rootDir] - プロジェクトルート（省略時は gulpfile の 2 階層上）
+ * @param {string} [options.rootDir] - リポジトリのルート（省略時は実行したディレクトリ）
  */
 export default function (gulp, options = {}) {
   const rootDir = options.rootDir || path.resolve(process.cwd());
-
-  // ──────────────────────────────────────────────
-  // preflight: 品質ゲート
-  // ──────────────────────────────────────────────
-
-  gulp.task('release:preflight:clean', (done) => {
-    console.log('=== Release Preflight ===');
-    console.log('[1/5] Working tree がクリーンか確認...');
+  const step = (run) => (done) => {
     try {
-      const status = execSync('git status --porcelain', {
-        cwd: rootDir,
-        stdio: 'pipe',
-        encoding: 'utf8',
-      }).trim();
-      if (status) {
-        done(new Error('Working tree is not clean. Commit or stash your changes first.\n' + status));
-        return;
-      }
-      console.log('  -> Clean');
+      run();
       done();
     } catch (error) {
       done(error);
     }
-  });
+  };
+  const task = (name, run) => gulp.task(name, step(run));
 
-  gulp.task('release:preflight:lint', (done) => {
-    console.log('[2/5] Lint...');
-    runCommandInDir('npm run lint', rootDir, done);
-  });
-
-  gulp.task('release:preflight:test', (done) => {
-    console.log('[3/5] Test...');
-    runCommandInDir('npm run test', rootDir, done);
-  });
-
-  gulp.task('release:preflight:build', (done) => {
-    console.log('[4/5] Build...');
-    runCommandInDir('npm run build', rootDir, done);
-  });
-
-  gulp.task('release:preflight:e2e', (done) => {
-    console.log('[5/5] E2E Test...');
-    runCommandInDir('npm run test:e2e', rootDir, done);
-  });
-
+  task('release:preflight:clean', () => checkClean(rootDir));
+  task('release:preflight:branch', () => checkBranch(rootDir));
+  task('release:preflight:ops-test', () => runOpsTests(rootDir));
+  task('release:preflight:gradle', () => runGradleGate(rootDir));
   gulp.task(
     'release:preflight',
     gulp.series(
       'release:preflight:clean',
-      'release:preflight:lint',
-      'release:preflight:test',
-      'release:preflight:build',
-      'release:preflight:e2e'
+      'release:preflight:branch',
+      'release:preflight:ops-test',
+      'release:preflight:gradle',
+      // ゲートは約 30 分かかる。その間に作業ツリーや HEAD が変わっていないことを、もう一度確かめる
+      'release:preflight:clean',
+      'release:preflight:branch'
     )
   );
 
-  // ──────────────────────────────────────────────
-  // release:patch / minor / major
-  // ──────────────────────────────────────────────
+  for (const type of ['patch', 'minor', 'major']) {
+    // 書き換える部分は名前を付けて登録しない（品質ゲートを通らずに呼べないようにする）
+    const execute = step(() => {
+      const { oldVersion, newVersion, tag } = executeRelease(rootDir, type, today());
+      console.log(`版: ${oldVersion} -> ${newVersion}、タグ: ${tag}`);
+      console.log(`内容を確かめてから push します: git push origin ${RELEASE_BRANCH} ${tag}`);
+    });
+    execute.displayName = `${type} の版・CHANGELOG・タグ`;
+    gulp.task(`release:${type}`, gulp.series('release:preflight', execute));
+  }
 
-  gulp.task('release:patch', gulp.series('release:preflight', createReleaseTask(rootDir, 'patch')));
-  gulp.task('release:minor', gulp.series('release:preflight', createReleaseTask(rootDir, 'minor')));
-  gulp.task('release:major', gulp.series('release:preflight', createReleaseTask(rootDir, 'major')));
-
-  // ──────────────────────────────────────────────
-  // release:dry-run
-  // ──────────────────────────────────────────────
-
-  gulp.task('release:dry-run', (done) => {
-    try {
-      const currentVersion = getCurrentVersion(rootDir);
-      console.log('=== Release Dry Run ===');
-      console.log('');
-      console.log(`Current version: ${currentVersion}`);
-      console.log('');
-      console.log('Version preview:');
-      console.log(`  patch: ${currentVersion} -> ${semverBump(currentVersion, 'patch')}`);
-      console.log(`  minor: ${currentVersion} -> ${semverBump(currentVersion, 'minor')}`);
-      console.log(`  major: ${currentVersion} -> ${semverBump(currentVersion, 'major')}`);
-      console.log('');
-      console.log('CHANGELOG preview:');
-      console.log('---');
-      const entry = generateChangelog(rootDir, semverBump(currentVersion, 'patch'));
-      console.log(entry);
-      console.log('---');
-      console.log('');
-      console.log('To release, run:');
-      console.log('  npm run release:patch   # patch release');
-      console.log('  npm run release:minor   # minor release');
-      console.log('  npm run release:major   # major release');
-      done();
-    } catch (error) {
-      done(error);
+  task('release:dry-run', () => {
+    const version = currentVersion(rootDir);
+    console.log('=== Release Dry Run（何も変更しません） ===\n');
+    console.log(`今の版: ${version}`);
+    for (const type of ['patch', 'minor', 'major']) {
+      const next = bumpVersion(version, type);
+      console.log(`  ${type}: ${next}（タグ ${TAG_PREFIX}${next}）`);
     }
+    console.log(`\n--- ${CHANGELOG_PATH} に足す内容 ---\n`);
+    console.log(generateChangelog(rootDir, '次の版', today()));
   });
-
-  // ──────────────────────────────────────────────
-  // release:deploy:* (release + deploy)
-  // ──────────────────────────────────────────────
-
-  gulp.task('release:deploy:patch', gulp.series('release:patch', 'deploy:prd'));
-  gulp.task('release:deploy:minor', gulp.series('release:minor', 'deploy:prd'));
-  gulp.task('release:deploy:major', gulp.series('release:major', 'deploy:prd'));
 }

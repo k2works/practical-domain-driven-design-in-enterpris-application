@@ -1,0 +1,497 @@
+package com.example.cargotracker.ui;
+
+import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
+
+import com.example.cargotracker.shared.domain.Role;
+import com.microsoft.playwright.Locator;
+import com.microsoft.playwright.Page;
+import com.microsoft.playwright.options.AriaRole;
+import io.cucumber.java.ja.かつ;
+import io.cucumber.java.ja.ならば;
+import io.cucumber.java.ja.もし;
+import io.cucumber.java.ja.前提;
+import java.time.Duration;
+import java.util.UUID;
+import java.util.regex.Pattern;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.jdbc.core.JdbcTemplate;
+
+/**
+ * 経路設計案件一覧（S-05）と経路候補の比較（S-06）、経路の確定（S-07）の画面の層のステップ定義（US-06・US-07。Bolt 17・19）。
+ * 案件は、同じシナリオで荷主が提出して詳細経路設計を依頼した見積依頼（{@link UiScenarioState}）のもの。
+ * 航海はシナリオごとに一意の航海番号で DB に入れる（画面の層は実際の時計で動くため、2099 年の運航予定にする。
+ * 荷主の希望到着期限は 2099-11-02 09:00 JST）。
+ */
+public class RoutingUiSteps {
+
+    private static final String CALCULATE = "候補を算出";
+    private static final String CONFIRM = "この経路で確定する";
+    /** 取込の Steps が使う航海の名前（航海番号の末尾。Bolt 39e）。航海番号の上限の 30 文字にして、幅 320 CSS px の折り返しを確かめる（20 文字。Bolt 39f2 の行 30）。 */
+    static final String ADOPTED = "ADOPTEDVOYAGENUMBER1";
+
+    private static final String STALE_MARK = "古くなった候補";
+    private static final String CONFIRM_ENTRY = "この候補で確定へ";
+
+    private final BrowserSession browser;
+    private final UiScenarioState state;
+    private final JdbcTemplate jdbc;
+    private final String baseUrl;
+    private String confirmationUrl;
+
+    public RoutingUiSteps(
+            BrowserSession browser,
+            UiScenarioState state,
+            JdbcTemplate jdbc,
+            @LocalServerPort int port,
+            @Value("${ui.base-url:}") String configuredBaseUrl) {
+        this.browser = browser;
+        this.state = state;
+        this.jdbc = jdbc;
+        this.baseUrl = configuredBaseUrl.isBlank() ? "http://localhost:" + port : configuredBaseUrl;
+    }
+
+    private Page page() {
+        return browser.page();
+    }
+
+    private String voyage(String name) {
+        return state.voyageNumber(name);
+    }
+
+    /**
+     * シナリオで入れた航海を消す。航海は DB をシナリオの間で共有するため、残すとほかのシナリオの航海とつながって候補が増え、
+     * 上限（20 件）で切られる（Bolt 17 レビュー D-62）。接続時間規則は同じ値なので残しても判定は変わらない。
+     * 案件の候補の区間が航海を参照する外部キーはないため、航海だけを消す（候補は案件ごとに残る）。航海を入れたシナリオだけを消す（タグを
+     * 列挙すると、航海を作る手順を使う機能を足したときに条件の更新を忘れる。Bolt 28 の開発レビューで、`@US-04`・`@US-24` の漏れが
+     * 見つかった）。航海を入れる手順と印がこのクラスにあるので、後片付けもここに置く（ブラウザの文脈の {@link BrowserSession} や
+     * {@link UiHooks} には移さない。Bolt 29）。
+     */
+    @io.cucumber.java.After("@ui")
+    public void シナリオの航海を消す() {
+        if (!state.voyagesWritten()) {
+            return;
+        }
+        jdbc.update("DELETE FROM routing.port_call WHERE voyage_number LIKE ?", state.voyageNumberPattern());
+        jdbc.update("DELETE FROM routing.voyage WHERE voyage_number LIKE ?", state.voyageNumberPattern());
+    }
+
+    /**
+     * 直行（適合）、東京 → シンガポールと、シンガポールで 8 時間ちょうどで接続し期限と同時刻に着く航海（適合）、
+     * 期限の 1 日 12 時間後に着く直行（期限超過）。シンガポールの必要最小接続時間は 8 時間。
+     */
+    @前提("経路の比較に使う航海と接続時間規則がある")
+    public void 航海と接続時間規則がある() {
+        insertVoyage("DIRECT", "JPTYO", "2099-10-12 00:00:00+00", "NLRTM", "2099-10-30 09:00:00+00");
+        insertVoyage("FEEDER", "JPTYO", "2099-10-10 00:00:00+00", "SGSIN", "2099-10-20 00:00:00+00");
+        insertVoyage("MAIN", "SGSIN", "2099-10-20 08:00:00+00", "NLRTM", "2099-11-02 00:00:00+00");
+        insertVoyage("LATE", "JPTYO", "2099-10-12 00:00:00+00", "NLRTM", "2099-11-03 12:00:00+00");
+        jdbc.update(
+                "INSERT INTO routing.connection_rule (id, route_scope, port_unlocode, min_connection_minutes, valid_from,"
+                        + " valid_to, version) VALUES (?, '*', 'SGSIN', 480, TIMESTAMP WITH TIME ZONE"
+                        + " '2026-01-01 00:00:00+00', NULL, 0)",
+                UUID.randomUUID());
+    }
+
+    /** 取得から 25 時間たった航海の直行（情報不足。許容 24 時間。US-06 AC4、D-89。Bolt 37b2）。 */
+    @前提("取得から 25 時間たった航海の直行の便がある")
+    public void 取得から25時間たった航海がある() {
+        insertVoyage(
+                "STALE", "JPTYO", "2099-10-12 00:00:00+00", "NLRTM", "2099-10-29 00:00:00+00", Duration.ofHours(25));
+    }
+
+    private void insertVoyage(String name, String load, String departure, String discharge, String arrival) {
+        insertVoyage(name, load, departure, discharge, arrival, Duration.ofHours(1));
+    }
+
+    private void insertVoyage(
+            String name, String load, String departure, String discharge, String arrival, Duration age) {
+        state.markVoyagesWritten();
+        String number = voyage(name);
+        jdbc.update(
+                "INSERT INTO routing.voyage (voyage_number, adopted_info_version, source_kind, source_ref, acquired_at,"
+                        + " version, updated_at) VALUES (?, ?, 'MANUAL_ENTRY', '画面の層のテスト',"
+                        + " ?, 0, CURRENT_TIMESTAMP)",
+                number,
+                number + "@1",
+                // 判定はアプリの時計（同じ JVM の実時計）で行うので、データベースの時計ではなく JVM の時計で入れる（Bolt 37b）
+                java.sql.Timestamp.from(java.time.Instant.now().minus(age)));
+        jdbc.update(
+                "INSERT INTO routing.port_call VALUES (?, 1, ?, NULL, CAST(? AS TIMESTAMP WITH TIME ZONE))",
+                number,
+                load,
+                departure);
+        jdbc.update(
+                "INSERT INTO routing.port_call VALUES (?, 2, ?, CAST(? AS TIMESTAMP WITH TIME ZONE), NULL)",
+                number,
+                discharge,
+                arrival);
+    }
+
+    /** 案件は DE-16 を受けて非同期に作られるため、行が出るまで開き直す。 */
+    @もし("経路設計者が案件一覧から提出した見積依頼の案件を開く")
+    public void 経路設計者が案件を開く() {
+        Locator row = page().getByRole(AriaRole.ROW)
+                .filter(new Locator.FilterOptions().setHasText(state.transportRequestNumber()));
+        BrowserSession.awaitEventually(
+                "案件一覧に " + state.transportRequestNumber() + " の案件が出ない（DE-16 の受け取りを待ちきれない）", 500, () -> {
+                    browser.navigate(baseUrl + "/staff/routing-cases");
+                    return row.count() > 0;
+                });
+        browser.checkAccessibility();
+        row.getByRole(AriaRole.LINK).first().click();
+        page().waitForURL("**/staff/routing-cases/RC-*");
+        assertThat(page().locator("main")).containsText("まだ候補を算出していません");
+        browser.checkAccessibility();
+    }
+
+    @かつ("キー操作だけで候補を算出する")
+    public void キー操作だけで候補を算出する() {
+        page().locator("body").focus();
+        Locator button = page().getByRole(
+                        AriaRole.BUTTON,
+                        new Page.GetByRoleOptions().setName(CALCULATE).setExact(true));
+        for (int i = 0; i < 60 && !isFocused(button); i++) {
+            page().keyboard().press("Tab");
+        }
+        if (!isFocused(button)) {
+            throw new AssertionError("キー操作で「" + CALCULATE + "」に届かない");
+        }
+        page().keyboard().press("Enter");
+        page().waitForURL("**/staff/routing-cases/RC-*");
+        assertThat(page().getByRole(AriaRole.STATUS)).containsText("算出しました");
+        browser.checkAccessibility();
+    }
+
+    private static boolean isFocused(Locator locator) {
+        return (Boolean) locator.evaluate("element => element === document.activeElement");
+    }
+
+    @ならば("算出した件数が示される")
+    public void 算出した件数が示される() {
+        assertThat(page().getByRole(AriaRole.STATUS)).containsText("候補を");
+        assertThat(page().getByRole(AriaRole.STATUS)).containsText("件算出しました");
+    }
+
+    @ならば("直行の航海の候補は {string} と示される")
+    public void 直行の候補(String judgement) {
+        assertThat(candidate(voyage("DIRECT"))).containsText(judgement);
+    }
+
+    @ならば("期限と同時刻に着き接続時間が必要最小接続時間と同値の候補は {string} と示される")
+    public void 同時刻と同値の候補(String judgement) {
+        Locator candidate = candidate(voyage("FEEDER"), voyage("MAIN"));
+        assertThat(candidate).containsText(judgement);
+        assertThat(candidate).containsText("余裕 0 分");
+    }
+
+    @ならば("期限に間に合わない候補は {string} と示され、理由に {string} と参照した航海情報の版が示される")
+    public void 期限超過の候補(String judgement, String reason) {
+        Locator candidate = candidate(voyage("LATE"));
+        assertThat(candidate).containsText(judgement);
+        assertThat(candidate).containsText(reason);
+        assertThat(candidate).containsText("参照した航海情報の版 " + voyage("LATE") + "@1");
+    }
+
+    @ならば("古い航海の候補は {string} と示され、理由に {string} と参照した航海情報の版が示される")
+    public void 古い航海の候補(String judgement, String reason) {
+        Locator candidate = candidate(voyage("STALE"));
+        // 利用者が除外の理由を読むところまで画面を送る（デモの動画に理由を写す。Bolt 37b2）
+        candidate.scrollIntoViewIfNeeded();
+        assertThat(candidate).containsText(judgement);
+        assertThat(candidate).containsText("情報不足（" + voyage("STALE") + " の情報は" + reason);
+        assertThat(candidate).containsText("参照した航海情報の版 " + voyage("STALE") + "@1");
+    }
+
+    /**
+     * 航海番号をすべて含む候補のまとまり（候補ごとの article）。航海は DB をシナリオの間で共有するため、ほかのシナリオの航海と
+     * つないだ候補もある。このシナリオの航海番号だけで絞る。
+     */
+    private Locator candidate(String... voyageNumbers) {
+        Locator found = page().locator("article.route-candidate");
+        for (String voyageNumber : voyageNumbers) {
+            found = found.filter(new Locator.FilterOptions().setHasText(voyageNumber));
+        }
+        assertThat(found).hasCount(1);
+        return found;
+    }
+
+    @もし("直行の航海の候補の確定へ進む")
+    public void 直行の候補の確定へ進む() {
+        openConfirmationOf(voyage("DIRECT"));
+    }
+
+    /** 1 つのページを役割で切り替えるので、開いた確定の画面は開き直せるように URL を覚える（Bolt 39e2 の決定 (6)）。 */
+    @かつ("取り込んだ航海の候補の確定へ進む")
+    public void 取り込んだ航海の候補の確定へ進む() {
+        openConfirmationOf(adoptedVoyage());
+        assertThat(page().locator("main")).containsText("最新の航海の情報（情報版、区間の予定、取得から経った時間）");
+        confirmationUrl = page().url();
+    }
+
+    @もし("経路設計者が確定の画面を開き直す")
+    public void 経路設計者が確定の画面を開き直す() {
+        browser.navigate(confirmationUrl);
+        assertThat(page().locator("main")).containsText("この経路で確定しますか");
+        browser.checkAccessibility();
+    }
+
+    private void openConfirmationOf(String voyageNumber) {
+        candidate(voyageNumber)
+                .getByRole(AriaRole.LINK, new Locator.GetByRoleOptions().setName(CONFIRM_ENTRY))
+                .click();
+        page().waitForURL("**/confirmation?candidate=*");
+        assertThat(page().getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setLevel(1)))
+                .containsText("経路の確定");
+        assertThat(page().locator("main")).containsText("この経路で確定しますか");
+        assertThat(page().locator("main")).containsText(voyageNumber);
+        browser.checkAccessibility();
+    }
+
+    @かつ("判断根拠 {string} を入れてキー操作だけで確定する")
+    public void 判断根拠を入れてキー操作だけで確定する(String rationale) {
+        page().getByLabel("判断根拠").fill(rationale);
+        Locator button = page().getByRole(
+                        AriaRole.BUTTON,
+                        new Page.GetByRoleOptions().setName(CONFIRM).setExact(true));
+        page().getByLabel("判断根拠").focus();
+        for (int i = 0; i < 10 && !isFocused(button); i++) {
+            page().keyboard().press("Tab");
+        }
+        if (!isFocused(button)) {
+            throw new AssertionError("キー操作で「" + CONFIRM + "」に届かない");
+        }
+        page().keyboard().press("Enter");
+        page().waitForURL("**/staff/routing-cases/RC-*");
+    }
+
+    @かつ("判断根拠を入れずに確定する")
+    public void 判断根拠を入れずに確定する() {
+        page().getByRole(
+                        AriaRole.BUTTON,
+                        new Page.GetByRoleOptions().setName(CONFIRM).setExact(true))
+                .click();
+        page().waitForLoadState();
+    }
+
+    /** 確定の画面を開いた後に、外部原本の取込で直行の航海の情報版が変わる（取得時刻は判定と同じ JVM の時計。Bolt 37c、T-171）。 */
+    @かつ("直行の航海の情報版が外部原本の取込で更新される")
+    public void 直行の航海の情報版が更新される() {
+        String number = voyage("DIRECT");
+        int updated = jdbc.update(
+                "UPDATE routing.voyage SET adopted_info_version = ?, acquired_at = ?, updated_at = CURRENT_TIMESTAMP"
+                        + " WHERE voyage_number = ?",
+                number + "@2",
+                java.sql.Timestamp.from(java.time.Instant.now()),
+                number);
+        if (updated != 1) {
+            throw new AssertionError("情報版を更新する航海がない: " + number);
+        }
+    }
+
+    @ならば("比較の画面に戻って航海の情報が更新されたため再算出して判断し直すよう示され、経路はまだ確定していない")
+    public void 情報版の更新で比較の画面に戻る() {
+        assertReturnedToComparisonFor(voyage("DIRECT"));
+    }
+
+    @ならば("比較の画面に戻って航海の情報が更新されたため再算出して判断し直すよう示され、取り込んだ航海の候補の経路はまだ確定していない")
+    public void 取り込んだ航海の候補の確定が拒否され比較の画面に戻る() {
+        assertReturnedToComparisonFor(adoptedVoyage());
+    }
+
+    private void assertReturnedToComparisonFor(String voyageNumber) {
+        assertThat(page().getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setLevel(1)))
+                .containsText("経路候補の比較");
+        Locator problem = page().getByRole(AriaRole.ALERT).first();
+        // 利用者が通知を読むところまで画面を送る（デモの動画に通知を写す）
+        problem.scrollIntoViewIfNeeded();
+        assertThat(problem).containsText("候補を算出した後に航海の情報が更新されたため確定できません");
+        assertThat(problem).containsText("候補を再算出して判断し直してください");
+        assertThat(candidate(voyageNumber)).not().containsText("確定した経路");
+        browser.checkAccessibility();
+    }
+
+    @ならば("経路を確定したと示され、確定した経路に判断根拠が示され、直行の航海の候補に確定と示される")
+    public void 経路を確定したと示される() {
+        assertThat(page().getByRole(AriaRole.STATUS)).containsText("経路を確定しました");
+        // 候補の番号は、ほかのシナリオが足した航海で変わるため問わない（画面の層のシナリオは同じアプリケーションで動く）
+        assertThat(page().getByRole(
+                                AriaRole.REGION,
+                                new Page.GetByRoleOptions().setName(Pattern.compile("^確定した経路（候補 \\d+）$"))))
+                .containsText("直行で期限まで 3 日あり");
+        assertThat(candidate(voyage("DIRECT"))).containsText("確定した経路");
+        assertThat(page().getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("候補を再算出")))
+                .hasCount(0);
+        browser.checkAccessibility();
+    }
+
+    @かつ("案件一覧で案件の状態は {string} と示される")
+    public void 案件一覧の状態(String status) {
+        browser.navigate(baseUrl + "/staff/routing-cases");
+        assertThat(page().getByRole(AriaRole.ROW)
+                        .filter(new Locator.FilterOptions().setHasText(state.transportRequestNumber())))
+                .containsText(status);
+        browser.checkAccessibility();
+    }
+
+    @ならば("判断根拠の誤りがエラー要約に示され、経路はまだ確定していない")
+    public void 判断根拠の誤りが示される() {
+        assertThat(page().locator("#error-summary")).containsText("判断根拠を入れてください");
+        assertThat(page().locator("main")).containsText("この経路で確定しますか");
+        browser.checkAccessibility();
+        page().getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("経路候補の比較へ戻る"))
+                .click();
+        assertThat(candidate(voyage("DIRECT"))).not().containsText("確定した経路");
+    }
+
+    /** 取込の航海番号（{@link ExternalDataIngestionUiSteps} と同じ。Bolt 39e の決定 (12)）。 */
+    private String adoptedVoyage() {
+        return voyage(ADOPTED);
+    }
+
+    /** DE-12 は非同期に配信されるので、航海の行が出るまで待つ（Bolt 39e の決定 (12)）。 */
+    @かつ("取り込んだ航海が経路設計の航海に反映される")
+    public void 取り込んだ航海が反映される() {
+        awaitVoyageCondition(
+                "SELECT COUNT(*) FROM routing.voyage WHERE voyage_number = ?",
+                "取り込んだ航海が経路設計の航海に反映されない（DE-12 の受け取りを待ちきれない）: " + adoptedVoyage());
+    }
+
+    /** Bolt 39h3 の行 9。後の外部版（外部版 2。ロッテルダムの到着 2099-10-29）を取り込んだ DE-12 の受け取りを待つ（後の隔離の採用の DE-12 と前後しないため）。 */
+    @かつ("後の外部版の航海が経路設計の航海に反映される")
+    public void 後の外部版の航海が反映される() {
+        awaitVoyageCondition(
+                "SELECT COUNT(*) FROM routing.port_call WHERE voyage_number = ? AND call_no = 2"
+                        + " AND arrival_at = TIMESTAMP WITH TIME ZONE '2099-10-29 00:00:00+00'",
+                "後の外部版の航海が経路設計の航海に反映されない: " + adoptedVoyage());
+    }
+
+    /** 採用の判断の DE-12 も非同期なので、揚地の到着予定が新しい値になるまで待つ（画面だけでは前の値と区別できない。Bolt 39e の決定 (12)）。 */
+    @かつ("採用した航海の予定が経路設計の航海に反映される")
+    public void 採用した航海の予定が反映される() {
+        awaitVoyageCondition(
+                "SELECT COUNT(*) FROM routing.port_call WHERE voyage_number = ? AND call_no = 2"
+                        + " AND arrival_at = TIMESTAMP WITH TIME ZONE '2099-10-31 00:00:00+00'",
+                "採用した航海の予定が経路設計の航海に反映されない: " + adoptedVoyage());
+    }
+
+    /** DE-12 と DE-30 の 2 段の配信は非同期なので、確定の候補の区間にこの航海がある経路版が再設計要になるまで待つ（Bolt 39f の決定 (8)）。 */
+    @かつ("確定した経路が航海の更新を受けて再設計要になる")
+    public void 確定した経路が再設計要になる() {
+        awaitVoyageCondition(
+                "SELECT COUNT(*) FROM routing.route_version v JOIN routing.candidate_leg l"
+                        + " ON l.routing_case_id = v.routing_case_id AND l.route_version_no = v.route_version_no"
+                        + " AND l.candidate_no = v.selected_candidate_no"
+                        + " WHERE v.status = 'REDESIGN_REQUIRED' AND l.voyage_number = ?",
+                "確定した経路が再設計要にならない（DE-12・DE-30 の評価を待ちきれない）: " + adoptedVoyage());
+    }
+
+    @もし("経路設計者が案件を開き直す")
+    public void 経路設計者が案件を開き直す() {
+        browser.navigate(baseUrl + "/staff/routing-cases");
+        page().getByRole(AriaRole.ROW)
+                .filter(new Locator.FilterOptions().setHasText(state.transportRequestNumber()))
+                .getByRole(AriaRole.LINK)
+                .first()
+                .click();
+        page().waitForURL("**/staff/routing-cases/RC-*");
+    }
+
+    @ならば("確定した経路に再設計要の経路と理由 {string} が示される")
+    public void 確定した経路に再設計要が示される(String reason) {
+        Locator route = page().getByRole(
+                        AriaRole.REGION, new Page.GetByRoleOptions().setName(Pattern.compile("^再設計要の経路（候補 \\d+）$")));
+        // 利用者が理由を読むところまで画面を送る（デモの動画に理由を写す）
+        route.scrollIntoViewIfNeeded();
+        assertThat(route).containsText("再設計要の理由");
+        assertThat(route).containsText(reason);
+        browser.checkAccessibility();
+    }
+
+    private void awaitVoyageCondition(String countSql, String message) {
+        BrowserSession.awaitEventually(message, 250, () -> {
+            Integer found = jdbc.queryForObject(countSql, Integer.class, adoptedVoyage());
+            return found != null && found > 0;
+        });
+    }
+
+    @ならば("取り込んだ航海の候補は {string} と示され、参照した航海情報の版に取り込んだ外部版 {string} が示される")
+    public void 取り込んだ航海の候補(String judgement, String infoVersion) {
+        Locator candidate = candidate(adoptedVoyage());
+        assertThat(candidate).containsText(judgement);
+        assertThat(candidate).containsText("参照した航海情報の版 " + infoVersion);
+        browser.checkAccessibility();
+    }
+
+    @ならば("取り込んだ航海の候補の到着予定に {string} が示される")
+    public void 取り込んだ航海の到着予定(String arrival) {
+        assertThat(candidate(adoptedVoyage())).containsText(arrival);
+        browser.checkAccessibility();
+    }
+
+    @もし("経路設計者が案件を開き直して候補を再算出する")
+    public void 案件を開き直して再算出する() {
+        browser.navigate(baseUrl + "/staff/routing-cases");
+        page().getByRole(AriaRole.ROW)
+                .filter(new Locator.FilterOptions().setHasText(state.transportRequestNumber()))
+                .getByRole(AriaRole.LINK)
+                .first()
+                .click();
+        page().waitForURL("**/staff/routing-cases/RC-*");
+        page().getByRole(
+                        AriaRole.BUTTON,
+                        new Page.GetByRoleOptions().setName("候補を再算出").setExact(true))
+                .click();
+        page().waitForURL("**/staff/routing-cases/RC-*");
+        assertThat(page().getByRole(AriaRole.STATUS)).containsText("算出しました");
+        browser.checkAccessibility();
+    }
+
+    /** 候補の見出しの判定の印と「古くなった候補」、確定の入口がないこと、再算出を促す上の文（Bolt 39f2 の行 29）。 */
+    @ならば("取り込んだ航海の候補は判定の印 {string} とともに古くなった候補と示され、確定へ進む操作は出ない")
+    public void 取り込んだ航海の候補は古くなった候補と示される(String judgement) {
+        Locator candidate = candidate(adoptedVoyage());
+        // 利用者が印を読むところまで画面を送る（デモの動画に印を写す）
+        candidate.scrollIntoViewIfNeeded();
+        Locator heading = candidate.getByRole(AriaRole.HEADING, new Locator.GetByRoleOptions().setLevel(3));
+        assertThat(heading).containsText(judgement);
+        assertThat(heading).containsText(STALE_MARK);
+        assertThat(entryOf(candidate)).hasCount(0);
+        // 共有の DB のほかの航海で候補の数が変わるので、「一部」と「すべて」に共通の文を確かめる（数の網羅は単体。行 19・20）
+        assertThat(page().locator("main .alert-warning")).containsText("古くなった候補は確定できません。");
+        assertThat(page().locator("main .alert-warning")).containsText("「候補を再算出」して比べ直してください。");
+        browser.checkAccessibility();
+    }
+
+    /** 区間の下の文（Bolt 39f2 の行 28・29。今の値は示さず、変わったことだけを示す。決定 (3)）。 */
+    @かつ("取り込んだ航海の候補の区間の下に {string} が示される")
+    public void 取り込んだ航海の候補の区間の下の文(String note) {
+        assertThat(candidate(adoptedVoyage()).locator("ol li")).containsText(note);
+        browser.checkAccessibility();
+    }
+
+    /** 再算出すると古くなった候補の表示が消える（Bolt 39f2 の行 29）。 */
+    @かつ("取り込んだ航海の候補に古くなった候補の印がなく、確定へ進む操作が出る")
+    public void 取り込んだ航海の候補に古くなった候補の印がない() {
+        Locator candidate = candidate(adoptedVoyage());
+        assertThat(candidate).not().containsText(STALE_MARK);
+        assertThat(entryOf(candidate)).hasCount(1);
+        browser.checkAccessibility();
+    }
+
+    private static Locator entryOf(Locator candidate) {
+        return candidate.getByRole(AriaRole.LINK, new Locator.GetByRoleOptions().setName(CONFIRM_ENTRY));
+    }
+
+    @もし("営業担当者が経路設計の案件一覧の URL を直接開く")
+    public void 営業担当者が案件一覧を開く() {
+        browser.signInAs(Role.SALES, baseUrl + "/login");
+        page().navigate(baseUrl + "/staff/routing-cases");
+    }
+
+    @ならば("権限なしと示される")
+    public void 権限なしと示される() {
+        assertThat(page().locator("main")).containsText("この画面を表示する権限がありません");
+        browser.checkAccessibility();
+    }
+}

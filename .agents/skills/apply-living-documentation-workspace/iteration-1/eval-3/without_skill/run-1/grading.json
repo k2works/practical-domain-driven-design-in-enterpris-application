@@ -1,0 +1,35 @@
+{
+ "expectations": [
+  {
+   "text": "コードから用語集を生成する",
+   "passed": true,
+   "evidence": "pattern: 生成"
+  },
+  {
+   "text": "ドメイン用語だけを選択的にフィルタする",
+   "passed": false,
+   "evidence": "pattern: フィルタ|選択的"
+  },
+  {
+   "text": "境界づけられたコンテキストごとに分ける",
+   "passed": false,
+   "evidence": "pattern: コンテキスト"
+  },
+  {
+   "text": "読みにくい場合はコードの名前・設計を直す",
+   "passed": false,
+   "evidence": "pattern: 名前.{0,12}(直|見直|改善)|コードの質|設計を直"
+  },
+  {
+   "text": "手書きはコードに現れない定義文・意図だけ",
+   "passed": true,
+   "evidence": "pattern: 定義文|コードに現れない|意図"
+  }
+ ],
+ "summary": {
+  "passed": 2,
+  "failed": 3,
+  "total": 5,
+  "pass_rate": 0.4
+ }
+}

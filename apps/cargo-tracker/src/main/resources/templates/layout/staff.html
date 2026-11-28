@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<!--/* 社内業務 Web の共通レイアウト（Bolt 8、UI 設計「ナビゲーションとレイアウト」）。画面は次のように使う。
+       <html lang="ja" th:replace="~{layout/staff :: layout(~{::title}, ~{::main}, ~{::script}, 'transport-requests')}">（スクリプトがなければ ~{} を渡す）
+       ナビには役割ごとの画面を出し（営業担当者は Bolt 14、経路設計者は Bolt 17、追跡管理者は Bolt 26、データ責任者は Bolt 39c）、まだ作っていない画面は準備中の画面へつなぐ。
+       ほかの役割の画面はその役割の Bolt で足す */-->
+<html lang="ja" xmlns:th="http://www.thymeleaf.org" th:fragment="layout(title, content, scripts, active)">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:replace="${title}">cargo-tracker</title>
+    <th:block th:replace="~{layout/common :: assets(${scripts})}"></th:block>
+</head>
+<body>
+<header class="navbar navbar-expand-md border-bottom app-header">
+    <div class="container-fluid">
+        <a class="navbar-brand" th:href="@{/}">cargo-tracker 社内</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#staff-nav"
+                aria-controls="staff-nav" aria-expanded="false" aria-label="メニュー">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <!-- ログインした利用者の役割名・利用者名とログアウト（Bolt 14、UI 設計「ナビゲーションとレイアウト」） -->
+        <div class="d-flex align-items-center gap-3 ms-auto" th:if="${currentActor != null}">
+            <p class="navbar-text mb-0 d-none d-md-block">
+                <span th:text="${#strings.listJoin(currentActor.roles().![displayName()], '・')}">営業担当者</span>
+                <span th:text="${currentActor.displayName()}">営業 一郎</span>
+            </p>
+            <form th:action="@{/logout}" method="post" class="mb-0">
+                <button type="submit" class="btn btn-outline-secondary btn-sm">ログアウト</button>
+            </form>
+        </div>
+    </div>
+</header>
+<div class="container-fluid">
+    <div class="row">
+        <nav id="staff-nav" class="col-md-3 col-lg-2 collapse d-md-block app-nav" aria-label="社内業務 Web">
+            <!-- 役割ごとにその役割の画面だけを出す（Bolt 17）。表示の制御は権限の防御ではない（URL を直接開いても A-04） -->
+            <ul class="nav flex-column">
+                <th:block th:if="${currentActor != null and currentActor.hasRole(T(com.example.cargotracker.shared.domain.Role).SALES)}">
+                <li class="nav-item">
+                    <a class="nav-link" th:classappend="${active == 'transport-requests'} ? 'fw-bold'"
+                       th:attr="aria-current=${active == 'transport-requests'} ? 'page' : null"
+                       th:href="@{/staff/transport-requests}">見積依頼</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:classappend="${active == 'bookings'} ? 'fw-bold'"
+                       th:attr="aria-current=${active == 'bookings'} ? 'page' : null"
+                       th:href="@{/staff/bookings}">予約</a>
+                </li>
+                </th:block>
+                <li class="nav-item"
+                    th:if="${currentActor != null and currentActor.hasRole(T(com.example.cargotracker.shared.domain.Role).AUDITOR)}">
+                    <a class="nav-link" th:classappend="${active == 'kpi-observations'} ? 'fw-bold'"
+                       th:attr="aria-current=${active == 'kpi-observations'} ? 'page' : null"
+                       th:href="@{/staff/kpi-observations}">KPI 計測記録</a>
+                </li>
+                <li class="nav-item"
+                    th:if="${currentActor != null and currentActor.hasRole(T(com.example.cargotracker.shared.domain.Role).ROUTE_DESIGNER)}">
+                    <a class="nav-link" th:classappend="${active == 'routing-cases'} ? 'fw-bold'"
+                       th:attr="aria-current=${active == 'routing-cases'} ? 'page' : null"
+                       th:href="@{/staff/routing-cases}">経路設計</a>
+                </li>
+                <li class="nav-item"
+                    th:if="${currentActor != null and currentActor.hasRole(T(com.example.cargotracker.shared.domain.Role).TRACKING_MANAGER)}">
+                    <a class="nav-link" th:classappend="${active == 'tracking-records'} ? 'fw-bold'"
+                       th:attr="aria-current=${active == 'tracking-records'} ? 'page' : null"
+                       th:href="@{/staff/tracking-records}">追跡</a>
+                </li>
+                <!--/* 有人案件（S-14・S-15）は社内の運用役割（カスタマーサポート・営業担当者・経路設計者・追跡管理者・データ責任者）。台帳 D-159（Bolt 40-11） */-->
+                <li class="nav-item"
+                    th:if="${currentActor != null and (currentActor.hasRole(T(com.example.cargotracker.shared.domain.Role).CUSTOMER_SUPPORT) or currentActor.hasRole(T(com.example.cargotracker.shared.domain.Role).SALES) or currentActor.hasRole(T(com.example.cargotracker.shared.domain.Role).ROUTE_DESIGNER) or currentActor.hasRole(T(com.example.cargotracker.shared.domain.Role).TRACKING_MANAGER) or currentActor.hasRole(T(com.example.cargotracker.shared.domain.Role).DATA_STEWARD))}">
+                    <a class="nav-link" th:classappend="${active == 'service-cases'} ? 'fw-bold'"
+                       th:attr="aria-current=${active == 'service-cases'} ? 'page' : null"
+                       th:href="@{/staff/service-cases}">有人案件</a>
+                </li>
+                <!--/* 照会の記録（S-23）はカスタマーサポートだけ（Bolt 40-15） */-->
+                <li class="nav-item"
+                    th:if="${currentActor != null and currentActor.hasRole(T(com.example.cargotracker.shared.domain.Role).CUSTOMER_SUPPORT)}">
+                    <a class="nav-link" th:classappend="${active == 'inquiries'} ? 'fw-bold'"
+                       th:attr="aria-current=${active == 'inquiries'} ? 'page' : null"
+                       th:href="@{/staff/inquiries/new}">照会の記録</a>
+                </li>
+                <!--/* 外部データの取込（S-16）はデータ責任者を持つ利用者だけ（Bolt 39c） */-->
+                <li class="nav-item"
+                    th:if="${currentActor != null and currentActor.hasRole(T(com.example.cargotracker.shared.domain.Role).DATA_STEWARD)}">
+                    <a class="nav-link" th:classappend="${active == 'external-data'} ? 'fw-bold'"
+                       th:attr="aria-current=${active == 'external-data'} ? 'page' : null"
+                       th:href="@{/staff/external-data/ingestions/new}">外部データの取込</a>
+                </li>
+                <!--/* 隔離・差異の確認（S-17）もデータ責任者を持つ利用者だけ、外部データの取込の後（Bolt 39d） */-->
+                <li class="nav-item"
+                    th:if="${currentActor != null and currentActor.hasRole(T(com.example.cargotracker.shared.domain.Role).DATA_STEWARD)}">
+                    <a class="nav-link" th:classappend="${active == 'undecided-records'} ? 'fw-bold'"
+                       th:attr="aria-current=${active == 'undecided-records'} ? 'page' : null"
+                       th:href="@{/staff/external-data/undecided-records}">隔離・差異の確認</a>
+                </li>
+                <li class="nav-item"
+                    th:if="${currentActor != null and currentActor.hasRole(T(com.example.cargotracker.shared.domain.Role).SYSTEM_ADMIN)}">
+                    <a class="nav-link" th:classappend="${active == 'users'} ? 'fw-bold'"
+                       th:attr="aria-current=${active == 'users'} ? 'page' : null"
+                       th:href="@{/staff/users}">利用者</a>
+                </li>
+            </ul>
+        </nav>
+        <div class="col app-main">
+            <!--/* 回復コードでログインした印の知らせ（Bolt 33b、UI 設計「共通部品」）。断片に寄せた（Bolt 38d2）。連絡先は役割を表すレイアウトが渡す */-->
+            <th:block th:replace="~{layout/recovery-login-notice :: notice('システム管理者')}"></th:block>
+            <!--/* 入力の控えの知らせ（Bolt 32f）。読み込みの時に差し込むと読まれないことがあるので、空の live region（aria-live="polite"）を先に置く。role="status" にしないのは、画面の結果の知らせ（role="status"）と区別するため */-->
+            <div id="session-input-status" class="app-session-input" aria-live="polite" aria-atomic="true" th:if="${sessionTimer != null}"></div>
+            <main th:replace="${content}"></main>
+        </div>
+    </div>
+</div>
+<!-- session の警告とそのスクリプト（Bolt 32b、ACC-06）。2 つの要素のそろった session の画面だけ（layout/public には置かない）。
+     th:replace は th:if より先に評価されるので、条件は外側の th:block に置く -->
+<th:block th:if="${sessionTimer != null}">
+    <th:block th:replace="~{layout/session-warning :: warning(${sessionTimer})}"></th:block>
+</th:block>
+</body>
+</html>

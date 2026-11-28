@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<!--/* 回復コードでログインした印の知らせ（Bolt 33b、UI 設計「共通部品」）。印がある間だけ、静的な案内として出す（live region にしない）。
+       2 つのレイアウトが持っていた知らせを 1 つに寄せた（Bolt 38d2）。まだ使っていない回復コードが少ないとき（advice が入れる。3 個以下）は
+       残りの数を足す（SEC-10）。期限を過ぎて 0 個のときは、回復コードでログインし直す道がないので、その文を出さず、連絡先（引数。
+       荷主は担当営業、社内はシステム管理者）に登録の解除を頼む文にする */-->
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<body>
+<th:block th:fragment="notice(contact)"
+          th:with="some=${remainingRecoveryCodes != null and !remainingRecoveryCodes.isEmpty()},
+                   none=${remainingRecoveryCodes != null and remainingRecoveryCodes.isEmpty()}">
+    <div class="alert alert-warning app-recovery-notice" th:if="${recoveryLoginNotice == 'active'}">
+        回復コードでログインしました。認証アプリを登録し直してください。
+        <a class="alert-link" th:href="@{${sessionUrls.reEnroll}}">認証アプリを登録し直す</a>
+        <span class="app-remaining-recovery-codes" th:if="${some}" th:text="|まだ使っていない回復コードは、残り ${remainingRecoveryCodes.count()} 個です。|">まだ使っていない回復コードは、残り 3 個です。</span>
+        <span class="app-remaining-recovery-codes" th:if="${none}">回復コードは残っていません。</span>
+    </div>
+    <div class="alert alert-warning app-recovery-notice" th:if="${recoveryLoginNotice == 'expired'}">
+        回復コードでログインしてから [[${recoveryLoginLifetime}]]を過ぎたため、この画面からは認証アプリを登録し直せません。<th:block th:unless="${none}">登録し直すには、いったんログアウトして、回復コードでログインし直してください。</th:block>
+        <span class="app-remaining-recovery-codes" th:if="${some}" th:text="|まだ使っていない回復コードは、残り ${remainingRecoveryCodes.count()} 個です。|">まだ使っていない回復コードは、残り 3 個です。</span>
+        <span class="app-remaining-recovery-codes" th:if="${none}" th:text="|回復コードは残っていないので、回復コードでログインし直して登録することはできません。${contact}に、認証アプリの登録の解除を頼んでください。|">回復コードは残っていないので、回復コードでログインし直して登録することはできません。担当営業に、認証アプリの登録の解除を頼んでください。</span>
+    </div>
+</th:block>
+</body>
+</html>

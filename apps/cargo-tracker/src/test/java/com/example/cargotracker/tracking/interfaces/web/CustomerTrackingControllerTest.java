@@ -1,0 +1,452 @@
+package com.example.cargotracker.tracking.interfaces.web;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.matchesPattern;
+import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.stringContainsInOrder;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.never;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import com.example.cargotracker.identity.infrastructure.security.TestActors;
+import com.example.cargotracker.identity.infrastructure.security.WithAuthenticatedActor;
+import com.example.cargotracker.shared.domain.Location;
+import com.example.cargotracker.shared.domain.Role;
+import com.example.cargotracker.shared.domain.Source;
+import com.example.cargotracker.shared.domain.SourceKind;
+import com.example.cargotracker.shared.domain.UtcInstant;
+import com.example.cargotracker.tracking.application.internal.commandservices.WebInquiryRecorder;
+import com.example.cargotracker.tracking.application.internal.queryservices.CustomerTrackingQueryService;
+import com.example.cargotracker.tracking.application.internal.queryservices.RecentTrackingRecords;
+import com.example.cargotracker.tracking.domain.model.TrackingFixture;
+import com.example.cargotracker.tracking.domain.model.valueobjects.CustomerMilestone;
+import com.example.cargotracker.tracking.domain.model.valueobjects.CustomerTrackingView;
+import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneKind;
+import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingNumber;
+import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingRecordSummary;
+import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingStatus;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
+
+/** C-10 追跡の照会（荷主担当者。US-09 AC1、BR-07。Bolt 27）。 */
+// 画面の単体テストはコントローラーの振る舞いだけを見る。認証・認可はセキュリティの統合テストで確かめる（Bolt 14）
+@WithAuthenticatedActor(Role.SHIPPER)
+@AutoConfigureMockMvc(addFilters = false)
+@WebMvcTest(controllers = CustomerTrackingController.class)
+class CustomerTrackingControllerTest {
+
+    private static final String LIST = "/customer/tracking-records";
+    private static final String DETAIL = LIST + "/" + TrackingFixture.TRACKING_NUMBER.value();
+
+    @Autowired
+    MockMvc mockMvc;
+
+    @MockitoBean
+    CustomerTrackingQueryService queryService;
+
+    @MockitoBean
+    WebInquiryRecorder webInquiryRecorder;
+
+    private static TrackingRecordSummary summary(String trackingNumber, TrackingStatus status) {
+        return new TrackingRecordSummary(
+                new TrackingNumber(trackingNumber),
+                status,
+                TrackingFixture.at("2026-11-15T00:00:00Z"),
+                TrackingFixture.at("2026-11-16T03:00:00Z"),
+                Optional.empty(),
+                Optional.empty(),
+                TrackingFixture.at("2026-10-26T01:00:00Z"));
+    }
+
+    private static CustomerTrackingView view(List<CustomerMilestone> milestones) {
+        return view(milestones, Optional.empty());
+    }
+
+    private static CustomerTrackingView view(List<CustomerMilestone> milestones, Optional<UtcInstant> lastAcquiredAt) {
+        return new CustomerTrackingView(
+                TrackingFixture.TRACKING_NUMBER,
+                TrackingStatus.PICKED_UP,
+                TrackingFixture.at("2026-11-15T00:00:00Z"),
+                TrackingFixture.at("2026-11-16T03:00:00Z"),
+                lastAcquiredAt,
+                TrackingFixture.schedule().legs(),
+                milestones);
+    }
+
+    private static CustomerTrackingView notified(
+            TrackingStatus status, boolean freshnessExceeded, Optional<UtcInstant> nextExpectedAt) {
+        return new CustomerTrackingView(
+                TrackingFixture.TRACKING_NUMBER,
+                status,
+                TrackingFixture.at("2026-11-15T00:00:00Z"),
+                TrackingFixture.at("2026-11-16T03:00:00Z"),
+                Optional.of(TrackingFixture.at("2026-11-01T03:00:00Z")),
+                TrackingFixture.schedule().legs(),
+                List.of(pickup()),
+                nextExpectedAt,
+                freshnessExceeded);
+    }
+
+    @Test
+    void Bolt47_確認中の照会は判明していることと未確定のことと次の行動と次回の更新と担当窓口を示す_US09_AC2() throws Exception {
+        given(queryService.find(TrackingFixture.TRACKING_NUMBER, TestActors.SHIPPER_COMPANY))
+                .willReturn(Optional.of(notified(
+                        TrackingStatus.UNDER_REVIEW, false, Optional.of(TrackingFixture.at("2026-11-17T01:00:00Z")))));
+
+        mockMvc.perform(get(DETAIL))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("確認中のお知らせ")))
+                .andExpect(content().string(containsString("判明していること")))
+                .andExpect(content().string(containsString("予定と、採用済みの実績は上に示したとおりです。")))
+                .andExpect(content().string(containsString("未確定のこと")))
+                .andExpect(content().string(containsString("確認中の実績があります。")))
+                .andExpect(content().string(containsString("次の行動")))
+                .andExpect(content().string(containsString("次回の更新")))
+                .andExpect(content().string(containsString("2026-11-17 10:00 Asia/Tokyo（UTC+09:00）")))
+                .andExpect(content().string(containsString("担当窓口")))
+                .andExpect(content().string(containsString("平日 09:00〜18:00 Asia/Tokyo（UTC+09:00）")))
+                .andExpect(content().string(containsString("href=\"/customer/inquiries\"")))
+                // 確認中の実績の中身は荷主に出さない（開示の範囲）
+                .andExpect(content().string(not(containsString("OUT_OF_SEQUENCE"))))
+                .andExpect(content().string(not(containsString("最新性を保証できません"))));
+    }
+
+    @Test
+    void Bolt47_鮮度超過の照会は最終の採用値と取得時刻と最新性を保証しない旨と次の行動と担当窓口を示す_US09_AC3() throws Exception {
+        given(queryService.find(TrackingFixture.TRACKING_NUMBER, TestActors.SHIPPER_COMPANY))
+                .willReturn(Optional.of(notified(
+                        TrackingStatus.PICKED_UP, true, Optional.of(TrackingFixture.at("2026-11-10T01:00:00Z")))));
+
+        mockMvc.perform(get(DETAIL))
+                .andExpect(content().string(containsString("最新性についてのお知らせ")))
+                .andExpect(content().string(containsString("最新性を保証できません")))
+                .andExpect(content().string(containsString("最後に採用した状態は「集荷済み」です")))
+                .andExpect(content().string(containsString("最終取得 2026-11-01 12:00 Asia/Tokyo（UTC+09:00）")))
+                .andExpect(content().string(containsString("次の行動")))
+                .andExpect(content().string(containsString("次回の更新")))
+                .andExpect(content().string(containsString("担当窓口")))
+                .andExpect(content().string(not(containsString("確認中のお知らせ"))));
+    }
+
+    @Test
+    void Bolt47_次回の更新の目安がなければ未定と示す() throws Exception {
+        given(queryService.find(TrackingFixture.TRACKING_NUMBER, TestActors.SHIPPER_COMPANY))
+                .willReturn(Optional.of(notified(TrackingStatus.UNDER_REVIEW, false, Optional.empty())));
+
+        mockMvc.perform(get(DETAIL)).andExpect(content().string(containsString("未定")));
+    }
+
+    @Test
+    void Bolt47_確認中でも鮮度超過でもなければお知らせを出さない() throws Exception {
+        given(queryService.find(TrackingFixture.TRACKING_NUMBER, TestActors.SHIPPER_COMPANY))
+                .willReturn(Optional.of(view(List.of(pickup()))));
+
+        mockMvc.perform(get(DETAIL))
+                .andExpect(content().string(not(containsString("確認中のお知らせ"))))
+                .andExpect(content().string(not(containsString("最新性についてのお知らせ"))));
+    }
+
+    /** Bolt 39g3 の行 19（本計画 CP-5）。照会の結果は最新の到着見込みの次に最終取得時刻（荷主の日時表示）。一覧の列は変えない。 */
+    @Test
+    void Bolt39g3_行19_照会の結果は最新の到着見込みの次に最終取得時刻を示す() throws Exception {
+        given(queryService.find(TrackingFixture.TRACKING_NUMBER, TestActors.SHIPPER_COMPANY))
+                .willReturn(
+                        Optional.of(view(List.of(pickup()), Optional.of(TrackingFixture.at("2026-11-01T03:00:00Z")))));
+
+        mockMvc.perform(get(DETAIL))
+                .andExpect(status().isOk())
+                .andExpect(content()
+                        .string(matchesPattern("(?s).*<dt class=\"col-sm-3\">最新の到着見込み</dt>\\s*"
+                                + "<dd class=\"col-sm-9\">2026-11-16 12:00 Asia/Tokyo（UTC\\+09:00）</dd>\\s*"
+                                + "<dt class=\"col-sm-3\">最終取得時刻</dt>\\s*"
+                                + "<dd class=\"col-sm-9\">2026-11-01 12:00 Asia/Tokyo（UTC\\+09:00）</dd>.*")));
+    }
+
+    @Test
+    void Bolt39g3_行19_最終取得時刻がなければまだありませんと示す() throws Exception {
+        given(queryService.find(TrackingFixture.TRACKING_NUMBER, TestActors.SHIPPER_COMPANY))
+                .willReturn(Optional.of(view(List.of())));
+
+        mockMvc.perform(get(DETAIL))
+                .andExpect(status().isOk())
+                .andExpect(content()
+                        .string(matchesPattern("(?s).*<dt class=\"col-sm-3\">最終取得時刻</dt>\\s*"
+                                + "<dd class=\"col-sm-9\">まだありません</dd>.*")));
+    }
+
+    @Test
+    void Bolt39g3_行19_一覧の列は変えない() throws Exception {
+        given(queryService.recent(TestActors.SHIPPER_COMPANY))
+                .willReturn(new RecentTrackingRecords(
+                        List.of(summary("CTABCDEFGH2345", TrackingStatus.PICKED_UP)), false, 50));
+
+        mockMvc.perform(get(LIST))
+                .andExpect(status().isOk())
+                .andExpect(content().string(not(containsString("最終取得時刻"))))
+                .andExpect(content().string(containsString("2026-11-16 12:00 Asia/Tokyo（UTC+09:00）")));
+    }
+
+    /**
+     * Bolt 39g4 の行 19（T-INV-09。C-10 は変えない）。照会の結果が鮮度超過の追跡番号を持っていても、荷主の一覧と照会の結果に鮮度超過の印と次の予定の
+     * 実績を出さない（荷主への「最新性を保証しない旨」は W9）。
+     */
+    @Test
+    void Bolt39g4_行19_荷主の一覧と照会の結果に鮮度超過と次の予定の実績を出さない() throws Exception {
+        TrackingRecordSummary overdue = summary("CTABCDEFGH2345", TrackingStatus.IN_TRANSIT);
+        given(queryService.recent(TestActors.SHIPPER_COMPANY))
+                .willReturn(new RecentTrackingRecords(List.of(overdue), false, 50, Set.of(overdue.trackingNumber())));
+        given(queryService.find(TrackingFixture.TRACKING_NUMBER, TestActors.SHIPPER_COMPANY))
+                .willReturn(Optional.of(view(List.of(pickup()))));
+
+        mockMvc.perform(get(LIST))
+                .andExpect(status().isOk())
+                .andExpect(content().string(not(containsString("鮮度超過"))));
+        mockMvc.perform(get(DETAIL))
+                .andExpect(status().isOk())
+                .andExpect(content().string(not(containsString("鮮度超過"))))
+                .andExpect(content().string(not(containsString("次の予定の実績"))))
+                .andExpect(content().string(not(containsString("届いていません"))));
+    }
+
+    /**
+     * Bolt 39g4c の行 7（T-INV-09。【業務の判断】(aw)）。見込みの根拠が最後の区間の航海の到着予定の追跡記録でも、荷主の照会の結果に見込みの根拠と
+     * 社内の航海番号の根拠の文を出さない。荷主の照会の値は追跡記録の荷主向けの表示から作る（根拠を持たない）。
+     */
+    @Test
+    void Bolt39g4c_行7_荷主の照会の結果に見込みの根拠を出さない() throws Exception {
+        com.example.cargotracker.tracking.domain.model.aggregates.TrackingRecord withVoyage =
+                com.example.cargotracker.tracking.domain.model.aggregates.TrackingRecord.start(
+                                TrackingFixture.TRACKING_NUMBER,
+                                TrackingFixture.BOOKING_ID,
+                                TrackingFixture.SHIPPER,
+                                TrackingFixture.CONSIGNEE,
+                                TrackingFixture.schedule(),
+                                TrackingFixture.STARTED_AT)
+                        .trackingRecord()
+                        .receiveVoyageArrival(
+                                "V200",
+                                List.of(
+                                        com.example.cargotracker.tracking.domain.model.valueobjects.VoyagePortCall.of(
+                                                new com.example.cargotracker.shared.domain.Location("KRPUS"),
+                                                null,
+                                                TrackingFixture.at("2026-11-04T00:00:00Z")),
+                                        com.example.cargotracker.tracking.domain.model.valueobjects.VoyagePortCall.of(
+                                                new com.example.cargotracker.shared.domain.Location("USLAX"),
+                                                TrackingFixture.at("2026-11-15T08:00:00Z"),
+                                                null)),
+                                new com.example.cargotracker.tracking.domain.model.valueobjects.PublicationOrder(
+                                        TrackingFixture.at("2026-11-06T02:00:00Z"),
+                                        TrackingFixture.at("2026-11-06T01:00:00Z"),
+                                        "rr-1"))
+                        .orElseThrow();
+        given(queryService.find(TrackingFixture.TRACKING_NUMBER, TestActors.SHIPPER_COMPANY))
+                .willReturn(Optional.of(withVoyage.customerView()));
+
+        mockMvc.perform(get(DETAIL))
+                .andExpect(status().isOk())
+                .andExpect(content().string(not(containsString("見込みの根拠"))))
+                .andExpect(content().string(not(containsString("航海 V200 の到着予定"))))
+                .andExpect(content().string(not(containsString("当初の到着予定どおり"))));
+    }
+
+    private static CustomerMilestone pickup() {
+        return new CustomerMilestone(
+                MilestoneKind.PICKUP,
+                new Location("JPTYO"),
+                TrackingFixture.at("2026-11-01T02:30:00Z"),
+                new Source(SourceKind.FIELD_RECORD, "F-118", TrackingFixture.at("2026-11-01T03:00:00Z")));
+    }
+
+    // 一覧
+
+    @Test
+    void 一覧はログインした荷主担当者の企業の追跡記録を追跡番号と現在状態と最新の到着見込みで示す() throws Exception {
+        given(queryService.recent(TestActors.SHIPPER_COMPANY))
+                .willReturn(new RecentTrackingRecords(
+                        List.of(summary("CTABCDEFGH2345", TrackingStatus.PICKED_UP)), false, 50));
+
+        mockMvc.perform(get(LIST))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("<h1>追跡の照会</h1>")))
+                // 照会の入力と一覧を見出しで分ける。並びは荷主の語（本予約の確定）で示す
+                .andExpect(content().string(containsString("<h2 class=\"h4\" id=\"search-heading\">追跡番号で照会する</h2>")))
+                .andExpect(content().string(containsString("role=\"search\" aria-labelledby=\"search-heading\"")))
+                .andExpect(
+                        content().string(containsString("<h2 class=\"h4\" id=\"tracking-records-heading\">自社の貨物</h2>")))
+                .andExpect(content().string(containsString("追跡中の貨物（本予約の確定の新しい順）")))
+                .andExpect(content().string(containsString("<th scope=\"col\">現在の状態</th>")))
+                .andExpect(content()
+                        .string(containsString(
+                                "href=\"/customer/tracking-records/CTABCDEFGH2345\">CTABCDEFGH2345</a>")))
+                .andExpect(content().string(containsString("<td>集荷済み</td>")))
+                // 荷主の日時表示（UTC を併記しない）。最新の到着見込みを示す
+                .andExpect(content().string(containsString("<td>2026-11-16 12:00 Asia/Tokyo（UTC+09:00）</td>")))
+                .andExpect(content().string(not(containsString("（UTC 2026"))));
+    }
+
+    @Test
+    void 自社の追跡記録がなければ本予約の確定を待つ案内を示し表を出さない() throws Exception {
+        given(queryService.recent(TestActors.SHIPPER_COMPANY))
+                .willReturn(new RecentTrackingRecords(List.of(), false, 50));
+
+        mockMvc.perform(get(LIST))
+                .andExpect(content().string(containsString("追跡中の貨物はまだありません。担当営業が本予約を確定すると、ここに出ます。")))
+                .andExpect(content().string(not(containsString("<table"))));
+    }
+
+    @Test
+    void 上限を超えたら新しい件数だけを示していると示す() throws Exception {
+        given(queryService.recent(TestActors.SHIPPER_COMPANY))
+                .willReturn(new RecentTrackingRecords(
+                        Collections.nCopies(50, summary("CTABCDEFGH2345", TrackingStatus.PICKUP_SCHEDULED)), true, 50));
+
+        mockMvc.perform(get(LIST))
+                .andExpect(content().string(containsString("新しい 50 件だけを示しています。それより前の貨物は、追跡番号を入れて照会してください。")));
+    }
+
+    // 追跡番号の入力
+
+    @Test
+    void 追跡番号を入れて照会すると空白とハイフンを除き大文字にそろえて照会の結果へ移す() throws Exception {
+        // 区切って伝えられた番号も受け付ける（Bolt 27 の開発レビューの判断）
+        mockMvc.perform(get(LIST).param("trackingNumber", " ctabc-defgh 2345 "))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl(DETAIL));
+
+        then(queryService).should(never()).recent(any());
+    }
+
+    @Test
+    void 追跡番号の形式に誤りがあればエラー要約と項目の下に理由と直し方を示し入力した値を残す() throws Exception {
+        given(queryService.recent(TestActors.SHIPPER_COMPANY))
+                .willReturn(new RecentTrackingRecords(List.of(), false, 50));
+
+        mockMvc.perform(get(LIST).param("trackingNumber", "CT-12"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("<title>入力内容に誤りがあります - 追跡の照会 - cargo-tracker</title>")))
+                .andExpect(content().string(containsString("id=\"error-summary\"")))
+                .andExpect(
+                        content()
+                                .string(
+                                        containsString(
+                                                "href=\"#trackingNumber\">追跡番号: CT で始まる 14 文字で入力してください。英字の I・L・O と数字の 0・1 は使いません（例: CTABCDEFGH2345）</a>")))
+                .andExpect(content().string(containsString("value=\"CT-12\"")))
+                .andExpect(content().string(containsString("aria-invalid=\"true\"")));
+    }
+
+    @Test
+    void 追跡番号が空のまま照会すると入力してくださいと示す() throws Exception {
+        given(queryService.recent(TestActors.SHIPPER_COMPANY))
+                .willReturn(new RecentTrackingRecords(List.of(), false, 50));
+
+        mockMvc.perform(get(LIST).param("trackingNumber", "  "))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("href=\"#trackingNumber\">追跡番号: 入力してください</a>")));
+    }
+
+    // 照会の結果
+
+    @Test
+    void 照会の結果に現在の状態と到着予定と予定区間と主要実績と出典と取得時刻を荷主の日時表示で示す() throws Exception {
+        given(queryService.find(TrackingFixture.TRACKING_NUMBER, TestActors.SHIPPER_COMPANY))
+                .willReturn(Optional.of(view(List.of(pickup()))));
+
+        mockMvc.perform(get(DETAIL))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("<h1>追跡の照会 CTABCDEFGH2345</h1>")))
+                .andExpect(content().string(containsString("<dd class=\"col-sm-9\">集荷済み</dd>")))
+                .andExpect(content().string(containsString("2026-11-15 09:00 Asia/Tokyo（UTC+09:00）")))
+                .andExpect(content().string(containsString("2026-11-16 12:00 Asia/Tokyo（UTC+09:00）")))
+                .andExpect(content().string(containsString("<ol aria-labelledby=\"schedule-heading\"")))
+                // 荷主の画面は社内の語「区間」を出さず、航海を予定の順に並べる（Bolt 37f3 の行 1）
+                .andExpect(content().string(stringContainsInOrder("航海 V100、JPTYO から KRPUS", "航海 V200、KRPUS から USLAX")))
+                .andExpect(content().string(not(containsString("区間"))))
+                .andExpect(content().string(containsString("出発予定 2026-11-01 09:00 Asia/Tokyo（UTC+09:00）")))
+                .andExpect(content().string(containsString("<ul aria-labelledby=\"milestones-heading\"")))
+                .andExpect(content().string(containsString("集荷、JPTYO")))
+                .andExpect(content().string(containsString("発生 2026-11-01 11:30 Asia/Tokyo（UTC+09:00）")))
+                // 出典と取得時刻は行を分ける（括弧の二重を避ける。Bolt 27 の開発レビュー）
+                .andExpect(content().string(containsString("<span>出典 現場記録 F-118</span>")))
+                .andExpect(content().string(containsString("<span>取得 2026-11-01 12:00 Asia/Tokyo（UTC+09:00）</span>")))
+                .andExpect(content().string(containsString("href=\"/customer/tracking-records\">追跡の照会へ戻る</a>")));
+    }
+
+    @Test
+    void 照会の結果の日時にUTCを併記しない() throws Exception {
+        given(queryService.find(TrackingFixture.TRACKING_NUMBER, TestActors.SHIPPER_COMPANY))
+                .willReturn(Optional.of(view(List.of(pickup()))));
+
+        String body = mockMvc.perform(get(DETAIL)).andReturn().getResponse().getContentAsString();
+
+        // UTC の併記は社内の日時表示（Bolt 27 計画の確認ポイント 11）。経路版・実績番号・実績の状態を照会結果が持たないことは
+        // 集約のテスト（TrackingRecordCustomerViewTest）で確かめる
+        assertThat(body).doesNotContain("（UTC 2026");
+    }
+
+    @Test
+    void 主要実績がなければまだないと示す() throws Exception {
+        given(queryService.find(TrackingFixture.TRACKING_NUMBER, TestActors.SHIPPER_COMPANY))
+                .willReturn(Optional.of(view(List.of())));
+
+        mockMvc.perform(get(DETAIL)).andExpect(content().string(containsString("主要実績はまだありません。")));
+    }
+
+    @Test
+    void Bolt42_1_照会の結果を開くと顧客Webの自己照会として記録し見つからないときは記録しない() throws Exception {
+        given(queryService.find(TrackingFixture.TRACKING_NUMBER, TestActors.SHIPPER_COMPANY))
+                .willReturn(Optional.of(view(List.of(pickup()))));
+
+        mockMvc.perform(get(DETAIL)).andExpect(status().isOk());
+
+        then(webInquiryRecorder)
+                .should()
+                .recordSelfLookup(TestActors.SHIPPER_USER, TestActors.SHIPPER_COMPANY, TrackingFixture.TRACKING_NUMBER);
+
+        given(queryService.find(any(), any())).willReturn(Optional.empty());
+        org.mockito.Mockito.clearInvocations(webInquiryRecorder);
+
+        mockMvc.perform(get(DETAIL)).andExpect(status().isNotFound());
+
+        then(webInquiryRecorder).shouldHaveNoInteractions();
+    }
+
+    @Test
+    void 他社や存在しない追跡番号と形式の誤った追跡番号は404で本文も同じ() throws Exception {
+        given(queryService.find(any(), any())).willReturn(Optional.empty());
+
+        String notFound = mockMvc.perform(get(DETAIL))
+                .andExpect(status().isNotFound())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        String malformed = mockMvc.perform(get(LIST + "/not-a-tracking-number"))
+                .andExpect(status().isNotFound())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        // 打ち間違いが日常の経路なので、既定のエラーページではなく C-10 の案内と戻り方を示す（Bolt 27 の開発レビューの判断）
+        assertThat(notFound)
+                .contains("<title>追跡番号が見つかりません - 追跡の照会 - cargo-tracker</title>")
+                .contains("<h1>追跡番号が見つかりません</h1>")
+                .contains("この追跡番号の貨物は見つかりませんでした。追跡番号に誤りがないか確かめてください。")
+                .contains("自社の貨物でない追跡番号は照会できません。")
+                .contains("href=\"/customer/tracking-records\">追跡の照会へ戻る</a>");
+        assertThat(malformed).isEqualTo(notFound);
+        then(queryService).should().find(TrackingFixture.TRACKING_NUMBER, TestActors.SHIPPER_COMPANY);
+    }
+}

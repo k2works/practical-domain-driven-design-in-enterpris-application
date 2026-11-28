@@ -1,0 +1,705 @@
+---
+type: Design
+title: "cargo-tracker テスト戦略"
+description: "cargo-tracker のテスト形状、テストレベルと責務、BDD（Cucumber）のシナリオ階層とタグ規約、不変条件・ユーザーストーリーとテストの対応、カバレッジ目標、CI での実行。"
+tags: [design, test-strategy, bdd]
+status: stable
+generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-16T02:25:31Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-01T08:12:04Z }
+  - { by: human:kakimomokuri, at: 2026-10-01T09:01:38Z }
+  - { by: human:kakimomokuri, at: 2026-10-02T01:37:43Z }
+---
+
+# cargo-tracker テスト戦略
+
+## 位置づけ
+
+本書は、各設計書から引き継いだテストの項目に答え、TDD と BDD（ADR-009）を一体にした開発の進め方を決める。
+
+| 引継ぎ | 出典 | 本書の節 |
+| :--- | :--- | :--- |
+| AB-05 アーキテクチャテスト（パッケージ依存、マッパーの SQL による他スキーマ参照の禁止） | バックエンドアーキテクチャ | アーキテクチャテスト |
+| AF-03 アクセシビリティ検証の配分と手動確認の手順 | フロントエンドアーキテクチャ | アクセシビリティテスト |
+| TS-03 テストの配分、カバレッジ、ArchUnit と Modulith、Cucumber の階層とタグ | 技術スタック | テスト形状、BDD、カバレッジ |
+| DM-03 不変条件と Cucumber シナリオ・単体テストの対応 | ドメインモデル | 不変条件とテストの対応 |
+| DA-03 H2 と PostgreSQL へのマイグレーション適用、追記専用・CHECK・一意制約のテスト | データモデル | 統合テスト |
+| UI-HO-01、UI-HO-03 主要フローの E2E、顧客向け HTML の開示テスト | UI 設計 | E2E、Web テスト |
+| 非機能要件の検証方法（PERF、RCV、RTY、FRS、SVC、AUD、OBS） | 非機能要件 | 非機能要件のテスト |
+
+2026-10-01 の [分析成果物レビュー](../../review/cargo-tracker/analysis_review_20261001.md) を受けて、業務の順序（R-01）、重複確定・session・イベント配信の検証（R-03、R-07、R-08）、非機能要件との接続（R-21）、対応表の漏れ（R-22）を反映した。
+
+## テスト形状
+
+全体は **ピラミッド型** とする。ドメインモデル（ADR-002）とヘキサゴナルの 4 パッケージ構成をとり、業務規則の大半がドメイン層にあるためである（テスト戦略ガイド）。ただし、ADR-002 でパターンを変えたコンテキストは形を変える。
+
+| コンテキスト | パターン（ADR-002） | 形 | 重点 |
+| :--- | :--- | :--- | :--- |
+| 見積り、経路設計、予約、追跡 | ドメインモデル | ピラミッド | 集約・ドメインルールのユニットテスト。境界値（BR-10、BR-11）を網羅する |
+| アクセス・監査 | 単純なモデル | ダイヤモンド | 認証・認可・参照許可の Web テストと統合テスト |
+| 外部データ | トランザクションスクリプト | 統合テスト中心 | 冪等性・隔離・照合を実 DB で確かめる統合テスト |
+
+```plantuml
+@startuml
+title cargo-tracker のテスト形状（全体）
+rectangle "E2E（画面を通す受入シナリオ）\n約 5%" as e2e #C8E6C9
+rectangle "Web・統合・アーキテクチャテスト\n約 20%" as it #FFE082
+rectangle "受入シナリオ（application 層）\n約 15%" as acc #FFCC80
+rectangle "ユニットテスト（domain 層中心）\n約 60%" as unit #90CAF9
+e2e -[hidden]down- it
+it -[hidden]down- acc
+acc -[hidden]down- unit
+@enduml
+```
+
+割合はテストの件数の目安であり、目標値ではない。実行時間の配分（CI の節）と合わせて、Bolt ごとの実績で見直す。
+
+### テストの深さ
+
+AI-DLC のテスト戦略の水準（リリース・イテレーション計画ガイド AI-DLC 版）は、本番機能を Standard 以上とする。パイロット中止の条件（PV-01: 権限外開示・外部原本消失・重複予約）に直結する箇所は Comprehensive にする。
+
+| 水準 | 対象 |
+| :--- | :--- |
+| Comprehensive | 予約確定の条件と冪等性（BR-01、BR-10、B-INV-01〜03）、制約適合判定（BR-11、Golden dataset）、開示制御（BR-07）、外部原本の冪等性・隔離・照合（BR-12）、認証・ロック・session 失効（BR-14）、訂正の二者確認（BR-05） |
+| Standard | 上記以外の本番機能 |
+
+## テストレベル
+
+各レベルの責務を分け、同じことを複数のレベルで重ねて確かめない。
+
+| レベル | 対象 | 外部依存 | 確かめること | 確かめないこと | ツール |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| ユニット | domain の集約・値オブジェクト・ドメインルール | なし（純粋なオブジェクト） | 不変条件、状態遷移、境界値 | 永続化、画面 | JUnit 6、AssertJ |
+| 受入シナリオ（application） | application の入力ポート | リポジトリはメモリ上の実装、Clock は固定 | ユーザーストーリーの受入条件、認可の判断、冪等コマンド、期待版 | SQL、HTML | Cucumber（日本語 Gherkin） |
+| Web | interfaces.web の画面 | application はモックまたはメモリ実装 | 画面の描画、開示範囲、エラー要約、確認画面の項目、拒否の枝（応答の状態と範囲外の試行の記録） | 業務規則の詳細、URL ごとの認可・CSRF（`addFilters = false` で外す。セキュリティの統合テストが確かめる） | Spring MockMvc（`@WebMvcTest`） |
+| 統合 | infrastructure（マッパー、マイグレーション、イベント配信、取込、S3 アダプター） | Testcontainers の PostgreSQL 18 | SQL の正しさ、制約、権限、イベントの永続化と再配信、ファイル取込 | 業務規則の詳細 | Testcontainers、Spring Modulith Test |
+| アーキテクチャ | コード全体の構造 | なし | 依存の向き、モジュール境界、ドメインのフレームワーク非依存、他スキーマ参照の禁止 | 振る舞い | ArchUnit、Spring Modulith |
+| E2E（画面を通す受入シナリオ） | アプリケーション全体 | PostgreSQL、実ブラウザ | 主要フローが画面から最後まで通ること、部分更新、アクセシビリティの自動検査 | 規則の網羅（下のレベルで済ませる） | Cucumber + Playwright、axe-core |
+| スモーク（H2） | アプリケーションの起動 | H2 | H2 でアプリが起動し、マイグレーションが通ること（ADR-007） | SQL の正しさ | Spring Boot Test |
+
+## BDD（ADR-009）
+
+### 開発の流れ
+
+ストーリーごとに、外側の受入シナリオと内側の TDD を二重のループで回す。
+
+```plantuml
+@startuml
+title BDD と TDD の二重ループ
+start
+:ストーリーの受入条件をシナリオにする\n（スリーアミーゴで確認）;
+:シナリオを実行して失敗を確かめる（Red）;
+repeat
+  :失敗しているステップに必要な\nユニットテストを書いて失敗させる;
+  :最小の実装で通す;
+  :リファクタリング;
+repeat while (シナリオがまだ失敗している?) is (yes)
+->no;
+:シナリオが通る（Green）;
+:シナリオとコードをリファクタリング;
+stop
+@enduml
+```
+
+### シナリオの階層
+
+| 階層 | タグ | ステップ定義の呼び先 | 使う場面 |
+| :--- | :--- | :--- | :--- |
+| 業務ルール | （既定） | application の入力ポート。リポジトリはメモリ上の実装、Clock は固定。他のコンテキストへのイベントはテスト用の同期の配信で届け、シナリオの中で「イベントが配信される」ステップとして明示する | 受入条件の大半。速く、規則を網羅する |
+| 画面 | `@ui` | Playwright で実ブラウザを操作し、PostgreSQL を使う | 主要フローの最後までの通し、確認画面、部分更新、アクセシビリティの自動検査 |
+
+同じ受入条件を両方の階層で書かない。画面の階層は、ストーリーごとに主成功シナリオ 1 本と、画面に固有の条件（確認の領域、エラー要約、開示範囲の見え方）に限る。
+
+業務ルールの階層では本番の非同期の購読（`@ApplicationModuleListener`）が動かないため、イベント配信そのもの（コミット後の配信、再配信、受信側の冪等性）は統合テストで確かめる（ADR-003）。session の失効や認可の即時反映のように、フレームワークと DB に依存する受入条件も、業務ルールの階層ではなくセキュリティの統合テストで確かめる。
+
+### タグの規約
+
+| タグ | 意味 | 例 |
+| :--- | :--- | :--- |
+| `@US-nn` | ユーザーストーリー（必須。Feature に付ける） | `@US-04` |
+| `@US-nn-ACm` | 受入条件の番号（必須。シナリオに付ける。番号は user_story.md の受入条件の順） | `@US-04-AC2` |
+| `@NFR-<ID>` | 非機能要件の ID（該当する統合テスト・性能テストに付ける） | `@NFR-RTY-02`。JUnit では `@Tag("NFR-PERF-06")`（Bolt 39b4） |
+| `@BR-nn` | 業務ルール（該当するシナリオに付ける） | `@BR-10` |
+| `@<不変条件 ID>` | ドメインモデルの不変条件 | `@B-INV-03` |
+| `@must`・`@should`・`@could` | ストーリーの優先度（Feature に付ける） | `@must` |
+| `@ui` | 画面を通す階層 | — |
+| `@main-flow` | 主成功の流れ（Bolt 28）。`@US-nn` を付けない例外（前例は `layout_ui.feature`。理由は「Release 0.1 の受入条件」の注） | — |
+| `@wip` | 作業中。CI の必須の実行から外す | — |
+| `@golden` | Golden dataset による経路の検証 | — |
+
+`@wip` のシナリオを残したまま Bolt を完了しない。受入条件ごとに `@US-nn-ACm` のシナリオがあることを、CI で受入条件の数と照合して確かめる（ADR-009 のコンプライアンス）。
+
+### 置き場所とステップ定義
+
+```text
+src/test/resources/features/
+├── quotation/        US-01〜03
+├── routing/          US-06〜08、golden/（Golden dataset。案件のデータは src/test/resources/golden/v0/）
+├── booking/          US-04、US-05
+├── tracking/         US-09〜13、US-20
+├── identity/         US-16〜19
+└── external_data/    US-14、US-15
+
+src/test/java/.../<context>/acceptance/   コンテキストごとのステップ定義
+src/test/java/.../shared/acceptance/      共通ステップ（ログイン、時刻の固定、企業・利用者の準備）
+src/test/java/.../ui/                     画面の層のステップ定義（@ui）。ブラウザの文脈とキー操作の部品は BrowserSession に 1 つ
+```
+
+画面の層のステップ定義は、Tab でフォーカスを進める部品（`tabUntilFocused`・`tabUntilGroup`）を `BrowserSession` から使い、クラスごとに写しを作らない（Bolt 29、#45。待ち方と上限を直す場所を 1 つにする）。1 回だけ Tab を押してフォーカスの順序を確かめる部品（`tabTo`）は、確かめる順序が画面ごとに違うので各クラスに置く。
+
+画面の層のステップ定義は、**固定の時間の待ち（`page().waitForTimeout`）を使わない**（W9 レビュー M-10、Bolt 49）。画面の状態（要素の表示・テキスト・URL）を Playwright の locator の待ち（`waitFor`・`assertThat(locator)`）で待つ。固定の待ちを許すのは、動画の最後の一枚を残す `BrowserSession` の 1 か所だけである。
+
+時間の経過を画面の層の受入シナリオで確かめるとき（session の警告。Bolt 32b）は、Playwright の `BrowserContext.clock()` でブラウザの時計を進める。時計は `signInAs` の前に入れる（`install`）。同じコンテキストのページは同じ時計を使うので、タブの間の同期も確かめられる。画面の層のテストのアプリは本物の時計（`Clock.systemUTC()`）で動き、`MutableClock` も共通の時計のステップも使わないので、サーバーの時計は進められない。Spring Session の無操作の期限はサーバーの実時間で数えるので、画面の層のシナリオではサーバーの session を実際に失効させない（サーバーの失効と延長による最終アクセスの更新は、セキュリティの統合テストで確かめる）。8 時間の警告は、テストの部品（`BrowserSession`）が session の属性 `cargotracker.session.authenticatedAt` を上限の近い時刻（7 時間 56 分前）に書き換えてから画面を開いて確かめる。
+
+ステップ定義は自分のコンテキストの入力ポートだけを呼ぶ。前提の準備で他のコンテキストのデータが必要なときは、そのコンテキストの公開 API を使う（ADR-001 の境界をテストでも守る）。
+
+いくつかの feature が同じ背景の手順を写すときは、複合ステップにまとめる（3 つ目の写しが出たら。Bolt 35b の開発レビュー）。複合ステップは、まとめる手順のステップを持つコンテキストの受入ステップに置き、同じコンテキストのステップのクラスと共有の時計・配信のステップをコンストラクターで受け取って呼ぶ（同じシナリオでは同じインスタンスが渡る）。中で決める値は Javadoc に書き、シナリオと比べる時刻や期限は引数で見せる。前例は `quotation/acceptance/RouteDesignRequestedSteps`（詳細経路設計の依頼の配信まで。8 つの feature。Bolt 37f2）。中のステップのクラスが入力ポートを呼び、複合ステップは入力ポートを直接呼ばない（他のコンテキストの acceptance への依存は AT-05 が拒む）。中のステップの文や決め打ちの値を変えると、まとめた feature のすべてに波及する
+
+### シナリオの例
+
+US-04 の受入条件と BR-10 の境界を、日本語 Gherkin で書いた例を示す。
+
+```gherkin
+# language: ja
+@US-04 @must
+機能: 予約を確定する
+  荷主として、合意した見積りと承認済み経路で本予約を確定したい。
+  追跡可能な輸送を開始するためだ。
+
+  背景:
+    前提 荷主企業 "荷主株式会社" の荷主担当者 "山田" が見積りを承認している
+    かつ 経路設計案件の経路版 1 が確定している
+    かつ 見積りの有効期限は "2026-10-08T09:00:00Z" である
+
+  @US-04-AC1 @BR-01 @BR-10 @B-INV-01
+  シナリオ: 有効期限の 1 分前の確定は成功する
+    前提 現在時刻は "2026-10-08T08:59:00Z" である
+    もし 営業担当者 "佐藤" が本予約を確定する
+    ならば 予約版 1 と一意な追跡番号が記録される
+
+  @US-04-AC2 @BR-10 @B-INV-02
+  シナリオアウトライン: 有効期限と同時刻以後の確定は失効として拒否される
+    前提 現在時刻は "<現在時刻>" である
+    もし 営業担当者 "佐藤" が本予約を確定する
+    ならば 予約は確定されない
+    かつ 見積りの失効と再見積りの必要性が示される
+
+    例:
+      | 現在時刻             |
+      | 2026-10-08T09:00:00Z |
+      | 2026-10-08T09:01:00Z |
+
+  @US-04-AC4 @B-INV-03
+  シナリオ: 同じ確定要求の再送は予約を重複生成しない
+    前提 コマンド "cmd-001" で本予約を確定済みである
+    もし コマンド "cmd-001" で本予約を再び確定する
+    ならば 予約は 1 件のままで、既存の追跡番号が返される
+```
+
+### Golden dataset（経路設計）
+
+要件定義の Golden dataset（代表案件を複数の経路設計者とコンプライアンス担当者が承認したもの）は、`@golden` のシナリオアウトラインとして例の表で表す。期待候補・除外候補・除外理由を例の列にし、データの版を Feature の説明に書く。データそのものは業務責任者が決める（要件定義 H-9 の残作業、TST-02）。
+
+Golden dataset v0（Bolt 37f。仮の値で業務責任者の承認待ち）は、案件ごとのデータ（`src/test/resources/golden/v0/G-nn.json`。版・判断根拠・規制資料・承認者・適用期間・入力・期待結果。1 つの区分が複数の形を持つときは `G-nn[a-z].json` として案件を足す。G-06 は古さ・G-06b は欠落・G-06c は差異。【前の決定の変更】(31)、Bolt 39h4）を、受入シナリオ（区分ごとの要約）と集約の単位のテスト（`RoutingCaseGoldenDatasetTest`。候補一覧の全体）で共有する。輸送条件は受入シナリオの背景の値にそろえ、必要最小接続時間の規則と航海は案件のデータだけから入れる。例の表の要約は、実際の候補と案件のデータの期待結果の両方と比べる（2 つを食い違わせない）。除外の要約は「番号:理由」で、理由は集約が付けた順に「・」でつなぎ、同じ理由は 1 つにする。下は抜粋（背景と区分の列を省く）。
+
+```gherkin
+# language: ja
+@US-06 @golden @BR-11
+機能: 経路候補の制約適合判定（Golden dataset v0）
+
+  シナリオアウトライン: 代表案件の候補と除外理由が期待結果と一致する
+    前提 Golden dataset v0 の案件 "<案件>" の規則と航海を読み込む
+    かつ 現在時刻を案件の判定時刻にする
+    もし 経路設計者が案件の候補を算出する
+    ならば 適合候補は "<適合候補>" である
+    かつ 除外候補と理由は "<除外>" である
+
+    例:
+      | 案件 | 適合候補 | 除外 |
+      | G-01 | 1,2,3,4 | なし |
+      | G-02 | 1,2 | 3:接続不足 |
+      | G-03 | 1 | 2:期限超過 |
+      | G-06 | 1 | 2:情報不足 |
+      | G-06b | なし | なし |
+      | G-06c | 1 | なし |
+```
+
+案件のデータの一覧（`GoldenDatasetCase.V0_CASES`）・`golden/v0` のファイル・例の表の案件の列は一致させる。足し忘れが集約の単位のテストで黙って抜けないよう、`RoutingCaseGoldenDatasetTest` のガードのテストが 3 つの一致を縛る（Bolt 39h4）。
+
+| 区分 | v0 の扱い（W6 の確認ポイント 11） |
+| :--- | :--- |
+| G-01 標準・直行と積替え | 直行 2 つ（到着が同時刻で航海番号の順）・積替え 1 回・積替え 2 回（3 区間）の 4 候補。すべて適合 |
+| G-02 接続時間の境界 | 接続余裕がちょうど（適合）と 1 分足りない（接続不足） |
+| G-03 期限超過を含む | 到着が期限と同時刻（適合）と 1 分過ぎる（期限超過） |
+| G-04 特殊貨物（MVP 対象外） | 提出で拒まれ、経路設計の案件はできない（US-01 AC4。別の feature の業務ルール層のシナリオ）。経路設計の貨物種別の判定は Bolt 39i（route_candidates.feature の `@US-06-AC2 @BR-02 @BR-03` のシナリオアウトラインで確かめる） |
+| G-05 欠航・港湾閉鎖による再設計 | v0 に入れない（US-08、W13） |
+| G-06 外部データの古さ | 取得からちょうど許容時間（24 時間）の航海は足り、24 時間 1 分の航海を使う候補だけが情報不足 |
+| G-06b 外部データの欠落（Bolt 39h4。【業務の判断】(bk)） | 経路に使える航海の外部 ID に採用値がない（まだ取り込まれていない、または形式の誤りで隔離のまま）。経路設計に航海がないので候補は 0 件で、除外理由の「情報不足」にしない（情報不足は採用値があり取得から許容時間を過ぎた航海を使う候補。D-89）。UC-06 3a の理由の表示と専門判断への引き継ぎは未実装で、候補 0 件までを縛る（W8 の US-20） |
+| G-06c 外部データの差異（Bolt 39h4。見張り） | 同じ航海の後に取得した外部版を採用した後に前に取得した外部版が届いて差異になる（版の逆転）。経路設計から見える航海は採用中の外部版のままで、差異にした外部版は入力にない。最初から通る見張りで規則の回帰は縛らない（規則は 39h の `IngestionServiceTest`・`discrepancy_ui.feature` が縛る）。航海に既存の採用値との矛盾は起きない（D-143） |
+
+表の値は区分を示すための仮の値で、実際の案件と期待結果は業務責任者が決める（TST-02 が届いたら差し替えの Bolt を足す）。
+
+## 不変条件とテストの対応
+
+ドメインモデルの不変条件を、主に確かめるレベルに対応させる（DM-03）。シナリオには不変条件 ID のタグを付け、どのテストで守られているかをたどれるようにする。
+
+| 不変条件 | ユニット | 受入シナリオ | 統合 | Web・E2E |
+| :--- | :--- | :--- | :--- | :--- |
+| Q-INV-01〜03（提出の条件、特殊貨物、版の不変） | ○ | ○ | 版の表の INSERT のみ（UPDATE の権限なし） | 特殊貨物の案内（`@ui`） |
+| Q-INV-04（最新版の審査） | ○ | ○ | — | — |
+| Q-INV-05〜07（見積りの条件と提示時刻、有効期限、失効・置換） | ○（境界値。再見積りの提示の DE-24 と輸送要求の戻し、届く順の入れ替わりを輸送要求と見積りの読み込みの後に差し込むテスト。Bolt 35b2。再承認の見積りか（荷主の回答の時刻で場合分け: 通常の流れは提示の後に回答するので偽、回答を引き継いだ見積りは提示すると真で承認しても変わらない、経路を持たない見積りは偽、引き継いだ回答と提示が同時刻なら偽。C-02 の読み取りモデルも同じ判定を回答の前・後・同時刻・回答なしで確かめる）と、荷主の画面の状態と案内の選び方のデシジョンテーブル（`TransportRequestLabelsCustomerStageTest`。輸送要求 × 最新の見積り、ほかの状態、見える見積りなし）。D-85。Bolt 35d の開発レビューで経路の確定の時刻から回答の時刻に改めた） | ○（再見積りの提示で輸送要求が荷主承認待ち、再承認で予約待ち、戻しの後の旧版の DE-04 で荷主承認待ちのまま。Bolt 35b2） | ○（引き継いだ見積りの保存と旧版の失効。PostgreSQL。Bolt 35b） | 承認の後に失効した見積りの再見積り（S-02 の予約の確定待ちの表から再見積りのフォーム、読み取り専用の経路方針と経路版、算出、提示まで。`requote_after_approval_ui.feature`、`@ui`。D-85。Bolt 35c）。再見積りから荷主の再承認と本予約まで（承認の後の失効の案内、再見積りと提示、C-02・C-04 の再承認の案内、C-17 で見積り 2 を承認、S-02 から見積り 2 の本予約の確定。同じ feature の 2 本目、`@demo @demo-bolt-35d/requote-and-reapprove`。axe を C-02・C-04・C-17 で通す。荷主の画面の状態と案内の組み合わせ（輸送要求 × 最新の見積り。UI 設計の組み合わせの表の行 1〜10。非同期の間の行を含む）は C-02・C-04 の WebMvc のテスト、C-02 の最新の見積りの読み取りモデルは PostgreSQL の統合テスト（荷主承認待ちと、見積りを提示していない見積依頼を含む）で確かめる。D-85。Bolt 35d） |
+| Q-INV-08（自社の輸送要求だけ） | — | ○ | — | ○（他社の URL の拒否） |
+| Q-INV-09〜10（荷主の回答、荷主の承認） | ○（境界値: 承認時の有効期限、経路版の状態。再設計要の印と判定の順は `QuotationRouteRedesignTest`。Bolt 37e。再見積りの判定が印があり期限内なら状態によらず再設計要を返すことは Bolt 37e3 の状態の組み合わせの表の行 10） | ○（`route_redesign_required.feature`。Bolt 37e3 で再見積りの拒否の理由の期待値を直す） | ○（印の往復と再見積りの INSERT。`MyBatisQuotationIntegrationTest`） | 回答・承認の画面（`@ui`）。Bolt 37e3: C-04 が印のある見積りに承認の操作を出さず理由を示すこと、C-17 を開いても送っても C-04 に戻して理由を示すこと（`route_redesign_required_ui.feature`。行 1〜4）、S-04 の再見積りの拒否と失効の後の案内（`StaffQuotationControllerTest`。行 10・11） |
+| Q-INV-11（複製） | ○ | ○ | — | — |
+| R-INV-01〜02（制約適合、除外理由） | ○（貨物種別の除外は Bolt 39i の RoutableCargoPolicyTest・RoutingCaseTest、境界値、複数の接続のうち 1 つだけ不足、規則の有効期間の境界、Golden dataset） | ○（`@golden`） | — | — |
+| R-INV-03（commit 時の再検証） | ○ | ○ | 期待版の競合 | — |
+| R-INV-04〜08（権限、確定は 1 つ、旧版、再設計） | ○ | ○ | 確定は 1 つの部分一意インデックス（PostgreSQL）、確定から再設計要への状態と再設計要の記録の更新、確定した経路版の内容が変わらないこと（Bolt 37d で `confirmed_route_version_no` を消した） | — |
+| R-INV-09（停止中の情報不足） | ○（鮮度の境界: 24 時間の直前・同時刻・直後） | ○ | — | — |
+| R-INV-10〜11（案件は輸送要求版ごとに 1 つ、経路版の割当て） | — | ○ | ○（DE-16 を 2 回配信しても案件が 1 つ） | — |
+| B-INV-01〜02（確定条件、有効期限） | ○（境界値） | ○ | — | 確定条件の表示（`@ui`） |
+| B-INV-03（同じコマンド ID の冪等性） | ○（判定の順序、内容の照合、拒否は記録しない） | ○（確定の後に失効しても最初の結果） | ○（同時送信で 1 件、同じ ID で内容が違えば衝突） | 二重送信（`@ui`。戻る → 再送で同じ追跡番号） |
+| B-INV-04（特殊貨物） | ○ | ○ | — | ○（S-09 の WebMvc。Bolt 35） |
+| B-INV-05（旧版、再設計要） | ○（再設計要は Bolt 37e: 見積りの本予約の判定の順（置換済み・失効の記録 → 期限切れ → 承認済みでない → 再設計要）を状態の組み合わせの表の行ごとに確かめる。荷主の承認（Q-INV-10）、再見積りでの印の引き継ぎ、印を付ける操作の冪等、届く順も同じ表で。旧版は US-08） | ○（Bolt 37e: `route_redesign_required.feature`。再設計要を伝えると荷主の承認と本予約の照会が拒否され、本予約を確定した見積りでも予約と輸送要求は変わらない） | ○（Bolt 37e: 印の列の往復、`ck_quotation_route_redesign` の違反、経路版で見積りを引く照会。PostgreSQL。Bolt 37e2: 本予約の確定用の照会（見積りの行のロック）と印を付ける更新の並行の統合テスト。ADR-016） | 予約・荷主の画面の拒否の文言は Bolt 37e3（`route_redesign_required_ui.feature`、`@US-07 @ui`。S-02 の印のある行に本予約の入口が出ないこと、S-09 を開いても送っても再設計要の理由で S-02 に戻ること。予約の腐敗防止層の写しと知らない理由を承認済みでないに寄せることは単体テスト、S-02 の照会の再設計要の有無は PostgreSQL の統合テスト。状態の組み合わせの表の行 5〜9・13） |
+| B-INV-06〜07（集荷前だけの変更・取消し） | ○ | ○ | ○（DE-09 の反映前に承認しても、追跡への同期の確認で拒否される） | — |
+| B-INV-08〜09（予約版の不変、競合） | ○ | ○ | 期待版の競合、版の表の INSERT のみ | 競合表示 |
+| B-INV-10（カスタマーサポートは予約を操作できない） | — | ○ | — | ○ |
+| B-INV-11（1 つの見積りから予約は 1 件） | — | ○（既存の追跡番号を返す。確定の後に失効しても同じ） | ○（別のコマンド ID・別の利用者で同時に確定しても 1 件。負けた側も既存の追跡番号） | 同じ見積りの予約があるお知らせと S-24 への導線（`@ui`。Bolt 24） |
+| B-INV-12（古い版のイベントを適用しない） | ○ | — | ○（順序を入れ替えて配信） | — |
+| T-INV-01〜05（追記、重複、確認中、取消済み、完了後） | ○（Bolt 26b: 同じ出典の既存の実績を返す、未来の発生時刻の拒否（T-INV-13）、実績番号の連番） | ○（Bolt 26b: `@US-12-AC1`・`@US-12-AC2 @T-INV-02`。Bolt 26c: 画面の層の `@ui @US-12-AC1`・`@US-12-AC2`。Bolt 39g: 取り込みの分の取消済み・完了後は `@US-12-AC4`・`@US-12-AC5`。Bolt 39gb: 下書きの採用は `@US-12-AC1`（業務ルール層と画面の層の `adopted_milestone_reflected_ui.feature`）、採用済みと同じ値の候補は `@US-12-AC2`。Bolt 39gc: 確認中は `@US-12-AC3 @T-INV-03`（手入力と採用）、手入力の取消済み・完了後は `@US-12-AC4`・`@US-12-AC5`、画面の層は `under_review_milestone_ui.feature`。単体は `MilestoneSequenceRuleTest`・`CurrentStatusDeriverTest`・`TrackingRecordMilestoneTest`・`TrackingRecordCandidateAdoptionTest`（`Bolt39gc_…`）） | 一意制約、DELETE の権限なし（Bolt 26b: `uk_milestone_source` の違反と版の不一致はセーブポイントに戻して競合、`[no-delete]`） | — |
+| T-INV-06〜07（訂正の二者確認、下書きの修正） | ○ | ○ | `CHECK`（承認者 ≠ 登録者） | 確認の領域（`@ui`） |
+| T-INV-08〜10（予定と実績の区別、開示範囲、当初の予定と最新の見込み） | ○（Bolt 26b: 現在状態の導出の規則。種類ごと、発生時刻の順、同じ時刻、採用済みだけ。Bolt 27: 荷主向けの照会結果は採用済みの実績だけで社内の識別子を持たない、荷主の照会のサービスは他社の追跡記録を返さない。Bolt 39g3: 最新の到着見込みの規則 `LatestEstimateRuleTest`（対応づけ・遅れ・到着・2 つ以上・状態・なし）、最終取得時刻は採用の実績の取得時刻の最大（`TrackingRecordTest`）、登録・採用・DE-13 の受け取りで採用のときだけ動き当初の到着予定は動かない。Bolt 39g4b: 公開の順 `PublicationOrderTest`、航海の到着予定の規則 `VoyageArrivalRuleTest`（積地・揚地の読み方、周回、結べない）、`LatestEstimateRuleTest` の航海の到着予定の組（遅い方、当初より早めない、到着の実績が勝つ）、集約の受け取り `TrackingRecordVoyageArrivalTest`（順・完了後・取消済み・中間の区間・最終取得時刻）、listener `VoyageArrivalEventHandlerTest`（押さえる順と読む順、内容の欠け）。Bolt 39g4c: 見込みの根拠の値 `LatestEstimateBasisTest`（実績のときだけ実績番号）、`LatestEstimateRuleTest` の根拠の組（到着の実績・遅れのない実績も根拠・同じ時刻は実績・早まった航海の到着予定は当初の到着予定・確認中は使わない・予定の順で最も後の実績）、集約の書き手と不変条件 `TrackingRecordLatestEstimateBasisTest`（開始・採用・航海の到着予定の受け取り・導出し直さない経路は根拠を保存した値のまま、private のコンストラクターが見込みと根拠の食い違いを拒む）、S-12 の根拠の文（`TrackingRecordControllerTest`。当初の到着予定・区間 n の出発と積替の実績と見込みの遅れ・当初の到着予定どおり・到着の実績・航海の到着予定と取得時刻・記録がありません）、`VoyageArrivalTest`（公開した時刻・出典の欠け）） | ○（Bolt 27: `@US-09-AC1`、他社の照会 `@BR-07 @T-INV-09`、自社だけの一覧 `@BR-07`。画面の層の `@ui @US-09-AC1`。荷受人の立場は R1.1。Bolt 39g3: `latest_estimate.feature`（`@T-INV-10`）、画面の層の `latest_estimate_ui.feature`（`@demo-bolt-39g3/latest-estimate`）。Bolt 39g4b: `voyage_arrival_estimate.feature`（`@T-INV-10`）、画面の層の `voyage_arrival_estimate_ui.feature`（`@demo-bolt-39g4b/voyage-arrival-estimate`）。Bolt 39g4c: `latest_estimate_basis.feature`（`@T-INV-10`）、画面の層の `latest_estimate_basis_ui.feature`（`@demo-bolt-39g4c/latest-estimate-basis`。S-12 の見込みの根拠が実績から航海の到着予定に変わり、C-10 に出ない）） | ○（Bolt 27: 荷主企業で絞る照会と索引。Bolt 39g3: 保存の UPDATE が `latest_eta`・`last_acquired_at` を書き、`original_eta` を書かない。読み直しの往復と一覧の要約。Bolt 39g4b: 航海の到着予定の 4 列の UPDATE・INSERT・往復、CHECK `ck_tracking_record_voyage_arrival`、照会 `findTrackingNumbersByFinalLegVoyage`（H2 と PostgreSQL）、配信の統合 `VoyageArrivalDeliveryIntegrationTest`（DE-12 の 3 つの購読）、DE-12 と DE-13 の受け取りの直列 `MyBatisTrackingRecordLockIntegrationTest`（PostgreSQL）。Bolt 39g4c: 見込みの根拠の 2 列（`latest_eta_basis`・`latest_eta_basis_milestone_no`）の INSERT・UPDATE・往復、根拠の実績番号の先の確かめ（ない実績なら競合）、CHECK `ck_tracking_record_latest_eta_basis`（H2 と PostgreSQL）、外部キー `fk_tracking_record_latest_eta_basis`（PostgreSQL。コミットで拒む）、列のコメント `SchemaCommentIntegrationTest`） | ○（顧客向け HTML の開示テスト。Bolt 27: 他社・存在しない・形式の誤りの追跡番号は同じ 404 で本文も同じ、経路版の案件番号・実績番号・UTC の併記が出ない。Bolt 27b: C-06 予約一覧は自社の予約だけ（照会のサービスの単体テストと PostgreSQL の統合テスト）、予約サガの状態の英語の値と UTC の併記が出ない、一覧の行の項目の見張り。荷受人の開示範囲は R1.1。Bolt 39g4c: C-10 の本文に見込みの根拠と根拠の文が出ない（`CustomerTrackingControllerTest`）、S-11 の列は変わらない） |
+| T-INV-11（追跡記録は予約 1 件に 1 件） | — | ○（DE-07 を 2 回配信しても追跡記録は 1 件。`@ADR-015 @T-INV-11`。Bolt 25） | ○（予約 ID の一意制約。DE-07・DE-22 の再配信で追跡記録・予定区間・予約サガの版が変わらない） | — |
+| T-INV-12（予定の妥当性） | ○（区間 1 件以上、区間番号の順、到着は出発の後、揚地と積地のつながり、経路版がない・企業 ID がないときは開始しない） | — | `CHECK`（`leg_no >= 1`、到着は出発の後） | — |
+| SC-INV-01〜03（有人案件） | ○ | ○ | — | — |
+| SC-INV-04（営業日カレンダーと受領期限） | ○（デシジョンテーブル: 営業時間内・外、休業日、優先度、年末年始） | ○ | — | — |
+| SC-INV-05（荷主は自社の問い合わせだけ） | — | ○ | — | ○ |
+| IR-INV-01〜02（照会記録） | ○（30 分のまとめ、24 時間の有人対応への移行の境界。境界は `WebInquiryEscalatorTest` の「ちょうど」「1 秒古い」で押さえる） | ○ | — | — |
+| 通知の同じ契機の 2 回受信（US-22。D-166） | ○（`MailDeliveryTest`） | ○（`MyBatisNotificationRepositoryIntegrationTest`、`ShipperNotificationMailIntegrationTest`） | — | — |
+| KPI-INV-01〜02（KPI の算出、基準値） | ○（中央値・90 パーセンタイル、除外の適用） | ○ | 基準値の表の INSERT のみ | — |
+| N-INV-01〜03（通知の本文、重複なし、失敗の記録） | ○（Bolt 33: 通知の状態の遷移、失敗の理由の長さ、同じ `event_id` と宛先は `AlreadySent`） | ○ | ○（イベントの再配信で 1 通。Bolt 33: `status = 'PENDING'` を条件にした更新、UK（`event_id`、`recipient_user_id`）、Mailpit で件名・本文・宛先） | メールの本文の開示テスト |
+| IA-INV-01〜02（固定役割、担当範囲） | ○ | ○ | — | ○（URL ごとの認可） |
+| IA-INV-03（ロック） | ○（4・5・6 回目、ロックの 14:59・15:00。Bolt 33a: password の再設定でロックと失敗の数が変わらない） | — | — | ○ |
+| IA-INV-04（session と即時反映） | — | — | ○（セキュリティの統合テスト: 無操作 30 分・8 時間の失効、利用停止・権限取消しの次の request からの反映） | ○ |
+| IA-INV-05〜06（参照許可） | ○ | ○ | ○（取消し後の既存 session、セキュリティの統合テスト） | — |
+| IA-INV-07（監査記録の追記専用と欠落の検知） | — | — | ○（UPDATE・DELETE の権限なし、操作と対象での冪等（イベント経由の監査。IA-INV-15。Bolt 39b3b で `event_id` の一意から改めた）、欠落の照合の定期処理） | — |
+| IA-INV-08（認証・権限外の試行の同期記録） | — | — | ○（セキュリティの統合テスト） | — |
+| IA-INV-10〜11（TOTP の資格と回復コード。Bolt 33b の置き換えと発行し直し） | ○（`TotpCredential.reEnroll` の最後に使った刻みは大きい方（古い値が大きい・新しいコードが大きい）。再登録のサービスの完了・コードの誤り（置き換えない）・15 分を過ぎた・秘密が読めない・資格がない・利用停止と企業の無効、監査 `TOTP_RE_ENROLLED`（利用者で絞る。T-113）、コミットの後の失効（ロールバックしたら失効しない）、失効が失敗しても完了、監査を書けなければ失効しない、外側のトランザクションの中では呼べない） | ○（`@US-18-AC9`。回復コードでログイン → A-08 → 再登録 → 新しい回復コード） | ○（`replace` の置き換え・0 件・`last_used_step` が大きい方、古い秘密を読んでから置き換えると `useStep` が 0 件（秘密の条件を外すと落ちる。T-112）、`revokeOthers` で今の session が残り同じ利用者のほかの session が消えほかの利用者の session は残る、再登録の完了 2 つの同時で 1 つだけ（後の再登録が先の行ロックを待つことを `pg_stat_activity` の待ちで確かめてから先を確定させ、後は `Superseded`。置き換えの秘密の条件を外すと落ちる）、発行し直しと回復コードによるログインの同時で古い回復コードは置き換えの後に通らない（T-100）、監査を書けなければ資格も回復コードも元のまま（`TotpReEnrollmentRollbackIntegrationTest`。全体が戻る）） | ○（A-08 の axe の違反 0） |
+| IA-INV-12（再設定のトークン） | ○（Bolt 38b4: 用途の値（初回の設定、契機の時刻の境界、譲る用途）、遅れた DE-25 と本人の再設定の後の DE-25 で招待を発行しない、初回の設定の監査。Bolt 38b2c: 用途の値（抑えを数えるのは `RESET` だけ）、招待のハンドラーの送信の失敗で完了。Bolt 33: 期限の 29 分 59 秒と 30 分、無効化、ハッシュだけを持つ。依頼のサービスの監査の結果と理由（有効・登録なし・止められた利用者・所属企業の無効）。Bolt 33a: 完了のサービスの完了・無効（期限切れ・使用済み・無効化・存在しない）・方針の誤り（トークンを使わない）・利用停止と企業の無効（無効、監査なし）、前の未使用のトークンの無効化、監査（利用者で絞る。T-113）、コミットの後の失効（ロールバックしたら失効しない）、失効が失敗しても完了） | ○（Bolt 33: `@US-18-AC8`。登録ありならリンクが届くことを先に確かめてから、登録なしで届かないこと。Bolt 33a: 依頼から設定まで、期限切れのリンクの案内、よく使われる password の誤り） | ○（Bolt 33: ハッシュで探す、新しい発行で前を無効、`request_id` の一意。ハンドラーの繰り返しの 59 秒と 1 分、同じ依頼の ID の再配信で 2 通送らない、送信の `Failed` で完了、依頼がロールバックしたら呼ばれない、同時の 2 つの発行の直列（T-100）。発行記録・トークンの表・ログに平文のトークンと URL がない。Bolt 33a: `findById`・`markUsed` と `isUsable` との契約テスト（使える・期限ちょうど・使用済み・無効）、同じトークンの同時の 2 つの送信で 1 回だけ（T-100。条件を外すと落ちることを確かめる。T-112）） | ○（Bolt 33: 登録の有無で応答（リダイレクト先・本文）が同じ、応答が送信を待たない。Bolt 33a: 期限切れ・使用済み・無効のリンクが同じ案内） |
+| password の方針（SEC-04・SEC-05。Bolt 33a） | ○（11・12・64・65 文字、72・73 バイト、空白と全角、一覧の照合の結果。一覧は 1 語・大文字小文字の違い・1 文字違い、読めない・空で起動を止める） | ○（よく使われる password で誤りが出る） | ○（利用者の password の更新（`version` が上がる）、bcrypt のハッシュで新しい password でログインでき、古い password でログインできない） | ○（誤りの文言、axe の違反 0） |
+| ED-INV-01（情報源 0 件で開始不可） | — | ○ | — | — |
+| ED-INV-02〜03（重複・隔離・差異） | — | ○ | ○（同じファイルの再取込、内容の違う原本、順序逆転・矛盾） | 取込画面（`@ui`） |
+| ED-INV-04〜05（手動情報、復旧照合） | — | ○ | ○（件数の照合） | — |
+
+### 時刻と境界値
+
+BR-10・BR-11 は「同時刻」「同値」が判定を分ける。境界値は次の規則で網羅する。
+
+- Clock を固定し、境界の直前・同時刻・直後の 3 点を必ず書く。
+- 時刻は UTC で与え、表示のテストではタイムゾーンと UTC offset を確かめる。
+- 「commit 時刻で判定する」規則（BR-10、R-INV-03）は、アプリケーションサービスが commit 時刻として渡す時刻を固定して確かめる。
+- Clock はマイクロ秒に切り捨てる（ADR-007）。境界値を保存して読み直しても、判定が変わらないことを統合テストでも確かめる。
+- BR-11 は、接続が複数ある経路で 1 つの接続だけが不足する場合と、接続時間規則の有効期間（適用開始・終了）の境界も網羅する。境界は次の区間の出発予定の時刻を基準にする（D-90。Bolt 37）。
+
+## アーキテクチャテスト
+
+CI で毎回実行する。
+
+| ID | ルール | ツール | 根拠 |
+| :--- | :--- | :--- | :--- |
+| AT-01 | `domain` パッケージは Spring などのフレームワークに依存しない | ArchUnit | 第 3 章、ADR-001 |
+| AT-02 | 依存は `interfaces` → `application` → `domain` ← `infrastructure` の向きに限る | ArchUnit | バックエンドアーキテクチャ |
+| AT-03 | モジュール（コンテキスト）間の依存は公開 API とドメインイベントだけ | Spring Modulith `ApplicationModules.verify()` | ADR-001 |
+| AT-04 | 各コンテキストのマッパーの SQL は自分のスキーマ（と `platform` の許可された表）以外を参照しない | マッパー XML を読む独自のテスト（`MapperSchemaArchitectureTest`。Bolt 25 で実装。既知の限界: `FROM`・`JOIN`・`INTO`・`UPDATE` の直後の `スキーマ.表` だけを見るので、カンマ結合の 2 つ目の表、`USING`、修飾のない表名、引用符付きの識別子、Java の注釈の SQL（今は使っていない）は拾わない。検査するスキーマの一覧は手で保つ。Bolt 25 レビュー A-5） | ADR-001（改訂）、データモデル |
+| AT-05 | 業務のルールの層のステップ定義（`<コンテキスト>.acceptance`）は、自分のコンテキストのアプリケーション層・ドメイン層と共有カーネル、他のコンテキストの公開 API にだけ依存し、自分のインフラストラクチャ層・画面・公開 API の実装（`interfaces.api.internal`）と他のコンテキストの内部（ドメインイベントを含む）に依存しない（入力ポートのほか、コマンドの組み立てと結果の確かめにドメインの値オブジェクト・集約を使うことは認める。画面の層のステップ定義と、受入テストの組み立て（`acceptance`・`shared.acceptance`。メモリのリポジトリや公開 API の実装をつなぐのが役目）は対象外） | ArchUnit（`AcceptanceStepArchitectureTest`。Bolt 28 で、Bolt 2 から後に回していたものを実態に合わせて作った。Bolt 39b3b で、コンテキストごとの手書きの規則を、依存元のパッケージからコンテキストを決める 1 つの規則にした） | 本書 BDD |
+| AT-06 | 本番の実行クラスパスに H2・Hibernate ORM・JPA が含まれない | Gradle のビルド検査 | ADR-007 |
+| AT-07 | identity の合成ルート（`identity.infrastructure.config`）の `@Bean` のメソッドが返す型は、`identity.application.internal..`・`identity.infrastructure.security..`・`org.springframework..` （そのパッケージとその下）の型か `AesGcmSecretCipher`・dev の `DevTotpCodeSource` に限り、送信アダプター（persistence・crypto）のコンストラクターを呼ばない（送信アダプターは部品探索で拾う） | 見張りのテスト（Bolt 32d） | バックエンドアーキテクチャの identity の合成ルートの規則 |
+| AT-08 | 画面の層のテスト（`com.example.cargotracker.ui`）は `java.util.regex.Pattern.quote` を呼ばず、Playwright の正規表現に渡す文字列は共通の補助（`PlaywrightText.literal`）でエスケープする（エスケープの漏れと書き方のばらつきを防ぐ。Bolt 33a の Try T-128。`documentation` の正しい使い方は対象外）。対象が空でないことを見張り、違反を控えのファイルに入れて落ちることを確かめる（T-107・T-112・T-131） | ArchUnit（テストのクラスを読む。前例 `AcceptanceStepArchitectureTest`。Bolt 33c） | Bolt 33a の議題 7 |
+| AT-09 | 暗号の部品（`identity.infrastructure.crypto` の 11 のクラス）は、名前ごとの規則で「その名前のクラスは `identity.infrastructure.crypto` にある」を確かめる（11 の名前を `.or()` でつないだ 1 本の規則を分ける。規則を作る補助は `.allowEmptyShould(false)` を明示し、1 つの名前が変わるとその規則の対象が空になって落ちる。前例 `AcceptanceStepArchitectureTest`）。逆向きの規則「`identity.infrastructure.crypto` のトップレベルのクラスは一覧の 11 のどれか」も並べ、一覧への足し忘れを捕まえる（名前ごとの規則は名前の変更を捕まえる）。Bolt 34c のステップ 2 で足した | ArchUnit（`AuthenticationArchitectureTest`） | Bolt 31d の問い、バックエンドアーキテクチャの暗号の部品の箇条 |
+| AT-10 | identity のパッケージ（`..identity..`）のテストのクラスのフィールドの `@MockitoSpyBean` は、共通の基底 `com.example.cargotracker.identity.infrastructure.security.IdentitySpyIntegrationTestBase` にだけ宣言する（テストのクラスごとに spy の組が増えて Spring のコンテキストが増えることを防ぐ。`integration` パッケージの 1 つとクラスに付ける `@MockitoSpyBean(types=…)` は範囲の外）。先に基底の spy のフィールドが対象として数えられていること（空でない）を確かめる（T-119）。見るのは spy の約束だけで、`@MockitoBean`・`@TestPropertySource` などコンテキストを分けるほかの要因は見ない。Bolt 34c のステップ 3 で足した | ArchUnit（テストのクラスを読む `TestPlacementArchitectureTest`。前例 `AcceptanceStepArchitectureTest`） | Bolt 32d の既知の課題、本書の identity の統合テストの段落 |
+| AT-11 | 本体のクラスに直接付ける `@Configuration`（`areAnnotatedWith(Configuration.class)`。メタ注釈の `@SpringBootApplication`・`@TestConfiguration` は対象外）は `..infrastructure.config..` に置くか、`com.example.cargotracker.ClockConfiguration` である。例外の広がりは、この規則が例外に完全な名前の 1 つしか許さないことで止める。並べた 2 本目の規則「ルートのパッケージの直接の `@Configuration` は `ClockConfiguration` だけ」は、例外の名前が実在し続けることの見張りで、`ClockConfiguration` を動かしたり名前を変えたりすると落ちる（T-135）。Bolt 34c のステップ 3 で足した | ArchUnit（`LayerArchitectureTest`。「config には `@Configuration` だけを置く」の隣） | バックエンドアーキテクチャの合成ルートの箇条（`ClockConfiguration` の例外。2026-10-17、human:kakimomokuri） |
+
+## 統合テスト
+
+| 対象 | 確かめること |
+| :--- | :--- |
+| マイグレーション | すべての DDL が PostgreSQL 18 と H2 の両方に適用できる（ADR-007）。CHECK 制約・一意制約が効く |
+| マッパー | 集約の保存と復元が一致する。期待版が違う更新は 0 件になる |
+| 追記専用の保護 | アプリケーションの DB 利用者で、監査記録・受信記録・版の表を UPDATE・DELETE できない（PostgreSQL のみ） |
+| 冪等性 | 同じ `commandId` を同時に 2 回送っても 1 件になる（本予約の確定では、同じ見積りなので貨物予約の一意制約が先に当たる）。同じ `commandId` で内容（payload のハッシュ）が違えば衝突として拒否する（同時に送られて処理済みコマンドの主キーで負けた側も衝突にする）。一意制約の違反は保存をセーブポイントに戻し、同じトランザクションで勝った側の結果を読み直す（Bolt 24。`BookingConfirmationConcurrentIntegrationTest`） |
+| 重複確定の防止 | 同じ見積りから、別のコマンド ID・別の利用者で同時に本予約を確定しても、貨物予約の見積り ID の一意制約で 1 件になる（B-INV-11） |
+| 受信側の冪等性 | DE-16・DE-07・DE-13 などを 2 回配信しても、購読側の処理は 1 回分になる（R-INV-10、N-INV-02） |
+| イベントの順序 | 同じ集約のイベントを逆の順序で配信しても、古い版のものは適用されない（B-INV-12） |
+| イベント配信 | 発行と業務データが同じトランザクションで記録される。購読前にアプリケーションを止めて再起動しても、イベントが失われず二重処理されない（ADR-003） |
+| 予約サガ | 本予約の確定から追跡の開始（DE-07 → 追跡記録 → DE-22 → 予約の公開 API）を経て予約サガが完了になる（PostgreSQL の統合テストでイベントの発行の記録の完了を待つ。完了は処理中のときだけ・期待版で更新。Bolt 25、ADR-015）。処理中のまま RTY-02 の時間を超えたものが有人確認要へ移る（境界の前後）。追跡の開始の技術の失敗はイベントの再配信が担い、予約サガは再試行を記録しない（ADR-015）。有人確認要の間、画面は処理中を成功と表示しない |
+| 輸送段階の通知 | 手入力で集荷・引渡しを登録すると、DE-09・DE-10 → 追跡の listener → 予約の公開 API を経て予約が輸送中・集荷後、完了・完了になり、発行の記録が完了になる（PostgreSQL の統合テストで待つ。T-184。Bolt 39g2、ADR-014）。集荷と引渡しの通知を重ねても予約の行のロックで両方とも例外なく終わる。届く順によらず段は戻らない。受入シナリオは `transport_phase_from_tracking.feature`・`transport_phase_from_tracking_ui.feature`（`@demo-bolt-39g2/transport-phase`） |
+| 外部原本の取込 | 同じファイルの再取込で件数と採用値が変わらない。同じキーで内容の違う原本は隔離される。照合の件数が一致する（ADR-004） |
+| ファイルの保存 | S3 アダプター（統合テストは S3 互換のコンテナ）で原本を保存・取得できる |
+| 外部原本の差異 | 順序逆転・既存値との矛盾は自動で上書きされず差異になる（US-14 の 5 件目、ED-INV-03）。Bolt 39h で、この外部 ID の採用値の一覧の照会を契約のテストでメモリ・H2・PostgreSQL に流し、差異の取込が DE-31 の監査を配信まで残すことを統合テストで確かめる。Bolt 39h3 で、同じ一覧の照会を判断の画面の「この外部 ID の採用値」の領域と古い外部版の警告にも使い、版の逆転の判定と比べる相手の選び方を差異の規則から取り出して共有する（取り出しは振る舞いを変えないので、`discrepancyOf` の既存の組が緑のままであることを確かめる） |
+| 権限のコールバック | Testcontainers で Flyway の `afterMigrate` コールバックを含めて適用し、所有者ではないアプリケーションの DB 利用者で全マッパーのテストを動かす（ADR-007） |
+| セキュリティ | SpringBootTest と PostgreSQL で、session の無操作 30 分・発行後 8 時間の失効、利用停止・権限取消し・参照許可の取消しの次の request からの反映、認証の失敗と権限外のアクセス試行の監査記録への同期の記録を確かめる（IA-INV-03〜08） |
+| 監査記録の欠落の照合 | 業務の状態変更と監査記録の件数の照合が、欠落を異常として検出する（AUD-04） |
+| 時刻に依存する定期処理 | Clock を固定して、鮮度超過（FRS-01・02。FRS-02 は Bolt 39g4 から定期処理でなく読むときの判定）、受領期限の超過と escalation（SVC-01〜05）、見積りの期限間近（DE-19）、再配信（RTY-01）の判定の境界を確かめる |
+| 通知 | メールを受けるだけのコンテナ（Testcontainers の Mailpit。Bolt 33、ADR-017）で、通知の宛先・件名・本文（料金などを含まない）と、送信失敗の記録を確かめる。Bolt 33 は password の再設定のメールの分、Bolt 38b2b は利用者の招待のメールの分（公開 API から Mailpit まで、同じ登録の 2 回目は送らない）、Bolt 38b2c は登録から招待のメールまで（登録のコミットの後に届く、拒否と重複では DE-25 が出ない、再配信で 2 通送らない、登録の後に止められた利用者には送らない、発行記録とログに平文とアドレスがない）: SMTP の送信アダプターで件名・本文・宛先が届く、送信のサービスが PENDING から SENT・FAILED にする、同じ `event_id` と宛先で 2 通送らない。dev のログに出す送信（`LoggingMailSender`）はログの取り込みを送信の間だけにして確かめ（T-111）、dev と staging・prod の併用と、staging・prod で SMTP の設定がないときに起動を止めることを確かめる |
+| password の再設定の依頼 | Bolt 33（US-18 AC8 の前半）。`/password-reset` が未認証で開ける、`/password-reset/{トークン}` は 33a まで仮の A-06（準備中）を返し、トークンを読まず session に覚えず `Referrer-Policy: no-referrer` を付ける（`/password-reset/x/y` は公開しない）、CSRF のトークンがない送信は 403、送信の後は `/login?reset-requested` に戻り、登録の有無・止められた利用者・所属企業の無効で応答（リダイレクト先・本文）が同じ、応答がハンドラーを待たない（送信アダプターを遅くする）、ログイン済み・password の段の session で開いた場合（T-102）。発行と送信を依頼のトランザクションの中に戻す違反で、応答が送信を待つテストが落ちることを確かめる（T-112） |
+| password の再設定の完了 | Bolt 33a（US-18 AC8 の後半）。リンクを開くと `/password-reset/new` に移り、移った先の URL と session の表にトークンがない（session があることを先に確かめる。T-107）、`Referrer-Policy: no-referrer`、無効なトークンは同じ案内、session にトークンの ID がなければ A-06 は案内、CSRF。完了の後に、ほかの端末の session で業務の画面を開くと A-03 になり、新しい password と TOTP でログインでき、古い password ではログインできない。消えるのはその利用者の session だけで、ほかの利用者と主体のない session は残る。ログイン中・password の段・別の利用者のブラウザでリンクを開いて設定しても完了の知らせが出る（T-102）。失効した Cookie でリンクを開いた場合も session の表にトークンがない。全 URL の見張り（`AUTHENTICATION_SCREENS`）に `/password-reset/new` と `/password-reset/{token}` を足す。`/password-reset/x/y` は公開しない |
+| 認証アプリの再登録 | Bolt 33b（US-18 AC9 の回復コードの経路）。回復コードでログインすると A-08 に移り（session の ID が変わることは既存の `RecoveryCodeLoginSecurityIntegrationTest` のまま）、認証コードでログインすると今のまま。印のない session・password の段・同じ session で別の利用者に切り替えた後に A-08 を開くと、役割のホーム・A-02・役割のホーム（T-102）。CSRF のトークンがない送信は 403。再登録の後に新しいコードでログインでき、古いコードと古い回復コードは通らない。ほかの端末の session は A-03 になり、今の session は残る。後で登録すると業務の画面に知らせが出る。完了の後の再送は置き換えずに役割のホームへ移る。回復コードでログインしてから 15 分を過ぎると A-08 を開けず、知らせはログインし直す案内になる（印の期限。Bolt 33b の開発レビュー）。ログインの前に開いた query の付いた画面に、「後で登録する」でも「続ける」（`POST /account/authenticator/continue`）でも query を保って戻る。A-08 の URL は全 URL の見張り（`AuthenticationSecurityIntegrationTest` の `checked`）が自動で含む（password の段の主体は A-02 へ。除外の一覧 `AUTHENTICATION_SCREENS` には足さない）。印の 2 つの属性の名前（利用者の ID と時刻）の 2 つの定数が同じ値であることを単体テストで守る（`SessionLifetimeFilterTest`。Bolt 33c で名前を `SessionKeys` に寄せ、このテストは消す）。印の状態（ログインから 15 分の間だけ ACTIVE、別の利用者の印と印のない session は NONE、時刻のない印は EXPIRED、消すと印も時刻もなくなる）は単体テスト `RecoveryLoginTest` で確かめる。監査を書けなければ資格も回復コードも元のままになることは統合テスト `TotpReEnrollmentRollbackIntegrationTest`、同時の再登録で後が先の確定を待つことは `pg_stat_activity` の待ちで確かめる |
+| session の属性の名前と期間の置き場所 | Bolt 33c（振る舞いの変わらない直し）。値を固定する単体テスト `SessionKeysTest` で、`SessionKeys` のすべての session・request の属性の名前と A-08・A-03 の URL が Bolt 33b までの文字列と同じことを守る（動いている session の属性が読めなくならない。`SessionLifetimeFilterTest` の値の固定のテストを移して広げる）。2 つの定数の一致を守るテスト（`SessionLifetimeFilterTest` の 4 本）は、同じ定数を参照するので消す。認証の入口から `application.internal.session` への参照は層の規則の例外として `LayerArchitectureTest` が許し、`queryservices` への参照は落ちる（ADR-012 の決定 6）。振る舞いは全 URL の見張りと既存のシナリオで守る（`check`・`uiTest` が緑のまま）。覚えた要求の属性の名前を `SessionKeys.SAVED_REQUEST` で共有しても（`RequestCache` の Bean は作らない。Bean にすると Spring Security が型で見つけて未認証の入口でも使い、覚える範囲が変わるため）、覚えた要求に戻るテスト（`ReturnAfterExpirySecurityIntegrationTest`、A-08 の「後で登録する」「続ける」、未認証で開いた画面に戻るテスト）が緑のまま。A-01 の「5 回」「15 分」を `LockPolicy` から描く前に、:27 の再設定の完了の知らせの文言を確かめるテスト（`AuthenticationSecurityIntegrationTest`）を足し、既存の `LoginLockSecurityIntegrationTest` と `login_ui.feature` も緑のまま（表示は変えない）。空の復号の境界は、テスト用の鍵と AAD で空の平文を JDK の暗号で暗号化した暗号文（IV とタグちょうどの長さ）が `UnreadableCredentialException`（短すぎる）になることを `AesGcmSecretCipherTest` で確かめる（乱数のバイト列ではタグの不一致でも同じ例外になり、境界を確かめられない）。`SchemaCommentIntegrationTest.BUSINESS_SCHEMAS` に `tracking` を足す |
+| TOTP と回復コードの部品の整理 | Bolt 33d（振る舞いの変わらない直し）。移す前に、A-02・A-07・A-08 のコードの欄の `pattern="[0-9]{6}"`・`maxlength="6"` と見出し・前文の「6 桁」を確かめるテストをセキュリティの統合テストに足し（今は `autocomplete` だけ）、属性を消す変異で落ちることを確かめる。生成した回復コードが `RecoveryCode.normalize` を通ることを確かめ、`RandomRecoveryCodeGeneratorTest` の正規表現の写しを置き換え、`NormalizedRecoveryCode.fromBytes` の区切りを変える変異で落ちることを確かめる。QR コードの SVG のテストは `QrCodeSvgTest` に移し、秘密の発行の側に URI を読み戻すテストを 1 本残す。`NormalizedRecoveryCode` の形・区切り・境界は `NormalizedRecoveryCodeTest` で確かめる。画面のコードの欄はテンプレートに静的な値を残さず `th:pattern`・`th:maxlength` だけで描き、見張りは属性ごとに確かめる（静的な値が残ると定数から描いたことを見分けられない。Bolt 33d の開発レビュー）。`RecoveryCode.issueSet` と `TotpProvisioningStarter` は単体テストを足し、登録・再登録の既存の単体・統合テスト（同時の登録・再登録、二度押し、途中の暗号文の使い続け）を緑のまま付け替える。テストの中の 6 桁の写し（偽の生成器の `%06d` など）は仕様を固定する値として文字列のまま残す |
+| 認証の入口と session の型と期限の整理 | Bolt 33e（振る舞いの変わらない直し）。`SessionPolicyTest` で期限の判定のちょうど・1 ナノ秒前・後を確かめ、判定していた 4 か所の既存のちょうどの時刻のテスト（`SessionLifetimeFilterTest` の 3 つの期間、`RecoveryLoginTest`、`TotpReEnrollmentServiceTest`）を緑のまま付け替える。テストのなかった A-08 の画面の期限の分岐は、session の行で A-08 を開いた時刻だけを前にずらす統合テストを `RecoveryCodeLoginSecurityIntegrationTest` に先に足す。`SessionIdTest` を足し、`SpringSessionUserSessionRevokerIntegrationTest` の今の session を残すテストが、実装の比較の取り違え（文字列と値を比べる）の変異で落ちることを確かめる。`RecoveryCodeAuthenticationProviderTest` に経路の確かめを足し、成功の扱いで経路を読まない変異と `Builder` が経路を写さない変異で落ちることを確かめる。画面だけが使う属性の名前 2 つの値を文字列で固定する |
+| 期間の表示と回復コードの型と session の URL の整理 | Bolt 33f（振る舞いの変わらない直し）。`SessionPolicyTest` に `deadline` を足し、`DurationDisplay` の汎用の書式のテストを足す。テンプレートの期間を描く前に、A-07・A-08・A-03 の期間の文言の統合テストと、session の警告の `data-lifetime-message` の値の統合テスト（`SessionTimerSecurityIntegrationTest`。今は uiTest だけが守る）を足し、式を外す変異で落ちることを確かめる（テンプレートに静的な値を残さない。T-136）。URL の値を固定するテストは `SessionPathsTest` に移す。回復コードの生成のポートの型を変えても、画面に平文が出ることは統合テストの正規表現が守る（uiTest は個数だけ） |
+| 役割の付与と取消しと職務分離 | Bolt 34（US-16 の一部）。`RoleAssignmentPolicyTest`（8 役割の組合せの職務分離と、企業の種類 3 つ × 役割）と `User` の判定の単体テスト（Bolt 34e から `decideRoleChange` が返す承認の値 `RoleChangeApproval` と `changeRoles(承認)`）、`UserRoleChangeService` の単体テストと PostgreSQL の統合テスト（版の条件、`user_role` の差分と `granted_by`、監査記録の対象と変更前後、監査の追記の失敗で全体が戻る、同時の 2 つの変更で 1 つだけ通る）、セキュリティの統合テスト（`/staff/users/**` はシステム管理者だけ、ホームの行き先、確定の POST を画面を経ずに送っても同じ判定で拒む、変えた役割が相手の次の request から効く）、画面の層の受入シナリオ（`@US-16`。付与・取消し・職務分離・企業の種類・自分の役割・古い版・「戻る」） |
+| 管理範囲と管理範囲の外の試行の記録 | Bolt 34b（US-16 AC2）。`AdministrationScope` の単体テスト、担当範囲の表とリポジトリの統合テスト（制約、割り当ての読み出し、一覧の絞り込み・空の集合）、記録のサービスの統合テスト、照会と役割の変更のサービスの範囲の判定、セキュリティの統合テスト（範囲外の詳細・確認・確定が 404 で `ADMIN_SCOPE_DENIED` が 1 行ずつ、役割も版も変わらない、割り当てのないシステム管理者には空、監査の追記の失敗で 500）、画面の層の受入シナリオ（`@US-16-AC2`。範囲外の利用者は一覧に出ず、URL を開くと見つからない） |
+| 利用者の利用停止と再開 | Bolt 34d（US-16 AC5）。単体テスト: `RoleAssignmentPolicy.holdsOversightRole`、`User.decideStatusChange`（自分・監督の役割・同じ状態・理由のない停止と、判定の順の境界。Bolt 34e から承認の値 `StatusChangeApproval` を返し、再開の承認は理由を持たない）と `changeStatus`（Bolt 34e から承認の値だけを受ける）、`AuditRecord.userSuspended`・`userReactivated`（対象・版・変更前後・停止の理由）、`UserStatusChangeService` の `check`・`change`。PostgreSQL の統合テスト: 確定で状態と版と監査記録が 1 つのトランザクションで変わる、古い版で何も変わらない、役割の変更の後の停止の確定は古い版（版の共有）、範囲外は `OutOfScope`、監査の追記の失敗で状態も版も戻る。セキュリティの統合テスト（状態コード・状態・版・監査の行だけを見る。T-145）: 自分・監督の役割・範囲外・同じ状態・理由のない停止の確定が拒まれ書かれない、知らない状態・理由の名前と再開に理由を付けた送信は 400、範囲外の確定で `ADMIN_SCOPE_DENIED` が 1 行、停止の確定の後に相手の既存の session の次の request が A-03 で `SESSION_REVOKED`（`SUSPENDED`）が 1 行、相手の過去の監査の行が残る、確認の GET は受け付けられる停止と範囲外の利用者のどちらでも書かない（T-115）。画面の層の受入シナリオ（`@US-16-AC5`。停止 → 相手がログインできない → 再開 → ログインできる。自分と監督の役割の利用者に操作が出ない。確認の画面のアクセシビリティの検査と幅 320 px。拒否の文言はここで確かめる）。Bolt 34・34b のシナリオ（ボタンの名前「変更内容を確認する」に依存するステップを含む）が緑のまま |
+| 利用者の管理のドメインとサービスの整理 | Bolt 34e（振る舞いの変わらない直し）。移す前に、`UserTest` に承認の取り違え（別の利用者の承認、判定と違う版の承認）で `IllegalArgumentException` になるテストを先に足す。判定の順の境界のテストは、中身を変えずに `decideRoleChange`・`decideStatusChange` の呼び出しに付け替えて通す。`UserRoleChangeServiceTest`・`UserStatusChangeServiceTest` と 2 つの統合テストを、確かめる結果（`RoleChangeCheck`・`StatusChangeCheck`）・変える結果（`RoleChangeOutcome`・`StatusChangeOutcome`）と共通の拒否 `UserAdministrationRefusal` に合わせ、判定の前半の部品 `ManagedUserLookup` の後でも、判定の順の変異（範囲と規則の入れ替え）で落ちることを確かめる（控えから戻す）。セキュリティの統合テストの同じ形の `login`・`loginWithPassword`・`currentCode`・`userIdOf`・`sessionOf(MvcResult)` は、共通の補助 `IdentityLogins`（test の `identity`。spy を持たず、`userIdOf` は JDBC で探す）に寄せ、使った刻みは TOTP を送る前に `AuthenticationFactorFixtures.resetTotpStep` で戻す形にそろえる。形の違う写し（今の Cookie を受ける・引き継ぐ login、引数のない login、`submitTotp`・`loginWithTotp`、リポジトリで探す `userIdOf`）は各クラスに残す。`check` と `uiTest` の件数が前後で減らないことを確かめる |
+| S-20 の画面の構造 | Bolt 34f（振る舞いの変わらない直し）。controller を分ける前に、今の controller に WebMvc のテスト（`@WebMvcTest`・`addFilters = false`、照会・変更・記録のサービスは `@MockitoBean`、操作者は `@WithAuthenticatedActor`）を特性のテストとして足す。役割と利用状態のそれぞれで、確定の範囲外は記録して 404（詳細の読み出しと判定の 2 つ）、確かめる範囲外は記録せずに 404、`NotPermitted` は 403、`NotFound` は 404、古い版は最新の版で詳細を示し直す、`Rejected` は選んだまま文言を示す、変えたら知らせとともに詳細へ移す。記録の 2 つの向きの変異（確定の範囲外の記録を外す、確かめる範囲外で記録する）で落ちることを確かめる（控えから戻す）。分けた後は controller ごとのテストに中身を変えずに分け、詳細の部品 `UserDetailPage` は `@Import` で本物を読む（モックにすると範囲外の記録の守りが消える）。画面の名前は `UserAdministrationLabelsTest`（`@CsvSource`）。認証・認可・CSRF はセキュリティの統合テストのまま |
+| 利用者の登録の画面 | Bolt 38b3b（US-16 AC1・AC2）。WebMvc のテスト（`UserRegistrationControllerTest`。企業の選択肢、選ばずに次へ、入力の画面の役割の順、404 と 1 段目へ戻す枝、確認で書かない、画面で見る誤りをまとめる、サービスの拒否の文言、戻る、PRG の行き先）。セキュリティの統合テスト（`UserRegistrationSecurityIntegrationTest`。5 つの URL の認可、3 つの POST の CSRF、範囲外の確定だけ試行を記録、重複の文言が管理範囲の内外で同じ、画面の確定から監査と DE-25 と招待のトークンまで）。画面の層（`register_user_ui.feature`。通し、エラー要約のフォーカスとリンク、幅 320 px、axe） |
+| A-06 の初回の設定 | Bolt 38b4（US-16 AC1・US-18 AC7）。完了のサービスの単体のテスト（初回の監査、`setupOf`）、セキュリティの統合テスト（`AuthenticationSecurityIntegrationTest`。初回の見出しと title、初回の知らせ、監査、方針の誤りと利用停止の組み合わせ、使えないリンクの案内の全文）、画面の層の受入シナリオ（登録から A-07 まで。`@demo-bolt-38b4`） |
+| 外部データの取込の画面 | Bolt 39c（US-14 AC1・AC2）。WebMvc のテスト（`ExternalDataIngestionControllerTest`。取込のサービスと照会は mock。画面で見る誤りでサービスを呼ばない（呼び出しの記録）、承認済みの情報源がないときの文言とボタンを出さないこと、PRG と知らせ、ない取込 ID の 404）。セキュリティの統合テスト（`ExternalDataIngestionSecurityIntegrationTest`。3 つの URL の認可（データ責任者と、ほかの 7 つの役割の A-04、未ログインの A-01）、CSRF のトークンのない multipart の送信で取り込まないこと（spy の呼び出しの記録）、画面の POST から DB の件数と DE-12・DE-14 の監査の発行記録の完了まで（T-184））。照会の MyBatis の統合テストとメモリの実装の契約（承認済みの情報源の一覧、取込を ID で引く）。ホームとナビは `AuthenticationSecurityIntegrationTest` のホームの行とレイアウトのテスト（データ責任者だけ・ほかの業務の役割と重ねた利用者）。Bolt 39c2 で取り込めない送信を理由ごとに確かめる: WebMvc のテストで、取込のサービスの拒否（`DataSourceNotApproved`・`DataSourceNotFound`・`FileTooLarge` を mock）と controller の手前のない情報源が、すべて空でない欄の誤りになり共通の文言を出さないこと（拒否の種類ごとのパラメーターのテスト。T-240）、ない情報源で取込のサービスを呼ばないこと（呼び出しの記録）、停止で承認済みが 0 件になったときにエラー要約と 0 件の全文をその順に示すこと、0 件の文言を画面の層の定数で確かめること。セキュリティの統合テストで、上限を超えるファイル（行数とバイト数）と画面を開いた後に停止した情報源の送信で、自分の情報源の取込もイベント発行記録もなく原本の保存を呼ばないこと（spy の呼び出しの記録）。RANDOM_PORT の統合テスト（`ExternalDataUploadLimitIntegrationTest`。外部データの側に置く）で、55 MB を超える取込の送信が 413 と取込の案内（数が `IngestionFileLimit` と合う、送信が拒まれた印の中）になり、一般の案内に取込の文が出ないこと。39c の行のテストと名前が衝突しないよう、既存のテストのクラスでは `@Nested class Bolt39c2_…` にまとめる。Bolt 39c3 で隔離の理由を確かめる: WebMvc のテストで（照会は mock）、隔離の理由の領域と注記の文（ファイルの誤りの今の「どうすればよいか」をそのまま示す）、残りの件数の文と 3 桁の区切り、隔離が 0 件で領域を出さないこと、取込ファイルから来た文字を `th:text` で文字として示すこと。照会の単体テスト（`IngestionSummaryQueryServiceTest`。ポートを mock）で、隔離の件数ごとの示す数と残りの件数（100・101・10,000 件の組のパラメーターのテスト。T-244）と、隔離が 0 件で受信記録の照会を呼ばないこと（呼び出しの記録。T-236）。契約（`ExternalDataRecordRepositoriesContract`。メモリ・H2・PostgreSQL）で、受信記録の行の範囲の往復（NULL を含む）、隔離の照会の並び（範囲が NULL を先、始まりの順。書いた順と違う順で書いても）とほかの取込・採用・重複を返さないこと。取込のサービスのテストで、受信記録の範囲と DE-14 の範囲が隔離のすべての種類で一致すること（T-184）。スキーマのテスト（`ExternalDataSchemaIntegrationTest`、H2）で CHECK `ck_received_record_line_range`。形式の誤りの単体テスト（`FormatDefectTest`）で、範囲がファイルの理由がすべて空でない「どうすればよいか」を持ち注記の全文が理由ごとに期待と一致すること（T-240・T-244）。セキュリティの統合テストで、行の範囲を持つ理由のすべての注記の全文と並び、ファイルの誤りが先頭・閉じ忘れが最後に出ること。上限いっぱいの結果の画面の照会の計測は 39c4。39c・39c2 の行のテストと名前が衝突しないよう、`@Nested class Bolt39c3_…` にまとめる。Bolt 39c4 で取込全体の要確認を確かめる: 照会の単体テストで、取込の取り込めなかった物理行の数と、読んだ隔離の受信記録にファイル全体の原本のキーがあるかの組（4 つ）から `UnreadableRegion` の値になること（組と期待のパラメーターのテスト。T-244）と、隔離が 0 件で要確認でなく受信記録の照会を呼ばないこと（呼び出しの記録。T-236）。WebMvc のテストで、要確認でない結果の画面に領域を出さないこと、「どこ」の 3 つの形の全文（3 桁の区切り）と領域の位置（`dl` の後・表の前）（形と期待の全文のパラメーターのテスト。T-240・T-244）、情報源の拒否の 2 つの文言と、拒否の後に承認済みの情報源が 0 件のときの示し方（T-243）。セキュリティの統合テスト（PostgreSQL）で、取込のサービスで取り込んで照会で読み直した要確認と取り込めなかった部分が、取込の結果の `requiresReview()` と一致すること（形式の正しいファイル・行の誤りだけ・ファイルの誤り（データ行あり・0 バイト）・閉じ忘れの組のパラメーターのテスト）。上限いっぱい（行の誤り 10,000 行）の結果の画面の照会と描画の時間を `ExternalDataIngestionPerformanceTest` でログの「PERF-06 notes」の行に出す。`@Nested class Bolt39c4_…` にまとめる。Bolt 39d で S-17 の判断を待つ隔離の一覧（US-14 AC4）を確かめる: 照会の単体テスト（`UndecidedRecordQueryServiceTest`。ポートを mock）で、種類（内容の違う原本・形式の誤り）と外部 ID・外部版の表示の組（T-240・T-244）、ページの境（件数 0・100・101・10,000 の組）、情報源をページの中の異なる ID ごとに 1 回だけ引くこと、0 件でページの照会と取込・情報源を引かないこと（呼び出しの記録。T-236）。契約（`ExternalDataRecordRepositoriesContract`。メモリ・H2・PostgreSQL）で、採用・重複を返さないこと、並び（取込の新しい順・同じ時刻は取込 ID の順・同じ取込は行の順。書く順を逆にしても。T-245）、取込で絞ること、読み直すと新しい取込が先頭に出ること。判断の表に行のある隔離を返さないことは `H2ExternalDataRecordRepositoriesTest`・`MyBatisExternalDataRecordRepositoriesIntegrationTest` だけ（判断の行を JDBC で入れる。メモリの実装は 39d2 まで判断を見ない。Bolt 39d4 で契約のテストに上げ、2 つの本体を消した）。WebMvc のテスト（`UndecidedRecordControllerTest`。照会は mock）で、件数と頁の範囲の文（3 桁の区切り）と前後のリンク、0 件の 2 つの文、不正な取込 ID・ページ、注記を `th:text` で文字として示すこと。S-16 の結果の画面の入口は `ExternalDataIngestionControllerTest` の `@Nested class Bolt39d_…`（隔離が 1 件以上のときだけリンク）、ナビはレイアウトのテスト。セキュリティの統合テスト（`ExternalDataIngestionSecurityIntegrationTest`、PostgreSQL）で、取込のサービスで取り込んでから S-17 を開き、2 つの種類・取込で絞ること・認可（ほかの役割の A-04、未ログインの A-01）。画面の層は `review_undecided_records_ui.feature`（幅 320 px、axe。`@demo-bolt-39d/list`）。上限いっぱいの一覧の照会の計測は Bolt 39d4 で足した（この行の最後）。Bolt 39d2 で S-17 の却下（US-14 AC4）を確かめる: ドメインの単体テスト（`ReceivedRecordDecisionTest`）で、判断するのは隔離だけ（分類のすべてのパラメーター。差異は 39h まで拒む。T-240）、理由の空・空白だけ・1000・1001 文字（コードポイント。サロゲートペアを含む。T-244）、判断の時刻のマイクロ秒の切り捨て。却下のサービスの単体テスト（`ReceivedRecordDecisionServiceTest`。ポートとイベントの発行を mock）で、`DecisionOutcome` の結果ごと（却下・権限なし・ない・取込のない・隔離でない・判断済み・一意制約の違反）と、判断を作らない結果で判断を追記せず DE-29 を出さないこと（呼び出しの記録。T-236）、DE-29 の値。契約（`ExternalDataRecordRepositoriesContract`。メモリ・H2・PostgreSQL）で、判断の追記と時刻の往復、2 つ目の判断の例外、`findById` と ID で絞った照会（ない・取込のない受信記録・判断済みで空）、補助文字を含む 1000 文字の理由の往復（H2 は広げた列。前例 `H2ReceivedRecordNoteTest`）。WebMvc のテスト（`UndecidedRecordControllerTest` の `@Nested class Bolt39d2_…`。サービスと照会は mock）で、`DecisionOutcome` のすべての結果が画面の行き先を持つこと（T-240）、欄の誤りの文、404（UUID でない ID を含む）、判断済みの文、一覧の「判断する」と戻り先、判断の画面の中身（内容の違う原本とキーのない隔離の 2 つ）。監査は listener の単体（`ExternalRecordAuditEventHandlerTest`）と監査の契約（`AuditRecordEventAuditContract`）で `EXTERNAL_RECORD_DECIDED` の形と再配信で 2 つ目を書かないこと、配信の統合テスト（`ExternalRecordAuditDeliveryIntegrationTest`。T-184）、イベントの直列化の契約（`DomainEventSerializationContractTest` に v1）、書き手は 1 か所（`LayerArchitectureTest`）。セキュリティの統合テスト（`ExternalDataIngestionSecurityIntegrationTest` の `@Nested class Bolt39d2_…`、PostgreSQL）で、却下から DB と一覧まで、認可（ほかの役割の A-04、未ログインの A-01）、CSRF のトークンのない POST で判断を作らないこと。画面の層は `reject_quarantine_ui.feature`（幅 320 px、axe。`@demo-bolt-39d2/reject`）。Bolt 39d2b で S-17 の 1 つの取込の形式の誤りのまとめての却下（US-14 AC4）を確かめる: 対象の照会（`undecidedKeylessQuarantinesOf`・`countUndecidedKeylessQuarantines`）は契約（`ExternalDataRecordRepositoriesContract`。メモリ・H2・PostgreSQL）で、内容の違う原本・ほかの取込の隔離・判断済み・採用・重複・差異を返さないこと（分類のすべてと外部原本の有無のパラメーター。T-240）と並び（範囲のないファイルの誤りを先、行の範囲の順。書く順を逆にしても。T-245）。まとめての却下のサービスは単体（`ReceivedRecordDecisionServiceTest` の `@Nested class Bolt39d2b_…`。ポートとイベントの発行を mock）で、受信記録ごとの判断と DE-29（判断者・時刻・理由は全件で同じ）、読んだ後に 1 件ずつ却下された受信記録の一意制約の違反をとばして数えないこと、0 件・権限なし・ない取込で判断を追記せずイベントを出さないこと（呼び出しの記録。T-236）、一意制約の違反でない失敗を握りつぶさず上げること。照会のサービスは単体（`UndecidedRecordQueryServiceTest`。ポートを mock）で、絞らない一覧でキーのない隔離を数えないこと、件数とページの間に件数が減ったときに数え直して最後のページを 1 回読み直すこと（ページが空でなければ数え直さない。呼び出しの記録）と、読み直しても空・数え直して 0 件で 0 件にすること。画面は WebMvc のテスト（`UndecidedRecordControllerTest` の `@Nested class Bolt39d2b_…`。サービスと照会は mock）で、リンクを出す条件、まとめての却下の画面の中身、件数の 3 桁の区切り（1・1,000・10,001。T-244）、理由の欄の誤り（空・空白だけ・1000・1001 文字）とそのときの対象の読み直し、0 件と 404（`keyless-rejection` が判断の画面の `/{受信記録 ID}` に入らないこと）、`KeylessRejectionOutcome` のすべての結果が画面の行き先を持つこと（T-240）、ページ送りの `nav` が表の前にあること。監査は配信の統合テスト（`ExternalRecordAuditDeliveryIntegrationTest`。まとめて 3 件を却下して監査記録が 3 つ。T-184）。セキュリティの統合テスト（`ExternalDataIngestionSecurityIntegrationTest` の `@Nested class Bolt39d2b_…`、PostgreSQL）で、まとめての却下から DB と一覧まで、認可（ほかの役割の A-04、未ログインの A-01）、CSRF のトークンのない POST で判断を作らないこと、途中の失敗でトランザクションごと巻き戻ること。上限いっぱい（キーのない隔離 1 万件）のまとめての却下の時間とそのトランザクションの間の一覧の照会の時間は `ExternalDataIngestionPerformanceTest`（`@Tag("performance")`、PostgreSQL、CI の手動のジョブ `performance`）でログの「PERF-06 keyless-rejection」の行に出す（PERF-06。5 分と 1 秒で判定）。画面の層は `reject_keyless_quarantines_ui.feature`（幅 320 px、axe。`@demo-bolt-39d2b/reject-keyless`）で、39d の UI のステップはページ送りを Tab で先頭から進める書き方に戻す。判断の表に行のある隔離を絞らない一覧と件数からも返さないことは、Bolt 39d4 で契約のテストに上げた（39d の行 7。Bolt 39d2b の計画の承認で 39d2b から送った）。Bolt 39d3 で S-17 の判断の画面に航海の内容の違う原本の受け取った値とこの外部版の採用値を示す（US-14 AC4）。受信記録の値の列とこの外部版の採用値の DB の通しは契約のテスト（`ExternalDataRecordRepositoriesContract`・`AdoptedValueRepositoryContract`。メモリ・H2・PostgreSQL。この外部版の採用値の並びは書く順を逆にしたデータで確かめる）、表の CHECK `ck_received_record_value` は JDBC の統合テスト（`MyBatisExternalDataRecordRepositoriesIntegrationTest`。H2 と PostgreSQL）、取込での書き込みはサービスの単体（`IngestionServiceTest` の `@Nested class Bolt39d3_…`）、要約から値に戻す規則は値の型の単体（`VoyageValuesTest`。往復と壊れた要約のパラメーター）、照会のサービスは単体（`UndecidedRecordQueryServiceTest`。ポートを mock し、引く数を呼び出しの記録で確かめる）、画面は WebMvc のテスト（`UndecidedRecordControllerTest` の `@Nested class Bolt39d3_…`。照会と判断のサービスは mock。値のない隔離・この外部版の採用値がない・同じ値の 2 つの文）、画面の通しは `compare_quarantine_values_ui.feature`（`@ui @US-14 @must`、幅 320 px、axe。`@demo-bolt-39d3/compare`）。Bolt 39d3c で主要実績の内容の違う原本の値と、値を読めない隔離の示し方を足す（US-14 AC4）。主要実績の要約から値に戻す規則と型で分ける入口は値の型の単体（`MilestoneValuesTest`。入口は `@Nested class Bolt39d3c_型で分ける入口`。主要実績の 6 種類の往復と壊れた要約の 6 種類のパラメーター、入口が `CsvFileKind.values()` のすべての名前を扱うこと）、上限いっぱい（寄港 60 と補助文字を含む 30 文字の航海番号）の往復は契約のテスト（`ExternalDataRecordRepositoriesContract`。メモリ・H2・PostgreSQL）、照会のサービスと `QuarantineValues`（Bolt 39h3 で `UndecidedRecordValues` に改めた。以下の `QuarantineValues`・`QuarantineValueViews`（同 `UndecidedRecordValueViews`）は当時の名前）の不変条件は単体（`UndecidedRecordQueryServiceTest`。ポートを mock し、引く数とキーのない隔離で引かないことを呼び出しの記録で、WARN のログを logback の `ListAppender` で確かめる。読めない値は航海・主要実績 × 受け取った値・採用値・両側、知らない原本種別、値の列がないとの組み合わせのパラメーター）、画面は WebMvc のテスト（`UndecidedRecordControllerTest` の `@Nested class Bolt39d3c_…`。照会と判断のサービスは mock）と画面の層の単体（`QuarantineValueViews` の実績の種類の名前。用語集の名前を書き並べ、組の数が `MilestoneKindValue.values()` と同じ）、採用の組み立て役の作り直しは取込のサービスの今のテスト（`IngestionServiceTest`。テストを足さない）、画面の通しは `compare_quarantine_values_ui.feature`（主要実績の値を比べるシナリオと寄港 60 の航海の幅 320 px、axe。`@demo-bolt-39d3c/compare-milestone`）。読めない値は UI で作れないので controller と照会のサービスのテストに下ろす。Bolt 39d3b で S-17 の航海の内容の違う原本の採用（US-14 AC4）を確かめる: 採用の判断のファクトリーは判断の型の単体（`ReceivedRecordDecisionTest`。理由が null・空・空白だけで null、1000・1001 文字（補助文字を含む 1000 コードポイント）、隔離でない受信記録を拒むこと）、外部原本の `findById` は契約のテスト（`ExternalDataRecordRepositoriesContract`。メモリ・H2・PostgreSQL。名前の頭に `Bolt39d3b_`）、判断のサービスの採用は単体（`ReceivedRecordDecisionServiceTest`。メモリの実装と固定の Clock。採用を出さない 6 つの隔離（キーのない・値の列のない・受け取った値の要約が壊れた・知らない原本種別・主要実績（39d3b2 まで）・停止した情報源）と取込・情報源・外部原本を引く数、`adoptionRefusalOf` と `adopt` の結果の一致、断る順、同時の判断で採用値を書かないこと、判断の追記が採用値の追記より先、判断の時刻が判断・採用値・DE-12・DE-29 で同じこと、採用値の側だけ読めない隔離で `currentOf` を呼ばないことを呼び出しの記録で。T-236・T-244）、同時の判断の統合テスト（H2・PostgreSQL の実リポジトリに競り合いを差し込み、PostgreSQL でトランザクションが中断しないこと）、監査は listener の単体（`ExternalRecordAuditEventHandlerTest`。理由のない採用は `;reason=` を省き、理由のない却下は今のまま捨てる）と配信の統合テスト（`EXTERNAL_RECORD_DECIDED` と `EXTERNAL_RECORD_ADOPTED` が 1 つずつ。T-184）、この外部版の採用値が採用した値に変わることは照会のサービスの単体（書く順を逆にしたデータ。T-245）、画面は WebMvc のテスト（`UndecidedRecordControllerTest` の `@Nested class Bolt39d3b_…`。照会と判断のサービスは mock。2 つの見出しの欄の順と id、採用の欄の有無が `adoptionRefusalOf` の結果だけで決まること、採用の欄の誤りとエラー要約のリンク `#adoption-reason`、`DecisionOutcome` のすべての結果の行き先。T-240）、採用の POST の認可と CSRF はセキュリティの統合テスト（`ExternalDataIngestionSecurityIntegrationTest` の `@Nested class Bolt39d3b_隔離の採用`、H2）、画面の通しは `adopt_quarantine_ui.feature`（幅 320 px、axe。`@demo-bolt-39d3b/adopt`）。値の列のない隔離・読めない隔離・停止した情報源の隔離・主要実績の隔離は UI で作れないか 39d3b2 で書き直すので controller と判断のサービスのテストに下ろす（T-243）。Bolt 39d3b2 で S-17 の主要実績の内容の違う原本の採用と採用できない隔離の理由（US-14 AC4）を確かめる: 判断のサービスは単体（`ReceivedRecordDecisionServiceTest` の `@Nested class Bolt39d3b2_…`。メモリの実装と固定の Clock、呼び出しの記録。採用値と DE-13・DE-29 の値と順、判断の時刻が判断・採用値・DE-13・DE-29 で同じこと、追跡番号の比べ（同じ・違う・この外部版の採用値がない）、採用値の要約が壊れていても対象のキーで決まること（(m) が (l) より先）、`NotAdoptableReason` の 5 つの理由と断る順、理由ごとの引く数、`adoptionRefusalOf` と `adopt` の結果の一致、航海で `currentOf` を呼ばないこと。T-236・T-244）、監査の配信は統合のテスト（`ExternalRecordAuditDeliveryIntegrationTest`。`EXTERNAL_RECORD_DECIDED` と `EXTERNAL_RECORD_ADOPTED` が主要実績でも 1 つずつ。T-184）、画面は WebMvc のテスト（`UndecidedRecordControllerTest` の `@Nested class Bolt39d3b2_…`。照会と判断のサービスは mock。すべての理由に文があること（T-240）と文の全文・位置、開いた後に採用できなくなった POST の PRG とエラー要約、1001 文字の理由の道、着地で事情が変わったとき、`DecisionOutcome` のすべての結果の行き先）、開いた後の停止は統合のテスト（`ExternalDataIngestionSecurityIntegrationTest` の `@Nested class Bolt39d3b2_…`、H2。承認を戻すと採用できること）、画面の通しは `adopt_quarantine_ui.feature`（主要実績の採用と追跡番号が違う隔離。幅 320 px、axe。`@demo-bolt-39d3b2/adopt-milestone`）。外部データの `org.slf4j` の許可を application に限ることは `ModularityTest` の分けた 2 つの規則。値の列のない隔離・読めない隔離・停止した情報源の隔離は UI で作れないので controller と判断のサービスのテストに下ろす（T-243）。Bolt 39d4 で判断の後に送り直された原本の分類（US-14 AC3・AC4）を確かめる（行の番号は [Bolt 39d4 計画](../../development/cargo-tracker/bolt_39d4_plan.md) の状態の組み合わせ）: 分類と判断の組み合わせは単体（`IngestionServiceTest`・`ReceivedRecordDecisionServiceTest` の `@Nested class Bolt39d4_…`。メモリの実装と固定の Clock、呼び出しの記録。採用・元・却下した payload の再送、形式の誤りの取り込み直し、直した行と版、付け替える順と付け替えないこと、基準と同じハッシュの隔離に採用を出さないこと、航海・主要実績と原本種別のパラメーター。T-236・T-240・T-244）、付け替えのポートは契約のテスト（`ExternalDataRecordRepositoriesContract`。メモリ・H2・PostgreSQL。名前の頭に `Bolt39d4_`。条件のハッシュが違う・ない ID で `ConcurrentExternalRecordUpdateException`。T-182）、採用と採用の同時は統合のテスト（`MyBatisConcurrentAdoptionIntegrationTest`・`H2ConcurrentAdoptionTest`。クラスに `@Transactional` を付けず、別のトランザクションで読み直して、負けた側の判断・採用値・イベントが残らないことを確かめる）、取込の途中の採用が待たないことは PostgreSQL の統合のテスト（`MyBatisExternalDataRecordRepositoriesIntegrationTest`。`statement_timeout` で待ちを落とす）、取込と採用の同時は単体（差し込み）、情報源の並びは `IngestibleDataSourceQueryServiceTest`（ポートの返す順を逆にして同じ。T-245）と `DataSourceRepositoryContract`（ポートは順を約束しない）、同じ公開時刻の採用値の UUID の比べ方は `AdoptedValueRepositoryContract`（上の位が符号で違う 2 つの UUID。書く順は両方）、負けた採用の行き先と文は WebMvc のテスト（`UndecidedRecordControllerTest` の `@Nested class Bolt39d4_…`。すべての `NotAdoptableReason` に文があること。T-240）、画面の通しは `resend_after_decision_ui.feature`（幅 320 px、axe。`@demo-bolt-39d4/resend`）。上限いっぱい（隔離 1 万件）の S-17 の一覧の照会と描画の時間は `ExternalDataIngestionPerformanceTest`（`performanceTest`。CI の手動のジョブ）でログの「PERF-06 undecided」の行に出す（T-241・T-242。照会が 1 秒を超えたら索引を諮る） |
+| 経路設計の航海の書き手 | Bolt 39e（US-14 AC1、US-06）。順の規則は `VoyageTest`（パラメーター。届く順を両方、`SourceKind` の全値、同じ情報版で値の違う組、同じ外部版の採用し直し、外部版をまたいだ採用の判断）。listener は単体のテスト（メモリの実装と呼び出しの記録。行がないときの保存、競合の読み直しと 3 回の上限、適用しないときに更新を呼ばない、内容の欠けた DE-12 を捨てて DB の失敗は上げる）。ポートは契約のテスト `VoyageRepositoryContract`（メモリ・H2・PostgreSQL。寄港の置き換え、上限いっぱいの 60、版の違う更新と重複、時間の窓の境界、窓の上の端がない、窓に区間の航海が返る、航海番号で引く）。同時と配信は統合のテスト（`@Transactional` を付けず、既存の行と初めての航海の 2 つの DE-12 の同時と読みの同時を H2 と PostgreSQL で。`VoyageUpdateDeliveryIntegrationTest` は取込と採用の判断の両方で `event_publication` の完了まで。T-184）。確定と評価が区間の航海番号だけを読むことは呼び出しの記録（T-236）。寄港の時刻の順が矛盾した航海がほかの候補を巻き込まないことは `RouteCandidateFinderTest`。モジュールの依存は `ModularityTest`。画面の層は `adopted_voyage_reflected_ui.feature`（取り込んだ航海が候補に出る、採用の判断で再算出した候補が新しい予定で比較に出る。axe、幅 320 px） |
+| 確定の照合と見本の航海 | Bolt 39e2（US-07 AC3・AC4、US-14 AC1）。照合は `VoyageTest` の `@Nested class Bolt39e2_…`（`matchesLeg` のパラメーター。始港から終港・途中の寄港から途中の寄港・組が 2 つある航海の一方は真、情報版違い・出発違い・到着違い・積地の港違い・揚地の港違い・組の順が逆・積地の寄港に出発がない・揚地の寄港に到着がない・航海番号違いは偽。T-244）。確定は `RoutingCaseConfirmationTest`（同じ情報版で区間の出発か到着が違うと `INFO_VERSION_CHANGED` で候補は変えない、ほかの寄港や取得時刻だけが変わると確定できる、値の違う 2 つの DE-12 の間を行き来する組、2 度寄る航海）、評価は `RoutingCaseEvaluationTest`（同じ情報版で区間の予定が違うと評価に入り、同じ予定なら評価しない。入口は下の Bolt 39f の行）。見本は `DevSampleDataSmokeTest`（0911・0912 の区間と写しが `DEMO-901` で予定と一致する、ほかの見本は `DEMO-101` のまま、`DEMO-901` の取得時刻と情報版は `DEMO-101` と同じ、候補の算出に入らない、`DEMO-%` のすべての区間の情報版と予定の組が今の航海の寄港にある（航海のない区間も数える））。画面の層は `adopted_voyage_reflected_ui.feature`（確定の画面を開いた後に同じ情報版で区間の予定が違う隔離を採用すると確定が拒否されて比較の画面に戻る、S-07 の注に区間の予定が示される。axe） |
+| 評価の入口と寄港の位置 | Bolt 39f（US-07 AC4、US-14 AC1）。寄港の位置は `LegTest`（片方だけの値と位置の順の誤りは例外。パラメーター）、`RouteCandidateFinderTest`（A→B→A→C の航海で 2 候補がそれぞれの `call_no` を持つ、書く順を逆にした航海も置く。引き直しは組が 1 つなら今のまま、2 つ以上で予定の一致する組が 1 つならその組、なければ位置の組、位置を使えなければ `VOYAGE_UNAVAILABLE`、位置がなければ今のまま）、`VoyageTest`（`matchesLeg` の入力と期待の組まで縛る）、`RoutingCaseEvaluationTest`（2 度寄る経路で情報版だけが上がる組は確定のまま DE-06 は 0 件、確定した寄港の到着が期限を過ぎると再設計要、範囲外の位置でも例外にしない）。照会は `MyBatisRoutingRepositoriesIntegrationTest` と `InMemoryRoutingCaseRepository`（最新の経路版が確定の案件だけを返す。パラメーター）。スキーマは `SchemaCommentIntegrationTest` と CHECK の確かめ。DE-30 の発行は `VoyageUpdateEventHandlerTest`（「発行しない」は呼び出しの記録で確かめる。T-236）。listener は `ConfirmedRouteEvaluationEventHandlerTest`（案件なし・2 件、競合 1 回は読み直して `Unchanged`、競合 3 回は例外、`NotFound` は次の案件へ）。配信は `ConfirmedRouteEvaluationDeliveryIntegrationTest`（PostgreSQL。DE-12 から DE-30、評価、再設計要、DE-06、見積りの印まで、発行記録の完了を待って確かめる。T-184。同じ情報版で予定が違う組、誤った採用を戻す組、予定が同じ組、再配信、競合 3 回で全体が戻る組）。同時は別々の航海の 2 つの DE-12 のトランザクションをラッチで重ね、片方ずつなら適合で両方なら接続不足の組で両方のコミットの後の評価が再設計要にすること、2 つの DE-30 の評価が重なっても DE-06 は 1 件であること（H2 と PostgreSQL）。画面の層は `adopted_voyage_reflected_ui.feature`（確定した後にデータ責任者が期限を過ぎる隔離を採用すると S-06 に再設計要と理由が出る。axe）、接続を満たさなくなる組は `evaluate_confirmed_route.feature`（W6 レビュー L-8） |
+| 古くなった候補 | Bolt 39f2（UC-06 4a、US-07 AC3。[Bolt 39f2 計画](../../development/cargo-tracker/bolt_39f2_plan.md) の状態の組み合わせの表の行ごと）。判定は `RoutingCaseStaleLegsTest`（理由の 4 区分と 1 区間に 1 件の順、3 区間の 2 区間目だけが古い組の入力と期待の組、同じ情報版で元の値に戻ると空、新しい外部版で元の予定に戻ると `INFO_VERSION_CHANGED`、許容時間の直前・同時刻・直後、今の航海の取得時刻で判定すること、確定の拒否との同値（行 8b）、除外の候補の不一致と鮮度、2 度寄る航海の `matchesLeg`、経路版の状態の全値、算出の直後は空。T-244）。照会は `RoutingCaseQueryServiceTest`（「読まないこと」は呼び出しの記録。候補 0 件、確定できない状態、20 候補 × 3 区間で `findByVoyageNumbers` を 1 回だけ重複のない番号で呼ぶ。T-236・T-106）。上限の読みは `VoyageRepositoryContract`（H2・PostgreSQL・メモリ。60 航海 × 寄港 60。読みの時間はログの「PERF-01 S-06」の行に出す。時間では落とさない）。画面は `RoutingCaseControllerTest`（印と判定の印の class、一部・すべて・除外が混ざるときの上の文と n の数え方、案内の順、鮮度の文の分岐、区間の文の 4 区分、確定済みと再設計要に出ないこと、範囲の外で判定を呼ばないこと、読み上げの文の全文）。画面の層は `adopted_voyage_reflected_ui.feature`（`@US-06-AC1 @US-14-AC1 @R-INV-03 @demo @demo-bolt-39f2/stale-candidate`。データ責任者が同じ情報版で到着の違う隔離を採用すると開き直した S-06 に古くなった候補が出て、再算出すると消えて「この候補で確定へ」が出る。同じ情報版のまま確定を拒否されて戻ると、変わった区間の下に文が出る。axe、幅 320 px）。元の値に戻る組は単体で確かめ、画面の層では取り込み直しを作らない。S-07 を古い候補の URL で開く組は既存のシナリオ |
+| 追跡の DE-13 の受け手 | Bolt 39g（US-12 AC1・AC2・AC4・AC5 の取り込みの分、US-14 AC1。[Bolt 39g 計画](../../development/cargo-tracker/bolt_39g_plan.md)）。受け取りは `TrackingRecordExternalMilestoneTest`（下書き・3 列・同じ出典・完了後・未来の発生時刻。T-INV-08）、`MilestoneTest`（外部の識別の不変条件。パラメーター）、判定の順は `ExternalMilestoneEventHandlerTest`（取消済み・知らない追跡番号は拒否の記録と WARN、内容の欠けた DE-13 は ERROR で捨てる、DB の失敗は例外で再配信に任せる、ロックして読むことは呼び出しの記録。T-236）。保存は `MyBatisTrackingRecordRepositoryIntegrationTest`、行のロックは `MyBatisTrackingRecordLockIntegrationTest`、CHECK と追記専用は `SchemaCommentIntegrationTest`・`AppendOnlyGrantIntegrationTest`。配信は `ExternalMilestoneDeliveryIntegrationTest`（PostgreSQL。T-184。受け手で絞って発行記録の完了まで待つ。再配信 3 組（下書きの後に取消済み・完了、拒否の記録の後に追跡記録ができる）、同時は H2 と PostgreSQL、1 つのファイルの 200 行が同じ追跡番号に集中する組）。受入シナリオは `register_milestone.feature`（`@US-12-AC4`・`@US-12-AC5`）と `adopted_milestone_reflected_ui.feature`（`@US-14-AC1 @T-INV-08`）。候補の判定は 39gb、確認中は 39gc |
+
+統合テストは Testcontainers の PostgreSQL を使い、H2 で書かない（ADR-007）。H2 で確かめるのはスモークテストだけとする。
+
+identity の統合テストは、時計を差し替えるなら合成注釈 `@IdentityIntegrationTest`（`@SpringBootTest`・`@AutoConfigureMockMvc`・PostgreSQL と共通の時計 `IdentityTestClock` の `@Import`）を付け、spy（`@MockitoSpyBean`）を使うクラスは同じ spy のフィールドの組を持つ共通の基底のクラス `IdentitySpyIntegrationTestBase` を継ぐ。Spring のコンテキストは `@Import` の組と bean の差し替えの組（spy はフィールド名と置き場所を含む）で区別されるので、組をそろえてコンテキストを共有する（Bolt 32d）。同じ組のクラスはコンテキストと PostgreSQL のコンテナ（DB）も共有するので、共有の表の件数は利用者で絞るかテストの前後の差で確かめる（T-113）。JUnit の並列実行を入れるときは、この共有を見直す。基底の spy の組を増やすのは、spy を使うクラスが要るときだけにする（増やすと spy を使う全クラスの組が変わる）。identity のテストのクラスのフィールドの `@MockitoSpyBean` が基底の外にないことは、ArchUnit の見張り（AT-10。Bolt 34c のステップ 3 で足した。spy の約束だけを見て、`@MockitoBean`・`@TestPropertySource` などコンテキストを分けるほかの要因は見ない）で確かめる。同時の操作のテスト（`OverlappingTransactions`）は、後の操作が先の行ロックを待っていることを PostgreSQL の `pg_blocking_pids` で確かめてから先をコミットする（「一定時間の間に終わらない」だけでは待ちの証拠にならない。Bolt 32d）。
+
+モジュールのイベントの非同期のハンドラー（`@ApplicationModuleListener`）を確かめるテストは、時計を進める前と DB を読む前に、発行記録（`platform.event_publication`）の完了を待つ（ハンドラーは別のスレッドで動くので、待たずに読むと前のハンドラーの書き込みと競う。Bolt 33 の開発レビュー）。
+
+メールを受ける Mailpit は、PostgreSQL の `TestcontainersConfiguration` とは別の `MailpitConfiguration` に分け、メールを確かめるテスト・identity の統合テスト・画面の層のテストだけで `@Import` して起動する（ほかのテストのコンテキストでコンテナを起動しない。Bolt 33 の開発レビュー）。
+
+## Web テストと開示制御
+
+| 対象 | 確かめること | 根拠 |
+| :--- | :--- | :--- |
+| URL ごとの認可 | 役割ごとに、許可された URL だけが表示でき、それ以外は A-04 になる | BR-15、IA-INV-01〜02 |
+| 他社のデータ | 他社の輸送要求・予約・追跡番号・問い合わせの URL は拒否される。存在しない番号と他社の番号で、応答の状態と本文が同じであることを比べて確かめる | BR-07、Q-INV-08、SC-INV-05 |
+| 顧客向け HTML の開示 | 荷主・荷受人の各画面の HTML、部分更新の断片、エラー応答、隠し項目、通知メールの本文に、料金・契約条件・書類・他の予約が含まれない | BR-07、UI-HO-03、N-INV-01 |
+| 参照許可の取消し | 取り消した直後の request から、既存 session でも対象の予約が表示されない | IA-INV-06 |
+| エラー要約・値の保持 | 入力エラーで要約が出て、入力値が保持される | BR-13 |
+| 確認の領域 | 重要操作の確認の領域に 6 項目（対象、現在状態、変更内容、影響、実行者、回復手段）がそろう | BR-13 |
+| 多言語 | 荷受人向けの画面と招待メールが、英語を選ぶと英語で表示される | US-10、US-19 |
+
+開示制御は Comprehensive の対象のため、荷主・荷受人・社内の各立場で、表示してよい項目と表示してはならない項目の両方を確かめる。
+
+## E2E テスト（画面を通す受入シナリオ）
+
+`@ui` のシナリオとして、次の主要フローを持つ（UI-HO-01）。
+
+| フロー | 範囲 | 対応 |
+| :--- | :--- | :--- |
+| 見積依頼から本予約まで | 荷主の提出 → 審査 → 見積りと経路方針の提示 → 荷主が詳細経路設計へ進む → 経路確定 → 荷主の承認 → 本予約確定 → 追跡開始の表示。各段階のメール通知（受けるだけのコンテナで確認）。Release 0.1 の主成功の流れ（`main_flow_ui.feature`、`@main-flow`。Bolt 28）は、メール通知（US-22、Release 1.0）を含まず、追跡管理者の実績の登録・荷主の予約一覧と追跡の照会・KPI 計測記録の KPI-01 の 2 時刻まで進む | US-01〜04、US-06〜07、US-22、US-24。Release 0.1 の主成功の流れは US-09・US-12・US-21 も通る |
+| 再見積りから再承認・本予約まで | 荷主の承認の後に見積りの有効期限を過ぎる → 荷主が C-04 で承認の後の失効の案内を確かめる → 営業担当者が S-02 の予約の確定待ちから再見積りし、算出して社内承認して提示する → 荷主が C-02・C-04 で再承認の案内を確かめ、C-17 で見積り 2 をもう一度承認する → 営業担当者が S-02 の予約の確定待ちから見積り 2 の本予約を確定する（`requote_after_approval_ui.feature`、`@demo-bolt-35d/requote-and-reapprove`。D-85。Bolt 35d） | US-24、US-04 |
+| 再設計要の見積りの拒否 | 背景は前例（`requote_after_approval_ui.feature`）の形で経路の確定から荷主の承認まで画面で進め、再設計要の印は見積りの公開 API（`RouteRedesignNotification`）を呼ぶステップで付け、案件の再設計要の記録は `JdbcTemplate` で入れる（見積りの側の理由を網羅するため。Bolt 39f で評価の入口ができても形を変えない。入口からの流れは `adopted_voyage_reflected_ui.feature`）。C-04 に承認の操作が出ず理由が出る、C-17 を開くと C-04 に戻って理由が出る、S-02 の印のある行に「経路が再設計要」と出て本予約の入口が出ない、S-09 を開くと S-02 に戻って理由が出る、S-07 を開くと S-06 に戻って理由が出る。axe を通す（`route_redesign_required_ui.feature`、`@US-07 @ui`。Bolt 37e3 計画の状態の組み合わせの表の行 1・4・5・9・12。ほかの行は WebMvc・単体・統合のテスト） | US-07、US-24、US-04 |
+| 出発済みの見積りの拒否 | 背景は前例（`route_redesign_required_ui.feature`）の形で経路の確定まで画面で進め、見積りの割り当てた区間の出発予定を `JdbcTemplate` で過去にする（時刻を待てないため。見積りの割り当てた区間だけを動かし、更新件数が 1 であることを確かめる）。C-04 に承認の操作が出ず理由が出る、C-17 を開くと C-04 に戻って理由が出る、S-02 の出発済みの行に「最初の区間が出発済み」と出て本予約の入口が出ない、S-09 を開くと S-02 に戻って理由が出る。axe を通す（`route_already_departed_ui.feature`、`@US-07 @ui`。Bolt 37e4 計画の状態の組み合わせの表の行 8・11・12・15。ほかの行は WebMvc・単体・統合のテスト） | US-07、US-24、US-04 |
+| 見積りの辞退・相談 | 荷主が辞退（理由）と相談（有人案件の起票）を選ぶ | US-24 |
+| 追跡の照会 | 荷主の照会（確認中の表示を含む）、荷受人の照会（開示範囲）。Bolt 27 は荷主の一覧から結果を開いて戻るまで（`@demo-bolt-27/query-tracking`）。確認中の表示は R1.0、照会記録（IR-INV-01）は W9 | US-09、US-10 |
+| 実績の訂正 | 追跡管理者 2 名による訂正の登録と承認 | US-13 |
+| 外部データの取込 | ファイル取込と分類結果の表示。Bolt 39c は `ingest_external_data_ui.feature`（`@US-14-AC1`）で、ホームから S-16 を開き、承認済みの情報源を選んでファイルを取り込み、結果の画面の件数を確かめる。選ばずに送るとエラー要約（幅 320 px、axe）。承認済みの情報源がない画面（AC2）は共有の PostgreSQL で作れないので WebMvc のテストで確かめる。Bolt 39c2 で上限を超えるファイル（航海のデータ行 10,001 行）を選んで取り込むと、エラー要約にフォーカスが移り、取込ファイルの欄へのリンクで示され、上限の中のファイルを選び直して取り込めるシナリオを足す（`@demo-bolt-39c2/too-large`。Bolt 39b4 の申し送り）。Bolt 39c3 で形式の正しい行と誤りの行の混在のファイル（航海の 6 行: 採用 3・重複 1・列数の誤り 1・内容の違う原本 1）を取り込むと、結果の画面の「隔離の理由」に誤りの行と内容の違う原本の注記だけが行の順に出て、重複の注記は出ないシナリオを足す（`@US-14-AC1 @US-14-AC4 @demo @demo-bolt-39c3/notes`）。既存の内容の違う行のシナリオにも「隔離の理由」の 1 行を、すべて採用のシナリオに領域が出ないことの 1 行を足し、幅 320 px のシナリオに結果の画面の隔離の理由を足す（axe）。Bolt 39c4 でシナリオテンプレート 1 本（例 4 つ: 0 バイトのファイル・選んだ情報源と違う種別のファイル（航海の情報源に主要実績のファイル）・ヘッダーのないファイル・閉じ忘れ）を足し、結果の画面の受け取った件数・隔離の件数・要確認の「どこ」・隔離の理由の先頭（または最後）の注記を確かめる（閉じ忘れの例に `@demo @demo-bolt-39c4/review`）。すべて採用のシナリオに要確認が出ないことの 1 行を、幅 320 px のシナリオに要確認の結果の画面を足す（axe） | US-14 |
+| 問い合わせ | 荷主の問い合わせの起票 → 社内の受領・回答 → 荷主の確認と再開の依頼 | US-20、US-23 |
+| 認証 | ログイン、初回の TOTP の登録、password の再設定（Bolt 33 は依頼まで。`login_ui.feature` の `@US-18-AC8`: A-01 から A-05 を開いて送ると A-01 に知らせが出て、登録された利用者にはリンクを含むメールが届く（Mailpit の API で確かめる）。登録のないアドレスでも同じ知らせが出てメールは届かない（先に登録ありで届くことを確かめる）。知らせの印 `reset-requested` がなければ出ない（T-124）。axe の違反 0。Bolt 33a は、依頼 → メール → リンクを開く → A-06 で設定 → A-01 の完了の知らせ → 新しい password と TOTP でログイン（`@demo @demo-bolt-33a/reset`。メールの到着の後に発行記録の完了を待ってからリンクを開く。T-127）、期限切れのリンクで案内が出る（表の `expires_at` を書き換えるテストの補助）、よく使われる password で誤りが出る、axe の違反 0。Bolt 33b は、回復コードでログイン → A-08 → QR の秘密から作ったコードで再登録 → 新しい回復コード → 続ける → 業務の画面（`@US-18-AC9`、`@demo @demo-bolt-33b/re-enroll`）、後で登録する → 業務の画面の知らせ → リンクから A-08、axe の違反 0。正規表現は `BookingUiSteps.literal` と同じエスケープ）、ロック、session の失効の警告と延長（Bolt 32b。無操作の警告と延長、8 時間の警告、タブの間の同期、期限の到来の案内。`session_timeout_ui.feature`）、失効後の再認証の案内と開いていた画面への復帰（Bolt 32e。無操作と 8 時間の失効の後に画面を開き直す・期限の到来の案内のリンクを押すと、ログインし直した後に同じ画面に戻る。サーバーの session の失効はセキュリティの統合テスト `ReturnAfterExpirySecurityIntegrationTest` で、画面は `session_timeout_ui.feature` で、session の行を古くして確かめる）、送信していない入力の保持と送信の後の失効（Bolt 32f。警告の期限の到来・「画面を開き直す」・送信の前にブラウザの sessionStorage の入力の控えに写し、同じ利用者が同じ画面に戻ると戻って知らせが出る。送信が拒まれた画面（A-03・CSRF の 403）で拒まれたら、ログインし直した後の画面に案内が出る（認可の 403 では出ない）。捨てる条件（別の利用者、8 時間と 7 時間 59 分の対、送信が届いた、送信が届いて同じ画面に戻った、案内と知らせの消す、ログアウト、期限の到来の取り消し）と、CSRF のトークン（値を変えてから。hidden の欄は値を変えると初期の値も変わるので、変えた欄だけを写す仕組みでも写らず、許す一覧の退行はこのシナリオでは見分けられない）・ファイルを写さないことは、同じ流れで先に控えが写っていることを確かめてから見る。戻した欄に画面の表示が追随し、消すと初めの状態に戻ることは貨物種別で見る。password を写さないことは、写す画面（ログインした画面の業務のフォーム）に password の欄がないので画面の層では確かめない（写す欄を許す一覧で決めている）。画面は `session_timeout_ui.feature` で sessionStorage を読んで確かめ、`data-user` と知らせの領域と公開の画面のスクリプト、A-03 の印、CSRF と認可の 403 の印は `SessionTimerSecurityIntegrationTest`、利用者の鍵は `SessionTimerAdviceTest` で確かめる） | US-18、US 横断受入条件 |
+
+## アクセシビリティテスト（BR-13、NFR-ACCESS-01）
+
+| 方法 | 範囲 | 頻度 |
+| :--- | :--- | :--- |
+| 自動検査（axe-core） | `@ui` のシナリオで表示したすべての画面 | CI で毎回 |
+| 部品のテスト | 共通部品（エラー要約、状態バッジ、確認画面、日時表示、通知領域、session の警告）の HTML 構造と属性。session の警告は、警告の部分の `data-` 属性がログインした画面にだけ出ること（統合テスト）と、ダイアログのフォーカス・axe の違反がないこと（`@ui`）で確かめる（Bolt 32b） | CI で毎回（Web テスト） |
+| キーボード操作の確認 | 主要フローをキーボードだけで操作できる（Playwright でキー操作だけを使う） | CI で毎回（`@ui` の一部） |
+| WCAG 2.2 の新しい基準 | フォーカスが固定ヘッダーに隠れない（2.4.11）、操作の大きさ 24px 以上（2.5.8）、ファイル選択をボタンで行える（2.5.7）、認証の欄で貼り付けができる（3.3.8）、窓口の案内が同じ位置にある（3.2.6）を `@ui` のシナリオで確かめる | CI で毎回 |
+| 画面幅 | 顧客向けの画面を 320 CSS px で表示し、横スクロールが出ないことを確かめる（1.4.10） | CI で毎回 |
+| 問い合わせの間隔と通知 | Playwright の時計を進めて、非同期処理の状態の問い合わせ間隔と停止、状態が変わったときだけの通知を確かめる | CI で毎回 |
+| 支援技術による手動確認 | 主要フローをスクリーンリーダー（NVDA または VoiceOver）で操作する | Bolt の完了時、画面を変えたとき |
+
+同じ画面を繰り返し表示するシナリオ（ロックまでの誤りの送信など）では、自動検査は 1 回目と状態の変わった後の画面だけにする（同じ画面の検査を重ねない。Bolt 32d）。
+
+自動検査で WCAG 2.2 AA の全体を判定することはできない。手動確認の結果は Bolt の完了報告に記録する。
+
+## 非機能要件のテスト
+
+非機能要件の検証方法（[非機能要件](non_functional.md)）を、テストのレベルと時期に対応させる（H-13、R-21）。テストには `@NFR-<ID>` のタグを付ける。
+
+| 非機能要件 | テストの種類 | 時期 |
+| :--- | :--- | :--- |
+| PERF-01〜09（応答時間、候補算出、取込、通知） | 負荷テスト（ツールはリリース計画の最初の性能テストの Bolt で選ぶ、TS-05）。ステージングで本番相当のデータ量（SCL-04）に対して実行する。PERF-06 は同じ追跡番号への実績の集中による版の競合を必ず含める。PERF-06 は Bolt 39b4 から統合テスト（`performanceTest`。`@Tag("performance")`・`@Tag("NFR-PERF-06")`。`check` と push の CI に入れない）でも測る。PERF-06 の判定は Linux の CI の手動のジョブ `performance`（`gh workflow run cargo-tracker-ci.yml --ref develop -f job=performance`）で行う。Windows の Docker Desktop の上では、ポート転送が 8 KB を超える文ごとに約 41 ms の人工の遅れを足し（寄港 60 の航海の DE-12 は直列化で 8,043 文字）、寄港 60 の航海 1 万件が 5 分を超えるので、手元の値で判定しない | パイロット開始前、大きな変更のたび |
+| RTY-01〜03（再配信、予約サガの滞留の判定） | 統合テスト（Clock を固定した境界） | CI で毎回 |
+| FRS-01〜04（鮮度） | 統合テスト（Clock を固定した境界）。FRS-02 は Bolt 39g4 から鮮度の判定の単体の境界（直前・同時刻・直後）と照会サービスの Clock の固定、受入シナリオ（`@FRS-02`） | CI で毎回 |
+| SVC-01〜07（受領・回答期限、営業日カレンダー） | ユニットテスト（デシジョンテーブル）と統合テスト | CI で毎回 |
+| SEC-01〜11（認証） | セキュリティの統合テスト、E2E | CI で毎回 |
+| SEC-15〜20（通信・保存・脆弱性） | CI の脆弱性スキャン、IaC の検査、外部の侵入テスト | CI で毎回、パイロット開始前 |
+| AUD-01〜04（監査） | 統合テスト | CI で毎回 |
+| RCV-01〜08（復旧） | 時点復旧の訓練で RTO と RPO を実測し、`recovery:reconcile` の照合まで行う。照合のタスクは、構造化ログと DB の差を作った状態で自動テストする | パイロット開始前、半年に 1 回（訓練）、CI で毎回（照合のタスク） |
+| OBS-01〜11（監視） | 閾値を超える状態を意図的に作り、通知を確かめる | パイロット開始前 |
+| ACC-01〜06（アクセシビリティ） | アクセシビリティテストの節 | CI で毎回、Bolt の完了時 |
+
+## カバレッジ目標
+
+JaCoCo でレイヤーごとに測る。目標値と CI の閾値を分け、閾値は実績に合わせて段階的に目標へ上げる（目標値をそのまま閾値にすると、閾値を満たすためのテストを書くことになる）。下の表の「最初の閾値」は出発点の記録であり、CI が使う現在の閾値の正は `apps/cargo-tracker/build.gradle` の `coverageThresholds` とする（閾値を上げるときは `build.gradle` だけを直す）。対象のクラスが 0 件の層は検証を失敗させる。分岐が 0 件の層の分岐の閾値は検証にならないため、報告では「対象なし」と書く。
+
+| レイヤー | 行（目標） | 分岐（目標） | 最初の閾値 |
+| :--- | :--- | :--- | :--- |
+| domain | 90% | 85% | 85% / 75% |
+| application | 85% | 75% | 80% / 65% |
+| interfaces | 70% | — | 65% / — |
+| infrastructure | 75% | — | 70% / — |
+| 全体 | 80% | 70% | 75% / 65% |
+
+カバレッジは足りないテストを見つける手段であり、品質の目標そのものではない。Comprehensive の対象は、カバレッジではなく前の節の境界値と不変条件の対応で完了を判断する。
+
+## CI での実行
+
+```plantuml
+@startuml
+title CI でのテストの実行順
+start
+fork
+  :ユニットテスト;
+fork again
+  :アーキテクチャテスト;
+fork again
+  :受入シナリオ（application、@ui と @wip を除く）;
+end fork
+:Web テスト;
+:統合テスト（Testcontainers PostgreSQL 18）;
+:H2 スモークテスト;
+:カバレッジの閾値確認;
+:コンテナイメージのビルド;
+:ステージングへ配備;
+:E2E（@ui、Playwright + axe-core）;
+stop
+@enduml
+```
+
+| 段階 | 実行時間の目標 | 失敗時 |
+| :--- | :--- | :--- |
+| ユニット・アーキテクチャ・受入シナリオ | 合計 2 分以内 | マージしない |
+| Web・統合・スモーク | 合計 6 分以内 | マージしない |
+| E2E | 10 分以内 | 本番へ配備しない |
+
+Pull Request ではステージングへの配備の前までを実行する。E2E は main へのマージ後にステージングで実行する。実行時間が目標を超えたら、テストを減らす前に、下のレベルへ移せないかを見直す。
+
+画面の層の受入シナリオの `ui` ジョブ（`./gradlew uiTest`）は、W6 で 15〜19 分かかり、目標を超えている。Bolt 37f で `ui` ジョブの上限（`timeout-minutes`）を 20 分から 30 分にした。25 分を超えたら、シナリオを分けて並べて動かすことを諮る。
+
+Bolt 2 の時点の実装（`.github/workflows/cargo-tracker-ci.yml`）は、配備の前までを 1 つのジョブの `./gradlew check` で動かす。段階を分けていないのは、全体で約 2 分と目標（合計 8 分）に収まっているためで、目標を超えたら段階に分ける。コンテナイメージのビルド・配備は運用準備、E2E は Bolt 3 で足す。書式（Spotless）・静的解析（Checkstyle・SpotBugs）・AT-06 も同じジョブで検証する。
+
+Bolt 3 から、画面の層の受入シナリオ（`@ui`）を同じワークフローの `ui` ジョブ（`./gradlew uiTest`）で動かす。ステージングがまだないため、アプリケーションを CI の中で起動し（PostgreSQL は Testcontainers）、Playwright の Chromium をヘッドレスで操作する。表示したすべての画面を axe-core で検査する。ステージングができたら、E2E を main へのマージ後にステージングで実行する形に移す（2026-10-02 に human:kakimomokuri が承認）。画面の層のアプリは、本番と同じくアプリケーション利用者（最小の権限）で PostgreSQL に接続し、Flyway だけを所有者で動かす。最小の権限で主要な流れが通ることを、この層で確かめる（Bolt 3 レビュー R-01）。`ui.base-url` を与えると、起動したアプリの代わりにその URL を操作する（ステージングへ移す継ぎ目）。
+
+Cucumber の実行結果（HTML・JSON）を CI の成果物として保存し、受入条件の達成状況を示す生きたドキュメントにする（ADR-009）。
+
+## テストデータ
+
+| 方針 | 内容 |
+| :--- | :--- |
+| ユニット | コンテキストごとに Object Mother とテストデータビルダーを用意する（例: 輸送要求のビルダー、承認済みの見積り） |
+| 受入シナリオ | 背景（Background）でデータを準備し、シナリオの中で業務の言葉で表す。ID や内部の値をシナリオに書かない |
+| 統合・E2E | テストごとにデータを作り、テストの順序に依存しない。共有のマスタ（企業・利用者・接続時間規則）は準備用のステップで作る。数えるテストは自分のキー（取込 ID・提供元・オブジェクトキー・受信記録 ID、発行記録は受け手とイベントの値）で絞り、原本・受信記録・発行記録を全体で数えない（共有の PostgreSQL に追記専用の行が残るため。Bolt 39b4） |
+| 本番データ | テストに使わない（インフラ設計: ステージングも匿名化・合成データ） |
+
+## 完了の定義（Definition of Done）
+
+ストーリーは次をすべて満たしたときに完了とする。
+
+- [ ] 受入条件ごとに、タグ付きのシナリオがあり、すべて通る（`@wip` なし）
+- [ ] 関係する不変条件のユニットテストが通り、境界値（直前・同時刻・直後）がある
+- [ ] Comprehensive の対象なら、本書の該当する統合・Web テストが通る
+- [ ] アーキテクチャテストとカバレッジの閾値を満たす
+- [ ] 画面を変えたなら、`@ui` のシナリオと axe-core の検査が通り、支援技術による手動確認を記録した
+- [ ] Cucumber の実行結果を CI の成果物で確認できる
+
+## ユーザーストーリーとシナリオの対応
+
+受入条件の数だけ業務ルールの階層のシナリオ（または、セキュリティの統合テストへ移したもの）を書き、主要フローに `@ui` のシナリオを足す。
+
+| ストーリー | 優先度 | 受入条件の数 | Feature の置き場所 | `@ui` |
+| :--- | :--- | :---: | :--- | :---: |
+| US-01 輸送条件を提出する | Must | 5 | quotation/ | ○ |
+| US-02 輸送条件を審査する | Must | 3 | quotation/ | ○ |
+| US-03 根拠付き見積りを提示する | Must | 5 | quotation/ | ○ |
+| US-24 見積りと経路に回答・承認する | Must | 5 | quotation/ | ○ |
+| US-04 予約を確定する | Must | 5 | booking/ | ○ |
+| US-05 予約を変更・取消しする | Should | 7 | booking/ | — |
+| US-06 経路候補を比較する | Must | 4 + Golden | routing/ | ○ |
+| US-07 専門判断を伴う経路を確定する | Must | 5 | routing/ | ○ |
+| US-08 経路を再設計する | Should | 4 | routing/ | — |
+| US-09 荷主が輸送状態を照会する | Must | 3 | tracking/ | ○ |
+| US-10 荷受人が許可範囲を照会する | Could | 6 | tracking/ | ○ |
+| US-11 顧客照会を引き継ぐ | Must | 3 | tracking/ | — |
+| US-20 照会・業務例外を回答・終結まで追跡する | Must | 8 | tracking/ | ○ |
+| US-22 重要な変化を荷主へ通知する | Must | 4 | notification/ | ○ |
+| US-23 自分の問い合わせを追跡する | Must | 4 | tracking/ | ○ |
+| US-12 主要実績を登録する | Must | 5 | tracking/ | ○ |
+| US-13 主要実績を訂正する | Should | 6 | tracking/ | ○ |
+| US-14 外部原本を安全に取り込む | Must | 5 | external_data/ | ○ |
+| US-15 外部連携停止から復旧する | Should | 4 | external_data/ | — |
+| US-18 本人として認証される | Must | 9 | identity/ | ○ |
+| US-19 荷受人の参照許可を管理する | Could | 7 | identity/ | — |
+| US-16 利用者と権限を管理する | Must | 5 | identity/ | — |
+| US-17 監査証跡を照会する | Should | 3 | identity/ | — |
+| US-21 パイロットの KPI を計測する | Must | 5 | identity/ | ○（`kpi_observations_ui.feature`。S-22 の前身の KPI 計測記録） |
+| 横断受入条件（BR-13、WCAG 2.2.1） | — | 7 | 各 `@ui` とアクセシビリティテスト | ○ |
+
+合計で受入条件は 120 件（横断の 7 件と Golden dataset を除く）、`@ui` が 15 フロー前後になる見込みである。
+
+### Release 0.1 の受入条件
+
+Release 0.1 の範囲（Release 0.1 のマイルストーンの Issue の題名の範囲）の受入条件と、それを確かめるシナリオのタグ。`AcceptanceCriteriaCoverageTest`（`documentationTest`）が、各行のタグに `@wip` でないシナリオがあることを照合する（Bolt 28。Bolt 2 レビュー R-17）。Release 1.0 では、Must の全受入条件の表を段階的に足して照合を広げる（次の「Release 1.0 の受入条件の照合の表」。Bolt 39h4 は US-14・US-12 まで。すでに閉じたストーリー（US-06・US-07・US-16・US-18 ほか）の分の持ち主は「Release 1.0 の締め」（リリース完了報告書の前）。release_plan に登録した）。
+
+| ストーリー | 受入条件 | 確かめるもの |
+| :--- | :--- | :--- |
+| US-01 | AC1 | `@US-01-AC1` |
+| US-01 | AC2 | `@US-01-AC2` |
+| US-01 | AC3 | `@US-01-AC3` |
+| US-01 | AC4 | `@US-01-AC4` |
+| US-01 | AC5 | `@US-01-AC5` |
+| US-02 | AC1 | `@US-02-AC1` |
+| US-02 | AC2 | `@US-02-AC2` |
+| US-02 | AC3 | `@US-02-AC3` |
+| US-03 | AC1 | `@US-03-AC1` |
+| US-03 | AC2 | `@US-03-AC2` |
+| US-03 | AC3 | `@US-03-AC3` |
+| US-03 | AC4 | `@US-03-AC4` |
+| US-03 | AC5 | `@US-03-AC5` |
+| US-24 | AC1 | `@US-24-AC1` |
+| US-24 | AC4 | `@US-24-AC4` |
+| US-24 | AC5 | `@US-24-AC5` |
+| US-06 | AC1 | `@US-06-AC1` |
+| US-06 | AC2 | `@US-06-AC2` |
+| US-06 | AC3 | `@US-06-AC3` |
+| US-07 | AC1 | `@US-07-AC1` |
+| US-07 | AC2 | `@US-07-AC2` |
+| US-21 | AC1 | `@US-21-AC1` |
+| US-04 | AC1 | `@US-04-AC1` |
+| US-04 | AC2 | `@US-04-AC2` |
+| US-04 | AC3 | `@US-04-AC3` |
+| US-04 | AC4 | `@US-04-AC4` |
+| US-04 | AC5 | `@US-04-AC5` |
+| US-04 | 特殊貨物の確定の拒否 | `@B-INV-04` |
+| US-04 | 重複確定の防止 | `@B-INV-11` |
+| US-12 | AC1 | `@US-12-AC1` |
+| US-12 | AC2 | `@US-12-AC2` |
+| US-09 | AC1 | `@US-09-AC1` |
+| US-18 | AC2 | `@US-18-AC2` |
+
+注: US-18 は Release 0.1 の #6 の AC2 だけを照合に入れる。Bolt 14 で Release 1.0 の #13 から前倒しした AC1 の password と session の部分・AC4・AC5 は、セキュリティの統合テストなどに移した（`AuthenticationSecurityIntegrationTest`・`SessionLifetimeFilterTest`・`UserTest`・`AuditRecordTest`）。Release 1.0 の表で扱う。主成功の流れ（`main_flow_ui.feature`、`@main-flow`）は流れの通しを確かめるシナリオで、受入条件のタグを付けない（照合の数に入れない）。照合は Cucumber の解析器で Feature を Pickle にし、機能・ルール・シナリオ・例のタグを継承した結果で数え、`@wip` の Pickle を除く。画面の層のシナリオは逐次に実行する（並行実行を有効にしない。「一覧の先頭」を確かめるシナリオがあるため）。
+
+### Release 1.0 の受入条件の照合の表
+
+Release 1.0 の Must の受入条件のうち、閉じたストーリーから段階的に足す照合の表（Bolt 39h4。US-14 と US-12 の Release 1.0 の範囲）。`AcceptanceCriteriaCoverageTest`（`documentationTest`）が、見出しを完全一致で探して読み、各行のタグに `@wip` でないシナリオがあることを照合する（表が読めずに空振りしたら失敗する。Release 0.1 の表と同じ）。US-12 の AC1・AC2 は Release 0.1 の表にある。すでに閉じたストーリー（US-06・US-07・US-16・US-18 ほか）の分は、持ち主を「Release 1.0 の締め」（リリース完了報告書の前）に決めて足す。
+
+| ストーリー | 受入条件 | 確かめるもの |
+| :--- | :--- | :--- |
+| US-14 | AC1 | `@US-14-AC1` |
+| US-14 | AC2 | `@US-14-AC2` |
+| US-14 | AC3 | `@US-14-AC3` |
+| US-14 | AC4 | `@US-14-AC4` |
+| US-14 | AC5 | `@US-14-AC5` |
+| US-12 | AC3 | `@US-12-AC3` |
+| US-12 | AC4 | `@US-12-AC4` |
+| US-12 | AC5 | `@US-12-AC5` |
+| US-11 | AC1 | `@US-11-AC1` |
+| US-11 | AC2 | `@US-11-AC2` |
+| US-11 | AC3 | `@US-11-AC3` |
+| US-20 | AC1 | `@US-20-AC1` |
+| US-20 | AC2 | `@US-20-AC2` |
+| US-20 | AC3 | `@US-20-AC3` |
+| US-20 | AC4 | `@US-20-AC4` |
+| US-20 | AC5 | `@US-20-AC5` |
+| US-20 | AC6 | `@US-20-AC6` |
+| US-20 | AC7 | `@US-20-AC7` |
+| US-20 | AC8 | `@US-20-AC8` |
+| US-23 | AC1 | `@US-23-AC1` |
+| US-23 | AC2 | `@US-23-AC2` |
+| US-23 | AC3 | `@US-23-AC3` |
+| US-23 | AC4 | `@US-23-AC4` |
+| US-22 | AC1 | `@US-22-AC1` |
+| US-22 | AC2 | `@US-22-AC2` |
+| US-22 | AC3 | `@US-22-AC3` |
+| US-22 | AC4 | `@US-22-AC4` |
+| US-24 | AC2 | `@US-24-AC2` |
+| US-21 | AC2 | `@US-21-AC2` |
+| US-21 | AC3 | `@US-21-AC3` |
+| US-21 | AC4 | `@US-21-AC4` |
+| US-21 | AC5 | `@US-21-AC5` |
+| US-24 | AC3 | `@US-24-AC3` |
+| US-09 | AC2 | `@US-09-AC2` |
+| US-09 | AC3 | `@US-09-AC3` |
+
+注: 部分的に確かめる受入条件をタグの照合の数に「完全」と読ませない。US-12 AC4 の「有人例外案件へ引き継ぐ」は W8（US-20）で、取り込みの分（39g）と手入力の分（39gc）の「拒否」だけを AC4 のタグで照合する。US-14 AC5 の「差異としてデータ責任者へ示される」は、取込の分類（39h）と却下（39h2）だけを確かめる（採用は Release 1.0 では作らない。D-144）。US-14 AC4 の古い外部版の警告は 39h3（`adopt_old_version_quarantine_ui.feature`）で確かめる。
+
+### Release 1.0 の照合の表の前の対応
+
+Release 1.0 の受入条件のうち、上の照合の表にまだ入れていないものと、照合の表に入れたものの詳細（Bolt 列と確かめるテストの名前）。分けて作る受入条件は、どの Bolt のどのテストで確かめるかを先にここに書く。照合の表に足した後も、詳細の対応表として残す（移さない。【前の決定の変更】(31)、Bolt 39h4）。`AcceptanceCriteriaCoverageTest` はこの表を読まない（見出しは接頭辞を共有しない名前にして、完全一致で探す照合の表の見出しとぶつからないようにした）。
+
+| ストーリー | 受入条件 | Bolt | 確かめるもの |
+| :--- | :--- | :--- | :--- |
+| US-18 | AC8 の前半（A-05 で依頼し、登録された有効な利用者にだけ 30 分・1 回だけのリンクが届く。登録の有無を示さない） | 33 | `@US-18-AC8`（`login_ui.feature`）、password の再設定の依頼のセキュリティの統合テスト、IA-INV-12 の単体・統合テスト |
+| US-18 | AC8 の後半（A-06 でリンクを開いて新しい password を設定し、A-01 でログインし直す。期限切れ・使用済みのリンク） | 33a | `@US-18-AC8`（`login_ui.feature`。依頼から設定とログインし直しまで、期限切れのリンク、よく使われる password）、password の再設定の完了のセキュリティの統合テスト、IA-INV-12 と password の方針の単体・統合テスト |
+| US-18 | AC9 の回復コードの経路（回復コードでログインすると A-08 に導かれ、TOTP を登録し直して新しい回復コードを受け取る。後で登録できる。古いコードと回復コードは使えなくなり、ほかの session は失効する。管理者の経路と本人への通知は #47） | 33b | `@US-18-AC9`（`login_ui.feature`。回復コードでログインして再登録し、新しい回復コードで続ける、後で登録すると知らせが出てリンクから A-08 を開ける）、認証アプリの再登録のセキュリティの統合テスト、IA-INV-10・11 の単体・統合テスト |
+| US-18 | AC9 の管理者の経路（S-20 で本人確認の手段と日時を記録して解除する。資格と回復コードを消し、ほかの端末は A-03、次のログインで A-07。本人への通知は 38d）と AC3 のロックの解除（S-20）。確認した登録の時刻のときだけ消す・既に解除・登録が変わった・同時の 2 つの解除はリポジトリの契約テストとサービスの統合テスト | 38c | `@US-18-AC9`・`@US-18-AC3`（`manage_user_login_credentials_ui.feature`）、セキュリティの統合テスト `UserLoginCredentialSecurityIntegrationTest`、`AuthenticationFactorRepositoriesContract`、`UserLoginCredentialServiceTest`・`UserLoginCredentialIntegrationTest`・`UserLoginCredentialRollbackIntegrationTest` |
+| US-18 | AC9 の「本人へ通知される」と SEC-10 の本人への通知（管理者による解除・A-07 の登録・回復コードの経路の再登録のお知らせ）。コミットの後に 1 通、監査記録の ID で冪等、送れなくても戻さない、発行記録とログにメールアドレスを残さない、本文の日時は監査の時刻、停止中にも送る、全部の通知の種類を CHECK が通す | 38d | `@US-18-AC9`（`manage_user_login_credentials_ui.feature`）と A-08 の場面（`login_ui.feature`）の Mailpit の確かめ、`TotpNotificationIntegrationTest`、ハンドラーの単体 `TotpResetMailEventHandlerTest`・`TotpEnrollmentMailEventHandlerTest`、通知の `TotpResetMailServiceTest`・`TotpEnrollmentMailServiceTest`・`MailDeliveryTest`・`TotpMailRequestsTest`・`TotpResetMailIntegrationTest`・`TotpEnrollmentMailIntegrationTest`・`NotificationMailAdaptersTest`、`MyBatisNotificationRepositoryIntegrationTest`（全部の種類） |
+| US-18 | SEC-10 の残りの回復コードの案内（回復コードでログインした後の A-08 と印の知らせに、未使用が 3 個以下のとき残りの数を示し、0 個なら登録の解除の道を示す） | 38d2 | `RemainingRecoveryCodesTest`・`TotpEnrollmentQueryServiceTest`（境界と数）、`RecoveryCodeLoginSecurityIntegrationTest`（A-08 の 4・3・0 個と描き直し、完了の後、認証コードのログイン、知らせの active・expired と荷主・社内の連絡先）、booking の `@WebMvcTest`（`BookingControllerTest`・`CustomerBookingControllerTest`。全画面の advice の slice）、`RecoveryLoginAdviceTest`（印のない request では照会しない）、`login_ui.feature`（幅 320 px と axe） |
+| US-16 | AC1（企業・利用者・役割・担当案件の関係と変更履歴。登録の手段と初回の設定を含む） | 34・38b〜38b4・38e（担当案件は担当企業で近似する。Bolt 38e） | `@US-16-AC1`（manage_user_roles_ui の役割の変更、register_user_ui の登録と招待から A-07 まで `@demo-bolt-38b4`）、`manage_user_assignments_ui`（担当範囲の割り当て。Bolt 38e。動画 `@demo-bolt-38f2b/assign` は Bolt 38f2b）、監査 `ROLES_CHANGED`・`USER_REGISTERED`・`INITIAL_PASSWORD_SET`・`ASSIGNMENTS_CHANGED` の統合テスト。照合は途中の経過で、閉じるのは 38g |
+| US-16 | AC2（管理範囲の外は拒否し試行を記録） | 34b・38b2・38b3b | `@US-16-AC2`、範囲外の記録の統合テスト |
+| US-16 | AC3（職務分離） | 34・38b | `@US-16-AC3`、役割の規則のテスト |
+| US-16 | AC4（業務担当者の担当範囲の外は拒否し試行を記録） | 38e〜38g・38f2（38f で見積りの側、38f2 で予約の側（`BookingAssignedScopeSecurityIntegrationTest`、`restrict_bookings_by_assigned_companies_ui.feature`）。動画は 38f2b、38g で経路設計・追跡の側（`RoutingAssignedScopeSecurityIntegrationTest`・`TrackingAssignedScopeSecurityIntegrationTest`、`restrict_routing_and_tracking_by_assigned_companies_ui.feature`）） | `@US-16-AC4`（restrict_staff_by_assigned_companies_ui のシナリオの行は 38f2b が足す。restrict_bookings_by_assigned_companies_ui、restrict_routing_and_tracking_by_assigned_companies_ui。動画 `@demo-bolt-38f2b/quotation-scope`・`booking-scope`）、範囲外の記録の統合テスト、判定の部品の単体（`RoutingCaseScopeTest`・`TrackingRecordScopeTest`）、ArchUnit の名前の規則と閉じる規則 |
+| US-16 | AC5（利用終了・権限取消しで次の request から拒否） | 34d・38c2・38g（38g で役割の取消しのシナリオ） | `@US-16-AC5`（manage_user_status_ui、manage_user_roles_ui の役割の取消し（2 つの役割から経路設計者を外すと、同じ session の次の request で経路設計の画面は A-04、追跡の画面は開け、ログインと役割の変更の監査の記録が残る。Bolt 38g）。manage_user_status_ui は38c2 で、停止中の詳細の停止の記録と再開の後に示さないことを足した）。停止の記録の照会は契約 `AuditRecordSuspensionContract`（H2 と PostgreSQL の子。最新の停止・操作と対象で絞る・停止した人の行がない）、索引 `ix_audit_record_target` は `MyBatisIdentityRepositoriesIntegrationTest`（`pg_indexes`） |
+| US-06 | AC4（最終取得から許容時間（24 時間。D-89）を過ぎた航海を使う候補は情報不足で除外され、航海・取得時刻・許容時間・参照した航海情報の版が示される。ちょうど許容時間は足りる） | 37b2 | `@US-06-AC4`（`route_candidates.feature`・`compare_route_candidates_ui.feature`）、`InfoFreshnessPolicyTest`・`RoutingCaseTest`、保存の往復の統合テスト、設定の結合のテスト |
+| US-06 | Golden dataset v0（#15 の補足。仮の値で業務責任者の承認待ち。G-01〜G-03・G-06 の制約適合判定、G-04 は提出の拒否。G-06b 欠落・G-06c 差異は 39h4 で足した） | 37f・39h4 | `@golden`（`routing/golden/route_candidates_golden_v0.feature` のシナリオアウトライン 6 行（37f では 4 行）、`special_cargo_golden_v0.feature` の 3 行）、`RoutingCaseGoldenDatasetTest`（案件のデータの候補一覧の全体） |
+| US-06 | UC-06 4a（候補の根拠の航海が算出の後に変わるか取得から許容時間を過ぎると、S-06 で古くなった候補と示し、再算出を促し、「この候補で確定へ」を出さない。US-06 に 4a を直接書いた受入条件はないので、受入シナリオのタグは AC1 につなぐ。【業務の判断】(w)・(y)・(z)） | 39f2 | `@US-06-AC1`（`adopted_voyage_reflected_ui.feature`。`@demo-bolt-39f2/stale-candidate`）、`RoutingCaseStaleLegsTest`・`RoutingCaseQueryServiceTest`・`RoutingCaseControllerTest`（上の「古くなった候補」の行） |
+| US-07 | AC3（承認中に区間の航海の情報版が更新されているか、同じ情報版でも区間の予定が変わっていれば確定は拒否され、候補の比較に戻って再判断が求められる。確定の時刻に情報不足でも確定できない） | 37c、39e2（情報版と区間の予定の組の照合）、39f2（拒否されて戻った S-06 に、変わった区間の下の文が出る） | `@US-07-AC3`（`confirm_route.feature`・`confirm_route_ui.feature`・`adopted_voyage_reflected_ui.feature`）、`RoutingCaseConfirmationTest`（情報版と区間の予定の組の照合を含む）・`VoyageTest`（`matchesLeg`）・`InfoFreshnessPolicyTest`、`RoutingCaseControllerTest` |
+| US-07 | AC4（確定した経路版の区間の航海が更新され、期限・接続を満たさなくなるか航海を引き直せなくなると、評価で再設計要になり、候補・区間・確定の記録（旧情報版）が残り、DE-06 が理由と旧情報版を運んで 1 度だけ出る。満たし続けるときと情報版も区間の予定も変わらないときは確定のまま。予約を自動で取り消さないことの確かめは 37e） | 37d2、37e4c（予約は自動取消しされないことを本物の本予約の確定で）、39e2（同じ情報版で区間の予定が変わると評価する） | `@US-07-AC4`（`evaluate_confirmed_route.feature`）、`RoutingCaseEvaluationTest`（状態の組み合わせの表の行ごと）・`RouteCandidateFinderTest`（引き直し）・`RedesignReasonCodeTest`（理由の写し）・`ConfirmedRouteEvaluationTest`（入力ポート。見つからない・変わらない・再設計要・競合）、保存の統合テスト（評価で `updated_by` を変えない）、`RoutingCaseControllerTest`（S-06 の再設計要の表示）・`RoutingCaseViewsTest`（理由の画面の語）。37e4c: 本予約の確定が見積りの行を押さえている間に来た再設計要の印は確定のコミットを待って付き、予約は確定のまま 1 件残り、輸送要求は予約確定済みになり、予約の画面（S-24）の照会は予約を返す（`integration/BookingConfirmationWithRouteRedesignIntegrationTest`、PostgreSQL。`pg_blocking_pids` で待ちを確かめる） |
+| US-07 | AC5（旧版・再設計要の経路版は再確定・新規予約への割当てに使えず、新しい経路版の作成が求められる） | 37d2（再設計要の経路版の再確定の拒否）、37e（見積りの印と荷主の承認・本予約の判定）、37e2（DE-06 の listener と DE-05・DE-06 の届く順）、37e3（再設計要の理由と文言、予約の追従）、37e3b（開発データの見本・マニュアル・デモ）、37e4（出発済みの判定（D-88）・理由・文言・マニュアル）、37e4b（出発済みの開発データの見本・デモ）、37e4c（37e2 の既知の課題 3 つ、#16 のクローズ） | `@US-07-AC5`（`evaluate_confirmed_route.feature`。再設計要の経路版は確定し直せず、もう一度評価しても DE-06 は出ない）。37e: `@US-07-AC5`（`route_redesign_required.feature`。荷主の承認と本予約の照会が再設計要で拒否される、もう一度伝わっても印の時刻は最初のまま、再見積りした新しい見積りの承認も拒否される）、見積りの集約の状態の組み合わせの表の行ごとのテスト、入力ポート（届く順）と公開 API のアダプターのテスト、保存の統合テスト。37e2: `@US-07-AC5`（`route_redesign_required.feature`。確定した経路を評価して再設計要にすると DE-06 の配信で見積りに印が付き荷主は承認できない（順 A: 確定 → 配る → 評価 → 配る）、DE-06 がもう一度届いても印の時刻は最初のまま）、DE-06 と DE-05 の listener の単体テスト（状態の組み合わせの表の行ごと。DE-06 が先に届く順 B は DE-05 の listener のテストで）、PostgreSQL の並行の統合テスト（`OverlappingTransactions`。DE-05 の listener が案件の行を押さえている間に評価の保存が待つ、本予約の確定用の照会と印を付ける更新が互いを待つ）、予約の腐敗防止層と本予約の確定・S-09 の GET の単体テスト（確定は確定用の照会、GET は今の照会）、dev（H2）の起動と本予約の確定、変異 7 つ。37e3: 画面の層のシナリオ（`route_redesign_required_ui.feature`、`@US-07 @ui`。C-04・C-17・S-02・S-09・S-07。axe）と、状態の組み合わせの表の行 1〜13 のそれぞれを名乗るテスト（C-04・C-17 は `QuotationViews`・`TransportRequestLabels`・`QuotationApprovalController` のテスト（行 1〜4）、S-02 は照会の PostgreSQL の統合テストと `TransportRequestReviewControllerTest`（行 5〜8）、S-09 と予約の腐敗防止層は `BookingControllerTest` と腐敗防止層の単体テスト（行 9・13）、S-04 は集約のテストと `StaffQuotationControllerTest`（行 10・11）、S-07 は集約のテスト（GET と POST で同じ理由）と `RoutingCaseControllerTest`（行 12。すべての理由に文言がある既存のテスト））、変わる既存の期待値（Bolt 37e の行 14b・14c と受入シナリオ、`NOT_CONFIRMABLE_STATE` の 3 つ）の直し、予約から見積りの `domain`・`application` への依存を拒む ArchUnit の規則（#50）、変異 8 つ。37e3b: 開発データの見本 2 件（TR-2026-0909 は荷主承認待ち、TR-2026-0910 は承認済み。どちらも割り当てた経路が再設計要）の `DevSampleDataSmokeTest`（状態、時刻の順と出発が起動より後、荷主の承認・本予約の照会・再見積り・経路の確定の拒否の理由、予約の確定待ちの行の印、案件の再設計要の記録と見積りの印の時刻の一致、KPI 計測）、dev（H2）で 3 つの役割で画面を開く確かめ、マニュアルのキャプチャ、変異 5 つ。37e4: 画面の層のシナリオ（`features/ui/route_already_departed_ui.feature`、`@US-07 @ui`。C-04・C-17・S-02・S-09。axe）と、状態の組み合わせの表の行 1〜16 のそれぞれを名乗るテスト（見積りの集約の荷主の承認・本予約の照会・理由の順・再見積り（行 1〜7。境界の同時刻を含む）、C-04・C-17 は `TransportRequestLabels`・`TransportRequestControllerTest`・`QuotationApprovalControllerTest`（行 8〜11。古い文言が出ないこと。T-185）、S-02 は照会の PostgreSQL の統合テストと `TransportRequestReviewControllerTest`（行 12・13）、S-04 は `StaffQuotationControllerTest`（行 14）、S-09 と予約の腐敗防止層は `BookingControllerTest` と腐敗防止層の単体テスト（行 15・16））、変異 11 個。37e4b: 出発済みの開発データの見本 2 件（TR-2026-0911 は荷主承認待ち、TR-2026-0912 は承認済み。どちらも割り当てた経路の最初の区間が起動した日の前日に出発）の `DevSampleDataSmokeTest`（状態、時刻の順と出発が起動より前、荷主の承認・本予約の照会・再見積りの拒否の理由、予約の確定待ちの行の出発の判定、経路設計中・荷主承認待ちの表、案件の確定の時刻と有効期限の写しの一致、候補の区間と割り当てた区間の写しの一致、KPI 計測、既存の見本が出発済みでない陰性の対照）、dev（H2）で 3 つの役割で画面を開く確かめ、デモの動画 2 本、変異 6 つ。37e4c: 届く順 B の受入シナリオ（`evaluate_confirmed_route.feature`、`@US-07-AC5 @DE-06 @Q-INV-10`。再設計要のイベントだけを先に配ると見積りに経路はまだなく、続けて経路を確定したイベントを配ると割り当てた後に続けて伝わって印が付き、荷主は承認できない。テストの配信の部品の `deliverOnly`）。予約の画面で予約が残ることは AC4 の行 |
+| US-12 | AC4 の取り込みの分（取消済みの予約に届いた DE-13 は実績を作らず拒否の記録に残す。「有人例外案件に引き継ぐ」は W8（US-20）に送った。手入力の分は 39gc） | 39g | `@US-12-AC4`（`register_milestone.feature`）、`ExternalMilestoneEventHandlerTest`、`ExternalMilestoneDeliveryIntegrationTest` |
+| US-12 | AC5 の取り込みの分（完了後の追跡に届いた DE-13 は保持のみで残り、現在状態は変わらない。完了後は予約状態が完了か現在状態が引渡し済み。手入力の分は 39gc） | 39g | `@US-12-AC5`（`register_milestone.feature`）、`TrackingRecordExternalMilestoneTest`、`ExternalMilestoneDeliveryIntegrationTest` |
+| US-12 | AC3（時系列に反する実績は原本を保持し、現在状態に直ちに反映せず確認中にする。手入力の登録と候補の採用の両方。DE-18 を 1 度だけ出す。【業務の判断】(ag)・(ah)） | 39gc | `@US-12-AC3`（`register_milestone.feature`、`under_review_milestone_ui.feature`）、`MilestoneSequenceRuleTest`、`CurrentStatusDeriverTest`、`TrackingRecordMilestoneTest`・`TrackingRecordCandidateAdoptionTest`（`Bolt39gc_…`）、`TrackingRecordCommandServiceTest`、`TrackingRecordControllerTest`、`MyBatisTrackingRecordRepositoryIntegrationTest` |
+| US-12 | AC4 の手入力の分（取消済みの予約への手入力は拒否し、S-13 に理由を示す。拒否の記録は書かない。【業務の判断】(aj)） | 39gc | `@US-12-AC4`（`register_milestone.feature`）、`TrackingRecordMilestoneTest`・`TrackingRecordCandidateAdoptionTest`（`Bolt39gc_…`）、`MilestoneRegistrationControllerTest` |
+| US-12 | AC5 の手入力の分（完了した追跡への手入力は保持のみで、現在状態を変えない。完了後は予約状態が完了か、採用済みの実績から導いた状態が引渡し済み。【業務の判断】(ak)、【前の決定の変更】(14)） | 39gc | `@US-12-AC5`（`register_milestone.feature`）、`TrackingRecordMilestoneTest`・`TrackingRecordCandidateAdoptionTest`（`Bolt39gc_…`）、`MilestoneRegistrationControllerTest` |
+| US-14 | AC5 の取込の分（同じ外部 ID で後に取得した外部版を採用しているのに前に取得した外部版が届いたとき（版の逆転）と、主要実績の追跡番号が同じ外部 ID の採用中の値と違うとき（既存の採用値との矛盾）、自動で採用せず差異にし、S-16 に件数と理由を示す。差異は採用値も DE-12・DE-13・DE-14 も作らず DE-31 と監査を残す。【業務の判断】(ay)〜(bd)。S-17 で差異を却下するのは Bolt 39h2（下の行）、G-06 の欠落（G-06b）・差異（G-06c）の案件と照合の表は 39h4） | 39h | `@US-14`（`features/external_data/classify_discrepancies.feature`）、規則 `DiscrepancyRuleTest`（パラメーター。比べる相手 2 つ、同じ取得時刻、外部版の文字列の順と取得時刻の順の逆、両方の理由）、分類 `ClassificationTest`（`Bolt39h_…`。3 つの入力の組）、照会の契約 `AdoptedValueRepositoryContract`（`findByExternalId`。メモリ・H2・PostgreSQL）、取込 `IngestionServiceTest`（`Bolt39h_…`。注記・DE-31・DE-12〜DE-14 を出さない）、監査 `ExternalRecordAuditEventHandlerTest`・`AuditRecordTest`・`ExternalRecordAuditDeliveryIntegrationTest`（配信まで。T-184）・`DomainEventSerializationContractTest`（DE-31）、画面 `ExternalDataIngestionControllerTest`・`IngestionSummaryQueryServiceTest` と `features/ui/discrepancy_ui.feature`（`@demo-bolt-39h/discrepancy`）、PERF-06 は `ExternalDataIngestionPerformanceTest`（Linux の CI の `performanceTest`） |
+| US-14 | AC5 の差異の確認（差異を S-17 の判断を待つ隔離・差異の一覧に隔離と混ぜて出し、差異の判断の画面で却下だけにする。採用は拒み、採用できない理由 `DISCREPANCY` を分類を最初に見て返す。S-16 のリンク「この取込の隔離・差異をすべて確認する」。却下した差異の原本の再送は再び差異。【業務の判断】(be)〜(bg)、台帳 D-144・D-145・D-147〜D-149。【前の決定の変更】(27)・(28)） | 39h2 | 判断の規則 `ReceivedRecordDecisionTest`（パラメーター。分類 4 つ × 却下・採用。差異の採用は拒む）、一覧の行 `UndecidedRecordTest`（不変条件）、判断のサービス `ReceivedRecordDecisionServiceTest`（`Bolt39h2_…`。採用できない理由の順、差異の却下・判断済み・同時の却下、結果の分類）、照会の契約 `ExternalDataRecordRepositoriesContract`（`Bolt39h2_…`。隔離と差異の並び・件数・1 件引く・却下後・再送の差異、キーのない隔離のまとめての却下の対象に差異が入らない。メモリ・H2・PostgreSQL）、照会 `UndecidedRecordQueryServiceTest`（差異の受け取った値。採用値は空）、画面 `UndecidedRecordControllerTest`（一覧の文・種類・差異の判断の画面・却下と判断済みの知らせ・採用の POST の行き先・GET の着地）・`ExternalDataIngestionControllerTest`（S-16 のリンクの文と条件）、監査 `ExternalRecordAuditDeliveryIntegrationTest`（差異の却下の `EXTERNAL_RECORD_DECIDED`。配信まで。T-184）、`features/ui/reject_discrepancy_ui.feature`（`@demo-bolt-39h2/reject-discrepancy`。axe・幅 320 px）。PERF-06 は照会の形が変わらないので流さない |
+| US-14 | AC4・AC5 の判断の画面での外部版をまたいだ比べ（判断の画面に「この外部 ID の採用値」の領域を隔離・差異の両方に示す。示すのは差異の規則が比べる相手 1 つで、版の逆転なら最後に取得した採用値、そうでなければ公開した日時が最も新しい採用値。古い外部版の隔離（取得時刻が最後に取得した採用値より厳密に前）の採用の欄に固定の警告の文を示す。警告は採用を止めず、差異と採用できない隔離には出さない。S-17 の絞らない一覧の各行に「この取込で絞る」。判断の画面の値の型を `UndecidedRecordValues` に改める。【業務の判断】(bh)〜(bj)、台帳 D-150〜D-152。【前の決定の変更】(29)・(30)） | 39h3 | 規則 `DiscrepancyRuleTest`（`Bolt39h3_…`。`isVersionReversed`・`inUseOf`・`partnerOf` の組。逆転の境（前・同じ・後）、最後に取得した採用値と比べること、公開した時刻 → 取得時刻 → 受信記録 ID の順。`discrepancyOf` の既存の組が緑のまま）、照会 `UndecidedRecordQueryServiceTest`（`Bolt39h3_…`。見本の組（V2 の取込の後の V1′ の隔離、今使っている採用値が同じ外部版、採用値なし、差異、キーのない隔離、比べる相手の値を読めない、別の提供元の採用値は拾わない）で `partner`・`olderThanAdopted` と引く回数を呼び出しの記録で縛る。一覧の照会は値も採用値も引かない。警告の判定と領域の出し方が独立していること）、一覧の行の型 `UndecidedRecordPageTest`（取込 ID の null を拒む）、契約 `AdoptedValueRepositoryContract`（別の外部 ID の採用値を拾わない。メモリ・H2・PostgreSQL）、判断のサービス `ReceivedRecordDecisionServiceTest`（`Bolt39h3_…`。古い外部版の隔離を採用でき、採用値の公開した時刻が最も新しくなり DE-12 を 1 つ出す。開いた後に古くなった隔離も採用できる）、画面 `UndecidedRecordControllerTest`（`Bolt39h3_…`。領域・警告の文（航海・主要実績）と位置、警告を出す条件（採用できない隔離・差異には出さない）、行の「この取込で絞る」のリンク（絞らない一覧だけ・2 頁目にも・行ごとの取込 ID・読み上げ）。照会は mock なので照会の変異は照会のテストで縛る）と画面の層の受入シナリオ `features/ui/adopt_old_version_quarantine_ui.feature`・`review_undecided_records_ui.feature`（`@demo-bolt-39h3/old-version-warning`。axe・幅 320 px）。層の規則は `LayerArchitectureTest`・`DddAnnotationArchitectureTest`・`LivingGlossaryConsistencyTest`・Modulith の検証（既存）。PERF-06 は取込の経路が変わらず、判断の画面の読みに照会が 2 回増えるだけなので流さない |
+| US-11 | AC1（顧客に開示できる情報と社内の確認状態の区別。S-12 の各実績の「顧客への表示」。採用済みは表示する、下書き・確認中は表示しない（社内の確認状態）。`shown_to_customer` の列は足さない） | 40-10・40-16 | `@US-11-AC1`（`customer_support_tracking_ui.feature`）、`TrackingRecordControllerTest`（Bolt 40-10 の行 1〜3） |
+| US-11 | AC2（照会を記録し、担当部門へ引き継ぐと、対象・照会内容・参照した出典・優先度・担当部門・回答期限・次回更新日時を持つ受付番号が発行される） | 40-7・40-15 | `@US-11-AC2`（`inquiry_record_ui.feature`。`@demo-bolt-40-15/inquiry-handoff`。実 PostgreSQL で外部キーまで）、`InquiryRecordingServiceTest`・`InquiryRecordControllerTest`・`MyBatisInquiryRecordRepositoryIntegrationTest`、起票は `ServiceCaseCommandServiceTest` |
+| US-11 | AC3（予約の代理確定・変更は許可されない。追跡の画面に予約の操作がなく、カスタマーサポートは実績の登録・採用もできない） | 40-10・40-16 | `@US-11-AC3`（`customer_support_tracking_ui.feature`。登録の画面を直接開くと 403）、`TrackingAssignedScopeSecurityIntegrationTest`（カスタマーサポートの 2 件） |
+| US-20 | AC1（起票するごとに一意な受付番号） | 40-5〜40-7・40-16 | `@US-20-AC1`（`features/tracking/service_case.feature`）、`MyBatisServiceCaseRepositoryIntegrationTest`（採番）、`ServiceCaseCommandServiceTest` |
+| US-20 | AC2（受領で担当者と時刻を記録し対応中） | 40-7・40-11 | `@US-20-AC2`（`service_case_receive_ui.feature`。`@demo-bolt-40-11/receive-service-case`）、`ServiceCaseControllerTest`・`ServiceCaseCommandServiceTest` |
+| US-20 | AC3（受領期限超過の escalation と担当未確定の表示。状態への書き込みと上位への通知は W10） | 40-9・40-12・40-14 | `@US-20-AC3`（`service_case_receive_ui.feature`。期限超過の印と絞り込み）、`ServiceCaseOverdueQueryServiceTest`・`ServiceCaseQueryServiceTest`・`ServiceCaseActionsControllerTest`（上位対応中の文） |
+| US-20 | AC4・AC5・AC6（進捗の更新、回答と終結、再開で受付番号と履歴を保持） | 40-8・40-12 | `@US-20-AC4`・`@US-20-AC5`・`@US-20-AC6`（`service_case_receive_ui.feature`）、`ServiceCaseActionServiceTest`・`ServiceCaseActionsControllerTest` |
+| US-20 | AC7（復旧照合が未完了の終結の拒否） | 40-5・40-8 | `@US-20-AC7`（`features/tracking/service_case.feature`）、`ServiceCaseTest`・`ServiceCaseActionServiceTest` |
+| US-20 | AC8（営業時間外の優先度高は起票の時刻に受付番号と次回更新日時を返す。営業日カレンダー） | 40-4・40-7 | `@US-20-AC8`（`features/tracking/service_case.feature`）、`ServiceDeadlinePolicyTest`・営業日カレンダーの単体と統合のテスト |
+| US-23 | AC1（問い合わせ一覧に自社の問い合わせの受付番号・状態・次回更新日時・最新の回答を新しい順で示す。他社は出さない） | 42-2 | `@US-23-AC1`（`features/ui/customer_service_case_ui.feature`）、`ServiceCaseQueryServiceTest` 行 8e・`CustomerServiceCaseControllerTest`・`MyBatisServiceCaseRepositoryIntegrationTest` 行 7 |
+| US-23 | AC2（回答済みの問い合わせを未解決と答えると同じ受付番号で再開を依頼でき、過去の回答の履歴が残る） | 42-3 | `@US-23-AC2`（同上）、`ServiceCaseTest` 行 11・`CustomerServiceCaseDetailControllerTest` |
+| US-23 | AC3（他社の問い合わせは内容を開示せず、試行を記録する） | 42・42-3 | `@US-23-AC3`（同上。画面の層は見つからないのと同じ画面）、`TrackingOutOfScopeResponderTest`・`ServiceCaseQueryServiceTest` 行 8c・`CustomerServiceCaseDetailControllerTest` 行 4・7 |
+| US-23 | AC4（受付時間を利用者のタイムゾーンで示す） | 42-2 | `@US-23-AC4`（同上）、`CustomerServiceCaseControllerTest` 行 4 |
+| US-01 | AC3（別企業の荷主情報では提出・出し直しを受け付けず、確定済みのデータは変更されない。荷主企業は利用者の所属から決め、他社の輸送要求は見つからない） | 45 | `@US-01-AC3`（`features/quotation/resubmit_transport_request.feature`。他社の見積依頼を出し直そうとしても見つからず、社内の読みで版・状態が変わっていない。Q-INV-08）、`TransportRequestControllerTest`・`TransportRequestCommandServiceTest` |
+| US-01 | AC5（自社の過去の見積依頼を複製すると、輸送条件を引き継いだ新しい下書きが作られ、希望到着期限と必要書類は再入力を求める。他社の見積依頼は見つからない） | 45-1 | `@US-01-AC5`（`features/ui/submit_transport_request_ui.feature`）、`TransportRequestControllerTest`（Bolt 45-1 の 3 行。他社は 404） |
+| US-22 | AC1（見積りの提示・経路の承認・本予約の確定・追跡が確認中のとき、対象の荷主担当者へ件名と導線だけのメールが送られる） | 43・43-1 | `@US-22-AC1`（`features/ui/shipper_notification_ui.feature`）、`ShipperNotificationEventHandlerTest`・`ShipperNotificationIntegrationTest`（PostgreSQL と Mailpit）・`ShipperNotificationMailIntegrationTest` |
+| US-22 | AC2（承認待ちの見積りの有効期限の 24 時間前にメールが送られる） | 43-2 | `@US-22-AC2`（同上）、`QuotationExpiryNotificationServiceTest`・`QuotationExpirySchedulerTest`・`MyBatisQuotationIntegrationTest` の窓の境界 |
+| US-22 | AC3（メールは料金・契約条件・書類・他の予約の情報を含まない） | 43 | `@US-22-AC3`（同上）、`ShipperNotificationMailIntegrationTest`（本文に料金等を含まない。N-INV-01） |
+| US-22 | AC4（送信に失敗したら失敗と宛先が記録され、通知一覧からも同じ内容を確認できる） | 43・43-3 | `@US-22-AC4`（同上）、`ShipperNotificationControllerTest`・`NotificationQueryServiceTest`・`MyBatisNotificationRepositoryIntegrationTest`（失敗の記録は `MailDeliveryTest` 系） |
+| US-21 | AC2（顧客 Web の照会と有人窓口の照会の経路と、Web で完結したか有人に移ったかを記録し、KPI-02 の自己照会率を求める） | 44・44-1 | `@US-21-AC2`（`features/ui/kpi_weekly_ui.feature`）、`WebInquiryEscalatorTest`（24 時間の規則。24 時間ちょうどを含む）、`ServiceCaseOpenEscalationTest`、`WebInquiryRecorderTest`（再開の依頼）、`MyBatisInquiryRecordRepositoryIntegrationTest`、`KpiStatisticsTest` |
+| US-21 | AC3（電話・メールの照会は引継ぎが不要でも照会総数に入る） | 44（Bolt 40-15 から） | `@US-21-AC3`（同上。電話の照会が総数に入る）、`InquiryRecordingServiceTest` |
+| US-21 | AC4（週次で KPI-01 の中央値・P90 と KPI-02 を示す。除外は未実装で全件） | 44-1 | `@US-21-AC4`（同上）、`KpiWeeklyQueryServiceTest`、`KpiObservationControllerTest`、`AuthenticationSecurityIntegrationTest`（監査担当者だけが開ける） |
+| US-21 | AC5（基準値・算出方法・登録者を記録し、パイロット中の値と並べて示す） | 44-2 | `@US-21-AC5`（同上）、`KpiBaselineTest`、`KpiBaselineCommandServiceTest`、`KpiComparisonQueryServiceTest`、`MyBatisKpiBaselineRepositoryIntegrationTest`、`AppendOnlyGrantIntegrationTest` |
+| US-24 | AC2（提示済みの見積りを理由を付けて辞退すると、見積りは失効として記録され、辞退の理由と回答者と辞退時刻が残り営業担当者に示される。再見積りできない。輸送要求の状態は変えない） | 46 | `@US-24-AC2`（`features/quotation/decline_quotation.feature`、画面の層は `features/ui/request_route_design_ui.feature`）、`QuotationTest`（辞退の行。DE-17 を出す）、`TransportRequestWithdrawnTest`・`QuotationDeclinedEventHandlerTest`（輸送要求を辞退で終了にする。冪等）、`QuotationResponseServiceTest`、`MyBatisQuotationIntegrationTest`（辞退の往復と CHECK `ck_quotation_declined`）、`QuotationResponseControllerTest`・`StaffQuotationControllerTest`・`TransportRequestControllerTest` |
+| US-24 | AC3（提示済みの見積りの条件を相談すると、相談内容を伴う有人案件（見積り相談）が起票され、見積りの状態は変わらない） | 46-1 | `@US-24-AC3`（`features/quotation/consult_quotation.feature`、画面の層は `features/ui/request_route_design_ui.feature`）、`QuotationTest`（相談の行）、`QuotationResponseServiceTest`、`QuotationConsultationRequestedEventHandlerTest`（起票・再配信で二重に起票しない）、`QuotationResponseControllerTest` |
+| US-09 | AC2（確認中の実績があるとき、判明していること・未確定のこと・次の行動・次回の更新・担当窓口を示す。確認中の実績の中身は出さない） | 47 | `@US-09-AC2`（`features/ui/customer_tracking_notice_ui.feature`）、`CustomerTrackingControllerTest`（Bolt 47 の行）、`CustomerTrackingQueryServiceTest` |
+| US-09 | AC3（更新が許容を過ぎて届かないとき、最新性を保証できないことと最後の採用値・次回の更新・次の行動を示す。台帳 D-167） | 47 | `@US-09-AC3`（同上）、`CustomerTrackingQueryServiceTest`（36 時間の境界）、`CustomerTrackingControllerTest` |
+| US-14 | 締め（AC1〜AC5 の照合の表、Golden dataset の G-06b 欠落・G-06c 差異、W7 のデモの動画、性能の複数の外部版の組。【業務の判断】(bk)、台帳 D-153。【前の決定の変更】(31)。#18 は終了報告の承認の後に閉じる） | 39h4 | `AcceptanceCriteriaCoverageTest`（Release 1.0 の照合の表 8 行。見出しを引数にした純粋なメソッドで書式の外れ・前方一致・2 つ目の表を縛る）、`RoutingCaseGoldenDatasetTest`（G-06b・G-06c とガードのテスト）、`route_candidates_golden_v0.feature`（`@golden` 6 行）、`adopted_voyage_reflected_ui.feature`（`@demo-bolt-39h4/confirm-rejected-same-info-version`）、`ExternalDataIngestionPerformanceTest`（`Bolt39h4_行7_…`。外部 ID 2,000 種 × 外部版 5。測るのは W7 の締めの CI） |
+
+## 後続工程への引継ぎ
+
+| ID | 引継ぎ内容 | 引継ぎ先 |
+| :--- | :--- | :--- |
+| TST-01 | 性能・負荷テストの目標値と方法 | 非機能要件 |
+| TST-02 | Golden dataset の案件・期待結果の決定と承認 | 業務責任者（要件定義 H-9） |
+| TST-03 | CI のワークフロー（段階、並列、成果物の保存） | `operating-cicd` |
+| TST-04 | 変異テスト（PIT）の導入可否。導入するなら技術スタックに追加する | 最初の数 Bolt の実績を見て判断 |
+
+## AI の仮定と要確認
+
+- **テストの割合**: ピラミッドの割合は目安として置いた。Bolt の実績（実行時間、変更依頼数）で見直す。
+- **カバレッジの目標値**: 目標値はテスト戦略ガイドの値を基にし、最初の閾値を目標より低く置いた。閾値を上げる時期はイテレーションのふりかえりで決める。
+- **E2E の実行場所**: ステージングで実行するとした。ステージングが用意できるまでは、CI 上でアプリケーションと PostgreSQL をコンテナで起動して実行する。
+- **ローカルの `@ui`**: 開発のアプリ起動は H2 だが、`@ui` のシナリオはローカルでも Testcontainers の PostgreSQL で実行する。Docker が必要なのは `@ui` と統合テストだけで、ADR-007 の範囲と矛盾しない（レビューの矛盾事項 2）。
+- **変異テスト**: テスト戦略ガイドは PIT による変異テストを示しているが、技術スタックに含めていない。導入は TST-04 で判断する。

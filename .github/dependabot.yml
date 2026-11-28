@@ -1,0 +1,22 @@
+# 依存の更新（2026-10-02 の D-7）。SHA で固定した GitHub Actions と、cargo-tracker の Gradle の依存を週 1 回更新する。
+# 更新はボットの Pull Request で届き、CI（cargo-tracker CI）が緑であることを確かめてから人がマージする。
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: ci
+    labels:
+      - dependencies
+
+  - package-ecosystem: gradle
+    directory: /apps/cargo-tracker
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: build
+    labels:
+      - dependencies
+    open-pull-requests-limit: 5

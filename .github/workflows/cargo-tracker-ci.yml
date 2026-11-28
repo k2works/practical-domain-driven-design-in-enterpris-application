@@ -1,0 +1,382 @@
+name: cargo-tracker CI
+
+# テスト戦略「CI での実行」のうち、配備の前までを実行する。
+# ステージング・本番への配備は運用準備で足す。デモ環境（Heroku、ADR-013）へは、develop の check・ui が緑になった後に
+# deploy-demo ジョブが配備する（Bolt 16）。画面の層の受入シナリオ（@ui）は、ステージングができるまでアプリを CI の中で起動して ui ジョブで動かす。
+# アクションはタグを付け替えられても中身が変わらないよう、コミットの SHA で固定する（末尾のコメントは版）。
+on:
+  push:
+    branches:
+      - develop
+      - main
+    paths:
+      - 'apps/cargo-tracker/**'
+      # 用語集の整合テストが読む設計文書
+      - 'docs/design/cargo-tracker/**'
+      # 運用の警告の印と Terraform のキーの一致のテストが読む
+      - 'ops/terraform/modules/alerts/**'
+      - '.github/workflows/cargo-tracker-ci.yml'
+  pull_request:
+    paths:
+      - 'apps/cargo-tracker/**'
+      # 用語集の整合テストが読む設計文書
+      - 'docs/design/cargo-tracker/**'
+      # 運用の警告の印と Terraform のキーの一致のテストが読む
+      - 'ops/terraform/modules/alerts/**'
+      - '.github/workflows/cargo-tracker-ci.yml'
+  # develop で手で配備し直すとき（deploy-demo は develop でだけ動く）。job に performance を選ぶと、性能の計測（performance ジョブ）だけを
+  # 動かし、check・ui・deploy-demo は動かさない（Bolt 39b4。PERF-06 の判定は Linux のランナーで行う）
+  workflow_dispatch:
+    inputs:
+      job:
+        description: 'deploy: check・ui の後に develop をデモ環境へ配備する / performance: 性能の計測（PERF-06）だけを動かす'
+        type: choice
+        options:
+          - deploy
+          - performance
+        default: deploy
+
+permissions:
+  contents: read
+
+# 同じ ref の後の実行が来たら、check・ui を取り消す（ジョブ単位。main ではコミットごとの結果を残すため取り消さない）。
+# deploy-demo はワークフロー全体の取り消しの外に置き、release の途中で取り消されないようにする（Bolt 16 レビュー R-02）
+env:
+  HEROKU_APP: cargo-tracker-mono-demo
+  DEMO_URL: https://cargo-tracker-mono-demo-883bf0b92807.herokuapp.com
+
+defaults:
+  run:
+    working-directory: apps/cargo-tracker
+
+jobs:
+  check:
+    # 手動の性能の計測（job=performance）では動かさない（push・pull_request では inputs が空なので動く）
+    if: inputs.job != 'performance'
+    runs-on: ubuntu-latest
+    concurrency:
+      group: cargo-tracker-ci-${{ github.ref }}-check
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+    timeout-minutes: 20
+    steps:
+      - name: リポジトリを取得する
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: JDK 25（Corretto）を用意する
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: corretto
+          java-version: '25'
+
+      - name: Gradle を用意する
+        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+
+      # テスト戦略: @wip は必須の実行から外し（RunCucumberTest の not @wip）、@wip を残したまま Bolt を完了しない。
+      # 失敗するシナリオを先に push できるよう、develop と Pull Request では警告にとどめ、main への push では失敗にする
+      - name: 作業中（@wip）の受入シナリオを確かめる
+        env:
+          FAIL_ON_WIP: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+        run: |
+          if [ ! -d src/test/resources/features ]; then
+            echo '::error::src/test/resources/features がありません（@wip を検出できません）'
+            exit 1
+          fi
+          set +e
+          grep -rnE --include='*.feature' '(^|[[:space:]])@wip([[:space:]]|$)' src/test/resources/features
+          status=$?
+          set -e
+          if [ "$status" -eq 2 ]; then
+            echo '::error::@wip の検出に失敗しました'
+            exit 1
+          fi
+          if [ "$status" -eq 0 ]; then
+            if [ "$FAIL_ON_WIP" = 'true' ]; then
+              echo '::error::@wip のシナリオが残っています（テスト戦略: @wip を残したまま Bolt を完了しない）'
+              exit 1
+            fi
+            echo '::warning::@wip のシナリオがあります。必須の実行から外れています。Bolt を完了する前に外してください'
+          fi
+
+      - name: 書式・静的解析・テスト・アーキテクチャ・本番の依存・カバレッジを検証する
+        run: ./gradlew check
+
+      # 生きたドキュメント（開発戦略）。Spring Modulith の図は check のテストで生成される
+      - name: JIG の設計ドキュメントを生成する
+        run: ./gradlew jigReports
+
+      - name: テストとカバレッジと受入シナリオの結果を保存する
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: cargo-tracker-reports
+          path: |
+            apps/cargo-tracker/build/reports/
+            apps/cargo-tracker/build/test-results/
+            apps/cargo-tracker/build/jig/
+            apps/cargo-tracker/build/spring-modulith-docs/
+          retention-days: 14
+
+  ui:
+    # 画面の層の受入シナリオ（@ui）。Playwright の Chromium と axe-core で、画面の流れとアクセシビリティを確かめる（テスト戦略）
+    # 手動の性能の計測（job=performance）では動かさない。deploy-demo は check・ui に依存するので、あわせて動かない
+    if: inputs.job != 'performance'
+    runs-on: ubuntu-latest
+    # W6 で 15〜19 分かかり時間切れが出たので 30 分にした（Bolt 37f）。25 分を超えたら分けて並べることを諮る（テスト戦略）
+    timeout-minutes: 30
+    concurrency:
+      group: cargo-tracker-ci-${{ github.ref }}-ui
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+    steps:
+      - name: リポジトリを取得する
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: JDK 25（Corretto）を用意する
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: corretto
+          java-version: '25'
+
+      - name: Gradle を用意する
+        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+
+      - name: Playwright のブラウザのキャッシュを使う
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('apps/cargo-tracker/build.gradle') }}
+
+      - name: Playwright の Chromium と OS の依存を入れる
+        run: ./gradlew playwrightInstall
+
+      - name: 画面の層の受入シナリオ（@ui）を動かす
+        run: ./gradlew uiTest
+
+      - name: 画面の層の受入シナリオの結果を保存する
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: cargo-tracker-ui-reports
+          path: |
+            apps/cargo-tracker/build/reports/cucumber-ui/
+            apps/cargo-tracker/build/reports/tests/uiTest/
+            apps/cargo-tracker/build/test-results/uiTest/
+          retention-days: 14
+
+  performance:
+    # 性能の計測（@Tag("performance")。PERF-06 の 1 万件の取込を 5 分以内。Bolt 39b4）。手で起動したときだけ動かし、push の CI に入れない。
+    # Windows の Docker Desktop のポート転送は 8 KB を超える文ごとに約 41 ms の人工の遅れを足し、寄港 60 の航海が 5 分を超えるので、
+    # PERF-06 の判定は Linux のランナーで行う。起動: gh workflow run cargo-tracker-ci.yml --ref develop -f job=performance
+    if: github.event_name == 'workflow_dispatch' && inputs.job == 'performance'
+    runs-on: ubuntu-latest
+    # 7 本（Bolt 39b4 の 3 本、39c2 の画面の POST、39c4 の結果の画面の照会、39d2b のまとめての却下、39d4 の S-17 の一覧の照会）。取込を判定する 4 本とまとめての却下は
+    # それぞれ 5 分の判定、7 本とも監査の配信を待つ上限 10 分（参考の値。まとめての却下は取込と却下の 2 回）を見込む。4 本のときの実測は
+    # 約 4 分（2026-11-04 の手動の実行）
+    timeout-minutes: 60
+    concurrency:
+      group: cargo-tracker-ci-${{ github.ref }}-performance
+      cancel-in-progress: false
+    steps:
+      - name: リポジトリを取得する
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: JDK 25（Corretto）を用意する
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: corretto
+          java-version: '25'
+
+      - name: Gradle を用意する
+        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+
+      - name: 性能の計測（PERF-06）を動かす
+        run: ./gradlew performanceTest
+
+      # 測った値（取込の時間・コミットの数・接続の最大・ファイルの大きさ・監査の配信の時間）は、テストのログの「PERF-06」で始まる行。
+      # テストの結果の XML から抜き出してログと実行の要約に出す（失敗したときも出す）
+      - name: 測った値をログと要約に出す
+        if: always()
+        run: |
+          set -euo pipefail
+          results=build/test-results/performanceTest
+          if [ ! -d "$results" ]; then
+            echo '::warning::performanceTest の結果がありません'
+            exit 0
+          fi
+          values=$(grep -ohE 'PERF-06 [^<]*' "$results"/*.xml || true)
+          echo "$values"
+          {
+            echo '### PERF-06（1 万件の取込）の測った値'
+            echo
+            echo '```text'
+            echo "$values"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: 性能の計測の結果を保存する
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: cargo-tracker-performance-reports
+          path: |
+            apps/cargo-tracker/build/reports/tests/performanceTest/
+            apps/cargo-tracker/build/test-results/performanceTest/
+          retention-days: 14
+
+  deploy-demo:
+    # デモ環境（Heroku、ADR-013）へ配備する。check・ui が緑の develop のコミットだけを出す（手元の deploy:demo のガードと同じ約束）。
+    # API キーは Environment demo（配備のブランチは develop だけ）の secret に人が置く。キー・Config Vars の値・API の応答の本文はログに出さない。
+    # キーの境界は develop に push できるもの。このジョブの変更は人がレビューする（ADR-013、D-58）
+    needs: [check, ui]
+    if: github.ref == 'refs/heads/develop' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment:
+      name: demo
+      url: ${{ env.DEMO_URL }}/
+    # 配備どうしは並べて 1 つずつ動かし、途中で取り消さない（後から来たものが待ちを置き換える）
+    concurrency:
+      group: cargo-tracker-demo-deploy
+      cancel-in-progress: false
+    steps:
+      - name: リポジトリを取得する（develop との比べに履歴を使う）
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          filter: blob:none
+
+      # 古い実行の再実行で古いコミットを出さない（R-06）。CI の対象のパスを最後に変えたコミットが、
+      # このコミットまでと develop の先頭までで同じときだけ配備する（先頭が文書だけのコミットでも手動の配備はできる）
+      - name: develop の最新の配備の対象か確かめる
+        id: latest
+        working-directory: .
+        run: |
+          set -euo pipefail
+          git fetch --quiet --filter=blob:none origin develop
+          paths=(apps/cargo-tracker docs/design/cargo-tracker .github/workflows/cargo-tracker-ci.yml)
+          mine=$(git log -1 --format=%H "${GITHUB_SHA}" -- "${paths[@]}")
+          latest=$(git log -1 --format=%H origin/develop -- "${paths[@]}")
+          if [ "$mine" = "$latest" ]; then
+            echo 'deploy=true' >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::develop には、より新しい配備の対象 ${latest:0:8} があります（このコミットまでは ${mine:0:8}）。配備を飛ばします"
+            echo 'deploy=false' >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Docker Buildx を用意する
+        if: steps.latest.outputs.deploy == 'true'
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Heroku の Container Registry にログインする
+        if: steps.latest.outputs.deploy == 'true'
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: registry.heroku.com
+          username: _
+          password: ${{ secrets.HEROKU_API_KEY }}
+
+      # Heroku の Container Registry は Docker v2 の manifest だけを受けるため、attestation を外し OCI の media type を使わない（ADR-013）
+      - name: デモのイメージをビルドして push する
+        if: steps.latest.outputs.deploy == 'true'
+        id: build
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: apps/cargo-tracker
+          target: demo
+          platforms: linux/amd64
+          provenance: false
+          sbom: false
+          labels: org.opencontainers.image.revision=${{ github.sha }}
+          outputs: type=image,name=registry.heroku.com/${{ env.HEROKU_APP }}/web,push=true,oci-mediatypes=false
+          cache-from: type=gha,scope=demo
+          cache-to: type=gha,scope=demo,mode=max
+
+      # Heroku CLI はランナーにないため、Platform API で release する（formation の更新と DEMO_REVISION）。
+      # イメージの差し替えの release の起動を待ってから DEMO_REVISION を設定し（2 つの起動を重ねない）、自分の release（DEMO_REVISION が
+      # github.sha、release が succeeded、その版の web の dyno が up）と /login の 200 を待ち、password の段のログイン（DB を使う）を確かめる。
+      # 来なければ直前の release に戻してジョブを失敗にする（Eco は preboot がなく、起動に失敗すると落ちたままになるため。R-01・R-07・R-08）
+      - name: Heroku に release し、起動を確かめる（失敗したら直前の release に戻す）
+        if: steps.latest.outputs.deploy == 'true'
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+          IMAGE_ID: ${{ steps.build.outputs.imageid }}
+          REVISION: ${{ github.sha }}
+          # 配備の後の DB を使う確かめに使う dev の荷主（db/dev-data と application-dev.properties の公開の値。本番には存在しない）
+          DEMO_CHECK_EMAIL: shipper@dev.cargo-tracker.example
+          DEMO_CHECK_PASSWORD: dev-password-shipper
+        run: |
+          set -euo pipefail
+          # キーをコマンドの引数に置かない（R-16）。ヘッダーはランナーの一時のファイルから渡す
+          hdr="${RUNNER_TEMP}/heroku-auth"
+          ( umask 077; printf 'Authorization: Bearer %s\n' "${HEROKU_API_KEY}" > "$hdr" )
+          base="https://api.heroku.com/apps/${HEROKU_APP}"
+          v3='Accept: application/vnd.heroku+json; version=3'
+          docker_releases='Accept: application/vnd.heroku+json; version=3.docker-releases'
+          get() { curl --fail --silent --show-error -H @"$hdr" -H "$v3" "${@:2}" "${base}/$1"; }
+          # send <method> <path> <Accept のヘッダー（"Accept: …" の形）> <JSON>
+          send() {
+            curl --fail --silent --show-error --output /dev/null -X "$1" -H @"$hdr" -H 'Content-Type: application/json' \
+              -H "$3" -d "$4" "${base}/$2"
+          }
+
+          previous=$(get releases -H 'Range: version ..; order=desc, max=1' | jq -r '.[0] | "\(.id) \(.version)"')
+          if [ -z "$previous" ] || [ "$previous" = 'null null' ]; then
+            echo '::error::直前の release が取れません（API キーとアプリ名を確かめてください）'
+            exit 1
+          fi
+          read -r previous_id previous_version <<< "$previous"
+          echo "直前の release: v${previous_version}"
+
+          rollback() {
+            echo "::error::$1。v${previous_version} に戻します"
+            send POST releases "$v3" "{\"release\":\"${previous_id}\"}" || echo '::error::自動で戻せませんでした。手順書の「ロールバック」で戻してください'
+            exit 1
+          }
+
+          # 最新の release が succeeded で、その版の web の dyno が up で、/login が 200 になるのを最大 180 秒待つ。
+          # 引数: 求める DEMO_REVISION（空なら問わない）。直前の release より新しい版であることも求める
+          wait_up() {
+            local want="$1"
+            state=none; code=000; status=none; version=none; revision=none
+            for i in $(seq 1 36); do
+              sleep 5
+              # API と HTTP の一時の失敗は受け流し、時間切れで判定する
+              revision=$(get config-vars | jq -r '.DEMO_REVISION // "none"') || revision=error
+              read -r version status <<< "$(get releases -H 'Range: version ..; order=desc, max=1' | jq -r '.[0] | "\(.version) \(.status)"' || echo 'error error')"
+              if [ "$version" != 'error' ]; then
+                state=$(get dynos | jq -r --argjson v "$version" '[.[] | select(.type == "web" and .release.version == $v)][0].state // "none"') || state=error
+              fi
+              code=$(curl --silent --output /dev/null --write-out '%{http_code}' "${DEMO_URL}/login" || echo 000)
+              if { [ -z "$want" ] || [ "$revision" = "$want" ]; } && [ "$version" != 'error' ] && [ "$version" -gt "$previous_version" ]                 && [ "$status" = 'succeeded' ] && [ "$state" = 'up' ] && [ "$code" = '200' ]; then
+                echo "v${version} の dyno が up で、/login が 200（${i} 回目）"
+                return 0
+              fi
+            done
+            echo "release=v${version} ${status}、dyno=${state}、/login=${code}、DEMO_REVISION=${revision}"
+            return 1
+          }
+
+          # イメージの差し替えと DEMO_REVISION の設定は、それぞれ release と再起動を起こす。続けて出すと 2 つの起動が重なり、
+          # 残ったプロセスの H2 が閉じてログインが 500 になった（2026-10-14）。差し替えの release が起動しきってから設定する
+          send PATCH formation "$docker_releases"             "{\"updates\":[{\"type\":\"web\",\"docker_image\":\"${IMAGE_ID}\"}]}"
+          wait_up '' || rollback 'イメージの差し替えの release の起動を 180 秒たっても確かめられません'
+          send PATCH config-vars "$v3" "{\"DEMO_REVISION\":\"${REVISION}\"}"
+          echo "release した: ${REVISION}"
+          wait_up "$REVISION" || rollback 'DEMO_REVISION の release の起動を 180 秒たっても確かめられません'
+
+          # DB を使う操作も確かめる（/login の表示は DB を使わないので、DB が閉じていても 200 になる）。dev の荷主の password の段の
+          # ログインを送り、A-02 へ移ることを確かめる（500 なら DB に届いていない）。dev の利用者は db/dev-data の公開の値
+          jar="${RUNNER_TEMP}/demo-cookies"
+          login=none
+          for i in $(seq 1 6); do
+            rm -f "$jar"
+            token=$(curl --silent -c "$jar" -b "$jar" "${DEMO_URL}/login" | grep -o 'name="_csrf" value="[^"]*"' | head -1 | sed 's/.*value="//; s/"$//') || token=''
+            login=$(curl --silent --output /dev/null --write-out '%{http_code} %{redirect_url}' -c "$jar" -b "$jar"               --data-urlencode "username=${DEMO_CHECK_EMAIL}" --data-urlencode "password=${DEMO_CHECK_PASSWORD}"               --data-urlencode "_csrf=${token}" "${DEMO_URL}/login" || echo '000 none')
+            case "$login" in
+              '302 '*'/login/totp')
+                echo "password の段のログインが A-02 へ移る（${i} 回目）"
+                exit 0
+                ;;
+            esac
+            sleep 5
+          done
+          rollback "password の段のログインが A-02 へ移りません（${login}）"

@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/staff :: layout(~{::title}, ~{::main}, ~{}, 'kpi-observations')}">
+<head>
+    <meta charset="UTF-8">
+    <title>KPI 計測記録 - cargo-tracker</title>
+</head>
+<body>
+<main>
+    <h1>KPI 計測記録</h1>
+    <!--/* S-22 週次の KPI（US-21 AC4。W9 の Bolt 44-1。台帳 D-171。仮）。週は UTC の月曜から日曜。値のない週は算出しない（0 とみなさない） */-->
+    <h2 class="h4" id="weekly-heading">週次の KPI</h2>
+    <div class="table-scroll" tabindex="0" role="region" aria-labelledby="weekly-heading">
+        <table class="table">
+            <caption>週次の KPI-01（経路提示リードタイム）と KPI-02（自己照会率）</caption>
+            <thead>
+            <tr>
+                <th scope="col">週（UTC の月曜から日曜）</th>
+                <th scope="col">KPI-01 見積依頼の件数</th>
+                <th scope="col">KPI-01 中央値</th>
+                <th scope="col">KPI-01 90 パーセンタイル</th>
+                <th scope="col">KPI-02 照会総数</th>
+                <th scope="col">KPI-02 Web で完結</th>
+                <th scope="col">KPI-02 自己照会率</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="week : ${weeks}">
+                <td th:text="${week.week}">2026-10-05 〜 2026-10-11（UTC）</td>
+                <td th:text="${week.leadTimeCount}">3</td>
+                <td th:if="${week.median != null}" th:text="${week.median}">3 時間 0 分</td>
+                <td th:unless="${week.median != null}"><span aria-hidden="true">—</span><span class="visually-hidden">算出しない</span></td>
+                <td th:if="${week.percentile90 != null}" th:text="${week.percentile90}">8 時間 20 分</td>
+                <td th:unless="${week.percentile90 != null}"><span aria-hidden="true">—</span><span class="visually-hidden">算出しない</span></td>
+                <td th:text="${week.inquiryTotal}">8</td>
+                <td th:text="${week.inquirySelfServed}">6</td>
+                <td th:if="${week.selfServiceRate != null}" th:text="${week.selfServiceRate}">75.0%</td>
+                <td th:unless="${week.selfServiceRate != null}"><span aria-hidden="true">—</span><span class="visually-hidden">算出しない</span></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <p class="form-text">KPI-01 は、その週に最初の見積りを提示した見積依頼の、提出から最初の提示までの時間の中央値と 90 パーセンタイルです（暦の経過時間。90 パーセンタイルは昇順の 90% の位置の値）。KPI-02 は、その週に受け付けた照会の総数に対する、顧客 Web で完結した照会（有人対応へ移っていない）の割合です。「—」は、対象がないため算出していないことを示します。いまは訓練データや顧客都合の取消しの除外は行わず、すべてを対象にしています。</p>
+    <!--/* 基準値との比較と登録（US-21 AC5。W9 の Bolt 44-2。台帳 D-172。仮）。基準値は追記専用で、訂正は新しい記録で行う */-->
+    <p role="status" th:if="${result}" th:text="${result}">KPI-01 の基準値を登録しました</p>
+    <p class="alert alert-danger" role="alert" th:if="${problem}" th:text="${problem}">基準値の期間は 28 日です</p>
+    <h2 class="h4" id="comparison-heading">基準値との比較</h2>
+    <div class="table-scroll" tabindex="0" role="region" aria-labelledby="comparison-heading">
+        <table class="table">
+            <caption>パイロット開始前 4 週間の基準値と、直近 12 週のパイロット中の値</caption>
+            <thead>
+            <tr>
+                <th scope="col">項目</th>
+                <th scope="col">基準値</th>
+                <th scope="col">直近 12 週</th>
+                <th scope="col">差</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="row : ${comparison.rows}">
+                <th scope="row" th:text="${row.item}">KPI-01 中央値</th>
+                <td th:if="${row.baseline != null}" th:text="${row.baseline}">8 時間 0 分</td>
+                <td th:unless="${row.baseline != null}">未登録</td>
+                <td th:if="${row.pilot != null}" th:text="${row.pilot}">4 時間 0 分</td>
+                <td th:unless="${row.pilot != null}"><span aria-hidden="true">—</span><span class="visually-hidden">算出しない</span></td>
+                <td th:if="${row.difference != null}" th:text="${row.difference}">50.0% 短縮</td>
+                <td th:unless="${row.difference != null}"><span aria-hidden="true">—</span><span class="visually-hidden">算出しない</span></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <ul th:unless="${#lists.isEmpty(comparison.baselines)}">
+        <li th:each="note : ${comparison.baselines}"
+            th:text="|${note.kpi} の基準値: 期間 ${note.period}、算出方法 ${note.method}、登録者 ${note.registrant}、登録 ${note.registeredAt}|">KPI-01 の基準値: 期間 2026-10-05 〜 2026-11-01、算出方法 現行の受付台帳から算出、登録者 監査 花子、登録 2026-11-16 10:00 Asia/Tokyo（UTC+09:00）（UTC 2026-11-16 01:00）</li>
+    </ul>
+    <p class="form-text">差は判断の材料です（KPI-01 は基準値に対する短縮・延長の割合、KPI-02 は自己照会率のポイントの差）。PV-01 の合否の判定そのものではありません。</p>
+    <h2 class="h4" id="publications-heading">未完了のイベントの発行</h2>
+    <p><span th:text="${comparison.incompletePublications}">0</span> 件</p>
+    <p class="form-text">リスナーが処理を終えていないイベントの数です。処理中のものも含むので、一時的に 0 でないことがあります。続けて 0 にならないときは、再配信を確かめます。</p>
+    <h2 class="h4" id="baseline-form-heading">基準値を登録する</h2>
+    <p class="form-text">パイロット開始前 4 週間（28 日）の値を登録します。登録した後は変えられません。訂正するときは、同じ KPI を登録し直します（前の記録を指す新しい記録になります）。KPI-01 の値は分、KPI-02 の値は自己照会率のパーセントです。</p>
+    <form th:action="@{/staff/kpi-observations/baselines}" method="post" aria-labelledby="baseline-form-heading">
+        <div class="mb-3">
+            <label for="baseline-kpi" class="form-label">KPI</label>
+            <select id="baseline-kpi" name="kpi" class="form-select">
+                <option value="KPI-01" th:selected="${form.kpi() == 'KPI-01'}">KPI-01 経路提示リードタイム</option>
+                <option value="KPI-02" th:selected="${form.kpi() == 'KPI-02'}">KPI-02 自己照会率</option>
+            </select>
+        </div>
+        <div class="mb-3">
+            <label for="baseline-from" class="form-label">期間の開始日</label>
+            <input id="baseline-from" name="periodFrom" type="date" class="form-control" required
+                   th:value="${form.periodFrom()}">
+        </div>
+        <div class="mb-3">
+            <label for="baseline-to" class="form-label">期間の終了日（開始日から 28 日め）</label>
+            <input id="baseline-to" name="periodTo" type="date" class="form-control" required
+                   th:value="${form.periodTo()}">
+        </div>
+        <div class="mb-3">
+            <label for="baseline-p50" class="form-label">中央値（KPI-01 は分、KPI-02 は自己照会率のパーセント）</label>
+            <input id="baseline-p50" name="valueP50" type="text" inputmode="decimal" class="form-control" required
+                   th:value="${form.valueP50()}">
+        </div>
+        <div class="mb-3">
+            <label for="baseline-p90" class="form-label">90 パーセンタイル（KPI-01 の分。省略できる。KPI-02 では入れない）</label>
+            <input id="baseline-p90" name="valueP90" type="text" inputmode="decimal" class="form-control"
+                   th:value="${form.valueP90()}">
+        </div>
+        <div class="mb-3">
+            <label for="baseline-method" class="form-label">算出方法（現行業務の記録からどう算出したか）</label>
+            <textarea id="baseline-method" name="method" class="form-control" rows="3" maxlength="4000" required
+                      th:text="${form.method()}"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">基準値を登録する</button>
+    </form>
+    <h2 class="h4" id="observations-heading">見積依頼ごとの KPI-01</h2>
+    <p th:if="${#lists.isEmpty(observations)}">まだ記録はありません。</p>
+    <div th:unless="${#lists.isEmpty(observations)}" class="table-scroll" tabindex="0" role="region"
+         aria-label="見積依頼ごとの KPI-01 の時刻とリードタイム">
+        <table class="table">
+            <caption>見積依頼ごとの KPI-01 の時刻とリードタイム</caption>
+            <thead>
+            <tr>
+                <th scope="col">業務番号</th>
+                <th scope="col">提出時刻</th>
+                <th scope="col">最初の提示時刻</th>
+                <th scope="col">KPI-01 リードタイム</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="observation : ${observations}">
+                <td th:text="${observation.transportRequestNumber}">TR-2026-0001</td>
+                <td th:text="${observation.submittedAt}">2026-10-05 10:00 Asia/Tokyo（UTC+09:00）（UTC 2026-10-05 01:00）</td>
+                <td th:if="${observation.firstPresentedAt != null}" th:text="${observation.firstPresentedAt}">2026-10-05 13:30 Asia/Tokyo（UTC+09:00）（UTC 2026-10-05 04:30）</td>
+                <td th:unless="${observation.firstPresentedAt != null}" th:text="|未提示（提出から ${observation.elapsedSinceSubmission}）|">未提示（提出から 52 時間 10 分）</td>
+                <td th:if="${observation.leadTime != null}" th:text="${observation.leadTime}">3 時間 30 分</td>
+                <td th:unless="${observation.leadTime != null}"><span aria-hidden="true">—</span><span class="visually-hidden">算出しない</span></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <p th:unless="${#lists.isEmpty(observations)}" class="form-text">「—」は、まだ提示していないため算出していないことを示します。リードタイムと経過時間は暦の経過時間（夜間・休日を含む）です。</p>
+</main>
+</body>
+</html>

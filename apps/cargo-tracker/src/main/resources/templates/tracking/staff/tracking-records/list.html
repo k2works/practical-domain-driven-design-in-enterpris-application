@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/staff :: layout(~{::title}, ~{::main}, ~{}, 'tracking-records')}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>追跡一覧 - cargo-tracker</title>
+</head>
+<body>
+<main>
+    <h1>追跡一覧</h1>
+    <!--/* S-11 の最小の表示（Bolt 26）。絞り込み（確認中・鮮度超過・訂正承認待ち）は絞り込みを作る Bolt で足す */-->
+    <p class="alert alert-info" th:if="${noAssignedCompanies}">担当企業がまだないので、表示できる追跡記録はありません。システム管理者に担当企業の割り当てを頼んでください。</p>
+    <p th:if="${#lists.isEmpty(trackingRecords) and !noAssignedCompanies}">追跡記録はまだありません。営業担当者が本予約を確定すると、追跡が始まった貨物がここに出ます。</p>
+    <p th:if="${truncated}" th:text="|新しい ${limit} 件だけを示しています。|">新しい 50 件だけを示しています。</p>
+    <div th:unless="${#lists.isEmpty(trackingRecords)}" class="table-scroll" tabindex="0" role="region"
+         aria-labelledby="tracking-records-caption">
+        <table class="table">
+            <caption id="tracking-records-caption">追跡記録（追跡の開始時刻の新しい順）</caption>
+            <thead>
+            <tr>
+                <th scope="col">追跡番号</th>
+                <th scope="col">現在状態</th>
+                <th scope="col">当初の到着予定</th>
+                <th scope="col">最新の到着見込み</th>
+                <th scope="col">最終取得時刻</th>
+                <th scope="col">追跡の開始時刻</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="trackingRecord : ${trackingRecords}">
+                <td><a th:href="@{/staff/tracking-records/{trackingNumber}(trackingNumber=${trackingRecord.trackingNumber()})}"
+                       th:text="${trackingRecord.trackingNumber()}">CTABCDEFGH2345</a></td>
+                <!--/* 確認中は状態バッジ（文字とアイコン。色だけで示さない。BR-13。Bolt 39gc）。絞り込みは足さない。
+                       鮮度超過は同じ形の印を現在状態の後ろに並べる（読むときの判定で、現在状態は変えない。Bolt 39g4、D-135） */-->
+                <td th:if="${!trackingRecord.underReview() and !trackingRecord.freshnessExceeded()}" th:text="${trackingRecord.status()}">集荷予定</td>
+                <td th:if="${trackingRecord.underReview() and !trackingRecord.freshnessExceeded()}"><span class="badge text-bg-warning"><span aria-hidden="true">⚠ </span><span th:text="${trackingRecord.status()}">確認中</span></span></td>
+                <td th:if="${trackingRecord.freshnessExceeded()}"><span th:unless="${trackingRecord.underReview()}" th:text="${trackingRecord.status()}">輸送中</span><span th:if="${trackingRecord.underReview()}" class="badge text-bg-warning"><span aria-hidden="true">⚠ </span><span th:text="${trackingRecord.status()}">確認中</span></span> <span class="badge text-bg-warning"><span aria-hidden="true">⚠ </span><span>鮮度超過</span></span></td>
+                <td th:text="${trackingRecord.originalEta()}">2026-11-15 09:00 Asia/Tokyo（UTC+09:00）（UTC 2026-11-15 00:00）</td>
+                <!--/* 最新の到着見込みは採用の実績と最後の区間の航海の到着予定で動き、最終取得時刻は採用の実績と受けた航海の知らせの取得時刻の最大（なければ「なし」。Bolt 39g3・39g4b。U-3） */-->
+                <td th:text="${trackingRecord.latestEta()}">2026-11-15 15:00 Asia/Tokyo（UTC+09:00）（UTC 2026-11-15 06:00）</td>
+                <td th:text="${trackingRecord.lastAcquiredAt()}">2026-11-01 12:00 Asia/Tokyo（UTC+09:00）（UTC 2026-11-01 03:00）</td>
+                <td th:text="${trackingRecord.startedAt()}">2026-10-26 10:00 Asia/Tokyo（UTC+09:00）（UTC 2026-10-26 01:00）</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</main>
+</body>
+</html>

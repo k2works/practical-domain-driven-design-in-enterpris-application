@@ -1,0 +1,1 @@
+- [cargo-tracker の業務と利用者視点の論点](project_cargo_tracker_domain.md) — 業務の流れ・呼び分け、Bolt 1〜21・W6 横断レビューの未解消の論点（再設計要の出口なし、担当企業の付け忘れ等）

@@ -1,0 +1,406 @@
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '4.1.3'
+	id 'io.spring.dependency-management' version '1.1.7'
+	id 'com.diffplug.spotless' version '8.10.3'
+	id 'checkstyle'
+	id 'jacoco'
+	id 'com.github.spotbugs' version '6.5.12'
+	id 'org.sonarqube' version '7.5.0.8588'
+	id 'org.dddjava.jig-gradle-plugin' version '2026.9.1'
+}
+
+group = 'com.example'
+version = '0.0.1-SNAPSHOT'
+description = 'A 社国際貨物輸送管理システム（cargo-tracker）'
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(25)
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+ext {
+	// Spring Boot の BOM が管理しないものだけ版を指定する（技術スタック「版は BOM に任せる」）
+	set('springModulithVersion', '2.1.1')
+	set('cucumberVersion', '8.0.3')
+	set('mybatisVersion', '4.1.0')
+	set('shedlockVersion', '7.11.0')
+	set('archunitVersion', '1.5.1')
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	implementation 'org.springframework.boot:spring-boot-starter-flyway'
+	implementation 'org.flywaydb:flyway-database-postgresql'
+	implementation "org.mybatis.spring.boot:mybatis-spring-boot-starter:${mybatisVersion}"
+	implementation 'org.springframework.modulith:spring-modulith-starter-jdbc'
+	// 未完了の発行の監視（OBS-03。W10-1 の Bolt 57-2）で EventPublicationRepository を使う。実行時には starter-jdbc 経由で
+	// 含まれている。イベントの直列化の契約テストも EventSerializer を使う（2026-11-27、human:kakimomokuri が承認）
+	implementation 'org.springframework.modulith:spring-modulith-events-core'
+	// 認証と session（US-18、ADR-012）。form login・役割による認可・CSRF と、DB に置く session（Bolt 14）
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+	// ヘルスチェックとメトリクス（OBS-10。W10 の Bolt 53。導入は 2026-11-16 に人が承認）。版は Spring Boot の BOM で決まる
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+	// 定期処理の排他（W10 の Bolt 53-1。導入とスキーマ変更は 2026-11-16 に人が承認）。ロックの表は platform.shedlock（Flyway）
+	implementation "net.javacrumbs.shedlock:shedlock-spring:${shedlockVersion}"
+	implementation "net.javacrumbs.shedlock:shedlock-provider-jdbc-template:${shedlockVersion}"
+	implementation 'org.springframework.boot:spring-boot-starter-session-jdbc'
+	// メールの送信（通知。password の再設定のメール。ADR-017、Bolt 33）。統合テストは Mailpit のコンテナで受ける
+	implementation 'org.springframework.boot:spring-boot-starter-mail'
+	// TOTP の生成（US-18、ADR-011。Bolt 30）。HOTP の計算と切り詰めだけを任せ、依存は identity.infrastructure に閉じる（ArchUnit）
+	implementation 'com.eatthepath:java-otp:1.0.0'
+	// 登録の QR（A-07）をインラインの SVG で描く（Bolt 31b、ADR-011。Apache-2.0、実行時の推移的な依存なし。identity.infrastructure に閉じる）
+	implementation 'com.google.zxing:core:3.5.4'
+	// 画面の CSS と部分更新（ADR-005、技術スタック）。フロントエンドのビルドを持たず、WebJars で同梱して版を固定する（Bolt 8）
+	implementation 'org.webjars:webjars-locator-lite'
+	implementation 'org.webjars.npm:bootstrap:5.3.8'
+	implementation 'org.webjars.npm:htmx.org:2.0.11'
+	runtimeOnly 'org.postgresql:postgresql'
+	runtimeOnly 'org.springframework.modulith:spring-modulith-runtime'
+
+	// 開発体験を優先し、ローカル起動だけ H2 を使う。本番の成果物には含めない（ADR-007、AT-06）
+	developmentOnly 'com.h2database:h2'
+	// ローカル起動（bootRun・bootTestRun）での自動再起動とライブリロード、テンプレートのキャッシュの無効化。本番の成果物には含めない
+	developmentOnly 'org.springframework.boot:spring-boot-devtools'
+
+	testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
+	testImplementation 'org.springframework.boot:spring-boot-starter-security-test'
+	testImplementation 'org.springframework.boot:spring-boot-starter-thymeleaf-test'
+	testImplementation 'org.springframework.boot:spring-boot-starter-validation-test'
+	testImplementation 'org.springframework.boot:spring-boot-starter-flyway-test'
+	testImplementation "org.mybatis.spring.boot:mybatis-spring-boot-starter-test:${mybatisVersion}"
+	testImplementation 'org.springframework.boot:spring-boot-testcontainers'
+	testImplementation 'org.testcontainers:testcontainers-junit-jupiter'
+	testImplementation 'org.testcontainers:testcontainers-postgresql'
+	testImplementation 'org.springframework.modulith:spring-modulith-starter-test'
+	testImplementation "com.tngtech.archunit:archunit-junit5:${archunitVersion}"
+	testImplementation 'io.cucumber:cucumber-java'
+	testImplementation 'io.cucumber:cucumber-spring'
+	testImplementation 'io.cucumber:cucumber-junit-platform-engine'
+	// 受入条件とシナリオの照合で Feature を Pickle に解析する（Bolt 28。版は cucumber-bom で決まる）
+	testImplementation 'io.cucumber:gherkin'
+	testImplementation 'org.junit.platform:junit-platform-suite'
+	// 画面の層の受入シナリオ（@ui）。実ブラウザの操作とアクセシビリティの自動検査（テスト戦略）
+	testImplementation 'com.microsoft.playwright:playwright:1.63.0'
+	testImplementation 'com.deque.html.axe-core:playwright:4.13.0'
+	// H2 のスモークテスト（テスト戦略）で dev プロファイルの起動とマイグレーションを確かめる。本番の成果物には含めない
+	testRuntimeOnly 'com.h2database:h2'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+dependencyManagement {
+	imports {
+		mavenBom "org.springframework.modulith:spring-modulith-bom:${springModulithVersion}"
+		mavenBom "io.cucumber:cucumber-bom:${cucumberVersion}"
+	}
+}
+
+// すべてのテストのタスクに共通の設定。受入シナリオは Suite（RunCucumberTest・RunUiCucumberTest）からだけ実行し、
+// Cucumber エンジンの直接探索による二重実行を防ぐ
+tasks.withType(Test).configureEach {
+	systemProperty 'cucumber.junit-platform.discovery.as-root-engine', 'false'
+	// テストが保存する必要書類のファイルは、タスクごとの build の下に置き、実行の前に消す
+	// （既定の一時ディレクトリに残さない。Bolt 6〜8 レビュー R-15）
+	def documentsDir = layout.buildDirectory.dir("test-documents/${name}").get().asFile
+	systemProperty 'cargotracker.document-storage.base-dir', documentsDir.absolutePath
+	doFirst {
+		documentsDir.deleteDir()
+	}
+}
+
+tasks.named('test') {
+	// 画面の層（@ui）は実ブラウザを使い、用語集の整合（documentation）は設計文書を読み、性能の計測（performance）は
+	// 1 万件を取り込んで時間を測るため、それぞれ別のタスクで動かす
+	useJUnitPlatform {
+		excludeTags 'ui', 'documentation', 'performance'
+	}
+	// Spring Modulith の図（ModuleDocumentationTest）を出力として宣言し、キャッシュから復元しても図が残るようにする
+	outputs.dir(layout.buildDirectory.dir('spring-modulith-docs')).withPropertyName('moduleDocumentation')
+	// テストの Spring の文脈がキャッシュに積み上がり、既定（512 MB）では足りなくなった（Bolt 38e。2026-10-28、human:kakimomokuri が決定）
+	maxHeapSize = '1g'
+}
+
+// 画面の層の受入シナリオ（@ui）。Playwright の Chromium をヘッドレスで動かす。check に入れず、CI では別のジョブで動かす
+tasks.register('uiTest', Test) {
+	group = 'verification'
+	description = '画面の層の受入シナリオ（@ui。Playwright と axe-core）を動かす'
+	testClassesDirs = sourceSets.test.output.classesDirs
+	classpath = sourceSets.test.runtimeClasspath
+	useJUnitPlatform {
+		includeTags 'ui'
+		// ユーザーマニュアルの撮影（@manual）は manualScreenshots で動かす
+		excludeTags 'manual'
+		excludeEngines 'archunit'
+	}
+	shouldRunAfter 'test'
+}
+
+// 性能の計測（@Tag("performance")。PERF-06 の 1 万件の取込を PostgreSQL で測る。Bolt 39b4）。測るたびに流す。check と push の CI に入れない
+// （共有の実行環境の時間は揺れ、5 分の判定が不安定になる。性能の継続的な確認は W10 の負荷テスト）。PERF-06 の判定は CI の手動のジョブ
+// performance（Linux）で行う。Windows の Docker Desktop のポート転送は 8 KB を超える文ごとに約 41 ms の人工の遅れを足す
+tasks.register('performanceTest', Test) {
+	group = 'verification'
+	description = '性能の計測のテスト（@Tag("performance")。PERF-06 の 1 万件の取込）を動かし、測った値をログに出す'
+	testClassesDirs = sourceSets.test.output.classesDirs
+	classpath = sourceSets.test.runtimeClasspath
+	useJUnitPlatform {
+		includeTags 'performance'
+		excludeEngines 'archunit', 'junit-platform-suite'
+	}
+	maxHeapSize = '1g'
+	outputs.upToDateWhen { false }
+	shouldRunAfter 'test'
+}
+
+// ユーザーマニュアルの画面のキャプチャ（docs/manual/assets/*.png）。@manual の画面の層のシナリオだけを動かし、本番と同じプロファイル
+// （開発用の利用者の欄なし）とシナリオが作るダミーのデータで撮る。手作業で PNG を置かない（creating-manual）。check に入れない
+tasks.register('manualScreenshots', Test) {
+	group = 'documentation'
+	description = 'ユーザーマニュアルの画面のキャプチャ（@manual）を撮り、docs/manual/assets に置く'
+	testClassesDirs = sourceSets.test.output.classesDirs
+	classpath = sourceSets.test.runtimeClasspath
+	useJUnitPlatform {
+		includeTags 'manual'
+		excludeEngines 'archunit'
+	}
+	def screenshotDir = file('../../docs/manual/assets')
+	systemProperty 'cargotracker.manual.screenshot-dir', screenshotDir.absolutePath
+	outputs.dir(screenshotDir).withPropertyName('manualScreenshots')
+	outputs.upToDateWhen { false }
+}
+
+// デモ項目の動画（Bolt 10 から）。画面の層のシナリオのうち @demo の印のものだけを動かし、Playwright で録画して
+// docs/assets/demo/<Bolt>/<名前>.webm に置く（置き場所はシナリオの @demo-<Bolt>/<名前> の印から）。終了報告のデモ項目と
+// 開発の索引のデモの一覧からリンクする。すべての Bolt の動画を、いまのコードで撮り直す。check に入れない（2026-10-05 に human:kakimomokuri が決定）
+tasks.register('demoVideo', Test) {
+	group = 'verification'
+	description = 'デモ項目の画面の層のシナリオ（@demo）を録画し、docs/assets/demo/<Bolt> に動画を置く'
+	testClassesDirs = sourceSets.test.output.classesDirs
+	classpath = sourceSets.test.runtimeClasspath
+	useJUnitPlatform {
+		includeTags 'demo'
+		excludeEngines 'archunit'
+	}
+	def videoDir = file('../../docs/assets/demo')
+	systemProperty 'cargotracker.ui.video-dir', videoDir.absolutePath
+	outputs.dir(videoDir).withPropertyName('demoVideos')
+	outputs.upToDateWhen { false }
+	doFirst {
+		videoDir.deleteDir()
+		videoDir.mkdirs()
+	}
+	doLast {
+		new File(videoDir, 'raw').deleteDir()
+	}
+}
+
+// 設計文書との整合テスト（用語集の LivingGlossaryConsistencyTest、受入条件とシナリオの照合の AcceptanceCriteriaCoverageTest。Bolt 28）。
+// ソースの Javadoc・設計文書・Feature を直接読むため、それらを入力として宣言する。
+// test から分け、文書の誤字の修正で Testcontainers を含む全テストが再実行されないようにする
+tasks.register('documentationTest', Test) {
+	group = 'verification'
+	description = '用語集（ドメインモデル設計）とコードの整合、受入条件とシナリオの照合を確かめる'
+	testClassesDirs = sourceSets.test.output.classesDirs
+	classpath = sourceSets.test.runtimeClasspath
+	useJUnitPlatform {
+		includeTags 'documentation'
+		excludeEngines 'archunit', 'junit-platform-suite'
+	}
+	inputs.dir('src/main/java').withPropertyName('mainSources').withPathSensitivity(PathSensitivity.RELATIVE)
+	inputs.file('../../docs/design/cargo-tracker/domain_model.md').withPropertyName('domainModel').withPathSensitivity(PathSensitivity.RELATIVE)
+	systemProperty 'cargotracker.domain-model', file('../../docs/design/cargo-tracker/domain_model.md').absolutePath
+	// 受入条件とシナリオの照合（Bolt 28）。表とタグを変えたら照合し直す
+	inputs.file('../../docs/design/cargo-tracker/test_strategy.md').withPropertyName('testStrategy').withPathSensitivity(PathSensitivity.RELATIVE)
+	inputs.dir('src/test/resources/features').withPropertyName('features').withPathSensitivity(PathSensitivity.RELATIVE)
+	systemProperty 'cargotracker.test-strategy', file('../../docs/design/cargo-tracker/test_strategy.md').absolutePath
+	systemProperty 'cargotracker.features', file('src/test/resources/features').absolutePath
+}
+
+tasks.named('check') {
+	dependsOn 'documentationTest'
+}
+
+// Playwright のブラウザ（Chromium）と OS の依存を入れる。CI の uiTest の前に動かす
+tasks.register('playwrightInstall', JavaExec) {
+	group = 'verification'
+	description = 'Playwright の Chromium と OS の依存を入れる'
+	classpath = sourceSets.test.runtimeClasspath
+	mainClass = 'com.microsoft.playwright.CLI'
+	args 'install', '--with-deps', 'chromium'
+}
+
+// Heroku のデモ環境（ADR-013）は dev プロファイルで動かすため、Dockerfile の demo のステージで H2 をクラスパスに足す。
+// bootJar（本番の成果物）には入れない（AT-06）。版は developmentOnly と同じく Spring Boot の BOM で決まる。devtools は写さない。
+// Sync にして、版を上げたときに古い jar を残さない（Bolt 15 レビュー R-19）
+tasks.register('copyDemoLibs', Sync) {
+	group = 'distribution'
+	description = 'デモのイメージ用に、developmentOnly の H2 を build/demo-lib に写す（ADR-013）'
+	from(configurations.developmentOnly.incoming.artifactView {
+		componentFilter { it instanceof ModuleComponentIdentifier && it.group == 'com.h2database' }
+	}.files)
+	into layout.buildDirectory.dir('demo-lib')
+}
+
+tasks.named('bootJar') {
+	// 成果物の名前を版に依らない名前にする。Dockerfile がこの名前を写すので、リリースで版を変えてもビルドが壊れない（Bolt 71）
+	archiveFileName = 'app.jar'
+}
+
+tasks.named('bootRun') {
+	// ローカル起動は H2 の dev プロファイルで動かす（開発体験を優先する。ADR-007）
+	systemProperty 'spring.profiles.active', 'dev'
+}
+
+// 書式（Bolt 1 レビュー R-31）。既存の書き方（4 スペース、120 桁）に近い palantir-java-format を使う
+spotless {
+	java {
+		target 'src/**/*.java'
+		// 版を固定する。Spotless の更新で書式だけの差分が混ざらないように（上げるときは書式だけのコミットに分ける）
+		palantirJavaFormat('2.98.0')
+		removeUnusedImports()
+		trimTrailingWhitespace()
+		endWithNewline()
+	}
+}
+
+// 静的解析（技術スタック）。規則は最小から始め、指摘は直す。抑止するときは理由を書く
+checkstyle {
+	toolVersion = '14.3.0'
+	configFile = file('config/checkstyle/checkstyle.xml')
+	maxWarnings = 0
+}
+
+spotbugs {
+	toolVersion = '4.10.4'
+	effort = com.github.spotbugs.snom.Effort.MAX
+	// Confidence の定数は本体を持つ enum のため、Groovy で直接書くとクラスとして解釈される。valueOf で指定する
+	reportLevel = com.github.spotbugs.snom.Confidence.valueOf('MEDIUM')
+	excludeFilter = file('config/spotbugs/exclude.xml')
+}
+
+tasks.withType(com.github.spotbugs.snom.SpotBugsTask).configureEach {
+	reports {
+		html.required = true
+	}
+}
+
+// テストコードの SpotBugs は、Mockito のスタブなど意図した書き方の指摘が多いため本体だけを検査する
+tasks.named('spotbugsTest') {
+	enabled = false
+}
+
+// AT-06: 本番の実行クラスパスに H2・Hibernate ORM・JPA を含めない（ADR-007、テスト戦略）。
+// bootJar が使う productionRuntimeClasspath を検査する（runtimeClasspath は bootRun 用に developmentOnly を含む）
+// 座標の完全一致ではなくグループの接頭辞で照合し、旧グループや別名をすり抜けさせない。Bean Validation の実装（org.hibernate.validator）は許す
+def forbiddenGroupPrefixes = ['com.h2database', 'org.hibernate', 'jakarta.persistence', 'javax.persistence']
+def allowedGroupPrefixes = ['org.hibernate.validator']
+tasks.register('verifyProductionClasspath') {
+	group = 'verification'
+	description = 'AT-06: 本番の実行クラスパスに H2・Hibernate ORM・JPA が含まれないことを確かめる'
+	def runtimeModules = configurations.productionRuntimeClasspath.incoming.resolutionResult.rootComponent.map { root ->
+		def modules = [] as Set
+		def visit
+		visit = { component ->
+			component.dependencies.each { dependency ->
+				if (dependency instanceof org.gradle.api.artifacts.result.ResolvedDependencyResult) {
+					def selected = dependency.selected
+					def id = selected.moduleVersion
+					if (id != null && modules.add("${id.group}:${id.name}".toString())) {
+						visit(selected)
+					}
+				}
+			}
+		}
+		visit(root)
+		modules
+	}
+	inputs.property('runtimeModules', runtimeModules)
+	inputs.property('forbiddenGroupPrefixes', forbiddenGroupPrefixes)
+	inputs.property('allowedGroupPrefixes', allowedGroupPrefixes)
+	doLast {
+		def forbidden = inputs.properties.forbiddenGroupPrefixes
+		def allowed = inputs.properties.allowedGroupPrefixes
+		def found = runtimeModules.get().findAll { module ->
+			def group = module.substring(0, module.indexOf(':'))
+			def matches = { prefix -> group == prefix || group.startsWith(prefix + '.') }
+			forbidden.any(matches) && !allowed.any(matches)
+		}
+		if (!found.isEmpty()) {
+			throw new GradleException("本番の実行クラスパスに含めてはいけない依存があります: ${found}")
+		}
+	}
+}
+
+tasks.named('check') {
+	dependsOn 'verifyProductionClasspath'
+}
+
+// カバレッジ（テスト戦略）。目標値と分け、最初の閾値をレイヤーごとに検証する。閾値は実績に合わせて段階的に目標へ上げる
+jacoco {
+	toolVersion = '0.8.15'
+}
+
+tasks.named('jacocoTestReport') {
+	dependsOn 'test'
+	reports {
+		xml.required = true
+		html.required = true
+	}
+}
+
+def coverageThresholds = [
+	// レイヤー: [対象のクラス, 行の閾値, 分岐の閾値（null は検証しない）]
+	domain        : ['com/example/cargotracker/**/domain/**', 0.85, 0.75],
+	application   : ['com/example/cargotracker/**/application/**', 0.80, 0.65],
+	interfaces    : ['com/example/cargotracker/**/interfaces/**', 0.65, null],
+	infrastructure: ['com/example/cargotracker/**/infrastructure/**', 0.70, null],
+	overall       : ['com/example/cargotracker/**', 0.75, 0.65],
+]
+
+def layerVerifications = coverageThresholds.collect { layer, threshold ->
+	def (pattern, lineMinimum, branchMinimum) = threshold
+	tasks.register("jacocoCoverageVerification${layer.capitalize()}", JacocoCoverageVerification) {
+		group = 'verification'
+		description = "カバレッジの閾値（${layer}）を検証する"
+		dependsOn 'test'
+		executionData.from(tasks.named('test').map { it.extensions.getByType(JacocoTaskExtension).destinationFile })
+		sourceDirectories.from(sourceSets.main.allJava.srcDirs)
+		def layerClasses = sourceSets.main.output.classesDirs.asFileTree.matching { include pattern }
+		classDirectories.from(layerClasses)
+		// JaCoCo の閾値は対象が 0 件（分母 0）のとき黙って通る。パッケージ名の変更などで何も拾わなくなったら失敗させる
+		doFirst {
+			if (layerClasses.isEmpty()) {
+				throw new GradleException("カバレッジの検証（${layer}）の対象クラスがありません: ${pattern}")
+			}
+		}
+		violationRules {
+			rule {
+				limit {
+					counter = 'LINE'
+					minimum = lineMinimum
+				}
+				if (branchMinimum != null) {
+					limit {
+						counter = 'BRANCH'
+						minimum = branchMinimum
+					}
+				}
+			}
+		}
+	}
+}
+
+tasks.named('check') {
+	dependsOn 'jacocoTestReport'
+	dependsOn layerVerifications
+}
+
+// SonarQube（ローカルの品質ゲート。operating-qt）。接続先とトークンは ops/scripts/sonar_local.js が渡す。
+// JaCoCo の XML は jacoco プラグインから自動で連携されるため、ここでは設定しない

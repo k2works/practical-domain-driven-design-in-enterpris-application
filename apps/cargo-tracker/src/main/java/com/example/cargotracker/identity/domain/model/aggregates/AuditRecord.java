@@ -1,0 +1,690 @@
+package com.example.cargotracker.identity.domain.model.aggregates;
+
+import com.example.cargotracker.identity.domain.model.valueobjects.AssignedCompanies;
+import com.example.cargotracker.identity.domain.model.valueobjects.AuditAction;
+import com.example.cargotracker.identity.domain.model.valueobjects.AuditResult;
+import com.example.cargotracker.identity.domain.model.valueobjects.AuditTarget;
+import com.example.cargotracker.identity.domain.model.valueobjects.AuthenticationRejection;
+import com.example.cargotracker.identity.domain.model.valueobjects.IdentityVerificationMethod;
+import com.example.cargotracker.identity.domain.model.valueobjects.SuspensionReason;
+import com.example.cargotracker.identity.domain.model.valueobjects.UserStatus;
+import com.example.cargotracker.shared.annotation.ddd.AggregateRoot;
+import com.example.cargotracker.shared.domain.CompanyId;
+import com.example.cargotracker.shared.domain.Role;
+import com.example.cargotracker.shared.domain.UserId;
+import com.example.cargotracker.shared.domain.UtcInstant;
+import java.util.EnumSet;
+import java.util.Objects;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+/**
+ * 監査記録。操作者・時刻・操作・結果・理由の追記専用の記録（IA-INV-07）。
+ * Bolt 14 はログインの成功・失敗とログアウトを、同じ request の中で同期に書く（IA-INV-08）。
+ * Bolt 34 で対象と変更前後（{@link AuditTarget}）を足した。承認・出典の項目は使う Bolt で足す。
+ */
+@AggregateRoot
+public final class AuditRecord {
+
+    /** 理由の引数の名前（null の確かめの文）。 */
+    private static final String REASON_ARGUMENT = "reason";
+
+    /** 操作者の引数の名前（null の確かめの文）。 */
+    private static final String USER_ARGUMENT = "user";
+
+    /** 対象の利用者の引数の名前（null の確かめの文）。 */
+    private static final String TARGET_USER_ARGUMENT = "targetUser";
+
+    /** 操作者の企業の引数の名前（null の確かめの文）。 */
+    private static final String COMPANY_ARGUMENT = "company";
+
+    /** 対象の種類: 利用者（`audit_record.target_type`）。 */
+    private static final String USER_TARGET = "USER";
+
+    /** 対象の種類の企業（Bolt 38b2。範囲外の企業への登録の試行）。 */
+    private static final String COMPANY_TARGET = "COMPANY";
+
+    /** 対象の種類の受信記録（Bolt 39b3b。外部原本の採否の監査）。 */
+    private static final String RECEIVED_RECORD_TARGET = "RECEIVED_RECORD";
+
+    /** 理由: 管理範囲外（`ADMIN_SCOPE_DENIED` の理由。Bolt 34b）。 */
+    static final String OUT_OF_SCOPE = "OUT_OF_SCOPE";
+
+    /** 管理者による TOTP の解除の理由（Bolt 38c。別経路の本人確認をした）。 */
+    static final String IDENTITY_VERIFIED = "IDENTITY_VERIFIED";
+
+    private final UUID id;
+    private final UtcInstant occurredAt;
+    private final UserId actorUserId;
+    private final CompanyId actorCompanyId;
+    private final AuditAction action;
+    private final AuditResult result;
+    private final String reason;
+    private final AuditTarget target;
+
+    @SuppressWarnings("java:S107") // 監査記録の項目（Bolt 34 で対象と変更前後を足した）をそろえて受ける
+    private AuditRecord(
+            UUID id,
+            UtcInstant occurredAt,
+            UserId actorUserId,
+            CompanyId actorCompanyId,
+            AuditAction action,
+            AuditResult result,
+            String reason,
+            AuditTarget target) {
+        this.id = Objects.requireNonNull(id, "id");
+        this.occurredAt = Objects.requireNonNull(occurredAt, "occurredAt");
+        this.actorUserId = actorUserId;
+        this.actorCompanyId = actorCompanyId;
+        this.action = Objects.requireNonNull(action, "action");
+        this.result = Objects.requireNonNull(result, "result");
+        this.reason = reason;
+        this.target = target;
+    }
+
+    private AuditRecord(
+            UUID id,
+            UtcInstant occurredAt,
+            UserId actorUserId,
+            CompanyId actorCompanyId,
+            AuditAction action,
+            AuditResult result,
+            String reason) {
+        this(id, occurredAt, actorUserId, actorCompanyId, action, result, reason, null);
+    }
+
+    /** password の段の成功を記録する（2 つの要素がそろったログインの成功とは分ける。Bolt 31、ADR-012 の見直しの 1）。 */
+    public static AuditRecord passwordVerified(UserId user, CompanyId company, UtcInstant at) {
+        return new AuditRecord(
+                UUID.randomUUID(), at, user, company, AuditAction.PASSWORD_VERIFIED, AuditResult.SUCCESS, null);
+    }
+
+    /** TOTP の登録を記録する（Bolt 31b、US-18 AC7。先取りの登録を後から追えるようにする。ADR-011）。 */
+    public static AuditRecord totpEnrolled(UserId user, CompanyId company, UtcInstant at) {
+        return new AuditRecord(
+                UUID.randomUUID(), at, user, company, AuditAction.TOTP_ENROLLED, AuditResult.SUCCESS, null);
+    }
+
+    /** 認証アプリの再登録を記録する（Bolt 33b、US-18 AC9。成功だけ）。 */
+    public static AuditRecord totpReEnrolled(UserId user, CompanyId company, UtcInstant at) {
+        return new AuditRecord(
+                UUID.randomUUID(), at, user, company, AuditAction.TOTP_RE_ENROLLED, AuditResult.SUCCESS, null);
+    }
+
+    /** 回復コードの使用を記録する（Bolt 31c、US-18 AC9 のログインの分。どのコードを使ったかは残さない）。 */
+    public static AuditRecord recoveryCodeUsed(UserId user, CompanyId company, UtcInstant at) {
+        return new AuditRecord(
+                UUID.randomUUID(), at, user, company, AuditAction.RECOVERY_CODE_USED, AuditResult.SUCCESS, null);
+    }
+
+    /**
+     * ロックを記録する（Bolt 32、US-18 AC3、OBS-09）。5 回目の失敗でロックしたときに、その失敗の記録と同じトランザクションで書く。
+     */
+    public static AuditRecord accountLocked(UserId user, CompanyId company, UtcInstant at) {
+        return new AuditRecord(
+                UUID.randomUUID(), at, user, company, AuditAction.ACCOUNT_LOCKED, AuditResult.SUCCESS, null);
+    }
+
+    /**
+     * session の取消しを記録する（Bolt 32c、US-18 AC6、IA-INV-04）。request ごとの確かめで利用停止・無効な企業・利用者なしを
+     * 見つけて session を捨てたとき。結果は失敗（その session を通さなかった）。操作者は session の主体で、利用者が消えていても
+     * 追跡できるように残す。
+     */
+    public static AuditRecord sessionRevoked(
+            UserId user, CompanyId company, AuthenticationRejection reason, UtcInstant at) {
+        Objects.requireNonNull(user, USER_ARGUMENT);
+        Objects.requireNonNull(company, COMPANY_ARGUMENT);
+        Objects.requireNonNull(reason, REASON_ARGUMENT);
+        return new AuditRecord(
+                UUID.randomUUID(), at, user, company, AuditAction.SESSION_REVOKED, AuditResult.FAILURE, reason.name());
+    }
+
+    /** ログインの成功を記録する。 */
+    public static AuditRecord loginSucceeded(UserId user, CompanyId company, UtcInstant at) {
+        return new AuditRecord(
+                UUID.randomUUID(), at, user, company, AuditAction.LOGIN_SUCCEEDED, AuditResult.SUCCESS, null);
+    }
+
+    /**
+     * ログインの失敗を記録する。利用者が分からない（存在しないメールアドレス）ときは、利用者と企業を null にする。
+     */
+    public static AuditRecord loginFailed(
+            UserId user, CompanyId company, AuthenticationRejection reason, UtcInstant at) {
+        Objects.requireNonNull(reason, REASON_ARGUMENT);
+        return new AuditRecord(
+                UUID.randomUUID(), at, user, company, AuditAction.LOGIN_FAILED, AuditResult.FAILURE, reason.name());
+    }
+
+    /**
+     * password の再設定の依頼を受け付けたことを記録する（Bolt 33、US-18 AC8、ADR-012）。有効な利用者の依頼で、結果は成功（理由なし）。
+     * 画面の応答は、受け付けなかった依頼（{@link #passwordResetRejected}）と同じ。
+     */
+    public static AuditRecord passwordResetRequested(UserId user, CompanyId company, UtcInstant at) {
+        Objects.requireNonNull(user, USER_ARGUMENT);
+        Objects.requireNonNull(company, COMPANY_ARGUMENT);
+        return new AuditRecord(
+                UUID.randomUUID(), at, user, company, AuditAction.PASSWORD_RESET_REQUESTED, AuditResult.SUCCESS, null);
+    }
+
+    /**
+     * password の再設定の依頼を受け付けなかったことを記録する（Bolt 33）。登録のないメールアドレスは利用者と企業を null にし、メールアドレスを
+     * 残さない。利用停止・企業の無効は理由を残す。結果は失敗（トークンを発行しない）。
+     */
+    public static AuditRecord passwordResetRejected(
+            UserId user, CompanyId company, AuthenticationRejection reason, UtcInstant at) {
+        Objects.requireNonNull(reason, REASON_ARGUMENT);
+        return new AuditRecord(
+                UUID.randomUUID(),
+                at,
+                user,
+                company,
+                AuditAction.PASSWORD_RESET_REQUESTED,
+                AuditResult.FAILURE,
+                reason.name());
+    }
+
+    /**
+     * password の再設定を終えたことを記録する（Bolt 33a、US-18 AC8）。A-06 で新しい password を設定し、トークンを使ったとき。結果は成功。
+     */
+    public static AuditRecord passwordResetCompleted(UserId user, CompanyId company, UtcInstant at) {
+        Objects.requireNonNull(user, USER_ARGUMENT);
+        Objects.requireNonNull(company, COMPANY_ARGUMENT);
+        return new AuditRecord(
+                UUID.randomUUID(), at, user, company, AuditAction.PASSWORD_RESET_COMPLETED, AuditResult.SUCCESS, null);
+    }
+
+    /**
+     * 招待のリンクで初回の password を設定したことを記録する（Bolt 38b4、US-16 AC1）。A-06 で初回の password を設定し、招待のトークンを
+     * 使ったとき。結果は成功。
+     */
+    public static AuditRecord initialPasswordSet(UserId user, CompanyId company, UtcInstant at) {
+        Objects.requireNonNull(user, USER_ARGUMENT);
+        Objects.requireNonNull(company, COMPANY_ARGUMENT);
+        return new AuditRecord(
+                UUID.randomUUID(), at, user, company, AuditAction.INITIAL_PASSWORD_SET, AuditResult.SUCCESS, null);
+    }
+
+    /**
+     * システム管理者が利用者の役割を変えたことを記録する（Bolt 34、US-16 AC1 の役割の分）。対象は利用者と更新した後の版、変更前後は
+     * 役割の名前を {@link Role} の宣言の順にカンマでつないだ文字列。結果は成功。
+     */
+    public static AuditRecord rolesChanged(
+            UserId actor,
+            CompanyId actorCompany,
+            UserId targetUser,
+            long targetVersion,
+            Set<Role> before,
+            Set<Role> after,
+            UtcInstant at) {
+        Objects.requireNonNull(actor, USER_ARGUMENT);
+        Objects.requireNonNull(actorCompany, COMPANY_ARGUMENT);
+        Objects.requireNonNull(targetUser, TARGET_USER_ARGUMENT);
+        return new AuditRecord(
+                UUID.randomUUID(),
+                at,
+                actor,
+                actorCompany,
+                AuditAction.ROLES_CHANGED,
+                AuditResult.SUCCESS,
+                null,
+                new AuditTarget(
+                        USER_TARGET,
+                        targetUser.value().toString(),
+                        Long.toString(targetVersion),
+                        roleNames(before),
+                        roleNames(after)));
+    }
+
+    /**
+     * システム管理者が業務担当者の担当範囲（担当企業）を変えたことを記録する（Bolt 38e、US-16 AC1）。対象は利用者と更新した後の版、
+     * 変更前後は管理範囲の外を含む担当企業の全体を企業 ID の昇順にカンマでつないだ文字列（担当企業がなければ空の文字列）。結果は成功。
+     */
+    public static AuditRecord assignmentsChanged(
+            UserId actor,
+            CompanyId actorCompany,
+            UserId targetUser,
+            long targetVersion,
+            AssignedCompanies before,
+            AssignedCompanies after,
+            UtcInstant at) {
+        Objects.requireNonNull(actor, USER_ARGUMENT);
+        Objects.requireNonNull(actorCompany, COMPANY_ARGUMENT);
+        Objects.requireNonNull(targetUser, TARGET_USER_ARGUMENT);
+        return new AuditRecord(
+                UUID.randomUUID(),
+                at,
+                actor,
+                actorCompany,
+                AuditAction.ASSIGNMENTS_CHANGED,
+                AuditResult.SUCCESS,
+                null,
+                new AuditTarget(
+                        USER_TARGET,
+                        targetUser.value().toString(),
+                        Long.toString(targetVersion),
+                        companyIds(before),
+                        companyIds(after)));
+    }
+
+    /**
+     * システム管理者が利用者を登録したことを記録する（Bolt 38b2、US-16 AC1）。対象は新しい利用者と版 0、変更前はなし（null）、変更後は
+     * 登録した役割の名前を {@link Role} の宣言の順にカンマでつないだ文字列。メールアドレスと表示名は書かない。結果は成功。
+     */
+    public static AuditRecord userRegistered(
+            UserId actor, CompanyId actorCompany, UserId targetUser, Set<Role> roles, UtcInstant at) {
+        Objects.requireNonNull(actor, USER_ARGUMENT);
+        Objects.requireNonNull(actorCompany, COMPANY_ARGUMENT);
+        Objects.requireNonNull(targetUser, TARGET_USER_ARGUMENT);
+        return new AuditRecord(
+                UUID.randomUUID(),
+                at,
+                actor,
+                actorCompany,
+                AuditAction.USER_REGISTERED,
+                AuditResult.SUCCESS,
+                null,
+                new AuditTarget(USER_TARGET, targetUser.value().toString(), "0", null, roleNames(roles)));
+    }
+
+    /**
+     * システム管理者が管理範囲外の企業に利用者を登録しようとしたことを記録する（Bolt 38b2、US-16 AC2、IA-INV-08・IA-INV-14）。結果は
+     * 失敗、理由は {@code OUT_OF_SCOPE}、対象は企業（版と変更前後はない）。
+     */
+    public static AuditRecord adminScopeDeniedCompany(
+            UserId actor, CompanyId actorCompany, CompanyId targetCompany, UtcInstant at) {
+        Objects.requireNonNull(actor, USER_ARGUMENT);
+        Objects.requireNonNull(actorCompany, COMPANY_ARGUMENT);
+        Objects.requireNonNull(targetCompany, "targetCompany");
+        return new AuditRecord(
+                UUID.randomUUID(),
+                at,
+                actor,
+                actorCompany,
+                AuditAction.ADMIN_SCOPE_DENIED,
+                AuditResult.FAILURE,
+                OUT_OF_SCOPE,
+                new AuditTarget(COMPANY_TARGET, targetCompany.value().toString(), null, null, null));
+    }
+
+    /**
+     * 業務担当者が担当企業の外の確定の操作を送ったことを記録する（担当範囲の外の試行。Bolt 38f、US-16 AC4、IA-INV-08、ADR-019）。結果は
+     * 失敗、理由は {@code OUT_OF_SCOPE}、対象は業務の対象の種類と ID（版と変更前後はない）。
+     *
+     * @param targetType 対象の種類（共有カーネルの {@code ScopedResourceKind} の名前）
+     * @param targetId 対象の ID（輸送要求番号など）
+     */
+    public static AuditRecord assignedScopeDenied(
+            UserId actor, CompanyId actorCompany, String targetType, String targetId, UtcInstant at) {
+        Objects.requireNonNull(actor, USER_ARGUMENT);
+        Objects.requireNonNull(actorCompany, COMPANY_ARGUMENT);
+        Objects.requireNonNull(targetType, "targetType");
+        Objects.requireNonNull(targetId, "targetId");
+        return new AuditRecord(
+                UUID.randomUUID(),
+                at,
+                actor,
+                actorCompany,
+                AuditAction.ASSIGNED_SCOPE_DENIED,
+                AuditResult.FAILURE,
+                OUT_OF_SCOPE,
+                new AuditTarget(targetType, targetId, null, null, null));
+    }
+
+    /**
+     * システム管理者が管理範囲外の利用者を開いた・変えようとしたことを記録する（Bolt 34b、US-16 AC2、IA-INV-08・IA-INV-14）。結果は
+     * 失敗、理由は {@code OUT_OF_SCOPE}、対象は利用者（版と変更前後はない）。
+     */
+    public static AuditRecord adminScopeDenied(UserId actor, CompanyId actorCompany, UserId targetUser, UtcInstant at) {
+        Objects.requireNonNull(actor, USER_ARGUMENT);
+        Objects.requireNonNull(actorCompany, COMPANY_ARGUMENT);
+        Objects.requireNonNull(targetUser, TARGET_USER_ARGUMENT);
+        return new AuditRecord(
+                UUID.randomUUID(),
+                at,
+                actor,
+                actorCompany,
+                AuditAction.ADMIN_SCOPE_DENIED,
+                AuditResult.FAILURE,
+                OUT_OF_SCOPE,
+                new AuditTarget(USER_TARGET, targetUser.value().toString(), null, null, null));
+    }
+
+    /**
+     * システム管理者が利用者の利用を停止したことを記録する（Bolt 34d、US-16 AC5）。理由は停止の理由の名前、対象は利用者と更新した後の版、
+     * 変更前後は利用状態の名前（変更前は判定に使った利用者の状態。変更後と同じなら記録しない）。結果は成功。
+     */
+    @SuppressWarnings("java:S107") // 利用状態の変更の項目をそろえて受ける
+    public static AuditRecord userSuspended(
+            UserId actor,
+            CompanyId actorCompany,
+            UserId targetUser,
+            long targetVersion,
+            UserStatus before,
+            SuspensionReason reason,
+            UtcInstant at) {
+        Objects.requireNonNull(reason, REASON_ARGUMENT);
+        return statusChanged(
+                actor,
+                actorCompany,
+                targetUser,
+                targetVersion,
+                AuditAction.USER_SUSPENDED,
+                reason.name(),
+                before,
+                UserStatus.SUSPENDED,
+                at);
+    }
+
+    /**
+     * システム管理者が停止中の利用者の利用を再開したことを記録する（Bolt 34d、US-16 AC5）。理由は持たない。対象は利用者と更新した後の版、
+     * 変更前後は利用状態の名前（変更前は判定に使った利用者の状態。変更後と同じなら記録しない）。結果は成功。
+     */
+    public static AuditRecord userReactivated(
+            UserId actor,
+            CompanyId actorCompany,
+            UserId targetUser,
+            long targetVersion,
+            UserStatus before,
+            UtcInstant at) {
+        return statusChanged(
+                actor,
+                actorCompany,
+                targetUser,
+                targetVersion,
+                AuditAction.USER_REACTIVATED,
+                null,
+                before,
+                UserStatus.ACTIVE,
+                at);
+    }
+
+    /**
+     * システム管理者がロックを解除したことを記録する（Bolt 38c、US-18 AC3）。理由は持たない。対象は利用者と今の版（解除では変わらない）、
+     * 変更前後はロックの状態（{@code LOCKED}・{@code UNLOCKED}）。結果は成功。
+     */
+    public static AuditRecord accountUnlocked(
+            UserId actor, CompanyId actorCompany, UserId targetUser, long targetVersion, UtcInstant at) {
+        return userTargetChanged(
+                actor,
+                actorCompany,
+                AuditAction.ACCOUNT_UNLOCKED,
+                null,
+                targetUser,
+                targetVersion,
+                "LOCKED",
+                "UNLOCKED",
+                at);
+    }
+
+    /**
+     * システム管理者が本人確認をしたうえで TOTP の登録を解除したことを記録する（Bolt 38c、US-18 AC9、SEC-10）。理由は
+     * {@code IDENTITY_VERIFIED}、対象は利用者と今の版、変更前は {@code ENROLLED}、変更後は本人確認の手段の名前と日時（UTC の ISO-8601）を
+     * {@code method=PHONE_CALLBACK;verifiedAt=2026-11-09T01:30:00Z} の形で持つ。結果は成功。
+     */
+    @SuppressWarnings("java:S107") // 解除の項目と本人確認の記録をそろえて受ける
+    public static AuditRecord totpResetByAdmin(
+            UserId actor,
+            CompanyId actorCompany,
+            UserId targetUser,
+            long targetVersion,
+            IdentityVerificationMethod method,
+            UtcInstant verifiedAt,
+            UtcInstant at) {
+        Objects.requireNonNull(method, "method");
+        Objects.requireNonNull(verifiedAt, "verifiedAt");
+        return userTargetChanged(
+                actor,
+                actorCompany,
+                AuditAction.TOTP_RESET_BY_ADMIN,
+                IDENTITY_VERIFIED,
+                targetUser,
+                targetVersion,
+                "ENROLLED",
+                "method=" + method.name() + ";verifiedAt=" + verifiedAt.instant(),
+                at);
+    }
+
+    /**
+     * 外部原本の取込での自動の採用とデータ責任者の採用の判断を記録する（DE-12・DE-13 の監査。Bolt 39b3b・39d3b、AUD-01、IA-INV-15）。操作者と時刻はイベントのもの、対象は
+     * 受信記録（版と変更前は持たない）、変更後は正規の要約。理由は持たない。結果は成功。必須の値がなければ {@link MissingEventValueException}
+     * （内容の欠けたイベント。listener が捨てる）。
+     */
+    public static AuditRecord externalRecordAdopted(
+            UserId actor, CompanyId actorCompany, String receivedRecordId, String summary, UtcInstant at) {
+        return receivedRecordAudit(
+                actor, actorCompany, AuditAction.EXTERNAL_RECORD_ADOPTED, null, receivedRecordId, summary, at);
+    }
+
+    /**
+     * 外部原本の隔離を記録する（DE-14 の監査。Bolt 39b3b、AUD-01、IA-INV-15）。理由は隔離の理由の区分（{@code CONTENT_MISMATCH} か形式の誤りの
+     * 名前）。対象・変更後・必須の値は {@link #externalRecordAdopted} と同じ。結果は成功。
+     */
+    public static AuditRecord externalRecordQuarantined(
+            UserId actor,
+            CompanyId actorCompany,
+            String receivedRecordId,
+            String reason,
+            String summary,
+            UtcInstant at) {
+        return receivedRecordAudit(
+                actor,
+                actorCompany,
+                AuditAction.EXTERNAL_RECORD_QUARANTINED,
+                requiredText(reason, REASON_ARGUMENT),
+                receivedRecordId,
+                summary,
+                at);
+    }
+
+    /**
+     * 外部原本の差異を記録する（DE-31 の監査。Bolt 39h、AUD-01、IA-INV-15）。理由は差異の理由の区分（{@code VERSION_REVERSED} か
+     * {@code TARGET_KEY_DIFFERS}）。対象・変更後・必須の値は {@link #externalRecordQuarantined} と同じ。結果は成功。
+     */
+    public static AuditRecord externalRecordDiscrepancyFound(
+            UserId actor,
+            CompanyId actorCompany,
+            String receivedRecordId,
+            String reason,
+            String summary,
+            UtcInstant at) {
+        return receivedRecordAudit(
+                actor,
+                actorCompany,
+                AuditAction.EXTERNAL_RECORD_DISCREPANCY_FOUND,
+                requiredText(reason, REASON_ARGUMENT),
+                receivedRecordId,
+                summary,
+                at);
+    }
+
+    /**
+     * データ責任者の受信記録の判断を記録する（DE-29 の監査。Bolt 39d2・39d3b、AUD-01、IA-INV-15）。理由は判断（{@code REJECTED} か {@code ADOPTED}）で、
+     * 判断の理由の文があれば変更後の要約の最後に置き（理由の列は 100 文字まで）、理由のない採用は {@code reason} の部品を省く。対象・変更後・必須の値は
+     * {@link #externalRecordAdopted} と同じ。結果は成功。
+     */
+    public static AuditRecord externalRecordDecided(
+            UserId actor,
+            CompanyId actorCompany,
+            String receivedRecordId,
+            String decision,
+            String summary,
+            UtcInstant at) {
+        return receivedRecordAudit(
+                actor,
+                actorCompany,
+                AuditAction.EXTERNAL_RECORD_DECIDED,
+                requiredText(decision, REASON_ARGUMENT),
+                receivedRecordId,
+                summary,
+                at);
+    }
+
+    /** 受信記録を対象にする監査記録（採用・隔離・判断の共通の形。Bolt 39d2 で公開のファクトリーと同じ名前を避けて名前を変えた）。 */
+    private static AuditRecord receivedRecordAudit(
+            UserId actor,
+            CompanyId actorCompany,
+            AuditAction action,
+            String reason,
+            String receivedRecordId,
+            String summary,
+            UtcInstant at) {
+        return new AuditRecord(
+                UUID.randomUUID(),
+                required(at, "at"),
+                required(actor, USER_ARGUMENT),
+                required(actorCompany, COMPANY_ARGUMENT),
+                action,
+                AuditResult.SUCCESS,
+                reason,
+                new AuditTarget(
+                        RECEIVED_RECORD_TARGET,
+                        requiredText(receivedRecordId, "receivedRecordId"),
+                        null,
+                        null,
+                        requiredText(summary, "summary")));
+    }
+
+    /** イベントから作る記録の必須の値（欠けは {@link MissingEventValueException}。listener が内容の欠けとして捨てる）。 */
+    private static <T> T required(T value, String name) {
+        if (value == null) {
+            throw new MissingEventValueException(name);
+        }
+        return value;
+    }
+
+    private static String requiredText(String value, String name) {
+        if (required(value, name).isBlank()) {
+            throw new MissingEventValueException(name);
+        }
+        return value;
+    }
+
+    /**
+     * イベントから作る監査記録の値が欠けている（内容の欠けたイベント。再配信しても直らない。Bolt 39b3b、IA-INV-15）。listener はこの型だけを
+     * 毒入りとして捨て、ほかの例外（プログラムの誤りや DB の失敗）は上げる。
+     */
+    public static final class MissingEventValueException extends IllegalArgumentException {
+
+        private static final long serialVersionUID = 1L;
+
+        /** @param name 欠けている値の名前（ログに出す。値そのものは出さない） */
+        public MissingEventValueException(String name) {
+            super("監査記録の値がない: " + name);
+        }
+    }
+
+    /** 利用者を対象にした成功の記録（利用状態の変更とログインの資格の記録が共有する）。変更前後は記録の文字列のまま持つ。 */
+    @SuppressWarnings("java:S107") // 利用者を対象にした記録が共有する項目をそろえて受ける
+    private static AuditRecord userTargetChanged(
+            UserId actor,
+            CompanyId actorCompany,
+            AuditAction action,
+            String reason,
+            UserId targetUser,
+            long targetVersion,
+            String before,
+            String after,
+            UtcInstant at) {
+        Objects.requireNonNull(actor, USER_ARGUMENT);
+        Objects.requireNonNull(actorCompany, COMPANY_ARGUMENT);
+        Objects.requireNonNull(targetUser, TARGET_USER_ARGUMENT);
+        return new AuditRecord(
+                UUID.randomUUID(),
+                at,
+                actor,
+                actorCompany,
+                action,
+                AuditResult.SUCCESS,
+                reason,
+                new AuditTarget(
+                        USER_TARGET, targetUser.value().toString(), Long.toString(targetVersion), before, after));
+    }
+
+    @SuppressWarnings("java:S107") // 利用状態の変更の 2 つの記録が共有する項目をそろえて受ける
+    private static AuditRecord statusChanged(
+            UserId actor,
+            CompanyId actorCompany,
+            UserId targetUser,
+            long targetVersion,
+            AuditAction action,
+            String reason,
+            UserStatus before,
+            UserStatus after,
+            UtcInstant at) {
+        if (Objects.requireNonNull(before, "before") == after) {
+            throw new IllegalArgumentException("利用状態が変わっていない変更は記録しない");
+        }
+        return userTargetChanged(
+                actor, actorCompany, action, reason, targetUser, targetVersion, before.name(), after.name(), at);
+    }
+
+    private static String companyIds(AssignedCompanies companies) {
+        return companies.companies().stream()
+                .map(company -> company.value().toString())
+                .sorted()
+                .collect(Collectors.joining(","));
+    }
+
+    private static String roleNames(Set<Role> roles) {
+        if (roles.isEmpty()) {
+            return "";
+        }
+        return EnumSet.copyOf(roles).stream().map(Role::name).collect(Collectors.joining(","));
+    }
+
+    /** ログアウトを記録する。 */
+    public static AuditRecord logout(UserId user, CompanyId company, UtcInstant at) {
+        return new AuditRecord(UUID.randomUUID(), at, user, company, AuditAction.LOGOUT, AuditResult.SUCCESS, null);
+    }
+
+    /** 保存されている状態から組み立てる（リポジトリが使う）。 */
+    @SuppressWarnings("java:S107") // 保存されている項目をそろえて受ける
+    public static AuditRecord reconstitute(
+            UUID id,
+            UtcInstant occurredAt,
+            UserId actorUserId,
+            CompanyId actorCompanyId,
+            AuditAction action,
+            AuditResult result,
+            String reason,
+            AuditTarget target) {
+        return new AuditRecord(id, occurredAt, actorUserId, actorCompanyId, action, result, reason, target);
+    }
+
+    public UUID id() {
+        return id;
+    }
+
+    public UtcInstant occurredAt() {
+        return occurredAt;
+    }
+
+    /** 操作者。存在しないメールアドレスでのログインの失敗では null。 */
+    public UserId actorUserId() {
+        return actorUserId;
+    }
+
+    /** 操作者の企業。存在しないメールアドレスでのログインの失敗では null。 */
+    public CompanyId actorCompanyId() {
+        return actorCompanyId;
+    }
+
+    public AuditAction action() {
+        return action;
+    }
+
+    public AuditResult result() {
+        return result;
+    }
+
+    /** 理由（ログインの失敗の理由など）。ないときは null。 */
+    public String reason() {
+        return reason;
+    }
+
+    /** 対象と変更前後（役割の変更など。Bolt 34）。対象のない記録（ログインなど）では null。 */
+    public AuditTarget target() {
+        return target;
+    }
+}

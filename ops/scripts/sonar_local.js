@@ -22,7 +22,7 @@ import { cleanDockerEnv } from './shared.js';
  *   ]
  * }
  *
- * scanType: "sonar-scanner" (npx sonarqube-scanner) | "sbt" (sbt sonarScan) | "maven" (mvn sonar:sonar) | "gradle" (gradle sonar)
+ * scanType: "sonar-scanner" (npx sonarqube-scanner) | "sbt" (sbt sonarScan) | "maven" (mvn sonar:sonar) | "gradle" (./gradlew があれば ./gradlew、なければ gradle で test jacocoTestReport sonar。品質ゲートの反映を待つ)
  */
 function loadProjects() {
   const configPath = path.join(process.cwd(), 'sonarqube.config.json');
@@ -95,7 +95,24 @@ function localExec(command, opts = {}) {
  */
 function dockerCompose(subcommand, opts = {}) {
   const dir = composeDir();
-  localExec(`docker compose -f "${dir}/docker-compose.yml" ${subcommand}`, opts);
+  const files = composeFiles(dir).map((file) => `-f "${file}"`).join(' ');
+  localExec(`docker compose ${files} ${subcommand}`, opts);
+}
+
+/**
+ * docker compose に渡す設定ファイルの一覧。Claude Code のクラウドの実行環境（CLAUDE_CODE_REMOTE=true）では、
+ * Elasticsearch の起動時チェックを外し Web の heap を上げる上書き（docker-compose.cloud.yml）を重ねる
+ * （Bolt 11 の T-34、Bolt 17 の T-52）。開発者の PC では docker-compose.yml だけを使う。
+ * @param {string} dir - docker-compose.yml のディレクトリ
+ * @returns {string[]}
+ */
+function composeFiles(dir) {
+  const files = [path.join(dir, 'docker-compose.yml')];
+  const cloudOverride = path.join(dir, 'docker-compose.cloud.yml');
+  if (process.env.CLAUDE_CODE_REMOTE === 'true' && fs.existsSync(cloudOverride)) {
+    files.push(cloudOverride);
+  }
+  return files;
 }
 
 /**
@@ -222,6 +239,8 @@ function waitForSonarHealthy() {
  * 環境変数 SONAR_PROJECT_KEY で指定可能
  * @returns {string} プロジェクトキー
  */
+// 注意: 判定するのは SONAR_PROJECT_KEY か、sonarqube.config.json の先頭のプロジェクトだけ。
+// 複数のプロジェクトを登録したら、gate と issues をプロジェクトごとに回すよう直す
 function sonarProjectKey() {
   const projects = loadProjects();
   return process.env.SONAR_PROJECT_KEY || (projects.length > 0 ? projects[0].projectKey : 'my-project');
@@ -244,6 +263,70 @@ function sonarApi(apiPath, params = {}) {
     { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'], shell: true, env: cleanDockerEnv() },
   );
   return JSON.parse(result);
+}
+
+/**
+ * SonarQube API を POST で呼び出す（品質プロファイルの変更など）
+ * @param {string} apiPath - API パス（例: /api/qualityprofiles/create）
+ * @param {Object} [params] - フォームのパラメータ
+ * @returns {Object|null} レスポンス JSON（本文がなければ null）
+ */
+function sonarApiPost(apiPath, params = {}) {
+  const token = requireSonarToken();
+  const auth = Buffer.from(`${token}:`).toString('base64');
+  const body = new URLSearchParams(params).toString();
+  const result = execSync(
+    `curl -sf -X POST -H "Authorization: Basic ${auth}" -d "${body}" "${sonarHostUrl()}${apiPath}"`,
+    { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'], shell: true, env: cleanDockerEnv() },
+  );
+  return result.trim() ? JSON.parse(result) : null;
+}
+
+/**
+ * 品質プロファイルの定義を取得（sonarqube.config.json の qualityProfiles。なければ空）
+ *
+ * フォーマット:
+ * {
+ *   "qualityProfiles": [
+ *     { "language": "java", "name": "my way", "parent": "Sonar way",
+ *       "deactivateRules": [{ "rule": "java:S8445", "reason": "整形の規則と正反対のため" }] }
+ *   ]
+ * }
+ *
+ * 親を継承した子のプロファイルを作り、外す規則だけを無効にして、projects のすべてに割り当てる。
+ */
+function loadQualityProfiles() {
+  const configPath = path.join(process.cwd(), 'sonarqube.config.json');
+  if (!fs.existsSync(configPath)) {
+    return [];
+  }
+  return JSON.parse(fs.readFileSync(configPath, 'utf8')).qualityProfiles || [];
+}
+
+/**
+ * 品質プロファイルを定義どおりにそろえる（何度流しても同じ結果になる）
+ * @param {Object} profile - 品質プロファイルの定義
+ */
+function applyQualityProfile(profile) {
+  const { language, name, parent } = profile;
+  const found = sonarApi('/api/qualityprofiles/search', { language, qualityProfile: name }).profiles || [];
+  let key = found.length > 0 ? found[0].key : null;
+  if (!key) {
+    key = sonarApiPost('/api/qualityprofiles/create', { language, name }).profile.key;
+    console.log(`  作成: ${language} / ${name}`);
+  }
+  if (parent) {
+    sonarApiPost('/api/qualityprofiles/change_parent', { language, qualityProfile: name, parentQualityProfile: parent });
+    console.log(`  親: ${parent}`);
+  }
+  for (const { rule, reason } of profile.deactivateRules || []) {
+    sonarApiPost('/api/qualityprofiles/deactivate_rule', { key, rule });
+    console.log(`  無効にした規則: ${rule}${reason ? `（${reason}）` : ''}`);
+  }
+  for (const project of loadProjects()) {
+    sonarApiPost('/api/qualityprofiles/add_project', { language, qualityProfile: name, project: project.projectKey });
+    console.log(`  割り当て: ${project.projectKey}`);
+  }
 }
 
 /**
@@ -286,16 +369,26 @@ function runScan(project, token, hostUrl) {
       );
       break;
 
-    case 'gradle':
+    case 'gradle': {
+      // 前提: scanType が gradle のプロジェクトは jacoco プラグインを使い、test と jacocoTestReport でレポートを作る。
+      // Gradle Wrapper があれば使う（ローカルに Gradle を入れていない環境でも動かすため）。
+      // check ではなく test jacocoTestReport を先に動かす（静的解析や閾値で check が失敗しても、解析の結果を見られるように）。
+      // sonar.qualitygate.wait で、サーバーの解析の反映を待ってから品質ゲートを判定し、不合格ならスキャンを失敗させる。
+      // トークンはコマンドラインに載せず、環境変数 SONAR_TOKEN で渡す（プロセスの一覧から見えないように）
+      // Windows の cmd.exe は ./gradlew を実行できないため gradlew.bat を使う（design_docs.js と同じ）。
+      // 今のディレクトリを探さない設定（NoDefaultCurrentDirectoryInExePath）でも動くよう、.\ を付ける
+      const wrapper = process.platform === 'win32' ? '.\\gradlew.bat' : './gradlew';
+      const gradle = fs.existsSync(path.join(cwd, 'gradlew')) ? wrapper : 'gradle';
       execSync(
-        `gradle sonar ` +
+        `${gradle} test jacocoTestReport sonar ` +
         `-Dsonar.projectKey=${project.projectKey} ` +
         `-Dsonar.projectName="${project.label}" ` +
         `-Dsonar.host.url=${hostUrl} ` +
-        `-Dsonar.token=${token}`,
-        { stdio: 'inherit', cwd, shell: true, env: cleanDockerEnv() },
+        `-Dsonar.qualitygate.wait=true`,
+        { stdio: 'inherit', cwd, shell: true, env: { ...cleanDockerEnv(), SONAR_TOKEN: token } },
       );
       break;
+    }
 
     case 'sonar-scanner':
     default:
@@ -536,7 +629,10 @@ export default function (gulp) {
 
       console.log('');
       if (status !== 'OK') {
-        console.log('  Quality Gate を通過していません。sonar-local:issues で詳細を確認してください。');
+        // OK 以外（ERROR・NONE など）は失敗で終える。表示だけで成功にすると、
+        // sonar-local:check が品質ゲートの不合格を見逃す
+        done(new Error(`Quality Gate を通過していません（${status}）。sonar-local:issues で詳細を確認してください。`));
+        return;
       }
       done();
     } catch (error) {
@@ -663,8 +759,53 @@ export default function (gulp) {
     }
   });
 
+  // セキュリティのホットスポットを一覧する（読むだけ。見直しの状態は変えない）。
+  // Quality Gate の new_security_hotspots_reviewed で落ちたとき、どれを見直すかを確かめる
+  gulp.task('sonar-local:hotspots', (done) => {
+    try {
+      const projectKey = sonarProjectKey();
+      const hostUrl = sonarHostUrl();
+      console.log('=== セキュリティのホットスポット ===');
+      for (const inNewCodePeriod of ['true', 'false']) {
+        const data = sonarApi('/api/hotspots/search', { projectKey, inNewCodePeriod, ps: '500' });
+        const hotspots = data.hotspots || [];
+        console.log('');
+        console.log(`── ${inNewCodePeriod === 'true' ? '新しいコード' : 'すべて'} (${hotspots.length} 件) ──`);
+        for (const h of hotspots) {
+          const component = (h.component || '').replace(`${projectKey}:`, '');
+          const line = h.line ? `:${h.line}` : '';
+          console.log(`  [${h.vulnerabilityProbability || '-'}/${h.status}${h.resolution ? '/' + h.resolution : ''}] ${component}${line}`);
+          console.log(`    ${h.securityCategory || '-'} ${h.ruleKey || ''}: ${h.message}`);
+        }
+      }
+      console.log('');
+      console.log(`詳細: ${hostUrl}/security_hotspots?id=${projectKey}`);
+      done();
+    } catch (error) {
+      done(error);
+    }
+  });
+
   // スキャン → Quality Gate 確認の一連フロー
-  gulp.task('sonar-local:check', gulp.series('sonar-local:scan', 'sonar-local:gate'));
+  // 品質プロファイルを sonarqube.config.json の qualityProfiles のとおりにそろえる（定義がなければ何もしない）
+  gulp.task('sonar-local:profile', (done) => {
+    try {
+      const profiles = loadQualityProfiles();
+      if (profiles.length === 0) {
+        console.log('品質プロファイルの定義（qualityProfiles）がないので、既定のプロファイルのまま使います。');
+        done();
+        return;
+      }
+      console.log('=== 品質プロファイルをそろえる ===');
+      profiles.forEach(applyQualityProfile);
+      done();
+    } catch (error) {
+      done(error);
+    }
+  });
+
+  // 品質プロファイルをそろえてからスキャンし、Quality Gate を判定する
+  gulp.task('sonar-local:check', gulp.series('sonar-local:profile', 'sonar-local:scan', 'sonar-local:gate'));
 
   // ──────────────────────────────────────────────
   // ヘルプ
@@ -695,6 +836,7 @@ SonarQube ローカル タスク一覧
 分析:
   sonar-local:gate           Quality Gate ステータス確認
   sonar-local:issues         メトリクス・イシュー・重複コード詳細表示
+  sonar-local:hotspots       セキュリティのホットスポットを一覧（読むだけ）
   sonar-local:check          スキャン → Quality Gate 確認の一連フロー
 
 管理:

@@ -1,0 +1,388 @@
+package com.example.cargotracker.routing.domain.model.rules;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+import com.example.cargotracker.routing.domain.model.aggregates.ConnectionRule;
+import com.example.cargotracker.routing.domain.model.valueobjects.ConstraintEvaluation;
+import com.example.cargotracker.routing.domain.model.valueobjects.ExclusionReason;
+import com.example.cargotracker.routing.domain.model.valueobjects.ExclusionReasonCode;
+import com.example.cargotracker.routing.domain.model.valueobjects.Leg;
+import com.example.cargotracker.routing.domain.model.valueobjects.RouteCargoCategory;
+import com.example.cargotracker.routing.domain.model.valueobjects.RouteSpecification;
+import com.example.cargotracker.shared.domain.Location;
+import com.example.cargotracker.shared.domain.UtcInstant;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.List;
+import java.util.UUID;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+
+/**
+ * 制約適合判定の境界（BR-11、R-INV-01・02、US-06 AC2・AC3）。境界は直前・同時刻・直後の 3 点で書く（T-38）。
+ * このテストの表は、Golden dataset（TST-02、W6）が届くまでの BR-11 の仕様である（ステップ 2 の承認ゲート）。
+ * 接続時間規則は、接続ごとに次の区間の出発予定の時刻に有効なものを選ぶ（D-90、Bolt 37）。
+ */
+class ConstraintEvaluatorTest {
+
+    static final Location TOKYO = new Location("JPTYO");
+    static final Location SINGAPORE = new Location("SGSIN");
+    static final Location ROTTERDAM = new Location("NLRTM");
+    static final Location HONG_KONG = new Location("HKHKG");
+    static final Location COLOMBO = new Location("LKCMB");
+    /** 希望到着期限 2026-11-02 09:00 JST。 */
+    static final Instant DEADLINE = Instant.parse("2026-11-02T00:00:00Z");
+
+    static final RouteSpecification SPEC =
+            new RouteSpecification(TOKYO, ROTTERDAM, new UtcInstant(DEADLINE), RouteCargoCategory.GENERAL);
+
+    private final ConstraintEvaluator evaluator = new ConstraintEvaluator();
+
+    @Nested
+    class 期限 {
+
+        @ParameterizedTest(name = "到着予定が期限の {0} 分後なら適合={1}")
+        @CsvSource({"-1, true", "0, true", "1, false"})
+        void 到着予定が期限以前なら適合し後なら期限超過で除外する(long minutesAfterDeadline, boolean conforming) {
+            Instant arrival = DEADLINE.plus(Duration.ofMinutes(minutesAfterDeadline));
+            Leg direct = leg("V-101", TOKYO, ROTTERDAM, "2026-10-08T00:00:00Z", arrival, "V-101@1");
+
+            ConstraintEvaluation evaluation = evaluator.evaluate(SPEC, List.of(direct), List.of());
+
+            assertThat(evaluation.conforming()).isEqualTo(conforming);
+            assertThat(evaluation.estimatedArrivalAt()).isEqualTo(new UtcInstant(arrival));
+            if (!conforming) {
+                assertThat(evaluation.reasons())
+                        .containsExactly(ExclusionReason.deadlineExceeded(
+                                new UtcInstant(arrival), new UtcInstant(DEADLINE), "V-101@1"));
+            }
+        }
+
+        @Test
+        void 期限超過の参照情報版は最終区間の航海の採用情報版() {
+            List<Leg> legs = List.of(
+                    leg("V-201", TOKYO, SINGAPORE, "2026-10-10T00:00:00Z", "2026-10-20T00:00:00Z", "V-201@3"),
+                    leg("V-301", SINGAPORE, ROTTERDAM, "2026-10-21T00:00:00Z", "2026-11-03T12:00:00Z", "V-301@5"));
+
+            ConstraintEvaluation evaluation =
+                    evaluator.evaluate(SPEC, legs, List.of(rule(SINGAPORE, Duration.ofHours(8))));
+
+            assertThat(evaluation.reasons())
+                    .containsExactly(ExclusionReason.deadlineExceeded(
+                            at("2026-11-03T12:00:00Z"), new UtcInstant(DEADLINE), "V-301@5"));
+        }
+
+        @Test
+        void 直行の候補は接続余裕を持たない() {
+            Leg direct = leg("V-101", TOKYO, ROTTERDAM, "2026-10-08T00:00:00Z", "2026-10-30T09:00:00Z", "V-101@1");
+
+            assertThat(evaluator.evaluate(SPEC, List.of(direct), List.of()).connectionSlack())
+                    .isEmpty();
+        }
+    }
+
+    @Nested
+    class 接続時間 {
+
+        static final Instant ARRIVAL_AT_SINGAPORE = Instant.parse("2026-10-20T00:00:00Z");
+
+        @ParameterizedTest(name = "必要最小接続時間 {0} 時間に対し接続時間が {1} 分多ければ適合={2}")
+        @CsvSource({
+            "8, -1, false",
+            "8, 0, true",
+            "8, 1, true",
+            // T-41: 既定（仮の値の 8 時間）と違う規則の値でも、同値が適合・1 分前が除外になる
+            "12, -1, false",
+            "12, 0, true",
+            "12, 1, true"
+        })
+        void 接続時間が必要最小接続時間以上なら適合し未満なら接続不足で除外する(long requiredHours, long minutesOverRequired, boolean conforming) {
+            Duration required = Duration.ofHours(requiredHours);
+            Instant nextDeparture = ARRIVAL_AT_SINGAPORE.plus(required).plus(Duration.ofMinutes(minutesOverRequired));
+            List<Leg> legs = transshipment(nextDeparture);
+
+            ConstraintEvaluation evaluation = evaluator.evaluate(SPEC, legs, List.of(rule(SINGAPORE, required)));
+
+            assertThat(evaluation.conforming()).isEqualTo(conforming);
+            assertThat(evaluation.connectionSlack()).contains(Duration.ofMinutes(minutesOverRequired));
+            if (!conforming) {
+                assertThat(evaluation.reasons())
+                        .containsExactly(ExclusionReason.connectionTooShort(
+                                new UtcInstant(nextDeparture), SINGAPORE, required, "V-301@5"));
+            }
+        }
+
+        @Test
+        void 積替えの港に規則がなければ接続できないで除外する() {
+            Instant nextDeparture = ARRIVAL_AT_SINGAPORE.plus(Duration.ofDays(1));
+
+            ConstraintEvaluation evaluation = evaluator.evaluate(
+                    SPEC, transshipment(nextDeparture), List.of(rule(HONG_KONG, Duration.ofHours(8))));
+
+            assertThat(evaluation.conforming()).isFalse();
+            assertThat(evaluation.reasons())
+                    .containsExactly(
+                            ExclusionReason.notConnectable(new UtcInstant(nextDeparture), SINGAPORE, "V-301@5"));
+            assertThat(evaluation.connectionSlack()).isEmpty();
+        }
+
+        @Test
+        void 次の区間の出発予定の時刻に有効でない規則は使わない() {
+            Instant nextDeparture = ARRIVAL_AT_SINGAPORE.plus(Duration.ofDays(1));
+            ConnectionRule expired = new ConnectionRule(
+                    UUID.randomUUID(),
+                    SINGAPORE,
+                    Duration.ofHours(8),
+                    at("2026-01-01T00:00:00Z"),
+                    new UtcInstant(nextDeparture));
+            ConnectionRule notYet = new ConnectionRule(
+                    UUID.randomUUID(),
+                    SINGAPORE,
+                    Duration.ofHours(8),
+                    new UtcInstant(nextDeparture.plusSeconds(1)),
+                    null);
+
+            ConstraintEvaluation evaluation =
+                    evaluator.evaluate(SPEC, transshipment(nextDeparture), List.of(expired, notYet));
+
+            assertThat(evaluation.reasons())
+                    .extracting(ExclusionReason::code)
+                    .containsExactly(ExclusionReasonCode.NOT_CONNECTABLE);
+        }
+
+        @Test
+        void 同じ港に有効な規則が複数あれば厳しい方を使う() {
+            Duration loose = Duration.ofHours(6);
+            Duration strict = Duration.ofHours(10);
+            Instant nextDeparture = ARRIVAL_AT_SINGAPORE.plus(Duration.ofHours(8));
+
+            ConstraintEvaluation evaluation = evaluator.evaluate(
+                    SPEC, transshipment(nextDeparture), List.of(rule(SINGAPORE, loose), rule(SINGAPORE, strict)));
+
+            assertThat(evaluation.reasons())
+                    .containsExactly(ExclusionReason.connectionTooShort(
+                            new UtcInstant(nextDeparture), SINGAPORE, strict, "V-301@5"));
+            assertThat(evaluation.connectionSlack()).contains(Duration.ofHours(-2));
+        }
+
+        @Test
+        void 判定時刻に有効でも次の区間の出発予定の時刻に終わっていて後継がなければ接続できない() {
+            Instant nextDeparture = ARRIVAL_AT_SINGAPORE.plus(Duration.ofDays(1));
+            ConnectionRule endsBeforeConnection = new ConnectionRule(
+                    UUID.randomUUID(),
+                    SINGAPORE,
+                    Duration.ofHours(8),
+                    at("2026-01-01T00:00:00Z"),
+                    at("2026-10-15T00:00:00Z"));
+
+            ConstraintEvaluation evaluation =
+                    evaluator.evaluate(SPEC, transshipment(nextDeparture), List.of(endsBeforeConnection));
+
+            assertThat(evaluation.reasons())
+                    .containsExactly(
+                            ExclusionReason.notConnectable(new UtcInstant(nextDeparture), SINGAPORE, "V-301@5"));
+        }
+
+        @Test
+        void 判定時刻の後に適用が始まる規則も次の区間の出発予定の時刻に有効なら使う() {
+            Instant nextDeparture = ARRIVAL_AT_SINGAPORE.plus(Duration.ofHours(10));
+            ConnectionRule old = new ConnectionRule(
+                    UUID.randomUUID(),
+                    SINGAPORE,
+                    Duration.ofHours(8),
+                    at("2026-01-01T00:00:00Z"),
+                    at("2026-10-15T00:00:00Z"));
+            ConnectionRule successor = new ConnectionRule(
+                    UUID.randomUUID(), SINGAPORE, Duration.ofHours(12), at("2026-10-15T00:00:00Z"), null);
+
+            ConstraintEvaluation evaluation =
+                    evaluator.evaluate(SPEC, transshipment(nextDeparture), List.of(old, successor));
+
+            assertThat(evaluation.reasons())
+                    .containsExactly(ExclusionReason.connectionTooShort(
+                            new UtcInstant(nextDeparture), SINGAPORE, Duration.ofHours(12), "V-301@5"));
+        }
+
+        private static List<Leg> transshipment(Instant nextDeparture) {
+            return List.of(
+                    leg("V-201", TOKYO, SINGAPORE, "2026-10-10T00:00:00Z", ARRIVAL_AT_SINGAPORE, "V-201@3"),
+                    leg(
+                            "V-301",
+                            SINGAPORE,
+                            ROTTERDAM,
+                            nextDeparture,
+                            Instant.parse("2026-10-30T00:00:00Z"),
+                            "V-301@5"));
+        }
+    }
+
+    /**
+     * 接続時間規則を選ぶ時刻の境界（D-90、Bolt 37）。シンガポールに 10-20T00:00Z に着き、24 時間後の 10-21T00:00Z に出発する。
+     * 規則の境界の時刻は前の区間の到着予定より後に置く（到着の時刻で選ぶと結果が変わる）。
+     */
+    @Nested
+    class 規則を選ぶ時刻 {
+
+        static final Instant ARRIVAL = Instant.parse("2026-10-20T00:00:00Z");
+        static final Instant NEXT_DEPARTURE = Instant.parse("2026-10-21T00:00:00Z");
+
+        @ParameterizedTest(name = "適用開始が次の区間の出発予定の {0} 分後なら規則を使う={1}")
+        @CsvSource({"-1, true", "0, true", "1, false"})
+        void 適用開始が次の区間の出発予定の時刻以前の規則を使う(long minutesAfterDeparture, boolean applies) {
+            ConnectionRule rule = new ConnectionRule(
+                    UUID.randomUUID(),
+                    SINGAPORE,
+                    Duration.ofHours(8),
+                    new UtcInstant(NEXT_DEPARTURE.plus(Duration.ofMinutes(minutesAfterDeparture))),
+                    null);
+
+            assertApplies(rule, applies);
+        }
+
+        @ParameterizedTest(name = "適用終了が次の区間の出発予定の {0} 分後なら規則を使う={1}")
+        @CsvSource({"-1, false", "0, false", "1, true"})
+        void 適用終了が次の区間の出発予定の時刻より後の規則を使う(long minutesAfterDeparture, boolean applies) {
+            ConnectionRule rule = new ConnectionRule(
+                    UUID.randomUUID(),
+                    SINGAPORE,
+                    Duration.ofHours(8),
+                    at("2026-01-01T00:00:00Z"),
+                    new UtcInstant(NEXT_DEPARTURE.plus(Duration.ofMinutes(minutesAfterDeparture))));
+
+            assertApplies(rule, applies);
+        }
+
+        private void assertApplies(ConnectionRule rule, boolean applies) {
+            List<Leg> legs = List.of(
+                    leg("V-201", TOKYO, SINGAPORE, "2026-10-10T00:00:00Z", ARRIVAL, "V-201@3"),
+                    leg(
+                            "V-301",
+                            SINGAPORE,
+                            ROTTERDAM,
+                            NEXT_DEPARTURE,
+                            Instant.parse("2026-10-30T00:00:00Z"),
+                            "V-301@5"));
+
+            ConstraintEvaluation evaluation = evaluator.evaluate(SPEC, legs, List.of(rule));
+
+            assertThat(evaluation.conforming()).isEqualTo(applies);
+            if (!applies) {
+                assertThat(evaluation.reasons())
+                        .containsExactly(
+                                ExclusionReason.notConnectable(new UtcInstant(NEXT_DEPARTURE), SINGAPORE, "V-301@5"));
+            }
+        }
+    }
+
+    /**
+     * 区間 3 の候補（Bolt 37）。シンガポールと香港で積み替え、港ごとの規則（シンガポール 8 時間、香港 6 時間）で接続ごとに判定する。
+     */
+    @Nested
+    class 区間3つ {
+
+        static final List<ConnectionRule> RULES =
+                List.of(rule(SINGAPORE, Duration.ofHours(8)), rule(HONG_KONG, Duration.ofHours(6)));
+
+        @Test
+        void 後の接続だけが足りなければその接続の理由だけを持ち接続余裕は小さい方() {
+            // シンガポール 10 時間（余裕 2 時間）、香港 4 時間（余裕 -2 時間）
+            List<Leg> legs = threeLegs("2026-10-20T10:00:00Z", "2026-10-23T00:00:00Z", "2026-10-23T04:00:00Z");
+
+            ConstraintEvaluation evaluation = evaluator.evaluate(SPEC, legs, RULES);
+
+            assertThat(evaluation.reasons())
+                    .containsExactly(ExclusionReason.connectionTooShort(
+                            at("2026-10-23T04:00:00Z"), HONG_KONG, Duration.ofHours(6), "V-402@2"));
+            assertThat(evaluation.connectionSlack()).contains(Duration.ofHours(-2));
+        }
+
+        @Test
+        void 前の接続だけが足りなければその接続の理由だけを持つ() {
+            // シンガポール 6 時間（余裕 -2 時間）、香港 7 時間（香港の規則で余裕 1 時間。シンガポールの規則なら足りない）
+            List<Leg> legs = threeLegs("2026-10-20T06:00:00Z", "2026-10-23T00:00:00Z", "2026-10-23T07:00:00Z");
+
+            ConstraintEvaluation evaluation = evaluator.evaluate(SPEC, legs, RULES);
+
+            assertThat(evaluation.reasons())
+                    .containsExactly(ExclusionReason.connectionTooShort(
+                            at("2026-10-20T06:00:00Z"), SINGAPORE, Duration.ofHours(8), "V-301@5"));
+            assertThat(evaluation.connectionSlack()).contains(Duration.ofHours(-2));
+        }
+
+        @Test
+        void 両方の接続が足りれば適合し接続余裕は小さい方() {
+            // シンガポール 13 時間（余裕 5 時間）、香港 7 時間（余裕 1 時間）
+            List<Leg> legs = threeLegs("2026-10-20T13:00:00Z", "2026-10-23T00:00:00Z", "2026-10-23T07:00:00Z");
+
+            ConstraintEvaluation evaluation = evaluator.evaluate(SPEC, legs, RULES);
+
+            assertThat(evaluation.conforming()).isTrue();
+            assertThat(evaluation.connectionSlack()).contains(Duration.ofHours(1));
+        }
+
+        @Test
+        void 後の接続の港に規則がなければその接続だけ接続できない() {
+            List<Leg> legs = threeLegs("2026-10-20T10:00:00Z", "2026-10-23T00:00:00Z", "2026-10-24T00:00:00Z");
+
+            ConstraintEvaluation evaluation =
+                    evaluator.evaluate(SPEC, legs, List.of(rule(SINGAPORE, Duration.ofHours(8))));
+
+            assertThat(evaluation.reasons())
+                    .containsExactly(ExclusionReason.notConnectable(at("2026-10-24T00:00:00Z"), HONG_KONG, "V-402@2"));
+            assertThat(evaluation.connectionSlack()).contains(Duration.ofHours(2));
+        }
+
+        /** 東京 → シンガポール（10-20T00:00Z 着）→ 香港 → ロッテルダム（10-30T00:00Z 着）。 */
+        private static List<Leg> threeLegs(
+                String singaporeDeparture, String hongKongArrival, String hongKongDeparture) {
+            return List.of(
+                    leg("V-201", TOKYO, SINGAPORE, "2026-10-10T00:00:00Z", "2026-10-20T00:00:00Z", "V-201@3"),
+                    leg("V-301", SINGAPORE, HONG_KONG, singaporeDeparture, hongKongArrival, "V-301@5"),
+                    leg("V-402", HONG_KONG, ROTTERDAM, hongKongDeparture, "2026-10-30T00:00:00Z", "V-402@2"));
+        }
+    }
+
+    @Test
+    void 期限超過と接続不足の両方があれば理由を2つ持つ() {
+        List<Leg> legs = List.of(
+                leg("V-201", TOKYO, SINGAPORE, "2026-10-10T00:00:00Z", "2026-10-20T00:00:00Z", "V-201@3"),
+                leg("V-301", SINGAPORE, ROTTERDAM, "2026-10-20T04:00:00Z", "2026-11-03T00:00:00Z", "V-301@5"));
+
+        ConstraintEvaluation evaluation = evaluator.evaluate(SPEC, legs, List.of(rule(SINGAPORE, Duration.ofHours(8))));
+
+        assertThat(evaluation.reasons())
+                .extracting(ExclusionReason::code)
+                .containsExactly(ExclusionReasonCode.CONNECTION_TOO_SHORT, ExclusionReasonCode.DEADLINE_EXCEEDED);
+    }
+
+    static ConnectionRule rule(Location port, Duration minimum) {
+        return new ConnectionRule(UUID.randomUUID(), port, minimum, at("2026-01-01T00:00:00Z"), null);
+    }
+
+    static Leg leg(String voyage, Location load, Location discharge, String departure, String arrival, String version) {
+        return leg(voyage, load, discharge, Instant.parse(departure), Instant.parse(arrival), version);
+    }
+
+    static Leg leg(
+            String voyage, Location load, Location discharge, String departure, Instant arrival, String version) {
+        return leg(voyage, load, discharge, Instant.parse(departure), arrival, version);
+    }
+
+    static Leg leg(
+            String voyage, Location load, Location discharge, Instant departure, Instant arrival, String version) {
+        return new Leg(
+                voyage,
+                load,
+                discharge,
+                new UtcInstant(departure),
+                new UtcInstant(arrival),
+                version,
+                at("2026-10-01T06:10:00Z"));
+    }
+
+    static UtcInstant at(String text) {
+        return new UtcInstant(Instant.parse(text));
+    }
+}

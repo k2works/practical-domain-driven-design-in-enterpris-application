@@ -1,0 +1,35 @@
+{
+ "expectations": [
+  {
+   "text": "DDLを正として生成する方針を示す",
+   "passed": true,
+   "evidence": "pattern: 生成"
+  },
+  {
+   "text": "生成物を再生成可能なキャッシュ／直接編集しないと位置づける",
+   "passed": true,
+   "evidence": "pattern: キャッシュ|直接編集|編集させ|手で(直さ|編集)"
+  },
+  {
+   "text": "いきなりツール導入せず、まず小さく手作業で価値を確かめる",
+   "passed": false,
+   "evidence": "pattern: 手作業で(試|生成|作)|まず.{0,15}(小さ|1つ|一部)|価値を確か"
+  },
+  {
+   "text": "図を1ストーリー・5〜9要素などに絞る",
+   "passed": true,
+   "evidence": "pattern: 5〜9|1 ?図 ?1 ?ストーリー|one diagram"
+  },
+  {
+   "text": "意図・根拠だけを人が書き、ADR等へ分ける",
+   "passed": true,
+   "evidence": "pattern: ADR"
+  }
+ ],
+ "summary": {
+  "passed": 4,
+  "failed": 1,
+  "total": 5,
+  "pass_rate": 0.8
+ }
+}

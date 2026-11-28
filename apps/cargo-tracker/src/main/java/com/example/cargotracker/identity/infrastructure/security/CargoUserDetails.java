@@ -1,0 +1,98 @@
+package com.example.cargotracker.identity.infrastructure.security;
+
+import com.example.cargotracker.shared.domain.AuthenticatedActor;
+import com.example.cargotracker.shared.domain.CompanyId;
+import com.example.cargotracker.shared.domain.Role;
+import com.example.cargotracker.shared.domain.UserId;
+import java.io.Serial;
+import java.util.Collection;
+import java.util.EnumSet;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
+import org.springframework.security.core.CredentialsContainer;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+
+/**
+ * Spring Security の認証の主体。session（Spring Session JDBC）に直列化して置くため、値は直列化できる型だけで持ち、
+ * ほかのコンテキストには {@link #actor()} で共有カーネルの型を渡す（ADR-012）。
+ * 利用停止・無効な企業は {@link #isEnabled()} が false になり、password の照合の後に拒否する（IA-INV-09）。
+ * session に置いた主体はログインの時点の値だが、Bolt 32c から認証済みの request ごとに {@link SessionRevalidationFilter} が今の
+ * 役割・表示名・企業名で作り直して差し替える（{@code enabled} は true、password のハッシュは持たない。このフィルターは session に
+ * 保存しないが、A-02・A-07 が通ったときは認証のフィルターが作り直した主体で保存する）。
+ * 担当企業（Bolt 38f）は {@code transient} で持ち、直列化しない。確かめのフィルターが request ごとに今の値で作り直すので、絞る request
+ * ではいつも今の担当企業が載る。session から戻した直後と、確かめをしない公開の URL（{@code /error} を含む）では null で、
+ * {@link #actor()} は空として渡す（失敗に倒す）。直列化の形を変えないので、古い session もそのまま戻る（ADR-012 の改訂）。
+ */
+public final class CargoUserDetails implements UserDetails, CredentialsContainer {
+
+    @Serial
+    private static final long serialVersionUID = 1L;
+
+    private final UUID userId;
+    private final UUID companyId;
+    private final String email;
+    private final String displayName;
+    private final String companyName;
+    private final EnumSet<Role> roles;
+    private final boolean enabled;
+    private String passwordHash;
+    private final transient Set<UUID> assignedCompanyIds;
+
+    /**
+     * @param actor 認証された利用者（値を直列化できる型に写して持つ）
+     * @param email ログインのメールアドレス
+     * @param enabled 認証できるか（利用停止・無効な企業なら false。IA-INV-09）
+     * @param passwordHash password のハッシュ（認証の後に消す）
+     */
+    CargoUserDetails(AuthenticatedActor actor, String email, boolean enabled, String passwordHash) {
+        this.userId = actor.userId().value();
+        this.companyId = actor.companyId().value();
+        this.email = email;
+        this.displayName = actor.displayName();
+        this.companyName = actor.companyName();
+        this.roles = EnumSet.copyOf(actor.roles());
+        this.enabled = enabled;
+        this.passwordHash = passwordHash;
+        this.assignedCompanyIds =
+                actor.assignedCompanies().stream().map(CompanyId::value).collect(Collectors.toUnmodifiableSet());
+    }
+
+    /** ほかのコンテキストに渡す、認証された利用者。 */
+    public AuthenticatedActor actor() {
+        Set<CompanyId> assigned = assignedCompanyIds == null
+                ? Set.of()
+                : assignedCompanyIds.stream().map(CompanyId::new).collect(Collectors.toUnmodifiableSet());
+        return new AuthenticatedActor(
+                new UserId(userId), new CompanyId(companyId), roles, displayName, companyName, assigned);
+    }
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return roles.stream()
+                .map(role -> (GrantedAuthority) new SimpleGrantedAuthority("ROLE_" + role.name()))
+                .toList();
+    }
+
+    @Override
+    public String getPassword() {
+        return passwordHash;
+    }
+
+    @Override
+    public String getUsername() {
+        return email;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    @Override
+    public void eraseCredentials() {
+        passwordHash = null;
+    }
+}

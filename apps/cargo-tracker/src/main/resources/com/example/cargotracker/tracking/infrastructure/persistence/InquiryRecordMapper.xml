@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.cargotracker.tracking.infrastructure.persistence.InquiryRecordMapper">
+
+    <!-- H2 と PostgreSQL の共通の構文で書く（ADR-007）。Bolt 40-15 -->
+    <insert id="insert">
+        INSERT INTO tracking.inquiry_record
+            (id, channel, shipper_company_id, tracking_number, inquirer_kind, inquirer_user_id, received_at,
+             escalated, case_number, recorded_by, created_at)
+        VALUES
+            (#{id}, #{channel}, #{shipperCompanyId}, #{trackingNumber}, #{inquirerKind}, #{inquirerUserId},
+             #{receivedAt}, #{escalated}, #{caseNumber}, #{recordedBy}, #{createdAt})
+    </insert>
+
+    <!-- Bolt 42-1。顧客 Web の自己照会（WEB_SELF）で、同じ利用者・同じ追跡番号の、指定の時刻より後の件数 -->
+    <select id="countWebSelfAfter" resultType="int">
+        SELECT COUNT(*)
+        FROM tracking.inquiry_record
+        WHERE channel = 'WEB_SELF'
+          AND inquirer_user_id = #{userId}
+          AND tracking_number = #{trackingNumber}
+          AND received_at &gt; #{after}
+    </select>
+
+    <resultMap id="inquiryRecordRow" type="com.example.cargotracker.tracking.infrastructure.persistence.InquiryRecordRow">
+        <constructor>
+            <idArg column="id" name="id" javaType="java.util.UUID"/>
+            <arg column="channel" name="channel" javaType="String"/>
+            <arg column="shipper_company_id" name="shipperCompanyId" javaType="java.util.UUID"/>
+            <arg column="tracking_number" name="trackingNumber" javaType="String"/>
+            <arg column="inquirer_kind" name="inquirerKind" javaType="String"/>
+            <arg column="inquirer_user_id" name="inquirerUserId" javaType="java.util.UUID"/>
+            <arg column="received_at" name="receivedAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="escalated" name="escalated" javaType="_boolean"/>
+            <arg column="case_number" name="caseNumber" javaType="String"/>
+            <arg column="recorded_by" name="recordedBy" javaType="java.util.UUID"/>
+            <arg column="created_at" name="createdAt" javaType="java.time.OffsetDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <!-- W9 の Bolt 44（IR-INV-01 の 24 時間の規則）。まだ有人対応へ移っていない顧客 Web の自己照会を、荷主企業・追跡番号・受付時刻の範囲（両端を含む）で探す。索引 ix_inquiry_record_tracking_received -->
+    <select id="selectUnescalatedWebSelf" resultMap="inquiryRecordRow">
+        SELECT id, channel, shipper_company_id, tracking_number, inquirer_kind, inquirer_user_id, received_at,
+               escalated, case_number, recorded_by, created_at
+        FROM tracking.inquiry_record
+        WHERE channel = 'WEB_SELF'
+          AND escalated = FALSE
+          AND shipper_company_id = #{shipperCompanyId}
+          AND tracking_number = #{trackingNumber}
+          AND received_at &gt;= #{from}
+          AND received_at &lt;= #{to}
+        ORDER BY received_at
+    </select>
+
+    <!-- W9 の Bolt 44-1（KPI-02）。受付時刻が [from, to) の照会の総数と、顧客 Web で完結した数（自己照会で有人対応へ移っていない） -->
+    <select id="countBetween" resultType="long">
+        SELECT COUNT(*)
+        FROM tracking.inquiry_record
+        WHERE received_at &gt;= #{from} AND received_at &lt; #{to}
+    </select>
+
+    <select id="countSelfServedBetween" resultType="long">
+        SELECT COUNT(*)
+        FROM tracking.inquiry_record
+        WHERE channel = 'WEB_SELF' AND escalated = FALSE
+          AND received_at &gt;= #{from} AND received_at &lt; #{to}
+    </select>
+
+    <!-- 有人対応へ移った印と受付番号を付ける（まだ移っていない記録だけ。W9 の Bolt 44） -->
+    <update id="escalate">
+        UPDATE tracking.inquiry_record
+           SET escalated = TRUE, case_number = #{caseNumber}
+         WHERE id = #{id} AND escalated = FALSE
+    </update>
+</mapper>

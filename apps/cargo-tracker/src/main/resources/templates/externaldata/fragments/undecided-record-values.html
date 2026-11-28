@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<!--/* 判断の画面の値の領域の中身（S-17 の受け取った値とこの外部版の採用値。Bolt 39d3、主要実績と読めない値は Bolt 39d3c、【業務の判断】(i)・(j)・(k)）。
+       取得した日時（この外部版の採用値は情報版・公開した日時・取得した日時）の後に、航海は航海番号と寄港の番号付きの並びを、主要実績は
+       追跡番号・実績の種類・場所・発生時刻を示す。値を読めない側は取得した日時の後に読めない文だけを示す。値には取込ファイルから来た値が
+       入るので th:text で示す */-->
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<body>
+<th:block th:fragment="values(v)">
+    <p th:if="${v.meta}" th:text="${v.meta}">取得した日時 2026-11-16 09:30 Asia/Tokyo（UTC+09:00）（UTC 2026-11-16 00:30）</p>
+    <p th:if="${v.emptyText}" th:text="${v.emptyText}">この外部版の採用値はありません。</p>
+    <th:block th:unless="${v.emptyText}">
+        <dl class="text-break">
+            <th:block th:each="definition : ${v.definitions}">
+                <dt th:text="${definition.term}">航海番号</dt>
+                <dd th:text="${definition.description}">DEMO-201</dd>
+            </th:block>
+        </dl>
+        <ol class="text-break" th:unless="${#lists.isEmpty(v.portCalls)}">
+            <li th:each="portCall : ${v.portCalls}" th:text="${portCall}">港 JPTYO・到着 —・出発 2026-11-19 08:00 Asia/Tokyo（UTC+09:00）（UTC 2026-11-18 23:00）</li>
+        </ol>
+    </th:block>
+</th:block>
+</body>
+</html>

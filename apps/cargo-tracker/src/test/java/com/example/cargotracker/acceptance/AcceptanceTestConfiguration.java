@@ -1,0 +1,724 @@
+package com.example.cargotracker.acceptance;
+
+import com.example.cargotracker.booking.acceptance.InMemoryBookingRepository;
+import com.example.cargotracker.booking.acceptance.InMemoryBookingSagaRepository;
+import com.example.cargotracker.booking.application.internal.commandservices.BookingCommandService;
+import com.example.cargotracker.booking.application.internal.commandservices.BookingSagaCommandService;
+import com.example.cargotracker.booking.application.internal.commandservices.TransportPhaseCommandService;
+import com.example.cargotracker.booking.application.internal.eventhandlers.BookingConfirmedEventHandler;
+import com.example.cargotracker.booking.application.internal.outboundservices.acl.QuotationBookability;
+import com.example.cargotracker.booking.application.internal.outboundservices.acl.QuotationBookingNotifications;
+import com.example.cargotracker.booking.domain.events.BookingConfirmed;
+import com.example.cargotracker.booking.infrastructure.persistence.RandomTrackingNumberIssuer;
+import com.example.cargotracker.booking.interfaces.api.internal.TrackingStartNotificationAdapter;
+import com.example.cargotracker.booking.interfaces.api.internal.TransportPhaseNotificationAdapter;
+import com.example.cargotracker.externaldata.application.internal.commandservices.IngestionService;
+import com.example.cargotracker.externaldata.application.internal.queryservices.PilotReadinessQueryService;
+import com.example.cargotracker.externaldata.domain.events.MilestoneAdoptedValueAccepted;
+import com.example.cargotracker.externaldata.domain.model.aggregates.InMemoryAdoptedValueRepository;
+import com.example.cargotracker.externaldata.domain.model.aggregates.InMemoryDataSourceRepository;
+import com.example.cargotracker.externaldata.domain.model.aggregates.InMemoryExternalPayloadStorage;
+import com.example.cargotracker.externaldata.domain.model.aggregates.InMemoryExternalRecordRepository;
+import com.example.cargotracker.externaldata.domain.model.aggregates.InMemoryIngestionRepository;
+import com.example.cargotracker.externaldata.domain.model.aggregates.InMemoryReceivedRecordRepository;
+import com.example.cargotracker.identity.acceptance.InMemoryKpiObservationRepository;
+import com.example.cargotracker.identity.application.internal.eventhandlers.KpiObservationEventHandler;
+import com.example.cargotracker.identity.application.internal.queryservices.KpiObservationQueryService;
+import com.example.cargotracker.quotation.acceptance.InMemoryQuotationRepository;
+import com.example.cargotracker.quotation.acceptance.InMemoryRequiredDocumentStorage;
+import com.example.cargotracker.quotation.acceptance.InMemoryTransportRequestNumberIssuer;
+import com.example.cargotracker.quotation.acceptance.InMemoryTransportRequestRepository;
+import com.example.cargotracker.quotation.acceptance.RequiredDocumentAttachments;
+import com.example.cargotracker.quotation.application.internal.commandservices.BookingNotificationService;
+import com.example.cargotracker.quotation.application.internal.commandservices.QuotationCommandService;
+import com.example.cargotracker.quotation.application.internal.commandservices.QuotationResponseService;
+import com.example.cargotracker.quotation.application.internal.commandservices.RouteAssignmentService;
+import com.example.cargotracker.quotation.application.internal.commandservices.RouteRedesignService;
+import com.example.cargotracker.quotation.application.internal.commandservices.TransportRequestCommandService;
+import com.example.cargotracker.quotation.application.internal.commandservices.TransportRequestReviewService;
+import com.example.cargotracker.quotation.application.internal.eventhandlers.QuotationApprovedByShipperEventHandler;
+import com.example.cargotracker.quotation.application.internal.eventhandlers.QuotationDeclinedEventHandler;
+import com.example.cargotracker.quotation.application.internal.eventhandlers.QuotationPresentedEventHandler;
+import com.example.cargotracker.quotation.application.internal.eventhandlers.QuotationPresentedForReapprovalEventHandler;
+import com.example.cargotracker.quotation.application.internal.eventhandlers.QuotationRouteAssignedEventHandler;
+import com.example.cargotracker.quotation.application.internal.eventhandlers.RouteDesignRequestedEventHandler;
+import com.example.cargotracker.quotation.application.internal.queryservices.BookableQuotationQueryService;
+import com.example.cargotracker.quotation.application.internal.queryservices.QuotationQueryService;
+import com.example.cargotracker.quotation.application.internal.queryservices.RouteConditionQueryService;
+import com.example.cargotracker.quotation.application.internal.queryservices.StaffQuotationQueryService;
+import com.example.cargotracker.quotation.application.internal.queryservices.StaffTransportRequestQueryService;
+import com.example.cargotracker.quotation.application.internal.queryservices.StaffTransportRequestScope;
+import com.example.cargotracker.quotation.application.internal.queryservices.TransportRequestQueryService;
+import com.example.cargotracker.quotation.domain.events.QuotationApprovedByShipper;
+import com.example.cargotracker.quotation.domain.events.QuotationDeclined;
+import com.example.cargotracker.quotation.domain.events.QuotationPresented;
+import com.example.cargotracker.quotation.domain.events.QuotationPresentedForReapproval;
+import com.example.cargotracker.quotation.domain.events.QuotationRouteAssigned;
+import com.example.cargotracker.quotation.domain.events.RouteDesignRequested;
+import com.example.cargotracker.quotation.domain.events.TransportRequestSubmitted;
+import com.example.cargotracker.quotation.domain.model.rules.MvpAcceptancePolicy;
+import com.example.cargotracker.quotation.domain.model.rules.RequiredDocumentPolicy;
+import com.example.cargotracker.quotation.interfaces.api.BookableQuotationQuery;
+import com.example.cargotracker.quotation.interfaces.api.RouteRedesignNotification;
+import com.example.cargotracker.quotation.interfaces.api.internal.BookableQuotationQueryAdapter;
+import com.example.cargotracker.quotation.interfaces.api.internal.BookingNotificationAdapter;
+import com.example.cargotracker.quotation.interfaces.api.internal.RouteAssignmentAdapter;
+import com.example.cargotracker.quotation.interfaces.api.internal.RouteConditionQueryAdapter;
+import com.example.cargotracker.quotation.interfaces.api.internal.RouteRedesignNotificationAdapter;
+import com.example.cargotracker.routing.acceptance.InMemoryConnectionRuleRepository;
+import com.example.cargotracker.routing.acceptance.InMemoryRoutingCaseNumberIssuer;
+import com.example.cargotracker.routing.acceptance.InMemoryRoutingCaseRepository;
+import com.example.cargotracker.routing.acceptance.InMemoryVoyageRepository;
+import com.example.cargotracker.routing.application.internal.commandservices.RoutingCaseCommandService;
+import com.example.cargotracker.routing.application.internal.eventhandlers.QuotationRouteAssignmentEventHandler;
+import com.example.cargotracker.routing.application.internal.eventhandlers.QuotationRouteRedesignEventHandler;
+import com.example.cargotracker.routing.application.internal.eventhandlers.RoutingCaseOpeningEventHandler;
+import com.example.cargotracker.routing.application.internal.outboundservices.acl.QuotationRouteAssignments;
+import com.example.cargotracker.routing.application.internal.outboundservices.acl.QuotationRouteConditions;
+import com.example.cargotracker.routing.application.internal.outboundservices.acl.QuotationRouteRedesigns;
+import com.example.cargotracker.routing.application.internal.queryservices.RoutingCaseQueryService;
+import com.example.cargotracker.routing.application.internal.queryservices.RoutingCaseScope;
+import com.example.cargotracker.routing.domain.events.RouteConfirmed;
+import com.example.cargotracker.routing.domain.events.RouteRedesignRequired;
+import com.example.cargotracker.routing.domain.model.rules.InfoFreshnessPolicy;
+import com.example.cargotracker.routing.interfaces.api.internal.RouteVersionLegQueryAdapter;
+import com.example.cargotracker.shared.acceptance.DeferredEventDelivery;
+import com.example.cargotracker.shared.acceptance.MutableClock;
+import com.example.cargotracker.shared.acceptance.ScenarioContext;
+import com.example.cargotracker.shared.domain.CompanyId;
+import com.example.cargotracker.tracking.acceptance.ExternalMilestoneArrival;
+import com.example.cargotracker.tracking.acceptance.InMemoryRejectedMilestoneRepository;
+import com.example.cargotracker.tracking.acceptance.InMemoryTrackingRecordRepository;
+import com.example.cargotracker.tracking.application.internal.commandservices.TrackingRecordCommandService;
+import com.example.cargotracker.tracking.application.internal.eventhandlers.BookingTrackingStartNotificationEventHandler;
+import com.example.cargotracker.tracking.application.internal.eventhandlers.BookingTransportPhaseNotificationEventHandler;
+import com.example.cargotracker.tracking.application.internal.eventhandlers.ExternalMilestoneEventHandler;
+import com.example.cargotracker.tracking.application.internal.eventhandlers.TrackingStartEventHandler;
+import com.example.cargotracker.tracking.application.internal.outboundservices.acl.BookingTrackingStarts;
+import com.example.cargotracker.tracking.application.internal.outboundservices.acl.BookingTransportPhases;
+import com.example.cargotracker.tracking.application.internal.outboundservices.acl.RoutingScheduledLegs;
+import com.example.cargotracker.tracking.application.internal.queryservices.CustomerTrackingQueryService;
+import com.example.cargotracker.tracking.application.internal.queryservices.TrackingRecordQueryService;
+import com.example.cargotracker.tracking.application.internal.queryservices.TrackingRecordScope;
+import com.example.cargotracker.tracking.domain.events.DeliveryConfirmed;
+import com.example.cargotracker.tracking.domain.events.PickupMilestoneAdopted;
+import com.example.cargotracker.tracking.domain.events.TrackingStarted;
+import com.example.cargotracker.tracking.domain.model.rules.FreshnessPolicy;
+import io.cucumber.spring.CucumberContextConfiguration;
+import java.time.Duration;
+import java.util.Random;
+import java.util.UUID;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
+import org.springframework.test.context.ContextConfiguration;
+
+/**
+ * 業務ルール層の受入シナリオの組み立て（テスト戦略）。
+ * DB とアプリケーション全体を起動せず、入力ポートの実装・メモリ上のリポジトリ・固定の Clock・
+ * テスト用の同期のイベント配信で組み立てる。イベント配信そのものは統合テストで確かめる（ADR-003）。
+ * 時刻・リポジトリ・ためたイベントはシナリオごとに初期化する（{@link ScenarioReset}）。
+ */
+@CucumberContextConfiguration
+@ContextConfiguration(classes = AcceptanceTestConfiguration.Components.class)
+public class AcceptanceTestConfiguration {
+
+    /** {@code @SpringBootTest} の部品探索に拾われないよう {@code @TestConfiguration} にする。 */
+    @TestConfiguration(proxyBeanMethods = false)
+    @Import({ScenarioContext.class, RequiredDocumentAttachments.class})
+    static class Components {
+
+        @Bean
+        MutableClock clock() {
+            return new MutableClock();
+        }
+
+        @Bean
+        InMemoryTransportRequestRepository transportRequestRepository() {
+            return new InMemoryTransportRequestRepository();
+        }
+
+        @Bean
+        InMemoryTransportRequestNumberIssuer transportRequestNumberIssuer() {
+            return new InMemoryTransportRequestNumberIssuer();
+        }
+
+        @Bean
+        InMemoryRequiredDocumentStorage requiredDocumentStorage() {
+            return new InMemoryRequiredDocumentStorage();
+        }
+
+        @Bean
+        InMemoryKpiObservationRepository kpiObservationRepository() {
+            return new InMemoryKpiObservationRepository();
+        }
+
+        @Bean
+        KpiObservationEventHandler kpiObservationEventHandler(InMemoryKpiObservationRepository repository) {
+            return new KpiObservationEventHandler(repository);
+        }
+
+        @Bean
+        InMemoryQuotationRepository quotationRepository() {
+            return new InMemoryQuotationRepository();
+        }
+
+        @Bean
+        QuotationPresentedEventHandler quotationPresentedEventHandler(InMemoryTransportRequestRepository repository) {
+            return new QuotationPresentedEventHandler(repository);
+        }
+
+        @Bean
+        QuotationDeclinedEventHandler quotationDeclinedEventHandler(InMemoryTransportRequestRepository repository) {
+            return new QuotationDeclinedEventHandler(repository);
+        }
+
+        @Bean
+        RouteDesignRequestedEventHandler routeDesignRequestedEventHandler(
+                InMemoryTransportRequestRepository repository) {
+            return new RouteDesignRequestedEventHandler(repository);
+        }
+
+        @Bean
+        InMemoryRoutingCaseRepository routingCaseRepository() {
+            return new InMemoryRoutingCaseRepository();
+        }
+
+        @Bean
+        InMemoryRoutingCaseNumberIssuer routingCaseNumberIssuer() {
+            return new InMemoryRoutingCaseNumberIssuer();
+        }
+
+        @Bean
+        InMemoryVoyageRepository voyageRepository() {
+            return new InMemoryVoyageRepository();
+        }
+
+        @Bean
+        InMemoryConnectionRuleRepository connectionRuleRepository() {
+            return new InMemoryConnectionRuleRepository();
+        }
+
+        /** 経路設計は見積りの公開 API（経路条件の照会）越しに経路条件を得る（Bolt 17）。 */
+        @Bean
+        RoutingCaseOpeningEventHandler routingCaseOpeningEventHandler(
+                InMemoryRoutingCaseRepository repository,
+                InMemoryRoutingCaseNumberIssuer numberIssuer,
+                InMemoryTransportRequestRepository transportRequestRepository) {
+            return new RoutingCaseOpeningEventHandler(
+                    repository,
+                    numberIssuer,
+                    new QuotationRouteConditions(new RouteConditionQueryAdapter(
+                            new RouteConditionQueryService(transportRequestRepository))));
+        }
+
+        @Bean
+        RoutingCaseCommandService routingCaseCommandService(
+                InMemoryTransportRequestRepository transportRequestRepository,
+                InMemoryRoutingCaseRepository repository,
+                InMemoryVoyageRepository voyageRepository,
+                InMemoryConnectionRuleRepository connectionRuleRepository,
+                DeferredEventDelivery eventDelivery,
+                MutableClock clock) {
+            return new RoutingCaseCommandService(
+                    new QuotationRouteConditions(
+                            new RouteConditionQueryAdapter(new RouteConditionQueryService(transportRequestRepository))),
+                    repository,
+                    voyageRepository,
+                    connectionRuleRepository,
+                    eventDelivery,
+                    clock,
+                    // 受入シナリオの境界（24 時間）は D-89 の仮の値で書いた仕様なので、設定の既定値を読まずに固定する
+                    new InfoFreshnessPolicy(Duration.ofHours(24)),
+                    new RoutingCaseScope(repository));
+        }
+
+        @Bean
+        RoutingCaseQueryService routingCaseQueryService(
+                InMemoryRoutingCaseRepository repository, InMemoryVoyageRepository voyageRepository) {
+            return new RoutingCaseQueryService(
+                    repository,
+                    new RoutingCaseScope(repository),
+                    voyageRepository,
+                    new InfoFreshnessPolicy(Duration.ofHours(24)));
+        }
+
+        @Bean
+        InMemoryBookingRepository bookingRepository() {
+            return new InMemoryBookingRepository();
+        }
+
+        @Bean
+        InMemoryBookingSagaRepository bookingSagaRepository() {
+            return new InMemoryBookingSagaRepository();
+        }
+
+        /** 予約は見積りの公開 API（予約確定に使える見積りの照会）越しに予約条件を得る（ADR-016。Bolt 23）。 */
+        @Bean
+        BookingCommandService bookingCommandService(
+                InMemoryBookingRepository bookingRepository,
+                InMemoryBookingSagaRepository bookingSagaRepository,
+                InMemoryQuotationRepository quotationRepository,
+                InMemoryTransportRequestRepository transportRequestRepository,
+                DeferredEventDelivery eventDelivery,
+                MutableClock clock) {
+            return new BookingCommandService(
+                    bookingRepository,
+                    bookingSagaRepository,
+                    new RandomTrackingNumberIssuer(bookingRepository, new Random(23)),
+                    new QuotationBookability(new BookableQuotationQueryAdapter(new BookableQuotationQueryService(
+                            quotationRepository,
+                            transportRequestRepository,
+                            new StaffTransportRequestScope(transportRequestRepository)))),
+                    new QuotationBookingNotifications(
+                            new BookingNotificationAdapter(new BookingNotificationService(transportRequestRepository))),
+                    eventDelivery,
+                    clock);
+        }
+
+        /** 予約は DE-07 を受けて見積りの公開 API（予約確定済みの通知）を呼ぶ（ADR-014。Bolt 23）。 */
+        @Bean
+        BookingConfirmedEventHandler bookingConfirmedEventHandler(InMemoryTransportRequestRepository repository) {
+            return new BookingConfirmedEventHandler(new QuotationBookingNotifications(
+                    new BookingNotificationAdapter(new BookingNotificationService(repository))));
+        }
+
+        @Bean
+        InMemoryTrackingRecordRepository trackingRecordRepository() {
+            return new InMemoryTrackingRecordRepository();
+        }
+
+        @Bean
+        InMemoryRejectedMilestoneRepository rejectedMilestoneRepository() {
+            return new InMemoryRejectedMilestoneRepository();
+        }
+
+        /** 追跡は DE-13 を受けて実績か拒否の記録を書く（Bolt 39g）。業務ルール層のシナリオは listener を直接呼ぶ。 */
+        @Bean
+        ExternalMilestoneEventHandler externalMilestoneEventHandler(
+                InMemoryTrackingRecordRepository repository,
+                InMemoryRejectedMilestoneRepository rejectedMilestones,
+                MutableClock clock) {
+            // 有人例外案件の起票は RejectedMilestoneCaseOpenerTest と統合の層で確かめる（Bolt 40-13）。業務ルール層のシナリオは拒否の記録まで
+            return new ExternalMilestoneEventHandler(repository, rejectedMilestones, clock, (r, found, operator) -> {});
+        }
+
+        /** 外部原本の主要実績が届くこと（DE-13 への組み立て。ステップ定義は他のコンテキストのイベントに依存しない。AT-05）。 */
+        @Bean
+        ExternalMilestoneArrival externalMilestoneArrival(ExternalMilestoneEventHandler handler) {
+            return milestone -> handler.on(new MilestoneAdoptedValueAccepted(
+                    UUID.randomUUID(),
+                    UUID.randomUUID(),
+                    milestone.origin().dataSourceId(),
+                    milestone.source(),
+                    milestone.trackingNumber().value(),
+                    milestone.kind().name(),
+                    milestone.location(),
+                    milestone.occurredAt(),
+                    milestone.origin().externalId(),
+                    "1",
+                    milestone.operator(),
+                    new CompanyId(UUID.randomUUID()),
+                    milestone.origin().publishedAt()));
+        }
+
+        /** DE-12 を受けて最後の区間の航海の到着予定を追跡記録に受けさせる（Bolt 39g4b）。 */
+        @Bean
+        com.example.cargotracker.tracking.application.internal.eventhandlers.VoyageArrivalEventHandler
+                voyageArrivalEventHandler(InMemoryTrackingRecordRepository repository) {
+            return new com.example.cargotracker.tracking.application.internal.eventhandlers.VoyageArrivalEventHandler(
+                    repository);
+        }
+
+        /** 航海の採用値が届くこと（DE-12 への組み立て。ステップ定義は他のコンテキストのイベントに依存しない。AT-05。Bolt 39g4b）。 */
+        @Bean
+        com.example.cargotracker.tracking.acceptance.VoyageAdoptionArrival voyageAdoptionArrival(
+                com.example.cargotracker.tracking.application.internal.eventhandlers.VoyageArrivalEventHandler
+                        handler) {
+            return (voyageNumber, portCalls, order) ->
+                    handler.on(new com.example.cargotracker.externaldata.domain.events.VoyageAdoptedValueUpdated(
+                            UUID.randomUUID(),
+                            UUID.randomUUID(),
+                            UUID.randomUUID(),
+                            new com.example.cargotracker.shared.domain.Source(
+                                    com.example.cargotracker.shared.domain.SourceKind.EXTERNAL_RECORD,
+                                    order.sourceReference(),
+                                    order.acquiredAt()),
+                            voyageNumber,
+                            portCalls.stream()
+                                    .map(call -> new com.example.cargotracker.externaldata.domain.events
+                                            .VoyageAdoptedValueUpdated.AdoptedPortCall(
+                                            call.port(),
+                                            call.arrivalAt().orElse(null),
+                                            call.departureAt().orElse(null)))
+                                    .toList(),
+                            "1",
+                            new com.example.cargotracker.shared.domain.UserId(UUID.randomUUID()),
+                            new CompanyId(UUID.randomUUID()),
+                            order.publishedAt()));
+        }
+
+        /** 追跡は DE-07 を受け、経路設計の公開 API から確定した経路版の区間を引いて追跡を開始する（ADR-015。Bolt 25）。 */
+        @Bean
+        TrackingStartEventHandler trackingStartEventHandler(
+                InMemoryTrackingRecordRepository repository,
+                RoutingCaseQueryService routingCaseQueryService,
+                DeferredEventDelivery eventDelivery,
+                MutableClock clock) {
+            return new TrackingStartEventHandler(
+                    repository,
+                    new RoutingScheduledLegs(new RouteVersionLegQueryAdapter(routingCaseQueryService)),
+                    eventDelivery,
+                    clock);
+        }
+
+        /** 荷主の追跡の照会（US-09。Bolt 27）。 */
+        @Bean
+        CustomerTrackingQueryService customerTrackingQueryService(
+                InMemoryTrackingRecordRepository repository, MutableClock clock) {
+            return new CustomerTrackingQueryService(repository, clock, new FreshnessPolicy(Duration.ofHours(36)));
+        }
+
+        /** 追跡記録の照会（S-11・S-12）。鮮度の判定の許容範囲は設定の既定と同じ 36 時間（FRS-02。Bolt 39g4）。 */
+        @Bean
+        TrackingRecordQueryService trackingRecordQueryService(
+                InMemoryTrackingRecordRepository repository, MutableClock clock) {
+            return new TrackingRecordQueryService(
+                    repository, new TrackingRecordScope(repository), clock, new FreshnessPolicy(Duration.ofHours(36)));
+        }
+
+        /** 追跡管理者が主要実績を登録する（US-12。Bolt 26b）。 */
+        @Bean
+        TrackingRecordCommandService trackingRecordCommandService(
+                InMemoryTrackingRecordRepository repository, MutableClock clock, DeferredEventDelivery eventDelivery) {
+            return new TrackingRecordCommandService(
+                    repository, clock, new TrackingRecordScope(repository), eventDelivery);
+        }
+
+        /** 追跡は DE-22 を受けて予約の公開 API で予約サガを完了にする（ADR-014・015。Bolt 25）。 */
+        @Bean
+        BookingTrackingStartNotificationEventHandler bookingTrackingStartNotificationEventHandler(
+                InMemoryBookingSagaRepository bookingSagaRepository) {
+            return new BookingTrackingStartNotificationEventHandler(new BookingTrackingStarts(
+                    new TrackingStartNotificationAdapter(new BookingSagaCommandService(bookingSagaRepository))));
+        }
+
+        /** 追跡は DE-09・DE-10 を受けて予約の公開 API で集荷・引渡しを伝える（ADR-014。Bolt 39g2）。 */
+        @Bean
+        BookingTransportPhaseNotificationEventHandler bookingTransportPhaseNotificationEventHandler(
+                InMemoryBookingRepository bookingRepository) {
+            return new BookingTransportPhaseNotificationEventHandler(new BookingTransportPhases(
+                    new TransportPhaseNotificationAdapter(new TransportPhaseCommandService(bookingRepository))));
+        }
+
+        /** テスト用の同期の配信。購読側は {@link EventSubscriptions} が登録する（発行する部品と購読する部品が互いに依存するため）。 */
+        @Bean
+        DeferredEventDelivery eventDelivery() {
+            return new DeferredEventDelivery();
+        }
+
+        /** 経路の割当て（見積りの公開 API。ADR-014。Bolt 20）。 */
+        @Bean
+        RouteAssignmentService routeAssignment(
+                InMemoryQuotationRepository quotationRepository,
+                InMemoryTransportRequestRepository transportRequestRepository,
+                DeferredEventDelivery eventDelivery,
+                MutableClock clock) {
+            return new RouteAssignmentService(quotationRepository, transportRequestRepository, eventDelivery, clock);
+        }
+
+        /** 再設計要の伝達（見積りの公開 API。ADR-014。Bolt 37e）。経路設計の DE-06 の listener が呼ぶ（Bolt 37e2）。 */
+        @Bean
+        RouteRedesignNotification routeRedesignNotification(InMemoryQuotationRepository quotationRepository) {
+            return new RouteRedesignNotificationAdapter(new RouteRedesignService(quotationRepository));
+        }
+
+        /** 予約確定に使える見積りの照会（見積りの公開 API。ADR-016。Bolt 37e の受入シナリオが直接呼ぶ）。 */
+        @Bean
+        BookableQuotationQuery bookableQuotationQuery(
+                InMemoryQuotationRepository quotationRepository,
+                InMemoryTransportRequestRepository transportRequestRepository) {
+            return new BookableQuotationQueryAdapter(new BookableQuotationQueryService(
+                    quotationRepository,
+                    transportRequestRepository,
+                    new StaffTransportRequestScope(transportRequestRepository)));
+        }
+
+        /** 経路設計は DE-05 を受けて見積りの公開 API（経路の割当て）を呼ぶ（Bolt 20）。 */
+        @Bean
+        QuotationRouteAssignmentEventHandler quotationRouteAssignmentEventHandler(
+                InMemoryRoutingCaseRepository repository,
+                RouteAssignmentService routeAssignment,
+                RouteRedesignNotification routeRedesignNotification) {
+            return new QuotationRouteAssignmentEventHandler(
+                    repository,
+                    new QuotationRouteAssignments(new RouteAssignmentAdapter(routeAssignment)),
+                    new QuotationRouteRedesigns(routeRedesignNotification));
+        }
+
+        /** 経路設計は DE-06 を受けて見積りの公開 API（再設計要の伝達）を呼ぶ（Bolt 37e2）。 */
+        @Bean
+        QuotationRouteRedesignEventHandler quotationRouteRedesignEventHandler(
+                RouteRedesignNotification routeRedesignNotification) {
+            return new QuotationRouteRedesignEventHandler(new QuotationRouteRedesigns(routeRedesignNotification));
+        }
+
+        @Bean
+        QuotationRouteAssignedEventHandler quotationRouteAssignedEventHandler(
+                InMemoryTransportRequestRepository repository, InMemoryQuotationRepository quotationRepository) {
+            return new QuotationRouteAssignedEventHandler(repository, quotationRepository);
+        }
+
+        @Bean
+        QuotationApprovedByShipperEventHandler quotationApprovedByShipperEventHandler(
+                InMemoryTransportRequestRepository repository, InMemoryQuotationRepository quotationRepository) {
+            return new QuotationApprovedByShipperEventHandler(repository, quotationRepository);
+        }
+
+        @Bean
+        QuotationPresentedForReapprovalEventHandler quotationPresentedForReapprovalEventHandler(
+                InMemoryTransportRequestRepository repository, InMemoryQuotationRepository quotationRepository) {
+            return new QuotationPresentedForReapprovalEventHandler(repository, quotationRepository);
+        }
+
+        /** 購読側を配信に登録する。 */
+        @Bean
+        EventSubscriptions eventSubscriptions(
+                DeferredEventDelivery delivery,
+                KpiObservationEventHandler kpiObservationEventHandler,
+                QuotationPresentedEventHandler quotationPresentedEventHandler,
+                RouteDesignRequestedEventHandler routeDesignRequestedEventHandler,
+                QuotationDeclinedEventHandler quotationDeclinedEventHandler,
+                RoutingCaseOpeningEventHandler routingCaseOpeningEventHandler,
+                QuotationRouteAssignmentEventHandler quotationRouteAssignmentEventHandler,
+                QuotationRouteRedesignEventHandler quotationRouteRedesignEventHandler,
+                QuotationRouteAssignedEventHandler quotationRouteAssignedEventHandler,
+                QuotationApprovedByShipperEventHandler quotationApprovedByShipperEventHandler,
+                QuotationPresentedForReapprovalEventHandler quotationPresentedForReapprovalEventHandler,
+                BookingConfirmedEventHandler bookingConfirmedEventHandler,
+                TrackingStartEventHandler trackingStartEventHandler,
+                BookingTrackingStartNotificationEventHandler bookingTrackingStartNotificationEventHandler,
+                BookingTransportPhaseNotificationEventHandler bookingTransportPhaseNotificationEventHandler) {
+            delivery.subscribe(event -> {
+                switch (event) {
+                    case TransportRequestSubmitted submitted -> kpiObservationEventHandler.on(submitted);
+                    case QuotationPresented presented -> {
+                        quotationPresentedEventHandler.on(presented);
+                        kpiObservationEventHandler.on(presented);
+                    }
+                    case QuotationDeclined declined -> quotationDeclinedEventHandler.on(declined);
+                    case RouteDesignRequested requested -> {
+                        routeDesignRequestedEventHandler.on(requested);
+                        routingCaseOpeningEventHandler.on(requested);
+                    }
+                    case RouteConfirmed _, RouteRedesignRequired _ ->
+                        deliverRouteEvent(
+                                event, quotationRouteAssignmentEventHandler, quotationRouteRedesignEventHandler);
+                    case QuotationRouteAssigned assigned -> quotationRouteAssignedEventHandler.on(assigned);
+                    case QuotationApprovedByShipper _, QuotationPresentedForReapproval _ ->
+                        deliverApprovalEvent(
+                                event,
+                                quotationApprovedByShipperEventHandler,
+                                quotationPresentedForReapprovalEventHandler);
+                    case BookingConfirmed confirmed -> {
+                        bookingConfirmedEventHandler.on(confirmed);
+                        trackingStartEventHandler.on(confirmed);
+                    }
+                    case TrackingStarted _, PickupMilestoneAdopted _, DeliveryConfirmed _ ->
+                        deliverTrackingEvent(
+                                event,
+                                bookingTrackingStartNotificationEventHandler,
+                                bookingTransportPhaseNotificationEventHandler);
+                    default -> {
+                        // 購読者のないイベント
+                    }
+                }
+            });
+            return new EventSubscriptions();
+        }
+
+        /** 追跡が予約に伝えるイベント（DE-22・DE-09・DE-10）を配る（購読の分岐の循環的複雑度を上限に収める。Bolt 39g2）。 */
+        private static void deliverTrackingEvent(
+                Object event,
+                BookingTrackingStartNotificationEventHandler trackingStart,
+                BookingTransportPhaseNotificationEventHandler transportPhase) {
+            if (event instanceof TrackingStarted started) {
+                trackingStart.on(started);
+            } else if (event instanceof PickupMilestoneAdopted adopted) {
+                transportPhase.on(adopted);
+            } else if (event instanceof DeliveryConfirmed confirmed) {
+                transportPhase.on(confirmed);
+            }
+        }
+
+        /** 荷主の承認と再承認のイベント（DE-04・DE-24）を配る（購読の分岐の循環的複雑度を上限に収める。W9 の Bolt 48-1）。 */
+        private static void deliverApprovalEvent(
+                Object event,
+                QuotationApprovedByShipperEventHandler approval,
+                QuotationPresentedForReapprovalEventHandler reapproval) {
+            if (event instanceof QuotationApprovedByShipper approved) {
+                approval.on(approved);
+            } else if (event instanceof QuotationPresentedForReapproval presented) {
+                reapproval.on(presented);
+            }
+        }
+
+        /** 経路設計が見積りに伝えるイベント（DE-05・DE-06）を配る（購読の分岐の循環的複雑度を上限に収める。Bolt 37e2）。 */
+        private static void deliverRouteEvent(
+                Object event,
+                QuotationRouteAssignmentEventHandler assignment,
+                QuotationRouteRedesignEventHandler redesign) {
+            if (event instanceof RouteConfirmed confirmed) {
+                assignment.on(confirmed);
+            } else if (event instanceof RouteRedesignRequired required) {
+                redesign.on(required);
+            }
+        }
+
+        @Bean
+        QuotationCommandService quotationCommandService(
+                InMemoryTransportRequestRepository transportRequestRepository,
+                InMemoryQuotationRepository quotationRepository,
+                DeferredEventDelivery eventDelivery,
+                MutableClock clock) {
+            return new QuotationCommandService(
+                    quotationRepository,
+                    eventDelivery,
+                    clock,
+                    new StaffTransportRequestScope(transportRequestRepository));
+        }
+
+        @Bean
+        QuotationResponseService quotationResponseService(
+                InMemoryTransportRequestRepository transportRequestRepository,
+                InMemoryQuotationRepository quotationRepository,
+                DeferredEventDelivery eventDelivery,
+                MutableClock clock) {
+            return new QuotationResponseService(transportRequestRepository, quotationRepository, eventDelivery, clock);
+        }
+
+        @Bean
+        QuotationQueryService quotationQueryService(
+                InMemoryTransportRequestRepository transportRequestRepository,
+                InMemoryQuotationRepository quotationRepository) {
+            return new QuotationQueryService(transportRequestRepository, quotationRepository);
+        }
+
+        @Bean
+        StaffQuotationQueryService staffQuotationQueryService(
+                InMemoryTransportRequestRepository transportRequestRepository,
+                InMemoryQuotationRepository quotationRepository) {
+            return new StaffQuotationQueryService(
+                    quotationRepository, new StaffTransportRequestScope(transportRequestRepository));
+        }
+
+        @Bean
+        KpiObservationQueryService kpiObservationQueryService(InMemoryKpiObservationRepository repository) {
+            return new KpiObservationQueryService(repository);
+        }
+
+        @Bean
+        InMemoryDataSourceRepository dataSourceRepository() {
+            return new InMemoryDataSourceRepository();
+        }
+
+        @Bean
+        InMemoryIngestionRepository ingestionRepository() {
+            return new InMemoryIngestionRepository();
+        }
+
+        @Bean
+        InMemoryExternalRecordRepository externalRecordRepository() {
+            return new InMemoryExternalRecordRepository();
+        }
+
+        @Bean
+        InMemoryReceivedRecordRepository receivedRecordRepository(
+                InMemoryIngestionRepository ingestions, InMemoryExternalRecordRepository externalRecords) {
+            return new InMemoryReceivedRecordRepository(ingestions, externalRecords);
+        }
+
+        /** この外部版の採用値は受信記録の外部原本 ID で結ぶ（Bolt 39d3）。 */
+        @Bean
+        InMemoryAdoptedValueRepository adoptedValueRepository(InMemoryReceivedRecordRepository receivedRecords) {
+            return new InMemoryAdoptedValueRepository(receivedRecords);
+        }
+
+        @Bean
+        InMemoryExternalPayloadStorage externalPayloadStorage() {
+            return new InMemoryExternalPayloadStorage();
+        }
+
+        /** データ責任者が承認済みの情報源のファイルを取り込む（US-14。Bolt 39b。採用値とイベントは Bolt 39b3）。 */
+        @Bean
+        IngestionService ingestionService(
+                InMemoryDataSourceRepository dataSources,
+                InMemoryIngestionRepository ingestions,
+                InMemoryExternalRecordRepository externalRecords,
+                InMemoryReceivedRecordRepository receivedRecords,
+                InMemoryAdoptedValueRepository adoptedValues,
+                InMemoryExternalPayloadStorage payloadStorage,
+                DeferredEventDelivery eventDelivery,
+                MutableClock clock) {
+            return new IngestionService(
+                    dataSources,
+                    ingestions,
+                    externalRecords,
+                    receivedRecords,
+                    adoptedValues,
+                    payloadStorage,
+                    eventDelivery,
+                    clock);
+        }
+
+        /** パイロットの開始判定（ED-INV-01、BR-18。Bolt 39b）。 */
+        @Bean
+        PilotReadinessQueryService pilotReadinessQueryService(InMemoryDataSourceRepository dataSources) {
+            return new PilotReadinessQueryService(dataSources);
+        }
+
+        @Bean
+        TransportRequestCommandService transportRequestCommandService(
+                InMemoryTransportRequestRepository repository,
+                InMemoryQuotationRepository quotationRepository,
+                InMemoryTransportRequestNumberIssuer numberIssuer,
+                InMemoryRequiredDocumentStorage documentStorage,
+                DeferredEventDelivery eventDelivery,
+                MutableClock clock) {
+            return new TransportRequestCommandService(
+                    repository,
+                    quotationRepository,
+                    numberIssuer,
+                    new MvpAcceptancePolicy(),
+                    new RequiredDocumentPolicy(),
+                    documentStorage,
+                    eventDelivery,
+                    clock);
+        }
+
+        @Bean
+        TransportRequestReviewService transportRequestReviewService(
+                InMemoryTransportRequestRepository repository,
+                DeferredEventDelivery eventDelivery,
+                MutableClock clock) {
+            return new TransportRequestReviewService(
+                    repository, eventDelivery, clock, new StaffTransportRequestScope(repository));
+        }
+
+        @Bean
+        TransportRequestQueryService transportRequestQueryService(
+                InMemoryTransportRequestRepository repository, InMemoryRequiredDocumentStorage documentStorage) {
+            return new TransportRequestQueryService(repository, documentStorage);
+        }
+
+        @Bean
+        StaffTransportRequestQueryService staffTransportRequestQueryService(
+                InMemoryTransportRequestRepository repository, InMemoryRequiredDocumentStorage documentStorage) {
+            return new StaffTransportRequestQueryService(
+                    repository, documentStorage, new StaffTransportRequestScope(repository));
+        }
+    }
+
+    /** 購読側を配信に登録したことを表す印（{@link Components#eventSubscriptions}）。 */
+    static final class EventSubscriptions {}
+}

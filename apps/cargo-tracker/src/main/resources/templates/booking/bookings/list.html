@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/customer :: layout(~{::title}, ~{::main}, ~{}, 'bookings')}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>予約一覧 - cargo-tracker</title>
+</head>
+<body>
+<main>
+    <h1>予約一覧</h1>
+    <!--/* C-06 の最小の表示（Bolt 27b）。自社の本予約だけを示し、他社の予約は出さない（BR-07）。絞り込み・ページ送り・C-07 予約の詳細・
+           変更・取消申請の状況は US-05（W11）。追跡が始まるまでは追跡番号をリンクにしない（C-10 の照会の結果は追跡記録がないと 404 になる） */-->
+    <p th:if="${#lists.isEmpty(bookings)}">確定した予約はまだありません。担当営業が本予約を確定すると、ここに出ます。承認した見積りの状況は<a th:href="@{/customer/transport-requests}">見積依頼の一覧</a>で確かめられます。</p>
+    <p th:unless="${#lists.isEmpty(bookings)}">追跡が始まった予約は、追跡番号から追跡の照会を開けます。追跡の開始待ちは、しばらくして開き直すと追跡中に変わります。</p>
+    <p th:if="${truncated}">新しい [[${limit}]] 件だけを示しています。それより前の予約は、追跡番号を入れて<a th:href="@{/customer/tracking-records}">追跡の照会</a>で確かめてください。</p>
+    <div th:unless="${#lists.isEmpty(bookings)}" class="table-scroll" tabindex="0" role="region"
+         aria-labelledby="bookings-caption">
+        <table class="table">
+            <caption id="bookings-caption">自社の確定した予約（確定時刻の新しい順）</caption>
+            <thead>
+            <tr>
+                <th scope="col">追跡番号</th>
+                <th scope="col">見積依頼</th>
+                <th scope="col">確定時刻</th>
+                <th scope="col">追跡の状況</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="booking : ${bookings}">
+                <td th:if="${booking.tracked()}"><a th:href="@{/customer/tracking-records/{trackingNumber}(trackingNumber=${booking.trackingNumber()})}"
+                       th:text="${booking.trackingNumber()}">CTABCDEFGH2345</a></td>
+                <td th:unless="${booking.tracked()}" th:text="${booking.trackingNumber()}">CTKMNPQRS67892</td>
+                <td><a th:href="@{/customer/transport-requests/{number}(number=${booking.transportRequestNumber()})}"
+                       th:text="${booking.transportRequestNumber()}">TR-2026-0001</a> <span th:text="${booking.quotation()}">見積 1</span></td>
+                <td th:text="${booking.committedAt()}">2026-10-08 09:30 Asia/Tokyo（UTC+09:00）</td>
+                <td th:text="${booking.tracking()}">追跡中</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</main>
+</body>
+</html>

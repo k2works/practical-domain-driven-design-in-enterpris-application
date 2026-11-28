@@ -1,0 +1,119 @@
+package com.example.cargotracker.routing.interfaces.web;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+import com.example.cargotracker.routing.domain.model.valueobjects.ExclusionReason;
+import com.example.cargotracker.routing.domain.model.valueobjects.Leg;
+import com.example.cargotracker.routing.domain.model.valueobjects.RedesignReasonCode;
+import com.example.cargotracker.routing.domain.model.valueobjects.RouteCargoCategory;
+import com.example.cargotracker.routing.domain.model.valueobjects.RouteVersionStatus;
+import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseNumber;
+import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseSummary;
+import com.example.cargotracker.shared.domain.Location;
+import com.example.cargotracker.shared.domain.UtcInstant;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.List;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+
+/** 案件一覧（S-05）の見積りの期限切れの境界（Bolt 19 レビュー）。期限と同時刻は期限切れ（見積りの失効 Q-INV-07 と同じ向き）。 */
+class RoutingCaseViewsTest {
+
+    static final UtcInstant EXPIRES_AT = new UtcInstant(Instant.parse("2026-10-08T09:00:00Z"));
+
+    @ParameterizedTest(name = "いまが {0} なら期限切れは {1}")
+    @CsvSource({"2026-10-08T08:59:00Z, false", "2026-10-08T09:00:00Z, true", "2026-10-08T09:01:00Z, true"})
+    void 期限と同時刻と後は期限切れ(String now, boolean expired) {
+        RoutingCaseSummary summary = new RoutingCaseSummary(
+                new RoutingCaseNumber(2026, 1),
+                "TR-2026-0001",
+                1,
+                new Location("JPTYO"),
+                new Location("NLRTM"),
+                new UtcInstant(Instant.parse("2026-11-02T00:00:00Z")),
+                new UtcInstant(Instant.parse("2026-10-06T02:00:00Z")),
+                RouteVersionStatus.CANDIDATES_PRESENTED,
+                EXPIRES_AT);
+
+        assertThat(RoutingCaseViews.row(summary, Instant.parse(now)).quotationExpired())
+                .isEqualTo(expired);
+    }
+
+    @Test
+    void 区間3つの後の接続の理由はその接続の時間を示す() {
+        // Bolt 37: 接続の時間は、理由の時刻に出発する区間とその前の区間から引く（2 つ目の接続）
+        List<Leg> legs = List.of(
+                leg("V-201", "JPTYO", "SGSIN", "2026-10-10T00:00:00Z", "2026-10-20T00:00:00Z"),
+                leg("V-401", "SGSIN", "LKCMB", "2026-10-20T10:00:00Z", "2026-10-23T00:00:00Z"),
+                leg("V-501", "LKCMB", "NLRTM", "2026-10-24T00:00:00Z", "2026-11-01T00:00:00Z"));
+        ExclusionReason reason = ExclusionReason.notConnectable(
+                new UtcInstant(Instant.parse("2026-10-24T00:00:00Z")), new Location("LKCMB"), "V-501@1");
+
+        assertThat(RoutingCaseViews.reason(reason, legs)).startsWith("接続を判定できない（LKCMB に次の出発の時刻で有効な接続時間規則がない。接続 1 日）");
+    }
+
+    @Test
+    void 情報不足の理由は古い航海と取得時刻と許容時間を時間で示し参照した航海情報の版を添える() {
+        // Bolt 37b2: AC4 の最終採用値は画面では「参照した航海情報の版」（ui_design :56）。24 時間を「1 日」とは示さない
+        ExclusionReason reason = ExclusionReason.infoInsufficient(
+                "V-301", new UtcInstant(Instant.parse("2026-10-06T01:00:00Z")), Duration.ofHours(24), "V-301@3");
+
+        assertThat(RoutingCaseViews.reason(reason, List.of()))
+                .isEqualTo("情報不足（V-301 の情報は取得から 24 時間を過ぎている）。取得 "
+                        + RoutingCaseViews.dateTime(reason.infoAcquiredAt().orElseThrow())
+                        + "。参照した航海情報の版 V-301@3");
+    }
+
+    @Test
+    void 分のある許容時間は時間と分で示す() {
+        ExclusionReason reason = ExclusionReason.infoInsufficient(
+                "V-301",
+                new UtcInstant(Instant.parse("2026-10-06T01:00:00Z")),
+                Duration.ofMinutes(24 * 60 + 30),
+                "V-301@3");
+
+        assertThat(RoutingCaseViews.reason(reason, List.of())).startsWith("情報不足（V-301 の情報は取得から 24 時間 30 分を過ぎている）");
+    }
+
+    @ParameterizedTest(name = "{0} の除外の文")
+    @CsvSource({
+        "DANGEROUS, 危険物",
+        "REEFER, 冷凍",
+        "OTHER_SPECIAL, その他特殊",
+        "UNRECOGNIZED, 不明な貨物種別",
+    })
+    void Bolt39i_貨物種別の除外の文は種別ごとの全文で最初の出発と参照情報版を添える(RouteCargoCategory category, String name) {
+        UtcInstant firstDeparture = new UtcInstant(Instant.parse("2026-11-03T12:00:00Z"));
+        ExclusionReason reason = ExclusionReason.cargoNotSupported(category, firstDeparture, "V-1@1");
+
+        assertThat(RoutingCaseViews.reason(reason, List.of()))
+                .isEqualTo("貨物種別に対応しない（" + name + "。MVP の対象は一般貨物だけで、手動の窓口で扱う）。最初の出発 "
+                        + RoutingCaseViews.dateTime(firstDeparture)
+                        + "。参照した航海情報の版 V-1@1");
+    }
+
+    static Leg leg(String voyage, String load, String discharge, String departure, String arrival) {
+        return new Leg(
+                voyage,
+                new Location(load),
+                new Location(discharge),
+                new UtcInstant(Instant.parse(departure)),
+                new UtcInstant(Instant.parse(arrival)),
+                voyage + "@1",
+                new UtcInstant(Instant.parse("2026-10-01T06:10:00Z")));
+    }
+
+    @ParameterizedTest(name = "{0} は「{1}」と示す")
+    @CsvSource({
+        "DEADLINE_EXCEEDED, 期限超過",
+        "CONNECTION_TOO_SHORT, 接続不足",
+        "NOT_CONNECTABLE, 接続できない",
+        "VOYAGE_UNAVAILABLE, 航海の予定が使えない"
+    })
+    void 再設計要の理由を経路設計者の語で示す(RedesignReasonCode reason, String text) {
+        // Bolt 37d2 レビュー。「引き直す」は実装の語なので、欠航・寄港の取りやめを利用者の語で示す
+        assertThat(RoutingCaseViews.redesignReason(reason)).isEqualTo(text);
+    }
+}

@@ -1,0 +1,664 @@
+package com.example.cargotracker.routing.domain.model.aggregates;
+
+import com.example.cargotracker.routing.domain.events.RouteCandidatesNotFound;
+import com.example.cargotracker.routing.domain.events.RouteConfirmed;
+import com.example.cargotracker.routing.domain.events.RouteRedesignRequired;
+import com.example.cargotracker.routing.domain.model.entities.RouteCandidate;
+import com.example.cargotracker.routing.domain.model.entities.RouteVersion;
+import com.example.cargotracker.routing.domain.model.rules.ConstraintEvaluator;
+import com.example.cargotracker.routing.domain.model.rules.InfoFreshnessPolicy;
+import com.example.cargotracker.routing.domain.model.rules.RoutableCargoPolicy;
+import com.example.cargotracker.routing.domain.model.rules.RouteCandidateFinder;
+import com.example.cargotracker.routing.domain.model.valueobjects.CandidateCalculation;
+import com.example.cargotracker.routing.domain.model.valueobjects.CandidatesNotFoundReason;
+import com.example.cargotracker.routing.domain.model.valueobjects.ConstraintEvaluation;
+import com.example.cargotracker.routing.domain.model.valueobjects.DecisionRationale;
+import com.example.cargotracker.routing.domain.model.valueobjects.ExclusionReasonCode;
+import com.example.cargotracker.routing.domain.model.valueobjects.Leg;
+import com.example.cargotracker.routing.domain.model.valueobjects.RedesignReasonCode;
+import com.example.cargotracker.routing.domain.model.valueobjects.RedesignRecord;
+import com.example.cargotracker.routing.domain.model.valueobjects.RouteApprover;
+import com.example.cargotracker.routing.domain.model.valueobjects.RouteConfirmation;
+import com.example.cargotracker.routing.domain.model.valueobjects.RouteConfirmationRejectionReason;
+import com.example.cargotracker.routing.domain.model.valueobjects.RouteSpecification;
+import com.example.cargotracker.routing.domain.model.valueobjects.RouteVersionStatus;
+import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseId;
+import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseNumber;
+import com.example.cargotracker.routing.domain.model.valueobjects.StaleLeg;
+import com.example.cargotracker.routing.domain.model.valueobjects.StaleLegReason;
+import com.example.cargotracker.shared.annotation.ddd.AggregateRoot;
+import com.example.cargotracker.shared.domain.CompanyId;
+import com.example.cargotracker.shared.domain.Location;
+import com.example.cargotracker.shared.domain.UserId;
+import com.example.cargotracker.shared.domain.UtcInstant;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+/**
+ * 経路設計案件。1 つの輸送要求について経路版を作り、確定・再設計する単位（集約ルート）。
+ * 荷主の詳細経路設計の依頼（DE-16）を受けて、輸送要求版ごとに 1 つ作る（R-INV-10）。Bolt 17 は経路版 1 の候補の算出まで。
+ * Bolt 19 で経路版の一覧（Bolt 17 レビュー D-64）と確定（US-07 AC1・AC2）を足した。Bolt 37d2 で確定した経路版の評価
+ * （外部情報の更新で再設計要にする。US-07 AC4）を足した。
+ *
+ * <p>輸送要求・見積りの ID と業務番号は、見積りの公開 API とイベントから得た値の写し（見積りのドメインの型を持たない。ADR-001）。
+ * 荷主企業も見積りの公開 API の写しで、社内の画面を担当企業で絞るのに使う（Bolt 38g。US-16 AC4、IA-INV-02）。
+ */
+@AggregateRoot
+public final class RoutingCase {
+
+    /** 示す候補の上限（Bolt 17 の確認ポイント 8）。 */
+    public static final int MAX_CANDIDATES = 20;
+
+    private static final long INITIAL_AGGREGATE_VERSION = 0;
+
+    private final RoutingCaseId id;
+    private final RoutingCaseNumber number;
+    private final UUID transportRequestId;
+    private final String transportRequestNumber;
+    private final int transportRequestVersionNo;
+    private final UUID quotationId;
+    private final List<Location> routePolicyVia;
+    private final RouteSpecification specification;
+    private final UtcInstant requestedAt;
+    private final UtcInstant quotationExpiresAt;
+    private final UUID requestedBy;
+    private final CompanyId shipperCompanyId;
+    private final long aggregateVersion;
+    private final List<RouteVersion> routeVersions;
+
+    @SuppressWarnings("java:S107") // 保存されている状態から組み立てるため、集約の値をすべて受け取る
+    private RoutingCase(
+            RoutingCaseId id,
+            RoutingCaseNumber number,
+            UUID transportRequestId,
+            String transportRequestNumber,
+            int transportRequestVersionNo,
+            UUID quotationId,
+            List<Location> routePolicyVia,
+            RouteSpecification specification,
+            UtcInstant requestedAt,
+            UtcInstant quotationExpiresAt,
+            UUID requestedBy,
+            CompanyId shipperCompanyId,
+            List<RouteVersion> routeVersions,
+            long aggregateVersion) {
+        this.id = Objects.requireNonNull(id, "id");
+        this.number = Objects.requireNonNull(number, "number");
+        this.transportRequestId = Objects.requireNonNull(transportRequestId, "transportRequestId");
+        this.transportRequestNumber = Objects.requireNonNull(transportRequestNumber, "transportRequestNumber");
+        if (transportRequestVersionNo < 1) {
+            throw new IllegalArgumentException("版番号は 1 以上です: " + transportRequestVersionNo);
+        }
+        this.transportRequestVersionNo = transportRequestVersionNo;
+        this.quotationId = Objects.requireNonNull(quotationId, "quotationId");
+        this.routePolicyVia = List.copyOf(routePolicyVia);
+        this.specification = Objects.requireNonNull(specification, "specification");
+        this.requestedAt = Objects.requireNonNull(requestedAt, "requestedAt");
+        this.quotationExpiresAt = quotationExpiresAt;
+        this.requestedBy = requestedBy;
+        this.shipperCompanyId = Objects.requireNonNull(shipperCompanyId, "shipperCompanyId");
+        this.routeVersions = new ArrayList<>(validated(routeVersions));
+        this.aggregateVersion = aggregateVersion;
+    }
+
+    /**
+     * 詳細経路設計の依頼を受けて案件を作る（経路版 1 は作成中）。同じ輸送要求版の案件がないことは、アプリケーションサービスが
+     * 確かめ、リポジトリの一意制約が最後に守る（R-INV-10）。見積有効期限と依頼者は DE-16 の値の写し（Bolt 19）。荷主企業は見積りの
+     * 公開 API の値の写しで、必ず持つ（Bolt 38g）。
+     */
+    @SuppressWarnings("java:S107") // 依頼と経路条件の値をすべて受け取る
+    public static RoutingCase open(
+            RoutingCaseId id,
+            RoutingCaseNumber number,
+            UUID transportRequestId,
+            String transportRequestNumber,
+            int transportRequestVersionNo,
+            UUID quotationId,
+            List<Location> routePolicyVia,
+            RouteSpecification specification,
+            UtcInstant requestedAt,
+            UtcInstant quotationExpiresAt,
+            UUID requestedBy,
+            CompanyId shipperCompanyId) {
+        return new RoutingCase(
+                id,
+                number,
+                transportRequestId,
+                transportRequestNumber,
+                transportRequestVersionNo,
+                quotationId,
+                routePolicyVia,
+                specification,
+                requestedAt,
+                Objects.requireNonNull(quotationExpiresAt, "quotationExpiresAt"),
+                Objects.requireNonNull(requestedBy, "requestedBy"),
+                shipperCompanyId,
+                List.of(RouteVersion.draft(1)),
+                INITIAL_AGGREGATE_VERSION);
+    }
+
+    /**
+     * 保存されている状態から案件を組み立てる（リポジトリが使う）。見積有効期限と依頼者は、Bolt 19 より前に作った案件にはない。
+     */
+    @SuppressWarnings("java:S107") // 保存されている状態から組み立てるため、集約の値をすべて受け取る
+    public static RoutingCase reconstitute(
+            RoutingCaseId id,
+            RoutingCaseNumber number,
+            UUID transportRequestId,
+            String transportRequestNumber,
+            int transportRequestVersionNo,
+            UUID quotationId,
+            List<Location> routePolicyVia,
+            RouteSpecification specification,
+            UtcInstant requestedAt,
+            UtcInstant quotationExpiresAt,
+            UUID requestedBy,
+            CompanyId shipperCompanyId,
+            List<RouteVersion> routeVersions,
+            long aggregateVersion) {
+        return new RoutingCase(
+                id,
+                number,
+                transportRequestId,
+                transportRequestNumber,
+                transportRequestVersionNo,
+                quotationId,
+                routePolicyVia,
+                specification,
+                requestedAt,
+                quotationExpiresAt,
+                requestedBy,
+                shipperCompanyId,
+                routeVersions,
+                aggregateVersion);
+    }
+
+    /**
+     * 候補を算出する（作成中・候補提示済み → 候補提示済み。US-06 AC1）。航海の一覧から区間の列を列挙し（候補探索）、
+     * それぞれを制約適合判定にかけて（規則は接続の時刻で選ぶ。D-90）、適合を先に、到着予定の早い順に上限まで残し、1 から候補番号を振る。
+     * 制約適合判定の後で情報鮮度の判定を判定時刻でかけ、情報不足の理由を後ろに足す（US-06 AC4、R-INV-09。Bolt 37b2。
+     * 制約適合判定は判定時刻を受け取らない。Bolt 37）。
+     * 候補提示済みで算出し直したら、候補を置き換え、判定時刻を更新する。
+     *
+     * @throws IllegalStateException 作成中・候補提示済みでない（確定の後の再算出は US-08 の再設計で行う）
+     */
+    @SuppressWarnings("java:S107") // 算出の入力と、候補探索・制約適合判定・情報鮮度の判定をすべて受け取る（確定と同じ形）
+    public CandidateCalculation calculateCandidates(
+            List<Voyage> voyages,
+            List<ConnectionRule> rules,
+            UtcInstant judgedAt,
+            RouteCandidateFinder finder,
+            ConstraintEvaluator evaluator,
+            InfoFreshnessPolicy freshness) {
+        RouteVersion routeVersion = routeVersion();
+        RouteVersionStatus status = routeVersion.status();
+        if (status != RouteVersionStatus.DRAFT && status != RouteVersionStatus.CANDIDATES_PRESENTED) {
+            throw new IllegalStateException("候補を算出できない経路版の状態です: " + status);
+        }
+        List<Evaluated> evaluated = finder.find(specification, voyages, judgedAt).stream()
+                .map(legs -> new Evaluated(
+                        legs,
+                        evaluator
+                                .evaluate(specification, legs, rules)
+                                .withAddedReasons(freshness.evaluate(legs, judgedAt))
+                                .withAddedReasons(RoutableCargoPolicy.evaluate(specification.cargoCategory(), legs))))
+                .sorted(PRESENTATION_ORDER)
+                .toList();
+        List<RouteCandidate> candidates = new ArrayList<>();
+        for (Evaluated candidate : evaluated.subList(0, Math.min(MAX_CANDIDATES, evaluated.size()))) {
+            candidates.add(
+                    new RouteCandidate(candidates.size() + 1, candidate.legs(), candidate.evaluation(), judgedAt));
+        }
+        replaceLatest(new RouteVersion(
+                routeVersion.routeVersionNo(),
+                RouteVersionStatus.CANDIDATES_PRESENTED,
+                candidates,
+                judgedAt,
+                evaluated.size(),
+                null));
+        int conforming = (int) candidates.stream()
+                .filter(candidate -> candidate.evaluation().conforming())
+                .count();
+        return new CandidateCalculation(evaluated.size(), candidates.size(), conforming, judgedAt);
+    }
+
+    /**
+     * 経路を確定する（候補提示済み → 確定。US-07 AC1〜AC3）。承認者が経路設計者で、選んだ候補が適合で、判断根拠があることを
+     * 確かめ、確定のときに読み直した航海・接続時間規則と希望到着期限で判定し直す（R-INV-03）。規則は確定の時刻ではなく、
+     * 接続の時刻（次の区間の出発予定）に有効なものを使う（D-90、Bolt 37。算出の後に登録・変更された規則を拾う）。
+     * 確かめる順は、状態・候補・除外 → 航海の情報の更新（区間の情報版と区間の予定の組が読み直した航海にない。航海がないときも。【業務の判断】(s)）→
+     * 判断根拠 → 出発済み（最初の区間が確定の時刻と同時刻または前に出発する）→ 情報不足（読み直した航海の取得時刻で、確定の時刻に
+     * 許容時間を過ぎている）→ 規則の判定し直し（Bolt 37c）。候補の比較に戻す理由を判断根拠より前に確かめる。
+     *
+     * @return DE-05 経路を確定した
+     * @throws RouteConfirmationRejected 確定できない（理由を値で持つ）
+     */
+    @SuppressWarnings("java:S107") // 確定の入力と、再検証に使う航海・規則・判定をすべて受け取る（算出と同じ形）
+    public RouteConfirmed confirm(
+            int candidateNo,
+            String rationale,
+            RouteApprover approver,
+            List<Voyage> voyages,
+            List<ConnectionRule> rules,
+            UtcInstant commitAt,
+            ConstraintEvaluator evaluator,
+            InfoFreshnessPolicy freshness) {
+        if (!approver.routeDesigner()) {
+            throw reject(RouteConfirmationRejectionReason.NOT_ROUTE_DESIGNER, "経路を確定できるのは経路設計者だけです");
+        }
+        RouteVersion routeVersion = routeVersion();
+        confirmationRejection().ifPresent(reason -> {
+            throw reject(reason, "確定できない経路版の状態です: " + routeVersion.status());
+        });
+        RouteCandidate candidate = routeVersion.candidates().stream()
+                .filter(each -> each.candidateNo() == candidateNo)
+                .findFirst()
+                .orElseThrow(() ->
+                        reject(RouteConfirmationRejectionReason.CANDIDATE_NOT_FOUND, "候補 " + candidateNo + " はありません"));
+        if (!candidate.evaluation().conforming()) {
+            throw reject(RouteConfirmationRejectionReason.CANDIDATE_EXCLUDED, "除外の候補は確定できません");
+        }
+        Map<String, Voyage> current = byVoyageNumber(voyages);
+        if (anyLegChanged(candidate, current)) {
+            throw reject(RouteConfirmationRejectionReason.INFO_VERSION_CHANGED, "候補を算出した後に区間の航海の情報が更新されました");
+        }
+        DecisionRationale.rejectionOf(rationale).ifPresent(reason -> {
+            throw reject(
+                    reason,
+                    reason == RouteConfirmationRejectionReason.RATIONALE_MISSING
+                            ? "判断根拠を入れてください"
+                            : "判断根拠は " + DecisionRationale.MAX_LENGTH + " 文字までです");
+        });
+        DecisionRationale decisionRationale = DecisionRationale.of(rationale);
+        if (!candidate.legs().getFirst().departureAt().instant().isAfter(commitAt.instant())) {
+            throw reject(RouteConfirmationRejectionReason.ALREADY_DEPARTED, "最初の区間が出発済みです");
+        }
+        // 航海がない区間は航海の情報の更新で先に拒否しているが、判定の順に頼らないよう、ないときも情報不足として扱う
+        if (candidate.legs().stream()
+                .anyMatch(leg -> Optional.ofNullable(current.get(leg.voyageNumber()))
+                        .map(voyage -> freshness.insufficient(voyage.acquiredAt(), commitAt))
+                        .orElse(true))) {
+            throw reject(RouteConfirmationRejectionReason.INFO_INSUFFICIENT, "区間の航海の情報が取得から許容時間を過ぎています");
+        }
+        if (!evaluator.evaluate(specification, candidate.legs(), rules).conforming()) {
+            throw reject(RouteConfirmationRejectionReason.NO_LONGER_CONFORMING, "確定のときに判定し直すと不適合です");
+        }
+        replaceLatest(new RouteVersion(
+                routeVersion.routeVersionNo(),
+                RouteVersionStatus.CONFIRMED,
+                routeVersion.candidates(),
+                routeVersion.candidatesEvaluatedAt(),
+                routeVersion.candidatesFound(),
+                new RouteConfirmation(candidateNo, decisionRationale, approver.userId(), commitAt)));
+        return new RouteConfirmed(
+                id.value(),
+                number.text(),
+                routeVersion.routeVersionNo(),
+                quotationId,
+                transportRequestId,
+                transportRequestVersionNo,
+                approver.userId(),
+                commitAt,
+                candidate.legs().stream().map(Leg::infoVersion).toList());
+    }
+
+    /**
+     * 確定した経路版を外部情報の更新で評価する（確定 → 再設計要。US-07 AC4、R-INV-07。Bolt 37d2）。外部情報の更新を受けたシステムの操作で、
+     * 利用者の操作ではない。最新の経路版が確定のときだけ評価し、確定の記録の候補のすべての区間の情報版と区間の予定の組が今の航海にあれば
+     * 評価しない（接続時間規則だけの変更はきっかけにしない。【業務の判断】(s)）。保存した判定は使わず、区間ごとに今の航海で引き直し（候補探索）、引き直した区間の列を制約適合判定に
+     * かけ直す。引き直せない区間があれば「航海を引き直せない」、不適合なら制約適合判定の理由の区分を写して（同じ区分は 1 つに
+     * まとめ、最初に出た順）再設計要にする。候補・区間・確定の記録は変えない（旧情報版の保持）。すでに再設計要なら何もしない
+     * （原因が解消しても戻さない。UC-08 1a）。
+     *
+     * @return DE-06 経路を再設計要にした。再設計要にしなければ空
+     */
+    public Optional<RouteRedesignRequired> evaluateConfirmedRoute(
+            List<Voyage> voyages,
+            List<ConnectionRule> rules,
+            UtcInstant evaluatedAt,
+            RouteCandidateFinder finder,
+            ConstraintEvaluator evaluator) {
+        RouteVersion routeVersion = routeVersion();
+        if (routeVersion.status() != RouteVersionStatus.CONFIRMED) {
+            return Optional.empty();
+        }
+        RouteCandidate candidate =
+                confirmedCandidateOf(routeVersion.routeVersionNo()).orElseThrow();
+        Map<String, Voyage> current = byVoyageNumber(voyages);
+        if (!anyLegChanged(candidate, current)) {
+            return Optional.empty();
+        }
+        List<RedesignReasonCode> reasons = redesignReasons(candidate.legs(), voyages, rules, finder, evaluator);
+        if (reasons.isEmpty()) {
+            return Optional.empty();
+        }
+        replaceLatest(new RouteVersion(
+                routeVersion.routeVersionNo(),
+                RouteVersionStatus.REDESIGN_REQUIRED,
+                routeVersion.candidates(),
+                routeVersion.candidatesEvaluatedAt(),
+                routeVersion.candidatesFound(),
+                routeVersion.routeConfirmation(),
+                new RedesignRecord(evaluatedAt, reasons)));
+        return Optional.of(new RouteRedesignRequired(
+                id.value(),
+                number.text(),
+                routeVersion.routeVersionNo(),
+                quotationId,
+                transportRequestId,
+                transportRequestVersionNo,
+                evaluatedAt,
+                reasons.stream().map(RedesignReasonCode::name).toList(),
+                candidate.legs().stream().map(Leg::infoVersion).toList()));
+    }
+
+    /**
+     * 適合する候補が見つからなかった理由（UC-06 3a。Bolt 40-14）。候補を算出済みで、候補がない（経路に使える航海がない）か、すべて除外のとき。
+     * 適合の候補が 1 件でもあれば空。すべて貨物種別だけで除外された案件は、手動の窓口の案内（Bolt 39i）で扱うので引き継がない。
+     */
+    public Optional<CandidatesNotFoundReason> candidatesNotFoundReason() {
+        RouteVersion version = routeVersion();
+        if (version.status() != RouteVersionStatus.CANDIDATES_PRESENTED) {
+            return Optional.empty();
+        }
+        List<RouteCandidate> candidates = version.candidates();
+        if (candidates.isEmpty()) {
+            return Optional.of(CandidatesNotFoundReason.EXTERNAL_DATA_MISSING);
+        }
+        if (candidates.stream().anyMatch(candidate -> candidate.evaluation().conforming())) {
+            return Optional.empty();
+        }
+        boolean cargoOnly = candidates.stream()
+                .allMatch(candidate -> !candidate.evaluation().reasons().isEmpty()
+                        && candidate.evaluation().reasons().stream()
+                                .allMatch(reason -> reason.code() == ExclusionReasonCode.CARGO_NOT_SUPPORTED));
+        return cargoOnly ? Optional.empty() : Optional.of(CandidatesNotFoundReason.NO_CONFORMING_CANDIDATE);
+    }
+
+    /** 適合する候補が見つからなかったことを DE-32 にする（引き継ぐ理由がなければ空。算出を保存した後に発行する）。 */
+    public Optional<RouteCandidatesNotFound> candidatesNotFound(UserId operator, UtcInstant notFoundAt) {
+        return candidatesNotFoundReason()
+                .map(reason -> new RouteCandidatesNotFound(
+                        id.value(),
+                        number.text(),
+                        quotationId,
+                        transportRequestId,
+                        transportRequestVersionNo,
+                        shipperCompanyId,
+                        reason.name(),
+                        routeVersion().candidatesFound(),
+                        notFoundAt,
+                        operator));
+    }
+
+    /** 区間を今の航海で引き直して判定し直した不適合の理由（適合なら空）。 */
+    private List<RedesignReasonCode> redesignReasons(
+            List<Leg> legs,
+            List<Voyage> voyages,
+            List<ConnectionRule> rules,
+            RouteCandidateFinder finder,
+            ConstraintEvaluator evaluator) {
+        List<Leg> refreshed = new ArrayList<>();
+        for (Leg leg : legs) {
+            Optional<Leg> current = finder.refresh(leg, voyages);
+            if (current.isEmpty()) {
+                return List.of(RedesignReasonCode.VOYAGE_UNAVAILABLE);
+            }
+            refreshed.add(current.get());
+        }
+        return evaluator.evaluate(specification, refreshed, rules).reasons().stream()
+                .map(reason -> RedesignReasonCode.from(reason.code()))
+                .distinct()
+                .toList();
+    }
+
+    /** 候補の区間のどれかが今の航海と一致しないか（確定と評価の照合。R-INV-03。航海がない区間は変わったとみなす）。 */
+    private static boolean anyLegChanged(RouteCandidate candidate, Map<String, Voyage> current) {
+        return candidate.legs().stream().anyMatch(leg -> changeOf(leg, current).isPresent());
+    }
+
+    /**
+     * 区間が今の航海と一致しない理由（一致すれば空。確定と評価の照合と S-06 の判定が同じ部品を使う。Bolt 39f2）。判定は {@link Voyage#matchesLeg} の 1 か所で、情報版の比較は
+     * 一致しないときの説明の分け方に使うだけ。
+     */
+    private static Optional<StaleLegReason> changeOf(Leg leg, Map<String, Voyage> current) {
+        Voyage voyage = current.get(leg.voyageNumber());
+        if (voyage == null) {
+            return Optional.of(StaleLegReason.VOYAGE_MISSING);
+        }
+        if (voyage.matchesLeg(leg)) {
+            return Optional.empty();
+        }
+        return Optional.of(
+                voyage.adoptedInfoVersion().equals(leg.infoVersion())
+                        ? StaleLegReason.SCHEDULE_CHANGED
+                        : StaleLegReason.INFO_VERSION_CHANGED);
+    }
+
+    /** 読み直した航海（航海番号はデータベースの主キーで重ならない）。 */
+    private static Map<String, Voyage> byVoyageNumber(List<Voyage> voyages) {
+        return voyages.stream().collect(Collectors.toMap(Voyage::voyageNumber, voyage -> voyage));
+    }
+
+    private static RouteConfirmationRejected reject(RouteConfirmationRejectionReason reason, String message) {
+        return new RouteConfirmationRejected(reason, message);
+    }
+
+    private void replaceLatest(RouteVersion latest) {
+        routeVersions.set(routeVersions.size() - 1, latest);
+    }
+
+    /** 経路版は 1 つ以上で、経路版番号が 1 から順に並び、確定は 1 つだけ（R-INV-05）。 */
+    private static List<RouteVersion> validated(List<RouteVersion> routeVersions) {
+        if (routeVersions.isEmpty()) {
+            throw new IllegalArgumentException("経路設計案件には経路版が要ります");
+        }
+        for (int i = 0; i < routeVersions.size(); i++) {
+            if (routeVersions.get(i).routeVersionNo() != i + 1) {
+                throw new IllegalArgumentException("経路版番号は 1 から順に並べます: " + routeVersions);
+            }
+        }
+        long confirmed = routeVersions.stream()
+                .filter(version -> version.status() == RouteVersionStatus.CONFIRMED)
+                .count();
+        if (confirmed > 1) {
+            throw new IllegalArgumentException("確定した経路版は案件に 1 つだけです");
+        }
+        return routeVersions;
+    }
+
+    /** 判定した区間の列（候補番号を振る前）。 */
+    private record Evaluated(List<Leg> legs, ConstraintEvaluation evaluation) {}
+
+    /** 示す順。適合を先に、到着予定の早い順、同時刻は航海番号の順（確定的にする）。 */
+    private static final Comparator<Evaluated> PRESENTATION_ORDER = Comparator.comparing(
+                    (Evaluated candidate) -> !candidate.evaluation().conforming())
+            .thenComparing(
+                    candidate -> candidate.evaluation().estimatedArrivalAt().instant())
+            .thenComparing(candidate -> String.join(
+                    ",", candidate.legs().stream().map(Leg::voyageNumber).toList()));
+
+    public RoutingCaseId id() {
+        return id;
+    }
+
+    public RoutingCaseNumber number() {
+        return number;
+    }
+
+    public UUID transportRequestId() {
+        return transportRequestId;
+    }
+
+    public String transportRequestNumber() {
+        return transportRequestNumber;
+    }
+
+    public int transportRequestVersionNo() {
+        return transportRequestVersionNo;
+    }
+
+    public UUID quotationId() {
+        return quotationId;
+    }
+
+    /** 経路方針（参考）の主な経由地。判定には使わない。 */
+    public List<Location> routePolicyVia() {
+        return routePolicyVia;
+    }
+
+    public RouteSpecification specification() {
+        return specification;
+    }
+
+    public UtcInstant requestedAt() {
+        return requestedAt;
+    }
+
+    /** 見積有効期限（DE-16 の写し。Bolt 19 より前に作った案件にはない）。経路設計は期限で確定を拒否しない。 */
+    public Optional<UtcInstant> quotationExpiresAt() {
+        return Optional.ofNullable(quotationExpiresAt);
+    }
+
+    /** 詳細経路設計を依頼した荷主担当者の利用者 ID（DE-16 の写し。Bolt 19 より前に作った案件にはない）。 */
+    public Optional<UUID> requestedBy() {
+        return Optional.ofNullable(requestedBy);
+    }
+
+    /** 荷主企業（見積りの公開 API の写し。社内の画面を担当企業で絞るのに使う。Bolt 38g）。 */
+    public CompanyId shipperCompanyId() {
+        return shipperCompanyId;
+    }
+
+    /** いまの（最新の）経路版。 */
+    public RouteVersion routeVersion() {
+        return routeVersions.getLast();
+    }
+
+    /** 経路版の一覧（経路版番号の順）。 */
+    public List<RouteVersion> routeVersions() {
+        return List.copyOf(routeVersions);
+    }
+
+    /**
+     * いまの経路版を確定できない理由（S-07 の GET と確定の判定が同じ理由を使う。Bolt 37e3）。再設計要の経路版は確定し直せない（R-INV-06）。
+     * それ以外で確定できなければ、確定済みか算出の前。
+     */
+    public Optional<RouteConfirmationRejectionReason> confirmationRejection() {
+        if (routeVersion().status() == RouteVersionStatus.REDESIGN_REQUIRED) {
+            return Optional.of(RouteConfirmationRejectionReason.ROUTE_REDESIGN_REQUIRED);
+        }
+        return routeVersion().status() == RouteVersionStatus.CANDIDATES_PRESENTED
+                        && confirmedRouteVersion().isEmpty()
+                ? Optional.empty()
+                : Optional.of(RouteConfirmationRejectionReason.NOT_CONFIRMABLE_STATE);
+    }
+
+    /** いまの経路版を確定できるか（候補提示済みで、確定した経路版がない）。画面の入口と確定の判定が使う。 */
+    public boolean confirmable() {
+        return confirmationRejection().isEmpty();
+    }
+
+    /** 確定した経路版（案件に 1 つだけ。R-INV-05）。 */
+    public Optional<RouteVersion> confirmedRouteVersion() {
+        return routeVersions.stream()
+                .filter(version -> version.status() == RouteVersionStatus.CONFIRMED)
+                .findFirst();
+    }
+
+    /**
+     * 確定した経路版の、確定の記録の候補（区間の列）。見積りへの割当て（DE-05 の listener）と、追跡の予定（経路設計の公開 API。Bolt 25）が使う。
+     * 経路版は不変なので、確定した後はいつ引いても同じ候補を返す。状態ではなく確定の記録で引くので、再設計要・旧版の経路版でも
+     * 確定のときの候補を返す（旧情報版の保持。R-INV-07。Bolt 37d）。
+     *
+     * @param routeVersionNo 経路版番号
+     * @return 確定の記録の候補。経路版がない、または確定の記録を持たなければ空
+     */
+    public Optional<RouteCandidate> confirmedCandidateOf(int routeVersionNo) {
+        return routeVersions.stream()
+                .filter(version -> version.routeVersionNo() == routeVersionNo)
+                .findFirst()
+                .flatMap(version -> version.confirmation()
+                        .flatMap(confirmation -> version.candidates().stream()
+                                .filter(candidate -> candidate.candidateNo() == confirmation.candidateNo())
+                                .findFirst()));
+    }
+
+    /** いまの経路版の候補の区間の航海番号（確定のときに読み直す航海。Bolt 39e）。候補がなければ空。 */
+    public List<String> voyageNumbersOf(int candidateNo) {
+        return routeVersion().candidates().stream()
+                .filter(candidate -> candidate.candidateNo() == candidateNo)
+                .findFirst()
+                .map(RoutingCase::voyageNumbersOf)
+                .orElse(List.of());
+    }
+
+    /** いまの経路版の確定の記録の候補の区間の航海番号（評価のときに読み直す航海。Bolt 39e）。確定の記録がなければ空。 */
+    public List<String> confirmedVoyageNumbers() {
+        return confirmedCandidateOf(routeVersion().routeVersionNo())
+                .map(RoutingCase::voyageNumbersOf)
+                .orElse(List.of());
+    }
+
+    /** いまの経路版のすべての候補の区間の航海番号（重複なし。S-06 を開くときに 1 文で読む航海。Bolt 39f2）。候補がなければ空。 */
+    public List<String> candidateVoyageNumbers() {
+        return routeVersion().candidates().stream()
+                .flatMap(candidate -> candidate.legs().stream())
+                .map(Leg::voyageNumber)
+                .distinct()
+                .toList();
+    }
+
+    /**
+     * 算出の後に古くなった区間を、S-06 を開いた時刻の航海と比べて返す（UC-06 4a、【業務の判断】(w)・(y)・(z)。Bolt 39f2）。状態も列も変えず保存しない読み取りの判定で、
+     * 同じ情報版で元の値に戻れば空に戻る。確定できるときだけ判定する（{@link #confirmable()} が偽なら空）。区間 1 つに理由は 1 つで、順は航海がない → 今の航海と合わない →
+     * 適合の候補だけ取得から許容時間を過ぎた（今の航海の取得時刻で比べる。確定と同じ。Bolt 37c）。除外の候補は取得から許容時間を過ぎただけでは示さない。
+     *
+     * @return 候補番号と区間の順の古くなった区間（なければ空）
+     */
+    public List<StaleLeg> staleLegs(List<Voyage> voyages, InfoFreshnessPolicy freshness, UtcInstant judgedAt) {
+        if (!confirmable()) {
+            return List.of();
+        }
+        Map<String, Voyage> current = byVoyageNumber(voyages);
+        List<StaleLeg> staleLegs = new ArrayList<>();
+        for (RouteCandidate candidate : routeVersion().candidates()) {
+            List<Leg> legs = candidate.legs();
+            for (int index = 0; index < legs.size(); index++) {
+                int legNo = index + 1;
+                staleReasonOf(candidate, legs.get(index), current, freshness, judgedAt)
+                        .ifPresent(reason -> staleLegs.add(new StaleLeg(candidate.candidateNo(), legNo, reason)));
+            }
+        }
+        return List.copyOf(staleLegs);
+    }
+
+    private static Optional<StaleLegReason> staleReasonOf(
+            RouteCandidate candidate,
+            Leg leg,
+            Map<String, Voyage> current,
+            InfoFreshnessPolicy freshness,
+            UtcInstant judgedAt) {
+        Optional<StaleLegReason> change = changeOf(leg, current);
+        if (change.isPresent() || !candidate.evaluation().conforming()) {
+            return change;
+        }
+        return freshness.insufficient(current.get(leg.voyageNumber()).acquiredAt(), judgedAt)
+                ? Optional.of(StaleLegReason.INFO_INSUFFICIENT)
+                : Optional.empty();
+    }
+
+    private static List<String> voyageNumbersOf(RouteCandidate candidate) {
+        return candidate.legs().stream().map(Leg::voyageNumber).distinct().toList();
+    }
+
+    public long aggregateVersion() {
+        return aggregateVersion;
+    }
+}

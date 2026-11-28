@@ -1,0 +1,230 @@
+package com.example.cargotracker.quotation.infrastructure.persistence;
+
+import com.example.cargotracker.quotation.domain.model.aggregates.ConcurrentTransportRequestUpdateException;
+import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequest;
+import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequestRepository;
+import com.example.cargotracker.quotation.domain.model.entities.ReviewRecord;
+import com.example.cargotracker.quotation.domain.model.entities.TransportRequestVersion;
+import com.example.cargotracker.quotation.domain.model.valueobjects.Cargo;
+import com.example.cargotracker.quotation.domain.model.valueobjects.CargoCategory;
+import com.example.cargotracker.quotation.domain.model.valueobjects.DocumentMediaType;
+import com.example.cargotracker.quotation.domain.model.valueobjects.DocumentType;
+import com.example.cargotracker.quotation.domain.model.valueobjects.PackageType;
+import com.example.cargotracker.quotation.domain.model.valueobjects.RequiredDocument;
+import com.example.cargotracker.quotation.domain.model.valueobjects.ReviewDecision;
+import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTerms;
+import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestId;
+import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
+import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestStatus;
+import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestSummary;
+import com.example.cargotracker.shared.domain.CompanyId;
+import com.example.cargotracker.shared.domain.Location;
+import com.example.cargotracker.shared.domain.UserId;
+import com.example.cargotracker.shared.domain.UtcInstant;
+import java.time.ZoneOffset;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+import org.springframework.stereotype.Repository;
+
+/**
+ * 輸送要求のリポジトリの MyBatis 実装。ヘッダ・現在の版・必要書類・審査記録の表を組み立てて集約にする。
+ * 更新は楽観ロック（集約の版）で照合し、版と審査記録は追記専用の表に足すだけにする。
+ */
+@Repository
+public class MyBatisTransportRequestRepository implements TransportRequestRepository {
+
+    private final TransportRequestMapper mapper;
+
+    public MyBatisTransportRequestRepository(TransportRequestMapper mapper) {
+        this.mapper = mapper;
+    }
+
+    @Override
+    public void save(TransportRequest transportRequest) {
+        TransportRequestRow row = toRow(transportRequest);
+        mapper.insertTransportRequest(row);
+        mapper.insertTransportRequestVersion(row);
+        insertDocuments(transportRequest.id(), transportRequest.currentVersion());
+    }
+
+    @Override
+    public Optional<TransportRequest> findById(TransportRequestId id) {
+        return mapper.selectById(id.value()).map(this::toAggregate);
+    }
+
+    @Override
+    public Optional<TransportRequest> findByNumber(TransportRequestNumber number, CompanyId shipperCompanyId) {
+        return mapper.selectByNumber(number.text(), shipperCompanyId.value()).map(this::toAggregate);
+    }
+
+    @Override
+    public void update(TransportRequest transportRequest) {
+        int updated = mapper.updateTransportRequest(
+                transportRequest.id().value(),
+                transportRequest.status().name(),
+                transportRequest.currentVersion().versionNo(),
+                transportRequest.aggregateVersion());
+        if (updated == 0) {
+            throw new ConcurrentTransportRequestUpdateException(
+                    transportRequest.id(), transportRequest.aggregateVersion());
+        }
+        // 読み込んだ後に作った版（再提出）があるときだけ、版と書類の行を追加する（新しい事実だけを書く。Bolt 6〜8 レビュー R-07）
+        transportRequest.newVersion().ifPresent(version -> {
+            mapper.insertTransportRequestVersion(toRow(transportRequest));
+            insertDocuments(transportRequest.id(), version);
+        });
+        // 読み込んだ後に足した審査記録だけを追加する（往復の回数を履歴の件数に比例させない。Bolt 5 レビュー R-03）
+        transportRequest
+                .newReviewRecords()
+                .forEach(reviewRecord -> mapper.insertReviewRecordIfAbsent(new ReviewRecordRow(
+                        reviewRecord.id(),
+                        transportRequest.id().value(),
+                        reviewRecord.versionNo(),
+                        reviewRecord.decision().name(),
+                        reviewRecord.reviewerId().value(),
+                        reviewRecord.rationale(),
+                        reviewRecord.missingItems(),
+                        reviewRecord.decidedAt().instant().atOffset(ZoneOffset.UTC))));
+    }
+
+    @Override
+    public Optional<TransportRequest> findByNumberForStaff(TransportRequestNumber number) {
+        return mapper.selectByNumberForStaff(number.text()).map(this::toAggregate);
+    }
+
+    @Override
+    public List<TransportRequestSummary> findSummariesByShipper(CompanyId shipperCompanyId) {
+        return mapper.selectSummariesByShipper(shipperCompanyId.value()).stream()
+                .map(MyBatisTransportRequestRepository::toSummary)
+                .toList();
+    }
+
+    @Override
+    public List<TransportRequestSummary> findUnderReviewSummaries(Set<CompanyId> shipperCompanyIds) {
+        return mapper.selectUnderReviewSummaries(idsOf(shipperCompanyIds)).stream()
+                .map(MyBatisTransportRequestRepository::toSummary)
+                .toList();
+    }
+
+    @Override
+    public List<TransportRequestSummary> findQuotingSummaries(Set<CompanyId> shipperCompanyIds) {
+        return mapper.selectQuotingSummaries(idsOf(shipperCompanyIds)).stream()
+                .map(MyBatisTransportRequestRepository::toSummary)
+                .toList();
+    }
+
+    /** 社内の一覧を絞る荷主企業（Bolt 38f）。空は呼ぶ側で守る（{@code IN ()} は書けない）。 */
+    static List<UUID> idsOf(Set<CompanyId> shipperCompanyIds) {
+        if (shipperCompanyIds.isEmpty()) {
+            throw new IllegalArgumentException("社内の一覧は担当企業で絞る（空は呼ぶ側で守る）");
+        }
+        return shipperCompanyIds.stream().map(CompanyId::value).toList();
+    }
+
+    private static TransportRequestSummary toSummary(TransportRequestSummaryRow row) {
+        return new TransportRequestSummary(
+                TransportRequestNumber.parse(row.requestNumber()),
+                row.currentVersionNo(),
+                TransportRequestStatus.valueOf(row.status()),
+                new UtcInstant(row.firstSubmittedAt().toInstant()),
+                new UtcInstant(row.currentSubmittedAt().toInstant()),
+                new Location(row.originUnlocode()),
+                new Location(row.destinationUnlocode()),
+                new UtcInstant(row.arrivalDeadline().toInstant()),
+                CargoCategory.valueOf(row.cargoCategory()));
+    }
+
+    /** 新しい版の必要書類を追加する（追記専用。再提出の版では引き継いだ書類も新しい版の行になる）。 */
+    private void insertDocuments(TransportRequestId id, TransportRequestVersion version) {
+        version.terms()
+                .documents()
+                .forEach(document -> mapper.insertRequiredDocument(new RequiredDocumentRow(
+                        id.value(),
+                        version.versionNo(),
+                        document.documentNo(),
+                        document.type().name(),
+                        document.fileName(),
+                        document.mediaType().name(),
+                        document.sizeBytes(),
+                        document.sha256(),
+                        document.objectKey())));
+    }
+
+    private static TransportRequestRow toRow(TransportRequest request) {
+        TransportRequestVersion version = request.currentVersion();
+        Cargo cargo = version.terms().cargo();
+        return new TransportRequestRow(
+                request.id().value(),
+                request.number().text(),
+                request.shipperCompanyId().value(),
+                request.status().name(),
+                version.versionNo(),
+                request.aggregateVersion(),
+                version.terms().consigneeCompanyId().value(),
+                version.terms().origin().unLocode(),
+                version.terms().destination().unLocode(),
+                version.terms().arrivalDeadline().instant().atOffset(ZoneOffset.UTC),
+                cargo.category().name(),
+                cargo.packageType().name(),
+                cargo.packageCount(),
+                cargo.grossWeightKg(),
+                cargo.volumeM3(),
+                version.submittedBy().value(),
+                version.submittedAt().instant().atOffset(ZoneOffset.UTC));
+    }
+
+    private TransportRequest toAggregate(TransportRequestRow row) {
+        TransportRequestVersion version = new TransportRequestVersion(
+                row.currentVersionNo(),
+                new ShipmentTerms(
+                        new CompanyId(row.consigneeCompanyId()),
+                        new Location(row.originUnlocode()),
+                        new Location(row.destinationUnlocode()),
+                        new UtcInstant(row.arrivalDeadline().toInstant()),
+                        new Cargo(
+                                CargoCategory.valueOf(row.cargoCategory()),
+                                PackageType.valueOf(row.packageType()),
+                                row.packageCount(),
+                                row.grossWeightKg(),
+                                row.volumeM3()),
+                        mapper.selectRequiredDocuments(row.id(), row.currentVersionNo()).stream()
+                                .map(MyBatisTransportRequestRepository::toDocument)
+                                .toList()),
+                new UserId(row.submittedBy()),
+                new UtcInstant(row.submittedAt().toInstant()));
+        return TransportRequest.reconstitute(
+                new TransportRequestId(row.id()),
+                TransportRequestNumber.parse(row.requestNumber()),
+                new CompanyId(row.shipperCompanyId()),
+                TransportRequestStatus.valueOf(row.status()),
+                version,
+                mapper.selectReviewRecords(row.id()).stream()
+                        .map(MyBatisTransportRequestRepository::toReviewRecord)
+                        .toList(),
+                row.version());
+    }
+
+    private static RequiredDocument toDocument(RequiredDocumentRow row) {
+        return new RequiredDocument(
+                row.documentNo(),
+                DocumentType.valueOf(row.documentType()),
+                row.fileName(),
+                DocumentMediaType.valueOf(row.mediaType()),
+                row.sizeBytes(),
+                row.sha256(),
+                row.objectKey());
+    }
+
+    private static ReviewRecord toReviewRecord(ReviewRecordRow row) {
+        return new ReviewRecord(
+                row.id(),
+                row.versionNo(),
+                ReviewDecision.valueOf(row.decision()),
+                new UserId(row.reviewerId()),
+                row.rationale(),
+                row.missingItems(),
+                new UtcInstant(row.decidedAt().toInstant()));
+    }
+}

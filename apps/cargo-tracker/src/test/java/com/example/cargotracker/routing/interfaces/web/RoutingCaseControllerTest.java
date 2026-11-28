@@ -1,0 +1,1292 @@
+package com.example.cargotracker.routing.interfaces.web;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import com.example.cargotracker.identity.infrastructure.security.TestActors;
+import com.example.cargotracker.identity.infrastructure.security.WithAuthenticatedActor;
+import com.example.cargotracker.routing.application.internal.commands.CalculateCandidatesCommand;
+import com.example.cargotracker.routing.application.internal.commands.ConfirmRouteCommand;
+import com.example.cargotracker.routing.application.internal.commandservices.CandidateCalculationOutcome;
+import com.example.cargotracker.routing.application.internal.commandservices.RouteConfirmationOutcome;
+import com.example.cargotracker.routing.application.internal.commandservices.RoutingCaseCommandService;
+import com.example.cargotracker.routing.application.internal.queryservices.RoutingCaseQueryService;
+import com.example.cargotracker.routing.domain.model.aggregates.ConnectionRule;
+import com.example.cargotracker.routing.domain.model.aggregates.RoutingCase;
+import com.example.cargotracker.routing.domain.model.aggregates.Voyage;
+import com.example.cargotracker.routing.domain.model.entities.RouteCandidate;
+import com.example.cargotracker.routing.domain.model.entities.RouteVersion;
+import com.example.cargotracker.routing.domain.model.rules.ConstraintEvaluator;
+import com.example.cargotracker.routing.domain.model.rules.InfoFreshnessPolicy;
+import com.example.cargotracker.routing.domain.model.rules.RouteCandidateFinder;
+import com.example.cargotracker.routing.domain.model.valueobjects.CandidateCalculation;
+import com.example.cargotracker.routing.domain.model.valueobjects.ConstraintEvaluation;
+import com.example.cargotracker.routing.domain.model.valueobjects.ExclusionReason;
+import com.example.cargotracker.routing.domain.model.valueobjects.Leg;
+import com.example.cargotracker.routing.domain.model.valueobjects.PortCall;
+import com.example.cargotracker.routing.domain.model.valueobjects.RedesignReasonCode;
+import com.example.cargotracker.routing.domain.model.valueobjects.RedesignRecord;
+import com.example.cargotracker.routing.domain.model.valueobjects.RouteApprover;
+import com.example.cargotracker.routing.domain.model.valueobjects.RouteCargoCategory;
+import com.example.cargotracker.routing.domain.model.valueobjects.RouteConfirmationRejectionReason;
+import com.example.cargotracker.routing.domain.model.valueobjects.RouteSpecification;
+import com.example.cargotracker.routing.domain.model.valueobjects.RouteVersionStatus;
+import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseId;
+import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseNumber;
+import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseSummary;
+import com.example.cargotracker.routing.domain.model.valueobjects.StaleLeg;
+import com.example.cargotracker.routing.domain.model.valueobjects.StaleLegReason;
+import com.example.cargotracker.shared.domain.CompanyId;
+import com.example.cargotracker.shared.domain.Location;
+import com.example.cargotracker.shared.domain.Role;
+import com.example.cargotracker.shared.domain.UtcInstant;
+import java.nio.charset.StandardCharsets;
+import java.time.Clock;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Stream;
+import org.hamcrest.Matchers;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.InOrder;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
+import org.springframework.http.HttpStatus;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.server.ResponseStatusException;
+
+/** S-05 経路設計案件一覧・S-06 経路候補の比較・S-07 経路の確定（US-06 AC1〜AC3、US-07 AC1・AC2。Bolt 17・19）。 */
+// 画面の単体テストはコントローラーの振る舞いだけを見る。認証・認可・CSRF はセキュリティの統合テストで確かめる（Bolt 14）
+@WithAuthenticatedActor(Role.ROUTE_DESIGNER)
+@AutoConfigureMockMvc(addFilters = false)
+@WebMvcTest(controllers = RoutingCaseController.class)
+class RoutingCaseControllerTest {
+
+    static final RoutingCaseNumber NUMBER = new RoutingCaseNumber(2026, 88);
+    static final String SHOW = "/staff/routing-cases/RC-2026-0088";
+    static final Location TOKYO = new Location("JPTYO");
+    static final Location SINGAPORE = new Location("SGSIN");
+    static final Location HONG_KONG = new Location("HKHKG");
+    static final Location ROTTERDAM = new Location("NLRTM");
+    static final UtcInstant DEADLINE = at("2026-11-02T00:00:00Z");
+
+    @Autowired
+    MockMvc mockMvc;
+
+    @MockitoBean
+    RoutingCaseQueryService queryService;
+
+    @MockitoBean
+    RoutingCaseCommandService commandService;
+
+    @MockitoBean
+    RoutingOutOfScopeResponder outOfScope;
+
+    @Test
+    void 案件一覧は案件番号と見積依頼と条件と依頼の日時と状態を示し案件を開ける() throws Exception {
+        when(queryService.listCases(any()))
+                .thenReturn(List.of(new RoutingCaseSummary(
+                        NUMBER,
+                        "TR-2026-0001",
+                        1,
+                        TOKYO,
+                        ROTTERDAM,
+                        DEADLINE,
+                        at("2026-10-06T02:00:00Z"),
+                        RouteVersionStatus.DRAFT,
+                        at("2026-10-08T09:00:00Z"))));
+
+        mockMvc.perform(get("/staff/routing-cases"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(Matchers.containsString("経路設計案件一覧")))
+                .andExpect(content().string(Matchers.containsString("href=\"" + SHOW + "\"")))
+                .andExpect(content().string(Matchers.containsString("TR-2026-0001 版 1")))
+                .andExpect(content().string(Matchers.containsString("JPTYO から NLRTM")))
+                // 「→」はスクリーンリーダーが「右矢印」と読むので使わない（Bolt 26 の U-4。Bolt 26c）
+                .andExpect(content().string(Matchers.containsString(">出発地・目的地</th>")))
+                .andExpect(content().string(Matchers.not(Matchers.containsString("→"))))
+                .andExpect(content()
+                        .string(Matchers.containsString(
+                                "2026-11-02 09:00 Asia/Tokyo（UTC+09:00）（UTC 2026-11-02 00:00）")))
+                .andExpect(content().string(Matchers.containsString("2026-10-06 11:00 Asia/Tokyo")))
+                .andExpect(content().string(Matchers.containsString("候補の算出待ち")));
+    }
+
+    @Test
+    void 候補を算出した案件の状態は確定待ちと示す() throws Exception {
+        when(queryService.listCases(any()))
+                .thenReturn(List.of(new RoutingCaseSummary(
+                        NUMBER,
+                        "TR-2026-0001",
+                        1,
+                        TOKYO,
+                        ROTTERDAM,
+                        DEADLINE,
+                        at("2026-10-06T02:00:00Z"),
+                        RouteVersionStatus.CANDIDATES_PRESENTED,
+                        at("2026-10-08T09:00:00Z"))));
+
+        mockMvc.perform(get("/staff/routing-cases"))
+                .andExpect(content().string(Matchers.containsString("候補算出済み（確定待ち）")));
+    }
+
+    @Test
+    void 案件がなければその旨を示す() throws Exception {
+        when(queryService.listCases(any())).thenReturn(List.of());
+
+        mockMvc.perform(get("/staff/routing-cases"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(Matchers.containsString("詳細経路設計の依頼はまだありません")));
+    }
+
+    @Test
+    void 算出の前の案件は条件と経路方針と候補の算出の操作を示す() throws Exception {
+        when(queryService.findByNumber(eq(NUMBER), any())).thenReturn(Optional.of(open()));
+
+        mockMvc.perform(get(SHOW))
+                .andExpect(status().isOk())
+                .andExpect(content().string(Matchers.containsString("経路候補の比較 RC-2026-0088")))
+                .andExpect(content().string(Matchers.containsString("JPTYO から NLRTM")))
+                .andExpect(content().string(Matchers.containsString("SGSIN")))
+                .andExpect(content().string(Matchers.containsString("まだ候補を算出していません")))
+                .andExpect(content().string(Matchers.containsString("action=\"" + SHOW + "/candidates\"")))
+                .andExpect(content().string(Matchers.containsString("候補を算出")));
+    }
+
+    @Test
+    void 算出した候補は適合と除外と理由と接続余裕と情報の取得時刻を示す() throws Exception {
+        when(queryService.findByNumber(eq(NUMBER), any())).thenReturn(Optional.of(calculated()));
+
+        mockMvc.perform(get(SHOW))
+                .andExpect(status().isOk())
+                .andExpect(content().string(Matchers.containsString("候補 1")))
+                .andExpect(content().string(Matchers.containsString("適合")))
+                .andExpect(content().string(Matchers.containsString("除外")))
+                .andExpect(content().string(Matchers.containsString("V-201")))
+                .andExpect(content().string(Matchers.containsString("余裕 4 時間")))
+                .andExpect(content().string(Matchers.containsString("不足 4 時間")))
+                // Bolt 17 レビュー D-61: 実際の接続時間と、規則がないことを判定できないと示す。経由港と期限までの余裕を示す
+                .andExpect(content().string(Matchers.containsString("接続不足（SGSIN で接続 4 時間、必要 8 時間、SGSIN の規則）")))
+                .andExpect(content().string(Matchers.containsString("接続を判定できない（HKHKG に次の出発の時刻で有効な接続時間規則がない。接続 1 日）")))
+                .andExpect(content().string(Matchers.containsString("期限超過 1 日 12 時間")))
+                .andExpect(content().string(Matchers.containsString("期限まで 2 日")))
+                .andExpect(content().string(Matchers.containsString("SGSIN 積替え")))
+                .andExpect(content().string(Matchers.containsString("直行")))
+                .andExpect(content().string(Matchers.containsString("最も古い情報の取得時刻")))
+                .andExpect(content().string(Matchers.containsString("参照した航海情報の版 V-LATE@1")))
+                .andExpect(content().string(Matchers.containsString("2026-10-07 10:00 Asia/Tokyo")))
+                .andExpect(content().string(Matchers.containsString("候補を再算出")));
+    }
+
+    @Test
+    void 算出したが候補がなければ航海の情報を確かめるよう示す() throws Exception {
+        RoutingCase routingCase = open();
+        routingCase.calculateCandidates(
+                List.of(),
+                List.of(),
+                at("2026-10-07T03:00:00Z"),
+                new RouteCandidateFinder(),
+                new ConstraintEvaluator(),
+                new InfoFreshnessPolicy(Duration.ofHours(24)));
+        when(queryService.findByNumber(eq(NUMBER), any())).thenReturn(Optional.of(routingCase));
+
+        mockMvc.perform(get(SHOW))
+                .andExpect(status().isOk())
+                .andExpect(content().string(Matchers.containsString("条件に合う航海が見つかりませんでした")))
+                .andExpect(content().string(Matchers.containsString("データ責任者")));
+    }
+
+    @Test
+    void ない案件番号と形式の違う案件番号は404() throws Exception {
+        when(queryService.findByNumber(any(), any())).thenReturn(Optional.empty());
+
+        mockMvc.perform(get(SHOW)).andExpect(status().isNotFound());
+        mockMvc.perform(get("/staff/routing-cases/TR-2026-0001")).andExpect(status().isNotFound());
+    }
+
+    @Test
+    void 範囲の外の案件の候補の算出はコマンドの前に記録して404() throws Exception {
+        // 行 3a・4（controller が先に範囲を確かめ、コマンドを呼ばない。Bolt 38g）
+        when(queryService.outOfScope(eq(NUMBER), any())).thenReturn(true);
+        when(outOfScope.recordAndNotFound(any(), eq("RC-2026-0088")))
+                .thenReturn(new ResponseStatusException(HttpStatus.NOT_FOUND));
+
+        mockMvc.perform(post(SHOW + "/candidates").param("expectedVersion", "7"))
+                .andExpect(status().isNotFound());
+
+        verify(outOfScope).recordAndNotFound(any(), eq("RC-2026-0088"));
+        verify(commandService, never()).calculateCandidates(any(), any());
+    }
+
+    @Test
+    void 算出の途中で範囲の外になったら記録して404() throws Exception {
+        // 行 5c（先の確かめの後に割り当てが外れた）
+        when(commandService.calculateCandidates(any(), any())).thenReturn(new CandidateCalculationOutcome.OutOfScope());
+        when(outOfScope.recordAndNotFound(any(), eq("RC-2026-0088")))
+                .thenReturn(new ResponseStatusException(HttpStatus.NOT_FOUND));
+
+        mockMvc.perform(post(SHOW + "/candidates").param("expectedVersion", "0"))
+                .andExpect(status().isNotFound());
+
+        InOrder order = inOrder(queryService, commandService, outOfScope);
+        order.verify(queryService).outOfScope(eq(NUMBER), any());
+        order.verify(commandService).calculateCandidates(any(), any());
+        order.verify(outOfScope).recordAndNotFound(any(), eq("RC-2026-0088"));
+    }
+
+    @Test
+    void 範囲の外の案件の確定はコマンドの前に記録して404() throws Exception {
+        // 行 3a・4
+        when(queryService.outOfScope(eq(NUMBER), any())).thenReturn(true);
+        when(outOfScope.recordAndNotFound(any(), eq("RC-2026-0088")))
+                .thenReturn(new ResponseStatusException(HttpStatus.NOT_FOUND));
+
+        mockMvc.perform(post(SHOW + "/confirmation")
+                        .param("candidate", "1")
+                        .param("rationale", "")
+                        .param("expectedVersion", "7"))
+                .andExpect(status().isNotFound());
+
+        verify(outOfScope).recordAndNotFound(any(), eq("RC-2026-0088"));
+        verify(commandService, never()).confirm(any(), any());
+    }
+
+    @Test
+    void 確定の途中で範囲の外になったら記録して404() throws Exception {
+        // 行 5c
+        when(commandService.confirm(any(), any())).thenReturn(new RouteConfirmationOutcome.OutOfScope());
+        when(outOfScope.recordAndNotFound(any(), eq("RC-2026-0088")))
+                .thenReturn(new ResponseStatusException(HttpStatus.NOT_FOUND));
+
+        mockMvc.perform(post(SHOW + "/confirmation")
+                        .param("candidate", "1")
+                        .param("rationale", "根拠")
+                        .param("expectedVersion", "0"))
+                .andExpect(status().isNotFound());
+
+        verify(outOfScope).recordAndNotFound(any(), eq("RC-2026-0088"));
+    }
+
+    @Test
+    void 範囲の外の詳細と確定の確認は記録せずに404() throws Exception {
+        // 行 2a（GET は記録しない。SEC-12）
+        when(queryService.findByNumber(any(), any())).thenReturn(Optional.empty());
+
+        mockMvc.perform(get(SHOW)).andExpect(status().isNotFound());
+        mockMvc.perform(get(SHOW + "/confirmation").param("candidate", "1")).andExpect(status().isNotFound());
+
+        verify(outOfScope, never()).recordAndNotFound(any(), any());
+    }
+
+    @Test
+    void 候補を算出すると比較の画面に戻り件数を示す() throws Exception {
+        when(commandService.calculateCandidates(
+                        eq(new CalculateCandidatesCommand(NUMBER, 0, TestActors.STAFF_USER)), any()))
+                .thenReturn(new CandidateCalculationOutcome.Calculated(
+                        NUMBER, new CandidateCalculation(22, 20, 18, at("2026-10-07T03:00:00Z"))));
+
+        mockMvc.perform(post(SHOW + "/candidates").param("expectedVersion", "0"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl(SHOW))
+                .andExpect(flash().attribute(
+                                "result",
+                                "候補を 20 件算出しました（適合 18 件、除外 2 件）。ほかに 2 件の候補があります（適合を先に、到着予定の早い順に 20 件まで示しています）"));
+    }
+
+    @Test
+    void ほかの経路設計者が先に算出していたら確かめるよう示す() throws Exception {
+        when(commandService.calculateCandidates(
+                        eq(new CalculateCandidatesCommand(NUMBER, 0, TestActors.STAFF_USER)), any()))
+                .thenReturn(new CandidateCalculationOutcome.Conflict());
+
+        mockMvc.perform(post(SHOW + "/candidates").param("expectedVersion", "0"))
+                .andExpect(redirectedUrl(SHOW))
+                .andExpect(flash().attribute("problem", "ほかの経路設計者が先にこの案件を更新しました。最新の候補を確かめてください。"));
+    }
+
+    @Test
+    void ない案件の候補は算出できず404() throws Exception {
+        when(commandService.calculateCandidates(
+                        eq(new CalculateCandidatesCommand(NUMBER, 0, TestActors.STAFF_USER)), any()))
+                .thenReturn(new CandidateCalculationOutcome.NotFound());
+
+        mockMvc.perform(post(SHOW + "/candidates").param("expectedVersion", "0"))
+                .andExpect(status().isNotFound());
+        // Bolt 38h の状態の組み合わせの行 10（ない対象は範囲外の試行として記録しない）
+        verify(outOfScope, never()).recordAndNotFound(any(), any());
+    }
+
+    @Test
+    void 案件一覧は見積有効期限を示し期限を過ぎた案件は期限切れと示し確定済みの状態を示す() throws Exception {
+        when(queryService.listCases(any()))
+                .thenReturn(List.of(
+                        new RoutingCaseSummary(
+                                NUMBER,
+                                "TR-2026-0001",
+                                1,
+                                TOKYO,
+                                ROTTERDAM,
+                                DEADLINE,
+                                at("2026-10-05T02:00:00Z"),
+                                RouteVersionStatus.CONFIRMED,
+                                at("2026-10-06T09:00:00Z")),
+                        new RoutingCaseSummary(
+                                new RoutingCaseNumber(2026, 89),
+                                "TR-2026-0002",
+                                1,
+                                TOKYO,
+                                ROTTERDAM,
+                                DEADLINE,
+                                at("2026-10-06T02:00:00Z"),
+                                RouteVersionStatus.CANDIDATES_PRESENTED,
+                                null)));
+
+        mockMvc.perform(get("/staff/routing-cases"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(Matchers.containsString("見積有効期限の近い順")))
+                .andExpect(content().string(Matchers.containsString("見積有効期限")))
+                .andExpect(content().string(Matchers.containsString("2026-10-06 18:00 Asia/Tokyo")))
+                .andExpect(content().string(Matchers.containsString("見積りの期限切れ")))
+                .andExpect(content().string(Matchers.containsString("確定済み")))
+                .andExpect(content().string(Matchers.containsString("期限の記録なし")));
+    }
+
+    @Test
+    void 比較の画面は適合の候補にだけ確定への入口を示し算出のフォームに版を持たせる() throws Exception {
+        when(queryService.findByNumber(eq(NUMBER), any())).thenReturn(Optional.of(calculated()));
+
+        mockMvc.perform(get(SHOW))
+                .andExpect(status().isOk())
+                .andExpect(content().string(Matchers.containsString("href=\"" + SHOW + "/confirmation?candidate=1\"")))
+                .andExpect(content().string(Matchers.not(Matchers.containsString(SHOW + "/confirmation?candidate=2"))))
+                .andExpect(content().string(Matchers.containsString("name=\"expectedVersion\" value=\"0\"")));
+    }
+
+    @Test
+    void 比較の画面は上限で示さなかった候補の数を常に示す() throws Exception {
+        RoutingCase calculated = calculated();
+        RouteVersion version = calculated.routeVersion();
+        RoutingCase withOmitted = reconstitute(new RouteVersion(
+                1,
+                version.status(),
+                version.candidates(),
+                version.candidatesEvaluatedAt(),
+                version.candidates().size() + 2,
+                null));
+        when(queryService.findByNumber(eq(NUMBER), any())).thenReturn(Optional.of(withOmitted));
+
+        mockMvc.perform(get(SHOW)).andExpect(content().string(Matchers.containsString("ほかに 2 件の候補があります")));
+    }
+
+    @Test
+    void 確定した案件は確定した経路と根拠を示し算出と確定の操作を出さない() throws Exception {
+        when(queryService.findByNumber(eq(NUMBER), any())).thenReturn(Optional.of(confirmed()));
+
+        mockMvc.perform(get(SHOW))
+                .andExpect(status().isOk())
+                .andExpect(content().string(Matchers.containsString("確定した経路")))
+                .andExpect(content().string(Matchers.containsString("SGSIN の接続に 4 時間の余裕がある。")))
+                .andExpect(content().string(Matchers.containsString("2026-10-07 14:00 Asia/Tokyo")))
+                // 画面に内部の ID を出さない（D-4。Bolt 19 レビュー）
+                .andExpect(content()
+                        .string(Matchers.not(Matchers.containsString(
+                                TestActors.STAFF_USER.value().toString()))))
+                .andExpect(content().string(Matchers.not(Matchers.containsString("候補を再算出"))))
+                .andExpect(content().string(Matchers.not(Matchers.containsString("この候補で確定へ"))));
+    }
+
+    @Test
+    void 確定した案件には再設計要の案内を出さない() throws Exception {
+        when(queryService.findByNumber(eq(NUMBER), any())).thenReturn(Optional.of(confirmed()));
+
+        mockMvc.perform(get(SHOW))
+                .andExpect(content().string(Matchers.containsString("確定した経路（候補 1）")))
+                .andExpect(content().string(Matchers.not(Matchers.containsString("再設計要"))));
+    }
+
+    @Test
+    void 再設計要の案件は確定の記録とともに再設計要の理由と時刻と確定し直せない案内を示し操作を出さない() throws Exception {
+        // Bolt 37d2（US-07 AC4・AC5）。評価は画面から起こさないので、再構成した状態で表示だけを確かめる
+        RouteVersion version = confirmed().routeVersion();
+        RoutingCase redesignRequired = reconstitute(new RouteVersion(
+                1,
+                RouteVersionStatus.REDESIGN_REQUIRED,
+                version.candidates(),
+                version.candidatesEvaluatedAt(),
+                version.candidatesFound(),
+                version.routeConfirmation(),
+                new RedesignRecord(
+                        at("2026-10-08T06:00:00Z"),
+                        List.of(RedesignReasonCode.CONNECTION_TOO_SHORT, RedesignReasonCode.DEADLINE_EXCEEDED))));
+        when(queryService.findByNumber(eq(NUMBER), any())).thenReturn(Optional.of(redesignRequired));
+
+        mockMvc.perform(get(SHOW))
+                .andExpect(status().isOk())
+                .andExpect(content().string(Matchers.containsString("再設計要の経路（候補 1）")))
+                .andExpect(content().string(Matchers.containsString("外部情報の更新で条件を満たさなくなったため再設計要です。")))
+                // 理由と時刻は承認者などと同じ欄の行で示す（かっこを重ねない。Bolt 37d2 レビュー）
+                .andExpect(content().string(Matchers.matchesRegex("(?s).*再設計要の理由</dt>\\s*<dd[^>]*>接続不足、期限超過</dd>.*")))
+                .andExpect(content()
+                        .string(Matchers.matchesRegex(
+                                "(?s).*再設計要にした時刻</dt>\\s*<dd[^>]*>2026-10-08 15:00 Asia/Tokyo.*")))
+                .andExpect(content().string(Matchers.containsString("候補の判定は確定のときのものです。")))
+                .andExpect(content().string(Matchers.containsString("この経路では確定し直せません。")))
+                .andExpect(content().string(Matchers.containsString("再設計の操作は今後の更新で入れます。")))
+                // Bolt 38h の状態の組み合わせの行 2（S-06。担当営業との相談を求めない）
+                .andExpect(content().string(Matchers.containsString("担当営業が荷主に新しい見積依頼を出すよう案内します。")))
+                .andExpect(content().string(Matchers.not(Matchers.containsString("担当営業と扱いを相談してください。"))))
+                .andExpect(content().string(Matchers.containsString(">再設計要の経路<")))
+                .andExpect(content().string(Matchers.containsString("✓ 適合（確定のとき）")))
+                .andExpect(content().string(Matchers.not(Matchers.containsString("後の版"))))
+                .andExpect(content().string(Matchers.containsString("SGSIN の接続に 4 時間の余裕がある。")))
+                .andExpect(content().string(Matchers.not(Matchers.containsString("確定した経路（候補"))))
+                .andExpect(content().string(Matchers.not(Matchers.containsString(">確定した経路<"))))
+                .andExpect(content().string(Matchers.not(Matchers.containsString("候補を再算出"))))
+                .andExpect(content().string(Matchers.not(Matchers.containsString("この候補で確定へ"))));
+    }
+
+    @Test
+    void 比較の画面の適合の根拠に参照した航海情報の版を画面の語で示す() throws Exception {
+        when(queryService.findByNumber(eq(NUMBER), any())).thenReturn(Optional.of(calculated()));
+
+        mockMvc.perform(get(SHOW))
+                .andExpect(status().isOk())
+                .andExpect(content().string(Matchers.containsString("（期限と接続時間を満たす）。参照した航海情報の版 V-201@1")))
+                .andExpect(content().string(Matchers.not(Matchers.containsString("参照情報版"))));
+    }
+
+    @Test
+    void 確定の画面の判定の根拠に参照した航海情報の版を画面の語で示す() throws Exception {
+        when(queryService.findByNumber(eq(NUMBER), any())).thenReturn(Optional.of(calculated()));
+
+        mockMvc.perform(get(SHOW + "/confirmation").param("candidate", "1"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(Matchers.containsString("（期限と接続時間を満たす）。参照した航海情報の版 V-201@1")))
+                .andExpect(content().string(Matchers.not(Matchers.containsString("参照情報版"))));
+    }
+
+    @Test
+    void 確定の画面は選んだ候補と見積有効期限と判断根拠の入力と確定の操作を示す() throws Exception {
+        when(queryService.findByNumber(eq(NUMBER), any())).thenReturn(Optional.of(calculated()));
+
+        mockMvc.perform(get(SHOW + "/confirmation").param("candidate", "1"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(Matchers.containsString("経路の確定 RC-2026-0088")))
+                .andExpect(content().string(Matchers.containsString("この経路で確定しますか")))
+                .andExpect(content().string(Matchers.containsString("候補 1（SGSIN 積替え）")))
+                .andExpect(content().string(Matchers.containsString("V-201")))
+                .andExpect(content().string(Matchers.containsString("見積有効期限")))
+                .andExpect(content().string(Matchers.containsString("2026-10-08 18:00 Asia/Tokyo")))
+                .andExpect(content().string(Matchers.containsString("4,000 文字まで")))
+                .andExpect(content().string(Matchers.not(Matchers.containsString("maxlength"))))
+                .andExpect(content().string(Matchers.containsString("確定した経路は見積りに割り当てられ、荷主の承認に進みます。")))
+                .andExpect(content().string(Matchers.not(Matchers.containsString("準備中"))))
+                .andExpect(content().string(Matchers.containsString("name=\"candidate\" value=\"1\"")))
+                .andExpect(content().string(Matchers.containsString("name=\"expectedVersion\" value=\"0\"")))
+                .andExpect(content().string(Matchers.containsString("この経路で確定する")));
+    }
+
+    @Test
+    void 輸送条件が変更された案件の確定の画面は開かず比較の画面で理由を示す_Bolt62() throws Exception {
+        when(queryService.findByNumber(eq(NUMBER), any())).thenReturn(Optional.of(calculated()));
+        when(commandService.conditionsChanged(any())).thenReturn(true);
+
+        mockMvc.perform(get(SHOW + "/confirmation").param("candidate", "1"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl(SHOW))
+                .andExpect(flash().attribute("problem", "荷主が輸送条件を変更したため、この案件の経路は確定できません。"));
+    }
+
+    @Test
+    void 除外の候補の確定の画面は開かず比較の画面で理由を示す() throws Exception {
+        when(queryService.findByNumber(eq(NUMBER), any())).thenReturn(Optional.of(calculated()));
+
+        mockMvc.perform(get(SHOW + "/confirmation").param("candidate", "2"))
+                .andExpect(redirectedUrl(SHOW))
+                .andExpect(flash().attribute("problem", "除外の候補は確定できません。"));
+    }
+
+    @Test
+    void ない候補とない案件の確定の画面は404() throws Exception {
+        when(queryService.findByNumber(eq(NUMBER), any())).thenReturn(Optional.of(calculated()));
+
+        mockMvc.perform(get(SHOW + "/confirmation").param("candidate", "99")).andExpect(status().isNotFound());
+        mockMvc.perform(get("/staff/routing-cases/RC-2026-0001/confirmation").param("candidate", "1"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void 確定すると比較の画面に戻り確定したと示す() throws Exception {
+        when(commandService.confirm(
+                        eq(new ConfirmRouteCommand(NUMBER, 1, "根拠", 3, TestActors.STAFF_USER, true)), any()))
+                .thenReturn(new RouteConfirmationOutcome.Confirmed(NUMBER, 1, 1));
+
+        mockMvc.perform(post(SHOW + "/confirmation")
+                        .param("candidate", "1")
+                        .param("rationale", "根拠")
+                        .param("expectedVersion", "3"))
+                .andExpect(redirectedUrl(SHOW))
+                .andExpect(flash().attribute("result", "候補 1 の経路を確定しました。確定した経路は見積りに割り当てられ、荷主の承認に進みます。"));
+    }
+
+    @Test
+    void 確定を拒否されたら理由をエラー要約に示し入力を残す() throws Exception {
+        // Bolt 38h の状態の組み合わせの行 4（出発済みの文を社内の語「最初の区間が出発済み」にそろえる）
+        when(queryService.findByNumber(eq(NUMBER), any())).thenReturn(Optional.of(calculated()));
+        when(commandService.confirm(
+                        eq(new ConfirmRouteCommand(NUMBER, 1, "出発の後の根拠", 0, TestActors.STAFF_USER, true)), any()))
+                .thenReturn(new RouteConfirmationOutcome.Rejected(RouteConfirmationRejectionReason.ALREADY_DEPARTED));
+
+        mockMvc.perform(post(SHOW + "/confirmation")
+                        .param("candidate", "1")
+                        .param("rationale", "出発の後の根拠")
+                        .param("expectedVersion", "0"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(Matchers.containsString("id=\"error-summary\"")))
+                .andExpect(content().string(Matchers.containsString("最初の区間が出発済みのため確定できません。候補を再算出してください。")))
+                .andExpect(content().string(Matchers.containsString(">出発の後の根拠</textarea>")));
+    }
+
+    @Test
+    void 判断根拠がなければ入れるよう示す() throws Exception {
+        when(queryService.findByNumber(eq(NUMBER), any())).thenReturn(Optional.of(calculated()));
+        when(commandService.confirm(eq(new ConfirmRouteCommand(NUMBER, 1, "", 0, TestActors.STAFF_USER, true)), any()))
+                .thenReturn(new RouteConfirmationOutcome.Rejected(RouteConfirmationRejectionReason.RATIONALE_MISSING));
+
+        mockMvc.perform(post(SHOW + "/confirmation")
+                        .param("candidate", "1")
+                        .param("rationale", "")
+                        .param("expectedVersion", "0"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(Matchers.containsString("判断根拠を入れてください。")))
+                .andExpect(content().string(Matchers.containsString("href=\"#rationale\"")));
+    }
+
+    @Test
+    void 画面を開いた後にほかの経路設計者が更新していたら確かめるよう示す() throws Exception {
+        when(commandService.confirm(
+                        eq(new ConfirmRouteCommand(NUMBER, 1, "根拠", 0, TestActors.STAFF_USER, true)), any()))
+                .thenReturn(new RouteConfirmationOutcome.Conflict());
+
+        mockMvc.perform(post(SHOW + "/confirmation")
+                        .param("candidate", "1")
+                        .param("rationale", "根拠")
+                        .param("expectedVersion", "0"))
+                .andExpect(redirectedUrl(SHOW))
+                .andExpect(flash().attribute("problem", "ほかの経路設計者が先にこの案件を更新しました。最新の候補を確かめてください。"));
+    }
+
+    @Test
+    void 再設計要の案件の確定の画面は開かず比較の画面で確定し直せない理由を示す() throws Exception {
+        // Bolt 37e3 の状態の組み合わせの行 12（GET。POST は比較の画面に戻す理由の組で確かめる）。Bolt 38h の状態の組み合わせの行 2（S-07）
+        RouteVersion version = confirmed().routeVersion();
+        when(queryService.findByNumber(eq(NUMBER), any()))
+                .thenReturn(Optional.of(reconstitute(new RouteVersion(
+                        1,
+                        RouteVersionStatus.REDESIGN_REQUIRED,
+                        version.candidates(),
+                        version.candidatesEvaluatedAt(),
+                        version.candidatesFound(),
+                        version.routeConfirmation(),
+                        new RedesignRecord(
+                                at("2026-10-08T06:00:00Z"), List.of(RedesignReasonCode.DEADLINE_EXCEEDED))))));
+
+        mockMvc.perform(get(SHOW + "/confirmation").param("candidate", "1"))
+                .andExpect(redirectedUrl(SHOW))
+                .andExpect(flash().attribute("problem", "この案件の経路は再設計要のため確定し直せません。担当営業が荷主に新しい見積依頼を出すよう案内します。"));
+    }
+
+    @Test
+    void 確定した案件と算出の前の案件の確定の画面は開かず比較の画面で理由を示す() throws Exception {
+        when(queryService.findByNumber(eq(NUMBER), any())).thenReturn(Optional.of(confirmed()));
+
+        mockMvc.perform(get(SHOW + "/confirmation").param("candidate", "1"))
+                .andExpect(redirectedUrl(SHOW))
+                .andExpect(flash().attribute("problem", "この案件の経路はすでに確定しているか、候補をまだ算出していません。"));
+
+        when(queryService.findByNumber(eq(NUMBER), any())).thenReturn(Optional.of(open()));
+
+        mockMvc.perform(get(SHOW + "/confirmation").param("candidate", "1"))
+                .andExpect(redirectedUrl(SHOW))
+                .andExpect(flash().attribute("problem", "この案件の経路はすでに確定しているか、候補をまだ算出していません。"));
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest(name = "{0} は比較の画面に戻して示す")
+    @org.junit.jupiter.params.provider.EnumSource(
+            value = RouteConfirmationRejectionReason.class,
+            names = {
+                "CANDIDATE_EXCLUDED",
+                "NOT_CONFIRMABLE_STATE",
+                "CANDIDATE_NOT_FOUND",
+                "INFO_VERSION_CHANGED",
+                "ROUTE_REDESIGN_REQUIRED"
+            })
+    void 選んだ候補が使えないか参照した情報が置き換わった拒否は比較の画面に戻して理由を示す(RouteConfirmationRejectionReason reason) throws Exception {
+        when(commandService.confirm(
+                        eq(new ConfirmRouteCommand(NUMBER, 1, "根拠", 0, TestActors.STAFF_USER, true)), any()))
+                .thenReturn(new RouteConfirmationOutcome.Rejected(reason));
+
+        mockMvc.perform(post(SHOW + "/confirmation")
+                        .param("candidate", "1")
+                        .param("rationale", "根拠")
+                        .param("expectedVersion", "0"))
+                .andExpect(redirectedUrl(SHOW))
+                .andExpect(flash().attribute("problem", RoutingCaseController.message(reason)));
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest(name = "{0} は確定の画面で示す")
+    @org.junit.jupiter.params.provider.EnumSource(
+            value = RouteConfirmationRejectionReason.class,
+            names = {"RATIONALE_TOO_LONG", "NOT_ROUTE_DESIGNER", "NO_LONGER_CONFORMING", "INFO_INSUFFICIENT"})
+    void 情報は同じで入力や再算出で直す拒否は確定の画面で示す(RouteConfirmationRejectionReason reason) throws Exception {
+        when(queryService.findByNumber(eq(NUMBER), any())).thenReturn(Optional.of(calculated()));
+        when(commandService.confirm(
+                        eq(new ConfirmRouteCommand(NUMBER, 1, "根拠", 0, TestActors.STAFF_USER, true)), any()))
+                .thenReturn(new RouteConfirmationOutcome.Rejected(reason));
+
+        mockMvc.perform(post(SHOW + "/confirmation")
+                        .param("candidate", "1")
+                        .param("rationale", "根拠")
+                        .param("expectedVersion", "0"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(Matchers.containsString(RoutingCaseController.message(reason))));
+    }
+
+    @Test
+    void 情報版の更新と情報不足の文言はすることと判断根拠が残らないことを示す() {
+        // Bolt 37c の開発レビュー: 本体と同じ式ではなく、文言そのものを確かめる
+        assertThat(RoutingCaseController.message(RouteConfirmationRejectionReason.INFO_VERSION_CHANGED))
+                .isEqualTo("候補を算出した後に航海の情報が更新されたため確定できません。入力した判断根拠は保存していません。" + "候補を再算出して判断し直してください。");
+        assertThat(RoutingCaseController.message(RouteConfirmationRejectionReason.INFO_INSUFFICIENT))
+                .isEqualTo("航海の情報が取得から許容時間を過ぎているため確定できません（情報不足）。" + "航海の情報の取込をデータ責任者に依頼し、取り込まれたら候補を再算出してください。");
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest(name = "{0} には文言がある")
+    @org.junit.jupiter.params.provider.EnumSource(RouteConfirmationRejectionReason.class)
+    void 確定の拒否の理由にはすべて文言がある(RouteConfirmationRejectionReason reason) {
+        assertThat(RoutingCaseController.message(reason)).isNotBlank();
+    }
+
+    @Test
+    void 確定の画面を描き直すときに候補がなくなっていたら比較の画面に戻す() throws Exception {
+        when(queryService.findByNumber(eq(NUMBER), any())).thenReturn(Optional.of(open()));
+        when(commandService.confirm(
+                        eq(new ConfirmRouteCommand(NUMBER, 1, "根拠", 0, TestActors.STAFF_USER, true)), any()))
+                .thenReturn(
+                        new RouteConfirmationOutcome.Rejected(RouteConfirmationRejectionReason.NO_LONGER_CONFORMING));
+
+        mockMvc.perform(post(SHOW + "/confirmation")
+                        .param("candidate", "1")
+                        .param("rationale", "根拠")
+                        .param("expectedVersion", "0"))
+                .andExpect(redirectedUrl(SHOW));
+    }
+
+    @Test
+    void ない案件は確定できず404() throws Exception {
+        when(commandService.confirm(
+                        eq(new ConfirmRouteCommand(NUMBER, 1, "根拠", 0, TestActors.STAFF_USER, true)), any()))
+                .thenReturn(new RouteConfirmationOutcome.NotFound());
+
+        mockMvc.perform(post(SHOW + "/confirmation")
+                        .param("candidate", "1")
+                        .param("rationale", "根拠")
+                        .param("expectedVersion", "0"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void 見積りの期限切れの案件は比較と確定の画面で担当営業との相談を示す() throws Exception {
+        when(queryService.findByNumber(eq(NUMBER), any()))
+                .thenReturn(Optional.of(withExpiry(calculated(), "2026-10-07T00:00:00Z")));
+
+        mockMvc.perform(get(SHOW))
+                .andExpect(content().string(Matchers.containsString("見積りの期限切れ")))
+                .andExpect(content().string(Matchers.containsString("担当営業と扱いを相談してください")));
+        mockMvc.perform(get(SHOW + "/confirmation").param("candidate", "1"))
+                .andExpect(content().string(Matchers.containsString("見積りの期限切れ")))
+                .andExpect(content().string(Matchers.containsString("担当営業と扱いを相談してください")));
+    }
+
+    @Test
+    void 期限の前の案件は期限切れと示さない() throws Exception {
+        when(queryService.findByNumber(eq(NUMBER), any()))
+                .thenReturn(Optional.of(withExpiry(calculated(), "2026-10-07T00:01:00Z")));
+
+        mockMvc.perform(get(SHOW)).andExpect(content().string(Matchers.not(Matchers.containsString("見積りの期限切れ"))));
+    }
+
+    @Test
+    void 判断根拠は表示でエスケープする() throws Exception {
+        RoutingCase routingCase = calculated();
+        routingCase.confirm(
+                1,
+                "<script>alert(1)</script>",
+                new RouteApprover(TestActors.STAFF_USER.value(), true),
+                voyages(),
+                List.of(new ConnectionRule(
+                        UUID.randomUUID(), SINGAPORE, Duration.ofHours(8), at("2026-01-01T00:00:00Z"), null)),
+                at("2026-10-07T05:00:00Z"),
+                new ConstraintEvaluator(),
+                new InfoFreshnessPolicy(Duration.ofHours(24)));
+        when(queryService.findByNumber(eq(NUMBER), any())).thenReturn(Optional.of(routingCase));
+
+        mockMvc.perform(get(SHOW))
+                .andExpect(content().string(Matchers.containsString("&lt;script&gt;alert(1)&lt;/script&gt;")))
+                .andExpect(content().string(Matchers.not(Matchers.containsString("<script>alert(1)"))));
+    }
+
+    /** 貨物種別で除外の候補の表示（Bolt 39i の行 30・32）。 */
+    @Nested
+    @Import(FixedClock.class)
+    class Bolt39i_貨物種別で除外の表示 {
+
+        private static final String LEAD_DEFAULT = "適合する候補がありません。除外の理由を確かめ、航海の情報や接続時間規則の確認をデータ責任者に依頼してください。";
+        private static final String LEAD_CARGO = "適合する候補がありません。この案件の貨物は MVP の対象外のため、手動の窓口で扱ってください。";
+        private static final String ENTRY = "この候補で確定へ";
+
+        private String shown(RoutingCase routingCase, StaleLeg... staleLegs) throws Exception {
+            when(queryService.findByNumber(eq(NUMBER), any())).thenReturn(Optional.of(routingCase));
+            when(queryService.staleLegsOf(any(), any())).thenReturn(List.of(staleLegs));
+            return mockMvc.perform(get(SHOW))
+                    .andExpect(status().isOk())
+                    .andReturn()
+                    .getResponse()
+                    .getContentAsString(StandardCharsets.UTF_8);
+        }
+
+        private static RouteCandidate candidate(int candidateNo, ExclusionReason... reasons) {
+            Leg leg = new Leg(
+                    "V-" + candidateNo,
+                    TOKYO,
+                    ROTTERDAM,
+                    at("2026-10-10T00:00:00Z"),
+                    at("2026-10-30T00:00:00Z"),
+                    "V-" + candidateNo + "@1",
+                    at("2026-10-07T01:00:00Z"));
+            return new RouteCandidate(
+                    candidateNo,
+                    List.of(leg),
+                    new ConstraintEvaluation(at("2026-10-30T00:00:00Z"), List.of(reasons), null),
+                    at("2026-10-07T03:00:00Z"));
+        }
+
+        private static ExclusionReason cargo(RouteCargoCategory category) {
+            return ExclusionReason.cargoNotSupported(category, at("2026-10-10T00:00:00Z"), "V-1@1");
+        }
+
+        private static RoutingCase presentedWith(RouteCandidate... candidates) {
+            return reconstitute(new RouteVersion(
+                    1, RouteVersionStatus.CANDIDATES_PRESENTED, List.of(candidates), at("2026-10-07T03:00:00Z")));
+        }
+
+        @Test
+        void 行30_すべて貨物種別で除外なら導入文は手動の窓口の案内で理由は候補ごとに出て確定の入口はない() throws Exception {
+            String html = shown(presentedWith(
+                    candidate(1, cargo(RouteCargoCategory.DANGEROUS)),
+                    candidate(2, cargo(RouteCargoCategory.DANGEROUS))));
+
+            assertThat(html)
+                    .contains(LEAD_CARGO)
+                    .doesNotContain(LEAD_DEFAULT, ENTRY)
+                    .contains("貨物種別に対応しない（危険物。MVP の対象は一般貨物だけで、手動の窓口で扱う）");
+            assertThat(html.split("貨物種別に対応しない（危険物", -1)).hasSize(3);
+        }
+
+        @Test
+        void 行30_貨物種別と別の区分が混ざる除外は今の導入文のまま() throws Exception {
+            ExclusionReason deadline = ExclusionReason.deadlineExceeded(at("2026-11-03T12:00:00Z"), DEADLINE, "V-X@1");
+            String html = shown(presentedWith(
+                    candidate(1, cargo(RouteCargoCategory.REEFER)),
+                    candidate(2, deadline, cargo(RouteCargoCategory.REEFER))));
+
+            assertThat(html).contains(LEAD_DEFAULT).doesNotContain(LEAD_CARGO);
+        }
+
+        @Test
+        void 行32_貨物種別で除外の候補も区間が今の航海と合わなければ古くなった候補と示す() throws Exception {
+            String html = shown(
+                    presentedWith(candidate(1, cargo(RouteCargoCategory.OTHER_SPECIAL))),
+                    new StaleLeg(1, 1, StaleLegReason.SCHEDULE_CHANGED));
+
+            assertThat(html).contains("古くなった候補").contains(LEAD_CARGO);
+        }
+    }
+
+    @Nested
+    @Import(FixedClock.class)
+    class Bolt39f2_古くなった候補の表示 {
+
+        private static final String STALE_MARK = "古くなった候補";
+        private static final String ENTRY = "この候補で確定へ";
+        private static final String WHEN_CALCULATED = "（算出のとき）";
+        private static final String PARTIAL_LEAD = "古くなった候補が %d 件あります。";
+        private static final String ALL_LEAD = "適合の候補はすべて古くなっています。";
+        private static final String COMMON_TAIL = "古くなった候補は確定できません。航海の情報が更新された候補は「候補を再算出」して比べ直してください。";
+        private static final String INSUFFICIENT_TAIL = "取得から許容時間を過ぎた航海は、先に航海の情報の取込をデータ責任者に依頼し、取り込まれたら再算出してください。";
+        private static final String SCHEDULE_NOTE = "参照した航海情報の版は同じですが、この区間の予定が変わりました。";
+        private static final Instant CLOCK_INSTANT = Instant.parse("2026-10-07T00:00:00Z");
+
+        private String shown(RoutingCase routingCase, StaleLeg... staleLegs) throws Exception {
+            when(queryService.findByNumber(eq(NUMBER), any())).thenReturn(Optional.of(routingCase));
+            when(queryService.staleLegsOf(any(), any())).thenReturn(List.of(staleLegs));
+            return mockMvc.perform(get(SHOW))
+                    .andExpect(status().isOk())
+                    .andReturn()
+                    .getResponse()
+                    .getContentAsString(StandardCharsets.UTF_8);
+        }
+
+        private static RoutingCase presentedWith(RouteCandidate... candidates) {
+            return reconstitute(new RouteVersion(
+                    1, RouteVersionStatus.CANDIDATES_PRESENTED, List.of(candidates), at("2026-10-07T03:00:00Z")));
+        }
+
+        private static Leg leg(String voyageNumber) {
+            return new Leg(
+                    voyageNumber,
+                    TOKYO,
+                    ROTTERDAM,
+                    at("2026-10-10T00:00:00Z"),
+                    at("2026-10-30T00:00:00Z"),
+                    voyageNumber + "@1",
+                    at("2026-10-07T01:00:00Z"));
+        }
+
+        private static RouteCandidate conforming(int candidateNo, String... voyageNumbers) {
+            return candidate(candidateNo, List.of(), voyageNumbers);
+        }
+
+        private static RouteCandidate excluded(int candidateNo, String... voyageNumbers) {
+            return candidate(
+                    candidateNo,
+                    List.of(ExclusionReason.deadlineExceeded(at("2026-11-03T12:00:00Z"), DEADLINE, "V-X@1")),
+                    voyageNumbers);
+        }
+
+        private static RouteCandidate candidate(
+                int candidateNo, List<ExclusionReason> reasons, String... voyageNumbers) {
+            return new RouteCandidate(
+                    candidateNo,
+                    Arrays.stream(voyageNumbers).map(Bolt39f2_古くなった候補の表示::leg).toList(),
+                    new ConstraintEvaluation(at("2026-10-30T00:00:00Z"), reasons, null),
+                    at("2026-10-07T03:00:00Z"));
+        }
+
+        private static StaleLeg stale(int candidateNo, int legNo) {
+            return new StaleLeg(candidateNo, legNo, StaleLegReason.SCHEDULE_CHANGED);
+        }
+
+        /** 候補ごとの article（どの候補に出たかまで縛る。T-244）。 */
+        private static String block(String html, int candidateNo) {
+            Matcher matcher = Pattern.compile(
+                            "(?s)<article[^>]*aria-labelledby=\"candidate-" + candidateNo + "\".*?</article>")
+                    .matcher(html);
+            assertThat(matcher.find()).as("候補 %d の article", candidateNo).isTrue();
+            return matcher.group();
+        }
+
+        /** 候補の見出しの全文（タグを除き、空白を 1 つにまとめる。読み上げの名前）。 */
+        private static String heading(String block) {
+            Matcher matcher = Pattern.compile("(?s)<h3[^>]*>(.*?)</h3>").matcher(block);
+            assertThat(matcher.find()).isTrue();
+            return matcher.group(1)
+                    .replaceAll("<[^>]+>", " ")
+                    .replaceAll("\\s+", " ")
+                    .trim();
+        }
+
+        private static List<String> legItems(String block) {
+            Matcher matcher = Pattern.compile("(?s)<ol[^>]*>(.*?)</ol>").matcher(block);
+            assertThat(matcher.find()).isTrue();
+            return Arrays.stream(matcher.group(1).split("<li>")).skip(1).toList();
+        }
+
+        private static long count(String html, String text) {
+            return html.split(Pattern.quote(text), -1).length - 1L;
+        }
+
+        @Test
+        void 行18_適合の候補が1つで古いと時点を添えた判定の印と古くなった候補の印と区間の文を示し確定の入口を出さない() throws Exception {
+            RoutingCase routingCase = presentedWith(conforming(1, "V-1"));
+
+            String html = shown(routingCase, stale(1, 1));
+
+            String block = block(html, 1);
+            assertThat(heading(block)).contains("✓ 適合（算出のとき）").contains(STALE_MARK);
+            assertThat(block)
+                    .containsPattern("class=\"badge text-bg-secondary\"[^>]*>✓ 適合（算出のとき）")
+                    .doesNotContain("text-bg-success")
+                    .contains(SCHEDULE_NOTE)
+                    .doesNotContain(ENTRY);
+            // 判定は開いた時刻の時計で 1 回呼ぶ（範囲の中では呼ぶことの確かめ。行 26 の T-106。T-229）
+            verify(queryService).staleLegsOf(routingCase, CLOCK_INSTANT);
+        }
+
+        static Stream<Arguments> partlyStale() {
+            return Stream.of(
+                    Arguments.of(
+                            "(a) 候補 2 つのうち候補 2 に古い区間 1 つ",
+                            new RouteCandidate[] {conforming(1, "V-1"), conforming(2, "V-2")},
+                            new StaleLeg[] {stale(2, 1)},
+                            1,
+                            Set.of(2)),
+                    Arguments.of(
+                            "(b) 候補 2 に古い区間 2 つでも候補の数で数える",
+                            new RouteCandidate[] {conforming(1, "V-1"), conforming(2, "V-2", "V-3")},
+                            new StaleLeg[] {stale(2, 1), stale(2, 2)},
+                            1,
+                            Set.of(2)),
+                    Arguments.of(
+                            "(c) 候補 3 つのうち 2 つに古い区間 1 つずつ",
+                            new RouteCandidate[] {conforming(1, "V-1"), conforming(2, "V-2"), conforming(3, "V-3")},
+                            new StaleLeg[] {stale(2, 1), stale(3, 1)},
+                            2,
+                            Set.of(2, 3)));
+        }
+
+        @ParameterizedTest(name = "{0}")
+        @MethodSource("partlyStale")
+        void 行19_一部だけ古いと古い候補だけに印と文を示し新しい候補は今のまま(
+                String description,
+                RouteCandidate[] candidates,
+                StaleLeg[] staleLegs,
+                int expected,
+                Set<Integer> staleNos)
+                throws Exception {
+            String html = shown(presentedWith(candidates), staleLegs);
+
+            for (RouteCandidate candidate : candidates) {
+                String block = block(html, candidate.candidateNo());
+                if (staleNos.contains(candidate.candidateNo())) {
+                    assertThat(heading(block))
+                            .as(description)
+                            .contains(WHEN_CALCULATED)
+                            .contains(STALE_MARK);
+                    assertThat(block).as(description).doesNotContain(ENTRY);
+                } else {
+                    assertThat(heading(block)).as(description).endsWith("✓ 適合").doesNotContain(STALE_MARK);
+                    assertThat(block)
+                            .as(description)
+                            .containsPattern("class=\"badge text-bg-success\"[^>]*>✓ 適合<")
+                            .contains(ENTRY);
+                }
+            }
+            assertThat(html)
+                    .as(description)
+                    .contains(PARTIAL_LEAD.formatted(expected) + COMMON_TAIL)
+                    .doesNotContain(ALL_LEAD);
+        }
+
+        static Stream<Arguments> excludedMixedIn() {
+            return Stream.of(
+                    Arguments.of(
+                            "(a) 適合 2 つのうち 1 つが古く、除外 1 つも区間が合わない",
+                            new RouteCandidate[] {conforming(1, "V-1"), conforming(2, "V-2"), excluded(3, "V-3")},
+                            new StaleLeg[] {stale(2, 1), stale(3, 1)},
+                            2),
+                    Arguments.of(
+                            "(b) 適合は新しく、除外 1 つだけ区間が合わない",
+                            new RouteCandidate[] {conforming(1, "V-1"), excluded(2, "V-2")},
+                            new StaleLeg[] {stale(2, 1)},
+                            1));
+        }
+
+        @ParameterizedTest(name = "{0}")
+        @MethodSource("excludedMixedIn")
+        void 行19b_除外が混ざると適合と除外を合わせて数え一部の文で新しい適合の候補の入口は残る(
+                String description, RouteCandidate[] candidates, StaleLeg[] staleLegs, int expected) throws Exception {
+            String html = shown(presentedWith(candidates), staleLegs);
+
+            assertThat(html)
+                    .as(description)
+                    .contains(PARTIAL_LEAD.formatted(expected))
+                    .doesNotContain(ALL_LEAD);
+            assertThat(block(html, 1)).as(description).contains(ENTRY);
+        }
+
+        @Test
+        void 行20_適合の候補がすべて古いと全部の文で確定の入口は0個で再算出は出る() throws Exception {
+            String html = shown(
+                    presentedWith(conforming(1, "V-1"), conforming(2, "V-2"), excluded(3, "V-3")),
+                    stale(1, 1),
+                    stale(2, 1));
+
+            assertThat(html)
+                    .contains(ALL_LEAD + COMMON_TAIL, "候補を再算出")
+                    .doesNotContain(PARTIAL_LEAD.formatted(2), ENTRY);
+        }
+
+        @Test
+        void 行20b_すべて除外で区間が合わないと一部の文で古くなった候補の文が適合する候補がありませんより先() throws Exception {
+            String html = shown(presentedWith(excluded(1, "V-1"), excluded(2, "V-2")), stale(1, 1), stale(2, 1));
+
+            assertThat(html).doesNotContain(ALL_LEAD);
+            assertThat(html.indexOf(PARTIAL_LEAD.formatted(2))).isPositive().isLessThan(html.indexOf("適合する候補がありません。"));
+        }
+
+        static Stream<Arguments> freshnessNotice() {
+            return Stream.of(
+                    Arguments.of("取得から許容時間を過ぎた区間がある", StaleLegReason.INFO_INSUFFICIENT, true),
+                    Arguments.of("過ぎた区間がない", StaleLegReason.SCHEDULE_CHANGED, false));
+        }
+
+        @ParameterizedTest(name = "{0}")
+        @MethodSource("freshnessNotice")
+        void 行20c_鮮度の案内の文は取得から許容時間を過ぎた区間があるときだけ出る(String description, StaleLegReason reason, boolean expected)
+                throws Exception {
+            String html = shown(presentedWith(conforming(1, "V-1")), new StaleLeg(1, 1, reason));
+
+            assertThat(html.contains(INSUFFICIENT_TAIL)).as(description).isEqualTo(expected);
+        }
+
+        static Stream<Arguments> legNotes() {
+            return Stream.of(
+                    Arguments.of(StaleLegReason.VOYAGE_MISSING, "今の航海の情報にこの航海がありません。"),
+                    Arguments.of(StaleLegReason.INFO_VERSION_CHANGED, "参照した航海情報の版が変わりました。"),
+                    Arguments.of(StaleLegReason.SCHEDULE_CHANGED, SCHEDULE_NOTE),
+                    Arguments.of(StaleLegReason.INFO_INSUFFICIENT, "航海の情報が取得から許容時間を過ぎています。取込をデータ責任者に依頼してください。"));
+        }
+
+        @ParameterizedTest(name = "{0}")
+        @MethodSource("legNotes")
+        void 行21_区間の文は区分ごとに1つで内部の語がなく古くない区間には文がない(StaleLegReason reason, String note) throws Exception {
+            String html = shown(presentedWith(conforming(1, "V-1", "V-2")), new StaleLeg(1, 2, reason));
+
+            List<String> items = legItems(block(html, 1));
+            assertThat(items).hasSize(2);
+            assertThat(items.get(1)).contains(note);
+            assertThat(legNotes().map(arguments -> (String) arguments.get()[1]))
+                    .isNotEmpty()
+                    .allSatisfy(text -> assertThat(items.get(0)).doesNotContain(text));
+            assertThat(count(html, note)).isEqualTo(1);
+            assertThat(html).doesNotContain("引き直す");
+        }
+
+        @Test
+        void 行22_除外の候補の区間が合わないと時点を添えた除外の印と古くなった候補の印を示し除外の理由は残す() throws Exception {
+            String html = shown(presentedWith(conforming(1, "V-1"), excluded(2, "V-2")), stale(2, 1));
+
+            String block = block(html, 2);
+            assertThat(heading(block)).contains("✕ 除外（算出のとき）").contains(STALE_MARK);
+            assertThat(block).contains("除外の理由").contains("期限超過");
+        }
+
+        @Test
+        void 行23_確定済みの案件は古くなった候補も時点の語も出さず今の表示のまま() throws Exception {
+            String html = shown(confirmed());
+
+            assertThat(heading(block(html, 1))).contains("✓ 適合").contains("確定した経路");
+            assertThat(html).doesNotContain(STALE_MARK).doesNotContain(WHEN_CALCULATED);
+        }
+
+        @Test
+        void 行24_再設計要の案件は確定のときの判定の印のままで算出のときの語も古くなった候補も出さない() throws Exception {
+            RouteVersion version = confirmed().routeVersion();
+            RoutingCase redesignRequired = reconstitute(new RouteVersion(
+                    1,
+                    RouteVersionStatus.REDESIGN_REQUIRED,
+                    version.candidates(),
+                    version.candidatesEvaluatedAt(),
+                    version.candidatesFound(),
+                    version.routeConfirmation(),
+                    new RedesignRecord(at("2026-10-08T06:00:00Z"), List.of(RedesignReasonCode.DEADLINE_EXCEEDED))));
+
+            String html = shown(redesignRequired);
+
+            assertThat(heading(block(html, 1))).contains("✓ 適合（確定のとき）").contains("再設計要の経路");
+            assertThat(html).doesNotContain(STALE_MARK).doesNotContain(WHEN_CALCULATED);
+        }
+
+        @Test
+        void 行25_見出しの全文と区間の文と上の文が読み上げの形になる() throws Exception {
+            String html = shown(presentedWith(conforming(1, "V-1"), conforming(2, "V-2")), stale(2, 1));
+
+            String block = block(html, 2);
+            assertThat(block).contains("aria-labelledby=\"candidate-2\"");
+            assertThat(heading(block)).isEqualTo("候補 2（直行） ✓ 適合（算出のとき） 古くなった候補");
+            assertThat(legItems(block).getFirst()).contains(SCHEDULE_NOTE);
+            assertThat(html)
+                    .containsPattern("<div class=\"alert alert-warning\">" + Pattern.quote(PARTIAL_LEAD.formatted(1)));
+        }
+
+        @Test
+        void 行26_担当範囲の外とない案件は404のままで判定を呼ばない() throws Exception {
+            when(queryService.findByNumber(any(), any())).thenReturn(Optional.empty());
+
+            mockMvc.perform(get(SHOW)).andExpect(status().isNotFound());
+
+            verify(queryService, never()).staleLegsOf(any(), any());
+        }
+
+        @Test
+        void 行27_確定の画面のGETは判定を呼ばず古い候補のURLでも開く() throws Exception {
+            when(queryService.findByNumber(eq(NUMBER), any()))
+                    .thenReturn(Optional.of(presentedWith(conforming(1, "V-1"))));
+
+            mockMvc.perform(get(SHOW + "/confirmation").param("candidate", "1")).andExpect(status().isOk());
+
+            verify(queryService, never()).staleLegsOf(any(), any());
+        }
+    }
+
+    static RoutingCase withExpiry(RoutingCase source, String expiresAt) {
+        return RoutingCase.reconstitute(
+                source.id(),
+                source.number(),
+                source.transportRequestId(),
+                source.transportRequestNumber(),
+                source.transportRequestVersionNo(),
+                source.quotationId(),
+                source.routePolicyVia(),
+                source.specification(),
+                source.requestedAt(),
+                at(expiresAt),
+                source.requestedBy().orElse(null),
+                source.shipperCompanyId(),
+                source.routeVersions(),
+                source.aggregateVersion());
+    }
+
+    static RoutingCase confirmed() {
+        RoutingCase routingCase = calculated();
+        routingCase.confirm(
+                1,
+                "SGSIN の接続に 4 時間の余裕がある。",
+                new RouteApprover(TestActors.STAFF_USER.value(), true),
+                voyages(),
+                List.of(new ConnectionRule(
+                        UUID.randomUUID(), SINGAPORE, Duration.ofHours(8), at("2026-01-01T00:00:00Z"), null)),
+                at("2026-10-07T05:00:00Z"),
+                new ConstraintEvaluator(),
+                new InfoFreshnessPolicy(Duration.ofHours(24)));
+        return routingCase;
+    }
+
+    static RoutingCase reconstitute(RouteVersion version) {
+        RoutingCase source = open();
+        return RoutingCase.reconstitute(
+                source.id(),
+                source.number(),
+                source.transportRequestId(),
+                source.transportRequestNumber(),
+                source.transportRequestVersionNo(),
+                source.quotationId(),
+                source.routePolicyVia(),
+                source.specification(),
+                source.requestedAt(),
+                source.quotationExpiresAt().orElse(null),
+                source.requestedBy().orElse(null),
+                source.shipperCompanyId(),
+                List.of(version),
+                0);
+    }
+
+    /** 画面の時計（S-05 の見積りの期限切れの判定）。 */
+    @TestConfiguration
+    static class FixedClock {
+
+        @Bean
+        Clock clock() {
+            return Clock.fixed(Instant.parse("2026-10-07T00:00:00Z"), ZoneOffset.UTC);
+        }
+    }
+
+    static RoutingCase open() {
+        return RoutingCase.open(
+                new RoutingCaseId(UUID.randomUUID()),
+                NUMBER,
+                UUID.randomUUID(),
+                "TR-2026-0001",
+                1,
+                UUID.randomUUID(),
+                List.of(SINGAPORE),
+                new RouteSpecification(TOKYO, ROTTERDAM, DEADLINE, RouteCargoCategory.GENERAL),
+                at("2026-10-06T02:00:00Z"),
+                at("2026-10-08T09:00:00Z"),
+                UUID.randomUUID(),
+                new CompanyId(UUID.randomUUID()));
+    }
+
+    /** 候補を算出する航海（確定で読み直したときも同じ。Bolt 37c）。 */
+    static List<Voyage> voyages() {
+        return List.of(
+                voyage(
+                        "V-201",
+                        call(TOKYO, null, "2026-10-10T00:00:00Z"),
+                        call(SINGAPORE, "2026-10-20T00:00:00Z", null)),
+                voyage(
+                        "V-301",
+                        call(SINGAPORE, null, "2026-10-20T12:00:00Z"),
+                        call(ROTTERDAM, "2026-10-31T00:00:00Z", null)),
+                voyage(
+                        "V-302",
+                        call(SINGAPORE, null, "2026-10-20T04:00:00Z"),
+                        call(ROTTERDAM, "2026-10-30T00:00:00Z", null)),
+                voyage(
+                        "V-202",
+                        call(TOKYO, null, "2026-10-11T00:00:00Z"),
+                        call(HONG_KONG, "2026-10-15T00:00:00Z", null)),
+                voyage(
+                        "V-304",
+                        call(HONG_KONG, null, "2026-10-16T00:00:00Z"),
+                        call(ROTTERDAM, "2026-10-29T00:00:00Z", null)),
+                voyage(
+                        "V-LATE",
+                        call(TOKYO, null, "2026-10-12T00:00:00Z"),
+                        call(ROTTERDAM, "2026-11-03T12:00:00Z", null)));
+    }
+
+    /** 適合（接続 12 時間）、接続不足（4 時間）、規則のない香港、期限超過 1 日 12 時間。 */
+    static RoutingCase calculated() {
+        RoutingCase routingCase = open();
+        routingCase.calculateCandidates(
+                voyages(),
+                List.of(new ConnectionRule(
+                        UUID.randomUUID(), SINGAPORE, Duration.ofHours(8), at("2026-01-01T00:00:00Z"), null)),
+                at("2026-10-07T03:00:00Z"),
+                new RouteCandidateFinder(),
+                new ConstraintEvaluator(),
+                new InfoFreshnessPolicy(Duration.ofHours(24)));
+        return routingCase;
+    }
+
+    static Voyage voyage(String number, PortCall... calls) {
+        return new Voyage(number, List.of(calls), number + "@1", at("2026-10-07T01:00:00Z"));
+    }
+
+    static PortCall call(Location port, String arrival, String departure) {
+        return new PortCall(port, arrival == null ? null : at(arrival), departure == null ? null : at(departure));
+    }
+
+    static UtcInstant at(String text) {
+        return new UtcInstant(Instant.parse(text));
+    }
+}

@@ -1,0 +1,95 @@
+package com.example.cargotracker.quotation.domain.model.aggregates;
+
+import com.example.cargotracker.quotation.domain.model.valueobjects.AwaitingBookingSummary;
+import com.example.cargotracker.quotation.domain.model.valueobjects.QuotationId;
+import com.example.cargotracker.quotation.domain.model.valueobjects.QuotedRequestSummary;
+import com.example.cargotracker.quotation.domain.model.valueobjects.RoutingRequestedSummary;
+import com.example.cargotracker.quotation.domain.model.valueobjects.ShipperLatestQuotationSummary;
+import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestId;
+import com.example.cargotracker.shared.domain.CompanyId;
+import com.example.cargotracker.shared.domain.UtcInstant;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+
+/**
+ * 見積りのリポジトリ（送信ポート）。見積りは輸送要求と別の集約で、輸送要求 ID と見積り番号で探す。
+ * 荷主企業での絞り込みは、輸送要求を荷主企業で絞って照会してから行う（Q-INV-08）。
+ */
+public interface QuotationRepository {
+
+    /**
+     * 新しい見積りを保存する。同じ輸送要求の同じ見積り番号は保存できない（UK）。
+     *
+     * @throws DuplicateQuotationException 同じ見積り番号の見積りが先に保存されていた（同時の算出）
+     */
+    void save(Quotation quotation);
+
+    /**
+     * 見積りを更新する。読み込んだときの集約の版で照合する。
+     *
+     * @throws ConcurrentQuotationUpdateException 読み込んだ後に、ほかの更新が先に保存されていた
+     */
+    void update(Quotation quotation);
+
+    /** 輸送要求の見積りを、見積り番号の順に返す。 */
+    List<Quotation> findByTransportRequestId(TransportRequestId transportRequestId);
+
+    /**
+     * 見積提示済みの見積依頼ごとに、最新の見積り（見積り番号の最大）を、有効期限の近い順に返す（受付一覧 S-02。Bolt 11 レビュー R-02）。
+     * 社内の照会で、荷主企業（営業担当者の担当企業。Bolt 38f）で絞る。
+     *
+     * @param shipperCompanyIds 荷主企業（空でない。空の守りは呼ぶ側の 1 か所）
+     */
+    List<QuotedRequestSummary> findLatestOfQuotedRequests(Set<CompanyId> shipperCompanyIds);
+
+    /**
+     * 経路設計中の見積依頼ごとに、詳細設計依頼済みの見積りを、依頼時刻の古い順に返す（受付一覧 S-02。US-24 AC1。Bolt 12）。
+     * 社内の照会で、荷主企業（担当企業。Bolt 38f）で絞る。
+     *
+     * @param shipperCompanyIds 荷主企業（空でない）
+     */
+    List<RoutingRequestedSummary> findRoutingRequestedSummaries(Set<CompanyId> shipperCompanyIds);
+
+    /**
+     * 予約の確定待ち（荷主が承認した見積りと、荷主の承認の後に失効した見積りを再見積りした後で提示する前の経路を持つ承認待ちの見積り。
+     * 輸送要求が予約確定済みでないもの）を有効期限の近い順に（S-02。Bolt 23b。承認待ちの行は D-85。Bolt 35c）。荷主企業（担当企業。
+     * Bolt 38f）で絞る。
+     *
+     * @param shipperCompanyIds 荷主企業（空でない）
+     */
+    List<AwaitingBookingSummary> findAwaitingBookingSummaries(Set<CompanyId> shipperCompanyIds);
+
+    /**
+     * 荷主企業の見積依頼ごとに、荷主に見える最新の見積り（提示済みで見積り番号の最大）を返す（荷主の見積依頼の一覧 C-02 の状態の
+     * 選び方。どの輸送要求の状態で使うかは画面が決める。D-85。Bolt 35d）。荷主企業で必ず絞る（Q-INV-08）。
+     */
+    List<ShipperLatestQuotationSummary> findLatestVisibleForShipper(CompanyId shipperCompanyId);
+
+    /**
+     * 荷主の回答か承認を待つ見積り（提示済み・荷主承認待ち）のうち、有効期限が指定の時刻より後で、もう一方の時刻以前のものを返す（有効期限の 24 時間前の
+     * 通知の検出。US-22 AC2。W9 の Bolt 43-2）。
+     *
+     * @param after この時刻より後（含まない）
+     * @param upTo この時刻以前（含む）
+     */
+    List<Quotation> findAwaitingResponseExpiringBetween(UtcInstant after, UtcInstant upTo);
+
+    /** 見積りを ID で探す（経路の割当て。経路設計は依頼元の見積り ID を持つ。Bolt 20）。 */
+    Optional<Quotation> findById(QuotationId id);
+
+    /**
+     * 経路版を割り当てた見積りの ID（失効・置換済みを含む。再設計要の印を付ける。US-07 AC5。Bolt 37e）。見積りは経路設計の案件 ID を
+     * 持たないので、案件番号と経路版番号で引く（D-4）。
+     */
+    List<QuotationId> findIdsByAssignedRoute(String routingCaseNumber, int routeVersionNo);
+
+    /** 輸送要求の見積りを見積り番号で探す。 */
+    Optional<Quotation> findByTransportRequestIdAndNo(TransportRequestId transportRequestId, int quotationNo);
+
+    /**
+     * 輸送要求の見積り番号の見積りの行を、呼び手のトランザクションが終わるまで押さえる（本予約の確定を再設計要の印と直列にする。
+     * ADR-016、US-07 AC5。Bolt 37e2）。押さえた後の読み込みは、押さえる前に読んだ値を使わない。見積りがなければ false。
+     */
+    boolean lockForBooking(TransportRequestId transportRequestId, int quotationNo);
+}

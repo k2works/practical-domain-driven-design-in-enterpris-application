@@ -1,0 +1,231 @@
+package com.example.cargotracker.quotation.infrastructure.config;
+
+import com.example.cargotracker.quotation.application.internal.commandservices.BookingNotificationService;
+import com.example.cargotracker.quotation.application.internal.commandservices.QuotationCommandService;
+import com.example.cargotracker.quotation.application.internal.commandservices.QuotationExpiryNotificationService;
+import com.example.cargotracker.quotation.application.internal.commandservices.QuotationResponseService;
+import com.example.cargotracker.quotation.application.internal.commandservices.RouteAssignmentService;
+import com.example.cargotracker.quotation.application.internal.commandservices.RouteRedesignService;
+import com.example.cargotracker.quotation.application.internal.commandservices.TransportRequestCommandService;
+import com.example.cargotracker.quotation.application.internal.commandservices.TransportRequestReviewService;
+import com.example.cargotracker.quotation.application.internal.eventhandlers.QuotationApprovedByShipperEventHandler;
+import com.example.cargotracker.quotation.application.internal.eventhandlers.QuotationDeclinedEventHandler;
+import com.example.cargotracker.quotation.application.internal.eventhandlers.QuotationPresentedEventHandler;
+import com.example.cargotracker.quotation.application.internal.eventhandlers.QuotationPresentedForReapprovalEventHandler;
+import com.example.cargotracker.quotation.application.internal.eventhandlers.QuotationRouteAssignedEventHandler;
+import com.example.cargotracker.quotation.application.internal.eventhandlers.RouteDesignRequestedEventHandler;
+import com.example.cargotracker.quotation.application.internal.queryservices.BookableQuotationQueryService;
+import com.example.cargotracker.quotation.application.internal.queryservices.QuotationQueryService;
+import com.example.cargotracker.quotation.application.internal.queryservices.RouteConditionQueryService;
+import com.example.cargotracker.quotation.application.internal.queryservices.StaffQuotationQueryService;
+import com.example.cargotracker.quotation.application.internal.queryservices.StaffTransportRequestQueryService;
+import com.example.cargotracker.quotation.application.internal.queryservices.StaffTransportRequestScope;
+import com.example.cargotracker.quotation.application.internal.queryservices.TransportRequestQueryService;
+import com.example.cargotracker.quotation.domain.model.aggregates.QuotationRepository;
+import com.example.cargotracker.quotation.domain.model.aggregates.RequiredDocumentStorage;
+import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequestNumberIssuer;
+import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequestRepository;
+import com.example.cargotracker.quotation.domain.model.rules.MvpAcceptancePolicy;
+import com.example.cargotracker.quotation.domain.model.rules.RequiredDocumentPolicy;
+import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
+import com.example.cargotracker.quotation.infrastructure.persistence.MyBatisTransportRequestNumberIssuer;
+import com.example.cargotracker.quotation.infrastructure.storage.DocumentStorageProperties;
+import com.example.cargotracker.quotation.infrastructure.storage.LocalFileSystemRequiredDocumentStorage;
+import com.example.cargotracker.shared.domain.UtcInstant;
+import java.time.Clock;
+import org.springframework.boot.ApplicationRunner;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+/**
+ * 見積りコンテキストの組み立て。アプリケーションサービスに送信アダプターをつなぐ。
+ */
+@Configuration(proxyBeanMethods = false)
+@EnableConfigurationProperties(DocumentStorageProperties.class)
+public class QuotationConfiguration {
+
+    @Bean
+    TransportRequestCommandService transportRequestCommandService(
+            TransportRequestRepository repository,
+            QuotationRepository quotationRepository,
+            TransportRequestNumberIssuer numberIssuer,
+            RequiredDocumentStorage documentStorage,
+            ApplicationEventPublisher eventPublisher,
+            Clock clock) {
+        return new TransportRequestCommandService(
+                repository,
+                quotationRepository,
+                numberIssuer,
+                new MvpAcceptancePolicy(),
+                new RequiredDocumentPolicy(),
+                documentStorage,
+                eventPublisher,
+                clock);
+    }
+
+    /** 書類の保存。開発環境はローカルのファイルシステム（ADR-007）。S3 の実装は運用準備（W10、#28）で差し替える。 */
+    @Bean
+    RequiredDocumentStorage requiredDocumentStorage(DocumentStorageProperties properties) {
+        return new LocalFileSystemRequiredDocumentStorage(properties.baseDir());
+    }
+
+    /**
+     * 起動時に、今年と来年（日本時間）の業務番号の採番の行を用意する（D-13）。
+     * 年の最初の提出が同時に来ても、提出の中で 2 本目の接続を取らずに済むようにする。
+     */
+    @Bean
+    ApplicationRunner transportRequestNumberYearPreparation(MyBatisTransportRequestNumberIssuer issuer, Clock clock) {
+        return args -> {
+            int year = TransportRequestNumber.yearOf(new UtcInstant(clock.instant()));
+            issuer.prepareYear(year);
+            issuer.prepareYear(year + 1);
+        };
+    }
+
+    @Bean
+    TransportRequestReviewService transportRequestReviewService(
+            TransportRequestRepository repository,
+            ApplicationEventPublisher eventPublisher,
+            Clock clock,
+            StaffTransportRequestScope scope) {
+        return new TransportRequestReviewService(repository, eventPublisher, clock, scope);
+    }
+
+    @Bean
+    StaffTransportRequestScope staffTransportRequestScope(TransportRequestRepository repository) {
+        return new StaffTransportRequestScope(repository);
+    }
+
+    @Bean
+    StaffTransportRequestQueryService staffTransportRequestQueryService(
+            TransportRequestRepository repository,
+            RequiredDocumentStorage documentStorage,
+            StaffTransportRequestScope scope) {
+        return new StaffTransportRequestQueryService(repository, documentStorage, scope);
+    }
+
+    @Bean
+    QuotationCommandService quotationCommandService(
+            QuotationRepository quotationRepository,
+            ApplicationEventPublisher eventPublisher,
+            Clock clock,
+            StaffTransportRequestScope scope) {
+        return new QuotationCommandService(quotationRepository, eventPublisher, clock, scope);
+    }
+
+    @Bean
+    QuotationResponseService quotationResponseService(
+            TransportRequestRepository transportRequestRepository,
+            QuotationRepository quotationRepository,
+            ApplicationEventPublisher eventPublisher,
+            Clock clock) {
+        return new QuotationResponseService(transportRequestRepository, quotationRepository, eventPublisher, clock);
+    }
+
+    /** DE-16 を受けて輸送要求を経路設計中にする（Spring Modulith のイベントの記録を経て、別のトランザクションで動く。Bolt 12）。 */
+    @Bean
+    RouteDesignRequestedEventHandler routeDesignRequestedEventHandler(TransportRequestRepository repository) {
+        return new RouteDesignRequestedEventHandler(repository);
+    }
+
+    /** DE-17 を受けて輸送要求を辞退で終了にする（Spring Modulith のイベントの記録を経て、別のトランザクションで動く。W9 の Bolt 48-1）。 */
+    @Bean
+    QuotationDeclinedEventHandler quotationDeclinedEventHandler(TransportRequestRepository repository) {
+        return new QuotationDeclinedEventHandler(repository);
+    }
+
+    /** DE-03 を受けて輸送要求を見積提示済みにする（Spring Modulith のイベントの記録を経て、別のトランザクションで動く）。 */
+    @Bean
+    QuotationPresentedEventHandler quotationPresentedEventHandler(TransportRequestRepository repository) {
+        return new QuotationPresentedEventHandler(repository);
+    }
+
+    /** 経路条件の照会の入力ポート（見積りの公開 API のアダプターが委ねる。経路設計が DE-16 を受けて使う。Bolt 17）。 */
+    @Bean
+    RouteConditionQueryService routeConditionQueryService(TransportRequestRepository repository) {
+        return new RouteConditionQueryService(repository);
+    }
+
+    /** 予約確定済みの通知の入力ポート（見積りの公開 API のアダプターが委ねる。予約が DE-07 を受けて使う。ADR-014。Bolt 23）。 */
+    @Bean
+    BookingNotificationService bookingNotificationService(TransportRequestRepository transportRequestRepository) {
+        return new BookingNotificationService(transportRequestRepository);
+    }
+
+    /** 予約確定に使える見積りの照会の入力ポート（見積りの公開 API のアダプターが委ねる。予約が本予約の確定で使う。ADR-016。Bolt 23）。 */
+    @Bean
+    BookableQuotationQueryService bookableQuotationQueryService(
+            QuotationRepository quotationRepository,
+            TransportRequestRepository transportRequestRepository,
+            StaffTransportRequestScope scope) {
+        return new BookableQuotationQueryService(quotationRepository, transportRequestRepository, scope);
+    }
+
+    /** 見積りの有効期限の 24 時間前の通知の検出（US-22 AC2。1 時間ごとの起動は {@code QuotationExpiryScheduler}。Bolt 43-2）。 */
+    @Bean
+    QuotationExpiryNotificationService quotationExpiryNotificationService(
+            QuotationRepository quotationRepository,
+            TransportRequestRepository transportRequestRepository,
+            ApplicationEventPublisher eventPublisher,
+            Clock clock) {
+        return new QuotationExpiryNotificationService(
+                quotationRepository, transportRequestRepository, eventPublisher, clock);
+    }
+
+    /** 経路の割当ての入力ポート（見積りの公開 API のアダプターが委ねる。経路設計が DE-05 を受けて使う。ADR-014。Bolt 20）。 */
+    @Bean
+    RouteAssignmentService routeAssignmentService(
+            QuotationRepository quotationRepository,
+            TransportRequestRepository transportRequestRepository,
+            ApplicationEventPublisher eventPublisher,
+            Clock clock) {
+        return new RouteAssignmentService(quotationRepository, transportRequestRepository, eventPublisher, clock);
+    }
+
+    /** 再設計要の伝達の入力ポート（見積りの公開 API のアダプターが委ねる。経路設計が DE-06 を受けて使う。ADR-014。Bolt 37e）。 */
+    @Bean
+    RouteRedesignService routeRedesignService(QuotationRepository quotationRepository) {
+        return new RouteRedesignService(quotationRepository);
+    }
+
+    /** DE-21 を受けて輸送要求を荷主承認待ちにする（別のトランザクション。Bolt 20。置換済み・失効の見積りは進めない。Bolt 35b2）。 */
+    @Bean
+    QuotationRouteAssignedEventHandler quotationRouteAssignedEventHandler(
+            TransportRequestRepository repository, QuotationRepository quotationRepository) {
+        return new QuotationRouteAssignedEventHandler(repository, quotationRepository);
+    }
+
+    /** DE-04 を受けて輸送要求を予約待ちにする（別のトランザクション。Bolt 20。届いていても書く・置換済み・失効は進めない。Bolt 35b2）。 */
+    @Bean
+    QuotationApprovedByShipperEventHandler quotationApprovedByShipperEventHandler(
+            TransportRequestRepository repository, QuotationRepository quotationRepository) {
+        return new QuotationApprovedByShipperEventHandler(repository, quotationRepository);
+    }
+
+    /** DE-24 を受けて輸送要求を予約待ちから荷主承認待ちへ戻す（別のトランザクション。D-85、ADR-018。Bolt 35b2）。 */
+    @Bean
+    QuotationPresentedForReapprovalEventHandler quotationPresentedForReapprovalEventHandler(
+            TransportRequestRepository repository, QuotationRepository quotationRepository) {
+        return new QuotationPresentedForReapprovalEventHandler(repository, quotationRepository);
+    }
+
+    @Bean
+    QuotationQueryService quotationQueryService(
+            TransportRequestRepository transportRequestRepository, QuotationRepository quotationRepository) {
+        return new QuotationQueryService(transportRequestRepository, quotationRepository);
+    }
+
+    @Bean
+    StaffQuotationQueryService staffQuotationQueryService(
+            QuotationRepository quotationRepository, StaffTransportRequestScope scope) {
+        return new StaffQuotationQueryService(quotationRepository, scope);
+    }
+
+    @Bean
+    TransportRequestQueryService transportRequestQueryService(
+            TransportRequestRepository repository, RequiredDocumentStorage documentStorage) {
+        return new TransportRequestQueryService(repository, documentStorage);
+    }
+}

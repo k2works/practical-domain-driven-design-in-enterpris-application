@@ -13,6 +13,11 @@ import vaultTasks from './ops/scripts/vault.js';
 import sshTasks from './ops/scripts/ssh.js';
 import sonarLocalTasks from './ops/scripts/sonar_local.js';
 import okfTasks from './ops/scripts/okf.js';
+import designDocsTasks from './ops/scripts/design_docs.js';
+import deployDemoTasks from './ops/scripts/deploy_demo.js';
+import issueDemoTasks from './ops/scripts/issue_demo.js';
+import operationTasks from './ops/scripts/operation.js';
+import releaseTasks from './ops/scripts/release.js';
 
 // Load gulp tasks from script modules
 mkdocsTasks(gulp);
@@ -22,6 +27,11 @@ vaultTasks(gulp);
 sshTasks(gulp);
 sonarLocalTasks(gulp);
 okfTasks(gulp);
+designDocsTasks(gulp);
+deployDemoTasks(gulp);
+issueDemoTasks(gulp);
+operationTasks(gulp);
+releaseTasks(gulp);
 
 export const spec = gulp.series('mkdocs:serve', 'mkdocs:open');
 

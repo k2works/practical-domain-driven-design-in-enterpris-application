@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/staff :: layout(~{::title}, ~{::main}, ~{::script}, 'tracking-records')}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${#fields.hasErrors('${milestoneForm.*}')} ? |入力内容に誤りがあります - 主要実績の登録 ${trackingNumber} - cargo-tracker| : |主要実績の登録 ${trackingNumber} - cargo-tracker|">主要実績の登録 - cargo-tracker</title>
+    <!--/* 送信の失敗のときにエラー要約へフォーカスを移す（社内の S-03・S-04 と同じ。Bolt 23b の U-3） */-->
+    <script th:src="@{/js/transport-request-form.js}" defer></script>
+</head>
+<body>
+<main>
+    <h1 th:text="|主要実績の登録 ${trackingNumber}|">主要実績の登録 CTABCDEFGH2345</h1>
+    <!--/* S-13（Bolt 26c、US-12 AC1・AC2）。出典と発生時刻を指定して実績を登録する。確認の領域は経ない（BR-13 が実行前の確認を求めるのは
+           訂正。Bolt 26c 計画の確認ポイント 6）。訂正（US-13）は後の Bolt */-->
+    <form th:action="@{/staff/tracking-records/{trackingNumber}/milestones(trackingNumber=${trackingNumber})}"
+          th:object="${milestoneForm}" method="post" novalidate>
+        <div id="error-summary" th:if="${#fields.hasErrors('*')}" tabindex="-1" role="alert"
+             aria-labelledby="error-summary-title">
+            <h2 id="error-summary-title" th:text="|入力内容に ${#fields.errors('*').size()} 件の誤りがあります|">入力内容に 1 件の誤りがあります</h2>
+            <ul>
+                <li th:each="error : ${#fields.detailedErrors('*')}">
+                    <a th:href="|#${error.fieldName}|"
+                       th:text="|${fieldLabels[error.fieldName]}: ${error.message}|">場所: UN/LOCODE で入力してください</a>
+                </li>
+            </ul>
+        </div>
+        <input type="hidden" th:field="*{expectedVersion}">
+
+        <fieldset th:attr="aria-invalid=${#fields.hasErrors('kind')},aria-describedby=${#fields.hasErrors('kind')} ? 'kind-hint kind-error' : 'kind-hint'">
+            <legend>種類</legend>
+            <p id="kind-hint">積替港での到着は積替、積替港からの出発は出発を選んでください</p>
+            <div th:each="option, stat : ${kinds}">
+                <input type="radio" th:field="*{kind}" th:value="${option.value()}"
+                       th:id="${stat.first} ? 'kind' : |kind-${stat.index}|">
+                <label th:for="${stat.first} ? 'kind' : |kind-${stat.index}|" th:text="${option.label()}">集荷</label>
+            </div>
+            <p id="kind-error" th:if="${#fields.hasErrors('kind')}" th:errors="*{kind}"></p>
+        </fieldset>
+        <div>
+            <label for="location">場所</label>
+            <p id="location-hint">UN/LOCODE。例: JPTYO</p>
+            <input id="location" type="text" class="form-control" th:field="*{location}" autocomplete="off"
+                   th:attr="aria-invalid=${#fields.hasErrors('location')},aria-describedby=${#fields.hasErrors('location')} ? 'location-hint location-error' : 'location-hint'">
+            <p id="location-error" th:if="${#fields.hasErrors('location')}" th:errors="*{location}"></p>
+        </div>
+        <div>
+            <label for="occurredAt">発生時刻（日本時間）</label>
+            <p id="occurredAt-hint">例: 2026-11-01 11:30。タイムゾーンは Asia/Tokyo（UTC+09:00）</p>
+            <input id="occurredAt" type="text" class="form-control" th:field="*{occurredAt}" autocomplete="off" inputmode="numeric"
+                   th:attr="aria-invalid=${#fields.hasErrors('occurredAt')},aria-describedby=${#fields.hasErrors('occurredAt')} ? 'occurredAt-hint occurredAt-error' : 'occurredAt-hint'">
+            <p id="occurredAt-error" th:if="${#fields.hasErrors('occurredAt')}" th:errors="*{occurredAt}"></p>
+        </div>
+        <fieldset th:attr="aria-invalid=${#fields.hasErrors('sourceKind')},aria-describedby=${#fields.hasErrors('sourceKind')} ? 'sourceKind-error' : null">
+            <legend>出典の種類</legend>
+            <div th:each="option, stat : ${sourceKinds}">
+                <input type="radio" th:field="*{sourceKind}" th:value="${option.value()}"
+                       th:id="${stat.first} ? 'sourceKind' : |sourceKind-${stat.index}|">
+                <label th:for="${stat.first} ? 'sourceKind' : |sourceKind-${stat.index}|" th:text="${option.label()}">現場記録</label>
+            </div>
+            <p id="sourceKind-error" th:if="${#fields.hasErrors('sourceKind')}" th:errors="*{sourceKind}"></p>
+        </fieldset>
+        <div>
+            <label for="sourceReference">出典の参照</label>
+            <p id="sourceReference-hint">200 文字まで。例: 港湾の受付番号、現場の記録番号</p>
+            <input id="sourceReference" type="text" class="form-control" th:field="*{sourceReference}" autocomplete="off"
+                   th:attr="aria-invalid=${#fields.hasErrors('sourceReference')},aria-describedby=${#fields.hasErrors('sourceReference')} ? 'sourceReference-hint sourceReference-error' : 'sourceReference-hint'">
+            <p id="sourceReference-error" th:if="${#fields.hasErrors('sourceReference')}" th:errors="*{sourceReference}"></p>
+        </div>
+        <p><button type="submit" class="btn btn-primary">登録する</button></p>
+    </form>
+    <p><a th:href="@{/staff/tracking-records/{trackingNumber}(trackingNumber=${trackingNumber})}">追跡の詳細へ戻る</a></p>
+</main>
+</body>
+</html>

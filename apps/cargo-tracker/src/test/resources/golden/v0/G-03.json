@@ -1,0 +1,66 @@
+{
+  "id": "G-03",
+  "title": "期限超過を含む（到着が期限と同時刻の候補は適合、1 分過ぎる候補は期限超過）",
+  "version": "v0",
+  "status": "仮の値。業務責任者の承認待ち（TST-02）",
+  "rationale": [
+    "BR-11（期限。希望到着期限と同時刻は適合）"
+  ],
+  "regulatoryReferences": [],
+  "approvers": [],
+  "validity": {
+    "from": null,
+    "to": null
+  },
+  "routeSpecification": {
+    "origin": "JPTYO",
+    "destination": "NLRTM",
+    "arrivalDeadline": "2026-11-02T00:00:00Z",
+    "cargoCategory": "GENERAL"
+  },
+  "judgedAt": "2026-10-07T03:00:00Z",
+  "freshnessTolerance": "PT24H",
+  "connectionRules": [
+    {
+      "port": "SGSIN",
+      "minimumConnection": "PT8H",
+      "validFrom": "2026-01-01T00:00:00Z"
+    }
+  ],
+  "voyages": [
+    {
+      "number": "V-103",
+      "load": "JPTYO",
+      "departureAt": "2026-10-12T00:00:00Z",
+      "discharge": "NLRTM",
+      "arrivalAt": "2026-11-02T00:00:00Z",
+      "acquiredAt": "2026-10-07T01:00:00Z"
+    },
+    {
+      "number": "V-104",
+      "load": "JPTYO",
+      "departureAt": "2026-10-11T00:00:00Z",
+      "discharge": "NLRTM",
+      "arrivalAt": "2026-11-02T00:01:00Z",
+      "acquiredAt": "2026-10-07T01:00:00Z"
+    }
+  ],
+  "expected": [
+    {
+      "voyages": "V-103",
+      "conforming": true,
+      "estimatedArrivalAt": "2026-11-02T00:00:00Z",
+      "connectionSlack": null,
+      "reasons": []
+    },
+    {
+      "voyages": "V-104",
+      "conforming": false,
+      "estimatedArrivalAt": "2026-11-02T00:01:00Z",
+      "connectionSlack": null,
+      "reasons": [
+        "DEADLINE_EXCEEDED"
+      ]
+    }
+  ]
+}

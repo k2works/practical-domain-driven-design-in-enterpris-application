@@ -1,0 +1,310 @@
+package com.example.cargotracker.identity.infrastructure.config;
+
+import com.example.cargotracker.identity.application.internal.commandservices.LoginAttemptService;
+import com.example.cargotracker.identity.application.internal.commandservices.RecoveryCodeVerificationService;
+import com.example.cargotracker.identity.application.internal.commandservices.SessionRevalidationService;
+import com.example.cargotracker.identity.application.internal.commandservices.TotpVerificationService;
+import com.example.cargotracker.identity.application.internal.session.SessionPaths;
+import com.example.cargotracker.identity.domain.model.aggregates.AuditRecordRepository;
+import com.example.cargotracker.identity.domain.model.aggregates.CompanyRepository;
+import com.example.cargotracker.identity.domain.model.aggregates.UserRepository;
+import com.example.cargotracker.identity.infrastructure.security.AuthenticationAuditListener;
+import com.example.cargotracker.identity.infrastructure.security.CargoUserDetailsService;
+import com.example.cargotracker.identity.infrastructure.security.ExpiredSessionRequestSaver;
+import com.example.cargotracker.identity.infrastructure.security.KeepEmailAuthenticationFailureHandler;
+import com.example.cargotracker.identity.infrastructure.security.LockAwareUserDetailsChecker;
+import com.example.cargotracker.identity.infrastructure.security.LoginSuccessHandler;
+import com.example.cargotracker.identity.infrastructure.security.RecoveryCodeAuthenticationProvider;
+import com.example.cargotracker.identity.infrastructure.security.RecoveryCodeRejectedException;
+import com.example.cargotracker.identity.infrastructure.security.SessionLifetimeFilter;
+import com.example.cargotracker.identity.infrastructure.security.SessionRevalidationFilter;
+import com.example.cargotracker.identity.infrastructure.security.TotpAuthenticationFilter;
+import com.example.cargotracker.identity.infrastructure.security.TotpAuthenticationProvider;
+import com.example.cargotracker.identity.infrastructure.security.TotpAuthenticationToken;
+import com.example.cargotracker.identity.infrastructure.security.TotpRejectedException;
+import com.example.cargotracker.shared.domain.Role;
+import java.time.Clock;
+import java.util.Arrays;
+import java.util.Map;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.AccountStatusUserDetailsChecker;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.DefaultAuthenticationEventPublisher;
+import org.springframework.security.authentication.InternalAuthenticationServiceException;
+import org.springframework.security.authentication.ProviderManager;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.authentication.event.AuthenticationFailureBadCredentialsEvent;
+import org.springframework.security.authentication.event.AuthenticationFailureServiceExceptionEvent;
+import org.springframework.security.authorization.AuthorityAuthorizationManager;
+import org.springframework.security.config.annotation.authorization.EnableMultiFactorAuthentication;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.core.authority.FactorGrantedAuthority;
+import org.springframework.security.crypto.factory.PasswordEncoderFactories;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.AccessDeniedHandler;
+import org.springframework.security.web.access.DelegatingMissingAuthorityAccessDeniedHandler;
+import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.csrf.CsrfException;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
+import org.springframework.security.web.util.matcher.AndRequestMatcher;
+import org.springframework.security.web.util.matcher.NegatedRequestMatcher;
+import org.springframework.security.web.util.matcher.OrRequestMatcher;
+import org.springframework.security.web.util.matcher.RequestHeaderRequestMatcher;
+import org.springframework.security.web.util.matcher.RequestMatcher;
+
+/**
+ * 認証と認可の構成（US-18 の password の段と TOTP の段、ADR-011・ADR-012）。
+ *
+ * <ul>
+ *   <li>form login（A-01 {@code /login}）。利用停止・無効な企業は password の照合の後に拒否し、どの失敗も同じ応答にする（AC2・AC4）
+ *   <li>2 段階のログイン（Bolt 31）。password（{@code FACTOR_PASSWORD}）と TOTP（{@code FACTOR_TOTP}）の 2 つの要素を、全体の注釈で
+ *       認証が要るすべての URL に求める（Bolt 13 レビューの R-08 の比較で全体の注釈を採った）。password の要素だけで開けるのは
+ *       A-02（{@code /login/totp}）と登録の案内（{@code /login/totp/enroll}）だけ。足りない要素の画面へ導く
+ *   <li>荷主の画面（{@code /customer/**}）は荷主担当者、社内の画面（{@code /staff/**}）は営業担当者。経路設計（{@code /staff/routing-cases/**}）は
+ *       経路設計者、追跡（{@code /staff/tracking-records/**}）は追跡管理者、利用者の管理（{@code /staff/users/**}）はシステム管理者、
+ *       外部データの取込（{@code /staff/external-data/**}。Bolt 39c）はデータ責任者。request ごとの今の役割で判定する（Bolt 32c。
+ *       {@link SessionRevalidationFilter} が主体を作り直す。ADR-012 の見直しの 3）
+ *   <li>利用停止・無効な企業・利用者なしは、次の request で session を捨てて A-03（Bolt 32c、US-18 AC6）
+ *   <li>session の固定化の防止（ログインで session ID を付け替える。既定）、CSRF の同期トークン（既定）
+ *   <li>無操作 30 分（Spring Session の期限）と、TOTP が初めて通った時刻から 8 時間・password の段だけは 5 分
+ *       （{@link SessionLifetimeFilter}）。失効したら A-03
+ *   <li>応答のヘッダー（SEC-17）
+ * </ul>
+ */
+@Configuration(proxyBeanMethods = false)
+@EnableMultiFactorAuthentication(
+        authorities = {FactorGrantedAuthority.PASSWORD_AUTHORITY, TotpAuthenticationToken.FACTOR_TOTP})
+public class SecurityConfiguration {
+
+    /**
+     * 403 の画面（A-04）に渡す、CSRF のトークンが合わず送信が拒まれた印の名前（Bolt 32f）。印があれば、画面が入力の控えに「拒まれた」
+     * 印を付け、ログインし直した後の画面で案内する。認可の 403 はログアウトでも送信の失敗でもないので付けない。
+     */
+    public static final String SESSION_INPUT_REJECTED = "sessionInputRejected";
+
+    /** A-01 の URL。 */
+    private static final String LOGIN_URL = "/login";
+
+    /** 認証なしで開ける URL（ログイン、再認証の案内、password の再設定の依頼（A-05）と仮の A-06（Bolt 33）、エラー、静的な資源）。request ごとの利用者の確かめもしない（Bolt 32c）。 */
+    private static final String[] PUBLIC_PATHS = {
+        LOGIN_URL,
+        SessionPaths.EXPIRED_URL,
+        SessionPaths.PASSWORD_RESET_URL,
+        SessionPaths.PASSWORD_RESET_TOKEN_URL_PATTERN,
+        "/error",
+        "/css/**",
+        "/js/**",
+        "/webjars/**",
+        "/favicon.ico"
+    };
+
+    /**
+     * 外部の資源とインラインのスクリプトを読まない（SEC-17）。default-src が覆わない埋め込み・フォームの送信先・base も閉じる
+     * （Bolt 14 レビュー）。
+     */
+    private static final String CONTENT_SECURITY_POLICY =
+            "default-src 'self'; frame-ancestors 'none'; form-action 'self'; base-uri 'self'; object-src 'none'";
+
+    /**
+     * 失効の後にログインし直したら戻れる業務の画面（Bolt 32e、ADR-012）。GET で、荷主の画面か社内の画面。書類のダウンロードは画面で
+     * ないので除き、部分更新（htmx の {@code HX-Request}）も除く。送信（POST）は覚えない（送信の本体を session に入れない）。
+     * 認可と同じ path の解釈（{@link PathPatternRequestMatcher}）で判定する。{@code /customer/**}・{@code /staff/**} の GET は状態を
+     * 変えない（ログインの後に覚えた GET を利用者の権限で開き直すため。architecture_backend）。
+     */
+    static RequestMatcher returnablePages() {
+        PathPatternRequestMatcher.Builder paths = PathPatternRequestMatcher.withDefaults();
+        RequestMatcher pages = new OrRequestMatcher(
+                paths.matcher(HttpMethod.GET, "/customer/**"), paths.matcher(HttpMethod.GET, "/staff/**"));
+        RequestMatcher documents = new OrRequestMatcher(
+                paths.matcher("/customer/transport-requests/*/versions/*/documents/*"),
+                paths.matcher("/staff/transport-requests/*/versions/*/documents/*"));
+        return new AndRequestMatcher(
+                pages,
+                new NegatedRequestMatcher(documents),
+                new NegatedRequestMatcher(new RequestHeaderRequestMatcher("HX-Request")));
+    }
+
+    private static RequestMatcher publicRequests() {
+        PathPatternRequestMatcher.Builder paths = PathPatternRequestMatcher.withDefaults();
+        return new OrRequestMatcher(Arrays.stream(PUBLIC_PATHS)
+                .map(path -> (RequestMatcher) paths.matcher(path))
+                .toList());
+    }
+
+    @Bean
+    PasswordEncoder passwordEncoder() {
+        return PasswordEncoderFactories.createDelegatingPasswordEncoder();
+    }
+
+    @Bean
+    CargoUserDetailsService cargoUserDetailsService(UserRepository users, CompanyRepository companies) {
+        return new CargoUserDetailsService(users, companies);
+    }
+
+    @Bean
+    AuthenticationAuditListener authenticationAuditListener(
+            AuditRecordRepository auditRecords,
+            CargoUserDetailsService userDetails,
+            CompanyRepository companies,
+            Clock clock,
+            LoginAttemptService loginAttemptService) {
+        return new AuthenticationAuditListener(auditRecords, userDetails, companies, clock, loginAttemptService);
+    }
+
+    /**
+     * password を先に照合し、利用停止・無効な企業はその後に拒否する。照合の前に拒否すると、誤った password でも
+     * 利用停止であることが応答の時間から分かってしまう（AC2）。
+     */
+    @Bean
+    AuthenticationManager authenticationManager(
+            CargoUserDetailsService userDetails,
+            PasswordEncoder passwordEncoder,
+            TotpVerificationService totpVerificationService,
+            RecoveryCodeVerificationService recoveryCodeVerificationService,
+            LoginAttemptService loginAttemptService,
+            ApplicationEventPublisher publisher) {
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider(userDetails);
+        provider.setPasswordEncoder(passwordEncoder);
+        provider.setPreAuthenticationChecks(user -> {});
+        // ロックは照合の後に 1 か所で確かめる（Bolt 32、AC2）。続けて利用停止・無効な企業を確かめる
+        provider.setPostAuthenticationChecks(
+                new LockAwareUserDetailsChecker(loginAttemptService, new AccountStatusUserDetailsChecker()));
+        // TOTP の要素も同じ認証のイベント（成功・失敗）で監査記録に書く（ADR-011 の決定 2）
+        ProviderManager manager = new ProviderManager(
+                provider,
+                new TotpAuthenticationProvider(totpVerificationService, loginAttemptService),
+                new RecoveryCodeAuthenticationProvider(recoveryCodeVerificationService, loginAttemptService));
+        DefaultAuthenticationEventPublisher events = new DefaultAuthenticationEventPublisher(publisher);
+        // 失敗のイベントは例外のクラス名の完全一致で選ばれる。BadCredentialsException を継いだ TOTP の拒否も、password の誤りと
+        // 同じ失敗のイベントにする（対応がないとイベントが出ず、監査記録に残らない。Bolt 31 のステップ 5 で見つけた）
+        events.setAdditionalExceptionMappings(Map.of(
+                TotpRejectedException.class,
+                AuthenticationFailureBadCredentialsEvent.class,
+                RecoveryCodeRejectedException.class,
+                AuthenticationFailureBadCredentialsEvent.class,
+                // 利用者の読み出しの DB の誤り（DaoAuthenticationProvider が包む）。既定の対応は親の型だけなので足す（Bolt 32）
+                InternalAuthenticationServiceException.class,
+                AuthenticationFailureServiceExceptionEvent.class));
+        manager.setAuthenticationEventPublisher(events);
+        return manager;
+    }
+
+    /**
+     * ヘルスチェック（OBS-10。W10 の Bolt 53）。ALB が認証なしで読む管理用のポート（management.server.port）の
+     * {@code /actuator/health} だけを通し、ほかの {@code /actuator/**} は拒否する。業務のポートでは Actuator を出さない
+     * （management.endpoints.web.exposure.include=health と別のポート）ので、この設定は業務の画面に触れない。
+     * 業務の連鎖より先に評価する。
+     */
+    @Bean
+    @Order(1)
+    SecurityFilterChain actuatorFilterChain(HttpSecurity http) {
+        return http.securityMatcher("/actuator/**")
+                .authorizeHttpRequests(requests -> requests.requestMatchers("/actuator/health", "/actuator/health/**")
+                        .permitAll()
+                        .anyRequest()
+                        .denyAll())
+                .build();
+    }
+
+    @Bean
+    SecurityFilterChain securityFilterChain(
+            HttpSecurity http,
+            AuthenticationManager authenticationManager,
+            TotpVerificationService totpVerificationService,
+            SessionRevalidationService sessionRevalidationService,
+            Clock clock) {
+        ExpiredSessionRequestSaver requestSaver = new ExpiredSessionRequestSaver(returnablePages());
+        return http.authenticationManager(authenticationManager)
+                .authorizeHttpRequests(requests -> requests.requestMatchers(PUBLIC_PATHS)
+                        .permitAll()
+                        // A-02 と登録の案内は password の要素だけで開ける。access に渡した判定は全体の注釈の 2 つの要素の要求を
+                        // 足されない（ほかの URL は既定で 2 つの要素を求めるので、新しい URL を足しても要求が漏れない）
+                        .requestMatchers(TotpAuthenticationFilter.URL, TotpAuthenticationFilter.ENROLL_URL)
+                        .access(AuthorityAuthorizationManager.hasAuthority(FactorGrantedAuthority.PASSWORD_AUTHORITY))
+                        .requestMatchers("/customer/**")
+                        .hasRole(Role.SHIPPER.name())
+                        // 経路設計の画面は経路設計者だけ。ほかの社内の画面より先に書く（Bolt 17 計画の確認ポイント 11）
+                        .requestMatchers("/staff/routing-cases/**")
+                        .hasRole(Role.ROUTE_DESIGNER.name())
+                        // 追跡の一覧（S-11）と詳細（S-12）の閲覧は追跡管理者とカスタマーサポート（照会のみ。Bolt 40-10。US-11 AC3）。
+                        // 実績の登録の画面・登録・採用などそれ以外は追跡管理者だけ（Bolt 26 計画の確認ポイント 4）。次の matcher より先に書く
+                        .requestMatchers(HttpMethod.GET, "/staff/tracking-records", "/staff/tracking-records/*")
+                        .hasAnyRole(Role.TRACKING_MANAGER.name(), Role.CUSTOMER_SUPPORT.name())
+                        .requestMatchers("/staff/tracking-records/**")
+                        .hasRole(Role.TRACKING_MANAGER.name())
+                        // 照会の記録（S-23）はカスタマーサポートだけ（Bolt 40-15。ui_design の定め。/staff/** より先に書く）
+                        .requestMatchers("/staff/inquiries", "/staff/inquiries/**")
+                        .hasRole(Role.CUSTOMER_SUPPORT.name())
+                        // 有人案件の一覧（S-14）・詳細と受領（S-15）は社内の運用役割だけ（Bolt 40-11。台帳 D-159。
+                        // 役割の集合は ServiceCaseAuthorization の OPERATING_ROLES と同じ。/staff/** より先に書く）
+                        .requestMatchers("/staff/service-cases", "/staff/service-cases/**")
+                        .hasAnyRole(
+                                Role.CUSTOMER_SUPPORT.name(),
+                                Role.SALES.name(),
+                                Role.ROUTE_DESIGNER.name(),
+                                Role.TRACKING_MANAGER.name(),
+                                Role.DATA_STEWARD.name())
+                        // 利用者の管理（S-20）はシステム管理者だけ（Bolt 34。/staff/** より先に書く）
+                        .requestMatchers("/staff/users/**")
+                        .hasRole(Role.SYSTEM_ADMIN.name())
+                        // 外部データの取込（S-16）はデータ責任者だけ（Bolt 39c。W7 の確認ポイント 3。/staff/** より先に書く）
+                        .requestMatchers("/staff/external-data/**")
+                        .hasRole(Role.DATA_STEWARD.name())
+                        // KPI の照会（S-22）と基準値の登録は監査担当者だけ（US-21。W9 の Bolt 44-1。人が選んだ。台帳 D-171。/staff/** より先に書く）
+                        .requestMatchers("/staff/kpi-observations", "/staff/kpi-observations/**")
+                        .hasRole(Role.AUDITOR.name())
+                        .requestMatchers("/staff/**")
+                        .hasRole(Role.SALES.name())
+                        .anyRequest()
+                        .authenticated())
+                .formLogin(form -> form.loginPage(LOGIN_URL)
+                        .successHandler(new LoginSuccessHandler(clock))
+                        .failureHandler(new KeepEmailAuthenticationFailureHandler()))
+                .logout(logout -> logout.logoutUrl("/logout").logoutSuccessUrl("/login?logout"))
+                // 失効した session の request は、新しい session を作り、開いていた業務の画面の GET を覚えて A-03 へ移す（Bolt 32e）。
+                // CSRF のトークンのない送信の失効も同じ扱いを通る
+                .sessionManagement(session -> session.invalidSessionStrategy(requestSaver))
+                // TOTP の段は password の段の後に置く。期限の確認は両方より前に置く（期限切れの session に TOTP を送って
+                // 延ばさせない。ADR-011、T-40）
+                .addFilterAfter(
+                        new TotpAuthenticationFilter(authenticationManager, clock),
+                        UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(
+                        new SessionLifetimeFilter(clock, requestSaver), UsernamePasswordAuthenticationFilter.class)
+                // request ごとの利用者の確かめは期限の確認の直後、認証のフィルターより前に置く（期限の切れた session は読まない。
+                // 止められた利用者の A-02・A-07 の送信も認証の前に A-03。Bolt 32c）
+                // addFilterAfter の順序の値は UsernamePasswordAuthenticationFilter と同じになり、先に登録したこちらが前に来る（並びは
+                // 統合テストで見張る）
+                .addFilterAfter(
+                        new SessionRevalidationFilter(sessionRevalidationService, publicRequests()),
+                        SessionLifetimeFilter.class)
+                // 足りない要素の画面へ導く。TOTP が足りなければ A-02、password が足りなければ A-01
+                .exceptionHandling(exceptions -> exceptions.accessDeniedHandler(
+                        markingCsrfRejection(DelegatingMissingAuthorityAccessDeniedHandler.builder()
+                                .addEntryPointFor(
+                                        new LoginUrlAuthenticationEntryPoint(TotpAuthenticationFilter.URL),
+                                        TotpAuthenticationToken.FACTOR_TOTP)
+                                .addEntryPointFor(
+                                        new LoginUrlAuthenticationEntryPoint(LOGIN_URL),
+                                        FactorGrantedAuthority.PASSWORD_AUTHORITY)
+                                .build())))
+                .headers(headers -> headers.frameOptions(frame -> frame.deny())
+                        .contentSecurityPolicy(csp -> csp.policyDirectives(CONTENT_SECURITY_POLICY)))
+                .build();
+    }
+
+    private static AccessDeniedHandler markingCsrfRejection(AccessDeniedHandler delegate) {
+        return (request, response, exception) -> {
+            if (exception instanceof CsrfException) {
+                request.setAttribute(SESSION_INPUT_REJECTED, Boolean.TRUE);
+            }
+            delegate.handle(request, response, exception);
+        };
+    }
+}

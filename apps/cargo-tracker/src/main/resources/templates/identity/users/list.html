@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/staff :: layout(~{::title}, ~{::main}, ~{}, 'users')}">
+<head>
+    <meta charset="UTF-8">
+    <title>利用者 - cargo-tracker</title>
+</head>
+<body>
+<main>
+    <h1>利用者</h1>
+    <!--/* 利用者の登録の入口（Bolt 38b3b） */-->
+    <p><a th:href="@{/staff/users/new}">利用者を登録する</a></p>
+    <p th:if="${#lists.isEmpty(summaries)}">管理する企業の利用者はいません。一覧に出るはずの企業がないときは、運用の担当に管理範囲の割り当てをご依頼ください。</p>
+    <div th:unless="${#lists.isEmpty(summaries)}" class="table-scroll" tabindex="0" role="region"
+         aria-label="利用者の一覧">
+        <table class="table">
+            <caption>企業と利用者と役割（企業名・表示名の順）</caption>
+            <thead>
+            <tr>
+                <th scope="col">企業</th>
+                <th scope="col">表示名</th>
+                <th scope="col">メールアドレス</th>
+                <th scope="col">利用状態</th>
+                <th scope="col">役割</th>
+                <th scope="col">担当企業</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="user : ${summaries}">
+                <td th:text="${user.companyName}">A 社</td>
+                <td><a th:href="@{/staff/users/{id}(id=${user.id.value})}" th:text="${user.displayName}">佐藤</a></td>
+                <td th:text="${user.email.value}">sato@example.com</td>
+                <td th:text="${statusNames[user.status.name()]}">利用中</td>
+                <td th:if="${#sets.isEmpty(user.roles)}">なし</td>
+                <td th:unless="${#sets.isEmpty(user.roles)}">
+                    <ul class="list-unstyled mb-0">
+                        <li th:each="role : ${T(com.example.cargotracker.shared.domain.Role).values()}"
+                            th:if="${user.roles.contains(role)}" th:text="${role.displayName}">営業担当者</li>
+                    </ul>
+                </td>
+                <!--/* 担当企業（Bolt 38h。H-2）。担当範囲のない役割は「—」と見えない文字 */-->
+                <td th:if="${user.hasAssignmentScope()}" th:text="${assignedCompanies[user.id]}">荷主 北、ほか 1 社</td>
+                <td th:unless="${user.hasAssignmentScope()}"><span aria-hidden="true">—</span><span class="visually-hidden">担当範囲のない役割</span></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</main>
+</body>
+</html>

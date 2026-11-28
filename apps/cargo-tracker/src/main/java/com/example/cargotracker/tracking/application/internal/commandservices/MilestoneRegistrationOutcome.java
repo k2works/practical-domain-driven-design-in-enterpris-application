@@ -1,0 +1,59 @@
+package com.example.cargotracker.tracking.application.internal.commandservices;
+
+import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneRejectionReason;
+import com.example.cargotracker.tracking.domain.model.valueobjects.MilestoneState;
+import com.example.cargotracker.tracking.domain.model.valueobjects.TrackingStatus;
+import java.util.Objects;
+
+/**
+ * 主要実績の登録の結果（US-12 AC1・AC2。Bolt 26b）。画面が結果ごとの文言を示す（Bolt 26c）。
+ */
+public sealed interface MilestoneRegistrationOutcome {
+
+    /**
+     * 登録した。現在状態を導出し直した（AC1）。時系列に反する実績は確認中、完了後の実績は保持のみで登録した（AC3・AC5。Bolt 39gc）。
+     *
+     * @param milestoneNo 登録した実績の実績番号
+     * @param state 登録した実績の状態（採用・確認中・保持のみ）
+     * @param currentStatus 導出し直した現在状態
+     */
+    record Registered(int milestoneNo, MilestoneState state, TrackingStatus currentStatus)
+            implements MilestoneRegistrationOutcome {
+
+        public Registered {
+            Objects.requireNonNull(state, "state");
+            Objects.requireNonNull(currentStatus, "currentStatus");
+        }
+    }
+
+    /**
+     * 同じ出典識別子（出典の種類と参照）の実績が登録済みで、新しい実績を作らなかった（AC2、T-INV-02）。
+     *
+     * @param milestoneNo 既存の実績の実績番号
+     */
+    record AlreadyRegistered(int milestoneNo) implements MilestoneRegistrationOutcome {}
+
+    /**
+     * 登録を拒否した。
+     *
+     * @param reason 理由
+     */
+    record Rejected(MilestoneRejectionReason reason) implements MilestoneRegistrationOutcome {
+
+        public Rejected {
+            Objects.requireNonNull(reason, "reason");
+        }
+    }
+
+    /** 追跡番号の追跡記録がない。 */
+    record NotFound() implements MilestoneRegistrationOutcome {}
+
+    /**
+     * 追跡記録の荷主企業が操作者の担当企業でない（Bolt 38g。US-16 AC4）。何も書かずに返す。画面は試行を記録して 404 にする（画面を開いた
+     * 後に割り当てが外れたときの守り。controller は先にロックしない照会で範囲を確かめる）。登録済み・版の照合・発生時刻の判定より先に判定する。
+     */
+    record OutOfScope() implements MilestoneRegistrationOutcome {}
+
+    /** 画面を開いた後に、ほかの更新が先にこの追跡記録を変更した（版の不一致・楽観ロックの競合）。ほかの更新は追跡管理者の登録と DE-13 の受け取り（Bolt 39g）。 */
+    record Conflict() implements MilestoneRegistrationOutcome {}
+}

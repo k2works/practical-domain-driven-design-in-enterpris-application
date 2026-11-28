@@ -1,0 +1,789 @@
+package com.example.cargotracker.integration;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.doAnswer;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
+
+import com.example.cargotracker.TestcontainersConfiguration;
+import com.example.cargotracker.externaldata.application.internal.commands.IngestFileCommand;
+import com.example.cargotracker.externaldata.application.internal.commands.RejectKeylessQuarantinesCommand;
+import com.example.cargotracker.externaldata.application.internal.commandservices.IngestionOutcome;
+import com.example.cargotracker.externaldata.application.internal.commandservices.IngestionOutcome.Ingested;
+import com.example.cargotracker.externaldata.application.internal.commandservices.IngestionService;
+import com.example.cargotracker.externaldata.application.internal.commandservices.KeylessRejectionOutcome;
+import com.example.cargotracker.externaldata.application.internal.commandservices.ReceivedRecordDecisionService;
+import com.example.cargotracker.externaldata.application.internal.queryservices.IngestionSummaryQueryService;
+import com.example.cargotracker.externaldata.application.internal.queryservices.UndecidedRecordPage;
+import com.example.cargotracker.externaldata.application.internal.queryservices.UndecidedRecordQueryService;
+import com.example.cargotracker.externaldata.domain.events.ReceivedRecordDecided;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.Classification;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.MilestoneKindValue;
+import com.example.cargotracker.externaldata.domain.model.valueobjects.VoyageValues;
+import com.example.cargotracker.externaldata.interfaces.file.CsvFileKind;
+import com.example.cargotracker.externaldata.interfaces.file.IngestFileCommandAssembler;
+import com.example.cargotracker.identity.IdentityLogins;
+import com.example.cargotracker.identity.application.internal.eventhandlers.ExternalRecordAuditEventHandler;
+import com.example.cargotracker.identity.domain.model.aggregates.Company;
+import com.example.cargotracker.identity.domain.model.aggregates.CompanyRepository;
+import com.example.cargotracker.identity.domain.model.aggregates.TotpCodeGenerator;
+import com.example.cargotracker.identity.domain.model.aggregates.TotpCredential;
+import com.example.cargotracker.identity.domain.model.aggregates.TotpCredentialRepository;
+import com.example.cargotracker.identity.domain.model.aggregates.User;
+import com.example.cargotracker.identity.domain.model.aggregates.UserRepository;
+import com.example.cargotracker.identity.domain.model.valueobjects.CompanyKind;
+import com.example.cargotracker.identity.domain.model.valueobjects.EmailAddress;
+import com.example.cargotracker.identity.domain.model.valueobjects.UserStatus;
+import com.example.cargotracker.identity.infrastructure.crypto.AesGcmSecretCipher;
+import com.example.cargotracker.shared.domain.AuthenticatedActor;
+import com.example.cargotracker.shared.domain.CompanyId;
+import com.example.cargotracker.shared.domain.Role;
+import com.example.cargotracker.shared.domain.UserId;
+import com.example.cargotracker.shared.domain.UtcInstant;
+import jakarta.servlet.http.Cookie;
+import java.nio.charset.StandardCharsets;
+import java.time.Clock;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.util.Set;
+import java.util.StringJoiner;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.IntFunction;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.context.annotation.Import;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
+
+/**
+ * PERF-06（1 万件のファイルを 5 分以内に分類・採用）を PostgreSQL 18 で測る（Bolt 39b4 の行 1・2・10・11・12、Bolt 39c2 の行 21 の画面の経路、Bolt 39c4 の行 16 の結果の画面の照会、Bolt 39d2b の行 21 のまとめての却下。non_functional の PERF-06）。
+ * 時間は CSV の組み立て（{@link IngestFileCommandAssembler#assemble}）の前から取込のサービスが戻るまで（取込のコミットを含む）で、
+ * 監査の listener の配信はコミットの後の非同期で PERF-06 の外なので、完了までを待って参考の値としてログに出す。測った値（全体・組み立て・
+ * 取込、接続の最大とコミットの数、分類ごとの件数の照会の合計、ファイルの大きさ）はテストのログに出す。
+ *
+ * <p>時間を測るので {@code test} から外し、{@code performanceTest} で動かす（{@code check} と push の CI に入れない。行 8 の規則）。
+ * PERF-06 の判定は Linux の CI の手動のジョブ {@code performance} で行う（Windows の Docker Desktop のポート転送は 8 KB を超える文ごとに
+ * 約 41 ms の人工の遅れを足し、寄港 60 の航海が 5 分を超える）。CI のログでは「PERF-06」で始まる行が測った値になる。すべての行が
+ * 採用になる最も重い経路（外部原本・採用値・イベントを書く）で、外部 ID は行ごとに違える。確かめる行は自分の取込 ID と UUID を含む提供元の
+ * 名前で絞り、全体で数えない（test_strategy の数えるテストの規約）。テストの終わりに自分の取込の監査の発行記録がすべて完了になるまで待つ
+ * （T-184）。情報源は最後に停止中にする。
+ */
+@Tag("performance")
+@Tag("NFR-PERF-06")
+@SpringBootTest
+@AutoConfigureMockMvc
+@Import(TestcontainersConfiguration.class)
+class ExternalDataIngestionPerformanceTest {
+
+    private static final Logger LOG = LoggerFactory.getLogger(ExternalDataIngestionPerformanceTest.class);
+
+    private static final int ROWS = 10_000;
+
+    /** 行 7（Bolt 39h4）: 外部 ID の種類と、外部 ID ごとの外部版の数（採用になる外部版は 4、版の逆転の差異が 1）。 */
+    private static final int EXTERNAL_IDS = 2_000;
+
+    private static final int ADOPTED_VERSIONS = 4;
+    private static final int VERSIONS_PER_ID = ADOPTED_VERSIONS + 1;
+
+    /** PERF-06 の判定（組み立てから取込のコミットまで）。 */
+    private static final Duration LIMIT = Duration.ofMinutes(5);
+
+    /** 分類ごとの件数の照会の合計の上限（超えたら 1 本の照会にする。開始準備の決定 (6)）。 */
+    private static final Duration COUNT_QUERIES_LIMIT = Duration.ofSeconds(1);
+
+    /** まとめての却下のトランザクションの間の一覧の照会の上限（超えたら値を記録して止め、分け方を諮る。Bolt 39d2b の開始準備の決定 (1)）。 */
+    private static final Duration LIST_QUERY_LIMIT = Duration.ofSeconds(1);
+
+    /** まとめての却下の終わりを待つ間隔（その間隔ごとに一覧を照会する）。 */
+    private static final Duration LIST_QUERY_INTERVAL = Duration.ofMillis(500);
+
+    /** 1 万件の監査の配信を待つ上限（設計の決定「共有の DB の他の行」。超えたら落とす）。 */
+    private static final Duration DELIVERY_TIMEOUT = Duration.ofMinutes(10);
+
+    /** 原本の大きさの上限（ファイル全体。「人に諮ること」1 の決定 (a)。40 MiB）。 */
+    private static final long MAX_FILE_BYTES = 41_943_040L;
+
+    private static final String VOYAGE_HEADER = "external_id,external_version,acquired_at,port_calls";
+
+    /** 寄港の時刻の書式（マイクロ秒と UTC。採用値の要約と同じ形で、秒までの形より長い）。 */
+    private static final DateTimeFormatter PORT_CALL_TIME =
+            DateTimeFormatter.ofPattern("uuuu-MM-dd'T'HH:mm:ss.SSSSSS'Z'").withZone(ZoneOffset.UTC);
+
+    /** 寄港の時刻の始まり（行と寄港ごとにずらす）。 */
+    private static final Instant FIRST_CALL = Instant.parse("2026-12-01T00:00:00Z");
+
+    private static final String LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+    private static final String AUDIT_LISTENER = ExternalRecordAuditEventHandler.class.getSimpleName();
+
+    private static final byte[] TOTP_SECRET = "12345678901234567890".getBytes(StandardCharsets.US_ASCII);
+
+    private final AuthenticatedActor steward = new AuthenticatedActor(
+            new UserId(UUID.randomUUID()),
+            new CompanyId(UUID.randomUUID()),
+            Set.of(Role.DATA_STEWARD),
+            "データ責任者",
+            "運営会社");
+
+    /** 行 21 で {@code ingest} の前後の時刻を取るため spy にする（ほかの行は本物をそのまま呼ぶ）。 */
+    @MockitoSpyBean
+    IngestionService ingestionService;
+
+    /** 行 16 で {@code summaryOf} の前後の時刻を取るため spy にする（Bolt 39c4）。 */
+    @MockitoSpyBean
+    IngestionSummaryQueryService summaries;
+
+    /** 行 21 のまとめての却下（Bolt 39d2b）。 */
+    @Autowired
+    ReceivedRecordDecisionService decisionService;
+
+    /** 行 21 のまとめての却下のトランザクションの間の一覧の照会（Bolt 39d2b）。Bolt 39d4 の行 24 で {@code page} の前後の時刻を取るため spy にする。 */
+    @MockitoSpyBean
+    UndecidedRecordQueryService undecidedRecords;
+
+    @Autowired
+    MockMvc mvc;
+
+    @Autowired
+    CompanyRepository companies;
+
+    @Autowired
+    UserRepository users;
+
+    @Autowired
+    TotpCredentialRepository totpCredentials;
+
+    @Autowired
+    TotpCodeGenerator totpCodes;
+
+    @Autowired
+    AesGcmSecretCipher cipher;
+
+    @Autowired
+    PasswordEncoder passwordEncoder;
+
+    @Autowired
+    ConnectionUsageRecorder connectionUsage;
+
+    @Autowired
+    JdbcTemplate jdbc;
+
+    @Autowired
+    Clock clock;
+
+    @Test
+    void 行1と行10と行11_寄港5の航海1万件は組み立てから取込のコミットまで5分以内で採用1万件になり監査の配信が完了する() {
+        byte[] csv = voyageCsv(5, acquiredAt());
+
+        measure("voyage(port-calls=5)", "VOYAGE", CsvFileKind.VOYAGE, csv);
+    }
+
+    @Test
+    void 行2と行10と行11_主要実績1万件は6種類を順に回しても5分以内で採用1万件になり監査の配信が完了する() {
+        Instant acquiredAt = acquiredAt();
+        MilestoneKindValue[] kinds = MilestoneKindValue.values();
+        byte[] csv = ExternalDataIngestionConnectionTest.csv(
+                ExternalDataIngestionConnectionTest.MILESTONE_HEADER,
+                ROWS,
+                row -> "MS-%05d,1,%s,%s,%s,JPTYO,%s"
+                        .formatted(
+                                row,
+                                acquiredAt,
+                                ExternalDataIngestionConnectionTest.trackingNumber(row),
+                                kinds[row % kinds.length],
+                                acquiredAt));
+
+        measure("milestone", "MILESTONE", CsvFileKind.MILESTONE, csv);
+    }
+
+    /**
+     * Bolt 39h4 の行 7: 39h が取込の分類に足した外部 ID ごとの採用値の照会（{@code findByExternalId}）と差異の経路（DE-31 と監査）を、
+     * 外部版が複数ある組で測る。測る・判定するのは W7 の締めの CI（Linux の手動のジョブ {@code performance}）で、Windows では組み立てて
+     * 流れること（採用 8,000・差異 2,000）を確かめる。
+     */
+    @Test
+    void Bolt39h4_行7_外部ID2000種と外部版5の航海1万件は5分以内で採用8000件と差異2000件になり監査の配信が完了する() {
+        byte[] csv = reversedVoyageCsv(5, acquiredAt());
+        LOG.info(
+                "PERF-06 voyage(port-calls=5,versions-per-id={}) external-ids={} adopted-expected={} discrepancies-expected={}",
+                VERSIONS_PER_ID,
+                EXTERNAL_IDS,
+                EXTERNAL_IDS * ADOPTED_VERSIONS,
+                EXTERNAL_IDS);
+
+        measure(
+                "voyage(port-calls=5,versions-per-id=" + VERSIONS_PER_ID + ")",
+                "VOYAGE",
+                CsvFileKind.VOYAGE,
+                csv,
+                EXTERNAL_IDS * ADOPTED_VERSIONS,
+                EXTERNAL_IDS);
+    }
+
+    @Test
+    void 行12_寄港60の航海1万件は5分以内でファイルは原本の大きさの上限の40MiB以下になる() {
+        Instant acquiredAt = acquiredAt();
+        IntFunction<String> line = voyageLine(VoyageValues.MAX_PORT_CALLS, acquiredAt);
+        byte[] csv = ExternalDataIngestionConnectionTest.csv(VOYAGE_HEADER, ROWS, line);
+        int maxLineBytes = 0;
+        for (int row = 0; row < ROWS; row++) {
+            maxLineBytes = Math.max(maxLineBytes, line.apply(row).getBytes(StandardCharsets.UTF_8).length);
+        }
+        LOG.info(
+                "PERF-06 voyage(port-calls=60) file-bytes={} limit-bytes={} max-row-bytes={}",
+                csv.length,
+                MAX_FILE_BYTES,
+                maxLineBytes);
+
+        assertThat((long) csv.length).isLessThanOrEqualTo(MAX_FILE_BYTES);
+        measure("voyage(port-calls=60)", "VOYAGE", CsvFileKind.VOYAGE, csv);
+    }
+
+    /**
+     * 行 21（Bolt 39c2。T-242）: 画面の経路で上限いっぱい（データ行 10,000 行）のファイルを取り込む。MockMvc の multipart で画面の POST
+     * （本物のフィルターの連なりと、password と TOTP でログインしたデータ責任者の session と CSRF のトークン）から結果の画面への移動（302）
+     * までを測る。Tomcat の multipart の受け取りは MockMvc の外なので範囲の外。取込のサービスの spy で {@code ingest} の呼び出しの前後の
+     * 時刻を取り、POST 全体から「取込の前（フィルター・束縛・ファイルの読み出し・組み立て）」「取込（コミットまで）」「取込の後（PRG の応答）」
+     * に分ける（T-241）。
+     */
+    @Test
+    void 行21_画面のPOSTで寄港5の航海1万件のファイルを送ると結果の画面への移動まで5分以内で採用1万件になる() throws Exception {
+        byte[] csv = voyageCsv(5, acquiredAt());
+        UUID sourceId = insertApprovedSource(ExternalDataIngestionConnectionTest.newProvider(), "VOYAGE");
+        Cookie session = login(dataSteward());
+        AtomicLong ingestStarted = new AtomicLong();
+        AtomicLong ingestFinished = new AtomicLong();
+        AtomicReference<IngestionOutcome> outcome = new AtomicReference<>();
+        doAnswer(invocation -> {
+                    ingestStarted.set(System.nanoTime());
+                    try {
+                        IngestionOutcome value = (IngestionOutcome) invocation.callRealMethod();
+                        outcome.set(value);
+                        return value;
+                    } finally {
+                        ingestFinished.set(System.nanoTime());
+                    }
+                })
+                .when(ingestionService)
+                .ingest(any(), any());
+        Ingested result = null;
+        try {
+            MockMultipartHttpServletRequestBuilder request =
+                    (MockMultipartHttpServletRequestBuilder) multipart("/staff/external-data/ingestions")
+                            .file(new MockMultipartFile("file", "voyage.csv", "text/csv", csv))
+                            .param("dataSourceId", sourceId.toString())
+                            .cookie(session)
+                            .with(csrf());
+            long started = System.nanoTime();
+            MvcResult response = mvc.perform(request).andReturn();
+            long finished = System.nanoTime();
+            result = ExternalDataIngestionConnectionTest.ingested(outcome.get());
+            LOG.info(
+                    "PERF-06 web voyage(port-calls=5) rows={} file-bytes={} before-ingest={} ingest={} after-ingest={}"
+                            + " total={} limit={}",
+                    result.receivedCount(),
+                    csv.length,
+                    seconds(ingestStarted.get() - started),
+                    seconds(ingestFinished.get() - ingestStarted.get()),
+                    seconds(finished - ingestFinished.get()),
+                    seconds(finished - started),
+                    seconds(LIMIT.toNanos()));
+
+            assertThat(response.getResponse().getStatus()).isEqualTo(302);
+            assertThat(response.getResponse().getRedirectedUrl())
+                    .isEqualTo("/staff/external-data/ingestions/" + result.ingestionId());
+            assertThat(Duration.ofNanos(finished - started)).isLessThanOrEqualTo(LIMIT);
+            assertThat(result.receivedCount()).isEqualTo(ROWS);
+            assertThat(result.countOf(Classification.ADOPTED)).isEqualTo(ROWS);
+            assertThat(adoptedValueCount(result.ingestionId())).isEqualTo(ROWS);
+        } finally {
+            finish("web voyage(port-calls=5)", result, sourceId);
+        }
+    }
+
+    /**
+     * 行 16（Bolt 39c4。39c3 の行 19。T-241・T-242）: 上限いっぱいの隔離（値の誤りだけのデータ行 10,000 行。T-230）の取込の結果の画面の GET
+     * （MockMvc。本物のフィルターの連なりとログインしたデータ責任者の session）を測る。取込の要約の照会の spy で {@code summaryOf} の前後の
+     * 時刻を取り、GET 全体から照会（{@code summaryOf}）と、それ以外（フィルター・controller・画面の描画）に分けて「PERF-06 notes」の行に出す。
+     * 目安の NFR はない参考の値なので時間で落とさない（non_functional の PERF-06。1 秒を超えたら値を記録して止め、索引を足すかを諮る）。
+     */
+    @Test
+    void 行16_隔離1万件の取込の結果の画面のGETは最初の100件の注記と残りの件数を示し照会と描画の時間をログに出す() throws Exception {
+        Instant acquiredAt = acquiredAt();
+        IntFunction<String> valid = voyageLine(5, acquiredAt);
+        // 外部版を空にした値の誤りだけの行（行の誤りのキーのない隔離。取り込めなかった部分はなく、要確認でない）
+        byte[] csv = ExternalDataIngestionConnectionTest.csv(
+                VOYAGE_HEADER, ROWS, row -> valid.apply(row).replaceFirst(",1,", ",,"));
+        UUID sourceId = insertApprovedSource(ExternalDataIngestionConnectionTest.newProvider(), "VOYAGE");
+        AtomicLong queryStarted = new AtomicLong();
+        AtomicLong queryFinished = new AtomicLong();
+        doAnswer(invocation -> {
+                    queryStarted.set(System.nanoTime());
+                    try {
+                        return invocation.callRealMethod();
+                    } finally {
+                        queryFinished.set(System.nanoTime());
+                    }
+                })
+                .when(summaries)
+                .summaryOf(any());
+        Ingested result = null;
+        try {
+            result = ExternalDataIngestionConnectionTest.ingested(ingestionService.ingest(
+                    steward, IngestFileCommandAssembler.assemble(sourceId, CsvFileKind.VOYAGE, csv)));
+            Cookie session = login(dataSteward());
+            String url = "/staff/external-data/ingestions/" + result.ingestionId();
+
+            long started = System.nanoTime();
+            MvcResult response = mvc.perform(get(url).cookie(session)).andReturn();
+            long finished = System.nanoTime();
+            String page = response.getResponse().getContentAsString(StandardCharsets.UTF_8);
+            LOG.info(
+                    "PERF-06 notes rows={} quarantined={} shown={} query={} render={} total={} (reference, no NFR)",
+                    result.receivedCount(),
+                    result.countOf(Classification.QUARANTINED),
+                    shownNotes(page),
+                    preciseSeconds(queryFinished.get() - queryStarted.get()),
+                    preciseSeconds((finished - started) - (queryFinished.get() - queryStarted.get())),
+                    preciseSeconds(finished - started));
+
+            assertThat(response.getResponse().getStatus()).isEqualTo(200);
+            assertThat(result.countOf(Classification.QUARANTINED)).isEqualTo(ROWS);
+            assertThat(shownNotes(page)).isEqualTo(IngestionSummaryQueryService.SHOWN_QUARANTINE_LIMIT);
+            assertThat(page)
+                    .contains("ほかに 9,900 件の隔離・差異があります（最初の 100 件だけを示しています）。")
+                    .doesNotContain("要確認");
+        } finally {
+            finish("notes", result, sourceId);
+        }
+    }
+
+    /**
+     * Bolt 39d4 の行 24（Bolt 39d の行 19。T-241・T-242）: 上限いっぱいの隔離（値の誤りだけのデータ行 10,000 行）の取込の S-17 の最後のページ（{@code page=100}）と絞らない 1 ページ目の
+     * GET を測る。照会のサービスの spy で {@code page} の前後の時刻を取り、照会（件数と頁）と、それ以外（フィルター・controller・画面の描画）に分けて「PERF-06 undecided」の行に出す。
+     * 目安の NFR はない参考の値なので時間で落とさない（1 秒を超えたら値を記録して止め、索引を足すか（スキーマ）を諮る。開始準備の決定 (10)）。
+     */
+    @Test
+    void Bolt39d4_行24_隔離1万件の取込のS17の最後のページと絞らない1ページ目のGETの照会と描画の時間をログに出す() throws Exception {
+        Instant acquiredAt = acquiredAt();
+        IntFunction<String> valid = voyageLine(5, acquiredAt);
+        byte[] csv = ExternalDataIngestionConnectionTest.csv(
+                VOYAGE_HEADER, ROWS, row -> valid.apply(row).replaceFirst(",1,", ",,"));
+        UUID sourceId = insertApprovedSource(ExternalDataIngestionConnectionTest.newProvider(), "VOYAGE");
+        AtomicLong queryStarted = new AtomicLong();
+        AtomicLong queryFinished = new AtomicLong();
+        doAnswer(invocation -> {
+                    queryStarted.set(System.nanoTime());
+                    try {
+                        return invocation.callRealMethod();
+                    } finally {
+                        queryFinished.set(System.nanoTime());
+                    }
+                })
+                .when(undecidedRecords)
+                .page(any(), anyInt());
+        Ingested result = null;
+        try {
+            result = ExternalDataIngestionConnectionTest.ingested(ingestionService.ingest(
+                    steward, IngestFileCommandAssembler.assemble(sourceId, CsvFileKind.VOYAGE, csv)));
+            Cookie session = login(dataSteward());
+            String list = "/staff/external-data/undecided-records";
+
+            String lastPage = measureUndecidedPage(
+                    "filtered-last-page",
+                    list + "?ingestion=" + result.ingestionId() + "&page=100",
+                    session,
+                    queryStarted,
+                    queryFinished);
+            String firstPage =
+                    measureUndecidedPage("unfiltered-first-page", list, session, queryStarted, queryFinished);
+
+            assertThat(lastPage).contains("この取込の判断を待つ隔離・差異 10,000 件（9,901〜10,000 件目を示しています）");
+            assertThat(firstPage).contains("1〜100 件目を示しています");
+        } finally {
+            finish("undecided", result, sourceId);
+        }
+    }
+
+    private String measureUndecidedPage(
+            String label, String url, Cookie session, AtomicLong queryStarted, AtomicLong queryFinished)
+            throws Exception {
+        long started = System.nanoTime();
+        MvcResult response = mvc.perform(get(url).cookie(session)).andReturn();
+        long finished = System.nanoTime();
+        long query = queryFinished.get() - queryStarted.get();
+        LOG.info(
+                "PERF-06 undecided {} query={} render={} total={} (reference, no NFR; stop at query 1s)",
+                label,
+                preciseSeconds(query),
+                preciseSeconds((finished - started) - query),
+                preciseSeconds(finished - started));
+        assertThat(response.getResponse().getStatus()).isEqualTo(200);
+        return response.getResponse().getContentAsString(StandardCharsets.UTF_8);
+    }
+
+    /**
+     * 行 21（Bolt 39d2b。T-241・T-242）: 上限いっぱいのキーのない隔離（値の誤りだけのデータ行 10,000 行）の取込を、まとめての却下で 1 つの
+     * トランザクションで却下する時間（{@code rejectKeyless} の呼び出しからコミットまで。PERF-06 と同じ 5 分）と、そのトランザクションの間に
+     * 別の接続で一覧の 1 ページを照会する時間（1 秒）を測り、「PERF-06 keyless-rejection」の行に出す。まとめての却下は受信記録ごとに判断の
+     * リポジトリのセーブポイントを作るので、取込の時間から見積もれない（開始準備の決定 (1)）。却下は別のスレッドで動かし、終わるまで
+     * 一覧の照会を繰り返す（取込の監査の配信は測る前に終わらせ、測る間に裏で走らせない）。監査の配信 1 万件の完了までは参考の値。
+     */
+    @Test
+    void Bolt39d2b_行21_キーのない隔離1万件のまとめての却下は5分以内でトランザクションの間の一覧の照会は1秒以内() throws Exception {
+        Instant acquiredAt = acquiredAt();
+        IntFunction<String> valid = voyageLine(5, acquiredAt);
+        // 外部版を空にした値の誤りだけの行（行の誤りのキーのない隔離。行 16 と同じ）
+        byte[] csv = ExternalDataIngestionConnectionTest.csv(
+                VOYAGE_HEADER, ROWS, row -> valid.apply(row).replaceFirst(",1,", ",,"));
+        UUID sourceId = insertApprovedSource(ExternalDataIngestionConnectionTest.newProvider(), "VOYAGE");
+        java.util.concurrent.ExecutorService executor = java.util.concurrent.Executors.newSingleThreadExecutor();
+        UUID rejectedIngestion = null;
+        try {
+            Ingested result = ExternalDataIngestionConnectionTest.ingested(ingestionService.ingest(
+                    steward, IngestFileCommandAssembler.assemble(sourceId, CsvFileKind.VOYAGE, csv)));
+            awaitCompletedAuditPublications(result);
+            UUID ingestionId = result.ingestionId();
+            assertThat(undecidedRecords.keylessRejectionTarget(ingestionId))
+                    .hasValueSatisfying(target -> assertThat(target.count()).isEqualTo(ROWS));
+
+            AtomicLong rejectNanos = new AtomicLong();
+            java.util.concurrent.Future<KeylessRejectionOutcome> rejecting = executor.submit(() -> {
+                long started = System.nanoTime();
+                try {
+                    return decisionService.rejectKeyless(
+                            steward, new RejectKeylessQuarantinesCommand(ingestionId, "列を直したファイルを取り込み直した。"));
+                } finally {
+                    rejectNanos.set(System.nanoTime() - started);
+                }
+            });
+            rejectedIngestion = ingestionId;
+            java.util.List<Long> listQueries = new java.util.ArrayList<>();
+            KeylessRejectionOutcome outcome = null;
+            while (outcome == null) {
+                try {
+                    outcome = rejecting.get(LIST_QUERY_INTERVAL.toMillis(), java.util.concurrent.TimeUnit.MILLISECONDS);
+                } catch (java.util.concurrent.TimeoutException _) {
+                    // 却下のトランザクションの間に、別の接続で取込で絞った一覧の 1 ページを照会する
+                    long started = System.nanoTime();
+                    UndecidedRecordPage page = undecidedRecords.page(ingestionId, 1);
+                    listQueries.add(System.nanoTime() - started);
+                    // 空のときは、照会の前に却下がコミットを終えた競合かを、却下の完了を待って見分ける（Bolt 40）
+                    KeylessRejectionListCheck.assertListedDuringRejection(
+                            page.items().isEmpty(),
+                            () -> rejecting.get(
+                                    KeylessRejectionListCheck.COMPLETION_WAIT_SECONDS,
+                                    java.util.concurrent.TimeUnit.SECONDS));
+                }
+            }
+            long listMax = listQueries.stream().mapToLong(Long::longValue).max().orElse(0);
+            LOG.info(
+                    "PERF-06 keyless-rejection rows={} rejected={} reject={} limit={} list-queries={} list-max={} list-limit={}",
+                    ROWS,
+                    outcome instanceof KeylessRejectionOutcome.RejectedAll(int count) ? count : 0,
+                    seconds(rejectNanos.get()),
+                    seconds(LIMIT.toNanos()),
+                    listQueries.size(),
+                    preciseSeconds(listMax),
+                    preciseSeconds(LIST_QUERY_LIMIT.toNanos()));
+
+            assertThat(outcome).isEqualTo(new KeylessRejectionOutcome.RejectedAll(ROWS));
+            assertThat(Duration.ofNanos(rejectNanos.get())).isLessThanOrEqualTo(LIMIT);
+            assertThat(listQueries).isNotEmpty();
+            assertThat(Duration.ofNanos(listMax)).isLessThanOrEqualTo(LIST_QUERY_LIMIT);
+            assertThat(undecidedRecords.page(ingestionId, 1).total()).isZero();
+        } finally {
+            executor.shutdown();
+            try {
+                if (rejectedIngestion != null) {
+                    long deliveryStarted = System.nanoTime();
+                    awaitCompletedDecidedAuditPublications(rejectedIngestion);
+                    LOG.info(
+                            "PERF-06 keyless-rejection audit delivery completed in {} (reference, outside PERF-06)",
+                            seconds(System.nanoTime() - deliveryStarted));
+                }
+            } finally {
+                removeSource(sourceId);
+            }
+        }
+    }
+
+    /** まとめての却下の DE-29 の監査の発行記録が 1 万件すべて完了になるまで待つ（待つ条件は取込 ID とイベントの型と監査の受け手。T-184）。 */
+    private void awaitCompletedDecidedAuditPublications(UUID ingestionId) {
+        await().atMost(DELIVERY_TIMEOUT)
+                .pollInterval(Duration.ofSeconds(2))
+                .until(() -> count(
+                                "SELECT COUNT(*) FROM platform.event_publication WHERE event_type = ?"
+                                        + " AND serialized_event LIKE ? AND listener_id LIKE ? AND completion_date IS NOT NULL",
+                                ReceivedRecordDecided.class.getName(),
+                                "%" + ingestionId + "%",
+                                "%" + AUDIT_LISTENER + "%")
+                        == ROWS);
+    }
+
+    /** 結果の画面の隔離の理由の一覧の項目の数。 */
+    private static int shownNotes(String page) {
+        Matcher list = Pattern.compile("<ul aria-labelledby=\"quarantine-notes-heading\">(.*?)</ul>", Pattern.DOTALL)
+                .matcher(page);
+        return list.find()
+                ? (int) Pattern.compile("<li>").matcher(list.group(1)).results().count()
+                : 0;
+    }
+
+    /** 1 秒の前後を読む参考の値なので、ミリ秒まで出す。 */
+    private static String preciseSeconds(long nanos) {
+        return "%.3fs".formatted(nanos / 1_000_000_000.0);
+    }
+
+    /** 画面の経路のデータ責任者（運営会社の利用者。TOTP を登録済み）。メールアドレスを返す。 */
+    private String dataSteward() {
+        Company operator = Company.of(new CompanyId(UUID.randomUUID()), "A 社", CompanyKind.OPERATOR, true);
+        companies.add(operator);
+        String email = "external-data-performance-" + UUID.randomUUID() + "@example.com";
+        UserId userId = new UserId(UUID.randomUUID());
+        users.add(User.of(
+                userId,
+                operator.id(),
+                EmailAddress.of(email),
+                "データ責任者",
+                passwordEncoder.encode(IdentityLogins.PASSWORD),
+                UserStatus.ACTIVE,
+                Set.of(Role.DATA_STEWARD)));
+        totpCredentials.add(TotpCredential.enroll(
+                userId, cipher.encrypt(TOTP_SECRET.clone(), userId), new UtcInstant(clock.instant())));
+        return email;
+    }
+
+    private Cookie login(String email) throws Exception {
+        return new IdentityLogins(mvc, jdbc, totpCredentials, totpCodes, clock).login(email);
+    }
+
+    /**
+     * 1 つのファイルを組み立てから取り込み、測った値をログに出して判定し、監査の配信の完了を待つ。配信の完了待ちは判定が落ちても
+     * {@code finally} で（情報源を停止にする前に）行い、1 万件の非同期の配信を裏で走らせたまま次の計測に進まない。
+     */
+    private void measure(String label, String recordType, CsvFileKind kind, byte[] csv) {
+        measure(label, recordType, kind, csv, ROWS, 0);
+    }
+
+    /** 採用と差異の件数の決まったファイルを測る（差異は採用値を作らない。Bolt 39h4 の行 7）。 */
+    private void measure(
+            String label,
+            String recordType,
+            CsvFileKind kind,
+            byte[] csv,
+            int expectedAdopted,
+            int expectedDiscrepancies) {
+        UUID sourceId = insertApprovedSource(ExternalDataIngestionConnectionTest.newProvider(), recordType);
+        Ingested result = null;
+        try {
+            connectionUsage.start();
+            long started = System.nanoTime();
+            IngestFileCommand command;
+            long assembled;
+            try {
+                command = IngestFileCommandAssembler.assemble(sourceId, kind, csv);
+                assembled = System.nanoTime();
+                result = ExternalDataIngestionConnectionTest.ingested(ingestionService.ingest(steward, command));
+            } finally {
+                connectionUsage.stop();
+            }
+            long finished = System.nanoTime();
+            Duration total = Duration.ofNanos(finished - started);
+            LOG.info(
+                    "PERF-06 {} rows={} file-bytes={} assemble={} ingest={} total={} limit={}",
+                    label,
+                    command.receivedCount(),
+                    csv.length,
+                    seconds(assembled - started),
+                    seconds(finished - assembled),
+                    seconds(finished - started),
+                    seconds(LIMIT.toNanos()));
+            Duration countQueries = assertClassificationCounts(result);
+            LOG.info(
+                    "PERF-06 {} connections peak={} commits={} classification-count-queries={} ({})",
+                    label,
+                    connectionUsage.peakConnections(),
+                    connectionUsage.commits(),
+                    Classification.values().length,
+                    seconds(countQueries.toNanos()));
+
+            assertThat(total).isLessThanOrEqualTo(LIMIT);
+            assertThat(result.receivedCount()).isEqualTo(ROWS);
+            assertThat(result.countOf(Classification.ADOPTED)).isEqualTo(expectedAdopted);
+            assertThat(result.countOf(Classification.DISCREPANCY)).isEqualTo(expectedDiscrepancies);
+            assertThat(adoptedValueCount(result.ingestionId())).isEqualTo(expectedAdopted);
+            assertThat(connectionUsage.peakConnections()).isEqualTo(2);
+            assertThat(connectionUsage.commits()).isEqualTo(ROWS + 2);
+            assertThat(countQueries).isLessThanOrEqualTo(COUNT_QUERIES_LIMIT);
+        } finally {
+            finish(label, result, sourceId);
+        }
+    }
+
+    /** 取り込めていれば監査の配信の完了を待ち（参考の値としてログに出す）、待てても待てなくても情報源を停止にする。 */
+    private void finish(String label, Ingested result, UUID sourceId) {
+        try {
+            if (result != null) {
+                long deliveryStarted = System.nanoTime();
+                awaitCompletedAuditPublications(result);
+                LOG.info(
+                        "PERF-06 {} audit delivery completed in {} (reference, outside PERF-06)",
+                        label,
+                        seconds(System.nanoTime() - deliveryStarted));
+            }
+        } finally {
+            removeSource(sourceId);
+        }
+    }
+
+    /**
+     * 行 11: 分類ごとの件数を取込のサービスと同じ照会（取込 ID と分類で絞る。分類の数だけ）で数え、行の結果の分類と一致することを
+     * 確かめ、照会の合計の時間を返す。
+     */
+    private Duration assertClassificationCounts(Ingested result) {
+        long started = System.nanoTime();
+        int[] counts = new int[Classification.values().length];
+        for (Classification classification : Classification.values()) {
+            counts[classification.ordinal()] = count(
+                    "SELECT COUNT(*) FROM external_data.received_record WHERE ingestion_id = ? AND classification = ?",
+                    result.ingestionId(),
+                    classification.name());
+        }
+        Duration elapsed = Duration.ofNanos(System.nanoTime() - started);
+        for (Classification classification : Classification.values()) {
+            long fromRows = result.rows().stream()
+                    .filter(row -> row.classification() == classification)
+                    .count();
+            assertThat(counts[classification.ordinal()])
+                    .as("分類 %s", classification)
+                    .isEqualTo((int) fromRows);
+            assertThat(result.countOf(classification))
+                    .as("分類 %s", classification)
+                    .isEqualTo((int) fromRows);
+        }
+        return elapsed;
+    }
+
+    /** 自分の取込の監査の発行記録がすべて完了になるまで待つ（待つ条件は自分の取込 ID と監査の受け手。T-184）。 */
+    private void awaitCompletedAuditPublications(Ingested result) {
+        // 監査の受け手は採用（DE-12・DE-13）・隔離（DE-14）・差異（DE-31。Bolt 39h）を受け、重複には何も出さない
+        int expected = result.countOf(Classification.ADOPTED)
+                + result.countOf(Classification.QUARANTINED)
+                + result.countOf(Classification.DISCREPANCY);
+        await().atMost(DELIVERY_TIMEOUT)
+                .pollInterval(Duration.ofSeconds(2))
+                .until(() -> count(
+                                "SELECT COUNT(*) FROM platform.event_publication WHERE serialized_event LIKE ?"
+                                        + " AND listener_id LIKE ? AND completion_date IS NOT NULL",
+                                "%" + result.ingestionId() + "%",
+                                "%" + AUDIT_LISTENER + "%")
+                        == expected);
+    }
+
+    /** 寄港の数の決まった航海のファイル（航海番号は行ごとに違え、すべて採用になる。T-230）。 */
+    private static byte[] voyageCsv(int portCalls, Instant acquiredAt) {
+        return ExternalDataIngestionConnectionTest.csv(VOYAGE_HEADER, ROWS, voyageLine(portCalls, acquiredAt));
+    }
+
+    /**
+     * 外部 ID 2,000 種 × 外部版 5 の航海のファイル（Bolt 39h4 の行 7）。外部版ごとにまとめて並べ（外部版 1 の 2,000 行、外部版 2 の…）、
+     * 外部版 1〜4 は取得時刻が昇順で採用になり、外部版 5 は外部版 1 より前の取得時刻にして版の逆転の差異にする。同じファイルの先の行の
+     * 採用値を後の行の分類が見る（{@code IngestionService} は 1 つのトランザクション）。
+     */
+    private static byte[] reversedVoyageCsv(int portCalls, Instant acquiredAt) {
+        IntFunction<String> line = row -> {
+            int version = row / EXTERNAL_IDS + 1;
+            Instant acquired = version <= ADOPTED_VERSIONS
+                    ? acquiredAt.minus(Duration.ofMinutes(ADOPTED_VERSIONS + 1L - version))
+                    : acquiredAt.minus(Duration.ofMinutes(ADOPTED_VERSIONS + 1L));
+            return voyageLine(portCalls, acquired, version).apply(row % EXTERNAL_IDS);
+        };
+        return ExternalDataIngestionConnectionTest.csv(VOYAGE_HEADER, ROWS, line);
+    }
+
+    private static IntFunction<String> voyageLine(int portCalls, Instant acquiredAt) {
+        return voyageLine(portCalls, acquiredAt, 1);
+    }
+
+    /**
+     * 航海の行。寄港は港を違え、時刻を順に並べ（寄港ごとに 1 日、到着から出発まで 12 時間）、始港の到着と終港の出発を空にする（T-230）。
+     */
+    private static IntFunction<String> voyageLine(int portCalls, Instant acquiredAt, int version) {
+        return row -> {
+            StringJoiner calls = new StringJoiner("|");
+            Instant base = FIRST_CALL.plus(row, ChronoUnit.MINUTES);
+            for (int call = 0; call < portCalls; call++) {
+                Instant arrival = base.plus(call, ChronoUnit.DAYS);
+                Instant departure = arrival.plus(12, ChronoUnit.HOURS);
+                calls.add(port(call) + ";" + (call == 0 ? "" : PORT_CALL_TIME.format(arrival)) + ";"
+                        + (call == portCalls - 1 ? "" : PORT_CALL_TIME.format(departure)));
+            }
+            return "V%05d,%d,%s,%s".formatted(row, version, acquiredAt, calls);
+        };
+    }
+
+    /** 寄港ごとに違う UN/LOCODE（{@code JP} と英大文字 3 字）。 */
+    private static String port(int call) {
+        return "JP" + LETTERS.charAt(call / (26 * 26) % 26) + LETTERS.charAt(call / 26 % 26)
+                + LETTERS.charAt(call % 26);
+    }
+
+    private static String seconds(long nanos) {
+        return "%.1fs".formatted(nanos / 1_000_000_000.0);
+    }
+
+    /** 取得時刻（取込時刻より前。秒まで。T-230）。 */
+    private Instant acquiredAt() {
+        return clock.instant().minus(Duration.ofMinutes(30)).truncatedTo(ChronoUnit.SECONDS);
+    }
+
+    private int adoptedValueCount(UUID ingestionId) {
+        return count(
+                "SELECT COUNT(*) FROM external_data.adopted_value a JOIN external_data.received_record r"
+                        + " ON r.id = a.received_record_id WHERE r.ingestion_id = ?",
+                ingestionId);
+    }
+
+    private UUID insertApprovedSource(String provider, String recordType) {
+        UUID id = UUID.randomUUID();
+        jdbc.update(
+                "INSERT INTO external_data.data_source (id, provider, record_type, approval_status, version)"
+                        + " VALUES (?, ?, ?, 'APPROVED', 0)",
+                id,
+                provider,
+                recordType);
+        return id;
+    }
+
+    /** コミットした情報源を承認済みのまま残さない（取込が残るので消せない。停止中にする）。 */
+    private void removeSource(UUID sourceId) {
+        jdbc.update("UPDATE external_data.data_source SET approval_status = 'SUSPENDED' WHERE id = ?", sourceId);
+    }
+
+    private int count(String sql, Object... args) {
+        Integer value = jdbc.queryForObject(sql, Integer.class, args);
+        return value == null ? 0 : value;
+    }
+}

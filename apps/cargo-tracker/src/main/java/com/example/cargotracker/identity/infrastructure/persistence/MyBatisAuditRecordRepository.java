@@ -1,0 +1,99 @@
+package com.example.cargotracker.identity.infrastructure.persistence;
+
+import com.example.cargotracker.identity.domain.model.aggregates.AuditRecord;
+import com.example.cargotracker.identity.domain.model.aggregates.AuditRecordRepository;
+import com.example.cargotracker.identity.domain.model.valueobjects.AuditAction;
+import com.example.cargotracker.identity.domain.model.valueobjects.AuditResult;
+import com.example.cargotracker.identity.domain.model.valueobjects.AuditTarget;
+import com.example.cargotracker.identity.domain.model.valueobjects.SuspensionReason;
+import com.example.cargotracker.identity.domain.model.valueobjects.SuspensionRecord;
+import com.example.cargotracker.shared.domain.CompanyId;
+import com.example.cargotracker.shared.domain.UserId;
+import com.example.cargotracker.shared.domain.UtcInstant;
+import java.time.ZoneOffset;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import org.springframework.stereotype.Repository;
+
+/**
+ * 監査記録のリポジトリの MyBatis 実装。追記と照会だけを持ち、更新と削除はしない（IA-INV-07）。
+ */
+@Repository
+public class MyBatisAuditRecordRepository implements AuditRecordRepository {
+
+    private final IdentityMapper mapper;
+
+    public MyBatisAuditRecordRepository(IdentityMapper mapper) {
+        this.mapper = mapper;
+    }
+
+    @Override
+    public void append(AuditRecord auditRecord) {
+        AuditTarget target = auditRecord.target();
+        mapper.insertAuditRecord(new AuditRecordRow(
+                auditRecord.id(),
+                auditRecord.occurredAt().instant().atOffset(ZoneOffset.UTC),
+                auditRecord.actorUserId() == null
+                        ? null
+                        : auditRecord.actorUserId().value(),
+                auditRecord.actorCompanyId() == null
+                        ? null
+                        : auditRecord.actorCompanyId().value(),
+                auditRecord.action().name(),
+                auditRecord.result().name(),
+                auditRecord.reason(),
+                target == null ? null : target.type(),
+                target == null ? null : target.id(),
+                target == null ? null : target.version(),
+                target == null ? null : target.beforeState(),
+                target == null ? null : target.afterState()));
+    }
+
+    @Override
+    public List<AuditRecord> findByActorUserId(UserId actor) {
+        return mapper.selectAuditRecordsByActor(actor.value()).stream()
+                .map(MyBatisAuditRecordRepository::toAggregate)
+                .toList();
+    }
+
+    @Override
+    public Optional<SuspensionRecord> findLatestUserSuspension(UserId target) {
+        return Optional.ofNullable(
+                        mapper.selectLatestUserSuspension(target.value().toString()))
+                .filter(SuspensionRecordRow::isCurrentSuspension)
+                .map(row -> new SuspensionRecord(
+                        SuspensionReason.valueOf(row.reason()),
+                        new UserId(row.actorUserId()),
+                        Optional.ofNullable(row.actorDisplayName()),
+                        new UtcInstant(row.occurredAt().toInstant())));
+    }
+
+    @Override
+    public boolean existsByActionAndTarget(AuditAction action, String targetType, String targetId) {
+        return mapper.existsAuditRecordByActionAndTarget(action.name(), targetType, targetId);
+    }
+
+    private static AuditRecord toAggregate(AuditRecordRow row) {
+        return AuditRecord.reconstitute(
+                row.id(),
+                new UtcInstant(row.occurredAt().toInstant()),
+                optionalUser(row.actorUserId()),
+                row.actorCompanyId() == null ? null : new CompanyId(row.actorCompanyId()),
+                AuditAction.valueOf(row.action()),
+                AuditResult.valueOf(row.result()),
+                row.reason(),
+                row.targetType() == null
+                        ? null
+                        : new AuditTarget(
+                                row.targetType(),
+                                row.targetId(),
+                                row.targetVersion(),
+                                row.beforeState(),
+                                row.afterState()));
+    }
+
+    private static UserId optionalUser(UUID id) {
+        return id == null ? null : new UserId(id);
+    }
+}

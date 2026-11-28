@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/customer :: layout(~{::title}, ~{::main}, ~{}, 'tracking-records')}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>追跡番号が見つかりません - 追跡の照会 - cargo-tracker</title>
+</head>
+<body>
+<main>
+    <h1>追跡番号が見つかりません</h1>
+    <!--/* C-10 の 404（Bolt 27 の開発レビューの判断）。他社・存在しない・形式の誤りの追跡番号に同じ本文を返し、追跡記録の存在を
+           漏らさない（BR-07）。入力した番号は示さない（どの場合も同じ本文にするため） */-->
+    <p>この追跡番号の貨物は見つかりませんでした。追跡番号に誤りがないか確かめてください。</p>
+    <p>自社の貨物でない追跡番号は照会できません。</p>
+    <p><a th:href="@{/customer/tracking-records}">追跡の照会へ戻る</a></p>
+</main>
+</body>
+</html>

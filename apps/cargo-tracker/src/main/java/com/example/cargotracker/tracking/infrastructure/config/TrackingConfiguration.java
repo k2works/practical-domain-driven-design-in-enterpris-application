@@ -1,0 +1,234 @@
+package com.example.cargotracker.tracking.infrastructure.config;
+
+import com.example.cargotracker.booking.interfaces.api.TrackingStartNotification;
+import com.example.cargotracker.booking.interfaces.api.TransportPhaseNotification;
+import com.example.cargotracker.routing.interfaces.api.RouteVersionLegQuery;
+import com.example.cargotracker.tracking.application.internal.commandservices.InquiryRecordingService;
+import com.example.cargotracker.tracking.application.internal.commandservices.RejectedMilestoneCaseOpener;
+import com.example.cargotracker.tracking.application.internal.commandservices.ServiceCaseActionService;
+import com.example.cargotracker.tracking.application.internal.commandservices.ServiceCaseAuthorization;
+import com.example.cargotracker.tracking.application.internal.commandservices.ServiceCaseCommandService;
+import com.example.cargotracker.tracking.application.internal.commandservices.SystemServiceCaseOpener;
+import com.example.cargotracker.tracking.application.internal.commandservices.TrackingRecordCommandService;
+import com.example.cargotracker.tracking.application.internal.commandservices.WebInquiryEscalator;
+import com.example.cargotracker.tracking.application.internal.commandservices.WebInquiryRecorder;
+import com.example.cargotracker.tracking.application.internal.eventhandlers.BookingTrackingStartNotificationEventHandler;
+import com.example.cargotracker.tracking.application.internal.eventhandlers.BookingTransportPhaseNotificationEventHandler;
+import com.example.cargotracker.tracking.application.internal.eventhandlers.ExternalMilestoneEventHandler;
+import com.example.cargotracker.tracking.application.internal.eventhandlers.QuotationConsultationRequestedEventHandler;
+import com.example.cargotracker.tracking.application.internal.eventhandlers.RouteCandidatesNotFoundEventHandler;
+import com.example.cargotracker.tracking.application.internal.eventhandlers.TrackingStartEventHandler;
+import com.example.cargotracker.tracking.application.internal.eventhandlers.VoyageArrivalEventHandler;
+import com.example.cargotracker.tracking.application.internal.outboundservices.acl.BookingTrackingStarts;
+import com.example.cargotracker.tracking.application.internal.outboundservices.acl.BookingTransportPhases;
+import com.example.cargotracker.tracking.application.internal.outboundservices.acl.RoutingScheduledLegs;
+import com.example.cargotracker.tracking.application.internal.queryservices.CustomerTrackingQueryService;
+import com.example.cargotracker.tracking.application.internal.queryservices.InquiryStatisticsQueryService;
+import com.example.cargotracker.tracking.application.internal.queryservices.ServiceCaseOverdueQueryService;
+import com.example.cargotracker.tracking.application.internal.queryservices.ServiceCaseQueryService;
+import com.example.cargotracker.tracking.application.internal.queryservices.TrackingRecordQueryService;
+import com.example.cargotracker.tracking.application.internal.queryservices.TrackingRecordScope;
+import com.example.cargotracker.tracking.domain.model.aggregates.BusinessCalendarRepository;
+import com.example.cargotracker.tracking.domain.model.aggregates.InquiryRecordRepository;
+import com.example.cargotracker.tracking.domain.model.aggregates.RejectedMilestoneRepository;
+import com.example.cargotracker.tracking.domain.model.aggregates.ServiceCaseNumberIssuer;
+import com.example.cargotracker.tracking.domain.model.aggregates.ServiceCaseRepository;
+import com.example.cargotracker.tracking.domain.model.aggregates.TrackingRecordRepository;
+import com.example.cargotracker.tracking.domain.model.rules.FreshnessPolicy;
+import java.time.Clock;
+import java.time.Duration;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+/**
+ * 追跡コンテキストの組み立て。腐敗防止層に経路設計と予約の公開 API をつなぎ、DE-07・DE-22 の listener を組み立てる（ADR-015。Bolt 25）。
+ * 追跡記録の照会（S-11・S-12）も組み立てる（Bolt 26）。
+ */
+@Configuration(proxyBeanMethods = false)
+public class TrackingConfiguration {
+
+    /** 経路設計の公開 API（確定した経路版の区間）を追跡の予定区間に変える腐敗防止層（units.md の U3 → U2）。 */
+    @Bean
+    RoutingScheduledLegs routingScheduledLegs(RouteVersionLegQuery routeVersionLegQuery) {
+        return new RoutingScheduledLegs(routeVersionLegQuery);
+    }
+
+    /** 予約の公開 API（追跡の開始の結果の通知）を呼ぶ腐敗防止層（ADR-014・015）。 */
+    @Bean
+    BookingTrackingStarts bookingTrackingStarts(TrackingStartNotification trackingStartNotification) {
+        return new BookingTrackingStarts(trackingStartNotification);
+    }
+
+    /** DE-07 を受けて追跡を開始する（Spring Modulith のイベントの記録を経て、別のトランザクションで動く）。 */
+    @Bean
+    TrackingStartEventHandler trackingStartEventHandler(
+            TrackingRecordRepository repository,
+            RoutingScheduledLegs scheduledLegs,
+            ApplicationEventPublisher eventPublisher,
+            Clock clock) {
+        return new TrackingStartEventHandler(repository, scheduledLegs, eventPublisher, clock);
+    }
+
+    /** DE-22 を受けて予約サガを完了にする（追跡記録の保存とは別のトランザクションで動く。ADR-014）。 */
+    @Bean
+    BookingTrackingStartNotificationEventHandler bookingTrackingStartNotificationEventHandler(
+            BookingTrackingStarts trackingStarts) {
+        return new BookingTrackingStartNotificationEventHandler(trackingStarts);
+    }
+
+    /** 予約の公開 API（輸送段階の通知）を呼ぶ腐敗防止層（ADR-014。Bolt 39g2）。 */
+    @Bean
+    BookingTransportPhases bookingTransportPhases(TransportPhaseNotification transportPhaseNotification) {
+        return new BookingTransportPhases(transportPhaseNotification);
+    }
+
+    /** DE-09・DE-10 を受けて予約の状態と輸送段階を進める（追跡記録の保存とは別のトランザクションで動く。ADR-014。Bolt 39g2）。 */
+    @Bean
+    BookingTransportPhaseNotificationEventHandler bookingTransportPhaseNotificationEventHandler(
+            BookingTransportPhases transportPhases) {
+        return new BookingTransportPhaseNotificationEventHandler(transportPhases);
+    }
+
+    /** DE-32 を受けて、適合する経路候補がなかった経路設計案件の有人案件を起票する（UC-06 3a。別のトランザクションで動く。Bolt 40-14）。 */
+    @Bean
+    RouteCandidatesNotFoundEventHandler routeCandidatesNotFoundEventHandler(
+            SystemServiceCaseOpener systemServiceCaseOpener) {
+        return new RouteCandidatesNotFoundEventHandler(systemServiceCaseOpener);
+    }
+
+    /** 荷主が見積りの条件を相談した を受けて、見積り相談の有人案件を起票する（US-24 AC3。別のトランザクションで動く。W9 の Bolt 46-1）。 */
+    @Bean
+    QuotationConsultationRequestedEventHandler quotationConsultationRequestedEventHandler(
+            SystemServiceCaseOpener systemServiceCaseOpener) {
+        return new QuotationConsultationRequestedEventHandler(systemServiceCaseOpener);
+    }
+
+    /** DE-13 を受けて追跡の実績か拒否の記録を書く（Spring Modulith のイベントの記録を経て、別のトランザクションで動く。Bolt 39g）。 */
+    @Bean
+    ExternalMilestoneEventHandler externalMilestoneEventHandler(
+            TrackingRecordRepository repository,
+            RejectedMilestoneRepository rejectedMilestones,
+            Clock clock,
+            SystemServiceCaseOpener systemServiceCaseOpener) {
+        // 拒否した主要実績は同じトランザクションの中で有人例外案件にする（T-INV-04。Bolt 40-13）
+        return new ExternalMilestoneEventHandler(
+                repository, rejectedMilestones, clock, new RejectedMilestoneCaseOpener(systemServiceCaseOpener));
+    }
+
+    /** DE-12 を受けて最後の区間の航海の到着予定を追跡記録に受けさせる（Spring Modulith のイベントの記録を経て、別のトランザクションで動く。Bolt 39g4b）。 */
+    @Bean
+    VoyageArrivalEventHandler voyageArrivalEventHandler(TrackingRecordRepository repository) {
+        return new VoyageArrivalEventHandler(repository);
+    }
+
+    /** 有人案件の起票と受領（US-20。認可の仮の定めは台帳 D-159。Bolt 40-7）。 */
+    @Bean
+    ServiceCaseCommandService serviceCaseCommandService(
+            ServiceCaseRepository repository,
+            ServiceCaseNumberIssuer numberIssuer,
+            BusinessCalendarRepository calendars,
+            Clock clock,
+            WebInquiryEscalator webInquiryEscalator) {
+        return new ServiceCaseCommandService(repository, numberIssuer, calendars, clock, webInquiryEscalator);
+    }
+
+    /** 有人案件を起票したら、その前の顧客 Web の照会を有人対応へ移ったと更新する（IR-INV-01。KPI-02。W9 の Bolt 44）。 */
+    @Bean
+    WebInquiryEscalator webInquiryEscalator(
+            InquiryRecordRepository inquiryRecordRepository, TrackingRecordRepository trackingRecordRepository) {
+        return new WebInquiryEscalator(inquiryRecordRepository, trackingRecordRepository);
+    }
+
+    /** システムの有人案件の起票（拒否した主要実績・経路候補なし。認可を通らない内部の経路。Bolt 40-13・40-17・40-18）。 */
+    @Bean
+    SystemServiceCaseOpener systemServiceCaseOpener(
+            ServiceCaseRepository repository,
+            ServiceCaseNumberIssuer numberIssuer,
+            BusinessCalendarRepository calendars,
+            Clock clock,
+            WebInquiryEscalator webInquiryEscalator) {
+        return new SystemServiceCaseOpener(repository, numberIssuer, calendars, clock, webInquiryEscalator);
+    }
+
+    /** 有人案件の進捗・回答・終結・再開・回答期限の変更（US-20 AC4〜AC7。Bolt 40-8）。 */
+    @Bean
+    ServiceCaseActionService serviceCaseActionService(ServiceCaseRepository repository, Clock clock) {
+        return new ServiceCaseActionService(repository, clock);
+    }
+
+    /** 受領期限を過ぎた有人案件の照会（US-20 AC3、SVC-04。読むときの判定。Bolt 40-9）。 */
+    @Bean
+    ServiceCaseOverdueQueryService serviceCaseOverdueQueryService(ServiceCaseRepository repository, Clock clock) {
+        return new ServiceCaseOverdueQueryService(repository, clock, ServiceCaseAuthorization::canOperate);
+    }
+
+    /** 電話・メールの照会の記録と有人案件への引き継ぎ（US-11 AC2、IR-INV-02。Bolt 40-15）。 */
+    @Bean
+    InquiryRecordingService inquiryRecordingService(
+            TrackingRecordScope trackingRecordScope,
+            InquiryRecordRepository inquiryRecordRepository,
+            ServiceCaseCommandService serviceCaseCommandService,
+            Clock clock) {
+        return new InquiryRecordingService(
+                trackingRecordScope, inquiryRecordRepository, serviceCaseCommandService, clock);
+    }
+
+    /** 顧客 Web の追跡照会の自動記録（IR-INV-01。Bolt 42-1）。 */
+    @Bean
+    WebInquiryRecorder webInquiryRecorder(InquiryRecordRepository inquiryRecordRepository, Clock clock) {
+        return new WebInquiryRecorder(inquiryRecordRepository, clock);
+    }
+
+    /** 期間の照会の件数（KPI-02 の材料。公開 API のアダプターが使う。W9 の Bolt 44-1）。 */
+    @Bean
+    InquiryStatisticsQueryService inquiryStatisticsQueryService(InquiryRecordRepository inquiryRecordRepository) {
+        return new InquiryStatisticsQueryService(inquiryRecordRepository);
+    }
+
+    /** 有人案件の一覧（S-14）と詳細（S-15）の照会（US-20。読むときの判定。Bolt 40-11）。 */
+    @Bean
+    ServiceCaseQueryService serviceCaseQueryService(ServiceCaseRepository repository, Clock clock) {
+        return new ServiceCaseQueryService(repository, clock, ServiceCaseAuthorization::canOperate);
+    }
+
+    /** 追跡管理者による主要実績の登録（US-12。Bolt 26b）。 */
+    @Bean
+    TrackingRecordCommandService trackingRecordCommandService(
+            TrackingRecordRepository repository,
+            Clock clock,
+            TrackingRecordScope trackingRecordScope,
+            ApplicationEventPublisher eventPublisher) {
+        return new TrackingRecordCommandService(repository, clock, trackingRecordScope, eventPublisher);
+    }
+
+    /** 追跡記録の照会（S-11 追跡一覧、S-12 追跡の詳細。Bolt 26）。鮮度の判定の判定の時刻は時計から得る（Bolt 39g4）。 */
+    @Bean
+    TrackingRecordQueryService trackingRecordQueryService(
+            TrackingRecordRepository repository,
+            TrackingRecordScope trackingRecordScope,
+            Clock clock,
+            FreshnessPolicy freshnessPolicy) {
+        return new TrackingRecordQueryService(repository, trackingRecordScope, clock, freshnessPolicy);
+    }
+
+    /** 鮮度の判定（FRS-02。許容範囲は設定の値。0 以下は組み立てで拒む。Bolt 39g4）。 */
+    @Bean
+    FreshnessPolicy freshnessPolicy(@Value("${cargotracker.tracking.freshness-tolerance}") Duration tolerance) {
+        return new FreshnessPolicy(tolerance);
+    }
+
+    /** 社内の追跡記録の担当範囲の判定（照会とコマンドのサービスが使う。Bolt 38g）。 */
+    @Bean
+    TrackingRecordScope trackingRecordScope(TrackingRecordRepository repository) {
+        return new TrackingRecordScope(repository);
+    }
+
+    /** 荷主の追跡の照会（C-10。社内の照会と分ける。Bolt 27）。 */
+    @Bean
+    CustomerTrackingQueryService customerTrackingQueryService(
+            TrackingRecordRepository repository, Clock clock, FreshnessPolicy freshnessPolicy) {
+        return new CustomerTrackingQueryService(repository, clock, freshnessPolicy);
+    }
+}

@@ -1,0 +1,504 @@
+package com.example.cargotracker.quotation.interfaces.web;
+
+import com.example.cargotracker.quotation.application.internal.commands.ResubmitTransportRequestCommand;
+import com.example.cargotracker.quotation.application.internal.commands.ReviseTransportRequestCommand;
+import com.example.cargotracker.quotation.application.internal.commands.SubmitTransportRequestCommand;
+import com.example.cargotracker.quotation.application.internal.commandservices.ResubmissionOutcome;
+import com.example.cargotracker.quotation.application.internal.commandservices.RevisionOutcome;
+import com.example.cargotracker.quotation.application.internal.commandservices.SubmissionOutcome;
+import com.example.cargotracker.quotation.application.internal.commandservices.TransportRequestCommandService;
+import com.example.cargotracker.quotation.application.internal.queryservices.QuotationQueryService;
+import com.example.cargotracker.quotation.application.internal.queryservices.TransportRequestQueryService;
+import com.example.cargotracker.quotation.domain.model.aggregates.ConcurrentTransportRequestUpdateException;
+import com.example.cargotracker.quotation.domain.model.aggregates.Quotation;
+import com.example.cargotracker.quotation.domain.model.aggregates.TransportRequest;
+import com.example.cargotracker.quotation.domain.model.valueobjects.RevisionRejection;
+import com.example.cargotracker.quotation.domain.model.valueobjects.SendBackNotice;
+import com.example.cargotracker.quotation.domain.model.valueobjects.ShipmentTermsInput;
+import com.example.cargotracker.quotation.domain.model.valueobjects.ShipperLatestQuotationSummary;
+import com.example.cargotracker.quotation.domain.model.valueobjects.SubmissionViolations;
+import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
+import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestStatus;
+import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestSummary;
+import com.example.cargotracker.shared.domain.AuthenticatedActor;
+import com.example.cargotracker.shared.domain.UtcInstant;
+import java.time.Clock;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+/**
+ * 顧客 Web の見積依頼（C-02 見積依頼の一覧、C-03 見積依頼の作成・編集、C-04 見積依頼の詳細）。
+ * C-03 は 1 つのフォームの中で 4 つの段階を切り替える段階入力にする（Bolt 8 のプロトタイプで操作性を確かめ、この形で残すと決めた。UI-HO-04）。
+ * 業務番号は推測しやすいため、照会と出し直しはすべて荷主企業で絞り、他社の番号は見つからない（404）とする（Q-INV-08、Bolt 4 レビュー R-02）。
+ * 荷主企業と操作者は、ログインした荷主担当者（認証の主体 {@link AuthenticatedActor}。ADR-012）のもの。
+ */
+@Controller
+@RequestMapping("/customer/transport-requests")
+public class TransportRequestController {
+
+    private static final String BASE_PATH = "/customer/transport-requests";
+    private static final String LIST_VIEW = "quotation/transport-requests/list";
+    private static final String FORM_VIEW = "quotation/transport-requests/new";
+    private static final String DETAIL_VIEW = "quotation/transport-requests/detail";
+    private static final String RESULT = "result";
+    private static final String PROBLEM = "problem";
+
+    private final TransportRequestCommandService commandService;
+    private final TransportRequestQueryService queryService;
+    private final QuotationQueryService quotationQueryService;
+    private final ProvisionalConsigneeProperties provisionalConsignees;
+    private final Clock clock;
+
+    public TransportRequestController(
+            TransportRequestCommandService commandService,
+            TransportRequestQueryService queryService,
+            QuotationQueryService quotationQueryService,
+            ProvisionalConsigneeProperties provisionalConsignees,
+            Clock clock) {
+        this.commandService = commandService;
+        this.queryService = queryService;
+        this.quotationQueryService = quotationQueryService;
+        this.provisionalConsignees = provisionalConsignees;
+        this.clock = clock;
+    }
+
+    @ModelAttribute
+    void formOptions(Model model) {
+        model.addAttribute("consignees", provisionalConsignees.companies());
+        model.addAttribute("cargoCategories", TransportRequestLabels.CARGO_CATEGORIES);
+        model.addAttribute("packageTypes", TransportRequestLabels.PACKAGE_TYPES);
+        model.addAttribute("cargoCategoryNotice", SubmissionViolationMessages.CargoCategoryNotice.MESSAGE);
+        model.addAttribute("fieldLabels", SubmissionViolationMessages.FIELD_LABELS);
+    }
+
+    /** C-02 見積依頼の一覧。自社の輸送要求を、最初の提出時刻の新しい順に示す。 */
+    @GetMapping
+    public String list(AuthenticatedActor actor, Model model) {
+        // 荷主承認待ち・予約待ちの見積依頼の状態は、荷主に見える最新の見積りから選ぶ（詳細 C-04 と同じ。D-85。Bolt 35d）
+        UtcInstant now = new UtcInstant(clock.instant());
+        Map<TransportRequestNumber, TransportRequestLabels.LatestQuotation> latest =
+                quotationQueryService.findLatestVisibleSummaries(actor.companyId()).stream()
+                        .collect(Collectors.toMap(
+                                ShipperLatestQuotationSummary::number, summary -> latestQuotation(summary, now)));
+        model.addAttribute(
+                "requests",
+                queryService.findSummaries(actor.companyId()).stream()
+                        .map(summary -> row(summary, Optional.ofNullable(latest.get(summary.number()))))
+                        .toList());
+        return LIST_VIEW;
+    }
+
+    /**
+     * C-03 の作成。{@code copyFrom} に自社の過去の見積依頼の業務番号を付けると、その現在の版の輸送条件を引き継いだ新しい下書きにする（US-01 AC5。
+     * 希望到着期限と必要書類は引き継がず、再入力を求める。Q-INV-11。Bolt 45-1）。他社・ない・形式の誤りの業務番号は、ほかの照会と同じく見つからない
+     * （404。US-01 AC3、Q-INV-08）。
+     */
+    @GetMapping("/new")
+    public String newForm(
+            @ModelAttribute TransportRequestForm transportRequestForm,
+            @RequestParam(name = "copyFrom", required = false) String copyFrom,
+            AuthenticatedActor actor,
+            Model model) {
+        if (copyFrom == null || copyFrom.isBlank()) {
+            return showCreateForm(model);
+        }
+        TransportRequest source = find(copyFrom, actor);
+        TransportRequestForm copied =
+                TransportRequestFormConverter.toForm(source.currentVersion().terms());
+        // 希望到着期限は引き継がない（提出の日に合わせて入れ直す）。必要書類はファイルなので、そもそも引き継げない
+        copied.setArrivalDeadline("");
+        model.addAttribute("transportRequestForm", copied);
+        model.addAttribute("versionNotice", source.number().text() + " の輸送条件を引き継ぎました。希望到着期限と必要書類は再入力してください。");
+        return showCreateForm(model);
+    }
+
+    /**
+     * 輸送要求を提出する。形式の誤りと業務の規則の違反は、入力値を残して同じ画面にエラー要約で示す。
+     * 提出できたら見積依頼の詳細へリダイレクトし、結果を示す（PRG。完了画面は C-04 に統合した。Bolt 6）。
+     */
+    @PostMapping
+    public String submit(
+            AuthenticatedActor actor,
+            @ModelAttribute TransportRequestForm transportRequestForm,
+            BindingResult bindingResult,
+            Model model,
+            RedirectAttributes redirectAttributes) {
+        Optional<ShipmentTermsInput> input =
+                TransportRequestFormConverter.convert(transportRequestForm, provisionalConsignees, bindingResult);
+        if (input.isEmpty()) {
+            return showCreateFormWithErrors(transportRequestForm, model);
+        }
+        SubmissionOutcome outcome = commandService.submit(new SubmitTransportRequestCommand(
+                actor.companyId(),
+                actor.userId(),
+                input.get(),
+                RequiredDocumentViews.attachments(transportRequestForm)));
+        return switch (outcome) {
+            case SubmissionOutcome.Submitted submitted ->
+                redirectToDetail(
+                        submitted.number(),
+                        TransportRequestLabels.numberWithVersion(submitted.number(), 1) + " を提出しました",
+                        redirectAttributes);
+            case SubmissionOutcome.Rejected(SubmissionViolations violations) -> {
+                SubmissionViolationMessages.reject(violations, bindingResult);
+                yield showCreateFormWithErrors(transportRequestForm, model);
+            }
+        };
+    }
+
+    /**
+     * C-04 見積依頼の詳細。URL のキーにも業務番号を使い、内部の ID を出さない（D-4）。
+     * 差し戻されているときは、差戻しの理由と不足事項だけを示す。判断者と審査の確定の根拠は見せない（2026-10-03 の人の決定）。
+     */
+    @GetMapping("/{number}")
+    public String detail(@PathVariable String number, AuthenticatedActor actor, Model model) {
+        TransportRequest request = find(number, actor);
+        Map<String, String> rows = TransportRequestViews.termsRows(
+                request.currentVersion(), provisionalConsignees, TransportRequestLabels::customerDateTime);
+        model.addAttribute("number", request.number().text());
+        model.addAttribute(
+                "numberWithVersion",
+                TransportRequestLabels.numberWithVersion(
+                        request.number(), request.currentVersion().versionNo()));
+        // 予約確定済みの後の追跡の状況は予約一覧（C-06）に任せる。見積りは追跡の開始を知らない（Bolt 29b、#46）
+        model.addAttribute("booked", request.status() == TransportRequestStatus.BOOKED);
+        model.addAttribute("terms", rows);
+        model.addAttribute(
+                "sendBack",
+                request.sendBackNotice()
+                        .map(TransportRequestController::sendBack)
+                        .orElse(null));
+        // 出し直せるかは集約が判定する（Bolt 6〜8 レビュー R-13）
+        model.addAttribute("editable", request.checkResubmittable().isEmpty());
+        // 本予約の前の条件の変更の入口（US-05 AC1。Bolt 62-1）。変更できるかは集約が判定する
+        model.addAttribute("revisable", isRevisable(request));
+        model.addAttribute("documents", RequiredDocumentViews.rows(request, BASE_PATH));
+        // 見積りの節は提示した見積りから出し、輸送要求の状態の更新（DE-03 の受け取り）を待たない（Bolt 10。US-03 AC2）。
+        // 最新の見積りを先に、以前の見積りを読み取り専用で並べる。失効は表示する時刻で判定する（Bolt 11。US-03 AC5）
+        UtcInstant now = new UtcInstant(clock.instant());
+        List<Quotation> visible = quotationQueryService.findVisible(request.number(), actor.companyId());
+        // 状態と案内は、荷主承認待ち・予約待ちなら最新の見積りから選ぶ（一覧 C-02 と同じ。D-85。Bolt 35d）
+        TransportRequestLabels.CustomerStage stage = TransportRequestLabels.customerStage(
+                request.status(), visible.stream().findFirst().map(quotation -> latestQuotation(quotation, now)));
+        model.addAttribute("statusLabel", stage.status());
+        model.addAttribute("guidance", stage.guidance());
+        // 承認の後に失効し、予約確定済みでない見積り（担当営業が経路を引き継いで再見積りする。D-85。Bolt 35d）。テンプレートの条件はこの値だけを見る
+        model.addAttribute(
+                "expiredAfterApproval",
+                request.status() != TransportRequestStatus.BOOKED
+                        && visible.stream()
+                                .findFirst()
+                                .map(quotation -> quotation.shipperApproval().isPresent() && quotation.isExpiredAt(now))
+                                .orElse(false));
+        List<QuotationViews.View> quotations = visible.stream()
+                .map(quotation -> QuotationViews.view(
+                        quotation, TransportRequestLabels::customerDateTime, now, QuotationViews.Audience.CUSTOMER))
+                .toList();
+        model.addAttribute("quotation", quotations.isEmpty() ? null : quotations.getFirst());
+        model.addAttribute(
+                "previousQuotations", quotations.isEmpty() ? List.of() : quotations.subList(1, quotations.size()));
+        return DETAIL_VIEW;
+    }
+
+    /**
+     * 必要書類を取得する（D-20: 提出した荷主は開ける）。荷主企業で絞り、他社の番号・ない書類は 404 にする（Q-INV-08）。
+     * ブラウザの中で開かせず、ダウンロードさせる。
+     */
+    @GetMapping("/{number}/versions/{versionNo}/documents/{documentNo}")
+    public ResponseEntity<byte[]> document(
+            @PathVariable String number,
+            @PathVariable int versionNo,
+            @PathVariable int documentNo,
+            AuthenticatedActor actor) {
+        return TransportRequestViews.parseNumber(number)
+                .flatMap(found -> queryService.findDocument(found, actor.companyId(), versionNo, documentNo))
+                .map(RequiredDocumentViews::download)
+                .orElseThrow(TransportRequestController::notFound);
+    }
+
+    /**
+     * C-03 の編集。差し戻されて下書きなら出し直し、本予約の前なら条件の変更（US-05 AC1）として開き、現在の版の輸送条件を初期値にする。
+     * どちらでもなければ、詳細に戻して理由を示す。変更の画面は、送ると見積りが使えなくなることを送る前に示す（画面そのものが確認の領域。BR-13）。
+     */
+    @GetMapping("/{number}/edit")
+    public String edit(
+            @PathVariable String number, AuthenticatedActor actor, Model model, RedirectAttributes redirectAttributes) {
+        TransportRequest request = find(number, actor);
+        boolean resubmittable = request.checkResubmittable().isEmpty();
+        if (!resubmittable && !isRevisable(request)) {
+            return redirectToDetailWithProblem(request.number(), notRevisable(request), redirectAttributes);
+        }
+        model.addAttribute(
+                "transportRequestForm",
+                TransportRequestFormConverter.toForm(request.currentVersion().terms()));
+        return resubmittable
+                ? showEditForm(request, model)
+                : showReviseForm(request, request.currentVersion().versionNo(), model);
+    }
+
+    /**
+     * 出し直すか、条件を変更する（どちらも新しい版を作る）。出し直しは期待版（ARCH-HO-01）を画面に持たせない（2026-10-03 の人の決定）。
+     * 二重送信の 2 回目は下書きでないため拒否され、同時の更新は楽観ロックで拒否される。変更の画面は荷主が見ていた版番号を持ち、
+     * 現在の版でなければ上書きしない（US-05 AC1。Bolt 62-1）。どれも詳細に戻して理由を示す。
+     */
+    @PostMapping("/{number}/versions")
+    public String resubmit(
+            @PathVariable String number,
+            @RequestParam(required = false) Integer baseVersionNo,
+            AuthenticatedActor actor,
+            @ModelAttribute TransportRequestForm transportRequestForm,
+            BindingResult bindingResult,
+            Model model,
+            RedirectAttributes redirectAttributes) {
+        TransportRequestNumber transportRequestNumber =
+                TransportRequestViews.parseNumber(number).orElseThrow(TransportRequestController::notFound);
+        Optional<ShipmentTermsInput> input =
+                TransportRequestFormConverter.convert(transportRequestForm, provisionalConsignees, bindingResult);
+        if (input.isEmpty()) {
+            return baseVersionNo == null
+                    ? showEditFormWithErrors(find(number, actor), transportRequestForm, model)
+                    : showReviseFormWithErrors(find(number, actor), baseVersionNo, transportRequestForm, model);
+        }
+        if (baseVersionNo != null) {
+            ReviseTransportRequestCommand command = new ReviseTransportRequestCommand(
+                    transportRequestNumber,
+                    actor.companyId(),
+                    actor.userId(),
+                    baseVersionNo,
+                    input.get(),
+                    RequiredDocumentViews.attachments(transportRequestForm));
+            return revise(command, actor, transportRequestForm, bindingResult, model, redirectAttributes);
+        }
+        ResubmissionOutcome outcome = commandService.resubmit(new ResubmitTransportRequestCommand(
+                transportRequestNumber,
+                actor.companyId(),
+                actor.userId(),
+                input.get(),
+                RequiredDocumentViews.attachments(transportRequestForm)));
+        return switch (outcome) {
+            case ResubmissionOutcome.Resubmitted(TransportRequestNumber resubmittedNumber, int versionNo) ->
+                redirectToDetail(
+                        resubmittedNumber,
+                        TransportRequestLabels.numberWithVersion(resubmittedNumber, versionNo) + " を出し直しました",
+                        redirectAttributes);
+            case ResubmissionOutcome.Invalid(SubmissionViolations violations) -> {
+                SubmissionViolationMessages.reject(violations, bindingResult);
+                yield showEditFormWithErrors(find(number, actor), transportRequestForm, model);
+            }
+            case ResubmissionOutcome.Rejected _ -> {
+                TransportRequest current = find(number, actor);
+                yield redirectToDetailWithProblem(current.number(), notResubmittable(current), redirectAttributes);
+            }
+            case ResubmissionOutcome.Conflict _ ->
+                redirectToDetailWithProblem(
+                        transportRequestNumber, "他の利用者が先に更新しました。内容を確かめてから出し直してください", redirectAttributes);
+            case ResubmissionOutcome.NotFound _ -> throw notFound();
+        };
+    }
+
+    private String revise(
+            ReviseTransportRequestCommand command,
+            AuthenticatedActor actor,
+            TransportRequestForm form,
+            BindingResult bindingResult,
+            Model model,
+            RedirectAttributes redirectAttributes) {
+        String number = command.number().text();
+        RevisionOutcome outcome;
+        try {
+            outcome = commandService.revise(command);
+        } catch (ConcurrentTransportRequestUpdateException _) {
+            // 見積りを無効にした後の輸送要求の更新で競合した。トランザクションはロールバックされている
+            outcome = new RevisionOutcome.Conflict();
+        }
+        return switch (outcome) {
+            case RevisionOutcome.Revised(TransportRequestNumber revised, int versionNo) ->
+                redirectToDetail(
+                        revised,
+                        TransportRequestLabels.numberWithVersion(revised, versionNo) + " の条件を変更しました",
+                        redirectAttributes);
+            case RevisionOutcome.Invalid(SubmissionViolations violations) -> {
+                SubmissionViolationMessages.reject(violations, bindingResult);
+                yield showReviseFormWithErrors(find(number, actor), command.baseVersionNo(), form, model);
+            }
+            case RevisionOutcome.Rejected(RevisionRejection reason) -> {
+                TransportRequest current = find(number, actor);
+                String problem = reason == RevisionRejection.STALE_VERSION
+                        ? number + " は版 " + current.currentVersion().versionNo() + " に変わっています。内容を確かめてから条件を変更してください"
+                        : notRevisable(current);
+                yield redirectToDetailWithProblem(current.number(), problem, redirectAttributes);
+            }
+            case RevisionOutcome.Conflict _ ->
+                redirectToDetailWithProblem(
+                        command.number(), "他の利用者が先に更新しました。内容を確かめてから条件を変更してください", redirectAttributes);
+            case RevisionOutcome.NotFound _ -> throw notFound();
+        };
+    }
+
+    private String showReviseFormWithErrors(
+            TransportRequest request, int baseVersionNo, TransportRequestForm form, Model model) {
+        model.addAttribute("reselectDocuments", RequiredDocumentViews.hasSelectedFiles(form));
+        return showReviseForm(request, baseVersionNo, model);
+    }
+
+    /** 本予約の前の条件の変更の画面（US-05 AC1）。送る前に、審査からやり直すことと見積りが使えなくなることを示す。 */
+    private String showReviseForm(TransportRequest request, int baseVersionNo, Model model) {
+        String number = request.number().text();
+        model.addAttribute("carriedDocuments", RequiredDocumentViews.rows(request, BASE_PATH));
+        model.addAttribute("formTitle", "見積依頼の条件の変更");
+        model.addAttribute("formAction", BASE_PATH + "/" + number + "/versions");
+        model.addAttribute("submitLabel", "条件を変更して送る");
+        model.addAttribute("baseVersionNo", baseVersionNo);
+        model.addAttribute(
+                "versionNotice",
+                number + " の条件を変更します。送ると版 " + (baseVersionNo + 1)
+                        + " になり、担当者の審査からやり直します。これまでの見積りと経路の承認は使えなくなります。業務番号は変わりません。");
+        return FORM_VIEW;
+    }
+
+    private static boolean isRevisable(TransportRequest request) {
+        return request.checkRevisable(request.currentVersion().versionNo()).isEmpty();
+    }
+
+    /** 本予約の前でないため条件を変更できない理由（例: TR-2026-0001 版 1 は予約確定済みのため条件を変更できません）。 */
+    private static String notRevisable(TransportRequest request) {
+        return TransportRequestLabels.numberWithVersion(
+                        request.number(), request.currentVersion().versionNo())
+                + " は" + TransportRequestLabels.status(request.status()) + "のため条件を変更できません";
+    }
+
+    private String showCreateForm(Model model) {
+        model.addAttribute("formTitle", "見積依頼の作成");
+        model.addAttribute("formAction", BASE_PATH);
+        model.addAttribute("submitLabel", "提出する");
+        return FORM_VIEW;
+    }
+
+    /** 誤りのある作成画面。ファイルを選んでいたら、選び直しを案内する（R-02）。 */
+    private String showCreateFormWithErrors(TransportRequestForm form, Model model) {
+        model.addAttribute("reselectDocuments", RequiredDocumentViews.hasSelectedFiles(form));
+        return showCreateForm(model);
+    }
+
+    /** 誤りのある編集画面。ファイルを選んでいたら、選び直しを案内する（R-02）。 */
+    private String showEditFormWithErrors(TransportRequest request, TransportRequestForm form, Model model) {
+        model.addAttribute("reselectDocuments", RequiredDocumentViews.hasSelectedFiles(form));
+        return showEditForm(request, model);
+    }
+
+    /** 編集画面。前の版の書類を一覧で示し、選ばなかった種類は引き継ぎ、選んだ種類は差し替えることを案内する（D-25）。 */
+    private String showEditForm(TransportRequest request, Model model) {
+        model.addAttribute("carriedDocuments", RequiredDocumentViews.rows(request, BASE_PATH));
+        return showEditForm(request.number(), request.currentVersion().versionNo() + 1, model);
+    }
+
+    private String showEditForm(TransportRequestNumber number, int nextVersionNo, Model model) {
+        model.addAttribute("formTitle", "見積依頼の編集");
+        model.addAttribute("formAction", BASE_PATH + "/" + number.text() + "/versions");
+        model.addAttribute("submitLabel", "出し直す");
+        model.addAttribute(
+                "versionNotice", number.text() + " を直して出し直します。出し直すと版 " + nextVersionNo + " になります。業務番号は変わりません。");
+        return FORM_VIEW;
+    }
+
+    private TransportRequest find(String number, AuthenticatedActor actor) {
+        return TransportRequestViews.parseNumber(number)
+                .flatMap(found -> queryService.findByNumber(found, actor.companyId()))
+                .orElseThrow(TransportRequestController::notFound);
+    }
+
+    /** 見積依頼の詳細へリダイレクトし、結果を上部に示す（PRG）。 */
+    private static String redirectToDetail(
+            TransportRequestNumber number, String result, RedirectAttributes redirectAttributes) {
+        redirectAttributes.addFlashAttribute(RESULT, result);
+        return "redirect:" + BASE_PATH + "/" + number.text();
+    }
+
+    /** 操作できなかった理由を、結果と分けて詳細の上部に警告として示す（Bolt 6〜8 レビュー R-24）。 */
+    private static String redirectToDetailWithProblem(
+            TransportRequestNumber number, String problem, RedirectAttributes redirectAttributes) {
+        redirectAttributes.addFlashAttribute(PROBLEM, problem);
+        return "redirect:" + BASE_PATH + "/" + number.text();
+    }
+
+    /** 下書きでないため出し直せない理由（例: TR-2026-0001 版 2 は審査中のため出し直せません）。二重送信の 2 回目もこれになる。 */
+    private static String notResubmittable(TransportRequest request) {
+        return TransportRequestLabels.numberWithVersion(
+                        request.number(), request.currentVersion().versionNo())
+                + " は" + TransportRequestLabels.status(request.status()) + "のため出し直せません";
+    }
+
+    private static Row row(TransportRequestSummary summary, Optional<TransportRequestLabels.LatestQuotation> latest) {
+        return new Row(
+                summary.number().text(),
+                summary.versionNo(),
+                TransportRequestLabels.customerStage(summary.status(), latest).status(),
+                summary.origin().unLocode() + " → " + summary.destination().unLocode(),
+                TransportRequestLabels.customerDateTime(summary.firstSubmittedAt()));
+    }
+
+    private static TransportRequestLabels.LatestQuotation latestQuotation(Quotation quotation, UtcInstant now) {
+        return new TransportRequestLabels.LatestQuotation(
+                quotation.status(),
+                quotation.isExpiredAt(now),
+                quotation.shipperApproval().isPresent(),
+                quotation.isPresentedForReapproval(),
+                quotation.isRouteRedesignRequired(),
+                quotation.isRouteDepartedAt(now));
+    }
+
+    private static TransportRequestLabels.LatestQuotation latestQuotation(
+            ShipperLatestQuotationSummary summary, UtcInstant now) {
+        return new TransportRequestLabels.LatestQuotation(
+                summary.status(),
+                summary.isExpiredAt(now),
+                summary.isShipperApproved(),
+                summary.isPresentedForReapproval(),
+                // C-02 は状態の表示名だけを示し、再設計要・出発済みでも表示名は変わらない（案内を出すなら読み取りモデルに足す。Bolt 37e3 の
+                // 開発レビュー、Bolt 37e4）
+                false,
+                false);
+    }
+
+    private static SendBack sendBack(SendBackNotice notice) {
+        return new SendBack(notice.reason(), TransportRequestLabels.missingItems(notice.missingItems()));
+    }
+
+    private static ResponseStatusException notFound() {
+        return new ResponseStatusException(HttpStatus.NOT_FOUND);
+    }
+
+    /**
+     * 見積依頼の一覧の 1 行。
+     *
+     * @param number 業務番号
+     * @param versionNo 版番号
+     * @param status 状態（いま誰の対応待ちか）
+     * @param route 出発地 → 目的地
+     * @param firstSubmittedAt 最初の提出時刻（荷主の日時表示）
+     */
+    public record Row(String number, int versionNo, String status, String route, String firstSubmittedAt) {}
+
+    /**
+     * 荷主に見せる差戻し。
+     *
+     * @param reason 差戻しの理由
+     * @param missingItems 不足事項（なければ「（なし）」）
+     */
+    public record SendBack(String reason, String missingItems) {}
+}

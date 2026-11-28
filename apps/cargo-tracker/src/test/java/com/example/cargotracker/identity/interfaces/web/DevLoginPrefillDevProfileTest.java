@@ -1,0 +1,119 @@
+package com.example.cargotracker.identity.interfaces.web;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.containsString;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
+
+import com.example.cargotracker.identity.AuthenticationFactorFixtures;
+import jakarta.servlet.http.Cookie;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
+
+/**
+ * 開発環境（dev、H2）のログインの画面（2026-10-06 の人の決定、UI 設計「A-01」）。
+ * A-01 は開発用の荷主の利用者で入力済みになり、荷主担当者・営業担当者の開発用の利用者を選んでそのままログインできる。
+ * A-02 は開発用の利用者の固定の秘密からその時点のコードで入力済みになる（Bolt 31。TOTP を飛ばさない）。
+ */
+@SpringBootTest
+@ActiveProfiles("dev")
+@AutoConfigureMockMvc
+class DevLoginPrefillDevProfileTest {
+
+    /** A-02 の認証コードの欄の入力済みの値。 */
+    private static final Pattern PREFILLED_CODE = Pattern.compile("name=\"code\"[^>]*value=\"([0-9]{6})\"");
+
+    @Autowired
+    MockMvc mvc;
+
+    @Autowired
+    DevTotpCodeSource devTotpCodes;
+
+    @Autowired
+    JdbcTemplate jdbc;
+
+    @Test
+    void devではログインの画面にメールアドレスとpasswordが入っている() throws Exception {
+        mvc.perform(get("/login"))
+                .andExpect(content().string(containsString("value=\"shipper@dev.cargo-tracker.example\"")))
+                .andExpect(content().string(containsString("value=\"dev-password-shipper\"")));
+    }
+
+    @Test
+    void devではログインの画面で荷主担当者と営業担当者の開発用の利用者を選べる() throws Exception {
+        mvc.perform(get("/login"))
+                .andExpect(content().string(containsString("開発用の利用者でログイン")))
+                .andExpect(content().string(containsString("荷主担当者でログイン（shipper@dev.cargo-tracker.example）")))
+                .andExpect(content().string(containsString("荷主担当者でログイン（shipper-b@dev.cargo-tracker.example）")))
+                .andExpect(content().string(containsString("営業担当者でログイン（sales@dev.cargo-tracker.example）")))
+                .andExpect(content().string(containsString("追跡管理者でログイン（tracking-manager@dev.cargo-tracker.example）")));
+    }
+
+    @Test
+    void 追跡管理者の開発用の利用者を選ぶとA02が入力済みで確認すると追跡一覧へ移る() throws Exception {
+        Cookie session = signIn("tracking-manager@dev.cargo-tracker.example");
+
+        mvc.perform(get("/").cookie(session)).andExpect(redirectedUrl("/staff/tracking-records"));
+    }
+
+    @Test
+    void 営業担当者の開発用の利用者を選ぶとA02が入力済みで確認すると社内のホームへ移る() throws Exception {
+        Cookie session = signIn("sales@dev.cargo-tracker.example");
+
+        mvc.perform(get("/").cookie(session)).andExpect(redirectedUrl("/staff/transport-requests"));
+    }
+
+    @Test
+    void データ責任者の開発用の利用者を選ぶとA02が入力済みで確認すると外部データの取込の画面へ移る() throws Exception {
+        // Bolt 39c の行 17。dev のログインの口座 accounts[8]（application-dev.properties）
+        Cookie session = signIn("data-steward@dev.cargo-tracker.example");
+
+        mvc.perform(get("/").cookie(session)).andExpect(redirectedUrl("/staff/external-data/ingestions/new"));
+    }
+
+    /**
+     * 開発用の利用者のボタンと同じ送信（password の段）の後に、A-02 が入力済みであることを確かめ、そのコードを送る（Bolt 31）。
+     * 同じ利用者のテストの間で同じ刻みのコードを使い回さないよう、使った刻みを戻す（テストの準備。確認ポイント 7）。
+     */
+    private Cookie signIn(String email) throws Exception {
+        AuthenticationFactorFixtures.resetTotpStep(jdbc, email);
+        MvcResult password = mvc.perform(post("/login")
+                        .param("username", email)
+                        .param("password", "dev-password-staff")
+                        .with(csrf()))
+                .andExpect(redirectedUrl("/login/totp"))
+                .andReturn();
+        Cookie passwordStage = password.getResponse().getCookie("SESSION");
+        // 画面を開く前後でコードを作り、画面に出たコードがそのどちらかであることを確かめる。刻み（30 秒）の境界をまたいでも
+        // 揺れないよう、送るのは画面に出たコード（Bolt 32d）。画面を開いてから送るまでに刻みをまたいでも通るのは、照合の窓が前後
+        // 1 つの刻みだから（TotpCredential の窓。窓を狭めるときはここも見直す）
+        String before = devTotpCodes.codeFor(email).orElseThrow();
+        String page = mvc.perform(get("/login/totp").cookie(passwordStage))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        String after = devTotpCodes.codeFor(email).orElseThrow();
+        Matcher prefilled = PREFILLED_CODE.matcher(page);
+        assertThat(prefilled.find()).as("A-02 が入力済み").isTrue();
+        String code = prefilled.group(1);
+        assertThat(code).isIn(before, after);
+        MvcResult totp = mvc.perform(post("/login/totp")
+                        .cookie(passwordStage)
+                        .param("code", code)
+                        .with(csrf()))
+                .andExpect(redirectedUrl("/"))
+                .andReturn();
+        return totp.getResponse().getCookie("SESSION");
+    }
+}

@@ -1,0 +1,86 @@
+package com.example.cargotracker.tracking.infrastructure.persistence;
+
+import java.time.OffsetDateTime;
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+/**
+ * 追跡の表（`tracking` スキーマ）の MyBatis のマッパー（Bolt 25。照会は Bolt 26）。SQL は自分のスキーマだけを参照する（AT-04）。
+ */
+@Mapper
+public interface TrackingRecordMapper {
+
+    void insertTrackingRecord(TrackingRecordRow row);
+
+    void insertScheduledLeg(ScheduledLegRow row);
+
+    /**
+     * 導出し直した現在状態と根拠の実績番号と確認中の理由（Bolt 39gc）を書き、版を 1 増やす（Bolt 26b）。航海の到着予定と順の鍵の 4 列（Bolt 39g4b）と見込みの根拠の
+     * 2 列（Bolt 39g4c）も書く。読み込んだときの
+     * 版と違えば 0 件。
+     */
+    @SuppressWarnings("java:S107") // UPDATE の SET と WHERE の値を名前付きの引数で渡す（MyBatis の @Param）
+    int updateTrackingRecord(
+            @Param("trackingNumber") String trackingNumber,
+            @Param("expectedVersion") long expectedVersion,
+            @Param("currentStatus") String currentStatus,
+            @Param("statusBasisMilestoneNo") Integer statusBasisMilestoneNo,
+            @Param("underReviewReason") String underReviewReason,
+            @Param("latestEta") OffsetDateTime latestEta,
+            @Param("latestEtaBasis") String latestEtaBasis,
+            @Param("latestEtaBasisMilestoneNo") Integer latestEtaBasisMilestoneNo,
+            @Param("lastAcquiredAt") OffsetDateTime lastAcquiredAt,
+            @Param("nextExpectedAt") OffsetDateTime nextExpectedAt,
+            @Param("voyageArrival") VoyageArrivalColumns voyageArrival,
+            @Param("updatedAt") OffsetDateTime updatedAt);
+
+    /** その航海が最後の区間（その追跡番号の最大の区間番号）の追跡番号を追跡番号の順に（DE-12。Bolt 39g4b。索引 ix_scheduled_leg_voyage）。 */
+    List<String> findTrackingNumbersByFinalLegVoyage(@Param("voyageNumber") String voyageNumber);
+
+    /**
+     * 航海の到着予定と順の鍵の 4 列の値（UPDATE の引数をまとめる。Bolt 39g4b）。受けていなければ 4 つとも null。
+     *
+     * @param arrivalAt 航海の到着予定（結べなければ null）
+     * @param publishedAt 公開した時刻
+     * @param acquiredAt 取得時刻
+     * @param sourceRef 出典の参照（受信記録 ID）
+     */
+    record VoyageArrivalColumns(
+            OffsetDateTime arrivalAt, OffsetDateTime publishedAt, OffsetDateTime acquiredAt, String sourceRef) {}
+
+    void insertMilestone(MilestoneRow row);
+
+    /** 下書きを採用か確認中に書き換える（Bolt 39gb。確認中は Bolt 39gc）。下書きでなければ 0 件。 */
+    int updateMilestoneAdoption(MilestoneRow row);
+
+    /** 実績番号の実績の件数（0 か 1。Bolt 39gb の P-5）。 */
+    int countMilestone(@Param("trackingNumber") String trackingNumber, @Param("milestoneNo") int milestoneNo);
+
+    /** 主要実績を実績番号の順に（Bolt 26b）。 */
+    List<MilestoneRow> findMilestones(@Param("trackingNumber") String trackingNumber);
+
+    Optional<TrackingRecordRow> findTrackingRecordByBookingId(@Param("bookingId") UUID bookingId);
+
+    Optional<TrackingRecordRow> findTrackingRecordByTrackingNumber(@Param("trackingNumber") String trackingNumber);
+
+    /** 追跡番号の行を呼び手のトランザクションが終わるまで押さえる（Bolt 39g）。追跡記録がなければ null。 */
+    String lockByTrackingNumber(@Param("trackingNumber") String trackingNumber);
+
+    /** C-10 照会の結果（Bolt 27）。追跡番号と荷主企業で絞る。 */
+    Optional<TrackingRecordRow> findTrackingRecordByTrackingNumberAndShipper(
+            @Param("trackingNumber") String trackingNumber, @Param("shipperCompanyId") UUID shipperCompanyId);
+
+    /** C-10 追跡の照会の一覧（Bolt 27）。荷主企業で絞り、追跡の開始時刻の新しい順（同じ時刻なら追跡番号の順）に上限まで。 */
+    List<TrackingRecordSummaryRow> findRecentSummariesByShipper(
+            @Param("shipperCompanyId") UUID shipperCompanyId, @Param("limit") int limit);
+
+    /** S-11 追跡一覧（Bolt 26）。荷主企業の集合（担当企業。Bolt 38g）で絞り、追跡の開始時刻の新しい順（同じ時刻なら追跡番号の順）に上限まで。 */
+    List<TrackingRecordSummaryRow> findRecentSummaries(
+            @Param("shipperCompanyIds") Collection<UUID> shipperCompanyIds, @Param("limit") int limit);
+
+    List<ScheduledLegRow> findScheduledLegs(@Param("trackingNumber") String trackingNumber);
+}

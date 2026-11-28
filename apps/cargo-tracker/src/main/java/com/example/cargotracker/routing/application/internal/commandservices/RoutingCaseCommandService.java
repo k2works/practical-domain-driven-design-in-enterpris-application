@@ -1,0 +1,201 @@
+package com.example.cargotracker.routing.application.internal.commandservices;
+
+import com.example.cargotracker.routing.application.internal.commands.CalculateCandidatesCommand;
+import com.example.cargotracker.routing.application.internal.commands.ConfirmRouteCommand;
+import com.example.cargotracker.routing.application.internal.commands.EvaluateConfirmedRouteCommand;
+import com.example.cargotracker.routing.application.internal.outboundservices.acl.QuotationRouteConditions;
+import com.example.cargotracker.routing.application.internal.queryservices.RoutingCaseLookup;
+import com.example.cargotracker.routing.application.internal.queryservices.RoutingCaseScope;
+import com.example.cargotracker.routing.domain.events.RouteConfirmed;
+import com.example.cargotracker.routing.domain.events.RouteRedesignRequired;
+import com.example.cargotracker.routing.domain.model.aggregates.ConcurrentRoutingCaseUpdateException;
+import com.example.cargotracker.routing.domain.model.aggregates.ConnectionRuleRepository;
+import com.example.cargotracker.routing.domain.model.aggregates.RouteConfirmationRejected;
+import com.example.cargotracker.routing.domain.model.aggregates.RoutingCase;
+import com.example.cargotracker.routing.domain.model.aggregates.RoutingCaseRepository;
+import com.example.cargotracker.routing.domain.model.aggregates.VoyageRepository;
+import com.example.cargotracker.routing.domain.model.rules.ConstraintEvaluator;
+import com.example.cargotracker.routing.domain.model.rules.InfoFreshnessPolicy;
+import com.example.cargotracker.routing.domain.model.rules.RouteCandidateFinder;
+import com.example.cargotracker.routing.domain.model.valueobjects.CandidateCalculation;
+import com.example.cargotracker.routing.domain.model.valueobjects.RouteApprover;
+import com.example.cargotracker.routing.domain.model.valueobjects.RouteConfirmationRejectionReason;
+import com.example.cargotracker.shared.domain.AuthenticatedActor;
+import com.example.cargotracker.shared.domain.UtcInstant;
+import java.time.Clock;
+import java.util.Optional;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+/**
+ * 経路設計案件の入力ポート（候補の算出と確定は経路設計者が使い、確定した経路の評価は外部情報の更新を受けたシステムが使う。US-06・US-07）。
+ * トランザクションの境界になる。
+ * 判定時刻は Clock から得る。航海と接続時間規則を読み込み、候補探索と制約適合判定に渡す（どちらもリポジトリを呼ばない）。
+ * 情報鮮度の判定（許容時間は設定の値。D-89。Bolt 37b2）は組み立てから受け取る。
+ * 経路設計者の操作（候補の算出と確定）は、読み出しの直後に担当範囲を判定し（{@link RoutingCaseScope}。Bolt 38g。US-16 AC4）、範囲の外なら
+ * 何も書かずに範囲外の結果を返す。判定は版の照合より先（範囲の外の案件の版の競合を示さない）。
+ *
+ * <p>{@code @Service} は JIG がユースケースとして読むための印で、部品探索の対象にはしない（CargoTrackerApplication）。
+ * 組み立ては {@code RoutingConfiguration} が担う。
+ */
+@Service
+public class RoutingCaseCommandService {
+
+    private final RoutingCaseRepository repository;
+    private final VoyageRepository voyageRepository;
+    private final ConnectionRuleRepository connectionRuleRepository;
+    private final ApplicationEventPublisher eventPublisher;
+    private final Clock clock;
+    private final RouteCandidateFinder finder = new RouteCandidateFinder();
+    private final ConstraintEvaluator evaluator = new ConstraintEvaluator();
+    private final InfoFreshnessPolicy freshness;
+    private final RoutingCaseScope scope;
+
+    private final QuotationRouteConditions routeConditions;
+
+    @SuppressWarnings("java:S107") // リポジトリ・時計・判定の部品をすべて組み立てから受け取る
+    public RoutingCaseCommandService(
+            QuotationRouteConditions routeConditions,
+            RoutingCaseRepository repository,
+            VoyageRepository voyageRepository,
+            ConnectionRuleRepository connectionRuleRepository,
+            ApplicationEventPublisher eventPublisher,
+            Clock clock,
+            InfoFreshnessPolicy freshness,
+            RoutingCaseScope scope) {
+        this.routeConditions = routeConditions;
+        this.repository = repository;
+        this.voyageRepository = voyageRepository;
+        this.connectionRuleRepository = connectionRuleRepository;
+        this.eventPublisher = eventPublisher;
+        this.clock = clock;
+        this.freshness = freshness;
+        this.scope = scope;
+    }
+
+    /** 経路候補を算出・再算出する（US-06 AC1〜AC4。情報不足は Bolt 37b2）。 */
+    @Transactional
+    public CandidateCalculationOutcome calculateCandidates(
+            CalculateCandidatesCommand command, AuthenticatedActor operator) {
+        RoutingCase routingCase;
+        switch (scope.find(command.number(), operator)) {
+            case RoutingCaseLookup.Found(RoutingCase found) -> routingCase = found;
+            case RoutingCaseLookup.NotFound _ -> {
+                return new CandidateCalculationOutcome.NotFound();
+            }
+            case RoutingCaseLookup.OutOfScope _ -> {
+                return new CandidateCalculationOutcome.OutOfScope();
+            }
+        }
+        if (routingCase.aggregateVersion() != command.expectedVersion()) {
+            return new CandidateCalculationOutcome.Conflict();
+        }
+        UtcInstant judgedAt = new UtcInstant(clock.instant());
+        CandidateCalculation calculation = routingCase.calculateCandidates(
+                voyageRepository.findCandidateVoyages(judgedAt),
+                connectionRuleRepository.findAll(),
+                judgedAt,
+                finder,
+                evaluator,
+                freshness);
+        try {
+            repository.update(routingCase, command.operator().value());
+        } catch (ConcurrentRoutingCaseUpdateException _) {
+            return new CandidateCalculationOutcome.Conflict();
+        }
+        // 適合する候補がなければ専門判断へ引き継ぐ（DE-32。追跡の listener が有人案件を起票する。UC-06 3a。Bolt 40-14）
+        routingCase.candidatesNotFound(command.operator(), judgedAt).ifPresent(eventPublisher::publishEvent);
+        return new CandidateCalculationOutcome.Calculated(routingCase.number(), calculation);
+    }
+
+    /**
+     * 判断根拠を記録して経路を確定する（US-07 AC1〜AC3）。確定の時刻（承認 commit 時刻）は Clock から得る。航海と接続時間規則を
+     * 同じトランザクションで読み直して判定し直す（規則は接続の時刻に有効なもの。D-90。航海は情報版と区間の予定の組の照合と情報不足。Bolt 37c・39e2。ロックしない。確定のトランザクションの間に届いた DE-12 の評価が抜ける窓は受け入れる。【業務の判断】(v)）。確定したら DE-05 を発行する（購読は US-24 AC4）。
+     */
+    @Transactional
+    public RouteConfirmationOutcome confirm(ConfirmRouteCommand command, AuthenticatedActor operator) {
+        RoutingCase routingCase;
+        switch (scope.find(command.number(), operator)) {
+            case RoutingCaseLookup.Found(RoutingCase found) -> routingCase = found;
+            case RoutingCaseLookup.NotFound _ -> {
+                return new RouteConfirmationOutcome.NotFound();
+            }
+            case RoutingCaseLookup.OutOfScope _ -> {
+                return new RouteConfirmationOutcome.OutOfScope();
+            }
+        }
+        if (routingCase.aggregateVersion() != command.expectedVersion()) {
+            return new RouteConfirmationOutcome.Conflict();
+        }
+        if (conditionsChanged(routingCase)) {
+            return new RouteConfirmationOutcome.Rejected(RouteConfirmationRejectionReason.CONDITIONS_CHANGED);
+        }
+        RouteConfirmed confirmed;
+        try {
+            confirmed = routingCase.confirm(
+                    command.candidateNo(),
+                    command.rationale(),
+                    new RouteApprover(command.approver().value(), command.routeDesigner()),
+                    voyageRepository.findByVoyageNumbers(routingCase.voyageNumbersOf(command.candidateNo())),
+                    connectionRuleRepository.findAll(),
+                    new UtcInstant(clock.instant()),
+                    evaluator,
+                    freshness);
+        } catch (RouteConfirmationRejected rejected) {
+            return new RouteConfirmationOutcome.Rejected(rejected.reason());
+        }
+        try {
+            repository.update(routingCase, command.approver().value());
+        } catch (ConcurrentRoutingCaseUpdateException _) {
+            return new RouteConfirmationOutcome.Conflict();
+        }
+        eventPublisher.publishEvent(confirmed);
+        return new RouteConfirmationOutcome.Confirmed(
+                routingCase.number(), confirmed.routeVersionNo(), command.candidateNo());
+    }
+
+    /**
+     * 荷主が輸送条件を変更し、案件の輸送要求版が現在の版でなくなったか（US-05 AC1。Bolt 62）。見積りの公開 API（経路条件の照会）は
+     * 現在の版にだけ答える。この確かめの後の変更は、見積りが無効の見積りに割り当てないことで守る。
+     */
+    @Transactional(readOnly = true)
+    public boolean conditionsChanged(RoutingCase routingCase) {
+        return routeConditions
+                .find(routingCase.transportRequestId(), routingCase.transportRequestVersionNo())
+                .isEmpty();
+    }
+
+    /**
+     * 外部情報の更新を受けて確定した経路版を評価する（US-07 AC4。Bolt 37d2。呼び手は DE-30 の listener。Bolt 39f）。評価の時刻は Clock から得る。航海と接続時間規則を読み直して
+     * 判定し直し、再設計要になったら保存して DE-06 を発行する（同じトランザクション。読み込んだ案件の版で競合を検知する。競合の読み直しは listener が行う）。評価は利用者の
+     * 操作ではないので、システムの更新で保存する（最終更新者を変えない）。再設計要にしなければ保存しない。
+     */
+    @Transactional
+    public ConfirmedRouteEvaluationOutcome evaluateConfirmedRoute(EvaluateConfirmedRouteCommand command) {
+        Optional<RoutingCase> found = repository.findByNumber(command.number());
+        if (found.isEmpty()) {
+            return new ConfirmedRouteEvaluationOutcome.NotFound();
+        }
+        RoutingCase routingCase = found.get();
+        Optional<RouteRedesignRequired> required = routingCase.evaluateConfirmedRoute(
+                voyageRepository.findByVoyageNumbers(routingCase.confirmedVoyageNumbers()),
+                connectionRuleRepository.findAll(),
+                new UtcInstant(clock.instant()),
+                finder,
+                evaluator);
+        if (required.isEmpty()) {
+            return new ConfirmedRouteEvaluationOutcome.Unchanged();
+        }
+        try {
+            repository.updateBySystem(routingCase);
+        } catch (ConcurrentRoutingCaseUpdateException _) {
+            return new ConfirmedRouteEvaluationOutcome.Conflict();
+        }
+        eventPublisher.publishEvent(required.get());
+        return new ConfirmedRouteEvaluationOutcome.RedesignRequired(
+                routingCase.number(),
+                required.get().routeVersionNo(),
+                routingCase.routeVersion().redesign().orElseThrow().reasons());
+    }
+}

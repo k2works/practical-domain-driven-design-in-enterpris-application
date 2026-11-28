@@ -1,0 +1,37 @@
+package com.example.cargotracker.tracking.domain.model.valueobjects;
+
+import com.example.cargotracker.shared.domain.UtcInstant;
+import java.util.Objects;
+import java.util.Optional;
+
+/**
+ * 追跡記録の要約（S-11 追跡一覧の読み取りモデル。Bolt 26）。集約を組み立てずに、一覧に要る値だけを追跡記録の表から引く。前例
+ * （{@code BookingSummary}・{@code RoutingCaseSummary} など）と同じく、ドメイン層の一覧の読み取りモデルで、自分の集約の表だけを使う。
+ *
+ * @param trackingNumber 追跡番号
+ * @param currentStatus 現在状態
+ * @param originalEta 当初の到着予定（確定した経路版。T-INV-10）
+ * @param latestEta 最新の到着見込み（T-INV-10。荷主の一覧 C-10 に示す。Bolt 27。S-11 にも示す。Bolt 39g3）
+ * @param lastAcquiredAt 最終取得時刻（S-11 に示す。なければ空。Bolt 39g3）
+ * @param nextExpectedAt 次の予定の実績の予定時刻（S-11 の鮮度超過の判定に使う。なければ空。Bolt 39g4）
+ * @param startedAt 追跡の開始時刻
+ */
+public record TrackingRecordSummary(
+        TrackingNumber trackingNumber,
+        TrackingStatus currentStatus,
+        UtcInstant originalEta,
+        UtcInstant latestEta,
+        Optional<UtcInstant> lastAcquiredAt,
+        Optional<UtcInstant> nextExpectedAt,
+        UtcInstant startedAt) {
+
+    public TrackingRecordSummary {
+        Objects.requireNonNull(trackingNumber, "trackingNumber");
+        Objects.requireNonNull(currentStatus, "currentStatus");
+        Objects.requireNonNull(originalEta, "originalEta");
+        Objects.requireNonNull(latestEta, "latestEta");
+        Objects.requireNonNull(lastAcquiredAt, "lastAcquiredAt");
+        Objects.requireNonNull(nextExpectedAt, "nextExpectedAt");
+        Objects.requireNonNull(startedAt, "startedAt");
+    }
+}

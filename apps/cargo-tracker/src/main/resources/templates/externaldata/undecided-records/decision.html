@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/staff :: layout(~{::title}, ~{::main}, ~{::script}, 'undecided-records')}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${#fields.hasErrors('${rejectionForm.*}')} ? ('却下できませんでした - ' + (${discrepancy} ? '差異の判断' : '隔離の判断') + ' - cargo-tracker') : (${#fields.hasErrors('${adoptionForm.*}') or adoptionConflictText != null or (adoptionRefused != null and adoptionRefusalText != null)} ? ('採用できませんでした - ' + (${discrepancy} ? '差異の判断' : '隔離の判断') + ' - cargo-tracker') : (${discrepancy} ? '差異の判断' : '隔離の判断') + ' - cargo-tracker')">隔離の判断 - cargo-tracker</title>
+    <!--/* 送信の失敗のときにエラー要約へフォーカスを移す（S-16 と同じ） */-->
+    <script th:src="@{/js/transport-request-form.js}" defer></script>
+</head>
+<body>
+<main>
+    <h1 th:text="${discrepancy} ? '差異の判断' : '隔離の判断'">隔離の判断</h1>
+    <!--/* S-17 の判断の画面（Bolt 39d2、US-14 AC4、UC-15 3b）。一覧と同じ項目と隔離の理由の全文を読んでから、却下の理由を書いて却下する。
+           注記には取込ファイルから来た値が入るので th:text で示す。却下と採用は取り消せない（【業務の判断】(e)）。採用の欄は判断のサービスの定めで採用できる隔離に
+           だけ示し（航海は Bolt 39d3b、主要実績は Bolt 39d3b2）、採用できない隔離には却下の欄の後に理由と次の道の文を示す（Bolt 39d3b2）。送り先と戻り先の URL は
+           controller が読んだ取込とページから組み立てる。1 回の POST は 1 つのフォームで、開いた後に採用できなくなったときと負けた採用の要約は PRG の GET で別の印で出るので、4 つの
+           エラー要約は同時に出ない。採用の欄の名前も reason なので、採用のエラー要約のリンクは欄の id（adoption-reason）を明示する。負けた採用の要約（Bolt 39d4 の開始準備の決定 (4)）は
+           この外部版の採用値の領域を指す */-->
+    <div id="error-summary" th:if="${adoptionRefused != null and adoptionRefusalText != null}" tabindex="-1" role="alert"
+         aria-labelledby="error-summary-title">
+        <h2 id="error-summary-title">採用できませんでした</h2>
+        <ul>
+            <li><a href="#adoption-refusal" th:text="${adoptionRefusalText}">情報源が承認済みではないため採用できません。</a></li>
+        </ul>
+    </div>
+    <div id="error-summary" th:if="${adoptionConflictText}" tabindex="-1" role="alert"
+         aria-labelledby="error-summary-title">
+        <h2 id="error-summary-title">採用できませんでした</h2>
+        <ul>
+            <li><a href="#adopted-values-heading" th:text="${adoptionConflictText}">ほかの隔離が先に採用されたため採用できませんでした。この外部版の採用値を読み直して、もう一度判断してください。</a></li>
+        </ul>
+    </div>
+    <div id="error-summary" th:if="${#fields.hasErrors('${rejectionForm.*}')}" tabindex="-1" role="alert"
+         aria-labelledby="error-summary-title">
+        <h2 id="error-summary-title">却下できませんでした</h2>
+        <ul>
+            <li th:each="error : ${#fields.detailedErrors('${rejectionForm.*}')}">
+                <a th:href="|#${error.fieldName}|" th:text="${error.message}">却下の理由を書いてください。</a>
+            </li>
+        </ul>
+    </div>
+    <div id="error-summary" th:if="${#fields.hasErrors('${adoptionForm.*}')}" tabindex="-1" role="alert"
+         aria-labelledby="error-summary-title">
+        <h2 id="error-summary-title">採用できませんでした</h2>
+        <ul>
+            <li th:each="error : ${#fields.detailedErrors('${adoptionForm.*}')}">
+                <a href="#adoption-reason" th:text="${error.message}">採用の理由は 1000 文字までで書いてください。</a>
+            </li>
+        </ul>
+    </div>
+    <dl class="text-break">
+        <dt>取り込んだ日時</dt>
+        <dd th:text="${ingestedAt}">2026-11-16 10:05 Asia/Tokyo（UTC+09:00）（UTC 2026-11-16 01:05）</dd>
+        <dt>情報源</dt>
+        <dd th:text="${source}">開発海運（架空）（航海）</dd>
+        <dt>行</dt>
+        <dd th:text="${lines}">140 行目</dd>
+        <dt>種類</dt>
+        <dd th:text="${kind}">内容の違う原本</dd>
+        <dt>外部 ID・外部版</dt>
+        <dd th:text="${externalKey}">DEMO-201・3</dd>
+        <dt th:text="${discrepancy} ? '差異の理由' : '隔離の理由'">隔離の理由</dt>
+        <dd th:text="${note}">140 行目: 同じ外部 ID・外部版で内容の違う原本を受け取りました。</dd>
+    </dl>
+    <!--/* 内容の違う原本の受け取った値とこの外部版の採用値（航海は Bolt 39d3、主要実績と読めない値は Bolt 39d3c、【業務の判断】(i)・(j)・(k)）。
+           見出しで名前の付いた 2 つの領域に、それぞれの取得した日時と値を示す（中身は externaldata/fragments/undecided-record-values）。値が同じなら
+           2 つの領域の前に文を 1 つ示す。キーのない隔離には出さない */-->
+    <th:block th:if="${receivedValues}">
+        <p th:if="${sameValuesText}" th:text="${sameValuesText}">受け取った値はこの外部版の採用値と同じです。同じ原本か、原本の書き方（引用符・空白など）だけが違います。</p>
+        <section aria-labelledby="received-values-heading">
+            <h2 id="received-values-heading">受け取った値</h2>
+            <th:block th:replace="~{externaldata/fragments/undecided-record-values :: values(${receivedValues})}"></th:block>
+        </section>
+        <section th:if="${adoptedValues}" aria-labelledby="adopted-values-heading">
+            <h2 id="adopted-values-heading" tabindex="-1">この外部版の採用値</h2>
+            <th:block th:replace="~{externaldata/fragments/undecided-record-values :: values(${adoptedValues})}"></th:block>
+        </section>
+        <!--/* この外部 ID の採用値（差異の規則が比べる相手。Bolt 39h3）。古い外部版の警告が指す相手を必ず示す。今使っている採用値が
+               この外部版の採用値と同じで逆転でないときは出さない */-->
+        <section th:if="${partnerValues}" aria-labelledby="partner-values-heading">
+            <h2 id="partner-values-heading">この外部 ID の採用値</h2>
+            <p th:text="${partnerNote}">公開した日時が最も新しい採用値です。</p>
+            <th:block th:replace="~{externaldata/fragments/undecided-record-values :: values(${partnerValues})}"></th:block>
+        </section>
+    </th:block>
+    <section aria-labelledby="rejection-heading">
+        <h2 id="rejection-heading">却下する</h2>
+        <form th:action="${actionUrl}" th:object="${rejectionForm}" method="post" novalidate>
+            <div>
+                <label for="reason">却下の理由</label>
+                <!--/* 上限は判断の理由の上限（controller が渡す）から示し、欄の誤りの文と食い違わせない */-->
+                <p id="reason-hint" th:text="|必須、${reasonLimit} 文字まで|">必須、1000 文字まで</p>
+                <p id="reason-error" class="text-danger" th:if="${#fields.hasErrors('reason')}" th:errors="*{reason}"></p>
+                <textarea class="form-control" id="reason" name="reason" rows="4" aria-required="true" th:text="*{reason}"
+                          th:attr="aria-invalid=${#fields.hasErrors('reason')} ? 'true' : null,aria-describedby=${#fields.hasErrors('reason')} ? 'reason-hint reason-error' : 'reason-hint'"></textarea>
+            </div>
+            <p id="irrevocable">却下すると取り消せません。誤って却下したときは、提供元に同じ原本を送り直してもらってください。</p>
+            <p><button type="submit" class="btn btn-primary" aria-describedby="irrevocable">却下する</button></p>
+        </form>
+    </section>
+    <section th:if="${adoptable}" aria-labelledby="adoption-heading">
+        <h2 id="adoption-heading">採用する</h2>
+        <!--/* 古い外部版の隔離の警告（Bolt 39h3 の決定 (3)）。固定の文で、採用を止めない。画面を開いたときの一度の判定 */-->
+        <p id="old-version-warning" role="note" th:if="${oldVersionWarning}" th:text="${oldVersionWarning}">この外部 ID は、この隔離を受け取った時刻より後に取得した外部版を採用しています。</p>
+        <form th:action="${adoptionActionUrl}" th:object="${adoptionForm}" method="post" novalidate>
+            <div>
+                <label for="adoption-reason">採用の理由</label>
+                <p id="adoption-reason-hint" th:text="|任意、${reasonLimit} 文字まで|">任意、1000 文字まで</p>
+                <p id="adoption-reason-error" class="text-danger" th:if="${#fields.hasErrors('reason')}" th:errors="*{reason}"></p>
+                <textarea class="form-control" id="adoption-reason" name="reason" rows="4" th:text="*{reason}"
+                          th:attr="aria-invalid=${#fields.hasErrors('reason')} ? 'true' : null,aria-describedby=${#fields.hasErrors('reason')} ? 'adoption-reason-hint adoption-reason-error' : 'adoption-reason-hint'"></textarea>
+            </div>
+            <p id="adoption-irrevocable">採用すると取り消せません。誤って採用したときは、提供元に新しい外部版で正しい原本を送ってもらってください。</p>
+            <p><button type="submit" class="btn btn-primary" th:attr="aria-describedby=${oldVersionWarning} ? 'adoption-irrevocable old-version-warning' : 'adoption-irrevocable'" aria-describedby="adoption-irrevocable">採用する</button></p>
+        </form>
+    </section>
+    <!--/* tabindex="-1" はエラー要約のリンクの受け口（標準のフラグメント移動でフォーカスが移る） */-->
+    <p id="adoption-refusal" tabindex="-1" th:if="${adoptionRefusalText}" th:text="${adoptionRefusalText}">形式の誤りは採用できません。直したファイルを取り込み直してください。</p>
+    <p><a th:href="${backUrl}">一覧に戻る</a></p>
+</main>
+</body>
+</html>

@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.cargotracker.quotation.infrastructure.persistence.TransportRequestMapper">
+
+    <!-- 社内の一覧を担当企業（荷主企業）で絞る IN の並び（Bolt 38f。空の集合は照会のサービスが読まずに返すので、ここでは空にならない） -->
+    <sql id="shipperCompanyIn"><foreach collection="shipperCompanyIds" item="shipperCompanyId" open="(" separator="," close=")">#{shipperCompanyId}</foreach></sql>
+
+    <resultMap id="transportRequestRow" type="com.example.cargotracker.quotation.infrastructure.persistence.TransportRequestRow">
+        <constructor>
+            <idArg column="id" name="id" javaType="java.util.UUID"/>
+            <arg column="request_number" name="requestNumber" javaType="String"/>
+            <arg column="shipper_company_id" name="shipperCompanyId" javaType="java.util.UUID"/>
+            <arg column="status" name="status" javaType="String"/>
+            <arg column="current_version_no" name="currentVersionNo" javaType="_int"/>
+            <arg column="version" name="version" javaType="_long"/>
+            <arg column="consignee_company_id" name="consigneeCompanyId" javaType="java.util.UUID"/>
+            <arg column="origin_unlocode" name="originUnlocode" javaType="String"/>
+            <arg column="destination_unlocode" name="destinationUnlocode" javaType="String"/>
+            <arg column="arrival_deadline" name="arrivalDeadline" javaType="java.time.OffsetDateTime"/>
+            <arg column="cargo_category" name="cargoCategory" javaType="String"/>
+            <arg column="package_type" name="packageType" javaType="String"/>
+            <arg column="package_count" name="packageCount" javaType="_int"/>
+            <arg column="gross_weight_kg" name="grossWeightKg" javaType="java.math.BigDecimal"/>
+            <arg column="volume_m3" name="volumeM3" javaType="java.math.BigDecimal"/>
+            <arg column="submitted_by" name="submittedBy" javaType="java.util.UUID"/>
+            <arg column="submitted_at" name="submittedAt" javaType="java.time.OffsetDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <insert id="insertTransportRequest">
+        INSERT INTO quotation.transport_request
+            (id, request_number, shipper_company_id, status, current_version_no, version)
+        VALUES (#{id}, #{requestNumber}, #{shipperCompanyId}, #{status}, #{currentVersionNo}, #{version})
+    </insert>
+
+    <insert id="insertTransportRequestVersion">
+        INSERT INTO quotation.transport_request_version
+            (transport_request_id, version_no, consignee_company_id, origin_unlocode, destination_unlocode,
+             arrival_deadline, cargo_category, package_type, package_count, gross_weight_kg, volume_m3,
+             submitted_by, submitted_at)
+        VALUES (#{id}, #{currentVersionNo}, #{consigneeCompanyId}, #{originUnlocode}, #{destinationUnlocode},
+                #{arrivalDeadline}, #{cargoCategory}, #{packageType}, #{packageCount}, #{grossWeightKg}, #{volumeM3},
+                #{submittedBy}, #{submittedAt})
+    </insert>
+
+    <!-- 楽観ロック（データモデル、ARCH-HO-01）。読み込んだときの版でなければ 0 件になる -->
+    <update id="updateTransportRequest">
+        UPDATE quotation.transport_request
+           SET status = #{status}, current_version_no = #{currentVersionNo}, version = version + 1
+         WHERE id = #{id} AND version = #{expectedVersion}
+    </update>
+
+    <insert id="insertReviewRecordIfAbsent">
+        INSERT INTO quotation.review_record
+            (id, transport_request_id, version_no, decision, reviewer_id, rationale, missing_items, decided_at)
+        SELECT #{id}, #{transportRequestId}, #{versionNo}, #{decision}, #{reviewerId}, #{rationale}, #{missingItems},
+               #{decidedAt}
+         WHERE NOT EXISTS (SELECT 1 FROM quotation.review_record WHERE id = #{id})
+    </insert>
+
+    <resultMap id="reviewRecordRow" type="com.example.cargotracker.quotation.infrastructure.persistence.ReviewRecordRow">
+        <constructor>
+            <idArg column="id" name="id" javaType="java.util.UUID"/>
+            <arg column="transport_request_id" name="transportRequestId" javaType="java.util.UUID"/>
+            <arg column="version_no" name="versionNo" javaType="_int"/>
+            <arg column="decision" name="decision" javaType="String"/>
+            <arg column="reviewer_id" name="reviewerId" javaType="java.util.UUID"/>
+            <arg column="rationale" name="rationale" javaType="String"/>
+            <arg column="missing_items" name="missingItems" javaType="String"/>
+            <arg column="decided_at" name="decidedAt" javaType="java.time.OffsetDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <select id="selectReviewRecords" resultMap="reviewRecordRow">
+        SELECT id, transport_request_id, version_no, decision, reviewer_id, rationale, missing_items, decided_at
+          FROM quotation.review_record
+         WHERE transport_request_id = #{transportRequestId}
+         ORDER BY version_no, decided_at, id
+    </select>
+
+    <!-- 新しい版の書類だけを書く（追記専用。既にある行は変えない。Bolt 6〜8 レビュー R-07） -->
+    <insert id="insertRequiredDocument">
+        INSERT INTO quotation.required_document
+            (transport_request_id, version_no, document_no, document_type, file_name, media_type, size_bytes, sha256,
+             object_key)
+        VALUES (#{transportRequestId}, #{versionNo}, #{documentNo}, #{documentType}, #{fileName}, #{mediaType},
+                #{sizeBytes}, #{sha256}, #{objectKey})
+    </insert>
+
+    <resultMap id="requiredDocumentRow" type="com.example.cargotracker.quotation.infrastructure.persistence.RequiredDocumentRow">
+        <constructor>
+            <idArg column="transport_request_id" name="transportRequestId" javaType="java.util.UUID"/>
+            <idArg column="version_no" name="versionNo" javaType="_int"/>
+            <idArg column="document_no" name="documentNo" javaType="_int"/>
+            <arg column="document_type" name="documentType" javaType="String"/>
+            <arg column="file_name" name="fileName" javaType="String"/>
+            <arg column="media_type" name="mediaType" javaType="String"/>
+            <arg column="size_bytes" name="sizeBytes" javaType="_long"/>
+            <arg column="sha256" name="sha256" javaType="String"/>
+            <arg column="object_key" name="objectKey" javaType="String"/>
+        </constructor>
+    </resultMap>
+
+    <select id="selectRequiredDocuments" resultMap="requiredDocumentRow">
+        SELECT transport_request_id, version_no, document_no, document_type, file_name, media_type, size_bytes, sha256,
+               object_key
+          FROM quotation.required_document
+         WHERE transport_request_id = #{transportRequestId}
+           AND version_no = #{versionNo}
+         ORDER BY document_no
+    </select>
+
+    <sql id="selectRow">
+        SELECT r.id, r.request_number, r.shipper_company_id, r.status, r.current_version_no, r.version,
+               v.consignee_company_id, v.origin_unlocode, v.destination_unlocode, v.arrival_deadline,
+               v.cargo_category, v.package_type, v.package_count, v.gross_weight_kg, v.volume_m3,
+               v.submitted_by, v.submitted_at
+          FROM quotation.transport_request r
+          JOIN quotation.transport_request_version v
+            ON v.transport_request_id = r.id
+           AND v.version_no = r.current_version_no
+    </sql>
+
+    <select id="selectById" resultMap="transportRequestRow">
+        <include refid="selectRow"/>
+         WHERE r.id = #{id}
+    </select>
+
+    <!-- 社内用: ここでは荷主企業で絞らない。営業担当者の担当範囲はアプリケーション層の StaffTransportRequestScope が判定する（Bolt 38f） -->
+    <select id="selectByNumberForStaff" resultMap="transportRequestRow">
+        <include refid="selectRow"/>
+         WHERE r.request_number = #{requestNumber}
+    </select>
+
+    <resultMap id="transportRequestSummaryRow" type="com.example.cargotracker.quotation.infrastructure.persistence.TransportRequestSummaryRow">
+        <constructor>
+            <arg column="request_number" name="requestNumber" javaType="String"/>
+            <arg column="current_version_no" name="currentVersionNo" javaType="_int"/>
+            <arg column="status" name="status" javaType="String"/>
+            <arg column="first_submitted_at" name="firstSubmittedAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="current_submitted_at" name="currentSubmittedAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="origin_unlocode" name="originUnlocode" javaType="String"/>
+            <arg column="destination_unlocode" name="destinationUnlocode" javaType="String"/>
+            <arg column="arrival_deadline" name="arrivalDeadline" javaType="java.time.OffsetDateTime"/>
+            <arg column="cargo_category" name="cargoCategory" javaType="String"/>
+        </constructor>
+    </resultMap>
+
+    <!-- 一覧の 1 行: ヘッダ、現在の版、版 1 の提出時刻を結合する。集約を組み立てず、審査記録も読まない（N+1 をなくす） -->
+    <sql id="selectSummary">
+        SELECT r.request_number, r.current_version_no, r.status,
+               first_version.submitted_at AS first_submitted_at, v.submitted_at AS current_submitted_at,
+               v.origin_unlocode, v.destination_unlocode, v.arrival_deadline, v.cargo_category
+          FROM quotation.transport_request r
+          JOIN quotation.transport_request_version v
+            ON v.transport_request_id = r.id
+           AND v.version_no = r.current_version_no
+          JOIN quotation.transport_request_version first_version
+            ON first_version.transport_request_id = r.id
+           AND first_version.version_no = 1
+    </sql>
+
+    <!-- 社内用の受付一覧: 担当企業（荷主企業。Bolt 38f）の審査中を、最初の提出時刻（版 1）の古い順に -->
+    <select id="selectUnderReviewSummaries" resultMap="transportRequestSummaryRow">
+        <include refid="selectSummary"/>
+         WHERE r.status = 'UNDER_REVIEW'
+           AND r.shipper_company_id IN
+               <include refid="shipperCompanyIn"/>
+         ORDER BY first_version.submitted_at, r.request_number
+    </select>
+
+    <!-- 社内用の受付一覧の見積り作成中: 担当企業の審査を確定した見積依頼を、最初の提出時刻（版 1）の古い順に（Bolt 10・38f） -->
+    <select id="selectQuotingSummaries" resultMap="transportRequestSummaryRow">
+        <include refid="selectSummary"/>
+         WHERE r.status = 'QUOTING'
+           AND r.shipper_company_id IN
+               <include refid="shipperCompanyIn"/>
+         ORDER BY first_version.submitted_at, r.request_number
+    </select>
+
+    <!-- 荷主の見積依頼の一覧: 自社だけを、最初の提出時刻（版 1）の新しい順に。荷主企業で必ず絞る（Q-INV-08） -->
+    <select id="selectSummariesByShipper" resultMap="transportRequestSummaryRow">
+        <include refid="selectSummary"/>
+         WHERE r.shipper_company_id = #{shipperCompanyId}
+         ORDER BY first_version.submitted_at DESC, r.request_number DESC
+    </select>
+
+    <select id="selectByNumber" resultMap="transportRequestRow">
+        <include refid="selectRow"/>
+         WHERE r.request_number = #{requestNumber}
+           AND r.shipper_company_id = #{shipperCompanyId}
+    </select>
+</mapper>

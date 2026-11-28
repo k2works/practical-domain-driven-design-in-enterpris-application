@@ -1,5 +1,13 @@
 # 実践ドメイン駆動設計 in エンタープライズアプリケーション
 
+[![cargo-tracker CI](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/actions/workflows/cargo-tracker-ci.yml/badge.svg?branch=develop)](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/actions/workflows/cargo-tracker-ci.yml?query=branch%3Adevelop)
+[![Deploy MkDocs](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/actions/workflows/mkdocs.yml/badge.svg?branch=develop)](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/actions/workflows/mkdocs.yml?query=branch%3Adevelop)
+[![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-main-222222?logo=github)](https://k2works.github.io/practical-domain-driven-design-in-enterpris-application/)
+[![GitHub Pages develop](https://img.shields.io/badge/GitHub%20Pages-develop-222222?logo=github)](https://k2works.github.io/practical-domain-driven-design-in-enterpris-application/develop/)
+![Java 25](https://img.shields.io/badge/Java-25-007396?logo=openjdk&logoColor=white)
+![Spring Boot 4.1.1](https://img.shields.io/badge/Spring%20Boot-4.1.1-6DB33F?logo=springboot&logoColor=white)
+![Node.js 22](https://img.shields.io/badge/Node.js-22-5FA04E?logo=nodedotjs&logoColor=white)
+
 ## 概要
 
 ### 目的
@@ -75,7 +83,9 @@ Skills 一覧は [CLAUDE.md の Skills 体系](CLAUDE.md#skills-体系) を参�
     - `Save` をクリック
 
 4. **初回デプロイ**
-    - main ブランチにプッシュすると GitHub Actions が自動実行
+    - `main` ブランチにプッシュすると GitHub Actions が自動実行され、`https://k2works.github.io/practical-domain-driven-design-in-enterpris-application/` に公開
+    - `develop` ブランチにプッシュすると同じ workflow が自動実行され、`https://k2works.github.io/practical-domain-driven-design-in-enterpris-application/develop/` に公開
+    - 両ブランチのデプロイは直列に実行し、`main` のルートと `develop/` を相互に保持
     - Actions タブでデプロイ状況を確認
 
 **[⬆ back to top](#構成)**
@@ -148,7 +158,7 @@ Skills 一覧は [CLAUDE.md の Skills 体系](CLAUDE.md#skills-体系) を参�
   npx gulp manual:build
   ```
 
-生成された HTML は `apps/manual/` に出力されます。サイトタイトル・著作権表示・ポータルへの戻りリンクは `.env` の `MANUAL_TITLE` / `MANUAL_COPYRIGHT` / `MANUAL_PORTAL_URL` で設定できます。
+生成された HTML は `docs/assets/manual-output/cargo-tracker/` に出力され、ER 図・JIG と同じくドキュメントサイトからリンクされます（`npx gulp docs:generate` でも作られます）。サイトタイトル・著作権表示・ポータルへの戻りリンクは `.env` の `MANUAL_TITLE` / `MANUAL_COPYRIGHT` / `MANUAL_PORTAL_URL` で設定できます。
 
 ##### 作業履歴（ジャーナル）タスク
 

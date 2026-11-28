@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.cargotracker.tracking.infrastructure.persistence.BusinessCalendarMapper">
+
+    <resultMap id="businessDayRow" type="com.example.cargotracker.tracking.infrastructure.persistence.BusinessDayRow">
+        <constructor>
+            <arg column="calendar_date" name="calendarDate" javaType="java.time.LocalDate"/>
+            <arg column="business_day" name="businessDay" javaType="_boolean"/>
+            <arg column="open_time" name="openTime" javaType="java.time.LocalTime"/>
+            <arg column="close_time" name="closeTime" javaType="java.time.LocalTime"/>
+            <arg column="time_zone" name="timeZone" javaType="string"/>
+            <arg column="note" name="note" javaType="string"/>
+        </constructor>
+    </resultMap>
+
+    <!-- 期間の営業日カレンダー（両端を含む。日付の順。Bolt 40-4） -->
+    <select id="findBetween" resultMap="businessDayRow">
+        SELECT calendar_date, business_day, open_time, close_time, time_zone, note
+        FROM tracking.business_calendar
+        WHERE calendar_date BETWEEN #{fromInclusive} AND #{toInclusive}
+        ORDER BY calendar_date
+    </select>
+</mapper>

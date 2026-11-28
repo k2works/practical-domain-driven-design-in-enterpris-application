@@ -1,0 +1,23 @@
+[
+  {"query": "docs/design にテーブル定義書を手で書き起こそうとしてるんだけど、db/migrations に DDL はもうある。毎回マイグレーションのたびに定義書も直すの正直しんどい。何か良いやり方ない？", "should_trigger": true},
+  {"query": "新しく入ってくるメンバーに、注文受付から在庫引当、DB 保存までの流れをコードのどこを読めばいいか案内したい。コードは週に何度も変わるので手書きの Wiki だと絶対古くなる。", "should_trigger": true},
+  {"query": "ドメインの用語集を docs/design/glossary.md で手メンテしてるけど、クラス名や列挙値とずれてばかり。コードから自動で作れない？", "should_trigger": true},
+  {"query": "ガイドツアーとサイトシーイング・マップって、うちのリポジトリだとどう使い分けて導入すればいい？ rank の付け方も知りたい", "should_trigger": true},
+  {"query": "アーキテクチャ構成図を PowerPoint で描いて保守してるんだけど、リファクタするたびに図が嘘になる。コードから図を生成する方向に変えたい", "should_trigger": true},
+  {"query": "設計書を新しく書く前に、そもそも書く価値があるのか、コードやテストから取り出せる情報じゃないのかを整理したい。Living Documentation の考え方で判断して", "should_trigger": true},
+  {"query": "READMEに『重要なクラス一覧』を手書きで載せてるけど、クラスをリネームするたびに壊れる。名前を指定せず、タグとかで動的に一覧を作る方法を教えて", "should_trigger": true},
+  {"query": "このサービスの設計判断の理由がコードから全然読み取れなくて、変更が怖い。意図や根拠をコードの近くに残す仕組みを入れたい", "should_trigger": true},
+  {"query": "BDD のシナリオに @keyexample とか @wip のタグを付けて、業務担当者向けのダイジェストを自動で作りたい。どう設計する？", "should_trigger": true},
+  {"query": "ドキュメントがコードと二重管理になっていて、どっちが正か分からなくなってる。重複してる知識に不一致を検出する仕組みを付けたい", "should_trigger": true},
+
+  {"query": "新しいプロジェクト inventory-service を始めるので、docs 配下と apps 配下のディレクトリ一式を用意して。識別子はケバブケースで", "should_trigger": false},
+  {"query": "さっき作った docs/adr/003-cache.md に OKF のフロントマターを付けて、index.md と log.md も更新しておいて", "should_trigger": false},
+  {"query": "Redis から Memcached に変える技術選定の理由を ADR として記録したい。背景と代替案も含めて書いて", "should_trigger": false},
+  {"query": "今日の変更をコミットして。Conventional Commits で日本語のメッセージにして", "should_trigger": false},
+  {"query": "ユーザーマニュアルの第 3 章を書いて。画面キャプチャも撮り直したい", "should_trigger": false},
+  {"query": "docs 配下の Markdown を markdownlint にかけて、エラーが出たところを直して。MkDocs でサイトもビルドして確認したい", "should_trigger": false},
+  {"query": "注文集約のドメインモデルを DDD で設計したい。エンティティと値オブジェクトを洗い出して", "should_trigger": false},
+  {"query": "バックエンドの在庫引当 API を TDD で実装したい。まず失敗するテストから書き始めて", "should_trigger": false},
+  {"query": "今日の作業内容と判断の理由を開発ジャーナルに残しておいて", "should_trigger": false},
+  {"query": "Spring Boot の連載記事に新しい章を追加したい。サンプルコードも動く状態で用意して", "should_trigger": false}
+]

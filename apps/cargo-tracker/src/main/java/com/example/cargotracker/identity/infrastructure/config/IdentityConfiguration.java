@@ -1,0 +1,559 @@
+package com.example.cargotracker.identity.infrastructure.config;
+
+import com.example.cargotracker.identity.application.internal.commandservices.AdministrationScopeDenialService;
+import com.example.cargotracker.identity.application.internal.commandservices.AssignedScopeDenialService;
+import com.example.cargotracker.identity.application.internal.commandservices.KpiBaselineCommandService;
+import com.example.cargotracker.identity.application.internal.commandservices.LoginAttemptService;
+import com.example.cargotracker.identity.application.internal.commandservices.PasswordResetCompletionService;
+import com.example.cargotracker.identity.application.internal.commandservices.PasswordResetRequestService;
+import com.example.cargotracker.identity.application.internal.commandservices.RecoveryCodeVerificationService;
+import com.example.cargotracker.identity.application.internal.commandservices.SessionRevalidationService;
+import com.example.cargotracker.identity.application.internal.commandservices.ShipperNotifications;
+import com.example.cargotracker.identity.application.internal.commandservices.TotpEnrollmentService;
+import com.example.cargotracker.identity.application.internal.commandservices.TotpReEnrollmentService;
+import com.example.cargotracker.identity.application.internal.commandservices.TotpVerificationService;
+import com.example.cargotracker.identity.application.internal.commandservices.UserAssignmentService;
+import com.example.cargotracker.identity.application.internal.commandservices.UserLoginCredentialService;
+import com.example.cargotracker.identity.application.internal.commandservices.UserRegistrationService;
+import com.example.cargotracker.identity.application.internal.commandservices.UserRoleChangeService;
+import com.example.cargotracker.identity.application.internal.commandservices.UserStatusChangeService;
+import com.example.cargotracker.identity.application.internal.eventhandlers.ExternalRecordAuditEventHandler;
+import com.example.cargotracker.identity.application.internal.eventhandlers.KpiObservationEventHandler;
+import com.example.cargotracker.identity.application.internal.eventhandlers.PasswordResetMailEventHandler;
+import com.example.cargotracker.identity.application.internal.eventhandlers.ShipperNotificationEventHandler;
+import com.example.cargotracker.identity.application.internal.eventhandlers.TotpEnrollmentMailEventHandler;
+import com.example.cargotracker.identity.application.internal.eventhandlers.TotpResetMailEventHandler;
+import com.example.cargotracker.identity.application.internal.eventhandlers.UserInvitationMailEventHandler;
+import com.example.cargotracker.identity.application.internal.outboundservices.acl.NotificationPasswordResetMails;
+import com.example.cargotracker.identity.application.internal.outboundservices.acl.NotificationShipperMails;
+import com.example.cargotracker.identity.application.internal.outboundservices.acl.NotificationTotpEnrollmentMails;
+import com.example.cargotracker.identity.application.internal.outboundservices.acl.NotificationTotpResetMails;
+import com.example.cargotracker.identity.application.internal.outboundservices.acl.NotificationUserInvitationMails;
+import com.example.cargotracker.identity.application.internal.outboundservices.acl.TrackingInquiryStatistics;
+import com.example.cargotracker.identity.application.internal.queryservices.KpiComparisonQueryService;
+import com.example.cargotracker.identity.application.internal.queryservices.KpiObservationQueryService;
+import com.example.cargotracker.identity.application.internal.queryservices.KpiWeeklyQueryService;
+import com.example.cargotracker.identity.application.internal.queryservices.TotpEnrollmentQueryService;
+import com.example.cargotracker.identity.application.internal.queryservices.UserAdministrationQueryService;
+import com.example.cargotracker.identity.application.internal.session.SessionPaths;
+import com.example.cargotracker.identity.domain.model.aggregates.AuditRecordRepository;
+import com.example.cargotracker.identity.domain.model.aggregates.CommonPasswordList;
+import com.example.cargotracker.identity.domain.model.aggregates.CompanyRepository;
+import com.example.cargotracker.identity.domain.model.aggregates.IncompleteEventPublicationCounter;
+import com.example.cargotracker.identity.domain.model.aggregates.KpiBaselineRepository;
+import com.example.cargotracker.identity.domain.model.aggregates.KpiObservationRepository;
+import com.example.cargotracker.identity.domain.model.aggregates.LoginFailureRepository;
+import com.example.cargotracker.identity.domain.model.aggregates.PasswordHasher;
+import com.example.cargotracker.identity.domain.model.aggregates.PasswordResetTokenGenerator;
+import com.example.cargotracker.identity.domain.model.aggregates.PasswordResetTokenHasher;
+import com.example.cargotracker.identity.domain.model.aggregates.PasswordResetTokenRepository;
+import com.example.cargotracker.identity.domain.model.aggregates.RecoveryCodeGenerator;
+import com.example.cargotracker.identity.domain.model.aggregates.RecoveryCodeHasher;
+import com.example.cargotracker.identity.domain.model.aggregates.RecoveryCodeRepository;
+import com.example.cargotracker.identity.domain.model.aggregates.TotpCodeGenerator;
+import com.example.cargotracker.identity.domain.model.aggregates.TotpCredentialRepository;
+import com.example.cargotracker.identity.domain.model.aggregates.TotpSecretIssuer;
+import com.example.cargotracker.identity.domain.model.aggregates.UnusablePasswordHashIssuer;
+import com.example.cargotracker.identity.domain.model.aggregates.User;
+import com.example.cargotracker.identity.domain.model.aggregates.UserAssignmentRepository;
+import com.example.cargotracker.identity.domain.model.aggregates.UserRepository;
+import com.example.cargotracker.identity.domain.model.aggregates.UserSessionRevoker;
+import com.example.cargotracker.identity.domain.model.aggregates.UserStandingRepository;
+import com.example.cargotracker.identity.domain.model.rules.LockPolicy;
+import com.example.cargotracker.identity.domain.model.rules.PasswordPolicy;
+import com.example.cargotracker.identity.infrastructure.crypto.AesGcmSecretCipher;
+import com.example.cargotracker.notification.interfaces.api.PasswordResetMail;
+import com.example.cargotracker.notification.interfaces.api.ShipperNotificationMail;
+import com.example.cargotracker.notification.interfaces.api.TotpEnrollmentMail;
+import com.example.cargotracker.notification.interfaces.api.TotpResetMail;
+import com.example.cargotracker.notification.interfaces.api.UserInvitationMail;
+import com.example.cargotracker.tracking.interfaces.api.InquiryStatistics;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.time.Clock;
+import java.util.Locale;
+import java.util.Map;
+import org.springframework.boot.context.properties.bind.Bindable;
+import org.springframework.boot.context.properties.bind.Binder;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
+import org.springframework.core.env.Profiles;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
+
+/**
+ * アクセス・監査コンテキストの組み立て。アプリケーションサービスに送信アダプターをつなぐ。
+ */
+@Configuration(proxyBeanMethods = false)
+public class IdentityConfiguration {
+
+    /** 設定の名前（環境変数は CARGOTRACKER_PUBLICBASEURL）。 */
+    static final String PUBLIC_BASE_URL = "cargotracker.public-base-url";
+
+    /**
+     * 公開の base URL（Bolt 33、SEC-08）を確かめ、末尾の / を除いて返す。メールのリンクは request の Host ヘッダーではなくこの設定から
+     * 組み立てる。ステージング・本番では https で localhost でない値を求め、既定の値のまま出さないように起動を止める。
+     *
+     * @throws IllegalStateException 値がない・絶対の http(s) の URL でない・ステージングと本番で https でないか localhost のとき
+     */
+    static String publicBaseUrl(Environment environment) {
+        String value = environment.getProperty(PUBLIC_BASE_URL, "").strip();
+        URI uri = absoluteHttpUrl(value);
+        boolean production = environment.acceptsProfiles(Profiles.of("staging | prod"));
+        if (production && (!"https".equalsIgnoreCase(uri.getScheme()) || isLoopback(uri.getHost()))) {
+            throw new IllegalStateException("ステージング・本番の " + PUBLIC_BASE_URL + " は https でループバックでない URL にする");
+        }
+        return value.endsWith("/") ? value.substring(0, value.length() - 1) : value;
+    }
+
+    /** 再設定と利用者の招待のリンクの接頭辞（A-06。リンクはこれにトークンを続ける。用途による出し分けは Bolt 38b4）。 */
+    private static String passwordResetLinkPrefix(Environment environment) {
+        return publicBaseUrl(environment) + SessionPaths.PASSWORD_RESET_URL + "/";
+    }
+
+    /** query と fragment のない、http(s) の絶対の URL として読む。 */
+    private static URI absoluteHttpUrl(String value) {
+        URI uri;
+        try {
+            uri = new URI(value);
+        } catch (URISyntaxException e) {
+            throw new IllegalStateException(PUBLIC_BASE_URL + " が URL でない", e);
+        }
+        String scheme = uri.getScheme() == null ? "" : uri.getScheme().toLowerCase(Locale.ROOT);
+        boolean http = scheme.equals("http") || scheme.equals("https");
+        boolean extra = uri.getUserInfo() != null || uri.getQuery() != null || uri.getFragment() != null;
+        if (!http || uri.getHost() == null || extra) {
+            throw new IllegalStateException(PUBLIC_BASE_URL + " は userinfo・query・fragment のない http(s) の絶対の URL にする");
+        }
+        return uri;
+    }
+
+    private static boolean isLoopback(String host) {
+        String name = host.toLowerCase(Locale.ROOT);
+        return name.equals("localhost") || name.startsWith("127.") || name.equals("[::1]") || name.equals("::1");
+    }
+
+    /** TOTP の秘密の暗号化の鍵の設定の名前（版ごとの Base64 の鍵。環境変数は CARGOTRACKER_TOTPSECRETKEYS_V1）。 */
+    static final String TOTP_SECRET_KEYS = "cargotracker.totp-secret-keys";
+
+    static Map<String, String> totpSecretKeys(Environment environment) {
+        return Binder.get(environment)
+                .bind(TOTP_SECRET_KEYS, Bindable.mapOf(String.class, String.class))
+                .orElse(Map.of());
+    }
+
+    /**
+     * TOTP の秘密の暗号化（SEC-16、Bolt 31）。鍵は環境変数で渡し、本番は Secrets Manager から注入する（W10）。鍵がない・
+     * 形が違うと起動を失敗させる。
+     */
+    @Bean
+    AesGcmSecretCipher totpSecretCipher(Environment environment) {
+        return AesGcmSecretCipher.fromBase64Keys(totpSecretKeys(environment));
+    }
+
+    @Bean
+    TotpVerificationService totpVerificationService(
+            TotpCredentialRepository credentials, TotpCodeGenerator generator, Clock clock) {
+        return new TotpVerificationService(credentials, generator, clock);
+    }
+
+    /** ログインの試行（失敗を数えてロックし、監査記録と同じトランザクションで書く。Bolt 32）。 */
+    @Bean
+    LoginAttemptService loginAttemptService(
+            LoginFailureRepository failures,
+            AuditRecordRepository auditRecords,
+            Clock clock,
+            PlatformTransactionManager transactionManager) {
+        return new LoginAttemptService(failures, auditRecords, new LockPolicy(), clock, transactionManager);
+    }
+
+    /** request ごとの利用者の確かめ（利用者・役割・企業を 1 回で読み、取消しを監査記録に書く。Bolt 32c）。 */
+    @Bean
+    SessionRevalidationService sessionRevalidationService(
+            UserStandingRepository standings,
+            AuditRecordRepository auditRecords,
+            Clock clock,
+            TransactionTemplate transactionTemplate) {
+        return new SessionRevalidationService(standings, auditRecords, clock, transactionTemplate);
+    }
+
+    @Bean
+    @SuppressWarnings("java:S107") // 判定と書き込みと使えないハッシュとイベントの部品をそろえて受ける
+    UserRegistrationService userRegistrationService(
+            UserRepository users,
+            CompanyRepository companies,
+            UserAssignmentRepository assignments,
+            AuditRecordRepository auditRecords,
+            UnusablePasswordHashIssuer unusablePasswordHashes,
+            ApplicationEventPublisher events,
+            Clock clock,
+            TransactionTemplate transactionTemplate) {
+        return new UserRegistrationService(
+                users,
+                companies,
+                assignments,
+                auditRecords,
+                unusablePasswordHashes,
+                events,
+                clock,
+                transactionTemplate);
+    }
+
+    @Bean
+    UserRoleChangeService userRoleChangeService(
+            UserRepository users,
+            CompanyRepository companies,
+            UserAssignmentRepository assignments,
+            AuditRecordRepository auditRecords,
+            Clock clock,
+            TransactionTemplate transactionTemplate) {
+        return new UserRoleChangeService(users, companies, assignments, auditRecords, clock, transactionTemplate);
+    }
+
+    @Bean
+    UserAssignmentService userAssignmentService(
+            UserRepository users,
+            CompanyRepository companies,
+            UserAssignmentRepository assignments,
+            AuditRecordRepository auditRecords,
+            Clock clock,
+            TransactionTemplate transactionTemplate) {
+        return new UserAssignmentService(users, companies, assignments, auditRecords, clock, transactionTemplate);
+    }
+
+    @Bean
+    @SuppressWarnings("java:S107") // 判定と書き込みと session の失効の部品をそろえて受ける
+    UserStatusChangeService userStatusChangeService(
+            UserRepository users,
+            CompanyRepository companies,
+            UserAssignmentRepository assignments,
+            AuditRecordRepository auditRecords,
+            PasswordResetTokenRepository tokens,
+            UserSessionRevoker sessions,
+            Clock clock,
+            TransactionTemplate transactionTemplate) {
+        return new UserStatusChangeService(
+                users, companies, assignments, auditRecords, tokens, sessions, clock, transactionTemplate);
+    }
+
+    @Bean
+    @SuppressWarnings("java:S107") // サービスの部品をそろえて受ける
+    UserLoginCredentialService userLoginCredentialService(
+            UserRepository users,
+            CompanyRepository companies,
+            UserAssignmentRepository assignments,
+            LoginFailureRepository loginFailures,
+            TotpCredentialRepository totpCredentials,
+            RecoveryCodeRepository recoveryCodes,
+            AuditRecordRepository auditRecords,
+            UserSessionRevoker sessions,
+            ApplicationEventPublisher events,
+            Clock clock,
+            TransactionTemplate transactionTemplate) {
+        return new UserLoginCredentialService(
+                users,
+                companies,
+                assignments,
+                loginFailures,
+                totpCredentials,
+                recoveryCodes,
+                auditRecords,
+                sessions,
+                events,
+                clock,
+                transactionTemplate);
+    }
+
+    @Bean
+    AdministrationScopeDenialService administrationScopeDenialService(
+            AuditRecordRepository auditRecords, Clock clock, TransactionTemplate transactionTemplate) {
+        return new AdministrationScopeDenialService(auditRecords, clock, transactionTemplate);
+    }
+
+    @Bean
+    AssignedScopeDenialService assignedScopeDenialService(
+            AuditRecordRepository auditRecords, Clock clock, TransactionTemplate transactionTemplate) {
+        return new AssignedScopeDenialService(auditRecords, clock, transactionTemplate);
+    }
+
+    @Bean
+    UserAdministrationQueryService userAdministrationQueryService(
+            UserRepository users,
+            UserAssignmentRepository assignments,
+            CompanyRepository companies,
+            AuditRecordRepository auditRecords,
+            Clock clock) {
+        return new UserAdministrationQueryService(users, assignments, companies, auditRecords, clock);
+    }
+
+    @Bean
+    RecoveryCodeVerificationService recoveryCodeVerificationService(
+            RecoveryCodeRepository codes,
+            AuditRecordRepository auditRecords,
+            RecoveryCodeHasher hasher,
+            Clock clock,
+            TransactionTemplate transactionTemplate) {
+        return new RecoveryCodeVerificationService(codes, auditRecords, hasher, clock, transactionTemplate);
+    }
+
+    @Bean
+    @SuppressWarnings("java:S107") // 登録のサービスに要るポートをそろえて渡す
+    TotpEnrollmentService totpEnrollmentService(
+            TotpCredentialRepository credentials,
+            RecoveryCodeRepository recoveryCodes,
+            AuditRecordRepository auditRecords,
+            TotpSecretIssuer issuer,
+            RecoveryCodeGenerator recoveryCodeGenerator,
+            RecoveryCodeHasher hasher,
+            TotpCodeGenerator generator,
+            ApplicationEventPublisher events,
+            Clock clock,
+            TransactionTemplate transactionTemplate) {
+        return new TotpEnrollmentService(
+                credentials,
+                recoveryCodes,
+                auditRecords,
+                issuer,
+                recoveryCodeGenerator,
+                hasher,
+                generator,
+                events,
+                clock,
+                transactionTemplate);
+    }
+
+    @Bean
+    @SuppressWarnings("java:S107") // 再登録のサービスに要るポートをそろえて渡す
+    TotpReEnrollmentService totpReEnrollmentService(
+            UserRepository users,
+            CompanyRepository companies,
+            TotpCredentialRepository credentials,
+            RecoveryCodeRepository recoveryCodes,
+            AuditRecordRepository auditRecords,
+            TotpSecretIssuer issuer,
+            RecoveryCodeGenerator recoveryCodeGenerator,
+            RecoveryCodeHasher hasher,
+            TotpCodeGenerator generator,
+            UserSessionRevoker sessions,
+            ApplicationEventPublisher events,
+            Clock clock,
+            TransactionTemplate transactionTemplate) {
+        return new TotpReEnrollmentService(
+                users,
+                companies,
+                credentials,
+                recoveryCodes,
+                auditRecords,
+                issuer,
+                recoveryCodeGenerator,
+                hasher,
+                generator,
+                sessions,
+                events,
+                clock,
+                transactionTemplate);
+    }
+
+    @Bean
+    TotpEnrollmentQueryService totpEnrollmentQueryService(
+            TotpCredentialRepository credentials, RecoveryCodeRepository recoveryCodes) {
+        return new TotpEnrollmentQueryService(credentials, recoveryCodes);
+    }
+
+    @Bean
+    KpiObservationEventHandler kpiObservationEventHandler(KpiObservationRepository repository) {
+        return new KpiObservationEventHandler(repository);
+    }
+
+    /** 外部原本の採否の監査（DE-12・DE-13・DE-14 を受ける。Bolt 39b3b、IA-INV-15）。 */
+    @Bean
+    ExternalRecordAuditEventHandler externalRecordAuditEventHandler(AuditRecordRepository auditRecords) {
+        return new ExternalRecordAuditEventHandler(auditRecords);
+    }
+
+    /** password の再設定（リンクを開く、A-06 で設定する。Bolt 33a、US-18 AC8）。方針はこの中で組む（AT-07。LockPolicy と同じ）。 */
+    @Bean
+    @SuppressWarnings("java:S107") // 再設定に要るポートをそろえて渡す
+    PasswordResetCompletionService passwordResetCompletionService(
+            PasswordResetTokenRepository tokens,
+            PasswordResetTokenHasher tokenHasher,
+            UserRepository users,
+            CompanyRepository companies,
+            PasswordHasher passwordHasher,
+            CommonPasswordList commonPasswords,
+            UserSessionRevoker sessions,
+            AuditRecordRepository auditRecords,
+            Clock clock,
+            TransactionTemplate transactionTemplate) {
+        return new PasswordResetCompletionService(
+                tokens,
+                tokenHasher,
+                users,
+                companies,
+                passwordHasher,
+                commonPasswords,
+                sessions,
+                auditRecords,
+                new PasswordPolicy(),
+                clock,
+                transactionTemplate);
+    }
+
+    /** password の再設定の依頼（判定・監査・DE-23。Bolt 33、US-18 AC8）。 */
+    @Bean
+    PasswordResetRequestService passwordResetRequestService(
+            UserRepository users,
+            CompanyRepository companies,
+            AuditRecordRepository auditRecords,
+            ApplicationEventPublisher events,
+            Clock clock,
+            TransactionTemplate transactionTemplate) {
+        return new PasswordResetRequestService(users, companies, auditRecords, events, clock, transactionTemplate);
+    }
+
+    /**
+     * DE-23 を受けて再設定のトークンを発行しメールを送る（Bolt 33、ADR-017）。リンクは公開の base URL（{@link #publicBaseUrl}）から組み立てる。
+     */
+    @Bean
+    @SuppressWarnings("java:S107") // 発行と送信に要るポートと設定をそろえて渡す
+    PasswordResetMailEventHandler passwordResetMailEventHandler(
+            PasswordResetTokenRepository tokens,
+            UserRepository users,
+            CompanyRepository companies,
+            PasswordResetTokenGenerator generator,
+            PasswordResetTokenHasher hasher,
+            NotificationPasswordResetMails notificationPasswordResetMails,
+            Environment environment,
+            Clock clock) {
+        return new PasswordResetMailEventHandler(
+                tokens,
+                users,
+                companies,
+                generator,
+                hasher,
+                notificationPasswordResetMails,
+                passwordResetLinkPrefix(environment),
+                clock);
+    }
+
+    /**
+     * DE-25 を受けて招待のトークンを発行しメールを送る（Bolt 38b2c、ADR-017）。リンクは再設定と同じ A-06 の形（{@link #publicBaseUrl}）。
+     */
+    @Bean
+    @SuppressWarnings("java:S107") // 発行と送信に要るポートと設定をそろえて渡す
+    UserInvitationMailEventHandler userInvitationMailEventHandler(
+            PasswordResetTokenRepository tokens,
+            UserRepository users,
+            CompanyRepository companies,
+            PasswordResetTokenGenerator generator,
+            PasswordResetTokenHasher hasher,
+            NotificationUserInvitationMails notificationUserInvitationMails,
+            Environment environment,
+            Clock clock) {
+        return new UserInvitationMailEventHandler(
+                tokens,
+                users,
+                companies,
+                generator,
+                hasher,
+                notificationUserInvitationMails,
+                passwordResetLinkPrefix(environment),
+                clock);
+    }
+
+    /** DE-26 を受けて本人へ TOTP の登録の解除のお知らせを送る（Bolt 38d、ADR-017）。 */
+    @Bean
+    TotpResetMailEventHandler totpResetMailEventHandler(
+            UserRepository users, NotificationTotpResetMails notificationTotpResetMails) {
+        return new TotpResetMailEventHandler(users, notificationTotpResetMails);
+    }
+
+    /** DE-28・DE-27 を受けて本人へ認証アプリの登録と再登録のお知らせを送る（Bolt 38d、ADR-017）。 */
+    @Bean
+    TotpEnrollmentMailEventHandler totpEnrollmentMailEventHandler(
+            UserRepository users, NotificationTotpEnrollmentMails notificationTotpEnrollmentMails) {
+        return new TotpEnrollmentMailEventHandler(users, notificationTotpEnrollmentMails);
+    }
+
+    /** 通知の公開 API（認証アプリの登録と再登録のお知らせ）を呼ぶ腐敗防止層（ADR-017。Bolt 38d）。 */
+    @Bean
+    NotificationTotpEnrollmentMails notificationTotpEnrollmentMails(TotpEnrollmentMail totpEnrollmentMail) {
+        return new NotificationTotpEnrollmentMails(totpEnrollmentMail);
+    }
+
+    /** 業務のイベントを受けて荷主へ通知する（US-22 AC1。Bolt 43-1。ADR-017 の補足）。 */
+    @Bean
+    ShipperNotificationEventHandler shipperNotificationEventHandler(ShipperNotifications shipperNotifications) {
+        return new ShipperNotificationEventHandler(shipperNotifications);
+    }
+
+    /** 通知の公開 API（荷主への業務の通知）を呼ぶ腐敗防止層（ADR-017。US-22。Bolt 43）。 */
+    @Bean
+    NotificationShipperMails notificationShipperMails(ShipperNotificationMail shipperNotificationMail) {
+        return new NotificationShipperMails(shipperNotificationMail);
+    }
+
+    /** 荷主への業務の通知の宛先の解決と送信（US-22。Bolt 43。台帳 D-166）。リンクは公開の base URL から組み立てる。 */
+    @Bean
+    ShipperNotifications shipperNotifications(
+            UserRepository users, NotificationShipperMails notificationShipperMails, Environment environment) {
+        return new ShipperNotifications(users, notificationShipperMails, publicBaseUrl(environment));
+    }
+
+    /** 通知の公開 API（管理者による TOTP の登録の解除のお知らせ）を呼ぶ腐敗防止層（ADR-017。Bolt 38d）。 */
+    @Bean
+    NotificationTotpResetMails notificationTotpResetMails(TotpResetMail totpResetMail) {
+        return new NotificationTotpResetMails(totpResetMail);
+    }
+
+    /** 通知の公開 API（利用者の招待のメール）を呼ぶ腐敗防止層（ADR-017。Bolt 38b2c）。 */
+    @Bean
+    NotificationUserInvitationMails notificationUserInvitationMails(UserInvitationMail userInvitationMail) {
+        return new NotificationUserInvitationMails(userInvitationMail);
+    }
+
+    /** 通知の公開 API（password の再設定のメール）を呼ぶ腐敗防止層（ADR-017。Bolt 33）。 */
+    @Bean
+    NotificationPasswordResetMails notificationPasswordResetMails(PasswordResetMail passwordResetMail) {
+        return new NotificationPasswordResetMails(passwordResetMail);
+    }
+
+    /** KPI の基準値の登録（US-21 AC5。監査担当者だけ。W9 の Bolt 44-2）。 */
+    @Bean
+    KpiBaselineCommandService kpiBaselineCommandService(KpiBaselineRepository repository, Clock clock) {
+        return new KpiBaselineCommandService(repository, clock);
+    }
+
+    /** 基準値とパイロット中の値を並べる照会（W9 の Bolt 44-2）。 */
+    @Bean
+    KpiComparisonQueryService kpiComparisonQueryService(
+            KpiWeeklyQueryService weeklyQueryService,
+            KpiBaselineRepository baselines,
+            IncompleteEventPublicationCounter publicationCounter,
+            UserRepository userRepository) {
+        return new KpiComparisonQueryService(
+                weeklyQueryService,
+                baselines,
+                publicationCounter,
+                id -> userRepository.findById(id).map(User::displayName).orElse("（利用者が見つかりません）"));
+    }
+
+    @Bean
+    KpiWeeklyQueryService kpiWeeklyQueryService(
+            KpiObservationRepository repository, TrackingInquiryStatistics trackingInquiryStatistics) {
+        return new KpiWeeklyQueryService(repository, trackingInquiryStatistics);
+    }
+
+    /** 追跡の期間の照会の件数（公開 API を通す腐敗防止層。US-21 AC4。W9 の Bolt 44-1）。 */
+    @Bean
+    TrackingInquiryStatistics trackingInquiryStatistics(InquiryStatistics inquiryStatistics) {
+        return new TrackingInquiryStatistics(inquiryStatistics);
+    }
+
+    @Bean
+    KpiObservationQueryService kpiObservationQueryService(KpiObservationRepository repository) {
+        return new KpiObservationQueryService(repository);
+    }
+}

@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 受信記録（Bolt 39b、ED-INV-02）。追記専用なので INSERT と数えることと、取込の隔離を行の範囲の順に読む SELECT（Bolt 39c3）だけを持つ。
+     取込と外部原本より後に書く（外部キー）。取込ごとの件数と隔離の照会は ix_received_record_ingestion を使う。キーのない隔離（Bolt 39b2）は
+     外部原本 ID と取得時刻が NULL。行の範囲の 2 列（Bolt 39c3）はファイルの誤りと既存の行で NULL。値の 2 列（Bolt 39d3）は外部原本を持つ
+     受信記録の対象のキーと値の要約で、キーのない隔離と Bolt 39d3 より前の行は NULL。値は INSERT と受信記録を読む SELECT（resultMap
+     receivedRecordRow）だけが扱い、判断を待つ隔離の一覧の照会は読まない。H2 と PostgreSQL の共通の構文で書く（ADR-007）。 -->
+<mapper namespace="com.example.cargotracker.externaldata.infrastructure.persistence.ReceivedRecordMapper">
+
+    <resultMap id="receivedRecordRow" type="com.example.cargotracker.externaldata.infrastructure.persistence.ReceivedRecordRow">
+        <constructor>
+            <idArg column="id" name="id" javaType="java.util.UUID"/>
+            <arg column="external_record_id" name="externalRecordId" javaType="java.util.UUID"/>
+            <arg column="ingestion_id" name="ingestionId" javaType="java.util.UUID"/>
+            <arg column="payload_hash" name="payloadHash" javaType="String"/>
+            <arg column="payload_object_key" name="payloadObjectKey" javaType="String"/>
+            <arg column="acquired_at" name="acquiredAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="classification" name="classification" javaType="String"/>
+            <arg column="classification_note" name="classificationNote" javaType="String"/>
+            <arg column="classified_at" name="classifiedAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="first_line_number" name="firstLineNumber" javaType="Integer"/>
+            <arg column="last_line_number" name="lastLineNumber" javaType="Integer"/>
+            <arg column="target_key" name="targetKey" javaType="String"/>
+            <arg column="value_summary" name="valueSummary" javaType="String"/>
+        </constructor>
+    </resultMap>
+
+    <insert id="insert">
+        INSERT INTO external_data.received_record
+            (id, external_record_id, ingestion_id, payload_hash, payload_object_key, acquired_at, classification,
+             classification_note, classified_at, first_line_number, last_line_number, target_key, value_summary)
+        VALUES (#{id}, #{externalRecordId,jdbcType=OTHER}, #{ingestionId}, #{payloadHash}, #{payloadObjectKey},
+                #{acquiredAt,jdbcType=TIMESTAMP_WITH_TIMEZONE},
+                #{classification}, #{classificationNote,jdbcType=VARCHAR}, #{classifiedAt},
+                #{firstLineNumber,jdbcType=INTEGER}, #{lastLineNumber,jdbcType=INTEGER},
+                #{targetKey,jdbcType=VARCHAR}, #{valueSummary,jdbcType=VARCHAR})
+    </insert>
+
+    <select id="countByIngestionAndClassification" resultType="int">
+        SELECT COUNT(*) FROM external_data.received_record
+         WHERE ingestion_id = #{ingestionId} AND classification = #{classification}
+    </select>
+
+    <!-- 取込の隔離と差異（S-16 の「隔離・差異の理由」。差異は Bolt 39h）。範囲のないファイルの誤りを先に、行の範囲の始まりの順。同じ始まりはない
+         （1 つの取込の範囲は重ならない）が、決まった順にするため ID で並べ直す -->
+    <select id="quarantinesAndDiscrepanciesOf" resultMap="receivedRecordRow">
+        SELECT id, external_record_id, ingestion_id, payload_hash, payload_object_key, acquired_at, classification,
+               classification_note, classified_at, first_line_number, last_line_number, target_key, value_summary
+          FROM external_data.received_record
+         WHERE ingestion_id = #{ingestionId} AND classification IN ('QUARANTINED', 'DISCREPANCY')
+         ORDER BY first_line_number NULLS FIRST, id
+         LIMIT #{limit}
+    </select>
+
+    <!-- 判断を待つ隔離・差異（Bolt 39d、S-17。差異は Bolt 39h2）。隔離か差異で、受信記録の判断の行がないもの。取込を結び（取込のない受信記録は落ちる）、外部原本を左外部結合して
+         取込の時刻・情報源 ID・外部 ID・外部版を 1 本の SQL で読む。索引は ix_received_record_ingestion・ix_received_record_classification を使う -->
+    <resultMap id="undecidedRecordRow"
+               type="com.example.cargotracker.externaldata.infrastructure.persistence.ReceivedRecordMapper$UndecidedRecordRow">
+        <constructor>
+            <idArg column="id" name="id" javaType="java.util.UUID"/>
+            <arg column="classification" name="classification" javaType="String"/>
+            <arg column="ingestion_id" name="ingestionId" javaType="java.util.UUID"/>
+            <arg column="ingested_at" name="ingestedAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="data_source_id" name="dataSourceId" javaType="java.util.UUID"/>
+            <arg column="first_line_number" name="firstLineNumber" javaType="Integer"/>
+            <arg column="last_line_number" name="lastLineNumber" javaType="Integer"/>
+            <arg column="external_id" name="externalId" javaType="String"/>
+            <arg column="external_version" name="externalVersion" javaType="String"/>
+            <arg column="classification_note" name="classificationNote" javaType="String"/>
+        </constructor>
+    </resultMap>
+
+    <sql id="undecidedRecordSource">
+          FROM external_data.received_record r
+          JOIN external_data.ingestion i ON i.id = r.ingestion_id
+          LEFT JOIN external_data.external_record e ON e.id = r.external_record_id
+         WHERE r.classification IN ('QUARANTINED', 'DISCREPANCY')
+           AND NOT EXISTS (SELECT 1 FROM external_data.received_record_decision d WHERE d.received_record_id = r.id)
+        <if test="ingestionId != null">
+           AND r.ingestion_id = #{ingestionId}
+        </if>
+    </sql>
+
+    <!-- 取込の新しい順、同じ時刻は取込 ID の順、同じ取込はファイルの誤りを先に行の範囲の始まりの順、受信記録 ID の順（時刻・数・UUID だけで並べ、
+         文字列の照合順序に頼らない。Bolt 39d 計画の開始準備の決定 (3)） -->
+    <select id="undecidedRecords" resultMap="undecidedRecordRow">
+        SELECT r.id, r.classification, r.ingestion_id, i.ingested_at, i.data_source_id, r.first_line_number, r.last_line_number,
+               e.external_id, e.external_version, r.classification_note
+        <include refid="undecidedRecordSource"/>
+         ORDER BY i.ingested_at DESC, r.ingestion_id, r.first_line_number NULLS FIRST, r.id
+         LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="countUndecidedRecords" resultType="int">
+        SELECT COUNT(*)
+        <include refid="undecidedRecordSource"/>
+    </select>
+
+    <!-- 判断を待つ隔離・差異のうち、分類の時刻が基準以前のもの（W10 の OBS-06。24 時間以上判断を待つ隔離の警告）。undecidedRecordSource の絞り込みに分類の時刻を足す -->
+    <select id="countUndecidedClassifiedAtOrBefore" resultType="int">
+        SELECT COUNT(*)
+        <include refid="undecidedRecordSource"/>
+           AND r.classified_at &lt;= #{threshold}
+    </select>
+
+    <!-- 取込で書いた受信記録を ID で引く（Bolt 39d2。判断できる受信記録の確かめ）。取込のない受信記録（ingestion_id が NULL）は返さない -->
+    <select id="selectById" resultMap="receivedRecordRow">
+        SELECT id, external_record_id, ingestion_id, payload_hash, payload_object_key, acquired_at, classification,
+               classification_note, classified_at, first_line_number, last_line_number, target_key, value_summary
+          FROM external_data.received_record
+         WHERE id = #{id} AND ingestion_id IS NOT NULL
+    </select>
+
+    <!-- ID で絞った判断を待つ隔離（Bolt 39d2。S-17 の判断の画面の中身）。一覧と同じ断片に受信記録 ID の絞り込みを足す -->
+    <select id="undecidedRecord" resultMap="undecidedRecordRow">
+        SELECT r.id, r.classification, r.ingestion_id, i.ingested_at, i.data_source_id, r.first_line_number, r.last_line_number,
+               e.external_id, e.external_version, r.classification_note
+        <include refid="undecidedRecordSource"/>
+           AND r.id = #{receivedRecordId}
+    </select>
+
+    <!-- その取込の判断を待つキーのない隔離（Bolt 39d2b。まとめての却下の対象）。一覧と同じ断片に外部原本を持たないことを足す。取込 ID は必須
+         （リポジトリが NULL を拒む）で、ix_received_record_ingestion で取込の受信記録に絞る。並びは取込の隔離の照会（quarantinesAndDiscrepanciesOf）と同じ -->
+    <select id="undecidedKeylessQuarantinesOf" resultMap="receivedRecordRow">
+        SELECT r.id, r.external_record_id, r.ingestion_id, r.payload_hash, r.payload_object_key, r.acquired_at,
+               r.classification, r.classification_note, r.classified_at, r.first_line_number, r.last_line_number,
+               r.target_key, r.value_summary
+        <include refid="undecidedRecordSource"/>
+           AND r.classification = 'QUARANTINED' AND r.external_record_id IS NULL
+         ORDER BY r.first_line_number NULLS FIRST, r.id
+    </select>
+
+    <select id="countUndecidedKeylessQuarantines" resultType="int">
+        SELECT COUNT(*)
+        <include refid="undecidedRecordSource"/>
+           AND r.classification = 'QUARANTINED' AND r.external_record_id IS NULL
+    </select>
+</mapper>

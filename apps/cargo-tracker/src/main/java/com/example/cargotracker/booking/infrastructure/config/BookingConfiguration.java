@@ -1,0 +1,99 @@
+package com.example.cargotracker.booking.infrastructure.config;
+
+import com.example.cargotracker.booking.application.internal.commandservices.BookingCommandService;
+import com.example.cargotracker.booking.application.internal.commandservices.BookingSagaCommandService;
+import com.example.cargotracker.booking.application.internal.commandservices.TransportPhaseCommandService;
+import com.example.cargotracker.booking.application.internal.eventhandlers.BookingConfirmedEventHandler;
+import com.example.cargotracker.booking.application.internal.outboundservices.acl.QuotationBookability;
+import com.example.cargotracker.booking.application.internal.outboundservices.acl.QuotationBookingNotifications;
+import com.example.cargotracker.booking.application.internal.queryservices.BookingQueryService;
+import com.example.cargotracker.booking.application.internal.queryservices.CustomerBookingQueryService;
+import com.example.cargotracker.booking.application.sagas.BookingSagaRepository;
+import com.example.cargotracker.booking.domain.model.aggregates.BookingRepository;
+import com.example.cargotracker.booking.domain.model.aggregates.TrackingNumberIssuer;
+import com.example.cargotracker.booking.infrastructure.persistence.RandomTrackingNumberIssuer;
+import com.example.cargotracker.quotation.interfaces.api.BookableQuotationQuery;
+import com.example.cargotracker.quotation.interfaces.api.BookingNotification;
+import java.security.SecureRandom;
+import java.time.Clock;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+/**
+ * 予約コンテキストの組み立て。アプリケーションサービスに送信アダプターと、見積りの公開 API をつなぐ（Bolt 23）。
+ */
+@Configuration(proxyBeanMethods = false)
+public class BookingConfiguration {
+
+    /** 見積りの公開 API（予約確定に使える見積りの照会）を予約の予約条件に変える腐敗防止層（ADR-016）。 */
+    @Bean
+    QuotationBookability quotationBookability(BookableQuotationQuery bookableQuotationQuery) {
+        return new QuotationBookability(bookableQuotationQuery);
+    }
+
+    /** 追跡番号の発行。暗号論的に安全な乱数を使う（BR-07）。 */
+    @Bean
+    TrackingNumberIssuer trackingNumberIssuer(BookingRepository repository) {
+        return new RandomTrackingNumberIssuer(repository, new SecureRandom());
+    }
+
+    /** 見積りの公開 API（予約確定済みの通知）を呼ぶ腐敗防止層（ADR-014）。 */
+    @Bean
+    QuotationBookingNotifications quotationBookingNotifications(BookingNotification bookingNotification) {
+        return new QuotationBookingNotifications(bookingNotification);
+    }
+
+    /** DE-07 を受けて輸送要求を予約確定済みにする（Spring Modulith のイベントの記録を経て、別のトランザクションで動く）。 */
+    @Bean
+    BookingConfirmedEventHandler bookingConfirmedEventHandler(QuotationBookingNotifications notifications) {
+        return new BookingConfirmedEventHandler(notifications);
+    }
+
+    @Bean
+    BookingCommandService bookingCommandService(
+            QuotationBookingNotifications quotationBookingNotifications,
+            BookingRepository repository,
+            BookingSagaRepository sagaRepository,
+            TrackingNumberIssuer trackingNumberIssuer,
+            QuotationBookability quotationBookability,
+            ApplicationEventPublisher eventPublisher,
+            Clock clock) {
+        return new BookingCommandService(
+                repository,
+                sagaRepository,
+                trackingNumberIssuer,
+                quotationBookability,
+                quotationBookingNotifications,
+                eventPublisher,
+                clock);
+    }
+
+    /** 追跡の開始の結果で予約サガを完了にする入力ポート。予約の公開 API のインバウンドアダプターが委ねる（ADR-015。Bolt 25）。 */
+    @Bean
+    BookingSagaCommandService bookingSagaCommandService(BookingSagaRepository sagaRepository) {
+        return new BookingSagaCommandService(sagaRepository);
+    }
+
+    /** 集荷・引渡しの通知で予約の状態と輸送段階を進める入力ポート。予約の公開 API のインバウンドアダプターが委ねる（ADR-014。Bolt 39g2）。 */
+    @Bean
+    TransportPhaseCommandService transportPhaseCommandService(BookingRepository repository) {
+        return new TransportPhaseCommandService(repository);
+    }
+
+    @Bean
+    BookingQueryService bookingQueryService(
+            BookingRepository repository,
+            BookingSagaRepository sagaRepository,
+            QuotationBookability quotationBookability,
+            Clock clock) {
+        return new BookingQueryService(repository, sagaRepository, quotationBookability, clock);
+    }
+
+    /** 荷主の予約の照会（C-06。荷主企業で絞る。BR-07。Bolt 27b）。 */
+    @Bean
+    CustomerBookingQueryService customerBookingQueryService(
+            BookingRepository repository, BookingSagaRepository sagaRepository) {
+        return new CustomerBookingQueryService(repository, sagaRepository);
+    }
+}

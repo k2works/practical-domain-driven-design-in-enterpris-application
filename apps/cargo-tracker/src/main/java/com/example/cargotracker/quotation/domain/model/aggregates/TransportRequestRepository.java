@@ -1,0 +1,61 @@
+package com.example.cargotracker.quotation.domain.model.aggregates;
+
+import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestId;
+import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestNumber;
+import com.example.cargotracker.quotation.domain.model.valueobjects.TransportRequestSummary;
+import com.example.cargotracker.shared.domain.CompanyId;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+
+/**
+ * 輸送要求のリポジトリ（送信ポート）。実装は infrastructure に置く。
+ */
+public interface TransportRequestRepository {
+
+    /** 提出した新しい輸送要求を保存する。 */
+    void save(TransportRequest transportRequest);
+
+    /**
+     * 読み込んだ輸送要求の変更（状態、再提出の版、審査記録）を保存する。読み込んだときの集約の版で照合し（楽観ロック）、
+     * ほかの更新が先に保存されていたら {@link ConcurrentTransportRequestUpdateException} を投げる。
+     */
+    void update(TransportRequest transportRequest);
+
+    Optional<TransportRequest> findById(TransportRequestId id);
+
+    /**
+     * 荷主企業の輸送要求を業務番号で探す。業務番号は一意なので、見つかるのは高々 1 件。
+     * 業務番号は連番で推測しやすいため、必ず荷主企業で絞る（他社の輸送要求は見つからない。Q-INV-08、Bolt 4 レビュー R-02）。
+     */
+    Optional<TransportRequest> findByNumber(TransportRequestNumber number, CompanyId shipperCompanyId);
+
+    /**
+     * 荷主企業の輸送要求を、最初の提出時刻（版 1）の新しい順に一覧する（見積依頼の一覧 C-02。荷主は最近の依頼から探す）。
+     * 必ず荷主企業で絞る（Q-INV-08）。集約を組み立てない読み取りモデルを返す。
+     */
+    List<TransportRequestSummary> findSummariesByShipper(CompanyId shipperCompanyId);
+
+    /**
+     * 社内用: 業務番号で輸送要求を探す。荷主企業で絞らずに読み、担当範囲の判定は社内の照会のサービスの側の 1 か所で行う（Bolt 38f）。
+     * 荷主の画面では使わない（荷主の画面は {@link #findByNumber(TransportRequestNumber, CompanyId)} で必ず絞る）。
+     */
+    Optional<TransportRequest> findByNumberForStaff(TransportRequestNumber number);
+
+    /**
+     * 社内用: 審査中の輸送要求を、最初の提出時刻（版 1）の古い順に一覧する（受付一覧。待たせている順）。
+     * 差し戻して出し直された版も、最初の提出時刻で並べる（Bolt 5 レビュー R-05）。集約を組み立てない読み取りモデルを返す。
+     * 荷主企業で絞る（営業担当者の担当企業。Bolt 38f）。
+     *
+     * @param shipperCompanyIds 荷主企業（空でない。空の守りは呼ぶ側の 1 か所）
+     */
+    List<TransportRequestSummary> findUnderReviewSummaries(Set<CompanyId> shipperCompanyIds);
+
+    /**
+     * 社内用: 見積り作成中の輸送要求を、最初の提出時刻（版 1）の古い順に一覧する（受付一覧の見積り作成中。Bolt 10）。荷主企業で絞る
+     * （Bolt 38f）。
+     *
+     * @param shipperCompanyIds 荷主企業（空でない）
+     */
+    List<TransportRequestSummary> findQuotingSummaries(Set<CompanyId> shipperCompanyIds);
+}

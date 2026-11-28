@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/customer :: layout(~{::title}, ~{::main}, ~{}, 'transport-requests')}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="|見積りへの回答 ${quotationLabel} - cargo-tracker|">見積りへの回答 TR-2026-0001 見積 1 - cargo-tracker</title>
+</head>
+<body>
+<main>
+    <h1 th:text="|見積りへの回答 ${quotationLabel}|">見積りへの回答 TR-2026-0001 見積 1</h1>
+    <!--/* C-05（Bolt 12、US-24 AC1）。料金根拠・有効期限・経路方針を確かめ、詳細経路設計へ進む。辞退・相談（AC2・AC3。W9 の Bolt 46・46-1）。
+         確認の領域は挟まない（この画面自体が確かめる画面。2026-10-06 の決定）。社内承認者は見せない。
+         開発の注記は荷主のブラウザに届かないパーサーレベルのコメントにする（Bolt 12 レビュー R-18） */-->
+    <dl>
+        <dt>状態</dt>
+        <dd>提示済み（回答待ち）</dd>
+    </dl>
+    <div th:replace="~{quotation/fragments/quotation :: details(${quotation})}"></div>
+    <p>この回答は予約の確定ではありません。経路が決まったら、あらためて見積りと経路を確かめて承認していただきます。</p>
+    <form th:action="@{/customer/transport-requests/{number}/quotations/{no}/response(number=${number},no=${quotation.quotationNo()})}"
+          method="post">
+        <button type="submit" class="btn btn-primary">この条件で詳細経路設計へ進む</button>
+    </form>
+    <p>回答を取り消したい場合は、業務番号を添えて担当営業にご連絡ください。</p>
+    <!--/* 辞退（US-24 AC2。W9 の Bolt 46）。理由を付けて辞退すると、この見積りは失効として記録され、担当営業に理由が伝わる（再見積りはしない。D-86） */-->
+    <!--/* 相談（US-24 AC3。W9 の Bolt 46-1）。見積りの状態は変えず、相談内容を伴う有人案件（見積り相談）を起票する。進捗は C-14 の問い合わせで追える */-->
+    <h2 class="h4" id="consult-heading">条件を相談する</h2>
+    <p>料金や納期などの条件を相談したいときは、内容を書いて送ってください。見積りはこのまま残り、担当者が確認します。</p>
+    <p th:if="${consultProblem}" class="alert alert-danger" role="alert" th:text="${consultProblem}">相談内容を入力してください</p>
+    <form th:action="@{/customer/transport-requests/{number}/quotations/{no}/response/consult(number=${number},no=${quotation.quotationNo()})}"
+          method="post" aria-labelledby="consult-heading">
+        <div class="mb-3">
+            <label for="consult-content" class="form-label">相談の内容（必須。500 文字まで）</label>
+            <textarea id="consult-content" name="content" class="form-control" rows="3" maxlength="500" required
+                      th:text="${consultContent}"></textarea>
+        </div>
+        <button type="submit" class="btn btn-outline-primary">条件を相談する</button>
+    </form>
+    <h2 class="h4" id="decline-heading">この見積りを辞退する</h2>
+    <p>辞退すると、この見積りは使えなくなります。取り消せません。条件を相談したいときは、辞退せず上の「条件を相談する」から送ってください。</p>
+    <p th:if="${declineProblem}" class="alert alert-danger" role="alert" th:text="${declineProblem}">辞退の理由を入力してください</p>
+    <form th:action="@{/customer/transport-requests/{number}/quotations/{no}/response/decline(number=${number},no=${quotation.quotationNo()})}"
+          method="post" aria-labelledby="decline-heading">
+        <div class="mb-3">
+            <label for="decline-reason" class="form-label">辞退の理由（必須。500 文字まで）</label>
+            <textarea id="decline-reason" name="reason" class="form-control" rows="3" maxlength="500" required
+                      th:text="${declineReason}"></textarea>
+        </div>
+        <div class="form-check mb-3">
+            <input class="form-check-input" type="checkbox" id="decline-confirm" name="confirm" value="yes" required>
+            <label class="form-check-label" for="decline-confirm">辞退すると取り消せないことを確かめました</label>
+        </div>
+        <button type="submit" class="btn btn-outline-danger">理由を付けて辞退する</button>
+    </form>
+    <p><a th:href="@{/customer/transport-requests/{number}(number=${number})}">見積依頼の詳細へ戻る</a></p>
+</main>
+</body>
+</html>

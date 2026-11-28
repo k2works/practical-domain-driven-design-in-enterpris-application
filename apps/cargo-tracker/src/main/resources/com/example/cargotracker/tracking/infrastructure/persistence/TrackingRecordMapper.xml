@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.cargotracker.tracking.infrastructure.persistence.TrackingRecordMapper">
+
+    <sql id="shipperCompanyIn"><foreach collection="shipperCompanyIds" item="shipperCompanyId" open="(" separator="," close=")">#{shipperCompanyId}</foreach></sql>
+
+    <resultMap id="trackingRecordRow" type="com.example.cargotracker.tracking.infrastructure.persistence.TrackingRecordRow">
+        <constructor>
+            <idArg column="tracking_number" name="trackingNumber" javaType="String"/>
+            <arg column="booking_id" name="bookingId" javaType="java.util.UUID"/>
+            <arg column="shipper_company_id" name="shipperCompanyId" javaType="java.util.UUID"/>
+            <arg column="consignee_company_id" name="consigneeCompanyId" javaType="java.util.UUID"/>
+            <arg column="booking_status" name="bookingStatus" javaType="String"/>
+            <arg column="routing_case_number" name="routingCaseNumber" javaType="String"/>
+            <arg column="route_version_no" name="routeVersionNo" javaType="java.lang.Integer"/>
+            <arg column="current_status" name="currentStatus" javaType="String"/>
+            <arg column="status_basis_milestone_no" name="statusBasisMilestoneNo" javaType="java.lang.Integer"/>
+            <arg column="under_review_reason" name="underReviewReason" javaType="String"/>
+            <arg column="original_eta" name="originalEta" javaType="java.time.OffsetDateTime"/>
+            <arg column="latest_eta" name="latestEta" javaType="java.time.OffsetDateTime"/>
+            <arg column="latest_eta_basis" name="latestEtaBasis" javaType="String"/>
+            <arg column="latest_eta_basis_milestone_no" name="latestEtaBasisMilestoneNo" javaType="java.lang.Integer"/>
+            <arg column="last_acquired_at" name="lastAcquiredAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="next_expected_at" name="nextExpectedAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="voyage_arrival_at" name="voyageArrivalAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="voyage_arrival_published_at" name="voyageArrivalPublishedAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="voyage_arrival_acquired_at" name="voyageArrivalAcquiredAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="voyage_arrival_source_ref" name="voyageArrivalSourceRef" javaType="String"/>
+            <arg column="version" name="version" javaType="_long"/>
+            <arg column="created_at" name="createdAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="updated_at" name="updatedAt" javaType="java.time.OffsetDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="scheduledLegRow" type="com.example.cargotracker.tracking.infrastructure.persistence.ScheduledLegRow">
+        <constructor>
+            <idArg column="tracking_number" name="trackingNumber" javaType="String"/>
+            <idArg column="leg_no" name="legNo" javaType="_int"/>
+            <arg column="voyage_number" name="voyageNumber" javaType="String"/>
+            <arg column="load_unlocode" name="loadUnlocode" javaType="String"/>
+            <arg column="discharge_unlocode" name="dischargeUnlocode" javaType="String"/>
+            <arg column="departure_at" name="departureAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="arrival_at" name="arrivalAt" javaType="java.time.OffsetDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="milestoneRow" type="com.example.cargotracker.tracking.infrastructure.persistence.MilestoneRow">
+        <constructor>
+            <idArg column="tracking_number" name="trackingNumber" javaType="String"/>
+            <idArg column="milestone_no" name="milestoneNo" javaType="_int"/>
+            <arg column="kind" name="kind" javaType="String"/>
+            <arg column="location_unlocode" name="locationUnlocode" javaType="String"/>
+            <arg column="occurred_at" name="occurredAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="source_kind" name="sourceKind" javaType="String"/>
+            <arg column="source_ref" name="sourceRef" javaType="String"/>
+            <arg column="acquired_at" name="acquiredAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="state" name="state" javaType="String"/>
+            <arg column="registered_by" name="registeredBy" javaType="java.util.UUID"/>
+            <arg column="registered_at" name="registeredAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="data_source_id" name="dataSourceId" javaType="java.util.UUID"/>
+            <arg column="external_id" name="externalId" javaType="String"/>
+            <arg column="published_at" name="publishedAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="adopted_by" name="adoptedBy" javaType="java.util.UUID"/>
+            <arg column="adopted_at" name="adoptedAt" javaType="java.time.OffsetDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="trackingRecordSummaryRow" type="com.example.cargotracker.tracking.infrastructure.persistence.TrackingRecordSummaryRow">
+        <constructor>
+            <idArg column="tracking_number" name="trackingNumber" javaType="String"/>
+            <arg column="current_status" name="currentStatus" javaType="String"/>
+            <arg column="original_eta" name="originalEta" javaType="java.time.OffsetDateTime"/>
+            <arg column="latest_eta" name="latestEta" javaType="java.time.OffsetDateTime"/>
+            <arg column="last_acquired_at" name="lastAcquiredAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="next_expected_at" name="nextExpectedAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="created_at" name="createdAt" javaType="java.time.OffsetDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <!-- 追跡記録の列（予約 ID と追跡番号の 2 つの select で使う。列を足すときに片方だけ直さないため。Bolt 26 レビュー P-5） -->
+    <sql id="trackingRecordColumns">
+        tracking_number, booking_id, shipper_company_id, consignee_company_id, booking_status, routing_case_number,
+        route_version_no, current_status, status_basis_milestone_no, under_review_reason, original_eta, latest_eta, latest_eta_basis,
+        latest_eta_basis_milestone_no, last_acquired_at,
+        next_expected_at, voyage_arrival_at, voyage_arrival_published_at, voyage_arrival_acquired_at, voyage_arrival_source_ref,
+        version, created_at, updated_at
+    </sql>
+
+    <!-- 追跡の開始（Bolt 25）。航海の到着予定と順の鍵の 4 列は行の値（開始では NULL。Bolt 39g4b）を書く。見込みの根拠の 2 列も行の値
+         （開始では当初の到着予定と NULL。Bolt 39g4c）を書く -->
+    <insert id="insertTrackingRecord">
+        INSERT INTO tracking.tracking_record
+            (tracking_number, booking_id, shipper_company_id, consignee_company_id, booking_status, routing_case_number,
+             route_version_no, current_status, status_basis_milestone_no, under_review_reason, original_eta, latest_eta,
+             latest_eta_basis, latest_eta_basis_milestone_no, last_acquired_at,
+             next_expected_at, voyage_arrival_at, voyage_arrival_published_at, voyage_arrival_acquired_at, voyage_arrival_source_ref,
+             version, created_at, updated_at)
+        VALUES
+            (#{trackingNumber}, #{bookingId}, #{shipperCompanyId}, #{consigneeCompanyId}, #{bookingStatus},
+             #{routingCaseNumber}, #{routeVersionNo}, #{currentStatus}, #{statusBasisMilestoneNo}, #{underReviewReason},
+             #{originalEta}, #{latestEta}, #{latestEtaBasis}, #{latestEtaBasisMilestoneNo}, #{lastAcquiredAt}, #{nextExpectedAt},
+             #{voyageArrivalAt}, #{voyageArrivalPublishedAt},
+             #{voyageArrivalAcquiredAt}, #{voyageArrivalSourceRef}, #{version}, #{createdAt}, #{updatedAt})
+    </insert>
+
+    <!-- 主要実績の登録（Bolt 26b）。読み込んだときの版と同じときだけ、導出し直した現在状態と根拠の実績番号と確認中の理由（Bolt 39gc）を書き、
+         版を 1 増やす（楽観ロック）。最新の到着見込みと最終取得時刻（Bolt 39g3）と次の予定の実績の予定時刻（Bolt 39g4）と航海の到着予定と順の鍵の 4 列（Bolt 39g4b。
+         DE-12 の受け取りもこの UPDATE を使う）と見込みの根拠の 2 列（Bolt 39g4c。見込みと同じ文で書く）も書く。経路版・当初の到着予定の列は書かない（T-INV-10） -->
+    <update id="updateTrackingRecord">
+        UPDATE tracking.tracking_record
+           SET current_status = #{currentStatus},
+               status_basis_milestone_no = #{statusBasisMilestoneNo},
+               under_review_reason = #{underReviewReason},
+               latest_eta = #{latestEta},
+               latest_eta_basis = #{latestEtaBasis},
+               latest_eta_basis_milestone_no = #{latestEtaBasisMilestoneNo},
+               last_acquired_at = #{lastAcquiredAt},
+               next_expected_at = #{nextExpectedAt},
+               voyage_arrival_at = #{voyageArrival.arrivalAt},
+               voyage_arrival_published_at = #{voyageArrival.publishedAt},
+               voyage_arrival_acquired_at = #{voyageArrival.acquiredAt},
+               voyage_arrival_source_ref = #{voyageArrival.sourceRef},
+               version = version + 1,
+               updated_at = #{updatedAt}
+         WHERE tracking_number = #{trackingNumber}
+           AND version = #{expectedVersion}
+    </update>
+
+    <insert id="insertMilestone">
+        INSERT INTO tracking.milestone
+            (tracking_number, milestone_no, kind, location_unlocode, occurred_at, source_kind, source_ref, acquired_at,
+             state, registered_by, registered_at, data_source_id, external_id, published_at, adopted_by, adopted_at)
+        VALUES
+            (#{trackingNumber}, #{milestoneNo}, #{kind}, #{locationUnlocode}, #{occurredAt}, #{sourceKind}, #{sourceRef},
+             #{acquiredAt}, #{state}, #{registeredBy}, #{registeredAt}, #{dataSourceId}, #{externalId}, #{publishedAt},
+             #{adoptedBy}, #{adoptedAt})
+    </insert>
+
+    <!-- 下書きの採用（Bolt 39gb）。時系列に反すれば確認中にする（Bolt 39gc。状態は集約が決める）。状態と採用者・採用時刻だけを書き換え、下書きの行だけを対象にする。版の条件は同じトランザクションの追跡記録の UPDATE で掛ける -->
+    <update id="updateMilestoneAdoption">
+        UPDATE tracking.milestone
+           SET state = #{state},
+               adopted_by = #{adoptedBy},
+               adopted_at = #{adoptedAt}
+         WHERE tracking_number = #{trackingNumber}
+           AND milestone_no = #{milestoneNo}
+           AND state = 'DRAFT'
+    </update>
+
+    <!-- 根拠の実績番号の実績が表にあるか（Bolt 39gb の P-5。遅延の外部キーの違反をコミットの前に競合として拾う） -->
+    <select id="countMilestone" resultType="int">
+        SELECT COUNT(*) FROM tracking.milestone WHERE tracking_number = #{trackingNumber} AND milestone_no = #{milestoneNo}
+    </select>
+
+    <insert id="insertScheduledLeg">
+        INSERT INTO tracking.scheduled_leg
+            (tracking_number, leg_no, voyage_number, load_unlocode, discharge_unlocode, departure_at, arrival_at)
+        VALUES
+            (#{trackingNumber}, #{legNo}, #{voyageNumber}, #{loadUnlocode}, #{dischargeUnlocode}, #{departureAt},
+             #{arrivalAt})
+    </insert>
+
+    <select id="findTrackingRecordByBookingId" resultMap="trackingRecordRow">
+        SELECT <include refid="trackingRecordColumns"/>
+          FROM tracking.tracking_record
+         WHERE booking_id = #{bookingId}
+    </select>
+
+    <!-- 追跡番号の行を呼び手のトランザクションが終わるまで押さえる（DE-13 の listener を直列にする。Bolt 39g の決定 (4)）。単表で最初に読み、後の読み込みがセッションの
+         キャッシュを使わないよう flushCache を付ける。待ちは 10 秒で打ち切る（前例 RoutingCaseMapper.lockByNumber） -->
+    <select id="lockByTrackingNumber" resultType="String" flushCache="true" timeout="10">
+        SELECT tracking_number FROM tracking.tracking_record WHERE tracking_number = #{trackingNumber} FOR UPDATE
+    </select>
+
+    <select id="findTrackingRecordByTrackingNumber" resultMap="trackingRecordRow">
+        SELECT <include refid="trackingRecordColumns"/>
+          FROM tracking.tracking_record
+         WHERE tracking_number = #{trackingNumber}
+    </select>
+
+    <!-- C-10 照会の結果（Bolt 27）。追跡番号と荷主企業で絞り、他社の追跡記録は存在しないのと同じく返さない（BR-07） -->
+    <select id="findTrackingRecordByTrackingNumberAndShipper" resultMap="trackingRecordRow">
+        SELECT <include refid="trackingRecordColumns"/>
+          FROM tracking.tracking_record
+         WHERE tracking_number = #{trackingNumber}
+           AND shipper_company_id = #{shipperCompanyId}
+    </select>
+
+    <!-- S-11 追跡一覧（Bolt 26）。追跡の開始時刻は作成時刻。同じ時刻は追跡番号の順で、追跡番号は英大文字と数字だけなので、DB の照合順序でも
+         メモリの実装（String.compareTo の文字コード順）と同じ並びになる（予約一覧と同じ） -->
+    <select id="findRecentSummaries" resultMap="trackingRecordSummaryRow">
+        SELECT tracking_number, current_status, original_eta, latest_eta, last_acquired_at, next_expected_at, created_at
+          FROM tracking.tracking_record
+         WHERE shipper_company_id IN <include refid="shipperCompanyIn"/>
+         ORDER BY created_at DESC, tracking_number
+         LIMIT #{limit}
+    </select>
+
+    <!-- C-10 追跡の照会の一覧（Bolt 27）。荷主企業で絞る（BR-07）。並びと上限は S-11 と同じ。索引 ix_tracking_record_shipper -->
+    <select id="findRecentSummariesByShipper" resultMap="trackingRecordSummaryRow">
+        SELECT tracking_number, current_status, original_eta, latest_eta, last_acquired_at, next_expected_at, created_at
+          FROM tracking.tracking_record
+         WHERE shipper_company_id = #{shipperCompanyId}
+         ORDER BY created_at DESC, tracking_number
+         LIMIT #{limit}
+    </select>
+
+    <!-- 追跡記録の組み立てで、主要実績を実績番号の順に読む（Bolt 26b） -->
+    <select id="findMilestones" resultMap="milestoneRow">
+        SELECT tracking_number, milestone_no, kind, location_unlocode, occurred_at, source_kind, source_ref, acquired_at,
+               state, registered_by, registered_at, data_source_id, external_id, published_at, adopted_by, adopted_at
+          FROM tracking.milestone
+         WHERE tracking_number = #{trackingNumber}
+         ORDER BY milestone_no
+    </select>
+
+    <!-- DE-12 の受け取りの対象（Bolt 39g4b の決定 (6)）。その航海が最後の区間（その追跡番号の最大の区間番号）の追跡番号を、押さえる順のため追跡番号の順に返す。
+         同じ追跡で最初と最後の区間に出る航海も 1 回だけ。完了後・取消済みは除かず集約が決める。索引 ix_scheduled_leg_voyage -->
+    <select id="findTrackingNumbersByFinalLegVoyage" resultType="String">
+        SELECT leg.tracking_number
+          FROM tracking.scheduled_leg leg
+         WHERE leg.voyage_number = #{voyageNumber}
+           AND leg.leg_no = (SELECT MAX(last_leg.leg_no) FROM tracking.scheduled_leg last_leg
+                              WHERE last_leg.tracking_number = leg.tracking_number)
+         ORDER BY leg.tracking_number
+    </select>
+
+    <select id="findScheduledLegs" resultMap="scheduledLegRow">
+        SELECT tracking_number, leg_no, voyage_number, load_unlocode, discharge_unlocode, departure_at, arrival_at
+          FROM tracking.scheduled_leg
+         WHERE tracking_number = #{trackingNumber}
+         ORDER BY leg_no
+    </select>
+</mapper>

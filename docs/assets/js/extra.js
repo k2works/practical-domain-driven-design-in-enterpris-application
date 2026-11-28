@@ -47,3 +47,11 @@ document.addEventListener('DOMContentLoaded', function() {
         };
     });
 });
+// 生成ドキュメント（ER 図・JIG）は独立した HTML のサイトなので、別タブで開く。
+// ナビのリンクには Markdown の属性（{:target="_blank"}）を付けられないため、ここで付ける。
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('a[href*="/schemaspy-output/"], a[href*="/jig-output/"]').forEach(function(link) {
+        link.setAttribute('target', '_blank');
+        link.setAttribute('rel', 'noopener');
+    });
+});

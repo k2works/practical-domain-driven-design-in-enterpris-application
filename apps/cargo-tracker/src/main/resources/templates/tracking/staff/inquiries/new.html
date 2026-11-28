@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/staff :: layout(~{::title}, ~{::main}, ~{::script}, 'inquiries')}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${#fields.hasErrors('${inquiryForm.*}')} ? '入力内容に誤りがあります - 照会の記録 - cargo-tracker' : '照会の記録 - cargo-tracker'">照会の記録 - cargo-tracker</title>
+    <!--/* 送信の失敗のときにエラー要約へフォーカスを移す（社内の S-03・S-04 と同じ） */-->
+    <script th:src="@{/js/transport-request-form.js}" defer></script>
+</head>
+<body>
+<main>
+    <h1>照会の記録</h1>
+    <!--/* S-23（Bolt 40-15、US-11 AC2、IR-INV-02）。電話・メールで受けた照会を記録し、必要なら有人案件へ引き継ぐ。引継ぎが不要でも記録する */-->
+    <p role="status" th:if="${result}" th:text="${result}">照会を記録しました。</p>
+    <p th:if="${resultLinkHref}"><a th:href="@{${resultLinkHref}}" th:text="${resultLinkLabel}">有人案件 SC-2026-0001 を開く</a></p>
+    <div class="alert alert-warning" role="alert" th:if="${problem}" th:text="${problem}">営業カレンダーが登録されていません。</div>
+    <form th:action="@{/staff/inquiries}" th:object="${inquiryForm}" method="post" novalidate>
+        <div id="error-summary" th:if="${#fields.hasErrors('*')}" tabindex="-1" role="alert"
+             aria-labelledby="error-summary-title">
+            <h2 id="error-summary-title" th:text="|入力内容に ${#fields.errors('*').size()} 件の誤りがあります|">入力内容に 1 件の誤りがあります</h2>
+            <ul>
+                <li th:each="error : ${#fields.detailedErrors('*')}">
+                    <a th:href="|#${error.fieldName}|"
+                       th:text="|${fieldLabels[error.fieldName]}: ${error.message}|">追跡番号: 入力してください</a>
+                </li>
+            </ul>
+        </div>
+
+        <fieldset th:attr="aria-invalid=${#fields.hasErrors('channel')},aria-describedby=${#fields.hasErrors('channel')} ? 'channel-error' : null">
+            <legend>経路</legend>
+            <div th:each="option, stat : ${channels}">
+                <input type="radio" th:field="*{channel}" th:value="${option.value()}"
+                       th:id="${stat.first} ? 'channel' : |channel-${stat.index}|">
+                <label th:for="${stat.first} ? 'channel' : |channel-${stat.index}|" th:text="${option.label()}">電話</label>
+            </div>
+            <p id="channel-error" th:if="${#fields.hasErrors('channel')}" th:errors="*{channel}"></p>
+        </fieldset>
+        <div>
+            <label for="trackingNumber">追跡番号</label>
+            <p id="trackingNumber-hint">例: CTABCDEFGH2345。荷主企業は追跡記録から決まります（あなたの担当企業の追跡記録だけ）</p>
+            <input id="trackingNumber" type="text" class="form-control" th:field="*{trackingNumber}" autocomplete="off"
+                   th:attr="aria-invalid=${#fields.hasErrors('trackingNumber')},aria-describedby=${#fields.hasErrors('trackingNumber')} ? 'trackingNumber-hint trackingNumber-error' : 'trackingNumber-hint'">
+            <p id="trackingNumber-error" th:if="${#fields.hasErrors('trackingNumber')}" th:errors="*{trackingNumber}"></p>
+        </div>
+        <fieldset th:attr="aria-invalid=${#fields.hasErrors('inquirerKind')},aria-describedby=${#fields.hasErrors('inquirerKind')} ? 'inquirerKind-error' : null">
+            <legend>照会者の種別</legend>
+            <div th:each="option, stat : ${inquirerKinds}">
+                <input type="radio" th:field="*{inquirerKind}" th:value="${option.value()}"
+                       th:id="${stat.first} ? 'inquirerKind' : |inquirerKind-${stat.index}|">
+                <label th:for="${stat.first} ? 'inquirerKind' : |inquirerKind-${stat.index}|" th:text="${option.label()}">荷主</label>
+            </div>
+            <p id="inquirerKind-error" th:if="${#fields.hasErrors('inquirerKind')}" th:errors="*{inquirerKind}"></p>
+        </fieldset>
+        <div>
+            <label for="receivedAt">受付時刻（日本時間。空なら今）</label>
+            <p id="receivedAt-hint">例: 2026-11-16 10:30。タイムゾーンは Asia/Tokyo（UTC+09:00）</p>
+            <input id="receivedAt" type="text" class="form-control" th:field="*{receivedAt}" autocomplete="off" inputmode="numeric"
+                   th:attr="aria-invalid=${#fields.hasErrors('receivedAt')},aria-describedby=${#fields.hasErrors('receivedAt')} ? 'receivedAt-hint receivedAt-error' : 'receivedAt-hint'">
+            <p id="receivedAt-error" th:if="${#fields.hasErrors('receivedAt')}" th:errors="*{receivedAt}"></p>
+        </div>
+        <div>
+            <label for="content">照会内容</label>
+            <p id="content-hint">4000 文字まで。有人案件へ引き継ぐときは必須です（案件の内容になります）</p>
+            <textarea id="content" class="form-control" rows="4" maxlength="4000" th:field="*{content}"
+                      th:attr="aria-invalid=${#fields.hasErrors('content')},aria-describedby=${#fields.hasErrors('content')} ? 'content-hint content-error' : 'content-hint'"></textarea>
+            <p id="content-error" th:if="${#fields.hasErrors('content')}" th:errors="*{content}"></p>
+        </div>
+        <div>
+            <label for="sourceReference">参照した出典（任意）</label>
+            <p id="sourceReference-hint">200 文字まで。例: 現場記録の番号。引き継ぐとき案件の出典になります</p>
+            <input id="sourceReference" type="text" class="form-control" th:field="*{sourceReference}" autocomplete="off"
+                   th:attr="aria-invalid=${#fields.hasErrors('sourceReference')},aria-describedby=${#fields.hasErrors('sourceReference')} ? 'sourceReference-hint sourceReference-error' : 'sourceReference-hint'">
+            <p id="sourceReference-error" th:if="${#fields.hasErrors('sourceReference')}" th:errors="*{sourceReference}"></p>
+        </div>
+        <div>
+            <label for="department">担当部門（引き継ぐとき）</label>
+            <p id="department-hint">50 文字まで。空なら CS</p>
+            <input id="department" type="text" class="form-control" th:field="*{department}" autocomplete="off"
+                   th:attr="aria-invalid=${#fields.hasErrors('department')},aria-describedby=${#fields.hasErrors('department')} ? 'department-hint department-error' : 'department-hint'">
+            <p id="department-error" th:if="${#fields.hasErrors('department')}" th:errors="*{department}"></p>
+        </div>
+        <div>
+            <input id="handOff" type="checkbox" th:field="*{handOff}">
+            <label for="handOff">有人案件へ引き継ぐ（受付番号を発行します）</label>
+        </div>
+        <p><button type="submit" class="btn btn-primary">記録する</button></p>
+    </form>
+    <p><a th:href="@{/staff/service-cases}">有人案件の一覧</a></p>
+</main>
+</body>
+</html>

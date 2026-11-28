@@ -1,0 +1,44 @@
+name: cargo-tracker terraform
+
+# Terraform の書式と構文の検査（W10-1 の Bolt 52-2）。AWS の認証情報は使わない。plan は認証情報が要るので行わない
+# （持ち越し H-9。AWS のアカウントとロールを用意した後）。バージョンを固定した公式のイメージで実行し、Action を増やさない。
+on:
+  pull_request:
+    paths:
+      - 'ops/terraform/**'
+      - '.github/workflows/cargo-tracker-terraform.yml'
+  push:
+    branches: [develop, main]
+    paths:
+      - 'ops/terraform/**'
+      - '.github/workflows/cargo-tracker-terraform.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cargo-tracker-terraform-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  TERRAFORM_IMAGE: hashicorp/terraform:1.9.8
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: リポジトリを取得する
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: 書式を検査する
+        run: docker run --rm -v "${PWD}/ops/terraform:/work:ro" -w /work "${TERRAFORM_IMAGE}" fmt -check -recursive -diff
+
+      - name: 構文を検査する（staging・production）
+        run: |
+          for environment in staging production; do
+            echo "::group::${environment}"
+            docker run --rm -v "${PWD}/ops/terraform:/work" -w "/work/environments/${environment}" \
+              --entrypoint sh "${TERRAFORM_IMAGE}" -c 'terraform init -backend=false -input=false && terraform validate'
+            echo "::endgroup::"
+          done

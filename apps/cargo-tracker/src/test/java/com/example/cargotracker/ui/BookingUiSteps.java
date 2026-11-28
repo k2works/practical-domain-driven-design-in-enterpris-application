@@ -1,0 +1,420 @@
+package com.example.cargotracker.ui;
+
+import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
+
+import com.microsoft.playwright.APIResponse;
+import com.microsoft.playwright.Locator;
+import com.microsoft.playwright.Page;
+import com.microsoft.playwright.options.AriaRole;
+import com.microsoft.playwright.options.FormData;
+import com.microsoft.playwright.options.RequestOptions;
+import io.cucumber.java.ja.ならば;
+import io.cucumber.java.ja.もし;
+import java.net.URI;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.regex.Pattern;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.test.web.server.LocalServerPort;
+
+/**
+ * 本予約の確定（S-09）・予約の詳細（S-24）と、受付一覧（S-02）の予約の確定待ちの表の画面の層のステップ定義（US-04 AC1・AC2・AC3・
+ * AC4。Bolt 23b・24・35）。見積依頼は、同じシナリオで荷主が提出したもの（{@link UiScenarioState}）とする。
+ *
+ * <p>二重送信と別のタブの確定は、ブラウザーの「戻る」に頼ると読み直しの有無で結果が揺れるため、控えた S-09 のフォームの値（隠し項目と
+ * CSRF のトークン）を、ブラウザーと同じ Cookie の HTTP の要求で送る（Bolt 24）。
+ */
+public class BookingUiSteps {
+
+    private static final String AWAITING_BOOKING = "予約の確定待ちの見積り（有効期限の近い順）";
+    private static final String CONFIRM = "本予約を確定する";
+
+    private final BrowserSession browser;
+    private final UiScenarioState state;
+    private final String baseUrl;
+    private Map<String, String> savedForm;
+    private String firstTrackingNumber;
+    private String otherTabTrackingNumber;
+    private String confirmedTrackingNumber;
+
+    public BookingUiSteps(
+            BrowserSession browser,
+            UiScenarioState state,
+            @LocalServerPort int port,
+            @Value("${ui.base-url:}") String configuredBaseUrl) {
+        this.browser = browser;
+        this.state = state;
+        this.baseUrl = configuredBaseUrl.isBlank() ? "http://localhost:" + port : configuredBaseUrl;
+    }
+
+    private Page page() {
+        return browser.page();
+    }
+
+    private String subject(int quotationNo) {
+        return state.transportRequestNumber() + " 見積 " + quotationNo;
+    }
+
+    private Locator awaitingBooking() {
+        return page().getByRole(AriaRole.REGION, new Page.GetByRoleOptions().setName(AWAITING_BOOKING));
+    }
+
+    private Locator awaitingRow(int quotationNo) {
+        return awaitingBooking().locator("tr", new Locator.LocatorOptions().setHasText(subject(quotationNo)));
+    }
+
+    private Locator definition(String term) {
+        return page().locator("dt:text-is('" + term + "') + dd");
+    }
+
+    @もし("営業担当者が受付一覧の予約の確定待ちから提出した見積依頼の見積り {int} の本予約の確定を開く")
+    public void 予約の確定待ちから開く(int quotationNo) {
+        browser.navigate(baseUrl + "/staff/transport-requests");
+        assertThat(awaitingRow(quotationNo)).hasCount(1);
+        browser.checkAccessibility();
+        awaitingRow(quotationNo)
+                .getByRole(AriaRole.LINK, new Locator.GetByRoleOptions().setName(subject(quotationNo) + " の本予約の確定へ"))
+                .click();
+        page().waitForURL("**/staff/bookings/new?**");
+        assertThat(page().getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setLevel(1)))
+                .hasText("本予約の確定 " + subject(quotationNo));
+        assertThat(page().locator("main")).containsText("この表示は開いた時刻での確認です");
+        assertThat(page().locator("main")).containsText("本予約を確定しますか");
+        browser.checkAccessibility();
+    }
+
+    @もし("キー操作だけで契約条件と照合したことを示して本予約を確定する")
+    public void キー操作だけで確定する() {
+        page().locator("body").focus();
+        browser.tabUntilFocused(page().getByLabel("契約条件と照合した（営業担当者の確認）"));
+        page().keyboard().press("Space");
+        assertThat(page().getByLabel("契約条件と照合した（営業担当者の確認）")).isChecked();
+        browser.tabUntilFocused(page().getByRole(
+                        AriaRole.BUTTON,
+                        new Page.GetByRoleOptions().setName(CONFIRM).setExact(true)));
+        page().keyboard().press("Enter");
+        page().waitForURL(url -> !url.contains("/staff/bookings/new"));
+    }
+
+    @もし("キー操作だけで契約条件と照合したことを示さずに本予約を確定する")
+    public void キー操作だけで確認せずに確定する() {
+        page().locator("body").focus();
+        assertThat(page().getByLabel("契約条件と照合した（営業担当者の確認）")).not().isChecked();
+        browser.tabUntilFocused(page().getByRole(
+                        AriaRole.BUTTON,
+                        new Page.GetByRoleOptions().setName(CONFIRM).setExact(true)));
+        page().keyboard().press("Enter");
+        page().waitForLoadState();
+    }
+
+    @ならば("本予約の確定のエラー要約に不足条件 {string} が示される")
+    public void 不足条件が示される(String message) {
+        Locator summary = page().getByRole(AriaRole.ALERT);
+        // 確定せずに S-09 のまま（S-24 へ移っていない）。エラー要約へフォーカスが移る（共通部品「エラー要約」。Bolt 35）
+        assertThat(page()).hasURL(Pattern.compile(".*/staff/bookings$"));
+        assertThat(summary).isFocused();
+        assertThat(summary).containsText("本予約を確定できませんでした");
+        assertThat(summary.getByRole(AriaRole.LINK, new Locator.GetByRoleOptions().setName(message)))
+                .isVisible();
+        assertThat(page().getByLabel("契約条件と照合した（営業担当者の確認）")).hasAttribute("aria-invalid", "true");
+        browser.checkAccessibility();
+    }
+
+    @ならば("受付一覧の予約の確定待ちに提出した見積依頼の見積り {int} が残る")
+    public void 予約の確定待ちに残る(int quotationNo) {
+        browser.navigate(baseUrl + "/staff/transport-requests");
+        assertThat(awaitingRow(quotationNo)).hasCount(1);
+    }
+
+    /**
+     * 追跡の開始は DE-07 を受けた追跡の listener が非同期で進めるので、確定の直後の表示は処理中か完了のどちらか（Bolt 25）。処理中の表示は
+     * 画面の単体テストで確かめる。
+     */
+    @ならば("予約の詳細に本予約を確定したことと追跡番号が示され、追跡の開始が {string} か {string} である")
+    public void 予約の詳細が示される(String inProgress, String completed) {
+        page().waitForURL("**/staff/bookings/CT*");
+        assertThat(page().getByRole(AriaRole.STATUS)).containsText(subject(1) + " で本予約を確定しました。追跡番号は CT");
+        assertThat(definition("追跡番号")).hasText(Pattern.compile("CT[A-HJKMNP-Z2-9]{12}"));
+        assertThat(definition("業務番号")).hasText(state.transportRequestNumber());
+        assertThat(definition("状態")).hasText("確定済み");
+        assertThat(definition("追跡の開始"))
+                .hasText(Pattern.compile(
+                        "^(" + PlaywrightText.literal(inProgress) + "|" + PlaywrightText.literal(completed) + ")$"));
+        browser.checkAccessibility();
+    }
+
+    /** 再見積りした見積りで本予約を確定する（D-85。Bolt 35d）。追跡の開始の進み具合は上のステップで確かめる。 */
+    @ならば("予約の詳細に見積り {int} で本予約を確定したことと追跡番号が示される")
+    public void 見積りで本予約を確定したと示される(int quotationNo) {
+        page().waitForURL("**/staff/bookings/CT*");
+        assertThat(page().getByRole(AriaRole.STATUS)).containsText(subject(quotationNo) + " で本予約を確定しました。追跡番号は CT");
+        assertThat(definition("業務番号")).hasText(state.transportRequestNumber());
+        assertThat(definition("状態")).hasText("確定済み");
+        browser.checkAccessibility();
+    }
+
+    /**
+     * 予約サガの完了は DE-07 と DE-22 の 2 つの非同期の処理の後なので、完了と出るまで開き直す（ADR-015。Bolt 25）。追跡番号は追跡管理者の
+     * ステップが使うので控える（Bolt 26）。
+     */
+    @もし("予約の詳細を更新して追跡の開始が完了するのを待つ")
+    public void 追跡の開始の完了を待つ() {
+        String url = page().url();
+        state.trackingNumber(definition("追跡番号").textContent().strip());
+        BrowserSession.awaitEventually("予約の詳細の追跡の開始が完了にならない（DE-07・DE-22 を待ちきれない）", 500, () -> {
+            browser.navigate(url);
+            return "完了".equals(definition("追跡の開始").textContent().strip());
+        });
+    }
+
+    /**
+     * 営業担当者でログインし直して確定した予約の詳細（S-24）を開き、状態が期待の値になるまで開き直す（Bolt 39g2 の行 27）。予約の状態は追跡の DE-09・DE-10 を
+     * 受けた listener が非同期で進める（結果整合）。開き直すたびに GET の応答を待ってから状態を読む（Bolt 39gb の Try。URL でなく応答で待つ）。
+     */
+    @もし("営業担当者が確定した予約の詳細を開き、状態が {string} になるまで開き直す")
+    public void 予約の状態が進むまで開き直す(String expected) {
+        String url = baseUrl + "/staff/bookings/" + state.trackingNumber();
+        browser.navigate(url);
+        BrowserSession.awaitEventually("予約の詳細の状態が " + expected + " にならない（DE-09・DE-10 を待ちきれない）", 500, () -> {
+            if (expected.equals(definition("状態").textContent().strip())) {
+                return true;
+            }
+            page().waitForResponse(
+                            response -> response.url().endsWith("/staff/bookings/" + state.trackingNumber())
+                                    && "GET".equals(response.request().method()),
+                            () -> page().navigate(url));
+            return false;
+        });
+    }
+
+    @ならば("予約の詳細の状態は {string} である")
+    public void 予約の詳細の状態(String expected) {
+        assertThat(definition("追跡番号")).hasText(state.trackingNumber());
+        assertThat(definition("状態")).hasText(expected);
+        browser.checkAccessibility();
+    }
+
+    @ならば("予約の詳細の追跡の開始が {string} で、画面の更新の案内は出ない")
+    public void 追跡の開始が完了と出る(String completed) {
+        assertThat(definition("追跡の開始")).hasText(completed);
+        assertThat(page().getByText("この画面は自動では変わりません")).hasCount(0);
+        browser.checkAccessibility();
+    }
+
+    /** 予約の確定待ちの表から行がなくなるのは DE-07 を受けた輸送要求の更新（非同期）の後なので、行がなくなるまで開き直す。 */
+    @ならば("受付一覧の予約の確定待ちから提出した見積依頼の見積り {int} がなくなる")
+    public void 予約の確定待ちからなくなる(int quotationNo) {
+        BrowserSession.awaitEventually("予約の確定待ちから見積り " + quotationNo + " の行がなくならない（DE-07 を待ちきれない）", 500, () -> {
+            browser.navigate(baseUrl + "/staff/transport-requests");
+            return awaitingRow(quotationNo).count() == 0;
+        });
+        assertThat(awaitingRow(quotationNo)).hasCount(0);
+        browser.checkAccessibility();
+    }
+
+    @ならば("受付一覧に {string} と示され、見積り {int} は {string} で本予約の確定の入口がない")
+    public void 受付一覧に理由が示される(String message, int quotationNo, String status) {
+        page().waitForURL("**/staff/transport-requests");
+        assertThat(page().getByRole(AriaRole.ALERT)).containsText(subject(quotationNo) + " " + message);
+        assertThat(awaitingRow(quotationNo)).containsText(status);
+        assertThat(awaitingRow(quotationNo)
+                        .getByRole(
+                                AriaRole.LINK,
+                                new Locator.GetByRoleOptions().setName(subject(quotationNo) + " の本予約の確定へ")))
+                .hasCount(0);
+        assertThat(awaitingRow(quotationNo)
+                        .getByRole(
+                                AriaRole.LINK,
+                                new Locator.GetByRoleOptions().setName(subject(quotationNo) + " を再見積りする")))
+                .hasCount(1);
+        browser.checkAccessibility();
+    }
+
+    /** 荷主の承認の後に失効した見積りを、予約の確定待ちの表から再見積りする（D-85。Bolt 35c）。 */
+    @もし("営業担当者が受付一覧の予約の確定待ちから提出した見積依頼の見積り {int} を再見積りする")
+    public void 予約の確定待ちから再見積りする(int quotationNo) {
+        browser.navigate(baseUrl + "/staff/transport-requests");
+        assertThat(awaitingRow(quotationNo)).containsText("失効（荷主承認済み）");
+        awaitingRow(quotationNo)
+                .getByRole(AriaRole.LINK, new Locator.GetByRoleOptions().setName(subject(quotationNo) + " を再見積りする"))
+                .click();
+        page().waitForURL("**/quotations/" + quotationNo + "/requotation");
+        browser.checkAccessibility();
+    }
+
+    /** 再見積りで算出した見積り（経路を引き継いだ承認待ち）は、提示するまで予約の確定待ちの表の行から開ける（D-85。Bolt 35c）。 */
+    @もし("営業担当者が受付一覧の予約の確定待ちから提出した見積依頼の見積り {int} を承認待ちで開く")
+    public void 予約の確定待ちから承認待ちで開く(int quotationNo) {
+        browser.navigate(baseUrl + "/staff/transport-requests");
+        assertThat(awaitingRow(quotationNo).locator("td").nth(2)).hasText("承認待ち");
+        assertThat(awaitingRow(quotationNo).locator("td").nth(3)).containsText("再承認の前");
+        // 再見積りで失効にした旧版の行は消える
+        assertThat(awaitingRow(quotationNo - 1)).hasCount(0);
+        browser.checkAccessibility();
+        awaitingRow(quotationNo)
+                .getByRole(AriaRole.LINK, new Locator.GetByRoleOptions().setName(subject(quotationNo) + " を開く（承認待ち）"))
+                .click();
+        page().waitForURL("**/quotations/" + quotationNo);
+        browser.checkAccessibility();
+    }
+
+    /** 提示の後、輸送要求を荷主承認待ちへ戻すのは DE-24 の受け取り（非同期）なので、行が出るまで開き直す。 */
+    @ならば("受付一覧の経路設計中・荷主承認待ちに提出した見積依頼の見積り {int} が {string} で出る")
+    public void 経路設計中に出る(int quotationNo, String status) {
+        Locator row = page().getByRole(
+                        AriaRole.REGION, new Page.GetByRoleOptions().setName("経路設計中・荷主承認待ちの見積依頼（依頼時刻の古い順）"))
+                .locator("tr", new Locator.LocatorOptions().setHasText(subject(quotationNo)));
+        BrowserSession.awaitEventually("経路設計中の表に見積り " + quotationNo + " の行が出ない（DE-24 を待ちきれない）", 500, () -> {
+            browser.navigate(baseUrl + "/staff/transport-requests");
+            return row.count() > 0;
+        });
+        assertThat(row).containsText(status);
+        assertThat(awaitingRow(quotationNo)).hasCount(0);
+        browser.checkAccessibility();
+    }
+
+    @もし("送る前の本予約の確定のフォームを控える")
+    public void フォームを控える() {
+        savedForm = currentForm();
+    }
+
+    /** 控えたフォームを同じ値（同じコマンド ID）でもう一度送る。リダイレクト先を、ブラウザーで開いて示す。 */
+    @もし("控えた本予約の確定のフォームをもう一度送る")
+    public void もう一度送る() {
+        firstTrackingNumber = definition("追跡番号").textContent().strip();
+        APIResponse response = post(savedForm, 0);
+        org.assertj.core.api.Assertions.assertThat(response.status()).isEqualTo(302);
+        page().navigate(URI.create(baseUrl + "/")
+                .resolve(response.headers().get("location"))
+                .toString());
+    }
+
+    @ならば("最初の確定と同じ追跡番号の予約の詳細が示される")
+    public void 最初と同じ追跡番号の予約の詳細() {
+        String first = firstTrackingNumber;
+        page().waitForURL("**/staff/bookings/" + first);
+        assertThat(page().getByRole(AriaRole.STATUS)).containsText(subject(1) + " で本予約を確定しました。追跡番号は " + first + " です。");
+        assertThat(definition("追跡番号")).hasText(first);
+        browser.checkAccessibility();
+    }
+
+    /** いま開いている S-09 の値で、別のコマンド ID の確定を先に送る（別のタブで確定した状態）。リダイレクトは要求の側で追う。 */
+    @もし("別のタブで同じ見積り {int} の本予約が確定されている")
+    public void 別のタブで確定されている(int quotationNo) {
+        Map<String, String> form = currentForm();
+        org.assertj.core.api.Assertions.assertThat(form).containsEntry("quotation", Integer.toString(quotationNo));
+        form.put("commandId", UUID.randomUUID().toString());
+        APIResponse response = post(form, 5);
+        String path = URI.create(response.url()).getPath();
+        org.assertj.core.api.Assertions.assertThat(path).startsWith("/staff/bookings/CT");
+        otherTabTrackingNumber = path.substring(path.lastIndexOf('/') + 1);
+    }
+
+    @ならば("受付一覧に見積り {int} はすでに予約に使われていることと別のタブで確定した予約の追跡番号が示される")
+    public void 既に予約に使われていると示される(int quotationNo) {
+        page().waitForURL("**/staff/transport-requests");
+        assertThat(page().getByRole(AriaRole.STATUS))
+                .hasText(subject(quotationNo) + " はすでに予約に使われています（追跡番号 " + otherTabTrackingNumber + "）。");
+        assertThat(detailLink()).isVisible();
+        browser.checkAccessibility();
+    }
+
+    @もし("キー操作だけで予約の詳細を開く")
+    public void キー操作だけで予約の詳細を開く() {
+        page().locator("body").focus();
+        browser.tabUntilFocused(detailLink());
+        page().keyboard().press("Enter");
+        page().waitForURL("**/staff/bookings/CT*");
+    }
+
+    @ならば("別のタブで確定した予約の詳細が示される")
+    public void 別のタブで確定した予約の詳細() {
+        assertThat(definition("追跡番号")).hasText(otherTabTrackingNumber);
+        assertThat(definition("業務番号")).hasText(state.transportRequestNumber());
+        browser.checkAccessibility();
+    }
+
+    /** 確定の直後の S-24 の追跡番号を控えてから、受付一覧へ戻る（S-24 から離れた後に S-10 で開き直すため。Bolt 25b）。 */
+    @もし("キー操作だけで予約の詳細から見積依頼の受付一覧へ戻る")
+    public void 予約の詳細から受付一覧へ戻る() {
+        page().waitForURL("**/staff/bookings/CT*");
+        confirmedTrackingNumber = definition("追跡番号").textContent().strip();
+        page().locator("body").focus();
+        browser.tabUntilFocused(page().getByRole(
+                        AriaRole.LINK,
+                        new Page.GetByRoleOptions().setName("見積依頼の受付一覧").setExact(true)));
+        page().keyboard().press("Enter");
+        page().waitForURL("**/staff/transport-requests");
+    }
+
+    @ならば("予約一覧の先頭に確定した予約が見積り {int} と追跡の開始とともに示される")
+    public void 予約一覧の先頭に確定した予約が示される(int quotationNo) {
+        assertThat(page().getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName("予約一覧")))
+                .isVisible();
+        Locator firstRow = bookingList().locator("tbody tr").first();
+        assertThat(firstRow.getByRole(AriaRole.LINK, new Locator.GetByRoleOptions().setName(confirmedTrackingNumber)))
+                .isVisible();
+        assertThat(firstRow).containsText(subject(quotationNo));
+        assertThat(firstRow.locator("td").last()).hasText(Pattern.compile("^(処理中|完了)$"));
+        browser.checkAccessibility();
+    }
+
+    @もし("キー操作だけで予約一覧の先頭の予約の詳細を開く")
+    public void 予約一覧から予約の詳細を開く() {
+        page().locator("body").focus();
+        browser.tabUntilFocused(bookingList()
+                .locator("tbody tr")
+                .first()
+                .getByRole(AriaRole.LINK, new Locator.GetByRoleOptions().setName(confirmedTrackingNumber)));
+        page().keyboard().press("Enter");
+        page().waitForURL("**/staff/bookings/" + confirmedTrackingNumber);
+    }
+
+    @ならば("確定した予約の詳細が示される")
+    public void 確定した予約の詳細が示される() {
+        assertThat(definition("追跡番号")).hasText(confirmedTrackingNumber);
+        assertThat(definition("業務番号")).hasText(state.transportRequestNumber());
+        browser.checkAccessibility();
+    }
+
+    @もし("キー操作だけで予約の詳細から予約一覧へ戻る")
+    public void 予約の詳細から予約一覧へ戻る() {
+        page().locator("body").focus();
+        browser.tabUntilFocused(page().getByRole(
+                        AriaRole.LINK,
+                        new Page.GetByRoleOptions().setName("予約一覧").setExact(true)));
+        page().keyboard().press("Enter");
+        page().waitForURL("**/staff/bookings");
+    }
+
+    private Locator bookingList() {
+        return page().getByRole(AriaRole.TABLE, new Page.GetByRoleOptions().setName("確定した予約（確定時刻の新しい順）"));
+    }
+
+    private Locator detailLink() {
+        return page().getByRole(
+                        AriaRole.LINK, new Page.GetByRoleOptions().setName(otherTabTrackingNumber + " の予約の詳細を開く"));
+    }
+
+    /** S-09 のフォームの隠し項目と CSRF のトークン。営業担当者の確認は送る値として入れる。 */
+    private Map<String, String> currentForm() {
+        Locator form = page().locator("main form[method='post']");
+        Map<String, String> values = new LinkedHashMap<>();
+        for (String name : List.of("_csrf", "commandId", "transportRequest", "quotation")) {
+            values.put(name, form.locator("input[name='" + name + "']").inputValue());
+        }
+        values.put("staffConfirmed", "true");
+        return values;
+    }
+
+    private APIResponse post(Map<String, String> form, int maxRedirects) {
+        FormData data = FormData.create();
+        form.forEach(data::set);
+        return page().request()
+                .post(
+                        baseUrl + "/staff/bookings",
+                        RequestOptions.create().setForm(data).setMaxRedirects(maxRedirects));
+    }
+}

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/staff :: layout(~{::title}, ~{::main}, ~{}, 'transport-requests')}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="|${quotationLabel} - cargo-tracker|">TR-2026-0001 見積 1 - cargo-tracker</title>
+</head>
+<body>
+<main>
+    <h1 th:text="|見積り ${quotationLabel}|">見積り TR-2026-0001 見積 1</h1>
+    <!-- S-04 の算出した見積り（Bolt 10、US-03 AC1）。承認待ちなら社内承認して提示する。承認者はログインした営業担当者 -->
+    <p role="status" th:if="${result}" th:text="${result}">TR-2026-0001 見積 1 を算出しました</p>
+    <div class="alert alert-warning" role="alert" th:if="${problem}" th:text="${problem}">他の利用者が先に更新しました</div>
+    <p><a th:href="@{/staff/transport-requests}">受付一覧へ戻る</a></p>
+    <!-- 失効（表示する時刻で有効期限を過ぎた）と置換済みは読み取り専用（Bolt 11、US-03 AC4・AC5） -->
+    <p class="alert alert-warning" th:if="${expiredNotice}" th:text="${expiredNotice}">有効期限を過ぎたため、この見積りは提示できません。再見積りしてください。</p>
+    <!-- 荷主が詳細経路設計を依頼した見積りは読み取り専用（Bolt 12、US-24 AC1）。経路設計の途中の再見積りは US-05・US-07 で決める -->
+    <p class="alert alert-info" th:if="${routingRequestedNotice}" th:text="${routingRequestedNotice}">荷主が 2026-10-06 09:30 Asia/Tokyo（UTC+09:00）（UTC 2026-10-06 00:30）に詳細経路設計を依頼しました。この見積りは読み取り専用です。</p>
+    <!-- 荷主が辞退した見積りは失効として記録され、再見積りできない（US-24 AC2。W9 の Bolt 46。D-86） -->
+    <p class="alert alert-info" th:if="${declinedNotice}" th:text="${declinedNotice}">荷主が 2026-10-06 09:30 Asia/Tokyo（UTC+09:00）に辞退しました（理由: 他社で進めるため）。この見積りは読み取り専用で、再見積りはできません。荷主と相談して、新しい見積依頼で出し直してください。</p>
+    <!--/* 荷主が本予約の前に輸送条件を変更した旧版の見積り（US-05 AC1。Bolt 62-1） */-->
+    <p class="alert alert-info" th:if="${voidedNotice}" th:text="${voidedNotice}">荷主が輸送条件を変更したため、この見積りは無効です（読み取り専用）。</p>
+    <p th:if="${replacement}">
+        <span th:text="|見積 ${replacement.quotationNo()} に置き換えました。この見積りは読み取り専用です。|">見積 2 に置き換えました。この見積りは読み取り専用です。</span>
+        <a th:href="@{${replacement.path()}}" th:text="${replacement.label()}">TR-2026-0001 見積 2</a>
+    </p>
+    <p th:if="${latest}">
+        最新の見積り: <a th:href="@{${latest.path()}}" th:text="${latest.label()}">TR-2026-0001 見積 2</a>
+    </p>
+    <dl>
+        <dt>対象</dt>
+        <dd th:text="${numberWithVersion}">TR-2026-0001 版 1</dd>
+        <dt>状態</dt>
+        <dd th:text="${quotation.status()}">承認待ち</dd>
+    </dl>
+    <h2>見積りの内容</h2>
+    <div th:replace="~{quotation/fragments/quotation :: details(${quotation})}"></div>
+    <th:block th:if="${quotation.route() != null}">
+        <div th:replace="~{quotation/fragments/assigned-route :: route(${quotation.route()}, 2)}"></div>
+    </th:block>
+    <form th:if="${quotation.presentable()}"
+          th:action="@{/staff/transport-requests/{number}/quotations/{no}/presentation(number=${number},no=${quotation.quotationNo()})}"
+          method="post">
+        <button type="submit" class="btn btn-primary">社内承認して提示する</button>
+    </form>
+    <p th:if="${requotable}">
+        <a th:href="@{/staff/transport-requests/{number}/quotations/{no}/requotation(number=${number},no=${quotation.quotationNo()})}">再見積りする</a>
+    </p>
+</main>
+</body>
+</html>

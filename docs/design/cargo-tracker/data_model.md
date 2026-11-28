@@ -1,0 +1,1356 @@
+---
+type: Design
+title: "cargo-tracker データモデル"
+description: "cargo-tracker の概念データモデル、スキーマ分割、命名と型の規約（H2 と PostgreSQL の共通部分）、コンテキストごとの論理データモデルと ER 図、版・追記専用・冪等性・イベント配信の表現。"
+tags: [design, data-model]
+status: stable
+generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-28T08:38:13Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-01T07:48:17Z }
+  - { by: human:kakimomokuri, at: 2026-10-01T09:01:37Z }
+  - { by: human:kakimomokuri, at: 2026-10-02T01:37:43Z }
+  - { by: human:kakimomokuri, at: 2026-10-02T07:02:38Z }
+  - { by: human:kakimomokuri, at: 2026-10-02T11:26:07Z }
+  - { by: human:kakimomokuri, at: 2026-10-02T13:47:11Z }
+  - { by: human:kakimomokuri, at: 2026-10-02T21:44:56Z }
+  - { by: human:kakimomokuri, at: 2026-10-03T01:31:13Z }
+  - { by: human:kakimomokuri, at: 2026-10-05T03:42:35Z }
+  - { by: human:kakimomokuri, at: 2026-10-05T06:28:15Z }
+  - { by: human:kakimomokuri, at: 2026-10-05T08:08:38Z }
+  - { by: human:kakimomokuri, at: 2026-10-05T08:21:52Z }
+  - { by: human:kakimomokuri, at: 2026-10-06T02:51:39Z }
+  - { by: human:kakimomokuri, at: 2026-11-02T11:39:37Z }
+  - { by: human:kakimomokuri, at: 2026-11-02T13:43:30Z }
+  - { by: human:kakimomokuri, at: 2026-11-03T00:39:43Z }
+  - { by: human:kakimomokuri, at: 2026-11-03T01:43:33Z }
+---
+
+# cargo-tracker データモデル
+
+## 位置づけ
+
+本書は、[ドメインモデル](domain_model.md) の集約を永続化する構造を決める（ドメインモデルの引継ぎ DM-01）。前提は次のとおり。
+
+| 前提 | 出典 | データモデルへの影響 |
+| :--- | :--- | :--- |
+| DB は 1 つ、コンテキストごとにスキーマを分ける | ADR-001 | 7 つの業務スキーマと、基盤用のスキーマを置く |
+| 集約は状態保存。版は不変、追跡の主要実績と監査記録は追記専用 | ADR-002 | 版はヘッダ・明細の形で別の行にする。追記専用の表には削除の権限を与えない |
+| 冪等コマンド、永続化したドメインイベント、予約サガ | ADR-003 | 処理済みコマンド、イベント発行記録、サガ状態の表を持つ |
+| 外部原本は Inbox・隔離・照合 | ADR-004 | 原本は W7〜W9 は DB、W10 で S3 に置き、DB には冪等性キーとハッシュと分類を持つ（Bolt 39a2） |
+| 開発は H2、本番は PostgreSQL 18、永続化は MyBatis、スキーマは Flyway | ADR-007 | DDL は H2 と PostgreSQL の共通部分で書く |
+
+## 概念データモデル
+
+業務の言葉で、管理する対象と関係を示す。コンテキストの境界をまたぐ関係は、ID による参照だけで表す（外部キーを張らない）。
+
+```plantuml
+@startuml
+title 概念データモデル - cargo-tracker MVP
+left to right direction
+skinparam linetype ortho
+
+package "見積り" {
+  entity 輸送要求
+  entity 輸送要求版
+  entity 審査記録
+  entity 見積り
+  entity 料金明細
+}
+package "経路設計" {
+  entity 経路設計案件
+  entity 経路版
+  entity 経路候補
+  entity 区間
+  entity 航海
+  entity 接続時間規則
+}
+package "予約" {
+  entity 貨物予約
+  entity 予約版
+  entity 変更取消申請
+  entity 予約サガ
+}
+package "追跡" {
+  entity 追跡記録
+  entity 予定区間
+  entity 主要実績
+  entity 訂正
+  entity 有人案件
+}
+package "アクセス・監査" {
+  entity 企業
+  entity 利用者
+  entity 参照許可
+  entity 監査記録
+}
+package "外部データ" {
+  entity 情報源
+  entity 取込
+  entity 外部原本
+  entity 受信記録
+  entity 採用値
+  entity 手動情報
+  entity 復旧照合
+}
+
+輸送要求 ||--|{ 輸送要求版
+輸送要求 ||--o{ 審査記録
+輸送要求版 ||--o{ 見積り
+見積り ||--|{ 料金明細
+輸送要求版 ||..o{ 経路設計案件 : ID 参照
+経路設計案件 ||--o{ 経路版
+経路版 ||--|{ 経路候補
+経路候補 ||--|{ 区間
+区間 }o..|| 航海 : 航海番号
+貨物予約 ||--|{ 予約版
+貨物予約 ||--o{ 変更取消申請
+貨物予約 ||--o| 予約サガ
+予約版 }o..|| 見積り : ID 参照
+予約版 }o..|| 経路版 : ID 参照
+貨物予約 ||..|| 追跡記録 : 追跡番号
+追跡記録 ||--|{ 予定区間
+追跡記録 ||--o{ 主要実績
+主要実績 ||--o{ 訂正
+追跡記録 ||..o{ 有人案件 : 追跡番号
+企業 ||--o{ 利用者
+貨物予約 ||..o{ 参照許可 : 予約 ID
+情報源 ||--o{ 取込
+取込 ||--o{ 受信記録
+外部原本 ||--|{ 受信記録
+受信記録 ||--o| 採用値
+情報源 ||--o{ 手動情報
+復旧照合 }o--|| 情報源
+@enduml
+```
+
+## スキーマ
+
+| スキーマ | 所有するコンテキスト | 内容 |
+| :--- | :--- | :--- |
+| `quotation` | 見積り | 輸送要求、輸送要求の下書き、輸送要求版、必要書類、審査記録、見積り、料金明細、処理済みコマンド |
+| `routing` | 経路設計 | 経路設計案件、経路版、経路候補、区間、除外理由、参照情報版、航海、寄港、接続時間規則、処理済みコマンド |
+| `booking` | 予約 | 貨物予約、予約版、変更取消申請、予約サガ、処理済みコマンド |
+| `tracking` | 追跡 | 追跡記録、予定区間、主要実績、訂正、有人案件とその進捗・回答、照会記録、営業日カレンダー、処理済みコマンド |
+| `identity` | アクセス・監査 | 企業、利用者、役割、担当範囲、参照許可、監査記録、KPI 計測記録、KPI 基準値 |
+| `external_data` | 外部データ | 情報源、取込、外部原本、保存した原本（W10 で S3 に差し替えるまで）、受信記録、採用値、手動情報、停止期間、復旧照合、差異 |
+| `notification` | 通知 | 通知（送信の記録） |
+| `platform` | 基盤（コンテキストに属さない） | Spring Modulith のイベント発行記録、Spring Session の表、ShedLock の表 |
+
+`platform` スキーマはフレームワークが定める表だけを置き、業務の表を置かない。イベント発行記録はすべてのコンテキストが書き込むが、内容はフレームワークが管理し、業務のコードは直接読み書きしない。
+
+## 命名と型の規約
+
+ADR-007 により、DDL は H2（PostgreSQL 互換モード）と PostgreSQL 18 の両方で動く範囲で書く。
+
+| 項目 | 規約 | 理由 |
+| :--- | :--- | :--- |
+| 物理名 | 英語の snake_case。表と列の日本語名は本書と DDL のコメントに書く | ドメインモデルの英語名（コード名）と揃え、H2 と PostgreSQL の両方で引用符なしで扱えるようにする |
+| 主キー | 集約ルートはアプリケーションが発行する UUID（`UUID` 型）。業務キーがあるもの（航海番号、追跡番号、受付番号）は業務キーを主キーにする | 第 2 章「集約識別子はビジネスキーを使う」。DB の採番機能（シーケンスの方言差）に依存しない |
+| 子の表の主キー | 親の主キー + 連番の複合主キー（例: 輸送要求 ID + 版番号） | 版・明細は親の中での順序に意味がある（ガイドのヘッダ・明細パターン） |
+| 時刻 | `TIMESTAMP WITH TIME ZONE`。値は UTC で保存する | BR-10。`TIMESTAMPTZ` の略記は H2 で使えないため、DDL では正式名で書く |
+| 文字列 | `VARCHAR(n)`。長い自由記述は `VARCHAR(4000)` | `TEXT` は H2 では CLOB になり、比較や索引の扱いが PostgreSQL と変わる |
+| 金額 | `NUMERIC(15,2)` と通貨コード `CHAR(3)` | 浮動小数を使わない |
+| 区分値 | `VARCHAR(30)` に英語の定数名（例: `UNDER_REVIEW`）を入れ、`CHECK` 制約で値を限る | 列挙型（`CREATE TYPE`）は H2 と PostgreSQL で構文が違う |
+| 真偽 | `BOOLEAN` | 両方で使える |
+| 使わないもの | `JSONB`、部分インデックス、`CREATE TYPE`、シーケンスの方言、トリガー | H2 で動かない。必要になったら ADR-007 に従って別の ADR で判断する |
+| 楽観ロック | 集約ルートの表に `version BIGINT NOT NULL` を置き、`UPDATE ... SET ..., version = version + 1 WHERE id = ? AND version = ?` で更新する。更新が 0 件なら、ほかの更新が先に入ったとして失敗させる（Bolt 5 の輸送要求の状態の更新で使い始める）。例外: `identity` の `totp_credential`・`recovery_code`・`login_failure` は `version` を持たず、値の条件付きの更新の件数で判定する（Bolt 30）。`identity.password_reset_token` は `version` を持たず、無効化と使用を `used_at IS NULL AND invalidated_at IS NULL` を条件にした更新の件数で判定する。`notification.notification` は `version` を持たず、送信の結果を `status = 'PENDING'` を条件にした更新で書く（どちらも Bolt 33。条件付きの更新が版の代わりになる）。`external_data.external_record` は `version` を持たず、読んだハッシュを条件にした更新の件数で判定する（Bolt 39d4）。`routing.voyage` はこの規約のとおり `version` で更新する（Bolt 39e で使い始めた。DE-12 の listener が書く） | ARCH-HO-01 の期待版の照合 |
+| 監査用の列 | 集約ルートの表に `created_at`、`created_by`、`updated_at`、`updated_by` を置く。例外: `identity.password_reset_token` は監査用の列を持たず、発行時刻（`issued_at`）が作った時刻を兼ねる。`notification.notification` は `created_at` だけを持つ（どちらも行は利用者の操作でなくシステムが作る。`tracking_record` と同じ考え方。Bolt 33） | ガイドの共通設計原則。業務上の証跡は監査記録が持つ |
+
+## 版・追記専用・冪等性の表し方
+
+### 版（ADR-002）
+
+版を持つ集約は、ヘッダ（集約ルート）と版の表に分ける。
+
+| 表 | 役割 | 更新 |
+| :--- | :--- | :--- |
+| ヘッダ（例: `transport_request`） | 現在の状態、現在の版番号、楽観ロックの `version` | 状態の変化のたびに UPDATE する（輸送要求は、DE-04・DE-24 の listener が状態を変えずに `version` だけを上げることがある。届く順の入れ替わりの守り。ADR-018、Bolt 35b2） |
+| 版（例: `transport_request_version`） | 版ごとの内容。主キーは（ヘッダ ID、版番号） | INSERT だけ。作った版の行は更新しない |
+
+集約の楽観ロック（`version`）と業務上の版番号（`*_version_no`）は別の列にする。前者は同時更新の検出、後者は業務が参照する版である。
+
+### 追記専用
+
+| 表 | 許す操作 | 守り方 |
+| :--- | :--- | :--- |
+| `identity.audit_record`、`identity.kpi_baseline` | INSERT、SELECT | PostgreSQL ではアプリケーションの DB 利用者から UPDATE・DELETE の権限を外す |
+| `quotation.transport_request_version`、`quotation.review_record`、`quotation.required_document`、`booking.booking_version`、`booking.processed_command`、`external_data.stored_payload`、`external_data.ingestion`、`external_data.received_record`、`external_data.received_record_decision`、`external_data.adopted_value`、`tracking.rejected_milestone`（Bolt 39g） | INSERT、SELECT | UPDATE・DELETE の権限を外す（`review_record` は判断の事実で後から変えないため。2026-10-02 に承認、Bolt 5。`required_document` は版に付く書類の事実のため。2026-10-03 に承認、Bolt 7。`stored_payload` は受け取った原本を上書きしない（ADR-004）ため。2026-11-02 に承認、Bolt 39a2。`received_record`・`received_record_decision`・`adopted_value` は受け取り・判断・採用の事実のため。2026-11-03 に承認、Bolt 39a3。`ingestion` は受け取った件数を書いた後に変えない取込の事実のため。2026-11-03 に承認、Bolt 39b。【前の決定の変更】Bolt 39a3 の開始準備の決定 (4) の「追記専用は 3 表」を、Bolt 39b の確認ポイント 2 で `ingestion` を足して 4 表に変えた（推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）。`external_record`・`data_source` には付けない。誤って採用した `ADOPTED` を取り消す経路がスキーマにないことは Bolt 39d の既知の課題） |
+| `tracking.milestone` | INSERT、SELECT、状態と下書き内容の UPDATE（下書きの採用の `state`・`adopted_by`・`adopted_at`。Bolt 39gb） | DELETE の権限を外す。採用済みの内容を変えないことはドメインと PostgreSQL の統合テストで確かめる（T-INV-01、T-INV-07） |
+| `routing.route_version` | INSERT、SELECT、UPDATE | 状態が変わる（確定 → 再設計要 → 旧版）ため権限では守らない。確定した経路版の内容（候補・区間・判断根拠・承認）を変えないことは、ドメインと PostgreSQL の統合テストで確かめる（R-INV-06） |
+
+輸送要求の下書きは、版の表とは別の `transport_request_draft` に置く（下書きは何度も更新するため）。提出したときに、下書きの内容を `transport_request_version` に新しい版として INSERT する。これにより版の表は INSERT だけになる（Q-INV-03）。
+
+権限の付与と剥奪は、PostgreSQL 用の Flyway のコールバック（`afterMigrate`）で、表の作成と同じ配備の中で行う（ADR-007 の補足の決定）。開発の H2 では権限による保護は働かない。保護は PostgreSQL の統合テストで確かめ、Testcontainers でも同じコールバックが動く。
+
+### 業務番号の採番（D-10）
+
+業務番号は、年ごとのカウンター表 `transport_request_number_counter` で振る。H2 と PostgreSQL の共通の SQL で書き（ADR-007）、方言で分けない。
+
+1. その年の行がなければ、提出とは別のトランザクションで `INSERT`（`last_no = 0`）する。同時の `INSERT` による一意制約の違反は、行がすでにあるという意味なので無視する。PostgreSQL では、トランザクションの中で制約に違反するとそのトランザクションが使えなくなるため、提出のトランザクションの中では `INSERT` しない。
+2. 提出のトランザクションで `UPDATE transport_request_number_counter SET last_no = last_no + 1 WHERE number_year = ?` を実行し、その年の行を行ロックして増やす。
+3. 同じトランザクションで `SELECT last_no` を実行して番号を読む。
+
+年の行は、アプリケーションの起動時に今年と来年（日本時間）の分を提出のトランザクションの外で用意する（2026-10-02 の D-13）。手順 1 の別のトランザクションは外側の接続を握ったまま 2 本目の接続を取るため、年の最初の提出が接続のプールの大きさ以上に同時に来ると枯渇しうる。手順 1 は、年をまたいで動き続けた場合の予備として残す。
+
+採番は提出と同じトランザクションで行う。提出が失敗すれば番号も戻るため、欠番が出ない（`last_no = 0` の行は番号を使わない）。手順 1 の後の UPDATE が行を見つけられるのは、分離レベルが READ COMMITTED だからである。行ロックは提出のトランザクションの終わりまで続くので、同じ年の提出は採番の部分で直列になる。年は、提出時刻の日本時間（Asia/Tokyo）の年をドメインが決めて渡す。
+
+### 冪等性（ARCH-HO-01）
+
+各業務スキーマに処理済みコマンドの表を置く。
+
+```text
+<schema>.processed_command
+  command_id      UUID          PK
+  command_type    VARCHAR(100)  NOT NULL
+  payload_hash    VARCHAR(64)   NOT NULL   -- 同じ command_id で内容が違えば衝突として拒否する
+  result_ref      VARCHAR(200)              -- 例: 予約 ID と追跡番号
+  processed_at    TIMESTAMP WITH TIME ZONE NOT NULL
+```
+
+コマンドの処理と同じトランザクションで INSERT する。主キーの一意制約により、同時に送られた同じコマンドの片方は失敗し、既存の結果を返す。
+
+## 論理データモデル
+
+列の表記は「物理名（日本語名）: 型」。`*` は NOT NULL、`PK` は主キー、`FK` は同じスキーマ内の外部キー、`UK` は一意制約、`REF` は他スキーマへの ID 参照（外部キーを張らない）を表す。
+
+### 見積り（`quotation`）
+
+```plantuml
+@startuml
+title quotation スキーマ
+hide circle
+skinparam linetype ortho
+
+entity "transport_request\n輸送要求" as tr {
+  * id : UUID <<PK>>
+  --
+  * request_number : VARCHAR(20) <<UK>>
+  * shipper_company_id : UUID <<REF identity>>
+  * status : VARCHAR(30)
+  * current_version_no : INTEGER
+  * version : BIGINT
+  * created_at / created_by
+  * updated_at / updated_by
+}
+entity "transport_request_number_counter\n業務番号の採番" as cnt {
+  * number_year : SMALLINT <<PK>>
+  --
+  * last_no : INTEGER
+}
+entity "transport_request_version\n輸送要求版" as trv {
+  * transport_request_id : UUID <<PK,FK>>
+  * version_no : INTEGER <<PK>>
+  --
+  * consignee_company_id : UUID <<REF identity>>
+  * origin_unlocode : CHAR(5)
+  * destination_unlocode : CHAR(5)
+  * arrival_deadline : TIMESTAMPTZ
+  * cargo_category : VARCHAR(30)
+  * package_type : VARCHAR(30)
+  * package_count : INTEGER
+  * gross_weight_kg : NUMERIC(12,3)
+  * volume_m3 : NUMERIC(12,3)
+  * submitted_by : UUID
+  * submitted_at : TIMESTAMPTZ
+}
+entity "transport_request_draft\n輸送要求の下書き" as trd {
+  * transport_request_id : UUID <<PK,FK>>
+  --
+  consignee_company_id : UUID
+  origin_unlocode : CHAR(5)
+  destination_unlocode : CHAR(5)
+  arrival_deadline : TIMESTAMPTZ
+  cargo_category : VARCHAR(30)
+  package_type : VARCHAR(30)
+  package_count : INTEGER
+  gross_weight_kg : NUMERIC(12,3)
+  volume_m3 : NUMERIC(12,3)
+  copied_from_request_id : UUID
+  * updated_at / updated_by
+}
+entity "required_document\n必要書類" as doc {
+  * transport_request_id : UUID <<PK,FK>>
+  * version_no : INTEGER <<PK,FK>>
+  * document_no : INTEGER <<PK>>
+  --
+  * document_type : VARCHAR(30)
+  * file_name : VARCHAR(255)
+  * media_type : VARCHAR(30)
+  * size_bytes : BIGINT
+  * sha256 : CHAR(64)
+  * object_key : VARCHAR(500)
+}
+entity "review_record\n審査記録" as rv {
+  * id : UUID <<PK>>
+  --
+  * transport_request_id : UUID <<FK>>
+  * version_no : INTEGER
+  * decision : VARCHAR(30)
+  * reviewer_id : UUID
+  * rationale : VARCHAR(4000)
+  missing_items : VARCHAR(4000)
+  * decided_at : TIMESTAMPTZ
+}
+entity "quotation\n見積り" as q {
+  * id : UUID <<PK>>
+  --
+  * transport_request_id : UUID <<FK>>
+  * quotation_no : INTEGER
+  * transport_request_version_no : INTEGER
+  * status : VARCHAR(30)
+  expires_at : TIMESTAMPTZ
+  total_amount : NUMERIC(15,2)
+  currency : CHAR(3)
+  route_policy_via : VARCHAR(200)
+  route_policy_departure_at : TIMESTAMPTZ
+  route_policy_arrival_at : TIMESTAMPTZ
+  internal_approved_by : UUID
+  internal_approved_at : TIMESTAMPTZ
+  presented_at : TIMESTAMPTZ
+  shipper_response : VARCHAR(30)
+  responded_by : UUID
+  responded_at : TIMESTAMPTZ
+  decline_reason : VARCHAR(500)
+  routing_case_number : VARCHAR(20) <<REF routing>>
+  route_version_no : INTEGER
+  route_confirmed_at : TIMESTAMPTZ
+  route_redesign_required_at : TIMESTAMPTZ（US-07 AC5。Bolt 37e）
+  shipper_approved_by : UUID
+  shipper_approved_at : TIMESTAMPTZ
+  replaced_by_quotation_id : UUID <<FK>>
+  * version : BIGINT
+  * created_at / created_by
+  * updated_at / updated_by
+}
+entity "pricing_line\n料金明細" as pl {
+  * quotation_id : UUID <<PK,FK>>
+  * line_no : INTEGER <<PK>>
+  --
+  * description : VARCHAR(200)
+  * amount : NUMERIC(15,2)
+  * currency : CHAR(3)
+  contract_reference : VARCHAR(200)
+}
+entity "assigned_route_leg\n割り当てた区間" as arl {
+  * quotation_id : UUID <<PK,FK>>
+  * leg_no : INTEGER <<PK>>
+  --
+  * voyage_number : VARCHAR(30)
+  * load_unlocode : CHAR(5)
+  * discharge_unlocode : CHAR(5)
+  * departure_at : TIMESTAMPTZ
+  * arrival_at : TIMESTAMPTZ
+}
+tr ||--|{ trv
+tr ||--o| trd
+trv ||--o{ doc
+tr ||--o{ rv
+trv ||--o{ q
+q ||--|{ pl
+q ||--o{ arl
+q |o--o| q : 置換
+@enduml
+```
+
+| 表 | 主な制約 | 対応する不変条件 |
+| :--- | :--- | :--- |
+| `transport_request` | `status` IN（`DRAFT`、`UNDER_REVIEW`、`QUOTING`、`QUOTED`、`ROUTING`、`AWAITING_APPROVAL`、`READY_TO_BOOK`、`BOOKED`、`WITHDRAWN`）。Bolt 20 で荷主承認待ち（`AWAITING_APPROVAL`）と予約待ち（`READY_TO_BOOK`）を使い始める（CHECK には初めからある） | 輸送要求の状態遷移 |
+| `transport_request`（業務番号） | `request_number` に一意制約（`uk_transport_request_number`）。`TR-年-年ごとの連番` の表記をそのまま入れる。画面と通知には業務番号だけを出す（D-4、D-10） | Q-INV-13 |
+| `transport_request_number_counter` | 年ごとに 1 行。`number_year` は業務番号の年（`year` は H2 の予約語のため使わない）。`last_no` はその年に最後に振った連番。追記専用ではない（行を更新する） | Q-INV-13 |
+| `transport_request_draft` | 輸送要求ごとに 1 行。提出時に内容を版の表へ INSERT する。`copied_from_request_id` は複製元 | Q-INV-03、Q-INV-11 |
+| `transport_request_version` | `cargo_category` IN（`GENERAL`、`DANGEROUS`、`REEFER`、`OTHER_SPECIAL`）。提出した版だけを INSERT し、更新しない（追記専用の印 `COMMENT ON TABLE ... IS '輸送要求版 [append-only]'` を付ける）。版 1 の `submitted_at` が KPI-01 の開始時刻（D-3） | Q-INV-02、Q-INV-03、US-21 |
+| `review_record` | （`transport_request_id`、`version_no`）→ `transport_request_version` の FK。（`transport_request_id`、`version_no`）に一意制約（1 つの版に判断は 1 つ。差し戻すと新しい版ができるため。Bolt 5 レビュー R-02）。`decision` IN（`APPROVED`、`SENT_BACK`）。`rationale` は確定の根拠と差戻しの理由の両方を入れる（判断で読み分ける）。追記専用の印を付ける | Q-INV-04、Q-INV-14 |
+| `required_document` | 主キー（`transport_request_id`、`version_no`、`document_no`）。（`transport_request_id`、`version_no`）→ `transport_request_version` の FK。`document_type` IN（`COMMERCIAL_INVOICE`、`PACKING_LIST`、`OTHER`）。`media_type` IN（`PDF`、`PNG`、`JPEG`）。`size_bytes` は 1 以上 10,485,760 以下。`sha256` は中身の SHA-256 の 16 進 64 文字。`file_name` は画面に出すだけに使い、`object_key` は `quotation/{輸送要求 ID}/{UUID}`（ファイル名を使わない）。出し直しでは、引き継ぐ書類は前の版の行と同じ `object_key` で新しい版に INSERT し（ファイルを複製しない）、差し替えた種類は新しい `object_key` の行にする。前の版の行は変えない。新しい版の `document_no` は 1 から振り直す。行は新しい版を作るとき（提出・出し直し）だけ INSERT し、審査の確定・差戻しの保存では書かない（2026-10-05 の D-25。Bolt 9。Bolt 6〜8 レビュー R-07）。追記専用の印を付ける（2026-10-03 に承認、Bolt 7） | Q-INV-16、US-01 |
+| `quotation` | UK（`transport_request_id`、`quotation_no`）。荷主の承認の後に失効した見積りの再見積り（D-85、Bolt 35b）では、新しい見積りが承認待ち・荷主承認待ちで経路の列（`routing_case_number`・`route_version_no`・`route_confirmed_at`）と荷主の回答の列を持ち（制約の範囲内）、経路方針の 3 列は旧版の値を写し（入れた経路方針は使わない。Bolt 35b レビュー）、`assigned_route_leg` に新しい見積りの ID で区間の写しを持つ。リポジトリは保存（新しい見積り）でも区間を書く。どの見積りから引き継いだかは列に持たない（同じ輸送要求で同じ案件番号・経路版を持つことから辿る）。`quotation_no` は輸送要求の中で 1 から振り、画面と URL に出す（内部の ID を出さない。Bolt 10）。`expires_at`・`total_amount`・`currency`・`route_policy_via`・`route_policy_departure_at`・`route_policy_arrival_at` は作成中（`DRAFT`）の見積りを保存するため NULL を許し、承認待ち以後は NOT NULL を CHECK で守る。`currency` IN（`USD`、`EUR`、`JPY`）。`route_policy_via` は UN/LOCODE のカンマ区切り（0〜5 件、空は経由地なし）。`status` IN（`DRAFT`、`PENDING_APPROVAL`、`PRESENTED`、`ROUTING_REQUESTED`、`AWAITING_SHIPPER_APPROVAL`、`APPROVED`、`EXPIRED`、`REPLACED`）。Bolt 10 は `DRAFT`・`PENDING_APPROVAL`・`PRESENTED` の値と、提示までに使う列だけで表を作り、ほかの値と列（荷主の回答・経路版・荷主承認・置換）は使う Bolt で足す（2026-10-05 の決定）。Bolt 10 の画面は作成と算出を 1 つの操作にしているため、作成中（`DRAFT`）の見積りはまだ表に入らない（入力に誤りがあれば見積りを保存しない）。作成中を保存するのは、作成中のまま保存する操作か、承認待ちからの差戻しを入れる Bolt から（Bolt 9・10 レビュー R-15）。Bolt 11 で `status` に `EXPIRED`・`REPLACED` を足し、`replaced_by_quotation_id`（`quotation.id` への FK、NULL 可。再見積りは旧版を先に更新し新しい見積りを後に保存するため、PostgreSQL では `DEFERRABLE INITIALLY DEFERRED` でコミットの時に確かめる。H2 は遅延の FK を作れないため置かない）と `ck_quotation_replaced`（置換済みのときだけ値を持つ: `(status = 'REPLACED') = (replaced_by_quotation_id IS NOT NULL)`）を足す。Q-INV-18 は PostgreSQL の部分一意インデックス `ux_quotation_active`（`transport_request_id`、`status` IN（`DRAFT`、`PENDING_APPROVAL`、`PRESENTED`））でも守り、違反は「見積りがすでにある」として値で返す。H2 は部分インデックスを作れないため、このインデックスと置換先の FK は `postgresql` のマイグレーション（`V20261005170100`）だけに置く（`event_publication` と同じく DB ごとのフォルダ）。`internal_approved_at` と `presented_at` は、社内承認して提示するが 1 つの操作なので同じ値（Bolt 9・10 レビュー R-14。COMMENT にも書いた）。失効・置換の時刻の列は作らない（監査記録は US-17）（2026-10-05 の決定）。マイグレーション `V20261005130000__create_quotation.sql` は、（`transport_request_id`、`transport_request_version_no`）→ `transport_request_version` の FK、承認待ち以後の必須（`ck_quotation_calculated`）、提示済みの承認者と提示時刻（`ck_quotation_presented`）、到着は出発より後の CHECK を持つ。ER 図の `created_at`・`updated_at` などの監査の列は、ほかの業務の表と同じく作っていない（監査記録は US-17 で決める）`shipper_response` IN（`PROCEED`、`DECLINED`）。`presented_at` は KPI-01 の終了時刻。Bolt 12 で `status` に `ROUTING_REQUESTED` を、荷主の回答の `shipper_response`（CHECK IN（`PROCEED`、`DECLINED`）。W9 の Bolt 46 で `DECLINED` を足した）・`responded_by`・`responded_at` を足す。回答の 3 列はそろって NULL かそろって値を持ち、`ROUTING_REQUESTED` なら値を持つ（`ck_quotation_responded`）。`ux_quotation_active` は `ROUTING_REQUESTED` も数えるよう作り直す（2026-10-06 の決定）。`decline_reason`（VARCHAR(500)。W9 の Bolt 46 の移行 `V20261123100000` で足した。CHECK `ck_quotation_declined`: 辞退は理由を持ち状態は失効、辞退でなければ理由を持たない）。Bolt 20（US-24 AC4・AC5）で `status` の `AWAITING_SHIPPER_APPROVAL`・`APPROVED` を使い始め、経路版の参照 `routing_case_number`（案件番号。画面と URL に内部の ID を出さないため、ER 図の当初の `routing_case_id` を案件番号に変えた。D-4）・`route_version_no`・`route_confirmed_at`（確定の時刻の写し）と、荷主承認の `shipper_approved_by`・`shipper_approved_at` を足す。経路版の参照の 3 列はそろって NULL かそろって値を持ち、荷主承認待ち・承認済みなら値を持つ（`ck_quotation_route_assigned`）。荷主承認の 2 列はそろって NULL かそろって値を持ち、承認済みなら値を持つ（`ck_quotation_shipper_approved`）。経路設計の表に外部キーは張らない（スキーマの所有。ADR-001）。割り当てた経路の区間は `assigned_route_leg`（見積り ID と区間番号 1 から。到着は出発より後）に写し、荷主の承認の画面（C-17）は経路設計に問い合わせない（ADR-014）。`ux_quotation_active` は `AWAITING_SHIPPER_APPROVAL`・`APPROVED` も数えるよう作り直す（マイグレーション `V20261008100000`・`V20261008100100`）。割り当てた区間は割当ての後に変えないため、リポジトリはまだ書いていないときだけ書く。Bolt 37e（US-07 AC5）で、割り当てた経路の再設計要の印 `route_redesign_required_at`（経路設計が経路版を再設計要にした時刻の写し。NULL 可、`COMMENT ON COLUMN` を付ける）を足す。印を持てるのは経路の割当てがあるときだけ（`ck_quotation_route_redesign`: `route_redesign_required_at IS NULL OR routing_case_number IS NOT NULL`）。印は見積りの状態ではないので `status` の CHECK は変えず、失効・置換済みの行も印を持てる。再見積りでは経路の 3 列とあわせて新しい見積りに写す。理由の区分は写さない（経路設計の `route_version.redesign_reasons` と DE-06 にある）。区間の表 `assigned_route_leg` は変えない（マイグレーション `common/V20261023100000`） | Q-INV-05〜10、B-INV-05、US-21 |
+| `pricing_line` | 主キー（`quotation_id`、`line_no`）。`line_no` は 1〜10。`amount` は 0 より大きい（NUMERIC(15,2)）。`currency` は見積りの `currency` と同じ値（アプリケーションで守る）。見積りを算出し直すときは明細を入れ替える（Bolt 10 は算出し直しを入れない） | Q-INV-17、US-03 |
+
+見積りの「失効」は、有効期限を過ぎたときに状態を書き換えるのではなく、判定時刻と `expires_at` の比較で決める（Q-INV-06）。`status` の `EXPIRED` は、期限切れを確かめた結果として残す。Bolt 11 では、再見積りのときに有効期限を過ぎていた旧版にだけ記録する（定期処理での記録は入れない。2026-10-05 の決定）。予約確定の判定は常に `expires_at` で行う。
+
+`quotation.status` の `VOIDED`（条件の変更で無効）は、荷主が本予約の前に輸送条件を変更し、旧版の見積りになったことを表す（Q-INV-19。Bolt 62。移行 `V20261128100000` は `ck_quotation_status` に値を足すだけで、列は足さない）。経路・荷主の回答・承認の列は残す。置換先を持たないので `REPLACED` とは分ける。有効な見積りを 1 件に限る部分一意インデックスは `VOIDED` を数えない。
+
+### 経路設計（`routing`）
+
+```plantuml
+@startuml
+title routing スキーマ
+hide circle
+skinparam linetype ortho
+
+entity "routing_case\n経路設計案件" as rc {
+  * id : UUID <<PK>>
+  --
+  * case_number : VARCHAR(20) <<UK>>
+  * transport_request_id : UUID <<REF quotation>>
+  * transport_request_version_no : INTEGER
+  * transport_request_number : VARCHAR(20)
+  * quotation_id : UUID <<REF quotation>>
+  route_policy_via : VARCHAR(200)
+  * origin_unlocode : CHAR(5)
+  * destination_unlocode : CHAR(5)
+  * arrival_deadline : TIMESTAMPTZ
+  * cargo_category : VARCHAR(30)
+  * requested_at : TIMESTAMPTZ
+  * shipper_company_id : UUID <<REF identity>>（Bolt 38g）
+  * version : BIGINT
+  * created_at / created_by（created_by は US-07）
+  * updated_at / updated_by（updated_by は US-07）
+}
+entity "route_version\n経路版" as rver {
+  * routing_case_id : UUID <<PK,FK>>
+  * route_version_no : INTEGER <<PK>>
+  --
+  * status : VARCHAR(30)
+  candidates_evaluated_at : TIMESTAMPTZ
+  previous_route_version_no : INTEGER（US-08）
+  redesign_cause : VARCHAR(4000)（US-08）
+  redesign_required_at : TIMESTAMPTZ（US-07 AC4。Bolt 37d）
+  redesign_reasons : VARCHAR(200)（US-07 AC4。Bolt 37d）
+  rationale : VARCHAR(4000)（US-07）
+  decided_by : UUID（US-07）
+  approved_by : UUID（US-07）
+  approved_at : TIMESTAMPTZ（US-07）
+  selected_candidate_no : INTEGER（US-07）
+  * created_at : TIMESTAMPTZ
+}
+entity "route_candidate\n経路候補" as cand {
+  * routing_case_id : UUID <<PK,FK>>
+  * route_version_no : INTEGER <<PK,FK>>
+  * candidate_no : INTEGER <<PK>>
+  --
+  * conforming : BOOLEAN
+  * estimated_arrival_at : TIMESTAMPTZ
+  min_connection_slack_minutes : INTEGER
+  * evaluated_at : TIMESTAMPTZ
+  oldest_info_acquired_at : TIMESTAMPTZ
+  * info_insufficient : BOOLEAN
+}
+entity "candidate_leg\n区間" as leg {
+  * routing_case_id : UUID <<PK,FK>>
+  * route_version_no : INTEGER <<PK,FK>>
+  * candidate_no : INTEGER <<PK,FK>>
+  * leg_no : INTEGER <<PK>>
+  --
+  * voyage_number : VARCHAR(30)
+  * load_unlocode : CHAR(5)
+  * discharge_unlocode : CHAR(5)
+  load_call_no : INTEGER
+  discharge_call_no : INTEGER
+  * departure_at : TIMESTAMPTZ
+  * arrival_at : TIMESTAMPTZ
+  cargo_cutoff_at : TIMESTAMPTZ
+  doc_cutoff_at : TIMESTAMPTZ
+  * info_version : VARCHAR(100)
+  * info_acquired_at : TIMESTAMPTZ
+  * executed : BOOLEAN
+}
+entity "exclusion_reason\n除外理由" as ex {
+  * routing_case_id : UUID <<PK,FK>>
+  * route_version_no : INTEGER <<PK,FK>>
+  * candidate_no : INTEGER <<PK,FK>>
+  * reason_no : INTEGER <<PK>>
+  --
+  * reason_code : VARCHAR(30)
+  violated_at : TIMESTAMPTZ
+  threshold_deadline : TIMESTAMPTZ
+  threshold_port_unlocode : CHAR(5)
+  threshold_required_connection : VARCHAR(30)
+  threshold_voyage_number : VARCHAR(30)
+  threshold_freshness_tolerance : VARCHAR(30)
+  threshold_cargo_category : VARCHAR(30)
+  info_version : VARCHAR(100)
+}
+entity "referenced_info_version\n参照情報版" as riv {
+  * routing_case_id : UUID <<PK,FK>>
+  * route_version_no : INTEGER <<PK,FK>>
+  * voyage_number : VARCHAR(30) <<PK>>
+  --
+  * info_version : VARCHAR(100)
+  * acquired_at : TIMESTAMPTZ
+}
+entity "voyage\n航海" as v {
+  * voyage_number : VARCHAR(30) <<PK>>
+  --
+  * adopted_info_version : VARCHAR(100)
+  * source_kind : VARCHAR(30)
+  * source_ref : VARCHAR(200)
+  * acquired_at : TIMESTAMPTZ
+  published_at : TIMESTAMPTZ
+  * version : BIGINT
+  * updated_at : TIMESTAMPTZ
+}
+entity "port_call\n寄港" as pc {
+  * voyage_number : VARCHAR(30) <<PK,FK>>
+  * call_no : INTEGER <<PK>>
+  --
+  * port_unlocode : CHAR(5)
+  arrival_at : TIMESTAMPTZ
+  departure_at : TIMESTAMPTZ
+}
+entity "connection_rule\n接続時間規則" as cr {
+  * id : UUID <<PK>>
+  --
+  * route_scope : VARCHAR(100)
+  * port_unlocode : CHAR(5)
+  * min_connection_minutes : INTEGER
+  * valid_from : TIMESTAMPTZ
+  valid_to : TIMESTAMPTZ
+  * version : BIGINT
+}
+rc ||--o{ rver
+rver ||--|{ cand
+cand ||--|{ leg
+cand ||--o{ ex
+rver ||--o{ riv
+v ||--|{ pc
+leg }o..|| v : 航海番号
+riv }o..|| v : 航海番号
+@enduml
+```
+
+| 表 | 主な制約 | 対応する不変条件 |
+| :--- | :--- | :--- |
+| `routing_case` | UK（`transport_request_id`、`transport_request_version_no`）で、詳細経路設計の依頼（DE-16）が再配信されても案件を重複させない。確定した経路版は `route_version` の状態で表す（Bolt 37d で `confirmed_route_version_no` を消した。確定は案件に 1 つを PostgreSQL の部分一意インデックス `ux_route_version_confirmed` と集約で守る） | R-INV-05、R-INV-10 |
+| `route_version` | `status` IN（`DRAFT`、`CANDIDATES_PRESENTED`、`EXPERT_REVIEW`、`CONFIRMED`、`REDESIGN_REQUIRED`、`SUPERSEDED`）。確定時は `approved_by`・`approved_at`・`rationale` が NOT NULL（アプリケーションで検証） | R-INV-03、R-INV-04、R-INV-06 |
+| `exclusion_reason` | `reason_code` IN（`DEADLINE_EXCEEDED`、`CONNECTION_TOO_SHORT`、`CARGO_NOT_SUPPORTED`、`NOT_CONNECTABLE`、`INFO_INSUFFICIENT`） | R-INV-02 |
+| `referenced_info_version` | 確定時に参照した航海ごとの情報版。承認時の再検証と、確定後の再評価に使う（Bolt 37c の注: この表はまだ作っていない。承認時の再検証は、区間の写しの情報版 `candidate_leg.info_version` と区間の予定 `departure_at`・`arrival_at` の組で今の航海と照合する（Bolt 39e2 の【前の決定の変更】(1)。スキーマは変えない）。Bolt 37d の決定: この表は作らない。旧情報版は確定の記録の候補の区間に残る。航海番号から評価する案件を引く照会は Bolt 39f で `candidate_leg.voyage_number` の索引 `ix_candidate_leg_voyage` を足した） | R-INV-03、R-INV-07 |
+| `candidate_leg` | `executed` は再設計の対象から外す区間を示す。`load_call_no`・`discharge_call_no` はそろって NULL か、そろって値を持ち `load_call_no` が小さい（CHECK。Bolt 39f） | R-INV-08 |
+| `port_call` | 寄港に到着予定か出発予定の少なくとも一方を要する（CHECK `ck_port_call_times`。V20261007100000__create_routing.sql）。寄港を 2 つ以上要すること・出発予定は到着予定以後であることは集約（`Voyage`・`PortCall`）が守る。外部データの取込の値は同じ規則を写しとして持つ（Bolt 39b2b）。航海の更新では寄港の行を消して入れ直す（置き換え。`voyage` の条件付きの更新が通った後。`candidate_leg` から航海への外部キーはないので影響しない。Bolt 39e） | — |
+
+「確定は案件に 1 つ」は PostgreSQL の部分一意インデックス `ux_route_version_confirmed`（`route_version (routing_case_id) WHERE status = 'CONFIRMED'`。`migration/postgresql`）で表す。H2（開発環境・デモ環境）では部分インデックスを使えないので、集約（`RoutingCase` の経路版の検査）が守る（Bolt 37d。それまでは案件のヘッダに `confirmed_route_version_no` を持っていたが、書くだけで読まれず、再設計要にすると NULL で上書きされるので消した。D-72 を解消した）。
+
+Bolt 17（US-06 AC1〜AC3）で作る範囲（[Bolt 17 計画](../../development/cargo-tracker/bolt_17_plan.md) の確認ポイント 4〜7）:
+
+- `routing` スキーマに、`routing_case`・`route_version`・`route_candidate`・`candidate_leg`・`exclusion_reason`・`voyage`・`port_call`・`connection_rule` と、案件番号の採番の `routing_case_number_counter`（年ごとに 1 行。`quotation.transport_request_number_counter` と同じ形）を作る。`route_version` の判断・承認の列（`rationale`、`decided_by`、`approved_by`、`approved_at`、`selected_candidate_no`）、再設計の列（`previous_route_version_no`、`redesign_cause`）と `referenced_info_version` は、使う Bolt（US-07・US-08）で足す。
+- `routing_case.case_number` は案件番号（`RC-年-連番`。UK）。画面と URL には案件番号だけを出す（D-4）。
+- 実装で足した列（Bolt 17 のステップ 3）: `routing_case.transport_request_number`（業務番号の写し。S-05 で見積依頼を示す）、`routing_case.requested_at`（詳細経路設計の依頼時刻。S-05 の並びと案件番号の年）、`route_version.candidates_evaluated_at`（候補の判定時刻。候補が 0 件でも算出したことを残す）、`candidate_leg.info_version`・`info_acquired_at`（区間を取った航海の採用情報版と取得時刻。理由の参照情報版と情報鮮度に使う）。`routing_case` の `created_by`・`updated_by` は、操作者を残す Bolt（US-07 の確定）で足す。`route_candidate.candidate_no` は 1〜20（候補の上限）、`voyage.source_kind` は出典の種類の 4 値を CHECK で守る。
+- `route_candidate.min_connection_slack_minutes` は候補の接続余裕（接続時間 − 必要最小接続時間の最小。分）。直行は NULL。`info_insufficient` は候補の理由に情報不足があるか（Bolt 37b2。それまでは常に false）。除外の閾値は Bolt 39i から区分ごとの 6 列（`threshold_deadline`・`threshold_port_unlocode`・`threshold_required_connection`・`threshold_voyage_number`・`threshold_freshness_tolerance`・`threshold_cargo_category`）に分けた。期限超過は希望到着期限、接続不足は港と必要最小接続時間（ISO 8601 の期間）、接続できないは港、情報不足は航海番号（空白を含み得る）と許容時間（ISO 8601 の期間）、貨物種別は案件の貨物種別の名前。区分が持つ列だけ値があり、ほかは NULL（CHECK `ck_exclusion_reason_threshold`。【前の決定の変更】(32)。Bolt 37b2 の「1 列に詰めて最後の空白で分ける」を改めた）。
+- **Bolt 39i で足す列と消す列**: `V20261116100000__split_routing_exclusion_reason_threshold.sql` が、`exclusion_reason` に上の 6 列（すべて NULL 可）を足し、既存の行を区分ごとに移し（期限は `CAST`、接続不足は港と接続時間、情報不足は最後の空白で分ける。区切りのない行は移さず NULL のままにして CHECK で止める）、CHECK `ck_exclusion_reason_threshold`（区分が持つ列は NOT NULL、持たない列は NULL）を足し、`threshold` を消す。理由の行は消さない（消すと除外の候補が適合に変わる）。`violated_at`・`info_version` は NULL 可のまま変えない。`threshold_cargo_category` に値の CHECK は足さない（`routing_case.cargo_category` に CHECK がない前例。読み戻しで種別にない文字列を拒む）。時間は ISO 8601 の文字列のまま。**後方互換の規約への例外**（【前の決定の変更】(34)）: ステージング・本番が W10 までなく旧版と並走する現場がないため、足して移して消すを 1 つにした。W10 の後に同じ変更をするときは 3 段にする。戻すときは逆のマイグレーションを書く（前進のみ）。
+- 候補を再算出したら、経路版の候補・区間・除外理由を消して入れ直す（候補は追記専用ではない）。確定した経路版の候補は書き換えない（Bolt 19）。
+- Bolt 19（US-07 AC1・AC2）で足す列: `route_version` の `candidates_found`（見つけた候補の数。上限で示さなかった候補の数を常に示す。Bolt 17 レビュー D-64。既存の行は示した候補の数で埋める）、`selected_candidate_no`・`rationale`（VARCHAR(4000)）・`approved_by`・`approved_at`。4 列はそろって NULL かそろって値を持ち、確定では値を持ち、作成中・候補提示済み・要専門家判断では持たない（再設計要・旧版は確定の後の状態なので持てる）（CHECK `ck_route_version_confirmed`）。確定すると `routing_case.confirmed_route_version_no` に経路版番号を入れる（Bolt 37d まで。Bolt 37d でこの列と外部キーを消した）。`routing_case` の `quotation_expires_at`（DE-16 の見積有効期限。S-05 の並び）・`created_by`（行を作った操作者ではなく、DE-16 の依頼者の荷主担当者。行はイベントの購読が作る）・`updated_by`（最後に算出・確定した経路設計者）。Bolt 17 で作った行のために NULL を許す（デモ環境のサンプルの案件は `db/dev-data` で依頼元の見積りから写す）。S-05 は最新の経路版の状態を示し、見積有効期限の近い順（NULL は後ろ）、同じなら依頼の古い順に並べる。確定した経路版の行は、`updateRouteVersion` の条件（作成中・候補提示済みだけ）で書き直さない。参照情報版は `candidate_leg.info_version` から読み、写しの列は作らない。開発レビューの後に外部キーを 2 本足した（`V20261007140000`）。`routing_case`（`id`、`confirmed_route_version_no`）→ `route_version`、`route_version`（`routing_case_id`、`route_version_no`、`selected_candidate_no`）→ `route_candidate`（確定した候補を消せない）。「確定は案件に 1 つ」は H2 で部分一意インデックスを作れないため `confirmed_route_version_no` と集約の検証で守る。`decided_by`（専門判断）と再設計の列は使う Bolt で足す。
+- Bolt 37d（US-07 AC4 の準備）で足す列と消す列: `route_version` の `redesign_required_at`（再設計要にした時刻）と `redesign_reasons`（不適合の理由の区分の名前を空白で区切る。`DEADLINE_EXCEEDED`・`CONNECTION_TOO_SHORT`・`NOT_CONNECTABLE`・`VOYAGE_UNAVAILABLE`）。2 列はそろって NULL かそろって値を持ち、値を持てるのは再設計要と旧版だけ、再設計要は必ず持つ（CHECK `ck_route_version_redesign`）。再設計要は確定の記録も持つ（CHECK `ck_route_version_redesign_confirmed`）。設計の `redesign_cause`（US-08 の再設計の変更根拠）とは別の列。`routing_case.confirmed_route_version_no` と外部キーを消した。
+- 経路設計の表と見積りの表の間に外部キーは張らない（スキーマの所有。ADR-001）。輸送要求・見積りの ID は、見積りの公開 API とイベントから得た値の写し。
+- Bolt 38g（US-16 AC4）で足す列: `routing_case.shipper_company_id`（荷主企業。見積りの公開 API「経路条件の照会」の結果の写しで、社内の経路設計の画面を担当企業で絞るのに使う。NOT NULL）。3 段で入れる: common の `V20261029100000` で null 可で足し索引 `ix_routing_case_shipper`（`shipper_company_id`、`quotation_expires_at`）を付ける → dev だけの `V20261029100900` で既存の行を輸送要求の荷主企業から埋める → common の `V20261029101000` で `SET NOT NULL`。ステージング・本番には行がない
+- 航海・寄港は、外部原本の取込（US-14、W7）で採用した値を経路設計の listener が書く（Bolt 39e）。出典 `EXTERNAL_RECORD`、参照は受信記録 ID、情報版は外部版。ステージング・本番では初めての DE-12 で行を作る。開発環境の `db/dev-data` の仮の航海（出典 `MANUAL_ENTRY`、情報版 `PROVISIONAL-1`、架空の航海番号）はそのまま残す。接続時間規則は、規則の管理ができるまで `db/dev-data` にだけ入れる仮のデータで、ステージング・本番では 0 件。
+- Bolt 39e（US-14）で足す列: `voyage.published_at`（採用値を公開した時刻。NULL を許す。取込を経ない仮の航海は NULL で、どの DE-12 より古いとみなす）。同じ航海の DE-12 の順の判定に使う。`updated_at` は監査用の列の規約のままで、公開した時刻に使わない。共通のマイグレーションで足す。索引は足さない（港ごとの出発の索引は W10 の性能テストと一緒に見る）。
+- Bolt 39f（US-07 AC4）で足す列と索引: `candidate_leg.load_call_no`・`discharge_call_no`（確定の区間の寄港の位置。INTEGER、NULL を許す。`port_call.call_no` の値（1 始まりの運航の順）を写す。外部キーはない（寄港は更新のたびに消して入れ直すので、位置は値として持つ））。CHECK はそろって NULL か、そろって値を持ち `load_call_no` が小さい。NULL は Bolt 39f より前に算出した候補だけで、埋め直さない（ステージング・本番に案件の行はなく、開発データの見本は算出し直すまで NULL のまま）。使うのは積地か揚地に 2 度寄る航海で組が 2 つ以上あるときの評価の引き直しと照合だけ（domain_model の Bolt 39f で決めたこと。【業務の判断】(u)）。索引 `ix_candidate_leg_voyage`（`candidate_leg (voyage_number)`）を足す（航海番号から確定した経路版を持つ案件を引く照会）。共通のマイグレーション `V20261110100000__add_routing_candidate_leg_call_no_and_voyage_index.sql` で足す。
+
+### 予約（`booking`）
+
+```plantuml
+@startuml
+title booking スキーマ
+hide circle
+skinparam linetype ortho
+
+entity "booking\n貨物予約" as b {
+  * id : UUID <<PK>>
+  --
+  * tracking_number : VARCHAR(20) <<UK>>
+  * transport_request_number : VARCHAR(20) <<REF quotation, UK1>>
+  * quotation_no : INTEGER <<REF quotation, UK1>>
+  * quotation_id : UUID <<REF quotation, UK>>
+  * shipper_company_id : UUID <<REF identity>>
+  * status : VARCHAR(30)
+  * transport_phase : VARCHAR(30)
+  * current_version_no : INTEGER
+  * version : BIGINT
+  * created_at / created_by
+  * updated_at / updated_by
+}
+entity "booking_version\n予約版" as bv {
+  * booking_id : UUID <<PK,FK>>
+  * booking_version_no : INTEGER <<PK>>
+  --
+  * transport_request_id : UUID <<REF quotation>>
+  * transport_request_version_no : INTEGER
+  * quotation_id : UUID <<REF quotation>>
+  * routing_case_number : VARCHAR(20) <<REF quotation>>
+  * route_version_no : INTEGER
+  * consignee_company_id : UUID <<REF identity>>
+  * cargo_category : VARCHAR(30)
+  * cargo_summary : VARCHAR(1000)
+  * shipper_approver_id : UUID
+  * confirmed_by : UUID
+  * committed_at : TIMESTAMPTZ
+}
+entity "amendment_request\n変更取消申請" as ar {
+  * id : UUID <<PK>>
+  --
+  * booking_id : UUID <<FK>>
+  * kind : VARCHAR(30)
+  * status : VARCHAR(30)
+  * requested_by : UUID
+  * requested_at : TIMESTAMPTZ
+  * reason : VARCHAR(4000)
+  decided_by : UUID
+  decided_at : TIMESTAMPTZ
+  decision_note : VARCHAR(4000)
+  service_case_number : VARCHAR(20)
+}
+entity "booking_saga\n予約サガ" as saga {
+  * id : UUID <<PK>>
+  --
+  * booking_id : UUID <<FK, UK>>
+  * tracking_number : VARCHAR(20)
+  * status : VARCHAR(30)
+  * current_step : VARCHAR(50)
+  service_case_number : VARCHAR(20)
+  * started_at : TIMESTAMPTZ
+  * updated_at : TIMESTAMPTZ
+  * version : BIGINT
+}
+b ||--|{ bv
+b ||--o{ ar
+b ||--o| saga
+
+entity "processed_command\n処理済みコマンド" as pc {
+  * command_id : UUID <<PK>>
+  --
+  * command_type : VARCHAR(100)
+  * payload_hash : VARCHAR(64)
+  result_ref : VARCHAR(200)
+  * processed_at : TIMESTAMPTZ
+}
+@enduml
+```
+
+| 表 | 主な制約 | 対応する不変条件 |
+| :--- | :--- | :--- |
+| `booking` | `tracking_number` は一意。UK（`quotation_id`）で、1 つの見積りから 2 件目の予約を作れない（別のコマンド ID による同時確定でも片方が一意制約で失敗する。予約版ではなく貨物予約に置くのは、変更の承認で予約版を足しても同じ見積りの写しを持てるようにするため。Bolt 23 レビュー）。`status` IN（`CONFIRMED`、`AMENDMENT_PENDING`、`CANCELLATION_PENDING`、`AMENDING`、`CANCELLED`、`IN_TRANSIT`、`COMPLETED`）。`transport_phase` IN（`BEFORE_PICKUP`、`AFTER_PICKUP`、`COMPLETED`）。UK（`transport_request_number`、`quotation_no`）: 見積り番号は見積りの写し（業務番号と同じ。R-31）で、見積りの公開 API に照会する前に同じ見積りの予約を引く（失効・置換の後は見積り ID が返らないため。Bolt 24）。B-INV-11 の正は見積り ID の UK で、業務番号と見積り番号の UK は同じ事実を業務の鍵で引くための索引を兼ねる（どちらに違反しても同じ見積りの予約として扱う）。Bolt 39g2 から、`status`・`transport_phase` は DE-09・DE-10 の通知（予約の公開 API）で `IN_TRANSIT`・`AFTER_PICKUP` と `COMPLETED`・`COMPLETED` に進む（期待版の UPDATE で `version` を 1 進め、`updated_at` と `updated_by`（通知の操作者＝集荷・引渡しを登録・採用した追跡管理者）を書く。`current_version_no` と予約版は書かない。B-INV-08）。スキーマは変えない。39g2 の前に採用した集荷・引渡しの予約は補正しない | B-INV-06、B-INV-07、B-INV-11 |
+| `booking_version` | 予約確定時の見積り・経路版・荷受人・貨物の写しと、確定者・commit 時刻 | B-INV-01、B-INV-08 |
+| `booking_saga` | 予約ごとに 1 つ。`status` IN（`IN_PROGRESS`、`COMPLETED`、`FAILED`、`NEEDS_HUMAN`）。完了は `status` と `updated_at`（完了の時刻を兼ねる。予約が通知を受けた時刻で、追跡を開始した時刻ではない。Bolt 25 レビュー A-6）を期待版（`version`）で更新し、完了時刻の列は持たない。`current_step` は完了の後も `START_TRACKING` のまま（Bolt 25）。再試行の回数・次の時刻・最後の誤りは持たない（追跡の開始の再試行はイベントの再配信が担う。ADR-015）。有人確認要の判定は処理中の滞留（`started_at`）で行う | ARCH-HO-02 |
+| `processed_command` | 本予約確定のコマンド ID を記録し、再送には既存の予約 ID と追跡番号を返す。確定に成功したときだけ、貨物予約と同じトランザクションで INSERT する。`command_type` は `ConfirmBooking`、`payload_hash` は業務番号・見積り番号・操作者の利用者 ID の SHA-256、`result_ref` は「予約 ID:追跡番号」、`processed_at` は commit 時刻。追記専用。同じコマンド ID の同時の確定は、同じ見積りなので処理済みコマンドの主キーより先に貨物予約の UK（`quotation_id`）で片方が負ける。負けた側は貨物予約の保存をセーブポイントに戻し（トランザクションは中断しない）、同じトランザクションで処理済みコマンド → 同じ見積りの予約の順に引き直し、最初の結果か既存の追跡番号を返す（Bolt 24） | B-INV-03、B-INV-11 |
+
+`booking_version.cargo_summary` は予約確定時の貨物の写しで、見積りの内部情報（料金明細）は複製しない（units.md「見積り内部情報を予約へ複製しない」）。表示用の文字列で、書式は見積りが決め、予約は解釈しない。Bolt 29c から貨物種別・荷姿の日本語名と、不要な 0 を落とし桁区切りを入れた重量・容積（例: 「一般 / パレット × 12 / 8,400 kg / 32.5 m3」）。それより前の予約版は追記専用なので英語の値（「GENERAL / PALLET × 12 / 8400.000 kg / 32.500 m3」）のまま残る。
+
+### 追跡（`tracking`）
+
+```plantuml
+@startuml
+title tracking スキーマ
+hide circle
+skinparam linetype ortho
+
+entity "tracking_record\n追跡記録" as trk {
+  * tracking_number : VARCHAR(20) <<PK>>
+  --
+  * booking_id : UUID <<UK, REF booking>>
+  * shipper_company_id : UUID <<REF identity>>
+  * consignee_company_id : UUID <<REF identity>>
+  * booking_status : VARCHAR(30)
+  routing_case_number : VARCHAR(20) <<REF routing>>
+  route_version_no : INTEGER
+  * current_status : VARCHAR(30)
+  status_basis_milestone_no : INTEGER
+  under_review_reason : VARCHAR(30)
+  procedure_stage : VARCHAR(30)
+  original_eta : TIMESTAMPTZ
+  latest_eta : TIMESTAMPTZ
+  last_acquired_at : TIMESTAMPTZ
+  next_expected_at : TIMESTAMPTZ
+  voyage_arrival_at : TIMESTAMPTZ
+  voyage_arrival_published_at : TIMESTAMPTZ
+  voyage_arrival_acquired_at : TIMESTAMPTZ
+  voyage_arrival_source_ref : VARCHAR(200)
+  latest_eta_basis : VARCHAR(30)
+  latest_eta_basis_milestone_no : INTEGER
+  * version : BIGINT
+  * created_at : TIMESTAMPTZ
+  * updated_at : TIMESTAMPTZ
+}
+entity "scheduled_leg\n予定区間" as sl {
+  * tracking_number : VARCHAR(20) <<PK,FK>>
+  * leg_no : INTEGER <<PK>>
+  --
+  * voyage_number : VARCHAR(30)
+  * load_unlocode : CHAR(5)
+  * discharge_unlocode : CHAR(5)
+  * departure_at : TIMESTAMPTZ
+  * arrival_at : TIMESTAMPTZ
+}
+entity "milestone\n主要実績" as m {
+  * tracking_number : VARCHAR(20) <<PK,FK>>
+  * milestone_no : INTEGER <<PK>>
+  --
+  * kind : VARCHAR(30)
+  * location_unlocode : CHAR(5)
+  * occurred_at : TIMESTAMPTZ
+  * source_kind : VARCHAR(30)
+  * source_ref : VARCHAR(200)
+  * acquired_at : TIMESTAMPTZ
+  * state : VARCHAR(30)
+  * shown_to_customer : BOOLEAN
+  * registered_by : UUID
+  * registered_at : TIMESTAMPTZ
+  revised_by : UUID
+  revised_at : TIMESTAMPTZ
+  data_source_id : UUID
+  external_id : VARCHAR(200)
+  published_at : TIMESTAMPTZ
+  adopted_by : UUID
+  adopted_at : TIMESTAMPTZ
+}
+entity "rejected_milestone\n拒否した主要実績 [append-only]" as rm {
+  * id : UUID <<PK>>
+  --
+  * tracking_number : VARCHAR(20)
+  * kind : VARCHAR(30)
+  * location_unlocode : CHAR(5)
+  * occurred_at : TIMESTAMPTZ
+  * source_kind : VARCHAR(30)
+  * source_ref : VARCHAR(200)
+  * acquired_at : TIMESTAMPTZ
+  * data_source_id : UUID
+  * external_id : VARCHAR(200)
+  * reason : VARCHAR(30)
+  * recorded_at : TIMESTAMPTZ
+}
+entity "correction\n訂正" as c {
+  * id : UUID <<PK>>
+  --
+  * tracking_number : VARCHAR(20) <<FK>>
+  * target_milestone_no : INTEGER <<FK>>
+  * new_kind : VARCHAR(30)
+  * new_location_unlocode : CHAR(5)
+  * new_occurred_at : TIMESTAMPTZ
+  * reason : VARCHAR(4000)
+  * status : VARCHAR(30)
+  * registered_by : UUID
+  * registered_at : TIMESTAMPTZ
+  approved_by : UUID
+  approved_at : TIMESTAMPTZ
+}
+entity "service_case\n有人案件" as sc {
+  * case_number : VARCHAR(20) <<PK>>
+  --
+  * kind : VARCHAR(30)
+  shipper_company_id : UUID <<REF identity>>
+  booking_id : UUID <<REF booking>>
+  tracking_number : VARCHAR(20)
+  * cause : VARCHAR(4000)
+  * priority : VARCHAR(30)
+  * department : VARCHAR(50)
+  assignee_id : UUID
+  received_at : TIMESTAMPTZ
+  * receive_due_at : TIMESTAMPTZ
+  answer_due_at : TIMESTAMPTZ
+  next_update_at : TIMESTAMPTZ
+  old_version_ref : VARCHAR(200)
+  new_version_ref : VARCHAR(200)
+  manual_source_ref : VARCHAR(200)
+  * reconciliation_required : BOOLEAN
+  reconciliation_id : UUID <<REF external_data>>
+  origin_ref : VARCHAR(200) <<UNIQUE。システム起票の起票元キー。Bolt 40-17>>
+  acknowledged_at : TIMESTAMPTZ
+  * status : VARCHAR(30)
+  * version : BIGINT
+  * created_at / created_by
+  * updated_at / updated_by
+}
+entity "service_case_source\n参照した出典" as scs {
+  * case_number : VARCHAR(20) <<PK,FK>>
+  * source_no : INTEGER <<PK>>
+  --
+  * source_kind : VARCHAR(30)
+  * source_ref : VARCHAR(200)
+  * acquired_at : TIMESTAMPTZ
+}
+entity "service_case_progress\n進捗" as scp {
+  * case_number : VARCHAR(20) <<PK,FK>>
+  * progress_no : INTEGER <<PK>>
+  --
+  * content : VARCHAR(4000)
+  next_update_at : TIMESTAMPTZ
+  * updated_by : UUID
+  * updated_at : TIMESTAMPTZ
+}
+entity "service_case_answer\n回答" as sca {
+  * case_number : VARCHAR(20) <<PK,FK>>
+  * answer_no : INTEGER <<PK>>
+  --
+  * content : VARCHAR(4000)
+  * answered_by : UUID
+  * answered_at : TIMESTAMPTZ
+  customer_response : VARCHAR(4000)
+  customer_responded_at : TIMESTAMPTZ
+}
+entity "inquiry_record\n照会記録" as ir {
+  * id : UUID <<PK>>
+  --
+  * channel : VARCHAR(30)
+  * shipper_company_id : UUID
+  tracking_number : VARCHAR(20)
+  * inquirer_kind : VARCHAR(30)
+  inquirer_user_id : UUID
+  * received_at : TIMESTAMPTZ
+  * escalated : BOOLEAN
+  case_number : VARCHAR(20)
+  recorded_by : UUID
+}
+entity "business_calendar\n営業日カレンダー" as bc {
+  * calendar_date : DATE <<PK>>
+  --
+  * business_day : BOOLEAN
+  open_time : TIME
+  close_time : TIME
+  * time_zone : VARCHAR(50)
+  note : VARCHAR(200)
+}
+trk ||--|{ sl
+trk ||--o{ m
+m ||--o{ c
+trk ||..o{ sc : 追跡番号
+sc ||--o{ scs
+sc ||--o{ scp
+sc ||--o{ sca
+@enduml
+```
+
+| 表 | 主な制約 | 対応する不変条件 |
+| :--- | :--- | :--- |
+| `tracking_record` | `current_status` は主要実績から導出した結果の保存（照会のため）。導出の正は集約のロジック。`original_eta`（確定した経路版の到着予定）と `latest_eta`（最新の見込み）を別に持つ。`procedure_stage` は通関等の手続き中の段階。UK（`booking_id`）`uk_tracking_record_booking`: 予約 1 件に追跡記録 1 件で、DE-07 の再配信の冪等の正（T-INV-11。Bolt 25）。`booking_status` IN（`CONFIRMED`、`CANCELLED`、`COMPLETED`）（`ck_tracking_record_booking_status`）。`current_status` IN（`BOOKED`、`PICKUP_SCHEDULED`、`PICKED_UP`、`RECEIVED_AT_ORIGIN`、`IN_TRANSIT`、`TRANSSHIPPING`、`ARRIVED_AT_DESTINATION`、`READY_FOR_DELIVERY`、`DELIVERED`、`UNDER_REVIEW`）（`ck_tracking_record_current_status`。ドメインモデルの追跡状態）。実績に関わる列（`status_basis_milestone_no`、`under_review_reason`、`procedure_stage`、`last_acquired_at`）と経路版・到着予定の 4 列は NULL 可で作る（Bolt 25 の追跡の開始では経路版と到着予定に必ず値を入れる）。監査用の列の `created_by`・`updated_by` は持たない（行はイベントの購読でシステムが作る。共通の規約の例外）。`created_at` は追跡の開始時刻で、S-11 追跡一覧はその新しい順（同じ時刻なら `tracking_number` の順）に引く（Bolt 26）。主要実績の登録（Bolt 26b）は `current_status`・`status_basis_milestone_no`・`version`・`updated_at` だけを UPDATE し（`WHERE version = 読み込んだ版`）、経路版・到着予定・`last_acquired_at` は書かない（到着見込みと鮮度は W7）。Bolt 39g3 から主要実績の保存は `latest_eta`（採用の実績から導いた最新の到着見込み）と `last_acquired_at`（採用の実績の出典の取得時刻のうち最も新しいもの。採用の実績がなければ NULL）も UPDATE する。`original_eta`・経路版は書かない（T-INV-10）。スキーマは変えない。39g3 の前に採用した実績を持つ行は、次に実績が変わるまで `latest_eta` が当初のまま、`last_acquired_at` が NULL のまま残る（補正しない。配備の前に件数を確かめる）。`status_basis_milestone_no` から `milestone` への外部キー `fk_tracking_record_status_basis`（`tracking_number`・`status_basis_milestone_no`）は、PostgreSQL だけに DEFERRABLE INITIALLY DEFERRED で張る（UPDATE を INSERT より先に行うため。見積りの `fk_quotation_replaced_by` と同じ決め方。H2 では集約の不変条件で守る。Bolt 26c）。経路版の 2 列と到着予定の 2 列は NOT NULL（追跡の開始で必ず入る。Bolt 26c で NULL 可から改めた）。`under_review_reason` は区分値 `VARCHAR(30)` で IN（`OUT_OF_SEQUENCE`）（`ck_tracking_record_under_review_reason`）、`current_status = 'UNDER_REVIEW'` のときだけ値を持ち、それ以外は NULL（`ck_tracking_record_under_review`）。主要実績の登録・採用は `under_review_reason` も UPDATE する（Bolt 39gc）。`next_expected_at`（次の予定の実績の予定時刻。NULL 可。完了後と次の予定の実績がないときは NULL）は追跡の開始の INSERT と主要実績の UPDATE が書く（Bolt 39g4。S-11・S-12 の鮮度超過の判定は読むときにこの値と判定の時刻で行い、判定は保存しない）。Bolt 39g4b から `last_acquired_at` は、採用の実績の出典の取得時刻と、受けた最後の区間の航海の知らせの取得時刻（`voyage_arrival_acquired_at`）のうち最も新しいもの（【業務の判断】(av)、台帳 D-138）。航海の到着予定の 4 列（`voyage_arrival_at`・`voyage_arrival_published_at`・`voyage_arrival_acquired_at`・`voyage_arrival_source_ref`。NULL 可）は最後の区間の航海の DE-12 の受け取りと主要実績の UPDATE が書き、開始の INSERT は NULL を書く。順の鍵の 3 列はそろって NULL かそろって NOT NULL、`voyage_arrival_at` が NOT NULL なら順の鍵も NOT NULL（`ck_tracking_record_voyage_arrival`）。要約（S-11・C-10）は 4 列を読まない（見込みは `latest_eta` を読む）。Bolt 39g4c から見込みの根拠の 2 列（`latest_eta_basis`。区分値 `VARCHAR(30)`、NULL 可。`ORIGINAL_ETA`・`MILESTONE`・`VOYAGE_ARRIVAL`。`latest_eta_basis_milestone_no`。`INTEGER`、NULL 可）を `latest_eta` と同じ規則の 1 回の評価から書く（開始の INSERT は `ORIGINAL_ETA` と NULL、主要実績の UPDATE は 2 列）。種類は 3 つの値か NULL、`MILESTONE` のときだけ実績番号が NOT NULL、`VOYAGE_ARRIVAL` なら `voyage_arrival_at` が NOT NULL で `latest_eta` と等しい、`ORIGINAL_ETA` なら `latest_eta` が `original_eta` と等しい（`ck_tracking_record_latest_eta_basis`）。`latest_eta_basis_milestone_no` から `milestone` への外部キー `fk_tracking_record_latest_eta_basis`（`tracking_number`・`latest_eta_basis_milestone_no`）は、`fk_tracking_record_status_basis` と同じく PostgreSQL だけに DEFERRABLE INITIALLY DEFERRED で張る（H2 では集約の不変条件で守る）。要約（S-11・C-10）は 2 列を読まない | T-INV-03、T-INV-08、T-INV-10、T-INV-11 |
+| `scheduled_leg` | 主キー（`tracking_number`、`leg_no`）。`leg_no >= 1`（`ck_scheduled_leg_no`）、`arrival_at > departure_at`（`ck_scheduled_leg_arrival`。見積りの `assigned_route_leg` と同じ）。値は経路設計の公開 API が返す確定した経路版の区間（Bolt 25）。行は追加だけで UPDATE しない（航海の到着予定は `tracking_record` が持つ。Bolt 39g4b） | T-INV-12 |
+| `milestone` | UK（`tracking_number`、`source_kind`、`source_ref`）`uk_milestone_source`。`kind` IN（`PICKUP`、`RECEIPT_AT_ORIGIN`、`DEPARTURE`、`TRANSSHIPMENT`、`ARRIVAL`、`DELIVERY`）。`source_kind` は航海と同じ 4 値。`state` IN（`DRAFT`、`ADOPTED`、`UNDER_REVIEW`、`RETAINED_ONLY`）。DELETE の権限なし（表の印 `[no-delete]`）。Bolt 26b は使う列だけで作った（`revised_by`・`revised_at` は下書きの修正の W12（US-13）、`shown_to_customer` は顧客への表示の US-11・US-13 で足す）。実績は追跡記録の `update` で、まだ表にない実績番号だけを INSERT する。Bolt 39g で外部の識別の 3 列（`data_source_id`・`external_id`・`published_at`。NULL を許す）と CHECK `ck_milestone_external_origin`（`source_kind = 'EXTERNAL_RECORD'` なら 3 列とも値を持ち、それ以外は 3 列とも NULL）を足した。Bolt 39gb で採用した人と時刻の 2 列（`adopted_by`・`adopted_at`。NULL を許す）と CHECK `ck_milestone_adoption`（`source_kind = 'EXTERNAL_RECORD'` かつ `state IN ('ADOPTED', 'UNDER_REVIEW')` なら 2 列とも値を持ち、それ以外は 2 列とも NULL）を足した | T-INV-01〜03、T-INV-05 |
+| `rejected_milestone` | 主キー `id`。UK（`source_kind`、`source_ref`）`uk_rejected_milestone_source`。`reason` IN（`UNKNOWN_TRACKING_NUMBER`、`BOOKING_CANCELLED`）。`tracking_number` に外部キーはない（知らない追跡番号を残すため）。追記専用（表の印 `[append-only]`、UPDATE・DELETE の権限なし。Bolt 39g） | T-INV-04 |
+| `correction` | `status` IN（`PENDING_APPROVAL`、`APPLIED`、`REJECTED`）。`approved_by` は `registered_by` と異なる（`CHECK`） | T-INV-06 |
+| `service_case` | `kind` IN（`CUSTOMER_INQUIRY`、`QUOTATION_CONSULTATION`、`AMENDMENT`、`REDESIGN`、`EXTERNAL_OUTAGE`、`REJECTED_MILESTONE`、`SAGA_FAILURE`）。`status` IN（`RECEIVED`、`ESCALATED`、`IN_PROGRESS`、`ANSWERED`、`CLOSED`、`DUPLICATE_CLOSED`）。`shipper_company_id` で荷主の照会範囲を限る。`acknowledged_at` は営業時間外の優先度高の自動受付の時刻 | SC-INV-01〜05 | **Bolt 40-6 で作った**（`V20261118100000`。`kind`・`status`・`priority` の CHECK、対応中・回答済み・終結は担当者と受領時刻、終結かつ復旧照合が必要なら照合 ID（SC-INV-02）、照合 ID があれば復旧照合が必要の CHECK。他のコンテキストの参照は外部キーを持たない）。子の `service_case_source` は共有カーネルの `Source` が取得時刻を必須にするため `acquired_at`（NOT NULL）を足した（2026-11-13 に人が承認）。進捗と回答は追記専用。**Bolt 40-17: `service_case.origin_ref VARCHAR(200)`（UNIQUE。システム起票の起票元キー。利用者の起票は空）を足した（W8 の週全体レビュー A。2026-11-14 に人が承認。台帳 D-163）。** 受付番号は `service_case_number_counter`（年ごとの連番。`SC-YYYY-NNNN`）で採番する。
+| `inquiry_record` | `channel` IN（`WEB_SELF`、`WEB_INQUIRY`、`PHONE`、`EMAIL`）。`inquirer_kind` IN（`SHIPPER`、`CONSIGNEE`）。`escalated` は有人対応へ移ったか（Bolt 40-15 で作った。CHECK: 真なら `case_number` がある。`case_number` は `service_case` への外部キー。荷主企業・追跡番号・利用者は他のコンテキストの参照なので外部キーなし。**data_model との差: `created_at`（NOT NULL。記録した時刻）を足した**。追記専用の印は付けない（W9 の IR-INV-01 が `escalated` を更新するため）。索引 `(shipper_company_id, received_at)`、`case_number`（`ix_inquiry_record_case_number`。Bolt 42-1。2026-11-14 に人が承認。移行 `V20261121100000`）。2026-11-14 に推奨のとおり承認。S-23 は `PHONE`・`EMAIL` だけを書く） | IR-INV-01〜02、KPI-02 |
+| `business_calendar` | 日ごとの営業日・営業時間。年次で翌年分を登録する | SC-INV-04 | **Bolt 40-4 で作った**（`V20261117100000`。`business_day` が真なら `open_time < close_time`、偽なら時刻なしの CHECK `ck_business_calendar_hours`。2026・2027 年の全日の見本を入れた。日本の祝日は内閣府の定めから作った見本で業務責任者の確認を要する。台帳 D-157）。
+
+`tracking_record.current_status` は導出結果を保存した非正規化である。照会（US-09）のたびに全実績から導出し直すのを避けるためで、集約を保存するときに必ず導出し直して書く。
+
+`correction` の `CHECK (approved_by IS NULL OR approved_by <> registered_by)` は H2 と PostgreSQL の両方で使える。
+
+Bolt 39g（US-12 の取り込みの分）で足す列と表（[Bolt 39g 計画](../../development/cargo-tracker/bolt_39g_plan.md) の開始準備の決定 (3)）: 共通のマイグレーション `V20261110150000__add_tracking_milestone_external_origin_and_rejected_milestone.sql` で次を足す。
+
+- `milestone.data_source_id`（UUID）・`external_id`（VARCHAR(200)。`external_data` の列と同じ）・`published_at`（TIMESTAMP WITH TIME ZONE）。どれも NULL を許し、CHECK `ck_milestone_external_origin` でそろえる。`EXTERNAL_RECORD` の行は今ない（画面で選べない）ので埋め直さない。ステージング・本番に `EXTERNAL_RECORD` の実績がないことは配備の前に確かめる（行があると CHECK の追加が失敗する）。情報版の列は持たない（順に使わず、受信記録 ID から外部データの原本にたどれる）。
+- `rejected_milestone`: 追跡が実績にしなかった DE-13 の追記専用の記録。冪等は読んでなければ書き、同時の負けは `NESTED` と `DuplicateKeyException` で既存とみなす。`reason` の値は `MilestoneRejectionReason` の値。
+- 下書きの採用で使う列は Bolt 39gb で足した（下）。`under_review_reason` は Bolt 39gc で決めた（下）。
+
+Bolt 39gb（下書きの採用）で足す列（[Bolt 39gb 計画](../../development/cargo-tracker/bolt_39gb_plan.md) の開始準備の決定 (3)、確認ポイント 3）: 共通のマイグレーション `V20261111100000__add_tracking_milestone_adoption.sql` で次を足す。
+
+- `milestone.adopted_by`（UUID）・`adopted_at`（TIMESTAMP WITH TIME ZONE）。NULL を許し、CHECK `ck_milestone_adoption` でそろえる。外部原本の採用済み・確認中は両方に値を持つ（39gc が採用のときに確認中にしても人と時刻を残せる）。下書き・保持のみ・手入力の実績は両方 NULL（手入力の採用は登録者と登録時刻が採用者と採用時刻を兼ねる）。`EXTERNAL_RECORD` の採用済みの行は今ない（採用の操作がなかった）ので埋め直さない。
+- 採用の保存は `state`・`adopted_by`・`adopted_at` だけを書き換え、`WHERE state = 'DRAFT'` で下書きの行だけを対象にする。追跡記録の版の条件は同じトランザクションの追跡記録の UPDATE で掛ける（上の権限の表の「状態と下書き内容の UPDATE」の採用の分）。
+
+Bolt 39gc（確認中）で変える列（[Bolt 39gc 計画](../../development/cargo-tracker/bolt_39gc_plan.md) の開始準備の決定 (11)、確認ポイント CP-3）: 共通のマイグレーション `V20261112100000__change_tracking_record_under_review_reason.sql` で次を変える。
+
+- `tracking_record.under_review_reason` の型を `VARCHAR(1000)` から区分値の `VARCHAR(30)` に変え（H2 と PostgreSQL の共通の `ALTER COLUMN … SET DATA TYPE`。ADR-007）、CHECK `ck_tracking_record_under_review_reason`（値は `OUT_OF_SEQUENCE` だけ）と CHECK `ck_tracking_record_under_review`（`current_status = 'UNDER_REVIEW'` なら理由に値、そうでなければ NULL）を足し、列のコメントを「確認中の理由（区分値）」にする。`current_status = 'UNDER_REVIEW'` の行と理由に値のある行は、書く経路がなかったので今はない（ステージング・本番は配備の前に確かめる）。
+- 保存: 追跡記録の UPDATE が `under_review_reason` も書く。採用で確認中にする外部原本の実績は、下書きの採用と同じく `state = 'DRAFT'` の行だけを `UNDER_REVIEW` と採用者・採用時刻に書き換える。`milestone` の表は変えない（`state` の CHECK に `UNDER_REVIEW` があり、`ck_milestone_adoption` は確認中にも採用者・採用時刻を求める）。
+
+Bolt 39g4（鮮度超過）で足す列（[Bolt 39g4 計画](../../development/cargo-tracker/bolt_39g4_plan.md) の開始準備の決定 (6)、確認ポイント CP-6）: 共通のマイグレーション `V20261113100000__add_tracking_record_next_expected_at.sql` で次を変える。
+
+- `tracking_record.next_expected_at`（`TIMESTAMP WITH TIME ZONE`、NULL 可）を足し、列のコメントを用語集の名「次の予定の実績の予定時刻」にする（H2 と PostgreSQL の共通の `ALTER TABLE … ADD COLUMN` と `COMMENT ON COLUMN`。ADR-007）。既存の行は NULL のままで補正しない（次に採用の実績が変わるまで鮮度超過と判定されない。配備の前に、完了後でなく NULL の行の数を確かめる）。
+- 保存: 追跡の開始の INSERT と主要実績の UPDATE が書き、組み立てと要約（S-11・C-10 の要約の照会。同じ resultMap）が読む。索引は足さない（S-11 はこの列で絞らない。鮮度超過だけの一覧を作る W10 で決める）。
+
+Bolt 39g4b（航海の到着予定）で足す列と索引（[Bolt 39g4b 計画](../../development/cargo-tracker/bolt_39g4b_plan.md) の開始準備の決定 (6)、確認ポイント CP-6）: 共通のマイグレーション `V20261114100000__add_tracking_record_voyage_arrival.sql` で次を変える。
+
+- `tracking_record` に 4 列を足す（どれも NULL 可。H2 と PostgreSQL の共通の `ALTER TABLE … ADD COLUMN` と `COMMENT ON COLUMN`。ADR-007）。`voyage_arrival_at`（`TIMESTAMP WITH TIME ZONE`。列のコメント「航海の到着予定」。結べないときと受けていないときは NULL）、`voyage_arrival_published_at`（同。「航海の到着予定の公開した時刻」）、`voyage_arrival_acquired_at`（同。「航海の到着予定の取得時刻」）、`voyage_arrival_source_ref`（`VARCHAR(200)`。「航海の到着予定の出典の参照」。受信記録 ID。`milestone.source_ref` と同じ幅）。
+- CHECK `ck_tracking_record_voyage_arrival`: 順の鍵の 3 列（`voyage_arrival_published_at`・`voyage_arrival_acquired_at`・`voyage_arrival_source_ref`）はそろって NULL かそろって NOT NULL。`voyage_arrival_at` が NOT NULL なら順の鍵も NOT NULL（結べない知らせを受けた後は `voyage_arrival_at` だけが NULL で順の鍵は値を持つ）。
+- `scheduled_leg` に索引 `ix_scheduled_leg_voyage`（`voyage_number`）を足す（DE-12 ごとに航海番号で予定区間を引き、その航海を最後の区間に持つ追跡記録を探す。名前は同じ形の前例 `ix_candidate_leg_voyage` にそろえる）。
+- 保存: 主要実績の UPDATE（`updateTrackingRecord`）が 4 列を書き（なければ NULL）、追跡の開始の INSERT は NULL を書く。`original_eta`・予定区間は書かない（T-INV-10）。組み立てが 4 列を読み、要約（S-11・C-10）は読まない。照会 `findTrackingNumbersByFinalLegVoyage` は航海番号がその追跡番号の最大の `leg_no` の区間に当たる追跡番号を追跡番号の順に返す（完了後・取消済みは除かず集約が決める）。
+- 既存の行は NULL のままで補正しない（次の DE-12 を受けるまで見込みは採用の実績だけで決まる。今と同じ振る舞い。前例 Bolt 39g3・39g4）。配備の前の件数の確かめに 4 列は含めない（NULL が今と同じ振る舞い）。
+
+Bolt 39g4c（見込みの根拠）で足す列と制約（[Bolt 39g4c 計画](../../development/cargo-tracker/bolt_39g4c_plan.md) の開始準備の決定 (3)、確認ポイント CP-3・CP-6）: 共通のマイグレーション `V20261115100000__add_tracking_record_latest_eta_basis.sql` と、PostgreSQL だけのマイグレーション `V20261115100100__add_tracking_record_latest_eta_basis_fk.sql` で次を変える。
+
+- `tracking_record` に 2 列を足す（どちらも NULL 可。H2 と PostgreSQL の共通の `ALTER TABLE … ADD COLUMN` と `COMMENT ON COLUMN`。ADR-007）。`latest_eta_basis`（`VARCHAR(30)`。区分値の列 `current_status`・`under_review_reason` と同じ幅。値は `ORIGINAL_ETA`・`MILESTONE`・`VOYAGE_ARRIVAL`。列のコメント「見込みの根拠」）、`latest_eta_basis_milestone_no`（`INTEGER`。列のコメント「見込みの根拠の実績番号」。種類が実績のときだけ値を持つ）。出発・積替・到着の別は根拠の実績の種類から、航海の到着予定の航海番号は予定の最後の区間から、取得時刻は `voyage_arrival_acquired_at` から読むので列にしない（2 か所で食い違わない）。
+- CHECK `ck_tracking_record_latest_eta_basis`: `latest_eta_basis` は 3 つの値か NULL。`MILESTONE` のときだけ `latest_eta_basis_milestone_no` が NOT NULL（種類が NULL なら実績番号も NULL）。`VOYAGE_ARRIVAL` なら `voyage_arrival_at` が NOT NULL で `latest_eta` と等しい。`ORIGINAL_ETA` なら `latest_eta` が `original_eta` と等しい。同じ行の列どうしで見込みと根拠の食い違いを H2 と PostgreSQL の両方で拒む。実績の状態（採用か）・予定の時点への結び方・到着の実績の発生時刻との一致は表で見ないので、集約の不変条件で守る。
+- 外部キー `fk_tracking_record_latest_eta_basis`（`tracking_number`・`latest_eta_basis_milestone_no` から `milestone`（`tracking_number`・`milestone_no`））を PostgreSQL だけに DEFERRABLE INITIALLY DEFERRED で張る（UPDATE を INSERT より先に行うため。前例 `fk_tracking_record_status_basis`（V20261010120100）。H2 では集約の不変条件で守る）。
+- 保存: 追跡の開始の INSERT は `ORIGINAL_ETA` と NULL を書き、主要実績の UPDATE（`updateTrackingRecord`）が 2 列を `latest_eta` と同じ文で書く。UPDATE の前に、根拠の実績番号の実績が表にあることを `countMilestone` で確かめ、なければ競合にする（根拠の実績番号（P-5）と同じ。遅延の外部キーの違反がコミットのときに 500 になるのを先に拾う）。組み立てが 2 列を読み（NULL は根拠なし）、要約（S-11・C-10）は読まない。索引は足さない（この列で引かない）。
+- 既存の行は NULL のままで補正しない（次に見込みを導き直すまで（採用の実績が変わるか、最後の区間の航海の知らせを受けるまで）根拠は空で、S-12 は「記録がありません」。SQL では予定の時点への結び方を写せない。前例 Bolt 39g3・39g4・39g4b）。配備の前に、39g3〜39g4b の件数の確かめと一緒に根拠が NULL の行を数える。
+
+### アクセス・監査（`identity`）
+
+```plantuml
+@startuml
+title identity スキーマ
+hide circle
+skinparam linetype ortho
+
+entity "company\n企業" as co {
+  * id : UUID <<PK>>
+  --
+  * name : VARCHAR(200)
+  * kind : VARCHAR(30)
+  * active : BOOLEAN
+  * version : BIGINT
+  * created_at / updated_at
+}
+entity "app_user\n利用者" as u {
+  * id : UUID <<PK>>
+  --
+  * company_id : UUID <<FK>>
+  * email : VARCHAR(320) <<UK>>
+  * display_name : VARCHAR(200)
+  * password_hash : VARCHAR(200)
+  * status : VARCHAR(30)
+  * version : BIGINT
+  * created_at / updated_at
+}
+entity "totp_credential\nTOTP の資格" as tc {
+  * user_id : UUID <<PK,FK>>
+  --
+  * secret_encrypted : VARCHAR(500)
+  * last_used_step : BIGINT
+  * enrolled_at : TIMESTAMPTZ
+}
+entity "recovery_code\n回復コード" as rc {
+  * id : UUID <<PK>>
+  --
+  * user_id : UUID <<FK>>
+  * code_hash : VARCHAR(200)
+  used_at : TIMESTAMPTZ
+  * issued_at : TIMESTAMPTZ
+}
+entity "login_failure\nログインの失敗" as lf {
+  * user_id : UUID <<PK,FK>>
+  --
+  * consecutive_failures : INTEGER
+  locked_until : TIMESTAMPTZ
+  * updated_at : TIMESTAMPTZ
+}
+entity "user_role\n役割" as ur {
+  * user_id : UUID <<PK,FK>>
+  * role : VARCHAR(30) <<PK>>
+  --
+  granted_by : UUID
+  * granted_at : TIMESTAMPTZ
+}
+entity "user_assignment\n担当範囲" as ua {
+  * user_id : UUID <<PK,FK>>
+  * scope_kind : VARCHAR(30) <<PK>>
+  * scope_id : UUID <<PK>>
+  --
+  granted_by : UUID
+  * granted_at : TIMESTAMPTZ
+}
+entity "access_grant\n参照許可" as ag {
+  * id : UUID <<PK>>
+  --
+  * booking_id : UUID <<REF booking>>
+  * consignee_company_id : UUID <<FK>>
+  consignee_user_id : UUID <<FK>>
+  * status : VARCHAR(30)
+  * valid_until : TIMESTAMPTZ
+  * invited_by : UUID
+  * invited_at : TIMESTAMPTZ
+  accepted_at : TIMESTAMPTZ
+  revoked_by : UUID
+  revoked_at : TIMESTAMPTZ
+  * version : BIGINT
+}
+entity "audit_record\n監査記録" as au {
+  * id : UUID <<PK>>
+  --
+  * occurred_at : TIMESTAMPTZ
+  actor_user_id : UUID
+  actor_company_id : UUID
+  * action : VARCHAR(100)
+  * result : VARCHAR(30)
+  target_type : VARCHAR(50)
+  target_id : VARCHAR(100)
+  target_version : VARCHAR(50)
+  before_state : VARCHAR(4000)
+  after_state : VARCHAR(4000)
+  reason : VARCHAR(4000)（DB は VARCHAR(100)。Bolt 34d の注）
+  approval_ref : VARCHAR(200)（DB にまだない。Bolt 39b3b の注）
+  source_ref : VARCHAR(200)（DB にまだない。Bolt 39b3b の注）
+  correlation_id : VARCHAR(100)
+  .. event_id は作らない（Bolt 39b3b。冪等は操作と対象） ..
+}
+entity "kpi_observation\nKPI 計測記録" as ko {
+  * transport_request_id : UUID <<PK>>
+  --
+  transport_request_number : VARCHAR(20)
+  * shipper_company_id : UUID
+  * submitted_at : TIMESTAMPTZ
+  first_presented_at : TIMESTAMPTZ
+  * excluded : BOOLEAN
+  exclusion_reason : VARCHAR(1000)
+  excluded_by : UUID
+}
+entity "password_reset_token\n再設定のトークン" as prt {
+  * id : UUID <<PK>>
+  --
+  * request_id : UUID <<UK>>
+  * user_id : UUID <<FK>>
+  * purpose : VARCHAR(20)
+  * token_hash : CHAR(64) <<UK>>
+  * issued_at : TIMESTAMPTZ
+  * expires_at : TIMESTAMPTZ
+  used_at : TIMESTAMPTZ
+  invalidated_at : TIMESTAMPTZ
+}
+entity "kpi_baseline\nKPI 基準値" as kb {
+  * id : UUID <<PK>>
+  --
+  * kpi : VARCHAR(30)
+  * period_from : DATE
+  * period_to : DATE
+  * value_p50 : NUMERIC(12,2)
+  value_p90 : NUMERIC(12,2)
+  * method : VARCHAR(4000)
+  * registered_by : UUID
+  * registered_at : TIMESTAMPTZ
+  supersedes_id : UUID
+}
+co ||--o{ u
+u ||--o| tc
+u ||--o{ rc
+u ||--o| lf
+u ||--o{ ur
+u ||--o{ ua
+u ||--o{ prt
+co ||--o{ ag
+@enduml
+```
+
+| 表 | 主な制約 | 対応する不変条件 |
+| :--- | :--- | :--- |
+| `user_role` | `role` IN（BR-15 の 8 役割）。システム管理者・監査担当者と業務の役割の併用は、アプリケーションで拒否する | IA-INV-01 |
+| `user_assignment` | `scope_kind` IN（`COMPANY`、`BOOKING`） | IA-INV-02、IA-INV-14 |
+| `login_failure` | 利用者ごとに 1 行（主キーは `user_id`）。`consecutive_failures >= 0` の CHECK。失敗は、ロック中でないことを条件にした `UPDATE ... SET consecutive_failures = consecutive_failures + 1` の更新件数で数え、回数を同じトランザクションで読み直す（`RETURNING` は H2 で動かないので使わない。ADR-007）。最初の行は `INSERT ... SELECT ... FROM app_user WHERE NOT EXISTS` で作る（利用者の表にない利用者では作らない。存在しないメールアドレスの失敗）。同じ利用者の最初の失敗が同時に 2 つ届くと、片方は主キーの違反になる。Bolt 32 で、最初の行（0 回）は数える主たるトランザクションの前にトランザクションの外の 1 文（auto-commit）で作り（`prepare`。入れ子にしないので接続を 2 本持たない。サービスは `PROPAGATION_NOT_SUPPORTED` で流し、外側にトランザクションがあっても中断して外で流す）、主キーの違反はトランザクションの外で受けて「既にある」として続けることにした（ADR-007 の「一意制約の違反は同じトランザクションで捕まえない」。ADR-011 の決定 9）。数える `UPDATE` とその監査記録は主たるトランザクションに置き（IA-INV-08）、更新の件数から数えたか（ロック中なら 0 件）を返す。ロックの判定も同じ `UPDATE` の `CASE` で行い、ロックが解けた後の失敗は 1 回目から数える。2 つの要素がそろったログインの成功で 0 に戻す（ロック中は戻さない）。ロックの期限は 5 回目の失敗の時刻から 15 分。数えるのは password・TOTP・回復コードの失敗（回復コードは Bolt 32）。表の注釈（`COMMENT`）は「password と TOTP」のままで、注釈を Bolt 34c のステップ 4 のマイグレーション（`common/V20261017140000__comment_identity_login_failure.sql`。注釈だけで、列と制約は変えない）で直した（中身は `SchemaCommentIntegrationTest` で確かめる）。Bolt 38c から、システム管理者の解除は `UPDATE ... SET consecutive_failures = 0, locked_until = NULL WHERE user_id = :id AND locked_until > :now` の更新件数で判定する（ロック中でなければ 0 件で何も書かない） | IA-INV-03 |
+| `totp_credential` | 利用者ごとに 1 行。`last_used_step >= 0` の CHECK。再利用の拒否は `UPDATE ... SET last_used_step = :step WHERE user_id = :id AND last_used_step < :step` の更新件数で判定する（Bolt 33b から秘密の条件を足す。下）。秘密は暗号文だけを置く。`secret_encrypted` は `v1:<Base64(IV 12 バイト + 暗号文 + タグ 16 バイト)>`（AES-GCM、鍵 256 ビット、IV 96 ビットを毎回乱数で作る。20 バイトの秘密で 64 文字）。先頭の `v1:` は鍵の版で、読むときはその版の鍵で復号し、書くときは最新の版で暗号化する。鍵はプロパティ `cargotracker.totp-secret-keys.v1`（環境変数 `CARGOTRACKER_TOTPSECRETKEYS_V1`。本番は Secrets Manager から注入）で、表には置かない（Bolt 31。ADR-011 の決定 5）。Bolt 31b から、暗号化と復号に `totp-secret:` と利用者 ID（`user_id` の UUID の小文字の形）を UTF-8 にした AAD を付ける。別の利用者の行の暗号文に入れ替えると、タグが合わず復号できない。列の形（`v1:<Base64>`）と長さは変わらない。dev-data の暗号文は、適用済みの版を書き換えず、新しい版のマイグレーション（`UPDATE`）で AAD を付けた形に作り直す（本番の利用者はまだいない）。Bolt 33b から、認証アプリの再登録で行を置き換える: `UPDATE ... SET secret_encrypted = :新しい暗号文, last_used_step = GREATEST(last_used_step, :新しいコードの刻み), enrolled_at = :再登録の時刻 WHERE user_id = :id AND secret_encrypted = :再登録の前に読んだ暗号文`（1 人 1 行のまま。更新が 0 件なら、資格がないか、ほかの画面で先に登録し直していたので置き換えない。同時の 2 つの再登録は、後の更新が先の行ロックを待って WHERE を評価し直し 0 件になる。開発の途中で、計画の「利用者の行を占有する」から改めた）。最後に使った刻みは戻さない（古い値と新しいコードの刻みの大きい方。`GREATEST` は H2 と PostgreSQL の共通の構文。ADR-007）。`enrolled_at` は再登録の時刻になる（最初の登録の時刻は監査記録 `TOTP_ENROLLED` に残る）。再登録のトランザクションは資格の置き換えを先に行い、`recovery_code` の発行し直しと監査記録 `TOTP_RE_ENROLLED` の追加と 1 つにする。刻みの使用の条件に、照合で読んだ暗号文との一致を足す: `UPDATE ... SET last_used_step = :step WHERE user_id = :id AND secret_encrypted = :読んだ暗号文 AND last_used_step < :step`（置き換えの前に古い秘密で照合を終えた要求は 0 件で通らない。暗号文は書くたびに IV が変わるので、同じ秘密でも置き換えの後は一致しない）。列・制約・索引は変えない（マイグレーションは要らない）。Bolt 38c から、システム管理者の解除は `DELETE ... WHERE user_id = :id AND enrolled_at = :確認で読んだ登録の時刻` の削除件数で判定する（確認の後に登録し直した資格は消さない） | IA-INV-10 |
+| `recovery_code` | 利用者ごとに 10 行。`user_id` の索引。消費は `UPDATE ... SET used_at = :now WHERE id = :id AND user_id = :userId AND used_at IS NULL` の更新件数で判定し、行を残す（ほかの利用者のコードの行は使えない。同じコードを同時に使っても 1 つだけが通る）。発行のたびに利用者の行を消して入れ直す（追記専用の印を付けない）。bcrypt は塩が毎回違うので、`(user_id, code_hash)` の一意制約は置かない。初回の発行は `totp_credential` の行の追加（主キーで同時の登録を 1 つに絞る）と同じトランザクションで行う（Bolt 31b）。未使用のコードの読み出しは並び順を約束しない（照合はすべての未使用のコードと比べる。SQL の `ORDER BY issued_at, id` は残すが、並びは契約にしない。Bolt 31b）。Bolt 31c から、ログインで回復コードを使う（読み出しと照合はトランザクションの外で行い、消費の `UPDATE` と監査記録 `RECOVERY_CODE_USED` の追加だけを 1 つのトランザクションにする。ADR-011 の決定 7）。Bolt 33b から、認証アプリの再登録の完了でも発行し直す（`totp_credential` の置き換えと同じトランザクションで、利用者の行を消して 10 行を入れ直す。重なった回復コードのログインの消費の `UPDATE` は、置き換えの後は 0 件になる）。Bolt 38c から、システム管理者の TOTP の解除では利用者の行をすべて消す（資格の削除と同じトランザクション） | IA-INV-11 |
+| `password_reset_token` | 主キー `id`（UUID）。`purpose`（Bolt 38b）: 用途。`RESET`（再設定）・`USER_INVITATION`（利用者の招待）の CHECK（`ck_password_reset_token_purpose`）付きで、既定の値は `RESET`（Bolt 38b の前の行と、用途を省いた INSERT）。期限は用途で決まる（再設定 30 分、利用者の招待 24 時間）。繰り返しの依頼の抑えの「前の発行の時刻」は `purpose = 'RESET'` の行だけで読み、前の未使用のトークンの無効化は用途を問わない。UK（`request_id`）: 同じ依頼（利用者の招待では登録）の ID のトークンは 1 つだけで、`PasswordResetRequested` と `UserRegistered`（DE-25。Bolt 38b2c）の再配信で 2 通送らない冪等の正。UK（`token_hash`）: トークンの SHA-256 の 16 進 64 文字（`CHAR(64)`）だけを置き、平文のトークンとリンクは置かない。`user_id` は `app_user` への外部キー。`issued_at`・`expires_at` は NOT NULL（期限は発行から用途の期限）、`used_at`・`invalidated_at` は NULL 可。同じ利用者の新しい発行の前に、`UPDATE ... SET invalidated_at = :now WHERE user_id = :userId AND used_at IS NULL AND invalidated_at IS NULL` で前の未使用のトークンを無効にする。使用（Bolt 33a）も同じ形の条件付きの更新の件数で判定する（`UPDATE ... SET used_at = :now WHERE id = :id AND used_at IS NULL AND invalidated_at IS NULL AND expires_at > :now`。0 件なら使えない。ドメインの `isUsable(now)` と同じ条件であることを契約テストで確かめる。`version` を持たない例外）。設定の完了では、使った行のほかに、同じ利用者の未使用のトークンを上の無効化の更新で無効にする（Bolt 33a）。同時の発行は、発行の前に `app_user` の行を `SELECT ... FOR UPDATE` でロックして直列にする。行は消さず、追記専用の印も付けない（状態の列を更新する）。インデックス（`user_id`、`issued_at`）は無効化と繰り返しの判定（前の発行から 1 分以内）に使う。保持の期間は非機能要件（W10）で決める（Bolt 33） | IA-INV-12 |
+| `access_grant` | `status` IN（`INVITED`、`ACTIVE`、`REVOKED`、`EXPIRED`）。同じ予約・荷受人企業に有効な許可を重複させないことはアプリケーションで確認する | IA-INV-05、IA-INV-06 |
+| `audit_record` | UPDATE・DELETE の権限なし。イベント経由の監査は操作と対象で冪等にする（（操作、受信記録）ごとにイベントは 1 つ。既存の索引 `ix_audit_record_target` で操作と対象を引き、あれば書かない）。`event_id` の列は作っていない。認証の失敗と権限外のアクセス試行は同期で書く（【前の決定の変更】Bolt 39b3b、2026-11-03、human:kakimomokuri が決めた。前は「`event_id` の一意制約で、イベントの再配信による重複記録を防ぐ」） | IA-INV-07、IA-INV-08、IA-INV-15 |
+| `kpi_observation` | 輸送要求ごとに 1 行。DE-01 で作り、DE-03 で最初の提示時刻を記録する。2 回目以降の提示では、届いた提示時刻のほうが早いとき（届く順の入れ替わり）だけ書き換える条件付きの更新にする（Bolt 21。KPI-INV-01）。`ck_kpi_observation_first_presented_at` で最初の提示時刻が提出時刻より前にならないことを確かめる（KPI-INV-03）。Bolt 21 より前に提示した見積りの DE-03 は購読者がいなかったため、その輸送要求の `first_presented_at` は NULL のままである（パイロットの前で本番の記録はない）。`transport_request_number` は DE-01 の表示用の業務番号の写しで、社内の一覧に UUID の代わりに出す（Bolt 4）。Bolt 4 より前の DE-01 は業務番号を持たないため null を許す | KPI-INV-01、KPI-INV-03 |
+| `kpi_baseline` | UPDATE・DELETE の権限なし。訂正は `supersedes_id` で前の行を指す新しい行にする | KPI-INV-02 |
+
+session は `platform` スキーマの Spring Session の表に置く。利用停止・権限取消し・参照許可の取消しを次の request から反映するため、認可の判断は session に保存した値ではなく、request ごとに `app_user`・`user_role`・`company`・`access_grant` を確かめる（IA-INV-04、IA-INV-06）。Bolt 32c で `app_user` と `company` を内部結合し `user_role` を外部結合する 1 つの SQL（`UserStandingRepository`）にした。役割の数だけ出る行を 1 人の利用者にたたみ、役割が 0 件ならデータの不整合として例外にする。`access_grant`（参照許可）は US-19 で足す。
+
+`audit_record.before_state` と `after_state` は変更前後の要約である。4000 文字を超える詳細が必要になったら、データモデルを見直す。
+
+Bolt 14 で作る範囲（2026-10-06、human:kakimomokuri。[Bolt 14 計画](../../development/cargo-tracker/bolt_14_plan.md) の確認ポイント 4・5・7・12）:
+
+- `company` は全列を作る。`kind` は `SHIPPER`・`CONSIGNEE`・`OPERATOR`（A 社）。
+- `app_user` は `id`・`company_id`・`email`・`display_name`・`password_hash`・`status`（`ACTIVE`・`SUSPENDED`）・`version`・`created_at`・`updated_at` を作る。`email` は前後の空白を除き小文字にして保存し、一意にする。TOTP の秘密・失敗の回数・ロックの期限は `app_user` に足さず、関心事ごとの `totp_credential`・`login_failure`・`recovery_code` に分ける（Bolt 30。利用者の行と `version` に触れずに条件付きの更新で書くため）。この 3 つの表は `version` を持たない（条件付きの更新が楽観ロックの版の代わりになる。上の「楽観ロック」の例外）。`password_hash` は `{bcrypt}` の接頭辞を付けた DelegatingPasswordEncoder の形式（SEC-07）。Bolt 33a から、password の再設定の完了で `UPDATE ... SET password_hash = :hash, version = version + 1, updated_at = :now WHERE id = :id` と更新する。版を上げるのは、利用者の管理（US-16）など期待版で更新する側が、この変更の後の古い版で上書きしないためである。版を条件にしないのは、同じ利用者の同時の設定が、同じトランザクションの `password_reset_token` の条件付きの使用で 1 つに絞られるためである（Bolt 33a では `User` に版を写さなかった。Bolt 34 で、役割の変更の期待する版のために `User` に版を写した。password の再設定は今も版を条件にしない）。スキーマは変えない。Bolt 34d から、S-20 の利用停止と再開で `UPDATE ... SET status = :status, version = version + 1, updated_at = :now WHERE id = :id AND version = :expectedVersion` と、`status` を版を条件にして更新し版を上げる（件数が 0 なら古い版。役割の変更と同じ版を共有し、片方の確定の後のもう片方は古い版になる）。`status` の CHECK（`ck_app_user_status`）は `ACTIVE`・`SUSPENDED` を既に持つので、スキーマは変えない。
+- `user_role` は全列を作る。`role` は `SHIPPER`（荷主担当者）・`SALES`（営業担当者）・`ROUTE_DESIGNER`（経路設計者）・`TRACKING_MANAGER`（追跡管理者）・`DATA_STEWARD`（データ責任者）・`CUSTOMER_SUPPORT`（カスタマーサポート）・`SYSTEM_ADMIN`（システム管理者）・`AUDITOR`（監査担当者）。
+- `audit_record` は `id`・`occurred_at`・`actor_user_id`・`actor_company_id`・`action`・`result`・`reason`・`correlation_id` を作り、追記だけにする（` [append-only]`）。`action` は password の段の成功・ログインの成功・失敗・TOTP の登録・回復コードの使用・ロック・session の取消し・ログアウト・password の再設定の依頼と完了・初回の password の設定・TOTP の再登録（`PASSWORD_VERIFIED`・`LOGIN_SUCCEEDED`・`LOGIN_FAILED`・`TOTP_ENROLLED`・`RECOVERY_CODE_USED`・`ACCOUNT_LOCKED`・`SESSION_REVOKED`・`LOGOUT`・`PASSWORD_RESET_REQUESTED`・`PASSWORD_RESET_COMPLETED`・`TOTP_RE_ENROLLED`・`ROLES_CHANGED`（Bolt 34）・`ADMIN_SCOPE_DENIED`（Bolt 34b）・`USER_SUSPENDED`・`USER_REACTIVATED`（Bolt 34d）・`USER_REGISTERED`（Bolt 38b2）・`INITIAL_PASSWORD_SET`（Bolt 38b4。`action` に CHECK はなく、マイグレーションは要らない））、`reason` は失敗の理由（`BAD_CREDENTIALS`・`UNKNOWN_USER`・`SUSPENDED`・`COMPANY_INACTIVE`・`INVALID_TOTP`・`TOTP_REUSED`・`INVALID_RECOVERY_CODE`・`TOTP_NOT_ENROLLED`・`LOCKED`・`SERVICE_ERROR`）と、成功の利用停止（`USER_SUSPENDED`）の停止の理由（`USAGE_ENDED`・`TRANSFERRED`・`EMERGENCY`。Bolt 34d。`reason` を持つ最初の成功の行）。`PASSWORD_VERIFIED` と `INVALID_TOTP`・`TOTP_REUSED` は Bolt 31 で足し、`LOGIN_SUCCEEDED` は 2 つの要素（password と TOTP）がそろったときに改めた。Bolt 31b で初回の TOTP の登録（`TOTP_ENROLLED`。操作者に登録した利用者と企業を入れる）を足す。Bolt 31c で回復コードの使用（`RECOVERY_CODE_USED`。操作者に利用者と企業を入れ、`LOGIN_SUCCEEDED` と 2 行にする）と、回復コードの拒否の理由（`INVALID_RECOVERY_CODE`。形の違い・誤り・使用済み・両方の欄がある送信を区別しない）を足す（ADR-011 の決定 7）。Bolt 31d で、TOTP を登録していない利用者の TOTP の送信の理由（`TOTP_NOT_ENROLLED`。今までは `INVALID_TOTP`）を分ける（ADR-011 の決定 8）。Bolt 32 で、ロック（`ACCOUNT_LOCKED`。その失敗でロックしたときだけ 1 行。結果は `SUCCESS`、理由は空、操作者に利用者と企業を入れる）と、ロック中の試行の理由（`LOCKED`）、利用者の読み出しの DB の誤りの理由（`SERVICE_ERROR`）を足す（どちらも失敗を数えない。ADR-011 の決定 9）。失敗の `LOGIN_FAILED` と `ACCOUNT_LOCKED` は `login_failure` の更新と同じトランザクションで書く（IA-INV-08）。Bolt 32c で、request ごとの確かめで session を捨てたこと（`SESSION_REVOKED`）を足す。結果は `FAILURE`（その session を通さなかった。`ACCOUNT_LOCKED` はロックを成し遂げた操作なので `SUCCESS`）、理由は `SUSPENDED`・`COMPANY_INACTIVE`・`UNKNOWN_USER`、操作者は session の主体の利用者 ID と企業 ID（利用者が消えていても追跡できるように残す。外部キーはない）。役割が変わっただけのときは書かない。Bolt 33 で、password の再設定の依頼（`PASSWORD_RESET_REQUESTED`）を足す。有効な利用者は `SUCCESS`（理由は空、操作者に利用者と企業を入れる）、止められた利用者は `FAILURE`・`SUSPENDED`、所属企業の無効は `FAILURE`・`COMPANY_INACTIVE`、登録なしは `FAILURE`・`UNKNOWN_USER`（操作者を空にし、入力したメールアドレスを残さない）で、理由は既存の値を再利用する。依頼の監査は依頼のサービスが同期に書き、トークンの発行と送信（イベントのハンドラー）では書かない。Bolt 33a で、password の再設定の完了（`PASSWORD_RESET_COMPLETED`）を足す。成功だけを `SUCCESS`（理由は空、操作者に利用者と企業を入れる）で、トークンの使用・password の更新と同じトランザクションで書く。方針の誤り・無効なリンク・利用停止と企業の無効での拒否は書かない。Bolt 33b で、TOTP の再登録（`TOTP_RE_ENROLLED`）を足す。成功だけを `SUCCESS`（理由は空、操作者に利用者と企業を入れる）で、`totp_credential` の置き換え・`recovery_code` の発行し直しと同じトランザクションで書く。コードの誤り・期限切れ・秘密が読めない・利用できないときは書かない。監査と送信の記録を結ぶ対象の列は使う Bolt で足す（AUD-02）。TOTP の失敗は操作者に利用者を入れて記録する。どちらの列にも CHECK 制約はないので、値を足すマイグレーションは要らない。存在しないメールアドレスでの失敗は、操作者を空にして記録し、メールアドレスは残さない。権限外のアクセスの試行の記録は US-16 の Bolt で足す。対象・変更前後・承認・出典・`event_id` の列は使う Bolt で足す。
+- `kpi_baseline` は W9 の Bolt 44-2 で作った（追記専用の印 `[append-only]`。登録者の外部キーは持たない。`ck_kpi_baseline_value_p90` は KPI-01 だけが 90 パーセンタイルを持てる）。`access_grant` は使う Bolt（US-19）で作る。`user_assignment` は Bolt 34b で作った（主キー 3 列、`scope_kind` の CHECK、`user_id` の外部キー、コメント。`scope_id` に企業への外部キーは張らない（`BOOKING` の行は予約 ID を持つ）。`granted_by` は NULL を許す（dev-data と運用の手順で入れる行））。Bolt 34b はシステム管理者の管理範囲（`COMPANY`。IA-INV-14）だけを使った。Bolt 38e から、業務担当者の担当企業（IA-INV-02）も同じ `COMPANY` の行で持つ（S-20 で書く。`granted_by` は操作者）。行の意味は役割で決まり、管理範囲はシステム管理者のときだけ、担当企業は担当範囲のある役割のときだけ読む（画面では職務分離で両方を持てない。監督の役割と業務の役割を付け替える運用の手順では、先に `COMPANY` の行を消す。W10 の宿題）。担当案件は担当企業で近似するので、`BOOKING` の行は作らない（置き換えも `COMPANY` の行だけを消す）。担当企業として読む読み手は、S-20 の詳細と置き換え（`selectAssignedCompanies`）、request ごとの確かめ（`selectUserStanding`）、Bolt 38h から S-20 の一覧（`selectUserAdministrationRowsIn`。担当範囲のある役割のときだけ担当企業として集める）の 3 つで、役割による読み分けをどれも同じ規則（`RoleAssignmentPolicy`）にそろえる。
+- `password_reset_token` は Bolt 33 で全列とインデックスを作る（Bolt 38b で `purpose` と CHECK を足す。`V20261025100000`）（[Bolt 33 計画](../../development/cargo-tracker/bolt_33_plan.md) の確認ポイント 8）。表と列に日本語名のコメントを付ける。
+- 既存の表の `shipper_company_id`・`consignee_company_id`・`submitted_by` などには外部キーを張らない。仮の荷受人の企業（US-16 の企業マスターまで設定にある）を表に持たないため、企業マスターで決める。
+- `db/dev-data/` の開発用のシードは、スキーマの所有（ADR-001）の例外として、ほかのコンテキストの表から写してよい（例: Bolt 21 の KPI 計測記録の最初の提示時刻を `quotation.quotation` から写す）。本番のマイグレーションとアプリケーションのコードでは、ほかのコンテキストの表を読まない。ただし、写しの列を足すマイグレーションが既存の行を 1 回だけ埋めるときは、ADR-001 のコンプライアンスの例外として読んでよい（Bolt 24。`booking.booking.quotation_no`）。
+- 開発用の企業と利用者は `db/dev-data/` に置き、`dev` のときだけ Flyway の場所に足す。共通・ベンダーの場所に置かない（ADR-011 の決定 3）。
+- Bolt 34 で `audit_record` に `target_type`・`target_id`・`target_version`・`before_state`・`after_state` を足した（どれも NULL を許す。今の記録は対象を持たない）。役割の変更の履歴は別の表を作らず、監査記録 `ROLES_CHANGED`（対象 `USER`・利用者 ID・更新した後の版、変更前後は役割の名前を `Role` の宣言の順にカンマでつないだ文字列）で代える。`user_role` は今の値だけを持ち、付与で `granted_by`（操作者）と `granted_at` を入れ、取消しで行を消す（2026-10-16、human:kakimomokuri）。`user_role.granted_by` は NULL を許す（dev-data の既存の行は NULL）。`approval_ref`・`source_ref` は、使う Bolt（監査の照会は US-17）で足す。`(target_type, target_id, occurred_at)` のインデックス `ix_audit_record_target` は、S-20 の詳細で停止中の利用者の今の停止の記録（最新の `USER_SUSPENDED`）を引くために Bolt 38c2 で足した（`V20261027100000`。H2 と PostgreSQL の共通の構文で、CONCURRENTLY は使わない。監査の照会（US-17）も同じ索引を使う）。
+- Bolt 38e の `ASSIGNMENTS_CHANGED`: `target_type` は `USER`、`target_id` は利用者 ID、`target_version` は更新した後の版、`before_state`・`after_state` は管理範囲の外を含む担当企業の全体を企業 ID の昇順にカンマでつないだ文字列（担当企業がなければ空の文字列）。企業名は変わりうるので残さない。`VARCHAR(4000)` に入るのは約 108 社まで（パイロットの規模では受け入れる）。
+- Bolt 38b2 で、利用者の登録の監査記録 `USER_REGISTERED` も対象の列を使う（対象 `USER`・新しい利用者 ID・版 `0`、変更前は null、変更後は登録した役割の名前。メールアドレスと表示名は書かない）。管理範囲の外の企業への登録の試行の `ADMIN_SCOPE_DENIED` は対象の種類を `COMPANY`（企業 ID、版と変更前後は null）にする（`target_type` は `VARCHAR(50)` で、スキーマは変えない）
+- Bolt 38f で、担当範囲の外の試行の監査記録 `ASSIGNED_SCOPE_DENIED` を足す（表と列は変えない）。`result` は `FAILURE`、`reason` は `OUT_OF_SCOPE`、対象の種類は `TRANSPORT_REQUEST`・`QUOTATION`、対象の ID は業務番号（見積りは「業務番号/見積り番号」）、版と変更前・変更後は null。確定の POST だけで書く（SEC-12）。Bolt 38f2 から、予約の確定の POST の範囲の外も書く（対象の種類は `QUOTATION`、対象の ID は「業務番号/見積り番号」。表と列は変えない）。Bolt 38g から、経路設計の候補の算出・確定の POST（対象の種類は `ROUTING_CASE`、対象の ID は案件番号）とマイルストーンの登録の POST（`TRACKING_RECORD`、追跡番号）の範囲の外も書き、「確定の POST だけ」を「状態を変える POST」に改める（表と列は変えない）
+- Bolt 34d で、利用状態の変更の監査記録 `USER_SUSPENDED`・`USER_REACTIVATED` も対象の列を使う（対象 `USER`・利用者 ID・更新した後の版、変更前後は利用状態の名前 `ACTIVE`・`SUSPENDED`。結果は `SUCCESS`。`USER_SUSPENDED` の `reason` は停止の理由の名前、`USER_REACTIVATED` の `reason` は空）。`app_user.status` の更新と同じトランザクションで書き、拒否と古い版は書かない（IA-INV-08）。スキーマは変えないので、DB の列のコメント（`V20261016100000__add_identity_audit_record_target.sql` の `target_type`・`target_id`・`target_version`・`before_state`・`after_state` の「役割の変更では」）は直さずに残す。`audit_record.reason` は上の ER では `VARCHAR(4000)` だが、DB（`V20261006140000__create_identity_users.sql`）は `VARCHAR(100)` で食い違う。停止の理由の名前は最長 11 文字（`TRANSFERRED`）で `VARCHAR(100)` に収まるので、この Bolt では食い違いを記すだけにし、解消は入れない（Bolt 34d の計画のスコープ。2026-10-17、human:kakimomokuri が承認）。
+- Bolt 38c で、ロックの解除の監査記録 `ACCOUNT_UNLOCKED`（対象 `USER`・利用者 ID・利用者の今の版（変わらない）、変更前 `LOCKED`・変更後 `UNLOCKED`、`reason` は空）と、管理者による TOTP の解除の監査記録 `TOTP_RESET_BY_ADMIN`（対象 `USER`・利用者 ID・利用者の今の版、変更前 `ENROLLED`、変更後は `method=PHONE_CALLBACK;verifiedAt=2026-11-09T01:30:00Z` の形（本人確認の手段の名前と UTC の ISO-8601）、`reason` は `IDENTITY_VERIFIED`）も対象の列を使う。結果はどちらも `SUCCESS`。拒否と「既に解除」は書かない。スキーマは変えない（`action` に CHECK はなく、3 つの表の DELETE は権限で許されている）
+- Bolt 39b3b で、外部原本の採否の監査記録 `EXTERNAL_RECORD_ADOPTED`（DE-12・DE-13。取込での自動の採用）・`EXTERNAL_RECORD_QUARANTINED`（DE-14）を足す（表と列は変えない）。identity の監査の listener（`ExternalRecordAuditEventHandler`）がイベントを受けて、取込のコミットの後に別のトランザクションで書く（IA-INV-15）。結果は `SUCCESS`。操作者と `occurred_at` はイベントの操作者（データ責任者）と時刻（取込の時刻）。対象の種類は `RECEIVED_RECORD`、対象の ID は受信記録 ID、`target_version` と `before_state` は null（外部版は 100 文字まであり `VARCHAR(50)` に入らないので、変更後の要約に入れる）。`reason` は隔離の理由の区分（`CONTENT_MISMATCH` か形式の誤りの名前。採用は空）。`after_state` は `key=value` を `;` でつなぐ要約で、採用は `recordType`・`targetKey`・`infoVersion`・`ingestionId`・`dataSourceId`・`adoptedValueId`（主要実績は `externalId` も）、隔離は `provider`・`recordType`・`externalId`・`externalVersion`・`lines`・`ingestionId`・`dataSourceId`（キーのない隔離は外部 ID・外部版を `-`、ファイルの誤りは行も `-`）。要約は人が読むためのもので、機械では解析しない。各部品の上限の合計は 4000 文字に収まる。ER の `approval_ref`・`source_ref` は DB にまだなく（上の Bolt 34 の項）、外部原本の採否の出典（AUD-02）は作らずに要約の `dataSourceId` で代える。冪等は（`action`、`target_type`、`target_id`）で引いてあれば書かない形にし、既存の索引 `ix_audit_record_target` を使う（`event_id` の列は作らない。2026-11-03、human:kakimomokuri が決めた）
+- Bolt 39d2 で、受信記録の判断の監査記録 `EXTERNAL_RECORD_DECIDED`（DE-29）を足す（表と列は変えない）。同じ listener（`ExternalRecordAuditEventHandler`）が却下・採用の判断のコミットの後に別のトランザクションで書く（IA-INV-15）。結果は `SUCCESS`。操作者と `occurred_at` はイベントの判断者（データ責任者）と判断の時刻、操作者の企業はイベントの判断者の企業。対象の種類は `RECEIVED_RECORD`、対象の ID は受信記録 ID、`target_version` と `before_state` は null。`reason` は判断（`REJECTED` か `ADOPTED`。採用は Bolt 39d3b）。判断の理由の文は 1000 文字まであり `reason`（`VARCHAR(100)`）に収まらないので、`after_state`（`VARCHAR(4000)`）の要約の最後に置く（`decision=REJECTED;ingestionId=…;dataSourceId=…;reason=<理由の文>`。理由の文に `;` があっても最後なので読み違えない）。採用の理由は任意で、理由のない採用は要約から `;reason=` の部品を省く（`decision=ADOPTED;ingestionId=…;dataSourceId=…`。利用者の書く理由と区別できない印を置かない。却下の理由のない DE-29 は今のまま内容の欠けとして書かない。Bolt 39d3b の開始準備の決定 (7)）。冪等は上の採否と同じく（`action`、`target_type`、`target_id`）で引く（Bolt 39d2 の開始準備の決定 (6)。2026-11-05、推奨のとおり。Recommend 承認の指示による。human:kakimomokuri） **Bolt 40-2 で、版の逆転の隔離を採用したときだけ、要約に `;versionReversed=true;comparedExternalVersion=<比べた採用値の外部版>` を理由の部品の前に足す（逆転でないときは今までの形のまま。表と列は変えない）。逆転なのに比べた外部版がなければ内容の欠けとして書かずに捨てる。**
+- Bolt 14 の認可はログインの時点の役割で行っていた。Bolt 32c で、権限の取消し（US-18 AC6）とあわせて request ごとに `app_user`・`user_role`・`company` を 1 回で確かめる形に置き換えた。スキーマは変えていない。
+
+### 通知（`notification`）
+
+```plantuml
+@startuml
+title notification スキーマ
+hide circle
+entity "notification\n通知" as n {
+  * id : UUID <<PK>>
+  --
+  * event_id : UUID
+  * recipient_user_id : UUID <<REF identity>>
+  * email : VARCHAR(320)
+  * kind : VARCHAR(30)
+  * target_ref : VARCHAR(200)
+  * locale : VARCHAR(10)
+  * status : VARCHAR(30)
+  sent_at : TIMESTAMPTZ
+  failure_reason : VARCHAR(1000)
+  * created_at : TIMESTAMPTZ
+  link : VARCHAR(500)
+  * retry_count : INTEGER
+  retryable : BOOLEAN
+  .. UK (event_id, recipient_user_id) ..
+}
+@enduml
+```
+
+| 表 | 主な制約 | 対応する不変条件 |
+| :--- | :--- | :--- |
+| `notification` | UK（`event_id`、`recipient_user_id`）で、イベントの再配信でも同じ宛先へ 2 通送らない。`kind` IN（`QUOTATION_PRESENTED`、`ROUTE_APPROVED`、`QUOTATION_EXPIRING`、`BOOKING_CONFIRMED`、`TRACKING_UNDER_REVIEW`、`CONSIGNEE_INVITATION`、`PASSWORD_RESET`、`USER_INVITATION`（Bolt 38b2b）、`TOTP_RESET_BY_ADMIN`、`TOTP_ENROLLED`、`TOTP_RE_ENROLLED`（Bolt 38d））。`status` IN（`PENDING`、`SENT`、`FAILED`）。`recipient_user_id` はコンテキストをまたぐので外部キーにしない。PENDING で追加してから送り、送信の結果は `UPDATE ... SET status = ..., sent_at = ..., failure_reason = ... WHERE id = :id AND status = 'PENDING'` の更新件数で書く（`version` を持たない例外）。`email`（宛先のメールアドレス。個人情報）の保持の期間は、トークンの表と同じく非機能要件（W10）で決める（Bolt 33）。**再送の列（Bolt 61。ADR-021）**: `link` は再送する荷主への業務の通知の 5 種類だけが持つ（CHECK。招待・password の再設定のリンクは書けない）。`retry_count` は 0〜3。`retryable` は失敗した行だけが持ち（再送の可否。追加の前に失敗した行は NULL で再送しない）、`TRUE` の行はリンクを持つ。再送は同じ行を `status = 'FAILED' AND retry_count = :前の回数` の条件で `PENDING` に戻して引き取ってから送る | N-INV-02、N-INV-03 |
+
+Bolt 33 でこの表を作る（[Bolt 33 計画](../../development/cargo-tracker/bolt_33_plan.md) の確認ポイント 4、[ADR-017](../../adr/cargo-tracker/017-notification-module-and-mail.md)）。`kind` の CHECK には上の 11 値を置く。Bolt 33 は `PASSWORD_RESET` を、Bolt 38b2b は `USER_INVITATION` を、Bolt 38d は TOTP の 3 値を使い、残りの 6 値は業務の通知（W9）で使う。`USER_INVITATION` は Bolt 38b2b で足した（`V20261026100000`。CHECK を DROP して ADD し、`event_id`・`target_ref` の注を直した）。TOTP の 3 値は Bolt 38d で同じ形で足した（`V20261027110000`。Bolt 38c2 の `V20261027100000` の後）。新しいスキーマなので、`afterMigrate__grant_app_user.sql` の `GRANT USAGE ON SCHEMA`、`MapperSchemaArchitectureTest.SCHEMAS`、`SchemaCommentIntegrationTest.BUSINESS_SCHEMAS`、ER 図の対象（`ops/scripts/design_docs.js` の `schemas`）の 4 か所に `notification` を足す（ER 図の対象の漏れは Bolt 33 で MkDocs の配備を止め、後から足した）。なお、`SchemaCommentIntegrationTest.BUSINESS_SCHEMAS` には `tracking` も漏れていた（Bolt 33a の既知の課題）。`tracking` の表と列にはコメントがそろっていて、マイグレーションは要らないので、Bolt 33c でテストの一覧に足す。
+
+メールの本文は保存しない（料金などを含まないことは N-INV-01 で守り、本文はテンプレートと `target_ref` から再現できる）。TOTP の解除・登録・再登録のお知らせ（Bolt 38d）は `event_id` と `target_ref` が監査記録の ID（`identity.audit_record.id`）で、本文の日時は監査の `occurred_at` から再現できるので、例外に入れない。例外は `PASSWORD_RESET` と `USER_INVITATION`（Bolt 38b2b）で、`event_id` は再設定の依頼の ID（利用者の招待では登録の ID）、`target_ref` はトークンの ID（`identity.password_reset_token.id`）とする。本文のリンクは平文のトークンを含み、どこにも残さないので、この種類は本文を再現しない（残るのは宛先・種類・対象・送信の結果まで）。トークンと送信の記録の保持の期間は非機能要件（W10）で決める。
+
+### 外部データ（`external_data`）
+
+```plantuml
+@startuml
+title external_data スキーマ
+hide circle
+skinparam linetype ortho
+
+entity "data_source\n情報源" as ds {
+  * id : UUID <<PK>>
+  --
+  * provider : VARCHAR(100)
+  * record_type : VARCHAR(50)
+  * approval_status : VARCHAR(30)
+  approved_by : UUID
+  approved_at : TIMESTAMPTZ
+  * version : BIGINT
+  .. UK (provider, record_type) ..
+}
+entity "ingestion\n取込" as ing {
+  * id : UUID <<PK>>
+  --
+  * data_source_id : UUID <<FK>>
+  * file_object_key : VARCHAR(500)
+  * file_hash : VARCHAR(64)
+  * ingested_by : UUID
+  * ingested_at : TIMESTAMPTZ
+  * received_count : INTEGER
+  unparsed_from_line : INTEGER
+  * unparsed_line_count : INTEGER
+  .. CHECK ck_ingestion_unparsed_lines ..
+}
+entity "external_record\n外部原本" as er {
+  * id : UUID <<PK>>
+  --
+  * provider : VARCHAR(100)
+  * record_type : VARCHAR(50)
+  * external_id : VARCHAR(200)
+  * external_version : VARCHAR(100)
+  * payload_hash : VARCHAR(64)
+  * payload_object_key : VARCHAR(500)
+  * first_received_at : TIMESTAMPTZ
+  .. UK (provider, record_type, external_id, external_version) ..
+}
+entity "stored_payload\n保存した原本" as sp {
+  * object_key : VARCHAR(500) <<PK>>
+  --
+  * content : BYTEA
+  * stored_at : TIMESTAMPTZ
+}
+entity "received_record\n受信記録" as rc {
+  * id : UUID <<PK>>
+  --
+  external_record_id : UUID <<FK>>
+  ingestion_id : UUID <<FK>>
+  * payload_hash : VARCHAR(64)
+  * payload_object_key : VARCHAR(500)
+  acquired_at : TIMESTAMPTZ
+  * classification : VARCHAR(30)
+  classification_note : VARCHAR(1000)
+  * classified_at : TIMESTAMPTZ
+  first_line_number : INTEGER
+  last_line_number : INTEGER
+  target_key : VARCHAR(100)
+  value_summary : VARCHAR(4000)
+  .. CHECK ck_received_record_keyless_quarantine ..
+  .. CHECK ck_received_record_line_range ..
+  .. CHECK ck_received_record_value ..
+}
+entity "received_record_decision\n受信記録の判断" as rcd {
+  * id : UUID <<PK>>
+  --
+  * received_record_id : UUID <<FK, UK>>
+  * decision : VARCHAR(30)
+  * decided_by : UUID
+  * decided_at : TIMESTAMPTZ
+  reason : VARCHAR(1000)
+}
+entity "adopted_value\n採用値" as av {
+  * id : UUID <<PK>>
+  --
+  * received_record_id : UUID <<FK, UK>>
+  * target_type : VARCHAR(30)
+  * target_key : VARCHAR(100)
+  * value_summary : VARCHAR(4000)
+  * info_version : VARCHAR(100)
+  * published_at : TIMESTAMPTZ
+}
+entity "outage\n停止期間" as og {
+  * id : UUID <<PK>>
+  --
+  * data_source_id : UUID <<FK>>
+  * started_at : TIMESTAMPTZ
+  ended_at : TIMESTAMPTZ
+}
+entity "manual_entry\n手動情報" as me {
+  * id : UUID <<PK>>
+  --
+  * data_source_id : UUID <<FK>>
+  outage_id : UUID <<FK>>
+  * source_ref : VARCHAR(200)
+  * entered_by : UUID
+  * entered_at : TIMESTAMPTZ
+  * provisional : BOOLEAN
+  * target_type : VARCHAR(30)
+  * target_key : VARCHAR(100)
+  * value_summary : VARCHAR(4000)
+}
+entity "recovery_reconciliation\n復旧照合" as rr {
+  * id : UUID <<PK>>
+  --
+  * outage_id : UUID <<FK, UK>>
+  * status : VARCHAR(30)
+  expected_count : INTEGER
+  adopted_count : INTEGER
+  duplicate_count : INTEGER
+  quarantined_count : INTEGER
+  discrepancy_count : INTEGER
+  confirmed_by : UUID
+  completed_at : TIMESTAMPTZ
+  * version : BIGINT
+}
+entity "reconciliation_discrepancy\n差異" as rd {
+  * reconciliation_id : UUID <<PK,FK>>
+  * discrepancy_no : INTEGER <<PK>>
+  --
+  manual_entry_id : UUID <<FK>>
+  received_record_id : UUID <<FK>>
+  * description : VARCHAR(4000)
+  resolution : VARCHAR(4000)
+  resolved_by : UUID
+  resolved_at : TIMESTAMPTZ
+}
+entity "fetch_failure\n取得失敗" as ff {
+  * id : UUID <<PK>>
+  --
+  * data_source_id : UUID <<FK>>
+  * failed_at : TIMESTAMPTZ
+  * reason : VARCHAR(1000)
+  retry_after : TIMESTAMPTZ
+}
+ds ||--o{ ing
+ing |o--o{ rc
+er |o--o{ rc
+rc ||--o| rcd
+rc ||--o| av
+ds ||--o{ og
+ds ||--o{ me
+og ||--o{ me
+og ||--o| rr
+rr ||--o{ rd
+ds ||--o{ ff
+@enduml
+```
+
+| 表 | 主な制約 | 対応する規則 |
+| :--- | :--- | :--- |
+| `data_source` | 情報源の単位（提供元、原本種別）の一意制約 `uk_data_source`（Bolt 39a3）。`approval_status` IN（`CANDIDATE`、`APPROVED`、`SUSPENDED`）。承認済みが 0 件ならパイロットを開始しない（アプリケーションで判定）。`record_type` の値は取込ファイルの種別 `CsvFileKind` の名前（`VOYAGE`、`MILESTONE`）にそろえる。CHECK は足さない（港湾は D-92 で Release 1.1 に増えるため。Bolt 39b） | BR-18 |
+| `ingestion` | 1 ファイルを 1 つの取込にする。`received_count`（受け取った件数）は、ファイルの物理データ行の数（ヘッダーとレコードの外の空行を除く）。取込の行を書くときに入れ、更新しない。形式の誤りの行はキーのない隔離の受信記録になる（Bolt 39b2。【前の決定の変更】はじめは「39b2 で形式の誤りの行が受信記録にならなくなっても意味を変えない」。`received_count` の意味は物理データ行の数のまま変えない。2026-11-03、human:kakimomokuri）。分類別の件数は受信記録から数える。分類別の件数と `received_count` は単位が違い（受信記録の数と物理行の数）、突き合わせは物理行で行う（受け取った件数 ＝ 取り込んだ行と誤りの行の物理行の数 ＋ 取り込めなかった物理行の数。Bolt 39b2）。取り込めなかった行（引用符の閉じ忘れの行からファイルの終わりまで、またはファイルの誤りのときのデータ行のすべて）の始まり `unparsed_from_line`（NULL 可）と物理行の数 `unparsed_line_count`（NOT NULL、既定 0）を持ち、CHECK `ck_ingestion_unparsed_lines`（数が 0 なら始まりは NULL、数が 0 より大きければ始まりは NOT NULL）で守る。ファイルの誤りでデータ行がなければ（0 バイト、BOM だけ、ヘッダーだけで列が足りない）NULL と 0 にする。どちらも取込の行を書くときに入れ、更新しない。取込全体の要確認は列で持たず、「取り込めなかった物理行の数が 0 より大きい、またはファイルの誤りの隔離の受信記録がある」と定める（Bolt 39b2）。S-16 の結果の画面はこの定めを使い、取込の要約の照会で `unparsed_line_count` と、読んだ隔離の受信記録のうちファイル全体の原本（`payload_object_key` が取込の `file_object_key` と同じ）を指すものから要確認を復元する（Bolt 39c4。スキーマは変えない）。受信記録が取込への外部キーを持つので、取込の行は受信記録より先に書く。追記専用の印を付け、UPDATE・DELETE の権限なし（Bolt 39b） | BR-12 |
+| `external_record` | 冪等性キー（提供元、原本種別、外部 ID、外部版）の一意制約。採用中の payload のハッシュ（はじめは最初に受け取った payload。採用の判断で付け替える）を持つ。`data_source` への外部キーは張らない（冪等性キーは情報源の承認の状態と独立し、出典は受信記録 → 取込 → 情報源でたどれるため。Bolt 39a3）。Bolt 39d4 で、採用の判断のときに `payload_hash`・`payload_object_key` を採用した payload に付け替えるようにした（`external_record` は追記専用でない。Bolt 39a3 の決定 (4)。冪等性キーと `first_received_at` は変えない。Bolt 39d の開始準備の決定 (9) と【前の決定の変更】(3)、【業務の判断】(b)・(f)。2026-11-05、推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）。付け替えは採用の判断と同じトランザクションの 1 文の `UPDATE ... SET payload_hash = ?, payload_object_key = ? WHERE id = ? AND payload_hash = ?`（読んだ基準のハッシュを条件にする）で、0 行なら `ConcurrentExternalRecordUpdateException` でトランザクションごと巻き戻す。列は変えず、`version` も足さない（比べるものがハッシュと同じ意味になる）。取込と採用の同時はロックが要らない（取込は既にある外部原本を更新せず、付け替えの前に読めば前の基準、後に読めば新しい基準で分類し、どちらも直列の順と同じ結果になる。更新はキーでない列だけなので、受信記録の外部キーが取るロックと競合せず、取込の途中でも採用は待たない見込みで、PostgreSQL の統合のテストで確かめる。`SELECT ... FOR UPDATE` は取込のコミットまで採用を待たせるので取らない）。採用と採用の同時は後の側の更新が 0 行になり、先の側の基準と採用値が残る（[Bolt 39d4 計画](../../development/cargo-tracker/bolt_39d4_plan.md) の開始準備の決定 (3)・(4)。推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）。共通のマイグレーション 1 つで列のコメントを「採用中の payload のハッシュ（はじめは最初に受け取った payload。採用の判断で付け替える）」「採用中の payload のオブジェクトキー（同じ）」に直す（列のコメントだけ。Bolt 39d4 のステップ 3 の承認ゲートで通す）。Bolt 39h で、差異にした原本も外部原本を作るので `payload_hash` の意味が広がる: 採用値のない外部原本（差異で作った外部原本）の基準は、採用されていない最初に差異にした payload のハッシュ（採用値がないことで見分ける。列とコメントは変えない。[Bolt 39h 計画](../../development/cargo-tracker/bolt_39h_plan.md) の開始準備の決定 (5)）。この外部 ID の採用値の一覧（採用値のポートの `findByExternalId`）は、一意制約 `uk_external_record_idempotency_key` の先頭 3 列（`provider`、`record_type`、`external_id`）で外部原本を引く（索引は足さない） | BR-12 |
+| `stored_payload` | 原本のオブジェクトキー（`object_key`。`PayloadObjectKey` の値）が主キー。`content`（原本の内容）はバイト列で NOT NULL、0 バイトを許す。型は `BYTEA`（共通の置き場所。H2 は別名として受けて `binary varying` になり、0 バイト・0x00・0xFF を読み書きできることを Bolt 39a2 のステップ 2 で確かめた。H2 の `binary varying` には長さの上限があり PostgreSQL の `BYTEA` と違うが、開発の範囲では影響しない。上限は H2 2.4.240 で 1,000,000,000 バイト（`org.h2.engine.Constants.MAX_STRING_LENGTH`）で、上限の中の 1 万件のファイルは当たらない。Bolt 39b4）。原本の大きさの上限はファイル全体で 41,943,040 バイト（40 MiB）と物理データ行 10,000 件にする。行の原本はファイルの一部なので、ファイルの上限を超えない。上限を超えるファイルは原本を保存せずに拒否する（2026-11-04、Bolt 39b4。human:kakimomokuri。推奨のとおり。Recommend 承認の指示による）。`stored_at`（保存した時刻）は Clock から取りマイクロ秒に切り捨てる。ハッシュは持たない（`ingestion.file_hash`・`external_record.payload_hash`・`received_record.payload_hash` が持つ）。`file_object_key`・`payload_object_key` とは外部キーを張らない（W10 で S3 に差し替えるため）。追記専用の印を付け、UPDATE・DELETE の権限なし | ADR-004、PV-01 |
+| `received_record` | 受け取るたびに 1 行。`classification` IN（`ADOPTED`、`DUPLICATE`、`QUARANTINED`、`DISCREPANCY`）。ハッシュが外部原本の採用中の payload のハッシュと同じなら重複、違えば隔離。差異（`DISCREPANCY`）は Bolt 39h で書く: 差異の受信記録は外部原本を持ち（キーのない隔離の CHECK に当たらない）、採用値を持たない。差異の理由と比べた外部版は `classification_note` に業務の言葉で書き（逆転「n 行目: 同じ外部 ID で後に取得した外部版 "V" を採用しているので、前に取得したこの外部版は採用していません（版の逆転）。」、矛盾「n 行目: 同じ外部 ID の採用中の外部版 "V" と追跡番号が違うので採用していません（既存の採用値との矛盾）。」）、理由の区分の列は足さない（区分で絞る画面はなく、区分は DE-31 と監査に残る。却下した差異を理由別に数えるには監査を見る）。CHECK は Bolt 39a3 から `DISCREPANCY` を受けるのでスキーマは変えない（[Bolt 39h 計画](../../development/cargo-tracker/bolt_39h_plan.md) の開始準備の決定 (2)、台帳 D-144・D-146。仮）。取込の結果の理由の照会（受信記録のポートの `quarantinedOf`）は Bolt 39h で隔離と差異を読む（Bolt 39h2 で名前を `quarantinesAndDiscrepanciesOf` に改めた。【前の決定の変更】(28)）。`ingestion_id` は NULL を許す。取込で書くときは、取込の行を先に書き、行の原本を保存してから受信記録を書く（Bolt 39b）。形式の誤りの受信記録は外部原本と取得時刻を持たない（キーのない隔離）。`external_record_id` と `acquired_at` は NULL を許し、CHECK `ck_received_record_keyless_quarantine`（`(external_record_id IS NULL) = (acquired_at IS NULL) AND (classification = 'QUARANTINED' OR external_record_id IS NOT NULL)`）で 2 列の NULL をそろえ（片方だけの NULL は拒む。Bolt 39b2 の開発レビュー）、NULL を隔離だけに限る。行の誤りの受信記録は行の原文（物理行の範囲）を保存した原本を指し、ファイルの誤り（文字コード、ヘッダーが読めない、必要な列がない、同じ名前の列）の受信記録は 1 つで、取込の `file_object_key`（`externaldata/ingestions/{UUID}` のキー）を指す。引用符の閉じ忘れは、その行からファイルの終わりまでの原文を保存した原本を指す受信記録を 1 つ書く。理由と物理行の範囲は `classification_note` に業務の言葉で書き、1000 文字を超えたら末尾を切る（Bolt 39b2）。1000 文字はコードポイントで数える（サービスがコードポイントで切り、PostgreSQL の `VARCHAR(1000)` も文字で数える）。H2（ローカル起動・デモ環境）は VARCHAR の長さを UTF-16 の単位で数え、補助文字を含む注記が `VARCHAR(1000)` に入らなかったので、H2 だけ `VARCHAR(2000)` に広げた（Bolt 39b4 のステップ 5。`db/migration/h2/V20261104145000__widen_received_record_classification_note.sql`、`H2ReceivedRecordNoteTest`、ADR-007）。値の列（寄港・追跡番号・種類・場所・発生時刻）は持たず、値は payload の行の原文に残る（Bolt 39d3 で、外部原本を持つ受信記録に対象のキーと値の要約の 2 列を書くことに改めた。下の Bolt 39d3 の項）。値の検証の誤りも形式の誤りの行としてキーのない隔離にする（Bolt 39b2b。スキーマは変えない）。行の範囲の 2 列 `first_line_number`・`last_line_number`（INTEGER、NULL 可）と CHECK `ck_received_record_line_range`（`(first_line_number IS NULL) = (last_line_number IS NULL) AND (first_line_number IS NULL OR (first_line_number >= 1 AND first_line_number <= last_line_number))`）を Bolt 39c3 で足す（共通のマイグレーション。1 列ずつの文で、H2 と PostgreSQL の両方で通る形。2 列に日本語の列のコメント「行の範囲の始まり（終わり）（物理行の番号。ファイルの誤りと Bolt 39c3 より前の行は NULL）」）。値は行ごとの結果（形式の正しい行と行の誤りの物理行の始まりと終わり）と、ファイルの終わりまで取り込めなかった範囲（始まりから「始まり ＋ 数 − 1」まで）。ファイルの誤りの受信記録はファイル全体の原本を指すので NULL、既存の行も NULL（追記専用で更新しない）。2 列は注記の並びに使う: 取込ごとの隔離の受信記録を `first_line_number NULLS FIRST, id` の順（範囲が NULL のファイルの誤りを先、同じ始まりは受信記録 ID の順）に読む（受信記録のポートの `quarantinedOf`。Bolt 39c3）。分類の時刻は 1 つの取込で同じなので並びに使えない。索引は `ix_received_record_ingestion` のまま（【前の決定の変更】Bolt 39a3 では行の番号を持たない形で決めた。Bolt 39c2 の開始準備の決定 (6) で、注記を物理行の順に示すため 2 列を足すと決めた。代わりの案（注記の文の頭の番号を読む・原本のキーを決まった順にする・分類の時刻で並べる・並びを諦める）は取らない。2026-11-04、推奨のとおり。Recommend 承認の指示による。human:kakimomokuri。スキーマの承認ゲートは 39c3 の計画のステップ 3 で通す）。S-17 の判断を待つ隔離・差異の一覧の照会（受信記録のポートの `undecidedRecords`・`countUndecidedRecords`。Bolt 39d は隔離だけの `undecidedQuarantines`・`countUndecidedQuarantines`。Bolt 39h2 で名前を改め、分類の条件を `classification IN ('QUARANTINED', 'DISCREPANCY')` にして行に分類の列を足した。キーのない隔離の 2 つの照会は分類を隔離に絞る条件を照会の側に足した。索引は `ix_received_record_classification` と `ix_received_record_ingestion` のまま）は、受信記録を `JOIN ingestion` と `LEFT JOIN external_record` で結んで取込の時刻・情報源 ID・外部 ID・外部版を 1 本の SQL で読み、`ix_received_record_ingestion`・`ix_received_record_classification` を使う。並びは `ingestion.ingested_at DESC, ingestion_id, first_line_number NULLS FIRST, id`（時刻・数・UUID だけで、文字列の照合順序に頼らない）。取込で書いた受信記録だけが出る（`ingestion_id` が NULL の受信記録は結合で落ちる）。索引は足さない（上限いっぱいの照会の計測は Bolt 39d4 で足した。1 秒を超えたら索引を諮る）。理由の符号は列で持たない（S-17 は理由で絞らず、符号は DE-14 と監査に残る。Bolt 39d の開始準備の決定 (6)）。Bolt 39d3 で、値の列 `target_key VARCHAR(100)`・`value_summary VARCHAR(4000)`（どちらも NULL 可。採用値の同じ名前の列と同じ型）を足し、外部原本を持つ受信記録（採用・重複・内容の違う原本の隔離。航海・主要実績）に採用値と同じ規則の値（キーは取込の値の `targetKey()`、要約は `summary()`）を取込の受信記録の INSERT で書く（【前の決定の変更】Bolt 39b2b の「値は受信記録に書かない」を、Bolt 39d の開始準備の決定 (8) と【前の決定の変更】(2) で変えた。採用の判断は要約から値を作り直す。39d3 より前の受信記録は値の列が NULL で採用できず、却下だけにする。2026-11-05、推奨のとおり。Recommend 承認の指示による。human:kakimomokuri。スキーマの変更は 39d3 のステップで扱う）。CHECK `ck_received_record_value`（`(target_key IS NULL) = (value_summary IS NULL) AND (external_record_id IS NOT NULL OR target_key IS NULL)`）で、2 列をそろって NULL かそろって NULL でないにし、外部原本を持たない受信記録（キーのない隔離）は値を持たないことを守る。外部原本を持つ受信記録に値を必須にはしない（39d3 より前の行は NULL のまま。追記専用で更新せず、埋め直さない）。索引 `ix_received_record_external_record`（`external_record_id`）を同じマイグレーションで足す（下の索引の表）。共通のマイグレーションで 1 列・1 制約・1 索引ずつの文にし、2 列に日本語の列のコメントを付ける。H2 は広げない: `value_summary` は ASCII だけ（港は UN/LOCODE、時刻は UTC の ISO 8601、種類は enum の名前、区切りは `\|`・`;`）で UTF-16 の単位とコードポイントの数が同じ（寄港 60 で最大 3719 文字）、`target_key` は航海番号ならコードポイントで 30 文字まで（補助文字だけでも UTF-16 で 60 単位）、追跡番号なら ASCII 14 文字で、どちらも `VARCHAR(100)` に入る（採用値の同じ 2 列も H2 で広げていない。ADR-007。上限いっぱい（寄港 60 の要約と補助文字を含む 30 文字の航海番号）が受信記録の追記と `findById`・`quarantinedOf` でメモリ・H2・PostgreSQL のどれでも往復することを、Bolt 39d3c で契約のテストで確かめる）。要約から値に戻す規則は値の型に置き（航海は `VoyageValues.ofSummary`（Bolt 39d3）、主要実績は `MilestoneValues.ofSummary`（Bolt 39d3c）。原本種別で分ける入口 `RecordValues.ofSummary(recordType, targetKey, summary)` が `VOYAGE` なら航海、`MILESTONE` なら主要実績の規則を呼び、知らない原本種別は `IllegalArgumentException` にする（`record_type` に CHECK がなく、表を直に書き換えると知らない原本種別が入りうるため。Bolt 39d3c））、往復の約束は「取込の値 `v` について `ofSummary(v.targetKey(), v.summary())` が `v` と等しい」（時刻はマイクロ秒に切り捨てた値に限る）。規則に合わない要約（主要実績の区切りの数の違いと空の発生時刻を含む）は読まずに `IllegalArgumentException` にする。判断を待つ隔離・差異の一覧の照会（`undecidedRecords`・`undecidedRecord`。Bolt 39h2 より前は `undecidedQuarantines`・`undecidedQuarantine`）は値の列を読まず、値を読むのは `receivedRecordRow` を使う `findById`・`quarantinesAndDiscrepanciesOf`（Bolt 39h2 より前は `quarantinedOf`）・`undecidedKeylessQuarantinesOf` で、S-17 の判断の画面は `findById` で受け取った値を読む（Bolt 39d3 の開始準備の決定 (2)〜(4)・(6)）。追記専用の印を付け、UPDATE・DELETE の権限なし | BR-12、US-14、UC-15 2a |
+| `received_record_decision` | 受信記録の判断。受信記録 1 件につき 1 つ（`received_record_id` の一意制約）。判断のやり直しは提供元からの再送（新しい受信記録）で扱う。`decision` IN（`ADOPTED`、`REJECTED`。前例の `review_record` の過去分詞にそろえる）。`reason` は NULL を許す。判断は隔離・差異の受信記録だけに付く。判断と分類の整合は表の制約で守らず、アプリケーションで判定する（Bolt 39d2 で読み書きを作った。守る場所は却下のファクトリー `ReceivedRecordDecision.reject` で、分類が隔離・差異でない受信記録を拒む。差異は Bolt 39h2 で足した（Bolt 39h の開始準備で 39h から分けた）。差異は却下だけ（Bolt 39h2。差異は Release 1.0 では採用の判断が付かない。採用のファクトリー `ReceivedRecordDecision.adopt` が分類が隔離でない受信記録を拒む。【前の決定の変更】(27)、台帳 D-144。仮。スキーマは変えず、`decision` と分類の整合の表の制約は足さない。[Bolt 39h2 計画](../../development/cargo-tracker/bolt_39h2_plan.md) の開始準備の決定 (3)・(7)）。読み書きは判断のポート `ReceivedRecordDecisionRepository`（`add`・`existsFor`）と MyBatis・メモリの実装で、2 つ目の判断は一意制約の違反を `DuplicateReceivedRecordDecisionException` に変える。`decided_at` は Clock から取りマイクロ秒に切り捨てる。Bolt 39d2 の開始準備の決定 (2)・(3)）。判断を待つ隔離・差異は、分類が隔離か差異で、この表に行のない受信記録（S-17 の一覧は `NOT EXISTS` で読む。Bolt 39d。差異は Bolt 39h2 で足した。39d では行を書く処理がなく、読み書きは 39d2（却下）・39d3b（航海の採用）・Bolt 39d3b2（主要実績の採用））。却下は理由を必須にし（1000 文字まで。`reason` は NULL 可のまま、アプリケーションで守る）、採用は理由を任意にする（【業務の判断】(d)。Bolt 39d の開始準備の決定 (11)）。採用の判断は採用のファクトリー `ReceivedRecordDecision.adopt` が作り、null と前後の空白だけの理由は NULL に、ほかは前後の空白を除いて持つ（空の文字列を残さない。上限は前後の空白を除いて 1000 文字。Bolt 39d3b の開始準備の決定 (2)）。採用の判断は判断の行を先にセーブポイントの中で追記し、その後に採用値をセーブポイントなしで追記する（同時の判断は判断の一意制約で 1 つに決まり、負けた側は採用値を書かない。Bolt 39d3b の開始準備の決定 (5)）。1000 文字はコードポイントで数える（`received_record.classification_note` と同じ事情で、H2 は VARCHAR の長さを UTF-16 の単位で数え、補助文字を含む 1000 コードポイントの理由が `VARCHAR(1000)` に入らないので、H2 だけ `reason` を `VARCHAR(2000)` に広げる。`db/migration/h2/V20261105100000__widen_received_record_decision_reason.sql`（版は 39d2 のステップ 3 の開始で確かめる）。PostgreSQL は文字で数えるので `VARCHAR(1000)` のまま。ADR-007。Bolt 39d2 の【前の決定の変更】(4)）。追記専用の印を付け、UPDATE・DELETE の権限なし（Bolt 39a3） | US-14 |
+| `adopted_value` | 採用した受信記録ごとに 1 つ（`received_record_id` の一意制約）。`target_type` IN（`VOYAGE`、`MILESTONE`。港湾は D-92 で Release 1.1）。採用値は分類が採用の受信記録と、採用と判断した受信記録だけに付く。採用値と判断・分類の整合は表の制約で守らず、アプリケーションで判定する（Bolt 39d）。ここから DE-12・DE-13 を発行する。追記専用の印を付け、UPDATE・DELETE の権限なし。列の意味（Bolt 39b3）: `target_key` は航海なら航海番号、主要実績なら追跡番号（外部 ID とは限らない）。`value_summary` は取込の値から作る正規の文字列で、航海は寄港を `\|` で区切った「UN/LOCODE;到着;出発」（例 `JPTYO;;2026-11-19T23:00:00.000000Z\|USLAX;2026-12-01T14:00:00.000000Z;`）、主要実績は「種類;場所;発生時刻」（例 `DEPARTURE;JPTYO;2026-11-19T23:00:00.000000Z`）。時刻は UTC の ISO 8601 でマイクロ秒の 6 桁に固定し、空は空にする。4000 コードポイントまで（寄港は 60 までなので、航海の要約は最大 3719 文字）。`info_version` は外部版（100 文字まで）。`published_at` は取込での採用は取込の時刻（Clock から 1 回取った値）、採用の判断は判断の時刻（判断の `decided_at` と同じマイクロ秒に切り捨てた値。Bolt 39d3b の開始準備の決定 (6)。Bolt 39d3b2 で主要実績の採用の判断（`target_type` が `MILESTONE`、`target_key` は受け取った値の追跡番号、`published_at` は判断の時刻）も同じ規則で書く）。この外部版の採用値（S-17 の判断の画面で内容の違う原本と比べる相手。Bolt 39d3）は、同じ外部原本（同じ提供元・原本種別・外部 ID・外部版）の受信記録に付いた採用値のうち `published_at` の最も新しいもの（同じ時刻なら採用値 ID の順の最後）と定める。同じ外部 ID の別の外部版の採用値は含めない（版をまたぐ比べは差異。Bolt 39h で、差異の比べる相手として、同じ提供元・原本種別・外部 ID の外部原本（外部版を問わない）の受信記録に付いた採用値の一覧を採用値のポートの `findByExternalId(provider, recordType, externalId)` で読む。外部原本の一意制約の先頭 3 列、索引 `ix_received_record_external_record`、一意制約 `uk_adopted_value_received_record` でたどり、並びは決めない（比べる相手は差異の規則が選ぶ）。差異の受信記録には採用値を作らない）。採用値のポートの `currentOf(externalRecordId)` が `adopted_value a JOIN received_record r ON r.id = a.received_record_id WHERE r.external_record_id = ?` を `a.published_at DESC, a.id DESC` で 1 件読み、索引 `ix_received_record_external_record` を使う。採用値の取得時刻は採用値の受信記録の `acquired_at`。隔離を採用すると（Bolt 39d3b）同じ外部原本の採用値が 2 つになり、後から採用した方がこの外部版の採用値になる（採用値は追記専用で前の採用値を消さない。【業務の判断】(j)、台帳 D-97。Bolt 39d の「採用中の値」の語は 39d の意味のまま） | ADR-004 |
+| `manual_entry` | 出典・入力者・入力時刻・仮状態を NOT NULL にする | BR-08 |
+| `recovery_reconciliation` | 停止期間ごとに 1 つ。完了には全件の分類、件数の一致、差異の解消が必要（アプリケーションで判定） | BR-12、US-15 |
+
+原本の payload（ファイル全体と行）は、W7〜W9 は DB の `stored_payload` に置き、W10 で S3 に差し替える（ADR-004、ADR-008。Bolt 39a2）。保存は受信記録とは独立したトランザクション（REQUIRES_NEW）で行い、外側のトランザクションが巻き戻っても原本は残る（S3 と同じ振る舞い）。受信記録などの表には `payload_object_key` とハッシュだけを持つ。S3 に差し替えたら `stored_payload` は使わなくなる。外側が巻き戻った取込の原本は、どの表からも参照されずに残る。参照されない原本は、`stored_payload` のオブジェクトキーのうち、`ingestion.file_object_key` と `received_record.payload_object_key` のどちらからも参照されないものとして数える（W10 の S3 ではオブジェクトの一覧と突き合わせる）。数える照会は照合を作る Bolt 39h で作る（ADR-004 の改訂の経緯。Bolt 39b2）。Bolt 39h の開始準備で、数える照会は BR-12 の独立した照合とともに復旧照合（US-15。Release 1.1、W12）の Bolt に送った（照合の入口がないと使い道がない。[Bolt 39h 計画](../../development/cargo-tracker/bolt_39h_plan.md) の開始準備の決定 (1)）。取込 1 つが同時に握る接続は 2 本（外側の取込のトランザクション 1、原本の保存の内側 1）で、コミットは「行の数 ＋ 2」（行ごとの原本、ファイル全体の原本、外側）になる。数と量は Bolt 39b4 の統合テストで確かめる（ADR-004 の改訂の経緯）。輸送要求の必要書類（`required_document`）も同じく、ファイルの中身は保存先に置き、DB にはオブジェクトキーと SHA-256 を持つ（Bolt 7）。
+
+### 基盤（`platform`）
+
+| 表 | 提供元 | 用途 |
+| :--- | :--- | :--- |
+| `event_publication`（と完了済みの保管表） | Spring Modulith（JDBC） | イベント発行記録。発行と同じトランザクションで記録し、購読の完了を記録する。未完了のものを再配信する（ADR-003） |
+| `spring_session`、`spring_session_attributes` | Spring Session JDBC | 複数インスタンス間で共有する session |
+| `shedlock` | ShedLock | 定期処理（再配信、予約サガの滞留の判定、日次の処理）を 1 インスタンスに限るためのロック。W10 の Bolt 53-1 で作った（`V20261125100000__create_platform_shedlock.sql`。列は name・lock_until・locked_at・locked_by。ロックの名前は定期処理ごと。いまは見積りの有効期限の通知 `quotation-expiry-notification` だけ） |
+
+`spring_session` と `spring_session_attributes` は Bolt 14 で作る（`principal_name` はログインのメールアドレスを入れるため 320 文字に広げた。Spring Session JDBC の DDL を `platform` スキーマに置く。無操作 30 分の期限は session の `MAX_INACTIVE_INTERVAL`（`spring.session.timeout`）、発行から 8 時間の上限は session の属性に置いた認証時刻で判定する）。Bolt 33a から、password の再設定の完了のコミットの後に、その利用者の session を `principal_name`（ログインのメールアドレス。`CargoUserDetails.getUsername()`）の索引で探して消す。消すのは Spring Session の `FindByIndexNameSessionRepository`（Spring Session JDBC は自分のトランザクション（`REQUIRES_NEW`）で動く）で、マッパーから `platform.spring_session` を直接消さない（AT-04）。完了の要求の新しい session は主体を持たないので消えない（主体のない session とほかの利用者の session が残ることを統合テストで確かめる）。表は変えない。表の定義はフレームワークの提供する DDL に従う。DDL は DB ごとに違うため、Flyway の `db/migration/{vendor}/` に H2 用と PostgreSQL 用を分けて置く（ADR-007）。完了したイベント発行記録は 30 日（RET-05）で削除する。注（Bolt 39b3b）: H2 の `event_publication.serialized_event` は Spring Modulith の H2 の定義では `VARCHAR(4000)` で、寄港 60 の DE-12（約 6,700 文字）が入らない。H2 だけのマイグレーション（`db/migration/h2/`）で `VARCHAR(1000000)`（寄港 60 の DE-12 が入る幅。H2 の上限は 1,000,000,000）（2026-11-04 訂正: はじめ「H2 の VARCHAR の上限」と書いたが誤り。H2 2.4.240 の `MAX_STRING_LENGTH` は 1,000,000,000 で、1,000,000 は広げた値。マイグレーションは変えない。Bolt 39b4）に広げ、ローカル起動とデモ環境でも寄港の多い航海を取り込めるようにする。PostgreSQL は `TEXT` のままで変えない（2026-11-03、human:kakimomokuri が決めた。ADR-007 の改訂の経緯）。
+
+## マイグレーションの構成
+
+```text
+src/main/resources/db/
+├── migration/
+│   ├── common/        業務の表（H2 と PostgreSQL の共通部分）
+│   │   ├── V20261001090000__create_identity.sql
+│   │   ├── V20261001090100__create_quotation.sql
+│   │   └── ...
+│   ├── h2/            フレームワークの表（H2 用）
+│   └── postgresql/    フレームワークの表（PostgreSQL 用）
+└── callback/
+    └── postgresql/
+        └── afterMigrate__grant_app_user.sql   権限の付与と、追記専用の表の UPDATE・DELETE の剥奪
+```
+
+| 規約 | 内容 |
+| :--- | :--- |
+| 版番号 | 作成日時の版番号（`VyyyyMMddHHmmss__説明.sql`）にする。コンテキストごとの版番号の帯は使わない（ADR-007。帯を分けると、後から小さい番号を足したときに検証で失敗する） |
+| 1 つの Flyway | `common` と `{vendor}` の場所を 1 つの Flyway の実行で適用し、履歴表は 1 つにする |
+| 共通部分 | 業務の表の DDL は H2 と PostgreSQL の両方で実行する（ADR-007）。CI で両方に適用して確かめる |
+| 権限 | 権限の付与と剥奪は PostgreSQL 用の `afterMigrate` のコールバックで行い、表の作成と同じ配備で反映する。新しい表を足したら、同じ変更でコールバックも更新する |
+| 後方互換 | ローリングデプロイのため、列の削除・名前の変更は「追加 → 移行 → 削除」に分ける（インフラ設計）。例外: Bolt 39i の `exclusion_reason.threshold`（ステージング・本番が W10 までないため 1 つにした。W10 の後は 3 段） |
+| 日本語名のコメント | 業務の表と列には、作るマイグレーションで日本語名のコメント（`COMMENT ON TABLE`・`COMMENT ON COLUMN`）を付ける。表の日本語名は本書の ER 図、列の日本語名はドメインモデルの用語集に合わせる。ER 図（SchemaSpy）に日本語名が出る。付け忘れは PostgreSQL の統合テスト（`SchemaCommentIntegrationTest`）が検出する（2026-10-03、human:kakimomokuri）。検出する業務のスキーマの一覧（`BUSINESS_SCHEMAS`）は手で保つので、新しいスキーマを作るときに足す（`tracking` は Bolt 33c で足した） |
+| 追記専用の印 | 追記専用の表には、作るマイグレーションで表のコメントの日本語名の後ろに印を付ける（`COMMENT ON TABLE ... IS '<日本語名> [append-only]'`。2026-10-03 に `'append-only'` だけの形から変えた）。PostgreSQL の `afterMigrate` のコールバックは、コメントが ` [append-only]` で終わる表からアプリケーション利用者の UPDATE・DELETE を外す（名指しにしないので、書き忘れで保護が黙って外れない）。印の付け忘れは、権限の統合テストが設計の一覧との一致で検出する（Bolt 3 レビュー R-02）。状態などを UPDATE するが行を消してはならない表（`tracking.milestone`）は、印 ` [no-delete]` を付け、`afterMigrate` が DELETE だけを外す（Bolt 26b。権限の統合テストの `NO_DELETE_TABLES`） |
+| スキーマの自動初期化 | 使わない。スキーマと表は Flyway だけが作る（Spring Modulith の `spring.modulith.events.jdbc.schema-initialization.enabled=false`。将来の Spring Session なども同じ）。既定権限（`ALTER DEFAULT PRIVILEGES`）も使わない。Flyway 以外で作られた表に UPDATE・DELETE が付くのを防ぐ。連番（SEQUENCE、IDENTITY）を使う表を足したら、コールバックに `USAGE ON ALL SEQUENCES` の付与を足す（Bolt 3 レビュー R-25） |
+| 凍結の時点 | 最初にステージングへ配置したマイグレーションは書き換えない。それまでは Bolt で使う列だけを作り、後の Bolt で足す。凍結の後に `NOT NULL` の列を足すときは、既定値付きで追加するか「追加 → 移行 → 制約」の 3 段にする。状態の `CHECK` 制約は、状態を足すたびに作り直す（Bolt 1 レビュー R-37） |
+
+## インデックス
+
+照会の主な経路に対してだけ置く。性能目標が決まった後（非機能要件）に見直す。
+
+| 表 | インデックス | 使う照会 |
+| :--- | :--- | :--- |
+| `quotation.transport_request` | （`shipper_company_id`、`status`） | 荷主の輸送要求の一覧 |
+| `quotation.quotation` | （`transport_request_id`、`status`） | 輸送要求の有効な見積り |
+| `quotation.quotation` | `ix_quotation_assigned_route`（`routing_case_number`、`route_version_no`） | 経路設計が再設計要にした経路版を割り当てた見積り（再見積りの旧版と新しい見積りの両方）を引き、再設計要の印を付ける（US-07 AC5。Bolt 37e） |
+| `routing.routing_case` | （`transport_request_id`） | 輸送要求から経路設計案件 |
+| `routing.routing_case` | `ix_routing_case_shipper`（`shipper_company_id`、`quotation_expires_at`） | 社内の経路設計案件一覧（S-05）を担当企業で絞り、見積有効期限の近い順に並べる（Bolt 38g） |
+| `routing.referenced_info_version` | （`voyage_number`） | 航海の更新で再評価する確定済み経路版の検索（DE-12）（Bolt 37d: この表は作らない。下の `routing.candidate_leg` の索引で引く） |
+| `routing.candidate_leg` | `ix_candidate_leg_voyage`（`voyage_number`） | 航海の更新（DE-30）で、航海番号から確定した経路版を持つ案件を引く（US-07 AC4。Bolt 39f） |
+| `booking.booking` | `tracking_number`（一意）、（`shipper_company_id`、`status`）、（`transport_request_number`）、（`transport_request_number`、`quotation_no`）（一意） | 追跡番号での照会、荷主の予約一覧、業務番号から予約をたどる社内の照会（Bolt 23、R-31）、見積りの照会の前に同じ見積りの予約を引く（Bolt 24）。S-10 予約一覧（Bolt 25b）は予約版 1 の `committed_at` の新しい順に引くが、R0.1 では予約が数十件なので索引を足さない（確定時刻の索引は W11 の一覧の本体で決める）。C-06 予約一覧（荷主。Bolt 27b）は（`shipper_company_id`、`status`）の索引 `ix_booking_shipper_status` で荷主企業を絞り、索引は足さない |
+| `booking.booking_saga` | （`status`、`started_at`） | 処理中の滞留の判定（RTY-02、OBS-04） |
+| `tracking.tracking_record` | `ix_tracking_record_shipper`（`shipper_company_id`、`created_at`）、（`consignee_company_id`） | 荷主の照会（C-10。Bolt 27 で足した。荷主企業で絞って追跡の開始時刻の新しい順に並べる一覧のため、並びの列を含めた複合の索引にした）・荷受人の照会（荷受人の照会を作る US-10・R1.1 で足す）。`booking_id` は一意制約が索引を兼ねる。S-11 の追跡の開始時刻（`created_at`）の並びの索引は、R0.1 では追跡記録が数十件なので足さない（一覧の絞り込みとページ送りを作る W7 以後に決める。Bolt 26）。`next_expected_at` の索引は鮮度超過だけの一覧を作る W10 で決める（Bolt 39g4） |
+| `tracking.scheduled_leg` | `ix_scheduled_leg_voyage`（`voyage_number`） | 航海の採用値の更新（DE-12）で、航海番号からその航海を最後の区間に持つ追跡記録を引く（`findTrackingNumbersByFinalLegVoyage`。Bolt 39g4b。名前は `ix_candidate_leg_voyage` にそろえた） |
+| `tracking.service_case` | （`status`、`receive_due_at`） | 受領期限を過ぎた案件（escalation） |
+| `identity.access_grant` | （`booking_id`、`consignee_company_id`、`status`） | 参照許可の確認（request ごと） |
+| `identity.audit_record` | `ix_audit_record_target`（`target_type`、`target_id`、`occurred_at`）、`ix_audit_record_actor`（`actor_user_id`、`occurred_at`） | S-20 の詳細の今の停止の記録（Bolt 38c2 で足した。対象の利用者の最新の `USER_SUSPENDED` を 1 行引く）・監査証跡の照会（US-17） |
+| `external_data.received_record` | （`ingestion_id`）、（`classification`） | 取込単位の件数、隔離中の一覧。取込ごとの隔離・差異を行の範囲の順に読む照会（`quarantinesAndDiscrepanciesOf`。Bolt 39c3 の `quarantinedOf`。Bolt 39h2 で名前を改めた）も `ix_received_record_ingestion` で 1 つの取込（最大 1 万件）に絞ってから並べ、行の範囲の索引は足さない（上限いっぱいの照会の計測は 39c4。遅ければ索引を足すかを諮る）。外部キーの列のほかの索引は、使う照会が決まる Bolt 39b・39d で足す |
+| `external_data.received_record` | `ix_received_record_external_record`（`external_record_id`） | この外部版の採用値の照会（採用値のポートの `currentOf`。採用値を受信記録と結び、外部原本 ID で絞る。【業務の判断】(j)）。S-17 の判断の画面を開くたびに受信記録の表を全部読まないようにする（1 つの取込で 1 万件まで。PostgreSQL は外部キーに索引を自動で作らない）。Bolt 39d3 で値の 2 列と同じ共通のマイグレーションで足す。39h の差異も外部原本ごとに受信記録を引く（この外部 ID の採用値の一覧 `findByExternalId`。取込の 1 行につき 1 本）が、足す理由は 39d3 の照会だけで足りる（Bolt 39d4 の付け替えは外部原本の ID で 1 行を更新し、受信記録を引かない） |
+| `tracking.service_case` | （`shipper_company_id`、`status`） | 荷主の問い合わせ一覧（US-23） |
+| `tracking.inquiry_record` | （`shipper_company_id`、`received_at`）、（`tracking_number`、`received_at`。W9 の Bolt 44） | KPI-02 の週次集計、顧客 Web の照会が有人対応へ移ったかの 24 時間の規則（追跡番号と受付時刻の範囲で探す） |
+| `identity.kpi_baseline` | （`kpi`、`registered_at`。W9 の Bolt 44-2） | 最新の基準値を引く（ほかの記録に訂正されていないもの） |
+| `identity.kpi_observation` | （`submitted_at`） | KPI-01 の週次集計 |
+| `identity.password_reset_token` | （`user_id`、`issued_at`）。`request_id` と `token_hash` は一意制約が索引を兼ねる | 前の未使用のトークンの無効化と、前の発行から 1 分以内の繰り返しの判定（Bolt 33）。ハッシュでの照合（Bolt 33a） |
+| `notification.notification` | （`event_id`、`recipient_user_id`）は一意制約が索引を兼ねる | 同じ依頼の ID と宛先の通知の有無（N-INV-02。Bolt 33） |
+| `quotation.quotation` | （`status`、`expires_at`） | 期限間近の見積り（DE-19）、荷主承認済み・期限間近の一覧 |
+
+## ドメインモデルとの対応
+
+| 集約（ドメインモデル） | 表 | 対応の注意 |
+| :--- | :--- | :--- |
+| 輸送要求 | `transport_request`、`transport_request_draft`、`transport_request_version`、`required_document`、`review_record` | 輸送条件（値オブジェクト）は下書きと版の表の列に展開する |
+| 見積り | `quotation`、`pricing_line` | 料金根拠は明細の表、有効期限・経路方針・荷主の回答・荷主承認は列 |
+| 経路設計案件 | `routing_case`、`route_version`、`route_candidate`、`candidate_leg`、`exclusion_reason`（`referenced_info_version` は Bolt 37d で作らないと決めた） | 制約適合判定（値オブジェクト）は候補の列と除外理由の表に展開する |
+| 航海 | `voyage`、`port_call` | — |
+| 接続時間規則 | `connection_rule` | — |
+| 貨物予約 | `booking`、`booking_version`、`amendment_request` | 確定条件（値オブジェクト）は保存しない。確定時に検証するだけ |
+| 予約サガ | `booking_saga` | ドメインモデルの予約サガの状態 |
+| 追跡記録 | `tracking_record`、`scheduled_leg`、`milestone`、`correction`、`rejected_milestone`（拒否した主要実績。別の集約。Bolt 39g） | 現在状態は導出結果を保存する（非正規化） |
+| 有人案件 | `service_case`、`service_case_source`、`service_case_progress`、`service_case_answer` | — |
+| 照会記録・営業日カレンダー | `inquiry_record`、`business_calendar` | — |
+| KPI 計測記録 | `kpi_observation`、`kpi_baseline` | — |
+| 通知 | `notification` | 本文とリンクは保存しない。`PASSWORD_RESET` と `USER_INVITATION` の `target_ref` はトークンの ID（Bolt 33・38b2b）。TOTP のお知らせ（`TOTP_RESET_BY_ADMIN`・`TOTP_ENROLLED`・`TOTP_RE_ENROLLED`）の `target_ref` は監査記録の ID で、本文を再現できる（Bolt 38d） |
+| 企業・利用者・参照許可・監査記録 | `company`、`app_user`、`user_role`、`user_assignment`、`access_grant`、`audit_record` | 認証の仕組みは Spring Security が使う |
+| TOTP の資格・回復コード・ログインの失敗 | `totp_credential`、`recovery_code`、`login_failure` | 利用者とは別の集約（Bolt 30） |
+| 再設定のトークン | `password_reset_token` | 利用者とは別の集約。ハッシュだけを持つ（IA-INV-12。Bolt 33） |
+| 外部データ（トランザクションスクリプト） | `external_data` の各表 | — |
+
+## 後続工程への引継ぎ
+
+| ID | 引継ぎ内容 | 引継ぎ先 |
+| :--- | :--- | :--- |
+| DA-01 | 監査記録・完了済みイベント発行記録・外部原本・session の保持期間と掃除の方針 | 非機能要件 |
+| DA-02 | DB 利用者（マイグレーション用・アプリケーション用）の作成。権限の付与と剥奪は Flyway のコールバックで行う | 運用要件、`operating-provision` |
+| DA-03 | H2 と PostgreSQL の両方へのマイグレーション適用、追記専用・CHECK 制約・一意制約のテスト | テスト戦略 |
+| DA-04 | 照会の性能目標に基づくインデックスの見直し | 非機能要件 |
+
+## AI の仮定と要確認
+
+- **DB 利用者の分け方**: アプリケーションの DB 利用者は 1 つにし、スキーマ境界はマッパーの SQL の静的検査で守る（2026-10-01 に human:kakimomokuri が決定、ADR-001 を改訂）。追記専用の表の権限剥奪は表単位で行う。
+- **荷受人**: 輸送条件に荷受人企業を加えた（UC-01 の記録項目、IA-INV-05 の判定に必要）。ドメインモデルにも同じ修正を入れた。
+- **金額の通貨**: 見積りは 1 つの通貨で表すと仮定した。複数通貨の混在が必要かは営業責任者に確認する。
+- **追跡番号の形式**: `VARCHAR(20)`。`CT` と、紛らわしい文字（0・O・1・I・L）を除いた英大文字・数字 12 桁（`SecureRandom`）の 14 文字（約 59 bit）とした（Bolt 23）。業務番号や連番から推測できない（BR-07）。
+- **経路版の写し**: 予約版は経路版を案件番号と経路版番号で持つ（`routing_case_number`）。予約は経路設計に問い合わせず、見積りが割り当てた経路の写し（案件番号で持つ）を使うため（ADR-016。Bolt 23 で案件 ID から改めた）。
+- **業務番号の写し**: 本予約で輸送要求の業務番号を貨物予約（`booking.transport_request_number`）に写して持つ。予約版が変わっても変わらないので予約版ではなく貨物予約に置く。社内の画面と照会で業務番号から予約をたどる（D-4、Bolt 3 レビュー R-31。Bolt 23）。
+- **外部原本の個人情報と保持**: 外部原本のファイルは荷受人の担当者名などの個人情報を含みうる。Object Lock（コンプライアンスモード）の 7 年の間は削除できないため、取引の証跡として保持期間の満了まで残し、満了後に PRV-06 に従って削除する。保持期間中の利用は採否の照合と監査に限る（要確認: 管理・コンプライアンス責任者）。
+- **保持期間を過ぎた記録の削除**: 追記専用の表はアプリケーションの DB 利用者では削除できないため、年次の削除（`retention:purge`）はマイグレーション用の DB 利用者で、承認を得て実行する（運用要件）。

@@ -1,0 +1,420 @@
+package com.example.cargotracker.identity.interfaces.web;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import com.example.cargotracker.identity.application.internal.commandservices.AdministrationScopeDenialService;
+import com.example.cargotracker.identity.application.internal.commandservices.StatusChangeCheck;
+import com.example.cargotracker.identity.application.internal.commandservices.StatusChangeOutcome;
+import com.example.cargotracker.identity.application.internal.commandservices.UserAdministrationRefusal;
+import com.example.cargotracker.identity.application.internal.commandservices.UserStatusChangeService;
+import com.example.cargotracker.identity.application.internal.queryservices.AdministrationListing;
+import com.example.cargotracker.identity.application.internal.queryservices.UserAdministrationQueryService;
+import com.example.cargotracker.identity.application.internal.queryservices.UserLookup;
+import com.example.cargotracker.identity.domain.model.aggregates.Company;
+import com.example.cargotracker.identity.domain.model.valueobjects.AssignedCompanies;
+import com.example.cargotracker.identity.domain.model.valueobjects.CompanyKind;
+import com.example.cargotracker.identity.domain.model.valueobjects.EmailAddress;
+import com.example.cargotracker.identity.domain.model.valueobjects.StatusChangeRejection;
+import com.example.cargotracker.identity.domain.model.valueobjects.SuspensionReason;
+import com.example.cargotracker.identity.domain.model.valueobjects.SuspensionRecord;
+import com.example.cargotracker.identity.domain.model.valueobjects.UserDetail;
+import com.example.cargotracker.identity.domain.model.valueobjects.UserStatus;
+import com.example.cargotracker.identity.infrastructure.security.WithAuthenticatedActor;
+import com.example.cargotracker.shared.domain.CompanyId;
+import com.example.cargotracker.shared.domain.Role;
+import com.example.cargotracker.shared.domain.UserId;
+import com.example.cargotracker.shared.domain.UtcInstant;
+import java.time.Instant;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+import org.hamcrest.Matchers;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.RequestBuilder;
+
+/**
+ * S-20 の利用状態の変更の拒否の枝と範囲外の試行の記録（Bolt 34f。分ける前の controller の特性のテストを分けた）。確定の範囲外は記録して
+ * 404、確かめる範囲外は記録せずに 404、権限なしは 403。詳細の部品は本物を読む（モックにすると範囲外の記録の守りが消える）。
+ */
+// 画面の単体テストはコントローラーの振る舞いだけを見る。認証・認可・CSRF はセキュリティの統合テストで確かめる（Bolt 14）
+@WithAuthenticatedActor(Role.SYSTEM_ADMIN)
+@AutoConfigureMockMvc(addFilters = false)
+@WebMvcTest(controllers = UserStatusChangeController.class)
+@Import(UserDetailPage.class)
+class UserStatusChangeControllerTest {
+
+    static final UserId TARGET = new UserId(UUID.fromString("20000000-0000-0000-0000-000000000501"));
+    static final String DETAIL = "/staff/users/" + TARGET.value();
+    static final String STATUS_CONFIRMATION = DETAIL + "/status-changes/confirmation";
+    static final String STALE = "この利用者の情報が先に更新されました。最新の内容を確かめてから、もう一度変更してください。";
+
+    @Autowired
+    MockMvc mockMvc;
+
+    @MockitoBean
+    UserAdministrationQueryService queryService;
+
+    @BeforeEach
+    void 担当企業にできる企業は既定でなし() {
+        // Bolt 38e。一覧系の照会は結果を値で返すので、モックの既定（null）にしない
+        when(queryService.assignableCompanies(any())).thenReturn(new AdministrationListing.Permitted<>(List.of()));
+    }
+
+    @MockitoBean
+    UserStatusChangeService statusChanges;
+
+    @MockitoBean
+    AdministrationScopeDenialService denials;
+
+    @Test
+    void 利用状態の確定で詳細が範囲外なら試行を記録して404にする() throws Exception {
+        when(queryService.detail(any(), eq(TARGET))).thenReturn(new UserLookup.OutOfScope());
+
+        mockMvc.perform(suspend()).andExpect(status().isNotFound());
+
+        verify(denials).recordDenied(any(), eq(TARGET));
+    }
+
+    @Test
+    void 利用状態の確定で値の誤りより先に範囲外の試行を記録する() throws Exception {
+        when(queryService.detail(any(), eq(TARGET))).thenReturn(new UserLookup.OutOfScope());
+
+        mockMvc.perform(post(STATUS_CONFIRMATION).param("status", "UNKNOWN")).andExpect(status().isNotFound());
+
+        verify(denials).recordDenied(any(), eq(TARGET));
+    }
+
+    @Test
+    void 利用状態の確定の判定が範囲外なら試行を記録して404にする() throws Exception {
+        found(user(3));
+        when(statusChanges.change(any(), eq(TARGET), anyLong(), any(), any()))
+                .thenReturn(new StatusChangeOutcome.Refused(new UserAdministrationRefusal.OutOfScope<>()));
+
+        mockMvc.perform(suspend()).andExpect(status().isNotFound());
+
+        verify(denials).recordDenied(any(), eq(TARGET));
+    }
+
+    @Test
+    void 利用状態の確認で詳細が範囲外なら記録せずに404にする() throws Exception {
+        when(queryService.detail(any(), eq(TARGET))).thenReturn(new UserLookup.OutOfScope());
+
+        mockMvc.perform(get(STATUS_CONFIRMATION)
+                        .param("status", "SUSPENDED")
+                        .param("reason", "EMERGENCY")
+                        .param("version", "3"))
+                .andExpect(status().isNotFound());
+
+        verify(denials, never()).recordDenied(any(), any());
+    }
+
+    @Test
+    void 利用状態の確認の判定が範囲外なら記録せずに404にする() throws Exception {
+        found(user(3));
+        when(statusChanges.check(any(), eq(TARGET), anyLong(), any(), any()))
+                .thenReturn(new StatusChangeCheck.Refused(new UserAdministrationRefusal.OutOfScope<>()));
+
+        mockMvc.perform(get(STATUS_CONFIRMATION)
+                        .param("status", "SUSPENDED")
+                        .param("reason", "EMERGENCY")
+                        .param("version", "3"))
+                .andExpect(status().isNotFound());
+
+        verify(denials, never()).recordDenied(any(), any());
+    }
+
+    @Test
+    void 利用状態の確定の権限がなければ403にする() throws Exception {
+        found(user(3));
+        when(statusChanges.change(any(), eq(TARGET), anyLong(), any(), any()))
+                .thenReturn(new StatusChangeOutcome.Refused(new UserAdministrationRefusal.NotPermitted<>()));
+
+        mockMvc.perform(suspend()).andExpect(status().isForbidden());
+
+        verify(denials, never()).recordDenied(any(), any());
+    }
+
+    @Test
+    void 利用状態の確定の判定で利用者がいなければ404にする() throws Exception {
+        found(user(3));
+        when(statusChanges.change(any(), eq(TARGET), anyLong(), any(), any()))
+                .thenReturn(new StatusChangeOutcome.Refused(new UserAdministrationRefusal.NotFound<>()));
+
+        mockMvc.perform(suspend()).andExpect(status().isNotFound());
+
+        verify(denials, never()).recordDenied(any(), any());
+    }
+
+    @Test
+    void 利用状態の確定が古い版なら最新の版で詳細を示し直す() throws Exception {
+        when(queryService.detail(any(), eq(TARGET)))
+                .thenReturn(new UserLookup.Found(user(3)), new UserLookup.Found(user(4)));
+        when(statusChanges.change(any(), eq(TARGET), anyLong(), any(), any()))
+                .thenReturn(new StatusChangeOutcome.Refused(new UserAdministrationRefusal.Stale<>()));
+
+        mockMvc.perform(suspend())
+                .andExpect(status().isOk())
+                .andExpect(content().string(Matchers.containsString("利用状態を変更できませんでした")))
+                .andExpect(content().string(Matchers.containsString(STALE)))
+                .andExpect(content().string(Matchers.containsString("name=\"version\" value=\"4\"")))
+                .andExpect(content().string(Matchers.not(Matchers.containsString("name=\"version\" value=\"3\""))))
+                // 古い版は選び方の誤りではないので、表示名を付けずリンクせず、群に誤りの印を付けない（Bolt 38 の開発レビュー）
+                .andExpect(content().string(UserRoleChangeControllerTest.summaryWithoutLink()))
+                .andExpect(content().string(Matchers.not(Matchers.containsString("停止の理由: "))))
+                .andExpect(content().string(Matchers.not(Matchers.containsString("aria-invalid"))));
+    }
+
+    @Test
+    void 利用状態の確認が理由のない停止なら理由の欄へ文言を示す() throws Exception {
+        found(user(3));
+        when(statusChanges.check(any(), eq(TARGET), anyLong(), any(), any()))
+                .thenReturn(new StatusChangeCheck.Refused(
+                        new UserAdministrationRefusal.Rejected<>(StatusChangeRejection.REASON_REQUIRED)));
+
+        mockMvc.perform(get(STATUS_CONFIRMATION).param("status", "SUSPENDED").param("version", "3"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(Matchers.containsString("利用状態を変更できませんでした")))
+                // 行 2: 文言は表示名で始めない（ui_design の共通部品）。群の最初の選択肢へ向かう（Bolt 38）
+                .andExpect(content()
+                        .string(Matchers.containsString(
+                                "<a href=\"#reason-USAGE_ENDED\">停止の理由: 利用終了・異動・緊急停止のどれかを選んでください。</a>")))
+                .andExpect(content().string(Matchers.not(Matchers.containsString("停止の理由を選んでください。"))))
+                .andExpect(content().string(Matchers.not(UserRoleChangeControllerTest.summaryWithoutLink())))
+                .andExpect(content().string(Matchers.containsString("src=\"/js/transport-request-form.js\"")))
+                .andExpect(content()
+                        .string(UserRoleChangeControllerTest.containsPattern(
+                                "<fieldset id=\"suspension-reason\"[^>]*aria-invalid=\"true\"")))
+                .andExpect(content().string(UserRoleChangeControllerTest.containsPattern("<fieldset id=\"roles\"")))
+                .andExpect(content()
+                        .string(Matchers.not(UserRoleChangeControllerTest.containsPattern(
+                                "<fieldset id=\"roles\"[^>]*aria-invalid"))));
+    }
+
+    @Test
+    void 停止の理由の欄のない停止中の利用者への理由の拒否は欄へリンクしない() throws Exception {
+        // 行 4b: 判定の後に停止された競合。示す欄がないので表示名を付けずリンクしない（Bolt 38）。
+        // Bolt 38c2 の行 9b: 規則の拒否の後に描き直す詳細にも停止の記録を示す
+        found(user(3, UserStatus.SUSPENDED).withSuspension(Optional.of(suspension())));
+        when(statusChanges.check(any(), eq(TARGET), anyLong(), any(), any()))
+                .thenReturn(new StatusChangeCheck.Refused(
+                        new UserAdministrationRefusal.Rejected<>(StatusChangeRejection.REASON_REQUIRED)));
+
+        mockMvc.perform(get(STATUS_CONFIRMATION).param("status", "SUSPENDED").param("version", "3"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(Matchers.containsString("id=\"error-summary\"")))
+                .andExpect(content().string(Matchers.containsString("利用終了・異動・緊急停止のどれかを選んでください。")))
+                .andExpect(content().string(Matchers.not(Matchers.containsString("停止の理由: 利用終了・異動・緊急停止のどれかを選んでください。"))))
+                .andExpect(content().string(UserRoleChangeControllerTest.summaryWithoutLink()))
+                .andExpect(content().string(Matchers.containsString(">停止の理由: 異動</p>")))
+                // 出口: 再開の操作と一覧へ戻るリンクは残る
+                .andExpect(content().string(Matchers.containsString("利用再開の内容を確認する")))
+                .andExpect(content().string(Matchers.containsString("利用者の一覧へ戻る")));
+    }
+
+    @Test
+    void 利用状態の確定が同じ状態なら最新の版で文言を示す() throws Exception {
+        when(queryService.detail(any(), eq(TARGET)))
+                .thenReturn(new UserLookup.Found(user(3)), new UserLookup.Found(user(4)));
+        when(statusChanges.change(any(), eq(TARGET), anyLong(), any(), any()))
+                .thenReturn(new StatusChangeOutcome.Refused(
+                        new UserAdministrationRefusal.Rejected<>(StatusChangeRejection.NO_CHANGE)));
+
+        mockMvc.perform(post(STATUS_CONFIRMATION).param("status", "ACTIVE").param("version", "3"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(Matchers.containsString("利用状態は既に利用中です。最新の内容を確かめてください。")))
+                .andExpect(content().string(Matchers.containsString("name=\"version\" value=\"4\"")));
+    }
+
+    @Test
+    void 利用状態の確定が規則に当たれば選んだ理由と送った版のまま文言を示す() throws Exception {
+        // 読み直した利用者の版（4）でなく、画面が送った版（3）のまま示す（同じ状態の拒否だけが最新の版にする）
+        when(queryService.detail(any(), eq(TARGET)))
+                .thenReturn(new UserLookup.Found(user(3)), new UserLookup.Found(user(4)));
+        when(statusChanges.change(any(), eq(TARGET), anyLong(), any(), any()))
+                .thenReturn(new StatusChangeOutcome.Refused(
+                        new UserAdministrationRefusal.Rejected<>(StatusChangeRejection.SELF_CHANGE)));
+
+        mockMvc.perform(suspend())
+                .andExpect(status().isOk())
+                .andExpect(content().string(Matchers.containsString("利用状態を変更できませんでした")))
+                .andExpect(content().string(Matchers.containsString("value=\"EMERGENCY\" checked")))
+                .andExpect(content().string(Matchers.containsString("name=\"version\" value=\"3\"")))
+                .andExpect(content().string(Matchers.not(Matchers.containsString("name=\"version\" value=\"4\""))));
+    }
+
+    @Test
+    void 利用を停止したら知らせとともに詳細へ移す() throws Exception {
+        found(user(3));
+        when(statusChanges.change(any(), eq(TARGET), anyLong(), any(), any()))
+                .thenReturn(new StatusChangeOutcome.Changed(4));
+
+        mockMvc.perform(suspend())
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl(DETAIL))
+                .andExpect(flash().attribute("notice", "利用を停止しました。相手の次の操作から使えなくなります。"));
+
+        verify(statusChanges)
+                .change(
+                        any(),
+                        eq(TARGET),
+                        eq(3L),
+                        eq(UserStatus.SUSPENDED),
+                        eq(Optional.of(SuspensionReason.EMERGENCY)));
+    }
+
+    // 確認ポイント 19（停止の確認の領域にこの利用者の担当企業。Bolt 38g の行 8）
+
+    @Test
+    void 停止の確認の領域に担当企業の名前とこの画面で変えられない企業の数を示す() throws Exception {
+        Company north = Company.of(
+                new CompanyId(UUID.fromString("30000000-0000-0000-0000-000000000001")),
+                "荷主 北",
+                CompanyKind.SHIPPER,
+                true);
+        Company south = Company.of(
+                new CompanyId(UUID.fromString("30000000-0000-0000-0000-000000000002")),
+                "荷主 南",
+                CompanyKind.SHIPPER,
+                true);
+        CompanyId outside = new CompanyId(UUID.fromString("30000000-0000-0000-0000-000000000009"));
+        found(user(3).withAssignedCompanies(new AssignedCompanies(Set.of(north.id(), south.id(), outside))));
+        when(queryService.assignableCompanies(any()))
+                .thenReturn(new AdministrationListing.Permitted<>(List.of(north, south)));
+
+        mockMvc.perform(suspendConfirmation())
+                .andExpect(status().isOk())
+                .andExpect(content().string(Matchers.containsString("<dt class=\"col-sm-3\">担当企業</dt>")))
+                .andExpect(content().string(Matchers.containsString("担当企業: 荷主 北、荷主 南。この画面で変えられない企業 1 社も担当しています。")));
+    }
+
+    @Test
+    void 変えられない企業だけを担当していれば停止の確認の領域にその数だけを示しなしと示さない() throws Exception {
+        // 「なし。」と「も担当しています。」を組み合わせると食い違うので、数だけの文にする（開発レビューの中 2）
+        Company north = Company.of(
+                new CompanyId(UUID.fromString("30000000-0000-0000-0000-000000000001")),
+                "荷主 北",
+                CompanyKind.SHIPPER,
+                true);
+        CompanyId outside = new CompanyId(UUID.fromString("30000000-0000-0000-0000-000000000009"));
+        found(user(3).withAssignedCompanies(new AssignedCompanies(Set.of(outside))));
+        when(queryService.assignableCompanies(any())).thenReturn(new AdministrationListing.Permitted<>(List.of(north)));
+
+        mockMvc.perform(suspendConfirmation())
+                .andExpect(status().isOk())
+                .andExpect(content().string(Matchers.containsString("担当企業: この画面で変えられない企業 1 社を担当しています。")))
+                .andExpect(content().string(Matchers.not(Matchers.containsString("担当企業: なし"))));
+    }
+
+    @Test
+    void 担当企業がなければ停止の確認の領域になしと示す() throws Exception {
+        found(user(3));
+
+        mockMvc.perform(suspendConfirmation())
+                .andExpect(status().isOk())
+                .andExpect(content().string(Matchers.containsString("担当企業: なし。")))
+                .andExpect(content().string(Matchers.not(Matchers.containsString("この画面で変えられない企業"))));
+    }
+
+    @Test
+    void 担当範囲のある役割を持たない利用者の停止の確認の領域には担当企業を示さない() throws Exception {
+        found(new UserDetail(
+                TARGET,
+                new CompanyId(UUID.fromString("20000000-0000-0000-0000-000000000004")),
+                "荷主 A",
+                CompanyKind.SHIPPER,
+                "荷主 太郎",
+                new EmailAddress("shipper@example.com"),
+                UserStatus.ACTIVE,
+                Set.of(Role.SHIPPER),
+                3L,
+                Optional.empty(),
+                Optional.empty()));
+
+        mockMvc.perform(suspendConfirmation())
+                .andExpect(status().isOk())
+                .andExpect(content().string(Matchers.not(Matchers.containsString("担当企業"))));
+    }
+
+    private org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder suspendConfirmation() {
+        when(statusChanges.check(any(), eq(TARGET), anyLong(), any(), any()))
+                .thenReturn(new StatusChangeCheck.Acceptable());
+        return get(STATUS_CONFIRMATION)
+                .param("status", "SUSPENDED")
+                .param("reason", "EMERGENCY")
+                .param("version", "3");
+    }
+
+    private void found(UserDetail user) {
+        when(queryService.detail(any(), eq(TARGET))).thenReturn(new UserLookup.Found(user));
+    }
+
+    @Test
+    void 利用状態の確定が古い版なら描き直す詳細にも停止の記録を示す() throws Exception {
+        // Bolt 38c2 の行 9b（古い版）
+        when(queryService.detail(any(), eq(TARGET)))
+                .thenReturn(
+                        new UserLookup.Found(user(3, UserStatus.SUSPENDED).withSuspension(Optional.of(suspension()))),
+                        new UserLookup.Found(user(4, UserStatus.SUSPENDED).withSuspension(Optional.of(suspension()))));
+        when(statusChanges.change(any(), eq(TARGET), anyLong(), any(), any()))
+                .thenReturn(new StatusChangeOutcome.Refused(new UserAdministrationRefusal.Stale<>()));
+
+        mockMvc.perform(post(STATUS_CONFIRMATION).param("status", "ACTIVE").param("version", "3"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(Matchers.containsString(STALE)))
+                .andExpect(content().string(Matchers.containsString(">停止の理由: 異動</p>")))
+                .andExpect(content().string(Matchers.containsString(">停止した人: 管理 次郎</p>")));
+    }
+
+    private static SuspensionRecord suspension() {
+        return new SuspensionRecord(
+                SuspensionReason.TRANSFERRED,
+                new UserId(UUID.fromString("20000000-0000-0000-0000-000000000509")),
+                Optional.of("管理 次郎"),
+                new UtcInstant(Instant.parse("2026-11-09T01:30:00Z")));
+    }
+
+    private static RequestBuilder suspend() {
+        return post(STATUS_CONFIRMATION)
+                .param("status", "SUSPENDED")
+                .param("reason", "EMERGENCY")
+                .param("version", "3");
+    }
+
+    private static UserDetail user(long version) {
+        return user(version, UserStatus.ACTIVE);
+    }
+
+    private static UserDetail user(long version, UserStatus status) {
+        return new UserDetail(
+                TARGET,
+                new CompanyId(UUID.fromString("20000000-0000-0000-0000-000000000003")),
+                "A 社",
+                CompanyKind.OPERATOR,
+                "佐藤",
+                new EmailAddress("sato@example.com"),
+                status,
+                Set.of(Role.SALES),
+                version,
+                Optional.empty(),
+                Optional.empty());
+    }
+}

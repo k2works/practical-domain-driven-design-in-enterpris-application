@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<!--/* 顧客 Web の共通レイアウト（Bolt 8、UI 設計「ナビゲーションとレイアウト」）。画面は次のように使う。
+       <html lang="ja" th:replace="~{layout/customer :: layout(~{::title}, ~{::main}, ~{::script}, 'transport-requests')}">（スクリプトがなければ ~{} を渡す）
+       ナビには荷主担当者の画面を出し、まだ作っていない画面は準備中の画面へつなぐ（Bolt 14。開発戦略の序盤の手順 3） */-->
+<html lang="ja" xmlns:th="http://www.thymeleaf.org" th:fragment="layout(title, content, scripts, active)">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:replace="${title}">cargo-tracker</title>
+    <th:block th:replace="~{layout/common :: assets(${scripts})}"></th:block>
+</head>
+<body>
+<header class="navbar navbar-expand-md border-bottom app-header">
+    <div class="container-fluid">
+        <a class="navbar-brand" th:href="@{/}">cargo-tracker</a>
+        <!-- 幅が狭いときは、左のナビを上部のメニューに畳む（UI 設計） -->
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#customer-nav"
+                aria-controls="customer-nav" aria-expanded="false" aria-label="メニュー">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <!-- ログインした利用者の企業名・利用者名とログアウト（Bolt 14、UI 設計「ナビゲーションとレイアウト」） -->
+        <div class="d-flex align-items-center gap-3 ms-auto" th:if="${currentActor != null}">
+            <p class="navbar-text mb-0 d-none d-md-block">
+                <span th:text="${currentActor.companyName()}">荷主 A</span>
+                <span th:text="${currentActor.displayName()}">荷主 太郎</span>
+            </p>
+            <form th:action="@{/logout}" method="post" class="mb-0">
+                <button type="submit" class="btn btn-outline-secondary btn-sm">ログアウト</button>
+            </form>
+        </div>
+    </div>
+</header>
+<div class="container-fluid">
+    <div class="row">
+        <nav id="customer-nav" class="col-md-3 col-lg-2 collapse d-md-block app-nav" aria-label="顧客 Web">
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link" th:classappend="${active == 'transport-requests'} ? 'fw-bold'"
+                       th:attr="aria-current=${active == 'transport-requests'} ? 'page' : null"
+                       th:href="@{/customer/transport-requests}">見積依頼</a>
+                </li>
+                <li class="nav-item" th:each="item : ${ {'bookings:予約', 'tracking-records:追跡の照会', 'inquiries:問い合わせ', 'notifications:通知'} }"
+                    th:with="key=${#strings.substringBefore(item, ':')}, label=${#strings.substringAfter(item, ':')}">
+                    <a class="nav-link" th:classappend="${active == key} ? 'fw-bold'"
+                       th:attr="aria-current=${active == key} ? 'page' : null"
+                       th:href="@{/customer/{key}(key=${key})}" th:text="${label}">予約</a>
+                </li>
+            </ul>
+        </nav>
+        <div class="col app-main">
+            <!--/* 回復コードでログインした印の知らせ（Bolt 33b、UI 設計「共通部品」）。断片に寄せた（Bolt 38d2）。連絡先は役割を表すレイアウトが渡す */-->
+            <th:block th:replace="~{layout/recovery-login-notice :: notice('担当営業')}"></th:block>
+            <!--/* 入力の控えの知らせ（Bolt 32f）。読み込みの時に差し込むと読まれないことがあるので、空の live region（aria-live="polite"）を先に置く。role="status" にしないのは、画面の結果の知らせ（role="status"）と区別するため */-->
+            <div id="session-input-status" class="app-session-input" aria-live="polite" aria-atomic="true" th:if="${sessionTimer != null}"></div>
+            <main th:replace="${content}"></main>
+        </div>
+    </div>
+</div>
+<!-- 窓口の案内はすべての顧客向け画面で同じ位置に出す（WCAG 3.2.6、R-11）。受付時間は 2026-10-06 に決定（D-29）。利用者のタイムゾーンを持つ Bolt で利用者のタイムゾーンで示す -->
+<footer class="border-top app-footer">
+    <p class="mb-0">お困りのときは: カスタマーサポート 平日 09:00〜18:00（Asia/Tokyo）</p>
+</footer>
+<!-- session の警告とそのスクリプト（Bolt 32b、ACC-06）。2 つの要素のそろった session の画面だけ（layout/public には置かない）。
+     th:replace は th:if より先に評価されるので、条件は外側の th:block に置く -->
+<th:block th:if="${sessionTimer != null}">
+    <th:block th:replace="~{layout/session-warning :: warning(${sessionTimer})}"></th:block>
+</th:block>
+</body>
+</html>

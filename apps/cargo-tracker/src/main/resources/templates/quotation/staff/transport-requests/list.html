@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/staff :: layout(~{::title}, ~{::main}, ~{}, 'transport-requests')}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>見積依頼の受付一覧 - cargo-tracker</title>
+</head>
+<body>
+<main>
+    <h1>見積依頼の受付一覧</h1>
+    <!-- S-02（Bolt 5）。審査中だけを、最初の提出時刻（版 1）の古い順（待たせている順）に示す。差し戻して出し直された版も最初の時刻で並ぶ。
+         どの表も営業担当者の担当企業の見積依頼だけを示す（Bolt 38f。US-16 AC4）。荷主企業名は企業マスター（US-16）の後に足す -->
+    <p role="status" th:if="${result}" th:text="${result}">TR-2026-0001 見積 1 を提示しました</p>
+    <p th:if="${resultLinkHref}"><a th:href="@{${resultLinkHref}}" th:text="${resultLinkLabel}">予約の詳細を開く</a></p>
+    <div class="alert alert-warning" role="alert" th:if="${problem}" th:text="${problem}">TR-2026-0001 にはすでに見積りがあります</div>
+    <!-- 担当企業がない営業担当者には、一覧が空の理由と頼む先を示す（Bolt 38f）。表ごとの空の文は出さない（Bolt 38h。S-10・S-05・S-11 と同じ形。見積依頼はあるのに「ありません」と言わない） -->
+    <p class="alert alert-info" th:if="${noAssignedCompanies}">担当企業がまだないので、表示できる見積依頼はありません。システム管理者に担当企業の割り当てを頼んでください。</p>
+    <h2>審査中</h2>
+    <p th:if="${#lists.isEmpty(requests) and !noAssignedCompanies}">審査中の見積依頼はありません。</p>
+    <!-- 狭い画面では表だけを横にスクロールさせ、ページ全体を横にスクロールさせない（WCAG 1.4.10 の表の例外）。
+         キー操作でもスクロールできるよう、囲みをフォーカスできるようにして名前を付ける -->
+    <div th:unless="${#lists.isEmpty(requests)}" class="table-scroll" tabindex="0" role="region"
+         aria-labelledby="requests-caption">
+    <table class="table">
+        <caption id="requests-caption">審査中の見積依頼（最初の提出時刻の古い順）</caption>
+        <thead>
+        <tr>
+            <th scope="col">業務番号</th>
+            <th scope="col">版</th>
+            <th scope="col">最初の提出時刻</th>
+            <th scope="col">待っている時間</th>
+            <th scope="col">貨物種別</th>
+            <th scope="col">出発地 → 目的地</th>
+            <th scope="col">希望到着期限</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="request : ${requests}">
+            <td><a th:href="@{/staff/transport-requests/{number}(number=${request.number()})}" th:text="${request.number()}">TR-2026-0001</a></td>
+            <td th:text="${request.versionNo()}">1</td>
+            <td th:text="${request.firstSubmittedAt()}">2026-10-05 10:00 Asia/Tokyo（UTC+09:00）（UTC 2026-10-05 01:00）</td>
+            <td th:text="${request.waiting()}">3 時間 20 分</td>
+            <td th:text="${request.cargoCategory()}">一般</td>
+            <td th:text="${request.route()}">JPTYO → NLRTM</td>
+            <td th:text="${request.arrivalDeadline()}">2026-11-02 09:00 Asia/Tokyo（UTC+09:00）（UTC 2026-11-02 00:00）</td>
+        </tr>
+        </tbody>
+    </table>
+    </div>
+
+    <!-- 見積り作成中（Bolt 10）。審査を確定した見積依頼を、最初の提出時刻の古い順に示し、見積りの作成（S-04）を開ける -->
+    <h2>見積り作成中</h2>
+    <p th:if="${#lists.isEmpty(quotingRequests) and !noAssignedCompanies}">見積り作成中の見積依頼はありません。</p>
+    <div th:unless="${#lists.isEmpty(quotingRequests)}" class="table-scroll" tabindex="0" role="region"
+         aria-labelledby="quoting-caption">
+    <table class="table">
+        <caption id="quoting-caption">見積り作成中の見積依頼</caption>
+        <thead>
+        <tr>
+            <th scope="col">業務番号</th>
+            <th scope="col">版</th>
+            <th scope="col">最初の提出時刻</th>
+            <th scope="col">待っている時間</th>
+            <th scope="col">出発地 → 目的地</th>
+            <th scope="col">希望到着期限</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="request : ${quotingRequests}">
+            <td><a th:href="@{/staff/transport-requests/{number}/quotations/new(number=${request.number()})}" th:text="${request.number()}">TR-2026-0001</a></td>
+            <td th:text="${request.versionNo()}">1</td>
+            <td th:text="${request.firstSubmittedAt()}">2026-10-05 10:00 Asia/Tokyo（UTC+09:00）（UTC 2026-10-05 01:00）</td>
+            <td th:text="${request.waiting()}">3 時間 20 分</td>
+            <td th:text="${request.route()}">JPTYO → NLRTM</td>
+            <td th:text="${request.arrivalDeadline()}">2026-11-02 09:00 Asia/Tokyo（UTC+09:00）（UTC 2026-11-02 00:00）</td>
+        </tr>
+        </tbody>
+    </table>
+    </div>
+
+    <!-- 見積提示済み（Bolt 11 レビュー R-02、D-38）。見積依頼ごとに最新の見積り（再見積りで作った承認待ちを含む）を、有効期限の近い順に示し、
+         見積り（S-04）を開ける。失効は表示する時刻で判定する -->
+    <h2>見積提示済み</h2>
+    <p th:if="${#lists.isEmpty(quotedRequests) and !noAssignedCompanies}">見積提示済みの見積依頼はありません。</p>
+    <div th:unless="${#lists.isEmpty(quotedRequests)}" class="table-scroll" tabindex="0" role="region"
+         aria-labelledby="quoted-caption">
+    <table class="table">
+        <caption id="quoted-caption">見積提示済みの見積依頼（最新の見積りの有効期限の近い順）</caption>
+        <thead>
+        <tr>
+            <th scope="col">最新の見積り</th>
+            <th scope="col">状態</th>
+            <th scope="col">有効期限</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="quoted : ${quotedRequests}">
+            <td><a th:href="@{${quoted.path()}}" th:text="${quoted.label()}">TR-2026-0001 見積 2</a></td>
+            <td th:text="${quoted.status()}">承認待ち</td>
+            <td th:text="${quoted.expiresAt()}">2026-10-09 18:00 Asia/Tokyo（UTC+09:00）（UTC 2026-10-09 09:00）</td>
+        </tr>
+        </tbody>
+    </table>
+    </div>
+    <!-- 経路設計中（Bolt 12、US-24 AC1）。荷主が詳細経路設計を依頼した見積りを依頼時刻の古い順に示し、見積り（S-04）を開ける。
+         経路設計者の案件一覧（S-05）は US-06。Bolt 20 から荷主承認待ちも並べ、Bolt 23b で経路の確定の時刻を足した（D-78）。
+         荷主が承認した見積りは下の予約の確定待ちの表に移した -->
+    <h2>経路設計中・荷主承認待ち</h2>
+    <p th:if="${#lists.isEmpty(routingRequests) and !noAssignedCompanies}">経路設計中・荷主承認待ちの見積依頼はありません。</p>
+    <div th:unless="${#lists.isEmpty(routingRequests)}" class="table-scroll" tabindex="0" role="region"
+         aria-labelledby="routing-caption">
+    <table class="table">
+        <caption id="routing-caption">経路設計中・荷主承認待ちの見積依頼（依頼時刻の古い順）</caption>
+        <thead>
+        <tr>
+            <th scope="col">見積り</th>
+            <th scope="col">状態</th>
+            <th scope="col">依頼時刻</th>
+            <th scope="col">経路の確定</th>
+            <th scope="col">有効期限</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="routing : ${routingRequests}">
+            <td><a th:href="@{${routing.path()}}" th:text="${routing.label()}">TR-2026-0001 見積 1</a></td>
+            <td th:text="${routing.status()}">詳細設計依頼済み</td>
+            <td th:text="${routing.requestedAt()}">2026-10-06 09:30 Asia/Tokyo（UTC+09:00）（UTC 2026-10-06 00:30）</td>
+            <td th:if="${routing.routeConfirmedAt()}" th:text="${routing.routeConfirmedAt()}">2026-10-07 14:00 Asia/Tokyo（UTC+09:00）（UTC 2026-10-07 05:00）</td>
+            <td th:unless="${routing.routeConfirmedAt()}"><span aria-hidden="true">—</span><span class="visually-hidden">未確定</span></td>
+            <td th:text="${routing.expiresAt()}">2026-10-09 18:00 Asia/Tokyo（UTC+09:00）（UTC 2026-10-09 09:00）</td>
+        </tr>
+        </tbody>
+    </table>
+    </div>
+    <p th:unless="${#lists.isEmpty(routingRequests)}">「—」は、まだ経路が確定していないことを示します。</p>
+    <!-- 予約の確定待ち（Bolt 23b、US-04、D-78）。荷主が承認した見積りを有効期限の近い順に示す。有効期限の前は本予約の確定（S-09）を、
+         失効した見積りは再見積り（S-04）を開ける。本予約を確定すると、輸送要求が予約確定済みになった後（DE-07 の配信）に行が消える -->
+    <h2>予約の確定待ち</h2>
+    <p th:if="${#lists.isEmpty(awaitingBookings) and !noAssignedCompanies}">予約の確定待ちの見積りはありません。</p>
+    <div th:unless="${#lists.isEmpty(awaitingBookings)}" class="table-scroll" tabindex="0" role="region"
+         aria-labelledby="awaiting-booking-caption">
+    <table class="table">
+        <caption id="awaiting-booking-caption">予約の確定待ちの見積り（有効期限の近い順）</caption>
+        <thead>
+        <tr>
+            <th scope="col">見積り</th>
+            <th scope="col">経路</th>
+            <th scope="col">状態</th>
+            <th scope="col">荷主の承認</th>
+            <th scope="col">有効期限</th>
+            <th scope="col">操作</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="awaiting : ${awaitingBookings}">
+            <td th:text="${awaiting.label()}">TR-2026-0001 見積 1</td>
+            <td th:text="${awaiting.route()}">RC-2026-0001 版 1</td>
+            <td th:text="${awaiting.status()}">荷主承認済み（予約待ち）</td>
+            <td th:if="${awaiting.shipperApprovedAt()}" th:text="${awaiting.shipperApprovedAt()}">2026-10-07 15:00 Asia/Tokyo（UTC+09:00）（UTC 2026-10-07 06:00）</td>
+            <td th:unless="${awaiting.shipperApprovedAt()}"><span aria-hidden="true">—</span><span class="visually-hidden">再承認の前</span></td>
+            <td th:text="${awaiting.expiresAt()}">2026-10-09 18:00 Asia/Tokyo（UTC+09:00）（UTC 2026-10-09 09:00）</td>
+            <td><a th:href="@{${awaiting.actionPath()}}" th:text="${awaiting.actionLabel()}">TR-2026-0001 見積 1 の本予約の確定へ</a></td>
+        </tr>
+        </tbody>
+    </table>
+    </div>
+    <p th:if="${anyAwaitingInternal}">この表の「荷主の承認」の「—」は、荷主の再承認の前（社内承認して提示する前）であることを示します。</p>
+</main>
+</body>
+</html>

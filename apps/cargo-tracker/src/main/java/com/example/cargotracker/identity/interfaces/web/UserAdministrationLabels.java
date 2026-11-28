@@ -1,0 +1,143 @@
+package com.example.cargotracker.identity.interfaces.web;
+
+import com.example.cargotracker.identity.domain.model.rules.RoleAssignmentPolicy;
+import com.example.cargotracker.identity.domain.model.valueobjects.CompanyKind;
+import com.example.cargotracker.identity.domain.model.valueobjects.IdentityVerificationMethod;
+import com.example.cargotracker.identity.domain.model.valueobjects.SuspensionReason;
+import com.example.cargotracker.identity.domain.model.valueobjects.SuspensionRecord;
+import com.example.cargotracker.identity.domain.model.valueobjects.UserDetail;
+import com.example.cargotracker.identity.domain.model.valueobjects.UserStatus;
+import com.example.cargotracker.identity.domain.model.valueobjects.UserSummary;
+import com.example.cargotracker.platform.web.DateTimeDisplay;
+import com.example.cargotracker.shared.domain.Role;
+import com.example.cargotracker.shared.domain.UserId;
+import com.example.cargotracker.shared.domain.UtcInstant;
+import java.util.EnumSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+/**
+ * S-20 の画面（一覧・詳細・確認）で共通に使う名前とモデルの属性の名前（UI 設計 S-20。Bolt 34f）。ドメインに画面の言葉を入れないため画面の層に置く。
+ * package-private の static のメソッドはテンプレートの {@code T(...)} から見えないので、controller が名前をモデルに渡す
+ * （前例 {@code TransportRequestLabels}）。
+ */
+final class UserAdministrationLabels {
+
+    /** フォームが持つ版のモデルの属性の名前（S-20 の画面で共通）。 */
+    static final String VERSION_ATTRIBUTE = "version";
+
+    /** レイアウトがナビの現在の項目を読むモデルの属性の名前。 */
+    static final String ACTIVE_ATTRIBUTE = "active";
+
+    /** レイアウトのナビの現在の項目（S-20 の画面で共通）。 */
+    static final String ACTIVE = "users";
+
+    private UserAdministrationLabels() {}
+
+    /** 利用状態の名前。 */
+    static String status(UserStatus status) {
+        return switch (status) {
+            case ACTIVE -> "利用中";
+            case SUSPENDED -> "利用停止";
+        };
+    }
+
+    /** 停止の理由の名前。 */
+    static String suspensionReason(SuspensionReason reason) {
+        return switch (reason) {
+            case USAGE_ENDED -> "利用終了";
+            case TRANSFERRED -> "異動";
+            case EMERGENCY -> "緊急停止";
+        };
+    }
+
+    /** 本人確認の手段の名前（Bolt 38c）。 */
+    static String verificationMethod(IdentityVerificationMethod method) {
+        return switch (method) {
+            case PHONE_CALLBACK -> "登録の電話番号への折り返し";
+            case IN_PERSON -> "対面";
+            case COMPANY_ADMINISTRATOR -> "所属企業の管理担当者への確認";
+        };
+    }
+
+    /** ロック中の状態の名前（Bolt 38c。Bolt 38c2 で期限を「解ける日時」の項目に分けた）。詳細の領域とロックの解除の確認が使う。 */
+    static final String LOCKED = "ロック中";
+
+    /** ロックがない状態の名前（Bolt 38c2）。詳細の領域とロックの解除の確認が使う。 */
+    static final String NOT_LOCKED = "なし";
+
+    /**
+     * 利用者の管理の画面の日時（Bolt 38c2。日時表示の共通部品の社内の形で、分で切り捨てる）。ロックが解ける日時と停止した日時が使う。
+     */
+    static String staffTime(UtcInstant at) {
+        return DateTimeDisplay.staff(at.instant());
+    }
+
+    /** ロックの状態の名前（Bolt 38c2）。今の時刻で期限が切れていれば（照会のサービスが期限を空にする）ロックはない。 */
+    static String lockState(UserDetail user) {
+        return user.lockedUntil().isPresent() ? LOCKED : NOT_LOCKED;
+    }
+
+    /** 停止した人の名前（Bolt 38c2）。今の表示名。利用者の行がなければ、監査証跡でたどれるよう利用者 ID を示す。 */
+    static String suspensionActor(SuspensionRecord suspension) {
+        return suspension
+                .actorDisplayName()
+                .orElseGet(() -> "不明（利用者 ID: " + suspension.actorUserId().value() + "）");
+    }
+
+    /** 企業の種類の名前。 */
+    static String companyKind(CompanyKind kind) {
+        return switch (kind) {
+            case SHIPPER -> "荷主企業";
+            case CONSIGNEE -> "荷受人の企業";
+            case OPERATOR -> "運用する会社";
+        };
+    }
+
+    /** 役割の表示名を {@link Role} の宣言の順に「・」でつなぐ。なければ「なし」。 */
+    static String roles(Set<Role> roles) {
+        if (roles.isEmpty()) {
+            return "なし";
+        }
+        return order(roles).stream().map(Role::displayName).collect(Collectors.joining("・"));
+    }
+
+    /** 役割を {@link Role} の宣言の順に並べる。 */
+    static List<Role> order(Set<Role> roles) {
+        return roles.isEmpty() ? List.of() : List.copyOf(EnumSet.copyOf(roles));
+    }
+
+    /**
+     * 一覧の担当企業の欄（UI 設計 S-20。Bolt 38h）。担当範囲のある役割の利用者だけを入れ、管理範囲の企業の名前を「、」で並べ、範囲の外は
+     * 「ほか N 社」、どちらもなければ「未割り当て」。担当範囲のない役割の利用者は入れない（画面は「—」と見えない文字にする）。
+     */
+    static Map<UserId, String> assignedCompanies(List<UserSummary> summaries) {
+        Map<UserId, String> labels = new LinkedHashMap<>();
+        summaries.stream()
+                .filter(UserSummary::hasAssignmentScope)
+                .forEach(summary -> labels.put(summary.id(), assignedCompanies(summary)));
+        return labels;
+    }
+
+    private static String assignedCompanies(UserSummary summary) {
+        String outside = summary.assignedOutsideCount() == 0 ? null : "ほか " + summary.assignedOutsideCount() + " 社";
+        if (summary.assignedCompanyNames().isEmpty()) {
+            return outside == null ? "未割り当て" : outside;
+        }
+        String names = String.join("、", summary.assignedCompanyNames());
+        return outside == null ? names : names + "、" + outside;
+    }
+
+    /** 企業の種類に付けられない役割の拒否の文言（役割の変更と利用者の登録が共有する。UI 設計 S-20）。 */
+    static String unfitRoles(Set<Role> roles, CompanyKind companyKind) {
+        return roles(roles) + "は、" + companyKind(companyKind) + "の利用者には付けられません。";
+    }
+
+    /** 職務分離の拒否の文言（役割の変更と利用者の登録が共有する。UI 設計 S-20）。 */
+    static String conflictingRoles(Set<Role> roles) {
+        return "システム管理者・監査担当者と、業務データを変更できる役割（" + roles(RoleAssignmentPolicy.businessRolesOf(roles)) + "）は併せて付けられません。";
+    }
+}

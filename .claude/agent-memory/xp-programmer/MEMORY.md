@@ -1,0 +1,2 @@
+- [標準入力のコマンドを使わない](feedback_no_stdin_commands.md) — heredoc・python -・git commit -F - は禁止。メッセージはファイルで渡す
+- [PRG で同じ URL に戻る待ち](feedback_prg_same_url_wait.md) — URL でなくリダイレクト後の GET の応答で待ってから axe

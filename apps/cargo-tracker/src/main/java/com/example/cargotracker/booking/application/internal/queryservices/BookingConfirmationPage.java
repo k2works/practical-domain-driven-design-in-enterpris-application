@@ -1,0 +1,69 @@
+package com.example.cargotracker.booking.application.internal.queryservices;
+
+import com.example.cargotracker.booking.application.internal.outboundservices.acl.QuotationUnavailability;
+import com.example.cargotracker.booking.domain.model.rules.BookableCargoPolicy;
+import com.example.cargotracker.booking.domain.model.valueobjects.BookingTerms;
+import com.example.cargotracker.booking.domain.model.valueobjects.TrackingNumber;
+import com.example.cargotracker.shared.domain.UtcInstant;
+import java.util.Objects;
+
+/**
+ * 本予約の確定の画面（S-09）を開いたときの読み取りモデル（US-04。Bolt 23b）。開いた時刻での参考の判定で、確定の可否は送ったときの
+ * 照会（commit 時刻）で決まる（ADR-016）。
+ */
+public sealed interface BookingConfirmationPage {
+
+    /**
+     * 確定に使える見積り。
+     *
+     * @param terms 予約条件（見積りの写し）
+     * @param shipperApprovedAt 荷主の承認時刻
+     * @param expiresAt 見積りの有効期限
+     */
+    record Available(BookingTerms terms, UtcInstant shipperApprovedAt, UtcInstant expiresAt)
+            implements BookingConfirmationPage {
+
+        public Available {
+            Objects.requireNonNull(terms, "terms");
+            Objects.requireNonNull(shipperApprovedAt, "shipperApprovedAt");
+            Objects.requireNonNull(expiresAt, "expiresAt");
+        }
+
+        /**
+         * 特殊貨物を含み、確定できない見積りか（B-INV-04、US-04 AC5。Bolt 35）。確定のときと同じ規則で、照会の結果の貨物種別を見る。
+         */
+        public boolean specialCargo() {
+            return !BookableCargoPolicy.bookable(terms.cargoCategory());
+        }
+    }
+
+    /**
+     * 確定に使えない見積り。
+     *
+     * @param reason 理由
+     */
+    record Unavailable(QuotationUnavailability reason) implements BookingConfirmationPage {
+
+        public Unavailable {
+            Objects.requireNonNull(reason, "reason");
+        }
+    }
+
+    /**
+     * 同じ見積りの貨物予約がすでにある（B-INV-11。Bolt 24）。見積りの照会より前に判定する。
+     *
+     * @param trackingNumber 既存の予約の追跡番号
+     */
+    record AlreadyBooked(TrackingNumber trackingNumber) implements BookingConfirmationPage {
+
+        public AlreadyBooked {
+            Objects.requireNonNull(trackingNumber, "trackingNumber");
+        }
+    }
+
+    /**
+     * 見積りの輸送要求が操作者の担当企業の外（Bolt 38f2。US-16 AC4）。予約済みの判定より先に判定し、追跡番号も理由も持たない（画面は
+     * 記録せずに 404 にする）。
+     */
+    record OutOfScope() implements BookingConfirmationPage {}
+}

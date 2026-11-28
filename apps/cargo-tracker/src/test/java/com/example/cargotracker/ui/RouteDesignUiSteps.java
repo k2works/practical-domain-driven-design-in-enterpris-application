@@ -1,0 +1,208 @@
+package com.example.cargotracker.ui;
+
+import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
+
+import com.microsoft.playwright.Locator;
+import com.microsoft.playwright.Page;
+import com.microsoft.playwright.options.AriaRole;
+import io.cucumber.java.ja.ならば;
+import io.cucumber.java.ja.もし;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.test.web.server.LocalServerPort;
+
+/**
+ * 荷主の見積りへの回答（C-05）と、回答の後の見積依頼の詳細（C-04）・受付一覧（S-02）・見積り（S-04）の画面の層の
+ * ステップ定義（US-24 AC1。Bolt 12）。見積依頼は、同じシナリオで荷主が提出したもの（{@link UiScenarioState}）とする。
+ */
+public class RouteDesignUiSteps {
+
+    private static final String RESPOND = "見積りに回答する";
+    private static final String PROCEED = "この条件で詳細経路設計へ進む";
+
+    private final BrowserSession browser;
+    private final UiScenarioState state;
+    private final String baseUrl;
+
+    public RouteDesignUiSteps(
+            BrowserSession browser,
+            UiScenarioState state,
+            @LocalServerPort int port,
+            @Value("${ui.base-url:}") String configuredBaseUrl) {
+        this.browser = browser;
+        this.state = state;
+        this.baseUrl = configuredBaseUrl.isBlank() ? "http://localhost:" + port : configuredBaseUrl;
+    }
+
+    private Page page() {
+        return browser.page();
+    }
+
+    private String number() {
+        return state.transportRequestNumber();
+    }
+
+    private Locator link(String name) {
+        return page().getByRole(
+                        AriaRole.LINK, new Page.GetByRoleOptions().setName(name).setExact(true));
+    }
+
+    private Locator button(String name) {
+        return page().getByRole(
+                        AriaRole.BUTTON,
+                        new Page.GetByRoleOptions().setName(name).setExact(true));
+    }
+
+    private Locator definition(String term) {
+        return page().locator("dt:text-is('" + term + "') + dd");
+    }
+
+    @もし("キー操作だけで見積りへの回答を開き、詳細経路設計へ進む")
+    public void キー操作だけで詳細経路設計へ進む() {
+        page().locator("body").focus();
+        browser.tabUntilFocused(link(RESPOND));
+        page().keyboard().press("Enter");
+        page().waitForURL("**/customer/transport-requests/" + number() + "/quotations/1/response");
+        browser.checkAccessibility();
+        assertThat(page().getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setLevel(1)))
+                .hasText("見積りへの回答 " + number() + " 見積 1");
+        assertThat(page().locator("main")).containsText("詳細な経路は、経路設計者の承認後に確定します");
+        assertThat(page().locator("main")).containsText("条件を相談する");
+        page().locator("body").focus();
+        browser.tabUntilFocused(button(PROCEED));
+        page().keyboard().press("Enter");
+        page().waitForURL("**/customer/transport-requests/" + number());
+        browser.checkAccessibility();
+    }
+
+    /** 辞退（US-24 AC2。W9 の Bolt 46）。回答の画面の辞退の欄に理由を入れて、キー操作だけで辞退する。 */
+    @もし("キー操作だけで見積りへの回答を開き、理由 {string} で辞退する")
+    public void キー操作だけで辞退する(String reason) {
+        page().locator("body").focus();
+        browser.tabUntilFocused(link(RESPOND));
+        page().keyboard().press("Enter");
+        page().waitForURL("**/customer/transport-requests/" + number() + "/quotations/1/response");
+        browser.checkAccessibility();
+        assertThat(page().locator("main")).containsText("辞退すると、この見積りは使えなくなります");
+        Locator field = page().getByLabel("辞退の理由（必須。500 文字まで）", new Page.GetByLabelOptions().setExact(true));
+        browser.tabUntilFocused(field);
+        page().keyboard().type(reason);
+        browser.tabUntilFocused(page().getByLabel("辞退すると取り消せないことを確かめました"));
+        page().keyboard().press("Space");
+        browser.tabUntilFocused(button("理由を付けて辞退する"));
+        page().keyboard().press("Enter");
+        page().waitForURL("**/customer/transport-requests/" + number());
+        browser.checkAccessibility();
+    }
+
+    @もし("キー操作だけで見積りへの回答を開き、理由を入れずに辞退する")
+    public void 理由を入れずに辞退する() {
+        page().locator("body").focus();
+        browser.tabUntilFocused(link(RESPOND));
+        page().keyboard().press("Enter");
+        page().waitForURL("**/customer/transport-requests/" + number() + "/quotations/1/response");
+        // 必須の入力は画面の検証が先に止めるので、空白だけを入れてサーバー側の検証まで通す
+        Locator field = page().getByLabel("辞退の理由（必須。500 文字まで）", new Page.GetByLabelOptions().setExact(true));
+        browser.tabUntilFocused(field);
+        page().keyboard().type("   ");
+        browser.tabUntilFocused(page().getByLabel("辞退すると取り消せないことを確かめました"));
+        page().keyboard().press("Space");
+        browser.tabUntilFocused(button("理由を付けて辞退する"));
+        page().keyboard().press("Enter");
+    }
+
+    @ならば("回答の画面に {string} と示され、辞退の欄が残る")
+    public void 辞退の誤りが示される(String message) {
+        assertThat(page().getByRole(AriaRole.ALERT).first()).containsText(message);
+        assertThat(button("理由を付けて辞退する")).isVisible();
+        browser.checkAccessibility();
+    }
+
+    @ならば("見積依頼の詳細に見積り {int} を理由 {string} で辞退したことが表示され、回答の入口はない")
+    public void 辞退したことが表示される(int quotationNo, String reason) {
+        assertThat(page().getByRole(AriaRole.STATUS)).containsText(number() + " 見積 " + quotationNo + " を辞退しました");
+        assertThat(page().locator("main")).containsText("にこの見積りを辞退しました（理由: " + reason + "）");
+        assertThat(link(RESPOND)).hasCount(0);
+        browser.checkAccessibility();
+    }
+
+    @ならば("見積り {int} は辞退した理由 {string} が示され、再見積りの操作はない")
+    public void 辞退が営業に示される(int quotationNo, String reason) {
+        assertThat(page().locator("main")).containsText("に辞退しました（理由: " + reason + "）");
+        assertThat(page().locator("main")).containsText("再見積りはできません");
+        assertThat(button("社内承認して提示する")).hasCount(0);
+        assertThat(link("再見積りする")).hasCount(0);
+    }
+
+    @ならば("見積依頼の詳細に見積り {int} で詳細経路設計を依頼したことが表示され、回答の入口はない")
+    public void 依頼したことが表示される(int quotationNo) {
+        assertThat(page().getByRole(AriaRole.STATUS)).containsText(number() + " 見積 " + quotationNo + " で詳細経路設計を依頼しました");
+        assertThat(quotationRegion()).containsText("見積 " + quotationNo + "（詳細経路設計を依頼済み）");
+        assertThat(link(RESPOND)).hasCount(0);
+    }
+
+    /** 辞退で終了への変更は DE-17 を受けた輸送要求の更新（非同期）を待つため、状態が変わるまで開き直す（W9 の Bolt 48-1。台帳 D-173）。 */
+    @ならば("見積依頼の詳細の状態が {string} に変わり、新しい見積りの案内が示される")
+    public void 辞退で終了に変わる(String status) {
+        BrowserSession.awaitEventually("見積依頼の詳細の状態が " + status + " にならない（DE-17 を待ちきれない）", 500, () -> {
+            page().reload();
+            return status.equals(definition("状態").textContent());
+        });
+        assertThat(definition("状態")).hasText(status);
+        assertThat(page().locator("main")).containsText("この見積依頼を複製して新しく作ってください");
+        browser.checkAccessibility();
+    }
+
+    /** 経路設計中への変更は DE-16 を受けた輸送要求の更新（非同期）を待つため、状態が変わるまで開き直す。 */
+    @ならば("見積依頼の詳細の状態が {string} になる")
+    public void 状態が変わる(String status) {
+        BrowserSession.awaitEventually("見積依頼の詳細の状態が " + status + " にならない（DE-16 を待ちきれない）", 500, () -> {
+            page().reload();
+            return status.equals(definition("状態").textContent());
+        });
+        assertThat(definition("状態")).hasText(status);
+        assertThat(page().locator("main")).containsText("経路設計者が詳細な経路を設計しています");
+        browser.checkAccessibility();
+    }
+
+    /** 経路設計中の表は DE-16 を受けた輸送要求の状態の更新（非同期）を待つため、行が出るまで開き直す。 */
+    @もし("営業担当者が受付一覧の経路設計中から提出した見積依頼の見積り {int} を開く")
+    public void 経路設計中から開く(int quotationNo) {
+        Locator row = page().getByRole(
+                        AriaRole.REGION, new Page.GetByRoleOptions().setName("経路設計中・荷主承認待ちの見積依頼（依頼時刻の古い順）"))
+                .getByRole(AriaRole.LINK, new Locator.GetByRoleOptions().setName(number() + " 見積 " + quotationNo));
+        BrowserSession.awaitEventually(
+                "受付一覧の経路設計中に " + number() + " 見積 " + quotationNo + " が出ない（DE-16 の受け取りを待ちきれない）", 500, () -> {
+                    browser.navigate(baseUrl + "/staff/transport-requests");
+                    return row.count() > 0;
+                });
+        browser.checkAccessibility();
+        row.click();
+        page().waitForURL("**/staff/transport-requests/" + number() + "/quotations/" + quotationNo);
+        browser.checkAccessibility();
+    }
+
+    @ならば("見積り {int} は {string} で読み取り専用と示され、提示と再見積りの操作はない")
+    public void 詳細設計依頼済みが表示される(int quotationNo, String status) {
+        assertThat(page().getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setLevel(1)))
+                .hasText("見積り " + number() + " 見積 " + quotationNo);
+        assertThat(definition("状態")).hasText(status);
+        assertThat(page().locator("main")).containsText("に詳細経路設計を依頼しました");
+        assertThat(page().locator("main")).containsText("読み取り専用");
+        assertThat(button("社内承認して提示する")).hasCount(0);
+        assertThat(link("再見積りする")).hasCount(0);
+    }
+
+    @ならば("見積依頼の詳細に {string} と示され、回答の入口はない")
+    public void 理由が示される(String reason) {
+        page().waitForURL("**/customer/transport-requests/" + number());
+        assertThat(page().getByRole(AriaRole.ALERT).first()).containsText(reason);
+        assertThat(link(RESPOND)).hasCount(0);
+        browser.checkAccessibility();
+    }
+
+    private Locator quotationRegion() {
+        return page().getByRole(
+                        AriaRole.REGION,
+                        new Page.GetByRoleOptions().setName("見積り").setExact(true));
+    }
+}

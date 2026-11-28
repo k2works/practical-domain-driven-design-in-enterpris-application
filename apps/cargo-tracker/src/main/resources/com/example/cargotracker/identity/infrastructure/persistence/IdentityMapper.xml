@@ -1,0 +1,306 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.cargotracker.identity.infrastructure.persistence.IdentityMapper">
+
+    <resultMap id="companyRow" type="com.example.cargotracker.identity.infrastructure.persistence.CompanyRow">
+        <constructor>
+            <idArg column="id" name="id" javaType="java.util.UUID"/>
+            <arg column="name" name="name" javaType="String"/>
+            <arg column="kind" name="kind" javaType="String"/>
+            <arg column="active" name="active" javaType="_boolean"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="userRow" type="com.example.cargotracker.identity.infrastructure.persistence.UserRow">
+        <constructor>
+            <idArg column="id" name="id" javaType="java.util.UUID"/>
+            <arg column="company_id" name="companyId" javaType="java.util.UUID"/>
+            <arg column="email" name="email" javaType="String"/>
+            <arg column="display_name" name="displayName" javaType="String"/>
+            <arg column="password_hash" name="passwordHash" javaType="String"/>
+            <arg column="status" name="status" javaType="String"/>
+            <arg column="version" name="version" javaType="_long"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="userStandingRow" type="com.example.cargotracker.identity.infrastructure.persistence.UserStandingRow">
+        <constructor>
+            <arg column="id" name="id" javaType="java.util.UUID"/>
+            <arg column="company_id" name="companyId" javaType="java.util.UUID"/>
+            <arg column="email" name="email" javaType="String"/>
+            <arg column="display_name" name="displayName" javaType="String"/>
+            <arg column="password_hash" name="passwordHash" javaType="String"/>
+            <arg column="status" name="status" javaType="String"/>
+            <arg column="company_name" name="companyName" javaType="String"/>
+            <arg column="company_kind" name="companyKind" javaType="String"/>
+            <arg column="company_active" name="companyActive" javaType="_boolean"/>
+            <arg column="role" name="role" javaType="String"/>
+            <arg column="assigned_company_id" name="assignedCompanyId" javaType="java.util.UUID"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="userAdministrationRow" type="com.example.cargotracker.identity.infrastructure.persistence.UserAdministrationRow">
+        <constructor>
+            <arg column="id" name="id" javaType="java.util.UUID"/>
+            <arg column="company_id" name="companyId" javaType="java.util.UUID"/>
+            <arg column="company_name" name="companyName" javaType="String"/>
+            <arg column="company_kind" name="companyKind" javaType="String"/>
+            <arg column="email" name="email" javaType="String"/>
+            <arg column="display_name" name="displayName" javaType="String"/>
+            <arg column="status" name="status" javaType="String"/>
+            <arg column="version" name="version" javaType="_long"/>
+            <arg column="role" name="role" javaType="String"/>
+            <arg column="assigned_company_id" name="assignedCompanyId" javaType="java.util.UUID"/>
+            <arg column="assigned_company_name" name="assignedCompanyName" javaType="String"/>
+        </constructor>
+    </resultMap>
+
+    <!-- S-20 の詳細の行（Bolt 38c で一覧の行から分けた。ロックの期限と認証アプリの登録の時刻を足す） -->
+    <resultMap id="userDetailRow" type="com.example.cargotracker.identity.infrastructure.persistence.UserDetailRow">
+        <constructor>
+            <arg column="id" name="id" javaType="java.util.UUID"/>
+            <arg column="company_id" name="companyId" javaType="java.util.UUID"/>
+            <arg column="company_name" name="companyName" javaType="String"/>
+            <arg column="company_kind" name="companyKind" javaType="String"/>
+            <arg column="email" name="email" javaType="String"/>
+            <arg column="display_name" name="displayName" javaType="String"/>
+            <arg column="status" name="status" javaType="String"/>
+            <arg column="version" name="version" javaType="_long"/>
+            <arg column="role" name="role" javaType="String"/>
+            <arg column="locked_until" name="lockedUntil" javaType="java.time.OffsetDateTime"/>
+            <arg column="totp_enrolled_at" name="totpEnrolledAt" javaType="java.time.OffsetDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="auditRecordRow" type="com.example.cargotracker.identity.infrastructure.persistence.AuditRecordRow">
+        <constructor>
+            <idArg column="id" name="id" javaType="java.util.UUID"/>
+            <arg column="occurred_at" name="occurredAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="actor_user_id" name="actorUserId" javaType="java.util.UUID"/>
+            <arg column="actor_company_id" name="actorCompanyId" javaType="java.util.UUID"/>
+            <arg column="action" name="action" javaType="String"/>
+            <arg column="result" name="result" javaType="String"/>
+            <arg column="reason" name="reason" javaType="String"/>
+            <arg column="target_type" name="targetType" javaType="String"/>
+            <arg column="target_id" name="targetId" javaType="String"/>
+            <arg column="target_version" name="targetVersion" javaType="String"/>
+            <arg column="before_state" name="beforeState" javaType="String"/>
+            <arg column="after_state" name="afterState" javaType="String"/>
+        </constructor>
+    </resultMap>
+
+    <!-- 停止の記録の行（Bolt 38c2）。最新の USER_SUSPENDED に、操作者の今の表示名を足す -->
+    <resultMap id="suspensionRecordRow" type="com.example.cargotracker.identity.infrastructure.persistence.SuspensionRecordRow">
+        <constructor>
+            <arg column="action" name="action" javaType="String"/>
+            <arg column="reason" name="reason" javaType="String"/>
+            <arg column="actor_user_id" name="actorUserId" javaType="java.util.UUID"/>
+            <arg column="actor_display_name" name="actorDisplayName" javaType="String"/>
+            <arg column="occurred_at" name="occurredAt" javaType="java.time.OffsetDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <insert id="insertCompany">
+        INSERT INTO identity.company (id, name, kind, active, version, created_at, updated_at)
+        VALUES (#{row.id}, #{row.name}, #{row.kind}, #{row.active}, 0, #{now}, #{now})
+    </insert>
+
+    <select id="selectCompany" resultMap="companyRow">
+        SELECT id, name, kind, active FROM identity.company WHERE id = #{id}
+    </select>
+
+    <!-- Bolt 38b3。登録できる企業の照会（空の集合では呼ばない） -->
+    <select id="selectCompaniesIn" resultMap="companyRow">
+        SELECT id, name, kind, active FROM identity.company
+         WHERE id IN
+               <foreach collection="companyIds" item="companyId" open="(" separator="," close=")">#{companyId}</foreach>
+         ORDER BY name, id
+    </select>
+
+    <sql id="userColumns">id, company_id, email, display_name, password_hash, status, version</sql>
+
+    <insert id="insertUser">
+        INSERT INTO identity.app_user
+            (id, company_id, email, display_name, password_hash, status, version, created_at, updated_at)
+        VALUES (#{row.id}, #{row.companyId}, #{row.email}, #{row.displayName}, #{row.passwordHash}, #{row.status},
+                0, #{now}, #{now})
+    </insert>
+
+    <insert id="insertUserRole">
+        INSERT INTO identity.user_role (user_id, role, granted_at) VALUES (#{userId}, #{role}, #{now})
+    </insert>
+
+    <select id="selectUserByEmail" resultMap="userRow">
+        SELECT <include refid="userColumns"/> FROM identity.app_user WHERE email = #{email}
+    </select>
+
+    <!-- Bolt 33a。版を上げるが条件にしない（同時の変更は再設定のトークンの条件付きの使用で直列になる） -->
+    <update id="updateUserPassword">
+        UPDATE identity.app_user
+           SET password_hash = #{passwordHash},
+               version = version + 1,
+               updated_at = #{now}
+         WHERE id = #{id}
+    </update>
+
+    <!-- Bolt 34。役割の変更で版を条件にして上げる（UC-16 の 4b。0 件ならほかの更新が先に入った） -->
+    <update id="updateUserVersion">
+        UPDATE identity.app_user
+           SET version = version + 1,
+               updated_at = #{now}
+         WHERE id = #{id}
+           AND version = #{expectedVersion}
+    </update>
+
+    <!-- Bolt 34d。利用停止と再開で、版を条件にして利用状態を変え版を上げる（役割の変更と版を共有する。0 件ならほかの更新が先に入った） -->
+    <update id="updateUserStatus">
+        UPDATE identity.app_user
+           SET status = #{status},
+               version = version + 1,
+               updated_at = #{now}
+         WHERE id = #{id}
+           AND version = #{expectedVersion}
+    </update>
+
+    <insert id="insertGrantedUserRole">
+        INSERT INTO identity.user_role (user_id, role, granted_by, granted_at)
+        VALUES (#{userId}, #{role}, #{grantedBy}, #{now})
+    </insert>
+
+    <delete id="deleteUserRole">
+        DELETE FROM identity.user_role WHERE user_id = #{userId} AND role = #{role}
+    </delete>
+
+    <!-- S-20 の読み出し（Bolt 34）。password_hash を読まない。役割の数だけ行が出る（役割がなければ role が NULL の 1 行） -->
+    <sql id="userAdministrationColumns">
+        u.id, u.company_id, c.name AS company_name, c.kind AS company_kind, u.email, u.display_name, u.status, u.version,
+        r.role
+    </sql>
+
+    <!-- Bolt 34b。管理範囲の企業の利用者だけ（空の集合では呼ばない）。Bolt 38h から COMPANY の行と企業の名前も読む（担当企業の列）。
+         COMPANY の条件は ON 句に置く（WHERE に置くと割り当てのない利用者の行が消える）。役割 × COMPANY の行の重なりと、担当企業として
+         読むか（役割で決める。Bolt 38e の決定 (9)）は写すときに決める -->
+    <select id="selectUserAdministrationRowsIn" resultMap="userAdministrationRow">
+        SELECT <include refid="userAdministrationColumns"/>, a.scope_id AS assigned_company_id, ac.name AS assigned_company_name
+          FROM identity.app_user u
+          JOIN identity.company c ON c.id = u.company_id
+          LEFT JOIN identity.user_role r ON r.user_id = u.id
+          LEFT JOIN identity.user_assignment a ON a.user_id = u.id AND a.scope_kind = 'COMPANY'
+          LEFT JOIN identity.company ac ON ac.id = a.scope_id
+         WHERE u.company_id IN
+               <foreach collection="companyIds" item="companyId" open="(" separator="," close=")">#{companyId}</foreach>
+         ORDER BY c.name, u.display_name, u.id, r.role, ac.name, a.scope_id
+    </select>
+
+    <!-- Bolt 34b。システム管理者の管理範囲（COMPANY の行だけ） -->
+    <select id="selectManagedCompanies" resultType="java.util.UUID">
+        SELECT scope_id FROM identity.user_assignment WHERE user_id = #{adminId} AND scope_kind = 'COMPANY'
+    </select>
+
+    <!-- Bolt 38e。利用者の COMPANY の行を役割で絞らずに読む（担当企業の置き換えの前の今の行。管理範囲・担当企業の意味を持たせない） -->
+    <select id="selectCompanyRows" resultType="java.util.UUID">
+        SELECT scope_id FROM identity.user_assignment WHERE user_id = #{userId} AND scope_kind = 'COMPANY'
+    </select>
+
+    <!-- Bolt 38e。業務担当者の担当企業。同じ COMPANY の行は、担当範囲のある役割を持つ利用者のときだけ担当企業として読む（決定 (9)） -->
+    <select id="selectAssignedCompanies" resultType="java.util.UUID">
+        SELECT a.scope_id
+          FROM identity.user_assignment a
+         WHERE a.user_id = #{userId}
+           AND a.scope_kind = 'COMPANY'
+           AND EXISTS (SELECT 1 FROM identity.user_role r
+                        WHERE r.user_id = a.user_id
+                          AND r.role IN
+                              <foreach collection="roles" item="role" open="(" separator="," close=")">#{role}</foreach>)
+    </select>
+
+    <!-- Bolt 38e。担当企業の差だけを書く（担当案件の BOOKING の行は触らない） -->
+    <delete id="deleteCompanyAssignment">
+        DELETE FROM identity.user_assignment
+         WHERE user_id = #{userId}
+           AND scope_kind = 'COMPANY'
+           AND scope_id = #{companyId}
+    </delete>
+
+    <insert id="insertCompanyAssignment">
+        INSERT INTO identity.user_assignment (user_id, scope_kind, scope_id, granted_by, granted_at)
+        VALUES (#{userId}, 'COMPANY', #{companyId}, #{grantedBy}, #{now})
+    </insert>
+
+    <!-- 詳細（Bolt 38c からログインの資格を足す）。2 つの表は主キーが user_id なので、役割の数より行は増えない。期限が切れたかは照会の
+         サービスが判定する（期限をそのまま返す）。TOTP の秘密は読まない -->
+    <select id="selectUserDetailRowsById" resultMap="userDetailRow">
+        SELECT <include refid="userAdministrationColumns"/>, f.locked_until, t.enrolled_at AS totp_enrolled_at
+          FROM identity.app_user u
+          JOIN identity.company c ON c.id = u.company_id
+          LEFT JOIN identity.user_role r ON r.user_id = u.id
+          LEFT JOIN identity.login_failure f ON f.user_id = u.id
+          LEFT JOIN identity.totp_credential t ON t.user_id = u.id
+         WHERE u.id = #{id}
+         ORDER BY r.role
+    </select>
+
+    <select id="selectUserById" resultMap="userRow">
+        SELECT <include refid="userColumns"/> FROM identity.app_user WHERE id = #{id}
+    </select>
+
+    <select id="selectUserRoles" resultType="String">
+        SELECT role FROM identity.user_role WHERE user_id = #{userId} ORDER BY role
+    </select>
+
+    <!-- request ごとの確かめ（Bolt 32c、ADR-012 の見直しの 3）。利用者・所属企業・役割・担当企業を 1 回で読む。役割がなければ role が
+         NULL、担当企業がなければ assigned_company_id が NULL。役割 × 担当企業の重なりは写すときに除く。COMPANY の条件は ON 句に置く
+         （WHERE に置くと割り当てのない利用者の行が消える）。担当企業として読むかは役割で決める（Bolt 38e の決定 (9)。Bolt 38f） -->
+    <select id="selectUserStanding" resultMap="userStandingRow">
+        SELECT u.id, u.company_id, u.email, u.display_name, u.password_hash, u.status,
+               c.name AS company_name, c.kind AS company_kind, c.active AS company_active,
+               r.role, a.scope_id AS assigned_company_id
+          FROM identity.app_user u
+          JOIN identity.company c ON c.id = u.company_id
+          LEFT JOIN identity.user_role r ON r.user_id = u.id
+          LEFT JOIN identity.user_assignment a ON a.user_id = u.id AND a.scope_kind = 'COMPANY'
+         WHERE u.id = #{id}
+         ORDER BY r.role, a.scope_id
+    </select>
+
+    <insert id="insertAuditRecord">
+        INSERT INTO identity.audit_record (id, occurred_at, actor_user_id, actor_company_id, action, result, reason,
+                                           target_type, target_id, target_version, before_state, after_state)
+        VALUES (#{id}, #{occurredAt}, #{actorUserId}, #{actorCompanyId}, #{action}, #{result}, #{reason},
+                #{targetType}, #{targetId}, #{targetVersion}, #{beforeState}, #{afterState})
+    </insert>
+
+    <select id="selectAuditRecordsByActor" resultMap="auditRecordRow">
+        SELECT id, occurred_at, actor_user_id, actor_company_id, action, result, reason,
+               target_type, target_id, target_version, before_state, after_state
+          FROM identity.audit_record
+         WHERE actor_user_id = #{actorUserId}
+         ORDER BY occurred_at, id
+    </select>
+
+    <!-- Bolt 38c2。対象の利用者の停止と再開のうち最新の 1 行（索引 ix_audit_record_target）。それが再開なら今の停止の記録はない
+         （停止 → 再開 → DB を直接書き換えた停止で、前の停止を今の停止として示さない）。判定と、理由か操作者の欠けた行の扱いは
+         リポジトリが行う（WHERE で落とすと、理由を持たない再開の行も消え、前の停止に戻ってしまう）。target_id は VARCHAR なので利用者 ID を
+         文字列で渡す。操作者に外部キーはないので LEFT JOIN にする（INNER JOIN だと行が消えた操作者の記録ごと失う）。id は同じ時刻の行の
+         並びを決めるだけ。失敗の USER_SUSPENDED を書くコードはないので result で絞らない -->
+    <select id="selectLatestUserSuspension" resultMap="suspensionRecordRow">
+        SELECT a.action, a.reason, a.actor_user_id, u.display_name AS actor_display_name, a.occurred_at
+          FROM identity.audit_record a
+          LEFT JOIN identity.app_user u ON u.id = a.actor_user_id
+         WHERE a.action IN ('USER_SUSPENDED', 'USER_REACTIVATED')
+           AND a.target_type = 'USER'
+           AND a.target_id = #{targetId}
+         ORDER BY a.occurred_at DESC, a.id DESC
+         LIMIT 1
+    </select>
+
+    <!-- Bolt 39b3b。イベント経由の監査の冪等（IA-INV-15）。操作と対象で引き、あれば listener は書かない。索引 ix_audit_record_target
+         （target_type, target_id, occurred_at）を使う。スキーマは変えない（人に諮ること 2 の決定） -->
+    <select id="existsAuditRecordByActionAndTarget" resultType="boolean">
+        SELECT COUNT(*) > 0
+          FROM identity.audit_record
+         WHERE target_type = #{targetType}
+           AND target_id = #{targetId}
+           AND action = #{action}
+    </select>
+</mapper>

@@ -1,0 +1,296 @@
+package com.example.cargotracker.routing.interfaces.web;
+
+import com.example.cargotracker.routing.application.internal.commands.CalculateCandidatesCommand;
+import com.example.cargotracker.routing.application.internal.commands.ConfirmRouteCommand;
+import com.example.cargotracker.routing.application.internal.commandservices.CandidateCalculationOutcome;
+import com.example.cargotracker.routing.application.internal.commandservices.RouteConfirmationOutcome;
+import com.example.cargotracker.routing.application.internal.commandservices.RoutingCaseCommandService;
+import com.example.cargotracker.routing.application.internal.queryservices.RoutingCaseQueryService;
+import com.example.cargotracker.routing.domain.model.aggregates.RoutingCase;
+import com.example.cargotracker.routing.domain.model.entities.RouteCandidate;
+import com.example.cargotracker.routing.domain.model.valueobjects.CandidateCalculation;
+import com.example.cargotracker.routing.domain.model.valueobjects.DecisionRationale;
+import com.example.cargotracker.routing.domain.model.valueobjects.RouteConfirmationRejectionReason;
+import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseNumber;
+import com.example.cargotracker.shared.domain.AuthenticatedActor;
+import com.example.cargotracker.shared.domain.Role;
+import java.time.Clock;
+import java.time.Instant;
+import java.util.EnumMap;
+import java.util.EnumSet;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+/**
+ * 経路設計案件一覧（S-05）、経路候補の比較（S-06）、経路の確定（S-07）（US-06 AC1〜AC3、US-07 AC1・AC2。Bolt 17・19）。
+ * 経路設計者だけが開ける（認可は SecurityConfiguration）。画面と URL には案件番号だけを出す（D-4）。候補の算出・再算出と確定は
+ * PRG で S-06 に戻る。算出と確定のフォームは案件の版を持ち、違えば競合として最新を確かめるよう示す（Bolt 17 レビュー D-64）。
+ * S-07 は画面そのものが確認の領域（BR-13。見積りへの回答 C-05 と同じ形で、別の確認のダイアログは挟まない）。
+ * Bolt 38g（US-16 AC4）から、経路設計者の担当企業の案件だけを扱う。範囲の外は存在しない案件と同じく 404 にし、状態を変える POST（候補の算出・
+ * 確定）の範囲の外だけを試行として記録する（{@link RoutingOutOfScopeResponder}。SEC-12、ADR-019）。POST は値の解釈（コマンドの判定）より先に
+ * ロックしない照会で範囲を確かめる。型の変換で止まる値（数でない版・候補番号）は範囲によらず 400 で、記録しない。
+ */
+@Controller
+@RequestMapping("/staff/routing-cases")
+public class RoutingCaseController {
+
+    private static final String LIST_VIEW = "routing/staff/routing-cases/list";
+    private static final String SHOW_VIEW = "routing/staff/routing-cases/show";
+    private static final String REDIRECT = "redirect:/staff/routing-cases/";
+    private static final String RESULT = "result";
+    private static final String PROBLEM = "problem";
+    private static final String CONFIRMATION_VIEW = "routing/staff/routing-cases/confirmation";
+    private static final String CONFLICT_MESSAGE = "ほかの経路設計者が先にこの案件を更新しました。最新の候補を確かめてください。";
+
+    /**
+     * S-07 にとどまって示す拒否の理由（情報は同じで、入力を直せば、または再算出の判断に使う）。ほかは S-06 に戻して示す（選んだ候補が
+     * 使えない、または参照した情報そのものが置き換わった。航海の情報の更新は AC3 の再判断で、古い情報に基づく判断根拠は残さない。Bolt 37c）。
+     */
+    private static final Set<RouteConfirmationRejectionReason> SHOWN_ON_CONFIRMATION = EnumSet.of(
+            RouteConfirmationRejectionReason.RATIONALE_MISSING,
+            RouteConfirmationRejectionReason.RATIONALE_TOO_LONG,
+            RouteConfirmationRejectionReason.NOT_ROUTE_DESIGNER,
+            RouteConfirmationRejectionReason.ALREADY_DEPARTED,
+            RouteConfirmationRejectionReason.INFO_INSUFFICIENT,
+            RouteConfirmationRejectionReason.NO_LONGER_CONFORMING);
+
+    private static final Set<RouteConfirmationRejectionReason> RATIONALE_REASONS = EnumSet.of(
+            RouteConfirmationRejectionReason.RATIONALE_MISSING, RouteConfirmationRejectionReason.RATIONALE_TOO_LONG);
+
+    private final RoutingCaseQueryService queryService;
+    private final RoutingCaseCommandService commandService;
+    private final Clock clock;
+    private final RoutingOutOfScopeResponder outOfScope;
+
+    public RoutingCaseController(
+            RoutingCaseQueryService queryService,
+            RoutingCaseCommandService commandService,
+            Clock clock,
+            RoutingOutOfScopeResponder outOfScope) {
+        this.queryService = queryService;
+        this.commandService = commandService;
+        this.clock = clock;
+        this.outOfScope = outOfScope;
+    }
+
+    /** S-05。担当企業の案件を見積有効期限の近い順に示す（Bolt 19・38g）。期限を過ぎた案件は期限切れと示す。 */
+    @GetMapping
+    public String list(AuthenticatedActor actor, Model model) {
+        Instant now = clock.instant();
+        model.addAttribute(
+                "cases",
+                queryService.listCases(actor).stream()
+                        .map(summary -> RoutingCaseViews.row(summary, now))
+                        .toList());
+        model.addAttribute("noAssignedCompanies", actor.hasNoAssignedCompanies());
+        return LIST_VIEW;
+    }
+
+    /**
+     * S-06。算出の前は候補の算出の操作を、算出の後は候補と再算出の操作を示す。範囲の外は 404（記録しない）。担当範囲を確かめた案件にだけ、開いた時刻の航海で古くなった候補を判定する
+     * （UC-06 4a。Bolt 39f2。判定と表示に同じ時刻を渡す。T-229）。
+     */
+    @GetMapping("/{number}")
+    public String show(@PathVariable String number, AuthenticatedActor actor, Model model) {
+        RoutingCase routingCase = find(parse(number), actor);
+        Instant now = clock.instant();
+        model.addAttribute(
+                "routingCase", RoutingCaseViews.detail(routingCase, queryService.staleLegsOf(routingCase, now), now));
+        return SHOW_VIEW;
+    }
+
+    /** 候補を算出・再算出する。結果の件数を S-06 の上部に示す。 */
+    @PostMapping("/{number}/candidates")
+    public String calculate(
+            @PathVariable String number,
+            @RequestParam long expectedVersion,
+            AuthenticatedActor actor,
+            RedirectAttributes redirectAttributes) {
+        RoutingCaseNumber caseNumber = parse(number);
+        rejectOutOfScope(caseNumber, actor);
+        return switch (commandService.calculateCandidates(
+                new CalculateCandidatesCommand(caseNumber, expectedVersion, actor.userId()), actor)) {
+            case CandidateCalculationOutcome.Calculated(
+                    RoutingCaseNumber calculated,
+                    CandidateCalculation calculation) -> {
+                redirectAttributes.addFlashAttribute(RESULT, result(calculation));
+                yield REDIRECT + calculated.text();
+            }
+            case CandidateCalculationOutcome.Conflict() -> {
+                redirectAttributes.addFlashAttribute(PROBLEM, CONFLICT_MESSAGE);
+                yield REDIRECT + caseNumber.text();
+            }
+            case CandidateCalculationOutcome.NotFound() -> throw notFound();
+            case CandidateCalculationOutcome.OutOfScope() -> throw recordOutOfScope(caseNumber, actor);
+        };
+    }
+
+    /** S-07。適合の候補だけを開ける。除外の候補・確定できない状態は S-06 に戻して理由を示す。範囲の外は 404（記録しない）。 */
+    @GetMapping("/{number}/confirmation")
+    public String confirmation(
+            @PathVariable String number,
+            @RequestParam int candidate,
+            AuthenticatedActor actor,
+            Model model,
+            RedirectAttributes redirectAttributes) {
+        RoutingCase routingCase = find(parse(number), actor);
+        Optional<RouteConfirmationRejectionReason> rejection = commandService.conditionsChanged(routingCase)
+                ? Optional.of(RouteConfirmationRejectionReason.CONDITIONS_CHANGED)
+                : routingCase.confirmationRejection();
+        if (rejection.isPresent()) {
+            redirectAttributes.addFlashAttribute(PROBLEM, message(rejection.get()));
+            return REDIRECT + routingCase.number().text();
+        }
+        RouteCandidate selected = candidateOf(routingCase, candidate).orElseThrow(RoutingCaseController::notFound);
+        if (!selected.evaluation().conforming()) {
+            redirectAttributes.addFlashAttribute(PROBLEM, message(RouteConfirmationRejectionReason.CANDIDATE_EXCLUDED));
+            return REDIRECT + routingCase.number().text();
+        }
+        model.addAttribute("page", RoutingCaseViews.confirmation(routingCase, selected, clock.instant()));
+        model.addAttribute("rationale", "");
+        return CONFIRMATION_VIEW;
+    }
+
+    /** 判断根拠を記録して経路を確定する（US-07 AC1・AC2）。拒否は S-07 に理由をエラー要約で示し入力を残す。 */
+    @PostMapping("/{number}/confirmation")
+    public String confirm(
+            @PathVariable String number,
+            @RequestParam int candidate,
+            @RequestParam(defaultValue = "") String rationale,
+            @RequestParam long expectedVersion,
+            AuthenticatedActor actor,
+            Model model,
+            RedirectAttributes redirectAttributes) {
+        RoutingCaseNumber caseNumber = parse(number);
+        rejectOutOfScope(caseNumber, actor);
+        RouteConfirmationOutcome outcome = commandService.confirm(
+                new ConfirmRouteCommand(
+                        caseNumber,
+                        candidate,
+                        rationale,
+                        expectedVersion,
+                        actor.userId(),
+                        actor.hasRole(Role.ROUTE_DESIGNER)),
+                actor);
+        return switch (outcome) {
+            case RouteConfirmationOutcome.Confirmed confirmed -> {
+                redirectAttributes.addFlashAttribute(
+                        RESULT, "候補 %d の経路を確定しました。確定した経路は見積りに割り当てられ、荷主の承認に進みます。".formatted(confirmed.candidateNo()));
+                yield REDIRECT + confirmed.number().text();
+            }
+            case RouteConfirmationOutcome.Conflict() -> {
+                redirectAttributes.addFlashAttribute(PROBLEM, CONFLICT_MESSAGE);
+                yield REDIRECT + caseNumber.text();
+            }
+            case RouteConfirmationOutcome.NotFound() -> throw notFound();
+            case RouteConfirmationOutcome.OutOfScope() -> throw recordOutOfScope(caseNumber, actor);
+            case RouteConfirmationOutcome.Rejected(RouteConfirmationRejectionReason reason) -> {
+                if (!SHOWN_ON_CONFIRMATION.contains(reason)) {
+                    redirectAttributes.addFlashAttribute(PROBLEM, message(reason));
+                    yield REDIRECT + caseNumber.text();
+                }
+                RoutingCase routingCase = find(caseNumber, actor);
+                Optional<RouteCandidate> selected = candidateOf(routingCase, candidate);
+                if (selected.isEmpty()) {
+                    // 拒否の後に候補が算出し直されていた。S-06 で最新の候補を確かめてもらう
+                    redirectAttributes.addFlashAttribute(
+                            PROBLEM, message(RouteConfirmationRejectionReason.CANDIDATE_NOT_FOUND));
+                    yield REDIRECT + caseNumber.text();
+                }
+                model.addAttribute("page", RoutingCaseViews.confirmation(routingCase, selected.get(), clock.instant()));
+                model.addAttribute("rationale", rationale);
+                model.addAttribute("error", message(reason));
+                model.addAttribute("rationaleError", RATIONALE_REASONS.contains(reason));
+                yield CONFIRMATION_VIEW;
+            }
+        };
+    }
+
+    /** 確定の拒否の理由の文言（UI 設計 S-07）。すべての理由に文言があることはテストで確かめる（Bolt 37c）。 */
+    private static final Map<RouteConfirmationRejectionReason, String> MESSAGES = messages();
+
+    private static Map<RouteConfirmationRejectionReason, String> messages() {
+        Map<RouteConfirmationRejectionReason, String> messages = new EnumMap<>(RouteConfirmationRejectionReason.class);
+        messages.put(RouteConfirmationRejectionReason.RATIONALE_MISSING, "判断根拠を入れてください。");
+        messages.put(
+                RouteConfirmationRejectionReason.RATIONALE_TOO_LONG,
+                "判断根拠は %,d 文字までで入れてください。".formatted(DecisionRationale.MAX_LENGTH));
+        messages.put(RouteConfirmationRejectionReason.NOT_ROUTE_DESIGNER, "経路を確定できるのは経路設計者だけです。");
+        messages.put(RouteConfirmationRejectionReason.NOT_CONFIRMABLE_STATE, "この案件の経路はすでに確定しているか、候補をまだ算出していません。");
+        messages.put(RouteConfirmationRejectionReason.CANDIDATE_NOT_FOUND, "選んだ候補がありません。経路候補の比較で最新の候補を確かめてください。");
+        messages.put(RouteConfirmationRejectionReason.CANDIDATE_EXCLUDED, "除外の候補は確定できません。");
+        messages.put(RouteConfirmationRejectionReason.CONDITIONS_CHANGED, "荷主が輸送条件を変更したため、この案件の経路は確定できません。");
+        messages.put(
+                RouteConfirmationRejectionReason.INFO_VERSION_CHANGED,
+                "候補を算出した後に航海の情報が更新されたため確定できません。入力した判断根拠は保存していません。" + "候補を再算出して判断し直してください。");
+        messages.put(
+                RouteConfirmationRejectionReason.ROUTE_REDESIGN_REQUIRED,
+                "この案件の経路は再設計要のため確定し直せません。担当営業が荷主に新しい見積依頼を出すよう案内します。");
+        messages.put(RouteConfirmationRejectionReason.ALREADY_DEPARTED, "最初の区間が出発済みのため確定できません。候補を再算出してください。");
+        messages.put(
+                RouteConfirmationRejectionReason.INFO_INSUFFICIENT,
+                "航海の情報が取得から許容時間を過ぎているため確定できません（情報不足）。" + "航海の情報の取込をデータ責任者に依頼し、取り込まれたら候補を再算出してください。");
+        messages.put(
+                RouteConfirmationRejectionReason.NO_LONGER_CONFORMING,
+                "最新の接続時間規則で判定し直すと条件を満たさないため確定できません。候補を再算出してください。");
+        return messages;
+    }
+
+    /** 確定の拒否の理由の文言（UI 設計 S-07）。 */
+    static String message(RouteConfirmationRejectionReason reason) {
+        return MESSAGES.get(reason);
+    }
+
+    private RoutingCase find(RoutingCaseNumber number, AuthenticatedActor actor) {
+        return queryService.findByNumber(number, actor).orElseThrow(RoutingCaseController::notFound);
+    }
+
+    /** 状態を変える POST の前の確かめ。範囲の外なら試行を記録して 404（値の解釈より先。Bolt 38g の行 4）。 */
+    private void rejectOutOfScope(RoutingCaseNumber number, AuthenticatedActor actor) {
+        if (queryService.outOfScope(number, actor)) {
+            throw recordOutOfScope(number, actor);
+        }
+    }
+
+    private ResponseStatusException recordOutOfScope(RoutingCaseNumber number, AuthenticatedActor actor) {
+        return outOfScope.recordAndNotFound(actor, number.text());
+    }
+
+    private static Optional<RouteCandidate> candidateOf(RoutingCase routingCase, int candidateNo) {
+        return routingCase.routeVersion().candidates().stream()
+                .filter(each -> each.candidateNo() == candidateNo)
+                .findFirst();
+    }
+
+    private static String result(CandidateCalculation calculation) {
+        String result = "候補を %d 件算出しました（適合 %d 件、除外 %d 件）"
+                .formatted(calculation.kept(), calculation.conforming(), calculation.excluded());
+        return calculation.omitted() > 0
+                ? result + "。ほかに %d 件の候補があります（適合を先に、到着予定の早い順に 20 件まで示しています）".formatted(calculation.omitted())
+                : result;
+    }
+
+    /** 案件番号の形でなければ、ない案件と同じに扱う（404）。 */
+    private static RoutingCaseNumber parse(String number) {
+        try {
+            return RoutingCaseNumber.parse(number);
+        } catch (IllegalArgumentException _) {
+            throw notFound();
+        }
+    }
+
+    private static ResponseStatusException notFound() {
+        return new ResponseStatusException(HttpStatus.NOT_FOUND);
+    }
+}

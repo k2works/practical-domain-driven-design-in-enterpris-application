@@ -1,0 +1,151 @@
+package com.example.cargotracker.routing.infrastructure.config;
+
+import com.example.cargotracker.quotation.interfaces.api.RouteAssignment;
+import com.example.cargotracker.quotation.interfaces.api.RouteConditionQuery;
+import com.example.cargotracker.quotation.interfaces.api.RouteRedesignNotification;
+import com.example.cargotracker.routing.application.internal.commandservices.RoutingCaseCommandService;
+import com.example.cargotracker.routing.application.internal.eventhandlers.ConfirmedRouteEvaluationEventHandler;
+import com.example.cargotracker.routing.application.internal.eventhandlers.QuotationRouteAssignmentEventHandler;
+import com.example.cargotracker.routing.application.internal.eventhandlers.QuotationRouteRedesignEventHandler;
+import com.example.cargotracker.routing.application.internal.eventhandlers.RoutingCaseOpeningEventHandler;
+import com.example.cargotracker.routing.application.internal.eventhandlers.VoyageUpdateEventHandler;
+import com.example.cargotracker.routing.application.internal.outboundservices.acl.QuotationRouteAssignments;
+import com.example.cargotracker.routing.application.internal.outboundservices.acl.QuotationRouteConditions;
+import com.example.cargotracker.routing.application.internal.outboundservices.acl.QuotationRouteRedesigns;
+import com.example.cargotracker.routing.application.internal.queryservices.RoutingCaseQueryService;
+import com.example.cargotracker.routing.application.internal.queryservices.RoutingCaseScope;
+import com.example.cargotracker.routing.domain.model.aggregates.ConnectionRuleRepository;
+import com.example.cargotracker.routing.domain.model.aggregates.RoutingCaseNumberIssuer;
+import com.example.cargotracker.routing.domain.model.aggregates.RoutingCaseRepository;
+import com.example.cargotracker.routing.domain.model.aggregates.VoyageRepository;
+import com.example.cargotracker.routing.domain.model.rules.InfoFreshnessPolicy;
+import com.example.cargotracker.routing.domain.model.valueobjects.RoutingCaseNumber;
+import com.example.cargotracker.routing.infrastructure.persistence.MyBatisRoutingCaseNumberIssuer;
+import com.example.cargotracker.shared.domain.UtcInstant;
+import java.time.Clock;
+import java.time.Duration;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.ApplicationRunner;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+/**
+ * 経路設計コンテキストの組み立て。アプリケーションサービスに送信アダプターと、見積りの公開 API をつなぐ（Bolt 17）。
+ */
+@Configuration(proxyBeanMethods = false)
+public class RoutingConfiguration {
+
+    /** 見積りの公開 API（経路条件の照会）を経路設計の経路条件に変える腐敗防止層。 */
+    @Bean
+    QuotationRouteConditions quotationRouteConditions(RouteConditionQuery routeConditionQuery) {
+        return new QuotationRouteConditions(routeConditionQuery);
+    }
+
+    /** DE-16 を受けて経路設計案件を作る（Spring Modulith のイベントの記録を経て、別のトランザクションで動く）。 */
+    @Bean
+    RoutingCaseOpeningEventHandler routingCaseOpeningEventHandler(
+            RoutingCaseRepository repository,
+            RoutingCaseNumberIssuer numberIssuer,
+            QuotationRouteConditions routeConditions) {
+        return new RoutingCaseOpeningEventHandler(repository, numberIssuer, routeConditions);
+    }
+
+    /** 見積りの公開 API（経路の割当て）を呼ぶ腐敗防止層（ADR-014。Bolt 20）。 */
+    @Bean
+    QuotationRouteAssignments quotationRouteAssignments(RouteAssignment routeAssignment) {
+        return new QuotationRouteAssignments(routeAssignment);
+    }
+
+    /** DE-05 を受けて見積りに経路版を割り当てる（Spring Modulith のイベントの記録を経て、別のトランザクションで動く。Bolt 20）。 */
+    @Bean
+    QuotationRouteAssignmentEventHandler quotationRouteAssignmentEventHandler(
+            RoutingCaseRepository repository,
+            QuotationRouteAssignments routeAssignments,
+            QuotationRouteRedesigns routeRedesigns) {
+        return new QuotationRouteAssignmentEventHandler(repository, routeAssignments, routeRedesigns);
+    }
+
+    /** 見積りの公開 API（再設計要の伝達）を呼ぶ腐敗防止層（ADR-014。Bolt 37e2）。 */
+    @Bean
+    QuotationRouteRedesigns quotationRouteRedesigns(RouteRedesignNotification notification) {
+        return new QuotationRouteRedesigns(notification);
+    }
+
+    /** DE-06 を受けて見積りに再設計要の印を付ける（別のトランザクションで動く。Bolt 37e2）。 */
+    @Bean
+    QuotationRouteRedesignEventHandler quotationRouteRedesignEventHandler(QuotationRouteRedesigns routeRedesigns) {
+        return new QuotationRouteRedesignEventHandler(routeRedesigns);
+    }
+
+    /**
+     * 情報鮮度の判定（US-06 AC4、D-89。Bolt 37b2）。許容時間は追跡・データ責任者が差し替える値なので設定から受ける
+     * （既定は application.properties の 24 時間。設定がなければ起動で落ち、正でなければ規則が拒む）。設定のクラスは作らない
+     * （このパッケージには Configuration のクラスだけを置く。層の規則）。
+     */
+    @Bean
+    InfoFreshnessPolicy infoFreshnessPolicy(
+            @Value("${cargotracker.routing.info-freshness-tolerance}") Duration tolerance) {
+        return new InfoFreshnessPolicy(tolerance);
+    }
+
+    /** DE-12 を受けて経路設計の航海を書く（Spring Modulith のイベントの記録を経て、別のトランザクションで動く。Bolt 39e）。 */
+    @Bean
+    VoyageUpdateEventHandler voyageUpdateEventHandler(
+            VoyageRepository repository, ApplicationEventPublisher eventPublisher) {
+        return new VoyageUpdateEventHandler(repository, eventPublisher);
+    }
+
+    /** DE-30 を受けて確定した経路を評価する（航海の更新のコミットの後に、別のトランザクションで動く。Bolt 39f）。 */
+    @Bean
+    ConfirmedRouteEvaluationEventHandler confirmedRouteEvaluationEventHandler(
+            RoutingCaseRepository repository, RoutingCaseCommandService commandService) {
+        return new ConfirmedRouteEvaluationEventHandler(repository, commandService);
+    }
+
+    @Bean
+    RoutingCaseCommandService routingCaseCommandService(
+            QuotationRouteConditions routeConditions,
+            RoutingCaseRepository repository,
+            VoyageRepository voyageRepository,
+            ConnectionRuleRepository connectionRuleRepository,
+            ApplicationEventPublisher eventPublisher,
+            Clock clock,
+            InfoFreshnessPolicy infoFreshnessPolicy,
+            RoutingCaseScope routingCaseScope) {
+        return new RoutingCaseCommandService(
+                routeConditions,
+                repository,
+                voyageRepository,
+                connectionRuleRepository,
+                eventPublisher,
+                clock,
+                infoFreshnessPolicy,
+                routingCaseScope);
+    }
+
+    @Bean
+    RoutingCaseQueryService routingCaseQueryService(
+            RoutingCaseRepository repository,
+            RoutingCaseScope routingCaseScope,
+            VoyageRepository voyageRepository,
+            InfoFreshnessPolicy infoFreshnessPolicy) {
+        return new RoutingCaseQueryService(repository, routingCaseScope, voyageRepository, infoFreshnessPolicy);
+    }
+
+    /** 社内の経路設計案件の担当範囲の判定（照会とコマンドのサービスが使う。Bolt 38g）。 */
+    @Bean
+    RoutingCaseScope routingCaseScope(RoutingCaseRepository repository) {
+        return new RoutingCaseScope(repository);
+    }
+
+    /** 起動時に、今年と来年（日本時間）の案件番号の採番の行を用意する（業務番号と同じ。D-13）。 */
+    @Bean
+    ApplicationRunner routingCaseNumberYearPreparation(MyBatisRoutingCaseNumberIssuer issuer, Clock clock) {
+        return args -> {
+            int year = RoutingCaseNumber.yearOf(new UtcInstant(clock.instant()));
+            issuer.prepareYear(year);
+            issuer.prepareYear(year + 1);
+        };
+    }
+}

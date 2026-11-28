@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<!--/* A-01 ログイン（US-18 の password の段、UI 設計「A-01」）。どの失敗も同じ文言にし、どれが誤りかを示さない（AC2、SEC-11）。
+       ロック中も同じ文言で、一般の予告だけを足す（ロックの有無と解ける時刻は示さない。Bolt 32、ADR-011 の決定 9）。
+       「password を忘れた場合」は A-05 へのリンク（Bolt 33）。A-05 から戻ったとき（印 reset-requested）だけ依頼を受け付けた知らせを出す
+       （登録の有無を示さない。UI 設計「A-05」の場面の表。T-124） */-->
+<html lang="ja" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/public :: layout(~{::title}, ~{::main})}">
+<head>
+    <meta charset="UTF-8">
+    <title>ログイン - cargo-tracker</title>
+</head>
+<body>
+<main>
+    <h1>ログイン</h1>
+    <div th:if="${param.error}" class="alert alert-danger" role="alert" tabindex="-1" id="login-error">
+        メールアドレスまたは password が正しくありません。続けて [[${lockFailures}]] 回誤ると、[[${lockMinutes}]] 分ログインできなくなります。
+    </div>
+    <!--/* A-02 の誤り・再利用で password の要素を捨てて戻ったとき（UI 設計「A-02」、Bolt 31）。誤りと再利用を区別しない（AC2）。
+         ロック中も同じ文言で、ロックの有無と解ける時刻は示さない（Bolt 32） */-->
+    <div th:if="${param['totp-error']}" class="alert alert-danger" role="alert" tabindex="-1" id="totp-error">
+        認証コードまたは回復コードが正しくないか、すでに使われています。もう一度ログインして、認証アプリに表示された新しいコードか、まだ使っていない回復コードを入れてください。続けて [[${lockFailures}]] 回誤ると、[[${lockMinutes}]] 分ログインできなくなります。
+    </div>
+    <div th:if="${param.logout}" class="alert alert-success" role="status">ログアウトしました。</div>
+    <!--/* 再設定を終えた後（印 reset-completed。Bolt 33a、UI 設計「A-06」の完了の知らせの場面の表）。ロックの有無は示さず、どの利用者にも同じに出す */-->
+    <div th:if="${param['reset-completed']}" class="alert alert-success" role="status" id="reset-completed">
+        <p class="mb-1"><strong>password を変更しました。</strong></p>
+        <p class="mb-1">新しい password でログインしてください。このブラウザでログインしていた場合は、ログアウトしました。</p>
+        <p class="mb-0">新しい password を正しく入れてもログインできない場合は、続けて誤ったログインのために、しばらくログインできなくなっていることがあります。[[${lockMinutes}]] 分たってから、もう一度ログインしてください。</p>
+    </div>
+    <!--/* 招待のリンクで初回の password を設定した後（印 initial-password-set。Bolt 38b4、UI 設計「A-06」の完了の知らせ） */-->
+    <div th:if="${param['initial-password-set']}" class="alert alert-success" role="status" id="initial-password-set">
+        <p class="mb-1"><strong>password を設定しました。</strong></p>
+        <p class="mb-0">このブラウザでログインしていた場合は、ログアウトしました。設定した password でログインし、認証アプリを登録してください。</p>
+    </div>
+    <div th:if="${param['reset-requested']}" class="alert alert-info" role="status" id="reset-requested">
+        <p class="mb-1"><strong>password の再設定の依頼を受け付けました。</strong></p>
+        <p class="mb-1">入力したメールアドレスが登録されていて、ご利用いただける状態であれば、再設定のリンクをそのアドレスへ送ります。</p>
+        <ul class="mb-0">
+            <li>リンクの有効期限は 30 分で、1 回だけ使えます。</li>
+            <li>数分たっても届かない場合は、迷惑メールのフォルダを確かめてから、もう一度依頼してください（前にリンクを送ってから 1 分以内の依頼では送りません。新しいリンクを送ると、前のリンクは使えなくなります）。</li>
+            <li>それでも届かない場合は、荷主の方は担当営業に、社内の方はシステム管理者にお問い合わせください。</li>
+        </ul>
+    </div>
+    <p>メールアドレスと password を入力してください。</p>
+    <form th:action="@{/login}" method="post" class="app-login-form">
+        <div class="mb-3">
+            <label for="username" class="form-label">メールアドレス</label>
+            <input type="email" id="username" name="username" class="form-control" autocomplete="username" required
+                   th:value="${username}">
+        </div>
+        <div class="mb-3">
+            <label for="password" class="form-label">password</label>
+            <input type="password" id="password" name="password" class="form-control"
+                   autocomplete="current-password" required th:value="${password}">
+        </div>
+        <button type="submit" class="btn btn-primary">ログイン</button>
+    </form>
+    <p class="mt-3"><a th:href="@{/password-reset}">password を忘れた場合</a></p>
+    <!-- 開発環境（dev）だけ: 開発用の利用者を選んでそのままログインする（2026-10-06 の人の決定）。既定の設定では出ない -->
+    <section th:if="${devAccounts != null}" class="mt-4" aria-labelledby="dev-login-heading">
+        <h2 id="dev-login-heading" class="h5">開発用の利用者でログイン（開発環境だけ）</h2>
+        <form th:each="account : ${devAccounts}" th:action="@{/login}" method="post" class="d-inline-block me-2 mb-2">
+            <input type="hidden" name="username" th:value="${account.email()}">
+            <input type="hidden" name="password" th:value="${account.password()}">
+            <button type="submit" class="btn btn-outline-secondary"
+                    th:text="${account.role().displayName()} + 'でログイン（' + ${account.email()} + '）'">荷主担当者でログイン</button>
+        </form>
+    </section>
+    <p class="mt-4">ログインできない場合は、荷主の方は担当営業に、社内の方はシステム管理者にお問い合わせください。</p>
+</main>
+</body>
+</html>

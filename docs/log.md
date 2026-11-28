@@ -1,6 +1,4588 @@
 # Docs Update Log
 
+## 2026-11-28
+* **Verification**: [bolt_63_plan](/development/cargo-tracker/bolt_63_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [bolt_63_plan](/development/cargo-tracker/bolt_63_plan.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-sonnet-5-5）
+* **Creation**: [bolt_63_plan](/development/cargo-tracker/bolt_63_plan.md) を作成（anthropic/claude-sonnet-5-5）
+* **Update**: [iteration_plan-W11](/development/cargo-tracker/iteration_plan-W11.md) を更新（anthropic/claude-sonnet-5-5）
+* **Verification**: [bolt_62_plan](/development/cargo-tracker/bolt_62_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [bolt_62_plan](/development/cargo-tracker/bolt_62_plan.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [用語集](/manual/用語集.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [付録B-トラブルシューティング](/manual/付録B-トラブルシューティング.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [08-経路設計](/manual/08-経路設計.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [07-本予約の確定と予約一覧](/manual/07-本予約の確定と予約一覧.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [06-受付一覧と審査と見積り](/manual/06-受付一覧と審査と見積り.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [03-見積依頼](/manual/03-見積依頼.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [bolt_62_plan](/development/cargo-tracker/bolt_62_plan.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [014-downstream-to-upstream-notification](/adr/cargo-tracker/014-downstream-to-upstream-notification.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [bolt_62_plan](/development/cargo-tracker/bolt_62_plan.md) を更新（anthropic/claude-sonnet-5-5）
+* **Verification**: [bolt_62_plan](/development/cargo-tracker/bolt_62_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [bolt_62_plan](/development/cargo-tracker/bolt_62_plan.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-sonnet-5-5）
+* **Creation**: [bolt_62_plan](/development/cargo-tracker/bolt_62_plan.md) を作成（anthropic/claude-sonnet-5-5）
+* **Verification**: [iteration_plan-W11](/development/cargo-tracker/iteration_plan-W11.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [iteration_plan-W11](/development/cargo-tracker/iteration_plan-W11.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [iteration_plan-W11](/development/cargo-tracker/iteration_plan-W11.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [iteration_plan-W11](/development/cargo-tracker/iteration_plan-W11.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [operation_tasks](/operation/cargo-tracker/operation_tasks.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [bolt_71_plan](/development/cargo-tracker/bolt_71_plan.md) を更新（anthropic/claude-sonnet-5-5）
+* **Verification**: [bolt_71_plan](/development/cargo-tracker/bolt_71_plan.md) を human:kakimomokuri が検証
+* **Update**: [bolt_71_plan](/development/cargo-tracker/bolt_71_plan.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [operation_tasks](/operation/cargo-tracker/operation_tasks.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [bolt_71_plan](/development/cargo-tracker/bolt_71_plan.md) を更新（anthropic/claude-sonnet-5-5）
+* **Verification**: [bolt_71_plan](/development/cargo-tracker/bolt_71_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [bolt_71_plan](/development/cargo-tracker/bolt_71_plan.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-sonnet-5-5）
+* **Creation**: [bolt_71_plan](/development/cargo-tracker/bolt_71_plan.md) を作成（anthropic/claude-sonnet-5-5）
+* **Verification**: [bolt_70_plan](/development/cargo-tracker/bolt_70_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_51-4_plan](/development/cargo-tracker/bolt_51-4_plan.md) を human:kakimomokuri が検証
+* **Update**: [bolt_70_plan](/development/cargo-tracker/bolt_70_plan.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [bolt_51-4_plan](/development/cargo-tracker/bolt_51-4_plan.md) を更新（anthropic/claude-sonnet-5-5）
+
+## 2026-11-27
+* **Update**: [operation_tasks](/operation/cargo-tracker/operation_tasks.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [tech_stack](/design/cargo-tracker/tech_stack.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-sonnet-5-5）
+* **Creation**: [bolt_70_plan](/development/cargo-tracker/bolt_70_plan.md) を作成（anthropic/claude-sonnet-5-5）
+* **Creation**: [bolt_51-4_plan](/development/cargo-tracker/bolt_51-4_plan.md) を作成（anthropic/claude-sonnet-5-5）
+* **Verification**: [bolt_52-2_plan](/development/cargo-tracker/bolt_52-2_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_61_plan](/development/cargo-tracker/bolt_61_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_58_plan](/development/cargo-tracker/bolt_58_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_59_plan](/development/cargo-tracker/bolt_59_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_57-2_plan](/development/cargo-tracker/bolt_57-2_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_57_plan](/development/cargo-tracker/bolt_57_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_56-1_plan](/development/cargo-tracker/bolt_56-1_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [iteration_plan-W10-1](/development/cargo-tracker/iteration_plan-W10-1.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [bolt_56-1_plan](/development/cargo-tracker/bolt_56-1_plan.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [operation](/design/cargo-tracker/operation.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [023-operations-notification-and-home](/adr/cargo-tracker/023-operations-notification-and-home.md) を更新（anthropic/claude-sonnet-5-5）
+* **Verification**: [iteration_plan-W10-1](/development/cargo-tracker/iteration_plan-W10-1.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [iteration_plan-W11](/development/cargo-tracker/iteration_plan-W11.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [iteration_plan-W10-1](/development/cargo-tracker/iteration_plan-W10-1.md) を更新（anthropic/claude-sonnet-5-5）
+* **Creation**: [iteration_plan-W10-1](/development/cargo-tracker/iteration_plan-W10-1.md) を作成（anthropic/claude-sonnet-5-5）
+* **Verification**: W9 の Bolt 41〜48-1 の計画と終了報告（38 文書）を human:kakimomokuri が検証
+* **Verification**: [iteration_report-W9](/development/cargo-tracker/iteration_report-W9.md) を human:kakimomokuri が検証
+* **Update**: [iteration_plan-W10](/development/cargo-tracker/iteration_plan-W10.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [iteration_report-W9](/development/cargo-tracker/iteration_report-W9.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [release_report-1_0](/development/cargo-tracker/release_report-1_0.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [iteration_report-W10](/development/cargo-tracker/iteration_report-W10.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-sonnet-5-5）
+
+## 2026-11-16
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [iteration_plan-W11](/development/cargo-tracker/iteration_plan-W11.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-sonnet-5-5）
+* **Verification**: [release_report-1_0](/development/cargo-tracker/release_report-1_0.md) を human:kakimomokuri が検証
+* **Update**: [release_report-1_0](/development/cargo-tracker/release_report-1_0.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [release_report-1_0](/development/cargo-tracker/release_report-1_0.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [023-operations-notification-and-home](/adr/cargo-tracker/023-operations-notification-and-home.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [022-required-document-virus-scan](/adr/cargo-tracker/022-required-document-virus-scan.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [iteration_report-W10](/development/cargo-tracker/iteration_report-W10.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [operation](/design/cargo-tracker/operation.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [iteration_report-W10](/development/cargo-tracker/iteration_report-W10.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [12-外部データ](/manual/12-外部データ.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [iteration_report-W10](/development/cargo-tracker/iteration_report-W10.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [operation_tasks](/operation/cargo-tracker/operation_tasks.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [iteration_report-W10](/development/cargo-tracker/iteration_report-W10.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [operation_tasks](/operation/cargo-tracker/operation_tasks.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [iteration_report-W10](/development/cargo-tracker/iteration_report-W10.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [bolt_53-1_plan](/development/cargo-tracker/bolt_53-1_plan.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [operation_tasks](/operation/cargo-tracker/operation_tasks.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [12-外部データ](/manual/12-外部データ.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [iteration_report-W10](/development/cargo-tracker/iteration_report-W10.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [operation_tasks](/operation/cargo-tracker/operation_tasks.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [12-外部データ](/manual/12-外部データ.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [iteration_report-W10](/development/cargo-tracker/iteration_report-W10.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [operation_tasks](/operation/cargo-tracker/operation_tasks.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [iteration_report-W10](/development/cargo-tracker/iteration_report-W10.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [w10_review_20261116](/review/cargo-tracker/w10_review_20261116.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [iteration_report-W10](/development/cargo-tracker/iteration_report-W10.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [operation_tasks](/operation/cargo-tracker/operation_tasks.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [iteration_report-W10](/development/cargo-tracker/iteration_report-W10.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [iteration_report-W10](/development/cargo-tracker/iteration_report-W10.md) を更新（anthropic/claude-sonnet-5-5）
+* **Verification**: [bolt_53-1_plan](/development/cargo-tracker/bolt_53-1_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_54_plan](/development/cargo-tracker/bolt_54_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_49_report](/development/cargo-tracker/bolt_49_report.md) を human:kakimomokuri が検証
+* **Verification**: [iteration_report-W10](/development/cargo-tracker/iteration_report-W10.md) を human:kakimomokuri が検証
+* **Update**: [w10_review_20261116](/review/cargo-tracker/w10_review_20261116.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [operation_tasks](/operation/cargo-tracker/operation_tasks.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [iteration_report-W10](/development/cargo-tracker/iteration_report-W10.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [bolt_54_plan](/development/cargo-tracker/bolt_54_plan.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [bolt_49_report](/development/cargo-tracker/bolt_49_report.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [021-shipper-notification-retry-and-subscription-home](/adr/cargo-tracker/021-shipper-notification-retry-and-subscription-home.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [iteration_report-W10](/development/cargo-tracker/iteration_report-W10.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [operation_tasks](/operation/cargo-tracker/operation_tasks.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [bolt_54_plan](/development/cargo-tracker/bolt_54_plan.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [bolt_53-1_plan](/development/cargo-tracker/bolt_53-1_plan.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [bolt_54_plan](/development/cargo-tracker/bolt_54_plan.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [021-shipper-notification-retry-and-subscription-home](/adr/cargo-tracker/021-shipper-notification-retry-and-subscription-home.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [iteration_plan-W10](/development/cargo-tracker/iteration_plan-W10.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [bolt_53_plan](/development/cargo-tracker/bolt_53_plan.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [bolt_49_report](/development/cargo-tracker/bolt_49_report.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [bolt_54_plan](/development/cargo-tracker/bolt_54_plan.md) を更新（anthropic/claude-sonnet-5-5）
+* **Verification**: [bolt_53_plan](/development/cargo-tracker/bolt_53_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_52_plan](/development/cargo-tracker/bolt_52_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_51_plan](/development/cargo-tracker/bolt_51_plan.md) を human:kakimomokuri が検証
+* **Update**: [bolt_53_plan](/development/cargo-tracker/bolt_53_plan.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [bolt_52_plan](/development/cargo-tracker/bolt_52_plan.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [bolt_51_plan](/development/cargo-tracker/bolt_51_plan.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [bolt_52_plan](/development/cargo-tracker/bolt_52_plan.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [bolt_53_plan](/development/cargo-tracker/bolt_53_plan.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [bolt_49_report](/development/cargo-tracker/bolt_49_report.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [bolt_53_plan](/development/cargo-tracker/bolt_53_plan.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [bolt_52_plan](/development/cargo-tracker/bolt_52_plan.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [bolt_51_report](/development/cargo-tracker/bolt_51_report.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [bolt_51_plan](/development/cargo-tracker/bolt_51_plan.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [021-shipper-notification-retry-and-subscription-home](/adr/cargo-tracker/021-shipper-notification-retry-and-subscription-home.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [bolt_49-1_plan](/development/cargo-tracker/bolt_49-1_plan.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [020-aws-account-region-environments](/adr/cargo-tracker/020-aws-account-region-environments.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [bolt_49_report](/development/cargo-tracker/bolt_49_report.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [bolt_49_plan](/development/cargo-tracker/bolt_49_plan.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [development_strategy](/development/cargo-tracker/development_strategy.md) を更新（anthropic/claude-sonnet-5-5）
+* **Verification**: [bolt_49_plan](/development/cargo-tracker/bolt_49_plan.md) を human:kakimomokuri が検証
+* **Update**: [bolt_49_plan](/development/cargo-tracker/bolt_49_plan.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [bolt_49_plan](/development/cargo-tracker/bolt_49_plan.md) を更新（anthropic/claude-sonnet-5-5）
+* **Verification**: [iteration_plan-W10](/development/cargo-tracker/iteration_plan-W10.md) を human:kakimomokuri が検証
+* **Update**: [iteration_plan-W10](/development/cargo-tracker/iteration_plan-W10.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-sonnet-5-5）
+
+## 2026-11-15
+* **Update**: [bolt_48-1_report](/development/cargo-tracker/bolt_48-1_report.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [bolt_48-1_plan](/development/cargo-tracker/bolt_48-1_plan.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [w9_review_20261115](/review/cargo-tracker/w9_review_20261115.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [06-受付一覧と審査と見積り](/manual/06-受付一覧と審査と見積り.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [04-見積りへの回答と承認](/manual/04-見積りへの回答と承認.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [iteration_report-W9](/development/cargo-tracker/iteration_report-W9.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [bolt_48-1_report](/development/cargo-tracker/bolt_48-1_report.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [bolt_48-1_plan](/development/cargo-tracker/bolt_48-1_plan.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [w9_review_20261115](/review/cargo-tracker/w9_review_20261115.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [06-受付一覧と審査と見積り](/manual/06-受付一覧と審査と見積り.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [04-見積りへの回答と承認](/manual/04-見積りへの回答と承認.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [iteration_report-W9](/development/cargo-tracker/iteration_report-W9.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-sonnet-5-5）
+* **Creation**: [bolt_48-1_plan](/development/cargo-tracker/bolt_48-1_plan.md)・[bolt_48-1_report](/development/cargo-tracker/bolt_48-1_report.md) を作成（anthropic/claude-sonnet-5-5。W9。辞退した見積りの輸送要求を辞退で終了にする。週全体レビューの高 H-2。人が選んだ）。domain_model・ui_design・user_story・test_strategy・マニュアル 4・6 章・台帳 D-168・D-173、W9 の完了報告書・レビューを更新
+* **Update**: [iteration_report-W9](/development/cargo-tracker/iteration_report-W9.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [bolt_48_report](/development/cargo-tracker/bolt_48_report.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [bolt_48_plan](/development/cargo-tracker/bolt_48_plan.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [iteration_plan-W9](/development/cargo-tracker/iteration_plan-W9.md) を更新（anthropic/claude-sonnet-5-5）
+* **Creation**: [iteration_report-W9](/development/cargo-tracker/iteration_report-W9.md)・[bolt_48_plan](/development/cargo-tracker/bolt_48_plan.md)・[bolt_48_report](/development/cargo-tracker/bolt_48_report.md)・[w9_review_20261115](/review/cargo-tracker/w9_review_20261115.md) を作成（anthropic/claude-sonnet-5-5。W9 の締め。週全体の 5 視点のレビュー、品質ゲートの流し直し、完了報告書）。release_plan の進捗表・W9 の計画の状態、マニュアル 4・6・7 章と用語集、データモデルを更新
+* **Creation**: [bolt_44_plan](/development/cargo-tracker/bolt_44_plan.md)・[bolt_44_report](/development/cargo-tracker/bolt_44_report.md)・[bolt_44-1_plan](/development/cargo-tracker/bolt_44-1_plan.md)・[bolt_44-1_report](/development/cargo-tracker/bolt_44-1_report.md)・[bolt_44-2_plan](/development/cargo-tracker/bolt_44-2_plan.md)・[bolt_44-2_report](/development/cargo-tracker/bolt_44-2_report.md) を作成（anthropic/claude-sonnet-5-5。W9。パイロットの KPI。US-21 を締める）。user_story の US-21、domain_model の IR-INV-01・KPI-INV-02・KPI-INV-04、data_model の `kpi_baseline`、ui_design の S-22、test_strategy、マニュアル [10 章](/manual/10-KPI計測記録.md)・[0 章](/manual/00-はじめに.md)・[2 章](/manual/02-ログインと共通の画面.md)、台帳 D-170〜D-172 を更新
+* **Creation**: [bolt_46_plan](/development/cargo-tracker/bolt_46_plan.md)・[bolt_46_report](/development/cargo-tracker/bolt_46_report.md)・[bolt_46-1_plan](/development/cargo-tracker/bolt_46-1_plan.md)・[bolt_46-1_report](/development/cargo-tracker/bolt_46-1_report.md) を作成（anthropic/claude-sonnet-5-5。W9。荷主の見積りの辞退と条件の相談。US-24 を締める）。user_story の US-24、ADR-018 の改訂の経緯、ui_design の C-05、domain_model の DE-33、data_model の `decline_reason`、test_strategy、マニュアル [4 章](/manual/04-見積りへの回答と承認.md)、台帳 D-86・D-168・D-169 を更新
+
+## 2026-11-14
+* **Creation**: [bolt_47_plan](/development/cargo-tracker/bolt_47_plan.md)・[bolt_47_report](/development/cargo-tracker/bolt_47_report.md) を作成（anthropic/claude-sonnet-5-5。W9。追跡の照会の確認中・鮮度超過のお知らせ。US-09 を締める）。マニュアル [5 章](/manual/05-予約一覧と追跡の照会.md)、ui_design の C-10、test_strategy の US-09 AC2・AC3、台帳 D-167 を更新
+* **Creation**: [bolt_45-1_plan](/development/cargo-tracker/bolt_45-1_plan.md)・[bolt_45-1_report](/development/cargo-tracker/bolt_45-1_report.md) を作成（anthropic/claude-sonnet-5-5。W9。過去の見積依頼の複製。US-01 を締める）。マニュアル [3 章](/manual/03-見積依頼.md)、ui_design の C-03、test_strategy の US-01 AC5 を更新
+* **Creation**: [bolt_45_plan](/development/cargo-tracker/bolt_45_plan.md)・[bolt_45_report](/development/cargo-tracker/bolt_45_report.md) を作成（anthropic/claude-sonnet-5-5。W9。US-01 AC3 の受入条件の照合。実装の変更なし）
+* **Creation**: [bolt_43-3_plan](/development/cargo-tracker/bolt_43-3_plan.md)・[bolt_43-3_report](/development/cargo-tracker/bolt_43-3_report.md) を作成（anthropic/claude-sonnet-5-5。W9。荷主の通知一覧 C-16。US-22 を締める）。マニュアル [15 章 通知](/manual/15-通知.md) を新規に追加、ui_design の C-16、test_strategy の US-22 を更新
+* **Creation**: [bolt_43-2_plan](/development/cargo-tracker/bolt_43-2_plan.md)・[bolt_43-2_report](/development/cargo-tracker/bolt_43-2_report.md) を作成（anthropic/claude-sonnet-5-5。W9。見積りの有効期限の 24 時間前の通知。アプリで最初の定期実行）
+* **Creation**: [bolt_43-1_plan](/development/cargo-tracker/bolt_43-1_plan.md)・[bolt_43-1_report](/development/cargo-tracker/bolt_43-1_report.md) を作成（anthropic/claude-sonnet-5-5。W9。4 つの契機の通知。DE-03・DE-21・DE-18 に荷主企業の ID を追加、tracking のイベントを公表、identity の依存を追加）
+* **Creation**: [bolt_43_plan](/development/cargo-tracker/bolt_43_plan.md)・[bolt_43_report](/development/cargo-tracker/bolt_43_report.md) を作成（anthropic/claude-sonnet-5-5。W9。荷主への業務の通知の基盤。宛先の解決は identity が担う方式を人が決めた）。ADR-017 に補足、台帳 D-166（仮）を追加
+* **Creation**: [bolt_42-3_plan](/development/cargo-tracker/bolt_42-3_plan.md)・[bolt_42-3_report](/development/cargo-tracker/bolt_42-3_report.md) を作成（anthropic/claude-sonnet-5-5。W9。荷主の問い合わせの詳細と再開の依頼 C-15。US-23 を締める）。マニュアル [14 章](/manual/14-問い合わせの追跡.md) に 14.2 とキャプチャ 3 枚、台帳 D-165（仮。【前の決定の変更】）、ui_design の C-15、test_strategy の US-23 を更新
+* **Creation**: [bolt_42-2_plan](/development/cargo-tracker/bolt_42-2_plan.md)・[bolt_42-2_report](/development/cargo-tracker/bolt_42-2_report.md) を作成（anthropic/claude-sonnet-5-5。W9。荷主の問い合わせ一覧 C-14）。マニュアル [14 章 問い合わせの追跡](/manual/14-問い合わせの追跡.md) を新規に追加、台帳 D-164（仮）、ui_design の C-14 を更新
+* **Creation**: [bolt_42-1_plan](/development/cargo-tracker/bolt_42-1_plan.md)・[bolt_42-1_report](/development/cargo-tracker/bolt_42-1_report.md) を作成（anthropic/claude-sonnet-5-5。W9。顧客 Web の追跡照会の自動記録と case_number の索引。スキーマは人が事前に承認）。data_model・domain_model（IR-INV-01）を更新
+* **Creation**: [bolt_42_plan](/development/cargo-tracker/bolt_42_plan.md)・[bolt_42_report](/development/cargo-tracker/bolt_42_report.md) を作成（anthropic/claude-sonnet-5-5。W9。荷主向けの問い合わせの認可。他社の閲覧の試行の記録）
+* **Creation**: [bolt_41_plan](/development/cargo-tracker/bolt_41_plan.md)・[bolt_41_report](/development/cargo-tracker/bolt_41_report.md) を作成（anthropic/claude-sonnet-5-5。W9 の最初の Bolt。有人案件の操作の拒否を専用の例外で区別する）
+* **Update**: iteration_plan-W9 を人（human:kakimomokuri）が承認した（status を stable に）
+* **Creation**: [iteration_plan-W9](/development/cargo-tracker/iteration_plan-W9.md) を作成（anthropic/claude-sonnet-5-5。草稿・承認待ち。Bolt の番号は人の指示で単位ごとに整数、枝番、枝番に枝番）
+* **Update**: bolt_40-18 の終了報告を人（human:kakimomokuri）が承認した
+* **Creation**: [bolt_40-18_plan](/development/cargo-tracker/bolt_40-18_plan.md)・[bolt_40-18_report](/development/cargo-tracker/bolt_40-18_report.md) を作成（anthropic/claude-sonnet-5-5。W8 週全体レビュー D の残り。詳細の認可の統一、システム起票の分離。人の指示を受けずに着手したため承認を待つ）
+* **Creation**: [iteration_report-W8](/development/cargo-tracker/iteration_report-W8.md)・[w8_review_20261114](/review/cargo-tracker/w8_review_20261114.md) を作成（anthropic/claude-sonnet-5-5。W8 の完了報告書と週全体レビュー。推奨のとおり承認として記録（human:kakimomokuri）。Issue #20・#21 はクローズ済み。確認の場の開催は未）
+* **Update**: iteration_report-W8 を人（human:kakimomokuri）が承認した（2026-11-14）。確認の場の開催は未回答のまま、D の残りは W9
+* **Creation**: [bolt_40-3_plan](/development/cargo-tracker/bolt_40-3_plan.md)・[bolt_40-3_report](/development/cargo-tracker/bolt_40-3_report.md)・[confirmation_requests-W8](/development/cargo-tracker/confirmation_requests-W8.md) を作成（anthropic/claude-sonnet-5-5。推奨のとおり承認として記録。human:kakimomokuri。確認の場は未開催で回答なし。台帳は仮のまま）
+* **Update**: bolt_40-16 の終了報告を推奨のとおり承認として記録した（human:kakimomokuri）
+* **Creation**: [bolt_40-16_plan](/development/cargo-tracker/bolt_40-16_plan.md)・[bolt_40-16_report](/development/cargo-tracker/bolt_40-16_report.md) を作成（anthropic/claude-sonnet-5-5。推奨のとおり承認として記録。human:kakimomokuri）。test_strategy の照合の表に US-11・US-20 を追加、マニュアル 13 章にキャプチャ 5 枚、動画 2 本を追加
+* **Update**: bolt_40-15 の終了報告を推奨のとおり承認として記録した（human:kakimomokuri）
+* **Creation**: [bolt_40-15_plan](/development/cargo-tracker/bolt_40-15_plan.md)・[bolt_40-15_report](/development/cargo-tracker/bolt_40-15_report.md) を作成（anthropic/claude-sonnet-5-5。推奨のとおり承認として記録。human:kakimomokuri）。台帳 D-162、表 inquiry_record、マニュアル 13.3 を追加
+* **Update**: bolt_40-14 の終了報告を推奨のとおり承認として記録した（human:kakimomokuri）
+* **Creation**: [bolt_40-14_plan](/development/cargo-tracker/bolt_40-14_plan.md)・[bolt_40-14_report](/development/cargo-tracker/bolt_40-14_report.md) を作成（anthropic/claude-sonnet-5-5。推奨のとおり承認として記録。human:kakimomokuri）。台帳 D-161、DE-32 を追加
+* **Update**: bolt_40-13 の終了報告を推奨のとおり承認として記録した（human:kakimomokuri）
+* **Creation**: [bolt_40-13_plan](/development/cargo-tracker/bolt_40-13_plan.md)・[bolt_40-13_report](/development/cargo-tracker/bolt_40-13_report.md) を作成（anthropic/claude-sonnet-5-5。推奨のとおり承認として記録。human:kakimomokuri）。台帳 D-160 を追加
+* **Update**: bolt_40-12 の終了報告を推奨のとおり承認として記録した（human:kakimomokuri）
+
+## 2026-11-13
+* **Creation**: [bolt_40-12_plan](/development/cargo-tracker/bolt_40-12_plan.md)・[bolt_40-12_report](/development/cargo-tracker/bolt_40-12_report.md) を作成（anthropic/claude-sonnet-5-5。推奨のとおり承認として記録。human:kakimomokuri）。マニュアル 13 章に操作を追記
+* **Update**: bolt_40-11 の終了報告を推奨のとおり承認として記録した（human:kakimomokuri）
+* **Creation**: [bolt_40-11_plan](/development/cargo-tracker/bolt_40-11_plan.md)・[bolt_40-11_report](/development/cargo-tracker/bolt_40-11_report.md) を作成（anthropic/claude-sonnet-5-5。推奨のとおり承認として記録。human:kakimomokuri）。マニュアル [13 章 有人案件](/manual/13-有人案件.md) を新規に追加
+* **Creation**: [bolt_40-10_plan](/development/cargo-tracker/bolt_40-10_plan.md)・[bolt_40-10_report](/development/cargo-tracker/bolt_40-10_report.md) を作成（anthropic/claude-sonnet-5-5。推奨のとおり承認として記録。human:kakimomokuri）
+* **Creation**: [bolt_40-9_plan](/development/cargo-tracker/bolt_40-9_plan.md)・[bolt_40-9_report](/development/cargo-tracker/bolt_40-9_report.md) を作成（anthropic/claude-sonnet-5-5。推奨のとおり承認として記録。human:kakimomokuri）
+* **Creation**: [bolt_40-8_plan](/development/cargo-tracker/bolt_40-8_plan.md)・[bolt_40-8_report](/development/cargo-tracker/bolt_40-8_report.md) を作成（anthropic/claude-sonnet-5-5。推奨のとおり承認として記録。human:kakimomokuri）
+* **Update**: bolt_40-7 の終了報告を推奨のとおり承認として記録した（human:kakimomokuri）
+* **Creation**: [bolt_40-7_plan](/development/cargo-tracker/bolt_40-7_plan.md)・[bolt_40-7_report](/development/cargo-tracker/bolt_40-7_report.md) を作成（anthropic/claude-sonnet-5-5。計画は認可の内容を人に示して承認、報告は承認待ち）
+* **Update**: bolt_40-6 の終了報告を推奨のとおり承認として記録した（human:kakimomokuri）
+* **Creation**: [bolt_40-6_plan](/development/cargo-tracker/bolt_40-6_plan.md)・[bolt_40-6_report](/development/cargo-tracker/bolt_40-6_report.md) を作成（anthropic/claude-sonnet-5-5。計画はスキーマの内容を人に示して承認、報告は承認待ち）
+* **Update**: bolt_40・40-1・40-2・40-4・40-5 の終了報告を推奨のとおり承認として記録した（human:kakimomokuri）
+* **Creation**: [bolt_40-5_plan](/development/cargo-tracker/bolt_40-5_plan.md)・[bolt_40-5_report](/development/cargo-tracker/bolt_40-5_report.md) を作成（anthropic/claude-sonnet-5-5。計画は推奨のとおり承認として記録、報告は承認待ち）
+* **Creation**: [bolt_40-4_plan](/development/cargo-tracker/bolt_40-4_plan.md)・[bolt_40-4_report](/development/cargo-tracker/bolt_40-4_report.md) を作成（anthropic/claude-sonnet-5-5。計画は推奨のとおり承認として記録、報告は承認待ち）
+* **Creation**: [bolt_40-2_plan](/development/cargo-tracker/bolt_40-2_plan.md)・[bolt_40-2_report](/development/cargo-tracker/bolt_40-2_report.md) を作成（anthropic/claude-sonnet-5-5。計画は推奨のとおり承認として記録、報告は承認待ち）
+* **Creation**: [bolt_40-1_report](/development/cargo-tracker/bolt_40-1_report.md) を作成（anthropic/claude-sonnet-5-5。承認待ち）
+* **Creation**: [bolt_40-1_plan](/development/cargo-tracker/bolt_40-1_plan.md) を作成（anthropic/claude-sonnet-5-5。推奨のとおり承認として記録。human:kakimomokuri）
+* **Creation**: [bolt_40_report](/development/cargo-tracker/bolt_40_report.md) を作成（anthropic/claude-sonnet-5-5。承認待ち）
+* **Update**: [iteration_plan-W8](/development/cargo-tracker/iteration_plan-W8.md) を更新（xp-architect）
+* **Update**: [bolt_40_plan](/development/cargo-tracker/bolt_40_plan.md) を更新（xp-architect）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（xp-architect）
+* **Creation**: [iteration_plan-W8](/development/cargo-tracker/iteration_plan-W8.md)・[bolt_40_plan](/development/cargo-tracker/bolt_40_plan.md) を作成（anthropic/claude-sonnet-5-5。W8 の開始準備。技術 Bolt にも分単位の見積りを付けた 17 本の計画と最初の Bolt の詳細計画。承認待ち）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md)・[index](/development/cargo-tracker/index.md)・mkdocs.yml を更新（anthropic/claude-sonnet-5-5。W8 の開始準備。W8 の行・進捗状況・AUD-UI-01 の行・Bolt 40 の行）
+* **Creation**: [iteration_report-W7](/development/cargo-tracker/iteration_report-W7.md) を作成（anthropic/claude-sonnet-5-5。W7 の締め。週全体のコードレビュー、品質ゲートの確認、PERF-06 の結果、ふりかえり、議題と推奨。承認待ち）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md)・[index](/development/cargo-tracker/index.md)・[development/index](/development/index.md)・mkdocs.yml を更新（anthropic/claude-sonnet-5-5。W7 の締め。進捗状況の W7 を 10/10 SP に、実績スケジュール、W7 の節の結果・ふりかえり・締めの見直し）
+* **Creation**: [bolt_39i_report](/development/cargo-tracker/bolt_39i_report.md) を作成（anthropic/claude-sonnet-5-5。承認待ち）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md)・[index](/development/cargo-tracker/index.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39i の終了報告。39i の行、確認ポイント 16・D-65 の済み、台帳 D-154・D-155、更新履歴）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md)・[data_model](/design/cargo-tracker/data_model.md)・[ui_design](/design/cargo-tracker/ui_design.md)・[test_strategy](/design/cargo-tracker/test_strategy.md)・[architecture_backend](/design/cargo-tracker/architecture_backend.md)・[architecture_infrastructure](/design/cargo-tracker/architecture_infrastructure.md)・[user_story](/requirements/cargo-tracker/user_story.md)・[system_usecase](/requirements/cargo-tracker/system_usecase.md)・[08-経路設計](/manual/08-経路設計.md)・[用語集](/manual/用語集.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39i の実装に合わせた）
+* **Update**: [bolt_39i_plan](/development/cargo-tracker/bolt_39i_plan.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39i の開始準備。39g〜39h4 の完了の後に引き直し、2 つの整合性検証の指摘を反映。承認待ち）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md)・[index](/development/cargo-tracker/index.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39i の開始準備。39i の行、台帳 D-154・D-155（仮。承認待ち））
+* **Creation**: [bolt_39h4_report](/development/cargo-tracker/bolt_39h4_report.md) を作成（anthropic/claude-sonnet-5-5。承認待ち）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md)・[index](/development/cargo-tracker/index.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39h4 の終了報告）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md)・[user_story](/requirements/cargo-tracker/user_story.md)・[system_usecase](/requirements/cargo-tracker/system_usecase.md)・[development_strategy](/development/cargo-tracker/development_strategy.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39h4 のステップ 1。Release 1.0 の照合の表、G-06b・G-06c）
+* **Creation**: [bolt_39h4_plan](/development/cargo-tracker/bolt_39h4_plan.md) を作成（anthropic/claude-sonnet-5-5。承認待ち）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39h4 の開始準備。39h4 の行、台帳 D-153（仮。承認待ち））
+* **Update**: [index](/development/cargo-tracker/index.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39h4 の開始準備）
+* **Creation**: [bolt_39h3_report](/development/cargo-tracker/bolt_39h3_report.md) を作成（anthropic/claude-sonnet-5-5。承認待ち）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39h3 の終了報告）
+* **Update**: [index](/development/cargo-tracker/index.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39h3 の終了報告。39h2 を完了に）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md)・[ui_design](/design/cargo-tracker/ui_design.md)・[test_strategy](/design/cargo-tracker/test_strategy.md)・[ADR-004](/adr/cargo-tracker/004-external-data-ingestion.md)・[system_usecase](/requirements/cargo-tracker/system_usecase.md)・[user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39h3 のステップ 1）
+* **Update**: [12-外部データ](/manual/12-外部データ.md)・[付録B-トラブルシューティング](/manual/付録B-トラブルシューティング.md)・[用語集](/manual/用語集.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39h3）
+* **Creation**: [bolt_39h3_plan](/development/cargo-tracker/bolt_39h3_plan.md) を作成（anthropic/claude-sonnet-5-5。承認待ち）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39h3 の開始準備。39h3 の行、台帳 D-150〜D-152（仮。承認待ち）と D-141・D-142・D-146〜D-148 の注）
+* **Update**: [index](/development/cargo-tracker/index.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39h3 の開始準備）
+
+## 2026-11-12
+* **Update**: [bolt_39h4_plan](/development/cargo-tracker/bolt_39h4_plan.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [bolt_39h4_plan](/development/cargo-tracker/bolt_39h4_plan.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-sonnet-5-5）
+* **Creation**: [bolt_39h2_report](/development/cargo-tracker/bolt_39h2_report.md) を作成（anthropic/claude-sonnet-5-5。承認待ち）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39h2 の終了報告）
+* **Update**: [index](/development/cargo-tracker/index.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39h2 の終了報告）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md)・[data_model](/design/cargo-tracker/data_model.md)・[ui_design](/design/cargo-tracker/ui_design.md)・[test_strategy](/design/cargo-tracker/test_strategy.md)・[ADR-004](/adr/cargo-tracker/004-external-data-ingestion.md) ほかを更新（anthropic/claude-sonnet-5-5。Bolt 39h2 のステップ 1）
+* **Update**: [12-外部データ](/manual/12-外部データ.md)・[付録B-トラブルシューティング](/manual/付録B-トラブルシューティング.md)・[用語集](/manual/用語集.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39h2）
+* **Verification**: [bolt_39h2_plan](/development/cargo-tracker/bolt_39h2_plan.md) を human:kakimomokuri が検証
+* **Creation**: [bolt_39h2_plan](/development/cargo-tracker/bolt_39h2_plan.md) を作成（anthropic/claude-opus-5-5。承認待ち）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5。Bolt 39h2 の開始準備。39h2 の行、台帳 D-147〜D-149（仮。承認待ち）と D-144・D-146 の注）
+* **Update**: [index](/development/cargo-tracker/index.md) を更新（anthropic/claude-opus-5-5。Bolt 39h2 の開始準備）
+* **Verification**: [bolt_39h_report](/development/cargo-tracker/bolt_39h_report.md) を human:kakimomokuri が検証
+* **Creation**: [bolt_39h_report](/development/cargo-tracker/bolt_39h_report.md) を作成（anthropic/claude-opus-5-5。承認待ち）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5。Bolt 39h の終了報告）
+* **Update**: [index](/development/cargo-tracker/index.md) を更新（anthropic/claude-opus-5-5。Bolt 39h の終了報告）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md)・[data_model](/design/cargo-tracker/data_model.md)・[ui_design](/design/cargo-tracker/ui_design.md)・[test_strategy](/design/cargo-tracker/test_strategy.md)・[ADR-004](/adr/cargo-tracker/004-external-data-ingestion.md) ほかを更新（anthropic/claude-opus-5-5。Bolt 39h のステップ 1・11）
+* **Update**: [12-外部データ](/manual/12-外部データ.md)・[付録B-トラブルシューティング](/manual/付録B-トラブルシューティング.md)・[用語集](/manual/用語集.md) を更新（anthropic/claude-opus-5-5。Bolt 39h）
+* **Verification**: [bolt_39h_plan](/development/cargo-tracker/bolt_39h_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5。Bolt 39h の開始準備。39h の行、39h2・39h3・39h4 の行（分ける提案）、順序、チェックの行、台帳 D-141〜D-146（仮。承認待ち）と D-100・D-105・D-114・D-115・D-120 の注）
+* **Update**: [index](/development/cargo-tracker/index.md) を更新（anthropic/claude-opus-5-5。Bolt 39h の開始準備）
+* **Creation**: [bolt_39h_plan](/development/cargo-tracker/bolt_39h_plan.md) を作成（anthropic/claude-opus-5-5。承認待ち）
+* **Verification**: [bolt_39g4c_report](/development/cargo-tracker/bolt_39g4c_report.md) を human:kakimomokuri が検証
+* **Creation**: [bolt_39g4c_report](/development/cargo-tracker/bolt_39g4c_report.md) を作成（anthropic/claude-opus-5-5。承認待ち）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5。Bolt 39g4c の終了報告）
+* **Update**: [index](/development/cargo-tracker/index.md) を更新（anthropic/claude-opus-5-5。Bolt 39g4c の終了報告）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md)・[data_model](/design/cargo-tracker/data_model.md)・[ui_design](/design/cargo-tracker/ui_design.md)・[test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5。Bolt 39g4c のステップ 1）
+* **Update**: [09-追跡管理](/manual/09-追跡管理.md)・[用語集](/manual/用語集.md) を更新（anthropic/claude-opus-5-5。Bolt 39g4c）
+* **Verification**: [bolt_39g4c_plan](/development/cargo-tracker/bolt_39g4c_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5。Bolt 39g4c の開始準備。39g4c の行、台帳 D-140（仮）と D-139 の注、デモ項目の動画の Bolt）
+* **Update**: [index](/development/cargo-tracker/index.md) を更新（anthropic/claude-opus-5-5。Bolt 39g4c の開始準備）
+* **Creation**: [bolt_39g4c_plan](/development/cargo-tracker/bolt_39g4c_plan.md) を作成（anthropic/claude-opus-5-5。承認待ち）
+* **Verification**: [bolt_39g4b_report](/development/cargo-tracker/bolt_39g4b_report.md) を human:kakimomokuri が検証
+* **Creation**: [bolt_39g4b_report](/development/cargo-tracker/bolt_39g4b_report.md) を作成（anthropic/claude-opus-5-5。承認待ち）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5。Bolt 39g4b の終了報告）
+* **Update**: [index](/development/cargo-tracker/index.md) を更新（anthropic/claude-opus-5-5。Bolt 39g4b の終了報告）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md)・[data_model](/design/cargo-tracker/data_model.md)・[ui_design](/design/cargo-tracker/ui_design.md)・[non_functional](/design/cargo-tracker/non_functional.md)・[test_strategy](/design/cargo-tracker/test_strategy.md)・[ADR-004](/adr/cargo-tracker/004-external-data-ingestion.md)・[development_strategy](/development/cargo-tracker/development_strategy.md) を更新（anthropic/claude-opus-5-5。Bolt 39g4b のステップ 1）
+* **Update**: [09-追跡管理](/manual/09-追跡管理.md)・[05-予約一覧と追跡の照会](/manual/05-予約一覧と追跡の照会.md)・[12-外部データ](/manual/12-外部データ.md)・[用語集](/manual/用語集.md) を更新（anthropic/claude-opus-5-5。Bolt 39g4b）
+* **Verification**: [bolt_39g4b_plan](/development/cargo-tracker/bolt_39g4b_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5。Bolt 39g4b の開始準備。39g4b・39g4c の行、順序、台帳 D-137〜D-139（仮）と D-132・D-136 の注）
+* **Update**: [index](/development/cargo-tracker/index.md) を更新（anthropic/claude-opus-5-5。Bolt 39g4b の開始準備）
+* **Creation**: [bolt_39g4b_plan](/development/cargo-tracker/bolt_39g4b_plan.md) を作成（anthropic/claude-opus-5-5。承認待ち）
+* **Verification**: [bolt_39g4_report](/development/cargo-tracker/bolt_39g4_report.md) を human:kakimomokuri が検証
+* **Creation**: [bolt_39g4_report](/development/cargo-tracker/bolt_39g4_report.md) を作成（anthropic/claude-sonnet-5-5。承認待ち）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39g4 のステップ 1 と終了報告）
+* **Update**: [index](/development/cargo-tracker/index.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39g4 の終了報告）
+* **Update**: [09-追跡管理](/manual/09-追跡管理.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39g4）
+* **Update**: [用語集](/manual/用語集.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39g4）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39g4 ステップ 1）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39g4 ステップ 1）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39g4 ステップ 1）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39g4 ステップ 1）
+* **Update**: [operation](/design/cargo-tracker/operation.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39g4 ステップ 1）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39g4 ステップ 1）
+* **Update**: [requirements_definition](/requirements/cargo-tracker/requirements_definition.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39g4 ステップ 1。状態モデルの注）
+* **Update**: [development_strategy](/development/cargo-tracker/development_strategy.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39g4 ステップ 1）
+* **Verification**: [bolt_39g4_plan](/development/cargo-tracker/bolt_39g4_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5。Bolt 39g4 の開始準備。39g4・39g4b の行、順序、台帳 D-133〜D-136（仮））
+* **Update**: [index](/development/cargo-tracker/index.md) を更新（anthropic/claude-opus-5-5。Bolt 39g4 の開始準備）
+* **Creation**: [bolt_39g4_plan](/development/cargo-tracker/bolt_39g4_plan.md) を作成（anthropic/claude-opus-5-5。承認待ち）
+* **Verification**: [bolt_39g3_report](/development/cargo-tracker/bolt_39g3_report.md) を human:kakimomokuri が検証
+* **Creation**: [bolt_39g3_report](/development/cargo-tracker/bolt_39g3_report.md) を作成（anthropic/claude-sonnet-5-5。承認待ち）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39g3 の終了報告）
+* **Update**: [05-予約一覧と追跡の照会](/manual/05-予約一覧と追跡の照会.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39g3）
+* **Update**: [09-追跡管理](/manual/09-追跡管理.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39g3）
+* **Update**: [用語集](/manual/用語集.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39g3）
+
+## 2026-11-11
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39g3 ステップ 1）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39g3 ステップ 1）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39g3 ステップ 1）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39g3 ステップ 1）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39g3 ステップ 1）
+* **Update**: [development_strategy](/development/cargo-tracker/development_strategy.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39g3 ステップ 1）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39g3 ステップ 1）
+* **Verification**: [bolt_39g3_plan](/development/cargo-tracker/bolt_39g3_plan.md) を human:kakimomokuri が検証
+* **Update**: [bolt_39g3_plan](/development/cargo-tracker/bolt_39g3_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_39g3_plan](/development/cargo-tracker/bolt_39g3_plan.md) を作成（anthropic/claude-opus-5-5。承認待ち）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5。Bolt 39g3 の開始準備）
+* **Verification**: [bolt_39g2_report](/development/cargo-tracker/bolt_39g2_report.md) を human:kakimomokuri が検証
+* **Creation**: [bolt_39g2_report](/development/cargo-tracker/bolt_39g2_report.md) を作成（anthropic/claude-sonnet-5-5。承認待ち）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39g2 の終了報告）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39g2 ステップ 1・2〜9）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39g2 ステップ 1）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39g2 ステップ 1）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39g2 ステップ 1）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39g2 ステップ 1）
+* **Update**: [014-downstream-to-upstream-notification](/adr/cargo-tracker/014-downstream-to-upstream-notification.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39g2 ステップ 1）
+* **Update**: [development_strategy](/development/cargo-tracker/development_strategy.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39g2 ステップ 1）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39g2 ステップ 1）
+* **Update**: [07-本予約の確定と予約一覧](/manual/07-本予約の確定と予約一覧.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39g2）
+* **Update**: [09-追跡管理](/manual/09-追跡管理.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39g2）
+* **Update**: [用語集](/manual/用語集.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39g2）
+* **Verification**: [bolt_39g2_plan](/development/cargo-tracker/bolt_39g2_plan.md) を human:kakimomokuri が検証
+* **Update**: [bolt_39g2_plan](/development/cargo-tracker/bolt_39g2_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_39g2_plan](/development/cargo-tracker/bolt_39g2_plan.md) を作成（anthropic/claude-opus-5-5。承認待ち）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5。Bolt 39g2 の開始準備）
+* **Verification**: [bolt_39gc_report](/development/cargo-tracker/bolt_39gc_report.md) を human:kakimomokuri が検証
+* **Creation**: [bolt_39gc_report](/development/cargo-tracker/bolt_39gc_report.md) を作成（anthropic/claude-sonnet-5-5。承認待ち）
+* **Update**: [09-追跡管理](/manual/09-追跡管理.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39gc）
+* **Update**: [用語集](/manual/用語集.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39gc）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39gc の終了報告）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39gc ステップ 1）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39gc ステップ 1）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39gc ステップ 1）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39gc ステップ 1）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39gc ステップ 1）
+* **Update**: [system_usecase](/requirements/cargo-tracker/system_usecase.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39gc ステップ 1）
+* **Update**: [004-external-data-ingestion](/adr/cargo-tracker/004-external-data-ingestion.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39gc ステップ 1）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-sonnet-5-5。Bolt 39gc ステップ 1）
+* **Verification**: [bolt_39gc_plan](/development/cargo-tracker/bolt_39gc_plan.md) を human:kakimomokuri が検証
+* **Creation**: [bolt_39gc_plan](/development/cargo-tracker/bolt_39gc_plan.md) を作成（anthropic/claude-opus-5-5。承認待ち）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5。Bolt 39gc の開始準備）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39gb_report](/development/cargo-tracker/bolt_39gb_report.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_39gb_report](/development/cargo-tracker/bolt_39gb_report.md) を human:kakimomokuri が検証
+* **Creation**: [bolt_39gb_report](/development/cargo-tracker/bolt_39gb_report.md) を作成（anthropic/claude-opus-5-5。承認待ち）
+* **Update**: [09-追跡管理](/manual/09-追跡管理.md) を更新（anthropic/claude-opus-5-5。Bolt 39gb）
+* **Update**: [12-外部データ](/manual/12-外部データ.md) を更新（anthropic/claude-opus-5-5。Bolt 39gb）
+* **Update**: [用語集](/manual/用語集.md) を更新（anthropic/claude-opus-5-5。Bolt 39gb）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5。Bolt 39gb ステップ 1）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5。Bolt 39gb ステップ 1）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5。Bolt 39gb ステップ 1）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5。Bolt 39gb ステップ 1）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5。Bolt 39gb ステップ 1）
+* **Update**: [004-external-data-ingestion](/adr/cargo-tracker/004-external-data-ingestion.md) を更新（anthropic/claude-opus-5-5。Bolt 39gb ステップ 1）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5。Bolt 39gb ステップ 1）
+* **Update**: [bolt_39gb_plan](/development/cargo-tracker/bolt_39gb_plan.md) を更新（anthropic/claude-sonnet-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-sonnet-5-5）
+
+## 2026-11-10
+* **Verification**: [bolt_39g_report](/development/cargo-tracker/bolt_39g_report.md) を human:kakimomokuri が検証
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39g_plan](/development/cargo-tracker/bolt_39g_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_39g_report](/development/cargo-tracker/bolt_39g_report.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [09-追跡管理](/manual/09-追跡管理.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39g_plan](/development/cargo-tracker/bolt_39g_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [用語集](/manual/用語集.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [12-外部データ](/manual/12-外部データ.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [09-追跡管理](/manual/09-追跡管理.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39g_plan](/development/cargo-tracker/bolt_39g_plan.md) を更新（anthropic/claude-opus-5-5）
+
+## 2026-11-09
+* **Verification**: [bolt_39f2_report](/development/cargo-tracker/bolt_39f2_report.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39f2_plan](/development/cargo-tracker/bolt_39f2_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_39f2_report](/development/cargo-tracker/bolt_39f2_report.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [用語集](/manual/用語集.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [08-経路設計](/manual/08-経路設計.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39f2_plan](/development/cargo-tracker/bolt_39f2_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [用語集](/manual/用語集.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [12-外部データ](/manual/12-外部データ.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [08-経路設計](/manual/08-経路設計.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39f2_plan](/development/cargo-tracker/bolt_39f2_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39g_plan](/development/cargo-tracker/bolt_39g_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [development_strategy](/development/cargo-tracker/development_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [004-external-data-ingestion](/adr/cargo-tracker/004-external-data-ingestion.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [system_usecase](/requirements/cargo-tracker/system_usecase.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39g_plan](/development/cargo-tracker/bolt_39g_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_39g_plan](/development/cargo-tracker/bolt_39g_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_39f_report](/development/cargo-tracker/bolt_39f_report.md) を human:kakimomokuri が検証
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39f_plan](/development/cargo-tracker/bolt_39f_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_39f_report](/development/cargo-tracker/bolt_39f_report.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39f_plan](/development/cargo-tracker/bolt_39f_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39f2_plan](/development/cargo-tracker/bolt_39f2_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [development_strategy](/development/cargo-tracker/development_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [heroku_demo_setup](/operation/cargo-tracker/heroku_demo_setup.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [system_usecase](/requirements/cargo-tracker/system_usecase.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39f_plan](/development/cargo-tracker/bolt_39f_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [12-外部データ](/manual/12-外部データ.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [08-経路設計](/manual/08-経路設計.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39f_plan](/development/cargo-tracker/bolt_39f_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_39f2_plan](/development/cargo-tracker/bolt_39f2_plan.md) を human:kakimomokuri が検証
+* **Update**: [bolt_39f2_plan](/development/cargo-tracker/bolt_39f2_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_39f2_plan](/development/cargo-tracker/bolt_39f2_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_39e2_report](/development/cargo-tracker/bolt_39e2_report.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39e2_plan](/development/cargo-tracker/bolt_39e2_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39e2_report](/development/cargo-tracker/bolt_39e2_report.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_39e2_report](/development/cargo-tracker/bolt_39e2_report.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [system_usecase](/requirements/cargo-tracker/system_usecase.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [development_strategy](/development/cargo-tracker/development_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39f_plan](/development/cargo-tracker/bolt_39f_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [004-external-data-ingestion](/adr/cargo-tracker/004-external-data-ingestion.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [development_strategy](/development/cargo-tracker/development_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [004-external-data-ingestion](/adr/cargo-tracker/004-external-data-ingestion.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [system_usecase](/requirements/cargo-tracker/system_usecase.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39e2_plan](/development/cargo-tracker/bolt_39e2_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39f_plan](/development/cargo-tracker/bolt_39f_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_39f_plan](/development/cargo-tracker/bolt_39f_plan.md) を human:kakimomokuri が検証
+* **Update**: [08-経路設計](/manual/08-経路設計.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39e2_plan](/development/cargo-tracker/bolt_39e2_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [system_usecase](/requirements/cargo-tracker/system_usecase.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [heroku_demo_setup](/operation/cargo-tracker/heroku_demo_setup.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [004-external-data-ingestion](/adr/cargo-tracker/004-external-data-ingestion.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_39e2_plan](/development/cargo-tracker/bolt_39e2_plan.md) を human:kakimomokuri が検証
+* **Update**: [bolt_39e2_plan](/development/cargo-tracker/bolt_39e2_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39e2_plan](/development/cargo-tracker/bolt_39e2_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_39e_report](/development/cargo-tracker/bolt_39e_report.md) を human:kakimomokuri が検証
+* **Creation**: [bolt_39e_report](/development/cargo-tracker/bolt_39e_report.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39e_plan](/development/cargo-tracker/bolt_39e_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [12-外部データ](/manual/12-外部データ.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39e_plan](/development/cargo-tracker/bolt_39e_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [用語集](/manual/用語集.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [12-外部データ](/manual/12-外部データ.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [08-経路設計](/manual/08-経路設計.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39e_plan](/development/cargo-tracker/bolt_39e_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [requirements_definition](/requirements/cargo-tracker/requirements_definition.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [development_strategy](/development/cargo-tracker/development_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39e_plan](/development/cargo-tracker/bolt_39e_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [004-external-data-ingestion](/adr/cargo-tracker/004-external-data-ingestion.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [development_strategy](/development/cargo-tracker/development_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [requirements_definition](/requirements/cargo-tracker/requirements_definition.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [004-external-data-ingestion](/adr/cargo-tracker/004-external-data-ingestion.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_39e_plan](/development/cargo-tracker/bolt_39e_plan.md) を human:kakimomokuri が検証
+* **Update**: [bolt_39e_plan](/development/cargo-tracker/bolt_39e_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39e_plan](/development/cargo-tracker/bolt_39e_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_39d4_report](/development/cargo-tracker/bolt_39d4_report.md) を human:kakimomokuri が検証
+* **Creation**: [bolt_39d4_report](/development/cargo-tracker/bolt_39d4_report.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39d4_plan](/development/cargo-tracker/bolt_39d4_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [12-外部データ](/manual/12-外部データ.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39d4_plan](/development/cargo-tracker/bolt_39d4_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [用語集](/manual/用語集.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [付録B-トラブルシューティング](/manual/付録B-トラブルシューティング.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [12-外部データ](/manual/12-外部データ.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39d4_plan](/development/cargo-tracker/bolt_39d4_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [用語集](/manual/用語集.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [付録B-トラブルシューティング](/manual/付録B-トラブルシューティング.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [12-外部データ](/manual/12-外部データ.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [system_usecase](/requirements/cargo-tracker/system_usecase.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39d4_plan](/development/cargo-tracker/bolt_39d4_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [004-external-data-ingestion](/adr/cargo-tracker/004-external-data-ingestion.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [system_usecase](/requirements/cargo-tracker/system_usecase.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [004-external-data-ingestion](/adr/cargo-tracker/004-external-data-ingestion.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_39d4_plan](/development/cargo-tracker/bolt_39d4_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39d4_plan](/development/cargo-tracker/bolt_39d4_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39d4_plan](/development/cargo-tracker/bolt_39d4_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_39d3b2_report](/development/cargo-tracker/bolt_39d3b2_report.md) を human:kakimomokuri が検証
+* **Creation**: [bolt_39d3b2_report](/development/cargo-tracker/bolt_39d3b2_report.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39d3b2_plan](/development/cargo-tracker/bolt_39d3b2_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [12-外部データ](/manual/12-外部データ.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39d3b2_plan](/development/cargo-tracker/bolt_39d3b2_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [用語集](/manual/用語集.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [付録B-トラブルシューティング](/manual/付録B-トラブルシューティング.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [12-外部データ](/manual/12-外部データ.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [00-はじめに](/manual/00-はじめに.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39d3b2_plan](/development/cargo-tracker/bolt_39d3b2_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [system_usecase](/requirements/cargo-tracker/system_usecase.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39d3b2_plan](/development/cargo-tracker/bolt_39d3b2_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [004-external-data-ingestion](/adr/cargo-tracker/004-external-data-ingestion.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_39d3b2_plan](/development/cargo-tracker/bolt_39d3b2_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39d3b2_plan](/development/cargo-tracker/bolt_39d3b2_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39d3b2_plan](/development/cargo-tracker/bolt_39d3b2_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_39d3b_report](/development/cargo-tracker/bolt_39d3b_report.md) を human:kakimomokuri が検証
+* **Creation**: [bolt_39d3b_report](/development/cargo-tracker/bolt_39d3b_report.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39d3b_plan](/development/cargo-tracker/bolt_39d3b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [12-外部データ](/manual/12-外部データ.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39d3b_plan](/development/cargo-tracker/bolt_39d3b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [用語集](/manual/用語集.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [付録B-トラブルシューティング](/manual/付録B-トラブルシューティング.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [12-外部データ](/manual/12-外部データ.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [00-はじめに](/manual/00-はじめに.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39d3b_plan](/development/cargo-tracker/bolt_39d3b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [00-はじめに](/manual/00-はじめに.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [用語集](/manual/用語集.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [付録B-トラブルシューティング](/manual/付録B-トラブルシューティング.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [12-外部データ](/manual/12-外部データ.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [development_strategy](/development/cargo-tracker/development_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39d3b_plan](/development/cargo-tracker/bolt_39d3b_plan.md) を更新（anthropic/claude-opus-5-5）
+
+## 2026-11-05
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [system_usecase](/requirements/cargo-tracker/system_usecase.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [004-external-data-ingestion](/adr/cargo-tracker/004-external-data-ingestion.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [system_usecase](/requirements/cargo-tracker/system_usecase.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [004-external-data-ingestion](/adr/cargo-tracker/004-external-data-ingestion.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_39d3b_plan](/development/cargo-tracker/bolt_39d3b_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39d3b_plan](/development/cargo-tracker/bolt_39d3b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39d3b_plan](/development/cargo-tracker/bolt_39d3b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_39d3c_report](/development/cargo-tracker/bolt_39d3c_report.md) を human:kakimomokuri が検証
+* **Creation**: [bolt_39d3c_report](/development/cargo-tracker/bolt_39d3c_report.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39d3c_plan](/development/cargo-tracker/bolt_39d3c_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39d3c_plan](/development/cargo-tracker/bolt_39d3c_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [application_development_setup](/operation/cargo-tracker/application_development_setup.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [付録B-トラブルシューティング](/manual/付録B-トラブルシューティング.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [12-外部データ](/manual/12-外部データ.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39d3c_plan](/development/cargo-tracker/bolt_39d3c_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [007-postgresql-mybatis-flyway](/adr/cargo-tracker/007-postgresql-mybatis-flyway.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [004-external-data-ingestion](/adr/cargo-tracker/004-external-data-ingestion.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_39d3c_plan](/development/cargo-tracker/bolt_39d3c_plan.md) を human:kakimomokuri が検証
+* **Update**: [bolt_39d3c_plan](/development/cargo-tracker/bolt_39d3c_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39d3c_plan](/development/cargo-tracker/bolt_39d3c_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_39d3_report](/development/cargo-tracker/bolt_39d3_report.md) を human:kakimomokuri が検証
+* **Creation**: [bolt_39d3_report](/development/cargo-tracker/bolt_39d3_report.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39d3_plan](/development/cargo-tracker/bolt_39d3_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39d3_plan](/development/cargo-tracker/bolt_39d3_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [用語集](/manual/用語集.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [付録B-トラブルシューティング](/manual/付録B-トラブルシューティング.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [12-外部データ](/manual/12-外部データ.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39d3_plan](/development/cargo-tracker/bolt_39d3_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [用語集](/manual/用語集.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [付録B-トラブルシューティング](/manual/付録B-トラブルシューティング.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [12-外部データ](/manual/12-外部データ.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [system_usecase](/requirements/cargo-tracker/system_usecase.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [development_strategy](/development/cargo-tracker/development_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39d3_plan](/development/cargo-tracker/bolt_39d3_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [007-postgresql-mybatis-flyway](/adr/cargo-tracker/007-postgresql-mybatis-flyway.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [004-external-data-ingestion](/adr/cargo-tracker/004-external-data-ingestion.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_39d3_plan](/development/cargo-tracker/bolt_39d3_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39d3_plan](/development/cargo-tracker/bolt_39d3_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39d3_plan](/development/cargo-tracker/bolt_39d3_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_39d2b_report](/development/cargo-tracker/bolt_39d2b_report.md) を human:kakimomokuri が検証
+* **Creation**: [bolt_39d2b_report](/development/cargo-tracker/bolt_39d2b_report.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39d2b_plan](/development/cargo-tracker/bolt_39d2b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [付録B-トラブルシューティング](/manual/付録B-トラブルシューティング.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [12-外部データ](/manual/12-外部データ.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39d2b_plan](/development/cargo-tracker/bolt_39d2b_plan.md) を更新（anthropic/claude-opus-5-5）
+
+## 2026-11-04
+* **Update**: [用語集](/manual/用語集.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [付録B-トラブルシューティング](/manual/付録B-トラブルシューティング.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [12-外部データ](/manual/12-外部データ.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39d2b_plan](/development/cargo-tracker/bolt_39d2b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [system_usecase](/requirements/cargo-tracker/system_usecase.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39d2b_plan](/development/cargo-tracker/bolt_39d2b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [004-external-data-ingestion](/adr/cargo-tracker/004-external-data-ingestion.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_39d2b_plan](/development/cargo-tracker/bolt_39d2b_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39d2b_plan](/development/cargo-tracker/bolt_39d2b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39d2b_plan](/development/cargo-tracker/bolt_39d2b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_39d2_report](/development/cargo-tracker/bolt_39d2_report.md) を human:kakimomokuri が検証
+* **Creation**: [bolt_39d2_report](/development/cargo-tracker/bolt_39d2_report.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39d2_plan](/development/cargo-tracker/bolt_39d2_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [付録B-トラブルシューティング](/manual/付録B-トラブルシューティング.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39d2_plan](/development/cargo-tracker/bolt_39d2_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [用語集](/manual/用語集.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [付録B-トラブルシューティング](/manual/付録B-トラブルシューティング.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [12-外部データ](/manual/12-外部データ.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [00-はじめに](/manual/00-はじめに.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39d2_plan](/development/cargo-tracker/bolt_39d2_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [system_usecase](/requirements/cargo-tracker/system_usecase.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39d2_plan](/development/cargo-tracker/bolt_39d2_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [007-postgresql-mybatis-flyway](/adr/cargo-tracker/007-postgresql-mybatis-flyway.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [004-external-data-ingestion](/adr/cargo-tracker/004-external-data-ingestion.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [system_usecase](/requirements/cargo-tracker/system_usecase.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39d2_plan](/development/cargo-tracker/bolt_39d2_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [007-postgresql-mybatis-flyway](/adr/cargo-tracker/007-postgresql-mybatis-flyway.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [004-external-data-ingestion](/adr/cargo-tracker/004-external-data-ingestion.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_39d2_plan](/development/cargo-tracker/bolt_39d2_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [development_strategy](/development/cargo-tracker/development_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39d2_plan](/development/cargo-tracker/bolt_39d2_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39d2_plan](/development/cargo-tracker/bolt_39d2_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_39d_report](/development/cargo-tracker/bolt_39d_report.md) を human:kakimomokuri が検証
+* **Creation**: [bolt_39d_report](/development/cargo-tracker/bolt_39d_report.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39d_plan](/development/cargo-tracker/bolt_39d_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [12-外部データ](/manual/12-外部データ.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [用語集](/manual/用語集.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [12-外部データ](/manual/12-外部データ.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [00-はじめに](/manual/00-はじめに.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [system_usecase](/requirements/cargo-tracker/system_usecase.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39d_plan](/development/cargo-tracker/bolt_39d_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [004-external-data-ingestion](/adr/cargo-tracker/004-external-data-ingestion.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [system_usecase](/requirements/cargo-tracker/system_usecase.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [004-external-data-ingestion](/adr/cargo-tracker/004-external-data-ingestion.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_39d_plan](/development/cargo-tracker/bolt_39d_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [development_strategy](/development/cargo-tracker/development_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39d_plan](/development/cargo-tracker/bolt_39d_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39d_plan](/development/cargo-tracker/bolt_39d_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_39c4_report](/development/cargo-tracker/bolt_39c4_report.md) を human:kakimomokuri が検証
+* **Creation**: [bolt_39c4_report](/development/cargo-tracker/bolt_39c4_report.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [12-外部データ](/manual/12-外部データ.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39c4_plan](/development/cargo-tracker/bolt_39c4_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [12-外部データ](/manual/12-外部データ.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [用語集](/manual/用語集.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [付録B-トラブルシューティング](/manual/付録B-トラブルシューティング.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [12-外部データ](/manual/12-外部データ.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [system_usecase](/requirements/cargo-tracker/system_usecase.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39c4_plan](/development/cargo-tracker/bolt_39c4_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [004-external-data-ingestion](/adr/cargo-tracker/004-external-data-ingestion.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [system_usecase](/requirements/cargo-tracker/system_usecase.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [004-external-data-ingestion](/adr/cargo-tracker/004-external-data-ingestion.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_39c4_plan](/development/cargo-tracker/bolt_39c4_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39c4_plan](/development/cargo-tracker/bolt_39c4_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39c4_plan](/development/cargo-tracker/bolt_39c4_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_39c3_report](/development/cargo-tracker/bolt_39c3_report.md) を human:kakimomokuri が検証
+* **Creation**: [bolt_39c3_report](/development/cargo-tracker/bolt_39c3_report.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39c3_plan](/development/cargo-tracker/bolt_39c3_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [用語集](/manual/用語集.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [12-外部データ](/manual/12-外部データ.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [004-external-data-ingestion](/adr/cargo-tracker/004-external-data-ingestion.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [004-external-data-ingestion](/adr/cargo-tracker/004-external-data-ingestion.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_39c3_plan](/development/cargo-tracker/bolt_39c3_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [development_strategy](/development/cargo-tracker/development_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39c3_plan](/development/cargo-tracker/bolt_39c3_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39c3_plan](/development/cargo-tracker/bolt_39c3_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [release_plan](/development/cargo-tracker/release_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_39c2_plan](/development/cargo-tracker/bolt_39c2_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_39c2_report](/development/cargo-tracker/bolt_39c2_report.md) を human:kakimomokuri が検証
+* **Update**: [bolt_39c2_report](/development/cargo-tracker/bolt_39c2_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39c2_plan](/development/cargo-tracker/bolt_39c2_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [付録B-トラブルシューティング](/manual/付録B-トラブルシューティング.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [12-外部データ](/manual/12-外部データ.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39c2_plan](/development/cargo-tracker/bolt_39c2_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [付録B-トラブルシューティング](/manual/付録B-トラブルシューティング.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [12-外部データ](/manual/12-外部データ.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39c2_plan](/development/cargo-tracker/bolt_39c2_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [付録B-トラブルシューティング](/manual/付録B-トラブルシューティング.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [12-外部データ](/manual/12-外部データ.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39c2_plan](/development/cargo-tracker/bolt_39c2_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [付録B-トラブルシューティング](/manual/付録B-トラブルシューティング.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [12-外部データ](/manual/12-外部データ.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39c2_plan](/development/cargo-tracker/bolt_39c2_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [development_strategy](/development/cargo-tracker/development_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39c2_plan](/development/cargo-tracker/bolt_39c2_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [development_strategy](/development/cargo-tracker/development_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [release_plan](/development/cargo-tracker/release_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_39c2_plan](/development/cargo-tracker/bolt_39c2_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39c2_plan](/development/cargo-tracker/bolt_39c2_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39c2_plan](/development/cargo-tracker/bolt_39c2_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [release_plan](/development/cargo-tracker/release_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_39c_plan](/development/cargo-tracker/bolt_39c_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_39c_report](/development/cargo-tracker/bolt_39c_report.md) を human:kakimomokuri が検証
+* **Update**: [bolt_39c_report](/development/cargo-tracker/bolt_39c_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39c_plan](/development/cargo-tracker/bolt_39c_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [用語集](/manual/用語集.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [付録B-トラブルシューティング](/manual/付録B-トラブルシューティング.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [12-外部データ](/manual/12-外部データ.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39c_plan](/development/cargo-tracker/bolt_39c_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [用語集](/manual/用語集.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [付録B-トラブルシューティング](/manual/付録B-トラブルシューティング.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [12-外部データ](/manual/12-外部データ.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39c_plan](/development/cargo-tracker/bolt_39c_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [用語集](/manual/用語集.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [付録B-トラブルシューティング](/manual/付録B-トラブルシューティング.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [12-外部データ](/manual/12-外部データ.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39c_plan](/development/cargo-tracker/bolt_39c_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [12-外部データ](/manual/12-外部データ.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [用語集](/manual/用語集.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [02-ログインと共通の画面](/manual/02-ログインと共通の画面.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [00-はじめに](/manual/00-はじめに.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39c_plan](/development/cargo-tracker/bolt_39c_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [12-外部データ](/manual/12-外部データ.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [用語集](/manual/用語集.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [02-ログインと共通の画面](/manual/02-ログインと共通の画面.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [00-はじめに](/manual/00-はじめに.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39c_plan](/development/cargo-tracker/bolt_39c_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [development_strategy](/development/cargo-tracker/development_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39c_plan](/development/cargo-tracker/bolt_39c_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_frontend](/design/cargo-tracker/architecture_frontend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [004-external-data-ingestion](/adr/cargo-tracker/004-external-data-ingestion.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [development_strategy](/development/cargo-tracker/development_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_frontend](/design/cargo-tracker/architecture_frontend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [004-external-data-ingestion](/adr/cargo-tracker/004-external-data-ingestion.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [release_plan](/development/cargo-tracker/release_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_39c_plan](/development/cargo-tracker/bolt_39c_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39c_plan](/development/cargo-tracker/bolt_39c_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39c_plan](/development/cargo-tracker/bolt_39c_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [release_plan](/development/cargo-tracker/release_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_39b4_plan](/development/cargo-tracker/bolt_39b4_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_39b4_report](/development/cargo-tracker/bolt_39b4_report.md) を human:kakimomokuri が検証
+* **Update**: [bolt_39b4_report](/development/cargo-tracker/bolt_39b4_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39b4_plan](/development/cargo-tracker/bolt_39b4_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39b4_plan](/development/cargo-tracker/bolt_39b4_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39b4_plan](/development/cargo-tracker/bolt_39b4_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [007-postgresql-mybatis-flyway](/adr/cargo-tracker/007-postgresql-mybatis-flyway.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39b4_plan](/development/cargo-tracker/bolt_39b4_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [004-external-data-ingestion](/adr/cargo-tracker/004-external-data-ingestion.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39b4_plan](/development/cargo-tracker/bolt_39b4_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [system_usecase](/requirements/cargo-tracker/system_usecase.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [requirements_definition](/requirements/cargo-tracker/requirements_definition.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39b4_plan](/development/cargo-tracker/bolt_39b4_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [007-postgresql-mybatis-flyway](/adr/cargo-tracker/007-postgresql-mybatis-flyway.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [004-external-data-ingestion](/adr/cargo-tracker/004-external-data-ingestion.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [system_usecase](/requirements/cargo-tracker/system_usecase.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [requirements_definition](/requirements/cargo-tracker/requirements_definition.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [007-postgresql-mybatis-flyway](/adr/cargo-tracker/007-postgresql-mybatis-flyway.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [004-external-data-ingestion](/adr/cargo-tracker/004-external-data-ingestion.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [release_plan](/development/cargo-tracker/release_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_39b4_plan](/development/cargo-tracker/bolt_39b4_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39b4_plan](/development/cargo-tracker/bolt_39b4_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39b4_plan](/development/cargo-tracker/bolt_39b4_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [release_plan](/development/cargo-tracker/release_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_39b3b_plan](/development/cargo-tracker/bolt_39b3b_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_39b3b_report](/development/cargo-tracker/bolt_39b3b_report.md) を human:kakimomokuri が検証
+* **Update**: [bolt_39b3b_report](/development/cargo-tracker/bolt_39b3b_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39b3b_plan](/development/cargo-tracker/bolt_39b3b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39b3b_plan](/development/cargo-tracker/bolt_39b3b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39b3b_plan](/development/cargo-tracker/bolt_39b3b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39b3b_plan](/development/cargo-tracker/bolt_39b3b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [007-postgresql-mybatis-flyway](/adr/cargo-tracker/007-postgresql-mybatis-flyway.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39b3b_plan](/development/cargo-tracker/bolt_39b3b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39b3b_plan](/development/cargo-tracker/bolt_39b3b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [013-heroku-demo-environment](/adr/cargo-tracker/013-heroku-demo-environment.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [007-postgresql-mybatis-flyway](/adr/cargo-tracker/007-postgresql-mybatis-flyway.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [004-external-data-ingestion](/adr/cargo-tracker/004-external-data-ingestion.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [013-heroku-demo-environment](/adr/cargo-tracker/013-heroku-demo-environment.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [007-postgresql-mybatis-flyway](/adr/cargo-tracker/007-postgresql-mybatis-flyway.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [004-external-data-ingestion](/adr/cargo-tracker/004-external-data-ingestion.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [release_plan](/development/cargo-tracker/release_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_39b3b_plan](/development/cargo-tracker/bolt_39b3b_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39b3b_plan](/development/cargo-tracker/bolt_39b3b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39a3_report](/development/cargo-tracker/bolt_39a3_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39a2_report](/development/cargo-tracker/bolt_39a2_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39b3b_plan](/development/cargo-tracker/bolt_39b3b_plan.md) を更新（anthropic/claude-opus-5-5）
+
+## 2026-11-03
+* **Verification**: [release_plan](/development/cargo-tracker/release_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_39b3_plan](/development/cargo-tracker/bolt_39b3_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_39b3_report](/development/cargo-tracker/bolt_39b3_report.md) を human:kakimomokuri が検証
+* **Update**: [bolt_39b3_report](/development/cargo-tracker/bolt_39b3_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39b3_plan](/development/cargo-tracker/bolt_39b3_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39b3_plan](/development/cargo-tracker/bolt_39b3_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39b3_plan](/development/cargo-tracker/bolt_39b3_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39b3_plan](/development/cargo-tracker/bolt_39b3_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39b3_plan](/development/cargo-tracker/bolt_39b3_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39b3_plan](/development/cargo-tracker/bolt_39b3_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [requirements_definition](/requirements/cargo-tracker/requirements_definition.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39b3_plan](/development/cargo-tracker/bolt_39b3_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39b2b_plan](/development/cargo-tracker/bolt_39b2b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [004-external-data-ingestion](/adr/cargo-tracker/004-external-data-ingestion.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [requirements_definition](/requirements/cargo-tracker/requirements_definition.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39b2b_plan](/development/cargo-tracker/bolt_39b2b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [004-external-data-ingestion](/adr/cargo-tracker/004-external-data-ingestion.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [release_plan](/development/cargo-tracker/release_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_39b3_plan](/development/cargo-tracker/bolt_39b3_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [development_strategy](/development/cargo-tracker/development_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39b3_plan](/development/cargo-tracker/bolt_39b3_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39b3_plan](/development/cargo-tracker/bolt_39b3_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [release_plan](/development/cargo-tracker/release_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_39b2b_plan](/development/cargo-tracker/bolt_39b2b_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_39b2b_report](/development/cargo-tracker/bolt_39b2b_report.md) を human:kakimomokuri が検証
+* **Update**: [bolt_39b2b_report](/development/cargo-tracker/bolt_39b2b_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39b2b_plan](/development/cargo-tracker/bolt_39b2b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39b2b_plan](/development/cargo-tracker/bolt_39b2b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39b2b_plan](/development/cargo-tracker/bolt_39b2b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39b2b_plan](/development/cargo-tracker/bolt_39b2b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39b2b_plan](/development/cargo-tracker/bolt_39b2b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39b2b_plan](/development/cargo-tracker/bolt_39b2b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [system_usecase](/requirements/cargo-tracker/system_usecase.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [requirements_definition](/requirements/cargo-tracker/requirements_definition.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39b2b_plan](/development/cargo-tracker/bolt_39b2b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [004-external-data-ingestion](/adr/cargo-tracker/004-external-data-ingestion.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [system_usecase](/requirements/cargo-tracker/system_usecase.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [requirements_definition](/requirements/cargo-tracker/requirements_definition.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [004-external-data-ingestion](/adr/cargo-tracker/004-external-data-ingestion.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [release_plan](/development/cargo-tracker/release_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_39b2b_plan](/development/cargo-tracker/bolt_39b2b_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39b2b_plan](/development/cargo-tracker/bolt_39b2b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39b2b_plan](/development/cargo-tracker/bolt_39b2b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [release_plan](/development/cargo-tracker/release_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_39b2_plan](/development/cargo-tracker/bolt_39b2_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_39b2_report](/development/cargo-tracker/bolt_39b2_report.md) を human:kakimomokuri が検証
+* **Update**: [bolt_39b2_report](/development/cargo-tracker/bolt_39b2_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39b2_plan](/development/cargo-tracker/bolt_39b2_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39b2_plan](/development/cargo-tracker/bolt_39b2_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39b2_plan](/development/cargo-tracker/bolt_39b2_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39b2_plan](/development/cargo-tracker/bolt_39b2_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39b2_plan](/development/cargo-tracker/bolt_39b2_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39b2_plan](/development/cargo-tracker/bolt_39b2_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39b2_plan](/development/cargo-tracker/bolt_39b2_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [system_usecase](/requirements/cargo-tracker/system_usecase.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [requirements_definition](/requirements/cargo-tracker/requirements_definition.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [development_strategy](/development/cargo-tracker/development_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39b2_plan](/development/cargo-tracker/bolt_39b2_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [004-external-data-ingestion](/adr/cargo-tracker/004-external-data-ingestion.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [system_usecase](/requirements/cargo-tracker/system_usecase.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [requirements_definition](/requirements/cargo-tracker/requirements_definition.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [development_strategy](/development/cargo-tracker/development_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [004-external-data-ingestion](/adr/cargo-tracker/004-external-data-ingestion.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [release_plan](/development/cargo-tracker/release_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_39b2_plan](/development/cargo-tracker/bolt_39b2_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39b2_plan](/development/cargo-tracker/bolt_39b2_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39b2_plan](/development/cargo-tracker/bolt_39b2_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39b2_plan](/development/cargo-tracker/bolt_39b2_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [release_plan](/development/cargo-tracker/release_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_39b_plan](/development/cargo-tracker/bolt_39b_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_39b_report](/development/cargo-tracker/bolt_39b_report.md) を human:kakimomokuri が検証
+* **Update**: [bolt_39b_report](/development/cargo-tracker/bolt_39b_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39b_plan](/development/cargo-tracker/bolt_39b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39b_plan](/development/cargo-tracker/bolt_39b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39b_plan](/development/cargo-tracker/bolt_39b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39b_plan](/development/cargo-tracker/bolt_39b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39b_plan](/development/cargo-tracker/bolt_39b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39b_plan](/development/cargo-tracker/bolt_39b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [system_usecase](/requirements/cargo-tracker/system_usecase.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [development_strategy](/development/cargo-tracker/development_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39b_plan](/development/cargo-tracker/bolt_39b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [004-external-data-ingestion](/adr/cargo-tracker/004-external-data-ingestion.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [system_usecase](/requirements/cargo-tracker/system_usecase.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [development_strategy](/development/cargo-tracker/development_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [004-external-data-ingestion](/adr/cargo-tracker/004-external-data-ingestion.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [release_plan](/development/cargo-tracker/release_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_39b_plan](/development/cargo-tracker/bolt_39b_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39b_plan](/development/cargo-tracker/bolt_39b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39b_plan](/development/cargo-tracker/bolt_39b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [data_model](/design/cargo-tracker/data_model.md) を human:kakimomokuri が検証
+* **Verification**: [release_plan](/development/cargo-tracker/release_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_39a3_plan](/development/cargo-tracker/bolt_39a3_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_39a3_report](/development/cargo-tracker/bolt_39a3_report.md) を human:kakimomokuri が検証
+* **Update**: [bolt_39a3_report](/development/cargo-tracker/bolt_39a3_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39a3_plan](/development/cargo-tracker/bolt_39a3_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39a3_plan](/development/cargo-tracker/bolt_39a3_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [004-external-data-ingestion](/adr/cargo-tracker/004-external-data-ingestion.md) を human:kakimomokuri が検証
+* **Verification**: [operation](/design/cargo-tracker/operation.md) を human:kakimomokuri が検証
+* **Verification**: [domain_model](/design/cargo-tracker/domain_model.md) を human:kakimomokuri が検証
+* **Verification**: [data_model](/design/cargo-tracker/data_model.md) を human:kakimomokuri が検証
+* **Update**: [bolt_39a3_plan](/development/cargo-tracker/bolt_39a3_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [operation](/design/cargo-tracker/operation.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [004-external-data-ingestion](/adr/cargo-tracker/004-external-data-ingestion.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [release_plan](/development/cargo-tracker/release_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_39a3_plan](/development/cargo-tracker/bolt_39a3_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39a3_plan](/development/cargo-tracker/bolt_39a3_plan.md) を更新（anthropic/claude-opus-5-5）
+
+## 2026-11-02
+* **Update**: [bolt_39a3_plan](/development/cargo-tracker/bolt_39a3_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39a3_plan](/development/cargo-tracker/bolt_39a3_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [domain_model](/design/cargo-tracker/domain_model.md) を human:kakimomokuri が検証
+* **Verification**: [data_model](/design/cargo-tracker/data_model.md) を human:kakimomokuri が検証
+* **Verification**: [004-external-data-ingestion](/adr/cargo-tracker/004-external-data-ingestion.md) を human:kakimomokuri が検証
+* **Verification**: [release_plan](/development/cargo-tracker/release_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_39a2_plan](/development/cargo-tracker/bolt_39a2_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_39a2_report](/development/cargo-tracker/bolt_39a2_report.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39a2_report](/development/cargo-tracker/bolt_39a2_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39a2_plan](/development/cargo-tracker/bolt_39a2_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39a2_report](/development/cargo-tracker/bolt_39a2_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [004-external-data-ingestion](/adr/cargo-tracker/004-external-data-ingestion.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39a2_plan](/development/cargo-tracker/bolt_39a2_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39a2_plan](/development/cargo-tracker/bolt_39a2_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [development_strategy](/development/cargo-tracker/development_strategy.md) を human:kakimomokuri が検証
+* **Verification**: [release_plan](/development/cargo-tracker/release_plan.md) を human:kakimomokuri が検証
+* **Verification**: [domain_model](/design/cargo-tracker/domain_model.md) を human:kakimomokuri が検証
+* **Verification**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を human:kakimomokuri が検証
+* **Verification**: [004-external-data-ingestion](/adr/cargo-tracker/004-external-data-ingestion.md) を human:kakimomokuri が検証
+* **Verification**: [data_model](/design/cargo-tracker/data_model.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39a2_plan](/development/cargo-tracker/bolt_39a2_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [development_strategy](/development/cargo-tracker/development_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39_report](/development/cargo-tracker/bolt_39_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [004-external-data-ingestion](/adr/cargo-tracker/004-external-data-ingestion.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_39a2_plan](/development/cargo-tracker/bolt_39a2_plan.md) を human:kakimomokuri が検証
+* **Update**: [bolt_39a2_plan](/development/cargo-tracker/bolt_39a2_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39a2_plan](/development/cargo-tracker/bolt_39a2_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39a2_plan](/development/cargo-tracker/bolt_39a2_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [user_story](/requirements/cargo-tracker/user_story.md) を human:kakimomokuri が検証
+* **Verification**: [004-external-data-ingestion](/adr/cargo-tracker/004-external-data-ingestion.md) を human:kakimomokuri が検証
+* **Verification**: [release_plan](/development/cargo-tracker/release_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_39_plan](/development/cargo-tracker/bolt_39_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_39_report](/development/cargo-tracker/bolt_39_report.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39_report](/development/cargo-tracker/bolt_39_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39_plan](/development/cargo-tracker/bolt_39_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39_report](/development/cargo-tracker/bolt_39_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [system_usecase](/requirements/cargo-tracker/system_usecase.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [requirements_definition](/requirements/cargo-tracker/requirements_definition.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [004-external-data-ingestion](/adr/cargo-tracker/004-external-data-ingestion.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39_plan](/development/cargo-tracker/bolt_39_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39_plan](/development/cargo-tracker/bolt_39_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39_plan](/development/cargo-tracker/bolt_39_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39_plan](/development/cargo-tracker/bolt_39_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_39_plan](/development/cargo-tracker/bolt_39_plan.md) を human:kakimomokuri が検証
+* **Verification**: [system_usecase](/requirements/cargo-tracker/system_usecase.md) を human:kakimomokuri が検証
+* **Verification**: [requirements_definition](/requirements/cargo-tracker/requirements_definition.md) を human:kakimomokuri が検証
+* **Verification**: [domain_model](/design/cargo-tracker/domain_model.md) を human:kakimomokuri が検証
+* **Verification**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を human:kakimomokuri が検証
+* **Verification**: [004-external-data-ingestion](/adr/cargo-tracker/004-external-data-ingestion.md) を human:kakimomokuri が検証
+* **Update**: [bolt_39_plan](/development/cargo-tracker/bolt_39_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [system_usecase](/requirements/cargo-tracker/system_usecase.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [requirements_definition](/requirements/cargo-tracker/requirements_definition.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [development_strategy](/development/cargo-tracker/development_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [004-external-data-ingestion](/adr/cargo-tracker/004-external-data-ingestion.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [release_plan](/development/cargo-tracker/release_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_39_plan](/development/cargo-tracker/bolt_39_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39_plan](/development/cargo-tracker/bolt_39_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_39_plan](/development/cargo-tracker/bolt_39_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [development_strategy](/development/cargo-tracker/development_strategy.md) を human:kakimomokuri が検証
+* **Verification**: [release_plan](/development/cargo-tracker/release_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_38h_plan](/development/cargo-tracker/bolt_38h_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_38h_report](/development/cargo-tracker/bolt_38h_report.md) を human:kakimomokuri が検証
+* **Update**: [bolt_38h_report](/development/cargo-tracker/bolt_38h_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [development_strategy](/development/cargo-tracker/development_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_38h_plan](/development/cargo-tracker/bolt_38h_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [08-経路設計](/manual/08-経路設計.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [07-本予約の確定と予約一覧](/manual/07-本予約の確定と予約一覧.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [06-受付一覧と審査と見積り](/manual/06-受付一覧と審査と見積り.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [用語集](/manual/用語集.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [付録B-トラブルシューティング](/manual/付録B-トラブルシューティング.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [11-利用者の管理](/manual/11-利用者の管理.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [09-追跡管理](/manual/09-追跡管理.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [08-経路設計](/manual/08-経路設計.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [07-本予約の確定と予約一覧](/manual/07-本予約の確定と予約一覧.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [06-受付一覧と審査と見積り](/manual/06-受付一覧と審査と見積り.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [04-見積りへの回答と承認](/manual/04-見積りへの回答と承認.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [02-ログインと共通の画面](/manual/02-ログインと共通の画面.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [00-はじめに](/manual/00-はじめに.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [001-modular-monolith](/adr/cargo-tracker/001-modular-monolith.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [release_plan](/development/cargo-tracker/release_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_38h_plan](/development/cargo-tracker/bolt_38h_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_38h_plan](/development/cargo-tracker/bolt_38h_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_38h_plan](/development/cargo-tracker/bolt_38h_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_38h_plan](/development/cargo-tracker/bolt_38h_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [release_plan](/development/cargo-tracker/release_plan.md) を human:kakimomokuri が検証
+* **Verification**: [w6_review_20261102](/review/cargo-tracker/w6_review_20261102.md) を human:kakimomokuri が検証
+* **Verification**: [iteration_report-W6](/development/cargo-tracker/iteration_report-W6.md) を human:kakimomokuri が検証
+* **Update**: [w6_review_20261102](/review/cargo-tracker/w6_review_20261102.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [iteration_report-W6](/development/cargo-tracker/iteration_report-W6.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [w6_review_20261102](/review/cargo-tracker/w6_review_20261102.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [iteration_report-W6](/development/cargo-tracker/iteration_report-W6.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [development_strategy](/development/cargo-tracker/development_strategy.md) を human:kakimomokuri が検証
+* **Verification**: [release_plan](/development/cargo-tracker/release_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [development_strategy](/development/cargo-tracker/development_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [release_plan](/development/cargo-tracker/release_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+
+## 2026-10-29
+* **Verification**: [release_plan](/development/cargo-tracker/release_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_38g_report](/development/cargo-tracker/bolt_38g_report.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_38g_report](/development/cargo-tracker/bolt_38g_report.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [release_plan](/development/cargo-tracker/release_plan.md) を human:kakimomokuri が検証
+* **Update**: [bolt_38g_report](/development/cargo-tracker/bolt_38g_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_38f2b_report](/development/cargo-tracker/bolt_38f2b_report.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [release_plan](/development/cargo-tracker/release_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_38f2b_report](/development/cargo-tracker/bolt_38f2b_report.md) を human:kakimomokuri が検証
+* **Creation**: [bolt_38g_report](/development/cargo-tracker/bolt_38g_report.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_38f2b_report](/development/cargo-tracker/bolt_38f2b_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [用語集](/manual/用語集.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [付録B-トラブルシューティング](/manual/付録B-トラブルシューティング.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [11-利用者の管理](/manual/11-利用者の管理.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [09-追跡管理](/manual/09-追跡管理.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [08-経路設計](/manual/08-経路設計.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [019-out-of-scope-attempt-recorder](/adr/cargo-tracker/019-out-of-scope-attempt-recorder.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [014-downstream-to-upstream-notification](/adr/cargo-tracker/014-downstream-to-upstream-notification.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [release_plan](/development/cargo-tracker/release_plan.md) を human:kakimomokuri が検証
+* **Creation**: [bolt_38f2b_report](/development/cargo-tracker/bolt_38f2b_report.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [release_plan](/development/cargo-tracker/release_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_38f2b_plan](/development/cargo-tracker/bolt_38f2b_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_38g_plan](/development/cargo-tracker/bolt_38g_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_38f2_report](/development/cargo-tracker/bolt_38f2_report.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_38g_plan](/development/cargo-tracker/bolt_38g_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_38f2b_plan](/development/cargo-tracker/bolt_38f2b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_38f2_report](/development/cargo-tracker/bolt_38f2_report.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_38f2b_plan](/development/cargo-tracker/bolt_38f2b_plan.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_38g_plan](/development/cargo-tracker/bolt_38g_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+
+## 2026-10-28
+* **Creation**: [bolt_38f2_report](/development/cargo-tracker/bolt_38f2_report.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_38g_plan](/development/cargo-tracker/bolt_38g_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [用語集](/manual/用語集.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [付録B-トラブルシューティング](/manual/付録B-トラブルシューティング.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [07-本予約の確定と予約一覧](/manual/07-本予約の確定と予約一覧.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [development_strategy](/development/cargo-tracker/development_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [019-out-of-scope-attempt-recorder](/adr/cargo-tracker/019-out-of-scope-attempt-recorder.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [016-booking-checks-quotation-at-commit-time](/adr/cargo-tracker/016-booking-checks-quotation-at-commit-time.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [用語集](/manual/用語集.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [付録B-トラブルシューティング](/manual/付録B-トラブルシューティング.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [07-本予約の確定と予約一覧](/manual/07-本予約の確定と予約一覧.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [development_strategy](/development/cargo-tracker/development_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [019-out-of-scope-attempt-recorder](/adr/cargo-tracker/019-out-of-scope-attempt-recorder.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [016-booking-checks-quotation-at-commit-time](/adr/cargo-tracker/016-booking-checks-quotation-at-commit-time.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [用語集](/manual/用語集.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [付録B-トラブルシューティング](/manual/付録B-トラブルシューティング.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [07-本予約の確定と予約一覧](/manual/07-本予約の確定と予約一覧.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [development_strategy](/development/cargo-tracker/development_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [019-out-of-scope-attempt-recorder](/adr/cargo-tracker/019-out-of-scope-attempt-recorder.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [016-booking-checks-quotation-at-commit-time](/adr/cargo-tracker/016-booking-checks-quotation-at-commit-time.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_38f2_plan](/development/cargo-tracker/bolt_38f2_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_38f_report](/development/cargo-tracker/bolt_38f_report.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_38f2_plan](/development/cargo-tracker/bolt_38f2_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_38f_report](/development/cargo-tracker/bolt_38f_report.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_38f2_plan](/development/cargo-tracker/bolt_38f2_plan.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_38f_report](/development/cargo-tracker/bolt_38f_report.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [019-out-of-scope-attempt-recorder](/adr/cargo-tracker/019-out-of-scope-attempt-recorder.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [06-受付一覧と審査と見積り](/manual/06-受付一覧と審査と見積り.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [014-downstream-to-upstream-notification](/adr/cargo-tracker/014-downstream-to-upstream-notification.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [012-authentication-principal-and-session](/adr/cargo-tracker/012-authentication-principal-and-session.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [011-mfa-totp](/adr/cargo-tracker/011-mfa-totp.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [001-modular-monolith](/adr/cargo-tracker/001-modular-monolith.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [019-out-of-scope-attempt-recorder](/adr/cargo-tracker/019-out-of-scope-attempt-recorder.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [06-受付一覧と審査と見積り](/manual/06-受付一覧と審査と見積り.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [014-downstream-to-upstream-notification](/adr/cargo-tracker/014-downstream-to-upstream-notification.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [012-authentication-principal-and-session](/adr/cargo-tracker/012-authentication-principal-and-session.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [011-mfa-totp](/adr/cargo-tracker/011-mfa-totp.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [001-modular-monolith](/adr/cargo-tracker/001-modular-monolith.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [019-out-of-scope-attempt-recorder](/adr/cargo-tracker/019-out-of-scope-attempt-recorder.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [06-受付一覧と審査と見積り](/manual/06-受付一覧と審査と見積り.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [014-downstream-to-upstream-notification](/adr/cargo-tracker/014-downstream-to-upstream-notification.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [012-authentication-principal-and-session](/adr/cargo-tracker/012-authentication-principal-and-session.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [011-mfa-totp](/adr/cargo-tracker/011-mfa-totp.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [001-modular-monolith](/adr/cargo-tracker/001-modular-monolith.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_38e_report](/development/cargo-tracker/bolt_38e_report.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_38e_report](/development/cargo-tracker/bolt_38e_report.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_38e_report](/development/cargo-tracker/bolt_38e_report.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_38f_plan](/development/cargo-tracker/bolt_38f_plan.md) を human:kakimomokuri が検証
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [system_usecase](/requirements/cargo-tracker/system_usecase.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [11-利用者の管理](/manual/11-利用者の管理.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [development_strategy](/development/cargo-tracker/development_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_38f_plan](/development/cargo-tracker/bolt_38f_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_38e_plan](/development/cargo-tracker/bolt_38e_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [operation](/design/cargo-tracker/operation.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [system_usecase](/requirements/cargo-tracker/system_usecase.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [11-利用者の管理](/manual/11-利用者の管理.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [development_strategy](/development/cargo-tracker/development_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_38e_plan](/development/cargo-tracker/bolt_38e_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [operation](/design/cargo-tracker/operation.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [system_usecase](/requirements/cargo-tracker/system_usecase.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [11-利用者の管理](/manual/11-利用者の管理.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [development_strategy](/development/cargo-tracker/development_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [operation](/design/cargo-tracker/operation.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_38f_plan](/development/cargo-tracker/bolt_38f_plan.md) を human:kakimomokuri が検証
+* **Update**: [bolt_38f_plan](/development/cargo-tracker/bolt_38f_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_38f_plan](/development/cargo-tracker/bolt_38f_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_38e_plan](/development/cargo-tracker/bolt_38e_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_38d2_report](/development/cargo-tracker/bolt_38d2_report.md) を human:kakimomokuri が検証
+* **Creation**: [bolt_38f_plan](/development/cargo-tracker/bolt_38f_plan.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_38e_plan](/development/cargo-tracker/bolt_38e_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_38d2_report](/development/cargo-tracker/bolt_38d2_report.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_38d2_report](/development/cargo-tracker/bolt_38d2_report.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+
+## 2026-10-27
+* **Update**: [bolt_38e_plan](/development/cargo-tracker/bolt_38e_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [付録B-トラブルシューティング](/manual/付録B-トラブルシューティング.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [02-ログインと共通の画面](/manual/02-ログインと共通の画面.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [011-mfa-totp](/adr/cargo-tracker/011-mfa-totp.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_38e_plan](/development/cargo-tracker/bolt_38e_plan.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [付録B-トラブルシューティング](/manual/付録B-トラブルシューティング.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [02-ログインと共通の画面](/manual/02-ログインと共通の画面.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [011-mfa-totp](/adr/cargo-tracker/011-mfa-totp.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [付録B-トラブルシューティング](/manual/付録B-トラブルシューティング.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [02-ログインと共通の画面](/manual/02-ログインと共通の画面.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [011-mfa-totp](/adr/cargo-tracker/011-mfa-totp.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_38d2_plan](/development/cargo-tracker/bolt_38d2_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_38d_report](/development/cargo-tracker/bolt_38d_report.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_38d_report](/development/cargo-tracker/bolt_38d_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_38d2_plan](/development/cargo-tracker/bolt_38d2_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_38d2_plan](/development/cargo-tracker/bolt_38d2_plan.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_38d_report](/development/cargo-tracker/bolt_38d_report.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [付録B-トラブルシューティング](/manual/付録B-トラブルシューティング.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [11-利用者の管理](/manual/11-利用者の管理.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [02-ログインと共通の画面](/manual/02-ログインと共通の画面.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [017-notification-module-and-mail](/adr/cargo-tracker/017-notification-module-and-mail.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [011-mfa-totp](/adr/cargo-tracker/011-mfa-totp.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [付録B-トラブルシューティング](/manual/付録B-トラブルシューティング.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [11-利用者の管理](/manual/11-利用者の管理.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [02-ログインと共通の画面](/manual/02-ログインと共通の画面.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [017-notification-module-and-mail](/adr/cargo-tracker/017-notification-module-and-mail.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [011-mfa-totp](/adr/cargo-tracker/011-mfa-totp.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [付録B-トラブルシューティング](/manual/付録B-トラブルシューティング.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [11-利用者の管理](/manual/11-利用者の管理.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [02-ログインと共通の画面](/manual/02-ログインと共通の画面.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [017-notification-module-and-mail](/adr/cargo-tracker/017-notification-module-and-mail.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [011-mfa-totp](/adr/cargo-tracker/011-mfa-totp.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_38c2_report](/development/cargo-tracker/bolt_38c2_report.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_38c2_report](/development/cargo-tracker/bolt_38c2_report.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_38c2_report](/development/cargo-tracker/bolt_38c2_report.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [用語集](/manual/用語集.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [付録B-トラブルシューティング](/manual/付録B-トラブルシューティング.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [11-利用者の管理](/manual/11-利用者の管理.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [operation](/design/cargo-tracker/operation.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [用語集](/manual/用語集.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [付録B-トラブルシューティング](/manual/付録B-トラブルシューティング.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [11-利用者の管理](/manual/11-利用者の管理.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [operation](/design/cargo-tracker/operation.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [用語集](/manual/用語集.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [付録B-トラブルシューティング](/manual/付録B-トラブルシューティング.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [11-利用者の管理](/manual/11-利用者の管理.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [operation](/design/cargo-tracker/operation.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_38d_plan](/development/cargo-tracker/bolt_38d_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_38c2_plan](/development/cargo-tracker/bolt_38c2_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_38d_plan](/development/cargo-tracker/bolt_38d_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_38c2_plan](/development/cargo-tracker/bolt_38c2_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_38d_plan](/development/cargo-tracker/bolt_38d_plan.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_38c2_plan](/development/cargo-tracker/bolt_38c2_plan.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_38c_report](/development/cargo-tracker/bolt_38c_report.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_38c_report](/development/cargo-tracker/bolt_38c_report.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_38c_report](/development/cargo-tracker/bolt_38c_report.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [付録B-トラブルシューティング](/manual/付録B-トラブルシューティング.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [11-利用者の管理](/manual/11-利用者の管理.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [02-ログインと共通の画面](/manual/02-ログインと共通の画面.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [operation](/design/cargo-tracker/operation.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [012-authentication-principal-and-session](/adr/cargo-tracker/012-authentication-principal-and-session.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [011-mfa-totp](/adr/cargo-tracker/011-mfa-totp.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [付録B-トラブルシューティング](/manual/付録B-トラブルシューティング.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [11-利用者の管理](/manual/11-利用者の管理.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [02-ログインと共通の画面](/manual/02-ログインと共通の画面.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [operation](/design/cargo-tracker/operation.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [012-authentication-principal-and-session](/adr/cargo-tracker/012-authentication-principal-and-session.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [011-mfa-totp](/adr/cargo-tracker/011-mfa-totp.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_38c_plan](/development/cargo-tracker/bolt_38c_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_38c_plan](/development/cargo-tracker/bolt_38c_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_38c_plan](/development/cargo-tracker/bolt_38c_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_38c_plan](/development/cargo-tracker/bolt_38c_plan.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+
+## 2026-10-26
+* **Verification**: [bolt_38b4_report](/development/cargo-tracker/bolt_38b4_report.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_38b4_report](/development/cargo-tracker/bolt_38b4_report.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_38b4_report](/development/cargo-tracker/bolt_38b4_report.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [付録B-トラブルシューティング](/manual/付録B-トラブルシューティング.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [11-利用者の管理](/manual/11-利用者の管理.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [02-ログインと共通の画面](/manual/02-ログインと共通の画面.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [017-notification-module-and-mail](/adr/cargo-tracker/017-notification-module-and-mail.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [012-authentication-principal-and-session](/adr/cargo-tracker/012-authentication-principal-and-session.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_38b4_plan](/development/cargo-tracker/bolt_38b4_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_38b4_plan](/development/cargo-tracker/bolt_38b4_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_38b4_plan](/development/cargo-tracker/bolt_38b4_plan.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_38b3b_report](/development/cargo-tracker/bolt_38b3b_report.md) を human:kakimomokuri が検証
+* **Creation**: [bolt_38b3b_report](/development/cargo-tracker/bolt_38b3b_report.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [11-利用者の管理](/manual/11-利用者の管理.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [00-はじめに](/manual/00-はじめに.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_38b3b_plan](/development/cargo-tracker/bolt_38b3b_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_38b3b_plan](/development/cargo-tracker/bolt_38b3b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_38b3b_plan](/development/cargo-tracker/bolt_38b3b_plan.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_38b3_report](/development/cargo-tracker/bolt_38b3_report.md) を human:kakimomokuri が検証
+* **Creation**: [bolt_38b3_report](/development/cargo-tracker/bolt_38b3_report.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_38b3_plan](/development/cargo-tracker/bolt_38b3_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_38b3_plan](/development/cargo-tracker/bolt_38b3_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_38b3_plan](/development/cargo-tracker/bolt_38b3_plan.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_38b2c_report](/development/cargo-tracker/bolt_38b2c_report.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_38b2c_report](/development/cargo-tracker/bolt_38b2c_report.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_38b2c_report](/development/cargo-tracker/bolt_38b2c_report.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [017-notification-module-and-mail](/adr/cargo-tracker/017-notification-module-and-mail.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_38b2c_plan](/development/cargo-tracker/bolt_38b2c_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_38b2c_plan](/development/cargo-tracker/bolt_38b2c_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_38b2c_plan](/development/cargo-tracker/bolt_38b2c_plan.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_38b2b_report](/development/cargo-tracker/bolt_38b2b_report.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_38b2b_report](/development/cargo-tracker/bolt_38b2b_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_38b2b_report](/development/cargo-tracker/bolt_38b2b_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_38b2b_report](/development/cargo-tracker/bolt_38b2b_report.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [017-notification-module-and-mail](/adr/cargo-tracker/017-notification-module-and-mail.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [017-notification-module-and-mail](/adr/cargo-tracker/017-notification-module-and-mail.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_38b2b_plan](/development/cargo-tracker/bolt_38b2b_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_38b2b_plan](/development/cargo-tracker/bolt_38b2b_plan.md) を更新（anthropic/claude-opus-5-5）
+
+## 2026-10-25
+* **Creation**: [bolt_38b2b_plan](/development/cargo-tracker/bolt_38b2b_plan.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_38b2_report](/development/cargo-tracker/bolt_38b2_report.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_38b2_report](/development/cargo-tracker/bolt_38b2_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_38b2_report](/development/cargo-tracker/bolt_38b2_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_38b2_report](/development/cargo-tracker/bolt_38b2_report.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [development_strategy](/development/cargo-tracker/development_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_38b2_plan](/development/cargo-tracker/bolt_38b2_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_38b2_plan](/development/cargo-tracker/bolt_38b2_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_38b2_plan](/development/cargo-tracker/bolt_38b2_plan.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_38b_report](/development/cargo-tracker/bolt_38b_report.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_38b_report](/development/cargo-tracker/bolt_38b_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_38b_report](/development/cargo-tracker/bolt_38b_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_38b_report](/development/cargo-tracker/bolt_38b_report.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [011-mfa-totp](/adr/cargo-tracker/011-mfa-totp.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_38b_plan](/development/cargo-tracker/bolt_38b_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_38b_plan](/development/cargo-tracker/bolt_38b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_38b_plan](/development/cargo-tracker/bolt_38b_plan.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_38_report](/development/cargo-tracker/bolt_38_report.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_38_report](/development/cargo-tracker/bolt_38_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_38_report](/development/cargo-tracker/bolt_38_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_38_report](/development/cargo-tracker/bolt_38_report.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [11-利用者の管理](/manual/11-利用者の管理.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+
+## 2026-10-24
+* **Verification**: [bolt_38_plan](/development/cargo-tracker/bolt_38_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_38_plan](/development/cargo-tracker/bolt_38_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_38_plan](/development/cargo-tracker/bolt_38_plan.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_37f3_report](/development/cargo-tracker/bolt_37f3_report.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_37f3_report](/development/cargo-tracker/bolt_37f3_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_37f3_report](/development/cargo-tracker/bolt_37f3_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_37f3_report](/development/cargo-tracker/bolt_37f3_report.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [用語集](/manual/用語集.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [05-予約一覧と追跡の照会](/manual/05-予約一覧と追跡の照会.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [04-見積りへの回答と承認](/manual/04-見積りへの回答と承認.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_37f3_plan](/development/cargo-tracker/bolt_37f3_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_37f3_plan](/development/cargo-tracker/bolt_37f3_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_37f3_plan](/development/cargo-tracker/bolt_37f3_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_37f2_report](/development/cargo-tracker/bolt_37f2_report.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_37f2_report](/development/cargo-tracker/bolt_37f2_report.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_37f2_report](/development/cargo-tracker/bolt_37f2_report.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_37f2_plan](/development/cargo-tracker/bolt_37f2_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_37f2_plan](/development/cargo-tracker/bolt_37f2_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_37f2_plan](/development/cargo-tracker/bolt_37f2_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_37f_report](/development/cargo-tracker/bolt_37f_report.md) を human:kakimomokuri が検証
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_37f_report](/development/cargo-tracker/bolt_37f_report.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_37f_report](/development/cargo-tracker/bolt_37f_report.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [application_development_setup](/operation/cargo-tracker/application_development_setup.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [application_development_setup](/operation/cargo-tracker/application_development_setup.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_37f_plan](/development/cargo-tracker/bolt_37f_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_37f_plan](/development/cargo-tracker/bolt_37f_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_37f_plan](/development/cargo-tracker/bolt_37f_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_37e4c_report](/development/cargo-tracker/bolt_37e4c_report.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_37e4c_report](/development/cargo-tracker/bolt_37e4c_report.md) を更新（anthropic/claude-opus-5-5）
+
+## 2026-10-23
+* **Update**: [bolt_37e4c_report](/development/cargo-tracker/bolt_37e4c_report.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_37e4c_report](/development/cargo-tracker/bolt_37e4c_report.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_37e4c_plan](/development/cargo-tracker/bolt_37e4c_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_37e4c_plan](/development/cargo-tracker/bolt_37e4c_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_37e4c_plan](/development/cargo-tracker/bolt_37e4c_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_37e4b_report](/development/cargo-tracker/bolt_37e4b_report.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_37e4b_report](/development/cargo-tracker/bolt_37e4b_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_37e4b_report](/development/cargo-tracker/bolt_37e4b_report.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_37e4b_report](/development/cargo-tracker/bolt_37e4b_report.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [heroku_demo_setup](/operation/cargo-tracker/heroku_demo_setup.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_37e4b_plan](/development/cargo-tracker/bolt_37e4b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [heroku_demo_setup](/operation/cargo-tracker/heroku_demo_setup.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_37e4b_plan](/development/cargo-tracker/bolt_37e4b_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_37e4b_plan](/development/cargo-tracker/bolt_37e4b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_37e4b_plan](/development/cargo-tracker/bolt_37e4b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_37e4_report](/development/cargo-tracker/bolt_37e4_report.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_37e4_report](/development/cargo-tracker/bolt_37e4_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_37e4_report](/development/cargo-tracker/bolt_37e4_report.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_37e4_report](/development/cargo-tracker/bolt_37e4_report.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [用語集](/manual/用語集.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [付録B-トラブルシューティング](/manual/付録B-トラブルシューティング.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [07-本予約の確定と予約一覧](/manual/07-本予約の確定と予約一覧.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [06-受付一覧と審査と見積り](/manual/06-受付一覧と審査と見積り.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [04-見積りへの回答と承認](/manual/04-見積りへの回答と承認.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [development_strategy](/development/cargo-tracker/development_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_37e4_plan](/development/cargo-tracker/bolt_37e4_plan.md) を human:kakimomokuri が検証
+* **Update**: [bolt_37e4_plan](/development/cargo-tracker/bolt_37e4_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_37e4_plan](/development/cargo-tracker/bolt_37e4_plan.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_37e3b_report](/development/cargo-tracker/bolt_37e3b_report.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_37e3b_report](/development/cargo-tracker/bolt_37e3b_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_37e3b_report](/development/cargo-tracker/bolt_37e3b_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_37e3b_report](/development/cargo-tracker/bolt_37e3b_report.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_37e3b_report](/development/cargo-tracker/bolt_37e3b_report.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [heroku_demo_setup](/operation/cargo-tracker/heroku_demo_setup.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [用語集](/manual/用語集.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [付録B-トラブルシューティング](/manual/付録B-トラブルシューティング.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [08-経路設計](/manual/08-経路設計.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [07-本予約の確定と予約一覧](/manual/07-本予約の確定と予約一覧.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [06-受付一覧と審査と見積り](/manual/06-受付一覧と審査と見積り.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [04-見積りへの回答と承認](/manual/04-見積りへの回答と承認.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [heroku_demo_setup](/operation/cargo-tracker/heroku_demo_setup.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_37e3b_plan](/development/cargo-tracker/bolt_37e3b_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_37e3b_plan](/development/cargo-tracker/bolt_37e3b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_37e3b_plan](/development/cargo-tracker/bolt_37e3b_plan.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_37e3_report](/development/cargo-tracker/bolt_37e3_report.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_37e3_report](/development/cargo-tracker/bolt_37e3_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_37e3_report](/development/cargo-tracker/bolt_37e3_report.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_37e3_report](/development/cargo-tracker/bolt_37e3_report.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [development_strategy](/development/cargo-tracker/development_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_37e3_plan](/development/cargo-tracker/bolt_37e3_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_37e3_plan](/development/cargo-tracker/bolt_37e3_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_37e3_plan](/development/cargo-tracker/bolt_37e3_plan.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_37e2_report](/development/cargo-tracker/bolt_37e2_report.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_37e2_report](/development/cargo-tracker/bolt_37e2_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_37e2_report](/development/cargo-tracker/bolt_37e2_report.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_37e2_report](/development/cargo-tracker/bolt_37e2_report.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [018-requote-returns-transport-request-with-ordering-guard](/adr/cargo-tracker/018-requote-returns-transport-request-with-ordering-guard.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [016-booking-checks-quotation-at-commit-time](/adr/cargo-tracker/016-booking-checks-quotation-at-commit-time.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [014-downstream-to-upstream-notification](/adr/cargo-tracker/014-downstream-to-upstream-notification.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_37e2_plan](/development/cargo-tracker/bolt_37e2_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_37e2_plan](/development/cargo-tracker/bolt_37e2_plan.md) を human:kakimomokuri が検証
+* **Creation**: [bolt_37e2_plan](/development/cargo-tracker/bolt_37e2_plan.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_37e_report](/development/cargo-tracker/bolt_37e_report.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_37e_report](/development/cargo-tracker/bolt_37e_report.md) を human:kakimomokuri が検証
+* **Update**: [bolt_37e_report](/development/cargo-tracker/bolt_37e_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_37e_report](/development/cargo-tracker/bolt_37e_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+
+## 2026-10-22
+* **Creation**: [bolt_37e_report](/development/cargo-tracker/bolt_37e_report.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_37e_plan](/development/cargo-tracker/bolt_37e_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [system_usecase](/requirements/cargo-tracker/system_usecase.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [016-booking-checks-quotation-at-commit-time](/adr/cargo-tracker/016-booking-checks-quotation-at-commit-time.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [014-downstream-to-upstream-notification](/adr/cargo-tracker/014-downstream-to-upstream-notification.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_37e_plan](/development/cargo-tracker/bolt_37e_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_37e_plan](/development/cargo-tracker/bolt_37e_plan.md) を human:kakimomokuri が検証
+* **Creation**: [bolt_37e_plan](/development/cargo-tracker/bolt_37e_plan.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_37d2_report](/development/cargo-tracker/bolt_37d2_report.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_37d2_report](/development/cargo-tracker/bolt_37d2_report.md) を human:kakimomokuri が検証
+* **Creation**: [bolt_37d2_report](/development/cargo-tracker/bolt_37d2_report.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_37d2_plan](/development/cargo-tracker/bolt_37d2_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [system_usecase](/requirements/cargo-tracker/system_usecase.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [用語集](/manual/用語集.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [08-経路設計](/manual/08-経路設計.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [用語集](/manual/用語集.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [08-経路設計](/manual/08-経路設計.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [system_usecase](/requirements/cargo-tracker/system_usecase.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_37d2_plan](/development/cargo-tracker/bolt_37d2_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_37d2_plan](/development/cargo-tracker/bolt_37d2_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_37d2_plan](/development/cargo-tracker/bolt_37d2_plan.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_37d_report](/development/cargo-tracker/bolt_37d_report.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_37d_report](/development/cargo-tracker/bolt_37d_report.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_37d_report](/development/cargo-tracker/bolt_37d_report.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_37d_plan](/development/cargo-tracker/bolt_37d_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_37d_plan](/development/cargo-tracker/bolt_37d_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_37d_plan](/development/cargo-tracker/bolt_37d_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_37d_plan](/development/cargo-tracker/bolt_37d_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_37d_plan](/development/cargo-tracker/bolt_37d_plan.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_37c_report](/development/cargo-tracker/bolt_37c_report.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_37c_report](/development/cargo-tracker/bolt_37c_report.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_37c_report](/development/cargo-tracker/bolt_37c_report.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_37c_plan](/development/cargo-tracker/bolt_37c_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [用語集](/manual/用語集.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [08-経路設計](/manual/08-経路設計.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [heroku_demo_setup](/operation/cargo-tracker/heroku_demo_setup.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [用語集](/manual/用語集.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [08-経路設計](/manual/08-経路設計.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [system_usecase](/requirements/cargo-tracker/system_usecase.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_37c_plan](/development/cargo-tracker/bolt_37c_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_37c_plan](/development/cargo-tracker/bolt_37c_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_37c_plan](/development/cargo-tracker/bolt_37c_plan.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_37b2_report](/development/cargo-tracker/bolt_37b2_report.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_37b2_report](/development/cargo-tracker/bolt_37b2_report.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_37b2_report](/development/cargo-tracker/bolt_37b2_report.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_37b2_plan](/development/cargo-tracker/bolt_37b2_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [system_usecase](/requirements/cargo-tracker/system_usecase.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [heroku_demo_setup](/operation/cargo-tracker/heroku_demo_setup.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [用語集](/manual/用語集.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [08-経路設計](/manual/08-経路設計.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [08-経路設計](/manual/08-経路設計.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [system_usecase](/requirements/cargo-tracker/system_usecase.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_37b2_plan](/development/cargo-tracker/bolt_37b2_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_37b2_plan](/development/cargo-tracker/bolt_37b2_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_37b2_plan](/development/cargo-tracker/bolt_37b2_plan.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+
+## 2026-10-21
+* **Verification**: [bolt_37b_report](/development/cargo-tracker/bolt_37b_report.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_37b_report](/development/cargo-tracker/bolt_37b_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_37b_report](/development/cargo-tracker/bolt_37b_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_37b_plan](/development/cargo-tracker/bolt_37b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [heroku_demo_setup](/operation/cargo-tracker/heroku_demo_setup.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [development_strategy](/development/cargo-tracker/development_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_37b_plan](/development/cargo-tracker/bolt_37b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [heroku_demo_setup](/operation/cargo-tracker/heroku_demo_setup.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_37b_plan](/development/cargo-tracker/bolt_37b_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_37b_plan](/development/cargo-tracker/bolt_37b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_37b_plan](/development/cargo-tracker/bolt_37b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_37_report](/development/cargo-tracker/bolt_37_report.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_37_report](/development/cargo-tracker/bolt_37_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_37_report](/development/cargo-tracker/bolt_37_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_37_plan](/development/cargo-tracker/bolt_37_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [system_usecase](/requirements/cargo-tracker/system_usecase.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [08-経路設計](/manual/08-経路設計.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [requirements_definition](/requirements/cargo-tracker/requirements_definition.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_37_plan](/development/cargo-tracker/bolt_37_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_37_plan](/development/cargo-tracker/bolt_37_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_37_plan](/development/cargo-tracker/bolt_37_plan.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_36_report](/development/cargo-tracker/bolt_36_report.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_36_report](/development/cargo-tracker/bolt_36_report.md) を更新（anthropic/claude-opus-5-5）
+
+## 2026-10-20
+* **Update**: [bolt_36_report](/development/cargo-tracker/bolt_36_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_36_plan](/development/cargo-tracker/bolt_36_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_36_plan](/development/cargo-tracker/bolt_36_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_36_plan](/development/cargo-tracker/bolt_36_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_36_plan](/development/cargo-tracker/bolt_36_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [development_strategy](/development/cargo-tracker/development_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [development_strategy](/development/cargo-tracker/development_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_35e_report](/development/cargo-tracker/bolt_35e_report.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_35e_report](/development/cargo-tracker/bolt_35e_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_35e_report](/development/cargo-tracker/bolt_35e_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [heroku_demo_setup](/operation/cargo-tracker/heroku_demo_setup.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [heroku_demo_setup](/operation/cargo-tracker/heroku_demo_setup.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_35e_plan](/development/cargo-tracker/bolt_35e_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_35e_plan](/development/cargo-tracker/bolt_35e_plan.md) を human:kakimomokuri が検証
+* **Update**: [bolt_35e_plan](/development/cargo-tracker/bolt_35e_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_35e_plan](/development/cargo-tracker/bolt_35e_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_35d_report](/development/cargo-tracker/bolt_35d_report.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_35d_report](/development/cargo-tracker/bolt_35d_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_35d_report](/development/cargo-tracker/bolt_35d_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_35d_report](/development/cargo-tracker/bolt_35d_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [用語集](/manual/用語集.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [07-本予約の確定と予約一覧](/manual/07-本予約の確定と予約一覧.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [06-受付一覧と審査と見積り](/manual/06-受付一覧と審査と見積り.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [04-見積りへの回答と承認](/manual/04-見積りへの回答と承認.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [01-業務フロー](/manual/01-業務フロー.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_35d_plan](/development/cargo-tracker/bolt_35d_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [018-requote-returns-transport-request-with-ordering-guard](/adr/cargo-tracker/018-requote-returns-transport-request-with-ordering-guard.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [用語集](/manual/用語集.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [07-本予約の確定と予約一覧](/manual/07-本予約の確定と予約一覧.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [06-受付一覧と審査と見積り](/manual/06-受付一覧と審査と見積り.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [04-見積りへの回答と承認](/manual/04-見積りへの回答と承認.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [development_strategy](/development/cargo-tracker/development_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_35d_plan](/development/cargo-tracker/bolt_35d_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_35d_plan](/development/cargo-tracker/bolt_35d_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_35d_plan](/development/cargo-tracker/bolt_35d_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_35d_plan](/development/cargo-tracker/bolt_35d_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+
+## 2026-10-19
+* **Verification**: [bolt_35c_report](/development/cargo-tracker/bolt_35c_report.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_35c_report](/development/cargo-tracker/bolt_35c_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_35c_report](/development/cargo-tracker/bolt_35c_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_35c_report](/development/cargo-tracker/bolt_35c_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [付録B-トラブルシューティング](/manual/付録B-トラブルシューティング.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [07-本予約の確定と予約一覧](/manual/07-本予約の確定と予約一覧.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [06-受付一覧と審査と見積り](/manual/06-受付一覧と審査と見積り.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_35c_plan](/development/cargo-tracker/bolt_35c_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_35c_report](/development/cargo-tracker/bolt_35c_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [付録B-トラブルシューティング](/manual/付録B-トラブルシューティング.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [07-本予約の確定と予約一覧](/manual/07-本予約の確定と予約一覧.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [06-受付一覧と審査と見積り](/manual/06-受付一覧と審査と見積り.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_35c_plan](/development/cargo-tracker/bolt_35c_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [付録B-トラブルシューティング](/manual/付録B-トラブルシューティング.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [07-本予約の確定と予約一覧](/manual/07-本予約の確定と予約一覧.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [06-受付一覧と審査と見積り](/manual/06-受付一覧と審査と見積り.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [development_strategy](/development/cargo-tracker/development_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_35c_plan](/development/cargo-tracker/bolt_35c_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_35c_plan](/development/cargo-tracker/bolt_35c_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_35c_plan](/development/cargo-tracker/bolt_35c_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [018-requote-returns-transport-request-with-ordering-guard](/adr/cargo-tracker/018-requote-returns-transport-request-with-ordering-guard.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_35b2_report](/development/cargo-tracker/bolt_35b2_report.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_35b2_report](/development/cargo-tracker/bolt_35b2_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [018-requote-returns-transport-request-with-ordering-guard](/adr/cargo-tracker/018-requote-returns-transport-request-with-ordering-guard.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_35b2_report](/development/cargo-tracker/bolt_35b2_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_35b2_report](/development/cargo-tracker/bolt_35b2_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_35b2_report](/development/cargo-tracker/bolt_35b2_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [018-requote-returns-transport-request-with-ordering-guard](/adr/cargo-tracker/018-requote-returns-transport-request-with-ordering-guard.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [018-requote-returns-transport-request-with-ordering-guard](/adr/cargo-tracker/018-requote-returns-transport-request-with-ordering-guard.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_35b2_plan](/development/cargo-tracker/bolt_35b2_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_35b2_plan](/development/cargo-tracker/bolt_35b2_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_35b2_plan](/development/cargo-tracker/bolt_35b2_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_35b_report](/development/cargo-tracker/bolt_35b_report.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_35b_report](/development/cargo-tracker/bolt_35b_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_35b_report](/development/cargo-tracker/bolt_35b_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_35b_report](/development/cargo-tracker/bolt_35b_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_35b_report](/development/cargo-tracker/bolt_35b_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [development_strategy](/development/cargo-tracker/development_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_35b_plan](/development/cargo-tracker/bolt_35b_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_35b_plan](/development/cargo-tracker/bolt_35b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_35b_plan](/development/cargo-tracker/bolt_35b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_35_report](/development/cargo-tracker/bolt_35_report.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_35_report](/development/cargo-tracker/bolt_35_report.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_35_report](/development/cargo-tracker/bolt_35_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_35_report](/development/cargo-tracker/bolt_35_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_35_report](/development/cargo-tracker/bolt_35_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_35_report](/development/cargo-tracker/bolt_35_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+
+## 2026-10-18
+* **Update**: [07-本予約の確定と予約一覧](/manual/07-本予約の確定と予約一覧.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [development_strategy](/development/cargo-tracker/development_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [development_strategy](/development/cargo-tracker/development_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_35_plan](/development/cargo-tracker/bolt_35_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_35_plan](/development/cargo-tracker/bolt_35_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_35_plan](/development/cargo-tracker/bolt_35_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_34f_report](/development/cargo-tracker/bolt_34f_report.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_34f_report](/development/cargo-tracker/bolt_34f_report.md) を human:kakimomokuri が検証
+* **Update**: [bolt_34f_report](/development/cargo-tracker/bolt_34f_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_34f_report](/development/cargo-tracker/bolt_34f_report.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [11-利用者の管理](/manual/11-利用者の管理.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [11-利用者の管理](/manual/11-利用者の管理.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_34f_plan](/development/cargo-tracker/bolt_34f_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_34f_plan](/development/cargo-tracker/bolt_34f_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_34f_plan](/development/cargo-tracker/bolt_34f_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_34e_report](/development/cargo-tracker/bolt_34e_report.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_34e_report](/development/cargo-tracker/bolt_34e_report.md) を更新（anthropic/claude-opus-5-5）
+
+## 2026-10-17
+* **Update**: [bolt_34e_report](/development/cargo-tracker/bolt_34e_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_34e_plan](/development/cargo-tracker/bolt_34e_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_34e_plan](/development/cargo-tracker/bolt_34e_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_34e_plan](/development/cargo-tracker/bolt_34e_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_34e_plan](/development/cargo-tracker/bolt_34e_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_34c_report](/development/cargo-tracker/bolt_34c_report.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_34c_report](/development/cargo-tracker/bolt_34c_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_34c_report](/development/cargo-tracker/bolt_34c_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_34c_plan](/development/cargo-tracker/bolt_34c_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_34c_plan](/development/cargo-tracker/bolt_34c_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [011-mfa-totp](/adr/cargo-tracker/011-mfa-totp.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_34d_report](/development/cargo-tracker/bolt_34d_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_32d_report](/development/cargo-tracker/bolt_32d_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_31d_report](/development/cargo-tracker/bolt_31d_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [012-authentication-principal-and-session](/adr/cargo-tracker/012-authentication-principal-and-session.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [011-mfa-totp](/adr/cargo-tracker/011-mfa-totp.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_34c_plan](/development/cargo-tracker/bolt_34c_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_34c_plan](/development/cargo-tracker/bolt_34c_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_34c_plan](/development/cargo-tracker/bolt_34c_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_34d_report](/development/cargo-tracker/bolt_34d_report.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_34d_report](/development/cargo-tracker/bolt_34d_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_34d_report](/development/cargo-tracker/bolt_34d_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_34d_plan](/development/cargo-tracker/bolt_34d_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [用語集](/manual/用語集.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [11-利用者の管理](/manual/11-利用者の管理.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [00-はじめに](/manual/00-はじめに.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_34d_plan](/development/cargo-tracker/bolt_34d_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [11-利用者の管理](/manual/11-利用者の管理.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_34d_plan](/development/cargo-tracker/bolt_34d_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_34d_plan](/development/cargo-tracker/bolt_34d_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_34d_plan](/development/cargo-tracker/bolt_34d_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+
+## 2026-10-16
+* **Verification**: [bolt_34b_report](/development/cargo-tracker/bolt_34b_report.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_34b_report](/development/cargo-tracker/bolt_34b_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_34b_report](/development/cargo-tracker/bolt_34b_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_34b_plan](/development/cargo-tracker/bolt_34b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_34b_report](/development/cargo-tracker/bolt_34b_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [用語集](/manual/用語集.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [11-利用者の管理](/manual/11-利用者の管理.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [02-ログインと共通の画面](/manual/02-ログインと共通の画面.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_34b_plan](/development/cargo-tracker/bolt_34b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [11-利用者の管理](/manual/11-利用者の管理.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [02-ログインと共通の画面](/manual/02-ログインと共通の画面.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_34b_plan](/development/cargo-tracker/bolt_34b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_34b_plan](/development/cargo-tracker/bolt_34b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_34b_plan](/development/cargo-tracker/bolt_34b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_34b_plan](/development/cargo-tracker/bolt_34b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_34b_plan](/development/cargo-tracker/bolt_34b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_34b_plan](/development/cargo-tracker/bolt_34b_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_34b_plan](/development/cargo-tracker/bolt_34b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_34b_plan](/development/cargo-tracker/bolt_34b_plan.md) を human:kakimomokuri が検証
+* **Update**: [bolt_34b_plan](/development/cargo-tracker/bolt_34b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_34_report](/development/cargo-tracker/bolt_34_report.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_34_report](/development/cargo-tracker/bolt_34_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_34_report](/development/cargo-tracker/bolt_34_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_34_plan](/development/cargo-tracker/bolt_34_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [用語集](/manual/用語集.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [11-利用者の管理](/manual/11-利用者の管理.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [02-ログインと共通の画面](/manual/02-ログインと共通の画面.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [00-はじめに](/manual/00-はじめに.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [11-利用者の管理](/manual/11-利用者の管理.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [用語集](/manual/用語集.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_34_plan](/development/cargo-tracker/bolt_34_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [11-利用者の管理](/manual/11-利用者の管理.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [用語集](/manual/用語集.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_34_plan](/development/cargo-tracker/bolt_34_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_34_plan](/development/cargo-tracker/bolt_34_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_34_plan](/development/cargo-tracker/bolt_34_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_34_plan](/development/cargo-tracker/bolt_34_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_34_plan](/development/cargo-tracker/bolt_34_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [011-mfa-totp](/adr/cargo-tracker/011-mfa-totp.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [011-mfa-totp](/adr/cargo-tracker/011-mfa-totp.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_34_plan](/development/cargo-tracker/bolt_34_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_34_plan](/development/cargo-tracker/bolt_34_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_34_plan](/development/cargo-tracker/bolt_34_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_33f_report](/development/cargo-tracker/bolt_33f_report.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_33f_report](/development/cargo-tracker/bolt_33f_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_33f_report](/development/cargo-tracker/bolt_33f_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_33f_plan](/development/cargo-tracker/bolt_33f_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_frontend](/design/cargo-tracker/architecture_frontend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [012-authentication-principal-and-session](/adr/cargo-tracker/012-authentication-principal-and-session.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_33f_plan](/development/cargo-tracker/bolt_33f_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_33f_plan](/development/cargo-tracker/bolt_33f_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_33f_plan](/development/cargo-tracker/bolt_33f_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_33f_plan](/development/cargo-tracker/bolt_33f_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_33f_plan](/development/cargo-tracker/bolt_33f_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [012-authentication-principal-and-session](/adr/cargo-tracker/012-authentication-principal-and-session.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [011-mfa-totp](/adr/cargo-tracker/011-mfa-totp.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_33f_plan](/development/cargo-tracker/bolt_33f_plan.md) を human:kakimomokuri が検証
+* **Update**: [bolt_33f_plan](/development/cargo-tracker/bolt_33f_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_33f_plan](/development/cargo-tracker/bolt_33f_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_33f_plan](/development/cargo-tracker/bolt_33f_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_33e_report](/development/cargo-tracker/bolt_33e_report.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_33e_report](/development/cargo-tracker/bolt_33e_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_33e_report](/development/cargo-tracker/bolt_33e_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_33e_plan](/development/cargo-tracker/bolt_33e_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [012-authentication-principal-and-session](/adr/cargo-tracker/012-authentication-principal-and-session.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [011-mfa-totp](/adr/cargo-tracker/011-mfa-totp.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_33e_plan](/development/cargo-tracker/bolt_33e_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_33e_plan](/development/cargo-tracker/bolt_33e_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_33e_plan](/development/cargo-tracker/bolt_33e_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_33e_plan](/development/cargo-tracker/bolt_33e_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_33d_report](/development/cargo-tracker/bolt_33d_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_33c_report](/development/cargo-tracker/bolt_33c_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [012-authentication-principal-and-session](/adr/cargo-tracker/012-authentication-principal-and-session.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [011-mfa-totp](/adr/cargo-tracker/011-mfa-totp.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_33e_plan](/development/cargo-tracker/bolt_33e_plan.md) を human:kakimomokuri が検証
+* **Update**: [bolt_33e_plan](/development/cargo-tracker/bolt_33e_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_33e_plan](/development/cargo-tracker/bolt_33e_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_33e_plan](/development/cargo-tracker/bolt_33e_plan.md) を更新（anthropic/claude-opus-5-5）
+
+## 2026-10-15
+* **Verification**: [bolt_33d_report](/development/cargo-tracker/bolt_33d_report.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_33d_report](/development/cargo-tracker/bolt_33d_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_33d_report](/development/cargo-tracker/bolt_33d_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_33d_plan](/development/cargo-tracker/bolt_33d_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [011-mfa-totp](/adr/cargo-tracker/011-mfa-totp.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_33d_plan](/development/cargo-tracker/bolt_33d_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [011-mfa-totp](/adr/cargo-tracker/011-mfa-totp.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_33d_plan](/development/cargo-tracker/bolt_33d_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_33d_plan](/development/cargo-tracker/bolt_33d_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [011-mfa-totp](/adr/cargo-tracker/011-mfa-totp.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_33d_plan](/development/cargo-tracker/bolt_33d_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_33d_plan](/development/cargo-tracker/bolt_33d_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_33c_report](/development/cargo-tracker/bolt_33c_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_33b_report](/development/cargo-tracker/bolt_33b_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [011-mfa-totp](/adr/cargo-tracker/011-mfa-totp.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_33d_plan](/development/cargo-tracker/bolt_33d_plan.md) を human:kakimomokuri が検証
+* **Update**: [bolt_33d_plan](/development/cargo-tracker/bolt_33d_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_33d_plan](/development/cargo-tracker/bolt_33d_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_33d_plan](/development/cargo-tracker/bolt_33d_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_33c_report](/development/cargo-tracker/bolt_33c_report.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_33c_report](/development/cargo-tracker/bolt_33c_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_33c_plan](/development/cargo-tracker/bolt_33c_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_33c_report](/development/cargo-tracker/bolt_33c_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_33c_plan](/development/cargo-tracker/bolt_33c_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_33c_plan](/development/cargo-tracker/bolt_33c_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_frontend](/design/cargo-tracker/architecture_frontend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_33c_plan](/development/cargo-tracker/bolt_33c_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_frontend](/design/cargo-tracker/architecture_frontend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [012-authentication-principal-and-session](/adr/cargo-tracker/012-authentication-principal-and-session.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [011-mfa-totp](/adr/cargo-tracker/011-mfa-totp.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_frontend](/design/cargo-tracker/architecture_frontend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [012-authentication-principal-and-session](/adr/cargo-tracker/012-authentication-principal-and-session.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [011-mfa-totp](/adr/cargo-tracker/011-mfa-totp.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_33b_report](/development/cargo-tracker/bolt_33b_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_frontend](/design/cargo-tracker/architecture_frontend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [012-authentication-principal-and-session](/adr/cargo-tracker/012-authentication-principal-and-session.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [011-mfa-totp](/adr/cargo-tracker/011-mfa-totp.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_33b_report](/development/cargo-tracker/bolt_33b_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_frontend](/design/cargo-tracker/architecture_frontend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [012-authentication-principal-and-session](/adr/cargo-tracker/012-authentication-principal-and-session.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [011-mfa-totp](/adr/cargo-tracker/011-mfa-totp.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_33c_plan](/development/cargo-tracker/bolt_33c_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_33b_report](/development/cargo-tracker/bolt_33b_report.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_33b_report](/development/cargo-tracker/bolt_33b_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_33b_plan](/development/cargo-tracker/bolt_33b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_33b_report](/development/cargo-tracker/bolt_33b_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_33b_plan](/development/cargo-tracker/bolt_33b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [用語集](/manual/用語集.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [付録B-トラブルシューティング](/manual/付録B-トラブルシューティング.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [02-ログインと共通の画面](/manual/02-ログインと共通の画面.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_33b_plan](/development/cargo-tracker/bolt_33b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [012-authentication-principal-and-session](/adr/cargo-tracker/012-authentication-principal-and-session.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [011-mfa-totp](/adr/cargo-tracker/011-mfa-totp.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [用語集](/manual/用語集.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [付録B-トラブルシューティング](/manual/付録B-トラブルシューティング.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [02-ログインと共通の画面](/manual/02-ログインと共通の画面.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_33b_plan](/development/cargo-tracker/bolt_33b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [012-authentication-principal-and-session](/adr/cargo-tracker/012-authentication-principal-and-session.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [011-mfa-totp](/adr/cargo-tracker/011-mfa-totp.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [用語集](/manual/用語集.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [付録B-トラブルシューティング](/manual/付録B-トラブルシューティング.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [02-ログインと共通の画面](/manual/02-ログインと共通の画面.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_33b_plan](/development/cargo-tracker/bolt_33b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [用語集](/manual/用語集.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [付録B-トラブルシューティング](/manual/付録B-トラブルシューティング.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [02-ログインと共通の画面](/manual/02-ログインと共通の画面.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_33b_plan](/development/cargo-tracker/bolt_33b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [012-authentication-principal-and-session](/adr/cargo-tracker/012-authentication-principal-and-session.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [011-mfa-totp](/adr/cargo-tracker/011-mfa-totp.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [012-authentication-principal-and-session](/adr/cargo-tracker/012-authentication-principal-and-session.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [011-mfa-totp](/adr/cargo-tracker/011-mfa-totp.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [012-authentication-principal-and-session](/adr/cargo-tracker/012-authentication-principal-and-session.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [011-mfa-totp](/adr/cargo-tracker/011-mfa-totp.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_33b_plan](/development/cargo-tracker/bolt_33b_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_33b_plan](/development/cargo-tracker/bolt_33b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_33b_plan](/development/cargo-tracker/bolt_33b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_33b_plan](/development/cargo-tracker/bolt_33b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_33a_report](/development/cargo-tracker/bolt_33a_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_33a_plan](/development/cargo-tracker/bolt_33a_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_33a_report](/development/cargo-tracker/bolt_33a_report.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_33a_report](/development/cargo-tracker/bolt_33a_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_33a_report](/development/cargo-tracker/bolt_33a_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_33a_report](/development/cargo-tracker/bolt_33a_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_33a_plan](/development/cargo-tracker/bolt_33a_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [付録B-トラブルシューティング](/manual/付録B-トラブルシューティング.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [02-ログインと共通の画面](/manual/02-ログインと共通の画面.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_33a_plan](/development/cargo-tracker/bolt_33a_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [012-authentication-principal-and-session](/adr/cargo-tracker/012-authentication-principal-and-session.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [heroku_demo_setup](/operation/cargo-tracker/heroku_demo_setup.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [付録B-トラブルシューティング](/manual/付録B-トラブルシューティング.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [02-ログインと共通の画面](/manual/02-ログインと共通の画面.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_33a_plan](/development/cargo-tracker/bolt_33a_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_33a_plan](/development/cargo-tracker/bolt_33a_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_33a_plan](/development/cargo-tracker/bolt_33a_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [017-notification-module-and-mail](/adr/cargo-tracker/017-notification-module-and-mail.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [012-authentication-principal-and-session](/adr/cargo-tracker/012-authentication-principal-and-session.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [011-mfa-totp](/adr/cargo-tracker/011-mfa-totp.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [017-notification-module-and-mail](/adr/cargo-tracker/017-notification-module-and-mail.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [012-authentication-principal-and-session](/adr/cargo-tracker/012-authentication-principal-and-session.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [011-mfa-totp](/adr/cargo-tracker/011-mfa-totp.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_33a_plan](/development/cargo-tracker/bolt_33a_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_33a_plan](/development/cargo-tracker/bolt_33a_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_33a_plan](/development/cargo-tracker/bolt_33a_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_33a_plan](/development/cargo-tracker/bolt_33a_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_33_report](/development/cargo-tracker/bolt_33_report.md) を human:kakimomokuri が検証
+* **Update**: [bolt_33_report](/development/cargo-tracker/bolt_33_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_33_plan](/development/cargo-tracker/bolt_33_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [heroku_demo_setup](/operation/cargo-tracker/heroku_demo_setup.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [付録B-トラブルシューティング](/manual/付録B-トラブルシューティング.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [02-ログインと共通の画面](/manual/02-ログインと共通の画面.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_33_plan](/development/cargo-tracker/bolt_33_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [017-notification-module-and-mail](/adr/cargo-tracker/017-notification-module-and-mail.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [013-heroku-demo-environment](/adr/cargo-tracker/013-heroku-demo-environment.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [012-authentication-principal-and-session](/adr/cargo-tracker/012-authentication-principal-and-session.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [heroku_demo_setup](/operation/cargo-tracker/heroku_demo_setup.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [付録B-トラブルシューティング](/manual/付録B-トラブルシューティング.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [02-ログインと共通の画面](/manual/02-ログインと共通の画面.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_33_plan](/development/cargo-tracker/bolt_33_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [付録B-トラブルシューティング](/manual/付録B-トラブルシューティング.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [02-ログインと共通の画面](/manual/02-ログインと共通の画面.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_33_plan](/development/cargo-tracker/bolt_33_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_33_plan](/development/cargo-tracker/bolt_33_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [017-notification-module-and-mail](/adr/cargo-tracker/017-notification-module-and-mail.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [017-notification-module-and-mail](/adr/cargo-tracker/017-notification-module-and-mail.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_33_plan](/development/cargo-tracker/bolt_33_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [tech_stack](/design/cargo-tracker/tech_stack.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [013-heroku-demo-environment](/adr/cargo-tracker/013-heroku-demo-environment.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [012-authentication-principal-and-session](/adr/cargo-tracker/012-authentication-principal-and-session.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [011-mfa-totp](/adr/cargo-tracker/011-mfa-totp.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [tech_stack](/design/cargo-tracker/tech_stack.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [013-heroku-demo-environment](/adr/cargo-tracker/013-heroku-demo-environment.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [012-authentication-principal-and-session](/adr/cargo-tracker/012-authentication-principal-and-session.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [011-mfa-totp](/adr/cargo-tracker/011-mfa-totp.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [017-notification-module-and-mail](/adr/cargo-tracker/017-notification-module-and-mail.md) を作成（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_33_plan](/development/cargo-tracker/bolt_33_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_33_plan](/development/cargo-tracker/bolt_33_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_33_plan](/development/cargo-tracker/bolt_33_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_33_plan](/development/cargo-tracker/bolt_33_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_33_plan](/development/cargo-tracker/bolt_33_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_32f_report](/development/cargo-tracker/bolt_32f_report.md) を human:kakimomokuri が検証
+* **Update**: [bolt_32f_report](/development/cargo-tracker/bolt_32f_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+
+## 2026-10-14
+* **Creation**: [bolt_32f_report](/development/cargo-tracker/bolt_32f_report.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_32f_plan](/development/cargo-tracker/bolt_32f_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [付録B-トラブルシューティング](/manual/付録B-トラブルシューティング.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [03-見積依頼](/manual/03-見積依頼.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [02-ログインと共通の画面](/manual/02-ログインと共通の画面.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_32f_plan](/development/cargo-tracker/bolt_32f_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_frontend](/design/cargo-tracker/architecture_frontend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [012-authentication-principal-and-session](/adr/cargo-tracker/012-authentication-principal-and-session.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [付録B-トラブルシューティング](/manual/付録B-トラブルシューティング.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [03-見積依頼](/manual/03-見積依頼.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [02-ログインと共通の画面](/manual/02-ログインと共通の画面.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_32f_plan](/development/cargo-tracker/bolt_32f_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_frontend](/design/cargo-tracker/architecture_frontend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [012-authentication-principal-and-session](/adr/cargo-tracker/012-authentication-principal-and-session.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [付録B-トラブルシューティング](/manual/付録B-トラブルシューティング.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [03-見積依頼](/manual/03-見積依頼.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [02-ログインと共通の画面](/manual/02-ログインと共通の画面.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_32f_plan](/development/cargo-tracker/bolt_32f_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_frontend](/design/cargo-tracker/architecture_frontend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [012-authentication-principal-and-session](/adr/cargo-tracker/012-authentication-principal-and-session.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_32f_plan](/development/cargo-tracker/bolt_32f_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_frontend](/design/cargo-tracker/architecture_frontend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [012-authentication-principal-and-session](/adr/cargo-tracker/012-authentication-principal-and-session.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [005-server-side-rendering](/adr/cargo-tracker/005-server-side-rendering.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_frontend](/design/cargo-tracker/architecture_frontend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [012-authentication-principal-and-session](/adr/cargo-tracker/012-authentication-principal-and-session.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [005-server-side-rendering](/adr/cargo-tracker/005-server-side-rendering.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_32f_plan](/development/cargo-tracker/bolt_32f_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_32f_plan](/development/cargo-tracker/bolt_32f_plan.md) を human:kakimomokuri が検証
+* **Update**: [bolt_32f_plan](/development/cargo-tracker/bolt_32f_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_32e_report](/development/cargo-tracker/bolt_32e_report.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_32e_report](/development/cargo-tracker/bolt_32e_report.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_32e_report](/development/cargo-tracker/bolt_32e_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_32e_plan](/development/cargo-tracker/bolt_32e_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [付録B-トラブルシューティング](/manual/付録B-トラブルシューティング.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [02-ログインと共通の画面](/manual/02-ログインと共通の画面.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_32e_plan](/development/cargo-tracker/bolt_32e_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_frontend](/design/cargo-tracker/architecture_frontend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [012-authentication-principal-and-session](/adr/cargo-tracker/012-authentication-principal-and-session.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_32e_plan](/development/cargo-tracker/bolt_32e_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_frontend](/design/cargo-tracker/architecture_frontend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [012-authentication-principal-and-session](/adr/cargo-tracker/012-authentication-principal-and-session.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_frontend](/design/cargo-tracker/architecture_frontend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [012-authentication-principal-and-session](/adr/cargo-tracker/012-authentication-principal-and-session.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_32e_plan](/development/cargo-tracker/bolt_32e_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_32e_plan](/development/cargo-tracker/bolt_32e_plan.md) を human:kakimomokuri が検証
+* **Update**: [bolt_32e_plan](/development/cargo-tracker/bolt_32e_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [heroku_demo_setup](/operation/cargo-tracker/heroku_demo_setup.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_32b_report](/development/cargo-tracker/bolt_32b_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_32b_plan](/development/cargo-tracker/bolt_32b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_32b_report](/development/cargo-tracker/bolt_32b_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_32b_plan](/development/cargo-tracker/bolt_32b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_32b_report](/development/cargo-tracker/bolt_32b_report.md) を human:kakimomokuri が検証
+* **Update**: [bolt_32b_report](/development/cargo-tracker/bolt_32b_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_32b_report](/development/cargo-tracker/bolt_32b_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_32b_plan](/development/cargo-tracker/bolt_32b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_32b_report](/development/cargo-tracker/bolt_32b_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_32b_plan](/development/cargo-tracker/bolt_32b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [付録B-トラブルシューティング](/manual/付録B-トラブルシューティング.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [02-ログインと共通の画面](/manual/02-ログインと共通の画面.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_frontend](/design/cargo-tracker/architecture_frontend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [付録B-トラブルシューティング](/manual/付録B-トラブルシューティング.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [02-ログインと共通の画面](/manual/02-ログインと共通の画面.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_32b_plan](/development/cargo-tracker/bolt_32b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [付録B-トラブルシューティング](/manual/付録B-トラブルシューティング.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [02-ログインと共通の画面](/manual/02-ログインと共通の画面.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_32b_plan](/development/cargo-tracker/bolt_32b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_frontend](/design/cargo-tracker/architecture_frontend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [012-authentication-principal-and-session](/adr/cargo-tracker/012-authentication-principal-and-session.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [011-mfa-totp](/adr/cargo-tracker/011-mfa-totp.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_frontend](/design/cargo-tracker/architecture_frontend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [012-authentication-principal-and-session](/adr/cargo-tracker/012-authentication-principal-and-session.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [011-mfa-totp](/adr/cargo-tracker/011-mfa-totp.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_32b_plan](/development/cargo-tracker/bolt_32b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_32b_plan](/development/cargo-tracker/bolt_32b_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_32b_plan](/development/cargo-tracker/bolt_32b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_32b_plan](/development/cargo-tracker/bolt_32b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_32d_report](/development/cargo-tracker/bolt_32d_report.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_32d_report](/development/cargo-tracker/bolt_32d_report.md) を human:kakimomokuri が検証
+* **Update**: [bolt_32d_report](/development/cargo-tracker/bolt_32d_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_32d_plan](/development/cargo-tracker/bolt_32d_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_32d_report](/development/cargo-tracker/bolt_32d_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_32d_plan](/development/cargo-tracker/bolt_32d_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [011-mfa-totp](/adr/cargo-tracker/011-mfa-totp.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_32d_plan](/development/cargo-tracker/bolt_32d_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_32d_plan](/development/cargo-tracker/bolt_32d_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [011-mfa-totp](/adr/cargo-tracker/011-mfa-totp.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_32d_plan](/development/cargo-tracker/bolt_32d_plan.md) を human:kakimomokuri が検証
+* **Update**: [bolt_32d_plan](/development/cargo-tracker/bolt_32d_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_32d_plan](/development/cargo-tracker/bolt_32d_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_32d_plan](/development/cargo-tracker/bolt_32d_plan.md) を作成（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_32c_report](/development/cargo-tracker/bolt_32c_report.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_32c_report](/development/cargo-tracker/bolt_32c_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_32c_report](/development/cargo-tracker/bolt_32c_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_32c_report](/development/cargo-tracker/bolt_32c_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_32c_plan](/development/cargo-tracker/bolt_32c_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_32c_report](/development/cargo-tracker/bolt_32c_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_32c_plan](/development/cargo-tracker/bolt_32c_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [付録B-トラブルシューティング](/manual/付録B-トラブルシューティング.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [02-ログインと共通の画面](/manual/02-ログインと共通の画面.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [012-authentication-principal-and-session](/adr/cargo-tracker/012-authentication-principal-and-session.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [付録B-トラブルシューティング](/manual/付録B-トラブルシューティング.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [02-ログインと共通の画面](/manual/02-ログインと共通の画面.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_32c_plan](/development/cargo-tracker/bolt_32c_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [012-authentication-principal-and-session](/adr/cargo-tracker/012-authentication-principal-and-session.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [011-mfa-totp](/adr/cargo-tracker/011-mfa-totp.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_32c_plan](/development/cargo-tracker/bolt_32c_plan.md) を human:kakimomokuri が検証
+* **Update**: [bolt_32c_plan](/development/cargo-tracker/bolt_32c_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_32c_plan](/development/cargo-tracker/bolt_32c_plan.md) を human:kakimomokuri が検証
+* **Update**: [bolt_32c_plan](/development/cargo-tracker/bolt_32c_plan.md) を更新（anthropic/claude-opus-5-5）
+
+## 2026-10-13
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_32c_plan](/development/cargo-tracker/bolt_32c_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_32c_plan](/development/cargo-tracker/bolt_32c_plan.md) を作成（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_32_report](/development/cargo-tracker/bolt_32_report.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_32_report](/development/cargo-tracker/bolt_32_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_32_report](/development/cargo-tracker/bolt_32_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_32_report](/development/cargo-tracker/bolt_32_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_32_plan](/development/cargo-tracker/bolt_32_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_32_plan](/development/cargo-tracker/bolt_32_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [012-authentication-principal-and-session](/adr/cargo-tracker/012-authentication-principal-and-session.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [011-mfa-totp](/adr/cargo-tracker/011-mfa-totp.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [012-authentication-principal-and-session](/adr/cargo-tracker/012-authentication-principal-and-session.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [011-mfa-totp](/adr/cargo-tracker/011-mfa-totp.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [012-authentication-principal-and-session](/adr/cargo-tracker/012-authentication-principal-and-session.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [011-mfa-totp](/adr/cargo-tracker/011-mfa-totp.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [012-authentication-principal-and-session](/adr/cargo-tracker/012-authentication-principal-and-session.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [011-mfa-totp](/adr/cargo-tracker/011-mfa-totp.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_32_plan](/development/cargo-tracker/bolt_32_plan.md) を human:kakimomokuri が検証
+* **Update**: [bolt_32_plan](/development/cargo-tracker/bolt_32_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_32_plan](/development/cargo-tracker/bolt_32_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_32_plan](/development/cargo-tracker/bolt_32_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_31d_report](/development/cargo-tracker/bolt_31d_report.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_31d_report](/development/cargo-tracker/bolt_31d_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_31d_report](/development/cargo-tracker/bolt_31d_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_31d_plan](/development/cargo-tracker/bolt_31d_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [011-mfa-totp](/adr/cargo-tracker/011-mfa-totp.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [011-mfa-totp](/adr/cargo-tracker/011-mfa-totp.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [012-authentication-principal-and-session](/adr/cargo-tracker/012-authentication-principal-and-session.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [011-mfa-totp](/adr/cargo-tracker/011-mfa-totp.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_31d_plan](/development/cargo-tracker/bolt_31d_plan.md) を human:kakimomokuri が検証
+* **Update**: [bolt_31d_plan](/development/cargo-tracker/bolt_31d_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_31d_plan](/development/cargo-tracker/bolt_31d_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_31d_plan](/development/cargo-tracker/bolt_31d_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_31c_report](/development/cargo-tracker/bolt_31c_report.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_31c_report](/development/cargo-tracker/bolt_31c_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_31c_report](/development/cargo-tracker/bolt_31c_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_31c_report](/development/cargo-tracker/bolt_31c_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_31c_plan](/development/cargo-tracker/bolt_31c_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_31c_plan](/development/cargo-tracker/bolt_31c_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [011-mfa-totp](/adr/cargo-tracker/011-mfa-totp.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [012-authentication-principal-and-session](/adr/cargo-tracker/012-authentication-principal-and-session.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [011-mfa-totp](/adr/cargo-tracker/011-mfa-totp.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_31c_plan](/development/cargo-tracker/bolt_31c_plan.md) を human:kakimomokuri が検証
+* **Update**: [bolt_31c_plan](/development/cargo-tracker/bolt_31c_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_31c_plan](/development/cargo-tracker/bolt_31c_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_31c_plan](/development/cargo-tracker/bolt_31c_plan.md) を作成（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_31b_report](/development/cargo-tracker/bolt_31b_report.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_31b_report](/development/cargo-tracker/bolt_31b_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_31b_plan](/development/cargo-tracker/bolt_31b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_31b_report](/development/cargo-tracker/bolt_31b_report.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_31b_plan](/development/cargo-tracker/bolt_31b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [011-mfa-totp](/adr/cargo-tracker/011-mfa-totp.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [tech_stack](/design/cargo-tracker/tech_stack.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [012-authentication-principal-and-session](/adr/cargo-tracker/012-authentication-principal-and-session.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [011-mfa-totp](/adr/cargo-tracker/011-mfa-totp.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [tech_stack](/design/cargo-tracker/tech_stack.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [012-authentication-principal-and-session](/adr/cargo-tracker/012-authentication-principal-and-session.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [011-mfa-totp](/adr/cargo-tracker/011-mfa-totp.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_31b_plan](/development/cargo-tracker/bolt_31b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_31_report](/development/cargo-tracker/bolt_31_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_31_report](/development/cargo-tracker/bolt_31_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_31_report](/development/cargo-tracker/bolt_31_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_31_report](/development/cargo-tracker/bolt_31_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_31_plan](/development/cargo-tracker/bolt_31_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [011-mfa-totp](/adr/cargo-tracker/011-mfa-totp.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [012-authentication-principal-and-session](/adr/cargo-tracker/012-authentication-principal-and-session.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [011-mfa-totp](/adr/cargo-tracker/011-mfa-totp.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [011-mfa-totp](/adr/cargo-tracker/011-mfa-totp.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [tech_stack](/design/cargo-tracker/tech_stack.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [012-authentication-principal-and-session](/adr/cargo-tracker/012-authentication-principal-and-session.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [011-mfa-totp](/adr/cargo-tracker/011-mfa-totp.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_31_plan](/development/cargo-tracker/bolt_31_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+
+## 2026-10-11
+* **Update**: [bolt_30_report](/development/cargo-tracker/bolt_30_report.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_30_plan](/development/cargo-tracker/bolt_30_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_30_report](/development/cargo-tracker/bolt_30_report.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_30_report](/development/cargo-tracker/bolt_30_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_30_plan](/development/cargo-tracker/bolt_30_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_30_report](/development/cargo-tracker/bolt_30_report.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_30_plan](/development/cargo-tracker/bolt_30_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_30_plan](/development/cargo-tracker/bolt_30_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_30_plan](/development/cargo-tracker/bolt_30_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_30_plan](/development/cargo-tracker/bolt_30_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_30_plan](/development/cargo-tracker/bolt_30_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [011-mfa-totp](/adr/cargo-tracker/011-mfa-totp.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_30_plan](/development/cargo-tracker/bolt_30_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [tech_stack](/design/cargo-tracker/tech_stack.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [012-authentication-principal-and-session](/adr/cargo-tracker/012-authentication-principal-and-session.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [011-mfa-totp](/adr/cargo-tracker/011-mfa-totp.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_30_plan](/development/cargo-tracker/bolt_30_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_30_plan](/development/cargo-tracker/bolt_30_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_30_plan](/development/cargo-tracker/bolt_30_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_30_plan](/development/cargo-tracker/bolt_30_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_29c_report](/development/cargo-tracker/bolt_29c_report.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_29c_plan](/development/cargo-tracker/bolt_29c_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_29c_report](/development/cargo-tracker/bolt_29c_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_29c_plan](/development/cargo-tracker/bolt_29c_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_29c_report](/development/cargo-tracker/bolt_29c_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_29c_plan](/development/cargo-tracker/bolt_29c_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [用語集](/manual/用語集.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [08-経路設計](/manual/08-経路設計.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [07-本予約の確定と予約一覧](/manual/07-本予約の確定と予約一覧.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_29c_plan](/development/cargo-tracker/bolt_29c_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [08-経路設計](/manual/08-経路設計.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_29c_plan](/development/cargo-tracker/bolt_29c_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_29c_plan](/development/cargo-tracker/bolt_29c_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_29c_plan](/development/cargo-tracker/bolt_29c_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_29c_plan](/development/cargo-tracker/bolt_29c_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_29c_plan](/development/cargo-tracker/bolt_29c_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_29c_plan](/development/cargo-tracker/bolt_29c_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_29c_plan](/development/cargo-tracker/bolt_29c_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_29c_plan](/development/cargo-tracker/bolt_29c_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_29b_report](/development/cargo-tracker/bolt_29b_report.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_29b_plan](/development/cargo-tracker/bolt_29b_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_29b_report](/development/cargo-tracker/bolt_29b_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_29b_plan](/development/cargo-tracker/bolt_29b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_29b_report](/development/cargo-tracker/bolt_29b_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_29b_plan](/development/cargo-tracker/bolt_29b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [用語集](/manual/用語集.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [05-予約一覧と追跡の照会](/manual/05-予約一覧と追跡の照会.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [01-業務フロー](/manual/01-業務フロー.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_29b_plan](/development/cargo-tracker/bolt_29b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [05-予約一覧と追跡の照会](/manual/05-予約一覧と追跡の照会.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [04-見積りへの回答と承認](/manual/04-見積りへの回答と承認.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [02-ログインと共通の画面](/manual/02-ログインと共通の画面.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [01-業務フロー](/manual/01-業務フロー.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_29b_plan](/development/cargo-tracker/bolt_29b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_29b_plan](/development/cargo-tracker/bolt_29b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_29b_plan](/development/cargo-tracker/bolt_29b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_29_report](/development/cargo-tracker/bolt_29_report.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_29_plan](/development/cargo-tracker/bolt_29_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_29_report](/development/cargo-tracker/bolt_29_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_29_plan](/development/cargo-tracker/bolt_29_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_29_report](/development/cargo-tracker/bolt_29_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_29_report](/development/cargo-tracker/bolt_29_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_29_plan](/development/cargo-tracker/bolt_29_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_29_report](/development/cargo-tracker/bolt_29_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_29_plan](/development/cargo-tracker/bolt_29_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_29_plan](/development/cargo-tracker/bolt_29_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_29_plan](/development/cargo-tracker/bolt_29_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [development_strategy](/development/cargo-tracker/development_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+
+## 2026-10-10
+* **Verification**: [release_report-0_1](/development/cargo-tracker/release_report-0_1.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [release_report-0_1](/development/cargo-tracker/release_report-0_1.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [walking-skeleton-tour](/article/walking-skeleton-tour.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [walking-skeleton-tour](/article/walking-skeleton-tour.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [walking-skeleton-tour](/article/walking-skeleton-tour.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [walking-skeleton-tour](/article/walking-skeleton-tour.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [用語集](/manual/用語集.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [付録B-トラブルシューティング](/manual/付録B-トラブルシューティング.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [07-本予約の確定と予約一覧](/manual/07-本予約の確定と予約一覧.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [06-受付一覧と審査と見積り](/manual/06-受付一覧と審査と見積り.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [05-予約一覧と追跡の照会](/manual/05-予約一覧と追跡の照会.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [04-見積りへの回答と承認](/manual/04-見積りへの回答と承認.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [02-ログインと共通の画面](/manual/02-ログインと共通の画面.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [01-業務フロー](/manual/01-業務フロー.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [00-はじめに](/manual/00-はじめに.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [用語集](/manual/用語集.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [付録B-トラブルシューティング](/manual/付録B-トラブルシューティング.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [10-KPI計測記録](/manual/10-KPI計測記録.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [09-追跡管理](/manual/09-追跡管理.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [08-経路設計](/manual/08-経路設計.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [07-本予約の確定と予約一覧](/manual/07-本予約の確定と予約一覧.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [06-受付一覧と審査と見積り](/manual/06-受付一覧と審査と見積り.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [01-業務フロー](/manual/01-業務フロー.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [00-はじめに](/manual/00-はじめに.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [付録B-トラブルシューティング](/manual/付録B-トラブルシューティング.md) を作成（anthropic/claude-opus-5-5）
+* **Creation**: [用語集](/manual/用語集.md) を作成（anthropic/claude-opus-5-5）
+* **Creation**: [10-KPI計測記録](/manual/10-KPI計測記録.md) を作成（anthropic/claude-opus-5-5）
+* **Creation**: [09-追跡管理](/manual/09-追跡管理.md) を作成（anthropic/claude-opus-5-5）
+* **Creation**: [08-経路設計](/manual/08-経路設計.md) を作成（anthropic/claude-opus-5-5）
+* **Creation**: [07-本予約の確定と予約一覧](/manual/07-本予約の確定と予約一覧.md) を作成（anthropic/claude-opus-5-5）
+* **Creation**: [06-受付一覧と審査と見積り](/manual/06-受付一覧と審査と見積り.md) を作成（anthropic/claude-opus-5-5）
+* **Creation**: [05-予約一覧と追跡の照会](/manual/05-予約一覧と追跡の照会.md) を作成（anthropic/claude-opus-5-5）
+* **Creation**: [04-見積りへの回答と承認](/manual/04-見積りへの回答と承認.md) を作成（anthropic/claude-opus-5-5）
+* **Creation**: [03-見積依頼](/manual/03-見積依頼.md) を作成（anthropic/claude-opus-5-5）
+* **Creation**: [02-ログインと共通の画面](/manual/02-ログインと共通の画面.md) を作成（anthropic/claude-opus-5-5）
+* **Creation**: [01-業務フロー](/manual/01-業務フロー.md) を作成（anthropic/claude-opus-5-5）
+* **Creation**: [00-はじめに](/manual/00-はじめに.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [application_development_setup](/operation/cargo-tracker/application_development_setup.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [development_strategy](/development/cargo-tracker/development_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_28_report](/development/cargo-tracker/bolt_28_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_28_plan](/development/cargo-tracker/bolt_28_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_28_report](/development/cargo-tracker/bolt_28_report.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_28_plan](/development/cargo-tracker/bolt_28_plan.md) を human:kakimomokuri が検証
+* **Update**: [bolt_28_report](/development/cargo-tracker/bolt_28_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_28_plan](/development/cargo-tracker/bolt_28_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_28_plan](/development/cargo-tracker/bolt_28_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_28_plan](/development/cargo-tracker/bolt_28_plan.md) を human:kakimomokuri が検証
+* **Creation**: [bolt_28_plan](/development/cargo-tracker/bolt_28_plan.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_27b_report](/development/cargo-tracker/bolt_27b_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_27b_plan](/development/cargo-tracker/bolt_27b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_27b_report](/development/cargo-tracker/bolt_27b_report.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_27b_plan](/development/cargo-tracker/bolt_27b_plan.md) を human:kakimomokuri が検証
+* **Update**: [bolt_27b_report](/development/cargo-tracker/bolt_27b_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_27b_plan](/development/cargo-tracker/bolt_27b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_27b_plan](/development/cargo-tracker/bolt_27b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_27b_plan](/development/cargo-tracker/bolt_27b_plan.md) を human:kakimomokuri が検証
+* **Creation**: [bolt_27b_plan](/development/cargo-tracker/bolt_27b_plan.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_27_report](/development/cargo-tracker/bolt_27_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_27_plan](/development/cargo-tracker/bolt_27_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_27_report](/development/cargo-tracker/bolt_27_report.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_27_plan](/development/cargo-tracker/bolt_27_plan.md) を human:kakimomokuri が検証
+* **Creation**: [bolt_27_report](/development/cargo-tracker/bolt_27_report.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [bolt_27_plan](/development/cargo-tracker/bolt_27_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_27_plan](/development/cargo-tracker/bolt_27_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_26c_report](/development/cargo-tracker/bolt_26c_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_26c_report](/development/cargo-tracker/bolt_26c_report.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_26c_report](/development/cargo-tracker/bolt_26c_report.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_26c_report](/development/cargo-tracker/bolt_26c_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_26c_plan](/development/cargo-tracker/bolt_26c_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_26c_report](/development/cargo-tracker/bolt_26c_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_26c_report](/development/cargo-tracker/bolt_26c_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_26c_plan](/development/cargo-tracker/bolt_26c_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_26c_plan](/development/cargo-tracker/bolt_26c_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_26c_plan](/development/cargo-tracker/bolt_26c_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_26c_plan](/development/cargo-tracker/bolt_26c_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_26c_plan](/development/cargo-tracker/bolt_26c_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_26b_report](/development/cargo-tracker/bolt_26b_report.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_26b_plan](/development/cargo-tracker/bolt_26b_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_26b_report](/development/cargo-tracker/bolt_26b_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_26b_plan](/development/cargo-tracker/bolt_26b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_26b_report](/development/cargo-tracker/bolt_26b_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_26b_report](/development/cargo-tracker/bolt_26b_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_26b_plan](/development/cargo-tracker/bolt_26b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_26b_plan](/development/cargo-tracker/bolt_26b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+
+## 2026-10-09
+* **Verification**: [bolt_26_report](/development/cargo-tracker/bolt_26_report.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_26_plan](/development/cargo-tracker/bolt_26_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_26_report](/development/cargo-tracker/bolt_26_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_26_plan](/development/cargo-tracker/bolt_26_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_26_plan](/development/cargo-tracker/bolt_26_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_25b_report](/development/cargo-tracker/bolt_25b_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_26_report](/development/cargo-tracker/bolt_26_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_26_report](/development/cargo-tracker/bolt_26_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_26_plan](/development/cargo-tracker/bolt_26_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_26_plan](/development/cargo-tracker/bolt_26_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_25b_report](/development/cargo-tracker/bolt_25b_report.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_25b_report](/development/cargo-tracker/bolt_25b_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_25b_plan](/development/cargo-tracker/bolt_25b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_25b_report](/development/cargo-tracker/bolt_25b_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_25b_report](/development/cargo-tracker/bolt_25b_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_25b_plan](/development/cargo-tracker/bolt_25b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_25b_plan](/development/cargo-tracker/bolt_25b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_25b_plan](/development/cargo-tracker/bolt_25b_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_25b_plan](/development/cargo-tracker/bolt_25b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_25b_plan](/development/cargo-tracker/bolt_25b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_25_report](/development/cargo-tracker/bolt_25_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_25_plan](/development/cargo-tracker/bolt_25_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [015-booking-saga-starts-tracking-by-event](/adr/cargo-tracker/015-booking-saga-starts-tracking-by-event.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_25_report](/development/cargo-tracker/bolt_25_report.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_25_plan](/development/cargo-tracker/bolt_25_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_25_report](/development/cargo-tracker/bolt_25_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_25_plan](/development/cargo-tracker/bolt_25_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_25_report](/development/cargo-tracker/bolt_25_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_25_plan](/development/cargo-tracker/bolt_25_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_25_report](/development/cargo-tracker/bolt_25_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [014-downstream-to-upstream-notification](/adr/cargo-tracker/014-downstream-to-upstream-notification.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_25_report](/development/cargo-tracker/bolt_25_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [heroku_demo_setup](/operation/cargo-tracker/heroku_demo_setup.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_25_plan](/development/cargo-tracker/bolt_25_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_25_plan](/development/cargo-tracker/bolt_25_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [units](/requirements/cargo-tracker/units.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_25_plan](/development/cargo-tracker/bolt_25_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [015-booking-saga-starts-tracking-by-event](/adr/cargo-tracker/015-booking-saga-starts-tracking-by-event.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [014-downstream-to-upstream-notification](/adr/cargo-tracker/014-downstream-to-upstream-notification.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [units](/requirements/cargo-tracker/units.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [015-booking-saga-starts-tracking-by-event](/adr/cargo-tracker/015-booking-saga-starts-tracking-by-event.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [014-downstream-to-upstream-notification](/adr/cargo-tracker/014-downstream-to-upstream-notification.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_25_plan](/development/cargo-tracker/bolt_25_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_25_plan](/development/cargo-tracker/bolt_25_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_24_report](/development/cargo-tracker/bolt_24_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_24_plan](/development/cargo-tracker/bolt_24_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [001-modular-monolith](/adr/cargo-tracker/001-modular-monolith.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_24_report](/development/cargo-tracker/bolt_24_report.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_24_plan](/development/cargo-tracker/bolt_24_plan.md) を human:kakimomokuri が検証
+* **Update**: [application_development_setup](/operation/cargo-tracker/application_development_setup.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_24_report](/development/cargo-tracker/bolt_24_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_24_plan](/development/cargo-tracker/bolt_24_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [operation](/design/cargo-tracker/operation.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [001-modular-monolith](/adr/cargo-tracker/001-modular-monolith.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [heroku_demo_setup](/operation/cargo-tracker/heroku_demo_setup.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_24_report](/development/cargo-tracker/bolt_24_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_24_plan](/development/cargo-tracker/bolt_24_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_24_report](/development/cargo-tracker/bolt_24_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_24_report](/development/cargo-tracker/bolt_24_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_24_plan](/development/cargo-tracker/bolt_24_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_24_report](/development/cargo-tracker/bolt_24_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_24_plan](/development/cargo-tracker/bolt_24_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_24_plan](/development/cargo-tracker/bolt_24_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_24_plan](/development/cargo-tracker/bolt_24_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_24_plan](/development/cargo-tracker/bolt_24_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_24_plan](/development/cargo-tracker/bolt_24_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_24_plan](/development/cargo-tracker/bolt_24_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_24_plan](/development/cargo-tracker/bolt_24_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+
+## 2026-10-08
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_23b_report](/development/cargo-tracker/bolt_23b_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_23b_plan](/development/cargo-tracker/bolt_23b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_23b_plan](/development/cargo-tracker/bolt_23b_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_23b_report](/development/cargo-tracker/bolt_23b_report.md) を human:kakimomokuri が検証
+* **Update**: [bolt_23b_plan](/development/cargo-tracker/bolt_23b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_23b_report](/development/cargo-tracker/bolt_23b_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_23b_plan](/development/cargo-tracker/bolt_23b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_23b_report](/development/cargo-tracker/bolt_23b_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_23b_plan](/development/cargo-tracker/bolt_23b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_23b_plan](/development/cargo-tracker/bolt_23b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_23b_plan](/development/cargo-tracker/bolt_23b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [016-booking-checks-quotation-at-commit-time](/adr/cargo-tracker/016-booking-checks-quotation-at-commit-time.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [016-booking-checks-quotation-at-commit-time](/adr/cargo-tracker/016-booking-checks-quotation-at-commit-time.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_23b_plan](/development/cargo-tracker/bolt_23b_plan.md) を human:kakimomokuri が検証
+* **Update**: [bolt_23b_plan](/development/cargo-tracker/bolt_23b_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_23_report](/development/cargo-tracker/bolt_23_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_23_plan](/development/cargo-tracker/bolt_23_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_23_report](/development/cargo-tracker/bolt_23_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_23_plan](/development/cargo-tracker/bolt_23_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [015-booking-saga-starts-tracking-by-event](/adr/cargo-tracker/015-booking-saga-starts-tracking-by-event.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_23_report](/development/cargo-tracker/bolt_23_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_23_report](/development/cargo-tracker/bolt_23_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_23_plan](/development/cargo-tracker/bolt_23_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [tech_stack](/design/cargo-tracker/tech_stack.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [016-booking-checks-quotation-at-commit-time](/adr/cargo-tracker/016-booking-checks-quotation-at-commit-time.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [015-booking-saga-starts-tracking-by-event](/adr/cargo-tracker/015-booking-saga-starts-tracking-by-event.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [003-inter-context-integration](/adr/cargo-tracker/003-inter-context-integration.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_23_plan](/development/cargo-tracker/bolt_23_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_23_plan](/development/cargo-tracker/bolt_23_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_22_plan](/development/cargo-tracker/bolt_22_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [016-booking-checks-quotation-at-commit-time](/adr/cargo-tracker/016-booking-checks-quotation-at-commit-time.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [015-booking-saga-starts-tracking-by-event](/adr/cargo-tracker/015-booking-saga-starts-tracking-by-event.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_23_plan](/development/cargo-tracker/bolt_23_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [003-inter-context-integration](/adr/cargo-tracker/003-inter-context-integration.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [016-booking-checks-quotation-at-commit-time](/adr/cargo-tracker/016-booking-checks-quotation-at-commit-time.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [015-booking-saga-starts-tracking-by-event](/adr/cargo-tracker/015-booking-saga-starts-tracking-by-event.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [003-inter-context-integration](/adr/cargo-tracker/003-inter-context-integration.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_23_plan](/development/cargo-tracker/bolt_23_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: Bolt 23 計画を承認（/goal）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_23_plan](/development/cargo-tracker/bolt_23_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_23_plan](/development/cargo-tracker/bolt_23_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_22_report](/development/cargo-tracker/bolt_22_report.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: Bolt 22 終了報告を承認
+* **Update**: [bolt_22_report](/development/cargo-tracker/bolt_22_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_22_report](/development/cargo-tracker/bolt_22_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_22_plan](/development/cargo-tracker/bolt_22_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: Bolt 22 計画を承認
+* **Update**: [bolt_22_plan](/development/cargo-tracker/bolt_22_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: W4 の計画（Bolt 22〜28、設計の決定 2 件、承認ゲートの密度）を承認
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [user_story](/requirements/cargo-tracker/user_story.md) を human:kakimomokuri が検証
+* **Verification**: [domain_model](/design/cargo-tracker/domain_model.md) を human:kakimomokuri が検証
+* **Verification**: [development_strategy](/development/cargo-tracker/development_strategy.md) を human:kakimomokuri が検証
+* **Verification**: [release_plan](/development/cargo-tracker/release_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_21_review_20261008](/review/cargo-tracker/bolt_21_review_20261008.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_21_report](/development/cargo-tracker/bolt_21_report.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_21_plan](/development/cargo-tracker/bolt_21_plan.md) を human:kakimomokuri が検証
+* **Update**: [bolt_21_review_20261008](/review/cargo-tracker/bolt_21_review_20261008.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [development_strategy](/development/cargo-tracker/development_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_21_report](/development/cargo-tracker/bolt_21_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_21_plan](/development/cargo-tracker/bolt_21_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_21_report](/development/cargo-tracker/bolt_21_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_21_report](/development/cargo-tracker/bolt_21_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_21_report](/development/cargo-tracker/bolt_21_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_21_plan](/development/cargo-tracker/bolt_21_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_21_review_20261008](/review/cargo-tracker/bolt_21_review_20261008.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_21_plan](/development/cargo-tracker/bolt_21_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_21_plan](/development/cargo-tracker/bolt_21_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_21_plan](/development/cargo-tracker/bolt_21_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_21_plan](/development/cargo-tracker/bolt_21_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_21_plan](/development/cargo-tracker/bolt_21_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_21_plan](/development/cargo-tracker/bolt_21_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_21_plan](/development/cargo-tracker/bolt_21_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_20_report](/development/cargo-tracker/bolt_20_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_20_review_20261008](/review/cargo-tracker/bolt_20_review_20261008.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_20_report](/development/cargo-tracker/bolt_20_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_20_plan](/development/cargo-tracker/bolt_20_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [014-downstream-to-upstream-notification](/adr/cargo-tracker/014-downstream-to-upstream-notification.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_20_review_20261008](/review/cargo-tracker/bolt_20_review_20261008.md) を human:kakimomokuri が検証
+* **Verification**: [014-downstream-to-upstream-notification](/adr/cargo-tracker/014-downstream-to-upstream-notification.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_20_plan](/development/cargo-tracker/bolt_20_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_20_report](/development/cargo-tracker/bolt_20_report.md) を human:kakimomokuri が検証
+* **Update**: [bolt_20_report](/development/cargo-tracker/bolt_20_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_20_report](/development/cargo-tracker/bolt_20_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_20_plan](/development/cargo-tracker/bolt_20_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_20_report](/development/cargo-tracker/bolt_20_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_20_review_20261008](/review/cargo-tracker/bolt_20_review_20261008.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_20_plan](/development/cargo-tracker/bolt_20_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_20_review_20261008](/review/cargo-tracker/bolt_20_review_20261008.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_20_plan](/development/cargo-tracker/bolt_20_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [014-downstream-to-upstream-notification](/adr/cargo-tracker/014-downstream-to-upstream-notification.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_20_plan](/development/cargo-tracker/bolt_20_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_20_plan](/development/cargo-tracker/bolt_20_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_20_plan](/development/cargo-tracker/bolt_20_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_20_plan](/development/cargo-tracker/bolt_20_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [014-downstream-to-upstream-notification](/adr/cargo-tracker/014-downstream-to-upstream-notification.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_20_plan](/development/cargo-tracker/bolt_20_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [014-downstream-to-upstream-notification](/adr/cargo-tracker/014-downstream-to-upstream-notification.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_20_plan](/development/cargo-tracker/bolt_20_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_20_plan](/development/cargo-tracker/bolt_20_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_19_review_20261007](/review/cargo-tracker/bolt_19_review_20261007.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_19_report](/development/cargo-tracker/bolt_19_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_19_plan](/development/cargo-tracker/bolt_19_plan.md) を更新（anthropic/claude-opus-5-5）
+
+## 2026-10-07
+* **Update**: [bolt_19_report](/development/cargo-tracker/bolt_19_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_19_report](/development/cargo-tracker/bolt_19_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_19_review_20261007](/review/cargo-tracker/bolt_19_review_20261007.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_19_plan](/development/cargo-tracker/bolt_19_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_19_review_20261007](/review/cargo-tracker/bolt_19_review_20261007.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_19_plan](/development/cargo-tracker/bolt_19_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_19_plan](/development/cargo-tracker/bolt_19_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_19_plan](/development/cargo-tracker/bolt_19_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_19_plan](/development/cargo-tracker/bolt_19_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_19_plan](/development/cargo-tracker/bolt_19_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [application_development_setup](/operation/cargo-tracker/application_development_setup.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_19_plan](/development/cargo-tracker/bolt_19_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [application_development_setup](/operation/cargo-tracker/application_development_setup.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_19_plan](/development/cargo-tracker/bolt_19_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_19_plan](/development/cargo-tracker/bolt_19_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_18_plan](/development/cargo-tracker/bolt_18_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_17_report](/development/cargo-tracker/bolt_17_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_17_plan](/development/cargo-tracker/bolt_17_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_18_plan](/development/cargo-tracker/bolt_18_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_18_plan](/development/cargo-tracker/bolt_18_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [013-heroku-demo-environment](/adr/cargo-tracker/013-heroku-demo-environment.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_17_review_20261007](/review/cargo-tracker/bolt_17_review_20261007.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_17_report](/development/cargo-tracker/bolt_17_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_17_plan](/development/cargo-tracker/bolt_17_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_17_plan](/development/cargo-tracker/bolt_17_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_17_plan](/development/cargo-tracker/bolt_17_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [index](/development/index.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_16_report](/development/cargo-tracker/bolt_16_report.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_16_plan](/development/cargo-tracker/bolt_16_plan.md) を human:kakimomokuri が検証
+* **Verification**: [013-heroku-demo-environment](/adr/cargo-tracker/013-heroku-demo-environment.md) を human:kakimomokuri が検証
+* **Verification**: [008-aws-container-platform](/adr/cargo-tracker/008-aws-container-platform.md) を human:kakimomokuri が検証
+* **Verification**: [heroku_demo_setup](/operation/cargo-tracker/heroku_demo_setup.md) を human:kakimomokuri が検証
+* **Creation**: [bolt_16_report](/development/cargo-tracker/bolt_16_report.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [bolt_16_plan](/development/cargo-tracker/bolt_16_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [heroku_demo_setup](/operation/cargo-tracker/heroku_demo_setup.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [008-aws-container-platform](/adr/cargo-tracker/008-aws-container-platform.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [013-heroku-demo-environment](/adr/cargo-tracker/013-heroku-demo-environment.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [heroku_demo_setup](/operation/cargo-tracker/heroku_demo_setup.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [index](/operation/cargo-tracker/index.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_infrastructure](/design/cargo-tracker/architecture_infrastructure.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_16_review_20261007](/review/cargo-tracker/bolt_16_review_20261007.md) を human:kakimomokuri が検証
+* **Creation**: [bolt_16_review_20261007](/review/cargo-tracker/bolt_16_review_20261007.md) を作成（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_16_plan](/development/cargo-tracker/bolt_16_plan.md) を human:kakimomokuri が検証
+* **Update**: [heroku_demo_setup](/operation/cargo-tracker/heroku_demo_setup.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_16_plan](/development/cargo-tracker/bolt_16_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_16_plan](/development/cargo-tracker/bolt_16_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_infrastructure](/design/cargo-tracker/architecture_infrastructure.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [heroku_demo_setup](/operation/cargo-tracker/heroku_demo_setup.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [013-heroku-demo-environment](/adr/cargo-tracker/013-heroku-demo-environment.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_16_plan](/development/cargo-tracker/bolt_16_plan.md) を human:kakimomokuri が検証
+* **Creation**: [bolt_16_plan](/development/cargo-tracker/bolt_16_plan.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [index](/development/index.md) を更新（anthropic/claude-opus-5-5）
+
+## 2026-10-06
+* **Verification**: [bolt_15_report](/development/cargo-tracker/bolt_15_report.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_15_plan](/development/cargo-tracker/bolt_15_plan.md) を human:kakimomokuri が検証
+* **Verification**: [013-heroku-demo-environment](/adr/cargo-tracker/013-heroku-demo-environment.md) を human:kakimomokuri が検証
+* **Verification**: [heroku_demo_setup](/operation/cargo-tracker/heroku_demo_setup.md) を human:kakimomokuri が検証
+* **Creation**: [bolt_15_report](/development/cargo-tracker/bolt_15_report.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [bolt_15_plan](/development/cargo-tracker/bolt_15_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [index](/development/cargo-tracker/index.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [heroku_demo_setup](/operation/cargo-tracker/heroku_demo_setup.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_15_review_20261006](/review/cargo-tracker/bolt_15_review_20261006.md) を human:kakimomokuri が検証
+* **Creation**: [bolt_15_review_20261006](/review/cargo-tracker/bolt_15_review_20261006.md) を作成（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_15_plan](/development/cargo-tracker/bolt_15_plan.md) を human:kakimomokuri が検証
+* **Update**: [heroku_demo_setup](/operation/cargo-tracker/heroku_demo_setup.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [index](/operation/cargo-tracker/index.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [index](/development/cargo-tracker/index.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_15_plan](/development/cargo-tracker/bolt_15_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_15_plan](/development/cargo-tracker/bolt_15_plan.md) を human:kakimomokuri が検証
+* **Update**: [bolt_15_plan](/development/cargo-tracker/bolt_15_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [index](/development/cargo-tracker/index.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_infrastructure](/design/cargo-tracker/architecture_infrastructure.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [heroku_demo_setup](/operation/cargo-tracker/heroku_demo_setup.md) を作成（anthropic/claude-opus-5-5）
+* **Creation**: [013-heroku-demo-environment](/adr/cargo-tracker/013-heroku-demo-environment.md) を作成（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_15_plan](/development/cargo-tracker/bolt_15_plan.md) を human:kakimomokuri が検証
+* **Creation**: [bolt_15_plan](/development/cargo-tracker/bolt_15_plan.md) を作成（anthropic/claude-opus-5-5）
+* **Verification**: [release_plan](/development/cargo-tracker/release_plan.md) を human:kakimomokuri が検証
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [012-authentication-principal-and-session](/adr/cargo-tracker/012-authentication-principal-and-session.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_14_review_20261006](/review/cargo-tracker/bolt_14_review_20261006.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_14_report](/development/cargo-tracker/bolt_14_report.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_14_plan](/development/cargo-tracker/bolt_14_plan.md) を human:kakimomokuri が検証
+* **Update**: [bolt_14_review_20261006](/review/cargo-tracker/bolt_14_review_20261006.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_14_report](/development/cargo-tracker/bolt_14_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_14_plan](/development/cargo-tracker/bolt_14_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [012-authentication-principal-and-session](/adr/cargo-tracker/012-authentication-principal-and-session.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [application_development_setup](/operation/cargo-tracker/application_development_setup.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_14_report](/development/cargo-tracker/bolt_14_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_14_plan](/development/cargo-tracker/bolt_14_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_14_report](/development/cargo-tracker/bolt_14_report.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_14_review_20261006](/review/cargo-tracker/bolt_14_review_20261006.md) を作成（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_14_report](/development/cargo-tracker/bolt_14_report.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_14_plan](/development/cargo-tracker/bolt_14_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_03_report](/development/cargo-tracker/bolt_03_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_14_plan](/development/cargo-tracker/bolt_14_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [012-authentication-principal-and-session](/adr/cargo-tracker/012-authentication-principal-and-session.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [011-mfa-totp](/adr/cargo-tracker/011-mfa-totp.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_14_plan](/development/cargo-tracker/bolt_14_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [012-authentication-principal-and-session](/adr/cargo-tracker/012-authentication-principal-and-session.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_14_plan](/development/cargo-tracker/bolt_14_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_14_plan](/development/cargo-tracker/bolt_14_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [012-authentication-principal-and-session](/adr/cargo-tracker/012-authentication-principal-and-session.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_14_plan](/development/cargo-tracker/bolt_14_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [tech_stack](/design/cargo-tracker/tech_stack.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [012-authentication-principal-and-session](/adr/cargo-tracker/012-authentication-principal-and-session.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [tech_stack](/design/cargo-tracker/tech_stack.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_14_plan](/development/cargo-tracker/bolt_14_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_14_plan](/development/cargo-tracker/bolt_14_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_14_plan](/development/cargo-tracker/bolt_14_plan.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_13_plan](/development/cargo-tracker/bolt_13_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_13_review_20261006](/review/cargo-tracker/bolt_13_review_20261006.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_13_report](/development/cargo-tracker/bolt_13_report.md) を human:kakimomokuri が検証
+* **Update**: [bolt_13_review_20261006](/review/cargo-tracker/bolt_13_review_20261006.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_13_report](/development/cargo-tracker/bolt_13_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_13_plan](/development/cargo-tracker/bolt_13_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_13_report](/development/cargo-tracker/bolt_13_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_13_review_20261006](/review/cargo-tracker/bolt_13_review_20261006.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_13_report](/development/cargo-tracker/bolt_13_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_13_plan](/development/cargo-tracker/bolt_13_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [011-mfa-totp](/adr/cargo-tracker/011-mfa-totp.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [011-mfa-totp](/adr/cargo-tracker/011-mfa-totp.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_13_plan](/development/cargo-tracker/bolt_13_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [tech_stack](/design/cargo-tracker/tech_stack.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_13_plan](/development/cargo-tracker/bolt_13_plan.md) を human:kakimomokuri が検証
+* **Update**: [bolt_13_plan](/development/cargo-tracker/bolt_13_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_13_plan](/development/cargo-tracker/bolt_13_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_13_plan](/development/cargo-tracker/bolt_13_plan.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [ui_design](/design/cargo-tracker/ui_design.md) を human:kakimomokuri が検証
+* **Verification**: [data_model](/design/cargo-tracker/data_model.md) を human:kakimomokuri が検証
+* **Verification**: [domain_model](/design/cargo-tracker/domain_model.md) を human:kakimomokuri が検証
+* **Verification**: [user_story](/requirements/cargo-tracker/user_story.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_12_review_20261006](/review/cargo-tracker/bolt_12_review_20261006.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_12_report](/development/cargo-tracker/bolt_12_report.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_12_plan](/development/cargo-tracker/bolt_12_plan.md) を human:kakimomokuri が検証
+* **Update**: [bolt_12_review_20261006](/review/cargo-tracker/bolt_12_review_20261006.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_12_report](/development/cargo-tracker/bolt_12_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_12_plan](/development/cargo-tracker/bolt_12_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_12_report](/development/cargo-tracker/bolt_12_report.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_12_report](/development/cargo-tracker/bolt_12_report.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_12_plan](/development/cargo-tracker/bolt_12_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_12_review_20261006](/review/cargo-tracker/bolt_12_review_20261006.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_12_plan](/development/cargo-tracker/bolt_12_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_12_review_20261006](/review/cargo-tracker/bolt_12_review_20261006.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [bolt_12_plan](/development/cargo-tracker/bolt_12_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_12_plan](/development/cargo-tracker/bolt_12_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_12_plan](/development/cargo-tracker/bolt_12_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_12_plan](/development/cargo-tracker/bolt_12_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_12_plan](/development/cargo-tracker/bolt_12_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_12_plan](/development/cargo-tracker/bolt_12_plan.md) を human:kakimomokuri が検証
+* **Creation**: [bolt_12_plan](/development/cargo-tracker/bolt_12_plan.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_11_report](/development/cargo-tracker/bolt_11_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+
+## 2026-10-05
+* **Verification**: [release_plan](/development/cargo-tracker/release_plan.md) を human:kakimomokuri が検証
+* **Verification**: [application_development_setup](/operation/cargo-tracker/application_development_setup.md) を human:kakimomokuri が検証
+* **Verification**: [ui_design](/design/cargo-tracker/ui_design.md) を human:kakimomokuri が検証
+* **Verification**: [domain_model](/design/cargo-tracker/domain_model.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_11_review_20261005](/review/cargo-tracker/bolt_11_review_20261005.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_11_plan](/development/cargo-tracker/bolt_11_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_11_report](/development/cargo-tracker/bolt_11_report.md) を human:kakimomokuri が検証
+* **Update**: [bolt_11_review_20261005](/review/cargo-tracker/bolt_11_review_20261005.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_11_report](/development/cargo-tracker/bolt_11_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_11_plan](/development/cargo-tracker/bolt_11_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_11_review_20261005](/review/cargo-tracker/bolt_11_review_20261005.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [application_development_setup](/operation/cargo-tracker/application_development_setup.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_11_report](/development/cargo-tracker/bolt_11_report.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_11_report](/development/cargo-tracker/bolt_11_report.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [bolt_11_review_20261005](/review/cargo-tracker/bolt_11_review_20261005.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_11_plan](/development/cargo-tracker/bolt_11_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_11_review_20261005](/review/cargo-tracker/bolt_11_review_20261005.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_09-10_review_20261005](/review/cargo-tracker/bolt_09-10_review_20261005.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_11_plan](/development/cargo-tracker/bolt_11_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_11_review_20261005](/review/cargo-tracker/bolt_11_review_20261005.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [bolt_11_plan](/development/cargo-tracker/bolt_11_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [data_model](/design/cargo-tracker/data_model.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_11_plan](/development/cargo-tracker/bolt_11_plan.md) を human:kakimomokuri が検証
+* **Update**: [bolt_11_plan](/development/cargo-tracker/bolt_11_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_11_plan](/development/cargo-tracker/bolt_11_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_09_report](/development/cargo-tracker/bolt_09_report.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_09-10_review_20261005](/review/cargo-tracker/bolt_09-10_review_20261005.md) を human:kakimomokuri が検証
+* **Verification**: [ui_design](/design/cargo-tracker/ui_design.md) を human:kakimomokuri が検証
+* **Verification**: [data_model](/design/cargo-tracker/data_model.md) を human:kakimomokuri が検証
+* **Verification**: [domain_model](/design/cargo-tracker/domain_model.md) を human:kakimomokuri が検証
+* **Verification**: [user_story](/requirements/cargo-tracker/user_story.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_11_plan](/development/cargo-tracker/bolt_11_plan.md) を human:kakimomokuri が検証
+* **Update**: [bolt_11_plan](/development/cargo-tracker/bolt_11_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_11_plan](/development/cargo-tracker/bolt_11_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_11_plan](/development/cargo-tracker/bolt_11_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_09-10_review_20261005](/review/cargo-tracker/bolt_09-10_review_20261005.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_11_plan](/development/cargo-tracker/bolt_11_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_09_report](/development/cargo-tracker/bolt_09_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_11_plan](/development/cargo-tracker/bolt_11_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_11_plan](/development/cargo-tracker/bolt_11_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_11_plan](/development/cargo-tracker/bolt_11_plan.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [development_strategy](/development/cargo-tracker/development_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_10_report](/development/cargo-tracker/bolt_10_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_09_report](/development/cargo-tracker/bolt_09_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_08_report](/development/cargo-tracker/bolt_08_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_07_report](/development/cargo-tracker/bolt_07_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_06_report](/development/cargo-tracker/bolt_06_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_05_report](/development/cargo-tracker/bolt_05_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_04_report](/development/cargo-tracker/bolt_04_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_03_report](/development/cargo-tracker/bolt_03_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_01_report](/development/cargo-tracker/bolt_01_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [application_development_setup](/operation/cargo-tracker/application_development_setup.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [development_strategy](/development/cargo-tracker/development_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_10_report](/development/cargo-tracker/bolt_10_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_09_report](/development/cargo-tracker/bolt_09_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_08_report](/development/cargo-tracker/bolt_08_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_07_report](/development/cargo-tracker/bolt_07_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_06_report](/development/cargo-tracker/bolt_06_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_05_report](/development/cargo-tracker/bolt_05_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_04_report](/development/cargo-tracker/bolt_04_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_03_report](/development/cargo-tracker/bolt_03_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_01_report](/development/cargo-tracker/bolt_01_report.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_09-10_review_20261005](/review/cargo-tracker/bolt_09-10_review_20261005.md) を human:kakimomokuri が検証
+* **Verification**: [user_story](/requirements/cargo-tracker/user_story.md) を human:kakimomokuri が検証
+* **Verification**: [application_development_setup](/operation/cargo-tracker/application_development_setup.md) を human:kakimomokuri が検証
+* **Verification**: [release_plan](/development/cargo-tracker/release_plan.md) を human:kakimomokuri が検証
+* **Verification**: [development_strategy](/development/cargo-tracker/development_strategy.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_10_report](/development/cargo-tracker/bolt_10_report.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_10_plan](/development/cargo-tracker/bolt_10_plan.md) を human:kakimomokuri が検証
+* **Verification**: [ui_design](/design/cargo-tracker/ui_design.md) を human:kakimomokuri が検証
+* **Verification**: [domain_model](/design/cargo-tracker/domain_model.md) を human:kakimomokuri が検証
+* **Verification**: [data_model](/design/cargo-tracker/data_model.md) を human:kakimomokuri が検証
+* **Verification**: [003-inter-context-integration](/adr/cargo-tracker/003-inter-context-integration.md) を human:kakimomokuri が検証
+* **Update**: [bolt_09-10_review_20261005](/review/cargo-tracker/bolt_09-10_review_20261005.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [development_strategy](/development/cargo-tracker/development_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_10_report](/development/cargo-tracker/bolt_10_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_10_plan](/development/cargo-tracker/bolt_10_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_10_report](/development/cargo-tracker/bolt_10_report.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [application_development_setup](/operation/cargo-tracker/application_development_setup.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_10_plan](/development/cargo-tracker/bolt_10_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [003-inter-context-integration](/adr/cargo-tracker/003-inter-context-integration.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_09-10_review_20261005](/review/cargo-tracker/bolt_09-10_review_20261005.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [bolt_10_plan](/development/cargo-tracker/bolt_10_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_10_plan](/development/cargo-tracker/bolt_10_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_10_plan](/development/cargo-tracker/bolt_10_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_10_plan](/development/cargo-tracker/bolt_10_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_10_plan](/development/cargo-tracker/bolt_10_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_10_plan](/development/cargo-tracker/bolt_10_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [release_plan](/development/cargo-tracker/release_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_10_plan](/development/cargo-tracker/bolt_10_plan.md) を human:kakimomokuri が検証
+* **Update**: [bolt_10_plan](/development/cargo-tracker/bolt_10_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_10_plan](/development/cargo-tracker/bolt_10_plan.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [development_strategy](/development/cargo-tracker/development_strategy.md) を human:kakimomokuri が検証
+* **Update**: [development_strategy](/development/cargo-tracker/development_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [ui_design](/design/cargo-tracker/ui_design.md) を human:kakimomokuri が検証
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_06-08_review_20261003](/review/cargo-tracker/bolt_06-08_review_20261003.md) を human:kakimomokuri が検証
+* **Verification**: [user_story](/requirements/cargo-tracker/user_story.md) を human:kakimomokuri が検証
+* **Verification**: [application_development_setup](/operation/cargo-tracker/application_development_setup.md) を human:kakimomokuri が検証
+* **Verification**: [release_plan](/development/cargo-tracker/release_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_09_report](/development/cargo-tracker/bolt_09_report.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_09_plan](/development/cargo-tracker/bolt_09_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_08_report](/development/cargo-tracker/bolt_08_report.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_06_report](/development/cargo-tracker/bolt_06_report.md) を human:kakimomokuri が検証
+* **Verification**: [ui_design](/design/cargo-tracker/ui_design.md) を human:kakimomokuri が検証
+* **Verification**: [domain_model](/design/cargo-tracker/domain_model.md) を human:kakimomokuri が検証
+* **Verification**: [data_model](/design/cargo-tracker/data_model.md) を human:kakimomokuri が検証
+* **Verification**: [010-required-document-storage-transaction](/adr/cargo-tracker/010-required-document-storage-transaction.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_09_report](/development/cargo-tracker/bolt_09_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_09_plan](/development/cargo-tracker/bolt_09_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_09_report](/development/cargo-tracker/bolt_09_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_09_plan](/development/cargo-tracker/bolt_09_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_09_report](/development/cargo-tracker/bolt_09_report.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [bolt_06-08_review_20261003](/review/cargo-tracker/bolt_06-08_review_20261003.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_09_plan](/development/cargo-tracker/bolt_09_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_09_plan](/development/cargo-tracker/bolt_09_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_09_plan](/development/cargo-tracker/bolt_09_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_09_plan](/development/cargo-tracker/bolt_09_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [010-required-document-storage-transaction](/adr/cargo-tracker/010-required-document-storage-transaction.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [application_development_setup](/operation/cargo-tracker/application_development_setup.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_09_plan](/development/cargo-tracker/bolt_09_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_08_report](/development/cargo-tracker/bolt_08_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_06_report](/development/cargo-tracker/bolt_06_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [010-required-document-storage-transaction](/adr/cargo-tracker/010-required-document-storage-transaction.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [application_development_setup](/operation/cargo-tracker/application_development_setup.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_08_report](/development/cargo-tracker/bolt_08_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_06_report](/development/cargo-tracker/bolt_06_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [release_plan](/development/cargo-tracker/release_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_09_plan](/development/cargo-tracker/bolt_09_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_09_plan](/development/cargo-tracker/bolt_09_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_09_plan](/development/cargo-tracker/bolt_09_plan.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [bolt_06-08_review_20261003](/review/cargo-tracker/bolt_06-08_review_20261003.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+
+## 2026-10-03
+* **Update**: [operation](/design/cargo-tracker/operation.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [application_development_setup](/operation/cargo-tracker/application_development_setup.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [tech_stack](/design/cargo-tracker/tech_stack.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [application_development_setup](/operation/cargo-tracker/application_development_setup.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [tech_stack](/design/cargo-tracker/tech_stack.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [non_functional](/design/cargo-tracker/non_functional.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_06-08_review_20261003](/review/cargo-tracker/bolt_06-08_review_20261003.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [release_plan](/development/cargo-tracker/release_plan.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_08_plan](/development/cargo-tracker/bolt_08_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [ui_design](/design/cargo-tracker/ui_design.md) を human:kakimomokuri が検証
+* **Verification**: [release_plan](/development/cargo-tracker/release_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_08_plan](/development/cargo-tracker/bolt_08_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_08_report](/development/cargo-tracker/bolt_08_report.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_08_report](/development/cargo-tracker/bolt_08_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_08_plan](/development/cargo-tracker/bolt_08_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_08_report](/development/cargo-tracker/bolt_08_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_08_plan](/development/cargo-tracker/bolt_08_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_08_report](/development/cargo-tracker/bolt_08_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_08_plan](/development/cargo-tracker/bolt_08_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_08_report](/development/cargo-tracker/bolt_08_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_08_plan](/development/cargo-tracker/bolt_08_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_08_plan](/development/cargo-tracker/bolt_08_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_08_plan](/development/cargo-tracker/bolt_08_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_08_plan](/development/cargo-tracker/bolt_08_plan.md) を human:kakimomokuri が検証
+* **Update**: [bolt_08_plan](/development/cargo-tracker/bolt_08_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_08_plan](/development/cargo-tracker/bolt_08_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_08_plan](/development/cargo-tracker/bolt_08_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_08_plan](/development/cargo-tracker/bolt_08_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [domain_model](/design/cargo-tracker/domain_model.md) を human:kakimomokuri が検証
+* **Verification**: [application_development_setup](/operation/cargo-tracker/application_development_setup.md) を human:kakimomokuri が検証
+* **Verification**: [release_plan](/development/cargo-tracker/release_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_07_plan](/development/cargo-tracker/bolt_07_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_07_report](/development/cargo-tracker/bolt_07_report.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_07_report](/development/cargo-tracker/bolt_07_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_07_plan](/development/cargo-tracker/bolt_07_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_07_report](/development/cargo-tracker/bolt_07_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_07_report](/development/cargo-tracker/bolt_07_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_07_plan](/development/cargo-tracker/bolt_07_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_07_report](/development/cargo-tracker/bolt_07_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [application_development_setup](/operation/cargo-tracker/application_development_setup.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_07_plan](/development/cargo-tracker/bolt_07_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_07_plan](/development/cargo-tracker/bolt_07_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_07_plan](/development/cargo-tracker/bolt_07_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [ui_design](/design/cargo-tracker/ui_design.md) を human:kakimomokuri が検証
+* **Verification**: [data_model](/design/cargo-tracker/data_model.md) を human:kakimomokuri が検証
+* **Verification**: [domain_model](/design/cargo-tracker/domain_model.md) を human:kakimomokuri が検証
+* **Verification**: [user_story](/requirements/cargo-tracker/user_story.md) を human:kakimomokuri が検証
+* **Update**: [bolt_07_plan](/development/cargo-tracker/bolt_07_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_07_plan](/development/cargo-tracker/bolt_07_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_07_plan](/development/cargo-tracker/bolt_07_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_07_plan](/development/cargo-tracker/bolt_07_plan.md) を human:kakimomokuri が検証
+* **Update**: [bolt_07_plan](/development/cargo-tracker/bolt_07_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_07_plan](/development/cargo-tracker/bolt_07_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_07_plan](/development/cargo-tracker/bolt_07_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_07_plan](/development/cargo-tracker/bolt_07_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [release_plan](/development/cargo-tracker/release_plan.md) を human:kakimomokuri が検証
+* **Verification**: [application_development_setup](/operation/cargo-tracker/application_development_setup.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_06_plan](/development/cargo-tracker/bolt_06_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_06_report](/development/cargo-tracker/bolt_06_report.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_06_report](/development/cargo-tracker/bolt_06_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_06_plan](/development/cargo-tracker/bolt_06_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_06_report](/development/cargo-tracker/bolt_06_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_06_report](/development/cargo-tracker/bolt_06_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_06_plan](/development/cargo-tracker/bolt_06_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_06_report](/development/cargo-tracker/bolt_06_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_06_plan](/development/cargo-tracker/bolt_06_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_06_report](/development/cargo-tracker/bolt_06_report.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [application_development_setup](/operation/cargo-tracker/application_development_setup.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_06_plan](/development/cargo-tracker/bolt_06_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [ui_design](/design/cargo-tracker/ui_design.md) を human:kakimomokuri が検証
+* **Verification**: [domain_model](/design/cargo-tracker/domain_model.md) を human:kakimomokuri が検証
+* **Verification**: [user_story](/requirements/cargo-tracker/user_story.md) を human:kakimomokuri が検証
+* **Update**: [bolt_06_plan](/development/cargo-tracker/bolt_06_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_06_plan](/development/cargo-tracker/bolt_06_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_06_plan](/development/cargo-tracker/bolt_06_plan.md) を human:kakimomokuri が検証
+* **Update**: [bolt_06_plan](/development/cargo-tracker/bolt_06_plan.md) を更新（anthropic/claude-opus-5-5）
+
+## 2026-10-02
+* **Creation**: [bolt_06_plan](/development/cargo-tracker/bolt_06_plan.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [requirements_definition](/requirements/cargo-tracker/requirements_definition.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_05_report](/development/cargo-tracker/bolt_05_report.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_05_plan](/development/cargo-tracker/bolt_05_plan.md) を human:kakimomokuri が検証
+* **Verification**: [ui_design](/design/cargo-tracker/ui_design.md) を human:kakimomokuri が検証
+* **Verification**: [domain_model](/design/cargo-tracker/domain_model.md) を human:kakimomokuri が検証
+* **Verification**: [data_model](/design/cargo-tracker/data_model.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_05_review_20261002](/review/cargo-tracker/bolt_05_review_20261002.md) を human:kakimomokuri が検証
+* **Update**: [bolt_05_review_20261002](/review/cargo-tracker/bolt_05_review_20261002.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_05_report](/development/cargo-tracker/bolt_05_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_05_review_20261002](/review/cargo-tracker/bolt_05_review_20261002.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [requirements_definition](/requirements/cargo-tracker/requirements_definition.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_05_report](/development/cargo-tracker/bolt_05_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_05_plan](/development/cargo-tracker/bolt_05_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_05_review_20261002](/review/cargo-tracker/bolt_05_review_20261002.md) を作成（anthropic/claude-opus-5-5）
+* **Verification**: [application_development_setup](/operation/cargo-tracker/application_development_setup.md) を human:kakimomokuri が検証
+* **Verification**: [requirements_definition](/requirements/cargo-tracker/requirements_definition.md) を human:kakimomokuri が検証
+* **Verification**: [user_story](/requirements/cargo-tracker/user_story.md) を human:kakimomokuri が検証
+* **Verification**: [ui_design](/design/cargo-tracker/ui_design.md) を human:kakimomokuri が検証
+* **Verification**: [data_model](/design/cargo-tracker/data_model.md) を human:kakimomokuri が検証
+* **Verification**: [domain_model](/design/cargo-tracker/domain_model.md) を human:kakimomokuri が検証
+* **Verification**: [release_plan](/development/cargo-tracker/release_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_05_plan](/development/cargo-tracker/bolt_05_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_05_report](/development/cargo-tracker/bolt_05_report.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_05_report](/development/cargo-tracker/bolt_05_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_05_plan](/development/cargo-tracker/bolt_05_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_05_report](/development/cargo-tracker/bolt_05_report.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_05_plan](/development/cargo-tracker/bolt_05_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_05_plan](/development/cargo-tracker/bolt_05_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [application_development_setup](/operation/cargo-tracker/application_development_setup.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_05_plan](/development/cargo-tracker/bolt_05_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_05_plan](/development/cargo-tracker/bolt_05_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_05_plan](/development/cargo-tracker/bolt_05_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [requirements_definition](/requirements/cargo-tracker/requirements_definition.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_05_plan](/development/cargo-tracker/bolt_05_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [requirements_definition](/requirements/cargo-tracker/requirements_definition.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_05_plan](/development/cargo-tracker/bolt_05_plan.md) を human:kakimomokuri が検証
+* **Update**: [bolt_05_plan](/development/cargo-tracker/bolt_05_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_05_plan](/development/cargo-tracker/bolt_05_plan.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_04_review_20261002](/review/cargo-tracker/bolt_04_review_20261002.md) を human:kakimomokuri が検証
+* **Verification**: [application_development_setup](/operation/cargo-tracker/application_development_setup.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_04_report](/development/cargo-tracker/bolt_04_report.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_04_plan](/development/cargo-tracker/bolt_04_plan.md) を human:kakimomokuri が検証
+* **Verification**: [ui_design](/design/cargo-tracker/ui_design.md) を human:kakimomokuri が検証
+* **Verification**: [domain_model](/design/cargo-tracker/domain_model.md) を human:kakimomokuri が検証
+* **Verification**: [data_model](/design/cargo-tracker/data_model.md) を human:kakimomokuri が検証
+* **Update**: [bolt_04_review_20261002](/review/cargo-tracker/bolt_04_review_20261002.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_04_report](/development/cargo-tracker/bolt_04_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [application_development_setup](/operation/cargo-tracker/application_development_setup.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_04_report](/development/cargo-tracker/bolt_04_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_04_review_20261002](/review/cargo-tracker/bolt_04_review_20261002.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_04_report](/development/cargo-tracker/bolt_04_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_04_plan](/development/cargo-tracker/bolt_04_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_04_review_20261002](/review/cargo-tracker/bolt_04_review_20261002.md) を作成（anthropic/claude-opus-5-5）
+* **Verification**: [application_development_setup](/operation/cargo-tracker/application_development_setup.md) を human:kakimomokuri が検証
+* **Verification**: [user_story](/requirements/cargo-tracker/user_story.md) を human:kakimomokuri が検証
+* **Verification**: [ui_design](/design/cargo-tracker/ui_design.md) を human:kakimomokuri が検証
+* **Verification**: [data_model](/design/cargo-tracker/data_model.md) を human:kakimomokuri が検証
+* **Verification**: [domain_model](/design/cargo-tracker/domain_model.md) を human:kakimomokuri が検証
+* **Verification**: [release_plan](/development/cargo-tracker/release_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_04_plan](/development/cargo-tracker/bolt_04_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_04_report](/development/cargo-tracker/bolt_04_report.md) を human:kakimomokuri が検証
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_04_report](/development/cargo-tracker/bolt_04_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_04_plan](/development/cargo-tracker/bolt_04_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_04_report](/development/cargo-tracker/bolt_04_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_04_plan](/development/cargo-tracker/bolt_04_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_04_report](/development/cargo-tracker/bolt_04_report.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_04_plan](/development/cargo-tracker/bolt_04_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_04_plan](/development/cargo-tracker/bolt_04_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_04_plan](/development/cargo-tracker/bolt_04_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_04_plan](/development/cargo-tracker/bolt_04_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_04_plan](/development/cargo-tracker/bolt_04_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_04_plan](/development/cargo-tracker/bolt_04_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_04_plan](/development/cargo-tracker/bolt_04_plan.md) を human:kakimomokuri が検証
+* **Update**: [bolt_04_plan](/development/cargo-tracker/bolt_04_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_04_plan](/development/cargo-tracker/bolt_04_plan.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（GitHub と同期: #1 をクローズし #36 に分けた。anthropic/claude-opus-5-5）
+* **Verification**: [application_development_setup](/operation/cargo-tracker/application_development_setup.md) を human:kakimomokuri が検証
+* **Verification**: [operation](/design/cargo-tracker/operation.md) を human:kakimomokuri が検証
+* **Verification**: [ui_design](/design/cargo-tracker/ui_design.md) を human:kakimomokuri が検証
+* **Verification**: [test_strategy](/design/cargo-tracker/test_strategy.md) を human:kakimomokuri が検証
+* **Verification**: [tech_stack](/design/cargo-tracker/tech_stack.md) を human:kakimomokuri が検証
+* **Verification**: [user_story](/requirements/cargo-tracker/user_story.md) を human:kakimomokuri が検証
+* **Verification**: [requirements_definition](/requirements/cargo-tracker/requirements_definition.md) を human:kakimomokuri が検証
+* **Verification**: [data_model](/design/cargo-tracker/data_model.md) を human:kakimomokuri が検証
+* **Verification**: [domain_model](/design/cargo-tracker/domain_model.md) を human:kakimomokuri が検証
+* **Verification**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を human:kakimomokuri が検証
+* **Verification**: [003-inter-context-integration](/adr/cargo-tracker/003-inter-context-integration.md) を human:kakimomokuri が検証
+* **Verification**: [001-modular-monolith](/adr/cargo-tracker/001-modular-monolith.md) を human:kakimomokuri が検証
+* **Verification**: [development_strategy](/development/cargo-tracker/development_strategy.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_02_report](/development/cargo-tracker/bolt_02_report.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_02_review_20261002](/review/cargo-tracker/bolt_02_review_20261002.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_03_review_20261002](/review/cargo-tracker/bolt_03_review_20261002.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_03_plan](/development/cargo-tracker/bolt_03_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_03_report](/development/cargo-tracker/bolt_03_report.md) を human:kakimomokuri が検証
+* **Update**: [bolt_03_review_20261002](/review/cargo-tracker/bolt_03_review_20261002.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_02_review_20261002](/review/cargo-tracker/bolt_02_review_20261002.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [development_strategy](/development/cargo-tracker/development_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_03_report](/development/cargo-tracker/bolt_03_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_03_plan](/development/cargo-tracker/bolt_03_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_02_report](/development/cargo-tracker/bolt_02_report.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_03_review_20261002](/review/cargo-tracker/bolt_03_review_20261002.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [bolt_02_review_20261002](/review/cargo-tracker/bolt_02_review_20261002.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [application_development_setup](/operation/cargo-tracker/application_development_setup.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [development_strategy](/development/cargo-tracker/development_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_03_report](/development/cargo-tracker/bolt_03_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_02_report](/development/cargo-tracker/bolt_02_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [operation](/design/cargo-tracker/operation.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [003-inter-context-integration](/adr/cargo-tracker/003-inter-context-integration.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_03_report](/development/cargo-tracker/bolt_03_report.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_03_plan](/development/cargo-tracker/bolt_03_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [application_development_setup](/operation/cargo-tracker/application_development_setup.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [development_strategy](/development/cargo-tracker/development_strategy.md) を更新（anthropic/claude-opus-5-5）
+
 ## 2026-10-01
+* **Update**: [development_strategy](/development/cargo-tracker/development_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [user_story](/requirements/cargo-tracker/user_story.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [requirements_definition](/requirements/cargo-tracker/requirements_definition.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [tech_stack](/design/cargo-tracker/tech_stack.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [003-inter-context-integration](/adr/cargo-tracker/003-inter-context-integration.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [001-modular-monolith](/adr/cargo-tracker/001-modular-monolith.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_03_plan](/development/cargo-tracker/bolt_03_plan.md) を human:kakimomokuri が検証
+* **Update**: [bolt_03_plan](/development/cargo-tracker/bolt_03_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_03_plan](/development/cargo-tracker/bolt_03_plan.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [development_strategy](/development/cargo-tracker/development_strategy.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_02_plan](/development/cargo-tracker/bolt_02_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_02_review_20261002](/review/cargo-tracker/bolt_02_review_20261002.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_02_report](/development/cargo-tracker/bolt_02_report.md) を human:kakimomokuri が検証
+* **Update**: [bolt_02_review_20261002](/review/cargo-tracker/bolt_02_review_20261002.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [development_strategy](/development/cargo-tracker/development_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_02_report](/development/cargo-tracker/bolt_02_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_02_plan](/development/cargo-tracker/bolt_02_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_02_report](/development/cargo-tracker/bolt_02_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [SonarQubeローカル環境セットアップ手順書](/reference/SonarQubeローカル環境セットアップ手順書.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_02_review_20261002](/review/cargo-tracker/bolt_02_review_20261002.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [development_strategy](/development/cargo-tracker/development_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_02_report](/development/cargo-tracker/bolt_02_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_02_plan](/development/cargo-tracker/bolt_02_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [test_strategy](/design/cargo-tracker/test_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [tech_stack](/design/cargo-tracker/tech_stack.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_02_report](/development/cargo-tracker/bolt_02_report.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_02_plan](/development/cargo-tracker/bolt_02_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [development_strategy](/development/cargo-tracker/development_strategy.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_02_plan](/development/cargo-tracker/bolt_02_plan.md) を human:kakimomokuri が検証
+* **Update**: [bolt_02_plan](/development/cargo-tracker/bolt_02_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [development_strategy](/development/cargo-tracker/development_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_02_plan](/development/cargo-tracker/bolt_02_plan.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [development_strategy](/development/cargo-tracker/development_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_01_plan](/development/cargo-tracker/bolt_01_plan.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_01_review_20261001](/review/cargo-tracker/bolt_01_review_20261001.md) を human:kakimomokuri が検証
+* **Verification**: [bolt_01_report](/development/cargo-tracker/bolt_01_report.md) を human:kakimomokuri が検証
+* **Update**: [bolt_01_review_20261001](/review/cargo-tracker/bolt_01_review_20261001.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_01_report](/development/cargo-tracker/bolt_01_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_01_plan](/development/cargo-tracker/bolt_01_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_01_review_20261001](/review/cargo-tracker/bolt_01_review_20261001.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [development_strategy](/development/cargo-tracker/development_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_01_report](/development/cargo-tracker/bolt_01_report.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_01_plan](/development/cargo-tracker/bolt_01_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [data_model](/design/cargo-tracker/data_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_01_report](/development/cargo-tracker/bolt_01_report.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [development_strategy](/development/cargo-tracker/development_strategy.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [bolt_01_plan](/development/cargo-tracker/bolt_01_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [ui_design](/design/cargo-tracker/ui_design.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を更新（anthropic/claude-opus-5-5）
+* **Verification**: [bolt_01_plan](/development/cargo-tracker/bolt_01_plan.md) を human:kakimomokuri が検証
+* **Verification**: [development_strategy](/development/cargo-tracker/development_strategy.md) を human:kakimomokuri が検証
+* **Creation**: [development_strategy](/development/cargo-tracker/development_strategy.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: [bolt_01_plan](/development/cargo-tracker/bolt_01_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: [release_plan](/development/cargo-tracker/release_plan.md) を更新（anthropic/claude-opus-5-5）
+* **Creation**: [bolt_01_plan](/development/cargo-tracker/bolt_01_plan.md) を作成（anthropic/claude-opus-5-5）
+* **Update**: GitHub Project #42 への初回同期の結果を記録
+* **Verification**: [AI-DLC導入ガイド](/reference/AI-DLC導入ガイド.md) を human:kakimomokuri が検証
+* **Update**: 第 13.5 節に本プロジェクトの Bolt の運用ルールを追記
+* **Verification**: [開発ガイド_AI-DLC版](/reference/開発ガイド_AI-DLC版.md) を human:kakimomokuri が検証
+* **Verification**: [AI-DLC導入ガイド](/reference/AI-DLC導入ガイド.md) を human:kakimomokuri が検証
+* **Verification**: [release_plan](/development/cargo-tracker/release_plan.md) を human:kakimomokuri が検証
+* **Update**: XP との対応表の Bolt とイテレーションの関係を定義に合わせて修正
+* **Update**: XP との対応表の Bolt とイテレーションの関係を定義に合わせて修正
+* **Update**: Bolt をイテレーションとし週を見直しの区切りに改めた（human:kakimomokuri の指示）
+* **Verification**: [release_plan](/development/cargo-tracker/release_plan.md) を human:kakimomokuri が検証
+* **Update**: Bolt を時間単位に改めた（human:kakimomokuri の指示）
+* **Creation**: [release_plan](/development/cargo-tracker/release_plan.md) を作成（anthropic/claude-opus-5-5）
+* **Verification**: [analysis_review_20261001](/review/cargo-tracker/analysis_review_20261001.md) を human:kakimomokuri が検証
+* **Verification**: [user_story](/requirements/cargo-tracker/user_story.md) を human:kakimomokuri が検証
+* **Verification**: [units](/requirements/cargo-tracker/units.md) を human:kakimomokuri が検証
+* **Verification**: [system_usecase](/requirements/cargo-tracker/system_usecase.md) を human:kakimomokuri が検証
+* **Verification**: [requirements_definition](/requirements/cargo-tracker/requirements_definition.md) を human:kakimomokuri が検証
+* **Verification**: [ui_design](/design/cargo-tracker/ui_design.md) を human:kakimomokuri が検証
+* **Verification**: [test_strategy](/design/cargo-tracker/test_strategy.md) を human:kakimomokuri が検証
+* **Verification**: [tech_stack](/design/cargo-tracker/tech_stack.md) を human:kakimomokuri が検証
+* **Verification**: [operation](/design/cargo-tracker/operation.md) を human:kakimomokuri が検証
+* **Verification**: [non_functional](/design/cargo-tracker/non_functional.md) を human:kakimomokuri が検証
+* **Verification**: [domain_model](/design/cargo-tracker/domain_model.md) を human:kakimomokuri が検証
+* **Verification**: [data_model](/design/cargo-tracker/data_model.md) を human:kakimomokuri が検証
+* **Verification**: [architecture_infrastructure](/design/cargo-tracker/architecture_infrastructure.md) を human:kakimomokuri が検証
+* **Verification**: [architecture_frontend](/design/cargo-tracker/architecture_frontend.md) を human:kakimomokuri が検証
+* **Verification**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を human:kakimomokuri が検証
+* **Verification**: [007-postgresql-mybatis-flyway](/adr/cargo-tracker/007-postgresql-mybatis-flyway.md) を human:kakimomokuri が検証
+* **Verification**: [006-java-spring-boot-platform](/adr/cargo-tracker/006-java-spring-boot-platform.md) を human:kakimomokuri が検証
+* **Verification**: [005-server-side-rendering](/adr/cargo-tracker/005-server-side-rendering.md) を human:kakimomokuri が検証
+* **Verification**: [003-inter-context-integration](/adr/cargo-tracker/003-inter-context-integration.md) を human:kakimomokuri が検証
+* **Verification**: [001-modular-monolith](/adr/cargo-tracker/001-modular-monolith.md) を human:kakimomokuri が検証
+* **Update**: [domain_model](/design/cargo-tracker/domain_model.md) を更新（anthropic/claude-opus-5-5）
+* **Update**: 分析成果物レビュー（2026-10-01）の指摘に対応
+* **Update**: 対応結果を記録
+* **Update**: 分析成果物レビュー（2026-10-01）の指摘に対応
+* **Update**: 分析成果物レビュー（2026-10-01）の指摘に対応
+* **Update**: 分析成果物レビュー（2026-10-01）の指摘に対応
+* **Update**: 分析成果物レビュー（2026-10-01）の指摘に対応
+* **Update**: 分析成果物レビュー（2026-10-01）の指摘に対応
+* **Update**: 分析成果物レビュー（2026-10-01）の指摘に対応
+* **Update**: 分析成果物レビュー（2026-10-01）の指摘に対応
+* **Update**: 分析成果物レビュー（2026-10-01）の指摘に対応
+* **Update**: 分析成果物レビュー（2026-10-01）の指摘に対応
+* **Update**: 分析成果物レビュー（2026-10-01）の指摘に対応
+* **Update**: 分析成果物レビュー（2026-10-01）の指摘に対応
+* **Update**: 分析成果物レビュー（2026-10-01）の指摘に対応
+* **Update**: 分析成果物レビュー（2026-10-01）の指摘に対応
+* **Update**: 分析成果物レビュー（2026-10-01）の指摘に対応
+* **Update**: 分析成果物レビュー（2026-10-01）の指摘に対応
+* **Update**: 分析成果物レビュー（2026-10-01）の指摘に対応
+* **Update**: 分析成果物レビュー（2026-10-01）の指摘に対応
+* **Update**: 分析成果物レビュー（2026-10-01）の指摘に対応
+* **Creation**: [analysis_review_20261001](/review/cargo-tracker/analysis_review_20261001.md) を作成（anthropic/claude-opus-5-5）
+* **Verification**: [operation](/design/cargo-tracker/operation.md) を human:kakimomokuri が検証
+* **Creation**: [operation](/design/cargo-tracker/operation.md) を草案として作成
+* **Verification**: [non_functional](/design/cargo-tracker/non_functional.md) を human:kakimomokuri が検証
+* **Creation**: [non_functional](/design/cargo-tracker/non_functional.md) を草案として作成
+* **Verification**: [test_strategy](/design/cargo-tracker/test_strategy.md) を human:kakimomokuri が検証
+* **Creation**: [test_strategy](/design/cargo-tracker/test_strategy.md) を草案として作成
+* **Verification**: [ui_design](/design/cargo-tracker/ui_design.md) を human:kakimomokuri が検証
+* **Creation**: [ui_design](/design/cargo-tracker/ui_design.md) を草案として作成
+* **Verification**: [data_model](/design/cargo-tracker/data_model.md) を human:kakimomokuri が検証
+* **Verification**: [domain_model](/design/cargo-tracker/domain_model.md) を human:kakimomokuri が検証
+* **Verification**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を human:kakimomokuri が検証
+* **Verification**: [architecture_infrastructure](/design/cargo-tracker/architecture_infrastructure.md) を human:kakimomokuri が検証
+* **Verification**: [007-postgresql-mybatis-flyway](/adr/cargo-tracker/007-postgresql-mybatis-flyway.md) を human:kakimomokuri が検証
+* **Verification**: [001-modular-monolith](/adr/cargo-tracker/001-modular-monolith.md) を human:kakimomokuri が検証
+* **Update**: DB 利用者を 1 つにしスキーマ境界を SQL の静的検査で守る方式へ改訂（human:kakimomokuri の決定）
+* **Update**: DB 利用者を 1 つにしスキーマ境界を SQL の静的検査で守る方式へ改訂（human:kakimomokuri の決定）
+* **Update**: DB 利用者を 1 つにしスキーマ境界を SQL の静的検査で守る方式へ改訂（human:kakimomokuri の決定）
+* **Update**: DB 利用者を 1 つにしスキーマ境界を SQL の静的検査で守る方式へ改訂（human:kakimomokuri の決定）
+* **Update**: 輸送条件に荷受人を追加（データモデル設計で判明）
+* **Creation**: [data_model](/design/cargo-tracker/data_model.md) を草案として作成
+* **Verification**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を human:kakimomokuri が検証
+* **Verification**: [domain_model](/design/cargo-tracker/domain_model.md) を human:kakimomokuri が検証
+* **Update**: ドメインモデル設計で判明したイベントによる逆向きの連携 2 件をコンテキストマップに追加
+* **Creation**: [domain_model](/design/cargo-tracker/domain_model.md) を草案として作成
+* **Verification**: [009-bdd-cucumber](/adr/cargo-tracker/009-bdd-cucumber.md) を human:kakimomokuri が検証
+* **Verification**: [008-aws-container-platform](/adr/cargo-tracker/008-aws-container-platform.md) を human:kakimomokuri が検証
+* **Verification**: [007-postgresql-mybatis-flyway](/adr/cargo-tracker/007-postgresql-mybatis-flyway.md) を human:kakimomokuri が検証
+* **Verification**: [006-java-spring-boot-platform](/adr/cargo-tracker/006-java-spring-boot-platform.md) を human:kakimomokuri が検証
+* **Verification**: [architecture_infrastructure](/design/cargo-tracker/architecture_infrastructure.md) を human:kakimomokuri が検証
+* **Verification**: [tech_stack](/design/cargo-tracker/tech_stack.md) を human:kakimomokuri が検証
+* **Update**: ローカル環境を H2 で起動する方針（ADR-007 改訂）を反映
+* **Update**: 開発体験を優先し、開発環境は H2・本番は PostgreSQL とする方針を tech_stack と ADR-007 に反映（human:kakimomokuri の決定）
+* **Creation**: [ADR-009](/adr/cargo-tracker/009-bdd-cucumber.md) BDD と Cucumber による受入条件の実行を提案
+* **Update**: [tech_stack](/design/cargo-tracker/tech_stack.md) に Cucumber-JVM を追加
+* **Creation**: [ADR-008](/adr/cargo-tracker/008-aws-container-platform.md) AWS の ECS Fargate・RDS・S3 を提案
+* **Creation**: [ADR-007](/adr/cargo-tracker/007-postgresql-mybatis-flyway.md) PostgreSQL 18・MyBatis・Flyway を提案
+* **Creation**: [ADR-006](/adr/cargo-tracker/006-java-spring-boot-platform.md) Java 25・Spring Boot 4.1・Spring Modulith を提案
+* **Creation**: [tech_stack](/design/cargo-tracker/tech_stack.md) を草案として作成
+* **Verification**: [005-server-side-rendering](/adr/cargo-tracker/005-server-side-rendering.md) を human:kakimomokuri が検証
+* **Verification**: [004-external-data-ingestion](/adr/cargo-tracker/004-external-data-ingestion.md) を human:kakimomokuri が検証
+* **Verification**: [003-inter-context-integration](/adr/cargo-tracker/003-inter-context-integration.md) を human:kakimomokuri が検証
+* **Verification**: [002-domain-logic-pattern-per-context](/adr/cargo-tracker/002-domain-logic-pattern-per-context.md) を human:kakimomokuri が検証
+* **Verification**: [001-modular-monolith](/adr/cargo-tracker/001-modular-monolith.md) を human:kakimomokuri が検証
+* **Verification**: [architecture_infrastructure](/design/cargo-tracker/architecture_infrastructure.md) を human:kakimomokuri が検証
+* **Verification**: [architecture_frontend](/design/cargo-tracker/architecture_frontend.md) を human:kakimomokuri が検証
+* **Verification**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を human:kakimomokuri が検証
+* **Update**: 開発ガイドライン第 1〜3 章との突き合わせでアーキテクチャ設計と ADR-001〜004 を改訂（追跡は状態保存の集約、イベントの永続化、予約サガ、4 パッケージ構成）
+* **Creation**: [ADR-005](/adr/cargo-tracker/005-server-side-rendering.md) 画面のサーバーサイドレンダリングを提案
+* **Creation**: [03-spring-modular-monolith](/article/03-spring-modular-monolith.md) を作成（human:kakimomokuri）
+* **Creation**: [02-cargo-domain-model](/article/02-cargo-domain-model.md) を作成（human:kakimomokuri）
+* **Creation**: [01-ddd-fundamentals](/article/01-ddd-fundamentals.md) を作成（human:kakimomokuri）
+* **Creation**: [ADR-004](/adr/cargo-tracker/004-external-data-ingestion.md) 外部原本の Inbox・隔離・照合を提案
+* **Creation**: [ADR-003](/adr/cargo-tracker/003-inter-context-integration.md) コンテキスト間の冪等コマンド・Outbox・プロセスマネージャーを提案
+* **Creation**: [ADR-002](/adr/cargo-tracker/002-domain-logic-pattern-per-context.md) コンテキストごとのドメインロジックパターン選択を提案
+* **Creation**: [ADR-001](/adr/cargo-tracker/001-modular-monolith.md) モジュラーモノリス採用を提案
+* **Creation**: [architecture_infrastructure](/design/cargo-tracker/architecture_infrastructure.md) を草案として作成
+* **Creation**: [architecture_frontend](/design/cargo-tracker/architecture_frontend.md) を草案として作成
+* **Creation**: [architecture_backend](/design/cargo-tracker/architecture_backend.md) を草案として作成
 * **Update**: MkDocs ビルド成功を確認しユースケース作成計画の仕上げを完了
 * **Update**: 仕上げ状態、Gate 4 承認記録、検証結果を実態に同期
 * **Verification**: [usecases_review_20260930](/review/cargo-tracker/usecases_review_20260930.md) を human:kakimomokuri が検証

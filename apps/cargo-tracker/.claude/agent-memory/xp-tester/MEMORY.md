@@ -1,0 +1,5 @@
+- [Bolt 32 ログインのロックのテストのレビュー](project_bolt32_login_lock_tests.md) — リスナーと照合の後の確認の単体テストなし、表全体の count、同時の作成の重なりの保証なし、監査の失敗で回数が戻るかを実 DB で未検証（2026-10-13）
+- [Bolt 32f 入力の控えのテストのレビュー](project_bolt32f_saved_input_tests.md) — 送信が届いた・CSRF の除外の空振り、単発の sessionStorage 読み、消す・select 等の未検証（2026-10-14）
+- [Bolt 33b 再登録のテストのレビュー](project_bolt33b_re_enrollment_tests.md) — bcrypt で待ちの確かめが空振り、2 つの再登録を repo で模す、二重の守りの片方、見張りの名指し、画面の分岐（2026-10-15）
+- [Bolt 37 経路の境界のテストのレビュー](project_bolt37_route_boundary_tests.md) — 届かない visitedBefore の枝、確定で後継なしの接続の時刻が未検証、写しの定数、計画外の S-06 文言（2026-10-21）
+- [Bolt 37d2 確定した経路の評価のテストのレビュー](project_bolt37d2_confirmed_route_evaluation_tests.md) — 行 9 の入力が変異を落とせない、時計を進めない、test_strategy のクラス名、「後の版」の語（2026-10-22）

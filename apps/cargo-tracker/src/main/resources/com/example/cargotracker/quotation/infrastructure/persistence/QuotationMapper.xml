@@ -1,0 +1,290 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.cargotracker.quotation.infrastructure.persistence.QuotationMapper">
+
+    <!-- 社内の一覧を担当企業（荷主企業）で絞る IN の並び（Bolt 38f。空の集合は照会のサービスが読まずに返すので、ここでは空にならない） -->
+    <sql id="shipperCompanyIn"><foreach collection="shipperCompanyIds" item="shipperCompanyId" open="(" separator="," close=")">#{shipperCompanyId}</foreach></sql>
+
+    <resultMap id="quotationRow" type="com.example.cargotracker.quotation.infrastructure.persistence.QuotationRow">
+        <constructor>
+            <idArg column="id" name="id" javaType="java.util.UUID"/>
+            <arg column="transport_request_id" name="transportRequestId" javaType="java.util.UUID"/>
+            <arg column="quotation_no" name="quotationNo" javaType="_int"/>
+            <arg column="transport_request_version_no" name="transportRequestVersionNo" javaType="_int"/>
+            <arg column="status" name="status" javaType="String"/>
+            <arg column="expires_at" name="expiresAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="total_amount" name="totalAmount" javaType="java.math.BigDecimal"/>
+            <arg column="currency" name="currency" javaType="String"/>
+            <arg column="route_policy_via" name="routePolicyVia" javaType="String"/>
+            <arg column="route_policy_departure_at" name="routePolicyDepartureAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="route_policy_arrival_at" name="routePolicyArrivalAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="internal_approved_by" name="internalApprovedBy" javaType="java.util.UUID"/>
+            <arg column="internal_approved_at" name="internalApprovedAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="presented_at" name="presentedAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="replaced_by_quotation_id" name="replacedByQuotationId" javaType="java.util.UUID"/>
+            <arg column="shipper_response" name="shipperResponse" javaType="String"/>
+            <arg column="responded_by" name="respondedBy" javaType="java.util.UUID"/>
+            <arg column="responded_at" name="respondedAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="routing_case_number" name="routingCaseNumber" javaType="String"/>
+            <arg column="route_version_no" name="routeVersionNo" javaType="Integer"/>
+            <arg column="route_confirmed_at" name="routeConfirmedAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="route_redesign_required_at" name="routeRedesignRequiredAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="shipper_approved_by" name="shipperApprovedBy" javaType="java.util.UUID"/>
+            <arg column="shipper_approved_at" name="shipperApprovedAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="decline_reason" name="declineReason" javaType="String"/>
+            <arg column="version" name="version" javaType="_long"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="pricingLineRow" type="com.example.cargotracker.quotation.infrastructure.persistence.PricingLineRow">
+        <constructor>
+            <idArg column="quotation_id" name="quotationId" javaType="java.util.UUID"/>
+            <idArg column="line_no" name="lineNo" javaType="_int"/>
+            <arg column="description" name="description" javaType="String"/>
+            <arg column="amount" name="amount" javaType="java.math.BigDecimal"/>
+            <arg column="currency" name="currency" javaType="String"/>
+            <arg column="contract_reference" name="contractReference" javaType="String"/>
+        </constructor>
+    </resultMap>
+
+    <insert id="insertQuotation">
+        INSERT INTO quotation.quotation
+            (id, transport_request_id, quotation_no, transport_request_version_no, status, expires_at, total_amount,
+             currency, route_policy_via, route_policy_departure_at, route_policy_arrival_at, internal_approved_by,
+             internal_approved_at, presented_at, replaced_by_quotation_id, shipper_response, responded_by, responded_at,
+             routing_case_number, route_version_no, route_confirmed_at, route_redesign_required_at, shipper_approved_by,
+             shipper_approved_at, decline_reason, version)
+        VALUES (#{id}, #{transportRequestId}, #{quotationNo}, #{transportRequestVersionNo}, #{status}, #{expiresAt},
+                #{totalAmount}, #{currency}, #{routePolicyVia}, #{routePolicyDepartureAt}, #{routePolicyArrivalAt},
+                #{internalApprovedBy}, #{internalApprovedAt}, #{presentedAt}, #{replacedByQuotationId},
+                #{shipperResponse}, #{respondedBy}, #{respondedAt}, #{routingCaseNumber}, #{routeVersionNo},
+                #{routeConfirmedAt}, #{routeRedesignRequiredAt}, #{shipperApprovedBy}, #{shipperApprovedAt}, #{declineReason}, #{version})
+    </insert>
+
+    <insert id="insertPricingLine">
+        INSERT INTO quotation.pricing_line (quotation_id, line_no, description, amount, currency, contract_reference)
+        VALUES (#{quotationId}, #{lineNo}, #{description}, #{amount}, #{currency}, #{contractReference})
+    </insert>
+
+    <!-- 楽観ロック（データモデル、ARCH-HO-01）。読み込んだときの版でなければ 0 件になる。料金明細は変えない（算出し直しは入れない）。
+         置換先の FK はコミットの時に確かめる（再見積りは旧版を先に更新する。Bolt 11） -->
+    <update id="updateQuotation">
+        UPDATE quotation.quotation
+           SET status = #{row.status}, expires_at = #{row.expiresAt}, total_amount = #{row.totalAmount},
+               currency = #{row.currency}, route_policy_via = #{row.routePolicyVia},
+               route_policy_departure_at = #{row.routePolicyDepartureAt},
+               route_policy_arrival_at = #{row.routePolicyArrivalAt},
+               internal_approved_by = #{row.internalApprovedBy}, internal_approved_at = #{row.internalApprovedAt},
+               presented_at = #{row.presentedAt}, replaced_by_quotation_id = #{row.replacedByQuotationId},
+               shipper_response = #{row.shipperResponse}, responded_by = #{row.respondedBy},
+               responded_at = #{row.respondedAt}, routing_case_number = #{row.routingCaseNumber},
+               route_version_no = #{row.routeVersionNo}, route_confirmed_at = #{row.routeConfirmedAt},
+               route_redesign_required_at = #{row.routeRedesignRequiredAt},
+               shipper_approved_by = #{row.shipperApprovedBy}, shipper_approved_at = #{row.shipperApprovedAt},
+               decline_reason = #{row.declineReason}, version = version + 1
+         WHERE id = #{row.id} AND version = #{expectedVersion}
+    </update>
+
+    <select id="selectByTransportRequestId" resultMap="quotationRow">
+        SELECT id, transport_request_id, quotation_no, transport_request_version_no, status, expires_at, total_amount,
+               currency, route_policy_via, route_policy_departure_at, route_policy_arrival_at, internal_approved_by,
+               internal_approved_at, presented_at, replaced_by_quotation_id, shipper_response, responded_by,
+               responded_at, routing_case_number, route_version_no, route_confirmed_at, route_redesign_required_at,
+               shipper_approved_by, shipper_approved_at, decline_reason, version
+          FROM quotation.quotation
+         WHERE transport_request_id = #{transportRequestId}
+         ORDER BY quotation_no
+    </select>
+
+    <select id="selectById" resultMap="quotationRow">
+        SELECT id, transport_request_id, quotation_no, transport_request_version_no, status, expires_at, total_amount,
+               currency, route_policy_via, route_policy_departure_at, route_policy_arrival_at, internal_approved_by,
+               internal_approved_at, presented_at, replaced_by_quotation_id, shipper_response, responded_by,
+               responded_at, routing_case_number, route_version_no, route_confirmed_at, route_redesign_required_at,
+               shipper_approved_by, shipper_approved_at, decline_reason, version
+          FROM quotation.quotation
+         WHERE id = #{id}
+    </select>
+
+    <!-- 本予約の確定で見積りの行を呼び手のトランザクションが終わるまで押さえる（再設計要の印を付ける更新と直列にする。ADR-016。
+         Bolt 37e2）。単表で最初に読み、後の読み込みがセッションのキャッシュを使わないよう flushCache を付ける。待ちは 10 秒で打ち切る
+         （H2 と PostgreSQL で効く） -->
+    <select id="lockByTransportRequestIdAndNo" resultType="java.util.UUID" flushCache="true" timeout="10">
+        SELECT id
+          FROM quotation.quotation
+         WHERE transport_request_id = #{transportRequestId}
+           AND quotation_no = #{quotationNo}
+           FOR UPDATE
+    </select>
+
+    <!-- 再設計要の印を付ける見積り（失効・置換済みを含む。索引 ix_quotation_assigned_route。Bolt 37e）。入力ポートは同じトランザクションで
+         照会し直して、ほかのトランザクションが後から保存した見積り（再見積りの新しい見積り）を拾う。READ COMMITTED の文ごとの読み取りで
+         新しい行を見るため、セッションのキャッシュを使わない -->
+    <!-- 荷主の回答か承認を待つ見積り（提示済み・荷主承認待ち）のうち、有効期限が (after, upTo] にあるもの（有効期限の 24 時間前の通知。Bolt 43-2） -->
+    <select id="selectIdsAwaitingResponseExpiringBetween" resultType="java.util.UUID" flushCache="true">
+        SELECT id
+          FROM quotation.quotation
+         WHERE status IN ('PRESENTED', 'AWAITING_SHIPPER_APPROVAL')
+           AND expires_at &gt; #{after} AND expires_at &lt;= #{upTo}
+         ORDER BY expires_at, transport_request_id, quotation_no
+    </select>
+
+    <select id="selectIdsByAssignedRoute" resultType="java.util.UUID" flushCache="true">
+        SELECT id
+          FROM quotation.quotation
+         WHERE routing_case_number = #{routingCaseNumber} AND route_version_no = #{routeVersionNo}
+         ORDER BY transport_request_id, quotation_no
+    </select>
+
+    <resultMap id="assignedRouteLegRow" type="com.example.cargotracker.quotation.infrastructure.persistence.AssignedRouteLegRow">
+        <constructor>
+            <idArg column="quotation_id" name="quotationId" javaType="java.util.UUID"/>
+            <idArg column="leg_no" name="legNo" javaType="_int"/>
+            <arg column="voyage_number" name="voyageNumber" javaType="String"/>
+            <arg column="load_unlocode" name="loadUnlocode" javaType="String"/>
+            <arg column="discharge_unlocode" name="dischargeUnlocode" javaType="String"/>
+            <arg column="departure_at" name="departureAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="arrival_at" name="arrivalAt" javaType="java.time.OffsetDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <insert id="insertAssignedRouteLeg">
+        INSERT INTO quotation.assigned_route_leg
+            (quotation_id, leg_no, voyage_number, load_unlocode, discharge_unlocode, departure_at, arrival_at)
+        VALUES (#{quotationId}, #{legNo}, #{voyageNumber}, #{loadUnlocode}, #{dischargeUnlocode}, #{departureAt},
+                #{arrivalAt})
+    </insert>
+
+    <select id="countAssignedRouteLegs" resultType="_int">
+        SELECT COUNT(*) FROM quotation.assigned_route_leg WHERE quotation_id = #{quotationId}
+    </select>
+
+    <select id="selectAssignedRouteLegsByTransportRequestId" resultMap="assignedRouteLegRow">
+        SELECT l.quotation_id, l.leg_no, l.voyage_number, l.load_unlocode, l.discharge_unlocode, l.departure_at,
+               l.arrival_at
+          FROM quotation.assigned_route_leg l
+          JOIN quotation.quotation q ON q.id = l.quotation_id
+         WHERE q.transport_request_id = #{transportRequestId}
+         ORDER BY l.quotation_id, l.leg_no
+    </select>
+
+    <resultMap id="quotedRequestSummaryRow" type="com.example.cargotracker.quotation.infrastructure.persistence.QuotedRequestSummaryRow">
+        <constructor>
+            <arg column="request_number" name="requestNumber" javaType="String"/>
+            <arg column="quotation_no" name="quotationNo" javaType="_int"/>
+            <arg column="status" name="status" javaType="String"/>
+            <arg column="expires_at" name="expiresAt" javaType="java.time.OffsetDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <!-- 受付一覧（S-02）の見積提示済みの表（Bolt 11 レビュー R-02）。見積提示済みの見積依頼ごとに、見積り番号の最大の見積りを、
+         有効期限の近い順に返す。社内の照会で、荷主企業（営業担当者の担当企業。Bolt 38f）で絞る -->
+    <select id="selectLatestOfQuotedRequests" resultMap="quotedRequestSummaryRow">
+        SELECT r.request_number, q.quotation_no, q.status, q.expires_at
+          FROM quotation.transport_request r
+          JOIN quotation.quotation q ON q.transport_request_id = r.id
+         WHERE r.status = 'QUOTED'
+           AND r.shipper_company_id IN
+               <include refid="shipperCompanyIn"/>
+           AND q.quotation_no = (SELECT MAX(latest.quotation_no)
+                                   FROM quotation.quotation latest
+                                  WHERE latest.transport_request_id = r.id)
+         ORDER BY q.expires_at, r.request_number
+    </select>
+
+    <resultMap id="routingRequestedSummaryRow" type="com.example.cargotracker.quotation.infrastructure.persistence.RoutingRequestedSummaryRow">
+        <constructor>
+            <arg column="request_number" name="requestNumber" javaType="String"/>
+            <arg column="quotation_no" name="quotationNo" javaType="_int"/>
+            <arg column="status" name="status" javaType="String"/>
+            <arg column="responded_at" name="respondedAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="expires_at" name="expiresAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="route_confirmed_at" name="routeConfirmedAt" javaType="java.time.OffsetDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <!-- 経路設計中・荷主承認待ちの見積依頼の、詳細設計依頼済み・荷主承認待ちの見積り（受付一覧 S-02。Bolt 12・20）。依頼時刻の古い順。
+         荷主が承認した見積りは予約の確定待ちの表に移した（Bolt 23b）。再見積りを提示した荷主承認待ちの見積りは、DE-24 で輸送要求が
+         予約待ちから荷主承認待ちへ戻る前でも出す（見積りの状態を正にする。D-85。Bolt 35c） -->
+    <select id="selectRoutingRequested" resultMap="routingRequestedSummaryRow">
+        SELECT r.request_number, q.quotation_no, q.status, q.responded_at, q.expires_at, q.route_confirmed_at
+          FROM quotation.transport_request r
+          JOIN quotation.quotation q ON q.transport_request_id = r.id
+         WHERE ((r.status IN ('ROUTING', 'AWAITING_APPROVAL')
+                 AND q.status IN ('ROUTING_REQUESTED', 'AWAITING_SHIPPER_APPROVAL'))
+                OR (r.status = 'READY_TO_BOOK' AND q.status = 'AWAITING_SHIPPER_APPROVAL'))
+           AND r.shipper_company_id IN
+               <include refid="shipperCompanyIn"/>
+         ORDER BY q.responded_at, r.request_number
+    </select>
+
+    <resultMap id="awaitingBookingSummaryRow" type="com.example.cargotracker.quotation.infrastructure.persistence.AwaitingBookingSummaryRow">
+        <constructor>
+            <arg column="request_number" name="requestNumber" javaType="String"/>
+            <arg column="quotation_no" name="quotationNo" javaType="_int"/>
+            <arg column="status" name="status" javaType="String"/>
+            <arg column="routing_case_number" name="routingCaseNumber" javaType="String"/>
+            <arg column="route_version_no" name="routeVersionNo" javaType="_int"/>
+            <arg column="shipper_approved_at" name="shipperApprovedAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="expires_at" name="expiresAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="route_redesign_required" name="routeRedesignRequired" javaType="_boolean"/>
+            <arg column="first_departure_at" name="firstDepartureAt" javaType="java.time.OffsetDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <!-- 予約の確定待ちの見積り（受付一覧 S-02。US-04、Bolt 20 レビュー D-78。Bolt 23b）。見積りの承認済みを正にし、輸送要求の荷主承認待ち・
+         予約待ちへの更新（DE-21・DE-04 の配信）を待たない（経路設計中のままでも出す）。予約確定済みの輸送要求は出さない。有効期限の近い順。
+         荷主の承認の後に失効した見積りを再見積りした後で、社内承認して提示する前の見積り（経路を持つ承認待ち）も出す（D-85。Bolt 35c）。
+         輸送要求の条件は承認済みの行と同じにし、DE-04 の前に再見積りしても出す。割り当てた経路が再設計要の見積りも表に残し、行で分かるように
+         する（失効した行の再見積りの入口を残すため。US-07 AC5。Bolt 37e3）。割り当てた経路の最初の区間の出発も持ち、出発済みの行は画面が
+         表示する時刻で出し分ける（D-88。Bolt 37e4）。最初の区間は集約と同じく区間の番号が最小の区間（開発レビュー） -->
+    <select id="selectAwaitingBooking" resultMap="awaitingBookingSummaryRow">
+        SELECT r.request_number, q.quotation_no, q.status, q.routing_case_number, q.route_version_no, q.shipper_approved_at,
+               q.expires_at, q.route_redesign_required_at IS NOT NULL AS route_redesign_required,
+               l.departure_at AS first_departure_at
+          FROM quotation.transport_request r
+          JOIN quotation.quotation q ON q.transport_request_id = r.id
+          LEFT JOIN quotation.assigned_route_leg l ON l.quotation_id = q.id
+           AND l.leg_no = (SELECT MIN(f.leg_no) FROM quotation.assigned_route_leg f WHERE f.quotation_id = q.id)
+         WHERE r.status IN ('ROUTING', 'AWAITING_APPROVAL', 'READY_TO_BOOK')
+           AND (q.status = 'APPROVED'
+                OR (q.status = 'PENDING_APPROVAL' AND q.routing_case_number IS NOT NULL))
+           AND r.shipper_company_id IN
+               <include refid="shipperCompanyIn"/>
+         ORDER BY q.expires_at, r.request_number
+    </select>
+
+    <resultMap id="shipperLatestQuotationSummaryRow" type="com.example.cargotracker.quotation.infrastructure.persistence.ShipperLatestQuotationSummaryRow">
+        <constructor>
+            <arg column="request_number" name="requestNumber" javaType="String"/>
+            <arg column="status" name="status" javaType="String"/>
+            <arg column="expires_at" name="expiresAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="shipper_approved_at" name="shipperApprovedAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="presented_at" name="presentedAt" javaType="java.time.OffsetDateTime"/>
+            <arg column="responded_at" name="respondedAt" javaType="java.time.OffsetDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <!-- 荷主の見積依頼の一覧（C-02）の状態の選び方: 荷主企業の見積依頼ごとに、荷主に見える最新の見積り（提示済みで見積り番号の最大。
+         提示の前の見積りは荷主に見えないので数えない）。どの輸送要求の状態で見積りから選ぶかは画面の選び方（TransportRequestLabels）だけが
+         決める（ここでは絞らない。Bolt 35d の開発レビュー）。荷主企業で必ず絞る（Q-INV-08）。D-85。Bolt 35d -->
+    <select id="selectLatestVisibleForShipper" resultMap="shipperLatestQuotationSummaryRow">
+        SELECT r.request_number, q.status, q.expires_at, q.shipper_approved_at, q.presented_at, q.responded_at
+          FROM quotation.transport_request r
+          JOIN quotation.quotation q ON q.transport_request_id = r.id
+         WHERE r.shipper_company_id = #{shipperCompanyId}
+           AND q.quotation_no = (SELECT MAX(v.quotation_no)
+                                   FROM quotation.quotation v
+                                  WHERE v.transport_request_id = r.id
+                                    AND v.presented_at IS NOT NULL)
+         ORDER BY r.request_number
+    </select>
+
+    <select id="selectPricingLinesByTransportRequestId" resultMap="pricingLineRow">
+        SELECT l.quotation_id, l.line_no, l.description, l.amount, l.currency, l.contract_reference
+          FROM quotation.pricing_line l
+          JOIN quotation.quotation q ON q.id = l.quotation_id
+         WHERE q.transport_request_id = #{transportRequestId}
+         ORDER BY l.quotation_id, l.line_no
+    </select>
+</mapper>

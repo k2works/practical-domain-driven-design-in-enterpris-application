@@ -1,0 +1,475 @@
+package com.example.cargotracker.identity.domain.model.aggregates;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+import com.example.cargotracker.identity.domain.model.valueobjects.AssignedCompanies;
+import com.example.cargotracker.identity.domain.model.valueobjects.AuditAction;
+import com.example.cargotracker.identity.domain.model.valueobjects.AuditResult;
+import com.example.cargotracker.identity.domain.model.valueobjects.AuditTarget;
+import com.example.cargotracker.identity.domain.model.valueobjects.AuthenticationRejection;
+import com.example.cargotracker.identity.domain.model.valueobjects.IdentityVerificationMethod;
+import com.example.cargotracker.identity.domain.model.valueobjects.SuspensionReason;
+import com.example.cargotracker.identity.domain.model.valueobjects.UserStatus;
+import com.example.cargotracker.shared.domain.CompanyId;
+import com.example.cargotracker.shared.domain.Role;
+import com.example.cargotracker.shared.domain.UserId;
+import com.example.cargotracker.shared.domain.UtcInstant;
+import java.time.Instant;
+import java.util.Set;
+import java.util.UUID;
+import org.junit.jupiter.api.Test;
+
+/**
+ * 認証の監査記録（IA-INV-08、US-18 AC1・AC4）。
+ */
+class AuditRecordTest {
+
+    private static final UserId USER = new UserId(UUID.randomUUID());
+    private static final CompanyId COMPANY = new CompanyId(UUID.randomUUID());
+    private static final UtcInstant AT = new UtcInstant(Instant.parse("2026-10-06T05:00:00Z"));
+
+    @Test
+    void ログインの成功は利用者と企業と時刻を記録する() {
+        AuditRecord auditRecord = AuditRecord.loginSucceeded(USER, COMPANY, AT);
+
+        assertThat(auditRecord.action()).isEqualTo(AuditAction.LOGIN_SUCCEEDED);
+        assertThat(auditRecord.result()).isEqualTo(AuditResult.SUCCESS);
+        assertThat(auditRecord.actorUserId()).isEqualTo(USER);
+        assertThat(auditRecord.actorCompanyId()).isEqualTo(COMPANY);
+        assertThat(auditRecord.occurredAt()).isEqualTo(AT);
+        assertThat(auditRecord.reason()).isNull();
+    }
+
+    @Test
+    void passwordの段の成功はログインの成功と分けて記録する() {
+        AuditRecord auditRecord = AuditRecord.passwordVerified(USER, COMPANY, AT);
+
+        assertThat(auditRecord.action()).isEqualTo(AuditAction.PASSWORD_VERIFIED);
+        assertThat(auditRecord.result()).isEqualTo(AuditResult.SUCCESS);
+        assertThat(auditRecord.actorUserId()).isEqualTo(USER);
+        assertThat(auditRecord.actorCompanyId()).isEqualTo(COMPANY);
+        assertThat(auditRecord.reason()).isNull();
+    }
+
+    @Test
+    void 初回のpasswordの設定は再設定と分けて成功として記録する() {
+        // Bolt 38b4（開始準備の決定 (3)）
+        AuditRecord auditRecord = AuditRecord.initialPasswordSet(USER, COMPANY, AT);
+
+        assertThat(auditRecord.action()).isEqualTo(AuditAction.INITIAL_PASSWORD_SET);
+        assertThat(auditRecord.result()).isEqualTo(AuditResult.SUCCESS);
+        assertThat(auditRecord.actorUserId()).isEqualTo(USER);
+        assertThat(auditRecord.actorCompanyId()).isEqualTo(COMPANY);
+        assertThat(auditRecord.occurredAt()).isEqualTo(AT);
+        assertThat(auditRecord.reason()).isNull();
+    }
+
+    @Test
+    void 初回のpasswordの設定は利用者と企業を欠かせない() {
+        assertThatThrownBy(() -> AuditRecord.initialPasswordSet(null, COMPANY, AT))
+                .isInstanceOf(NullPointerException.class);
+        assertThatThrownBy(() -> AuditRecord.initialPasswordSet(USER, null, AT))
+                .isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
+    void TOTPの登録は利用者と企業を記録する() {
+        AuditRecord auditRecord = AuditRecord.totpEnrolled(USER, COMPANY, AT);
+
+        assertThat(auditRecord.action()).isEqualTo(AuditAction.TOTP_ENROLLED);
+        assertThat(auditRecord.result()).isEqualTo(AuditResult.SUCCESS);
+        assertThat(auditRecord.actorUserId()).isEqualTo(USER);
+        assertThat(auditRecord.actorCompanyId()).isEqualTo(COMPANY);
+        assertThat(auditRecord.reason()).isNull();
+    }
+
+    @Test
+    void ログインの失敗は理由を記録する() {
+        AuditRecord auditRecord = AuditRecord.loginFailed(USER, COMPANY, AuthenticationRejection.SUSPENDED, AT);
+
+        assertThat(auditRecord.action()).isEqualTo(AuditAction.LOGIN_FAILED);
+        assertThat(auditRecord.result()).isEqualTo(AuditResult.FAILURE);
+        assertThat(auditRecord.reason()).isEqualTo("SUSPENDED");
+        assertThat(auditRecord.actorUserId()).isEqualTo(USER);
+    }
+
+    @Test
+    void 存在しないメールアドレスでの失敗は操作者を記録しない() {
+        AuditRecord auditRecord = AuditRecord.loginFailed(null, null, AuthenticationRejection.UNKNOWN_USER, AT);
+
+        assertThat(auditRecord.actorUserId()).isNull();
+        assertThat(auditRecord.actorCompanyId()).isNull();
+        assertThat(auditRecord.reason()).isEqualTo("UNKNOWN_USER");
+    }
+
+    @Test
+    void ログアウトを記録する() {
+        AuditRecord auditRecord = AuditRecord.logout(USER, COMPANY, AT);
+
+        assertThat(auditRecord.action()).isEqualTo(AuditAction.LOGOUT);
+        assertThat(auditRecord.result()).isEqualTo(AuditResult.SUCCESS);
+    }
+
+    @Test
+    void 記録ごとに別の識別子を持つ() {
+        assertThat(AuditRecord.logout(USER, COMPANY, AT).id())
+                .isNotEqualTo(AuditRecord.logout(USER, COMPANY, AT).id());
+    }
+
+    @Test
+    void sessionの取消しは失敗として理由とsessionの主体を記録する() {
+        AuditRecord auditRecord = AuditRecord.sessionRevoked(USER, COMPANY, AuthenticationRejection.SUSPENDED, AT);
+
+        assertThat(auditRecord.action()).isEqualTo(AuditAction.SESSION_REVOKED);
+        assertThat(auditRecord.result()).isEqualTo(AuditResult.FAILURE);
+        assertThat(auditRecord.reason()).isEqualTo("SUSPENDED");
+        assertThat(auditRecord.actorUserId()).isEqualTo(USER);
+        assertThat(auditRecord.actorCompanyId()).isEqualTo(COMPANY);
+        assertThat(auditRecord.occurredAt()).isEqualTo(AT);
+    }
+
+    @Test
+    void sessionの取消しは理由と主体を欠かせない() {
+        assertThatThrownBy(() -> AuditRecord.sessionRevoked(USER, COMPANY, null, AT))
+                .isInstanceOf(NullPointerException.class);
+        assertThatThrownBy(() -> AuditRecord.sessionRevoked(null, COMPANY, AuthenticationRejection.UNKNOWN_USER, AT))
+                .isInstanceOf(NullPointerException.class);
+        assertThatThrownBy(() -> AuditRecord.sessionRevoked(USER, null, AuthenticationRejection.UNKNOWN_USER, AT))
+                .isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
+    void 担当範囲の変更は対象の利用者と版と変更前後の担当企業を企業IDの昇順で記録する() {
+        // Bolt 38e の行 3（V16）。企業名は変わりうるので残さない
+        UserId target = new UserId(UUID.randomUUID());
+        CompanyId first = new CompanyId(UUID.fromString("00000000-0000-0000-0000-000000000001"));
+        CompanyId second = new CompanyId(UUID.fromString("00000000-0000-0000-0000-000000000002"));
+        CompanyId third = new CompanyId(UUID.fromString("00000000-0000-0000-0000-000000000003"));
+
+        AuditRecord auditRecord = AuditRecord.assignmentsChanged(
+                USER,
+                COMPANY,
+                target,
+                7L,
+                new AssignedCompanies(Set.of(third, first)),
+                new AssignedCompanies(Set.of(second, third, first)),
+                AT);
+
+        assertThat(auditRecord.action()).isEqualTo(AuditAction.ASSIGNMENTS_CHANGED);
+        assertThat(auditRecord.result()).isEqualTo(AuditResult.SUCCESS);
+        assertThat(auditRecord.reason()).isNull();
+        assertThat(auditRecord.actorUserId()).isEqualTo(USER);
+        assertThat(auditRecord.target())
+                .isEqualTo(new AuditTarget(
+                        "USER",
+                        target.value().toString(),
+                        "7",
+                        first.value() + "," + third.value(),
+                        first.value() + "," + second.value() + "," + third.value()));
+    }
+
+    @Test
+    void 担当企業がなくなる変更は変更後を空で記録する() {
+        UserId target = new UserId(UUID.randomUUID());
+        CompanyId only = new CompanyId(UUID.randomUUID());
+
+        AuditRecord auditRecord = AuditRecord.assignmentsChanged(
+                USER, COMPANY, target, 2L, new AssignedCompanies(Set.of(only)), AssignedCompanies.none(), AT);
+
+        assertThat(auditRecord.target().beforeState()).isEqualTo(only.value().toString());
+        assertThat(auditRecord.target().afterState()).isEmpty();
+    }
+
+    @Test
+    void 範囲外の試行は失敗として理由と対象の利用者を記録し版と変更前後を持たない() {
+        UserId target = new UserId(UUID.randomUUID());
+
+        AuditRecord auditRecord = AuditRecord.adminScopeDenied(USER, COMPANY, target, AT);
+
+        assertThat(auditRecord.action()).isEqualTo(AuditAction.ADMIN_SCOPE_DENIED);
+        assertThat(auditRecord.result()).isEqualTo(AuditResult.FAILURE);
+        assertThat(auditRecord.reason()).isEqualTo("OUT_OF_SCOPE");
+        assertThat(auditRecord.target())
+                .isEqualTo(new AuditTarget("USER", target.value().toString(), null, null, null));
+    }
+
+    @Test
+    void 利用者の登録は成功として対象の利用者と版0と登録した役割を記録しメールアドレスと表示名を持たない() {
+        // 行 1（Bolt 38b2）
+        UserId target = new UserId(UUID.randomUUID());
+
+        AuditRecord auditRecord = AuditRecord.userRegistered(
+                USER, COMPANY, target, java.util.Set.of(Role.ROUTE_DESIGNER, Role.SALES), AT);
+
+        assertThat(auditRecord.action()).isEqualTo(AuditAction.USER_REGISTERED);
+        assertThat(auditRecord.result()).isEqualTo(AuditResult.SUCCESS);
+        assertThat(auditRecord.reason()).isNull();
+        assertThat(auditRecord.target())
+                .isEqualTo(new AuditTarget("USER", target.value().toString(), "0", null, "SALES,ROUTE_DESIGNER"));
+    }
+
+    @Test
+    void 範囲外の企業への登録の試行は失敗として理由と対象の企業を記録する() {
+        // 行 3b（Bolt 38b2）
+        CompanyId target = new CompanyId(UUID.randomUUID());
+
+        AuditRecord auditRecord = AuditRecord.adminScopeDeniedCompany(USER, COMPANY, target, AT);
+
+        assertThat(auditRecord.action()).isEqualTo(AuditAction.ADMIN_SCOPE_DENIED);
+        assertThat(auditRecord.result()).isEqualTo(AuditResult.FAILURE);
+        assertThat(auditRecord.reason()).isEqualTo("OUT_OF_SCOPE");
+        assertThat(auditRecord.target())
+                .isEqualTo(new AuditTarget("COMPANY", target.value().toString(), null, null, null));
+    }
+
+    @Test
+    void 範囲外の試行は主体と対象を欠かせない() {
+        UserId target = new UserId(UUID.randomUUID());
+
+        assertThatThrownBy(() -> AuditRecord.adminScopeDenied(null, COMPANY, target, AT))
+                .isInstanceOf(NullPointerException.class);
+        assertThatThrownBy(() -> AuditRecord.adminScopeDenied(USER, null, target, AT))
+                .isInstanceOf(NullPointerException.class);
+        assertThatThrownBy(() -> AuditRecord.adminScopeDenied(USER, COMPANY, null, AT))
+                .isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
+    void 利用停止は停止の理由と対象と変更前後を記録する() {
+        UserId target = new UserId(UUID.randomUUID());
+
+        AuditRecord auditRecord =
+                AuditRecord.userSuspended(USER, COMPANY, target, 5L, UserStatus.ACTIVE, SuspensionReason.EMERGENCY, AT);
+
+        assertThat(auditRecord.action()).isEqualTo(AuditAction.USER_SUSPENDED);
+        assertThat(auditRecord.result()).isEqualTo(AuditResult.SUCCESS);
+        assertThat(auditRecord.reason()).isEqualTo("EMERGENCY");
+        assertThat(auditRecord.actorUserId()).isEqualTo(USER);
+        assertThat(auditRecord.actorCompanyId()).isEqualTo(COMPANY);
+        assertThat(auditRecord.target())
+                .isEqualTo(new AuditTarget("USER", target.value().toString(), "5", "ACTIVE", "SUSPENDED"));
+    }
+
+    @Test
+    void 利用再開は理由を持たず対象と変更前後を記録する() {
+        UserId target = new UserId(UUID.randomUUID());
+
+        AuditRecord auditRecord = AuditRecord.userReactivated(USER, COMPANY, target, 6L, UserStatus.SUSPENDED, AT);
+
+        assertThat(auditRecord.action()).isEqualTo(AuditAction.USER_REACTIVATED);
+        assertThat(auditRecord.result()).isEqualTo(AuditResult.SUCCESS);
+        assertThat(auditRecord.reason()).isNull();
+        assertThat(auditRecord.target())
+                .isEqualTo(new AuditTarget("USER", target.value().toString(), "6", "SUSPENDED", "ACTIVE"));
+    }
+
+    @Test
+    void 利用状態の変更は主体と対象と理由を欠かせない() {
+        UserId target = new UserId(UUID.randomUUID());
+
+        assertThatThrownBy(() -> AuditRecord.userSuspended(
+                        null, COMPANY, target, 1L, UserStatus.ACTIVE, SuspensionReason.TRANSFERRED, AT))
+                .isInstanceOf(NullPointerException.class);
+        assertThatThrownBy(() -> AuditRecord.userSuspended(USER, COMPANY, target, 1L, UserStatus.ACTIVE, null, AT))
+                .isInstanceOf(NullPointerException.class);
+        assertThatThrownBy(() -> AuditRecord.userReactivated(USER, null, target, 1L, UserStatus.SUSPENDED, AT))
+                .isInstanceOf(NullPointerException.class);
+        assertThatThrownBy(() -> AuditRecord.userReactivated(USER, COMPANY, null, 1L, UserStatus.SUSPENDED, AT))
+                .isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
+    void 利用状態が変わっていない変更は記録しない() {
+        UserId target = new UserId(UUID.randomUUID());
+
+        assertThatThrownBy(() -> AuditRecord.userSuspended(
+                        USER, COMPANY, target, 1L, UserStatus.SUSPENDED, SuspensionReason.TRANSFERRED, AT))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> AuditRecord.userReactivated(USER, COMPANY, target, 1L, UserStatus.ACTIVE, AT))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void ロックの解除は理由を持たず対象の利用者と今の版とロックの前後を記録する() {
+        UserId target = new UserId(UUID.randomUUID());
+
+        AuditRecord auditRecord = AuditRecord.accountUnlocked(USER, COMPANY, target, 3L, AT);
+
+        assertThat(auditRecord.action()).isEqualTo(AuditAction.ACCOUNT_UNLOCKED);
+        assertThat(auditRecord.result()).isEqualTo(AuditResult.SUCCESS);
+        assertThat(auditRecord.reason()).isNull();
+        assertThat(auditRecord.actorUserId()).isEqualTo(USER);
+        assertThat(auditRecord.actorCompanyId()).isEqualTo(COMPANY);
+        assertThat(auditRecord.target())
+                .isEqualTo(new AuditTarget("USER", target.value().toString(), "3", "LOCKED", "UNLOCKED"));
+    }
+
+    @Test
+    void 管理者のTOTPの解除は本人確認の理由と手段と日時を記録する() {
+        UserId target = new UserId(UUID.randomUUID());
+        UtcInstant verifiedAt = new UtcInstant(Instant.parse("2026-11-09T01:30:00Z"));
+
+        AuditRecord auditRecord = AuditRecord.totpResetByAdmin(
+                USER, COMPANY, target, 7L, IdentityVerificationMethod.PHONE_CALLBACK, verifiedAt, AT);
+
+        assertThat(auditRecord.action()).isEqualTo(AuditAction.TOTP_RESET_BY_ADMIN);
+        assertThat(auditRecord.result()).isEqualTo(AuditResult.SUCCESS);
+        assertThat(auditRecord.reason()).isEqualTo("IDENTITY_VERIFIED");
+        assertThat(auditRecord.target())
+                .isEqualTo(new AuditTarget(
+                        "USER",
+                        target.value().toString(),
+                        "7",
+                        "ENROLLED",
+                        "method=PHONE_CALLBACK;verifiedAt=2026-11-09T01:30:00Z"));
+    }
+
+    @Test
+    void ログインの資格の解除は主体と対象と本人確認を欠かせない() {
+        UserId target = new UserId(UUID.randomUUID());
+
+        assertThatThrownBy(() -> AuditRecord.accountUnlocked(null, COMPANY, target, 1L, AT))
+                .isInstanceOf(NullPointerException.class);
+        assertThatThrownBy(() -> AuditRecord.accountUnlocked(USER, COMPANY, null, 1L, AT))
+                .isInstanceOf(NullPointerException.class);
+        assertThatThrownBy(() -> AuditRecord.totpResetByAdmin(USER, COMPANY, target, 1L, null, AT, AT))
+                .isInstanceOf(NullPointerException.class);
+        assertThatThrownBy(() -> AuditRecord.totpResetByAdmin(
+                        USER, null, target, 1L, IdentityVerificationMethod.IN_PERSON, AT, AT))
+                .isInstanceOf(NullPointerException.class);
+        assertThatThrownBy(() -> AuditRecord.totpResetByAdmin(
+                        USER, COMPANY, target, 1L, IdentityVerificationMethod.IN_PERSON, null, AT))
+                .isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
+    void 行1_外部原本の採用は成功として受信記録を対象に版と変更前を持たず変更後の要約を記録する() {
+        // Bolt 39b3b（人に諮ること 1 の決定）
+        String receivedRecordId = UUID.randomUUID().toString();
+        String summary = "recordType=VOYAGE;targetKey=V001;infoVersion=9";
+
+        AuditRecord auditRecord = AuditRecord.externalRecordAdopted(USER, COMPANY, receivedRecordId, summary, AT);
+
+        assertThat(auditRecord.action()).isEqualTo(AuditAction.EXTERNAL_RECORD_ADOPTED);
+        assertThat(auditRecord.result()).isEqualTo(AuditResult.SUCCESS);
+        assertThat(auditRecord.reason()).isNull();
+        assertThat(auditRecord.actorUserId()).isEqualTo(USER);
+        assertThat(auditRecord.actorCompanyId()).isEqualTo(COMPANY);
+        assertThat(auditRecord.occurredAt()).isEqualTo(AT);
+        assertThat(auditRecord.target())
+                .isEqualTo(new AuditTarget("RECEIVED_RECORD", receivedRecordId, null, null, summary));
+    }
+
+    @Test
+    void 行3_外部原本の隔離は成功として理由の区分を記録し版と変更前を持たない() {
+        String receivedRecordId = UUID.randomUUID().toString();
+        String summary = "provider=P;recordType=VOYAGE;externalId=V001;externalVersion=9";
+
+        AuditRecord auditRecord =
+                AuditRecord.externalRecordQuarantined(USER, COMPANY, receivedRecordId, "CONTENT_MISMATCH", summary, AT);
+
+        assertThat(auditRecord.action()).isEqualTo(AuditAction.EXTERNAL_RECORD_QUARANTINED);
+        assertThat(auditRecord.result()).isEqualTo(AuditResult.SUCCESS);
+        assertThat(auditRecord.reason()).isEqualTo("CONTENT_MISMATCH");
+        assertThat(auditRecord.occurredAt()).isEqualTo(AT);
+        assertThat(auditRecord.target())
+                .isEqualTo(new AuditTarget("RECEIVED_RECORD", receivedRecordId, null, null, summary));
+    }
+
+    @Test
+    void 行7_外部原本の採否の記録は操作者と受信記録IDと要約と時刻と理由を欠かせない() {
+        // 内容の欠けは専用の型 MissingEventValueException（IllegalArgumentException の子。listener はこの型だけを毒入りとして捨てる）
+        String id = UUID.randomUUID().toString();
+
+        assertThatThrownBy(() -> AuditRecord.externalRecordAdopted(null, COMPANY, id, "s", AT))
+                .isInstanceOf(AuditRecord.MissingEventValueException.class);
+        assertThatThrownBy(() -> AuditRecord.externalRecordAdopted(USER, null, id, "s", AT))
+                .isInstanceOf(AuditRecord.MissingEventValueException.class);
+        assertThatThrownBy(() -> AuditRecord.externalRecordAdopted(USER, COMPANY, null, "s", AT))
+                .isInstanceOf(AuditRecord.MissingEventValueException.class);
+        assertThatThrownBy(() -> AuditRecord.externalRecordAdopted(USER, COMPANY, " ", "s", AT))
+                .isInstanceOf(AuditRecord.MissingEventValueException.class);
+        assertThatThrownBy(() -> AuditRecord.externalRecordAdopted(USER, COMPANY, id, " ", AT))
+                .isInstanceOf(AuditRecord.MissingEventValueException.class);
+        assertThatThrownBy(() -> AuditRecord.externalRecordAdopted(USER, COMPANY, id, "s", null))
+                .isInstanceOf(AuditRecord.MissingEventValueException.class);
+        assertThatThrownBy(() -> AuditRecord.externalRecordQuarantined(USER, COMPANY, id, null, "s", AT))
+                .isInstanceOf(AuditRecord.MissingEventValueException.class);
+        assertThatThrownBy(() -> AuditRecord.externalRecordQuarantined(null, COMPANY, id, "CONTENT_MISMATCH", "s", AT))
+                .isInstanceOf(AuditRecord.MissingEventValueException.class);
+    }
+
+    /** Bolt 39h の行 6（DE-31 の監査。開始準備の決定 (8)）。 */
+    @org.junit.jupiter.api.Nested
+    class Bolt39h_外部原本の差異 {
+
+        @Test
+        void 行6_外部原本の差異は成功として差異の理由を記録し版と変更前を持たない() {
+            String receivedRecordId = UUID.randomUUID().toString();
+            String summary = "provider=P;recordType=MILESTONE;externalId=MS-0001;externalVersion=1";
+
+            AuditRecord auditRecord = AuditRecord.externalRecordDiscrepancyFound(
+                    USER, COMPANY, receivedRecordId, "VERSION_REVERSED", summary, AT);
+
+            assertThat(auditRecord.action()).isEqualTo(AuditAction.EXTERNAL_RECORD_DISCREPANCY_FOUND);
+            assertThat(auditRecord.result()).isEqualTo(AuditResult.SUCCESS);
+            assertThat(auditRecord.reason()).isEqualTo("VERSION_REVERSED");
+            assertThat(auditRecord.occurredAt()).isEqualTo(AT);
+            assertThat(auditRecord.target())
+                    .isEqualTo(new AuditTarget("RECEIVED_RECORD", receivedRecordId, null, null, summary));
+        }
+
+        @Test
+        void 行6_外部原本の差異の記録は理由と操作者を欠かせない() {
+            String id = UUID.randomUUID().toString();
+
+            assertThatThrownBy(() -> AuditRecord.externalRecordDiscrepancyFound(USER, COMPANY, id, null, "s", AT))
+                    .isInstanceOf(AuditRecord.MissingEventValueException.class);
+            assertThatThrownBy(() ->
+                            AuditRecord.externalRecordDiscrepancyFound(null, COMPANY, id, "VERSION_REVERSED", "s", AT))
+                    .isInstanceOf(AuditRecord.MissingEventValueException.class);
+        }
+    }
+
+    /** Bolt 39d2 の行 11（受信記録の判断の監査。開始準備の決定 (6)）。39b3b の同じ番号の行と名前が衝突しないよう入れ子にする。 */
+    @org.junit.jupiter.api.Nested
+    class Bolt39d2_受信記録の判断 {
+
+        @Test
+        void 行11_受信記録の判断は成功として理由の列に判断を記録し版と変更前を持たない() {
+            String receivedRecordId = UUID.randomUUID().toString();
+            String summary = "decision=REJECTED;ingestionId=i;dataSourceId=d;reason=提供元に確かめた";
+
+            AuditRecord auditRecord =
+                    AuditRecord.externalRecordDecided(USER, COMPANY, receivedRecordId, "REJECTED", summary, AT);
+
+            assertThat(auditRecord.action()).isEqualTo(AuditAction.EXTERNAL_RECORD_DECIDED);
+            assertThat(auditRecord.result()).isEqualTo(AuditResult.SUCCESS);
+            assertThat(auditRecord.reason()).isEqualTo("REJECTED");
+            assertThat(auditRecord.actorUserId()).isEqualTo(USER);
+            assertThat(auditRecord.actorCompanyId()).isEqualTo(COMPANY);
+            assertThat(auditRecord.occurredAt()).isEqualTo(AT);
+            assertThat(auditRecord.target())
+                    .isEqualTo(new AuditTarget("RECEIVED_RECORD", receivedRecordId, null, null, summary));
+        }
+
+        @Test
+        void 行11_受信記録の判断の記録は判断者と企業と受信記録IDと判断と要約と時刻を欠かせない() {
+            String id = UUID.randomUUID().toString();
+
+            assertThatThrownBy(() -> AuditRecord.externalRecordDecided(null, COMPANY, id, "REJECTED", "s", AT))
+                    .isInstanceOf(AuditRecord.MissingEventValueException.class);
+            assertThatThrownBy(() -> AuditRecord.externalRecordDecided(USER, null, id, "REJECTED", "s", AT))
+                    .isInstanceOf(AuditRecord.MissingEventValueException.class);
+            assertThatThrownBy(() -> AuditRecord.externalRecordDecided(USER, COMPANY, " ", "REJECTED", "s", AT))
+                    .isInstanceOf(AuditRecord.MissingEventValueException.class);
+            assertThatThrownBy(() -> AuditRecord.externalRecordDecided(USER, COMPANY, id, null, "s", AT))
+                    .isInstanceOf(AuditRecord.MissingEventValueException.class);
+            assertThatThrownBy(() -> AuditRecord.externalRecordDecided(USER, COMPANY, id, "REJECTED", " ", AT))
+                    .isInstanceOf(AuditRecord.MissingEventValueException.class);
+            assertThatThrownBy(() -> AuditRecord.externalRecordDecided(USER, COMPANY, id, "REJECTED", "s", null))
+                    .isInstanceOf(AuditRecord.MissingEventValueException.class);
+        }
+    }
+}

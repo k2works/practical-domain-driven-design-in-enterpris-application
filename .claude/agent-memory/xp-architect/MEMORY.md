@@ -1,0 +1,23 @@
+- [Bolt 1 レビューの未解決リスク](project_bolt1_review.md) — 受信側の冪等性、AT-02、イベント直列化契約、afterMigrate、D-1 への意見
+- [Bolt 2 レビューの指摘](project_bolt2_review.md) — AT-02 の層外の抜け、イベント依存規則、アクション SHA 固定、D-1/D-5 の記録
+- [Bolt 3 レビューの指摘](project_bolt3_review.md) — Flyway と実行時の DB 利用者の未分離、REVOKE の fail-open、CI の paths、E2E のステージング移行
+- [Bolt 4 レビューの指摘](project_bolt4_review.md) — 採番の REQUIRES_NEW と接続枯渇、連番 URL の他社参照、null 許容の二重基準
+- [Bolt 5 レビューの指摘](project_bolt5_review.md) — 審査記録の UNIQUE、update の全件 INSERT、N+1、社内照会の取り違え防止、CSRF
+- [Bolt 21 レビューの指摘](project_bolt21_review.md) — listener 例外の毒メッセージ化、日時書式の 3 重の写し、アプローチ規則の軸
+- [Bolt 32b レビューの指摘](project_bolt32b_review.md) — 属性名の 2 定数の 2 組目、レイアウトの条件のずれ、止められた利用者の延長のテスト
+- [Bolt 32c レビューの指摘](project_bolt32c_review.md) — フィルター順序の同値、静的資源の毎回 SQL、UserStanding の形、ロックと session
+- [Bolt 32d レビューの指摘](project_bolt32d_review.md) — AT-07 の戻り値の型だけの見張りの抜け道、テストのコンテキスト共有が規約頼み
+- [Bolt 33a レビューの指摘](project_bolt33a_review.md) — 今の session を捨てる順序の決定との食い違い、コミット後の失効の tx 依存、LOGOUT 監査の抜け
+- [Bolt 33c レビューの指摘](project_bolt33c_review.md) — session パッケージの例外の見張りなし、計画・Javadoc の残り、境界の判定の 4 重の写し、15 分の直書き
+- [Bolt 33f レビューの指摘](project_bolt33f_review.md) — ArchUnit は String 定数の参照を見ない、ADR-012 決定 3 の理由、A-03 の期間を全画面 Advice で描いた
+- [Bolt 34 レビューの指摘](project_bolt34_review.md) — 最後のシステム管理者、check/change の二重読み出し、controller の監督の役割の写し
+- [Bolt 34d レビューの指摘](project_bolt34d_review.md) — 停止→再開で旧 session が残る、NO_CHANGE の古い版、管理の前置きの写し、controller の切れ目
+- [Bolt 34e レビューの指摘](project_bolt34e_review.md) — 承認は id と版だけで縛る、to・reason の出どころ、入れ子の理由の記録漏れ、PASSWORD の写し
+- [Bolt 34c レビューの指摘](project_bolt34c_review.md) — session を捨てる列挙の漏れ、回復コード 500 後の password の段、AT-11 の 2 本目の役割、SpotBugs の範囲
+- [Bolt 39gc 計画のリスク](project_bolt39gc_plan.md) — 確認中で組・完了後の判定が壊れる、確認中の出口が W12 まで無い
+- [Bolt 39g3 計画の申し送り](project_bolt39g3_plan.md) — 鮮度超過の未決 3 点を 39g4 へ、見込みは保存値、既存行は未補正
+- [Bolt 39g4 計画の判断](project_bolt39g4_plan.md) — 鮮度超過は読むときの判定と next_expected_at、DE-12 の見込みは 39g4b、優先は先に決めた
+- [Bolt 39g4c 計画の判断](project_bolt39g4c_plan.md) — 根拠は保存し 1 項目で持つ、値の一致を CHECK で、テストが導出の経路を通るか
+- [Bolt 39h 計画の判断](project_bolt39h_plan.md) — 4 本に分ける、比べる相手を 2 つの時計で分けた、差異は却下だけ、D-115 の道が閉じる
+- [Bolt 39h4 計画の検証](project_bolt39h4_plan.md) — 照合の表の見出しの前方一致、航海に矛盾なし（D-143）、候補なしの案件、全 Must の表の持ち主
+- [Bolt 34f レビューの指摘](project_bolt34f_review.md) — 書き手 1 か所が規則で守られない、refuse の section の二重、Javadoc の残り、役割 POST の版

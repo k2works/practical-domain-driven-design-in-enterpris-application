@@ -1,0 +1,73 @@
+package com.example.cargotracker.routing.domain.model.rules;
+
+import com.example.cargotracker.routing.domain.model.aggregates.ConnectionRule;
+import com.example.cargotracker.routing.domain.model.valueobjects.ConstraintEvaluation;
+import com.example.cargotracker.routing.domain.model.valueobjects.ExclusionReason;
+import com.example.cargotracker.routing.domain.model.valueobjects.Leg;
+import com.example.cargotracker.routing.domain.model.valueobjects.RouteSpecification;
+import com.example.cargotracker.shared.annotation.ddd.DomainRule;
+import com.example.cargotracker.shared.domain.Location;
+import com.example.cargotracker.shared.domain.UtcInstant;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
+
+/**
+ * 制約適合判定。経路条件、区間の列、接続時間規則から、適合・除外と理由を返す純粋な関数（R-INV-01・02、BR-11）。
+ * Golden dataset（TST-02、W6）で検証する。
+ *
+ * <p>到着予定が希望到着期限以前で、すべての接続時間が必要最小接続時間以上なら適合（同時刻・同値は適合）。
+ * 接続時間は、前の区間の到着予定から次の区間の出発予定まで。規則は接続ごとに、次の区間の出発予定の時刻（実際に積み替える時刻）に
+ * 有効なものを使う（D-90、Bolt 37。Bolt 17 の確認ポイント 9 の判定時刻から変えた）。その時刻に有効な規則がなければ、確かめていない
+ * 接続を通さないよう「接続できない」で除外する（失敗に倒す）。同じ港に有効な規則が複数あれば厳しい方を使う。
+ * 理由は区間の順の接続の理由、期限超過の順に並べる。貨物種別は判定しない（算出の集約が {@code RoutableCargoPolicy} で後ろに足す。
+ * 確定と評価がこの規則を通るので、貨物種別を判定すると評価が貨物種別の理由を受けてしまう。Bolt 39i の決定 (3)）。
+ */
+@DomainRule
+public class ConstraintEvaluator {
+
+    /** 判定する。 */
+    public ConstraintEvaluation evaluate(RouteSpecification specification, List<Leg> legs, List<ConnectionRule> rules) {
+        if (legs.isEmpty()) {
+            throw new IllegalArgumentException("区間のない候補は判定できません");
+        }
+        List<ExclusionReason> reasons = new ArrayList<>();
+        Duration minSlack = null;
+        for (int i = 1; i < legs.size(); i++) {
+            Leg previous = legs.get(i - 1);
+            Leg next = legs.get(i);
+            Location port = previous.discharge();
+            Optional<Duration> required = requiredConnection(rules, port, next.departureAt());
+            if (required.isEmpty()) {
+                reasons.add(ExclusionReason.notConnectable(next.departureAt(), port, next.infoVersion()));
+                continue;
+            }
+            Duration connection = Duration.between(
+                    previous.arrivalAt().instant(), next.departureAt().instant());
+            Duration slack = connection.minus(required.get());
+            if (minSlack == null || slack.compareTo(minSlack) < 0) {
+                minSlack = slack;
+            }
+            if (slack.isNegative()) {
+                reasons.add(ExclusionReason.connectionTooShort(
+                        next.departureAt(), port, required.get(), next.infoVersion()));
+            }
+        }
+        Leg last = legs.getLast();
+        UtcInstant deadline = specification.arrivalDeadline();
+        if (last.arrivalAt().instant().isAfter(deadline.instant())) {
+            reasons.add(ExclusionReason.deadlineExceeded(last.arrivalAt(), deadline, last.infoVersion()));
+        }
+        return new ConstraintEvaluation(last.arrivalAt(), reasons, minSlack);
+    }
+
+    private static Optional<Duration> requiredConnection(
+            List<ConnectionRule> rules, Location port, UtcInstant connectionAt) {
+        return rules.stream()
+                .filter(rule -> rule.appliesTo(port, connectionAt))
+                .map(ConnectionRule::minimumConnection)
+                .max(Comparator.naturalOrder());
+    }
+}

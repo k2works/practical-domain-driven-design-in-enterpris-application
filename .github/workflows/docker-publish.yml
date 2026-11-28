@@ -4,6 +4,9 @@ on:
   push:
     tags:
       - '*'
+      # cargo-tracker のリリースのタグでは動かさない。ここで作るのはルートの開発用ツールのイメージで、アプリではない（Bolt 71）。
+      # 除外は '*' より後に書く
+      - '!cargo-tracker-v*'
   workflow_dispatch:
     inputs:
       tag:

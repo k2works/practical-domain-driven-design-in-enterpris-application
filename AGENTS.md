@@ -10,8 +10,8 @@ AI コーディングエージェント向けのプロジェクトガイドラ�
 
 - **プロジェクト名**: 実践ドメイン駆動設計 in エンタープライズアプリケーション
 - **説明**: エンタープライズアプリケーションの開発題材を通じて、ドメイン駆動設計（DDD）の戦略的設計・戦術的設計を実践するプロジェクト。AI-DLC（AI-Driven Development Lifecycle）に基づき、分析・開発・運用の各フェーズを AI が実行し人が承認ゲートで検証する形で進める
-- **技術スタック**: アプリケーションの技術スタックは未選定（`analyzing-tech-stack` スキルで選定し ADR に記録する）。開発基盤は Node.js 22 / Gulp（タスクランナー）、MkDocs Material + PlantUML（ドキュメント）、Docker・Docker Compose / Nix flake（実行環境）、GitHub Actions（CI/CD）
-- **アーキテクチャ**: <!-- アーキテクチャパターン -->
+- **技術スタック**: Java 25 LTS・Spring Boot 4.1・Spring Modulith・MyBatis・Flyway・Thymeleaf + htmx 2、DB は開発 H2／本番 PostgreSQL 18、テストは JUnit 6・Cucumber（BDD）・Testcontainers・ArchUnit・Playwright、実行基盤は AWS（ECS Fargate・RDS・S3）。詳細は `docs/design/cargo-tracker/tech_stack.md` と ADR-006〜009。開発基盤は Node.js 22 / Gulp（タスクランナー）、MkDocs Material + PlantUML（ドキュメント）、Docker・Docker Compose / Nix flake（実行環境）、GitHub Actions（CI/CD）
+- **アーキテクチャ**: モジュラーモノリス（境界づけられたコンテキストごとに interfaces / application / domain / infrastructure の 4 パッケージ）、サーバーサイドレンダリング。詳細は `docs/design/cargo-tracker/architecture_*.md` と ADR-001〜005
 
 ## ディレクトリ構成
 

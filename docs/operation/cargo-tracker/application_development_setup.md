@@ -1,0 +1,200 @@
+---
+type: Playbook
+title: "アプリケーション開発環境セットアップ手順書 - cargo-tracker"
+description: "cargo-tracker（A 社国際貨物輸送管理システム）を、開発者の PC で起動・テスト・品質チェックするための手順を示す。"
+tags: [operation,playbook,setup]
+status: stable
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-05T08:04:01Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-02T01:37:59Z }
+  - { by: human:kakimomokuri, at: 2026-10-02T07:02:38Z }
+  - { by: human:kakimomokuri, at: 2026-10-02T11:26:07Z }
+  - { by: human:kakimomokuri, at: 2026-10-02T13:47:11Z }
+  - { by: human:kakimomokuri, at: 2026-10-03T00:50:25Z }
+  - { by: human:kakimomokuri, at: 2026-10-03T02:07:18Z }
+  - { by: human:kakimomokuri, at: 2026-10-05T03:42:38Z }
+  - { by: human:kakimomokuri, at: 2026-10-05T06:28:16Z }
+  - { by: human:kakimomokuri, at: 2026-10-05T09:58:24Z }
+---
+
+# アプリケーション開発環境セットアップ手順書 - cargo-tracker
+
+## 概要
+
+cargo-tracker（A 社国際貨物輸送管理システム）を、開発者の PC で起動・テスト・品質チェックするための手順を示す。テンプレート（`docs/template/アプリケーション開発環境セットアップ手順書.md`）の構成に従い、このプロジェクトにあるものだけを書く。
+
+| 項目 | 内容 |
+| :--- | :--- |
+| 対象 | `apps/cargo-tracker`（Java 25、Spring Boot 4.1、Spring Modulith のモジュラーモノリス） |
+| 正とする文書 | 品質チェックのコマンドは [開発戦略](../../development/cargo-tracker/development_strategy.md) の「品質チェックのコマンド」、使う技術と版は [技術スタック](../../design/cargo-tracker/tech_stack.md) を正とする。本書は環境を用意して動かす手順だけを書く |
+| 確認日 | 2026-10-02（本書のコマンドはこの日に実際に動かして確かめた）。9 節（クラウドの実行環境）は 2026-10-05 |
+
+## 1. 前提条件
+
+| ツール | 版 | 用途 | 確かめ方 |
+| :--- | :--- | :--- | :--- |
+| JDK | 25（Amazon Corretto を推奨） | ビルド・実行。Gradle の toolchain が 25 を求める | `java -version` |
+| Docker | 動いていること | 統合テスト・画面の層のテスト・`bootTestRun` の PostgreSQL 18.6（Testcontainers） | `docker info` |
+| Node.js | 版は問わない（技術スタックに定めがない。確認日は v24 で動かした） | SonarQube と文書の検査（ルートの Gulp のタスク）を使うときだけ要る | `node --version` |
+
+Gradle は Gradle Wrapper（`./gradlew`、9.8.0）を使うため、入れなくてよい。
+
+## 2. プロジェクトの取得
+
+```bash
+git clone https://github.com/k2works/practical-domain-driven-design-in-enterpris-application.git
+cd practical-domain-driven-design-in-enterpris-application
+npm install                                           # ルートの Gulp のタスクを使う場合
+git config blame.ignoreRevsFile .git-blame-ignore-revs  # 書式だけのコミットを git blame で飛ばす（一度だけ）
+cd apps/cargo-tracker
+```
+
+## 3. 起動
+
+### H2 で起動する（日常の開発）
+
+開発体験を優先し、ローカルの起動は H2 を PostgreSQL 互換モードで使う（ADR-007）。Docker は要らない。
+
+```bash
+./gradlew bootRun
+```
+
+`dev` プロファイル（`application-dev.properties`）で起動し、Flyway のマイグレーションを当てる。権限による保護（追記専用の表）は H2 では働かない。
+
+Spring Boot DevTools が入っているので、起動したまま変更を確かめられる。テンプレート（`src/main/resources/templates`）と静的ファイルは保存すると反映され、Java の変更はクラスファイルが変わると自動で再起動する。`bootRun` を動かしたまま、別の端末で `./gradlew classes` を実行するか、IDE でビルドする（IntelliJ IDEA は「Build Project」、または設定の「Build project automatically」）。再起動すると H2 のインメモリの DB は作り直され、入力したデータは消える。
+
+IDE（IntelliJ IDEA など）から `CargoTrackerApplication` を直接起動するときは、実行構成の Active profiles に `dev` を入れる。入れないと H2 の設定と、開発用の利用者・ログインの入力済みが有効にならない。
+
+### PostgreSQL で起動する（本番に近い確認）
+
+```bash
+./gradlew bootTestRun
+```
+
+テストのクラスパスの `TestCargoTrackerApplication` が、Testcontainers で PostgreSQL 18.6 を起動して接続する。追記専用の表の権限（`afterMigrate`）も働く。終了するとコンテナも止まる。
+
+### 開く URL
+
+| URL | 画面 | 備考 |
+| :--- | :--- | :--- |
+| <http://localhost:8080/> | ログイン（A-01）と役割のホーム | 未認証ならログインの画面に移る。開発環境では荷主の開発用の利用者で入力済み。ログインすると、荷主は見積依頼の一覧（C-02）、営業担当者は受付一覧（S-02）へ移る。開発用の利用者のメールアドレスと password は [README](https://github.com/k2works/practical-domain-driven-design-in-enterpris-application/blob/develop/apps/cargo-tracker/README.md) の「開発環境のログイン」を見る。ログインの画面の下の「開発用の利用者でログイン」から、荷主担当者・営業担当者を選んでそのままログインできる。営業の画面を使うときは、ヘッダーの「ログアウト」の後に「営業担当者でログイン」を押す |
+| <http://localhost:8080/customer/transport-requests/new> | 見積依頼の作成（C-03。輸送条件・貨物・書類・確認の 4 段階） | 荷主の画面（荷主担当者でログインして開く）。必須条件を入れて提出すると（必要書類は任意。PDF・PNG・JPEG で 1 件 10 MB まで、1 つの版に 5 件まで（商業送り状 1 件、梱包明細 1 件、その他 3 件まで）。Q-INV-16）、見積依頼の詳細（C-04）に業務番号（例: `TR-2026-0001 版 1`）と「提出しました」が出る。内部の ID（UUID）は画面にもアドレスバーにも出さない（D-4）。希望到着期限は日本時間で `2026-11-02 09:00` の形で入れる |
+| <http://localhost:8080/customer/transport-requests> | 見積依頼の一覧（C-02） | 荷主の画面。自社の見積依頼だけを、最初の提出時刻の新しい順に示す。業務番号から詳細（C-04）を開ける。差し戻された見積依頼は「差戻し（お客様の対応待ち）」で出て、詳細で理由と不足事項を読み、「編集して出し直す」から版 2 を出し直せる |
+| <http://localhost:8080/staff/transport-requests> | 見積依頼の受付一覧（S-02） | 社内の画面（営業担当者でログインして開く）。審査中の見積依頼を提出時刻の古い順に示す。業務番号から審査（S-03）を開き、確定・差戻しできる |
+| <http://localhost:8080/staff/kpi-observations> | KPI 計測記録の一覧（S-22 の前身の仮の画面） | 社内の画面。提出の後、非同期の配信を経て業務番号と提出時刻が表示される。提出時刻はまだ UTC だけで表示する（BR-10 との差。S-22 の本実装で直す） |
+
+添付した書類のファイルは、ローカルのファイルシステムの `cargotracker.document-storage.base-dir` に置く（既定は一時ディレクトリの下の `cargo-tracker/documents`。Bolt 7）。DB は H2 のインメモリなので、`bootRun` をやり直すと書類の記録は消え、ファイルだけが残る。気になるときはこのディレクトリを消してよい。本番の S3 の実装は運用準備（W10、#28）で作る（保存とトランザクションの扱いは ADR-010）。社内の画面（`/staff`）は、Bolt 14 から営業担当者でログインしないと開けない（Bolt 6〜8 レビュー D-27 のパイロット開始の条件のうち、認証の部分）。
+
+荷主企業と提出者・審査者・承認者は、ログインした利用者で記録される（Bolt 14。US-18 の password によるログインと session。TOTP は W5）。H2 のコンソールは、ログインと CSRF の守りの外に置くことになるため Bolt 14 で外した。開発中の DB の中身は、テストか画面で確かめる。
+
+社内の画面（`/staff/**`）にも認証はまだなく、誰でも開ける。ローカルの開発環境だけで動かす。審査の判断者は `cargotracker.provisional-actor.staff-user-id`（仮の営業担当者）で記録される。
+
+荷受人は、企業マスターができるまで `cargotracker.provisional-consignees.*`（仮の荷受人の一覧、3 社）から選ぶ。`.properties` は ISO-8859-1 で読まれるため、名前の日本語は Unicode のエスケープで書く。企業マスターは US-16 の Bolt で入れ、この設定を消す。
+
+## 4. テストと品質チェック
+
+| 目的 | コマンド（`apps/cargo-tracker` で実行） | 時間の目安 |
+| :--- | :--- | :--- |
+| すべての検証（書式・静的解析・ユニット・アーキテクチャ・業務ルール層の受入シナリオ・統合・Web・H2 のスモーク・本番の依存・カバレッジの閾値・用語集の整合） | `./gradlew check` | 約 2 分 |
+| 用語集とコードの整合だけ | `./gradlew documentationTest` | 数秒。設計文書やソースの Javadoc を変えたときに動く |
+| 書式をそろえる | `./gradlew spotlessApply` | 数秒 |
+| 画面の層の受入シナリオ（`@ui`。Playwright と axe-core） | 初回だけ `./gradlew playwrightInstall`、以降 `./gradlew uiTest` | CI の `ui` の段で約 15〜19 分（W6。準備を含む。上限は 30 分。手元は機械による） |
+| デモ項目の動画（`@demo`。Bolt の終了報告と開発の索引からリンクする） | `./gradlew demoVideo`。`docs/assets/demo/<Bolt>/<名前>.webm` に置く（置き場所はシナリオの `@demo-<Bolt>/<名前>` の印）。実行の前にすべての動画を消し、いまのコードで撮り直す | 約 3 分 |
+| 設計ドキュメントの生成（JIG だけ） | `./gradlew jigReports` | 十数秒 |
+
+SonarQube の品質ゲートは、リポジトリのルートで次を実行する。ローカルの SonarQube（既定は <http://localhost:9000>。ポートを変えた場合は `.env` の `LOCAL_SONAR_PORT` か `SONAR_HOST_URL`）と、`.env` の `SONAR_TOKEN`・`SONAR_PROJECT_KEY` が要る。手順は [SonarQube ローカル環境セットアップ手順書](../../reference/SonarQubeローカル環境セットアップ手順書.md) に従う。
+
+```bash
+npx gulp sonar-local:status   # 起動しているか
+npx gulp sonar-local:profile  # 品質プロファイルを sonarqube.config.json のとおりにそろえる（check が先に流す）
+npx gulp sonar-local:check    # プロファイルをそろえ、スキャンして Quality Gate を判定する（不合格なら失敗で終わる）
+npx gulp sonar-local:issues   # 指摘の一覧
+npx gulp sonar-local:hotspots # セキュリティのホットスポットの一覧（読むだけ。new_security_hotspots_reviewed で落ちたときに見る）
+```
+
+品質プロファイルは、`sonarqube.config.json` の `qualityProfiles` に書いた「cargo-tracker way」（Sonar way を継承し、整形の規則と正反対の `java:S8445` だけを外す。2026-10-09 に human:kakimomokuri が決定、Bolt 24）を、`sonar-local:profile` が作り、cargo-tracker に割り当てる。何度流しても同じ状態になる。品質プロファイルを変えるので、`SONAR_TOKEN` は **User Token**（管理者の利用者のもの）にする。解析用のトークン（Global・Project Analysis Token）では HTTP 403（Insufficient privileges）になる。外す規則を足すときは、`deactivateRules` に規則と理由を書く。
+
+## 5. 生成物の場所
+
+| 生成物 | 場所 | 作るコマンド |
+| :--- | :--- | :--- |
+| テストの結果 | `build/reports/tests/test/index.html`、`build/reports/tests/uiTest/index.html` | `check`、`uiTest` |
+| 受入シナリオ（Cucumber） | `build/reports/cucumber/cucumber.html`（業務ルール層）、`build/reports/cucumber-ui/cucumber.html`（画面の層） | `check`、`uiTest` |
+| カバレッジ（JaCoCo） | `build/reports/jacoco/test/html/index.html` | `check` |
+| 静的解析 | `build/reports/checkstyle/`、`build/reports/spotbugs/main.html` | `check` |
+| JIG（用語集、パッケージ関連、業務ルール一覧） | `build/jig/index.html` | `jigReports` |
+| Spring Modulith のモジュール図 | `build/spring-modulith-docs/` | `test`（`ModuleDocumentationTest`。`check` でも動く） |
+| ドキュメントサイトに載せる ER 図（SchemaSpy） | リポジトリのルートの `docs/assets/schemaspy-output/cargo-tracker/index.html` | リポジトリのルートで `npx gulp schemaspy:generate`（Docker が要る。約 2 分） |
+| ドキュメントサイトに載せる JIG | リポジトリのルートの `docs/assets/jig-output/cargo-tracker/index.html` | リポジトリのルートで `npx gulp jig:generate`（`jigReports` の出力を写す） |
+| ドキュメントサイトに載せるユーザーマニュアル（HTML） | リポジトリのルートの `docs/assets/manual-output/cargo-tracker/index.html` | リポジトリのルートで `npx gulp manual:build`（`docs/manual` の Markdown を変換。`docs:generate` にも入る） |
+| ユーザーマニュアルの画面のキャプチャ | `docs/manual/assets/*.png`（Git に入れる） | `apps/cargo-tracker` で `./gradlew manualScreenshots`（`@manual` のシナリオ。手作業で PNG を置かない） |
+
+ER 図は、`apps/cargo-tracker/docker-compose.yml` の使い捨ての PostgreSQL 18.6 にアプリと同じ Flyway のマイグレーションを当て、SchemaSpy で作る。`npx gulp docs:generate` で ER 図と JIG をまとめて作り、`npx gulp docs:build` で続けてドキュメントサイトを作る。公開サイトのビルド（`.github/workflows/mkdocs.yml`）も同じタスクを使う。`main` は GitHub Pages のルート、`develop` は `develop/` に公開し、同時デプロイは直列化する。
+
+生成物はリポジトリにコミットしない。CI（`.github/workflows/cargo-tracker-ci.yml`）では、成果物 `cargo-tracker-reports`・`cargo-tracker-ui-reports` に 14 日残る。
+
+## 6. ディレクトリ構造
+
+```text
+apps/cargo-tracker/
+├── build.gradle                  依存、品質チェック、カバレッジの閾値（CI の閾値の正）
+├── config/                       Checkstyle の規則、SpotBugs の除外（理由つき）
+└── src/
+    ├── main/java/com/example/cargotracker/
+    │   ├── quotation/            見積りコンテキスト（interfaces・application・domain・infrastructure）
+    │   ├── identity/             アクセス・監査コンテキスト
+    │   ├── shared/               共有カーネル（domain）と注釈の語彙（annotation.ddd）
+    │   └── platform/             技術の部品（MyBatis の型ハンドラー）
+    ├── main/resources/
+    │   ├── db/migration/         Flyway（common と {vendor}）
+    │   ├── db/callback/          Flyway のコールバック（PostgreSQL の権限）
+    │   └── templates/            Thymeleaf の画面
+    └── test/
+        ├── java/                 ユニット・アーキテクチャ・受入シナリオのステップ定義・統合・Web・画面の層
+        └── resources/features/   受入シナリオ（日本語 Gherkin）
+```
+
+パッケージ構成と依存の規則は [バックエンドアーキテクチャ](../../design/cargo-tracker/architecture_backend.md)、テストの階層は [テスト戦略](../../design/cargo-tracker/test_strategy.md) を参照する。
+
+## 7. Git の規約
+
+コミットは Conventional Commits に従い、1 コミット 1 変更にする（`git-commit` スキル）。push すると、`apps/cargo-tracker` の変更で CI の `check` と `ui` の 2 つのジョブが動く。
+
+## 8. よくあるつまずき
+
+| 症状 | 原因と対処 |
+| :--- | :--- |
+| 統合テストや `bootTestRun` が Docker に接続できない | Docker が動いていない。Docker Desktop などを起動する |
+| `uiTest` がブラウザを見つけられない | `./gradlew playwrightInstall` を一度実行する |
+| `check` が書式で失敗する（`spotlessCheck`） | `./gradlew spotlessApply` で書式をそろえ、書式だけの変更は別のコミットにする |
+| `sonar-local:check` が NONE で失敗する | 解析の反映を待つ設定（`sonar.qualitygate.wait`）が働いていない可能性がある。`npx gulp sonar-local:status` でサーバーを確かめる |
+
+## 9. クラウドの実行環境（Claude Code on the web）
+
+Claude Code のクラウドの実行環境では、セッションの開始のフック（`.claude/hooks/session-start.sh`。`.claude/settings.json` に登録）が、検証を動かせる状態を作る（Bolt 11 の Try T-34。2026-10-05 に human:kakimomokuri が決定）。クラウドの実行環境のときだけ動き（`CLAUDE_CODE_REMOTE=true`）、何度動かしても同じ結果になる。
+
+| 順 | フックがすること | 理由 |
+| :--- | :--- | :--- |
+| 1 | ロケールを `C.UTF-8` にする（`LC_ALL`・`LANG` をセッションの環境変数に足す） | 日本語のシナリオ名のテストの報告を書き出すときに失敗するため |
+| 2 | JDK 25 がなければ apt で `openjdk-25-jdk-headless` を入れる | Gradle の toolchain が 25 を求める。JDK のダウンロードのサイトはネットワークの方針で許可されていない |
+| 3 | dockerd が止まっていれば起動する | Testcontainers の PostgreSQL に要る。待機中に止まることがある |
+| 4 | `./gradlew testClasses` で依存を取り、Maven Central の 429 なら間を置いて 3 回まで取り直す | 依存の取得で 429 が返ることがある |
+| 5 | Playwright が求める Chromium（driver の `browsers.json` の版）がなければ、環境にある Chromium を求める版の場所から参照させる | 求める版のダウンロード元（`cdn.playwright.dev`）が許可されていない。CI は正規の版で回る |
+| 6 | ルートの `node_modules` がなければ `npm install` する | 文書の検査（`npx gulp okf:check`）に要る |
+| 7 | `vm.max_map_count` を 262144 にする | SonarQube の Elasticsearch が求める |
+
+フックの後は、4 節のコマンドがそのまま動く。SonarQube を使うときは、フックでは起動しないため、次の手順で起動してから 4 節の `sonar-local:check` を実行する。`sonar-local:*` のタスクは、クラウドの実行環境（`CLAUDE_CODE_REMOTE=true`）では `ops/docker/sonarqube-local/docker-compose.cloud.yml`（起動時チェックを外し Web の heap を 2 GB にする上書き）を自動で重ねる。開発者の PC では重ねない（Bolt 19。T-52）。
+
+```bash
+npx gulp sonar-local:start
+until curl -s localhost:9000/api/system/status | grep -q '"UP"'; do sleep 3; done
+```
+
+初回は admin のパスワードを変えてトークンを作り、ルートの `.env`（Git の対象外）に `SONAR_TOKEN` と `SONAR_PROJECT_KEY=cargo-tracker-modular-monolith` を書く（[SonarQube ローカル環境セットアップ手順書](../../reference/SonarQubeローカル環境セットアップ手順書.md)）。クラウドの実行環境のコンテナはセッションの終わりに消えるため、トークンはセッションごとに作り直す。
+
+| つまずき | 対処 |
+| :--- | :--- |
+| `uiTest` が `Executable doesn't exist at /opt/pw-browsers/chromium_headless_shell-…` で全件失敗する | フックの 5 が動いていない。`CLAUDE_CODE_REMOTE=true .claude/hooks/session-start.sh` を実行する |
+| 統合テストが `Could not find a valid Docker environment` で失敗する | dockerd が止まった。フックをもう一度実行する |
+| SonarQube のコンテナが起動を繰り返す | `docker-compose.cloud.yml` を重ねずに起動した（`docker compose` を直接使った、または `CLAUDE_CODE_REMOTE` がない）。`npx gulp sonar-local:stop` の後、上の手順で起動し直す |
+

@@ -1,0 +1,104 @@
+---
+type: ADR
+title: "ADR-007: 開発環境は H2、本番は PostgreSQL 18 を使い、永続化は MyBatis、スキーマは Flyway で管理する"
+description: "開発体験を優先してローカルのアプリ起動は H2、ステージング・本番と SQL を検証するテストは PostgreSQL 18 を使い、永続化に MyBatis、マイグレーションに Flyway を使う決定。"
+tags: [adr, tech-stack]
+status: stable
+generated: { by: anthropic/claude-opus-5-5, at: 2026-11-05T05:39:39Z }
+verified:
+  - { by: human:kakimomokuri, at: 2026-10-01T07:29:05Z }
+  - { by: human:kakimomokuri, at: 2026-10-01T07:48:17Z }
+  - { by: human:kakimomokuri, at: 2026-10-01T09:01:36Z }
+---
+
+# ADR-007: 開発環境は H2、本番は PostgreSQL 18 を使い、永続化は MyBatis、スキーマは Flyway で管理する
+
+開発体験を優先してローカルは H2 で起動し、SQL の正しさは PostgreSQL のテストで担保する。
+
+日付: 2026-10-01
+
+## ステータス
+
+承認済み（開発環境を H2、本番を PostgreSQL とする方針は human:kakimomokuri が 2026-10-01 に決定。本 ADR は方式を記録する。コンプライアンスの H2 のリポジトリのテストの行は 2026-11-03 に Bolt 39b3b で改訂した。下の「改訂の経緯」）
+
+## コンテキスト
+
+- ADR-001 で、DB は 1 つにし、コンテキストごとにスキーマを分けると決めた。
+- ADR-002 で、集約は状態保存とし、版の不変性と追跡の主要実績の追記専用を守ると決めた。
+- BR-10 は、時刻を UTC の時点として保存することを求める。
+- 開発ガイドライン第 3 章は、MyBatis（JPA は不採用）と Flyway を使い、H2 はローカルでのアプリ起動だけに使う（`developmentOnly`）としている。
+- 開発アプローチとして開発体験を優先し、開発環境は H2、プロダクション環境は PostgreSQL とする方針が決まった。初版の草案は全環境を PostgreSQL にし H2 を使わないとしていたが、この方針に合わせて改めた。
+- H2 と PostgreSQL には方言差がある（TIMESTAMPTZ の扱い、部分インデックス、ロックの構文など）。H2 だけで SQL を確かめると、本番でだけ失敗する。
+- PostgreSQL のコミュニティサポート期限（endoflife.date、2026-10-01 時点）: 18 は 2030-11-14、17 は 2029-11-08、16 は 2028-11-09。RDS の標準サポートは 18 が 2031-02-28 まで。
+
+## 決定
+
+| 用途 | DB |
+| :--- | :--- |
+| ローカルでのアプリ起動・画面確認 | **H2**（PostgreSQL 互換モード、インメモリ）。`developmentOnly` 依存とし、本番の成果物に含めない |
+| リポジトリ・MyBatis マッパー・イベント配信・取込の統合テスト | Testcontainers の **PostgreSQL 18** |
+| E2E（画面を通す Cucumber シナリオ） | **PostgreSQL 18** |
+| ステージング・本番 | Amazon RDS for **PostgreSQL 18** |
+
+- **永続化は MyBatis**（mybatis-spring-boot-starter 4.1.0）とし、JPA / Hibernate は使わない。
+- **スキーマは Flyway** で版管理し、コンテキストごとにマイグレーションの置き場所とスキーマを分ける。
+- マイグレーションとマッパーの SQL は、**H2 と PostgreSQL の両方で動く範囲**で書く。PostgreSQL にしかない機能がどうしても必要な場合は、ローカルでの代替手段とあわせて別の ADR で判断する。
+- **SQL の正しさは H2 で判断しない。** CI では、PostgreSQL での統合テストに加えて、H2 でアプリが起動しマイグレーションが通ることをスモークテストで確かめる（方言差でローカルだけ起動できなくなることを防ぐ）。
+
+### 補足の決定（2026-10-01 の分析成果物レビューで追加）
+
+| 項目 | 決定 | 理由 |
+| :--- | :--- | :--- |
+| 版番号 | Flyway の版番号は作成日時（`V20261001120000__create_booking.sql` の形）にする。コンテキストごとの版番号の帯は使わない | 単一の履歴表に帯を分けた番号を入れると、後から小さい番号を足したときに Flyway の検証で失敗する |
+| DB ごとに違う DDL | フレームワークの表（Spring Modulith のイベント発行記録、Spring Session、ShedLock）は DB ごとに DDL が違うため、Flyway の `{vendor}` の置き場所（`db/migration/{vendor}`）に分ける。業務の表は共通の置き場所に H2 と PostgreSQL の共通部分で書く | フレームワークの DDL は TEXT・BYTEA・BLOB などの型が DB ごとに違い、共通部分では書けない |
+| 権限の付与 | アプリケーションの DB 利用者への権限の付与と、追記専用の表からの UPDATE・DELETE の剥奪は、PostgreSQL 用の Flyway のコールバック（`afterMigrate`）で、表の作成と同じ配備の中で行う。H2 では行わない | 別の運用タスクで付与すると、配備の途中で表を使えないか、保護が外れる時間ができる。Testcontainers でも同じ手順が再現される |
+| 一意制約違反の扱い | 一意制約違反（冪等性・重複確定の防止）は、例外を捕まえて同じトランザクションの中で処理を続けない。トランザクションを終えてから既存の結果を読み直す | PostgreSQL は違反の後に同じトランザクションの文を受け付けないが、H2 は受け付けるため、H2 だけで動く実装になる |
+| 時刻の精度 | アプリケーションの Clock をマイクロ秒に切り捨てる | `TIMESTAMP WITH TIME ZONE` はマイクロ秒の精度で、境界値の比較が保存の前後で変わらないようにする |
+
+### 代替案
+
+| 案 | 却下理由 |
+| :--- | :--- |
+| 全環境を PostgreSQL にする（初版の草案） | ローカルの起動に Docker が必要になり、起動も遅くなる。開発体験を優先する方針に合わない |
+| 全環境を H2 にする（テストも H2） | 方言差による不具合を本番まで検出できない |
+| PostgreSQL 16 / 17 | 新規構築であり、サポート期限が最も長い 18 を選ばない理由がない |
+| JPA / Hibernate | 版の追加・追記専用・スキーマ分割を、ORM の自動の更新・遅延読み込みと両立させる注意が要る。第 3 章も採用していない |
+
+## 影響
+
+### ポジティブ
+
+- ローカルでは Docker なしで素早くアプリを起動でき、画面を直して確かめる間隔が短くなる。
+- SQL の正しさは実際の PostgreSQL で確かめるため、方言差が本番障害になりにくい。
+- 第 3 章と同じ構成になり、手本の実装をそのまま参照できる。
+
+### ネガティブ
+
+- SQL を H2 と PostgreSQL の共通部分で書く制約がかかる。
+- H2 でだけ動く・PostgreSQL でだけ動く SQL を書くと、片方のテストでしか気づけない。両方を CI で確かめる必要がある。
+- 統合テストと E2E には Docker が必要である。
+
+## コンプライアンス
+
+- 本番の実行クラスパスに H2・Hibernate ORM・JPA が含まれないことをビルドで検証する。
+- リポジトリのテストは Testcontainers の PostgreSQL 18 で実行し、H2 でリポジトリのテストを書かない。（2026-11-03 改訂: リポジトリの契約のテストは PostgreSQL と H2 の両方で継ぐ。デモ環境とローカル起動が H2 で動くため。SQL の正しさは引き続き PostgreSQL で判断する。下の「改訂の経緯」）
+- CI で、H2 でアプリが起動しマイグレーションが通ることをスモークテストで確認する。
+- 追記専用の表について、アプリケーションの DB 利用者が UPDATE・DELETE できないことを PostgreSQL の統合テストで確認する。
+
+## 改訂の経緯
+
+- 2026-11-03（W7、Bolt 39b3b）: 次のように改めた（[Bolt 39b3b 計画](../../development/cargo-tracker/bolt_39b3b_plan.md) の人に諮ること 3・6。human:kakimomokuri が決定）。
+  - **H2 でのリポジトリのテスト（コンプライアンス）**: 「H2 でリポジトリのテストを書かない」を、今の運用に合わせて改めた。リポジトリの契約のテスト（抽象の契約のクラス。前例 `AuditRecordSuspensionContract`）を、Testcontainers の PostgreSQL 18 と H2 の両方で継ぐ（前例 `MyBatisAuditRecordSuspensionIntegrationTest`・`H2AuditRecordSuspensionTest`）。デモ環境（ADR-013）とローカル起動が H2 で動くので、H2 でも同じ約束が守られることを確かめる。SQL の正しさを H2 だけで判断しない決定（上の「決定」）は変えない。
+  - **H2 のイベント発行記録の列**: Spring Modulith のイベント発行記録の H2 の定義（spring-modulith-events-jdbc の schema-h2.sql の写し。`db/migration/h2/V20261001090300__create_event_publication.sql`）の `serialized_event VARCHAR(4000)` を、H2 だけのマイグレーション（`db/migration/h2/V20261104103700__widen_event_publication_serialized_event.sql`）で `VARCHAR(1000000)`（H2 の VARCHAR の上限）（2026-11-04 訂正: 「H2 の VARCHAR の上限」は誤り。H2 2.4.240 の `org.h2.engine.Constants.MAX_STRING_LENGTH` は 1,000,000,000 で、1,000,000 は寄港 60 の DE-12 が入るように広げた値。マイグレーションは変えない。Bolt 39b4 の開始準備で jar を読んで確かめた）に広げる。索引 `(listener_id, serialized_event)` は広げた列で作り直され、同じ名前と列のまま残る（`H2EventPublicationCapacityTest`）。寄港 60 の DE-12（約 6,700 文字）が入らず、H2 の取込が発行記録の INSERT で巻き戻るため。前例は H2 だけの列の幅の変更 `db/migration/h2/V20261006150000__widen_spring_session_principal_name.sql`。PostgreSQL は TEXT のままで、ステージング・本番は変わらない。寄港の上限を下げる案と DE-12 の値を減らす案は、前の人の決定（寄港 60、イベントの型）を H2 の都合で変えるので取らない。
+- 2026-11-04（W7、Bolt 39b4 のステップ 5）: 次を足した（[Bolt 39b4 計画](../../development/cargo-tracker/bolt_39b4_plan.md) の開始準備の決定 (8)。推奨のとおり。Recommend 承認の指示による。human:kakimomokuri）。
+  - **H2 の受信記録の注記の列**: H2 の VARCHAR は長さを UTF-16 の単位で数え、PostgreSQL は文字（コードポイント）で数える。取込のサービスは注記をコードポイントで 1,000 文字に切るので、補助文字を含む注記が H2 の `received_record.classification_note VARCHAR(1000)` に入らず、取込全体が巻き戻った（`H2ReceivedRecordNoteTest` の Red。補助文字 1,000 コードポイントは 2,000 単位）。H2 だけのマイグレーション（`db/migration/h2/V20261104145000__widen_received_record_classification_note.sql`）で `VARCHAR(2000)` に広げる。上限の判定はサービスのコードポイントのまま。PostgreSQL は `VARCHAR(1000)` のままで、ステージング・本番は変わらない。広げるのはこの 1 つの列だけにする。
+- 2026-11-05（W7、Bolt 39d2）: 次を足した（[Bolt 39d2 計画](../../development/cargo-tracker/bolt_39d2_plan.md) の開始準備の決定 (2) と【前の決定の変更】(4)。推奨のとおり。Recommend 承認の指示による。human:kakimomokuri。スキーマの承認ゲートは 39d2 のステップ 3 で通す）。
+  - **H2 の受信記録の判断の理由の列**: 却下の理由は 1,000 文字をコードポイントで数える。上の注記の列と同じ事情で、補助文字を含む 1,000 コードポイントの理由が H2 の `received_record_decision.reason VARCHAR(1000)`（Bolt 39a3 で決めた。`V20261103100000`）に入らないので、H2 だけのマイグレーション（`db/migration/h2/V20261105100000__widen_received_record_decision_reason.sql`。版はステップ 3 の開始ですべての場所の最新より後に決める）で `VARCHAR(2000)` に広げる。上の Bolt 39b4 の項の「広げるのはこの 1 つの列だけ」に、この列を足して 2 つにする。PostgreSQL と共通のマイグレーションは変えず、ステージング・本番は変わらない。契約のテストに補助文字を含む 1,000 文字の理由の往復を足す（メモリ・H2・PostgreSQL。前例 `H2ReceivedRecordNoteTest`）。
+- 2026-11-05（W7、Bolt 39d3）: 次を足した（[Bolt 39d3 計画](../../development/cargo-tracker/bolt_39d3_plan.md) の開始準備の決定 (2)。推奨のとおり。Recommend 承認の指示による。human:kakimomokuri。スキーマの承認ゲートは 39d3 のステップ 3 で通す）。
+  - **H2 で広げない受信記録の値の 2 列**: 受信記録の値の 2 列（`target_key VARCHAR(100)`・`value_summary VARCHAR(4000)`。共通のマイグレーション）は ASCII と値の型の上限に収まるので H2 で広げない（要約は UN/LOCODE・UTC の時刻・enum の名前・区切りの ASCII だけで UTF-16 の単位とコードポイントの数が同じ、キーは航海番号ならコードポイントで 30 文字（補助文字だけでも 60 単位）、追跡番号なら ASCII 14 文字。採用値の同じ 2 列も H2 で広げていない）。上の「広げる列」は 2 つのまま。上限いっぱい（寄港 60 の要約と補助文字を含む 30 文字の航海番号）が H2 と PostgreSQL で往復することは契約のテストで確かめる。注（2026-11-05、Bolt 39d3c）: 受信記録の追記と `findById`・`quarantinedOf` での往復を、メモリ・H2・PostgreSQL の契約のテスト（`ExternalDataRecordRepositoriesContract`）で確かめた（[Bolt 39d3c 計画](../../development/cargo-tracker/bolt_39d3c_plan.md) の開始準備の決定 (8)。H2 で広げない判断は変えない）。
+
+## 備考
+
+- 著者: anthropic/claude-opus-5-5（AI の提案。human:kakimomokuri が 2026-10-01 に承認）
+- 関連文書: [技術スタック](../../design/cargo-tracker/tech_stack.md)、[第 3 章](../../article/03-spring-modular-monolith.md)
+- 関連 ADR: ADR-001、ADR-002、ADR-006
