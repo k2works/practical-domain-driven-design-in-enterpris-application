@@ -4,7 +4,7 @@ title: "運用タスク手順書 - cargo-tracker のステージング・本番�
 description: "ステージング・本番の DB 利用者の作成、権限の確認、配備前の確認、配備、戻しの運用タスク（Gulp）の使い方。未実行のコードであること、まだ作っていない運用タスクと、その理由を明記する。"
 tags: [operation, runbook]
 status: draft
-generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-27T22:45:06Z }
+generated: { by: anthropic/claude-sonnet-5-5, at: 2026-11-28T01:57:53Z }
 ---
 
 # 運用タスク手順書 - cargo-tracker のステージング・本番
@@ -72,6 +72,39 @@ DB への経路は、SSM Session Manager の踏み台のポートフォワード
 5. `/actuator/health`（管理用のポート 8081）が UP を返す。ALB のヘルスチェックが healthy になっている。
 6. 本番は、ステージングで確かめたイメージの digest をそのまま昇格する（再ビルドしない）。
 
+## リリース（版・CHANGELOG・タグ）
+
+cargo-tracker の版を上げ、CHANGELOG とタグを作る（[Bolt 71](../../development/cargo-tracker/bolt_71_plan.md)。実装は `ops/scripts/release.js`）。**配備も push もしない**（配備は上の `deploy:release`）。AWS の接続と `.env` の `OPS_*` は要らない。
+
+> **注意: `release:patch`・`minor`・`major` は、このリポジトリではまだ一度も実行していない。** コミットとタグの部分は一時の Git リポジトリのテストで、`release:dry-run` は実際のリポジトリで確かめた。
+
+| タスク | 内容 | 変更するか |
+| :--- | :--- | :--- |
+| `npx gulp release:dry-run` | 今の版、上げた後の版とタグ、CHANGELOG に足す内容を表示する | しない |
+| `npx gulp release:preflight` | 品質ゲート（約 30 分。Docker が要る）。作業ツリーが clean、`develop` で `origin/develop` と一致（`git fetch` する）、運用スクリプトのテスト、`./gradlew check documentationTest uiTest bootJar`、最後にもう一度 clean と一致を確かめる | しない（ビルドの出力を除く） |
+| `npx gulp release:patch`・`release:minor`・`release:major` | `release:preflight` の後に、版を書き換え、CHANGELOG に足し、その 2 ファイルだけをコミット（`chore(release): cargo-tracker vX.Y.Z`）して注釈付きのタグ `cargo-tracker-vX.Y.Z` を打つ | する（手元のコミットとタグ） |
+
+- **版**: 正本は `apps/cargo-tracker/build.gradle` の `version`。数字の部分から上げ、`-SNAPSHOT` を付けずに書き戻す（`0.0.1-SNAPSHOT` からの minor は 0.1.0、major は 1.0.0）。リリースの後に次の `-SNAPSHOT` へは進めない。[リリース計画](../../development/cargo-tracker/release_plan.md)の Release 0.1・1.0・1.1 は、版の 0.1.0・1.0.0・1.1.0 に当てる。
+- **CHANGELOG**: `apps/cargo-tracker/CHANGELOG.md`（最初のリリースで作る）。直前の `cargo-tracker-v*` のタグからの（タグがなければ全履歴の）、`apps/cargo-tracker`・`ops/terraform`・`ops/scripts/operation*.js`・`.github/workflows/cargo-tracker-*.yml` を変えたコミットのうち、`feat`・`fix`・`perf`・`build` と `!` 付き。
+
+**実行の前に人が確かめること（タスクは検査しない）。**
+
+1. 上げる版に対応する、リリース計画の**リリース条件**がすべて満たされている。未達があるときは実行しない。
+2. `release:dry-run` の版・タグ・CHANGELOG が、意図したとおりである。
+3. SonarQube の Quality Gate が PASS（`npx gulp sonar-local:check`。品質ゲートに含まれない）。
+
+**実行の後。** コミットとタグを確かめてから、`git push origin develop cargo-tracker-vX.Y.Z` で送る（push は人の指示で行う）。リリースのコミットは `apps/cargo-tracker` を変えるので、push すると CI と `deploy-demo` が動く。
+
+**失敗したとき。**
+
+| 状態 | 対応 |
+| :--- | :--- |
+| `release:preflight` が失敗した | 何も変わっていない。表示された理由を直してから実行し直す |
+| 版や CHANGELOG を書き換えた後、コミットの前に失敗した | `git status` で確かめ、`apps/cargo-tracker/build.gradle` と `CHANGELOG.md` の変更を戻してから実行し直す |
+| コミットはできたが、タグがない | 内容を確かめて `git tag -a cargo-tracker-vX.Y.Z -m cargo-tracker-vX.Y.Z` を打つ |
+| push の前に取りやめる | `git tag -d cargo-tracker-vX.Y.Z` でタグを消し、`git revert` でリリースのコミットを打ち消す |
+| push の後に取りやめる | タグを消すかどうかは人が決める。版を戻さず、直した版を次のリリースとして出す |
+
 ## 時点復旧（RB-02）の手順（手動。草案。未訓練・未検証）
 
 DB の論理障害・誤操作で、障害の直前の時点へ戻すときの手順。設計は [運用要件](../../design/cargo-tracker/operation.md) の RB-02、RCV-04（RTO 2 時間）、RCV-07（復旧後の照合）。**この手順の AWS CLI の記述は仕様から書いたもので、実際に実行して確かめていない。** タスク（`db:restore:pitr`・`recovery:reconcile`）はまだ作っていない（持ち越し H-6）。環境ができたら、ステージングで訓練して直す（RCV-08: 本番開始前に 1 回、その後は半年に 1 回）。
@@ -113,3 +146,4 @@ DB の論理障害・誤操作で、障害の直前の時点へ戻すときの�
 | 日付 | 更新内容 | 更新者 |
 | :--- | :--- | :--- |
 | 2026-11-16 | 初版（draft。未実行のコード） | anthropic/claude-sonnet-5-5 |
+| 2026-11-28 | 「リリース」の節を足した（Bolt 71） | anthropic/claude-sonnet-5-5 |
