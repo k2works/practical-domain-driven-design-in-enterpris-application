@@ -20242,7 +20242,7 @@
 </tr>
 <tr>
 <td style="text-align: left;"><code>npx gulp deploy:rollback --env staging</code></td>
-<td style="text-align: left;">ECS のサービスを、<strong>イメージの違う直前の版</strong>へ戻し、安定するまで待つ（<code>maintenance:on</code>・<code>off</code> が作った版はイメージが同じなので飛ばす）。メンテナンス表示は今の状態を保つ。ECS のサーキットブレーカーの自動の戻しとは別の、人が判断する戻し。<strong>実環境では未実行</strong></td>
+<td style="text-align: left;">ECS のサービスを、<strong>イメージの違う直前の版</strong>へ戻し、安定するまで待つ（<code>maintenance:on</code>・<code>off</code> が作った版はイメージが同じなので飛ばす。戻し先はイメージを digest で固定した版に限り、Terraform が登録しただけの版は選ばない）。メンテナンス表示は今の状態を保つ。ECS のサーキットブレーカーの自動の戻しとは別の、人が判断する戻し。<strong>実環境では未実行</strong></td>
 <td style="text-align: left;">する（配備の戻し）</td>
 </tr>
 <tr>
@@ -20284,7 +20284,7 @@
 </tbody>
 </table>
 <h2 id="w7-3">配備前の確認表（W7 の議題 3）<a class="headerlink" href="#w7-3" title="Permanent link">&para;</a></h2>
-<p><strong><code>terraform apply</code> の前の注意。</strong> 配備や <code>maintenance:on</code>・<code>off</code> でタスク定義の版が進んだ後に <code>apply</code> すると、<strong>ECS のサービスは Terraform の版に戻る。イメージも変数 <code>image_tag</code> のものに戻り、メンテナンス表示の環境変数は消える。</strong> <code>apply</code> の前に <code>plan</code> を読み、<code>aws_ecs_service</code> と <code>aws_ecs_task_definition</code> に意図しない差分がないことを確かめる。<code>image_tag</code> には今動いているイメージのタグを指定する。警報だけを足すときは <code>-target=module.stack.module.alerts</code> を使う。サービスの版を Terraform の管理から外すかは未決。</p>
+<p><strong><code>terraform apply</code> とタスク定義の版（Bolt 51-4）。</strong> ECS のサービスが動かすタスク定義の版は Terraform の管理の外で、<code>apply</code> はサービスの版を変えない（<code>ignore_changes</code>）。<code>apply</code> がタスク定義を変えると新しい版が登録されるだけで、<strong>サービスには次の配備（<code>deploy:release</code>）まで反映されない。</strong> タスク定義を変える <code>apply</code> の後は、<code>maintenance:on</code>・<code>off</code> や <code>deploy:rollback</code> より先に配備する（これらは今動いている版を元に新しい版を登録することがあり、それが family の最新になると、次の配備に Terraform の変更が入らない）。<code>apply</code> の前に <code>plan</code> を読むことは変わらない。<strong>実環境では未確認。</strong></p>
 <p><strong>警告の配布先（W10-1 の Bolt 57）。</strong> <code>terraform apply</code> の前に、変数 <code>operations_alert_emails</code>・<code>data_alert_emails</code>・<code>tracking_alert_emails</code> を指定する（既定値はない。値は運用責任者が決める）。SNS のメールの購読は、届いた確認のメールを承認するまで有効にならない（承認されない購読は数日で消える）。宛先を変えたときは、SNS の画面で古い購読が残っていないかを確かめる。空の一覧を指定すると、購読のないトピックができる。<code>apply</code> の後に、3 つのトピックの購読が「確認済み」であることを確かめる。</p>
 <p>配備（<code>deploy:release</code>）の前に、人が次を確かめる。</p>
 <ol>
